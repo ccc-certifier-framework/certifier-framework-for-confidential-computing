@@ -17,7 +17,7 @@ as background.
 
 
 $CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.
-export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier
+export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
 $EXAMPLE_DIR is this directory containing the example application.
 export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_app
 

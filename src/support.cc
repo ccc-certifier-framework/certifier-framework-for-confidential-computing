@@ -111,7 +111,7 @@ int mac_output_byte_size(const char* alg_name) {
   return -1;
 }
 
-bool write_file(string& file_name, int size, byte* data) {
+bool write_file(const string& file_name, int size, byte* data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (out < 0)
     return false;
@@ -120,7 +120,7 @@ bool write_file(string& file_name, int size, byte* data) {
   return true;
 }
 
-int file_size(string& file_name) {
+int file_size(const string& file_name) {
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0)
@@ -130,7 +130,7 @@ int file_size(string& file_name) {
   return (int)file_info.st_size;
 }
 
-bool read_file(string& file_name, int* size, byte* data) {
+bool read_file(const string& file_name, int* size, byte* data) {
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0)

@@ -1,3 +1,7 @@
-make sev-guest
+make
+cd test
+make
+make sev-keys
 sudo make insmod
 sudo sev-test
+make sev-guest

@@ -6,7 +6,7 @@ export GOPATH=$HOME
 export GOROOT=/usr/local/go
 export PATH=$PATH:$GOROOT/bin
 export GO111MODULE=off
-export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier
+export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
 export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_app
 
 # Create keys

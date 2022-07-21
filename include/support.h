@@ -53,9 +53,9 @@ using std::string;
 const int block_size = 16;
 const int num_bits_in_byte = 8;
 
-bool write_file(string& file_name, int size, byte* data);
-int file_size(string& file_name);
-bool read_file(string& file_name, int* size, byte* data);
+bool write_file(const string& file_name, int size, byte* data);
+int file_size(const string& file_name);
+bool read_file(const string& file_name, int* size, byte* data);
 
 bool encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size);

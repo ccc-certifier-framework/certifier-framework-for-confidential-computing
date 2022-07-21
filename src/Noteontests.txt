@@ -1,0 +1,7 @@
+In order for the sev certifier tests to work, you must first generate some test files
+in install sev drivers as described in the instructionstxt in sev-snp-simulator.
+You must then copy the two files, ec-secp384r1-priv-key.pem and ec-secp384r1-pub-key.pem
+into src.  You must also run the tests as root. None of the other certifier tests require
+special treatment.
+
+
