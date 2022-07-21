@@ -29,18 +29,26 @@ int hash_utility(string& input, string& output) {
 
   int in_size = file_size(input);
   int in_read = in_size;
-  byte to_hash[in_size];
+  byte* to_hash = (byte*)malloc(in_size * sizeof(byte) + 1);
   byte out[sha256_size];
   unsigned int out_len = sha256_size;
 
+  if (to_hash == nullptr) {
+    printf("Can't malloc\n");
+    return 1;
+  }
+
   if (!read_file(input, &in_read, to_hash)) {
+    free(to_hash);
     printf("Can't read %s\n", input.c_str());
     return 1;
   }
   if (!digest_message(to_hash, in_size, out, out_len)) {
+    free(to_hash);
     return 1;
   }
   if (!write_file(output, (int) out_len, out)) {
+    free(to_hash);
     printf("Can't write %s\n", output.c_str());
     return 1;
   }
@@ -51,6 +59,7 @@ int hash_utility(string& input, string& output) {
     printf("\n");
   }
 
+  free(to_hash);
   return 0;
 }
 

@@ -5,6 +5,10 @@ Thus distribution contains code for several programs.
 In this description, the top level directory of this repository,
 which includes this INSTALL.md file, is denoted $(CERTIFIER).
 
+The Ubuntu 20.04 install guide can be found in
+[Ubuntu Install](./Doc/install-certifier-Ubuntu-20.04.md)
+
+
 The certifier API is in the src directory.  To compile and run the
 certifier API tests:
   cd $(CERTIFIER)/src
