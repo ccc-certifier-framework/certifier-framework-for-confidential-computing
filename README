@@ -1,6 +1,9 @@
 Certifier Framework for Confidential Computing 
 ==============================================
 
+Overview
+--------
+
 The Certifier Framework for Confidential Computing consists of a client API 
 called the certifier API and server based policy evaluation server called
 the Certifier Service.
@@ -34,6 +37,7 @@ and application, policy and deploying a service.
 
 
 Documentation and Installation
+------------------------------
 
 Instructions on building the Certifier Framework for Confidential Computing can
 be found in INSTALL.md and additional documentation can be found in the Doc
@@ -41,6 +45,7 @@ subdirectory.
 
 
 Contributing
+------------
 
 The certifier-framework-for-confidential-computing project team welcomes
 contributions from the community. Before you start working with
