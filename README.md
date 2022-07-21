@@ -2,21 +2,43 @@
 
 ## Overview
 
-## Try it out
+The Certifier Framework for Confidential Computing consists of a client API
+called the certifier API and server based policy evaluation server called
+the Certifier Service.
 
-### Prerequisites
+The Certifier API greatly simplifies and unifies programming and
+operations support for multi-vendor Confidential Computing platforms
+by providing simple client trust management including attestation evaluation,
+secure storage, platform initialization, secret sharing, secure channels
+and other services.
 
-* Prereq 1
-* Prereq 2
-* Prereq 3
+The Certifier Service provides support for scalable, policy driven
+trust management including attestation evaluation, application upgrade
+and other Confidential Computing Trust services.
 
-### Build & Run
+This project was started at the VMware Inc.
 
-1. Step 1
-2. Step 2
-3. Step 3
+Except as expressly noted in individual source files, the code and
+accompanying material is licensed for general use under the Apache
+2.0 License. Some test drivers are licensed under GPL 2.0; fortunately,
+there are very few affected files and none of the GPL code is
+required in the certifier API, sample applications, utilities or
+the Certifier Service.
 
-## Documentation
+Please consult the LICENSE file for APACHE 2.0 details and terms.
+By using this software you agree to those terms of the respective licenses.
+
+The repository contains the complete Certifier Framework source and a number of
+examples as well as complete instructions.  In particular, the sample in
+sample_app policy is a complete guide on building
+and application, policy and deploying a service.
+
+
+## Documentation and Installation
+
+Instructions on building the Certifier Framework for Confidential Computing can
+be found in INSTALL.md and additional documentation can be found in the Doc
+subdirectory.
 
 ## Contributing
 
