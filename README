@@ -32,12 +32,23 @@ examples as well as complete instructions.  In particular, the sample in
 sample_app_with_generated policy is a complete guide on building
 and application, policy and deploying a service.
 
+
+Documentation and Installation
+
 Instructions on building the Certifier Framework for Confidential Computing can
 be found in INSTALL.md and additional documentation can be found in the Doc
 subdirectory.
 
-We welcome community participation.  If you plan to contribute to the project,
-read CONTRIBUTING.md and CODE-OF-CONDUCT.md.
+
+Contributing
+
+The certifier-framework-for-confidential-computing project team welcomes
+contributions from the community. Before you start working with
+certifier-framework-for-confidential-computing, please read our Developer
+Certificate of Origin. All contributions to this repository must be signed
+as described on that page. Your signature certifies that you wrote the patch
+or have the right to pass it on as an open-source patch. For more detailed
+information, refer to CONTRIBUTING.md.
 
 If you have questions, contact us at:  xxx@vmware.com.
 
