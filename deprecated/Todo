@@ -1,0 +1,34 @@
+ 1. Key transport --- low priority
+ 2. Add SEV and SGX measurements (Ye?)
+ 3. Add sev-attestation and oe-attestation evaluation to certifier_service (JLM)
+ 4. Get Sev attestation chain sample (Ye?)
+ 5. Integrate OPA?  --- low priority
+ 6. Test OE-VSGX (Ye? Anoop?)
+ 7. Check interface safety  and review all code (Anoop?)
+ 8. Integrate TDX. (JLM and Ye?)
+ 9. Test SEV (Anoop?)
+10. Fix certifier lib. (Anoop?) [string ABI problem]
+11. Write a service for SEV
+12. Implement application level certification in SEV.  Here's how it should work:
+      a.  The service should have a known communications port, probably tcp.  It should
+          request the service run an confidential computing application naming the binary,
+          come over this port. When it gets such a request, the service should measure
+          (hash) the binary, this is the app measurement and store it.  The service should
+          have generated symmetric keys to encrypt and integrity protect data for sealed
+          storage and have a certificate for its authentication key.
+      b.  The service should fork, change owners, exec and open shared pipes to the application.
+          The service should support three calls over the pipes Seal, Unseal, Attest.
+          Seal should accept a secret to seal, put the secret and the program measurement in
+          a protobuf and encrypt/integrity protect it.  Unseal should accept the output of
+          Seal, check its integrity and decrypt it; if the measurement matches that of the program
+          running, it should return the decrypted secret.  Attest takes user-data as an argument,
+          builds a certificate with the measurement of the program, the hash of the user data and
+          signs it with its public key.
+      c.  The certifier will have a new provider "application" (like sev) that sends seal, unseal and
+          attest requests over the shared pipes to the service and retrieves results.
+      d. Change the service so it can either issue admission certs (for authentication) or
+          platform attestation evidence appointing the service key as an attestation key.
+13. Add Eric's consumer data app
+14. Add a keystore app
+
+

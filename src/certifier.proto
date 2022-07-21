@@ -1,0 +1,245 @@
+//  Certifier data structures
+
+// REMOVE THIS AFTER OPEN SOURCE APPROVAL: The license notices below are ineffective
+// until these two lines are removed.
+
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax="proto2";
+//option go_package = "github.com/jlmucb/crypto/v2/certifier_prototype/certifier_service/certprotos";
+
+// YYYY-MM-DDTHH:mm:ss.sssZ
+message time_point {
+  optional int32 year                       = 1;
+  // January = 1
+  optional int32 month                      = 2;
+  optional int32 day                        = 3;
+  optional int32 hour                       = 4;
+  optional int32 minute                     = 5;
+  optional double seconds                   = 6;
+};
+
+message rsa_message {
+  optional bytes public_modulus             = 1;
+  optional bytes public_exponent            = 2;
+  optional bytes private_exponent           = 3;
+  optional bytes private_p                  = 4;
+  optional bytes private_q                  = 5;
+  optional bytes private_dp                 = 6;
+  optional bytes private_dq                 = 7;
+};
+
+message ecc_message {
+};
+
+// Key types: "rsa-2048" "ecc-521", "aes-256", "aes-256-hmac-sha-256"
+// Principal formats: "vse-entity"
+// Key formats: "vse-key", "x509-cert"
+message key_message {
+  optional string key_name                  = 1;
+  optional string key_type                  = 2;
+  optional string key_format                = 3;
+  optional rsa_message rsa_key              = 4;
+  optional ecc_message ecc_key              = 5;
+  optional bytes secret_key_bits            = 6;
+  optional bytes certificate                = 7;
+  optional bytes other_key_formats          = 8;
+  optional string not_before                = 9;
+  optional string not_after                 = 10;
+};
+
+message protected_blob_message {
+  optional bytes encrypted_key              = 1;
+  optional bytes encrypted_data             = 2;
+};
+
+message entity_message {
+  optional string entity_type               = 1;
+  optional key_message key                  = 2;
+  optional bytes measurement                = 3;
+};
+
+// Example 1:  PK "speaks-for" measurement
+// Example 2:  PK1 "says" PK2 "speaks-for" measurement
+message vse_clause {
+  optional entity_message subject           = 1;
+  optional string verb                      = 2;
+  optional entity_message object            = 3;
+  optional vse_clause clause                = 4;
+};
+
+message vse_clauses {
+  repeated vse_clause clauses               = 1;
+};
+
+//  This is a "vse-attestation" which is a claim type
+//  The claims are in "vse-clause.  Time is
+//  the time the attestation was signed.
+//  A signed attestation is just another signed claim.
+//  enclave types are "simulated-enclave" and "oe-enclave"
+message attestation {
+  optional string enclave_type              = 1;
+  optional string key_id                    = 2;
+  optional bytes measurement                = 3;
+  optional string time                      = 4;
+  optional vse_clause clause                = 5;
+  optional string description               = 6;
+};
+
+// So far formats are: "vse-clause", "vse-attestation",
+// "vse-key" (for keys an measurements) and soon X509.
+message claim_message {
+  optional string claim_format              = 1;
+  optional string claim_descriptor          = 2;
+  optional string not_before                = 3;
+  optional string not_after                 = 4;
+  optional bytes serialized_claim           = 5;
+};
+
+message signed_claim_message {
+  optional bytes serialized_claim_message   = 1;
+  optional key_message signing_key          = 2;
+  optional string signing_algorithm         = 3;
+  optional bytes signature                  = 4;
+};
+
+message oe_assertion {
+  optional bytes user_data                  = 1;
+  optional bytes oe_report                  = 2;
+};
+
+// Current evidence types: "signed-claim", "oe-assertion"
+message evidence {
+  optional string evidence_type             = 1;
+  optional bytes serialized_evidence        = 2;
+};
+
+// Current value for prover_type is "vse-verifier"
+// maybe support "opa-verifier" later
+message evidence_package {
+  optional string prover_type               = 1;
+  repeated evidence fact_assertion          = 2;
+};
+
+message certifier_rules {
+  repeated string rule                      = 1;
+};
+
+message proved_statements {
+  repeated vse_clause proved                = 1;
+};
+
+message proof_step {
+  optional vse_clause s1                    = 1;
+  optional vse_clause s2                    = 2;
+  optional vse_clause conclusion            = 3;
+  optional int32  rule_applied              = 4; 
+};
+
+message proof {
+  optional vse_clause to_prove              = 1;
+  repeated vse_clause already_proved        = 2;
+  repeated proof_step steps                 = 3;
+};
+
+// submitted_evidence_type is "full-vse-support"
+//  "platform-attestation-only" or "oe-evidence"
+message trust_request_message {
+  optional string requesting_enclave_tag    = 1;
+  optional string providing_enclave_tag     = 2;
+  optional string submitted_evidence_type   = 3;
+  optional evidence_package support         = 4;
+  optional key_message policy_key           = 5;
+  optional string service_address           = 6;
+  optional bytes serialized_policy_key      = 7;
+  optional bytes signed_policy_key          = 8;
+};
+
+message trust_response_message {
+  optional string status                    = 1; // "succeeded" or "failed"
+  optional string requesting_enclave_tag    = 2;
+  optional string providing_enclave_tag     = 3;
+  optional bytes artifact                   = 4;
+};
+
+message storage_info_message {
+  optional string storage_type              = 1;
+  optional string storage_descriptor        = 2;
+  optional string address                   = 3;
+  optional key_message storage_key          = 4;
+  optional string tag                       = 5;
+};
+
+message channel_key_message {
+  optional string tag                       = 1;
+  optional key_message auth_key             = 2;
+};
+
+message trusted_service_message {
+  optional string trusted_service_address   = 1;
+  optional key_message trusted_service_key  = 2;
+  optional string tag                       = 3;
+};
+
+message tagged_claim {
+  optional string tag                       = 1;
+  optional claim_message claim              = 2;
+};
+
+message tagged_claims_sequence {
+  repeated tagged_claim claims              = 1;
+};
+
+message policy_store_message {
+  optional key_message policy_key                           = 1;
+  repeated trusted_service_message trusted_services         = 2;
+  repeated channel_key_message channel_authentication_keys  = 3;
+  repeated tagged_claim claims                              = 4;
+  repeated storage_info_message storage_info                = 5;
+  repeated tagged_signed_claim signed_claims                = 6;
+};
+
+message claims_sequence {
+  repeated claim_message claims             = 1;
+};
+
+message signed_claim_sequence {
+  repeated signed_claim_message claims      = 1;
+};
+
+message tagged_signed_claim {
+  optional string tag                       = 1;
+  optional signed_claim_message sc          = 2;
+};
+
+message buffer_sequence {
+  repeated bytes block                      = 1;
+};
+
+message app_call {
+  optional string function                  = 1;
+  repeated bytes args                       = 2;
+};
+
+message app_registry_entry {
+  optional string app_name                  = 1;
+  optional bytes measure                    = 2;
+  optional int32 to_app                     = 3;
+  optional int32 from_app                   = 4;
+};
+
+message app_registry {
+  repeated app_registry_entry ent           = 1;
+};

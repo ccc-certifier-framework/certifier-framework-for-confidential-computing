@@ -1,0 +1,3 @@
+make sev-guest
+sudo make insmod
+sudo sev-test

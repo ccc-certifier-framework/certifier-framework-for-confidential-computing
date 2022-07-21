@@ -49,3 +49,7 @@ as an open-source patch. For more detailed information, refer to [CONTRIBUTING.m
 
 ## License
 
+Except as expressly set forth in a source file, the contents of this repository are licensed
+under the Apache 2.0 license which is included in the LICENSE file.  There are a very few files,
+used for testing (and not included in the API or services) that have other license terms.
+

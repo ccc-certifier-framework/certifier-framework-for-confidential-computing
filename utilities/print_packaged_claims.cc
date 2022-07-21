@@ -1,0 +1,65 @@
+#include <gflags/gflags.h>
+#include "certifier.h"
+#include "support.h"
+
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// print_packaged_claims.exe --input=input-file
+
+DEFINE_bool(print_all, false,  "verbose");
+DEFINE_string(input, "simple_clause.bin",  "input file");
+
+int main(int an, char** av) {
+  gflags::ParseCommandLineFlags(&an, &av, true);
+  an = 1;
+
+  int in_size = file_size(FLAGS_input.c_str());
+  int in_read = in_size;
+
+  if (in_size <= 0) {
+    return 1;
+  }
+
+  byte buf[in_size];
+  string all_bufs;
+
+  if (!read_file(FLAGS_input, &in_read, buf)) {
+    printf("Can't read %s\n", FLAGS_input.c_str());
+    return 1;
+  }
+
+  all_bufs.assign((char*)buf, in_size);
+  buffer_sequence seq;
+  if (!seq.ParseFromString(all_bufs)) {
+    printf("Can't deserialize %s\n", FLAGS_input.c_str());
+    return 1;
+  }
+
+  printf("\n %d blocks\n", seq.block_size());
+  for (int i = 0; i < seq.block_size(); i++) {
+    const string& s = seq.block(i);
+    signed_claim_message sc;
+
+    if (!sc.ParseFromString(s)) {
+      printf("Can't parse input file\n");
+      return 1;
+    }
+    printf("%d: ", i + 1);
+    print_signed_claim(sc);
+    printf("\n");
+  }
+
+  return 0;
+}

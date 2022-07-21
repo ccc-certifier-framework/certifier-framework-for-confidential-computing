@@ -1,0 +1,364 @@
+// REMOVE THIS AFTER OPEN SOURCE APPROVAL: The license notices below are ineffective
+// until these two lines are removed.
+
+// Remove:  This file is deprecated.
+
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package main
+
+import (
+	"crypto/x509"
+	"flag"
+	"fmt"
+	"net"
+	"os"
+
+	"github.com/golang/protobuf/proto"
+	certprotos "github.com/jlmucb/crypto/v2/certifier/certifier_service/certprotos"
+	certlib "github.com/jlmucb/crypto/v2/certifier/certifier_service/certlib"
+)
+
+var serverHost = flag.String("host", "localhost", "address for client/server")
+var serverPort = flag.String("port", "8123", "port for client/server")
+var simpleClientPath = flag.String("path", "./SimpleClientFiles", "path to SimpleClient files")
+
+var policyCert *x509.Certificate = nil
+
+// The following are for test only
+var policyKeyFile = flag.String("policy_key_file", "./certlib/policy_key_file.bin", "policy key file name")
+var policyCertFile = flag.String("policy_cert_file", "./certlib/policy_cert_file.bin", "policy cert file name")
+var platformKeyFile = flag.String("platform_key_file", "./certlib/platform_key_file.bin", "platform key file name")
+var attestKeyFile = flag.String("attest_key_file", "./certlib/attest_key_file.bin", "attest key file name")
+
+var measurementFile = flag.String("measurement_file", "./certlib/measurement_file.bin", "measurement file name")
+var platformFile = flag.String("platform_file", "./certlib/platform_file.bin", "platform file name")
+
+var platformEndorsesAttestFile = flag.String("platform_attest_endorsement", "./certlib/platform_attest_endorsement.bin",
+	"platform says attest is-trusted file name")
+
+var privatePolicyKey certprotos.KeyMessage
+var publicPolicyKey *certprotos.KeyMessage = nil
+var serializedPolicyCert []byte
+
+var privatePlatformKey certprotos.KeyMessage
+var privateAttestKey certprotos.KeyMessage
+
+var sn uint64 = uint64(100)
+var duration float64 = 365.0 * 86400
+var measurements certprotos.SignedClaimSequence
+var platforms certprotos.SignedClaimSequence
+
+
+// Initialises and saves measurements and platforms
+// returns signed "platformKey says attestKey is-trusted" and
+//	"attestKey says enclaveKey speaks-for measurement"
+func InitKeysandStatements() (*certprotos.SignedClaimMessage, *certprotos.SignedClaimMessage) {
+
+	serializedPolicyKey, err := os.ReadFile(*policyKeyFile)
+	if err != nil {
+		fmt.Println("can't read policyKey, ", err)
+		return nil, nil
+	}
+
+	serializedPolicyCert, err = os.ReadFile(*policyCertFile)
+	if err != nil {
+		fmt.Println("can't read policyCert, ", err)
+		return nil, nil
+	}
+
+	serializedPlatformKey, err := os.ReadFile(*platformKeyFile)
+	if err != nil {
+		fmt.Println("can't read platform key, ", err)
+		return nil, nil
+	}
+
+	serializedAttestKey, err := os.ReadFile(*attestKeyFile)
+	if err != nil {
+		fmt.Println("can't read attest key, ", err)
+		return nil, nil
+	}
+
+	err = proto.Unmarshal(serializedPolicyKey, &privatePolicyKey)
+	if err != nil {
+		fmt.Println("can't Unmarshal policy key, ", err)
+		return nil, nil
+	}
+
+	err = proto.Unmarshal(serializedPlatformKey, &privatePlatformKey)
+	if err != nil {
+		fmt.Println("can't Unmarshal platform key, ", err)
+		return nil, nil
+	}
+
+	err = proto.Unmarshal(serializedAttestKey, &privateAttestKey)
+	if err != nil {
+		fmt.Println("can't Unmarshal Attest key, ", err)
+		return nil, nil
+	}
+
+	publicPolicyKey = certlib.InternalPublicFromPrivateKey(&privatePolicyKey)
+	policyCert, err = x509.ParseCertificate(serializedPolicyCert)
+	if err != nil {
+		fmt.Println("can't parse policy cert, ", err)
+		return nil, nil
+	}
+	policySubj := certlib.MakeKeyEntity(publicPolicyKey)
+	if policySubj == nil {
+		return nil, nil
+	}
+
+	publicAttestKey := certlib.InternalPublicFromPrivateKey(&privateAttestKey)
+	attestSubj := certlib.MakeKeyEntity(publicAttestKey)
+	if attestSubj == nil {
+		return nil, nil
+	}
+
+	verbIs := "is-trusted"
+	verbSays := "says"
+	verbSpeaksFor := "speaks-for"
+
+        tn := certlib.TimePointNow()
+        tf := certlib.TimePointPlus(tn, 365 * 86400)
+        nb := certlib.TimePointToString(tn)
+        na := certlib.TimePointToString(tf)
+
+	publicPlatformKey := certlib.InternalPublicFromPrivateKey(&privatePlatformKey)
+	platformSubj := certlib.MakeKeyEntity(publicPlatformKey)
+	platformKeyIsTrusted := certlib.MakeUnaryVseClause(platformSubj, &verbIs)
+	policyKeySaysPlatformKeyIsTrusted := certlib.MakeIndirectVseClause(policySubj, &verbSays, platformKeyIsTrusted)
+	serializedPolicyKeySaysPlatformKeyIsTrusted, err :=  proto.Marshal(policyKeySaysPlatformKeyIsTrusted)
+	if err != nil {
+		return nil, nil
+	}
+	clPolicyKeySaysPlatformKeyIsTrusted := certlib.MakeClaim(serializedPolicyKeySaysPlatformKeyIsTrusted, "vse-clause", "", nb, na)
+	if clPolicyKeySaysPlatformKeyIsTrusted == nil {
+		return nil, nil
+	}
+	signedclPolicyKeySaysPlatformKeyIsTrusted:= certlib.MakeSignedClaim(clPolicyKeySaysPlatformKeyIsTrusted, &privatePolicyKey)
+	if signedclPolicyKeySaysPlatformKeyIsTrusted == nil {
+		return nil, nil
+	}
+	platforms.Claims = append(platforms.Claims, signedclPolicyKeySaysPlatformKeyIsTrusted)
+	serializedPlatforms, err := proto.Marshal(&platforms)
+	if err != nil {
+		return nil, nil
+	}
+	err = os.WriteFile(*platformFile, serializedPlatforms, os.ModePerm)
+	if err != nil {
+		return nil, nil
+	}
+
+	m := certlib.GetMeasurement("simulated-enclave", "")
+	measurementSubj := certlib.MakeMeasurementEntity(m)
+	if measurementSubj == nil {
+		return nil, nil
+	}
+	measurementIsTrusted := certlib.MakeUnaryVseClause(measurementSubj, &verbIs)
+	policyKeySaysMeasurementIsTrusted := certlib.MakeIndirectVseClause(policySubj, &verbSays, measurementIsTrusted)
+	serializedPolicyKeySaysMeasurementIsTrusted, err := proto.Marshal(policyKeySaysMeasurementIsTrusted)
+	if err != nil {
+		return nil, nil
+	}
+
+	clPolicyKeySaysMeasurementIsTrusted:= certlib.MakeClaim(serializedPolicyKeySaysMeasurementIsTrusted, "vse-clause", "", nb, na)
+	if clPolicyKeySaysMeasurementIsTrusted == nil {
+		return nil, nil
+	}
+	signedPolicyKeySaysMeasurementIsTrusted := certlib.MakeSignedClaim(clPolicyKeySaysMeasurementIsTrusted, &privatePolicyKey)
+	if signedPolicyKeySaysMeasurementIsTrusted == nil {
+		return nil, nil
+	}
+	measurements.Claims = append(measurements.Claims, signedPolicyKeySaysMeasurementIsTrusted)
+	serializedMeasurements, err := proto.Marshal(&measurements)
+	if err != nil {
+		return nil, nil
+	}
+	err = os.WriteFile(*measurementFile, serializedMeasurements, os.ModePerm)
+	if err != nil {
+		return nil, nil
+	}
+
+	attestKeyIsTrusted := certlib.MakeUnaryVseClause(attestSubj, &verbIs)
+	platformKeySaysAttestKeyIsTrusted := certlib.MakeIndirectVseClause(platformSubj, &verbSays, attestKeyIsTrusted)
+	serializedPlatformSays, err := proto.Marshal(platformKeySaysAttestKeyIsTrusted)
+	if err != nil {
+		return nil, nil
+	}
+	clPlatformKeySaysAttestKeyIsTrusted:= certlib.MakeClaim(serializedPlatformSays, "vse-clause", "", nb, na)
+	if clPlatformKeySaysAttestKeyIsTrusted== nil {
+		return nil, nil
+	}
+	signedPlatformKeySaysAttestKeyIsTrusted := certlib.MakeSignedClaim(clPlatformKeySaysAttestKeyIsTrusted, &privatePlatformKey)
+	if signedPlatformKeySaysAttestKeyIsTrusted == nil {
+		return nil, nil
+	}
+
+	// make up enclaveKey
+	privateEnclaveKey := certlib.MakeVseRsaKey(2048)
+	if privateEnclaveKey == nil {
+		return nil, nil
+	}
+	enclaveStr :="enclaveKey"
+	privateEnclaveKey.KeyName = &enclaveStr
+	publicEnclaveKey := certlib.InternalPublicFromPrivateKey(privateEnclaveKey)
+	if publicEnclaveKey == nil {
+		return nil, nil
+	}
+	enclaveSubj := certlib.MakeKeyEntity(publicEnclaveKey)
+	if enclaveSubj == nil {
+		return nil, nil
+	}
+
+	enclaveKeySpeaksForMeasurement := certlib.MakeSimpleVseClause(enclaveSubj, &verbSpeaksFor, measurementSubj)
+	if enclaveKeySpeaksForMeasurement == nil {
+		return nil, nil
+	}
+	attestKeySaysEnclaveKeySpeaksForMeasurement :=  certlib.MakeIndirectVseClause(attestSubj, &verbSays, enclaveKeySpeaksForMeasurement)
+	serializedAttestSays, err := proto.Marshal(attestKeySaysEnclaveKeySpeaksForMeasurement)
+	if err != nil {
+		return nil, nil
+	}
+	atClm:= certlib.MakeClaim(serializedAttestSays, "vse-clause", "", nb, na)
+	if atClm == nil {
+		return nil, nil
+	}
+	signedAttestClm := certlib.MakeSignedClaim(atClm, &privateAttestKey)
+	if signedAttestClm == nil {
+		return nil, nil
+	}
+
+	return signedPlatformKeySaysAttestKeyIsTrusted, signedAttestClm
+}
+
+func main() {
+
+	// Parse flags
+	flag.Parse()
+
+	var serverAddr string
+	serverAddr = *serverHost + ":" + *serverPort
+
+	fmt.Println("Client")
+	s1, s2 := InitKeysandStatements()
+	if s1 == nil || s2 == nil {
+		fmt.Printf("Cant initKeysandStatements\n")
+		return
+	}
+
+        serializedPlatformSaysAttestIsTrusted, err := proto.Marshal(s1)
+        if err != nil {
+                return
+        }
+        err = os.WriteFile(*platformEndorsesAttestFile, serializedPlatformSaysAttestIsTrusted, os.ModePerm)
+        if err != nil {
+                return
+        }
+
+	// use ResolveTCPAddr to create address to connect to
+	raddr, err := net.ResolveTCPAddr("tcp", serverAddr)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	// DialTCP creates connection to remote address.
+	conn, err := net.DialTCP("tcp", nil, raddr)
+	if err != nil {
+		fmt.Println("Main: failed to connect to server:", err)
+		os.Exit(1)
+	}
+
+	defer conn.Close()
+
+	request:= &certprotos.TrustRequestMessage{}
+	var t1 string = "testRequestor"
+	var t2 string = "testProvider"
+	var t3 string = "platform-attestation-only"
+	request.RequestingEnclaveTag = &t1
+	request.ProvidingEnclaveTag = &t2
+	request.SubmittedEvidenceType= &t3
+
+	evp := certprotos.EvidencePackage{}
+	request.Support = &evp
+	if request.Support == nil {
+		fmt.Printf("Main: Support is nil\n")
+	}
+
+	te1 := &certprotos.Evidence{}
+	te2 := &certprotos.Evidence{}
+	sc_str := "signed-claim"
+	te1.EvidenceType = &sc_str
+	te2.EvidenceType = &sc_str
+
+	serEv1, err := proto.Marshal(s1)
+	if err != nil {
+		fmt.Printf("Can't serialize claim\n")
+		return
+	}
+	serEv2, err := proto.Marshal(s2)
+	if err != nil {
+		fmt.Printf("Can't serialize claim\n")
+		return
+	}
+
+	te1.SerializedEvidence = serEv1
+	te2.SerializedEvidence = serEv2
+
+	request.Support.FactAssertion = append(request.Support.FactAssertion, te1)
+	request.Support.FactAssertion = append(request.Support.FactAssertion, te2)
+
+	vseVerifierString := "vse-verifier"
+	request.Support.ProverType = &vseVerifierString
+	if request.Support.FactAssertion == nil {
+		fmt.Printf("Main: Support.SignedClaimMessageis nil\n")
+	}
+
+	if publicPolicyKey == nil {
+		fmt.Printf("Main: Bad public policy key\n")
+	}
+	request.PolicyKey = publicPolicyKey
+	out, err := proto.Marshal(request)
+	if err != nil {
+		fmt.Printf("Main: Failed to encode request", err)
+	} else {
+		fmt.Printf("\nMain: request out length is %d\n", len(out))
+	}
+
+	// DEBUG
+	fmt.Printf("Main: simpleclient sending request:\n")
+	certlib.PrintTrustRequest(request)
+
+	if _, err := conn.Write(out); err != nil {
+		fmt.Printf("Write error: ", err)
+	}
+
+	serResponse := make([]byte, 4096)
+	n, err := conn.Read(serResponse)
+	if err != nil {
+		fmt.Printf("Read error: ", err)
+	}
+	response := certprotos.TrustResponseMessage {}
+	err = proto.Unmarshal(serResponse[0:n], &response)
+	if err != nil {
+		fmt.Printf("Response error\n")
+		fmt.Println(err)
+		return
+	}
+
+	// DEBUG
+	fmt.Printf("simpleclient received response (%d):", n)
+	certlib.PrintTrustReponse(&response)
+}
