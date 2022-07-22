@@ -7,6 +7,7 @@
 #include "application_enclave.h"
 #include "certifier.pb.h"
 #include <mutex>
+#include <thread>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -762,7 +763,6 @@ bool client_auth_server(SSL*ssl) {
   size_sig = SSL_read(ssl, sig, size_sig);
 
   // verify chain
-
   res = X509_STORE_CTX_init(ctx, cs, x, nullptr);
   X509_STORE_CTX_set_cert(ctx, x);
   res = X509_verify_cert(ctx);
@@ -827,6 +827,70 @@ void print_ssl_error(int code) {
   }
 }
 
+class spawned_children {
+public:
+  bool valid_;
+  string app_name_;
+  string location_;
+  string measured;
+  int pid_;
+  int parent_read_fd_;
+  int parent_write_fd_;
+  spawned_children* next_;
+};
+
+std::mutex kid_mtx;
+spawned_children* my_kids = nullptr;
+
+spawned_children* new_kid() {
+  spawned_children* nk = new(spawned_children);
+  if (nk == nullptr)
+    return nullptr;
+  kid_mtx.lock();
+  nk->valid_ = false;
+  nk->next_ = my_kids;
+  my_kids = nk;
+  kid_mtx.unlock();
+  return nullptr;
+}
+
+spawned_children* find_kid(int pid) {
+  kid_mtx.lock();
+  spawned_children* k = my_kids;
+  while (k != nullptr) {
+    if (k->pid_ == pid)
+      break;
+    k = k->next_;
+  }
+  kid_mtx.unlock();
+  return k;
+}
+
+void remove_kid(int pid) {
+  kid_mtx.lock();
+  if (my_kids == nullptr) {
+    kid_mtx.unlock();
+    return;
+  }
+  if (my_kids->pid_ == pid) {
+    delete my_kids;
+    my_kids = nullptr;
+  }
+  spawned_children* k = my_kids;
+  while (k != nullptr) {
+    if (k->next_ == nullptr)
+      break;
+    if (k->next_->pid_ == pid) {
+      spawned_children* to_remove = k->next_;
+      k->next_ = to_remove->next_;
+      delete to_remove;
+      break;
+    }
+    k = k->next_;
+  }
+  kid_mtx.unlock();
+}
+
 bool measure_binary(const string& file, string* m) {
   int size = file_size(file.c_str());
   if (size <= 0) {
@@ -854,8 +918,9 @@ bool measure_binary(const string& file, string* m) {
 }
 
 void delete_child(int signum) {
-    // kill thread and reap child
-    wait(nullptr);
+    int pid = wait(nullptr);
+    // kill the thread
+    remove_kid(pid);
 }
 
 bool impl_Seal(string in, string* out) {
@@ -944,7 +1009,6 @@ void app_service_loop(int read_fd, int write_fd) {
     } else if (req.function() == "attest") {
         in = req.args(0);
         succeeded= impl_Attest(in, &out);
-      // what_to_say, out
     } else if (req.function() == "getcerts") {
         succeeded= impl_GetCerts(&out);
     }
@@ -969,73 +1033,8 @@ finishreq:
 }
 
 bool start_app_service_loop(int read_fd, int write_fd) {
-  // std::thread th1
-  app_service_loop(read_fd, write_fd);
+  std::thread service_loop(app_service_loop, read_fd, write_fd);
   return true;
-}
-
-class spawned_children {
-public:
-  bool valid_;
-  string app_name_;
-  string location_;
-  string measured;
-  int pid_;
-  int parent_read_fd_;
-  int parent_write_fd_;
-  spawned_children* next_;
-};
-
-std::mutex kid_mtx;
-spawned_children* my_kids = nullptr;
-
-spawned_children* new_kid() {
-  spawned_children* nk = new(spawned_children);
-  if (nk == nullptr)
-    return nullptr;
-  kid_mtx.lock();
-  nk->valid_ = false;
-  nk->next_ = my_kids;
-  my_kids = nk;
-  kid_mtx.unlock();
-  return nullptr;
-}
-
-spawned_children* find_kid(int pid) {
-  kid_mtx.lock();
-  spawned_children* k = my_kids;
-  while (k != nullptr) {
-    if (k->pid_ == pid)
-      break;
-    k = k->next_;
-  }
-  kid_mtx.unlock();
-  return k;
-}
-
-void remove_kid(int pid) {
-  kid_mtx.lock();
-  if (my_kids == nullptr) {
-    kid_mtx.unlock();
-    return;
-  }
-  if (my_kids->pid_ == pid) {
-    delete my_kids;
-    my_kids = nullptr;
-  }
-  spawned_children* k = my_kids;
-  while (k != nullptr) {
-    if (k->next_ == nullptr)
-      break;
-    if (k->next_->pid_ == pid) {
-      spawned_children* to_remove = k->next_;
-      k->next_ = to_remove->next_;
-      delete to_remove;
-      break;
-    }
-    k = k->next_;
-  }
-  kid_mtx.unlock();
 }
 
 
@@ -1071,7 +1070,7 @@ bool process_run_request(run_request& req) {
     close(fd1[1]);
     close(fd2[0]);
     // change owner
-    if (execl(req.location().c_str(), "tr", "a", "b" , 0) < 0) {
+    if (execl(req.location().c_str(), 0) < 0) {
       printf("Exec failed\n");
       return false;
     }
