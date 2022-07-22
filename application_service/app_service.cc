@@ -70,9 +70,10 @@ X509* service_cert = nullptr;
 key_message privateServiceKey;
 key_message publicServiceKey;
 
-// For seal and unseal
+// This is the sealing key
 const int service_symmetric_key_size = 64;
 byte service_symmetric_key[service_symmetric_key_size];
+
 byte symmetric_key_for_protect[service_symmetric_key_size];
 key_message *protect_symmetric_key = nullptr;
 
@@ -254,7 +255,7 @@ bool cold_init() {
   protect_symmetric_key->set_key_format("vse-key");
   protect_symmetric_key->set_secret_key_bits(service_symmetric_key, service_symmetric_key_size);
 
-  // make service attedt private and public key
+  // make service attest private and public key
   if (!make_certifier_rsa_key(2048,  &privateServiceKey)) {
     return false;
   }
@@ -857,27 +858,119 @@ void delete_child(int signum) {
     wait(nullptr);
 }
 
-bool impl_Seal() {
-  return false;
+bool impl_Seal(string in, string* out) {
+  byte iv[16];
+  int t_size = in.size() + 64;
+  byte t_out[t_size];
+
+  if (!get_random(8 * 16, iv))
+    return false;
+  if (!authenticated_encrypt((byte*)in.data(), in.size(), service_symmetric_key,
+            iv, t_out, &t_size))
+    return false;
+  out->assign((char*)t_out, t_size);
+  return true;
 }
 
-bool impl_Unseal() {
-  return false;
+bool impl_Unseal(string in, string* out) {
+  int t_size = in.size();
+  byte t_out[t_size];
+  if (!authenticated_decrypt((byte*)in.data(), in.size(), service_symmetric_key,
+            t_out, &t_size))
+    return false;
+  out->assign((char*)t_out, t_size);
+  return true;
 }
 
-bool impl_Attest() {
-  return false;
+bool impl_Attest(string in, string* out) {
+  // in is a serialized vse-attestation
+  claim_message cm;
+  string nb, na;
+  time_point tn, tf;
+  if (!time_now(&tn))
+    return false;
+  if (!add_interval_to_time_point(tn, 24.0 * 365.0, &tf))
+    return false;
+  if (!time_to_string(tn, &nb))
+    return false;
+  if (!time_to_string(tf, &na))
+    return false;
+  string cf("vse-attestation");
+  string desc("");
+  if (!make_claim(in.size(), (byte*)in.data(), cf, desc,
+        nb, na, &cm))
+    return false;
+  string ser_cm;
+  if (!cm.SerializeToString(&ser_cm))
+    return false;
+
+  signed_claim_message scm;
+  if (!make_signed_claim(cm, privateServiceKey, &scm))
+    return false;
+  if (!scm.SerializeToString(out))
+    return false;
+
+  return true;
 }
 
-bool impl_GetCerts() {
+bool impl_GetCerts(string* out) {
   return false;
 }
 
 void app_service_loop(int read_fd, int write_fd) {
+  int r_size = 4096;
+  byte* r_buf[r_size];
+
+  while(1) {
+    bool succeeded = false;
+    string in;
+    string out;
+    int n = read(read_fd, r_buf, r_size);
+    if (n < 0)
+      continue;
+    string str_app_req;
+    str_app_req.assign((char*)r_buf, n);
+    app_request req;
+    if (!req.ParseFromString(str_app_req)) {
+      goto finishreq;
+    }
+
+    if (req.function() == "seal") {
+        in = req.args(0);
+        succeeded= impl_Seal(in, &out);
+    } else if (req.function() == "unseal") {
+        in = req.args(0);
+        succeeded= impl_Unseal(in, &out);
+    } else if (req.function() == "attest") {
+        in = req.args(0);
+        succeeded= impl_Attest(in, &out);
+      // what_to_say, out
+    } else if (req.function() == "getcerts") {
+        succeeded= impl_GetCerts(&out);
+    }
+
+finishreq:
+    app_response rsp;
+    string str_app_rsp;
+    rsp.set_function(req.function());
+
+    if (!succeeded) {
+      rsp.set_status("failed");
+      rsp.SerializeToString(&str_app_rsp);
+      write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size());
+      continue;
+    }
+    rsp.set_status("succeeded");
+    rsp.add_args(out);
+    write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size());
+    continue;
+  }
+
 }
 
 bool start_app_service_loop(int read_fd, int write_fd) {
   // std::thread th1
+  app_service_loop(read_fd, write_fd);
   return true;
 }
 

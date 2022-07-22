@@ -46,6 +46,7 @@ using std::string;
 #ifndef _APPLICATION_ENCLAVE_H__
 #define _APPLICATION_ENCLAVE_H__
 
+bool application_Init(int read_fd, int write_fd);
 bool application_GetCerts(int* size_out, byte* out);
 bool application_Seal( int in_size, byte* in, int* size_out, byte* out);
 bool application_Unseal(int in_size, byte* in, int* size_out, byte* out);

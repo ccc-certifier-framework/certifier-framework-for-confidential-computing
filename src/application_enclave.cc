@@ -28,128 +28,129 @@ using std::string;
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+bool initialized = false;
+int reader = 0;
+int writer = 0;
+
+bool application_Init(int read_fd, int write_fd) {
+  reader = read_fd;
+  writer = write_fd;
+  initialized = true;
+  return true;
+}
+
 bool application_GetCerts(int* size_out, byte* out) {
-  return false;
+  app_request req;
+  app_response rsp;
+
+  req.set_function("getcerts");
+  string str_req;
+  req.SerializeToString(&str_req);
+  write(writer, (byte*)str_req.data(), str_req.size());
+  int t_size = 4096;
+  byte t_out[t_size];
+  int n= read(reader, t_out, t_size);
+  if (n < 0)
+    return false;
+  string r_str;
+  r_str.assign((char*)t_out, n);
+  if (!rsp.ParseFromString(r_str))
+    return false;
+  if (rsp.function() != "getcerts" || rsp.status() != "succeeded")
+    return false;
+  if (*size_out > rsp.args(0).size())
+    return false;
+  *size_out = rsp.args(0).size();
+  memcpy(out, rsp.args(0).data(), *size_out);
+  return true;
 }
 
 bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
+  app_request req;
+  app_response rsp;
 
-#if 0
-  const int iv_size = block_size;
-  byte iv[iv_size];
-  string my_measurement;
-
-  int input_size = in_size + my_measurement.size();
-  byte input[input_size];
-
-  int output_size = in_size + my_measurement.size() + iv_size + 512;
-  byte output[output_size];
-
-  memset(input, 0, input_size);
-  memset(output, 0, output_size);
-  if (!get_random(8 * block_size, iv)) {
+  req.set_function("seal");
+  string s_in;
+  s_in.assign((char*)in, in_size);
+  req.add_args(s_in);
+  string str_req;
+  req.SerializeToString(&s_in);
+  write(writer, (byte*)s_in.data(), s_in.size());
+  int t_size = in_size + 64;
+  byte t_out[t_size];
+  int n= read(reader, t_out, t_size);
+  if (n < 0)
     return false;
-  }
-
-  // input: concatinate measurment_size bytes of measurement and in
-  // then encrypt it and give it back.
-  int m_size = my_measurement.size();
-  byte m[m_size];
-  if (!application_Getmeasurement(enclave_type, enclave_id, &m_size, m))
+  string r_str;
+  r_str.assign((char*)t_out, n);
+  if (!rsp.ParseFromString(r_str))
     return false;
-
-  memcpy(input, m, my_measurement.size());
-  memcpy(input + my_measurement.size(), in, in_size);
-
-  // output is iv, encrypted bytes
-  int real_output_size = output_size;
-  if (!authenticated_encrypt(input, input_size, sealing_key, iv, output, &real_output_size))
+  if (rsp.function() != "seal" || rsp.status() != "succeeded")
     return false;
-
-   memcpy(out, output, real_output_size);
-  *size_out = real_output_size;
+  if (*size_out > rsp.args(0).size())
+    return false;
+  *size_out = rsp.args(0).size();
+  memcpy(out, rsp.args(0).data(), *size_out);
   return true;
-#else
-  return false;
-#endif
 }
 
 bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
+  app_request req;
+  app_response rsp;
 
-#if 0
-  int iv_size = block_size;
-  byte iv[iv_size];
-  int output_size = in_size + 128;
-  byte output[output_size];
-
-  memset(output, 0, output_size);
-  memcpy(iv, in, iv_size);
-
-  // input: concatinate measurment_size bytes of measurement and in
-  // then encrypt it and give it back.
-  int m_size = my_measurement.size();
-  byte m[m_size];
-  if (!application_Getmeasurement(enclave_type, enclave_id, &m_size, m))
+  req.set_function("unseal");
+  string s_in;
+  s_in.assign((char*)in, in_size);
+  req.add_args(s_in);
+  string str_req;
+  req.SerializeToString(&s_in);
+  write(writer, (byte*)s_in.data(), s_in.size());
+  int t_size = in_size + 64;
+  byte t_out[t_size];
+  int n= read(reader, t_out, t_size);
+  if (n < 0)
     return false;
-
-  int real_output_size = output_size;
-  if (!authenticated_decrypt(in, in_size, (byte*)sealing_key,
-          output, &real_output_size))
+  string r_str;
+  r_str.assign((char*)t_out, n);
+  if (!rsp.ParseFromString(r_str))
     return false;
-
-  if (memcmp((void*)output, (void*)m, (int)m_size) != 0)
+  if (rsp.function() != "unseal" || rsp.status() != "succeeded")
     return false;
-  real_output_size -= m_size;
-  memcpy(out, (byte*)(output + m_size), real_output_size);
-  *size_out = real_output_size;
+  if (*size_out > rsp.args(0).size())
+    return false;
+  *size_out = rsp.args(0).size();
+  memcpy(out, rsp.args(0).data(), *size_out);
   return true;
-#else
-  return false;
-#endif
 }
 
 // Attestation is a signed_claim_message
 // with a vse_claim_message claim
-bool application_Attest(int what_to_say_size, byte* what_to_say,
+bool application_Attest(int in_size, byte* in,
   int* size_out, byte* out) {
+  app_request req;
+  app_response rsp;
 
-#if 0
-  if (rsa_attestation_key == nullptr)
+  req.set_function("attest");
+  string s_in;
+  s_in.assign((char*)in, in_size);
+  req.add_args(s_in);
+  string str_req;
+  req.SerializeToString(&s_in);
+  write(writer, (byte*)s_in.data(), s_in.size());
+  int t_size = in_size + 64;
+  byte t_out[t_size];
+  int n= read(reader, t_out, t_size);
+  if (n < 0)
     return false;
-  // what_to_say is a serialized vse-attestation
-  claim_message cm;
-  string nb, na;
-  time_point tn, tf;
-  if (!time_now(&tn))
+  string r_str;
+  r_str.assign((char*)t_out, n);
+  if (!rsp.ParseFromString(r_str))
     return false;
-  if (!add_interval_to_time_point(tn, 24.0 * 365.0, &tf))
+  if (rsp.function() != "attest" || rsp.status() != "succeeded")
     return false;
-  if (!time_to_string(tn, &nb))
+  if (*size_out > rsp.args(0).size())
     return false;
-  if (!time_to_string(tf, &na))
-    return false;
-  string cf("vse-attestation");
-  string desc("");
-  if (!make_claim(what_to_say_size, what_to_say, cf, desc,
-        nb, na, &cm))
-    return false;
-  string ser_cm;
-  if (!cm.SerializeToString(&ser_cm))
-    return false;
-
-  signed_claim_message scm;
-  if (!make_signed_claim(cm, my_attestation_key, &scm))
-    return false;
-  string ser_scm;
-  if (!scm.SerializeToString(&ser_scm))
-    return false;
-  if (*size_out < ser_scm.size())
-    return false;
-  memset(out, 0, *size_out);
-  *size_out = ser_scm.size();
-  memcpy(out, ser_scm.data(), *size_out);
+  *size_out = rsp.args(0).size();
+  memcpy(out, rsp.args(0).data(), *size_out);
   return true;
-#else
-  return false;
-#endif
 }

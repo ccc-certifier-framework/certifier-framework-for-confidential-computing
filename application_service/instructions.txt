@@ -140,6 +140,24 @@ Step 10: Start the App Service
 
 ==========================================================================================
 
-Notes on real deployment and measurements
+Running the application service
+-------------------------------
+
+The application_service must run as root and be started at boot.  Usually,
+it is in initiram.
+
+Arguments
+
+--cold_init_service=true means reinit even if there is already service data
+--policy_cert_file= policy_cert.bin
+--policy_host="address for policy server
+--policy_port=8123, port for policy server
+--service_dir="./service/", directory for service data
+--policy_store_file="policy_store.bin, policy store for service
+--server_app_host=localhost,"address for application requests
+--server_app_port=8124, port for application requests"
+--run_policy="all", means run any binary
+--run_policy="signed", means run only signed binaries
+
 
  

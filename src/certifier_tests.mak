@@ -58,7 +58,7 @@ $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
 $(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o
 else
 dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
-$(O)/certificate_tests.o $(O)/claims_tests.o $(O)/primitive_tests.o \
+$(O)/application_enclave.o $(O)/claims_tests.o $(O)/primitive_tests.o \
 $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o
 endif
 
