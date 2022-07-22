@@ -236,20 +236,13 @@ message run_response {
   optional string status                    = 1;
 };
 
-message app_call {
+message app_request {
   optional string function                  = 1;
   repeated bytes args                       = 2;
 };
 
-message app_registry_entry {
-  optional string app_name                  = 1;
-  optional string location                  = 2;
-  optional bytes measure                    = 3;
-  optional int32 child_pid                  = 4;
-  optional int32 to_app                     = 5;
-  optional int32 from_app                   = 6;
-};
-
-message app_registry {
-  repeated app_registry_entry ent           = 1;
+message app_response {
+  optional string function                  = 1;
+  optional string status                    = 2;
+  repeated bytes args                       = 3;
 };

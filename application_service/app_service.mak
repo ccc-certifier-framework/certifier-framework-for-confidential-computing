@@ -53,7 +53,7 @@ app_service.exe: $(dobj)
 	$(LINK) -o $(EXE_DIR)/app_service.exe $(dobj) $(LDFLAGS)
 
 $(S)/certifier.pb.cc: $(LIBSRC)/certifier.proto
-	$(PROTO) -I$(S) --cpp_out=$(S) $(LIBSRC)/certifier.proto
+	$(PROTO) --proto_path=$(LIBSRC) --cpp_out=$(S) certifier.proto
 	mv certifier.pb.h $(I)
 
 $(O)/app_service.o: $(S)/app_service.cc $(S)/certifier.pb.cc

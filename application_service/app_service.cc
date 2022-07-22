@@ -6,6 +6,7 @@
 #include "simulated_enclave.h"
 #include "application_enclave.h"
 #include "certifier.pb.h"
+#include <mutex>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -51,6 +52,7 @@ DEFINE_string(server_app_host, "localhost", "address for application requests");
 DEFINE_int32(server_app_port, 8124, "port for application requests");
 
 DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement", "platform cert");
+DEFINE_string(run_policy, "all", "what programs to run");  // "signed" is other possibility
 
 
 bool service_trust_data_initialized = false;
@@ -73,10 +75,6 @@ const int service_symmetric_key_size = 64;
 byte service_symmetric_key[service_symmetric_key_size];
 byte symmetric_key_for_protect[service_symmetric_key_size];
 key_message *protect_symmetric_key = nullptr;
-
-// All my children
-app_registry child_apps;
-
 
 // --------------------------------------------------------------------------
 
@@ -828,12 +826,185 @@ void print_ssl_error(int code) {
   }
 }
 
+bool measure_binary(const string& file, string* m) {
+  int size = file_size(file.c_str());
+  if (size <= 0) {
+    printf("Can't get executable file\n");
+    return false;
+  }
+  byte* file_contents = (byte*)malloc(size);
+  int bytes_read = size;
+  if (!read_file(file, &bytes_read, file_contents) || bytes_read < size) {
+    printf("Executable read failed\n");
+    free(file_contents);
+    return false;
+  }
+  byte digest[32];
+  unsigned int len = 32;
+  if (!digest_message(file_contents, bytes_read,
+          digest, len)) {
+    printf("Digest failed\n");
+    free(file_contents);
+    return false;
+  }
+  m->assign((char*)digest, (int)len);
+  free(file_contents);
+  return true;
+}
+
+void delete_child(int signum) {
+    // kill thread and reap child
+    wait(nullptr);
+}
+
+bool impl_Seal() {
+  return false;
+}
+
+bool impl_Unseal() {
+  return false;
+}
+
+bool impl_Attest() {
+  return false;
+}
+
+bool impl_GetCerts() {
+  return false;
+}
+
+void app_service_loop(int read_fd, int write_fd) {
+}
+
+bool start_app_service_loop(int read_fd, int write_fd) {
+  // std::thread th1
+  return true;
+}
+
+class spawned_children {
+public:
+  bool valid_;
+  string app_name_;
+  string location_;
+  string measured;
+  int pid_;
+  int parent_read_fd_;
+  int parent_write_fd_;
+  spawned_children* next_;
+};
+
+std::mutex kid_mtx;
+spawned_children* my_kids = nullptr;
+
+spawned_children* new_kid() {
+  spawned_children* nk = new(spawned_children);
+  if (nk == nullptr)
+    return nullptr;
+  kid_mtx.lock();
+  nk->valid_ = false;
+  nk->next_ = my_kids;
+  my_kids = nk;
+  kid_mtx.unlock();
+  return nullptr;
+}
+
+spawned_children* find_kid(int pid) {
+  kid_mtx.lock();
+  spawned_children* k = my_kids;
+  while (k != nullptr) {
+    if (k->pid_ == pid)
+      break;
+    k = k->next_;
+  }
+  kid_mtx.unlock();
+  return k;
+}
+
+void remove_kid(int pid) {
+  kid_mtx.lock();
+  if (my_kids == nullptr) {
+    kid_mtx.unlock();
+    return;
+  }
+  if (my_kids->pid_ == pid) {
+    delete my_kids;
+    my_kids = nullptr;
+  }
+  spawned_children* k = my_kids;
+  while (k != nullptr) {
+    if (k->next_ == nullptr)
+      break;
+    if (k->next_->pid_ == pid) {
+      spawned_children* to_remove = k->next_;
+      k->next_ = to_remove->next_;
+      delete to_remove;
+      break;
+    }
+    k = k->next_;
+  }
+  kid_mtx.unlock();
+}
+
+
 bool process_run_request(run_request& req) {
+  // check this for thread safety
+
   // measure binary
+  string m;
+  // Change later to prevent TOCTOU attack
+  if (!req.has_location() || !measure_binary(req.location(), &m)) {
+    printf("Can't measure binary\n");
+    return false;
+  }
+
+  // pipe 1 is parent-->child
+  // pipe 2 is child-->parent
+  int fd1[2];
+  int fd2[2];
+
+  if (pipe(fd1) < 0) {
+    printf("Pipe 1 failed\n");
+    return false;
+  }
+  if (pipe(fd2) < 0) {
+    printf("Pipe 1 failed\n");
+    return false;
+  }
+
   // fork and get pid
-  // change owner
-  // execl and arrange pipes
-  // wait
+  pid_t pid = fork();
+  if (pid < 0) {
+  } else if (pid == 0) {  // child
+    close(fd1[1]);
+    close(fd2[0]);
+    // change owner
+    if (execl(req.location().c_str(), "tr", "a", "b" , 0) < 0) {
+      printf("Exec failed\n");
+      return false;
+    }
+  } else {  // parent
+    close(fd1[0]);
+    close(fd2[1]);
+    signal(SIGCHLD, delete_child);
+
+    // add it to lists
+    spawned_children* nk = new_kid();
+    if (nk == nullptr) {
+      printf("Can't add kid\n");
+      return false;
+    }
+    nk->location_ = req.location();
+    nk->measured.assign((char*)m.data(), m.size());;
+    nk->pid_ = pid;
+    nk->parent_read_fd_ = fd2[0];
+    nk->parent_write_fd_ = fd1[1];
+    nk->valid_ = true;
+    if (!start_app_service_loop(fd2[0], fd1[1])) {
+      printf("Couldn't start service loop\n");
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -870,10 +1041,14 @@ void server_application(SSL* ssl) {
 done:
   run_response resp;
   if (ret) {
+    resp.set_status("SUCCEEDED");
   } else {
+    resp.set_status("FAILED");
   }
   string str_resp;
-  SSL_write(ssl, (byte*)str_resp.data(), str_resp.size());
+  if (resp.SerializeToString(&str_resp)) {
+    SSL_write(ssl, (byte*)str_resp.data(), str_resp.size());
+  }
   close(sd);
   SSL_free(ssl);
 }
