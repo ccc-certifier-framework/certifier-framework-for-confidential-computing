@@ -25,7 +25,6 @@ endif
 LIBSRC= $(SRC_DIR)/src
 S= $(SRC_DIR)/application_service
 O= $(OBJ_DIR)
-US= .
 I= $(SRC_DIR)/include
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/
 
@@ -53,17 +52,17 @@ app_service.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/app_service.exe $(dobj) $(LDFLAGS)
 
-$(S)/certifier.pb.cc $(LIBSRC)/certifier.pb.h: $(LIBSRC)/certifier.proto
-	$(PROTO) -I$(I) --cpp_out=$(S) $(LIBSRC)/certifier.proto
+$(S)/certifier.pb.cc: $(LIBSRC)/certifier.proto
+	$(PROTO) -I$(S) --cpp_out=$(S) $(LIBSRC)/certifier.proto
 	mv certifier.pb.h $(I)
 
-$(O)/app_service.o: $(US)/app_service.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/app_service.o: $(S)/app_service.cc $(S)/certifier.pb.cc
 	@echo "compiling app_service.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/app_service.o $(US)/app_service.cc
+	$(CC) $(CFLAGS) -c -o $(O)/app_service.o $(S)/app_service.cc
 
-$(O)/certifier.pb.o: $(LIBSRC)/certifier.pb.cc $(I)/certifier.pb.h
+$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(LIBSRC)/certifier.pb.cc
+	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
 
 $(O)/certifier.o: $(LIBSRC)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"

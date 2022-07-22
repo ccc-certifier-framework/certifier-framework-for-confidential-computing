@@ -5,6 +5,7 @@
 #include "certifier.h"
 #include "simulated_enclave.h"
 #include "application_enclave.h"
+#include "certifier.pb.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -827,8 +828,54 @@ void print_ssl_error(int code) {
   }
 }
 
-bool app_request() {
-  return false;
+bool process_run_request(run_request& req) {
+  // measure binary
+  // fork and get pid
+  // change owner
+  // execl and arrange pipes
+  // wait
+  return true;
+}
+
+const int max_req_size = 2048;
+void server_application(SSL* ssl) {
+  int res = SSL_accept(ssl);
+  if (res != 1) {
+    printf("Server: Can't SSL_accept connection\n");
+    unsigned long code = ERR_get_error();
+    printf("Accept error: %s\n", ERR_lib_error_string(code));
+    print_ssl_error(SSL_get_error(ssl, res));
+    SSL_free(ssl);
+    return;
+  }
+  int sd = SSL_get_fd(ssl);
+  printf("Accepted ssl connection using %s \n", SSL_get_cipher(ssl));
+
+  // read run request
+  byte in[max_req_size];
+  memset(in, 0, max_req_size);
+  int n = SSL_read(ssl, in, 1024);
+  printf("SSL server read: %s\n", (const char*) in);
+
+  // This should be a serialized run_request
+  bool ret = false;
+  run_request req;
+  string str_req;
+  str_req.assign((char*)in, n);
+  if (!req.ParseFromString(str_req)) {
+    goto done;
+  }
+  ret = process_run_request(req);
+
+done:
+  run_response resp;
+  if (ret) {
+  } else {
+  }
+  string str_resp;
+  SSL_write(ssl, (byte*)str_resp.data(), str_resp.size());
+  close(sd);
+  SSL_free(ssl);
 }
 
 bool app_request_server() {
@@ -867,6 +914,18 @@ bool app_request_server() {
     printf("SSL_CTX_new failed\n");
     return false;
   }
+
+    unsigned int len = 0;
+    while (1) {
+      printf("application_service server at accept\n");
+      struct sockaddr_in addr;
+      int client = accept(sd, (struct sockaddr*)&addr, &len);
+      SSL* ssl = SSL_new(ctx);
+      SSL_set_fd(ssl, client);
+      server_application(ssl);
+  }
+  close(sd);
+  SSL_CTX_free(ctx);
   return true;
 }
 
@@ -909,6 +968,8 @@ int main(int an, char** av) {
     }
 
   // run service response
+  if (!app_request_server()) {
+  }
 
   clear_sensitive_data();
   return 0;

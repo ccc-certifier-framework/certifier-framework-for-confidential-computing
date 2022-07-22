@@ -228,6 +228,14 @@ message buffer_sequence {
   repeated bytes block                      = 1;
 };
 
+message run_request {
+  optional string location                  = 1;
+};
+
+message run_response {
+  optional string status                    = 1;
+};
+
 message app_call {
   optional string function                  = 1;
   repeated bytes args                       = 2;
@@ -235,9 +243,11 @@ message app_call {
 
 message app_registry_entry {
   optional string app_name                  = 1;
-  optional bytes measure                    = 2;
-  optional int32 to_app                     = 3;
-  optional int32 from_app                   = 4;
+  optional string location                  = 2;
+  optional bytes measure                    = 3;
+  optional int32 child_pid                  = 4;
+  optional int32 to_app                     = 5;
+  optional int32 from_app                   = 6;
 };
 
 message app_registry {
