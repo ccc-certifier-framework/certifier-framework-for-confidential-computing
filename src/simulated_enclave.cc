@@ -88,8 +88,7 @@ bool simulator_init(const char* key_file, const char* m_file) {
   return true;
 }
 
-bool simulated_Getmeasurement(const string& enclave_type, const string& enclave_id,
-    int* size_out, byte* out) {
+bool simulated_Getmeasurement(int* size_out, byte* out) {
 
   if (*size_out < simulated_measurment_size)
     return false;
@@ -121,7 +120,7 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
   // then encrypt it and give it back.
   int m_size = my_measurement.size();
   byte m[m_size];
-  if (!simulated_Getmeasurement(enclave_type, enclave_id, &m_size, m))
+  if (!simulated_Getmeasurement(&m_size, m))
     return false;
 
   memcpy(input, m, my_measurement.size());
@@ -152,7 +151,7 @@ bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
   // then encrypt it and give it back.
   int m_size = my_measurement.size();
   byte m[m_size];
-  if (!simulated_Getmeasurement(enclave_type, enclave_id, &m_size, m))
+  if (!simulated_Getmeasurement(&m_size, m))
     return false;
 
   int real_output_size = output_size;

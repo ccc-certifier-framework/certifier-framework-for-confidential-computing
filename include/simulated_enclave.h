@@ -47,8 +47,7 @@ using std::string;
 #define _SIMULATED_ENCLAVE_H__
 
 bool simulator_init(const char* key_file, const char* m_file);
-bool simulated_Getmeasurement(const string& enclave_type, const string& enclave_id,
-  int* size_out, byte* out);
+bool simulated_Getmeasurement(int* size_out, byte* out);
 bool simulated_Seal(const string& enclave_type, const string& enclave_id,
   int in_size, byte* in, int* size_out, byte* out);
 bool simulated_Unseal(const string& enclave_type, const string& enclave_id,

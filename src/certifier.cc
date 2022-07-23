@@ -433,6 +433,7 @@ bool construct_what_to_say(string& enclave_type,
 }
 
 #ifdef SEV_SNP
+extern bool sev_Getmeasurement(int* size_out, byte* out);
 extern bool sev_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool sev_Unseal(int in_size, byte* in, int* size_out, byte* out);
 extern bool sev_Attest(int what_to_say_size, byte* what_to_say,
@@ -509,9 +510,13 @@ bool Getmeasurement(const string& enclave_type, const string& enclave_id,
   // consider doing it after calling SDK Verify since that guarantees
   // that both measurement and custom claims are verified anyway.
   if (enclave_type == "simulated-enclave" || enclave_type == "oe-enclave") {
-    return simulated_Getmeasurement(enclave_type, enclave_id,
-        size_out, out);
+    return simulated_Getmeasurement(size_out, out);
   }
+#ifdef SEV
+  if (enclave_type == "simulated-enclave" || enclave_type == "oe-enclave") {
+    return simulated_Getmeasurement(size_out, out);
+  }
+#endif
   return false;
 }
 

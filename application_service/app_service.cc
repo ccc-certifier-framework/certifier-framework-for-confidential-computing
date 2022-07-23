@@ -75,9 +75,13 @@ key_message publicServiceKey;
 // This is the sealing key
 const int service_symmetric_key_size = 64;
 byte service_symmetric_key[service_symmetric_key_size];
+key_message app_sealing_key;
 
+// Protect Key
 byte symmetric_key_for_protect[service_symmetric_key_size];
-key_message *protect_symmetric_key = nullptr;
+key_message protect_symmetric_key;
+
+#define DEBUG
 
 // --------------------------------------------------------------------------
 
@@ -111,9 +115,9 @@ bool save_store(const string& enclave_type) {
   }
   int size_protected_store = serialized_store.size() + 4096;
   byte protected_store[size_protected_store];
-  if (!Protect_Blob(enclave_type, *protect_symmetric_key, serialized_store.size(),
+  if (!Protect_Blob(enclave_type, protect_symmetric_key, serialized_store.size(),
           (byte*)serialized_store.data(), &size_protected_store, protected_store)) {
-    printf("save_store an't protect blob\n");
+    printf("save_store can't protect blob\n");
     return false;
   }
 
@@ -141,7 +145,7 @@ bool fetch_store(const string& enclave_type) {
   }
   
   if (!Unprotect_Blob(enclave_type, size_protected_blob, protected_blob,
-        protect_symmetric_key, &size_unprotected_blob, unprotected_blob)) {
+        &protect_symmetric_key, &size_unprotected_blob, unprotected_blob)) {
     printf("fetch_store can't Unprotect\n");
     return false;
   }
@@ -248,11 +252,19 @@ bool cold_init(const string& enclave_type) {
   if (!get_random(8 * service_symmetric_key_size, service_symmetric_key))
     return false;
 
+  // service_symmetric_key
+  app_sealing_key.set_key_name("sealing-key");
+  app_sealing_key.set_key_type("aes-256-cbc-hmac-sha256");
+  app_sealing_key.set_key_format("vse-key");
+  app_sealing_key.set_secret_key_bits(service_symmetric_key, service_symmetric_key_size);
+
   // fill symmetric_key_for_protect
-  protect_symmetric_key->set_key_name("protect-key");
-  protect_symmetric_key->set_key_type("aes-256-cbc-hmac-sha256");
-  protect_symmetric_key->set_key_format("vse-key");
-  protect_symmetric_key->set_secret_key_bits(service_symmetric_key, service_symmetric_key_size);
+  protect_symmetric_key.set_key_name("protect-key");
+  protect_symmetric_key.set_key_type("aes-256-cbc-hmac-sha256");
+  protect_symmetric_key.set_key_format("vse-key");
+  protect_symmetric_key.set_secret_key_bits(symmetric_key_for_protect, service_symmetric_key_size);
+
+  // Todo: Stick keys in store
 
   // make service attest private and public key
   if (!make_certifier_rsa_key(2048,  &privateServiceKey)) {
@@ -323,6 +335,9 @@ bool warm_restart(const string& enclave_type) {
     printf("warm-restart error 5\n");
     return false;
   }
+
+  // Todo: Get cert from store
+
   service_trust_data_initialized = true;
 
   if (FLAGS_print_all) {
@@ -621,11 +636,13 @@ bool certify_me(const string& enclave_type) {
     printf("Can't find authentication key in store\n");
     return false;
   }
-  ((key_message*) km)->set_certificate((byte*)response.artifact().data(), response.artifact().size());
+  ((key_message*) km)->set_certificate((byte*)response.artifact().data(),
+        response.artifact().size());
+
   return save_store(enclave_type);
 }
 
-// ----------------------------------------------------------------
+// -------------------------------------------------------------------------------------
 
 class spawned_children {
 public:

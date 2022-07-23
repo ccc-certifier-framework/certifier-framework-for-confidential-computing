@@ -705,3 +705,7 @@ bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
   memcpy(measurement, report->measurement, *size_measurement);
   return true;
 }
+
+bool sev_Getmeasurement(int* size_out, byte* out) {
+  return false;
+}

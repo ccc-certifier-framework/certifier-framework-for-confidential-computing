@@ -154,3 +154,7 @@ bool application_Attest(int in_size, byte* in,
   memcpy(out, rsp.args(0).data(), *size_out);
   return true;
 }
+
+bool application_Getmeasurement(int* size_out, byte* out) {
+  return false;
+}
