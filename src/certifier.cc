@@ -439,7 +439,7 @@ extern bool sev_Attest(int what_to_say_size, byte* what_to_say,
     int* size_out, byte* out);
 #endif
 
-bool Seal(string& enclave_type, string& enclave_id,
+bool Seal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
   if (enclave_type == "simulated-enclave") {
@@ -459,7 +459,7 @@ bool Seal(string& enclave_type, string& enclave_id,
  return false;
 }
 
-bool Unseal(string& enclave_type, string& enclave_id,
+bool Unseal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
   if (enclave_type == "simulated-enclave") {
@@ -479,8 +479,7 @@ bool Unseal(string& enclave_type, string& enclave_id,
  return false;
 }
 
-
-bool Attest(string& enclave_type, int what_to_say_size, byte* what_to_say,
+bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
  int* size_out, byte* out) {
 
   if (enclave_type == "simulated-enclave") {
@@ -501,7 +500,7 @@ bool Attest(string& enclave_type, int what_to_say_size, byte* what_to_say,
  return false;
 }
 
-bool Getmeasurement(string& enclave_type, string& enclave_id,
+bool Getmeasurement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out) {
 
   // TODO: We cannot assume the Getmeasurement interface. We do need a
@@ -521,7 +520,7 @@ bool Getmeasurement(string& enclave_type, string& enclave_id,
 // Protect Support
 // -------------------------------------------------------------------
 
-bool Protect_Blob(string& enclave_type, key_message& key,
+bool Protect_Blob(const string& enclave_type, key_message& key,
   int size_unencrypted_data, byte* unencrypted_data,
   int* size_protected_blob, byte* blob) {
 
@@ -585,8 +584,9 @@ bool Protect_Blob(string& enclave_type, key_message& key,
   return true;
 }
 
-bool Unprotect_Blob(string& enclave_type, int size_protected_blob, byte* protected_blob,
-  key_message* key, int* size_of_unencrypted_data, byte* unencrypted_data) {
+bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
+      byte* protected_blob, key_message* key, int* size_of_unencrypted_data,
+      byte* unencrypted_data) {
 
   // for now, no encryption
   string protected_blob_string;

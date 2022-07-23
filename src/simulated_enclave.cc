@@ -88,7 +88,7 @@ bool simulator_init(const char* key_file, const char* m_file) {
   return true;
 }
 
-bool simulated_Getmeasurement(string& enclave_type, string& enclave_id,
+bool simulated_Getmeasurement(const string& enclave_type, const string& enclave_id,
     int* size_out, byte* out) {
 
   if (*size_out < simulated_measurment_size)
@@ -98,7 +98,7 @@ bool simulated_Getmeasurement(string& enclave_type, string& enclave_id,
   return true;
 }
 
-bool simulated_Seal(string& enclave_type, string& enclave_id,
+bool simulated_Seal(const string& enclave_type, const string& enclave_id,
     int in_size, byte* in, int* size_out, byte* out) {
 
   const int iv_size = block_size;
@@ -112,11 +112,10 @@ bool simulated_Seal(string& enclave_type, string& enclave_id,
 
   memset(input, 0, input_size);
   memset(output, 0, output_size);
-  if (!get_random(8 * block_size, iv))
-{
-printf("getrandom FAILED\n");
+  if (!get_random(8 * block_size, iv)) {
+    printf("getrandom FAILED\n");
     return false;
-}
+  }
 
   // input: concatinate measurment_size bytes of measurement and in
   // then encrypt it and give it back.
@@ -138,8 +137,8 @@ printf("getrandom FAILED\n");
   return true;
 }
 
-bool simulated_Unseal(string& enclave_type, string& enclave_id,
-  int in_size, byte* in, int* size_out, byte* out) {
+bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
+      int in_size, byte* in, int* size_out, byte* out) {
 
   int iv_size = block_size;
   byte iv[iv_size];
@@ -171,7 +170,7 @@ bool simulated_Unseal(string& enclave_type, string& enclave_id,
 
 // Attestation is a signed_claim_message
 // with a vse_claim_message claim
-bool simulated_Attest(string& enclave_type,
+bool simulated_Attest(const string& enclave_type,
   int what_to_say_size, byte* what_to_say,
   int* size_out, byte* out) {
 

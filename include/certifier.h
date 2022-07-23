@@ -121,16 +121,16 @@ void print_store(policy_store& ps);
 
 // Trusted primitives
 // -------------------------------------------------------------------
-bool Getmeasurement(string& enclave_type, string& enclave_id,
+bool Getmeasurement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out);
 
-bool Seal(string& enclave_type, string& enclave_id,
+bool Seal(const string& enclave_type, const string& enclave_id,
   int in_size, byte* in, int* size_out, byte* out);
 
-bool Unseal(string& enclave_type, string& enclave_id,
+bool Unseal(const string& enclave_type, const string& enclave_id,
   int in_size, byte* in, int* size_out, byte* out);
 
-bool Attest(string& enclave_type,
+bool Attest(const string& enclave_type,
   int what_to_say_size, byte* what_to_say,
   int* size_out, byte* out);
 
@@ -140,10 +140,10 @@ bool Attest(string& enclave_type,
 // Protect Support
 // -------------------------------------------------------------------
 
-bool Protect_Blob(string& enclave_type,
+bool Protect_Blob(const string& enclave_type,
   key_message& key, int size_unencrypted_data, byte* unencrypted_data,
   int* size_protected_blob, byte* blob);
-bool Unprotect_Blob(string& enclave_type,
+bool Unprotect_Blob(const string& enclave_type,
   int size_protected_blob, byte* protected_blob,
   key_message* key, int* size_of_unencrypted_data, byte* data);
 

@@ -528,50 +528,6 @@ bool rsa_private_decrypt(RSA* key, byte* enc_data, int data_len,  byte* decrypte
   return true;
 }
 
-#if 0
-
-// This is the original (incorrect) signature
-
-bool rsa_sha256_sign(RSA*key, int size, byte* msg, int* size_out, byte* out) {
-  // hash message
-  unsigned int size_buf= RSA_size(key);
-  byte buf[size_buf];
-  memset(buf, 0, size_buf);
-  int digest_size = digest_output_byte_size("sha-256");
-
-  // Padding:  0x00 || 0x01 || PS || 0x00 || M to fill buffer
-  if (!digest_message((const byte*) msg, size, buf + (size_buf - digest_size), digest_size)) {
-    printf("digest failed\n");
-    return false;
-  }
-  buf[1] = 1;
-  int  n = RSA_private_encrypt(size_buf, buf, out, key, RSA_NO_PADDING);
-  if (n <= 0)
-    return false;
-  *size_out = n;
-  return true;
-}
-
-bool rsa_sha256_verify(RSA*key, int size, byte* msg, int size_sig, byte* sig) {
-
-  unsigned int size_digest = digest_output_byte_size("sha-256");
-  byte digest[size_digest];
-  memset(digest, 0, size_digest);
-  if (!digest_message((const byte*) msg, size, digest, size_digest))
-    return false;
-
-  int size_decrypted = RSA_size(key);
-  byte decrypted[size_decrypted];
-  int n = RSA_public_decrypt(size_sig, sig, decrypted, key, RSA_NO_PADDING);
-  if (n <= 0)
-    return false;
-  if (memcmp(digest, &decrypted[size_decrypted - size_digest], size_digest) != 0)
-    return false;
-  return true;
-}
-
-#else
-
 //  PKCS compliant signer
 bool rsa_sha256_sign(RSA*key, int to_sign_size, byte* to_sign, int* sig_size, byte* sig) {
   EVP_MD_CTX* sign_ctx = EVP_MD_CTX_create();
@@ -620,8 +576,6 @@ bool rsa_sha256_verify(RSA*key, int size, byte* msg, int sig_size, byte* sig) {
     return false;
   return true;
 }
-
-#endif
 
 bool generate_new_rsa_key(int num_bits, RSA* r) {
   bool ret= true;
@@ -1235,8 +1189,8 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   return success;
 }
 
-bool vse_attestation(string& descript, string& enclave_type, string& enclave_id,
-      vse_clause& cl, string* serialized_attestation) {
+bool vse_attestation(const string& descript, const string& enclave_type,
+         const string& enclave_id, vse_clause& cl, string* serialized_attestation) {
   attestation at;
 
   at.set_description(descript);

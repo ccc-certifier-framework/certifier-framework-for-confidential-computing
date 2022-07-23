@@ -106,8 +106,8 @@ void print_trusted_service_message(const trusted_service_message& tsm);
 void print_attestation(attestation& at);
 void print_protected_blob(protected_blob_message& pb);
 
-bool vse_attestation(string& descript, string& enclave_type, string& enclave_id,
-      vse_clause& cl, string* serialized_attestation);
+bool vse_attestation(const string& descript, const string& enclave_type,
+        const string& enclave_id, vse_clause& cl, string* serialized_attestation);
 bool make_signed_claim(const claim_message& claim, const key_message& key,
     signed_claim_message* out);
 bool verify_signed_claim(const signed_claim_message& claim, const key_message& key);

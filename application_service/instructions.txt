@@ -158,6 +158,7 @@ Arguments
 --server_app_port=8124, port for application requests"
 --run_policy="all", means run any binary
 --run_policy="signed", means run only signed binaries
+--host_enclave_type="simulated-enclave", enclave type of the primary host
 
 
  

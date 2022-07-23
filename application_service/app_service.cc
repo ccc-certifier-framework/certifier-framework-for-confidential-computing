@@ -54,6 +54,7 @@ DEFINE_int32(server_app_port, 8124, "port for application requests");
 
 DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement", "platform cert");
 DEFINE_string(run_policy, "all", "what programs to run");  // "signed" is other possibility
+DEFINE_string(host_enclave_type, "simulated-enclave", "Primary enclave");
 
 
 bool service_trust_data_initialized = false;
@@ -80,9 +81,6 @@ key_message *protect_symmetric_key = nullptr;
 
 // --------------------------------------------------------------------------
 
-
-string enclave_type("application-enclave");
-
 void print_trust_data() {
   if (!service_trust_data_initialized)
     return;
@@ -104,7 +102,7 @@ void print_trust_data() {
   printf("\n\n");
 }
 
-bool save_store(string& enclave_type) {
+bool save_store(const string& enclave_type) {
   string serialized_store;
 
   if (!pStore.Serialize(&serialized_store)) {
@@ -128,7 +126,7 @@ bool save_store(string& enclave_type) {
   return true;
 }
 
-bool fetch_store(string& enclave_type) {
+bool fetch_store(const string& enclave_type) {
   string store_file(FLAGS_service_dir);
   store_file.append(FLAGS_policy_store_file);
 
@@ -165,7 +163,7 @@ void clear_sensitive_data() {
   // clear policy store?
 }
 
-bool cold_init() {
+bool cold_init(const string& enclave_type) {
 
   // Because of policy_key.cc include, the asn1 policy cert is in
   // initialized_cert it has size initialized_cert_size equal
@@ -291,7 +289,7 @@ bool cold_init() {
   return service_trust_data_initialized;
 }
 
-bool warm_restart() {
+bool warm_restart(const string& enclave_type) {
   if (!fetch_store(enclave_type)) {
     printf("Can't fetch store\n");
     return false;
@@ -335,8 +333,8 @@ bool warm_restart() {
 
 // -----------------------------------------------------------------------------
 
-bool certify_me() {
-  if (!warm_restart()) {
+bool certify_me(const string& enclave_type) {
+  if (!warm_restart(enclave_type)) {
     printf("warm restart failed\n");
     return false;
   }
@@ -625,9 +623,7 @@ bool certify_me() {
   return save_store(enclave_type);
 }
 
-
 // -------------------------------------------------------------------------------------
-
 
 void print_cn_name(X509_NAME* name) {
   char name_buf[1024];
@@ -1146,6 +1142,8 @@ done:
 }
 
 bool app_request_server() {
+  // This is the TCP server that requests to start
+  // protected programs.
   SSL_load_error_strings();
 
   const char* hostname = FLAGS_server_app_host.c_str();
@@ -1196,9 +1194,7 @@ bool app_request_server() {
   return true;
 }
 
-
 // ------------------------------------------------------------------------------
-
 
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -1213,29 +1209,32 @@ int main(int an, char** av) {
     printf("app_service.exe --print_all=true|false --policy_host=policy-host-address --policy_port=policy-host-port\n");
     printf("\t --service_dir=-directory-for-service-data --server_service_host=my-server-host-address --server_service_port=server-host-port\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
+    printf("\t --host_enclave_type=\"simulated-enclave\"");
     return 0;
   }
 
   // initialize and certify service data
   if (FLAGS_cold_init_service || file_size(store_file)) {
-    if (!cold_init()) {
+    if (!cold_init(FLAGS_host_enclave_type)) {
       printf("cold-init failed\n");
       return 1;
     }
   }
 
-    if (!warm_restart()) {
-      printf("warm-restart failed\n");
-      return 1;
-    }
+  if (!warm_restart(FLAGS_host_enclave_type)) {
+    printf("warm-restart failed\n");
+    return 1;
+  }
 
-    if (!certify_me()) {
-      printf("certification failed\n");
-      return 1;
-    }
+  if (!certify_me(FLAGS_host_enclave_type)) {
+    printf("certification failed\n");
+    return 1;
+  }
 
   // run service response
   if (!app_request_server()) {
+    printf("Can't run request server\n");
+    return 1;
   }
 
   clear_sensitive_data();
