@@ -160,5 +160,8 @@ Arguments
 --run_policy="signed", means run only signed binaries
 --host_enclave_type="simulated-enclave", enclave type of the primary host
 
+To test:
+  ./send_request.exe --executable="./hello_world.exe" --server_app_port=8124 --server_app_host-"localhost"
+
 
  
