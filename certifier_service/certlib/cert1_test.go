@@ -793,7 +793,7 @@ func TestArtifacts(t *testing.T) {
                 t.Error("Can't parse parent Certificate")
         }
 
-	cert := ProduceArtifact(privateIssuerKey, newParentCert, subjKey, "testSubject", "",
+	cert := ProduceAdmissionCert(privateIssuerKey, newParentCert, subjKey, "testSubject", "",
                 uint64(5), 365.0 * 86400)
 	fmt.Println("")
 	if cert == nil {
@@ -811,7 +811,7 @@ func TestArtifacts(t *testing.T) {
 	if sk != nil {
 		PrintKey(sk)
 	}
-	if !VerifyArtifact(newParentCert, cert) {
+	if !VerifyAdmissionCert(newParentCert, cert) {
                 t.Error("Artifact does not verify")
 	}
 }

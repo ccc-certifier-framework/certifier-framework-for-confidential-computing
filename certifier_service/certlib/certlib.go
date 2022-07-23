@@ -1103,7 +1103,55 @@ func X509ToAsn1(cert *x509.Certificate) []byte {
 	return out
 }
 
-func ProduceArtifact(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
+func ProducePlatformRule(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
+		subjKey *certprotos.KeyMessage, durationSeconds float64) []byte {
+
+	// Return signed claim: issuer-Key says subjKey is-trusted-for-attestation
+	s1 := MakeKeyEntity(subjKey)
+	if s1 == nil {
+		return nil
+	}
+	isTrustedForAttest := "is-trusted-for-attestation"
+	c1 :=  MakeUnaryVseClause(s1, &isTrustedForAttest)
+	if c1 == nil {
+		return nil
+	}
+	s2 := MakeKeyEntity(issuerKey)
+	if s2 == nil {
+		return nil
+	}
+	saysVerb := "says"
+	c2 := MakeIndirectVseClause(s2, &saysVerb, c1)
+	if c2 == nil {
+		return nil
+	}
+
+	tn := TimePointNow()
+        tf := TimePointPlus(tn, 365 * 86400)
+        nb := TimePointToString(tn)
+        na := TimePointToString(tf)
+	ser, err := proto.Marshal(c2)
+        if err != nil {
+                return nil
+        }
+        cl1 := MakeClaim(ser, "vse-clause", "platform-rule", nb, na)
+        if cl1 == nil {
+                return nil
+        }
+
+	rule := MakeSignedClaim(cl1, issuerKey)
+        if rule == nil {
+                return nil
+        }
+	ssc, err := proto.Marshal(rule)
+        if err != nil {
+                return nil
+        }
+
+	return ssc
+}
+
+func ProduceAdmissionCert(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
 		subjKey *certprotos.KeyMessage, subjName string, subjOrg string,
 		serialNumber uint64, durationSeconds float64) *x509.Certificate {
 
@@ -1182,7 +1230,7 @@ func GetIssuerKey(cert *x509.Certificate) *certprotos.KeyMessage{
 	return nil
 }
 
-func VerifyArtifact(policyCert *x509.Certificate, cert *x509.Certificate) bool {
+func VerifyAdmissionCert(policyCert *x509.Certificate, cert *x509.Certificate) bool {
         certPool := x509.NewCertPool()
         certPool.AddCert(policyCert)
         opts := x509.VerifyOptions{

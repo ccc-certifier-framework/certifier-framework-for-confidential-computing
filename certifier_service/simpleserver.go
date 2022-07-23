@@ -441,7 +441,7 @@ func ConstructProofFromFullVseEvidence(publicPolicyKey *certprotos.KeyMessage,
 		RuleApplied: &r7,
 		}
 		proof.Steps = append(proof.Steps, &ps5)
-	} else
+	} else {
 		toProve =  certlib.MakeUnaryVseClause(enclaveKeySpeaksForMeasurement.Subject,
 			&isTrustedForAuth)
 		ps5 := certprotos.ProofStep {
@@ -739,26 +739,40 @@ func serviceThread(conn net.Conn, client string) {
 	} else if certlib.VerifyProof(publicPolicyKey, toProve, proof, alreadyProved) {
 		fmt.Printf("Proof verified\n")
 		// Produce Artifact
-		if toProve.Subject == nil && toProve.Subject.Key == nil  && toProve.Subject.Key.KeyName == nil {
+		if toProve.Subject == nil && toProve.Subject.Key == nil &&
+				toProve.Subject.Key.KeyName == nil {
 			fmt.Printf("toProve check failed\n")
 			certlib.PrintVseClause(toProve)
 			fmt.Println()
 			response.Status = &failed
 		} else {
-			// find statement appKey speaks-for measurement in alreadyProved and reset appOrgName
-			m := getAppMeasurementFromProvedStatements(appKeyEntity,  alreadyProved)
-			if m != nil {
-				appOrgName = "Measured-" + hex.EncodeToString(m)
+			if purpose == "attestation" {
+				sr := certlib.ProducePlatformRule(&privatePolicyKey, policyCert,
+					toProve.Subject.Key, duration)
+				if sr == nil {
+					response.Status = &succeeded
+				} else {
+					response.Status = &succeeded
+					response.Artifact = sr
+				}
+			} else {
+				// find statement appKey speaks-for measurement in alreadyProved and reset appOrgName
+				m := getAppMeasurementFromProvedStatements(appKeyEntity,  alreadyProved)
+				if m != nil {
+					appOrgName = "Measured-" + hex.EncodeToString(m)
+				}
+				sn = sn + 1
+				cert := certlib.ProduceAdmissionCert(&privatePolicyKey, policyCert,
+					toProve.Subject.Key, request.GetServiceAddress(),
+					appOrgName, sn, duration)
+				if cert == nil {
+					fmt.Printf("certlib.ProduceAdmissionCert returned nil\n")
+					response.Status = &failed
+				} else {
+					response.Status = &succeeded
+					response.Artifact = cert.Raw
+				}
 			}
-			sn = sn + 1
-			cert := certlib.ProduceArtifact(&privatePolicyKey, policyCert, toProve.Subject.Key,
-				request.GetServiceAddress(), appOrgName, sn, duration)
-			if cert == nil {
-				fmt.Printf("certlib.ProduceArtifact returned nil\n")
-				response.Status = &failed
-			}
-			response.Status = &succeeded
-			response.Artifact = cert.Raw
 		}
 	} else {
 		fmt.Printf("Verifying proof failed\n")
