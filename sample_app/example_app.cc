@@ -802,7 +802,6 @@ done:
   return ret;
 }
 
-
 void print_ssl_error(int code) {
   switch(code) {
   case SSL_ERROR_NONE:

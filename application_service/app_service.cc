@@ -338,7 +338,8 @@ bool certify_me(const string& enclave_type) {
     printf("warm restart failed\n");
     return false;
   }
-  
+
+  // This comes from the platform usually
   string platform_attest_file_name(FLAGS_service_dir);
   platform_attest_file_name.append(FLAGS_platform_attest_endorsement);
   int plat_attest_size = file_size(platform_attest_file_name)+1;
@@ -464,7 +465,8 @@ bool certify_me(const string& enclave_type) {
     printf("attestation underlying claim\n");
     claim_message tcm;
     string ser_claim_str;
-    ser_claim_str.assign((char*)the_attestation.serialized_claim_message().data(), the_attestation.serialized_claim_message().size());
+    ser_claim_str.assign((char*)the_attestation.serialized_claim_message().data(),
+        the_attestation.serialized_claim_message().size());
     tcm.ParseFromString(ser_claim_str);
     print_claim(tcm);
     printf("\n");
@@ -480,9 +482,9 @@ bool certify_me(const string& enclave_type) {
   request.set_providing_enclave_tag("providing-enclave");
   request.set_submitted_evidence_type("platform-attestation-only");
 
-  // put platform claim and attestation in support in the following order
-  //    platform_says_attest_key_is_trusted, the_attestation
-
+  // Put platform claim and attestation in support in the following order
+  //    platform_says_attest_key_is_trusted
+  //    the_attestation
   evidence_package* ep = new(evidence_package);
   string pt("vse-verifier");
   string et("signed-claim");
@@ -623,205 +625,7 @@ bool certify_me(const string& enclave_type) {
   return save_store(enclave_type);
 }
 
-// -------------------------------------------------------------------------------------
-
-void print_cn_name(X509_NAME* name) {
-  char name_buf[1024];
-  if (X509_NAME_get_text_by_NID(name, NID_commonName, name_buf, 1024) > 0) {
-    printf(" %s", name_buf);
-  }
-  printf("\n");
-}
-
-void print_org_name(X509_NAME* name) {
-  char name_buf[1024];
-  if (X509_NAME_get_text_by_NID(name, NID_organizationName, name_buf, 1024) > 0) {
-    printf(" %s", name_buf);
-  }
-  printf("\n");
-}
-
-int SSL_my_client_callback(SSL *s, int *al, void *arg) {
-  printf("callback\n");
-  return 1;
-}
-
-// this is used to test the signature chain is verified properly
-int verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
-  int depth = X509_STORE_CTX_get_error_depth(x509_ctx);
-  int err = X509_STORE_CTX_get_error(x509_ctx);
-
-  X509* cert = X509_STORE_CTX_get_current_cert(x509_ctx);
-  X509_NAME* iname = cert ? X509_get_issuer_name(cert) : NULL;
-  X509_NAME* sname = cert ? X509_get_subject_name(cert) : NULL;
-
-  printf("Depth %d, Preverify: %d\n", depth, preverify);
-  printf("Issuer CN : ");
-  print_cn_name(iname);
-  printf("Subject CN: ");
-  print_cn_name(sname);
-
-  if(depth == 0) {
-    /* If depth is 0, its the server's certificate. Print the SANs too */
-    printf("Subject ORG: ");
-    print_org_name(sname);
-  }
-
-  return preverify;
-}
-
-// temporary hack till I fix client auth in ssl
-bool client_auth_client(SSL* ssl) {
-  bool ret = true;
-
-  int size_nonce = 128;
-  byte nonce[size_nonce];
-  int size_sig = 256;
-  byte sig[size_sig];
-  RSA* r = nullptr;
-
-  // send cert
-  SSL_write(ssl, privateServiceKey.certificate().data(),
-      privateServiceKey.certificate().size());
-  size_nonce = SSL_read(ssl, nonce, size_nonce);
-
-  r = RSA_new();
-  if (!key_to_RSA(privateServiceKey, r)) {
-    ret = false;
-    goto done;
-  }
-
-  if (!rsa_sha256_sign(r, size_nonce, nonce, &size_sig, sig)) {
-    ret = false;
-    goto done;
-  }
-  SSL_write(ssl, sig, size_sig);
-  printf("client_auth_client succeeds\n");
-
-done:
-  if (r != nullptr)
-    RSA_free(r);
-  return ret;
-}
-
-bool client_auth_server(SSL*ssl) {
-  bool ret = true;
-  int res = 0;
-
-  int size_cert = 8192;
-  byte cert_buf[size_cert];
-  int size_nonce = 64;
-  byte nonce[size_nonce];
-  int size_sig = 256;
-  byte sig[size_sig];
-
-  X509* x = nullptr;
-  EVP_PKEY* client_auth_public_key = nullptr;
-  EVP_PKEY* subject_pkey = nullptr;
-  RSA* r = nullptr;
-  X509_STORE_CTX* ctx = nullptr; 
-
-  // prepare for verify 
-  X509_STORE* cs = X509_STORE_new();
-  X509_STORE_add_cert(cs, policy_cert);
-  ctx = X509_STORE_CTX_new();
-
-  // get cert
-  size_cert= SSL_read(ssl, cert_buf, size_cert);
-  string asn_cert;
-  asn_cert.assign((char*)cert_buf, size_cert);
-
-  x = X509_new();
-  if (!asn1_to_x509(asn_cert, x)) {
-    ret = false;
-    goto done;
-  }
-
-  subject_pkey = X509_get_pubkey(x);
-  if (subject_pkey == nullptr) {
-    ret = false;
-    goto done;
-  }
-  r = EVP_PKEY_get1_RSA(subject_pkey);
-  if (r == nullptr) {
-    ret = false;
-    goto done;
-  }
-  
-  memset(nonce, 0, 64);
-  if (!get_random(64 * 8, nonce)) {
-    ret = false;
-    goto done;
-  }
-  SSL_write(ssl, nonce, size_nonce);
-
-  // get signature
-  size_sig = SSL_read(ssl, sig, size_sig);
-
-  // verify chain
-  res = X509_STORE_CTX_init(ctx, cs, x, nullptr);
-  X509_STORE_CTX_set_cert(ctx, x);
-  res = X509_verify_cert(ctx);
-  if (res != 1) {
-    ret = false;
-    goto done;
-  }
-
-  // verify signature
-  if (!rsa_sha256_verify(r, size_nonce, nonce, size_sig, sig)) {
-    ret = false;
-    goto done;
-  }
-  printf("client_auth_server succeeds\n");
-
-done:
-  if (x != nullptr)
-    X509_free(x);
-  if (r != nullptr)
-    RSA_free(r);
-  if (subject_pkey != nullptr)
-    EVP_PKEY_free(subject_pkey);
-  if (ctx != nullptr)
-    X509_STORE_CTX_free(ctx);
-  
-  return ret;
-}
-
-
-void print_ssl_error(int code) {
-  switch(code) {
-  case SSL_ERROR_NONE:
-    printf("No ssl error\n");
-    break;
-  case SSL_ERROR_WANT_READ:
-    printf("want read ssl error\n");
-    break;
-  case SSL_ERROR_WANT_WRITE:
-    printf("want write ssl error\n");
-    break;
-  case SSL_ERROR_WANT_CONNECT:
-    printf("want connect ssl error\n");
-    break;
-  case SSL_ERROR_WANT_ACCEPT:
-    printf("want accept ssl error\n");
-    break;
-  case SSL_ERROR_WANT_X509_LOOKUP:
-    printf("want lookup ssl error\n");
-    break;
-  case SSL_ERROR_WANT_ASYNC:
-    printf("want async ssl error\n");
-    break;
-  case SSL_ERROR_WANT_CLIENT_HELLO_CB:
-    printf("wantclient hello  ssl error\n");
-    break;
-  case SSL_ERROR_SSL:
-    printf("ssl error error\n");
-    break;
-  default:
-    printf("Unknown ssl error, %d\n", code);
-    break;
-  }
-}
+// ----------------------------------------------------------------
 
 class spawned_children {
 public:
@@ -1096,6 +900,41 @@ bool process_run_request(run_request& req) {
   return true;
 }
 
+void print_ssl_error(int code) {
+  switch(code) {
+  case SSL_ERROR_NONE:
+    printf("No ssl error\n");
+    break;
+  case SSL_ERROR_WANT_READ:
+    printf("want read ssl error\n");
+    break;
+  case SSL_ERROR_WANT_WRITE:
+    printf("want write ssl error\n");
+    break;
+  case SSL_ERROR_WANT_CONNECT:
+    printf("want connect ssl error\n");
+    break;
+  case SSL_ERROR_WANT_ACCEPT:
+    printf("want accept ssl error\n");
+    break;
+  case SSL_ERROR_WANT_X509_LOOKUP:
+    printf("want lookup ssl error\n");
+    break;
+  case SSL_ERROR_WANT_ASYNC:
+    printf("want async ssl error\n");
+    break;
+  case SSL_ERROR_WANT_CLIENT_HELLO_CB:
+    printf("wantclient hello  ssl error\n");
+    break;
+  case SSL_ERROR_SSL:
+    printf("ssl error error\n");
+    break;
+  default:
+    printf("Unknown ssl error, %d\n", code);
+    break;
+  }
+}
+
 const int max_req_size = 2048;
 void server_application(SSL* ssl) {
   int res = SSL_accept(ssl);
@@ -1214,7 +1053,7 @@ int main(int an, char** av) {
   }
 
   // initialize and certify service data
-  if (FLAGS_cold_init_service || file_size(store_file)) {
+  if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
     if (!cold_init(FLAGS_host_enclave_type)) {
       printf("cold-init failed\n");
       return 1;
