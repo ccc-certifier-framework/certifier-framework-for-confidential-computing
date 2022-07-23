@@ -47,15 +47,19 @@ DEFINE_string(policy_host, "localhost", "address for policy server");
 DEFINE_int32(policy_port, 8123, "port for policy server");
 
 DEFINE_string(service_dir, "./service/", "directory for service data");
-DEFINE_string(policy_store_file, "policy_store.bin", "policy store for service");
+DEFINE_string(service_policy_store, "policy_store.bin", "policy store for service");
 
 DEFINE_string(server_app_host, "localhost", "address for application requests");
 DEFINE_int32(server_app_port, 8127, "port for application requests");
 
-DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement", "platform cert");
 DEFINE_string(run_policy, "all", "what programs to run");  // "signed" is other possibility
 DEFINE_string(host_enclave_type, "simulated-enclave", "Primary enclave");
 
+// For simulated enclave only
+DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
+DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
+DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
+DEFINE_string(measurement_file, "app_service.measurement", "measurement");
 
 bool service_trust_data_initialized = false;
 key_message publicPolicyKey;
@@ -122,7 +126,7 @@ bool save_store(const string& enclave_type) {
   }
 
   string store_file(FLAGS_service_dir);
-  store_file.append(FLAGS_policy_store_file);
+  store_file.append(FLAGS_service_policy_store);
   if (!write_file(store_file, size_protected_store, protected_store)) {
     printf("save_store can't write %s\n", store_file.c_str());
     return false;
@@ -132,7 +136,7 @@ bool save_store(const string& enclave_type) {
 
 bool fetch_store(const string& enclave_type) {
   string store_file(FLAGS_service_dir);
-  store_file.append(FLAGS_policy_store_file);
+  store_file.append(FLAGS_service_policy_store);
 
   int size_protected_blob = file_size(store_file) + 1;
   byte protected_blob[size_protected_blob];
@@ -248,6 +252,8 @@ bool cold_init(const string& enclave_type) {
   // make up some symmetric keys
   if (!get_random(8 * service_symmetric_key_size, service_symmetric_key))
     return false;
+  if (!get_random(8 * service_symmetric_key_size, symmetric_key_for_protect))
+    return false;
 
   // service_symmetric_key
   app_sealing_key.set_key_name("sealing-key");
@@ -285,8 +291,12 @@ bool cold_init(const string& enclave_type) {
     return false;
   }
 
+  // protect_symmetric_key
+  printf("protect_symmetric_key:\n");
+  print_key(protect_symmetric_key);
+  printf("enclave type: %s\n", enclave_type.c_str());
   if (!save_store(enclave_type)) {
-    printf("Can't save storen");
+    printf("Can't save store\n");
     return false;
   }
 
@@ -1060,7 +1070,7 @@ int main(int an, char** av) {
 
   SSL_library_init();
   string store_file(FLAGS_service_dir);
-  store_file.append(FLAGS_policy_store_file);
+  store_file.append(FLAGS_service_policy_store);
 
   if (FLAGS_help_me) {
     printf("app_service.exe --print_all=true|false --policy_host=policy-host-address --policy_port=policy-host-port\n");
@@ -1068,6 +1078,26 @@ int main(int an, char** av) {
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
     printf("\t --host_enclave_type=\"simulated-enclave\"");
     return 0;
+  }
+
+  if (FLAGS_host_enclave_type == "simulated-enclave") {
+    string at_file(FLAGS_service_dir);
+    at_file.append(FLAGS_attest_key_file);
+    string measurement_file(FLAGS_service_dir);
+    measurement_file.append(FLAGS_measurement_file);
+    if (!simulator_init(at_file.c_str(), measurement_file.c_str())) {
+      printf("Can't init from : %s, %s\n", at_file.c_str(), measurement_file.c_str());
+      return 1;
+    }
+  } else if (FLAGS_host_enclave_type == "oe-enclave") {
+    printf("Unsupported host enclave\n");
+    return 1;
+  } else if (FLAGS_host_enclave_type == "sev-snp") {
+    printf("Unsupported host enclave\n");
+    return 1;
+  } else {
+    printf("Unsupported host enclave\n");
+    return 1;
   }
 
   // initialize and certify service data

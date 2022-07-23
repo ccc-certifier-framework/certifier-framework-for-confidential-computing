@@ -70,13 +70,17 @@ Step 4: Embed the policy key in app_service.
     cd $APP_SERVICE_DIR/provisioning
     $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin --output=../policy_key.cc
 
-
 Step 5: Compile app_service with the embedded policy_key
 
     cd $APP_SERVICE_DIR
     make -f app_service.mak
 
-Step 6: Author the policy for the security domain and produce the signed claims the apps need.
+Step 6: For simulated enclave, obtain the measurement of the trusted application for ths security domain.
+    cd $APP_SERVICE_DIR/service
+    $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../app_service.exe \
+      --output=app_service.measurement
+
+Step 7: Author the policy for the security domain and produce the signed claims the apps need.
         This policy describes what applications the service is willing to run.
 
     cd $APP_SERVICE_DIR/provisioning
@@ -127,16 +131,27 @@ Step 8: Create a directory for service data
 
 Step 9: Provision the service files
     cd $APP_SERVICE_DIR/provisioning
-    cp policy_key_file.bin policy_cert_file.bin policy.bin $APP_SERVICE_DIR/service
+    cp policy_key_file.bin policy_cert_file.bin policy.bin attest_key_file.bin platform_attest_endorsement.bin platform_key_file.bin $APP_SERVICE_DIR/service
+
+Step 10: Start certifier service
+    cd $APP_SERVICE_DIR/service
+    $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+      --path=$APP_SERVICE_DIR/service \
+      --policyFile=policy.bin --readPolicy=true
 
 
-Step 10: Start the App Service
+Step 11: Start the App Service (The last four flags are needed for the simulated enclave)
   At startup
     cd $APP_SERVICE_DIR/service
-    $CERTIFIER_PROTOTYPE/certifier_service/app_service.exe \
-      --path=$APP_SERVICE_DIR/service \
-      --policyFile=policy.bin --service_policy_store="policy-store" \
-      --host_enclave_type="simulated-enclave"
+    $APP_SERVICE_DIR/app_service.exe \
+      --policy_cert_file="policy_cert_file.bin" \
+      --service_dir="./service/" \
+      --service_policy_store="policy_store" \
+      --host_enclave_type="simulated-enclave" \
+      --platform_file_name="platform_file.bin" \
+      --platform_attest_endorsement="platform_attest_endorsement.bin" \
+      --attest_key_file="attest_key_file.bin" \
+      --measurement_file="app_service.measurement"
 
 
 ==========================================================================================
@@ -164,5 +179,3 @@ Arguments
 To test:
   ./send_request.exe --executable="./hello_world.exe" --server_app_port=8127 --server_app_host="localhost"
 
-
- 

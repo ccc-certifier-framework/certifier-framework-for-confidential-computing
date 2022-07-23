@@ -1,6 +1,7 @@
 #include "support.h"
 #include "certifier.h"
 #include "simulated_enclave.h"
+#include "application_enclave.h"
 #include <sys/socket.h>
 #include <resolv.h>
 #include <netdb.h>
@@ -528,7 +529,6 @@ bool Getmeasurement(const string& enclave_type, const string& enclave_id,
 bool Protect_Blob(const string& enclave_type, key_message& key,
   int size_unencrypted_data, byte* unencrypted_data,
   int* size_protected_blob, byte* blob) {
-
 
   // for now, no encryption
   string serialized_key;
