@@ -54,7 +54,8 @@ hello_world.exe: hello_world.cc
 
 send_request.exe: send_request.cc
 	@echo "send_request.cc"
-	$(CC) $(CFLAGS) -o $(O)/send_request.exe $(S)/send_request.cc
+	$(CC) $(CFLAGS) -o $(O)/send_request.exe $(S)/send_request.cc $(S)/certifier.pb.cc \
+          -L $(LOCAL_LIB) -lprotobuf -lgflags -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -lpthread
 
 app_service.exe: $(dobj) 
 	@echo "linking executable files"
