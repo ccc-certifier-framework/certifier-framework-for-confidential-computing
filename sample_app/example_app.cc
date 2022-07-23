@@ -493,6 +493,7 @@ bool certify_me() {
   request.set_requesting_enclave_tag("requesting-enclave");
   request.set_providing_enclave_tag("providing-enclave");
   request.set_submitted_evidence_type("platform-attestation-only");
+  request.set_purpose("authentication");
 
   // put platform claim and attestation in support in the following order
   //    platform_says_attest_key_is_trusted, the_attestation

@@ -135,7 +135,8 @@ Step 10: Start the App Service
     cd $APP_SERVICE_DIR/service
     $CERTIFIER_PROTOTYPE/certifier_service/app_service.exe \
       --path=$APP_SERVICE_DIR/service \
-      --policyFile=policy.bin --service_policy_store="policy-store"
+      --policyFile=policy.bin --service_policy_store="policy-store" \
+      --host_enclave_type="simulated-enclave"
 
 
 ==========================================================================================
