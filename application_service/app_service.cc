@@ -12,7 +12,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include  <netdb.h>
+#include <netdb.h>
 #include <openssl/ssl.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
