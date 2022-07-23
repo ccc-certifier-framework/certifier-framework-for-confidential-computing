@@ -18,7 +18,7 @@
 // limitations under the License.
 
 syntax="proto2";
-option go_package = "github.com/jlmucb/crypto/v2/certifier_prototype/certifier_service/certprotos";
+//option go_package = "github.com/jlmucb/crypto/v2/certifier_prototype/certifier_service/certprotos";
 
 // YYYY-MM-DDTHH:mm:ss.sssZ
 message time_point {
@@ -160,11 +160,12 @@ message trust_request_message {
   optional string requesting_enclave_tag    = 1;
   optional string providing_enclave_tag     = 2;
   optional string submitted_evidence_type   = 3;
-  optional evidence_package support         = 4;
-  optional key_message policy_key           = 5;
-  optional string service_address           = 6;
-  optional bytes serialized_policy_key      = 7;
-  optional bytes signed_policy_key          = 8;
+  optional string purpose                   = 4;  // "authentication" or "attestation"
+  optional evidence_package support         = 5;
+  optional key_message policy_key           = 6;
+  optional string service_address           = 7;
+  optional bytes serialized_policy_key      = 8;
+  optional bytes signed_policy_key          = 9;
 };
 
 message trust_response_message {
@@ -228,3 +229,21 @@ message buffer_sequence {
   repeated bytes block                      = 1;
 };
 
+message run_request {
+  optional string location                  = 1;
+};
+
+message run_response {
+  optional string status                    = 1;
+};
+
+message app_request {
+  optional string function                  = 1;
+  repeated bytes args                       = 2;
+};
+
+message app_response {
+  optional string function                  = 1;
+  optional string status                    = 2;
+  repeated bytes args                       = 3;
+};

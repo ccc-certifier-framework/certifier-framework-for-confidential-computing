@@ -160,11 +160,12 @@ message trust_request_message {
   optional string requesting_enclave_tag    = 1;
   optional string providing_enclave_tag     = 2;
   optional string submitted_evidence_type   = 3;
-  optional evidence_package support         = 4;
-  optional key_message policy_key           = 5;
-  optional string service_address           = 6;
-  optional bytes serialized_policy_key      = 7;
-  optional bytes signed_policy_key          = 8;
+  optional string purpose                   = 4;  // "authentication" or "attestation"
+  optional evidence_package support         = 5;
+  optional key_message policy_key           = 6;
+  optional string service_address           = 7;
+  optional bytes serialized_policy_key      = 8;
+  optional bytes signed_policy_key          = 9;
 };
 
 message trust_response_message {

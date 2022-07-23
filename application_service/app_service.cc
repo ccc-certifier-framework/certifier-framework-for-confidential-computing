@@ -162,9 +162,7 @@ bool fetch_store(const string& enclave_type) {
 }
 
 void clear_sensitive_data() {
-  // Todo
-  // clear symmetric and private keys
-  // clear policy store?
+  // Todo: clear symmetric and private keys
 }
 
 bool cold_init(const string& enclave_type) {
@@ -236,7 +234,6 @@ bool cold_init(const string& enclave_type) {
   publicPolicyKey.set_key_format("vse-key");
   publicPolicyKey.set_allocated_rsa_key(rkm);
 
-  // BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret);
   BN_free((BIGNUM*)N);
   BN_free((BIGNUM*)E);
   BN_free((BIGNUM*)D);

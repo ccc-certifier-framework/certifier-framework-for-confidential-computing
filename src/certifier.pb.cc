@@ -282,6 +282,7 @@ constexpr trust_request_message::trust_request_message(
   : requesting_enclave_tag_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
   , providing_enclave_tag_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
   , submitted_evidence_type_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , purpose_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
   , service_address_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
   , serialized_policy_key_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
   , signed_policy_key_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
@@ -741,6 +742,7 @@ const uint32_t TableStruct_certifier_2eproto::offsets[] PROTOBUF_SECTION_VARIABL
   PROTOBUF_FIELD_OFFSET(::trust_request_message, requesting_enclave_tag_),
   PROTOBUF_FIELD_OFFSET(::trust_request_message, providing_enclave_tag_),
   PROTOBUF_FIELD_OFFSET(::trust_request_message, submitted_evidence_type_),
+  PROTOBUF_FIELD_OFFSET(::trust_request_message, purpose_),
   PROTOBUF_FIELD_OFFSET(::trust_request_message, support_),
   PROTOBUF_FIELD_OFFSET(::trust_request_message, policy_key_),
   PROTOBUF_FIELD_OFFSET(::trust_request_message, service_address_),
@@ -749,11 +751,12 @@ const uint32_t TableStruct_certifier_2eproto::offsets[] PROTOBUF_SECTION_VARIABL
   0,
   1,
   2,
-  6,
-  7,
   3,
+  7,
+  8,
   4,
   5,
+  6,
   PROTOBUF_FIELD_OFFSET(::trust_response_message, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::trust_response_message, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -930,22 +933,22 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOB
   { 198, -1, -1, sizeof(::proved_statements)},
   { 205, 215, -1, sizeof(::proof_step)},
   { 219, 228, -1, sizeof(::proof)},
-  { 231, 245, -1, sizeof(::trust_request_message)},
-  { 253, 263, -1, sizeof(::trust_response_message)},
-  { 267, 278, -1, sizeof(::storage_info_message)},
-  { 283, 291, -1, sizeof(::channel_key_message)},
-  { 293, 302, -1, sizeof(::trusted_service_message)},
-  { 305, 313, -1, sizeof(::tagged_claim)},
-  { 315, -1, -1, sizeof(::tagged_claims_sequence)},
-  { 322, 334, -1, sizeof(::policy_store_message)},
-  { 340, -1, -1, sizeof(::claims_sequence)},
-  { 347, -1, -1, sizeof(::signed_claim_sequence)},
-  { 354, 362, -1, sizeof(::tagged_signed_claim)},
-  { 364, -1, -1, sizeof(::buffer_sequence)},
-  { 371, 378, -1, sizeof(::run_request)},
-  { 379, 386, -1, sizeof(::run_response)},
-  { 387, 395, -1, sizeof(::app_request)},
-  { 397, 406, -1, sizeof(::app_response)},
+  { 231, 246, -1, sizeof(::trust_request_message)},
+  { 255, 265, -1, sizeof(::trust_response_message)},
+  { 269, 280, -1, sizeof(::storage_info_message)},
+  { 285, 293, -1, sizeof(::channel_key_message)},
+  { 295, 304, -1, sizeof(::trusted_service_message)},
+  { 307, 315, -1, sizeof(::tagged_claim)},
+  { 317, -1, -1, sizeof(::tagged_claims_sequence)},
+  { 324, 336, -1, sizeof(::policy_store_message)},
+  { 342, -1, -1, sizeof(::claims_sequence)},
+  { 349, -1, -1, sizeof(::signed_claim_sequence)},
+  { 356, 364, -1, sizeof(::tagged_signed_claim)},
+  { 366, -1, -1, sizeof(::buffer_sequence)},
+  { 373, 380, -1, sizeof(::run_request)},
+  { 381, 388, -1, sizeof(::run_response)},
+  { 389, 397, -1, sizeof(::app_request)},
+  { 399, 408, -1, sizeof(::app_response)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -1030,49 +1033,50 @@ const char descriptor_table_protodef_certifier_2eproto[] PROTOBUF_SECTION_VARIAB
   "sion\030\003 \001(\0132\013.vse_clause\022\024\n\014rule_applied\030"
   "\004 \001(\005\"g\n\005proof\022\035\n\010to_prove\030\001 \001(\0132\013.vse_c"
   "lause\022#\n\016already_proved\030\002 \003(\0132\013.vse_clau"
-  "se\022\032\n\005steps\030\003 \003(\0132\013.proof_step\"\220\002\n\025trust"
+  "se\022\032\n\005steps\030\003 \003(\0132\013.proof_step\"\241\002\n\025trust"
   "_request_message\022\036\n\026requesting_enclave_t"
   "ag\030\001 \001(\t\022\035\n\025providing_enclave_tag\030\002 \001(\t\022"
-  "\037\n\027submitted_evidence_type\030\003 \001(\t\022\"\n\007supp"
-  "ort\030\004 \001(\0132\021.evidence_package\022 \n\npolicy_k"
-  "ey\030\005 \001(\0132\014.key_message\022\027\n\017service_addres"
-  "s\030\006 \001(\t\022\035\n\025serialized_policy_key\030\007 \001(\014\022\031"
-  "\n\021signed_policy_key\030\010 \001(\014\"y\n\026trust_respo"
-  "nse_message\022\016\n\006status\030\001 \001(\t\022\036\n\026requestin"
-  "g_enclave_tag\030\002 \001(\t\022\035\n\025providing_enclave"
-  "_tag\030\003 \001(\t\022\020\n\010artifact\030\004 \001(\014\"\211\001\n\024storage"
-  "_info_message\022\024\n\014storage_type\030\001 \001(\t\022\032\n\022s"
-  "torage_descriptor\030\002 \001(\t\022\017\n\007address\030\003 \001(\t"
-  "\022!\n\013storage_key\030\004 \001(\0132\014.key_message\022\013\n\003t"
-  "ag\030\005 \001(\t\"B\n\023channel_key_message\022\013\n\003tag\030\001"
-  " \001(\t\022\036\n\010auth_key\030\002 \001(\0132\014.key_message\"r\n\027"
-  "trusted_service_message\022\037\n\027trusted_servi"
-  "ce_address\030\001 \001(\t\022)\n\023trusted_service_key\030"
-  "\002 \001(\0132\014.key_message\022\013\n\003tag\030\003 \001(\t\":\n\014tagg"
-  "ed_claim\022\013\n\003tag\030\001 \001(\t\022\035\n\005claim\030\002 \001(\0132\016.c"
-  "laim_message\"7\n\026tagged_claims_sequence\022\035"
-  "\n\006claims\030\001 \003(\0132\r.tagged_claim\"\240\002\n\024policy"
-  "_store_message\022 \n\npolicy_key\030\001 \001(\0132\014.key"
-  "_message\0222\n\020trusted_services\030\002 \003(\0132\030.tru"
-  "sted_service_message\0229\n\033channel_authenti"
-  "cation_keys\030\003 \003(\0132\024.channel_key_message\022"
-  "\035\n\006claims\030\004 \003(\0132\r.tagged_claim\022+\n\014storag"
-  "e_info\030\005 \003(\0132\025.storage_info_message\022+\n\rs"
-  "igned_claims\030\006 \003(\0132\024.tagged_signed_claim"
-  "\"1\n\017claims_sequence\022\036\n\006claims\030\001 \003(\0132\016.cl"
-  "aim_message\">\n\025signed_claim_sequence\022%\n\006"
-  "claims\030\001 \003(\0132\025.signed_claim_message\"E\n\023t"
-  "agged_signed_claim\022\013\n\003tag\030\001 \001(\t\022!\n\002sc\030\002 "
-  "\001(\0132\025.signed_claim_message\" \n\017buffer_seq"
-  "uence\022\r\n\005block\030\001 \003(\014\"\037\n\013run_request\022\020\n\010l"
-  "ocation\030\001 \001(\t\"\036\n\014run_response\022\016\n\006status\030"
-  "\001 \001(\t\"-\n\013app_request\022\020\n\010function\030\001 \001(\t\022\014"
-  "\n\004args\030\002 \003(\014\">\n\014app_response\022\020\n\010function"
-  "\030\001 \001(\t\022\016\n\006status\030\002 \001(\t\022\014\n\004args\030\003 \003(\014"
+  "\037\n\027submitted_evidence_type\030\003 \001(\t\022\017\n\007purp"
+  "ose\030\004 \001(\t\022\"\n\007support\030\005 \001(\0132\021.evidence_pa"
+  "ckage\022 \n\npolicy_key\030\006 \001(\0132\014.key_message\022"
+  "\027\n\017service_address\030\007 \001(\t\022\035\n\025serialized_p"
+  "olicy_key\030\010 \001(\014\022\031\n\021signed_policy_key\030\t \001"
+  "(\014\"y\n\026trust_response_message\022\016\n\006status\030\001"
+  " \001(\t\022\036\n\026requesting_enclave_tag\030\002 \001(\t\022\035\n\025"
+  "providing_enclave_tag\030\003 \001(\t\022\020\n\010artifact\030"
+  "\004 \001(\014\"\211\001\n\024storage_info_message\022\024\n\014storag"
+  "e_type\030\001 \001(\t\022\032\n\022storage_descriptor\030\002 \001(\t"
+  "\022\017\n\007address\030\003 \001(\t\022!\n\013storage_key\030\004 \001(\0132\014"
+  ".key_message\022\013\n\003tag\030\005 \001(\t\"B\n\023channel_key"
+  "_message\022\013\n\003tag\030\001 \001(\t\022\036\n\010auth_key\030\002 \001(\0132"
+  "\014.key_message\"r\n\027trusted_service_message"
+  "\022\037\n\027trusted_service_address\030\001 \001(\t\022)\n\023tru"
+  "sted_service_key\030\002 \001(\0132\014.key_message\022\013\n\003"
+  "tag\030\003 \001(\t\":\n\014tagged_claim\022\013\n\003tag\030\001 \001(\t\022\035"
+  "\n\005claim\030\002 \001(\0132\016.claim_message\"7\n\026tagged_"
+  "claims_sequence\022\035\n\006claims\030\001 \003(\0132\r.tagged"
+  "_claim\"\240\002\n\024policy_store_message\022 \n\npolic"
+  "y_key\030\001 \001(\0132\014.key_message\0222\n\020trusted_ser"
+  "vices\030\002 \003(\0132\030.trusted_service_message\0229\n"
+  "\033channel_authentication_keys\030\003 \003(\0132\024.cha"
+  "nnel_key_message\022\035\n\006claims\030\004 \003(\0132\r.tagge"
+  "d_claim\022+\n\014storage_info\030\005 \003(\0132\025.storage_"
+  "info_message\022+\n\rsigned_claims\030\006 \003(\0132\024.ta"
+  "gged_signed_claim\"1\n\017claims_sequence\022\036\n\006"
+  "claims\030\001 \003(\0132\016.claim_message\">\n\025signed_c"
+  "laim_sequence\022%\n\006claims\030\001 \003(\0132\025.signed_c"
+  "laim_message\"E\n\023tagged_signed_claim\022\013\n\003t"
+  "ag\030\001 \001(\t\022!\n\002sc\030\002 \001(\0132\025.signed_claim_mess"
+  "age\" \n\017buffer_sequence\022\r\n\005block\030\001 \003(\014\"\037\n"
+  "\013run_request\022\020\n\010location\030\001 \001(\t\"\036\n\014run_re"
+  "sponse\022\016\n\006status\030\001 \001(\t\"-\n\013app_request\022\020\n"
+  "\010function\030\001 \001(\t\022\014\n\004args\030\002 \003(\014\">\n\014app_res"
+  "ponse\022\020\n\010function\030\001 \001(\t\022\016\n\006status\030\002 \001(\t\022"
+  "\014\n\004args\030\003 \003(\014"
   ;
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_certifier_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_certifier_2eproto = {
-  false, false, 3316, descriptor_table_protodef_certifier_2eproto, "certifier.proto", 
+  false, false, 3333, descriptor_table_protodef_certifier_2eproto, "certifier.proto", 
   &descriptor_table_certifier_2eproto_once, nullptr, 0, 34,
   schemas, file_default_instances, TableStruct_certifier_2eproto::offsets,
   file_level_metadata_certifier_2eproto, file_level_enum_descriptors_certifier_2eproto, file_level_service_descriptors_certifier_2eproto,
@@ -6920,22 +6924,25 @@ class trust_request_message::_Internal {
   static void set_has_submitted_evidence_type(HasBits* has_bits) {
     (*has_bits)[0] |= 4u;
   }
+  static void set_has_purpose(HasBits* has_bits) {
+    (*has_bits)[0] |= 8u;
+  }
   static const ::evidence_package& support(const trust_request_message* msg);
   static void set_has_support(HasBits* has_bits) {
-    (*has_bits)[0] |= 64u;
+    (*has_bits)[0] |= 128u;
   }
   static const ::key_message& policy_key(const trust_request_message* msg);
   static void set_has_policy_key(HasBits* has_bits) {
-    (*has_bits)[0] |= 128u;
+    (*has_bits)[0] |= 256u;
   }
   static void set_has_service_address(HasBits* has_bits) {
-    (*has_bits)[0] |= 8u;
-  }
-  static void set_has_serialized_policy_key(HasBits* has_bits) {
     (*has_bits)[0] |= 16u;
   }
-  static void set_has_signed_policy_key(HasBits* has_bits) {
+  static void set_has_serialized_policy_key(HasBits* has_bits) {
     (*has_bits)[0] |= 32u;
+  }
+  static void set_has_signed_policy_key(HasBits* has_bits) {
+    (*has_bits)[0] |= 64u;
   }
 };
 
@@ -6982,6 +6989,14 @@ trust_request_message::trust_request_message(const trust_request_message& from)
   #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
   if (from._internal_has_submitted_evidence_type()) {
     submitted_evidence_type_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_submitted_evidence_type(), 
+      GetArenaForAllocation());
+  }
+  purpose_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    purpose_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_purpose()) {
+    purpose_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_purpose(), 
       GetArenaForAllocation());
   }
   service_address_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
@@ -7034,6 +7049,10 @@ submitted_evidence_type_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::Ge
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
   submitted_evidence_type_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+purpose_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  purpose_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 service_address_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
   service_address_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
@@ -7064,6 +7083,7 @@ inline void trust_request_message::SharedDtor() {
   requesting_enclave_tag_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   providing_enclave_tag_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   submitted_evidence_type_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  purpose_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   service_address_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   serialized_policy_key_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   signed_policy_key_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
@@ -7099,22 +7119,25 @@ void trust_request_message::Clear() {
       submitted_evidence_type_.ClearNonDefaultToEmpty();
     }
     if (cached_has_bits & 0x00000008u) {
-      service_address_.ClearNonDefaultToEmpty();
+      purpose_.ClearNonDefaultToEmpty();
     }
     if (cached_has_bits & 0x00000010u) {
-      serialized_policy_key_.ClearNonDefaultToEmpty();
+      service_address_.ClearNonDefaultToEmpty();
     }
     if (cached_has_bits & 0x00000020u) {
-      signed_policy_key_.ClearNonDefaultToEmpty();
+      serialized_policy_key_.ClearNonDefaultToEmpty();
     }
     if (cached_has_bits & 0x00000040u) {
+      signed_policy_key_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000080u) {
       GOOGLE_DCHECK(support_ != nullptr);
       support_->Clear();
     }
-    if (cached_has_bits & 0x00000080u) {
-      GOOGLE_DCHECK(policy_key_ != nullptr);
-      policy_key_->Clear();
-    }
+  }
+  if (cached_has_bits & 0x00000100u) {
+    GOOGLE_DCHECK(policy_key_ != nullptr);
+    policy_key_->Clear();
   }
   _has_bits_.Clear();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
@@ -7163,25 +7186,37 @@ const char* trust_request_message::_InternalParse(const char* ptr, ::PROTOBUF_NA
         } else
           goto handle_unusual;
         continue;
-      // optional .evidence_package support = 4;
+      // optional string purpose = 4;
       case 4:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
+          auto str = _internal_mutable_purpose();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          #ifndef NDEBUG
+          ::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "trust_request_message.purpose");
+          #endif  // !NDEBUG
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional .evidence_package support = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 42)) {
           ptr = ctx->ParseMessage(_internal_mutable_support(), ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
         continue;
-      // optional .key_message policy_key = 5;
-      case 5:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 42)) {
+      // optional .key_message policy_key = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 50)) {
           ptr = ctx->ParseMessage(_internal_mutable_policy_key(), ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
         continue;
-      // optional string service_address = 6;
-      case 6:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 50)) {
+      // optional string service_address = 7;
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 58)) {
           auto str = _internal_mutable_service_address();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           #ifndef NDEBUG
@@ -7191,18 +7226,18 @@ const char* trust_request_message::_InternalParse(const char* ptr, ::PROTOBUF_NA
         } else
           goto handle_unusual;
         continue;
-      // optional bytes serialized_policy_key = 7;
-      case 7:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 58)) {
+      // optional bytes serialized_policy_key = 8;
+      case 8:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 66)) {
           auto str = _internal_mutable_serialized_policy_key();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
         } else
           goto handle_unusual;
         continue;
-      // optional bytes signed_policy_key = 8;
-      case 8:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 66)) {
+      // optional bytes signed_policy_key = 9;
+      case 9:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 74)) {
           auto str = _internal_mutable_signed_policy_key();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
@@ -7270,42 +7305,52 @@ uint8_t* trust_request_message::_InternalSerialize(
         3, this->_internal_submitted_evidence_type(), target);
   }
 
-  // optional .evidence_package support = 4;
-  if (cached_has_bits & 0x00000040u) {
-    target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(
-        4, _Internal::support(this), target, stream);
+  // optional string purpose = 4;
+  if (cached_has_bits & 0x00000008u) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::VerifyUTF8StringNamedField(
+      this->_internal_purpose().data(), static_cast<int>(this->_internal_purpose().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SERIALIZE,
+      "trust_request_message.purpose");
+    target = stream->WriteStringMaybeAliased(
+        4, this->_internal_purpose(), target);
   }
 
-  // optional .key_message policy_key = 5;
+  // optional .evidence_package support = 5;
   if (cached_has_bits & 0x00000080u) {
     target = stream->EnsureSpace(target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(
-        5, _Internal::policy_key(this), target, stream);
+        5, _Internal::support(this), target, stream);
   }
 
-  // optional string service_address = 6;
-  if (cached_has_bits & 0x00000008u) {
+  // optional .key_message policy_key = 6;
+  if (cached_has_bits & 0x00000100u) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(
+        6, _Internal::policy_key(this), target, stream);
+  }
+
+  // optional string service_address = 7;
+  if (cached_has_bits & 0x00000010u) {
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::VerifyUTF8StringNamedField(
       this->_internal_service_address().data(), static_cast<int>(this->_internal_service_address().length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SERIALIZE,
       "trust_request_message.service_address");
     target = stream->WriteStringMaybeAliased(
-        6, this->_internal_service_address(), target);
+        7, this->_internal_service_address(), target);
   }
 
-  // optional bytes serialized_policy_key = 7;
-  if (cached_has_bits & 0x00000010u) {
-    target = stream->WriteBytesMaybeAliased(
-        7, this->_internal_serialized_policy_key(), target);
-  }
-
-  // optional bytes signed_policy_key = 8;
+  // optional bytes serialized_policy_key = 8;
   if (cached_has_bits & 0x00000020u) {
     target = stream->WriteBytesMaybeAliased(
-        8, this->_internal_signed_policy_key(), target);
+        8, this->_internal_serialized_policy_key(), target);
+  }
+
+  // optional bytes signed_policy_key = 9;
+  if (cached_has_bits & 0x00000040u) {
+    target = stream->WriteBytesMaybeAliased(
+        9, this->_internal_signed_policy_key(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -7347,42 +7392,49 @@ size_t trust_request_message::ByteSizeLong() const {
           this->_internal_submitted_evidence_type());
     }
 
-    // optional string service_address = 6;
+    // optional string purpose = 4;
     if (cached_has_bits & 0x00000008u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_purpose());
+    }
+
+    // optional string service_address = 7;
+    if (cached_has_bits & 0x00000010u) {
       total_size += 1 +
         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
           this->_internal_service_address());
     }
 
-    // optional bytes serialized_policy_key = 7;
-    if (cached_has_bits & 0x00000010u) {
+    // optional bytes serialized_policy_key = 8;
+    if (cached_has_bits & 0x00000020u) {
       total_size += 1 +
         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
           this->_internal_serialized_policy_key());
     }
 
-    // optional bytes signed_policy_key = 8;
-    if (cached_has_bits & 0x00000020u) {
+    // optional bytes signed_policy_key = 9;
+    if (cached_has_bits & 0x00000040u) {
       total_size += 1 +
         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
           this->_internal_signed_policy_key());
     }
 
-    // optional .evidence_package support = 4;
-    if (cached_has_bits & 0x00000040u) {
+    // optional .evidence_package support = 5;
+    if (cached_has_bits & 0x00000080u) {
       total_size += 1 +
         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
           *support_);
     }
 
-    // optional .key_message policy_key = 5;
-    if (cached_has_bits & 0x00000080u) {
-      total_size += 1 +
-        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-          *policy_key_);
-    }
-
   }
+  // optional .key_message policy_key = 6;
+  if (cached_has_bits & 0x00000100u) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *policy_key_);
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_cached_size_);
 }
 
@@ -7417,20 +7469,23 @@ void trust_request_message::MergeFrom(const trust_request_message& from) {
       _internal_set_submitted_evidence_type(from._internal_submitted_evidence_type());
     }
     if (cached_has_bits & 0x00000008u) {
-      _internal_set_service_address(from._internal_service_address());
+      _internal_set_purpose(from._internal_purpose());
     }
     if (cached_has_bits & 0x00000010u) {
-      _internal_set_serialized_policy_key(from._internal_serialized_policy_key());
+      _internal_set_service_address(from._internal_service_address());
     }
     if (cached_has_bits & 0x00000020u) {
-      _internal_set_signed_policy_key(from._internal_signed_policy_key());
+      _internal_set_serialized_policy_key(from._internal_serialized_policy_key());
     }
     if (cached_has_bits & 0x00000040u) {
-      _internal_mutable_support()->::evidence_package::MergeFrom(from._internal_support());
+      _internal_set_signed_policy_key(from._internal_signed_policy_key());
     }
     if (cached_has_bits & 0x00000080u) {
-      _internal_mutable_policy_key()->::key_message::MergeFrom(from._internal_policy_key());
+      _internal_mutable_support()->::evidence_package::MergeFrom(from._internal_support());
     }
+  }
+  if (cached_has_bits & 0x00000100u) {
+    _internal_mutable_policy_key()->::key_message::MergeFrom(from._internal_policy_key());
   }
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -7466,6 +7521,11 @@ void trust_request_message::InternalSwap(trust_request_message* other) {
       &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
       &submitted_evidence_type_, lhs_arena,
       &other->submitted_evidence_type_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &purpose_, lhs_arena,
+      &other->purpose_, rhs_arena
   );
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
