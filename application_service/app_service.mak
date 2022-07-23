@@ -41,12 +41,20 @@ dobj=	$(O)/app_service.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o
 
 
-all:	app_service.exe
+all:	app_service.exe hello_world.exe send_request.exe
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
 	@echo "removing executable file"
 	rm $(EXE_DIR)/app_service.exe
+
+hello_world.exe: hello_world.cc
+	@echo "hello_world.cc"
+	$(CC) $(CFLAGS) -o $(O)/hello_world.exe $(S)/hello_world.cc
+
+send_request.exe: send_request.cc
+	@echo "send_request.cc"
+	$(CC) $(CFLAGS) -o $(O)/send_request.exe $(S)/send_request.cc
 
 app_service.exe: $(dobj) 
 	@echo "linking executable files"

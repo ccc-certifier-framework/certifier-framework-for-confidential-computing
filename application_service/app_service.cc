@@ -308,7 +308,6 @@ bool warm_restart(const string& enclave_type) {
   }
 
   // initialize trust data from store
-  string tag("blob-key");
   const key_message* pk = pStore.get_policy_key();
   if (pk == nullptr) {
     printf("warm-restart error 1\n");
@@ -838,12 +837,18 @@ finishreq:
     if (!succeeded) {
       rsp.set_status("failed");
       rsp.SerializeToString(&str_app_rsp);
-      write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size());
+      if (write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size()) <
+              (int)str_app_rsp.size()) {
+        printf("Response write failed\n");
+      }
       continue;
     }
     rsp.set_status("succeeded");
     rsp.add_args(out);
-    write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size());
+    if (write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size()) <
+              (int)str_app_rsp.size()) {
+        printf("Response write failed\n");
+      }
     continue;
   }
 
@@ -853,7 +858,6 @@ bool start_app_service_loop(int read_fd, int write_fd) {
   std::thread service_loop(app_service_loop, read_fd, write_fd);
   return true;
 }
-
 
 bool process_run_request(run_request& req) {
   // check this for thread safety
@@ -887,7 +891,7 @@ bool process_run_request(run_request& req) {
     close(fd1[1]);
     close(fd2[0]);
     // change owner
-    if (execl(req.location().c_str(), 0) < 0) {
+    if (execl(req.location().c_str(), req.location().c_str()) < 0) {
       printf("Exec failed\n");
       return false;
     }
@@ -913,7 +917,6 @@ bool process_run_request(run_request& req) {
       return false;
     }
   }
-
   return true;
 }
 
