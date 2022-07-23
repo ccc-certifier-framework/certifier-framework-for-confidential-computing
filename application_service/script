@@ -14,6 +14,8 @@ cd utilities
 make -f cert_utility.mak
 make -f policy_utilities.mak
 mkdir $APP_SERVICE_DIR/provisioning
+
+# create key data
 cd $APP_SERVICE_DIR/provisioning
 $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
     --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin \
@@ -26,10 +28,9 @@ cd $APP_SERVICE_DIR
 make -f app_service.mak
 
 # provision service data
-cd $APP_SERVICE_DIR/prvisioning
+cd $APP_SERVICE_DIR/provisioning
 $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../app_service.exe \
       --output=app_service.measurement
-cd $APP_SERVICE_DIR/provisioning
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
     --measurement_subject=app_service.measurement --verb="is-trusted" \
     --output=ts1.bin
@@ -56,7 +57,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=
     --output=platform_attest_endorsement.bin
 $CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
 cd $APP_SERVICE_DIR/provisioning
-cp policy_key_file.bin policy_cert_file.bin policy.bin attest_key_file.bin platform_attest_endorsement.bin platform_key_file.bin $APP_SERVICE_DIR/service
+cp policy_key_file.bin policy_cert_file.bin policy.bin attest_key_file.bin platform_attest_endorsement.bin platform_key_file.bin app_service.measurement $APP_SERVICE_DIR/service
 
 # run certifier_service
 cd $APP_SERVICE_DIR/service
@@ -74,7 +75,9 @@ $APP_SERVICE_DIR/app_service.exe \
   --platform_file_name="platform_file.bin" \
   --platform_attest_endorsement="platform_attest_endorsement.bin" \
   --attest_key_file="attest_key_file.bin" \
-  --measurement_file="app_service.measurement"
+  --measurement_file="app_service.measurement" \
+  --cold_init_service=true
+
 
 # send request to start app
 $APP_SERVICE_DIR/send_request.exe

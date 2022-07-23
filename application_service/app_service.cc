@@ -273,7 +273,7 @@ bool cold_init(const string& enclave_type) {
   if (!make_certifier_rsa_key(2048,  &privateServiceKey)) {
     return false;
   }
-  privateServiceKey.set_key_name("app-auth-key");
+  privateServiceKey.set_key_name("service-key");
   if (!private_key_to_public_key(privateServiceKey, &publicServiceKey)) {
     printf("Can't make public Service key\n");
     return false;
@@ -355,10 +355,12 @@ bool warm_restart(const string& enclave_type) {
 // -----------------------------------------------------------------------------
 
 bool certify_me(const string& enclave_type) {
+#if 0
   if (!warm_restart(enclave_type)) {
     printf("warm restart failed\n");
     return false;
   }
+#endif
 
   // This comes from the platform usually
   string platform_attest_file_name(FLAGS_service_dir);
@@ -637,7 +639,7 @@ bool certify_me(const string& enclave_type) {
   close(sock);
 
   // Update store and save it
-  string auth_tag("auth-key");
+  string auth_tag("attest-key");
   const key_message* km = pStore.get_authentication_key_by_tag(auth_tag);
   if (km == nullptr) {
     printf("Can't find authentication key in store\n");
@@ -675,7 +677,7 @@ spawned_children* new_kid() {
   nk->next_ = my_kids;
   my_kids = nk;
   kid_mtx.unlock();
-  return nullptr;
+  return nk;
 }
 
 spawned_children* find_kid(int pid) {
@@ -859,7 +861,6 @@ finishreq:
       }
     continue;
   }
-
 }
 
 bool start_app_service_loop(int read_fd, int write_fd) {
@@ -928,91 +929,10 @@ bool process_run_request(run_request& req) {
   return true;
 }
 
-void print_ssl_error(int code) {
-  switch(code) {
-  case SSL_ERROR_NONE:
-    printf("No ssl error\n");
-    break;
-  case SSL_ERROR_WANT_READ:
-    printf("want read ssl error\n");
-    break;
-  case SSL_ERROR_WANT_WRITE:
-    printf("want write ssl error\n");
-    break;
-  case SSL_ERROR_WANT_CONNECT:
-    printf("want connect ssl error\n");
-    break;
-  case SSL_ERROR_WANT_ACCEPT:
-    printf("want accept ssl error\n");
-    break;
-  case SSL_ERROR_WANT_X509_LOOKUP:
-    printf("want lookup ssl error\n");
-    break;
-  case SSL_ERROR_WANT_ASYNC:
-    printf("want async ssl error\n");
-    break;
-  case SSL_ERROR_WANT_CLIENT_HELLO_CB:
-    printf("wantclient hello  ssl error\n");
-    break;
-  case SSL_ERROR_SSL:
-    printf("ssl error error\n");
-    break;
-  default:
-    printf("Unknown ssl error, %d\n", code);
-    break;
-  }
-}
-
-const int max_req_size = 2048;
-void server_application(SSL* ssl) {
-  int res = SSL_accept(ssl);
-  if (res != 1) {
-    printf("Server: Can't SSL_accept connection\n");
-    unsigned long code = ERR_get_error();
-    printf("Accept error: %s\n", ERR_lib_error_string(code));
-    print_ssl_error(SSL_get_error(ssl, res));
-    SSL_free(ssl);
-    return;
-  }
-  int sd = SSL_get_fd(ssl);
-  printf("Accepted ssl connection using %s \n", SSL_get_cipher(ssl));
-
-  // read run request
-  byte in[max_req_size];
-  memset(in, 0, max_req_size);
-  int n = SSL_read(ssl, in, 1024);
-  printf("SSL server read: %s\n", (const char*) in);
-
-  // This should be a serialized run_request
-  bool ret = false;
-  run_request req;
-  string str_req;
-  str_req.assign((char*)in, n);
-  if (!req.ParseFromString(str_req)) {
-    goto done;
-  }
-  ret = process_run_request(req);
-
-done:
-  run_response resp;
-  if (ret) {
-    resp.set_status("SUCCEEDED");
-  } else {
-    resp.set_status("FAILED");
-  }
-  string str_resp;
-  if (resp.SerializeToString(&str_resp)) {
-    SSL_write(ssl, (byte*)str_resp.data(), str_resp.size());
-  }
-  close(sd);
-  SSL_free(ssl);
-}
-
+const int max_req_size = 4096;
 bool app_request_server() {
   // This is the TCP server that requests to start
   // protected programs.
-  SSL_load_error_strings();
-
   const char* hostname = FLAGS_server_app_host.c_str();
   int port= FLAGS_server_app_port;
   struct sockaddr_in addr;
@@ -1040,24 +960,41 @@ bool app_request_server() {
     return false;
   }
 
-  SSL_METHOD* method = (SSL_METHOD*) TLS_server_method();
-  SSL_CTX* ctx = SSL_CTX_new(method);
-  if (ctx == NULL) {
-    printf("SSL_CTX_new failed\n");
-    return false;
-  }
-
     unsigned int len = 0;
     while (1) {
       printf("application_service server at accept\n");
       struct sockaddr_in addr;
       int client = accept(sd, (struct sockaddr*)&addr, &len);
-      SSL* ssl = SSL_new(ctx);
-      SSL_set_fd(ssl, client);
-      server_application(ssl);
+
+      // read run request
+        byte in[max_req_size];
+        memset(in, 0, max_req_size);
+        int n = read(client, in, 1024);
+
+        // This should be a serialized run_request
+        bool ret = false;
+        run_request req;
+        string str_req;
+        str_req.assign((char*)in, n);
+        if (!req.ParseFromString(str_req)) {
+          goto done;
+        }
+        ret = process_run_request(req);
+
+done:
+        run_response resp;
+        if (ret) {
+          resp.set_status("SUCCEEDED");
+        } else {
+          resp.set_status("FAILED");
+        }
+        string str_resp;
+        if (resp.SerializeToString(&str_resp)) {
+          write(client, (byte*)str_resp.data(), str_resp.size());
+        }
+        close(client);
   }
   close(sd);
-  SSL_CTX_free(ctx);
   return true;
 }
 
@@ -1108,10 +1045,12 @@ int main(int an, char** av) {
     }
   }
 
+#if 0
   if (!warm_restart(FLAGS_host_enclave_type)) {
     printf("warm-restart failed\n");
     return 1;
   }
+#endif
 
   if (!certify_me(FLAGS_host_enclave_type)) {
     printf("certification failed\n");
