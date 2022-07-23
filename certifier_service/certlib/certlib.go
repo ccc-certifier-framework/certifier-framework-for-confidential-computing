@@ -31,7 +31,7 @@ import (
 	"crypto/x509/pkix"
 	"time"
 	"google.golang.org/protobuf/proto"
-	certprotos "github.com/jlmucb/crypto/v2/certifier/certifier_service/certprotos"
+	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 )
 
 type PredicateDominance struct {
@@ -1277,6 +1277,9 @@ func InitCerifierRules(cr *certprotos.CertifierRules) bool {
 		provided is-trustedXXX dominates is-trustedYYY
 	rule 6 (R6): if key1 is-trustedXXX and key1 says key2 speaks-for measurement then
 		key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation 
+	rule 7 (R7): If measurement is-trusted and key1 speaks-for measurement then
+		key1 is-trusted-for-attestation.
+
  */
 
 	return true;
@@ -1296,7 +1299,6 @@ func PrintProofStep(prefix string, step *certprotos.ProofStep) {
 	PrintVseClause(step.Conclusion)
 	fmt.Printf("\n\n")
 }
-
 
 // R1: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-authentication.
 func VerifyRule1(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
@@ -1457,6 +1459,37 @@ func VerifyRule6(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 	return SameVseClause(c3, c)
 }
 
+// R7: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-attestation.
+func VerifyRule7(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
+	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
+		return false
+	}
+	if c1.GetVerb() != "is-trusted" {
+		return false
+	}
+	if c1.Subject.GetEntityType() != "measurement" {
+		return false
+	}
+
+	if c2.Subject == nil || c2.Verb == nil || c2.Object == nil || c2.Clause != nil {
+		return false
+	}
+	if c2.GetVerb() != "speaks-for" {
+		return false
+	}
+	if (!SameEntity(c1.Subject, c2.Object)) {
+		return false
+	}
+
+	if c.Subject == nil || c.Verb == nil || c.Object != nil  || c.Clause != nil {
+		return false
+	}
+	if c.GetVerb() != "is-trusted-for-attestation" {
+		return false
+	}
+	return SameEntity(c.Subject, c2.Subject)
+}
+
 func StatementAlreadyProved(c1 *certprotos.VseClause, ps *certprotos.ProvedStatements) bool {
 	for i := 0; i < len(ps.Proved); i++ {
 		if SameVseClause(c1, ps.Proved[i]) {
@@ -1483,6 +1516,8 @@ func VerifyInternalProofStep(tree *PredicateDominance, c1 *certprotos.VseClause,
 		return VerifyRule5(tree, c1, c2, c)
 	case 6:
 		return VerifyRule6(tree, c1, c2, c)
+	case 7:
+		return VerifyRule7(tree, c1, c2, c)
 	}
 	return false
 }
@@ -1544,6 +1579,9 @@ func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
 	fmt.Printf("Requesting Enclave Tag : %s\n", req.GetRequestingEnclaveTag())
         fmt.Printf("Providing Enclave Tag: %s\n", req.GetProvidingEnclaveTag())
         fmt.Printf("Policy Key:\n")
+	if req.Purpose != nil {
+		fmt.Printf("Purpose: %s\n", *req.Purpose)
+	}
 	PrintKey(req.PolicyKey)
 	if req.SubmittedEvidenceType != nil {
 		fmt.Printf("\nSubmittedEvidenceType: %s\n", req.GetSubmittedEvidenceType())

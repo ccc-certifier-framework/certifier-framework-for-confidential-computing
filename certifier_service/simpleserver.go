@@ -31,8 +31,8 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	certprotos "github.com/jlmucb/crypto/v2/certifier/certifier_service/certprotos"
-	certlib "github.com/jlmucb/crypto/v2/certifier/certifier_service/certlib"
+	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
 )
 
 var simpleServerPath = flag.String("path", "./SimpleServerFiles",
@@ -368,7 +368,7 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, alread
 
 // Returns toProve and proof steps
 func ConstructProofFromFullVseEvidence(publicPolicyKey *certprotos.KeyMessage,
-	alreadyProved certprotos.ProvedStatements) (*certprotos.VseClause, *certprotos.Proof) {
+	alreadyProved certprotos.ProvedStatements, purpose string) (*certprotos.VseClause, *certprotos.Proof) {
 
 	// At this point, the evidence should be
 	//      "policyKey is-trusted"
@@ -385,6 +385,7 @@ func ConstructProofFromFullVseEvidence(publicPolicyKey *certprotos.KeyMessage,
 	r3 := int32(3)
 	r5 := int32(5)
 	r6 := int32(6)
+	r7 := int32(7)
 
 	policyKeyIsTrusted := alreadyProved.Proved[0]
 	policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[3]
@@ -427,15 +428,30 @@ func ConstructProofFromFullVseEvidence(publicPolicyKey *certprotos.KeyMessage,
 	}
 	proof.Steps = append(proof.Steps, &ps4)
 
+	var toProve *certprotos.VseClause = nil
 	isTrustedForAuth := "is-trusted-for-authentication"
-	toProve :=  certlib.MakeUnaryVseClause(enclaveKeySpeaksForMeasurement.Subject, &isTrustedForAuth)
-	ps5 := certprotos.ProofStep {
-	S1: measurementIsTrusted,
-	S2: enclaveKeySpeaksForMeasurement,
-	Conclusion: toProve,
-	RuleApplied: &r1,
+	isTrustedForAttest:= "is-trusted-for-attestation"
+	if  purpose == "attestation" {
+		toProve =  certlib.MakeUnaryVseClause(enclaveKeySpeaksForMeasurement.Subject,
+			&isTrustedForAttest)
+		ps5 := certprotos.ProofStep {
+		S1: measurementIsTrusted,
+		S2: enclaveKeySpeaksForMeasurement,
+		Conclusion: toProve,
+		RuleApplied: &r7,
+		}
+		proof.Steps = append(proof.Steps, &ps5)
+	} else
+		toProve =  certlib.MakeUnaryVseClause(enclaveKeySpeaksForMeasurement.Subject,
+			&isTrustedForAuth)
+		ps5 := certprotos.ProofStep {
+		S1: measurementIsTrusted,
+		S2: enclaveKeySpeaksForMeasurement,
+		Conclusion: toProve,
+		RuleApplied: &r1,
+		}
+		proof.Steps = append(proof.Steps, &ps5)
 	}
-	proof.Steps = append(proof.Steps, &ps5)
 
 	return toProve, proof
 }
@@ -448,7 +464,7 @@ func ConstructProofFromFullVseEvidence(publicPolicyKey *certprotos.KeyMessage,
 //
 //      Returns the proof goal (toProve), the proof steps (proof), 
 //	      and a list of true statements (alreadyProved)
-func ConstructProofFromRequest(evidenceType string, support *certprotos.EvidencePackage) (*certprotos.VseClause, *certprotos.Proof, *certprotos.ProvedStatements) {
+func ConstructProofFromRequest(evidenceType string, support *certprotos.EvidencePackage, purpose string) (*certprotos.VseClause, *certprotos.Proof, *certprotos.ProvedStatements) {
 
 	// Debug
 	fmt.Printf("\nConstructProofFromRequest\n")
@@ -515,7 +531,7 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
 	}
 
 	if evidenceType == "full-vse-support" || evidenceType == "platform-attestation-only" {
-		toProve, proof = ConstructProofFromFullVseEvidence(publicPolicyKey, *alreadyProved)
+		toProve, proof = ConstructProofFromFullVseEvidence(publicPolicyKey, *alreadyProved, purpose)
 		if toProve == nil {
 			fmt.Printf("ConstructProofFromFullVseEvidence failed\n")
 			return nil, nil, nil
@@ -642,8 +658,15 @@ func serviceThread(conn net.Conn, client string) {
 	certlib.PrintTrustRequest(request)
 
 	// Construct the proof
+	var purpose string
+	if  request.Purpose == nil {
+		purpose =  "authentication"
+	} else {
+		purpose =  *request.Purpose
+	}
 	toProve, proof, alreadyProved := ConstructProofFromRequest(
-			request.GetSubmittedEvidenceType(), request.GetSupport())
+			request.GetSubmittedEvidenceType(), request.GetSupport(),
+                        purpose)
 	if toProve == nil || proof == nil || alreadyProved == nil {
 		// Debug
 		fmt.Printf("Constructing Proof fails\n")

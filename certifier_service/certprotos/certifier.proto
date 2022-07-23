@@ -18,7 +18,7 @@
 // limitations under the License.
 
 syntax="proto2";
-//option go_package = "github.com/jlmucb/crypto/v2/certifier_prototype/certifier_service/certprotos";
+option go_package = "github.com/jlmucb/crypto/v2/certifier_prototype/certifier_service/certprotos";
 
 // YYYY-MM-DDTHH:mm:ss.sssZ
 message time_point {

@@ -30,7 +30,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	certprotos "github.com/jlmucb/crypto/v2/certifier/certifier_service/certprotos"
+	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 )
 
 func TestEntity(t *testing.T) {
@@ -315,8 +315,8 @@ func TestCrypt(t *testing.T) {
 	}
 }
 
-func TestProofs(t *testing.T) {
-	fmt.Print("\nTestProofs\n")
+func TestProofsAuth(t *testing.T) {
+	fmt.Print("\nTestProofsAuth\n")
 
 	if !InitSimulatedEnclave() {
 		t.Errorf("Cannot init simulated enclave")
@@ -509,6 +509,220 @@ func TestProofs(t *testing.T) {
 		S2: enclaveKeySpeaksForMeasurement,
 		Conclusion: enclaveKeyIsTrusted,
 		RuleApplied: &r1,
+	}
+	p.Steps = append(p.Steps, &ps5)
+
+
+	if VerifyProof(policyKey, enclaveKeyIsTrusted, &p, &ps) {
+		fmt.Printf("Proved: ")
+		PrintVseClause(enclaveKeyIsTrusted)
+		fmt.Println("")
+	} else {
+		fmt.Printf("Not proved: ")
+		PrintVseClause(enclaveKeyIsTrusted)
+		fmt.Println("")
+		t.Errorf("Cannot prove statement")
+	}
+	fmt.Printf("\n\nFinal proved statements %d\n", len(ps.Proved))
+	for i := 0; i < len(ps.Proved); i++ {
+		PrintVseClause(ps.Proved[i])
+		fmt.Println("")
+	}
+}
+
+func TestProofsAttest(t *testing.T) {
+	fmt.Print("\nTestProofsAttest\n")
+
+	if !InitSimulatedEnclave() {
+		t.Errorf("Cannot init simulated enclave")
+	}
+
+	privatePolicyKey := MakeVseRsaKey(2048)
+	var tpk  string = "policyKey"
+	privatePolicyKey.KeyName = &tpk
+	PrintKey(privatePolicyKey)
+	policyKey := InternalPublicFromPrivateKey(privatePolicyKey)
+	policySubj := MakeKeyEntity(policyKey)
+	fmt.Println("\nPolicy key")
+	PrintEntity(policySubj)
+
+	privateIntelKey := MakeVseRsaKey(2048)
+	iek  := "intelKey"
+	privateIntelKey.KeyName = &iek
+	PrintKey(privateIntelKey)
+	fmt.Println("")
+	intelKey := InternalPublicFromPrivateKey(privateIntelKey)
+	intelSubj := MakeKeyEntity(intelKey)
+	fmt.Println("\nAttest key")
+	PrintEntity(intelSubj)
+
+	privateAttestKey := MakeVseRsaKey(2048)
+	aek  := "attestKey"
+	privateAttestKey.KeyName = &aek
+	PrintKey(privateAttestKey)
+	fmt.Println("")
+	attestKey := InternalPublicFromPrivateKey(privateAttestKey)
+	attestSubj := MakeKeyEntity(attestKey)
+	fmt.Println("\nAttest key")
+	PrintEntity(attestSubj)
+
+	privateEnclaveKey := MakeVseRsaKey(2048)
+	tek  := "enclaveKey"
+	privateEnclaveKey.KeyName = &tek
+	PrintKey(privateEnclaveKey)
+	fmt.Println("")
+	enclaveKey := InternalPublicFromPrivateKey(privateEnclaveKey)
+	enclaveSubj := MakeKeyEntity(enclaveKey)
+	fmt.Println("\nEnclave key")
+	PrintEntity(enclaveSubj)
+
+	m:= make([]byte, 32)
+	for i := 0; i < 32; i++ {
+		m[i] = byte(i)
+	}
+	entObj:= MakeMeasurementEntity(m)
+	fmt.Println("\nEnclave measurement")
+	PrintEntity(entObj)
+
+	verbIs := "is-trusted"
+	verbSays := "says"
+	verbSpeaksFor:= "speaks-for"
+	verbIsTrustedForAtt := "is-trusted-for-attestation"
+
+	intelKeyIsTrusted := MakeUnaryVseClause(intelSubj, &verbIsTrustedForAtt)
+	attestKeyIsTrusted := MakeUnaryVseClause(attestSubj, &verbIsTrustedForAtt)
+	measurementIsTrusted :=  MakeUnaryVseClause(entObj, &verbIs)
+	enclaveKeyIsTrusted := MakeUnaryVseClause(enclaveSubj, &verbIsTrustedForAtt)
+
+	policyKeySaysIntelKeyIsTrusted :=  MakeIndirectVseClause(policySubj, &verbSays, intelKeyIsTrusted)
+	intelKeySaysAttestKeyIsTrusted := MakeIndirectVseClause(intelSubj, &verbSays, attestKeyIsTrusted)
+	policyKeySaysMeasurementIsTrusted :=  MakeIndirectVseClause(policySubj, &verbSays, measurementIsTrusted)
+
+	enclaveKeySpeaksForMeasurement:=  MakeSimpleVseClause(enclaveSubj, &verbSpeaksFor, entObj)
+	attestKeySaysEnclaveKeySpeaksForMeasurement:=  MakeIndirectVseClause(attestSubj, &verbSays, enclaveKeySpeaksForMeasurement)
+
+	// make signed assertions
+	tn := TimePointNow()
+	tf := TimePointPlus(tn, 365 * 86400)
+	nb := TimePointToString(tn)
+	na := TimePointToString(tf)
+	vfmt := "vse-clause"
+	d1 := "policyKey says intelKey is-trusted-for-attestation"
+	d2 := "policyKey says Measurement is-trusted"
+	d3 := "intelKey says attestKey is-trusted-for-attestation"
+	d4 := "attest Key says entityKey speaks-for entityMeasurement"
+
+	serPolicyKeySaysIntelKeyIsTrusted, _:= proto.Marshal(policyKeySaysIntelKeyIsTrusted)
+	clPolicyKeySaysIntelKeyIsTrusted := MakeClaim(serPolicyKeySaysIntelKeyIsTrusted, vfmt, d1, nb, na)
+	signedPolicyKeySaysIntelKeyIsTrusted := MakeSignedClaim(clPolicyKeySaysIntelKeyIsTrusted, privatePolicyKey)
+
+	serPolicyKeySaysMeasurementIsTrusted, _:= proto.Marshal(policyKeySaysMeasurementIsTrusted)
+	clPolicyKeySaysMeasurementIsTrusted := MakeClaim(serPolicyKeySaysMeasurementIsTrusted, vfmt, d2, nb, na)
+	signedPolicyKeySaysMeasurementIsTrusted := MakeSignedClaim(clPolicyKeySaysMeasurementIsTrusted, privatePolicyKey)
+
+	serIntelKeySaysAttestKeyIsTrusted, _:= proto.Marshal(intelKeySaysAttestKeyIsTrusted)
+	clIntelKeySaysAttestKeyIsTrusted := MakeClaim(serIntelKeySaysAttestKeyIsTrusted, vfmt, d3, nb, na)
+	signedIntelKeySaysAttestKeyIsTrusted := MakeSignedClaim(clIntelKeySaysAttestKeyIsTrusted, privateIntelKey)
+
+	serAttestKeySaysEnclaveKeySpeaksForMeasurement, _ := proto.Marshal(attestKeySaysEnclaveKeySpeaksForMeasurement)
+	clAttestKeySaysEnclaveKeySpeaksForMeasurement := MakeClaim(serAttestKeySaysEnclaveKeySpeaksForMeasurement, vfmt, d4, nb, na)
+	signedAttestKeySaysEnclaveKeySpeaksForMeasurement := MakeSignedClaim(clAttestKeySaysEnclaveKeySpeaksForMeasurement, privateAttestKey)
+
+        var evidenceList []*certprotos.Evidence
+	ps := certprotos.ProvedStatements{}
+        scStr := "signed-claim"
+
+        e1 := certprotos.Evidence {}
+        e1.EvidenceType = &scStr
+        sc1, err := proto.Marshal(signedPolicyKeySaysIntelKeyIsTrusted)
+        if err != nil {
+                t.Errorf("Marshal fails\n")
+        }
+        e1.SerializedEvidence = sc1
+        evidenceList = append(evidenceList, &e1)
+
+        e2 := certprotos.Evidence {}
+        e2.EvidenceType = &scStr
+        sc2, err := proto.Marshal(signedPolicyKeySaysMeasurementIsTrusted)
+        if err != nil {
+                t.Errorf("Marshal fails\n")
+        }
+        e2.SerializedEvidence = sc2
+        evidenceList = append(evidenceList, &e2)
+
+        e3 := certprotos.Evidence {}
+        e3.EvidenceType = &scStr
+        sc3, err := proto.Marshal(signedIntelKeySaysAttestKeyIsTrusted)
+        if err != nil {
+                t.Errorf("Marshal fails\n")
+        }
+        e3.SerializedEvidence = sc3
+        evidenceList = append(evidenceList, &e3)
+
+        e4 := certprotos.Evidence {}
+        e4.EvidenceType = &scStr
+        sc4, err := proto.Marshal(signedAttestKeySaysEnclaveKeySpeaksForMeasurement)
+        if err != nil {
+                t.Errorf("Marshal fails\n")
+        }
+        e4.SerializedEvidence = sc4
+        evidenceList = append(evidenceList, &e4)
+
+
+	fmt.Println("Public policy key")
+	PrintKey(policyKey)
+	fmt.Println("")
+
+	if !InitProvedStatements(*policyKey, evidenceList, &ps) {
+		t.Errorf("Cannot init proved statements")
+	}
+	fmt.Printf("Initial proved statements %d\n", len(ps.Proved))
+	for i := 0; i < len(ps.Proved); i++ {
+		PrintVseClause(ps.Proved[i])
+		fmt.Println("")
+	}
+	fmt.Println("")
+
+	// The proof
+	p := certprotos.Proof{}
+
+	r3 := int32(3)
+	r5 := int32(5)
+	r6 := int32(6)
+	r7 := int32(7)
+	ps1 := certprotos.ProofStep {
+		S1: ps.Proved[0],
+		S2: policyKeySaysMeasurementIsTrusted,
+		Conclusion: measurementIsTrusted,
+		RuleApplied: &r3,
+	}
+	p.Steps = append(p.Steps, &ps1)
+	ps2 := certprotos.ProofStep {
+		S1: ps.Proved[0],
+		S2: policyKeySaysIntelKeyIsTrusted,
+		Conclusion: intelKeyIsTrusted,
+		RuleApplied: &r5,
+	}
+	p.Steps = append(p.Steps, &ps2)
+	ps3 := certprotos.ProofStep {
+		S1: intelKeyIsTrusted,
+		S2: intelKeySaysAttestKeyIsTrusted,
+		Conclusion: attestKeyIsTrusted,
+		RuleApplied: &r5,
+	}
+	p.Steps = append(p.Steps, &ps3)
+	ps4 := certprotos.ProofStep {
+		S1: attestKeyIsTrusted,
+		S2: attestKeySaysEnclaveKeySpeaksForMeasurement,
+		Conclusion: enclaveKeySpeaksForMeasurement,
+		RuleApplied: &r6,
+	}
+	p.Steps = append(p.Steps, &ps4)
+	ps5 := certprotos.ProofStep {
+		S1: measurementIsTrusted,
+		S2: enclaveKeySpeaksForMeasurement,
+		Conclusion: enclaveKeyIsTrusted,
+		RuleApplied: &r7,
 	}
 	p.Steps = append(p.Steps, &ps5)
 
