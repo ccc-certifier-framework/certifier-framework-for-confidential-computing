@@ -50,7 +50,7 @@ DEFINE_string(service_dir, "./service/", "directory for service data");
 DEFINE_string(policy_store_file, "policy_store.bin", "policy store for service");
 
 DEFINE_string(server_app_host, "localhost", "address for application requests");
-DEFINE_int32(server_app_port, 8124, "port for application requests");
+DEFINE_int32(server_app_port, 8127, "port for application requests");
 
 DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement", "platform cert");
 DEFINE_string(run_policy, "all", "what programs to run");  // "signed" is other possibility
