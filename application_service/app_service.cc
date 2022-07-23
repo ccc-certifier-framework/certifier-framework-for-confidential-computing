@@ -292,8 +292,6 @@ bool cold_init(const string& enclave_type) {
   }
 
   // protect_symmetric_key
-  printf("protect_symmetric_key:\n");
-  print_key(protect_symmetric_key);
   printf("enclave type: %s\n", enclave_type.c_str());
   if (!save_store(enclave_type)) {
     printf("Can't save store\n");
@@ -960,39 +958,41 @@ bool app_request_server() {
     return false;
   }
 
-    unsigned int len = 0;
-    while (1) {
-      printf("application_service server at accept\n");
-      struct sockaddr_in addr;
-      int client = accept(sd, (struct sockaddr*)&addr, &len);
+  unsigned int len = 0;
+  while (1) {
+    printf("application_service server at accept\n");
+    struct sockaddr_in addr;
+    int client = accept(sd, (struct sockaddr*)&addr, &len);
+    printf("client: %d\n", client);
 
-      // read run request
-        byte in[max_req_size];
-        memset(in, 0, max_req_size);
-        int n = read(client, in, 1024);
+    // read run request
+    byte in[max_req_size];
+    memset(in, 0, max_req_size);
+    int n = read(client, in, max_req_size);
 
-        // This should be a serialized run_request
-        bool ret = false;
-        run_request req;
-        string str_req;
-        str_req.assign((char*)in, n);
-        if (!req.ParseFromString(str_req)) {
-          goto done;
-        }
-        ret = process_run_request(req);
+    // This should be a serialized run_request
+    bool ret = false;
+    run_request req;
+    string str_req;
+    str_req.assign((char*)in, n);
+    if (!req.ParseFromString(str_req)) {
+      goto done;
+    }
+    printf("at process_run_request: %s\n", req.location().c_str());
+    ret = process_run_request(req);
 
 done:
-        run_response resp;
-        if (ret) {
-          resp.set_status("SUCCEEDED");
-        } else {
-          resp.set_status("FAILED");
-        }
-        string str_resp;
-        if (resp.SerializeToString(&str_resp)) {
-          write(client, (byte*)str_resp.data(), str_resp.size());
-        }
-        close(client);
+    run_response resp;
+    if (ret) {
+      resp.set_status("succeeded");
+    } else {
+      resp.set_status("failed");
+    }
+    string str_resp;
+    if (resp.SerializeToString(&str_resp)) {
+      write(client, (byte*)str_resp.data(), str_resp.size());
+    }
+    close(client);
   }
   close(sd);
   return true;
