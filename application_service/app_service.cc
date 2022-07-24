@@ -755,8 +755,10 @@ bool impl_Seal(string in, string* out) {
   if (!get_random(8 * 16, iv))
     return false;
   if (!authenticated_encrypt((byte*)in.data(), in.size(), service_symmetric_key,
-            iv, t_out, &t_size))
+            iv, t_out, &t_size)) {
+    printf("impl_Seal: authenticated encrypt failed\n");
     return false;
+  }
   out->assign((char*)t_out, t_size);
   return true;
 }
@@ -765,8 +767,10 @@ bool impl_Unseal(string in, string* out) {
   int t_size = in.size();
   byte t_out[t_size];
   if (!authenticated_decrypt((byte*)in.data(), in.size(), service_symmetric_key,
-            t_out, &t_size))
+            t_out, &t_size)) {
+    printf("impl_Unseal: authenticated decrypt failed\n");
     return false;
+  }
   out->assign((char*)t_out, t_size);
   return true;
 }
@@ -794,8 +798,10 @@ bool impl_Attest(string in, string* out) {
     return false;
 
   signed_claim_message scm;
-  if (!make_signed_claim(cm, privateServiceKey, &scm))
+  if (!make_signed_claim(cm, privateServiceKey, &scm)) {
+    printf("impl_Attest: Signing failed\n");
     return false;
+  }
   if (!scm.SerializeToString(out))
     return false;
 
@@ -809,14 +815,21 @@ bool impl_GetCerts(string* out) {
 void app_service_loop(int read_fd, int write_fd) {
   int r_size = 4096;
   byte* r_buf[r_size];
+  bool continue_loop = true;
 
-  while(1) {
+  sleep(20); // hack
+  printf("application service loop: %d %d\n", read_fd, write_fd);
+  while(continue_loop) {
+    sleep(10); // hack
     bool succeeded = false;
+    // continue_loop = false;
     string in;
     string out;
     int n = read(read_fd, r_buf, r_size);
-    if (n < 0)
+    printf("app_service_loop, read: %d\n", n);
+    if (n <= 0) {
       continue;
+    }
     string str_app_req;
     str_app_req.assign((char*)r_buf, n);
     app_request req;
@@ -824,6 +837,7 @@ void app_service_loop(int read_fd, int write_fd) {
       goto finishreq;
     }
 
+    printf("app_service_loop, service requested: %s\n", req.function().c_str());
     if (req.function() == "seal") {
         in = req.args(0);
         succeeded= impl_Seal(in, &out);
@@ -836,33 +850,41 @@ void app_service_loop(int read_fd, int write_fd) {
     } else if (req.function() == "getcerts") {
         succeeded= impl_GetCerts(&out);
     }
+    if (succeeded) {
+      printf("service succeeded\n");
+    } else {
+      printf("service failed\n");
+    }
 
 finishreq:
     app_response rsp;
     string str_app_rsp;
     rsp.set_function(req.function());
 
-    if (!succeeded) {
+    if (succeeded) {
+      rsp.set_status("succeeded");
+      rsp.add_args(out);
+    } else {
       rsp.set_status("failed");
-      rsp.SerializeToString(&str_app_rsp);
-      if (write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size()) <
-              (int)str_app_rsp.size()) {
-        printf("Response write failed\n");
-      }
-      continue;
     }
-    rsp.set_status("succeeded");
-    rsp.add_args(out);
+    if (!rsp.SerializeToString(&str_app_rsp)) {
+      printf("Can't serialize response\n");
+    }
     if (write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size()) <
-              (int)str_app_rsp.size()) {
-        printf("Response write failed\n");
-      }
-    continue;
+            (int)str_app_rsp.size()) {
+      printf("Response write failed\n");
+    }
   }
 }
 
 bool start_app_service_loop(int read_fd, int write_fd) {
+  printf("start_app_service_loop\n");
+#if 0
   std::thread service_loop(app_service_loop, read_fd, write_fd);
+#else
+  app_service_loop(read_fd, write_fd);
+#endif
+  printf("after thread\n");
   return true;
 }
 
@@ -877,35 +899,59 @@ bool process_run_request(run_request& req) {
     return false;
   }
 
-  // pipe 1 is parent-->child
-  // pipe 2 is child-->parent
   int fd1[2];
   int fd2[2];
-
   if (pipe(fd1) < 0) {
     printf("Pipe 1 failed\n");
     return false;
   }
   if (pipe(fd2) < 0) {
-    printf("Pipe 1 failed\n");
+    printf("Pipe 2 failed\n");
     return false;
   }
+  printf("pipes made %d %d %d %d\n", fd1[0], fd1[1], fd2[0], fd2[1]);
+
+  int parent_read_fd = fd2[0];
+  int parent_write_fd = fd1[1];
+  int child_read_fd = fd1[0];
+  int child_write_fd = fd2[1];
 
   // fork and get pid
   pid_t pid = fork();
   if (pid < 0) {
-  } else if (pid == 0) {  // child
+    printf("Can't fork\n");
+    close(fd1[0]);
     close(fd1[1]);
     close(fd2[0]);
-    // change owner
-    if (execl(req.location().c_str(), req.location().c_str()) < 0) {
+    close(fd2[1]);
+    return false;
+  } else if (pid == 0) {  // child
+    close(parent_read_fd);
+    close(parent_write_fd);
+
+    // Todo: change owner
+
+    printf("Child about to exec %s, read: %d, write: %d\n",
+        req.location().c_str(), child_read_fd, child_write_fd);
+    string n1 = std::to_string(child_read_fd);
+    string n2 = std::to_string(child_write_fd);
+    char *argv[3]= {
+      (char*)n1.c_str(),
+      (char*)n2.c_str(),
+      nullptr
+    };
+    char *envp[1]= {
+      nullptr
+    };
+    if (execve(req.location().c_str(), argv, envp) < 0) {
       printf("Exec failed\n");
       return false;
     }
   } else {  // parent
-    close(fd1[0]);
-    close(fd2[1]);
+    close(child_read_fd);
+    close(child_write_fd);
     signal(SIGCHLD, delete_child);
+    printf("parent returned, read: %d, write: %d\n", parent_read_fd, parent_write_fd);
 
     // add it to lists
     spawned_children* nk = new_kid();
@@ -916,10 +962,10 @@ bool process_run_request(run_request& req) {
     nk->location_ = req.location();
     nk->measured.assign((char*)m.data(), m.size());;
     nk->pid_ = pid;
-    nk->parent_read_fd_ = fd2[0];
-    nk->parent_write_fd_ = fd1[1];
+    nk->parent_read_fd_ = parent_read_fd;
+    nk->parent_write_fd_ = parent_write_fd;
     nk->valid_ = true;
-    if (!start_app_service_loop(fd2[0], fd1[1])) {
+    if (!start_app_service_loop(parent_read_fd, parent_write_fd)) {
       printf("Couldn't start service loop\n");
       return false;
     }
@@ -969,6 +1015,9 @@ bool app_request_server() {
     byte in[max_req_size];
     memset(in, 0, max_req_size);
     int n = read(client, in, max_req_size);
+    if (n < 0) {
+      printf("Read failed in application server\n");
+    }
 
     // This should be a serialized run_request
     bool ret = false;

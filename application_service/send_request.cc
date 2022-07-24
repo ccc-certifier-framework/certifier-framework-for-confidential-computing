@@ -1,3 +1,5 @@
+#include <gflags/gflags.h>
+
 #include <support.h>
 #include <gflags/gflags.h>
 #include <sys/socket.h>
@@ -10,6 +12,9 @@ DEFINE_int32(server_app_port, 8127, "port for application requests");
 DEFINE_string(executable, "hello_world.exe", "executable to run");
 
 int main(int an, char**av) {
+  gflags::ParseCommandLineFlags(&an, &av, true);
+  an = 1;
+
   run_request req;
   run_response rsp;
 
@@ -31,6 +36,7 @@ int main(int an, char**av) {
     return 1;
   }
 
+  printf("Executable: %s\n", FLAGS_executable.c_str());
   req.set_location(FLAGS_executable);
   string serialized_request;
   if (!req.SerializeToString(&serialized_request)) {

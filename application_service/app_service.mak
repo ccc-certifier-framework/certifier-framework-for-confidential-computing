@@ -40,8 +40,12 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 dobj=	$(O)/app_service.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o
 
+user_dobj= $(O)/test_user.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o
 
-all:	app_service.exe hello_world.exe send_request.exe
+
+all:	app_service.exe hello_world.exe send_request.exe test_user.exe
+
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
@@ -60,6 +64,10 @@ send_request.exe: send_request.cc
 app_service.exe: $(dobj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/app_service.exe $(dobj) $(LDFLAGS)
+
+test_user.exe: $(user_dobj) 
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/test_user.exe $(user_dobj) $(LDFLAGS)
 
 $(S)/certifier.pb.cc: $(LIBSRC)/certifier.proto
 	$(PROTO) --proto_path=$(LIBSRC) --cpp_out=$(S) $(LIBSRC)/certifier.proto
@@ -88,3 +96,7 @@ $(O)/simulated_enclave.o: $(LIBSRC)/simulated_enclave.cc $(I)/simulated_enclave.
 $(O)/application_enclave.o: $(LIBSRC)/application_enclave.cc $(I)/application_enclave.h
 	@echo "compiling application_enclave.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(LIBSRC)/application_enclave.cc
+
+$(O)/test_user.o: $(S)/test_user.cc $(S)/certifier.pb.cc
+	@echo "compiling test_user.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/test_user.o $(S)/test_user.cc

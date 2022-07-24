@@ -458,6 +458,9 @@ bool Seal(const string& enclave_type, const string& enclave_id,
    return sev_Seal(in_size, in, size_out, out);
   }
 #endif
+  if (enclave_type == "application-enclave") {
+   return application_Seal(in_size, in, size_out, out);
+  }
  return false;
 }
 
@@ -478,6 +481,9 @@ bool Unseal(const string& enclave_type, const string& enclave_id,
     return sev_Unseal(in_size, in, size_out, out);
   }
 #endif
+  if (enclave_type == "application-enclave") {
+    return application_Unseal(in_size, in, size_out, out);
+  }
  return false;
 }
 
@@ -498,6 +504,9 @@ bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
     return sev_Attest(what_to_say_size, what_to_say, size_out, out);
   }
 #endif
+  if (enclave_type == "application-enclave") {
+    return application_Attest(what_to_say_size, what_to_say, size_out, out);
+  }
 
  return false;
 }
