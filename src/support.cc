@@ -115,7 +115,9 @@ bool write_file(const string& file_name, int size, byte* data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (out < 0)
     return false;
-  write(out, data, size);
+  if (write(out, data, size) < 0) {
+    printf("write failed\n");
+  }
   close(out);
   return true;
 }
@@ -459,7 +461,7 @@ bool authenticated_decrypt(byte* in, int in_len, byte *key,
 
 bool private_key_to_public_key(const key_message& in, key_message* out) {
 
-  int n_bytes;
+  int n_bytes = 0;
   if (in.key_type() == "rsa-2048-private") {
     out->set_key_type("rsa-2048-public");
     n_bytes = cipher_block_byte_size("rsa-2048-public");
@@ -602,9 +604,8 @@ bool key_to_RSA(const key_message& k, RSA* r) {
     return false;
   }
 
-  int key_size_bits= 0;
   bool private_key= true;
-
+  int key_size_bits= 0;
   if (k.key_type() == "rsa-1024-public") {
     key_size_bits= 1024;
     private_key = false;

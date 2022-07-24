@@ -202,10 +202,10 @@ bool simulated_Attest(const string& enclave_type,
   string ser_scm;
   if (!scm.SerializeToString(&ser_scm))
     return false;
-  if (*size_out < ser_scm.size())
+  if (*size_out < (int)ser_scm.size())
     return false;
   memset(out, 0, *size_out);
-  *size_out = ser_scm.size();
+  *size_out = (int)ser_scm.size();
   memcpy(out, ser_scm.data(), *size_out);
   return true;
 }

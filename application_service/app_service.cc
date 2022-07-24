@@ -817,10 +817,10 @@ void app_service_loop(int read_fd, int write_fd) {
   byte* r_buf[r_size];
   bool continue_loop = true;
 
-  sleep(20); // hack
+  sleep(10); // hack
   printf("application service loop: %d %d\n", read_fd, write_fd);
   while(continue_loop) {
-    sleep(10); // hack
+    sleep(5); // hack
     bool succeeded = false;
     // continue_loop = false;
     string in;
@@ -1039,7 +1039,9 @@ done:
     }
     string str_resp;
     if (resp.SerializeToString(&str_resp)) {
-      write(client, (byte*)str_resp.data(), str_resp.size());
+      if(write(client, (byte*)str_resp.data(), str_resp.size()) < 0) {
+        printf("Write failed\n");
+      }
     }
     close(client);
   }

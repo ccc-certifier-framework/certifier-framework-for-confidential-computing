@@ -47,7 +47,9 @@ bool application_GetCerts(int* size_out, byte* out) {
   req.set_function("getcerts");
   string req_str;
   req.SerializeToString(&req_str);
-  write(writer, (byte*)req_str.data(), req_str.size());
+  if (write(writer, (byte*)req_str.data(), req_str.size()) < 0) {
+    printf("write failed\n");
+  }
 
   // response
   int t_size = 4096;
@@ -61,9 +63,9 @@ bool application_GetCerts(int* size_out, byte* out) {
     return false;
   if (rsp.function() != "getcerts" || rsp.status() != "succeeded")
     return false;
-  if (*size_out < rsp.args(0).size())
+  if (*size_out < (int)rsp.args(0).size())
     return false;
-  *size_out = rsp.args(0).size();
+  *size_out = (int)rsp.args(0).size();
   memcpy(out, rsp.args(0).data(), *size_out);
   return true;
 }
@@ -82,7 +84,9 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   req.add_args(req_arg_str);
   string req_str;
   req.SerializeToString(&req_str);
-  write(writer, (byte*)req_str.data(), req_str.size());
+  if (write(writer, (byte*)req_str.data(), req_str.size()) < 0) {
+    printf("write failed\n");
+  }
 
   // response
   int t_size = in_size + buffer_pad;
@@ -99,11 +103,11 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
     return false;
   }
 
-  if (*size_out < rsp.args(0).size()) {
+  if (*size_out < (int)rsp.args(0).size()) {
     printf("application_Seal, output too big\n");
     return false;
   }
-  *size_out = rsp.args(0).size();
+  *size_out = (int)rsp.args(0).size();
   memcpy(out, rsp.args(0).data(), *size_out);
   return true;
 }
@@ -119,7 +123,9 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   req.add_args(req_arg_str);
   string req_str;
   req.SerializeToString(&req_str);
-  write(writer, (byte*)req_str.data(), req_str.size());
+  if (write(writer, (byte*)req_str.data(), req_str.size()) < 0) {
+    printf("write failed\n");
+  }
 
   // response
   int t_size = in_size  + buffer_pad;
@@ -136,11 +142,11 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
     printf("application_Unseal, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
   }
-  if (*size_out < rsp.args(0).size()) {
+  if (*size_out < (int)rsp.args(0).size()) {
     printf("application_Unseal, output too big\n");
     return false;
   }
-  *size_out = rsp.args(0).size();
+  *size_out = (int)rsp.args(0).size();
   memcpy(out, rsp.args(0).data(), *size_out);
   return true;
 }
@@ -159,7 +165,9 @@ bool application_Attest(int in_size, byte* in,
   req.add_args(req_arg_str);
   string req_str;
   req.SerializeToString(&req_str);
-  write(writer, (byte*)req_str.data(), req_str.size());
+  if (write(writer, (byte*)req_str.data(), req_str.size()) < 0) {
+    printf("write failed\n");
+  }
 
   // response
   int t_size = in_size  + buffer_pad;
@@ -171,11 +179,11 @@ bool application_Attest(int in_size, byte* in,
     printf("application_Attest, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
   }
-  if (*size_out < rsp.args(0).size()) {
+  if (*size_out < (int)rsp.args(0).size()) {
     printf("application_Attest, output too big\n");
     return false;
   }
-  *size_out = rsp.args(0).size();
+  *size_out = (int)rsp.args(0).size();
   memcpy(out, rsp.args(0).data(), *size_out);
   return true;
 }

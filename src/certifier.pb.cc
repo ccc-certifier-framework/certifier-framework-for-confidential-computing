@@ -448,7 +448,8 @@ struct buffer_sequenceDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT buffer_sequenceDefaultTypeInternal _buffer_sequence_default_instance_;
 constexpr run_request::run_request(
   ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
-  : location_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string){}
+  : location_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , cert_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string){}
 struct run_requestDefaultTypeInternal {
   constexpr run_requestDefaultTypeInternal()
     : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
@@ -882,7 +883,9 @@ const uint32_t TableStruct_certifier_2eproto::offsets[] PROTOBUF_SECTION_VARIABL
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::run_request, location_),
+  PROTOBUF_FIELD_OFFSET(::run_request, cert_),
   0,
+  1,
   PROTOBUF_FIELD_OFFSET(::run_response, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::run_response, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -945,10 +948,10 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOB
   { 349, -1, -1, sizeof(::signed_claim_sequence)},
   { 356, 364, -1, sizeof(::tagged_signed_claim)},
   { 366, -1, -1, sizeof(::buffer_sequence)},
-  { 373, 380, -1, sizeof(::run_request)},
-  { 381, 388, -1, sizeof(::run_response)},
-  { 389, 397, -1, sizeof(::app_request)},
-  { 399, 408, -1, sizeof(::app_response)},
+  { 373, 381, -1, sizeof(::run_request)},
+  { 383, 390, -1, sizeof(::run_response)},
+  { 391, 399, -1, sizeof(::app_request)},
+  { 401, 410, -1, sizeof(::app_response)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -1067,16 +1070,16 @@ const char descriptor_table_protodef_certifier_2eproto[] PROTOBUF_SECTION_VARIAB
   "laim_sequence\022%\n\006claims\030\001 \003(\0132\025.signed_c"
   "laim_message\"E\n\023tagged_signed_claim\022\013\n\003t"
   "ag\030\001 \001(\t\022!\n\002sc\030\002 \001(\0132\025.signed_claim_mess"
-  "age\" \n\017buffer_sequence\022\r\n\005block\030\001 \003(\014\"\037\n"
-  "\013run_request\022\020\n\010location\030\001 \001(\t\"\036\n\014run_re"
-  "sponse\022\016\n\006status\030\001 \001(\t\"-\n\013app_request\022\020\n"
-  "\010function\030\001 \001(\t\022\014\n\004args\030\002 \003(\014\">\n\014app_res"
-  "ponse\022\020\n\010function\030\001 \001(\t\022\016\n\006status\030\002 \001(\t\022"
-  "\014\n\004args\030\003 \003(\014"
+  "age\" \n\017buffer_sequence\022\r\n\005block\030\001 \003(\014\"-\n"
+  "\013run_request\022\020\n\010location\030\001 \001(\t\022\014\n\004cert\030\002"
+  " \001(\014\"\036\n\014run_response\022\016\n\006status\030\001 \001(\t\"-\n\013"
+  "app_request\022\020\n\010function\030\001 \001(\t\022\014\n\004args\030\002 "
+  "\003(\014\">\n\014app_response\022\020\n\010function\030\001 \001(\t\022\016\n"
+  "\006status\030\002 \001(\t\022\014\n\004args\030\003 \003(\014"
   ;
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_certifier_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_certifier_2eproto = {
-  false, false, 3333, descriptor_table_protodef_certifier_2eproto, "certifier.proto", 
+  false, false, 3347, descriptor_table_protodef_certifier_2eproto, "certifier.proto", 
   &descriptor_table_certifier_2eproto_once, nullptr, 0, 34,
   schemas, file_default_instances, TableStruct_certifier_2eproto::offsets,
   file_level_metadata_certifier_2eproto, file_level_enum_descriptors_certifier_2eproto, file_level_service_descriptors_certifier_2eproto,
@@ -10647,6 +10650,9 @@ class run_request::_Internal {
   static void set_has_location(HasBits* has_bits) {
     (*has_bits)[0] |= 1u;
   }
+  static void set_has_cert(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
 };
 
 run_request::run_request(::PROTOBUF_NAMESPACE_ID::Arena* arena,
@@ -10670,6 +10676,14 @@ run_request::run_request(const run_request& from)
     location_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_location(), 
       GetArenaForAllocation());
   }
+  cert_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    cert_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_cert()) {
+    cert_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_cert(), 
+      GetArenaForAllocation());
+  }
   // @@protoc_insertion_point(copy_constructor:run_request)
 }
 
@@ -10677,6 +10691,10 @@ inline void run_request::SharedCtor() {
 location_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
   location_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+cert_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  cert_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 }
 
@@ -10690,6 +10708,7 @@ run_request::~run_request() {
 inline void run_request::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   location_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  cert_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
 void run_request::ArenaDtor(void* object) {
@@ -10709,8 +10728,13 @@ void run_request::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 0x00000001u) {
-    location_.ClearNonDefaultToEmpty();
+  if (cached_has_bits & 0x00000003u) {
+    if (cached_has_bits & 0x00000001u) {
+      location_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000002u) {
+      cert_.ClearNonDefaultToEmpty();
+    }
   }
   _has_bits_.Clear();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
@@ -10731,6 +10755,15 @@ const char* run_request::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID
           #ifndef NDEBUG
           ::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "run_request.location");
           #endif  // !NDEBUG
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional bytes cert = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_cert();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -10776,6 +10809,12 @@ uint8_t* run_request::_InternalSerialize(
         1, this->_internal_location(), target);
   }
 
+  // optional bytes cert = 2;
+  if (cached_has_bits & 0x00000002u) {
+    target = stream->WriteBytesMaybeAliased(
+        2, this->_internal_cert(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -10792,14 +10831,23 @@ size_t run_request::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // optional string location = 1;
   cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 0x00000001u) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->_internal_location());
-  }
+  if (cached_has_bits & 0x00000003u) {
+    // optional string location = 1;
+    if (cached_has_bits & 0x00000001u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_location());
+    }
 
+    // optional bytes cert = 2;
+    if (cached_has_bits & 0x00000002u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_cert());
+    }
+
+  }
   return MaybeComputeUnknownFieldsSize(total_size, &_cached_size_);
 }
 
@@ -10822,8 +10870,14 @@ void run_request::MergeFrom(const run_request& from) {
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_has_location()) {
-    _internal_set_location(from._internal_location());
+  cached_has_bits = from._has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
+    if (cached_has_bits & 0x00000001u) {
+      _internal_set_location(from._internal_location());
+    }
+    if (cached_has_bits & 0x00000002u) {
+      _internal_set_cert(from._internal_cert());
+    }
   }
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -10849,6 +10903,11 @@ void run_request::InternalSwap(run_request* other) {
       &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
       &location_, lhs_arena,
       &other->location_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &cert_, lhs_arena,
+      &other->cert_, rhs_arena
   );
 }
 
