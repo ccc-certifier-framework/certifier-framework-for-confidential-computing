@@ -166,7 +166,7 @@ bool fetch_store(const string& enclave_type) {
 }
 
 void clear_sensitive_data() {
-  // Todo: clear symmetric and private keys
+  // Todo: Fix - clear symmetric and private keys
 }
 
 bool cold_init(const string& enclave_type) {
@@ -307,6 +307,8 @@ bool cold_init(const string& enclave_type) {
 }
 
 bool warm_restart(const string& enclave_type) {
+  // Todo: Fix - make sure this works
+
   if (!fetch_store(enclave_type)) {
     printf("Can't fetch store\n");
     return false;
@@ -743,7 +745,7 @@ bool measure_binary(const string& file, string* m) {
 
 void delete_child(int signum) {
     int pid = wait(nullptr);
-    // kill the thread
+    // Todo: Fix 3 --- kill the thread
     remove_kid(pid);
 }
 
@@ -808,7 +810,7 @@ bool impl_Attest(string in, string* out) {
   return true;
 }
 
-bool impl_GetCerts(string* out) {
+bool impl_GetParentEvidence(string* out) {
   return false;
 }
 
@@ -825,6 +827,7 @@ void app_service_loop(int read_fd, int write_fd) {
     // continue_loop = false;
     string in;
     string out;
+    // Todo: Fix 1 - Why doesn't this read block?
     int n = read(read_fd, r_buf, r_size);
     printf("app_service_loop, read: %d\n", n);
     if (n <= 0) {
@@ -848,7 +851,7 @@ void app_service_loop(int read_fd, int write_fd) {
         in = req.args(0);
         succeeded= impl_Attest(in, &out);
     } else if (req.function() == "getcerts") {
-        succeeded= impl_GetCerts(&out);
+        succeeded= impl_GetParentEvidence(&out);
     }
     if (succeeded) {
       printf("service succeeded\n");
@@ -879,6 +882,7 @@ finishreq:
 
 bool start_app_service_loop(int read_fd, int write_fd) {
   printf("start_app_service_loop\n");
+  // Todo: Fix 2 - make this multithreaded
 #if 0
   std::thread service_loop(app_service_loop, read_fd, write_fd);
 #else
@@ -929,7 +933,7 @@ bool process_run_request(run_request& req) {
     close(parent_read_fd);
     close(parent_write_fd);
 
-    // Todo: change owner
+    // Todo: Fix - change owner
 
     printf("Child about to exec %s, read: %d, write: %d\n",
         req.location().c_str(), child_read_fd, child_write_fd);
@@ -1026,6 +1030,10 @@ bool app_request_server() {
     str_req.assign((char*)in, n);
     if (!req.ParseFromString(str_req)) {
       goto done;
+    }
+
+    if (FLAGS_run_policy != "all") {
+      // Todo: Fix - check certificate
     }
     printf("at process_run_request: %s\n", req.location().c_str());
     ret = process_run_request(req);
