@@ -713,7 +713,10 @@ func serviceThread(conn net.Conn, client string) {
 	}
 
 	// Verify proof and send response
-	appOrgName := *toProve.Subject.Key.KeyName
+	var appOrgName string = "anonymous"
+	if  toProve.Subject.Key != nil && toProve.Subject.Key.KeyName != nil {
+		appOrgName = *toProve.Subject.Key.KeyName
+	}
 
 	// Debug
 	fmt.Printf("Verifying proof %d steps\n", len(proof.Steps))

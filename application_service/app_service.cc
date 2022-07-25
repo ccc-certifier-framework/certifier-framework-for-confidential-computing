@@ -21,6 +21,8 @@
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 
+#include <pwd.h>
+
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,6 +62,8 @@ DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
 DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "app_service.measurement", "measurement");
+
+DEFINE_string(guest_login_name, "jlm", "guest name");
 
 bool service_trust_data_initialized = false;
 key_message publicPolicyKey;
@@ -834,10 +838,24 @@ bool process_run_request(run_request& req) {
     close(fd2[1]);
     return false;
   } else if (pid == 0) {  // child
+
     close(parent_read_fd);
     close(parent_write_fd);
 
-    // Todo: Fix - change owner
+    // Change process owner
+    struct passwd* ent = getpwnam(FLAGS_guest_login_name.c_str());
+    if (ent == nullptr) {
+      printf("Guest is not a user\n");
+      return false;
+    }
+    uid_t uid = ent->pw_uid;
+    gid_t gid = ent->pw_gid;
+    // Make sure this is not a privileged account?
+    printf("Changing to gid: %d, uid: %d\n", gid, uid);
+    //free(ent);
+    ent = nullptr;
+    setgid(gid);
+    setuid (uid);
 
     printf("Child about to exec %s, read: %d, write: %d\n",
         req.location().c_str(), child_read_fd, child_write_fd);
