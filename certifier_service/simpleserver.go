@@ -19,7 +19,7 @@ package main
 import (
 	"bytes"
         "crypto/x509"
-	"crypto/rsa"
+	//"crypto/rsa"
 	"flag"
 	"fmt"
 	"encoding/hex"
@@ -693,39 +693,7 @@ func serviceThread(conn net.Conn, client string) {
 	response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
 	response.Artifact = make([]byte, 5)
 	response.Status = &failed
-
-	// Make sure app key signed policy key
-	// Replace the following with the serialized measurement of the requesting app
 	appKeyEntity := toProve.GetSubject()
-	var appKey *certprotos.KeyMessage = nil
-	if appKeyEntity.GetEntityType() == "key" {
-		appKey = appKeyEntity.Key
-	}
-
-	policyKeyVerified := false
-	pK := rsa.PrivateKey{}
-	PK := rsa.PublicKey{}
-	if appKey != nil && certlib.GetRsaKeysFromInternal(appKey, &pK, &PK){
-		assertedPolicyKey := certprotos.KeyMessage {}
-		if certlib.RsaSha256Verify(&PK, request.GetSerializedPolicyKey(), request.GetSignedPolicyKey()) {
-			err = proto.Unmarshal(request.GetSerializedPolicyKey(), &assertedPolicyKey)
-			if err == nil && certlib.SameKey(publicPolicyKey, &assertedPolicyKey) {
-				policyKeyVerified = true
-			}
-		}
-	} else {
-		fmt.Printf("Can't find app key to check signature\n")
-	}
-
-	if !policyKeyVerified {
-		// send response
-		rb, err := proto.Marshal(&response)
-		if err != nil {
-			logEvent("Request packet not signed", b[0:n], nil)
-			return
-		}
-		_, err = conn.Write(rb)
-	}
 
 	// find statement appKey speaks-for measurement in alreadyProved later
 	appOrgName := *toProve.Subject.Key.KeyName

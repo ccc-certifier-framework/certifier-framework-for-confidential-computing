@@ -390,6 +390,127 @@ void policy_store::delete_signed_claim_by_index(int n) {
 // Trusted primitives
 // -------------------------------------------------------------------
 
+bool certifier_public_policy_key_initialized = false;
+key_message certifier_public_policy_key;
+const key_message* GetPublicPolicyKey() {
+  if (!certifier_public_policy_key_initialized)
+    return nullptr;
+  return &certifier_public_policy_key;
+}
+
+bool GetX509FromCert(const string& cert, X509* x) {
+  return asn1_to_x509(cert, x);
+}
+
+bool PublicKeyFromCert(const string& cert, key_message* k) {
+  X509* x = X509_new();
+  EVP_PKEY* epk = nullptr;
+  RSA* rk = nullptr;
+  X509_NAME* sn = nullptr;
+  const BIGNUM* N = BN_new();
+  const BIGNUM* E = BN_new();
+  const BIGNUM* D = BN_new();
+  rsa_message* rkm = nullptr;
+  int size_n = 0;
+  int size_e = 0;
+  int s = 0;
+  bool res = true;
+  string subject_name_str;
+  char name_buf[1024];
+  string* cert_str = nullptr;
+
+  if (!GetX509FromCert(cert, x)) {
+    printf("Can't get X509 from cert\n");
+    res = false;
+    goto done;
+  }
+
+  // make key message for public policy key from cert
+  epk = X509_get_pubkey(x);
+  if (epk == nullptr) {
+    printf("Can't get subject key\n");
+    res = false;
+    goto done;
+  }
+  rk = EVP_PKEY_get1_RSA(epk);
+  if (rk == nullptr) {
+    printf("Can't get subject rsa key\n");
+    res = false;
+    goto done;
+  }
+
+  sn = X509_get_subject_name(x);
+  if (sn == nullptr) {
+    printf("Can't get subject name\n");
+    res = false;
+    goto done;
+  }
+
+  if (X509_NAME_get_text_by_NID(sn, NID_commonName, name_buf, 1024) < 0) {
+    printf("Can't X509_NAME_get_text_by_NID\n");
+    res = false;
+    goto done;
+  }
+  subject_name_str.assign((const char*) name_buf);
+
+  RSA_get0_key(rk, &N, &E, &D);
+  rkm = new(rsa_message);
+  if (rkm == nullptr) {
+    printf("Can't get rsa key\n");
+    res = false;
+    goto done;
+  }
+
+  size_n = BN_num_bytes(N);
+  size_e = BN_num_bytes(E);
+
+  byte bn_buf[8192];
+  s = BN_bn2bin(N, bn_buf);
+  if (s <= 0) {
+    printf("Can't BN_bn2bin\n");
+    res = false;
+    goto done;
+  }
+  rkm->set_public_modulus(bn_buf, s);
+  s = BN_bn2bin(E, bn_buf);
+  if (s <= 0) {
+    printf("Can't BN_bn2bin\n");
+    res = false;
+    goto done;
+  }
+  rkm->set_public_exponent(bn_buf, s);
+
+  k->set_key_name(subject_name_str);
+  if (size_n == 128) {
+    k->set_key_type("rsa-1024-public");
+  } else if (size_n == 256) {
+    k->set_key_type("rsa-2048-public");
+  } else {
+    printf("Bad key type\n");
+    res = false;
+    goto done;
+  }
+  k->set_key_format("vse-key");
+  k->set_allocated_rsa_key(rkm);
+
+  cert_str = new(string);
+  cert_str->assign((char*)cert.data(), cert.size());
+  k->set_allocated_certificate(cert_str);
+
+done:
+  if (N != nullptr)
+    BN_free((BIGNUM*)N);
+  if (E != nullptr)
+    BN_free((BIGNUM*)E);
+  if (D != nullptr)
+    BN_free((BIGNUM*)D);
+  if (epk != nullptr)
+    EVP_PKEY_free(epk);
+  if (x != nullptr)
+    X509_free(x);
+  return res;
+}
+
 bool construct_what_to_say(string& enclave_type,
       key_message& attest_pk, key_message& enclave_pk,
       string& expected_measurement, string* what_to_say) {
@@ -434,7 +555,9 @@ bool construct_what_to_say(string& enclave_type,
 }
 
 #ifdef SEV_SNP
+extern bool sev_Init(const string& platform_certs_file);
 extern bool sev_Getmeasurement(int* size_out, byte* out);
+extern bool sev_GetParentEvidence(string* out);
 extern bool sev_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool sev_Unseal(int in_size, byte* in, int* size_out, byte* out);
 extern bool sev_Attest(int what_to_say_size, byte* what_to_say,
@@ -511,6 +634,26 @@ bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
  return false;
 }
 
+bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_type,
+    string* out) {
+#ifdef OE_CERTIFIER
+  if (enclave_type == "oe-enclave") {
+    return false;
+  }
+#endif
+#ifdef SEV_SNP
+  if (enclave_type == "sev-snp") {
+    return sev_GetParentEvidence(out);
+  }
+#endif
+  if (enclave_type == "application-enclave") {
+    return application_GetParentEvidence(out);
+  }
+  return false;
+}
+
+// Todo: We should get rid of this.  User shouldn't need to know its
+//measurement, usually.
 bool Getmeasurement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out) {
 
@@ -528,6 +671,15 @@ bool Getmeasurement(const string& enclave_type, const string& enclave_id,
   }
 #endif
   return false;
+}
+
+bool certifier_parent_enclave_type_intitalized = false;
+string certifier_parent_enclave_type;
+bool GetParentEnclaveType(string* type) {
+  if (!certifier_parent_enclave_type_intitalized)
+    return false;
+  *type = certifier_parent_enclave_type;
+  return true;
 }
 
 // -------------------------------------------------------------------
@@ -1782,12 +1934,16 @@ void print_trust_request_message(trust_request_message& m) {
   if (m.has_providing_enclave_tag()) {
     printf("Providing  enclave     :  %s\n", m.providing_enclave_tag().c_str());
   }
+  if (m.has_purpose()) {
+    printf("Purpose                :  %s\n", m.purpose().c_str());
+  }
   if (m.has_submitted_evidence_type()) {
     printf("Evidence type          :  %s\n", m.submitted_evidence_type().c_str());
   }
   if (m.support().has_prover_type()) {
     printf("Prover type: %s\n", m.support().prover_type().c_str());
   }
+#if 0
   if (m.has_policy_key()) {
     print_key(m.policy_key());
   }
@@ -1804,6 +1960,7 @@ void print_trust_request_message(trust_request_message& m) {
     print_bytes(m.signed_policy_key().size(), (byte*)m.signed_policy_key().data());
     printf("\n");
   }
+#endif
 }
 
 void print_trust_response_message(trust_response_message& m) {

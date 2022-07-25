@@ -140,13 +140,13 @@ TEST (test_sev, test_sev) {
 
 // -----------------------Run Tests-----------------------------
 
-
+extern bool simulator_init();
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
 
-  if (!simulator_init(nullptr, nullptr)) {
+  if (!simulator_init()) {
     return 1;
   }
 

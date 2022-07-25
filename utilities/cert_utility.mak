@@ -40,7 +40,8 @@ AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
-dobj=	$(O)/cert_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o $(O)/simulated_enclave.o
+dobj=	$(O)/cert_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o
 
 
 all:	cert_utility.exe measurement_init.exe
@@ -85,3 +86,7 @@ $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 $(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
 	@echo "compiling simulated_enclave.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/simulated_enclave.o $(S)/simulated_enclave.cc
+
+$(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
+	@echo "compiling application_enclave.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(S)/application_enclave.cc

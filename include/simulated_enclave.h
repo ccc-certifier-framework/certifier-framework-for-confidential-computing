@@ -46,7 +46,8 @@ using std::string;
 #ifndef _SIMULATED_ENCLAVE_H__
 #define _SIMULATED_ENCLAVE_H__
 
-bool simulator_init(const char* key_file, const char* m_file);
+bool simulated_Init(const string& policy_cert, const string& attest_key_file,
+    const string& measurement_file, const string& attest_key_signed_claim_file);
 bool simulated_Getmeasurement(int* size_out, byte* out);
 bool simulated_Seal(const string& enclave_type, const string& enclave_id,
   int in_size, byte* in, int* size_out, byte* out);
@@ -55,5 +56,9 @@ bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
 bool simulated_Attest(const string& enclave_type,
   int what_to_say_size, byte* what_to_say,
   int* size_out, byte* out);
+bool simulated_GetParentEvidence(string* out);
+
+bool simulated_GetAttestClaim(signed_claim_message* out);
+bool simulated_GetPlatformClaim(signed_claim_message* out);
 
 #endif

@@ -706,6 +706,31 @@ bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
   return true;
 }
 
+bool plat_certs_initialized = false;
+string platform_certs;
+
+bool sev_Init(const string& platform_certs_file) {
+  int size = file_size(platform_certs_file);
+  if (size < 0) {
+    return false;
+  }
+  byte buf[size];
+
+  if (!read_file(platform_certs_file, &size, buf)) {
+    return false;
+  }
+  platform_certs.assign((char*)buf, size);
+  plat_certs_initialized = true;
+  return true;
+}
+
+bool sev_GetParentEvidence(string* out) {
+  if (!plat_certs_initialized)
+    return false;
+  out->assign((char*)platform_certs.data(), platform_certs.size());
+  return true;
+}
+
 bool sev_Getmeasurement(int* size_out, byte* out) {
   return false;
 }

@@ -1626,7 +1626,6 @@ func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
 	fmt.Printf("\nRequest:\n")
 	fmt.Printf("Requesting Enclave Tag : %s\n", req.GetRequestingEnclaveTag())
         fmt.Printf("Providing Enclave Tag: %s\n", req.GetProvidingEnclaveTag())
-        fmt.Printf("Policy Key:\n")
 	if req.Purpose != nil {
 		fmt.Printf("Purpose: %s\n", *req.Purpose)
 	}
@@ -1657,24 +1656,6 @@ func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
 		fmt.Printf("Support is empty\n")
 	}
 	fmt.Printf("\n")
-	if req.PolicyKey!= nil {
-		fmt.Printf("Policy Key:\n")
-		PrintKey(req.PolicyKey)
-		fmt.Printf("\n")
-	}
-	if req.ServiceAddress != nil {
-		fmt.Printf("Service address: %s\n", req.GetServiceAddress())
-	}
-	if req.SerializedPolicyKey != nil {
-		fmt.Printf("Serialized policy Key:\n")
-		PrintBytes(req.SerializedPolicyKey)
-		fmt.Printf("\n")
-	}
-	if req.SignedPolicyKey != nil {
-		fmt.Printf("Signed policy Key:\n")
-		PrintBytes(req.SignedPolicyKey)
-		fmt.Printf("\n")
-	}
 }
 
 func PrintTrustReponse(res *certprotos.TrustResponseMessage) {

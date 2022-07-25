@@ -140,7 +140,7 @@ int cipher_key_byte_size(const char* alg_name);
 int digest_output_byte_size(const char* alg_name);
 int mac_output_byte_size(const char* alg_name);
 
-bool asn1_to_x509(string& in, X509 *x);
+bool asn1_to_x509(const string& in, X509 *x);
 bool x509_to_asn1(X509 *x, string* out);
 bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k);
 #endif

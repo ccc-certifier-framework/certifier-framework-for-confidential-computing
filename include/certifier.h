@@ -43,6 +43,18 @@ using std::string;
 // limitations under the License.
 
 
+// Some Data and access functions
+// -------------------------------------------------------------------
+
+extern bool certifier_parent_enclave_type_intitalized;
+extern string certifier_parent_enclave_type;
+
+extern bool certifier_public_policy_key_initialized;
+extern key_message certifier_public_policy_key;
+const key_message* GetPublicPolicyKey();
+
+bool PublicKeyFromCert(const string& cert, key_message* k);
+
 // Policy store
 // -------------------------------------------------------------------
 
@@ -133,6 +145,9 @@ bool Unseal(const string& enclave_type, const string& enclave_id,
 bool Attest(const string& enclave_type,
   int what_to_say_size, byte* what_to_say,
   int* size_out, byte* out);
+
+bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_type,
+      string* out);
 
 // -------------------------------------------------------------------
 

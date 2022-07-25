@@ -255,9 +255,9 @@ Go setup
 export GOPATH=$HOME
 export GOROOT=/usr/local/go
 export PATH=$PATH:$GOROOT/bin
+export GO111MODULE=off
 go mod init
 go mod tidy
 go mod init certifier.pb.go
-export GO111MODULE=off
 
 

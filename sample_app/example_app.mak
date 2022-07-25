@@ -24,7 +24,7 @@ endif
 
 S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
-US= .
+US=.
 I= $(SRC_DIR)/include
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/
 
@@ -52,17 +52,19 @@ example_app.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/example_app.exe $(dobj) $(LDFLAGS)
 
-$(S)/certifier.pb.cc $(S)/certifier.pb.h: $(S)/certifier.proto
-	$(PROTO) -I$(I) --cpp_out=$(S) $(S)/certifier.proto
-	mv certifier.pb.h $(I)
+$(US)/certifier.pb.cc: $(S)/certifier.proto
+	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto
+	mv $(US)/certifier.pb.h $(I)
 
-$(O)/example_app.o: $(US)/example_app.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(I)/certifier.pb.h: $(US)/certifier.pb.cc
+
+$(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
+	@echo "compiling certifier.pb.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
+
+$(O)/example_app.o: $(US)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "compiling example_app.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/example_app.o $(US)/example_app.cc
-
-$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
-	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"

@@ -104,20 +104,31 @@ bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) 
   char t_buf[buf_size];
   memset(t_buf, 0, buf_size);
   sprintf(t_buf, "int %s = %d;\n", size_name.c_str(), t_size);
-  write(out, (byte*)t_buf, strlen(t_buf));
+  if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
+    printf("Bad write\n");
+  }
   memset(t_buf, 0, buf_size);
   sprintf(t_buf, "byte %s[%d] = {\n    ", array_name.c_str(), t_size);
   const char* s2 = "\n};\n\n";
 
-  write(out, (byte*)t_buf, strlen(t_buf));
+  if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
+    printf("Bad write\n");
+  }
   for (int i = 0; i < t_size; i++) {
     memset(t_buf, 0, buf_size);
     sprintf(t_buf, "0x%02x, ", bin_cert[i]);
-    write(out, (byte*)t_buf, strlen(t_buf));
-    if ((i%8) == 7)
-      write(out, (byte*)"\n    ", 5);
+    if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
+      printf("Bad write\n");
+    }
+    if ((i%8) == 7) {
+      if (write(out, (byte*)"\n    ", 5) < 0) {
+        printf("Bad write\n");
+      }
+    }
   }
-  write(out, (byte*)s2, strlen(s2));
+  if (write(out, (byte*)s2, strlen(s2)) < 0) {
+    printf("Bad write\n");
+  }
   close(out);
 
 return true;

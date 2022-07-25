@@ -28,63 +28,90 @@ using std::string;
 // limitations under the License.
 
 
-
+// simulated enclave data
+bool my_data_initialized = false;
 const int simulated_measurment_size = 32;
-string my_measurement;
-
-const int sealing_key_size = 4 * block_size;
+const int sealing_key_size = 64;  // for aes&hmac
 byte sealing_key[sealing_key_size];
 key_message my_attestation_key;
+key_message my_platform_key;
+string serialized_platform_claim;
+signed_claim_message my_platform_claim;
+string serialized_attest_claim;
+signed_claim_message my_attest_claim;
 RSA* rsa_attestation_key = nullptr;
+string my_measurement;
 
-bool simulator_init(const char* key_file, const char* m_file) {
-  // makeup attestation key and measurement and sealing key
-  byte m[simulated_measurment_size];
-
-  if (m_file == nullptr) {
-    for (int i = 0; i < simulated_measurment_size; i++)
-      m[i] = (byte)i;
-  } else {
-    string m_str(m_file);
-    int m_size = simulated_measurment_size;
-    if (!read_file(m_str, &m_size, m)) {
-      return false;
-    }
+bool simulated_GetAttestClaim(signed_claim_message* out) {
+  if (!my_data_initialized) {
+    return false;
   }
-  my_measurement.assign((char*)m, simulated_measurment_size);
+  out->CopyFrom(my_attest_claim);
+  return true;
+}
 
+bool simulated_GetPlatformClaim(signed_claim_message* out) {
+  if (!my_data_initialized) {
+    return false;
+  }
+  out->CopyFrom(my_platform_claim);
+  return true;
+}
+
+bool simulated_Init(const string& asn1_policy_cert, const string& attest_key_file,
+      const string& measurement_file, const string& attest_key_signed_claim_file) {
+
+  int m_size = file_size(measurement_file);
+  if (m_size < 0) {
+    printf("simulated_Init, error 1\n");
+    return false;
+  }
+  byte m[m_size];
+  if (!read_file(measurement_file, &m_size, m)) {
+    printf("simulated_Init, error 2\n");
+    return false;
+  }
+  my_measurement.assign((char*)m, m_size);
+
+  // For reproducability, make this a fixed key
   for (int i = 0; i < sealing_key_size; i++)
     sealing_key[i]= (5*i)%16;
 
-  if (key_file == nullptr) {
-    rsa_attestation_key = RSA_new();
-    if (!generate_new_rsa_key(2048, rsa_attestation_key))
-      return false;
-    if (!RSA_to_key(rsa_attestation_key, &my_attestation_key))
-      return false;
-    my_attestation_key.set_key_type("rsa-2048-private");
-    my_attestation_key.set_key_name("attestKey");
-  } else {
-    string file_name(key_file);
-    int at_size =  file_size(file_name)+1;
-    byte at[at_size];
-    if (!read_file(file_name, &at_size, at)) {
-      return false;
-    }
-    string serialized_key;
-    serialized_key.assign((char*)at, at_size);
-    if (!my_attestation_key.ParseFromString(serialized_key)) {
-      return false;
-    }
-    // my_attestation_key.set_key_name("local-attestation-key");
-    my_attestation_key.set_key_name("attestKey");
-    rsa_attestation_key = RSA_new();
-    if (!key_to_RSA( my_attestation_key, rsa_attestation_key)) {
-      printf("Can't recover attestation key\n");
-      return false;
-    }
+  // get attest key
+  int at_size = file_size(attest_key_file);
+  byte at[at_size];
+  if (!read_file(attest_key_file, &at_size, at)) {
+    return false;
+  }
+  string serialized_attest_key;
+  serialized_attest_key.assign((char*)at, at_size);
+  if (!my_attestation_key.ParseFromString(serialized_attest_key)) {
+    return false;
   }
 
+  // my_attestation_key.set_key_name("local-attestation-key");
+  my_attestation_key.set_key_name("attestKey");
+  rsa_attestation_key = RSA_new();
+  if (!key_to_RSA(my_attestation_key, rsa_attestation_key)) {
+    printf("Can't recover attestation key\n");
+    return false;
+  }
+
+  int a_size = file_size(attest_key_signed_claim_file);
+  byte a_buf[a_size];
+  if (!read_file(attest_key_signed_claim_file, &a_size, a_buf)) {
+    printf("Can't read attest claim\n");
+    return false;
+  }
+  serialized_attest_claim.assign((char*)a_buf, a_size);
+  if (!my_attest_claim.ParseFromString(serialized_attest_claim)) {
+    printf("Can't parse attest claim\n");
+    return false;
+  }
+
+  certifier_parent_enclave_type = "software";
+  certifier_parent_enclave_type_intitalized = true;
+  my_data_initialized = true;
   return true;
 }
 
@@ -209,3 +236,29 @@ bool simulated_Attest(const string& enclave_type,
   memcpy(out, ser_scm.data(), *size_out);
   return true;
 }
+
+bool simulated_GetParentEvidence(string* out) {
+  return false;
+}
+
+// delete this
+bool simulator_init() {
+  // makeup attestation key and measurement and sealing key
+  byte m[simulated_measurment_size];
+  for (int i = 0; i < simulated_measurment_size; i++)
+    m[i] = (byte)i;
+  my_measurement.assign((char*)m, simulated_measurment_size);
+  for (int i = 0; i < sealing_key_size; i++)
+    sealing_key[i]= (5*i)%16;
+  
+  rsa_attestation_key = RSA_new();
+  if (!generate_new_rsa_key(2048, rsa_attestation_key))
+    return false;
+  if (!RSA_to_key(rsa_attestation_key, &my_attestation_key))
+    return false;
+  my_attestation_key.set_key_type("rsa-2048-private");
+  my_attestation_key.set_key_name("attestKey");
+
+  return true;
+}
+

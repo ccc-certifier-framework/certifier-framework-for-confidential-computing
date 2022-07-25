@@ -39,12 +39,12 @@ bool application_Init(int read_fd, int write_fd) {
   return true;
 }
 
-bool application_GetCerts(int* size_out, byte* out) {
+bool application_GetParentEvidence(string* out) {
   app_request req;
   app_response rsp;
 
   // request
-  req.set_function("getcerts");
+  req.set_function("getparentevidence");
   string req_str;
   req.SerializeToString(&req_str);
   if (write(writer, (byte*)req_str.data(), req_str.size()) < 0) {
@@ -57,16 +57,13 @@ bool application_GetCerts(int* size_out, byte* out) {
   int n= read(reader, t_out, t_size);
   if (n < 0)
     return false;
-  string r_str;
-  r_str.assign((char*)t_out, n);
-  if (!rsp.ParseFromString(r_str))
+  string rsp_str;
+  rsp_str.assign((char*)t_out, n);
+  if (!rsp.ParseFromString(rsp_str))
     return false;
-  if (rsp.function() != "getcerts" || rsp.status() != "succeeded")
+  if (rsp.function() != "getparentevidence" || rsp.status() != "succeeded")
     return false;
-  if (*size_out < (int)rsp.args(0).size())
-    return false;
-  *size_out = (int)rsp.args(0).size();
-  memcpy(out, rsp.args(0).data(), *size_out);
+  out->assign((char*)rsp.args(0).data(), (int)rsp.args(0).size());
   return true;
 }
 

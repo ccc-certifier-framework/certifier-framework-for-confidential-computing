@@ -1371,7 +1371,7 @@ bool verify_artifact(X509& cert, key_message& verify_key,
 }
 
 
-bool asn1_to_x509(string& in, X509 *x) {
+bool asn1_to_x509(const string& in, X509 *x) {
   int len = in.size();
 
   byte* p = (byte*) in.data();
