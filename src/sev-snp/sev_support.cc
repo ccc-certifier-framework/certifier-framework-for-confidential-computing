@@ -719,6 +719,9 @@ bool sev_Init(const string& platform_certs_file) {
   if (!read_file(platform_certs_file, &size, buf)) {
     return false;
   }
+
+  certifier_parent_enclave_type = "hardware";
+  certifier_parent_enclave_type_intitalized = true;
   platform_certs.assign((char*)buf, size);
   plat_certs_initialized = true;
   return true;

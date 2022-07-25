@@ -28,7 +28,8 @@ int main(int an, char**av) {
     in_fd = atoi(av[1]);
     out_fd = atoi(av[2]);
   }
-  if (!application_Init(in_fd, out_fd)) {
+  string parent_enclave_type("simulated-enclave");
+  if (!application_Init(parent_enclave_type, in_fd, out_fd)) {
     printf("Can't init application-enclave\n");
     return 1;
   }

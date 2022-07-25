@@ -66,6 +66,7 @@ key_message publicPolicyKey;
 
 #include "policy_key.cc"
 
+// Trust data
 string serializedPolicyCert;
 string serializedServiceCert;
 policy_store pStore;
@@ -75,6 +76,7 @@ X509* service_cert = nullptr;
 // For attest
 key_message privateServiceKey;
 key_message publicServiceKey;
+signed_claim_message platform_rule;
 
 // This is the sealing key
 const int service_symmetric_key_size = 64;
@@ -207,10 +209,23 @@ bool cold_init(const string& enclave_type) {
     return false;
   }
 
-  string auth_tag("attest-key");
-  if (!pStore.add_authentication_key(auth_tag, privateServiceKey)) {
+  // Save attest-key
+  string service_tag("attest-key");
+  if (!pStore.add_authentication_key(service_tag, privateServiceKey)) {
     printf("Can't store auth key\n");
     return false;
+  }
+
+  // Sealing keys
+  string sealing_tag("sealing-key");
+  storage_info_message sm;
+  sm.set_storage_type("key");
+  sm.set_tag(sealing_tag);
+  key_message* sk = new(key_message);
+  sk->CopyFrom(service_sealing_key);
+  sm.set_allocated_storage_key(sk);
+  if (!pStore.add_storage_info(sm)) {
+    printf("Can't store sealing keys\n");
   }
 
   if (!save_store(enclave_type)) {
@@ -240,10 +255,10 @@ bool warm_restart(const string& enclave_type) {
     return false;
   }
 
-  string auth_tag("attest-key");
-  const key_message* ak = pStore.get_authentication_key_by_tag(auth_tag);
+  string service_tag("attest-key");
+  const key_message* ak = pStore.get_authentication_key_by_tag(service_tag);
   if (ak == nullptr) {
-    printf("warm-restart error 2\n");
+    printf("Can't get attest key\n");
     return false;
   }
 
@@ -257,6 +272,27 @@ bool warm_restart(const string& enclave_type) {
     print_trust_data();
   }
 
+  string rule_tag("rule-tag");
+  int index = pStore.get_signed_claim_index_by_tag(rule_tag);
+  if (index >= 0) {
+    const signed_claim_message* psm = pStore.get_signed_claim_by_index(index);
+    if (psm != nullptr) {
+      platform_rule.CopyFrom(*psm);
+    }
+  }
+
+  // storage keys
+  string sealing_tag("sealing-key");
+  index = pStore.get_storage_info_index_by_tag(sealing_tag);
+  if (index >= 0) {
+    const storage_info_message* sm = pStore.get_storage_info_by_index(index);
+    if (sm !=nullptr) {
+      service_sealing_key.CopyFrom(sm->storage_key());
+      memcpy(service_symmetric_key, sm->storage_key().secret_key_bits().data(),
+        sm->storage_key().secret_key_bits().size());
+    }
+  }
+  
   service_trust_data_initialized = true;
   return service_trust_data_initialized;
 }
@@ -338,17 +374,14 @@ bool certify_me(const string& enclave_type) {
 
   // Here we generate a vse-attestation which is
   // a claim, signed by the attestation key that signed a statement
-  // the user requests (Some people call this the "user data" in an
-  // attestation.  Formats for an attestation will vary among platforms
-  // but they must always convery the information we do here.
-  // most of this is boiler plate
-
+  // the user requests. Some people call this the "user data" in an
+  // attestation.  Most of this is boiler plate.
   string enclave_id("");
   string descript("service-attest");
   string at_format("vse-attestation");
 
   // now construct the vse clause "attest-key says authentication key speaks-for measurement"
-  // there are three entities in the attest: the attest-key, the auth-key and the measurement
+  // there are three entities in the attest: the attest-key, the service-key and the measurement
   int my_measurement_size = 32;
   byte my_measurement[my_measurement_size];
   if (!Getmeasurement(enclave_type, enclave_id, &my_measurement_size, my_measurement)) {
@@ -378,14 +411,14 @@ bool certify_me(const string& enclave_type) {
   string serialized_attestation;
   if (!vse_attestation(descript, enclave_type, enclave_id, vse_attest_clause,
         &serialized_attestation)) {
-    printf("certify_me error 5\n");
+    printf("vse_attestation failed\n");
     return false;
   }
   int size_out = 8192;
   byte out[size_out];
   if (!Attest(enclave_type, serialized_attestation.size(),
         (byte*) serialized_attestation.data(), &size_out, out)) {
-    printf("certify_me error 6\n");
+    printf("Attest failed\n");
     return false;
   }
   string the_attestation_str;
@@ -421,7 +454,7 @@ bool certify_me(const string& enclave_type) {
   trust_response_message response;
 
   // Important Todo: trust_request_message should be signed by auth key
-  //   to prevent MITM attacks.
+  //   to prevent MITM attacks.  Now I don't think it's necessary.
   request.set_requesting_enclave_tag("requesting-enclave");
   request.set_providing_enclave_tag("providing-enclave");
   request.set_submitted_evidence_type("platform-attestation-only");
@@ -498,12 +531,27 @@ bool certify_me(const string& enclave_type) {
   close(sock);
 
   // Update store and save it
-  string auth_tag("attest-key");
-  const key_message* km = pStore.get_authentication_key_by_tag(auth_tag);
+  string key_tag("attest-key");
+  const key_message* km = pStore.get_authentication_key_by_tag(key_tag);
   if (km == nullptr) {
-    printf("Can't find authentication key in store\n");
-    return false;
+    if (!pStore.add_authentication_key(key_tag, privateServiceKey)) {
+      printf("Can't find authentication key in store\n");
+      return false;
+    }
   }
+ 
+  signed_claim_message  psm;
+  string psm_str;
+  psm_str.assign((char*)response.artifact().data(), response.artifact().size());
+  if (!psm.ParseFromString(psm_str)) {
+      printf("Can't parse artifact\n");
+  }
+
+  string rule_tag("platform-rule");
+  if (!pStore.add_signed_claim(rule_tag, psm)) {
+    printf("Can't add platform rule\n");
+  }
+  platform_rule.CopyFrom(psm);
 
   return save_store(enclave_type);
 }
@@ -751,10 +799,9 @@ bool start_app_service_loop(int read_fd, int write_fd) {
 
 bool process_run_request(run_request& req) {
   // check this for thread safety
-
   // measure binary
+  // Todo: Fix -- Change later to prevent TOCTOU attack
   string m;
-  // Change later to prevent TOCTOU attack
   if (!req.has_location() || !measure_binary(req.location(), &m)) {
     printf("Can't measure binary\n");
     return false;
@@ -938,6 +985,7 @@ int main(int an, char** av) {
     return false;
   }
 
+  // Add directory to file name.
   string attest_key_file_name(FLAGS_service_dir);
   attest_key_file_name.append(FLAGS_attest_key_file);
   string platform_attest_file_name(FLAGS_service_dir);
