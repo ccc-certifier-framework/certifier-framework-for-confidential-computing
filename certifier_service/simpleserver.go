@@ -657,6 +657,16 @@ func serviceThread(conn net.Conn, client string) {
 	fmt.Printf("serviceThread: Trust request received:\n")
 	certlib.PrintTrustRequest(request)
 
+	// Prepare response
+	succeeded := "succeeded"
+	failed := "failed"
+
+	response := certprotos.TrustResponseMessage{}
+	response.RequestingEnclaveTag = request.RequestingEnclaveTag
+	response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
+	response.Artifact = make([]byte, 5)
+	response.Status = &failed
+
 	// Construct the proof
 	var purpose string
 	if  request.Purpose == nil {
@@ -671,11 +681,29 @@ func serviceThread(conn net.Conn, client string) {
 		// Debug
 		fmt.Printf("Constructing Proof fails\n")
 		logEvent("Can't construct proof from request", b[0:n], nil)
-		return
+
+		// Debug
+		fmt.Printf("Sending response\n")
+		certlib.PrintTrustReponse(&response)
+
+		// send response
+		rb, err := proto.Marshal(&response)
+		if err != nil {
+			logEvent("Couldn't marshall request", b[0:n], nil)
+			return
+		}
+		_, err = conn.Write(rb)
+		if response.Status != nil && *response.Status == "succeeded" {
+			logEvent("Successful request", b[0:n], rb)
+		} else {
+			logEvent("Failed Request", b[0:n], rb)
+		}
+			return
 	} else {
 		// Debug
 		fmt.Printf("Constructing Proof succeeded\n")
 	}
+	appKeyEntity := toProve.GetSubject()
 
 	// Debug
 	if toProve != nil {
@@ -684,18 +712,7 @@ func serviceThread(conn net.Conn, client string) {
 		fmt.Printf("\n")
 	}
 
-	// Response
-	succeeded := "succeeded"
-	failed := "failed"
-
-	response := certprotos.TrustResponseMessage{}
-	response.RequestingEnclaveTag = request.RequestingEnclaveTag
-	response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
-	response.Artifact = make([]byte, 5)
-	response.Status = &failed
-	appKeyEntity := toProve.GetSubject()
-
-	// find statement appKey speaks-for measurement in alreadyProved later
+	// Verify proof and send response
 	appOrgName := *toProve.Subject.Key.KeyName
 
 	// Debug
