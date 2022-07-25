@@ -2,6 +2,7 @@
 //  Copyright (C) 2021 Advanced Micro Devices, Inc.
 //  Licensed under Apache 2.0
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -10,6 +11,10 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/ecdsa.h>
+#include <openssl/bn.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <sys/ioctl.h>
 
 #include <secg_sec1.h>
@@ -368,6 +373,7 @@ exit:
   }
   return rc;
 }
+#endif
 
 static bool digest_sha384(const void *msg, size_t msg_len, uint8_t *digest,
     size_t digest_len) {
@@ -394,12 +400,55 @@ int verify_report(struct attestation_report *report) {
   EVP_PKEY *key = NULL;
   unsigned char sha_digest_384[SHA384_DIGEST_LENGTH];
 
+#ifdef SEV_DUMMY_GUEST
   rc = read_key_file(SEV_ECDSA_PUB_KEY, &key, false);
   if (rc != EXIT_SUCCESS) {
     errno = rc;
     perror("read_key_file");
     goto exit;
   }
+#else
+  X509 *x509_vcek = NULL;
+  X509 *x509_ask = NULL;
+  X509 *x509_ark = NULL;
+
+#define SEV_ARK_CERT  "Ark.cer"
+#define SEV_ASK_CERT  "Ask.cer"
+#define SEV_VCEK_CERT "Vcek.cer"
+
+  if (!sev_read_pem_into_x509(SEV_ARK_CERT, &x509_ark)) {
+    rc = EXIT_FAILURE;
+    perror("Failed to load ARK Cert!");
+    goto exit;
+  }
+
+  if (!sev_read_pem_into_x509(SEV_ASK_CERT, &x509_ask)) {
+    rc = EXIT_FAILURE;
+    perror("Failed to load ASK Cert!");
+    goto exit;
+  }
+
+  if (!sev_read_pem_into_x509(SEV_VCEK_CERT, &x509_ask)) {
+    rc = EXIT_FAILURE;
+    perror("Failed to load VCEK Cert!");
+    goto exit;
+  }
+
+  rc = sev_validate_vcek_cert_chain(x509_vcek, x509_ask, x509_ark);
+  if (rc != EXIT_SUCCESS) {
+    errno = rc;
+    perror("sev_validate_vcek_cert_chain");
+    goto exit;
+  }
+  printf("Certificate chain validated!\n");
+
+  key = sev_get_vcek_pubkey(x509_vcek);
+  if (!key) {
+    errno = EXIT_FAILURE;
+    perror("sev_get_vcek_pubkey");
+    goto exit;
+  }
+#endif
 
   if (!digest_sha384(report, sizeof(struct attestation_report) - sizeof(struct signature),
         sha_digest_384, sizeof(sha_digest_384))) {
@@ -423,7 +472,6 @@ exit:
   }
   return rc;
 }
-#endif
 
 int get_report(const uint8_t *data, size_t data_size,
          struct attestation_report *report) {
@@ -736,4 +784,143 @@ bool sev_GetParentEvidence(string* out) {
 
 bool sev_Getmeasurement(int* size_out, byte* out) {
   return false;
+}
+
+int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert)
+{
+  FILE *pFile = NULL;
+  pFile = fopen(file_name, "re");
+  if (!pFile)
+    return EXIT_FAILURE;
+
+  // printf("Reading from file: %s\n", file_name.c_str());
+  *x509_cert = PEM_read_X509(pFile, NULL, NULL, NULL);
+  if (!x509_cert) {
+    printf("Error reading x509 from file: %s\n", file_name);
+    fclose(pFile);
+    return EXIT_FAILURE;
+  }
+  fclose(pFile);
+  return EXIT_SUCCESS;
+}
+
+static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert, X509 *parent_cert)
+{
+  bool ret = false;
+  X509_STORE *store = NULL;
+  X509_STORE_CTX *store_ctx = NULL;
+
+  do {
+    // Create the store
+    store = X509_STORE_new();
+    if (!store)
+      break;
+
+    // Add the parent cert to the store
+    if (X509_STORE_add_cert(store, parent_cert) != 1) {
+      printf("Error adding parent_cert to x509_store\n");
+      break;
+    }
+
+    // Add the intermediate cert to the store
+    if (intermediate_cert) {
+      if (X509_STORE_add_cert(store, intermediate_cert) != 1) {
+        printf("Error adding intermediate_cert to x509_store\n");
+        break;
+      }
+    }
+
+    // Create the store context
+    store_ctx = X509_STORE_CTX_new();
+    if (!store_ctx) {
+      printf("Error creating x509_store_context\n");
+      break;
+    }
+
+    // Pass the store (parent and intermediate cert) and child cert (that we want to verify) into the store context
+    if (X509_STORE_CTX_init(store_ctx, store, child_cert, NULL) != 1) {
+      printf("Error initializing 509_store_context\n");
+      break;
+    }
+
+    // Specify which cert to validate
+    X509_STORE_CTX_set_cert(store_ctx, child_cert);
+
+    // Verify the certificate
+    ret = X509_verify_cert(store_ctx);
+
+    // Print out error code
+    if (ret == 0)
+      printf("Error verifying cert: %s\n", X509_verify_cert_error_string(X509_STORE_CTX_get_error(store_ctx)));
+
+    if (ret != 1)
+      break;
+
+    ret = true;
+  } while (0);
+
+  // Cleanup
+  if (store_ctx)
+    X509_STORE_CTX_free(store_ctx);
+  if (store)
+    X509_STORE_free(store);
+
+  return ret;
+}
+
+int sev_validate_vcek_cert_chain(X509 *x509_vcek, X509 *x509_ask, X509 *x509_ark)
+{
+  EVP_PKEY *vcek_pub_key = NULL;
+  int ret = EXIT_FAILURE;
+
+  if (!x509_vcek || !x509_ask || !x509_ark) {
+    printf("Invalid certificate\n");
+    return EXIT_FAILURE;
+  }
+
+  vcek_pub_key = X509_get_pubkey(x509_vcek);
+  if (!vcek_pub_key) {
+    goto err;
+  }
+
+  if (!x509_validate_signature(x509_ark, NULL, x509_ark)) {
+    printf("Error validating signature of ARK Cert\n");
+    goto err;;
+  }
+
+  if (!x509_validate_signature(x509_ask, NULL, x509_ark)) {
+    printf("Error validating signature of ASK Cert\n");
+    goto err;;
+  }
+
+  if (!x509_validate_signature(x509_vcek, x509_ask, x509_ark)) {
+    printf("Error validating signature of VCEK Cert\n");
+    goto err;;
+  }
+
+  ret = EXIT_SUCCESS;
+
+err:
+  if (vcek_pub_key) {
+    EVP_PKEY_free(vcek_pub_key);
+  }
+  return ret;
+}
+
+EVP_PKEY *sev_get_vcek_pubkey(X509 *x509_vcek)
+{
+  EVP_PKEY *vcek_pub_key = NULL;
+
+  if (!x509_vcek) {
+    printf("Invalid certificate\n");
+    return NULL;
+  }
+
+  vcek_pub_key = X509_get_pubkey(x509_vcek);
+  if (!vcek_pub_key) {
+    printf("Failed to get VCEK public key from certificate\n");
+    return NULL;
+  }
+
+  return vcek_pub_key;
 }
