@@ -162,10 +162,6 @@ message trust_request_message {
   optional string submitted_evidence_type   = 3;
   optional string purpose                   = 4;  // "authentication" or "attestation"
   optional evidence_package support         = 5;
-  optional key_message policy_key           = 6;
-  optional string service_address           = 7;
-  optional bytes serialized_policy_key      = 8;
-  optional bytes signed_policy_key          = 9;
 };
 
 message trust_response_message {

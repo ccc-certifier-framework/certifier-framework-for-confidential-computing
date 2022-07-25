@@ -1629,7 +1629,6 @@ func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
 	if req.Purpose != nil {
 		fmt.Printf("Purpose: %s\n", *req.Purpose)
 	}
-	PrintKey(req.PolicyKey)
 	if req.SubmittedEvidenceType != nil {
 		fmt.Printf("\nSubmittedEvidenceType: %s\n", req.GetSubmittedEvidenceType())
 	}

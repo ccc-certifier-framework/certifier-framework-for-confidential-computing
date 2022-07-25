@@ -730,8 +730,9 @@ func serviceThread(conn net.Conn, client string) {
 					appOrgName = "Measured-" + hex.EncodeToString(m)
 				}
 				sn = sn + 1
+				org := "CertifierUsers"
 				cert := certlib.ProduceAdmissionCert(&privatePolicyKey, policyCert,
-					toProve.Subject.Key, request.GetServiceAddress(),
+					toProve.Subject.Key, org,
 					appOrgName, sn, duration)
 				if cert == nil {
 					fmt.Printf("certlib.ProduceAdmissionCert returned nil\n")
