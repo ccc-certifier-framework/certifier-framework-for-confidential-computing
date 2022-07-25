@@ -22,6 +22,8 @@
 #include <openssl/err.h>
 
 #include <pwd.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
@@ -571,6 +573,7 @@ public:
   int pid_;
   int parent_read_fd_;
   int parent_write_fd_;
+  std::thread * thread_obj_;
   spawned_children* next_;
 };
 
@@ -584,6 +587,7 @@ spawned_children* new_kid() {
   kid_mtx.lock();
   nk->valid_ = false;
   nk->next_ = my_kids;
+  nk->thread_obj_ = nullptr;
   my_kids = nk;
   kid_mtx.unlock();
   return nk;
@@ -654,7 +658,10 @@ bool measure_binary(const string& file, string* m) {
 
 void delete_child(int signum) {
     int pid = wait(nullptr);
-    // Todo: Fix 3 --- kill the thread
+    spawned_children* c = find_kid(pid);
+    if (c->thread_obj_ != nullptr) {
+      delete c->thread_obj_;
+    }
     remove_kid(pid);
 }
 
@@ -731,9 +738,7 @@ void app_service_loop(int read_fd, int write_fd) {
   sleep(10); // hack
   printf("application service loop: %d %d\n", read_fd, write_fd);
   while(continue_loop) {
-    sleep(5); // hack
     bool succeeded = false;
-    // continue_loop = false;
     string in;
     string out;
     // Todo: Fix 1 - Why doesn't this read block?
@@ -789,11 +794,12 @@ finishreq:
   }
 }
 
-bool start_app_service_loop(int read_fd, int write_fd) {
+bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   printf("start_app_service_loop\n");
   // Todo: Fix 2 - make this multithreaded
 #if 0
-  std::thread service_loop(app_service_loop, read_fd, write_fd);
+  std::thread* t = new std::thread(app_service_loop, read_fd, write_fd);
+  kid->thread_obj_ = t;
 #else
   app_service_loop(read_fd, write_fd);
 #endif
@@ -823,10 +829,16 @@ bool process_run_request(run_request& req) {
   }
   printf("pipes made %d %d %d %d\n", fd1[0], fd1[1], fd2[0], fd2[1]);
 
+  // Is this what I want?
+
   int parent_read_fd = fd2[0];
   int parent_write_fd = fd1[1];
   int child_read_fd = fd1[0];
   int child_write_fd = fd2[1];
+
+  // Neither of these worked
+  //  fcntl(fd1[0], F_SETFL, 0);
+  //  fcntl(fd2[1], F_SETFL, fcntl(fd2[1], F_GETFL) & ~O_NONBLOCK);
 
   // fork and get pid
   pid_t pid = fork();
@@ -854,8 +866,10 @@ bool process_run_request(run_request& req) {
     printf("Changing to gid: %d, uid: %d\n", gid, uid);
     //free(ent);
     ent = nullptr;
-    setgid(gid);
-    setuid (uid);
+    if (setgid(gid) != 0 || setuid (uid) != 0) {
+      printf("Can't seettuid\n");
+      return false;
+    }
 
     printf("Child about to exec %s, read: %d, write: %d\n",
         req.location().c_str(), child_read_fd, child_write_fd);
@@ -891,7 +905,7 @@ bool process_run_request(run_request& req) {
     nk->parent_read_fd_ = parent_read_fd;
     nk->parent_write_fd_ = parent_write_fd;
     nk->valid_ = true;
-    if (!start_app_service_loop(parent_read_fd, parent_write_fd)) {
+    if (!start_app_service_loop(nk, parent_read_fd, parent_write_fd)) {
       printf("Couldn't start service loop\n");
       return false;
     }

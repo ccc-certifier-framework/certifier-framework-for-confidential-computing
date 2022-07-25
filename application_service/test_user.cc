@@ -34,7 +34,7 @@ int main(int an, char**av) {
     return 1;
   }
 
-  printf("***test_user.exe\n" );
+  printf("test_user.exe is running\n" );
 
   string secret("abc");
   int out_size = 128;
