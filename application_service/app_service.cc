@@ -195,8 +195,6 @@ bool cold_init(const string& enclave_type) {
   protect_symmetric_key.set_key_format("vse-key");
   protect_symmetric_key.set_secret_key_bits(symmetric_key_for_protect, service_symmetric_key_size);
 
-  // Todo: Stick keys in store
-
   // make service attest private and public key
   if (!make_certifier_rsa_key(2048,  &privateServiceKey)) {
     return false;
@@ -220,6 +218,10 @@ bool cold_init(const string& enclave_type) {
     return false;
   }
 
+  printf("cold_init, attest key:\n");
+  print_key(privateServiceKey);
+  printf("\n");
+
   // Sealing keys
   string sealing_tag("sealing-key");
   storage_info_message sm;
@@ -236,6 +238,11 @@ bool cold_init(const string& enclave_type) {
     printf("Can't save store\n");
     return false;
   }
+
+  printf("cold_init, sealing key:\n");
+  print_key(service_sealing_key);
+  printf("\n");
+
 
   if (FLAGS_print_all) {
     print_trust_data();
@@ -272,11 +279,11 @@ bool warm_restart(const string& enclave_type) {
     return false;
   }
 
-  if (FLAGS_print_all) {
-    print_trust_data();
-  }
+  printf("warm_init, attest key:\n");
+  print_key(privateServiceKey);
+  printf("\n");
 
-  string rule_tag("rule-tag");
+  string rule_tag("platform-rule");
   int index = pStore.get_signed_claim_index_by_tag(rule_tag);
   if (index >= 0) {
     const signed_claim_message* psm = pStore.get_signed_claim_by_index(index);
@@ -284,6 +291,10 @@ bool warm_restart(const string& enclave_type) {
       platform_rule.CopyFrom(*psm);
     }
   }
+
+  printf("warm_init, platform rule:\n");
+  print_signed_claim(platform_rule);
+  printf("\n");
 
   // storage keys
   string sealing_tag("sealing-key");
@@ -296,7 +307,15 @@ bool warm_restart(const string& enclave_type) {
         sm->storage_key().secret_key_bits().size());
     }
   }
-  
+
+  printf("warm_init, sealing key:\n");
+  print_key(service_sealing_key);
+  printf("\n");
+
+  if (FLAGS_print_all) {
+    print_trust_data();
+  }
+
   service_trust_data_initialized = true;
   return service_trust_data_initialized;
 }
@@ -348,12 +367,13 @@ bool construct_attestation(entity_message& attest_key_entity, entity_message& se
 }
 
 bool certify_me(const string& enclave_type) {
-#if 0
-  if (!warm_restart(enclave_type)) {
-    printf("warm restart failed\n");
-    return false;
+
+  if (!service_trust_data_initialized) {
+    if (!warm_restart(enclave_type)) {
+      printf("warm restart failed\n");
+      return false;
+    }
   }
-#endif
 
   /// Get the signed claim "platform-key says attestation-key is trusted"
   signed_claim_message signed_platform_says_attest_key_is_trusted;
@@ -1055,17 +1075,15 @@ int main(int an, char** av) {
       printf("cold-init failed\n");
       return 1;
     }
+
+    if (!certify_me(FLAGS_host_enclave_type)) {
+      printf("certification failed\n");
+      return 1;
+    }
   }
 
-#if 0
   if (!warm_restart(FLAGS_host_enclave_type)) {
     printf("warm-restart failed\n");
-    return 1;
-  }
-#endif
-
-  if (!certify_me(FLAGS_host_enclave_type)) {
-    printf("certification failed\n");
     return 1;
   }
 

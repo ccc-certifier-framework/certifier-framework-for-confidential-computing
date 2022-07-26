@@ -77,6 +77,7 @@ $APP_SERVICE_DIR/app_service.exe \
   --attest_key_file="attest_key_file.bin" \
   --measurement_file="app_service.measurement" \
   --cold_init_service=true
+  --cold_init_service=false
 
 
 # send request to start app
