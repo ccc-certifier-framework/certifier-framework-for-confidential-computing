@@ -1,13 +1,18 @@
 Installing The Certifier Framework for Confidential Computing 
 =============================================================
 
-Thus distribution contains code for several programs.
 In this description, the top level directory of this repository,
 which includes this INSTALL.md file, is denoted $(CERTIFIER).
 
 The Ubuntu 20.04 install guide can be found in
 [Ubuntu Install](./Doc/install-certifier-Ubuntu-20.04.md)
 
+Read the Guide in the Doc directory to understand the basic nomenclature
+and programs you will build and use.
+
+
+Certifier API
+-------------
 
 The certifier API is in the src directory.  To compile and run the
 certifier API tests:
@@ -30,6 +35,10 @@ certifier library:
   make clean -f certifier.mak
   make -f certifier.mak
 
+
+Certifier Service
+-----------------
+
 The certifier service is in the certifier_service directory and contains
 two subdirectories: certlib and certprotos.  To compile the certlib tests:
   cd $(CERTIFIER)/certifier_service/certprotos
@@ -39,6 +48,10 @@ two subdirectories: certlib and certprotos.  To compile the certlib tests:
 
 To compile and run the certifier service and test it,
 follow the instructions in sample_app.
+
+
+Utilities
+---------
 
 There are utilities in the utilities subdirectory.  To compile them:
   cd $(CERTIFIER)/utilities

@@ -33,16 +33,21 @@ examples as well as complete instructions.  In particular, the sample in
 sample_app policy is a complete guide on building
 and application, policy and deploying a service.
 
-
 ## Documentation and Installation
 
 Instructions on building the Certifier Framework for Confidential Computing can
 be found in INSTALL.md and additional documentation can be found in the Doc
 subdirectory.
 
+## Feedback and questions
+
+Feedback and questions can be submitted on the github site.  All feedback will be
+treated as licensed under the Apache license.
+
 ## Contributing
 
-The certifier-framework-for-confidential-computing project team welcomes contributions from the community. Before you start working with certifier-framework-for-confidential-computing, please
+The certifier-framework-for-confidential-computing project team welcomes contributions from the
+community. Before you start working with certifier-framework-for-confidential-computing, please
 read our [Developer Certificate of Origin](https://cla.vmware.com/dco). All contributions to this repository must be
 signed as described on that page. Your signature certifies that you wrote the patch or have the right to pass it on
 as an open-source patch. For more detailed information, refer to [CONTRIBUTING.md](CONTRIBUTING.md).
