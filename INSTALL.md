@@ -112,13 +112,13 @@ Additional packages required
 The Certifier Framework for Confidential Computing employs code from other open
 source projects including:
 
-Google gflags which can be obtained at https://github.com/gflags/gflags
+Google gflags which can be obtained at https://github.com/gflags/gflags,
   gflags helps deal with command line arguments and defaults.
 
-Google gtest which can be obtained at https://github.com/google/googletest
+Google gtest which can be obtained at https://github.com/google/googletest,
   gtest is a test infrastructure used in our tests.
 
-Google protobuf which can be obtained at https://github.com/protocolbuffers/protobuf
+Google protobuf which can be obtained at https://github.com/protocolbuffers/protobuf,
   protobuf is a serialization framwork.
 
 Openssl which contains crypto libraries and TLS support.
