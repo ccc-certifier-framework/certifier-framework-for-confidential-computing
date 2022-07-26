@@ -126,6 +126,6 @@ Openssl which contains crypto libraries and TLS support.
 We use git as the repository framework.
 
 You must install these as well as standard C++ compilers and libraries.  The
-certifier_service uses Go and you also need to install that to build and use
-the certifier_service.
+Certifier Service is written in Go, so you also need to install that to build and use
+the Certifier Service.
 
