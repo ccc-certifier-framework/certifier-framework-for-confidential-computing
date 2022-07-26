@@ -23,7 +23,8 @@
 
 #include <pwd.h>
 #include <unistd.h>
-#include <fcntl.h>
+#include <linux/memfd.h>
+#include <sys/mman.h>
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
@@ -674,6 +675,18 @@ bool measure_binary(const string& file, string* m) {
   return true;
 }
 
+bool measure_in_mem_binary(byte* file_contents, int size, string* m) {
+  byte digest[32];
+  unsigned int len = 32;
+  if (!digest_message(file_contents, (unsigned) size,
+          digest, len)) {
+    printf("Digest failed\n");
+    return false;
+  }
+  m->assign((char*)digest, (int)len);
+  return true;
+}
+
 void delete_child(int signum) {
     int pid = wait(nullptr);
     spawned_children* c = find_kid(pid);
@@ -820,15 +833,55 @@ bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   return true;
 }
 
+//#define INMEMEXEC
 bool process_run_request(run_request& req) {
-  // check this for thread safety
+
   // measure binary
-  // Todo: Fix -- Change later to prevent TOCTOU attack
   string m;
+#ifndef INMEMEXEC
   if (!req.has_location() || !measure_binary(req.location(), &m)) {
     printf("Can't measure binary\n");
     return false;
   }
+#else
+  if (!req.has_location()) {
+    printf("Program location unspecified\n");
+    return false;
+  }
+
+  string mem_app_name(req.location());
+  mem_app_name.append("_in_mem_app");
+  int mem_fd = memfd_create(mem_app_name.c_str(), MFD_CLOEXEC);
+  if (mem_fd < 0) {
+    printf("Can't create in mem file\n");
+    return false;
+  }
+
+  int fsz = file_size(req.location());
+  byte* file_buffer = (byte*)malloc(fsz);
+
+  if (!read_file(req.location(), &fsz, file_buffer)) {
+    printf("Can't read executable\n");
+    free(file_buffer);
+    close(mem_fd);
+    return false;
+  }
+
+  // Make sure you read the binary to exec into “buffer”
+  if (write(mem_fd, file_buffer, fsz) != fsz) {
+    printf("Failed to copy app binary.\n");
+    close(mem_fd);
+    free(file_buffer);
+    return false;
+  }
+
+  if (!measure_in_mem_binary(file_buffer, fsz, &m)) {
+    printf("Can't measure in_mem binary\n");
+    close(mem_fd);
+    free(file_buffer);
+    return false;
+  }
+#endif
 
   int fd1[2];
   int fd2[2];
@@ -865,6 +918,10 @@ bool process_run_request(run_request& req) {
     struct passwd* ent = getpwnam(FLAGS_guest_login_name.c_str());
     if (ent == nullptr) {
       printf("Guest is not a user\n");
+#ifdef INMEMEXEC
+      free(file_buffer);
+      close(mem_fd);
+#endif
       return false;
     }
     uid_t uid = ent->pw_uid;
@@ -875,6 +932,10 @@ bool process_run_request(run_request& req) {
     ent = nullptr;
     if (setgid(gid) != 0 || setuid (uid) != 0) {
       printf("Can't seettuid\n");
+#ifdef INMEMEXEC
+      free(file_buffer);
+      close(mem_fd);
+#endif
       return false;
     }
 
@@ -896,10 +957,22 @@ bool process_run_request(run_request& req) {
     char *envp[1]= {
       nullptr
     };
+
+#ifndef INMEMEXEC
     if (execve(req.location().c_str(), argv, envp) < 0) {
       printf("Exec failed\n");
       return false;
     }
+#else
+    if (fexecve(mem_fd, argv, envp) < 0) {
+      printf("Exec failed\n");
+      free(file_buffer);
+      close(mem_fd);
+      return false;
+    }
+    free(file_buffer);
+    close(mem_fd);
+#endif
   } else {  // parent
     signal(SIGCHLD, delete_child);
     // If we close these, reads become non blocking
