@@ -34,7 +34,7 @@ int main(int an, char**av) {
     return 1;
   }
 
-  printf("test_user.exe is running\n" );
+  printf("test_user.exe is running on (%d, %d)\n", in_fd, out_fd);
 
   string secret("abc");
   int out_size = 128;
@@ -64,9 +64,9 @@ int main(int an, char**av) {
   }
   unsealed.assign((char*)out, t_out);
 
-  printf("\ntest_user.exe SUCCEEDED\n");
   printf("unsealed: ");
   print_bytes((int)unsealed.size(), (byte*)unsealed.data());
   printf("\n");
+  printf("\ntest_user.exe succeeded\n");
   return 0;
 }

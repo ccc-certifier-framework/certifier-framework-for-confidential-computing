@@ -732,10 +732,9 @@ bool impl_GetParentEvidence(string* out) {
 
 void app_service_loop(int read_fd, int write_fd) {
   int r_size = 4096;
-  byte* r_buf[r_size];
+  byte r_buf[r_size];
   bool continue_loop = true;
 
-  sleep(10); // hack
   printf("application service loop: %d %d\n", read_fd, write_fd);
   while(continue_loop) {
     bool succeeded = false;
@@ -745,6 +744,7 @@ void app_service_loop(int read_fd, int write_fd) {
     int n = read(read_fd, r_buf, r_size);
     printf("app_service_loop, read: %d\n", n);
     if (n <= 0) {
+      // sleep(2); // hack
       continue;
     }
     string str_app_req;
@@ -797,9 +797,10 @@ finishreq:
 bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   printf("start_app_service_loop\n");
   // Todo: Fix 2 - make this multithreaded
-#if 0
+#if 1
   std::thread* t = new std::thread(app_service_loop, read_fd, write_fd);
   kid->thread_obj_ = t;
+  t->detach();
 #else
   app_service_loop(read_fd, write_fd);
 #endif
@@ -819,18 +820,17 @@ bool process_run_request(run_request& req) {
 
   int fd1[2];
   int fd2[2];
-  if (pipe(fd1) < 0) {
+  if (pipe2(fd1, O_DIRECT) < 0) {
     printf("Pipe 1 failed\n");
     return false;
   }
-  if (pipe(fd2) < 0) {
+  if (pipe2(fd2, O_DIRECT) < 0) {
     printf("Pipe 2 failed\n");
     return false;
   }
   printf("pipes made %d %d %d %d\n", fd1[0], fd1[1], fd2[0], fd2[1]);
 
   // Is this what I want?
-
   int parent_read_fd = fd2[0];
   int parent_write_fd = fd1[1];
   int child_read_fd = fd1[0];
@@ -850,7 +850,6 @@ bool process_run_request(run_request& req) {
     close(fd2[1]);
     return false;
   } else if (pid == 0) {  // child
-
     close(parent_read_fd);
     close(parent_write_fd);
 
@@ -888,9 +887,10 @@ bool process_run_request(run_request& req) {
       return false;
     }
   } else {  // parent
-    close(child_read_fd);
-    close(child_write_fd);
     signal(SIGCHLD, delete_child);
+    // close(child_read_fd);
+    // close(child_write_fd);
+
     printf("parent returned, read: %d, write: %d\n", parent_read_fd, parent_write_fd);
 
     // add it to lists
