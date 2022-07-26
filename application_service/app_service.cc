@@ -93,8 +93,6 @@ key_message service_sealing_key;
 byte symmetric_key_for_protect[service_symmetric_key_size];
 key_message protect_symmetric_key;
 
-#define DEBUG
-
 // --------------------------------------------------------------------------
 
 void print_trust_data() {
@@ -571,8 +569,8 @@ public:
   string location_;
   string measured;
   int pid_;
-  int parent_read_fd_;
-  int parent_write_fd_;
+  int child_read_fd_;
+  int child_write_fd_;
   std::thread * thread_obj_;
   spawned_children* next_;
 };
@@ -735,16 +733,14 @@ void app_service_loop(int read_fd, int write_fd) {
   byte r_buf[r_size];
   bool continue_loop = true;
 
-  printf("application service loop: %d %d\n", read_fd, write_fd);
+  printf("\napplication service loop: %d %d\n", read_fd, write_fd);
   while(continue_loop) {
     bool succeeded = false;
     string in;
     string out;
-    // Todo: Fix 1 - Why doesn't this read block?
     int n = read(read_fd, r_buf, r_size);
     printf("app_service_loop, read: %d\n", n);
     if (n <= 0) {
-      // sleep(2); // hack
       continue;
     }
     string str_app_req;
@@ -766,11 +762,6 @@ void app_service_loop(int read_fd, int write_fd) {
         succeeded= impl_Attest(in, &out);
     } else if (req.function() == "getcerts") {
         succeeded= impl_GetParentEvidence(&out);
-    }
-    if (succeeded) {
-      printf("service succeeded\n");
-    } else {
-      printf("service failed\n");
     }
 
 finishreq:
@@ -795,16 +786,16 @@ finishreq:
 }
 
 bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
+#ifdef DEBUG
   printf("start_app_service_loop\n");
-  // Todo: Fix 2 - make this multithreaded
-#if 1
+#endif
+#ifndef NOTHREAD
   std::thread* t = new std::thread(app_service_loop, read_fd, write_fd);
   kid->thread_obj_ = t;
   t->detach();
 #else
   app_service_loop(read_fd, write_fd);
 #endif
-  printf("after thread\n");
   return true;
 }
 
@@ -870,7 +861,7 @@ bool process_run_request(run_request& req) {
       return false;
     }
 
-    printf("Child about to exec %s, read: %d, write: %d\n",
+    printf("\nChild about to exec %s, read: %d, write: %d\n",
         req.location().c_str(), child_read_fd, child_write_fd);
     string n1 = std::to_string(child_read_fd);
     string n2 = std::to_string(child_write_fd);
@@ -888,10 +879,12 @@ bool process_run_request(run_request& req) {
     }
   } else {  // parent
     signal(SIGCHLD, delete_child);
-    // close(child_read_fd);
-    // close(child_write_fd);
+    //close(child_read_fd);
+    //close(child_write_fd);
 
-    printf("parent returned, read: %d, write: %d\n", parent_read_fd, parent_write_fd);
+#ifdef DEBUG
+    printf("\nparent returned, read: %d, write: %d\n", parent_read_fd, parent_write_fd);
+#endif
 
     // add it to lists
     spawned_children* nk = new_kid();
@@ -902,8 +895,8 @@ bool process_run_request(run_request& req) {
     nk->location_ = req.location();
     nk->measured.assign((char*)m.data(), m.size());;
     nk->pid_ = pid;
-    nk->parent_read_fd_ = parent_read_fd;
-    nk->parent_write_fd_ = parent_write_fd;
+    nk->child_read_fd_ = child_read_fd;
+    nk->child_write_fd_ = child_write_fd;
     nk->valid_ = true;
     if (!start_app_service_loop(nk, parent_read_fd, parent_write_fd)) {
       printf("Couldn't start service loop\n");
@@ -949,7 +942,7 @@ bool app_request_server() {
     printf("application_service server at accept\n");
     struct sockaddr_in addr;
     int client = accept(sd, (struct sockaddr*)&addr, &len);
-    printf("client: %d\n", client);
+    printf("\nclient: %d\n", client);
 
     // read run request
     byte in[max_req_size];
@@ -969,7 +962,7 @@ bool app_request_server() {
     }
 
     if (FLAGS_run_policy != "all") {
-      // Todo: Fix - check certificate
+      // Todo: Fix - check certificate?
     }
     printf("at process_run_request: %s\n", req.location().c_str());
     ret = process_run_request(req);
