@@ -120,7 +120,7 @@ message oe_assertion {
   optional bytes oe_report                  = 2;
 };
 
-// Current evidence types: "signed-claim", "oe-assertion"
+// Current evidence types: "signed-claim", "oe-assertion", "cert"
 message evidence {
   optional string evidence_type             = 1;
   optional bytes serialized_evidence        = 2;
@@ -227,6 +227,8 @@ message buffer_sequence {
 
 message run_request {
   optional string location                  = 1;
+  optional bytes cert                       = 2;
+  repeated string args                      = 3;
 };
 
 message run_response {
