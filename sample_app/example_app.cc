@@ -151,6 +151,7 @@ bool fetch_store(const string& enclave_type) {
 
 void clear_sensitive_data() {
   // Todo: clear symmetric and private keys
+  //    Not necessary on most platforms
 }
 
 bool cold_init(const string& enclave_type) {
@@ -403,8 +404,8 @@ printf("certify_me\n");
   trust_request_message request;
   trust_response_message response;
 
-  // Important Todo: trust_request_message should be signed by auth key
-  //   to prevent MITM attacks.
+  // Should trust_request_message should be signed by auth key
+  //   to prevent MITM attacks?  Probably not.
   request.set_requesting_enclave_tag("requesting-enclave");
   request.set_providing_enclave_tag("providing-enclave");
   request.set_submitted_evidence_type("platform-attestation-only");

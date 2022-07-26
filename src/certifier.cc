@@ -79,11 +79,12 @@ policy_store::policy_store(int max_trusted_services, int max_trusted_signed_clai
 }
 
 policy_store::~policy_store() {
-  // clean up sensitive values
+  // Todo: clean up sensitive values
+  //    not necessary on most platfroms
 }
 
 void policy_store::clear_policy_store() {
-  // Todo
+  // Todo: not necessary on most platfroms
 }
 
 bool policy_store::replace_policy_key(key_message& k) {
@@ -652,7 +653,7 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
   return false;
 }
 
-// Todo: We should get rid of this.  User shouldn't need to know its
+// Todo: We should get rid of this eventually.  User shouldn't need to know its
 //measurement, usually.
 bool Getmeasurement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out) {

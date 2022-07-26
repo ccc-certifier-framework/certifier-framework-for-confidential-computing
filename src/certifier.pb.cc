@@ -444,7 +444,8 @@ struct buffer_sequenceDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT buffer_sequenceDefaultTypeInternal _buffer_sequence_default_instance_;
 constexpr run_request::run_request(
   ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
-  : location_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  : args_()
+  , location_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
   , cert_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string){}
 struct run_requestDefaultTypeInternal {
   constexpr run_requestDefaultTypeInternal()
@@ -872,8 +873,10 @@ const uint32_t TableStruct_certifier_2eproto::offsets[] PROTOBUF_SECTION_VARIABL
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::run_request, location_),
   PROTOBUF_FIELD_OFFSET(::run_request, cert_),
+  PROTOBUF_FIELD_OFFSET(::run_request, args_),
   0,
   1,
+  ~0u,
   PROTOBUF_FIELD_OFFSET(::run_response, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::run_response, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -936,10 +939,10 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOB
   { 341, -1, -1, sizeof(::signed_claim_sequence)},
   { 348, 356, -1, sizeof(::tagged_signed_claim)},
   { 358, -1, -1, sizeof(::buffer_sequence)},
-  { 365, 373, -1, sizeof(::run_request)},
-  { 375, 382, -1, sizeof(::run_response)},
-  { 383, 391, -1, sizeof(::app_request)},
-  { 393, 402, -1, sizeof(::app_response)},
+  { 365, 374, -1, sizeof(::run_request)},
+  { 377, 384, -1, sizeof(::run_response)},
+  { 385, 393, -1, sizeof(::app_request)},
+  { 395, 404, -1, sizeof(::app_response)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -1056,15 +1059,16 @@ const char descriptor_table_protodef_certifier_2eproto[] PROTOBUF_SECTION_VARIAB
   "d_claim_message\"E\n\023tagged_signed_claim\022\013"
   "\n\003tag\030\001 \001(\t\022!\n\002sc\030\002 \001(\0132\025.signed_claim_m"
   "essage\" \n\017buffer_sequence\022\r\n\005block\030\001 \003(\014"
-  "\"-\n\013run_request\022\020\n\010location\030\001 \001(\t\022\014\n\004cer"
-  "t\030\002 \001(\014\"\036\n\014run_response\022\016\n\006status\030\001 \001(\t\""
-  "-\n\013app_request\022\020\n\010function\030\001 \001(\t\022\014\n\004args"
-  "\030\002 \003(\014\">\n\014app_response\022\020\n\010function\030\001 \001(\t"
-  "\022\016\n\006status\030\002 \001(\t\022\014\n\004args\030\003 \003(\014"
+  "\";\n\013run_request\022\020\n\010location\030\001 \001(\t\022\014\n\004cer"
+  "t\030\002 \001(\014\022\014\n\004args\030\003 \003(\t\"\036\n\014run_response\022\016\n"
+  "\006status\030\001 \001(\t\"-\n\013app_request\022\020\n\010function"
+  "\030\001 \001(\t\022\014\n\004args\030\002 \003(\014\">\n\014app_response\022\020\n\010"
+  "function\030\001 \001(\t\022\016\n\006status\030\002 \001(\t\022\014\n\004args\030\003"
+  " \003(\014"
   ;
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_certifier_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_certifier_2eproto = {
-  false, false, 3230, descriptor_table_protodef_certifier_2eproto, "certifier.proto", 
+  false, false, 3244, descriptor_table_protodef_certifier_2eproto, "certifier.proto", 
   &descriptor_table_certifier_2eproto_once, nullptr, 0, 34,
   schemas, file_default_instances, TableStruct_certifier_2eproto::offsets,
   file_level_metadata_certifier_2eproto, file_level_enum_descriptors_certifier_2eproto, file_level_service_descriptors_certifier_2eproto,
@@ -10436,7 +10440,8 @@ class run_request::_Internal {
 
 run_request::run_request(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
-  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned),
+  args_(arena) {
   SharedCtor();
   if (!is_message_owned) {
     RegisterArenaDtor(arena);
@@ -10445,7 +10450,8 @@ run_request::run_request(::PROTOBUF_NAMESPACE_ID::Arena* arena,
 }
 run_request::run_request(const run_request& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
-      _has_bits_(from._has_bits_) {
+      _has_bits_(from._has_bits_),
+      args_(from.args_) {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   location_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
@@ -10506,6 +10512,7 @@ void run_request::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  args_.Clear();
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 0x00000003u) {
     if (cached_has_bits & 0x00000001u) {
@@ -10544,6 +10551,23 @@ const char* run_request::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID
           auto str = _internal_mutable_cert();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // repeated string args = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            auto str = _internal_add_args();
+            ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+            #ifndef NDEBUG
+            ::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "run_request.args");
+            #endif  // !NDEBUG
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<26>(ptr));
         } else
           goto handle_unusual;
         continue;
@@ -10594,6 +10618,16 @@ uint8_t* run_request::_InternalSerialize(
         2, this->_internal_cert(), target);
   }
 
+  // repeated string args = 3;
+  for (int i = 0, n = this->_internal_args_size(); i < n; i++) {
+    const auto& s = this->_internal_args(i);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::VerifyUTF8StringNamedField(
+      s.data(), static_cast<int>(s.length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SERIALIZE,
+      "run_request.args");
+    target = stream->WriteString(3, s, target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -10609,6 +10643,14 @@ size_t run_request::ByteSizeLong() const {
   uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
+
+  // repeated string args = 3;
+  total_size += 1 *
+      ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(args_.size());
+  for (int i = 0, n = args_.size(); i < n; i++) {
+    total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+      args_.Get(i));
+  }
 
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 0x00000003u) {
@@ -10649,6 +10691,7 @@ void run_request::MergeFrom(const run_request& from) {
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  args_.MergeFrom(from.args_);
   cached_has_bits = from._has_bits_[0];
   if (cached_has_bits & 0x00000003u) {
     if (cached_has_bits & 0x00000001u) {
@@ -10678,6 +10721,7 @@ void run_request::InternalSwap(run_request* other) {
   auto* rhs_arena = other->GetArenaForAllocation();
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   swap(_has_bits_[0], other->_has_bits_[0]);
+  args_.InternalSwap(&other->args_);
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
       &location_, lhs_arena,

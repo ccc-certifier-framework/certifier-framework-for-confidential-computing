@@ -478,8 +478,8 @@ bool certify_me(const string& enclave_type) {
   trust_request_message request;
   trust_response_message response;
 
-  // Important Todo: trust_request_message should be signed by auth key
-  //   to prevent MITM attacks.  Now I don't think it's necessary.
+  // Should trust_request_message should be signed by auth key
+  //   to prevent MITM attacks?  Now I don't think it's necessary.
   request.set_requesting_enclave_tag("requesting-enclave");
   request.set_providing_enclave_tag("providing-enclave");
   request.set_submitted_evidence_type("platform-attestation-only");
@@ -944,7 +944,6 @@ bool process_run_request(run_request& req) {
 
     string n1 = std::to_string(child_read_fd);
     string n2 = std::to_string(child_write_fd);
-    // Todo: add args
     int num_args = req.args_size();
     char **argv = new char*[num_args + 3];
     for (int i = 0; i < num_args; i++) {
