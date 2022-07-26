@@ -36,6 +36,15 @@ int main(int an, char**av) {
 
   // In general, at this point the app should subtract 2 from an.
   //    (an, av) will then have the original arguments for the call.
+
+  //  This is the Init call you would make early in an
+  //    application_enclave application.
+  //  After that, the application uses normal certifier calls
+  //    (as below).  Normally, you'd have a Certifier Service
+  //    associated with a security domain and you would have
+  //    embedded a policy key and carry out the same procedure
+  //    illustrated in the sample_app.  This is just a test
+  //    program to make sure the primitives work.
   string parent_enclave_type("simulated-enclave");
   if (!application_Init(parent_enclave_type, in_fd, out_fd)) {
     printf("Can't init application-enclave\n");
@@ -75,6 +84,7 @@ int main(int an, char**av) {
   printf("unsealed: ");
   print_bytes((int)unsealed.size(), (byte*)unsealed.data());
   printf("\n");
+
   printf("\ntest_user.exe succeeded\n");
   return 0;
 }
