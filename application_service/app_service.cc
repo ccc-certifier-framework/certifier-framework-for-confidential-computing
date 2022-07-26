@@ -833,7 +833,7 @@ bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   return true;
 }
 
-//#define INMEMEXEC
+#define INMEMEXEC
 bool process_run_request(run_request& req) {
 
   // measure binary

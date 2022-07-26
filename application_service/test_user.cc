@@ -23,12 +23,19 @@ int main(int an, char**av) {
   string id("1");
 
   printf("num args: %d\n", an);
+  for (int i = 0; i < an; i++) {
+    printf("argv[%d]: %s\n", i, av[i]);
+  }
+  printf("\n");
   int in_fd = 5;
   int out_fd = 8;
-  if (an >= 3) {
+  if (an >= 2) {
     in_fd = atoi(av[an - 2]);
     out_fd = atoi(av[an - 1]);
   }
+
+  // In general, at this point the app should subtract 2 from an.
+  //    (an, av) will then have the original arguments for the call.
   string parent_enclave_type("simulated-enclave");
   if (!application_Init(parent_enclave_type, in_fd, out_fd)) {
     printf("Can't init application-enclave\n");
