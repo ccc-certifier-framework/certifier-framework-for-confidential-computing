@@ -228,6 +228,7 @@ message buffer_sequence {
 message run_request {
   optional string location                  = 1;
   optional bytes cert                       = 2;
+  repeated string args                      = 3;
 };
 
 message run_response {

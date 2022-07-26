@@ -569,8 +569,8 @@ public:
   string location_;
   string measured;
   int pid_;
-  int child_read_fd_;
-  int child_write_fd_;
+  int parent_read_fd_;
+  int parent_write_fd_;
   std::thread * thread_obj_;
   spawned_children* next_;
 };
@@ -660,6 +660,7 @@ void delete_child(int signum) {
     if (c->thread_obj_ != nullptr) {
       delete c->thread_obj_;
     }
+    // close parent fds/
     remove_kid(pid);
 }
 
@@ -827,10 +828,6 @@ bool process_run_request(run_request& req) {
   int child_read_fd = fd1[0];
   int child_write_fd = fd2[1];
 
-  // Neither of these worked
-  //  fcntl(fd1[0], F_SETFL, 0);
-  //  fcntl(fd2[1], F_SETFL, fcntl(fd2[1], F_GETFL) & ~O_NONBLOCK);
-
   // fork and get pid
   pid_t pid = fork();
   if (pid < 0) {
@@ -861,15 +858,21 @@ bool process_run_request(run_request& req) {
       return false;
     }
 
-    printf("\nChild about to exec %s, read: %d, write: %d\n",
+    printf("Child about to exec %s, read: %d, write: %d\n",
         req.location().c_str(), child_read_fd, child_write_fd);
+
     string n1 = std::to_string(child_read_fd);
     string n2 = std::to_string(child_write_fd);
-    char *argv[3]= {
-      (char*)n1.c_str(),
-      (char*)n2.c_str(),
-      nullptr
-    };
+    // Todo: add args
+    int num_args = req.args_size();
+    char **argv = new char*[num_args + 3];
+    for (int i = 0; i < num_args; i++) {
+      argv[i] = (char*)req.args(i).c_str();
+    }
+    argv[num_args] = (char*)n1.c_str();
+    argv[num_args + 1] = (char*)n2.c_str();
+    argv[num_args + 2] = nullptr;
+
     char *envp[1]= {
       nullptr
     };
@@ -879,11 +882,12 @@ bool process_run_request(run_request& req) {
     }
   } else {  // parent
     signal(SIGCHLD, delete_child);
-    //close(child_read_fd);
-    //close(child_write_fd);
+    // If we close these, reads become non blocking
+    //    close(child_read_fd);
+    //    close(child_write_fd);
 
 #ifdef DEBUG
-    printf("\nparent returned, read: %d, write: %d\n", parent_read_fd, parent_write_fd);
+    printf("parent returned, read: %d, write: %d\n", parent_read_fd, parent_write_fd);
 #endif
 
     // add it to lists
@@ -895,8 +899,8 @@ bool process_run_request(run_request& req) {
     nk->location_ = req.location();
     nk->measured.assign((char*)m.data(), m.size());;
     nk->pid_ = pid;
-    nk->child_read_fd_ = child_read_fd;
-    nk->child_write_fd_ = child_write_fd;
+    nk->parent_read_fd_ = parent_read_fd;
+    nk->parent_write_fd_ = parent_write_fd;
     nk->valid_ = true;
     if (!start_app_service_loop(nk, parent_read_fd, parent_write_fd)) {
       printf("Couldn't start service loop\n");

@@ -22,11 +22,12 @@ int main(int an, char**av) {
   string enclave("application-enclave");
   string id("1");
 
+  printf("num args: %d\n", an);
   int in_fd = 5;
   int out_fd = 8;
   if (an >= 3) {
-    in_fd = atoi(av[1]);
-    out_fd = atoi(av[2]);
+    in_fd = atoi(av[an - 2]);
+    out_fd = atoi(av[an - 1]);
   }
   string parent_enclave_type("simulated-enclave");
   if (!application_Init(parent_enclave_type, in_fd, out_fd)) {
