@@ -1,4 +1,4 @@
-# certifier-framework-for-confidential-computing
+# Certifier Framework for Confidential Computing
 
 ## Overview
 
