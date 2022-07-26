@@ -1,6 +1,22 @@
-// Portions of this are
+// Portions of this are  from AMD's SEV support code.  Those portions are:
 //  Copyright (C) 2021 Advanced Micro Devices, Inc.
 //  Licensed under Apache 2.0
+// The remainder are:
+
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 
 #include <stdio.h>
 #include <stdint.h>
@@ -786,8 +802,7 @@ bool sev_Getmeasurement(int* size_out, byte* out) {
   return false;
 }
 
-int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert)
-{
+int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
   FILE *pFile = NULL;
   pFile = fopen(file_name, "re");
   if (!pFile)
@@ -804,8 +819,7 @@ int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert)
   return EXIT_SUCCESS;
 }
 
-static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert, X509 *parent_cert)
-{
+static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert, X509 *parent_cert) {
   bool ret = false;
   X509_STORE *store = NULL;
   X509_STORE_CTX *store_ctx = NULL;
