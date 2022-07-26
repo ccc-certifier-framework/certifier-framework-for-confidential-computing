@@ -16,10 +16,15 @@ Certifier API
 
 The certifier API is in the src directory.  To compile and run the
 certifier API tests:
+
   cd $(CERTIFIER)/src
+
   make clean -f certifier_tests.mak
+
   make -f certifier_tests.mak
-  ./certifier_tests.exe [--print_all=true]
+
+  ./certifier_tests.exe [--print_all=true]a
+
 If you are compiling the certifier tests win sev enabled (This is
 indicated by ENABLE_SEV=1 in the mak file), you must run the
 tests as root and must install the simulated SEV driver (see
