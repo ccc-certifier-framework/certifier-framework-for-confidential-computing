@@ -38,6 +38,7 @@ DEFINE_bool(print_all, false,  "verbose");
 DEFINE_bool(test_measurement, false,  "init test measurement");
 DEFINE_string(in_file, "test.exe",  "Input binary");
 DEFINE_string(out_file, "binary_trusted_measurements_file.bin",  "binary_trusted_measurements_file");
+DEFINE_string(mrenclave, "", "Measurement Hex String");
 
 bool write_file(string file_name, int size, byte* data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
@@ -105,8 +106,11 @@ int main(int an, char** av) {
   if (FLAGS_print_all) {
     if (FLAGS_test_measurement)
       printf("Generating test measurement\n");
-    else
+    else if (FLAGS_mrenclave.size() != 0) {
+      printf("Using measurement string: %s\n", FLAGS_mrenclave.c_str());
+    } else {
       printf("Measuring %s\n", FLAGS_in_file.c_str());
+    }
     printf("Output file: %s\n", FLAGS_out_file.c_str());
   }
 
@@ -116,6 +120,28 @@ int main(int an, char** av) {
   if (FLAGS_test_measurement == true) {
     for (int i = 0; i < measurment_size; i++)
       m[i] = (byte)i;
+    if (!write_file(FLAGS_out_file, measurment_size, m)) {
+      printf("Can't write %s\n", FLAGS_out_file.c_str());
+      return 1;
+    }
+    return 0;
+  } else if (FLAGS_mrenclave.size() != 0) {
+    size_t size = FLAGS_mrenclave.size();
+    char hex[size + 2] = {0};
+    const char *pos = (const char *)hex;
+    byte m[measurment_size];
+    if (size % 2) {
+      hex[0] = '0';
+      memcpy(hex + 1, FLAGS_mrenclave.c_str(), size + 1);
+    } else {
+      memcpy(hex, FLAGS_mrenclave.c_str(), size + 1);
+    }
+    printf("Using measurement: %s\n", hex);
+    for (size_t count = 0; count < strlen(hex) / 2 && count < measurment_size; count++) {
+      sscanf(pos, "%2hhx", &m[count]);
+      pos += 2;
+    }
+
     if (!write_file(FLAGS_out_file, measurment_size, m)) {
       printf("Can't write %s\n", FLAGS_out_file.c_str());
       return 1;
