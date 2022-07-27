@@ -862,8 +862,9 @@ predicate_dominance::predicate_dominance() {
 predicate_dominance::~predicate_dominance() {
   predicate_dominance* current = first_child_;
   while (current != nullptr) {
-    delete current->next_;
+    predicate_dominance* temp = current;
     current = current->next_;
+    delete temp;
   }
   first_child_ = nullptr;
   next_ = nullptr;
