@@ -94,7 +94,7 @@ bool certifier_test_seal(void) {
 
   int secret_to_seal_size = 32;
   byte secret_to_seal[secret_to_seal_size];
-  int sealed_size_out = 256;
+  int sealed_size_out = 1024;
   byte sealed[sealed_size_out];
   int recovered_size = 128;
   byte recovered[recovered_size];
