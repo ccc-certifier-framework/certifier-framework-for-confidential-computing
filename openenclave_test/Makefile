@@ -5,7 +5,6 @@
 
 OE_CRYPTO_LIB := openssl
 export OE_CRYPTO_LIB
-MEASUREMENT_INIT := ~/Projects/certifier_prototype/build/measurement_init.exe
 
 all: build
 
