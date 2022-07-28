@@ -157,19 +157,19 @@ Step 14:  Run the apps and get admission certificates from Certifier Service
   In app as a client terminal run the following:
     cd $EXAMPLE_DIR
     $EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=cold-init --data_dir=./app1_data/ measurement_file="example_app.measurement" \
+      --operation=cold-init --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
     $EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=get-certifier --data_dir=./app1_data/ measurement_file="example_app.measurement" \
+      --operation=get-certifier --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
 
   In app as a server terminal run the following:
     cd $EXAMPLE_DIR
     $EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=cold-init --data_dir=./app2_data/ measurement_file="example_app.measurement" \
+      --operation=cold-init --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
     $EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=get-certifier --data_dir=./app2_data/ measurement_file="example_app.measurement" \
+      --operation=get-certifier --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
        --policy_store_file=policy_store
 
 At this point, both versions of the app have their admission certificates.  You can look at

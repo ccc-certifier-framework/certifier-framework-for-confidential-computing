@@ -664,7 +664,7 @@ func serviceThread(conn net.Conn, client string) {
 	response := certprotos.TrustResponseMessage{}
 	response.RequestingEnclaveTag = request.RequestingEnclaveTag
 	response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
-	response.Artifact = make([]byte, 5)
+	//response.Artifact = make([]byte, 5)
 	response.Status = &failed
 
 	// Construct the proof
