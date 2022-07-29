@@ -9,6 +9,7 @@
 #include "support.h" 
 #include "certifier.pb.h" 
 
+#include <sys/ioctl.h>
 #include <string>
 using std::string;
 
@@ -1389,4 +1390,35 @@ bool x509_to_asn1(X509 *x, string* out) {
   i2d_X509(x, (byte**)&p);
   out->assign((char*)buf, len);
   return true;
+}
+
+// blocking read of pipe when you don't know the size
+//    of the buffer in advance
+int sized_read(int fd, string* out) {
+#if 0
+  byte tb;
+  if (read(fd, &tb, 1) < 1) {
+    return -1;
+  }
+
+  int m = 0;
+  if (ioctl(fd, FIONREAD, &m) < 0 ) {
+    return -1;
+  }
+  printf("ioctl: %d\n", m);
+  byte buf[m + 1];
+  buf[0] = tb;
+  if (read(fd, &buf[1], m) < m) {
+    return -1;
+  }
+  out->assign((char*)buf, m + 1);
+  return m + 1;
+#else
+  byte buf[32000];
+  int n = read(fd, buf, 32000);
+  if (n < 0)
+    return -1;
+  out->assign((char*)buf, n);
+  return n;
+#endif
 }
