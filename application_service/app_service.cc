@@ -90,10 +90,7 @@ const int service_symmetric_key_size = 64;
 byte service_symmetric_key[service_symmetric_key_size];
 key_message service_sealing_key;
 
-// Fix: This should not be a global
-// Protect Key
-byte symmetric_key_for_protect[service_symmetric_key_size];
-key_message protect_symmetric_key;
+#define DEBUG
 
 // --------------------------------------------------------------------------
 
@@ -113,18 +110,21 @@ void print_trust_data() {
   printf("\nSeal key\n");
   print_bytes(service_symmetric_key_size, service_symmetric_key);
   printf("\n\n");
-  printf("\nBlob key\n");
-  print_bytes(service_trust_data_initialized, symmetric_key_for_protect);
-  printf("\n\n");
 }
 
 bool save_store(const string& enclave_type) {
   string serialized_store;
 
+  // fill symmetric_key_for_protect blob
+  byte symmetric_key_for_protect[service_symmetric_key_size];
+  key_message protect_symmetric_key;
+  if (!get_random(8 * service_symmetric_key_size, symmetric_key_for_protect))
+    return false;
+  protect_symmetric_key.set_key_name("protect-key");
+  protect_symmetric_key.set_key_type("aes-256-cbc-hmac-sha256");
+  protect_symmetric_key.set_key_format("vse-key");
+  protect_symmetric_key.set_secret_key_bits(symmetric_key_for_protect, service_symmetric_key_size);
 
-// Protect Key
-// byte symmetric_key_for_protect[service_symmetric_key_size];
-// key_message protect_symmetric_key;
   if (!pStore.Serialize(&serialized_store)) {
     printf("save_store() can't serialize store\n"); 
     return false;
@@ -149,6 +149,10 @@ bool save_store(const string& enclave_type) {
 bool fetch_store(const string& enclave_type) {
   string store_file(FLAGS_service_dir);
   store_file.append(FLAGS_service_policy_store);
+
+  // for Unprotect_Blob
+  byte symmetric_key_for_protect[service_symmetric_key_size];
+  key_message protect_symmetric_key;
 
   int size_protected_blob = file_size(store_file) + 1;
   byte protected_blob[size_protected_blob];
@@ -183,23 +187,13 @@ void clear_sensitive_data() {
 
 bool cold_init(const string& enclave_type) {
 
- // make up some symmetric keys
+  // service_symmetric_key
   if (!get_random(8 * service_symmetric_key_size, service_symmetric_key))
     return false;
-  if (!get_random(8 * service_symmetric_key_size, symmetric_key_for_protect))
-    return false;
-
-  // service_symmetric_key
   service_sealing_key.set_key_name("sealing-key");
   service_sealing_key.set_key_type("aes-256-cbc-hmac-sha256");
   service_sealing_key.set_key_format("vse-key");
   service_sealing_key.set_secret_key_bits(service_symmetric_key, service_symmetric_key_size);
-
-  // fill symmetric_key_for_protect
-  protect_symmetric_key.set_key_name("protect-key");
-  protect_symmetric_key.set_key_type("aes-256-cbc-hmac-sha256");
-  protect_symmetric_key.set_key_format("vse-key");
-  protect_symmetric_key.set_secret_key_bits(symmetric_key_for_protect, service_symmetric_key_size);
 
   // make service attest private and public key
   if (!make_certifier_rsa_key(2048,  &privateServiceKey)) {
@@ -224,9 +218,11 @@ bool cold_init(const string& enclave_type) {
     return false;
   }
 
+#ifdef DEBUG
   printf("cold_init, attest key:\n");
   print_key(privateServiceKey);
   printf("\n");
+#endif
 
   // Sealing keys
   string sealing_tag("sealing-key");
@@ -245,10 +241,11 @@ bool cold_init(const string& enclave_type) {
     return false;
   }
 
+#ifdef DEBUG
   printf("cold_init, sealing key:\n");
   print_key(service_sealing_key);
   printf("\n");
-
+#endif
 
   if (FLAGS_print_all) {
     print_trust_data();
@@ -265,7 +262,6 @@ bool warm_restart(const string& enclave_type) {
   }
 
   // initialize trust data from store
-  string tag("blob-key");
   const key_message* pk = pStore.get_policy_key();
   if (pk == nullptr) {
     printf("warm-restart error 1\n");
@@ -285,9 +281,11 @@ bool warm_restart(const string& enclave_type) {
     return false;
   }
 
+#ifdef DEBUG
   printf("warm_init, attest key:\n");
   print_key(privateServiceKey);
   printf("\n");
+#endif
 
   string rule_tag("platform-rule");
   int index = pStore.get_signed_claim_index_by_tag(rule_tag);
@@ -298,9 +296,11 @@ bool warm_restart(const string& enclave_type) {
     }
   }
 
+#ifdef DEBUG
   printf("warm_init, platform rule:\n");
   print_signed_claim(platform_rule);
   printf("\n");
+#endif
 
   // storage keys
   string sealing_tag("sealing-key");
@@ -314,9 +314,11 @@ bool warm_restart(const string& enclave_type) {
     }
   }
 
+#ifdef DEBUG
   printf("warm_init, sealing key:\n");
   print_key(service_sealing_key);
   printf("\n");
+#endif
 
   if (FLAGS_print_all) {
     print_trust_data();
