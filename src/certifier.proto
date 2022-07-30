@@ -206,6 +206,7 @@ message policy_store_message {
   repeated tagged_claim claims                              = 4;
   repeated storage_info_message storage_info                = 5;
   repeated tagged_signed_claim signed_claims                = 6;
+  repeated tagged_blob_message blobs                        = 7;
 };
 
 message claims_sequence {
@@ -244,4 +245,9 @@ message app_response {
   optional string function                  = 1;
   optional string status                    = 2;
   repeated bytes args                       = 3;
+};
+
+message tagged_blob_message {
+  optional string tag                       = 1;
+  optional bytes b                          = 2;
 };

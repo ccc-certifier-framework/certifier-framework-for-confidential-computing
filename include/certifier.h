@@ -80,12 +80,15 @@ public:
   int max_num_tkm_;
   int num_tkm_;
   channel_key_message** tkm_;
+  int max_num_blobs_;
+  int num_blobs_;
+  tagged_blob_message** tagged_blob_;
 
 public:
 
   policy_store();
   policy_store(int max_trusted_services, int max_trusted_signed_claims,
-      int max_storage_infos, int max_claims, int max_keys);
+      int max_storage_infos, int max_claims, int max_keys, int max_blobs);
   ~policy_store();
 
   bool replace_policy_key(key_message& k);
@@ -120,6 +123,14 @@ public:
   const key_message* get_authentication_key_by_index(int index);
   int get_authentication_key_index_by_tag(string& tag);
   void delete_authentication_key_by_index(int index);
+
+  bool add_blob(string& tag, const string& s);
+  const string* get_blob_by_tag(string& tag);
+  const string* get_blob_by_index(int index);
+  const tagged_blob_message* get_tagged_blob_info_by_index(int n);
+  int get_blob_index_by_tag(string& tag);
+  void delete_blob_by_index(int index);
+  int get_num_blobs();
 
   bool Serialize(string* out);
   bool Deserialize(string& in);

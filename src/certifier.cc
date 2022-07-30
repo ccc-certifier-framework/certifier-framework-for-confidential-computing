@@ -41,22 +41,26 @@ policy_store::policy_store() {
   max_num_si_ = MAX_NUM_ENTRIES;
   max_num_tc_ = MAX_NUM_ENTRIES;
   max_num_tkm_ = MAX_NUM_ENTRIES;
+  max_num_tkm_ = MAX_NUM_ENTRIES;
+  max_num_blobs_ = MAX_NUM_ENTRIES;
 
   ts_ = new trusted_service_message*[max_num_ts_];
   tsc_ = new tagged_signed_claim*[max_num_tsc_];
   si_ = new storage_info_message*[max_num_si_];
   tc_ = new tagged_claim*[max_num_tc_];
   tkm_ = new channel_key_message*[max_num_tkm_];
+  tagged_blob_ = new tagged_blob_message*[max_num_blobs_];
 
   num_ts_ = 0;
   num_tsc_ = 0;
   num_si_ = 0;
   num_tc_ = 0;
   num_tkm_ = 0;
+  num_blobs_ = 0;
 }
 
 policy_store::policy_store(int max_trusted_services, int max_trusted_signed_claims,
-      int max_storage_infos, int max_claims, int max_keys) {
+      int max_storage_infos, int max_claims, int max_keys, int max_blobs) {
   policy_key_valid_ = false;
 
   max_num_ts_ = max_trusted_services;
@@ -64,18 +68,21 @@ policy_store::policy_store(int max_trusted_services, int max_trusted_signed_clai
   max_num_si_ = max_storage_infos;
   max_num_tc_ = max_claims;
   max_num_tkm_ = max_keys;
+  max_num_blobs_ = max_blobs;
 
   ts_ = new trusted_service_message*[max_num_ts_];
   tsc_ = new tagged_signed_claim*[max_num_tsc_];
   si_ = new storage_info_message*[max_num_si_];
   tc_ = new tagged_claim*[max_num_tc_];
   tkm_ = new channel_key_message*[max_num_tkm_];
+  tagged_blob_ = new tagged_blob_message *[max_num_blobs_];
 
   num_ts_ = 0;
   num_tsc_ = 0;
   num_si_ = 0;
   num_tc_ = 0;
   num_tkm_ = 0;
+  num_blobs_ = 0;
 }
 
 policy_store::~policy_store() {
@@ -135,7 +142,7 @@ void policy_store::delete_trusted_service_by_index(int n) {
     ts_[i] = ts_[i+1];
   num_ts_--;
   ts_[num_ts_] = nullptr;
-  // clear deleted and free it
+  // Todo: clear deleted and free it
 }
 
 int policy_store::get_num_storage_info() {
@@ -166,7 +173,7 @@ void policy_store::delete_storage_info_by_index(int n) {
     si_[i] = si_[i+1];
   num_si_--;
   si_[num_si_] = nullptr;
-  // clear deleted and free it
+  // Todo: clear deleted and free it
 }
 
 int policy_store::get_storage_info_index_by_tag(string& tag) {
@@ -206,7 +213,7 @@ void policy_store::delete_claim_by_index(int n) {
     tc_[i] = tc_[i+1];
   num_tc_--;
   tc_[num_tc_] = nullptr;
-  // clear deleted and free it
+  // Todo: clear deleted and free it
 }
 
 int policy_store::get_claim_index_by_tag(string& tag) { // to do
@@ -258,7 +265,7 @@ void policy_store::delete_authentication_key_by_index(int n) {
     tkm_[i] = tkm_[i+1];
   num_tkm_--;
   tkm_[num_tkm_] = nullptr;
-  // clear deleted and free it
+  // Todo: clear deleted and free it
 }
 
 bool policy_store::Serialize(string* out) {
@@ -290,6 +297,10 @@ bool policy_store::Serialize(string* out) {
     channel_key_message* t = psm.add_channel_authentication_keys();
     t->set_tag(tkm_[i]->tag());
     t->mutable_auth_key()->CopyFrom(tkm_[i]->auth_key());
+  }
+  for (int i = 0; i < num_blobs_; i++) {
+    tagged_blob_message* t = psm.add_blobs();
+    t->CopyFrom(*tagged_blob_[i]);
   }
 
   if (!psm.SerializeToString(out))
@@ -345,6 +356,12 @@ bool policy_store::Deserialize(string& in) {
     t->mutable_auth_key()->CopyFrom(psm.channel_authentication_keys(i).auth_key());
     tkm_[i] = t;
   }
+  num_blobs_ = psm.blobs_size();
+  for (int i = 0; i < num_blobs_; i++) {
+    tagged_blob_message* t = new(tagged_blob_message);
+    t->CopyFrom(psm.blobs(i));
+    tagged_blob_[i] = t;
+  }
 
   return true;
 }
@@ -382,7 +399,63 @@ void policy_store::delete_signed_claim_by_index(int n) {
     tsc_[i] = tsc_[i+1];
   num_tsc_--;
   tsc_[num_tsc_] = nullptr;
+  // Todo: clear deleted and free it
+}
+
+bool policy_store::add_blob(string& tag, const string& s) {
+  if (num_blobs_ >= max_num_blobs_)
+    return false;
+  int n = get_blob_index_by_tag(tag);
+  if (n >= 0)
+    return false;
+  tagged_blob_message* t = new(tagged_blob_message);
+  t->set_tag(tag);
+  t->set_b(s);
+  tagged_blob_[num_blobs_++] = t;
+  return true;
+}
+
+const string* policy_store::get_blob_by_tag(string& tag) {
+  int index = get_blob_index_by_tag(tag);
+  if (index < 0)
+    return nullptr;
+  return &tagged_blob_[index]->b();
+}
+
+const tagged_blob_message* policy_store::get_tagged_blob_info_by_index(int n) {
+  if (n >= num_blobs_)
+    return nullptr;
+  return tagged_blob_[n];
+}
+
+const string* policy_store::get_blob_by_index(int index) {
+  if (index >= num_blobs_)
+    return nullptr;
+  return &(tagged_blob_[index]->b());
+}
+
+int policy_store::get_blob_index_by_tag(string& tag) {
+  for (int i = 0; i < num_blobs_; i++) {
+    if (tag == tagged_blob_[i]->tag())
+      return i;
+  }
+  return -1;
+}
+
+void policy_store::delete_blob_by_index(int index) {
+  if (index >= num_blobs_)
+    return;
+  const tagged_blob_message* deleted = get_tagged_blob_info_by_index(index);
+  for (int i = index; i < (num_blobs_ - 1); i++)
+    tagged_blob_[i] = tagged_blob_[i+1];
+  num_blobs_--;
+  tagged_blob_[num_blobs_] = nullptr;
   // clear deleted and free it
+
+}
+
+int policy_store::get_num_blobs() {
+  return num_blobs_;
 }
 
 

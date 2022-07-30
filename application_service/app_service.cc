@@ -90,6 +90,7 @@ const int service_symmetric_key_size = 64;
 byte service_symmetric_key[service_symmetric_key_size];
 key_message service_sealing_key;
 
+// Fix: This should not be a global
 // Protect Key
 byte symmetric_key_for_protect[service_symmetric_key_size];
 key_message protect_symmetric_key;
@@ -120,6 +121,10 @@ void print_trust_data() {
 bool save_store(const string& enclave_type) {
   string serialized_store;
 
+
+// Protect Key
+// byte symmetric_key_for_protect[service_symmetric_key_size];
+// key_message protect_symmetric_key;
   if (!pStore.Serialize(&serialized_store)) {
     printf("save_store() can't serialize store\n"); 
     return false;

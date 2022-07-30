@@ -200,6 +200,26 @@ bool test_policy_store(bool print_all) {
   if (fc == nullptr)
     return false;
 
+  byte t_bs1[3] = {
+    1,2,3
+  };
+  string bs1;
+  bs1.assign((char*)t_bs1, 3);
+  string lab_s1("string-1");
+  byte t_bs2[3] = {
+    4,5,6
+  };
+  string bs2;
+  bs2.assign((char*)t_bs2, 3);
+  string lab_s2("string-2");
+
+  if (!ps.add_blob(lab_s1, bs1)) {
+    return false;
+  }
+  if (!ps.add_blob(lab_s2, bs2)) {
+    return false;
+  }
+
   storage_info_message smi;
   string si_tag("test-si-tag");
   smi.set_tag(si_tag);
@@ -252,6 +272,18 @@ bool test_policy_store(bool print_all) {
     for (int i = 0; i < nt; i++) {
       const trusted_service_message* tsm = ps.get_trusted_service_info_by_index(i);
       print_trusted_service_message(*tsm);
+    }
+    printf("\n");
+  }
+
+  int ntb = ps.get_num_blobs();
+  if (print_all) {
+    printf("%d blobs\n", ntb);
+    for (int i = 0; i < ntb; i++) {
+      const tagged_blob_message* tsb = ps.get_tagged_blob_info_by_index(i);
+      printf("blob %d, tag %s: ", i, tsb->tag().c_str());
+      print_bytes(tsb->b().size(), (byte*)tsb->b().data());
+      printf("\n");
     }
     printf("\n");
   }
