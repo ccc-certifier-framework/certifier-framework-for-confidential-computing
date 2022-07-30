@@ -142,7 +142,7 @@ void policy_store::delete_trusted_service_by_index(int n) {
     ts_[i] = ts_[i+1];
   num_ts_--;
   ts_[num_ts_] = nullptr;
-  // Todo: clear deleted and free it
+  delete deleted;
 }
 
 int policy_store::get_num_storage_info() {
@@ -173,7 +173,7 @@ void policy_store::delete_storage_info_by_index(int n) {
     si_[i] = si_[i+1];
   num_si_--;
   si_[num_si_] = nullptr;
-  // Todo: clear deleted and free it
+  delete deleted;
 }
 
 int policy_store::get_storage_info_index_by_tag(const string& tag) {
@@ -213,7 +213,7 @@ void policy_store::delete_claim_by_index(int n) {
     tc_[i] = tc_[i+1];
   num_tc_--;
   tc_[num_tc_] = nullptr;
-  // Todo: clear deleted and free it
+  delete deleted;
 }
 
 int policy_store::get_claim_index_by_tag(const string& tag) { // to do
@@ -265,7 +265,7 @@ void policy_store::delete_authentication_key_by_index(int n) {
     tkm_[i] = tkm_[i+1];
   num_tkm_--;
   tkm_[num_tkm_] = nullptr;
-  // Todo: clear deleted and free it
+  delete deleted;
 }
 
 bool policy_store::Serialize(string* out) {
@@ -399,7 +399,7 @@ void policy_store::delete_signed_claim_by_index(int n) {
     tsc_[i] = tsc_[i+1];
   num_tsc_--;
   tsc_[num_tsc_] = nullptr;
-  // Todo: clear deleted and free it
+  delete deleted;
 }
 
 bool policy_store::add_blob(const string& tag, const string& s) {
