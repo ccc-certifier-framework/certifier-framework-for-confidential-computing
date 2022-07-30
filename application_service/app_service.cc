@@ -526,6 +526,7 @@ bool certify_me(const string& enclave_type) {
   }
 
   // read response
+  // Todo: Replace with call to int sized_read(int fd, string* out)
   int size_response_buf = 32000;
   byte response_buf[size_response_buf];
   int n = read(sock, response_buf, size_response_buf);
@@ -769,6 +770,7 @@ void app_service_loop(int read_fd, int write_fd) {
     bool succeeded = false;
     string in;
     string out;
+    // Todo: Replace with call to int sized_read(int fd, string* out)
     int n = read(read_fd, r_buf, r_size);
     printf("app_service_loop, read: %d\n", n);
     if (n <= 0) {
@@ -1048,6 +1050,7 @@ bool app_request_server() {
     // read run request
     byte in[max_req_size];
     memset(in, 0, max_req_size);
+    // Todo: Replace with call to int sized_read(int fd, string* out)
     int n = read(client, in, max_req_size);
     if (n < 0) {
       printf("Read failed in application server\n");

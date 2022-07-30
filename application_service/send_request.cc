@@ -48,6 +48,7 @@ int main(int an, char**av) {
   }
 
   // read response
+  // Todo: Replace with call to int sized_read(int fd, string* out)
   int size_response_buf = 32000;
   byte response_buf[size_response_buf];
   int n = read(sock, response_buf, size_response_buf);

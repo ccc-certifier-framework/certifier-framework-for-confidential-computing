@@ -457,6 +457,7 @@ printf("certify_me\n");
   }
 
   // read response
+  // Todo: Replace with call to int sized_read(int fd, string* out)
   int size_response_buf = 32000;
   byte response_buf[size_response_buf];
   int n = read(sock, response_buf, size_response_buf);
@@ -608,6 +609,7 @@ bool client_auth_server(SSL*ssl) {
   ctx = X509_STORE_CTX_new();
 
   // get cert
+  // Todo: Replace with call to int sized_read(int fd, string* out)
   size_cert= SSL_read(ssl, cert_buf, size_cert);
   string asn_cert;
   asn_cert.assign((char*)cert_buf, size_cert);
@@ -637,6 +639,7 @@ bool client_auth_server(SSL*ssl) {
   SSL_write(ssl, nonce, size_nonce);
 
   // get signature
+  // Todo: Replace with call to int sized_read(int fd, string* out)
   size_sig = SSL_read(ssl, sig, size_sig);
 
   // verify chain
@@ -738,6 +741,7 @@ void server_application(SSL* ssl) {
   memset(in, 0, 1024);
 
   // client starts, in a real application we would likely get a serialized protobuf
+  // Todo: Replace with call to int sized_read(int fd, string* out)
   int n = SSL_read(ssl, in, 1024);
   printf("SSL server read: %s\n", (const char*) in);
 
@@ -868,6 +872,7 @@ void client_application(SSL* ssl) {
   SSL_write(ssl, (byte*)msg, strlen(msg));
   byte buf[1024];
   memset(buf, 0, 1024);
+  // Todo: Replace with call to int sized_read(int fd, string* out)
   int n = SSL_read(ssl, buf, 1024);
   printf("SSL client read: %s\n", (const char*)buf);
 }

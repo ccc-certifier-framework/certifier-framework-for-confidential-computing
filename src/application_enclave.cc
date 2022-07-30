@@ -54,6 +54,7 @@ bool application_GetParentEvidence(string* out) {
   }
 
   // response
+  // Todo: Replace with call to int sized_read(int fd, string* out)
   int t_size = 4096;
   byte t_out[t_size];
   int n= read(reader, t_out, t_size);
