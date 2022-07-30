@@ -126,7 +126,7 @@ bool policy_store::add_trusted_service(trusted_service_message& to_add) {
   return true;
 }
 
-int policy_store::get_trusted_service_index_by_tag(string tag) {
+int policy_store::get_trusted_service_index_by_tag(const string tag) {
   for (int i = 0; i < num_ts_; i++) {
     if (ts_[i]->tag() == tag)
       return i;
@@ -176,7 +176,7 @@ void policy_store::delete_storage_info_by_index(int n) {
   // Todo: clear deleted and free it
 }
 
-int policy_store::get_storage_info_index_by_tag(string& tag) {
+int policy_store::get_storage_info_index_by_tag(const string& tag) {
   for (int i = 0; i < num_si_; i++) {
     if (si_[i]->tag() == tag)
       return i;
@@ -194,7 +194,7 @@ const claim_message* policy_store::get_claim_by_index(int n) {
   return &(tc_[n]->claim());
 }
 
-bool policy_store::add_claim(string& tag, const claim_message& to_add) {
+bool policy_store::add_claim(const string& tag, const claim_message& to_add) {
   if ((num_tc_ + 1) >= max_num_tc_)
     return false;
   tagged_claim* t = new(tagged_claim);
@@ -216,7 +216,7 @@ void policy_store::delete_claim_by_index(int n) {
   // Todo: clear deleted and free it
 }
 
-int policy_store::get_claim_index_by_tag(string& tag) { // to do
+int policy_store::get_claim_index_by_tag(const string& tag) { // to do
   for (int i = 0; i < num_tc_; i++) {
     if (tc_[i]->tag() == tag)
       return i;
@@ -224,7 +224,7 @@ int policy_store::get_claim_index_by_tag(string& tag) { // to do
   return -1;
 }
 
-bool policy_store::add_authentication_key(string& tag, const key_message& k) {
+bool policy_store::add_authentication_key(const string& tag, const key_message& k) {
   if ((num_tkm_ + 1) >= max_num_tkm_)
     return false;
   channel_key_message* t = new(channel_key_message);
@@ -235,7 +235,7 @@ bool policy_store::add_authentication_key(string& tag, const key_message& k) {
   return true;
 }
 
-const key_message* policy_store::get_authentication_key_by_tag(string& tag) {
+const key_message* policy_store::get_authentication_key_by_tag(const string& tag) {
   for (int i = 0; i < num_tkm_; i++) {
     if (tkm_[i]->tag() == tag)
       return &(tkm_[i]->auth_key());
@@ -249,7 +249,7 @@ const key_message* policy_store::get_authentication_key_by_index(int i) {
   return &(tkm_[i]->auth_key());
 }
 
-int policy_store::get_authentication_key_index_by_tag(string& tag) {
+int policy_store::get_authentication_key_index_by_tag(const string& tag) {
   for (int i = 0; i < num_tkm_; i++) {
     if (tkm_[i]->tag() == tag)
       return i;
@@ -372,7 +372,7 @@ const signed_claim_message* policy_store::get_signed_claim_by_index(int n) {
   return &(tsc_[n]->sc());
 }
 
-bool policy_store::add_signed_claim(string& tag, const signed_claim_message& to_add) {
+bool policy_store::add_signed_claim(const string& tag, const signed_claim_message& to_add) {
   if ((num_tsc_ + 1) >= max_num_tsc_)
     return false;
   tagged_signed_claim* t = new(tagged_signed_claim);
@@ -383,7 +383,7 @@ bool policy_store::add_signed_claim(string& tag, const signed_claim_message& to_
   return true;
 }
 
-int policy_store::get_signed_claim_index_by_tag(string& tag) {
+int policy_store::get_signed_claim_index_by_tag(const string& tag) {
   for (int i = 0; i < num_tsc_; i++) {
     if (tsc_[i]->tag() == tag)
       return i;
@@ -402,7 +402,7 @@ void policy_store::delete_signed_claim_by_index(int n) {
   // Todo: clear deleted and free it
 }
 
-bool policy_store::add_blob(string& tag, const string& s) {
+bool policy_store::add_blob(const string& tag, const string& s) {
   if (num_blobs_ >= max_num_blobs_)
     return false;
   int n = get_blob_index_by_tag(tag);
@@ -415,7 +415,7 @@ bool policy_store::add_blob(string& tag, const string& s) {
   return true;
 }
 
-const string* policy_store::get_blob_by_tag(string& tag) {
+const string* policy_store::get_blob_by_tag(const string& tag) {
   int index = get_blob_index_by_tag(tag);
   if (index < 0)
     return nullptr;
@@ -434,7 +434,7 @@ const string* policy_store::get_blob_by_index(int index) {
   return &(tagged_blob_[index]->b());
 }
 
-int policy_store::get_blob_index_by_tag(string& tag) {
+int policy_store::get_blob_index_by_tag(const string& tag) {
   for (int i = 0; i < num_blobs_; i++) {
     if (tag == tagged_blob_[i]->tag())
       return i;

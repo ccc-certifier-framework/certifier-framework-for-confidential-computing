@@ -96,39 +96,39 @@ public:
 
   int get_num_trusted_services();
   const trusted_service_message* get_trusted_service_info_by_index(int n);
-  int get_trusted_service_index_by_tag(string tag);
+  int get_trusted_service_index_by_tag(const string tag);
   bool add_trusted_service(trusted_service_message& to_add);
   void delete_trusted_service_by_index(int n);
 
   int get_num_storage_info();
   const storage_info_message* get_storage_info_by_index(int n);
   bool add_storage_info(storage_info_message& to_add);
-  int get_storage_info_index_by_tag(string& tag);
+  int get_storage_info_index_by_tag(const string& tag);
   void delete_storage_info_by_index(int n);
 
   int get_num_claims();
   const claim_message* get_claim_by_index(int n);
-  bool add_claim(string& tag, const claim_message& to_add);
-  int get_claim_index_by_tag(string& tag);
+  bool add_claim(const string& tag, const claim_message& to_add);
+  int get_claim_index_by_tag(const string& tag);
   void delete_claim_by_index(int n);
 
   int get_num_signed_claims();
   const signed_claim_message* get_signed_claim_by_index(int n);
-  int get_signed_claim_index_by_tag(string& tag);
-  bool add_signed_claim(string& tag, const signed_claim_message& to_add);
+  int get_signed_claim_index_by_tag(const string& tag);
+  bool add_signed_claim(const string& tag, const signed_claim_message& to_add);
   void delete_signed_claim_by_index(int n);
 
-  bool add_authentication_key(string& tag, const key_message& k);
-  const key_message* get_authentication_key_by_tag(string& tag);
+  bool add_authentication_key(const string& tag, const key_message& k);
+  const key_message* get_authentication_key_by_tag(const string& tag);
   const key_message* get_authentication_key_by_index(int index);
-  int get_authentication_key_index_by_tag(string& tag);
+  int get_authentication_key_index_by_tag(const string& tag);
   void delete_authentication_key_by_index(int index);
 
-  bool add_blob(string& tag, const string& s);
-  const string* get_blob_by_tag(string& tag);
+  bool add_blob(const string& tag, const string& s);
+  const string* get_blob_by_tag(const string& tag);
   const string* get_blob_by_index(int index);
   const tagged_blob_message* get_tagged_blob_info_by_index(int n);
-  int get_blob_index_by_tag(string& tag);
+  int get_blob_index_by_tag(const string& tag);
   void delete_blob_by_index(int index);
   int get_num_blobs();
 
