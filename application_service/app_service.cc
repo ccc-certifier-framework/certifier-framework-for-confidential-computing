@@ -90,7 +90,7 @@ const int service_symmetric_key_size = 64;
 byte service_symmetric_key[service_symmetric_key_size];
 key_message service_sealing_key;
 
-#define DEBUG
+//#define DEBUG
 
 // --------------------------------------------------------------------------
 
@@ -245,11 +245,8 @@ bool cold_init(const string& enclave_type) {
   printf("cold_init, sealing key:\n");
   print_key(service_sealing_key);
   printf("\n");
+  print_trust_data();
 #endif
-
-  if (FLAGS_print_all) {
-    print_trust_data();
-  }
 
   service_trust_data_initialized = true;
   return service_trust_data_initialized;
@@ -318,11 +315,8 @@ bool warm_restart(const string& enclave_type) {
   printf("warm_init, sealing key:\n");
   print_key(service_sealing_key);
   printf("\n");
+  print_trust_data();
 #endif
-
-  if (FLAGS_print_all) {
-    print_trust_data();
-  }
 
   service_trust_data_initialized = true;
   return service_trust_data_initialized;
@@ -388,10 +382,6 @@ bool certify_me(const string& enclave_type) {
   if (!simulated_GetAttestClaim(&signed_platform_says_attest_key_is_trusted)) {
     printf("Can't get signed attest claim\n");
     return false;
-  }
-  if (FLAGS_print_all) {
-    printf("Got platform claims\n");
-    print_signed_claim(signed_platform_says_attest_key_is_trusted);
   }
 
   vse_clause vc;
@@ -461,25 +451,25 @@ bool certify_me(const string& enclave_type) {
     return false;
   }
 
-  if (FLAGS_print_all) {
-    printf("\nPlatform vse claim:\n");
-    print_vse_clause(vc);
-    printf("\n");
-    printf("attest vse claim:\n");
-    print_vse_clause(vse_attest_clause);
-    printf("\n\n");
-    printf("attestation signed claim\n");
-    print_signed_claim(the_attestation);
-    printf("\n");
-    printf("attestation underlying claim\n");
-    claim_message tcm;
-    string ser_claim_str;
-    ser_claim_str.assign((char*)the_attestation.serialized_claim_message().data(),
-        the_attestation.serialized_claim_message().size());
-    tcm.ParseFromString(ser_claim_str);
-    print_claim(tcm);
-    printf("\n");
-  }
+#ifdef DEBUG
+  printf("\nPlatform vse claim:\n");
+  print_vse_clause(vc);
+  printf("\n");
+  printf("attest vse claim:\n");
+  print_vse_clause(vse_attest_clause);
+  printf("\n\n");
+  printf("attestation signed claim\n");
+  print_signed_claim(the_attestation);
+  printf("\n");
+  printf("attestation underlying claim\n");
+  claim_message tcm;
+  string ser_claim_str;
+  ser_claim_str.assign((char*)the_attestation.serialized_claim_message().data(),
+      the_attestation.serialized_claim_message().size());
+  tcm.ParseFromString(ser_claim_str);
+  print_claim(tcm);
+  printf("\n");
+#endif
 
   // Get certified
   trust_request_message request;
@@ -900,7 +890,10 @@ bool process_run_request(run_request& req) {
     printf("Pipe 2 failed\n");
     return false;
   }
+
+#ifdef DEBUG
   printf("pipes made %d %d %d %d\n", fd1[0], fd1[1], fd2[0], fd2[1]);
+#endif
 
   // Is this what I want?
   int parent_read_fd = fd2[0];
@@ -931,11 +924,12 @@ bool process_run_request(run_request& req) {
 #endif
       return false;
     }
+    // Make sure this is not a privileged account?
     uid_t uid = ent->pw_uid;
     gid_t gid = ent->pw_gid;
-    // Make sure this is not a privileged account?
+#ifdef DEBUG
     printf("Changing to gid: %d, uid: %d\n", gid, uid);
-    //free(ent);
+#endif
     ent = nullptr;
     if (setgid(gid) != 0 || setuid (uid) != 0) {
       printf("Can't seettuid\n");
@@ -946,8 +940,10 @@ bool process_run_request(run_request& req) {
       return false;
     }
 
+#ifdef DEBUG
     printf("Child about to exec %s, read: %d, write: %d\n",
         req.location().c_str(), child_read_fd, child_write_fd);
+#endif
 
     string n1 = std::to_string(child_read_fd);
     string n2 = std::to_string(child_write_fd);
@@ -1045,7 +1041,9 @@ bool app_request_server() {
     printf("application_service server at accept\n");
     struct sockaddr_in addr;
     int client = accept(sd, (struct sockaddr*)&addr, &len);
+#ifdef DEBUG
     printf("\nclient: %d\n", client);
+#endif
 
     // read run request
     byte in[max_req_size];
