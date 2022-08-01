@@ -83,29 +83,38 @@ int main(int an, char** av) {
 
   string enclave_type("simulated-enclave");
   string purpose("authentication");
-  app_trust_data = new cc_trust_data(enclave_type, purpose, FLAGS_policy_store_file);
+
+  string store_file(FLAGS_data_dir);
+  store_file.append(FLAGS_policy_store_file);
+  app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
   if (app_trust_data == nullptr) {
     printf("couldn't initialize trust object\n");
     return 1;
   }
 
-  string attest_key_file_name(FLAGS_data_dir);
-  attest_key_file_name.append(FLAGS_attest_key_file);
-
-  string platform_attest_file_name(FLAGS_data_dir);
-  platform_attest_file_name.append(FLAGS_platform_attest_endorsement);
-
-  string measurement_file_name(FLAGS_data_dir);
-  measurement_file_name.append(FLAGS_measurement_file);
-
-  string attest_endorsement_file_name(FLAGS_data_dir);
-  attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
-  if (!simulated_Init(serializedPolicyCert, attest_key_file_name, measurement_file_name,
-           attest_endorsement_file_name)) {
-    printf("simulated_init failed\n");
+  // Init policy key info
+  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert)) {
+    printf("Can't init policy key\n");
     return false;
   }
 
+  // Init simulated enclave
+  string attest_key_file_name(FLAGS_data_dir);
+  attest_key_file_name.append(FLAGS_attest_key_file);
+  string platform_attest_file_name(FLAGS_data_dir);
+  platform_attest_file_name.append(FLAGS_platform_attest_endorsement);
+  string measurement_file_name(FLAGS_data_dir);
+  measurement_file_name.append(FLAGS_measurement_file);
+  string attest_endorsement_file_name(FLAGS_data_dir);
+  attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
+
+  if (!app_trust_data->initialize_simulated_enclave_data(attest_key_file_name,
+      measurement_file_name, attest_endorsement_file_name))
+    printf("Can't init simulated enclave\n");
+    return false;
+  }
+
+  // Carry out operation
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
     if (!app_trust_data->cold_init()) {
