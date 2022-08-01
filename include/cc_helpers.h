@@ -49,6 +49,7 @@ public:
   policy_store store_;
 
   bool cc_provider_provisioned_;
+  bool cc_is_certified_;
 
   // For auth
   bool cc_auth_key_initialized_;

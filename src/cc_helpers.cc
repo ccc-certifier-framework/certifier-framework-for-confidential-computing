@@ -66,6 +66,7 @@ cc_trust_data::cc_trust_data(const string& enclave_type, const string& purpose,
   cc_sealing_key_initialized_ = false;
   cc_provider_provisioned_ = false;
   x509_policy_cert_ = nullptr;
+  cc_is_certified_ = true;
 }
 
 cc_trust_data::cc_trust_data() {
@@ -78,6 +79,7 @@ cc_trust_data::cc_trust_data() {
   cc_sealing_key_initialized_ = false;
   cc_provider_provisioned_ = false;
   x509_policy_cert_ = nullptr;
+  cc_is_certified_ = true;
 }
 
 cc_trust_data::~cc_trust_data() {
@@ -303,14 +305,12 @@ bool cc_trust_data::put_trust_data_in_store() {
       printf("Can't store sealing keys\n");
       return false;
     }
-    signed_claim_message  psm;
 
     if (cc_service_platform_rule_initialized_) {
       string rule_tag("platform-rule");
       if (!store_.add_signed_claim(rule_tag, platform_rule_)) {
         printf("Can't add platform rule\n");
       }
-      platform_rule_.CopyFrom(psm);
     }
     return true;
   }
@@ -376,6 +376,7 @@ bool cc_trust_data::get_trust_data_from_store() {
         platform_rule_.CopyFrom(*psm);
       }
       cc_service_platform_rule_initialized_ = true;
+      cc_is_certified_ = true;
     }
     return true;
   }
@@ -395,7 +396,11 @@ bool cc_trust_data::get_trust_data_from_store() {
       printf("Can't transform to public key\n");
       return false;
     }
+    if (private_service_key_.has_certificate()) {
+      cc_is_certified_ = true;
+    }
     cc_auth_key_initialized_ = true;
+
     string symmetric_key_tag("app-symmetric-key");
     index = store_.get_storage_info_index_by_tag(symmetric_key_tag);
     if (index < 0) {
@@ -407,6 +412,7 @@ bool cc_trust_data::get_trust_data_from_store() {
       return false;
     symmetric_key_.CopyFrom(skm->storage_key());
     cc_symmetric_key_initialized_ = true;
+
     return true;
   }
 
@@ -529,25 +535,25 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     return false;
   }
   
-  // Get the signed claim "platform-key says attestation-key is trusted"
+  //  The platform statement is "platform-key says attestation-key is-trusted-for-attestation"
+  //  This is CC provider dependant
   signed_claim_message signed_platform_says_attest_key_is_trusted;
   if (!GetPlatformSaysAttestClaim(&signed_platform_says_attest_key_is_trusted)) {
     printf("Can't get signed attest claim\n");
     return false;
   }
+
 #ifdef DEBUG
-    printf("Got platform claims\n");
+    printf("Got platform statement\n");
     print_signed_claim(signed_platform_says_attest_key_is_trusted);
 #endif
 
+  //  We retrieve the attest key from the platform statement.
   vse_clause vc;
   if (!get_vse_clause_from_signed_claim(signed_platform_says_attest_key_is_trusted, &vc)) {
     printf("Can't get vse platform claim\n");
     return false;
   }
-
-  //  The platform statement is "platform-key says attestation-key is-trusted-for-attestation"
-  //  We retrieve the entity describing the attestation key from this.
   entity_message attest_key_entity = vc.clause().subject();
 
   // Here we generate a vse-attestation which is
@@ -555,14 +561,13 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   // the user requests (Some people call this the "user data" in an
   // attestation.  Formats for an attestation will vary among platforms
   // but they must always convery the information we do here.
-  // most of this is boiler plate
-
   string enclave_id("");
   string descript("test-attest");
   string at_format("vse-attestation");
 
-  // now construct the vse clause "attest-key says authentication key speaks-for measurement"
-  // there are three entities in the attest: the attest-key, the auth-key and the measurement
+  // Now construct the vse clause "attest-key says authentication key speaks-for measurement"
+  // There are three entities in the attest: the attest-key, the auth-key and the measurement
+  // How we find the measurement is also provider dependant.
   int my_measurement_size = 32;
   byte my_measurement[my_measurement_size];
   if (!Getmeasurement(enclave_type_, enclave_id, &my_measurement_size, my_measurement)) {
@@ -582,12 +587,18 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     return false;
   }
 
-  // Construct the vse attestation
+  // Now we have all the Principals for the attestation.
+  // Next, we construct the vse attestation.
+  // SGX doesn't need this.
+  // construct_attestation creates the vse statement representing the
+  // attestation.
   vse_clause vse_attest_clause;
   if (!construct_attestation(attest_key_entity, auth_key_entity,
         measurement_entity, &vse_attest_clause)) {
+    printf("certify_me error 3\n");
+    return false;
   }
-  // Create the attestation and sign it
+  // Create the final attestation and sign it and serialize it
   string serialized_attestation;
   if (!vse_attestation(descript, enclave_type_, enclave_id, vse_attest_clause, &serialized_attestation)) {
     printf("certify_me error 5\n");
@@ -609,23 +620,23 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   }
 
 #ifdef DEBUG
-    printf("\nPlatform vse claim:\n");
-    print_vse_clause(vc);
-    printf("\n");
-    printf("attest vse claim:\n");
-    print_vse_clause(vse_attest_clause);
-    printf("\n\n");
-    printf("attestation signed claim\n");
-    print_signed_claim(the_attestation);
-    printf("\n");
-    printf("attestation underlying claim\n");
-    claim_message tcm;
-    string ser_claim_str;
-    ser_claim_str.assign((char*)the_attestation.serialized_claim_message().data(),
-        the_attestation.serialized_claim_message().size());
-    tcm.ParseFromString(ser_claim_str);
-    print_claim(tcm);
-    printf("\n");
+  printf("\nPlatform vse claim:\n");
+  print_vse_clause(vc);
+  printf("\n");
+  printf("attest vse claim:\n");
+  print_vse_clause(vse_attest_clause);
+  printf("\n\n");
+  printf("attestation signed claim\n");
+  print_signed_claim(the_attestation);
+  printf("\n");
+  printf("attestation underlying claim\n");
+  claim_message tcm;
+  string ser_claim_str;
+  ser_claim_str.assign((char*)the_attestation.serialized_claim_message().data(),
+      the_attestation.serialized_claim_message().size());
+  tcm.ParseFromString(ser_claim_str);
+  print_claim(tcm);
+  printf("\n");
 #endif
 
   // Get certified
@@ -639,10 +650,9 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   request.set_submitted_evidence_type("platform-attestation-only");
   request.set_purpose("authentication");
 
-
   // Construct the evidence package
-  // put platform attest claim and attestation in the following order
-  // platform_says_attest_key_is_trusted, the_attestation
+  // Put platform attest claim and attestation in the following order:
+  //  platform_says_attest_key_is_trusted, the_attestation
   evidence_package* ep = new(evidence_package);
   if (!construct_platform_evidence_package(signed_platform_says_attest_key_is_trusted,
         the_attestation, ep))  {
@@ -657,22 +667,21 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   }
 
 #ifdef DEBUG 
-    printf("\nRequest:\n");
-    print_trust_request_message(request);
+  printf("\nRequest:\n");
+  print_trust_request_message(request);
 #endif 
 
+  // Open socket and send request.
   int sock = -1;
   if (!open_client_socket(host_name, port, &sock)) {
     printf("Can't open request socket\n");
     return false;
   }
-  
-  // write request
   if (write(sock, (byte*)serialized_request.data(), serialized_request.size()) < 0) {
     return false;
   }
 
-  // read response
+  // Read response from Certifier Service.
   string serialized_response;
   int resp_size = sized_read(sock, &serialized_response);
   if (resp_size < 0) {
@@ -686,8 +695,8 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   close(sock);
 
 #ifdef DEBUG
-    printf("\nResponse:\n");
-    print_trust_response_message(response);
+  printf("\nResponse:\n");
+  print_trust_response_message(response);
 #endif
 
   if (response.status() != "succeeded") {
@@ -695,7 +704,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     return false;
   }
 
-  // store cert or rule
+  // Store the admissions certificate cert or platform rule
   if (purpose_ == "authentication") {
     public_auth_key_.set_certificate(response.artifact());
     private_auth_key_.set_certificate(response.artifact());
@@ -708,25 +717,36 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       X509_print_fp(stdout, art_cert);
     }
 #endif
-  } else if (purpose_ == "authentication") {
-    if (!platform_rule_.ParseFromString(response.artifact())) {
+
+    // Update store with cert and save it
+    string auth_tag("auth-key");
+    const key_message* km = store_.get_authentication_key_by_tag(auth_tag);
+    if (km == nullptr) {
+      printf("Can't find authentication key in store\n");
+      return false;
+    }
+    ((key_message*) km)->set_certificate((byte*)response.artifact().data(), response.artifact().size());
+    cc_service_platform_rule_initialized_ = true;
+    cc_is_certified_ = true;
+  } else if (purpose_ == "attestation") {
+    // Set platform_rule
+    string pr_str;
+    pr_str.assign((char*)response.artifact().data(),response.artifact().size());
+    if (!platform_rule_.ParseFromString(pr_str)) {
       printf("Can't parse platform rule\n");
       return false;
     }
     cc_service_platform_rule_initialized_ = true;
+
+    // Update store with platform_rule and save it
+    string platform_rule__tag("platform-rule");
+    cc_is_certified_ = true;
+
   } else {
     printf("Unknown purpose\n");
     return false;
   }
 
-  // Update store and save it
-  string auth_tag("auth-key");
-  const key_message* km = store_.get_authentication_key_by_tag(auth_tag);
-  if (km == nullptr) {
-    printf("Can't find authentication key in store\n");
-    return false;
-  }
-  ((key_message*) km)->set_certificate((byte*)response.artifact().data(), response.artifact().size());
   return save_store();
 }
 

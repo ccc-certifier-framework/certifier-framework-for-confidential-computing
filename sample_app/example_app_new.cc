@@ -131,12 +131,14 @@ void server_application(X509* x509_policy_cert, SSL* ssl) {
 bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port) {
   SSL_load_error_strings();
 
+  // Get a socket.
   int sock = -1;
   if (!open_server_socket(host_name, port, &sock)) {
     printf("Can't open server socket\n");
     return false;
   }
 
+  // Set up TLS handshake data.
   SSL_METHOD* method = (SSL_METHOD*) TLS_server_method();
   SSL_CTX* ctx = SSL_CTX_new(method);
   if (ctx == NULL) {
@@ -155,13 +157,14 @@ bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const st
   SSL_CTX_set_options(ctx, flags);
 
 #if 0
-  // This is unnecessary on my mac.
+  // This is unnecessary usually.
   if(!isRoot()) {
     printf("This program must be run as root/sudo user!!");
     return false;
   }
 #endif
 
+  // Verify peer
   // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
   unsigned int len = 0;
@@ -171,8 +174,11 @@ bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const st
     int client = accept(sock, (struct sockaddr*)&addr, &len);
     SSL* ssl = SSL_new(ctx);
     SSL_set_fd(ssl, client);
+    // This is the server application flow.
     server_application(x509_policy_cert, ssl);
   }
+
+  // Clean up.
   close(sock);
   SSL_CTX_free(ctx);
   return true;
@@ -186,16 +192,22 @@ bool run_me_as_client(X509* x509_policy_cert, key_message& private_key,
   SSL_CTX* ctx = nullptr;
   SSL* ssl = nullptr;
 
+  // Set up socket (sd), ssl context and ssl channel.
   if (!init_client_ssl(x509_policy_cert, private_key, host_name, port, &sd, &ctx, &ssl)) {
     printf("init_client_ssl failed\n");
     return false;
   }
 
+  // Authenticate client interaction (initiated by server after handshake)
   if (!client_auth_client(x509_policy_cert, private_key, ssl)) {
     printf("Client auth failed at client\n");
     return false;
   }
+
+  // This is the actual application code.
   client_application(ssl);
+
+  // CLean up.
   close_client_ssl(sd, ctx, ssl);
   return true;
 }
