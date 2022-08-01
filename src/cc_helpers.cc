@@ -285,7 +285,7 @@ bool cc_trust_data::put_trust_data_in_store() {
       printf("Can't store sealing keys\n");
       return false;
     }
-    // platform rule?
+    // Todo: platform rule?
     return true;
   }
   if (purpose_ == "authentication") {
@@ -801,7 +801,9 @@ bool client_auth_client(key_message& private_key, SSL* ssl) {
     goto done;
   }
   SSL_write(ssl, sig, size_sig);
+#ifdef DEBUG
   printf("client_auth_client succeeds\n");
+#endif
 
 
 done:
@@ -907,7 +909,9 @@ void server_application(X509* x509_policy_cert, SSL* ssl) {
     return;
   }
   int sd = SSL_get_fd(ssl);
+#ifdef DEBUG
   printf("Accepted ssl connection using %s \n", SSL_get_cipher(ssl));
+#endif
 
     // Verify a client certificate was presented during the negotiation
     X509* cert = SSL_get_peer_certificate(ssl);
@@ -951,7 +955,8 @@ bool load_server_certs_and_key(X509* x509_policy_cert, key_message& private_key,
 
   X509* x509_auth_key_cert= X509_new();
   string auth_cert_str;
-  auth_cert_str.assign((char*)private_key.certificate().data(),private_key.certificate().size());
+  auth_cert_str.assign((char*)private_key.certificate().data(),
+        private_key.certificate().size());
   if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
       return false;
   }
@@ -1207,8 +1212,7 @@ bool construct_attestation(entity_message& attest_key_entity, entity_message& au
 // ---------------------------------------------------------------------------------------
 // App functions
 
-bool run_me_as_server(const string& host_address, int port) {
-#if 0
+bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port) {
   SSL_load_error_strings();
 
   int sock = -1;
@@ -1224,9 +1228,9 @@ bool run_me_as_server(const string& host_address, int port) {
     return false;
   }
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
-  X509_STORE_add_cert(cs, x509_policy_cert_);
+  X509_STORE_add_cert(cs, x509_policy_cert);
 
-  if (!load_server_certs_and_key(ctx)) {
+  if (!load_server_certs_and_key(x509_policy_cert, private_key, ctx)) {
     printf("SSL_CTX_new failed\n");
     return false;
   }
@@ -1256,36 +1260,31 @@ bool run_me_as_server(const string& host_address, int port) {
       int client = accept(sock, (struct sockaddr*)&addr, &len);
       SSL* ssl = SSL_new(ctx);
       SSL_set_fd(ssl, client);
-      server_application(ssl);
+      server_application(x509_policy_cert, ssl);
   }
   close(sock);
   SSL_CTX_free(ctx);
   return true;
-#else
-  return false;
-#endif
 }
 
-bool run_me_as_client() {
-#if 0
+bool run_me_as_client(X509* x509_policy_cert, key_message& private_key,
+      const string& host_name, int port) {
+
   SSL_load_error_strings();
   int sd = 0;
   SSL_CTX* ctx = nullptr;
   SSL* ssl = nullptr;
 
-  if (!init_client_ssl(&sd, &ctx, &ssl)) {
+  if (!init_client_ssl(x509_policy_cert, private_key, host_name, port, &sd, &ctx, &ssl)) {
     printf("init_client_ssl failed\n");
     return false;
   }
 
-  if (!client_auth_client(ssl)) {
+  if (!client_auth_client(private_key, ssl)) {
     printf("Hokey client auth failed at client\n");
     return false;
   }
   client_application(ssl);
   close_client_ssl(sd, ctx, ssl);
   return true;
-#else
-  return false;
-#endif
 }
