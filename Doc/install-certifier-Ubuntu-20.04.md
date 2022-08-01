@@ -3,10 +3,10 @@
 
 ### Setup Environment variables 
 
-export CERTIFIER=`pwd`/certifier
+git clone https://github.com/vmware-research/certifier-framework-for-confidential-computing.git
+export CERTIFIER=certifier-framework-for-confidential-computing
 export CERTIFIER_PROTOTYPE=$CERTIFIER
 export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_app
-git clone XXXX $CERTIFIER 
 
 ### Install Dependencies
 ```
@@ -17,6 +17,7 @@ We note that the versioning of `protobuf` and `golang` matters. One shall not us
 
 Install the latest protobuf from source by 
 ```
+sudo apt install autoconf automake libtool curl make g++ unzip
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
 git submodule update --init --recursive
@@ -40,6 +41,13 @@ The protobuf compiler(protoc) for golang is installed by
 go get github.com/golang/protobuf/proto
 go get google.golang.org/protobuf/cmd/protoc-gen-go
 ```
+
+Ensure OpenSSL library and OpenSSL headers are installed or install by
+```
+sudo apt install openssl
+sudo apt install libssl-dev
+```
+Current tests on Ubuntu are with OpenSSL 1.1.1f.
 
 ### Compile Certifier Library 
 The certifier library can be compiled by 

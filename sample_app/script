@@ -10,6 +10,7 @@ export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework
 export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_app
 
 # Create keys
+mkdir -p $EXAMPLE_DIR/provisioning
 cd $EXAMPLE_DIR/provisioning
 
 $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
@@ -60,7 +61,14 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=
 $CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
 
 # provision service and apps
+cd $EXAMPLE_DIR
+mkdir -p app1_data app2_data
+mkdir -p service
+
+
+# provision service and apps
 cd $EXAMPLE_DIR/provisioning
+
 cp ./* $EXAMPLE_DIR/service
 cp ./* $EXAMPLE_DIR/app1_data
 cp ./* $EXAMPLE_DIR/app2_data
