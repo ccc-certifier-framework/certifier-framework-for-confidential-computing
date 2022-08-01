@@ -314,6 +314,7 @@ bool cc_trust_data::put_trust_data_in_store() {
     }
     return true;
   }
+
   if (purpose_ == "authentication") {
 
     string auth_tag("auth-key");
@@ -386,20 +387,23 @@ bool cc_trust_data::get_trust_data_from_store() {
     string auth_key_tag("auth-key");
     int index = store_.get_authentication_key_index_by_tag(auth_key_tag);
     if (index < 0) {
+      printf("Can't find authentication key\n");
       return false;
     }
-    const key_message* sk = store_.get_authentication_key_by_index(index);
-    if (sk == nullptr)
+    const key_message* ak = store_.get_authentication_key_by_index(index);
+    if (ak == nullptr) {
+      printf("Can't retrieve authentication key\n");
       return false;
-    private_service_key_.CopyFrom(*sk);
-    if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
+    }
+    private_auth_key_.CopyFrom(*ak);
+    if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
       printf("Can't transform to public key\n");
       return false;
     }
-    if (private_service_key_.has_certificate()) {
+    cc_auth_key_initialized_ = true;
+    if (private_auth_key_.has_certificate()) {
       cc_is_certified_ = true;
     }
-    cc_auth_key_initialized_ = true;
 
     string symmetric_key_tag("app-symmetric-key");
     index = store_.get_storage_info_index_by_tag(symmetric_key_tag);
@@ -468,7 +472,7 @@ bool cc_trust_data::cold_init() {
       printf("Can't get random bytes for app key\n");
       return false;
     }
-    symmetric_key_.set_key_name("app-symmetric-key");
+    symmetric_key_.set_key_name("sealing-key");
     symmetric_key_.set_key_type("aes-256-cbc-hmac-sha256");
     symmetric_key_.set_key_format("vse-key");
     symmetric_key_.set_secret_key_bits(service_symmetric_key_, cc_helper_symmetric_key_size);
