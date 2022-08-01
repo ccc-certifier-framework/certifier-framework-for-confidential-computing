@@ -62,23 +62,28 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 //    run-app-as-server: This runs the app as a client
 
 #include "policy_key.cc"
-
 cc_trust_data* app_trust_data = nullptr;
+
 
 // -----------------------------------------------------------------------------------------
 
 void client_application(SSL* ssl) {
-  // client starts, in a real application we would likely send a serialized protobuf
+
+  // client sends a message over authenticated, encrypted channel
   const char* msg = "Hi from your secret client\n";
   SSL_write(ssl, (byte*)msg, strlen(msg));
   byte buf[1024];
   memset(buf, 0, 1024);
+
+  // Get server response over authenticated, encrypted channel and print it
   // Todo: Replace with call to int sized_read(int fd, string* out)
   int n = SSL_read(ssl, buf, 1024);
   printf("SSL client read: %s\n", (const char*)buf);
 }
 
 void server_application(X509* x509_policy_cert, SSL* ssl) {
+
+  // accept and carry out auth
   int res = SSL_accept(ssl);
   if (res != 1) {
     printf("Server: Can't SSL_accept connection\n");
@@ -100,22 +105,19 @@ void server_application(X509* x509_policy_cert, SSL* ssl) {
     } else {
       printf("Server: No peer cert presented in nego\n");
     }
-
   if (!client_auth_server(x509_policy_cert, ssl)) {
     printf("Client auth failed at server\n");
     return;
   }
 
+  // Read message from client over authenticated, encrypted channel
   // Todo: use sized_read
   byte in[1024];
   memset(in, 0, 1024);
-
-  // client starts, in a real application we would likely get a serialized protobuf
-  // Todo: Replace with call to int sized_read(int fd, string* out)
   int n = SSL_read(ssl, in, 1024);
   printf("SSL server read: %s\n", (const char*) in);
 
-  // says something back
+  // Reply over authenticated, encrypted channel
   const char* msg = "Hi from your secret server\n";
   SSL_write(ssl, (byte*)msg, strlen(msg));
   close(sd);
