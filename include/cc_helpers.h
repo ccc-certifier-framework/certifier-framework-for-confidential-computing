@@ -80,9 +80,13 @@ public:
       const string& policy_store_name);
   ~cc_trust_data();
 
-  bool cc_all_initialized();
+  // Each of the enclave types have bespoke initialization
   bool initialize_simulated_enclave_data(const string& attest_key_file_name,
       const string& measurement_file_name, const string& attest_endorsement_file_name);
+  bool initialize_sev_enclave_data(const string& platform_certs);
+  bool initialize_oe_enclave_data();
+
+  bool cc_all_initialized();
   bool init_policy_key(int asn1_cert_size, byte* asn1_cert);
   bool put_trust_data_in_store();
   bool get_trust_data_from_store();
@@ -107,12 +111,11 @@ void print_cn_name(X509_NAME* name);
 void print_org_name(X509_NAME* name);
 void print_ssl_error(int code);
 
-bool client_auth_server(X509* x509_policy_cert, SSL* ssl);
-bool load_server_certs_and_key(X509* x509_policy_cert, key_message& private_key, SSL_CTX* ctx);
-bool init_client_ssl(X509* x509_policy_cert, key_message& private_key,
-    const string& host_name, int port,
-    int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl);
-bool client_auth_client(key_message& private_key, SSL* ssl);
+bool client_auth_server(X509* x509_root_cert, SSL* ssl);
+bool client_auth_client(X509* x509_root_cert, key_message& private_key, SSL* ssl);
+bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx);
+bool init_client_ssl(X509* x509_root_cert, key_message& private_key,
+    const string& host_name, int port, int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl);
 void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl);
 #endif
 

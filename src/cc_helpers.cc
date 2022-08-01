@@ -116,7 +116,25 @@ bool cc_trust_data::initialize_simulated_enclave_data(const string& attest_key_f
       return false;
     }
   cc_provider_provisioned_ = true;
+  return true;
+}
+
+bool cc_trust_data::initialize_sev_enclave_data(const string& platform_certs_file) {
+  extern bool sev_Init(const string& platform_certs_file);
+#ifdef SEV_SNP
+  if (!sev_Init(const string& platform_certs_file)) {
+    return false;
+  }
+  cc_provider_provisioned_ = true;
+  return true;
+#else
   return false;
+#endif
+}
+
+bool cc_trust_data::initialize_oe_enclave_data() {
+  cc_provider_provisioned_ = true;
+  return true;
 }
 
 bool cc_trust_data::init_policy_key(int asn1_cert_size, byte* asn1_cert) {
@@ -255,8 +273,8 @@ bool cc_trust_data::fetch_store() {
 }
 
 void cc_trust_data::clear_sensitive_data() {
-  // Todo: clear symmetric and private keys
-  //    Not necessary on most platforms
+  // Clear symmetric and private keys.
+  // Not necessary on most platforms.
 }
 
 bool cc_trust_data::put_trust_data_in_store() {
@@ -285,7 +303,15 @@ bool cc_trust_data::put_trust_data_in_store() {
       printf("Can't store sealing keys\n");
       return false;
     }
-    // Todo: platform rule?
+    signed_claim_message  psm;
+
+    if (cc_service_platform_rule_initialized_) {
+      string rule_tag("platform-rule");
+      if (!store_.add_signed_claim(rule_tag, platform_rule_)) {
+        printf("Can't add platform rule\n");
+      }
+      platform_rule_.CopyFrom(psm);
+    }
     return true;
   }
   if (purpose_ == "authentication") {
@@ -342,8 +368,18 @@ bool cc_trust_data::get_trust_data_from_store() {
     cc_symmetric_key_initialized_ = true;
 
     // platform rule?
+    string rule_tag("platform-rule");
+    index = store_.get_signed_claim_index_by_tag(rule_tag);
+    if (index >= 0) {
+      const signed_claim_message* psm = store_.get_signed_claim_by_index(index);
+      if (psm != nullptr) {
+        platform_rule_.CopyFrom(*psm);
+      }
+      cc_service_platform_rule_initialized_ = true;
+    }
     return true;
   }
+
   if (purpose_ == "authentication") {
 
     string auth_key_tag("auth-key");
@@ -373,6 +409,7 @@ bool cc_trust_data::get_trust_data_from_store() {
     cc_symmetric_key_initialized_ = true;
     return true;
   }
+
   return false;
 }
 
@@ -676,6 +713,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       printf("Can't parse platform rule\n");
       return false;
     }
+    cc_service_platform_rule_initialized_ = true;
   } else {
     printf("Unknown purpose\n");
     return false;
@@ -745,12 +783,13 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
   return true;
 }
 
+// This is only for debugging.
 int SSL_my_client_callback(SSL *s, int *al, void *arg) {
   printf("callback\n");
   return 1;
 }
 
-// this is used to test the signature chain is verified properly
+// This is used to test the signature chain is verified properly
 int verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
   int depth = X509_STORE_CTX_get_error_depth(x509_ctx);
   int err = X509_STORE_CTX_get_error(x509_ctx);
@@ -774,8 +813,9 @@ int verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
   return preverify;
 }
 
-// temporary hack fixing client auth in ssl
-bool client_auth_client(key_message& private_key, SSL* ssl) {
+// Responds to Server challenge
+bool client_auth_client(X509* x509_policy_cert, key_message& private_key,
+      SSL* ssl) {
   bool ret = true;
 
   int size_nonce = 128;
@@ -810,6 +850,7 @@ done:
   return ret;
 }
 
+// Generates client challence and checks response.
 bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   bool ret = true;
   int res = 0;
@@ -867,7 +908,6 @@ bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   size_sig = SSL_read(ssl, sig, size_sig);
 
   // verify chain
-
   res = X509_STORE_CTX_init(ctx, cs, x, nullptr);
   X509_STORE_CTX_set_cert(ctx, x);
   res = X509_verify_cert(ctx);
@@ -896,7 +936,9 @@ done:
   return ret;
 }
 
-bool load_server_certs_and_key(X509* x509_policy_cert, key_message& private_key, SSL_CTX* ctx) {
+// Loads server side certs and keys.  Note: key for private_key is in
+//    the key.
+bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
   // load auth key, policy_cert and certificate chain
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key, r)) {
@@ -914,15 +956,9 @@ bool load_server_certs_and_key(X509* x509_policy_cert, key_message& private_key,
   }
 
   STACK_OF(X509)* stack = sk_X509_new_null();
-  if (sk_X509_push(stack, x509_policy_cert) == 0) {
+  if (sk_X509_push(stack, x509_root_cert) == 0) {
     return false;
   }
-#if 0
-  // Don't need this
-  if (sk_X509_push(stack, x509_auth_key_cert) == 0) {
-      return false;
-  }
-#endif
 
   if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
       return false;
@@ -930,12 +966,14 @@ bool load_server_certs_and_key(X509* x509_policy_cert, key_message& private_key,
   if (!SSL_CTX_check_private_key(ctx) ) {
       return false;
   }
-  SSL_CTX_add_client_CA(ctx, x509_policy_cert);
-  SSL_CTX_add1_to_CA_list(ctx, x509_policy_cert);
+  SSL_CTX_add_client_CA(ctx, x509_root_cert);
+  SSL_CTX_add1_to_CA_list(ctx, x509_root_cert);
   return true;
 }
 
-bool load_client_certs_and_key(X509* x509_policy_cert, key_message& private_key, SSL_CTX* ctx) {
+// Loads client side certs and keys.  Note: key for private_key is in
+//    the key.
+bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key, r)) {
     printf("load_client_certs_and_key, error 1\n");
@@ -953,17 +991,10 @@ bool load_client_certs_and_key(X509* x509_policy_cert, key_message& private_key,
   }
 
   STACK_OF(X509)* stack = sk_X509_new_null();
-  if (sk_X509_push(stack, x509_policy_cert) == 0) {
+  if (sk_X509_push(stack, x509_root_cert) == 0) {
     printf("load_client_certs_and_key, error 3\n");
     return false;
   }
-#if 0
-  // Don't need this
-  if (sk_X509_push(stack, x509_auth_key_cert) == 0) {
-    printf("load_client_certs_and_key, error 4\n");
-      return false;
-  }
-#endif
 
   if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
     printf("load_client_certs_and_key, error 5\n");
@@ -973,8 +1004,8 @@ bool load_client_certs_and_key(X509* x509_policy_cert, key_message& private_key,
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
-  SSL_CTX_add_client_CA(ctx, x509_policy_cert);
-  SSL_CTX_add1_to_CA_list(ctx, x509_policy_cert);
+  SSL_CTX_add_client_CA(ctx, x509_root_cert);
+  SSL_CTX_add1_to_CA_list(ctx, x509_root_cert);
   return true;
 }
 
@@ -1002,12 +1033,8 @@ bool init_client_ssl(X509* x509_policy_cert, key_message& private_key, const str
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
   X509_STORE_add_cert(cs, x509_policy_cert);
 
-#if 0
-  // for debugging
-  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
-#else
+  // For debugging: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
-#endif
 
   SSL_CTX_set_verify_depth(ctx, 4);
   const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
@@ -1030,12 +1057,13 @@ bool init_client_ssl(X509* x509_policy_cert, key_message& private_key, const str
 
   // Verify a server certificate was presented during the negotiation
   X509* cert = SSL_get_peer_certificate(ssl);
+#ifdef DEBUG
   if(cert) {
-    // X509_free(cert);
     printf("Client: Peer cert presented in nego\n");
   } else {
     printf("Client: No peer cert presented in nego\n");
   }
+#endif
 
   *p_sd = sock;
   *p_ctx = ctx;

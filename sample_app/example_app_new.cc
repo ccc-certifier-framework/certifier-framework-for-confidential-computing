@@ -64,8 +64,12 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 #include "policy_key.cc"
 cc_trust_data* app_trust_data = nullptr;
 
-
 // -----------------------------------------------------------------------------------------
+
+
+// This is the secure channel between the CC protected client and protected server.
+//    Most of the work of setting up SSL is done with the helpers.
+
 
 void client_application(SSL* ssl) {
 
@@ -187,7 +191,7 @@ bool run_me_as_client(X509* x509_policy_cert, key_message& private_key,
     return false;
   }
 
-  if (!client_auth_client(private_key, ssl)) {
+  if (!client_auth_client(x509_policy_cert, private_key, ssl)) {
     printf("Client auth failed at client\n");
     return false;
   }
