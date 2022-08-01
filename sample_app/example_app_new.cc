@@ -67,6 +67,64 @@ cc_trust_data* app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
+void client_application(SSL* ssl) {
+  // client starts, in a real application we would likely send a serialized protobuf
+  const char* msg = "Hi from your secret client\n";
+  SSL_write(ssl, (byte*)msg, strlen(msg));
+  byte buf[1024];
+  memset(buf, 0, 1024);
+  // Todo: Replace with call to int sized_read(int fd, string* out)
+  int n = SSL_read(ssl, buf, 1024);
+  printf("SSL client read: %s\n", (const char*)buf);
+}
+
+extern bool client_auth_server(X509* x509_policy_cert, SSL* ssl);
+void server_application(X509* x509_policy_cert, SSL* ssl) {
+  int res = SSL_accept(ssl);
+  if (res != 1) {
+    printf("Server: Can't SSL_accept connection\n");
+    unsigned long code = ERR_get_error();
+    printf("Accept error: %s\n", ERR_lib_error_string(code));
+    print_ssl_error(SSL_get_error(ssl, res));
+    SSL_free(ssl);
+    return;
+  }
+  int sd = SSL_get_fd(ssl);
+#ifdef DEBUG
+  printf("Accepted ssl connection using %s \n", SSL_get_cipher(ssl));
+#endif
+
+    // Verify a client certificate was presented during the negotiation
+    X509* cert = SSL_get_peer_certificate(ssl);
+    if(cert) {
+      // X509_free(cert);
+      printf("Server: Peer cert presented in nego\n");
+    } else {
+      printf("Server: No peer cert presented in nego\n");
+      // return;
+    }
+
+  if (!client_auth_server(x509_policy_cert, ssl)) {
+    printf("Client auth failed at server\n");
+    return;
+  }
+
+  // Todo: use sized_read
+  byte in[1024];
+  memset(in, 0, 1024);
+
+  // client starts, in a real application we would likely get a serialized protobuf
+  // Todo: Replace with call to int sized_read(int fd, string* out)
+  int n = SSL_read(ssl, in, 1024);
+  printf("SSL server read: %s\n", (const char*) in);
+
+  // says something back
+  const char* msg = "Hi from your secret server\n";
+  SSL_write(ssl, (byte*)msg, strlen(msg));
+  close(sd);
+  SSL_free(ssl);
+}
+
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -81,7 +139,6 @@ int main(int an, char** av) {
   }
 
   SSL_library_init();
-
   string enclave_type("simulated-enclave");
   string purpose("authentication");
 
@@ -137,23 +194,23 @@ int main(int an, char** av) {
       printf("warm-restart failed\n");
       return 1;
     }
-#if 0
-    if (!run_me_as_client()) {
+    if (!run_me_as_client(app_trust_data->x509_policy_cert_,
+          app_trust_data->private_auth_key_,
+          FLAGS_policy_host.c_str(), FLAGS_policy_port)) {
       printf("run-me-as-client failed\n");
       ret = 1;
     }
-#endif
   } else if (FLAGS_operation == "run-app-as-server") {
     if (!app_trust_data->warm_restart()) {
       printf("warm-restart failed\n");
       return 1;
     }
-#if 0
-    if (!run_me_as_server()) {
+    if (!run_me_as_server(app_trust_data->x509_policy_cert_,
+          app_trust_data->private_auth_key_,
+          FLAGS_policy_host.c_str(), FLAGS_policy_port)) {
       printf("run-me-as-server failed\n");
       ret = 1;
     }
-#endif
   } else {
     printf("Unknown operation\n");
   }

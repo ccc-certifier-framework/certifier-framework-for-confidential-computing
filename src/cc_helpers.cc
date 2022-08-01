@@ -327,6 +327,7 @@ bool cc_trust_data::get_trust_data_from_store() {
       printf("Can't transform to public key\n");
       return false;
     }
+    cc_service_key_initialized_ = true;
 
     string sealing_key_tag("sealing-key");
     index = store_.get_storage_info_index_by_tag(sealing_key_tag);
@@ -338,6 +339,7 @@ bool cc_trust_data::get_trust_data_from_store() {
     if (skm == nullptr)
       return false;
     service_sealing_key_.CopyFrom(skm->storage_key());
+    cc_symmetric_key_initialized_ = true;
 
     // platform rule?
     return true;
@@ -357,6 +359,7 @@ bool cc_trust_data::get_trust_data_from_store() {
       printf("Can't transform to public key\n");
       return false;
     }
+    cc_auth_key_initialized_ = true;
     string symmetric_key_tag("app-symmetric-key");
     index = store_.get_storage_info_index_by_tag(symmetric_key_tag);
     if (index < 0) {
@@ -367,6 +370,7 @@ bool cc_trust_data::get_trust_data_from_store() {
     if (skm == nullptr)
       return false;
     symmetric_key_.CopyFrom(skm->storage_key());
+    cc_symmetric_key_initialized_ = true;
     return true;
   }
   return false;
@@ -387,11 +391,18 @@ bool cc_trust_data::cold_init() {
       return false;
     }
 
-    // make up some symmetric keys for app
+    // make up symmetric keys for app
     if (!get_random(8 * cc_helper_symmetric_key_size, symmetric_key_bytes_)) {
       printf("Can't get random bytes for app key\n");
       return false;
     }
+    if (!get_random(8 * cc_helper_symmetric_key_size, symmetric_key_bytes_))
+      return false;
+    symmetric_key_.set_key_name("app-symmetric-key");
+    symmetric_key_.set_key_type("aes-256-cbc-hmac-sha256");
+    symmetric_key_.set_key_format("vse-key");
+    symmetric_key_.set_secret_key_bits(symmetric_key_bytes_, cc_helper_symmetric_key_size);
+    cc_symmetric_key_initialized_ = true;
 
     // make app private and public key
     if (!make_certifier_rsa_key(2048,  &private_auth_key_)) {
@@ -414,6 +425,11 @@ bool cc_trust_data::cold_init() {
       printf("Can't get random bytes for app key\n");
       return false;
     }
+    symmetric_key_.set_key_name("app-symmetric-key");
+    symmetric_key_.set_key_type("aes-256-cbc-hmac-sha256");
+    symmetric_key_.set_key_format("vse-key");
+    symmetric_key_.set_secret_key_bits(service_symmetric_key_, cc_helper_symmetric_key_size);
+    cc_sealing_key_initialized_ = true;
 
     // make service private and public key
     if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
@@ -424,23 +440,6 @@ bool cc_trust_data::cold_init() {
     if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
       printf("Can't make public service key\n");
       return false;
-    }
-
-    // put private service key and symmetric keys in store
-    string service_key_tag("service-key");
-    if (!store_.add_authentication_key(service_key_tag, private_service_key_)) {
-      printf("Can't store service key\n");
-      return false;
-    }
-    string sealing_key_tag("sealing-key");
-    storage_info_message sm;
-    sm.set_storage_type("key");
-    sm.set_tag(sealing_key_tag);
-    key_message* sk = new(key_message);
-    sk->CopyFrom(service_sealing_key_);
-    sm.set_allocated_storage_key(sk);
-    if (!store_.add_storage_info(sm)) {
-      printf("Can't store sealing keys\n");
     }
 
     cc_sealing_key_initialized_= true;
@@ -546,7 +545,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     return false;
   }
 
-  // construct the vse attestation
+  // Construct the vse attestation
   vse_clause vse_attest_clause;
   if (!construct_attestation(attest_key_entity, auth_key_entity,
         measurement_entity, &vse_attest_clause)) {
@@ -805,7 +804,6 @@ bool client_auth_client(key_message& private_key, SSL* ssl) {
   printf("client_auth_client succeeds\n");
 #endif
 
-
 done:
   if (r != nullptr)
     RSA_free(r);
@@ -896,52 +894,6 @@ done:
     X509_STORE_CTX_free(ctx);
   
   return ret;
-}
-
-void server_application(X509* x509_policy_cert, SSL* ssl) {
-  int res = SSL_accept(ssl);
-  if (res != 1) {
-    printf("Server: Can't SSL_accept connection\n");
-    unsigned long code = ERR_get_error();
-    printf("Accept error: %s\n", ERR_lib_error_string(code));
-    print_ssl_error(SSL_get_error(ssl, res));
-    SSL_free(ssl);
-    return;
-  }
-  int sd = SSL_get_fd(ssl);
-#ifdef DEBUG
-  printf("Accepted ssl connection using %s \n", SSL_get_cipher(ssl));
-#endif
-
-    // Verify a client certificate was presented during the negotiation
-    X509* cert = SSL_get_peer_certificate(ssl);
-    if(cert) {
-      // X509_free(cert);
-      printf("Server: Peer cert presented in nego\n");
-    } else {
-      printf("Server: No peer cert presented in nego\n");
-      // return;
-    }
-
-  if (!client_auth_server(x509_policy_cert, ssl)) {
-    printf("Client auth failed at server\n");
-    return;
-  }
-
-  // Todo: use sized_read
-  byte in[1024];
-  memset(in, 0, 1024);
-
-  // client starts, in a real application we would likely get a serialized protobuf
-  // Todo: Replace with call to int sized_read(int fd, string* out)
-  int n = SSL_read(ssl, in, 1024);
-  printf("SSL server read: %s\n", (const char*) in);
-
-  // says something back
-  const char* msg = "Hi from your secret server\n";
-  SSL_write(ssl, (byte*)msg, strlen(msg));
-  close(sd);
-  SSL_free(ssl);
 }
 
 bool load_server_certs_and_key(X509* x509_policy_cert, key_message& private_key, SSL_CTX* ctx) {
@@ -1151,17 +1103,6 @@ void print_ssl_error(int code) {
   }
 }
 
-void client_application(SSL* ssl) {
-  // client starts, in a real application we would likely send a serialized protobuf
-  const char* msg = "Hi from your secret client\n";
-  SSL_write(ssl, (byte*)msg, strlen(msg));
-  byte buf[1024];
-  memset(buf, 0, 1024);
-  // Todo: Replace with call to int sized_read(int fd, string* out)
-  int n = SSL_read(ssl, buf, 1024);
-  printf("SSL client read: %s\n", (const char*)buf);
-}
-
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
@@ -1212,6 +1153,7 @@ bool construct_attestation(entity_message& attest_key_entity, entity_message& au
 // ---------------------------------------------------------------------------------------
 // App functions
 
+extern void server_application(X509* x509_policy_cert, SSL* ssl);
 bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port) {
   SSL_load_error_strings();
 
@@ -1267,6 +1209,7 @@ bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const st
   return true;
 }
 
+extern void client_application(SSL* ssl);
 bool run_me_as_client(X509* x509_policy_cert, key_message& private_key,
       const string& host_name, int port) {
 

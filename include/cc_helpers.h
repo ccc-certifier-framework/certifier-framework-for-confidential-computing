@@ -107,5 +107,10 @@ void print_cn_name(X509_NAME* name);
 void print_org_name(X509_NAME* name);
 void print_ssl_error(int code);
 
+bool run_me_as_client(X509* x509_policy_cert, key_message& private_key,
+    const string& host_name, int port);
+bool run_me_as_server(X509* x509_policy_cert, key_message& private_key,
+    const string& host_name, int port);
+
 #endif
 
