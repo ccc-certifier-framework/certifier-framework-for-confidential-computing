@@ -78,7 +78,6 @@ void client_application(SSL* ssl) {
   printf("SSL client read: %s\n", (const char*)buf);
 }
 
-extern bool client_auth_server(X509* x509_policy_cert, SSL* ssl);
 void server_application(X509* x509_policy_cert, SSL* ssl) {
   int res = SSL_accept(ssl);
   if (res != 1) {
@@ -97,11 +96,9 @@ void server_application(X509* x509_policy_cert, SSL* ssl) {
     // Verify a client certificate was presented during the negotiation
     X509* cert = SSL_get_peer_certificate(ssl);
     if(cert) {
-      // X509_free(cert);
       printf("Server: Peer cert presented in nego\n");
     } else {
       printf("Server: No peer cert presented in nego\n");
-      // return;
     }
 
   if (!client_auth_server(x509_policy_cert, ssl)) {
@@ -123,6 +120,78 @@ void server_application(X509* x509_policy_cert, SSL* ssl) {
   SSL_write(ssl, (byte*)msg, strlen(msg));
   close(sd);
   SSL_free(ssl);
+}
+
+bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port) {
+  SSL_load_error_strings();
+
+  int sock = -1;
+  if (!open_server_socket(host_name, port, &sock)) {
+    printf("Can't open server socket\n");
+    return false;
+  }
+
+  SSL_METHOD* method = (SSL_METHOD*) TLS_server_method();
+  SSL_CTX* ctx = SSL_CTX_new(method);
+  if (ctx == NULL) {
+    printf("SSL_CTX_new failed\n");
+    return false;
+  }
+  X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
+  X509_STORE_add_cert(cs, x509_policy_cert);
+
+  if (!load_server_certs_and_key(x509_policy_cert, private_key, ctx)) {
+    printf("SSL_CTX_new failed\n");
+    return false;
+  }
+
+  const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
+  SSL_CTX_set_options(ctx, flags);
+
+#if 0
+  // This is unnecessary on my mac.
+  if(!isRoot()) {
+    printf("This program must be run as root/sudo user!!");
+    return false;
+  }
+#endif
+
+  // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+  unsigned int len = 0;
+  while (1) {
+    printf("example_app server at accept\n");
+    struct sockaddr_in addr;
+    int client = accept(sock, (struct sockaddr*)&addr, &len);
+    SSL* ssl = SSL_new(ctx);
+    SSL_set_fd(ssl, client);
+    server_application(x509_policy_cert, ssl);
+  }
+  close(sock);
+  SSL_CTX_free(ctx);
+  return true;
+}
+
+bool run_me_as_client(X509* x509_policy_cert, key_message& private_key,
+      const string& host_name, int port) {
+
+  SSL_load_error_strings();
+  int sd = 0;
+  SSL_CTX* ctx = nullptr;
+  SSL* ssl = nullptr;
+
+  if (!init_client_ssl(x509_policy_cert, private_key, host_name, port, &sd, &ctx, &ssl)) {
+    printf("init_client_ssl failed\n");
+    return false;
+  }
+
+  if (!client_auth_client(private_key, ssl)) {
+    printf("Client auth failed at client\n");
+    return false;
+  }
+  client_application(ssl);
+  close_client_ssl(sd, ctx, ssl);
+  return true;
 }
 
 int main(int an, char** av) {
