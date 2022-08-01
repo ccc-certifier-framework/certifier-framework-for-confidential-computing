@@ -4,6 +4,7 @@
 #include "support.h"
 #include "certifier.h"
 #include "simulated_enclave.h"
+#include "cc_helpers.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -109,7 +110,7 @@ int main(int an, char** av) {
   attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
   if (!app_trust_data->initialize_simulated_enclave_data(attest_key_file_name,
-      measurement_file_name, attest_endorsement_file_name))
+      measurement_file_name, attest_endorsement_file_name)) {
     printf("Can't init simulated enclave\n");
     return false;
   }
@@ -136,19 +137,23 @@ int main(int an, char** av) {
       printf("warm-restart failed\n");
       return 1;
     }
+#if 0
     if (!run_me_as_client()) {
       printf("run-me-as-client failed\n");
       ret = 1;
     }
+#endif
   } else if (FLAGS_operation == "run-app-as-server") {
     if (!app_trust_data->warm_restart()) {
       printf("warm-restart failed\n");
       return 1;
     }
+#if 0
     if (!run_me_as_server()) {
       printf("run-me-as-server failed\n");
       ret = 1;
     }
+#endif
   } else {
     printf("Unknown operation\n");
   }

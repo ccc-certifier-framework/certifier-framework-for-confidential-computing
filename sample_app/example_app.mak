@@ -40,13 +40,17 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 dobj=	$(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o
 
+dobj_new= $(O)/example_app_new.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 
-all:	example_app.exe
+
+all:	example_app.exe example_app_new.exe
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
 	@echo "removing executable file"
 	rm $(EXE_DIR)/example_app.exe
+	rm $(EXE_DIR)/example_app_new.exe
 
 example_app.exe: $(dobj) 
 	@echo "linking executable files"
@@ -81,3 +85,15 @@ $(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
 $(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
 	@echo "compiling application_enclave.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(S)/application_enclave.cc
+
+example_app_new.exe: $(dobj_new) 
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/example_app_new.exe $(dobj_new) $(LDFLAGS)
+
+$(O)/example_app_new.o: $(US)/example_app_new.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "compiling example_app_new.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/example_app_new.o $(US)/example_app_new.cc
+
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "compiling cc_helpers.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc

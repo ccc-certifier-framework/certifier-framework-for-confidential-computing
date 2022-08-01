@@ -1,7 +1,6 @@
 #include "support.h"
 #include "certifier.h"
 #include "simulated_enclave.h"
-#include "cc_helpers.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -83,8 +82,8 @@ public:
 
   bool cc_all_initialized();
   bool initialize_simulated_enclave_data(const string& attest_key_file_name,
-      measurement_file_name, attest_endorsement_file_name);
-  bool init_policy_key(int asn1_cert_size, asn1_cert);
+      const string& measurement_file_name, const string& attest_endorsement_file_name);
+  bool init_policy_key(int asn1_cert_size, byte* asn1_cert);
   bool put_trust_data_in_store();
   bool get_trust_data_from_store();
   bool save_store();
@@ -93,8 +92,8 @@ public:
   bool cold_init();
   bool warm_restart();
   bool certify_me(const string& host_name, int port);
-
   bool GetPlatformSaysAttestClaim(signed_claim_message* scm);
+  void print_trust_data();
 };
 
 bool open_client_socket(const string& host_name, int port, int* soc);

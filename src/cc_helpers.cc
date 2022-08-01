@@ -58,7 +58,7 @@ cc_trust_data::cc_trust_data(const string& enclave_type, const string& purpose,
   }
   enclave_type_ = enclave_type;
   store_file_name_ = policy_store_name;
-  cc_policy_cert_initialized_ = false;
+  cc_policy_info_initialized_= false;
   cc_policy_store_initialized_ = false;
   cc_service_key_initialized_ = false;
   cc_service_cert_initialized_ = false;
@@ -70,7 +70,7 @@ cc_trust_data::cc_trust_data(const string& enclave_type, const string& purpose,
 
 cc_trust_data::cc_trust_data() {
   cc_basic_data_initialized_ = false;
-  cc_policy_cert_initialized_ = false;
+  cc_policy_info_initialized_= false;
   cc_policy_store_initialized_ = false;
   cc_service_key_initialized_ = false;
   cc_service_cert_initialized_ = false;
@@ -84,15 +84,14 @@ cc_trust_data::~cc_trust_data() {
 }
 
 bool cc_trust_data::cc_all_initialized() {
-  if (purpose_ == "authentication")
-    return cc_basic_data_initialized_ &
-           cc_policy_cert_initialized_ & cc_auth_key_initialized_ &
+  if (purpose_ == "authentication") {
+    return cc_basic_data_initialized_ & cc_auth_key_initialized_ &
            cc_symmetric_key_initialized_& cc_policy_info_initialized_ &
            cc_provider_provisioned_ & cc_policy_store_initialized_;
   } else if (purpose_ == "attestation") {
-    return cc_basic_data_initialized_ &
-           cc_policy_cert_initialized_ & cc_sealing_key_initialized_ &
-           cc_service_key_initialized_ & cc_service_platform_rule_initialized_ &
+    return cc_basic_data_initialized_ & cc_service_key_initialized_ &
+           cc_sealing_key_initialized_ & cc_policy_info_initialized_ &
+           cc_service_platform_rule_initialized_ &
            cc_provider_provisioned_ & cc_policy_store_initialized_;
   } else {
     return false;
@@ -120,7 +119,7 @@ bool cc_trust_data::initialize_simulated_enclave_data(const string& attest_key_f
   return false;
 }
 
-bool cc_trust_data::init_policy_key(int asn1_cert_size, asn1_cert) {
+bool cc_trust_data::init_policy_key(int asn1_cert_size, byte* asn1_cert) {
   serialized_policy_cert_.assign((char*)asn1_cert, asn1_cert_size);
 
   x509_policy_cert_ = X509_new();
@@ -212,7 +211,7 @@ bool cc_trust_data::save_store() {
   protect_symmetric_key.set_key_format("vse-key");
   protect_symmetric_key.set_secret_key_bits(symmetric_key_for_protect, cc_helper_symmetric_key_size);
 
-  if (!Protect_Blob(enclave_type, protect_symmetric_key, serialized_store.size(),
+  if (!Protect_Blob(enclave_type_, protect_symmetric_key, serialized_store.size(),
           (byte*)serialized_store.data(), &size_protected_store, protected_store)) {
     printf("save_store can't protect blob\n");
     return false;
@@ -227,7 +226,7 @@ bool cc_trust_data::save_store() {
 
 bool cc_trust_data::fetch_store() {
 
-  int size_protected_blob = file_size(store_file) + 1;
+  int size_protected_blob = file_size(store_file_name_) + 1;
   byte protected_blob[size_protected_blob];
   int size_unprotected_blob = size_protected_blob;
   byte unprotected_blob[size_unprotected_blob];
@@ -278,9 +277,9 @@ bool cc_trust_data::put_trust_data_in_store() {
     string sealing_key_tag("sealing-key");
     storage_info_message sm;
     sm.set_storage_type("key");
-    sm.set_tag(sealing_tag);
+    sm.set_tag(sealing_key_tag);
     key_message* sk = new(key_message);
-    sk->CopyFrom(service_sealing_key);
+    sk->CopyFrom(service_sealing_key_);
     sm.set_allocated_storage_key(sk);
     if (!store_.add_storage_info(sm)) {
       printf("Can't store sealing keys\n");
@@ -292,21 +291,7 @@ bool cc_trust_data::put_trust_data_in_store() {
   if (purpose_ == "authentication") {
 
     string auth_tag("auth-key");
-    if (!pStore.add_authentication_key(auth_tag, privateAppKey)) {
-      printf("Can't store auth key\n");
-      return false;
-    }
-    string sealing_key_tag("sealing-key");
-    storage_info_message sm;
-    sm.set_storage_type("key");
-    sm.set_tag(sealing_tag);
-    key_message* sk = new(key_message);
-    sk->CopyFrom(service_sealing_key);
-    sm.set_allocated_storage_key(sk);
-    if (!store_.add_storage_info(sm)) {
-      printf("Can't store sealing keys\n");
-    } 
-    if (!store_.add_authentication_key(sealing_key_tag, service_sealing_key_)) {
+    if (!store_.add_authentication_key(auth_tag, private_auth_key_)) {
       printf("Can't store auth key\n");
       return false;
     }
@@ -349,7 +334,7 @@ bool cc_trust_data::get_trust_data_from_store() {
       printf("Can't get sealing-key\n");
       return false;
     }
-    const storage_info_message* skm = store_get_storage_info_by_index(index);
+    const storage_info_message* skm = store_.get_storage_info_by_index(index);
     if (skm == nullptr)
       return false;
     service_sealing_key_.CopyFrom(skm->storage_key());
@@ -359,7 +344,7 @@ bool cc_trust_data::get_trust_data_from_store() {
   }
   if (purpose_ == "authentication") {
 
-    string auth_tag("auth-key");
+    string auth_key_tag("auth-key");
     int index = store_.get_authentication_key_index_by_tag(auth_key_tag);
     if (index < 0) {
       return false;
@@ -378,7 +363,7 @@ bool cc_trust_data::get_trust_data_from_store() {
       printf("Can't get app-symmetric-key\n");
       return false;
     }
-    const storage_info_message* skm = store_get_storage_info_by_index(index);
+    const storage_info_message* skm = store_.get_storage_info_by_index(index);
     if (skm == nullptr)
       return false;
     symmetric_key_.CopyFrom(skm->storage_key());
@@ -403,7 +388,7 @@ bool cc_trust_data::cold_init() {
     }
 
     // make up some symmetric keys for app
-    if (!get_random(8 * cc_helper_symmetric_key_size, symmetric_key_)) {
+    if (!get_random(8 * cc_helper_symmetric_key_size, symmetric_key_bytes_)) {
       printf("Can't get random bytes for app key\n");
       return false;
     }
@@ -450,9 +435,9 @@ bool cc_trust_data::cold_init() {
     string sealing_key_tag("sealing-key");
     storage_info_message sm;
     sm.set_storage_type("key");
-    sm.set_tag(sealing_tag);
+    sm.set_tag(sealing_key_tag);
     key_message* sk = new(key_message);
-    sk->CopyFrom(service_sealing_key);
+    sk->CopyFrom(service_sealing_key_);
     sm.set_allocated_storage_key(sk);
     if (!store_.add_storage_info(sm)) {
       printf("Can't store sealing keys\n");
@@ -544,7 +529,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   // there are three entities in the attest: the attest-key, the auth-key and the measurement
   int my_measurement_size = 32;
   byte my_measurement[my_measurement_size];
-  if (!Getmeasurement(enclave_type, enclave_id, &my_measurement_size, my_measurement)) {
+  if (!Getmeasurement(enclave_type_, enclave_id, &my_measurement_size, my_measurement)) {
     printf("Getmeasurement failed\n");
     return false;
   }
@@ -556,7 +541,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     return false;
   }
   entity_message auth_key_entity;
-  if (!make_key_entity(publicAppKey, &auth_key_entity)) {
+  if (!make_key_entity(public_auth_key_, &auth_key_entity)) {
     printf("certify_me error 2\n");
     return false;
   }
@@ -568,13 +553,13 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   }
   // Create the attestation and sign it
   string serialized_attestation;
-  if (!vse_attestation(descript, enclave_type, enclave_id, vse_attest_clause, &serialized_attestation)) {
+  if (!vse_attestation(descript, enclave_type_, enclave_id, vse_attest_clause, &serialized_attestation)) {
     printf("certify_me error 5\n");
     return false;
   }
   int size_out = 8192;
   byte out[size_out];
-  if (!Attest(enclave_type, serialized_attestation.size(),
+  if (!Attest(enclave_type_, serialized_attestation.size(),
         (byte*) serialized_attestation.data(), &size_out, out)) {
     printf("certify_me error 6\n");
     return false;
@@ -699,7 +684,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
 
   // Update store and save it
   string auth_tag("auth-key");
-  const key_message* km = pStore.get_authentication_key_by_tag(auth_tag);
+  const key_message* km = store_.get_authentication_key_by_tag(auth_tag);
   if (km == nullptr) {
     printf("Can't find authentication key in store\n");
     return false;
@@ -761,7 +746,6 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
   return true;
 }
 
-
 int SSL_my_client_callback(SSL *s, int *al, void *arg) {
   printf("callback\n");
   return 1;
@@ -792,7 +776,7 @@ int verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
 }
 
 // temporary hack till I fix client auth in ssl
-bool client_auth_client(SSL* ssl) {
+bool client_auth_client(key_message& private_key, SSL* ssl) {
   bool ret = true;
 
   int size_nonce = 128;
@@ -802,12 +786,12 @@ bool client_auth_client(SSL* ssl) {
   RSA* r = nullptr;
 
   // send cert
-  SSL_write(ssl, privateAppKey.certificate().data(),
-      privateAppKey.certificate().size());
+  SSL_write(ssl, private_key.certificate().data(),
+      private_key.certificate().size());
   size_nonce = SSL_read(ssl, nonce, size_nonce);
 
   r = RSA_new();
-  if (!key_to_RSA(privateAppKey, r)) {
+  if (!key_to_RSA(private_key, r)) {
     ret = false;
     goto done;
   }
@@ -819,13 +803,14 @@ bool client_auth_client(SSL* ssl) {
   SSL_write(ssl, sig, size_sig);
   printf("client_auth_client succeeds\n");
 
+
 done:
   if (r != nullptr)
     RSA_free(r);
   return ret;
 }
 
-bool client_auth_server(SSL* ssl) {
+bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   bool ret = true;
   int res = 0;
 
@@ -844,7 +829,7 @@ bool client_auth_server(SSL* ssl) {
 
   // prepare for verify 
   X509_STORE* cs = X509_STORE_new();
-  X509_STORE_add_cert(cs, policy_cert);
+  X509_STORE_add_cert(cs, x509_policy_cert);
   ctx = X509_STORE_CTX_new();
 
   // get cert
@@ -911,7 +896,7 @@ done:
   return ret;
 }
 
-void server_application(SSL* ssl) {
+void server_application(X509* x509_policy_cert, SSL* ssl) {
   int res = SSL_accept(ssl);
   if (res != 1) {
     printf("Server: Can't SSL_accept connection\n");
@@ -934,7 +919,7 @@ void server_application(SSL* ssl) {
       // return;
     }
 
-  if (!client_auth_server(ssl)) {
+  if (!client_auth_server(x509_policy_cert, ssl)) {
     printf("Client auth failed at server\n");
     return;
   }
@@ -955,10 +940,10 @@ void server_application(SSL* ssl) {
   SSL_free(ssl);
 }
 
-bool load_server_certs_and_key(SSL_CTX* ctx) {
+bool load_server_certs_and_key(X509* x509_policy_cert, key_message& private_key, SSL_CTX* ctx) {
   // load auth key, policy_cert and certificate chain
   RSA* r = RSA_new();
-  if (!key_to_RSA(privateAppKey, r)) {
+  if (!key_to_RSA(private_key, r)) {
     return false;
   }
   EVP_PKEY* auth_private_key = EVP_PKEY_new();
@@ -966,13 +951,13 @@ bool load_server_certs_and_key(SSL_CTX* ctx) {
 
   X509* x509_auth_key_cert= X509_new();
   string auth_cert_str;
-  auth_cert_str.assign((char*)privateAppKey.certificate().data(),privateAppKey.certificate().size());
+  auth_cert_str.assign((char*)private_key.certificate().data(),private_key.certificate().size());
   if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
       return false;
   }
 
   STACK_OF(X509)* stack = sk_X509_new_null();
-  if (sk_X509_push(stack, policy_cert) == 0) {
+  if (sk_X509_push(stack, x509_policy_cert) == 0) {
     return false;
   }
 #if 0
@@ -988,12 +973,56 @@ bool load_server_certs_and_key(SSL_CTX* ctx) {
   if (!SSL_CTX_check_private_key(ctx) ) {
       return false;
   }
-  SSL_CTX_add_client_CA(ctx, policy_cert);
-  SSL_CTX_add1_to_CA_list(ctx, policy_cert);
+  SSL_CTX_add_client_CA(ctx, x509_policy_cert);
+  SSL_CTX_add1_to_CA_list(ctx, x509_policy_cert);
   return true;
 }
 
-bool init_client_ssl(const string& host_name, int port, int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl) {
+bool load_client_certs_and_key(X509* x509_policy_cert, key_message& private_key, SSL_CTX* ctx) {
+  RSA* r = RSA_new();
+  if (!key_to_RSA(private_key, r)) {
+    printf("load_client_certs_and_key, error 1\n");
+    return false;
+  }
+  EVP_PKEY* auth_private_key = EVP_PKEY_new();
+  EVP_PKEY_set1_RSA(auth_private_key, r);
+
+  X509* x509_auth_key_cert= X509_new();
+  string auth_cert_str;
+  auth_cert_str.assign((char*)private_key.certificate().data(), private_key.certificate().size());
+  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
+    printf("load_client_certs_and_key, error 2\n");
+      return false;
+  }
+
+  STACK_OF(X509)* stack = sk_X509_new_null();
+  if (sk_X509_push(stack, x509_policy_cert) == 0) {
+    printf("load_client_certs_and_key, error 3\n");
+    return false;
+  }
+#if 0
+  // Don't need this
+  if (sk_X509_push(stack, x509_auth_key_cert) == 0) {
+    printf("load_client_certs_and_key, error 4\n");
+      return false;
+  }
+#endif
+
+  if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
+    printf("load_client_certs_and_key, error 5\n");
+      return false;
+  }
+  if (!SSL_CTX_check_private_key(ctx) ) {
+    printf("load_client_certs_and_key, error 6\n");
+    return false;
+  }
+  SSL_CTX_add_client_CA(ctx, x509_policy_cert);
+  SSL_CTX_add1_to_CA_list(ctx, x509_policy_cert);
+  return true;
+}
+
+bool init_client_ssl(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port,
+    int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl) {
   OPENSSL_init_ssl(0, NULL);;
   SSL_load_error_strings();
 
@@ -1014,7 +1043,7 @@ bool init_client_ssl(const string& host_name, int port, int* p_sd, SSL_CTX** p_c
     return false;
   }
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
-  X509_STORE_add_cert(cs, policy_cert);
+  X509_STORE_add_cert(cs, x509_policy_cert);
 
 #if 0
   // for debugging
@@ -1028,10 +1057,10 @@ bool init_client_ssl(const string& host_name, int port, int* p_sd, SSL_CTX** p_c
   SSL_CTX_set_options(ctx, flags);
 
   SSL* ssl = SSL_new(ctx);
-  SSL_set_fd(ssl, sd);
+  SSL_set_fd(ssl, sock);
   int res = SSL_set_cipher_list(ssl, "TLS_AES_256_GCM_SHA384");  // Change?
 
-  if (!load_client_certs_and_key(ctx)) {
+  if (!load_client_certs_and_key(x509_policy_cert, private_key, ctx)) {
     printf("load_client_certs_and_key failed\n");
     return false;
   }
@@ -1051,7 +1080,7 @@ bool init_client_ssl(const string& host_name, int port, int* p_sd, SSL_CTX** p_c
     printf("Client: No peer cert presented in nego\n");
   }
 
-  *p_sd = sd;
+  *p_sd = sock;
   *p_ctx = ctx;
   *p_ssl = ssl;
   return true;
@@ -1128,49 +1157,6 @@ void client_application(SSL* ssl) {
   printf("SSL client read: %s\n", (const char*)buf);
 }
 
-bool load_client_certs_and_key(SSL_CTX* ctx) {
-  RSA* r = RSA_new();
-  if (!key_to_RSA(privateAppKey, r)) {
-    printf("load_client_certs_and_key, error 1\n");
-    return false;
-  }
-  EVP_PKEY* auth_private_key = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(auth_private_key, r);
-
-  X509* x509_auth_key_cert= X509_new();
-  string auth_cert_str;
-  auth_cert_str.assign((char*)privateAppKey.certificate().data(), privateAppKey.certificate().size());
-  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
-    printf("load_client_certs_and_key, error 2\n");
-      return false;
-  }
-
-  STACK_OF(X509)* stack = sk_X509_new_null();
-  if (sk_X509_push(stack, policy_cert) == 0) {
-    printf("load_client_certs_and_key, error 3\n");
-    return false;
-  }
-#if 0
-  // Don't need this
-  if (sk_X509_push(stack, x509_auth_key_cert) == 0) {
-    printf("load_client_certs_and_key, error 4\n");
-      return false;
-  }
-#endif
-
-  if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
-    printf("load_client_certs_and_key, error 5\n");
-      return false;
-  }
-  if (!SSL_CTX_check_private_key(ctx) ) {
-    printf("load_client_certs_and_key, error 6\n");
-    return false;
-  }
-  SSL_CTX_add_client_CA(ctx, policy_cert);
-  SSL_CTX_add1_to_CA_list(ctx, policy_cert);
-  return true;
-}
-
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
@@ -1238,7 +1224,7 @@ bool run_me_as_server(const string& host_address, int port) {
     return false;
   }
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
-  X509_STORE_add_cert(cs, policy_cert);
+  X509_STORE_add_cert(cs, x509_policy_cert_);
 
   if (!load_server_certs_and_key(ctx)) {
     printf("SSL_CTX_new failed\n");
