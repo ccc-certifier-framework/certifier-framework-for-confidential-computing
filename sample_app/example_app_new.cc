@@ -302,6 +302,7 @@ int main(int an, char** av) {
     printf("Unknown operation\n");
   }
 
+  app_trust_data->print_trust_data();
   app_trust_data->clear_sensitive_data();
   return ret;
 }
