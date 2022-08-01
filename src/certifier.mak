@@ -55,10 +55,10 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 ifdef ENABLE_SEV
 dobj=	$(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/application_enclave.o $(O)/simulated_enclave.o \
-$(O)/sev_support.o $(O)/sev_report.o
+$(O)/sev_support.o $(O)/sev_report.o $(O)/cc_helpers.o
 else
 dobj=	$(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
-$(O)/application_enclave.o $(O)/simulated_enclave.o
+$(O)/application_enclave.o $(O)/simulated_enclave.o $(O)/cc_helpers.o
 endif
 
 
@@ -101,6 +101,10 @@ $(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
 $(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
 	@echo "compiling application_enclave.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(S)/application_enclave.cc
+
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/cc_helpers.h
+	@echo "compiling cc_helpers.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc
 
 ifdef ENABLE_SEV
 SEV_S=$(S)/sev-snp

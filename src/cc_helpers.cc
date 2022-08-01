@@ -124,7 +124,7 @@ bool cc_trust_data::initialize_simulated_enclave_data(const string& attest_key_f
 bool cc_trust_data::initialize_sev_enclave_data(const string& platform_certs_file) {
   extern bool sev_Init(const string& platform_certs_file);
 #ifdef SEV_SNP
-  if (!sev_Init(const string& platform_certs_file)) {
+  if (!sev_Init(platform_certs_file)) {
     return false;
   }
   cc_provider_provisioned_ = true;
