@@ -49,6 +49,8 @@ public:
   bool cc_policy_store_initialized_;
   policy_store store_;
 
+  bool cc_provider_provisioned_;
+
   // For auth
   bool cc_auth_key_initialized_;
   key_message private_auth_key_;
@@ -77,6 +79,9 @@ public:
       const string& policy_store_name);
   ~cc_trust_data();
 
+  bool cc_all_initialized();
+  bool initialize_simulated_enclave_data(const string& attest_key_file_name,
+      measurement_file_name, attest_endorsement_file_name);
   bool init_policy_key(int asn1_cert_size, asn1_cert);
   bool save_store();
   bool fetch_store();

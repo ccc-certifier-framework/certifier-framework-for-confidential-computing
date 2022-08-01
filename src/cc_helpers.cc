@@ -62,6 +62,7 @@ cc_trust_data::cc_trust_data(const string& enclave_type, const string& purpose,
   cc_service_cert_initialized_ = false;
   cc_service_platform_rule_initialized_ = false;
   cc_sealing_key_initialized_ = false;
+  cc_provider_provisioned_ = false;
   x509_policy_cert= nullptr;
 }
 
@@ -73,13 +74,35 @@ cc_trust_data::cc_trust_data() {
   cc_service_cert_initialized_ = false;
   cc_service_platform_rule_initialized_ = false;
   cc_sealing_key_initialized_ = false;
+  cc_provider_provisioned_ = false;
   x509_policy_cert= nullptr;
 }
 
 cc_trust_data::~cc_trust_data() {
 }
 
+bool cc_trust_data::cc_all_initialized() {
+  if (purpose_ == "authentication")
+    return cc_policy_cert_initialized_ & cc_auth_key_initialized_ &
+           cc_symmetric_key_initialized_& cc_policy_info_initialized_ &
+           cc_provider_provisioned_ & cc_policy_store_initialized_;
+  } else if (purpose_ == "attestation") {
+    return cc_policy_cert_initialized_ & cc_sealing_key_initialized_ &
+           cc_service_key_initialized_ & cc_service_platform_rule_initialized_ &
+           cc_provider_provisioned_ & cc_policy_store_initialized_;
+  } else {
+    return false;
+  }
+}
+
+bool cc_trust_data::initialize_simulated_enclave_data(const string& attest_key_file_name,
+      const string& measurement_file_name, const string& attest_endorsement_file_name) {
+  // cc_provider_provisioned_ = true;
+  return false;
+}
+
 bool cc_trust_data::init_policy_key(int asn1_cert_size, asn1_cert) {
+  cc_policy_info_initialized_ = true;
   return false;
 }
 
