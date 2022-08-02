@@ -3,7 +3,7 @@
 
 
 ifndef SRC_DIR
-SRC_DIR=..
+SRC_DIR=../..
 endif
 ifndef OBJ_DIR
 OBJ_DIR=.
@@ -37,6 +37,8 @@ AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
+# Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
+#  if you link in the certifier library certifier.a.
 dobj=	$(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 
