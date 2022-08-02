@@ -30,6 +30,7 @@ using std::string;
 
 // simulated enclave data
 bool my_data_initialized = false;
+string my_measurement;
 const int simulated_measurment_size = 32;
 const int sealing_key_size = 64;  // for aes&hmac
 byte sealing_key[sealing_key_size];
@@ -40,7 +41,6 @@ signed_claim_message my_platform_claim;
 string serialized_attest_claim;
 signed_claim_message my_attest_claim;
 RSA* rsa_attestation_key = nullptr;
-string my_measurement;
 
 bool simulated_GetAttestClaim(signed_claim_message* out) {
   if (!my_data_initialized) {
@@ -120,7 +120,7 @@ bool simulated_Getmeasurement(int* size_out, byte* out) {
   if (*size_out < simulated_measurment_size)
     return false;
   *size_out = simulated_measurment_size;
-  memcpy(out, (byte*)my_measurement.data(),simulated_measurment_size);
+  memcpy(out, (byte*)my_measurement.data(), my_measurement.size());
   return true;
 }
 
@@ -145,20 +145,15 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
 
   // input: concatinate measurment_size bytes of measurement and in
   // then encrypt it and give it back.
-  int m_size = my_measurement.size();
-  byte m[m_size];
-  if (!simulated_Getmeasurement(&m_size, m))
-    return false;
-
-  memcpy(input, m, my_measurement.size());
+  memcpy(input, (byte*)my_measurement.data(), my_measurement.size());
   memcpy(input + my_measurement.size(), in, in_size);
 
   // output is iv, encrypted bytes
   int real_output_size = output_size;
   if (!authenticated_encrypt(input, input_size, sealing_key, iv, output, &real_output_size))
     return false;
-
-   memcpy(out, output, real_output_size);
+ 
+  memcpy(out, output, real_output_size);
   *size_out = real_output_size;
   return true;
 }
@@ -174,22 +169,16 @@ bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
   memset(output, 0, output_size);
   memcpy(iv, in, iv_size);
 
-  // input: concatinate measurment_size bytes of measurement and in
-  // then encrypt it and give it back.
-  int m_size = my_measurement.size();
-  byte m[m_size];
-  if (!simulated_Getmeasurement(&m_size, m))
-    return false;
-
   int real_output_size = output_size;
   if (!authenticated_decrypt(in, in_size, (byte*)sealing_key,
           output, &real_output_size))
     return false;
 
-  if (memcmp((void*)output, (void*)m, (int)m_size) != 0)
+  if (memcmp((void*)output, (byte*)my_measurement.data(), (int)my_measurement.size()) != 0) {
     return false;
-  real_output_size -= m_size;
-  memcpy(out, (byte*)(output + m_size), real_output_size);
+  }
+  real_output_size -= my_measurement.size();
+  memcpy(out, (byte*)(output + my_measurement.size()), real_output_size);
   *size_out = real_output_size;
   return true;
 }

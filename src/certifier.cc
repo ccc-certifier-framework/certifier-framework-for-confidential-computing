@@ -765,10 +765,10 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
   int size_unencrypted_data, byte* unencrypted_data,
   int* size_protected_blob, byte* blob) {
 
-  // for now, no encryption
   string serialized_key;
-  if (!key.SerializeToString(&serialized_key))
+  if (!key.SerializeToString(&serialized_key)) {
     return false;
+  }
 
   int size_sealed_key = serialized_key.size() + 128;
   byte sealed_key[size_sealed_key];
@@ -828,7 +828,6 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
       byte* protected_blob, key_message* key, int* size_of_unencrypted_data,
       byte* unencrypted_data) {
 
-  // for now, no encryption
   string protected_blob_string;
   protected_blob_string.assign((char*)protected_blob, size_protected_blob);
   protected_blob_message pb;
@@ -2018,24 +2017,6 @@ void print_trust_request_message(trust_request_message& m) {
   if (m.support().has_prover_type()) {
     printf("Prover type: %s\n", m.support().prover_type().c_str());
   }
-#if 0
-  if (m.has_policy_key()) {
-    print_key(m.policy_key());
-  }
-  if (m.has_service_address()) {
-    printf("Service address: %s\n", m.service_address().c_str());
-  }
-  if (m.has_serialized_policy_key()) {
-    printf("Serialized policy key:\n");
-    print_bytes(m.serialized_policy_key().size(), (byte*)m.serialized_policy_key().data());
-    printf("\n");
-  }
-  if (m.has_signed_policy_key()) {
-    printf("Signed policy key:\n");
-    print_bytes(m.signed_policy_key().size(), (byte*)m.signed_policy_key().data());
-    printf("\n");
-  }
-#endif
 }
 
 void print_trust_response_message(trust_response_message& m) {

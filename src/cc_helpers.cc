@@ -206,8 +206,69 @@ void cc_trust_data::print_trust_data() {
     printf("\n\n");
   }
   if (cc_service_platform_rule_initialized_) {
-    printf("platformrule:\n");
+    printf("platform rule:\n");
     print_signed_claim(platform_rule_);
+  }
+
+  if (cc_basic_data_initialized_) {
+    printf("cc_basic_data_initialized_ is true\n");
+  } else {
+    printf("cc_basic_data_initialized_ is false\n");
+  }
+  if (cc_policy_info_initialized_) {
+    printf("cc_policy_info_initialized_ is true\n");
+  } else {
+    printf("cc_policy_info_initialized_ is false\n");
+  }
+  if (cc_provider_provisioned_) {
+    printf("cc_provider_provisioned_ is true\n");
+  } else {
+    printf("cc_provider_provisioned_ is false\n");
+  }
+  if (cc_is_certified_) {
+    printf("cc_is_certified_ is true\n");
+  } else {
+    printf("cc_is_certified_ is false\n");
+  }
+  if (cc_auth_key_initialized_) {
+    printf("cc_auth_key_initialized_ is true\n");
+  } else {
+    printf("cc_auth_key_initialized_ is false\n");
+  }
+  if (cc_symmetric_key_initialized_) {
+    printf("cc_symmetric_key_initialized_ is true\n");
+  } else {
+    printf("cc_symmetric_key_initialized_ is false\n");
+  }
+  if (cc_service_key_initialized_) {
+    printf("cc_service_key_initialized_ is true\n");
+  } else {
+    printf("cc_service_key_initialized_ is false\n");
+  }
+  if (cc_service_cert_initialized_) {
+    printf("cc_service_cert_initialized_ is true\n");
+  } else {
+    printf("cc_service_cert_initialized_ is false\n");
+  }
+  if (cc_service_platform_rule_initialized_) {
+    printf("cc_service_platform_rule_initialized_ is true\n");
+  } else {
+    printf("cc_service_platform_rule_initialized_ is false\n");
+  }
+  if (cc_sealing_key_initialized_) {
+    printf("cc_sealing_key_initialized_ is true\n");
+  } else {
+    printf("cc_sealing_key_initialized_ is false\n");
+  }
+  if (cc_policy_store_initialized_) {
+    printf("cc_policy_store_initialized_ is true\n");
+  } else {
+    printf("cc_policy_store_initialized_ is false\n");
+  }
+  if (cc_all_initialized()) {
+    printf("all initialized\n");
+  } else {
+    printf("all not initialized\n");
   }
 }
 
@@ -219,25 +280,25 @@ bool cc_trust_data::save_store() {
     return false;
   }
 
-  int size_protected_store = serialized_store.size() + 4096;
-  byte protected_store[size_protected_store];
+  int size_protected_blob= serialized_store.size() + 4096;
+  byte protected_blob[size_protected_blob];
 
-  byte symmetric_key_for_protect[cc_helper_symmetric_key_size];
-  if (!get_random(8 * cc_helper_symmetric_key_size, symmetric_key_for_protect))
+  byte pkb[cc_helper_symmetric_key_size];
+  if (!get_random(8 * cc_helper_symmetric_key_size, pkb))
     return false;
-  key_message protect_symmetric_key;
-  protect_symmetric_key.set_key_name("protect-key");
-  protect_symmetric_key.set_key_type("aes-256-cbc-hmac-sha256");
-  protect_symmetric_key.set_key_format("vse-key");
-  protect_symmetric_key.set_secret_key_bits(symmetric_key_for_protect, cc_helper_symmetric_key_size);
+  key_message pk;
+  pk.set_key_name("protect-key");
+  pk.set_key_type("aes-256-cbc-hmac-sha256");
+  pk.set_key_format("vse-key");
+  pk.set_secret_key_bits(pkb, cc_helper_symmetric_key_size);
 
-  if (!Protect_Blob(enclave_type_, protect_symmetric_key, serialized_store.size(),
-          (byte*)serialized_store.data(), &size_protected_store, protected_store)) {
+  if (!Protect_Blob(enclave_type_, pk, serialized_store.size(),
+          (byte*)serialized_store.data(), &size_protected_blob, protected_blob)) {
     printf("save_store can't protect blob\n");
     return false;
   }
 
-  if (!write_file(store_file_name_, size_protected_store, protected_store)) {
+  if (!write_file(store_file_name_, size_protected_blob, protected_blob)) {
     printf("Save_store can't write %s\n", store_file_name_.c_str());
     return false;
   }
@@ -246,19 +307,26 @@ bool cc_trust_data::save_store() {
 
 bool cc_trust_data::fetch_store() {
 
-  int size_protected_blob = file_size(store_file_name_) + 1;
+  int size_protected_blob = file_size(store_file_name_);
   byte protected_blob[size_protected_blob];
   int size_unprotected_blob = size_protected_blob;
   byte unprotected_blob[size_unprotected_blob];
+
+  memset(protected_blob, 0, size_protected_blob);
+  memset(unprotected_blob, 0, size_unprotected_blob);
 
   if (!read_file(store_file_name_, &size_protected_blob, protected_blob)) {
     printf("fetch_store can't read %s\n", store_file_name_.c_str());
     return false;
   }
 
-  key_message protect_symmetric_key;
+  key_message pk;
+  pk.set_key_name("protect-key");
+  pk.set_key_type("aes-256-cbc-hmac-sha256");
+  pk.set_key_format("vse-key");
+
   if (!Unprotect_Blob(enclave_type_, size_protected_blob, protected_blob,
-        &protect_symmetric_key, &size_unprotected_blob, unprotected_blob)) {
+        &pk, &size_unprotected_blob, unprotected_blob)) {
     printf("fetch_store can't Unprotect\n");
     return false;
   }
@@ -506,19 +574,21 @@ bool cc_trust_data::cold_init() {
     printf("Can't save store\n");
     return false;
   }
+  cc_policy_store_initialized_ = true;
   return true;
 }
 
 bool cc_trust_data::warm_restart() {
 
+  // fetch store
   if (!cc_policy_store_initialized_) {
     if (!fetch_store()) {
       printf("Can't fetch store\n");
       return false;
     }
   }
+  cc_policy_store_initialized_ = true;
 
-  // fetch store
   if (!get_trust_data_from_store()) {
     printf("Can't get trust data from store\n");
     return false;
@@ -534,9 +604,12 @@ bool cc_trust_data::GetPlatformSaysAttestClaim(signed_claim_message* scm) {
 }
 
 bool cc_trust_data::certify_me(const string& host_name, int port) {
-  if (!warm_restart()) {
-    printf("warm restart failed\n");
-    return false;
+
+  if (!cc_all_initialized()) {
+    if (!warm_restart()) {
+      printf("warm restart failed\n");
+      return false;
+    }
   }
   
   //  The platform statement is "platform-key says attestation-key is-trusted-for-attestation"

@@ -66,7 +66,6 @@ cc_trust_data* app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
-
 // This is the secure channel between the CC protected client and protected server.
 //    Most of the work of setting up SSL is done with the helpers.
 
@@ -129,6 +128,7 @@ void server_application(X509* x509_policy_cert, SSL* ssl) {
 }
 
 bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port) {
+
   SSL_load_error_strings();
 
   // Get a socket.
@@ -207,7 +207,7 @@ bool run_me_as_client(X509* x509_policy_cert, key_message& private_key,
   // This is the actual application code.
   client_application(ssl);
 
-  // CLean up.
+  // Clean up.
   close_client_ssl(sd, ctx, ssl);
   return true;
 }
@@ -271,6 +271,7 @@ int main(int an, char** av) {
       printf("warm-restart failed\n");
       ret = 1;
     }
+
   } else if (FLAGS_operation == "get-certifier") {
     if (!app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
       printf("certification failed\n");
@@ -279,30 +280,35 @@ int main(int an, char** av) {
   } else if (FLAGS_operation == "run-app-as-client") {
     if (!app_trust_data->warm_restart()) {
       printf("warm-restart failed\n");
-      return 1;
+      ret = 1;
+      goto done;
     }
     if (!run_me_as_client(app_trust_data->x509_policy_cert_,
           app_trust_data->private_auth_key_,
           FLAGS_policy_host.c_str(), FLAGS_policy_port)) {
       printf("run-me-as-client failed\n");
       ret = 1;
+      goto done;
     }
   } else if (FLAGS_operation == "run-app-as-server") {
     if (!app_trust_data->warm_restart()) {
       printf("warm-restart failed\n");
-      return 1;
+      ret = 1;
+      goto done;
     }
     if (!run_me_as_server(app_trust_data->x509_policy_cert_,
           app_trust_data->private_auth_key_,
           FLAGS_policy_host.c_str(), FLAGS_policy_port)) {
       printf("run-me-as-server failed\n");
       ret = 1;
+      goto done;
     }
   } else {
     printf("Unknown operation\n");
   }
 
-  app_trust_data->print_trust_data();
+done:
+  // app_trust_data->print_trust_data();
   app_trust_data->clear_sensitive_data();
   return ret;
 }

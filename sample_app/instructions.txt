@@ -167,10 +167,10 @@ Step 14:  Run the apps and get admission certificates from Certifier Service
     cd $EXAMPLE_DIR
     $EXAMPLE_DIR/example_app.exe --print_all=true \
       --operation=cold-init --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store
+      --policy_store_file=policy_store --measurement_file="example_app.measurement"
     $EXAMPLE_DIR/example_app.exe --print_all=true \
       --operation=get-certifier --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
-       --policy_store_file=policy_store
+      --policy_store_file=policy_store --measurement_file="example_app.measurement"
 
 At this point, both versions of the app have their admission certificates.  You can look at
 the output of the terminal running simpleserver for output.  Now all we have to do is have

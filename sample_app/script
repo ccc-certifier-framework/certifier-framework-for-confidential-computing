@@ -27,10 +27,10 @@ make -f example_app.mak
 
 # build policy
 cd $EXAMPLE_DIR/provisioning
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../example_app.exe \
-      --output=example_app.measurement
+$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../example_app_new.exe \
+      --output=example_app_new.measurement
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
-  --measurement_subject=example_app.measurement --verb="is-trusted" \
+  --measurement_subject=example_app_new.measurement --verb="is-trusted" \
   --output=ts1.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1.bin
@@ -65,7 +65,6 @@ cd $EXAMPLE_DIR
 mkdir -p app1_data app2_data
 mkdir -p service
 
-
 # provision service and apps
 cd $EXAMPLE_DIR/provisioning
 
@@ -85,25 +84,28 @@ $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
 
 # initialize app
 cd $EXAMPLE_DIR
-$EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=cold-init --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
+$EXAMPLE_DIR/example_app_new.exe --print_all=true \
+      --operation=cold-init --data_dir=./app1_data/ --measurement_file="example_app_new.measurement" \
       --policy_store_file=policy_store
-$EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=get-certifier --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
+$EXAMPLE_DIR/example_app_new.exe --print_all=true \
+      --operation=warm-restart --data_dir=./app1_data/ --measurement_file="example_app_new.measurement" \
+      --policy_store_file=policy_store
+$EXAMPLE_DIR/example_app_new.exe --print_all=true \
+      --operation=get-certifier --data_dir=./app1_data/ --measurement_file="example_app_new.measurement" \
       --policy_store_file=policy_store
 
 # get certified
-$EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=cold-init --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
+$EXAMPLE_DIR/example_app_new.exe --print_all=true \
+      --operation=cold-init --data_dir=./app2_data/ --measurement_file="example_app_new.measurement" \
       --policy_store_file=policy_store
-$EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=get-certifier --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
+$EXAMPLE_DIR/example_app_new.exe --print_all=true \
+      --operation=get-certifier --data_dir=./app2_data/ --measurement_file="example_app_new.measurement" \
        --policy_store_file=policy_store
 
 #run the app
-$EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
-      --policy_store_file=policy_store
+$EXAMPLE_DIR/example_app_new.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
+      --policy_store_file=policy_store --measurement_file="example_app_new.measurement"
 cd $EXAMPLE_DIR
-$EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
-      --policy_store_file=policy_store
+$EXAMPLE_DIR/example_app_new.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
+      --policy_store_file=policy_store --measurement_file="example_app_new.measurement"
 
