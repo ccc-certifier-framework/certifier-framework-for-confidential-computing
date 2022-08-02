@@ -75,11 +75,11 @@ void client_application(SSL* ssl) {
   // client sends a message over authenticated, encrypted channel
   const char* msg = "Hi from your secret client\n";
   SSL_write(ssl, (byte*)msg, strlen(msg));
-  byte buf[1024];
-  memset(buf, 0, 1024);
 
   // Get server response over authenticated, encrypted channel and print it
   // Todo: Replace with call to int sized_read(int fd, string* out)
+  byte buf[1024];
+  memset(buf, 0, 1024);
   int n = SSL_read(ssl, buf, 1024);
   printf("SSL client read: %s\n", (const char*)buf);
 }
