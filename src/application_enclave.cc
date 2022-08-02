@@ -54,14 +54,10 @@ bool application_GetParentEvidence(string* out) {
   }
 
   // response
-  // Todo: Replace with call to int sized_read(int fd, string* out)
-  int t_size = 4096;
-  byte t_out[t_size];
-  int n= read(reader, t_out, t_size);
+  string rsp_str;
+  int n= sized_read(reader, &rsp_str);
   if (n < 0)
     return false;
-  string rsp_str;
-  rsp_str.assign((char*)t_out, n);
   if (!rsp.ParseFromString(rsp_str))
     return false;
   if (rsp.function() != "getparentevidence" || rsp.status() != "succeeded")

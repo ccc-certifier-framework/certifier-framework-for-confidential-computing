@@ -952,8 +952,6 @@ bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   bool ret = true;
   int res = 0;
 
-  int size_cert = 8192;
-  byte cert_buf[size_cert];
   int size_nonce = 64;
   byte nonce[size_nonce];
   int size_sig = 256;
@@ -972,8 +970,10 @@ bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
 
   // get cert
   // Todo: Replace with call to int sized_read(int fd, string* out)
-  size_cert= SSL_read(ssl, cert_buf, size_cert);
   string asn_cert;
+  int size_cert = 8192;
+  byte cert_buf[size_cert];
+  size_cert= SSL_read(ssl, cert_buf, size_cert);
   asn_cert.assign((char*)cert_buf, size_cert);
 
   x = X509_new();
