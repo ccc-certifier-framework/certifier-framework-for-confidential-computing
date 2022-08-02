@@ -873,21 +873,20 @@ void server_application(SSL* ssl) {
     return;
   }
 
-  //byte in[1024];
-  //memset(in, 0, 1024);
-  byte* in = (byte*) malloc(sizeof(byte) * 23910);
-  memset(in, 0, 23910);
+
+  byte* in = (byte*) malloc(sizeof(byte) * 16000);
+  memset(in, 0, 16000);
 
   // client starts, in a real application we would likely get a serialized protobuf
-  int n = SSL_read(ssl, in, 23910);
+  int n = SSL_read(ssl, in, 16000);
   printf("SSL server read: %s\n", (const char*) in);
 
-  proc_data("/home/azureuser/certifier/openenclave_example/third_party/dataset/", (const char*) in);
+  std::string ret = proc_data((const char*) in);
 
   // says something back
-  const char* msg = "Hi from your secret server\n";
-  SSL_write(ssl, (byte*)msg, strlen(msg));
+  SSL_write(ssl, (byte*)ret.c_str(), ret.size());
   close(sd);
+  free(in);
   SSL_free(ssl);
 }
 
@@ -1020,9 +1019,8 @@ bool run_me_as_server() {
 
 void client_application(SSL* ssl) {
   // client starts, in a real application we would likely send a serialized protobuf
-  //const char* msg = "Hi from your secret client\n";
   ULDataFrame   sales_df;
-  sales_df.read("/home/azureuser/certifier/openenclave_example/third_party/dataset/sales.csv", io_format::csv2);
+  sales_df.read((data_dir + "../third_party/dataset/sales.csv").c_str(), io_format::csv2);
   
   std::string msg = sales_df.to_string<double, long>();
   printf("size of the dataframe is %d\n", msg.size());
@@ -1094,25 +1092,6 @@ bool init_client_ssl(int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl) {
     const char* error_str = ERR_lib_error_string(code);
     printf("Error: %s\n", error_str);
   }
-
-  /*
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-
-  struct hostent *he = gethostbyname(hostname);
-  if (he == nullptr) {
-    printf("init_client_ssl, error 1\n");
-    return false;
-  }
-  memcpy(&(addr.sin_addr.s_addr), he->h_addr, he->h_length);
-
-  if (connect(sd, (struct sockaddr*)&addr, sizeof(addr)) !=  0) {
-    printf("init_client_ssl, error 2, port: %d\n", port);
-    close(sd);
-    return false;
-  }*/
-
 
   // dial service
   struct sockaddr_in address;
