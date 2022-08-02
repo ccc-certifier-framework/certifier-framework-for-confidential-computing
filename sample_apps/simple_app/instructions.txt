@@ -16,10 +16,16 @@ Read the policy_key_notes.txt in ../sample_app and policy_utilities_info.txt in 
 as background.
 
 
-$CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.
+$CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.  On my
+computer, it is in =~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing.
+It is helpful to have a shell variable for it:
+
 export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
-$EXAMPLE_DIR is this directory containing the example application.
-export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_app
+
+$EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable
+is useful.
+
+export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app
 
 
 

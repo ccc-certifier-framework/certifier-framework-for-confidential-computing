@@ -30,8 +30,8 @@ By using this software you agree to those terms of the respective licenses.
 
 The repository contains the complete Certifier Framework source and a number of
 examples as well as complete instructions.  In particular, the sample in
-sample_app policy is a complete guide on building
-and application, policy and deploying a service.
+sample_app/simple_app policy is a complete guide on building and developing
+an application, and policy as well as deploying a service.
 
 ## Documentation and Installation
 

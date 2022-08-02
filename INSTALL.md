@@ -54,8 +54,8 @@ two subdirectories: certlib and certprotos.  To compile the certlib tests:
   cd ../certlib
   go test
 
-To compile and run the certifier service and test it,
-follow the instructions in sample_app.
+To compile and run the Certifier Service and test it, follow the instructions in
+sample_apps/simple_example.
 
 
 Utilities
@@ -83,9 +83,9 @@ and install it on Linux:
   make sev-test
   sudo sev-test (You must be root to run the test)
 
-There is a sample app in sample_app. To compile:
+There is a sample app in sample_apps/simple_app. To compile:
 
-  cd $(CERTIFIER)/sample_app
+  cd $(CERTIFIER)/sample_apps/simple_app
   make clean -f example_app.mak
   make -f example_app.mak
 
