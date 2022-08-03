@@ -47,7 +47,10 @@ endif
 
 CC=g++
 LINK=g++
-PROTO=/usr/local/bin/protoc
+# PROTO=/usr/local/bin/protoc
+# Point this to the right place, if you have to.
+# I had to do the above on my machine.
+PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
