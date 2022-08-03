@@ -1,9 +1,12 @@
 # Contributing to certifier-framework-for-confidential-computing
 
-The certifier-framework-for-confidential-computing project team welcomes contributions from the community. Before you start working with certifier-framework-for-confidential-computing, please
-read our [Developer Certificate of Origin](https://cla.vmware.com/dco). All contributions to this repository must be
-signed as described on that page. Your signature certifies that you wrote the patch or have the right to pass it on
-as an open-source patch.
+The certifier-framework-for-confidential-computing project team welcomes
+contributions from the community. Before you start working with
+certifier-framework-for-confidential-computing, please read our
+[Developer Certificate of Origin](https://cla.vmware.com/dco).
+All contributions to this repository must be signed as described
+on that page. Your signature certifies that you wrote the patch
+or have the right to pass it on as an open-source patch.
 
 ## Contribution Flow
 
@@ -37,11 +40,11 @@ git push --force-with-lease origin my-new-feature
 
 ### Updating pull requests
 
-If your PR fails to pass CI or needs changes based on code review, you'll most likely want to squash these changes into
-existing commits.
+If your PR fails to pass CI or needs changes based on code review, you'll
+most likely want to squash these changes into existing commits.
 
-If your pull request contains a single commit or your changes are related to the most recent commit, you can simply
-amend the commit.
+If your pull request contains a single commit or your changes are related
+to the most recent commit, you can simply amend the commit.
 
 ``` shell
 git add .
@@ -58,19 +61,30 @@ git rebase -i --autosquash main
 git push --force-with-lease origin my-new-feature
 ```
 
-Be sure to add a comment to the PR indicating your new changes are ready to review, as GitHub does not generate a
-notification when you git push.
+Be sure to add a comment to the PR indicating your new changes are ready to
+review, as GitHub does not generate a notification when you git push.
 
-### Code Style
+### Coding Style
+
+We use Google's code style for C++ and Go and the Linux code style for
+C.  Before you check in new features, you should have tests and you
+should run all the tests.  When possible, we use Google's test
+framework (gtest), although some tests are stand-alone.  Even if
+functionality does not change, we welcome additional tests.  The
+Test goal is: "If the tests pass, changes are compatible."
+
 
 ### Formatting Commit Messages
 
-We follow the conventions on [How to Write a Git Commit Message](http://chris.beams.io/posts/git-commit/).
+We follow the conventions on [How to Write a Git Commit Message]
+(http://chris.beams.io/posts/git-commit/).
 
-Be sure to include any related GitHub issue references in the commit message.  See
-[GFM syntax](https://guides.github.com/features/mastering-markdown/#GitHub-flavored-markdown) for referencing issues
-and commits.
+Be sure to include any related GitHub issue references in the
+commit message.  See [GFM syntax]
+(https://guides.github.com/features/mastering-markdown/#GitHub-flavored-markdown)
+for referencing issues and commits.
 
 ## Reporting Bugs and Creating Issues
 
-When opening a new issue, try to roughly follow the commit message format conventions above.
+When opening a new issue, try to roughly follow the commit message
+format conventions above.
