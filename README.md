@@ -26,11 +26,12 @@ required in the certifier API, sample applications, utilities or
 the Certifier Service.
 
 Please consult the LICENSE file for APACHE 2.0 details and terms.
-By using this software you agree to those terms of the respective licenses.
+By using this software you agree to those terms of the respective
+licenses.
 
 The repository contains the complete Certifier Framework source and a number of
 examples as well as complete instructions.  In particular, the sample in
-sample_app/simple_app policy is a complete guide on building and developing
+sample_apps/simple_app policy is a complete guide on building and developing
 an application, and policy as well as deploying a service.
 
 ## Documentation and Installation
@@ -46,15 +47,19 @@ treated as licensed under the Apache license.
 
 ## Contributing
 
-The certifier-framework-for-confidential-computing project team welcomes contributions from the
-community. Before you start working with certifier-framework-for-confidential-computing, please
-read our [Developer Certificate of Origin](https://cla.vmware.com/dco). All contributions to this repository must be
-signed as described on that page. Your signature certifies that you wrote the patch or have the right to pass it on
-as an open-source patch. For more detailed information, refer to [CONTRIBUTING.md](CONTRIBUTING.md).
+The certifier-framework-for-confidential-computing project team welcomes
+contributions from the community. Before you start working with
+certifier-framework-for-confidential-computing, please read our 
+[Developer Certificate of Origin](https://cla.vmware.com/dco). All contributions
+to this repository must be signed as described on that page. Your signature
+certifies that you wrote the patch or have the right to pass it on
+as an open-source patch. For more detailed information, refer to
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Except as expressly set forth in a source file, the contents of this repository are licensed
-under the Apache 2.0 license which is included in the LICENSE file.  There are a very few files,
-used for testing (and not included in the API or services) that have other license terms.
+Except as expressly set forth in a source file, the contents of this repository
+are licensed under the Apache 2.0 license which is included in the LICENSE
+file.  There are a very few files, used for testing (and not included in
+the API or services) that have other license terms.
 
