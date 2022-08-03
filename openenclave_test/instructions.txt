@@ -32,7 +32,7 @@ to verify that everything is configured correctly.
 
 We tested Open Enclave 0.17 and 0.18 using clang-10.
 
-Step 2: Build the Certifier Utilities
+Step 2a: Build the Certifier Utilities
 
     cd $CERTIFIER_PROTOTYPE
     cd utilities
@@ -45,6 +45,74 @@ measurement_init utility:
     cd $CERTIFIER_PROTOTYPE
     cd utilities
     make -f cert_utility.mak measurement_init.exe
+
+Step 2b: Build the Open Enclave protobuf
+
+The Certifier API requires protobuf. For the SGX enclave environment, we a
+statically compiled protobuf archive to be built into the enclave binary.
+Additionally, the matching protoc command needs to be available on the
+development host.
+
+If you do not see these and the headers inside the
+$(CERTIFIER_PROTOTYPE)/openenclave_test/protobufs-bin directory, you will need
+to build and install them first. When the Open Enclave SDK integrates protobuf
+in the future, we will be able to live without these.
+
+$(OE_SOURCE) is the Open Enclave SDK source directory
+$(OE_BIN) is the Open Enclave SDK installation directory
+$(PROTO_BIN) is the protobuf installation directory
+
+Step 2b.1: Download protobuf
+
+Download the protobuf versions you want from
+https://github.com/protocolbuffers/protobuf/releases
+
+Step 2b.2: Build protobuf for the development host (e.g., Ubuntu 20.04)
+
+    git clone https://github.com/protocolbuffers/protobuf.git
+    cd protobuf
+    git submodule update --init --recursive
+    ./autogen.sh
+    ./configure --prefix=$(PROTO_BIN) --disable-shared CC=clang-10 CXX=clang++10
+    make
+    make check
+    make install
+
+The protobuf libraries in the installation directory is built for the host
+after this step and not ready for the enclave. We need to rebuild the libraries
+for the enclave environment.
+
+Step 2b.3: Rebuild protobuf libraries for the enclave
+
+    cd protobuf
+    export LIBCXX_LIBRARY_DIR=$(OE_BIN)/share/pkgconfig/../../lib/openenclave/enclave
+    export LIBCXX_SOURCE_DIR=$(OE_SOURCE)/3rdparty/libcxx/libcxx
+    ./configure --prefix=$(PROTO_BIN) --disable-shared CC=clang-10 CXX=clang++-10 \
+    CXXFLAGS="-c -nostdinc++ -nostdlib++ -m64 -fPIE -ftls-model=local-exec -fvisibility=hidden \
+    -fstack-protector-strong -fno-omit-frame-pointer -ffunction-sections -fdata-sections -mllvm \
+    -x86-speculative-load-hardening \
+    -I$(OE_BIN)/share/pkgconfig/../../include/openenclave/3rdparty/libcxx \
+    -I$(OE_BIN)/share/pkgconfig/../../include/openenclave/3rdparty/libc \
+    -I$(OE_BIN)/share/pkgconfig/../../include/openenclave/3rdparty \
+    -I$(OE_BIN)/share/pkgconfig/../../include" \
+    LDFLAGS="-nostdinc++ -nostdlib++ -nodefaultlibs -nostartfiles -Wl,--no-undefined -Wl,-Bstatic \
+    -Wl,-Bsymbolic -Wl,--export-dynamic -Wl,-pie -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,now -Wl,\
+    -gc-sections -L${LIBCXX_LIBRARY_DIR} -Wl,-rpath,${LIBCXX_LIBRARY_DIR} -loelibcxx"
+    make
+
+You will get some warnings and the protoc tool generated will not be usable on
+your development host. You SHOULD NOT DO make install at this point. Instead
+copy the generated archives to $(PROTO_BIN) manually.
+
+    cp protobuf/src/.libs/libprotobuf.a $(PROTO_BIN)/lib/
+    cp protobuf/src/.libs/libprotobuf-lite.a $(PROTO_BIN)/lib/
+
+Step 2b.4: Replace protobufs-bin in openenclave_test
+
+    cd $CERTIFIER_PROTOTYPE
+    cd openenclave_test
+    rm -rf protobufs-bin
+    cp -r $(PROTO_BIN) ./protobufs-bin
 
 Step 3: Build the Certifier API Test Sample Application
 
@@ -115,72 +183,3 @@ You should get the results similar to the following:
 
     Calling certifier_test_seal
     Test succeeded!
-
-## Notes on protobuf
-
-The Certifier API requires protobuf. For the SGX enclave environment, we a
-statically compiled protobuf archive to be built into the enclave binary.
-Additionally, the matching protoc command needs to be available on the
-development host.
-
-For convenience, we included both of these and the headers inside the
-$(CERTIFIER_PROTOTYPE)/openenclave_test/protobufs-bin directory. When the Open
-Enclave SDK integrates protobuf in the future, we will be able to live without
-these. If you need to build your own protobuf libraries for any reason, you can
-do it wit the following instructions:
-
-$(OE_SOURCE) is the Open Enclave SDK source directory
-$(OE_BIN) is the Open Enclave SDK installation directory
-$(PROTO_BIN) is the protobuf installation directory
-
-Step 1: Download protobuf
-
-Download the protobuf versions you want from
-https://github.com/protocolbuffers/protobuf/releases
-
-Step 2: Build protobuf for the development host (e.g., Ubuntu 20.04)
-
-    git clone https://github.com/protocolbuffers/protobuf.git
-    cd protobuf
-    git submodule update --init --recursive
-    ./autogen.sh
-    ./configure --prefix=$(PROTO_BIN) --disable-shared CC=clang-10 CXX=clang++10
-    make
-    make check
-    make install
-
-The protobuf libraries in the installation directory is built for the host
-after this step and not ready for enclave. We need to rebuild the libraries for
-the enclave environment.
-
-Step 3: Rebuild protobuf libraries for the enclave
-
-    cd protobuf
-    export LIBCXX_LIBRARY_DIR=$(OE_BIN)/share/pkgconfig/../../lib/openenclave/enclave
-    export LIBCXX_SOURCE_DIR=$(OE_SOURCE)/3rdparty/libcxx/libcxx
-    ./configure --prefix=$(PROTO_BIN) --disable-shared CC=clang-10 CXX=clang++-10 \
-    CXXFLAGS="-c -nostdinc++ -nostdlib++ -m64 -fPIE -ftls-model=local-exec -fvisibility=hidden \
-    -fstack-protector-strong -fno-omit-frame-pointer -ffunction-sections -fdata-sections -mllvm \
-    -x86-speculative-load-hardening \
-    -I$(OE_BIN)/share/pkgconfig/../../include/openenclave/3rdparty/libcxx \
-    -I$(OE_BIN)/share/pkgconfig/../../include/openenclave/3rdparty/libc \
-    -I$(OE_BIN)/share/pkgconfig/../../include/openenclave/3rdparty \
-    -I$(OE_BIN)/share/pkgconfig/../../include" \
-    LDFLAGS="-nostdinc++ -nostdlib++ -nodefaultlibs -nostartfiles -Wl,--no-undefined -Wl,-Bstatic \
-    -Wl,-Bsymbolic -Wl,--export-dynamic -Wl,-pie -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,now -Wl,\
-    -gc-sections -L${LIBCXX_LIBRARY_DIR} -Wl,-rpath,${LIBCXX_LIBRARY_DIR} -loelibcxx"
-    make
-
-You will get some warnings and the protoc tool generated will not be usable on
-your development host. You SHOULD NOT DO make install at this point. Instead
-copy the generated archives to $(PROTO_BIN) manually.
-
-    cp protobuf/src/.libs/libprotobuf.a $(PROTO_BIN)/lib/
-    cp protobuf/src/.libs/libprotobuf-lite.a $(PROTO_BIN)/lib/
-
-Step 4: Replace protobufs-bin in openenclave_test
-
-    cd $CERTIFIER_PROTOTYPE
-    cd openenclave_test
-    rm -rf protobufs-bin
-    cp -r $(PROTO_BIN) ./protobufs-bin
