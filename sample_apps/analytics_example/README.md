@@ -2,7 +2,7 @@
 # Privacy Preserving data analytics with Certifier Framework 
 
 This sample application demonstrates how to conduct privacy preserving data analytics with 
-the Certifier Framework. It has the following properties: 
+the Certifier Framework on openenclave. It has the following properties: 
 * Demonstrates how to securely use certifier framework  
    * configures custom trusted policy and security domain
    * conducts data analytics only on certified secure enclaves  
@@ -18,21 +18,40 @@ does not leverage the openenclave's interface for getting and verifying the meas
 Future release will fix this issue.  
 
 ### On Simulated Enclave 
+
+#### Prerequisites 
+The example is build on [Open Enclave](https://github.com/openenclave/openenclave). 
+Please refer to the [link](https://github.com/openenclave/openenclave/tree/master/docs/GettingStartedDocs#hardware-drivers)
+ for instructions. The example also relies on the protobuf built specifically with 
+ openenclave libc, which the instructions can be found [here](../../openenclave_test/instructions.txt)
+
 To configure the environment variables for this project, run 
 ```
 export CERTIFIER=~/certifier-github-mirror
 export CERTIFIER_PROTOTYPE=$CERTIFIER
-export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_app/analytics_example
+export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/analytics_example
 export PATH=$PATH:/usr/local/go/bin && export PATH=$PATH:$(go env GOPATH)/bin
+source /opt/openenclave/share/openenclave/openenclaverc
 ```
 `$CERTIFIER` is the top level directory for the certifier repository.
 
+#### Build and Run
+
+Step 1: Load the third party libraries 
+```bash
+cd $EXAMPLE_DIR/third_party
+chmod +x ./load_dataframe.sh
+./load_dataframe.sh
+```
+This will load and build the [Dataframe](https://github.com/hosseinmoein/DataFrame)
+dependency of the project with openenclave SDK.
+
 Step 1: Build the utilities
 ```bash
-    cd $CERTIFIER_PROTOTYPE
-    cd utilities
-    make -f cert_utility.mak
-    make -f policy_utilities.mak
+cd $CERTIFIER_PROTOTYPE
+cd utilities
+make -f cert_utility.mak
+make -f policy_utilities.mak
 ```
 
 

@@ -14,8 +14,8 @@ PROTO_INCL=-I../../../openenclave_test/protobufs-bin/include
 PROTO_LIB=-L../../../openenclave_test/protobufs-bin/lib -lprotobuf -loeenclave -loelibcxx -loelibc -loesyscall -loecore -loesyscall -loecore -loehostsock -loehostresolver
 CERT_SRC=../../../src
 CERT_INCL=-I../../../include -I../../../src
-DATAFRAME_INCL=-I../third_party/dataframe/include
-DATAFRAME_LIB=../third_party/dataframe/bin/libDataFrame.a 
+DATAFRAME_INCL=-I../third_party/DataFrame/include
+DATAFRAME_LIB=../third_party/DataFrame/build/libDataFrame.a 
 
 #
 # Seal plug-ins are searched in two steps.
@@ -56,7 +56,7 @@ sign:
 	oesign sign -e enclave -c enc.conf -k private.pem
 
 clean:
-	rm -f *.o enclave enclave.signed attestation_t.* attestation_args.h *.pem certifier.pb.*
+	rm -f *.o enclave enclave.signed attestation_t.* attestation_args.h *.pem certifier.pb.* 
 
 keys:
 	openssl genrsa -out private.pem -3 3072
