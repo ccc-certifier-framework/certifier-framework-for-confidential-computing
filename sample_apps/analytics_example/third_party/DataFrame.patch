@@ -1,0 +1,87 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d64e9e9..fdac97a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,19 @@
+-cmake_minimum_required(VERSION 3.8)
++cmake_minimum_required(VERSION 3.11)
++
++if (UNIX)
++  if (NOT DEFINED ENV{CC} AND NOT DEFINED CMAKE_C_COMPILER)
++    find_program(CMAKE_C_COMPILER clang-10 clang)
++  endif ()
++  if (NOT DEFINED ENV{CXX} AND NOT DEFINED CMAKE_CXX_COMPILER)
++    find_program(CMAKE_CXX_COMPILER clang++-10 clang++)
++  endif ()
++endif ()
++
++set(CMAKE_CXX_STANDARD 17)
++set(OE_CRYPTO_LIB
++    openssl
++    CACHE STRING "Crypto library used by enclaves.")
++
+ 
+ if(POLICY CMP0090)
+     cmake_policy(SET CMP0090 NEW)
+@@ -6,13 +21,15 @@ endif()
+ 
+ project(DataFrame
+     VERSION 1.19.0
+-    LANGUAGES CXX
++    LANGUAGES C CXX
+ )
+ 
+ option(HMDF_TESTING "Enable testing" OFF)
+ option(HMDF_EXAMPLES "Build Examples" OFF)
+ option(HMDF_BENCHMARKS "Build Benchmarks" OFF)
+ 
++find_package(OpenEnclave CONFIG REQUIRED)
++
+ if(HMDF_TESTING)
+     enable_testing()
+ endif()
+@@ -29,6 +46,7 @@ include(HmdfTargetDataFiles)
+ 
+ # Build DataFrame library
+ check_symbol_exists(clock_gettime "time.h" HMDF_HAVE_CLOCK_GETTIME)
++set(HMDF_HAVE_CLOCK_GETTIME, FALSE)
+ 
+ find_package(Threads REQUIRED)
+ 
+@@ -43,7 +61,7 @@ target_sources(DataFrame
+         src/Vectors/HeteroPtrView.cc
+ )
+ 
+-target_compile_features(DataFrame PUBLIC cxx_std_17)
++# target_compile_features(DataFrame PUBLIC cxx_std_17)
+ target_compile_definitions(DataFrame
+     PRIVATE
+         $<$<BOOL:${HMDF_HAVE_CLOCK_GETTIME}>:HMDF_HAVE_CLOCK_GETTIME>
+@@ -81,6 +99,9 @@ target_link_libraries(DataFrame
+         $<$<AND:$<BOOL:${UNIX}>,$<NOT:$<BOOL:${APPLE}>>>:rt>
+ )
+ 
++target_link_libraries(
++  DataFrame PUBLIC openenclave::oelibc openenclave::oelibcxx)
++
+ target_include_directories(DataFrame
+     PUBLIC
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+@@ -155,17 +176,3 @@ install(
+ 
+ export(PACKAGE DataFrame)
+ 
+-# Tests
+-if(HMDF_TESTING)
+-    add_subdirectory(test)
+-endif()
+-
+-# Examples
+-if(HMDF_EXAMPLES)
+-    add_subdirectory(examples)
+-endif()
+-
+-# Benchmarks
+-if(HMDF_BENCHMARKS)
+-    add_subdirectory(benchmarks)
+-endif()
