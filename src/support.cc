@@ -10,6 +10,7 @@
 #include "certifier.pb.h" 
 
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <string>
 using std::string;
 
@@ -1392,27 +1393,80 @@ bool x509_to_asn1(X509 *x, string* out) {
   return true;
 }
 
-// blocking read of pipe when you don't know the size
-//    of the buffer in advance
-int sized_read(int fd, string* out) {
-#if 0
-  byte tb;
-  if (read(fd, &tb, 1) < 1) {
-    return -1;
-  }
+// Blocking read of pipe, socket, SSL connection when you
+//  don't know the size of the buffer in advance
 
-  int m = 0;
-  if (ioctl(fd, FIONREAD, &m) < 0 ) {
+// This sucks but...
+//    You can get max_pipe_size from fcntl(fd, F_GETPIPE_SZ);
+const int max_pipe_size = 65536;
+int sized_pipe_read(int fd, string* out) {
+  out->clear();
+  byte buf[max_pipe_size];
+  int n = read(fd, buf, max_pipe_size);
+  if (n < 0)
     return -1;
+  out->assign((char*)buf, n);
+  return n;
+}
+
+int sized_ssl_read(SSL* ssl, string* out) {
+  out->clear();
+#if 1
+  int total = 0;
+  const int read_stride = 8192;
+  byte buf[read_stride];
+  int n = 0;
+
+  for (;;) {
+    n = SSL_read(ssl, buf, read_stride);
+    if (n < 0) {
+      return n;
+    } else if (n < read_stride) {
+      out->append((char*)buf, n);
+      total += n;
+      break;
+    } else {
+      out->append((char*)buf, n);
+      total += n;
+      if (SSL_pending(ssl) <= 0)
+        break;
+      continue;
+    }
   }
-  printf("ioctl: %d\n", m);
-  byte buf[m + 1];
-  buf[0] = tb;
-  if (read(fd, &buf[1], m) < m) {
+  return total;
+#else
+  byte buf[32000];
+  int n = SSL_read(ssl, buf, 32000);
+  if (n < 0)
     return -1;
+  out->assign((char*)buf, n);
+  return n;
+#endif
+}
+
+int sized_socket_read(int fd, string* out) {
+  out->clear();
+#if 1
+  int n = 0;
+  int total = 0;
+  const int read_stride = 8192;
+  byte buf[read_stride];
+  int m = recv(fd, buf, read_stride, MSG_PEEK);
+  while(m > 0) {
+    n = read(fd, buf, read_stride);
+    if (n <= 0) {
+      return total;
+    } else if (n < read_stride) {
+      out->append((char*)buf, n);
+      total += n;
+      m -= n;
+    } else {
+      out->append((char*)buf, n);
+      total += n;
+      m -= n;
+    }
   }
-  out->assign((char*)buf, m + 1);
-  return m + 1;
+  return total;
 #else
   byte buf[32000];
   int n = read(fd, buf, 32000);

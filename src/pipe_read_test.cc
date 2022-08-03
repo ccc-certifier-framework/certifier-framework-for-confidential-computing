@@ -50,7 +50,7 @@ int main(int an, char** av) {
     close(fd[1]);
     for (int i = 0; i < num_tests; i++) {
       string out;
-      int k = sized_read(fd[0], &out);
+      int k = sized_pipe_read(fd[0], &out);
       if (k < 0) {
         res = false;
       } else {

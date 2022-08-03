@@ -144,5 +144,7 @@ bool asn1_to_x509(const string& in, X509 *x);
 bool x509_to_asn1(X509 *x, string* out);
 bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k);
 
-int sized_read(int fd, string* out);
+int sized_pipe_read(int fd, string* out);
+int sized_ssl_read(SSL* ssl, string* out);
+int sized_socket_read(int fd, string* out);
 #endif

@@ -55,7 +55,7 @@ bool application_GetParentEvidence(string* out) {
 
   // response
   string rsp_str;
-  int n= sized_read(reader, &rsp_str);
+  int n= sized_pipe_read(reader, &rsp_str);
   if (n < 0)
     return false;
   if (!rsp.ParseFromString(rsp_str))

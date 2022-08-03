@@ -77,11 +77,9 @@ void client_application(SSL* ssl) {
   SSL_write(ssl, (byte*)msg, strlen(msg));
 
   // Get server response over authenticated, encrypted channel and print it
-  // Todo: Replace with call to int sized_read(int fd, string* out)
-  byte buf[1024];
-  memset(buf, 0, 1024);
-  int n = SSL_read(ssl, buf, 1024);
-  printf("SSL client read: %s\n", (const char*)buf);
+  string out;
+  int n = sized_ssl_read(ssl, &out);
+  printf("SSL client read: %s\n", out.data());
 }
 
 void server_application(X509* x509_policy_cert, SSL* ssl) {
@@ -114,11 +112,9 @@ void server_application(X509* x509_policy_cert, SSL* ssl) {
   }
 
   // Read message from client over authenticated, encrypted channel
-  // Todo: use sized_read
-  byte in[1024];
-  memset(in, 0, 1024);
-  int n = SSL_read(ssl, in, 1024);
-  printf("SSL server read: %s\n", (const char*) in);
+  string out;
+  int n = sized_ssl_read(ssl, &out);
+  printf("SSL server read: %s\n", (const char*) out.data());
 
   // Reply over authenticated, encrypted channel
   const char* msg = "Hi from your secret server\n";

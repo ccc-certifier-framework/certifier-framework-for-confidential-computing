@@ -760,7 +760,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
 
   // Read response from Certifier Service.
   string serialized_response;
-  int resp_size = sized_read(sock, &serialized_response);
+  int resp_size = sized_socket_read(sock, &serialized_response);
   if (resp_size < 0) {
      printf("Can't read response\n");
     return false;
@@ -955,7 +955,10 @@ bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   int size_nonce = 64;
   byte nonce[size_nonce];
   int size_sig = 256;
+#if 0
   byte sig[size_sig];
+#endif
+  string sig_str;
 
   X509* x = nullptr;
   EVP_PKEY* client_auth_public_key = nullptr;
@@ -969,12 +972,11 @@ bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   ctx = X509_STORE_CTX_new();
 
   // get cert
-  // Todo: Replace with call to int sized_read(int fd, string* out)
   string asn_cert;
-  int size_cert = 8192;
-  byte cert_buf[size_cert];
-  size_cert= SSL_read(ssl, cert_buf, size_cert);
-  asn_cert.assign((char*)cert_buf, size_cert);
+  if (sized_ssl_read(ssl, &asn_cert) < 0) {
+    ret = false;
+    goto done;
+  }
 
   x = X509_new();
   if (!asn1_to_x509(asn_cert, x)) {
@@ -1001,8 +1003,11 @@ bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   SSL_write(ssl, nonce, size_nonce);
 
   // get signature
-  // Todo: Replace with call to int sized_read(int fd, string* out)
-  size_sig = SSL_read(ssl, sig, size_sig);
+  size_sig = sized_ssl_read(ssl, &sig_str);
+  if (size_sig < 0 ) {
+    ret = false;
+    goto done;
+  }
 
   // verify chain
   res = X509_STORE_CTX_init(ctx, cs, x, nullptr);
@@ -1014,11 +1019,19 @@ bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   }
 
   // verify signature
+#if 0
   if (!rsa_sha256_verify(r, size_nonce, nonce, size_sig, sig)) {
+#else
+  if (!rsa_sha256_verify(r, size_nonce, nonce,
+          sig_str.size(), (byte*)sig_str.data())) {
+#endif
     ret = false;
     goto done;
   }
+
+#ifdef DEBUG
   printf("client_auth_server succeeds\n");
+#endif
 
 done:
   if (x != nullptr)

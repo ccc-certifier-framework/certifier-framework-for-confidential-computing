@@ -526,22 +526,11 @@ bool certify_me(const string& enclave_type) {
 
   // read response
   string serialized_response;
-#if 0
-  int n = sized_read(sock, &serialized_response);
+  int n = sized_socket_read(sock, &serialized_response);
   if (n < 0) {
-     printf("Can't read response\n");
+    printf("Can't read response\n");
     return false;
   }
-#else
-  int size_response_buf = 32000;
-  byte response_buf[size_response_buf];
-  int n = read(sock, response_buf, size_response_buf);
-  if (n < 0) {
-     printf("Can't read response\n");
-    return false;
-  }
-  serialized_response.assign((char*)response_buf, n);
-#endif
 
   if (!response.ParseFromString(serialized_response)) {
     printf("Can't parse response\n");
@@ -777,19 +766,10 @@ void app_service_loop(int read_fd, int write_fd) {
     string in;
     string out;
     string str_app_req;
-#if 1
-    int n = read(read_fd, r_buf, r_size);
-    printf("app_service_loop, read: %d\n", n);
+    int n = sized_pipe_read(read_fd, &str_app_req);
     if (n <= 0) {
       continue;
     }
-    str_app_req.assign((char*)r_buf, n);
-#else
-    int n = sized_read(read_fd, &str_app_req);
-    if (n <= 0) {
-      continue;
-    }
-#endif
     app_request req;
     if (!req.ParseFromString(str_app_req)) {
       goto finishreq;
@@ -1061,21 +1041,11 @@ bool app_request_server() {
 
     // read run request
     string str_req;
-#if 1
-    byte in[max_req_size];
-    memset(in, 0, max_req_size);
-    
-    int n = read(client, in, max_req_size);
+    int n = sized_pipe_read(client, &str_req);
     if (n < 0) {
       printf("Read failed in application server\n");
+      continue;
     }
-    str_req.assign((char*)in, n);
-#else
-    int n = size_read(client, &str_req);
-    if (n < 0) {
-      printf("Read failed in application server\n");
-    }
-#endif
 
     // This should be a serialized run_request
     run_request req;

@@ -48,17 +48,15 @@ int main(int an, char**av) {
   }
 
   // read response
-  // Todo: Replace with call to int sized_read(int fd, string* out)
-  int size_response_buf = 32000;
-  byte response_buf[size_response_buf];
-  int n = read(sock, response_buf, size_response_buf);
+  byte response[8192];
+  string serialized_response;
+  int n = read(sock, response, 8192);
   if (n < 0) {
-     printf("Can't read response\n");
+    printf("Can't read response\n");
     return 1;
   }
+  serialized_response.assign((char*)response, n);
 
-  string serialized_response;
-  serialized_response.assign((char*)response_buf, n);
   if (!rsp.ParseFromString(serialized_response)) {
     printf("Can't parse response\n");
     return 1;
