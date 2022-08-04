@@ -6,6 +6,7 @@
 #include "simulated_enclave.h"
 #include "application_enclave.h"
 #include "certifier.pb.h"
+#include "cc_helpers.h"
 #include <mutex>
 #include <thread>
 
@@ -68,520 +69,21 @@ DEFINE_string(measurement_file, "app_service.measurement", "measurement");
 
 DEFINE_string(guest_login_name, "jlm", "guest name");
 
-bool service_trust_data_initialized = false;
-key_message publicPolicyKey;
+
+#define DEBUG
+
+// ---------------------------------------------------------------------------------
 
 #include "policy_key.cc"
+cc_trust_data* app_trust_data = nullptr;
 
-// Trust data
-string serializedPolicyCert;
-string serializedServiceCert;
-policy_store pStore;
-X509* policy_cert = nullptr;
-X509* service_cert = nullptr;
-
-// For attest
-key_message privateServiceKey;
-key_message publicServiceKey;
-signed_claim_message platform_rule;
-
-// This is the sealing key
-const int service_symmetric_key_size = 64;
-byte service_symmetric_key[service_symmetric_key_size];
-key_message service_sealing_key;
-
-//#define DEBUG
-
-// --------------------------------------------------------------------------
-
-void print_trust_data() {
-  if (!service_trust_data_initialized)
-    return;
-  printf("\nTrust data:\n");
-  printf("\nPolicy key\n");
-  print_key(publicPolicyKey);
-  printf("\nPolicy cert\n");
-  print_bytes(serializedPolicyCert.size(), (byte*)serializedPolicyCert.data());
-  printf("\n");
-  printf("\nPrivate attest key\n");
-  print_key(privateServiceKey);
-  printf("\nPublic attestkey\n");
-  print_key(publicServiceKey);
-  printf("\nSeal key\n");
-  print_bytes(service_symmetric_key_size, service_symmetric_key);
-  printf("\n\n");
-}
-
-bool save_store(const string& enclave_type) {
-  string serialized_store;
-
-  // fill symmetric_key_for_protect blob
-  byte symmetric_key_for_protect[service_symmetric_key_size];
-  key_message protect_symmetric_key;
-  if (!get_random(8 * service_symmetric_key_size, symmetric_key_for_protect))
-    return false;
-  protect_symmetric_key.set_key_name("protect-key");
-  protect_symmetric_key.set_key_type("aes-256-cbc-hmac-sha256");
-  protect_symmetric_key.set_key_format("vse-key");
-  protect_symmetric_key.set_secret_key_bits(symmetric_key_for_protect, service_symmetric_key_size);
-
-  if (!pStore.Serialize(&serialized_store)) {
-    printf("save_store() can't serialize store\n"); 
-    return false;
-  }
-  int size_protected_store = serialized_store.size() + 4096;
-  byte protected_store[size_protected_store];
-  if (!Protect_Blob(enclave_type, protect_symmetric_key, serialized_store.size(),
-          (byte*)serialized_store.data(), &size_protected_store, protected_store)) {
-    printf("save_store can't protect blob\n");
-    return false;
-  }
-
-  string store_file(FLAGS_service_dir);
-  store_file.append(FLAGS_service_policy_store);
-  if (!write_file(store_file, size_protected_store, protected_store)) {
-    printf("save_store can't write %s\n", store_file.c_str());
-    return false;
-  }
-  return true;
-}
-
-bool fetch_store(const string& enclave_type) {
-  string store_file(FLAGS_service_dir);
-  store_file.append(FLAGS_service_policy_store);
-
-  // for Unprotect_Blob
-  byte symmetric_key_for_protect[service_symmetric_key_size];
-  key_message protect_symmetric_key;
-
-  int size_protected_blob = file_size(store_file) + 1;
-  byte protected_blob[size_protected_blob];
-  int size_unprotected_blob = size_protected_blob;
-  byte unprotected_blob[size_unprotected_blob];
-
-  if (!read_file(store_file, &size_protected_blob, protected_blob)) {
-    printf("fetch_store can't read %s\n", store_file.c_str());
-    return false;
-  }
-  
-  if (!Unprotect_Blob(enclave_type, size_protected_blob, protected_blob,
-        &protect_symmetric_key, &size_unprotected_blob, unprotected_blob)) {
-    printf("fetch_store can't Unprotect\n");
-    return false;
-  }
-
-  // read policy store
-  string serialized_store;
-  serialized_store.assign((char*)unprotected_blob, size_unprotected_blob);
-  if (!pStore.Deserialize(serialized_store)) {
-    printf("fetch_store can't deserialize store\n");
-    return false;
-  }
-
-  return true;
-}
-
-void clear_sensitive_data() {
-}
-
-bool cold_init(const string& enclave_type) {
-
-  // service_symmetric_key
-  if (!get_random(8 * service_symmetric_key_size, service_symmetric_key))
-    return false;
-  service_sealing_key.set_key_name("sealing-key");
-  service_sealing_key.set_key_type("aes-256-cbc-hmac-sha256");
-  service_sealing_key.set_key_format("vse-key");
-  service_sealing_key.set_secret_key_bits(service_symmetric_key, service_symmetric_key_size);
-
-  // make service attest private and public key
-  if (!make_certifier_rsa_key(2048,  &privateServiceKey)) {
-    return false;
-  }
-  privateServiceKey.set_key_name("service-key");
-  if (!private_key_to_public_key(privateServiceKey, &publicServiceKey)) {
-    printf("Can't make public Service key\n");
-    return false;
-  }
-
-  // put symmetric keys, app private and public key and policy_cert in store
-  if (!pStore.replace_policy_key(publicPolicyKey)) {
-    printf("Can't store policy key\n");
-    return false;
-  }
-
-  // Save attest-key
-  string service_tag("attest-key");
-  if (!pStore.add_authentication_key(service_tag, privateServiceKey)) {
-    printf("Can't store auth key\n");
-    return false;
-  }
-
-#ifdef DEBUG
-  printf("cold_init, attest key:\n");
-  print_key(privateServiceKey);
-  printf("\n");
-#endif
-
-  // Sealing keys
-  string sealing_tag("sealing-key");
-  storage_info_message sm;
-  sm.set_storage_type("key");
-  sm.set_tag(sealing_tag);
-  key_message* sk = new(key_message);
-  sk->CopyFrom(service_sealing_key);
-  sm.set_allocated_storage_key(sk);
-  if (!pStore.add_storage_info(sm)) {
-    printf("Can't store sealing keys\n");
-  }
-
-  if (!save_store(enclave_type)) {
-    printf("Can't save store\n");
-    return false;
-  }
-
-#ifdef DEBUG
-  printf("cold_init, sealing key:\n");
-  print_key(service_sealing_key);
-  printf("\n");
-  print_trust_data();
-#endif
-
-  service_trust_data_initialized = true;
-  return service_trust_data_initialized;
-}
-
-bool warm_restart(const string& enclave_type) {
-  if (!fetch_store(enclave_type)) {
-    printf("Can't fetch store\n");
-    return false;
-  }
-
-  // initialize trust data from store
-  const key_message* pk = pStore.get_policy_key();
-  if (pk == nullptr) {
-    printf("warm-restart error 1\n");
-    return false;
-  }
-
-  string service_tag("attest-key");
-  const key_message* ak = pStore.get_authentication_key_by_tag(service_tag);
-  if (ak == nullptr) {
-    printf("Can't get attest key\n");
-    return false;
-  }
-
-  privateServiceKey.CopyFrom(*ak);
-  if (!private_key_to_public_key(privateServiceKey, &publicServiceKey)) {
-    printf("Can't make public Service key\n");
-    return false;
-  }
-
-#ifdef DEBUG
-  printf("warm_init, attest key:\n");
-  print_key(privateServiceKey);
-  printf("\n");
-#endif
-
-  string rule_tag("platform-rule");
-  int index = pStore.get_signed_claim_index_by_tag(rule_tag);
-  if (index >= 0) {
-    const signed_claim_message* psm = pStore.get_signed_claim_by_index(index);
-    if (psm != nullptr) {
-      platform_rule.CopyFrom(*psm);
-    }
-  }
-
-#ifdef DEBUG
-  printf("warm_init, platform rule:\n");
-  print_signed_claim(platform_rule);
-  printf("\n");
-#endif
-
-  // storage keys
-  string sealing_tag("sealing-key");
-  index = pStore.get_storage_info_index_by_tag(sealing_tag);
-  if (index >= 0) {
-    const storage_info_message* sm = pStore.get_storage_info_by_index(index);
-    if (sm !=nullptr) {
-      service_sealing_key.CopyFrom(sm->storage_key());
-      memcpy(service_symmetric_key, sm->storage_key().secret_key_bits().data(),
-        sm->storage_key().secret_key_bits().size());
-    }
-  }
-
-#ifdef DEBUG
-  printf("warm_init, sealing key:\n");
-  print_key(service_sealing_key);
-  printf("\n");
-  print_trust_data();
-#endif
-
-  service_trust_data_initialized = true;
-  return service_trust_data_initialized;
-}
-
-// -----------------------------------------------------------------------------
-
-bool construct_platform_evidence_package(signed_claim_message& platform_attest_claim,
-    signed_claim_message& the_attestation, evidence_package* ep) {
-
-  string pt("vse-verifier");
-  string et("signed-claim");
-
-  ep->set_prover_type(pt);
-  evidence* ev1 = ep->add_fact_assertion();
-  ev1->set_evidence_type(et);
-  signed_claim_message sc1;
-  sc1.CopyFrom(platform_attest_claim);
-  string serialized_sc1;
-  if (!sc1.SerializeToString(&serialized_sc1))
-    return false;
-  ev1->set_serialized_evidence((byte*)serialized_sc1.data(), serialized_sc1.size());
-
-  evidence* ev2 = ep->add_fact_assertion();
-  ev2->set_evidence_type(et);
-  signed_claim_message sc2;
-  sc2.CopyFrom(the_attestation);
-  string serialized_sc2;
-  if (!sc2.SerializeToString(&serialized_sc2))
-    return false;
-  ev2->set_serialized_evidence((byte*)serialized_sc2.data(), serialized_sc2.size());
-  return true;
-}
-
-bool construct_attestation(entity_message& attest_key_entity, entity_message& service_key_entity,
-        entity_message& measurement_entity, vse_clause* vse_attest_clause) {
-  string s1("says");
-  string s2("speaks-for");
-
-  vse_clause service_key_speaks_for_measurement;
-  if (!make_simple_vse_clause(service_key_entity, s2, measurement_entity, &service_key_speaks_for_measurement)) {
-    printf("Construct attestation error 1\n");
-    return false;
-  }
-  if (!make_indirect_vse_clause(attest_key_entity, s1, service_key_speaks_for_measurement, vse_attest_clause)) {
-    printf("Construct attestation error 1\n");
-    return false;
-  }
-  return true;
-}
-
-bool certify_me(const string& enclave_type) {
-
-  if (!service_trust_data_initialized) {
-    if (!warm_restart(enclave_type)) {
-      printf("warm restart failed\n");
-      return false;
-    }
-  }
-
-  /// Get the signed claim "platform-key says attestation-key is trusted"
-  signed_claim_message signed_platform_says_attest_key_is_trusted;
-  if (!simulated_GetAttestClaim(&signed_platform_says_attest_key_is_trusted)) {
-    printf("Can't get signed attest claim\n");
-    return false;
-  }
-
-  vse_clause vc;
-  if (!get_vse_clause_from_signed_claim(signed_platform_says_attest_key_is_trusted, &vc)) {
-    printf("Can't get vse platform claim\n");
-    return false;
-  }
-
-  //  The platform statement is "platform-key says attestation-key is-trusted-for-attestation"
-  //  We retrieve the entity describing the attestation key from this.
-  entity_message attest_key_entity = vc.clause().subject();
-
-  // Here we generate a vse-attestation which is
-  // a claim, signed by the attestation key that signed a statement
-  // the user requests. Some people call this the "user data" in an
-  // attestation.  Most of this is boiler plate.
-  string enclave_id("");
-  string descript("service-attest");
-  string at_format("vse-attestation");
-
-  // now construct the vse clause "attest-key says authentication key speaks-for measurement"
-  // there are three entities in the attest: the attest-key, the service-key and the measurement
-  int my_measurement_size = 32;
-  byte my_measurement[my_measurement_size];
-  if (!Getmeasurement(enclave_type, enclave_id, &my_measurement_size, my_measurement)) {
-    printf("Getmeasurement failed\n");
-    return false;
-  }
-  string measurement;
-  measurement.assign((char*)my_measurement, my_measurement_size);
-  entity_message measurement_entity;
-  if (!make_measurement_entity(measurement, &measurement_entity)) {
-    printf("certify_me error 1\n");
-    return false;
-  }
-
-  entity_message service_key_entity;
-  if (!make_key_entity(publicServiceKey, &service_key_entity)) {
-    printf("certify_me error 2\n");
-    return false;
-  }
-
-  // construct the vse attestation
-  vse_clause vse_attest_clause;
-  if (!construct_attestation(attest_key_entity, service_key_entity,
-        measurement_entity, &vse_attest_clause)) {
-  }
-  // Create the attestation and sign it
-  string serialized_attestation;
-  if (!vse_attestation(descript, enclave_type, enclave_id, vse_attest_clause,
-        &serialized_attestation)) {
-    printf("vse_attestation failed\n");
-    return false;
-  }
-  int size_out = 8192;
-  byte out[size_out];
-  if (!Attest(enclave_type, serialized_attestation.size(),
-        (byte*) serialized_attestation.data(), &size_out, out)) {
-    printf("Attest failed\n");
-    return false;
-  }
-  string the_attestation_str;
-  the_attestation_str.assign((char*)out, size_out);
-  signed_claim_message the_attestation;
-  if (!the_attestation.ParseFromString(the_attestation_str)) {
-    printf("certify_me error 7\n");
-    return false;
-  }
-
-#ifdef DEBUG
-  printf("\nPlatform vse claim:\n");
-  print_vse_clause(vc);
-  printf("\n");
-  printf("attest vse claim:\n");
-  print_vse_clause(vse_attest_clause);
-  printf("\n\n");
-  printf("attestation signed claim\n");
-  print_signed_claim(the_attestation);
-  printf("\n");
-  printf("attestation underlying claim\n");
-  claim_message tcm;
-  string ser_claim_str;
-  ser_claim_str.assign((char*)the_attestation.serialized_claim_message().data(),
-      the_attestation.serialized_claim_message().size());
-  tcm.ParseFromString(ser_claim_str);
-  print_claim(tcm);
-  printf("\n");
-#endif
-
-  // Get certified
-  trust_request_message request;
-  trust_response_message response;
-
-  // Should trust_request_message should be signed by auth key
-  //   to prevent MITM attacks?  Now I don't think it's necessary.
-  request.set_requesting_enclave_tag("requesting-enclave");
-  request.set_providing_enclave_tag("providing-enclave");
-  request.set_submitted_evidence_type("platform-attestation-only");
-  request.set_purpose("attestation");
-
-// Construct the evidence package
-  // put platform attest claim and attestation in the following order
-  // platform_says_attest_key_is_trusted, the_attestation
-  evidence_package* ep = new(evidence_package);
-  if (!construct_platform_evidence_package(signed_platform_says_attest_key_is_trusted,
-        the_attestation, ep))  {
-  }
-  request.set_allocated_support(ep);
-
-  // Serialize request
-  string serialized_request;
-  if (!request.SerializeToString(&serialized_request)) {
-    printf("certify_me error 8\n");
-    return false;
-  }
-  if (FLAGS_print_all) {
-    printf("\nRequest:\n");
-    print_trust_request_message(request);
-  }
-
-  // dial service
-  struct sockaddr_in address;
-  memset((byte*)&address, 0, sizeof(struct sockaddr_in));
-  int sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0) {
-    return false;
-  }
-  struct hostent* he = gethostbyname(FLAGS_policy_host.c_str());
-  if (he == nullptr) {
-    return false;
-  }
-  memcpy(&(address.sin_addr.s_addr), he->h_addr, he->h_length);
-  address.sin_family = AF_INET;
-  address.sin_port = htons(FLAGS_policy_port);
-  if(connect(sock,(struct sockaddr *) &address, sizeof(address)) != 0) {
-    return false;
-  }
-  
-  // write request
-  if (write(sock, (byte*)serialized_request.data(), serialized_request.size()) < 0) {
-    return false;
-  }
-
-  // read response
-  string serialized_response;
-  int n = sized_socket_read(sock, &serialized_response);
-  if (n < 0) {
-    printf("Can't read response\n");
-    return false;
-  }
-
-  if (!response.ParseFromString(serialized_response)) {
-    printf("Can't parse response\n");
-    return false;
-  }
-
-  if (FLAGS_print_all) {
-    printf("\nResponse:\n");
-    print_trust_response_message(response);
-  }
-
-  if (response.status() != "succeeded") {
-    printf("Certification failed\n");
-    return false;
-  }
-  close(sock);
-
-  // Update store and save it
-  string key_tag("attest-key");
-  const key_message* km = pStore.get_authentication_key_by_tag(key_tag);
-  if (km == nullptr) {
-    if (!pStore.add_authentication_key(key_tag, privateServiceKey)) {
-      printf("Can't find authentication key in store\n");
-      return false;
-    }
-  }
- 
-  signed_claim_message  psm;
-  string psm_str;
-  psm_str.assign((char*)response.artifact().data(), response.artifact().size());
-  if (!psm.ParseFromString(psm_str)) {
-      printf("Can't parse artifact\n");
-  }
-
-  string rule_tag("platform-rule");
-  if (!pStore.add_signed_claim(rule_tag, psm)) {
-    printf("Can't add platform rule\n");
-  }
-  platform_rule.CopyFrom(psm);
-
-  return save_store(enclave_type);
-}
-
-// -------------------------------------------------------------------------------------
 
 class spawned_children {
 public:
   bool valid_;
   string app_name_;
   string location_;
-  string measured;
+  string measurement_;
   int pid_;
   int parent_read_fd_;
   int parent_write_fd_;
@@ -690,36 +192,57 @@ void delete_child(int signum) {
     remove_kid(pid);
 }
 
-bool impl_Seal(string in, string* out) {
-  byte iv[16];
-  int t_size = in.size() + 64;
+bool soft_Seal(spawned_children* kid, string in, string* out) {
+
+  string buffer_to_seal;
+  buffer_to_seal.assign(kid->measurement_.data(), kid->measurement_.size());
+  buffer_to_seal.append(in.data(), in.size());
+
+  int t_size = buffer_to_seal.size() + 64;
   byte t_out[t_size];
 
+  byte iv[16];
   if (!get_random(8 * 16, iv))
     return false;
-  if (!authenticated_encrypt((byte*)in.data(), in.size(), service_symmetric_key,
-            iv, t_out, &t_size)) {
-    printf("impl_Seal: authenticated encrypt failed\n");
+  if (!authenticated_encrypt((byte*)buffer_to_seal.data(), buffer_to_seal.size(),
+        app_trust_data->service_symmetric_key_, iv, t_out, &t_size)) {
+    printf("soft_Seal: authenticated encrypt failed\n");
     return false;
   }
   out->assign((char*)t_out, t_size);
   return true;
 }
 
-bool impl_Unseal(string in, string* out) {
+bool soft_Unseal(spawned_children* kid, string in, string* out) {
+
   int t_size = in.size();
   byte t_out[t_size];
-  if (!authenticated_decrypt((byte*)in.data(), in.size(), service_symmetric_key,
+
+  if (!authenticated_decrypt((byte*)in.data(), in.size(), app_trust_data->service_symmetric_key_,
             t_out, &t_size)) {
-    printf("impl_Unseal: authenticated decrypt failed\n");
+    printf("soft_Unseal: authenticated decrypt failed\n");
     return false;
   }
-  out->assign((char*)t_out, t_size);
+#ifdef DEBUG
+  printf("Unsealed  : ");
+  print_bytes(t_size, t_out);
+  printf("\n");
+  printf("Measurment: ");
+  print_bytes(kid->measurement_.size(), (byte*)kid->measurement_.data());
+  printf("\n");
+#endif
+  if (memcmp(t_out, (byte*)kid->measurement_.data(),
+      kid->measurement_.size()) != 0) {
+    printf("soft_Unseal: mis-matched measurements\n");
+    return false;
+  }
+  out->assign((char*)&t_out[kid->measurement_.size()],
+        t_size - kid->measurement_.size());
   return true;
 }
 
-bool impl_Attest(string in, string* out) {
-  // in is a serialized vse-attestation
+bool soft_Attest(spawned_children* kid, string in, string* out) {
+  // in  is a serialized vse-attestation
   claim_message cm;
   string nb, na;
   time_point tn, tf;
@@ -741,8 +264,8 @@ bool impl_Attest(string in, string* out) {
     return false;
 
   signed_claim_message scm;
-  if (!make_signed_claim(cm, privateServiceKey, &scm)) {
-    printf("impl_Attest: Signing failed\n");
+  if (!make_signed_claim(cm, app_trust_data->private_service_key_, &scm)) {
+    printf("soft_Attest: Signing failed\n");
     return false;
   }
   if (!scm.SerializeToString(out))
@@ -751,13 +274,16 @@ bool impl_Attest(string in, string* out) {
   return true;
 }
 
-bool impl_GetParentEvidence(string* out) {
+bool soft_GetParentEvidence(spawned_children* kid, string* out) {
   return false;
 }
 
-void app_service_loop(int read_fd, int write_fd) {
-  int r_size = 4096;
-  byte r_buf[r_size];
+bool soft_Getmeasurement(spawned_children* kid, string* out) {
+  out->assign(kid->measurement_.data(), kid->measurement_.size());
+  return true;
+}
+
+void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   bool continue_loop = true;
 
   printf("\napplication service loop: %d %d\n", read_fd, write_fd);
@@ -778,15 +304,17 @@ void app_service_loop(int read_fd, int write_fd) {
     printf("app_service_loop, service requested: %s\n", req.function().c_str());
     if (req.function() == "seal") {
         in = req.args(0);
-        succeeded= impl_Seal(in, &out);
+        succeeded= soft_Seal(kid, in, &out);
     } else if (req.function() == "unseal") {
         in = req.args(0);
-        succeeded= impl_Unseal(in, &out);
+        succeeded= soft_Unseal(kid, in, &out);
     } else if (req.function() == "attest") {
         in = req.args(0);
-        succeeded= impl_Attest(in, &out);
+        succeeded= soft_Attest(kid, in, &out);
+    } else if (req.function() == "getmeasurement") {
+        succeeded= soft_Getmeasurement(kid, &out);
     } else if (req.function() == "getcerts") {
-        succeeded= impl_GetParentEvidence(&out);
+        succeeded= soft_GetParentEvidence(kid, &out);
     }
 
 finishreq:
@@ -815,11 +343,11 @@ bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   printf("start_app_service_loop\n");
 #endif
 #ifndef NOTHREAD
-  std::thread* t = new std::thread(app_service_loop, read_fd, write_fd);
+  std::thread* t = new std::thread(app_service_loop, kid, read_fd, write_fd);
   kid->thread_obj_ = t;
   t->detach();
 #else
-  app_service_loop(read_fd, write_fd);
+  app_service_loop(kid, read_fd, write_fd);
 #endif
   return true;
 }
@@ -986,7 +514,7 @@ bool process_run_request(run_request& req) {
       return false;
     }
     nk->location_ = req.location();
-    nk->measured.assign((char*)m.data(), m.size());;
+    nk->measurement_.assign((char*)m.data(), m.size());;
     nk->pid_ = pid;
     nk->parent_read_fd_ = parent_read_fd;
     nk->parent_write_fd_ = parent_write_fd;
@@ -999,7 +527,6 @@ bool process_run_request(run_request& req) {
   return true;
 }
 
-const int max_req_size = 4096;
 bool app_request_server() {
   // This is the TCP server that requests to start
   // protected programs.
@@ -1095,29 +622,39 @@ int main(int an, char** av) {
   }
 
   SSL_library_init();
+  string enclave_type("simulated-enclave");
+  string purpose("attestation");
 
-  serializedPolicyCert.assign((char*)initialized_cert, initialized_cert_size);
-  policy_cert = X509_new();
-  if (!asn1_to_x509(serializedPolicyCert, policy_cert)) {
-    printf("Can't translate cert\n");
+  string store_file(FLAGS_service_dir);
+  store_file.append(FLAGS_service_policy_store);
+  app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
+  if (app_trust_data == nullptr) {
+    printf("Couldn't initialize trust object\n");
+    return 1;
+  }
+
+  // Init policy key info
+  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert)) {
+    printf("Can't init policy key\n");
     return false;
   }
 
-  // Add directory to file name.
-  string attest_key_file_name(FLAGS_service_dir);
-  attest_key_file_name.append(FLAGS_attest_key_file);
-  string platform_attest_file_name(FLAGS_service_dir);
-  platform_attest_file_name.append(FLAGS_platform_attest_endorsement);
-  string measurement_file_name(FLAGS_service_dir);
-  measurement_file_name.append(FLAGS_measurement_file);
-  string attest_endorsement_file_name(FLAGS_service_dir);
-  attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
-
   if (FLAGS_host_enclave_type == "simulated-enclave") {
-    if (!simulated_Init(serializedPolicyCert, attest_key_file_name, measurement_file_name,
-            attest_endorsement_file_name)) {
-      printf("simulated_init failed\n");
-      return false;
+
+    // Init simulated enclave
+    string attest_key_file_name(FLAGS_service_dir);
+    attest_key_file_name.append(FLAGS_attest_key_file);
+    string platform_attest_file_name(FLAGS_service_dir);
+    platform_attest_file_name.append(FLAGS_platform_attest_endorsement);
+    string measurement_file_name(FLAGS_service_dir);
+    measurement_file_name.append(FLAGS_measurement_file);
+    string attest_endorsement_file_name(FLAGS_service_dir);
+    attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
+
+    if (!app_trust_data->initialize_simulated_enclave_data(attest_key_file_name,
+      measurement_file_name, attest_endorsement_file_name)) {
+      printf("Can't init simulated enclave\n");
+      return 1;
     }
   } else if (FLAGS_host_enclave_type == "oe-enclave") {
     printf("Unsupported host enclave\n");
@@ -1130,28 +667,18 @@ int main(int an, char** av) {
     return 1;
   }
 
-  if (!PublicKeyFromCert(serializedPolicyCert, &publicPolicyKey)) {
-    printf("Can't get public policy key\n");
-    return false;
-  }
-
-  string store_file(FLAGS_service_dir);
-  store_file.append(FLAGS_service_policy_store);
-
   // initialize and certify service data
   if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
-    if (!cold_init(FLAGS_host_enclave_type)) {
+    if (!app_trust_data->cold_init()) {
       printf("cold-init failed\n");
       return 1;
     }
 
-    if (!certify_me(FLAGS_host_enclave_type)) {
-      printf("certification failed\n");
-      return 1;
-    }
-  }
-
-  if (!warm_restart(FLAGS_host_enclave_type)) {
+    if (!app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
+        printf("certification failed\n");
+        return 1;
+      }
+  } else  if (!app_trust_data->warm_restart()) {
     printf("warm-restart failed\n");
     return 1;
   }
@@ -1162,6 +689,6 @@ int main(int an, char** av) {
     return 1;
   }
 
-  clear_sensitive_data();
+  app_trust_data->clear_sensitive_data();
   return 0;
 }

@@ -41,10 +41,10 @@ AR=ar
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
 dobj=	$(O)/app_service.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
+$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 
 user_dobj= $(O)/test_user.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
+$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 
 
 all:	app_service.exe hello_world.exe send_request.exe test_user.exe
@@ -91,6 +91,10 @@ $(O)/certifier.o: $(LIBSRC)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 $(O)/support.o: $(LIBSRC)/support.cc $(I)/support.h
 	@echo "compiling support.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/support.o $(LIBSRC)/support.cc
+
+$(O)/cc_helpers.o: $(LIBSRC)/cc_helpers.cc $(I)/cc_helpers.h
+	@echo "compiling cc_helpers.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(LIBSRC)/cc_helpers.cc
 
 $(O)/simulated_enclave.o: $(LIBSRC)/simulated_enclave.cc $(I)/simulated_enclave.h
 	@echo "compiling simulated_enclave.cc"
