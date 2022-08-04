@@ -557,6 +557,12 @@ bool cc_trust_data::cold_init() {
       return false;
     }
 
+    string service_tag("service-key");
+    if (!store_.add_authentication_key(service_tag, private_service_key_)) {
+      printf("Can't store auth key\n");
+      return false;
+    }
+
     cc_sealing_key_initialized_= true;
     cc_service_key_initialized_= true;
 
@@ -658,11 +664,6 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     printf("certify_me error 1\n");
     return false;
   }
-  entity_message auth_key_entity;
-  if (!make_key_entity(public_auth_key_, &auth_key_entity)) {
-    printf("certify_me error 2\n");
-    return false;
-  }
 
   // Now we have all the Principals for the attestation.
   // Next, we construct the vse attestation.
@@ -670,11 +671,35 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   // construct_attestation creates the vse statement representing the
   // attestation.
   vse_clause vse_attest_clause;
-  if (!construct_attestation(attest_key_entity, auth_key_entity,
-        measurement_entity, &vse_attest_clause)) {
-    printf("certify_me error 3\n");
+  if (purpose_ == "authentication") {
+    entity_message auth_key_entity;
+    if (!make_key_entity(public_auth_key_, &auth_key_entity)) {
+      printf("certify_me error 2\n");
+      return false;
+    }
+
+    if (!construct_attestation(attest_key_entity, auth_key_entity,
+          measurement_entity, &vse_attest_clause)) {
+      printf("certify_me error 3\n");
+      return false;
+    }
+  } else if (purpose_ == "attestation") {
+    entity_message service_key_entity;
+    if (!make_key_entity(public_service_key_, &service_key_entity)) {
+      printf("certify_me error 2.5\n");
+      return false;
+    }
+
+    if (!construct_attestation(attest_key_entity, service_key_entity,
+          measurement_entity, &vse_attest_clause)) {
+      printf("certify_me error 3.5\n");
+      return false;
+    }
+  } else {
+    printf("error: neither attestation or authorization\n");
     return false;
   }
+
   // Create the final attestation and sign it and serialize it
   string serialized_attestation;
   if (!vse_attestation(descript, enclave_type_, enclave_id, vse_attest_clause, &serialized_attestation)) {
@@ -725,7 +750,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   request.set_requesting_enclave_tag("requesting-enclave");
   request.set_providing_enclave_tag("providing-enclave");
   request.set_submitted_evidence_type("platform-attestation-only");
-  request.set_purpose("authentication");
+  request.set_purpose(purpose_);
 
   // Construct the evidence package
   // Put platform attest claim and attestation in the following order:
@@ -805,7 +830,19 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     ((key_message*) km)->set_certificate((byte*)response.artifact().data(), response.artifact().size());
     cc_service_platform_rule_initialized_ = true;
     cc_is_certified_ = true;
+
   } else if (purpose_ == "attestation") {
+
+    // Update store and save it
+    string key_tag("service-key");
+    const key_message* km = store_.get_authentication_key_by_tag(key_tag);
+    if (km == nullptr) {
+      if (!store_.add_authentication_key(key_tag, private_service_key_)) {
+        printf("Can't find service key in store\n");
+        return false;
+      }
+    }
+
     // Set platform_rule
     string pr_str;
     pr_str.assign((char*)response.artifact().data(),response.artifact().size());
@@ -813,10 +850,13 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       printf("Can't parse platform rule\n");
       return false;
     }
-    cc_service_platform_rule_initialized_ = true;
 
     // Update store with platform_rule and save it
-    string platform_rule__tag("platform-rule");
+    string platform_rule_tag("platform-rule");
+    if (!store_.add_signed_claim(platform_rule_tag, platform_rule_)) {
+      printf("Can't add platform rule\n");
+    }
+    cc_service_platform_rule_initialized_ = true;
     cc_is_certified_ = true;
 
   } else {
