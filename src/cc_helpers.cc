@@ -828,7 +828,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       return false;
     }
     ((key_message*) km)->set_certificate((byte*)response.artifact().data(), response.artifact().size());
-    cc_service_platform_rule_initialized_ = true;
+    cc_auth_key_initialized_ = true;
     cc_is_certified_ = true;
 
   } else if (purpose_ == "attestation") {

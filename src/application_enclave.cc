@@ -28,6 +28,8 @@ using std::string;
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// #define DEBUG
+
 bool initialized = false;
 int reader = 0;
 int writer = 0;
@@ -95,7 +97,9 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   if (!rsp.ParseFromString(rsp_str))
     return false;
   if (rsp.function() != "seal" || rsp.status() != "succeeded") {
+#ifdef DEBUG
     printf("application_Seal, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
+#endif
     return false;
   }
 
@@ -171,6 +175,12 @@ bool application_Attest(int in_size, byte* in,
   int n = read(reader, t_out, t_size);
   if (n < 0)
     return false;
+
+  string rsp_str;
+  rsp_str.assign((char*)t_out, n);
+  if (!rsp.ParseFromString(rsp_str))
+    return false;
+
   if (rsp.function() != "attest" || rsp.status() != "succeeded") {
     printf("application_Attest, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
@@ -203,6 +213,12 @@ bool application_Getmeasurement(int* size_out, byte* out) {
   int n = read(reader, t_out, t_size);
   if (n < 0)
     return false;
+
+  string rsp_str;
+  rsp_str.assign((char*)t_out, n);
+  if (!rsp.ParseFromString(rsp_str))
+    return false;
+
   if (rsp.function() != "getmeasurement" || rsp.status() != "succeeded") {
     printf("application_Getmeasurement, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
@@ -220,6 +236,9 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
   app_request req;
   app_response rsp;
 
+#ifdef DEBUG
+  printf("application_GetPlatformStatement\n");
+#endif
   // request
   req.set_function("getplatformstatement");
   string req_str;
@@ -229,13 +248,23 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
   }
 
   // response
-  const int buffer_pad = 256;
+  const int buffer_pad = 4096;
   int t_size = buffer_pad;
   byte t_out[t_size];
   int n = read(reader, t_out, t_size);
-  if (n < 0)
+  if (n < 0) {
+    printf("bad read\n");
     return false;
-  if (rsp.function() != "getmeasurement" || rsp.status() != "succeeded") {
+  }
+
+  string rsp_str;
+  rsp_str.assign((char*)t_out, n);
+  if (!rsp.ParseFromString(rsp_str)) {
+    printf("bad ParseFromString\n");
+    return false;
+  }
+
+  if (rsp.function() != "getplatformstatement" || rsp.status() != "succeeded") {
     printf("application_GetPlatformStatement, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
   }
@@ -245,5 +274,9 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
   }
   *size_out = (int)rsp.args(0).size();
   memcpy(out, rsp.args(0).data(), *size_out);
+
+#ifdef DEBUG
+  printf("application_GetPlatformStatement returns true\n");
+#endif
   return true;
 }

@@ -54,36 +54,62 @@ int main(int an, char**av) {
   printf("test_user.exe is running on (%d, %d)\n", in_fd, out_fd);
 
   string secret("abc");
-  int out_size = 128;
+  int out_size = 4096;
   byte out[out_size];
   string sealed;
   string unsealed;
 
+  // Seal test
   printf("secret  : ");
   print_bytes((int)secret.size(), (byte*)secret.data());
   printf("\n");
- 
   int t_out = out_size; 
   if (!Seal(enclave, id, (int)secret.size(), (byte*)secret.data(), &t_out, out)) {
     printf("Application seal failed\n");
     return 1;
   }
   sealed.assign((char*)out, t_out);
-
   printf("sealed  : ");
   print_bytes((int)sealed.size(), (byte*)sealed.data());
   printf("\n");
 
+  // Unseal test
   t_out = out_size; 
   if (!Unseal(enclave, id, (int)sealed.size(), (byte*)sealed.data(), &t_out, out)) {
     printf("Application unseal failed\n");
     return 1;
   }
   unsealed.assign((char*)out, t_out);
-
   printf("unsealed: ");
   print_bytes((int)unsealed.size(), (byte*)unsealed.data());
   printf("\n");
+
+  // Getmeasurement test
+  t_out = out_size;
+  if (!Getmeasurement(enclave, id, &t_out, out)) {
+    printf("Application getmeasurement failed\n");
+    return 1;
+  }
+  printf("Measurement: ");
+  print_bytes(t_out, out);
+  printf("\n");
+
+  // GetPlatformStatement test
+  t_out = out_size;
+  string other_enclave("application-enclave");
+  if (!GetPlatformStatement(other_enclave, id, &t_out, out)) {
+    printf("Application getplatformstatement failed\n");
+    return 1;
+  }
+  signed_claim_message sc;
+  if (t_out > 0) {
+    string ser_sc;
+    ser_sc.assign((char*)out, t_out);
+    sc.ParseFromString(ser_sc);
+    printf("Platform claim:\n");
+    print_signed_claim(sc);
+    printf("\n");
+  }
 
   printf("\ntest_user.exe succeeded\n");
   return 0;

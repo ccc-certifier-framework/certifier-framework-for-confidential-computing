@@ -745,7 +745,7 @@ bool Getmeasurement(const string& enclave_type, const string& enclave_id,
   }
 #ifdef SEV
   if (enclave_type == "simulated-enclave" || enclave_type == "oe-enclave") {
-    return simulated_GetPlatformStatement(size_out, out);
+    return sev_GetPlatformStatement(size_out, out);
   }
 #endif
   return false;
@@ -754,8 +754,14 @@ bool Getmeasurement(const string& enclave_type, const string& enclave_id,
 bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out) {
   if (enclave_type == "application-enclave") {
+#ifdef DEBUG
+printf("Calling application_GetPlatformStatement\n");
+#endif
     return application_GetPlatformStatement(size_out, out);
   }
+#ifdef DEBUG
+printf("application_GetPlatformStatement dropped through\n");
+#endif
   return false;
 }
 

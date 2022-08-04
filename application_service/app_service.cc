@@ -275,8 +275,13 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
 }
 
 bool soft_GetPlatformStatement(spawned_children* kid, string* out) {
-  if (!app_trust_data->cc_service_platform_rule_initialized_)
+#ifdef DEBUG
+  printf("soft_GetPlatformStatement\n");
+#endif
+  if (!app_trust_data->cc_service_platform_rule_initialized_) {
+    printf("soft_GetPlatformStatement: not initialized\n");
     return false;
+  }
   app_trust_data->platform_rule_.SerializeToString(out);
   return true;
 }
@@ -286,6 +291,9 @@ bool soft_GetParentEvidence(spawned_children* kid, string* out) {
 }
 
 bool soft_Getmeasurement(spawned_children* kid, string* out) {
+#ifdef DEBUG
+  printf("soft_Getmeasurement\n");
+#endif
   out->assign(kid->measurement_.data(), kid->measurement_.size());
   return true;
 }
