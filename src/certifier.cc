@@ -691,6 +691,7 @@ bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
     return simulated_Attest(enclave_type, what_to_say_size, what_to_say,
        size_out, out);
   }
+
 #ifdef OE_CERTIFIER
   if (enclave_type == "oe-enclave") {
     return oe_Attest(what_to_say_size, what_to_say, size_out, out);

@@ -357,7 +357,7 @@ bool cc_trust_data::put_trust_data_in_store() {
   if (purpose_ == "attestation") {
 
     // put private service key and symmetric keys in store
-    string service_key_tag("service-key");
+    string service_key_tag("service-attest-key");
     if (!store_.add_authentication_key(service_key_tag, private_service_key_)) {
       printf("Can't store service key\n");
       return false;
@@ -411,7 +411,7 @@ bool cc_trust_data::get_trust_data_from_store() {
   if (purpose_ == "attestation") {
 
     // put private service key and symmetric keys in store
-    string service_key_tag("service-key");
+    string service_key_tag("service-attest-key");
     int index = store_.get_authentication_key_index_by_tag(service_key_tag);
     if (index < 0) {
       return false;
@@ -551,13 +551,13 @@ bool cc_trust_data::cold_init() {
       printf("Can't generate service private key\n");
       return false;
     }
-    private_service_key_.set_key_name("service-key");
+    private_service_key_.set_key_name("service-attest-key");
     if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
       printf("Can't make public service key\n");
       return false;
     }
 
-    string service_tag("service-key");
+    string service_tag("service-attest-key");
     if (!store_.add_authentication_key(service_tag, private_service_key_)) {
       printf("Can't store auth key\n");
       return false;
@@ -645,7 +645,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   // attestation.  Formats for an attestation will vary among platforms
   // but they must always convery the information we do here.
   string enclave_id("");
-  string descript("test-attest");
+  string descript("attest");
   string at_format("vse-attestation");
 
   // Now construct the vse clause "attest-key says authentication key speaks-for measurement"
@@ -700,7 +700,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     return false;
   }
 
-  // Create the final attestation and sign it and serialize it
+  // Create the final attestation, sign it and serialize it
   string serialized_attestation;
   if (!vse_attestation(descript, enclave_type_, enclave_id, vse_attest_clause, &serialized_attestation)) {
     printf("certify_me error 5\n");
@@ -834,7 +834,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   } else if (purpose_ == "attestation") {
 
     // Update store and save it
-    string key_tag("service-key");
+    string key_tag("service-attest-key");
     const key_message* km = store_.get_authentication_key_by_tag(key_tag);
     if (km == nullptr) {
       if (!store_.add_authentication_key(key_tag, private_service_key_)) {

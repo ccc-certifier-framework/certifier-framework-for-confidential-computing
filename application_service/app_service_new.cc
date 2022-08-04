@@ -70,7 +70,7 @@ DEFINE_string(measurement_file, "app_service.measurement", "measurement");
 DEFINE_string(guest_login_name, "jlm", "guest name");
 
 
-//#define DEBUG
+#define DEBUG
 
 // ---------------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ public:
   bool valid_;
   string app_name_;
   string location_;
-  string measured;
+  string measurement_;
   int pid_;
   int parent_read_fd_;
   int parent_write_fd_;
@@ -192,36 +192,57 @@ void delete_child(int signum) {
     remove_kid(pid);
 }
 
-bool impl_Seal(string in, string* out) {
-  byte iv[16];
-  int t_size = in.size() + 64;
+bool soft_Seal(spawned_children* kid, string in, string* out) {
+
+  string buffer_to_seal;
+  buffer_to_seal.assign(kid->measurement_.data(), kid->measurement_.size());
+  buffer_to_seal.append(in.data(), in.size());
+
+  int t_size = buffer_to_seal.size() + 64;
   byte t_out[t_size];
 
+  byte iv[16];
   if (!get_random(8 * 16, iv))
     return false;
-  if (!authenticated_encrypt((byte*)in.data(), in.size(), app_trust_data->service_symmetric_key_,
-            iv, t_out, &t_size)) {
-    printf("impl_Seal: authenticated encrypt failed\n");
+  if (!authenticated_encrypt((byte*)buffer_to_seal.data(), buffer_to_seal.size(),
+        app_trust_data->service_symmetric_key_, iv, t_out, &t_size)) {
+    printf("soft_Seal: authenticated encrypt failed\n");
     return false;
   }
   out->assign((char*)t_out, t_size);
   return true;
 }
 
-bool impl_Unseal(string in, string* out) {
+bool soft_Unseal(spawned_children* kid, string in, string* out) {
+
   int t_size = in.size();
   byte t_out[t_size];
+
   if (!authenticated_decrypt((byte*)in.data(), in.size(), app_trust_data->service_symmetric_key_,
             t_out, &t_size)) {
-    printf("impl_Unseal: authenticated decrypt failed\n");
+    printf("soft_Unseal: authenticated decrypt failed\n");
     return false;
   }
-  out->assign((char*)t_out, t_size);
+#ifdef DEBUG
+  printf("Unsealed  : ");
+  print_bytes(t_size, t_out);
+  printf("\n");
+  printf("Measurment: ");
+  print_bytes(kid->measurement_.size(), (byte*)kid->measurement_.data());
+  printf("\n");
+#endif
+  if (memcmp(t_out, (byte*)kid->measurement_.data(),
+      kid->measurement_.size()) != 0) {
+    printf("soft_Unseal: mis-matched measurements\n");
+    return false;
+  }
+  out->assign((char*)&t_out[kid->measurement_.size()],
+        t_size - kid->measurement_.size());
   return true;
 }
 
-bool impl_Attest(string in, string* out) {
-  // in is a serialized vse-attestation
+bool soft_Attest(spawned_children* kid, string in, string* out) {
+  // in  is a serialized vse-attestation
   claim_message cm;
   string nb, na;
   time_point tn, tf;
@@ -244,7 +265,7 @@ bool impl_Attest(string in, string* out) {
 
   signed_claim_message scm;
   if (!make_signed_claim(cm, app_trust_data->private_service_key_, &scm)) {
-    printf("impl_Attest: Signing failed\n");
+    printf("soft_Attest: Signing failed\n");
     return false;
   }
   if (!scm.SerializeToString(out))
@@ -253,13 +274,16 @@ bool impl_Attest(string in, string* out) {
   return true;
 }
 
-bool impl_GetParentEvidence(string* out) {
+bool soft_GetParentEvidence(spawned_children* kid, string* out) {
   return false;
 }
 
-void app_service_loop(int read_fd, int write_fd) {
-  int r_size = 4096;
-  byte r_buf[r_size];
+bool soft_Getmeasurement(spawned_children* kid, string* out) {
+  out->assign(kid->measurement_.data(), kid->measurement_.size());
+  return true;
+}
+
+void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   bool continue_loop = true;
 
   printf("\napplication service loop: %d %d\n", read_fd, write_fd);
@@ -280,15 +304,17 @@ void app_service_loop(int read_fd, int write_fd) {
     printf("app_service_loop, service requested: %s\n", req.function().c_str());
     if (req.function() == "seal") {
         in = req.args(0);
-        succeeded= impl_Seal(in, &out);
+        succeeded= soft_Seal(kid, in, &out);
     } else if (req.function() == "unseal") {
         in = req.args(0);
-        succeeded= impl_Unseal(in, &out);
+        succeeded= soft_Unseal(kid, in, &out);
     } else if (req.function() == "attest") {
         in = req.args(0);
-        succeeded= impl_Attest(in, &out);
+        succeeded= soft_Attest(kid, in, &out);
+    } else if (req.function() == "getmeasurement") {
+        succeeded= soft_Getmeasurement(kid, &out);
     } else if (req.function() == "getcerts") {
-        succeeded= impl_GetParentEvidence(&out);
+        succeeded= soft_GetParentEvidence(kid, &out);
     }
 
 finishreq:
@@ -317,11 +343,11 @@ bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   printf("start_app_service_loop\n");
 #endif
 #ifndef NOTHREAD
-  std::thread* t = new std::thread(app_service_loop, read_fd, write_fd);
+  std::thread* t = new std::thread(app_service_loop, kid, read_fd, write_fd);
   kid->thread_obj_ = t;
   t->detach();
 #else
-  app_service_loop(read_fd, write_fd);
+  app_service_loop(kid, read_fd, write_fd);
 #endif
   return true;
 }
@@ -488,7 +514,7 @@ bool process_run_request(run_request& req) {
       return false;
     }
     nk->location_ = req.location();
-    nk->measured.assign((char*)m.data(), m.size());;
+    nk->measurement_.assign((char*)m.data(), m.size());;
     nk->pid_ = pid;
     nk->parent_read_fd_ = parent_read_fd;
     nk->parent_write_fd_ = parent_write_fd;
