@@ -58,12 +58,15 @@ bool application_GetParentEvidence(string* out) {
   // response
   string rsp_str;
   int n= sized_pipe_read(reader, &rsp_str);
-  if (n < 0)
+  if (n < 0) {
     return false;
-  if (!rsp.ParseFromString(rsp_str))
+  }
+  if (!rsp.ParseFromString(rsp_str)) {
     return false;
-  if (rsp.function() != "getparentevidence" || rsp.status() != "succeeded")
+  }
+  if (rsp.function() != "getparentevidence" || rsp.status() != "succeeded") {
     return false;
+  }
   out->assign((char*)rsp.args(0).data(), (int)rsp.args(0).size());
   return true;
 }
@@ -90,12 +93,14 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   int t_size = in_size + buffer_pad;
   byte t_out[t_size];
   int n = read(reader, t_out, t_size);
-  if (n < 0)
+  if (n < 0) {
     return false;
+  }
   string rsp_str;
   rsp_str.assign((char*)t_out, n);
-  if (!rsp.ParseFromString(rsp_str))
+  if (!rsp.ParseFromString(rsp_str)) {
     return false;
+  }
   if (rsp.function() != "seal" || rsp.status() != "succeeded") {
 #ifdef DEBUG
     printf("application_Seal, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
@@ -131,13 +136,15 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   int t_size = in_size  + buffer_pad;
   byte t_out[t_size];
   int n= read(reader, t_out, t_size);
-  if (n < 0)
+  if (n < 0) {
     return false;
+  }
 
   string rsp_str;
   rsp_str.assign((char*)t_out, n);
-  if (!rsp.ParseFromString(rsp_str))
+  if (!rsp.ParseFromString(rsp_str)) {
     return false;
+  }
   if (rsp.function() != "unseal" || rsp.status() != "succeeded") {
     printf("application_Unseal, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
@@ -173,13 +180,15 @@ bool application_Attest(int in_size, byte* in,
   int t_size = in_size  + buffer_pad;
   byte t_out[t_size];
   int n = read(reader, t_out, t_size);
-  if (n < 0)
+  if (n < 0) {
     return false;
+  }
 
   string rsp_str;
   rsp_str.assign((char*)t_out, n);
-  if (!rsp.ParseFromString(rsp_str))
+  if (!rsp.ParseFromString(rsp_str)) {
     return false;
+  }
 
   if (rsp.function() != "attest" || rsp.status() != "succeeded") {
     printf("application_Attest, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
@@ -211,13 +220,15 @@ bool application_Getmeasurement(int* size_out, byte* out) {
   int t_size = buffer_pad;
   byte t_out[t_size];
   int n = read(reader, t_out, t_size);
-  if (n < 0)
+  if (n < 0) {
     return false;
+  }
 
   string rsp_str;
   rsp_str.assign((char*)t_out, n);
-  if (!rsp.ParseFromString(rsp_str))
+  if (!rsp.ParseFromString(rsp_str)) {
     return false;
+  }
 
   if (rsp.function() != "getmeasurement" || rsp.status() != "succeeded") {
     printf("application_Getmeasurement, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
