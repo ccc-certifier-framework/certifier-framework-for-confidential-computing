@@ -160,6 +160,9 @@ bool Attest(const string& enclave_type,
 bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_type,
       string* out);
 
+bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
+  int* size_out, byte* out);
+
 // -------------------------------------------------------------------
 
 

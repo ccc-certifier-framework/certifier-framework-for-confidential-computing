@@ -740,11 +740,22 @@ bool Getmeasurement(const string& enclave_type, const string& enclave_id,
   if (enclave_type == "simulated-enclave" || enclave_type == "oe-enclave") {
     return simulated_Getmeasurement(size_out, out);
   }
+  if (enclave_type == "application-enclave") {
+    return application_Getmeasurement(size_out, out);
+  }
 #ifdef SEV
   if (enclave_type == "simulated-enclave" || enclave_type == "oe-enclave") {
-    return simulated_Getmeasurement(size_out, out);
+    return simulated_GetPlatformStatement(size_out, out);
   }
 #endif
+  return false;
+}
+
+bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
+  int* size_out, byte* out) {
+  if (enclave_type == "application-enclave") {
+    return application_GetPlatformStatement(size_out, out);
+  }
   return false;
 }
 

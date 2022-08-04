@@ -53,5 +53,6 @@ bool application_Attest(int what_to_say_size, byte* what_to_say,
   int* size_out, byte* out);
 bool application_GetParentEvidence(string* out);
 bool application_Getmeasurement(int* size_out, byte* out);
+bool application_GetPlatformStatement(int* size_out, byte* out);
 
 #endif

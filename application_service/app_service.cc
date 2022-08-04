@@ -70,7 +70,7 @@ DEFINE_string(measurement_file, "app_service.measurement", "measurement");
 DEFINE_string(guest_login_name, "jlm", "guest name");
 
 
-#define DEBUG
+// #define DEBUG
 
 // ---------------------------------------------------------------------------------
 
@@ -274,6 +274,13 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
   return true;
 }
 
+bool soft_GetPlatformStatement(spawned_children* kid, string* out) {
+  if (!app_trust_data->cc_service_platform_rule_initialized_)
+    return false;
+  app_trust_data->platform_rule_.SerializeToString(out);
+  return true;
+}
+
 bool soft_GetParentEvidence(spawned_children* kid, string* out) {
   return false;
 }
@@ -313,6 +320,8 @@ void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
         succeeded= soft_Attest(kid, in, &out);
     } else if (req.function() == "getmeasurement") {
         succeeded= soft_Getmeasurement(kid, &out);
+    } else if (req.function() == "getplatformstatement") {
+        succeeded= soft_GetPlatformStatement(kid, &out);
     } else if (req.function() == "getcerts") {
         succeeded= soft_GetParentEvidence(kid, &out);
     }

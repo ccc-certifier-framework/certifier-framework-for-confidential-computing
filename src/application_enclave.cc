@@ -185,5 +185,65 @@ bool application_Attest(int in_size, byte* in,
 }
 
 bool application_Getmeasurement(int* size_out, byte* out) {
-  return false;
+  app_request req;
+  app_response rsp;
+
+  // request
+  req.set_function("getmeasurement");
+  string req_str;
+  req.SerializeToString(&req_str);
+  if (write(writer, (byte*)req_str.data(), req_str.size()) < 0) {
+    printf("write failed\n");
+  }
+
+  const int buffer_pad = 256;
+  // response
+  int t_size = buffer_pad;
+  byte t_out[t_size];
+  int n = read(reader, t_out, t_size);
+  if (n < 0)
+    return false;
+  if (rsp.function() != "getmeasurement" || rsp.status() != "succeeded") {
+    printf("application_Getmeasurement, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
+    return false;
+  }
+  if (*size_out < (int)rsp.args(0).size()) {
+    printf("application_Getmeasurement, output too big\n");
+    return false;
+  }
+  *size_out = (int)rsp.args(0).size();
+  memcpy(out, rsp.args(0).data(), *size_out);
+  return true;
+}
+
+bool application_GetPlatformStatement(int* size_out, byte* out) {
+  app_request req;
+  app_response rsp;
+
+  // request
+  req.set_function("getplatformstatement");
+  string req_str;
+  req.SerializeToString(&req_str);
+  if (write(writer, (byte*)req_str.data(), req_str.size()) < 0) {
+    printf("write failed\n");
+  }
+
+  // response
+  const int buffer_pad = 256;
+  int t_size = buffer_pad;
+  byte t_out[t_size];
+  int n = read(reader, t_out, t_size);
+  if (n < 0)
+    return false;
+  if (rsp.function() != "getmeasurement" || rsp.status() != "succeeded") {
+    printf("application_GetPlatformStatement, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
+    return false;
+  }
+  if (*size_out < (int)rsp.args(0).size()) {
+    printf("application_GetPlatformStatement, output too big\n");
+    return false;
+  }
+  *size_out = (int)rsp.args(0).size();
+  memcpy(out, rsp.args(0).data(), *size_out);
+  return true;
 }
