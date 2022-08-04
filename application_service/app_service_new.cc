@@ -77,7 +77,6 @@ DEFINE_string(guest_login_name, "jlm", "guest name");
 #include "policy_key.cc"
 cc_trust_data* app_trust_data = nullptr;
 
-// -------------------------------------------------------------------------------------
 
 class spawned_children {
 public:
