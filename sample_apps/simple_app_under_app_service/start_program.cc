@@ -10,6 +10,7 @@
 DEFINE_string(server_app_host, "localhost", "address for application requests");
 DEFINE_int32(server_app_port, 8127, "port for application requests");
 DEFINE_string(executable, "service_example_app.exe", "executable to run");
+DEFINE_string(args, "service_example_app.exe", "service example arguments");
 
 int main(int an, char**av) {
   gflags::ParseCommandLineFlags(&an, &av, true);

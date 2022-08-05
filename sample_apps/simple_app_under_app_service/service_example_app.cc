@@ -4,6 +4,7 @@
 #include "support.h"
 #include "certifier.h"
 #include "simulated_enclave.h"
+#include "application_enclave.h"
 #include "cc_helpers.h"
 
 #include <sys/socket.h>
@@ -256,7 +257,7 @@ int main(int an, char** av) {
     return false;
   }
 
-  // init application
+  // Init application
   if (!application_Init(parent_enclave_type, in_fd, out_fd)) {
     printf("Can't init application-enclave\n");
     return 1;
@@ -311,7 +312,7 @@ int main(int an, char** av) {
   }
 
 done:
-  // app_trust_data->print_trust_data();
+  app_trust_data->print_trust_data();
   app_trust_data->clear_sensitive_data();
   return ret;
 }
