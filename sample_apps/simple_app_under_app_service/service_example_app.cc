@@ -312,6 +312,11 @@ int main(int an, char** av) {
   }
 
 done:
+  printf("enclave: %s, parent enclave: %s, purpose: %s\n",
+      app_trust_data->enclave_type_.c_str(),
+      parent_enclave_type.c_str(),
+      app_trust_data->purpose_.c_str());
+  printf("\n");
   app_trust_data->print_trust_data();
   app_trust_data->clear_sensitive_data();
   return ret;

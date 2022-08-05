@@ -6,8 +6,12 @@ Instructions for building and running the sample application under the
 This uses the same application as in .../sample_app but running under the
 application service.  The app itself is almost identical with the original.
 This example runs under the simulated-enclave right now but we'll port it
-to running under sev-snp.
+to running under sev-snp.  For this example, we let the policy key for the
+application service be the same as the policy key for the application.  This
+will often, but not always, be the case.
 
+
+Set up some name shortcuts 
 
 $CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.  On my
 computer, it is in =~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing.
@@ -182,20 +186,16 @@ Step 17: In a new window, run simple_app_under_app_service for cold boot
     cd $SERVICE_EXAMPLE_DIR
 
     $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
-      --args= "--print_all=true,--operation=cold-init,--data_dir=./app1_data/," \
-        "--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
+      --args= "--print_all=true,--operation=cold-init,--data_dir=./app1_data/,--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
 
     $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
-      --args= "--print_all=true,--operation=get-certifier-init,--data_dir=./app1_data/," \
-        "--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
+      --args= "--print_all=true,--operation=get-certifier,--data_dir=./app1_data/,--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
 
     $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
-      --args= "--print_all=true,--operation=cold-init,--data_dir=./app2_data/," \
-        "--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
+      --args= "--print_all=true,--operation=cold-init,--data_dir=./app2_data/,--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
 
     $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
-      --args= "--print_all=true,--operation=get-certifier-init,--data_dir=./app2_data/," \
-        "--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
+      --args= "--print_all=true,--operation=get-certifier,--data_dir=./app2_data/,--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
 
 
 At this point, both versions of the app have their admission certificates.  You can look at
@@ -210,13 +210,12 @@ Step 18:  Run the apps to test trusted services
 In app as a server terminal run the following:
     cd $SERVICE_EXAMPLE_DIR
     $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
-    --args="--print_all=true --operation=run-app-as-server,--data_dir=./app2_data/," \
-      "--policy_cert_file=policy_cert_file.bin,--policy_store_file=policy_store"
+    --args="--print_all=true,--operation=run-app-as-server,--data_dir=./app2_data/,--policy_cert_file=policy_cert_file.bin,--policy_store_file=policy_store"
 
 In app as a client terminal run the following:
     cd $SERVICE_EXAMPLE_DIR
     $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
-    --args="--print_all=true --operation=run-app-as-client,--data_dir=./app1_data/,--policy_cert_file=policy_cert_file.bin,--policy_store_file=policy_store"
+    --args="--print_all=true,--operation=run-app-as-client,--data_dir=./app1_data/,--policy_cert_file=policy_cert_file.bin,--policy_store_file=policy_store"
 
 
 As in simple_example, you should see the message "Hi from your secret server"

@@ -107,9 +107,10 @@ int main(int an, char**av) {
   }
 
   // read response
-  byte response[8192];
+  const int max_response_size = 16000;
+  byte response[max_response_size];
   string serialized_response;
-  int n = read(sock, response, 8192);
+  int n = read(sock, response, max_response_size);
   if (n < 0) {
     printf("Can't read response\n");
     return 1;

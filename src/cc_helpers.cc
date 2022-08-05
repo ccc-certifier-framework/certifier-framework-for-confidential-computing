@@ -67,7 +67,7 @@ cc_trust_data::cc_trust_data(const string& enclave_type, const string& purpose,
   cc_sealing_key_initialized_ = false;
   cc_provider_provisioned_ = false;
   x509_policy_cert_ = nullptr;
-  cc_is_certified_ = true;
+  cc_is_certified_ = false;
 }
 
 cc_trust_data::cc_trust_data() {
@@ -80,7 +80,7 @@ cc_trust_data::cc_trust_data() {
   cc_sealing_key_initialized_ = false;
   cc_provider_provisioned_ = false;
   x509_policy_cert_ = nullptr;
-  cc_is_certified_ = true;
+  cc_is_certified_ = false;
 }
 
 cc_trust_data::~cc_trust_data() {
