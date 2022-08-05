@@ -1,0 +1,19 @@
+Writing an applicaation service based  CC app with the Certifier Framework
+==========================================================================
+
+The example app shows all the major steps in a Confidential Computing Program,
+running under an application-service which allows.
+
+These steps are made much simpler by the Certifier API as indicated in
+instructions.txt. As with the simple_app, the instructions are detailed
+and generally similar except for the application-service features.  These
+include starting the application my sending a meesage to the application
+service to start the program and actually running such a service.  This
+is demonstrated in the application_service directory where application_service
+is built.
+
+For the Certifier Service, there are almost no changes.  For the Application,
+since in enjoys access to the Linux API, there are few changes.  Most
+involve a little extra setup to establish and managed pipes with the app-service,
+acting as a parent.  CC calls are made over these pipes.  The application
+code is nearly identical with simple_example.
