@@ -181,19 +181,19 @@ Step 17: In a new window, run simple_app_under_app_service for cold boot
          provisioning, you need to do this through the start_program utility
     cd $SERVICE_EXAMPLE_DIR
 
-    $SERVICE_EXAMPLE_DIR/start_program/exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
+    $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
       --args= "--print_all=true,--operation=cold-init,--data_dir=./app1_data/," \
         "--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
 
-    $SERVICE_EXAMPLE_DIR/start_program/exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
+    $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
       --args= "--print_all=true,--operation=get-certifier-init,--data_dir=./app1_data/," \
         "--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
 
-    $SERVICE_EXAMPLE_DIR/start_program/exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
+    $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
       --args= "--print_all=true,--operation=cold-init,--data_dir=./app2_data/," \
         "--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
 
-    $SERVICE_EXAMPLE_DIR/start_program/exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
+    $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
       --args= "--print_all=true,--operation=get-certifier-init,--data_dir=./app2_data/," \
         "--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
 
@@ -209,15 +209,14 @@ Step 18:  Run the apps to test trusted services
 
 In app as a server terminal run the following:
     cd $SERVICE_EXAMPLE_DIR
-    $SERVICE_EXAMPLE_DIR/start_program/exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
+    $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
     --args="--print_all=true --operation=run-app-as-server,--data_dir=./app2_data/," \
       "--policy_cert_file=policy_cert_file.bin,--policy_store_file=policy_store"
 
 In app as a client terminal run the following:
     cd $SERVICE_EXAMPLE_DIR
-    $SERVICE_EXAMPLE_DIR/start_program/exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
-    --args="--print_all=true --operation=run-app-as-client,--data_dir=./app1_data/," \
-      "--policy_cert_file=policy_cert_file.bin,--policy_store_file=policy_store"
+    $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
+    --args="--print_all=true --operation=run-app-as-client,--data_dir=./app1_data/,--policy_cert_file=policy_cert_file.bin,--policy_store_file=policy_store"
 
 
 As in simple_example, you should see the message "Hi from your secret server"
