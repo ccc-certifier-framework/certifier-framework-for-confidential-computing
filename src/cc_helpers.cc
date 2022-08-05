@@ -4,6 +4,7 @@
 #include "support.h"
 #include "certifier.h"
 #include "simulated_enclave.h"
+#include "application_enclave.h"
 #include "cc_helpers.h"
 
 #include <sys/socket.h>
@@ -603,8 +604,23 @@ bool cc_trust_data::warm_restart() {
 }
 
 bool cc_trust_data::GetPlatformSaysAttestClaim(signed_claim_message* scm) {
-   if (enclave_type_ == "simulated-enclave") {
-      return simulated_GetAttestClaim(scm);
+  if (enclave_type_ == "simulated-enclave") {
+     return simulated_GetAttestClaim(scm);
+  }
+  if (enclave_type_ == "application-enclave") {
+    int size_out = 8192;
+    byte out[size_out];
+    if (!application_GetPlatformStatement(&size_out, out)) {
+      printf("Can't get PlatformStatement from parent\n");
+      return false;
+    }
+    string sc_str;
+    sc_str.assign((char*)out, size_out);
+    if (!scm->ParseFromString(sc_str)) {
+      printf("Can't parse platform claim\n");
+      return false;
+    }
+    return true;
   }
   return false; 
 }
