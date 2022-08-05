@@ -4,6 +4,13 @@ We will also be adding more samples and instructions throughout the
 Beta period as well as a little more utility support for SEV.  You are
 welcome to use the current version, however.  Consider contributing!
 
+The simulated-enclave and SGX examples work and have been tested.  
+Although the SEV-SNP tests work with software simulation as indicated,
+we haven't gotten an SEV-SNP machine yet but we expect to get one
+in a few weeks; we'll update the respository then.  We'll also add
+some sample "application-enclave" and several more samples over the
+next several weeks.
+
 Best,
 
 The Certifier Framework for Confidential Computing Team
