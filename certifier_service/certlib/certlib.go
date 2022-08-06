@@ -41,9 +41,9 @@ type PredicateDominance struct {
 }
 
 func Spaces(i int) {
-        for j := 0; j < i; j++ {
-                fmt.Printf(" ")
-        }
+	for j := 0; j < i; j++ {
+		fmt.Printf(" ")
+	}
 }
 
 func PrintDominanceNode (ind int, node *PredicateDominance) {
@@ -51,60 +51,60 @@ func PrintDominanceNode (ind int, node *PredicateDominance) {
 		fmt.Printf("\n")
 		return
 	}
-        Spaces(ind)
-        fmt.Printf("Node predicate: %s\n", node.Predicate)
+	Spaces(ind)
+	fmt.Printf("Node predicate: %s\n", node.Predicate)
 }
 
 func PrintDominanceTree(ind int, tree *PredicateDominance) {
-        PrintDominanceNode (ind, tree)
-        for n := tree.FirstChild; n != nil; n = n.Next {
-                PrintDominanceTree(ind + 2, n)
-        }
+	PrintDominanceNode (ind, tree)
+	for n := tree.FirstChild; n != nil; n = n.Next {
+		PrintDominanceTree(ind + 2, n)
+	}
 }
 
 func FindNode(node *PredicateDominance, pred string) *PredicateDominance {
-        if node.Predicate == pred {
-                return node
-        }
-        for n := node.FirstChild; n != nil; n = n.Next {
-                ret := FindNode(n, pred)
-                if ret !=  nil {
-                        return ret
-                }
-                n = n.Next
-        }
+	if node.Predicate == pred {
+		return node
+	}
+	for n := node.FirstChild; n != nil; n = n.Next {
+		ret := FindNode(n, pred)
+		if ret !=  nil {
+			return ret
+		}
+		n = n.Next
+	}
 	return nil
 }
 
 func Insert(r *PredicateDominance, parent string, descendant string) bool {
 
-        if r == nil {
-                return false
-        }
+	if r == nil {
+		return false
+	}
 
-        ret :=  FindNode(r, parent)
-        if ret == nil {
-                return false
-        }
+	ret :=  FindNode(r, parent)
+	if ret == nil {
+		return false
+	}
 	oldFirst :=  ret.FirstChild
-        pd := &PredicateDominance {
-                Predicate: descendant,
-                FirstChild: nil,
-                Next: oldFirst,
-        }
+	pd := &PredicateDominance {
+		Predicate: descendant,
+		FirstChild: nil,
+		Next: oldFirst,
+	}
 	ret.FirstChild = pd
 	return true
 }
 
 func IsChild(r *PredicateDominance, descendant string) bool {
-        if r.Predicate == descendant {
-                return true
-        }
-        for n := r.FirstChild; n != nil; n = n.Next {
-                if IsChild(n, descendant) {
-                        return true
-                }
-        }
+	if r.Predicate == descendant {
+		return true
+	}
+	for n := r.FirstChild; n != nil; n = n.Next {
+		if IsChild(n, descendant) {
+			return true
+		}
+	}
 	return false
 }
 
@@ -123,18 +123,18 @@ func Dominates(root *PredicateDominance, parent string, descendant string) bool 
 }
 
 func InitDominance(root *PredicateDominance) bool {
-        root.Predicate = "is-trusted"
-        root.FirstChild = nil
-        root.Next = nil
+	root.Predicate = "is-trusted"
+	root.FirstChild = nil
+	root.Next = nil
 
-        if !Insert(root, "is-trusted", "is-trusted-for-attestation") {
-                return false;
-        }
-        if !Insert(root, "is-trusted", "is-trusted-for-authentication") {
-                return false;
-        }
+	if !Insert(root, "is-trusted", "is-trusted-for-attestation") {
+		return false;
+	}
+	if !Insert(root, "is-trusted", "is-trusted-for-authentication") {
+		return false;
+	}
 
-        return true;
+	return true;
 }
 
 func PrintTimePoint(tp *certprotos.TimePoint) {
@@ -325,20 +325,20 @@ func GetRsaKeysFromInternal(k *certprotos.KeyMessage, pK *rsa.PrivateKey, PK *rs
 
 func GetInternalKeyFromRsaPublicKey(name string, PK *rsa.PublicKey, km *certprotos.KeyMessage) bool {
 	km.RsaKey = &certprotos.RsaMessage{}
-        km.GetRsaKey().PublicModulus =  PK.N.Bytes()
+	km.GetRsaKey().PublicModulus =  PK.N.Bytes()
 	e := big.Int{}
 	e.SetUint64(uint64(PK.E))
-        km.GetRsaKey().PublicExponent=  e.Bytes()
+	km.GetRsaKey().PublicExponent=  e.Bytes()
 	return true
 }
 
 func GetInternalKeyFromRsaPrivateKey(name string, pK *rsa.PrivateKey, km *certprotos.KeyMessage) bool {
 	km.RsaKey = &certprotos.RsaMessage{}
-        km.GetRsaKey().PublicModulus =  pK.PublicKey.N.Bytes()
+	km.GetRsaKey().PublicModulus =  pK.PublicKey.N.Bytes()
 	e := big.Int{}
 	e.SetUint64(uint64(pK.PublicKey.E))
-        km.GetRsaKey().PublicExponent=  e.Bytes()
-        km.GetRsaKey().PrivateExponent =  pK.D.Bytes()
+	km.GetRsaKey().PublicExponent=  e.Bytes()
+	km.GetRsaKey().PrivateExponent =  pK.D.Bytes()
 	return true
 }
 
@@ -355,16 +355,16 @@ func InternalPublicFromPrivateKey(privateKey *certprotos.KeyMessage) *certprotos
 		return nil
 	}
 	publicKey := certprotos.KeyMessage{}
-        publicKey.KeyType = &kt
+	publicKey.KeyType = &kt
 	publicKey.KeyName = privateKey.KeyName
-        publicKey.KeyFormat = privateKey.KeyFormat
+	publicKey.KeyFormat = privateKey.KeyFormat
 	r := certprotos.RsaMessage {}
-        publicKey.RsaKey = &r
-        r.PublicModulus = privateKey.GetRsaKey().PublicModulus
-        r.PublicExponent = privateKey.GetRsaKey().PublicExponent
-        publicKey.Certificate = privateKey.Certificate
-        publicKey.NotBefore = privateKey.NotBefore
-        publicKey.NotAfter = privateKey.NotAfter
+	publicKey.RsaKey = &r
+	r.PublicModulus = privateKey.GetRsaKey().PublicModulus
+	r.PublicExponent = privateKey.GetRsaKey().PublicExponent
+	publicKey.Certificate = privateKey.Certificate
+	publicKey.NotBefore = privateKey.NotBefore
+	publicKey.NotAfter = privateKey.NotAfter
 	return &publicKey
 }
 
@@ -768,7 +768,7 @@ func PrintAttestation(a *certprotos.Attestation) {
 		fmt.Printf("\n")
 	}
 	if a.GetTime() != "" {
-		fmt.Printf("Time        : %s\n", a.GetTime())
+		fmt.Printf("Time	: %s\n", a.GetTime())
 	}
 	if a.GetDescription() != "" {
 		fmt.Printf("Description : %s\n", a.GetDescription())
@@ -929,9 +929,9 @@ func AttestationToVseClause(cm *certprotos.ClaimMessage) *certprotos.VseClause {
 	serClaim := cm.GetSerializedClaim()
 	at := certprotos.Attestation{}
 	err := proto.Unmarshal(serClaim, &at)
-        if err != nil {
-                return nil
-        }
+	if err != nil {
+		return nil
+	}
 	return at.Clause
 }
 
@@ -1116,7 +1116,12 @@ func ProducePlatformRule(issuerKey *certprotos.KeyMessage, issuerCert *x509.Cert
 	if c1 == nil {
 		return nil
 	}
-	s2 := MakeKeyEntity(issuerKey)
+	issuerPublic := InternalPublicFromPrivateKey(issuerKey)
+	if issuerPublic == nil {
+		fmt.Printf("Can't make isser public from private\n")
+		return nil
+	}
+	s2 := MakeKeyEntity(issuerPublic)
 	if s2 == nil {
 		return nil
 	}
@@ -1127,26 +1132,26 @@ func ProducePlatformRule(issuerKey *certprotos.KeyMessage, issuerCert *x509.Cert
 	}
 
 	tn := TimePointNow()
-        tf := TimePointPlus(tn, 365 * 86400)
-        nb := TimePointToString(tn)
-        na := TimePointToString(tf)
+	tf := TimePointPlus(tn, 365 * 86400)
+	nb := TimePointToString(tn)
+	na := TimePointToString(tf)
 	ser, err := proto.Marshal(c2)
-        if err != nil {
-                return nil
-        }
-        cl1 := MakeClaim(ser, "vse-clause", "platform-rule", nb, na)
-        if cl1 == nil {
-                return nil
-        }
+	if err != nil {
+		return nil
+	}
+	cl1 := MakeClaim(ser, "vse-clause", "platform-rule", nb, na)
+	if cl1 == nil {
+		return nil
+	}
 
 	rule := MakeSignedClaim(cl1, issuerKey)
-        if rule == nil {
-                return nil
-        }
+	if rule == nil {
+		return nil
+	}
 	ssc, err := proto.Marshal(rule)
-        if err != nil {
-                return nil
-        }
+	if err != nil {
+		return nil
+	}
 
 	return ssc
 }
@@ -1162,11 +1167,11 @@ func ProduceAdmissionCert(issuerKey *certprotos.KeyMessage, issuerCert *x509.Cer
 			CommonName: subjName,
 			Organization: []string{subjOrg},
 		},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().Add(time.Duration(dur)),
-		IsCA:                  false,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		NotBefore:	     time.Now(),
+		NotAfter:	      time.Now().Add(time.Duration(dur)),
+		IsCA:		  false,
+		ExtKeyUsage:	   []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:	      x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
 	}
 	spK := rsa.PrivateKey{}
@@ -1231,15 +1236,15 @@ func GetIssuerKey(cert *x509.Certificate) *certprotos.KeyMessage{
 }
 
 func VerifyAdmissionCert(policyCert *x509.Certificate, cert *x509.Certificate) bool {
-        certPool := x509.NewCertPool()
-        certPool.AddCert(policyCert)
-        opts := x509.VerifyOptions{
-                Roots:   certPool,
-        }
+	certPool := x509.NewCertPool()
+	certPool.AddCert(policyCert)
+	opts := x509.VerifyOptions{
+		Roots:   certPool,
+	}
 
-        if _, err := cert.Verify(opts); err != nil {
-                return false
-        }
+	if _, err := cert.Verify(opts); err != nil {
+		return false
+	}
 	return true
 }
 
@@ -1300,7 +1305,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 		} else if ev.GetEvidenceType() == "oe-assertion" {
 			// call oeVerify here and construct the statement:
-			//	enclave-key speaks-for measurement
+			//      enclave-key speaks-for measurement
 			// from the return values.  Then add it to proved statements
 			fmt.Printf("oe-verify not implemented\n")
 			return false
@@ -1461,7 +1466,7 @@ func VerifyRule5(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 }
 
 // R6: if key1 is-trustedXXX and key1 says key2 speaks-for measurement then
-//        key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation 
+//	key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation 
 func VerifyRule6(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
 		return false
@@ -1625,7 +1630,7 @@ func VerifyProof(policyKey *certprotos.KeyMessage, toProve *certprotos.VseClause
 func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
 	fmt.Printf("\nRequest:\n")
 	fmt.Printf("Requesting Enclave Tag : %s\n", req.GetRequestingEnclaveTag())
-        fmt.Printf("Providing Enclave Tag: %s\n", req.GetProvidingEnclaveTag())
+	fmt.Printf("Providing Enclave Tag: %s\n", req.GetProvidingEnclaveTag())
 	if req.Purpose != nil {
 		fmt.Printf("Purpose: %s\n", *req.Purpose)
 	}
@@ -1634,7 +1639,7 @@ func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
 	}
 
 	fmt.Printf("Prover Type: %s\n\n", req.Support.GetProverType())
-        // Support
+	// Support
 	if req.Support != nil {
 		for  i := 0; i < len(req.Support.FactAssertion); i++ {
 			fmt.Printf("\nEvidence %d:\n", i)
@@ -1658,14 +1663,14 @@ func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
 }
 
 func PrintTrustReponse(res *certprotos.TrustResponseMessage) {
-        // Status
-        // RequestingEnclaveTag
-        // ProvidingEnclaveTag
-        // Artifact
+	// Status
+	// RequestingEnclaveTag
+	// ProvidingEnclaveTag
+	// Artifact
 	fmt.Printf("\nResponse:\n")
-        fmt.Printf("Status: %s\n", res.GetStatus())
+	fmt.Printf("Status: %s\n", res.GetStatus())
 	fmt.Printf("Requesting Enclave Tag : %s\n", res.GetRequestingEnclaveTag())
-        fmt.Printf("Providing Enclave Tag: %s\n", res.GetProvidingEnclaveTag())
+	fmt.Printf("Providing Enclave Tag: %s\n", res.GetProvidingEnclaveTag())
 	if res.Artifact != nil {
 		fmt.Printf("Artifact: ")
 		PrintBytes(res.Artifact)

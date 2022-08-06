@@ -778,6 +778,8 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   evidence_package* ep = new(evidence_package);
   if (!construct_platform_evidence_package(signed_platform_says_attest_key_is_trusted,
         the_attestation, ep))  {
+    printf("certify_me error 7.5\n");
+    return false;
   }
   request.set_allocated_support(ep);
 

@@ -357,16 +357,15 @@ func AddNewFactsForAugmentedPlatformAttestation(publicPolicyKey *certprotos.KeyM
 
 	// At this point, already proved should contain
 	//      "policyKey is-trusted"
-	//      "platformKey says attestationKey is-trusted-for-attestation
+	//      "policyKey says attestKey is-trusted-for-attestation"
 	//      "attestKey says enclaveKey speaks-for measurement"
-	//      "policyKey says platformKey is-trusted-for-attestation"
 	// Add
 	//      "policyKey says measurement is-trusted"
 	// Get platform measurement statement and platform statement
 	// Find the corresponding "measurement is-trusted" in measurements
 	//      This is signedPolicyKeySaysMeasurementIsTrusted
 	//      Add it
-	if len(alreadyProved.Proved) != 4 {
+	if len(alreadyProved.Proved) != 3 {
 		fmt.Printf("AddNewFactsForAugmentedPlatformAttestation, Error 1\n")
 		return false
 	}
@@ -511,6 +510,85 @@ func ConstructProofFromFullVseEvidence(publicPolicyKey *certprotos.KeyMessage,
 	return toProve, proof
 }
 
+// Returns toProve and proof steps
+func ConstructProofFromShortVseEvidence(publicPolicyKey *certprotos.KeyMessage,
+	alreadyProved certprotos.ProvedStatements, purpose string) (*certprotos.VseClause, *certprotos.Proof) {
+
+	// At this point, alreadyProved should be
+	//      "policyKey is-trusted"
+	//      "platformKey says attestationKey is-trusted-for-attestation"
+	//      "attestKey says enclaveKey speaks-for measurement
+	//      "policyKey says measurement is-trusted"
+
+	// Debug
+	fmt.Printf("ConstructProofFromFullVseEvidence entries %d\n", len(alreadyProved.Proved))
+
+	proof := &certprotos.Proof{}
+	r1 := int32(1)
+	r3 := int32(3)
+	r5 := int32(5)
+	r6 := int32(6)
+	r7 := int32(7)
+
+	policyKeyIsTrusted := alreadyProved.Proved[0]
+	policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[3]
+	measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
+	ps1 := certprotos.ProofStep {
+		S1: policyKeyIsTrusted,
+		S2: policyKeySaysMeasurementIsTrusted,
+		Conclusion: measurementIsTrusted,
+		RuleApplied: &r3,
+	}
+	proof.Steps = append(proof.Steps, &ps1)
+
+	policyKeySaysAttestKeyIsTrusted := alreadyProved.Proved[1]
+	attestKeyIsTrusted := policyKeySaysAttestKeyIsTrusted.Clause
+	ps3 := certprotos.ProofStep {
+		S1: policyKeyIsTrusted,
+		S2: policyKeySaysAttestKeyIsTrusted,
+		Conclusion: attestKeyIsTrusted,
+		RuleApplied: &r5,
+	}
+	proof.Steps = append(proof.Steps, &ps3)
+
+	attestKeySaysEnclaveKeySpeaksForMeasurement := alreadyProved.Proved[2]
+	enclaveKeySpeaksForMeasurement := attestKeySaysEnclaveKeySpeaksForMeasurement.Clause
+	ps4 := certprotos.ProofStep {
+	S1: attestKeyIsTrusted,
+	S2: attestKeySaysEnclaveKeySpeaksForMeasurement,
+	Conclusion: enclaveKeySpeaksForMeasurement,
+	RuleApplied: &r6,
+	}
+	proof.Steps = append(proof.Steps, &ps4)
+
+	var toProve *certprotos.VseClause = nil
+	isTrustedForAuth := "is-trusted-for-authentication"
+	isTrustedForAttest:= "is-trusted-for-attestation"
+	if  purpose == "attestation" {
+		toProve =  certlib.MakeUnaryVseClause(enclaveKeySpeaksForMeasurement.Subject,
+			&isTrustedForAttest)
+		ps5 := certprotos.ProofStep {
+		S1: measurementIsTrusted,
+		S2: enclaveKeySpeaksForMeasurement,
+		Conclusion: toProve,
+		RuleApplied: &r7,
+		}
+		proof.Steps = append(proof.Steps, &ps5)
+	} else {
+		toProve =  certlib.MakeUnaryVseClause(enclaveKeySpeaksForMeasurement.Subject,
+			&isTrustedForAuth)
+		ps5 := certprotos.ProofStep {
+		S1: measurementIsTrusted,
+		S2: enclaveKeySpeaksForMeasurement,
+		Conclusion: toProve,
+		RuleApplied: &r1,
+		}
+		proof.Steps = append(proof.Steps, &ps5)
+	}
+
+	return toProve, proof
+}
+
 //      ConstructProofFromRequest first checks evidence and make sure each evidence
 //	      component is verified and it put in alreadyProved Statements
 //      Next, alreadyProved is augmented to include additional true statements
@@ -546,6 +624,19 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
 
 	// Debug
 	fmt.Printf("%d fact assertions in evidence\n", len(support.FactAssertion))
+	for i := 0; i < len(support.FactAssertion); i++ {
+		fmt.Printf("Type: %s\n",  support.FactAssertion[i].GetEvidenceType())
+		var sc certprotos.SignedClaimMessage
+		err := proto.Unmarshal(support.FactAssertion[i].SerializedEvidence, &sc)
+		if err != nil {
+			fmt.Printf("Can't unmarshal\n");
+		} else {
+		fmt.Printf("Clause: ")
+		vse:= certlib.GetVseFromSignedClaim(&sc)
+		certlib.PrintVseClause(vse)
+		}
+		fmt.Println("")
+	}
 
 	if !certlib.InitProvedStatements(*publicPolicyKey, support.FactAssertion, alreadyProved) {
 		fmt.Printf("certlib.InitProvedStatements failed\n")
@@ -592,6 +683,12 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
 
 	if evidenceType == "full-vse-support" || evidenceType == "platform-attestation-only" {
 		toProve, proof = ConstructProofFromFullVseEvidence(publicPolicyKey, *alreadyProved, purpose)
+		if toProve == nil {
+			fmt.Printf("ConstructProofFromFullVseEvidence failed\n")
+			return nil, nil, nil
+		}
+	} else if evidenceType == "augmented-platform-attestation-only" {
+		toProve, proof = ConstructProofFromShortVseEvidence(publicPolicyKey, *alreadyProved, purpose)
 		if toProve == nil {
 			fmt.Printf("ConstructProofFromFullVseEvidence failed\n")
 			return nil, nil, nil
