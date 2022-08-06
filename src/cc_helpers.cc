@@ -765,7 +765,11 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   //   to prevent MITM attacks?  Probably not.
   request.set_requesting_enclave_tag("requesting-enclave");
   request.set_providing_enclave_tag("providing-enclave");
-  request.set_submitted_evidence_type("platform-attestation-only");
+  if (enclave_type_ == "application-enclave") {
+    request.set_submitted_evidence_type("augmented-platform-attestation-only");
+  } else {
+    request.set_submitted_evidence_type("platform-attestation-only");
+  }
   request.set_purpose(purpose_);
 
   // Construct the evidence package
@@ -1324,6 +1328,21 @@ bool construct_platform_evidence_package(signed_claim_message& platform_attest_c
   if (!sc2.SerializeToString(&serialized_sc2))
     return false;
   ev2->set_serialized_evidence((byte*)serialized_sc2.data(), serialized_sc2.size());
+  return true;
+}
+
+bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_key_is_trusted, evidence_package* ep) {
+
+  string et("signed-claim");
+
+  evidence* ev = ep->add_fact_assertion();
+  ev->set_evidence_type(et);
+  signed_claim_message sc;
+  sc.CopyFrom(platform_key_is_trusted);
+  string serialized_sc;
+  if (!sc.SerializeToString(&serialized_sc))
+    return false;
+  ev->set_serialized_evidence((byte*)serialized_sc.data(), serialized_sc.size());
   return true;
 }
 

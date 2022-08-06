@@ -77,7 +77,7 @@ cd $CERTIFIER_PROTOTYPE/certifier_service
 go build simpleserver.go
 
 #run server
-cd $EXAMPLE_DIR
+cd $EXAMPLE_DIR/service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
       --path=$EXAMPLE_DIR/service \
       --policyFile=policy.bin --readPolicy=true

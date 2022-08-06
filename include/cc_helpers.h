@@ -108,6 +108,8 @@ bool construct_platform_evidence_package(signed_claim_message& platform_attest_c
     signed_claim_message& the_attestation, evidence_package* ep);
 bool construct_attestation(entity_message& attest_key_entity, entity_message& auth_key_entity,
         entity_message& measurement_entity, vse_clause* vse_attest_clause);
+bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_key_is_trusted,
+      evidence_package* ep);
 void print_cn_name(X509_NAME* name);
 void print_org_name(X509_NAME* name);
 void print_ssl_error(int code);
