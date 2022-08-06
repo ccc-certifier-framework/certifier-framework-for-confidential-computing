@@ -71,7 +71,7 @@ bool application_GetParentEvidence(string* out) {
   return true;
 }
 
-const int buffer_pad = 256;
+const int buffer_pad = 2048;
 
 bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   app_request req;
@@ -181,12 +181,14 @@ bool application_Attest(int in_size, byte* in,
   byte t_out[t_size];
   int n = read(reader, t_out, t_size);
   if (n < 0) {
+    printf("application_Attest, read failed\n");
     return false;
   }
 
   string rsp_str;
   rsp_str.assign((char*)t_out, n);
   if (!rsp.ParseFromString(rsp_str)) {
+    printf("application_Attest, can't parse response %d\n", n);
     return false;
   }
 

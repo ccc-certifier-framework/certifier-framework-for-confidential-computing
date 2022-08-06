@@ -722,7 +722,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     printf("certify_me error 5\n");
     return false;
   }
-  int size_out = 8192;
+  int size_out = 16000;
   byte out[size_out];
   if (!Attest(enclave_type_, serialized_attestation.size(),
         (byte*) serialized_attestation.data(), &size_out, out)) {

@@ -243,6 +243,10 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
 
 bool soft_Attest(spawned_children* kid, string in, string* out) {
   // in  is a serialized vse-attestation
+  if (!app_trust_data->cc_service_key_initialized_) {
+    printf("soft_Attest: service key not initialized\n");
+    return false;
+  }
   claim_message cm;
   string nb, na;
   time_point tn, tf;
@@ -257,19 +261,25 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
   string cf("vse-attestation");
   string desc("");
   if (!make_claim(in.size(), (byte*)in.data(), cf, desc,
-        nb, na, &cm))
+        nb, na, &cm)) {
+    printf("soft_Attest: error 1\n");
     return false;
+  }
   string ser_cm;
-  if (!cm.SerializeToString(&ser_cm))
+  if (!cm.SerializeToString(&ser_cm)) {
+    printf("soft_Attest: error 2\n");
     return false;
+  }
 
   signed_claim_message scm;
   if (!make_signed_claim(cm, app_trust_data->private_service_key_, &scm)) {
     printf("soft_Attest: Signing failed\n");
     return false;
   }
-  if (!scm.SerializeToString(out))
+  if (!scm.SerializeToString(out)) {
+    printf("soft_Attest: Serialize failed\n");
     return false;
+  }
 
   return true;
 }
