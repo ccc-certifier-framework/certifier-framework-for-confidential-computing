@@ -257,8 +257,9 @@ int main(int an, char** av) {
     return false;
   }
 
-  // Init application
-  if (!application_Init(parent_enclave_type, in_fd, out_fd)) {
+  // Init application enclave
+  if (!app_trust_data->initialize_application_enclave_data(parent_enclave_type,
+        in_fd, out_fd)) {
     printf("Can't init application-enclave\n");
     return 1;
   }
@@ -317,7 +318,7 @@ done:
       parent_enclave_type.c_str(),
       app_trust_data->purpose_.c_str());
   printf("\n");
-  app_trust_data->print_trust_data();
+  // app_trust_data->print_trust_data();
   app_trust_data->clear_sensitive_data();
   return ret;
 }

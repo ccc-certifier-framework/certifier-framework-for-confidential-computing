@@ -46,7 +46,7 @@
 //
 //  You may want to augment these or write replacements if your needs are fancier.
 
-#define DEBUG
+//#define DEBUG
 
 cc_trust_data::cc_trust_data(const string& enclave_type, const string& purpose,
     const string& policy_store_name) {
@@ -99,6 +99,26 @@ bool cc_trust_data::cc_all_initialized() {
   } else {
     return false;
   }
+}
+
+bool cc_trust_data::initialize_application_enclave_data(const string& parent_enclave_type,
+    int in_fd, int out_fd) {
+
+   if (!cc_policy_info_initialized_) {
+      printf("Policy key must be initialized first\n");
+      return false;
+    }
+
+    if (enclave_type_ != "application-enclave") {
+      printf("Not a application enclave\n");
+      return false;
+    }
+    if (!application_Init(parent_enclave_type, in_fd, out_fd)) {
+      printf("Can't init application-enclave\n");
+      return false;
+    }
+  cc_provider_provisioned_ = true;
+  return true;
 }
 
 bool cc_trust_data::initialize_simulated_enclave_data(const string& attest_key_file_name,

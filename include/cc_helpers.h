@@ -86,6 +86,7 @@ public:
       const string& measurement_file_name, const string& attest_endorsement_file_name);
   bool initialize_sev_enclave_data(const string& platform_certs);
   bool initialize_oe_enclave_data();
+  bool initialize_application_enclave_data(const string& parent_enclave_type, int in_fd, int out_fd);
 
   bool cc_all_initialized();
   bool init_policy_key(int asn1_cert_size, byte* asn1_cert);

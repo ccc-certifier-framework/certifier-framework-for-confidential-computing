@@ -48,7 +48,7 @@ clean:
 	@echo "removing object files"
 	rm $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/example_app.exe
+	rm $(EXE_DIR)/service_example_app.exe
 
 service_example_app.exe: $(dobj) 
 	@echo "linking executable files"
