@@ -182,9 +182,13 @@ Step 16: In a new window, run the Certifier Service for simple_app_under_app_ser
 
 
 Step 17: In a new window, run simple_app_under_app_service for cold boot
-         provisioning, you need to do this through the start_program utility
-    cd $SERVICE_EXAMPLE_DIR
+         provisioning, you need to do this through the start_program utility.  Note:
+         as demonstrated in the script, you should use the full path name for files
+         and directories referenced by start_program.exe since they will run under a
+         directory that is differenc from the one you start start_program.exe in.
 
+
+    cd $SERVICE_EXAMPLE_DIR
     $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
       --args= "--print_all=true,--operation=cold-init,--data_dir=./app1_data/,--measurement_file="service_example_app.measurement", --policy_store_file=policy_store"
 
