@@ -258,13 +258,19 @@ def asylo_deps(toolchain_path = None):
 
     # Protobuf
     if not native.existing_rule("com_google_protobuf"):
+        #http_archive(
+        #    name = "com_google_protobuf",
+        #    strip_prefix = "protobuf-3.15.8",
+        #    urls = ["https://github.com/google/protobuf/archive/v3.15.8.tar.gz"],
+        #    sha256 = "0cbdc9adda01f6d2facc65a22a2be5cecefbefe5a09e5382ee8879b522c04441",
+        #)
+
         http_archive(
             name = "com_google_protobuf",
-            strip_prefix = "protobuf-3.15.8",
-            urls = ["https://github.com/google/protobuf/archive/v3.15.8.tar.gz"],
-            sha256 = "0cbdc9adda01f6d2facc65a22a2be5cecefbefe5a09e5382ee8879b522c04441",
+            strip_prefix = "protobuf-3.21.4",
+            urls = ["https://github.com/google/protobuf/archive/v3.21.4.tar.gz"],
+            sha256 = "85d42d4485f36f8cec3e475a3b9e841d7d78523cd775de3a86dba77081f4ca25",
         )
-
     # gRPC
     if not native.existing_rule("com_github_grpc_grpc"):
         http_archive(
