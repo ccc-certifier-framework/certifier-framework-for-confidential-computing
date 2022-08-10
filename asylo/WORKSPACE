@@ -103,3 +103,8 @@ node_repositories()
 load("@io_bazel_rules_sass//:defs.bzl", "sass_repositories")
 
 sass_repositories()
+
+local_repository(
+    name = "asylo_certifier",
+    path = "../certifier-framework-for-confidential-computing",
+)
