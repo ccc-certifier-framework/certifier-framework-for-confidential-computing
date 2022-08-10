@@ -1,0 +1,288 @@
+// This file is the source of truth enumerating the system calls bound by Asylo,
+// along with their parameter types and sizes.
+//
+// To add a new entry to this file:
+//
+//   * Locate the SYSCALL_DEFINE* entry in the Linux kernel sources and copy it
+//     into the list below. In most case, this can be done literally, but in
+//     some instances it may be necessary to identify the version used by the
+//     64-bit ABI, as there may be other variations defined for the 32 bit ABI
+//     or other legacy configurations. In particular, avoid the versions that
+//     reference 'compat_' types.
+//
+//   * Remove __user attribute macros from the type signature.
+//
+//   * If the system call references a user-defined type, for instance a struct,
+//     then add an INCLUDE directive for the header that defines that type.
+//
+//   * The SYSCALL_DEFINE[0-6] macro may not provide sufficient information to
+//     serialize a system call. In addition to its type signature, the
+//     serializer requires 1) a convention describing whether a parameter should
+//     be included in the request, in the response, or in both and 2) size
+//     information describing the the amount of data to by serialized.
+//
+//       * \in: Value copied "in" to the kernel.
+//       * \out: Value copied "out" of the kernel.
+//       * \in_out: Value copied "in" to and "out" of the kernel.
+//       * [count:N]:  Pointer to an array of N items. N must be a numerical
+//          value.
+//       * [bound:PARAM]: Pointer to a buffer of PARAM bytes, where "param"
+//          names the parameter containing the number of bytes to serialize.
+//       * [length:PARAM]: Pointer to an array of PARAM items, where each item
+//          is sizeof(element type) bytes long. PARAM names the parameter
+//          containing the length of the array.
+//
+//   * Consider adding tests in metadata_test.cc and system_call_test.cc.
+//
+//   * Run the table generator and test suite. The test suite will validate
+//     and ensure each metadata entry is serializable.
+
+// Required Include Paths
+// ======================
+
+INCLUDE("sys/epoll.h")
+INCLUDE("sys/poll.h")
+INCLUDE("sys/socket.h")
+INCLUDE("sys/stat.h")
+INCLUDE("sys/statfs.h")
+INCLUDE("sys/syscall.h")
+INCLUDE("sys/types.h")
+INCLUDE("sys/inotify.h")
+INCLUDE("sys/wait.h")
+INCLUDE("sys/time.h")
+INCLUDE("sys/times.h")
+INCLUDE("sys/resource.h")
+INCLUDE("sys/utsname.h")
+INCLUDE("sys/xattr.h")
+INCLUDE("sched.h")
+INCLUDE("utime.h")
+
+// File Descriptors
+// ================
+
+SYSCALL_DEFINE1(dup, unsigned int, fildes)
+SYSCALL_DEFINE1(eventfd, unsigned int, count)
+SYSCALL_DEFINE2(dup2, unsigned int, oldfd, unsigned int, newfd)
+SYSCALL_DEFINE2(eventfd2, unsigned int, count, int, flags)
+SYSCALL_DEFINE3(dup3, unsigned int, oldfd, unsigned int, newfd, int, flags)
+
+// File System
+// ===========
+
+SYSCALL_DEFINE1(rmdir, const char *, pathname)
+SYSCALL_DEFINE1(umask, umode_t, mask)
+SYSCALL_DEFINE1(unlink, const char *, pathname)
+SYSCALL_DEFINE2(creat, const char *, pathname, umode_t, mode)
+SYSCALL_DEFINE2(chmod, const char *, pathname, umode_t, mode)
+SYSCALL_DEFINE2(fchmod, unsigned int, fd, umode_t, mode)
+SYSCALL_DEFINE2(link, const char *, oldname, const char *, newname)
+SYSCALL_DEFINE2(mkdir, const char *, pathname, umode_t, mode)
+SYSCALL_DEFINE2(rename, const char *, oldname, const char *, newname)
+SYSCALL_DEFINE2(symlink, const char *, oldname, const char *, newname)
+SYSCALL_DEFINE2(truncate, const char *, path, long, length)
+SYSCALL_DEFINE2(ftruncate, unsigned int, fd, unsigned long, length)
+SYSCALL_DEFINE2(flock, int, fd, int, operation)
+
+// I/O Synchronization
+// ===================
+
+SYSCALL_DEFINE3(poll, \in_out struct pollfd * [length:nfds], fds,
+                uint64_t, nfds, int, timeout)
+
+SYSCALL_DEFINE5(select, int, nfds, \in_out fd_set *, readfds,
+                \in_out fd_set *, writefds, \in_out fd_set *, exceptfds,
+                \in struct timeval *, timeout)
+
+// Input / Output
+// ==============
+
+SYSCALL_DEFINE1(chdir, const char *, filename)
+SYSCALL_DEFINE1(close, unsigned int, fd)
+SYSCALL_DEFINE1(fsync, unsigned int, fd)
+SYSCALL_DEFINE1(fdatasync, unsigned int, fd)
+SYSCALL_DEFINE1(pipe, \out int * [count:2], fildes);
+SYSCALL_DEFINE2(access, const char *, filename, int, mode)
+SYSCALL_DEFINE2(fstat, unsigned int, fd, \out struct stat *, statbuf)
+SYSCALL_DEFINE2(fstatfs, int, fd, \out struct statfs *, statbuf)
+SYSCALL_DEFINE2(getcwd, \out char * [bound:size], buf, unsigned long, size)
+SYSCALL_DEFINE2(lstat, const char *, filename, \out struct stat *, statbuf)
+SYSCALL_DEFINE2(pipe2, \out int * [count:2], fildes, int, flags)
+SYSCALL_DEFINE2(stat, const char *, filename, \out struct stat *, statbuf)
+SYSCALL_DEFINE2(statfs, const char *, filename, \out struct statfs *, statbuf)
+SYSCALL_DEFINE2(ioctl, unsigned int, fd, unsigned long, cmd)
+SYSCALL_DEFINE3(fcntl, unsigned int, fd, unsigned int, cmd, unsigned int, arg)
+SYSCALL_DEFINE3(chown, const char *, filename, uid_t, user, gid_t, group)
+SYSCALL_DEFINE3(fchown, unsigned int, fd, uid_t, user, gid_t, group)
+SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
+SYSCALL_DEFINE3(open, const char *, filename, int, flags, umode_t, mode)
+SYSCALL_DEFINE3(read, unsigned int, fd, \out void * [bound:count], buf, size_t,
+                count)
+SYSCALL_DEFINE3(readv, unsigned long, fd, const struct iovec *, vec,
+		            unsigned long, vlen)
+SYSCALL_DEFINE3(readlink, const char *, path, \out char * [bound:bufsiz], buf,
+                int, bufsiz)
+SYSCALL_DEFINE3(write, unsigned int, fd, \in const void * [bound:count], buf,
+                size_t, count)
+SYSCALL_DEFINE3(writev, unsigned long, fd, const struct iovec *, vec,
+		            unsigned long, vlen)
+SYSCALL_DEFINE4(pread64, unsigned int, fd, \out void * [bound:count], buf,
+                size_t, count, off_t, offset)
+SYSCALL_DEFINE4(pwrite64, unsigned int, fd, \in const void * [bound:count],
+                buf, size_t, count, off_t, offset)
+SYSCALL_DEFINE4(getxattr, const char *, path, const char *, name,
+                \out void * [bound:size], value, size_t, size)
+SYSCALL_DEFINE4(lgetxattr, const char *, path, const char *, name,
+                \out void * [bound:size], value, size_t, size)
+SYSCALL_DEFINE4(fgetxattr, int, fd, const char *, name,
+                \out void * [bound:size], value, size_t, size)
+SYSCALL_DEFINE5(setxattr, const char *, path, const char *, name,
+                \in const void * [bound:size], value, size_t, size, int, flags)
+SYSCALL_DEFINE5(lsetxattr, const char *, path, const char *, name,
+                \in const void * [bound:size], value, size_t, size, int, flags)
+SYSCALL_DEFINE5(fsetxattr, int, fd, const char *, name,
+                \in const void * [bound:size], value, size_t, size, int, flags)
+SYSCALL_DEFINE3(listxattr, const char *, path, \out char * [bound:size], list,
+                size_t, size)
+SYSCALL_DEFINE3(llistxattr, const char *, path, \out char * [bound:size], list,
+                size_t, size)
+SYSCALL_DEFINE3(flistxattr, int, fd, \out char * [bound:size], list,
+                size_t, size)
+
+// Process Management
+// ==================
+
+SYSCALL_DEFINE0(getpid)
+SYSCALL_DEFINE0(getppid)
+SYSCALL_DEFINE0(setsid)
+SYSCALL_DEFINE1(exit, int, error_code)
+SYSCALL_DEFINE1(exit_group, int, status)
+SYSCALL_DEFINE4(wait4, pid_t, upid, \out int *, stat_addr, int, options,
+                \out struct rusage *, ru)
+
+// Signals
+// =======
+
+SYSCALL_DEFINE2(kill, pid_t, pid, int, sig)
+SYSCALL_DEFINE2(tkill, pid_t, pid, int, sig)
+SYSCALL_DEFINE4(rt_sigaction, int, sig, const struct sigaction *, act,
+		            struct sigaction *, oact, size_t, sigsetsize)
+SYSCALL_DEFINE4(rt_sigprocmask, int, how, sigset_t *, nset, sigset_t *, oset,
+                size_t, sigsetsize)
+
+// Networking
+// ==========
+
+SYSCALL_DEFINE3(accept, int, fd, struct sockaddr *, upeer_sockaddr,
+		            int *, upeer_addrlen)
+
+SYSCALL_DEFINE3(bind, int, fd, \in void * [bound:addrlen], umyaddr,
+                int, addrlen)
+
+SYSCALL_DEFINE3(connect, int, fd, \in void * [bound:addrlen], uservaddr,
+                int, addrlen)
+
+SYSCALL_DEFINE3(getpeername, int, fd, struct sockaddr *, usockaddr,
+		            int *, usockaddr_len)
+
+SYSCALL_DEFINE3(getsockname, int, fd, struct sockaddr *, usockaddr, int *,
+                usockaddr_len)
+
+SYSCALL_DEFINE5(getsockopt, int, fd, int, level, int, optname,
+		            char *, optval, int *, optlen)
+
+SYSCALL_DEFINE2(listen, int, fd, int, backlog)
+
+SYSCALL_DEFINE6(recvfrom, int, fd, void *, ubuf, size_t, size,
+                unsigned int, flags, struct sockaddr *, addr, int *, addr_len)
+
+SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr *, msg,
+		            unsigned int, flags)
+
+SYSCALL_DEFINE3(sendmsg, int, fd, struct msghdr *, msg,
+                unsigned int, flags)
+
+SYSCALL_DEFINE6(sendto, int, fd, \in void * [bound:len], buff, size_t, len,
+                unsigned int, flags, \in void * [bound:addr_len], addr,
+                int, addr_len)
+
+SYSCALL_DEFINE5(setsockopt, int, fd, int, level, int, optname,
+                \in const void * [bound:optlen], optval, socklen_t, optlen)
+
+SYSCALL_DEFINE2(shutdown, int, fd, int, how)
+
+SYSCALL_DEFINE3(socket, int, family, int, type, int, protocol)
+
+// epoll
+// =====
+
+SYSCALL_DEFINE1(epoll_create, int, size)
+
+SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
+                \in struct epoll_event *, event)
+
+SYSCALL_DEFINE4(epoll_wait, int, epfd,
+                \out struct epoll_event * [length:maxevents], events,
+                int, maxevents, int, timeout)
+
+SYSCALL_DEFINE6(epoll_pwait, int, epfd, struct epoll_event *, events, int,
+                maxevents, int, timeout, const sigset_t *, sigmask, size_t,
+                sigsetsize)
+
+// Scheduling
+// ==========
+
+SYSCALL_DEFINE0(sched_yield)
+SYSCALL_DEFINE3(sched_getaffinity, pid_t, pid,  uint64_t, len, \out cpu_set_t *,
+                user_mask_ptr)
+
+// Synchronization
+// ===============
+
+
+// Users and Groups
+// ================
+
+SYSCALL_DEFINE0(getuid)
+SYSCALL_DEFINE0(geteuid)
+SYSCALL_DEFINE0(getgid)
+SYSCALL_DEFINE0(getegid)
+
+// INotify
+// =======
+
+SYSCALL_DEFINE0(inotify_init)
+SYSCALL_DEFINE1(inotify_init1, int, flags)
+SYSCALL_DEFINE2(inotify_rm_watch, int, fd, int, wd)
+SYSCALL_DEFINE3(inotify_add_watch, int, fd, const char *, pathname,
+                uint32_t, mask)
+
+// Time
+// ====
+
+SYSCALL_DEFINE1(times, \out struct tms *, buf)
+SYSCALL_DEFINE2(nanosleep, \in const struct timespec *, req,
+                \out struct timespec *, rem)
+SYSCALL_DEFINE2(gettimeofday, \out struct timeval *, tv,
+                \in struct timezone *, tz)
+SYSCALL_DEFINE2(getitimer, int, which, \out struct itimerval *, curr_value)
+SYSCALL_DEFINE3(setitimer, int, which, \in struct itimerval *, new_value,
+                \out struct itimerval *, old_value)
+SYSCALL_DEFINE2(utimes, const char *, filename,
+                \in const struct timeval * [count:2], times)
+SYSCALL_DEFINE2(utime, const char *, filename,
+                \in const struct utimbuf *, times)
+
+// Resource
+// ========
+
+SYSCALL_DEFINE2(getrlimit, unsigned int, resource, struct rlimit *, rlim)
+SYSCALL_DEFINE2(getrusage, int, who, \out struct rusage *, usage)
+SYSCALL_DEFINE2(setrlimit, unsigned int, resource, struct rlimit *, rlim)
+
+// utsname.h
+// =========
+SYSCALL_DEFINE1(uname, \out struct utsname *, buf)
+
+// syslog.h
+// ========
+SYSCALL_DEFINE3(syslog, int, type, \in const char * [bound:len], buf, int, len)

@@ -1,0 +1,110 @@
+//
+// Copyright 2019 Asylo authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+syntax = "proto2";
+
+// $title: CSR, CRL, Certificate, and Certificate Chain
+// $overview: Certificate-related protos
+// $location: https://asylo.dev/docs/reference/proto/crypto/asylo.certificate.v1.html
+// $front_matter: redirect_from: /docs/reference/proto/crypto/certificate.html
+
+// This package defines certificate-related messages.
+package asylo;
+
+// A certificate signing request (CSR) for a public key.
+message CertificateSigningRequest {
+  // Defines different CSR formats.
+  enum CertificateSigningRequestFormat {
+    UNKNOWN = 0;
+
+    // A PKCS #10 certificate request encoded in DER format (.der file).
+    PKCS10_DER = 1;
+
+    // A PKCS #10 certificate request encoded in PEM format (.pem file).
+    PKCS10_PEM = 2;
+  }
+
+  // The format of the CSR in |data|. Required.
+  optional CertificateSigningRequestFormat format = 1;
+
+  // The raw bytes of an encoded CSR. Required.
+  optional bytes data = 2;
+}
+
+// A certificate for a public key.
+message Certificate {
+  // Defines different certificate formats.
+  enum CertificateFormat {
+    UNKNOWN = 0;
+
+    // An X.509 certificate encoded in DER format (.der file).
+    X509_DER = 1;
+
+    // An X.509 certificate encoded in PEM format (.pem file).
+    X509_PEM = 2;
+
+    // A serialized sgx.AttestationKeyCertificate proto for an SGX attestation
+    // key.
+    SGX_ATTESTATION_KEY_CERTIFICATE = 3;
+  }
+
+  // The format of the certificate in |data|. Required.
+  optional CertificateFormat format = 1;
+
+  // The raw bytes of an encoded certificate. Required.
+  optional bytes data = 2;
+}
+
+// A chain of certificates. In general, the following properties apply:
+//
+//   * The first certificate in the chain is the end-entity certificate. This
+//   certificate belongs to an entity that is presenting a certificate chain in
+//   order to prove a public key trustworthy.
+//   * Certificates in the range [1, N-1] belong to intermediate certificate
+//   authorities.
+//   * The last certificate in the chain represents the root certificate. This
+//   certificate is self-signed, and belongs to an entity that is trusted by the
+//   relying party for some out-of-band reason.
+//   * A certificate with index i in the range [0, N-1] is signed by the private
+//   key corresponding to the certificate with index i+1.
+//
+// Additional properties may apply for particular certificate types.
+//
+// Note that a CertificateChain may use more than one certificate format.
+message CertificateChain {
+  // A chain of certificates.
+  repeated Certificate certificates = 1;
+}
+
+// A Certificate Revocation List (CRL).
+message CertificateRevocationList {
+  // Defines different certificate revocation list formats.
+  enum CertificateRevocationListFormat {
+    UNKNOWN = 0;
+
+    // An X.509 certificate revocation list in DER format (.der file).
+    X509_DER = 1;
+
+    // An X.509 certificate revocation list in PEM format (.pem file).
+    X509_PEM = 2;
+  }
+
+  // The format of the certificate revocation list in |data|. Required.
+  optional CertificateRevocationListFormat format = 1;
+
+  // The raw bytes of an encoded certificate revocation list. Required.
+  optional bytes data = 2;
+}

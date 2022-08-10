@@ -1,0 +1,67 @@
+//
+// Copyright 2019 Asylo authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+syntax = "proto2";
+
+package asylo;
+
+import "asylo/enclave.proto";
+
+option java_package = "com.asylo";
+option java_multiple_files = true;
+option java_outer_classname = "EnclaveLoadConfigSgxExtension";
+
+// Configuration for an SGX enclave loader.
+message SgxLoadConfig {
+  // True, if the enclave is to be loaded in debug mode.
+  optional bool debug = 2;
+
+  message ForkConfig {
+    // Start address to load enclave.
+    optional uint64 base_address = 1 [default = 0];
+
+    // Size of the enclave in memory.
+    optional uint64 enclave_size = 2 [default = 0];
+  }
+
+  // Configuration passed by the implementation of fork to load a child enclave
+  // in the same virtual space as the parent.
+  optional ForkConfig fork_config = 3;
+
+  message FileEnclaveConfig {
+    // Path to the enclave binary (.so) file to load.
+    optional string enclave_path = 1;
+  }
+
+  message EmbeddedEnclaveConfig {
+    // Name of the ELF section containing the enclave.
+    optional string section_name = 1;
+  }
+
+  oneof source {
+    // Set if loading an SGX based enclave located in shared object files read
+    // from the file system.
+    FileEnclaveConfig file_enclave_config = 1;
+
+    // Set if loading an SGX based enclaves embedded in the binary of the
+    // calling process.
+    EmbeddedEnclaveConfig embedded_enclave_config = 4;
+  }
+}
+
+extend EnclaveLoadConfig {
+  optional SgxLoadConfig sgx_load_config = 263000381;
+}

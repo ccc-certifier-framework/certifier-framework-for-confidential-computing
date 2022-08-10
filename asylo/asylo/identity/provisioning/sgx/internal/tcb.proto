@@ -1,0 +1,131 @@
+syntax = "proto2";
+
+package asylo.sgx;
+
+import "google/protobuf/timestamp.proto";
+import "asylo/identity/platform/sgx/machine_configuration.proto";
+import "asylo/identity/provisioning/sgx/internal/platform_provisioning.proto";
+
+// This file defines the messages representing information about an SGX
+// platform's Trusted Computing Base (TCB).
+
+// A number indicating the layout of TCB and CPU SVN values.
+enum TcbType {
+  TCB_TYPE_UNKNOWN = 0;
+  TCB_TYPE_0 = 1;
+}
+
+// SGX Trusted Computing Base (TCB).
+message Tcb {
+  // The components of the TCB. Must be exactly 16 bytes. Required.
+  optional bytes components = 1;
+
+  // PCE SVN. Required.
+  optional PceSvn pce_svn = 2;
+}
+
+// Representation of a combination of CPUSVN and PCESVN.
+message RawTcb {
+  // Required.
+  optional CpuSvn cpu_svn = 1;
+
+  // Required.
+  optional PceSvn pce_svn = 2;
+}
+
+// SGX TCB status.
+message TcbStatus {
+  enum StatusType {
+    INVALID = 0;
+
+    // Indicates the TCB is up to date.
+    UP_TO_DATE = 1;
+
+    // Indicates the TCB is out of date.
+    OUT_OF_DATE = 2;
+
+    // User configuration is required to bring the platform to an up-to-date
+    // TCB.
+    CONFIGURATION_NEEDED = 3;
+
+    // Indicates the TCB has been revoked by Intel.
+    REVOKED = 4;
+  }
+  oneof value {
+    // Indicates that Intel's API returned a "status" string corresponding to
+    // one of the values in StatusType.
+    StatusType known_status = 1;
+
+    // Indicates that Intel's API returned a "status" string with no
+    // corresponding value in StatusType at the time that the message was
+    // created.
+    //
+    // Values may be added to StatusType. In that case, some old message may
+    // have |unknown_status|es that correspond to the new values in StatusType.
+    string unknown_status = 2;
+  }
+}
+
+// TCB level info.
+message TcbLevel {
+  // Required.
+  optional Tcb tcb = 1;
+
+  // From Intel's documentation: "Representation of date and time when the TCB
+  // level was certified not to be vulnerable to any issues described in SAs
+  // that were published on or prior to this date." Optional, but see
+  // TcbInfoImpl.tcb_levels.
+  optional google.protobuf.Timestamp tcb_date = 3;
+
+  // Status of the TcbLevel. Required.
+  optional TcbStatus status = 2;
+
+  // Advisory IDs for vulnerabilities that this TCB level is known to be
+  // vulnerable to. See
+  // https://www.intel.com/content/www/us/en/security-center/default.html for
+  // more information on Advisory IDs. Optional (i.e. may be empty), but see
+  // TcbInfoImpl.tcb_levels.
+  repeated string advisory_ids = 4;
+}
+
+// SGX TCB Info implementation.
+message TcbInfoImpl {
+  // Version of the TcbInfo returned from Intel. Required.
+  optional int32 version = 1;
+
+  // Date and time the TCB information was created. Required.
+  optional google.protobuf.Timestamp issue_date = 2;
+
+  // Date and time by which next TCB information will be issued. Required.
+  optional google.protobuf.Timestamp next_update = 3;
+
+  // FMSPC. Required.
+  optional Fmspc fmspc = 4;
+
+  // PCE identifier. Required.
+  optional PceId pce_id = 5;
+
+  // TCB type indicating how TCB levels should be compared. Required if
+  // |version| >= 2, otherwise must not be present.
+  optional TcbType tcb_type = 7;
+
+  // Monotonic counter indicating how many times TCB info has been updated for
+  // this FMSPC. Required if |version| >= 2, otherwise must not be present.
+  optional int32 tcb_evaluation_data_number = 8;
+
+  // If |version| >= 2, then each TcbLevel must have a |tcb_date| field.
+  // Otherwise, each TcbLevel must not have a |tcb_date| field and its
+  // |advisory_ids| field must be empty.
+  repeated TcbLevel tcb_levels = 6;
+}
+
+// SGX TCB info.
+//
+// To account for vastly different variants of this message, for instance,
+// if Intel makes wild changes of their format, we make TcbInfo contain
+// oneof value.
+message TcbInfo {
+  oneof value {
+    TcbInfoImpl impl = 1;
+  }
+}

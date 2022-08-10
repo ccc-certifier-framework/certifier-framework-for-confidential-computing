@@ -1,0 +1,1800 @@
+# Google's Modifications to Intel's SGX Data Center Attestation Primitives
+
+## Top-level files added
+  * Added `BUILD` file for Bazel support
+
+## Modifications to v1.2
+  * Renamed `map_file` and `unmap_file` to `dcap_internal_map_file` and
+    `dcap_internal_unmap_file` to prevent linking conflicts with the linux-sgx
+    which also defines `map_file` and `unmap_file`.
+  * Moved PCE constants out of sgx_pce.h to sgx_pce_constants.h
+  * Moved quote constants out of QuoteVerification src and into include dir.
+    moved non-constexpr definitions into QuoteConstants.cpp so as not to violate
+    the one definition rule.
+  * Added include user_types.h in sgx_ql_ecdsa_quote.h
+  * Added sgx_qe_set_enclave_dirpath to set the directory paths for both the
+    PCE and QE.
+  * Removed duplicated code in qe_logic.cpp.
+  * Added sgx_ql_set_quote_config to allow users to explicitly set the platform
+    quote data instead of relying on a Platform Quote Provider Library.
+--
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/common/inc/internal/se_map.h QuoteGeneration/common/inc/internal/se_map.h
+--- QuoteGeneration/common/inc/internal/se_map.h
++++ QuoteGeneration/common/inc/internal/se_map.h
+@@ -71,10 +71,10 @@
+ #endif
+ 
+ /* Map a file to memory and get its size. */
+-map_handle_t* map_file(se_file_handle_t fd, uint32_t *size);
++map_handle_t* dcap_internal_map_file(se_file_handle_t fd, uint32_t *size);
+ 
+ /* Unmap a mapped file. */
+-void unmap_file(map_handle_t* mh);
++void dcap_internal_unmap_file(map_handle_t* mh);
+ 
+ #ifdef __cplusplus
+ }
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/common/src/se_map.c QuoteGeneration/common/src/se_map.c
+--- QuoteGeneration/common/src/se_map.c
++++ QuoteGeneration/common/src/se_map.c
+@@ -36,7 +36,7 @@
+ 
+ #if defined(_MSC_VER)
+ 
+-map_handle_t* map_file(se_file_handle_t file, uint32_t *size)
++map_handle_t* dcap_internal_map_file(se_file_handle_t file, uint32_t *size)
+ {
+     if(size == NULL)
+         return NULL;
+@@ -78,7 +78,7 @@
+     return mh;
+ }
+ 
+-void unmap_file(map_handle_t* mh)
++void dcap_internal_unmap_file(map_handle_t* mh)
+ {
+     UnmapViewOfFile(mh->base_addr);
+     CloseHandle(mh->maph);
+@@ -86,7 +86,7 @@
+ }
+ 
+ #elif defined(__GNUC__)
+-map_handle_t* map_file(se_file_handle_t fd, uint32_t *size)
++map_handle_t* dcap_internal_map_file(se_file_handle_t fd, uint32_t *size)
+ {
+     struct stat st;
+     memset(&st, 0, sizeof(st));
+@@ -111,7 +111,7 @@
+     return mh;
+ }
+ 
+-void unmap_file(map_handle_t* mh)
++void dcap_internal_unmap_file(map_handle_t* mh)
+ {
+     munmap(mh->base_addr, mh->length);
+     free(mh);
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/pce_wrapper/inc/sgx_pce_constants.h QuoteGeneration/pce_wrapper/inc/sgx_pce_constants.h
+--- QuoteGeneration/pce_wrapper/inc/sgx_pce_constants.h
++++ QuoteGeneration/pce_wrapper/inc/sgx_pce_constants.h
+@@ -0,0 +1,51 @@
++/*
++ * Copyright (C) 2011-2019 Intel Corporation. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ *   * Redistributions of source code must retain the above copyright
++ *     notice, this list of conditions and the following disclaimer.
++ *   * Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in
++ *     the documentation and/or other materials provided with the
++ *     distribution.
++ *   * Neither the name of Intel Corporation nor the names of its
++ *     contributors may be used to endorse or promote products derived
++ *     from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ */
++
++/**
++ * File: sgx_pce_constants.h
++ * Description: Definition of constants used in PCE interface.
++ *
++ * Constants used in the PCE interface
++ */
++
++#ifndef _SGX_PCE_CONSTANTS_H_
++#define _SGX_PCE_CONSTANTS_H_
++
++/* PCE ID for the PCE in this library */
++#define PCE_ID = 0;
++
++/* Crypto_suite */
++#define PCE_ALG_RSA_OAEP_3072 1
++
++/* Signature_scheme */
++#define PCE_NIST_P256_ECDSA_SHA256 0
++
++#endif  // _SGX_PCE_CONSTANTS_H_
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/pce_wrapper/inc/sgx_pce.h QuoteGeneration/pce_wrapper/inc/sgx_pce.h
+--- QuoteGeneration/pce_wrapper/inc/sgx_pce.h
++++ QuoteGeneration/pce_wrapper/inc/sgx_pce.h
+@@ -33,56 +33,19 @@
+  * File: sgx_pce.h
+  * Description: Definition for pce interface.
+  *
+- * PCE interface and supporting structure definitions.
++ * PCE interface.
+  */
+ #ifndef _SGX_PCE_H_
+ #define _SGX_PCE_H_
+ 
+ #include "sgx_key.h"
+ #include "sgx_report.h"
++#include "sgx_pce_constants.h"
++#include "sgx_pce_types.h"
+ 
+-#define SGX_PCE_MK_ERROR(x)          (0x0000F000|(x))
+-typedef enum _sgx_pce_error_t
+-{
+-    SGX_PCE_SUCCESS                  = SGX_PCE_MK_ERROR(0x0000),
+-    SGX_PCE_UNEXPECTED               = SGX_PCE_MK_ERROR(0x0001),      /* Unexpected error */
+-    SGX_PCE_INVALID_PARAMETER        = SGX_PCE_MK_ERROR(0x0002),      /* The parameter is incorrect */
+-    SGX_PCE_OUT_OF_EPC               = SGX_PCE_MK_ERROR(0x0003),      /* Not enough memory is available to complete this operation */
+-    SGX_PCE_INTERFACE_UNAVAILABLE    = SGX_PCE_MK_ERROR(0x0004),      /* SGX API is unavailable */
+-    SGX_PCE_INVALID_REPORT           = SGX_PCE_MK_ERROR(0x0005),      /* the report cannot be verified */
+-    SGX_PCE_CRYPTO_ERROR             = SGX_PCE_MK_ERROR(0x0006),      /* Cannot decrypt or verify ciphertext */
+-    SGX_PCE_INVALID_PRIVILEGE        = SGX_PCE_MK_ERROR(0x0007),      /* Not enough privilege to perform the operation */
+-    SGX_PCE_INVALID_TCB              = SGX_PCE_MK_ERROR(0x0008),      /* PCE could not sign at the requested TCB */
+-} sgx_pce_error_t;
+-
+-
+-/* PCE ID for the PCE in this library */
+-#define PCE_ID 0
+-
+-/* Crypto_suite */
+-#define PCE_ALG_RSA_OAEP_3072 1
+-
+-/* Signature_scheme */
+-#define PCE_NIST_P256_ECDSA_SHA256 0
+-
+-
+-//TODO: in qe pce common header
+-/** Typedef enum _sgx_ql_request_policy */ 
+-typedef enum _sgx_ql_request_policy
+-{
+-    SGX_QL_PERSISTENT, ///< QE is initialized on first use and reused until process ends.
+-    SGX_QL_EPHEMERAL,  ///< QE is initialized and terminated on every quote.
+-                       ///< If a previous QE exists, it is stopped & restarted before quoting.
+-    SGX_QL_DEFAULT = SGX_QL_PERSISTENT
+-} sgx_ql_request_policy_t;
+-
+-#pragma pack(push, 1)
+-/** Structure for the Platform Certificate Enclave identity information   */
+-typedef struct _sgx_pce_info_t {
+-    sgx_isv_svn_t pce_isv_svn;  ///< PCE ISVSVN
+-    uint16_t      pce_id;       ///< PCE ID.  It will change when something in the PCE would cause the PPID generation to change on the same platform
+-}sgx_pce_info_t;
+-#pragma pack(pop)
++#ifdef _MSC_VER
++#include <tchar.h>
++#endif
+ 
+ #if defined(__cplusplus)
+ extern "C" {
+@@ -91,6 +54,14 @@
+ sgx_pce_error_t sgx_set_pce_enclave_load_policy(
+                               sgx_ql_request_policy_t policy);
+ 
++/** Set the directory in which the PCE binary is located. */
++sgx_pce_error_t sgx_set_pce_enclave_dirpath(
++#if defined(_MSC_VER)
++                              const TCHAR *dirpath);
++#else
++                              const char *dirpath);
++#endif
++
+ sgx_pce_error_t sgx_pce_get_target(
+                               sgx_target_info_t *p_pce_target,
+                               sgx_isv_svn_t *p_pce_isv_svn);
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/pce_wrapper/inc/sgx_pce_types.h QuoteGeneration/pce_wrapper/inc/sgx_pce_types.h
+--- QuoteGeneration/pce_wrapper/inc/sgx_pce_types.h
++++ QuoteGeneration/pce_wrapper/inc/sgx_pce_types.h
+@@ -0,0 +1,79 @@
++/*
++ * Copyright (C) 2011-2019 Intel Corporation. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ *   * Redistributions of source code must retain the above copyright
++ *     notice, this list of conditions and the following disclaimer.
++ *   * Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in
++ *     the documentation and/or other materials provided with the
++ *     distribution.
++ *   * Neither the name of Intel Corporation nor the names of its
++ *     contributors may be used to endorse or promote products derived
++ *     from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ */
++
++/**
++ * File: sgx_pce_types.h
++ * Description: Type definitions for pce interface.
++ *
++ * PCE supporting structure definitions.
++ */
++
++#ifndef _SGX_PCE_TYPES_H_
++#define _SGX_PCE_TYPES_H_
++
++#include <stdint.h>
++
++#include "sgx_key.h"
++
++#define SGX_PCE_MK_ERROR(x)          (0x0000F000|(x))
++typedef enum _sgx_pce_error_t
++{
++    SGX_PCE_SUCCESS                  = SGX_PCE_MK_ERROR(0x0000),
++    SGX_PCE_UNEXPECTED               = SGX_PCE_MK_ERROR(0x0001),      /* Unexpected error */
++    SGX_PCE_INVALID_PARAMETER        = SGX_PCE_MK_ERROR(0x0002),      /* The parameter is incorrect */
++    SGX_PCE_OUT_OF_EPC               = SGX_PCE_MK_ERROR(0x0003),      /* Not enough memory is available to complete this operation */
++    SGX_PCE_INTERFACE_UNAVAILABLE    = SGX_PCE_MK_ERROR(0x0004),      /* SGX API is unavailable */
++    SGX_PCE_INVALID_REPORT           = SGX_PCE_MK_ERROR(0x0005),      /* the report cannot be verified */
++    SGX_PCE_CRYPTO_ERROR             = SGX_PCE_MK_ERROR(0x0006),      /* Cannot decrypt or verify ciphertext */
++    SGX_PCE_INVALID_PRIVILEGE        = SGX_PCE_MK_ERROR(0x0007),      /* Not enough privilege to perform the operation */
++    SGX_PCE_INVALID_TCB              = SGX_PCE_MK_ERROR(0x0008),      /* PCE could not sign at the requested TCB */
++} sgx_pce_error_t;
++
++/** Typedef enum _sgx_ql_request_policy */ 
++typedef enum _sgx_ql_request_policy
++{
++    SGX_QL_PERSISTENT, ///< QE is initialized on first use and reused until process ends.
++    SGX_QL_EPHEMERAL,  ///< QE is initialized and terminated on every quote.
++                       ///< If a previous QE exists, it is stopped & restarted before quoting.
++    SGX_QL_DEFAULT = SGX_QL_PERSISTENT
++} sgx_ql_request_policy_t;
++
++#pragma pack(push, 1)
++/** Structure for the Platform Certificate Enclave identity information   */
++typedef struct _sgx_pce_info_t {
++    sgx_isv_svn_t pce_isv_svn;  ///< PCE ISVSVN
++    uint16_t      pce_id;       ///< PCE ID.  It will change when something in the PCE would cause the PPID generation to change on the same platform
++}sgx_pce_info_t;
++#pragma pack(pop)
++
++#endif
++
++
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/pce_wrapper/linux/pce_parser.cpp QuoteGeneration/pce_wrapper/linux/pce_parser.cpp
+--- QuoteGeneration/pce_wrapper/linux/pce_parser.cpp
++++ QuoteGeneration/pce_wrapper/linux/pce_parser.cpp
+@@ -115,7 +115,7 @@
+     }
+     
+     
+-    mh = map_file(fd, &file_size);
++    mh = dcap_internal_map_file(fd, &file_size);
+     if (!mh)
+     {
+         close(fd);
+@@ -125,25 +125,26 @@
+     PARSER parser(const_cast<uint8_t *>(mh->base_addr), (uint64_t)(file_size));
+     if(SGX_SUCCESS != parser.run_parser())
+     {
+-        unmap_file(mh);
++        dcap_internal_unmap_file(mh);
+         close(fd);
+         return false;
+     }
+ 
+     if(true != get_metadata(&parser, &p_metadata))
+     {
+-        unmap_file(mh);
++        dcap_internal_unmap_file(mh);
+         close(fd);
+         return false;
+     }
+     memcpy(metadata, p_metadata, sizeof(metadata_t));
+-    unmap_file(mh);
++    dcap_internal_unmap_file(mh);
+     close(fd);
+     return true;
+ }
+ 
+ #define PCE_ENCLAVE_NAME "libsgx_pce.signed.so"
+ bool get_pce_path(
++    const char *p_dirpath,
+     char *p_file_path,
+     size_t buf_size)
+ {
+@@ -151,10 +152,19 @@
+         return false;
+ 
+     Dl_info dl_info;
+-    if(0 != dladdr(__builtin_return_address(0), &dl_info) &&
++    if (p_dirpath != NULL)
++    {
++        if(strnlen(p_dirpath,buf_size)==buf_size)
++        {
++            SE_TRACE(SE_TRACE_ERROR, "Input dirpath is too long\n");
++            return false;
++        }
++        (void)strncpy(p_file_path,p_dirpath,buf_size);
++    }
++    else if(0 != dladdr(__builtin_return_address(0), &dl_info) &&
+         NULL != dl_info.dli_fname)
+     {
+-        if(strnlen(dl_info.dli_fname,buf_size)>=buf_size)
++        if(strnlen(dl_info.dli_fname,buf_size)==buf_size)
+             return false;
+         (void)strncpy(p_file_path,dl_info.dli_fname,buf_size);
+     }
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/pce_wrapper/pce_wrapper.cpp QuoteGeneration/pce_wrapper/pce_wrapper.cpp
+--- QuoteGeneration/pce_wrapper/pce_wrapper.cpp
++++ QuoteGeneration/pce_wrapper/pce_wrapper.cpp
+@@ -52,24 +52,28 @@
+ 
+ #if defined(_MSC_VER)
+ #include <tchar.h>
+-bool get_pce_path(TCHAR *p_file_path, size_t buf_size);
+-bool pce_get_metadata(const TCHAR* enclave_file, metadata_t *metadata);
+ #else
+ #include <limits.h>
++#include <string.h>
+ #define MAX_PATH PATH_MAX
+-bool get_pce_path(char *p_file_path, size_t buf_size);
+-bool pce_get_metadata(const char* enclave_file, metadata_t *metadata);
+-
++typedef char TCHAR;
++#define _T(str) str
+ #endif
+ 
++bool get_pce_path(const TCHAR *p_dirpath, TCHAR *p_file_path, size_t buf_size);
++bool pce_get_metadata(const TCHAR* enclave_file, metadata_t *metadata);
++
+ struct PCE_status {
+     se_mutex_t m_pce_mutex;
+     sgx_ql_request_policy_t m_pce_enclave_load_policy;
++    TCHAR m_pce_dirpath[MAX_PATH];
++    size_t m_pce_dirpath_length;
+     sgx_enclave_id_t m_pce_eid;
+     sgx_misc_attribute_t m_pce_attributes;
+ 
+     PCE_status() :
+         m_pce_enclave_load_policy(SGX_QL_DEFAULT),
++        m_pce_dirpath_length(0),
+         m_pce_eid(0)
+     {
+         se_mutex_init(&m_pce_mutex);
+@@ -79,6 +83,12 @@
+         if (m_pce_eid != 0) sgx_destroy_enclave(m_pce_eid);
+         se_mutex_destroy(&m_pce_mutex);
+     }
++
++    bool get_pce_path(TCHAR *p_file_path, size_t buf_size) const
++    {
++        const TCHAR *dirpath = m_pce_dirpath_length > 0 ? m_pce_dirpath : NULL;
++        return ::get_pce_path(dirpath, p_file_path, buf_size);
++    }
+ };
+ 
+ static PCE_status g_pce_status;
+@@ -90,11 +100,7 @@
+     sgx_status_t sgx_status = SGX_SUCCESS;
+     int enclave_lost_retry_time = 1;
+     int launch_token_updated = 0;
+-#if defined(_MSC_VER)
+     TCHAR pce_enclave_path[MAX_PATH] = _T("");
+-#else 
+-    char pce_enclave_path[MAX_PATH] = "";
+-#endif
+     memset(p_launch_token, 0, sizeof(*p_launch_token));
+ 
+     int rc = se_mutex_lock(&g_pce_status.m_pce_mutex);
+@@ -107,7 +113,7 @@
+     // Load the PCE
+     if (g_pce_status.m_pce_eid == 0)
+     {
+-        if (!get_pce_path(pce_enclave_path, MAX_PATH))
++        if (!g_pce_status.get_pce_path(pce_enclave_path, MAX_PATH))
+             return SGX_PCE_INTERFACE_UNAVAILABLE;
+         do
+         {
+@@ -190,6 +196,37 @@
+         unload_pce(true);
+     return SGX_PCE_SUCCESS;
+ }
++
++sgx_pce_error_t sgx_set_pce_enclave_dirpath(
++    const TCHAR *dirpath)
++{
++    if (dirpath == NULL)
++    {
++        memset(g_pce_status.m_pce_dirpath, 0, sizeof(g_pce_status.m_pce_dirpath));
++        g_pce_status.m_pce_dirpath_length = 0;
++        return SGX_PCE_SUCCESS;
++    }
++
++    size_t dirpath_length;
++
++#if defined(_MSC_VER)
++    dirpath_length = _tcsnlen(dirpath);
++#else
++    dirpath_length = strlen(dirpath);
++#endif
++
++    if (dirpath_length >= sizeof(g_pce_status.m_pce_dirpath))
++    {
++        return SGX_PCE_INVALID_PARAMETER;
++    }
++
++    memcpy(g_pce_status.m_pce_dirpath, dirpath, dirpath_length);
++    g_pce_status.m_pce_dirpath[dirpath_length] = 0;
++    g_pce_status.m_pce_dirpath_length = dirpath_length;
++
++    return SGX_PCE_SUCCESS;
++}
++
+ sgx_pce_error_t sgx_pce_get_target(sgx_target_info_t *p_target,
+     sgx_isv_svn_t *p_isvsvn)
+ {
+@@ -197,18 +234,14 @@
+     sgx_enclave_id_t pce_eid = 0;
+     sgx_launch_token_t launch_token = { 0 };
+     metadata_t metadata;
+-#if defined(_MSC_VER)
+     TCHAR pce_enclave_path[MAX_PATH] = _T("");
+-#else 
+-    char pce_enclave_path[MAX_PATH] = "";
+-#endif
+     if ((NULL == p_target) ||
+         (NULL == p_isvsvn))
+     {
+         return(SGX_PCE_INVALID_PARAMETER);
+     }
+ 
+-    if (!get_pce_path(pce_enclave_path, MAX_PATH))
++    if (!g_pce_status.get_pce_path(pce_enclave_path, MAX_PATH))
+         return SGX_PCE_INTERFACE_UNAVAILABLE;
+ 
+     if (!pce_get_metadata(pce_enclave_path, &metadata))
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/qcnl/sgx_default_qcnl_wrapper.cpp QuoteGeneration/qcnl/sgx_default_qcnl_wrapper.cpp
+--- QuoteGeneration/qcnl/sgx_default_qcnl_wrapper.cpp
++++ QuoteGeneration/qcnl/sgx_default_qcnl_wrapper.cpp
+@@ -43,7 +43,7 @@
+ #include <algorithm>
+ #include <sgx_key.h>
+ #include "sgx_default_qcnl_wrapper.h"
+-#include "sgx_pce.h"
++#include "sgx_pce_types.h"
+ #include "network_wrapper.h"
+ #include "se_memcpy.h"
+ 
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/quote_wrapper/common/inc/sgx_ql_ecdsa_quote.h QuoteGeneration/quote_wrapper/common/inc/sgx_ql_ecdsa_quote.h
+--- QuoteGeneration/quote_wrapper/common/inc/sgx_ql_ecdsa_quote.h
++++ QuoteGeneration/quote_wrapper/common/inc/sgx_ql_ecdsa_quote.h
+@@ -39,7 +39,13 @@
+ #ifndef _SGX_QL_ECDSA_QUOTE_H_
+ #define _SGX_QL_ECDSA_QUOTE_H_
+ 
++#include "sgx_pce_types.h"  // sgx_ql_request_policy_t
+ #include "sgx_ql_quote.h"
++#include "user_types.h"
++
++#ifdef _MSC_VER
++#include <tchar.h>
++#endif
+ 
+ /**
+     Class definition of the reference ECDSA-P256 quoting code which implements the quoting interface, IQuote.
+@@ -48,6 +54,14 @@
+ public:
+     virtual quote3_error_t set_enclave_load_policy(sgx_ql_request_policy_t policy);
+ 
++#ifdef _MSC_VER
++    virtual quote3_error_t set_enclave_dirpath(const TCHAR *dirpath);
++#else
++    virtual quote3_error_t set_enclave_dirpath(const char *dirpath);
++#endif
++
++    virtual quote3_error_t set_quote_config(const sgx_ql_config_t *config);
++
+     virtual quote3_error_t init_quote(sgx_ql_att_key_id_t* p_att_key_id,
+                                       sgx_ql_cert_key_type_t certification_key_type,
+                                       sgx_target_info_t *p_target_info,
+@@ -68,6 +82,12 @@
+ private:
+     quote3_error_t ecdsa_set_enclave_load_policy(sgx_ql_request_policy_t policy);
+ 
++#ifdef _MSC_VER
++    quote3_error_t ecdsa_set_enclave_dirpath(const TCHAR *dirpath);
++#else
++    quote3_error_t ecdsa_set_enclave_dirpath(const char *dirpath);
++#endif
++
+     quote3_error_t ecdsa_init_quote(sgx_ql_cert_key_type_t certification_key_type,
+                                     sgx_target_info_t *p_target_info,
+                                     bool refresh_att_key,
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/quote_wrapper/common/inc/sgx_quote_3.h QuoteGeneration/quote_wrapper/common/inc/sgx_quote_3.h
+--- QuoteGeneration/quote_wrapper/common/inc/sgx_quote_3.h
++++ QuoteGeneration/quote_wrapper/common/inc/sgx_quote_3.h
+@@ -40,7 +40,7 @@
+ #define _SGX_QUOTE_3_H_
+ 
+ #include "sgx_report.h"
+-#include "sgx_pce.h"
++#include "sgx_pce_types.h"
+ 
+ #define REF_QUOTE_MAX_AUTHENTICATON_DATA_SIZE 64
+ #define USE_PCEID
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/quote_wrapper/ql/inc/sgx_dcap_ql_wrapper.h QuoteGeneration/quote_wrapper/ql/inc/sgx_dcap_ql_wrapper.h
+--- QuoteGeneration/quote_wrapper/ql/inc/sgx_dcap_ql_wrapper.h
++++ QuoteGeneration/quote_wrapper/ql/inc/sgx_dcap_ql_wrapper.h
+@@ -39,15 +39,25 @@
+ #define _SGX_DCAP_QL_WRAPPER_H_
+ 
+ #include "sgx_report.h"
+-#include "sgx_pce.h"
++#include "sgx_pce_types.h"
+ #include "sgx_ql_lib_common.h"
+ 
++#if defined(_MSC_VER)
++#include <tchar.h>
++#endif
++
+ #if defined(__cplusplus)
+ extern "C" {
+ #endif
+ 
+ quote3_error_t sgx_qe_set_enclave_load_policy(sgx_ql_request_policy_t policy);
+ 
++#if defined(_MSC_VER)
++quote3_error_t sgx_qe_set_enclave_dirpath(const TCHAR *dirpath);
++#else
++quote3_error_t sgx_qe_set_enclave_dirpath(const char *dirpath);
++#endif
++
+ quote3_error_t sgx_qe_get_target_info(sgx_target_info_t *p_qe_target_info);
+ 
+ quote3_error_t sgx_qe_get_quote_size(uint32_t *p_quote_size);
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/quote_wrapper/ql/sgx_dcap_ql_wrapper.cpp QuoteGeneration/quote_wrapper/ql/sgx_dcap_ql_wrapper.cpp
+--- QuoteGeneration/quote_wrapper/ql/sgx_dcap_ql_wrapper.cpp
++++ QuoteGeneration/quote_wrapper/ql/sgx_dcap_ql_wrapper.cpp
+@@ -46,6 +46,10 @@
+ #include "sgx_quote_3.h"
+ #include "se_trace.h"
+ 
++#ifndef _MSC_VER
++typedef char TCHAR;
++#endif
++
+ /** 
+  * When the Quoting Library is linked to a process, it needs to know the proper enclave loading policy.  The library
+  * may be linked with a long lived process, such as a service, where it can load the enclaves and leave them loaded 
+@@ -75,6 +79,19 @@
+ }
+ 
+ /**
++ * This API will explicitly set the directory where enclaves required for quoting are located. By default, enclaves
++ * are assumed to be located in the same directory as the application which is calling the ECDSA quoting APIs. This
++ * API will override that default, locating the quoting and provisioning enclaves in dirpath.
++ *
++ * @param dirpath The directory where the quoting and provisioning enclaves are. If NULL, any previously-set
++ * path is cleared.
++ */
++extern "C" quote3_error_t sgx_qe_set_enclave_dirpath(const TCHAR *dirpath)
++{
++    return(sgx_ql_set_enclave_dirpath(dirpath));
++}
++
++/**
+  * This API will allow the calling code to retrieve the target info of the QE.  This maps to the Initialize Quote
+  * Attestation Key API of the core library.  It will be a simple wrapper around the core library's
+  * sgx_ql_init_quote() API. The loading of the QE and the PCE will follow the selected loading policy. 
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/quote_wrapper/quote/enclave/quoting_enclave_3.cpp QuoteGeneration/quote_wrapper/quote/enclave/quoting_enclave_3.cpp
+--- QuoteGeneration/quote_wrapper/quote/enclave/quoting_enclave_3.cpp
++++ QuoteGeneration/quote_wrapper/quote/enclave/quoting_enclave_3.cpp
+@@ -51,14 +51,14 @@
+ 
+ #include "qe3.h"
+ #include "user_types.h"
+-#include "sgx_pce.h"
++#include "sgx_pce_types.h"
+ #include "sgx_lfence.h"
+ 
+-  //Compile switches for debug and for currently unsupported features.
+-  //#define ALLOW_DEBUG_PCE 1
+-  //#define ALLOW_CLEARTEXT_PPID 1
+-  //#define USE_ALPHA_ENCRYPTION_KEY 1
+-  //#define GENERATE_RANDOM_ATTESTATION_KEY 1
++// Compile switches for debug and for currently unsupported features.
++//#define ALLOW_DEBUG_PCE 1
++//#define ALLOW_CLEARTEXT_PPID 1
++//#define USE_ALPHA_ENCRYPTION_KEY 1
++//#define GENERATE_RANDOM_ATTESTATION_KEY 1
+ 
+ #define REF_N_SIZE_IN_BYTES    384
+ #define REF_E_SIZE_IN_BYTES    4
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/quote_wrapper/quote/inc/ecdsa_quote.h QuoteGeneration/quote_wrapper/quote/inc/ecdsa_quote.h
+--- QuoteGeneration/quote_wrapper/quote/inc/ecdsa_quote.h
++++ QuoteGeneration/quote_wrapper/quote/inc/ecdsa_quote.h
+@@ -40,7 +40,7 @@
+ #define _ECDSA_QUOTE_H_
+ 
+ #include "sgx_tseal.h"
+-#include "sgx_pce.h"
++#include "sgx_pce_types.h"
+ #include "sgx_quote_3.h"
+ 
+ #define REF_ECDSDA_AUTHENTICATION_DATA_SIZE 32
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/quote_wrapper/quote/inc/sgx_ql_core_wrapper.h QuoteGeneration/quote_wrapper/quote/inc/sgx_ql_core_wrapper.h
+--- QuoteGeneration/quote_wrapper/quote/inc/sgx_ql_core_wrapper.h
++++ QuoteGeneration/quote_wrapper/quote/inc/sgx_ql_core_wrapper.h
+@@ -40,6 +40,10 @@
+ #include "sgx_quote_3.h"
+ #include "sgx_ql_quote.h"
+ 
++#if defined(_MSC_VER)
++#include <tchar.h>
++#endif
++
+ #define SGX_QL_MAX_ATT_KEY_IDS 10
+ 
+ #define SGX_QL_CERT_TYPE PPID_RSA3072_ENCRYPTED 
+@@ -50,6 +54,14 @@
+ 
+ quote3_error_t sgx_ql_set_enclave_load_policy(sgx_ql_request_policy_t policy);
+ 
++#if defined(_MSC_VER)
++quote3_error_t sgx_ql_set_enclave_dirpath(const TCHAR *dirpath);
++#else
++quote3_error_t sgx_ql_set_enclave_dirpath(const char *dirpath);
++#endif
++
++quote3_error_t sgx_ql_set_quote_config(const sgx_ql_config_t *config);
++
+ quote3_error_t sgx_ql_select_att_key_id(sgx_ql_att_key_id_list_t *p_att_key_id_list,
+                                         sgx_ql_att_key_id_t **p_selected_key_id);
+     
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/quote_wrapper/quote/qe_logic.cpp QuoteGeneration/quote_wrapper/quote/qe_logic.cpp
+--- QuoteGeneration/quote_wrapper/quote/qe_logic.cpp
++++ QuoteGeneration/quote_wrapper/quote/qe_logic.cpp
+@@ -53,6 +53,8 @@
+ #include "qe3.h"
+ #include "qe3_u.h"
+ #include "sgx_pce.h"
++#include "sgx_pce_constants.h"
++#include "sgx_pce_types.h"
+ #ifdef MSFT_COM_WRAPPER
+     #include "sgx_provision_certificate.h"
+ #endif
+@@ -67,12 +69,56 @@
+     #define SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME_LEGACY "libdcap_quoteprov.so"
+     #define TCHAR char
+     #define _T(x) (x)
++    #define PATH_SEPARATOR '/'
++    typedef void* library_handle_t;
+ #else
+     #define QE3_ENCLAVE_NAME _T("qe3.signed.dll")
+     #define SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME "dcap_quoteprov.dll"
++    #define SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME_LEGACY NULL
++    #define PATH_SEPARATOR '\\'
++    typedef HINSTANCE library_handle_t;
+ #endif
+ #define ECDSA_BLOB_LABEL "ecdsa_data.blob"
+ 
++/**
++ * Define various local compatibility shims for working with dynamically loaded
++ * libraries so that code doesn't have to vary so much between different OS.
++ */
++static inline library_handle_t load_library(const char *filename)
++{
++#ifndef _MSC_VER
++    return dlopen(filename, RTLD_LAZY);
++#else
++    return LoadLibrary(TEXT(filename));
++#endif
++}
++
++static inline void *lookup_symbol(library_handle_t handle, const char *symbol)
++{
++#ifndef _MSC_VER
++    return dlsym(handle, symbol);
++#else
++    return GetProcAddress(handle, symbol);
++#endif
++}
++
++static inline char *get_lookup_error()
++{
++#ifndef _MSC_VER
++  return dlerror();
++#else
++  return NULL;
++#endif
++}
++
++static inline void close_library(library_handle_t handle)
++{
++#ifndef _MSC_VER
++    dlclose(handle);
++#else
++    FreeLibrary(handle);
++#endif
++}
+ 
+ #define MAX_PATH 260
+ #define MAX_CERT_DATA_SIZE (4098*3)
+@@ -96,6 +142,18 @@
+ #define strcpy_s(dst, dstsize, src) strncpy(dst, src, dstsize)
+ #endif
+ 
++/**
++ * Free the heap-allocated sgx_ql_config_t structure. Safe to call with a NULL
++ * pointer.
++ */
++static inline void free_quote_config(sgx_ql_config_t *config)
++{
++    if (config)
++    {
++        free(config->p_cert_data);
++        free(config);
++    }
++}
+ 
+ /**
+  * Since the error code space of the PCE library is not unique from SGX SDK error space, need to explicitly
+@@ -163,17 +221,22 @@
+     se_mutex_t m_ecdsa_blob_mutex;
+ 
+     sgx_ql_request_policy_t m_load_policy;
++    TCHAR m_qe_dirpath[MAX_PATH];
++    size_t m_qe_dirpath_length;
+     sgx_enclave_id_t m_eid;
+     sgx_misc_attribute_t m_attributes;
+     sgx_launch_token_t m_launch_token;
+     uint8_t m_ecdsa_blob[SGX_QL_TRUSTED_ECDSA_BLOB_SIZE_SDK];
+     uint8_t *m_pencryptedppid;
+     sgx_pce_info_t m_pce_info;
++    sgx_ql_config_t *m_quote_config;
+ 
+     ql_global_data():
+         m_load_policy(SGX_QL_DEFAULT),
++        m_qe_dirpath_length(0),
+         m_eid(0),
+-        m_pencryptedppid(NULL)
++        m_pencryptedppid(NULL),
++        m_quote_config(NULL)
+     {
+         se_mutex_init(&m_enclave_load_mutex);
+         se_mutex_init(&m_ecdsa_blob_mutex);
+@@ -193,10 +256,14 @@
+             free(m_pencryptedppid);
+             m_pencryptedppid = NULL;
+         }
++        free_quote_config(m_quote_config);
+     }
+ };
+ 
+-static ql_global_data g_ql_global_data;
++// We prefer a reference to a heap allocated static object here to prevent its clean-up when destroying the object.
++// This allows references by other objects which may need this object, say during ecall for enclave destruction.
++// A reference is also preferable to keep allowing the existing usage of . operator instead of ->
++static ql_global_data &g_ql_global_data = *new ql_global_data;
+ 
+ #ifdef ENABLE_QE3_LOGGING
+ /* OCall functions for debug */
+@@ -237,17 +304,11 @@
+     sgx_get_quote_config_func_t p_sgx_get_quote_config = NULL;
+     sgx_free_quote_config_func_t p_sgx_free_quote_config = NULL;
+     sgx_ql_config_t *p_pck_cert_config = NULL;
+-
+-    #ifndef _MSC_VER
+-    void *handle = NULL;
++    library_handle_t handle = NULL;
+     char *error1 = NULL;
+     char *error2 = NULL;
+-    #ifndef DISABLE_TRACE
+     bool old_libname_used = false;
+-    #endif
+-    #else
+-    HINSTANCE handle;
+-    #endif
++    bool unlock_on_cleanup = false;
+ 
+     if((NULL == p_pck_cert_id) ||
+        (NULL == p_cert_cpu_svn) ||
+@@ -259,175 +320,126 @@
+         return SGX_QL_ERROR_INVALID_PARAMETER;
+     }
+ 
+-    #ifndef _MSC_VER
+-    handle = dlopen(SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME, RTLD_LAZY);
+-    if (NULL == handle)
+-    {
+-        ///TODO:
+-        // This is a temporary solution to make sure the legacy library without a version suffix can be loaded.
+-        // We shalll remove this when we have a major version change later and drop the backward compatible
+-        // support for old lib name.
+-        #ifndef DISABLE_TRACE
+-        old_libname_used = true;
+-        #endif
+-        handle = dlopen(SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME_LEGACY, RTLD_LAZY);
++    if (!se_mutex_lock(&g_ql_global_data.m_enclave_load_mutex)) {
++        SE_TRACE(SE_TRACE_ERROR, "Failed to lock mutex\n");
++        return SGX_QL_ERROR_UNEXPECTED;
+     }
+-    if (handle) {
+-        SE_TRACE(SE_TRACE_DEBUG, "Found the Quote's dependent library. %s.\n",
+-            old_libname_used ? SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME_LEGACY : SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME);
+-        p_sgx_get_quote_config = (sgx_get_quote_config_func_t)dlsym(handle, "sgx_ql_get_quote_config");
+-        error1 = dlerror();
+-        p_sgx_free_quote_config = (sgx_free_quote_config_func_t)dlsym(handle, "sgx_ql_free_quote_config");
+-        error2 = dlerror();
+-
+-        if ((NULL == error1) &&
+-             (NULL != p_sgx_get_quote_config) &&
+-            (NULL == error2) &&
+-             (NULL != p_sgx_free_quote_config)){
+-            SE_TRACE(SE_TRACE_DEBUG, "Found the sgx_ql_get_quote_config and sgx_ql_free_quote_config API.\n");
+-            SE_TRACE(SE_TRACE_DEBUG, "Request the Quote Config data.\n");
+-            ret_val = p_sgx_get_quote_config(p_pck_cert_id, &p_pck_cert_config);
+-            if (SGX_QL_SUCCESS != ret_val) {
+-                SE_TRACE(SE_TRACE_ERROR, "Error returned from the p_sgx_get_quote_config API. 0x%04x\n", ret_val);
+-                ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
+-                goto CLEANUP;
+-            }
+-            if(NULL == p_pck_cert_config) {
+-                ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
+-                SE_TRACE(SE_TRACE_ERROR, "p_sgx_get_quote_config returned NULL for p_pck_cert_config.\n");
+-                goto CLEANUP;
+-            }
+-            if(p_pck_cert_config->version != SGX_QL_CONFIG_VERSION_1) {
+-                SE_TRACE(SE_TRACE_ERROR, "p_sgx_get_quote_config returned incompatible pck_cert_config version.\n");
+-                ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
+-                goto CLEANUP;
+-            }
+-            if(0 != memcpy_s(p_cert_cpu_svn, sizeof(*p_cert_cpu_svn), &p_pck_cert_config->cert_cpu_svn, sizeof(p_pck_cert_config->cert_cpu_svn))) {
+-                ret_val = SGX_QL_ERROR_UNEXPECTED;
+-                goto CLEANUP;
+-            }
+-            *p_cert_pce_isv_svn = p_pck_cert_config->cert_pce_isv_svn;
+-            if(NULL == p_cert_data) {
+-                // The caller only needs the TCBm and/or the required buffer size.
+-                // Return the required buffer size.
+-                *p_cert_data_size = p_pck_cert_config->cert_data_size;
+-            }
+-            else {
+-                // The caller wants the TCBm and the required buffer size.
+-                if(*p_cert_data_size < p_pck_cert_config->cert_data_size) {
+-                    // The buffer passed in to this API is not large enouge to contain the provider library's returned cert data.
+-                    // This shouldn't happen since the passed in value should be the result of calling this function
+-                    // with the inputted p_cert_data equal to NULL just befor this caller.
+-                    SE_TRACE(SE_TRACE_ERROR, "sgx_ql_get_quote_config returned a cert_data_size too large to fit in inputted buffer.\n");
+-                    ret_val = SGX_QL_ERROR_INVALID_PARAMETER;
+-                    goto CLEANUP;
+-                }
+-                if(NULL == p_pck_cert_config->p_cert_data) {
+-                    SE_TRACE(SE_TRACE_ERROR, "sgx_ql_get_quote_config returned NULL for p_cert_data.\n");
++
++    if (NULL != g_ql_global_data.m_quote_config) {
++        SE_TRACE(SE_TRACE_DEBUG, "Using explicitly set quote config.\n");
++        p_pck_cert_config = g_ql_global_data.m_quote_config;
++        unlock_on_cleanup = true;
++    } else {
++        // If the quote config was not explicitly set, try to look up the config
++        // using a Platform Quote Provider Library.
++
++        // Don't hold the lock if we're calling out to an unknown library.
++        unlock_on_cleanup = false;
++        if (!se_mutex_unlock(&g_ql_global_data.m_enclave_load_mutex)) {
++            SE_TRACE(SE_TRACE_ERROR, "Failed to unlock mutex\n");
++        }
++
++        handle = load_library(SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME);
++        if (NULL == handle && NULL != SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME_LEGACY)
++        {
++            // This is a temporary solution to make sure the legacy library without a version suffix can be loaded.
++            // We shalll remove this when we have a major version change later and drop the backward compatible
++            // support for old lib name.
++            old_libname_used = true;
++            handle = load_library(SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME_LEGACY);
++        }
++        if (handle) {
++            SE_TRACE(SE_TRACE_DEBUG, "Found the Quote's dependent library. %s.\n",
++                old_libname_used ? SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME_LEGACY : SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME);
++            p_sgx_get_quote_config = (sgx_get_quote_config_func_t)lookup_symbol(handle, "sgx_ql_get_quote_config");
++            error1 = get_lookup_error();
++            p_sgx_free_quote_config = (sgx_free_quote_config_func_t)lookup_symbol(handle, "sgx_ql_free_quote_config");
++            error2 = get_lookup_error();
++
++            if ((NULL == error1) &&
++                 (NULL != p_sgx_get_quote_config) &&
++                (NULL == error2) &&
++                 (NULL != p_sgx_free_quote_config)){
++                SE_TRACE(SE_TRACE_DEBUG, "Found the sgx_ql_get_quote_config and sgx_ql_free_quote_config API.\n");
++                SE_TRACE(SE_TRACE_DEBUG, "Request the Quote Config data.\n");
++                ret_val = p_sgx_get_quote_config(p_pck_cert_id, &p_pck_cert_config);
++                if (SGX_QL_SUCCESS != ret_val) {
++                    SE_TRACE(SE_TRACE_ERROR, "Error returned from the p_sgx_get_quote_config API. 0x%04x\n", ret_val);
+                     ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
+                     goto CLEANUP;
+                 }
+-                // Copy the returned cert data
+-                if(0 != memcpy_s(p_cert_data, *p_cert_data_size, p_pck_cert_config->p_cert_data, p_pck_cert_config->cert_data_size)) {
+-                    ret_val = SGX_QL_ERROR_UNEXPECTED;
+-                    goto CLEANUP;
+-                }
+-                // Return the number of bytes copied.
+-                *p_cert_data_size = p_pck_cert_config->cert_data_size;
++            } else {
++                ret_val = SGX_QL_PLATFORM_LIB_UNAVAILABLE;
++                SE_TRACE(SE_TRACE_WARNING, "Couldn't find 'sgx_ql_get_quote_config()' and 'sgx_ql_free_quote_config()' in the platform library. %s\n", dlerror());
++                goto CLEANUP;
+             }
+         } else {
+-            SE_TRACE(SE_TRACE_WARNING, "Couldn't find 'sgx_ql_get_quote_config()' and 'sgx_ql_free_quote_config()' in the platform library. %s\n", dlerror());
++            ret_val = SGX_QL_PLATFORM_LIB_UNAVAILABLE;
++            SE_TRACE(SE_TRACE_DEBUG, "Couldn't find the platform library. %s\n", dlerror());
++            goto CLEANUP;
+         }
+-    } else {
+-        SE_TRACE(SE_TRACE_DEBUG, "Couldn't find the platform library. %s\n", dlerror());
+     }
+ 
+-    CLEANUP:
+-    if(NULL != p_sgx_free_quote_config){
+-        if(NULL != p_pck_cert_config) {
+-            p_sgx_free_quote_config(p_pck_cert_config);
+-        }
++    if(NULL == p_pck_cert_config) {
++        ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
++        SE_TRACE(SE_TRACE_ERROR, "p_sgx_get_quote_config returned NULL for p_pck_cert_config.\n");
++        goto CLEANUP;
+     }
+-    if(NULL != handle) {
+-        dlclose(handle);
++    if(p_pck_cert_config->version != SGX_QL_CONFIG_VERSION_1) {
++        SE_TRACE(SE_TRACE_ERROR, "p_sgx_get_quote_config returned incompatible pck_cert_config version.\n");
++        ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
++        goto CLEANUP;
+     }
+-    #else
+-    handle = LoadLibrary(TEXT(SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME));
+-    if (handle != NULL) {
+-        SE_TRACE(SE_TRACE_DEBUG, "Found the Quote's dependent library. %s.\n", SGX_QL_QUOTE_CONFIG_LIB_FILE_NAME);
+-        p_sgx_get_quote_config = (sgx_get_quote_config_func_t)GetProcAddress(handle, "sgx_ql_get_quote_config");
+-        p_sgx_free_quote_config = (sgx_free_quote_config_func_t)GetProcAddress(handle, "sgx_ql_free_quote_config");
+-        if ((NULL != p_sgx_get_quote_config) &&
+-            (NULL != p_sgx_free_quote_config)){
+-            SE_TRACE(SE_TRACE_DEBUG, "Found the sgx_ql_get_quote_config and sgx_ql_free_quote_config API.\n");
+-            SE_TRACE(SE_TRACE_DEBUG, "Request the Quote Config data.\n");
+-            ret_val = p_sgx_get_quote_config(p_pck_cert_id, &p_pck_cert_config);
+-            if (SGX_QL_SUCCESS != ret_val) {
+-                SE_TRACE(SE_TRACE_ERROR, "Error returned from the p_sgx_get_quote_config API. 0x%04x\n", ret_val);
+-                ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
+-                goto CLEANUP;
+-            }
+-            if (NULL == p_pck_cert_config) {
+-                ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
+-                SE_TRACE(SE_TRACE_ERROR, "p_sgx_get_quote_config returned NULL for p_pck_cert_config.\n");
+-                goto CLEANUP;
+-            }
+-            if (p_pck_cert_config->version != SGX_QL_CONFIG_VERSION_1) {
+-                SE_TRACE(SE_TRACE_ERROR, "p_sgx_get_quote_config returned incompatible pck_cert_config version.\n");
+-                ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
+-                goto CLEANUP;
+-            }
+-            if (0 != memcpy_s(p_cert_cpu_svn, sizeof(*p_cert_cpu_svn), &p_pck_cert_config->cert_cpu_svn, sizeof(p_pck_cert_config->cert_cpu_svn))) {
+-                ret_val = SGX_QL_ERROR_UNEXPECTED;
+-                goto CLEANUP;
+-            }
+-            *p_cert_pce_isv_svn = p_pck_cert_config->cert_pce_isv_svn;
+-            if (NULL == p_cert_data) {
+-                // The caller only needs the TCBm and/or the required buffer size.
+-                // Return the required buffer size.
+-                *p_cert_data_size = p_pck_cert_config->cert_data_size;
+-            }
+-            else {
+-                // The caller wants the TCBm and the required buffer size.
+-                if (*p_cert_data_size < p_pck_cert_config->cert_data_size) {
+-                    // The buffer passed in to this API is not large enouge to contain the provider library's returned cert data.
+-                    // This shouldn't happen since the passed in value should be the result of calling this function
+-                    // with the inputted p_cert_data equal to NULL just befor this caller.
+-                    SE_TRACE(SE_TRACE_ERROR, "sgx_ql_get_quote_config returned a cert_data_size too large to fit in inputted buffer.\n");
+-                    ret_val = SGX_QL_ERROR_INVALID_PARAMETER;
+-                    goto CLEANUP;
+-                }
+-                if (NULL == p_pck_cert_config->p_cert_data) {
+-                    SE_TRACE(SE_TRACE_ERROR, "sgx_ql_get_quote_config returned NULL for p_cert_data.\n");
+-                    ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
+-                    goto CLEANUP;
+-                }
+-                // Copy the returned cert data
+-                if (0 != memcpy_s(p_cert_data, *p_cert_data_size, p_pck_cert_config->p_cert_data, p_pck_cert_config->cert_data_size)) {
+-                    ret_val = SGX_QL_ERROR_UNEXPECTED;
+-                    goto CLEANUP;
+-                }
+-                // Return the number of bytes copied.
+-                *p_cert_data_size = p_pck_cert_config->cert_data_size;
+-            }
+-        }
+-        else {
+-            SE_TRACE(SE_TRACE_WARNING, "Couldn't find 'sgx_ql_get_quote_config()' and 'sgx_ql_free_quote_config()' in the platform library.\n");
+-        }
++    if(0 != memcpy_s(p_cert_cpu_svn, sizeof(*p_cert_cpu_svn), &p_pck_cert_config->cert_cpu_svn, sizeof(p_pck_cert_config->cert_cpu_svn))) {
++        ret_val = SGX_QL_ERROR_UNEXPECTED;
++        goto CLEANUP;
++    }
++    *p_cert_pce_isv_svn = p_pck_cert_config->cert_pce_isv_svn;
++    if(NULL == p_cert_data) {
++        // The caller only needs the TCBm and/or the required buffer size.
++        // Return the required buffer size.
++        *p_cert_data_size = p_pck_cert_config->cert_data_size;
+     }
+     else {
+-        SE_TRACE(SE_TRACE_DEBUG, "Couldn't find the platform library. %s\n");
++        // The caller wants the TCBm and the required buffer size.
++        if(*p_cert_data_size < p_pck_cert_config->cert_data_size) {
++            // The buffer passed in to this API is not large enouge to contain the provider library's returned cert data.
++            // This shouldn't happen since the passed in value should be the result of calling this function
++            // with the inputted p_cert_data equal to NULL just befor this caller.
++            SE_TRACE(SE_TRACE_ERROR, "sgx_ql_get_quote_config returned a cert_data_size too large to fit in inputted buffer.\n");
++            ret_val = SGX_QL_ERROR_INVALID_PARAMETER;
++            goto CLEANUP;
++        }
++        if(NULL == p_pck_cert_config->p_cert_data) {
++            SE_TRACE(SE_TRACE_ERROR, "sgx_ql_get_quote_config returned NULL for p_cert_data.\n");
++            ret_val = SGX_QL_NO_PLATFORM_CERT_DATA;
++            goto CLEANUP;
++        }
++        // Copy the returned cert data
++        if(0 != memcpy_s(p_cert_data, *p_cert_data_size, p_pck_cert_config->p_cert_data, p_pck_cert_config->cert_data_size)) {
++            ret_val = SGX_QL_ERROR_UNEXPECTED;
++            goto CLEANUP;
++        }
++        // Return the number of bytes copied.
++        *p_cert_data_size = p_pck_cert_config->cert_data_size;
+     }
++
++    ret_val = SGX_QL_SUCCESS;
++
+     CLEANUP:
+-    if (NULL != p_sgx_free_quote_config) {
+-        if (NULL != p_pck_cert_config) {
++    if(NULL != p_sgx_free_quote_config){
++        if(NULL != p_pck_cert_config) {
+             p_sgx_free_quote_config(p_pck_cert_config);
+         }
+     }
+-    if (NULL != handle) {
+-        FreeLibrary(handle);
++    if(NULL != handle) {
++        close_library(handle);
++    }
++    if (unlock_on_cleanup) {
++        if (!se_mutex_unlock(&g_ql_global_data.m_enclave_load_mutex)) {
++            SE_TRACE(SE_TRACE_ERROR, "Failed to unlock mutex\n");
++        }
+     }
+-    #endif
+ 
+     return(ret_val);
+ }
+@@ -447,24 +459,38 @@
+     if(!p_file_name || !p_file_path) {
+         return false;
+     }
+-    #ifndef _MSC_VER
+-#ifndef AESM_ECDSA_BUNDLE
+-    Dl_info dl_info;
+-    if(0 != dladdr(__builtin_return_address(0), &dl_info) &&
+-        NULL != dl_info.dli_fname)
+-    {
+-        if(strnlen(dl_info.dli_fname,buf_size)>=buf_size) {
++
++    // If an explicit path as set by a client, use that instead of searching.
++    bool used_explicit_path = false;
++    if (g_ql_global_data.m_qe_dirpath_length > 0) {
++        if(g_ql_global_data.m_qe_dirpath_length>=buf_size) {
+             return false;
+         }
+-        (void)strncpy(p_file_path,dl_info.dli_fname,buf_size);
++        memcpy(p_file_path,g_ql_global_data.m_qe_dirpath,g_ql_global_data.m_qe_dirpath_length);
++        p_file_path[g_ql_global_data.m_qe_dirpath_length] = 0;
++        used_explicit_path = true;
+     }
+-    else //not a dynamic executable
++
++    #ifndef _MSC_VER
++#ifndef AESM_ECDSA_BUNDLE
++    if (!used_explicit_path) {
++        Dl_info dl_info;
++        if(0 != dladdr(__builtin_return_address(0), &dl_info) &&
++            NULL != dl_info.dli_fname)
++        {
++            if(strnlen(dl_info.dli_fname,buf_size)>=buf_size) {
++                return false;
++            }
++            (void)strncpy(p_file_path,dl_info.dli_fname,buf_size);
++        }
++        else //not a dynamic executable
+ #endif
+-    {
+-        ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size );
+-        if (i == -1)
+-            return false;
+-        p_file_path[i] = '\0';
++        {
++            ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size );
++            if (i == -1)
++                return false;
++            p_file_path[i] = '\0';
++        }
+     }
+ 
+     char* p_last_slash = strrchr(p_file_path, '/' );
+@@ -481,16 +507,18 @@
+     }
+     (void)strncat(p_file_path,p_file_name, strnlen(p_file_name,buf_size));
+     #else
+-    HMODULE hModule = NULL;
++    if (!used_explicit_path) {
++        HMODULE hModule = NULL;
+ #ifndef AESM_ECDSA_BUNDLE
+-    if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, _T(__FUNCTION__), &hModule))
+-        return false;
++        if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, _T(__FUNCTION__), &hModule))
++            return false;
+ #endif
+-    DWORD path_length = GetModuleFileName(hModule, p_file_path, static_cast<DWORD>(buf_size));
+-    if (path_length == 0)
+-        return false;
+-    if (path_length == buf_size)
+-        return false;
++        DWORD path_length = GetModuleFileName(hModule, p_file_path, static_cast<DWORD>(buf_size));
++        if (path_length == 0)
++            return false;
++        if (path_length == buf_size)
++            return false;
++    }
+ 
+     TCHAR *p_last_slash = _tcsrchr(p_file_path, _T('\\'));
+     if (p_last_slash != NULL)
+@@ -1076,6 +1104,107 @@
+ 
+     return(refqt_ret);
+ }
++
++quote3_error_t ECDSA256Quote::set_enclave_dirpath(const TCHAR *dirpath)
++{
++    quote3_error_t refqt_ret = SGX_QL_ERROR_UNEXPECTED;
++    sgx_pce_error_t pce_error;
++    int rc = 0;
++    size_t dirpath_len;
++    TCHAR dirpath_copy[MAX_PATH + 1];
++
++#ifndef _MSC_VER
++    dirpath_len = strnlen(dirpath, MAX_PATH);
++#else
++    dirpath_len = _tcsnlen(dirpath, MAX_PATH);
++#endif
++
++    // Ensure that the dirpath ends with a slash
++    memcpy(dirpath_copy, dirpath, dirpath_len);
++    if (dirpath_copy[dirpath_len-1] != PATH_SEPARATOR) {
++      dirpath_copy[dirpath_len] = PATH_SEPARATOR;
++
++      ++dirpath_len;
++      dirpath_copy[dirpath_len] = '\0';
++    }
++
++    if (dirpath_len >= sizeof(g_ql_global_data.m_qe_dirpath))
++    {
++        refqt_ret = SGX_QL_ERROR_INVALID_PARAMETER;
++        goto CLEANUP;
++    }
++
++    rc = se_mutex_lock(&g_ql_global_data.m_enclave_load_mutex);
++    if (0 == rc) {
++        SE_TRACE(SE_TRACE_ERROR, "Failed to lock mutex\n");
++        refqt_ret = SGX_QL_ERROR_UNEXPECTED;
++        goto CLEANUP;
++    }
++
++    memcpy(g_ql_global_data.m_qe_dirpath, dirpath_copy, dirpath_len);
++    g_ql_global_data.m_qe_dirpath[dirpath_len] = 0;
++    g_ql_global_data.m_qe_dirpath_length = dirpath_len;
++    refqt_ret = SGX_QL_SUCCESS;
++
++    rc = se_mutex_unlock(&g_ql_global_data.m_enclave_load_mutex);
++    if (0 == rc) {
++        SE_TRACE(SE_TRACE_ERROR, "Failed to unlock mutex.\n");
++        refqt_ret = SGX_QL_ERROR_UNEXPECTED;
++    }
++    pce_error = sgx_set_pce_enclave_dirpath(dirpath_copy);
++    if (SGX_PCE_SUCCESS != pce_error) {
++        refqt_ret = translate_pce_errors(pce_error);
++        goto CLEANUP;
++    }
++
++    CLEANUP:
++    return(refqt_ret);
++}
++
++quote3_error_t ECDSA256Quote::set_quote_config(const sgx_ql_config_t *config)
++{
++    quote3_error_t refqt_ret = SGX_QL_ERROR_UNEXPECTED;
++    int rc = 0;
++
++    rc = se_mutex_lock(&g_ql_global_data.m_enclave_load_mutex);
++    if (0 == rc) {
++        SE_TRACE(SE_TRACE_ERROR, "Failed to lock mutex\n");
++        return SGX_QL_ERROR_UNEXPECTED;
++    }
++
++    free_quote_config(g_ql_global_data.m_quote_config);
++
++    g_ql_global_data.m_quote_config =
++        (sgx_ql_config_t *)malloc(sizeof(sgx_ql_config_t));
++    if (NULL == g_ql_global_data.m_quote_config) {
++        refqt_ret = SGX_QL_ERROR_OUT_OF_MEMORY;
++        goto CLEANUP;
++    }
++
++    memcpy(g_ql_global_data.m_quote_config, config, sizeof(*config));
++    if (NULL == config->p_cert_data) {
++        g_ql_global_data.m_quote_config->p_cert_data = NULL;
++    } else {
++        g_ql_global_data.m_quote_config->p_cert_data =
++            (uint8_t *)malloc(config->cert_data_size);
++        if (NULL == g_ql_global_data.m_quote_config->p_cert_data) {
++            refqt_ret = SGX_QL_ERROR_OUT_OF_MEMORY;
++            goto CLEANUP;
++        }
++        memcpy(g_ql_global_data.m_quote_config->p_cert_data,
++               config->p_cert_data, config->cert_data_size);
++    }
++
++    refqt_ret = SGX_QL_SUCCESS;
++    CLEANUP:
++    rc = se_mutex_unlock(&g_ql_global_data.m_enclave_load_mutex);
++    if (0 == rc) {
++        SE_TRACE(SE_TRACE_ERROR, "Failed to unlock mutex.\n");
++        refqt_ret = SGX_QL_ERROR_UNEXPECTED;
++    }
++
++    return(refqt_ret);
++}
+ 
+ /**
+  * This is the ECDSA-P256 specific init quote code.  The generic quote interfaces have been converted/reduced to the ECDSA specific inputs.
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteGeneration/quote_wrapper/quote/sgx_ql_core_wrapper.cpp QuoteGeneration/quote_wrapper/quote/sgx_ql_core_wrapper.cpp
+--- QuoteGeneration/quote_wrapper/quote/sgx_ql_core_wrapper.cpp
++++ QuoteGeneration/quote_wrapper/quote/sgx_ql_core_wrapper.cpp
+@@ -42,9 +42,14 @@
+ #include "user_types.h"
+ #include "sgx_report.h"
+ #include "sgx_ql_ecdsa_quote.h"
++#include "sgx_ql_lib_common.h"
+ #include "sgx_ql_core_wrapper.h"
+ #include "qe3.h"
+ 
++#ifndef _MSC_VER
++typedef char TCHAR;
++#endif
++
+ #ifdef USE_DEBUG_MRSIGNER
+ // This is the mrsigner for debug key
+ uint8_t g_qe_mrsigner[32] = { 0xe4, 0xbd, 0x9f, 0xc2, 0x12, 0x98, 0x35, 0xba, 0x1d, 0xcc, 0xa1, 0x93, 0x9d, 0x57, 0xd0, 0x8e,
+@@ -128,6 +133,56 @@
+         }
+     }
+ 
++    return(ret_val);
++}
++
++/**
++ * This API will explicitly set the directory where enclaves required for quoting are located. By default, enclaves
++ * are assumed to be located in the same directory as the application which is calling the ECDSA quoting APIs. This
++ * API will override that default, locating the quoting and provisionining enclaves in dirpath.
++ *
++ * @param dirpath The directory where the quoting and provisioning enclaves are. If NULL, any previously-set
++ * path is cleared.
++ */
++quote3_error_t sgx_ql_set_enclave_dirpath(const TCHAR *dirpath)
++{
++    quote3_error_t ret_val = SGX_QL_ERROR_UNEXPECTED;
++    ECDSA256Quote ecdsa_quote;
++
++    ret_val = ecdsa_quote.set_enclave_dirpath(dirpath);
++    if(SGX_QL_SUCCESS != ret_val) {
++        if((ret_val < SGX_QL_ERROR_MIN) ||
++           (ret_val > SGX_QL_ERROR_MAX))
++        {
++                ret_val = SGX_QL_ERROR_UNEXPECTED;
++        }
++    }
++
++    return(ret_val);
++}
++
++/**
++ * Used to set the quote configuration data associated with quotes. This data
++ * includes information such as CPU and PCE SVNs. It additionally includes any
++ * certification data, such as the PCK certificate chain.
++ *
++ * If quote config is explicitly set, the DCAP library will not attempt to load
++ * a Platform Quote Provider Library.
++ */
++quote3_error_t sgx_ql_set_quote_config(const sgx_ql_config_t *config)
++{
++    quote3_error_t ret_val = SGX_QL_ERROR_UNEXPECTED;
++    ECDSA256Quote ecdsa_quote;
++
++    ret_val = ecdsa_quote.set_quote_config(config);
++    if(SGX_QL_SUCCESS != ret_val) {
++        if((ret_val < SGX_QL_ERROR_MIN) ||
++           (ret_val > SGX_QL_ERROR_MAX))
++        {
++            ret_val = SGX_QL_ERROR_UNEXPECTED;
++        }
++    }
++
+     return(ret_val);
+ }
+ 
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteVerification/QVL/Src/AttestationLibrary/src/QuoteVerification.cpp QuoteVerification/QVL/Src/AttestationLibrary/src/QuoteVerification.cpp
+--- QuoteVerification/QVL/Src/AttestationLibrary/src/QuoteVerification.cpp
++++ QuoteVerification/QVL/Src/AttestationLibrary/src/QuoteVerification.cpp
+@@ -80,7 +80,7 @@
+     OpensslGuard& operator=(OpensslGuard&&) = delete;
+ };
+ 
+-static const OpensslGuard opensslGuard;
++static const OpensslGuard *opensslGuard = new OpensslGuard;
+ 
+ const char* sgxAttestationGetVersion()
+ {
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteVerification/Src/AttestationLibrary/include/QuoteVerification/QuoteConstants.h QuoteVerification/Src/AttestationLibrary/include/QuoteVerification/QuoteConstants.h
+--- QuoteVerification/Src/AttestationLibrary/include/QuoteVerification/QuoteConstants.h
++++ QuoteVerification/Src/AttestationLibrary/include/QuoteVerification/QuoteConstants.h
+@@ -0,0 +1,55 @@
++/*
++* Copyright (c) 2017, Intel Corporation
++*
++* Redistribution and use in source and binary forms, with or without modification,
++* are permitted provided that the following conditions are met:
++
++* 1. Redistributions of source code must retain the above copyright notice,
++*    this list of conditions and the following disclaimer.
++* 2. Redistributions in binary form must reproduce the above copyright notice,
++*    this list of conditions and the following disclaimer in the documentation
++*    and/or other materials provided with the distribution.
++* 3. Neither the name of the copyright holder nor the names of its contributors
++*    may be used to endorse or promote products derived from this software
++*    without specific prior written permission.
++*
++* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++* THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++* ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
++* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
++* OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
++* OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
++* OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++* OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
++* EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++*/
++
++#ifndef INTEL_SGX_QVL_QUOTE_CONSTANTS_H_
++#define INTEL_SGX_QVL_QUOTE_CONSTANTS_H_
++
++#include <array>
++
++namespace intel { namespace sgx { namespace qvl { namespace constants {
++
++extern const uint16_t QUOTE_VERSION;
++
++extern const uint16_t ECDSA_256_WITH_P256_CURVE;
++extern const uint16_t ECDSA_384_WITH_P384_CURVE;
++extern const size_t ECDSA_P256_SIGNATURE_BYTE_LEN;
++extern const size_t ENCLAVE_REPORT_BYTE_LEN;
++
++extern const uint16_t PCK_ID_PLAIN_PPID;
++extern const uint16_t PCK_ID_ENCRYPTED_PPID_2048;
++extern const uint16_t PCK_ID_ENCRYPTED_PPID_3072;
++extern const uint16_t PCK_ID_PCK_CERTIFICATE;
++extern const uint16_t PCK_ID_PCK_CERT_CHAIN;
++
++extern const std::array<uint16_t, 5> SUPPORTED_PCK_IDS;
++extern const std::array<uint16_t, 1> ALLOWED_ATTESTATION_KEY_TYPES;
++extern const std::array<uint8_t, 16> INTEL_QE_VENDOR_ID;
++
++}}}} // namespace intel { namespace sgx { namespace qvl { namespace constants {
++
++#endif
+diff -Nur -x '*.png' -x '*.gif' -x .gitignore QuoteVerification/Src/AttestationLibrary/src/QuoteVerification/QuoteConstants.cpp QuoteVerification/Src/AttestationLibrary/src/QuoteVerification/QuoteConstants.cpp
+--- QuoteVerification/Src/AttestationLibrary/src/QuoteVerification/QuoteConstants.cpp
++++ QuoteVerification/Src/AttestationLibrary/src/QuoteVerification/QuoteConstants.cpp
+@@ -0,0 +1,61 @@
++/*
++* Copyright (c) 2017, Intel Corporation
++*
++* Redistribution and use in source and binary forms, with or without
++modification,
++* are permitted provided that the following conditions are met:
++
++* 1. Redistributions of source code must retain the above copyright notice,
++*    this list of conditions and the following disclaimer.
++* 2. Redistributions in binary form must reproduce the above copyright notice,
++*    this list of conditions and the following disclaimer in the documentation
++*    and/or other materials provided with the distribution.
++* 3. Neither the name of the copyright holder nor the names of its contributors
++*    may be used to endorse or promote products derived from this software
++*    without specific prior written permission.
++*
++* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++* THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++* ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
++* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
++* OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
++* OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
++* OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++* OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
++* EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++*/
++
++#include <array>
++
++#include "QuoteVerification/Src/AttestationLibrary/include/QuoteVerification/QuoteConstants.h"
++
++namespace intel { namespace sgx { namespace qvl { namespace constants {
++
++extern const uint16_t QUOTE_VERSION = 3;
++
++extern const uint16_t ECDSA_256_WITH_P256_CURVE = 2;
++extern const uint16_t ECDSA_384_WITH_P384_CURVE = 3;
++extern const size_t ECDSA_P256_SIGNATURE_BYTE_LEN = 64;
++extern const size_t ENCLAVE_REPORT_BYTE_LEN = 384;
++
++extern const uint16_t PCK_ID_PLAIN_PPID = 1;
++extern const uint16_t PCK_ID_ENCRYPTED_PPID_2048 = 2;
++extern const uint16_t PCK_ID_ENCRYPTED_PPID_3072 = 3;
++extern const uint16_t PCK_ID_PCK_CERTIFICATE = 4;
++extern const uint16_t PCK_ID_PCK_CERT_CHAIN = 5;
++
++extern const std::array<uint16_t, 5> SUPPORTED_PCK_IDS = {
++    {PCK_ID_PLAIN_PPID, PCK_ID_ENCRYPTED_PPID_2048, PCK_ID_ENCRYPTED_PPID_3072,
++     PCK_ID_PCK_CERTIFICATE, PCK_ID_PCK_CERT_CHAIN}};
++
++extern const std::array<uint16_t, 1> ALLOWED_ATTESTATION_KEY_TYPES = {
++    {ECDSA_256_WITH_P256_CURVE}};
++
++extern const std::array<uint8_t, 16> INTEL_QE_VENDOR_ID = {
++    {0x93, 0x9A, 0x72, 0x33, 0xF7, 0x9C, 0x4C, 0xA9, 0x94, 0x0A, 0x0D, 0xB3,
++     0x95, 0x7F, 0x06, 0x07}};
++
++}}}} // namespace intel { namespace sgx { namespace qvl { namespace constants {
++
+diff -Nur /dev/null BUILD
+--- /dev/null
++++ BUILD
+@@ -0,0 +1,287 @@
++# Description: sgx_data_center_attestation_primitives is the Intel SGX Data
++# Center Attestation Primitives library for linux.
++
++load("@rules_cc//cc:defs.bzl", "cc_library")
++
++licenses(["notice"])
++
++exports_files(["LICENSE"])
++
++# Generates code for the untrusted interface to the PCE using the edger8r tool.
++genrule(
++    name = "gen_pce",
++    srcs = ["QuoteGeneration/ae/pce/pce.edl"],
++    outs = [
++        "QuoteGeneration/pce_wrapper/generated/pce_u.c",
++        "QuoteGeneration/pce_wrapper/generated/pce_u.h",
++    ],
++    cmd = (
++        "./$(location @linux_sgx//:sgx_edger8r) $(SRCS) " +
++        "--untrusted --untrusted-dir $(@D)/QuoteGeneration/pce_wrapper/generated/"
++    ),
++    tools = ["@linux_sgx//:sgx_edger8r"],
++)
++
++# Library exposing the edger8r-generated untrusted interface to the PCE.
++cc_library(
++    name = "pce_untrusted",
++    srcs = [
++        "QuoteGeneration/ae/inc/internal/pce_cert.h",
++        "QuoteGeneration/pce_wrapper/generated/pce_u.c",
++    ],
++    hdrs = ["QuoteGeneration/pce_wrapper/generated/pce_u.h"],
++    copts = [
++        "-Iexternal/sgx_dcap/QuoteGeneration/ae/inc/internal",
++        "-Iexternal/sgx_dcap/QuoteGeneration/common/inc/internal",
++    ],
++    # Allow the header to be included as a global "pce_u.h".
++    strip_include_prefix = "QuoteGeneration/pce_wrapper/generated/",
++    deps = [
++        ":common_inc_internal",
++        "@linux_sgx//:common_inc",
++    ],
++)
++
++cc_library(
++    name = "pce_types",
++    hdrs = ["QuoteGeneration/pce_wrapper/inc/sgx_pce_types.h"],
++    copts = [
++        "-Iexternal/linux_sgx/include",
++    ],
++    visibility = ["//visibility:public"],
++    deps = ["@linux_sgx//:public"],
++)
++
++cc_library(
++    name = "pce_constants",
++    hdrs = ["QuoteGeneration/pce_wrapper/inc/sgx_pce_constants.h"],
++    copts = [
++        "-Iexternal/sgx_dcap/QuoteGeneration/pce_wrapper/inc",
++    ],
++    visibility = ["//visibility:public"],
++)
++
++cc_library(
++    name = "quote_constants",
++    srcs = ["QuoteVerification/Src/AttestationLibrary/src/QuoteVerification/QuoteConstants.cpp"],
++    hdrs = ["QuoteVerification/Src/AttestationLibrary/include/QuoteVerification/QuoteConstants.h"],
++    visibility = ["//visibility:public"],
++)
++
++# Library exposing the PCE wrapper interface.
++cc_library(
++    name = "pce_wrapper",
++    srcs = [
++        "QuoteGeneration/ae/inc/aeerror.h",
++        "QuoteGeneration/pce_wrapper/inc/sgx_pce_types.h",
++        "QuoteGeneration/pce_wrapper/linux/pce_parser.cpp",
++        "QuoteGeneration/pce_wrapper/pce_wrapper.cpp",
++    ],
++    hdrs = [
++        "QuoteGeneration/pce_wrapper/inc/sgx_pce.h",
++    ],
++    copts = [
++        "-Iexternal/sgx_dcap/QuoteGeneration/common/inc/internal",
++        "-Iexternal/sgx_dcap/QuoteGeneration/common/inc/internal/linux",
++        "-Iexternal/sgx_dcap/QuoteGeneration/ae/common",
++        "-Iexternal/sgx_dcap/QuoteGeneration/ae/inc",
++        "-Iexternal/sgx_dcap/QuoteGeneration/ae/inc/internal",
++        "-Iexternal/sgx_dcap/QuoteGeneration/pce_wrapper/inc",
++    ],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":common_inc_internal",
++        ":parser",
++        ":pce_constants",
++        ":pce_types",
++        ":pce_untrusted",
++        "@linux_sgx//:common_inc",
++        "@linux_sgx//:untrusted_inc",
++        "@linux_sgx//:urts",
++    ],
++)
++
++# Generates code for the untrusted interface to the QE3 using the edger8r tool.
++genrule(
++    name = "gen_qe3",
++    srcs = ["QuoteGeneration/quote_wrapper/quote/enclave/qe3.edl"],
++    outs = [
++        "QuoteGeneration/quote_wrapper/generated/qe3_u.c",
++        "QuoteGeneration/quote_wrapper/generated/qe3_u.h",
++    ],
++    cmd = (
++        "./$(location @linux_sgx//:sgx_edger8r) $(SRCS) " +
++        "--untrusted --untrusted-dir $(@D)/QuoteGeneration/quote_wrapper/generated/"
++    ),
++    tools = ["@linux_sgx//:sgx_edger8r"],
++)
++
++# Includes for quote_wrapper that are common across qe3_untrusted and quote_wrapper.
++cc_library(
++    name = "quote_wrapper_common",
++    hdrs = [
++        "QuoteGeneration/quote_wrapper/common/inc/sgx_ql_lib_common.h",
++        "QuoteGeneration/quote_wrapper/common/inc/sgx_ql_quote.h",
++        "QuoteGeneration/quote_wrapper/common/inc/sgx_quote_3.h",
++    ],
++    includes = [
++        "QuoteGeneration/common/inc",
++        "QuoteGeneration/pce_wrapper/inc",
++        "QuoteGeneration/quote_wrapper/common/inc",
++        "QuoteGeneration/quote_wrapper/ql/inc",
++        "QuoteGeneration/quote_wrapper/quote/inc",
++    ],
++    visibility = [
++        "//visibility:public",
++    ],
++    deps = [
++        ":pce_types",
++        "@linux_sgx//:common_inc",
++        "@linux_sgx//:public",
++    ],
++)
++
++# The untrusted component includes for the qe3 enclave.
++cc_library(
++    name = "qe3_untrusted",
++    srcs = [
++        "QuoteGeneration/quote_wrapper/common/inc/user_types.h",
++        "QuoteGeneration/quote_wrapper/generated/qe3_u.c",
++        "QuoteGeneration/quote_wrapper/quote/inc/ecdsa_quote.h",
++    ],
++    hdrs = ["QuoteGeneration/quote_wrapper/generated/qe3_u.h"],
++    copts = [
++        "-Iexternal/sgx_dcap/QuoteGeneration/common/inc/internal",
++        "-Iexternal/sgx_dcap/QuoteGeneration/quote_wrapper/quote",
++    ],
++    # Allow the header to be included as a global "qe3_u.h".
++    strip_include_prefix = "QuoteGeneration/quote_wrapper/generated/",
++    deps = [
++        ":common_inc_internal",
++        ":pce_types",
++        ":quote_wrapper_common",
++        "@linux_sgx//:common_inc",
++        "@linux_sgx//:public",
++    ],
++)
++
++# Library exposing quote wrapper headers
++cc_library(
++    name = "quote_wrapper",
++    srcs = [
++        "QuoteGeneration/pce_wrapper/inc/sgx_pce.h",
++        "QuoteGeneration/quote_wrapper/common/inc/user_types.h",
++        "QuoteGeneration/quote_wrapper/generated/qe3_u.h",
++        "QuoteGeneration/quote_wrapper/ql/sgx_dcap_ql_wrapper.cpp",
++        "QuoteGeneration/quote_wrapper/quote/enclave/qe3.h",
++        "QuoteGeneration/quote_wrapper/quote/inc/ecdsa_quote.h",
++        "QuoteGeneration/quote_wrapper/quote/qe_logic.cpp",
++        "QuoteGeneration/quote_wrapper/quote/qe_logic.h",
++        "QuoteGeneration/quote_wrapper/quote/sgx_ql_core_wrapper.cpp",
++    ],
++    hdrs = [
++        "QuoteGeneration/quote_wrapper/common/inc/sgx_ql_ecdsa_quote.h",
++        "QuoteGeneration/quote_wrapper/common/inc/sgx_ql_lib_common.h",
++        "QuoteGeneration/quote_wrapper/ql/inc/sgx_dcap_ql_wrapper.h",
++        "QuoteGeneration/quote_wrapper/quote/inc/sgx_ql_core_wrapper.h",
++    ],
++    copts = [
++        "-Iexternal/sgx_dcap/QuoteGeneration/pce_wrapper/inc",
++        "-Iexternal/sgx_dcap/QuoteGeneration/quote_wrapper/quote",
++        "-Iexternal/sgx_dcap/QuoteGeneration/quote_wrapper/quote/enclave",
++        "-Iexternal/sgx_dcap/QuoteGeneration/common/inc/internal",
++        "-Wno-address",
++    ],
++    # The linker option below works around a linker issue. The PCE interface is
++    # implemented twice in both SGX DCAP and SGX SDK. The latter is used to
++    # build aesmd to avoid circular dependency, which results in compiling
++    # sources from SGX SDK and SGX DCAP together. The implementations are
++    # provided in separate targets in the SGX DCAP and SGX SDK BUILD files,
++    # which leaves some symbols in this library unresolved. Marking the symbol
++    # as undefined here keeps the linker from complaining about those
++    # unresolved symbols.
++    linkopts = ["-Wl,--undefined=sgx_pce_sign_report"],
++    visibility = [
++        "//visibility:public",
++    ],
++    deps = [
++        ":common_inc_internal",
++        ":pce_constants",
++        ":pce_types",
++        ":qe3_untrusted",
++        ":quote_wrapper_common",
++        "@linux_sgx//:common_inc",
++        "@linux_sgx//:public",
++        "@linux_sgx//:untrusted_inc",
++    ],
++)
++
++cc_library(
++    name = "parser",
++    srcs = [
++        "QuoteGeneration/parser/linux/elfparser.cpp",
++        "QuoteGeneration/parser/section.cpp",
++    ],
++    hdrs = [
++        "QuoteGeneration/parser/linux/binparser.h",
++        "QuoteGeneration/parser/linux/create_param.h",
++        "QuoteGeneration/parser/linux/elfparser.h",
++        "QuoteGeneration/parser/section.h",
++    ],
++    copts = [
++        "-Iexternal/sgx_dcap/QuoteGeneration/common/inc/internal",
++        "-Iexternal/sgx_dcap/QuoteGeneration/common/inc/internal/linux",
++    ],
++    includes = [
++        "QuoteGeneration/parser",
++        "QuoteGeneration/parser/linux",
++    ],
++    textual_hdrs = [
++        "QuoteGeneration/parser/linux/update_global_data.hxx",
++    ],
++    deps = [
++        ":common_inc_internal",
++        "@linux_sgx//:common_inc",
++    ],
++)
++
++cc_library(
++    name = "common_inc_internal",
++    srcs = [
++        "QuoteGeneration/common/src/se_map.c",
++        "QuoteGeneration/common/src/se_thread.c",
++        "QuoteGeneration/common/src/se_trace.c",
++    ],
++    hdrs = [
++        "QuoteGeneration/common/inc/internal/cpputil.h",
++        "QuoteGeneration/common/inc/internal/elf_util.h",
++        "QuoteGeneration/common/inc/internal/elfheader/elf_common.h",
++        "QuoteGeneration/common/inc/internal/elfheader/elfstructs.h",
++        "QuoteGeneration/common/inc/internal/linux/arch.h",
++        "QuoteGeneration/common/inc/internal/linux/global_data.h",
++        "QuoteGeneration/common/inc/internal/linux/metadata.h",
++        "QuoteGeneration/common/inc/internal/linux/rts.h",
++        "QuoteGeneration/common/inc/internal/linux/rts_cmd.h",
++        "QuoteGeneration/common/inc/internal/linux/se_page_attr.h",
++        "QuoteGeneration/common/inc/internal/linux/thread_data.h",
++        "QuoteGeneration/common/inc/internal/se_cdefs.h",
++        "QuoteGeneration/common/inc/internal/se_macro.h",
++        "QuoteGeneration/common/inc/internal/se_map.h",
++        "QuoteGeneration/common/inc/internal/se_memcpy.h",
++        "QuoteGeneration/common/inc/internal/se_thread.h",
++        "QuoteGeneration/common/inc/internal/se_trace.h",
++        "QuoteGeneration/common/inc/internal/se_types.h",
++        "QuoteGeneration/common/inc/internal/uncopyable.h",
++        "QuoteGeneration/common/inc/internal/util.h",
++    ],
++    copts = [
++        "-Iexternal/sgx_dcap/QuoteGeneration/common/inc/internal",
++        "-Iexternal/sgx_dcap/QuoteGeneration/common/inc/internal/linux",
++        "-Iexternal/sgx_dcap/QuoteGeneration/common/inc/internal/elfheader",
++    ],
++    # The contents of inst.h only makes sense if arch.h is included.
++    textual_hdrs = ["QuoteGeneration/common/inc/internal/linux/inst.h"],
++    deps = [
++        "@linux_sgx//:common_inc",
++    ],
++)

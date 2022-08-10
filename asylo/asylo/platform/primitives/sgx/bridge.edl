@@ -1,0 +1,113 @@
+/*
+ *
+ * Copyright 2019 Asylo authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+// EDL file for primitives enclave infrastructure. Defines function calls across
+// enclave boundary. The "trusted" scope defines "ecall" functions that are
+// called on the host side and enter the enclave and execute inside it. The
+// "untrusted" scope defines "ocall" functions that cross the enclave boundary
+// in the opposite direction - called from within enclave, executed on
+// the host side.
+//
+// See generate_bridge.sh for build instruction.
+//
+// In addition, new function definitions must be added to
+// primitives/sgx/ocalls.cc and to primitives/sgx/ecalls.cc for untrusted and
+// trusted functions respectively.
+enclave {
+  from "../../../third_party/intel/sgx_tstdc.edl" import
+      sgx_thread_wait_untrusted_event_ocall,
+      sgx_oc_cpuidex,
+      sgx_thread_set_untrusted_event_ocall,
+      sgx_thread_setwait_untrusted_events_ocall,
+      sgx_thread_set_multiple_untrusted_events_ocall;
+  from "../../../platform/primitives/sgx/errno.edl" import *;
+
+  include "include/sgx_report.h"
+  include "QuoteGeneration/quote_wrapper/common/inc/sgx_ql_lib_common.h"
+
+  trusted {
+    // Invokes the trusted entry point designated by `selector`.
+    public int ecall_dispatch_trusted_call(uint64_t selector,
+                                          [user_check] void *buffer);
+
+    // Intended for use by primitives enclave signal implementation.
+    // Invokes signal handling entry point.
+    exception_handler public int ecall_deliver_signal(int signum, int sigcode);
+
+    // Invokes a utility ecall that enters the enclave to take a snapshot.
+    // This is a private ecall because it should only be invoked by an
+    // ocall(fork).
+    utility_tcs public int ecall_take_snapshot(
+	      [out] char **output,
+	      [out] uint64_t *output_len);
+
+    // Invokes a utility ecall that enters the enclave to restore it from a
+    // snapshot.
+    utility_tcs public int ecall_restore(
+        [user_check] const char *input,
+        uint64_t input_len,
+        [user_check] char **output,
+        [user_check] uint64_t *output_len);
+
+    // Invokes a utility ecall that enters the enclave to encrypt and transfer
+    // the snapshot key.
+    utility_tcs public int ecall_transfer_secure_snapshot_key(
+        [in, size=input_len] const char *input,
+        uint64_t input_len,
+        [out] char **output,
+        [out] uint64_t *output_len);
+  };
+
+  untrusted {
+    // Invokes the untrusted entry point designated by `selector`.
+    int ocall_dispatch_untrusted_call(uint64_t selector,
+        [user_check] void *buffer);
+    void *ocall_untrusted_local_alloc(uint64_t size);
+    void ocall_untrusted_local_free([user_check] void *ptr);
+    int ocall_untrusted_debug_puts([in, string] const char *str);
+    void **ocall_enc_untrusted_allocate_buffers(uint64_t count,
+        uint64_t size);
+    void ocall_enc_untrusted_deallocate_free_list([user_check] void **free_list,
+        uint64_t count);
+    void ocall_enc_untrusted__exit(int rc);
+    int32_t ocall_enc_untrusted_fork(
+        [in, string]const char *enclave_name,
+	      bool restore_snapshot)
+	      allow(ecall_take_snapshot, ecall_restore) propagate_errno;
+    int ocall_enc_untrusted_register_signal_handler(
+        int klinux_signum,
+        [user_check] void *sigaction_ptr,
+        [in, size=klinux_mask_len] const void *klinux_mask, int klinux_mask_len,
+        int64_t flags);
+
+    // The following functions invoke the Intel DCAP library. These functions
+    // support getting remotely verifiable quotes of an enclave's identity.
+    uint32_t ocall_enc_untrusted_ql_set_quote_config(
+        [in] const sgx_ql_config_t *config,
+	uint32_t cert_data_size,
+	[in, size=cert_data_size] const uint8_t *cert_data);
+    uint32_t ocall_enc_untrusted_qe_get_target_info(
+        [out] sgx_target_info_t *qe_target_info);
+    uint32_t ocall_enc_untrusted_qe_get_quote_size(
+        [out] uint32_t *quote_size);
+    uint32_t ocall_enc_untrusted_qe_get_quote(
+        [in] const sgx_report_t *app_report,
+	uint32_t quote_size,
+	[out, size=quote_size] uint8_t *quote);
+  };
+};

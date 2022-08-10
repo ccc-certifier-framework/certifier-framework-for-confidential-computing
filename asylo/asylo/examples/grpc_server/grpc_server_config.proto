@@ -1,0 +1,36 @@
+//
+// Copyright 2018 Asylo authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+syntax = "proto2";
+
+package examples.grpc_server;
+
+import "asylo/enclave.proto";
+
+extend asylo.EnclaveConfig {
+  // The address that the gRPC server inside the enclave will be hosted on.
+  // Required.
+  optional string server_address = 205739939;
+
+  // The port that the gRPC server should listen to. May be 0 to request that
+  // the server let the operating system choose an unused port.
+  optional int32 port = 253106740;
+}
+
+extend asylo.EnclaveOutput {
+  // The Translator server's port.
+  optional int32 actual_server_port = 285084421;
+}

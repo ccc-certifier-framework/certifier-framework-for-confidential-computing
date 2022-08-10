@@ -1,0 +1,82 @@
+//
+// Copyright 2019 Asylo authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+syntax = "proto2";
+
+package asylo;
+
+import "asylo/crypto/algorithms.proto";
+
+// An encryption or decryption key.
+message AsymmetricEncryptionKeyProto {
+  enum KeyType {
+    UNKNOWN = 0;
+    ENCRYPTION_KEY = 1;
+    DECRYPTION_KEY = 2;
+  }
+
+  // Indicates whether |key| is an encryption key or decryption key.
+  optional KeyType key_type = 1;
+
+  // Asymmetric encryption scheme used by |key|. Required.
+  optional AsymmetricEncryptionScheme encryption_scheme = 2;
+
+  // Encoding of |key|. Required.
+  optional AsymmetricKeyEncoding encoding = 3;
+
+  // An encoded asymmetric key. Required.
+  optional bytes key = 4;
+}
+
+// A signing key or verifying key.
+message AsymmetricSigningKeyProto {
+  enum KeyType {
+    UNKNOWN = 0;
+    SIGNING_KEY = 1;
+    VERIFYING_KEY = 2;
+  }
+
+  // Indicates whether |key| is a signing key or verifying key.
+  optional KeyType key_type = 1;
+
+  // Signature scheme used by |key|. Required.
+  optional SignatureScheme signature_scheme = 2;
+
+  // Encoding of |key|. Required.
+  optional AsymmetricKeyEncoding encoding = 3;
+
+  // An encoded asymmetric key. Required.
+  optional bytes key = 4;
+}
+
+// A signature produced by an asymmetric signing key.
+message Signature {
+  // Indicates the signature scheme used to produce the signature value.
+  optional SignatureScheme signature_scheme = 1;
+
+  oneof value {
+    EcdsaSignature ecdsa_signature = 2;
+  }
+}
+
+// A signature produced using the Elliptic Curve Digital Signature Algorithm.
+message EcdsaSignature {
+  // The r parameter of the signature in big-endian encoding.
+  optional bytes r = 1;
+
+  // The s parameter of the signature in big-endian encoding.
+  optional bytes s = 2;
+}

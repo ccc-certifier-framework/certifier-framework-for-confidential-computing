@@ -1,0 +1,54 @@
+//
+// Copyright 2018 Asylo authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+syntax = "proto2";
+
+package asylo;
+
+import "asylo/enclave.proto";
+
+// Input to a signal test case, specifying the type of signal handler.
+message SignalTestInput {
+  enum SignalTestType {
+    UNSUPPORTED = 0;
+    // Tests sigaction(2) that registers a signal with sa_handler, which takes
+    // a single argument signum.
+    HANDLER = 1;
+    // Tests sigaction(2) that registers sa_sigaction, which takes three
+    // arguments: signum, siginfo, and ucontext.
+    SIGACTION = 2;
+    // Tests sigprocmask(2) that blocks/unblocks signals.
+    SIGMASK = 3;
+    // Tests signal(2) that registers a signal handler.
+    SIGNAL = 4;
+    // Tests sigaction(2) that specifies signals to be blocked during the
+    // execution of the registered signal handler.
+    SIGACTIONMASK = 5;
+    // Tests sigaction(2) that specifies the flag SA_RESETHAND to reset the
+    // handler to default upon entry into the signal handler.
+    RESETHANDLER = 6;
+  }
+  // The type of signal test.
+  optional SignalTestType signal_test_type = 1;
+}
+
+extend EnclaveInput {
+  optional SignalTestInput signal_test_input = 196854770;
+}
+
+extend EnclaveOutput {
+  optional bool signal_received = 196854770;
+}

@@ -1,0 +1,99 @@
+/*
+ *
+ * Copyright 2018 Asylo authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+#include_next <cmath>
+
+#ifndef ASYLO_PLATFORM_SYSTEM_INCLUDE_CMATH_
+#define ASYLO_PLATFORM_SYSTEM_INCLUDE_CMATH_
+
+namespace std {
+
+using ::acosh;
+using ::acoshf;
+using ::asinh;
+using ::asinhf;
+using ::atanh;
+using ::atanhf;
+using ::cbrt;
+using ::cbrtf;
+using ::copysign;
+using ::copysignf;
+using ::erf;
+using ::erff;
+using ::erfc;
+using ::erfcf;
+using ::exp2;
+using ::exp2f;
+using ::expm1;
+using ::expm1f;
+using ::fdim;
+using ::fdimf;
+using ::fma;
+using ::fmaf;
+using ::fmax;
+using ::fmaxf;
+using ::fmin;
+using ::fminf;
+using ::hypot;
+using ::hypotf;
+using ::hypotl;
+using ::ilogb;
+using ::ilogbf;
+using ::lgamma;
+using ::lgammaf;
+using ::llrint;
+using ::llrintf;
+using ::llround;
+using ::llroundf;
+using ::log1p;
+using ::log1pf;
+using ::log2;
+using ::log2f;
+using ::logb;
+using ::logbf;
+using ::lrint;
+using ::lrintf;
+using ::lround;
+using ::lroundf;
+using ::nan;
+using ::nanf;
+using ::nearbyint;
+using ::nearbyintf;
+using ::nextafter;
+using ::nextafterf;
+using ::remainder;
+using ::remainderf;
+using ::remquo;
+using ::remquof;
+using ::rint;
+using ::rintf;
+using ::round;
+using ::roundf;
+using ::scalbln;
+using ::scalblnf;
+using ::scalbn;
+using ::scalbnf;
+using ::sqrtl;
+using ::tgamma;
+using ::tgammaf;
+using ::trunc;
+using ::truncf;
+
+}
+
+#endif  // ASYLO_PLATFORM_SYSTEM_INCLUDE_CMATH_

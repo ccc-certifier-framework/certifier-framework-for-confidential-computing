@@ -1,0 +1,95 @@
+diff -Naur --no-dereference -x '*~' -x '*.orig' bazel/build_settings.bzl bazel/build_settings.bzl
+--- bazel/build_settings.bzl
++++ bazel/build_settings.bzl
+@@ -0,0 +1,17 @@
++"""Configurable build settings for gRPC."""
++
++_ares_setting_info = provider(fields = ["use"])
++
++def _ares_setting_impl(ctx):
++    return [_ares_setting_info(use=ctx.build_setting_value)]
++
++_ares_setting = rule(
++    doc = "Build configuration setting for whether gRPC should use c-ares.",
++    implementation = _ares_setting_impl,
++    build_setting = config.bool(flag = True),
++)
++
++grpc_build_settings = struct(
++    ares_setting_info = _ares_setting_info,
++    ares = _ares_setting,
++)
+diff -Naur --no-dereference -x '*~' -x '*.orig' BUILD BUILD
+--- BUILD
++++ BUILD
+@@ -29,6 +29,8 @@
+     ],
+ )
+ 
++load("@bazel_skylib//lib:selects.bzl", "selects")
++load("//bazel:build_settings.bzl", "grpc_build_settings")
+ load(
+     "//bazel:grpc_build_system.bzl",
+     "grpc_cc_library",
+@@ -38,11 +40,32 @@
+     "python_config_settings",
+ )
+ 
++grpc_build_settings.ares(
++    name = "grpc_use_ares",
++    build_setting_default = True,
++    visibility = ["//visibility:public"],
++)
++
+ config_setting(
+-    name = "grpc_no_ares",
++    name = "grpc_no_ares_flag",
++    flag_values = {
++        ":grpc_use_ares": "False",
++    },
++)
++
++config_setting(
++    name = "grpc_no_ares_define",
+     values = {"define": "grpc_no_ares=true"},
+ )
+ 
++selects.config_setting_group(
++    name = "grpc_no_ares",
++    match_any = [
++        ":grpc_no_ares_define",
++        ":grpc_no_ares_flag",
++    ],
++)
++
+ config_setting(
+     name = "grpc_no_xds",
+     values = {"define": "grpc_no_xds=true"},
+diff -Naur --no-dereference -x '*~' -x '*.orig' include/grpc/impl/codegen/port_platform.h include/grpc/impl/codegen/port_platform.h
+--- include/grpc/impl/codegen/port_platform.h
++++ include/grpc/impl/codegen/port_platform.h
+@@ -184,9 +184,13 @@
+ #define GPR_POSIX_SYNC 1
+ #define GPR_POSIX_STRING 1
+ #define GPR_POSIX_LOG 1
++#define GPR_POSIX_STAT 1
+ #define GPR_POSIX_TIME 1
+ #define GPR_POSIX_ENV 1
+ #define GPR_ASYLO 1
++#define GRPC_HAVE_MSG_NOSIGNAL 1
++#define GRPC_HAVE_UNIX_SOCKET 1
++#define GRPC_IF_NAMETOINDEX 0
+ #define GRPC_POSIX_SOCKET 1
+ #define GRPC_POSIX_SOCKETADDR
+ #define GRPC_POSIX_SOCKETUTILS 1
+diff -Naur --no-dereference -x '*~' -x '*.orig' test/core/end2end/generate_tests.bzl test/core/end2end/generate_tests.bzl
+--- test/core/end2end/generate_tests.bzl
++++ test/core/end2end/generate_tests.bzl
+@@ -422,6 +422,7 @@
+             "end2end_tests.h",
+         ],
+         language = "C++",
++        visibility = ["//visibility:public"],
+         deps = [
+             ":cq_verifier",
+             ":ssl_test_data",
