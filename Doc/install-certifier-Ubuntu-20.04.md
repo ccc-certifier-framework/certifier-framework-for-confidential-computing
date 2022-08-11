@@ -2,11 +2,12 @@
 
 
 ### Setup Environment variables 
-
+```
 git clone https://github.com/vmware-research/certifier-framework-for-confidential-computing.git
-export CERTIFIER=certifier-framework-for-confidential-computing
+export CERTIFIER=`pwd`/certifier-framework-for-confidential-computing
 export CERTIFIER_PROTOTYPE=$CERTIFIER
-export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_app
+export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps
+```
 
 ### Install Dependencies
 ```
@@ -89,7 +90,7 @@ If showing error of `go.mod not found`, run `go env -w GO111MODULE=off` before b
 
 To run sample application, follow the README in sample_app or directly run 
 ```
-cd $EXAMPLE_DIR
+cd $EXAMPLE_DIR/simple_app
 chmod +x ./script
 ./script
 ```

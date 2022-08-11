@@ -25,9 +25,13 @@ Please refer to the [link](https://github.com/openenclave/openenclave/tree/maste
  for instructions. The example also relies on the protobuf built specifically with 
  openenclave libc, which the instructions can be found [here](../../openenclave_test/instructions.txt)
 
-To configure the environment variables for this project, run 
+To configure the environment variables for this project, first point `$CERTIFIER` to 
+the top level of the certifier repository. such as 
 ```
-export CERTIFIER=~/certifier-github-mirror
+export CERTIFIER=~/certifier-framework-for-confidential-computing
+```
+Then run 
+```
 export CERTIFIER_PROTOTYPE=$CERTIFIER
 export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/analytics_example
 export PATH=$PATH:/usr/local/go/bin && export PATH=$PATH:$(go env GOPATH)/bin
