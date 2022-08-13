@@ -69,14 +69,11 @@ DEFINE_string(measurement_file, "app_service.measurement", "measurement");
 
 DEFINE_string(guest_login_name, "jlm", "guest name");
 
-
-// #define DEBUG
+//#define DEBUG
 
 // ---------------------------------------------------------------------------------
 
 #include "policy_key.cc"
-cc_trust_data* app_trust_data = nullptr;
-
 
 class spawned_children {
 public:
@@ -192,18 +189,29 @@ void delete_child(int signum) {
     remove_kid(pid);
 }
 
+// ---------------------------------------------------------------------------------
+
+// The support functions use the helper object
+//    This is just a reference, object is local to main
+cc_trust_data* app_trust_data = nullptr;
+
+
 bool soft_Seal(spawned_children* kid, string in, string* out) {
+#ifdef DEBUG
+  printf("soft_Seal\n");
+#endif
 
   string buffer_to_seal;
   buffer_to_seal.assign(kid->measurement_.data(), kid->measurement_.size());
   buffer_to_seal.append(in.data(), in.size());
 
-  int t_size = buffer_to_seal.size() + 64;
+  int t_size = buffer_to_seal.size() + 128;
   byte t_out[t_size];
 
   byte iv[16];
-  if (!get_random(8 * 16, iv))
+  if (!get_random(8 * 16, iv)) {
     return false;
+  }
   if (!authenticated_encrypt((byte*)buffer_to_seal.data(), buffer_to_seal.size(),
         app_trust_data->service_symmetric_key_, iv, t_out, &t_size)) {
     printf("soft_Seal: authenticated encrypt failed\n");
@@ -214,6 +222,9 @@ bool soft_Seal(spawned_children* kid, string in, string* out) {
 }
 
 bool soft_Unseal(spawned_children* kid, string in, string* out) {
+#ifdef DEBUG
+  printf("soft_Unseal\n");
+#endif
 
   int t_size = in.size();
   byte t_out[t_size];
@@ -242,6 +253,10 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
 }
 
 bool soft_Attest(spawned_children* kid, string in, string* out) {
+#ifdef DEBUG
+  printf("soft_Attest\n");
+#endif
+
   // in  is a serialized vse-attestation
   if (!app_trust_data->cc_service_key_initialized_) {
     printf("soft_Attest: service key not initialized\n");
@@ -319,7 +334,9 @@ bool soft_Getmeasurement(spawned_children* kid, string* out) {
 void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   bool continue_loop = true;
 
+#ifdef DEBUG
   printf("\napplication service loop: %d %d\n", read_fd, write_fd);
+#endif
   while(continue_loop) {
     bool succeeded = false;
     string in;
@@ -353,6 +370,12 @@ void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
     }
 
 finishreq:
+#ifdef DEBUG
+    if (succeeded)
+      printf("Service response: succeeded\n");
+    else
+      printf("Service response: failed\n");
+#endif
     app_response rsp;
     string str_app_rsp;
     rsp.set_function(req.function());
@@ -370,6 +393,9 @@ finishreq:
             (int)str_app_rsp.size()) {
       printf("Response write failed\n");
     }
+#ifdef DEBUG
+    printf("Service loop: ended\n");
+#endif
   }
 }
 
@@ -662,14 +688,11 @@ int main(int an, char** av) {
 
   string store_file(FLAGS_service_dir);
   store_file.append(FLAGS_service_policy_store);
-  app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
-  if (app_trust_data == nullptr) {
-    printf("Couldn't initialize trust object\n");
-    return 1;
-  }
+  cc_trust_data helper(enclave_type, purpose, store_file);
+  app_trust_data = &helper;
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert)) {
+  if (!helper.init_policy_key(initialized_cert_size, initialized_cert)) {
     printf("Can't init policy key\n");
     return false;
   }
@@ -686,7 +709,7 @@ int main(int an, char** av) {
     string attest_endorsement_file_name(FLAGS_service_dir);
     attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
-    if (!app_trust_data->initialize_simulated_enclave_data(attest_key_file_name,
+    if (!helper.initialize_simulated_enclave_data(attest_key_file_name,
       measurement_file_name, attest_endorsement_file_name)) {
       printf("Can't init simulated enclave\n");
       return 1;
@@ -704,16 +727,16 @@ int main(int an, char** av) {
 
   // initialize and certify service data
   if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
-    if (!app_trust_data->cold_init()) {
+    if (!helper.cold_init()) {
       printf("cold-init failed\n");
       return 1;
     }
 
-    if (!app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
+    if (!helper.certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
         printf("certification failed\n");
         return 1;
       }
-  } else  if (!app_trust_data->warm_restart()) {
+  } else  if (!helper.warm_restart()) {
     printf("warm-restart failed\n");
     return 1;
   }
@@ -724,6 +747,6 @@ int main(int an, char** av) {
     return 1;
   }
 
-  app_trust_data->clear_sensitive_data();
+  helper.clear_sensitive_data();
   return 0;
 }
