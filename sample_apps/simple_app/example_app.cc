@@ -306,5 +306,8 @@ int main(int an, char** av) {
 done:
   // app_trust_data->print_trust_data();
   app_trust_data->clear_sensitive_data();
+  if (app_trust_data != nullptr) {
+    delete app_trust_data;
+  }
   return ret;
 }
