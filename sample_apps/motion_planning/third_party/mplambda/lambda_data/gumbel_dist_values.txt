@@ -1,0 +1,31 @@
+Gumbel Distribution Values (a, b)
+
+======================================================
+script:
+
+FIT_LIMIT=1.e-40
+f(x) = exp(-exp(-(a*x+b)))
+a = .1
+b = .1 
+fit f(x) "<file>.dat" using 2:1 via a,b
+plot "<file>.dat" using 2:1, f(x) 
+print a, b
+======================================================
+
+cublicle_lambda_data.dat
+2.94232913008364 -4.32192691131427
+
+apartment_lambda_data.dat
+0.886241684681993 -2.09776180449652
+
+home_lambda_data.dat
+0.269002588971669 -2.50812845649737
+
+alpha15_lambda_data.dat
+1.42941215179322 -1.14048361133661
+
+fetch_lambda_data.dat
+0.0586688791698255 -1.00715832699345
+
+twistycool_lambda_data.dat
+0.094669953901988 -1.51012852574138

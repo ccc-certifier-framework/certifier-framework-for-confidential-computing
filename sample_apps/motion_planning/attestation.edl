@@ -1,0 +1,28 @@
+// Copyright (c) Open Enclave SDK contributors.
+// Licensed under the MIT License.
+
+enclave {
+    from "openenclave/edl/attestation.edl" import *;
+    from "openenclave/edl/syscall.edl" import *;
+    from "openenclave/edl/logging.edl" import *;
+    //from "openenclave/edl/socket.edl" import *;
+    from "platform.edl" import *;
+
+    trusted {
+        public bool certifier_init([in, size=size] const void* data_dir, size_t size);
+
+        public bool openenclave_init(void);
+        public bool cold_init(void);
+        public bool certify_me(void);
+        public bool warm_restart(void);
+        public bool run_me_as_client(void);
+        public bool run_me_as_server(void);
+        public bool temp_test(void);
+    };
+
+    untrusted {
+        //uint64_t alloc_copy_host_buffer( [in, size=count] const void* buf,
+        //                                 size_t count)
+        //                                 propagate_errno;
+    };
+};

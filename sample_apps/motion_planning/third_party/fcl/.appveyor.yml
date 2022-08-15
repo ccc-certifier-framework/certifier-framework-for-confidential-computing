@@ -1,0 +1,60 @@
+# AppVeyor file
+# http://www.appveyor.com/docs/appveyor-yml
+
+version: "{build}"
+os: Visual Studio 2015
+
+clone_folder: C:\projects\fcl
+shallow_clone: true
+
+# build platform, i.e. Win32 (instead of x86), x64, Any CPU. This setting is optional.
+platform:
+  - Win32
+  - x64
+
+environment:
+  CTEST_OUTPUT_ON_FAILURE: 1
+
+cache:
+  - C:\Program Files\libccd -> .appveyor.yml
+
+configuration:
+  - Debug
+  - Release
+
+before_build:
+  - cmd: if "%platform%"=="Win32" set CMAKE_GENERATOR_NAME=Visual Studio 14 2015
+  - cmd: if "%platform%"=="x64"   set CMAKE_GENERATOR_NAME=Visual Studio 14 2015 Win64
+  - cmd: if "%platform%"=="Win32" set PROGRAM_FILES_PATH=Program Files (x86)
+  - cmd: if "%platform%"=="x64"   set PROGRAM_FILES_PATH=Program Files
+  - cmd: if not exist C:\"Program Files"\libccd\lib\ccd.lib (
+            curl -L -o libccd-2.0.tar.gz https://github.com/danfis/libccd/archive/v2.0.tar.gz &&
+            cmake -E tar zxf libccd-2.0.tar.gz &&
+            cd libccd-2.0 &&
+            mkdir build &&
+            cd build &&
+            cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%Configuration% -DCCD_DOUBLE=True .. &&
+            cmake --build . --target install --config %Configuration% &&
+            cd ..\..
+         ) else (echo Using cached libccd)
+  - cmd: if not exist C:\"Program Files"\Eigen\include\eigen3\Eigen\Core (
+            curl -LO https://gitlab.com/libeigen/eigen/-/archive/3.2.9/eigen-3.2.9.tar.gz &&
+            cmake -E tar zxf eigen-3.2.9.tar.gz &&
+            cd eigen-3.2.9 &&
+            mkdir build &&
+            cd build &&
+            cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%Configuration% .. &&
+            cmake --build . --target install --config %Configuration% &&
+            cd ..\..
+         ) else (echo Using cached Eigen3)
+  - cmd: set
+  - cmd: mkdir build
+  - cmd: cd build
+  - cmd: cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%Configuration% -DCCD_INCLUDE_DIR="C:\%PROGRAM_FILES_PATH%\libccd\include" -DCCD_LIBRARY="C:\%PROGRAM_FILES_PATH%\libccd\lib\ccd.lib" -DEIGEN3_INCLUDE_DIR="C:\%PROGRAM_FILES_PATH%\Eigen\include\eigen3" ..
+
+build:
+  project: C:\projects\fcl\build\fcl.sln
+  parallel: true
+
+test_script:
+  - cmd: ctest -C %Configuration% --output-on-failure
