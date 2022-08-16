@@ -28,13 +28,13 @@ The CXX compiler identification is Clang, found in "/home/azureuser/certifier-fr
 Determining if the C compiler works passed with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_b749a/fast && /usr/bin/make -f CMakeFiles/cmTC_b749a.dir/build.make CMakeFiles/cmTC_b749a.dir/build
+Run Build Command(s):/usr/bin/make cmTC_cf1fc/fast && /usr/bin/make -f CMakeFiles/cmTC_cf1fc.dir/build.make CMakeFiles/cmTC_cf1fc.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_b749a.dir/testCCompiler.c.o
-/usr/bin/clang-10    -o CMakeFiles/cmTC_b749a.dir/testCCompiler.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/testCCompiler.c
-Linking C executable cmTC_b749a
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b749a.dir/link.txt --verbose=1
-/usr/bin/clang-10      CMakeFiles/cmTC_b749a.dir/testCCompiler.c.o  -o cmTC_b749a 
+Building C object CMakeFiles/cmTC_cf1fc.dir/testCCompiler.c.o
+/usr/bin/clang-10    -o CMakeFiles/cmTC_cf1fc.dir/testCCompiler.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/testCCompiler.c
+Linking C executable cmTC_cf1fc
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cf1fc.dir/link.txt --verbose=1
+/usr/bin/clang-10      CMakeFiles/cmTC_cf1fc.dir/testCCompiler.c.o  -o cmTC_cf1fc 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -42,10 +42,10 @@ make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential
 Detecting C compiler ABI info compiled with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_dab59/fast && /usr/bin/make -f CMakeFiles/cmTC_dab59.dir/build.make CMakeFiles/cmTC_dab59.dir/build
+Run Build Command(s):/usr/bin/make cmTC_e98de/fast && /usr/bin/make -f CMakeFiles/cmTC_e98de.dir/build.make CMakeFiles/cmTC_e98de.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o
-/usr/bin/clang-10   -v -o CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake-3.16/Modules/CMakeCCompilerABI.c
+Building C object CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o
+/usr/bin/clang-10   -v -o CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake-3.16/Modules/CMakeCCompilerABI.c
 Ubuntu clang version 10.0.1-++20211003085942+ef32c611aa21-1~exp1~20211003090334.2
 Target: x86_64-pc-linux-gnu
 Thread model: posix
@@ -58,7 +58,7 @@ Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/9
 Candidate multilib: .;@m64
 Selected multilib: .;@m64
  (in-process)
- "/usr/lib/llvm-10/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model static -mthread-model posix -mframe-pointer=all -fmath-errno -fno-rounding-math -masm-verbose -mconstructor-aliases -munwind-tables -target-cpu x86-64 -dwarf-column-info -fno-split-dwarf-inlining -debugger-tuning=gdb -v -resource-dir /usr/lib/llvm-10/lib/clang/10.0.1 -internal-isystem /usr/local/include -internal-isystem /usr/lib/llvm-10/lib/clang/10.0.1/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdebug-compilation-dir /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -fgnuc-version=4.2.1 -fobjc-runtime=gcc -fdiagnostics-show-option -faddrsig -o CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o -x c /usr/share/cmake-3.16/Modules/CMakeCCompilerABI.c
+ "/usr/lib/llvm-10/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model static -mthread-model posix -mframe-pointer=all -fmath-errno -fno-rounding-math -masm-verbose -mconstructor-aliases -munwind-tables -target-cpu x86-64 -dwarf-column-info -fno-split-dwarf-inlining -debugger-tuning=gdb -v -resource-dir /usr/lib/llvm-10/lib/clang/10.0.1 -internal-isystem /usr/local/include -internal-isystem /usr/lib/llvm-10/lib/clang/10.0.1/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdebug-compilation-dir /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -fgnuc-version=4.2.1 -fobjc-runtime=gcc -fdiagnostics-show-option -faddrsig -o CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o -x c /usr/share/cmake-3.16/Modules/CMakeCCompilerABI.c
 clang -cc1 version 10.0.1 based upon LLVM 10.0.1 default target x86_64-pc-linux-gnu
 ignoring nonexistent directory "/include"
 #include "..." search starts here:
@@ -68,9 +68,9 @@ ignoring nonexistent directory "/include"
  /usr/include/x86_64-linux-gnu
  /usr/include
 End of search list.
-Linking C executable cmTC_dab59
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dab59.dir/link.txt --verbose=1
-/usr/bin/clang-10     -v CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o  -o cmTC_dab59 
+Linking C executable cmTC_e98de
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e98de.dir/link.txt --verbose=1
+/usr/bin/clang-10     -v CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o  -o cmTC_e98de 
 Ubuntu clang version 10.0.1-++20211003085942+ef32c611aa21-1~exp1~20211003090334.2
 Target: x86_64-pc-linux-gnu
 Thread model: posix
@@ -82,7 +82,7 @@ Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/9
 Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/9
 Candidate multilib: .;@m64
 Selected multilib: .;@m64
- "/usr/bin/ld" -z relro --hash-style=gnu --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_dab59 /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crt1.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtbegin.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/usr/lib/x86_64-linux-gnu/../../lib64 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../.. -L/usr/lib/llvm-10/bin/../lib -L/lib -L/usr/lib CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtend.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crtn.o
+ "/usr/bin/ld" -z relro --hash-style=gnu --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_e98de /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crt1.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtbegin.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/usr/lib/x86_64-linux-gnu/../../lib64 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../.. -L/usr/lib/llvm-10/bin/../lib -L/lib -L/usr/lib CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtend.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crtn.o
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -106,10 +106,10 @@ Parsed C implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
   ignore line: [Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command(s):/usr/bin/make cmTC_dab59/fast && /usr/bin/make -f CMakeFiles/cmTC_dab59.dir/build.make CMakeFiles/cmTC_dab59.dir/build]
+  ignore line: [Run Build Command(s):/usr/bin/make cmTC_e98de/fast && /usr/bin/make -f CMakeFiles/cmTC_e98de.dir/build.make CMakeFiles/cmTC_e98de.dir/build]
   ignore line: [make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp']
-  ignore line: [Building C object CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o]
-  ignore line: [/usr/bin/clang-10   -v -o CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake-3.16/Modules/CMakeCCompilerABI.c]
+  ignore line: [Building C object CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/usr/bin/clang-10   -v -o CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake-3.16/Modules/CMakeCCompilerABI.c]
   ignore line: [Ubuntu clang version 10.0.1-++20211003085942+ef32c611aa21-1~exp1~20211003090334.2]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Thread model: posix]
@@ -124,7 +124,7 @@ Parsed C implicit link information from above output:
   ignore line: [Selected multilib: .]
   ignore line: [@m64]
   ignore line: [ (in-process)]
-  ignore line: [ "/usr/lib/llvm-10/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model static -mthread-model posix -mframe-pointer=all -fmath-errno -fno-rounding-math -masm-verbose -mconstructor-aliases -munwind-tables -target-cpu x86-64 -dwarf-column-info -fno-split-dwarf-inlining -debugger-tuning=gdb -v -resource-dir /usr/lib/llvm-10/lib/clang/10.0.1 -internal-isystem /usr/local/include -internal-isystem /usr/lib/llvm-10/lib/clang/10.0.1/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdebug-compilation-dir /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -fgnuc-version=4.2.1 -fobjc-runtime=gcc -fdiagnostics-show-option -faddrsig -o CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o -x c /usr/share/cmake-3.16/Modules/CMakeCCompilerABI.c]
+  ignore line: [ "/usr/lib/llvm-10/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model static -mthread-model posix -mframe-pointer=all -fmath-errno -fno-rounding-math -masm-verbose -mconstructor-aliases -munwind-tables -target-cpu x86-64 -dwarf-column-info -fno-split-dwarf-inlining -debugger-tuning=gdb -v -resource-dir /usr/lib/llvm-10/lib/clang/10.0.1 -internal-isystem /usr/local/include -internal-isystem /usr/lib/llvm-10/lib/clang/10.0.1/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdebug-compilation-dir /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -fgnuc-version=4.2.1 -fobjc-runtime=gcc -fdiagnostics-show-option -faddrsig -o CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o -x c /usr/share/cmake-3.16/Modules/CMakeCCompilerABI.c]
   ignore line: [clang -cc1 version 10.0.1 based upon LLVM 10.0.1 default target x86_64-pc-linux-gnu]
   ignore line: [ignoring nonexistent directory "/include"]
   ignore line: [#include "..." search starts here:]
@@ -134,9 +134,9 @@ Parsed C implicit link information from above output:
   ignore line: [ /usr/include/x86_64-linux-gnu]
   ignore line: [ /usr/include]
   ignore line: [End of search list.]
-  ignore line: [Linking C executable cmTC_dab59]
-  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dab59.dir/link.txt --verbose=1]
-  ignore line: [/usr/bin/clang-10     -v CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o  -o cmTC_dab59 ]
+  ignore line: [Linking C executable cmTC_e98de]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e98de.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/clang-10     -v CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o  -o cmTC_e98de ]
   ignore line: [Ubuntu clang version 10.0.1-++20211003085942+ef32c611aa21-1~exp1~20211003090334.2]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Thread model: posix]
@@ -150,7 +150,7 @@ Parsed C implicit link information from above output:
   ignore line: [@m64]
   ignore line: [Selected multilib: .]
   ignore line: [@m64]
-  link line: [ "/usr/bin/ld" -z relro --hash-style=gnu --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_dab59 /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crt1.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtbegin.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/usr/lib/x86_64-linux-gnu/../../lib64 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../.. -L/usr/lib/llvm-10/bin/../lib -L/lib -L/usr/lib CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtend.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crtn.o]
+  link line: [ "/usr/bin/ld" -z relro --hash-style=gnu --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_e98de /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crt1.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtbegin.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/usr/lib/x86_64-linux-gnu/../../lib64 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../.. -L/usr/lib/llvm-10/bin/../lib -L/lib -L/usr/lib CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtend.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crtn.o]
     arg [/usr/bin/ld] ==> ignore
     arg [-zrelro] ==> ignore
     arg [--hash-style=gnu] ==> ignore
@@ -161,7 +161,7 @@ Parsed C implicit link information from above output:
     arg [-dynamic-linker] ==> ignore
     arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_dab59] ==> ignore
+    arg [cmTC_e98de] ==> ignore
     arg [/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crt1.o] ==> ignore
     arg [/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crti.o] ==> ignore
     arg [/usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtbegin.o] ==> ignore
@@ -177,7 +177,7 @@ Parsed C implicit link information from above output:
     arg [-L/usr/lib/llvm-10/bin/../lib] ==> dir [/usr/lib/llvm-10/bin/../lib]
     arg [-L/lib] ==> dir [/lib]
     arg [-L/usr/lib] ==> dir [/usr/lib]
-    arg [CMakeFiles/cmTC_dab59.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [CMakeFiles/cmTC_e98de.dir/CMakeCCompilerABI.c.o] ==> ignore
     arg [-lgcc] ==> lib [gcc]
     arg [--as-needed] ==> ignore
     arg [-lgcc_s] ==> lib [gcc_s]
@@ -209,13 +209,13 @@ Parsed C implicit link information from above output:
 Determining if the CXX compiler works passed with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_b014a/fast && /usr/bin/make -f CMakeFiles/cmTC_b014a.dir/build.make CMakeFiles/cmTC_b014a.dir/build
+Run Build Command(s):/usr/bin/make cmTC_654ef/fast && /usr/bin/make -f CMakeFiles/cmTC_654ef.dir/build.make CMakeFiles/cmTC_654ef.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_b014a.dir/testCXXCompiler.cxx.o
-/usr/bin/clang++-10     -o CMakeFiles/cmTC_b014a.dir/testCXXCompiler.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
-Linking CXX executable cmTC_b014a
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b014a.dir/link.txt --verbose=1
-/usr/bin/clang++-10       CMakeFiles/cmTC_b014a.dir/testCXXCompiler.cxx.o  -o cmTC_b014a 
+Building CXX object CMakeFiles/cmTC_654ef.dir/testCXXCompiler.cxx.o
+/usr/bin/clang++-10     -o CMakeFiles/cmTC_654ef.dir/testCXXCompiler.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+Linking CXX executable cmTC_654ef
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_654ef.dir/link.txt --verbose=1
+/usr/bin/clang++-10       CMakeFiles/cmTC_654ef.dir/testCXXCompiler.cxx.o  -o cmTC_654ef 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -223,10 +223,10 @@ make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential
 Detecting CXX compiler ABI info compiled with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_3ef21/fast && /usr/bin/make -f CMakeFiles/cmTC_3ef21.dir/build.make CMakeFiles/cmTC_3ef21.dir/build
+Run Build Command(s):/usr/bin/make cmTC_caf58/fast && /usr/bin/make -f CMakeFiles/cmTC_caf58.dir/build.make CMakeFiles/cmTC_caf58.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o
-/usr/bin/clang++-10    -v -o CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.16/Modules/CMakeCXXCompilerABI.cpp
+Building CXX object CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o
+/usr/bin/clang++-10    -v -o CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.16/Modules/CMakeCXXCompilerABI.cpp
 Ubuntu clang version 10.0.1-++20211003085942+ef32c611aa21-1~exp1~20211003090334.2
 Target: x86_64-pc-linux-gnu
 Thread model: posix
@@ -239,7 +239,7 @@ Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/9
 Candidate multilib: .;@m64
 Selected multilib: .;@m64
  (in-process)
- "/usr/lib/llvm-10/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model static -mthread-model posix -mframe-pointer=all -fmath-errno -fno-rounding-math -masm-verbose -mconstructor-aliases -munwind-tables -target-cpu x86-64 -dwarf-column-info -fno-split-dwarf-inlining -debugger-tuning=gdb -v -resource-dir /usr/lib/llvm-10/lib/clang/10.0.1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/backward -internal-isystem /usr/local/include -internal-isystem /usr/lib/llvm-10/lib/clang/10.0.1/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -fgnuc-version=4.2.1 -fobjc-runtime=gcc -fcxx-exceptions -fexceptions -fdiagnostics-show-option -faddrsig -o CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/share/cmake-3.16/Modules/CMakeCXXCompilerABI.cpp
+ "/usr/lib/llvm-10/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model static -mthread-model posix -mframe-pointer=all -fmath-errno -fno-rounding-math -masm-verbose -mconstructor-aliases -munwind-tables -target-cpu x86-64 -dwarf-column-info -fno-split-dwarf-inlining -debugger-tuning=gdb -v -resource-dir /usr/lib/llvm-10/lib/clang/10.0.1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/backward -internal-isystem /usr/local/include -internal-isystem /usr/lib/llvm-10/lib/clang/10.0.1/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -fgnuc-version=4.2.1 -fobjc-runtime=gcc -fcxx-exceptions -fexceptions -fdiagnostics-show-option -faddrsig -o CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/share/cmake-3.16/Modules/CMakeCXXCompilerABI.cpp
 clang -cc1 version 10.0.1 based upon LLVM 10.0.1 default target x86_64-pc-linux-gnu
 ignoring nonexistent directory "/include"
 ignoring duplicate directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9"
@@ -253,9 +253,9 @@ ignoring duplicate directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../..
  /usr/include/x86_64-linux-gnu
  /usr/include
 End of search list.
-Linking CXX executable cmTC_3ef21
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3ef21.dir/link.txt --verbose=1
-/usr/bin/clang++-10      -v CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_3ef21 
+Linking CXX executable cmTC_caf58
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_caf58.dir/link.txt --verbose=1
+/usr/bin/clang++-10      -v CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_caf58 
 Ubuntu clang version 10.0.1-++20211003085942+ef32c611aa21-1~exp1~20211003090334.2
 Target: x86_64-pc-linux-gnu
 Thread model: posix
@@ -267,7 +267,7 @@ Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/9
 Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/9
 Candidate multilib: .;@m64
 Selected multilib: .;@m64
- "/usr/bin/ld" -z relro --hash-style=gnu --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_3ef21 /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crt1.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtbegin.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/usr/lib/x86_64-linux-gnu/../../lib64 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../.. -L/usr/lib/llvm-10/bin/../lib -L/lib -L/usr/lib CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtend.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crtn.o
+ "/usr/bin/ld" -z relro --hash-style=gnu --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_caf58 /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crt1.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtbegin.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/usr/lib/x86_64-linux-gnu/../../lib64 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../.. -L/usr/lib/llvm-10/bin/../lib -L/lib -L/usr/lib CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtend.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crtn.o
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -297,10 +297,10 @@ Parsed CXX implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
   ignore line: [Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command(s):/usr/bin/make cmTC_3ef21/fast && /usr/bin/make -f CMakeFiles/cmTC_3ef21.dir/build.make CMakeFiles/cmTC_3ef21.dir/build]
+  ignore line: [Run Build Command(s):/usr/bin/make cmTC_caf58/fast && /usr/bin/make -f CMakeFiles/cmTC_caf58.dir/build.make CMakeFiles/cmTC_caf58.dir/build]
   ignore line: [make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp']
-  ignore line: [Building CXX object CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o]
-  ignore line: [/usr/bin/clang++-10    -v -o CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.16/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Building CXX object CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/bin/clang++-10    -v -o CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.16/Modules/CMakeCXXCompilerABI.cpp]
   ignore line: [Ubuntu clang version 10.0.1-++20211003085942+ef32c611aa21-1~exp1~20211003090334.2]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Thread model: posix]
@@ -315,7 +315,7 @@ Parsed CXX implicit link information from above output:
   ignore line: [Selected multilib: .]
   ignore line: [@m64]
   ignore line: [ (in-process)]
-  ignore line: [ "/usr/lib/llvm-10/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model static -mthread-model posix -mframe-pointer=all -fmath-errno -fno-rounding-math -masm-verbose -mconstructor-aliases -munwind-tables -target-cpu x86-64 -dwarf-column-info -fno-split-dwarf-inlining -debugger-tuning=gdb -v -resource-dir /usr/lib/llvm-10/lib/clang/10.0.1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/backward -internal-isystem /usr/local/include -internal-isystem /usr/lib/llvm-10/lib/clang/10.0.1/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -fgnuc-version=4.2.1 -fobjc-runtime=gcc -fcxx-exceptions -fexceptions -fdiagnostics-show-option -faddrsig -o CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/share/cmake-3.16/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [ "/usr/lib/llvm-10/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model static -mthread-model posix -mframe-pointer=all -fmath-errno -fno-rounding-math -masm-verbose -mconstructor-aliases -munwind-tables -target-cpu x86-64 -dwarf-column-info -fno-split-dwarf-inlining -debugger-tuning=gdb -v -resource-dir /usr/lib/llvm-10/lib/clang/10.0.1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/backward -internal-isystem /usr/local/include -internal-isystem /usr/lib/llvm-10/lib/clang/10.0.1/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmessage-length 0 -fgnuc-version=4.2.1 -fobjc-runtime=gcc -fcxx-exceptions -fexceptions -fdiagnostics-show-option -faddrsig -o CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/share/cmake-3.16/Modules/CMakeCXXCompilerABI.cpp]
   ignore line: [clang -cc1 version 10.0.1 based upon LLVM 10.0.1 default target x86_64-pc-linux-gnu]
   ignore line: [ignoring nonexistent directory "/include"]
   ignore line: [ignoring duplicate directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9"]
@@ -329,9 +329,9 @@ Parsed CXX implicit link information from above output:
   ignore line: [ /usr/include/x86_64-linux-gnu]
   ignore line: [ /usr/include]
   ignore line: [End of search list.]
-  ignore line: [Linking CXX executable cmTC_3ef21]
-  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3ef21.dir/link.txt --verbose=1]
-  ignore line: [/usr/bin/clang++-10      -v CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_3ef21 ]
+  ignore line: [Linking CXX executable cmTC_caf58]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_caf58.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/clang++-10      -v CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_caf58 ]
   ignore line: [Ubuntu clang version 10.0.1-++20211003085942+ef32c611aa21-1~exp1~20211003090334.2]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Thread model: posix]
@@ -345,7 +345,7 @@ Parsed CXX implicit link information from above output:
   ignore line: [@m64]
   ignore line: [Selected multilib: .]
   ignore line: [@m64]
-  link line: [ "/usr/bin/ld" -z relro --hash-style=gnu --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_3ef21 /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crt1.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtbegin.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/usr/lib/x86_64-linux-gnu/../../lib64 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../.. -L/usr/lib/llvm-10/bin/../lib -L/lib -L/usr/lib CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtend.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crtn.o]
+  link line: [ "/usr/bin/ld" -z relro --hash-style=gnu --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_caf58 /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crt1.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtbegin.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/usr/lib/x86_64-linux-gnu/../../lib64 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../.. -L/usr/lib/llvm-10/bin/../lib -L/lib -L/usr/lib CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtend.o /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crtn.o]
     arg [/usr/bin/ld] ==> ignore
     arg [-zrelro] ==> ignore
     arg [--hash-style=gnu] ==> ignore
@@ -356,7 +356,7 @@ Parsed CXX implicit link information from above output:
     arg [-dynamic-linker] ==> ignore
     arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_3ef21] ==> ignore
+    arg [cmTC_caf58] ==> ignore
     arg [/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crt1.o] ==> ignore
     arg [/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crti.o] ==> ignore
     arg [/usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtbegin.o] ==> ignore
@@ -372,7 +372,7 @@ Parsed CXX implicit link information from above output:
     arg [-L/usr/lib/llvm-10/bin/../lib] ==> dir [/usr/lib/llvm-10/bin/../lib]
     arg [-L/lib] ==> dir [/lib]
     arg [-L/usr/lib] ==> dir [/usr/lib]
-    arg [CMakeFiles/cmTC_3ef21.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [CMakeFiles/cmTC_caf58.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
     arg [-lstdc++] ==> lib [stdc++]
     arg [-lm] ==> lib [m]
     arg [-lgcc_s] ==> lib [gcc_s]
@@ -402,13 +402,13 @@ Parsed CXX implicit link information from above output:
 Determining if the include file pthread.h exists passed with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_e98ef/fast && /usr/bin/make -f CMakeFiles/cmTC_e98ef.dir/build.make CMakeFiles/cmTC_e98ef.dir/build
+Run Build Command(s):/usr/bin/make cmTC_0bafd/fast && /usr/bin/make -f CMakeFiles/cmTC_0bafd.dir/build.make CMakeFiles/cmTC_0bafd.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_e98ef.dir/CheckIncludeFile.c.o
-/usr/bin/clang-10    -o CMakeFiles/cmTC_e98ef.dir/CheckIncludeFile.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
-Linking C executable cmTC_e98ef
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e98ef.dir/link.txt --verbose=1
-/usr/bin/clang-10      CMakeFiles/cmTC_e98ef.dir/CheckIncludeFile.c.o  -o cmTC_e98ef 
+Building C object CMakeFiles/cmTC_0bafd.dir/CheckIncludeFile.c.o
+/usr/bin/clang-10    -o CMakeFiles/cmTC_0bafd.dir/CheckIncludeFile.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_0bafd
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0bafd.dir/link.txt --verbose=1
+/usr/bin/clang-10      CMakeFiles/cmTC_0bafd.dir/CheckIncludeFile.c.o  -o cmTC_0bafd 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -416,13 +416,13 @@ make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential
 Determining if the function pthread_create exists in the pthread passed with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_140f5/fast && /usr/bin/make -f CMakeFiles/cmTC_140f5.dir/build.make CMakeFiles/cmTC_140f5.dir/build
+Run Build Command(s):/usr/bin/make cmTC_ccb6a/fast && /usr/bin/make -f CMakeFiles/cmTC_ccb6a.dir/build.make CMakeFiles/cmTC_ccb6a.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_140f5.dir/CheckFunctionExists.c.o
-/usr/bin/clang-10   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_140f5.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
-Linking C executable cmTC_140f5
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_140f5.dir/link.txt --verbose=1
-/usr/bin/clang-10  -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_140f5.dir/CheckFunctionExists.c.o  -o cmTC_140f5  -lpthread 
+Building C object CMakeFiles/cmTC_ccb6a.dir/CheckFunctionExists.c.o
+/usr/bin/clang-10   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_ccb6a.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
+Linking C executable cmTC_ccb6a
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ccb6a.dir/link.txt --verbose=1
+/usr/bin/clang-10  -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_ccb6a.dir/CheckFunctionExists.c.o  -o cmTC_ccb6a  -lpthread 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -430,13 +430,13 @@ make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential
 Performing C SOURCE FILE Test OE_SPECTRE_MITIGATION_C_FLAGS_SUPPORTED succeeded with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_f63b1/fast && /usr/bin/make -f CMakeFiles/cmTC_f63b1.dir/build.make CMakeFiles/cmTC_f63b1.dir/build
+Run Build Command(s):/usr/bin/make cmTC_15ea0/fast && /usr/bin/make -f CMakeFiles/cmTC_15ea0.dir/build.make CMakeFiles/cmTC_15ea0.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_f63b1.dir/src.c.o
-/usr/bin/clang-10   -DOE_SPECTRE_MITIGATION_C_FLAGS_SUPPORTED   -mllvm -x86-speculative-load-hardening -o CMakeFiles/cmTC_f63b1.dir/src.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.c
-Linking C executable cmTC_f63b1
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f63b1.dir/link.txt --verbose=1
-/usr/bin/clang-10  -DOE_SPECTRE_MITIGATION_C_FLAGS_SUPPORTED    CMakeFiles/cmTC_f63b1.dir/src.c.o  -o cmTC_f63b1 
+Building C object CMakeFiles/cmTC_15ea0.dir/src.c.o
+/usr/bin/clang-10   -DOE_SPECTRE_MITIGATION_C_FLAGS_SUPPORTED   -mllvm -x86-speculative-load-hardening -o CMakeFiles/cmTC_15ea0.dir/src.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_15ea0
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_15ea0.dir/link.txt --verbose=1
+/usr/bin/clang-10  -DOE_SPECTRE_MITIGATION_C_FLAGS_SUPPORTED    CMakeFiles/cmTC_15ea0.dir/src.c.o  -o cmTC_15ea0 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -445,28 +445,112 @@ int main(void) { return 0; }
 Performing C++ SOURCE FILE Test OE_SPECTRE_MITIGATION_CXX_FLAGS_SUPPORTED succeeded with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_a7cf3/fast && /usr/bin/make -f CMakeFiles/cmTC_a7cf3.dir/build.make CMakeFiles/cmTC_a7cf3.dir/build
+Run Build Command(s):/usr/bin/make cmTC_4af8a/fast && /usr/bin/make -f CMakeFiles/cmTC_4af8a.dir/build.make CMakeFiles/cmTC_4af8a.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_a7cf3.dir/src.cxx.o
-/usr/bin/clang++-10    -DOE_SPECTRE_MITIGATION_CXX_FLAGS_SUPPORTED   -mllvm -x86-speculative-load-hardening -o CMakeFiles/cmTC_a7cf3.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
-Linking CXX executable cmTC_a7cf3
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a7cf3.dir/link.txt --verbose=1
-/usr/bin/clang++-10   -DOE_SPECTRE_MITIGATION_CXX_FLAGS_SUPPORTED    CMakeFiles/cmTC_a7cf3.dir/src.cxx.o  -o cmTC_a7cf3 
+Building CXX object CMakeFiles/cmTC_4af8a.dir/src.cxx.o
+/usr/bin/clang++-10    -DOE_SPECTRE_MITIGATION_CXX_FLAGS_SUPPORTED   -mllvm -x86-speculative-load-hardening -o CMakeFiles/cmTC_4af8a.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_4af8a
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4af8a.dir/link.txt --verbose=1
+/usr/bin/clang++-10   -DOE_SPECTRE_MITIGATION_CXX_FLAGS_SUPPORTED    CMakeFiles/cmTC_4af8a.dir/src.cxx.o  -o cmTC_4af8a 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
 Source file was:
 int main() { return 0; }
+Determining if the include file sys/types.h exists passed with the following output:
+Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b7832/fast && /usr/bin/make -f CMakeFiles/cmTC_b7832.dir/build.make CMakeFiles/cmTC_b7832.dir/build
+make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b7832.dir/CheckIncludeFile.c.o
+/usr/bin/clang-10   -fno-strict-aliasing   -fPIE   -std=gnu99 -o CMakeFiles/cmTC_b7832.dir/CheckIncludeFile.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_b7832
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b7832.dir/link.txt --verbose=1
+/usr/bin/clang-10 -fno-strict-aliasing      CMakeFiles/cmTC_b7832.dir/CheckIncludeFile.c.o  -o cmTC_b7832 
+make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the include file stdint.h exists passed with the following output:
+Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_34c9f/fast && /usr/bin/make -f CMakeFiles/cmTC_34c9f.dir/build.make CMakeFiles/cmTC_34c9f.dir/build
+make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_34c9f.dir/CheckIncludeFile.c.o
+/usr/bin/clang-10   -fno-strict-aliasing   -fPIE   -std=gnu99 -o CMakeFiles/cmTC_34c9f.dir/CheckIncludeFile.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_34c9f
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_34c9f.dir/link.txt --verbose=1
+/usr/bin/clang-10 -fno-strict-aliasing      CMakeFiles/cmTC_34c9f.dir/CheckIncludeFile.c.o  -o cmTC_34c9f 
+make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the include file stddef.h exists passed with the following output:
+Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_54e21/fast && /usr/bin/make -f CMakeFiles/cmTC_54e21.dir/build.make CMakeFiles/cmTC_54e21.dir/build
+make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_54e21.dir/CheckIncludeFile.c.o
+/usr/bin/clang-10   -fno-strict-aliasing   -fPIE   -std=gnu99 -o CMakeFiles/cmTC_54e21.dir/CheckIncludeFile.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_54e21
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_54e21.dir/link.txt --verbose=1
+/usr/bin/clang-10 -fno-strict-aliasing      CMakeFiles/cmTC_54e21.dir/CheckIncludeFile.c.o  -o cmTC_54e21 
+make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining size of off64_t passed with the following output:
+Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_fb864/fast && /usr/bin/make -f CMakeFiles/cmTC_fb864.dir/build.make CMakeFiles/cmTC_fb864.dir/build
+make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fb864.dir/OFF64_T.c.o
+/usr/bin/clang-10 -DHAVE_STDDEF_H -DHAVE_STDINT_H -DHAVE_SYS_TYPES_H -D_LARGEFILE64_SOURCE=1  -fno-strict-aliasing   -fPIE   -std=gnu99 -o CMakeFiles/cmTC_fb864.dir/OFF64_T.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CheckTypeSize/OFF64_T.c
+Linking C executable cmTC_fb864
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fb864.dir/link.txt --verbose=1
+/usr/bin/clang-10 -fno-strict-aliasing      CMakeFiles/cmTC_fb864.dir/OFF64_T.c.o  -o cmTC_fb864 
+make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function fseeko exists passed with the following output:
+Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_5caa7/fast && /usr/bin/make -f CMakeFiles/cmTC_5caa7.dir/build.make CMakeFiles/cmTC_5caa7.dir/build
+make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_5caa7.dir/CheckFunctionExists.c.o
+/usr/bin/clang-10   -fno-strict-aliasing  -DCHECK_FUNCTION_EXISTS=fseeko -fPIE   -std=gnu99 -o CMakeFiles/cmTC_5caa7.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
+Linking C executable cmTC_5caa7
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5caa7.dir/link.txt --verbose=1
+/usr/bin/clang-10 -fno-strict-aliasing  -DCHECK_FUNCTION_EXISTS=fseeko    CMakeFiles/cmTC_5caa7.dir/CheckFunctionExists.c.o  -o cmTC_5caa7 
+make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the include file unistd.h exists passed with the following output:
+Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b9b70/fast && /usr/bin/make -f CMakeFiles/cmTC_b9b70.dir/build.make CMakeFiles/cmTC_b9b70.dir/build
+make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b9b70.dir/CheckIncludeFile.c.o
+/usr/bin/clang-10   -fno-strict-aliasing   -fPIE   -std=gnu99 -o CMakeFiles/cmTC_b9b70.dir/CheckIncludeFile.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_b9b70
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b9b70.dir/link.txt --verbose=1
+/usr/bin/clang-10 -fno-strict-aliasing      CMakeFiles/cmTC_b9b70.dir/CheckIncludeFile.c.o  -o cmTC_b9b70 
+make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
+
+
+
 Performing C++ SOURCE FILE Test COMPILER_SUPPORTS_VISIBILITY succeeded with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_a44fa/fast && /usr/bin/make -f CMakeFiles/cmTC_a44fa.dir/build.make CMakeFiles/cmTC_a44fa.dir/build
+Run Build Command(s):/usr/bin/make cmTC_88d67/fast && /usr/bin/make -f CMakeFiles/cmTC_88d67.dir/build.make CMakeFiles/cmTC_88d67.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_a44fa.dir/src.cxx.o
-/usr/bin/clang++-10    -DCOMPILER_SUPPORTS_VISIBILITY   -fvisibility=hidden -std=gnu++17 -o CMakeFiles/cmTC_a44fa.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
-Linking CXX executable cmTC_a44fa
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a44fa.dir/link.txt --verbose=1
-/usr/bin/clang++-10   -DCOMPILER_SUPPORTS_VISIBILITY    CMakeFiles/cmTC_a44fa.dir/src.cxx.o  -o cmTC_a44fa 
+Building CXX object CMakeFiles/cmTC_88d67.dir/src.cxx.o
+/usr/bin/clang++-10    -DCOMPILER_SUPPORTS_VISIBILITY   -fvisibility=hidden -std=gnu++17 -o CMakeFiles/cmTC_88d67.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_88d67
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_88d67.dir/link.txt --verbose=1
+/usr/bin/clang++-10   -DCOMPILER_SUPPORTS_VISIBILITY    CMakeFiles/cmTC_88d67.dir/src.cxx.o  -o cmTC_88d67 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -475,13 +559,13 @@ int main() { return 0; }
 Performing C++ SOURCE FILE Test _compiler_supports_sse succeeded with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_b3dbf/fast && /usr/bin/make -f CMakeFiles/cmTC_b3dbf.dir/build.make CMakeFiles/cmTC_b3dbf.dir/build
+Run Build Command(s):/usr/bin/make cmTC_7182f/fast && /usr/bin/make -f CMakeFiles/cmTC_7182f.dir/build.make CMakeFiles/cmTC_7182f.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_b3dbf.dir/src.cxx.o
-/usr/bin/clang++-10    -D_compiler_supports_sse   -mfpmath=sse -msse -msse2 -msse3 -mssse3 -std=gnu++17 -o CMakeFiles/cmTC_b3dbf.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
-Linking CXX executable cmTC_b3dbf
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b3dbf.dir/link.txt --verbose=1
-/usr/bin/clang++-10   -D_compiler_supports_sse    CMakeFiles/cmTC_b3dbf.dir/src.cxx.o  -o cmTC_b3dbf 
+Building CXX object CMakeFiles/cmTC_7182f.dir/src.cxx.o
+/usr/bin/clang++-10    -D_compiler_supports_sse   -mfpmath=sse -msse -msse2 -msse3 -mssse3 -std=gnu++17 -o CMakeFiles/cmTC_7182f.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_7182f
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7182f.dir/link.txt --verbose=1
+/usr/bin/clang++-10   -D_compiler_supports_sse    CMakeFiles/cmTC_7182f.dir/src.cxx.o  -o cmTC_7182f 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -490,13 +574,13 @@ int main() { return 0; }
 Performing C++ SOURCE FILE Test COMPILER_HAS_HIDDEN_VISIBILITY succeeded with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_ca11d/fast && /usr/bin/make -f CMakeFiles/cmTC_ca11d.dir/build.make CMakeFiles/cmTC_ca11d.dir/build
+Run Build Command(s):/usr/bin/make cmTC_15f4a/fast && /usr/bin/make -f CMakeFiles/cmTC_15f4a.dir/build.make CMakeFiles/cmTC_15f4a.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_ca11d.dir/src.cxx.o
-/usr/bin/clang++-10    -DCOMPILER_HAS_HIDDEN_VISIBILITY   -fvisibility=hidden -std=gnu++17 -o CMakeFiles/cmTC_ca11d.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
-Linking CXX executable cmTC_ca11d
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ca11d.dir/link.txt --verbose=1
-/usr/bin/clang++-10   -DCOMPILER_HAS_HIDDEN_VISIBILITY    CMakeFiles/cmTC_ca11d.dir/src.cxx.o  -o cmTC_ca11d 
+Building CXX object CMakeFiles/cmTC_15f4a.dir/src.cxx.o
+/usr/bin/clang++-10    -DCOMPILER_HAS_HIDDEN_VISIBILITY   -fvisibility=hidden -std=gnu++17 -o CMakeFiles/cmTC_15f4a.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_15f4a
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_15f4a.dir/link.txt --verbose=1
+/usr/bin/clang++-10   -DCOMPILER_HAS_HIDDEN_VISIBILITY    CMakeFiles/cmTC_15f4a.dir/src.cxx.o  -o cmTC_15f4a 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -505,13 +589,13 @@ int main() { return 0; }
 Performing C++ SOURCE FILE Test COMPILER_HAS_HIDDEN_INLINE_VISIBILITY succeeded with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_293f0/fast && /usr/bin/make -f CMakeFiles/cmTC_293f0.dir/build.make CMakeFiles/cmTC_293f0.dir/build
+Run Build Command(s):/usr/bin/make cmTC_5f9d5/fast && /usr/bin/make -f CMakeFiles/cmTC_5f9d5.dir/build.make CMakeFiles/cmTC_5f9d5.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_293f0.dir/src.cxx.o
-/usr/bin/clang++-10    -DCOMPILER_HAS_HIDDEN_INLINE_VISIBILITY   -fvisibility-inlines-hidden -std=gnu++17 -o CMakeFiles/cmTC_293f0.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
-Linking CXX executable cmTC_293f0
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_293f0.dir/link.txt --verbose=1
-/usr/bin/clang++-10   -DCOMPILER_HAS_HIDDEN_INLINE_VISIBILITY    CMakeFiles/cmTC_293f0.dir/src.cxx.o  -o cmTC_293f0 
+Building CXX object CMakeFiles/cmTC_5f9d5.dir/src.cxx.o
+/usr/bin/clang++-10    -DCOMPILER_HAS_HIDDEN_INLINE_VISIBILITY   -fvisibility-inlines-hidden -std=gnu++17 -o CMakeFiles/cmTC_5f9d5.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_5f9d5
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5f9d5.dir/link.txt --verbose=1
+/usr/bin/clang++-10   -DCOMPILER_HAS_HIDDEN_INLINE_VISIBILITY    CMakeFiles/cmTC_5f9d5.dir/src.cxx.o  -o cmTC_5f9d5 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
@@ -520,10 +604,10 @@ int main() { return 0; }
 Performing C++ SOURCE FILE Test COMPILER_HAS_DEPRECATED_ATTR succeeded with the following output:
 Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_86253/fast && /usr/bin/make -f CMakeFiles/cmTC_86253.dir/build.make CMakeFiles/cmTC_86253.dir/build
+Run Build Command(s):/usr/bin/make cmTC_0766c/fast && /usr/bin/make -f CMakeFiles/cmTC_0766c.dir/build.make CMakeFiles/cmTC_0766c.dir/build
 make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_86253.dir/src.cxx.o
-/usr/bin/clang++-10    -DCOMPILER_HAS_DEPRECATED_ATTR   -std=gnu++17 -o CMakeFiles/cmTC_86253.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
+Building CXX object CMakeFiles/cmTC_0766c.dir/src.cxx.o
+/usr/bin/clang++-10    -DCOMPILER_HAS_DEPRECATED_ATTR   -std=gnu++17 -o CMakeFiles/cmTC_0766c.dir/src.cxx.o -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx
 /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/src.cxx:2:25: warning: 'somefunc' is deprecated [-Wdeprecated-declarations]
     int main() { return somefunc();}
                         ^
@@ -531,96 +615,12 @@ Building CXX object CMakeFiles/cmTC_86253.dir/src.cxx.o
 __attribute__((__deprecated__)) int somefunc() { return 0; }
                ^
 1 warning generated.
-Linking CXX executable cmTC_86253
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_86253.dir/link.txt --verbose=1
-/usr/bin/clang++-10   -DCOMPILER_HAS_DEPRECATED_ATTR    CMakeFiles/cmTC_86253.dir/src.cxx.o  -o cmTC_86253 
+Linking CXX executable cmTC_0766c
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0766c.dir/link.txt --verbose=1
+/usr/bin/clang++-10   -DCOMPILER_HAS_DEPRECATED_ATTR    CMakeFiles/cmTC_0766c.dir/src.cxx.o  -o cmTC_0766c 
 make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
 
 
 Source file was:
 __attribute__((__deprecated__)) int somefunc() { return 0; }
     int main() { return somefunc();}
-Determining if the include file sys/types.h exists passed with the following output:
-Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
-
-Run Build Command(s):/usr/bin/make cmTC_e03e1/fast && /usr/bin/make -f CMakeFiles/cmTC_e03e1.dir/build.make CMakeFiles/cmTC_e03e1.dir/build
-make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_e03e1.dir/CheckIncludeFile.c.o
-/usr/bin/clang-10   -fno-strict-aliasing   -fPIE   -std=gnu99 -o CMakeFiles/cmTC_e03e1.dir/CheckIncludeFile.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
-Linking C executable cmTC_e03e1
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e03e1.dir/link.txt --verbose=1
-/usr/bin/clang-10 -fno-strict-aliasing      CMakeFiles/cmTC_e03e1.dir/CheckIncludeFile.c.o  -o cmTC_e03e1 
-make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-
-
-
-Determining if the include file stdint.h exists passed with the following output:
-Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
-
-Run Build Command(s):/usr/bin/make cmTC_ee823/fast && /usr/bin/make -f CMakeFiles/cmTC_ee823.dir/build.make CMakeFiles/cmTC_ee823.dir/build
-make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_ee823.dir/CheckIncludeFile.c.o
-/usr/bin/clang-10   -fno-strict-aliasing   -fPIE   -std=gnu99 -o CMakeFiles/cmTC_ee823.dir/CheckIncludeFile.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
-Linking C executable cmTC_ee823
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ee823.dir/link.txt --verbose=1
-/usr/bin/clang-10 -fno-strict-aliasing      CMakeFiles/cmTC_ee823.dir/CheckIncludeFile.c.o  -o cmTC_ee823 
-make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-
-
-
-Determining if the include file stddef.h exists passed with the following output:
-Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
-
-Run Build Command(s):/usr/bin/make cmTC_12493/fast && /usr/bin/make -f CMakeFiles/cmTC_12493.dir/build.make CMakeFiles/cmTC_12493.dir/build
-make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_12493.dir/CheckIncludeFile.c.o
-/usr/bin/clang-10   -fno-strict-aliasing   -fPIE   -std=gnu99 -o CMakeFiles/cmTC_12493.dir/CheckIncludeFile.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
-Linking C executable cmTC_12493
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_12493.dir/link.txt --verbose=1
-/usr/bin/clang-10 -fno-strict-aliasing      CMakeFiles/cmTC_12493.dir/CheckIncludeFile.c.o  -o cmTC_12493 
-make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-
-
-
-Determining size of off64_t passed with the following output:
-Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
-
-Run Build Command(s):/usr/bin/make cmTC_be0f0/fast && /usr/bin/make -f CMakeFiles/cmTC_be0f0.dir/build.make CMakeFiles/cmTC_be0f0.dir/build
-make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_be0f0.dir/OFF64_T.c.o
-/usr/bin/clang-10 -DHAVE_STDDEF_H -DHAVE_STDINT_H -DHAVE_SYS_TYPES_H -D_LARGEFILE64_SOURCE=1  -fno-strict-aliasing   -fPIE   -std=gnu99 -o CMakeFiles/cmTC_be0f0.dir/OFF64_T.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CheckTypeSize/OFF64_T.c
-Linking C executable cmTC_be0f0
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_be0f0.dir/link.txt --verbose=1
-/usr/bin/clang-10 -fno-strict-aliasing      CMakeFiles/cmTC_be0f0.dir/OFF64_T.c.o  -o cmTC_be0f0 
-make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-
-
-
-Determining if the function fseeko exists passed with the following output:
-Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
-
-Run Build Command(s):/usr/bin/make cmTC_f1298/fast && /usr/bin/make -f CMakeFiles/cmTC_f1298.dir/build.make CMakeFiles/cmTC_f1298.dir/build
-make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_f1298.dir/CheckFunctionExists.c.o
-/usr/bin/clang-10   -fno-strict-aliasing  -DCHECK_FUNCTION_EXISTS=fseeko -fPIE   -std=gnu99 -o CMakeFiles/cmTC_f1298.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
-Linking C executable cmTC_f1298
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f1298.dir/link.txt --verbose=1
-/usr/bin/clang-10 -fno-strict-aliasing  -DCHECK_FUNCTION_EXISTS=fseeko    CMakeFiles/cmTC_f1298.dir/CheckFunctionExists.c.o  -o cmTC_f1298 
-make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-
-
-
-Determining if the include file unistd.h exists passed with the following output:
-Change Dir: /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp
-
-Run Build Command(s):/usr/bin/make cmTC_4aac8/fast && /usr/bin/make -f CMakeFiles/cmTC_4aac8.dir/build.make CMakeFiles/cmTC_4aac8.dir/build
-make[1]: Entering directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_4aac8.dir/CheckIncludeFile.c.o
-/usr/bin/clang-10   -fno-strict-aliasing   -fPIE   -std=gnu99 -o CMakeFiles/cmTC_4aac8.dir/CheckIncludeFile.c.o   -c /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
-Linking C executable cmTC_4aac8
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4aac8.dir/link.txt --verbose=1
-/usr/bin/clang-10 -fno-strict-aliasing      CMakeFiles/cmTC_4aac8.dir/CheckIncludeFile.c.o  -o cmTC_4aac8 
-make[1]: Leaving directory '/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles/CMakeTmp'
-
-
-

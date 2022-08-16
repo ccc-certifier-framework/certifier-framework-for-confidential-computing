@@ -80,6 +80,17 @@ install/local/fast: preinstall/fast
 	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
 .PHONY : install/local/fast
 
+# Special rule for the target edit_cache
+edit_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+.PHONY : edit_cache
+
+# Special rule for the target edit_cache
+edit_cache/fast: edit_cache
+
+.PHONY : edit_cache/fast
+
 # Special rule for the target install
 install: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
@@ -112,17 +123,6 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 
 .PHONY : rebuild_cache/fast
-
-# Special rule for the target edit_cache
-edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
-.PHONY : edit_cache
-
-# Special rule for the target edit_cache
-edit_cache/fast: edit_cache
-
-.PHONY : edit_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -158,17 +158,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named common
+# Target rules for targets named mpl
 
 # Build rule for target.
-common: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 common
-.PHONY : common
+mpl: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 mpl
+.PHONY : mpl
 
 # fast build rule for target.
-common/fast:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/build
-.PHONY : common/fast
+mpl/fast:
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/build
+.PHONY : mpl/fast
 
 #=============================================================================
 # Target rules for targets named zlibstatic
@@ -605,7 +605,7 @@ mplambda/src/mpl/comm.o: mplambda/src/mpl/comm.cpp.o
 
 # target to build an object file
 mplambda/src/mpl/comm.cpp.o:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/comm.cpp.o
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/comm.cpp.o
 .PHONY : mplambda/src/mpl/comm.cpp.o
 
 mplambda/src/mpl/comm.i: mplambda/src/mpl/comm.cpp.i
@@ -614,7 +614,7 @@ mplambda/src/mpl/comm.i: mplambda/src/mpl/comm.cpp.i
 
 # target to preprocess a source file
 mplambda/src/mpl/comm.cpp.i:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/comm.cpp.i
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/comm.cpp.i
 .PHONY : mplambda/src/mpl/comm.cpp.i
 
 mplambda/src/mpl/comm.s: mplambda/src/mpl/comm.cpp.s
@@ -623,7 +623,7 @@ mplambda/src/mpl/comm.s: mplambda/src/mpl/comm.cpp.s
 
 # target to generate assembly for a file
 mplambda/src/mpl/comm.cpp.s:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/comm.cpp.s
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/comm.cpp.s
 .PHONY : mplambda/src/mpl/comm.cpp.s
 
 mplambda/src/mpl/demo/app_options.o: mplambda/src/mpl/demo/app_options.cpp.o
@@ -632,7 +632,7 @@ mplambda/src/mpl/demo/app_options.o: mplambda/src/mpl/demo/app_options.cpp.o
 
 # target to build an object file
 mplambda/src/mpl/demo/app_options.cpp.o:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/demo/app_options.cpp.o
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/demo/app_options.cpp.o
 .PHONY : mplambda/src/mpl/demo/app_options.cpp.o
 
 mplambda/src/mpl/demo/app_options.i: mplambda/src/mpl/demo/app_options.cpp.i
@@ -641,7 +641,7 @@ mplambda/src/mpl/demo/app_options.i: mplambda/src/mpl/demo/app_options.cpp.i
 
 # target to preprocess a source file
 mplambda/src/mpl/demo/app_options.cpp.i:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/demo/app_options.cpp.i
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/demo/app_options.cpp.i
 .PHONY : mplambda/src/mpl/demo/app_options.cpp.i
 
 mplambda/src/mpl/demo/app_options.s: mplambda/src/mpl/demo/app_options.cpp.s
@@ -650,7 +650,7 @@ mplambda/src/mpl/demo/app_options.s: mplambda/src/mpl/demo/app_options.cpp.s
 
 # target to generate assembly for a file
 mplambda/src/mpl/demo/app_options.cpp.s:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/demo/app_options.cpp.s
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/demo/app_options.cpp.s
 .PHONY : mplambda/src/mpl/demo/app_options.cpp.s
 
 mplambda/src/mpl/demo/lambda_common.o: mplambda/src/mpl/demo/lambda_common.cpp.o
@@ -659,7 +659,7 @@ mplambda/src/mpl/demo/lambda_common.o: mplambda/src/mpl/demo/lambda_common.cpp.o
 
 # target to build an object file
 mplambda/src/mpl/demo/lambda_common.cpp.o:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/demo/lambda_common.cpp.o
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/demo/lambda_common.cpp.o
 .PHONY : mplambda/src/mpl/demo/lambda_common.cpp.o
 
 mplambda/src/mpl/demo/lambda_common.i: mplambda/src/mpl/demo/lambda_common.cpp.i
@@ -668,7 +668,7 @@ mplambda/src/mpl/demo/lambda_common.i: mplambda/src/mpl/demo/lambda_common.cpp.i
 
 # target to preprocess a source file
 mplambda/src/mpl/demo/lambda_common.cpp.i:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/demo/lambda_common.cpp.i
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/demo/lambda_common.cpp.i
 .PHONY : mplambda/src/mpl/demo/lambda_common.cpp.i
 
 mplambda/src/mpl/demo/lambda_common.s: mplambda/src/mpl/demo/lambda_common.cpp.s
@@ -677,7 +677,7 @@ mplambda/src/mpl/demo/lambda_common.s: mplambda/src/mpl/demo/lambda_common.cpp.s
 
 # target to generate assembly for a file
 mplambda/src/mpl/demo/lambda_common.cpp.s:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/demo/lambda_common.cpp.s
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/demo/lambda_common.cpp.s
 .PHONY : mplambda/src/mpl/demo/lambda_common.cpp.s
 
 mplambda/src/mpl/write_queue.o: mplambda/src/mpl/write_queue.cpp.o
@@ -686,7 +686,7 @@ mplambda/src/mpl/write_queue.o: mplambda/src/mpl/write_queue.cpp.o
 
 # target to build an object file
 mplambda/src/mpl/write_queue.cpp.o:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/write_queue.cpp.o
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/write_queue.cpp.o
 .PHONY : mplambda/src/mpl/write_queue.cpp.o
 
 mplambda/src/mpl/write_queue.i: mplambda/src/mpl/write_queue.cpp.i
@@ -695,7 +695,7 @@ mplambda/src/mpl/write_queue.i: mplambda/src/mpl/write_queue.cpp.i
 
 # target to preprocess a source file
 mplambda/src/mpl/write_queue.cpp.i:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/write_queue.cpp.i
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/write_queue.cpp.i
 .PHONY : mplambda/src/mpl/write_queue.cpp.i
 
 mplambda/src/mpl/write_queue.s: mplambda/src/mpl/write_queue.cpp.s
@@ -704,7 +704,7 @@ mplambda/src/mpl/write_queue.s: mplambda/src/mpl/write_queue.cpp.s
 
 # target to generate assembly for a file
 mplambda/src/mpl/write_queue.cpp.s:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/mplambda/src/mpl/write_queue.cpp.s
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/mplambda/src/mpl/write_queue.cpp.s
 .PHONY : mplambda/src/mpl/write_queue.cpp.s
 
 # Help Target
@@ -715,11 +715,11 @@ help:
 	@echo "... depend"
 	@echo "... install/strip"
 	@echo "... install/local"
+	@echo "... edit_cache"
 	@echo "... install"
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... edit_cache"
-	@echo "... common"
+	@echo "... mpl"
 	@echo "... zlibstatic"
 	@echo "... assimp"
 	@echo "... NightlyTest"

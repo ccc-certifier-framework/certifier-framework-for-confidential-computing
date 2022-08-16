@@ -37,26 +37,22 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 include_directories(include ../nigh/src)
 
 # Create a library common to each of our two enclaves.
-add_library(common OBJECT 
+add_library(mpl STATIC 
             ${CMAKE_SOURCE_DIR}/mplambda/src/mpl/demo/lambda_common.cpp
            ${CMAKE_SOURCE_DIR}/mplambda/src/mpl/comm.cpp
            ${CMAKE_SOURCE_DIR}/mplambda/src/mpl/write_queue.cpp
            ${CMAKE_SOURCE_DIR}/mplambda/src/mpl/demo/app_options.cpp
            )
 
-if (WIN32)
-  maybe_build_using_clangw(common)
-endif ()
-
 SET(LINK_SEARCH_START_STATIC TRUE)
 target_link_libraries(
-  common PUBLIC openenclave::oeenclave openenclave::oecrypto${OE_CRYPTO_LIB}
+  mpl PUBLIC openenclave::oeenclave openenclave::oecrypto${OE_CRYPTO_LIB}
     ${CMAKE_BINARY_DIR} Threads::Threads
     zlibstatic libassimp   fcl ccd 
     openenclave::oehostfs openenclave::oehostsock openenclave::oehostresolver
     ${CMAKE_SOURCE_DIR}/openlibm/libopenlibm.a openenclave::oelibc openenclave::oelibcxx )
 
-target_include_directories(common PUBLIC ${CMAKE_SOURCE_DIR}
+target_include_directories(mpl PUBLIC ${CMAKE_SOURCE_DIR}
                                          ${CMAKE_BINARY_DIR}
                                          ${CMAKE_SOURCE_DIR}/mplambda/include
                                          ${CMAKE_SOURCE_DIR}/fcl/include

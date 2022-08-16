@@ -53,7 +53,7 @@ CMAKE_BINARY_DIR = /home/azureuser/certifier-framework-for-confidential-computin
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/common.dir/all
+all: CMakeFiles/mpl.dir/all
 all: assimp/all
 all: libccd/all
 all: fcl/all
@@ -68,7 +68,7 @@ preinstall: fcl/preinstall
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/common.dir/clean
+clean: CMakeFiles/mpl.dir/clean
 clean: assimp/clean
 clean: libccd/clean
 clean: fcl/clean
@@ -255,33 +255,33 @@ libccd/src/clean: libccd/src/CMakeFiles/ccd.dir/clean
 .PHONY : libccd/src/clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/common.dir
+# Target rules for target CMakeFiles/mpl.dir
 
 # All Build rule for target.
-CMakeFiles/common.dir/all: assimp/contrib/zlib/CMakeFiles/zlibstatic.dir/all
-CMakeFiles/common.dir/all: libccd/src/CMakeFiles/ccd.dir/all
-CMakeFiles/common.dir/all: fcl/src/CMakeFiles/fcl.dir/all
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/depend
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles --progress-num=65 "Built target common"
-.PHONY : CMakeFiles/common.dir/all
+CMakeFiles/mpl.dir/all: assimp/contrib/zlib/CMakeFiles/zlibstatic.dir/all
+CMakeFiles/mpl.dir/all: libccd/src/CMakeFiles/ccd.dir/all
+CMakeFiles/mpl.dir/all: fcl/src/CMakeFiles/fcl.dir/all
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/depend
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles --progress-num=95 "Built target mpl"
+.PHONY : CMakeFiles/mpl.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/common.dir/rule: cmake_check_build_system
+CMakeFiles/mpl.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles 38
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/common.dir/all
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/mpl.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles 0
-.PHONY : CMakeFiles/common.dir/rule
+.PHONY : CMakeFiles/mpl.dir/rule
 
 # Convenience name for target.
-common: CMakeFiles/common.dir/rule
+mpl: CMakeFiles/mpl.dir/rule
 
-.PHONY : common
+.PHONY : mpl
 
 # clean rule for target.
-CMakeFiles/common.dir/clean:
-	$(MAKE) -f CMakeFiles/common.dir/build.make CMakeFiles/common.dir/clean
-.PHONY : CMakeFiles/common.dir/clean
+CMakeFiles/mpl.dir/clean:
+	$(MAKE) -f CMakeFiles/mpl.dir/build.make CMakeFiles/mpl.dir/clean
+.PHONY : CMakeFiles/mpl.dir/clean
 
 #=============================================================================
 # Target rules for target assimp/contrib/zlib/CMakeFiles/zlibstatic.dir
@@ -1154,7 +1154,7 @@ fcl/CMakeFiles/uninstall.dir/clean:
 fcl/src/CMakeFiles/fcl.dir/all: libccd/src/CMakeFiles/ccd.dir/all
 	$(MAKE) -f fcl/src/CMakeFiles/fcl.dir/build.make fcl/src/CMakeFiles/fcl.dir/depend
 	$(MAKE) -f fcl/src/CMakeFiles/fcl.dir/build.make fcl/src/CMakeFiles/fcl.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles --progress-num=66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95 "Built target fcl"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build/CMakeFiles --progress-num=65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94 "Built target fcl"
 .PHONY : fcl/src/CMakeFiles/fcl.dir/all
 
 # Build rule for subdir invocation for target.

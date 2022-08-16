@@ -14,9 +14,9 @@ PROTO_INCL=-I../../../openenclave_test/protobufs-bin/include
 PROTO_LIB=-L../../../openenclave_test/protobufs-bin/lib -lprotobuf -loeenclave -loelibcxx -loelibc -loesyscall -loecore -loesyscall -loecore -loehostsock -loehostresolver
 CERT_SRC=../../../src
 CERT_INCL=-I../../../include -I../../../src  -I../eigen3/
-DATAFRAME_INCL=-I../third_party/DataFrame/include -I../third_party/mplambda/include 
+DATAFRAME_INCL=-I../third_party/DataFrame/include -I../third_party/mplambda/include  
 #DATAFRAME_LIB=../third_party/DataFrame/build/libDataFrame.a 
-DATAFRAME_LIB=
+DATAFRAME_LIB=../third_party/build/libmpl.a ../third_party/build/assimp/lib/libassimp.a ../third_party/build/assimp/contrib/zlib/libzlibstatic.a ../third_party/build/fcl/lib/libfcl.a ../third_party/build/libccd/src/libccd.a
 #
 # Seal plug-ins are searched in two steps.
 #

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmpl.a  CMakeFiles/mpl.dir/mplambda/src/mpl/demo/lambda_common.cpp.o CMakeFiles/mpl.dir/mplambda/src/mpl/comm.cpp.o CMakeFiles/mpl.dir/mplambda/src/mpl/write_queue.cpp.o CMakeFiles/mpl.dir/mplambda/src/mpl/demo/app_options.cpp.o
+/usr/bin/ranlib libmpl.a

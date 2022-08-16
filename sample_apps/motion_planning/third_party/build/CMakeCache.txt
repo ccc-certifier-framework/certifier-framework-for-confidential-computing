@@ -563,6 +563,9 @@ libccd_BINARY_DIR:STATIC=/home/azureuser/certifier-framework-for-confidential-co
 //Value Computed by CMake
 libccd_SOURCE_DIR:STATIC=/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/libccd
 
+//Dependencies for the target
+mpl_LIB_DEPENDS:STATIC=general;openenclave::oeenclave;general;openenclave::oecryptombedtls;general;/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/build;general;zlibstatic;general;libassimp;general;fcl;general;ccd;general;openenclave::oehostfs;general;openenclave::oehostsock;general;openenclave::oehostresolver;general;/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/openlibm/libopenlibm.a;general;openenclave::oelibc;general;openenclave::oelibcxx;
+
 //The directory containing a CMake configuration file for octomap.
 octomap_DIR:PATH=octomap_DIR-NOTFOUND
 
