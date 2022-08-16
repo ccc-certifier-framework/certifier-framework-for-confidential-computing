@@ -39,7 +39,7 @@
 #  include <unistd.h>
 #endif
 
-#include "zlib.h"
+#include "../zlib/zlib.h"
 
 #include "crypt.h"
 

@@ -951,6 +951,10 @@ ELSE()
   SOURCE_GROUP( Contrib\\Poly2Tri FILES ${Poly2Tri_SRCS})
 ENDIF()
 
+
+
+
+
 # minizip/unzip
 IF(ASSIMP_HUNTER_ENABLED)
   hunter_add_package(minizip)
@@ -1280,7 +1284,7 @@ if (MINGW)
     ARCHIVE_OUTPUT_NAME assimp
   )
   if (NOT BUILD_SHARED_LIBS)
-    TARGET_LINK_LIBRARIES ( assimp -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lwinpthread ) # winpthread is for libminizip.
+    TARGET_LINK_LIBRARIES ( assimp -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lwinpthread  -loelibcxx -loelibc) # winpthread is for libminizip.
   endif ()
 endif()
 
@@ -1329,6 +1333,11 @@ ENDIF()
 IF (RT_FOUND AND ASSIMP_IMPORTER_GLTF_USE_OPEN3DGC)
   TARGET_LINK_LIBRARIES(assimp ${RT_LIBRARY})
 ENDIF ()
+
+
+TARGET_LINK_LIBRARIES(
+  assimp  openenclave::oelibc openenclave::oelibcxx
+)
 
 
 INSTALL( TARGETS assimp
@@ -1392,6 +1401,12 @@ if (ASSIMP_COVERALLS)
         "${PROJECT_SOURCE_DIR}/cmake-modules/") # (Optional) Alternate project cmake module path.
 ENDIF()
 
-add_library(libassimp STATIC ${assimp_src})
-target_link_libraries(
-  libassimp PUBLIC  openenclave::oelibc openenclave::oelibcxx )
+#add_library(libassimp STATIC ${assimp_src})
+#target_link_libraries(
+#  libassimp PUBLIC  openenclave::oelibc openenclave::oelibcxx zlibstatic
+#)
+#TARGET_INCLUDE_DIRECTORIES ( assimp PUBLIC
+#  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+#  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../include>
+#  $<INSTALL_INTERFACE:${ASSIMP_INCLUDE_INSTALL_DIR}>
+#)

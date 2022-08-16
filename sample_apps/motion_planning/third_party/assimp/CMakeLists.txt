@@ -62,7 +62,7 @@ PROJECT(Assimp VERSION 5.2.0)
 
 OPTION( BUILD_SHARED_LIBS
   "Build package with shared libraries."
-  ON
+  OFF
 )
 OPTION( ASSIMP_BUILD_FRAMEWORK
   "Build package as Mac OS X Framework bundle."
@@ -90,7 +90,7 @@ OPTION( ASSIMP_BUILD_ZLIB
 )
 OPTION( ASSIMP_BUILD_ASSIMP_TOOLS
   "If the supplementary tools for Assimp are built in addition to the library."
-  ON
+  OFF
 )
 OPTION ( ASSIMP_BUILD_SAMPLES
   "If the official samples are built as well (needs Glut)."
@@ -98,7 +98,7 @@ OPTION ( ASSIMP_BUILD_SAMPLES
 )
 OPTION ( ASSIMP_BUILD_TESTS
   "If the test suite for Assimp is built in addition to the library."
-  ON
+  OFF
 )
 OPTION ( ASSIMP_COVERALLS
   "Enable this to measure test coverage."
@@ -219,6 +219,8 @@ IF(NOT ASSIMP_IGNORE_GIT_HASH)
     ERROR_QUIET
   )
 ENDIF()
+
+find_package(OpenEnclave CONFIG REQUIRED)
 
 IF(NOT GIT_COMMIT_HASH)
   SET(GIT_COMMIT_HASH 0)
@@ -469,7 +471,7 @@ IF(ASSIMP_HUNTER_ENABLED)
   hunter_add_package(ZLIB)
   find_package(ZLIB CONFIG REQUIRED)
 
-  add_definitions(-DASSIMP_BUILD_NO_OWN_ZLIB)
+  # add_definitions(-DASSIMP_BUILD_NO_OWN_ZLIB)
   set(ZLIB_FOUND TRUE)
   set(ZLIB_LIBRARIES ZLIB::zlib)
   set(ASSIMP_BUILD_MINIZIP TRUE)
@@ -506,7 +508,7 @@ ELSE()
     # need to ensure we don't link with system zlib or minizip as well.
     SET(ASSIMP_BUILD_MINIZIP 1)
   ELSE()
-    ADD_DEFINITIONS(-DASSIMP_BUILD_NO_OWN_ZLIB)
+    # ADD_DEFINITIONS(-DASSIMP_BUILD_NO_OWN_ZLIB)
     SET(ZLIB_LIBRARIES_LINKED -lz)
   ENDIF()
   INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
