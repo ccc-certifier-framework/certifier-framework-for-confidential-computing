@@ -121,5 +121,29 @@ bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, S
 bool init_client_ssl(X509* x509_root_cert, key_message& private_key,
     const string& host_name, int port, int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl);
 void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl);
+
+#if 0
+class secure_authenticated_channel {
+public:
+  string role_;
+  bool channel_initialized_;
+  SSL_CTX* ctx_;
+  SSL* ssl_;
+  int sock_;
+  X509* my_cert_;
+  X509* peer_cert_;
+  string peer_id_;
+
+  secure_authenticated_channel(string& role);  // role is client or server
+  ~secure_authenticated_channel();
+  // bool init_client_ssl(string& host_name, int port, x509* root_cert, key_message& private_key);
+  // bool init_server_ssl(string& host_name, int port, x509* root_cert, key_message& private_key);
+  int read(int size, byte* b);
+  int write(int size, byte* b);
+  void close();
+  bool get_peer_id(string* out);
+};
+#endif
+
 #endif
 
