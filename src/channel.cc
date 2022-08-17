@@ -179,6 +179,7 @@ bool load_server_certs_and_key(
 void server_dispatch(const string& host_name, int port,
       x509* root_cert, key_message& private_key,
       void (*)(secure_authenticated_channel&)) {
+
   SSL_load_error_strings();
 
   // Get a socket.
@@ -396,9 +397,6 @@ bool secure_authenticated_channel::init_client_ssl(string& host_name, int port,
         x509* root_cert, key_message& private_key) {
 
   SSL_load_error_strings();
-  int sd = 0;
-  SSL_CTX* ctx = nullptr;
-  SSL* ssl = nullptr;
   OPENSSL_init_ssl(0, NULL);;
 
   int sock = -1;
@@ -423,13 +421,13 @@ bool secure_authenticated_channel::init_client_ssl(string& host_name, int port,
   // For debugging: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
   SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER, nullptr);
 
-  SSL_CTX_set_verify_depth(ctx, 4);
+  SSL_CTX_set_verify_depth(ssl_ctx_, 4);
   const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
-  SSL_CTX_set_options(ctx, flags);
+  SSL_CTX_set_options(ssl_ctx_, flags);
 
   ssl_ = SSL_new(ctx);
   SSL_set_fd(ssl_, sock_);
-  int res = SSL_set_cipher_list(ssl, "TLS_AES_256_GCM_SHA384");  // Change?
+  int res = SSL_set_cipher_list(ssl_, "TLS_AES_256_GCM_SHA384");  // Change?
 
   if (!load_client_certs_and_key(root_cert_, private_key_, ssl_ctx_)) {
     printf("load_client_certs_and_key failed\n");
@@ -493,7 +491,6 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
   return true;
 }
 
-//  void (*func)(secure_authenticated_channel& channel)
 bool secure_authenticated_channel::server_channel_accept_and_auth(
     void (*func)(secure_authenticated_channel& channel)) {
 
@@ -503,13 +500,13 @@ bool secure_authenticated_channel::server_channel_accept_and_auth(
     printf("Server: Can't SSL_accept connection\n");
     unsigned long code = ERR_get_error();
     printf("Accept error: %s\n", ERR_lib_error_string(code));
-    print_ssl_error(SSL_get_error(ssl, res));
+    print_ssl_error(SSL_get_error(ssl_, res));
     SSL_free(ssl_);
     return;
   }
   sock_ = SSL_get_fd(ssl_);
 #ifdef DEBUG
-  printf("Accepted ssl connection using %s \n", SSL_get_cipher(ssl));
+  printf("Accepted ssl connection using %s \n", SSL_get_cipher(ssl_));
 #endif
 
     // Verify a client certificate was presented during the negotiation
@@ -569,10 +566,11 @@ void server_application(secure_authenticated_channel& channel) {
   channel.write(strlen(msg), (byte*)msg);
 }
 
-bool run_me_as_server( const string& host_name, int port,
+bool run_me_as_server(const string& host_name, int port,
       X509* x509_policy_cert, key_message& private_key) {
 
-  server_dispatch(server_application, channel)
+  server_dispatch(host_name, port, x509_policy_cert, private_key,
+      server_application);
   return true;
 }
 
@@ -599,6 +597,8 @@ bool run_me_as_client( const string& host_name, int port,
   client_application(channel);
   return true;
 }
+
+// ------------------------------------------------------------------------------------------
 
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
