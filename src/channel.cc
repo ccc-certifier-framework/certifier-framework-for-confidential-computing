@@ -2,6 +2,8 @@
 
 // ----------------------------------------------------------------------------------
 
+#define DEBUG
+
 // Socket and SSL support
 
 void print_cn_name(X509_NAME* name) {
@@ -136,6 +138,99 @@ int verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
 }
 
 // ----------------------------------------------------------------------------------
+
+// Loads server side certs and keys.
+bool load_server_certs_and_key(
+      X509* x509_root_cert, key_message& private_key,
+      SSL_CTX* ctx) {
+  // load auth key, policy_cert and certificate chain
+  RSA* r = RSA_new();
+  if (!key_to_RSA(private_key, r)) {
+    return false;
+  }
+  EVP_PKEY* auth_private_key = EVP_PKEY_new();
+  EVP_PKEY_set1_RSA(auth_private_key, r);
+
+  X509* x509_auth_key_cert= X509_new();
+  string auth_cert_str;
+  auth_cert_str.assign((char*)private_key.certificate().data(),
+        privatekey_.certificate().size());
+  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
+      return false;
+  }
+
+  STACK_OF(X509)* stack = sk_X509_new_null();
+  if (sk_X509_push(stack, root_cert) == 0) {
+    return false;
+  }
+
+  if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
+      return false;
+  }
+  if (!SSL_CTX_check_private_key(ctx) ) {
+      return false;
+  }
+  SSL_CTX_add_client_CA(ctx, root_cert);
+  SSL_CTX_add1_to_CA_list(ctx, root_cert);
+  return true;
+}
+
+
+void server_dispatch(const string& host_name, int port,
+      x509* root_cert, key_message& private_key,
+      void (*)(secure_authenticated_channel&)) {
+  SSL_load_error_strings();
+
+  // Get a socket.
+  int sock = -1;
+  if (!open_server_socket(host_name, port, &sock)) {
+    printf("Can't open server socket\n");
+    return false;
+  }
+
+  // Set up TLS handshake data.
+  SSL_METHOD* method = (SSL_METHOD*) TLS_server_method();
+  SSL_CTX* ctx = SSL_CTX_new(method);
+  if (ctx == NULL) {
+    printf("SSL_CTX_new failed\n");
+    return false;
+  }
+  X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
+  X509_STORE_add_cert(cs, x509_policy_cert);
+
+  if (!load_server_certs_and_key(x509_policy_cert, private_key, ctx)) {
+    printf("SSL_CTX_new failed\n");
+    return false;
+  }
+
+  const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
+  SSL_CTX_set_options(ctx, flags);
+
+#if 0
+  // This is unnecessary usually.
+  if(!isRoot()) {
+    printf("This program must be run as root/sudo user!!");
+    return false;
+  }
+#endif
+
+  unsigned int len = 0;
+  while (1) {
+#ifdef DEBUG
+    printf("at accept\n");
+#endif
+    struct sockaddr_in addr;
+    int client = accept(sock, (struct sockaddr*)&addr, &len);
+    secure_authenticated_channel* nc = new(secure_authenticated_channel("server"));
+    if (!nc->init_server_ssl(host_name, port, root_cert, private_key)) {
+      continue;
+    }
+    nc->ssl_ = SSL_new(ctx);
+    SSL_set_fd(nc->ssl_, client);
+    nc->sock_ = client;
+    nc->server_channel_accept_and_auth(func);
+  }
+}
 
 secure_authenticated_channel::secure_authenticated_channel(string& role) {
   role_ = role;
@@ -297,41 +392,8 @@ done:
   return ret;
 }
 
-// Loads server side certs and keys.
-bool secure_authenticated_channel::load_server_certs_and_key() {
-  // load auth key, policy_cert and certificate chain
-  RSA* r = RSA_new();
-  if (!key_to_RSA(private_key_, r)) {
-    return false;
-  }
-  EVP_PKEY* auth_private_key = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(auth_private_key, r);
-
-  X509* x509_auth_key_cert= X509_new();
-  string auth_cert_str;
-  auth_cert_str.assign((char*)private_key_.certificate().data(),
-        private_key_.certificate().size());
-  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
-      return false;
-  }
-
-  STACK_OF(X509)* stack = sk_X509_new_null();
-  if (sk_X509_push(stack, root_cert_) == 0) {
-    return false;
-  }
-
-  if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
-      return false;
-  }
-  if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
-      return false;
-  }
-  SSL_CTX_add_client_CA(ssl_ctx_, root_cert_);
-  SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
-  return true;
-}
-
-bool secure_authenticated_channel::init_client_ssl(string& host_name, int port, x509* root_cert, key_message& private_key) {
+bool secure_authenticated_channel::init_client_ssl(string& host_name, int port,
+        x509* root_cert, key_message& private_key) {
 
   SSL_load_error_strings();
   int sd = 0;
@@ -432,7 +494,8 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
 }
 
 //  void (*func)(secure_authenticated_channel& channel)
-bool secure_authenticated_channel::server_channel_accept_and_auth(void (*func)(secure_authenticated_channel& channel)) {
+bool secure_authenticated_channel::server_channel_accept_and_auth(
+    void (*func)(secure_authenticated_channel& channel)) {
 
   // accept and carry out auth
   int res = SSL_accept(ssl_);
@@ -450,58 +513,27 @@ bool secure_authenticated_channel::server_channel_accept_and_auth(void (*func)(s
 #endif
 
     // Verify a client certificate was presented during the negotiation
-    X509* cert = SSL_get_peer_certificate(ssl_);
-    if(cert) {
+    peer_cert_ = SSL_get_peer_certificate(ssl_);
+    if(peer_cert_) {
       printf("Server: Peer cert presented in nego\n");
     } else {
       printf("Server: No peer cert presented in nego\n");
     }
+  
   if (!client_auth_server(root_cert_, ssl_)) {
     printf("Client auth failed at server\n");
     return;
   }
+  channel_initialized_ = true;
   func(this);
+  return true;
 }
 
-bool secure_authenticated_channel::init_server_ssl(string& host_name, int port, x509* root_cert, key_message& private_key) {
+bool secure_authenticated_channel::init_server_ssl(string& host_name, int port,
+      x509* root_cert, key_message& private_key) {
   SSL_load_error_strings();
 
-  // Get a socket.
-  int sock = -1;
-  if (!open_server_socket(host_name, port, &sock_)) {
-    printf("Can't open server socket\n");
-    return false;
-  }
-
-  // Set up TLS handshake data.
-  SSL_METHOD* method = (SSL_METHOD*) TLS_server_method();
-  ssl_ctx_ = SSL_CTX_new(method);
-  if (ssl_ctx_ == NULL) {
-    printf("SSL_CTX_new failed\n");
-    return false;
-  }
-  X509_STORE* cs = SSL_CTX_get_cert_store(ssl_ctx_);
-  X509_STORE_add_cert(cs, root_cert_);
-
-  if (!load_server_certs_and_key(x509_policy_cert, private_key_, ssl_ctx_)) {
-    printf("SSL_CTX_new failed\n");
-    return false;
-  }
-
-  const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
-  SSL_CTX_set_options(ssl_ctx_, flags);
-
-#if 0
-  // This is unnecessary usually.
-  if(!isRoot()) {
-    printf("This program must be run as root/sudo user!!");
-    return false;
-  }
-#endif
-
-  // Verify peer
-  // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
-  SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER, nullptr);
+  // set keys and cert
   return true;
 }
 
@@ -536,15 +568,11 @@ void server_application(secure_authenticated_channel& channel) {
   const char* msg = "Hi from your secret server\n";
   channel.write(strlen(msg), (byte*)msg);
 }
-#endif
 
 bool run_me_as_server( const string& host_name, int port,
       X509* x509_policy_cert, key_message& private_key) {
 
-  secure_authenticated_channel channel("server");
-  if (!channel.init_server_ssl(host_name, port, x509_policy_cert, private_key)) {
-  }
-  // channel.server_channel_accept_and_auth(server_application, channel)
+  server_dispatch(server_application, channel)
   return true;
 }
 

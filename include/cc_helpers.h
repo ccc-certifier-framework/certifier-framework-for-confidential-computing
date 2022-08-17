@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include  <netdb.h>
+#include <netdb.h>
 #include <openssl/ssl.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
@@ -143,19 +143,22 @@ public:
   bool client_auth_server();
   bool client_auth_client();
   bool load_client_certs_and_key();
-  bool load_server_certs_and_key();
 
   bool init_client_ssl(string& host_name, int port, x509* root_cert, key_message& private_key);
   bool init_server_ssl(string& host_name, int port, x509* root_cert, key_message& private_key);
 
   void server_channel_accept_and_auth(void (*)(secure_authenticated_channel&),
-      secure_authenticated_channel& channel)
+      secure_authenticated_channel& channel);
 
   int read(string* out);
   int write(int size, byte* b);
   void close();
   bool get_peer_id(string* out);
 };
+
+void server_dispatch(const string& host_name, int port,
+      x509* root_cert, key_message& private_key,
+      void (*)(secure_authenticated_channel&));
 #endif
 
 #endif
