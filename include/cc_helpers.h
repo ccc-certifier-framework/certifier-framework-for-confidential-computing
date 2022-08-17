@@ -122,7 +122,7 @@ bool init_client_ssl(X509* x509_root_cert, key_message& private_key,
     const string& host_name, int port, int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl);
 void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl);
 
-#if 0
+#if 1
 class secure_authenticated_channel {
 public:
   string role_;
@@ -132,8 +132,10 @@ public:
   X509_STORE_CTX* store_ctx_;
   SSL* ssl_;
   int sock_;
+  string asn1_root_cert_;
   X509* root_cert_;
   X509* my_cert_;
+  string asn1_my_cert_;
   X509* peer_cert_;
   string peer_id_;
 
@@ -144,20 +146,20 @@ public:
   bool client_auth_client();
   bool load_client_certs_and_key();
 
-  bool init_client_ssl(string& host_name, int port, x509* root_cert, key_message& private_key);
-  bool init_server_ssl(string& host_name, int port, x509* root_cert, key_message& private_key);
+  bool init_client_ssl(const string& host_name, int port, string& asn1_root_cert, key_message& private_key);
+  bool init_server_ssl(const string& host_name, int port, string& asn1_root_cert, key_message& private_key);
 
-  void server_channel_accept_and_auth(void (*)(secure_authenticated_channel&),
-      secure_authenticated_channel& channel);
+  void server_channel_accept_and_auth(void (*func)(secure_authenticated_channel&));
 
   int read(string* out);
+  int read(int size, byte* b);
   int write(int size, byte* b);
   void close();
   bool get_peer_id(string* out);
 };
 
 void server_dispatch(const string& host_name, int port,
-      x509* root_cert, key_message& private_key,
+      string& asn1_root_cert, key_message& private_key,
       void (*)(secure_authenticated_channel&));
 #endif
 

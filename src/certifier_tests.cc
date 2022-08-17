@@ -133,11 +133,11 @@ TEST (test_predicate_dominance, test_predicate_dominance) {
 }
 
 // sev tests
-extern bool test_sev(bool print_all);
+#ifdef SEV_SNP
 TEST (test_sev, test_sev) {
   EXPECT_TRUE(test_sev(FLAGS_print_all));
-}
-
+} 
+#endif
 // -----------------------Run Tests-----------------------------
 
 extern bool simulator_init();

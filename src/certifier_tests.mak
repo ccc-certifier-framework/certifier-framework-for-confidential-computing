@@ -18,7 +18,7 @@ endif
 #GOOGLE_INCLUDE=/usr/local/include/google
 #endif
 
-ENABLE_SEV=1
+# ENABLE_SEV=1
 
 LOCAL_LIB=/usr/local/lib
 
@@ -59,22 +59,27 @@ dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o
 $(O)/certificate_tests.o $(O)/claims_tests.o $(O)/primitive_tests.o \
 $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
 $(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o
-pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
-$(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o
 else
 dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
 $(O)/application_enclave.o $(O)/claims_tests.o $(O)/primitive_tests.o \
-$(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o
+$(O)/certificate_tests.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o
 pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
 $(O)/application_enclave.o
 endif
 
-all:	certifier_tests.exe pipe_read_test.exe
+pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
+$(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o
+
+channel_dobj=	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
+$(O)/application_enclave.o $(O)/cc_helpers_new.o
+
+all:	certifier_tests.exe test_channel.exe # pipe_read_test.exe
+
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/certifier_tests.exe $(EXE_DIR)/pipe_read_test.exe
+	rm $(EXE_DIR)/certifier_tests.exe $(EXE_DIR)/pipe_read_test.exe $(EXE_DIR)/test_channel.exe
 
 certifier_tests.exe: $(dobj) 
 	@echo "linking executable files"
@@ -155,3 +160,15 @@ pipe_read_test.exe: $(pipe_read_dobj)
 $(O)/pipe_read_test.o: $(S)/pipe_read_test.cc
 	@echo "compiling pipe_read_test.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/pipe_read_test.o $(S)/pipe_read_test.cc
+
+test_channel.exe: $(channel_dobj) 
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/test_channel.exe $(channel_dobj) $(LDFLAGS)
+
+$(O)/cc_helpers_new.o: $(S)/cc_helpers_new.cc
+	@echo "compiling cc_helpers_new.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers_new.o $(S)/cc_helpers_new.cc
+
+$(O)/test_channel.o: $(S)/test_channel.cc
+	@echo "compiling test_channel.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/test_channel.o $(S)/test_channel.cc
