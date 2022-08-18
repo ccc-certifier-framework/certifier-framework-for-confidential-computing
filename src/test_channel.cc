@@ -33,7 +33,7 @@
 // limitations under the License.
 
 
-// operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server
+// operations are: client, server
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(operation, "server", "operation");
 
@@ -53,6 +53,8 @@ DEFINE_string(auth_key_file, "auth_key_file.bin", "auth key file");
 
 void server_application(secure_authenticated_channel& channel) {
 
+  printf("Server peer id is %s\n", channel.peer_id_.c_str());
+
   // Read message from client over authenticated, encrypted channel
   string out;
   int n = channel.read(&out);
@@ -67,18 +69,14 @@ bool run_me_as_server(const string& host_name, int port,
       string& asn1_policy_cert, key_message& private_key,
       string& private_key_cert) {
 
-  X509* x509_policy_cert = X509_new();
-  if (!asn1_to_x509(asn1_policy_cert, x509_policy_cert)) {
-    printf("Can't parse policy cert\n");
-    return false;
-  }
-
   server_dispatch(host_name, port, asn1_policy_cert, private_key,
       private_key_cert, server_application);
   return true;
 }
 
 void client_application(secure_authenticated_channel& channel) {
+
+  printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
   // client sends a message over authenticated, encrypted channel
   const char* msg = "Hi from your secret client\n";

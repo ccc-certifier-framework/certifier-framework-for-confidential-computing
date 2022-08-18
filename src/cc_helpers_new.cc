@@ -1112,6 +1112,19 @@ int verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
 
 // ----------------------------------------------------------------------------------
 
+bool extract_id_from_cert(X509* in, string* out) {
+  if (in == nullptr)
+    return false;
+  X509_NAME* sname = X509_get_subject_name(in);
+  char name_buf[2048];
+  int n = X509_NAME_get_text_by_NID(sname, NID_commonName, name_buf, 2048);
+  if (n <= 0)
+    return false;
+  out->assign((char*)name_buf, n);
+  out->append(0);
+  return true;
+}
+
 // Loads server side certs and keys.
 bool load_server_certs_and_key(
       X509* root_cert, key_message& private_key,
@@ -1194,6 +1207,10 @@ void server_dispatch(const string& host_name, int port,
   }
 #endif
 
+  // Verify peer
+  // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+
   unsigned int len = 0;
   while (1) {
 #ifdef DEBUG
@@ -1202,14 +1219,14 @@ void server_dispatch(const string& host_name, int port,
     struct sockaddr_in addr;
     int client = accept(sock, (struct sockaddr*)&addr, &len);
     string my_role("server");
-    secure_authenticated_channel* nc = new secure_authenticated_channel(my_role);
-    if (!nc->init_server_ssl(host_name, port, asn1_root_cert, private_key, private_key_cert)) {
+    secure_authenticated_channel nc(my_role);
+    if (!nc.init_server_ssl(host_name, port, asn1_root_cert, private_key, private_key_cert)) {
       continue;
     }
-    nc->ssl_ = SSL_new(ctx);
-    SSL_set_fd(nc->ssl_, client);
-    nc->sock_ = client;
-    nc->server_channel_accept_and_auth(func);
+    nc.ssl_ = SSL_new(ctx);
+    SSL_set_fd(nc.ssl_, client);
+    nc.sock_ = client;
+    nc.server_channel_accept_and_auth(func);
   }
 }
 
@@ -1430,6 +1447,11 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
 
   // Verify a server certificate was presented during the negotiation
   peer_cert_ = SSL_get_peer_certificate(ssl_);
+  if (peer_cert_ != nullptr) {
+    if (!extract_id_from_cert(peer_cert_, &peer_id_)) {
+      printf("Client: Can't extract id\n");
+    }
+  }
 
 #ifdef DEBUG
   if(peer_cert_) {
@@ -1457,26 +1479,30 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
   string auth_cert_str;
   auth_cert_str.assign((char*)private_key_.certificate().data(), private_key_.certificate().size());
   if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
+    // X509_free(x509_auth_key_cert);
     printf("load_client_certs_and_key, error 2\n");
-      return false;
+    return false;
   }
 
   STACK_OF(X509)* stack = sk_X509_new_null();
   if (sk_X509_push(stack, root_cert_) == 0) {
+    // X509_free(x509_auth_key_cert);
     printf("load_client_certs_and_key, error 3\n");
     return false;
   }
 
   if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
     printf("load_client_certs_and_key, error 5\n");
-      return false;
+    return false;
   }
   if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
+    // X509_free(x509_auth_key_cert);
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
   SSL_CTX_add_client_CA(ssl_ctx_, root_cert_);
   SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
+  // X509_free(x509_auth_key_cert);
   return true;
 }
 
@@ -1501,11 +1527,18 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
 
     // Verify a client certificate was presented during the negotiation
     peer_cert_ = SSL_get_peer_certificate(ssl_);
+    if (peer_cert_ != nullptr) {
+      if (!extract_id_from_cert(peer_cert_, &peer_id_)) {
+        printf("Client: Can't extract id\n");
+      }
+    } 
+#ifdef DEBUG
     if(peer_cert_) {
       printf("Server: Peer cert presented in nego\n");
     } else {
       printf("Server: No peer cert presented in nego\n");
     }
+#endif
   
   if (!client_auth_server()) {
     printf("Client auth failed at server\n");
