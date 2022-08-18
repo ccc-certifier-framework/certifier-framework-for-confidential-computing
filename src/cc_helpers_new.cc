@@ -1151,7 +1151,7 @@ bool load_server_certs_and_key(
 
 void server_dispatch(const string& host_name, int port,
       string& asn1_root_cert, key_message& private_key,
-      void (*func)(secure_authenticated_channel&)) {
+      string& private_key_cert, void (*func)(secure_authenticated_channel&)) {
 
   SSL_load_error_strings();
 
@@ -1203,7 +1203,7 @@ void server_dispatch(const string& host_name, int port,
     int client = accept(sock, (struct sockaddr*)&addr, &len);
     string my_role("server");
     secure_authenticated_channel* nc = new secure_authenticated_channel(my_role);
-    if (!nc->init_server_ssl(host_name, port, asn1_root_cert, private_key)) {
+    if (!nc->init_server_ssl(host_name, port, asn1_root_cert, private_key, private_key_cert)) {
       continue;
     }
     nc->ssl_ = SSL_new(ctx);
@@ -1374,7 +1374,7 @@ done:
 }
 
 bool secure_authenticated_channel::init_client_ssl(const string& host_name, int port,
-        string& asn1_root_cert, key_message& private_key) {
+        string& asn1_root_cert, key_message& private_key, string& auth_cert) {
 
   SSL_load_error_strings();
   OPENSSL_init_ssl(0, NULL);
@@ -1438,6 +1438,7 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
     printf("Client: No peer cert presented in nego\n");
   }
 #endif
+  channel_initialized_ = true;
   return true;
 }
 
@@ -1516,7 +1517,7 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
 }
 
 bool secure_authenticated_channel::init_server_ssl(const string& host_name, int port,
-      string& asn1_root_cert, key_message& private_key) {
+      string& asn1_root_cert, key_message& private_key, string& auth_cert) {
   SSL_load_error_strings();
 
   // set keys and cert

@@ -63,7 +63,8 @@ void server_application(secure_authenticated_channel& channel) {
 }
 
 bool run_me_as_server(const string& host_name, int port,
-      string& asn1_policy_cert, key_message& private_key) {
+      string& asn1_policy_cert, key_message& private_key,
+      string& private_key_cert) {
 
   X509* x509_policy_cert = X509_new();
   if (!asn1_to_x509(asn1_policy_cert, x509_policy_cert)) {
@@ -72,7 +73,7 @@ bool run_me_as_server(const string& host_name, int port,
   }
 
   server_dispatch(host_name, port, asn1_policy_cert, private_key,
-      server_application);
+      private_key_cert, server_application);
   return true;
 }
 
@@ -89,11 +90,13 @@ void client_application(secure_authenticated_channel& channel) {
 }
 
 bool run_me_as_client( const string& host_name, int port,
-      string& asn1_policy_cert, key_message& private_key) {
+      string& asn1_policy_cert, key_message& private_key,
+      string& private_key_cert) {
 
   string my_role("client");
   secure_authenticated_channel channel(my_role);
-  if (!channel.init_client_ssl(host_name, port, asn1_policy_cert, private_key)) {
+  if (!channel.init_client_ssl(host_name, port, asn1_policy_cert,
+        private_key, private_key_cert)) {
     printf("Can't init client app\n");
     return false;
   }
@@ -101,6 +104,10 @@ bool run_me_as_client( const string& host_name, int port,
   // This is the actual application code.
   client_application(channel);
   return true;
+}
+
+bool make_admissions_cert(key_message& policy_key, key_message& auth_key, string* out) {
+  return false;
 }
 
 // ------------------------------------------------------------------------------------------
@@ -168,15 +175,22 @@ int main(int an, char** av) {
     return 1;
   }
 
+  // make admissions cert
+  string auth_cert;
+  if (!make_admissions_cert(policy_key, auth_key, &auth_cert)) {
+    printf("Can't make admissions cert\n");
+    return 1;
+  }
+
   if (FLAGS_operation == "client") {
     if (!run_me_as_client(FLAGS_policy_host.c_str(), FLAGS_port,
-          str_policy_cert, auth_key)) {
+          str_policy_cert, auth_key, auth_cert)) {
       printf("run-me-as-client failed\n");
       return 1;
     }
   } else if (FLAGS_operation == "server") {
     if (!run_me_as_server( FLAGS_policy_host.c_str(), FLAGS_port,
-          str_policy_cert, auth_key)) {
+          str_policy_cert, auth_key, auth_cert)) {
       printf("server failed\n");
       return 1;
     }
