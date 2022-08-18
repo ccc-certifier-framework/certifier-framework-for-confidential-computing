@@ -40,9 +40,10 @@ DEFINE_string(operation, "server", "operation");
 DEFINE_string(policy_host, "localhost", "address for server");
 DEFINE_int32(port, 8124, "port for server");
 
-DEFINE_string(policy_cert_file, "policy_cert.bin", "policy cert file");
-DEFINE_string(policy_key_file, "policy_key.bin", "policy key file");
-DEFINE_string(auth_key_file, "auth_key.bin", "auth key file");
+DEFINE_string(data_dir, "./test_data/", "directory for files");
+DEFINE_string(policy_cert_file, "policy_cert_file.bin", "policy cert file");
+DEFINE_string(policy_key_file, "policy_key_file.bin", "policy key file");
+DEFINE_string(auth_key_file, "auth_key_file.bin", "auth key file");
 
 
 // ----------------------------------------------------------------------------------
@@ -106,8 +107,22 @@ bool run_me_as_client( const string& host_name, int port,
   return true;
 }
 
-bool make_admissions_cert(key_message& policy_key, key_message& auth_key, string* out) {
-  return false;
+bool make_admissions_cert(const string& role, key_message& policy_key, key_message& auth_key, string* out) {
+  string issuer_name("policyAuthority");
+  string issuer_organization("root");
+  string subject_name(role);
+  string subject_organization("1234567890");
+
+  X509* x509_cert = X509_new();
+  if (!produce_artifact(policy_key, issuer_name, issuer_organization,
+        auth_key, subject_name, subject_organization, 23, 365.26 * 86400.0,
+        x509_cert, false)) {
+    return false;
+  }
+  if (!x509_to_asn1(x509_cert, out)) {
+    return false;
+  }
+  return true;
 }
 
 // ------------------------------------------------------------------------------------------
@@ -119,9 +134,9 @@ int main(int an, char** av) {
 
   if (FLAGS_operation == "") {
     printf("example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
-    printf("\t --data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
+    printf("\t --data_dir=-directory-for-app-data\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
-    printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server\n");
+    printf("Operations are: client, server\n");
     return 0;
   }
 
@@ -132,9 +147,11 @@ int main(int an, char** av) {
   key_message auth_key;
   X509* policy_cert = nullptr;
 
-  int sz = file_size(FLAGS_policy_cert_file);
+  string policy_cert_file(FLAGS_data_dir);
+  policy_cert_file.append(FLAGS_policy_cert_file);
+  int sz = file_size(policy_cert_file);
   byte policy_cert_buf[sz];
-  if (!read_file(FLAGS_policy_cert_file, &sz, policy_cert_buf)) {
+  if (!read_file(policy_cert_file, &sz, policy_cert_buf)) {
     printf("Can't read policy cert\n");
     return 1;
   }
@@ -142,19 +159,23 @@ int main(int an, char** av) {
   str_policy_cert.assign((char*)policy_cert_buf, sz);
 
   // policy_key_file
-  sz = file_size(FLAGS_policy_key_file);
+  string policy_key_file(FLAGS_data_dir);
+  policy_key_file.append(FLAGS_policy_key_file);
+  sz = file_size(policy_key_file);
   byte policy_key_buf[sz];
-  if (!read_file(FLAGS_policy_key_file, &sz, policy_key_buf)) {
-    printf("Can't read policy key\n");
+  if (!read_file(policy_key_file, &sz, policy_key_buf)) {
+    printf("Can't read policy key %s\n", policy_key_file.c_str());
     return 1;
   }
   string str_policy_key;
   str_policy_key.assign((char*)policy_key_buf, sz);
 
   // auth_key_file
-  sz = file_size(FLAGS_auth_key_file);
+  string auth_key_file(FLAGS_data_dir);
+  auth_key_file.append(FLAGS_auth_key_file);
+  sz = file_size(auth_key_file);
   byte auth_key_buf[sz];
-  if (!read_file(FLAGS_auth_key_file, &sz, auth_key_buf)) {
+  if (!read_file(auth_key_file, &sz, auth_key_buf)) {
     printf("Can't read auth key\n");
     return 1;
   }
@@ -177,10 +198,21 @@ int main(int an, char** av) {
 
   // make admissions cert
   string auth_cert;
-  if (!make_admissions_cert(policy_key, auth_key, &auth_cert)) {
+  if (!make_admissions_cert(FLAGS_operation, policy_key, auth_key, &auth_cert)) {
     printf("Can't make admissions cert\n");
     return 1;
   }
+
+#ifdef DEBUG
+  X509* x509_auth_cert = X509_new();
+  asn1_to_x509(auth_cert, x509_auth_cert);
+  printf("\npolicy cert:\n");
+  X509_print_fp(stdout, policy_cert);
+  printf("\nAdmissions cert:\n");
+  X509_print_fp(stdout, x509_auth_cert);
+  printf("\nPolicy key::\n");
+  print_key(policy_key);
+#endif
 
   if (FLAGS_operation == "client") {
     if (!run_me_as_client(FLAGS_policy_host.c_str(), FLAGS_port,

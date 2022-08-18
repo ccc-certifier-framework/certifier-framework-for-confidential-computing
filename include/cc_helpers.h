@@ -146,8 +146,10 @@ public:
   bool client_auth_client();
   bool load_client_certs_and_key();
 
-  bool init_client_ssl(const string& host_name, int port, string& asn1_root_cert, key_message& private_key);
-  bool init_server_ssl(const string& host_name, int port, string& asn1_root_cert, key_message& private_key);
+  bool init_client_ssl(const string& host_name, int port, string& asn1_root_cert,
+      key_message& private_key, string& private_key_cert);
+  bool init_server_ssl(const string& host_name, int port, string& asn1_root_cert,
+      key_message& private_key, string& private_key_cert);
 
   void server_channel_accept_and_auth(void (*func)(secure_authenticated_channel&));
 
@@ -160,7 +162,7 @@ public:
 
 void server_dispatch(const string& host_name, int port,
       string& asn1_root_cert, key_message& private_key,
-      void (*)(secure_authenticated_channel&));
+      string& private_key_cert, void (*)(secure_authenticated_channel&));
 #endif
 
 #endif
