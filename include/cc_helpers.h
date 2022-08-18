@@ -122,7 +122,7 @@ bool init_client_ssl(X509* x509_root_cert, key_message& private_key,
     const string& host_name, int port, int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl);
 void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl);
 
-#if 1
+
 class secure_authenticated_channel {
 public:
   string role_;
@@ -163,7 +163,6 @@ public:
 void server_dispatch(const string& host_name, int port,
       string& asn1_root_cert, key_message& private_key,
       string& private_key_cert, void (*)(secure_authenticated_channel&));
-#endif
 
 #endif
 
