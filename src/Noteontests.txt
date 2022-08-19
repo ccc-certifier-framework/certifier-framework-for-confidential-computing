@@ -4,4 +4,26 @@ You must then copy the two files, ec-secp384r1-priv-key.pem and ec-secp384r1-pub
 into src.  You must also run the tests as root. None of the other certifier tests require
 special treatment.
 
+We've added an additional test for secure channel called test_channel.exe.  To use it,
+you should init some keys in the test_data subdirectory just as in simple_apps.
+Either change the calls below or rename:
+  1. the policy cert file policy_cert_file.bin
+  2. the policy_key file policy_key_file.bin
+  3. the attestation key file auth_key_file.bin
+
+
+In one window, type
+
+  ./test_channel.exe --data_dir=./test_dir/ --operation=server --policy_cert_file=policy_cert_file.bin \
+    --policy_key_file=policy_key_file.bin --auth_key_file=auth_key_file.bin
+
+in another
+
+  ./test_channel.exe --data_dir=./test_dir/ --operation=client --policy_cert_file=policy_cert_file.bin \
+    --policy_key_file=policy_key_file.bin --auth_key_file=auth_key_file.bin
+
+You should see the familiar "Hi from your secret client" and "Hi from your secret server."
+Using the support tested, you no longer need to understand TLS and talking to a "trusted"
+enclave involves only a couple of initialization calls.
+
 
