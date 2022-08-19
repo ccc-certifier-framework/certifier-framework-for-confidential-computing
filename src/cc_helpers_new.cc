@@ -1288,13 +1288,18 @@ bool secure_authenticated_channel::client_auth_server() {
     goto done;
   }
 
-  x = X509_new();
-  if (!asn1_to_x509(asn_cert, x)) {
+  peer_cert_ = X509_new();
+  if (!asn1_to_x509(asn_cert, peer_cert_)) {
     ret = false;
     goto done;
   }
 
-  subject_pkey = X509_get_pubkey(x);
+  if (!extract_id_from_cert(peer_cert_, &peer_id_)) {
+    ret = false;
+    goto done;
+  }
+
+  subject_pkey = X509_get_pubkey(peer_cert_);
   if (subject_pkey == nullptr) {
     ret = false;
     goto done;
@@ -1320,8 +1325,8 @@ bool secure_authenticated_channel::client_auth_server() {
   }
 
   // verify chain
-  res = X509_STORE_CTX_init(store_ctx_, cs, x, nullptr);
-  X509_STORE_CTX_set_cert(store_ctx_, x);
+  res = X509_STORE_CTX_init(store_ctx_, cs, peer_cert_, nullptr);
+  X509_STORE_CTX_set_cert(store_ctx_, peer_cert_);
   res = X509_verify_cert(store_ctx_);
   if (res != 1) {
     ret = false;
@@ -1340,8 +1345,6 @@ bool secure_authenticated_channel::client_auth_server() {
 #endif
 
 done:
-  if (x != nullptr)
-    X509_free(x);
   if (r != nullptr)
     RSA_free(r);
   if (subject_pkey != nullptr)
