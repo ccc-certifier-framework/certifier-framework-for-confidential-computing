@@ -41,9 +41,11 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 #  if you link in the certifier library certifier.a.
 dobj=	$(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
+new_dobj=$(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 
 
-all:	example_app.exe
+all:	example_app.exe example_app_new.exe
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
@@ -53,6 +55,10 @@ clean:
 example_app.exe: $(dobj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/example_app.exe $(dobj) $(LDFLAGS)
+
+example_app_new.exe: $(new_dobj) 
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/example_app_new.exe $(new_dobj) $(LDFLAGS)
 
 $(US)/certifier.pb.cc: $(S)/certifier.proto
 	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto
@@ -87,3 +93,7 @@ $(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave
 $(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "compiling cc_helpers.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc
+
+$(O)/cc_helpers_new.o: $(S)/cc_helpers_new.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "compiling cc_helpers_new.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers_new.o $(S)/cc_helpers_new.cc
