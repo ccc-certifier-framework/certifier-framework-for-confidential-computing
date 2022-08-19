@@ -1120,18 +1120,17 @@ bool extract_id_from_cert(X509* in, string* out) {
   int n = X509_NAME_get_text_by_NID(sname, NID_commonName, name_buf, 2048);
   if (n <= 0)
     return false;
-  out->assign((char*)name_buf, n);
-  out->append(0);
+  out->assign((char*)name_buf, strlen(name_buf)+1);
   return true;
 }
 
 // Loads server side certs and keys.
-bool load_server_certs_and_key(
-      X509* root_cert, key_message& private_key,
-      SSL_CTX* ctx) {
+bool load_server_certs_and_key(X509* root_cert,
+      key_message& private_key, SSL_CTX* ctx) {
   // load auth key, policy_cert and certificate chain
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key, r)) {
+    printf("key_to_RSA failed\n");
     return false;
   }
   EVP_PKEY* auth_private_key = EVP_PKEY_new();
@@ -1142,18 +1141,22 @@ bool load_server_certs_and_key(
   auth_cert_str.assign((char*)private_key.certificate().data(),
         private_key.certificate().size());
   if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
+      printf("asn1_to_x509 failed\n");
       return false;
   }
 
   STACK_OF(X509)* stack = sk_X509_new_null();
   if (sk_X509_push(stack, root_cert) == 0) {
+    printf("sk_X509_push failed\n");
     return false;
   }
 
   if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
+      printf("SSL_CTX_use_cert_and_key failed\n");
       return false;
   }
   if (!SSL_CTX_check_private_key(ctx) ) {
+      printf("SSL_CTX_check_private_key failed\n");
       return false;
   }
   SSL_CTX_add_client_CA(ctx, root_cert);
@@ -1185,14 +1188,14 @@ void server_dispatch(const string& host_name, int port,
   SSL_METHOD* method = (SSL_METHOD*) TLS_server_method();
   SSL_CTX* ctx = SSL_CTX_new(method);
   if (ctx == NULL) {
-    printf("SSL_CTX_new failed\n");
+    printf("SSL_CTX_new failed (1)\n");
     return;
   }
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
   X509_STORE_add_cert(cs, root_cert);
 
   if (!load_server_certs_and_key(root_cert, private_key, ctx)) {
-    printf("SSL_CTX_new failed\n");
+    printf("SSL_CTX_new failed (2)\n");
     return;
   }
 
@@ -1352,6 +1355,7 @@ done:
 }
 
 // Responds to Server challenge
+// We wouldn't need this if mutual auth worked
 bool secure_authenticated_channel::client_auth_client() {
   if (ssl_ == nullptr)
     return false;
@@ -1420,6 +1424,7 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
     printf("Can't get SSL_CTX\n");
     return false;
   }
+
   X509_STORE* cs = SSL_CTX_get_cert_store(ssl_ctx_);
   X509_STORE_add_cert(cs, root_cert_);
 
@@ -1448,6 +1453,7 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
   // Verify a server certificate was presented during the negotiation
   peer_cert_ = SSL_get_peer_certificate(ssl_);
   if (peer_cert_ != nullptr) {
+    peer_id_.clear();
     if (!extract_id_from_cert(peer_cert_, &peer_id_)) {
       printf("Client: Can't extract id\n");
     }
@@ -1460,6 +1466,9 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
     printf("Client: No peer cert presented in nego\n");
   }
 #endif
+  if (!client_auth_client()) {
+    printf("client_auth_client failed\n");
+  }
   channel_initialized_ = true;
   return true;
 }
@@ -1521,6 +1530,7 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
     return;
   }
   sock_ = SSL_get_fd(ssl_);
+
 #ifdef DEBUG
   printf("Accepted ssl connection using %s \n", SSL_get_cipher(ssl_));
 #endif

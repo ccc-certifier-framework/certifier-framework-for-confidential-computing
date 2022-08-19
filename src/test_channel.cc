@@ -69,6 +69,7 @@ bool run_me_as_server(const string& host_name, int port,
       string& asn1_policy_cert, key_message& private_key,
       string& private_key_cert) {
 
+  printf("running as server\n");
   server_dispatch(host_name, port, asn1_policy_cert, private_key,
       private_key_cert, server_application);
   return true;
@@ -92,6 +93,7 @@ bool run_me_as_client( const string& host_name, int port,
       string& asn1_policy_cert, key_message& private_key,
       string& private_key_cert) {
 
+  printf("running as client\n");
   string my_role("client");
   secure_authenticated_channel channel(my_role);
   if (!channel.init_client_ssl(host_name, port, asn1_policy_cert,
@@ -189,6 +191,7 @@ int main(int an, char** av) {
     printf("Can't parse policy key\n");
     return 1;
   }
+  policy_key.set_certificate((byte*)str_policy_cert.data(), str_policy_cert.size());
   if (!auth_key.ParseFromString(str_auth_key)) {
     printf("Can't parse auth key\n");
     return 1;
@@ -200,6 +203,7 @@ int main(int an, char** av) {
     printf("Can't make admissions cert\n");
     return 1;
   }
+  auth_key.set_certificate(auth_cert);
 
 #ifdef DEBUG
   X509* x509_auth_cert = X509_new();

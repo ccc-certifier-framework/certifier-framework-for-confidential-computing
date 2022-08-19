@@ -1003,6 +1003,7 @@ bool client_auth_client(X509* x509_policy_cert, key_message& private_key,
   byte sig[size_sig];
   RSA* r = nullptr;
 
+printf("client_auth_client certificate size: %d\n", private_key.certificate().size());
   // send cert
   SSL_write(ssl, private_key.certificate().data(),
       private_key.certificate().size());
