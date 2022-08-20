@@ -8,6 +8,18 @@
  8. Test all the sample apps on all providers.
  9. Add Asylo support
 10. Test with Gramine?
+11. Add ECC and RSA-4096 and a quantum one
+
+
+void SSL_CTX_set_verify(SSL_CTX *ctx, int mode,
+                         int (*verify_callback)(int, X509_STORE_CTX *));
+mode SSL_VERIFY_FAIL_IF_NO_PEER_CERT
+
+at client: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+server:  SSL_CTX_set_verify(ctx,
+                       SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+                       NULL);
+ctx is ssl ctx
 
 
 

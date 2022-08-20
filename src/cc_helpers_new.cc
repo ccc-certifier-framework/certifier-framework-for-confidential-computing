@@ -297,7 +297,7 @@ bool cc_trust_data::save_store() {
 
   string serialized_store;
   if (!store_.Serialize(&serialized_store)) {
-    printf("save_store() can't serialize store\n"); 
+    printf("save_store() can't serialize store\n");
     return false;
   }
 
@@ -642,7 +642,7 @@ bool cc_trust_data::GetPlatformSaysAttestClaim(signed_claim_message* scm) {
     }
     return true;
   }
-  return false; 
+  return false;
 }
 
 bool cc_trust_data::certify_me(const string& host_name, int port) {
@@ -653,7 +653,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       return false;
     }
   }
-  
+
   //  The platform statement is "platform-key says attestation-key is-trusted-for-attestation"
   //  This is CC provider dependant
   signed_claim_message signed_platform_says_attest_key_is_trusted;
@@ -810,10 +810,10 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     return false;
   }
 
-#ifdef DEBUG 
+#ifdef DEBUG
   printf("\nRequest:\n");
   print_trust_request_message(request);
-#endif 
+#endif
 
   // Open socket and send request.
   int sock = -1;
@@ -914,7 +914,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
 
 bool construct_platform_evidence_package(signed_claim_message& platform_attest_claim,
     signed_claim_message& the_attestation, evidence_package* ep) {
-    
+
   string pt("vse-verifier");
   string et("signed-claim");
 
@@ -1023,6 +1023,12 @@ void print_ssl_error(int code) {
     break;
   case SSL_ERROR_SSL:
     printf("ssl error error\n");
+    break;
+  case SSL_ERROR_SYSCALL:
+    printf("ssl error syscall\n");
+    break;
+  case SSL_ERROR_ZERO_RETURN:
+    printf("ssl error zero return\n");
     break;
   default:
     printf("Unknown ssl error, %d\n", code);
@@ -1146,10 +1152,13 @@ bool load_server_certs_and_key(X509* root_cert,
   }
 
   STACK_OF(X509)* stack = sk_X509_new_null();
+#if 0
+  // not needed
   if (sk_X509_push(stack, root_cert) == 0) {
     printf("sk_X509_push failed\n");
     return false;
   }
+#endif
 
   if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
       printf("SSL_CTX_use_cert_and_key failed\n");
@@ -1161,6 +1170,17 @@ bool load_server_certs_and_key(X509* root_cert,
   }
   SSL_CTX_add_client_CA(ctx, root_cert);
   SSL_CTX_add1_to_CA_list(ctx, root_cert);
+
+#ifdef DEBUG
+  const STACK_OF(X509_NAME)* ca_list= SSL_CTX_get0_CA_list(ctx);
+  printf("CA names to offer\n");
+  if (ca_list != nullptr) {
+    for (int i = 0; i < sk_X509_NAME_num(ca_list); i++) {
+      X509_NAME* name = sk_X509_NAME_value(ca_list, i);
+      print_cn_name(name);
+    }
+  }
+#endif
   return true;
 }
 
@@ -1175,7 +1195,7 @@ void server_dispatch(const string& host_name, int port,
   if (!asn1_to_x509(asn1_root_cert, root_cert)) {
     printf("Can't convert cert\n");
     return;
-  } 
+  }
 
   // Get a socket.
   int sock = -1;
@@ -1211,6 +1231,7 @@ void server_dispatch(const string& host_name, int port,
 #endif
 
   // Verify peer
+  // SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
   // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 
@@ -1276,7 +1297,7 @@ bool secure_authenticated_channel::client_auth_server() {
   EVP_PKEY* subject_pkey = nullptr;
   RSA* r = nullptr;
 
-  // prepare for verify 
+  // prepare for verify
   X509_STORE* cs = X509_STORE_new();
   X509_STORE_add_cert(cs, root_cert_);
   store_ctx_ = X509_STORE_CTX_new();
@@ -1309,7 +1330,7 @@ bool secure_authenticated_channel::client_auth_server() {
     ret = false;
     goto done;
   }
-  
+
   memset(nonce, 0, 64);
   if (!get_random(64 * 8, nonce)) {
     ret = false;
@@ -1353,7 +1374,7 @@ done:
     store_ctx_ = nullptr;
     X509_STORE_CTX_free(store_ctx_);
   }
-  
+
   return ret;
 }
 
@@ -1497,11 +1518,13 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
   }
 
   STACK_OF(X509)* stack = sk_X509_new_null();
+#if 0
   if (sk_X509_push(stack, root_cert_) == 0) {
     // X509_free(x509_auth_key_cert);
     printf("load_client_certs_and_key, error 3\n");
     return false;
   }
+#endif
 
   if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
     printf("load_client_certs_and_key, error 5\n");
@@ -1512,9 +1535,20 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
-  SSL_CTX_add_client_CA(ssl_ctx_, root_cert_);
   SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
+
+  // Not needed: SSL_CTX_add_client_CA(ssl_ctx_, root_cert_);
   // X509_free(x509_auth_key_cert);
+#ifdef DEBUG
+  const STACK_OF(X509_NAME)* ca_list= SSL_CTX_get0_CA_list(ssl_ctx_);
+  printf("CA names to offer\n");
+  if (ca_list != nullptr) {
+    for (int i = 0; i < sk_X509_NAME_num(ca_list); i++) {
+      X509_NAME* name = sk_X509_NAME_value(ca_list, i);
+      print_cn_name(name);
+    }
+  }
+#endif
   return true;
 }
 
@@ -1530,6 +1564,7 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
     printf("Accept error: %s\n", ERR_lib_error_string(code));
     print_ssl_error(SSL_get_error(ssl_, res));
     SSL_free(ssl_);
+    ssl_ = nullptr;
     return;
   }
   sock_ = SSL_get_fd(ssl_);
@@ -1538,13 +1573,14 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
   printf("Accepted ssl connection using %s \n", SSL_get_cipher(ssl_));
 #endif
 
-    // Verify a client certificate was presented during the negotiation
-    peer_cert_ = SSL_get_peer_certificate(ssl_);
-    if (peer_cert_ != nullptr) {
-      if (!extract_id_from_cert(peer_cert_, &peer_id_)) {
-        printf("Client: Can't extract id\n");
-      }
-    } 
+  // Verify a client certificate was presented during the negotiation
+  peer_cert_ = SSL_get_peer_certificate(ssl_);
+  if (peer_cert_ != nullptr) {
+    if (!extract_id_from_cert(peer_cert_, &peer_id_)) {
+      printf("Client: Can't extract id\n");
+    }
+  }
+
 #ifdef DEBUG
     if(peer_cert_) {
       printf("Server: Peer cert presented in nego\n");
@@ -1552,7 +1588,7 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
       printf("Server: No peer cert presented in nego\n");
     }
 #endif
-  
+
   if (!client_auth_server()) {
     printf("Client auth failed at server\n");
     return;
