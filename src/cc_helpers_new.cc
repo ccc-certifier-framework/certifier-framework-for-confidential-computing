@@ -1214,6 +1214,13 @@ void server_dispatch(const string& host_name, int port,
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
   X509_STORE_add_cert(cs, root_cert);
 
+#if 0
+  X509* x509_auth_cert = X509_new();
+  if (asn1_to_x509(private_key_cert, x509_auth_cert)) {
+    X509_STORE_add_cert(cs, x509_auth_cert);
+  }
+#endif
+
   if (!load_server_certs_and_key(root_cert, private_key, ctx)) {
     printf("SSL_CTX_new failed (2)\n");
     return;
@@ -1428,7 +1435,7 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
   asn1_root_cert_.assign((char*)asn1_root_cert.data(), asn1_root_cert.size());
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
-    printf("Client auth failed at server\n");
+    printf("Client: root cert invalid\n");
     return false;
   }
 
@@ -1451,6 +1458,14 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
 
   X509_STORE* cs = SSL_CTX_get_cert_store(ssl_ctx_);
   X509_STORE_add_cert(cs, root_cert_);
+
+#if 0
+  X509* x509_auth_cert = X509_new();
+  if (asn1_to_x509(auth_cert, x509_auth_cert)) {
+printf("ADDING\n");
+    X509_STORE_add_cert(cs, x509_auth_cert);
+  }
+#endif
 
   // For debugging: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
   SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER, nullptr);
@@ -1500,6 +1515,7 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
 // Loads client side certs and keys.  Note: key for private_key is in
 //    the key.
 bool secure_authenticated_channel::load_client_certs_and_key() {
+
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key_, r)) {
     printf("load_client_certs_and_key, error 1\n");
@@ -1536,7 +1552,7 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
     return false;
   }
   SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
-
+  
   // Not needed: SSL_CTX_add_client_CA(ssl_ctx_, root_cert_);
   // X509_free(x509_auth_key_cert);
 #ifdef DEBUG
