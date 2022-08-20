@@ -1277,14 +1277,22 @@ secure_authenticated_channel::~secure_authenticated_channel() {
   role_.clear();
   channel_initialized_ = false;
   // delete?
+  if (ssl_ctx_ != nullptr)
+    SSL_CTX_free(ssl_ctx_); 
   ssl_ctx_= nullptr;
+  if (store_ctx_ != nullptr)
+    X509_STORE_CTX_free(store_ctx_);
   store_ctx_= nullptr;
   // delete?
   ssl_= nullptr;
+  if (sock_ > 0)
+    ::close(sock_);
   sock_ = -1;
   // delete?
   my_cert_= nullptr;
   // delete?
+  if (peer_cert_ != nullptr)
+    X509_free(peer_cert_);
   peer_cert_= nullptr;
   peer_id_.clear();
 }
@@ -1373,13 +1381,15 @@ bool secure_authenticated_channel::client_auth_server() {
 #endif
 
 done:
-  if (r != nullptr)
+  if (r != nullptr) {
     RSA_free(r);
+    r = nullptr;
+  }
   if (subject_pkey != nullptr)
     EVP_PKEY_free(subject_pkey);
   if (store_ctx_ != nullptr) {
-    store_ctx_ = nullptr;
     X509_STORE_CTX_free(store_ctx_);
+    store_ctx_ = nullptr;
   }
 
   return ret;
@@ -1420,8 +1430,10 @@ bool secure_authenticated_channel::client_auth_client() {
 #endif
 
 done:
-  if (r != nullptr)
+  if (r != nullptr) {
     RSA_free(r);
+    r = nullptr;
+  }
   return ret;
 }
 
@@ -1528,7 +1540,6 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
   string auth_cert_str;
   auth_cert_str.assign((char*)private_key_.certificate().data(), private_key_.certificate().size());
   if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
-    // X509_free(x509_auth_key_cert);
     printf("load_client_certs_and_key, error 2\n");
     return false;
   }
@@ -1536,7 +1547,6 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
   STACK_OF(X509)* stack = sk_X509_new_null();
 #if 0
   if (sk_X509_push(stack, root_cert_) == 0) {
-    // X509_free(x509_auth_key_cert);
     printf("load_client_certs_and_key, error 3\n");
     return false;
   }
@@ -1547,14 +1557,12 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
     return false;
   }
   if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
-    // X509_free(x509_auth_key_cert);
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
   SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
   
   // Not needed: SSL_CTX_add_client_CA(ssl_ctx_, root_cert_);
-  // X509_free(x509_auth_key_cert);
 #ifdef DEBUG
   const STACK_OF(X509_NAME)* ca_list= SSL_CTX_get0_CA_list(ssl_ctx_);
   printf("CA names to offer\n");
@@ -1579,8 +1587,10 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
     unsigned long code = ERR_get_error();
     printf("Accept error: %s\n", ERR_lib_error_string(code));
     print_ssl_error(SSL_get_error(ssl_, res));
-    SSL_free(ssl_);
-    ssl_ = nullptr;
+    if (ssl_ != nullptr) {
+      SSL_free(ssl_);
+      ssl_ = nullptr;
+    }
     return;
   }
   sock_ = SSL_get_fd(ssl_);
@@ -1643,7 +1653,10 @@ int secure_authenticated_channel::write(int size, byte* b) {
 
 void secure_authenticated_channel::close() {
   ::close(sock_);
-  SSL_free(ssl_);
+  if (ssl_ != nullptr) {
+    SSL_free(ssl_);
+    ssl_ = nullptr;
+  }
 }
 
 bool secure_authenticated_channel::get_peer_id(string* out) {
@@ -1746,8 +1759,10 @@ done:
     RSA_free(r);
   if (subject_pkey != nullptr)
     EVP_PKEY_free(subject_pkey);
-  if (ctx != nullptr)
+  if (ctx != nullptr) {
     X509_STORE_CTX_free(ctx);
+    ctx = nullptr;
+  }
 
   return ret;
 }
