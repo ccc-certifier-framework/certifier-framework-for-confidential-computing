@@ -179,12 +179,13 @@ bool test_public_keys(bool print_all) {
 bool test_digest(bool print_all) {
   const char* message = "1234";
   int msg_len = strlen(message);
-  unsigned int size_digest = 32;
+  unsigned int size_digest = 64;
   byte digest[size_digest];
 
-  memset(digest, 0, 32);
-  if (!digest_message((const byte*) message, msg_len, digest, 32))
+  memset(digest, 0, size_digest);
+  if (!digest_message("sha256", (const byte*) message, msg_len, digest, size_digest)) {
     return false;
+  }
   if (print_all) {
     printf("SHA-256 message: "); print_bytes(msg_len, (byte*)message); printf("\n");
     printf("SHA-256 digest : "); print_bytes(32, digest); printf("\n");

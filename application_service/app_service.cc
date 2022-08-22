@@ -156,7 +156,7 @@ bool measure_binary(const string& file, string* m) {
   }
   byte digest[32];
   unsigned int len = 32;
-  if (!digest_message(file_contents, bytes_read,
+  if (!digest_message("sha256", file_contents, bytes_read,
           digest, len)) {
     printf("Digest failed\n");
     free(file_contents);
@@ -170,7 +170,7 @@ bool measure_binary(const string& file, string* m) {
 bool measure_in_mem_binary(byte* file_contents, int size, string* m) {
   byte digest[32];
   unsigned int len = 32;
-  if (!digest_message(file_contents, (unsigned) size,
+  if (!digest_message("sha256", file_contents, (unsigned) size,
           digest, len)) {
     printf("Digest failed\n");
     return false;

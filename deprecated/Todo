@@ -9,5 +9,6 @@
  9. Test with Gramine?
 10. Add ECC and RSA-4096 and a quantum one
 11  Add SHA-384, SHA-512
+12. cold-init should take args to specify ciphers, hashes and macs
 
 

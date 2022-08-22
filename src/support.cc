@@ -28,6 +28,7 @@ using std::string;
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// -----------------------------------------------------------------------
 
 class name_size {
 public:
@@ -48,6 +49,9 @@ name_size cipher_block_byte_name_size[] = {
   {"rsa-1024-public", 128},
   {"rsa-2048-private", 256},
   {"rsa-2048-public", 256},
+  {"rsa-4096-sha384-pkcs-sign", 512},
+  {"rsa-4096-private", 512},
+  {"rsa-4096-public", 512},
 };
 
 name_size cipher_key_byte_name_size[] = {
@@ -61,16 +65,22 @@ name_size cipher_key_byte_name_size[] = {
   {"rsa-2048-public", 256},
   {"rsa-1024-private", 128},
   {"rsa-1024-public", 128},
+  {"rsa-4096-sha384-pkcs-sign", 512},
+  {"rsa-4096-private", 512},
+  {"rsa-4096-public", 512},
 };
 
 name_size digest_byte_name_size[] = {
   {"sha-256", 32},
   {"sha256", 32},
+  {"sha384", 48},
+  {"sha512", 64},
 };
 
 name_size mac_byte_name_size[] = {
   {"hmac-sha256", 32},
   {"aes-256-cbc-hmac-sha256", 32},
+  {"aes-256-cbc-hmac-sha384", 48},
 };
 
 int cipher_block_byte_size(const char* alg_name) {
@@ -153,6 +163,8 @@ bool read_file(const string& file_name, int* size, byte* data) {
   *size = n;
   return true;
 }
+
+// -----------------------------------------------------------------------
 
 bool time_now(time_point* t) {
   time_t now;
@@ -322,6 +334,8 @@ void print_time_point(time_point& t) {
     t.day(), t.hour(), t.minute(), t.seconds());
 }
 
+// -----------------------------------------------------------------------
+
 // Encryption is ssl
 //    Set up a context
 //    Initialize the encryption operation
@@ -398,14 +412,34 @@ done:
     return ret;
 }
 
-bool digest_message(const byte* message, int message_len,
+bool digest_message(const char* alg, const byte* message, int message_len,
     byte* digest, unsigned int digest_len) {
+
+  int n = digest_output_byte_size(alg);
+  if (n > (int)digest_len)
+    return false;
+
   EVP_MD_CTX *mdctx;
 
-  if((mdctx = EVP_MD_CTX_new()) == NULL)
+  if (strcmp(alg, "sha256") == 0) {
+    if((mdctx = EVP_MD_CTX_new()) == NULL)
+      return false;
+    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
+      return false;
+  } else if (strcmp(alg, "sha384") == 0) {
+    if((mdctx = EVP_MD_CTX_new()) == NULL)
+      return false;
+    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha384(), NULL))
+      return false;
+  } else if (strcmp(alg, "sha512")  == 0) {
+    if((mdctx = EVP_MD_CTX_new()) == NULL)
+      return false;
+    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha512(), NULL))
+      return false;
+  } else {
     return false;
-  if(1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
-    return false;
+  }
+
   if(1 != EVP_DigestUpdate(mdctx, message, message_len))
     return false;
   if(1 != EVP_DigestFinal_ex(mdctx, digest, &digest_len))
@@ -562,7 +596,7 @@ bool rsa_sha256_verify(RSA*key, int size, byte* msg, int sig_size, byte* sig) {
   byte digest[size_digest];
   memset(digest, 0, size_digest);
 
-  if (!digest_message((const byte*) msg, size, digest, size_digest))
+  if (!digest_message("sha256", (const byte*) msg, size, digest, size_digest))
     return false;
   int size_decrypted = RSA_size(key);
   byte decrypted[size_decrypted];
@@ -731,6 +765,8 @@ bool make_root_key_with_cert(string& type, string& name, string& issuer_name, ke
   return true;
 }
 
+// -----------------------------------------------------------------------
+
 bool get_random(int num_bits, byte* out) {
   bool ret = true;
 
@@ -878,6 +914,8 @@ bool make_claim(int size, byte* serialized_claim, string& format, string& descri
   out->set_serialized_claim((void*)serialized_claim, size);
   return true;
 }
+
+// -----------------------------------------------------------------------
 
 void print_bytes(int n, byte* buf) {
   for(int i = 0; i < n; i++)
@@ -1192,6 +1230,8 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   return success;
 }
 
+// -----------------------------------------------------------------------
+
 bool vse_attestation(const string& descript, const string& enclave_type,
          const string& enclave_id, vse_clause& cl, string* serialized_attestation) {
   attestation at;
@@ -1219,6 +1259,8 @@ bool vse_attestation(const string& descript, const string& enclave_type,
   at.SerializeToString(serialized_attestation);
   return true;
 }
+
+// -----------------------------------------------------------------------
 
 void print_storage_info(const storage_info_message& smi) {
   printf("\nStorage info:\n");
@@ -1252,6 +1294,8 @@ void print_protected_blob(protected_blob_message& pb) {
     printf("\n");
   }
 }
+
+// -----------------------------------------------------------------------
 
 int add_ext(X509 *cert, int nid, const char *value) {
   X509_EXTENSION *ex;
@@ -1372,6 +1416,7 @@ bool verify_artifact(X509& cert, key_message& verify_key,
   return success;;
 }
 
+// -----------------------------------------------------------------------
 
 bool asn1_to_x509(const string& in, X509 *x) {
   int len = in.size();
@@ -1443,6 +1488,8 @@ int sized_ssl_read(SSL* ssl, string* out) {
   return n;
 #endif
 }
+
+// -----------------------------------------------------------------------
 
 int sized_socket_read(int fd, string* out) {
   out->clear();
