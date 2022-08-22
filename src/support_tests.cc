@@ -176,6 +176,38 @@ bool test_public_keys(bool print_all) {
   return true;
 }
 
+//  Test vectors
+//    Input: "abc"
+//    sha256: ba7816bf 8f01cfea 414140de 5dae2223 b00361a3 96177a9c b410ff61 f20015ad
+//    sha384: cb00753f45a35e8b b5a03d699ac65007 272c32ab0eded163 1a8b605a43ff5bed
+//            8086072ba1e7cc23 58baeca134c825a7
+//    sha512: ddaf35a193617aba cc417349ae204131 12e6fa4e89a97ea2 0a9eeee64b55d39a
+//            2192992a274fc1a8 36ba3c23a3feebbd 454d4423643ce80e 2a9ac94fa54ca49f
+
+byte sha256_test[32] = {
+  0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea,
+  0x41, 0x41, 0x40, 0xde, 0x5d, 0xae, 0x22, 0x23,
+  0xb0, 0x03, 0x61, 0xa3, 0x96, 0x17, 0x7a, 0x9c,
+  0xb4, 0x10, 0xff, 0x61 , 0xf2, 0x00, 0x15, 0xad
+};
+byte sha384_test[48] = {
+  0xcb, 0x00, 0x75, 0x3f, 0x45, 0xa3, 0x5e, 0x8b,
+  0xb5, 0xa0, 0x3d, 0x69, 0x9a, 0xc6, 0x50, 0x07,
+  0x27, 0x2c, 0x32, 0xab, 0x0e, 0xde, 0xd1, 0x63,
+  0x1a, 0x8b, 0x60, 0x5a, 0x43, 0xff, 0x5b, 0xed,
+  0x80, 0x86, 0x07, 0x2b, 0xa1, 0xe7, 0xcc, 0x23,
+  0x58, 0xba, 0xec, 0xa1, 0x34, 0xc8, 0x25, 0xa7
+};
+byte sha512_test[64] = {
+  0xdd, 0xaf, 0x35, 0xa1, 0x93, 0x61, 0x7a, 0xba,
+  0xcc, 0x41, 0x73, 0x49, 0xae, 0x20, 0x41, 0x31,
+  0x12, 0xe6, 0xfa, 0x4e, 0x89, 0xa9, 0x7e, 0xa2,
+  0x0a, 0x9e, 0xee, 0xe6, 0x4b, 0x55, 0xd3, 0x9a,
+  0x21, 0x92, 0x99, 0x2a, 0x27, 0x4f, 0xc1, 0xa8,
+  0x36, 0xba, 0x3c, 0x23, 0xa3, 0xfe, 0xeb, 0xbd,
+  0x45, 0x4d, 0x44, 0x23, 0x64, 0x3c, 0xe8, 0x0e,
+  0x2a, 0x9a, 0xc9, 0x4f, 0xa5, 0x4c, 0xa4, 0x9f
+};
 bool test_digest(bool print_all) {
   const char* message = "1234";
   int msg_len = strlen(message);
@@ -190,7 +222,50 @@ bool test_digest(bool print_all) {
     printf("SHA-256 message: "); print_bytes(msg_len, (byte*)message); printf("\n");
     printf("SHA-256 digest : "); print_bytes(32, digest); printf("\n");
   }
-  // FIX: put comparison here
+
+  // Verifier outputs
+  const char* message2 = "abc";
+  msg_len= 3;
+
+  size_digest = (unsigned int) digest_output_byte_size("sha256");
+  memset(digest, 0, size_digest);
+  if (!digest_message("sha256", (const byte*) message2, msg_len, digest, size_digest)) {
+    return false;
+  }
+  if (print_all) {
+    printf("\nSHA-256 message: "); print_bytes(msg_len, (byte*)message2); printf("\n");
+    printf("SHA-256 digest : "); print_bytes((int)size_digest, digest); printf("\n");
+  }
+  if (memcmp(digest, sha256_test, size_digest) != 0) {
+    return false;
+  }
+
+  size_digest = (unsigned int) digest_output_byte_size("sha384");
+  memset(digest, 0, size_digest);
+  if (!digest_message("sha384", (const byte*) message2, msg_len, digest, size_digest)) {
+    return false;
+  }
+  if (print_all) {
+    printf("SHA-384 message: "); print_bytes(msg_len, (byte*)message2); printf("\n");
+    printf("SHA-384 digest : "); print_bytes((int)size_digest, digest); printf("\n");
+  }
+  if (memcmp(digest, sha384_test, size_digest) != 0) {
+    return false;
+  }
+
+  size_digest = (unsigned int) digest_output_byte_size("sha512");
+  memset(digest, 0, size_digest);
+  if (!digest_message("sha512", (const byte*) message2, msg_len, digest, size_digest)) {
+    return false;
+  }
+  if (print_all) {
+    printf("SHA-512 message: "); print_bytes(msg_len, (byte*)message2); printf("\n");
+    printf("SHA-512 digest : "); print_bytes((int)size_digest, digest); printf("\n");
+  }
+  if (memcmp(digest, sha512_test, size_digest) != 0) {
+    return false;
+  }
+
   return true;
 }
 
