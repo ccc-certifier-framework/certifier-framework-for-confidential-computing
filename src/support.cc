@@ -951,11 +951,18 @@ void print_ecc_key(const ecc_message& em) {
   }
 }
 
-bool ecc_public_encrypt(EC_KEY* key, byte* data, int data_len, byte *encrypted, int* size_out) {
+//  ECC
+//    G is generator, x is private key P=xG ia public key
+//    Encrypt
+//      Embed message m in P_m.  Pick random k.  Send (kG, kP + P_m)
+//    Decrypt
+//      compute Q=xkG = kP.  Subtract Q from kP + P_m = P_m.  Extract message from P_m.
+//  Sopenssl recommends using EVP_Seal and EVP_Unseal
+bool ecc_encrypt(EC_KEY* key, byte* data, int data_len, byte *encrypted, int* size_out) {
   return false;
 }
 
-bool ecc_private_decrypt(EC_KEY* key, byte* enc_data, int data_len, byte* decrypted, int* size_out) {
+bool ecc_decrypt(EC_KEY* key, byte* enc_data, int data_len, byte* decrypted, int* size_out) {
   return false;
 }
 
