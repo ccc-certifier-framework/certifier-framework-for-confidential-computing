@@ -209,6 +209,12 @@ bool run_me_as_client(X509* x509_policy_cert, key_message& private_key,
   return true;
 }
 
+// Standard algorithms for the enclave
+string public_key_alg("rsa-2048");
+string symmetric_key_alg("aes-256");;
+string hash_alg("sha-256");
+string hmac_alg("sha-256-hmac");
+
 int main(int an, char** av) {
 
   // remove pipe descriptors before processing other arguments
@@ -267,7 +273,8 @@ int main(int an, char** av) {
   // Carry out operations as before
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init()) {
+    if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
+          hash_alg, hmac_alg)) {
       printf("cold-init failed\n");
       ret = 1;
     }
