@@ -132,6 +132,7 @@ bool test_authenticated_encrypt(bool print_all) {
 }
 
 bool test_public_keys(bool print_all) {
+
   RSA* r1 = RSA_new();
 
   if (!generate_new_rsa_key(2048, r1))
@@ -147,9 +148,9 @@ bool test_public_keys(bool print_all) {
   const char* msg = "This is a message of length 32  ";
   int size_data = 32;
   byte data[size_data];
-  int size_out = 512;
+  int size_out = 2048;
   byte out[size_out];
-  int size_recovered = 512;
+  int size_recovered = 2048;
   byte recovered[size_recovered];
 
   memset(data, 0, size_data);
@@ -178,8 +179,8 @@ bool test_public_keys(bool print_all) {
   if (!generate_new_rsa_key(4096, r2))
     return false;
 
-  size_out = 512;
-  size_recovered = 512;
+  size_out = 2048;
+  size_recovered = 2048;
   key_message km2;
   if (!RSA_to_key(r2, &km2)) {
     printf("RSA_to_key failed\n");
@@ -213,6 +214,8 @@ bool test_public_keys(bool print_all) {
     return false;
   
   // ECC
+  size_out = 2048;
+  size_recovered = 2048;
   EC_KEY* ecc_key = generate_new_ecc_key(384);
   if (ecc_key == nullptr) {
     printf("Can't generate new ecc key\n");
@@ -229,6 +232,24 @@ bool test_public_keys(bool print_all) {
     printf("\n");
     print_key((const key_message&)km3);
   }
+  if (print_all) {
+    printf("public to encrypt: "); print_bytes(size_data, data); printf("\n");
+  }
+  if (!ecc_sign("sha-384", ecc_key, size_data, data, &size_out, out)) {
+    printf("ecc_sign failed\n");
+    return false;
+  }
+  if (print_all) {
+    printf("public encrypted: "); print_bytes(size_out, out); printf("\n");
+  }
+  if (!ecc_verify("sha-384", ecc_key, size_data, data, size_out, out)) {
+    printf("ecc_verify failed\n");
+    return false;
+  }
+  if (print_all) {
+    printf("public recovered: "); print_bytes(size_recovered, recovered); printf("\n");
+  }
+  EC_KEY_free(ecc_key);
   return true;
 }
 
@@ -271,7 +292,8 @@ bool test_digest(bool print_all) {
   byte digest[size_digest];
 
   memset(digest, 0, size_digest);
-  if (!digest_message("sha256", (const byte*) message, msg_len, digest, size_digest)) {
+  if (!digest_message("sha-256", (const byte*) message, msg_len, digest, size_digest)) {
+    printf("failed 0 (%d)\n", size_digest);
     return false;
   }
   if (print_all) {
@@ -284,8 +306,13 @@ bool test_digest(bool print_all) {
   msg_len= 3;
 
   size_digest = (unsigned int) digest_output_byte_size("sha256");
+  if (size_digest < 0) {
+    printf("failed 1 (%d)\n", size_digest);
+    return false;
+  }
   memset(digest, 0, size_digest);
-  if (!digest_message("sha256", (const byte*) message2, msg_len, digest, size_digest)) {
+  if (!digest_message("sha-256", (const byte*) message2, msg_len, digest, size_digest)) {
+    printf("failed 2 (%d)\n", size_digest);
     return false;
   }
   if (print_all) {
@@ -293,12 +320,18 @@ bool test_digest(bool print_all) {
     printf("SHA-256 digest : "); print_bytes((int)size_digest, digest); printf("\n");
   }
   if (memcmp(digest, sha256_test, size_digest) != 0) {
+    printf("failed 3 (%d)\n", size_digest);
     return false;
   }
 
-  size_digest = (unsigned int) digest_output_byte_size("sha384");
+  size_digest = (unsigned int) digest_output_byte_size("sha-384");
+  if (size_digest < 0) {
+    printf("failed 4 (%d)\n", size_digest);
+    return false;
+  }
   memset(digest, 0, size_digest);
-  if (!digest_message("sha384", (const byte*) message2, msg_len, digest, size_digest)) {
+  if (!digest_message("sha-384", (const byte*) message2, msg_len, digest, size_digest)) {
+    printf("failed 5 (%d)\n", size_digest);
     return false;
   }
   if (print_all) {
@@ -309,9 +342,14 @@ bool test_digest(bool print_all) {
     return false;
   }
 
-  size_digest = (unsigned int) digest_output_byte_size("sha512");
+  size_digest = (unsigned int) digest_output_byte_size("sha-512");
+  if (size_digest < 0) {
+    printf("failed 6 (%d)\n", size_digest);
+    return false;
+  }
   memset(digest, 0, size_digest);
-  if (!digest_message("sha512", (const byte*) message2, msg_len, digest, size_digest)) {
+  if (!digest_message("sha-512", (const byte*) message2, msg_len, digest, size_digest)) {
+    printf("failed 7 (%d)\n", size_digest);
     return false;
   }
   if (print_all) {

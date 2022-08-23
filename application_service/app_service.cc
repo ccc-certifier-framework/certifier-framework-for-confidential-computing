@@ -669,6 +669,14 @@ done:
 
 // ------------------------------------------------------------------------------
 
+
+// Standard algorithms for the enclave
+string public_key_alg("rsa-2048");
+string symmetric_key_alg("aes-256");;
+string hash_alg("sha-256");
+string hmac_alg("sha-256-hmac");
+
+
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -727,7 +735,8 @@ int main(int an, char** av) {
 
   // initialize and certify service data
   if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
-    if (!helper.cold_init()) {
+    if (!helper.cold_init(public_key_alg, symmetric_key_alg,
+            hash_alg, hmac_alg)) {
       printf("cold-init failed\n");
       return 1;
     }

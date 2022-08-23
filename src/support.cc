@@ -73,10 +73,10 @@ name_size cipher_key_byte_name_size[] = {
 };
 
 name_size digest_byte_name_size[] = {
-  {"sha-256", 32},
   {"sha256", 32},
-  {"sha384", 48},
-  {"sha512", 64},
+  {"sha-256", 32},
+  {"sha-384", 48},
+  {"sha-512", 64},
 };
 
 name_size mac_byte_name_size[] = {
@@ -418,22 +418,24 @@ bool digest_message(const char* alg, const byte* message, int message_len,
     byte* digest, unsigned int digest_len) {
 
   int n = digest_output_byte_size(alg);
+  if (n < 0)
+    return false;
   if (n > (int)digest_len)
     return false;
 
   EVP_MD_CTX *mdctx;
 
-  if (strcmp(alg, "sha256") == 0) {
+  if (strcmp(alg, "sha-256") == 0 || strcmp(alg, "sha256") == 0) {
     if((mdctx = EVP_MD_CTX_new()) == NULL)
       return false;
     if(1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
       return false;
-  } else if (strcmp(alg, "sha384") == 0) {
+  } else if (strcmp(alg, "sha-384") == 0) {
     if((mdctx = EVP_MD_CTX_new()) == NULL)
       return false;
     if(1 != EVP_DigestInit_ex(mdctx, EVP_sha384(), NULL))
       return false;
-  } else if (strcmp(alg, "sha512")  == 0) {
+  } else if (strcmp(alg, "sha-512")  == 0) {
     if((mdctx = EVP_MD_CTX_new()) == NULL)
       return false;
     if(1 != EVP_DigestInit_ex(mdctx, EVP_sha512(), NULL))
@@ -890,15 +892,17 @@ bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, 
 
   unsigned int sig_len = ECDSA_size(key);
   if (!digest_message(alg, msg, size, digest, len)) {
+    printf("digest_message failed (%s)\n", alg);
     return false;
   }
   if (ECDSA_sign(0, digest, len, out, &sig_len, key) != 1) {
+    printf("ECDSA_sign failed\n");
     return false;
   }
   return true;
 }
 
-bool ecc_verify(const char* alg, EC_KEY *key, int size, byte* msg, int size_sig, byte* sig) {
+bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig, byte* sig) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte digest[len];
 
@@ -906,7 +910,9 @@ bool ecc_verify(const char* alg, EC_KEY *key, int size, byte* msg, int size_sig,
   if (!digest_message(alg, msg, size, digest, len)) {
     return false;
   }
-  if (ECDSA_verify(0, digest, len, sig, sig_len, key) != 1) {
+  int res = ECDSA_verify(0, digest, len, sig, sig_len, key);
+  if (res != 1) {
+    printf("Failure= %d, size: %d\n", res, size_sig);
     return false;
   }
   return true;

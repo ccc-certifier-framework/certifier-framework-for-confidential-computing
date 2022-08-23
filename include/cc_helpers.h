@@ -95,7 +95,8 @@ public:
   bool save_store();
   bool fetch_store();
   void clear_sensitive_data();
-  bool cold_init();
+  bool cold_init(const string& public_key_alg, const string& symmetric_key_alg,
+                 const string& hash_alg, const string& hmac_alg);
   bool warm_restart();
   bool certify_me(const string& host_name, int port);
   bool GetPlatformSaysAttestClaim(signed_claim_message* scm);

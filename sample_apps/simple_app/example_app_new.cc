@@ -152,6 +152,12 @@ int main(int an, char** av) {
     return 1;
   }
 
+  // Standard algorithms for the enclave
+  string public_key_alg("rsa-2048");
+  string symmetric_key_alg("aes-256");;
+  string hash_alg("sha-256");
+  string hmac_alg("sha-256-hmac");
+
   // Carry out operation
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
