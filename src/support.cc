@@ -497,15 +497,28 @@ bool authenticated_decrypt(byte* in, int in_len, byte *key,
   return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
 
+const int rsa_alg_type = 1;
+const int ecc_alg_type = 2;
 bool private_key_to_public_key(const key_message& in, key_message* out) {
 
   int n_bytes = 0;
+  int alg_type = 0;
   if (in.key_type() == "rsa-2048-private") {
+    alg_type = rsa_alg_type;
     out->set_key_type("rsa-2048-public");
     n_bytes = cipher_block_byte_size("rsa-2048-public");
   } else if (in.key_type() == "rsa-1024-private") {
+    alg_type = rsa_alg_type;
     out->set_key_type("rsa-1024-public");
     n_bytes = cipher_block_byte_size("rsa-1024-public");
+  } else if (in.key_type() == "rsa-4096-private") {
+    alg_type = rsa_alg_type;
+    out->set_key_type("rsa-4096-public");
+    n_bytes = cipher_block_byte_size("rsa-4096-public");
+  } else if (in.key_type() == "ecc-384-private") {
+    alg_type = ecc_alg_type;
+    out->set_key_type("ecc-384-public");
+    n_bytes = cipher_block_byte_size("ecc_384-public");
   } else {
     return false;
   }
@@ -516,13 +529,24 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
   out->set_not_after(in.not_after());
   out->set_certificate(in.certificate().data(), in.certificate().size());
 
-  rsa_message* rk = new(rsa_message);
-  rk->set_public_modulus(in.rsa_key().public_modulus().data(),
-      in.rsa_key().public_modulus().size());
-  rk->set_public_exponent(in.rsa_key().public_exponent().data(),
-      in.rsa_key().public_exponent().size());
-  out->set_allocated_rsa_key(rk);
-  return true;
+  if (alg_type == rsa_alg_type) {
+    rsa_message* rk = new(rsa_message);
+    rk->set_public_modulus(in.rsa_key().public_modulus().data(),
+        in.rsa_key().public_modulus().size());
+    rk->set_public_exponent(in.rsa_key().public_exponent().data(),
+        in.rsa_key().public_exponent().size());
+    out->set_allocated_rsa_key(rk);
+    return true;
+  } else if (alg_type == ecc_alg_type) {
+    ecc_message* ek = new ecc_message;
+    ek->CopyFrom(in.ecc_key());
+    // FIX
+    ek->set_private_multiplier(0,0);
+    out->set_allocated_ecc_key(ek);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 bool make_certifier_rsa_key(int n,  key_message* k) {
@@ -617,7 +641,6 @@ bool rsa_sha256_verify(RSA*key, int size, byte* msg, int sig_size, byte* sig) {
   return true;
 }
 
-// Todo
 bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* size_out, byte* out) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte digest[len];
@@ -632,7 +655,6 @@ bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* size_out, byt
   return true;
 }
 
-// Todo
 bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int size_sig, byte* sig) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte digest[len];
