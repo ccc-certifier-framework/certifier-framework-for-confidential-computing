@@ -512,6 +512,10 @@ bool cc_trust_data::get_trust_data_from_store() {
   return false;
 }
 
+//  public_key_alg can be rsa-2048 (soon: rsa-1024, rsa-4096, ecc-384)
+//  symmetric_key_alg can be aes-256
+//  hash_alg can be sha-256 (soon: sha-384, sha-512)
+//  hmac-alg can be sha-256-hmac (soon: sha-384-hmac, sha-512-hmac)
 bool cc_trust_data::cold_init(const string& public_key_alg,
         const string& symmetric_key_alg,
         const string& hash_alg, const string& hmac_alg) {

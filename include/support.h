@@ -66,10 +66,14 @@ bool digest_message(const char* alg, const byte* message, int message_len,
     byte* digest, unsigned int digest_len);
 
 
-
 bool authenticated_encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size);
 bool authenticated_decrypt(byte* in, int in_len, byte *key,
+            byte *out, int* out_size);
+
+bool authenticated_encrypt(const char* alg, byte* in, int in_len, byte *key,
+            byte *iv, byte *out, int* out_size);
+bool authenticated_decrypt(const char* alg, byte* in, int in_len, byte *key,
             byte *out, int* out_size);
 
 bool make_certifier_rsa_key(int n,  key_message* k);

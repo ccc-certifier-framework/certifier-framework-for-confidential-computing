@@ -499,6 +499,59 @@ bool authenticated_decrypt(byte* in, int in_len, byte *key,
   return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
 
+bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key,
+            byte *iv, byte *out, int* out_size) {
+
+  if (strcmp(alg_name,  "aes-256-cbc-hmac-sha256") != 0) {
+    printf("Only aes-256-cbc-hmac-sha256 for now\n");
+    return false;
+  }
+  int blk_size =  cipher_block_byte_size(alg_name);
+  int key_size =  cipher_key_byte_size(alg_name);
+  int mac_size =  mac_output_byte_size(alg_name);
+  int cipher_size = *out_size - blk_size;
+  memset(out, 0, *out_size);
+
+  if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size))
+    return false;
+  memcpy(out, iv, block_size);
+  cipher_size += block_size;
+
+  unsigned int hmac_size = mac_size;
+  HMAC(EVP_sha256(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
+  *out_size = cipher_size + hmac_size;
+  return true;
+}
+
+bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *key,
+            byte *out, int* out_size) {
+
+
+  if (strcmp(alg_name,  "aes-256-cbc-hmac-sha256") != 0) {
+    printf("Only aes-256-cbc-hmac-sha256 for now\n");
+    return false;
+  }
+  int blk_size =  cipher_block_byte_size(alg_name);
+  int key_size =  cipher_key_byte_size(alg_name);
+  int mac_size =  mac_output_byte_size(alg_name);
+  int cipher_size = *out_size - blk_size;
+
+  int plain_size = *out_size - blk_size - mac_size;
+
+  int msg_with_iv_size = in_len - mac_size;
+  unsigned int hmac_size = mac_size;
+  byte* hmac_out[hmac_size];
+  HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
+  if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
+    return false;
+  }
+
+  if (!decrypt(in + block_size, msg_with_iv_size - block_size, key, in, out, &plain_size))
+    return false;
+  *out_size = plain_size;
+  return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
+}
+
 const int rsa_alg_type = 1;
 const int ecc_alg_type = 2;
 bool private_key_to_public_key(const key_message& in, key_message* out) {
