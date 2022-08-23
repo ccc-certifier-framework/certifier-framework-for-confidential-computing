@@ -734,6 +734,11 @@ bool RSA_to_key(RSA* r, key_message* k) {
       k->set_key_type("rsa-2048-public");
     else
       k->set_key_type("rsa-2048-private");
+  } else if (rsa_size == 4096) {
+    if (d == nullptr)
+      k->set_key_type("rsa-4096-public");
+    else
+      k->set_key_type("rsa-4096-private");
   } else {
     return false;
   }

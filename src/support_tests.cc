@@ -132,13 +132,13 @@ bool test_authenticated_encrypt(bool print_all) {
 }
 
 bool test_public_keys(bool print_all) {
-  RSA* r= RSA_new();
+  RSA* r1 = RSA_new();
 
-  if (!generate_new_rsa_key(2048, r))
+  if (!generate_new_rsa_key(2048, r1))
     return false;
 
   key_message km1;
-  if (!RSA_to_key(r, &km1))
+  if (!RSA_to_key(r1, &km1))
     return false;
   if (print_all) {
     print_key((const key_message&)km1);
@@ -160,41 +160,35 @@ bool test_public_keys(bool print_all) {
   if (print_all) {
     printf("public to encrypt: "); print_bytes(size_data, data); printf("\n");
   }
-  if (!rsa_public_encrypt(r, data, size_data, out, &size_out))
+  if (!rsa_public_encrypt(r1, data, size_data, out, &size_out))
     return false;
   if (print_all) {
     printf("public encrypted: "); print_bytes(size_out, out); printf("\n");
   }
-  if (!rsa_private_decrypt(r, out, size_out, recovered, &size_recovered))
+  if (!rsa_private_decrypt(r1, out, size_out, recovered, &size_recovered))
     return false;
   if (print_all) {
     printf("public recovered: "); print_bytes(size_recovered, recovered); printf("\n");
   }
-  RSA_free(r);
+  RSA_free(r1);
   if (memcmp(data, recovered, size_recovered) != 0)
     return false;
 
-/*
-  RSA* r= RSA_new();
-
-  if (!generate_new_rsa_key(4096, r))
+  RSA* r2 = RSA_new();
+  if (!generate_new_rsa_key(4096, r2))
     return false;
 
+  size_out = 512;
+  size_recovered = 512;
   key_message km2;
-  if (!RSA_to_key(r, &km2))
+  if (!RSA_to_key(r2, &km2)) {
+    printf("RSA_to_key failed\n");
     return false;
+  }
   if (print_all) {
     printf("\n");
     print_key((const key_message&)km2);
   }
-
-  const char* msg = "This is a message of length 32  ";
-  int size_data = 32;
-  byte data[size_data];
-  int size_out = 512;
-  byte out[size_out];
-  int size_recovered = 512;
-  byte recovered[size_recovered];
 
   memset(data, 0, size_data);
   memset(out, 0, size_out);
@@ -204,21 +198,20 @@ bool test_public_keys(bool print_all) {
   if (print_all) {
     printf("public to encrypt: "); print_bytes(size_data, data); printf("\n");
   }
-  if (!rsa_public_encrypt(r, data, size_data, out, &size_out))
+  if (!rsa_public_encrypt(r2, data, size_data, out, &size_out))
     return false;
   if (print_all) {
     printf("public encrypted: "); print_bytes(size_out, out); printf("\n");
   }
-  if (!rsa_private_decrypt(r, out, size_out, recovered, &size_recovered))
+  if (!rsa_private_decrypt(r2, out, size_out, recovered, &size_recovered))
     return false;
   if (print_all) {
     printf("public recovered: "); print_bytes(size_recovered, recovered); printf("\n");
   }
-  RSA_free(r);
+  RSA_free(r2);
   if (memcmp(data, recovered, size_recovered) != 0)
     return false;
- */
-
+  
   // ECC
   EC_KEY* ecc_key = generate_new_ecc_key(384);
   if (ecc_key == nullptr) {
