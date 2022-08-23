@@ -5,6 +5,8 @@
 #include <openssl/rand.h>
 #include <openssl/hmac.h>
 #include <openssl/x509v3.h>
+#include <openssl/ecdsa.h>
+ #include <openssl/bn.h>
 
 #include "support.h" 
 #include "certifier.pb.h" 
@@ -567,7 +569,7 @@ bool rsa_private_decrypt(RSA* key, byte* enc_data, int data_len,  byte* decrypte
 }
 
 //  PKCS compliant signer
-bool rsa_sha256_sign(RSA*key, int to_sign_size, byte* to_sign, int* sig_size, byte* sig) {
+bool rsa_sha256_sign(RSA* key, int to_sign_size, byte* to_sign, int* sig_size, byte* sig) {
   EVP_MD_CTX* sign_ctx = EVP_MD_CTX_create();
   EVP_PKEY* private_key  = EVP_PKEY_new();
   EVP_PKEY_assign_RSA(private_key, key);
@@ -613,6 +615,16 @@ bool rsa_sha256_verify(RSA*key, int size, byte* msg, int sig_size, byte* sig) {
   if (memcmp(check_buf, decrypted, check_size) != 0)
     return false;
   return true;
+}
+
+// Todo
+bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* size_out, byte* out) {
+  return false;
+}
+
+// Todo
+bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int size_sig, byte* sig) {
+  return false;
 }
 
 bool generate_new_rsa_key(int num_bits, RSA* r) {
@@ -732,15 +744,304 @@ bool RSA_to_key(RSA* r, key_message* k) {
   return true;
 }
 
+void print_point(const point_message& pt) {
+  if (!pt.has_x() || !pt.has_y())
+    return;
+
+  BIGNUM* x = BN_new();
+  BIGNUM* y = BN_new();
+
+  BN_bin2bn((byte*)pt.x().data(), pt.x().size(), x);
+  BN_bin2bn((byte*)pt.y().data(), pt.y().size(), y);
+  printf("(");
+  BN_print_fp(stdout, x);
+  printf(", ");
+  BN_print_fp(stdout, y);
+  printf(")");
+
+  BN_free(x);
+  BN_free(y);
+}
+
+void print_ecc_key(const ecc_message& em) {
+
+  if (em.has_curve_name()) {
+    printf("Curve name: %s\n", em.curve_name().c_str());
+  }
+
+  if (em.has_public_point()) {
+    printf("Public point:\n");
+    print_point(em.public_point());
+    printf("\n");
+  }
+
+  if (em.has_base_point()) {
+    printf("Base   point:\n");
+    print_point(em.base_point());
+    printf("\n");
+  }
+
+  if (em.has_order_of_base_point()) {
+    BIGNUM* order = BN_new();
+    BN_bin2bn((byte*)em.order_of_base_point().data(), em.order_of_base_point().size(), order);
+    printf("order: ");
+    BN_print_fp(stdout, order);
+    printf("\n");
+    BN_free(order);
+  }
+
+  if (em.has_private_multiplier()) {
+    BIGNUM* private_mult = BN_new();
+
+    BN_bin2bn((byte*)em.private_multiplier().data(), em.private_multiplier().size(), private_mult);
+    printf("private multiplier: ");
+    BN_print_fp(stdout, private_mult);
+    printf("\n");
+
+    BN_free(private_mult);
+  }
+
+  if (em.has_curve_p() && em.has_curve_p() && em.has_curve_p()) {
+    BIGNUM* p = BN_new();
+    BIGNUM* a = BN_new();
+    BIGNUM* b = BN_new();
+  
+    BN_bin2bn((byte*)em.curve_p().data(), em.curve_p().size(), p);
+    BN_bin2bn((byte*)em.curve_a().data(), em.curve_a().size(), a);
+    BN_bin2bn((byte*)em.curve_b().data(), em.curve_b().size(), b);
+
+    printf("Curve parameters:\n");
+    printf("  p: ");
+    BN_print_fp(stdout, p);
+    printf("\n");
+    printf("  a: ");
+    BN_print_fp(stdout, a);
+    printf("\n");
+    printf("  b: ");
+    BN_print_fp(stdout, b);
+    printf("\n");
+
+    BN_free(p);
+    BN_free(a);
+    BN_free(b);
+  }
+}
+
+bool ecc_public_encrypt(EC_KEY* key, byte* data, int data_len, byte *encrypted, int* size_out) {
+  return false;
+}
+
+bool ecc_private_decrypt(EC_KEY* key, byte* enc_data, int data_len, byte* decrypted, int* size_out) {
+  return false;
+}
+
+bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, byte* out) {
+  // ECDSA_sign(0, dgst, dgst_len, sig, sig_len, ecc_key_))
+  // ECDSA_verify(0, dgst, dgst_len, sig, sig_len, ecc_key_))
+  // ECDSA_size(ecc_key_):
+  return false;
+}
+
+bool ecc_verify(const char* alg, EC_KEY *key, int size, byte* msg, int size_sig, byte* sig) {
+  return false;
+}
+
+EC_KEY* generate_new_ecc_key(int num_bits) {
+
+  if (num_bits != 384) {
+    printf("Only P-384 supported\n");
+    return nullptr;
+  }
+  EC_KEY* ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
+  if (ecc_key == nullptr) {
+    printf("Can't get curve by name\n");
+    return nullptr;
+  }
+
+  const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
+  if (group == nullptr) {
+    printf("Can't get group (1)\n");
+    return nullptr;
+  }
+
+  if (EC_KEY_generate_key(ecc_key) != 1) {
+    printf("Can't generate key\n");
+    return nullptr;
+  }
+
+  return ecc_key;
+}
+
+bool key_to_ECC(const key_message& k, EC_KEY* r) {
+  // string curve_name                = 1;
+  // bytes curve_p                    = 2;
+  // bytes curve_a                    = 3;
+  // bytes curve_b                    = 4;
+  // point_message base_point         = 5;
+  // point_message public_point       = 6;
+  // bytes order_of_base_point        = 7;
+  // bytes private_multiplier         = 8;
+  return false;
+}
+
+bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
+
+  k->set_key_name("ecc-p384-private");
+  k->set_key_format("vse_key");
+
+  ecc_message* ek = new ecc_message;
+  if (ek == nullptr)
+    return false;
+
+  if (ecc_key == nullptr) {
+    return false;
+  }
+
+  BN_CTX* ctx = BN_CTX_new();
+  if (ctx == nullptr)
+    return false;
+
+  const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
+  if (group == nullptr) {
+    printf("Can't get group (2)\n");
+    return false;
+  }
+
+  BIGNUM* p = BN_new();
+  BIGNUM* a = BN_new();
+  BIGNUM* b = BN_new();
+  if (EC_GROUP_get_curve(group, p, a, b, ctx) <= 0) {
+    BN_CTX_free(ctx);
+    return false;
+  }
+
+  if (BN_num_bytes(p) == 48) {
+    ek->set_curve_name("P-384");
+  } else {
+    printf("Only P-384 supported\n");
+    return false;
+  }
+
+  // set p, a, b
+  int sz  = BN_num_bytes(p);
+  byte p_buf[sz];
+  sz  = BN_bn2bin(p, p_buf);
+  ek->set_curve_p(p_buf, sz);
+
+  sz  = BN_num_bytes(a);
+  byte a_buf[sz];
+  sz  = BN_bn2bin(a, a_buf);
+  ek->set_curve_a(a_buf, sz);
+
+  sz  = BN_num_bytes(b);
+  byte b_buf[sz];
+  sz  = BN_bn2bin(b, b_buf);
+  ek->set_curve_b(b_buf, sz);
+
+  BN_free(p);
+  BN_free(a);
+  BN_free(b);
+
+  // set base_point
+  const EC_POINT* generator = EC_GROUP_get0_generator(group);
+  if (generator == nullptr) {
+    printf("Can't get base point\n");
+    BN_CTX_free(ctx);
+    return false;
+  }
+  BIGNUM* x = BN_new();
+  BIGNUM* y = BN_new();
+  if (EC_POINT_get_affine_coordinates_GFp(group,
+        generator, x, y, ctx) != 1) {
+    printf("Can't get affine coordinates\n");
+    BN_CTX_free(ctx);
+    return false;
+  }
+
+  sz  = BN_num_bytes(x);
+  byte x_buf[sz];
+  sz  = BN_bn2bin(x, x_buf);
+  point_message* b_pt= new point_message;
+  ek->set_allocated_base_point(b_pt);
+  b_pt->set_x((void*)x_buf, sz);
+
+  sz  = BN_num_bytes(y);
+  byte y_buf[sz];
+  sz  = BN_bn2bin(y, y_buf);
+  b_pt->set_y((void*)y_buf, sz);
+  BN_free(x);
+  BN_free(y);
+
+  // set public_point
+  const EC_POINT* pub_pt= EC_KEY_get0_public_key(ecc_key);
+  if (pub_pt == nullptr) {
+    printf("Can't get public point\n");
+    BN_CTX_free(ctx);
+    return false;
+  }
+
+  BIGNUM* xx = BN_new();
+  BIGNUM* yy = BN_new();
+  if (EC_POINT_get_affine_coordinates_GFp(group,
+        pub_pt, xx, yy, ctx) != 1) {
+    printf("Can't get affine coordinates\n");
+    BN_CTX_free(ctx);
+    return false;
+  }
+  sz  = BN_num_bytes(xx);
+  byte xx_buf[sz];
+  sz  = BN_bn2bin(xx, xx_buf);
+  point_message* p_pt= new point_message;
+  ek->set_allocated_public_point(p_pt);
+  p_pt->set_x((void*)xx_buf, sz);
+  sz  = BN_num_bytes(yy);
+  byte yy_buf[sz];
+  sz  = BN_bn2bin(yy, yy_buf);
+  p_pt->set_y((void*)yy_buf, sz);
+  BN_free(xx);
+  BN_free(yy);
+
+  // set order_of_base_point
+  BIGNUM* order = BN_new();
+  if (EC_GROUP_get_order(group, order, ctx) != 1) {
+    printf("Can't get order\n");
+    BN_free(order);
+    BN_CTX_free(ctx);
+    return false;
+  }
+  sz  = BN_num_bytes(order);
+  byte order_buf[sz];
+  sz  = BN_bn2bin(order, order_buf);
+  ek->set_order_of_base_point((void*)order_buf, sz);
+  BN_free(order);
+
+  // set private_multiplier
+  const BIGNUM* pk = EC_KEY_get0_private_key(ecc_key);
+  if (pk == nullptr) {
+    return false;
+  }
+
+  k->set_allocated_ecc_key(ek);
+  BN_CTX_free(ctx);
+  return true;
+}
+
+bool make_certifier_ecc_key(int n,  key_message* k) {
+  return false;
+}
+
 bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k) {
   string root_name("root");
 
-  if (type == "rsa-2048-private" || type == "rsa-1024-private") {
+  if (type == "rsa-4096-private" || type == "rsa-2048-private" || type == "rsa-1024-private") {
     int n = 2048;
     if (type == "rsa-2048-private")
       n = 2048;
     else if (type == "rsa-1024-private")
       n = 1024;
+    else if (type == "rsa-4096-private")
+      n = 4096;
+
     if (!make_certifier_rsa_key(n,  k))
       return false;
     k->set_key_format("vse-key");
@@ -962,6 +1263,7 @@ void print_key(const key_message& k) {
     print_rsa_key(k.rsa_key());
   }
   if (k.has_ecc_key()) {
+    print_ecc_key(k.ecc_key());
   }
   if (k.has_secret_key_bits()) {
     printf("Secret key bits: ");
