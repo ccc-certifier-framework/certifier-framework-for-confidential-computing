@@ -619,12 +619,34 @@ bool rsa_sha256_verify(RSA*key, int size, byte* msg, int sig_size, byte* sig) {
 
 // Todo
 bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* size_out, byte* out) {
-  return false;
+  unsigned int len = (unsigned int)digest_output_byte_size(alg);
+  byte digest[len];
+
+  int sig_len = RSA_size(key);
+  if (!digest_message(alg, msg, size, digest, len)) {
+    return false;
+  }
+  if (!rsa_private_decrypt(key, digest, len,  out, &sig_len)) {
+    return false;
+  }
+  return true;
 }
 
 // Todo
 bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int size_sig, byte* sig) {
-  return false;
+  unsigned int len = (unsigned int)digest_output_byte_size(alg);
+  byte digest[len];
+
+  int sig_len = RSA_size(key);
+  if (!digest_message(alg, msg, size, digest, len)) {
+    return false;
+  }
+  int out_len = sig_len;
+  byte out[sig_len];
+  if (!rsa_public_encrypt(key, sig, size_sig,  out, &out_len)) {
+    return false;
+  }
+  return memcmp(digest, out, (int)len) == 0;
 }
 
 bool generate_new_rsa_key(int num_bits, RSA* r) {
@@ -836,14 +858,31 @@ bool ecc_private_decrypt(EC_KEY* key, byte* enc_data, int data_len, byte* decryp
 }
 
 bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, byte* out) {
-  // ECDSA_sign(0, dgst, dgst_len, sig, sig_len, ecc_key_))
-  // ECDSA_verify(0, dgst, dgst_len, sig, sig_len, ecc_key_))
-  // ECDSA_size(ecc_key_):
-  return false;
+  unsigned int len = (unsigned int)digest_output_byte_size(alg);
+  byte digest[len];
+
+  unsigned int sig_len = ECDSA_size(key);
+  if (!digest_message(alg, msg, size, digest, len)) {
+    return false;
+  }
+  if (ECDSA_sign(0, digest, len, out, &sig_len, key) != 1) {
+    return false;
+  }
+  return true;
 }
 
 bool ecc_verify(const char* alg, EC_KEY *key, int size, byte* msg, int size_sig, byte* sig) {
-  return false;
+  unsigned int len = (unsigned int)digest_output_byte_size(alg);
+  byte digest[len];
+
+  unsigned int sig_len = ECDSA_size(key);
+  if (!digest_message(alg, msg, size, digest, len)) {
+    return false;
+  }
+  if (ECDSA_verify(0, digest, len, sig, sig_len, key) != 1) {
+    return false;
+  }
+  return true;
 }
 
 EC_KEY* generate_new_ecc_key(int num_bits) {
@@ -872,16 +911,26 @@ EC_KEY* generate_new_ecc_key(int num_bits) {
   return ecc_key;
 }
 
-bool key_to_ECC(const key_message& k, EC_KEY* r) {
-  // string curve_name                = 1;
-  // bytes curve_p                    = 2;
-  // bytes curve_a                    = 3;
-  // bytes curve_b                    = 4;
-  // point_message base_point         = 5;
-  // point_message public_point       = 6;
-  // bytes order_of_base_point        = 7;
-  // bytes private_multiplier         = 8;
-  return false;
+EC_KEY* key_to_ECC(const key_message& k) {
+  if (k.key_type() != "ecc-p384-private" && k.key_type() != "ecc-p384-public") {
+    return nullptr;
+  }
+  EC_KEY* ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
+  if (ecc_key == nullptr) {
+    printf("Can't get curve by name\n");
+    return nullptr;
+  }
+
+  const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
+  if (group == nullptr) {
+    printf("Can't get group (1)\n");
+    return nullptr;
+  }
+
+  // set private multiplier
+
+  // set public point
+  return ecc_key;
 }
 
 bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {

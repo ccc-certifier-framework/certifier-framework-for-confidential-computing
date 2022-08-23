@@ -98,7 +98,7 @@ bool key_to_RSA(const key_message& k, RSA* r);
 bool RSA_to_key(RSA* r, key_message* k);
 
 EC_KEY* generate_new_ecc_key(int num_bits);
-bool key_to_ECC(const key_message& k, EC_KEY* r);
+EC_KEY* key_to_ECC(const key_message& kr);
 bool ECC_to_key(const EC_KEY* e, key_message* k);
 
 bool private_key_to_public_key(const key_message& in, key_message* out);

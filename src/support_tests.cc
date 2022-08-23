@@ -184,6 +184,7 @@ bool test_public_keys(bool print_all) {
   if (!RSA_to_key(r, &km2))
     return false;
   if (print_all) {
+    printf("\n");
     print_key((const key_message&)km2);
   }
 
@@ -226,15 +227,13 @@ bool test_public_keys(bool print_all) {
   }
   if (ecc_key == nullptr)
     return false;
-  if (print_all) {
-    printf("ecc_key generated in test\n");
-  }
   key_message km3;
   if (!ECC_to_key(ecc_key, &km3)) {
     printf("Can't ECC to key\n");
     return false;
   }
   if (print_all) {
+    printf("\n");
     print_key((const key_message&)km3);
   }
   return true;
