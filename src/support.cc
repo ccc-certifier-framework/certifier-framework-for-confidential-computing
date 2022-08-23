@@ -487,7 +487,8 @@ bool authenticated_decrypt(byte* in, int in_len, byte *key,
 
   int msg_with_iv_size = in_len - mac_size;
   unsigned int hmac_size = mac_size;
-  byte* hmac_out[hmac_size];
+  byte hmac_out[hmac_size];
+
   HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
   if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
     return false;
@@ -502,14 +503,15 @@ bool authenticated_decrypt(byte* in, int in_len, byte *key,
 bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
 
-  if (strcmp(alg_name,  "aes-256-cbc-hmac-sha256") != 0) {
-    printf("Only aes-256-cbc-hmac-sha256 for now\n");
+  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-384-cbc-hmac-sha384") != 0) {
+    printf("Only aes-256-cbc-hmac-sha256 and aes-384-cbc-hmac-sha384 for now\n");
     return false;
   }
   int blk_size =  cipher_block_byte_size(alg_name);
   int key_size =  cipher_key_byte_size(alg_name);
   int mac_size =  mac_output_byte_size(alg_name);
   int cipher_size = *out_size - blk_size;
+
   memset(out, 0, *out_size);
 
   if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size))
@@ -517,9 +519,17 @@ bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key
   memcpy(out, iv, block_size);
   cipher_size += block_size;
 
-  unsigned int hmac_size = mac_size;
-  HMAC(EVP_sha256(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
-  *out_size = cipher_size + hmac_size;
+  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
+    unsigned int hmac_size = mac_size;
+    HMAC(EVP_sha256(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
+    *out_size = cipher_size + hmac_size;
+  } else if (strcmp(alg_name, "aes-384-cbc-hmac-sha384") == 0) {
+    unsigned int hmac_size = mac_size;
+    HMAC(EVP_sha384(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
+    *out_size = cipher_size + hmac_size;
+  } else {
+    return false;
+  }
   return true;
 }
 
@@ -527,22 +537,32 @@ bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *ke
             byte *out, int* out_size) {
 
 
-  if (strcmp(alg_name,  "aes-256-cbc-hmac-sha256") != 0) {
-    printf("Only aes-256-cbc-hmac-sha256 for now\n");
+  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-384-cbc-hmac-sha384") != 0) {
+    printf("Only aes-256-cbc-hmac-sha256 and aes-384-cbc-hmac-sha384 for now\n");
     return false;
   }
+
   int blk_size =  cipher_block_byte_size(alg_name);
   int key_size =  cipher_key_byte_size(alg_name);
   int mac_size =  mac_output_byte_size(alg_name);
   int cipher_size = *out_size - blk_size;
 
   int plain_size = *out_size - blk_size - mac_size;
-
   int msg_with_iv_size = in_len - mac_size;
   unsigned int hmac_size = mac_size;
-  byte* hmac_out[hmac_size];
-  HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
-  if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
+
+  byte hmac_out[hmac_size];
+  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
+    HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
+    if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
+      return false;
+    }
+  } else if (strcmp(alg_name, "aes-384-cbc-hmac-sha384") == 0) {
+    HMAC(EVP_sha384(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
+    if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
+      return false;
+    }
+  } else {
     return false;
   }
 
@@ -943,15 +963,18 @@ bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, 
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte digest[len];
 
-  unsigned int sig_len = ECDSA_size(key);
+  int blk_len = ECDSA_size(key);
+  if (*size_out < 2 * blk_len)
+    return false;
+
   if (!digest_message(alg, msg, size, digest, len)) {
-    printf("digest_message failed (%s)\n", alg);
     return false;
   }
-  if (ECDSA_sign(0, digest, len, out, &sig_len, key) != 1) {
-    printf("ECDSA_sign failed\n");
+  unsigned int sz = (unsigned int) *size_out;
+  if (ECDSA_sign(0, digest, len, out, &sz, key) != 1) {
     return false;
   }
+  *size_out = (int) sz;
   return true;
 }
 
@@ -959,13 +982,11 @@ bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig,
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte digest[len];
 
-  unsigned int sig_len = ECDSA_size(key);
   if (!digest_message(alg, msg, size, digest, len)) {
     return false;
   }
-  int res = ECDSA_verify(0, digest, len, sig, sig_len, key);
+  int res = ECDSA_verify(0, digest, len, sig, size_sig, key);
   if (res != 1) {
-    printf("Failure= %d, size: %d\n", res, size_sig);
     return false;
   }
   return true;
