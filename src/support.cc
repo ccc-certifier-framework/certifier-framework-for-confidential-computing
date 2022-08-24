@@ -1651,10 +1651,9 @@ bool verify_signed_attestation(int serialized_size, byte* serialized,
 }
 
 //Todo: take alg argument
-bool make_signed_claim(const claim_message& claim, const key_message& key,
+bool make_signed_claim( const char* alg, const claim_message& claim, const key_message& key,
     signed_claim_message* out) {
 
-  const char* alg = "rsa-2048-sha256-pkcs-sign";
   string serialized_claim;
   if(!claim.SerializeToString(&serialized_claim))
     return false;

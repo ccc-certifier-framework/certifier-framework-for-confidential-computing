@@ -213,7 +213,7 @@ bool simulated_Attest(const string& enclave_type,
     return false;
 
   signed_claim_message scm;
-  if (!make_signed_claim(cm, my_attestation_key, &scm))
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm, my_attestation_key, &scm))
     return false;
   string ser_scm;
   if (!scm.SerializeToString(&ser_scm))

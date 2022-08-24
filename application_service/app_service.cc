@@ -287,7 +287,7 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
   }
 
   signed_claim_message scm;
-  if (!make_signed_claim(cm, app_trust_data->private_service_key_, &scm)) {
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm, app_trust_data->private_service_key_, &scm)) {
     printf("soft_Attest: Signing failed\n");
     return false;
   }

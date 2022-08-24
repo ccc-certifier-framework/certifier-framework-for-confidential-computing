@@ -120,7 +120,7 @@ bool test_signed_claims(bool print_all) {
     nb, na, &claim))
       return false;
   signed_claim_message signed_claim;
-  if(!make_signed_claim(claim, my_attestation_key, &signed_claim))
+  if(!make_signed_claim("rsa-2048-sha256-pkcs-sign", claim, my_attestation_key, &signed_claim))
       return false;
   return verify_signed_claim(signed_claim, public_attestation_key);
 }

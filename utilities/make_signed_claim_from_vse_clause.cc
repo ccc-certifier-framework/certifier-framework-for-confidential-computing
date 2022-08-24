@@ -126,7 +126,7 @@ int main(int an, char** av) {
   printf("\n");
 
   signed_claim_message sc_out;
-  if (!make_signed_claim(cm_out, signing_key, &sc_out)) {
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm_out, signing_key, &sc_out)) {
     printf("Can't make claim\n");
     return 1;
   }
