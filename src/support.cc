@@ -636,6 +636,8 @@ bool make_certifier_rsa_key(int n,  key_message* k) {
     k->set_key_type("rsa-2048-private");
   } else if (n == 1024) {
     k->set_key_type("rsa-1024-private");
+  } else if (n == 4096) {
+    k->set_key_type("rsa-4096-private");
   } else {
     RSA_free(r);
     return false;
@@ -784,6 +786,9 @@ bool key_to_RSA(const key_message& k, RSA* r) {
     private_key = false;
   } else if (k.key_type() == "rsa-2048-private") {
     key_size_bits= 2048;
+    private_key = true;
+  } else if (k.key_type() == "rsa-4096-private") {
+    key_size_bits= 4096;
     private_key = true;
   } else {
     return false;
@@ -1247,11 +1252,25 @@ bool get_random(int num_bits, byte* out) {
   return ret;
 }
 
+// may want to check leading 0's
+bool same_point(const point_message& pt1, const point_message& pt2) {
+  if (pt1.x().size() != pt2.x().size())
+    return false;
+  if (pt1.y().size() != pt2.y().size())
+    return false;
+  if (memcmp(pt1.x().data(),pt1.x().data(), pt1.x().size()) != 0)
+    return false;
+  if (memcmp(pt1.y().data(),pt1.y().data(), pt1.y().size()) != 0)
+    return false;
+  return true;
+}
+
 bool same_key(const key_message& k1, const key_message& k2) {
   if (k1.key_type() != k2.key_type())
     return false;
   if (k1.key_type() == "rsa-2048-private" || k1.key_type() == "rsa-2048-public" ||
-      k1.key_type() == "rsa-1024-private" || k1.key_type() == "rsa-1024-public") {
+      k1.key_type() == "rsa-1024-private" || k1.key_type() == "rsa-1024-public" ||
+      k1.key_type() == "rsa-4096-private" || k1.key_type() == "rsa-4096-public") {
     string b1, b2;
     if (!k1.has_rsa_key() || !k2.has_rsa_key())
       return false;
@@ -1266,6 +1285,23 @@ bool same_key(const key_message& k1, const key_message& k2) {
     if (k1.secret_key_bits().size() != k2.secret_key_bits().size())
       return false;
     return (memcmp(k1.secret_key_bits().data(), k2.secret_key_bits().data(), k1.secret_key_bits().size()) == 0);
+  } else if (k1.key_type() == "ecc-384") {
+    const ecc_message& em1 = k1.ecc_key();
+    const ecc_message& em2 = k2.ecc_key();
+    if (em1.curve_p().size() != em2.curve_p().size() ||
+        memcmp(em1.curve_p().data(),em2.curve_p().data(), em1.curve_p().size()) != 0)
+      return false;
+    if (em1.curve_a().size() != em2.curve_a().size() ||
+          memcmp(em1.curve_a().data(),em1.curve_a().data(), em2.curve_a().size()) != 0)
+      return false;
+    if (em1.curve_b().size() != em2.curve_b().size() ||
+           memcmp(em1.curve_b().data(),em1.curve_b().data(), em2.curve_b().size()) != 0)
+      return false;
+    if (!same_point(em1.base_point(), em2.base_point()))
+      return false;
+    if (!same_point(em1.public_point(), em2.public_point()))
+      return false;
+    return true;
   } else {
     return false;
   }
@@ -1454,7 +1490,8 @@ void print_key_descriptor(const key_message& k) {
     return;
 
   if (k.key_type() == "rsa-2048-private" || k.key_type() == "rsa-2048-public" ||
-      k.key_type() == "rsa-1024-private" || k.key_type() == "rsa-1024-public") {
+      k.key_type() == "rsa-1024-private" || k.key_type() == "rsa-1024-public" ||
+      k.key_type() == "rsa-4096-private" || k.key_type() == "rsa-4096-public") {
     printf("Key[rsa, ");
     if (k.has_key_name()) {
       printf("%s, ", k.key_name().c_str());
@@ -1613,6 +1650,7 @@ bool verify_signed_attestation(int serialized_size, byte* serialized,
   return fRet;
 }
 
+//Todo: allow other key types
 bool make_signed_claim(const claim_message& claim, const key_message& key,
     signed_claim_message* out) {
 
@@ -1680,6 +1718,7 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   if (compare_time(t_na, t_now) < 0)
      return false;
 
+  // Todo: allow other algorithms
   if (signed_claim.signing_algorithm() != "rsa-2048-sha256-pkcs-sign")
     return false;
 

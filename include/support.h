@@ -87,8 +87,8 @@ bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* size_out, byt
 bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int size_sig, byte* sig);
 
 bool make_certifier_ecc_key(int n,  key_message* k);
-bool ecc_public_encrypt(EC_KEY* key, byte* data, int data_len, byte *encrypted, int* size_out);
-bool ecc_private_decrypt(EC_KEY* key, byte* enc_data, int data_len, byte* decrypted, int* size_out);
+bool ecc_encrypt(EC_KEY* key, byte* data, int data_len, byte *encrypted, int* size_out);
+bool ecc_decrypt(EC_KEY* key, byte* enc_data, int data_len, byte* decrypted, int* size_out);
 bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, byte* out);
 bool ecc_verify(const char* alg, EC_KEY *key, int size, byte* msg, int size_sig, byte* sig);
 
