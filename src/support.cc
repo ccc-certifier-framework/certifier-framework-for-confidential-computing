@@ -1650,36 +1650,75 @@ bool verify_signed_attestation(int serialized_size, byte* serialized,
   return fRet;
 }
 
-//Todo: allow other key types
+//Todo: take alg argument
 bool make_signed_claim(const claim_message& claim, const key_message& key,
     signed_claim_message* out) {
 
+  const char* alg = "rsa-2048-sha256-pkcs-sign";
   string serialized_claim;
   if(!claim.SerializeToString(&serialized_claim))
     return false;
 
-  out->set_signing_algorithm("rsa-2048-sha256-pkcs-sign");
+  out->set_signing_algorithm(alg);
   out->set_serialized_claim_message((void*)serialized_claim.data(), serialized_claim.size());
 
-  RSA* r = RSA_new();
-  if (!key_to_RSA(key, r))
-    return false;
+  int sig_size = 0;
+  bool success = false;
+  if (strcmp(alg, "rsa-2048-sha256-pkcs-sign") == 0) {
+    RSA* r = RSA_new();
+    if (!key_to_RSA(key, r))
+      return false;
 
-  int sig_size = RSA_size(r);
-  byte sig[sig_size];
-  bool success = rsa_sha256_sign(r, serialized_claim.size(), (byte*)serialized_claim.data(),
-    &sig_size, sig);
-  RSA_free(r);
-  if (!success)
-    return false;
+    sig_size = RSA_size(r);
+    byte sig[sig_size];
+    success = rsa_sha256_sign(r, serialized_claim.size(), (byte*)serialized_claim.data(),
+      &sig_size, sig);
+    RSA_free(r);
 
-  // sign serialized claim
-  key_message* psk = new(key_message);
-  if (!private_key_to_public_key(key, psk))
+    // sign serialized claim
+    key_message* psk = new key_message;
+    if (!private_key_to_public_key(key, psk))
+      return false;
+    out->set_allocated_signing_key(psk);
+    out->set_signature((void*)sig, sig_size);
+  } else if (strcmp(alg, "rsa-4096-sha384-pkcs-sign") == 0) {
+    RSA* r = RSA_new();
+    if (!key_to_RSA(key, r))
+      return false;
+
+    sig_size = RSA_size(r);
+    byte sig[sig_size];
+    success = rsa_sign("sha-384", r, serialized_claim.size(), (byte*)serialized_claim.data(),
+      &sig_size, sig);
+    RSA_free(r);
+
+    // sign serialized claim
+    key_message* psk = new(key_message);
+    if (!private_key_to_public_key(key, psk))
+      return false;
+    out->set_allocated_signing_key(psk);
+    out->set_signature((void*)sig, sig_size);
+  } else if (strcmp(alg, "ecc-384-sha384-pkcs-sign") == 0) {
+    EC_KEY* k = key_to_ECC(key);
+    if (k == nullptr)
+      return false;
+    sig_size = 2 * ECDSA_size(k);
+    byte sig[sig_size];
+
+    success = ecc_sign("sha-384", k, serialized_claim.size(), (byte*)serialized_claim.data(),
+      &sig_size, sig);
+    EC_KEY_free(k);
+
+    // sign serialized claim
+    key_message* psk = new(key_message);
+    if (!private_key_to_public_key(key, psk))
+      return false;
+    out->set_allocated_signing_key(psk);
+    out->set_signature((void*)sig, sig_size);
+  } else {
     return false;
-  out->set_allocated_signing_key(psk);
-  out->set_signature((void*)sig, sig_size);
-  return true;
+  }
+  return success;
 }
 
 bool verify_signed_claim(const signed_claim_message& signed_claim, const key_message& key) {
@@ -1718,18 +1757,35 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   if (compare_time(t_na, t_now) < 0)
      return false;
 
-  // Todo: allow other algorithms
-  if (signed_claim.signing_algorithm() != "rsa-2048-sha256-pkcs-sign")
+  bool success = false;
+  if (signed_claim.signing_algorithm() == "rsa-2048-sha256-pkcs-sign") {
+    RSA* r = RSA_new();
+    if (!key_to_RSA(key, r))
+      return false;
+    success = rsa_sha256_verify(r, (int)signed_claim.serialized_claim_message().size(),
+	(byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
+	(byte*)signed_claim.signature().data());
+    RSA_free(r);
+  } else if (signed_claim.signing_algorithm() == "rsa-4096-sha384-pkcs-sign") {
+    RSA* r = RSA_new();
+    if (!key_to_RSA(key, r))
+      return false;
+    success = rsa_verify("sha-384", r, (int)signed_claim.serialized_claim_message().size(),
+	(byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
+	(byte*)signed_claim.signature().data());
+    RSA_free(r);
+    return success;
+  } else if (signed_claim.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
+    EC_KEY* k = key_to_ECC(key);
+    if (k == nullptr)
+      return false;
+    success = ecc_verify("sha-384", k, (int)signed_claim.serialized_claim_message().size(),
+        (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
+        (byte*)signed_claim.signature().data());
+    EC_KEY_free(k);
+  } else {
     return false;
-
-  RSA* r = RSA_new();
-  if (!key_to_RSA(key, r))
-    return false;
-
-  bool success = rsa_sha256_verify(r, (int)signed_claim.serialized_claim_message().size(),
-      (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
-      (byte*)signed_claim.signature().data());
-  RSA_free(r);
+  }
 
   return success;
 }
