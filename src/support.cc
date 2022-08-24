@@ -1030,6 +1030,7 @@ EC_KEY* generate_new_ecc_key(int num_bits) {
   return ecc_key;
 }
 
+// Todo: free k on error
 EC_KEY* key_to_ECC(const key_message& k) {
   if (k.key_type() != "ecc-p384-private" && k.key_type() != "ecc-p384-public") {
     return nullptr;
@@ -1040,15 +1041,37 @@ EC_KEY* key_to_ECC(const key_message& k) {
     return nullptr;
   }
 
+  // set private multiplier
+  const BIGNUM* priv_mult =  BN_bin2bn((byte*)(k.ecc_key().private_multiplier().data()),
+                (int)(k.ecc_key().private_multiplier().size()), NULL);
+  if (priv_mult == nullptr)
+    return nullptr;
+  if (EC_KEY_set_private_key(ecc_key, priv_mult) != 1)
+    return nullptr;
+
+  // set public point
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
     printf("Can't get group (1)\n");
     return nullptr;
   }
+  const BIGNUM* p_pt_x =  BN_bin2bn((byte*)(k.ecc_key().base_point().x().data()),
+                (int)(k.ecc_key().base_point().x().size()), NULL);
+  const BIGNUM* p_pt_y =  BN_bin2bn((byte*)(k.ecc_key().base_point().y().data()),
+                (int)(k.ecc_key().base_point().y().size()), NULL);
 
-  // set private multiplier
+  EC_POINT* pt = EC_POINT_new(group);
+  if (pt == nullptr)
+    return nullptr;
+  BN_CTX* ctx = BN_CTX_new();
+  if (ctx == nullptr)
+    return nullptr;
+  if (EC_POINT_set_affine_coordinates_GFp(group, pt, p_pt_x, p_pt_y, ctx) != 1)
+    return nullptr;
+  if (EC_KEY_set_public_key(ecc_key, pt) != 1)
+    return nullptr;
+  BN_CTX_free(ctx);
 
-  // set public point
   return ecc_key;
 }
 
@@ -1650,7 +1673,6 @@ bool verify_signed_attestation(int serialized_size, byte* serialized,
   return fRet;
 }
 
-//Todo: take alg argument
 bool make_signed_claim( const char* alg, const claim_message& claim, const key_message& key,
     signed_claim_message* out) {
 
@@ -1762,16 +1784,16 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
     if (!key_to_RSA(key, r))
       return false;
     success = rsa_sha256_verify(r, (int)signed_claim.serialized_claim_message().size(),
-	(byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
-	(byte*)signed_claim.signature().data());
+        (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
+        (byte*)signed_claim.signature().data());
     RSA_free(r);
   } else if (signed_claim.signing_algorithm() == "rsa-4096-sha384-pkcs-sign") {
     RSA* r = RSA_new();
     if (!key_to_RSA(key, r))
       return false;
     success = rsa_verify("sha-384", r, (int)signed_claim.serialized_claim_message().size(),
-	(byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
-	(byte*)signed_claim.signature().data());
+        (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
+        (byte*)signed_claim.signature().data());
     RSA_free(r);
     return success;
   } else if (signed_claim.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
