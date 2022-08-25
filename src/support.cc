@@ -621,7 +621,7 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
     ecc_message* ek = new ecc_message;
     ek->CopyFrom(in.ecc_key());
     // FIX
-    ek->set_private_multiplier(0,0);
+    ek->mutable_private_multiplier()->clear();
     out->set_allocated_ecc_key(ek);
     return true;
   } else {
@@ -933,6 +933,8 @@ void print_ecc_key(const ecc_message& em) {
     printf("\n");
 
     BN_free(private_mult);
+  } else {
+    printf("No private multiplier\n");
   }
 
   if (em.has_curve_p() && em.has_curve_p() && em.has_curve_p()) {
@@ -961,72 +963,12 @@ void print_ecc_key(const ecc_message& em) {
   }
 }
 
-//  ECC
+//  ECC encrypt
 //    G is generator, x is private key P=xG ia public key
 //    Encrypt
 //      Embed message m in P_m.  Pick random k.  Send (kG, kP + P_m)
 //    Decrypt
 //      compute Q=xkG = kP.  Subtract Q from kP + P_m = P_m.  Extract message from P_m.
-bool ecc_encrypt(EC_KEY* key, byte* data, int data_len, byte *encrypted, int* size_out) {
-
-  int blk_len = ECDSA_size(key);
-  if (*size_out < 2 * blk_len)
-        return false;
-
-  EVP_PKEY* ek = EVP_PKEY_new();
-  EVP_PKEY_set1_EC_KEY(ek, key);
-  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-  if (ctx == nullptr)
-    return false;
-  void* secret_buf = malloc(4 * EVP_PKEY_size(ek));
-  int secret_buf_len = 1;
-  byte iv[32];
-
-  memset(iv, 0, 32);
-  if (0 == EVP_SealInit(ctx, EVP_aes_256_cbc(), (byte**)&secret_buf, &secret_buf_len, iv, &ek, 1)) {
-    printf("EVP_SealInit failed\n");
-    return false;
-  }
-  if (1 != EVP_SealUpdate(ctx, encrypted, size_out, data, data_len)) {
-    printf("EVP_SealUpdate failed\n");
-    return false;
-  }
-  if (1 != EVP_SealFinal(ctx, encrypted, size_out)) {
-    printf("EVP_SealFinal \n");
-    return false;
-  }
-  EVP_PKEY_free(ek);
-  EVP_CIPHER_CTX_free(ctx);
-  return true;
-}
-
-bool ecc_decrypt(EC_KEY* key, byte* enc_data, int data_len, byte* decrypted, int* size_out) {
-  EVP_PKEY* ek = EVP_PKEY_new();
-  EVP_PKEY_set1_EC_KEY(ek, key);
-  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-  if (ctx == nullptr)
-    return false;
-  void* secret_buf = malloc(4 * EVP_PKEY_size(ek));
-  int secret_buf_len = 16;
-  byte iv[32];
-
-  memset(iv, 0, 32);
-  if (0 == EVP_OpenInit(ctx, EVP_aes_256_cbc(), (byte*)secret_buf, secret_buf_len, iv, ek)) {
-    printf("EVP_OpenInit failed\n");
-    return false;
-  }
-  if (1 != EVP_OpenUpdate(ctx, decrypted, size_out, enc_data, data_len)) {
-    printf("EVP_OpenUpdate failed\n");
-    return false;
-  }
-  if (1 != EVP_OpenFinal(ctx, decrypted, size_out)) {
-    printf("EVP_OpenFinal failed\n");
-    return false;
-  }
-  EVP_PKEY_free(ek);
-  EVP_CIPHER_CTX_free(ctx);
-  return true;
-}
 
 bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, byte* out) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
@@ -1265,8 +1207,11 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
 
   // set private_multiplier
   const BIGNUM* pk = EC_KEY_get0_private_key(ecc_key);
-  if (pk == nullptr) {
-    return false;
+  if (pk != nullptr) {
+    sz  = BN_num_bytes(pk);
+    byte pm_buf[sz];
+    sz  = BN_bn2bin(pk, pm_buf);
+    ek->set_private_multiplier((void*)pm_buf, sz);
   }
 
   k->set_allocated_ecc_key(ek);

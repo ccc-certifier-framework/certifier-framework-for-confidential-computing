@@ -278,44 +278,33 @@ bool test_public_keys(bool print_all) {
     return false;
   }
   if (print_all) {
-    printf("public encrypted: "); print_bytes(size_out, out); printf("\n");
+    printf("ecc sign out    : "); print_bytes(size_out, out); printf("\n");
   }
   if (!ecc_verify("sha-384", ecc_key, size_data, data, size_out, out)) {
     printf("ecc_verify failed\n");
     return false;
   }
 
-  byte in[10] = {
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-  };
-  byte encrypted[2048];
-  byte decrypted[2048];
-  size_out = 2048;
-  size_recovered = 2048;
-  memset(encrypted, 0, size_out);
-  memset(decrypted, 0, size_recovered);
-
-#if 0
-  // These don't work yet.
-  if (!ecc_encrypt(ecc_key, in, 10, encrypted, &size_out)) {
-    printf("ecc_encrypt failed\n");
+  key_message priv_km;
+  key_message pub_km;
+  if (!ECC_to_key(ecc_key, &priv_km)) {
+    printf("ECC_to_key failed\n");
     return false;
   }
 
-  if (!ecc_decrypt(ecc_key, encrypted, size_out, decrypted, &size_recovered)) {
-    printf("ecc_decrypt failed\n");
+  priv_km.set_key_name("test-key");
+  priv_km.set_key_type("ecc-384-private");
+  printf("Key:\n");
+  print_key(priv_km);
+  printf("\n");
+
+  if (!private_key_to_public_key(priv_km, &pub_km)) {
+    printf("ECC private_key_to_public_key failed\n");
     return false;
   }
-#endif
 
-  printf("in       : ");
-  print_bytes(10, in);
-  printf("\n");
-  printf("encrypted: ");
-  print_bytes(size_out, encrypted);
-  printf("\n");
-  printf("decrypted: ");
-  print_bytes(size_recovered, decrypted);
+  printf("Key:\n");
+  print_key(pub_km);
   printf("\n");
 
   EC_KEY_free(ecc_key);
