@@ -1528,8 +1528,20 @@ void print_key_descriptor(const key_message& k) {
       if (k.rsa_key().has_public_modulus()) {
         print_bytes(l, (byte*)k.rsa_key().public_modulus().data());
       }
+      printf("]");
     }
-    printf("]");
+  } else if (k.key_type() == "ecc-384-private" || k.key_type() == "ecc-384-public") {
+    printf("Key[ecc, ");
+    if (k.has_key_name()) {
+      printf("%s, ", k.key_name().c_str());
+    }
+    if (k.has_ecc_key()) {
+      printf("%s-", k.ecc_key().curve_name().c_str());
+      print_bytes(k.ecc_key().base_point().x().size(), (byte*)k.ecc_key().base_point().x().data());
+      printf("_");
+      print_bytes(k.ecc_key().base_point().y().size(), (byte*)k.ecc_key().base_point().y().data());
+      printf("]");
+    }
   } else {
     printf(" unsupported type %s ", k.key_type().c_str());
   }

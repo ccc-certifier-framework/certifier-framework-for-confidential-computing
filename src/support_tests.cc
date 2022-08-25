@@ -307,6 +307,10 @@ bool test_public_keys(bool print_all) {
   print_key(pub_km);
   printf("\n");
 
+  printf("Descriptor: ");
+  print_key_descriptor(pub_km);
+  printf("\n");
+
   EC_KEY_free(ecc_key);
   return true;
 }
