@@ -7,6 +7,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/ecdsa.h>
  #include <openssl/bn.h>
+ #include <openssl/evp.h>
 
 #include "support.h" 
 #include "certifier.pb.h" 
@@ -41,6 +42,7 @@ public:
 name_size cipher_block_byte_name_size[] = {
   {"aes-256", 16},
   {"aes-256-cbc-hmac-sha256", 16},
+  {"aes-256-cbc-hmac-sha384", 16},
   {"aes-128", 16},
   {"aes-128-cbc-hmac-sha256", 16},
   {"rsa-2048-sha256-pkcs-sign", 256},
@@ -59,6 +61,7 @@ name_size cipher_block_byte_name_size[] = {
 name_size cipher_key_byte_name_size[] = {
   {"aes-256", 32},
   {"aes-256-cbc-hmac-sha256", 64},
+  {"aes-256-cbc-hmac-sha384", 64},
   {"rsa-2048-sha256-pkcs-sign", 256},
   {"rsa-2048", 256},
   {"rsa-1024-sha256-pkcs-sign", 128},
@@ -503,8 +506,8 @@ bool authenticated_decrypt(byte* in, int in_len, byte *key,
 bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
 
-  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-384-cbc-hmac-sha384") != 0) {
-    printf("Only aes-256-cbc-hmac-sha256 and aes-384-cbc-hmac-sha384 for now\n");
+  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-256-cbc-hmac-sha384") != 0) {
+    printf("Only aes-256-cbc-hmac-sha256 and aes-256-cbc-hmac-sha384 for now\n");
     return false;
   }
   int blk_size =  cipher_block_byte_size(alg_name);
@@ -514,8 +517,10 @@ bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key
 
   memset(out, 0, *out_size);
 
-  if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size))
+  if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size)) {
+    printf("encrypt failed\n");
     return false;
+  }
   memcpy(out, iv, block_size);
   cipher_size += block_size;
 
@@ -523,7 +528,7 @@ bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key
     unsigned int hmac_size = mac_size;
     HMAC(EVP_sha256(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
     *out_size = cipher_size + hmac_size;
-  } else if (strcmp(alg_name, "aes-384-cbc-hmac-sha384") == 0) {
+  } else if (strcmp(alg_name, "aes-256-cbc-hmac-sha384") == 0) {
     unsigned int hmac_size = mac_size;
     HMAC(EVP_sha384(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
     *out_size = cipher_size + hmac_size;
@@ -537,7 +542,7 @@ bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *ke
             byte *out, int* out_size) {
 
 
-  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-384-cbc-hmac-sha384") != 0) {
+  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-256-cbc-hmac-sha384") != 0) {
     printf("Only aes-256-cbc-hmac-sha256 and aes-384-cbc-hmac-sha384 for now\n");
     return false;
   }
@@ -557,7 +562,7 @@ bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *ke
     if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
       return false;
     }
-  } else if (strcmp(alg_name, "aes-384-cbc-hmac-sha384") == 0) {
+  } else if (strcmp(alg_name, "aes-256-cbc-hmac-sha384") == 0) {
     HMAC(EVP_sha384(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
     if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
       return false;
@@ -962,13 +967,65 @@ void print_ecc_key(const ecc_message& em) {
 //      Embed message m in P_m.  Pick random k.  Send (kG, kP + P_m)
 //    Decrypt
 //      compute Q=xkG = kP.  Subtract Q from kP + P_m = P_m.  Extract message from P_m.
-//  Sopenssl recommends using EVP_Seal and EVP_Unseal
 bool ecc_encrypt(EC_KEY* key, byte* data, int data_len, byte *encrypted, int* size_out) {
-  return false;
+
+  int blk_len = ECDSA_size(key);
+  if (*size_out < 2 * blk_len)
+        return false;
+
+  EVP_PKEY* ek = EVP_PKEY_new();
+  EVP_PKEY_set1_EC_KEY(ek, key);
+  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+  if (ctx == nullptr)
+    return false;
+  void* secret_buf = malloc(4 * EVP_PKEY_size(ek));
+  int secret_buf_len = 1;
+  byte iv[32];
+
+  memset(iv, 0, 32);
+  if (0 == EVP_SealInit(ctx, EVP_aes_256_cbc(), (byte**)&secret_buf, &secret_buf_len, iv, &ek, 1)) {
+    printf("EVP_SealInit failed\n");
+    return false;
+  }
+  if (1 != EVP_SealUpdate(ctx, encrypted, size_out, data, data_len)) {
+    printf("EVP_SealUpdate failed\n");
+    return false;
+  }
+  if (1 != EVP_SealFinal(ctx, encrypted, size_out)) {
+    printf("EVP_SealFinal \n");
+    return false;
+  }
+  EVP_PKEY_free(ek);
+  EVP_CIPHER_CTX_free(ctx);
+  return true;
 }
 
 bool ecc_decrypt(EC_KEY* key, byte* enc_data, int data_len, byte* decrypted, int* size_out) {
-  return false;
+  EVP_PKEY* ek = EVP_PKEY_new();
+  EVP_PKEY_set1_EC_KEY(ek, key);
+  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+  if (ctx == nullptr)
+    return false;
+  void* secret_buf = malloc(4 * EVP_PKEY_size(ek));
+  int secret_buf_len = 16;
+  byte iv[32];
+
+  memset(iv, 0, 32);
+  if (0 == EVP_OpenInit(ctx, EVP_aes_256_cbc(), (byte*)secret_buf, secret_buf_len, iv, ek)) {
+    printf("EVP_OpenInit failed\n");
+    return false;
+  }
+  if (1 != EVP_OpenUpdate(ctx, decrypted, size_out, enc_data, data_len)) {
+    printf("EVP_OpenUpdate failed\n");
+    return false;
+  }
+  if (1 != EVP_OpenFinal(ctx, decrypted, size_out)) {
+    printf("EVP_OpenFinal failed\n");
+    return false;
+  }
+  EVP_PKEY_free(ek);
+  EVP_CIPHER_CTX_free(ctx);
+  return true;
 }
 
 bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, byte* out) {

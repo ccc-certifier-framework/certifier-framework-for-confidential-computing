@@ -131,11 +131,10 @@ bool test_authenticated_encrypt(bool print_all) {
     return false;
   }
 
-#if 0
   const char* alg = "aes-256-cbc-hmac-sha384";
-  const char* msg = "this is a message of length 32.";
-  memcpy(plain, (byte*)msg, 32);
-
+  size_encrypt_out = out_size;
+  size_decrypt_out = out_size;
+  int size_in = 32;
   if (print_all) {
     printf("\nAuthenticated encryption\n");
     printf("input: "); print_bytes(in_size, plain); printf("\n");
@@ -153,7 +152,18 @@ bool test_authenticated_encrypt(bool print_all) {
   if (!authenticated_decrypt(alg, cipher, size_encrypt_out, key,
             decrypted, &size_decrypt_out)) {
     printf("authenticated decrypt failed\n");
-#endif
+    return false;
+  }
+
+  if (print_all) {
+    printf("authenticated decrypt succeeded, out_size is %d\n", size_decrypt_out);
+    printf("decrypted: "); print_bytes(size_decrypt_out, decrypted); printf("\n");
+    printf("\n");
+  }
+  if (size_decrypt_out != size_in || memcmp(plain, decrypted, size_in) != 0) {
+    printf("comparison failed\n");
+    return false;
+  }
 
   return true;
 }
@@ -274,6 +284,40 @@ bool test_public_keys(bool print_all) {
     printf("ecc_verify failed\n");
     return false;
   }
+
+  byte in[10] = {
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+  };
+  byte encrypted[2048];
+  byte decrypted[2048];
+  size_out = 2048;
+  size_recovered = 2048;
+  memset(encrypted, 0, size_out);
+  memset(decrypted, 0, size_recovered);
+
+#if 0
+  // These don't work yet.
+  if (!ecc_encrypt(ecc_key, in, 10, encrypted, &size_out)) {
+    printf("ecc_encrypt failed\n");
+    return false;
+  }
+
+  if (!ecc_decrypt(ecc_key, encrypted, size_out, decrypted, &size_recovered)) {
+    printf("ecc_decrypt failed\n");
+    return false;
+  }
+#endif
+
+  printf("in       : ");
+  print_bytes(10, in);
+  printf("\n");
+  printf("encrypted: ");
+  print_bytes(size_out, encrypted);
+  printf("\n");
+  printf("decrypted: ");
+  print_bytes(size_recovered, decrypted);
+  printf("\n");
+
   EC_KEY_free(ecc_key);
   return true;
 }
