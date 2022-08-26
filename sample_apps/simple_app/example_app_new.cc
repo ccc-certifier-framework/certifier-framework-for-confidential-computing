@@ -161,7 +161,8 @@ int main(int an, char** av) {
   // Carry out operation
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init()) {
+    if (!app_trust_data->cold_init(public_key_alg,
+        symmetric_key_alg, hash_alg, hmac_alg)) {
       printf("cold-init failed\n");
       ret = 1;
     }

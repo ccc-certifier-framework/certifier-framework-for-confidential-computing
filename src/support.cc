@@ -1168,17 +1168,17 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   int sz  = BN_num_bytes(p);
   byte p_buf[sz];
   sz  = BN_bn2bin(p, p_buf);
-  ek->set_curve_p(p_buf, sz);
+  ek->mutable_curve_p()->assign((char*)p_buf, sz);
 
   sz  = BN_num_bytes(a);
   byte a_buf[sz];
   sz  = BN_bn2bin(a, a_buf);
-  ek->set_curve_a(a_buf, sz);
+  ek->mutable_curve_a()->assign((char*)a_buf, sz);
 
   sz  = BN_num_bytes(b);
   byte b_buf[sz];
   sz  = BN_bn2bin(b, b_buf);
-  ek->set_curve_b(b_buf, sz);
+  ek->mutable_curve_b()->assign((char*)b_buf, sz);
 
   BN_free(p);
   BN_free(a);
