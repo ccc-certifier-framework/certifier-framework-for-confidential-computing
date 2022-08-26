@@ -294,22 +294,26 @@ bool test_public_keys(bool print_all) {
 
   priv_km.set_key_name("test-key");
   priv_km.set_key_type("ecc-384-private");
-  printf("Key:\n");
-  print_key(priv_km);
-  printf("\n");
+  if (print_all) {
+    printf("Key:\n");
+    print_key(priv_km);
+    printf("\n");
+  }
 
   if (!private_key_to_public_key(priv_km, &pub_km)) {
     printf("ECC private_key_to_public_key failed\n");
     return false;
   }
 
-  printf("Key:\n");
-  print_key(pub_km);
-  printf("\n");
+  if (print_all) {
+    printf("Key:\n");
+    print_key(pub_km);
+    printf("\n");
 
-  printf("Descriptor: ");
-  print_key_descriptor(pub_km);
-  printf("\n");
+    printf("Descriptor: ");
+    print_key_descriptor(pub_km);
+    printf("\n");
+  }
 
   EC_KEY_free(ecc_key);
   return true;

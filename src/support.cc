@@ -1044,23 +1044,31 @@ EC_KEY* generate_new_ecc_key(int num_bits) {
     return nullptr;
   }
 
+  if (1 != EC_KEY_generate_key(ecc_key)) {
+    printf("Can't generate key\n");
+    return nullptr;
+  }
+
+#if 0
+  BN_CTX* ctx = BN_CTX_new();
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
     printf("Can't get group (1)\n");
     return nullptr;
   }
-
-  if (EC_KEY_generate_key(ecc_key) != 1) {
-    printf("Can't generate key\n");
-    return nullptr;
-  }
-
+  BIGNUM* pt_x = BN_new();
+  BIGNUM* pt_y = BN_new();
+  const EC_POINT* pt = EC_KEY_get0_public_key(ecc_key);
+  EC_POINT_get_affine_coordinates_GFp(group, pt, pt_x, pt_y, ctx); 
+  BN_CTX_free(ctx);
+#endif
   return ecc_key;
 }
 
 // Todo: free k on error
 EC_KEY* key_to_ECC(const key_message& k) {
-  if (k.key_type() != "ecc-p384-private" && k.key_type() != "ecc-p384-public") {
+  if (k.key_type() != "ecc-384-private" && k.key_type() != "ecc-384-public") {
+    printf("key_to_ECC: wrong type %s\n", k.key_type().c_str());
     return nullptr;
   }
   EC_KEY* ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
@@ -1072,10 +1080,14 @@ EC_KEY* key_to_ECC(const key_message& k) {
   // set private multiplier
   const BIGNUM* priv_mult =  BN_bin2bn((byte*)(k.ecc_key().private_multiplier().data()),
                 (int)(k.ecc_key().private_multiplier().size()), NULL);
-  if (priv_mult == nullptr)
+  if (priv_mult == nullptr) {
+    printf("key_to_ECC: not private mult\n");
     return nullptr;
-  if (EC_KEY_set_private_key(ecc_key, priv_mult) != 1)
+  }
+  if (EC_KEY_set_private_key(ecc_key, priv_mult) != 1) {
+    printf("key_to_ECC: not can't set\n");
     return nullptr;
+  }
 
   // set public point
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
@@ -1083,21 +1095,32 @@ EC_KEY* key_to_ECC(const key_message& k) {
     printf("Can't get group (1)\n");
     return nullptr;
   }
-  const BIGNUM* p_pt_x =  BN_bin2bn((byte*)(k.ecc_key().base_point().x().data()),
-                (int)(k.ecc_key().base_point().x().size()), NULL);
-  const BIGNUM* p_pt_y =  BN_bin2bn((byte*)(k.ecc_key().base_point().y().data()),
-                (int)(k.ecc_key().base_point().y().size()), NULL);
+  const BIGNUM* p_pt_x =  BN_bin2bn((byte*)(k.ecc_key().public_point().x().data()),
+                (int)(k.ecc_key().public_point().x().size()), NULL);
+  const BIGNUM* p_pt_y =  BN_bin2bn((byte*)(k.ecc_key().public_point().y().data()),
+                (int)(k.ecc_key().public_point().y().size()), NULL);
+  if (p_pt_x == nullptr || p_pt_y == nullptr) {
+    printf("key_to_ECC: pts are null\n");
+    return nullptr;
+  }
 
   EC_POINT* pt = EC_POINT_new(group);
-  if (pt == nullptr)
+  if (pt == nullptr) {
+    printf("key_to_ECC: no pt in group\n");
     return nullptr;
+  }
   BN_CTX* ctx = BN_CTX_new();
-  if (ctx == nullptr)
+  if (ctx == nullptr) {
     return nullptr;
-  if (EC_POINT_set_affine_coordinates_GFp(group, pt, p_pt_x, p_pt_y, ctx) != 1)
+  }
+  if (EC_POINT_set_affine_coordinates_GFp(group, pt, p_pt_x, p_pt_y, ctx) != 1) {
+    printf("key_to_ECC: can't set affine\n");
     return nullptr;
-  if (EC_KEY_set_public_key(ecc_key, pt) != 1)
+  }
+  if (EC_KEY_set_public_key(ecc_key, pt) != 1) {
+    printf("key_to_ECC: can't set public\n");
     return nullptr;
+  }
   BN_CTX_free(ctx);
 
   return ecc_key;
@@ -1105,7 +1128,7 @@ EC_KEY* key_to_ECC(const key_message& k) {
 
 bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
 
-  k->set_key_name("ecc-p384-private");
+  k->set_key_name("ecc-384-private");
   k->set_key_format("vse_key");
 
   ecc_message* ek = new ecc_message;
@@ -1249,7 +1272,23 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
 }
 
 bool make_certifier_ecc_key(int n,  key_message* k) {
-  return false;
+  if (k == nullptr)
+    return false;
+  if (n != 384)
+    return false;
+
+  EC_KEY* ek = generate_new_ecc_key(n);
+  if (ek == nullptr)
+    return false;
+
+  k->set_key_name("test-key-2");
+  k->set_key_format("vse-key");
+  k->set_key_type("ecc-384-private");
+  if (!ECC_to_key(ek, k)) {
+    return false;
+  }
+  EC_KEY_free(ek);
+  return true;
 }
 
 bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k) {
@@ -1265,6 +1304,25 @@ bool make_root_key_with_cert(string& type, string& name, string& issuer_name, ke
       n = 4096;
 
     if (!make_certifier_rsa_key(n,  k))
+      return false;
+    k->set_key_format("vse-key");
+    k->set_key_type(type);
+    k->set_key_name(name);
+    double duration = 5.0 * 86400.0 * 365.0;
+    X509* cert = X509_new();
+    if (cert == nullptr)
+      return false;
+    if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name, root_name,
+                      01L, duration, cert, true)) {
+      return false;
+    }
+    string cert_asn;
+    if (!x509_to_asn1(cert, &cert_asn))
+      return false;
+    k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
+    X509_free(cert);
+  } else if (type == "ecc_384-private") {
+    if (!make_certifier_ecc_key(384,  k))
       return false;
     k->set_key_format("vse-key");
     k->set_key_type(type);
@@ -1779,8 +1837,10 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
     out->set_signature((void*)sig, sig_size);
   } else if (strcmp(alg, "ecc-384-sha384-pkcs-sign") == 0) {
     EC_KEY* k = key_to_ECC(key);
-    if (k == nullptr)
+    if (k == nullptr) {
+      printf("make_signed_claim: to_ECC failed\n");
       return false;
+    }
     sig_size = 2 * ECDSA_size(k);
     byte sig[sig_size];
 
@@ -1789,7 +1849,7 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
     EC_KEY_free(k);
 
     // sign serialized claim
-    key_message* psk = new(key_message);
+    key_message* psk = new key_message;
     if (!private_key_to_public_key(key, psk))
       return false;
     out->set_allocated_signing_key(psk);
