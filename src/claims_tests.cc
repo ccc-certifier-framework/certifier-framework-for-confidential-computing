@@ -81,16 +81,36 @@ bool test_claims_1(bool print_all) {
 }
 
 bool test_signed_claims(bool print_all) {
-  key_message public_attestation_key;
-  extern key_message my_attestation_key;
-  if (!private_key_to_public_key(my_attestation_key, &public_attestation_key))
+  // make up rsa private keys and measurement
+  string my_measurement;
+  byte m[32];
+  for (int i = 0; i < 32; i++)
+    m[i] = i;
+  my_measurement.assign((char*)m, 32);
+
+
+  key_message my_rsa_key;
+  key_message my_big_rsa_key;
+  key_message my_ecc_key;
+
+  if (!make_certifier_rsa_key(2048,  &my_rsa_key)) {
+    printf("test_signed_claims: make_certifier_rsa_key failed (1)\n");
     return false;
+  }
+  my_rsa_key.set_key_name("my-rsa-key");
+  my_rsa_key.set_key_type("rsa-2048-private");
+  my_rsa_key.set_key_format("vse-key");
+
+  key_message my_public_rsa_key;
+  if (!private_key_to_public_key(my_rsa_key, &my_public_rsa_key)) {
+    printf("test_signed_claims: private_key_to_public_key failed (1)\n");
+    return false;
+  }
   entity_message e1;
   entity_message e2;
-  if (!make_key_entity(public_attestation_key, &e1))
+  if (!make_key_entity(my_public_rsa_key, &e1))
     return false;
 
-  extern string my_measurement;
   if (!make_measurement_entity(my_measurement, &e2))
     return false;
   string s1("says");
@@ -120,9 +140,9 @@ bool test_signed_claims(bool print_all) {
     nb, na, &claim))
       return false;
   signed_claim_message signed_claim;
-  if(!make_signed_claim("rsa-2048-sha256-pkcs-sign", claim, my_attestation_key, &signed_claim))
+  if(!make_signed_claim("rsa-2048-sha256-pkcs-sign", claim, my_rsa_key, &signed_claim))
       return false;
-  return verify_signed_claim(signed_claim, public_attestation_key);
+  return verify_signed_claim(signed_claim, my_public_rsa_key);
 }
 
 //  Proofs and certification -----------------------------
