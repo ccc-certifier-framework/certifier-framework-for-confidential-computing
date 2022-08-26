@@ -90,8 +90,6 @@ bool test_signed_claims(bool print_all) {
 
 
   key_message my_rsa_key;
-  key_message my_big_rsa_key;
-  key_message my_ecc_key;
 
   if (!make_certifier_rsa_key(2048,  &my_rsa_key)) {
     printf("test_signed_claims: make_certifier_rsa_key failed (1)\n");
@@ -142,7 +140,45 @@ bool test_signed_claims(bool print_all) {
   signed_claim_message signed_claim;
   if(!make_signed_claim("rsa-2048-sha256-pkcs-sign", claim, my_rsa_key, &signed_claim))
       return false;
-  return verify_signed_claim(signed_claim, my_public_rsa_key);
+  if (!verify_signed_claim(signed_claim, my_public_rsa_key)) {
+    printf("my_rsa_key verified failed\n");
+    return false;
+  }
+
+  // RSA-4096
+  key_message my_big_rsa_key;
+  if (!make_certifier_rsa_key(4096,  &my_big_rsa_key)) {
+    printf("test_signed_claims: make_certifier_rsa_key failed (1)\n");
+    return false;
+  }
+  my_big_rsa_key.set_key_name("my-big-rsa-key");
+  my_big_rsa_key.set_key_type("rsa-4096-private");
+  my_big_rsa_key.set_key_format("vse-key");
+
+  if (print_all) {
+    printf("***RSA-4096 key: \n");
+    print_key(my_big_rsa_key);
+    printf("\n");
+  }
+
+  key_message my_big_public_rsa_key;
+  if (!private_key_to_public_key(my_big_rsa_key, &my_big_public_rsa_key)) {
+    printf("test_signed_claims: private_key_to_public_key failed (2)\n");
+    return false;
+  }
+
+  signed_claim_message signed_claim2;
+  if(!make_signed_claim("rsa-4096-sha384-pkcs-sign", claim, my_big_rsa_key, &signed_claim2)) {
+    printf("test_signed_claims: make_signed_claim failed (2)\n");
+    return false;
+  }
+  if (!verify_signed_claim(signed_claim2, my_big_public_rsa_key)) {
+    printf("my_big_rsa_key verified failed\n");
+    return false;
+  }
+
+  key_message my_ecc_key;
+  return true;
 }
 
 //  Proofs and certification -----------------------------

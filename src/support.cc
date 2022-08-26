@@ -600,6 +600,7 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
     out->set_key_type("ecc-384-public");
     n_bytes = cipher_block_byte_size("ecc_384-public");
   } else {
+    printf("private_key_to_public_key: bad key type\n");
     return false;
   }
 
@@ -610,7 +611,7 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
   out->set_certificate(in.certificate().data(), in.certificate().size());
 
   if (alg_type == rsa_alg_type) {
-    rsa_message* rk = new(rsa_message);
+    rsa_message* rk = new rsa_message;
     rk->set_public_modulus(in.rsa_key().public_modulus().data(),
         in.rsa_key().public_modulus().size());
     rk->set_public_exponent(in.rsa_key().public_exponent().data(),
@@ -620,11 +621,11 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
   } else if (alg_type == ecc_alg_type) {
     ecc_message* ek = new ecc_message;
     ek->CopyFrom(in.ecc_key());
-    // FIX
     ek->mutable_private_multiplier()->clear();
     out->set_allocated_ecc_key(ek);
     return true;
   } else {
+    printf("private_key_to_public_key: bad key type\n");
     return false;
   }
 }
@@ -647,29 +648,32 @@ bool make_certifier_rsa_key(int n,  key_message* k) {
     RSA_free(r);
     return false;
   }
+  k->set_key_name("test-key-2");
   k->set_key_format("vse-key");
-  if (!RSA_to_key(r, k))
+  k->set_key_type("rsa-4096-private");
+  if (!RSA_to_key(r, k)) {
     return false;
+  }
   RSA_free(r);
   return true;
 }
 
 bool rsa_public_encrypt(RSA* key, byte* data, int data_len, byte *encrypted, int* size_out) {
   int n = RSA_public_encrypt(data_len, data, encrypted, key, RSA_PKCS1_PADDING);
-  if (n <= 0)
+  if (n <= 0) {
+    printf("rsa_public_encrypt: RSA_public_encrypt failed %d, %d\n", data_len, *size_out);
     return false;
-  if (n <= 0)
-    return false;
+  }
   *size_out = n; 
   return true;
 }
 
 bool rsa_private_decrypt(RSA* key, byte* enc_data, int data_len,  byte* decrypted, int* size_out) {
   int  n = RSA_private_decrypt(data_len, enc_data, decrypted, key, RSA_PKCS1_PADDING);
-  if (n <= 0)
+  if (n <= 0) {
+    printf("rsa_private_decrypt: RSA_private_decrypt failed %d, %d\n", data_len, *size_out);
     return false;
-  if (n <= 0)
-    return false;
+  }
   *size_out = n; 
   return true;
 }
@@ -687,13 +691,13 @@ bool rsa_sha256_sign(RSA* key, int to_sign_size, byte* to_sign, int* sig_size, b
       return false;
   }
   size_t t = *sig_size;
-  if (EVP_DigestSignFinal(sign_ctx, nullptr, (size_t*)&t) <= 0) {
-      return false;
-  }
-  *sig_size = t;
+  // if (EVP_DigestSignFinal(sign_ctx, nullptr, (size_t*)&t) <= 0) {
+      // return false;
+  // }
   if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
       return false;
   }
+  *sig_size = t;
   EVP_MD_CTX_destroy(sign_ctx);
   return true;
 }
@@ -723,34 +727,97 @@ bool rsa_sha256_verify(RSA*key, int size, byte* msg, int sig_size, byte* sig) {
   return true;
 }
 
-bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* size_out, byte* out) {
-  unsigned int len = (unsigned int)digest_output_byte_size(alg);
-  byte digest[len];
+bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* sig_size, byte* sig) {
 
-  int sig_len = RSA_size(key);
-  if (!digest_message(alg, msg, size, digest, len)) {
+  EVP_MD_CTX* sign_ctx = EVP_MD_CTX_create();
+  EVP_PKEY* private_key  = EVP_PKEY_new();
+  EVP_PKEY_assign_RSA(private_key, key);
+
+  unsigned int size_digest = 0;
+  if (strcmp("sha-256", alg) == 0) {
+    if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha256(), nullptr, private_key) <= 0) {
+        return false;
+    }
+    if (EVP_DigestSignUpdate(sign_ctx, msg, size) <= 0) {
+      return false;
+    }
+    size_t t = *sig_size;
+    if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
+        return false;
+    }
+    *sig_size = t;
+  } else if(strcmp("sha-384", alg) == 0) {
+    if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha384(), nullptr, private_key) <= 0) {
+        return false;
+    }
+    if (EVP_DigestSignUpdate(sign_ctx, msg, size) <= 0) {
+      return false;
+    }
+    size_t t = *sig_size;
+    if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
+        return false;
+    }
+    *sig_size = t;
+  } else {
     return false;
   }
-  if (!rsa_private_decrypt(key, digest, len,  out, &sig_len)) {
-    return false;
-  }
+  EVP_MD_CTX_destroy(sign_ctx);
+
   return true;
 }
 
-bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int size_sig, byte* sig) {
-  unsigned int len = (unsigned int)digest_output_byte_size(alg);
-  byte digest[len];
+bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, byte* sig) {
+printf("rsa_verify: %s\n", alg);
 
-  int sig_len = RSA_size(key);
-  if (!digest_message(alg, msg, size, digest, len)) {
+  if (strcmp("sha-256", alg) == 0) {
+    unsigned int size_digest = digest_output_byte_size("sha-256");
+    byte digest[size_digest];
+    memset(digest, 0, size_digest);
+
+    if (!digest_message("sha-256", (const byte*) msg, size, digest, size_digest))
+      return false;
+    int size_decrypted = RSA_size(key);
+    byte decrypted[size_decrypted];
+    memset(decrypted, 0, size_decrypted);
+    int n = RSA_public_encrypt(sig_size, sig, decrypted, key, RSA_NO_PADDING);
+    if (n < 0)
+      return false;
+    if (memcmp(digest, &decrypted[n - size_digest], size_digest) != 0)
+      return false;
+
+    const int check_size = 16;
+    byte check_buf[16] = {
+      0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    };
+    if (memcmp(check_buf, decrypted, check_size) != 0)
+      return false;
+    return memcmp(digest, &decrypted[n - size_digest], size_digest) == 0;
+  } else if (strcmp("sha-384", alg) == 0) {
+    unsigned int size_digest = digest_output_byte_size("sha-384");
+    byte digest[size_digest];
+    memset(digest, 0, size_digest);
+    if (!digest_message("sha-384", (const byte*) msg, size, digest, size_digest)) {
+      printf("digest_message failed\n");
+      return false;
+    }
+    int size_decrypted = RSA_size(key);
+    byte decrypted[size_decrypted];
+    memset(decrypted, 0, size_decrypted);
+    int n = RSA_public_encrypt(sig_size, sig, decrypted, key, RSA_NO_PADDING);
+    if (n < 0)
+      return false;
+    const int check_size = 16;
+    byte check_buf[16] = {
+      0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    };
+    if (memcmp(check_buf, decrypted, check_size) != 0)
+      return false;
+    return memcmp(digest, &decrypted[n - size_digest], size_digest) == 0;
+  } else {
     return false;
   }
-  int out_len = sig_len;
-  byte out[sig_len];
-  if (!rsa_public_encrypt(key, sig, size_sig,  out, &out_len)) {
-    return false;
-  }
-  return memcmp(digest, out, (int)len) == 0;
 }
 
 bool generate_new_rsa_key(int num_bits, RSA* r) {
@@ -795,6 +862,9 @@ bool key_to_RSA(const key_message& k, RSA* r) {
   } else if (k.key_type() == "rsa-4096-private") {
     key_size_bits= 4096;
     private_key = true;
+  } else if (k.key_type() == "rsa-4096-public") {
+    key_size_bits= 4096;
+    private_key = false;
   } else {
     return false;
   }
@@ -1691,8 +1761,10 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
     signed_claim_message* out) {
 
   string serialized_claim;
-  if(!claim.SerializeToString(&serialized_claim))
+  if(!claim.SerializeToString(&serialized_claim)) {
+    printf("make_signed_claim: serialize claim failed\n");
     return false;
+  }
 
   out->set_signing_algorithm(alg);
   out->set_serialized_claim_message((void*)serialized_claim.data(), serialized_claim.size());
@@ -1701,8 +1773,10 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
   bool success = false;
   if (strcmp(alg, "rsa-2048-sha256-pkcs-sign") == 0) {
     RSA* r = RSA_new();
-    if (!key_to_RSA(key, r))
+    if (!key_to_RSA(key, r)) {
+      printf("make_signed_claim: key_to_RSA failed\n");
       return false;
+    }
 
     sig_size = RSA_size(r);
     byte sig[sig_size];
@@ -1712,26 +1786,37 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
 
     // sign serialized claim
     key_message* psk = new key_message;
-    if (!private_key_to_public_key(key, psk))
+    if (!private_key_to_public_key(key, psk)) {
+      printf("make_signed_claim: private_key_to_public_key failed\n");
       return false;
+    }
     out->set_allocated_signing_key(psk);
+    out->set_signing_algorithm(alg);
     out->set_signature((void*)sig, sig_size);
   } else if (strcmp(alg, "rsa-4096-sha384-pkcs-sign") == 0) {
     RSA* r = RSA_new();
-    if (!key_to_RSA(key, r))
+    if (!key_to_RSA(key, r)) {
+      printf("make_signed_claim: key_to_RSA failed\n");
       return false;
+    }
 
     sig_size = RSA_size(r);
     byte sig[sig_size];
     success = rsa_sign("sha-384", r, serialized_claim.size(), (byte*)serialized_claim.data(),
       &sig_size, sig);
+    if (!success) {
+      printf("make_signed_claim: rsa_sign failed\n");
+    }
     RSA_free(r);
 
     // sign serialized claim
-    key_message* psk = new(key_message);
-    if (!private_key_to_public_key(key, psk))
+    key_message* psk = new key_message;
+    if (!private_key_to_public_key(key, psk)) {
+      printf("make_signed_claim: private_key_to_public_key failed\n");
       return false;
+    }
     out->set_allocated_signing_key(psk);
+    out->set_signing_algorithm(alg);
     out->set_signature((void*)sig, sig_size);
   } else if (strcmp(alg, "ecc-384-sha384-pkcs-sign") == 0) {
     EC_KEY* k = key_to_ECC(key);
@@ -1757,7 +1842,6 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
 }
 
 bool verify_signed_claim(const signed_claim_message& signed_claim, const key_message& key) {
-
   if (!signed_claim.has_serialized_claim_message() || !signed_claim.has_signing_key() ||
       !signed_claim.has_signing_algorithm() || !signed_claim.has_signature())
     return false;
@@ -1803,8 +1887,9 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
     RSA_free(r);
   } else if (signed_claim.signing_algorithm() == "rsa-4096-sha384-pkcs-sign") {
     RSA* r = RSA_new();
-    if (!key_to_RSA(key, r))
+    if (!key_to_RSA(key, r)) {
       return false;
+    }
     success = rsa_verify("sha-384", r, (int)signed_claim.serialized_claim_message().size(),
         (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
         (byte*)signed_claim.signature().data());
