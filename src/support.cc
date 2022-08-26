@@ -680,51 +680,11 @@ bool rsa_private_decrypt(RSA* key, byte* enc_data, int data_len,  byte* decrypte
 
 //  PKCS compliant signer
 bool rsa_sha256_sign(RSA* key, int to_sign_size, byte* to_sign, int* sig_size, byte* sig) {
-  EVP_MD_CTX* sign_ctx = EVP_MD_CTX_create();
-  EVP_PKEY* private_key  = EVP_PKEY_new();
-  EVP_PKEY_assign_RSA(private_key, key);
-
-  if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha256(), nullptr, private_key) <= 0) {
-      return false;
-  }
-  if (EVP_DigestSignUpdate(sign_ctx,  to_sign, to_sign_size) <= 0) {
-      return false;
-  }
-  size_t t = *sig_size;
-  // if (EVP_DigestSignFinal(sign_ctx, nullptr, (size_t*)&t) <= 0) {
-      // return false;
-  // }
-  if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
-      return false;
-  }
-  *sig_size = t;
-  EVP_MD_CTX_destroy(sign_ctx);
-  return true;
+  return rsa_sign("sha-256", key, to_sign_size, to_sign, sig_size, sig);
 }
 
 bool rsa_sha256_verify(RSA*key, int size, byte* msg, int sig_size, byte* sig) {
-
-  unsigned int size_digest = digest_output_byte_size("sha-256");
-  byte digest[size_digest];
-  memset(digest, 0, size_digest);
-
-  if (!digest_message("sha256", (const byte*) msg, size, digest, size_digest))
-    return false;
-  int size_decrypted = RSA_size(key);
-  byte decrypted[size_decrypted];
-  memset(decrypted, 0, size_decrypted);
-  int n = RSA_public_encrypt(sig_size, sig, decrypted, key, RSA_NO_PADDING);
-  if (memcmp(digest, &decrypted[n - size_digest], size_digest) != 0)
-    return false;
-
-  const int check_size = 16;
-  byte check_buf[16] = {
-    0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-  };
-  if (memcmp(check_buf, decrypted, check_size) != 0)
-    return false;
-  return true;
+  return rsa_verify("sha-256", key, size, msg , sig_size, sig);
 }
 
 bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* sig_size, byte* sig) {
@@ -767,7 +727,6 @@ bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* sig_size, byt
 }
 
 bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, byte* sig) {
-printf("rsa_verify: %s\n", alg);
 
   if (strcmp("sha-256", alg) == 0) {
     unsigned int size_digest = digest_output_byte_size("sha-256");
