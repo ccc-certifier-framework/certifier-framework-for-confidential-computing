@@ -70,7 +70,7 @@ $(O)/simulated_enclave.o $(O)/application_enclave.o
 channel_dobj=	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
 $(O)/application_enclave.o $(O)/cc_helpers.o
 
-all:	certifier_tests.exe test_channel.exe # pipe_read_test.exe
+all:	certifier_tests.exe test_channel.exe pipe_read_test.exe
 
 clean:
 	@echo "removing object files"
