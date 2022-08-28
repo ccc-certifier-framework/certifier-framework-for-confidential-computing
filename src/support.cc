@@ -1965,20 +1965,6 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
                       string& subject_name_str, string& subject_organization_str,
                       uint64_t sn, double secs_duration, X509* x509, bool is_root) {
 
-  RSA* signing_rsa_key = RSA_new();
-  if (!key_to_RSA(signing_key, signing_rsa_key))
-    return false;
-  EVP_PKEY* signing_pkey = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(signing_pkey, signing_rsa_key);
-  X509_set_pubkey(x509, signing_pkey);
-
-  RSA* subject_rsa_key = RSA_new();
-  if (!key_to_RSA(subject_key, subject_rsa_key))
-    return false;
-  EVP_PKEY* subject_pkey = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
-  X509_set_pubkey(x509, subject_pkey);
-
   ASN1_INTEGER* a = ASN1_INTEGER_new();
   ASN1_INTEGER_set_uint64(a, sn);
   X509_set_serialNumber(x509, a);
@@ -2013,17 +1999,60 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
     add_ext(x509, NID_basic_constraints, "critical,CA:TRUE");
   }
 
-  X509_sign(x509, signing_pkey, EVP_sha256());
+  if (signing_key.key_type() == "rsa-1024-private" ||
+      signing_key.key_type() == "rsa-2048-private" ||
+      signing_key.key_type() == "rsa-4096-private") {
+    RSA* signing_rsa_key = RSA_new();
+    if (!key_to_RSA(signing_key, signing_rsa_key))
+      return false;
+    EVP_PKEY* signing_pkey = EVP_PKEY_new();
+    EVP_PKEY_set1_RSA(signing_pkey, signing_rsa_key);
+    X509_set_pubkey(x509, signing_pkey);
+
+    RSA* subject_rsa_key = RSA_new();
+    if (!key_to_RSA(subject_key, subject_rsa_key))
+      return false;
+    EVP_PKEY* subject_pkey = EVP_PKEY_new();
+    EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
+    X509_set_pubkey(x509, subject_pkey);
+    if (signing_key.key_type() == "rsa-4096-private") {
+      X509_sign(x509, signing_pkey, EVP_sha384());
+    } else {
+      X509_sign(x509, signing_pkey, EVP_sha256());
+    }
+    EVP_PKEY_free(signing_pkey);
+    EVP_PKEY_free(subject_pkey);
+    RSA_free(signing_rsa_key);
+    RSA_free(subject_rsa_key);
+  } else if (signing_key.key_type() == "ecc-384-private") {
+    EC_KEY* signing_ecc_key = key_to_ECC(signing_key);
+    if (signing_ecc_key == nullptr)
+      return false;
+    EVP_PKEY* signing_pkey = EVP_PKEY_new();
+    EVP_PKEY_set1_EC_KEY(signing_pkey, signing_ecc_key);
+    X509_set_pubkey(x509, signing_pkey);
+
+    EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
+    if (subject_ecc_key == nullptr)
+      return false;
+    EVP_PKEY* subject_pkey = EVP_PKEY_new();
+    EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
+    X509_set_pubkey(x509, subject_pkey);
+    X509_sign(x509, signing_pkey, EVP_sha384());
+    EVP_PKEY_free(signing_pkey);
+    EVP_PKEY_free(subject_pkey);
+    EC_KEY_free(signing_ecc_key);
+    EC_KEY_free(subject_ecc_key);
+  } else {
+    printf("Unsupported algorithm\n");
+    return false;
+  }
 
   ASN1_INTEGER_free(a);
   ASN1_TIME_free(tm_start);
   ASN1_TIME_free(tm_end);
-  RSA_free(signing_rsa_key);
-  RSA_free(subject_rsa_key);
   X509_NAME_free(subject_name);
   X509_NAME_free(issuer_name);
-  EVP_PKEY_free(signing_pkey);
-  EVP_PKEY_free(subject_pkey);
   return true;
 }
 

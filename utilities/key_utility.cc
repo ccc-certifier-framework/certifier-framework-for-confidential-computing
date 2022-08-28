@@ -101,7 +101,7 @@ int main(int an, char** av) {
                           FLAGS_key_name, FLAGS_key_name,
                           FLAGS_serial_number, FLAGS_duration,
                           cert, FLAGS_is_root)) {
-        printf("Can't generate cert\n");
+        printf("Can't generate cert, produce_artifact failed\n");
         return 1;
     }
     if (!x509_to_asn1(cert, &asn_cert)) {
