@@ -89,7 +89,6 @@ bool simulated_Init(const string& asn1_policy_cert, const string& attest_key_fil
     return false;
   }
 
-  // my_attestation_key.set_key_name("local-attestation-key");
   my_attestation_key.set_key_name("attestKey");
   rsa_attestation_key = RSA_new();
   if (!key_to_RSA(my_attestation_key, rsa_attestation_key)) {

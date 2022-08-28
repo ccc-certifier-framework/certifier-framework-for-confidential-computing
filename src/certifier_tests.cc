@@ -24,6 +24,12 @@ DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(trusted_measurements_file, "binary_trusted_measurements_file.bin",  "binary_trusted_measurements_file");
 DEFINE_bool(read_measurement_file, false,  "read measurement file");
 
+DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
+DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
+DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
+DEFINE_string(measurement_file, "example_app.measurement", "measurement");
+
+
 // Encryption and support tests
 extern bool test_digest(bool print_all);
 TEST (test_digest, test_digest) {
@@ -146,9 +152,17 @@ int main(int an, char** av) {
   an = 1;
   ::testing::InitGoogleTest(&an, av);
 
+#if 1
   if (!simulator_init()) {
     return 1;
   }
+#else
+  if (!simulated_Init(serialized_policy_cert_, attest_key_file_name, measurement_file_name,
+          attest_endorsement_file_name)) {
+    printf("simulated_init failed\n");
+    return false;
+  }
+#endif
 
   int result = RUN_ALL_TESTS();
 
