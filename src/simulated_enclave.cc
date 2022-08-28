@@ -229,6 +229,7 @@ bool simulated_GetParentEvidence(string* out) {
   return false;
 }
 
+
 // Delete this eventually.  It is only used in certifier_tests.
 bool simulator_init() {
   // makeup attestation key and measurement and sealing key
