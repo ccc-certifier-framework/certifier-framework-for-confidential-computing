@@ -23,6 +23,8 @@ DEFINE_string(key_name, "policyKey",  "key name");
 DEFINE_string(key_type, "rsa-2048-private",  "policy key type");
 DEFINE_string(authority_name, "policyAuthority",  "policy authority name");
 DEFINE_string(key_output_file, "policy_key_file.bin",  "policy key file");
+DEFINE_float64(duration, 5.0 * 86400.0 * 365.0,  "duration");
+
 DEFINE_string(cert_output_file, "policy_cert_file.bin",  "policy cert file");
 DEFINE_string(cert_output_file, "policy_cert_file.bin",  "policy cert file");
 DEFINE_bool(generate_cert, false,  "generate cert?");
@@ -60,7 +62,7 @@ bool generate_key(const string& name, const string& type,
   return true;
 }
 
-bool generate_cert(const key_message& key, bool is_root, X509* cert) {
+bool generate_cert(const key_message& key, bool is_root, double duration, X509* cert) {
   return false;
 }
 
@@ -69,7 +71,7 @@ int main(int an, char** av) {
 
   printf("key_utility.exe --key_type=rsa-2048-private --key_output_file=key_file.bin\n");
   printf(" --generate_cert=false, --cert_output_file=cert_file.bin\n");
-  printf(" --authority_name=authority\n");
+  printf(" --duration=in-seconds --authority_name=authority\n");
   printf("Key types : rsa-1024-private , rsa-2048-private, rsa-4096-private, ecc-384-private\n");
 
   key_message priv;
@@ -98,7 +100,7 @@ int main(int an, char** av) {
   if (FLAGS_generate_cert) {
     string asn_cert;
     X509* cert= X509_new();
-    if (!generate_cert(*priv, FLAGS_is_root, cert)) {
+    if (!generate_cert(*priv, FLAGS_is_root, cert, FLAGS_duration)) {
       printf("Can't generate cert\n");
       return 1;
     }
