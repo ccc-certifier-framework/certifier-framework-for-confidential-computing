@@ -1291,61 +1291,6 @@ bool make_certifier_ecc_key(int n,  key_message* k) {
   return true;
 }
 
-bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k) {
-  string root_name("root");
-
-  if (type == "rsa-4096-private" || type == "rsa-2048-private" || type == "rsa-1024-private") {
-    int n = 2048;
-    if (type == "rsa-2048-private")
-      n = 2048;
-    else if (type == "rsa-1024-private")
-      n = 1024;
-    else if (type == "rsa-4096-private")
-      n = 4096;
-
-    if (!make_certifier_rsa_key(n,  k))
-      return false;
-    k->set_key_format("vse-key");
-    k->set_key_type(type);
-    k->set_key_name(name);
-    double duration = 5.0 * 86400.0 * 365.0;
-    X509* cert = X509_new();
-    if (cert == nullptr)
-      return false;
-    if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name, root_name,
-                      01L, duration, cert, true)) {
-      return false;
-    }
-    string cert_asn;
-    if (!x509_to_asn1(cert, &cert_asn))
-      return false;
-    k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
-    X509_free(cert);
-  } else if (type == "ecc_384-private") {
-    if (!make_certifier_ecc_key(384,  k))
-      return false;
-    k->set_key_format("vse-key");
-    k->set_key_type(type);
-    k->set_key_name(name);
-    double duration = 5.0 * 86400.0 * 365.0;
-    X509* cert = X509_new();
-    if (cert == nullptr)
-      return false;
-    if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name, root_name,
-                      01L, duration, cert, true)) {
-      return false;
-    }
-    string cert_asn;
-    if (!x509_to_asn1(cert, &cert_asn))
-      return false;
-    k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
-    X509_free(cert);
-  } else {
-    return false;
-  }
-  return true;
-}
-
 // -----------------------------------------------------------------------
 
 bool get_random(int num_bits, byte* out) {
@@ -2276,6 +2221,61 @@ bool x509_to_public_key(X509* x, key_message* k) {
   EVP_PKEY_free(subject_pkey);
   X509_NAME_free(subject_name);
 
+  return true;
+}
+
+bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k) {
+  string root_name("root");
+
+  if (type == "rsa-4096-private" || type == "rsa-2048-private" || type == "rsa-1024-private") {
+    int n = 2048;
+    if (type == "rsa-2048-private")
+      n = 2048;
+    else if (type == "rsa-1024-private")
+      n = 1024;
+    else if (type == "rsa-4096-private")
+      n = 4096;
+
+    if (!make_certifier_rsa_key(n,  k))
+      return false;
+    k->set_key_format("vse-key");
+    k->set_key_type(type);
+    k->set_key_name(name);
+    double duration = 5.0 * 86400.0 * 365.0;
+    X509* cert = X509_new();
+    if (cert == nullptr)
+      return false;
+    if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name, root_name,
+                      01L, duration, cert, true)) {
+      return false;
+    }
+    string cert_asn;
+    if (!x509_to_asn1(cert, &cert_asn))
+      return false;
+    k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
+    X509_free(cert);
+  } else if (type == "ecc_384-private") {
+    if (!make_certifier_ecc_key(384,  k))
+      return false;
+    k->set_key_format("vse-key");
+    k->set_key_type(type);
+    k->set_key_name(name);
+    double duration = 5.0 * 86400.0 * 365.0;
+    X509* cert = X509_new();
+    if (cert == nullptr)
+      return false;
+    if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name, root_name,
+                      01L, duration, cert, true)) {
+      return false;
+    }
+    string cert_asn;
+    if (!x509_to_asn1(cert, &cert_asn))
+      return false;
+    k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
+    X509_free(cert);
+  } else {
+    return false;
+  }
   return true;
 }
 

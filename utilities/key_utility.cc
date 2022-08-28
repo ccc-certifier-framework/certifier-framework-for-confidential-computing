@@ -19,15 +19,15 @@
 DEFINE_bool(print_all, false,  "verbose");
 
 DEFINE_bool(is_root, false,  "verbose");
-DEFINE_string(key_name, "policyKey",  "key name");
-DEFINE_string(key_type, "rsa-2048-private",  "policy key type");
-DEFINE_string(authority_name, "policyAuthority",  "policy authority name");
-DEFINE_string(key_output_file, "policy_key_file.bin",  "policy key file");
-DEFINE_float64(duration, 5.0 * 86400.0 * 365.0,  "duration");
-
-DEFINE_string(cert_output_file, "policy_cert_file.bin",  "policy cert file");
-DEFINE_string(cert_output_file, "policy_cert_file.bin",  "policy cert file");
+DEFINE_string(key_name, "testKey",  "key name");
+DEFINE_string(key_type, "rsa-2048-private",  "test key type");
+DEFINE_string(authority_name, "testAuthority",  "authority name");
+DEFINE_double(duration, 5.0 * 86400.0 * 365.0,  "duration");
+DEFINE_uint64(serial_number, 1,  "serial number");
 DEFINE_bool(generate_cert, false,  "generate cert?");
+
+DEFINE_string(key_output_file, "test_key_file.bin",  "test key file");
+DEFINE_string(cert_output_file, "test_cert_file.bin",  "test cert file");
 
 
 bool generate_key(const string& name, const string& type, 
@@ -62,26 +62,22 @@ bool generate_key(const string& name, const string& type,
   return true;
 }
 
-bool generate_cert(const key_message& key, bool is_root, double duration, X509* cert) {
-  return false;
-}
-
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   printf("key_utility.exe --key_type=rsa-2048-private --key_output_file=key_file.bin\n");
   printf(" --generate_cert=false, --cert_output_file=cert_file.bin\n");
-  printf(" --duration=in-seconds --authority_name=authority\n");
+  printf(" --duration=in-seconds --serial_number=123231--authority_name=authority\n");
   printf("Key types : rsa-1024-private , rsa-2048-private, rsa-4096-private, ecc-384-private\n");
 
   key_message priv;
   key_message pub;
-  key_message serialized_key;
+  string serialized_key;
   if (strcmp(FLAGS_key_type.c_str(), "rsa-1024-private") == 0 ||
       strcmp(FLAGS_key_type.c_str(), "rsa-2048-private") == 0 ||
       strcmp(FLAGS_key_type.c_str(), "rsa-4096-private") == 0 ||
       strcmp(FLAGS_key_type.c_str(), "ecc-384-private") == 0) {
-    if (!generate_key(FLAGS_key_name, FLAGS_key_type, FLAGS_key_authority, &priv, &pub)) {
+    if (!generate_key(FLAGS_key_name, FLAGS_key_type, FLAGS_authority_name, &priv, &pub)) {
       printf("Couldn't generate key\n");
       return 0;
     }
@@ -89,7 +85,7 @@ int main(int an, char** av) {
     printf("unsupported key type\n");
     return 1;
   }
-  if (!priv->SerializeToString(&serialized_key)) {
+  if (!priv.SerializeToString(&serialized_key)) {
     printf("Can't serialize key\n");
     return 1;
   }
@@ -97,14 +93,18 @@ int main(int an, char** av) {
     printf("Can't write key file\n");
     return 1;
   }
-  if (FLAGS_generate_cert) {
     string asn_cert;
+  if (FLAGS_generate_cert) {
     X509* cert= X509_new();
-    if (!generate_cert(*priv, FLAGS_is_root, cert, FLAGS_duration)) {
-      printf("Can't generate cert\n");
-      return 1;
+    if (!produce_artifact(priv, FLAGS_key_name,
+                          FLAGS_key_name, pub,
+                          FLAGS_key_name, FLAGS_key_name,
+                          FLAGS_serial_number, FLAGS_duration,
+                          cert, FLAGS_is_root)) {
+        printf("Can't generate cert\n");
+        return 1;
     }
-    if (!x509_to_asn1(cert, &ans_cert)) {
+    if (!x509_to_asn1(cert, &asn_cert)) {
       printf("Can't convert to asn1\n");
       return 1;
     }

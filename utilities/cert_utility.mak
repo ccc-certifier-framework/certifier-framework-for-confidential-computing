@@ -46,8 +46,11 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 dobj=	$(O)/cert_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o
 
+key_dobj=	$(O)/key_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o
 
-all:	cert_utility.exe measurement_init.exe
+
+all:	cert_utility.exe measurement_init.exe key_utility.exe
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
@@ -57,6 +60,10 @@ clean:
 cert_utility.exe: $(dobj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/cert_utility.exe $(dobj) $(LDFLAGS)
+
+key_utility.exe: $(key_dobj)
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/key_utility.exe $(key_dobj) $(LDFLAGS)
 
 measurement_init.exe: $(O)/measurement_init.o
 	@echo "linking executable files"
@@ -69,6 +76,10 @@ $(O)/measurement_init.o: $(US)/measurement_init.cc
 $(O)/cert_utility.o: $(US)/cert_utility.cc $(I)/support.h $(I)/certifier.pb.h
 	@echo "compiling cert_utility.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/cert_utility.o $(US)/cert_utility.cc
+
+$(O)/key_utility.o: $(US)/key_utility.cc $(I)/support.h $(I)/certifier.pb.h
+	@echo "compiling key_utility.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/key_utility.o $(US)/key_utility.cc
 
 $(US)/certifier.pb.cc $(I)/certifier.pb.h: $(S)/certifier.proto
 	$(PROTO) -I$(S) --cpp_out=$(US) $(S)/certifier.proto
