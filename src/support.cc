@@ -2015,8 +2015,9 @@ int add_ext(X509 *cert, int nid, const char *value) {
 
 // Caller should have allocated X509
 // name is some printable version of the measurement
-bool produce_artifact(key_message& signing_key, string& issuer_name_str, string& issuer_organization_str,
-                      key_message& subject_key, string& subject_name_str, string& subject_organization_str,
+bool produce_artifact(key_message& signing_key, string& issuer_name_str,
+                      string& issuer_organization_str, key_message& subject_key,
+                      string& subject_name_str, string& subject_organization_str,
                       uint64_t sn, double secs_duration, X509* x509, bool is_root) {
 
   RSA* signing_rsa_key = RSA_new();
@@ -2222,3 +2223,61 @@ int sized_socket_read(int fd, string* out) {
   return n;
 #endif
 }
+
+// -----------------------------------------------------------------------
+
+// make a public key from the X509 cert
+bool x509_to_public_key(X509* x, key_message* k) {
+  EVP_PKEY* subject_pkey = X509_get_pubkey(x);
+  if (subject_pkey == nullptr)
+    return false;
+  if (EVP_PKEY_base_id(subject_pkey) == EVP_PK_RSA) {
+    int size = EVP_PKEY_bits(subject_pkey); 
+    RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
+    if (!RSA_to_key(subject_rsa_key, k))
+      return false;
+    switch(size) {
+    case 1024:
+      k->set_key_type("rsa-1024-public");
+      break;
+    case 2048:
+      k->set_key_type("rsa-2048-public");
+      break;
+    case 4096:
+      k->set_key_type("rsa-4096-public");
+      break;
+    default:
+      return false;
+    }
+    // free subject_rsa_key?
+  } else if (EVP_PKEY_base_id(subject_pkey) == EVP_PK_EC) {
+    int size = EVP_PKEY_bits(subject_pkey); 
+    EC_KEY* subject_ecc_key= EVP_PKEY_get1_EC_KEY(subject_pkey);
+    if (!ECC_to_key(subject_ecc_key, k))
+      return false;
+    if (size == 384) {
+      k->set_key_type("ecc-384-public");
+    } else {
+      return false;
+    }
+    // free subject_ecc_key?
+  } else {
+    return false;
+  }
+
+  X509_NAME* subject_name = X509_get_subject_name(x);
+  const int max_buf = 2048;
+  char name_buf[max_buf];
+  if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, max_buf) < 0)
+    return false;
+  k->set_key_name((const char*) name_buf);
+  k->set_key_format("vse-key");
+
+  EVP_PKEY_free(subject_pkey);
+  X509_NAME_free(subject_name);
+
+  return true;
+}
+
+// -----------------------------------------------------------------------
+

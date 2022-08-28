@@ -170,4 +170,6 @@ bool make_root_key_with_cert(string& type, string& name, string& issuer_name, ke
 int sized_pipe_read(int fd, string* out);
 int sized_ssl_read(SSL* ssl, string* out);
 int sized_socket_read(int fd, string* out);
+
+bool x509_to_public_key(X509* x, key_message* k);
 #endif
