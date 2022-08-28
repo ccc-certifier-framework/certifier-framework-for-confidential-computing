@@ -2061,33 +2061,62 @@ bool verify_artifact(X509& cert, key_message& verify_key,
     key_message* subject_key, string* subject_name_str, string* subject_organization_str,
     uint64_t* sn) {
 
-  RSA* verify_rsa_key = RSA_new();
-  if (!key_to_RSA(verify_key, verify_rsa_key))
+  bool success = false;
+  if (verify_key.key_type() == "rsa-1024-public" ||
+      verify_key.key_type() == "rsa-1024-private" ||
+      verify_key.key_type() == "rsa-2048-private" ||
+      verify_key.key_type() == "rsa-2048-private" ||
+      verify_key.key_type() == "rsa-4096-private" ||
+      verify_key.key_type() == "rsa-4096-private") {
+    EVP_PKEY* verify_pkey = EVP_PKEY_new();
+    RSA* verify_rsa_key = RSA_new();
+    if (!key_to_RSA(verify_key, verify_rsa_key))
+      return false;
+    EVP_PKEY_set1_RSA(verify_pkey, verify_rsa_key);
+
+    EVP_PKEY* subject_pkey = X509_get_pubkey(&cert);
+    RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
+    if (!RSA_to_key(subject_rsa_key, subject_key))
+      return false;
+    success = (X509_verify(&cert, verify_pkey) == 1);
+    RSA_free(verify_rsa_key);
+    RSA_free(subject_rsa_key);
+    EVP_PKEY_free(verify_pkey);
+    EVP_PKEY_free(subject_pkey);
+  } else if (verify_key.key_type() == "ecc-384-public" ||
+             verify_key.key_type() == "ecc-384-private") {
+    EVP_PKEY* verify_pkey = EVP_PKEY_new();
+    EC_KEY* verify_ecc_key = key_to_ECC(verify_key);
+    if (verify_ecc_key == nullptr) 
+      return false;
+    EVP_PKEY_set1_EC_KEY(verify_pkey, verify_ecc_key);
+
+    EVP_PKEY* subject_pkey = X509_get_pubkey(&cert);
+    EC_KEY* subject_ecc_key= EVP_PKEY_get1_EC_KEY(subject_pkey);
+    if (!ECC_to_key(subject_ecc_key, subject_key))
+      return false;
+    success = (X509_verify(&cert, verify_pkey) == 1);
+    EC_KEY_free(verify_ecc_key);
+    EC_KEY_free(subject_ecc_key);
+    EVP_PKEY_free(verify_pkey);
+    EVP_PKEY_free(subject_pkey);
+  } else {
+    printf("Unsupported key type\n");
     return false;
-  EVP_PKEY* verify_pkey = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(verify_pkey, verify_rsa_key);
+  }
 
-  EVP_PKEY* subject_pkey = X509_get_pubkey(&cert);
-  RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
-  if (!RSA_to_key(subject_rsa_key, subject_key))
-    return false;
-
-  bool success = (X509_verify(&cert, verify_pkey) == 1);
-
+  // Todo: report other cert values
   X509_NAME* subject_name = X509_get_subject_name(&cert);
-  char name_buf[1024];
-  if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, 1024) < 0)
+  const int max_buf = 2048;
+  char name_buf[max_buf];
+  if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, max_buf) < 0)
     success = false;
   else {
     subject_name_str->assign((const char*) name_buf);
   }
  
-  RSA_free(verify_rsa_key);
-  RSA_free(subject_rsa_key);
-  EVP_PKEY_free(verify_pkey);
-  EVP_PKEY_free(subject_pkey);
   X509_NAME_free(subject_name);
-  return success;;
+  return success;
 }
 
 // -----------------------------------------------------------------------

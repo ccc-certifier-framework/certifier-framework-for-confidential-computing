@@ -93,7 +93,7 @@ int main(int an, char** av) {
     printf("Can't write key file\n");
     return 1;
   }
-    string asn_cert;
+  string asn_cert;
   if (FLAGS_generate_cert) {
     X509* cert= X509_new();
     if (!produce_artifact(priv, FLAGS_key_name,
@@ -107,6 +107,18 @@ int main(int an, char** av) {
     if (!x509_to_asn1(cert, &asn_cert)) {
       printf("Can't convert to asn1\n");
       return 1;
+    }
+    string issuer_name_str;
+    string issuer_description_str;
+    string subject_name_str;
+    string subject_organization_str;
+    uint64_t sn= 0;
+    key_message s_key;
+    if (verify_artifact(*cert, pub, &issuer_name_str, &issuer_description_str,
+            &s_key, &subject_name_str, &subject_organization_str, &sn)) {
+      printf("Certificate verifies\n");
+    } else {
+      printf("Certificate does not verify\n");
     }
     if (!write_file(FLAGS_cert_output_file, asn_cert.size(),
           (byte*) asn_cert.data())) {
