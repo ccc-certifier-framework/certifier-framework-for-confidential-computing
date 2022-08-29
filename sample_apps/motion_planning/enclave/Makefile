@@ -47,16 +47,17 @@ build:
 		--search-path $(INCDIR)/openenclave/edl/sgx
 	$(PROTO) -I$(CERT_SRC) --cpp_out=. $(CERT_SRC)/certifier.proto
 	$(PROTO) -I$(CERT_SRC) --cpp_out=$(CERT_SRC) $(CERT_SRC)/certifier.proto
-	$(CXX) -g -Wno-shift-op-parentheses -c $(CXXFLAGS) $(INCLUDES) $(PROTO_INCL) $(CERT_INCL) $(DATAFRAME_INCL) -I. -I.. -std=c++17 -DOE_API_VERSION=2 ecalls.cc $(CERT_SRC)/support.cc $(CERT_SRC)/test_support.cc $(CERT_SRC)/simulated_enclave.cc $(CERT_SRC)/application_enclave.cc $(CERT_SRC)/certifier.cc certifier.pb.cc $(CERT_SRC)/openenclave/attestation.cc $(CERT_SRC)/openenclave/sealing.cc
+	$(PROTO) -I../proto/ --cpp_out=. ../proto/mp_options.proto
+	$(CXX) -g -Wno-shift-op-parentheses -c $(CXXFLAGS) $(INCLUDES) $(PROTO_INCL) $(CERT_INCL) $(DATAFRAME_INCL) -I. -I.. -std=c++17 -DOE_API_VERSION=2 ecalls.cc $(CERT_SRC)/support.cc $(CERT_SRC)/test_support.cc $(CERT_SRC)/simulated_enclave.cc $(CERT_SRC)/application_enclave.cc $(CERT_SRC)/certifier.cc certifier.pb.cc mp_options.pb.cc $(CERT_SRC)/openenclave/attestation.cc $(CERT_SRC)/openenclave/sealing.cc
 	$(CC) -g -c $(CFLAGS) $(CINCLUDES) -I.. -DOE_API_VERSION=2 ./attestation_t.c
-	$(CXX) -o enclave ecalls.o attestation_t.o certifier.pb.o certifier.o support.o test_support.o simulated_enclave.o attestation.o sealing.o application_enclave.o $(SEAL_PLUGINS) $(DATAFRAME_LIB) $(LDFLAGS) $(CRYPTO_LDFLAGS) $(PROTO_LIB)  -loehostfs
+	$(CXX) -o enclave ecalls.o attestation_t.o certifier.pb.o mp_options.pb.o certifier.o support.o test_support.o simulated_enclave.o attestation.o sealing.o application_enclave.o $(SEAL_PLUGINS) $(DATAFRAME_LIB) $(LDFLAGS) $(CRYPTO_LDFLAGS) $(PROTO_LIB)  -loehostfs
 	strip enclave
 
 sign:
 	oesign sign -e enclave -c enc.conf -k private.pem
 
 clean:
-	rm -f *.o enclave enclave.signed attestation_t.* attestation_args.h *.pem certifier.pb.* 
+	rm -f *.o enclave enclave.signed attestation_t.* attestation_args.h *.pem certifier.pb.* mp_options.pb.* 
 
 keys:
 	openssl genrsa -out private.pem -3 3072

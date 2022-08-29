@@ -23,7 +23,6 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/arena.h>
 #include <google/protobuf/arenastring.h>
-#include <google/protobuf/generated_message_bases.h>
 #include <google/protobuf/generated_message_table_driven.h>
 #include <google/protobuf/generated_message_util.h>
 #include <google/protobuf/metadata_lite.h>
@@ -47,7 +46,7 @@ struct TableStruct_certifier_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[35]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[36]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -96,6 +95,9 @@ extern key_messageDefaultTypeInternal _key_message_default_instance_;
 class oe_assertion;
 struct oe_assertionDefaultTypeInternal;
 extern oe_assertionDefaultTypeInternal _oe_assertion_default_instance_;
+class point_message;
+struct point_messageDefaultTypeInternal;
+extern point_messageDefaultTypeInternal _point_message_default_instance_;
 class policy_store_message;
 struct policy_store_messageDefaultTypeInternal;
 extern policy_store_messageDefaultTypeInternal _policy_store_message_default_instance_;
@@ -174,6 +176,7 @@ template<> ::evidence* Arena::CreateMaybeMessage<::evidence>(Arena*);
 template<> ::evidence_package* Arena::CreateMaybeMessage<::evidence_package>(Arena*);
 template<> ::key_message* Arena::CreateMaybeMessage<::key_message>(Arena*);
 template<> ::oe_assertion* Arena::CreateMaybeMessage<::oe_assertion>(Arena*);
+template<> ::point_message* Arena::CreateMaybeMessage<::point_message>(Arena*);
 template<> ::policy_store_message* Arena::CreateMaybeMessage<::policy_store_message>(Arena*);
 template<> ::proof* Arena::CreateMaybeMessage<::proof>(Arena*);
 template<> ::proof_step* Arena::CreateMaybeMessage<::proof_step>(Arena*);
@@ -715,10 +718,194 @@ class rsa_message final :
 };
 // -------------------------------------------------------------------
 
+class point_message final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:point_message) */ {
+ public:
+  inline point_message() : point_message(nullptr) {}
+  ~point_message() override;
+  explicit constexpr point_message(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  point_message(const point_message& from);
+  point_message(point_message&& from) noexcept
+    : point_message() {
+    *this = ::std::move(from);
+  }
+
+  inline point_message& operator=(const point_message& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline point_message& operator=(point_message&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::PROTOBUF_NAMESPACE_ID::UnknownFieldSet& unknown_fields() const {
+    return _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance);
+  }
+  inline ::PROTOBUF_NAMESPACE_ID::UnknownFieldSet* mutable_unknown_fields() {
+    return _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const point_message& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const point_message* internal_default_instance() {
+    return reinterpret_cast<const point_message*>(
+               &_point_message_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    2;
+
+  friend void swap(point_message& a, point_message& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(point_message* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(point_message* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  point_message* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<point_message>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const point_message& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom(const point_message& from);
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message* to, const ::PROTOBUF_NAMESPACE_ID::Message& from);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(point_message* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "point_message";
+  }
+  protected:
+  explicit point_message(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kXFieldNumber = 1,
+    kYFieldNumber = 2,
+  };
+  // optional bytes x = 1;
+  bool has_x() const;
+  private:
+  bool _internal_has_x() const;
+  public:
+  void clear_x();
+  const std::string& x() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_x(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_x();
+  PROTOBUF_NODISCARD std::string* release_x();
+  void set_allocated_x(std::string* x);
+  private:
+  const std::string& _internal_x() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_x(const std::string& value);
+  std::string* _internal_mutable_x();
+  public:
+
+  // optional bytes y = 2;
+  bool has_y() const;
+  private:
+  bool _internal_has_y() const;
+  public:
+  void clear_y();
+  const std::string& y() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_y(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_y();
+  PROTOBUF_NODISCARD std::string* release_y();
+  void set_allocated_y(std::string* y);
+  private:
+  const std::string& _internal_y() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_y(const std::string& value);
+  std::string* _internal_mutable_y();
+  public:
+
+  // @@protoc_insertion_point(class_scope:point_message)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr x_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr y_;
+  friend struct ::TableStruct_certifier_2eproto;
+};
+// -------------------------------------------------------------------
+
 class ecc_message final :
-    public ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase /* @@protoc_insertion_point(class_definition:ecc_message) */ {
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:ecc_message) */ {
  public:
   inline ecc_message() : ecc_message(nullptr) {}
+  ~ecc_message() override;
   explicit constexpr ecc_message(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
   ecc_message(const ecc_message& from);
@@ -769,7 +956,7 @@ class ecc_message final :
                &_ecc_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    3;
 
   friend void swap(ecc_message& a, ecc_message& b) {
     a.Swap(&b);
@@ -798,15 +985,27 @@ class ecc_message final :
   ecc_message* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
     return CreateMaybeMessage<ecc_message>(arena);
   }
-  using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyFrom;
-  inline void CopyFrom(const ecc_message& from) {
-    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyImpl(this, from);
-  }
-  using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeFrom;
-  void MergeFrom(const ecc_message& from) {
-    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeImpl(this, from);
-  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const ecc_message& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom(const ecc_message& from);
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message* to, const ::PROTOBUF_NAMESPACE_ID::Message& from);
   public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ecc_message* other);
 
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
@@ -817,6 +1016,8 @@ class ecc_message final :
   explicit ecc_message(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                        bool is_message_owned = false);
   private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
   public:
 
   static const ClassData _class_data_;
@@ -828,6 +1029,160 @@ class ecc_message final :
 
   // accessors -------------------------------------------------------
 
+  enum : int {
+    kCurveNameFieldNumber = 1,
+    kCurvePFieldNumber = 2,
+    kCurveAFieldNumber = 3,
+    kCurveBFieldNumber = 4,
+    kOrderOfBasePointFieldNumber = 7,
+    kPrivateMultiplierFieldNumber = 8,
+    kBasePointFieldNumber = 5,
+    kPublicPointFieldNumber = 6,
+  };
+  // optional string curve_name = 1;
+  bool has_curve_name() const;
+  private:
+  bool _internal_has_curve_name() const;
+  public:
+  void clear_curve_name();
+  const std::string& curve_name() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_curve_name(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_curve_name();
+  PROTOBUF_NODISCARD std::string* release_curve_name();
+  void set_allocated_curve_name(std::string* curve_name);
+  private:
+  const std::string& _internal_curve_name() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_curve_name(const std::string& value);
+  std::string* _internal_mutable_curve_name();
+  public:
+
+  // optional bytes curve_p = 2;
+  bool has_curve_p() const;
+  private:
+  bool _internal_has_curve_p() const;
+  public:
+  void clear_curve_p();
+  const std::string& curve_p() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_curve_p(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_curve_p();
+  PROTOBUF_NODISCARD std::string* release_curve_p();
+  void set_allocated_curve_p(std::string* curve_p);
+  private:
+  const std::string& _internal_curve_p() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_curve_p(const std::string& value);
+  std::string* _internal_mutable_curve_p();
+  public:
+
+  // optional bytes curve_a = 3;
+  bool has_curve_a() const;
+  private:
+  bool _internal_has_curve_a() const;
+  public:
+  void clear_curve_a();
+  const std::string& curve_a() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_curve_a(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_curve_a();
+  PROTOBUF_NODISCARD std::string* release_curve_a();
+  void set_allocated_curve_a(std::string* curve_a);
+  private:
+  const std::string& _internal_curve_a() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_curve_a(const std::string& value);
+  std::string* _internal_mutable_curve_a();
+  public:
+
+  // optional bytes curve_b = 4;
+  bool has_curve_b() const;
+  private:
+  bool _internal_has_curve_b() const;
+  public:
+  void clear_curve_b();
+  const std::string& curve_b() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_curve_b(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_curve_b();
+  PROTOBUF_NODISCARD std::string* release_curve_b();
+  void set_allocated_curve_b(std::string* curve_b);
+  private:
+  const std::string& _internal_curve_b() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_curve_b(const std::string& value);
+  std::string* _internal_mutable_curve_b();
+  public:
+
+  // optional bytes order_of_base_point = 7;
+  bool has_order_of_base_point() const;
+  private:
+  bool _internal_has_order_of_base_point() const;
+  public:
+  void clear_order_of_base_point();
+  const std::string& order_of_base_point() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_order_of_base_point(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_order_of_base_point();
+  PROTOBUF_NODISCARD std::string* release_order_of_base_point();
+  void set_allocated_order_of_base_point(std::string* order_of_base_point);
+  private:
+  const std::string& _internal_order_of_base_point() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_order_of_base_point(const std::string& value);
+  std::string* _internal_mutable_order_of_base_point();
+  public:
+
+  // optional bytes private_multiplier = 8;
+  bool has_private_multiplier() const;
+  private:
+  bool _internal_has_private_multiplier() const;
+  public:
+  void clear_private_multiplier();
+  const std::string& private_multiplier() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_private_multiplier(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_private_multiplier();
+  PROTOBUF_NODISCARD std::string* release_private_multiplier();
+  void set_allocated_private_multiplier(std::string* private_multiplier);
+  private:
+  const std::string& _internal_private_multiplier() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_private_multiplier(const std::string& value);
+  std::string* _internal_mutable_private_multiplier();
+  public:
+
+  // optional .point_message base_point = 5;
+  bool has_base_point() const;
+  private:
+  bool _internal_has_base_point() const;
+  public:
+  void clear_base_point();
+  const ::point_message& base_point() const;
+  PROTOBUF_NODISCARD ::point_message* release_base_point();
+  ::point_message* mutable_base_point();
+  void set_allocated_base_point(::point_message* base_point);
+  private:
+  const ::point_message& _internal_base_point() const;
+  ::point_message* _internal_mutable_base_point();
+  public:
+  void unsafe_arena_set_allocated_base_point(
+      ::point_message* base_point);
+  ::point_message* unsafe_arena_release_base_point();
+
+  // optional .point_message public_point = 6;
+  bool has_public_point() const;
+  private:
+  bool _internal_has_public_point() const;
+  public:
+  void clear_public_point();
+  const ::point_message& public_point() const;
+  PROTOBUF_NODISCARD ::point_message* release_public_point();
+  ::point_message* mutable_public_point();
+  void set_allocated_public_point(::point_message* public_point);
+  private:
+  const ::point_message& _internal_public_point() const;
+  ::point_message* _internal_mutable_public_point();
+  public:
+  void unsafe_arena_set_allocated_public_point(
+      ::point_message* public_point);
+  ::point_message* unsafe_arena_release_public_point();
+
   // @@protoc_insertion_point(class_scope:ecc_message)
  private:
   class _Internal;
@@ -835,7 +1190,16 @@ class ecc_message final :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr curve_name_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr curve_p_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr curve_a_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr curve_b_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr order_of_base_point_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr private_multiplier_;
+  ::point_message* base_point_;
+  ::point_message* public_point_;
   friend struct ::TableStruct_certifier_2eproto;
 };
 // -------------------------------------------------------------------
@@ -895,7 +1259,7 @@ class key_message final :
                &_key_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    4;
 
   friend void swap(key_message& a, key_message& b) {
     a.Swap(&b);
@@ -1238,7 +1602,7 @@ class protected_blob_message final :
                &_protected_blob_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    5;
 
   friend void swap(protected_blob_message& a, protected_blob_message& b) {
     a.Swap(&b);
@@ -1421,7 +1785,7 @@ class entity_message final :
                &_entity_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    6;
 
   friend void swap(entity_message& a, entity_message& b) {
     a.Swap(&b);
@@ -1624,7 +1988,7 @@ class vse_clause final :
                &_vse_clause_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   friend void swap(vse_clause& a, vse_clause& b) {
     a.Swap(&b);
@@ -1847,7 +2211,7 @@ class vse_clauses final :
                &_vse_clauses_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   friend void swap(vse_clauses& a, vse_clauses& b) {
     a.Swap(&b);
@@ -2009,7 +2373,7 @@ class attestation final :
                &_attestation_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   friend void swap(attestation& a, attestation& b) {
     a.Swap(&b);
@@ -2272,7 +2636,7 @@ class claim_message final :
                &_claim_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   friend void swap(claim_message& a, claim_message& b) {
     a.Swap(&b);
@@ -2515,7 +2879,7 @@ class signed_claim_message final :
                &_signed_claim_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   friend void swap(signed_claim_message& a, signed_claim_message& b) {
     a.Swap(&b);
@@ -2738,7 +3102,7 @@ class oe_assertion final :
                &_oe_assertion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   friend void swap(oe_assertion& a, oe_assertion& b) {
     a.Swap(&b);
@@ -2921,7 +3285,7 @@ class evidence final :
                &_evidence_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   friend void swap(evidence& a, evidence& b) {
     a.Swap(&b);
@@ -3104,7 +3468,7 @@ class evidence_package final :
                &_evidence_package_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   friend void swap(evidence_package& a, evidence_package& b) {
     a.Swap(&b);
@@ -3287,7 +3651,7 @@ class certifier_rules final :
                &_certifier_rules_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    15;
 
   friend void swap(certifier_rules& a, certifier_rules& b) {
     a.Swap(&b);
@@ -3455,7 +3819,7 @@ class proved_statements final :
                &_proved_statements_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    16;
 
   friend void swap(proved_statements& a, proved_statements& b) {
     a.Swap(&b);
@@ -3617,7 +3981,7 @@ class proof_step final :
                &_proof_step_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    17;
 
   friend void swap(proof_step& a, proof_step& b) {
     a.Swap(&b);
@@ -3835,7 +4199,7 @@ class proof final :
                &_proof_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    18;
 
   friend void swap(proof& a, proof& b) {
     a.Swap(&b);
@@ -4038,7 +4402,7 @@ class trust_request_message final :
                &_trust_request_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    19;
 
   friend void swap(trust_request_message& a, trust_request_message& b) {
     a.Swap(&b);
@@ -4281,7 +4645,7 @@ class trust_response_message final :
                &_trust_response_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    20;
 
   friend void swap(trust_response_message& a, trust_response_message& b) {
     a.Swap(&b);
@@ -4504,7 +4868,7 @@ class storage_info_message final :
                &_storage_info_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    21;
 
   friend void swap(storage_info_message& a, storage_info_message& b) {
     a.Swap(&b);
@@ -4747,7 +5111,7 @@ class channel_key_message final :
                &_channel_key_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    22;
 
   friend void swap(channel_key_message& a, channel_key_message& b) {
     a.Swap(&b);
@@ -4930,7 +5294,7 @@ class trusted_service_message final :
                &_trusted_service_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    23;
 
   friend void swap(trusted_service_message& a, trusted_service_message& b) {
     a.Swap(&b);
@@ -5133,7 +5497,7 @@ class tagged_claim final :
                &_tagged_claim_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    24;
 
   friend void swap(tagged_claim& a, tagged_claim& b) {
     a.Swap(&b);
@@ -5316,7 +5680,7 @@ class tagged_claims_sequence final :
                &_tagged_claims_sequence_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    25;
 
   friend void swap(tagged_claims_sequence& a, tagged_claims_sequence& b) {
     a.Swap(&b);
@@ -5478,7 +5842,7 @@ class policy_store_message final :
                &_policy_store_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    26;
 
   friend void swap(policy_store_message& a, policy_store_message& b) {
     a.Swap(&b);
@@ -5761,7 +6125,7 @@ class claims_sequence final :
                &_claims_sequence_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   friend void swap(claims_sequence& a, claims_sequence& b) {
     a.Swap(&b);
@@ -5923,7 +6287,7 @@ class signed_claim_sequence final :
                &_signed_claim_sequence_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(signed_claim_sequence& a, signed_claim_sequence& b) {
     a.Swap(&b);
@@ -6085,7 +6449,7 @@ class tagged_signed_claim final :
                &_tagged_signed_claim_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    29;
 
   friend void swap(tagged_signed_claim& a, tagged_signed_claim& b) {
     a.Swap(&b);
@@ -6268,7 +6632,7 @@ class buffer_sequence final :
                &_buffer_sequence_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    30;
 
   friend void swap(buffer_sequence& a, buffer_sequence& b) {
     a.Swap(&b);
@@ -6436,7 +6800,7 @@ class run_request final :
                &_run_request_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    31;
 
   friend void swap(run_request& a, run_request& b) {
     a.Swap(&b);
@@ -6645,7 +7009,7 @@ class run_response final :
                &_run_response_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    32;
 
   friend void swap(run_response& a, run_response& b) {
     a.Swap(&b);
@@ -6808,7 +7172,7 @@ class app_request final :
                &_app_request_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    33;
 
   friend void swap(app_request& a, app_request& b) {
     a.Swap(&b);
@@ -6997,7 +7361,7 @@ class app_response final :
                &_app_response_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    34;
 
   friend void swap(app_response& a, app_response& b) {
     a.Swap(&b);
@@ -7206,7 +7570,7 @@ class tagged_blob_message final :
                &_tagged_blob_message_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    35;
 
   friend void swap(tagged_blob_message& a, tagged_blob_message& b) {
     a.Swap(&b);
@@ -8000,7 +8364,743 @@ inline void rsa_message::set_allocated_private_dq(std::string* private_dq) {
 
 // -------------------------------------------------------------------
 
+// point_message
+
+// optional bytes x = 1;
+inline bool point_message::_internal_has_x() const {
+  bool value = (_has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool point_message::has_x() const {
+  return _internal_has_x();
+}
+inline void point_message::clear_x() {
+  x_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& point_message::x() const {
+  // @@protoc_insertion_point(field_get:point_message.x)
+  return _internal_x();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void point_message::set_x(ArgT0&& arg0, ArgT... args) {
+ _has_bits_[0] |= 0x00000001u;
+ x_.SetBytes(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:point_message.x)
+}
+inline std::string* point_message::mutable_x() {
+  std::string* _s = _internal_mutable_x();
+  // @@protoc_insertion_point(field_mutable:point_message.x)
+  return _s;
+}
+inline const std::string& point_message::_internal_x() const {
+  return x_.Get();
+}
+inline void point_message::_internal_set_x(const std::string& value) {
+  _has_bits_[0] |= 0x00000001u;
+  x_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* point_message::_internal_mutable_x() {
+  _has_bits_[0] |= 0x00000001u;
+  return x_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* point_message::release_x() {
+  // @@protoc_insertion_point(field_release:point_message.x)
+  if (!_internal_has_x()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000001u;
+  auto* p = x_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (x_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    x_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void point_message::set_allocated_x(std::string* x) {
+  if (x != nullptr) {
+    _has_bits_[0] |= 0x00000001u;
+  } else {
+    _has_bits_[0] &= ~0x00000001u;
+  }
+  x_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), x,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (x_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    x_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:point_message.x)
+}
+
+// optional bytes y = 2;
+inline bool point_message::_internal_has_y() const {
+  bool value = (_has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool point_message::has_y() const {
+  return _internal_has_y();
+}
+inline void point_message::clear_y() {
+  y_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline const std::string& point_message::y() const {
+  // @@protoc_insertion_point(field_get:point_message.y)
+  return _internal_y();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void point_message::set_y(ArgT0&& arg0, ArgT... args) {
+ _has_bits_[0] |= 0x00000002u;
+ y_.SetBytes(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:point_message.y)
+}
+inline std::string* point_message::mutable_y() {
+  std::string* _s = _internal_mutable_y();
+  // @@protoc_insertion_point(field_mutable:point_message.y)
+  return _s;
+}
+inline const std::string& point_message::_internal_y() const {
+  return y_.Get();
+}
+inline void point_message::_internal_set_y(const std::string& value) {
+  _has_bits_[0] |= 0x00000002u;
+  y_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* point_message::_internal_mutable_y() {
+  _has_bits_[0] |= 0x00000002u;
+  return y_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* point_message::release_y() {
+  // @@protoc_insertion_point(field_release:point_message.y)
+  if (!_internal_has_y()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000002u;
+  auto* p = y_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (y_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    y_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void point_message::set_allocated_y(std::string* y) {
+  if (y != nullptr) {
+    _has_bits_[0] |= 0x00000002u;
+  } else {
+    _has_bits_[0] &= ~0x00000002u;
+  }
+  y_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), y,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (y_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    y_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:point_message.y)
+}
+
+// -------------------------------------------------------------------
+
 // ecc_message
+
+// optional string curve_name = 1;
+inline bool ecc_message::_internal_has_curve_name() const {
+  bool value = (_has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool ecc_message::has_curve_name() const {
+  return _internal_has_curve_name();
+}
+inline void ecc_message::clear_curve_name() {
+  curve_name_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& ecc_message::curve_name() const {
+  // @@protoc_insertion_point(field_get:ecc_message.curve_name)
+  return _internal_curve_name();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void ecc_message::set_curve_name(ArgT0&& arg0, ArgT... args) {
+ _has_bits_[0] |= 0x00000001u;
+ curve_name_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:ecc_message.curve_name)
+}
+inline std::string* ecc_message::mutable_curve_name() {
+  std::string* _s = _internal_mutable_curve_name();
+  // @@protoc_insertion_point(field_mutable:ecc_message.curve_name)
+  return _s;
+}
+inline const std::string& ecc_message::_internal_curve_name() const {
+  return curve_name_.Get();
+}
+inline void ecc_message::_internal_set_curve_name(const std::string& value) {
+  _has_bits_[0] |= 0x00000001u;
+  curve_name_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* ecc_message::_internal_mutable_curve_name() {
+  _has_bits_[0] |= 0x00000001u;
+  return curve_name_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* ecc_message::release_curve_name() {
+  // @@protoc_insertion_point(field_release:ecc_message.curve_name)
+  if (!_internal_has_curve_name()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000001u;
+  auto* p = curve_name_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (curve_name_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    curve_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void ecc_message::set_allocated_curve_name(std::string* curve_name) {
+  if (curve_name != nullptr) {
+    _has_bits_[0] |= 0x00000001u;
+  } else {
+    _has_bits_[0] &= ~0x00000001u;
+  }
+  curve_name_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), curve_name,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (curve_name_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    curve_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:ecc_message.curve_name)
+}
+
+// optional bytes curve_p = 2;
+inline bool ecc_message::_internal_has_curve_p() const {
+  bool value = (_has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool ecc_message::has_curve_p() const {
+  return _internal_has_curve_p();
+}
+inline void ecc_message::clear_curve_p() {
+  curve_p_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline const std::string& ecc_message::curve_p() const {
+  // @@protoc_insertion_point(field_get:ecc_message.curve_p)
+  return _internal_curve_p();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void ecc_message::set_curve_p(ArgT0&& arg0, ArgT... args) {
+ _has_bits_[0] |= 0x00000002u;
+ curve_p_.SetBytes(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:ecc_message.curve_p)
+}
+inline std::string* ecc_message::mutable_curve_p() {
+  std::string* _s = _internal_mutable_curve_p();
+  // @@protoc_insertion_point(field_mutable:ecc_message.curve_p)
+  return _s;
+}
+inline const std::string& ecc_message::_internal_curve_p() const {
+  return curve_p_.Get();
+}
+inline void ecc_message::_internal_set_curve_p(const std::string& value) {
+  _has_bits_[0] |= 0x00000002u;
+  curve_p_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* ecc_message::_internal_mutable_curve_p() {
+  _has_bits_[0] |= 0x00000002u;
+  return curve_p_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* ecc_message::release_curve_p() {
+  // @@protoc_insertion_point(field_release:ecc_message.curve_p)
+  if (!_internal_has_curve_p()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000002u;
+  auto* p = curve_p_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (curve_p_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    curve_p_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void ecc_message::set_allocated_curve_p(std::string* curve_p) {
+  if (curve_p != nullptr) {
+    _has_bits_[0] |= 0x00000002u;
+  } else {
+    _has_bits_[0] &= ~0x00000002u;
+  }
+  curve_p_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), curve_p,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (curve_p_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    curve_p_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:ecc_message.curve_p)
+}
+
+// optional bytes curve_a = 3;
+inline bool ecc_message::_internal_has_curve_a() const {
+  bool value = (_has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool ecc_message::has_curve_a() const {
+  return _internal_has_curve_a();
+}
+inline void ecc_message::clear_curve_a() {
+  curve_a_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline const std::string& ecc_message::curve_a() const {
+  // @@protoc_insertion_point(field_get:ecc_message.curve_a)
+  return _internal_curve_a();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void ecc_message::set_curve_a(ArgT0&& arg0, ArgT... args) {
+ _has_bits_[0] |= 0x00000004u;
+ curve_a_.SetBytes(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:ecc_message.curve_a)
+}
+inline std::string* ecc_message::mutable_curve_a() {
+  std::string* _s = _internal_mutable_curve_a();
+  // @@protoc_insertion_point(field_mutable:ecc_message.curve_a)
+  return _s;
+}
+inline const std::string& ecc_message::_internal_curve_a() const {
+  return curve_a_.Get();
+}
+inline void ecc_message::_internal_set_curve_a(const std::string& value) {
+  _has_bits_[0] |= 0x00000004u;
+  curve_a_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* ecc_message::_internal_mutable_curve_a() {
+  _has_bits_[0] |= 0x00000004u;
+  return curve_a_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* ecc_message::release_curve_a() {
+  // @@protoc_insertion_point(field_release:ecc_message.curve_a)
+  if (!_internal_has_curve_a()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000004u;
+  auto* p = curve_a_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (curve_a_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    curve_a_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void ecc_message::set_allocated_curve_a(std::string* curve_a) {
+  if (curve_a != nullptr) {
+    _has_bits_[0] |= 0x00000004u;
+  } else {
+    _has_bits_[0] &= ~0x00000004u;
+  }
+  curve_a_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), curve_a,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (curve_a_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    curve_a_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:ecc_message.curve_a)
+}
+
+// optional bytes curve_b = 4;
+inline bool ecc_message::_internal_has_curve_b() const {
+  bool value = (_has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool ecc_message::has_curve_b() const {
+  return _internal_has_curve_b();
+}
+inline void ecc_message::clear_curve_b() {
+  curve_b_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline const std::string& ecc_message::curve_b() const {
+  // @@protoc_insertion_point(field_get:ecc_message.curve_b)
+  return _internal_curve_b();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void ecc_message::set_curve_b(ArgT0&& arg0, ArgT... args) {
+ _has_bits_[0] |= 0x00000008u;
+ curve_b_.SetBytes(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:ecc_message.curve_b)
+}
+inline std::string* ecc_message::mutable_curve_b() {
+  std::string* _s = _internal_mutable_curve_b();
+  // @@protoc_insertion_point(field_mutable:ecc_message.curve_b)
+  return _s;
+}
+inline const std::string& ecc_message::_internal_curve_b() const {
+  return curve_b_.Get();
+}
+inline void ecc_message::_internal_set_curve_b(const std::string& value) {
+  _has_bits_[0] |= 0x00000008u;
+  curve_b_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* ecc_message::_internal_mutable_curve_b() {
+  _has_bits_[0] |= 0x00000008u;
+  return curve_b_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* ecc_message::release_curve_b() {
+  // @@protoc_insertion_point(field_release:ecc_message.curve_b)
+  if (!_internal_has_curve_b()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000008u;
+  auto* p = curve_b_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (curve_b_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    curve_b_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void ecc_message::set_allocated_curve_b(std::string* curve_b) {
+  if (curve_b != nullptr) {
+    _has_bits_[0] |= 0x00000008u;
+  } else {
+    _has_bits_[0] &= ~0x00000008u;
+  }
+  curve_b_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), curve_b,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (curve_b_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    curve_b_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:ecc_message.curve_b)
+}
+
+// optional .point_message base_point = 5;
+inline bool ecc_message::_internal_has_base_point() const {
+  bool value = (_has_bits_[0] & 0x00000040u) != 0;
+  PROTOBUF_ASSUME(!value || base_point_ != nullptr);
+  return value;
+}
+inline bool ecc_message::has_base_point() const {
+  return _internal_has_base_point();
+}
+inline void ecc_message::clear_base_point() {
+  if (base_point_ != nullptr) base_point_->Clear();
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline const ::point_message& ecc_message::_internal_base_point() const {
+  const ::point_message* p = base_point_;
+  return p != nullptr ? *p : reinterpret_cast<const ::point_message&>(
+      ::_point_message_default_instance_);
+}
+inline const ::point_message& ecc_message::base_point() const {
+  // @@protoc_insertion_point(field_get:ecc_message.base_point)
+  return _internal_base_point();
+}
+inline void ecc_message::unsafe_arena_set_allocated_base_point(
+    ::point_message* base_point) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(base_point_);
+  }
+  base_point_ = base_point;
+  if (base_point) {
+    _has_bits_[0] |= 0x00000040u;
+  } else {
+    _has_bits_[0] &= ~0x00000040u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ecc_message.base_point)
+}
+inline ::point_message* ecc_message::release_base_point() {
+  _has_bits_[0] &= ~0x00000040u;
+  ::point_message* temp = base_point_;
+  base_point_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::point_message* ecc_message::unsafe_arena_release_base_point() {
+  // @@protoc_insertion_point(field_release:ecc_message.base_point)
+  _has_bits_[0] &= ~0x00000040u;
+  ::point_message* temp = base_point_;
+  base_point_ = nullptr;
+  return temp;
+}
+inline ::point_message* ecc_message::_internal_mutable_base_point() {
+  _has_bits_[0] |= 0x00000040u;
+  if (base_point_ == nullptr) {
+    auto* p = CreateMaybeMessage<::point_message>(GetArenaForAllocation());
+    base_point_ = p;
+  }
+  return base_point_;
+}
+inline ::point_message* ecc_message::mutable_base_point() {
+  ::point_message* _msg = _internal_mutable_base_point();
+  // @@protoc_insertion_point(field_mutable:ecc_message.base_point)
+  return _msg;
+}
+inline void ecc_message::set_allocated_base_point(::point_message* base_point) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete base_point_;
+  }
+  if (base_point) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper<::point_message>::GetOwningArena(base_point);
+    if (message_arena != submessage_arena) {
+      base_point = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, base_point, submessage_arena);
+    }
+    _has_bits_[0] |= 0x00000040u;
+  } else {
+    _has_bits_[0] &= ~0x00000040u;
+  }
+  base_point_ = base_point;
+  // @@protoc_insertion_point(field_set_allocated:ecc_message.base_point)
+}
+
+// optional .point_message public_point = 6;
+inline bool ecc_message::_internal_has_public_point() const {
+  bool value = (_has_bits_[0] & 0x00000080u) != 0;
+  PROTOBUF_ASSUME(!value || public_point_ != nullptr);
+  return value;
+}
+inline bool ecc_message::has_public_point() const {
+  return _internal_has_public_point();
+}
+inline void ecc_message::clear_public_point() {
+  if (public_point_ != nullptr) public_point_->Clear();
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline const ::point_message& ecc_message::_internal_public_point() const {
+  const ::point_message* p = public_point_;
+  return p != nullptr ? *p : reinterpret_cast<const ::point_message&>(
+      ::_point_message_default_instance_);
+}
+inline const ::point_message& ecc_message::public_point() const {
+  // @@protoc_insertion_point(field_get:ecc_message.public_point)
+  return _internal_public_point();
+}
+inline void ecc_message::unsafe_arena_set_allocated_public_point(
+    ::point_message* public_point) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(public_point_);
+  }
+  public_point_ = public_point;
+  if (public_point) {
+    _has_bits_[0] |= 0x00000080u;
+  } else {
+    _has_bits_[0] &= ~0x00000080u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ecc_message.public_point)
+}
+inline ::point_message* ecc_message::release_public_point() {
+  _has_bits_[0] &= ~0x00000080u;
+  ::point_message* temp = public_point_;
+  public_point_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::point_message* ecc_message::unsafe_arena_release_public_point() {
+  // @@protoc_insertion_point(field_release:ecc_message.public_point)
+  _has_bits_[0] &= ~0x00000080u;
+  ::point_message* temp = public_point_;
+  public_point_ = nullptr;
+  return temp;
+}
+inline ::point_message* ecc_message::_internal_mutable_public_point() {
+  _has_bits_[0] |= 0x00000080u;
+  if (public_point_ == nullptr) {
+    auto* p = CreateMaybeMessage<::point_message>(GetArenaForAllocation());
+    public_point_ = p;
+  }
+  return public_point_;
+}
+inline ::point_message* ecc_message::mutable_public_point() {
+  ::point_message* _msg = _internal_mutable_public_point();
+  // @@protoc_insertion_point(field_mutable:ecc_message.public_point)
+  return _msg;
+}
+inline void ecc_message::set_allocated_public_point(::point_message* public_point) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete public_point_;
+  }
+  if (public_point) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper<::point_message>::GetOwningArena(public_point);
+    if (message_arena != submessage_arena) {
+      public_point = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, public_point, submessage_arena);
+    }
+    _has_bits_[0] |= 0x00000080u;
+  } else {
+    _has_bits_[0] &= ~0x00000080u;
+  }
+  public_point_ = public_point;
+  // @@protoc_insertion_point(field_set_allocated:ecc_message.public_point)
+}
+
+// optional bytes order_of_base_point = 7;
+inline bool ecc_message::_internal_has_order_of_base_point() const {
+  bool value = (_has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool ecc_message::has_order_of_base_point() const {
+  return _internal_has_order_of_base_point();
+}
+inline void ecc_message::clear_order_of_base_point() {
+  order_of_base_point_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline const std::string& ecc_message::order_of_base_point() const {
+  // @@protoc_insertion_point(field_get:ecc_message.order_of_base_point)
+  return _internal_order_of_base_point();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void ecc_message::set_order_of_base_point(ArgT0&& arg0, ArgT... args) {
+ _has_bits_[0] |= 0x00000010u;
+ order_of_base_point_.SetBytes(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:ecc_message.order_of_base_point)
+}
+inline std::string* ecc_message::mutable_order_of_base_point() {
+  std::string* _s = _internal_mutable_order_of_base_point();
+  // @@protoc_insertion_point(field_mutable:ecc_message.order_of_base_point)
+  return _s;
+}
+inline const std::string& ecc_message::_internal_order_of_base_point() const {
+  return order_of_base_point_.Get();
+}
+inline void ecc_message::_internal_set_order_of_base_point(const std::string& value) {
+  _has_bits_[0] |= 0x00000010u;
+  order_of_base_point_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* ecc_message::_internal_mutable_order_of_base_point() {
+  _has_bits_[0] |= 0x00000010u;
+  return order_of_base_point_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* ecc_message::release_order_of_base_point() {
+  // @@protoc_insertion_point(field_release:ecc_message.order_of_base_point)
+  if (!_internal_has_order_of_base_point()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000010u;
+  auto* p = order_of_base_point_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (order_of_base_point_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    order_of_base_point_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void ecc_message::set_allocated_order_of_base_point(std::string* order_of_base_point) {
+  if (order_of_base_point != nullptr) {
+    _has_bits_[0] |= 0x00000010u;
+  } else {
+    _has_bits_[0] &= ~0x00000010u;
+  }
+  order_of_base_point_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), order_of_base_point,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (order_of_base_point_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    order_of_base_point_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:ecc_message.order_of_base_point)
+}
+
+// optional bytes private_multiplier = 8;
+inline bool ecc_message::_internal_has_private_multiplier() const {
+  bool value = (_has_bits_[0] & 0x00000020u) != 0;
+  return value;
+}
+inline bool ecc_message::has_private_multiplier() const {
+  return _internal_has_private_multiplier();
+}
+inline void ecc_message::clear_private_multiplier() {
+  private_multiplier_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline const std::string& ecc_message::private_multiplier() const {
+  // @@protoc_insertion_point(field_get:ecc_message.private_multiplier)
+  return _internal_private_multiplier();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void ecc_message::set_private_multiplier(ArgT0&& arg0, ArgT... args) {
+ _has_bits_[0] |= 0x00000020u;
+ private_multiplier_.SetBytes(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:ecc_message.private_multiplier)
+}
+inline std::string* ecc_message::mutable_private_multiplier() {
+  std::string* _s = _internal_mutable_private_multiplier();
+  // @@protoc_insertion_point(field_mutable:ecc_message.private_multiplier)
+  return _s;
+}
+inline const std::string& ecc_message::_internal_private_multiplier() const {
+  return private_multiplier_.Get();
+}
+inline void ecc_message::_internal_set_private_multiplier(const std::string& value) {
+  _has_bits_[0] |= 0x00000020u;
+  private_multiplier_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
+}
+inline std::string* ecc_message::_internal_mutable_private_multiplier() {
+  _has_bits_[0] |= 0x00000020u;
+  return private_multiplier_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
+}
+inline std::string* ecc_message::release_private_multiplier() {
+  // @@protoc_insertion_point(field_release:ecc_message.private_multiplier)
+  if (!_internal_has_private_multiplier()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000020u;
+  auto* p = private_multiplier_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (private_multiplier_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    private_multiplier_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void ecc_message::set_allocated_private_multiplier(std::string* private_multiplier) {
+  if (private_multiplier != nullptr) {
+    _has_bits_[0] |= 0x00000020u;
+  } else {
+    _has_bits_[0] &= ~0x00000020u;
+  }
+  private_multiplier_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), private_multiplier,
+      GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (private_multiplier_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited())) {
+    private_multiplier_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:ecc_message.private_multiplier)
+}
 
 // -------------------------------------------------------------------
 
@@ -14670,6 +15770,8 @@ inline void tagged_blob_message::set_allocated_b(std::string* b) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

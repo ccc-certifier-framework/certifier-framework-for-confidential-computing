@@ -1,0 +1,12 @@
+syntax="proto2";
+
+message motion_planning_task {
+  optional string scenario                       = 1;
+  optional string algorithm                      = 2;
+  optional string env                      = 3; 
+  optional string robot                      = 4; 
+  optional string start                      = 5; 
+  optional string goal                      = 6; 
+  optional string min                      = 7; 
+  optional string max                      = 8; 
+};

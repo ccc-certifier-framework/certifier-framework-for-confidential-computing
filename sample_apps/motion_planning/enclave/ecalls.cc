@@ -27,8 +27,10 @@
 #include "support.h"
 #include "simulated_enclave.h"
 #include "../policy_key.cc"
+#include "mp_options.pb.h"
 
 #include "analytics_app.cc"
+
 
 #define FLAGS_print_all true
 static string measurement_file("/tmp/binary_trusted_measurements_file.bin");
@@ -1020,7 +1022,17 @@ bool run_me_as_server() {
 void client_application(SSL* ssl) {
   // client starts, in a real application we would likely send a serialized protobuf
 
-  std::string msg = "hello";
+  motion_planning_task mp; 
+  mp.set_scenario("se3");
+  mp.set_algorithm("rrt");
+  mp.set_env("/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/mplambda/resources/se3/Easy_env.dae");
+  mp.set_robot("/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/mplambda/resources/se3/Easy_robot.dae");
+  mp.set_start("0,1,0,0,-21.91,-4.11,-14.14");
+  mp.set_goal("0,1,0,0,-21.91,-4.11,68.86");
+  mp.set_min("-281.64,-119.64,-176.86");
+  mp.set_max("89.05,189.18,174.86");
+  string msg; 
+  mp.SerializeToString(&msg);
 
   SSL_write(ssl, (byte*)msg.c_str(), msg.size());
 

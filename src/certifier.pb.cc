@@ -51,8 +51,29 @@ struct rsa_messageDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT rsa_messageDefaultTypeInternal _rsa_message_default_instance_;
+constexpr point_message::point_message(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : x_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , y_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string){}
+struct point_messageDefaultTypeInternal {
+  constexpr point_messageDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~point_messageDefaultTypeInternal() {}
+  union {
+    point_message _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT point_messageDefaultTypeInternal _point_message_default_instance_;
 constexpr ecc_message::ecc_message(
-  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized){}
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : curve_name_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , curve_p_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , curve_a_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , curve_b_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , order_of_base_point_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , private_multiplier_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string)
+  , base_point_(nullptr)
+  , public_point_(nullptr){}
 struct ecc_messageDefaultTypeInternal {
   constexpr ecc_messageDefaultTypeInternal()
     : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
@@ -509,7 +530,7 @@ struct tagged_blob_messageDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT tagged_blob_messageDefaultTypeInternal _tagged_blob_message_default_instance_;
-static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_certifier_2eproto[35];
+static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_certifier_2eproto[36];
 static constexpr ::PROTOBUF_NAMESPACE_ID::EnumDescriptor const** file_level_enum_descriptors_certifier_2eproto = nullptr;
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_certifier_2eproto = nullptr;
 
@@ -552,12 +573,38 @@ const uint32_t TableStruct_certifier_2eproto::offsets[] PROTOBUF_SECTION_VARIABL
   4,
   5,
   6,
-  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::point_message, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::point_message, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::point_message, x_),
+  PROTOBUF_FIELD_OFFSET(::point_message, y_),
+  0,
+  1,
+  PROTOBUF_FIELD_OFFSET(::ecc_message, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::ecc_message, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::ecc_message, curve_name_),
+  PROTOBUF_FIELD_OFFSET(::ecc_message, curve_p_),
+  PROTOBUF_FIELD_OFFSET(::ecc_message, curve_a_),
+  PROTOBUF_FIELD_OFFSET(::ecc_message, curve_b_),
+  PROTOBUF_FIELD_OFFSET(::ecc_message, base_point_),
+  PROTOBUF_FIELD_OFFSET(::ecc_message, public_point_),
+  PROTOBUF_FIELD_OFFSET(::ecc_message, order_of_base_point_),
+  PROTOBUF_FIELD_OFFSET(::ecc_message, private_multiplier_),
+  0,
+  1,
+  2,
+  3,
+  6,
+  7,
+  4,
+  5,
   PROTOBUF_FIELD_OFFSET(::key_message, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::key_message, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -937,44 +984,46 @@ const uint32_t TableStruct_certifier_2eproto::offsets[] PROTOBUF_SECTION_VARIABL
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, 12, -1, sizeof(::time_point)},
   { 18, 31, -1, sizeof(::rsa_message)},
-  { 38, -1, -1, sizeof(::ecc_message)},
-  { 44, 60, -1, sizeof(::key_message)},
-  { 70, 78, -1, sizeof(::protected_blob_message)},
-  { 80, 89, -1, sizeof(::entity_message)},
-  { 92, 102, -1, sizeof(::vse_clause)},
-  { 106, -1, -1, sizeof(::vse_clauses)},
-  { 113, 125, -1, sizeof(::attestation)},
-  { 131, 142, -1, sizeof(::claim_message)},
-  { 147, 157, -1, sizeof(::signed_claim_message)},
-  { 161, 169, -1, sizeof(::oe_assertion)},
-  { 171, 179, -1, sizeof(::evidence)},
-  { 181, 189, -1, sizeof(::evidence_package)},
-  { 191, -1, -1, sizeof(::certifier_rules)},
-  { 198, -1, -1, sizeof(::proved_statements)},
-  { 205, 215, -1, sizeof(::proof_step)},
-  { 219, 228, -1, sizeof(::proof)},
-  { 231, 242, -1, sizeof(::trust_request_message)},
-  { 247, 257, -1, sizeof(::trust_response_message)},
-  { 261, 272, -1, sizeof(::storage_info_message)},
-  { 277, 285, -1, sizeof(::channel_key_message)},
-  { 287, 296, -1, sizeof(::trusted_service_message)},
-  { 299, 307, -1, sizeof(::tagged_claim)},
-  { 309, -1, -1, sizeof(::tagged_claims_sequence)},
-  { 316, 329, -1, sizeof(::policy_store_message)},
-  { 336, -1, -1, sizeof(::claims_sequence)},
-  { 343, -1, -1, sizeof(::signed_claim_sequence)},
-  { 350, 358, -1, sizeof(::tagged_signed_claim)},
-  { 360, -1, -1, sizeof(::buffer_sequence)},
-  { 367, 376, -1, sizeof(::run_request)},
-  { 379, 386, -1, sizeof(::run_response)},
-  { 387, 395, -1, sizeof(::app_request)},
-  { 397, 406, -1, sizeof(::app_response)},
-  { 409, 417, -1, sizeof(::tagged_blob_message)},
+  { 38, 46, -1, sizeof(::point_message)},
+  { 48, 62, -1, sizeof(::ecc_message)},
+  { 70, 86, -1, sizeof(::key_message)},
+  { 96, 104, -1, sizeof(::protected_blob_message)},
+  { 106, 115, -1, sizeof(::entity_message)},
+  { 118, 128, -1, sizeof(::vse_clause)},
+  { 132, -1, -1, sizeof(::vse_clauses)},
+  { 139, 151, -1, sizeof(::attestation)},
+  { 157, 168, -1, sizeof(::claim_message)},
+  { 173, 183, -1, sizeof(::signed_claim_message)},
+  { 187, 195, -1, sizeof(::oe_assertion)},
+  { 197, 205, -1, sizeof(::evidence)},
+  { 207, 215, -1, sizeof(::evidence_package)},
+  { 217, -1, -1, sizeof(::certifier_rules)},
+  { 224, -1, -1, sizeof(::proved_statements)},
+  { 231, 241, -1, sizeof(::proof_step)},
+  { 245, 254, -1, sizeof(::proof)},
+  { 257, 268, -1, sizeof(::trust_request_message)},
+  { 273, 283, -1, sizeof(::trust_response_message)},
+  { 287, 298, -1, sizeof(::storage_info_message)},
+  { 303, 311, -1, sizeof(::channel_key_message)},
+  { 313, 322, -1, sizeof(::trusted_service_message)},
+  { 325, 333, -1, sizeof(::tagged_claim)},
+  { 335, -1, -1, sizeof(::tagged_claims_sequence)},
+  { 342, 355, -1, sizeof(::policy_store_message)},
+  { 362, -1, -1, sizeof(::claims_sequence)},
+  { 369, -1, -1, sizeof(::signed_claim_sequence)},
+  { 376, 384, -1, sizeof(::tagged_signed_claim)},
+  { 386, -1, -1, sizeof(::buffer_sequence)},
+  { 393, 402, -1, sizeof(::run_request)},
+  { 405, 412, -1, sizeof(::run_response)},
+  { 413, 421, -1, sizeof(::app_request)},
+  { 423, 432, -1, sizeof(::app_response)},
+  { 435, 443, -1, sizeof(::tagged_blob_message)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_time_point_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_rsa_message_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_point_message_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_ecc_message_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_key_message_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_protected_blob_message_default_instance_),
@@ -1018,88 +1067,94 @@ const char descriptor_table_protodef_certifier_2eproto[] PROTOBUF_SECTION_VARIAB
   "\022\027\n\017public_exponent\030\002 \001(\014\022\030\n\020private_exp"
   "onent\030\003 \001(\014\022\021\n\tprivate_p\030\004 \001(\014\022\021\n\tprivat"
   "e_q\030\005 \001(\014\022\022\n\nprivate_dp\030\006 \001(\014\022\022\n\nprivate"
-  "_dq\030\007 \001(\014\"\r\n\013ecc_message\"\363\001\n\013key_message"
-  "\022\020\n\010key_name\030\001 \001(\t\022\020\n\010key_type\030\002 \001(\t\022\022\n\n"
-  "key_format\030\003 \001(\t\022\035\n\007rsa_key\030\004 \001(\0132\014.rsa_"
-  "message\022\035\n\007ecc_key\030\005 \001(\0132\014.ecc_message\022\027"
-  "\n\017secret_key_bits\030\006 \001(\014\022\023\n\013certificate\030\007"
-  " \001(\014\022\031\n\021other_key_formats\030\010 \001(\014\022\022\n\nnot_b"
-  "efore\030\t \001(\t\022\021\n\tnot_after\030\n \001(\t\"G\n\026protec"
-  "ted_blob_message\022\025\n\rencrypted_key\030\001 \001(\014\022"
-  "\026\n\016encrypted_data\030\002 \001(\014\"U\n\016entity_messag"
-  "e\022\023\n\013entity_type\030\001 \001(\t\022\031\n\003key\030\002 \001(\0132\014.ke"
-  "y_message\022\023\n\013measurement\030\003 \001(\014\"z\n\nvse_cl"
-  "ause\022 \n\007subject\030\001 \001(\0132\017.entity_message\022\014"
-  "\n\004verb\030\002 \001(\t\022\037\n\006object\030\003 \001(\0132\017.entity_me"
-  "ssage\022\033\n\006clause\030\004 \001(\0132\013.vse_clause\"+\n\013vs"
-  "e_clauses\022\034\n\007clauses\030\001 \003(\0132\013.vse_clause\""
-  "\210\001\n\013attestation\022\024\n\014enclave_type\030\001 \001(\t\022\016\n"
-  "\006key_id\030\002 \001(\t\022\023\n\013measurement\030\003 \001(\014\022\014\n\004ti"
-  "me\030\004 \001(\t\022\033\n\006clause\030\005 \001(\0132\013.vse_clause\022\023\n"
-  "\013description\030\006 \001(\t\"\200\001\n\rclaim_message\022\024\n\014"
-  "claim_format\030\001 \001(\t\022\030\n\020claim_descriptor\030\002"
-  " \001(\t\022\022\n\nnot_before\030\003 \001(\t\022\021\n\tnot_after\030\004 "
-  "\001(\t\022\030\n\020serialized_claim\030\005 \001(\014\"\211\001\n\024signed"
-  "_claim_message\022 \n\030serialized_claim_messa"
-  "ge\030\001 \001(\014\022!\n\013signing_key\030\002 \001(\0132\014.key_mess"
-  "age\022\031\n\021signing_algorithm\030\003 \001(\t\022\021\n\tsignat"
-  "ure\030\004 \001(\014\"4\n\014oe_assertion\022\021\n\tuser_data\030\001"
-  " \001(\014\022\021\n\toe_report\030\002 \001(\014\">\n\010evidence\022\025\n\re"
-  "vidence_type\030\001 \001(\t\022\033\n\023serialized_evidenc"
-  "e\030\002 \001(\014\"J\n\020evidence_package\022\023\n\013prover_ty"
-  "pe\030\001 \001(\t\022!\n\016fact_assertion\030\002 \003(\0132\t.evide"
-  "nce\"\037\n\017certifier_rules\022\014\n\004rule\030\001 \003(\t\"0\n\021"
-  "proved_statements\022\033\n\006proved\030\001 \003(\0132\013.vse_"
-  "clause\"u\n\nproof_step\022\027\n\002s1\030\001 \001(\0132\013.vse_c"
-  "lause\022\027\n\002s2\030\002 \001(\0132\013.vse_clause\022\037\n\nconclu"
-  "sion\030\003 \001(\0132\013.vse_clause\022\024\n\014rule_applied\030"
-  "\004 \001(\005\"g\n\005proof\022\035\n\010to_prove\030\001 \001(\0132\013.vse_c"
-  "lause\022#\n\016already_proved\030\002 \003(\0132\013.vse_clau"
-  "se\022\032\n\005steps\030\003 \003(\0132\013.proof_step\"\254\001\n\025trust"
-  "_request_message\022\036\n\026requesting_enclave_t"
-  "ag\030\001 \001(\t\022\035\n\025providing_enclave_tag\030\002 \001(\t\022"
-  "\037\n\027submitted_evidence_type\030\003 \001(\t\022\017\n\007purp"
-  "ose\030\004 \001(\t\022\"\n\007support\030\005 \001(\0132\021.evidence_pa"
-  "ckage\"y\n\026trust_response_message\022\016\n\006statu"
-  "s\030\001 \001(\t\022\036\n\026requesting_enclave_tag\030\002 \001(\t\022"
-  "\035\n\025providing_enclave_tag\030\003 \001(\t\022\020\n\010artifa"
-  "ct\030\004 \001(\014\"\211\001\n\024storage_info_message\022\024\n\014sto"
-  "rage_type\030\001 \001(\t\022\032\n\022storage_descriptor\030\002 "
-  "\001(\t\022\017\n\007address\030\003 \001(\t\022!\n\013storage_key\030\004 \001("
-  "\0132\014.key_message\022\013\n\003tag\030\005 \001(\t\"B\n\023channel_"
-  "key_message\022\013\n\003tag\030\001 \001(\t\022\036\n\010auth_key\030\002 \001"
-  "(\0132\014.key_message\"r\n\027trusted_service_mess"
-  "age\022\037\n\027trusted_service_address\030\001 \001(\t\022)\n\023"
-  "trusted_service_key\030\002 \001(\0132\014.key_message\022"
-  "\013\n\003tag\030\003 \001(\t\":\n\014tagged_claim\022\013\n\003tag\030\001 \001("
-  "\t\022\035\n\005claim\030\002 \001(\0132\016.claim_message\"7\n\026tagg"
-  "ed_claims_sequence\022\035\n\006claims\030\001 \003(\0132\r.tag"
-  "ged_claim\"\305\002\n\024policy_store_message\022 \n\npo"
-  "licy_key\030\001 \001(\0132\014.key_message\0222\n\020trusted_"
-  "services\030\002 \003(\0132\030.trusted_service_message"
-  "\0229\n\033channel_authentication_keys\030\003 \003(\0132\024."
-  "channel_key_message\022\035\n\006claims\030\004 \003(\0132\r.ta"
-  "gged_claim\022+\n\014storage_info\030\005 \003(\0132\025.stora"
-  "ge_info_message\022+\n\rsigned_claims\030\006 \003(\0132\024"
-  ".tagged_signed_claim\022#\n\005blobs\030\007 \003(\0132\024.ta"
-  "gged_blob_message\"1\n\017claims_sequence\022\036\n\006"
-  "claims\030\001 \003(\0132\016.claim_message\">\n\025signed_c"
-  "laim_sequence\022%\n\006claims\030\001 \003(\0132\025.signed_c"
-  "laim_message\"E\n\023tagged_signed_claim\022\013\n\003t"
-  "ag\030\001 \001(\t\022!\n\002sc\030\002 \001(\0132\025.signed_claim_mess"
-  "age\" \n\017buffer_sequence\022\r\n\005block\030\001 \003(\014\";\n"
-  "\013run_request\022\020\n\010location\030\001 \001(\t\022\014\n\004cert\030\002"
-  " \001(\014\022\014\n\004args\030\003 \003(\t\"\036\n\014run_response\022\016\n\006st"
-  "atus\030\001 \001(\t\"-\n\013app_request\022\020\n\010function\030\001 "
-  "\001(\t\022\014\n\004args\030\002 \003(\014\">\n\014app_response\022\020\n\010fun"
-  "ction\030\001 \001(\t\022\016\n\006status\030\002 \001(\t\022\014\n\004args\030\003 \003("
-  "\014\"-\n\023tagged_blob_message\022\013\n\003tag\030\001 \001(\t\022\t\n"
-  "\001b\030\002 \001(\014"
+  "_dq\030\007 \001(\014\"%\n\rpoint_message\022\t\n\001x\030\001 \001(\014\022\t\n"
+  "\001y\030\002 \001(\014\"\327\001\n\013ecc_message\022\022\n\ncurve_name\030\001"
+  " \001(\t\022\017\n\007curve_p\030\002 \001(\014\022\017\n\007curve_a\030\003 \001(\014\022\017"
+  "\n\007curve_b\030\004 \001(\014\022\"\n\nbase_point\030\005 \001(\0132\016.po"
+  "int_message\022$\n\014public_point\030\006 \001(\0132\016.poin"
+  "t_message\022\033\n\023order_of_base_point\030\007 \001(\014\022\032"
+  "\n\022private_multiplier\030\010 \001(\014\"\363\001\n\013key_messa"
+  "ge\022\020\n\010key_name\030\001 \001(\t\022\020\n\010key_type\030\002 \001(\t\022\022"
+  "\n\nkey_format\030\003 \001(\t\022\035\n\007rsa_key\030\004 \001(\0132\014.rs"
+  "a_message\022\035\n\007ecc_key\030\005 \001(\0132\014.ecc_message"
+  "\022\027\n\017secret_key_bits\030\006 \001(\014\022\023\n\013certificate"
+  "\030\007 \001(\014\022\031\n\021other_key_formats\030\010 \001(\014\022\022\n\nnot"
+  "_before\030\t \001(\t\022\021\n\tnot_after\030\n \001(\t\"G\n\026prot"
+  "ected_blob_message\022\025\n\rencrypted_key\030\001 \001("
+  "\014\022\026\n\016encrypted_data\030\002 \001(\014\"U\n\016entity_mess"
+  "age\022\023\n\013entity_type\030\001 \001(\t\022\031\n\003key\030\002 \001(\0132\014."
+  "key_message\022\023\n\013measurement\030\003 \001(\014\"z\n\nvse_"
+  "clause\022 \n\007subject\030\001 \001(\0132\017.entity_message"
+  "\022\014\n\004verb\030\002 \001(\t\022\037\n\006object\030\003 \001(\0132\017.entity_"
+  "message\022\033\n\006clause\030\004 \001(\0132\013.vse_clause\"+\n\013"
+  "vse_clauses\022\034\n\007clauses\030\001 \003(\0132\013.vse_claus"
+  "e\"\210\001\n\013attestation\022\024\n\014enclave_type\030\001 \001(\t\022"
+  "\016\n\006key_id\030\002 \001(\t\022\023\n\013measurement\030\003 \001(\014\022\014\n\004"
+  "time\030\004 \001(\t\022\033\n\006clause\030\005 \001(\0132\013.vse_clause\022"
+  "\023\n\013description\030\006 \001(\t\"\200\001\n\rclaim_message\022\024"
+  "\n\014claim_format\030\001 \001(\t\022\030\n\020claim_descriptor"
+  "\030\002 \001(\t\022\022\n\nnot_before\030\003 \001(\t\022\021\n\tnot_after\030"
+  "\004 \001(\t\022\030\n\020serialized_claim\030\005 \001(\014\"\211\001\n\024sign"
+  "ed_claim_message\022 \n\030serialized_claim_mes"
+  "sage\030\001 \001(\014\022!\n\013signing_key\030\002 \001(\0132\014.key_me"
+  "ssage\022\031\n\021signing_algorithm\030\003 \001(\t\022\021\n\tsign"
+  "ature\030\004 \001(\014\"4\n\014oe_assertion\022\021\n\tuser_data"
+  "\030\001 \001(\014\022\021\n\toe_report\030\002 \001(\014\">\n\010evidence\022\025\n"
+  "\revidence_type\030\001 \001(\t\022\033\n\023serialized_evide"
+  "nce\030\002 \001(\014\"J\n\020evidence_package\022\023\n\013prover_"
+  "type\030\001 \001(\t\022!\n\016fact_assertion\030\002 \003(\0132\t.evi"
+  "dence\"\037\n\017certifier_rules\022\014\n\004rule\030\001 \003(\t\"0"
+  "\n\021proved_statements\022\033\n\006proved\030\001 \003(\0132\013.vs"
+  "e_clause\"u\n\nproof_step\022\027\n\002s1\030\001 \001(\0132\013.vse"
+  "_clause\022\027\n\002s2\030\002 \001(\0132\013.vse_clause\022\037\n\nconc"
+  "lusion\030\003 \001(\0132\013.vse_clause\022\024\n\014rule_applie"
+  "d\030\004 \001(\005\"g\n\005proof\022\035\n\010to_prove\030\001 \001(\0132\013.vse"
+  "_clause\022#\n\016already_proved\030\002 \003(\0132\013.vse_cl"
+  "ause\022\032\n\005steps\030\003 \003(\0132\013.proof_step\"\254\001\n\025tru"
+  "st_request_message\022\036\n\026requesting_enclave"
+  "_tag\030\001 \001(\t\022\035\n\025providing_enclave_tag\030\002 \001("
+  "\t\022\037\n\027submitted_evidence_type\030\003 \001(\t\022\017\n\007pu"
+  "rpose\030\004 \001(\t\022\"\n\007support\030\005 \001(\0132\021.evidence_"
+  "package\"y\n\026trust_response_message\022\016\n\006sta"
+  "tus\030\001 \001(\t\022\036\n\026requesting_enclave_tag\030\002 \001("
+  "\t\022\035\n\025providing_enclave_tag\030\003 \001(\t\022\020\n\010arti"
+  "fact\030\004 \001(\014\"\211\001\n\024storage_info_message\022\024\n\014s"
+  "torage_type\030\001 \001(\t\022\032\n\022storage_descriptor\030"
+  "\002 \001(\t\022\017\n\007address\030\003 \001(\t\022!\n\013storage_key\030\004 "
+  "\001(\0132\014.key_message\022\013\n\003tag\030\005 \001(\t\"B\n\023channe"
+  "l_key_message\022\013\n\003tag\030\001 \001(\t\022\036\n\010auth_key\030\002"
+  " \001(\0132\014.key_message\"r\n\027trusted_service_me"
+  "ssage\022\037\n\027trusted_service_address\030\001 \001(\t\022)"
+  "\n\023trusted_service_key\030\002 \001(\0132\014.key_messag"
+  "e\022\013\n\003tag\030\003 \001(\t\":\n\014tagged_claim\022\013\n\003tag\030\001 "
+  "\001(\t\022\035\n\005claim\030\002 \001(\0132\016.claim_message\"7\n\026ta"
+  "gged_claims_sequence\022\035\n\006claims\030\001 \003(\0132\r.t"
+  "agged_claim\"\305\002\n\024policy_store_message\022 \n\n"
+  "policy_key\030\001 \001(\0132\014.key_message\0222\n\020truste"
+  "d_services\030\002 \003(\0132\030.trusted_service_messa"
+  "ge\0229\n\033channel_authentication_keys\030\003 \003(\0132"
+  "\024.channel_key_message\022\035\n\006claims\030\004 \003(\0132\r."
+  "tagged_claim\022+\n\014storage_info\030\005 \003(\0132\025.sto"
+  "rage_info_message\022+\n\rsigned_claims\030\006 \003(\013"
+  "2\024.tagged_signed_claim\022#\n\005blobs\030\007 \003(\0132\024."
+  "tagged_blob_message\"1\n\017claims_sequence\022\036"
+  "\n\006claims\030\001 \003(\0132\016.claim_message\">\n\025signed"
+  "_claim_sequence\022%\n\006claims\030\001 \003(\0132\025.signed"
+  "_claim_message\"E\n\023tagged_signed_claim\022\013\n"
+  "\003tag\030\001 \001(\t\022!\n\002sc\030\002 \001(\0132\025.signed_claim_me"
+  "ssage\" \n\017buffer_sequence\022\r\n\005block\030\001 \003(\014\""
+  ";\n\013run_request\022\020\n\010location\030\001 \001(\t\022\014\n\004cert"
+  "\030\002 \001(\014\022\014\n\004args\030\003 \003(\t\"\036\n\014run_response\022\016\n\006"
+  "status\030\001 \001(\t\"-\n\013app_request\022\020\n\010function\030"
+  "\001 \001(\t\022\014\n\004args\030\002 \003(\014\">\n\014app_response\022\020\n\010f"
+  "unction\030\001 \001(\t\022\016\n\006status\030\002 \001(\t\022\014\n\004args\030\003 "
+  "\003(\014\"-\n\023tagged_blob_message\022\013\n\003tag\030\001 \001(\t\022"
+  "\t\n\001b\030\002 \001(\014"
   ;
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_certifier_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_certifier_2eproto = {
-  false, false, 3328, descriptor_table_protodef_certifier_2eproto, "certifier.proto", 
-  &descriptor_table_certifier_2eproto_once, nullptr, 0, 35,
+  false, false, 3570, descriptor_table_protodef_certifier_2eproto, "certifier.proto", 
+  &descriptor_table_certifier_2eproto_once, nullptr, 0, 36,
   schemas, file_default_instances, TableStruct_certifier_2eproto::offsets,
   file_level_metadata_certifier_2eproto, file_level_enum_descriptors_certifier_2eproto, file_level_service_descriptors_certifier_2eproto,
 };
@@ -1966,41 +2021,839 @@ void rsa_message::InternalSwap(rsa_message* other) {
 
 // ===================================================================
 
-class ecc_message::_Internal {
+class point_message::_Internal {
  public:
+  using HasBits = decltype(std::declval<point_message>()._has_bits_);
+  static void set_has_x(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static void set_has_y(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
 };
 
+point_message::point_message(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor();
+  if (!is_message_owned) {
+    RegisterArenaDtor(arena);
+  }
+  // @@protoc_insertion_point(arena_constructor:point_message)
+}
+point_message::point_message(const point_message& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
+      _has_bits_(from._has_bits_) {
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  x_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    x_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_x()) {
+    x_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_x(), 
+      GetArenaForAllocation());
+  }
+  y_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    y_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_y()) {
+    y_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_y(), 
+      GetArenaForAllocation());
+  }
+  // @@protoc_insertion_point(copy_constructor:point_message)
+}
+
+inline void point_message::SharedCtor() {
+x_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  x_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+y_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  y_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+}
+
+point_message::~point_message() {
+  // @@protoc_insertion_point(destructor:point_message)
+  if (GetArenaForAllocation() != nullptr) return;
+  SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+inline void point_message::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  x_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  y_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+}
+
+void point_message::ArenaDtor(void* object) {
+  point_message* _this = reinterpret_cast< point_message* >(object);
+  (void)_this;
+}
+void point_message::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
+void point_message::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+
+void point_message::Clear() {
+// @@protoc_insertion_point(message_clear_start:point_message)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
+    if (cached_has_bits & 0x00000001u) {
+      x_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000002u) {
+      y_.ClearNonDefaultToEmpty();
+    }
+  }
+  _has_bits_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* point_message::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // optional bytes x = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          auto str = _internal_mutable_x();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional bytes y = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_y();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  _has_bits_.Or(has_bits);
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* point_message::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:point_message)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  // optional bytes x = 1;
+  if (cached_has_bits & 0x00000001u) {
+    target = stream->WriteBytesMaybeAliased(
+        1, this->_internal_x(), target);
+  }
+
+  // optional bytes y = 2;
+  if (cached_has_bits & 0x00000002u) {
+    target = stream->WriteBytesMaybeAliased(
+        2, this->_internal_y(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:point_message)
+  return target;
+}
+
+size_t point_message::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:point_message)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
+    // optional bytes x = 1;
+    if (cached_has_bits & 0x00000001u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_x());
+    }
+
+    // optional bytes y = 2;
+    if (cached_has_bits & 0x00000002u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_y());
+    }
+
+  }
+  return MaybeComputeUnknownFieldsSize(total_size, &_cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData point_message::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSizeCheck,
+    point_message::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*point_message::GetClassData() const { return &_class_data_; }
+
+void point_message::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message* to,
+                      const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+  static_cast<point_message *>(to)->MergeFrom(
+      static_cast<const point_message &>(from));
+}
+
+
+void point_message::MergeFrom(const point_message& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:point_message)
+  GOOGLE_DCHECK_NE(&from, this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  cached_has_bits = from._has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
+    if (cached_has_bits & 0x00000001u) {
+      _internal_set_x(from._internal_x());
+    }
+    if (cached_has_bits & 0x00000002u) {
+      _internal_set_y(from._internal_y());
+    }
+  }
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void point_message::CopyFrom(const point_message& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:point_message)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool point_message::IsInitialized() const {
+  return true;
+}
+
+void point_message::InternalSwap(point_message* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_has_bits_[0], other->_has_bits_[0]);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &x_, lhs_arena,
+      &other->x_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &y_, lhs_arena,
+      &other->y_, rhs_arena
+  );
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata point_message::GetMetadata() const {
+  return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
+      &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
+      file_level_metadata_certifier_2eproto[2]);
+}
+
+// ===================================================================
+
+class ecc_message::_Internal {
+ public:
+  using HasBits = decltype(std::declval<ecc_message>()._has_bits_);
+  static void set_has_curve_name(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static void set_has_curve_p(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+  static void set_has_curve_a(HasBits* has_bits) {
+    (*has_bits)[0] |= 4u;
+  }
+  static void set_has_curve_b(HasBits* has_bits) {
+    (*has_bits)[0] |= 8u;
+  }
+  static const ::point_message& base_point(const ecc_message* msg);
+  static void set_has_base_point(HasBits* has_bits) {
+    (*has_bits)[0] |= 64u;
+  }
+  static const ::point_message& public_point(const ecc_message* msg);
+  static void set_has_public_point(HasBits* has_bits) {
+    (*has_bits)[0] |= 128u;
+  }
+  static void set_has_order_of_base_point(HasBits* has_bits) {
+    (*has_bits)[0] |= 16u;
+  }
+  static void set_has_private_multiplier(HasBits* has_bits) {
+    (*has_bits)[0] |= 32u;
+  }
+};
+
+const ::point_message&
+ecc_message::_Internal::base_point(const ecc_message* msg) {
+  return *msg->base_point_;
+}
+const ::point_message&
+ecc_message::_Internal::public_point(const ecc_message* msg) {
+  return *msg->public_point_;
+}
 ecc_message::ecc_message(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
-  : ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase(arena, is_message_owned) {
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor();
+  if (!is_message_owned) {
+    RegisterArenaDtor(arena);
+  }
   // @@protoc_insertion_point(arena_constructor:ecc_message)
 }
 ecc_message::ecc_message(const ecc_message& from)
-  : ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase() {
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
+      _has_bits_(from._has_bits_) {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  curve_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    curve_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_curve_name()) {
+    curve_name_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_curve_name(), 
+      GetArenaForAllocation());
+  }
+  curve_p_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    curve_p_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_curve_p()) {
+    curve_p_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_curve_p(), 
+      GetArenaForAllocation());
+  }
+  curve_a_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    curve_a_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_curve_a()) {
+    curve_a_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_curve_a(), 
+      GetArenaForAllocation());
+  }
+  curve_b_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    curve_b_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_curve_b()) {
+    curve_b_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_curve_b(), 
+      GetArenaForAllocation());
+  }
+  order_of_base_point_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    order_of_base_point_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_order_of_base_point()) {
+    order_of_base_point_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_order_of_base_point(), 
+      GetArenaForAllocation());
+  }
+  private_multiplier_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    private_multiplier_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_private_multiplier()) {
+    private_multiplier_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, from._internal_private_multiplier(), 
+      GetArenaForAllocation());
+  }
+  if (from._internal_has_base_point()) {
+    base_point_ = new ::point_message(*from.base_point_);
+  } else {
+    base_point_ = nullptr;
+  }
+  if (from._internal_has_public_point()) {
+    public_point_ = new ::point_message(*from.public_point_);
+  } else {
+    public_point_ = nullptr;
+  }
   // @@protoc_insertion_point(copy_constructor:ecc_message)
 }
 
+inline void ecc_message::SharedCtor() {
+curve_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  curve_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+curve_p_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  curve_p_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+curve_a_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  curve_a_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+curve_b_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  curve_b_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+order_of_base_point_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  order_of_base_point_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+private_multiplier_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  private_multiplier_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
+    reinterpret_cast<char*>(&base_point_) - reinterpret_cast<char*>(this)),
+    0, static_cast<size_t>(reinterpret_cast<char*>(&public_point_) -
+    reinterpret_cast<char*>(&base_point_)) + sizeof(public_point_));
+}
 
+ecc_message::~ecc_message() {
+  // @@protoc_insertion_point(destructor:ecc_message)
+  if (GetArenaForAllocation() != nullptr) return;
+  SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
 
+inline void ecc_message::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  curve_name_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  curve_p_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  curve_a_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  curve_b_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  order_of_base_point_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  private_multiplier_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete base_point_;
+  if (this != internal_default_instance()) delete public_point_;
+}
 
+void ecc_message::ArenaDtor(void* object) {
+  ecc_message* _this = reinterpret_cast< ecc_message* >(object);
+  (void)_this;
+}
+void ecc_message::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
+void ecc_message::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+
+void ecc_message::Clear() {
+// @@protoc_insertion_point(message_clear_start:ecc_message)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x000000ffu) {
+    if (cached_has_bits & 0x00000001u) {
+      curve_name_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000002u) {
+      curve_p_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000004u) {
+      curve_a_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000008u) {
+      curve_b_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000010u) {
+      order_of_base_point_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000020u) {
+      private_multiplier_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000040u) {
+      GOOGLE_DCHECK(base_point_ != nullptr);
+      base_point_->Clear();
+    }
+    if (cached_has_bits & 0x00000080u) {
+      GOOGLE_DCHECK(public_point_ != nullptr);
+      public_point_->Clear();
+    }
+  }
+  _has_bits_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* ecc_message::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // optional string curve_name = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          auto str = _internal_mutable_curve_name();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          #ifndef NDEBUG
+          ::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "ecc_message.curve_name");
+          #endif  // !NDEBUG
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional bytes curve_p = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_curve_p();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional bytes curve_a = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          auto str = _internal_mutable_curve_a();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional bytes curve_b = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
+          auto str = _internal_mutable_curve_b();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional .point_message base_point = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 42)) {
+          ptr = ctx->ParseMessage(_internal_mutable_base_point(), ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional .point_message public_point = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 50)) {
+          ptr = ctx->ParseMessage(_internal_mutable_public_point(), ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional bytes order_of_base_point = 7;
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 58)) {
+          auto str = _internal_mutable_order_of_base_point();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional bytes private_multiplier = 8;
+      case 8:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 66)) {
+          auto str = _internal_mutable_private_multiplier();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  _has_bits_.Or(has_bits);
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* ecc_message::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:ecc_message)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  // optional string curve_name = 1;
+  if (cached_has_bits & 0x00000001u) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::VerifyUTF8StringNamedField(
+      this->_internal_curve_name().data(), static_cast<int>(this->_internal_curve_name().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SERIALIZE,
+      "ecc_message.curve_name");
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_curve_name(), target);
+  }
+
+  // optional bytes curve_p = 2;
+  if (cached_has_bits & 0x00000002u) {
+    target = stream->WriteBytesMaybeAliased(
+        2, this->_internal_curve_p(), target);
+  }
+
+  // optional bytes curve_a = 3;
+  if (cached_has_bits & 0x00000004u) {
+    target = stream->WriteBytesMaybeAliased(
+        3, this->_internal_curve_a(), target);
+  }
+
+  // optional bytes curve_b = 4;
+  if (cached_has_bits & 0x00000008u) {
+    target = stream->WriteBytesMaybeAliased(
+        4, this->_internal_curve_b(), target);
+  }
+
+  // optional .point_message base_point = 5;
+  if (cached_has_bits & 0x00000040u) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(
+        5, _Internal::base_point(this), target, stream);
+  }
+
+  // optional .point_message public_point = 6;
+  if (cached_has_bits & 0x00000080u) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(
+        6, _Internal::public_point(this), target, stream);
+  }
+
+  // optional bytes order_of_base_point = 7;
+  if (cached_has_bits & 0x00000010u) {
+    target = stream->WriteBytesMaybeAliased(
+        7, this->_internal_order_of_base_point(), target);
+  }
+
+  // optional bytes private_multiplier = 8;
+  if (cached_has_bits & 0x00000020u) {
+    target = stream->WriteBytesMaybeAliased(
+        8, this->_internal_private_multiplier(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:ecc_message)
+  return target;
+}
+
+size_t ecc_message::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:ecc_message)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x000000ffu) {
+    // optional string curve_name = 1;
+    if (cached_has_bits & 0x00000001u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_curve_name());
+    }
+
+    // optional bytes curve_p = 2;
+    if (cached_has_bits & 0x00000002u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_curve_p());
+    }
+
+    // optional bytes curve_a = 3;
+    if (cached_has_bits & 0x00000004u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_curve_a());
+    }
+
+    // optional bytes curve_b = 4;
+    if (cached_has_bits & 0x00000008u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_curve_b());
+    }
+
+    // optional bytes order_of_base_point = 7;
+    if (cached_has_bits & 0x00000010u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_order_of_base_point());
+    }
+
+    // optional bytes private_multiplier = 8;
+    if (cached_has_bits & 0x00000020u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_private_multiplier());
+    }
+
+    // optional .point_message base_point = 5;
+    if (cached_has_bits & 0x00000040u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          *base_point_);
+    }
+
+    // optional .point_message public_point = 6;
+    if (cached_has_bits & 0x00000080u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          *public_point_);
+    }
+
+  }
+  return MaybeComputeUnknownFieldsSize(total_size, &_cached_size_);
+}
 
 const ::PROTOBUF_NAMESPACE_ID::Message::ClassData ecc_message::_class_data_ = {
-    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyImpl,
-    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeImpl,
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSizeCheck,
+    ecc_message::MergeImpl
 };
 const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*ecc_message::GetClassData() const { return &_class_data_; }
 
+void ecc_message::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message* to,
+                      const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+  static_cast<ecc_message *>(to)->MergeFrom(
+      static_cast<const ecc_message &>(from));
+}
 
 
+void ecc_message::MergeFrom(const ecc_message& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:ecc_message)
+  GOOGLE_DCHECK_NE(&from, this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
 
+  cached_has_bits = from._has_bits_[0];
+  if (cached_has_bits & 0x000000ffu) {
+    if (cached_has_bits & 0x00000001u) {
+      _internal_set_curve_name(from._internal_curve_name());
+    }
+    if (cached_has_bits & 0x00000002u) {
+      _internal_set_curve_p(from._internal_curve_p());
+    }
+    if (cached_has_bits & 0x00000004u) {
+      _internal_set_curve_a(from._internal_curve_a());
+    }
+    if (cached_has_bits & 0x00000008u) {
+      _internal_set_curve_b(from._internal_curve_b());
+    }
+    if (cached_has_bits & 0x00000010u) {
+      _internal_set_order_of_base_point(from._internal_order_of_base_point());
+    }
+    if (cached_has_bits & 0x00000020u) {
+      _internal_set_private_multiplier(from._internal_private_multiplier());
+    }
+    if (cached_has_bits & 0x00000040u) {
+      _internal_mutable_base_point()->::point_message::MergeFrom(from._internal_base_point());
+    }
+    if (cached_has_bits & 0x00000080u) {
+      _internal_mutable_public_point()->::point_message::MergeFrom(from._internal_public_point());
+    }
+  }
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
 
+void ecc_message::CopyFrom(const ecc_message& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:ecc_message)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
 
+bool ecc_message::IsInitialized() const {
+  return true;
+}
+
+void ecc_message::InternalSwap(ecc_message* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_has_bits_[0], other->_has_bits_[0]);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &curve_name_, lhs_arena,
+      &other->curve_name_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &curve_p_, lhs_arena,
+      &other->curve_p_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &curve_a_, lhs_arena,
+      &other->curve_a_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &curve_b_, lhs_arena,
+      &other->curve_b_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &order_of_base_point_, lhs_arena,
+      &other->order_of_base_point_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      &private_multiplier_, lhs_arena,
+      &other->private_multiplier_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(ecc_message, public_point_)
+      + sizeof(ecc_message::public_point_)
+      - PROTOBUF_FIELD_OFFSET(ecc_message, base_point_)>(
+          reinterpret_cast<char*>(&base_point_),
+          reinterpret_cast<char*>(&other->base_point_));
+}
 
 ::PROTOBUF_NAMESPACE_ID::Metadata ecc_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[2]);
+      file_level_metadata_certifier_2eproto[3]);
 }
 
 // ===================================================================
@@ -2701,7 +3554,7 @@ void key_message::InternalSwap(key_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata key_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[3]);
+      file_level_metadata_certifier_2eproto[4]);
 }
 
 // ===================================================================
@@ -2969,7 +3822,7 @@ void protected_blob_message::InternalSwap(protected_blob_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata protected_blob_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[4]);
+      file_level_metadata_certifier_2eproto[5]);
 }
 
 // ===================================================================
@@ -3290,7 +4143,7 @@ void entity_message::InternalSwap(entity_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata entity_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[5]);
+      file_level_metadata_certifier_2eproto[6]);
 }
 
 // ===================================================================
@@ -3658,7 +4511,7 @@ void vse_clause::InternalSwap(vse_clause* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata vse_clause::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[6]);
+      file_level_metadata_certifier_2eproto[7]);
 }
 
 // ===================================================================
@@ -3843,7 +4696,7 @@ void vse_clauses::InternalSwap(vse_clauses* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata vse_clauses::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[7]);
+      file_level_metadata_certifier_2eproto[8]);
 }
 
 // ===================================================================
@@ -4332,7 +5185,7 @@ void attestation::InternalSwap(attestation* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata attestation::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[8]);
+      file_level_metadata_certifier_2eproto[9]);
 }
 
 // ===================================================================
@@ -4775,7 +5628,7 @@ void claim_message::InternalSwap(claim_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata claim_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[9]);
+      file_level_metadata_certifier_2eproto[10]);
 }
 
 // ===================================================================
@@ -5145,7 +5998,7 @@ void signed_claim_message::InternalSwap(signed_claim_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata signed_claim_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[10]);
+      file_level_metadata_certifier_2eproto[11]);
 }
 
 // ===================================================================
@@ -5413,7 +6266,7 @@ void oe_assertion::InternalSwap(oe_assertion* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata oe_assertion::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[11]);
+      file_level_metadata_certifier_2eproto[12]);
 }
 
 // ===================================================================
@@ -5688,7 +6541,7 @@ void evidence::InternalSwap(evidence* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata evidence::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[12]);
+      file_level_metadata_certifier_2eproto[13]);
 }
 
 // ===================================================================
@@ -5940,7 +6793,7 @@ void evidence_package::InternalSwap(evidence_package* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata evidence_package::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[13]);
+      file_level_metadata_certifier_2eproto[14]);
 }
 
 // ===================================================================
@@ -6132,7 +6985,7 @@ void certifier_rules::InternalSwap(certifier_rules* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata certifier_rules::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[14]);
+      file_level_metadata_certifier_2eproto[15]);
 }
 
 // ===================================================================
@@ -6317,7 +7170,7 @@ void proved_statements::InternalSwap(proved_statements* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata proved_statements::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[15]);
+      file_level_metadata_certifier_2eproto[16]);
 }
 
 // ===================================================================
@@ -6656,7 +7509,7 @@ void proof_step::InternalSwap(proof_step* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata proof_step::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[16]);
+      file_level_metadata_certifier_2eproto[17]);
 }
 
 // ===================================================================
@@ -6929,7 +7782,7 @@ void proof::InternalSwap(proof* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata proof::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[17]);
+      file_level_metadata_certifier_2eproto[18]);
 }
 
 // ===================================================================
@@ -7369,7 +8222,7 @@ void trust_request_message::InternalSwap(trust_request_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata trust_request_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[18]);
+      file_level_metadata_certifier_2eproto[19]);
 }
 
 // ===================================================================
@@ -7756,7 +8609,7 @@ void trust_response_message::InternalSwap(trust_response_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata trust_response_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[19]);
+      file_level_metadata_certifier_2eproto[20]);
 }
 
 // ===================================================================
@@ -8196,7 +9049,7 @@ void storage_info_message::InternalSwap(storage_info_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata storage_info_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[20]);
+      file_level_metadata_certifier_2eproto[21]);
 }
 
 // ===================================================================
@@ -8468,7 +9321,7 @@ void channel_key_message::InternalSwap(channel_key_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata channel_key_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[21]);
+      file_level_metadata_certifier_2eproto[22]);
 }
 
 // ===================================================================
@@ -8796,7 +9649,7 @@ void trusted_service_message::InternalSwap(trusted_service_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata trusted_service_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[22]);
+      file_level_metadata_certifier_2eproto[23]);
 }
 
 // ===================================================================
@@ -9068,7 +9921,7 @@ void tagged_claim::InternalSwap(tagged_claim* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata tagged_claim::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[23]);
+      file_level_metadata_certifier_2eproto[24]);
 }
 
 // ===================================================================
@@ -9253,7 +10106,7 @@ void tagged_claims_sequence::InternalSwap(tagged_claims_sequence* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata tagged_claims_sequence::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[24]);
+      file_level_metadata_certifier_2eproto[25]);
 }
 
 // ===================================================================
@@ -9658,7 +10511,7 @@ void policy_store_message::InternalSwap(policy_store_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata policy_store_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[25]);
+      file_level_metadata_certifier_2eproto[26]);
 }
 
 // ===================================================================
@@ -9843,7 +10696,7 @@ void claims_sequence::InternalSwap(claims_sequence* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata claims_sequence::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[26]);
+      file_level_metadata_certifier_2eproto[27]);
 }
 
 // ===================================================================
@@ -10028,7 +10881,7 @@ void signed_claim_sequence::InternalSwap(signed_claim_sequence* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata signed_claim_sequence::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[27]);
+      file_level_metadata_certifier_2eproto[28]);
 }
 
 // ===================================================================
@@ -10300,7 +11153,7 @@ void tagged_signed_claim::InternalSwap(tagged_signed_claim* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata tagged_signed_claim::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[28]);
+      file_level_metadata_certifier_2eproto[29]);
 }
 
 // ===================================================================
@@ -10485,7 +11338,7 @@ void buffer_sequence::InternalSwap(buffer_sequence* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata buffer_sequence::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[29]);
+      file_level_metadata_certifier_2eproto[30]);
 }
 
 // ===================================================================
@@ -10800,7 +11653,7 @@ void run_request::InternalSwap(run_request* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata run_request::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[30]);
+      file_level_metadata_certifier_2eproto[31]);
 }
 
 // ===================================================================
@@ -11019,7 +11872,7 @@ void run_response::InternalSwap(run_response* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata run_response::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[31]);
+      file_level_metadata_certifier_2eproto[32]);
 }
 
 // ===================================================================
@@ -11271,7 +12124,7 @@ void app_request::InternalSwap(app_request* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata app_request::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[32]);
+      file_level_metadata_certifier_2eproto[33]);
 }
 
 // ===================================================================
@@ -11586,7 +12439,7 @@ void app_response::InternalSwap(app_response* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata app_response::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[33]);
+      file_level_metadata_certifier_2eproto[34]);
 }
 
 // ===================================================================
@@ -11861,7 +12714,7 @@ void tagged_blob_message::InternalSwap(tagged_blob_message* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata tagged_blob_message::GetMetadata() const {
   return ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(
       &descriptor_table_certifier_2eproto_getter, &descriptor_table_certifier_2eproto_once,
-      file_level_metadata_certifier_2eproto[34]);
+      file_level_metadata_certifier_2eproto[35]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -11871,6 +12724,9 @@ template<> PROTOBUF_NOINLINE ::time_point* Arena::CreateMaybeMessage< ::time_poi
 }
 template<> PROTOBUF_NOINLINE ::rsa_message* Arena::CreateMaybeMessage< ::rsa_message >(Arena* arena) {
   return Arena::CreateMessageInternal< ::rsa_message >(arena);
+}
+template<> PROTOBUF_NOINLINE ::point_message* Arena::CreateMaybeMessage< ::point_message >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::point_message >(arena);
 }
 template<> PROTOBUF_NOINLINE ::ecc_message* Arena::CreateMaybeMessage< ::ecc_message >(Arena* arena) {
   return Arena::CreateMessageInternal< ::ecc_message >(arena);

@@ -112,23 +112,23 @@ namespace mpl::demo {
         static constexpr unsigned long MAX_JOBS = 1000;
         unsigned long int timeStart; 
         
-        std::string scenario_ = "se3";
-        std::string algorithm_ = "rrt";
+        std::string scenario_ ;
+        std::string algorithm_ ;
         std::string coordinator_;
         unsigned long jobs_{4};
         
         std::uint64_t problemId_;
 
-        std::string env_ = "/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/mplambda/resources/se3/Easy_env.dae";
-        std::string robot_ = "/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/mplambda/resources/se3/Easy_robot.dae";
+        std::string env_; 
+        std::string robot_;
         std::string envFrame_;
 
-        std::string start_ = "0,1,0,0,-21.91,-4.11,-14.14";
-        std::string goal_ = "0,1,0,0,-21.91,-4.11,68.86";
+        std::string start_ ;
+        std::string goal_ ;
         std::string goalRadius_;
 
-        std::string min_ = "-281.64,-119.64,-176.86";
-        std::string max_ = "89.05,189.18,174.86";
+        std::string min_ ;
+        std::string max_ ;
 	std::uint16_t thread_id_ = 0;
 
         double timeLimit_{std::numeric_limits<double>::infinity()};
