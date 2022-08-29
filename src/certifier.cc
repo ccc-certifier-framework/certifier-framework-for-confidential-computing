@@ -2090,7 +2090,6 @@ bool construct_what_to_say(string& enclave_type,
       string& expected_measurement, string* what_to_say) {
 
   if (enclave_type == "simulated-enclave") {
-    // attestation-key says enclave-authentication-key speaks-for enclave-measurement
     string descript("test-attest");
     string enclave_id("test-simulated-enclave");
 
