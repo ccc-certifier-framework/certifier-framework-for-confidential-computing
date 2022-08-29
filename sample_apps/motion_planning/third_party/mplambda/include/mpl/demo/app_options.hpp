@@ -119,8 +119,8 @@ namespace mpl::demo {
         
         std::uint64_t problemId_;
 
-        std::string env_ = "/home/vse/Desktop/openenclave/samples/attestation/mplambda/resources/se3/Easy_env.dae";
-        std::string robot_ = "/home/vse/Desktop/openenclave/samples/attestation/mplambda/resources/se3/Easy_robot.dae";
+        std::string env_ = "/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/mplambda/resources/se3/Easy_env.dae";
+        std::string robot_ = "/home/azureuser/certifier-framework-for-confidential-computing/sample_apps/motion_planning/third_party/mplambda/resources/se3/Easy_robot.dae";
         std::string envFrame_;
 
         std::string start_ = "0,1,0,0,-21.91,-4.11,-14.14";

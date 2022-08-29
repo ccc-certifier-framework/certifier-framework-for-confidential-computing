@@ -33,7 +33,7 @@ export CERTIFIER=~/certifier-framework-for-confidential-computing
 Then run 
 ```
 export CERTIFIER_PROTOTYPE=$CERTIFIER
-export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/analytics_example
+export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/motion_planning
 export PATH=$PATH:/usr/local/go/bin && export PATH=$PATH:$(go env GOPATH)/bin
 source /opt/openenclave/share/openenclave/openenclaverc
 ```
