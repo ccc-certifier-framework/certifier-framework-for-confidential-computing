@@ -81,16 +81,32 @@ bool test_claims_1(bool print_all) {
 }
 
 bool test_signed_claims(bool print_all) {
-  key_message public_attestation_key;
-  extern key_message my_attestation_key;
-  if (!private_key_to_public_key(my_attestation_key, &public_attestation_key))
+  // make up rsa private keys and measurement
+  string my_measurement;
+  byte m[32];
+  for (int i = 0; i < 32; i++)
+    m[i] = i;
+  my_measurement.assign((char*)m, 32);
+
+  key_message my_rsa_key;
+  if (!make_certifier_rsa_key(2048,  &my_rsa_key)) {
+    printf("test_signed_claims: make_certifier_rsa_key failed (1)\n");
     return false;
+  }
+  my_rsa_key.set_key_name("my-rsa-key");
+  my_rsa_key.set_key_type("rsa-2048-private");
+  my_rsa_key.set_key_format("vse-key");
+
+  key_message my_public_rsa_key;
+  if (!private_key_to_public_key(my_rsa_key, &my_public_rsa_key)) {
+    printf("test_signed_claims: private_key_to_public_key failed (1)\n");
+    return false;
+  }
   entity_message e1;
   entity_message e2;
-  if (!make_key_entity(public_attestation_key, &e1))
+  if (!make_key_entity(my_public_rsa_key, &e1))
     return false;
 
-  extern string my_measurement;
   if (!make_measurement_entity(my_measurement, &e2))
     return false;
   string s1("says");
@@ -100,13 +116,13 @@ bool test_signed_claims(bool print_all) {
   vse_clause clause2;
   if (!make_simple_vse_clause((const entity_message)e1, s2, (const entity_message)e2, &clause1))
     return false;
-  if (!make_indirect_vse_clause((const entity_message)e1, s2, clause1, &clause2))
+  if (!make_indirect_vse_clause((const entity_message)e1, s1, clause1, &clause2))
     return false;
 
-  string serialized_vse;
-  clause2.SerializeToString(&serialized_vse);
+  string serialized_vse1;
+  clause2.SerializeToString(&serialized_vse1);
 
-  claim_message claim;
+  claim_message claim1;
   time_point t_nb;
   time_point t_na;
   time_now(&t_nb);
@@ -116,13 +132,127 @@ bool test_signed_claims(bool print_all) {
   time_to_string(t_nb, &nb);
   time_to_string(t_na, &na);
   string n1("description");
-  if (!make_claim(serialized_vse.size(), (byte*)serialized_vse.data(), vse_clause_format, n1,
-    nb, na, &claim))
+  if (!make_claim(serialized_vse1.size(), (byte*)serialized_vse1.data(), vse_clause_format, n1,
+    nb, na, &claim1))
       return false;
-  signed_claim_message signed_claim;
-  if(!make_signed_claim(claim, my_attestation_key, &signed_claim))
+  if (print_all) {
+    printf("\nClaims for signing:\n");
+    print_claim(claim1);
+    printf("\n");
+  }
+  signed_claim_message signed_claim1;
+  if(!make_signed_claim("rsa-2048-sha256-pkcs-sign", claim1, my_rsa_key, &signed_claim1))
       return false;
-  return verify_signed_claim(signed_claim, public_attestation_key);
+  if (!verify_signed_claim(signed_claim1, my_public_rsa_key)) {
+    printf("my_rsa_key verified failed\n");
+    return false;
+  }
+
+  // RSA-4096
+  key_message my_big_rsa_key;
+  if (!make_certifier_rsa_key(4096,  &my_big_rsa_key)) {
+    printf("test_signed_claims: make_certifier_rsa_key failed (1)\n");
+    return false;
+  }
+  my_big_rsa_key.set_key_name("my-big-rsa-key");
+  my_big_rsa_key.set_key_type("rsa-4096-private");
+  my_big_rsa_key.set_key_format("vse-key");
+
+  if (print_all) {
+    printf("RSA-4096 key: \n");
+    print_key(my_big_rsa_key);
+    printf("\n");
+  }
+
+  key_message my_big_public_rsa_key;
+  if (!private_key_to_public_key(my_big_rsa_key, &my_big_public_rsa_key)) {
+    printf("test_signed_claims: private_key_to_public_key failed (2)\n");
+    return false;
+  }
+  entity_message e3;
+  if (!make_key_entity(my_big_public_rsa_key, &e3))
+    return false;
+  vse_clause clause3;
+  vse_clause clause4;
+  if (!make_simple_vse_clause((const entity_message)e3, s2, (const entity_message)e2, &clause3))
+    return false;
+  if (!make_indirect_vse_clause((const entity_message)e3, s1, clause3, &clause4))
+    return false;
+
+  claim_message claim2;
+  signed_claim_message signed_claim2;
+  string serialized_vse2;
+  clause4.SerializeToString(&serialized_vse2);
+  if (!make_claim(serialized_vse2.size(), (byte*)serialized_vse2.data(), vse_clause_format, n1,
+        nb, na, &claim2))
+      return false;
+  if (print_all) {
+    printf("\nClaims for signing:\n");
+    print_claim(claim2);
+    printf("\n");
+  }
+  if(!make_signed_claim("rsa-4096-sha384-pkcs-sign", claim2, my_big_rsa_key, &signed_claim2)) {
+    printf("test_signed_claims: make_signed_claim failed (2)\n");
+    return false;
+  }
+  if (!verify_signed_claim(signed_claim2, my_big_public_rsa_key)) {
+    printf("my_big_rsa_key verified failed\n");
+    return false;
+  }
+
+  // ECC-384
+  key_message my_ecc_key;
+  key_message my_ecc_public_key;
+  if (!make_certifier_ecc_key(384,  &my_ecc_key)) {
+    printf("test_signed_claims: make_certifier_ecc_key failed (1)\n");
+    return false;
+  }
+  my_ecc_key.set_key_name("my-ecc-key");
+  my_ecc_key.set_key_type("ecc-384-private");
+  my_ecc_key.set_key_format("vse-key");
+
+  if (print_all) {
+    printf("ECC-384 key: \n");
+    print_key(my_ecc_key);
+    printf("\n");
+  }
+  if (!private_key_to_public_key(my_ecc_key, &my_ecc_public_key)) {
+    printf("test_signed_claims: private_key_to_public_key failed (2)\n");
+    return false;
+  }
+  entity_message e5;
+  if (!make_key_entity(my_ecc_public_key, &e5))
+    return false;
+  vse_clause clause5;
+  vse_clause clause6;
+  if (!make_simple_vse_clause((const entity_message)e5, s2, (const entity_message)e2, &clause5))
+    return false;
+  if (!make_indirect_vse_clause((const entity_message)e5, s1, clause5, &clause6))
+    return false;
+
+  claim_message claim3;
+  string serialized_vse3;
+  clause6.SerializeToString(&serialized_vse3);
+  if (!make_claim(serialized_vse3.size(), (byte*)serialized_vse3.data(), vse_clause_format, n1,
+        nb, na, &claim3))
+      return false;
+  if (print_all) {
+    printf("\nClaims for signing:\n");
+    print_claim(claim3);
+    printf("\n");
+  }
+
+  signed_claim_message signed_claim3;
+  if(!make_signed_claim("ecc-384-sha384-pkcs-sign", claim3, my_ecc_key, &signed_claim3)) {
+    printf("test_signed_claims: make_signed_claim failed (3)\n");
+    return false;
+  }
+  if (!verify_signed_claim(signed_claim3, my_ecc_public_key)) {
+    printf("my_ecc_key verified failed\n");
+    return false;
+  }
+
+  return true;
 }
 
 //  Proofs and certification -----------------------------

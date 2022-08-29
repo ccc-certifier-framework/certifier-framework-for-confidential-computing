@@ -5,6 +5,9 @@
 #include <openssl/rand.h>
 #include <openssl/hmac.h>
 #include <openssl/x509v3.h>
+#include <openssl/ecdsa.h>
+ #include <openssl/bn.h>
+ #include <openssl/evp.h>
 
 #include "support.h" 
 #include "certifier.pb.h" 
@@ -28,6 +31,7 @@ using std::string;
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// -----------------------------------------------------------------------
 
 class name_size {
 public:
@@ -38,6 +42,7 @@ public:
 name_size cipher_block_byte_name_size[] = {
   {"aes-256", 16},
   {"aes-256-cbc-hmac-sha256", 16},
+  {"aes-256-cbc-hmac-sha384", 16},
   {"aes-128", 16},
   {"aes-128-cbc-hmac-sha256", 16},
   {"rsa-2048-sha256-pkcs-sign", 256},
@@ -48,11 +53,15 @@ name_size cipher_block_byte_name_size[] = {
   {"rsa-1024-public", 128},
   {"rsa-2048-private", 256},
   {"rsa-2048-public", 256},
+  {"rsa-4096-sha384-pkcs-sign", 512},
+  {"rsa-4096-private", 512},
+  {"rsa-4096-public", 512},
 };
 
 name_size cipher_key_byte_name_size[] = {
   {"aes-256", 32},
   {"aes-256-cbc-hmac-sha256", 64},
+  {"aes-256-cbc-hmac-sha384", 64},
   {"rsa-2048-sha256-pkcs-sign", 256},
   {"rsa-2048", 256},
   {"rsa-1024-sha256-pkcs-sign", 128},
@@ -61,16 +70,22 @@ name_size cipher_key_byte_name_size[] = {
   {"rsa-2048-public", 256},
   {"rsa-1024-private", 128},
   {"rsa-1024-public", 128},
+  {"rsa-4096-sha384-pkcs-sign", 512},
+  {"rsa-4096-private", 512},
+  {"rsa-4096-public", 512},
 };
 
 name_size digest_byte_name_size[] = {
-  {"sha-256", 32},
   {"sha256", 32},
+  {"sha-256", 32},
+  {"sha-384", 48},
+  {"sha-512", 64},
 };
 
 name_size mac_byte_name_size[] = {
   {"hmac-sha256", 32},
   {"aes-256-cbc-hmac-sha256", 32},
+  {"aes-256-cbc-hmac-sha384", 48},
 };
 
 int cipher_block_byte_size(const char* alg_name) {
@@ -153,6 +168,8 @@ bool read_file(const string& file_name, int* size, byte* data) {
   *size = n;
   return true;
 }
+
+// -----------------------------------------------------------------------
 
 bool time_now(time_point* t) {
   time_t now;
@@ -322,6 +339,8 @@ void print_time_point(time_point& t) {
     t.day(), t.hour(), t.minute(), t.seconds());
 }
 
+// -----------------------------------------------------------------------
+
 // Encryption is ssl
 //    Set up a context
 //    Initialize the encryption operation
@@ -398,14 +417,36 @@ done:
     return ret;
 }
 
-bool digest_message(const byte* message, int message_len,
+bool digest_message(const char* alg, const byte* message, int message_len,
     byte* digest, unsigned int digest_len) {
+
+  int n = digest_output_byte_size(alg);
+  if (n < 0)
+    return false;
+  if (n > (int)digest_len)
+    return false;
+
   EVP_MD_CTX *mdctx;
 
-  if((mdctx = EVP_MD_CTX_new()) == NULL)
+  if (strcmp(alg, "sha-256") == 0 || strcmp(alg, "sha256") == 0) {
+    if((mdctx = EVP_MD_CTX_new()) == NULL)
+      return false;
+    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
+      return false;
+  } else if (strcmp(alg, "sha-384") == 0) {
+    if((mdctx = EVP_MD_CTX_new()) == NULL)
+      return false;
+    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha384(), NULL))
+      return false;
+  } else if (strcmp(alg, "sha-512")  == 0) {
+    if((mdctx = EVP_MD_CTX_new()) == NULL)
+      return false;
+    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha512(), NULL))
+      return false;
+  } else {
     return false;
-  if(1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
-    return false;
+  }
+
   if(1 != EVP_DigestUpdate(mdctx, message, message_len))
     return false;
   if(1 != EVP_DigestFinal_ex(mdctx, digest, &digest_len))
@@ -449,7 +490,8 @@ bool authenticated_decrypt(byte* in, int in_len, byte *key,
 
   int msg_with_iv_size = in_len - mac_size;
   unsigned int hmac_size = mac_size;
-  byte* hmac_out[hmac_size];
+  byte hmac_out[hmac_size];
+
   HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
   if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
     return false;
@@ -461,16 +503,104 @@ bool authenticated_decrypt(byte* in, int in_len, byte *key,
   return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
 
+bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key,
+            byte *iv, byte *out, int* out_size) {
+
+  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-256-cbc-hmac-sha384") != 0) {
+    printf("Only aes-256-cbc-hmac-sha256 and aes-256-cbc-hmac-sha384 for now\n");
+    return false;
+  }
+  int blk_size =  cipher_block_byte_size(alg_name);
+  int key_size =  cipher_key_byte_size(alg_name);
+  int mac_size =  mac_output_byte_size(alg_name);
+  int cipher_size = *out_size - blk_size;
+
+  memset(out, 0, *out_size);
+
+  if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size)) {
+    printf("encrypt failed\n");
+    return false;
+  }
+  memcpy(out, iv, block_size);
+  cipher_size += block_size;
+
+  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
+    unsigned int hmac_size = mac_size;
+    HMAC(EVP_sha256(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
+    *out_size = cipher_size + hmac_size;
+  } else if (strcmp(alg_name, "aes-256-cbc-hmac-sha384") == 0) {
+    unsigned int hmac_size = mac_size;
+    HMAC(EVP_sha384(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
+    *out_size = cipher_size + hmac_size;
+  } else {
+    return false;
+  }
+  return true;
+}
+
+bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *key,
+            byte *out, int* out_size) {
+
+
+  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-256-cbc-hmac-sha384") != 0) {
+    printf("Only aes-256-cbc-hmac-sha256 and aes-384-cbc-hmac-sha384 for now\n");
+    return false;
+  }
+
+  int blk_size =  cipher_block_byte_size(alg_name);
+  int key_size =  cipher_key_byte_size(alg_name);
+  int mac_size =  mac_output_byte_size(alg_name);
+  int cipher_size = *out_size - blk_size;
+
+  int plain_size = *out_size - blk_size - mac_size;
+  int msg_with_iv_size = in_len - mac_size;
+  unsigned int hmac_size = mac_size;
+
+  byte hmac_out[hmac_size];
+  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
+    HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
+    if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
+      return false;
+    }
+  } else if (strcmp(alg_name, "aes-256-cbc-hmac-sha384") == 0) {
+    HMAC(EVP_sha384(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
+    if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
+      return false;
+    }
+  } else {
+    return false;
+  }
+
+  if (!decrypt(in + block_size, msg_with_iv_size - block_size, key, in, out, &plain_size))
+    return false;
+  *out_size = plain_size;
+  return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
+}
+
+const int rsa_alg_type = 1;
+const int ecc_alg_type = 2;
 bool private_key_to_public_key(const key_message& in, key_message* out) {
 
   int n_bytes = 0;
+  int alg_type = 0;
   if (in.key_type() == "rsa-2048-private") {
+    alg_type = rsa_alg_type;
     out->set_key_type("rsa-2048-public");
     n_bytes = cipher_block_byte_size("rsa-2048-public");
   } else if (in.key_type() == "rsa-1024-private") {
+    alg_type = rsa_alg_type;
     out->set_key_type("rsa-1024-public");
     n_bytes = cipher_block_byte_size("rsa-1024-public");
+  } else if (in.key_type() == "rsa-4096-private") {
+    alg_type = rsa_alg_type;
+    out->set_key_type("rsa-4096-public");
+    n_bytes = cipher_block_byte_size("rsa-4096-public");
+  } else if (in.key_type() == "ecc-384-private") {
+    alg_type = ecc_alg_type;
+    out->set_key_type("ecc-384-public");
+    n_bytes = cipher_block_byte_size("ecc_384-public");
   } else {
+    printf("private_key_to_public_key: bad key type\n");
     return false;
   }
 
@@ -480,13 +610,24 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
   out->set_not_after(in.not_after());
   out->set_certificate(in.certificate().data(), in.certificate().size());
 
-  rsa_message* rk = new(rsa_message);
-  rk->set_public_modulus(in.rsa_key().public_modulus().data(),
-      in.rsa_key().public_modulus().size());
-  rk->set_public_exponent(in.rsa_key().public_exponent().data(),
-      in.rsa_key().public_exponent().size());
-  out->set_allocated_rsa_key(rk);
-  return true;
+  if (alg_type == rsa_alg_type) {
+    rsa_message* rk = new rsa_message;
+    rk->set_public_modulus(in.rsa_key().public_modulus().data(),
+        in.rsa_key().public_modulus().size());
+    rk->set_public_exponent(in.rsa_key().public_exponent().data(),
+        in.rsa_key().public_exponent().size());
+    out->set_allocated_rsa_key(rk);
+    return true;
+  } else if (alg_type == ecc_alg_type) {
+    ecc_message* ek = new ecc_message;
+    ek->CopyFrom(in.ecc_key());
+    ek->mutable_private_multiplier()->clear();
+    out->set_allocated_ecc_key(ek);
+    return true;
+  } else {
+    printf("private_key_to_public_key: bad key type\n");
+    return false;
+  }
 }
 
 bool make_certifier_rsa_key(int n,  key_message* k) {
@@ -501,84 +642,141 @@ bool make_certifier_rsa_key(int n,  key_message* k) {
     k->set_key_type("rsa-2048-private");
   } else if (n == 1024) {
     k->set_key_type("rsa-1024-private");
+  } else if (n == 4096) {
+    k->set_key_type("rsa-4096-private");
   } else {
     RSA_free(r);
     return false;
   }
+  k->set_key_name("test-key-2");
   k->set_key_format("vse-key");
-  if (!RSA_to_key(r, k))
+  k->set_key_type("rsa-4096-private");
+  if (!RSA_to_key(r, k)) {
     return false;
+  }
   RSA_free(r);
   return true;
 }
 
 bool rsa_public_encrypt(RSA* key, byte* data, int data_len, byte *encrypted, int* size_out) {
   int n = RSA_public_encrypt(data_len, data, encrypted, key, RSA_PKCS1_PADDING);
-  if (n <= 0)
+  if (n <= 0) {
+    printf("rsa_public_encrypt: RSA_public_encrypt failed %d, %d\n", data_len, *size_out);
     return false;
-  if (n <= 0)
-    return false;
+  }
   *size_out = n; 
   return true;
 }
 
 bool rsa_private_decrypt(RSA* key, byte* enc_data, int data_len,  byte* decrypted, int* size_out) {
   int  n = RSA_private_decrypt(data_len, enc_data, decrypted, key, RSA_PKCS1_PADDING);
-  if (n <= 0)
+  if (n <= 0) {
+    printf("rsa_private_decrypt: RSA_private_decrypt failed %d, %d\n", data_len, *size_out);
     return false;
-  if (n <= 0)
-    return false;
+  }
   *size_out = n; 
   return true;
 }
 
 //  PKCS compliant signer
-bool rsa_sha256_sign(RSA*key, int to_sign_size, byte* to_sign, int* sig_size, byte* sig) {
+bool rsa_sha256_sign(RSA* key, int to_sign_size, byte* to_sign, int* sig_size, byte* sig) {
+  return rsa_sign("sha-256", key, to_sign_size, to_sign, sig_size, sig);
+}
+
+bool rsa_sha256_verify(RSA*key, int size, byte* msg, int sig_size, byte* sig) {
+  return rsa_verify("sha-256", key, size, msg , sig_size, sig);
+}
+
+bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* sig_size, byte* sig) {
+
   EVP_MD_CTX* sign_ctx = EVP_MD_CTX_create();
   EVP_PKEY* private_key  = EVP_PKEY_new();
   EVP_PKEY_assign_RSA(private_key, key);
 
-  if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha256(), nullptr, private_key) <= 0) {
+  unsigned int size_digest = 0;
+  if (strcmp("sha-256", alg) == 0) {
+    if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha256(), nullptr, private_key) <= 0) {
+        return false;
+    }
+    if (EVP_DigestSignUpdate(sign_ctx, msg, size) <= 0) {
       return false;
-  }
-  if (EVP_DigestSignUpdate(sign_ctx,  to_sign, to_sign_size) <= 0) {
+    }
+    size_t t = *sig_size;
+    if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
+        return false;
+    }
+    *sig_size = t;
+  } else if(strcmp("sha-384", alg) == 0) {
+    if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha384(), nullptr, private_key) <= 0) {
+        return false;
+    }
+    if (EVP_DigestSignUpdate(sign_ctx, msg, size) <= 0) {
       return false;
-  }
-  size_t t = *sig_size;
-  if (EVP_DigestSignFinal(sign_ctx, nullptr, (size_t*)&t) <= 0) {
-      return false;
-  }
-  *sig_size = t;
-  if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
-      return false;
+    }
+    size_t t = *sig_size;
+    if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
+        return false;
+    }
+    *sig_size = t;
+  } else {
+    return false;
   }
   EVP_MD_CTX_destroy(sign_ctx);
+
   return true;
 }
 
-bool rsa_sha256_verify(RSA*key, int size, byte* msg, int sig_size, byte* sig) {
+bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, byte* sig) {
 
-  unsigned int size_digest = digest_output_byte_size("sha-256");
-  byte digest[size_digest];
-  memset(digest, 0, size_digest);
+  if (strcmp("sha-256", alg) == 0) {
+    unsigned int size_digest = digest_output_byte_size("sha-256");
+    byte digest[size_digest];
+    memset(digest, 0, size_digest);
 
-  if (!digest_message((const byte*) msg, size, digest, size_digest))
-    return false;
-  int size_decrypted = RSA_size(key);
-  byte decrypted[size_decrypted];
-  memset(decrypted, 0, size_decrypted);
-  int n = RSA_public_encrypt(sig_size, sig, decrypted, key, RSA_NO_PADDING);
-  if (memcmp(digest, &decrypted[n - size_digest], size_digest) != 0)
-    return false;
+    if (!digest_message("sha-256", (const byte*) msg, size, digest, size_digest))
+      return false;
+    int size_decrypted = RSA_size(key);
+    byte decrypted[size_decrypted];
+    memset(decrypted, 0, size_decrypted);
+    int n = RSA_public_encrypt(sig_size, sig, decrypted, key, RSA_NO_PADDING);
+    if (n < 0)
+      return false;
+    if (memcmp(digest, &decrypted[n - size_digest], size_digest) != 0)
+      return false;
 
-  const int check_size = 16;
-  byte check_buf[16] = {
-    0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-  };
-  if (memcmp(check_buf, decrypted, check_size) != 0)
+    const int check_size = 16;
+    byte check_buf[16] = {
+      0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    };
+    if (memcmp(check_buf, decrypted, check_size) != 0)
+      return false;
+    return memcmp(digest, &decrypted[n - size_digest], size_digest) == 0;
+  } else if (strcmp("sha-384", alg) == 0) {
+    unsigned int size_digest = digest_output_byte_size("sha-384");
+    byte digest[size_digest];
+    memset(digest, 0, size_digest);
+    if (!digest_message("sha-384", (const byte*) msg, size, digest, size_digest)) {
+      printf("digest_message failed\n");
+      return false;
+    }
+    int size_decrypted = RSA_size(key);
+    byte decrypted[size_decrypted];
+    memset(decrypted, 0, size_decrypted);
+    int n = RSA_public_encrypt(sig_size, sig, decrypted, key, RSA_NO_PADDING);
+    if (n < 0)
+      return false;
+    const int check_size = 16;
+    byte check_buf[16] = {
+      0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    };
+    if (memcmp(check_buf, decrypted, check_size) != 0)
+      return false;
+    return memcmp(digest, &decrypted[n - size_digest], size_digest) == 0;
+  } else {
     return false;
-  return true;
+  }
 }
 
 bool generate_new_rsa_key(int num_bits, RSA* r) {
@@ -620,6 +818,12 @@ bool key_to_RSA(const key_message& k, RSA* r) {
   } else if (k.key_type() == "rsa-2048-private") {
     key_size_bits= 2048;
     private_key = true;
+  } else if (k.key_type() == "rsa-4096-private") {
+    key_size_bits= 4096;
+    private_key = true;
+  } else if (k.key_type() == "rsa-4096-public") {
+    key_size_bits= 4096;
+    private_key = false;
   } else {
     return false;
   }
@@ -666,6 +870,11 @@ bool RSA_to_key(RSA* r, key_message* k) {
       k->set_key_type("rsa-2048-public");
     else
       k->set_key_type("rsa-2048-private");
+  } else if (rsa_size == 4096) {
+    if (d == nullptr)
+      k->set_key_type("rsa-4096-public");
+    else
+      k->set_key_type("rsa-4096-private");
   } else {
     return false;
   }
@@ -698,38 +907,391 @@ bool RSA_to_key(RSA* r, key_message* k) {
   return true;
 }
 
-bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k) {
-  string root_name("root");
+void print_point(const point_message& pt) {
+  if (!pt.has_x() || !pt.has_y())
+    return;
 
-  if (type == "rsa-2048-private" || type == "rsa-1024-private") {
-    int n = 2048;
-    if (type == "rsa-2048-private")
-      n = 2048;
-    else if (type == "rsa-1024-private")
-      n = 1024;
-    if (!make_certifier_rsa_key(n,  k))
-      return false;
-    k->set_key_format("vse-key");
-    k->set_key_type(type);
-    k->set_key_name(name);
-    double duration = 5.0 * 86400.0 * 365.0;
-    X509* cert = X509_new();
-    if (cert == nullptr)
-      return false;
-    if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name, root_name,
-                      01L, duration, cert, true)) {
-      return false;
-    }
-    string cert_asn;
-    if (!x509_to_asn1(cert, &cert_asn))
-      return false;
-    k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
-    X509_free(cert);
+  BIGNUM* x = BN_new();
+  BIGNUM* y = BN_new();
+
+  BN_bin2bn((byte*)pt.x().data(), pt.x().size(), x);
+  BN_bin2bn((byte*)pt.y().data(), pt.y().size(), y);
+  printf("(");
+  BN_print_fp(stdout, x);
+  printf(", ");
+  BN_print_fp(stdout, y);
+  printf(")");
+
+  BN_free(x);
+  BN_free(y);
+}
+
+void print_ecc_key(const ecc_message& em) {
+
+  if (em.has_curve_name()) {
+    printf("Curve name: %s\n", em.curve_name().c_str());
+  }
+
+  if (em.has_public_point()) {
+    printf("Public point:\n");
+    print_point(em.public_point());
+    printf("\n");
+  }
+
+  if (em.has_base_point()) {
+    printf("Base   point:\n");
+    print_point(em.base_point());
+    printf("\n");
+  }
+
+  if (em.has_order_of_base_point()) {
+    BIGNUM* order = BN_new();
+    BN_bin2bn((byte*)em.order_of_base_point().data(), em.order_of_base_point().size(), order);
+    printf("order: ");
+    BN_print_fp(stdout, order);
+    printf("\n");
+    BN_free(order);
+  }
+
+  if (em.has_private_multiplier()) {
+    BIGNUM* private_mult = BN_new();
+
+    BN_bin2bn((byte*)em.private_multiplier().data(), em.private_multiplier().size(), private_mult);
+    printf("private multiplier: ");
+    BN_print_fp(stdout, private_mult);
+    printf("\n");
+
+    BN_free(private_mult);
   } else {
+    printf("No private multiplier\n");
+  }
+
+  if (em.has_curve_p() && em.has_curve_p() && em.has_curve_p()) {
+    BIGNUM* p = BN_new();
+    BIGNUM* a = BN_new();
+    BIGNUM* b = BN_new();
+  
+    BN_bin2bn((byte*)em.curve_p().data(), em.curve_p().size(), p);
+    BN_bin2bn((byte*)em.curve_a().data(), em.curve_a().size(), a);
+    BN_bin2bn((byte*)em.curve_b().data(), em.curve_b().size(), b);
+
+    printf("Curve parameters:\n");
+    printf("  p: ");
+    BN_print_fp(stdout, p);
+    printf("\n");
+    printf("  a: ");
+    BN_print_fp(stdout, a);
+    printf("\n");
+    printf("  b: ");
+    BN_print_fp(stdout, b);
+    printf("\n");
+
+    BN_free(p);
+    BN_free(a);
+    BN_free(b);
+  }
+}
+
+//  ECC encrypt
+//    G is generator, x is private key P=xG ia public key
+//    Encrypt
+//      Embed message m in P_m.  Pick random k.  Send (kG, kP + P_m)
+//    Decrypt
+//      compute Q=xkG = kP.  Subtract Q from kP + P_m = P_m.  Extract message from P_m.
+
+bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, byte* out) {
+  unsigned int len = (unsigned int)digest_output_byte_size(alg);
+  byte digest[len];
+
+  int blk_len = ECDSA_size(key);
+  if (*size_out < 2 * blk_len)
+    return false;
+
+  if (!digest_message(alg, msg, size, digest, len)) {
+    return false;
+  }
+  unsigned int sz = (unsigned int) *size_out;
+  if (ECDSA_sign(0, digest, len, out, &sz, key) != 1) {
+    return false;
+  }
+  *size_out = (int) sz;
+  return true;
+}
+
+bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig, byte* sig) {
+  unsigned int len = (unsigned int)digest_output_byte_size(alg);
+  byte digest[len];
+
+  if (!digest_message(alg, msg, size, digest, len)) {
+    return false;
+  }
+  int res = ECDSA_verify(0, digest, len, sig, size_sig, key);
+  if (res != 1) {
     return false;
   }
   return true;
 }
+
+EC_KEY* generate_new_ecc_key(int num_bits) {
+
+  if (num_bits != 384) {
+    printf("Only P-384 supported\n");
+    return nullptr;
+  }
+  EC_KEY* ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
+  if (ecc_key == nullptr) {
+    printf("Can't get curve by name\n");
+    return nullptr;
+  }
+
+  if (1 != EC_KEY_generate_key(ecc_key)) {
+    printf("Can't generate key\n");
+    return nullptr;
+  }
+
+#if 0
+  BN_CTX* ctx = BN_CTX_new();
+  const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
+  if (group == nullptr) {
+    printf("Can't get group (1)\n");
+    return nullptr;
+  }
+  BIGNUM* pt_x = BN_new();
+  BIGNUM* pt_y = BN_new();
+  const EC_POINT* pt = EC_KEY_get0_public_key(ecc_key);
+  EC_POINT_get_affine_coordinates_GFp(group, pt, pt_x, pt_y, ctx); 
+  BN_CTX_free(ctx);
+#endif
+  return ecc_key;
+}
+
+// Todo: free k on error
+EC_KEY* key_to_ECC(const key_message& k) {
+  if (k.key_type() != "ecc-384-private" && k.key_type() != "ecc-384-public") {
+    printf("key_to_ECC: wrong type %s\n", k.key_type().c_str());
+    return nullptr;
+  }
+  EC_KEY* ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
+  if (ecc_key == nullptr) {
+    printf("Can't get curve by name\n");
+    return nullptr;
+  }
+
+  // set private multiplier
+  const BIGNUM* priv_mult =  BN_bin2bn((byte*)(k.ecc_key().private_multiplier().data()),
+                (int)(k.ecc_key().private_multiplier().size()), NULL);
+  if (priv_mult == nullptr) {
+    printf("key_to_ECC: not private mult\n");
+    return nullptr;
+  }
+  if (EC_KEY_set_private_key(ecc_key, priv_mult) != 1) {
+    printf("key_to_ECC: not can't set\n");
+    return nullptr;
+  }
+
+  // set public point
+  const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
+  if (group == nullptr) {
+    printf("Can't get group (1)\n");
+    return nullptr;
+  }
+  const BIGNUM* p_pt_x =  BN_bin2bn((byte*)(k.ecc_key().public_point().x().data()),
+                (int)(k.ecc_key().public_point().x().size()), NULL);
+  const BIGNUM* p_pt_y =  BN_bin2bn((byte*)(k.ecc_key().public_point().y().data()),
+                (int)(k.ecc_key().public_point().y().size()), NULL);
+  if (p_pt_x == nullptr || p_pt_y == nullptr) {
+    printf("key_to_ECC: pts are null\n");
+    return nullptr;
+  }
+
+  EC_POINT* pt = EC_POINT_new(group);
+  if (pt == nullptr) {
+    printf("key_to_ECC: no pt in group\n");
+    return nullptr;
+  }
+  BN_CTX* ctx = BN_CTX_new();
+  if (ctx == nullptr) {
+    return nullptr;
+  }
+  if (EC_POINT_set_affine_coordinates_GFp(group, pt, p_pt_x, p_pt_y, ctx) != 1) {
+    printf("key_to_ECC: can't set affine\n");
+    return nullptr;
+  }
+  if (EC_KEY_set_public_key(ecc_key, pt) != 1) {
+    printf("key_to_ECC: can't set public\n");
+    return nullptr;
+  }
+  BN_CTX_free(ctx);
+
+  return ecc_key;
+}
+
+bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
+
+  k->set_key_name("ecc-384-private");
+  k->set_key_format("vse_key");
+
+  ecc_message* ek = new ecc_message;
+  if (ek == nullptr)
+    return false;
+
+  if (ecc_key == nullptr) {
+    return false;
+  }
+
+  BN_CTX* ctx = BN_CTX_new();
+  if (ctx == nullptr)
+    return false;
+
+  const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
+  if (group == nullptr) {
+    printf("Can't get group (2)\n");
+    return false;
+  }
+
+  BIGNUM* p = BN_new();
+  BIGNUM* a = BN_new();
+  BIGNUM* b = BN_new();
+  if (EC_GROUP_get_curve(group, p, a, b, ctx) <= 0) {
+    BN_CTX_free(ctx);
+    return false;
+  }
+
+  if (BN_num_bytes(p) == 48) {
+    ek->set_curve_name("P-384");
+  } else {
+    printf("Only P-384 supported\n");
+    return false;
+  }
+
+  // set p, a, b
+  int sz  = BN_num_bytes(p);
+  byte p_buf[sz];
+  sz  = BN_bn2bin(p, p_buf);
+  ek->mutable_curve_p()->assign((char*)p_buf, sz);
+
+  sz  = BN_num_bytes(a);
+  byte a_buf[sz];
+  sz  = BN_bn2bin(a, a_buf);
+  ek->mutable_curve_a()->assign((char*)a_buf, sz);
+
+  sz  = BN_num_bytes(b);
+  byte b_buf[sz];
+  sz  = BN_bn2bin(b, b_buf);
+  ek->mutable_curve_b()->assign((char*)b_buf, sz);
+
+  BN_free(p);
+  BN_free(a);
+  BN_free(b);
+
+  // set base_point
+  const EC_POINT* generator = EC_GROUP_get0_generator(group);
+  if (generator == nullptr) {
+    printf("Can't get base point\n");
+    BN_CTX_free(ctx);
+    return false;
+  }
+  BIGNUM* x = BN_new();
+  BIGNUM* y = BN_new();
+  if (EC_POINT_get_affine_coordinates_GFp(group,
+        generator, x, y, ctx) != 1) {
+    printf("Can't get affine coordinates\n");
+    BN_CTX_free(ctx);
+    return false;
+  }
+
+  sz  = BN_num_bytes(x);
+  byte x_buf[sz];
+  sz  = BN_bn2bin(x, x_buf);
+  point_message* b_pt= new point_message;
+  ek->set_allocated_base_point(b_pt);
+  b_pt->set_x((void*)x_buf, sz);
+
+  sz  = BN_num_bytes(y);
+  byte y_buf[sz];
+  sz  = BN_bn2bin(y, y_buf);
+  b_pt->set_y((void*)y_buf, sz);
+  BN_free(x);
+  BN_free(y);
+
+  // set public_point
+  const EC_POINT* pub_pt= EC_KEY_get0_public_key(ecc_key);
+  if (pub_pt == nullptr) {
+    printf("Can't get public point\n");
+    BN_CTX_free(ctx);
+    return false;
+  }
+
+  BIGNUM* xx = BN_new();
+  BIGNUM* yy = BN_new();
+  if (EC_POINT_get_affine_coordinates_GFp(group,
+        pub_pt, xx, yy, ctx) != 1) {
+    printf("Can't get affine coordinates\n");
+    BN_CTX_free(ctx);
+    return false;
+  }
+  sz  = BN_num_bytes(xx);
+  byte xx_buf[sz];
+  sz  = BN_bn2bin(xx, xx_buf);
+  point_message* p_pt= new point_message;
+  ek->set_allocated_public_point(p_pt);
+  p_pt->set_x((void*)xx_buf, sz);
+  sz  = BN_num_bytes(yy);
+  byte yy_buf[sz];
+  sz  = BN_bn2bin(yy, yy_buf);
+  p_pt->set_y((void*)yy_buf, sz);
+  BN_free(xx);
+  BN_free(yy);
+
+  // set order_of_base_point
+  BIGNUM* order = BN_new();
+  if (EC_GROUP_get_order(group, order, ctx) != 1) {
+    printf("Can't get order\n");
+    BN_free(order);
+    BN_CTX_free(ctx);
+    return false;
+  }
+  sz  = BN_num_bytes(order);
+  byte order_buf[sz];
+  sz  = BN_bn2bin(order, order_buf);
+  ek->set_order_of_base_point((void*)order_buf, sz);
+  BN_free(order);
+
+  // set private_multiplier
+  const BIGNUM* pk = EC_KEY_get0_private_key(ecc_key);
+  if (pk != nullptr) {
+    sz  = BN_num_bytes(pk);
+    byte pm_buf[sz];
+    sz  = BN_bn2bin(pk, pm_buf);
+    ek->set_private_multiplier((void*)pm_buf, sz);
+  }
+
+  k->set_allocated_ecc_key(ek);
+  BN_CTX_free(ctx);
+  return true;
+}
+
+bool make_certifier_ecc_key(int n,  key_message* k) {
+  if (k == nullptr)
+    return false;
+  if (n != 384)
+    return false;
+
+  EC_KEY* ek = generate_new_ecc_key(n);
+  if (ek == nullptr)
+    return false;
+
+  k->set_key_name("test-key-2");
+  k->set_key_format("vse-key");
+  k->set_key_type("ecc-384-private");
+  if (!ECC_to_key(ek, k)) {
+    return false;
+  }
+  EC_KEY_free(ek);
+  return true;
+}
+
+// -----------------------------------------------------------------------
 
 bool get_random(int num_bits, byte* out) {
   bool ret = true;
@@ -747,11 +1309,25 @@ bool get_random(int num_bits, byte* out) {
   return ret;
 }
 
+// may want to check leading 0's
+bool same_point(const point_message& pt1, const point_message& pt2) {
+  if (pt1.x().size() != pt2.x().size())
+    return false;
+  if (pt1.y().size() != pt2.y().size())
+    return false;
+  if (memcmp(pt1.x().data(),pt1.x().data(), pt1.x().size()) != 0)
+    return false;
+  if (memcmp(pt1.y().data(),pt1.y().data(), pt1.y().size()) != 0)
+    return false;
+  return true;
+}
+
 bool same_key(const key_message& k1, const key_message& k2) {
   if (k1.key_type() != k2.key_type())
     return false;
   if (k1.key_type() == "rsa-2048-private" || k1.key_type() == "rsa-2048-public" ||
-      k1.key_type() == "rsa-1024-private" || k1.key_type() == "rsa-1024-public") {
+      k1.key_type() == "rsa-1024-private" || k1.key_type() == "rsa-1024-public" ||
+      k1.key_type() == "rsa-4096-private" || k1.key_type() == "rsa-4096-public") {
     string b1, b2;
     if (!k1.has_rsa_key() || !k2.has_rsa_key())
       return false;
@@ -766,6 +1342,23 @@ bool same_key(const key_message& k1, const key_message& k2) {
     if (k1.secret_key_bits().size() != k2.secret_key_bits().size())
       return false;
     return (memcmp(k1.secret_key_bits().data(), k2.secret_key_bits().data(), k1.secret_key_bits().size()) == 0);
+  } else if (k1.key_type() == "ecc-384") {
+    const ecc_message& em1 = k1.ecc_key();
+    const ecc_message& em2 = k2.ecc_key();
+    if (em1.curve_p().size() != em2.curve_p().size() ||
+        memcmp(em1.curve_p().data(),em2.curve_p().data(), em1.curve_p().size()) != 0)
+      return false;
+    if (em1.curve_a().size() != em2.curve_a().size() ||
+          memcmp(em1.curve_a().data(),em1.curve_a().data(), em2.curve_a().size()) != 0)
+      return false;
+    if (em1.curve_b().size() != em2.curve_b().size() ||
+           memcmp(em1.curve_b().data(),em1.curve_b().data(), em2.curve_b().size()) != 0)
+      return false;
+    if (!same_point(em1.base_point(), em2.base_point()))
+      return false;
+    if (!same_point(em1.public_point(), em2.public_point()))
+      return false;
+    return true;
   } else {
     return false;
   }
@@ -879,6 +1472,8 @@ bool make_claim(int size, byte* serialized_claim, string& format, string& descri
   return true;
 }
 
+// -----------------------------------------------------------------------
+
 void print_bytes(int n, byte* buf) {
   for(int i = 0; i < n; i++)
     printf("%02x", buf[i]);
@@ -924,6 +1519,7 @@ void print_key(const key_message& k) {
     print_rsa_key(k.rsa_key());
   }
   if (k.has_ecc_key()) {
+    print_ecc_key(k.ecc_key());
   }
   if (k.has_secret_key_bits()) {
     printf("Secret key bits: ");
@@ -951,7 +1547,8 @@ void print_key_descriptor(const key_message& k) {
     return;
 
   if (k.key_type() == "rsa-2048-private" || k.key_type() == "rsa-2048-public" ||
-      k.key_type() == "rsa-1024-private" || k.key_type() == "rsa-1024-public") {
+      k.key_type() == "rsa-1024-private" || k.key_type() == "rsa-1024-public" ||
+      k.key_type() == "rsa-4096-private" || k.key_type() == "rsa-4096-public") {
     printf("Key[rsa, ");
     if (k.has_key_name()) {
       printf("%s, ", k.key_name().c_str());
@@ -963,8 +1560,20 @@ void print_key_descriptor(const key_message& k) {
       if (k.rsa_key().has_public_modulus()) {
         print_bytes(l, (byte*)k.rsa_key().public_modulus().data());
       }
+      printf("]");
     }
-    printf("]");
+  } else if (k.key_type() == "ecc-384-private" || k.key_type() == "ecc-384-public") {
+    printf("Key[ecc, ");
+    if (k.has_key_name()) {
+      printf("%s, ", k.key_name().c_str());
+    }
+    if (k.has_ecc_key()) {
+      printf("%s-", k.ecc_key().curve_name().c_str());
+      print_bytes(k.ecc_key().base_point().x().size(), (byte*)k.ecc_key().base_point().x().data());
+      printf("_");
+      print_bytes(k.ecc_key().base_point().y().size(), (byte*)k.ecc_key().base_point().y().data());
+      printf("]");
+    }
   } else {
     printf(" unsupported type %s ", k.key_type().c_str());
   }
@@ -1110,39 +1719,93 @@ bool verify_signed_attestation(int serialized_size, byte* serialized,
   return fRet;
 }
 
-bool make_signed_claim(const claim_message& claim, const key_message& key,
+bool make_signed_claim( const char* alg, const claim_message& claim, const key_message& key,
     signed_claim_message* out) {
 
   string serialized_claim;
-  if(!claim.SerializeToString(&serialized_claim))
+  if(!claim.SerializeToString(&serialized_claim)) {
+    printf("make_signed_claim: serialize claim failed\n");
     return false;
+  }
 
-  out->set_signing_algorithm("rsa-2048-sha256-pkcs-sign");
+  out->set_signing_algorithm(alg);
   out->set_serialized_claim_message((void*)serialized_claim.data(), serialized_claim.size());
 
-  RSA* r = RSA_new();
-  if (!key_to_RSA(key, r))
-    return false;
+  int sig_size = 0;
+  bool success = false;
+  if (strcmp(alg, "rsa-2048-sha256-pkcs-sign") == 0) {
+    RSA* r = RSA_new();
+    if (!key_to_RSA(key, r)) {
+      printf("make_signed_claim: key_to_RSA failed\n");
+      return false;
+    }
 
-  int sig_size = RSA_size(r);
-  byte sig[sig_size];
-  bool success = rsa_sha256_sign(r, serialized_claim.size(), (byte*)serialized_claim.data(),
-    &sig_size, sig);
-  RSA_free(r);
-  if (!success)
-    return false;
+    sig_size = RSA_size(r);
+    byte sig[sig_size];
+    success = rsa_sha256_sign(r, serialized_claim.size(), (byte*)serialized_claim.data(),
+      &sig_size, sig);
+    RSA_free(r);
 
-  // sign serialized claim
-  key_message* psk = new(key_message);
-  if (!private_key_to_public_key(key, psk))
+    // sign serialized claim
+    key_message* psk = new key_message;
+    if (!private_key_to_public_key(key, psk)) {
+      printf("make_signed_claim: private_key_to_public_key failed\n");
+      return false;
+    }
+    out->set_allocated_signing_key(psk);
+    out->set_signing_algorithm(alg);
+    out->set_signature((void*)sig, sig_size);
+  } else if (strcmp(alg, "rsa-4096-sha384-pkcs-sign") == 0) {
+    RSA* r = RSA_new();
+    if (!key_to_RSA(key, r)) {
+      printf("make_signed_claim: key_to_RSA failed\n");
+      return false;
+    }
+
+    sig_size = RSA_size(r);
+    byte sig[sig_size];
+    success = rsa_sign("sha-384", r, serialized_claim.size(), (byte*)serialized_claim.data(),
+      &sig_size, sig);
+    if (!success) {
+      printf("make_signed_claim: rsa_sign failed\n");
+    }
+    RSA_free(r);
+
+    // sign serialized claim
+    key_message* psk = new key_message;
+    if (!private_key_to_public_key(key, psk)) {
+      printf("make_signed_claim: private_key_to_public_key failed\n");
+      return false;
+    }
+    out->set_allocated_signing_key(psk);
+    out->set_signing_algorithm(alg);
+    out->set_signature((void*)sig, sig_size);
+  } else if (strcmp(alg, "ecc-384-sha384-pkcs-sign") == 0) {
+    EC_KEY* k = key_to_ECC(key);
+    if (k == nullptr) {
+      printf("make_signed_claim: to_ECC failed\n");
+      return false;
+    }
+    sig_size = 2 * ECDSA_size(k);
+    byte sig[sig_size];
+
+    success = ecc_sign("sha-384", k, serialized_claim.size(), (byte*)serialized_claim.data(),
+      &sig_size, sig);
+    EC_KEY_free(k);
+
+    // sign serialized claim
+    key_message* psk = new key_message;
+    if (!private_key_to_public_key(key, psk))
+      return false;
+    out->set_allocated_signing_key(psk);
+    out->set_signature((void*)sig, sig_size);
+  } else {
     return false;
-  out->set_allocated_signing_key(psk);
-  out->set_signature((void*)sig, sig_size);
-  return true;
+  }
+  return success;
 }
 
 bool verify_signed_claim(const signed_claim_message& signed_claim, const key_message& key) {
-
   if (!signed_claim.has_serialized_claim_message() || !signed_claim.has_signing_key() ||
       !signed_claim.has_signing_algorithm() || !signed_claim.has_signature())
     return false;
@@ -1177,20 +1840,41 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   if (compare_time(t_na, t_now) < 0)
      return false;
 
-  if (signed_claim.signing_algorithm() != "rsa-2048-sha256-pkcs-sign")
+  bool success = false;
+  if (signed_claim.signing_algorithm() == "rsa-2048-sha256-pkcs-sign") {
+    RSA* r = RSA_new();
+    if (!key_to_RSA(key, r))
+      return false;
+    success = rsa_sha256_verify(r, (int)signed_claim.serialized_claim_message().size(),
+        (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
+        (byte*)signed_claim.signature().data());
+    RSA_free(r);
+  } else if (signed_claim.signing_algorithm() == "rsa-4096-sha384-pkcs-sign") {
+    RSA* r = RSA_new();
+    if (!key_to_RSA(key, r)) {
+      return false;
+    }
+    success = rsa_verify("sha-384", r, (int)signed_claim.serialized_claim_message().size(),
+        (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
+        (byte*)signed_claim.signature().data());
+    RSA_free(r);
+    return success;
+  } else if (signed_claim.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
+    EC_KEY* k = key_to_ECC(key);
+    if (k == nullptr)
+      return false;
+    success = ecc_verify("sha-384", k, (int)signed_claim.serialized_claim_message().size(),
+        (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
+        (byte*)signed_claim.signature().data());
+    EC_KEY_free(k);
+  } else {
     return false;
-
-  RSA* r = RSA_new();
-  if (!key_to_RSA(key, r))
-    return false;
-
-  bool success = rsa_sha256_verify(r, (int)signed_claim.serialized_claim_message().size(),
-      (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
-      (byte*)signed_claim.signature().data());
-  RSA_free(r);
+  }
 
   return success;
 }
+
+// -----------------------------------------------------------------------
 
 bool vse_attestation(const string& descript, const string& enclave_type,
          const string& enclave_id, vse_clause& cl, string* serialized_attestation) {
@@ -1219,6 +1903,8 @@ bool vse_attestation(const string& descript, const string& enclave_type,
   at.SerializeToString(serialized_attestation);
   return true;
 }
+
+// -----------------------------------------------------------------------
 
 void print_storage_info(const storage_info_message& smi) {
   printf("\nStorage info:\n");
@@ -1253,6 +1939,8 @@ void print_protected_blob(protected_blob_message& pb) {
   }
 }
 
+// -----------------------------------------------------------------------
+
 int add_ext(X509 *cert, int nid, const char *value) {
   X509_EXTENSION *ex;
   X509V3_CTX ctx;
@@ -1272,23 +1960,10 @@ int add_ext(X509 *cert, int nid, const char *value) {
 
 // Caller should have allocated X509
 // name is some printable version of the measurement
-bool produce_artifact(key_message& signing_key, string& issuer_name_str, string& issuer_organization_str,
-                      key_message& subject_key, string& subject_name_str, string& subject_organization_str,
+bool produce_artifact(key_message& signing_key, string& issuer_name_str,
+                      string& issuer_organization_str, key_message& subject_key,
+                      string& subject_name_str, string& subject_organization_str,
                       uint64_t sn, double secs_duration, X509* x509, bool is_root) {
-
-  RSA* signing_rsa_key = RSA_new();
-  if (!key_to_RSA(signing_key, signing_rsa_key))
-    return false;
-  EVP_PKEY* signing_pkey = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(signing_pkey, signing_rsa_key);
-  X509_set_pubkey(x509, signing_pkey);
-
-  RSA* subject_rsa_key = RSA_new();
-  if (!key_to_RSA(subject_key, subject_rsa_key))
-    return false;
-  EVP_PKEY* subject_pkey = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
-  X509_set_pubkey(x509, subject_pkey);
 
   ASN1_INTEGER* a = ASN1_INTEGER_new();
   ASN1_INTEGER_set_uint64(a, sn);
@@ -1324,17 +1999,60 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str, string&
     add_ext(x509, NID_basic_constraints, "critical,CA:TRUE");
   }
 
-  X509_sign(x509, signing_pkey, EVP_sha256());
+  if (signing_key.key_type() == "rsa-1024-private" ||
+      signing_key.key_type() == "rsa-2048-private" ||
+      signing_key.key_type() == "rsa-4096-private") {
+    RSA* signing_rsa_key = RSA_new();
+    if (!key_to_RSA(signing_key, signing_rsa_key))
+      return false;
+    EVP_PKEY* signing_pkey = EVP_PKEY_new();
+    EVP_PKEY_set1_RSA(signing_pkey, signing_rsa_key);
+    X509_set_pubkey(x509, signing_pkey);
+
+    RSA* subject_rsa_key = RSA_new();
+    if (!key_to_RSA(subject_key, subject_rsa_key))
+      return false;
+    EVP_PKEY* subject_pkey = EVP_PKEY_new();
+    EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
+    X509_set_pubkey(x509, subject_pkey);
+    if (signing_key.key_type() == "rsa-4096-private") {
+      X509_sign(x509, signing_pkey, EVP_sha384());
+    } else {
+      X509_sign(x509, signing_pkey, EVP_sha256());
+    }
+    EVP_PKEY_free(signing_pkey);
+    EVP_PKEY_free(subject_pkey);
+    RSA_free(signing_rsa_key);
+    RSA_free(subject_rsa_key);
+  } else if (signing_key.key_type() == "ecc-384-private") {
+    EC_KEY* signing_ecc_key = key_to_ECC(signing_key);
+    if (signing_ecc_key == nullptr)
+      return false;
+    EVP_PKEY* signing_pkey = EVP_PKEY_new();
+    EVP_PKEY_set1_EC_KEY(signing_pkey, signing_ecc_key);
+    X509_set_pubkey(x509, signing_pkey);
+
+    EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
+    if (subject_ecc_key == nullptr)
+      return false;
+    EVP_PKEY* subject_pkey = EVP_PKEY_new();
+    EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
+    X509_set_pubkey(x509, subject_pkey);
+    X509_sign(x509, signing_pkey, EVP_sha384());
+    EVP_PKEY_free(signing_pkey);
+    EVP_PKEY_free(subject_pkey);
+    EC_KEY_free(signing_ecc_key);
+    EC_KEY_free(subject_ecc_key);
+  } else {
+    printf("Unsupported algorithm\n");
+    return false;
+  }
 
   ASN1_INTEGER_free(a);
   ASN1_TIME_free(tm_start);
   ASN1_TIME_free(tm_end);
-  RSA_free(signing_rsa_key);
-  RSA_free(subject_rsa_key);
   X509_NAME_free(subject_name);
   X509_NAME_free(issuer_name);
-  EVP_PKEY_free(signing_pkey);
-  EVP_PKEY_free(subject_pkey);
   return true;
 }
 
@@ -1343,35 +2061,65 @@ bool verify_artifact(X509& cert, key_message& verify_key,
     key_message* subject_key, string* subject_name_str, string* subject_organization_str,
     uint64_t* sn) {
 
-  RSA* verify_rsa_key = RSA_new();
-  if (!key_to_RSA(verify_key, verify_rsa_key))
+  bool success = false;
+  if (verify_key.key_type() == "rsa-1024-public" ||
+      verify_key.key_type() == "rsa-1024-private" ||
+      verify_key.key_type() == "rsa-2048-private" ||
+      verify_key.key_type() == "rsa-2048-private" ||
+      verify_key.key_type() == "rsa-4096-private" ||
+      verify_key.key_type() == "rsa-4096-private") {
+    EVP_PKEY* verify_pkey = EVP_PKEY_new();
+    RSA* verify_rsa_key = RSA_new();
+    if (!key_to_RSA(verify_key, verify_rsa_key))
+      return false;
+    EVP_PKEY_set1_RSA(verify_pkey, verify_rsa_key);
+
+    EVP_PKEY* subject_pkey = X509_get_pubkey(&cert);
+    RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
+    if (!RSA_to_key(subject_rsa_key, subject_key))
+      return false;
+    success = (X509_verify(&cert, verify_pkey) == 1);
+    RSA_free(verify_rsa_key);
+    RSA_free(subject_rsa_key);
+    EVP_PKEY_free(verify_pkey);
+    EVP_PKEY_free(subject_pkey);
+  } else if (verify_key.key_type() == "ecc-384-public" ||
+             verify_key.key_type() == "ecc-384-private") {
+    EVP_PKEY* verify_pkey = EVP_PKEY_new();
+    EC_KEY* verify_ecc_key = key_to_ECC(verify_key);
+    if (verify_ecc_key == nullptr) 
+      return false;
+    EVP_PKEY_set1_EC_KEY(verify_pkey, verify_ecc_key);
+
+    EVP_PKEY* subject_pkey = X509_get_pubkey(&cert);
+    EC_KEY* subject_ecc_key= EVP_PKEY_get1_EC_KEY(subject_pkey);
+    if (!ECC_to_key(subject_ecc_key, subject_key))
+      return false;
+    success = (X509_verify(&cert, verify_pkey) == 1);
+    EC_KEY_free(verify_ecc_key);
+    EC_KEY_free(subject_ecc_key);
+    EVP_PKEY_free(verify_pkey);
+    EVP_PKEY_free(subject_pkey);
+  } else {
+    printf("Unsupported key type\n");
     return false;
-  EVP_PKEY* verify_pkey = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(verify_pkey, verify_rsa_key);
+  }
 
-  EVP_PKEY* subject_pkey = X509_get_pubkey(&cert);
-  RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
-  if (!RSA_to_key(subject_rsa_key, subject_key))
-    return false;
-
-  bool success = (X509_verify(&cert, verify_pkey) == 1);
-
+  // Todo: report other cert values
   X509_NAME* subject_name = X509_get_subject_name(&cert);
-  char name_buf[1024];
-  if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, 1024) < 0)
+  const int max_buf = 2048;
+  char name_buf[max_buf];
+  if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, max_buf) < 0)
     success = false;
   else {
     subject_name_str->assign((const char*) name_buf);
   }
  
-  RSA_free(verify_rsa_key);
-  RSA_free(subject_rsa_key);
-  EVP_PKEY_free(verify_pkey);
-  EVP_PKEY_free(subject_pkey);
   X509_NAME_free(subject_name);
-  return success;;
+  return success;
 }
 
+// -----------------------------------------------------------------------
 
 bool asn1_to_x509(const string& in, X509 *x) {
   int len = in.size();
@@ -1444,6 +2192,8 @@ int sized_ssl_read(SSL* ssl, string* out) {
 #endif
 }
 
+// -----------------------------------------------------------------------
+
 int sized_socket_read(int fd, string* out) {
   out->clear();
 #if 1
@@ -1476,3 +2226,116 @@ int sized_socket_read(int fd, string* out) {
   return n;
 #endif
 }
+
+// -----------------------------------------------------------------------
+
+// make a public key from the X509 cert
+bool x509_to_public_key(X509* x, key_message* k) {
+  EVP_PKEY* subject_pkey = X509_get_pubkey(x);
+  if (subject_pkey == nullptr)
+    return false;
+  if (EVP_PKEY_base_id(subject_pkey) == EVP_PK_RSA) {
+    int size = EVP_PKEY_bits(subject_pkey); 
+    RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
+    if (!RSA_to_key(subject_rsa_key, k))
+      return false;
+    switch(size) {
+    case 1024:
+      k->set_key_type("rsa-1024-public");
+      break;
+    case 2048:
+      k->set_key_type("rsa-2048-public");
+      break;
+    case 4096:
+      k->set_key_type("rsa-4096-public");
+      break;
+    default:
+      return false;
+    }
+    // free subject_rsa_key?
+  } else if (EVP_PKEY_base_id(subject_pkey) == EVP_PK_EC) {
+    int size = EVP_PKEY_bits(subject_pkey); 
+    EC_KEY* subject_ecc_key= EVP_PKEY_get1_EC_KEY(subject_pkey);
+    if (!ECC_to_key(subject_ecc_key, k))
+      return false;
+    if (size == 384) {
+      k->set_key_type("ecc-384-public");
+    } else {
+      return false;
+    }
+    // free subject_ecc_key?
+  } else {
+    return false;
+  }
+
+  X509_NAME* subject_name = X509_get_subject_name(x);
+  const int max_buf = 2048;
+  char name_buf[max_buf];
+  if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, max_buf) < 0)
+    return false;
+  k->set_key_name((const char*) name_buf);
+  k->set_key_format("vse-key");
+
+  EVP_PKEY_free(subject_pkey);
+  X509_NAME_free(subject_name);
+
+  return true;
+}
+
+bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k) {
+  string root_name("root");
+
+  if (type == "rsa-4096-private" || type == "rsa-2048-private" || type == "rsa-1024-private") {
+    int n = 2048;
+    if (type == "rsa-2048-private")
+      n = 2048;
+    else if (type == "rsa-1024-private")
+      n = 1024;
+    else if (type == "rsa-4096-private")
+      n = 4096;
+
+    if (!make_certifier_rsa_key(n,  k))
+      return false;
+    k->set_key_format("vse-key");
+    k->set_key_type(type);
+    k->set_key_name(name);
+    double duration = 5.0 * 86400.0 * 365.0;
+    X509* cert = X509_new();
+    if (cert == nullptr)
+      return false;
+    if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name, root_name,
+                      01L, duration, cert, true)) {
+      return false;
+    }
+    string cert_asn;
+    if (!x509_to_asn1(cert, &cert_asn))
+      return false;
+    k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
+    X509_free(cert);
+  } else if (type == "ecc_384-private") {
+    if (!make_certifier_ecc_key(384,  k))
+      return false;
+    k->set_key_format("vse-key");
+    k->set_key_type(type);
+    k->set_key_name(name);
+    double duration = 5.0 * 86400.0 * 365.0;
+    X509* cert = X509_new();
+    if (cert == nullptr)
+      return false;
+    if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name, root_name,
+                      01L, duration, cert, true)) {
+      return false;
+    }
+    string cert_asn;
+    if (!x509_to_asn1(cert, &cert_asn))
+      return false;
+    k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
+    X509_free(cert);
+  } else {
+    return false;
+  }
+  return true;
+}
+
+// -----------------------------------------------------------------------
+

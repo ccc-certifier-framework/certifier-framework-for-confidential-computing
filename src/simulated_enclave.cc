@@ -89,7 +89,6 @@ bool simulated_Init(const string& asn1_policy_cert, const string& attest_key_fil
     return false;
   }
 
-  // my_attestation_key.set_key_name("local-attestation-key");
   my_attestation_key.set_key_name("attestKey");
   rsa_attestation_key = RSA_new();
   if (!key_to_RSA(my_attestation_key, rsa_attestation_key)) {
@@ -213,7 +212,7 @@ bool simulated_Attest(const string& enclave_type,
     return false;
 
   signed_claim_message scm;
-  if (!make_signed_claim(cm, my_attestation_key, &scm))
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm, my_attestation_key, &scm))
     return false;
   string ser_scm;
   if (!scm.SerializeToString(&ser_scm))
@@ -229,6 +228,7 @@ bool simulated_Attest(const string& enclave_type,
 bool simulated_GetParentEvidence(string* out) {
   return false;
 }
+
 
 // Delete this eventually.  It is only used in certifier_tests.
 bool simulator_init() {

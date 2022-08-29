@@ -236,7 +236,7 @@ int main(int an, char** av) {
   // Init policy key info
   if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert)) {
     printf("Can't init policy key\n");
-    return false;
+    return 1;
   }
 
   // Init simulated enclave
@@ -249,16 +249,23 @@ int main(int an, char** av) {
   string attest_endorsement_file_name(FLAGS_data_dir);
   attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
+  // Standard algorithms for the enclave
+  string public_key_alg("rsa-2048");
+  string symmetric_key_alg("aes-256");;
+  string hash_alg("sha-256");
+  string hmac_alg("sha-256-hmac");
+
   if (!app_trust_data->initialize_simulated_enclave_data(attest_key_file_name,
       measurement_file_name, attest_endorsement_file_name)) {
     printf("Can't init simulated enclave\n");
-    return false;
+    return 1;
   }
 
   // Carry out operation
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init()) {
+    if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
+          hash_alg, hmac_alg)) {
       printf("cold-init failed\n");
       ret = 1;
     }

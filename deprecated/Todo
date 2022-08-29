@@ -6,8 +6,8 @@
  6. Write a service for SEV
  7. Add a keystore app
  8. Test all the sample apps on all providers.
- 9. Add Asylo support
-10. Test with Gramine?
+ 9. Test with Gramine?
 
-
+my_attestation_key is in ./src/test_support.cc ./src/simulated_enclave.cc ./src/primitive_tests.cc
+Get rid of it
 

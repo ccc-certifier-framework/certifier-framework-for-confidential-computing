@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include  <netdb.h>
+#include <netdb.h>
 #include <openssl/ssl.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
@@ -95,7 +95,8 @@ public:
   bool save_store();
   bool fetch_store();
   void clear_sensitive_data();
-  bool cold_init();
+  bool cold_init(const string& public_key_alg, const string& symmetric_key_alg,
+                 const string& hash_alg, const string& hmac_alg);
   bool warm_restart();
   bool certify_me(const string& host_name, int port);
   bool GetPlatformSaysAttestClaim(signed_claim_message* scm);
@@ -121,5 +122,48 @@ bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, S
 bool init_client_ssl(X509* x509_root_cert, key_message& private_key,
     const string& host_name, int port, int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl);
 void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl);
+
+
+class secure_authenticated_channel {
+public:
+  string role_;
+  bool channel_initialized_;
+  key_message private_key_;
+  SSL_CTX* ssl_ctx_;
+  X509_STORE_CTX* store_ctx_;
+  SSL* ssl_;
+  int sock_;
+  string asn1_root_cert_;
+  X509* root_cert_;
+  X509* my_cert_;
+  string asn1_my_cert_;
+  X509* peer_cert_;
+  string peer_id_;
+
+  secure_authenticated_channel(string& role);  // role is client or server
+  ~secure_authenticated_channel();
+
+  bool client_auth_server();
+  bool client_auth_client();
+  bool load_client_certs_and_key();
+
+  bool init_client_ssl(const string& host_name, int port, string& asn1_root_cert,
+      key_message& private_key, string& private_key_cert);
+  bool init_server_ssl(const string& host_name, int port, string& asn1_root_cert,
+      key_message& private_key, string& private_key_cert);
+
+  void server_channel_accept_and_auth(void (*func)(secure_authenticated_channel&));
+
+  int read(string* out);
+  int read(int size, byte* b);
+  int write(int size, byte* b);
+  void close();
+  bool get_peer_id(string* out);
+};
+
+void server_dispatch(const string& host_name, int port,
+      string& asn1_root_cert, key_message& private_key,
+      string& private_key_cert, void (*)(secure_authenticated_channel&));
+
 #endif
 

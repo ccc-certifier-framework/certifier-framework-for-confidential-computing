@@ -61,18 +61,34 @@ bool encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size);
 bool decrypt(byte *in, int in_len, byte *key,
             byte *iv, byte *out, int* size_out);
-bool digest_message(const byte* message, int message_len,
+
+bool digest_message(const char* alg, const byte* message, int message_len,
     byte* digest, unsigned int digest_len);
+
+
 bool authenticated_encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size);
 bool authenticated_decrypt(byte* in, int in_len, byte *key,
             byte *out, int* out_size);
 
+bool authenticated_encrypt(const char* alg, byte* in, int in_len, byte *key,
+            byte *iv, byte *out, int* out_size);
+bool authenticated_decrypt(const char* alg, byte* in, int in_len, byte *key,
+            byte *out, int* out_size);
+
 bool make_certifier_rsa_key(int n,  key_message* k);
 bool rsa_public_encrypt(RSA* key, byte* data, int data_len, byte *encrypted, int* size_out);
 bool rsa_private_decrypt(RSA* key, byte* enc_data, int data_len, byte* decrypted, int* size_out);
-bool rsa_sha256_sign(RSA*key, int size, byte* msg, int* size_out, byte* out);
-bool rsa_sha256_verify(RSA*key, int size, byte* msg, int size_sig, byte* sig);
+
+// replace these two
+bool rsa_sha256_sign(RSA* key, int size, byte* msg, int* size_out, byte* out);
+bool rsa_sha256_verify(RSA *key, int size, byte* msg, int size_sig, byte* sig);
+bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* size_out, byte* out);
+bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int size_sig, byte* sig);
+
+bool make_certifier_ecc_key(int n,  key_message* k);
+bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, byte* out);
+bool ecc_verify(const char* alg, EC_KEY *key, int size, byte* msg, int size_sig, byte* sig);
 
 bool same_key(const key_message& k1, const key_message& k2);
 bool same_measurement(string& m1, string& m2);
@@ -82,8 +98,14 @@ bool same_vse_claim(const vse_clause& c1, const vse_clause& c2);
 bool generate_new_rsa_key(int num_bits, RSA* r);
 bool key_to_RSA(const key_message& k, RSA* r);
 bool RSA_to_key(RSA* r, key_message* k);
+
+EC_KEY* generate_new_ecc_key(int num_bits);
+EC_KEY* key_to_ECC(const key_message& kr);
+bool ECC_to_key(const EC_KEY* e, key_message* k);
+
 bool private_key_to_public_key(const key_message& in, key_message* out);
 bool get_random(int num_bits, byte* out);
+
 bool make_key_entity(const key_message& key, entity_message* ent);
 bool make_measurement_entity(string& measurement, entity_message* ent);
 bool make_unary_vse_clause(const entity_message& subject, string& verb,
@@ -108,7 +130,7 @@ void print_protected_blob(protected_blob_message& pb);
 
 bool vse_attestation(const string& descript, const string& enclave_type,
         const string& enclave_id, vse_clause& cl, string* serialized_attestation);
-bool make_signed_claim(const claim_message& claim, const key_message& key,
+bool make_signed_claim(const char* alg, const claim_message& claim, const key_message& key,
     signed_claim_message* out);
 bool verify_signed_claim(const signed_claim_message& claim, const key_message& key);
 bool verify_signed_attestation(int serialized_size, byte* serialized,
@@ -125,6 +147,7 @@ void print_time_point(time_point& t);
 void print_entity(const entity_message& em);
 void print_key(const key_message& k);
 void print_rsa_key(const rsa_message& rsa);
+void print_ecc_key(const ecc_message& rsa);
 
 // X509 artifact
 bool produce_artifact(key_message& signing_key, string& issuer_name_str, string& issuer_description_str,
@@ -147,4 +170,6 @@ bool make_root_key_with_cert(string& type, string& name, string& issuer_name, ke
 int sized_pipe_read(int fd, string* out);
 int sized_ssl_read(SSL* ssl, string* out);
 int sized_socket_read(int fd, string* out);
+
+bool x509_to_public_key(X509* x, key_message* k);
 #endif

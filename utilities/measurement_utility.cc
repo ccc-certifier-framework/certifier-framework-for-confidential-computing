@@ -43,7 +43,7 @@ int hash_utility(string& input, string& output) {
     printf("Can't read %s\n", input.c_str());
     return 1;
   }
-  if (!digest_message(to_hash, in_size, out, out_len)) {
+  if (!digest_message("sha256", to_hash, in_size, out, out_len)) {
     free(to_hash);
     return 1;
   }

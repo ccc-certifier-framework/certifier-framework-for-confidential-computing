@@ -156,7 +156,7 @@ bool measure_binary(const string& file, string* m) {
   }
   byte digest[32];
   unsigned int len = 32;
-  if (!digest_message(file_contents, bytes_read,
+  if (!digest_message("sha256", file_contents, bytes_read,
           digest, len)) {
     printf("Digest failed\n");
     free(file_contents);
@@ -170,7 +170,7 @@ bool measure_binary(const string& file, string* m) {
 bool measure_in_mem_binary(byte* file_contents, int size, string* m) {
   byte digest[32];
   unsigned int len = 32;
-  if (!digest_message(file_contents, (unsigned) size,
+  if (!digest_message("sha256", file_contents, (unsigned) size,
           digest, len)) {
     printf("Digest failed\n");
     return false;
@@ -287,7 +287,7 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
   }
 
   signed_claim_message scm;
-  if (!make_signed_claim(cm, app_trust_data->private_service_key_, &scm)) {
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm, app_trust_data->private_service_key_, &scm)) {
     printf("soft_Attest: Signing failed\n");
     return false;
   }
@@ -669,6 +669,14 @@ done:
 
 // ------------------------------------------------------------------------------
 
+
+// Standard algorithms for the enclave
+string public_key_alg("rsa-2048");
+string symmetric_key_alg("aes-256");;
+string hash_alg("sha-256");
+string hmac_alg("sha-256-hmac");
+
+
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -727,7 +735,8 @@ int main(int an, char** av) {
 
   // initialize and certify service data
   if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
-    if (!helper.cold_init()) {
+    if (!helper.cold_init(public_key_alg, symmetric_key_alg,
+            hash_alg, hmac_alg)) {
       printf("cold-init failed\n");
       return 1;
     }

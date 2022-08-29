@@ -33,6 +33,8 @@
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 
+#include "src/asylo/asylo_api.h"
+
 #include "policy_key.cc"
 
 #define FLAGS_print_all true
@@ -79,7 +81,6 @@ const int app_symmetric_key_size = 64;
 byte app_symmetric_key[app_symmetric_key_size];
 key_message symmertic_key_for_protect;
 
-
 void print_trust_data() {
   if (!trust_data_initialized)
     return;
@@ -96,6 +97,81 @@ void print_trust_data() {
   printf("\nBlob key\n");
   print_key(symmertic_key_for_protect);
   printf("\n\n");
+}
+
+bool certifier_test_seal(void) {
+  string enclave_type("asylo-enclave");
+  string enclave_id("local-machine");
+
+  int secret_to_seal_size = 32;
+  byte secret_to_seal[secret_to_seal_size];
+  int sealed_size_out = 1024;
+  byte sealed[sealed_size_out];
+  int recovered_size = 32;
+  byte recovered[recovered_size];
+
+  memset(sealed, 0, sealed_size_out);
+  memset(recovered, 0, recovered_size);
+  for (int i = 0; i < secret_to_seal_size; i++)
+    secret_to_seal[i]= (7 * i)%16;
+
+  if (FLAGS_print_all) {
+    printf("\nSeal\n");
+    printf("to seal  (%d): ", secret_to_seal_size); print_bytes(secret_to_seal_size, secret_to_seal); printf("\n");
+  }
+
+  if (!Seal(enclave_type, enclave_id, secret_to_seal_size, secret_to_seal, &sealed_size_out, sealed))
+    return false;
+
+  if (FLAGS_print_all) {
+    printf("sealed   (%d): ", sealed_size_out); print_bytes(sealed_size_out, sealed); printf("\n");
+  }
+
+  if (!Unseal(enclave_type, enclave_id, sealed_size_out, sealed, &recovered_size, recovered))
+    return false;
+
+  if (FLAGS_print_all) {
+    printf("recovered: (%d)", recovered_size); print_bytes(recovered_size, recovered); printf("\n");
+  }
+
+  return true;
+}
+
+bool asylo_local_certify() {
+  string enclave_type("asylo-enclave");
+  string evidence_descriptor("asylo-evidence");
+  extern bool simulator_init(void);
+  if (!simulator_initialized) {
+    if (!simulator_init()) {
+      return false;
+    }
+    simulator_initialized = true;
+  }
+
+  if (!test_local_certify(enclave_type,
+    FLAGS_read_measurement_file,
+    FLAGS_trusted_measurements_file,
+    evidence_descriptor)) {
+    printf("test_local_certify failed\n");
+    return false;
+  }
+
+  simulator_initialized = false;
+  return true;
+}
+
+bool asylo_seal() {
+  if (!certifier_test_seal()) {
+    printf("Sealing test failed\n");
+    return false;
+  }
+  printf("Sealing test succeeded\n");
+  return true;
+}
+
+bool asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs) {
+  setFuncs(asyloFuncs);
+  return true;
 }
 
 bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
@@ -173,11 +249,11 @@ bool warm_restart() {
 }
 
 bool certify_me() {
+  printf("Begin certify_me\n");
   if (!app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
       printf("certify_me failed\n");
       return false;
     }
-
   return true;
 }
 

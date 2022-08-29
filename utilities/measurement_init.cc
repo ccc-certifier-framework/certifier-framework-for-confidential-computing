@@ -127,7 +127,8 @@ int main(int an, char** av) {
     return 0;
   } else if (FLAGS_mrenclave.size() != 0) {
     size_t size = FLAGS_mrenclave.size();
-    char hex[size + 2] = {0};
+    char hex[size + 2];
+    memset((byte*)hex, 0, size + 2);
     const char *pos = (const char *)hex;
     byte m[measurment_size];
     if (size % 2) {

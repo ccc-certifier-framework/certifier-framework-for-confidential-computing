@@ -24,6 +24,7 @@ DEFINE_string(output, "signed_claim.bin",  "output file");
 DEFINE_string(private_key_file, "",  "signing key");
 DEFINE_double(duration, 24,  "validity in hours");
 DEFINE_string(descipt, "",  "descriptor");
+DEFINE_string(signing_alg, "rsa-2048-sha256-pkcs-sign",  "signing algorithm");
 
 bool get_clause_from_file(const string& in, vse_clause* cl) {
   int in_size = file_size(in);
@@ -126,7 +127,7 @@ int main(int an, char** av) {
   printf("\n");
 
   signed_claim_message sc_out;
-  if (!make_signed_claim(cm_out, signing_key, &sc_out)) {
+  if (!make_signed_claim(FLAGS_signing_alg.c_str(), cm_out, signing_key, &sc_out)) {
     printf("Can't make claim\n");
     return 1;
   }

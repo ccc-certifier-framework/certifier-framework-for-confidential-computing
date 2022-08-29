@@ -18,7 +18,7 @@ endif
 #GOOGLE_INCLUDE=/usr/local/include/google
 #endif
 
-ENABLE_SEV=1
+# ENABLE_SEV=1
 
 LOCAL_LIB=/usr/local/lib
 
@@ -57,24 +57,26 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 ifdef ENABLE_SEV
 dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
 $(O)/certificate_tests.o $(O)/claims_tests.o $(O)/primitive_tests.o \
-$(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
-$(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o
-pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
+$(O)/cc_helpers.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
 $(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o
 else
 dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
-$(O)/application_enclave.o $(O)/claims_tests.o $(O)/primitive_tests.o \
-$(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o
-pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
-$(O)/application_enclave.o
+$(O)/cc_helpers.o $(O)/application_enclave.o $(O)/claims_tests.o $(O)/primitive_tests.o \
+$(O)/certificate_tests.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o
 endif
+pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o
 
-all:	certifier_tests.exe pipe_read_test.exe
+channel_dobj=	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
+$(O)/application_enclave.o $(O)/cc_helpers.o
+
+all:	certifier_tests.exe test_channel.exe pipe_read_test.exe
+
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/certifier_tests.exe $(EXE_DIR)/pipe_read_test.exe
+	rm $(EXE_DIR)/certifier_tests.exe $(EXE_DIR)/pipe_read_test.exe $(EXE_DIR)/test_channel.exe
 
 certifier_tests.exe: $(dobj) 
 	@echo "linking executable files"
@@ -120,6 +122,10 @@ $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(S)/certifier.cc
 
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.pb.h $(I)/cc_helpers.h
+	@echo "compiling cc_helpers.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc
+
 $(O)/support.o: $(S)/support.cc $(I)/support.h
 	@echo "compiling support.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/support.o $(S)/support.cc
@@ -155,3 +161,11 @@ pipe_read_test.exe: $(pipe_read_dobj)
 $(O)/pipe_read_test.o: $(S)/pipe_read_test.cc
 	@echo "compiling pipe_read_test.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/pipe_read_test.o $(S)/pipe_read_test.cc
+
+test_channel.exe: $(channel_dobj) 
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/test_channel.exe $(channel_dobj) $(LDFLAGS)
+
+$(O)/test_channel.o: $(S)/test_channel.cc
+	@echo "compiling test_channel.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/test_channel.o $(S)/test_channel.cc
