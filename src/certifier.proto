@@ -114,7 +114,7 @@ message attestation {
 };
 
 // So far formats are: "vse-clause", "vse-attestation",
-// "vse-key" (for keys an measurements) and soon X509.
+// oe_attestation and sev-attestation
 message claim_message {
   optional string claim_format              = 1;
   optional string claim_descriptor          = 2;

@@ -2040,7 +2040,7 @@ void print_proof(proof& pf) {
 
 // -------------------------------------------------------------------
 
-bool construct_attestation(entity_message& attest_key_entity, entity_message& auth_key_entity,
+bool construct_vse_attestation_statement(entity_message& attest_key_entity, entity_message& auth_key_entity,
         entity_message& measurement_entity, vse_clause* vse_attest_clause) {
   string s1("says");
   string s2("speaks-for");

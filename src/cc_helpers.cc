@@ -710,8 +710,8 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   // Now we have all the Principals for the attestation.
   // Next, we construct the vse attestation.
   // SGX doesn't need this.
-  // construct_attestation creates the vse statement representing the
-  // attestation.
+  // ../sample_apps/analytics_example/enclave/ecalls.cc creates the
+  // vse statement representing the attestation.
   vse_clause vse_attest_clause;
   if (purpose_ == "authentication") {
     entity_message auth_key_entity;
@@ -720,7 +720,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       return false;
     }
 
-    if (!construct_attestation(attest_key_entity, auth_key_entity,
+    if (!construct_vse_attestation_statement(attest_key_entity, auth_key_entity,
           measurement_entity, &vse_attest_clause)) {
       printf("certify_me error 3\n");
       return false;
@@ -732,7 +732,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       return false;
     }
 
-    if (!construct_attestation(attest_key_entity, service_key_entity,
+    if (!construct_vse_attestation_statement(attest_key_entity, service_key_entity,
           measurement_entity, &vse_attest_clause)) {
       printf("certify_me error 3.5\n");
       return false;

@@ -235,7 +235,7 @@ bool statement_already_proved(const vse_clause& cl, proved_statements* are_prove
 // Certify API
 // -------------------------------------------------------------------
 
-bool construct_attestation(entity_message& attest_key_entity, entity_message& auth_key_entity,
+bool construct_vse_attestation_statement(entity_message& attest_key_entity, entity_message& auth_key_entity,
         entity_message& measurement_entity, vse_clause* vse_attest_clause);
 bool vse_attestation(const string& descript, const string& enclave_type,
         const string& enclave_id, vse_clause& cl, string* serialized_attestation);
