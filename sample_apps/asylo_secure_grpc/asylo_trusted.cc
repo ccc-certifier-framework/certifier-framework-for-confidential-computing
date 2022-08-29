@@ -169,7 +169,7 @@ bool asylo_seal() {
   return true;
 }
 
-bool asylo_setup_certifier_functions(AsyloCertifierServerFunctions asyloFuncs) {
+bool asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs) {
   setFuncs(asyloFuncs);
   return true;
 }
