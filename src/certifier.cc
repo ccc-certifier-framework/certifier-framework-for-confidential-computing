@@ -2093,28 +2093,21 @@ bool construct_what_to_say(string& enclave_type,
     // attestation-key says enclave-authentication-key speaks-for enclave-measurement
     string descript("test-attest");
     string enclave_id("test-simulated-enclave");
-    int size_out = 8192;
-    byte attest_out[size_out];
-    string final_serialized_attest;
-    string serialized_attest;
-    vse_clause c;
+
     vse_clause attest_statement;
     entity_message measurement_entity;
     entity_message attest_key_entity;
     entity_message enclave_key_entity;
-
     if (!make_key_entity(attest_pk, &attest_key_entity))
       return false;
     if (!make_key_entity(enclave_pk, &enclave_key_entity))
       return false;
     if (!make_measurement_entity(expected_measurement, &measurement_entity))
       return false;
-    string sf_verb("speaks-for");
-    if (!make_simple_vse_clause(enclave_key_entity, sf_verb, measurement_entity, &c))
+    if (!construct_vse_attestation_statement(attest_key_entity, enclave_key_entity,
+        measurement_entity, &attest_statement)) {
       return false;
-    string says_verb("says");
-    if (!make_indirect_vse_clause(attest_key_entity, says_verb, c, &attest_statement))
-      return false;
+    }
 
     if (!vse_attestation(descript, enclave_type, enclave_id,
           attest_statement, what_to_say))
