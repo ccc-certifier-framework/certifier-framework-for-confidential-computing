@@ -103,7 +103,8 @@ message vse_clauses {
 //  The claims are in "vse-clause.  Time is
 //  the time the attestation was signed.
 //  A signed attestation is just another signed claim.
-//  enclave types are "simulated-enclave" and "oe-enclave"
+//  Enclave types are "simulated-enclave", "oe-enclave",
+//  "application-enclave" and "sev-enclave"
 message attestation {
   optional string enclave_type              = 1;
   optional string key_id                    = 2;
