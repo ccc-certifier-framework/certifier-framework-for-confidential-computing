@@ -52,7 +52,6 @@ cc_library(
     includes = [ "include" ],
     srcs = [ "sample_apps/asylo_secure_grpc/asylo_untrusted.cc",
              "sample_apps/asylo_secure_grpc/certifier.pb.cc",
-             "sample_apps/asylo_secure_grpc/policy_key.cc",
     ],
     deps = [ ":openssl",
              ":cc_helpers",
@@ -85,6 +84,7 @@ cc_library(
     hdrs = glob([
         "include/*.h",
         "include/policy_key.cc",
+        "src/asylo/asylo_api.h",
     ]),
     includes = [ "include" ],
     srcs = [ "sample_apps/asylo_secure_grpc/asylo_trusted.cc",
@@ -93,6 +93,8 @@ cc_library(
              "src/simulated_enclave.cc",
              "src/application_enclave.cc",
              "src/cc_helpers.cc",
+             "src/test_support.cc",
+             "src/asylo/asylo_api.cc",
              "sample_apps/asylo_secure_grpc/certifier.pb.cc",
     ],
     deps = [
@@ -111,6 +113,7 @@ cc_library(
     ],
     copts = [
         "-Iinclude",
+        "-DASYLO_CERTIFIER",
     ],
     visibility = ["//visibility:public"],
 )
