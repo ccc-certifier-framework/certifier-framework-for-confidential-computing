@@ -585,49 +585,6 @@ done:
   return res;
 }
 
-bool construct_what_to_say(string& enclave_type,
-      key_message& attest_pk, key_message& enclave_pk,
-      string& expected_measurement, string* what_to_say) {
-
-  if (enclave_type == "simulated-enclave") {
-    // attestation-key says enclave-authentication-key speaks-for enclave-measurement
-    string descript("test-attest");
-    string enclave_id("test-simulated-enclave");
-    int size_out = 8192;
-    byte attest_out[size_out];
-    string final_serialized_attest;
-    string serialized_attest;
-    vse_clause c;
-    vse_clause attest_statement;
-    entity_message measurement_entity;
-    entity_message attest_key_entity;
-    entity_message enclave_key_entity;
-
-    if (!make_key_entity(attest_pk, &attest_key_entity))
-      return false;
-    if (!make_key_entity(enclave_pk, &enclave_key_entity))
-      return false;
-    if (!make_measurement_entity(expected_measurement, &measurement_entity))
-      return false;
-    string sf_verb("speaks-for");
-    if (!make_simple_vse_clause(enclave_key_entity, sf_verb, measurement_entity, &c))
-      return false;
-    string says_verb("says");
-    if (!make_indirect_vse_clause(attest_key_entity, says_verb, c, &attest_statement))
-      return false;
-
-    if (!vse_attestation(descript, enclave_type, enclave_id,
-          attest_statement, what_to_say))
-      return false;
-    } else if (enclave_type == "oe-enclave") {
-      if (!enclave_pk.SerializeToString(what_to_say))
-        return false;
-    } else {
-      return false;
-    }
-  return true;
-}
-
 #ifdef SEV_SNP
 extern bool sev_Init(const string& platform_certs_file);
 extern bool sev_Getmeasurement(int* size_out, byte* out);
@@ -2083,39 +2040,92 @@ void print_proof(proof& pf) {
 
 // -------------------------------------------------------------------
 
-// TLS client/server with auth
+bool construct_attestation(entity_message& attest_key_entity, entity_message& auth_key_entity,
+        entity_message& measurement_entity, vse_clause* vse_attest_clause) {
+  string s1("says");
+  string s2("speaks-for");
 
-
-int OpenConnection(const char* hostname, int port) {
-  struct hostent *host;
-  struct sockaddr_in addr;
-
-  if ((host = gethostbyname(hostname)) == NULL) {
-    return -1;
+  vse_clause auth_key_speaks_for_measurement;
+  if (!make_simple_vse_clause(auth_key_entity, s2, measurement_entity, &auth_key_speaks_for_measurement)) {
+    printf("Construct attestation error 1\n");
+    return false;
   }
-  int sd = socket(PF_INET, SOCK_STREAM, 0);
-  bzero(&addr, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = *(long*)(host->h_addr);
-  if (connect(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
-    close(sd);
-    return -1;
+  if (!make_indirect_vse_clause(attest_key_entity, s1, auth_key_speaks_for_measurement, vse_attest_clause)) {
+    printf("Construct attestation error 1\n");
+    return false;
   }
-  return sd;
+  return true;
 }
 
-SSL_CTX* InitCTX() {
-  SSL_CTX *ctx;
+bool vse_attestation(const string& descript, const string& enclave_type,
+         const string& enclave_id, vse_clause& cl, string* serialized_attestation) {
+  attestation at;
 
-  OpenSSL_add_all_algorithms();
-  SSL_load_error_strings();
-  SSL_METHOD* method = (SSL_METHOD*)SSLv23_client_method();
-  ctx = SSL_CTX_new(method);
-  if ( ctx == NULL ) {
-    return nullptr;
-  }
-  return ctx;
+  at.set_description(descript);
+  at.set_enclave_type(enclave_type);
+  int digest_size = digest_output_byte_size("sha-256");
+  int size_out= digest_size;
+  byte m[size_out];
+  memset(m, 0, size_out);
+  if (!Getmeasurement(enclave_type, enclave_id, &size_out, m))
+    return false;
+  at.set_measurement((void*)m, size_out);
+  time_point t_now;
+  if (!time_now(&t_now))
+    return false;
+  string time_str;
+  if (!time_to_string(t_now, &time_str))
+    return false;
+  vse_clause* cn = new(vse_clause);
+  cn->CopyFrom(cl);
+  at.set_allocated_clause(cn);
+  at.set_time(time_str);
+  string serialized;
+  at.SerializeToString(serialized_attestation);
+  return true;
+}
+
+bool construct_what_to_say(string& enclave_type,
+      key_message& attest_pk, key_message& enclave_pk,
+      string& expected_measurement, string* what_to_say) {
+
+  if (enclave_type == "simulated-enclave") {
+    // attestation-key says enclave-authentication-key speaks-for enclave-measurement
+    string descript("test-attest");
+    string enclave_id("test-simulated-enclave");
+    int size_out = 8192;
+    byte attest_out[size_out];
+    string final_serialized_attest;
+    string serialized_attest;
+    vse_clause c;
+    vse_clause attest_statement;
+    entity_message measurement_entity;
+    entity_message attest_key_entity;
+    entity_message enclave_key_entity;
+
+    if (!make_key_entity(attest_pk, &attest_key_entity))
+      return false;
+    if (!make_key_entity(enclave_pk, &enclave_key_entity))
+      return false;
+    if (!make_measurement_entity(expected_measurement, &measurement_entity))
+      return false;
+    string sf_verb("speaks-for");
+    if (!make_simple_vse_clause(enclave_key_entity, sf_verb, measurement_entity, &c))
+      return false;
+    string says_verb("says");
+    if (!make_indirect_vse_clause(attest_key_entity, says_verb, c, &attest_statement))
+      return false;
+
+    if (!vse_attestation(descript, enclave_type, enclave_id,
+          attest_statement, what_to_say))
+      return false;
+    } else if (enclave_type == "oe-enclave") {
+      if (!enclave_pk.SerializeToString(what_to_say))
+        return false;
+    } else {
+      return false;
+    }
+  return true;
 }
 
 // -------------------------------------------------------------------

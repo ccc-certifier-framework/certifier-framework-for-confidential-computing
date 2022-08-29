@@ -960,23 +960,6 @@ bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_
   return true;
 }
 
-bool construct_attestation(entity_message& attest_key_entity, entity_message& auth_key_entity,
-        entity_message& measurement_entity, vse_clause* vse_attest_clause) {
-  string s1("says");
-  string s2("speaks-for");
-
-  vse_clause auth_key_speaks_for_measurement;
-  if (!make_simple_vse_clause(auth_key_entity, s2, measurement_entity, &auth_key_speaks_for_measurement)) {
-    printf("Construct attestation error 1\n");
-    return false;
-  }
-  if (!make_indirect_vse_clause(attest_key_entity, s1, auth_key_speaks_for_measurement, vse_attest_clause)) {
-    printf("Construct attestation error 1\n");
-    return false;
-  }
-  return true;
-}
-
 // ---------------------------------------------------------------------------------------------------
 // Socket and SSL support
 

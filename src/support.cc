@@ -1876,36 +1876,6 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
 
 // -----------------------------------------------------------------------
 
-bool vse_attestation(const string& descript, const string& enclave_type,
-         const string& enclave_id, vse_clause& cl, string* serialized_attestation) {
-  attestation at;
-
-  at.set_description(descript);
-  at.set_enclave_type(enclave_type);
-  int digest_size = digest_output_byte_size("sha-256");
-  int size_out= digest_size;
-  byte m[size_out];
-  memset(m, 0, size_out);
-  if (!Getmeasurement(enclave_type, enclave_id, &size_out, m))
-    return false;
-  at.set_measurement((void*)m, size_out);
-  time_point t_now;
-  if (!time_now(&t_now))
-    return false;
-  string time_str;
-  if (!time_to_string(t_now, &time_str))
-    return false;
-  vse_clause* cn = new(vse_clause);
-  cn->CopyFrom(cl);
-  at.set_allocated_clause(cn);
-  at.set_time(time_str);
-  string serialized;
-  at.SerializeToString(serialized_attestation);
-  return true;
-}
-
-// -----------------------------------------------------------------------
-
 void print_storage_info(const storage_info_message& smi) {
   printf("\nStorage info:\n");
   if (smi.has_storage_type())

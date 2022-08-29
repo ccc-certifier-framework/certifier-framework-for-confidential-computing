@@ -204,10 +204,6 @@ bool dominates(predicate_dominance& root, const string& parent, const string& de
 bool make_enclave_name(string enclave_type, string* enclave_name);
 
 // Certifier proofs
-bool construct_what_to_say(string& enclave_type,
-      key_message& attest_pk, key_message& enclave_pk,
-      string& expected_measurement, string* what_to_say);
-
 bool init_certifier_rules(certifier_rules& rules);
 bool init_axiom(key_message& pk, proved_statements* _proved);
 bool init_proved_statements(key_message& pk, evidence_package& evp,
@@ -238,6 +234,14 @@ bool statement_already_proved(const vse_clause& cl, proved_statements* are_prove
 
 // Certify API
 // -------------------------------------------------------------------
+
+bool construct_attestation(entity_message& attest_key_entity, entity_message& auth_key_entity,
+        entity_message& measurement_entity, vse_clause* vse_attest_clause);
+bool vse_attestation(const string& descript, const string& enclave_type,
+        const string& enclave_id, vse_clause& cl, string* serialized_attestation);
+bool construct_what_to_say(string& enclave_type,
+      key_message& attest_pk, key_message& enclave_pk,
+      string& expected_measurement, string* what_to_say);
 
 bool verify_proof(key_message& policy_pk, vse_clause& to_prove,
         predicate_dominance& dom_tree,
