@@ -24,9 +24,9 @@
 
 #define MAX_ASSERTION_SIZE 512
 
-AsyloCertifierServerFunctions asyloFuncs;
+AsyloCertifierFunctions asyloFuncs;
 
-void setFuncs(AsyloCertifierServerFunctions funcs) {
+void setFuncs(AsyloCertifierFunctions funcs) {
   asyloFuncs.Attest = funcs.Attest;
   asyloFuncs.Verify = funcs.Verify;
   asyloFuncs.Seal = funcs.Seal;
