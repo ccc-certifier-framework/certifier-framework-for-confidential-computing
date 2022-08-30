@@ -248,13 +248,13 @@ bool verify_proof(key_message& policy_pk, vse_clause& to_prove,
         proof *the_proof, proved_statements* are_proved);
 bool add_fact_from_signed_claim(signed_claim_message& signedClaim,
     proved_statements* already_proved);
-bool add_newfacts_for_oeplatform_attestation(key_message& policy_pk,
+bool add_newfacts_for_oe_asylo_platform_attestation(key_message& policy_pk,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       proved_statements* already_proved);
 bool add_new_facts_for_abbreviatedplatformattestation(key_message& policy_pk,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       proved_statements* already_proved);
-bool construct_proof_from_oeevidence(key_message& policy_pk,
+bool construct_proof_from_oe_asylo_evidence(key_message& policy_pk,
       proved_statements* already_proved,
       vse_clause* to_prove, proof* pf);
 bool construct_proof_from_full_vse_evidence(key_message& policy_pk,
