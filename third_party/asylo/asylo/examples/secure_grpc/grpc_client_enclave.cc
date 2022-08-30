@@ -37,10 +37,20 @@
 #include "include/grpc/support/time.h"
 #include "include/grpcpp/grpcpp.h"
 
+typedef unsigned char byte;
+
+typedef struct AsyloCertifierFunctions {
+  bool (*Attest)(int claims_size, byte* claims, int* size_out, byte* out);
+  bool (*Verify)(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out);
+  bool (*Seal)(int in_size, byte* in, int* size_out, byte* out);
+  bool (*Unseal)(int in_size, byte* in, int* size_out, byte* out);
+} AsyloCertifierFunctions;
+
 extern bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size);
 extern bool cold_init();
 extern bool certify_me();
 extern bool setup_client_ssl();
+extern bool asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs);
 
 namespace examples {
 namespace secure_grpc {
@@ -69,7 +79,18 @@ asylo::Status GrpcClientEnclave::Initialize(
 
   LOG(INFO) << "Client initializing";
 
+  AsyloCertifierFunctions asyloFuncs;
+  asyloFuncs.Attest = NULL;
+  asyloFuncs.Verify = NULL;
+  asyloFuncs.Seal = NULL;
+  asyloFuncs.Unseal = NULL;
+
   bool cert_result = false;
+  /* Setup functions */
+  cert_result = asylo_setup_certifier_functions(asyloFuncs);
+  LOG_IF(QFATAL, !cert_result)
+      << "asylo_setup_certifier_functions failed: result = " << cert_result;
+
   cert_result = certifier_init((char*)data_dir.c_str(), data_dir.size());
   LOG_IF(QFATAL, !cert_result)
       << "certifier_init failed: result = " << cert_result;
