@@ -57,6 +57,7 @@ bool simulated_Attest(const string& enclave_type,
   int what_to_say_size, byte* what_to_say,
   int* size_out, byte* out);
 bool simulated_GetParentEvidence(string* out);
+bool simulated_Verify(string& serialized_report);
 
 bool simulated_GetAttestClaim(signed_claim_message* out);
 bool simulated_GetPlatformClaim(signed_claim_message* out);

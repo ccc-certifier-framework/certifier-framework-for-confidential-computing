@@ -2243,11 +2243,6 @@ bool sign_report(const string& type, const string& to_be_signed, const string& s
 bool verify_report(string& type, string& serialized_signed_report,
       const key_message& signer_key) {
 
-  if (type != "signed-vse-attestation-report") {
-    printf("Only signed-vse-attestation-report supported\n");
-    return false;
-  }
-
   signed_report sr;
   if (!sr.ParseFromString(serialized_signed_report)) {
     printf("Can't parse serialized_signed_report\n");

@@ -232,6 +232,30 @@ bool simulated_Attest(const string& enclave_type,
   return true;
 }
 
+bool simulated_Verify(string& serialized_signed_report) {
+  string type("vse-attestation-report");
+
+  if (!verify_report(type, serialized_signed_report, my_attestation_key)) {
+    printf("verify_report failed\n");
+    return false;
+  }
+
+  signed_report sr;
+  if (!sr.ParseFromString(serialized_signed_report)) {
+    return false;
+  }
+  if (!sr.has_report_format() || sr.report_format() != "vse-attestation-report") {
+    return false;
+  }
+  vse_attestation_report_info info;
+  if (!info.ParseFromString(sr.report()))
+    return false;
+  if (info.verified_measurement() != my_measurement)
+    return false;
+  //  time ok?  not_after, not_after
+  return true;
+}
+
 bool simulated_GetParentEvidence(string* out) {
   return false;
 }
