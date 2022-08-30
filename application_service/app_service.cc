@@ -262,6 +262,8 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
     printf("soft_Attest: service key not initialized\n");
     return false;
   }
+
+#if 0
   claim_message cm;
   string nb, na;
   time_point tn, tf;
@@ -295,6 +297,51 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
     printf("soft_Attest: Serialize failed\n");
     return false;
   }
+#else
+  vse_attestation_report_info report_info;
+  string serialized_report_info;
+  report_info.set_enclave_type("application-enclave");
+
+  string nb, na;
+  time_point tn, tf;
+  if (!time_now(&tn))
+    return false;
+  if (!add_interval_to_time_point(tn, 24.0 * 365.0, &tf))
+    return false;
+  if (!time_to_string(tn, &nb))
+    return false;
+  if (!time_to_string(tf, &na))
+    return false;
+
+  report_info.set_not_before(nb);
+  report_info.set_not_after(na);
+  // in should be a serialized attestation_user_data
+  report_info.set_user_data((byte*)in.data(), in.size());
+  report_info.set_verified_measurement((byte*)kid->measurement_.data(),
+    kid->measurement_.size());
+  if (!report_info.SerializeToString(&serialized_report_info)) {
+    return false;
+  }
+
+  const string type("vse-attestation-report");
+  string signing_alg;
+
+  if (app_trust_data->private_service_key_.key_type() == "rsa-2048-private") {
+    signing_alg.assign("rsa-2048-sha256-pkcs-sign");
+  } else if (app_trust_data->private_service_key_.key_type() == "rsa-4096-private") {
+    signing_alg.assign("rsa-4096-sha384-pkcs-sign");
+  } else if (app_trust_data->private_service_key_.key_type() == "ecc-384-private") {
+    signing_alg.assign("ecc-384-sha384-pkcs-sign");
+  } else {
+    return false;
+  }
+
+  if (!sign_report(type, serialized_report_info,
+      signing_alg, app_trust_data->private_service_key_, out)) {
+    printf("Can't sign report\n");
+    return false;
+  }
+#endif
 
   return true;
 }
