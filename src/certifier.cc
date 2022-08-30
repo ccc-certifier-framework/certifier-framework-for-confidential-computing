@@ -3,9 +3,6 @@
 #include "simulated_enclave.h"
 #include "application_enclave.h"
 #include <sys/socket.h>
-#ifndef ASYLO_CERTIFIER
-#include <resolv.h>
-#endif
 #include <netdb.h>
 
 
