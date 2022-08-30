@@ -595,7 +595,7 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
     alg_type = rsa_alg_type;
     out->set_key_type("rsa-4096-public");
     n_bytes = cipher_block_byte_size("rsa-4096-public");
-#if 0
+#ifndef ASYLO_CERTIFIER
   } else if (in.key_type() == "ecc-384-private") {
     alg_type = ecc_alg_type;
     out->set_key_type("ecc-384-public");
@@ -1034,6 +1034,7 @@ bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig,
   return true;
 }
 
+#ifndef ASYLO_CERTIFIER
 EC_KEY* generate_new_ecc_key(int num_bits) {
 
   if (num_bits != 384) {
@@ -1051,7 +1052,6 @@ EC_KEY* generate_new_ecc_key(int num_bits) {
     return nullptr;
   }
 
-#if 0
   BN_CTX* ctx = BN_CTX_new();
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
@@ -1063,9 +1063,10 @@ EC_KEY* generate_new_ecc_key(int num_bits) {
   const EC_POINT* pt = EC_KEY_get0_public_key(ecc_key);
   EC_POINT_get_affine_coordinates_GFp(group, pt, pt_x, pt_y, ctx); 
   BN_CTX_free(ctx);
-#endif
+
   return ecc_key;
 }
+#endif
 
 // Todo: free k on error
 EC_KEY* key_to_ECC(const key_message& k) {
@@ -1127,7 +1128,7 @@ EC_KEY* key_to_ECC(const key_message& k) {
 
   return ecc_key;
 }
-#if 0
+#ifndef ASYLO_CERTIFIER
 bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
 
   k->set_key_name("ecc-384-private");
@@ -2057,7 +2058,7 @@ bool verify_artifact(X509& cert, key_message& verify_key,
     RSA_free(subject_rsa_key);
     EVP_PKEY_free(verify_pkey);
     EVP_PKEY_free(subject_pkey);
-#if 0
+#ifndef ASYLO_CERTIFIER
   } else if (verify_key.key_type() == "ecc-384-public" ||
              verify_key.key_type() == "ecc-384-private") {
     EVP_PKEY* verify_pkey = EVP_PKEY_new();
@@ -2206,7 +2207,7 @@ int sized_socket_read(int fd, string* out) {
 // -----------------------------------------------------------------------
 
 // make a public key from the X509 cert
-#if 0
+#ifndef ASYLO_CERTIFIER
 bool x509_to_public_key(X509* x, key_message* k) {
   EVP_PKEY* subject_pkey = X509_get_pubkey(x);
   if (subject_pkey == nullptr)
@@ -2259,6 +2260,7 @@ bool x509_to_public_key(X509* x, key_message* k) {
   return true;
 }
 #endif
+
 bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k) {
   string root_name("root");
 

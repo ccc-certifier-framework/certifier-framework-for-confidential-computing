@@ -38,7 +38,10 @@ cc_library(
 	     # For Asylo protobuf
              #":certifier_asylo_cc_proto",
     ],
-    copts = [ "-Iinclude"],
+    copts = [
+        "-Iinclude",
+        "-DASYLO_CERTIFIER",
+    ],
     linkopts = [ "-L/usr/local/lib", "-lprotobuf"],
     visibility = ["//visibility:public"],
 )
@@ -60,7 +63,10 @@ cc_library(
              "@com_google_googletest//:gtest",
 
     ],
-    copts = [ "-Iinclude" ],
+    copts = [
+        "-Iinclude",
+        "-DASYLO_CERTIFIER",
+    ],
     #linkopts = [ "-L/usr/local/lib", "-lprotobuf"],
     visibility = ["//visibility:public"],
 )

@@ -1974,12 +1974,12 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
       return false;
     }
   } else if (evidence_descriptor == "oe-evidence") {
-    if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk, 
+    if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
               trusted_platforms, trusted_measurements, already_proved))
       return false;
     return construct_proof_from_oe_asylo_evidence(policy_pk, already_proved, to_prove, pf);
   } else if (evidence_descriptor == "asylo-evidence") {
-      printf("Invoking add_newfacts_for_asyloplatform_attestation: \n");
+      printf("Invoking add_newfacts_for_oe_asylo_platform_attestation: \n");
     if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
               trusted_platforms, trusted_measurements, already_proved)) {
       printf("construct_proof_from_full_vse_evidence in add_newfacts_for_asyloplatform_attestation failed\n");

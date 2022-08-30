@@ -1040,7 +1040,7 @@ bool open_client_socket(const string& host_name, int port, int* soc) {
 
   /* Obtain address(es) matching host/port */
   memset(&hints, 0, sizeof(struct addrinfo));
-  hints.ai_family = AF_UNSPEC;
+  hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = 0;
   hints.ai_protocol = 0;
@@ -1088,7 +1088,7 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
   int sfd, s;
 
   memset(&hints, 0, sizeof(struct addrinfo));
-  hints.ai_family = AF_UNSPEC;
+  hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
   hints.ai_protocol = 0;
@@ -1119,75 +1119,25 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
     if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
       break;                  /* Success */
 
-      close(sfd);
-    }
+    close(sfd);
+  }
 
-    if (rp == NULL) {               /* No address succeeded */
-      fprintf(stderr, "Could not bind\n");
-      return false;
-    }
+  if (rp == NULL) {               /* No address succeeded */
+    fprintf(stderr, "Could not bind\n");
+    return false;
+  }
 
-    freeaddrinfo(result);           /* No longer needed */
+  freeaddrinfo(result);           /* No longer needed */
 
-    if (listen(sfd, 10) != 0) {
-      printf("cant listen\n");
-      return false;
-    }
+  if (listen(sfd, 10) != 0) {
+    printf("cant listen\n");
+    return false;
+  }
 
   *soc = sfd;
   return true;
 }
-#if 0
-bool open_client_socket(const string& host_name, int port, int* soc) {
-  // dial service
-  struct sockaddr_in address;
-  memset((byte*)&address, 0, sizeof(struct sockaddr_in));
-  *soc = socket(AF_INET, SOCK_STREAM, 0);
-  if (*soc < 0) {
-    return false;
-  }
-  struct hostent* he = gethostbyname(host_name.c_str());
-  if (he == nullptr) {
-    return false;
-  }
-  memcpy(&(address.sin_addr.s_addr), he->h_addr, he->h_length);
-  address.sin_family = AF_INET;
-  address.sin_port = htons(port);
-  if(connect(*soc, (struct sockaddr *) &address, sizeof(address)) != 0) {
-    return false;
-  }
-  return true;
-}
 
-bool open_server_socket(const string& host_name, int port, int* soc) {
-  const char* hostname = host_name.c_str();
-  struct sockaddr_in addr;
-
-  struct hostent *he = nullptr;
-  if ((he = gethostbyname(hostname)) == NULL) {
-    printf("gethostbyname failed\n");
-    return false;
-  }
-  *soc= socket(AF_INET, SOCK_STREAM, 0);
-  if (*soc < 0) {
-    printf("socket call failed\n");
-    return false;
-  }
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = *(long*)(he->h_addr);
-  if (bind(*soc, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
-    printf("bind failed\n");
-    return false;
-  }
-  if (listen(*soc, 10) != 0) {
-    printf("listen failed\n");
-    return false;
-  }
-  return true;
-}
-#endif
 // This is only for debugging.
 int SSL_my_client_callback(SSL *s, int *al, void *arg) {
   printf("callback\n");
@@ -1232,6 +1182,7 @@ bool extract_id_from_cert(X509* in, string* out) {
   return true;
 }
 
+#ifdef ASYLO_CERTIFIER
 // Loads server side certs and keys.  Note: key for private_key is in
 //    the key.
 bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
@@ -1277,10 +1228,7 @@ bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, S
 
   SSL_CTX_add_client_CA(ctx, x509_root_cert);
   SSL_CTX_add1_chain_cert(ctx, x509_root_cert);
-  //Note: This is not available in all OpenSSL versions
-#if 0
-  SSL_CTX_add1_to_CA_list(ctx, x509_root_cert);
-#endif
+
   return true;
 }
 
@@ -1328,14 +1276,11 @@ bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, S
   }
   SSL_CTX_add_client_CA(ctx, x509_root_cert);
   SSL_CTX_add1_chain_cert(ctx, x509_root_cert);
-  //Note: This is not available in all OpenSSL versions
-#if 0
-  SSL_CTX_add1_to_CA_list(ctx, x509_root_cert);
-#endif
+
   return true;
 }
 
-#if 0
+#else
 // Loads server side certs and keys.
 bool load_server_certs_and_key(X509* root_cert,
       key_message& private_key, SSL_CTX* ctx) {
@@ -1389,7 +1334,7 @@ bool load_server_certs_and_key(X509* root_cert,
 #endif
   return true;
 }
-#endif
+#endif // ASYLO_CERTIFIER
 
 
 void server_dispatch(const string& host_name, int port,
@@ -1771,7 +1716,7 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
-#if 0
+#ifndef ASYLO_CERTIFIER
   if (!SSL_CTX_set1_chain(ctx, stack)) {
   if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
     printf("load_client_certs_and_key, error 5\n");
@@ -2031,7 +1976,7 @@ done:
   return ret;
 }
 
-#if 0
+#ifndef ASYLO_CERTIFIER
 bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key, r)) {
@@ -2068,6 +2013,7 @@ bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, S
   return true;
 }
 #endif
+
 bool init_client_ssl(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port,
     int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl) {
   OPENSSL_init_ssl(0, NULL);;
