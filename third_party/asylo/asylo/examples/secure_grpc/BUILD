@@ -108,6 +108,8 @@ cc_unsigned_enclave(
         "//asylo/util:status",
         "@com_github_grpc_grpc//:grpc++",
         "@com_github_grpc_grpc//:grpc++_reflection",
+        "//asylo/identity/sealing/sgx:sgx_local_secret_sealer",
+        "//asylo/util:cleansing_types",
         "@asylo_certifier//:trusted",
     ] + select(
         {
