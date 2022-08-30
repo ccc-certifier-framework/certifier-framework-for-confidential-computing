@@ -190,8 +190,13 @@ bool simulated_Attest(const string& enclave_type,
 
   if (rsa_attestation_key == nullptr)
     return false;
-  // what_to_say is a serialized vse-attestation
-  claim_message cm;
+
+  vse_attestation_report_info report_info;
+  string serialized_report_info;
+  report_info.set_enclave_type("simulated-enclave");
+
+  // what_to_say is usually a serialized vse-attestation_report_info
+  // simulated_Attest returns a serialized signed_report
   string nb, na;
   time_point tn, tf;
   if (!time_now(&tn))
@@ -202,26 +207,28 @@ bool simulated_Attest(const string& enclave_type,
     return false;
   if (!time_to_string(tf, &na))
     return false;
-  string cf("vse-attestation");
-  string desc("");
-  if (!make_claim(what_to_say_size, what_to_say, cf, desc,
-        nb, na, &cm))
-    return false;
-  string ser_cm;
-  if (!cm.SerializeToString(&ser_cm))
-    return false;
 
-  signed_claim_message scm;
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm, my_attestation_key, &scm))
+  report_info.set_not_before(nb);
+  report_info.set_not_after(na);
+  report_info.set_user_data((byte*)what_to_say, what_to_say_size);
+  report_info.set_verified_measurement(my_measurement);
+
+  const string type("vse-attestation-report");
+  string signing_alg("rsa-2048-sha256-pkcs-sign");
+
+  signed_report report; 
+  string serialized_signed_report;
+
+  if (!sign_report(type, serialized_report_info,
+      signing_alg, my_attestation_key, &serialized_signed_report)) {
+    printf("Can't sign report\n");
     return false;
-  string ser_scm;
-  if (!scm.SerializeToString(&ser_scm))
-    return false;
-  if (*size_out < (int)ser_scm.size())
+  }
+  if (*size_out < (int)serialized_signed_report.size())
     return false;
   memset(out, 0, *size_out);
-  *size_out = (int)ser_scm.size();
-  memcpy(out, ser_scm.data(), *size_out);
+  *size_out = (int)serialized_signed_report.size();
+  memcpy(out, serialized_signed_report.data(), *size_out);
   return true;
 }
 

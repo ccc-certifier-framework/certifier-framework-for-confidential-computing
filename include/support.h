@@ -125,14 +125,11 @@ void print_claim(const claim_message& claim);
 void print_signed_claim(const signed_claim_message& signed_claim);
 void print_storage_info(const storage_info_message& smi);
 void print_trusted_service_message(const trusted_service_message& tsm);
-void print_attestation(attestation& at);
 void print_protected_blob(protected_blob_message& pb);
 
 bool make_signed_claim(const char* alg, const claim_message& claim, const key_message& key,
     signed_claim_message* out);
 bool verify_signed_claim(const signed_claim_message& claim, const key_message& key);
-bool verify_signed_attestation(int serialized_size, byte* serialized,
-      int sig_size, byte* sig, const key_message& key);
 bool get_vse_clause_from_signed_claim(const signed_claim_message& scm, vse_clause* c);
 
 // Serialized time: YYYY-MM-DDTHH:mm:ss. sssZ

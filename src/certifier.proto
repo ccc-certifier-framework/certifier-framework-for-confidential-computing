@@ -99,29 +99,42 @@ message vse_clauses {
   repeated vse_clause clauses               = 1;
 };
 
-//  This is a "vse-attestation" which is a claim type
 //  The claims are in "vse-clause.  Time is
 //  the time the attestation was signed.
-//  A signed attestation is just another signed claim.
 //  Enclave types are "simulated-enclave", "oe-enclave",
 //  "application-enclave" and "sev-enclave"
-message attestation {
+message attestation_user_data {
   optional string enclave_type              = 1;
-  optional string key_id                    = 2;
-  optional bytes measurement                = 3;
-  optional string time                      = 4;
-  optional vse_clause clause                = 5;
-  optional string description               = 6;
+  optional string time                      = 2;
+  optional key_message enclave_key          = 3;
+  optional key_message policy_key           = 4;
 };
 
-// So far formats are: "vse-clause", "vse-attestation",
-// oe_attestation and sev-attestation
+// So far formats are: "vse-clause"
 message claim_message {
   optional string claim_format              = 1;
   optional string claim_descriptor          = 2;
   optional string not_before                = 3;
   optional string not_after                 = 4;
   optional bytes serialized_claim           = 5;
+};
+
+message vse_attestation_report_info {
+  optional string enclave_type              = 1;
+  optional bytes verified_measurement       = 2;
+  optional string not_before                = 3;
+  optional string not_after                 = 4;
+  optional bytes user_data                  = 5;
+};
+
+// format will be vse-attestation-report for
+//  simulated-enclave and application-enclave
+message signed_report {
+  optional string report_format             = 1;
+  optional bytes report                     = 2;
+  optional key_message signing_key          = 3;
+  optional string signing_algorithm         = 4;
+  optional bytes signature                  = 5;
 };
 
 message signed_claim_message {
@@ -136,7 +149,9 @@ message oe_assertion {
   optional bytes oe_report                  = 2;
 };
 
-// Current evidence types: "signed-claim", "oe-assertion", "cert"
+// Current evidence types: "signed-claim",
+//   "signed-vse-attestation"
+//   "oe-assertion", "sev-assertion", "cert"
 message evidence {
   optional string evidence_type             = 1;
   optional bytes serialized_evidence        = 2;

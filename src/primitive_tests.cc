@@ -56,9 +56,8 @@ bool test_attest(bool print_all) {
   string enclave_id("test-enclave");
   string descript("simulated-test");
 
-  key_message public_attestation_key;
   extern key_message my_attestation_key;
-
+  key_message public_attestation_key;
   if (!private_key_to_public_key(my_attestation_key, &public_attestation_key))
     return false;
   entity_message e1;
@@ -69,31 +68,28 @@ bool test_attest(bool print_all) {
   extern string my_measurement;
   if (!make_measurement_entity(my_measurement, &e2))
     return false;
-  string s1("says");
-  string s2("speaks-for");
-  vse_clause clause1;
-  vse_clause clause2;
-  if (!make_simple_vse_clause((const entity_message)e1, s2, (const entity_message)e2, &clause1))
-    return false;
-  if (!make_indirect_vse_clause((const entity_message)e1, s2, clause1, &clause2))
-    return false;
 
-  string serialized_attestation;
-  if (!vse_attestation(descript, enclave_type, enclave_id,
-        clause2, &serialized_attestation))
-    return false;
+  attestation_user_data ud;
+  if (!make_attestation_user_data(enclave_type,
+          public_attestation_key, &ud)) {
+      printf("Can't make user data (1)\n");
+      return false;
+    }
+  string serialized_ud;
+  if (!ud.SerializeToString(&serialized_ud)) {
+      printf("Can't serialize data (1)\n");
+      return false;
+    }
+
+  // Todo: fix size
   int size_out = 8192; 
   byte out[size_out]; 
-  if (!Attest(enclave_type, serialized_attestation.size(),
-        (byte*) serialized_attestation.data(), &size_out, out))
+  if (!Attest(enclave_type, serialized_ud.size(),
+        (byte*) serialized_ud.data(), &size_out, out))
     return false;
-
-  string ser_scm;
-  signed_claim_message scm;
-  ser_scm.assign((char*)out, size_out);
-  if (!scm.ParseFromString(ser_scm))
-    return false;
-  vse_clause cl;
-  return verify_signed_assertion_and_extract_clause(public_attestation_key, scm, &cl);
+  string serialized_signed_report;
+  serialized_signed_report.assign((char*)out, size_out);
+  string type("signed-vse-attestation-report");
+  return verify_report(type, serialized_signed_report, public_attestation_key);
 }
 

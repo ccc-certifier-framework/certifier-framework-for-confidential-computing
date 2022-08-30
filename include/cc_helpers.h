@@ -107,7 +107,7 @@ bool open_client_socket(const string& host_name, int port, int* soc);
 bool open_server_socket(const string& host_name, int port, int* soc);
 
 bool construct_platform_evidence_package(signed_claim_message& platform_attest_claim,
-    signed_claim_message& the_attestation, evidence_package* ep);
+    string&enclave_type, string& the_attestation, evidence_package* ep);
 bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_key_is_trusted,
       evidence_package* ep);
 void print_cn_name(X509_NAME* name);

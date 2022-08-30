@@ -41,10 +41,25 @@ message rsa_message {
   optional bytes private_dq                 = 7;
 };
 
-message ecc_message {
+message point_message {
+ optional bytes x                           = 1;
+ optional bytes y                           = 2;
 };
 
-// Key types: "rsa-2048" "ecc-521", "aes-256", "aes-256-hmac-sha-256"
+message ecc_message {
+  optional string curve_name                = 1;
+  optional bytes curve_p                    = 2;
+  optional bytes curve_a                    = 3;
+  optional bytes curve_b                    = 4;
+  optional point_message base_point         = 5;
+  optional point_message public_point       = 6;
+  optional bytes order_of_base_point        = 7;
+  optional bytes private_multiplier         = 8;
+};
+
+// Key types: "rsa-2048-public" "ecc-384-public",
+//    "rsa-2048-private" "ecc-384-private",
+//    "aes-256", "aes-256-hmac-sha-256", etc.
 // Principal formats: "vse-entity"
 // Key formats: "vse-key", "x509-cert"
 message key_message {
@@ -84,22 +99,19 @@ message vse_clauses {
   repeated vse_clause clauses               = 1;
 };
 
-//  This is a "vse-attestation" which is a claim type
 //  The claims are in "vse-clause.  Time is
 //  the time the attestation was signed.
-//  A signed attestation is just another signed claim.
-//  enclave types are "simulated-enclave" and "oe-enclave"
-message attestation {
+//  Enclave types are "simulated-enclave", "oe-enclave",
+//  "application-enclave" and "sev-enclave"
+message attestation_user_data {
   optional string enclave_type              = 1;
-  optional string key_id                    = 2;
-  optional bytes measurement                = 3;
-  optional string time                      = 4;
-  optional vse_clause clause                = 5;
-  optional string description               = 6;
+  optional string time                      = 2;
+  optional key_message enclave_key          = 3;
+  optional policy_key                       = 4;
 };
 
 // So far formats are: "vse-clause", "vse-attestation",
-// "vse-key" (for keys an measurements) and soon X509.
+// oe_attestation and sev-attestation
 message claim_message {
   optional string claim_format              = 1;
   optional string claim_descriptor          = 2;
@@ -206,6 +218,7 @@ message policy_store_message {
   repeated tagged_claim claims                              = 4;
   repeated storage_info_message storage_info                = 5;
   repeated tagged_signed_claim signed_claims                = 6;
+  repeated tagged_blob_message blobs                        = 7;
 };
 
 message claims_sequence {
@@ -244,4 +257,9 @@ message app_response {
   optional string function                  = 1;
   optional string status                    = 2;
   repeated bytes args                       = 3;
+};
+
+message tagged_blob_message {
+  optional string tag                       = 1;
+  optional bytes b                          = 2;
 };

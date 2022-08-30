@@ -1061,16 +1061,17 @@ bool init_certifier_rules(certifier_rules& rules) {
   return true;
 }
 
-bool convert_attestation_to_vse_clause(const claim_message& asserted_claim, vse_clause* cl) {
+bool convert_attestation_to_vse_clause(const key_message& key, 
+      string& measurement, string& serialized_attestation,
+      vse_clause* cl) {
   
-  string serialized_attestation;
-  serialized_attestation.assign((char*)asserted_claim.serialized_claim().data(), (int)asserted_claim.serialized_claim().size());
-  attestation at;
+  serialized_attestation.assign((char*)serialized_attestation.data(),
+      (int)serialized_attestation.size());
+  attestation_user_data at;
     if (!at.ParseFromString(serialized_attestation))
       return false;
-  // in the future the attestation may not be in vse-clauses in some cases
-  cl->CopyFrom(at.clause());;
-  return true;
+  return construct_vse_attestation_statement(key,
+        at.enclave_key(), measurement, cl);
 }
 
 bool verify_signed_assertion_and_extract_clause(const key_message& key,
@@ -1094,13 +1095,18 @@ bool verify_signed_assertion_and_extract_clause(const key_message& key,
 
     string serialized_vse_string;
     vse_clause asserted_vse;
-    serialized_vse_string.assign((char*)asserted_claim.serialized_claim().data(), (int)asserted_claim.serialized_claim().size());
+    serialized_vse_string.assign((char*)asserted_claim.serialized_claim().data(),
+        (int)asserted_claim.serialized_claim().size());
     if (!asserted_vse.ParseFromString(serialized_vse_string))
       return false;
     cl->CopyFrom(asserted_vse);
-  } else if (asserted_claim.claim_format() == "vse-attestation") {
-    if (!convert_attestation_to_vse_clause(asserted_claim, cl))
+#if 0
+  // FIX?
+  } else if (asserted_claim.claim_format() == "attestation") {
+    if (!convert_attestation_to_vse_clause(key, 
+          asserted_claim.serialized_claim(), cl))
       return false;
+#endif
   } else {
     return false;
   }
@@ -1175,6 +1181,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       }
       vse_clause* cl_to_insert = already_proved->add_proved();
       cl_to_insert->CopyFrom(to_add);
+    } else if (evp.fact_assertion(i).evidence_type() == "signed-claim") {
 #ifdef OE_CERTIFIER
     } else if (evp.fact_assertion(i).evidence_type() == "oe-assertion") {
       size_t user_data_size = 4096;
@@ -2146,13 +2153,227 @@ void print_proof(proof& pf) {
 
 // -------------------------------------------------------------------
 
-bool construct_vse_attestation_statement(entity_message& attest_key_entity, entity_message& auth_key_entity,
-        entity_message& measurement_entity, vse_clause* vse_attest_clause) {
+
+// type is usually "vse-attestation-report"
+bool sign_report(const string& type, const string& to_be_signed, const string& signing_alg,
+      const key_message& signing_key, string* serialized_signed_report) {
+
+  signed_report report;
+  key_message public_signing_alg;
+  if (!private_key_to_public_key(signing_key, &public_signing_alg)) {
+    printf("private_key_to_public_key failed\n");
+    return false;
+  }
+
+  report.set_report_format("vse-attestation-report");
+  report.set_signing_algorithm(signing_alg);
+  report.mutable_signing_key()->CopyFrom(public_signing_alg);
+  report.set_report(to_be_signed);
+
+  int size = cipher_block_byte_size(signing_alg.c_str());
+  if (size < 0) {
+    printf("Bad cipher\n");
+    return false;
+  }
+
+  byte signature[size];
+  if (signing_alg == "rsa-2048-sha256-pkcs-sign") {
+    if (signing_key.key_type() != "rsa-2048-private") {
+      printf("Wrong key\n");
+      return false;
+    }
+    RSA* rsa_key = RSA_new();
+    if (!key_to_RSA(signing_key, rsa_key)) {
+      printf("key_to_RSA failed\n");
+      return false;
+    }
+    if (!rsa_sign("sha-256", rsa_key, to_be_signed.size(), (byte*)to_be_signed.data(),
+            &size, signature)) {
+      printf("rsa_sign failed\n");
+      RSA_free(rsa_key);
+      return false;
+    }
+    RSA_free(rsa_key);
+  } else if (signing_alg == "rsa-4096-sha384-pkcs-sign") {
+    if (signing_key.key_type() != "rsa-4096-private") {
+      printf("Wrong key\n");
+      return false;
+    }
+    RSA* rsa_key = RSA_new();
+    if (!key_to_RSA(signing_key, rsa_key)) {
+      printf("key_to_RSA failed\n");
+      return false;
+    }
+    if (!rsa_sign("sha-384", rsa_key, to_be_signed.size(), (byte*)to_be_signed.data(),
+            &size, signature)) {
+      printf("rsa_sign failed\n");
+      RSA_free(rsa_key);
+      return false;
+    }
+    RSA_free(rsa_key);
+  } else if (signing_alg == "ecc-384-sha384-pkcs-sign") {
+    if (signing_key.key_type() != "ecc-384-private") {
+      printf("Wrong key\n");
+      return false;
+    }
+    EC_KEY* ecc_key = key_to_ECC(signing_key);
+    if (ecc_key == nullptr) {
+      printf("key_to_ECC failed\n");
+      return false;
+    }
+    if (!ecc_sign("sha-384", ecc_key, to_be_signed.size(), (byte*)to_be_signed.data(),
+            &size, signature)) {
+      printf("ecc_sign failed\n");
+      EC_KEY_free(ecc_key);
+      return false;
+    }
+    EC_KEY_free(ecc_key);
+  } else {
+    return false;
+  }
+
+  report.set_signature((byte*)signature, size);
+  if (!report.SerializeToString(serialized_signed_report)) {
+    return false;
+  }
+  return true;
+}
+
+// type is usually "signed-vse-attestation-report"
+bool verify_report(string& type, string& serialized_signed_report,
+      const key_message& signer_key) {
+
+  if (type != "signed-vse-attestation-report") {
+    printf("Only signed-vse-attestation-report supported\n");
+    return false;
+  }
+
+  signed_report sr;
+  if (!sr.ParseFromString(serialized_signed_report)) {
+    printf("Can't parse serialized_signed_report\n");
+    return false;
+  }
+
+  if (sr.report_format() != "vse_attestation-report") {
+    printf("Format should be vse_attestation-report\n");
+    return false;
+  }
+
+  bool success = false;
+  if (sr.signing_algorithm() == "rsa-2048-sha256-pkcs-sign") {
+    RSA* rsa_key = RSA_new();
+    if (!key_to_RSA(signer_key, rsa_key)) {
+      printf("key_to_RSA failed\n");
+      return false;
+    }
+    int size = sr.signature().size();
+    success = rsa_verify("sha-256", rsa_key, sr.report().size(),
+            (byte*)sr.report().data(),
+            size, (byte*)sr.signature().data());
+    RSA_free(rsa_key);
+  } else if (sr.signing_algorithm() == "rsa-4096-sha384-pkcs-sign") {
+    RSA* rsa_key = RSA_new();
+    if (!key_to_RSA(signer_key, rsa_key)) {
+      printf("key_to_RSA failed\n");
+      return false;
+    }
+    int size = sr.signature().size();
+    success = rsa_verify("sha-384", rsa_key, sr.report().size(),
+            (byte*)sr.report().data(),
+            size, (byte*)sr.signature().data());
+    RSA_free(rsa_key);
+  } else if (sr.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
+    EC_KEY* ecc_key = key_to_ECC(signer_key);
+    if (ecc_key == nullptr) {
+      printf("key_to_RSA failed\n");
+      return false;
+    }
+    int size = sr.signature().size();
+    success = ecc_verify("sha-384", ecc_key, sr.report().size(),
+            (byte*)sr.report().data(),
+            size, (byte*)sr.signature().data());
+    EC_KEY_free(ecc_key);
+  } else {
+    return false;
+  }
+
+  return success;
+}
+
+void print_attestation_info(const vse_attestation_report_info& r) {
+  printf("\nvse attestation report\n");
+  if (r.has_enclave_type()) {
+    printf("Enclave type: %s\n", r.enclave_type().c_str());
+  }
+  if (r.has_verified_measurement()) {
+    printf("Measurement: ");
+    print_bytes(r.verified_measurement().size(),
+        (byte*)r.verified_measurement().data());
+  }
+  if (r.has_not_before() && r.has_not_after()) {
+    printf("Not before  : %s\n", r.not_before().c_str());
+    printf("Not after  : %s\n", r.not_after().c_str());
+  }
+  if (r.has_user_data()) {
+    printf("User data  : ");
+    print_bytes(r.user_data().size(), (byte*)r.user_data().data());
+    printf("\n");
+  }
+  printf("\n");
+}
+
+void print_user_data(attestation_user_data& ud) {
+  printf("\nUser data\n");
+  if (ud.has_enclave_type()) {
+    printf("Enclave type: %s\n", ud.enclave_type().c_str());
+  }
+  if (ud.has_time()) {
+    printf("Time        : %s\n", ud.time().c_str());
+  }
+  if (ud.has_enclave_key()) {
+    printf("Auth key    :");
+    print_key(ud.enclave_key());
+    printf("\n");
+  }
+  if (ud.has_policy_key()) {
+  }
+  printf("\n");
+}
+
+void print_signed_report(const signed_report& sr) {
+  printf("\nSigned report\n");
+  if (sr.has_report_format()) {
+    printf("Report format: %s\n", sr.report_format().c_str());
+  }
+  if (sr.has_report()) {
+  }
+  if (sr.has_signing_key()) {
+  }
+  if (sr.has_signing_algorithm()) {
+  }
+  if (sr.has_signature()) {
+  }
+  printf("\n");
+}
+
+bool construct_vse_attestation_statement(const key_message& attest_key,
+        const key_message& enclave_key, string& measurement,
+        vse_clause* vse_attest_clause) {
   string s1("says");
   string s2("speaks-for");
 
+  entity_message measurement_entity;
+  entity_message attest_key_entity;
+  entity_message enclave_key_entity;
+  if (!make_key_entity(attest_key, &attest_key_entity))
+    return false;
+  if (!make_key_entity(enclave_key, &enclave_key_entity))
+    return false;
+  if (!make_measurement_entity(measurement, &measurement_entity))
+    return false;
+
   vse_clause auth_key_speaks_for_measurement;
-  if (!make_simple_vse_clause(auth_key_entity, s2, measurement_entity, &auth_key_speaks_for_measurement)) {
+  if (!make_simple_vse_clause(enclave_key_entity, s2, measurement_entity, &auth_key_speaks_for_measurement)) {
     printf("Construct attestation error 1\n");
     return false;
   }
@@ -2163,69 +2384,36 @@ bool construct_vse_attestation_statement(entity_message& attest_key_entity, enti
   return true;
 }
 
-bool vse_attestation(const string& descript, const string& enclave_type,
-         const string& enclave_id, vse_clause& cl, string* serialized_attestation) {
-  attestation at;
+bool make_attestation_user_data(const string& enclave_type,
+         const key_message& enclave_key, attestation_user_data* out) {
 
-  at.set_description(descript);
-  at.set_enclave_type(enclave_type);
-  int digest_size = digest_output_byte_size("sha-256");
-  int size_out= digest_size;
-  byte m[size_out];
-  memset(m, 0, size_out);
-  if (!Getmeasurement(enclave_type, enclave_id, &size_out, m))
-    return false;
-  at.set_measurement((void*)m, size_out);
+  out->set_enclave_type(enclave_type);
   time_point t_now;
   if (!time_now(&t_now))
     return false;
   string time_str;
   if (!time_to_string(t_now, &time_str))
     return false;
-  vse_clause* cn = new(vse_clause);
-  cn->CopyFrom(cl);
-  at.set_allocated_clause(cn);
-  at.set_time(time_str);
-  string serialized;
-  at.SerializeToString(serialized_attestation);
+  out->set_time(time_str);
+  out->CopyFrom(enclave_key);
   return true;
 }
 
 bool construct_what_to_say(string& enclave_type,
-      key_message& attest_pk, key_message& enclave_pk,
-      string& expected_measurement, string* what_to_say) {
+      key_message& enclave_pk, string* what_to_say) {
 
-  if (enclave_type == "simulated-enclave") {
-    string descript("test-attest");
-    string enclave_id("test-simulated-enclave");
+  if (enclave_type != "simulated-enclave" && enclave_type != "application-enclave" &&
+      enclave_type != "sev-enclave" && enclave_type != "oe-enclave" &&
+      enclave_type != "asylo-enclave")
+    return false;
 
-    vse_clause attest_statement;
-    entity_message measurement_entity;
-    entity_message attest_key_entity;
-    entity_message enclave_key_entity;
-    if (!make_key_entity(attest_pk, &attest_key_entity))
-      return false;
-    if (!make_key_entity(enclave_pk, &enclave_key_entity))
-      return false;
-    if (!make_measurement_entity(expected_measurement, &measurement_entity))
-      return false;
-    if (!construct_vse_attestation_statement(attest_key_entity, enclave_key_entity,
-        measurement_entity, &attest_statement)) {
-      return false;
-    }
+  attestation_user_data ud;
+  if (!make_attestation_user_data(enclave_type, enclave_pk, &ud)) {
+    return false;
+  }
+  if (!ud.SerializeToString(what_to_say))
+    return false;
 
-    if (!vse_attestation(descript, enclave_type, enclave_id,
-          attest_statement, what_to_say))
-      return false;
-    } else if (enclave_type == "oe-enclave") {
-      if (!enclave_pk.SerializeToString(what_to_say))
-        return false;
-    } else if (enclave_type == "asylo-enclave") {
-      if (!enclave_pk.SerializeToString(what_to_say))
-        return false;
-    } else {
-      return false;
-    }
   return true;
 }
 

@@ -1631,29 +1631,6 @@ void print_claim(const claim_message& claim) {
     print_vse_clause(c);
     printf("\n");
   }
-  if (claim.claim_format() == "vse-attestation" && claim.has_serialized_claim()) {
-    attestation at;
-    at.ParseFromString(claim.serialized_claim());
-    print_attestation(at);
-    printf("\n");
-  }
-}
-
-void print_attestation(attestation& at) {
-  if (at.has_description())
-    printf("Description: %s\n", at.description().c_str());
-  if (at.has_key_id())
-    printf("Key-id: %s\n", at.key_id().c_str());
-  if (at.has_measurement()) {
-    printf("Measurement: ");
-    print_bytes((int)at.measurement().size(), (byte*)at.measurement().data());
-    printf("\n");
-  }
-  if (at.has_time())
-    printf("time attested: %s\n", at.time().c_str());
-  if (at.has_clause()) {
-    print_vse_clause(at.clause());
-  }
 }
 
 void print_signed_claim(const signed_claim_message& signed_claim) {
@@ -1705,21 +1682,6 @@ void print_entity(const entity_message& em) {
   } else {
     return;
   }
-}
-
-bool verify_signed_attestation(int serialized_size, byte* serialized,
-      int sig_size, byte* sig, const key_message& key) {
-  attestation at;
-  string s;
-  s.assign((char*)serialized, serialized_size);
-  at.ParseFromString(s);
-
-  RSA* r = RSA_new();
-  if (!key_to_RSA(key, r))
-    return false;
-  bool fRet= rsa_sha256_verify(r, serialized_size, serialized, sig_size, sig);
-  RSA_free(r);
-  return fRet;
 }
 
 bool make_signed_claim( const char* alg, const claim_message& claim, const key_message& key,

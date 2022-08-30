@@ -680,107 +680,39 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   }
   entity_message attest_key_entity = vc.clause().subject();
 
-  // Here we generate a vse-attestation which is
-  // a claim, signed by the attestation key that signed a statement
-  // the user requests (Some people call this the "user data" in an
-  // attestation.  Formats for an attestation will vary among platforms
-  // but they must always convery the information we do here.
-  string enclave_id("");
-  string descript("attest");
-  string at_format("vse-attestation");
-
-  // Now construct the vse clause "attest-key says authentication key speaks-for measurement"
-  // There are three entities in the attest: the attest-key, the auth-key and the measurement
-  // How we find the measurement is also provider dependant.
-  int my_measurement_size = 32;
-  byte my_measurement[my_measurement_size];
-  if (!Getmeasurement(enclave_type_, enclave_id, &my_measurement_size, my_measurement)) {
-    printf("Getmeasurement failed\n");
-    return false;
-  }
-  string measurement;
-  measurement.assign((char*)my_measurement, my_measurement_size);
-  entity_message measurement_entity;
-  if (!make_measurement_entity(measurement, &measurement_entity)) {
-    printf("certify_me error 1\n");
-    return false;
-  }
-
-  // Now we have all the Principals for the attestation.
-  // Next, we construct the vse attestation.
-  // SGX doesn't need this.
-  // ../sample_apps/analytics_example/enclave/ecalls.cc creates the
-  // vse statement representing the attestation.
-  vse_clause vse_attest_clause;
+  attestation_user_data ud;
   if (purpose_ == "authentication") {
-    entity_message auth_key_entity;
-    if (!make_key_entity(public_auth_key_, &auth_key_entity)) {
-      printf("certify_me error 2\n");
-      return false;
-    }
-
-    if (!construct_vse_attestation_statement(attest_key_entity, auth_key_entity,
-          measurement_entity, &vse_attest_clause)) {
-      printf("certify_me error 3\n");
+    if (!make_attestation_user_data(enclave_type_,
+          public_auth_key_, &ud)) {
+      printf("Can't make user data (1)\n");
       return false;
     }
   } else if (purpose_ == "attestation") {
-    entity_message service_key_entity;
-    if (!make_key_entity(public_service_key_, &service_key_entity)) {
-      printf("certify_me error 2.5\n");
-      return false;
-    }
-
-    if (!construct_vse_attestation_statement(attest_key_entity, service_key_entity,
-          measurement_entity, &vse_attest_clause)) {
-      printf("certify_me error 3.5\n");
+    if (!make_attestation_user_data(enclave_type_,
+          public_service_key_, &ud)) {
+      printf("Can't make user data (1)\n");
       return false;
     }
   } else {
     printf("error: neither attestation or authorization\n");
     return false;
   }
-
-  // Create the final attestation, sign it and serialize it
-  string serialized_attestation;
-  if (!vse_attestation(descript, enclave_type_, enclave_id, vse_attest_clause, &serialized_attestation)) {
-    printf("certify_me error 5\n");
+  string serialized_ud;
+  if (!ud.SerializeToString(&serialized_ud)) {
+    printf("Can't serialize user data\n");
     return false;
   }
+
+  // Todo: fix size
   int size_out = 16000;
   byte out[size_out];
-  if (!Attest(enclave_type_, serialized_attestation.size(),
-        (byte*) serialized_attestation.data(), &size_out, out)) {
+  if (!Attest(enclave_type_, serialized_ud.size(),
+        (byte*) serialized_ud.data(), &size_out, out)) {
     printf("certify_me error 6\n");
     return false;
   }
   string the_attestation_str;
   the_attestation_str.assign((char*)out, size_out);
-  signed_claim_message the_attestation;
-  if (!the_attestation.ParseFromString(the_attestation_str)) {
-    printf("certify_me error 7\n");
-    return false;
-  }
-
-#ifdef DEBUG
-  printf("\nPlatform vse claim:\n");
-  print_vse_clause(vc);
-  printf("\n");
-  printf("attest vse claim:\n");
-  print_vse_clause(vse_attest_clause);
-  printf("\n\n");
-  printf("attestation signed claim\n");
-  print_signed_claim(the_attestation);
-  printf("\n");
-  printf("attestation underlying claim\n");
-  claim_message tcm;
-  string ser_claim_str;
-  ser_claim_str.assign((char*)the_attestation.serialized_claim_message().data(),
-      the_attestation.serialized_claim_message().size());
-  tcm.ParseFromString(ser_claim_str);
-  print_claim(tcm);
-  printf("\n");
-#endif
 
   // Get certified
   trust_request_message request;
@@ -802,7 +734,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   //  platform_says_attest_key_is_trusted, the_attestation
   evidence_package* ep = new(evidence_package);
   if (!construct_platform_evidence_package(signed_platform_says_attest_key_is_trusted,
-        the_attestation, ep))  {
+        enclave_type_, the_attestation_str, ep))  {
     printf("certify_me error 7.5\n");
     return false;
   }
@@ -918,13 +850,14 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
 // helpers for proofs
 
 bool construct_platform_evidence_package(signed_claim_message& platform_attest_claim,
-    signed_claim_message& the_attestation, evidence_package* ep) {
+    string& attesting_enclave_type, string& serialized_attestation, evidence_package* ep) {
 
   string pt("vse-verifier");
   string et("signed-claim");
 
   ep->set_prover_type(pt);
   evidence* ev1 = ep->add_fact_assertion();
+
   ev1->set_evidence_type(et);
   signed_claim_message sc1;
   sc1.CopyFrom(platform_attest_claim);
@@ -934,13 +867,21 @@ bool construct_platform_evidence_package(signed_claim_message& platform_attest_c
   ev1->set_serialized_evidence((byte*)serialized_sc1.data(), serialized_sc1.size());
 
   evidence* ev2 = ep->add_fact_assertion();
-  ev2->set_evidence_type(et);
-  signed_claim_message sc2;
-  sc2.CopyFrom(the_attestation);
-  string serialized_sc2;
-  if (!sc2.SerializeToString(&serialized_sc2))
+  if ("simulated-enclave" ==  attesting_enclave_type ||
+      "application-enclave" == attesting_enclave_type) {
+    string et2("vse-attestation-report");
+    ev2->set_evidence_type(et2);
+  } else if ("oe-enclave" == attesting_enclave_type) {
+    string et2("oe-attestation-report");
+    ev2->set_evidence_type(et2);
+  } else if ("sev-enclave" ==  attesting_enclave_type) {
+    string et2("sev-attestation-report");
+    ev2->set_evidence_type(et2);
+  } else {
     return false;
-  ev2->set_serialized_evidence((byte*)serialized_sc2.data(), serialized_sc2.size());
+  }
+
+  ev2->set_serialized_evidence(serialized_attestation);
   return true;
 }
 

@@ -323,8 +323,8 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
 
   string serialized_what_to_say;
-  if (!construct_what_to_say(enclave_type, attest_pk, enclave_pk,
-          meas, &serialized_what_to_say)) {
+  if (!construct_what_to_say(enclave_type, enclave_pk,
+          &serialized_what_to_say)) {
     return false;
   }
 
@@ -736,8 +736,8 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     return false;
 
   string serialized_what_to_say;
-  if (!construct_what_to_say(enclave_type, attest_pk, enclave_pk,
-          meas, &serialized_what_to_say)) {
+  if (!construct_what_to_say(enclave_type, enclave_pk,
+          &serialized_what_to_say)) {
     return false;
   }
 
