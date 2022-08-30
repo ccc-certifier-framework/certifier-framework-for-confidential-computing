@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
+#ifndef ASYLO_CERTIFIER
 #include <gflags/gflags.h>
+#endif
 
 #include "support.h"
 #include "certifier.h"
@@ -10,7 +12,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include  <netdb.h>
+#include <netdb.h>
 #include <openssl/ssl.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
@@ -995,21 +997,25 @@ void print_ssl_error(int code) {
   case SSL_ERROR_WANT_WRITE:
     printf("want write ssl error\n");
     break;
+#ifndef ASYLO_CERTIFIER
   case SSL_ERROR_WANT_CONNECT:
     printf("want connect ssl error\n");
     break;
+#endif
   case SSL_ERROR_WANT_ACCEPT:
     printf("want accept ssl error\n");
     break;
   case SSL_ERROR_WANT_X509_LOOKUP:
     printf("want lookup ssl error\n");
     break;
+#ifndef ASYLO_CERTIFIER
   case SSL_ERROR_WANT_ASYNC:
     printf("want async ssl error\n");
     break;
   case SSL_ERROR_WANT_CLIENT_HELLO_CB:
     printf("wantclient hello  ssl error\n");
     break;
+#endif
   case SSL_ERROR_SSL:
     printf("ssl error error\n");
     break;
@@ -1025,6 +1031,113 @@ void print_ssl_error(int code) {
   }
 }
 
+// Socket and SSL support
+
+bool open_client_socket(const string& host_name, int port, int* soc) {
+  struct addrinfo hints;
+  struct addrinfo *result, *rp;
+  int sfd, s;
+
+  /* Obtain address(es) matching host/port */
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = 0;
+  hints.ai_protocol = 0;
+
+  char port_str[16] = {};
+  sprintf(port_str, "%d", port);
+
+  s = getaddrinfo(host_name.c_str(), port_str, &hints, &result);
+  if (s != 0) {
+    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+    return false;
+  }
+
+  /* getaddrinfo() returns a list of address structures.
+   Try each address until we successfully connect(2).
+   If socket(2) (or connect(2)) fails, we (close the socket
+   and) try the next address. */
+
+  for (rp = result; rp != NULL; rp = rp->ai_next) {
+    sfd = socket(rp->ai_family, rp->ai_socktype,
+                 rp->ai_protocol);
+    if (sfd == -1)
+      continue;
+
+    if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
+      break;                  /* Success */
+
+    close(sfd);
+  }
+
+  if (rp == NULL) {               /* No address succeeded */
+    fprintf(stderr, "Could not connect\n");
+    return false;
+  }
+
+  freeaddrinfo(result);           /* No longer needed */
+
+  *soc = sfd;
+  return true;
+}
+
+bool open_server_socket(const string& host_name, int port, int* soc) {
+  struct addrinfo hints;
+  struct addrinfo *result, *rp;
+  int sfd, s;
+
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+  hints.ai_protocol = 0;
+  hints.ai_canonname = NULL;
+  hints.ai_addr = NULL;
+  hints.ai_next = NULL;
+
+  char port_str[16] = {};
+  sprintf(port_str, "%d", port);
+
+  s = getaddrinfo(host_name.c_str(), port_str, &hints, &result);
+  if (s != 0) {
+    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+    return false;
+  }
+
+  /* getaddrinfo() returns a list of address structures.
+   Try each address until we successfully bind(2).
+   If socket(2) (or bind(2)) fails, we (close the socket
+   and) try the next address. */
+
+  for (rp = result; rp != NULL; rp = rp->ai_next) {
+    sfd = socket(rp->ai_family, rp->ai_socktype,
+                 rp->ai_protocol);
+    if (sfd == -1)
+      continue;
+
+    if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
+      break;                  /* Success */
+
+      close(sfd);
+    }
+
+    if (rp == NULL) {               /* No address succeeded */
+      fprintf(stderr, "Could not bind\n");
+      return false;
+    }
+
+    freeaddrinfo(result);           /* No longer needed */
+
+    if (listen(sfd, 10) != 0) {
+      printf("cant listen\n");
+      return false;
+    }
+
+  *soc = sfd;
+  return true;
+}
+#if 0
 bool open_client_socket(const string& host_name, int port, int* soc) {
   // dial service
   struct sockaddr_in address;
@@ -1074,7 +1187,7 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
   }
   return true;
 }
-
+#endif
 // This is only for debugging.
 int SSL_my_client_callback(SSL *s, int *al, void *arg) {
   printf("callback\n");
@@ -1119,6 +1232,110 @@ bool extract_id_from_cert(X509* in, string* out) {
   return true;
 }
 
+// Loads server side certs and keys.  Note: key for private_key is in
+//    the key.
+bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
+  // load auth key, policy_cert and certificate chain
+  RSA* r = RSA_new();
+  if (!key_to_RSA(private_key, r)) {
+    return false;
+  }
+  EVP_PKEY* auth_private_key = EVP_PKEY_new();
+  EVP_PKEY_set1_RSA(auth_private_key, r);
+
+  X509* x509_auth_key_cert= X509_new();
+  string auth_cert_str;
+  auth_cert_str.assign((char*)private_key.certificate().data(),
+        private_key.certificate().size());
+  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
+      printf("err asn1\n");
+      return false;
+  }
+
+  STACK_OF(X509)* stack = sk_X509_new_null();
+  if (sk_X509_push(stack, x509_root_cert) == 0) {
+    return false;
+  }
+
+  if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
+      printf("use cert failed\n");
+      return false;
+  }
+  if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
+      printf("use priv key failed\n");
+      return false;
+  }
+
+  if (!SSL_CTX_check_private_key(ctx)) {
+      printf("private key failed\n");
+      return false;
+  }
+  if (!SSL_CTX_set1_chain(ctx, stack)) {
+    printf("set1 chain error\n");
+    return false;
+  }
+
+  SSL_CTX_add_client_CA(ctx, x509_root_cert);
+  SSL_CTX_add1_chain_cert(ctx, x509_root_cert);
+  //Note: This is not available in all OpenSSL versions
+#if 0
+  SSL_CTX_add1_to_CA_list(ctx, x509_root_cert);
+#endif
+  return true;
+}
+
+// Loads client side certs and keys.  Note: key for private_key is in
+//    the key.
+bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
+  RSA* r = RSA_new();
+  if (!key_to_RSA(private_key, r)) {
+    printf("load_client_certs_and_key, error 1\n");
+    return false;
+  }
+  EVP_PKEY* auth_private_key = EVP_PKEY_new();
+  EVP_PKEY_set1_RSA(auth_private_key, r);
+
+  X509* x509_auth_key_cert= X509_new();
+  string auth_cert_str;
+  auth_cert_str.assign((char*)private_key.certificate().data(), private_key.certificate().size());
+  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
+    printf("load_client_certs_and_key, error 2\n");
+      return false;
+  }
+
+  STACK_OF(X509)* stack = sk_X509_new_null();
+  if (sk_X509_push(stack, x509_root_cert) == 0) {
+    printf("load_client_certs_and_key, error 3\n");
+    return false;
+  }
+
+  if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
+      printf("use cert failed\n");
+      return false;
+  }
+  if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
+      printf("use priv key failed\n");
+      return false;
+  }
+  if (!SSL_CTX_check_private_key(ctx) ) {
+    printf("load_client_certs_and_key, error 6\n");
+    return false;
+  }
+
+  if (!SSL_CTX_set1_chain(ctx, stack)) {
+    printf("set0 chain error\n");
+    return false;
+  }
+  SSL_CTX_add_client_CA(ctx, x509_root_cert);
+  SSL_CTX_add1_chain_cert(ctx, x509_root_cert);
+  //Note: This is not available in all OpenSSL versions
+#if 0
+  SSL_CTX_add1_to_CA_list(ctx, x509_root_cert);
+#endif
+  return true;
+}
+
+#if 0
 // Loads server side certs and keys.
 bool load_server_certs_and_key(X509* root_cert,
       key_message& private_key, SSL_CTX* ctx) {
@@ -1172,6 +1389,7 @@ bool load_server_certs_and_key(X509* root_cert,
 #endif
   return true;
 }
+#endif
 
 
 void server_dispatch(const string& host_name, int port,
@@ -1541,17 +1759,37 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
   }
 #endif
 
-  if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
-    printf("load_client_certs_and_key, error 5\n");
-    return false;
+  if (!SSL_CTX_use_certificate(ssl_ctx_, x509_auth_key_cert)) {
+      printf("use cert failed\n");
+      return false;
+  }
+  if (!SSL_CTX_use_PrivateKey(ssl_ctx_, auth_private_key)) {
+      printf("use priv key failed\n");
+      return false;
   }
   if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
+#if 0
+  if (!SSL_CTX_set1_chain(ctx, stack)) {
+  if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
+    printf("load_client_certs_and_key, error 5\n");
+    return false;
+  }
+#endif
+  if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
+    printf("load_client_certs_and_key, error 6\n");
+    return false;
+  }
+#ifndef ASYLO_CERTIFIER
   SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
+#else
+  SSL_CTX_add1_chain_cert(ssl_ctx_, root_cert_);
+#endif
   
   // Not needed: SSL_CTX_add_client_CA(ssl_ctx_, root_cert_);
+#ifndef ASYLO_CERTIFIER
 #ifdef DEBUG
   const STACK_OF(X509_NAME)* ca_list= SSL_CTX_get0_CA_list(ssl_ctx_);
   printf("CA names to offer\n");
@@ -1561,6 +1799,7 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
       print_cn_name(name);
     }
   }
+#endif
 #endif
   return true;
 }
@@ -1792,7 +2031,7 @@ done:
   return ret;
 }
 
-
+#if 0
 bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key, r)) {
@@ -1828,17 +2067,11 @@ bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, S
   SSL_CTX_add1_to_CA_list(ctx, x509_root_cert);
   return true;
 }
-
+#endif
 bool init_client_ssl(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port,
     int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl) {
   OPENSSL_init_ssl(0, NULL);;
   SSL_load_error_strings();
-
-  int sock = -1;
-  if (!open_client_socket(host_name, port, &sock)) {
-    printf("Can't open client socket\n");
-    return false;
-  }
 
   const SSL_METHOD* method = TLS_client_method();
   if(method == nullptr) {
@@ -1860,14 +2093,20 @@ bool init_client_ssl(X509* x509_policy_cert, key_message& private_key, const str
   const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
   SSL_CTX_set_options(ctx, flags);
 
-  SSL* ssl = SSL_new(ctx);
-  SSL_set_fd(ssl, sock);
-  int res = SSL_set_cipher_list(ssl, "TLS_AES_256_GCM_SHA384");  // Change?
-
   if (!load_client_certs_and_key(x509_policy_cert, private_key, ctx)) {
     printf("load_client_certs_and_key failed\n");
     return false;
   }
+
+  int sock = -1;
+  if (!open_client_socket(host_name, port, &sock)) {
+    printf("Can't open client socket\n");
+    return false;
+  }
+
+  SSL* ssl = SSL_new(ctx);
+  SSL_set_fd(ssl, sock);
+  int res = SSL_set_cipher_list(ssl, "TLS_AES_256_GCM_SHA384");  // Change?
 
   // SSL_connect - initiate the TLS/SSL handshake with an TLS/SSL server
   if (SSL_connect(ssl) == 0) {

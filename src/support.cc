@@ -595,10 +595,12 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
     alg_type = rsa_alg_type;
     out->set_key_type("rsa-4096-public");
     n_bytes = cipher_block_byte_size("rsa-4096-public");
+#if 0
   } else if (in.key_type() == "ecc-384-private") {
     alg_type = ecc_alg_type;
     out->set_key_type("ecc-384-public");
     n_bytes = cipher_block_byte_size("ecc_384-public");
+#endif
   } else {
     printf("private_key_to_public_key: bad key type\n");
     return false;
@@ -1125,7 +1127,7 @@ EC_KEY* key_to_ECC(const key_message& k) {
 
   return ecc_key;
 }
-
+#if 0
 bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
 
   k->set_key_name("ecc-384-private");
@@ -1290,7 +1292,7 @@ bool make_certifier_ecc_key(int n,  key_message* k) {
   EC_KEY_free(ek);
   return true;
 }
-
+#endif
 // -----------------------------------------------------------------------
 
 bool get_random(int num_bits, byte* out) {
@@ -1919,9 +1921,11 @@ int add_ext(X509 *cert, int nid, const char *value) {
   X509V3_set_ctx_nodb(&ctx);
 
   X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
+#ifndef ASYLO_CERTIFIER
   ex = X509V3_EXT_conf_nid(NULL, &ctx, nid, value);
   if(!ex)
     return 0;
+#endif
 
   X509_add_ext(cert,ex, -1);
   X509_EXTENSION_free(ex);
@@ -2053,6 +2057,7 @@ bool verify_artifact(X509& cert, key_message& verify_key,
     RSA_free(subject_rsa_key);
     EVP_PKEY_free(verify_pkey);
     EVP_PKEY_free(subject_pkey);
+#if 0
   } else if (verify_key.key_type() == "ecc-384-public" ||
              verify_key.key_type() == "ecc-384-private") {
     EVP_PKEY* verify_pkey = EVP_PKEY_new();
@@ -2070,6 +2075,7 @@ bool verify_artifact(X509& cert, key_message& verify_key,
     EC_KEY_free(subject_ecc_key);
     EVP_PKEY_free(verify_pkey);
     EVP_PKEY_free(subject_pkey);
+#endif
   } else {
     printf("Unsupported key type\n");
     return false;
@@ -2200,6 +2206,7 @@ int sized_socket_read(int fd, string* out) {
 // -----------------------------------------------------------------------
 
 // make a public key from the X509 cert
+#if 0
 bool x509_to_public_key(X509* x, key_message* k) {
   EVP_PKEY* subject_pkey = X509_get_pubkey(x);
   if (subject_pkey == nullptr)
@@ -2251,7 +2258,7 @@ bool x509_to_public_key(X509* x, key_message* k) {
 
   return true;
 }
-
+#endif
 bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k) {
   string root_name("root");
 
@@ -2283,8 +2290,10 @@ bool make_root_key_with_cert(string& type, string& name, string& issuer_name, ke
     k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
     X509_free(cert);
   } else if (type == "ecc_384-private") {
+#ifndef ASYLO_CERTIFIER
     if (!make_certifier_ecc_key(384,  k))
       return false;
+#endif
     k->set_key_format("vse-key");
     k->set_key_type(type);
     k->set_key_name(name);
