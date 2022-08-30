@@ -76,6 +76,12 @@ framework (gtest), although some tests are stand-alone.  Even if
 functionality does not change, we welcome additional tests.  The
 Test goal is: "If the tests pass, changes are compatible."
 
+Before a check-in you should make sure certifier_tests pass with
+SEV defined along with test_channel.exe,
+sample_app/simple_app/example_app.exe,
+application_service/app_service.exe and
+simple_app_under_app_service/service_example_app.exe.
+
 
 ### Formatting Commit Messages
 
