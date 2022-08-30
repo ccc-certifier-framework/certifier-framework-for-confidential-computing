@@ -519,6 +519,9 @@ bool cc_trust_data::cold_init(const string& public_key_alg,
         const string& symmetric_key_alg,
         const string& hash_alg, const string& hmac_alg) {
 
+  // Todo: The arguments are currently ignored but should be used
+  //    to generate key types, below.
+
   if (!cc_policy_info_initialized_) {
       printf("policy key should have been initialized\n");
       return false;

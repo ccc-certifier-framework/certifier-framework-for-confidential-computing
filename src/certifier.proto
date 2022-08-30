@@ -125,6 +125,8 @@ message vse_attestation_report_info {
   optional string not_before                = 3;
   optional string not_after                 = 4;
   optional bytes user_data                  = 5;
+  // in the future, we may want to add platform
+  // characteristics to this (version, FW version, etc)
 };
 
 // format will be vse-attestation-report for
