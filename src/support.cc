@@ -1425,7 +1425,7 @@ bool make_key_entity(const key_message& key, entity_message* ent) {
   return true;
 }
 
-bool make_measurement_entity(string& measurement, entity_message* ent) {
+bool make_measurement_entity(const string& measurement, entity_message* ent) {
   ent->set_entity_type("measurement");
   string* m = new string(measurement);
   ent->set_allocated_measurement(m);

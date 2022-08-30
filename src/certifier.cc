@@ -1151,7 +1151,6 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       proved_statements* already_proved) {
 
   // verify already signed assertions, converting to vse_clause
-printf("*******init_proved\n");
   int nsa = evp.fact_assertion_size();
   for (int i = 0; i < nsa; i++) {
     if (evp.fact_assertion(i).evidence_type() == "signed-claim") {
@@ -1286,17 +1285,47 @@ printf("*******init_proved\n");
         return false;
     }
 #endif
+    } else if (evp.fact_assertion(i).evidence_type() == "cert") {
+      printf("Cert not implemented\n");
+      return false;
     } else if (evp.fact_assertion(i).evidence_type() == "signed-vse-attestation-report") {
       // HERE
-      // attestKey is signing_key
-      // get measurement and enclaveKey from user data
-      // construct_vse_attestation_statement(const key_message& attest_key,
-      // const key_message& enclave_key, string& measurement,
-      // vse_clause* vse_attest_clause)
-      // could come from simulated-enclave or application-enclave
-      // construct vse-clause attestKey says enclaveKey speaks-for measurement)
-      // vse_clause* cl_to_insert = already_proved->add_proved();
-      // cl_to_insert->CopyFrom(to_add);
+      string t_str;
+      t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
+          evp.fact_assertion(i).serialized_evidence().size());
+      string type("vse-attestation-report");
+      signed_report sr;
+      if (!sr.ParseFromString(t_str)) {
+        printf("ParseFromString failed (1)\n");
+        return false;
+      }
+      if (!verify_report(type, t_str, sr.signing_key())) {
+        printf("verify_report failed\n");
+        return false;
+      }
+      vse_attestation_report_info info;
+      if (!info.ParseFromString(sr.report())) {
+        printf("ParseFromString failed (2)\n");
+        return false;
+      }
+
+      if (!check_date_range(info.not_before(), info.not_after())) {
+        printf("check_date_range failed\n");
+        return false;
+      }
+
+      attestation_user_data ud;
+      if (!ud.ParseFromString(info.user_data())) {
+        printf("ParseFromString failed (3)\n");
+        return false;
+      }
+      key_message attest_key;
+      vse_clause* cl_to_insert = already_proved->add_proved();
+      if (!construct_vse_attestation_statement(sr.signing_key(),
+            ud.enclave_key(), info.verified_measurement(), cl_to_insert)) {
+        printf("construct_vse_attestation_statement failed\n");
+        return false;
+      }
     } else {
       printf("Unknown evidence type: %s\n", evp.fact_assertion(i).evidence_type().c_str());
       return false;
@@ -1328,9 +1357,9 @@ bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
     return false;
   if (c2.object().entity_type() != "measurement")
     return false;
+
   if (!same_entity(c1.subject(), c2.object()))
     return false;
-
   // Make sure subject of conclusion is subject of c2 and verb "is-trusted"
   if (!conclusion.has_subject() || !conclusion.has_verb() || 
        conclusion.has_object() || conclusion.has_clause())
@@ -1873,14 +1902,13 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       evidence_package& evp, proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
 
-printf("*******construct_proof_from_request\n");
   if (!init_proved_statements(policy_pk, evp, already_proved)) {
     printf("init_proved_statements returned false\n");
     return false;
   }
 
-#if 1
-  printf("initial proved statements:\n");
+#if 0
+  printf("construct proof from request, initial proved statements:\n");
   for (int i = 0; i < already_proved->proved_size(); i++) {
     print_vse_clause(already_proved->proved(i));
     printf("\n");
@@ -1948,7 +1976,6 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
   }
 
 #if 0
-  // Debug: print proof
   printf("proved statements after additions:\n");
   for (int i = 0; i < pf.steps_size(); i++) {
     print_vse_clause(already_proved.proved(i));
@@ -2077,6 +2104,10 @@ void print_proof(proof& pf) {
 
 // -------------------------------------------------------------------
 
+bool check_date_range(const string& nb, const string& na) {
+  // Todo
+  return true;
+}
 
 // type is usually "vse-attestation-report"
 bool sign_report(const string& type, const string& to_be_signed, const string& signing_alg,
@@ -2287,7 +2318,7 @@ void print_signed_report(const signed_report& sr) {
 }
 
 bool construct_vse_attestation_statement(const key_message& attest_key,
-        const key_message& enclave_key, string& measurement,
+        const key_message& enclave_key, const string& measurement,
         vse_clause* vse_attest_clause) {
   string s1("says");
   string s2("speaks-for");

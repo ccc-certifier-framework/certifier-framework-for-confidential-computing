@@ -237,7 +237,7 @@ bool statement_already_proved(const vse_clause& cl, proved_statements* are_prove
 // -------------------------------------------------------------------
 
 bool construct_vse_attestation_statement(const key_message& attest_key, const key_message& auth_key,
-        string& measurement, vse_clause* vse_attest_clause);
+        const string& measurement, vse_clause* vse_attest_clause);
 bool construct_what_to_say(string& enclave_type,
       key_message& enclave_pk, string* what_to_say);
 
@@ -267,6 +267,7 @@ bool validate_evidence(string& evidence_descriptor,
 
 // -------------------------------------------------------------------
 
+bool check_date_range(const string& nb, const string& na);
 bool make_attestation_user_data(const string& enclave_type,
        const key_message& enclave_key, attestation_user_data* out);
 bool sign_report(const string& type, const string& report, const string& signing_alg,

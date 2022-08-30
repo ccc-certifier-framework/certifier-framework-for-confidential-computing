@@ -147,7 +147,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     } else {
       byte m[32];
       for (int i = 0; i < 32; i++)
-        m[i] = (17*i)%16;
+        m[i] = i;
       meas.assign((char*)m, 32);
     }
 
@@ -338,18 +338,6 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
   string final_serialized_attest;
   final_serialized_attest.assign((char*) attest_out, size_out);
 
-#if 1
-  signed_report sr;
-  if (!sr.ParseFromString(final_serialized_attest)) {
-    printf("Cant parse signed_report\n");
-    return false;
-  }
-  printf("construct_standard_evidence_package\n");
-  print_signed_report(sr);
-  printf("\n");
-  // string et2("signed-vse-attestation-report");
-#endif
-
   evp->set_prover_type("vse-verifier");
 
   // sc1: "policyKey says measurement is-trusted"
@@ -406,7 +394,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
-    ev2->set_evidence_type("signed-claim");
+    ev2->set_evidence_type("signed-vse-attestation-report");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
     if (!init_measurements) {
@@ -570,7 +558,7 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     } else {
       byte m[32];
       for (int i = 0; i < 32; i++)
-        m[i] = (17*i)%16;
+        m[i] = i;
       meas.assign((char*)m, 32);
     }
 
@@ -789,7 +777,7 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
-    ev2->set_evidence_type("signed-claim");
+    ev2->set_evidence_type("signed-vse-attestation-report");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
     if (!sc1.SerializeToString(&t_str))
@@ -819,7 +807,7 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
-    ev2->set_evidence_type("signed-claim");
+    ev2->set_evidence_type("signed-vse-attestation-report");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
     if (!init_measurements) {
