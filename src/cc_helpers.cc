@@ -1679,7 +1679,7 @@ printf("ADDING\n");
 // Loads client side certs and keys.  Note: key for private_key is in
 //    the key.
 bool secure_authenticated_channel::load_client_certs_and_key() {
-
+#ifndef ASYLO_CERTIFIER
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key_, r)) {
     printf("load_client_certs_and_key, error 1\n");
@@ -1716,24 +1716,20 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
-#ifndef ASYLO_CERTIFIER
+
   if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
     printf("load_client_certs_and_key, error 5\n");
     return false;
   }
-#endif
+
   if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
-#ifndef ASYLO_CERTIFIER
+
   SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
-#else
-  SSL_CTX_add1_chain_cert(ssl_ctx_, root_cert_);
-#endif
   
   // Not needed: SSL_CTX_add_client_CA(ssl_ctx_, root_cert_);
-#ifndef ASYLO_CERTIFIER
 #ifdef DEBUG
   const STACK_OF(X509_NAME)* ca_list= SSL_CTX_get0_CA_list(ssl_ctx_);
   printf("CA names to offer\n");
