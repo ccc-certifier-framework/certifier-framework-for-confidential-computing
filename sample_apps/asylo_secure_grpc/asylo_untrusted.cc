@@ -242,11 +242,16 @@ certifier_init() {
   int ret = 0;
   int err;
   struct addrinfo hints, *res;
-  if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init()) {
-      printf("cold-init failed\n");
-      ret = 1;
-    }
+  // Standard algorithms for the enclave
+  string public_key_alg("rsa-2048");
+  string symmetric_key_alg("aes-256");;
+  string hash_alg("sha-256");
+  string hmac_alg("sha-256-hmac");
+
+  if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
+        hash_alg, hmac_alg)) {
+    printf("cold-init failed\n");
+    ret = 1;
   } else if (FLAGS_operation == "warm-restart") {
     if (!app_trust_data->warm_restart()) {
       printf("warm-restart failed\n");
