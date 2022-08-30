@@ -105,9 +105,10 @@ bool construct_keys(string key_name, string format, key_message* public_key, key
   return true;
 }
 
-bool construct_standard_evidence_package(string& enclave_type, bool init_measurements, string& file_name,
-        string& evidence_descriptor,
-        signed_claim_sequence* trusted_platforms, signed_claim_sequence* trusted_measurements,
+bool construct_standard_evidence_package(string& enclave_type, bool init_measurements,
+        string& file_name, string& evidence_descriptor,
+        signed_claim_sequence* trusted_platforms,
+        signed_claim_sequence* trusted_measurements,
         key_message* policy_key, key_message* policy_pk, evidence_package* evp) {
 
   string policy_key_name("policy-key");
@@ -337,6 +338,18 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
   string final_serialized_attest;
   final_serialized_attest.assign((char*) attest_out, size_out);
 
+#if 1
+  signed_report sr;
+  if (!sr.ParseFromString(final_serialized_attest)) {
+    printf("Cant parse signed_report\n");
+    return false;
+  }
+  printf("construct_standard_evidence_package\n");
+  print_signed_report(sr);
+  printf("\n");
+  // string et2("signed-vse-attestation-report");
+#endif
+
   evp->set_prover_type("vse-verifier");
 
   // sc1: "policyKey says measurement is-trusted"
@@ -363,7 +376,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
-    ev2->set_evidence_type("signed-claim");
+    ev2->set_evidence_type("signed-vse-attestation-report");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
     if (!sc1.SerializeToString(&t_str))
@@ -922,18 +935,11 @@ bool test_new_local_certify(string& enclave_type,
     }
   }
 
-#if 1
   // adding predicate hierarchy
   if (!validate_evidence(evidence_descriptor, trusted_platforms,
           trusted_measurements, evp, policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }
-#else
-
-  validate_evidence(evidence_descriptor, trusted_platforms,
-          trusted_measurements, evp, policy_pk);
-#endif
-
   return true;
 }

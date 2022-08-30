@@ -869,7 +869,7 @@ bool construct_platform_evidence_package(signed_claim_message& platform_attest_c
   evidence* ev2 = ep->add_fact_assertion();
   if ("simulated-enclave" ==  attesting_enclave_type ||
       "application-enclave" == attesting_enclave_type) {
-    string et2("vse-attestation-report");
+    string et2("signed-vse-attestation-report");
     ev2->set_evidence_type(et2);
   } else if ("oe-enclave" == attesting_enclave_type) {
     string et2("oe-attestation-report");

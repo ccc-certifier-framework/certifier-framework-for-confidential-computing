@@ -268,14 +268,13 @@ bool simulated_Verify(string& serialized_signed_report) {
     printf("simulated_Verify 3 failed\n");
     return false;
   }
-  //  time ok?  not_after, not_after
+  //  Todo: time ok?  not_after, not_after
   return true;
 }
 
 bool simulated_GetParentEvidence(string* out) {
   return false;
 }
-
 
 // Delete this eventually.  It is only used in certifier_tests.
 bool simulator_init() {
