@@ -1,5 +1,7 @@
 #include "certifier.h"
 #include "support.h"
+#include "simulated_enclave.h"
+#include "application_enclave.h"
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
@@ -60,15 +62,8 @@ bool test_attest(bool print_all) {
   key_message public_attestation_key;
   if (!private_key_to_public_key(my_attestation_key, &public_attestation_key))
     return false;
-  entity_message e1;
-  entity_message e2;
-  if (!make_key_entity(public_attestation_key, &e1))
-    return false;
 
   extern string my_measurement;
-  if (!make_measurement_entity(my_measurement, &e2))
-    return false;
-
   attestation_user_data ud;
   if (!make_attestation_user_data(enclave_type,
           public_attestation_key, &ud)) {
@@ -89,7 +84,6 @@ bool test_attest(bool print_all) {
     return false;
   string serialized_signed_report;
   serialized_signed_report.assign((char*)out, size_out);
-  string type("signed-vse-attestation-report");
-  return verify_report(type, serialized_signed_report, public_attestation_key);
+  return simulated_Verify(serialized_signed_report);
 }
 

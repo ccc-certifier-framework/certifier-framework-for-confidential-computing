@@ -99,6 +99,15 @@ message vse_clauses {
   repeated vse_clause clauses               = 1;
 };
 
+// So far formats are: "vse-clause"
+message claim_message {
+  optional string claim_format              = 1;
+  optional string claim_descriptor          = 2;
+  optional string not_before                = 3;
+  optional string not_after                 = 4;
+  optional bytes serialized_claim           = 5;
+};
+
 //  The claims are in "vse-clause.  Time is
 //  the time the attestation was signed.
 //  Enclave types are "simulated-enclave", "oe-enclave",
@@ -108,15 +117,6 @@ message attestation_user_data {
   optional string time                      = 2;
   optional key_message enclave_key          = 3;
   optional key_message policy_key           = 4;
-};
-
-// So far formats are: "vse-clause"
-message claim_message {
-  optional string claim_format              = 1;
-  optional string claim_descriptor          = 2;
-  optional string not_before                = 3;
-  optional string not_after                 = 4;
-  optional bytes serialized_claim           = 5;
 };
 
 message vse_attestation_report_info {

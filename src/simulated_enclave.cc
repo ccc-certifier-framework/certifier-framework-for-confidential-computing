@@ -188,8 +188,8 @@ bool simulated_Attest(const string& enclave_type,
   int what_to_say_size, byte* what_to_say,
   int* size_out, byte* out) {
 
-  if (rsa_attestation_key == nullptr)
-    return false;
+  //if (rsa_attestation_key == nullptr)
+    //return false;
 
   vse_attestation_report_info report_info;
   string serialized_report_info;
@@ -211,12 +211,14 @@ bool simulated_Attest(const string& enclave_type,
   report_info.set_not_before(nb);
   report_info.set_not_after(na);
   report_info.set_user_data((byte*)what_to_say, what_to_say_size);
-  report_info.set_verified_measurement(my_measurement);
+  report_info.set_verified_measurement((byte*)my_measurement.data(),
+    my_measurement.size());
+  if (!report_info.SerializeToString(&serialized_report_info)) {
+    return false;
+  }
 
   const string type("vse-attestation-report");
   string signing_alg("rsa-2048-sha256-pkcs-sign");
-
-  signed_report report; 
   string serialized_signed_report;
 
   if (!sign_report(type, serialized_report_info,
@@ -224,8 +226,10 @@ bool simulated_Attest(const string& enclave_type,
     printf("Can't sign report\n");
     return false;
   }
-  if (*size_out < (int)serialized_signed_report.size())
+  if (*size_out < (int)serialized_signed_report.size()) {
+    printf("size out in simulated Attest is too small\n");
     return false;
+  }
   memset(out, 0, *size_out);
   *size_out = (int)serialized_signed_report.size();
   memcpy(out, serialized_signed_report.data(), *size_out);
@@ -242,16 +246,28 @@ bool simulated_Verify(string& serialized_signed_report) {
 
   signed_report sr;
   if (!sr.ParseFromString(serialized_signed_report)) {
+    printf("Can't parse serialized_signed_report\n");
     return false;
   }
   if (!sr.has_report_format() || sr.report_format() != "vse-attestation-report") {
+    printf("simulated_Verify 1 failed\n");
     return false;
   }
   vse_attestation_report_info info;
-  if (!info.ParseFromString(sr.report()))
+  if (!info.ParseFromString(sr.report())) {
+    printf("simulated_Verify 2 failed\n");
     return false;
-  if (info.verified_measurement() != my_measurement)
+  }
+  if (info.verified_measurement() != my_measurement) {
+    printf("verified measurement: ");
+    print_bytes(info.verified_measurement().size(), (byte*)info.verified_measurement().data());
+    printf("\n");
+    printf("my       measurement: ");
+    print_bytes(my_measurement.size(), (byte*)my_measurement.data());
+    printf("\n");
+    printf("simulated_Verify 3 failed\n");
     return false;
+  }
   //  time ok?  not_after, not_after
   return true;
 }

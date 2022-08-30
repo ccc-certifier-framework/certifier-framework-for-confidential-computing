@@ -99,6 +99,8 @@ extern bool test_signed_claims(bool print_all);
 TEST (signed_claims, test_signed_claims) {
   EXPECT_TRUE(test_signed_claims(FLAGS_print_all));
 }
+
+#if 0
 extern bool test_local_certify(string&, bool, string&, string&);
 TEST (local_certify, test_local_certify) {
   string enclave_type("simulated-enclave");
@@ -125,6 +127,8 @@ TEST (local_certify, test_new_local_certify) {
     FLAGS_trusted_measurements_file,
     evidence_descriptor));
 }
+#endif 
+
 extern bool test_certify_steps(bool print_all);
 TEST (certify, test_certify_steps) {
   EXPECT_TRUE(test_certify_steps(FLAGS_print_all));
