@@ -1,4 +1,4 @@
-# Certifier Asylo setup
+# Asylo Secure GRPC Server and Client with Certifier Framework
 
 ```
 git clone 
@@ -62,7 +62,7 @@ make -f policy_utilities.mak
 
 Compile Certifier Protobuf in system protobuf and not Asylo protobuf
 ```
-cd certifier-framework-for-confidential-computing/src 
+cd $CERTIFIER_PROTOTYPE/src
 protoc --cpp_out=. certifier.proto
 cp certifier.pb.h ../include
 cp certifier.pb.cc ../sample_apps/asylo_secure_grpc/
@@ -81,7 +81,7 @@ $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-
 Embed policy key and compile app
 ```
 cd $EXAMPLE_DIR/provisioning
-$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin --output=../../include/policy_key.cc
+$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin --output=../../../include/policy_key.cc
 ```
 
 Compile Asylo GRPC server (remove sgx_sim and add sgx_hw for hardware test) 
@@ -141,6 +141,12 @@ cp ./* $EXAMPLE_DIR/client_data
 cp ./* $EXAMPLE_DIR/server_data
 ```
 
+Copy client_data/server_data to bazel .cache directory
+Sign with Asylo debug signing key (replace with actual MRSIGNER on hardware)
+```
+./measurement_init.exe --mrenclave=83d719e77deaca1470f6baf62a4d774303c899db69020f9c70ee1dfc08c7ce9e --out_file=/tmp/binary_trusted_measurements_file.bin
+```
+
 Compile the certifier service 
 
 ```
@@ -150,7 +156,7 @@ go build simpleserver.go
 
 Run certifier service (in 1st window)
 ```
-cd $EXAMPLE_DIR
+cd $EXAMPLE_DIR/service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
       --path=$EXAMPLE_DIR/service \
       --policyFile=policy.bin --readPolicy=true
