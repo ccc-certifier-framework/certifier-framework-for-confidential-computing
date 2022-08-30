@@ -188,9 +188,6 @@ bool simulated_Attest(const string& enclave_type,
   int what_to_say_size, byte* what_to_say,
   int* size_out, byte* out) {
 
-  //if (rsa_attestation_key == nullptr)
-    //return false;
-
   vse_attestation_report_info report_info;
   string serialized_report_info;
   report_info.set_enclave_type("simulated-enclave");

@@ -2037,6 +2037,18 @@ void print_evidence(const evidence& ev) {
     }
       printf("\n");
     }
+    if (ev.evidence_type() == "cert") {
+      printf("Cert: ");
+      print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
+      printf("\n");
+    }
+    if (ev.evidence_type() == "signed-vse-attestation-report") {
+      signed_report sr;
+      if (sr.ParseFromString(ev.serialized_evidence())) {
+        print_signed_report(sr);
+        printf("\n");
+      }
+    }
   }
 }
 
