@@ -2105,7 +2105,22 @@ void print_proof(proof& pf) {
 // -------------------------------------------------------------------
 
 bool check_date_range(const string& nb, const string& na) {
-  // Todo
+  time_point t_now;
+  time_point t_nb;
+  time_point t_na;
+
+  if (!time_now(&t_now))
+    return false;
+  if (!string_to_time(nb, &t_nb))
+    return false;
+  if (!string_to_time(na, &t_na))
+    return false;
+
+  if (compare_time(t_now, t_nb) <  0)
+     return false;
+  if (compare_time(t_na, t_now) < 0)
+     return false;
+
   return true;
 }
 
