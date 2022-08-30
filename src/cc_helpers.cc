@@ -1717,7 +1717,6 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
     return false;
   }
 #ifndef ASYLO_CERTIFIER
-  if (!SSL_CTX_set1_chain(ctx, stack)) {
   if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
     printf("load_client_certs_and_key, error 5\n");
     return false;
