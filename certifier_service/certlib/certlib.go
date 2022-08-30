@@ -1261,19 +1261,75 @@ func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
 	return true
 }
 
-// Todo
 func ConstructVseAttestClaim(attestKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
 		measurement []byte) *certprotos.VseClause {
-	return nil
+	am := MakeKeyEntity(attestKey)
+	if am == nil {
+		fmt.Printf("Can't make attest entity\n")
+		return nil
+	}
+	em := MakeKeyEntity(enclaveKey)
+	if em == nil {
+		fmt.Printf("Can't make enclave entity\n")
+		return nil
+	}
+	mm := MakeMeasurementEntity(measurement)
+	if mm == nil {
+		fmt.Printf("Can't make measurement entity\n")
+		return nil
+	}
+	says := "says"
+	speaks_for := "speaks-for"
+	c1 := MakeSimpleVseClause(em, &speaks_for, mm)
+	return MakeIndirectVseClause(am, &says, c1)
 }
 
 // Todo
 func VerifyReport(etype string, pk *certprotos.KeyMessage, serialized []byte) bool {
-	return true;
+	if etype != "vse-attestation-report" {
+		return false
+	}
+	sr := certprotos.SignedReport{}
+	err := proto.Unmarshal(serialized, &sr)
+	if err != nil {
+		fmt.Printf("Can't unmarshal signed report\n")
+		return false
+	}
+	k := sr.SigningKey
+	if !SameKey(k, pk) {
+		return false
+	}
+	if sr.Report == nil || sr.Signature == nil {
+		return false
+	}
+
+	rPK := rsa.PublicKey{}
+	rpK := rsa.PrivateKey{}
+	if GetRsaKeysFromInternal(k, &rpK, &rPK) == false {
+		fmt.Printf("VerifyReport: error 1\n")
+		return false
+	}
+
+	if RsaSha256Verify(&rPK, sr.Report, sr.Signature) {
+		return true;
+	}
+	return false
 }
 
-// Todo
 func CheckTimeRange(nb *string, na *string) bool {
+	if nb == nil || na == nil {
+		return false
+	}
+	tn := TimePointNow()
+	tb := StringToTimePoint(*nb)
+	ta := StringToTimePoint(*na)
+	if tn == nil || ta == nil && tb == nil {
+		return false
+	}
+	if CompareTimePoints(tb, tn) > 0 || CompareTimePoints(ta, tn) < 0 {
+		fmt.Printf("CheckTimeRange out of range\n")
+		return false
+	}
 	return true
 }
 
