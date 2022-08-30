@@ -755,26 +755,51 @@ func PrintClaim(c *certprotos.ClaimMessage) {
 	return
 }
 
-func PrintAttestation(a *certprotos.Attestation) {
-	if a.GetEnclaveType() != "" {
-		fmt.Printf("Enclave type: %s\n", a.GetEnclaveType())
+func PrintAttestationUserData(sr *certprotos.AttestationUserData) {
+	if sr.EnclaveType != nil {
+		fmt.Printf("Enclave type: %s\n", *sr.EnclaveType)
 	}
-	if a.GetKeyId() != "" {
-		fmt.Printf("Key id      : %s\n", a.GetKeyId())
+	if sr.Time!= nil {
+		fmt.Printf("Time signed : %s\n", *sr.Time)
 	}
-	if a.GetMeasurement() != nil {
+	if sr.EnclaveKey != nil {
+		PrintKey(sr.EnclaveKey)
+	}
+	return
+}
+
+func PrintVseAttestationReportInfo(info *certprotos.VseAttestationReportInfo) {
+	if info.EnclaveType != nil {
+		fmt.Printf("Enclave type: %s\n", *info.EnclaveType)
+	}
+	if info.VerifiedMeasurement != nil {
 		fmt.Printf("Measurement : ")
-		PrintBytes(a.GetMeasurement())
-		fmt.Printf("\n")
+		PrintBytes(info.VerifiedMeasurement)
 	}
-	if a.GetTime() != "" {
-		fmt.Printf("Time	: %s\n", a.GetTime())
+	if info.NotBefore!= nil  && info.NotAfter != nil {
+		fmt.Printf("Valid between: %s and %s\n", *info.NotBefore, *info.NotAfter)
 	}
-	if a.GetDescription() != "" {
-		fmt.Printf("Description : %s\n", a.GetDescription())
+	if info.UserData!= nil {
+		fmt.Printf("User Data   : ")
+		PrintBytes(info.UserData)
 	}
-	if a.GetClause() != nil {
-		PrintVseClause(a.GetClause())
+	return
+}
+
+func PrintSignedReport(sr *certprotos.SignedReport) {
+	if sr.ReportFormat != nil {
+		fmt.Printf("Report format: %s\n", *sr.ReportFormat)
+	}
+	if sr.Report != nil {
+		fmt.Printf("Report       : ")
+		PrintBytes(sr.Report)
+	}
+	if sr.SigningAlgorithm != nil {
+		fmt.Printf("Report format: %s\n", *sr.SigningAlgorithm)
+	}
+	if sr.SigningKey != nil {
+		fmt.Printf("Signing key  : ")
+		PrintKey(sr.SigningKey)
 	}
 	return
 }
@@ -898,50 +923,12 @@ func VerifySignedClaim(c *certprotos.SignedClaimMessage, k *certprotos.KeyMessag
 	return false
 }
 
-// Returns serialized_attestation
-func VseAttestation(d string, etype string, id string, c *certprotos.VseClause) []byte {
-	at :=  certprotos.Attestation {}
-	m := GetMeasurement("simulated-enclave", "")
-	if m == nil {
-		return nil
-	}
-	at.Measurement = m
-	at.Clause = c
-	at.EnclaveType = &etype
-	at.Description = &d
-	at.KeyId = &id
-	tn := TimePointNow()
-	if tn == nil {
-		return nil
-	}
-	ts := TimePointToString(tn)
-	at.Time = &ts
-
-	serAtt, err := proto.Marshal(&at)
-	if err != nil {
-		return nil
-	}
-	return serAtt
-}
-
-// bool convert_attestation_to_vse_clauseconst (claim_message& sa, vse_clause* cl);
-func AttestationToVseClause(cm *certprotos.ClaimMessage) *certprotos.VseClause {
-	serClaim := cm.GetSerializedClaim()
-	at := certprotos.Attestation{}
-	err := proto.Unmarshal(serClaim, &at)
-	if err != nil {
-		return nil
-	}
-	return at.Clause
-}
-
 func VerifySignedAssertion(scm certprotos.SignedClaimMessage, k *certprotos.KeyMessage, vseClause *certprotos.VseClause) bool {
 	// verify signed claim and extract vse clause
 	if !VerifySignedClaim(&scm, k) {
 		return false;
 	}
 	// extract clause
-	att_str := "vse-attestation"
 	cl_str := "vse-clause"
 
 	cm := certprotos.ClaimMessage{}
@@ -949,15 +936,7 @@ func VerifySignedAssertion(scm certprotos.SignedClaimMessage, k *certprotos.KeyM
 	if err != nil {
 		return false
 	}
-	if cm.GetClaimFormat() == att_str {
-		at := certprotos.Attestation{}
-		err = proto.Unmarshal(cm.GetSerializedClaim(), &at)
-		if err != nil {
-			fmt.Printf("VerifySignedAssertion, Error 1\n")
-			return false
-		}
-		*vseClause = *at.Clause
-	} else if cm.GetClaimFormat() == cl_str {
+	if cm.GetClaimFormat() == cl_str {
 		err = proto.Unmarshal(cm.GetSerializedClaim(), vseClause)
 		if err != nil {
 			fmt.Printf("VerifySignedAssertion, Error 2\n")
@@ -1257,6 +1236,13 @@ func PrintEvidence(ev *certprotos.Evidence) {
 			return
 		}
 		PrintSignedClaim(&sc)
+	} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
+		sr := certprotos.SignedReport{}
+		err:= proto.Unmarshal(ev.SerializedEvidence, &sr)
+		if err != nil {
+			return
+		}
+		PrintSignedReport(&sr)
 	} else if ev.GetEvidenceType() == "oe-attestation" {
 		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "sev-attestation" {
@@ -1272,6 +1258,22 @@ func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
 	ist := "is-trusted"
 	vc :=  MakeUnaryVseClause(ke, &ist)
 	ps.Proved = append(ps.Proved, vc)
+	return true
+}
+
+// Todo
+func ConstructVseAttestClaim(attestKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
+		measurement []byte) *certprotos.VseClause {
+	return nil
+}
+
+// Todo
+func VerifyReport(etype string, pk *certprotos.KeyMessage, serialized []byte) bool {
+	return true;
+}
+
+// Todo
+func CheckTimeRange(nb *string, na *string) bool {
 	return true
 }
 
@@ -1311,6 +1313,38 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			return false
 		} else if ev.GetEvidenceType() == "sev-assertion" {
 			fmt.Printf("sev-verify not implemented\n")
+			return false
+		} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
+			sr := certprotos.SignedReport{}
+			err := proto.Unmarshal(ev.SerializedEvidence, &sr)
+			if err != nil {
+				fmt.Printf("Can't unmarshal signed report\n")
+				return false
+			}
+			k := sr.SigningKey
+			info := certprotos.VseAttestationReportInfo{}
+			err = proto.Unmarshal(sr.GetReport(), &info)
+			if err != nil {
+				fmt.Printf("Can't unmarshal info\n")
+				return false
+			}
+			ud := certprotos.AttestationUserData{}
+			err = proto.Unmarshal(info.GetUserData(), &ud)
+			if err != nil {
+				fmt.Printf("Can't unmarshal user data\n")
+				return false
+			}
+			if VerifyReport("vse-attestation-report", k, ev.GetSerializedEvidence()) {
+				if CheckTimeRange(info.NotBefore, info.NotAfter) {
+					cl := ConstructVseAttestClaim(k, ud.EnclaveKey, info.VerifiedMeasurement)
+					ps.Proved = append(ps.Proved, cl)
+				}
+			}
+		} else if ev.GetEvidenceType() == "cert" {
+			fmt.Printf("Cert evidence type unimplemented\n")
+			return false
+		} else {
+			fmt.Printf("Unknown evidence type\n")
 			return false
 		}
 	}
@@ -1691,16 +1725,6 @@ func GetVseFromSignedClaim(sc *certprotos.SignedClaimMessage) *certprotos.VseCla
 		if err != nil {
 			return nil
 		}
-	} else if claimMsg.GetClaimFormat() == "vse-attestation" {
-		at :=  certprotos.Attestation{}
-		err = proto.Unmarshal(claimMsg.SerializedClaim, &at)
-		if err != nil {
-			return nil
-		}
-		if at.Clause == nil {
-			return nil
-		}
-		vseClause = *at.Clause
 	} else {
 		return nil
 	}

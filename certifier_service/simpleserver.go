@@ -626,16 +626,26 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
 	fmt.Printf("%d fact assertions in evidence\n", len(support.FactAssertion))
 	for i := 0; i < len(support.FactAssertion); i++ {
 		fmt.Printf("Type: %s\n",  support.FactAssertion[i].GetEvidenceType())
-		var sc certprotos.SignedClaimMessage
-		err := proto.Unmarshal(support.FactAssertion[i].SerializedEvidence, &sc)
-		if err != nil {
-			fmt.Printf("Can't unmarshal\n");
+		if support.FactAssertion[i].GetEvidenceType() == "signed-claim" {
+			var sc certprotos.SignedClaimMessage
+			err := proto.Unmarshal(support.FactAssertion[i].SerializedEvidence, &sc)
+			if err != nil {
+				fmt.Printf("Can't unmarshal\n");
+			} else {
+			fmt.Printf("Clause: ")
+			vse:= certlib.GetVseFromSignedClaim(&sc)
+			certlib.PrintVseClause(vse)
+			}
+			fmt.Println("")
+		} else if support.FactAssertion[i].GetEvidenceType() == "signed-vse-attestation-report" {
+			fmt.Printf("Signed report\n")
+		} else if support.FactAssertion[i].GetEvidenceType() == "cert" {
+			fmt.Printf("Cert evidence type unimplemented\n")
+			return nil, nil, nil
 		} else {
-		fmt.Printf("Clause: ")
-		vse:= certlib.GetVseFromSignedClaim(&sc)
-		certlib.PrintVseClause(vse)
+			fmt.Printf("Invalid evidence type\n")
+			return nil, nil, nil
 		}
-		fmt.Println("")
 	}
 
 	if !certlib.InitProvedStatements(*publicPolicyKey, support.FactAssertion, alreadyProved) {

@@ -236,6 +236,7 @@ func TestClaims(t *testing.T) {
 		t.Errorf("Verify signed claim fails\n")
 	}
 
+/*
 	fmt.Printf("\nAttest\n")
 	vat := VseAttestation("testAttestation", "simulated-enclave", "", vcl3)
 	if  vat == nil {
@@ -247,6 +248,7 @@ func TestClaims(t *testing.T) {
 		t.Errorf("attestation unmarshal fails")
 	}
 	PrintAttestation(&uvat)
+*/
 }
 
 func TestCrypt(t *testing.T) {
