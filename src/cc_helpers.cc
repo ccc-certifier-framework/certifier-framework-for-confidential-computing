@@ -1,7 +1,4 @@
 #include <gtest/gtest.h>
-#ifndef ASYLO_CERTIFIER
-#include <gflags/gflags.h>
-#endif
 
 #include "support.h"
 #include "certifier.h"
@@ -1182,105 +1179,6 @@ bool extract_id_from_cert(X509* in, string* out) {
   return true;
 }
 
-#ifdef ASYLO_CERTIFIER
-// Loads server side certs and keys.  Note: key for private_key is in
-//    the key.
-bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
-  // load auth key, policy_cert and certificate chain
-  RSA* r = RSA_new();
-  if (!key_to_RSA(private_key, r)) {
-    return false;
-  }
-  EVP_PKEY* auth_private_key = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(auth_private_key, r);
-
-  X509* x509_auth_key_cert= X509_new();
-  string auth_cert_str;
-  auth_cert_str.assign((char*)private_key.certificate().data(),
-        private_key.certificate().size());
-  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
-      printf("err asn1\n");
-      return false;
-  }
-
-  STACK_OF(X509)* stack = sk_X509_new_null();
-  if (sk_X509_push(stack, x509_root_cert) == 0) {
-    return false;
-  }
-
-  if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
-      printf("use cert failed\n");
-      return false;
-  }
-  if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
-      printf("use priv key failed\n");
-      return false;
-  }
-
-  if (!SSL_CTX_check_private_key(ctx)) {
-      printf("private key failed\n");
-      return false;
-  }
-  if (!SSL_CTX_set1_chain(ctx, stack)) {
-    printf("set1 chain error\n");
-    return false;
-  }
-
-  SSL_CTX_add_client_CA(ctx, x509_root_cert);
-  SSL_CTX_add1_chain_cert(ctx, x509_root_cert);
-
-  return true;
-}
-
-// Loads client side certs and keys.  Note: key for private_key is in
-//    the key.
-bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
-  RSA* r = RSA_new();
-  if (!key_to_RSA(private_key, r)) {
-    printf("load_client_certs_and_key, error 1\n");
-    return false;
-  }
-  EVP_PKEY* auth_private_key = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(auth_private_key, r);
-
-  X509* x509_auth_key_cert= X509_new();
-  string auth_cert_str;
-  auth_cert_str.assign((char*)private_key.certificate().data(), private_key.certificate().size());
-  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
-    printf("load_client_certs_and_key, error 2\n");
-      return false;
-  }
-
-  STACK_OF(X509)* stack = sk_X509_new_null();
-  if (sk_X509_push(stack, x509_root_cert) == 0) {
-    printf("load_client_certs_and_key, error 3\n");
-    return false;
-  }
-
-  if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
-      printf("use cert failed\n");
-      return false;
-  }
-  if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
-      printf("use priv key failed\n");
-      return false;
-  }
-  if (!SSL_CTX_check_private_key(ctx) ) {
-    printf("load_client_certs_and_key, error 6\n");
-    return false;
-  }
-
-  if (!SSL_CTX_set1_chain(ctx, stack)) {
-    printf("set0 chain error\n");
-    return false;
-  }
-  SSL_CTX_add_client_CA(ctx, x509_root_cert);
-  SSL_CTX_add1_chain_cert(ctx, x509_root_cert);
-
-  return true;
-}
-
-#else
 // Loads server side certs and keys.
 bool load_server_certs_and_key(X509* root_cert,
       key_message& private_key, SSL_CTX* ctx) {
@@ -1303,23 +1201,40 @@ bool load_server_certs_and_key(X509* root_cert,
   }
 
   STACK_OF(X509)* stack = sk_X509_new_null();
-#if 0
-  // not needed
   if (sk_X509_push(stack, root_cert) == 0) {
     printf("sk_X509_push failed\n");
     return false;
   }
-#endif
 
+#ifdef ASYLO_CERTIFIER
+  if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
+      printf("use cert failed\n");
+      return false;
+  }
+  if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
+      printf("use priv key failed\n");
+      return false;
+  }
+
+  if (!SSL_CTX_set1_chain(ctx, stack)) {
+    printf("set1 chain error\n");
+    return false;
+  }
+#else
   if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
       printf("SSL_CTX_use_cert_and_key failed\n");
       return false;
   }
-  if (!SSL_CTX_check_private_key(ctx) ) {
+#endif
+
+  if (!SSL_CTX_check_private_key(ctx)) {
       printf("SSL_CTX_check_private_key failed\n");
       return false;
   }
   SSL_CTX_add_client_CA(ctx, root_cert);
+#ifdef ASYLO_CERTIFIER
+  SSL_CTX_add1_chain_cert(ctx, root_cert);
+#else
   SSL_CTX_add1_to_CA_list(ctx, root_cert);
 
 #ifdef DEBUG
@@ -1332,10 +1247,10 @@ bool load_server_certs_and_key(X509* root_cert,
     }
   }
 #endif
-  return true;
-}
 #endif // ASYLO_CERTIFIER
 
+  return true;
+}
 
 void server_dispatch(const string& host_name, int port,
       string& asn1_root_cert, key_message& private_key,
@@ -1971,7 +1886,8 @@ done:
   return ret;
 }
 
-#ifndef ASYLO_CERTIFIER
+// Loads client side certs and keys.  Note: key for private_key is in
+//    the key.
 bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key, r)) {
@@ -1995,19 +1911,41 @@ bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, S
     return false;
   }
 
+#ifdef ASYLO_CERTIFIER
+  if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
+      printf("use cert failed\n");
+      return false;
+  }
+
+  if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
+      printf("use priv key failed\n");
+      return false;
+  }
+
+  if (!SSL_CTX_set1_chain(ctx, stack)) {
+    printf("set0 chain error\n");
+    return false;
+  }
+#else
   if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
     printf("load_client_certs_and_key, error 5\n");
       return false;
   }
+#endif
   if (!SSL_CTX_check_private_key(ctx) ) {
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
+
   SSL_CTX_add_client_CA(ctx, x509_root_cert);
+#ifdef ASYLO_CERTIFIER
+  SSL_CTX_add1_chain_cert(ctx, x509_root_cert);
+#else
   SSL_CTX_add1_to_CA_list(ctx, x509_root_cert);
+#endif
+
   return true;
 }
-#endif
 
 bool init_client_ssl(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port,
     int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl) {
