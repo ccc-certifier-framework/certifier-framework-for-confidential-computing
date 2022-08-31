@@ -121,7 +121,6 @@ bool init_client_ssl(X509* x509_root_cert, key_message& private_key,
     const string& host_name, int port, int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl);
 void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl);
 
-
 class secure_authenticated_channel {
 public:
   string role_;
@@ -146,9 +145,9 @@ public:
   bool load_client_certs_and_key();
 
   bool init_client_ssl(const string& host_name, int port, string& asn1_root_cert,
-      key_message& private_key, string& private_key_cert);
+      key_message& private_key, const string& private_key_cert);
   bool init_server_ssl(const string& host_name, int port, string& asn1_root_cert,
-      key_message& private_key, string& private_key_cert);
+      key_message& private_key, const string& private_key_cert);
 
   void server_channel_accept_and_auth(void (*func)(secure_authenticated_channel&));
 
@@ -161,7 +160,7 @@ public:
 
 void server_dispatch(const string& host_name, int port,
       string& asn1_root_cert, key_message& private_key,
-      string& private_key_cert, void (*)(secure_authenticated_channel&));
+      const string& private_key_cert, void (*)(secure_authenticated_channel&));
 
 #endif
 

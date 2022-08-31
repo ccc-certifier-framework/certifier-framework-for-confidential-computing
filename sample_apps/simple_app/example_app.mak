@@ -43,7 +43,7 @@ dobj=	$(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 
 
-all:	example_app.exe example_app_new.exe
+all:	example_app.exe
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
@@ -53,10 +53,6 @@ clean:
 example_app.exe: $(dobj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/example_app.exe $(dobj) $(LDFLAGS)
-
-example_app_new.exe: $(new_dobj) 
-	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/example_app_new.exe $(dobj) $(LDFLAGS)
 
 $(US)/certifier.pb.cc: $(S)/certifier.proto
 	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto

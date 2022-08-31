@@ -888,7 +888,8 @@ bool construct_platform_evidence_package(signed_claim_message& platform_attest_c
   return true;
 }
 
-bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_key_is_trusted, evidence_package* ep) {
+bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_key_is_trusted,
+      evidence_package* ep) {
 
   string et("signed-claim");
 
@@ -905,7 +906,6 @@ bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_
 
 // ---------------------------------------------------------------------------------------------------
 // Socket and SSL support
-
 
 #define DEBUG
 
@@ -938,7 +938,7 @@ void print_ssl_error(int code) {
   case SSL_ERROR_WANT_WRITE:
     printf("want write ssl error\n");
     break;
-#ifndef ASYLO_CERTIFIER
+#ifndef BORING_SSL
   case SSL_ERROR_WANT_CONNECT:
     printf("want connect ssl error\n");
     break;
@@ -949,7 +949,7 @@ void print_ssl_error(int code) {
   case SSL_ERROR_WANT_X509_LOOKUP:
     printf("want lookup ssl error\n");
     break;
-#ifndef ASYLO_CERTIFIER
+#ifndef BORING_SSL
   case SSL_ERROR_WANT_ASYNC:
     printf("want async ssl error\n");
     break;
@@ -979,7 +979,7 @@ bool open_client_socket(const string& host_name, int port, int* soc) {
   struct addrinfo *result, *rp;
   int sfd, s;
 
-  /* Obtain address(es) matching host/port */
+  // Obtain address(es) matching host/port
   memset(&hints, 0, sizeof(struct addrinfo));
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
@@ -995,11 +995,10 @@ bool open_client_socket(const string& host_name, int port, int* soc) {
     return false;
   }
 
-  /* getaddrinfo() returns a list of address structures.
-   Try each address until we successfully connect(2).
-   If socket(2) (or connect(2)) fails, we (close the socket
-   and) try the next address. */
-
+  // getaddrinfo() returns a list of address structures.
+  // Try each address until we successfully connect(2).
+  // If socket(2) (or connect(2)) fails, we (close the socket
+  // and) try the next address.
   for (rp = result; rp != NULL; rp = rp->ai_next) {
     sfd = socket(rp->ai_family, rp->ai_socktype,
                  rp->ai_protocol);
@@ -1007,17 +1006,17 @@ bool open_client_socket(const string& host_name, int port, int* soc) {
       continue;
 
     if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
-      break;                  /* Success */
+      break;
 
     close(sfd);
   }
 
-  if (rp == NULL) {               /* No address succeeded */
+  if (rp == NULL) {
     fprintf(stderr, "Could not connect\n");
     return false;
   }
 
-  freeaddrinfo(result);           /* No longer needed */
+  freeaddrinfo(result);
 
   *soc = sfd;
   return true;
@@ -1046,11 +1045,10 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
     return false;
   }
 
-  /* getaddrinfo() returns a list of address structures.
-   Try each address until we successfully bind(2).
-   If socket(2) (or bind(2)) fails, we (close the socket
-   and) try the next address. */
-
+  // getaddrinfo() returns a list of address structures.
+  // Try each address until we successfully bind(2).
+  // If socket(2) (or bind(2)) fails, we (close the socket
+  // and) try the next address.
   for (rp = result; rp != NULL; rp = rp->ai_next) {
     sfd = socket(rp->ai_family, rp->ai_socktype,
                  rp->ai_protocol);
@@ -1058,17 +1056,17 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
       continue;
 
     if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
-      break;                  /* Success */
+      break;
 
     close(sfd);
   }
 
-  if (rp == NULL) {               /* No address succeeded */
+  if (rp == NULL) {
     fprintf(stderr, "Could not bind\n");
     return false;
   }
 
-  freeaddrinfo(result);           /* No longer needed */
+  freeaddrinfo(result);
 
   if (listen(sfd, 10) != 0) {
     printf("cant listen\n");
@@ -1150,7 +1148,7 @@ bool load_server_certs_and_key(X509* root_cert,
     return false;
   }
 
-#ifdef ASYLO_CERTIFIER
+#ifdef BORING_SSL
   if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
       printf("use cert failed\n");
       return false;
@@ -1176,7 +1174,8 @@ bool load_server_certs_and_key(X509* root_cert,
       return false;
   }
   SSL_CTX_add_client_CA(ctx, root_cert);
-#ifdef ASYLO_CERTIFIER
+
+#ifdef BORING_SSL
   SSL_CTX_add1_chain_cert(ctx, root_cert);
 #else
   SSL_CTX_add1_to_CA_list(ctx, root_cert);
@@ -1191,14 +1190,14 @@ bool load_server_certs_and_key(X509* root_cert,
     }
   }
 #endif
-#endif // ASYLO_CERTIFIER
+#endif // BORING_SSL
 
   return true;
 }
 
 void server_dispatch(const string& host_name, int port,
       string& asn1_root_cert, key_message& private_key,
-      string& private_key_cert, void (*func)(secure_authenticated_channel&)) {
+      const string& private_key_cert, void (*func)(secure_authenticated_channel&)) {
 
   SSL_load_error_strings();
 
@@ -1449,7 +1448,7 @@ done:
 }
 
 bool secure_authenticated_channel::init_client_ssl(const string& host_name, int port,
-        string& asn1_root_cert, key_message& private_key, string& auth_cert) {
+        string& asn1_root_cert, key_message& private_key, const string& auth_cert) {
 
   SSL_load_error_strings();
   OPENSSL_init_ssl(0, NULL);
@@ -1537,8 +1536,8 @@ printf("ADDING\n");
 
 // Loads client side certs and keys.  Note: key for private_key is in
 //    the key.
+#ifndef BORING_SSL
 bool secure_authenticated_channel::load_client_certs_and_key() {
-#ifndef ASYLO_CERTIFIER
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key_, r)) {
     printf("load_client_certs_and_key, error 1\n");
@@ -1588,7 +1587,6 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
 
   SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
   
-  // Not needed: SSL_CTX_add_client_CA(ssl_ctx_, root_cert_);
 #ifdef DEBUG
   const STACK_OF(X509_NAME)* ca_list= SSL_CTX_get0_CA_list(ssl_ctx_);
   printf("CA names to offer\n");
@@ -1599,11 +1597,19 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
     }
   }
 #endif
-#endif
   return true;
 }
+#endif  // BORING_SSL
 
-//  void server_channel_accept_and_auth(void (*)(secure_authenticated_channel&));
+#ifdef BORING_SSL
+// Todo:  Anoop will rewrite for BORING_SSL
+// Loads client side certs and keys.  Note: key for private_key is in
+//    the key.
+bool secure_authenticated_channel::load_client_certs_and_key() {
+  return false;
+}
+#endif  // BORING_SSL
+
 void secure_authenticated_channel::server_channel_accept_and_auth(
       void (*func)(secure_authenticated_channel&)) {
 
@@ -1652,7 +1658,7 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
 }
 
 bool secure_authenticated_channel::init_server_ssl(const string& host_name, int port,
-      string& asn1_root_cert, key_message& private_key, string& auth_cert) {
+      string& asn1_root_cert, key_message& private_key, const string& auth_cert) {
   SSL_load_error_strings();
 
   // set keys and cert
@@ -1691,9 +1697,11 @@ bool secure_authenticated_channel::get_peer_id(string* out) {
   return true;
 }
 
+// -----------------------------------------------------------------------
 
+// These should no longer be needed
+#if 0
 // The following will be deprecated
-
 bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   bool ret = true;
   int res = 0;
@@ -1765,12 +1773,8 @@ bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   }
 
   // verify signature
-#if 0
-  if (!rsa_sha256_verify(r, size_nonce, nonce, size_sig, sig)) {
-#else
   if (!rsa_sha256_verify(r, size_nonce, nonce,
           sig_str.size(), (byte*)sig_str.data())) {
-#endif
     ret = false;
     goto done;
   }
@@ -1855,7 +1859,7 @@ bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, S
     return false;
   }
 
-#ifdef ASYLO_CERTIFIER
+#ifdef BORING_SSL
   if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
       printf("use cert failed\n");
       return false;
@@ -1882,7 +1886,7 @@ bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, S
   }
 
   SSL_CTX_add_client_CA(ctx, x509_root_cert);
-#ifdef ASYLO_CERTIFIER
+#ifdef BORING_SSL
   SSL_CTX_add1_chain_cert(ctx, x509_root_cert);
 #else
   SSL_CTX_add1_to_CA_list(ctx, x509_root_cert);
@@ -1961,3 +1965,4 @@ void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl) {
   if (ctx !=nullptr)
     SSL_CTX_free(ctx);
 }
+#endif

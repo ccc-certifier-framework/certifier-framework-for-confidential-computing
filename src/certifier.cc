@@ -773,11 +773,7 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
     return false;
   }
 
-#ifdef ASYLO_CERTIFIER
   int size_sealed_key = serialized_key.size() + 512;
-#else
-  int size_sealed_key = serialized_key.size() + 128;
-#endif
   byte sealed_key[size_sealed_key];
   memset(sealed_key, 0, size_sealed_key);
   string enclave_id("enclave-id");
@@ -1084,7 +1080,8 @@ bool verify_signed_assertion_and_extract_clause(const key_message& key,
   // Deserialize claim to get clasue
   string serialized_claim_string;
   claim_message asserted_claim;
-  serialized_claim_string.assign((char*)sc.serialized_claim_message().data(), (int)sc.serialized_claim_message().size());
+  serialized_claim_string.assign((char*)sc.serialized_claim_message().data(),
+        (int)sc.serialized_claim_message().size());
   if (!asserted_claim.ParseFromString(serialized_claim_string))
     return false;
 
@@ -1100,13 +1097,6 @@ bool verify_signed_assertion_and_extract_clause(const key_message& key,
     if (!asserted_vse.ParseFromString(serialized_vse_string))
       return false;
     cl->CopyFrom(asserted_vse);
-#if 0
-  // FIX?
-  } else if (asserted_claim.claim_format() == "attestation") {
-    if (!convert_attestation_to_vse_clause(key, 
-          asserted_claim.serialized_claim(), cl))
-      return false;
-#endif
   } else {
     return false;
   }
@@ -1181,7 +1171,6 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       }
       vse_clause* cl_to_insert = already_proved->add_proved();
       cl_to_insert->CopyFrom(to_add);
-    } else if (evp.fact_assertion(i).evidence_type() == "signed-claim") {
 #ifdef OE_CERTIFIER
     } else if (evp.fact_assertion(i).evidence_type() == "oe-assertion") {
       size_t user_data_size = 4096;
@@ -1289,7 +1278,6 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       printf("Cert not implemented\n");
       return false;
     } else if (evp.fact_assertion(i).evidence_type() == "signed-vse-attestation-report") {
-      // HERE
       string t_str;
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
           evp.fact_assertion(i).serialized_evidence().size());
