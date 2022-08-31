@@ -1125,6 +1125,7 @@ bool extract_id_from_cert(X509* in, string* out) {
 bool load_server_certs_and_key(X509* root_cert,
       key_message& private_key, SSL_CTX* ctx) {
   // load auth key, policy_cert and certificate chain
+  // Todo: Add other key types
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key, r)) {
     printf("key_to_RSA failed\n");
@@ -1320,6 +1321,7 @@ bool secure_authenticated_channel::client_auth_server() {
   X509* x = nullptr;
   EVP_PKEY* client_auth_public_key = nullptr;
   EVP_PKEY* subject_pkey = nullptr;
+  // Todo: Add other key types
   RSA* r = nullptr;
 
   // prepare for verify
@@ -1417,6 +1419,7 @@ bool secure_authenticated_channel::client_auth_client() {
   byte nonce[size_nonce];
   int size_sig = 256;
   byte sig[size_sig];
+  // Todo: Add other key types
   RSA* r = nullptr;
 
   // send cert
@@ -1424,6 +1427,7 @@ bool secure_authenticated_channel::client_auth_client() {
       private_key_.certificate().size());
   size_nonce = SSL_read(ssl_, nonce, size_nonce);
 
+  // Todo: Add other key types
   r = RSA_new();
   if (!key_to_RSA(private_key_, r)) {
     ret = false;
@@ -1538,6 +1542,7 @@ printf("ADDING\n");
 //    the key.
 #ifndef BORING_SSL
 bool secure_authenticated_channel::load_client_certs_and_key() {
+  // Todo: Add other key types
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key_, r)) {
     printf("load_client_certs_and_key, error 1\n");
