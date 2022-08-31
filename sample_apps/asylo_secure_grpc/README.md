@@ -7,10 +7,13 @@ https://github.com/vmware-research/certifier-framework-for-confidential-computin
 
 1. Setup Asylo
 Copy Asylo repo to one directory above certifier to work around WORKSPACE and
-bazel issues.
+bazel issues. Also move the BUILD and WORKSPACE files to needed location.
 ```
 cd certifier-framework-for-confidential-computing
-mv asylo ../
+cp -r third_party/asylo ../
+
+cp src/asylo/BUILD .
+cp src/asylo/WORKSPACE .
 ```
 
 Install prerequisites
