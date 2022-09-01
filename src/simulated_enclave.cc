@@ -265,8 +265,7 @@ bool simulated_Verify(string& serialized_signed_report) {
     printf("simulated_Verify 3 failed\n");
     return false;
   }
-  //  Todo: time ok?  not_after, not_after
-  return true;
+  return check_date_range(info.not_before(), info.not_after());
 }
 
 bool simulated_GetParentEvidence(string* out) {

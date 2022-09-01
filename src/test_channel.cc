@@ -37,8 +37,8 @@
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(operation, "server", "operation");
 
-DEFINE_string(policy_host, "localhost", "address for server");
-DEFINE_int32(port, 8124, "port for server");
+DEFINE_string(app_host, "localhost", "address for server");
+DEFINE_int32(app_port, 8124, "port for server");
 
 DEFINE_string(data_dir, "./test_data/", "directory for files");
 DEFINE_string(policy_cert_file, "policy_cert_file.bin", "policy cert file");
@@ -49,7 +49,6 @@ DEFINE_string(auth_key_file, "auth_key_file.bin", "auth key file");
 // ----------------------------------------------------------------------------------
 
 #define DEBUG
-
 
 void server_application(secure_authenticated_channel& channel) {
 
@@ -133,7 +132,7 @@ int main(int an, char** av) {
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf("example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
+    printf("example_app.exe --print_all=true|false --operation=op --app_host=policy-host-address --app_port=policy-host-port\n");
     printf("\t --data_dir=-directory-for-app-data\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
     printf("Operations are: client, server\n");
@@ -217,13 +216,13 @@ int main(int an, char** av) {
 #endif
 
   if (FLAGS_operation == "client") {
-    if (!run_me_as_client(FLAGS_policy_host.c_str(), FLAGS_port,
+    if (!run_me_as_client(FLAGS_app_host.c_str(), FLAGS_app_port,
           str_policy_cert, auth_key, auth_cert)) {
       printf("run-me-as-client failed\n");
       return 1;
     }
   } else if (FLAGS_operation == "server") {
-    if (!run_me_as_server( FLAGS_policy_host.c_str(), FLAGS_port,
+    if (!run_me_as_server(FLAGS_app_host.c_str(), FLAGS_app_port,
           str_policy_cert, auth_key, auth_cert)) {
       printf("server failed\n");
       return 1;
