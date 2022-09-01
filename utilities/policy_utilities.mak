@@ -126,7 +126,6 @@ $(O)/make_indirect_vse_clause.o: $(S)/make_indirect_vse_clause.cc $(INC_DIR)/cer
 $(EXE_DIR)/make_indirect_vse_clause.exe: $(make_indirect_vse_clause_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/make_indirect_vse_clause.exe $(make_indirect_vse_clause_obj) $(LDFLAGS)
-#-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
 
 $(O)/make_simple_vse_clause.o: $(S)/make_simple_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling make_simple_vse_clause.cc"
@@ -143,7 +142,6 @@ $(O)/make_unary_vse_clause.o: $(S)/make_unary_vse_clause.cc $(INC_DIR)/certifier
 $(EXE_DIR)/make_unary_vse_clause.exe: $(make_unary_vse_clause_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/make_unary_vse_clause.exe $(make_unary_vse_clause_obj) $(LDFLAGS)
-#-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
 
 $(O)/make_signed_claim_from_vse_clause.o: $(S)/make_signed_claim_from_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling make_signed_claim_from_vse_clause.cc"
@@ -158,7 +156,6 @@ $(EXE_DIR)/make_signed_claim_from_vse_clause.exe: $(make_signed_claim_from_vse_c
 $(EXE_DIR)/print_vse_clause.exe: $(print_vse_clause_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/print_vse_clause.exe $(print_vse_clause_obj) $(LDFLAGS)
-#-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
 
 $(O)/print_vse_clause.o: $(S)/print_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling print_vse_clause.cc"
@@ -167,7 +164,6 @@ $(O)/print_vse_clause.o: $(S)/print_vse_clause.cc $(INC_DIR)/certifier.pb.h $(IN
 $(EXE_DIR)/print_signed_claim.exe: $(print_signed_claim_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/print_signed_claim.exe $(print_signed_claim_obj) $(LDFLAGS)
-#-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
 
 $(O)/print_signed_claim.o: $(S)/print_signed_claim.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling print_signed_claim.cc"
@@ -176,7 +172,6 @@ $(O)/print_signed_claim.o: $(S)/print_signed_claim.cc $(INC_DIR)/certifier.pb.h 
 $(EXE_DIR)/package_claims.exe: $(package_claims_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/package_claims.exe $(package_claims_obj) $(LDFLAGS)
-#-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
 
 $(O)/package_claims.o: $(S)/package_claims.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling package_claims.cc"
@@ -185,7 +180,6 @@ $(O)/package_claims.o: $(S)/package_claims.cc $(INC_DIR)/certifier.pb.h $(INC_DI
 $(EXE_DIR)/print_packaged_claims.exe: $(print_packaged_claims_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/print_packaged_claims.exe $(print_packaged_claims_obj) $(LDFLAGS)
-#-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
 
 print_packaged_claims.o: $(S)/print_packaged_claims.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling print_packaged_claims.cc"
