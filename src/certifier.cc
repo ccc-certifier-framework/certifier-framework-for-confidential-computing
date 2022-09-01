@@ -1172,7 +1172,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       vse_clause* cl_to_insert = already_proved->add_proved();
       cl_to_insert->CopyFrom(to_add);
 #ifdef OE_CERTIFIER
-    } else if (evp.fact_assertion(i).evidence_type() == "oe-assertion") {
+    } else if (evp.fact_evidence(i).evidence_type() == "oe-evidence") {
       size_t user_data_size = 4096;
       byte user_data[user_data_size];
       size_t measurement_out_size = 256;
@@ -1185,16 +1185,16 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         return false;
       }
 
-      // user_data should be a serialized key
-      key_message km;
-      string km_str;
-      km_str.assign((char*)user_data, user_data_size);
-      if (!km.ParseFromString(km_str))
+      // user_data should be a attestation_user_data
+      string ud_str;
+      ud_str.assign((char*)user_data, user_data_size);
+      attestation_user_data ud;
+      if (!ud.ParseFromString(ud_str))
         return false;
 
       // construct vse-clause (key speaks-for measurement)
       entity_message* key_ent = new(entity_message);
-      if (!make_key_entity(km, key_ent)) {
+      if (!make_key_entity(ud.enclave_key(), key_ent)) {
         printf("init_proved_statements: make_key_entity failed\n");
         return false;
       }
@@ -1218,15 +1218,19 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       byte user_data[user_data_size];
       int measurement_out_size = 256;
       byte measurement_out[measurement_out_size];
+#ifdef DEBUG
       printf("init_proved_statements: trying asylo_Verify\n");
+#endif
 
       string pk_str = pk.SerializeAsString();
+#ifdef DEBUG
       printf("init_proved_statements: print pk\n");
       print_bytes(pk_str.size(), (byte*)pk_str.c_str());
 
       printf("init_proved_statements: print evp\n");
       print_bytes(evp.fact_assertion(i).serialized_evidence().size(),
        (byte *)evp.fact_assertion(i).serialized_evidence().data());
+#endif
 
       if (!asylo_Verify(
            evp.fact_assertion(i).serialized_evidence().size(),
@@ -1236,27 +1240,22 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         printf("init_proved_statements: asylo_Verify failed\n");
       }
 
+#ifdef DEBUG
       printf("\nasylo returned user data: size: %d\n", user_data_size);
       print_bytes(user_data_size, user_data);
       printf("\nasylo returned measurement: size: %d\n", measurement_out_size);
       print_bytes(measurement_out_size, measurement_out);
+#endif
 
-      // user_data should be a serialized key
-      key_message km;
-      string km_str;
-      km_str.assign((char*)user_data, user_data_size);
-      //km_str.assign((char*)&claim, sizeof(claim) + user_data_size);
-      if (!km.ParseFromString(km_str)) {
-        printf("\ninit_proved_statements: parse km failed\n");
+      // user_data should be a attestation_user_data
+      string ud_str;
+      ud_str.assign((char*)user_data, user_data_size);
+      attestation_user_data ud;
+      if (!ud.ParseFromString(ud_str))
         return false;
-      }
-        printf("\ninit_proved_statements: km str:\n");
-      print_bytes(km_str.size(), (byte*)km_str.c_str());
-        printf("\ninit_proved_statements: done km str\n");
 
-      // construct vse-clause (key speaks-for measurement)
       entity_message* key_ent = new(entity_message);
-      if (!make_key_entity(km, key_ent)) {
+      if (!make_key_entity(ud.enclave_key(), key_ent)) {
         printf("init_proved_statements: make_key_entity failed\n");
         return false;
       }
@@ -2019,10 +2018,10 @@ void print_evidence(const evidence& ev) {
     }
     if (ev.evidence_type() == "oe-assertion") {
       print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
-    if (ev.evidence_type() == "asylo-assertion") {
-      print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
-      printf("\n");
-    }
+      if (ev.evidence_type() == "asylo-assertion") {
+        print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
+        printf("\n");
+      }
       printf("\n");
     }
     if (ev.evidence_type() == "cert") {

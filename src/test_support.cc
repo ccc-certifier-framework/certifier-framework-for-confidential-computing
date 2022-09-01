@@ -126,7 +126,6 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
 
   // Construct measurement
   string meas;
-
   if (init_measurements) {
     if (!read_trusted_binary_measurements_and_sign(file_name, *policy_key, trusted_measurements))
       return false;
@@ -144,12 +143,12 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
       return false;
     meas.assign((char*)c.clause().subject().measurement().data(),
       c.clause().subject().measurement().size());
-    } else {
-      byte m[32];
-      for (int i = 0; i < 32; i++)
-        m[i] = i;
-      meas.assign((char*)m, 32);
-    }
+  } else {
+    byte m[32];
+    for (int i = 0; i < 32; i++)
+      m[i] = i;
+    meas.assign((char*)m, 32);
+  }
 
   // Construct intel-key
   key_message intel_key;
@@ -403,7 +402,6 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     }
     signed_claim_message* nsc2 = trusted_platforms->add_claims();
     nsc2->CopyFrom(sc2);
-
   } else if (evidence_descriptor == "oe-evidence") {
     // Evidence should be
     //    sc3: "platformKey says attestationKey is-trusted
@@ -421,7 +419,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
-    ev2->set_evidence_type("oe-assertion");
+    ev2->set_evidence_type("oe-evidence");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
     if (!init_measurements) {
@@ -447,7 +445,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
-    ev2->set_evidence_type("asylo-assertion");
+    ev2->set_evidence_type("asylo-evidence");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
     if (!init_measurements) {
@@ -834,7 +832,7 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
-    ev2->set_evidence_type("oe-assertion");
+    ev2->set_evidence_type("oe-evidence");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
     if (!init_measurements) {
@@ -862,17 +860,17 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
-    ev2->set_evidence_type("asylo-assertion");
+    ev2->set_evidence_type("asylo-evidence");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
-    printf("\n Asylo assertion\n");
+    printf("\n Asylo evidence\n");
     print_bytes(final_serialized_attest.size(), (byte*)final_serialized_attest.c_str());
     if (!init_measurements) {
       signed_claim_message* nsc1 = trusted_measurements->add_claims();
       nsc1->CopyFrom(sc1);
     }
     signed_claim_message* nsc2 = trusted_platforms->add_claims();
-    printf("\n Successfully added asylo assertion\n");
+    printf("\n Successfully added asylo evidence\n");
   } else {
     printf("Bad evidence descriptor\n");
     return false;
