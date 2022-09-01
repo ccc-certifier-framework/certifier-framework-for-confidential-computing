@@ -1,13 +1,10 @@
- 1. Key transport --- low priority
- 2. Add sev-attestation and oe-attestation evaluation to certifier_service
- 3. Integrate OPA?  --- low priority
- 4. Integrate TDX.
- 5. Test SEV.
- 6. Write a service for SEV
- 7. Add a keystore app
- 8. Test all the sample apps on all providers.
- 9. Test with Gramine?
-
-my_attestation_key is in ./src/test_support.cc ./src/simulated_enclave.cc ./src/primitive_tests.cc
-Get rid of it
+ 1. Test SEV. (High priority) Add sev-attestation and oe-attestation evaluation to certifier_service
+ 2. Test all the sample apps on all providers.
+    (Add simple_app_under_sev, simple_app_under_oe simple_app_under_asylo)
+ 3. Port Gramine and do simple_app_under_Gramine
+ 4. Add a keystore app (Medium priority)
+ 5. Write an application level service for SEV
+ 6. Integrate TDX.
+ 7. Integrate OPA?  --- low priority
+ 8. Key transport --- low priority
 
