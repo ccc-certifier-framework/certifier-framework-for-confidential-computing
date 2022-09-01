@@ -28,6 +28,7 @@ TARGET_MACHINE_TYPE= x64
 endif
 
 S= $(SRC_DIR)
+CERT_SRC=$(CERTIFIER_PROTOTYPE_DIR)/src
 O= $(OBJ_DIR)
 INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/
 
@@ -65,18 +66,19 @@ $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 embed_policy_key_obj=$(O)/embed_policy_key.o
 
 
-all:	measurement_utility.exe make_indirect_vse_clause.exe make_simple_vse_clause.exe \
-    make_unary_vse_clause.exe make_signed_claim_from_vse_clause.exe print_vse_clause.exe \
-    print_signed_claim.exe package_claims.exe print_packaged_claims.exe embed_policy_key.exe
-
+all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe \
+	$(EXE_DIR)/make_simple_vse_clause.exe $(EXE_DIR)/make_unary_vse_clause.exe \
+	$(EXE_DIR)/make_signed_claim_from_vse_clause.exe $(EXE_DIR)/print_vse_clause.exe \
+	$(EXE_DIR)/print_signed_claim.exe $(EXE_DIR)/package_claims.exe \
+	$(EXE_DIR)/print_packaged_claims.exe $(EXE_DIR)/embed_policy_key.exe
 
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/measurement_utility.exe
+	rm $(EXE_DIR)/*.exe
 
-measurement_utility.exe: $(measurement_utility_obj) 
+$(EXE_DIR)/measurement_utility.exe: $(measurement_utility_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/measurement_utility.exe $(measurement_utility_obj) $(LDFLAGS)
 #-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
@@ -85,44 +87,75 @@ $(O)/measurement_utility.o: $(S)/measurement_utility.cc $(INC_DIR)/certifier.pb.
 	@echo "compiling measurement_utility.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/measurement_utility.o $(S)/measurement_utility.cc
 
-make_indirect_vse_clause.exe: $(make_indirect_vse_clause_obj) 
-	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/make_indirect_vse_clause.exe $(make_indirect_vse_clause_obj) $(LDFLAGS)
-#-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
+$(O)/cert_utility.o: $(US)/cert_utility.cc $(INC_DIR)/support.h $(INC_DIR)/certifier.pb.h
+	@echo "compiling cert_utility.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cert_utility.o $(US)/cert_utility.cc
+
+$(O)/key_utility.o: $(US)/key_utility.cc $(INC_DIR)/support.h $(INC_DIR)/certifier.pb.h
+	@echo "compiling key_utility.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/key_utility.o $(US)/key_utility.cc
+
+$(O)/certifier.pb.o: $(CERT_SRC)/certifier.pb.cc $(INC_DIR)/certifier.pb.h
+	@echo "compiling certifier.pb.cc"
+	$(CC) $(CFLAGS) -c  -o $(O)/certifier.pb.o $(CERT_SRC)/certifier.pb.cc
+
+$(O)/support.o: $(CERT_SRC)/support.cc $(INC_DIR)/support.h $(INC_DIR)/certifier.pb.h
+	@echo "compiling support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/support.o $(CERT_SRC)/support.cc
+
+$(O)/certifier.o: $(CERT_SRC)/certifier.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
+	@echo "compiling certifier.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(CERT_SRC)/certifier.cc
+
+$(O)/simulated_enclave.o: $(CERT_SRC)/simulated_enclave.cc $(INC_DIR)/simulated_enclave.h
+	@echo "compiling simulated_enclave.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/simulated_enclave.o $(CERT_SRC)/simulated_enclave.cc
+
+$(O)/application_enclave.o: $(CERT_SRC)/application_enclave.cc $(INC_DIR)/application_enclave.h
+	@echo "compiling application_enclave.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(CERT_SRC)/application_enclave.cc
+
+$(O)/measurement_init.o: $(US)/measurement_init.cc
+	@echo "compiling measurement_init.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/measurement_init.o $(US)/measurement_init.cc
 
 $(O)/make_indirect_vse_clause.o: $(S)/make_indirect_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling make_indirect_vse_clause.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/make_indirect_vse_clause.o $(S)/make_indirect_vse_clause.cc
 
-make_simple_vse_clause.exe: $(make_simple_vse_clause_obj) 
+$(EXE_DIR)/make_indirect_vse_clause.exe: $(make_indirect_vse_clause_obj) 
 	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/make_simple_vse_clause.exe $(make_simple_vse_clause_obj) $(LDFLAGS)
+	$(LINK) -o $(EXE_DIR)/make_indirect_vse_clause.exe $(make_indirect_vse_clause_obj) $(LDFLAGS)
+#-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
 
 $(O)/make_simple_vse_clause.o: $(S)/make_simple_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling make_simple_vse_clause.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/make_simple_vse_clause.o $(S)/make_simple_vse_clause.cc
 
-make_unary_vse_clause.exe: $(make_unary_vse_clause_obj) 
+$(EXE_DIR)/make_simple_vse_clause.exe: $(make_simple_vse_clause_obj) 
 	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/make_unary_vse_clause.exe $(make_unary_vse_clause_obj) $(LDFLAGS)
-#-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
+	$(LINK) -o $(EXE_DIR)/make_simple_vse_clause.exe $(make_simple_vse_clause_obj) $(LDFLAGS)
 
 $(O)/make_unary_vse_clause.o: $(S)/make_unary_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling make_unary_vse_clause.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/make_unary_vse_clause.o $(S)/make_unary_vse_clause.cc
 
-make_signed_claim_from_vse_clause.exe: $(make_signed_claim_from_vse_clause_obj) 
+$(EXE_DIR)/make_unary_vse_clause.exe: $(make_unary_vse_clause_obj) 
 	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/make_signed_claim_from_vse_clause.exe $(make_signed_claim_from_vse_clause_obj) $(LDFLAGS)
+	$(LINK) -o $(EXE_DIR)/make_unary_vse_clause.exe $(make_unary_vse_clause_obj) $(LDFLAGS)
 #-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
 
 $(O)/make_signed_claim_from_vse_clause.o: $(S)/make_signed_claim_from_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling make_signed_claim_from_vse_clause.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/make_signed_claim_from_vse_clause.o $(S)/make_signed_claim_from_vse_clause.cc
 
+$(EXE_DIR)/make_signed_claim_from_vse_clause.exe: $(make_signed_claim_from_vse_clause_obj) 
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/make_signed_claim_from_vse_clause.exe $(make_signed_claim_from_vse_clause_obj) $(LDFLAGS)
+
 # package_claims.exe print_packaged_claims.exe
 
-print_vse_clause.exe: $(print_vse_clause_obj) 
+$(EXE_DIR)/print_vse_clause.exe: $(print_vse_clause_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/print_vse_clause.exe $(print_vse_clause_obj) $(LDFLAGS)
 #-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
@@ -131,7 +164,7 @@ $(O)/print_vse_clause.o: $(S)/print_vse_clause.cc $(INC_DIR)/certifier.pb.h $(IN
 	@echo "compiling print_vse_clause.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/print_vse_clause.o $(S)/print_vse_clause.cc
 
-print_signed_claim.exe: $(print_signed_claim_obj) 
+$(EXE_DIR)/print_signed_claim.exe: $(print_signed_claim_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/print_signed_claim.exe $(print_signed_claim_obj) $(LDFLAGS)
 #-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
@@ -140,7 +173,7 @@ $(O)/print_signed_claim.o: $(S)/print_signed_claim.cc $(INC_DIR)/certifier.pb.h 
 	@echo "compiling print_signed_claim.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/print_signed_claim.o $(S)/print_signed_claim.cc
 
-package_claims.exe: $(package_claims_obj) 
+$(EXE_DIR)/package_claims.exe: $(package_claims_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/package_claims.exe $(package_claims_obj) $(LDFLAGS)
 #-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
@@ -149,7 +182,7 @@ $(O)/package_claims.o: $(S)/package_claims.cc $(INC_DIR)/certifier.pb.h $(INC_DI
 	@echo "compiling package_claims.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/package_claims.o $(S)/package_claims.cc
 
-print_packaged_claims.exe: $(print_packaged_claims_obj) 
+$(EXE_DIR)/print_packaged_claims.exe: $(print_packaged_claims_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/print_packaged_claims.exe $(print_packaged_claims_obj) $(LDFLAGS)
 #-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
@@ -158,7 +191,7 @@ print_packaged_claims.o: $(S)/print_packaged_claims.cc $(INC_DIR)/certifier.pb.h
 	@echo "compiling print_packaged_claims.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/print_packaged_claims.o $(S)/print_packaged_claims.cc
 
-embed_policy_key.exe: $(embed_policy_key_obj)
+$(EXE_DIR)/embed_policy_key.exe: $(embed_policy_key_obj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/embed_policy_key.exe $(embed_policy_key_obj) $(LDFLAGS)
 
