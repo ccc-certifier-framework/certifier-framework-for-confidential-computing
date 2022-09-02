@@ -1654,7 +1654,7 @@ bool add_new_facts_for_abbreviatedplatformattestation(key_message& policy_pk,
   // Add
   //    "policyKey says measurement is-trusted"
   //    "policyKey says platformKey is-trusted"
-  //    TODO: change last one to "policyKey says platformKey is-trusted-for-attestation"
+  //    Todo: change last one to "policyKey says platformKey is-trusted-for-attestation"
 
   // "attestKey says enclaveKey speaks-for measurement
   string expected_measurement;
@@ -2051,11 +2051,10 @@ bool check_date_range(const string& nb, const string& na) {
   if (!string_to_time(na, &t_na))
     return false;
 
-  if (compare_time(t_now, t_nb) <  0)
-     return false;
-  if (compare_time(t_na, t_now) < 0)
-     return false;
-
+  if (compare_time(t_now, t_nb) < 0 || compare_time(t_na, t_now) < 0) {
+    printf("No longer valid\n");
+    return false;
+  }
   return true;
 }
 
@@ -2139,6 +2138,7 @@ bool sign_report(const string& type, const string& to_be_signed, const string& s
 
   report.set_signature((byte*)signature, size);
   if (!report.SerializeToString(serialized_signed_report)) {
+    printf("Can't serialize report\n");
     return false;
   }
   return true;
@@ -2198,7 +2198,9 @@ bool verify_report(string& type, string& serialized_signed_report,
     return false;
   }
 
-if (!success) printf("report verify returning false\n");
+  if (!success) {
+    printf("report verify returning false\n");
+  }
 
   return success;
 }
@@ -2250,6 +2252,9 @@ void print_signed_report(const signed_report& sr) {
     printf("Report format: %s\n", sr.report_format().c_str());
   }
   if (sr.has_report()) {
+    printf("Report     :\n");
+    print_bytes(sr.report().size(), (byte*)sr.report().data());
+    printf("\n");
   }
   if (sr.has_signing_key()) {
     printf("Signing key:\n");
@@ -2320,10 +2325,13 @@ bool construct_what_to_say(string& enclave_type,
 
   attestation_user_data ud;
   if (!make_attestation_user_data(enclave_type, enclave_pk, &ud)) {
+    printf("make_attestation_user_data failed\n");
     return false;
   }
-  if (!ud.SerializeToString(what_to_say))
+  if (!ud.SerializeToString(what_to_say)) {
+    printf("ud.SerializeToString failed\n");
     return false;
+  }
 
   return true;
 }
