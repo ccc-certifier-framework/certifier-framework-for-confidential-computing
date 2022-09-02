@@ -1741,7 +1741,7 @@ func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
 					return
 				}
 				PrintSignedClaim(&signedClaimMsg)
-			} else if req.Support.FactAssertion[i].GetEvidenceType() == "oe_assertion" {
+			} else if req.Support.FactAssertion[i].GetEvidenceType() == "oe_evidence" {
 				PrintBytes(req.Support.FactAssertion[i].GetSerializedEvidence())
 			}
 			fmt.Printf("\n")
