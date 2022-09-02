@@ -144,9 +144,6 @@ void print_store(policy_store& ps);
 
 // Trusted primitives
 // -------------------------------------------------------------------
-bool Getmeasurement(const string& enclave_type, const string& enclave_id,
-  int* size_out, byte* out);
-
 bool Seal(const string& enclave_type, const string& enclave_id,
   int in_size, byte* in, int* size_out, byte* out);
 
@@ -162,6 +159,10 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
 
 bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out);
+
+bool Getmeasurement(const string& enclave_type, const string& enclave_id,
+  int* size_out, byte* out);
+
 
 // -------------------------------------------------------------------
 
@@ -181,7 +182,6 @@ bool Unprotect_Blob(const string& enclave_type,
 
 // Claims and proofs
 // -------------------------------------------------------------------
-
 
 class predicate_dominance {
 public:

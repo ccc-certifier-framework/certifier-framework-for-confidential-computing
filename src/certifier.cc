@@ -2003,9 +2003,9 @@ void print_evidence(const evidence& ev) {
       if (sc.ParseFromString(sc_st))
         print_signed_claim(sc);
     }
-    if (ev.evidence_type() == "oe-assertion") {
+    if (ev.evidence_type() == "oe-evidence") {
       print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
-      if (ev.evidence_type() == "asylo-assertion") {
+      if (ev.evidence_type() == "asylo-evidence") {
         print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
         printf("\n");
       }

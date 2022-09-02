@@ -1361,7 +1361,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 					}
 				}
 			}
-		} else if ev.GetEvidenceType() == "oe-assertion" {
+		} else if ev.GetEvidenceType() == "oe-evidence" {
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
 			// from the return values.  Then add it to proved statements
