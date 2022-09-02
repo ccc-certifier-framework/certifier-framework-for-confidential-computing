@@ -586,7 +586,6 @@ done:
 
 #ifdef SEV_SNP
 extern bool sev_Init(const string& platform_certs_file);
-extern bool sev_Getmeasurement(int* size_out, byte* out);
 extern bool sev_GetParentEvidence(string* out);
 extern bool sev_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool sev_Unseal(int in_size, byte* in, int* size_out, byte* out);
@@ -711,10 +710,11 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
   return false;
 }
 
-// Todo: We should get rid of this eventually.  User shouldn't need to know its
-//measurement, usually.
+// Todo: Remove
+#if 0
 bool Getmeasurement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out) {
+return false;
 
   // TODO: We cannot assume the Getmeasurement interface. We do need a
   // unified Certifier attestation report. But the measurement field has
@@ -735,6 +735,7 @@ bool Getmeasurement(const string& enclave_type, const string& enclave_id,
 #endif
   return false;
 }
+#endif
 
 bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out) {
@@ -1470,31 +1471,6 @@ bool verify_external_proof_step(predicate_dominance& dom_tree, proof_step& step)
     return verify_rule_6(dom_tree, step.s1(), step.s2(), step.conclusion());
   }
   return false;
-}
-
-char hex_digit(byte v) {
-  if (v >= 0 && v <= 9)
-    return '0' + v;
-  if (v >= 10 && v <= 15)
-    return 'a' + v - 10;
-  return ' ';
-}
-
-bool make_enclave_name(string enclave_type, string* enclave_name) {
-  int measurement_size = 32;
-  byte m[measurement_size];
-  string enclave_id;
-  if (!Getmeasurement(enclave_type, enclave_id, &measurement_size, m))
-    return false;
-  char hex[65];
-  int pos = 0;
-  hex[64] = 0;
-  for (int i = 0; i < measurement_size; i++) {
-    hex[2*i] = hex_digit(m[i]>>4);
-    hex[2*i + 1] = hex_digit(m[i]&0xff);
-  }
-  enclave_name->append((const char*)hex);
- return true; 
 }
 
 bool verify_internal_proof_step(predicate_dominance& dom_tree,

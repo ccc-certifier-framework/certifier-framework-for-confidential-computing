@@ -85,16 +85,6 @@ int main(int an, char**av) {
   print_bytes((int)unsealed.size(), (byte*)unsealed.data());
   printf("\n");
 
-  // Getmeasurement test
-  t_out = out_size;
-  if (!Getmeasurement(enclave, id, &t_out, out)) {
-    printf("Application getmeasurement failed\n");
-    return 1;
-  }
-  printf("Measurement: ");
-  print_bytes(t_out, out);
-  printf("\n");
-
   // GetPlatformStatement test
   t_out = out_size;
   string other_enclave("application-enclave");

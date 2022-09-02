@@ -15,6 +15,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+char hex_digit(byte v) {
+  if (v >= 0 && v <= 9)
+    return '0' + v;
+  if (v >= 10 && v <= 15)
+    return 'a' + v - 10;
+  return ' ';
+}
+
+bool make_enclave_name(string enclave_type, string* enclave_name) {
+  int measurement_size = 32;
+  byte m[measurement_size];
+  string enclave_id;
+
+  if (enclave_type != "simulated-enclave")
+    return false;
+  for (int i = 0; i < measurement_size; i++)
+    m[i] = i;
+  char hex[65];
+  int pos = 0;
+  hex[64] = 0;
+  for (int i = 0; i < measurement_size; i++) {
+    hex[2*i] = hex_digit(m[i]>>4);
+    hex[2*i + 1] = hex_digit(m[i]&0xff);
+  }
+  enclave_name->append((const char*)hex);
+ return true;
+}
+
+
 bool test_artifact(bool print_all) {
   X509* cert = X509_new();
   key_message signing_key;

@@ -160,8 +160,11 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
 bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out);
 
+// Todo: Remove
+#if 0
 bool Getmeasurement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out);
+#endif
 
 
 // -------------------------------------------------------------------
@@ -200,8 +203,6 @@ public:
   bool is_child(const string& descendant);
 };
 bool dominates(predicate_dominance& root, const string& parent, const string& descendant);
-
-bool make_enclave_name(string enclave_type, string* enclave_name);
 
 // Certifier proofs
 bool init_certifier_rules(certifier_rules& rules);

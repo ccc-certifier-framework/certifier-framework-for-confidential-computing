@@ -205,6 +205,8 @@ bool application_Attest(int in_size, byte* in,
   return true;
 }
 
+// Todo: remove
+#if 0
 bool application_Getmeasurement(int* size_out, byte* out) {
   app_request req;
   app_response rsp;
@@ -244,6 +246,7 @@ bool application_Getmeasurement(int* size_out, byte* out) {
   memcpy(out, rsp.args(0).data(), *size_out);
   return true;
 }
+#endif
 
 bool application_GetPlatformStatement(int* size_out, byte* out) {
   app_request req;

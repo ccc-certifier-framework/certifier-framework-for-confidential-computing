@@ -798,10 +798,6 @@ bool sev_GetParentEvidence(string* out) {
   return true;
 }
 
-bool sev_Getmeasurement(int* size_out, byte* out) {
-  return false;
-}
-
 int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
   FILE *pFile = NULL;
   pFile = fopen(file_name, "re");

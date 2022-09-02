@@ -416,6 +416,7 @@ bool construct_attestation(entity_message& attest_key_entity, entity_message& au
   return true;
 }
 
+// Todo: replace with new cc_trust_data interface
 bool certify_me() {
 printf("certify_me\n");
   if (!warm_restart()) {

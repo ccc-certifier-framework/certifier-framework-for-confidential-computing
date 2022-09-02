@@ -370,6 +370,7 @@ bool soft_GetParentEvidence(spawned_children* kid, string* out) {
   return true;
 }
 
+// This Getmeasurement stays
 bool soft_Getmeasurement(spawned_children* kid, string* out) {
 #ifdef DEBUG
   printf("soft_Getmeasurement\n");
