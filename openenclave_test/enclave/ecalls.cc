@@ -74,7 +74,7 @@ bool certifier_test_sim_certify(void) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("full-vse-support");
   return test_local_certify(enclave_type,
-    FLAGS_read_measurement_file,
+    false,
     FLAGS_trusted_measurements_file,
     evidence_descriptor);
 }
