@@ -1057,19 +1057,6 @@ bool init_certifier_rules(certifier_rules& rules) {
   return true;
 }
 
-bool convert_attestation_to_vse_clause(const key_message& key, 
-      string& measurement, string& serialized_attestation,
-      vse_clause* cl) {
-  
-  serialized_attestation.assign((char*)serialized_attestation.data(),
-      (int)serialized_attestation.size());
-  attestation_user_data at;
-    if (!at.ParseFromString(serialized_attestation))
-      return false;
-  return construct_vse_attestation_statement(key,
-        at.enclave_key(), measurement, cl);
-}
-
 bool verify_signed_assertion_and_extract_clause(const key_message& key,
       const signed_claim_message& sc, vse_clause* cl) {
 

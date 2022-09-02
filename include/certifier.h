@@ -208,8 +208,6 @@ bool init_certifier_rules(certifier_rules& rules);
 bool init_axiom(key_message& pk, proved_statements* _proved);
 bool init_proved_statements(key_message& pk, evidence_package& evp,
       proved_statements* already_proved);
-bool convert_attestation_to_vse_clause(const key_message& key,
-      string& measurement, string& serialized_attestation, vse_clause* cl);
 bool verify_signed_assertion_and_extract_clause(const key_message& key,
       const signed_claim_message& sc, vse_clause* cl);
 
