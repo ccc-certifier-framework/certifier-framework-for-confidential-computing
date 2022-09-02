@@ -877,6 +877,9 @@ bool construct_platform_evidence_package(signed_claim_message& platform_attest_c
   } else if ("oe-enclave" == attesting_enclave_type) {
     string et2("oe-attestation-report");
     ev2->set_evidence_type(et2);
+  } else if ("asylo-enclave" == attesting_enclave_type) {
+    string et2("asylo-attestation-report");
+    ev2->set_evidence_type(et2);
   } else if ("sev-enclave" ==  attesting_enclave_type) {
     string et2("sev-attestation-report");
     ev2->set_evidence_type(et2);
@@ -1704,9 +1707,7 @@ bool secure_authenticated_channel::get_peer_id(string* out) {
 
 // -----------------------------------------------------------------------
 
-// These should no longer be needed
-#if 0
-// The following will be deprecated
+// These are used by BORING_SSL dependent code
 bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   bool ret = true;
   int res = 0;
@@ -1970,4 +1971,3 @@ void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl) {
   if (ctx !=nullptr)
     SSL_CTX_free(ctx);
 }
-#endif

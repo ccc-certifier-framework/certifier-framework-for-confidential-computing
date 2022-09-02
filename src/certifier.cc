@@ -1201,7 +1201,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       }
 #endif
 #ifdef ASYLO_CERTIFIER
-    } else if (evp.fact_assertion(i).evidence_type() == "asylo-assertion") {
+    } else if (evp.fact_assertion(i).evidence_type() == "asylo-evidence") {
       int user_data_size = 4096;
       byte user_data[user_data_size];
       int measurement_out_size = 256;
@@ -1981,10 +1981,10 @@ void print_evidence(const evidence& ev) {
     }
     if (ev.evidence_type() == "oe-evidence") {
       print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
-      if (ev.evidence_type() == "asylo-evidence") {
-        print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
         printf("\n");
-      }
+    }
+    if (ev.evidence_type() == "asylo-evidence") {
+        print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
       printf("\n");
     }
     if (ev.evidence_type() == "cert") {
