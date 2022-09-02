@@ -41,6 +41,7 @@ cc_library(
     copts = [
         "-Iinclude",
         "-DASYLO_CERTIFIER",
+        "-DBORING_SSL",
     ],
     linkopts = [ "-L/usr/local/lib", "-lprotobuf"],
     visibility = ["//visibility:public"],
@@ -66,6 +67,7 @@ cc_library(
     copts = [
         "-Iinclude",
         "-DASYLO_CERTIFIER",
+        "-DBORING_SSL",
     ],
     #linkopts = [ "-L/usr/local/lib", "-lprotobuf"],
     visibility = ["//visibility:public"],
@@ -120,6 +122,7 @@ cc_library(
     copts = [
         "-Iinclude",
         "-DASYLO_CERTIFIER",
+        "-DBORING_SSL",
     ],
     visibility = ["//visibility:public"],
 )
