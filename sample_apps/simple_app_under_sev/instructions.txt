@@ -1,15 +1,16 @@
 Instructions for building and running the sample application under the
-                        application service
+EV-SNP
 ======================================================================
 
 
 This uses the same application as in .../sample_app but running under the
-application service.  The app itself is almost identical with the original.
-This example runs under the simulated-enclave right now but we'll port it
-to running under sev-snp.  For this example, we let the policy key for the
-application service be the same as the policy key for the application.  This
-will often, but not always, be the case.
+sev.  The app itself is almost identical with the original.
 
+Provisioning
+
+You must first provision your SEV machine and obtain certificates as follows
+
+Make sure you store the certificates in the file XXXXXX
 
 Set up some name shortcuts 
 
@@ -18,12 +19,9 @@ computer, it is in =~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-co
 It is helpful to have a shell variable for it:
 export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
 
-$SERVICE_EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable
+$SEV_EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable
 is useful.
-export SERVICE_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_app_service
-
-$APP_SERVICE_DIR is the application service
-export APP_SERVICE_DIR=$CERTIFIER_PROTOTYPE/application_service
+export SEV_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_sev
 
 Much of this is the same as the original simple_app
 
@@ -59,16 +57,14 @@ Step 5: Compile example_app with the embedded policy_key
 
 Step 6: Obtain the measurement of the trusted application for ths security domain.
     cd $SERVICE_EXAMPLE_DIR/provisioning
-    $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../example_app.exe \
-      --output=example_app.measurement
-
+    SEV MEASUREMENT into example_sev_app.measurement
 
 Step 7: Author the policy for the security domain and produce the signed claims the apps need.
     cd $SERVICE_EXAMPLE_DIR/provisioning
 
     a. Construct statement "policy-key says example_app-measurement is-trusted"
        $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
-          --measurement_subject=example_app.measurement --verb="is-trusted" \
+          --measurement_subject=example_sev_app.measurement --verb="is-trusted" \
           --output=ts1.bin
        $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
           --verb="says" --clause=ts1.bin --output=vse_policy1.bin
@@ -143,35 +139,6 @@ Step 11: Provision the app files for the app
 Step 12: Provision the service files
     cd $SERVICE_EXAMPLE_DIR/provisioning
     cp policy_key_file.bin policy_cert_file.bin policy.bin $SERVICE_EXAMPLE_DIR/service
-
-
-Step 13: Build the Application Service and provision the service data for it
-    cd $APP_SERVICE_DIR
-    Follow the build and provisioning instructions in
-    $APP_SERVICE_DIR/instructions.txt steps 4-9.
-
-
-Step 14: Start the Certifier Service for the built application service
-  In a new terminal window:
-    cd $APP_SERVICE_DIR/service
-    $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-      --path=$SERVICE_EXAMPLE_DIR/service \
-      --policyFile=policy.bin --readPolicy=true
-
-
-Step 15: In a new window, run the application service
-    cd $APP_SERVICE_DIR/service
-    $APP_SERVICE_DIR/app_service.exe \
-      --policy_cert_file="policy_cert_file.bin" \
-      --service_dir="./service/" \
-      --service_policy_store="policy_store" \
-      --host_enclave_type="simulated-enclave" \
-      --platform_file_name="platform_file.bin" \
-      --platform_attest_endorsement="platform_attest_endorsement.bin" \
-      --attest_key_file="attest_key_file.bin" \
-      --measurement_file="app_service.measurement" \
-      --cold_init_service=true \
-      --guest_login_name="guest"
 
 
 Step 16: In a new window, run the Certifier Service for simple_app_under_app_service
