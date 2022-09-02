@@ -1708,6 +1708,8 @@ bool secure_authenticated_channel::get_peer_id(string* out) {
 // -----------------------------------------------------------------------
 
 // These are used by BORING_SSL dependent code
+// Eventually they will be deprecated
+#if 1
 bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
   bool ret = true;
   int res = 0;
@@ -1971,3 +1973,4 @@ void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl) {
   if (ctx !=nullptr)
     SSL_CTX_free(ctx);
 }
+#endif

@@ -710,33 +710,6 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
   return false;
 }
 
-// Todo: Remove
-#if 0
-bool Getmeasurement(const string& enclave_type, const string& enclave_id,
-  int* size_out, byte* out) {
-return false;
-
-  // TODO: We cannot assume the Getmeasurement interface. We do need a
-  // unified Certifier attestation report. But the measurement field has
-  // to be filled it after Attest at the earliest. We should actually
-  // consider doing it after calling SDK Verify since that guarantees
-  // that both measurement and custom claims are verified anyway.
-  if (enclave_type == "simulated-enclave" || enclave_type == "oe-enclave" ||
-      enclave_type == "asylo-enclave") {
-    return simulated_Getmeasurement(size_out, out);
-  }
-  if (enclave_type == "application-enclave") {
-    return application_Getmeasurement(size_out, out);
-  }
-#ifdef SEV
-  if (enclave_type == "simulated-enclave" || enclave_type == "oe-enclave") {
-    return sev_GetPlatformStatement(size_out, out);
-  }
-#endif
-  return false;
-}
-#endif
-
 bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out) {
   if (enclave_type == "application-enclave") {

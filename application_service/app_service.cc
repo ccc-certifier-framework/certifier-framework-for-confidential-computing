@@ -263,41 +263,6 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
     return false;
   }
 
-#if 0
-  claim_message cm;
-  string nb, na;
-  time_point tn, tf;
-  if (!time_now(&tn))
-    return false;
-  if (!add_interval_to_time_point(tn, 24.0 * 365.0, &tf))
-    return false;
-  if (!time_to_string(tn, &nb))
-    return false;
-  if (!time_to_string(tf, &na))
-    return false;
-  string cf("vse-attestation");
-  string desc("");
-  if (!make_claim(in.size(), (byte*)in.data(), cf, desc,
-        nb, na, &cm)) {
-    printf("soft_Attest: error 1\n");
-    return false;
-  }
-  string ser_cm;
-  if (!cm.SerializeToString(&ser_cm)) {
-    printf("soft_Attest: error 2\n");
-    return false;
-  }
-
-  signed_claim_message scm;
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm, app_trust_data->private_service_key_, &scm)) {
-    printf("soft_Attest: Signing failed\n");
-    return false;
-  }
-  if (!scm.SerializeToString(out)) {
-    printf("soft_Attest: Serialize failed\n");
-    return false;
-  }
-#else
   vse_attestation_report_info report_info;
   string serialized_report_info;
   report_info.set_enclave_type("application-enclave");
@@ -341,7 +306,6 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
     printf("Can't sign report\n");
     return false;
   }
-#endif
 
   return true;
 }

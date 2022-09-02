@@ -160,12 +160,6 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
 bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out);
 
-// Todo: Remove
-#if 0
-bool Getmeasurement(const string& enclave_type, const string& enclave_id,
-  int* size_out, byte* out);
-#endif
-
 
 // -------------------------------------------------------------------
 

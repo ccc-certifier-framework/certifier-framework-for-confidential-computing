@@ -205,49 +205,6 @@ bool application_Attest(int in_size, byte* in,
   return true;
 }
 
-// Todo: remove
-#if 0
-bool application_Getmeasurement(int* size_out, byte* out) {
-  app_request req;
-  app_response rsp;
-
-  // request
-  req.set_function("getmeasurement");
-  string req_str;
-  req.SerializeToString(&req_str);
-  if (write(writer, (byte*)req_str.data(), req_str.size()) < 0) {
-    printf("write failed\n");
-  }
-
-  const int buffer_pad = 256;
-  // response
-  int t_size = buffer_pad;
-  byte t_out[t_size];
-  int n = read(reader, t_out, t_size);
-  if (n < 0) {
-    return false;
-  }
-
-  string rsp_str;
-  rsp_str.assign((char*)t_out, n);
-  if (!rsp.ParseFromString(rsp_str)) {
-    return false;
-  }
-
-  if (rsp.function() != "getmeasurement" || rsp.status() != "succeeded") {
-    printf("application_Getmeasurement, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
-    return false;
-  }
-  if (*size_out < (int)rsp.args(0).size()) {
-    printf("application_Getmeasurement, output too big\n");
-    return false;
-  }
-  *size_out = (int)rsp.args(0).size();
-  memcpy(out, rsp.args(0).data(), *size_out);
-  return true;
-}
-#endif
-
 bool application_GetPlatformStatement(int* size_out, byte* out) {
   app_request req;
   app_response rsp;
