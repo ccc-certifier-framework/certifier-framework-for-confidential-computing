@@ -1101,6 +1101,7 @@ bool init_axiom(key_message& pk, proved_statements* are_proved) {
 bool init_proved_statements(key_message& pk, evidence_package& evp,
       proved_statements* already_proved) {
 
+  cert_keys_seen_list seen_keys_list(30);
   // verify already signed assertions, converting to vse_clause
   int nsa = evp.fact_assertion_size();
   for (int i = 0; i < nsa; i++) {
@@ -1235,8 +1236,59 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
     }
 #endif
     } else if (evp.fact_assertion(i).evidence_type() == "cert") {
-      printf("Cert not implemented\n");
-      return false;
+      // A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
+      // construct vse statement.
+
+      // This whole thing is more complicated because we have to keep track of
+      // previously seen subject keys which, as issuer keys, will sign other
+      // keys.  The only time we can get the issuer_key directly is when the cert
+      // is self signed.
+
+      X509* x = X509_new();
+      if (x == nullptr)
+        return false;
+      if (!asn1_to_x509(evp.fact_assertion(i).serialized_evidence(), x)) {
+        printf("init_proved_statements: Can't asn convert cert\n");
+        return false;
+      }
+
+      key_message* subject_key = new key_message;
+      if (!x509_to_public_key(x, subject_key)) {
+        printf("init_proved_statements: Can't convert subject key to key\n");
+        return false;
+      }
+      if (!seen_keys_list.add_key_seen(subject_key)) {
+        printf("init_proved_statements: Can't add subject key to seen keys\n");
+        return false;
+      }
+
+      // Todo: size?
+      X509_NAME* x509_issuer_name = X509_get_issuer_name(x);
+      string issuer_name_str;
+      const int max_buf = 2048;
+      char name_buf[max_buf];
+      if (X509_NAME_get_text_by_NID(x509_issuer_name, NID_commonName, name_buf, max_buf) < 0) {
+        return false;
+      }
+      issuer_name_str.assign((const char*) name_buf);
+
+      const key_message* signer_key = get_issuer_key(x, seen_keys_list);
+      EVP_PKEY* signer_pkey = pkey_from_key(*signer_key);
+      bool success = (X509_verify(x, signer_pkey) == 1);
+
+      // add to proved: signing-key says subject-key is-trusted-for-attestation
+      vse_clause* cl = already_proved->add_proved();
+      if (!construct_vse_attestation_from_cert(*subject_key, *signer_key, cl)) {
+        printf("init_proved_statements: Can't construct vse attestation from cert\n");
+        return false;
+      }
+
+      // Todo: free on errors too
+      if (signer_pkey != nullptr)
+        EVP_PKEY_free(signer_pkey);
+      if (x != nullptr)
+        X509_free(x);
+      return true;
     } else if (evp.fact_assertion(i).evidence_type() == "signed-vse-attestation-report") {
       string t_str;
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
@@ -1613,6 +1665,20 @@ bool get_signed_platform_claim_from_trusted_list(
   return false;
 }
 
+bool add_newfacts_for_sev_attestation(key_message& policy_pk, string& serialized_ark_cert,
+      string& serialized_ask_cert, string& serialized_vcek_cert,
+      signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
+      proved_statements* already_proved) {
+  // At this point, the already_proved should be
+  //    "policyKey is-trusted"
+  // Add
+  //    "The policy-key days the ARK-key is-trusted-for-attestation
+  //    "The ARK-key says the ASK-key is-trusted-for-attestation"
+  //    "The ASK-key says the VCEK-key is-trusted-for-attestation"
+  //    "VCEK says the enclave-key speaks-for the measurement
+    return false;
+}
+
 bool add_newfacts_for_oe_asylo_platform_attestation(key_message& policy_pk,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       proved_statements* already_proved) {
@@ -1692,6 +1758,20 @@ bool add_new_facts_for_abbreviatedplatformattestation(key_message& policy_pk,
   }
 
   return true;
+}
+
+bool construct_proof_from_sev_evidence(key_message& policy_pk,
+      proved_statements* already_proved,
+      vse_clause* to_prove, proof* pf) {
+
+  // At this point, the already_proved should be
+  //    "policyKey is-trusted"
+  //    "The ARK-key says the ASK-key is-trusted-for-attestation"
+  //    "The ASK-key says the VCEK-key is-trusted-for-attestation"
+  //    "The policy-key days the ARK-key is-trusted-for-attestation
+  //    "enclaveKey speaks-for measurement"
+  //    "policyKey says measurement is-trusted"
+  return false;
 }
 
 bool construct_proof_from_oe_asylo_evidence(key_message& policy_pk,
@@ -1852,6 +1932,15 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
       printf("construct_proof_from_full_vse_evidence in construct_proof_from_request failed\n");
       return false;
     }
+  } else if (evidence_descriptor == "sev-evidence") {
+    string serialized_ark_cert;
+    string serialized_ask_cert;
+    string serialized_vcek_cert;
+    if (!add_newfacts_for_sev_attestation(policy_pk, serialized_ark_cert,
+            serialized_ask_cert, serialized_vcek_cert,
+            trusted_platforms, trusted_measurements, already_proved))
+      return false;
+    return construct_proof_from_sev_evidence(policy_pk, already_proved, to_prove, pf);
   } else if (evidence_descriptor == "oe-evidence") {
     if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
               trusted_platforms, trusted_measurements, already_proved))

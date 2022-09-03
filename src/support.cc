@@ -595,12 +595,10 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
     alg_type = rsa_alg_type;
     out->set_key_type("rsa-4096-public");
     n_bytes = cipher_block_byte_size("rsa-4096-public");
-#ifndef ASYLO_CERTIFIER
   } else if (in.key_type() == "ecc-384-private") {
     alg_type = ecc_alg_type;
     out->set_key_type("ecc-384-public");
     n_bytes = cipher_block_byte_size("ecc_384-public");
-#endif
   } else {
     printf("private_key_to_public_key: bad key type\n");
     return false;
@@ -1034,9 +1032,12 @@ bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig,
   return true;
 }
 
-#ifndef ASYLO_CERTIFIER
 EC_KEY* generate_new_ecc_key(int num_bits) {
 
+#ifdef BORING_SSL
+  // Todo: Make this work
+  return nullptr;
+#else
   if (num_bits != 384) {
     printf("Only P-384 supported\n");
     return nullptr;
@@ -1065,8 +1066,8 @@ EC_KEY* generate_new_ecc_key(int num_bits) {
   BN_CTX_free(ctx);
 
   return ecc_key;
-}
 #endif
+}
 
 // Todo: free k on error
 EC_KEY* key_to_ECC(const key_message& k) {
@@ -1128,9 +1129,13 @@ EC_KEY* key_to_ECC(const key_message& k) {
 
   return ecc_key;
 }
-#ifndef ASYLO_CERTIFIER
+
 bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
 
+#ifdef BORING_SSL
+  // Todo: Make this work
+  return false;
+#else
   k->set_key_name("ecc-384-private");
   k->set_key_format("vse_key");
 
@@ -1272,6 +1277,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   k->set_allocated_ecc_key(ek);
   BN_CTX_free(ctx);
   return true;
+#endif
 }
 
 bool make_certifier_ecc_key(int n,  key_message* k) {
@@ -1293,7 +1299,7 @@ bool make_certifier_ecc_key(int n,  key_message* k) {
   EC_KEY_free(ek);
   return true;
 }
-#endif
+
 // -----------------------------------------------------------------------
 
 bool get_random(int num_bits, byte* out) {
@@ -1884,7 +1890,10 @@ int add_ext(X509 *cert, int nid, const char *value) {
   X509V3_set_ctx_nodb(&ctx);
 
   X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
-#ifndef ASYLO_CERTIFIER
+#ifdef BORING_SSL
+  // Todo: make this work
+  return 0;
+#else
   ex = X509V3_EXT_conf_nid(NULL, &ctx, nid, value);
   if(!ex)
     return 0;
@@ -2020,7 +2029,8 @@ bool verify_artifact(X509& cert, key_message& verify_key,
     RSA_free(subject_rsa_key);
     EVP_PKEY_free(verify_pkey);
     EVP_PKEY_free(subject_pkey);
-#ifndef ASYLO_CERTIFIER
+#ifndef BORING_SSL
+  // Todo: Make this work
   } else if (verify_key.key_type() == "ecc-384-public" ||
              verify_key.key_type() == "ecc-384-private") {
     EVP_PKEY* verify_pkey = EVP_PKEY_new();
@@ -2098,7 +2108,8 @@ int sized_pipe_read(int fd, string* out) {
 
 int sized_ssl_read(SSL* ssl, string* out) {
   out->clear();
-#if 1
+
+  // Todo: size assumed
   int total = 0;
   const int read_stride = 8192;
   byte buf[read_stride];
@@ -2121,21 +2132,13 @@ int sized_ssl_read(SSL* ssl, string* out) {
     }
   }
   return total;
-#else
-  byte buf[32000];
-  int n = SSL_read(ssl, buf, 32000);
-  if (n < 0)
-    return -1;
-  out->assign((char*)buf, n);
-  return n;
-#endif
 }
 
 // -----------------------------------------------------------------------
 
 int sized_socket_read(int fd, string* out) {
+  // Todo: size assumed
   out->clear();
-#if 1
   int n = 0;
   int total = 0;
   const int read_stride = 8192;
@@ -2156,21 +2159,142 @@ int sized_socket_read(int fd, string* out) {
     }
   }
   return total;
-#else
-  byte buf[32000];
-  int n = read(fd, buf, 32000);
-  if (n < 0)
-    return -1;
-  out->assign((char*)buf, n);
-  return n;
-#endif
 }
 
 // -----------------------------------------------------------------------
 
-// make a public key from the X509 cert
-#ifndef ASYLO_CERTIFIER
+bool key_from_pkey(EVP_PKEY* pkey, const string& name, key_message* k) {
+
+  if (pkey == nullptr)
+    return false;
+  if (EVP_PKEY_base_id(pkey) == EVP_PK_RSA) {
+    int size = EVP_PKEY_bits(pkey);
+    RSA* rsa_key= EVP_PKEY_get1_RSA(pkey);
+    if (!RSA_to_key(rsa_key, k))
+      return false;
+    switch(size) {
+    case 1024:
+      k->set_key_type("rsa-1024-public");
+      break;
+    case 2048:
+      k->set_key_type("rsa-2048-public");
+      break;
+    case 4096:
+      k->set_key_type("rsa-4096-public");
+      break;
+    default:
+      return false;
+    }
+    RSA_free(rsa_key);
+  } else if (EVP_PKEY_base_id(pkey) == EVP_PK_EC) {
+    int size = EVP_PKEY_bits(pkey);
+    EC_KEY* ecc_key= EVP_PKEY_get1_EC_KEY(pkey);
+    if (!ECC_to_key(ecc_key, k))
+      return false;
+    if (size == 384) {
+      k->set_key_type("ecc-384-public");
+    } else {
+      return false;
+    }
+    EC_KEY_free(ecc_key);
+  } else {
+    return false;
+  }
+
+  k->set_key_name(name);
+  k->set_key_format("vse-key");
+  return true;
+}
+
+cert_keys_seen_list::cert_keys_seen_list(int max_size) {
+  max_size_ = max_size;
+  entries_ = new cert_keys_seen* [max_size];
+  size_ = 0;
+}
+
+cert_keys_seen_list::~cert_keys_seen_list() {
+  for (int i = 0; i < size_; i++) {
+    delete entries_[i];
+  }
+  delete entries_;
+}
+
+key_message* cert_keys_seen_list::find_key_seen(const string& name) {
+  for (int i= 0; i < size_; i++) {
+    if (entries_[i]->issuer_name_ == name)
+      return entries_[i]->k_;
+  }
+  return nullptr;
+}
+
+bool cert_keys_seen_list::add_key_seen(key_message* k) {
+  if (size_ >= (max_size_ - 1))
+    return false;
+  entries_[size_] = new cert_keys_seen;
+  entries_[size_]->issuer_name_.assign(k->key_name());
+  entries_[size_]->k_ = k;
+  size_++;
+  return true;
+}
+
+const key_message* get_issuer_key(X509* x, cert_keys_seen_list& list) {
+  string str_issuer_name;
+
+  const int max_buf = 2048;
+  char name_buf[max_buf];
+  X509_NAME* issuer_name = X509_get_issuer_name(x);
+  if (X509_NAME_get_text_by_NID(issuer_name, NID_commonName, name_buf, max_buf) < 0) {
+    return nullptr;
+  }
+  str_issuer_name.assign((const char*) name_buf);
+  X509_NAME_free(issuer_name);
+
+  return list.find_key_seen(str_issuer_name);
+}
+
+EVP_PKEY* pkey_from_key(const key_message& k) {
+  EVP_PKEY* pkey = EVP_PKEY_new();
+
+  if (k.key_type() == "rsa-1024-public" ||
+      k.key_type() == "rsa-1024-private" ||
+      k.key_type() == "rsa-2048-private" ||
+      k.key_type() == "rsa-2048-private" ||
+      k.key_type() == "rsa-4096-private" ||
+      k.key_type() == "rsa-4096-private") {
+    RSA* rsa_key = RSA_new();
+    if (!key_to_RSA(k, rsa_key)) {
+      EVP_PKEY_free(pkey);
+      return nullptr;
+    }
+    EVP_PKEY_set1_RSA(pkey, rsa_key);
+    RSA_free(rsa_key);
+    return pkey;
+#ifndef BORING_SSL
+  // Todo: Make this work
+  } else if (k.key_type() == "ecc-384-public" ||
+             k.key_type() == "ecc-384-private") {
+    EC_KEY* ecc_key = key_to_ECC(k);
+    if (ecc_key == nullptr) {
+      EVP_PKEY_free(pkey);
+      return nullptr;
+    }
+    EVP_PKEY_set1_EC_KEY(pkey, ecc_key);
+    return pkey;
+#endif
+  } else {
+    printf("pkey_from_key: Unsupported key type\n");
+    EVP_PKEY_free(pkey);
+    return nullptr;
+  }
+  return nullptr;
+}
+
+// make a public key from the X509 cert's subject key
 bool x509_to_public_key(X509* x, key_message* k) {
+#ifdef BORING_SSL
+  // Todo: Make this work
+  return false;
+#else
   EVP_PKEY* subject_pkey = X509_get_pubkey(x);
   if (subject_pkey == nullptr)
     return false;
@@ -2203,7 +2327,7 @@ bool x509_to_public_key(X509* x, key_message* k) {
     } else {
       return false;
     }
-    // free subject_ecc_key?
+    // Todo: free subject_ecc_key?
   } else {
     return false;
   }
@@ -2220,8 +2344,8 @@ bool x509_to_public_key(X509* x, key_message* k) {
   X509_NAME_free(subject_name);
 
   return true;
-}
 #endif
+}
 
 bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k) {
   string root_name("root");
@@ -2254,7 +2378,10 @@ bool make_root_key_with_cert(string& type, string& name, string& issuer_name, ke
     k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
     X509_free(cert);
   } else if (type == "ecc_384-private") {
-#ifndef ASYLO_CERTIFIER
+#ifdef BORING_SSL
+  // Todo: Make this work
+    return false;
+#else
     if (!make_certifier_ecc_key(384,  k))
       return false;
 #endif
@@ -2277,6 +2404,34 @@ bool make_root_key_with_cert(string& type, string& name, string& issuer_name, ke
   } else {
     return false;
   }
+  return true;
+}
+
+bool construct_vse_attestation_from_cert(const key_message& subj,
+      const key_message& signer, vse_clause* cl) {
+  string str_says("says");
+  string str_prop("is-trusted-for-attestation");
+
+  entity_message subj_ent;
+  if (!make_key_entity(subj, &subj_ent)) {
+    printf("construct_vse_attestation_from_cert: Can't make subject entity\n");
+    return false;
+  }
+  vse_clause* c1 = new vse_clause;
+  if (!make_unary_vse_clause(subj_ent, str_prop, c1)) {
+    printf("construct_vse_attestation_from_cert: Can't construct unary clause\n");
+    return false;
+  }
+  entity_message signer_ent;
+  if (!make_key_entity(signer, &signer_ent)) {
+    printf("construct_vse_attestation_from_cert: Can't make signer entity\n");
+    return false;
+  }
+  if (!make_indirect_vse_clause(signer_ent, str_says, *c1, cl)) {
+    printf("construct_vse_attestation_from_cert: Can't construct indirect clause\n");
+    return false;
+  }
+
   return true;
 }
 

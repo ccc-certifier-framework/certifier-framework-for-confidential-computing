@@ -166,5 +166,27 @@ int sized_pipe_read(int fd, string* out);
 int sized_ssl_read(SSL* ssl, string* out);
 int sized_socket_read(int fd, string* out);
 
+class cert_keys_seen {
+public:
+  string issuer_name_;
+  key_message* k_;
+};
+
+class cert_keys_seen_list {
+public:
+  cert_keys_seen_list(int max_size);
+  ~cert_keys_seen_list();
+  int max_size_;
+  int size_;
+  cert_keys_seen** entries_;
+
+  key_message* find_key_seen(const string& name);
+  bool add_key_seen(key_message* k);
+};
+
+const key_message* get_issuer_key(X509* x, cert_keys_seen_list& list);
+EVP_PKEY* pkey_from_key(const key_message& k);
 bool x509_to_public_key(X509* x, key_message* k);
+bool construct_vse_attestation_from_cert(const key_message& subj,
+      const key_message& signer, vse_clause* cl);
 #endif
