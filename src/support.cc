@@ -2255,20 +2255,20 @@ key_message* get_issuer_key(X509* x, cert_keys_seen_list& list) {
 EVP_PKEY* pkey_from_key(const key_message& k) {
   EVP_PKEY* pkey = EVP_PKEY_new();
 
-  if (k.key_type() == "rsa-1024-public" ||
-      k.key_type() == "rsa-1024-private" ||
-      k.key_type() == "rsa-2048-public" ||
-      k.key_type() == "rsa-2048-private" ||
-      k.key_type() == "rsa-4096-public" ||
-      k.key_type() == "rsa-4096-private") {
+  if (k.key_type() == "rsa-1024-public" || k.key_type() == "rsa-1024-private" ||
+      k.key_type() == "rsa-2048-public" || k.key_type() == "rsa-2048-private" ||
+      k.key_type() == "rsa-4096-public" || k.key_type() == "rsa-4096-private") {
     RSA* rsa_key = RSA_new();
     if (!key_to_RSA(k, rsa_key)) {
       printf("pkey_from_key: Can't translate key to RSA key\n");
       EVP_PKEY_free(pkey);
       return nullptr;
     }
-    EVP_PKEY_set1_RSA(pkey, rsa_key);
-    RSA_free(rsa_key);
+    if (1 != EVP_PKEY_assign_RSA(pkey, rsa_key)) {
+      printf("pkey_from_key: Can't set RSA key\n");
+      EVP_PKEY_free(pkey);
+      return nullptr;
+    }
     return pkey;
 #ifndef BORING_SSL
   // Todo: Make this work
@@ -2279,7 +2279,7 @@ EVP_PKEY* pkey_from_key(const key_message& k) {
       EVP_PKEY_free(pkey);
       return nullptr;
     }
-    EVP_PKEY_set1_EC_KEY(pkey, ecc_key);
+    EVP_PKEY_assign_EC_KEY(pkey, ecc_key);
     return pkey;
 #endif
   } else {
@@ -2287,7 +2287,6 @@ EVP_PKEY* pkey_from_key(const key_message& k) {
     EVP_PKEY_free(pkey);
     return nullptr;
   }
-  return nullptr;
 }
 
 // make a public key from the X509 cert's subject key

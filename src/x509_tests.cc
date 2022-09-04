@@ -183,18 +183,18 @@ bool test_x_509_chain(bool print_all) {
     printf("Cert 3 issuer name: %s\n", issuer3_key->key_name().c_str());
   }
   if (print_all) {
-    printf("Signing key:\n");
+    printf("\nSigning key:\n");
     print_key(*issuer3_key);
     printf("\n");
   }
   EVP_PKEY* signing_pkey3 = pkey_from_key(*issuer3_key);
   if (signing_pkey3 == nullptr) {
-    printf("\nsigning_pkey3 is NULL\n");
+    printf("signing_pkey3 is NULL\n");
     return false;
   }
 
   int ret = X509_verify(cert3, signing_pkey3);
-  bool success = (ret  == 1);
+  bool success = (ret == 1);
   if (success) {
     printf("X509 verifies\n");
   } else {
