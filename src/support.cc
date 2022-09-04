@@ -2167,11 +2167,13 @@ bool key_from_pkey(EVP_PKEY* pkey, const string& name, key_message* k) {
 
   if (pkey == nullptr)
     return false;
-  if (EVP_PKEY_base_id(pkey) == EVP_PK_RSA) {
+  if (EVP_PKEY_base_id(pkey) == EVP_PKEY_RSA) {
     int size = EVP_PKEY_bits(pkey);
     RSA* rsa_key= EVP_PKEY_get1_RSA(pkey);
-    if (!RSA_to_key(rsa_key, k))
+    if (!RSA_to_key(rsa_key, k)) {
+      printf("key_from_pkey: RSA_to_key failed\n");
       return false;
+    }
     switch(size) {
     case 1024:
       k->set_key_type("rsa-1024-public");
@@ -2185,19 +2187,22 @@ bool key_from_pkey(EVP_PKEY* pkey, const string& name, key_message* k) {
     default:
       return false;
     }
-    RSA_free(rsa_key);
-  } else if (EVP_PKEY_base_id(pkey) == EVP_PK_EC) {
+    // RSA_free(rsa_key);
+  } else if (EVP_PKEY_base_id(pkey) == EVP_PKEY_EC) {
     int size = EVP_PKEY_bits(pkey);
     EC_KEY* ecc_key= EVP_PKEY_get1_EC_KEY(pkey);
-    if (!ECC_to_key(ecc_key, k))
+    if (!ECC_to_key(ecc_key, k)) {
+      printf("key_from_pkey: ECC_to_key failed\n");
       return false;
+    }
     if (size == 384) {
       k->set_key_type("ecc-384-public");
     } else {
       return false;
     }
-    EC_KEY_free(ecc_key);
+    // EC_KEY_free(ecc_key);
   } else {
+    printf("key_from_pkey: unsupported key type\n");
     return false;
   }
 
@@ -2300,8 +2305,7 @@ bool x509_to_public_key(X509* x, key_message* k) {
     printf("x509_to_public_key: subject_pkey is null\n");
     return false;
   }
-  // Todo: Fix
-  if (EVP_PKEY_base_id(subject_pkey) == 6) { // EVP_PK_RSA) {
+  if (EVP_PKEY_base_id(subject_pkey) == EVP_PKEY_RSA) {
     int size = EVP_PKEY_bits(subject_pkey); 
     RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
     if (!RSA_to_key(subject_rsa_key, k))
@@ -2321,7 +2325,7 @@ bool x509_to_public_key(X509* x, key_message* k) {
       return false;
     }
     // free subject_rsa_key?
-  } else if (EVP_PKEY_base_id(subject_pkey) == EVP_PK_EC) {
+  } else if (EVP_PKEY_base_id(subject_pkey) == EVP_PKEY_EC) {
     int size = EVP_PKEY_bits(subject_pkey); 
     EC_KEY* subject_ecc_key= EVP_PKEY_get1_EC_KEY(subject_pkey);
     if (!ECC_to_key(subject_ecc_key, k)) {
