@@ -519,11 +519,8 @@ bool cc_trust_data::cold_init(const string& public_key_alg,
         const string& symmetric_key_alg,
         const string& hash_alg, const string& hmac_alg) {
 
-  // Todo: The arguments are currently ignored but should be used
-  //    to generate key types, below.
-
   if (!cc_policy_info_initialized_) {
-      printf("policy key should have been initialized\n");
+      printf("cold_init: policy key should have been initialized\n");
       return false;
   }
 
@@ -531,13 +528,18 @@ bool cc_trust_data::cold_init(const string& public_key_alg,
 
     // put private auth key and symmetric keys in store
     if (!store_.replace_policy_key(public_policy_key_)) {
-      printf("Can't store policy key\n");
+      printf("cold_init: Can't store policy key\n");
       return false;
     }
 
-    // make up symmetric keys for app
+    // Make up symmetric keys for app
+    // Right now, the symmertric keys and hmac key are the same for all algs.
+    if (symmetric_key_alg != "aes-256") {
+      printf("cold_init: only aes-256 supported now\n");
+      return false;
+    }
     if (!get_random(8 * cc_helper_symmetric_key_size, symmetric_key_bytes_)) {
-      printf("Can't get random bytes for app key\n");
+      printf("cold_init: Can't get random bytes for app key\n");
       return false;
     }
     if (!get_random(8 * cc_helper_symmetric_key_size, symmetric_key_bytes_))
@@ -548,14 +550,30 @@ bool cc_trust_data::cold_init(const string& public_key_alg,
     symmetric_key_.set_secret_key_bits(symmetric_key_bytes_, cc_helper_symmetric_key_size);
     cc_symmetric_key_initialized_ = true;
 
-    // make app private and public key
-    if (!make_certifier_rsa_key(2048,  &private_auth_key_)) {
-      printf("Can't generate App private key\n");
-      return false;
+    // make app auth private and public key
+    if (public_key_alg == "rsa-2048") {
+      if (!make_certifier_rsa_key(2048,  &private_auth_key_)) {
+        printf("cold_init: Can't generate App private key\n");
+        return false;
+      }
+    } else if (public_key_alg == "rsa-4096") {
+      if (!make_certifier_rsa_key(4096,  &private_auth_key_)) {
+        printf("cold_init: Can't generate App private key\n");
+        return false;
+      }
+    } else if (public_key_alg == "ecc-384") {
+      if (!make_certifier_ecc_key(384,  &private_auth_key_)) {
+        printf("cold_init: Can't generate App private key\n");
+        return false;
+      }
+    } else {
+        printf("cold_init: Unsupported public key algorithm\n");
+        return false;
     }
+
     private_auth_key_.set_key_name("auth-key");
     if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
-      printf("Can't make public Auth key\n");
+      printf("cold_init: Can't make public Auth key\n");
       return false;
     }
 
@@ -564,9 +582,14 @@ bool cc_trust_data::cold_init(const string& public_key_alg,
 
   } else if (purpose_ == "attestation") {
 
-    // make up sealing key for service
+    // Make up sealing keys for app
+    // Right now, the symmertric keys and hmac key are the same for all algs.
+    if (symmetric_key_alg != "aes-256") {
+      printf("cold_init: only aes-256 supported now\n");
+      return false;
+    }
     if (!get_random(8 * cc_helper_symmetric_key_size, service_symmetric_key_)) {
-      printf("Can't get random bytes for app key\n");
+      printf("cold_init: Can't get random bytes for app key\n");
       return false;
     }
     symmetric_key_.set_key_name("sealing-key");
@@ -575,20 +598,36 @@ bool cc_trust_data::cold_init(const string& public_key_alg,
     symmetric_key_.set_secret_key_bits(service_symmetric_key_, cc_helper_symmetric_key_size);
     cc_sealing_key_initialized_ = true;
 
-    // make service private and public key
-    if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
-      printf("Can't generate service private key\n");
-      return false;
+    // make app service private and public key
+    if (public_key_alg == "rsa-2048") {
+      if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
+        printf("cold_init: Can't generate App private key\n");
+        return false;
+      }
+    } else if (public_key_alg == "rsa-4096") {
+      if (!make_certifier_rsa_key(4096,  &private_service_key_)) {
+        printf("cold_init: Can't generate App private key\n");
+        return false;
+      }
+    } else if (public_key_alg == "ecc-384") {
+      if (!make_certifier_ecc_key(384,  &private_service_key_)) {
+        printf("cold_init: Can't generate App private key\n");
+        return false;
+      }
+    } else {
+        printf("cold_init: Unsupported public key algorithm\n");
+        return false;
     }
+
     private_service_key_.set_key_name("service-attest-key");
     if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
-      printf("Can't make public service key\n");
+      printf("cold_init: Can't make public service key\n");
       return false;
     }
 
     string service_tag("service-attest-key");
     if (!store_.add_authentication_key(service_tag, private_service_key_)) {
-      printf("Can't store auth key\n");
+      printf("cold_init: Can't store auth key\n");
       return false;
     }
 
@@ -596,17 +635,17 @@ bool cc_trust_data::cold_init(const string& public_key_alg,
     cc_service_key_initialized_= true;
 
   } else {
-    printf("invalid cold_init purpose\n");
+    printf("cold_init: invalid cold_init purpose\n");
     return false;
   }
 
   if (!put_trust_data_in_store()) {
-    printf("Can't put trust data in store\n");
+    printf("cold_init: Can't put trust data in store\n");
     return false;
   }
 
   if (!save_store()) {
-    printf("Can't save store\n");
+    printf("cold_init: Can't save store\n");
     return false;
   }
   cc_policy_store_initialized_ = true;
