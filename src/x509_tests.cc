@@ -112,6 +112,7 @@ bool test_x_509_chain(bool print_all) {
     printf("Can't get public key from cert 1\n");
     return false;
   }
+
   // issuer name from first cert
   string issuer1(pub_k1.key_name());
   if (!list.add_key_seen(pub_subject_key1)) {
@@ -180,12 +181,12 @@ bool test_x_509_chain(bool print_all) {
     print_key(*issuer3_key);
     printf("\n");
   }
+
   EVP_PKEY* signing_pkey3 = pkey_from_key(*issuer3_key);
   if (signing_pkey3 == nullptr) {
     printf("signing_pkey3 is NULL\n");
     return false;
   }
-return true;
   int ret = X509_verify(cert3, signing_pkey3);
   bool success = (ret == 1);
   if (success) {
@@ -193,18 +194,64 @@ return true;
   } else {
     printf("X509 does not verify (%d)\n", ret);
   }
-  return true;
-  /*
-      vse_clause* cl = already_proved->add_proved();
-      if (!construct_vse_attestation_from_cert(*subject_key, *signer_key, cl)) {
-        printf("init_proved_statements: Can't construct vse attestation from cert\n");
-        return false;
-        }
-    }
-   */
+
+  vse_clause cl;
+  if (!construct_vse_attestation_from_cert(*pub_subject_key3, *issuer3_key, &cl)) {
+      printf("Can't construct vse attestation from cert\n");
+      return false;
+   }
+
+  if (print_all) {
+    printf("Statement: \n");
+    print_vse_clause(cl);
+    printf("\n");
+  }
 
   X509_free(cert1);
   X509_free(cert2);
   X509_free(cert3);
+  return true;
+}
+
+bool test_x_509_sign(bool print_all) {
+
+  string issuer_common_name("Tester-cert");
+  string issuer_desc("JLM");
+  key_message k1;
+  if (!make_certifier_rsa_key(4096,  &k1)) {
+    return false;
+  }
+  k1.set_key_name(issuer_common_name);
+  k1.set_key_format("vse-key");
+  key_message pub_k1;
+  if (!private_key_to_public_key(k1, &pub_k1)) {
+    return false;
+  }
+
+  X509* cert1 =X509_new();
+  if (!produce_artifact(k1, issuer_common_name, issuer_desc, pub_k1,
+         issuer_common_name, issuer_desc, 1L, 150000.0, cert1, true)) {
+    return false;
+  }
+  if (print_all) {
+    printf("\nFirst cert:\n");
+    X509_print_fp(stdout, cert1);
+    printf("\n");
+  }
+
+  if (print_all) {
+    printf("\nCert:\n");
+    X509_print_fp(stdout, cert1);
+    printf("\n");
+  }
+  EVP_PKEY* pkey = pkey_from_key(pub_k1);
+  int ret = X509_verify(cert1, pkey);
+  bool success = (ret == 1);
+  if (success) {
+    printf("X509 (2) verifies\n");
+  } else {
+    printf("X509 (2) does not verify (%d)\n", ret);
+  }
+  X509_free(cert1);
   return true;
 }

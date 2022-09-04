@@ -635,8 +635,10 @@ bool make_certifier_rsa_key(int n,  key_message* k) {
     return false;
 
   RSA* r = RSA_new();
-  if (!generate_new_rsa_key(n, r))
+  if (!generate_new_rsa_key(n, r)) {
+    printf("make_certifier_rsa_key: Can't generate RSA key\n");
     return false;
+  }
 
   if (n == 2048) {
     k->set_key_type("rsa-2048-private");
@@ -650,7 +652,6 @@ bool make_certifier_rsa_key(int n,  key_message* k) {
   }
   k->set_key_name("test-key-2");
   k->set_key_format("vse-key");
-  k->set_key_type("rsa-4096-private");
   if (!RSA_to_key(r, k)) {
     return false;
   }
@@ -885,10 +886,10 @@ bool RSA_to_key(RSA* r, key_message* k) {
   int size;
   if (m != nullptr) {
     size = BN_num_bytes(m);
-    byte n_b[size];
-    memset(n_b, 0, size);
-    i = BN_bn2bin(m, n_b);
-    rsa->set_public_modulus((void*)n_b, i);
+    byte m_b[size];
+    memset(m_b, 0, size);
+    i = BN_bn2bin(m, m_b);
+    rsa->set_public_modulus((void*)m_b, i);
   }
   if (e != nullptr) {
     size = BN_num_bytes(e);
@@ -2064,7 +2065,7 @@ bool verify_artifact(X509& cert, key_message& verify_key,
     subject_name_str->assign((const char*) name_buf);
   }
  
-  X509_NAME_free(subject_name);
+  // X509_NAME_free(subject_name);
   return success;
 }
 
@@ -2253,7 +2254,7 @@ key_message* get_issuer_key(X509* x, cert_keys_seen_list& list) {
     return nullptr;
   }
   str_issuer_name.assign((const char*) name_buf);
-  X509_NAME_free(issuer_name);
+  // X509_NAME_free(issuer_name);
   return list.find_key_seen(str_issuer_name);
 }
 
@@ -2305,11 +2306,14 @@ bool x509_to_public_key(X509* x, key_message* k) {
     printf("x509_to_public_key: subject_pkey is null\n");
     return false;
   }
+
   if (EVP_PKEY_base_id(subject_pkey) == EVP_PKEY_RSA) {
     int size = EVP_PKEY_bits(subject_pkey); 
     RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
-    if (!RSA_to_key(subject_rsa_key, k))
+    if (!RSA_to_key(subject_rsa_key, k)) {
+      printf("x509_to_public_key: RSA_to_key failed\n");
       return false;
+    }
     switch(size) {
     case 1024:
       k->set_key_type("rsa-1024-public");
@@ -2327,7 +2331,7 @@ bool x509_to_public_key(X509* x, key_message* k) {
     // free subject_rsa_key?
   } else if (EVP_PKEY_base_id(subject_pkey) == EVP_PKEY_EC) {
     int size = EVP_PKEY_bits(subject_pkey); 
-    EC_KEY* subject_ecc_key= EVP_PKEY_get1_EC_KEY(subject_pkey);
+    EC_KEY* subject_ecc_key = EVP_PKEY_get1_EC_KEY(subject_pkey);
     if (!ECC_to_key(subject_ecc_key, k)) {
       return false;
     }
@@ -2345,15 +2349,14 @@ bool x509_to_public_key(X509* x, key_message* k) {
   X509_NAME* subject_name = X509_get_subject_name(x);
   const int max_buf = 2048;
   char name_buf[max_buf];
+  memset(name_buf, 0, max_buf);
   if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, max_buf) < 0) {
     printf("x509_to_public_key: can't get subject_name\n");
     return false;
   }
   k->set_key_name((const char*) name_buf);
   k->set_key_format("vse-key");
-
   EVP_PKEY_free(subject_pkey);
-  X509_NAME_free(subject_name);
   return true;
 #endif
 }
