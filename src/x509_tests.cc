@@ -189,10 +189,12 @@ bool test_x_509_chain(bool print_all) {
   }
   int ret = X509_verify(cert3, signing_pkey3);
   bool success = (ret == 1);
-  if (success) {
-    printf("X509 verifies\n");
-  } else {
-    printf("X509 does not verify (%d)\n", ret);
+  if (print_all) {
+    if (success) {
+      printf("X509 verifies\n");
+    } else {
+      printf("X509 does not verify (%d)\n", ret);
+    }
   }
 
   vse_clause cl;
@@ -210,7 +212,7 @@ bool test_x_509_chain(bool print_all) {
   X509_free(cert1);
   X509_free(cert2);
   X509_free(cert3);
-  return true;
+  return success;
 }
 
 bool test_x_509_sign(bool print_all) {
@@ -247,11 +249,13 @@ bool test_x_509_sign(bool print_all) {
   EVP_PKEY* pkey = pkey_from_key(pub_k1);
   int ret = X509_verify(cert1, pkey);
   bool success = (ret == 1);
-  if (success) {
-    printf("X509 (2) verifies\n");
-  } else {
-    printf("X509 (2) does not verify (%d)\n", ret);
+  if (print_all) {
+    if (success) {
+      printf("X509 (2) verifies\n");
+    } else {
+      printf("X509 (2) does not verify (%d)\n", ret);
+    }
   }
   X509_free(cert1);
-  return true;
+  return success;
 }
