@@ -1283,10 +1283,14 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       }
 
       // Todo: free on errors too
-      if (signer_pkey != nullptr)
+      if (signer_pkey != nullptr) {
         EVP_PKEY_free(signer_pkey);
-      if (x != nullptr)
+        signer_pkey = nullptr;
+      }
+      if (x != nullptr) {
         X509_free(x);
+        x = nullptr;
+      }
       return success;
     } else if (evp.fact_assertion(i).evidence_type() == "signed-vse-attestation-report") {
       string t_str;
