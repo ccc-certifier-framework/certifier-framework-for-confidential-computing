@@ -58,11 +58,13 @@ ifdef ENABLE_SEV
 dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
 $(O)/certificate_tests.o $(O)/claims_tests.o $(O)/primitive_tests.o \
 $(O)/cc_helpers.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
-$(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o
+$(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o \
+$(O)/x509_tests.o
 else
 dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
 $(O)/cc_helpers.o $(O)/application_enclave.o $(O)/claims_tests.o $(O)/primitive_tests.o \
-$(O)/certificate_tests.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o
+$(O)/certificate_tests.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
+$(O)/x509_tests.o
 endif
 pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o
@@ -97,6 +99,10 @@ $(O)/store_tests.o: $(S)/store_tests.cc $(I)/certifier.pb.h $(I)/certifier.h
 $(O)/primitive_tests.o: $(S)/primitive_tests.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling primitive_tests.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/primitive_tests.o $(S)/primitive_tests.cc
+
+$(O)/x509_tests.o: $(S)/x509_tests.cc $(I)/certifier.pb.h $(I)/certifier.h
+	@echo "compiling x509_tests.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/x509_tests.o $(S)/x509_tests.cc
 
 $(O)/certificate_tests.o: $(S)/certificate_tests.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certificate_tests.cc"

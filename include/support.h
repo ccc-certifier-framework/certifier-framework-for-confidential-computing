@@ -145,9 +145,10 @@ void print_rsa_key(const rsa_message& rsa);
 void print_ecc_key(const ecc_message& rsa);
 
 // X509 artifact
-bool produce_artifact(key_message& signing_key, string& issuer_name_str, string& issuer_description_str,
-                      key_message& subject_key, string& subject_name_str, string& subject_description_str,
-                      uint64_t sn, double secs_duration, X509* x509, bool is_root);
+bool produce_artifact(key_message& signing_key, string& issuer_name_str,
+      string& issuer_description_str, key_message& subject_key,
+      string& subject_name_str, string& subject_description_str,
+      uint64_t sn, double secs_duration, X509* x509, bool is_root);
 bool verify_artifact(X509& cert, key_message& verify_key,
     string* issuer_name_str, string* issuer_description_str,
     key_message* subject_key, string* subject_name_str, string* subject_description_str,
@@ -184,7 +185,7 @@ public:
   bool add_key_seen(key_message* k);
 };
 
-const key_message* get_issuer_key(X509* x, cert_keys_seen_list& list);
+key_message* get_issuer_key(X509* x, cert_keys_seen_list& list);
 EVP_PKEY* pkey_from_key(const key_message& k);
 bool x509_to_public_key(X509* x, key_message* k);
 bool construct_vse_attestation_from_cert(const key_message& subj,

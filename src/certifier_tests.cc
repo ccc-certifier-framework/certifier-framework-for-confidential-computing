@@ -140,6 +140,11 @@ TEST (test_predicate_dominance, test_predicate_dominance) {
   EXPECT_TRUE(test_predicate_dominance(FLAGS_print_all));
 }
 
+extern bool test_x_509_chain(bool print_all);
+TEST (test_x_509_chain, test_x_509_chain) {
+  EXPECT_TRUE(test_x_509_chain(FLAGS_print_all));
+}
+
 // sev tests
 #ifdef SEV_SNP
 TEST (test_sev, test_sev) {

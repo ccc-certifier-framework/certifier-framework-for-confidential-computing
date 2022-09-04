@@ -2237,18 +2237,18 @@ bool cert_keys_seen_list::add_key_seen(key_message* k) {
   return true;
 }
 
-const key_message* get_issuer_key(X509* x, cert_keys_seen_list& list) {
+key_message* get_issuer_key(X509* x, cert_keys_seen_list& list) {
   string str_issuer_name;
 
   const int max_buf = 2048;
   char name_buf[max_buf];
   X509_NAME* issuer_name = X509_get_issuer_name(x);
   if (X509_NAME_get_text_by_NID(issuer_name, NID_commonName, name_buf, max_buf) < 0) {
+    printf("get_issuer_key: Can't get name from NID\n");
     return nullptr;
   }
   str_issuer_name.assign((const char*) name_buf);
   X509_NAME_free(issuer_name);
-
   return list.find_key_seen(str_issuer_name);
 }
 
@@ -2257,12 +2257,13 @@ EVP_PKEY* pkey_from_key(const key_message& k) {
 
   if (k.key_type() == "rsa-1024-public" ||
       k.key_type() == "rsa-1024-private" ||
+      k.key_type() == "rsa-2048-public" ||
       k.key_type() == "rsa-2048-private" ||
-      k.key_type() == "rsa-2048-private" ||
-      k.key_type() == "rsa-4096-private" ||
+      k.key_type() == "rsa-4096-public" ||
       k.key_type() == "rsa-4096-private") {
     RSA* rsa_key = RSA_new();
     if (!key_to_RSA(k, rsa_key)) {
+      printf("pkey_from_key: Can't translate key to RSA key\n");
       EVP_PKEY_free(pkey);
       return nullptr;
     }
@@ -2296,9 +2297,12 @@ bool x509_to_public_key(X509* x, key_message* k) {
   return false;
 #else
   EVP_PKEY* subject_pkey = X509_get_pubkey(x);
-  if (subject_pkey == nullptr)
+  if (subject_pkey == nullptr) {
+    printf("x509_to_public_key: subject_pkey is null\n");
     return false;
-  if (EVP_PKEY_base_id(subject_pkey) == EVP_PK_RSA) {
+  }
+  // Todo: Fix
+  if (EVP_PKEY_base_id(subject_pkey) == 6) { // EVP_PK_RSA) {
     int size = EVP_PKEY_bits(subject_pkey); 
     RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
     if (!RSA_to_key(subject_rsa_key, k))
@@ -2314,14 +2318,16 @@ bool x509_to_public_key(X509* x, key_message* k) {
       k->set_key_type("rsa-4096-public");
       break;
     default:
+      printf("x509_to_public_key: bad key type\n");
       return false;
     }
     // free subject_rsa_key?
   } else if (EVP_PKEY_base_id(subject_pkey) == EVP_PK_EC) {
     int size = EVP_PKEY_bits(subject_pkey); 
     EC_KEY* subject_ecc_key= EVP_PKEY_get1_EC_KEY(subject_pkey);
-    if (!ECC_to_key(subject_ecc_key, k))
+    if (!ECC_to_key(subject_ecc_key, k)) {
       return false;
+    }
     if (size == 384) {
       k->set_key_type("ecc-384-public");
     } else {
@@ -2329,20 +2335,22 @@ bool x509_to_public_key(X509* x, key_message* k) {
     }
     // Todo: free subject_ecc_key?
   } else {
+    printf("x509_to_public_key: bad pkey type\n");
     return false;
   }
 
   X509_NAME* subject_name = X509_get_subject_name(x);
   const int max_buf = 2048;
   char name_buf[max_buf];
-  if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, max_buf) < 0)
+  if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, max_buf) < 0) {
+    printf("x509_to_public_key: can't get subject_name\n");
     return false;
+  }
   k->set_key_name((const char*) name_buf);
   k->set_key_format("vse-key");
 
   EVP_PKEY_free(subject_pkey);
   X509_NAME_free(subject_name);
-
   return true;
 #endif
 }
