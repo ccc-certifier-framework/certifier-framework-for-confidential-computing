@@ -1262,25 +1262,24 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         return false;
       }
 
-      // Todo: size?
-      X509_NAME* x509_issuer_name = X509_get_issuer_name(x);
-      string issuer_name_str;
-      const int max_buf = 2048;
-      char name_buf[max_buf];
-      if (X509_NAME_get_text_by_NID(x509_issuer_name, NID_commonName, name_buf, max_buf) < 0) {
+      const key_message* signer_key = get_issuer_key(x, seen_keys_list);
+      if (signer_key == nullptr) {
+        printf("init_proved_statements: Can't find issuer key\n");
         return false;
       }
-      issuer_name_str.assign((const char*) name_buf);
-
-      const key_message* signer_key = get_issuer_key(x, seen_keys_list);
       EVP_PKEY* signer_pkey = pkey_from_key(*signer_key);
-      bool success = (X509_verify(x, signer_pkey) == 1);
-
-      // add to proved: signing-key says subject-key is-trusted-for-attestation
-      vse_clause* cl = already_proved->add_proved();
-      if (!construct_vse_attestation_from_cert(*subject_key, *signer_key, cl)) {
-        printf("init_proved_statements: Can't construct vse attestation from cert\n");
+      if (signer_pkey == nullptr) {
+        printf("init_proved_statements: Can't get pkey\n");
         return false;
+      }
+      bool success = (X509_verify(x, signer_pkey) == 1);
+      if (success) {
+        // add to proved: signing-key says subject-key is-trusted-for-attestation
+        vse_clause* cl = already_proved->add_proved();
+        if (!construct_vse_attestation_from_cert(*subject_key, *signer_key, cl)) {
+          printf("init_proved_statements: Can't construct vse attestation from cert\n");
+          return false;
+        }
       }
 
       // Todo: free on errors too
@@ -1288,7 +1287,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         EVP_PKEY_free(signer_pkey);
       if (x != nullptr)
         X509_free(x);
-      return true;
+      return success;
     } else if (evp.fact_assertion(i).evidence_type() == "signed-vse-attestation-report") {
       string t_str;
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
