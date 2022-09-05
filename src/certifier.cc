@@ -714,12 +714,12 @@ bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out) {
   if (enclave_type == "application-enclave") {
 #ifdef DEBUG
-printf("Calling application_GetPlatformStatement\n");
+    printf("Calling application_GetPlatformStatement\n");
 #endif
     return application_GetPlatformStatement(size_out, out);
   }
 #ifdef DEBUG
-printf("application_GetPlatformStatement dropped through\n");
+  printf("application_GetPlatformStatement dropped through\n");
 #endif
   return false;
 }
@@ -1723,8 +1723,7 @@ bool add_new_facts_for_abbreviatedplatformattestation(key_message& policy_pk,
   //    "attestKey says enclaveKey speaks-for measurement
   // Add
   //    "policyKey says measurement is-trusted"
-  //    "policyKey says platformKey is-trusted"
-  //    Todo: change last one to "policyKey says platformKey is-trusted-for-attestation"
+  //    "policyKey says platformKey is-trusted-for-attestation"
 
   // "attestKey says enclaveKey speaks-for measurement
   string expected_measurement;
@@ -1772,7 +1771,7 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   //    "policyKey is-trusted"
   //    "The ARK-key says the ASK-key is-trusted-for-attestation"
   //    "The ASK-key says the VCEK-key is-trusted-for-attestation"
-  //    "The policy-key days the ARK-key is-trusted-for-attestation
+  //    "The policy-key says the ARK-key is-trusted-for-attestation
   //    "VCEK says the enclave-key speaks-for the measurement
   //    "The policy-key says the ARK-key is-trusted-for-attestation
   //    "policyKey says measurement is-trusted"
