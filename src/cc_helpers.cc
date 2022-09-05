@@ -710,6 +710,64 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     }
   }
 
+#if 0
+  evidence_list platform_evidence;
+  if (enclave_type_ == "simulated-enclave" || enclave_type_ == "application-enclave") {
+    signed_claim_message signed_platform_says_attest_key_is_trusted;
+    if (!GetPlatformSaysAttestClaim(&signed_platform_says_attest_key_is_trusted)) {
+      printf("cc_trust_data::certify_me: Can't get signed attest claim\n");
+      return false;
+    }
+    string str_s;
+    if (!signed_platform_says_attest_key_is_trusted.SerializeToString(&str_s)) {
+      printf("cc_trust_data::certify_me: Can't serialize signed attest claim\n");
+      return false;
+    }
+    evidence* ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
+      return false;
+    }
+    ev->set_evidence_type("signed-claim");
+    ev->set_serialized_evidence(str_s);
+  } else if (enclave_type_ == "sev-enclave") {
+    extern bool plat_certs_initialized;
+    extern string platform_certs;
+    extern string serialized_ark_cert;
+    extern string serialized_ask_cert;
+    extern string serialized_vcek_cert;
+    if (!plat_certs_initialized) {
+      printf("cc_trust_data::certify_me: sev certs not initialized\n");
+      return false;
+    }
+    evidence* ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
+      return false;
+    }
+    ev->set_evidence_type("cert");
+    ev->set_serialized_evidence(serialized_ark_cert);
+    ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
+      return false;
+    }
+    ev->set_evidence_type("cert");
+    ev->set_serialized_evidence(serialized_ask_cert);
+    ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
+      return false;
+    }
+    ev->set_evidence_type("cert");
+    ev->set_serialized_evidence(serialized_vcek_cert);
+  } else {
+    printf("Unknown enclave type\n");
+    return false;
+  }
+
+#else
+
   //  The platform statement is "platform-key says attestation-key is-trusted-for-attestation"
   //  This is CC provider dependant
   signed_claim_message signed_platform_says_attest_key_is_trusted;
@@ -717,19 +775,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     printf("Can't get signed attest claim\n");
     return false;
   }
-
-#ifdef DEBUG
-    printf("Got platform statement\n");
-    print_signed_claim(signed_platform_says_attest_key_is_trusted);
 #endif
-
-  //  We retrieve the attest key from the platform statement.
-  vse_clause vc;
-  if (!get_vse_clause_from_signed_claim(signed_platform_says_attest_key_is_trusted, &vc)) {
-    printf("Can't get vse platform claim\n");
-    return false;
-  }
-  entity_message attest_key_entity = vc.clause().subject();
 
   attestation_user_data ud;
   if (purpose_ == "authentication") {
@@ -783,7 +829,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   request.set_purpose(purpose_);
 
   // Construct the evidence package
-  // Put platform attest claim and attestation in the following order:
+  // Put initialized platform evidence and attestation in the following order:
   //  platform_says_attest_key_is_trusted, the_attestation
   evidence_package* ep = new(evidence_package);
   if (!construct_platform_evidence_package(signed_platform_says_attest_key_is_trusted,
@@ -947,6 +993,7 @@ bool construct_platform_evidence_package(signed_claim_message& platform_attest_c
   return true;
 }
 
+// Todo: This isn't used
 bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_key_is_trusted,
       evidence_package* ep) {
 
@@ -963,7 +1010,7 @@ bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_
   return true;
 }
 
-// ---------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------
 // Socket and SSL support
 
 #define DEBUG
