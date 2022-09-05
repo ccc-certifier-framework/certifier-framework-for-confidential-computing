@@ -800,6 +800,10 @@ bool sev_Init(const string& platform_certs_file) {
   certifier_parent_enclave_type = "hardware";
   certifier_parent_enclave_type_intitalized = true;
   platform_certs.assign((char*)buf, size);
+
+  // Todo: put DER encoded versions in serialized_ark_cert,
+  //      serialized_ask_cert, serialized_vcek_cert
+
   plat_certs_initialized = true;
   return true;
 }
