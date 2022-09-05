@@ -1674,11 +1674,12 @@ bool add_newfacts_for_sev_attestation(key_message& policy_pk, string& serialized
       proved_statements* already_proved) {
   // At this point, the already_proved should be
   //    "policyKey is-trusted"
-  // Add
-  //    "The policy-key days the ARK-key is-trusted-for-attestation
   //    "The ARK-key says the ASK-key is-trusted-for-attestation"
   //    "The ASK-key says the VCEK-key is-trusted-for-attestation"
   //    "VCEK says the enclave-key speaks-for the measurement
+  // Add
+  //    "The policy-key says the ARK-key is-trusted-for-attestation
+  //    "The policy-key says the measurement is-trusted
     return false;
 }
 
@@ -1772,8 +1773,29 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   //    "The ARK-key says the ASK-key is-trusted-for-attestation"
   //    "The ASK-key says the VCEK-key is-trusted-for-attestation"
   //    "The policy-key days the ARK-key is-trusted-for-attestation
-  //    "enclaveKey speaks-for measurement"
+  //    "VCEK says the enclave-key speaks-for the measurement
+  //    "The policy-key says the ARK-key is-trusted-for-attestation
   //    "policyKey says measurement is-trusted"
+
+  // Proof is:
+  //    "policyKey is-trusted" AND policyKey says measurement is-trusted" -->
+  //        "the measurement is-trusted" (R3)
+  //    "policyKey is-trusted" AND
+  //        "policy-key says the ARK-key is-trusted-for-attestation" -->
+  //        "the ARK-key is-trusted-for-attestation" (R3)
+  //    "the ARK-key is-trusted-for-attestation" AND
+  //        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
+  //        "the ASK-key is-trusted-for-attestation" (R5)
+  //    "the ASK-key is-trusted-for-attestation" AND
+  //        "the ASK-key says the VCEK-key is-trusted-for-attestation" -->
+  //        "the VCEK-key is-trusted-for-attestation" (R5)
+  //    "the VCEK-key is-trusted-for-attestation" AND
+  //        "the VCEK-key says the enclave-key speaks-for the measurement" -->
+  //        "enclave-key speaks-for the measurement"  (R6)
+  //    "enclave-key speaks-for the measurement" AND "the measurement is-trusted" -->
+  //        "the enclave key is-trusted-for-authentication" (R1) OR
+  //        "the enclave key is-trusted-for-attestation" (R6)
+
   return false;
 }
 
