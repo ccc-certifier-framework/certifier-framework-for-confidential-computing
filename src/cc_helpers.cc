@@ -710,7 +710,6 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     }
   }
 
-#if 0
   evidence_list platform_evidence;
   if (enclave_type_ == "simulated-enclave" || enclave_type_ == "application-enclave") {
     signed_claim_message signed_platform_says_attest_key_is_trusted;
@@ -730,6 +729,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     }
     ev->set_evidence_type("signed-claim");
     ev->set_serialized_evidence(str_s);
+#ifdef SEV_SNP
   } else if (enclave_type_ == "sev-enclave") {
     extern bool plat_certs_initialized;
     extern string platform_certs;
@@ -761,21 +761,11 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     }
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(serialized_vcek_cert);
+#endif
   } else {
     printf("Unknown enclave type\n");
     return false;
   }
-
-#else
-
-  //  The platform statement is "platform-key says attestation-key is-trusted-for-attestation"
-  //  This is CC provider dependant
-  signed_claim_message signed_platform_says_attest_key_is_trusted;
-  if (!GetPlatformSaysAttestClaim(&signed_platform_says_attest_key_is_trusted)) {
-    printf("Can't get signed attest claim\n");
-    return false;
-  }
-#endif
 
   attestation_user_data ud;
   if (purpose_ == "authentication") {
@@ -832,8 +822,8 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   // Put initialized platform evidence and attestation in the following order:
   //  platform_says_attest_key_is_trusted, the_attestation
   evidence_package* ep = new(evidence_package);
-  if (!construct_platform_evidence_package(signed_platform_says_attest_key_is_trusted,
-        enclave_type_, the_attestation_str, ep))  {
+  if (!construct_platform_evidence_package(enclave_type_, platform_evidence,
+        the_attestation_str, ep))  {
     printf("certify_me error 7.5\n");
     return false;
   }
@@ -948,27 +938,19 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
-// Todo: Change to
-//   bool construct_platform_evidence_package(string& attesting_enclave_type,
-//      evidence_list platform_assertions,
-//      string& serialized_attestation,
-//      evidence_package* ep) {
-bool construct_platform_evidence_package(signed_claim_message& platform_attest_claim,
-    string& attesting_enclave_type, string& serialized_attestation, evidence_package* ep) {
+bool construct_platform_evidence_package(string& attesting_enclave_type,
+      evidence_list& platform_assertions, string& serialized_attestation,
+      evidence_package* ep) {
 
   string pt("vse-verifier");
   string et("signed-claim");
   ep->set_prover_type(pt);
 
-  // Todo: Just add platform assertions
-  evidence* ev1 = ep->add_fact_assertion();
-  ev1->set_evidence_type(et);
-  signed_claim_message sc1;
-  sc1.CopyFrom(platform_attest_claim);
-  string serialized_sc1;
-  if (!sc1.SerializeToString(&serialized_sc1))
-    return false;
-  ev1->set_serialized_evidence((byte*)serialized_sc1.data(), serialized_sc1.size());
+  for (int i = 0; i < platform_assertions.assertion_size(); i++) {
+    const evidence& ev_from = platform_assertions.assertion(i);
+    evidence* ev_to = ep->add_fact_assertion();
+    ev_to->CopyFrom(ev_from);
+  }
 
   // add attestation
   evidence* ev2 = ep->add_fact_assertion();
