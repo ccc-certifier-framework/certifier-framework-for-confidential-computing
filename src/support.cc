@@ -805,8 +805,8 @@ bool key_to_RSA(const key_message& k, RSA* r) {
     return false;
   }
 
-  bool private_key= true;
-  int key_size_bits= 0;
+  bool private_key = true;
+  int key_size_bits = 0;
   if (k.key_type() == "rsa-1024-public") {
     key_size_bits= 1024;
     private_key = false;

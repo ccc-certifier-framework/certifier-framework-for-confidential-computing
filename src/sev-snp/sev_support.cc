@@ -54,10 +54,8 @@ static void reverse_bytes(uint8_t *buffer, size_t size) {
   }
 }
 
-/*
- * Extract r and s from an ecdsa signature.
- * Based on get_ecdsa_sig_rs_bytes() in test/acvp_test.c from OpenSSL.
- */
+// Extract r and s from an ecdsa signature.
+// Based on get_ecdsa_sig_rs_bytes() in test/acvp_test.c from OpenSSL.
 static int get_ecdsa_sig_rs_bytes(const unsigned char *sig, size_t sig_len,
           unsigned char *r, unsigned char *s,
           size_t *rlen, size_t *slen) {
@@ -260,6 +258,7 @@ int sev_ecdsa_verify(const void *digest, size_t digest_size, EVP_PKEY *key,
 #define SEV_ECDSA_PRIV_KEY  "ec-secp384r1-priv-key.pem"
 #define SEV_ECDSA_PUB_KEY  "ec-secp384r1-pub-key.pem"
 
+// Todo: suggest renaming this to sev_key_options
 struct key_options {
   union tcb_version tcb;
   const char *key_filename;
@@ -269,6 +268,7 @@ struct key_options {
   bool do_root_key;
 };
 
+// Todo: suggest renaming this to sev_request_key
 int request_key(struct key_options *options, uint8_t *key, size_t size) {
   int rc = EXIT_FAILURE;
   int fd = -1;
@@ -365,6 +365,7 @@ out:
   return rc;
 }
 
+// Todo: suggest renaming this to sev_sign_report
 int sign_report(struct attestation_report *report) {
   int rc = -EXIT_FAILURE;
   EVP_PKEY *key = NULL;
@@ -391,6 +392,8 @@ exit:
 }
 #endif
 
+// Todo: Suggest using bool digest_message(const char* alg, const byte* message, int message_len,
+//    byte* digest, unsigned int digest_len); in support.h
 static bool digest_sha384(const void *msg, size_t msg_len, uint8_t *digest,
     size_t digest_len) {
   bool ret = false;
@@ -411,6 +414,7 @@ static bool digest_sha384(const void *msg, size_t msg_len, uint8_t *digest,
   return ret;
 }
 
+// Todo: suggest renaming this to sev_verify_report
 int verify_report(struct attestation_report *report) {
   int rc = -EXIT_FAILURE;
   EVP_PKEY *key = NULL;
@@ -489,6 +493,7 @@ exit:
   return rc;
 }
 
+// Todo: suggest renaming this to sev_get_report
 int get_report(const uint8_t *data, size_t data_size,
          struct attestation_report *report) {
   int rc = EXIT_FAILURE;
@@ -566,6 +571,7 @@ out:
   return rc;
 }
 
+// Todo: suggest renaming this to sev_write_report
 int write_report(const char *file_name, struct attestation_report *report) {
   int rc = EXIT_FAILURE;
   FILE *report_file = NULL;
@@ -653,6 +659,7 @@ bool kdf(int key_len, byte* key, int iter,
   return true;
 }
 
+// Todo: suggest renaming this to sev_get_final_keys
 bool get_final_keys(int final_key_size, byte* final_key) {
   struct key_options opt = {0};
   byte key[MSG_KEY_RSP_DERIVED_KEY_SIZE] = {0};
@@ -770,6 +777,7 @@ bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
   return true;
 }
 
+//  Platform certs
 bool plat_certs_initialized = false;
 string platform_certs;
 string serialized_ark_cert;
@@ -779,11 +787,13 @@ string serialized_vcek_cert;
 bool sev_Init(const string& platform_certs_file) {
   int size = file_size(platform_certs_file);
   if (size < 0) {
+    printf("sev_Init: Can't size sev platform certs\n");
     return false;
   }
   byte buf[size];
 
   if (!read_file(platform_certs_file, &size, buf)) {
+    printf("sev_Init: Can't read sev platform certs\n");
     return false;
   }
 
@@ -795,8 +805,10 @@ bool sev_Init(const string& platform_certs_file) {
 }
 
 bool sev_GetParentEvidence(string* out) {
-  if (!plat_certs_initialized)
+  if (!plat_certs_initialized) {
+    printf("sev_GetParentEvidence: platform cert not initialized\n");
     return false;
+  }
   out->assign((char*)platform_certs.data(), platform_certs.size());
   return true;
 }

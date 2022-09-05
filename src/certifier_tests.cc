@@ -152,6 +152,7 @@ TEST (test_x_509_sign, test_x_509_sign) {
 
 // sev tests
 #ifdef SEV_SNP
+extern bool test_sev(bool);
 TEST (test_sev, test_sev) {
   EXPECT_TRUE(test_sev(FLAGS_print_all));
 } 
