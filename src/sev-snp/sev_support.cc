@@ -801,6 +801,8 @@ bool sev_GetParentEvidence(string* out) {
   return true;
 }
 
+// ------------------------------------------------------------------
+
 int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
   FILE *pFile = NULL;
   pFile = fopen(file_name, "re");
@@ -818,7 +820,8 @@ int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
   return EXIT_SUCCESS;
 }
 
-static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert, X509 *parent_cert) {
+static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert,
+      X509 *parent_cert) {
   bool ret = false;
   X509_STORE *store = NULL;
   X509_STORE_CTX *store_ctx = NULL;
