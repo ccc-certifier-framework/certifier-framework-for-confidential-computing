@@ -666,14 +666,14 @@ bool cc_trust_data::warm_restart() {
   // fetch store
   if (!cc_policy_store_initialized_) {
     if (!fetch_store()) {
-      printf("Can't fetch store\n");
+      printf("cc_trust_data::warm_restart: Can't fetch store\n");
       return false;
     }
   }
   cc_policy_store_initialized_ = true;
 
   if (!get_trust_data_from_store()) {
-    printf("Can't get trust data from store\n");
+    printf("cc_trust_data::warm_restart: Can't get trust data from store\n");
     return false;
   }
   return true;
@@ -687,13 +687,13 @@ bool cc_trust_data::GetPlatformSaysAttestClaim(signed_claim_message* scm) {
     int size_out = 8192;
     byte out[size_out];
     if (!application_GetPlatformStatement(&size_out, out)) {
-      printf("Can't get PlatformStatement from parent\n");
+      printf("cc_trust_data::GetPlatformSaysAttestClaim: Can't get PlatformStatement from parent\n");
       return false;
     }
     string sc_str;
     sc_str.assign((char*)out, size_out);
     if (!scm->ParseFromString(sc_str)) {
-      printf("Can't parse platform claim\n");
+      printf("cc_trust_data::GetPlatformSaysAttestClaim: Can't parse platform claim\n");
       return false;
     }
     return true;
@@ -763,7 +763,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     ev->set_serialized_evidence(serialized_vcek_cert);
 #endif
   } else {
-    printf("Unknown enclave type\n");
+    printf("cc_trust_data::certify_me: Unknown enclave type\n");
     return false;
   }
 
@@ -771,22 +771,22 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   if (purpose_ == "authentication") {
     if (!make_attestation_user_data(enclave_type_,
           public_auth_key_, &ud)) {
-      printf("Can't make user data (1)\n");
+      printf("cc_trust_data::certify_me: Can't make user data (1)\n");
       return false;
     }
   } else if (purpose_ == "attestation") {
     if (!make_attestation_user_data(enclave_type_,
           public_service_key_, &ud)) {
-      printf("Can't make user data (1)\n");
+      printf("cc_trust_data::certify_me: Can't make user data (1)\n");
       return false;
     }
   } else {
-    printf("error: neither attestation or authorization\n");
+    printf("cc_trust_data::certify_me: neither attestation or authorization\n");
     return false;
   }
   string serialized_ud;
   if (!ud.SerializeToString(&serialized_ud)) {
-    printf("Can't serialize user data\n");
+    printf("cc_trust_data::certify_me: Can't serialize user data\n");
     return false;
   }
 
@@ -795,7 +795,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   byte out[size_out];
   if (!Attest(enclave_type_, serialized_ud.size(),
         (byte*) serialized_ud.data(), &size_out, out)) {
-    printf("certify_me error 6\n");
+    printf("cc_trust_data::certify_me: Attest failed\n");
     return false;
   }
   string the_attestation_str;
@@ -824,7 +824,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   evidence_package* ep = new(evidence_package);
   if (!construct_platform_evidence_package(enclave_type_, platform_evidence,
         the_attestation_str, ep))  {
-    printf("certify_me error 7.5\n");
+    printf("cc_trust_data::certify_me: construct_platform_evidence_package failed\n");
     return false;
   }
   request.set_allocated_support(ep);
@@ -832,7 +832,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   // Serialize request
   string serialized_request;
   if (!request.SerializeToString(&serialized_request)) {
-    printf("certify_me error 8\n");
+    printf("cc_trust_data::certify_me: error 8\n");
     return false;
   }
 
@@ -844,7 +844,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   // Open socket and send request.
   int sock = -1;
   if (!open_client_socket(host_name, port, &sock)) {
-    printf("Can't open request socket\n");
+    printf("cc_trust_data::certify_me: Can't open request socket\n");
     return false;
   }
   if (write(sock, (byte*)serialized_request.data(), serialized_request.size()) < 0) {
@@ -855,11 +855,11 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   string serialized_response;
   int resp_size = sized_socket_read(sock, &serialized_response);
   if (resp_size < 0) {
-     printf("Can't read response\n");
+     printf("cc_trust_data::certify_me: Can't read response\n");
     return false;
   }
   if (!response.ParseFromString(serialized_response)) {
-    printf("Can't parse response\n");
+    printf("cc_trust_data::certify_me: Can't parse response\n");
     return false;
   }
   close(sock);
@@ -870,7 +870,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
 #endif
 
   if (response.status() != "succeeded") {
-    printf("Certification failed\n");
+    printf("cc_trust_data::certify_me: Certification failed\n");
     return false;
   }
 
@@ -892,7 +892,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     string auth_tag("auth-key");
     const key_message* km = store_.get_authentication_key_by_tag(auth_tag);
     if (km == nullptr) {
-      printf("Can't find authentication key in store\n");
+      printf("cc_trust_data::certify_me: Can't find authentication key in store\n");
       return false;
     }
     ((key_message*) km)->set_certificate((byte*)response.artifact().data(), response.artifact().size());
@@ -906,7 +906,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     const key_message* km = store_.get_authentication_key_by_tag(key_tag);
     if (km == nullptr) {
       if (!store_.add_authentication_key(key_tag, private_service_key_)) {
-        printf("Can't find service key in store\n");
+        printf("cc_trust_data::certify_me: Can't find service key in store\n");
         return false;
       }
     }
@@ -915,20 +915,20 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     string pr_str;
     pr_str.assign((char*)response.artifact().data(),response.artifact().size());
     if (!platform_rule_.ParseFromString(pr_str)) {
-      printf("Can't parse platform rule\n");
+      printf("cc_trust_data::certify_me: Can't parse platform rule\n");
       return false;
     }
 
     // Update store with platform_rule and save it
     string platform_rule_tag("platform-rule");
     if (!store_.add_signed_claim(platform_rule_tag, platform_rule_)) {
-      printf("Can't add platform rule\n");
+      printf("cc_trust_data::certify_me: Can't add platform rule\n");
     }
     cc_service_platform_rule_initialized_ = true;
     cc_is_certified_ = true;
 
   } else {
-    printf("Unknown purpose\n");
+    printf("cc_trust_data::certify_me: Unknown purpose\n");
     return false;
   }
 
