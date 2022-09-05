@@ -135,5 +135,9 @@ int main(int an, char** av) {
     return 1;
   }
 
+  printf("New statement: ");
+  print_vse_clause(cl2);
+  printf("\n");
+
   return 0;
 }
