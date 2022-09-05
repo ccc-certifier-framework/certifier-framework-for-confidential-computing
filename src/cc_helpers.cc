@@ -775,6 +775,8 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   request.set_providing_enclave_tag("providing-enclave");
   if (enclave_type_ == "application-enclave") {
     request.set_submitted_evidence_type("augmented-platform-attestation-only");
+  } else if (enclave_type_ == "sev-enclave") {
+    request.set_submitted_evidence_type("sev-platform-attestation-only");
   } else {
     request.set_submitted_evidence_type("platform-attestation-only");
   }
@@ -900,15 +902,20 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
+// Todo: Change to
+//   bool construct_platform_evidence_package(string& attesting_enclave_type,
+//      evidence_list platform_assertions,
+//      string& serialized_attestation,
+//      evidence_package* ep) {
 bool construct_platform_evidence_package(signed_claim_message& platform_attest_claim,
     string& attesting_enclave_type, string& serialized_attestation, evidence_package* ep) {
 
   string pt("vse-verifier");
   string et("signed-claim");
-
   ep->set_prover_type(pt);
-  evidence* ev1 = ep->add_fact_assertion();
 
+  // Todo: Just add platform assertions
+  evidence* ev1 = ep->add_fact_assertion();
   ev1->set_evidence_type(et);
   signed_claim_message sc1;
   sc1.CopyFrom(platform_attest_claim);
@@ -917,6 +924,7 @@ bool construct_platform_evidence_package(signed_claim_message& platform_attest_c
     return false;
   ev1->set_serialized_evidence((byte*)serialized_sc1.data(), serialized_sc1.size());
 
+  // add attestation
   evidence* ev2 = ep->add_fact_assertion();
   if ("simulated-enclave" ==  attesting_enclave_type ||
       "application-enclave" == attesting_enclave_type) {
