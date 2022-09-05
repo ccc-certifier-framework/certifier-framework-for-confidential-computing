@@ -772,6 +772,9 @@ bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
 
 bool plat_certs_initialized = false;
 string platform_certs;
+string serialized_ark_cert;
+string serialized_ask_cert;
+string serialized_vcek_cert;
 
 bool sev_Init(const string& platform_certs_file) {
   int size = file_size(platform_certs_file);
@@ -878,8 +881,7 @@ static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert, X
   return ret;
 }
 
-int sev_validate_vcek_cert_chain(X509 *x509_vcek, X509 *x509_ask, X509 *x509_ark)
-{
+int sev_validate_vcek_cert_chain(X509 *x509_vcek, X509 *x509_ask, X509 *x509_ark) {
   EVP_PKEY *vcek_pub_key = NULL;
   int ret = EXIT_FAILURE;
 
@@ -917,8 +919,7 @@ err:
   return ret;
 }
 
-EVP_PKEY *sev_get_vcek_pubkey(X509 *x509_vcek)
-{
+EVP_PKEY *sev_get_vcek_pubkey(X509 *x509_vcek) {
   EVP_PKEY *vcek_pub_key = NULL;
 
   if (!x509_vcek) {

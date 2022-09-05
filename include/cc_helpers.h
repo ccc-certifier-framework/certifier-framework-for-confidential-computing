@@ -86,7 +86,8 @@ public:
       const string& measurement_file_name, const string& attest_endorsement_file_name);
   bool initialize_sev_enclave_data(const string& platform_certs);
   bool initialize_oe_enclave_data();
-  bool initialize_application_enclave_data(const string& parent_enclave_type, int in_fd, int out_fd);
+  bool initialize_application_enclave_data(const string& parent_enclave_type,
+          int in_fd, int out_fd);
 
   bool cc_all_initialized();
   bool init_policy_key(int asn1_cert_size, byte* asn1_cert);
@@ -114,12 +115,16 @@ void print_cn_name(X509_NAME* name);
 void print_org_name(X509_NAME* name);
 void print_ssl_error(int code);
 
+// The functions below are used by BORING_SSL
+// Eventually they will be deprecated
+#if 1
 bool client_auth_server(X509* x509_root_cert, SSL* ssl);
 bool client_auth_client(X509* x509_root_cert, key_message& private_key, SSL* ssl);
 bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx);
 bool init_client_ssl(X509* x509_root_cert, key_message& private_key,
     const string& host_name, int port, int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl);
 void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl);
+#endif
 
 class secure_authenticated_channel {
 public:

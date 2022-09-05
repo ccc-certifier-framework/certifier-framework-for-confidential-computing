@@ -147,6 +147,15 @@ bool cc_trust_data::initialize_sev_enclave_data(const string& platform_certs_fil
   if (!sev_Init(platform_certs_file)) {
     return false;
   }
+
+  // extern plat_certs_initialized;
+  // extern string platform_certs;
+
+  // translate certs to DER
+  // extern string serialized_ark_cert;
+  // extern string serialized_ask_cert;
+  // extern string serialized_vcek_cert;
+
   cc_provider_provisioned_ = true;
   return true;
 #else
