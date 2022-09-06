@@ -779,31 +779,28 @@ bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
 
 //  Platform certs
 bool plat_certs_initialized = false;
-string platform_certs;
 string serialized_ark_cert;
 string serialized_ask_cert;
 string serialized_vcek_cert;
 
-bool sev_Init(const string& platform_certs_file) {
-  int size = file_size(platform_certs_file);
-  if (size < 0) {
-    printf("sev_Init: Can't size sev platform certs\n");
+bool sev_Init(const string& platform_ark_der_file, const string& platform_ask_der_file,
+      const string& platform_vcek_der_file) {
+
+  if (!read_file_into_string(platform_ark_der_file, &serialized_ark_cert)) {
+    printf("sev_Init: Can't read ark file\n");
     return false;
   }
-  byte buf[size];
-
-  if (!read_file(platform_certs_file, &size, buf)) {
-    printf("sev_Init: Can't read sev platform certs\n");
+  if (!read_file_into_string(platform_ask_der_file, &serialized_ask_cert)) {
+    printf("sev_Init: Can't read ask file\n");
+    return false;
+  }
+  if (!read_file_into_string(platform_vcek_der_file, &serialized_vcek_cert)) {
+    printf("sev_Init: Can't read vcek file\n");
     return false;
   }
 
   certifier_parent_enclave_type = "hardware";
   certifier_parent_enclave_type_intitalized = true;
-  platform_certs.assign((char*)buf, size);
-
-  // Todo: put DER encoded versions in serialized_ark_cert,
-  //      serialized_ask_cert, serialized_vcek_cert
-
   plat_certs_initialized = true;
   return true;
 }
@@ -813,8 +810,9 @@ bool sev_GetParentEvidence(string* out) {
     printf("sev_GetParentEvidence: platform cert not initialized\n");
     return false;
   }
-  out->assign((char*)platform_certs.data(), platform_certs.size());
-  return true;
+  // Todo: fix this
+  return false;
+  // return true;
 }
 
 // ------------------------------------------------------------------

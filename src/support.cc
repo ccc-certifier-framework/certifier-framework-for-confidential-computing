@@ -169,6 +169,22 @@ bool read_file(const string& file_name, int* size, byte* data) {
   return true;
 }
 
+bool read_file_into_string(const string& file_name, string* out) {
+  int size = file_size(file_name);
+  if (size < 0) {
+    printf("read_file_into_string: Can't size input file\n");
+    return false;
+  }
+  byte buf[size];
+  if (!read_file(file_name, &size, buf)) {
+    printf("read_file_into_string: Can't read file\n");
+    return false;
+  }
+
+  out->assign((char*)buf, size);
+  return true;
+}
+
 // -----------------------------------------------------------------------
 
 bool time_now(time_point* t) {

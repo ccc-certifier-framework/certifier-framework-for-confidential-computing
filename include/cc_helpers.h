@@ -84,7 +84,9 @@ public:
   // Each of the enclave types have bespoke initialization
   bool initialize_simulated_enclave_data(const string& attest_key_file_name,
       const string& measurement_file_name, const string& attest_endorsement_file_name);
-  bool initialize_sev_enclave_data(const string& platform_certs);
+  bool initialize_sev_enclave_data(const string& platform_ark_der_file,
+      const string& platform_ask_der_file,
+      const string& platform_vcek_der_file);
   bool initialize_oe_enclave_data();
   bool initialize_application_enclave_data(const string& parent_enclave_type,
           int in_fd, int out_fd);

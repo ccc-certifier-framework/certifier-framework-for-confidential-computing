@@ -56,6 +56,7 @@ const int num_bits_in_byte = 8;
 bool write_file(const string& file_name, int size, byte* data);
 int file_size(const string& file_name);
 bool read_file(const string& file_name, int* size, byte* data);
+bool read_file_into_string(const string& file_name, string* out);
 
 bool encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size);

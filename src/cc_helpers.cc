@@ -141,17 +141,22 @@ bool cc_trust_data::initialize_simulated_enclave_data(const string& attest_key_f
   return true;
 }
 
-bool cc_trust_data::initialize_sev_enclave_data(const string& platform_certs_file) {
-  extern bool sev_Init(const string& platform_certs_file);
+bool cc_trust_data::initialize_sev_enclave_data(const string& platform_ark_der_file,
+      const string& platform_ask_der_file,
+      const string& platform_vcek_der_file) {
+
+  extern bool sev_Init(const string& platform_ark_der_file,
+      const string& platform_ask_der_file,
+      const string& platform_vcek_der_file);
+
 #ifdef SEV_SNP
-  if (!sev_Init(platform_certs_file)) {
+  if (!sev_Init(platform_ark_der_file, platform_ask_der_file,
+        platform_vcek_der_file)) {
+    printf("initialize_sev_enclave_data: sev_Init failed\n");
     return false;
   }
 
   // extern plat_certs_initialized;
-  // extern string platform_certs;
-
-  // translate certs to DER
   // extern string serialized_ark_cert;
   // extern string serialized_ask_cert;
   // extern string serialized_vcek_cert;

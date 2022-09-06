@@ -259,3 +259,14 @@ bool test_x_509_sign(bool print_all) {
   X509_free(cert1);
   return success;
 }
+
+bool test_sev_certs(bool print_all) {
+#if 0
+  if (!read_file_into_string(platform_ark_der_file, &serialized_ark_cert)) {
+    printf("sev_Init: Can't read ark file\n");
+    return false;
+  }
+#endif
+  return true;
+}
+
