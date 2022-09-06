@@ -349,4 +349,3 @@ bool test_sev_certs(bool print_all) {
 
   return true;
 }
-
