@@ -261,12 +261,92 @@ bool test_x_509_sign(bool print_all) {
 }
 
 bool test_sev_certs(bool print_all) {
-#if 0
-  if (!read_file_into_string(platform_ark_der_file, &serialized_ark_cert)) {
-    printf("sev_Init: Can't read ark file\n");
+  string ark_file_str("./test_data/milan_ark_cert.der");
+  string ask_file_str("./test_data/milan_ask_cert.der");
+
+  string ark_der_str;
+  string ask_der_str;
+  if (!read_file_into_string(ark_file_str, &ark_der_str)) {
+    printf("Can't read ark file\n");
     return false;
   }
-#endif
+  if (!read_file_into_string(ask_file_str, &ask_der_str)) {
+    printf("Can't read ask file\n");
+    return false;
+  }
+
+  X509* cert1 =X509_new();
+  if (!asn1_to_x509(ark_der_str, cert1)) {
+    return false;
+  }
+  if (print_all) {
+    printf("\nARK cert:\n");
+    X509_print_fp(stdout, cert1);
+    printf("\n");
+  }
+
+  EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
+  int ret = X509_verify(cert1, ark_pkey);
+  bool success = (ret == 1);
+  if (print_all) {
+    if (success) {
+      printf("ark cert verifies\n");
+    } else {
+      printf("ark cert does not verify (%d)\n", ret);
+    }
+  }
+  if (!success)
+    return false;
+
+  X509* cert2 =X509_new();
+  if (!asn1_to_x509(ask_der_str, cert2)) {
+    return false;
+  }
+  if (print_all) {
+    printf("\nASK cert:\n");
+    X509_print_fp(stdout, cert2);
+    printf("\n");
+  }
+
+  ret = X509_verify(cert2, ark_pkey);
+  success = (ret == 1);
+  if (print_all) {
+    if (success) {
+      printf("ask cert verifies\n");
+    } else {
+      printf("ask cert does not verify (%d)\n", ret);
+    }
+  }
+  if (!success)
+    return false;
+
+  key_message ark_key;
+  if (!x509_to_public_key(cert1, &ark_key)) {
+    printf("Can't convert ark to key\n");
+    return false;
+  }
+
+  key_message ask_key;
+  if (!x509_to_public_key(cert2, &ask_key)) {
+    printf("Can't convert ark to key\n");
+    return false;
+  }
+
+  vse_clause cl;
+  if (!construct_vse_attestation_from_cert(ask_key, ark_key, &cl)) {
+    printf("construct_vse_attestation_from_cert failed\n");
+    return false;
+  }
+
+  printf("\n");
+  if (print_all) {
+    print_vse_clause(cl);
+    printf("\n");
+  }
+
+  X509_free(cert1);
+  X509_free(cert2);
+
   return true;
 }
 
