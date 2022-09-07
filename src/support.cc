@@ -472,6 +472,8 @@ bool digest_message(const char* alg, const byte* message, int message_len,
   return true;
 }
 
+// Still needed?
+#if 1
 bool authenticated_encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
 
@@ -518,6 +520,7 @@ bool authenticated_decrypt(byte* in, int in_len, byte *key,
   *out_size = plain_size;
   return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
+#endif
 
 bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
@@ -556,7 +559,6 @@ bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key
 
 bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *key,
             byte *out, int* out_size) {
-
 
   if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-256-cbc-hmac-sha384") != 0) {
     printf("Only aes-256-cbc-hmac-sha256 and aes-384-cbc-hmac-sha384 for now\n");
@@ -1015,7 +1017,6 @@ void print_ecc_key(const ecc_message& em) {
 //      Embed message m in P_m.  Pick random k.  Send (kG, kP + P_m)
 //    Decrypt
 //      compute Q=xkG = kP.  Subtract Q from kP + P_m = P_m.  Extract message from P_m.
-
 bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, byte* out) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte digest[len];
@@ -1362,7 +1363,8 @@ bool same_key(const key_message& k1, const key_message& k2) {
     if (k1.rsa_key().public_exponent() != k2.rsa_key().public_exponent())
       return false;
     return true;
-  } else if (k1.key_type() == "aes-256-cbc-hmac-sha256" || k1.key_type() == "aes-256-cbc" || k1.key_type() == "aes-256") {
+  } else if (k1.key_type() == "aes-256-cbc-hmac-sha256" ||
+            k1.key_type() == "aes-256-cbc" || k1.key_type() == "aes-256") {
     if (!k1.has_secret_key_bits())
       return false;
     if (k1.secret_key_bits().size() != k2.secret_key_bits().size())
