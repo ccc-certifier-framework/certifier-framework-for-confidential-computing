@@ -151,7 +151,7 @@ int main(int an, char** av) {
 
   // Standard algorithms for the enclave
   string public_key_alg("rsa-2048");
-  string symmetric_key_alg("aes-256");;
+  string symmetric_key_alg("aes-256");
   string hash_alg("sha-256");
   string hmac_alg("sha-256-hmac");
 

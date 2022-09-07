@@ -47,12 +47,11 @@ DEFINE_string(data_dir, "./app1_data/", "directory for application data");
 
 DEFINE_string(server_app_host, "localhost", "address for app server");
 DEFINE_int32(server_app_port, 8124, "port for server app server");
-
 DEFINE_string(policy_store_file, "store.bin", "policy store file name");
-DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
-DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
-DEFINE_string(measurement_file, "example_app.measurement", "measurement");
+
+DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der", "ark cert file name");
+DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der", "ask cert file name");
+DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der", "vcek cert file name");
 
 
 // The test app performs five possible roles
@@ -217,19 +216,13 @@ int main(int an, char** av) {
     printf("argv[%d]: %s\n", i, av[i]);
   }
   printf("\n");
-  int in_fd = 5;
-  int out_fd = 8;
-  if (an >= 2) {
-    in_fd = atoi(av[an - 2]);
-    out_fd = atoi(av[an - 1]);
-  }
 
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf("example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
+    printf("sev_example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
     printf("\t --data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
     printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server\n");
@@ -258,16 +251,23 @@ int main(int an, char** av) {
   }
 
   // Init application enclave
-  if (!app_trust_data->initialize_application_enclave_data(parent_enclave_type,
-        in_fd, out_fd)) {
+  if (!app_trust_data->initialize_sev_enclave_data(FLAGS_ark_cert_file,
+        FLAGS_ask_cert_file, FLAGS_vcek_cert_file)) {
     printf("Can't init application-enclave\n");
     return 1;
   }
 
+  // Standard algorithms for the enclave
+  string public_key_alg("rsa-2048");
+  string symmetric_key_alg("aes-256");;
+  string hash_alg("sha-256");
+  string hmac_alg("sha-256-hmac");
+
   // Carry out operations as before
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init()) {
+    if (!app_trust_data->cold_init(public_key_alg,
+        symmetric_key_alg, hash_alg, hmac_alg)) {
       printf("cold-init failed\n");
       ret = 1;
     }
