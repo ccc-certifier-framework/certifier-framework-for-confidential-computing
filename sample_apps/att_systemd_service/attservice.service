@@ -1,0 +1,9 @@
+[Unit]
+Description=VMware Confidential Computing Attestation Service.
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/attsvc
+
+[Install]
+WantedBy=multi-user.target
