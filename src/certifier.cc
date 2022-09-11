@@ -1022,12 +1022,14 @@ bool init_certifier_rules(certifier_rules& rules) {
   string* r4 =  rules.add_rule();
   string* r5 =  rules.add_rule();
   string* r6 =  rules.add_rule();
+  string* r7 =  rules.add_rule();
   r1->assign("If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-authentication.");
   r2->assign("If key2 speaks-for key1 and key3 speaks-for key2 then key3 speaks-for key1.");
   r3->assign("If key1 is-trusted and key1 says X, then X is true.");
   r4->assign("If key2 speaks-for key1 and key1 is-trusted then key2 is-trusted.");
   r5->assign("If key1 is-trusted-for-a-purpose and key1 says key2 is-trusted-for-another-purpose then key2 is-trusted-for-another-purpose, if is-trusted-for-a-purpose dominate is-trusted-for-another-purpose.");
-  r6->assign("If key1 is-trusted-for-a-purpose and key1 says key2 speaks-for measurement provided is-trusted-for-a-purpose dominates is-trusted-for-attestation.");
+  r6->assign("If key1 is-trusted-for-a-attestation and key1 says key2 speaks-for measurement then key2 speaks-for measurment.");
+  r7->assign("If measurement is-trusted and key2 speaks-for measurement then key2 is-trusted-for-attestation.");
   return true;
 }
 
@@ -1437,8 +1439,7 @@ bool verify_rule_5(predicate_dominance& dom_tree, const vse_clause& c1,
 }
 
 // R6: if key1 is-trustedXXX and key1 says key2 speaks-for measurement then
-//  key2 speaks-for measurement
-//      provided is-trustedXXX dominates is-trusted-for-attestation
+//      key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation
 bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
       const vse_clause& c2, const vse_clause& conclusion) {
 
@@ -1477,6 +1478,44 @@ bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
   return same_vse_claim(c2.clause(), conclusion);
 }
 
+// R7: if measurement is-trusted
+//  key2 speaks-for measurement then
+//  key2 is-trusted-for-attestation
+//      provided is-trustedXXX dominates is-trusted-for-attestation
+bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
+      const vse_clause& c2, const vse_clause& conclusion) {
+
+  // Make sure clauses are in the right form.
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (c1.has_object() || c1.has_clause())
+    return false;
+  if (c1.verb() != "is-trusted")
+    return false;
+  if (c1.subject().entity_type() != "measurement")
+    return false;
+
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (c2.verb() != "speaks-for")
+    return false;
+  if (!c2.has_object() || c2.has_clause())
+    return false;
+  if (c2.object().entity_type() != "measurement")
+    return false;
+
+  if (!same_entity(c1.subject(), c2.object()))
+    return false;
+  // Make sure subject of conclusion is subject of c2 and verb "is-trusted"
+  if (!conclusion.has_subject() || !conclusion.has_verb() || 
+       conclusion.has_object() || conclusion.has_clause())
+    return false;
+  if (conclusion.verb() != "is-trusted-for-attestation")
+    return false;
+  return same_entity(conclusion.subject(), c2.subject());
+}
+
+
 bool verify_external_proof_step(predicate_dominance& dom_tree, proof_step& step) {
   if (!step.has_rule_applied())
     return false;
@@ -1497,6 +1536,8 @@ bool verify_external_proof_step(predicate_dominance& dom_tree, proof_step& step)
     return verify_rule_5(dom_tree, step.s1(), step.s2(), step.conclusion());
   case 6:
     return verify_rule_6(dom_tree, step.s1(), step.s2(), step.conclusion());
+  case 7:
+    return verify_rule_7(dom_tree, step.s1(), step.s2(), step.conclusion());
   }
   return false;
 }
@@ -1520,6 +1561,8 @@ bool verify_internal_proof_step(predicate_dominance& dom_tree,
       return verify_rule_5(dom_tree, s1, s2, conclude);
     case 6:
       return verify_rule_6(dom_tree, s1, s2, conclude);
+    case 7:
+      return verify_rule_7(dom_tree, s1, s2, conclude);
   }
   return true;
 }

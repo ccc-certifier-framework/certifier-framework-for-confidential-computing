@@ -1333,10 +1333,92 @@ func CheckTimeRange(nb *string, na *string) bool {
 	return true
 }
 
+type CertKeysSeen struct {
+	name string
+	pk  certprotos.KeyMessage
+}
+
+type CertSeenList struct {
+	maxSize int
+	size int
+	keysSeen [30]CertKeysSeen
+}
+
+func AddKeySeen(list CertSeenList, k *certprotos.KeyMessage) bool {
+	if list.maxSize >= (list.size - 1) {
+		return false
+	}
+	var entry *CertKeysSeen = &list.keysSeen[list.size]
+	list.size = list.size + 1
+	entry.name = k.GetKeyName()
+	entry.pk = *k
+	return true
+}
+
+func FindKeySeen(list CertSeenList, name string) *certprotos.KeyMessage {
+	for j := 0; j < list.size; j++ {
+		if list.keysSeen[j].name == name {
+			return &list.keysSeen[j].pk
+		}
+	}
+	return nil
+}
+
+func ConstructVseAttestationFromCert(subjKey *certprotos.KeyMessage, signerKey *certprotos.KeyMessage) *certprotos.VseClause {
+	subjectKeyEntity := MakeKeyEntity(subjKey)
+	if subjectKeyEntity == nil {
+		return nil
+	}
+	signerKeyEntity := MakeKeyEntity(signerKey)
+	if signerKeyEntity == nil {
+		return nil
+	}
+	t_verb := "is-trusted-for-attestation"
+	tcl := MakeUnaryVseClause(subjectKeyEntity, &t_verb)
+	if tcl == nil {
+		return nil
+	}
+	s_verb := "says"
+	return MakeIndirectVseClause(signerKeyEntity, &s_verb, tcl)
+}
+
+func ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage, measurement []byte) *certprotos.VseClause {
+	vcertKeyEntity := MakeKeyEntity(vcertKey)
+	if vcertKeyEntity == nil {
+		return nil
+	}
+	enclaveKeyEntity := MakeKeyEntity(enclaveKey)
+	if enclaveKeyEntity == nil {
+		return nil
+	}
+	measurementEntity := MakeMeasurementEntity(measurement)
+	if measurementEntity == nil {
+		return nil
+	}
+	speaks_verb := "speaks-for"
+	tcl := MakeSimpleVseClause(enclaveKeyEntity, &speaks_verb, measurementEntity)
+	if tcl == nil {
+		return nil
+	}
+	says_verb := "says"
+	return MakeIndirectVseClause(vcertKeyEntity, &says_verb, tcl)
+}
+
+func VerifySevAttestation(serialized []byte) []byte{
+	return nil
+}
+
+
 func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.Evidence,
 		ps *certprotos.ProvedStatements) bool {
 	if !InitAxiom(pk, ps) {
 		return false
+	}
+
+	var seenList CertSeenList = CertSeenList {
+		maxSize: 30,
+		size: 0,
+		//keysSeen: CertKeysSeen,
 	}
 
 	// Debug
@@ -1367,9 +1449,60 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			// from the return values.  Then add it to proved statements
 			fmt.Printf("oe-verify not implemented\n")
 			return false
-		} else if ev.GetEvidenceType() == "sev-assertion" {
+		} else if ev.GetEvidenceType() == "sev-attestation" {
+			// m := VerifySevAttestation(serialized []byte)
+			// add vcert-key says enclave-key speaks-for measurement
+			// cl := ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage, m)
+			// ps.Proved = append(ps.Proved, cl)
+			// return true
 			fmt.Printf("sev-verify not implemented\n")
 			return false
+		} else if ev.GetEvidenceType() == "cert" {
+			// A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
+			// construct vse statement.
+
+			// This whole thing is more complicated because we have to keep track of
+			// previously seen subject keys which, as issuer keys, will sign other
+			// keys.  The only time we can get the issuer_key directly is when the cert
+			// is self signed.
+
+			// turn into X509
+			cert := Asn1ToX509(ev.SerializedEvidence)
+			if cert == nil {
+				fmt.Printf("Can't convert cert\n")
+				return false
+			}
+			subjKey := GetSubjectKey(cert)
+			if subjKey == nil {
+				fmt.Printf("Can't get subject key\n")
+				return false
+			}
+			if FindKeySeen(seenList, subjKey.GetKeyName()) == nil {
+				if !AddKeySeen(seenList, subjKey) {
+					return false
+				}
+			}
+			issuerName := GetIssuerNameFromCert(cert)
+			signerKey := FindKeySeen(seenList, *issuerName)
+			if signerKey == nil {
+					return false
+			}
+			// verify x509 signature
+			certPool := x509.NewCertPool()
+			certPool.AddCert(cert)
+			opts := x509.VerifyOptions{
+				Roots:   certPool,
+			}
+
+			if _, err := cert.Verify(opts); err != nil {
+				return false
+			}
+			cl := ConstructVseAttestationFromCert(subjKey, signerKey)
+			if cl == nil {
+				return false
+			}
+			ps.Proved = append(ps.Proved, cl)
+			return true
 		} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
 			sr := certprotos.SignedReport{}
 			err := proto.Unmarshal(ev.SerializedEvidence, &sr)
@@ -1602,7 +1735,7 @@ func VerifyRule6(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 	return SameVseClause(c3, c)
 }
 
-// R7: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-attestation.
+// R7: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-authentication.
 func VerifyRule7(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
 		return false
