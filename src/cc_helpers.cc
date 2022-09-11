@@ -67,6 +67,7 @@ cc_trust_data::cc_trust_data(const string& enclave_type, const string& purpose,
   cc_provider_provisioned_ = false;
   x509_policy_cert_ = nullptr;
   cc_is_certified_ = false;
+  peer_data_initialized_ = false;
 }
 
 cc_trust_data::cc_trust_data() {
@@ -938,6 +939,25 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   }
 
   return save_store();
+}
+
+bool cc_trust_data::init_peer_certification_data(const string& public_key_alg) {
+  // bool peer_data_initialized_;
+  // key_message local_policy_key_;
+  // string local_policy_cert_;
+  return false;
+}
+
+bool cc_trust_data::recover_peer_certification_data() {
+  return false;
+}
+
+bool cc_trust_data::get_peer_certification(const string& host_name, int port) {
+  return false;
+}
+
+bool cc_trust_data::run_peer_certificationservice(const string& host_name, int port) {
+  return false;
 }
 
 // --------------------------------------------------------------------------------------

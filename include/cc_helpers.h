@@ -76,6 +76,11 @@ public:
   byte service_symmetric_key_[cc_helper_symmetric_key_size];
   key_message service_sealing_key_;
 
+  // For peer-to-peer certification
+  bool peer_data_initialized_;
+  key_message local_policy_key_;
+  string local_policy_cert_;
+
   cc_trust_data();
   cc_trust_data(const string& enclave_type, const string& purpose,
       const string& policy_store_name);
@@ -104,6 +109,12 @@ public:
   bool certify_me(const string& host_name, int port);
   bool GetPlatformSaysAttestClaim(signed_claim_message* scm);
   void print_trust_data();
+
+  // For peer-to-peer certification
+  bool init_peer_certification_data(const string& public_key_alg);
+  bool recover_peer_certification_data();
+  bool get_peer_certification(const string& host_name, int port);
+  bool run_peer_certificationservice(const string& host_name, int port);
 };
 
 bool open_client_socket(const string& host_name, int port, int* soc);
