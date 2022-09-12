@@ -462,14 +462,7 @@ bool test_real_sev_certs(bool print_all) {
   return true;
 }
 
-int fake_sign_report(struct attestation_report *report) {
-  return 1;
-}
-
-int fake_get_report(const byte* data, size_t data_size, struct attestation_report *report) {
-  return 1;
-}
-
+// Coming soon: call the simulated one, then the real one
 bool fake_sev_Attest(int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
   unsigned int hash_len = 48;
   byte hash[hash_len];
@@ -805,9 +798,7 @@ bool test_sev_request(bool print_all) {
 
   }
 
-  // bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trusted_platforms,
-  //      signed_claim_sequence& trusted_measurements,
-  //      evidence_package& evp, key_message& policy_pk)
+  // bool validate_evidence(evidence_descriptor, trusted_platforms, trusted_measurements, evp, policy_public_pk)
 
   return true;
 }

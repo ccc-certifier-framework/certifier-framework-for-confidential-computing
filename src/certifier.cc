@@ -1724,26 +1724,8 @@ bool add_newfacts_for_sev_attestation(key_message& policy_pk, string& serialized
   // Add
   //    "The policy-key says the ARK-key is-trusted-for-attestation
   //    "The policy-key says the measurement is-trusted
-  string expected_measurement;
-  if (!already_proved->proved(4).has_clause()) {
-    return false;
-  }
-  if (!already_proved->proved(4).clause().has_object()) {
-    return false;
-  }
-  const entity_message& m_ent = already_proved->proved(4).clause().object();
-  expected_measurement.assign((char*)m_ent.measurement().data(), m_ent.measurement().size());
 
-  signed_claim_message sc;
-  if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
-        trusted_measurements, &sc)) {
-    return false;
-  }
-  if (!add_fact_from_signed_claim(sc, already_proved)) {
-    return false;
-  }
-
-  // "platformKey says attestationKey is-trusted
+  signed_claim_message sc1;
   if (!already_proved->proved(1).has_subject()) {
     return false;
   }
@@ -1752,10 +1734,29 @@ bool add_newfacts_for_sev_attestation(key_message& policy_pk, string& serialized
   }
   const key_message& expected_key = already_proved->proved(1).subject().key();
   if (!get_signed_platform_claim_from_trusted_list(expected_key,
-        trusted_platforms, &sc)) {
+        trusted_platforms, &sc1)) {
     return false;
   }
-  if (!add_fact_from_signed_claim(sc, already_proved)) {
+  if (!add_fact_from_signed_claim(sc1, already_proved)) {
+    return false;
+  }
+
+  if (!already_proved->proved(4).has_clause()) {
+    return false;
+  }
+  if (!already_proved->proved(4).clause().has_object()) {
+    return false;
+  }
+  const entity_message& m_ent = already_proved->proved(4).clause().object();
+  string expected_measurement;
+  expected_measurement.assign((char*)m_ent.measurement().data(), m_ent.measurement().size());
+
+  signed_claim_message sc2;
+  if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
+        trusted_measurements, &sc2)) {
+    return false;
+  }
+  if (!add_fact_from_signed_claim(sc2, already_proved)) {
     return false;
   }
 
