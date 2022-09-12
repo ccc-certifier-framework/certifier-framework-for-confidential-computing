@@ -273,6 +273,7 @@ void print_user_data(attestation_user_data& at);
 void print_attestation_info(vse_attestation_report_info& info);
 
 void print_evidence(const evidence& ev);
+void print_evidence_package(const evidence_package& evp);
 void print_proof_step(const proof_step& ps);
 void print_proof(proof& pf);
 void print_trust_response_message(trust_response_message& m);

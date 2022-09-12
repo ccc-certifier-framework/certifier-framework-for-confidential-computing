@@ -349,3 +349,474 @@ bool test_sev_certs(bool print_all) {
 
   return true;
 }
+
+bool test_real_sev_certs(bool print_all) {
+  string ark_file_str("./test_data/ark.der");
+  string ask_file_str("./test_data/ask.der");
+  string vcek_file_str("./test_data/vcek.der");
+
+  string ark_der_str;
+  string ask_der_str;
+  string vcek_der_str;
+  if (!read_file_into_string(ark_file_str, &ark_der_str)) {
+    printf("Can't read ark file\n");
+    return false;
+  }
+  if (!read_file_into_string(ask_file_str, &ask_der_str)) {
+    printf("Can't read ask file\n");
+    return false;
+  }
+  if (!read_file_into_string(vcek_file_str, &vcek_der_str)) {
+    printf("Can't read vcek file\n");
+    return false;
+  }
+
+  X509* cert1 =X509_new();
+  if (!asn1_to_x509(ark_der_str, cert1)) {
+    return false;
+  }
+  if (print_all) {
+    printf("\nARK cert:\n");
+    X509_print_fp(stdout, cert1);
+    printf("\n");
+  }
+
+  EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
+  int ret = X509_verify(cert1, ark_pkey);
+  bool success = (ret == 1);
+  if (print_all) {
+    if (success) {
+      printf("ark cert verifies\n");
+    } else {
+      printf("ark cert does not verify (%d)\n", ret);
+    }
+  }
+  if (!success)
+    return false;
+
+  X509* cert2 =X509_new();
+  if (!asn1_to_x509(ask_der_str, cert2)) {
+    return false;
+  }
+  if (print_all) {
+    printf("\nASK cert:\n");
+    X509_print_fp(stdout, cert2);
+    printf("\n");
+  }
+
+  EVP_PKEY* ask_pkey = X509_get_pubkey(cert2);
+  ret = X509_verify(cert2, ark_pkey);
+  success = (ret == 1);
+  if (print_all) {
+    if (success) {
+      printf("ask cert verifies\n");
+    } else {
+      printf("ask cert does not verify (%d)\n", ret);
+    }
+  }
+  if (!success)
+    return false;
+
+  X509* cert3 =X509_new();
+  if (!asn1_to_x509(vcek_der_str, cert3)) {
+    return false;
+  }
+  if (print_all) {
+    printf("\nVCEK cert:\n");
+    X509_print_fp(stdout, cert3);
+    printf("\n");
+  }
+
+  ret = X509_verify(cert3, ask_pkey);
+  success = (ret == 1);
+  if (print_all) {
+    if (success) {
+      printf("vcek cert verifies\n");
+    } else {
+      printf("vcek cert does not verify (%d)\n", ret);
+    }
+  }
+  if (!success)
+    return false;
+
+
+  key_message ark_key;
+  if (!x509_to_public_key(cert1, &ark_key)) {
+    printf("Can't convert ark to key\n");
+    return false;
+  }
+
+  key_message ask_key;
+  if (!x509_to_public_key(cert2, &ask_key)) {
+    printf("Can't convert ark to key\n");
+    return false;
+  }
+
+  key_message vcek_key;
+  if (!x509_to_public_key(cert3, &vcek_key)) {
+    printf("Can't convert vcek to key\n");
+    return false;
+  }
+
+  vse_clause cl;
+  if (!construct_vse_attestation_from_cert(vcek_key, ask_key, &cl)) {
+    printf("construct_vse_attestation_from_cert failed\n");
+    return false;
+  }
+
+  printf("\n");
+  if (print_all) {
+    print_vse_clause(cl);
+    printf("\n");
+  }
+
+  X509_free(cert1);
+  X509_free(cert2);
+  X509_free(cert3);
+
+  return true;
+}
+
+bool fake_sev_Attest(int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
+  return true;
+}
+
+bool fake_verify_sev_Attest(int what_to_say_size, byte* what_to_say, int* size_measurement, byte* measurement,
+      int size_report, byte* report_data) {
+  return true;
+}
+
+bool test_sev_request(bool print_all) {
+  string ark_file_str("./test_data/ark.der");
+  string ask_file_str("./test_data/ask.der");
+  string vcek_file_str("./test_data/vcek.der");
+
+  string ark_der_str;
+  string ask_der_str;
+  string vcek_der_str;
+  if (!read_file_into_string(ark_file_str, &ark_der_str)) {
+    printf("Can't read ark file\n");
+    return false;
+  }
+  if (!read_file_into_string(ask_file_str, &ask_der_str)) {
+    printf("Can't read ask file\n");
+    return false;
+  }
+  if (!read_file_into_string(vcek_file_str, &vcek_der_str)) {
+    printf("Can't read vcek file\n");
+    return false;
+  }
+
+  X509* cert1 =X509_new();
+  if (!asn1_to_x509(ark_der_str, cert1)) {
+    return false;
+  }
+  if (print_all) {
+    printf("\nARK cert:\n");
+    X509_print_fp(stdout, cert1);
+    printf("\n");
+  }
+
+  EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
+  int ret = X509_verify(cert1, ark_pkey);
+  bool success = (ret == 1);
+  if (print_all) {
+    if (success) {
+      printf("ark cert verifies\n");
+    } else {
+      printf("ark cert does not verify (%d)\n", ret);
+    }
+  }
+  if (!success)
+    return false;
+
+  X509* cert2 =X509_new();
+  if (!asn1_to_x509(ask_der_str, cert2)) {
+    return false;
+  }
+  if (print_all) {
+    printf("\nASK cert:\n");
+    X509_print_fp(stdout, cert2);
+    printf("\n");
+  }
+
+  EVP_PKEY* ask_pkey = X509_get_pubkey(cert2);
+  ret = X509_verify(cert2, ark_pkey);
+  success = (ret == 1);
+  if (print_all) {
+    if (success) {
+      printf("ask cert verifies\n");
+    } else {
+      printf("ask cert does not verify (%d)\n", ret);
+    }
+  }
+  if (!success)
+    return false;
+
+  X509* cert3 =X509_new();
+  if (!asn1_to_x509(vcek_der_str, cert3)) {
+    return false;
+  }
+  if (print_all) {
+    printf("\nVCEK cert:\n");
+    X509_print_fp(stdout, cert3);
+    printf("\n");
+  }
+
+  ret = X509_verify(cert3, ask_pkey);
+  success = (ret == 1);
+  if (print_all) {
+    if (success) {
+      printf("vcek cert verifies\n");
+    } else {
+      printf("vcek cert does not verify (%d)\n", ret);
+    }
+  }
+  if (!success)
+    return false;
+
+  key_message ark_key;
+  if (!x509_to_public_key(cert1, &ark_key)) {
+    printf("Can't convert ark to key\n");
+    return false;
+  }
+
+  key_message ask_key;
+  if (!x509_to_public_key(cert2, &ask_key)) {
+    printf("Can't convert ark to key\n");
+    return false;
+  }
+
+  key_message vcek_key;
+  if (!x509_to_public_key(cert3, &vcek_key)) {
+    printf("Can't convert vcek to key\n");
+    return false;
+  }
+
+  vse_clause cl;
+  if (!construct_vse_attestation_from_cert(vcek_key, ask_key, &cl)) {
+    printf("construct_vse_attestation_from_cert failed\n");
+    return false;
+  }
+
+  printf("\n");
+  if (print_all) {
+    print_vse_clause(cl);
+    printf("\n");
+  }
+
+  X509_free(cert1);
+  X509_free(cert2);
+  X509_free(cert3);
+
+  string policy_key_file_str("./test_data/policy_key_file.bin");
+  string serialized_policy_key;
+  key_message policy_private_key;
+  key_message policy_public_key;
+  if (!read_file_into_string(policy_key_file_str, &serialized_policy_key)) {
+    printf("Can't read policy file\n");
+    return false;
+  }
+
+  if (!policy_private_key.ParseFromString(serialized_policy_key)) {
+    printf("Can't parse policy key\n");
+    return false;
+  }
+
+  if (!private_key_to_public_key(policy_private_key, &policy_public_key)) {
+    printf("Can't get public policy key\n");
+    return false;
+  }
+
+  key_message auth_private_key;
+  key_message auth_public_key;
+  // Cheat
+  auth_private_key.CopyFrom(policy_private_key);
+  auth_private_key.set_key_name("authKey");
+  auth_public_key.CopyFrom(policy_public_key);
+  auth_public_key.set_key_name("authKey");
+
+  string evidence_descriptor("sev-evidence");
+  string enclave_type("sev-enclave");
+
+  // Build evidence_package:
+  //	serialized ark cert
+  //	serialized ask cert
+  //	serialized vcek cert
+  //	"vcek says authKey speaks-for measurement
+
+  evidence_package evp;
+  signed_claim_sequence trusted_measurements;
+  signed_claim_sequence trusted_platforms;
+  attestation_user_data ud;
+  string serialized_ud;
+
+  evp.set_prover_type("vse-verifier");
+
+  evidence* ev = evp.add_fact_assertion();
+  ev->set_evidence_type("cert");
+  ev->set_serialized_evidence(ark_der_str);
+  ev = evp.add_fact_assertion();
+  ev->set_evidence_type("cert");
+  ev->set_serialized_evidence(ask_der_str);
+  ev = evp.add_fact_assertion();
+  ev->set_evidence_type("cert");
+  ev->set_serialized_evidence(vcek_der_str);
+
+  if (!make_attestation_user_data(enclave_type,
+          auth_public_key, &ud)) {
+      printf("Can't make user data (1)\n");
+      return false;
+    }
+  if (!ud.SerializeToString(&serialized_ud)) {
+    printf("Can't serialize user data\n");
+    return false;
+  }
+
+  int size_out = 2048;
+  byte out[size_out];
+  if (!fake_sev_Attest(serialized_ud.size(), (byte*) serialized_ud.data(), &size_out, out)) {
+    printf("fake_sev_Attest failed\n");
+    return false;
+  }
+  string at_str;
+  at_str.assign((char*)out, size_out);
+  ev = evp.add_fact_assertion();
+  ev->set_evidence_type("sev-attestation");
+  ev->set_serialized_evidence(at_str);
+
+  byte m[32];
+  for (int i = 0; i < 32; i++)
+    m[i] = i;
+  string measurement_str;
+  measurement_str.assign((char*)m, 32);
+
+  // init trusted_measurements
+  //	policyKey says measurement is-trusted
+  entity_message meas_ent;
+  if (!make_measurement_entity(measurement_str, &meas_ent)) {
+    printf("make_measurement_entity failed\n");
+    return false;
+  }
+  entity_message policy_ent;
+  if (!make_key_entity(policy_public_key, &policy_ent)) {
+    printf("make_key_entity failed (1)\n");
+    return false;
+  }
+
+  entity_message auth_ent;
+  if (!make_key_entity(auth_public_key, &auth_ent)) {
+    printf("make_key_entity failed (2)\n");
+    return false;
+  }
+
+  string is_trusted_verb("is-trusted");
+  string is_trusted_for_att_verb("is-trusted-for-attestation");
+  string says_verb("says");
+
+  // measurement is-trusted
+  vse_clause c1;
+  if (!make_unary_vse_clause(meas_ent, is_trusted_verb, &c1)) {
+    printf("clause 1 failed (2)\n");
+    return false;
+  }
+  // policyKey says measurement is-trusted
+  vse_clause c2;
+  if (!make_indirect_vse_clause(policy_ent, says_verb, c1, &c2)) {
+    printf("clause 2 failed (3)\n");
+    return false;
+  }
+
+  string s_nb;
+  string s_na;
+  time_point t_nb;
+  time_point t_na;
+  double hours_to_add = 365.0 * 24.0;
+
+  if (!time_now(&t_nb))
+    return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
+    return false;
+
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!time_to_string(t_na, &s_na))
+    return false;
+
+  string tm1_ser_vse;
+  if (!c2.SerializeToString(&tm1_ser_vse)) {
+    printf("serialize claim failed (1)\n");
+    return false;
+  }
+
+  string format("vse-clause");
+  string descriptor;
+  claim_message cm1;
+  if (!make_claim(tm1_ser_vse.size(), (byte*) tm1_ser_vse.data(), format, descriptor, s_nb, s_na, &cm1)) {
+    printf("serialize claim failed (1)\n");
+    return false;
+  }
+
+  signed_claim_message* scm1 = trusted_measurements.add_claims();
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm1, policy_private_key, scm1)) {
+    printf("sign claim failed (3)\n");
+    return false;
+  }
+
+  // init trusted_platfoms
+  //  arkKey is-trusted-for-attestation
+  vse_clause c3;
+  entity_message ark_ent;
+  if (!make_key_entity(ark_key, &ark_ent)) {
+    printf("make_key_entity failed (2)\n");
+    return false;
+  }
+  if (!make_unary_vse_clause(ark_ent, is_trusted_for_att_verb, &c3)) {
+    printf("clause 3 failed (3)\n");
+    return false;
+  }
+  //	policyKey says arkKey is-trusted-for-attestation
+  vse_clause c4;
+  if (!make_indirect_vse_clause(policy_ent, says_verb, c3, &c4)) {
+    printf("clause 4 failed (4)\n");
+    return false;
+  }
+
+  string tm2_ser_vse;
+  if (!c4.SerializeToString(&tm2_ser_vse)) {
+    printf("serialize claim failed (2)\n");
+    return false;
+  }
+  claim_message cm2;
+  if (!make_claim(tm2_ser_vse.size(), (byte*) tm2_ser_vse.data(), format, descriptor, s_nb, s_na, &cm2)) {
+    printf("serialize claim failed (3)\n");
+    return false;
+  }
+
+  signed_claim_message* scm2 = trusted_measurements.add_claims();
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm2, policy_private_key, scm2)) {
+    printf("sign claim failed (4)\n");
+    return false;
+  }
+
+  if (print_all) {
+    printf("Trusted measurements\n");
+    print_signed_claim(*scm1);
+    printf("\n");
+    printf("Trusted platforms\n");
+    print_signed_claim(*scm2);
+    printf("\n");
+    printf("\nEvidence package\n");
+    print_evidence_package(evp);
+    printf("\n");
+
+  }
+
+  // bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trusted_platforms,
+  //      signed_claim_sequence& trusted_measurements,
+  //      evidence_package& evp, key_message& policy_pk)
+
+  return true;
+}

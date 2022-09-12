@@ -2273,6 +2273,15 @@ void print_evidence(const evidence& ev) {
   }
 }
 
+void print_evidence_package(const evidence_package& evp) {
+  printf("Evidence package.  Prover: %s\n", evp.prover_type().c_str());
+  for (int i = 0; i < evp.fact_assertion_size(); i++) {
+    printf("%02d: \n", i);
+    print_evidence(evp.fact_assertion(i));
+    printf("\n");
+  }
+}
+
 void print_trust_request_message(trust_request_message& m) {
   if (m.has_requesting_enclave_tag()) {
     printf("Requesting enclave     :  %s\n", m.requesting_enclave_tag().c_str());

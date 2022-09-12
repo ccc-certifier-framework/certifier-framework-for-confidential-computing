@@ -140,6 +140,8 @@ TEST (test_predicate_dominance, test_predicate_dominance) {
   EXPECT_TRUE(test_predicate_dominance(FLAGS_print_all));
 }
 
+// The following tests will only work if there is initialized
+// policy data in test_data
 extern bool test_x_509_chain(bool print_all);
 TEST (test_x_509_chain, test_x_509_chain) {
   EXPECT_TRUE(test_x_509_chain(FLAGS_print_all));
@@ -153,6 +155,16 @@ TEST (test_x_509_sign, test_x_509_sign) {
 extern bool test_sev_certs(bool print_all);
 TEST (test_sev_certs, test_sev_certs) {
   EXPECT_TRUE(test_sev_certs(FLAGS_print_all));
+}
+
+extern bool test_real_sev_certs(bool print_all);
+TEST (test_real_sev_certs, test_real_sev_certs) {
+  EXPECT_TRUE(test_real_sev_certs(FLAGS_print_all));
+}
+
+extern bool test_sev_request(bool print_all);
+TEST (test_sev_request, test_sev_request) {
+  EXPECT_TRUE(test_sev_request(FLAGS_print_all));
 }
 
 // sev tests
