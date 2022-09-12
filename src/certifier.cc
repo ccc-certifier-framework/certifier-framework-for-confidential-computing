@@ -1294,6 +1294,58 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         x = nullptr;
       }
       return success;
+#ifdef SEV_SNP
+    } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
+      string t_str;
+      t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
+          evp.fact_assertion(i).serialized_evidence().size());
+      sev_attestation sev_att;
+      if (!sev_att.ParseFromString(evp.fact_assertion(i).serialized_evidence())) {
+        return false;
+      }
+      int size_measurement = 64;
+      byte measurement[size_measurement];
+
+      // verify_sev_Attest returns measurement
+      bool success = verify_sev_Attest(evp.fact_assertion(i).serialized_evidence().size(),
+            evp.fact_assertion(i).serialized_evidence().data(), &size_measurement, measurement);
+      if (!success)
+        return false;
+
+      attestation_user_data ud;
+      if (!ud.ParseFromString(sev_att.what_was_said())) {
+        return false;
+      }
+      string says_verb("says");
+      string speaks_verb("speaks-for");
+      string m_str;
+      m_str.assign((char*)measurement,size_measurement);
+      entity_message m_ent;
+      if (!make_measurement_entity(m_str, m_ent)) {
+        return false;
+      }
+
+      entity_message auth_ent;
+      if (!make_key_entity(ud.enclave_key(), auth_ent)) {
+        return false;
+      }
+
+      vse_clause c1;
+      if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
+          return false;
+      }
+
+      // vcekKey says authKey speaks-for measurement
+      key_message vcek_key;    // Todo: Where do I get this from?
+      entity_message vcek_ent;
+      if (!make_key_entity(vcek_key, vcek_ent)) {
+        return false;
+      }
+      vse_clause* cl = already_proved->add_proved();
+      if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl)) {
+        return false;
+      }
+#endif
     } else if (evp.fact_assertion(i).evidence_type() == "signed-vse-attestation-report") {
       string t_str;
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),

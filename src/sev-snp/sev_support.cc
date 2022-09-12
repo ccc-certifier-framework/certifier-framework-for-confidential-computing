@@ -717,13 +717,35 @@ bool sev_Unseal(int in_size, byte* in, int* size_out, byte* out) {
 
 bool sev_Attest(int what_to_say_size, byte* what_to_say,
     int* size_out, byte* out) {
-
   struct attestation_report report;
 
   // hash what to say
   int hash_len = 48;
   byte hash[hash_len];
 
+#if 0
+  sev_attestation the_attestation;
+  the_attestation.set_what_was_said(what_to_say_size, what_to_say);
+
+  if (!digest_message("sha-384", what_to_say, what_to_say_size, hash, hash_len)) {
+    return false;
+  }
+
+  int rc = get_report(hash, hash_len, &report);
+  if (rc != EXIT_SUCCESS) {
+    return false;
+  }
+  the_attestation.set_reported_attestation(sizeof(report), (byte*)(&report));
+  string serialized_sev_attestation;
+  if (!the_attestation.SerializeToString(&serialized_sev_attestation)) {
+    return false;
+  }
+  if (*size_out < serialized_sev_attestation.size()) {
+    return false;
+  }
+  *size_out = serialized_sev_attestation.size();
+  memcpy(out, (byte*)serialized_sev_attestation.data(), *size_out);
+#else
   SHA512_CTX context;
   if (SHA384_Init(&context) != 1)
     return false;
@@ -738,8 +760,51 @@ bool sev_Attest(int what_to_say_size, byte* what_to_say,
   }
   *size_out = sizeof(struct attestation_report);
   memcpy(out, (byte*)&report, *size_out);
+#endif
   return true;
 }
+
+#if 0
+
+bool verify_sev_Attest(int size_sev_attestation, byte* the_attestation,
+      int* size_measurement, byte* measurement) {
+
+  string at_str;
+  at_str.assign((char*)the_attestation, size_sev_attestation);
+  sev_attestation sev_att;
+  if (!sev_att.ParseFromString(at_str)) {
+    return false;
+  }
+
+  // hash what was said
+  unsigned int digest_size = 64;
+  byte digest[digest_size];
+  memset(digest, 0, digest_size);
+  if (!digest_message("sha-384", sev_att.what_was_said().data(), sev_att.what_was_said().size(),
+          digest, digest_size)) {
+    return false;
+  }
+
+  struct attestation_report* report = (struct attestation_report*)sev_att.attestation_report().data();
+  if (report->signature_algo != SIG_ALGO_ECDSA_P384_SHA384)
+    return false;
+
+  if (*size_measurement < 48)
+    return false;
+  if (memcmp(report->report_data, digest, 48) != 0)
+    return false;
+
+  // doesn't verify
+  if (EXIT_SUCCESS != verify_report((struct attestation_report*) report_data))
+    return false;
+
+  *size_measurement = 48;
+  memcpy(measurement, report->measurement, *size_measurement);
+  return true;
+}
+#endif
+
+#else
 
 bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
       int* size_measurement, byte* measurement,
@@ -757,6 +822,7 @@ bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
   if (*size_measurement < 48)
     return false;
 
+  // Suggest replacing this with digest_message
   SHA512_CTX context;
   if (SHA384_Init(&context) != 1)
     return false;
@@ -776,6 +842,7 @@ bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
   memcpy(measurement, report->measurement, *size_measurement);
   return true;
 }
+#endif
 
 //  Platform certs
 bool plat_certs_initialized = false;

@@ -63,14 +63,16 @@ bool test_sev(bool print_all) {
   if (unsealed_size != data_size || memcmp(data, unsealed, data_size) != 0)
     return false;
 
-  int what_to_say_size = 64;
   int size_measurement = 64;
+  byte measurement[size_measurement];
+  memset(measurement, 0, size_measurement);
+
+#if 1
+  int what_to_say_size = 64;
   int size_out = 2048;
   byte what_to_say[what_to_say_size];
-  byte measurement[size_measurement];
   byte out[size_out];
 
-  memset(measurement, 0, size_measurement);
   memset(what_to_say, 0, what_to_say_size);
   memset(out, 0, size_out);
 
@@ -82,12 +84,63 @@ bool test_sev(bool print_all) {
     printf("Attest failed\n");
     return false;
   }
-
   if (!verify_sev_Attest(what_to_say_size, what_to_say,
           &size_measurement, measurement, size_out, out)) {
     printf("Verify failed\n");
     return false;
   }
+#else
+  attestation_user_data ud;
+  ud.set_enclave_type("sev-enclave");
+  RSA* r = RSA_new();
+  if (!generate_new_rsa_key(2048, r))
+    return false;
+  key_message private_auth_key;
+  key_message public_auth_key;
+  if (!RSA_to_key(r, &private_auth_key)) {
+    return false;
+  }
+  private_auth_key.set_key_name("authKey");
+  if (!private_key_to_public_key(private_auth_key, &public_auth_key)) {
+      return false;
+  }
+  // time
+  time_point t;
+  time_new(&t);
+  string str_now;
+  time_to_string(t, &str_now);
+  ud.set_time(str_now);
+  ud.mutable_enclave_key()->CopyFrom(public_auth_key);
+
+  int size_out = 2048;
+  byte out[size_out];
+  string serialized_user;
+  if (!ud.SerializeToString(&serialized_user)) {
+    return false;
+  }
+  if (!Attest(ud.enclave_type(), serialized_user.size(), (byte*)serialized_user.data(), &size_out, out)) {
+    printf("Attest failed\n");
+    return false;
+  }
+
+  if (!verify_sev_Attest(size_out out, &size_measurement, measurement)) {
+    printf("Verify failed\n");
+    return false;
+  }
+  sev_attestation sev_att;
+  string at_str;
+  at.str.assign((char*)out, size_out);
+  if (!sev_att.ParseFromString(at_str)) {
+    return false;
+  }
+  attestation_user_data ud_new;
+  if (ud_new.ParseFromString(sev_att.what_was_said()) {
+    return false;
+  }
+  if (!same_key(ud_new.enclave_key(), ud.enclave_key())) {
+    return false;
+  }
+#endif
 
   if (print_all) {
     printf("\nMeasurement size: %d, measurement: ", size_measurement);
@@ -97,4 +150,5 @@ bool test_sev(bool print_all) {
 
   return true;
 }
-#endif
+
+#endif // SEV_SNP
