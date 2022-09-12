@@ -241,11 +241,6 @@ bool test_x_509_sign(bool print_all) {
     printf("\n");
   }
 
-  if (print_all) {
-    printf("\nCert:\n");
-    X509_print_fp(stdout, cert1);
-    printf("\n");
-  }
   EVP_PKEY* pkey = pkey_from_key(pub_k1);
   int ret = X509_verify(cert1, pkey);
   bool success = (ret == 1);
@@ -279,11 +274,6 @@ bool test_sev_certs(bool print_all) {
   if (!asn1_to_x509(ark_der_str, cert1)) {
     return false;
   }
-  if (print_all) {
-    printf("\nARK cert:\n");
-    X509_print_fp(stdout, cert1);
-    printf("\n");
-  }
 
   EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
   int ret = X509_verify(cert1, ark_pkey);
@@ -301,11 +291,6 @@ bool test_sev_certs(bool print_all) {
   X509* cert2 =X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
     return false;
-  }
-  if (print_all) {
-    printf("\nASK cert:\n");
-    X509_print_fp(stdout, cert2);
-    printf("\n");
   }
 
   ret = X509_verify(cert2, ark_pkey);
@@ -477,7 +462,23 @@ bool test_real_sev_certs(bool print_all) {
   return true;
 }
 
+int fake_sign_report(struct attestation_report *report) {
+  return 1;
+}
+
+int fake_get_report(const byte* data, size_t data_size, struct attestation_report *report) {
+  return 1;
+}
+
 bool fake_sev_Attest(int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
+  unsigned int hash_len = 48;
+  byte hash[hash_len];
+
+  if (!digest_message("sha-384", what_to_say, what_to_say_size, hash, hash_len)) {
+    return false;
+  }
+  *size_out = hash_len;
+  memcpy(out, (byte*)hash, *size_out);
   return true;
 }
 
@@ -486,7 +487,12 @@ bool fake_verify_sev_Attest(int what_to_say_size, byte* what_to_say, int* size_m
   return true;
 }
 
+// Should only run is SEV_SNP is defined
 bool test_sev_request(bool print_all) {
+
+  if (print_all) {
+    printf("\n\ntest_sev_request\n\n");
+  }
   string ark_file_str("./test_data/ark.der");
   string ask_file_str("./test_data/ask.der");
   string vcek_file_str("./test_data/vcek.der");
@@ -511,11 +517,6 @@ bool test_sev_request(bool print_all) {
   if (!asn1_to_x509(ark_der_str, cert1)) {
     return false;
   }
-  if (print_all) {
-    printf("\nARK cert:\n");
-    X509_print_fp(stdout, cert1);
-    printf("\n");
-  }
 
   EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
   int ret = X509_verify(cert1, ark_pkey);
@@ -534,11 +535,6 @@ bool test_sev_request(bool print_all) {
   if (!asn1_to_x509(ask_der_str, cert2)) {
     return false;
   }
-  if (print_all) {
-    printf("\nASK cert:\n");
-    X509_print_fp(stdout, cert2);
-    printf("\n");
-  }
 
   EVP_PKEY* ask_pkey = X509_get_pubkey(cert2);
   ret = X509_verify(cert2, ark_pkey);
@@ -556,11 +552,6 @@ bool test_sev_request(bool print_all) {
   X509* cert3 =X509_new();
   if (!asn1_to_x509(vcek_der_str, cert3)) {
     return false;
-  }
-  if (print_all) {
-    printf("\nVCEK cert:\n");
-    X509_print_fp(stdout, cert3);
-    printf("\n");
   }
 
   ret = X509_verify(cert3, ask_pkey);
@@ -802,11 +793,11 @@ bool test_sev_request(bool print_all) {
   }
 
   if (print_all) {
-    printf("Trusted measurements\n");
-    print_signed_claim(*scm1);
+    printf("\nTrusted measurements\n");
+    print_vse_clause(c2);
     printf("\n");
     printf("Trusted platforms\n");
-    print_signed_claim(*scm2);
+    print_vse_clause(c4);
     printf("\n");
     printf("\nEvidence package\n");
     print_evidence_package(evp);

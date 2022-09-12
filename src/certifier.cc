@@ -2270,6 +2270,10 @@ void print_evidence(const evidence& ev) {
         printf("\n");
       }
     }
+    if (ev.evidence_type() == "sev-attestation") {
+      print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
+        printf("\n");
+    }
   }
 }
 
