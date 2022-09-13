@@ -1307,8 +1307,10 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       byte measurement[size_measurement];
 
       // verify_sev_Attest returns measurement
+      extern bool verify_sev_Attest(int size_sev_attestation, byte* the_attestation,
+          int* size_measurement, byte* measurement);
       bool success = verify_sev_Attest(evp.fact_assertion(i).serialized_evidence().size(),
-            evp.fact_assertion(i).serialized_evidence().data(), &size_measurement, measurement);
+            (byte*)evp.fact_assertion(i).serialized_evidence().data(), &size_measurement, measurement);
       if (!success)
         return false;
 
@@ -1321,12 +1323,12 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       string m_str;
       m_str.assign((char*)measurement,size_measurement);
       entity_message m_ent;
-      if (!make_measurement_entity(m_str, m_ent)) {
+      if (!make_measurement_entity(m_str, &m_ent)) {
         return false;
       }
 
       entity_message auth_ent;
-      if (!make_key_entity(ud.enclave_key(), auth_ent)) {
+      if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
         return false;
       }
 
@@ -1336,9 +1338,17 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       }
 
       // vcekKey says authKey speaks-for measurement
-      key_message vcek_key;    // Todo: Where do I get this from?
+      // Last proved statement should have been ask_key says vcek_key is-trusted-for-attestation;
+      if (already_proved->proved_size() < 1)
+        return false;
+      const vse_clause& last_clause = already_proved->proved(already_proved->proved_size() - 1);
+      if (!last_clause.has_clause())
+        return false;
+      if (!last_clause.clause().has_subject() || last_clause.clause().subject().entity_type() != "key")
+        return false;
+      const key_message& vcek_key = last_clause.clause().subject().key();
       entity_message vcek_ent;
-      if (!make_key_entity(vcek_key, vcek_ent)) {
+      if (!make_key_entity(vcek_key, &vcek_ent)) {
         return false;
       }
       vse_clause* cl = already_proved->add_proved();

@@ -802,7 +802,6 @@ bool verify_sev_Attest(int size_sev_attestation, byte* the_attestation,
   memcpy(measurement, report->measurement, *size_measurement);
   return true;
 }
-#endif
 
 #else
 
