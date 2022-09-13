@@ -17,9 +17,18 @@
 
 #ifdef SEV_SNP
 
+#include "attestation.h"
+
+#if 1
 extern bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
       int* size_measurement, byte* measurement,
       int size_report, byte* report_data);
+#else
+  extern bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attestation,
+      int* size_measurement, byte* measurement);
+  extern EVP_PKEY* get_simulated_vcek_key();
+  extern bool sev_verify_report(EVP_PKEY* key, struct attestation_report *report);
+#endif
 
 bool test_sev(bool print_all) {
   const int data_size = 64;
@@ -84,8 +93,10 @@ bool test_sev(bool print_all) {
     printf("Attest failed\n");
     return false;
   }
-  if (!verify_sev_Attest(what_to_say_size, what_to_say,
-          &size_measurement, measurement, size_out, out)) {
+
+  bool success = verify_sev_Attest(what_to_say_size, what_to_say,
+          &size_measurement, measurement, size_out, out);
+  if (!success) {
     printf("Verify failed\n");
     return false;
   }
@@ -123,7 +134,21 @@ bool test_sev(bool print_all) {
     return false;
   }
 
-  if (!verify_sev_Attest(size_out out, &size_measurement, measurement)) {
+  extern EVP_PKEY* get_simulated_vcek_key();
+  EVP_PKEY* verify_pkey = get_simulated_vcek_key();
+  if (verify_pkey == nullptr)
+    return false;
+  bool success = verify_sev_Attest(verify_pkey, what_to_say_size, what_to_say,
+          &size_measurement, measurement, size_out, out);
+  EVP_PKEY_free(verify_pkey);
+  verify_pkey = nullptr;
+
+  if (!success) {
+    printf("Verify failed\n");
+    return false;
+  }
+
+  if (!verify_sev_Attest(verify_pkey, size_out, out, &size_measurement, measurement)) {
     printf("Verify failed\n");
     return false;
   }

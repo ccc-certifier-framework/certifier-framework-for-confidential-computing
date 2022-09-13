@@ -414,6 +414,30 @@ static bool digest_sha384(const void *msg, size_t msg_len, uint8_t *digest,
   return ret;
 }
 
+EVP_PKEY* get_simulated_vcek_key() {
+  EVP_PKEY *key = NULL;
+  rc = read_key_file(SEV_ECDSA_PUB_KEY, &key, false);
+  if (rc != EXIT_SUCCESS)
+    return nullptr;
+  return key;
+}
+
+bool sev_verify_report(EVP_PKEY* key, struct attestation_report *report) {
+  unsigned int size_digest = 48;
+  byte digest[size_digest];
+
+  if(!digest_message("sha-384", (const byte*)report,
+        sizeof(struct attestation_report) - sizeof(struct signature), digest, size_digest)) {
+    return false;
+  }
+
+  rc = sev_ecdsa_verify(digest, 48, key, (union sev_ecdsa_sig *)&report->signature);
+  if (rc != EXIT_SUCCESS) {
+    return false;
+  }
+  return true;;
+}
+
 // Todo: suggest renaming this to sev_verify_report
 int verify_report(struct attestation_report *report) {
   int rc = -EXIT_FAILURE;
@@ -766,7 +790,7 @@ bool sev_Attest(int what_to_say_size, byte* what_to_say,
 
 #if 0
 
-bool verify_sev_Attest(int size_sev_attestation, byte* the_attestation,
+bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attestation,
       int* size_measurement, byte* measurement) {
 
   string at_str;
@@ -795,7 +819,7 @@ bool verify_sev_Attest(int size_sev_attestation, byte* the_attestation,
     return false;
 
   // doesn't verify
-  if (EXIT_SUCCESS != verify_report((struct attestation_report*) report_data))
+  if (EXIT_SUCCESS != sev_verify_report(key, (struct attestation_report*) report_data))
     return false;
 
   *size_measurement = 48;
