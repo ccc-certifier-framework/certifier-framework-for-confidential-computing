@@ -416,7 +416,7 @@ static bool digest_sha384(const void *msg, size_t msg_len, uint8_t *digest,
 
 EVP_PKEY* get_simulated_vcek_key() {
   EVP_PKEY *key = NULL;
-  rc = read_key_file(SEV_ECDSA_PUB_KEY, &key, false);
+  int rc = read_key_file(SEV_ECDSA_PUB_KEY, &key, false);
   if (rc != EXIT_SUCCESS)
     return nullptr;
   return key;
@@ -431,7 +431,7 @@ bool sev_verify_report(EVP_PKEY* key, struct attestation_report *report) {
     return false;
   }
 
-  rc = sev_ecdsa_verify(digest, 48, key, (union sev_ecdsa_sig *)&report->signature);
+  int rc = sev_ecdsa_verify(digest, 48, key, (union sev_ecdsa_sig *)&report->signature);
   if (rc != EXIT_SUCCESS) {
     return false;
   }
