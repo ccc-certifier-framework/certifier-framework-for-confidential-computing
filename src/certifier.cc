@@ -1504,7 +1504,6 @@ bool verify_rule_5(predicate_dominance& dom_tree, const vse_clause& c1,
     return false;
   if (c1.has_object() || c1.has_clause())
     return false;
-
   if (!c2.has_subject() || !c2.has_verb())
     return false;
   if (c2.verb() != "says")
@@ -1992,7 +1991,7 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   //      13: "enclave-key is-trusted-for-authentication
 
 
-#if 1
+#if 0
   printf("construct proof from sev evidence, initial proved statements:\n");
   for (int i = 0; i < already_proved->proved_size(); i++) {
     print_vse_clause(already_proved->proved(i));
@@ -2077,7 +2076,7 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(4));
   ps->mutable_conclusion()->CopyFrom(already_proved->proved(4).clause());
-  ps->set_rule_applied(5);
+  ps->set_rule_applied(6);
   const vse_clause& enclave_speaksfor_measurement = ps->conclusion();
 
   // "measurement is-trusted" AND "enclaveKey speaks-for measurement"
@@ -2227,7 +2226,7 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
     return false;
   }
 
-#if 1
+#if 0
   printf("construct proof from request, initial proved statements:\n");
   for (int i = 0; i < already_proved->proved_size(); i++) {
     print_vse_clause(already_proved->proved(i));
@@ -2306,7 +2305,7 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
     return false;
   }
 
-#if 1
+#if 0
   printf("proved statements after additions:\n");
   for (int i = 0; i < pf.steps_size(); i++) {
     print_vse_clause(already_proved.proved(i));

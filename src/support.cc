@@ -1370,7 +1370,7 @@ bool same_key(const key_message& k1, const key_message& k2) {
     if (k1.secret_key_bits().size() != k2.secret_key_bits().size())
       return false;
     return (memcmp(k1.secret_key_bits().data(), k2.secret_key_bits().data(), k1.secret_key_bits().size()) == 0);
-  } else if (k1.key_type() == "ecc-384") {
+  } else if (k1.key_type() == "ecc-384-public" || k1.key_type() == "ecc-384-private") {
     const ecc_message& em1 = k1.ecc_key();
     const ecc_message& em2 = k2.ecc_key();
     if (em1.curve_p().size() != em2.curve_p().size() ||
