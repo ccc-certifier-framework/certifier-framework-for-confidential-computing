@@ -60,17 +60,22 @@ $(O)/certificate_tests.o $(O)/claims_tests.o $(O)/primitive_tests.o \
 $(O)/cc_helpers.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
 $(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o \
 $(O)/x509_tests.o
+
+channel_dobj=	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/sev_support.o $(O)/sev_report.o
+pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o
 else
 dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
 $(O)/cc_helpers.o $(O)/application_enclave.o $(O)/claims_tests.o $(O)/primitive_tests.o \
 $(O)/certificate_tests.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
 $(O)/x509_tests.o
-endif
+
+channel_dobj=	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o
-
-channel_dobj=	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/simulated_enclave.o \
-$(O)/application_enclave.o $(O)/cc_helpers.o
+endif
 
 all:	certifier_tests.exe test_channel.exe pipe_read_test.exe
 

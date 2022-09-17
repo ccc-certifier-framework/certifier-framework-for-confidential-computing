@@ -788,8 +788,6 @@ bool sev_Attest(int what_to_say_size, byte* what_to_say,
   return true;
 }
 
-#if 0
-
 bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attestation,
       int* size_measurement, byte* measurement) {
 
@@ -804,12 +802,12 @@ bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attest
   unsigned int digest_size = 64;
   byte digest[digest_size];
   memset(digest, 0, digest_size);
-  if (!digest_message("sha-384", sev_att.what_was_said().data(), sev_att.what_was_said().size(),
+  if (!digest_message("sha-384", (byte*)sev_att.what_was_said().data(), sev_att.what_was_said().size(),
           digest, digest_size)) {
     return false;
   }
 
-  struct attestation_report* report = (struct attestation_report*)sev_att.attestation_report().data();
+  struct attestation_report* report = (struct attestation_report*)sev_att.reported_attestation().data();
   if (report->signature_algo != SIG_ALGO_ECDSA_P384_SHA384)
     return false;
 
@@ -819,15 +817,13 @@ bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attest
     return false;
 
   // doesn't verify
-  if (EXIT_SUCCESS != sev_verify_report(key, (struct attestation_report*) report_data))
+  if (EXIT_SUCCESS != sev_verify_report(key, report))
     return false;
 
   *size_measurement = 48;
   memcpy(measurement, report->measurement, *size_measurement);
   return true;
 }
-
-#else
 
 bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
       int* size_measurement, byte* measurement,
@@ -865,7 +861,6 @@ bool verify_sev_Attest(int what_to_say_size, byte* what_to_say,
   memcpy(measurement, report->measurement, *size_measurement);
   return true;
 }
-#endif
 
 //  Platform certs
 bool plat_certs_initialized = false;
