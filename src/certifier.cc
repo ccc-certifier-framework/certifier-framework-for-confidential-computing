@@ -614,7 +614,7 @@ bool Seal(const string& enclave_type, const string& enclave_id,
   }
 #endif
 #ifdef SEV_SNP
-  if (enclave_type == "sev-snp") {
+  if (enclave_type == "sev-enclave") {
    return sev_Seal(in_size, in, size_out, out);
   }
 #endif
@@ -642,7 +642,7 @@ bool Unseal(const string& enclave_type, const string& enclave_id,
   }
 #endif
 #ifdef SEV_SNP
-  if (enclave_type == "sev-snp") {
+  if (enclave_type == "sev-enclave") {
     return sev_Unseal(in_size, in, size_out, out);
   }
 #endif
@@ -671,7 +671,7 @@ bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
   }
 #endif
 #ifdef SEV_SNP
-  if (enclave_type == "sev-snp") {
+  if (enclave_type == "sev-enclave") {
     return sev_Attest(what_to_say_size, what_to_say, size_out, out);
   }
 #endif
@@ -695,7 +695,7 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
   }
 #endif
 #ifdef SEV_SNP
-  if (enclave_type == "sev-snp") {
+  if (enclave_type == "sev-enclave") {
     return sev_GetParentEvidence(out);
   }
 #endif
