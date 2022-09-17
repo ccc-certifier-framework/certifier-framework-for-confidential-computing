@@ -406,11 +406,14 @@ bool sev_verify_report(EVP_PKEY* key, struct attestation_report *report) {
     return false;
   }
 
+// Todo: REMOVE
+#if 1
   int rc = sev_ecdsa_verify(digest, 48, key, (union sev_ecdsa_sig *)&report->signature);
   if (rc != EXIT_SUCCESS) {
     printf("sev_verify_report: sev_ecdsa_verify failed\n");
     return false;
   }
+#endif
   return true;
 }
 

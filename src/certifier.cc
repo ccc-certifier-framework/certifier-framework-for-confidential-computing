@@ -882,6 +882,8 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
     rule 6 (R6): if key1 is-trustedXXX and key1 says key2 speaks-for measurement then
         key2 speaks-for measurement
           provided is-trustedXXX dominates is-trusted-for-attestation
+    rule 7 (R1): If measurement is-trusted and key1 speaks-for measurement then
+        key1 is-trusted-for-attestation.
 
   A statement, X, signed by entity1 is the same as entity1 says X
 
@@ -1107,7 +1109,6 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
   // verify already signed assertions, converting to vse_clause
   int nsa = evp.fact_assertion_size();
   for (int i = 0; i < nsa; i++) {
-printf("piece %d, %d, %s\n", i, nsa, evp.fact_assertion(i).evidence_type().c_str());
     if (evp.fact_assertion(i).evidence_type() == "signed-claim") {
       signed_claim_message sc;
       string t_str;
@@ -1678,7 +1679,8 @@ bool verify_proof(key_message& policy_pk, vse_clause& to_prove,
               the_proof->steps(i).s1(), the_proof->steps(i).s2(),
               the_proof->steps(i).conclusion(), the_proof->steps(i).rule_applied());
     if (!success) {
-      printf("Proof step %d failed\n", i);
+      printf("Proof step %d failed, rule: %d\n", i, the_proof->steps(i).rule_applied());
+      print_vse_clause(the_proof->steps(i).conclusion()); printf("\n");
       return false;
     }
     vse_clause* to_add = are_proved->add_proved();
@@ -1776,16 +1778,19 @@ bool get_signed_platform_claim_from_trusted_list(
 
   for (int i= 0; i < trusted_platforms.claims_size(); i++) {
     vse_clause c;
-    if (!get_vse_clause_from_signed_claim(trusted_platforms.claims(i), &c))
+    if (!get_vse_clause_from_signed_claim(trusted_platforms.claims(i), &c)) {
       continue;
+    }
     string says_verb("says");
-    string it_verb("is-trusted");
+    string it1_verb("is-trusted");
+    string it2_verb("is-trusted-for-attestation");
+    // policy-key says platform-key is-trusted-for-attestation
     if (c.verb() != says_verb)
       continue;
-    // policy-key says platform-key is-trusted
-    if (!c.has_clause() || c.verb() != says_verb)
+    if (!c.has_clause() || !c.clause().has_verb())
       continue;
-    if (c.clause().verb() != it_verb || !c.clause().has_subject())
+    if ((c.clause().verb() != it1_verb && c.clause().verb() != it2_verb) ||
+          !c.clause().has_subject())
       continue;
     if (c.clause().subject().entity_type() != "key")
       continue;
@@ -1947,7 +1952,6 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   //    "The ARK-key says the ARK-key is-trusted-for-attestation"
   //    "The ARK-key says the ASK-key is-trusted-for-attestation"
   //    "The ASK-key says the VCEK-key is-trusted-for-attestation"
-  //    "The policy-key says the ARK-key is-trusted-for-attestation
   //    "VCEK says the enclave-key speaks-for the measurement
   //    "The policy-key says the ARK-key is-trusted-for-attestation
   //    "policyKey says measurement is-trusted"
@@ -1988,16 +1992,24 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   //      13: "enclave-key is-trusted-for-authentication
 
 
-  if (already_proved->proved_size() != 8) {
+#if 1
+  printf("construct proof from sev evidence, initial proved statements:\n");
+  for (int i = 0; i < already_proved->proved_size(); i++) {
+    print_vse_clause(already_proved->proved(i));
+    printf("\n");
+  }
+  printf("\n");
+#endif
+
+  if (already_proved->proved_size() != 7) {
     printf("construct_proof_from_sev_evidence: Error 0\n");
     return false;
   }
-
   if (!already_proved->proved(2).has_clause() || !already_proved->proved(2).clause().has_subject()) {
     printf("construct_proof_from_sev_evidence: Error 1\n");
     return false;
   }
-  const entity_message& enclave_key = already_proved->proved(2).clause().subject();
+  const entity_message& enclave_key = already_proved->proved(4).clause().subject();
   string it("is-trusted-for-authentication");
   if (!make_unary_vse_clause(enclave_key, it, to_prove))
       return false;
@@ -2012,8 +2024,8 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   }
   ps = pf->add_steps();
   ps->mutable_s1()->CopyFrom(already_proved->proved(0));
-  ps->mutable_s2()->CopyFrom(already_proved->proved(4));
-  ps->mutable_conclusion()->CopyFrom(already_proved->proved(4).clause());
+  ps->mutable_s2()->CopyFrom(already_proved->proved(5));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(5).clause());
   ps->set_rule_applied(3);
   const vse_clause& ark_key_is_trusted = ps->conclusion();
 
@@ -2024,8 +2036,8 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   }
   ps = pf->add_steps();
   ps->mutable_s1()->CopyFrom(already_proved->proved(0));
-  ps->mutable_s2()->CopyFrom(already_proved->proved(7));
-  ps->mutable_conclusion()->CopyFrom(already_proved->proved(7).clause());
+  ps->mutable_s2()->CopyFrom(already_proved->proved(6));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(6).clause());
   ps->set_rule_applied(3);
   const vse_clause& measurement_is_trusted = ps->conclusion();
 
@@ -2063,9 +2075,9 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   }
   ps = pf->add_steps();
   ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
-  ps->mutable_s2()->CopyFrom(already_proved->proved(5));
-  ps->mutable_conclusion()->CopyFrom(already_proved->proved(5).clause());
-  ps->set_rule_applied(6);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(4));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(4).clause());
+  ps->set_rule_applied(5);
   const vse_clause& enclave_speaksfor_measurement = ps->conclusion();
 
   // "measurement is-trusted" AND "enclaveKey speaks-for measurement"
@@ -2210,10 +2222,6 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       evidence_package& evp, proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
 
-#if 1
-  printf("construct proof from request, type: %s, %d facts\n", evp.prover_type().c_str(),
-    evp.fact_assertion_size());
-#endif
   if (!init_proved_statements(policy_pk, evp, already_proved)) {
     printf("init_proved_statements returned false\n");
     return false;
@@ -2251,7 +2259,8 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
       printf("construct_proof_from_sev_evidence failed in add_newfacts_for_sev_attestation\n");
       return false;
     }
-    return construct_proof_from_sev_evidence(policy_pk, already_proved, to_prove, pf);
+    bool success = construct_proof_from_sev_evidence(policy_pk, already_proved, to_prove, pf);
+    return success;
   } else if (evidence_descriptor == "oe-evidence") {
     if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
               trusted_platforms, trusted_measurements, already_proved))
@@ -2297,7 +2306,7 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
     return false;
   }
 
-#if 0
+#if 1
   printf("proved statements after additions:\n");
   for (int i = 0; i < pf.steps_size(); i++) {
     print_vse_clause(already_proved.proved(i));

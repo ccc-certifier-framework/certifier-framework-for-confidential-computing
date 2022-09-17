@@ -462,24 +462,6 @@ bool test_real_sev_certs(bool print_all) {
   return true;
 }
 
-// Coming soon: call the simulated one, then the real one
-bool fake_sev_Attest(int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
-  unsigned int hash_len = 48;
-  byte hash[hash_len];
-
-  if (!digest_message("sha-384", what_to_say, what_to_say_size, hash, hash_len)) {
-    return false;
-  }
-  *size_out = hash_len;
-  memcpy(out, (byte*)hash, *size_out);
-  return true;
-}
-
-bool fake_verify_sev_Attest(int what_to_say_size, byte* what_to_say, int* size_measurement, byte* measurement,
-      int size_report, byte* report_data) {
-  return true;
-}
-
 // Should only run is SEV_SNP is defined
 bool test_sev_request(bool print_all) {
 
@@ -669,11 +651,11 @@ bool test_sev_request(bool print_all) {
   ev->set_evidence_type("sev-attestation");
   ev->set_serialized_evidence(at_str);
 
-  byte m[32];
-  for (int i = 0; i < 32; i++)
-    m[i] = i;
+  byte m[48];
+  for (int i = 0; i < 48; i++)
+    m[i] = (i%8) + 1;
   string measurement_str;
-  measurement_str.assign((char*)m, 32);
+  measurement_str.assign((char*)m, 48);
 
   // init trusted_measurements
   //	policyKey says measurement is-trusted
@@ -749,7 +731,7 @@ bool test_sev_request(bool print_all) {
     return false;
   }
 
-  // init trusted_platfoms
+  // init trusted_platforms
   //  arkKey is-trusted-for-attestation
   vse_clause c3;
   entity_message ark_ent;
@@ -779,7 +761,7 @@ bool test_sev_request(bool print_all) {
     return false;
   }
 
-  signed_claim_message* scm2 = trusted_measurements.add_claims();
+  signed_claim_message* scm2 = trusted_platforms.add_claims();
   if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm2, policy_private_key, scm2)) {
     printf("sign claim failed (4)\n");
     return false;
@@ -798,6 +780,7 @@ bool test_sev_request(bool print_all) {
 
   }
 
+return true;
   if (!validate_evidence(evidence_descriptor, trusted_platforms,
         trusted_measurements, evp, policy_public_key)) {
     printf("validate_evidence\n");
