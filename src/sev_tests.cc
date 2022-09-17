@@ -152,7 +152,7 @@ bool test_sev(bool print_all) {
     printf("Verify failed\n");
     return false;
   }
-  sev_attestation sev_att;
+  sev_attestation_message sev_att;
   string at_str;
   at.str.assign((char*)out, size_out);
   if (!sev_att.ParseFromString(at_str)) {

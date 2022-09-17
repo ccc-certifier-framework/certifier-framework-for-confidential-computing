@@ -793,7 +793,7 @@ bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attest
 
   string at_str;
   at_str.assign((char*)the_attestation, size_sev_attestation);
-  sev_attestation sev_att;
+  sev_attestation_message sev_att;
   if (!sev_att.ParseFromString(at_str)) {
     return false;
   }

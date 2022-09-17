@@ -1299,7 +1299,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       string t_str;
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
           evp.fact_assertion(i).serialized_evidence().size());
-      sev_attestation sev_att;
+      sev_attestation_message sev_att;
       if (!sev_att.ParseFromString(evp.fact_assertion(i).serialized_evidence())) {
         return false;
       }
