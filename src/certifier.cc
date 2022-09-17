@@ -1107,6 +1107,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
   // verify already signed assertions, converting to vse_clause
   int nsa = evp.fact_assertion_size();
   for (int i = 0; i < nsa; i++) {
+printf("piece %d, %d, %s\n", i, nsa, evp.fact_assertion(i).evidence_type().c_str());
     if (evp.fact_assertion(i).evidence_type() == "signed-claim") {
       signed_claim_message sc;
       string t_str;
@@ -1236,7 +1237,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         printf("init_proved_statements: make_simple_vse_clause failed\n");
         return false;
     }
-#endif
+#endif  // ASYLO
     } else if (evp.fact_assertion(i).evidence_type() == "cert") {
       // A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
       // construct vse statement.
@@ -1293,7 +1294,6 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         X509_free(x);
         x = nullptr;
       }
-      return success;
 #ifdef SEV_SNP
     } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
       string t_str;
@@ -1301,23 +1301,32 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
           evp.fact_assertion(i).serialized_evidence().size());
       sev_attestation_message sev_att;
       if (!sev_att.ParseFromString(evp.fact_assertion(i).serialized_evidence())) {
+        printf("sev attest processing, error 1\n");
         return false;
       }
 
       // vcekKey
       // Last proved statement should have been ask_key says vcek_key is-trusted-for-attestation;
-      if (already_proved->proved_size() < 1)
+      if (already_proved->proved_size() < 1) {
+        printf("sev attest processing, error 2\n");
         return false;
+      }
       const vse_clause& last_clause = already_proved->proved(already_proved->proved_size() - 1);
-      if (!last_clause.has_clause())
+      if (!last_clause.has_clause()) {
+        printf("sev attest processing, error 3\n");
         return false;
-      if (!last_clause.clause().has_subject() || last_clause.clause().subject().entity_type() != "key")
+      }
+      if (!last_clause.clause().has_subject() || last_clause.clause().subject().entity_type() != "key") {
+        printf("sev attest processing, error 4\n");
         return false;
+      }
       const key_message& vcek_key = last_clause.clause().subject().key();
 
       EVP_PKEY* verify_pkey = pkey_from_key(vcek_key);
-      if (verify_pkey == nullptr)
+      if (verify_pkey == nullptr) {
+        printf("sev attest processing, error 5\n");
         return false;
+      }
 
       int size_measurement = 64;
       byte measurement[size_measurement];
@@ -1343,26 +1352,31 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       m_str.assign((char*)measurement, size_measurement);
       entity_message m_ent;
       if (!make_measurement_entity(m_str, &m_ent)) {
+        printf("sev attest processing, error 7\n");
         return false;
       }
 
       entity_message auth_ent;
       if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
+        printf("sev attest processing, error 8\n");
         return false;
       }
 
       vse_clause c1;
       if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
-          return false;
+        printf("sev attest processing, error 9\n");
+        return false;
       }
 
       // vcekKey says authKey speaks-for measurement
       entity_message vcek_ent;
       if (!make_key_entity(vcek_key, &vcek_ent)) {
+        printf("sev attest processing, error 10\n");
         return false;
       }
       vse_clause* cl = already_proved->add_proved();
       if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl)) {
+        printf("sev attest processing, error 11\n");
         return false;
       }
 #endif
@@ -1787,6 +1801,7 @@ bool add_newfacts_for_sev_attestation(key_message& policy_pk, string& serialized
       string& serialized_ask_cert, string& serialized_vcek_cert,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       proved_statements* already_proved) {
+
   // At this point, the already_proved should be
   //    "policyKey is-trusted"
   //    "The ARK-key says the ARK-key is-trusted-for-attestation"
@@ -1799,24 +1814,30 @@ bool add_newfacts_for_sev_attestation(key_message& policy_pk, string& serialized
 
   signed_claim_message sc1;
   if (!already_proved->proved(1).has_subject()) {
+    printf("add_newfacts_for_sev_attestation: error 1\n");
     return false;
   }
   if (already_proved->proved(1).subject().entity_type() != "key") {
+    printf("add_newfacts_for_sev_attestation: error 2\n");
     return false;
   }
   const key_message& expected_key = already_proved->proved(1).subject().key();
   if (!get_signed_platform_claim_from_trusted_list(expected_key,
         trusted_platforms, &sc1)) {
+    printf("add_newfacts_for_sev_attestation: error 3\n");
     return false;
   }
   if (!add_fact_from_signed_claim(sc1, already_proved)) {
+    printf("add_newfacts_for_sev_attestation: error 4\n");
     return false;
   }
 
   if (!already_proved->proved(4).has_clause()) {
+    printf("add_newfacts_for_sev_attestation: error 5\n");
     return false;
   }
   if (!already_proved->proved(4).clause().has_object()) {
+    printf("add_newfacts_for_sev_attestation: error 6\n");
     return false;
   }
   const entity_message& m_ent = already_proved->proved(4).clause().object();
@@ -1826,9 +1847,11 @@ bool add_newfacts_for_sev_attestation(key_message& policy_pk, string& serialized
   signed_claim_message sc2;
   if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
         trusted_measurements, &sc2)) {
+    printf("add_newfacts_for_sev_attestation: error 7\n");
     return false;
   }
   if (!add_fact_from_signed_claim(sc2, already_proved)) {
+    printf("add_newfacts_for_sev_attestation: error 8\n");
     return false;
   }
 
@@ -2187,12 +2210,16 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       evidence_package& evp, proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
 
+#if 1
+  printf("construct proof from request, type: %s, %d facts\n", evp.prover_type().c_str(),
+    evp.fact_assertion_size());
+#endif
   if (!init_proved_statements(policy_pk, evp, already_proved)) {
     printf("init_proved_statements returned false\n");
     return false;
   }
 
-#if 0
+#if 1
   printf("construct proof from request, initial proved statements:\n");
   for (int i = 0; i < already_proved->proved_size(); i++) {
     print_vse_clause(already_proved->proved(i));
@@ -2220,8 +2247,10 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
     string serialized_vcek_cert;
     if (!add_newfacts_for_sev_attestation(policy_pk, serialized_ark_cert,
             serialized_ask_cert, serialized_vcek_cert,
-            trusted_platforms, trusted_measurements, already_proved))
+            trusted_platforms, trusted_measurements, already_proved)) {
+      printf("construct_proof_from_sev_evidence failed in add_newfacts_for_sev_attestation\n");
       return false;
+    }
     return construct_proof_from_sev_evidence(policy_pk, already_proved, to_prove, pf);
   } else if (evidence_descriptor == "oe-evidence") {
     if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
@@ -2229,7 +2258,6 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
       return false;
     return construct_proof_from_oe_asylo_evidence(policy_pk, already_proved, to_prove, pf);
   } else if (evidence_descriptor == "asylo-evidence") {
-      printf("Invoking add_newfacts_for_oe_asylo_platform_attestation: \n");
     if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
               trusted_platforms, trusted_measurements, already_proved)) {
       printf("construct_proof_from_full_vse_evidence in add_newfacts_for_asyloplatform_attestation failed\n");

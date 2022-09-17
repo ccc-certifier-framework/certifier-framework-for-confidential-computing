@@ -657,10 +657,10 @@ bool test_sev_request(bool print_all) {
     return false;
   }
 
-  int size_out = 2048;
+  int size_out = 8192;
   byte out[size_out];
-  if (!fake_sev_Attest(serialized_ud.size(), (byte*) serialized_ud.data(), &size_out, out)) {
-    printf("fake_sev_Attest failed\n");
+  if (!Attest(enclave_type, serialized_ud.size(), (byte*) serialized_ud.data(), &size_out, out)) {
+    printf("Attest failed\n");
     return false;
   }
   string at_str;
@@ -798,7 +798,11 @@ bool test_sev_request(bool print_all) {
 
   }
 
-  // bool validate_evidence(evidence_descriptor, trusted_platforms, trusted_measurements, evp, policy_public_pk)
+  if (!validate_evidence(evidence_descriptor, trusted_platforms,
+        trusted_measurements, evp, policy_public_key)) {
+    printf("validate_evidence\n");
+    return false;
+  }
 
   return true;
 }
