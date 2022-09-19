@@ -548,8 +548,7 @@ bool kdf(int key_len, byte* key, int iter,
   return true;
 }
 
-// Todo: suggest renaming this to sev_get_final_keys
-bool get_final_keys(int final_key_size, byte* final_key) {
+bool sev_get_final_keys(int final_key_size, byte* final_key) {
   struct sev_key_options opt = {0};
   byte key[MSG_KEY_RSP_DERIVED_KEY_SIZE] = {0};
   int size = MSG_KEY_RSP_DERIVED_KEY_SIZE;
@@ -576,7 +575,7 @@ bool sev_Seal(int in_size, byte* in, int* size_out, byte* out) {
 
   int final_key_size = 64;
   byte final_key[final_key_size];
-  if (!get_final_keys(final_key_size, final_key)) {
+  if (!sev_get_final_keys(final_key_size, final_key)) {
     return false;
   }
 #if 0
@@ -596,7 +595,7 @@ bool sev_Seal(int in_size, byte* in, int* size_out, byte* out) {
 bool sev_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   int final_key_size = 64;
   byte final_key[final_key_size];
-  if (!get_final_keys(final_key_size, final_key)) {
+  if (!sev_get_final_keys(final_key_size, final_key)) {
     return false;
   }
 #if 0
@@ -668,7 +667,8 @@ bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attest
 
   struct attestation_report* report = (struct attestation_report*)sev_att.reported_attestation().data();
   if (report->signature_algo != SIG_ALGO_ECDSA_P384_SHA384) {
-    printf("verify_sev_Attest: Not SIG_ALGO_ECDSA_P384_SHA384\n");
+    printf("verify_sev_Attest: Not SIG_ALGO_ECDSA_P384_SHA384 %08x %08x\n",
+        report->signature_algo, SIG_ALGO_ECDSA_P384_SHA384);
     return false;
   }
 
