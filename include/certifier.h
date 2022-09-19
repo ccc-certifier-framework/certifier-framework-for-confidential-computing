@@ -245,18 +245,21 @@ bool add_newfacts_for_oe_asylo_platform_attestation(key_message& policy_pk,
 bool add_new_facts_for_abbreviatedplatformattestation(key_message& policy_pk,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       proved_statements* already_proved);
-bool construct_proof_from_oe_asylo_evidence(key_message& policy_pk,
+bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& purpose,
+      proved_statements* already_proved, vse_clause* to_prove, proof* pf);
+bool construct_proof_from_oe_asylo_evidence(key_message& policy_pk, const string& purpose,
       proved_statements* already_proved,
       vse_clause* to_prove, proof* pf);
 bool construct_proof_from_full_vse_evidence(key_message& policy_pk,
-      proved_statements* already_proved,
+      const string& purpose, proved_statements* already_proved,
       vse_clause* to_prove, proof* pf);
 bool construct_proof_from_request(string& evidence_descriptor, key_message& policy_pk,
-      signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
-      evidence_package& evp, proved_statements* already_proved, vse_clause* to_prove, proof* pf);
+      const string& purpose, signed_claim_sequence& trusted_platforms,
+      signed_claim_sequence& trusted_measurements, evidence_package& evp,
+      proved_statements* already_proved, vse_clause* to_prove, proof* pf);
 bool validate_evidence(string& evidence_descriptor,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
-      evidence_package& evp, key_message& policy_pk);
+      const string& purpose, evidence_package& evp, key_message& policy_pk);
 
 // -------------------------------------------------------------------
 

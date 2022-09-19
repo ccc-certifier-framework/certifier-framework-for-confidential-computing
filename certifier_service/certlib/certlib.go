@@ -1404,7 +1404,17 @@ func ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey 
 	return MakeIndirectVseClause(vcertKeyEntity, &says_verb, tcl)
 }
 
-func VerifySevAttestation(serialized []byte) []byte{
+//	Returns measurement
+//	serialized is the serialized sev_attestation_message
+func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
+	var am certprotos.SevAttestationMessage
+	err := proto.Unmarshal(ev.SerializedEvidence, &am)
+	if err == nil {
+	       fmt.Printf("InitProvedStatements: Can't unmarshal SevAttestationMessage\n")
+		return false
+	}
+	// check signature
+	// return measurement if successful from am.ReportedAttestation->report_data
 	return nil
 }
 
@@ -1430,7 +1440,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			signedClaim := certprotos.SignedClaimMessage{}
 			err := proto.Unmarshal(ev.SerializedEvidence, &signedClaim)
 			if err != nil {
-				fmt.Printf("Can't unmarshal serialized claim\n")
+				fmt.Printf("InitProvedStatements: Can't unmarshal serialized claim\n")
 				return false
 			}
 			k := signedClaim.SigningKey
@@ -1447,16 +1457,60 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
 			// from the return values.  Then add it to proved statements
-			fmt.Printf("oe-verify not implemented\n")
+			fmt.Printf("InitProvedStatements: oe-verify not implemented\n")
 			return false
 		} else if ev.GetEvidenceType() == "sev-attestation" {
-			// m := VerifySevAttestation(serialized []byte)
+			// get the key from ps
+			if  ps.Proved[4] == nil || ps.Proved[4].Subject == nil {
+				fmt.Printf("InitProvedStatements: Can't get vcek key (1)\n")
+				return false
+			}
+			vcekVerifyKeyEnt := ps.Proved[4].Subject
+			if vcekVerifyKeyEnt == nil {
+				fmt.Printf("InitProvedStatements: Can't get vcek key (2)\n")
+				return false
+			}
+			if vcekVerifyKeyEnt.GetEntityType() != "key" {
+				fmt.Printf("InitProvedStatements: Can't get vcek key (3)\n")
+				return false
+			}
+			vcekKey := vcekVerifyKeyEnt.Key
+			if vcekKey == nil {
+				fmt.Printf("InitProvedStatements: Can't get vcek key (4)\n")
+				return false
+			}
+			m := VerifySevAttestation(ev.SerializedEvidence, vcekKey)
+			if m == nil {
+				fmt.Printf("InitProvedStatements: VerifySevAttestation failed\n")
+				return false
+			}
+			// unmarshal certprotos.SevAttestationMessage
+			// unmarshal certprotos.AttestationUserData
 			// add vcert-key says enclave-key speaks-for measurement
-			// cl := ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage, m)
-			// ps.Proved = append(ps.Proved, cl)
-			// return true
-			fmt.Printf("sev-verify not implemented\n")
-			return false
+			// get EnclaveKey from certprotos.AttestationUserData
+			var am certprotos.SevAttestationMessage
+			err := proto.Unmarshal(ev.SerializedEvidence, &am)
+			if err == nil {
+				fmt.Printf("InitProvedStatements: Can't unmarshal SevAttestationMessage\n")
+				return false
+			}
+			var ud certprotos.AttestationUserData
+			err = proto.Unmarshal(am.WhatWasSaid, &ud)
+			if err == nil {
+				fmt.Printf("InitProvedStatements: Can't unmarshal UserData\n")
+				return false
+			}
+			if ud.EnclaveKey == nil {
+				fmt.Printf("InitProvedStatements: No enclaveKey\n")
+				return false
+			}
+			cl := ConstructSevSpeaksForStatement(vcekKey, ud.EnclaveKey, m)
+			if cl == nil {
+				fmt.Printf("InitProvedStatements: ConstructSevSpeaksForStatement failed\n")
+				return false
+			}
+			ps.Proved = append(ps.Proved, cl)
+			return true
 		} else if ev.GetEvidenceType() == "cert" {
 			// A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
 			// construct vse statement.

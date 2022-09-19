@@ -160,6 +160,11 @@ message evidence_list {
   repeated evidence assertion               = 1;
 };
 
+message sev_attestation_message {
+  optional bytes what_was_said              = 1;
+  optional bytes reported_attestation       = 2;
+};
+
 // Current value for prover_type is "vse-verifier"
 // maybe support "opa-verifier" later
 message evidence_package {

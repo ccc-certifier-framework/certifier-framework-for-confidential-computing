@@ -828,7 +828,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   // Put initialized platform evidence and attestation in the following order:
   //  platform_says_attest_key_is_trusted, the_attestation
   evidence_package* ep = new(evidence_package);
-  if (!construct_platform_evidence_package(enclave_type_, platform_evidence,
+  if (!construct_platform_evidence_package(enclave_type_, purpose_, platform_evidence,
         the_attestation_str, ep))  {
     printf("cc_trust_data::certify_me: construct_platform_evidence_package failed\n");
     return false;
@@ -963,7 +963,7 @@ bool cc_trust_data::run_peer_certificationservice(const string& host_name, int p
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
-bool construct_platform_evidence_package(string& attesting_enclave_type,
+bool construct_platform_evidence_package(string& attesting_enclave_type, const string& purpose,
       evidence_list& platform_assertions, string& serialized_attestation,
       evidence_package* ep) {
 

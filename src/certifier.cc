@@ -1942,18 +1942,17 @@ bool add_new_facts_for_abbreviatedplatformattestation(key_message& policy_pk,
   return true;
 }
 
-bool construct_proof_from_sev_evidence(key_message& policy_pk,
-      proved_statements* already_proved,
-      vse_clause* to_prove, proof* pf) {
+bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& purpose,
+      proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
 
   // At this point, the already_proved should be
-  //    "policyKey is-trusted"
-  //    "The ARK-key says the ARK-key is-trusted-for-attestation"
-  //    "The ARK-key says the ASK-key is-trusted-for-attestation"
-  //    "The ASK-key says the VCEK-key is-trusted-for-attestation"
-  //    "VCEK says the enclave-key speaks-for the measurement
-  //    "The policy-key says the ARK-key is-trusted-for-attestation
-  //    "policyKey says measurement is-trusted"
+  //    0: "policyKey is-trusted"
+  //    1: "The ARK-key says the ARK-key is-trusted-for-attestation"
+  //    2: "The ARK-key says the ASK-key is-trusted-for-attestation"
+  //    3: "The ASK-key says the VCEK-key is-trusted-for-attestation"
+  //    4: "VCEK says the enclave-key speaks-for the measurement
+  //    5: "The policy-key says the ARK-key is-trusted-for-attestation
+  //    6: "policyKey says measurement is-trusted"
 
   // Proof is:
   //    "policyKey is-trusted" AND policyKey says measurement is-trusted" -->
@@ -2010,8 +2009,14 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   }
   const entity_message& enclave_key = already_proved->proved(4).clause().subject();
   string it("is-trusted-for-authentication");
-  if (!make_unary_vse_clause(enclave_key, it, to_prove))
-      return false;
+  string it2("is-trusted-for-attestation");
+  if (purpose == "attestation") {
+    if (!make_unary_vse_clause(enclave_key, it2, to_prove))
+        return false;
+  } else {
+    if (!make_unary_vse_clause(enclave_key, it, to_prove))
+        return false;
+  }
 
   proof_step* ps = nullptr;
 
@@ -2085,12 +2090,16 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   ps->mutable_s1()->CopyFrom(measurement_is_trusted);
   ps->mutable_s2()->CopyFrom(enclave_speaksfor_measurement);
   ps->mutable_conclusion()->CopyFrom(*to_prove);
-  ps->set_rule_applied(1);
+  if (purpose == "attestation") {
+    ps->set_rule_applied(7);
+  } else {
+    ps->set_rule_applied(1);
+  }
 
   return true;
 }
 
-bool construct_proof_from_oe_asylo_evidence(key_message& policy_pk,
+bool construct_proof_from_oe_asylo_evidence(key_message& policy_pk, const string& purpose,
       proved_statements* already_proved,
       vse_clause* to_prove, proof* pf) {
 
@@ -2129,7 +2138,7 @@ bool construct_proof_from_oe_asylo_evidence(key_message& policy_pk,
   return true;
 }
 
-bool construct_proof_from_full_vse_evidence(key_message& policy_pk,
+bool construct_proof_from_full_vse_evidence(key_message& policy_pk, const string& purpose,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
 
   // At this point, the already_proved should be
@@ -2217,9 +2226,10 @@ bool construct_proof_from_full_vse_evidence(key_message& policy_pk,
   return true;
 }
 
-bool construct_proof_from_request(string& evidence_descriptor, key_message& policy_pk, 
-      signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
-      evidence_package& evp, proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
+bool construct_proof_from_request(string& evidence_descriptor, key_message& policy_pk,
+      const string& purpose, signed_claim_sequence& trusted_platforms,
+      signed_claim_sequence& trusted_measurements, evidence_package& evp,
+      proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
 
   if (!init_proved_statements(policy_pk, evp, already_proved)) {
     printf("init_proved_statements returned false\n");
@@ -2236,7 +2246,7 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
 #endif
 
   if (evidence_descriptor == "full-vse-support") {
-    if (!construct_proof_from_full_vse_evidence(policy_pk, already_proved, to_prove, pf))
+    if (!construct_proof_from_full_vse_evidence(policy_pk, purpose, already_proved, to_prove, pf))
       return false;
   } else if (evidence_descriptor == "platform-attestation-only") {
     if (!add_new_facts_for_abbreviatedplatformattestation(policy_pk, 
@@ -2244,7 +2254,7 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
       printf("add_new_facts_for_abbreviatedplatformattestation failed\n");
       return false;
     }
-    if (!construct_proof_from_full_vse_evidence(policy_pk, already_proved, to_prove, pf)) {
+    if (!construct_proof_from_full_vse_evidence(policy_pk, purpose, already_proved, to_prove, pf)) {
       printf("construct_proof_from_full_vse_evidence in construct_proof_from_request failed\n");
       return false;
     }
@@ -2258,20 +2268,20 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
       printf("construct_proof_from_sev_evidence failed in add_newfacts_for_sev_attestation\n");
       return false;
     }
-    bool success = construct_proof_from_sev_evidence(policy_pk, already_proved, to_prove, pf);
+    bool success = construct_proof_from_sev_evidence(policy_pk, purpose, already_proved, to_prove, pf);
     return success;
   } else if (evidence_descriptor == "oe-evidence") {
     if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
               trusted_platforms, trusted_measurements, already_proved))
       return false;
-    return construct_proof_from_oe_asylo_evidence(policy_pk, already_proved, to_prove, pf);
+    return construct_proof_from_oe_asylo_evidence(policy_pk, purpose, already_proved, to_prove, pf);
   } else if (evidence_descriptor == "asylo-evidence") {
     if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
               trusted_platforms, trusted_measurements, already_proved)) {
-      printf("construct_proof_from_full_vse_evidence in add_newfacts_for_asyloplatform_attestation failed\n");
+      printf("construct_proof_from_full_vse_evidence in add_newfacts_for_asyloplatform_evidence failed\n");
       return false;
     }
-    return construct_proof_from_oe_asylo_evidence(policy_pk, already_proved, to_prove, pf);
+    return construct_proof_from_oe_asylo_evidence(policy_pk, purpose, already_proved, to_prove, pf);
   } else {
     return false;
   }
@@ -2280,7 +2290,7 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
 }
 
 bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trusted_platforms,
-        signed_claim_sequence& trusted_measurements,
+        signed_claim_sequence& trusted_measurements, const string& purpose,
         evidence_package& evp, key_message& policy_pk) {
 
   proved_statements already_proved;
@@ -2298,7 +2308,7 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
     return false;
   }
 
-  if (!construct_proof_from_request(evidence_descriptor, policy_pk,
+  if (!construct_proof_from_request(evidence_descriptor, policy_pk, purpose,
             trusted_platforms, trusted_measurements,
             evp, &already_proved, &to_prove, &pf)) {
     printf("validate_evidence: can't construct proof\n");

@@ -504,8 +504,9 @@ bool test_local_certify(string& enclave_type,
     }
   }
 
+  string purpose("authentication");
   if (!validate_evidence(evidence_descriptor, trusted_platforms,
-          trusted_measurements, evp, policy_pk)) {
+          trusted_measurements, purpose, evp, policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }
@@ -922,8 +923,9 @@ bool test_new_local_certify(string& enclave_type,
   }
 
   // adding predicate hierarchy
+  string purpose("authentication");
   if (!validate_evidence(evidence_descriptor, trusted_platforms,
-          trusted_measurements, evp, policy_pk)) {
+          trusted_measurements, purpose, evp, policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }

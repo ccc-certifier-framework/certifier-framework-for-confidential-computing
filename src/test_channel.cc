@@ -132,8 +132,7 @@ int main(int an, char** av) {
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf("example_app.exe --print_all=true|false --operation=op --app_host=policy-host-address --app_port=policy-host-port\n");
-    printf("\t --data_dir=-directory-for-app-data\n");
+    printf("test_channel.exe --print_all=true|false --operation=op --app_host=policy-host-address --app_port=policy-host-port\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
     printf("Operations are: client, server\n");
     return 0;
