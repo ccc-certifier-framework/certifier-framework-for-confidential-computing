@@ -44,9 +44,11 @@
 #include "support.h"
 
 #define SEV_GUEST_DEVICE  "/dev/sev-guest"
-#define SEV_DUMMY_GUEST
+
+#ifdef SEV_DUMMY_GUEST
 #define SEV_ECDSA_PRIV_KEY  "ec-secp384r1-priv-key.pem"
 #define SEV_ECDSA_PUB_KEY  "ec-secp384r1-pub-key.pem"
+#endif
 
 static void reverse_bytes(uint8_t *buffer, size_t size) {
   if (!buffer || size == 0)
@@ -552,10 +554,15 @@ bool get_final_keys(int final_key_size, byte* final_key) {
   byte key[MSG_KEY_RSP_DERIVED_KEY_SIZE] = {0};
   int size = MSG_KEY_RSP_DERIVED_KEY_SIZE;
   opt.do_root_key = true;
-  opt.svn = 1;
-  opt.fields = FIELD_POLICY_MASK | FIELD_IMAGE_ID_MASK |
-               FIELD_FAMILY_ID_MASK | FIELD_MEASUREMENT_MASK |
-               FIELD_GUEST_SVN_MASK | FIELD_TCB_VERSION_MASK;
+  /*
+   * Select which fieds are mixed into the key:
+   *   FIELD_POLICY_MASK    | FIELD_IMAGE_ID_MASK
+   *   FIELD_FAMILY_ID_MASK | FIELD_MEASUREMENT_MASK
+   *   FIELD_GUEST_SVN_MASK | FIELD_TCB_VERSION_MASK
+   *
+   * Ignore all optional fields for now.
+   */
+  opt.fields = 0;
 
   if (EXIT_SUCCESS != sev_request_key(&opt, key, size))
     return false;

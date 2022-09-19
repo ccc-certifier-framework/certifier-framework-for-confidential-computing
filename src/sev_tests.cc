@@ -109,8 +109,19 @@ bool test_sev(bool print_all) {
     return false;
   }
 
+#ifdef SEV_DUMMY_GUEST
   extern EVP_PKEY* get_simulated_vcek_key();
   EVP_PKEY* verify_pkey = get_simulated_vcek_key();
+#else
+  extern int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert);
+  extern EVP_PKEY *sev_get_vcek_pubkey(X509 *x509_vcek);
+  X509 *x509_vcek;
+  if (sev_read_pem_into_x509("test_data/vcek.pem", &x509_vcek) != EXIT_SUCCESS) {
+    printf("Failed to load VCEK Cert!\n");
+    return false;
+  }
+  EVP_PKEY* verify_pkey = sev_get_vcek_pubkey(x509_vcek);
+#endif
   if (verify_pkey == nullptr)
     return false;
   bool success = verify_sev_Attest(verify_pkey, size_out, out, &size_measurement, measurement);
