@@ -27,6 +27,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"time"
@@ -1284,7 +1285,6 @@ func ConstructVseAttestClaim(attestKey *certprotos.KeyMessage, enclaveKey *certp
 	return MakeIndirectVseClause(am, &says, c1)
 }
 
-// Todo
 func VerifyReport(etype string, pk *certprotos.KeyMessage, serialized []byte) bool {
 	if etype != "vse-attestation-report" {
 		return false
@@ -1408,14 +1408,33 @@ func ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey 
 //	serialized is the serialized sev_attestation_message
 func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	var am certprotos.SevAttestationMessage
-	err := proto.Unmarshal(ev.SerializedEvidence, &am)
+	err := proto.Unmarshal(serialized, &am)
 	if err == nil {
 	       fmt.Printf("InitProvedStatements: Can't unmarshal SevAttestationMessage\n")
-		return false
+		return nil
 	}
+
+	ptr := am.ReportedAttestation
+
 	// check signature
-	// return measurement if successful from am.ReportedAttestation->report_data
-	return nil
+
+	// hash the userdata and compare it to the one in the report
+	hd := ptr[0x50:0x8f]
+	fmt.Printf("Hashed user data in report: ")
+	PrintBytes(hd)
+	if am.WhatWasSaid == nil {
+		return nil
+	}
+	hashed := sha512.Sum384(am.WhatWasSaid)
+	if !bytes.Equal(hashed[0:47], hd[0:47]) {
+		return nil
+	}
+
+	// return measurement if successful from am.ReportedAttestation->measurement
+	if ptr == nil {
+		return nil
+	}
+	return ptr[0x90: 0xbf]
 }
 
 

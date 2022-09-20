@@ -672,6 +672,10 @@ bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attest
     return false;
   }
 
+  if (memcmp(report->report_data, digest, 48) != 0) {
+    return false;
+  }
+
   if (*size_measurement < 48) {
     printf("verify_sev_Attest: measurement too small\n");
     return false;
