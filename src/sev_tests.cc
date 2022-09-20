@@ -24,6 +24,7 @@ extern bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the
 extern EVP_PKEY* get_simulated_vcek_key();
 extern bool sev_verify_report(EVP_PKEY* key, struct attestation_report *report);
 
+
 bool test_sev(bool print_all) {
   const int data_size = 64;
   string enclave_type("sev-enclave");
