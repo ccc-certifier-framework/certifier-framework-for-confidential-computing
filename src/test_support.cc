@@ -21,6 +21,9 @@ bool read_trusted_binary_measurements_and_sign(string& file_name, key_message& p
         signed_claim_sequence* list) {
 
   int size = file_size(file_name);
+  if (size < 0) {
+    return false;
+  }
   byte file_contents[size];
 
   if (!read_file(file_name, &size, file_contents)) {

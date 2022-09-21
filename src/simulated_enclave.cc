@@ -79,6 +79,9 @@ bool simulated_Init(const string& asn1_policy_cert, const string& attest_key_fil
 
   // get attest key
   int at_size = file_size(attest_key_file);
+  if (at_size < 0) {
+    return false;
+  }
   byte at[at_size];
   if (!read_file(attest_key_file, &at_size, at)) {
     return false;
@@ -97,6 +100,9 @@ bool simulated_Init(const string& asn1_policy_cert, const string& attest_key_fil
   }
 
   int a_size = file_size(attest_key_signed_claim_file);
+  if (a_size < 0) {
+      return false;
+  }
   byte a_buf[a_size];
   if (!read_file(attest_key_signed_claim_file, &a_size, a_buf)) {
     printf("Can't read attest claim\n");

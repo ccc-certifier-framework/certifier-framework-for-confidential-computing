@@ -148,6 +148,10 @@ int main(int an, char** av) {
   string policy_cert_file(FLAGS_data_dir);
   policy_cert_file.append(FLAGS_policy_cert_file);
   int sz = file_size(policy_cert_file);
+  if (sz < 0) {
+    printf("Can't find policy cert\n");
+    return 1;
+  }
   byte policy_cert_buf[sz];
   if (!read_file(policy_cert_file, &sz, policy_cert_buf)) {
     printf("Can't read policy cert\n");
@@ -160,6 +164,10 @@ int main(int an, char** av) {
   string policy_key_file(FLAGS_data_dir);
   policy_key_file.append(FLAGS_policy_key_file);
   sz = file_size(policy_key_file);
+  if (sz < 0) {
+    printf("Can't find policy key %s\n", policy_key_file.c_str());
+    return 1;
+  }
   byte policy_key_buf[sz];
   if (!read_file(policy_key_file, &sz, policy_key_buf)) {
     printf("Can't read policy key %s\n", policy_key_file.c_str());
@@ -172,6 +180,10 @@ int main(int an, char** av) {
   string auth_key_file(FLAGS_data_dir);
   auth_key_file.append(FLAGS_auth_key_file);
   sz = file_size(auth_key_file);
+  if (sz < 0) {
+    printf("Can't find auth key\n");
+    return 1;
+  }
   byte auth_key_buf[sz];
   if (!read_file(auth_key_file, &sz, auth_key_buf)) {
     printf("Can't read auth key\n");
