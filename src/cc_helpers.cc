@@ -1,5 +1,3 @@
-#include <gtest/gtest.h>
-
 #include "support.h"
 #include "certifier.h"
 #include "simulated_enclave.h"
