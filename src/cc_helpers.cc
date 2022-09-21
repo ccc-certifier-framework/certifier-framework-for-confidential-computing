@@ -343,6 +343,9 @@ bool cc_trust_data::save_store() {
 bool cc_trust_data::fetch_store() {
 
   int size_protected_blob = file_size(store_file_name_);
+  if (size_protected_blob < 0) {
+    return false;
+  }
   byte protected_blob[size_protected_blob];
   int size_unprotected_blob = size_protected_blob;
   byte unprotected_blob[size_unprotected_blob];

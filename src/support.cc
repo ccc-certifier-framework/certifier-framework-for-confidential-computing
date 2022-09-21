@@ -143,9 +143,9 @@ int file_size(const string& file_name) {
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0)
-    return false;
+    return -1;
   if (!S_ISREG(file_info.st_mode))
-    return false;
+    return -1;
   return (int)file_info.st_size;
 }
 
