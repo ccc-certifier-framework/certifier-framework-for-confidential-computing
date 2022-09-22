@@ -310,6 +310,13 @@ func StringToTimePoint(s string) *certprotos.TimePoint {
 	return &tp
 }
 
+func SamePoint(p1 *certprotos.PointMessage, p2 *certprotos.PointMessage) bool {
+	if p1.X == nil || p1.Y == nil || p2.X == nil || p2.Y ==nil {
+		return false
+	}
+	return bytes.Equal(p1.X, p2.X) && bytes.Equal(p1.Y, p2.Y)
+}
+
 func GetEccKeysFromInternal(k *certprotos.KeyMessage, pK *ecdsa.PrivateKey, PK *ecdsa.PublicKey) bool {
 	if  k == nil || k.EccKey == nil || k.EccKey.PublicPoint == nil {
 		return false
@@ -317,9 +324,10 @@ func GetEccKeysFromInternal(k *certprotos.KeyMessage, pK *ecdsa.PrivateKey, PK *
 	if k.EccKey.PublicPoint.X  == nil  || k.EccKey.PublicPoint.Y  == nil {
 		return false
 	}
-	if k.GetKeyType() != "ecc-384-public" || k.GetKeyType() != "ecc-384-private" {
+	if k.GetKeyType() != "ecc-384-public" && k.GetKeyType() != "ecc-384-private" {
 		return false
 	}
+
 	X := new(big.Int).SetBytes(k.EccKey.PublicPoint.X)
 	Y := new(big.Int).SetBytes(k.EccKey.PublicPoint.Y)
 
@@ -342,6 +350,15 @@ func GetEccKeysFromInternal(k *certprotos.KeyMessage, pK *ecdsa.PrivateKey, PK *
 }
 
 func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certprotos.KeyMessage) bool {
+	km.KeyName = &name
+	ktype := "ecc-384-public"
+	km.KeyType = &ktype
+	format := "vse-key"
+	km.KeyFormat = &format
+	if PK.Curve == nil {
+		fmt.Printf("No curve\n")
+		return false
+	}
 	p := PK.Curve.Params()
 	if p.BitSize != 384 {
 		return false
@@ -349,7 +366,10 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
 	if p.P == nil  || p.B == nil || p.Gx == nil || p.Gy == nil || PK.X == nil || PK.Y == nil {
 		return false
 	}
-	*km.EccKey.CurveName = p.Name
+	km.EccKey = new(certprotos.EccMessage)
+	nm := "P-384"
+	km.EccKey.CurveName = &nm
+
 	km.EccKey.CurveP = make([]byte, 48)
 	km.EccKey.CurveP = p.P.FillBytes(km.EccKey.CurveP)
 
@@ -363,12 +383,13 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
 
 	km.EccKey.CurveB = make([]byte, 48)
 	km.EccKey.CurveB = p.B.FillBytes(km.EccKey.CurveB)
-
+	km.EccKey.PublicPoint = new(certprotos.PointMessage)
 	km.EccKey.PublicPoint.X = make([]byte, 48)
 	km.EccKey.PublicPoint.Y = make([]byte, 48)
 	km.EccKey.PublicPoint.X = PK.X.FillBytes(km.EccKey.PublicPoint.X)
 	km.EccKey.PublicPoint.Y = PK.Y.FillBytes(km.EccKey.PublicPoint.Y)
 
+	km.EccKey.BasePoint = new(certprotos.PointMessage)
 	km.EccKey.BasePoint.X = make([]byte, 48)
 	km.EccKey.BasePoint.Y = make([]byte, 48)
 	km.EccKey.BasePoint.X = p.Gx.FillBytes(km.EccKey.BasePoint.X)
@@ -613,6 +634,23 @@ func SameKey(k1 *certprotos.KeyMessage, k2 *certprotos.KeyMessage) bool {
 		return bytes.Equal(k1.RsaKey.PublicModulus, k2.RsaKey.PublicModulus) &&
 			bytes.Equal(k1.RsaKey.PublicExponent, k2.RsaKey.PublicExponent)
 	}
+	if k1.GetKeyType() == "ecc-384-private"  || k1.GetKeyType() == "ecc-384-public" {
+		if k1.EccKey == nil || k2.EccKey == nil {
+			return false
+		}
+		if k1.EccKey.BasePoint == nil || k2.EccKey.BasePoint == nil {
+			return false
+		}
+		if k1.EccKey.PublicPoint == nil || k2.EccKey.PublicPoint == nil {
+			return false
+		}
+		if k1.EccKey.CurveName == nil || k2.EccKey.CurveName == nil ||
+				*k1.EccKey.CurveName != *k2.EccKey.CurveName {
+			return false
+		}
+		return SamePoint(k1.EccKey.BasePoint, k2.EccKey.BasePoint) &&
+			SamePoint(k1.EccKey.PublicPoint, k2.EccKey.PublicPoint)
+	}
 	return false
 }
 
@@ -726,7 +764,7 @@ func PrintEccKey(e *certprotos.EccMessage) {
 		if e.BasePoint.X != nil && e.BasePoint.Y != nil {
 			fmt.Printf("(")
 			PrintBytes(e.BasePoint.X)
-			fmt.Printf("\n, ")
+			fmt.Printf(",\n")
 			PrintBytes(e.BasePoint.Y)
 			fmt.Printf(")\n")
 		}
@@ -736,7 +774,7 @@ func PrintEccKey(e *certprotos.EccMessage) {
 		if e.PublicPoint.X != nil && e.PublicPoint.Y != nil {
 			fmt.Printf("(")
 			PrintBytes(e.PublicPoint.X)
-			fmt.Printf("\n, ")
+			fmt.Printf(",\n")
 			PrintBytes(e.PublicPoint.Y)
 			fmt.Printf(")\n")
 		}
@@ -798,15 +836,16 @@ func PrintKey(k *certprotos.KeyMessage) {
 	if k.GetKeyFormat() != "" {
 		fmt.Printf("Key format: %s\n", k.GetKeyFormat())
 	}
+
 	if k.GetKeyType() == "rsa-1024-public" || k.GetKeyType() == "rsa-2048-public" ||
                 k.GetKeyType() == "rsa-4096-public" || k.GetKeyType() == "rsa-1024-private" ||
-                k.GetKeyType() != "rsa-2048-private" || k.GetKeyType() != "rsa-4096-private" {
+                k.GetKeyType() == "rsa-2048-private" || k.GetKeyType() == "rsa-4096-private" {
 	        if k.GetRsaKey() != nil {
-		        PrintRsaKey(k.GetRsaKey() )
+		        PrintRsaKey(k.GetRsaKey())
                 }
-        } else if k.GetKeyType() == "ecc-384-public" || k.GetKeyType() == "ecc-384-private" {
-	        if k.GetEccKey() != nil {
-		        PrintEccKey(k.GetEccKey() )
+        } else if k.GetKeyType() == "ecc-384-public" || k.GetKeyType() != "ecc-384-private" {
+	        if k.EccKey != nil {
+		        PrintEccKey(k.EccKey)
                 }
 	} else {
                  fmt.Printf("Unknown key type\n")

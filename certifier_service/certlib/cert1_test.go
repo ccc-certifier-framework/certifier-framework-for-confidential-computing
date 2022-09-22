@@ -20,6 +20,7 @@ import (
 	"crypto/elliptic"
 	"crypto/ecdsa"
 	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -851,21 +852,53 @@ func TestInterface(t *testing.T) {
 
 func TestEcc(t *testing.T) {
         fmt.Printf("\nTestECC\n")
-        return
 	pK, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
-	if err == nil {
-                t.Errorf("ecdsa.GenerateKey fails")
+	if err != nil {
+                t.Errorf("ecdsa.GenerateKey fails\n")
+		return
 	}
         name := "test-key"
         k := new(certprotos.KeyMessage)
         PK := pK.Public()
 	if !GetInternalKeyFromEccPublicKey(name, PK.(*ecdsa.PublicKey), k) {
-                t.Errorf("GetInternalKeyFromEccPublicKey fails")
+                t.Errorf("GetInternalKeyFromEccPublicKey fails\n")
+		return
         }
-/*
-	certlib.VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte
-	certlib.GetEccKeysFromInternal(k *certprotos.KeyMessage, pK *ecdsa.PrivateKey, PK *ecdsa.PublicKey) bool 
-	ecdsa.Sign(rand io.Reader, priv *PrivateKey, hash []byte) (r, s *big.Int, err error)
-	ecdsa.Verify(pub *PublicKey, hash []byte, r, s *big.Int) bool
- */
+	PrintKey(k)
+	new_pK := new(ecdsa.PrivateKey)
+	new_PK := new(ecdsa.PublicKey)
+	if !GetEccKeysFromInternal(k, new_pK, new_PK) {
+                t.Errorf("GetInternalKeyFromEccPublicKey fails\n")
+                return
+        }
+        new_k := new(certprotos.KeyMessage)
+	if !GetInternalKeyFromEccPublicKey(name, PK.(*ecdsa.PublicKey), new_k) {
+                t.Errorf("GetInternalKeyFromEccPublicKey fails\n")
+		return
+        }
+	PrintKey(new_k)
+	if !SameKey(k, new_k) {
+                t.Errorf("Translated key doesnt match\n")
+		return
+	}
+
+	toHash := make([]byte, 50)
+	for i := 0; i < 50; i++ {
+		toHash[i] = byte(i)
+	}
+	hashed := sha512.Sum384(toHash)
+	fmt.Printf("hashed: ")
+	PrintBytes(hashed[0:])
+	fmt.Printf("\n")
+	r, s, err := ecdsa.Sign(rand.Reader, pK, hashed[0:])
+	if err != nil {
+                t.Errorf("Couldn't sign\n")
+		return
+	}
+	if !ecdsa.Verify(PK.(*ecdsa.PublicKey), hashed[0:], r, s) {
+                t.Errorf("Couldn't verify\n")
+		return
+	}
+
+	// certlib.VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte
 }
