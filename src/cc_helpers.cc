@@ -1654,7 +1654,6 @@ printf("ADDING\n");
 
 // Loads client side certs and keys.  Note: key for private_key is in
 //    the key.
-#ifndef BORING_SSL
 bool secure_authenticated_channel::load_client_certs_and_key() {
   // Todo: Add other key types
   RSA* r = RSA_new();
@@ -1689,18 +1688,17 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
       printf("use priv key failed\n");
       return false;
   }
+
   if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
 
+#ifdef BORING_SSL
+  SSL_CTX_add1_chain_cert(ssl_ctx_, root_cert_);
+#else
   if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
     printf("load_client_certs_and_key, error 5\n");
-    return false;
-  }
-
-  if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
-    printf("load_client_certs_and_key, error 6\n");
     return false;
   }
 
@@ -1716,18 +1714,9 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
     }
   }
 #endif
+#endif // BORING_SSL
   return true;
 }
-#endif  // BORING_SSL
-
-#ifdef BORING_SSL
-// Todo:  Anoop will rewrite for BORING_SSL
-// Loads client side certs and keys.  Note: key for private_key is in
-//    the key.
-bool secure_authenticated_channel::load_client_certs_and_key() {
-  return false;
-}
-#endif  // BORING_SSL
 
 void secure_authenticated_channel::server_channel_accept_and_auth(
       void (*func)(secure_authenticated_channel&)) {
