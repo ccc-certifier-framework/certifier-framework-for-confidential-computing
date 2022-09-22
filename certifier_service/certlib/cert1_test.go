@@ -865,12 +865,12 @@ func TestEcc(t *testing.T) {
 		return
         }
 	PrintKey(k)
-	new_pK := new(ecdsa.PrivateKey)
-	new_PK := new(ecdsa.PublicKey)
-	if !GetEccKeysFromInternal(k, new_pK, new_PK) {
+	_, new_PK, err := GetEccKeysFromInternal(k)
+	if err != nil || new_PK == nil {
                 t.Errorf("GetInternalKeyFromEccPublicKey fails\n")
                 return
         }
+
         new_k := new(certprotos.KeyMessage)
 	if !GetInternalKeyFromEccPublicKey(name, PK.(*ecdsa.PublicKey), new_k) {
                 t.Errorf("GetInternalKeyFromEccPublicKey fails\n")
@@ -896,7 +896,17 @@ func TestEcc(t *testing.T) {
 		return
 	}
 	if !ecdsa.Verify(PK.(*ecdsa.PublicKey), hashed[0:], r, s) {
-                t.Errorf("Couldn't verify\n")
+                t.Errorf("Couldn't verify with old PK\n")
+		return
+	}
+	fmt.Printf("New internal:\n")
+	fmt.Print(new_PK)
+	fmt.Printf("\n")
+	fmt.Printf("X: ")
+	fmt.Print(new_PK.X)
+	fmt.Printf("\n")
+	if !ecdsa.Verify(new_PK, hashed[0:], r, s) {
+                t.Errorf("Couldn't verify with new PK\n")
 		return
 	}
 

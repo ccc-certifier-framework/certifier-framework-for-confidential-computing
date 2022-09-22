@@ -32,6 +32,7 @@ import (
 	"crypto/sha512"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"time"
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
@@ -317,36 +318,35 @@ func SamePoint(p1 *certprotos.PointMessage, p2 *certprotos.PointMessage) bool {
 	return bytes.Equal(p1.X, p2.X) && bytes.Equal(p1.Y, p2.Y)
 }
 
-func GetEccKeysFromInternal(k *certprotos.KeyMessage, pK *ecdsa.PrivateKey, PK *ecdsa.PublicKey) bool {
+func GetEccKeysFromInternal(k *certprotos.KeyMessage) (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
 	if  k == nil || k.EccKey == nil || k.EccKey.PublicPoint == nil {
-		return false
+		return nil, nil, errors.New("EccKey")
 	}
 	if k.EccKey.PublicPoint.X  == nil  || k.EccKey.PublicPoint.Y  == nil {
-		return false
+		return nil, nil, errors.New("no public or base")
 	}
 	if k.GetKeyType() != "ecc-384-public" && k.GetKeyType() != "ecc-384-private" {
-		return false
+		return nil, nil, errors.New("no public or base")
 	}
 
-	X := new(big.Int).SetBytes(k.EccKey.PublicPoint.X)
-	Y := new(big.Int).SetBytes(k.EccKey.PublicPoint.Y)
+	tX := new(big.Int).SetBytes(k.EccKey.PublicPoint.X)
+	tY := new(big.Int).SetBytes(k.EccKey.PublicPoint.Y)
 
-	PK = &ecdsa.PublicKey {
+	PK := &ecdsa.PublicKey {
 		Curve: elliptic.P384(),
-		X: X,
-		Y: Y,
+		X: tX,
+		Y: tY,
 	}
 
 	if k.EccKey.PrivateMultiplier == nil {
-		pK = nil
-		return true
+		return nil, PK, nil
 	}
 	D := new(big.Int).SetBytes(k.EccKey.PrivateMultiplier)
-	pK = &ecdsa.PrivateKey {
+	pK := &ecdsa.PrivateKey {
 		PublicKey: *PK,
 		D: D,
 	}
-	return true
+	return pK, PK, nil
 }
 
 func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certprotos.KeyMessage) bool {
@@ -1582,9 +1582,8 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	ptr := am.ReportedAttestation
 
 	// check signature
-	PK := new(ecdsa.PublicKey)
-	pK := new(ecdsa.PrivateKey)
-	if !GetEccKeysFromInternal(k, pK, PK) {
+	_, PK, err := GetEccKeysFromInternal(k)
+	if err!= nil || PK == nil {
 		return nil
 	}
 
