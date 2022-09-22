@@ -234,8 +234,8 @@ int main(int an, char** av) {
   SSL_library_init();
   // Parent will usually be an SEV-SNP or TDX encrypted vitual
   // machine.
-  string parent_enclave_type("hardware");
-  string enclave_type("sev-enclave");
+  string parent_enclave_type("simulated-enclave");
+  string enclave_type("application-enclave");
   string purpose("authentication");
 
   string store_file(FLAGS_data_dir);

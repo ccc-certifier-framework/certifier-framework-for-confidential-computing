@@ -909,6 +909,5 @@ func TestEcc(t *testing.T) {
                 t.Errorf("Couldn't verify with new PK\n")
 		return
 	}
-
 	// certlib.VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte
 }
