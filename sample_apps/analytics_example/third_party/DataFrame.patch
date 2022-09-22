@@ -26,7 +26,7 @@ index d64e9e9..fdac97a 100644
 @@ -6,13 +21,15 @@ endif()
  
  project(DataFrame
-     VERSION 1.19.0
+     VERSION 1.21.0
 -    LANGUAGES CXX
 +    LANGUAGES C CXX
  )
