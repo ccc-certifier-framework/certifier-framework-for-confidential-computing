@@ -264,6 +264,7 @@ bool certify_me() {
   return true;
 }
 
+#if 0
 void server_application(X509* x509_policy_cert, SSL* ssl, bool &connected) {
     printf("Server: running server_application, verify SSL accept now...\n");
   // accept and carry out auth
@@ -312,7 +313,22 @@ void server_application(X509* x509_policy_cert, SSL* ssl, bool &connected) {
   close(sd);
   SSL_free(ssl);
 }
+#endif
 
+void server_application(secure_authenticated_channel& channel) {
+
+  printf("Server peer id is %s\n", channel.peer_id_.c_str());
+
+  // Read message from client over authenticated, encrypted channel
+  string out;
+  int n = channel.read(&out);
+  printf("SSL server read: %s\n", (const char*) out.data());
+
+  // Reply over authenticated, encrypted channel
+  const char* msg = "Hi from your secret server\n";
+  channel.write(strlen(msg), (byte*)msg);
+}
+#if 0
 bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port) {
 
   SSL_load_error_strings();
@@ -370,14 +386,24 @@ bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const st
   SSL_CTX_free(ctx);
   return true;
 }
+#endif
 
 bool setup_server_ssl() {
   bool ret = true;
-    if (!app_trust_data->warm_restart()) {
-      printf("warm-restart failed\n");
-      ret = false;
-      goto done;
-    }
+  if (!app_trust_data->warm_restart()) {
+    printf("warm-restart failed\n");
+    ret = false;
+    goto done;
+  }
+
+  printf("running as server\n");
+  server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+      app_trust_data->serialized_policy_cert_,
+      app_trust_data->private_auth_key_,
+      app_trust_data->private_auth_key_.certificate(),
+      server_application);
+
+#if 0
     if (!run_me_as_server(app_trust_data->x509_policy_cert_,
           app_trust_data->private_auth_key_,
           FLAGS_server_app_host, FLAGS_server_app_port)) {
@@ -385,7 +411,7 @@ bool setup_server_ssl() {
       ret = false;
       goto done;
     }
-
+#endif
 done:
   // app_trust_data->print_trust_data();
   app_trust_data->clear_sensitive_data();
