@@ -352,6 +352,15 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
 	*km.EccKey.CurveName = p.Name
 	km.EccKey.CurveP = make([]byte, 48)
 	km.EccKey.CurveP = p.P.FillBytes(km.EccKey.CurveP)
+
+        // A is -3
+        t := new(big.Int)
+        t.SetInt64(-3)
+        a := new(big.Int)
+        a.Add(t, p.P)
+        km.EccKey.CurveA = make([]byte, 48)
+	km.EccKey.CurveA = a.FillBytes(km.EccKey.CurveA)
+
 	km.EccKey.CurveB = make([]byte, 48)
 	km.EccKey.CurveB = p.B.FillBytes(km.EccKey.CurveB)
 
@@ -695,6 +704,55 @@ func PrintBytes(b []byte) {
 	return
 }
 
+func PrintEccKey(e *certprotos.EccMessage) {
+	fmt.Printf("curve: %s\n", e.GetCurveName());
+	if e.CurveP != nil {
+		fmt.Printf("P: ")
+		PrintBytes(e.CurveP)
+		fmt.Printf("\n")
+	}
+	if e.CurveA != nil {
+		fmt.Printf("A: ")
+		PrintBytes(e.CurveA)
+		fmt.Printf("\n")
+	}
+	if e.CurveB != nil {
+		fmt.Printf("B: ")
+		PrintBytes(e.CurveB)
+		fmt.Printf("\n")
+	}
+	if e.BasePoint != nil {
+		fmt.Printf("Base: ")
+		if e.BasePoint.X != nil && e.BasePoint.Y != nil {
+			fmt.Printf("(")
+			PrintBytes(e.BasePoint.X)
+			fmt.Printf("\n, ")
+			PrintBytes(e.BasePoint.Y)
+			fmt.Printf(")\n")
+		}
+	}
+	if e.PublicPoint != nil {
+		fmt.Printf("Public Point: ")
+		if e.PublicPoint.X != nil && e.PublicPoint.Y != nil {
+			fmt.Printf("(")
+			PrintBytes(e.PublicPoint.X)
+			fmt.Printf("\n, ")
+			PrintBytes(e.PublicPoint.Y)
+			fmt.Printf(")\n")
+		}
+	}
+	if e.OrderOfBasePoint!= nil {
+		fmt.Printf("Order of Base Point: ")
+		PrintBytes(e.OrderOfBasePoint)
+		fmt.Printf("\n")
+	}
+	if e.PrivateMultiplier != nil {
+		fmt.Printf("PrivateMultiplier: ")
+		PrintBytes(e.PrivateMultiplier)
+		fmt.Printf("\n")
+	}
+}
+
 func PrintRsaKey(r *certprotos.RsaMessage) {
 	if len(r.GetPublicModulus()) > 0 {
 		fmt.Printf("Public Modulus : ")
@@ -731,7 +789,6 @@ func PrintRsaKey(r *certprotos.RsaMessage) {
 }
 
 func PrintKey(k *certprotos.KeyMessage) {
-	fmt.Printf("RSA Key:\n")
 	if k.GetKeyName() != "" {
 		fmt.Printf("Key name  : %s\n", k.GetKeyName())
 	}
@@ -741,9 +798,19 @@ func PrintKey(k *certprotos.KeyMessage) {
 	if k.GetKeyFormat() != "" {
 		fmt.Printf("Key format: %s\n", k.GetKeyFormat())
 	}
-	if k.GetRsaKey() != nil {
-		PrintRsaKey(k.GetRsaKey() )
-	}
+	if k.GetKeyType() == "rsa-1024-public" || k.GetKeyType() == "rsa-2048-public" ||
+                k.GetKeyType() == "rsa-4096-public" || k.GetKeyType() == "rsa-1024-private" ||
+                k.GetKeyType() != "rsa-2048-private" || k.GetKeyType() != "rsa-4096-private" {
+	        if k.GetRsaKey() != nil {
+		        PrintRsaKey(k.GetRsaKey() )
+                }
+        } else if k.GetKeyType() == "ecc-384-public" || k.GetKeyType() == "ecc-384-private" {
+	        if k.GetEccKey() != nil {
+		        PrintEccKey(k.GetEccKey() )
+                }
+	} else {
+                 fmt.Printf("Unknown key type\n")
+        }
 	return
 }
 

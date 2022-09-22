@@ -17,6 +17,8 @@ package certlib
 import (
 	"bytes"
 	"crypto"
+	"crypto/elliptic"
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"crypto/rand"
 	"crypto/rsa"
@@ -847,3 +849,23 @@ func TestInterface(t *testing.T) {
 	fmt.Println(i.Func2(3))
 }
 
+func TestEcc(t *testing.T) {
+        fmt.Printf("\nTestECC\n")
+        return
+	pK, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	if err == nil {
+                t.Errorf("ecdsa.GenerateKey fails")
+	}
+        name := "test-key"
+        k := new(certprotos.KeyMessage)
+        PK := pK.Public()
+	if !GetInternalKeyFromEccPublicKey(name, PK.(*ecdsa.PublicKey), k) {
+                t.Errorf("GetInternalKeyFromEccPublicKey fails")
+        }
+/*
+	certlib.VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte
+	certlib.GetEccKeysFromInternal(k *certprotos.KeyMessage, pK *ecdsa.PrivateKey, PK *ecdsa.PublicKey) bool 
+	ecdsa.Sign(rand io.Reader, priv *PrivateKey, hash []byte) (r, s *big.Int, err error)
+	ecdsa.Verify(pub *PublicKey, hash []byte, r, s *big.Int) bool
+ */
+}
