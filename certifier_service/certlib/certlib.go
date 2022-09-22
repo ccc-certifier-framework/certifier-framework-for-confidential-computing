@@ -22,6 +22,8 @@ import (
 	"math/big"
 	"crypto"
 	"crypto/aes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/rand"
@@ -306,6 +308,63 @@ func StringToTimePoint(s string) *certprotos.TimePoint {
 	tp.Minute = &mi
 	tp.Seconds = &sec
 	return &tp
+}
+
+func GetEccKeysFromInternal(k *certprotos.KeyMessage, pK *ecdsa.PrivateKey, PK *ecdsa.PublicKey) bool {
+	if  k == nil || k.EccKey == nil || k.EccKey.PublicPoint == nil {
+		return false
+	}
+	if k.EccKey.PublicPoint.X  == nil  || k.EccKey.PublicPoint.Y  == nil {
+		return false
+	}
+	if k.GetKeyType() != "ecc-384-public" || k.GetKeyType() != "ecc-384-private" {
+		return false
+	}
+	X := new(big.Int).SetBytes(k.EccKey.PublicPoint.X)
+	Y := new(big.Int).SetBytes(k.EccKey.PublicPoint.Y)
+
+	PK = &ecdsa.PublicKey {
+		Curve: elliptic.P384(),
+		X: X,
+		Y: Y,
+	}
+
+	if k.EccKey.PrivateMultiplier == nil {
+		pK = nil
+		return true
+	}
+	D := new(big.Int).SetBytes(k.EccKey.PrivateMultiplier)
+	pK = &ecdsa.PrivateKey {
+		PublicKey: *PK,
+		D: D,
+	}
+	return true
+}
+
+func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certprotos.KeyMessage) bool {
+	p := PK.Curve.Params()
+	if p.BitSize != 384 {
+		return false
+	}
+	if p.P == nil  || p.B == nil || p.Gx == nil || p.Gy == nil || PK.X == nil || PK.Y == nil {
+		return false
+	}
+	*km.EccKey.CurveName = p.Name
+	km.EccKey.CurveP = make([]byte, 48)
+	km.EccKey.CurveP = p.P.FillBytes(km.EccKey.CurveP)
+	km.EccKey.CurveB = make([]byte, 48)
+	km.EccKey.CurveB = p.B.FillBytes(km.EccKey.CurveB)
+
+	km.EccKey.PublicPoint.X = make([]byte, 48)
+	km.EccKey.PublicPoint.Y = make([]byte, 48)
+	km.EccKey.PublicPoint.X = PK.X.FillBytes(km.EccKey.PublicPoint.X)
+	km.EccKey.PublicPoint.Y = PK.Y.FillBytes(km.EccKey.PublicPoint.Y)
+
+	km.EccKey.BasePoint.X = make([]byte, 48)
+	km.EccKey.BasePoint.Y = make([]byte, 48)
+	km.EccKey.BasePoint.X = p.Gx.FillBytes(km.EccKey.BasePoint.X)
+	km.EccKey.BasePoint.Y = p.Gy.FillBytes(km.EccKey.BasePoint.Y)
+	return true
 }
 
 func GetRsaKeysFromInternal(k *certprotos.KeyMessage, pK *rsa.PrivateKey, PK *rsa.PublicKey) bool {
@@ -1417,6 +1476,11 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	ptr := am.ReportedAttestation
 
 	// check signature
+	PK := new(ecdsa.PublicKey)
+	pK := new(ecdsa.PrivateKey)
+	if !GetEccKeysFromInternal(k, pK, PK) {
+		return nil
+	}
 
 	// hash the userdata and compare it to the one in the report
 	hd := ptr[0x50:0x8f]
@@ -1427,6 +1491,12 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 	hashed := sha512.Sum384(am.WhatWasSaid)
 	if !bytes.Equal(hashed[0:47], hd[0:47]) {
+		return nil
+	}
+
+	r :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2a0:0x2cf])
+	s :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2d0:0x2ff])
+	if !ecdsa.Verify(PK, hashed[0:], r, s) {
 		return nil
 	}
 
