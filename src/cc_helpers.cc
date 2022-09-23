@@ -1654,7 +1654,6 @@ printf("ADDING\n");
 
 // Loads client side certs and keys.  Note: key for private_key is in
 //    the key.
-#ifndef BORING_SSL
 bool secure_authenticated_channel::load_client_certs_and_key() {
   // Todo: Add other key types
   RSA* r = RSA_new();
@@ -1689,18 +1688,17 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
       printf("use priv key failed\n");
       return false;
   }
+
   if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
     printf("load_client_certs_and_key, error 6\n");
     return false;
   }
 
+#ifdef BORING_SSL
+  SSL_CTX_add1_chain_cert(ssl_ctx_, root_cert_);
+#else
   if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
     printf("load_client_certs_and_key, error 5\n");
-    return false;
-  }
-
-  if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
-    printf("load_client_certs_and_key, error 6\n");
     return false;
   }
 
@@ -1716,18 +1714,9 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
     }
   }
 #endif
+#endif // BORING_SSL
   return true;
 }
-#endif  // BORING_SSL
-
-#ifdef BORING_SSL
-// Todo:  Anoop will rewrite for BORING_SSL
-// Loads client side certs and keys.  Note: key for private_key is in
-//    the key.
-bool secure_authenticated_channel::load_client_certs_and_key() {
-  return false;
-}
-#endif  // BORING_SSL
 
 void secure_authenticated_channel::server_channel_accept_and_auth(
       void (*func)(secure_authenticated_channel&)) {
@@ -1815,273 +1804,3 @@ bool secure_authenticated_channel::get_peer_id(string* out) {
   out->assign((char*)peer_id_.data(), peer_id_.size());
   return true;
 }
-
-// -----------------------------------------------------------------------
-
-// These are used by BORING_SSL dependent code
-// Eventually they will be deprecated
-#if 1
-bool client_auth_server(X509* x509_policy_cert, SSL* ssl) {
-  bool ret = true;
-  int res = 0;
-
-  int size_nonce = 64;
-  byte nonce[size_nonce];
-  int size_sig = 256;
-#if 0
-  byte sig[size_sig];
-#endif
-  string sig_str;
-
-  X509* x = nullptr;
-  EVP_PKEY* client_auth_public_key = nullptr;
-  EVP_PKEY* subject_pkey = nullptr;
-  RSA* r = nullptr;
-  X509_STORE_CTX* ctx = nullptr;
-
-  // prepare for verify
-  X509_STORE* cs = X509_STORE_new();
-  X509_STORE_add_cert(cs, x509_policy_cert);
-  ctx = X509_STORE_CTX_new();
-
-  // get cert
-  string asn_cert;
-  if (sized_ssl_read(ssl, &asn_cert) < 0) {
-    ret = false;
-    goto done;
-  }
-
-  x = X509_new();
-  if (!asn1_to_x509(asn_cert, x)) {
-    ret = false;
-    goto done;
-  }
-
-  subject_pkey = X509_get_pubkey(x);
-  if (subject_pkey == nullptr) {
-    ret = false;
-    goto done;
-  }
-  r = EVP_PKEY_get1_RSA(subject_pkey);
-  if (r == nullptr) {
-    ret = false;
-    goto done;
-  }
-
-  memset(nonce, 0, 64);
-  if (!get_random(64 * 8, nonce)) {
-    ret = false;
-    goto done;
-  }
-  SSL_write(ssl, nonce, size_nonce);
-
-  // get signature
-  size_sig = sized_ssl_read(ssl, &sig_str);
-  if (size_sig < 0 ) {
-    ret = false;
-    goto done;
-  }
-
-  // verify chain
-  res = X509_STORE_CTX_init(ctx, cs, x, nullptr);
-  X509_STORE_CTX_set_cert(ctx, x);
-  res = X509_verify_cert(ctx);
-  if (res != 1) {
-    ret = false;
-    goto done;
-  }
-
-  // verify signature
-  if (!rsa_sha256_verify(r, size_nonce, nonce,
-          sig_str.size(), (byte*)sig_str.data())) {
-    ret = false;
-    goto done;
-  }
-
-#ifdef DEBUG
-  printf("client_auth_server succeeds\n");
-#endif
-
-done:
-  if (x != nullptr)
-    X509_free(x);
-  if (r != nullptr)
-    RSA_free(r);
-  if (subject_pkey != nullptr)
-    EVP_PKEY_free(subject_pkey);
-  if (ctx != nullptr) {
-    X509_STORE_CTX_free(ctx);
-    ctx = nullptr;
-  }
-
-  return ret;
-}
-
-bool client_auth_client(X509* x509_policy_cert, key_message& private_key,
-      SSL* ssl) {
-  bool ret = true;
-
-  int size_nonce = 128;
-  byte nonce[size_nonce];
-  int size_sig = 256;
-  byte sig[size_sig];
-  RSA* r = nullptr;
-
-  // send cert
-  SSL_write(ssl, private_key.certificate().data(),
-      private_key.certificate().size());
-  size_nonce = SSL_read(ssl, nonce, size_nonce);
-
-  r = RSA_new();
-  if (!key_to_RSA(private_key, r)) {
-    ret = false;
-    goto done;
-  }
-
-  if (!rsa_sha256_sign(r, size_nonce, nonce, &size_sig, sig)) {
-    ret = false;
-    goto done;
-  }
-  SSL_write(ssl, sig, size_sig);
-#ifdef DEBUG
-  printf("client_auth_client succeeds\n");
-#endif
-
-done:
-  if (r != nullptr)
-    RSA_free(r);
-  return ret;
-}
-
-// Loads client side certs and keys.  Note: key for private_key is in
-//    the key.
-bool load_client_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx) {
-  RSA* r = RSA_new();
-  if (!key_to_RSA(private_key, r)) {
-    printf("load_client_certs_and_key, error 1\n");
-    return false;
-  }
-  EVP_PKEY* auth_private_key = EVP_PKEY_new();
-  EVP_PKEY_set1_RSA(auth_private_key, r);
-
-  X509* x509_auth_key_cert= X509_new();
-  string auth_cert_str;
-  auth_cert_str.assign((char*)private_key.certificate().data(), private_key.certificate().size());
-  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
-    printf("load_client_certs_and_key, error 2\n");
-      return false;
-  }
-
-  STACK_OF(X509)* stack = sk_X509_new_null();
-  if (sk_X509_push(stack, x509_root_cert) == 0) {
-    printf("load_client_certs_and_key, error 3\n");
-    return false;
-  }
-
-#ifdef BORING_SSL
-  if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
-      printf("use cert failed\n");
-      return false;
-  }
-
-  if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
-      printf("use priv key failed\n");
-      return false;
-  }
-
-  if (!SSL_CTX_set1_chain(ctx, stack)) {
-    printf("set0 chain error\n");
-    return false;
-  }
-#else
-  if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
-    printf("load_client_certs_and_key, error 5\n");
-      return false;
-  }
-#endif
-  if (!SSL_CTX_check_private_key(ctx) ) {
-    printf("load_client_certs_and_key, error 6\n");
-    return false;
-  }
-
-  SSL_CTX_add_client_CA(ctx, x509_root_cert);
-#ifdef BORING_SSL
-  SSL_CTX_add1_chain_cert(ctx, x509_root_cert);
-#else
-  SSL_CTX_add1_to_CA_list(ctx, x509_root_cert);
-#endif
-
-  return true;
-}
-
-bool init_client_ssl(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port,
-    int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl) {
-  OPENSSL_init_ssl(0, NULL);;
-  SSL_load_error_strings();
-
-  const SSL_METHOD* method = TLS_client_method();
-  if(method == nullptr) {
-    printf("Can't get method\n");
-    return false;
-  }
-  SSL_CTX* ctx = SSL_CTX_new(method);
-  if(ctx == nullptr) {
-    printf("Can't get SSL_CTX\n");
-    return false;
-  }
-  X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
-  X509_STORE_add_cert(cs, x509_policy_cert);
-
-  // For debugging: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
-  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
-
-  SSL_CTX_set_verify_depth(ctx, 4);
-  const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
-  SSL_CTX_set_options(ctx, flags);
-
-  if (!load_client_certs_and_key(x509_policy_cert, private_key, ctx)) {
-    printf("load_client_certs_and_key failed\n");
-    return false;
-  }
-
-  int sock = -1;
-  if (!open_client_socket(host_name, port, &sock)) {
-    printf("Can't open client socket\n");
-    return false;
-  }
-
-  SSL* ssl = SSL_new(ctx);
-  SSL_set_fd(ssl, sock);
-  int res = SSL_set_cipher_list(ssl, "TLS_AES_256_GCM_SHA384");  // Change?
-
-  // SSL_connect - initiate the TLS/SSL handshake with an TLS/SSL server
-  if (SSL_connect(ssl) == 0) {
-    printf("ssl_connect failed\n");
-    return false;
-  }
-
-  // Verify a server certificate was presented during the negotiation
-  X509* cert = SSL_get_peer_certificate(ssl);
-#ifdef DEBUG
-  if(cert) {
-    printf("Client: Peer cert presented in nego\n");
-  } else {
-    printf("Client: No peer cert presented in nego\n");
-  }
-#endif
-
-  *p_sd = sock;
-  *p_ctx = ctx;
-  *p_ssl = ssl;
-  return true;
-}
-
-void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl) {
-  if (ssl != nullptr)
-    SSL_free(ssl);
-  if (sd > 0)
-    close(sd);
-  if (ctx !=nullptr)
-    SSL_CTX_free(ctx);
-}
-#endif

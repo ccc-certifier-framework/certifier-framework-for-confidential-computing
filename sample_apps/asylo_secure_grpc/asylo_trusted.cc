@@ -80,6 +80,7 @@ key_message publicAppKey;
 const int app_symmetric_key_size = 64;
 byte app_symmetric_key[app_symmetric_key_size];
 key_message symmertic_key_for_protect;
+bool connected = false;
 
 void print_trust_data() {
   if (!trust_data_initialized)
@@ -264,127 +265,99 @@ bool certify_me() {
   return true;
 }
 
-void server_application(X509* x509_policy_cert, SSL* ssl, bool &connected) {
-    printf("Server: running server_application, verify SSL accept now...\n");
-  // accept and carry out auth
-  int res = SSL_accept(ssl);
-  if (res != 1) {
-    char err[256];
-    printf("Server: Can't SSL_accept connection\n");
-    unsigned long code = ERR_get_error();
-    printf("Accept error: %s\n", ERR_lib_error_string(code));
-    print_ssl_error(SSL_get_error(ssl, res));
-    ERR_error_string(res, err);
-    printf("%s\n", err);
-    SSL_free(ssl);
-    connected = false;
-    return;
-  }
-  int sd = SSL_get_fd(ssl);
-#ifdef DEBUG
-  printf("Accepted ssl connection using %s \n", SSL_get_cipher(ssl));
-#endif
+void server_application(secure_authenticated_channel& channel) {
 
-    // Verify a client certificate was presented during the negotiation
-    X509* cert = SSL_get_peer_certificate(ssl);
-    if(cert) {
-      printf("Server: Peer cert presented in nego\n");
-    } else {
-      printf("Server: No peer cert presented in nego\n");
-    }
-  if (!client_auth_server(x509_policy_cert, ssl)) {
-    printf("Client auth failed at server\n");
-    connected = false;
-    return;
-  }
+  printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
-  connected = true;
   // Read message from client over authenticated, encrypted channel
-  // Todo: use sized_read
-  byte in[1024];
-  memset(in, 0, 1024);
-  int n = SSL_read(ssl, in, 1024);
-  printf("SSL server read: %s\n", (const char*) in);
+  string out;
+  int n = channel.read(&out);
+  printf("SSL server read: %s\n", (const char*) out.data());
 
   // Reply over authenticated, encrypted channel
   const char* msg = "Hi from your secret server\n";
-  SSL_write(ssl, (byte*)msg, strlen(msg));
-  close(sd);
-  SSL_free(ssl);
+  channel.write(strlen(msg), (byte*)msg);
+  connected = true;
 }
 
-bool run_me_as_server(X509* x509_policy_cert, key_message& private_key, const string& host_name, int port) {
+void asylo_server_dispatch(const string& host_name, int port,
+      string& asn1_root_cert, key_message& private_key,
+      const string& private_key_cert, void (*func)(secure_authenticated_channel&)) {
 
   SSL_load_error_strings();
+
+  X509* root_cert = X509_new();
+  if (!asn1_to_x509(asn1_root_cert, root_cert)) {
+    printf("Can't convert cert\n");
+    return;
+  }
 
   // Get a socket.
   int sock = -1;
   if (!open_server_socket(host_name, port, &sock)) {
     printf("Can't open server socket\n");
-    return false;
+    return;
   }
 
   // Set up TLS handshake data.
   SSL_METHOD* method = (SSL_METHOD*) TLS_server_method();
   SSL_CTX* ctx = SSL_CTX_new(method);
   if (ctx == NULL) {
-    printf("SSL_CTX_new failed\n");
-    return false;
+    printf("SSL_CTX_new failed (1)\n");
+    return;
   }
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
-  X509_STORE_add_cert(cs, x509_policy_cert);
+  X509_STORE_add_cert(cs, root_cert);
 
-  if (!load_server_certs_and_key(x509_policy_cert, private_key, ctx)) {
-    printf("load_server_certs_and_key failed\n");
-    return false;
+  if (!load_server_certs_and_key(root_cert, private_key, ctx)) {
+    printf("SSL_CTX_new failed (2)\n");
+    return;
   }
 
   const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
   SSL_CTX_set_options(ctx, flags);
 
   // Verify peer
+  // SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
   // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
-  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 
-  SSL_CTX_set_verify_depth(ctx, 4);
   unsigned int len = 0;
-  bool connected = false;
-
   while (1) {
     if (connected) {
       break;
     }
-    printf("asylo server at accept\n");
+#ifdef DEBUG
+    printf("at accept\n");
+#endif
     struct sockaddr_in addr;
     int client = accept(sock, (struct sockaddr*)&addr, &len);
-    printf("socket connection: accepted\n");
-
-    SSL* ssl = SSL_new(ctx);
-    SSL_set_fd(ssl, client);
-    // This is the server application flow.
-    server_application(x509_policy_cert, ssl, connected);
+    string my_role("server");
+    secure_authenticated_channel nc(my_role);
+    if (!nc.init_server_ssl(host_name, port, asn1_root_cert, private_key, private_key_cert)) {
+      continue;
+    }
+    nc.ssl_ = SSL_new(ctx);
+    SSL_set_fd(nc.ssl_, client);
+    nc.sock_ = client;
+    nc.server_channel_accept_and_auth(func);
   }
-
-  // Clean up.
-  close(sock);
-  SSL_CTX_free(ctx);
-  return true;
 }
 
 bool setup_server_ssl() {
   bool ret = true;
-    if (!app_trust_data->warm_restart()) {
-      printf("warm-restart failed\n");
-      ret = false;
-      goto done;
-    }
-    if (!run_me_as_server(app_trust_data->x509_policy_cert_,
-          app_trust_data->private_auth_key_,
-          FLAGS_server_app_host, FLAGS_server_app_port)) {
-      printf("run-me-as-server failed\n");
-      ret = false;
-      goto done;
-    }
+  if (!app_trust_data->warm_restart()) {
+    printf("warm-restart failed\n");
+    ret = false;
+    goto done;
+  }
+
+  printf("running as server\n");
+  asylo_server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+      app_trust_data->serialized_policy_cert_,
+      app_trust_data->private_auth_key_,
+      app_trust_data->private_auth_key_.certificate(),
+      server_application);
 
 done:
   // app_trust_data->print_trust_data();
@@ -392,66 +365,50 @@ done:
   return ret;
 }
 
-void client_application(SSL* ssl) {
+void client_application(secure_authenticated_channel& channel) {
+
+  printf("Client peer id is %s\n", channel.peer_id_.c_str());
+
   // client sends a message over authenticated, encrypted channel
   const char* msg = "Hi from your secret client\n";
-  printf("writing to SSL: %s\n");
-  SSL_write(ssl, (byte*)msg, strlen(msg));
+  channel.write(strlen(msg), (byte*)msg);
 
   // Get server response over authenticated, encrypted channel and print it
-  // Todo: Replace with call to int sized_read(int fd, string* out)
-  byte buf[1024];
-  memset(buf, 0, 1024);
-  int n = SSL_read(ssl, buf, 1024);
-  printf("SSL client read: %s\n", (const char*)buf);
-}
-
-bool run_me_as_client(X509* x509_policy_cert, key_message& private_key,
-      const string& host_name, int port) {
-
-  SSL_load_error_strings();
-  int sd = 0;
-  SSL_CTX* ctx = nullptr;
-  SSL* ssl = nullptr;
-
-  // Set up socket (sd), ssl context and ssl channel.
-  if (!init_client_ssl(x509_policy_cert, private_key, host_name, port, &sd, &ctx, &ssl)) {
-    printf("init_client_ssl failed\n");
-    return false;
-  }
-
-  printf("doing client_auth\n");
-
-  // Authenticate client interaction (initiated by server after handshake)
-  if (!client_auth_client(x509_policy_cert, private_key, ssl)) {
-    printf("Client auth failed at client\n");
-    return false;
-  }
-
-  printf("done auth, running app code\n");
-
-  // This is the actual application code.
-  client_application(ssl);
-
-  // Clean up.
-  close_client_ssl(sd, ctx, ssl);
-  return true;
+  string out;
+  int n = channel.read(&out);
+  printf("SSL client read: %s\n", out.data());
 }
 
 bool setup_client_ssl() {
   bool ret = true;
-    if (!app_trust_data->warm_restart()) {
-      printf("warm-restart failed\n");
-      ret = false;
-      goto done;
-    }
-    if (!run_me_as_client(app_trust_data->x509_policy_cert_,
-          app_trust_data->private_auth_key_,
-          FLAGS_server_app_host, FLAGS_server_app_port)) {
-      printf("run-me-as-server failed\n");
-      ret = false;
-      goto done;
-    }
+  string my_role("client");
+  secure_authenticated_channel channel(my_role);
+
+  if (!app_trust_data->warm_restart()) {
+    printf("warm-restart failed\n");
+    ret = false;
+    goto done;
+  }
+
+  printf("running as client\n");
+  if (!app_trust_data->cc_auth_key_initialized_ ||
+      !app_trust_data->cc_policy_info_initialized_) {
+    printf("trust data not initialized\n");
+    ret = 1;
+    goto done;
+  }
+
+  if (!channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
+        app_trust_data->serialized_policy_cert_,
+        app_trust_data->private_auth_key_,
+        app_trust_data->private_auth_key_.certificate())) {
+    printf("Can't init client app\n");
+    ret = 1;
+    goto done;
+  }
+
+  // This is the actual application code.
+  client_application(channel);
 
 done:
   // app_trust_data->print_trust_data();

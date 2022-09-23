@@ -8,6 +8,7 @@
 #include <openssl/ecdsa.h>
  #include <openssl/bn.h>
  #include <openssl/evp.h>
+ #include <openssl/ec.h>
 
 #include "support.h" 
 #include "certifier.pb.h" 
@@ -1051,11 +1052,6 @@ bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig,
 }
 
 EC_KEY* generate_new_ecc_key(int num_bits) {
-
-#ifdef BORING_SSL
-  // Todo: Make this work
-  return nullptr;
-#else
   if (num_bits != 384) {
     printf("Only P-384 supported\n");
     return nullptr;
@@ -1084,7 +1080,6 @@ EC_KEY* generate_new_ecc_key(int num_bits) {
   BN_CTX_free(ctx);
 
   return ecc_key;
-#endif
 }
 
 // Todo: free k on error
@@ -1149,11 +1144,6 @@ EC_KEY* key_to_ECC(const key_message& k) {
 }
 
 bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
-
-#ifdef BORING_SSL
-  // Todo: Make this work
-  return false;
-#else
   k->set_key_name("ecc-384-private");
   k->set_key_format("vse_key");
 
@@ -1178,7 +1168,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   BIGNUM* p = BN_new();
   BIGNUM* a = BN_new();
   BIGNUM* b = BN_new();
-  if (EC_GROUP_get_curve(group, p, a, b, ctx) <= 0) {
+  if (EC_GROUP_get_curve_GFp(group, p, a, b, ctx) <= 0) {
     BN_CTX_free(ctx);
     return false;
   }
@@ -1295,7 +1285,6 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   k->set_allocated_ecc_key(ek);
   BN_CTX_free(ctx);
   return true;
-#endif
 }
 
 bool make_certifier_ecc_key(int n,  key_message* k) {
@@ -1909,14 +1898,9 @@ int add_ext(X509 *cert, int nid, const char *value) {
   X509V3_set_ctx_nodb(&ctx);
 
   X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
-#ifdef BORING_SSL
-  // Todo: make this work
-  return 0;
-#else
-  ex = X509V3_EXT_conf_nid(NULL, &ctx, nid, value);
+  ex = X509V3_EXT_nconf_nid(NULL, &ctx, nid, value);
   if(!ex)
     return 0;
-#endif
 
   X509_add_ext(cert,ex, -1);
   X509_EXTENSION_free(ex);
@@ -2048,7 +2032,6 @@ bool verify_artifact(X509& cert, key_message& verify_key,
     RSA_free(subject_rsa_key);
     EVP_PKEY_free(verify_pkey);
     EVP_PKEY_free(subject_pkey);
-#ifndef BORING_SSL
   // Todo: Make this work
   } else if (verify_key.key_type() == "ecc-384-public" ||
              verify_key.key_type() == "ecc-384-private") {
@@ -2067,7 +2050,6 @@ bool verify_artifact(X509& cert, key_message& verify_key,
     EC_KEY_free(subject_ecc_key);
     EVP_PKEY_free(verify_pkey);
     EVP_PKEY_free(subject_pkey);
-#endif
   } else {
     printf("Unsupported key type\n");
     return false;
@@ -2294,8 +2276,6 @@ EVP_PKEY* pkey_from_key(const key_message& k) {
       return nullptr;
     }
     return pkey;
-#ifndef BORING_SSL
-  // Todo: Make this work
   } else if (k.key_type() == "ecc-384-public" ||
              k.key_type() == "ecc-384-private") {
     EC_KEY* ecc_key = key_to_ECC(k);
@@ -2305,7 +2285,6 @@ EVP_PKEY* pkey_from_key(const key_message& k) {
     }
     EVP_PKEY_assign_EC_KEY(pkey, ecc_key);
     return pkey;
-#endif
   } else {
     printf("pkey_from_key: Unsupported key type\n");
     EVP_PKEY_free(pkey);
@@ -2315,10 +2294,6 @@ EVP_PKEY* pkey_from_key(const key_message& k) {
 
 // make a public key from the X509 cert's subject key
 bool x509_to_public_key(X509* x, key_message* k) {
-#ifdef BORING_SSL
-  // Todo: Make this work
-  return false;
-#else
   EVP_PKEY* subject_pkey = X509_get_pubkey(x);
   if (subject_pkey == nullptr) {
     printf("x509_to_public_key: subject_pkey is null\n");
@@ -2376,7 +2351,6 @@ bool x509_to_public_key(X509* x, key_message* k) {
   k->set_key_format("vse-key");
   EVP_PKEY_free(subject_pkey);
   return true;
-#endif
 }
 
 bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k) {
@@ -2410,13 +2384,8 @@ bool make_root_key_with_cert(string& type, string& name, string& issuer_name, ke
     k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
     X509_free(cert);
   } else if (type == "ecc_384-private") {
-#ifdef BORING_SSL
-  // Todo: Make this work
-    return false;
-#else
     if (!make_certifier_ecc_key(384,  k))
       return false;
-#endif
     k->set_key_format("vse-key");
     k->set_key_type(type);
     k->set_key_name(name);
