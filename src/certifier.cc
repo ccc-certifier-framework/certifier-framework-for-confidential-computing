@@ -2268,8 +2268,8 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
       printf("construct_proof_from_sev_evidence failed in add_newfacts_for_sev_attestation\n");
       return false;
     }
-    bool success = construct_proof_from_sev_evidence(policy_pk, purpose, already_proved, to_prove, pf);
-    return success;
+    if (!construct_proof_from_sev_evidence(policy_pk, purpose, already_proved, to_prove, pf))
+      return false;
   } else if (evidence_descriptor == "oe-evidence") {
     if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
               trusted_platforms, trusted_measurements, already_proved))

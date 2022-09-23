@@ -474,12 +474,70 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
 
         // At this point, the evidence should be
         //      "policyKey is-trusted"
-        //      "policyKey says platformKey is-trusted-for-attestation"
         //      "enclaveKey speaks-for measurement
         //      "policyKey says measurement is-trusted"
+        //      "policyKey says platformKey is-trusted-for-attestation"
 
-        var toProve *certprotos.VseClause = nil
+	if len(alreadyProved.Proved) < 3 {
+		return nil, nil
+	}
+	policyKeyIsTrusted :=  alreadyProved.Proved[0]
+	enclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[1]
+	policyKeySaysMeasurementIsTrusted :=  alreadyProved.Proved[2]
+	if policyKeyIsTrusted == nil || enclaveKeySpeaksForMeasurement == nil ||
+			policyKeySaysMeasurementIsTrusted == nil {
+		return nil, nil
+	}
         proof := &certprotos.Proof{}
+        r1 := int32(1)
+        r3 := int32(3)
+        r7 := int32(7)
+
+	enclaveKey := enclaveKeySpeaksForMeasurement.Subject
+	if enclaveKey == nil || enclaveKey.GetEntityType() != "key" {
+		return nil, nil
+	}
+        var toProve *certprotos.VseClause = nil
+	if purpose == "authentication" {
+		verb := "is-trustd-for-authentication"
+		toProve = certlib.MakeUnaryVseClause(enclaveKey, &verb)
+	} else {
+		verb := "is-trustd-for-attestation"
+		toProve = certlib.MakeUnaryVseClause(enclaveKey, &verb)
+	}
+
+	measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
+	if measurementIsTrusted == nil {
+		return nil, nil
+	}
+	ps1 := certprotos.ProofStep {
+		S1: policyKeyIsTrusted,
+		S2: policyKeySaysMeasurementIsTrusted,
+		Conclusion: measurementIsTrusted,
+		RuleApplied: &r3,
+	}
+	proof.Steps = append(proof.Steps, &ps1)
+
+	// measurement is-trusted and enclaveKey speaks-for measurement -->
+	//	enclaveKey is-trusted-for-authentication (r1) or
+	//	enclaveKey is-trusted-for-attestation r7
+	if purpose == "authentication" {
+		ps2 := certprotos.ProofStep {
+			S1: measurementIsTrusted,
+			S2: enclaveKeySpeaksForMeasurement,
+			Conclusion: toProve,
+			RuleApplied: &r1,
+		}
+		proof.Steps = append(proof.Steps, &ps2)
+	} else {
+		ps2 := certprotos.ProofStep {
+			S1: measurementIsTrusted,
+			S2: enclaveKeySpeaksForMeasurement,
+			Conclusion: toProve,
+			RuleApplied: &r7,
+		}
+		proof.Steps = append(proof.Steps, &ps2)
+	}
 
         return toProve, proof
 }

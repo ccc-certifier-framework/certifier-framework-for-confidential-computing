@@ -1612,6 +1612,25 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	return ptr[0x90: 0xbf]
 }
 
+// returns verification result, serialized_user_data and measurement
+func VerifyOeAttestation(serialized []byte) (bool, []byte, []byte) {
+	// Todo: Rado's call shim here
+	return false, nil, nil
+}
+
+func ConstructEnclaveKeySpeaksForMeasurement(k *certprotos.KeyMessage, m []byte) *certprotos.VseClause {
+	e1 := MakeKeyEntity(k)
+	if e1 == nil {
+		return nil
+	}
+	e2 := MakeMeasurementEntity(m)
+	if e1 == nil {
+		return nil
+	}
+	speaks_for := "speaks-for"
+        return MakeSimpleVseClause(e1, &speaks_for, e2)
+}
+
 
 func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.Evidence,
 		ps *certprotos.ProvedStatements) bool {
@@ -1651,8 +1670,21 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
 			// from the return values.  Then add it to proved statements
-			fmt.Printf("InitProvedStatements: oe-verify not implemented\n")
-			return false
+			success, serializedUD, m := VerifyOeAttestation(ev.SerializedEvidence)
+			if !success || serializedUD == nil || m == nil {
+				return false
+			}
+			ud := certprotos.AttestationUserData{}
+			err := proto.Unmarshal(serializedUD, &ud)
+			if err != nil {
+				return false
+			}
+			cl := ConstructEnclaveKeySpeaksForMeasurement(ud.EnclaveKey, m)
+			if cl == nil {
+				fmt.Printf("InitProvedStatements: ConstructEnclaveKeySpeaksForMeasurement failed\n")
+				return false
+			}
+			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "sev-attestation" {
 			// get the key from ps
 			if  ps.Proved[4] == nil || ps.Proved[4].Subject == nil {
@@ -1704,7 +1736,6 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
-			return true
 		} else if ev.GetEvidenceType() == "cert" {
 			// A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
 			// construct vse statement.
@@ -1750,7 +1781,6 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
-			return true
 		} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
 			sr := certprotos.SignedReport{}
 			err := proto.Unmarshal(ev.SerializedEvidence, &sr)
