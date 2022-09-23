@@ -26,7 +26,7 @@ LIBSRC= $(SRC_DIR)/src
 S= $(SRC_DIR)/application_service
 O= $(OBJ_DIR)
 I= $(SRC_DIR)/include
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/
+INCLUDE= -I$(I) -I$(LIBSRC)/sev-snp -I/usr/local/opt/openssl@1.1/include/
 
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64
@@ -41,7 +41,8 @@ AR=ar
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
 dobj=	$(O)/app_service.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
+$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
+$(O)/sev_support.o $(O)/sev_report.o
 
 user_dobj= $(O)/test_user.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
@@ -107,3 +108,18 @@ $(O)/application_enclave.o: $(LIBSRC)/application_enclave.cc $(I)/application_en
 $(O)/test_user.o: $(S)/test_user.cc $(S)/certifier.pb.cc
 	@echo "compiling test_user.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/test_user.o $(S)/test_user.cc
+
+SEV_S=$(LIBSRC)/sev-snp
+
+$(O)/sev_support.o: $(SEV_S)/sev_support.cc \
+$(I)/certifier.h $(I)/support.h $(SEV_S)/attestation.h  $(SEV_S)/sev_guest.h  \
+$(SEV_S)/snp_derive_key.h
+	@echo "compiling sev_support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/sev_support.o $(SEV_S)/sev_support.cc
+
+$(O)/sev_report.o: $(SEV_S)/sev_report.cc \
+$(I)/certifier.h $(I)/support.h $(SEV_S)/attestation.h  $(SEV_S)/sev_guest.h  \
+$(SEV_S)/snp_derive_key.h
+	@echo "compiling sev_report.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/sev_report.o $(SEV_S)/sev_report.cc
+

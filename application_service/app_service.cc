@@ -41,6 +41,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+DEFINE_string(parent_enclave, "simulated-enclave", "parent enclave");
 DEFINE_bool(help_me, false, "Want help?");
 DEFINE_bool(cold_init_service, false, "Start over");
 
@@ -68,6 +69,11 @@ DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "app_service.measurement", "measurement");
 
 DEFINE_string(guest_login_name, "jlm", "guest name");
+
+DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der", "ark cert file name");
+DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der", "ask cert file name");
+DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der", "vcek cert file name");
+
 
 //#define DEBUG
 
@@ -703,7 +709,7 @@ int main(int an, char** av) {
   }
 
   SSL_library_init();
-  string enclave_type("simulated-enclave");
+  string enclave_type(FLAGS_parent_enclave);
   string purpose("attestation");
 
   string store_file(FLAGS_service_dir);
@@ -737,9 +743,13 @@ int main(int an, char** av) {
   } else if (FLAGS_host_enclave_type == "oe-enclave") {
     printf("Unsupported host enclave\n");
     return 1;
-  } else if (FLAGS_host_enclave_type == "sev-snp") {
-    printf("Unsupported host enclave\n");
+  } else if (FLAGS_host_enclave_type == "sev-enclave") {
+    // Init sev enclave
+    if (!helper.initialize_sev_enclave_data(FLAGS_ark_cert_file,
+        FLAGS_ask_cert_file, FLAGS_vcek_cert_file)) {
+    printf("Can't init sev-enclave\n");
     return 1;
+  }
   } else {
     printf("Unsupported host enclave\n");
     return 1;
