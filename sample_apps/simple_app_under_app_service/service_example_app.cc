@@ -37,6 +37,7 @@
 // operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(operation, "", "operation");
+DEFINE_string(parent_enclave, "simulatd-enclave", "parent enclave");
 
 DEFINE_string(policy_host, "localhost", "address for policy server");
 DEFINE_int32(policy_port, 8123, "port for policy server");
@@ -131,7 +132,7 @@ int main(int an, char** av) {
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf("example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
+    printf("service_example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
     printf("\t --data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
     printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server\n");
@@ -141,7 +142,7 @@ int main(int an, char** av) {
   SSL_library_init();
   // Parent will usually be an SEV-SNP or TDX encrypted vitual
   // machine.
-  string parent_enclave_type("simulated-enclave");
+  string parent_enclave_type(FLAGS_parent_enclave);
   string enclave_type("application-enclave");
   string purpose("authentication");
 
