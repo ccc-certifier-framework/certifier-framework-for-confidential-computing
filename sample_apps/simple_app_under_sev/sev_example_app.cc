@@ -48,7 +48,6 @@ DEFINE_string(policy_store_file, "store.bin", "policy store file name");
 DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der", "ark cert file name");
 DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der", "ask cert file name");
 DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der", "vcek cert file name");
-DEFINE_string(measurement_file, "sev_example_app.measurement", "measurement");
 
 
 // The test app performs five possible roles
