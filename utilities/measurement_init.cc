@@ -114,10 +114,11 @@ int main(int an, char** av) {
     printf("Output file: %s\n", FLAGS_out_file.c_str());
   }
 
-  const int measurment_size = 32;
+  int measurment_size = 64;
   byte m[measurment_size];
 
   if (FLAGS_test_measurement == true) {
+    measurment_size = 32;
     for (int i = 0; i < measurment_size; i++)
       m[i] = (byte)i;
     if (!write_file(FLAGS_out_file, measurment_size, m)) {
@@ -138,6 +139,7 @@ int main(int an, char** av) {
       memcpy(hex, FLAGS_mrenclave.c_str(), size + 1);
     }
     printf("Using measurement: %s\n", hex);
+    measurement_size = strlen(hex) / 2;
     for (size_t count = 0; count < strlen(hex) / 2 && count < measurment_size; count++) {
       sscanf(pos, "%2hhx", &m[count]);
       pos += 2;
