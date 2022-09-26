@@ -1361,9 +1361,11 @@ func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage{
 	k.KeyName = GetSubjectNameFromCert(cert)
 	var kt string
 	if len(modulus) == 128 {
-		kt = "rsa-2048-public"
+		kt = "rsa-1024-public"
 	} else if len(modulus) == 256 {
 		kt = "rsa-2048-public"
+	} else if len(modulus) == 512 {
+		kt = "rsa-4096-public"
 	} else {
 		return nil
 	}
