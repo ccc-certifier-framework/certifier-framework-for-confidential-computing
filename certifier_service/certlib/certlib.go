@@ -1232,9 +1232,7 @@ func VerifyAttestation(eType string, attestBlob []byte, k *certprotos.KeyMessage
 }
 
 func Asn1ToX509 (in []byte) *x509.Certificate {
-	// var cert x509.Certificate
-	cert := new(x509.Certificate)
-	_, err := asn1.Unmarshal(in, cert)
+	cert, err := x509.ParseCertificate(in)
 	if err != nil {
 		return nil
 	}
