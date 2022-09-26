@@ -1343,8 +1343,8 @@ func ProduceAdmissionCert(issuerKey *certprotos.KeyMessage, issuerCert *x509.Cer
 	return newCert
 }
 
-func GetIssuerNameFromCert(cert *x509.Certificate) *string {
-	return &cert.Issuer.CommonName
+func GetIssuerNameFromCert(cert *x509.Certificate) string {
+	return cert.Issuer.CommonName
 }
 
 func GetSubjectNameFromCert(cert *x509.Certificate) *string {
@@ -1510,18 +1510,18 @@ type CertSeenList struct {
 	keysSeen [30]CertKeysSeen
 }
 
-func AddKeySeen(list CertSeenList, k *certprotos.KeyMessage) bool {
-	if list.maxSize >= (list.size - 1) {
+func AddKeySeen(list *CertSeenList, k *certprotos.KeyMessage) bool {
+	if (list.maxSize - 1) <= list.size {
 		return false
 	}
-	var entry *CertKeysSeen = &list.keysSeen[list.size]
+	entry := &list.keysSeen[list.size]
 	list.size = list.size + 1
 	entry.name = k.GetKeyName()
 	entry.pk = *k
 	return true
 }
 
-func FindKeySeen(list CertSeenList, name string) *certprotos.KeyMessage {
+func FindKeySeen(list *CertSeenList, name string) *certprotos.KeyMessage {
 	for j := 0; j < list.size; j++ {
 		if list.keysSeen[j].name == name {
 			return &list.keysSeen[j].pk
@@ -1639,11 +1639,9 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 		return false
 	}
 
-	var seenList CertSeenList = CertSeenList {
-		maxSize: 30,
-		size: 0,
-		//keysSeen: CertKeysSeen,
-	}
+	seenList := new (CertSeenList)
+	seenList.maxSize = 30
+	seenList.size = 0
 
 	// Debug
 	fmt.Printf("\nInitProvedStatements %d assertions\n", len(evidenceList))
@@ -1763,7 +1761,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				}
 			}
 			issuerName := GetIssuerNameFromCert(cert)
-			signerKey := FindKeySeen(seenList, *issuerName)
+			signerKey := FindKeySeen(seenList, issuerName)
 			if signerKey == nil {
 					return false
 			}
