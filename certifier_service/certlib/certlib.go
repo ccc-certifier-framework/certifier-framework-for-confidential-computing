@@ -414,11 +414,24 @@ func GetRsaKeysFromInternal(k *certprotos.KeyMessage, pK *rsa.PrivateKey, PK *rs
 }
 
 func GetInternalKeyFromRsaPublicKey(name string, PK *rsa.PublicKey, km *certprotos.KeyMessage) bool {
+	km.KeyName = &name
+	modLen := len(PK.N.Bytes())
+	var kt string
+	if modLen == 128 {
+		kt = "rsa-1024-public"
+	} else if modLen == 256 {
+		kt = "rsa-2048-public"
+	} else if modLen == 512 {
+		kt = "rsa-4096-public"
+	} else {
+		return false
+	}
+	km.KeyType = &kt
 	km.RsaKey = &certprotos.RsaMessage{}
-	km.GetRsaKey().PublicModulus =  PK.N.Bytes()
+	km.GetRsaKey().PublicModulus = PK.N.Bytes()
 	e := big.Int{}
 	e.SetUint64(uint64(PK.E))
-	km.GetRsaKey().PublicExponent=  e.Bytes()
+	km.GetRsaKey().PublicExponent= e.Bytes()
 	return true
 }
 
@@ -1351,30 +1364,29 @@ func GetSubjectNameFromCert(cert *x509.Certificate) *string {
 	return &cert.Subject.CommonName
 }
 
-func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage{
-	var PK *rsa.PublicKey = cert.PublicKey.(*rsa.PublicKey)
-	e := big.Int{}
-	modulus := PK.N.Bytes()
-	e.SetInt64(int64(PK.E))
-	exp := e.Bytes()
-	k := certprotos.KeyMessage{}
-	k.KeyName = GetSubjectNameFromCert(cert)
-	var kt string
-	if len(modulus) == 128 {
-		kt = "rsa-1024-public"
-	} else if len(modulus) == 256 {
-		kt = "rsa-2048-public"
-	} else if len(modulus) == 512 {
-		kt = "rsa-4096-public"
-	} else {
+func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
+	name := GetSubjectNameFromCert(cert)
+	if name == nil {
 		return nil
 	}
-	k.KeyType = &kt
-	r := certprotos.RsaMessage{}
-	k.RsaKey = &r
-	r.PublicModulus = modulus
-	r.PublicExponent = exp
-	return  &k
+
+	PKrsa, ok := cert.PublicKey.(*rsa.PublicKey)
+	if ok {
+		k := certprotos.KeyMessage{}
+		if !GetInternalKeyFromRsaPublicKey(*name, PKrsa, &k) {
+			return nil
+		}
+		return  &k
+	}
+	PKecc, ok := cert.PublicKey.(*ecdsa.PublicKey)
+	if ok {
+		k := certprotos.KeyMessage{}
+		if !GetInternalKeyFromEccPublicKey(*name, PKecc, &k) {
+			return nil
+		}
+		return  &k
+	}
+	return nil
 }
 
 func GetIssuerKey(cert *x509.Certificate) *certprotos.KeyMessage{
