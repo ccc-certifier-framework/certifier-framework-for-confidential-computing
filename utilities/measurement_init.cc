@@ -114,14 +114,14 @@ int main(int an, char** av) {
     printf("Output file: %s\n", FLAGS_out_file.c_str());
   }
 
-  int measurment_size = 64;
-  byte m[measurment_size];
+  int measurement_size = 64;
+  byte m[measurement_size];
 
   if (FLAGS_test_measurement == true) {
-    measurment_size = 32;
-    for (int i = 0; i < measurment_size; i++)
+    measurement_size = 32;
+    for (int i = 0; i < measurement_size; i++)
       m[i] = (byte)i;
-    if (!write_file(FLAGS_out_file, measurment_size, m)) {
+    if (!write_file(FLAGS_out_file, measurement_size, m)) {
       printf("Can't write %s\n", FLAGS_out_file.c_str());
       return 1;
     }
@@ -131,7 +131,7 @@ int main(int an, char** av) {
     char hex[size + 2];
     memset((byte*)hex, 0, size + 2);
     const char *pos = (const char *)hex;
-    byte m[measurment_size];
+    byte m[measurement_size];
     if (size % 2) {
       hex[0] = '0';
       memcpy(hex + 1, FLAGS_mrenclave.c_str(), size + 1);
@@ -140,12 +140,12 @@ int main(int an, char** av) {
     }
     printf("Using measurement: %s\n", hex);
     measurement_size = strlen(hex) / 2;
-    for (size_t count = 0; count < strlen(hex) / 2 && count < measurment_size; count++) {
+    for (size_t count = 0; count < strlen(hex) / 2 && count < (size_t)measurement_size; count++) {
       sscanf(pos, "%2hhx", &m[count]);
       pos += 2;
     }
 
-    if (!write_file(FLAGS_out_file, measurment_size, m)) {
+    if (!write_file(FLAGS_out_file, measurement_size, m)) {
       printf("Can't write %s\n", FLAGS_out_file.c_str());
       return 1;
     }
@@ -171,13 +171,13 @@ int main(int an, char** av) {
     return 1;
   }
 
-  if (!digest_message(file_contents, size, m, (unsigned int) measurment_size) ) {
+  if (!digest_message(file_contents, size, m, (unsigned int) measurement_size) ) {
     printf("Can't digest file\n");
     free(file_contents);
     return 1;
   }
 
-  if (!write_file(FLAGS_out_file, measurment_size, m)) {
+  if (!write_file(FLAGS_out_file, measurement_size, m)) {
     printf("Can't write %s\n", FLAGS_out_file.c_str());
     free(file_contents);
     return 1;

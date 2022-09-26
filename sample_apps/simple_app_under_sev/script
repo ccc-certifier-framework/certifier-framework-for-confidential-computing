@@ -27,9 +27,7 @@ make -f sev_example_app.mak
 # build policy
 cd $SEV_EXAMPLE_DIR/provisioning
 
-# replace this with app to measure sev
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../sev_example_app.exe \
-      --output=sev_example_app.measurement
+$CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=5c19d5b4a50066c8c991bd920dfa2276e11d3531c91434a734f3b258ab279cd1b3bbe89ef930236af11dc3d28c70f406 --out_file=sev_example_app.measurement
 
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
   --measurement_subject=sev_example_app.measurement --verb="is-trusted" \

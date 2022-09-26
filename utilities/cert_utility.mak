@@ -46,7 +46,10 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 dobj=	$(O)/cert_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o
 
-key_dobj=	$(O)/key_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
+key_dobj=$(O)/key_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o
+
+mobj=	$(O)/measurement_init.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o
 
 
@@ -65,9 +68,9 @@ key_utility.exe: $(key_dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/key_utility.exe $(key_dobj) $(LDFLAGS)
 
-measurement_init.exe: $(O)/measurement_init.o
+measurement_init.exe: $(mobj)
 	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/measurement_init.exe $(O)/measurement_init.o $(LDFLAGS)
+	$(LINK) -o $(EXE_DIR)/measurement_init.exe $(mobj) $(LDFLAGS)
 
 $(O)/measurement_init.o: $(US)/measurement_init.cc
 	@echo "compiling measurement_init.cc"
