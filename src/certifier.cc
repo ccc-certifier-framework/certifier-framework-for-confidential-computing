@@ -558,6 +558,8 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
     k->set_key_type("rsa-1024-public");
   } else if (size_n == 256) {
     k->set_key_type("rsa-2048-public");
+  } else if (size_n == 512) {
+    k->set_key_type("rsa-4096-public");
   } else {
     printf("Bad key type\n");
     res = false;

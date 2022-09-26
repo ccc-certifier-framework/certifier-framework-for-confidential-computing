@@ -23,6 +23,7 @@ DEFINE_string(output, "simple_clause.bin",  "output file");
 DEFINE_string(key_subject, "",  "subject file");
 DEFINE_string(measurement_subject, "",  "subject file");
 DEFINE_string(verb, "verb",  "verb to use");
+DEFINE_string(cert_subject, "",  "cert file");
 
 bool get_clause_from_file(const string& in, vse_clause* cl) {
   int in_size = file_size(in);
@@ -72,6 +73,25 @@ int make_unary_clause_file_utility(entity_message& subject, const string& verb,
   return 0;
 }
 
+bool get_key_from_cert_file(const string& in, key_message* k) {
+  int in_size = file_size(in);
+  int in_read = in_size;
+  byte asn_cert[in_size];
+  
+  if (!read_file(in, &in_read, asn_cert)) {
+    printf("Can't read %s\n", in.c_str());
+    return false;
+  }
+  string cert;
+  cert.assign((char*)asn_cert, in_size);
+
+  if (!PublicKeyFromCert(cert, k)) {
+    printf("Can't get key from cert\n");
+    return false;
+  }
+  return true;
+}
+
 bool get_key_from_file(const string& in, key_message* k) {
   int in_size = file_size(in);
   int in_read = in_size;
@@ -113,7 +133,7 @@ int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_key_subject == "" && FLAGS_measurement_subject == "") {
+  if (FLAGS_key_subject == "" && FLAGS_cert_subject == "" && FLAGS_measurement_subject == "") {
     printf("No subject\n");
     return 1;
   }
@@ -123,6 +143,16 @@ int main(int an, char** av) {
   if (FLAGS_key_subject != "") {
     key_message k;
     if (!get_key_from_file(FLAGS_key_subject, &k)) {
+      printf("Can't get subject key\n");
+      return 1;
+    }
+    if (!make_key_entity(k, &sub_ent)) {
+      printf("Can't get subject entity\n");
+      return 1;
+    }
+  } else if (FLAGS_cert_subject != "") {
+    key_message k;
+    if (!get_key_from_cert_file(FLAGS_cert_subject, &k)) {
       printf("Can't get subject key\n");
       return 1;
     }
