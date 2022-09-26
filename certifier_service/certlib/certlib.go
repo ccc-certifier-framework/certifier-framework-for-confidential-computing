@@ -1807,9 +1807,6 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 					ps.Proved = append(ps.Proved, cl)
 				}
 			}
-		} else if ev.GetEvidenceType() == "cert" {
-			fmt.Printf("Cert evidence type unimplemented\n")
-			return false
 		} else {
 			fmt.Printf("Unknown evidence type\n")
 			return false
