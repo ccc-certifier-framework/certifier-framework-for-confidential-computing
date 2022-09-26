@@ -1639,12 +1639,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 		return false
 	}
 
-	var seenList CertSeenList = CertSeenList {
-		maxSize: 30,
-		size: 0,
-		//keysSeen: CertKeysSeen,
-	}
-
+	var seenList CertSeenList
 	// Debug
 	fmt.Printf("\nInitProvedStatements %d assertions\n", len(evidenceList))
 

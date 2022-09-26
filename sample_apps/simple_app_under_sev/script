@@ -24,6 +24,8 @@ $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin
 cd $SEV_EXAMPLE_DIR
 make -f sev_example_app.mak
 
+# copy the der files
+
 # build policy
 cd $SEV_EXAMPLE_DIR/provisioning
 
