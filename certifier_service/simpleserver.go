@@ -1,4 +1,4 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+ereport/  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -943,6 +943,8 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
                         fmt.Printf("Signed report\n")
                 } else if support.FactAssertion[i].GetEvidenceType() == "cert" {
                         fmt.Printf("Cert\n")
+                } else if support.FactAssertion[i].GetEvidenceType() == "sev-attestation" {
+                        fmt.Printf("sev-attestation\n")
                 } else {
                         fmt.Printf("Invalid evidence type\n")
                         return nil, nil, nil
