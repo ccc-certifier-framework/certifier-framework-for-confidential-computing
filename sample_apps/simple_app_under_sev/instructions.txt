@@ -53,6 +53,8 @@ Step 3: Generate the policy key and self-signed cert
     cd $SEV_EXAMPLE_DIR/provisioning
     $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key \
     --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin 
+Step3a: Make sure there are der encoded versions of the ARK, ASK and VCEK certificates in
+    the provisioning directory.
 
 
 Step 4: Embed the policy key in sev_example_app.
