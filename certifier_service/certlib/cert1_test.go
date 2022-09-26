@@ -804,11 +804,8 @@ func TestArtifacts(t *testing.T) {
 	if cert == nil {
 		fmt.Println("ProduceArtifact returned nil")
 	}
-	issuerName := GetIssuerNameFromCert(cert)
-	if issuerName != nil {
-		fmt.Printf("Issuer Name: %s\n",  *issuerName)
-	}
-		subjName := GetSubjectNameFromCert(cert)
+	//issuerName := GetIssuerNameFromCert(cert)
+	subjName := GetSubjectNameFromCert(cert)
 	if subjName != nil {
 		fmt.Printf("Subject Name: %s\n",  *subjName)
 	}
