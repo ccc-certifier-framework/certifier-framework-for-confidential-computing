@@ -13,9 +13,8 @@ export SEV_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_sev
 mkdir -p $SEV_EXAMPLE_DIR/provisioning
 cd $SEV_EXAMPLE_DIR/provisioning
 
-$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
-    --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin \
-    --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
+$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key \
+    --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin
 
 # embed policy key and compile app
 cd $SEV_EXAMPLE_DIR/provisioning
@@ -27,8 +26,11 @@ make -f sev_example_app.mak
 
 # build policy
 cd $SEV_EXAMPLE_DIR/provisioning
+
+# replace this with app to measure sev
 $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../sev_example_app.exe \
       --output=sev_example_app.measurement
+
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
   --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
   --output=ts1.bin

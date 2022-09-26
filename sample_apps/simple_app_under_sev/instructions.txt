@@ -2,6 +2,7 @@ Instructions for building and running the sample application and generating poli
                  the Certifier Service using the policy utilities.
 ======================================================================================
 
+
 This uses the same application as in .../sample_app but under sev.
 This example embeds the policy key in the application using embed_policy_key.exe.
 
@@ -21,13 +22,16 @@ export SEV_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_sev
 General notes on building and running an SEV enabled VM under KVM
 Todo: Ye
 
+
 Measuring an SEV kernel and initram
-Todo
+Todo: Ye
+
 
 Additional comments
+
 When deploying an SEV application, the application and all the libraries it
 needs should be provisioned into initram.  If you are using the application
-service unde SEV, the application service and all the libraries it
+service under SEV, the application service and all the libraries it
 needs should be provisioned into initram.
 
 -------------------------------------------------------------------------
@@ -47,10 +51,8 @@ Step 2:  Create a directory for the provisioning files
 
 Step 3: Generate the policy key and self-signed cert
     cd $SEV_EXAMPLE_DIR/provisioning
-    $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
-    --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin \
-    --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
-This will also generate the attestation key and platform key for the these tests.
+    $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key \
+    --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin 
 
 
 Step 4: Embed the policy key in sev_example_app.
