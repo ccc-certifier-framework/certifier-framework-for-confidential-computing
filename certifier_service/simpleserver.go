@@ -963,7 +963,7 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
         fmt.Println("")
 
         // evidenceType should be "full-vse-support", "platform-attestation-only" or
-        //      "oe-evidence"
+        //      "oe-evidence" or "sev-platform-attestation-only"
         if evidenceType == "full-vse-support" {
         } else if evidenceType == "platform-attestation-only" {
                 if !AddNewFactsForAbbreviatedPlatformAttestation(publicPolicyKey, alreadyProved) {
@@ -985,7 +985,7 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
                         fmt.Printf("AddNewFactsForOePlatformAttestation failed\n")
                         return nil, nil, nil
                 }
-        } else if evidenceType == "sev-evidence" {
+        } else if evidenceType == "sev-platform-attestation-only" {
                 if !AddNewFactsForSevEvidence(publicPolicyKey, alreadyProved) {
                         fmt.Printf("AddNewFactsForSevEvidence failed\n")
                         return nil, nil, nil
@@ -1014,7 +1014,7 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
                         fmt.Printf("ConstructProofFromFullVseEvidence failed\n")
                         return nil, nil, nil
                 }
-        } else if evidenceType == "sev-evidence" {
+        } else if evidenceType == "sev-platform-attestation-only" {
                 toProve, proof = ConstructProofFromSevEvidence(publicPolicyKey, purpose, *alreadyProved)
                 if toProve == nil {
                         fmt.Printf("ConstructProofFromSevEvidence failed\n")
