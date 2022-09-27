@@ -1593,6 +1593,10 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 
 	ptr := am.ReportedAttestation
+	if ptr == nil {
+		fmt.Printf("VerifySevAttestation: am.ReportedAttestation is wrong\n")
+		return nil
+	}
 
 	// check signature
 	_, PK, err := GetEccKeysFromInternal(k)
@@ -1602,6 +1606,8 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 
 	// hash the userdata and compare it to the one in the report
 	hd := ptr[0x50:0x8f]
+
+	// Debug
 	fmt.Printf("Hashed user data in report: ")
 	PrintBytes(hd)
 	fmt.Printf("\n")
@@ -1614,11 +1620,12 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 		return nil
 	}
 
+	// Debug
 	fmt.Printf("VerifySevAttestation: Header of report: ")
 	PrintBytes(am.ReportedAttestation[0:0x29f])
 	fmt.Printf("\n")
-	hashOfHeader := sha512.Sum384(am.ReportedAttestation[0:0x29f])
 
+	hashOfHeader := sha512.Sum384(am.ReportedAttestation[0:0x29f])
 	r :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2a0:0x2cf])
 	s :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2d0:0x2ff])
 	if !ecdsa.Verify(PK, hashOfHeader[0:], r, s) {
@@ -1627,9 +1634,6 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 
 	// return measurement if successful from am.ReportedAttestation->measurement
-	if ptr == nil {
-		return nil
-	}
 	return ptr[0x90: 0xbf]
 }
 
