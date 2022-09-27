@@ -1601,6 +1601,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	// check signature
 	_, PK, err := GetEccKeysFromInternal(k)
 	if err!= nil || PK == nil {
+		fmt.Printf("VerifySevAttestation: Can't extract key.\n")
 		return nil
 	}
 
@@ -1611,7 +1612,9 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	fmt.Printf("Hashed user data in report: ")
 	PrintBytes(hd)
 	fmt.Printf("\n")
+
 	if am.WhatWasSaid == nil {
+		fmt.Printf("VerifySevAttestation: WhatWasSaid is nil.\n")
 		return nil
 	}
 	hashed := sha512.Sum384(am.WhatWasSaid)
