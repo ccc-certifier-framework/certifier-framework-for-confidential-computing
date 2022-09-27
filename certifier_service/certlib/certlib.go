@@ -1588,7 +1588,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	var am certprotos.SevAttestationMessage
 	err := proto.Unmarshal(serialized, &am)
 	if err != nil {
-		fmt.Printf("InitProvedStatements: Can't unmarshal SevAttestationMessage\n")
+		fmt.Printf("VerifySevAttestation: Can't unmarshal SevAttestationMessage\n")
 		return nil
 	}
 
@@ -1608,12 +1608,13 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	if am.WhatWasSaid == nil {
 		return nil
 	}
-	hashed := sha512.Sum384(am.ReportedAttestation[0:0x29f])
+	hashed := sha512.Sum384(am.WhatWasSaid)
 	if !bytes.Equal(hashed[0:47], hd[0:47]) {
+		fmt.Printf("VerifySevAttestation: Hash of user data is not the same as in the report\n")
 		return nil
 	}
 
-	fmt.Printf("Header of report: ")
+	fmt.Printf("VerifySevAttestation: Header of report: ")
 	PrintBytes(am.ReportedAttestation[0:0x29f])
 	fmt.Printf("\n")
 	hashOfHeader := sha512.Sum384(am.ReportedAttestation[0:0x29f])
@@ -1621,6 +1622,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	r :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2a0:0x2cf])
 	s :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2d0:0x2ff])
 	if !ecdsa.Verify(PK, hashOfHeader[0:], r, s) {
+		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
 		return nil
 	}
 
