@@ -1608,16 +1608,19 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	// hash the userdata and compare it to the one in the report
 	hd := ptr[0x50:0x8f]
 
-	// Debug
-	fmt.Printf("Hashed user data in report: ")
-	PrintBytes(hd)
-	fmt.Printf("\n")
-
 	if am.WhatWasSaid == nil {
 		fmt.Printf("VerifySevAttestation: WhatWasSaid is nil.\n")
 		return nil
 	}
 	hashed := sha512.Sum384(am.WhatWasSaid)
+
+	// Debug
+	fmt.Printf("Hashed user data in report: ")
+	PrintBytes(hd)
+	fmt.Printf("\n, and,")
+	PrintBytes(hashed[0:])
+	fmt.Printf("\n")
+
 	if !bytes.Equal(hashed[0:47], hd[0:47]) {
 		fmt.Printf("VerifySevAttestation: Hash of user data is not the same as in the report\n")
 		return nil
@@ -1629,6 +1632,12 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	fmt.Printf("\n")
 
 	hashOfHeader := sha512.Sum384(am.ReportedAttestation[0:0x29f])
+
+	// Debug
+	fmt.Printf("VerifySevAttestation: Hashed header of report: ")
+	PrintBytes(hashOfHeader[0:])
+	fmt.Printf("\n")
+
 	r :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2a0:0x2cf])
 	s :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2d0:0x2ff])
 	if !ecdsa.Verify(PK, hashOfHeader[0:], r, s) {
