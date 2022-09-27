@@ -1587,8 +1587,8 @@ func ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey 
 func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	var am certprotos.SevAttestationMessage
 	err := proto.Unmarshal(serialized, &am)
-	if err == nil {
-	       fmt.Printf("InitProvedStatements: Can't unmarshal SevAttestationMessage\n")
+	if err != nil {
+		fmt.Printf("InitProvedStatements: Can't unmarshal SevAttestationMessage\n")
 		return nil
 	}
 
@@ -1733,7 +1733,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 			var ud certprotos.AttestationUserData
 			err = proto.Unmarshal(am.WhatWasSaid, &ud)
-			if err == nil {
+			if err != nil {
 				fmt.Printf("InitProvedStatements: Can't unmarshal UserData\n")
 				return false
 			}
