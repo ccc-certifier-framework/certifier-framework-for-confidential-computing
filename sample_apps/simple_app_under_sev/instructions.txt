@@ -20,10 +20,167 @@ export SEV_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_sev
 -------------------------------------------------------------------------
 
 General notes on building and running an SEV enabled VM under KVM
-Todo: Ye
+=================================================================
 
+As it stand today (Oct. 2022), you will need to prepare the following
+components to have SEV-SNP VMs under KVM:
+
+  - Server BIOS/Firmware update to support SEV-SNP
+  - AMD SEV firmware update if necessary
+  - Linux kernel build with SNP support (for both the host and the guest)
+  - Build the SNP enabled virtual firmware for the guest OS (OVMF)
+  - Build the SNP enabled QEMU
+  - Build guest and host SEV tools
+  - A prepared guest disk image if desired
+
+You first need to make sure your EPYC 7xx3 (or newer) server BIOS is updated to
+the newest version with SNP support. This heavily depends on your server
+vendor. But they should all provide tools for the job.
+
+Once you have the newest BIOS/Firmware, you should see some processor settings
+in the BIOS similar to:
+
+  - SEV-ES ASID space limit
+  - SEV SNP memory coverage
+
+Set the ES limit and enable SNP memory coverage or reservation. The terms would
+be different for different servers. The way to know whether you have enabled
+the hardware properly is to boot the host with a Linux kernel with SNP support
+and do the following:
+
+  vmware@sev-snp1:~$ dmesg | grep -i SEV
+  [    3.291523] SEV-SNP: RMP table physical address 0x0000017e7fa00000 - 0x0000017fffafffff
+  [    6.513026] systemd[1]: Set hostname to <sev-snp1>.
+  [    7.002618] ccp 0000:2a:00.1: sev enabled
+  [   70.954551] ccp 0000:2a:00.1: SEV API:1.52 build:4
+  [   70.954564] ccp 0000:2a:00.1: SEV-SNP API:1.52 build:4
+  [   70.977781] SEV supported: 478 ASIDs
+  [   70.977782] SEV-ES and SEV-SNP supported: 31 ASIDs
+
+You need to make sure you have RMP table reserved and SEV-SNP supported in the
+log. Otherwise, you missed something in the platform configuration.
+
+You might also need to update the SEV firmware. You should do this if you know
+the firmware version is too low. Follow the instructions at:
+https://github.com/AMDESE/AMDSEV/tree/sev-snp-devel#upgrade-sev-firmware
+
+AMD helps with all the software and tools building steps with some scripts.
+Make sure you clone it from: https://github.com/AMDESE/AMDSEV.git
+
+Make sure you swtich to the "sev-snp-devel" branch. Follow the instructions in
+the README and you are supposed to have everything ready. However, we encounted
+several issues during the process. Hopefully these will be fixed by the time of
+your attempt. Eventually, AMD will upstream all these SEV-SNP support to
+Linux/QEMU/OVMF, etc. so that none of the building from the sources steps are
+necessary.
+
+Most of the errors you will encounter are related to environment setup. When
+the error log is clear, nothing can't be solved with a couple of Google
+searches. However, due to how OVMF is built, you might encounter errors with
+misleading messages. If you do encounter problems building OVMF with SNP
+support, first make sure you have both IASL and NASM installed on your build
+system. When the error occurs and you are at a lost, you should at least be
+able to see the command failed. You can manually retry the command after
+setting the EDK environment manually. For instance:
+
+  cd AMDSEV/ovmf
+  . ./edksetup.sh
+  nice build -v --cmd-len=64436 -DDEBUG_ON_SERIAL_PORT=TRUE -n 256 -t GCC5 -a X64 -p OvmfPkg/OvmfPkgX64.dsc
+
+This should give you more helpful info. If you encounter any errors with NASM
+complaining about new x86 instructions, remember to build and install the
+newest version of NASM. The one comes with your distro might be too old.
+
+If you have problem building the kernel and generate the ramdisk following the
+AMD script or if you need special kernel configurations, you can always build
+your own.
+
+Clone the AMD Linux kernel source at: https://github.com/AMDESE/linux.git
+Switch to the newest SNP branch. Currently, sev-snp-5.19-rc5 would do.
+
+Copy your host config to the source:
+
+  cp /boot/config-`uname -r` .config
+
+Sift through the configuration differences and double check the SEV related ones:
+
+  make oldconfig
+  make menuconfig
+
+Compile the kernel and generate the deb packages:
+
+  make -j `getconf _NPROCESSORS_ONLN`
+  make deb-pkg LOCALVERSION=-custom
+
+Whatever problems you encounter here should be straight-forward enough to fix.
+You should have the following packages ready for install with dpkg after
+everything is done:
+
+  linux-headers-5.19.0-rc5-next-20220706-custom_5.19.0-rc5-next-20220706-custom-4_amd64.deb
+  linux-image-5.19.0-rc5-next-20220706-custom_5.19.0-rc5-next-20220706-custom-4_amd64.deb
+  linux-image-5.19.0-rc5-next-20220706-custom-dbg_5.19.0-rc5-next-20220706-custom-4_amd64.deb
+  linux-libc-dev_5.19.0-rc5-next-20220706-custom-4_amd64.deb
+
+Their identities should be self-explanatory. If you need to update the ramdisk,
+you can do it after installing the linux-image-xxx package.
+
+After the installation is done, create /etc/modprobe.d/kvm.conf and add the
+following line to it:
+
+  options kvm_amd sev-snp=1 sev=1 sev-es=1
+
+Reboot your host Linux and verify SNP is ready. Try the dmesg above first and
+do the following. Make sure you see the 'Y'.
+
+  # cat /sys/module/kvm_amd/parameters/sev_snp
+  Y
+
+You should also be able to see the SEV device on the host at /dev/sev. Now you
+should have host, kernel, QEMU, and OVMF ready. The last thing to do on the
+host is to install sev-tool and retrieve the platform certificates. Clone the
+sev-tool source at: https://github.com/AMDESE/sev-tool.git
+
+Follow the instructions and build the tool. Usage is also included in the
+README. However, if for some reason you encountered some buffer overflow during
+the certificate retrieval, try the following:
+
+  --- a/src/sevcore_linux.cpp
+  +++ b/src/sevcore_linux.cpp
+  @@ -680,7 +680,7 @@ int SEVDevice::generate_vcek_ask(const std::string output_folder,
+       int cmd_ret = SEV_RET_UNSUPPORTED;
+       int ioctl_ret = -1;
+       sev_user_data_get_id id_buf;
+  -    char cmd[235];
+  +    char cmd[512];
+       std::string fmt;
+       std::string output = "";
+       std::string der_cert_w_path = output_folder + vcek_der_file;
+
+Hopefully it will be fixed by the time of your attempt.
+
+The next step is to create a guest. You do this by following the general
+KVM/QEMU tutorial. After the guest is installed, install the guest linux
+kernel/header/libc packages in the guest. Locate your disk image at
+/var/lib/libvirt/images. And it is time to launch your guest. Go to your AMDSEV
+repo and do the following:
+
+  ./launch-qemu.sh -hda /var/lib/libvirt/images/your_disk_image.qcow2 -sev-snp
+
+To get networking and VNC, I recommend updating the script to fix the options.
+But I assume you know what you are doing. Here is just a reference:
+
+  add_opts "-netdev user,id=vmnic,hostfwd=tcp::8000-:22 -device e1000,netdev=vmnic,romfile="
+  add_opts "-monitor pty -monitor unix:monitor,server,nowait -vnc :0"
+
+If you encountered problems with accessing /dev/sev, make sure your SeLinux or
+AppArmor is configured with proper permissions or just disable them. You should
+be able to check these potential permission problems in dmesg.
+
+If the guest boots successfully, you should be able to see the /dev/sev-guest
+device and the corresponding SEV related messages in the guest OS kernel log.
 
 Measuring an SEV kernel and initram
+===================================
 Todo: Ye
 
 
