@@ -1727,7 +1727,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			// get EnclaveKey from certprotos.AttestationUserData
 			var am certprotos.SevAttestationMessage
 			err := proto.Unmarshal(ev.SerializedEvidence, &am)
-			if err == nil {
+			if err != nil {
 				fmt.Printf("InitProvedStatements: Can't unmarshal SevAttestationMessage\n")
 				return false
 			}
