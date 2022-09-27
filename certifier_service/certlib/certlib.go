@@ -1604,17 +1604,23 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	hd := ptr[0x50:0x8f]
 	fmt.Printf("Hashed user data in report: ")
 	PrintBytes(hd)
+	fmt.Printf("\n")
 	if am.WhatWasSaid == nil {
 		return nil
 	}
-	hashed := sha512.Sum384(am.WhatWasSaid)
+	hashed := sha512.Sum384(am.ReportedAttestation[0:0x29f])
 	if !bytes.Equal(hashed[0:47], hd[0:47]) {
 		return nil
 	}
 
+	fmt.Printf("Header of report: ")
+	PrintBytes(am.ReportedAttestation[0:0x29f])
+	fmt.Printf("\n")
+	hashOfHeader := sha512.Sum384(am.ReportedAttestation[0:0x29f])
+
 	r :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2a0:0x2cf])
 	s :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2d0:0x2ff])
-	if !ecdsa.Verify(PK, hashed[0:], r, s) {
+	if !ecdsa.Verify(PK, hashOfHeader[0:], r, s) {
 		return nil
 	}
 
@@ -1841,7 +1847,6 @@ func InitCerifierRules(cr *certprotos.CertifierRules) bool {
 		key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation 
 	rule 7 (R7): If measurement is-trusted and key1 speaks-for measurement then
 		key1 is-trusted-for-attestation.
-
  */
 
 	return true;
