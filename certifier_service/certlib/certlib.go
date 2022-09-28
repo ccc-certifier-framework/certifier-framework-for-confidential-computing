@@ -1749,6 +1749,9 @@ fmt.Printf("Evidence statement %d is a %s\n", i, ev.GetEvidenceType())
 				fmt.Printf("InitProvedStatements: Can't get vcek key (4)\n")
 				return false
 			}
+fmt.Printf("InitProvedStatements: recovered vcek is ")
+PrintKey(vcekKey)
+fmt.Printf("\n")
 			m := VerifySevAttestation(ev.SerializedEvidence, vcekKey)
 			if m == nil {
 				fmt.Printf("InitProvedStatements: VerifySevAttestation failed\n")
