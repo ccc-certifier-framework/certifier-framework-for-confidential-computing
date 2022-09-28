@@ -1684,6 +1684,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 
 	for i := 0; i < len(evidenceList); i++ {
 		ev := evidenceList[i]
+fmt.Printf("Evidence statement %d is a %s\n", i, ev.GetEvidenceType())
 		if  ev.GetEvidenceType() == "signed-claim" {
 			signedClaim := certprotos.SignedClaimMessage{}
 			err := proto.Unmarshal(ev.SerializedEvidence, &signedClaim)
@@ -1722,11 +1723,16 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "sev-attestation" {
 			// get the key from ps
-			if  ps.Proved[4] == nil || ps.Proved[4].Subject == nil {
+			n := i - 1
+			if n < 0 {
+				fmt.Printf("InitProvedStatements: sev evidence is at wrong position\n")
+				return false
+			}
+			if  ps.Proved[n] == nil || ps.Proved[n].Subject == nil {
 				fmt.Printf("InitProvedStatements: Can't get vcek key (1)\n")
 				return false
 			}
-			vcekVerifyKeyEnt := ps.Proved[4].Subject
+			vcekVerifyKeyEnt := ps.Proved[n].Subject
 			if vcekVerifyKeyEnt == nil {
 				fmt.Printf("InitProvedStatements: Can't get vcek key (2)\n")
 				return false
@@ -1745,10 +1751,6 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				fmt.Printf("InitProvedStatements: VerifySevAttestation failed\n")
 				return false
 			}
-			// unmarshal certprotos.SevAttestationMessage
-			// unmarshal certprotos.AttestationUserData
-			// add vcert-key says enclave-key speaks-for measurement
-			// get EnclaveKey from certprotos.AttestationUserData
 			var am certprotos.SevAttestationMessage
 			err := proto.Unmarshal(ev.SerializedEvidence, &am)
 			if err != nil {
@@ -1783,24 +1785,29 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			// turn into X509
 			cert := Asn1ToX509(ev.SerializedEvidence)
 			if cert == nil {
-				fmt.Printf("Can't convert cert\n")
+				fmt.Printf("InitProvedStatements: Can't convert cert\n")
 				return false
 			}
 			subjKey := GetSubjectKey(cert)
 			if subjKey == nil {
-				fmt.Printf("Can't get subject key\n")
+				fmt.Printf("InitProvedStatements: Can't get subject key\n")
 				return false
 			}
+fmt.Printf("InitProvedStatements: Subject key name is %s\n", subjKey.GetKeyName())
 			if FindKeySeen(seenList, subjKey.GetKeyName()) == nil {
 				if !AddKeySeen(seenList, subjKey) {
+					fmt.Printf("InitProvedStatements: Can't add subject key\n")
 					return false
 				}
 			}
 			issuerName := GetIssuerNameFromCert(cert)
+fmt.Printf("InitProvedStatements: Issuer name is %s\n", issuerName)
 			signerKey := FindKeySeen(seenList, issuerName)
 			if signerKey == nil {
-					return false
+				fmt.Printf("InitProvedStatements: signerKey is nil\n")
+				return false
 			}
+fmt.Printf("InitProvedStatements: Issuer key name is %s\n", signerKey.GetKeyName())
 			// verify x509 signature
 			certPool := x509.NewCertPool()
 			certPool.AddCert(cert)
@@ -1809,12 +1816,17 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 
 			if _, err := cert.Verify(opts); err != nil {
+				fmt.Printf("InitProvedStatements: Cert.Vertify fails\n")
 				return false
 			}
 			cl := ConstructVseAttestationFromCert(subjKey, signerKey)
 			if cl == nil {
+				fmt.Printf("InitProvedStatements: Can't construct Attestation from cert\n")
 				return false
 			}
+fmt.Printf("InitProvedStatements: Clause constructed from cert: ")
+	PrintVseClause(cl)
+fmt.Printf("\n")
 			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
 			sr := certprotos.SignedReport{}
@@ -1847,6 +1859,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			return false
 		}
 	}
+fmt.Printf("InitProvedStatements returning %d proved statements\n", len(ps.Proved))
 	return true
 }
 
