@@ -875,6 +875,7 @@ func PrintKeyDescriptor(k *certprotos.KeyMessage) {
 	}
 
 	if k.GetKeyType() == "rsa-2048-private" || k.GetKeyType() == "rsa-2048-public" ||
+		k.GetKeyType() == "rsa-4096-private" || k.GetKeyType() == "rsa-4096-public" ||
 		k.GetKeyType() == "rsa-1024-private" || k.GetKeyType() == "rsa-1024-public" {
 		fmt.Printf("Key[rsa, ")
 		if k.GetKeyName() != "" {
@@ -882,6 +883,20 @@ func PrintKeyDescriptor(k *certprotos.KeyMessage) {
 		}
 		if k.GetRsaKey() != nil {
 			PrintBytes(k.GetRsaKey().GetPublicModulus()[0:20])
+		}
+		fmt.Printf("]")
+	}
+	if k.GetKeyType() == "ecc-383-private" || k.GetKeyType() == "ecc-383-public" {
+		if k.GetEccKey() == nil {
+			fmt.Printf("Key[ecc] Bad key")
+			return
+		}
+		fmt.Printf("Key[ecc-%s, ", k.GetEccKey().GetCurveName())
+		if k.GetKeyName() != "" {
+			fmt.Printf("%s, ", k.GetKeyName())
+		}
+		if k.GetEccKey().PublicPoint != nil && k.GetEccKey().PublicPoint.X != nil {
+			PrintBytes(k.GetEccKey().PublicPoint.X)
 		}
 		fmt.Printf("]")
 	}
