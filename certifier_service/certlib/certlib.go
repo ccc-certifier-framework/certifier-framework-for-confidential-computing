@@ -1817,6 +1817,8 @@ fmt.Printf("InitProvedStatements: Issuer name is %s\n", issuerName)
 			}
 			// verify x509 signature
 			certPool := x509.NewCertPool()
+// Todo: Fix and add intermediates.
+// Maybe use func (c *Certificate) CheckSignatureFrom(parent *Certificate) error
 			certPool.AddCert(cert)
 			opts := x509.VerifyOptions{
 				Roots:   certPool,
