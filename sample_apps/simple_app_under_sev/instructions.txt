@@ -20,7 +20,6 @@ export SEV_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_sev
 -------------------------------------------------------------------------
 
 General notes on building and running an SEV enabled VM under KVM
-=================================================================
 
 As it stand today (Oct. 2022), you will need to prepare the following
 components to have SEV-SNP VMs under KVM:
@@ -179,10 +178,41 @@ be able to check these potential permission problems in dmesg.
 If the guest boots successfully, you should be able to see the /dev/sev-guest
 device and the corresponding SEV related messages in the guest OS kernel log.
 
-Measuring an SEV kernel and initram
-===================================
-Todo: Ye
+-------------------------------------------------------------------------
 
+Measuring an SEV kernel and initram
+
+The easiest way to measure your SNP VM is using the open source
+SEV-SNP-MEASUREMENT tool from IBM. You can clone the project from here:
+https://github.com/IBM/sev-snp-measure.git
+
+$ sev-snp-measure --help
+usage: sev-snp-measure [-h] [--version] [-v] --mode {sev,seves,snp} [--vcpus N]
+                       [--vcpu-type CPUTYPE] [--vcpu-sig VALUE] [--vcpu-family FAMILY]
+                       [--vcpu-model MODEL] [--vcpu-stepping STEPPING] --ovmf PATH [--kernel PATH]
+                       [--initrd PATH] [--append CMDLINE] [--output-format {hex,base64}]
+
+You should use 'snp' for the mode option. N is the number of vcpus you
+allocated for your SNP VM. You can also check it inside the VM. Instead of
+using vcpu-sig/vcpu-family/vcpu-model/vcpu-stepping combinations, you can use
+vcpu-type for the input. This is the vcpu type you specified when you start
+your VM. You can check /proc/cpuinfo inside the guest too.
+
+The --ovmf option is used to provide the OVMF firmware image of your VM is you
+are booting with OVMF. Otherwise, you can use --kernel/--initrd/--append to
+specify kernel image, initrd image, and kernel boot parameters. You can get
+your guest boot parameters by reading /proc/cmdline.
+
+If you used the launch-qemu.sh script from AMD, you are booting the VM using
+OVMF. The kernel and initrd are all on the disk image. In this case, you can
+get the measurement of your VM by issuing the following:
+
+  $ ./sev-snp-measure.py --mode snp --vcpus=4 --vcpu-type=EPYC-v4 --ovmf=usr/local/share/qemu/OVMF_CODE.fd
+
+The output will match the measurement field in the attestation report from your
+SEV-SNP firmware.
+
+-------------------------------------------------------------------------
 
 Additional comments
 
