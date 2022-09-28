@@ -1772,6 +1772,9 @@ fmt.Printf("Evidence statement %d is a %s\n", i, ev.GetEvidenceType())
 				fmt.Printf("InitProvedStatements: ConstructSevSpeaksForStatement failed\n")
 				return false
 			}
+fmt.Printf("InitProvedStatements: Clause constructed from sev-attestation: ")
+	PrintVseClause(cl)
+fmt.Printf("\n")
 			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "cert" {
 			// A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
