@@ -109,7 +109,7 @@ Sift through the configuration differences and double check the SEV related ones
 Compile the kernel and generate the deb packages:
 
   make -j `getconf _NPROCESSORS_ONLN`
-  make deb-pkg LOCALVERSION=-custom
+  make -j deb-pkg LOCALVERSION=-custom
 
 Whatever problems you encounter here should be straight-forward enough to fix.
 You should have the following packages ready for install with dpkg after
@@ -176,7 +176,14 @@ AppArmor is configured with proper permissions or just disable them. You should
 be able to check these potential permission problems in dmesg.
 
 If the guest boots successfully, you should be able to see the /dev/sev-guest
-device and the corresponding SEV related messages in the guest OS kernel log.
+device and the corresponding SEV related messages in the guest OS kernel log:
+
+  $ dmesg | grep -i SEV
+  [    0.185529] Memory Encryption Features active: AMD SEV SEV-ES SEV-SNP
+  [    0.324674] SEV: Using SNP CPUID table, 31 entries present.
+  [    0.512198] SEV: SNP guest platform device initialized.
+  [    0.670153] sev-guest sev-guest: Initialized SEV guest driver (using vmpck_id 0)
+  [    1.373997] systemd[1]: Set hostname to <sev-snp-vm>.
 
 -------------------------------------------------------------------------
 
@@ -198,7 +205,7 @@ using vcpu-sig/vcpu-family/vcpu-model/vcpu-stepping combinations, you can use
 vcpu-type for the input. This is the vcpu type you specified when you start
 your VM. You can check /proc/cpuinfo inside the guest too.
 
-The --ovmf option is used to provide the OVMF firmware image of your VM is you
+The --ovmf option is used to provide the OVMF firmware image of your VM if you
 are booting with OVMF. Otherwise, you can use --kernel/--initrd/--append to
 specify kernel image, initrd image, and kernel boot parameters. You can get
 your guest boot parameters by reading /proc/cmdline.
