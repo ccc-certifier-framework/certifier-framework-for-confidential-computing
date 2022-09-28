@@ -320,12 +320,15 @@ func SamePoint(p1 *certprotos.PointMessage, p2 *certprotos.PointMessage) bool {
 
 func GetEccKeysFromInternal(k *certprotos.KeyMessage) (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
 	if  k == nil || k.EccKey == nil || k.EccKey.PublicPoint == nil {
+		fmt.Printf("GetEccKeysFromInternal: no public point\n")
 		return nil, nil, errors.New("EccKey")
 	}
 	if k.EccKey.PublicPoint.X  == nil  || k.EccKey.PublicPoint.Y  == nil {
+		fmt.Printf("GetEccKeysFromInternal: no base\n")
 		return nil, nil, errors.New("no public or base")
 	}
 	if k.GetKeyType() != "ecc-384-public" && k.GetKeyType() != "ecc-384-private" {
+		fmt.Printf("GetEccKeysFromInternal: Wrong key type %s\n", k.GetKeyType())
 		return nil, nil, errors.New("no public or base")
 	}
 
