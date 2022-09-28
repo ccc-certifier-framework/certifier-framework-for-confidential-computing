@@ -323,7 +323,7 @@ func GetEccKeysFromInternal(k *certprotos.KeyMessage) (*ecdsa.PrivateKey, *ecdsa
 		fmt.Printf("GetEccKeysFromInternal: no public point\n")
 		return nil, nil, errors.New("EccKey")
 	}
-	if k.EccKey.PublicPoint.X  == nil  || k.EccKey.PublicPoint.Y  == nil {
+	if k.EccKey.BasePoint.X  == nil  || k.EccKey.BasePoint.Y  == nil {
 		fmt.Printf("GetEccKeysFromInternal: no base\n")
 		return nil, nil, errors.New("no public or base")
 	}
@@ -1372,7 +1372,6 @@ func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
 	if name == nil {
 		return nil
 	}
-fmt.Printf("NAME: %s\n", *name)
 
 	PKrsa, ok := cert.PublicKey.(*rsa.PublicKey)
 	if ok {
@@ -1800,7 +1799,6 @@ fmt.Printf("\n")
 				fmt.Printf("InitProvedStatements: Can't get subject key\n")
 				return false
 			}
-fmt.Printf("InitProvedStatements: Subject key name is %s\n", subjKey.GetKeyName())
 			if FindKeySeen(seenList, subjKey.GetKeyName()) == nil {
 				if !AddKeySeen(seenList, subjKey) {
 					fmt.Printf("InitProvedStatements: Can't add subject key\n")
@@ -1814,7 +1812,6 @@ fmt.Printf("InitProvedStatements: Issuer name is %s\n", issuerName)
 				fmt.Printf("InitProvedStatements: signerKey is nil\n")
 				return false
 			}
-fmt.Printf("InitProvedStatements: Issuer key name is %s\n", signerKey.GetKeyName())
 			// verify x509 signature
 			certPool := x509.NewCertPool()
 			certPool.AddCert(cert)
@@ -1826,6 +1823,8 @@ fmt.Printf("InitProvedStatements: Issuer key name is %s\n", signerKey.GetKeyName
 				fmt.Printf("InitProvedStatements: Cert.Vertify fails\n")
 				return false
 			}
+fmt.Printf("InitProvedStatements: Subject key name is %s\n", subjKey.GetKeyName())
+fmt.Printf("InitProvedStatements: Issuer key name is %s\n", signerKey.GetKeyName())
 			cl := ConstructVseAttestationFromCert(subjKey, signerKey)
 			if cl == nil {
 				fmt.Printf("InitProvedStatements: Can't construct Attestation from cert\n")
