@@ -1372,6 +1372,7 @@ func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
 	if name == nil {
 		return nil
 	}
+fmt.Printf("NAME: %s\n", *name)
 
 	PKrsa, ok := cert.PublicKey.(*rsa.PublicKey)
 	if ok {
