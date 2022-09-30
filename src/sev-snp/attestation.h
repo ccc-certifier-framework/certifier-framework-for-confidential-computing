@@ -3,7 +3,14 @@
 #ifndef ATTESTATION_H
 #define ATTESTATION_H
 
+#if 1
 #include <linux/types.h>
+#else
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned uint32_t;
+typedef long long unsigned uint64_t;
+#endif
 
 #define POLICY_DEBUG_SHIFT      19
 #define POLICY_MIGRATE_MA_SHIFT 18

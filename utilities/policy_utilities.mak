@@ -5,7 +5,7 @@ ifndef CERTIFIER_PROTOTYPE_DIR
 CERTIFIER_PROTOTYPE_DIR=..
 endif
 ifndef SRC_DIR
-SRC_DIR=.
+SRC_DIR=$(CERTIFIER_PROTOTYPE_DIR)/utilities
 endif
 ifndef INC_DIR
 INC_DIR=$(CERTIFIER_PROTOTYPE_DIR)/include
@@ -37,13 +37,14 @@ CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64
 
 CC=g++
 LINK=g++
-# PROTO=/usr/local/bin/protoc
+#PROTO=/usr/local/bin/protoc
 # Point this to the right place, if you have to.
 # I had to do the above on my machine.
 PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+
 
 measurement_utility_obj=$(O)/measurement_utility.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o

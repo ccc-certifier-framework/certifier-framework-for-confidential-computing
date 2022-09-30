@@ -323,20 +323,17 @@ func GetEccKeysFromInternal(k *certprotos.KeyMessage) (*ecdsa.PrivateKey, *ecdsa
 		fmt.Printf("GetEccKeysFromInternal: no ecc key\n")
 		return nil, nil, errors.New("EccKey")
 	}
-fmt.Printf("GetEccKeysFromInternal, incoming key: ")
-PrintKey(k)
-fmt.Printf("\n")
 	if k.EccKey.PublicPoint == nil {
 		fmt.Printf("GetEccKeysFromInternal: no public point\n")
 		return nil, nil, errors.New("EccKey")
 	}
 	if k.EccKey.BasePoint == nil  {
 		fmt.Printf("GetEccKeysFromInternal: no base\n")
-		return nil, nil, errors.New("no public or base")
+		return nil, nil, errors.New("no base point")
 	}
 	if k.GetKeyType() != "ecc-384-public" && k.GetKeyType() != "ecc-384-private" {
 		fmt.Printf("GetEccKeysFromInternal: Wrong key type %s\n", k.GetKeyType())
-		return nil, nil, errors.New("no public or base")
+		return nil, nil, errors.New("no public point")
 	}
 
 	tX := new(big.Int).SetBytes(k.EccKey.PublicPoint.X)
@@ -393,6 +390,7 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
 
 	km.EccKey.CurveB = make([]byte, 48)
 	km.EccKey.CurveB = p.B.FillBytes(km.EccKey.CurveB)
+
 	km.EccKey.PublicPoint = new(certprotos.PointMessage)
 	km.EccKey.PublicPoint.X = make([]byte, 48)
 	km.EccKey.PublicPoint.Y = make([]byte, 48)
@@ -893,7 +891,7 @@ func PrintKeyDescriptor(k *certprotos.KeyMessage) {
 		}
 		fmt.Printf("]")
 	}
-	if k.GetKeyType() == "ecc-383-private" || k.GetKeyType() == "ecc-383-public" {
+	if k.GetKeyType() == "ecc-384-private" || k.GetKeyType() == "ecc-384-public" {
 		if k.GetEccKey() == nil {
 			fmt.Printf("Key[ecc] Bad key")
 			return
@@ -1405,6 +1403,7 @@ func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
 	}
 	PKecc, ok := cert.PublicKey.(*ecdsa.PublicKey)
 	if ok {
+fmt.Printf("ECDSA PUBLIC, name: %s\n", *name)
 		k := certprotos.KeyMessage{}
 		if !GetInternalKeyFromEccPublicKey(*name, PKecc, &k) {
 			return nil

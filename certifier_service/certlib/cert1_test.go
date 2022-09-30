@@ -907,4 +907,27 @@ func TestEcc(t *testing.T) {
 		return
 	}
 	// certlib.VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte
+
+	new_name := "vcertKey"
+	km := new(certprotos.KeyMessage)
+	if !GetInternalKeyFromEccPublicKey(new_name, new_PK, km) {
+                t.Errorf("Couldn't GetInternalKeyFromEccPublicKey\n")
+		return
+	}
+	PrintKey(km)
+	fmt.Printf("\n")
+
+	_, recovered_PK, err := GetEccKeysFromInternal(km)
+	if err != nil {
+                t.Errorf("GetEccKeysFromInternal failed\n")
+		return
+	}
+
+	new_km := new(certprotos.KeyMessage)
+	if !GetInternalKeyFromEccPublicKey(new_name, recovered_PK, new_km) {
+                t.Errorf("Couldn't GetInternalKeyFromEccPublicKey\n")
+		return
+	}
+	PrintKey(new_km)
+	fmt.Printf("\n")
 }
