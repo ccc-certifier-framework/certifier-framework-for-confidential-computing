@@ -298,6 +298,10 @@ func AddNewFactsForSevEvidence(publicPolicyKey *certprotos.KeyMessage,
                 return false
         }
         prog_m := mc.Clause.Object.Measurement
+        if prog_m == nil {
+                fmt.Printf("AddNewFactsForSevEvidence, bad measurement\n")
+                return false
+        }
 
         // Get platformKey from  "The ARK-key says the ARK-key is-trusted-for-attestation"
         kc := alreadyProved.Proved[1]

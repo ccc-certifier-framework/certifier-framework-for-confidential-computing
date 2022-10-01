@@ -1669,7 +1669,6 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 		return nil
 	}
 
-
 	// return measurement if successful from am.ReportedAttestation->measurement
 	return ptr[0x90: 0xbf]
 }
