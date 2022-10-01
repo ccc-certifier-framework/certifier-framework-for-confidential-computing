@@ -1752,11 +1752,12 @@ fmt.Printf("Evidence statement %d is a %s\n", i, ev.GetEvidenceType())
 				fmt.Printf("InitProvedStatements: sev evidence is at wrong position\n")
 				return false
 			}
-			if  ps.Proved[n] == nil || ps.Proved[n].Subject == nil {
+			if  ps.Proved[n] == nil ||  ps.Proved[n].Clause == nil ||
+					ps.Proved[n].Clause.Subject == nil {
 				fmt.Printf("InitProvedStatements: Can't get vcek key (1)\n")
 				return false
 			}
-			vcekVerifyKeyEnt := ps.Proved[n].Subject
+			vcekVerifyKeyEnt := ps.Proved[n].Clause.Subject
 			if vcekVerifyKeyEnt == nil {
 				fmt.Printf("InitProvedStatements: Can't get vcek key (2)\n")
 				return false
@@ -1830,7 +1831,6 @@ fmt.Printf("\n")
 				}
 			}
 			issuerName := GetIssuerNameFromCert(cert)
-fmt.Printf("InitProvedStatements: Issuer name is %s\n", issuerName)
 			signerKey := FindKeySeen(seenList, issuerName)
 			if signerKey == nil {
 				fmt.Printf("InitProvedStatements: signerKey is nil\n")
@@ -1838,8 +1838,8 @@ fmt.Printf("InitProvedStatements: Issuer name is %s\n", issuerName)
 			}
 			// verify x509 signature
 			certPool := x509.NewCertPool()
-// Todo: Fix and add intermediates.
-// Maybe use func (c *Certificate) CheckSignatureFrom(parent *Certificate) error
+			// Todo: Fix and add intermediates.
+			// Maybe use func (c *Certificate) CheckSignatureFrom(parent *Certificate) error
 			certPool.AddCert(cert)
 			opts := x509.VerifyOptions{
 				Roots:   certPool,
@@ -1849,15 +1849,13 @@ fmt.Printf("InitProvedStatements: Issuer name is %s\n", issuerName)
 				fmt.Printf("InitProvedStatements: Cert.Vertify fails\n")
 				return false
 			}
-fmt.Printf("InitProvedStatements: Subject key name is %s\n", subjKey.GetKeyName())
-fmt.Printf("InitProvedStatements: Issuer key name is %s\n", signerKey.GetKeyName())
 			cl := ConstructVseAttestationFromCert(subjKey, signerKey)
 			if cl == nil {
 				fmt.Printf("InitProvedStatements: Can't construct Attestation from cert\n")
 				return false
 			}
 fmt.Printf("InitProvedStatements: Clause constructed from cert: ")
-	PrintVseClause(cl)
+PrintVseClause(cl)
 fmt.Printf("\n")
 			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
@@ -1891,7 +1889,6 @@ fmt.Printf("\n")
 			return false
 		}
 	}
-fmt.Printf("InitProvedStatements returning %d proved statements\n", len(ps.Proved))
 	return true
 }
 
