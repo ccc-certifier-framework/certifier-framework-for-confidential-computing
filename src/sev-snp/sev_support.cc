@@ -332,6 +332,7 @@ out:
 
 #ifdef SEV_DUMMY_GUEST
 int read_key_file(const char *filename, EVP_PKEY **key, bool priv) {
+printf("opening %s\n", filename);
   int rc = -EXIT_FAILURE;
   EVP_PKEY *pkey;
   FILE *file = NULL;

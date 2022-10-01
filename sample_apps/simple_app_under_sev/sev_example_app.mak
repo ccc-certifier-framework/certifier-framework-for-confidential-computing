@@ -1,7 +1,6 @@
 #    
 #    File: sev_example_app.mak
 
-
 ifndef SRC_DIR
 SRC_DIR=../..
 endif

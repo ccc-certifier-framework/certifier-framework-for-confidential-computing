@@ -1669,6 +1669,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 		return nil
 	}
 
+
 	// return measurement if successful from am.ReportedAttestation->measurement
 	return ptr[0x90: 0xbf]
 }
@@ -1708,7 +1709,6 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 
 	for i := 0; i < len(evidenceList); i++ {
 		ev := evidenceList[i]
-fmt.Printf("Evidence statement %d is a %s\n", i, ev.GetEvidenceType())
 		if  ev.GetEvidenceType() == "signed-claim" {
 			signedClaim := certprotos.SignedClaimMessage{}
 			err := proto.Unmarshal(ev.SerializedEvidence, &signedClaim)
@@ -1747,12 +1747,12 @@ fmt.Printf("Evidence statement %d is a %s\n", i, ev.GetEvidenceType())
 			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "sev-attestation" {
 			// get the key from ps
-			n := i - 1
+			n := len(ps.Proved) - 1
 			if n < 0 {
 				fmt.Printf("InitProvedStatements: sev evidence is at wrong position\n")
 				return false
 			}
-			if  ps.Proved[n] == nil ||  ps.Proved[n].Clause == nil ||
+			if ps.Proved[n] == nil || ps.Proved[n].Clause == nil ||
 					ps.Proved[n].Clause.Subject == nil {
 				fmt.Printf("InitProvedStatements: Can't get vcek key (1)\n")
 				return false
@@ -1771,9 +1771,6 @@ fmt.Printf("Evidence statement %d is a %s\n", i, ev.GetEvidenceType())
 				fmt.Printf("InitProvedStatements: Can't get vcek key (4)\n")
 				return false
 			}
-fmt.Printf("InitProvedStatements: recovered vcek is ")
-PrintKey(vcekKey)
-fmt.Printf("\n")
 			m := VerifySevAttestation(ev.SerializedEvidence, vcekKey)
 			if m == nil {
 				fmt.Printf("InitProvedStatements: VerifySevAttestation failed\n")
@@ -1800,9 +1797,6 @@ fmt.Printf("\n")
 				fmt.Printf("InitProvedStatements: ConstructSevSpeaksForStatement failed\n")
 				return false
 			}
-fmt.Printf("InitProvedStatements: Clause constructed from sev-attestation: ")
-	PrintVseClause(cl)
-fmt.Printf("\n")
 			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "cert" {
 			// A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
@@ -1854,9 +1848,6 @@ fmt.Printf("\n")
 				fmt.Printf("InitProvedStatements: Can't construct Attestation from cert\n")
 				return false
 			}
-fmt.Printf("InitProvedStatements: Clause constructed from cert: ")
-PrintVseClause(cl)
-fmt.Printf("\n")
 			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
 			sr := certprotos.SignedReport{}
