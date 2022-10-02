@@ -160,6 +160,8 @@ Step 14: Start the Certifier Service for the built application service
 
 
 Step 15: In a new window, run the application service
+
+Under the simulated enclave:
     cd $APP_SERVICE_DIR/service
     $APP_SERVICE_DIR/app_service.exe \
       --policy_cert_file="policy_cert_file.bin" \
@@ -170,6 +172,16 @@ Step 15: In a new window, run the application service
       --platform_attest_endorsement="platform_attest_endorsement.bin" \
       --attest_key_file="attest_key_file.bin" \
       --measurement_file="app_service.measurement" \
+      --cold_init_service=true \
+      --guest_login_name="guest"
+
+Under the sev enclave:
+    cd $APP_SERVICE_DIR/service
+    $APP_SERVICE_DIR/app_service.exe \
+      --policy_cert_file="policy_cert_file.bin" \
+      --service_dir="./service/" \
+      --service_policy_store="policy_store" \
+      --host_enclave_type="sev-enclave" \
       --cold_init_service=true \
       --guest_login_name="guest"
 
@@ -187,6 +199,10 @@ Step 17: In a new window, run simple_app_under_app_service for cold boot
          and directories referenced by start_program.exe since they will run under a
          directory that is differenc from the one you start start_program.exe in.
 
+Note:
+  If the parent enclave is the simulated enclave, add --parent_enclave="simulated-enclave", to the commands below.
+  If the parent enclave is the sev, add --parent_enclave="sev-enclave", to the commands below.  For that
+  enclave, you can also remove --measurement_file="service_example_app.measurement".
 
     cd $SERVICE_EXAMPLE_DIR
     $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
