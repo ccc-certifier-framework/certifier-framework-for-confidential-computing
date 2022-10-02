@@ -1403,7 +1403,6 @@ func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
 	}
 	PKecc, ok := cert.PublicKey.(*ecdsa.PublicKey)
 	if ok {
-fmt.Printf("ECDSA PUBLIC, name: %s\n", *name)
 		k := certprotos.KeyMessage{}
 		if !GetInternalKeyFromEccPublicKey(*name, PKecc, &k) {
 			return nil
@@ -1653,6 +1652,9 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	hashOfHeader := sha512.Sum384(ptr[0:0x29f])
 
 	// Debug
+	fmt.Printf("VerifySevAttestation, vcekKey: ")
+	PrintKey(k)
+	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, Header of report: ")
 	PrintBytes(ptr[0:0x29f])
 	fmt.Printf("\n")
