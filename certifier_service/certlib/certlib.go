@@ -1630,7 +1630,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 
 	// hash the userdata and compare it to the one in the report
-	hd := ptr[0x50:0x8f]
+	hd := ptr[0x50:0x7f]
 
 	if am.WhatWasSaid == nil {
 		fmt.Printf("VerifySevAttestation: WhatWasSaid is nil.\n")
