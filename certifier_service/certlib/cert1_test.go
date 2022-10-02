@@ -930,4 +930,15 @@ func TestEcc(t *testing.T) {
 	}
 	PrintKey(new_km)
 	fmt.Printf("\n")
+
+	ttt :=  make([]byte, 48)
+	for i := 0; i < 48; i++ {
+		ttt[i] = byte(i)
+	}
+	fmt.Printf("One: ")
+	PrintBytes(ttt[0:47])
+	fmt.Printf("\n")
+	fmt.Printf("Two: ")
+	PrintBytes(ttt[0:48])
+	fmt.Printf("\n")
 }
