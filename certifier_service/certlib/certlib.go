@@ -1629,7 +1629,8 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 
 	// hash the userdata and compare it to the one in the report
-	hd := ptr[0x50:0x7f]
+	// changed, hd := ptr[0x50:0x7f]
+	hd := ptr[0x50:0x80]
 
 	if am.WhatWasSaid == nil {
 		fmt.Printf("VerifySevAttestation: WhatWasSaid is nil.\n")
@@ -1641,43 +1642,55 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	fmt.Printf("Hashed user data in report: ")
 	PrintBytes(hd)
 	fmt.Printf("\n, and,")
-	PrintBytes(hashed[0:47])
+	// changed, PrintBytes(hashed[0:47])
+	PrintBytes(hashed[0:48])
 	fmt.Printf("\n")
 
-	if !bytes.Equal(hashed[0:47], hd[0:47]) {
+	// changed, if !bytes.Equal(hashed[0:47], hd[0:47]) {
+	if !bytes.Equal(hashed[0:48], hd[0:48]) {
 		fmt.Printf("VerifySevAttestation: Hash of user data is not the same as in the report\n")
 		return nil
 	}
 
-	hashOfHeader := sha512.Sum384(ptr[0:0x29f])
+	// changed, hashOfHeader := sha512.Sum384(ptr[0:0x29f])
+	hashOfHeader := sha512.Sum384(ptr[0:0x2a0])
 
 	// Debug
 	fmt.Printf("VerifySevAttestation, vcekKey: ")
 	PrintKey(k)
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, Header of report: ")
-	PrintBytes(ptr[0:0x29f])
+	// changed, PrintBytes(ptr[0:0x29f])
+	PrintBytes(ptr[0:0x2a0])
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, Hashed header of report: ")
-	PrintBytes(hashOfHeader[0:47])
+	// changed, PrintBytes(hashOfHeader[0:47])
+	PrintBytes(hashOfHeader[0:48])
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, measurement: ")
-	PrintBytes(ptr[0x90: 0xbf])
+	// changed, PrintBytes(ptr[0x90: 0xbf])
+	PrintBytes(ptr[0x90: 0xc0])
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, signature: ")
-	PrintBytes(ptr[0x2a0:0x2cf])
-	PrintBytes(ptr[0x2d0:0x2ff])
+	// changed, PrintBytes(ptr[0x2a0:0x2cf])
+	PrintBytes(ptr[0x2a0:0x2d0])
+	// changed, PrintBytes(ptr[0x2d0:0x2ff])
+	PrintBytes(ptr[0x2d0:0x300])
 	fmt.Printf("\n")
 
-	r :=  new(big.Int).SetBytes(ptr[0x2a0:0x2cf])
-	s :=  new(big.Int).SetBytes(ptr[0x2d0:0x2ff])
-	if !ecdsa.Verify(PK, hashOfHeader[0:47], r, s) {
+	// changed, r :=  new(big.Int).SetBytes(ptr[0x2a0:0x2cf])
+	// changed, s :=  new(big.Int).SetBytes(ptr[0x2d0:0x2ff])
+	r :=  new(big.Int).SetBytes(ptr[0x2a0:0x2d0])
+	s :=  new(big.Int).SetBytes(ptr[0x2d0:0x300])
+	// changed, if !ecdsa.Verify(PK, hashOfHeader[0:47], r, s) {
+	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
 		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
 		return nil
 	}
 
 	// return measurement if successful from am.ReportedAttestation->measurement
-	return ptr[0x90: 0xbf]
+	// changed, return ptr[0x90: 0xbf]
+	return ptr[0x90: 0xc0]
 }
 
 // returns verification result, serialized_user_data and measurement
