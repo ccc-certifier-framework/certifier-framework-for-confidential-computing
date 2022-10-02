@@ -896,6 +896,18 @@ func TestEcc(t *testing.T) {
                 t.Errorf("Couldn't verify with old PK\n")
 		return
 	}
+	fmt.Printf("\n\nr: ")
+	fmt.Print(r)
+	fmt.Printf("\n")
+	fmt.Printf("s: ")
+	fmt.Print(s)
+	fmt.Printf("\nr: ")
+	r_bytes := r.Bytes()
+	PrintBytes(r_bytes)
+	fmt.Printf("\ns: ")
+	s_bytes := s.Bytes()
+	PrintBytes(s_bytes)
+	fmt.Printf("\n\n")
 	fmt.Printf("New internal:\n")
 	fmt.Print(new_PK)
 	fmt.Printf("\n")

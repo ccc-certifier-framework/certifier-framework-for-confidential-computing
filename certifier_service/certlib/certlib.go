@@ -1673,7 +1673,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	fmt.Printf("\n")
 
 	r :=  new(big.Int).SetBytes(ptr[0x2a0:0x2d0])
-	// s :=  new(big.Int).SetBytes(ptr[0x2d0:0x300])
+	// changed, s :=  new(big.Int).SetBytes(ptr[0x2d0:0x300])
 	s :=  new(big.Int).SetBytes(ptr[0x300:0x330])
 	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
 		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
