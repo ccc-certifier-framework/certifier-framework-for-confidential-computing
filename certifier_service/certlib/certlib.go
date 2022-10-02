@@ -1655,8 +1655,8 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	fmt.Printf("VerifySevAttestation, vcekKey: ")
 	PrintKey(k)
 	fmt.Printf("\n")
-	fmt.Printf("VerifySevAttestation, report (%d): ", len(am.WhatWasSaid))
-	PrintBytes(ptr[0:0x330])
+	fmt.Printf("VerifySevAttestation, report (%x): ", len(am.ReportedAttestation))
+	PrintBytes(ptr[0:len(am.ReportedAttestation)])
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, Header of report: ")
 	PrintBytes(ptr[0:0x2a0])
@@ -1673,7 +1673,6 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	fmt.Printf("\n")
 
 	r :=  new(big.Int).SetBytes(ptr[0x2a0:0x2d0])
-	// changed, s :=  new(big.Int).SetBytes(ptr[0x2d0:0x300])
 	s :=  new(big.Int).SetBytes(ptr[0x300:0x330])
 	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
 		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")

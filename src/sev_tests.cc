@@ -156,6 +156,8 @@ bool test_sev(bool print_all) {
   }
 
   if (print_all) {
+    printf("attestation struct size is %lx, reported attestation size is %lx\n",
+      sizeof(attestation_report), sev_att.reported_attestation().size());
     printf("\nMeasurement size: %d, measurement: ", size_measurement);
     print_bytes(size_measurement, measurement);
     printf("\n");
