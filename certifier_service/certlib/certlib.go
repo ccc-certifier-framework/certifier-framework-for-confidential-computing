@@ -1622,7 +1622,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 		return nil
 	}
 
-	// check signature
+	// Get public key so we can check the attestation
 	_, PK, err := GetEccKeysFromInternal(k)
 	if err!= nil || PK == nil {
 		fmt.Printf("VerifySevAttestation: Can't extract key.\n")
@@ -1653,7 +1653,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	hashOfHeader := sha512.Sum384(ptr[0:0x29f])
 
 	// Debug
-	fmt.Printf("VerifySevAttestation: Header of report: ")
+	fmt.Printf("VerifySevAttestation, Header of report: ")
 	PrintBytes(ptr[0:0x29f])
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, Hashed header of report: ")
