@@ -1642,7 +1642,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	fmt.Printf("Hashed user data in report: ")
 	PrintBytes(hd)
 	fmt.Printf("\n, and,")
-	PrintBytes(hashed[0:])
+	PrintBytes(hashed[0:47])
 	fmt.Printf("\n")
 
 	if !bytes.Equal(hashed[0:47], hd[0:47]) {
@@ -1655,16 +1655,24 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	PrintBytes(am.ReportedAttestation[0:0x29f])
 	fmt.Printf("\n")
 
+
 	hashOfHeader := sha512.Sum384(am.ReportedAttestation[0:0x29f])
 
 	// Debug
-	fmt.Printf("VerifySevAttestation: Hashed header of report: ")
-	PrintBytes(hashOfHeader[0:])
+	fmt.Printf("VerifySevAttestation, Hashed header of report: ")
+	PrintBytes(hashOfHeader[0:47])
+	fmt.Printf("\n")
+	fmt.Printf("VerifySevAttestation, measurement: ")
+	PrintBytes(ptr[0x90: 0xbf])
+	fmt.Printf("\n")
+	fmt.Printf("VerifySevAttestation, signature: ")
+	PrintBytes(am.ReportedAttestation[0x2a0:0x2cf])
+	PrintBytes(am.ReportedAttestation[0x2d0:0x2ff])
 	fmt.Printf("\n")
 
 	r :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2a0:0x2cf])
 	s :=  new(big.Int).SetBytes(am.ReportedAttestation[0x2d0:0x2ff])
-	if !ecdsa.Verify(PK, hashOfHeader[0:], r, s) {
+	if !ecdsa.Verify(PK, hashOfHeader[0:47], r, s) {
 		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
 		return nil
 	}
