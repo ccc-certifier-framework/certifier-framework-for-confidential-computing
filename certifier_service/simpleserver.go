@@ -743,7 +743,7 @@ func ConstructProofFromSevEvidence(publicPolicyKey *certprotos.KeyMessage,
         //        "enclave-key speaks-for the measurement"  (R6)
         //    "enclave-key speaks-for the measurement" AND "the measurement is-trusted" -->
         //        "the enclave key is-trusted-for-authentication" (R1) OR
-        //        "the enclave key is-trusted-for-attestation" (R6)
+        //        "the enclave key is-trusted-for-attestation" (R7)
 
         // Debug
         fmt.Printf("ConstructProofFromSevEvidence entries %d\n", len(alreadyProved.Proved))
