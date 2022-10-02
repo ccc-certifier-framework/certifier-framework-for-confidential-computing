@@ -935,10 +935,10 @@ func TestEcc(t *testing.T) {
 	for i := 0; i < 48; i++ {
 		ttt[i] = byte(i)
 	}
-	fmt.Printf("One: ")
+	fmt.Printf("One (%d): ", len(ttt[0:47]))
 	PrintBytes(ttt[0:47])
 	fmt.Printf("\n")
-	fmt.Printf("Two: ")
+	fmt.Printf("Two (%d): ", len(ttt[0:48]))
 	PrintBytes(ttt[0:48])
 	fmt.Printf("\n")
 }

@@ -1629,7 +1629,6 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 
 	// hash the userdata and compare it to the one in the report
-	// changed, hd := ptr[0x50:0x7f]
 	hd := ptr[0x50:0x80]
 
 	if am.WhatWasSaid == nil {
@@ -1642,17 +1641,14 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	fmt.Printf("Hashed user data in report: ")
 	PrintBytes(hd)
 	fmt.Printf("\n, and,")
-	// changed, PrintBytes(hashed[0:47])
 	PrintBytes(hashed[0:48])
 	fmt.Printf("\n")
 
-	// changed, if !bytes.Equal(hashed[0:47], hd[0:47]) {
 	if !bytes.Equal(hashed[0:48], hd[0:48]) {
 		fmt.Printf("VerifySevAttestation: Hash of user data is not the same as in the report\n")
 		return nil
 	}
 
-	// changed, hashOfHeader := sha512.Sum384(ptr[0:0x29f])
 	hashOfHeader := sha512.Sum384(ptr[0:0x2a0])
 
 	// Debug
@@ -1663,36 +1659,27 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	PrintBytes(ptr[0:0x360])
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, Header of report: ")
-	// changed, PrintBytes(ptr[0:0x29f])
 	PrintBytes(ptr[0:0x2a0])
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, Hashed header of report: ")
-	// changed, PrintBytes(hashOfHeader[0:47])
 	PrintBytes(hashOfHeader[0:48])
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, measurement: ")
-	// changed, PrintBytes(ptr[0x90: 0xbf])
 	PrintBytes(ptr[0x90: 0xc0])
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, signature: ")
-	// changed, PrintBytes(ptr[0x2a0:0x2cf])
 	PrintBytes(ptr[0x2a0:0x2d0])
-	// changed, PrintBytes(ptr[0x2d0:0x2ff])
 	PrintBytes(ptr[0x2d0:0x300])
 	fmt.Printf("\n")
 
-	// changed, r :=  new(big.Int).SetBytes(ptr[0x2a0:0x2cf])
-	// changed, s :=  new(big.Int).SetBytes(ptr[0x2d0:0x2ff])
 	r :=  new(big.Int).SetBytes(ptr[0x2a0:0x2d0])
 	s :=  new(big.Int).SetBytes(ptr[0x2d0:0x300])
-	// changed, if !ecdsa.Verify(PK, hashOfHeader[0:47], r, s) {
 	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
 		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
 		return nil
 	}
 
 	// return measurement if successful from am.ReportedAttestation->measurement
-	// changed, return ptr[0x90: 0xbf]
 	return ptr[0x90: 0xc0]
 }
 
