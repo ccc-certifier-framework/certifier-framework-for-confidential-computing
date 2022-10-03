@@ -955,6 +955,30 @@ func TestEcc(t *testing.T) {
 	fmt.Printf("\n")
 }
 
+func bigToLittle(stride int, in []byte) {
+	t := make([]byte, stride)
+	for i := 0; i < stride; i++ {
+		t[i] = in[stride - 1 - i]
+	}
+	for i := 0; i < stride; i++ {
+		in[i] = t[i]
+	}
+}
+
+func BigToLittleEndian(stride int, in []byte) []byte {
+	if (len(in) % stride) != 0 {
+		return nil
+	}
+	out := make([]byte, len(in))
+	for i := 0; i < len(in); i++ {
+		out[i] = in[i]
+	}
+	for i := 0; i < len(out); i += stride {
+		bigToLittle(stride, out[i:i+stride])
+	}
+	return out
+}
+
 
 // For Sev testing
 func TestEccX509(t *testing.T) {
@@ -962,7 +986,7 @@ func TestEccX509(t *testing.T) {
 	certFile := "vcek.der"
 	certDer, err := os.ReadFile(certFile)
 	if err != nil {
-		fmt.Println("can't certkey file, ", err)
+		fmt.Println("Can't read key file, ", err)
 	}
 	cert := Asn1ToX509(certDer)
 	if cert == nil {
@@ -976,4 +1000,50 @@ func TestEccX509(t *testing.T) {
 	}
 	PrintKey(k)
 	fmt.Printf("\n")
+	repFile := "guest_report.bin"
+	report, err := os.ReadFile(repFile)
+	if err != nil {
+                t.Errorf("Can't read report file\n")
+		return
+	}
+	fmt.Printf("Report (%d):\n", len(report))
+	PrintBytes(report)
+	fmt.Printf("\n")
+
+	hashOfHeader := sha512.Sum384(report[0:0x2a0])
+	fmt.Printf("hash of header (%d): ", len(hashOfHeader))
+	PrintBytes(hashOfHeader[0:48])
+	fmt.Printf("\n")
+
+	fmt.Printf("signature: ")
+	PrintBytes(report[0x2a0:0x2d0])
+	PrintBytes(report[0x2e8:0x318])
+	fmt.Printf("\n")
+
+	_, PK, err := GetEccKeysFromInternal(k)
+	if err!= nil || PK == nil {
+		t.Errorf("Can't extract key from Internal.\n")
+		return
+	}
+
+	be_r_bytes :=  BigToLittleEndian(8, report[0x2a0:0x2d0])
+	be_s_bytes :=  BigToLittleEndian(8, report[0x2e8:0x318])
+
+	fmt.Printf("signature (be): ")
+	PrintBytes(be_r_bytes)
+	PrintBytes(be_s_bytes)
+	fmt.Printf("\n")
+
+	if  be_r_bytes == nil || be_s_bytes== nil {
+		t.Errorf("Can't convert to big endian.\n")
+		return
+	}
+	r :=  new(big.Int).SetBytes(be_r_bytes)
+	s :=  new(big.Int).SetBytes(be_s_bytes)
+	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
+		fmt.Printf("Does not verify\n")
+		return
+	}
+	fmt.Printf("Verifies\n")
+	return
 }

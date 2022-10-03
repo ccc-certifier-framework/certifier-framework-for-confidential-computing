@@ -314,14 +314,19 @@ func AddNewFactsForSevEvidence(publicPolicyKey *certprotos.KeyMessage,
                 return false
         }
         plat_key := kc.Subject.Key
+        if plat_key == nil {
+                fmt.Printf("AddNewFactsForSevEvidence, bad platform key\n")
+                return false
+        }
 
         signedPolicyKeySaysMeasurementIsTrusted := findPolicyFromMeasurement(prog_m)
         if signedPolicyKeySaysMeasurementIsTrusted == nil {
                 fmt.Printf("AddNewFactsForSevEvidence, can't find measurement policy\n")
                 return false
         }
+
         signedPolicyKeySaysPlatformKeyIsTrusted := findPolicyFromKey(plat_key)
-        if signedPolicyKeySaysMeasurementIsTrusted == nil {
+        if signedPolicyKeySaysPlatformKeyIsTrusted == nil {
                 fmt.Printf("AddNewFactsForSevEvidence, can't find platform policy\n")
                 return false
         }
