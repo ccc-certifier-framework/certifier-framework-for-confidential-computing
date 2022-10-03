@@ -1697,6 +1697,10 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 
 	reversedR := LittleToBigEndian(ptr[0x2a0:0x2d0])
 	reversedS := LittleToBigEndian(ptr[0x2e8:0x318])
+	if reversedR == nil || reversedS == nil {
+		fmt.Printf("VerifySevAttestation: reversed bytes failed\n")
+		return nil
+	}
 
 	fmt.Printf("VerifySevAttestation, signature reversed:\n    ")
 	PrintBytes(reversedR)
