@@ -955,7 +955,7 @@ func TestEcc(t *testing.T) {
 	fmt.Printf("\n")
 }
 
-/*
+
 // For Sev testing
 func TestEccX509(t *testing.T) {
         fmt.Printf("\nTestECCX509\n")
@@ -977,4 +977,3 @@ func TestEccX509(t *testing.T) {
 	PrintKey(k)
 	fmt.Printf("\n")
 }
-*/

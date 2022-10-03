@@ -33,6 +33,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"errors"
+	"os"
 	"time"
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
@@ -1658,6 +1659,11 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	fmt.Printf("VerifySevAttestation, report (%x): ", len(am.ReportedAttestation))
 	PrintBytes(ptr[0:len(am.ReportedAttestation)])
 	fmt.Printf("\n")
+	outFile := "test_attestation.bin"
+	err = os.WriteFile(outFile, ptr[0:len(am.ReportedAttestation)], 0666)
+	if err != nil {
+		fmt.Printf("Write failed\n")
+	}
 	fmt.Printf("VerifySevAttestation, Header of report: ")
 	PrintBytes(ptr[0:0x2a0])
 	fmt.Printf("\n")
@@ -1672,12 +1678,14 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	PrintBytes(ptr[0x2e8:0x318])
 	fmt.Printf("\n")
 
+/*
 	r :=  new(big.Int).SetBytes(ptr[0x2a0:0x2d0])
 	s :=  new(big.Int).SetBytes(ptr[0x2e8:0x318])
 	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
 		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
 		return nil
 	}
+*/
 
 	// return measurement if successful from am.ReportedAttestation->measurement
 	return ptr[0x90: 0xc0]
