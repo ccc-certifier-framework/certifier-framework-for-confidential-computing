@@ -965,26 +965,6 @@ func bigToLittle(stride int, in []byte) {
 	}
 }
 
-func LittleToBigEndian(stride int, in []byte) []byte {
-	out := make([]byte, len(in))
-	for i := 0; i < len(in); i++ {
-		out[len(in) - 1 - i] = in[i]
-	}
-/*
-	if (len(in) % stride) != 0 {
-		return nil
-	}
-	for i := 0; i < len(in); i++ {
-		out[i] = in[i]
-	}
-	for i := 0; i < len(out); i += stride {
-		bigToLittle(stride, out[i:i+stride])
-	}
-*/
-	return out
-}
-
-
 // For Sev testing
 func TestSevSignatures(t *testing.T) {
         fmt.Printf("\nTestSevSignatures\n")
@@ -1045,8 +1025,8 @@ func TestSevSignatures(t *testing.T) {
 		return
 	}
 
-	be_r_bytes :=  LittleToBigEndian(8, report[0x2a0:0x2d0])
-	be_s_bytes :=  LittleToBigEndian(8, report[0x2e8:0x318])
+	be_r_bytes :=  LittleToBigEndian(report[0x2a0:0x2d0])
+	be_s_bytes :=  LittleToBigEndian(report[0x2e8:0x318])
 
 	fmt.Printf("signature (be):\n    ")
 	PrintBytes(be_r_bytes)

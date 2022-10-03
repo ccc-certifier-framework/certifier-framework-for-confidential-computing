@@ -1614,6 +1614,14 @@ func ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey 
 	return MakeIndirectVseClause(vcertKeyEntity, &says_verb, tcl)
 }
 
+func LittleToBigEndian(in []byte) []byte {
+	out := make([]byte, len(in))
+	for i := 0; i < len(in); i++ {
+		out[len(in) - 1 - i] = in[i]
+	}
+	return out
+}
+
 //	Returns measurement
 //	serialized is the serialized sev_attestation_message
 func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
@@ -1686,14 +1694,12 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	PrintBytes(ptr[0x2e8:0x318])
 	fmt.Printf("\n")
 
-/*
-	r :=  new(big.Int).SetBytes(ptr[0x2a0:0x2d0])
-	s :=  new(big.Int).SetBytes(ptr[0x2e8:0x318])
+	r :=  new(big.Int).SetBytes(LittleToBigEndian(ptr[0x2a0:0x2d0]))
+	s :=  new(big.Int).SetBytes(LittleToBigEndian(ptr[0x2e8:0x318]))
 	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
 		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
 		return nil
 	}
-*/
 
 	// return measurement if successful from am.ReportedAttestation->measurement
 	return ptr[0x90: 0xc0]
