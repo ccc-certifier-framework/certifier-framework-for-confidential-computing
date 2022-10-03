@@ -965,7 +965,7 @@ func bigToLittle(stride int, in []byte) {
 	}
 }
 
-func BigToLittleEndian(stride int, in []byte) []byte {
+func LittleToBigEndian(stride int, in []byte) []byte {
 	out := make([]byte, len(in))
 	for i := 0; i < len(in); i++ {
 		out[len(in) - 1 - i] = in[i]
@@ -998,13 +998,6 @@ func TestSevSignatures(t *testing.T) {
                 t.Errorf("Can't turn der into cert\n")
 		return
 	}
-	k := GetSubjectKey(cert)
-	if k == nil {
-                t.Errorf("Can't get subject Key\n")
-		return
-	}
-	PrintKey(k)
-	fmt.Printf("\n")
 	repFile := "guest_report.bin"
 	report, err := os.ReadFile(repFile)
 	if err != nil {
@@ -1026,14 +1019,26 @@ func TestSevSignatures(t *testing.T) {
 	PrintBytes(report[0x2e8:0x318])
 	fmt.Printf("\n")
 
+	k := GetSubjectKey(cert)
+	if k == nil {
+                t.Errorf("Can't get subject Key\n")
+		return
+	}
+	PrintKey(k)
+	fmt.Printf("\n")
 	_, PK, err := GetEccKeysFromInternal(k)
 	if err!= nil || PK == nil {
 		t.Errorf("Can't extract key from Internal.\n")
 		return
 	}
+	PKecc, ok := cert.PublicKey.(*ecdsa.PublicKey)
+	if !ok {
+		t.Errorf("Can't get key from cert.\n")
+		return
+	}
 
-	be_r_bytes :=  BigToLittleEndian(8, report[0x2a0:0x2d0])
-	be_s_bytes :=  BigToLittleEndian(8, report[0x2e8:0x318])
+	be_r_bytes :=  LittleToBigEndian(8, report[0x2a0:0x2d0])
+	be_s_bytes :=  LittleToBigEndian(8, report[0x2e8:0x318])
 
 	fmt.Printf("signature (be):\n    ")
 	PrintBytes(be_r_bytes)
@@ -1055,7 +1060,7 @@ func TestSevSignatures(t *testing.T) {
 	fmt.Print(s)
 	fmt.Printf("\n")
 
-	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
+	if !ecdsa.Verify(PKecc, hashOfHeader[0:48], r, s) {
 		fmt.Printf("Does NOT verify\n")
 		return
 	}
