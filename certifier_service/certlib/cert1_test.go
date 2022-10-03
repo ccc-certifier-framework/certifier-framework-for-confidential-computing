@@ -954,3 +954,27 @@ func TestEcc(t *testing.T) {
 	PrintBytes(ttt[0:48])
 	fmt.Printf("\n")
 }
+
+/*
+// For Sev testing
+func TestEccX509(t *testing.T) {
+        fmt.Printf("\nTestECCX509\n")
+	certFile := "vcek.der"
+	certDer, err := os.ReadFile(certFile)
+	if err != nil {
+		fmt.Println("can't certkey file, ", err)
+	}
+	cert := Asn1ToX509(certDer)
+	if cert == nil {
+                t.Errorf("Can't turn der into cert\n")
+		return
+	}
+	k := GetSubjectKey(cert)
+	if k == nil {
+                t.Errorf("Can't get subject Key\n")
+		return
+	}
+	PrintKey(k)
+	fmt.Printf("\n")
+}
+*/

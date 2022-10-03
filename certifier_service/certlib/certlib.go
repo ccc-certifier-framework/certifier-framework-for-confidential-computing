@@ -1640,7 +1640,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	// Debug
 	fmt.Printf("Hashed user data in report: ")
 	PrintBytes(hd)
-	fmt.Printf("\n, and,")
+	fmt.Printf(", and,\n")
 	PrintBytes(hashed[0:48])
 	fmt.Printf("\n")
 
