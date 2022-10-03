@@ -988,6 +988,7 @@ func LittleToBigEndian(stride int, in []byte) []byte {
 // For Sev testing
 func TestSevSignatures(t *testing.T) {
         fmt.Printf("\nTestSevSignatures\n")
+
 	certFile := "vcek.der"
 	certDer, err := os.ReadFile(certFile)
 	if err != nil {
@@ -1004,19 +1005,23 @@ func TestSevSignatures(t *testing.T) {
                 t.Errorf("Can't read report file\n")
 		return
 	}
-	fmt.Printf("Report (%d):\n", len(report))
+
+	fmt.Printf("Report (%x):\n", len(report))
 	PrintBytes(report)
 	fmt.Printf("\n")
-
-	hashOfHeader := sha512.Sum384(report[0:0x2a0])
-	fmt.Printf("hash of header (%d): ", len(hashOfHeader))
-	PrintBytes(hashOfHeader[0:48])
+	fmt.Printf("Header (%x):\n", 0x2a0)
+	PrintBytes(report[0:0x2a0])
 	fmt.Printf("\n")
-
 	fmt.Printf("signature:\n    ")
 	PrintBytes(report[0x2a0:0x2d0])
 	fmt.Printf("\n    ")
 	PrintBytes(report[0x2e8:0x318])
+	fmt.Printf("\n")
+
+	hashOfHeader := sha512.Sum384(report[0:0x2a0])
+
+	fmt.Printf("hash of header (%d): ", len(hashOfHeader))
+	PrintBytes(hashOfHeader[0:48])
 	fmt.Printf("\n")
 
 	k := GetSubjectKey(cert)
@@ -1024,13 +1029,16 @@ func TestSevSignatures(t *testing.T) {
                 t.Errorf("Can't get subject Key\n")
 		return
 	}
+
 	PrintKey(k)
 	fmt.Printf("\n")
+
 	_, PK, err := GetEccKeysFromInternal(k)
 	if err!= nil || PK == nil {
 		t.Errorf("Can't extract key from Internal.\n")
 		return
 	}
+
 	PKecc, ok := cert.PublicKey.(*ecdsa.PublicKey)
 	if !ok {
 		t.Errorf("Can't get key from cert.\n")
@@ -1046,7 +1054,7 @@ func TestSevSignatures(t *testing.T) {
 	PrintBytes(be_s_bytes)
 	fmt.Printf("\n")
 
-	if  be_r_bytes == nil || be_s_bytes== nil {
+	if  be_r_bytes == nil || be_s_bytes == nil {
 		t.Errorf("Can't convert to big endian.\n")
 		return
 	}
