@@ -460,6 +460,8 @@ func InternalPublicFromPrivateKey(privateKey *certprotos.KeyMessage) *certprotos
 		kt = "rsa-1024-public"
 	} else if privateKey.GetKeyType() == "rsa-2048-private" {
 		kt = "rsa-2048-public"
+	} else if privateKey.GetKeyType() == "rsa-4096-private" {
+		kt = "rsa-4096-public"
 	} else {
 		return nil
 	}
@@ -500,6 +502,8 @@ func MakeVseRsaKey(n int) *certprotos.KeyMessage {
 		kf = "rsa-1024-private"
 	} else if n == 2048 {
 		kf = "rsa-2048-private"
+	} else if n == 4096 {
+		kf = "rsa-4096-private"
 	} else {
 		return nil
 	}
@@ -652,6 +656,7 @@ func SameKey(k1 *certprotos.KeyMessage, k2 *certprotos.KeyMessage) bool {
 		return false
 	}
 	if k1.GetKeyType() == "rsa-2048-private"  || k1.GetKeyType() == "rsa-2048-public" ||
+		k1.GetKeyType() == "rsa-4096-private"  || k1.GetKeyType() == "rsa-4096-public" ||
 		k1.GetKeyType() == "rsa-1024-private"  || k1.GetKeyType() == "rsa-1024-public" {
 		return bytes.Equal(k1.RsaKey.PublicModulus, k2.RsaKey.PublicModulus) &&
 			bytes.Equal(k1.RsaKey.PublicExponent, k2.RsaKey.PublicExponent)
@@ -1061,6 +1066,9 @@ func MakeSignedClaim(s *certprotos.ClaimMessage, k *certprotos.KeyMessage) *cert
 		sm.SigningAlgorithm =  &ss
 	} else if k.GetKeyType() == "rsa-2048-private" {
 		var ss string = "rsa-2048-sha256-pkcs-sign"
+		sm.SigningAlgorithm =  &ss
+	} else if k.GetKeyType() == "rsa-4096-private" {
+		var ss string = "rsa-4096-sha384-pkcs-sign"
 		sm.SigningAlgorithm =  &ss
 	} else {
 		return nil
