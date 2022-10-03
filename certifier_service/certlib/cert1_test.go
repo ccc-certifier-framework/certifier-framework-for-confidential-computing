@@ -955,17 +955,8 @@ func TestEcc(t *testing.T) {
 	fmt.Printf("\n")
 }
 
-func bigToLittle(stride int, in []byte) {
-	t := make([]byte, stride)
-	for i := 0; i < stride; i++ {
-		t[i] = in[stride - 1 - i]
-	}
-	for i := 0; i < stride; i++ {
-		in[i] = t[i]
-	}
-}
-
-// For Sev testing
+// For Sev testing --- deprecated
+/*
 func TestSevSignatures(t *testing.T) {
         fmt.Printf("\nTestSevSignatures\n")
 
@@ -1055,3 +1046,4 @@ func TestSevSignatures(t *testing.T) {
 	fmt.Printf("VERIFIES\n")
 	return
 }
+*/
