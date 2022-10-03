@@ -966,23 +966,28 @@ func bigToLittle(stride int, in []byte) {
 }
 
 func BigToLittleEndian(stride int, in []byte) []byte {
+	out := make([]byte, len(in))
+	for i := 0; i < len(in); i++ {
+		out[len(in) - 1 - i] = in[i]
+	}
+/*
 	if (len(in) % stride) != 0 {
 		return nil
 	}
-	out := make([]byte, len(in))
 	for i := 0; i < len(in); i++ {
 		out[i] = in[i]
 	}
 	for i := 0; i < len(out); i += stride {
 		bigToLittle(stride, out[i:i+stride])
 	}
+*/
 	return out
 }
 
 
 // For Sev testing
-func TestEccX509(t *testing.T) {
-        fmt.Printf("\nTestECCX509\n")
+func TestSevSignatures(t *testing.T) {
+        fmt.Printf("\nTestSevSignatures\n")
 	certFile := "vcek.der"
 	certDer, err := os.ReadFile(certFile)
 	if err != nil {
@@ -1015,8 +1020,9 @@ func TestEccX509(t *testing.T) {
 	PrintBytes(hashOfHeader[0:48])
 	fmt.Printf("\n")
 
-	fmt.Printf("signature: ")
+	fmt.Printf("signature:\n    ")
 	PrintBytes(report[0x2a0:0x2d0])
+	fmt.Printf("\n    ")
 	PrintBytes(report[0x2e8:0x318])
 	fmt.Printf("\n")
 
@@ -1029,8 +1035,9 @@ func TestEccX509(t *testing.T) {
 	be_r_bytes :=  BigToLittleEndian(8, report[0x2a0:0x2d0])
 	be_s_bytes :=  BigToLittleEndian(8, report[0x2e8:0x318])
 
-	fmt.Printf("signature (be): ")
+	fmt.Printf("signature (be):\n    ")
 	PrintBytes(be_r_bytes)
+	fmt.Printf("\n    ")
 	PrintBytes(be_s_bytes)
 	fmt.Printf("\n")
 
@@ -1040,10 +1047,18 @@ func TestEccX509(t *testing.T) {
 	}
 	r :=  new(big.Int).SetBytes(be_r_bytes)
 	s :=  new(big.Int).SetBytes(be_s_bytes)
+
+	fmt.Printf("r: ")
+	fmt.Print(r)
+	fmt.Printf("\n")
+	fmt.Printf("s: ")
+	fmt.Print(s)
+	fmt.Printf("\n")
+
 	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
-		fmt.Printf("Does not verify\n")
+		fmt.Printf("Does NOT verify\n")
 		return
 	}
-	fmt.Printf("Verifies\n")
+	fmt.Printf("VERIFIES\n")
 	return
 }
