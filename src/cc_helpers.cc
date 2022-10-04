@@ -1358,9 +1358,9 @@ void server_dispatch(const string& host_name, int port,
 #endif
 
   // Verify peer
-  // SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
   // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
-  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+  //SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 
   unsigned int len = 0;
   while (1) {
@@ -1417,154 +1417,11 @@ secure_authenticated_channel::~secure_authenticated_channel() {
   peer_id_.clear();
 }
 
-// Generates client challenge and checks response.
-bool secure_authenticated_channel::client_auth_server() {
-  bool ret = true;
-  int res = 0;
-
-  int size_nonce = 64;
-  byte nonce[size_nonce];
-  int size_sig = 256;
-  string sig_str;
-
-  X509* x = nullptr;
-  EVP_PKEY* client_auth_public_key = nullptr;
-  EVP_PKEY* subject_pkey = nullptr;
-  // Todo: Add other key types
-  RSA* r = nullptr;
-
-  // prepare for verify
-  X509_STORE* cs = X509_STORE_new();
-  X509_STORE_add_cert(cs, root_cert_);
-  store_ctx_ = X509_STORE_CTX_new();
-
-  // get cert
-  string asn_cert;
-  if (sized_ssl_read(ssl_, &asn_cert) < 0) {
-    ret = false;
-    goto done;
-  }
-
-  peer_cert_ = X509_new();
-  if (!asn1_to_x509(asn_cert, peer_cert_)) {
-    ret = false;
-    goto done;
-  }
-
-  if (!extract_id_from_cert(peer_cert_, &peer_id_)) {
-    ret = false;
-    goto done;
-  }
-
-  subject_pkey = X509_get_pubkey(peer_cert_);
-  if (subject_pkey == nullptr) {
-    ret = false;
-    goto done;
-  }
-  r = EVP_PKEY_get1_RSA(subject_pkey);
-  if (r == nullptr) {
-    ret = false;
-    goto done;
-  }
-
-  memset(nonce, 0, 64);
-  if (!get_random(64 * 8, nonce)) {
-    ret = false;
-    goto done;
-  }
-  SSL_write(ssl_, nonce, size_nonce);
-
-  // get signature
-  size_sig = sized_ssl_read(ssl_, &sig_str);
-  if (size_sig < 0 ) {
-    ret = false;
-    goto done;
-  }
-
-  // verify chain
-  res = X509_STORE_CTX_init(store_ctx_, cs, peer_cert_, nullptr);
-  X509_STORE_CTX_set_cert(store_ctx_, peer_cert_);
-  res = X509_verify_cert(store_ctx_);
-  if (res != 1) {
-    ret = false;
-    goto done;
-  }
-
-  // verify signature
-  if (!rsa_sha256_verify(r, size_nonce, nonce,
-          sig_str.size(), (byte*)sig_str.data())) {
-    ret = false;
-    goto done;
-  }
-
-#ifdef DEBUG
-  printf("client_auth_server succeeds\n");
-#endif
-
-done:
-  if (r != nullptr) {
-    RSA_free(r);
-    r = nullptr;
-  }
-  if (subject_pkey != nullptr)
-    EVP_PKEY_free(subject_pkey);
-  if (store_ctx_ != nullptr) {
-    X509_STORE_CTX_free(store_ctx_);
-    store_ctx_ = nullptr;
-  }
-
-  return ret;
-}
-
-// Responds to Server challenge
-// We wouldn't need this if mutual auth worked
-bool secure_authenticated_channel::client_auth_client() {
-  if (ssl_ == nullptr)
-    return false;
-
-  // private key should have been initialized
-  bool ret = true;
-  int size_nonce = 128;
-  byte nonce[size_nonce];
-  int size_sig = 256;
-  byte sig[size_sig];
-  // Todo: Add other key types
-  RSA* r = nullptr;
-
-  // send cert
-  SSL_write(ssl_, private_key_.certificate().data(),
-      private_key_.certificate().size());
-  size_nonce = SSL_read(ssl_, nonce, size_nonce);
-
-  // Todo: Add other key types
-  r = RSA_new();
-  if (!key_to_RSA(private_key_, r)) {
-    ret = false;
-    goto done;
-  }
-
-  if (!rsa_sha256_sign(r, size_nonce, nonce, &size_sig, sig)) {
-    ret = false;
-    goto done;
-  }
-  SSL_write(ssl_, sig, size_sig);
-#ifdef DEBUG
-  printf("client_auth_client succeeds\n");
-#endif
-
-done:
-  if (r != nullptr) {
-    RSA_free(r);
-    r = nullptr;
-  }
-  return ret;
-}
-
 bool secure_authenticated_channel::init_client_ssl(const string& host_name, int port,
         string& asn1_root_cert, key_message& private_key, const string& auth_cert) {
 
-  SSL_load_error_strings();
   OPENSSL_init_ssl(0, NULL);
+  SSL_load_error_strings();
 
   private_key_.CopyFrom(private_key);
   asn1_root_cert_.assign((char*)asn1_root_cert.data(), asn1_root_cert.size());
@@ -1574,17 +1431,12 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
     return false;
   }
 
-  int sock = -1;
-  if (!open_client_socket(host_name, port, &sock_)) {
-    printf("Can't open client socket\n");
-    return false;
-  }
-
   const SSL_METHOD* method = TLS_client_method();
   if(method == nullptr) {
     printf("Can't get method\n");
     return false;
   }
+
   ssl_ctx_ = SSL_CTX_new(method);
   if(ssl_ctx_ == nullptr) {
     printf("Can't get SSL_CTX\n");
@@ -1609,14 +1461,19 @@ printf("ADDING\n");
   const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
   SSL_CTX_set_options(ssl_ctx_, flags);
 
-  ssl_ = SSL_new(ssl_ctx_);
-  SSL_set_fd(ssl_, sock_);
-  int res = SSL_set_cipher_list(ssl_, "TLS_AES_256_GCM_SHA384");  // Change?
-
   if (!load_client_certs_and_key()) {
     printf("load_client_certs_and_key failed\n");
     return false;
   }
+
+  if (!open_client_socket(host_name, port, &sock_)) {
+    printf("Can't open client socket\n");
+    return false;
+  }
+
+  ssl_ = SSL_new(ssl_ctx_);
+  SSL_set_fd(ssl_, sock_);
+  int res = SSL_set_cipher_list(ssl_, "TLS_AES_256_GCM_SHA384");  // Change?
 
   // SSL_connect - initiate the TLS/SSL handshake with an TLS/SSL server
   int ret = SSL_connect(ssl_);
@@ -1642,9 +1499,6 @@ printf("ADDING\n");
     printf("Client: No peer cert presented in nego\n");
   }
 #endif
-  if (!client_auth_client()) {
-    printf("client_auth_client failed\n");
-  }
   channel_initialized_ = true;
   return true;
 }
@@ -1753,10 +1607,6 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
     }
 #endif
 
-  if (!client_auth_server()) {
-    printf("Client auth failed at server\n");
-    return;
-  }
   channel_initialized_ = true;
   func(*this);
   return;

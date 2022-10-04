@@ -131,8 +131,6 @@ void print_ssl_error(int code);
 // The functions below are used by BORING_SSL
 // Eventually they will be deprecated
 #if 1
-bool client_auth_server(X509* x509_root_cert, SSL* ssl);
-bool client_auth_client(X509* x509_root_cert, key_message& private_key, SSL* ssl);
 bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx);
 bool init_client_ssl(X509* x509_root_cert, key_message& private_key,
     const string& host_name, int port, int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl);
@@ -158,8 +156,6 @@ public:
   secure_authenticated_channel(string& role);  // role is client or server
   ~secure_authenticated_channel();
 
-  bool client_auth_server();
-  bool client_auth_client();
   bool load_client_certs_and_key();
 
   bool init_client_ssl(const string& host_name, int port, string& asn1_root_cert,
