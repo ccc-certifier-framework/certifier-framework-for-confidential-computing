@@ -1449,7 +1449,6 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
 #if 0
   X509* x509_auth_cert = X509_new();
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
-printf("ADDING\n");
     X509_STORE_add_cert(cs, x509_auth_cert);
   }
 #endif
