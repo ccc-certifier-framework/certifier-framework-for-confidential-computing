@@ -1358,9 +1358,9 @@ void server_dispatch(const string& host_name, int port,
 #endif
 
   // Verify peer
-  // SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
   // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
-  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+  //SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 
   unsigned int len = 0;
   while (1) {
@@ -1563,8 +1563,8 @@ done:
 bool secure_authenticated_channel::init_client_ssl(const string& host_name, int port,
         string& asn1_root_cert, key_message& private_key, const string& auth_cert) {
 
-  SSL_load_error_strings();
   OPENSSL_init_ssl(0, NULL);
+  SSL_load_error_strings();
 
   private_key_.CopyFrom(private_key);
   asn1_root_cert_.assign((char*)asn1_root_cert.data(), asn1_root_cert.size());
@@ -1574,17 +1574,12 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
     return false;
   }
 
-  int sock = -1;
-  if (!open_client_socket(host_name, port, &sock_)) {
-    printf("Can't open client socket\n");
-    return false;
-  }
-
   const SSL_METHOD* method = TLS_client_method();
   if(method == nullptr) {
     printf("Can't get method\n");
     return false;
   }
+
   ssl_ctx_ = SSL_CTX_new(method);
   if(ssl_ctx_ == nullptr) {
     printf("Can't get SSL_CTX\n");
@@ -1609,14 +1604,19 @@ printf("ADDING\n");
   const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
   SSL_CTX_set_options(ssl_ctx_, flags);
 
-  ssl_ = SSL_new(ssl_ctx_);
-  SSL_set_fd(ssl_, sock_);
-  int res = SSL_set_cipher_list(ssl_, "TLS_AES_256_GCM_SHA384");  // Change?
-
   if (!load_client_certs_and_key()) {
     printf("load_client_certs_and_key failed\n");
     return false;
   }
+
+  if (!open_client_socket(host_name, port, &sock_)) {
+    printf("Can't open client socket\n");
+    return false;
+  }
+
+  ssl_ = SSL_new(ssl_ctx_);
+  SSL_set_fd(ssl_, sock_);
+  int res = SSL_set_cipher_list(ssl_, "TLS_AES_256_GCM_SHA384");  // Change?
 
   // SSL_connect - initiate the TLS/SSL handshake with an TLS/SSL server
   if (SSL_connect(ssl_) == 0) {
