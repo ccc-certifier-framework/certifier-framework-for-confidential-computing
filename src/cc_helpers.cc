@@ -1619,8 +1619,10 @@ printf("ADDING\n");
   }
 
   // SSL_connect - initiate the TLS/SSL handshake with an TLS/SSL server
-  if (SSL_connect(ssl_) == 0) {
-    printf("ssl_connect failed\n");
+  int ret = SSL_connect(ssl_);
+  if (ret <= 0) {
+    int err = SSL_get_error(ssl_, ret);
+    printf("ssl_connect failed, err: %d\n", err);
     return false;
   }
 
