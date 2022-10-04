@@ -1223,7 +1223,7 @@ bool extract_id_from_cert(X509* in, string* out) {
     return false;
   X509_NAME* sname = X509_get_subject_name(in);
   char name_buf[2048];
-  int n = X509_NAME_get_text_by_NID(sname, NID_commonName, name_buf, 2048);
+  int n = X509_NAME_get_text_by_NID(sname, NID_organizationName, name_buf, 2048);
   if (n <= 0)
     return false;
   out->assign((char*)name_buf, strlen(name_buf)+1);
@@ -1334,7 +1334,7 @@ void server_dispatch(const string& host_name, int port,
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
   X509_STORE_add_cert(cs, root_cert);
 
-#if 0
+#if 1
   X509* x509_auth_cert = X509_new();
   if (asn1_to_x509(private_key_cert, x509_auth_cert)) {
     X509_STORE_add_cert(cs, x509_auth_cert);
@@ -1446,7 +1446,7 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
   X509_STORE* cs = SSL_CTX_get_cert_store(ssl_ctx_);
   X509_STORE_add_cert(cs, root_cert_);
 
-#if 0
+#if 1
   X509* x509_auth_cert = X509_new();
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
     X509_STORE_add_cert(cs, x509_auth_cert);
