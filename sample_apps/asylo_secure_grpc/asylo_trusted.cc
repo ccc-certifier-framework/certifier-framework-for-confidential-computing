@@ -318,9 +318,8 @@ void asylo_server_dispatch(const string& host_name, int port,
   SSL_CTX_set_options(ctx, flags);
 
   // Verify peer
-  // SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
   // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
-  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 
   unsigned int len = 0;
   while (1) {
