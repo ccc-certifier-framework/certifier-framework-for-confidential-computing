@@ -1858,6 +1858,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				fmt.Printf("InitProvedStatements: Can't convert cert\n")
 				return false
 			}
+
 			subjKey := GetSubjectKey(cert)
 			if subjKey == nil {
 				fmt.Printf("InitProvedStatements: Can't get subject key\n")
@@ -1875,19 +1876,44 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				fmt.Printf("InitProvedStatements: signerKey is nil\n")
 				return false
 			}
+
 			// verify x509 signature
 			certPool := x509.NewCertPool()
-			// Todo: Fix and add intermediates.
-			// Maybe use func (c *Certificate) CheckSignatureFrom(parent *Certificate) error
 			certPool.AddCert(cert)
 			opts := x509.VerifyOptions{
 				Roots:   certPool,
 			}
-
 			if _, err := cert.Verify(opts); err != nil {
 				fmt.Printf("InitProvedStatements: Cert.Vertify fails\n")
 				return false
 			}
+
+			/*
+			// This code will replace the above eventually
+			if signerKey.GetName() == subjKey.GetKeyName {
+				err := cert.CheckSignatureFrom(cert)
+				if err != nil {
+					fmt.Printf("InitProvedStatements: parent signature check fails\n")
+					return false
+				}
+			} else {
+				if i <= 0 {
+					fmt.Printf("InitProvedStatements: No parent cert\n")
+					return false
+				}
+				parentCert := Asn1ToX509(evidenceList[i - 1].SerializedEvidence)
+				if parentCert == nil {
+					fmt.Printf("InitProvedStatements: Can't convert parent cert\n")
+					return false
+				}
+				err := cert.CheckSignatureFrom(parentCert)
+				if err != nil {
+					fmt.Printf("InitProvedStatements: parent signature check fails\n")
+					return false
+				}
+			}
+			 */
+
 			cl := ConstructVseAttestationFromCert(subjKey, signerKey)
 			if cl == nil {
 				fmt.Printf("InitProvedStatements: Can't construct Attestation from cert\n")
