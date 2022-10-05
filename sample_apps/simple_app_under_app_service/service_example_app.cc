@@ -187,11 +187,15 @@ int main(int an, char** av) {
       ret = 1;
     }
   } else if (FLAGS_operation == "run-app-as-client") {
+    string my_role("client");
+    secure_authenticated_channel channel(my_role);
+
     if (!app_trust_data->warm_restart()) {
       printf("warm-restart failed\n");
       ret = 1;
       goto done;
     }
+
     printf("running as client\n");
     if (!app_trust_data->cc_auth_key_initialized_ ||
         !app_trust_data->cc_policy_info_initialized_) {
@@ -199,8 +203,7 @@ int main(int an, char** av) {
       ret = 1;
       goto done;
     }
-    string my_role("client");
-    secure_authenticated_channel channel(my_role);
+
     if (!channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
           app_trust_data->serialized_policy_cert_,
           app_trust_data->private_auth_key_,
