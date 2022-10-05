@@ -35,8 +35,6 @@ import (
         certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
 )
 
-var simpleServerPath = flag.String("path", "./SimpleServerFiles",
-        "path to Server files")
 var serverHost = flag.String("host", "localhost", "address for client/server")
 var serverPort = flag.String("port", "8123", "port for client/server")
 

@@ -137,7 +137,6 @@ Step 9: Start the Certifier Service
 ```bash
 cd $EXAMPLE_DIR/service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
---path=$EXAMPLE_DIR/service \
 --policyFile=policy.bin --readPolicy=true
 ```
 

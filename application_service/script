@@ -62,7 +62,6 @@ cp policy_key_file.bin policy_cert_file.bin policy.bin attest_key_file.bin platf
 # run certifier_service
 cd $APP_SERVICE_DIR/service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-  --path=$APP_SERVICE_DIR/service \
   --policyFile=policy.bin --readPolicy=true
 
 # run app service

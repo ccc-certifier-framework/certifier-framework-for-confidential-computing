@@ -155,7 +155,6 @@ Step 14: Start the Certifier Service for the built application service
   In a new terminal window:
     cd $APP_SERVICE_DIR/service
     $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-      --path=$SERVICE_EXAMPLE_DIR/service \
       --policyFile=policy.bin --readPolicy=true
 
 
@@ -189,7 +188,6 @@ Under the sev enclave:
 Step 16: In a new window, run the Certifier Service for simple_app_under_app_service
     cd $SERVICE_EXAMPLE_DIR/service
     $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-      --path=$SERVICE_EXAMPLE_DIR/service \
       --policyFile=policy.bin --readPolicy=true
 
 
