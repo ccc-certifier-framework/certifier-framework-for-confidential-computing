@@ -136,7 +136,6 @@ Step 9: Provision the service files
 Step 10: Start certifier service
     cd $APP_SERVICE_DIR/service
     $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-      --path=$APP_SERVICE_DIR/service \
       --policyFile=policy.bin --readPolicy=true
 
 

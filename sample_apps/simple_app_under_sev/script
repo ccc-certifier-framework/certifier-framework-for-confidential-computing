@@ -73,7 +73,6 @@ go build simpleserver.go
 #run server
 cd $SEV_EXAMPLE_DIR/service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-      --path=$SEV_EXAMPLE_DIR/service \
       --policyFile=policy.bin --readPolicy=true
 
 # initialize client app
