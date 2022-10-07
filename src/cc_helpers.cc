@@ -1362,12 +1362,12 @@ void server_dispatch(const string& host_name, int port,
   // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
   //SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 
-  unsigned int len = 0;
   while (1) {
 #ifdef DEBUG
     printf("at accept\n");
 #endif
     struct sockaddr_in addr;
+    unsigned int len = sizeof(sockaddr_in);
     int client = accept(sock, (struct sockaddr*)&addr, &len);
     string my_role("server");
     secure_authenticated_channel nc(my_role);
