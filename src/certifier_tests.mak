@@ -18,8 +18,6 @@ endif
 #GOOGLE_INCLUDE=/usr/local/include/google
 #endif
 
-ENABLE_SEV=1
-
 LOCAL_LIB=/usr/local/lib
 
 ifndef TARGET_MACHINE_TYPE

@@ -152,6 +152,8 @@ TEST (test_x_509_sign, test_x_509_sign) {
   EXPECT_TRUE(test_x_509_sign(FLAGS_print_all));
 }
 
+// sev tests
+#ifdef SEV_SNP
 extern bool test_sev_certs(bool print_all);
 TEST (test_sev_certs, test_sev_certs) {
   EXPECT_TRUE(test_sev_certs(FLAGS_print_all));
@@ -167,8 +169,6 @@ TEST (test_sev_request, test_sev_request) {
   EXPECT_TRUE(test_sev_request(FLAGS_print_all));
 }
 
-// sev tests
-#ifdef SEV_SNP
 extern bool test_sev(bool);
 TEST (test_sev, test_sev) {
   EXPECT_TRUE(test_sev(FLAGS_print_all));
