@@ -33,6 +33,7 @@ import (
         "github.com/golang/protobuf/proto"
         certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
         certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
+        //oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 )
 
 var serverHost = flag.String("host", "localhost", "address for client/server")
