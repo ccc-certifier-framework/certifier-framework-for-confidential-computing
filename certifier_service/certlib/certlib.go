@@ -37,6 +37,7 @@ import (
 	"time"
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 )
 
 type PredicateDominance struct {
@@ -1771,17 +1772,17 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
 			// from the return values.  Then add it to proved statements
-			if i < 1  || evidenceList[i-1].GetEvidenceType != "pem-cert-chain" {
+			if i < 1  || evidenceList[i-1].GetEvidenceType() != "pem-cert-chain" {
 				fmt.Printf("InitProvedStatements: missing cert chain in oe evidence\n")
 				return false
 			}
-			serializedUD, m, err  := OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
+			serializedUD, m, err  := oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
 				evidenceList[i-1].SerializedEvidence)
 			if err != nil || serializedUD == nil || m == nil {
 				return false
 			}
 			ud := certprotos.AttestationUserData{}
-			err := proto.Unmarshal(serializedUD, &ud)
+			err = proto.Unmarshal(serializedUD, &ud)
 			if err != nil {
 				return false
 			}

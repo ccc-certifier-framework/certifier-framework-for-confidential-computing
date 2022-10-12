@@ -267,6 +267,45 @@ func AddFactFromSignedClaim(signedClaim *certprotos.SignedClaimMessage,
 }
 
 func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage, alreadyProved *certprotos.ProvedStatements) bool {
+        // At this point, the already_proved should be
+        //    "policyKey is-trusted"
+        //    "The enclave-key speaks-for the measurement"
+        // Add
+        //    "The policy-key says the measurement is-trusted"
+	if len alreadyProved.Proved < 2 {
+                fmt.Printf("AddNewFactsForOeEvidence, too few initial facts\n")
+                return false
+	}
+        mc := alreadyProved.Proved[1]
+        if mc.Subject == nil || mc.Verb == nil || mc.Clause == nil {
+                fmt.Printf("AddNewFactsForOeEvidence, bad measurement evidence(1)\n")
+                return false
+        }
+        if mc.Clause.Object == nil {
+                fmt.Printf("AddNewFactsForOeEvidence, bad measurement evidence (2)\n")
+                return false
+        }
+        if mc.Clause.Object.GetEntityType() != "measurement" {
+                fmt.Printf("AddNewFactsForOeEvidence, bad measurement evidence (3)\n")
+                return false
+        }
+        prog_m := mc.Clause.Object.Measurement
+        if prog_m == nil {
+                fmt.Printf("AddNewFactsForOeEvidence, bad measurement\n")
+                return false
+        }
+
+        signedPolicyKeySaysMeasurementIsTrusted := findPolicyFromMeasurement(prog_m)
+        if signedPolicyKeySaysMeasurementIsTrusted == nil {
+                fmt.Printf("AddNewFactsForOeEvidence, can't find measurement policy\n")
+                return false
+        }
+
+        if !AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
+                fmt.Printf("AddNewFactsForOeEvidence, Couldn't AddFactFromSignedClaim, Error 1\n")
+                return false
+        }
+
         return true
 }
 
@@ -283,6 +322,10 @@ func AddNewFactsForSevEvidence(publicPolicyKey *certprotos.KeyMessage,
         //    "The policy-key says the measurement is-trusted"
 
         // Get measurement from  "VCEK says the enclave-key speaks-for the measurement"
+	if len alreadyProved.Proved < 5 {
+                fmt.Printf("AddNewFactsForSevEvidence, too few initial facts\n")
+                return false
+	}
         mc := alreadyProved.Proved[4]
         if mc.Subject == nil || mc.Verb == nil || mc.Clause == nil {
                 fmt.Printf("AddNewFactsForSevEvidence, bad measurement evidence(1)\n")
