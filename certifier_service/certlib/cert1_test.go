@@ -955,6 +955,31 @@ func TestEcc(t *testing.T) {
 	fmt.Printf("\n")
 }
 
+func TestPEM(t *testing.T) {
+        fmt.Printf("\nTestPEM\n")
+
+	certFile := "vse.crt"
+	certPem, err := os.ReadFile(certFile)
+	if err != nil  || certPem == nil {
+                t.Errorf("Can't read pem cert file\n")
+		return
+	}
+	stripped := StripPemHeaderAndTrailer(string(certPem))
+	if stripped == nil {
+                t.Errorf("No headers?\n")
+		return
+	}
+	fmt.Printf("PEM: %s\n", *stripped)
+	k := KeyFromPemFormat(*stripped)
+	if  k == nil {
+                t.Errorf("Can't retrieve key from pem cert\n")
+		return
+	}
+	fmt.Printf("Key from pem cert\n")
+	PrintKey(k)
+	fmt.Printf("\n")
+}
+
 // For Sev testing --- deprecated
 /*
 func TestSevSignatures(t *testing.T) {

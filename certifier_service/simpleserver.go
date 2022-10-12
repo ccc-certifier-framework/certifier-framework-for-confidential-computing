@@ -270,7 +270,6 @@ func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage,
         // At this point, the already_proved should be
         //    "policyKey is-trusted"
         //    "The platform-key says the enclave-key speaks-for the measurement"
-	//	Note: Currently is only "enclave-key speaks-for the measurement"
         // Add
         //    "The policy-key says the measurement is-trusted"
         //    "The policy-key says the platform-key is-trusted-for-attestation"
@@ -554,27 +553,43 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
         // At this point, the evidence should be
         //      "policyKey is-trusted"
         //      "platform-key says enclaveKey speaks-for measurement
-	//	Note:  Currently it only says enclaveKey speaks-for measurement but is should be changed
         //      "policyKey says measurement is-trusted"
         //      "policyKey says platformKey is-trusted-for-attestation"
 
-	if len(alreadyProved.Proved) < 3 {
+	if len(alreadyProved.Proved) < 4 {
+		fmt.Printf("ConstructProofFromOeEvidence: too few statements\n")
 		return nil, nil
 	}
 	policyKeyIsTrusted :=  alreadyProved.Proved[0]
-	enclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[1]
+	platformSaysEnclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[1]
+	if platformSaysEnclaveKeySpeaksForMeasurement.Clause == nil {
+		fmt.Printf("ConstructProofFromOeEvidence: can't get enclaveKeySpeaksForMeasurement\n")
+		return nil, nil
+	}
+	enclaveKeySpeaksForMeasurement :=  platformSaysEnclaveKeySpeaksForMeasurement.Clause
 	policyKeySaysMeasurementIsTrusted :=  alreadyProved.Proved[2]
 	if policyKeyIsTrusted == nil || enclaveKeySpeaksForMeasurement == nil ||
 			policyKeySaysMeasurementIsTrusted == nil {
+		fmt.Printf("ConstructProofFromOeEvidence: Error 4\n")
 		return nil, nil
 	}
+
+	policyKeySaysPlatformKeyIsTrustedForAttestation := alreadyProved.Proved[3]
+	if policyKeySaysPlatformKeyIsTrustedForAttestation.Clause == nil {
+		fmt.Printf("ConstructProofFromOeEvidence: Can't get platformKeyIsTrustedForAttestation\n")
+		return nil, nil
+	}
+	platformKeyIsTrustedForAttestation := policyKeySaysPlatformKeyIsTrustedForAttestation.Clause
+
         proof := &certprotos.Proof{}
         r1 := int32(1)
         r3 := int32(3)
+        r6 := int32(6)
         r7 := int32(7)
 
 	enclaveKey := enclaveKeySpeaksForMeasurement.Subject
 	if enclaveKey == nil || enclaveKey.GetEntityType() != "key" {
+		fmt.Printf("ConstructProofFromOeEvidence: Bad enclave key\n")
 		return nil, nil
 	}
         var toProve *certprotos.VseClause = nil
@@ -588,6 +603,7 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
 
 	measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
 	if measurementIsTrusted == nil {
+		fmt.Printf("ConstructProofFromOeEvidence: Can't get measurement\n")
 		return nil, nil
 	}
 	ps1 := certprotos.ProofStep {
@@ -598,25 +614,42 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
 	}
 	proof.Steps = append(proof.Steps, &ps1)
 
+	ps2 := certprotos.ProofStep {
+		S1: policyKeyIsTrusted,
+		S2: policyKeySaysPlatformKeyIsTrustedForAttestation,
+		Conclusion: platformKeyIsTrustedForAttestation,
+		RuleApplied: &r3,
+	}
+	proof.Steps = append(proof.Steps, &ps2)
+
+	ps3 := certprotos.ProofStep {
+		S1: platformKeyIsTrustedForAttestation,
+		S2: platformSaysEnclaveKeySpeaksForMeasurement,
+		Conclusion: enclaveKeySpeaksForMeasurement,
+		RuleApplied: &r6,
+	}
+	proof.Steps = append(proof.Steps, &ps3)
+
+
 	// measurement is-trusted and enclaveKey speaks-for measurement -->
 	//	enclaveKey is-trusted-for-authentication (r1) or
 	//	enclaveKey is-trusted-for-attestation r7
 	if purpose == "authentication" {
-		ps2 := certprotos.ProofStep {
+		ps4 := certprotos.ProofStep {
 			S1: measurementIsTrusted,
 			S2: enclaveKeySpeaksForMeasurement,
 			Conclusion: toProve,
 			RuleApplied: &r1,
 		}
-		proof.Steps = append(proof.Steps, &ps2)
+		proof.Steps = append(proof.Steps, &ps4)
 	} else {
-		ps2 := certprotos.ProofStep {
+		ps4 := certprotos.ProofStep {
 			S1: measurementIsTrusted,
 			S2: enclaveKeySpeaksForMeasurement,
 			Conclusion: toProve,
 			RuleApplied: &r7,
 		}
-		proof.Steps = append(proof.Steps, &ps2)
+		proof.Steps = append(proof.Steps, &ps4)
 	}
 
         return toProve, proof

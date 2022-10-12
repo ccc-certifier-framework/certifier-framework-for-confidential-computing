@@ -32,8 +32,10 @@ import (
 	"crypto/sha512"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	b64 "encoding/base64"
 	"errors"
 	"os"
+	"strings"
 	"time"
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
@@ -1733,19 +1735,29 @@ func ConstructEnclaveKeySpeaksForMeasurement(k *certprotos.KeyMessage, m []byte)
         return MakeSimpleVseClause(e1, &speaks_for, e2)
 }
 
-func KeyFromPemFormat(pem []byte) *certprotos.KeyMessage {
-/*
-	// turn into X509
-	der := PemToDer
+func StripPemHeaderAndTrailer(pem string) *string {
+	sl := strings.Split(pem, "\n")
+	if len(sl) < 3 {
+		return nil
+	}
+	s := strings.Join(sl[1:len(sl)-2], "\n")
+	return &s
+}
+
+func KeyFromPemFormat(pem string) *certprotos.KeyMessage {
+	// base64 decode pem
+	der, err := b64.StdEncoding.DecodeString(pem)
+	if err != nil || der == nil {
+		fmt.Printf("KeyFromPemFormat: base64 decode error\n")
+		return nil
+	}
 	cert := Asn1ToX509(der)
 	if cert == nil {
 		fmt.Printf("KeyFromPemFormat: Can't convert cert\n")
-		return false
+		return nil
 	}
 
 	return GetSubjectKey(cert)
- */
-	return nil
 }
 
 func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.Evidence,
@@ -1801,15 +1813,13 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			// Get platform key from pem file
-/*
-			k := KeyFromPemFormat(evidenceList[i-1].SerializedEvidence)
-			cl := ConstructSevSpeaksForStatement(k, ud.EnclaveKey, m)
-			if cl == nil {
-				fmt.Printf("InitProvedStatements: ConstructEnclaveKeySpeaksForMeasurement failed\n")
+			stripped := StripPemHeaderAndTrailer(string(evidenceList[i-1].SerializedEvidence))
+			if stripped == nil {
+				fmt.Printf("InitProvedStatements: Bad PEM\n")
 				return false
 			}
- */
-			cl := ConstructEnclaveKeySpeaksForMeasurement(ud.EnclaveKey, m)
+			k := KeyFromPemFormat(*stripped)
+			cl := ConstructSevSpeaksForStatement(k, ud.EnclaveKey, m)
 			if cl == nil {
 				fmt.Printf("InitProvedStatements: ConstructEnclaveKeySpeaksForMeasurement failed\n")
 				return false
