@@ -12,7 +12,7 @@ all: build
 build:
 	$(MAKE) -C enclave
 	$(MAKE) -C host
-	$(MEASUREMENT_INIT) --in_file=./enclave/enclave --out_file=/tmp/binary_trusted_measurements_file.bin
+	$(MEASUREMENT_INIT) --in_file=./enclave/enclave --out_file=binary_trusted_measurements_file.bin
 
 clean:
 	$(MAKE) -C enclave clean
