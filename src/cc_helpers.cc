@@ -162,16 +162,20 @@ bool cc_trust_data::initialize_sev_enclave_data(const string& platform_ark_der_f
 #endif
 }
 
-bool cc_trust_data::initialize_oe_enclave_data() {
+bool cc_trust_data::initialize_oe_enclave_data(const string& pem_cert_chain_file) {
+#if OE_CERTIFIER
   cc_provider_provisioned_ = true;
   extern bool oe_Init(const string& pem_cert_chain_file);
 
-  if (oe_Init(const string& pem_cert_chain_file)) {
+  if (oe_Init(pem_cert_chain_file)) {
     printf("initialize_oe_enclave_data: oe_Init failed\n");
     return false;
   }
   cc_provider_provisioned_ = true;
   return true;
+#else
+  return false;
+#endif
 }
 
 bool cc_trust_data::init_policy_key(int asn1_cert_size, byte* asn1_cert) {
@@ -770,6 +774,21 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     }
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(serialized_vcek_cert);
+#endif
+#ifdef OE_CERTIFIER
+  } else if (enclave_type_ == "oe-enclave") {
+    extern string pem_cert_chain;
+    if (!cc_provider_provisioned_) {
+      printf("cc_trust_data::certify_me: Can't get pem-chain\n");
+      return false;
+    }
+    evidence* ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
+      return false;
+    }
+    ev->set_evidence_type("pem-cert-chain");
+    ev->set_serialized_evidence(pem_cert_chain);
 #endif
   } else {
     printf("cc_trust_data::certify_me: Unknown enclave type\n");
