@@ -69,7 +69,7 @@ Step 7: Author the policy for the security domain and produce the signed claims 
           --verb="says" --clause=ts1.bin --output=vse_policy1.bin
 
     b. Construct statement "policy-key says the platform-key is-trusted-for-attestation"
-       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_key_subject=vse.cer.der \
+       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=vse.cer.der \
           --verb="is-trusted-for-attestation" --output=ts2.bin
        $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
           --verb="says" --clause=ts2.bin --output=vse_policy2.bin
