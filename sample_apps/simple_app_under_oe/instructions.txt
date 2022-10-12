@@ -62,11 +62,9 @@ Step 7: Author the policy for the security domain and produce the signed claims 
 
     cd $EXAMPLE_DIR/provisioning
 
-    a. Construct statement "policy-key says example_app-measurement is-trusted"
-       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
-          --measurement_subject=binary_trusted_measurements_file.bin
-.measurement --verb="is-trusted" \
-          --output=ts1.bin
+    a. Construct statement "policy-key says measurement is-trusted"
+       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_key_subject="vse.cert.der" \
+          --measurement_subject=binary_trusted_measurements_file.bin --output=ts1.bin
        $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
           --verb="says" --clause=ts1.bin --output=vse_policy1.bin
 
@@ -136,6 +134,8 @@ Step 13: Start the Certifier Service
       --policyFile=policy.bin --readPolicy=true
 
 
+# Ye should do below this
+
 Step 14:  Run the apps and get admission certificates from Certifier Service
   Open two new terminals (one for the app as a client and one for the app as a server):
 
@@ -178,71 +178,3 @@ Step 15:  Run the apps to test trusted services
 
 You should see the message "Hi from your secret server" in the client terminal window and
 "Hi from your secret client".   If so, your first Confidential Computing program worked!
-
-==========================================================================================
-
-Notes on real deployment and measurements
-
-simpleserver is complete enough to serve as a server for a security domain.  In practice,
-unlike this example, there will be multiple trusted measurements and possibly multiple
-approved platform keys.  To accomodate these, you will have to repeat steps 7a and 7b
-for these, putting them in unique files and including them in the 7d.  There is also
-support for logging.  To enable it add the following calls to the simplserver invocation.
-
-    --enableLog=true
-    --logDir="the directory name where you want your log files"
-    --logFile="the log file name for the log"
-
-You can change the starting log file sequence number using:
-    --loggingSequenceNumber=3141
-
-As part of program measurement, each platform has a tool that takes an application
-and produces a measurement which is used to construct policy.  The utility
-measurement_utility.exe does this in step 6 above for the simulated enclave.
-For Sev, you can obtain the corresponding tool from https://github.com/AMDESE/sev-tool.
-When Open Enclaves is used for SGX development, the oesign tool should be used.  This
-can be obtained from https://github.com/openenclave/openenclave/tree/master/tools/oesign.
-These tools both produce a file containing the binary measurement which should
-be used in step 7a, above.
-
-For the Intel tool, see
-https://github.com/intel/linux-sgx/blob/master/sdk/sign_tool/SignTool/sign_tool.cpp.
- 
-
-==========================================================================================
-
-Below are commands for general testing:
-
-Other commands
-./example_app.exe --print_all=true --operation=cold-init --data_dir=./app1_data/ \
-    --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
-./example_app.exe --print_all=true --operation=warm-restart --data_dir=./app1_data/ \
-    --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
-./example_app.exe --print_all=true --operation=get-certifier --data_dir=./app1_data/ \
-    --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
-./example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
-    --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
-
-./example_app.exe --print_all=true --operation=cold-init --data_dir=./app2_data/ \
-    --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
-./example_app.exe --print_all=true --operation=warm-restart --data_dir=./app2_data/ \
-    --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
-./example_app.exe --print_all=true --operation=get-certifier --data_dir=./app2_data/ \
-    --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
-./example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
-    --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
-
-
-===========================================================================================
-
-Go setup
-
-export GOPATH=$HOME
-export GOROOT=/usr/local/go
-export PATH=$PATH:$GOROOT/bin
-export GO111MODULE=off
-go mod init
-go mod tidy
-go mod init certifier.pb.go
-
-
