@@ -28,16 +28,13 @@ cd $EXAMPLE_DIR
 make
 
 # build policy
-cd $EXAMPLE_DIR/provisioning
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../example_app.exe \
-      --output=example_app.measurement
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
   --measurement_subject=binary_trusted_measurements_file.bin --verb="is-trusted" \
   --output=ts1.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_key_subject=vse.cer.der \
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=vse.crt.der \
   --verb="is-trusted-for-attestation" --output=ts2.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts2.bin --output=vse_policy2.bin
