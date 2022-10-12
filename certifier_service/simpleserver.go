@@ -269,9 +269,11 @@ func AddFactFromSignedClaim(signedClaim *certprotos.SignedClaimMessage,
 func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage, alreadyProved *certprotos.ProvedStatements) bool {
         // At this point, the already_proved should be
         //    "policyKey is-trusted"
-        //    "The enclave-key speaks-for the measurement"
+        //    "The platform-key says the enclave-key speaks-for the measurement"
+	//	Note: Currently is only "enclave-key speaks-for the measurement"
         // Add
         //    "The policy-key says the measurement is-trusted"
+        //    "The policy-key says the platform-key is-trusted-for-attestation"
 	if len(alreadyProved.Proved) < 2 {
                 fmt.Printf("AddNewFactsForOeEvidence, too few initial facts\n")
                 return false
@@ -295,14 +297,40 @@ func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage,
                 return false
         }
 
+        // Get platformKey from  "The platform-key says the enclave-key speaks-for the measurement"
+        kc := alreadyProved.Proved[1]
+        if kc.Subject == nil || kc.Verb == nil || kc.Clause == nil {
+                fmt.Printf("AddNewFactsForSevEvidence, bad platform evidence(1)\n")
+                return false
+        }
+        if kc.Subject.GetEntityType() != "key" {
+                fmt.Printf("AddNewFactsForSevEvidence, bad platform evidence(2)\n")
+                return false
+        }
+        plat_key := kc.Subject.Key
+        if plat_key == nil {
+                fmt.Printf("AddNewFactsForSevEvidence, bad platform key\n")
+                return false
+        }
+
         signedPolicyKeySaysMeasurementIsTrusted := findPolicyFromMeasurement(prog_m)
         if signedPolicyKeySaysMeasurementIsTrusted == nil {
-                fmt.Printf("AddNewFactsForOeEvidence, can't find measurement policy\n")
+                fmt.Printf("AddNewFactsForSevEvidence, can't find measurement policy\n")
+	}
+
+        signedPolicyKeySaysPlatformKeyIsTrusted := findPolicyFromKey(plat_key)
+        if signedPolicyKeySaysPlatformKeyIsTrusted == nil {
+                fmt.Printf("AddNewFactsForSevEvidence, can't find platform policy\n")
                 return false
         }
 
         if !AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
                 fmt.Printf("AddNewFactsForOeEvidence, Couldn't AddFactFromSignedClaim, Error 1\n")
+                return false
+        }
+
+        if !AddFactFromSignedClaim(signedPolicyKeySaysPlatformKeyIsTrusted, alreadyProved) {
+                fmt.Printf("Couldn't AddFactFromSignedClaim, Error 2\n")
                 return false
         }
 
@@ -525,7 +553,8 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
 
         // At this point, the evidence should be
         //      "policyKey is-trusted"
-        //      "enclaveKey speaks-for measurement
+        //      "platform-key says enclaveKey speaks-for measurement
+	//	Note:  Currently it only says enclaveKey speaks-for measurement but is should be changed
         //      "policyKey says measurement is-trusted"
         //      "policyKey says platformKey is-trusted-for-attestation"
 

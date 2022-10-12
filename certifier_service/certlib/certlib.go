@@ -1733,6 +1733,20 @@ func ConstructEnclaveKeySpeaksForMeasurement(k *certprotos.KeyMessage, m []byte)
         return MakeSimpleVseClause(e1, &speaks_for, e2)
 }
 
+func KeyFromPemFormat(pem []byte) *certprotos.KeyMessage {
+/*
+	// turn into X509
+	der := PemToDer
+	cert := Asn1ToX509(der)
+	if cert == nil {
+		fmt.Printf("KeyFromPemFormat: Can't convert cert\n")
+		return false
+	}
+
+	return GetSubjectKey(cert)
+ */
+	return nil
+}
 
 func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.Evidence,
 		ps *certprotos.ProvedStatements) bool {
@@ -1786,6 +1800,15 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			if err != nil {
 				return false
 			}
+			// Get platform key from pem file
+/*
+			k := KeyFromPemFormat(evidenceList[i-1].SerializedEvidence)
+			cl := ConstructSevSpeaksForStatement(k, ud.EnclaveKey, m)
+			if cl == nil {
+				fmt.Printf("InitProvedStatements: ConstructEnclaveKeySpeaksForMeasurement failed\n")
+				return false
+			}
+ */
 			cl := ConstructEnclaveKeySpeaksForMeasurement(ud.EnclaveKey, m)
 			if cl == nil {
 				fmt.Printf("InitProvedStatements: ConstructEnclaveKeySpeaksForMeasurement failed\n")
