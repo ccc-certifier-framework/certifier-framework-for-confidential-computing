@@ -272,7 +272,7 @@ func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage,
         //    "The enclave-key speaks-for the measurement"
         // Add
         //    "The policy-key says the measurement is-trusted"
-	if len alreadyProved.Proved < 2 {
+	if len(alreadyProved.Proved) < 2 {
                 fmt.Printf("AddNewFactsForOeEvidence, too few initial facts\n")
                 return false
 	}
@@ -322,7 +322,7 @@ func AddNewFactsForSevEvidence(publicPolicyKey *certprotos.KeyMessage,
         //    "The policy-key says the measurement is-trusted"
 
         // Get measurement from  "VCEK says the enclave-key speaks-for the measurement"
-	if len alreadyProved.Proved < 5 {
+	if len(alreadyProved.Proved) < 5 {
                 fmt.Printf("AddNewFactsForSevEvidence, too few initial facts\n")
                 return false
 	}
