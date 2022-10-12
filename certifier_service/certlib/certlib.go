@@ -1719,12 +1719,6 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	return ptr[0x90: 0xc0]
 }
 
-// returns verification result, serialized_user_data and measurement
-func VerifyOeAttestation(serialized []byte) (bool, []byte, []byte) {
-	// Todo: Rado's call shim here
-	return false, nil, nil
-}
-
 func ConstructEnclaveKeySpeaksForMeasurement(k *certprotos.KeyMessage, m []byte) *certprotos.VseClause {
 	e1 := MakeKeyEntity(k)
 	if e1 == nil {
@@ -1771,12 +1765,19 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 					}
 				}
 			}
+		} else if ev.GetEvidenceType() == "pem-cert-chain" {
+			// nothing to do
 		} else if ev.GetEvidenceType() == "oe-evidence" {
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
 			// from the return values.  Then add it to proved statements
-			success, serializedUD, m := VerifyOeAttestation(ev.SerializedEvidence)
-			if !success || serializedUD == nil || m == nil {
+			if i < 1  || evidenceList[i-1].GetEvidenceType != "pem-cert-chain" {
+				fmt.Printf("InitProvedStatements: missing cert chain in oe evidence\n")
+				return false
+			}
+			serializedUD, m, err  := OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
+				evidenceList[i-1].SerializedEvidence)
+			if err != nil || serializedUD == nil || m == nil {
 				return false
 			}
 			ud := certprotos.AttestationUserData{}

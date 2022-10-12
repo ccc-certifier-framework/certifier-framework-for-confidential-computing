@@ -267,7 +267,7 @@ func AddFactFromSignedClaim(signedClaim *certprotos.SignedClaimMessage,
 }
 
 func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage, alreadyProved *certprotos.ProvedStatements) bool {
-        return false
+        return true
 }
 
 func AddNewFactsForSevEvidence(publicPolicyKey *certprotos.KeyMessage,
