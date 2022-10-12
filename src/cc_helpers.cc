@@ -164,6 +164,13 @@ bool cc_trust_data::initialize_sev_enclave_data(const string& platform_ark_der_f
 
 bool cc_trust_data::initialize_oe_enclave_data() {
   cc_provider_provisioned_ = true;
+  extern bool oe_Init(const string& pem_cert_chain_file);
+
+  if (oe_Init(const string& pem_cert_chain_file)) {
+    printf("initialize_oe_enclave_data: oe_Init failed\n");
+    return false;
+  }
+  cc_provider_provisioned_ = true;
   return true;
 }
 
