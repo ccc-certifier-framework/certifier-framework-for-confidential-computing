@@ -605,10 +605,10 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
 	}
         var toProve *certprotos.VseClause = nil
 	if purpose == "authentication" {
-		verb := "is-trustd-for-authentication"
+		verb := "is-trusted-for-authentication"
 		toProve = certlib.MakeUnaryVseClause(enclaveKey, &verb)
 	} else {
-		verb := "is-trustd-for-attestation"
+		verb := "is-trusted-for-attestation"
 		toProve = certlib.MakeUnaryVseClause(enclaveKey, &verb)
 	}
 
