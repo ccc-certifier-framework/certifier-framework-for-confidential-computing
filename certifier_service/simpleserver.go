@@ -556,6 +556,13 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
         //      "policyKey says measurement is-trusted"
         //      "policyKey says platformKey is-trusted-for-attestation"
 
+	// Debug
+	fmt.Printf("ConstructProofFromOeEvidence, %d statements\n", len(alreadyProved.Proved))
+	for i := 0; i < len(alreadyProved.Proved);  i++ {
+		certlib.PrintVseClause(alreadyProved.Proved[i])
+		fmt.Printf("\n")
+	}
+
 	if len(alreadyProved.Proved) < 4 {
 		fmt.Printf("ConstructProofFromOeEvidence: too few statements\n")
 		return nil, nil
