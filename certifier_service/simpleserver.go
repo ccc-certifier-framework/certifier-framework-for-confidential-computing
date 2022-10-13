@@ -1064,6 +1064,8 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
                         fmt.Printf("Cert\n")
                 } else if support.FactAssertion[i].GetEvidenceType() == "sev-attestation" {
                         fmt.Printf("sev-attestation\n")
+                } else if support.FactAssertion[i].GetEvidenceType() == "pem-cert-chain" {
+                        fmt.Printf("pem-cert-chain\n")
                 } else {
                         fmt.Printf("Invalid evidence type\n")
                         return nil, nil, nil
