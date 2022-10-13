@@ -630,10 +630,9 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
 	}
 	proof.Steps = append(proof.Steps, &ps3)
 
-
 	// measurement is-trusted and enclaveKey speaks-for measurement -->
 	//	enclaveKey is-trusted-for-authentication (r1) or
-	//	enclaveKey is-trusted-for-attestation r7
+	//	enclaveKey is-trusted-for-attestation (r7)
 	if purpose == "authentication" {
 		ps4 := certprotos.ProofStep {
 			S1: measurementIsTrusted,
