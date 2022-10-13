@@ -316,7 +316,7 @@ func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage,
 	if signedPolicyKeySaysMeasurementIsTrusted == nil {
 		fmt.Printf("AddNewFactsForOeEvidence, can't find measurement policy\n")
 		fmt.Printf("    Measurement: ")
-		PrintBytes(prog_m.Measurement)
+		certlib.PrintBytes(prog_m.Measurement)
 		fmt.Printf("\n")
 		return false
 	}
