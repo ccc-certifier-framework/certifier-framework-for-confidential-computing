@@ -171,6 +171,7 @@ int main(int an, char** av) {
     return 1;
   }
 
+  measurement_size = 32;
   if (!digest_message(file_contents, size, m, (unsigned int) measurement_size) ) {
     printf("Can't digest file\n");
     free(file_contents);
