@@ -269,71 +269,75 @@ func AddFactFromSignedClaim(signedClaim *certprotos.SignedClaimMessage,
 func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage, alreadyProved *certprotos.ProvedStatements) bool {
         // At this point, the already_proved should be
         //    "policyKey is-trusted"
-        //    "The platform-key says the enclave-key speaks-for the measurement"
-        // Add
-        //    "The policy-key says the measurement is-trusted"
-        //    "The policy-key says the platform-key is-trusted-for-attestation"
+	//    "The platform-key says the enclave-key speaks-for the measurement"
+	// Add
+	//    "The policy-key says the measurement is-trusted"
+	//    "The policy-key says the platform-key is-trusted-for-attestation"
 	if len(alreadyProved.Proved) < 2 {
-                fmt.Printf("AddNewFactsForOeEvidence, too few initial facts\n")
-                return false
+		fmt.Printf("AddNewFactsForOeEvidence, too few initial facts\n")
+		return false
 	}
-        mc := alreadyProved.Proved[1]
-        if mc.Subject == nil || mc.Verb == nil || mc.Clause == nil {
-                fmt.Printf("AddNewFactsForOeEvidence, bad measurement evidence(1)\n")
-                return false
-        }
-        if mc.Clause.Object == nil {
-                fmt.Printf("AddNewFactsForOeEvidence, bad measurement evidence (2)\n")
-                return false
-        }
-        if mc.Clause.Object.GetEntityType() != "measurement" {
-                fmt.Printf("AddNewFactsForOeEvidence, bad measurement evidence (3)\n")
-                return false
-        }
-        prog_m := mc.Clause.Object.Measurement
-        if prog_m == nil {
-                fmt.Printf("AddNewFactsForOeEvidence, bad measurement\n")
-                return false
-        }
-
-        // Get platformKey from  "The platform-key says the enclave-key speaks-for the measurement"
-        kc := alreadyProved.Proved[1]
-        if kc.Subject == nil || kc.Verb == nil || kc.Clause == nil {
-                fmt.Printf("AddNewFactsForSevEvidence, bad platform evidence(1)\n")
-                return false
-        }
-        if kc.Subject.GetEntityType() != "key" {
-                fmt.Printf("AddNewFactsForSevEvidence, bad platform evidence(2)\n")
-                return false
-        }
-        plat_key := kc.Subject.Key
-        if plat_key == nil {
-                fmt.Printf("AddNewFactsForSevEvidence, bad platform key\n")
-                return false
-        }
-
-        signedPolicyKeySaysMeasurementIsTrusted := findPolicyFromMeasurement(prog_m)
-        if signedPolicyKeySaysMeasurementIsTrusted == nil {
-                fmt.Printf("AddNewFactsForSevEvidence, can't find measurement policy\n")
+	mc := alreadyProved.Proved[1]
+	if mc.Subject == nil || mc.Verb == nil || mc.Clause == nil {
+		fmt.Printf("AddNewFactsForOeEvidence, bad measurement evidence(1)\n")
+		return false
+	}
+	if mc.Clause.Object == nil {
+		fmt.Printf("AddNewFactsForOeEvidence, bad measurement evidence (2)\n")
+		return false
+	}
+	if mc.Clause.Object.GetEntityType() != "measurement" {
+		fmt.Printf("AddNewFactsForOeEvidence, bad measurement evidence (3)\n")
+		return false
+	}
+	prog_m := mc.Clause.Object.Measurement
+	if prog_m == nil {
+		fmt.Printf("AddNewFactsForOeEvidence, bad measurement\n")
+		return false
 	}
 
-        signedPolicyKeySaysPlatformKeyIsTrusted := findPolicyFromKey(plat_key)
-        if signedPolicyKeySaysPlatformKeyIsTrusted == nil {
-                fmt.Printf("AddNewFactsForSevEvidence, can't find platform policy\n")
-                return false
-        }
+	// Get platformKey from  "The platform-key says the enclave-key speaks-for the measurement"
+	kc := alreadyProved.Proved[1]
+	if kc.Subject == nil || kc.Verb == nil || kc.Clause == nil {
+		fmt.Printf("AddNewFactsForOeEvidence, bad platform evidence(1)\n")
+		return false
+	}
+	if kc.Subject.GetEntityType() != "key" {
+		fmt.Printf("AddNewFactsForOeEvidence, bad platform evidence(2)\n")
+		return false
+	}
+	plat_key := kc.Subject.Key
+	if plat_key == nil {
+		fmt.Printf("AddNewFactsForOeEvidence, bad platform key\n")
+		return false
+	}
 
-        if !AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
-                fmt.Printf("AddNewFactsForOeEvidence, Couldn't AddFactFromSignedClaim, Error 1\n")
-                return false
-        }
+	signedPolicyKeySaysMeasurementIsTrusted := findPolicyFromMeasurement(prog_m)
+	if signedPolicyKeySaysMeasurementIsTrusted == nil {
+		fmt.Printf("AddNewFactsForOeEvidence, can't find measurement policy\n")
+		fmt.Printf("    Measurement: ")
+		PrintBytes(prog_m.Measurement)
+		fmt.Printf("\n")
+		return false
+	}
 
-        if !AddFactFromSignedClaim(signedPolicyKeySaysPlatformKeyIsTrusted, alreadyProved) {
-                fmt.Printf("Couldn't AddFactFromSignedClaim, Error 2\n")
-                return false
-        }
+	signedPolicyKeySaysPlatformKeyIsTrusted := findPolicyFromKey(plat_key)
+	if signedPolicyKeySaysPlatformKeyIsTrusted == nil {
+		fmt.Printf("AddNewFactsForOeEvidence, can't find platform policy\n")
+		return false
+	}
 
-        return true
+	if !AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
+		fmt.Printf("AddNewFactsForOeEvidence, Couldn't AddFactFromSignedClaim, Error 1\n")
+		return false
+	}
+
+	if !AddFactFromSignedClaim(signedPolicyKeySaysPlatformKeyIsTrusted, alreadyProved) {
+		fmt.Printf("AddNewFactsForOeEvidence, Couldn't AddFactFromSignedClaim, Error 2\n")
+		return false
+	}
+
+	return true
 }
 
 func AddNewFactsForSevEvidence(publicPolicyKey *certprotos.KeyMessage,
