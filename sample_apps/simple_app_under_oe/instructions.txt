@@ -49,6 +49,7 @@ Step 4: Embed the policy key in example_app.
 Step 5: Compile example_app with the embedded policy_key
     cd $EXAMPLE_DIR
     make
+    make dump_mrenclave
 
 Step 6: In addition to making the binary, make will produce a file, binary_trusted_measurements_file.bin
 containing the application measurement.  The platform key should have been provisioned in a pem file called

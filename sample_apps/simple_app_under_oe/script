@@ -26,6 +26,7 @@ cd $EXAMPLE_DIR/provisioning
 openssl x509 -in vse.crt -inform pem -out vse.cer.der -outform der
 cd $EXAMPLE_DIR
 make
+make dump_mrenclave
 
 # build policy
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \

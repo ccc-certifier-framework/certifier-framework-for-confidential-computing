@@ -21,7 +21,7 @@ cleanall: clean
 	rm -rf app1_data app2_data provisioning service policy_key.cc
 	rm -rf binary_trusted_measurements_file.bin
 
-dummy_mrenclave:
+dump_mrenclave:
 	oesign dump --enclave-image=./enclave/enclave.signed
 	@echo "\e[1;31m Invoke measurement_init.exe --mrenclave=xxx --out_file=binary_trusted_measurements_file.bin\e[1;m"
 	@echo "\e[1;31m Replace 'xxx' with the mrenclave string from the output above\e[1;m"
