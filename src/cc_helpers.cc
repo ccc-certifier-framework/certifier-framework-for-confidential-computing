@@ -841,6 +841,8 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     request.set_submitted_evidence_type("augmented-platform-attestation-only");
   } else if (enclave_type_ == "sev-enclave") {
     request.set_submitted_evidence_type("sev-platform-attestation-only");
+  } else if (enclave_type_ == "oe-enclave") {
+    request.set_submitted_evidence_type("oe-evidence");
   } else {
     request.set_submitted_evidence_type("platform-attestation-only");
   }
