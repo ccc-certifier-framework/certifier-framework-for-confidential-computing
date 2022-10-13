@@ -422,7 +422,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
-    ev2->set_evidence_type("oe-evidence");
+    ev2->set_evidence_type("oe-attestation-report");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
     if (!init_measurements) {
@@ -836,7 +836,7 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
-    ev2->set_evidence_type("oe-evidence");
+    ev2->set_evidence_type("oe-attestation-report");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
     if (!init_measurements) {

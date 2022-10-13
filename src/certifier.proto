@@ -148,8 +148,8 @@ message signed_claim_message {
 
 // Current evidence types: "signed-claim",
 //   "signed-vse-attestation"
-//   "oe-evidence", "asylo-evidence",
-//   "sev-evidence", "cert"
+//   "oe-attestation-report", "asylo-evidence",
+//   "sev-attestation", "cert"
 message evidence {
   optional string evidence_type             = 1;
   optional bytes serialized_evidence        = 2;
