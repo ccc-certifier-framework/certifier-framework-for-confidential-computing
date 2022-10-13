@@ -11,7 +11,7 @@ build:
 	@ echo "Compilers used: $(CC), $(CXX)"
 	oeedger8r ../attestation.edl --untrusted \
 		--search-path $(INCDIR) \
-		--search-path $(INCDIR)/openenclave/edl/vse
+		--search-path $(INCDIR)/openenclave/edl/sgx
 	$(CC) -g -c $(CFLAGS) $(CINCLUDES) attestation_u.c
 	$(CXX) -g -c $(CXXFLAGS) $(INCLUDES) -std=c++11 host.cc
 	$(CXX) -o host host.o attestation_u.o $(LDFLAGS)

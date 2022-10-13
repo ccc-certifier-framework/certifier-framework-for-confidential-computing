@@ -4,14 +4,14 @@
 include ../config.mk
 
 CFLAGS=$(shell pkg-config oeenclave-$(C_COMPILER) --cflags)
-CXXFLAGS=$(shell pkg-config oeenclave-$(CXX_COMPILER) --cflags) -DOE_CERTIFIER 
+CXXFLAGS=$(shell pkg-config oeenclave-$(CXX_COMPILER) --cflags) -DOE_CERTIFIER
 LDFLAGS=$(shell pkg-config oeenclave-$(CXX_COMPILER) --libs)
 INCDIR=$(shell pkg-config oeenclave-$(C_COMPILER) --variable=includedir)
 LIBDIR:= $(shell pkg-config oeenclave-$(C_COMPILER) --variable=libdir)/openenclave
 CRYPTO_LDFLAGS=$(shell pkg-config oeenclave-$(COMPILER) --variable=${OE_CRYPTO_LIB}libs)
-PROTO=../../../openenclave_vse_test/protobufs-bin/bin/protoc
-PROTO_INCL=-I../../../openenclave_vse_test/protobufs-bin/include
-PROTO_LIB=-L../../../openenclave_vse_test/protobufs-bin/lib -lprotobuf -loeenclave -loelibcxx -loelibc -loesyscall -loecore -loesyscall -loecore -loehostsock -loehostresolver
+PROTO=../../../openenclave_test/protobufs-bin/bin/protoc
+PROTO_INCL=-I../../../openenclave_test/protobufs-bin/include
+PROTO_LIB=-L../../../openenclave_test/protobufs-bin/lib -lprotobuf -loeenclave -loelibcxx -loelibc -loesyscall -loecore -loesyscall -loecore -loehostsock -loehostresolver
 CERT_SRC=../../../src
 CERT_INCL=-I../../../include -I../../../src
 
@@ -35,12 +35,14 @@ SEAL_PLUGINS:= $(foreach p,$(OE_SEAL_PLUGINS),$(or	\
 
 all:
 	$(MAKE) build
+	$(MAKE) keys
+	$(MAKE) sign
 
 build:
 	@ echo "Compilers used: $(CC), $(CXX)"
 	oeedger8r ../attestation.edl --trusted --trusted-dir ./ \
 		--search-path $(INCDIR) \
-		--search-path $(INCDIR)/openenclave/edl/vse
+		--search-path $(INCDIR)/openenclave/edl/sgx
 	$(PROTO) -I$(CERT_SRC) --cpp_out=. $(CERT_SRC)/certifier.proto
 	$(PROTO) -I$(CERT_SRC) --cpp_out=$(CERT_SRC) $(CERT_SRC)/certifier.proto
 	$(CXX) -g -Wno-shift-op-parentheses -c $(CXXFLAGS) $(INCLUDES) $(PROTO_INCL) $(CERT_INCL) $(DATAFRAME_INCL) -I. -I.. -std=c++17 -DOE_API_VERSION=2 ecalls.cc $(CERT_SRC)/support.cc $(CERT_SRC)/test_support.cc $(CERT_SRC)/simulated_enclave.cc $(CERT_SRC)/openenclave/oe_support.cc $(CERT_SRC)/application_enclave.cc $(CERT_SRC)/certifier.cc certifier.pb.cc $(CERT_SRC)/openenclave/attestation.cc $(CERT_SRC)/openenclave/sealing.cc $(CERT_SRC)/cc_helpers.cc
@@ -53,3 +55,7 @@ sign:
 
 clean:
 	rm -f *.o enclave enclave.signed attestation_t.* attestation_args.h *.pem certifier.pb.*
+
+keys:
+	openssl genrsa -out private.pem -3 3072
+	openssl rsa -in private.pem -pubout -out public.pem

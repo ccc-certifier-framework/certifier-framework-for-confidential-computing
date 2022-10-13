@@ -167,7 +167,7 @@ bool cc_trust_data::initialize_oe_enclave_data(const string& pem_cert_chain_file
   cc_provider_provisioned_ = true;
   extern bool oe_Init(const string& pem_cert_chain_file);
 
-  if (oe_Init(pem_cert_chain_file)) {
+  if (!oe_Init(pem_cert_chain_file)) {
     printf("initialize_oe_enclave_data: oe_Init failed\n");
     return false;
   }

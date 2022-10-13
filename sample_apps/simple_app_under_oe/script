@@ -23,7 +23,7 @@ $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin
 
 # make app, provision key and compute app measurement
 cd $EXAMPLE_DIR/provisioning
-openssl x509 -in vse.cert -inform pem -out vse.cer.der -outform der
+openssl x509 -in vse.crt -inform pem -out vse.cer.der -outform der
 cd $EXAMPLE_DIR
 make
 
@@ -34,7 +34,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=vse.crt.der \
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=vse.cer.der \
   --verb="is-trusted-for-attestation" --output=ts2.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts2.bin --output=vse_policy2.bin
@@ -71,32 +71,20 @@ cd $EXAMPLE_DIR/service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
       --policyFile=policy.bin --readPolicy=true
 
-# Ye should do below this
-
 # initialize client app
 cd $EXAMPLE_DIR
-$EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=cold-init --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store
+./host/host enclave/enclave cold-init app1_data
 # get client app certified
-$EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=get-certifier --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store
+./host/host enclave/enclave get-certifier app1_data
 
 # initialize server app
-$EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=cold-init --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store
+./host/host enclave/enclave cold-init app2_data
 # get server app certified
-$EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=get-certifier --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
-       --policy_store_file=policy_store
+./host/host enclave/enclave get-certifier app2_data
 
 #run the app
 cd $EXAMPLE_DIR
-$EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
-      --policy_store_file=policy_store --measurement_file="example_app.measurement"
+./host/host enclave/enclave run-app-as-server app2_data
 cd $EXAMPLE_DIR
-$EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
-      --policy_store_file=policy_store --measurement_file="example_app.measurement"
+./host/host enclave/enclave run-app-as-client app1_data
 
