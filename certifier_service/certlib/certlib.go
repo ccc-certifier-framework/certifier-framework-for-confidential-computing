@@ -1457,7 +1457,7 @@ func PrintEvidence(ev *certprotos.Evidence) {
 			return
 		}
 		PrintSignedReport(&sr)
-	} else if ev.GetEvidenceType() == "oe-attestation" {
+	} else if ev.GetEvidenceType() == "oe-attestation-report" {
 		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "sev-attestation" {
 		PrintBytes(ev.SerializedEvidence)
