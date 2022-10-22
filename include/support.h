@@ -165,8 +165,11 @@ bool x509_to_asn1(X509 *x, string* out);
 bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k);
 
 int sized_pipe_read(int fd, string* out);
+int sized_pipe_write(int fd, int size, byte* buf);
 int sized_ssl_read(SSL* ssl, string* out);
+int sized_ssl_write(SSL* ssl, int size, byte* buf);
 int sized_socket_read(int fd, string* out);
+int sized_socket_write(int fd, int size, byte* buf);
 
 class cert_keys_seen {
 public:

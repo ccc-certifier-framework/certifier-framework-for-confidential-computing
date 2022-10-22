@@ -1315,7 +1315,7 @@ bool get_random(int num_bits, byte* out) {
 #if 1
   int in = open("/dev/urandom", O_RDONLY, 0644);
 #else
-  // FIX! it should be /dev/random
+  // Todo: should be /dev/random
   int in = open("/dev/random", O_RDONLY, 0644);
 #endif
   int n = ((num_bits + num_bits_in_byte - 1) / num_bits_in_byte);
@@ -2164,14 +2164,32 @@ int sized_ssl_read(SSL* ssl, string* out) {
   return total;
 }
 
-// little endian only
-int sized_socket_write(int fd, int size, byte* buf) {
-  if (write(fd, (byte*)&size, sizeof(int)) < sizeof(int))
-    return -1;
-  if (write(fd, buf, size) < size)
-    return -1;
-  return size;
+#if 1
+int sized_socket_read(int fd, string* out) {
+  out->clear();
+  int n = 0;
+  int total = 0;
+  const int read_stride = 8192;
+  byte buf[read_stride];
+  int m = recv(fd, buf, read_stride, MSG_PEEK);
+  while(m > 0) {
+    n = read(fd, buf, read_stride);
+    if (n <= 0) {
+      return total;
+    } else if (n < read_stride) {
+      out->append((char*)buf, n);
+      total += n;
+      m -= n;
+    } else {
+      out->append((char*)buf, n);
+      total += n;
+      m -= n;
+    }
+  }
+  return total;
 }
+
+#else
 
 // little endian only
 int sized_socket_read(int fd, string* out) {
@@ -2195,6 +2213,16 @@ int sized_socket_read(int fd, string* out) {
     }
   }
   return total;
+}
+#endif
+
+// little endian only
+int sized_socket_write(int fd, int size, byte* buf) {
+  if (write(fd, (byte*)&size, sizeof(int)) < sizeof(int))
+    return -1;
+  if (write(fd, buf, size) < size)
+    return -1;
+  return size;
 }
 
 // -----------------------------------------------------------------------
