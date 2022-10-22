@@ -2111,18 +2111,24 @@ int sized_pipe_write(int fd, int size, byte* buf) {
 // little endian only
 int sized_pipe_read(int fd, string* out) {
   int size = 0;
-  if (read(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
+  if (read(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int)) {
+    printf("sized_pipe_read error 1\n");
     return -1;
-  if (size > max_pipe_size)
+  }
+  if (size > max_pipe_size) {
+    printf("sized_pipe_read error 2\n");
     return -1;
+  }
 
   byte buf[size];
   int cur_size = 0;
   int n = 0;
   while (cur_size < size) {
     n = read(fd, &buf[cur_size], size);
-    if (n < 0)
+    if (n < 0) {
+      printf("sized_pipe_read error 3\n");
       return -1;
+    }
     cur_size += n;
   }
 

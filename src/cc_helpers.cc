@@ -877,6 +877,8 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     printf("cc_trust_data::certify_me: Can't open request socket\n");
     return false;
   }
+
+  // Change to sized_write
   if (write(sock, (byte*)serialized_request.data(), serialized_request.size()) < 0) {
     return false;
   }

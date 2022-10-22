@@ -52,13 +52,15 @@ bool application_GetParentEvidence(string* out) {
   string req_str;
   req.SerializeToString(&req_str);
   if (sized_pipe_write(writer, req_str.size(), (byte*)req_str.data()) < 0) {
-    printf("write failed\n");
+    printf("sized_pipe_write failed\n");
+    return false;
   }
 
   // response
   string rsp_str;
   int n= sized_pipe_read(reader, &rsp_str);
   if (n < 0) {
+    printf("sized_pipe_read failed\n");
     return false;
   }
   if (!rsp.ParseFromString(rsp_str)) {
@@ -86,7 +88,8 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   string req_str;
   req.SerializeToString(&req_str);
   if (sized_pipe_write(writer, req_str.size(), (byte*)req_str.data()) < 0) {
-    printf("write failed\n");
+    printf("sized_pipe_write failed\n");
+    return false;
   }
 
   // response
@@ -129,7 +132,8 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   string req_str;
   req.SerializeToString(&req_str);
   if (sized_pipe_write(writer, req_str.size(), (byte*)req_str.data()) < 0) {
-    printf("write failed\n");
+    printf("sized_pipe_write failed\n");
+    return false;
   }
 
   // response
@@ -173,7 +177,8 @@ bool application_Attest(int in_size, byte* in,
   string req_str;
   req.SerializeToString(&req_str);
   if (sized_pipe_write(writer, req_str.size(), (byte*)req_str.data()) < 0) {
-    printf("write failed\n");
+    printf("sized_pipe_write failed\n");
+    return false;
   }
 
   // response
@@ -217,7 +222,8 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
   string req_str;
   req.SerializeToString(&req_str);
   if (sized_pipe_write(writer, req_str.size(), (byte*)req_str.data()) < 0) {
-    printf("write failed\n");
+    printf("sized_pipe_write failed\n");
+    return false;
   }
 
   // response
