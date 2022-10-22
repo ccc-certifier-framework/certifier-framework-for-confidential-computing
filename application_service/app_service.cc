@@ -647,7 +647,7 @@ bool app_request_server() {
 
     // read run request
     string str_req;
-    int n = sized_pipe_read(client, &str_req);
+    int n = sized_socket_read(client, &str_req);
     if (n < 0) {
       printf("Read failed in application server\n");
       continue;

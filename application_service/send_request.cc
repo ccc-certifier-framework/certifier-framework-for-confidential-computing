@@ -40,10 +40,12 @@ int main(int an, char**av) {
   req.set_location(FLAGS_executable);
   string serialized_request;
   if (!req.SerializeToString(&serialized_request)) {
+    printf("send_request, serialize failed\n");
     return 1;
   }
   // write request
   if (write(sock, (byte*)serialized_request.data(), serialized_request.size()) < 0) {
+    printf("send_request, socket write failed\n");
     return 1;
   }
 
