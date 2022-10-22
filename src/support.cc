@@ -2220,7 +2220,6 @@ int sized_socket_read(int fd, string* out) {
   }
   return total;
 }
-#endif
 
 // little endian only
 int sized_socket_write(int fd, int size, byte* buf) {
@@ -2230,6 +2229,7 @@ int sized_socket_write(int fd, int size, byte* buf) {
     return -1;
   return size;
 }
+#endif
 
 // -----------------------------------------------------------------------
 
