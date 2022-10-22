@@ -43,8 +43,7 @@ int main(int an, char** av) {
     for (int i = 0; i < num_tests; i++) {
       int k = 4 * i + 1;
       printf("writing %d\n", k);
-      write(fd[1], buf, k);
-      sleep(1);
+      sized_pipe_write(fd[1], k, buf);
     }
   } else {  // parent
     close(fd[1]);

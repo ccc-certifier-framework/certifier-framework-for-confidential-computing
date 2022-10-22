@@ -1663,7 +1663,7 @@ int secure_authenticated_channel::read(string* out) {
 }
 
 int secure_authenticated_channel::write(int size, byte* b) {
-  return SSL_write(ssl_, b, size);
+  return sized_ssl_write(ssl_, size, b);
 }
 
 void secure_authenticated_channel::close() {

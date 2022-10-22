@@ -2091,72 +2091,107 @@ bool x509_to_asn1(X509 *x, string* out) {
   return true;
 }
 
-// Blocking read of pipe, socket, SSL connection when you
-//  don't know the size of the buffer in advance
+// -----------------------------------------------------------------------
 
-// This sucks but...
-//    You can get max_pipe_size from fcntl(fd, F_GETPIPE_SZ);
+//  Blocking read of pipe, socket, SSL connection with
+//  size prefix
+
+// little endian only
 const int max_pipe_size = 65536;
-int sized_pipe_read(int fd, string* out) {
-  out->clear();
-  byte buf[max_pipe_size];
-  int n = read(fd, buf, max_pipe_size);
-  if (n < 0)
+int sized_pipe_write(int fd, int size, byte* buf) {
+  if (size > max_pipe_size)
     return -1;
-  out->assign((char*)buf, n);
+  if (write(fd, (byte*)&size, sizeof(int)) < sizeof(int))
+    return -1;
+  if (write(fd, buf, size) < size)
+    return -1;
+  return size;
+}
+
+// little endian only
+int sized_pipe_read(int fd, string* out) {
+  int size = 0;
+  if (read(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
+    return -1;
+  if (size > max_pipe_size)
+    return -1;
+
+  byte buf[size];
+  int cur_size = 0;
+  int n = 0;
+  while (cur_size < size) {
+    n = read(fd, &buf[cur_size], size);
+    if (n < 0)
+      return -1;
+    cur_size += n;
+  }
+
+  out->clear();
+  out->assign((char*)buf, size);
   return n;
 }
 
+// little endian only
+int sized_ssl_write(SSL* ssl, int size, byte* buf) {
+  if (SSL_write(ssl, (byte*)&size, sizeof(int)) < sizeof(int))
+    return -1;
+  if (SSL_write(ssl, buf, size) < size)
+    return -1;
+  return size;
+}
+
+// little endian only
 int sized_ssl_read(SSL* ssl, string* out) {
   out->clear();
+  int size = 0;
+  int n = SSL_read(ssl, (byte*)&size, sizeof(int));
+  if (n < 0)
+    return n;
 
-  // Todo: size assumed
   int total = 0;
   const int read_stride = 8192;
   byte buf[read_stride];
-  int n = 0;
 
-  for (;;) {
+  while(total < size) {
     n = SSL_read(ssl, buf, read_stride);
     if (n < 0) {
       return n;
-    } else if (n < read_stride) {
-      out->append((char*)buf, n);
-      total += n;
-      break;
     } else {
       out->append((char*)buf, n);
       total += n;
-      if (SSL_pending(ssl) <= 0)
-        break;
-      continue;
     }
   }
   return total;
 }
 
-// -----------------------------------------------------------------------
+// little endian only
+int sized_socket_write(int fd, int size, byte* buf) {
+  if (write(fd, (byte*)&size, sizeof(int)) < sizeof(int))
+    return -1;
+  if (write(fd, buf, size) < size)
+    return -1;
+  return size;
+}
 
+// little endian only
 int sized_socket_read(int fd, string* out) {
-  // Todo: size assumed
   out->clear();
   int n = 0;
+  int size = 0;
   int total = 0;
   const int read_stride = 8192;
   byte buf[read_stride];
-  int m = recv(fd, buf, read_stride, MSG_PEEK);
-  while(m > 0) {
+
+  if (read(fd, (byte*)&size, sizeof(int)) < sizeof(int))
+    return -1;
+
+  while(total < size) {
     n = read(fd, buf, read_stride);
     if (n <= 0) {
-      return total;
-    } else if (n < read_stride) {
-      out->append((char*)buf, n);
-      total += n;
-      m -= n;
+      return -1;
     } else {
       out->append((char*)buf, n);
       total += n;
-      m -= n;
     }
   }
   return total;
