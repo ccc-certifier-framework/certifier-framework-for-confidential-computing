@@ -2124,7 +2124,7 @@ int sized_pipe_read(int fd, string* out) {
   int cur_size = 0;
   int n = 0;
   while (cur_size < size) {
-    n = read(fd, &buf[cur_size], size);
+    n = read(fd, &buf[cur_size], size - cur_size);
     if (n < 0) {
       printf("sized_pipe_read error 3\n");
       return -1;
@@ -2159,7 +2159,10 @@ int sized_ssl_read(SSL* ssl, string* out) {
   byte buf[read_stride];
 
   while(total < size) {
-    n = SSL_read(ssl, buf, read_stride);
+    if ((size - total) > read_stride)
+      n = SSL_read(ssl, buf, read_stride);
+    else
+      n = SSL_read(ssl, buf, size - total);
     if (n < 0) {
       return n;
     } else {
@@ -2210,7 +2213,10 @@ int sized_socket_read(int fd, string* out) {
     return -1;
 
   while(total < size) {
-    n = read(fd, buf, read_stride);
+    if ((size - total) > read_stride)
+      n = read(fd, buf, read_stride);
+    else
+      n = read(fd, buf, size - total);
     if (n <= 0) {
       return -1;
     } else {
