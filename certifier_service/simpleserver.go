@@ -1250,16 +1250,14 @@ func logEvent(msg string, req []byte, resp []byte) {
 //      if logging is enabled, log event, request and response
 func serviceThread(conn net.Conn, client string) {
 
-        b := make([]byte, 8192)
-        n, err := conn.Read(b)
-        if err != nil {
-                fmt.Printf("n: %d\n", n)
+	b := certlib.SizedSocketRead(conn)
+	if b == nil {
                 logEvent("Can't read request", nil, nil)
                 return
-        }
+	}
 
         request:= &certprotos.TrustRequestMessage{}
-        err = proto.Unmarshal(b[0:n], request)
+        err := proto.Unmarshal(b, request)
         if err != nil {
                 fmt.Println("serviceThread: Failed to decode request", err)
                 logEvent("Can't unmarshal request", nil, nil)
@@ -1277,7 +1275,6 @@ func serviceThread(conn net.Conn, client string) {
         response := certprotos.TrustResponseMessage{}
         response.RequestingEnclaveTag = request.RequestingEnclaveTag
         response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
-        //response.Artifact = make([]byte, 5)
         response.Status = &failed
 
         // Construct the proof
@@ -1293,7 +1290,7 @@ func serviceThread(conn net.Conn, client string) {
         if toProve == nil || proof == nil || alreadyProved == nil {
                 // Debug
                 fmt.Printf("Constructing Proof fails\n")
-                logEvent("Can't construct proof from request", b[0:n], nil)
+                logEvent("Can't construct proof from request", b, nil)
 
                 // Debug
                 fmt.Printf("Sending response\n")
@@ -1302,14 +1299,17 @@ func serviceThread(conn net.Conn, client string) {
                 // send response
                 rb, err := proto.Marshal(&response)
                 if err != nil {
-                        logEvent("Couldn't marshall request", b[0:n], nil)
+                        logEvent("Couldn't marshall request", b, nil)
                         return
                 }
-                _, err = conn.Write(rb)
+		if !certlib.SizedSocketWrite(conn, rb) {
+                        fmt.Printf("SizedSocketWrite failed\n")
+                        return
+		}
                 if response.Status != nil && *response.Status == "succeeded" {
-                        logEvent("Successful request", b[0:n], rb)
+                        logEvent("Successful request", b, rb)
                 } else {
-                        logEvent("Failed Request", b[0:n], rb)
+                        logEvent("Failed Request", b, rb)
                 }
                         return
         } else {
@@ -1388,14 +1388,17 @@ func serviceThread(conn net.Conn, client string) {
         // send response
         rb, err := proto.Marshal(&response)
         if err != nil {
-                logEvent("Couldn't marshall request", b[0:n], nil)
+                logEvent("Couldn't marshall request", b, nil)
                 return
         }
-        _, err = conn.Write(rb)
+	if !certlib.SizedSocketWrite(conn, rb) {
+                fmt.Printf("SizedSocketWrite failed (2)\n")
+                return
+	}
         if response.Status != nil && *response.Status == "succeeded" {
-                logEvent("Successful request", b[0:n], rb)
+                logEvent("Successful request", b, rb)
         } else {
-                logEvent("Failed Request", b[0:n], rb)
+                logEvent("Failed Request", b, rb)
         }
         return
 }

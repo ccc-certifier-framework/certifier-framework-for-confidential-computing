@@ -34,6 +34,7 @@ import (
 	"crypto/x509/pkix"
 	b64 "encoding/base64"
 	"errors"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -2366,4 +2367,23 @@ func GetVseFromSignedClaim(sc *certprotos.SignedClaimMessage) *certprotos.VseCla
 		return nil
 	}
 	return &vseClause
+}
+
+func SizedSocketRead(conn net.Conn) []byte {
+	b := make([]byte, 8192)
+	n, err := conn.Read(b)
+	if err != nil {
+		fmt.Printf("SizedSocketRead, error: %d\n", n)
+		return nil
+	}
+	return b[0:n]
+}
+
+func SizedSocketWrite(conn net.Conn, b []byte) bool {
+	_, err := conn.Write(b)
+	if err != nil {
+		fmt.Printf("SizedSocketWrite error\n")
+		return false
+	}
+	return true
 }
