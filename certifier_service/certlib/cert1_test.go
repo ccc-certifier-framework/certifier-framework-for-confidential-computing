@@ -982,66 +982,6 @@ func TestPEM(t *testing.T) {
 	fmt.Printf("\n")
 }
 
-func service(conn net.Conn) {
-        return
-}
-
-func client () bool {
-        return true
-}
-
-func TestSizedChannel(t *testing.T) {
-	serverAddr := "localhost:8123"
-	fmt.Printf("\nTestSizedChannel %s\n", serverAddr)
-
-	id, _, _ := syscall.Syscall(syscall.SYS_FORK, 0, 0, 0)
-	if id == 0 {	// child
-
-/*
-		// use ResolveTCPAddr to create address to connect to
-		raddr, err := net.ResolveTCPAddr("tcp", serverAddr)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		// DialTCP creates connection to remote address.
-		conn, err := net.DialTCP("tcp", nil, raddr)
-		if err != nil {
-			fmt.Println("Main: failed to connect to server:", err)
-			os.Exit(1)
-		}
-		defer conn.Close()
- */
-
-		if !client() {
-			t.Errorf("Test failed\n")
-		} else {
-			fmt.Printf("Test succeeded\n")
-		}
-	} else {	// parent
-
-		// Listen for clients.
-		fmt.Printf("Listening\n")
-                return
-		sock, err := net.Listen("tcp", serverAddr)
-		if err != nil {
-			fmt.Printf("listen error\n")
-			return
-		}
-
-		// Service client connections.
-		for {
-			fmt.Printf("server: at accept\n")
-			conn, err := sock.Accept()
-			if err != nil {
-				fmt.Printf("Can't accept connection: %s\n", err.Error())
-				continue
-			}
-			go service(conn)
-		}
-	}
-}
-
 // For Sev testing --- deprecated
 /*
 func TestSevSignatures(t *testing.T) {
