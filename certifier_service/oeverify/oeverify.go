@@ -16,7 +16,7 @@ package oeverify
 
 /*
 #cgo CFLAGS: -g -Wall -I../oelib
-#cgo LDFLAGS: -L../oelib -loeverify -Wl,-rpath=oelib
+#cgo LDFLAGS: -L../oelib -loeverify -Wl,-rpath=oelib:../../certifier_service/oelib/:../../../certifier_service/oelib
 #include "oeverify.h"
 */
 import "C"

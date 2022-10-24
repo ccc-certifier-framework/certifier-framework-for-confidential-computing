@@ -306,6 +306,12 @@ Step 8: Build SimpleServer:
     cd $CERTIFIER_PROTOTYPE
     cd certifier_service/certprotos
     protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
+  Compile the oelib for OE host verification
+    cd $CERTIFIER_PROTOTYPE
+    cd certifier_service/oelib
+    make
+  If you do not have OE SDK installed or do not want to enable OE:
+    make dummy
 
   This should produce a go file for the certifier protobufs called certifier.pb.go in certprotos.
   Now build simpleclient and simpeserver:
