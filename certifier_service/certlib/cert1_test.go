@@ -980,6 +980,10 @@ func TestPEM(t *testing.T) {
 	fmt.Printf("\n")
 }
 
+func TestSizedChannel(t *testing.T) {
+        fmt.Printf("\nTestSizedChannel\n")
+}
+
 // For Sev testing --- deprecated
 /*
 func TestSevSignatures(t *testing.T) {
