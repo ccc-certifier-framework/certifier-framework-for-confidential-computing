@@ -2395,12 +2395,16 @@ func NewSizedSocketRead(conn net.Conn) []byte {
 		fmt.Printf("NewSizedSocketRead, error: %d\n", n)
 		return nil
 	}
-	size := int(bsize[0]) +  256 * int(bsize[1])
+	size := int(bsize[0]) +  256 * int(bsize[1]) + 256 * 256 * int(bsize[2])
 	b := make([]byte, size)
-	n, err = conn.Read(b)
-	if err != nil {
-		fmt.Printf("NewSizedSocketRead, error: %d\n", n)
-		return nil
+	total := 0
+	for ; total < size; {
+		n, err = conn.Read(b[total:])
+		if err != nil {
+			fmt.Printf("NewSizedSocketRead, error: %d\n", n)
+			return nil
+		}
+		total = total + n
 	}
 	return b
 }
@@ -2410,7 +2414,7 @@ func NewSizedSocketWrite(conn net.Conn, b []byte) bool {
 	bs := make([]byte, 4)
 	bs[0] = byte(size&0xff)
 	bs[1] = byte((size>>8)&0xff)
-	bs[2] = 0
+	bs[2] = byte((size>>16)&0xff)
 	bs[3] = 0
 	_, err := conn.Write(bs)
 	if err != nil {
