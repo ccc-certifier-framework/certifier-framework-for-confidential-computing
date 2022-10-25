@@ -878,8 +878,8 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     return false;
   }
 
-  // Change to sized_write
-  if (write(sock, (byte*)serialized_request.data(), serialized_request.size()) < 0) {
+  if (sized_socket_write(sock, serialized_request.size(), (byte*)serialized_request.data()) <
+        serialized_request.size()) {
     return false;
   }
 

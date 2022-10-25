@@ -2198,6 +2198,12 @@ int sized_socket_read(int fd, string* out) {
   return total;
 }
 
+int sized_socket_write(int fd, int size, byte* buf) {
+  if (write(fd, buf, size) < size)
+    return -1;
+  return size;
+}
+
 #else
 
 // little endian only
