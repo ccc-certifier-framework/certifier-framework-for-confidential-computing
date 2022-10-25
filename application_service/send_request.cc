@@ -44,20 +44,19 @@ int main(int an, char**av) {
     return 1;
   }
   // write request
-  if (write(sock, (byte*)serialized_request.data(), serialized_request.size()) < 0) {
+  if (sized_socket_write(sock, serialized_request.size(), (byte*)serialized_request.data()) <
+      serialized_request.size()) {
     printf("send_request, socket write failed\n");
     return 1;
   }
 
   // read response
-  byte response[8192];
   string serialized_response;
-  int n = read(sock, response, 8192);
+  int n = sized_socket_read(sock, &serialized_response);
   if (n < 0) {
     printf("Can't read response\n");
     return 1;
   }
-  serialized_response.assign((char*)response, n);
 
   if (!rsp.ParseFromString(serialized_response)) {
     printf("Can't parse response\n");

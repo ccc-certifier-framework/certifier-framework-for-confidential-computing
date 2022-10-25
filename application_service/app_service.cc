@@ -675,7 +675,7 @@ done:
     }
     string str_resp;
     if (resp.SerializeToString(&str_resp)) {
-      if(write(client, (byte*)str_resp.data(), str_resp.size()) < 0) {
+      if (sized_socket_write(client, str_resp.size(), (byte*)str_resp.data()) < str_resp.size()) {
         printf("Write failed\n");
       }
     }

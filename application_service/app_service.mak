@@ -60,10 +60,14 @@ hello_world.exe: hello_world.cc
 	@echo "hello_world.cc"
 	$(CC) $(CFLAGS) -o $(O)/hello_world.exe $(S)/hello_world.cc
 
-send_request.exe: send_request.cc
+send_request.exe: $(O)/send_request.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o
+	@echo "send_request.exe"
+	$(LINK) -o $(EXE_DIR)/send_request.exe $(O)/send_request.o $(O)/certifier.pb.o \
+	$(O)/certifier.o $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o $(LDFLAGS)
+
+$(O)/send_request.o: $(S)/send_request.cc
 	@echo "send_request.cc"
-	$(CC) $(CFLAGS) -o $(O)/send_request.exe $(S)/send_request.cc $(S)/certifier.pb.cc \
-        -L $(LOCAL_LIB) -lprotobuf -lgflags -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -lpthread
+	$(CC) $(CFLAGS) -c -o $(O)/send_request.o $(S)/send_request.cc
 
 app_service.exe: $(dobj) 
 	@echo "linking executable files"
