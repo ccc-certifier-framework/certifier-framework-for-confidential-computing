@@ -2370,29 +2370,10 @@ func GetVseFromSignedClaim(sc *certprotos.SignedClaimMessage) *certprotos.VseCla
 }
 
 func SizedSocketRead(conn net.Conn) []byte {
-	b := make([]byte, 8192)
-	n, err := conn.Read(b)
-	if err != nil {
-		fmt.Printf("SizedSocketRead, error: %d\n", n)
-		return nil
-	}
-	return b[0:n]
-}
-
-func SizedSocketWrite(conn net.Conn, b []byte) bool {
-	_, err := conn.Write(b)
-	if err != nil {
-		fmt.Printf("SizedSocketWrite error\n")
-		return false
-	}
-	return true
-}
-
-func NewSizedSocketRead(conn net.Conn) []byte {
 	bsize := make([]byte, 4)
 	n, err := conn.Read(bsize)
 	if err != nil {
-		fmt.Printf("NewSizedSocketRead, error: %d\n", n)
+		fmt.Printf("SizedSocketRead, error: %d\n", n)
 		return nil
 	}
 	size := int(bsize[0]) +  256 * int(bsize[1]) + 256 * 256 * int(bsize[2])
@@ -2401,7 +2382,7 @@ func NewSizedSocketRead(conn net.Conn) []byte {
 	for ; total < size; {
 		n, err = conn.Read(b[total:])
 		if err != nil {
-			fmt.Printf("NewSizedSocketRead, error: %d\n", n)
+			fmt.Printf("SizedSocketRead, error: %d\n", n)
 			return nil
 		}
 		total = total + n
@@ -2409,7 +2390,7 @@ func NewSizedSocketRead(conn net.Conn) []byte {
 	return b
 }
 
-func NewSizedSocketWrite(conn net.Conn, b []byte) bool {
+func SizedSocketWrite(conn net.Conn, b []byte) bool {
 	size := len(b)
 	bs := make([]byte, 4)
 	bs[0] = byte(size&0xff)
@@ -2418,13 +2399,13 @@ func NewSizedSocketWrite(conn net.Conn, b []byte) bool {
 	bs[3] = 0
 	_, err := conn.Write(bs)
 	if err != nil {
-		fmt.Printf("NewSizedSocketWrite error(1)\n")
+		fmt.Printf("SizedSocketWrite error(1)\n")
 		return false
 	}
 	_, err = conn.Write(b)
 	if err != nil {
 		fmt.Print(err)
-		fmt.Printf("NewSizedSocketWrite error(2)\n")
+		fmt.Printf("SizedSocketWrite error(2)\n")
 		return false
 	}
 	return true

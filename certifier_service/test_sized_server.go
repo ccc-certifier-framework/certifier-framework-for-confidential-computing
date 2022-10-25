@@ -9,8 +9,8 @@ import (
 
 func service(conn net.Conn) {
 	fmt.Printf("At service\n")
-	b := certlib.NewSizedSocketRead(conn)
-	if !certlib.NewSizedSocketWrite(conn, b) {
+	b := certlib.SizedSocketRead(conn)
+	if !certlib.SizedSocketWrite(conn, b) {
 		return
 	}
 	conn.Close()

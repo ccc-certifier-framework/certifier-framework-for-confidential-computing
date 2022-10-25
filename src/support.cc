@@ -2173,39 +2173,6 @@ int sized_ssl_read(SSL* ssl, string* out) {
   return total;
 }
 
-#if 1
-int sized_socket_read(int fd, string* out) {
-  out->clear();
-  int n = 0;
-  int total = 0;
-  const int read_stride = 8192;
-  byte buf[read_stride];
-  int m = recv(fd, buf, read_stride, MSG_PEEK);
-  while(m > 0) {
-    n = read(fd, buf, read_stride);
-    if (n <= 0) {
-      return total;
-    } else if (n < read_stride) {
-      out->append((char*)buf, n);
-      total += n;
-      m -= n;
-    } else {
-      out->append((char*)buf, n);
-      total += n;
-      m -= n;
-    }
-  }
-  return total;
-}
-
-int sized_socket_write(int fd, int size, byte* buf) {
-  if (write(fd, buf, size) < size)
-    return -1;
-  return size;
-}
-
-#else
-
 // little endian only
 int sized_socket_read(int fd, string* out) {
   out->clear();
@@ -2241,7 +2208,6 @@ int sized_socket_write(int fd, int size, byte* buf) {
     return -1;
   return size;
 }
-#endif
 
 // -----------------------------------------------------------------------
 

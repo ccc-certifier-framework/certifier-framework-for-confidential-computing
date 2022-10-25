@@ -11,10 +11,10 @@ import (
 func client (conn net.Conn) bool {
 	fmt.Printf("At client\n")
 	b := []byte{5, 6, 7, 8, 9, 10}
-	if !certlib.NewSizedSocketWrite(conn, b) {
+	if !certlib.SizedSocketWrite(conn, b) {
 		return false
 	}
-	nb := certlib.NewSizedSocketRead(conn)
+	nb := certlib.SizedSocketRead(conn)
 	fmt.Printf("b : ")
 	certlib.PrintBytes(b)
 	fmt.Printf("\n")
