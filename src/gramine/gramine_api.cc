@@ -24,29 +24,29 @@
 
 #define MAX_ASSERTION_SIZE 512
 
-AsyloCertifierFunctions asyloFuncs;
+GramineCertifierFunctions gramineFuncs;
 
-void setFuncs(AsyloCertifierFunctions funcs) {
-  asyloFuncs.Attest = funcs.Attest;
-  asyloFuncs.Verify = funcs.Verify;
-  asyloFuncs.Seal = funcs.Seal;
-  asyloFuncs.Unseal = funcs.Unseal;
+void setFuncs(GramineCertifierFunctions funcs) {
+  gramineFuncs.Attest = funcs.Attest;
+  gramineFuncs.Verify = funcs.Verify;
+  gramineFuncs.Seal = funcs.Seal;
+  gramineFuncs.Unseal = funcs.Unseal;
 }
 
-bool asylo_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
+bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
   int assertion_size = 0;
   bool result = false;
 
-  printf("Invoking Asylo Attest %d\n", claims_size);
+  printf("Invoking Gramine Attest %d\n", claims_size);
   print_bytes(claims_size, claims);
   printf("\n");
 
-  result = (*asyloFuncs.Attest)
+  result = (*gramineFuncs.Attest)
            (claims_size, claims, &assertion_size, assertion);
   if (!result) {
-    printf("Asylo attest failed\n");
+    printf("Gramine attest failed\n");
     return false;
   }
 
@@ -71,20 +71,20 @@ bool asylo_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
 
   *size_out = j;
 
-  printf("Done Asylo Attest assertion size %d:\n", *size_out);
+  printf("Done Gramine Attest assertion size %d:\n", *size_out);
   print_bytes(*size_out, out);
 
   return true;
 }
 
-bool asylo_Verify(int claims_size, byte* claims, int *user_data_out_size,
+bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
                   byte *user_data_out, int* size_out, byte* out) {
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
   int assertion_size = 0;
   bool result = false;
 
-  printf("\nInput claims sent to asylo_Verify:\n");
+  printf("\nInput claims sent to gramine_Verify:\n");
   print_bytes(claims_size, claims);
 
   int i, j = 0;
@@ -109,44 +109,44 @@ bool asylo_Verify(int claims_size, byte* claims, int *user_data_out_size,
   printf("\nuser_data_out:\n");
   print_bytes(*user_data_out_size, user_data_out);
 
-  printf("Invoking Asylo Verify %d\n", claims_size);
-  result = (*asyloFuncs.Verify)
+  printf("Invoking Gramine Verify %d\n", claims_size);
+  result = (*gramineFuncs.Verify)
            (*user_data_out_size, user_data_out, assertion_size,
              assertion, size_out, out);
   if (!result) {
-    printf("Asylo verify failed\n");
+    printf("Gramine verify failed\n");
     return false;
   }
 
-  printf("Done Asylo Verify %d\n", *size_out);
+  printf("Done Gramine Verify %d\n", *size_out);
 
   return true;
 }
 
-bool asylo_Seal(int in_size, byte* in, int* size_out, byte* out) {
+bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
   bool result = false;
-  printf("Invoking Asylo Seal %d\n", in_size);
+  printf("Invoking Gramine Seal %d\n", in_size);
 
-  result = (*asyloFuncs.Seal)(in_size, in, size_out, out);
+  result = (*gramineFuncs.Seal)(in_size, in, size_out, out);
   if (!result) {
-    printf("Asylo seal failed\n");
+    printf("Gramine seal failed\n");
     return false;
   }
 
-  printf("Done Asylo Seal %d\n", *size_out);
+  printf("Done Gramine Seal %d\n", *size_out);
   return true;
 }
 
-bool asylo_Unseal(int in_size, byte* in, int* size_out, byte* out) {
+bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   bool result = false;
-  printf("Invoking Asylo Unseal %d\n", in_size);
+  printf("Invoking Gramine Unseal %d\n", in_size);
 
-  result = (*asyloFuncs.Unseal)(in_size, in, size_out, out);
+  result = (*gramineFuncs.Unseal)(in_size, in, size_out, out);
   if (!result) {
-    printf("Asylo unseal failed\n");
+    printf("Gramine unseal failed\n");
     return false;
   }
 
-  printf("Done Asylo Unseal %d\n", *size_out);
+  printf("Done Gramine Unseal %d\n", *size_out);
   return true;
 }
