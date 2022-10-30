@@ -457,6 +457,32 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     }
     signed_claim_message* nsc2 = trusted_platforms->add_claims();
     nsc2->CopyFrom(sc2);
+  } else if (evidence_descriptor == "gramine-evidence") {
+    // Evidence should be
+    //    sc3: "platformKey says attestationKey is-trusted
+    //    attest output (attest)
+    //    sc1 --> trusted_measurements
+    //    sc2 --> trusted platforms
+
+    evidence* ev1 = evp->add_fact_assertion();
+    evidence* ev2 = evp->add_fact_assertion();
+
+    string t_str;
+    if (!sc3.SerializeToString(&t_str))
+      return false;
+    ev1->set_evidence_type("signed-claim");
+    ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
+    t_str.clear();
+
+    ev2->set_evidence_type("gramine-evidence");
+    ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
+
+    if (!init_measurements) {
+      signed_claim_message* nsc1 = trusted_measurements->add_claims();
+      nsc1->CopyFrom(sc1);
+    }
+    signed_claim_message* nsc2 = trusted_platforms->add_claims();
+    nsc2->CopyFrom(sc2);
   } else {
     printf("Bad evidence descriptor\n");
     return false;
@@ -875,6 +901,36 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     }
     signed_claim_message* nsc2 = trusted_platforms->add_claims();
     printf("\n Successfully added asylo evidence\n");
+  } else if (evidence_descriptor == "gramine-evidence") {
+    // Evidence should be
+    //    sc3: "platformKey says attestationKey is-trusted
+    //    attest output (attest)
+    //    sc1 --> trusted_measurements
+    //    sc2 --> trusted platforms
+
+    evidence* ev1 = evp->add_fact_assertion();
+    evidence* ev2 = evp->add_fact_assertion();
+
+    string t_str;
+    if (!sc3.SerializeToString(&t_str)) {
+      printf("\n Error in adding gramine evidence\n");
+      return false;
+    }
+    ev1->set_evidence_type("signed-claim");
+    ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
+    t_str.clear();
+
+    ev2->set_evidence_type("gramine-evidence");
+    ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
+
+    printf("\n Gramine evidence\n");
+    print_bytes(final_serialized_attest.size(), (byte*)final_serialized_attest.c_str());
+    if (!init_measurements) {
+      signed_claim_message* nsc1 = trusted_measurements->add_claims();
+      nsc1->CopyFrom(sc1);
+    }
+    signed_claim_message* nsc2 = trusted_platforms->add_claims();
+    printf("\n Successfully added gramine evidence\n");
   } else {
     printf("Bad evidence descriptor\n");
     return false;
