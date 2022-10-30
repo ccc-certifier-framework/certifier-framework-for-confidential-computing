@@ -33,10 +33,9 @@
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 
-#include "gramine_api.h"
-extern "C" {
+//extern "C" {
 #include "gramine_trusted.h"
-}
+//}
 
 #include "policy_key.cc"
 
@@ -174,7 +173,15 @@ bool gramine_seal() {
   return true;
 }
 
+//extern bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out);
+//extern int setFuncs(GramineCertifierFunctions funcs);
+
 bool gramine_setup_certifier_functions(GramineCertifierFunctions gramineFuncs) {
+	/*
+  int arg1;
+  byte arg2;
+  gramine_Attest(sizeof(arg2), &arg2, &arg1, &arg2);
+  */
   setFuncs(gramineFuncs);
   return true;
 }

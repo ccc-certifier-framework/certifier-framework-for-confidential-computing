@@ -13,9 +13,13 @@
 // limitations under the License.
 
 #include <iostream>
+//#include <stdio.h>
+//#include <stdlib.h>
 
 #ifndef _GRAMINE_API_H_
 #define _GRAMINE_API_H_
+
+typedef unsigned char byte;
 
 typedef struct GramineCertifierFunctions {
   bool (*Attest)(int claims_size, byte* claims, int* size_out, byte* out);

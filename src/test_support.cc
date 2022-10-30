@@ -16,6 +16,7 @@
 // limitations under the License.
 
 const bool debug_print = false;
+//const bool debug_print = true;
 
 bool read_trusted_binary_measurements_and_sign(string& file_name, key_message& policy_key,
         signed_claim_sequence* list) {
@@ -161,10 +162,10 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   if (debug_print) {
     printf("\nIntel key: ");
-    print_key(intel_key);
-    printf("\n");
+    //print_key(intel_key);
   }
 
+  printf("\nBefore Attest key: \n");
   // attest key
   key_message attest_pk;
   extern key_message my_attestation_key;
@@ -172,10 +173,11 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   if (debug_print) {
     printf("\nAttest key: ");
-    print_key(attest_pk);
+    //print_key(attest_pk);
     printf("\n");
   }
 
+  printf("\nBefore Enclave key: \n");
   // Construct enclave-authentication-key
   string enclave_key_name("enclave-key");
   key_message enclave_key;
@@ -184,7 +186,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   if (debug_print) {
     printf("\nEnclave key: ");
-    print_key(enclave_key);
+    //print_key(enclave_key);
     printf("\n");
   }
 
@@ -194,7 +196,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   if (debug_print) {
     printf("Measurement: ");
-    print_entity(measurement_entity);
+    //print_entity(measurement_entity);
     printf("\n");
   }
 
@@ -330,16 +332,18 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
           &serialized_what_to_say)) {
     return false;
   }
+  printf("Constructed statements, before Attest\n");
 
   int size_out = 8192;
   byte attest_out[size_out];
+
   if (!Attest(enclave_type, serialized_what_to_say.size(),
               (byte*)serialized_what_to_say.data(),
               &size_out, attest_out))
     return false;
   string final_serialized_attest;
   final_serialized_attest.assign((char*) attest_out, size_out);
-
+#if 0
   evp->set_prover_type("vse-verifier");
 
   // sc1: "policyKey says measurement is-trusted"
@@ -488,6 +492,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   }
 
+#endif
   return true;
 }
 
@@ -513,8 +518,10 @@ bool test_local_certify(string& enclave_type,
           &trusted_platforms, &trusted_measurements,
           &policy_key, &policy_pk, &evp))
     return false;
-
+    printf("test_local_certify, evidence descriptor: %s, enclave type: %s, evidence:\n",
+        evidence_descriptor.c_str(), enclave_type.c_str());
   if (debug_print) {
+#if 0
     printf("test_local_certify, evidence descriptor: %s, enclave type: %s, evidence:\n",
         evidence_descriptor.c_str(), enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
@@ -531,15 +538,16 @@ bool test_local_certify(string& enclave_type,
       print_signed_claim(trusted_platforms.claims(i));
       printf("\n");
     }
+#endif
   }
-
+#if 0
   string purpose("authentication");
   if (!validate_evidence(evidence_descriptor, trusted_platforms,
           trusted_measurements, purpose, evp, policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }
-
+#endif
   return true;
 }
 
@@ -602,6 +610,7 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     printf("\n");
   }
 
+    printf("\nMeasurement2: \n");
   // attest key
   key_message attest_pk;
   extern key_message my_attestation_key;
@@ -613,6 +622,7 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     printf("\n");
   }
 
+    printf("\nMeasurement3: \n");
   // Construct enclave-authentication-key
   string enclave_key_name("enclave-key");
   key_message enclave_key;
@@ -700,6 +710,7 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
   if (!make_indirect_vse_clause(attest_key_entity, says, c8 , &c9))
     return false;
 
+  printf("Constructed statements\n");
   // Construct signed statements
   //    C1: policy-key says enclave-measurement is-trusted (signed c5)
   //    C2: policy-key says intel-key is-trusted-for-attestation (signed c6)
@@ -770,6 +781,7 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     return false;
   }
 
+  printf("Constructed statements, before Attest\n");
   int size_out = 8192;
   byte attest_out[size_out];
   if (!Attest(enclave_type, serialized_what_to_say.size(),
