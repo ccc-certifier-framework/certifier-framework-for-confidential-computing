@@ -105,7 +105,7 @@ void print_trust_data() {
 }
 
 bool certifier_test_seal(void) {
-  string enclave_type("asylo-enclave");
+  string enclave_type("gramine-enclave");
   string enclave_id("local-machine");
 
   int secret_to_seal_size = 32;
@@ -142,9 +142,9 @@ bool certifier_test_seal(void) {
   return true;
 }
 
-bool asylo_local_certify() {
-  string enclave_type("asylo-enclave");
-  string evidence_descriptor("asylo-evidence");
+bool gramine_local_certify() {
+  string enclave_type("gramine-enclave");
+  string evidence_descriptor("gramine-evidence");
   extern bool simulator_init(void);
   if (!simulator_initialized) {
     if (!simulator_init()) {
@@ -165,7 +165,7 @@ bool asylo_local_certify() {
   return true;
 }
 
-bool asylo_seal() {
+bool gramine_seal() {
   if (!certifier_test_seal()) {
     printf("Sealing test failed\n");
     return false;
@@ -174,8 +174,8 @@ bool asylo_seal() {
   return true;
 }
 
-bool asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs) {
-  setFuncs(asyloFuncs);
+bool gramine_setup_certifier_functions(GramineCertifierFunctions gramineFuncs) {
+  setFuncs(gramineFuncs);
   return true;
 }
 
@@ -284,7 +284,7 @@ void server_application(secure_authenticated_channel& channel) {
   connected = true;
 }
 
-void asylo_server_dispatch(const string& host_name, int port,
+void gramine_server_dispatch(const string& host_name, int port,
       string& asn1_root_cert, key_message& private_key,
       const string& private_key_cert, void (*func)(secure_authenticated_channel&)) {
 
@@ -356,7 +356,7 @@ bool setup_server_ssl() {
   }
 
   printf("running as server\n");
-  asylo_server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+  gramine_server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
       app_trust_data->serialized_policy_cert_,
       app_trust_data->private_auth_key_,
       app_trust_data->private_auth_key_.certificate(),
