@@ -335,7 +335,8 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
   printf("Constructed statements, before Attest\n");
 
   int size_out = 8192;
-  byte attest_out[size_out];
+  //byte attest_out[size_out];
+  byte *attest_out = (byte*)malloc(size_out);
 
   if (!Attest(enclave_type, serialized_what_to_say.size(),
               (byte*)serialized_what_to_say.data(),
@@ -343,7 +344,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   string final_serialized_attest;
   final_serialized_attest.assign((char*) attest_out, size_out);
-#if 0
+
   evp->set_prover_type("vse-verifier");
 
   // sc1: "policyKey says measurement is-trusted"
@@ -492,7 +493,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   }
 
-#endif
+  free(attest_out);
   return true;
 }
 
@@ -521,7 +522,6 @@ bool test_local_certify(string& enclave_type,
     printf("test_local_certify, evidence descriptor: %s, enclave type: %s, evidence:\n",
         evidence_descriptor.c_str(), enclave_type.c_str());
   if (debug_print) {
-#if 0
     printf("test_local_certify, evidence descriptor: %s, enclave type: %s, evidence:\n",
         evidence_descriptor.c_str(), enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
@@ -538,16 +538,15 @@ bool test_local_certify(string& enclave_type,
       print_signed_claim(trusted_platforms.claims(i));
       printf("\n");
     }
-#endif
   }
-#if 0
+
   string purpose("authentication");
   if (!validate_evidence(evidence_descriptor, trusted_platforms,
           trusted_measurements, purpose, evp, policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }
-#endif
+
   return true;
 }
 

@@ -22,7 +22,7 @@
 #include "cc_helpers.h"
 #include "gramine_api.h"
 
-#define MAX_ASSERTION_SIZE 512
+#define MAX_ASSERTION_SIZE 5000
 
 GramineCertifierFunctions gramineFuncs;
 
@@ -40,7 +40,7 @@ bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   bool result = false;
 
   printf("Invoking Gramine Attest %d\n", claims_size);
-#if 0
+
   print_bytes(claims_size, claims);
   printf("\n");
 
@@ -71,7 +71,7 @@ bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   }
 
   *size_out = j;
-#endif
+
   printf("Done Gramine Attest assertion size %d:\n", *size_out);
   print_bytes(*size_out, out);
 
