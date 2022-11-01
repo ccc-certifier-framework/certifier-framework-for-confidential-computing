@@ -186,7 +186,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   if (debug_print) {
     printf("\nEnclave key: ");
-    //print_key(enclave_key);
+    print_key(enclave_key);
     printf("\n");
   }
 
@@ -196,7 +196,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   if (debug_print) {
     printf("Measurement: ");
-    //print_entity(measurement_entity);
+    print_entity(measurement_entity);
     printf("\n");
   }
 
@@ -335,8 +335,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
   printf("Constructed statements, before Attest\n");
 
   int size_out = 8192;
-  //byte attest_out[size_out];
-  byte *attest_out = (byte*)malloc(size_out);
+  byte attest_out[size_out];
 
   if (!Attest(enclave_type, serialized_what_to_say.size(),
               (byte*)serialized_what_to_say.data(),
@@ -493,7 +492,6 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   }
 
-  free(attest_out);
   return true;
 }
 
