@@ -29,7 +29,7 @@ bool oe_host_verify_evidence(
     size_t* measurement_size)
 {
     bool result = false;
-    static const oe_uuid_t _uuid_vse = {OE_FORMAT_UUID_VSE_REMOTE_ATTESTATION};
+    static const oe_uuid_t _uuid = {OE_FORMAT_UUID_SGX_LOCAL_ATTESTATION};
     const oe_policy_t* policies = NULL;
     size_t policies_size = 0;
     oe_claim_t* claims = NULL;
@@ -51,7 +51,7 @@ bool oe_host_verify_evidence(
     }
 
     result = (OE_OK == oe_verify_evidence(
-        &_uuid_vse,
+        &_uuid,
         evidence,
         evidence_size,
         endorsements,
