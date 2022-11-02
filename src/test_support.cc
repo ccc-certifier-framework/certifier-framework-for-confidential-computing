@@ -15,8 +15,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const bool debug_print = false;
-//const bool debug_print = true;
+//const bool debug_print = false;
+const bool debug_print = true;
 
 bool read_trusted_binary_measurements_and_sign(string& file_name, key_message& policy_key,
         signed_claim_sequence* list) {
@@ -162,7 +162,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   if (debug_print) {
     printf("\nIntel key: ");
-    //print_key(intel_key);
+    print_key(intel_key);
   }
 
   printf("\nBefore Attest key: \n");
@@ -173,7 +173,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     return false;
   if (debug_print) {
     printf("\nAttest key: ");
-    //print_key(attest_pk);
+    print_key(attest_pk);
     printf("\n");
   }
 
@@ -478,13 +478,16 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     ev1->set_serialized_evidence((byte*) t_str.data(), t_str.size());
     t_str.clear();
 
+    printf("Adding gramine evidence........... 1\n");
     ev2->set_evidence_type("gramine-evidence");
     ev2->set_serialized_evidence((byte*) final_serialized_attest.data(), final_serialized_attest.size());
 
     if (!init_measurements) {
+      printf("Adding gramine evidence........... 2\n");
       signed_claim_message* nsc1 = trusted_measurements->add_claims();
       nsc1->CopyFrom(sc1);
     }
+      printf("Adding gramine evidence........... 3\n");
     signed_claim_message* nsc2 = trusted_platforms->add_claims();
     nsc2->CopyFrom(sc2);
   } else {
@@ -545,6 +548,7 @@ bool test_local_certify(string& enclave_type,
     return false;
   }
 
+  printf("done validating evidence\n");
   return true;
 }
 

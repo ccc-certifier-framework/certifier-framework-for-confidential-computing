@@ -73,7 +73,7 @@ bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   *size_out = j;
 
   printf("Done Gramine Attest assertion size %d:\n", *size_out);
-  print_bytes(*size_out, out);
+  //print_bytes(*size_out, out);
 
   return true;
 }
@@ -86,7 +86,7 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
   bool result = false;
 
   printf("\nInput claims sent to gramine_Verify:\n");
-  print_bytes(claims_size, claims);
+  //print_bytes(claims_size, claims);
 
   int i, j = 0;
   for (i = 0; i < sizeof(int); i++, j++) {
@@ -97,7 +97,7 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
     assertion[i] = claims[j];
   }
   printf("\nAssertion:\n");
-  print_bytes(assertion_size, assertion);
+  //print_bytes(assertion_size, assertion);
 
   for (i = 0; i < sizeof(int); i++, j++) {
     ((byte*)user_data_out_size)[i] = claims[j];
@@ -108,7 +108,7 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
   }
 
   printf("\nuser_data_out:\n");
-  print_bytes(*user_data_out_size, user_data_out);
+  //print_bytes(*user_data_out_size, user_data_out);
 
   printf("Invoking Gramine Verify %d\n", claims_size);
   result = (*gramineFuncs.Verify)
