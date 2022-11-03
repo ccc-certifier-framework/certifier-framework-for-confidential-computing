@@ -53,7 +53,7 @@ Step 5: Compile example_app with the embedded policy_key
 
 Step 6: In addition to making the binary, make will produce a file, binary_trusted_measurements_file.bin
 containing the application measurement.  The platform key should have been provisioned in a pem file called
-vse.cert which you should copy into the provisioning directory.  Translate vse.cert, which in in pem format,
+vse.crt which you should copy into the provisioning directory.  Translate vse.crt, which is in pem format,
 into der by:
     cd $EXAMPLE_DIR/provisioning
     openssl x509 -in vse.crt -inform pem -out vse.crt.der -outform der
@@ -64,8 +64,8 @@ Step 7: Author the policy for the security domain and produce the signed claims 
     cd $EXAMPLE_DIR/provisioning
 
     a. Construct statement "policy-key says measurement is-trusted"
-       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_key_subject="vse.cert.der" \
-          --measurement_subject=binary_trusted_measurements_file.bin --output=ts1.bin
+       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe \
+          --measurement_subject=binary_trusted_measurements_file.bin --verb="is-trusted" --output=ts1.bin
        $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
           --verb="says" --clause=ts1.bin --output=vse_policy1.bin
 
