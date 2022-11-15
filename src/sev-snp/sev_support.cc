@@ -559,10 +559,8 @@ bool sev_get_final_keys(int final_key_size, byte* final_key) {
    *   FIELD_POLICY_MASK    | FIELD_IMAGE_ID_MASK
    *   FIELD_FAMILY_ID_MASK | FIELD_MEASUREMENT_MASK
    *   FIELD_GUEST_SVN_MASK | FIELD_TCB_VERSION_MASK
-   *
-   * Ignore all optional fields for now.
    */
-  opt.fields = 0;
+  opt.fields = FIELD_MEASUREMENT_MASK;
 
   if (EXIT_SUCCESS != sev_request_key(&opt, key, size))
     return false;
