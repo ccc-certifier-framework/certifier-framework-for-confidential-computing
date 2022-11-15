@@ -57,6 +57,10 @@
 #define ATTEST_KEY_FILE              "attest_key_file.bin"
 #define PLAT_ATTEST_ENDORSEMENT_FILE "platform_attest_endorsement.bin"
 #define MEASUREMENT_FILE             "example_app.measurement"
+#else
+#define ARK_CERT_FILE                "ark_cert.der"
+#define ASK_CERT_FILE                "ask_cert.der"
+#define VCEK_CERT_FILE               "vcek_cert.der"
 #endif
 
 #include "policy_key.cc"
@@ -229,6 +233,19 @@ int main(int argc, char *argv[]) {
     printf("Can't init simulated enclave\n");
     return 1;
   }
+#else
+  // Init SEV enclave
+  string ark_cert_file_name(ATTSERVICE_DATA_DIR);
+  ark_cert_file_name.append(ARK_CERT_FILE);
+  string ask_cert_file_name(ATTSERVICE_DATA_DIR);
+  ask_cert_file_name.append(ASK_CERT_FILE);
+  string vcek_cert_file_name(ATTSERVICE_DATA_DIR);
+  vcek_cert_file_name.append(VCEK_CERT_FILE);
+  if (!app_trust_data->initialize_sev_enclave_data(ark_cert_file_name,
+        ask_cert_file_name, vcek_cert_file_name)) {
+    printf("Can't init sev enclave\n");
+    return 1;
+  }
 #endif
 
   // Standard algorithms for the enclave
@@ -249,8 +266,13 @@ int main(int argc, char *argv[]) {
     ATT_LOG(LOG_INFO, "Performing warm initialization...");
     if (!app_trust_data->warm_restart()) {
       ATT_LOG(LOG_INFO, "warm-restart failed");
-      ret = 1;
-      goto done;
+      /* Attemp cold init */
+      if (!app_trust_data->cold_init(public_key_alg,
+          symmetric_key_alg, hash_alg, hmac_alg)) {
+        ATT_LOG(LOG_INFO, "cold-init failed");
+        ret = 1;
+        goto done;
+      }
     }
   }
 
@@ -268,15 +290,17 @@ int main(int argc, char *argv[]) {
   ATT_LOG(LOG_INFO, "  Require Disk Encryption? : %s", app_config.check_disk ? "Yes" : "No");
 
   /*
-   * Perform the certification every time a guest is launched for now. We have
-   * no easy way to know whether the guest was cloned or had its kernel/initrd/
-   * boot params updated before the launch.
+   * Perform the certification if the appliance is not already certified.
    */
-  ATT_LOG(LOG_INFO, "Performing certification...");
-  if (!app_trust_data->certify_me(app_config.certifier_host, app_config.certifier_port)) {
-    ATT_LOG(LOG_INFO, "Certification failed.");
-    ret = 1;
-    goto done;
+  if (app_trust_data->cc_is_certified_) {
+    ATT_LOG(LOG_INFO, "Appliance was already certified");
+  } else {
+    ATT_LOG(LOG_INFO, "Performing certification...");
+    if (!app_trust_data->certify_me(app_config.certifier_host, app_config.certifier_port)) {
+      ATT_LOG(LOG_INFO, "Certification failed.");
+      ret = 1;
+      goto done;
+    }
   }
 
   // Check for disk encryption status if configured

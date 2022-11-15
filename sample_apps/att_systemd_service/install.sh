@@ -15,6 +15,15 @@ if [[ "$CMD" == "install" ]]; then
     cp attest_key_file.bin /etc/attsvc
     cp example_app.measurement /etc/attsvc
     cp platform_attest_endorsement.bin /etc/attsvc
+  else
+    if [ ! -f "ark_cert.der" ] || [ ! -f "ask_cert.der" ] || [ ! -f "vcek_cert.der" ] ; then
+      echo "Platform certificates not found! Copy [ark|ask|vcek]_cert.der to current directory before installation."
+      exit
+    else
+      cp ark_cert.der /etc/attsvc
+      cp ask_cert.der /etc/attsvc
+      cp vcek_cert.der /etc/attsvc
+    fi
   fi
   touch /etc/attsvc/config
   echo "# VMware Attestation Service Configuration" >> /etc/attsvc/config
