@@ -297,8 +297,6 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
 int main(int argc, char** argv) {
     int ret;
     size_t len;
-    mbedtls_net_context listen_fd;
-    mbedtls_net_context client_fd;
     unsigned char buf[1024];
     const char* pers = "ssl_server";
     void* ra_tls_attest_lib;
@@ -306,25 +304,11 @@ int main(int argc, char** argv) {
     uint8_t* der_key = NULL;
     uint8_t* der_crt = NULL;
 
-    mbedtls_entropy_context entropy;
-    mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_ssl_context ssl;
     mbedtls_ssl_config conf;
-    mbedtls_x509_crt srvcert;
-    mbedtls_pk_context pkey;
 
-    mbedtls_net_init(&listen_fd);
-    mbedtls_net_init(&client_fd);
     mbedtls_ssl_init(&ssl);
     mbedtls_ssl_config_init(&conf);
-    mbedtls_x509_crt_init(&srvcert);
-    mbedtls_pk_init(&pkey);
-    mbedtls_entropy_init(&entropy);
-    mbedtls_ctr_drbg_init(&ctr_drbg);
-
-#if defined(MBEDTLS_DEBUG_C)
-    mbedtls_debug_set_threshold(DEBUG_LEVEL);
-#endif
 
     printf("Attestation type:\n");
     char attestation_type_str[32] = {0};
@@ -353,16 +337,6 @@ int main(int argc, char** argv) {
     }
 
     bool cert_result = false;
-
-    printf("  . Seeding the random number generator...");
-    fflush(stdout);
-
-    ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
-                                (const unsigned char*)pers, strlen(pers));
-    if (ret != 0) {
-        printf(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
-        goto exit;
-    }
 
     /* Certifier local attest and seal tests */
     GramineCertifierFunctions gramineFuncs;
