@@ -350,46 +350,6 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
 
     return true;
 }
-#if 0
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
-static int exec_prog(const char **argv)
-{
-    pid_t   my_pid;
-    int     status, timeout /* unused ifdef WAIT_FOR_COMPLETION */;
-
-    if (0 == (my_pid = fork())) {
-            if (-1 == execve(argv[0], (char **)argv , NULL)) {
-                    perror("child process execve failed [%m]");
-                    return -1;
-            }
-    }
-
-#ifdef WAIT_FOR_COMPLETION
-    timeout = 1000;
-
-    while (0 == waitpid(my_pid , &status , WNOHANG)) {
-            if ( --timeout < 0 ) {
-                    perror("timeout");
-                    return -1;
-            }
-            sleep(1);
-    }
-
-    printf("%s WEXITSTATUS %d WIFEXITED %d [status %d]\n",
-            argv[0], WEXITSTATUS(status), WIFEXITED(status), status);
-
-    if (1 != WIFEXITED(status) || 0 != WEXITSTATUS(status)) {
-            perror("%s failed, halt system");
-            return -1;
-    }
-
-#endif
-    return 0;
-}
-#endif
 
 int main(int argc, char** argv) {
     int ret;
@@ -458,11 +418,6 @@ int main(int argc, char** argv) {
     }
 
     bool cert_result = false;
-    //argv[0] = "/usr/bin/ls";
-    //argv[1] = "2>&1 > out";
-    //char * argv_list[] = {(char*)" -lart > /tmp/out",NULL};
-    //char * argv_list[] = {(char*)"asdf", " > ", " out.bin",NULL};
-    char * argv_list[] = {(char*)" asdf1 > /tmp/out.bin", NULL};
 
     mbedtls_printf("  . Seeding the random number generator...");
     fflush(stdout);
@@ -492,31 +447,7 @@ int main(int argc, char** argv) {
     }
     fflush(stdout);
 
-    printf("Done verification, launching TKG workload host...\n");
-    int out;
-    //out = exec_prog(my_argv);
 #if 0
-    if (fork() == 0) {
-        printf("In child\n");
-        out = execv("/usr/bin/echo", argv_list); 
-	if (out == -1) {
-            printf("In child error %d\n", errno);
-	}
-    }
-
-    out = system("docker run -it --entrypoint /bin/bash --tty --hostname host1 --name host1 --device=/dev/sgx_enclave -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket --privileged --security-opt seccomp=unconfined --tmpfs /tmp --tmpfs /run --volume /var --volume /lib/modules:/lib/modules:ro --network kind gsc-byoh/node:e2e");
-
-    printf("Launched TKG workload host...\n");
-#endif
-#if 0
-    cert_result = gramine_seal();
-    if (!cert_result) {
-        printf("gramine_seal failed: result = %d\n", cert_result);
-        goto exit;
-    }
-
-    mbedtls_printf(" ok\n");
-
     if (ra_tls_attest_lib) {
         mbedtls_printf("\n  . Creating the RA-TLS server cert and key (using \"%s\" as "
                        "attestation type)...", attestation_type_str);
