@@ -1859,6 +1859,7 @@ bool get_signed_measurement_claim_from_trusted_list(
     print_bytes(c.clause().subject().measurement().size(), (byte*)c.clause().subject().measurement().data());
     printf("\n exp measurement size: %ld\n", expected_measurement.size());
     print_bytes(expected_measurement.size(), (byte*) expected_measurement.data());
+    printf("\n");
 
     if (memcmp(c.clause().subject().measurement().data(),
             (byte*) expected_measurement.data(), expected_measurement.size()) == 0) {
@@ -1987,15 +1988,12 @@ bool add_newfacts_for_sdk_platform_attestation(key_message& policy_pk,
   expected_measurement.assign((char*)m_ent.measurement().data(), m_ent.measurement().size());
 
   signed_claim_message sc;
-    printf("add_newfacts_for_sdk_platform_attestation 3\n");
   if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
         trusted_measurements, &sc))
     return false;
-    printf("add_newfacts_for_sdk_platform_attestation 4\n");
   if (!add_fact_from_signed_claim(sc, already_proved))
     return false;
 
-    printf("add_newfacts_for_sdk_platform_attestation 5\n");
   return true;
 }
 
