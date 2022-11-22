@@ -404,14 +404,6 @@ int main(int argc, char** argv) {
             mbedtls_printf("User requested RA-TLS attestation but cannot find lib\n");
             return 1;
         }
-#if 0 
-        char* error;
-        ra_tls_create_key_and_crt_der_f = dlsym(ra_tls_attest_lib, "ra_tls_create_key_and_crt_der");
-        if ((error = dlerror()) != NULL) {
-            mbedtls_printf("%s\n", error);
-            return 1;
-        }
-#endif
     } else {
         mbedtls_printf("Unrecognized remote attestation type: %s\n", attestation_type_str);
         return 1;
@@ -433,8 +425,6 @@ int main(int argc, char** argv) {
     GramineCertifierFunctions gramineFuncs;
     gramineFuncs.Attest = &Attest;
     gramineFuncs.Verify = &Verify;
-    //gramineFuncs.Seal = &Seal;
-    //gramineFuncs.Unseal = &Unseal;
 
     gramine_setup_certifier_functions(gramineFuncs);
     printf("Invoking certifier...\n");
@@ -448,29 +438,9 @@ int main(int argc, char** argv) {
     fflush(stdout);
 
 exit:
-#ifdef MBEDTLS_ERROR_C
-    if (ret != 0) {
-        char error_buf[100];
-        mbedtls_strerror(ret, error_buf, sizeof(error_buf));
-        mbedtls_printf("Last error was: %d - %s\n\n", ret, error_buf);
-    }
-#endif
 
     if (ra_tls_attest_lib)
         dlclose(ra_tls_attest_lib);
-#if 0
-    mbedtls_net_free(&client_fd);
-    mbedtls_net_free(&listen_fd);
 
-    mbedtls_x509_crt_free(&srvcert);
-    mbedtls_pk_free(&pkey);
-    mbedtls_ssl_free(&ssl);
-    mbedtls_ssl_config_free(&conf);
-    mbedtls_ctr_drbg_free(&ctr_drbg);
-    mbedtls_entropy_free(&entropy);
-
-    free(der_key);
-    free(der_crt);
-#endif
     return ret;
 }
