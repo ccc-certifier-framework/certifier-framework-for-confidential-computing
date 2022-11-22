@@ -1297,12 +1297,12 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         printf("init_proved_statements: gramine_Verify failed\n");
       }
 
-//#ifdef DEBUG
+#ifdef DEBUG
       printf("\ngramine returned user data: size: %d\n", user_data_size);
-      //print_bytes(user_data_size, user_data);
+      print_bytes(user_data_size, user_data);
       printf("\ngramine returned measurement: size: %d\n", measurement_out_size);
       print_bytes(measurement_out_size, measurement_out);
-//#endif
+#endif
 
       // user_data should be a attestation_user_data
       string ud_str;
@@ -1329,7 +1329,6 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         printf("init_proved_statements: make_simple_vse_clause failed\n");
         return false;
       }
-      printf("\nmake_simple_vse_clause done\n");
 #endif  // GRAMINE
     } else if (evp.fact_assertion(i).evidence_type() == "cert") {
       // A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
@@ -1515,7 +1514,6 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       return false;
     }
   }
-  printf("\ninit_proved_statements done\n");
   return true;
 }
 
@@ -1855,11 +1853,13 @@ bool get_signed_measurement_claim_from_trusted_list(
       continue;
     }
 
+#ifdef DEBUG
     printf("\n got measurement size: %ld\n", c.clause().subject().measurement().size());
     print_bytes(c.clause().subject().measurement().size(), (byte*)c.clause().subject().measurement().data());
-    printf("\n exp measurement size: %ld\n", expected_measurement.size());
+    printf("\n expected measurement size: %ld\n", expected_measurement.size());
     print_bytes(expected_measurement.size(), (byte*) expected_measurement.data());
     printf("\n");
+#endif
 
     if (memcmp(c.clause().subject().measurement().data(),
             (byte*) expected_measurement.data(), expected_measurement.size()) == 0) {
@@ -1981,9 +1981,6 @@ bool add_newfacts_for_sdk_platform_attestation(key_message& policy_pk,
   if (!already_proved->proved(2).has_object())
     return false;
   const entity_message& m_ent = already_proved->proved(2).object();
-
-  //printf("SIZEEEEEEE: m_ent.measurement().size(): %ld\n", m_ent.measurement().size());
-  //print_bytes(m_ent.measurement().size(), (byte*)m_ent.measurement().data());
 
   expected_measurement.assign((char*)m_ent.measurement().data(), m_ent.measurement().size());
 
@@ -2445,7 +2442,6 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
   printf("\n");
 #endif
 
-  printf("validating proof...\n");
   if (!verify_proof(policy_pk, to_prove, predicate_dominance_root,
             &pf, &already_proved)) {
     printf("verify_proof failed\n");
@@ -2462,7 +2458,6 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
   printf("\n");
 #endif
 
-  printf("validating proof... done\n");
   return true;
 }
 
