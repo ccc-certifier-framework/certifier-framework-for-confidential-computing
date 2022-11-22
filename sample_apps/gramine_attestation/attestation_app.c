@@ -766,7 +766,7 @@ exit:
 
     if (ra_tls_attest_lib)
         dlclose(ra_tls_attest_lib);
-
+#if 0
     mbedtls_net_free(&client_fd);
     mbedtls_net_free(&listen_fd);
 
@@ -779,6 +779,6 @@ exit:
 
     free(der_key);
     free(der_crt);
-
+#endif
     return ret;
 }
