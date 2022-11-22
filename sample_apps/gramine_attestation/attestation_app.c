@@ -41,6 +41,8 @@ typedef unsigned char byte;
 int (*ra_tls_create_key_and_crt_der_f)(uint8_t** der_key, size_t* der_key_size, uint8_t** der_crt,
                                        size_t* der_crt_size);
 
+#define SGX_QUOTE_SIZE 32
+
 static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
     ssize_t bytes = 0;
     ssize_t ret = 0;
@@ -259,12 +261,12 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
         return false;
     }
 
-    printf("\nTest quote interface mr_enclave: size: %d\n", 32);
-    print_bytes(32, quote_body_expected->report_body.mr_enclave.m);
+    printf("\nTest quote interface mr_enclave: size: %d\n", SGX_QUOTE_SIZE);
+    print_bytes(SGX_QUOTE_SIZE, quote_body_expected->report_body.mr_enclave.m);
 
     /* Copy out quote info */
-    memcpy(out, quote_body_expected->report_body.mr_signer.m, 32);
-    *size_out = 32;
+    memcpy(out, quote_body_expected->report_body.mr_signer.m, SGX_QUOTE_SIZE);
+    *size_out = SGX_QUOTE_SIZE;
 
     printf("\nTest quote interface compare done, output: size: %d\n", *size_out);
     print_bytes(*size_out, out);
@@ -290,7 +292,7 @@ int main(int argc, char** argv) {
     mbedtls_ssl_config_init(&conf);
 
     printf("Attestation type:\n");
-    char attestation_type_str[32] = {0};
+    char attestation_type_str[SGX_QUOTE_SIZE] = {0};
 
     ret = rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
                   sizeof(attestation_type_str) - 1, /*do_write=*/false);
