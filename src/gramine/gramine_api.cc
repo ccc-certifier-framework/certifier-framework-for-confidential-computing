@@ -41,8 +41,10 @@ bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
 
   printf("Invoking Gramine Attest %d\n", claims_size);
 
+#ifdef DEBUG
   print_bytes(claims_size, claims);
   printf("\n");
+#endif
 
   result = (*gramineFuncs.Attest)
            (claims_size, claims, &assertion_size, assertion);
@@ -73,7 +75,9 @@ bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   *size_out = j;
 
   printf("Done Gramine Attest assertion size %d:\n", *size_out);
-  //print_bytes(*size_out, out);
+#ifdef DEBUG
+  print_bytes(*size_out, out);
+#endif
 
   return true;
 }
@@ -85,8 +89,10 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
   int assertion_size = 0;
   bool result = false;
 
-  printf("\nInput claims sent to gramine_Verify:\n");
-  //print_bytes(claims_size, claims);
+  printf("\nInput claims sent to gramine_Verify claims_size %d\n", claims_size);
+#ifdef DEBUG
+  print_bytes(claims_size, claims);
+#endif
 
   int i, j = 0;
   for (i = 0; i < sizeof(int); i++, j++) {
@@ -96,8 +102,11 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
   for (i = 0; i < assertion_size; i++, j++) {
     assertion[i] = claims[j];
   }
+
+#ifdef DEBUG
   printf("\nAssertion:\n");
-  //print_bytes(assertion_size, assertion);
+  print_bytes(assertion_size, assertion);
+#endif
 
   for (i = 0; i < sizeof(int); i++, j++) {
     ((byte*)user_data_out_size)[i] = claims[j];
@@ -107,8 +116,10 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
     user_data_out[i] = claims[j];
   }
 
+#ifdef DEBUG
   printf("\nuser_data_out:\n");
-  //print_bytes(*user_data_out_size, user_data_out);
+  print_bytes(*user_data_out_size, user_data_out);
+#endif
 
   printf("Invoking Gramine Verify %d\n", claims_size);
   result = (*gramineFuncs.Verify)
@@ -124,6 +135,7 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
   return true;
 }
 
+// TODO: API to be implemented and tested
 bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
   bool result = false;
   printf("Invoking Gramine Seal %d\n", in_size);
@@ -138,6 +150,7 @@ bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
   return true;
 }
 
+// TODO: API to be implemented and tested
 bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   bool result = false;
   printf("Invoking Gramine Unseal %d\n", in_size);

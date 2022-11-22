@@ -13,8 +13,6 @@
 // limitations under the License.
 
 #include <iostream>
-//#include <stdio.h>
-//#include <stdlib.h>
 
 #ifndef _GRAMINE_API_H_
 #define _GRAMINE_API_H_
