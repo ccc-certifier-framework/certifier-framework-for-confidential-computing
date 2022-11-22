@@ -101,34 +101,6 @@ static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write
     close(fd);
     return ret < 0 ? ret : bytes;
 }
-#if 0
-static ssize_t file_write(const char* path, uint8_t* buf, size_t len) {
-    ssize_t bytes = 0;
-    ssize_t ret = 0;
-
-    int fd = open(path, O_WRONLY);
-    if (fd < 0)
-        return fd;
-
-    while ((ssize_t)len > bytes) {
-        ret = write(fd, buf + bytes, len - bytes);
-
-        if (ret > 0) {
-            bytes += ret;
-        } else if (ret == 0) {
-            /* end of file */
-            break;
-        } else {
-            if (ret < 0 && (errno == EAGAIN || errno == EINTR))
-                continue;
-            break;
-        }
-    }
-
-    close(fd);
-    return ret < 0 ? ret : bytes;
-}
-#endif
 
 static const char* paths[] = {
     "/dev/attestation/user_report_data",
