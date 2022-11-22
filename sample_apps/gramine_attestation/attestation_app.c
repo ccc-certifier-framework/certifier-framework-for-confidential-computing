@@ -94,36 +94,30 @@ uint8_t user_quote[64];
 static int test_quote_interface(void) {
     ssize_t bytes;
 
-    printf("Test quote interface begin\n");
-
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
     uint8_t data[SGX_REPORT_DATA_SIZE];
-    memcpy((uint8_t*) data, "795fa68798a644d32c1d8e2cfe5834f2390e097f0223d94b4758298d1b5501e5", 64);
+
+    /* Test user data */
+    memcpy((uint8_t*) data,
+           "795fa68798a644d32c1d8e2cfe5834f2390e097f0223d94b4758298d1b5501e5", 64);
 
     memcpy((void*)&user_report_data, (void*)data, sizeof(user_report_data));
-
-    printf("Test quote interface prep user_data\n");
 
     bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                          sizeof(user_report_data), /*do_write=*/true);
     if (bytes != sizeof(user_report_data)) {
-        /* error is already printed by rw_file() */
-        printf("Test quote interface prep user_data failed %d\n", errno);
+        printf("Test prep user_data failed %d\n", errno);
         return FAILURE;
     }
-
-    printf("Test quote interface prep done\n");
 
     /* 2. read `quote` file */
     bytes = rw_file("/dev/attestation/quote", (uint8_t*)&g_quote, sizeof(g_quote),
 		    /*do_write=*/false);
     if (bytes < 0) {
-        /* error is already printed by rw_file() */
+        printf("Test quote interface for user_data failed %d\n", errno);
         return FAILURE;
     }
-
-    printf("Test quote interface read done\n");
 
     /* 3. verify report data read from `quote` */
     if ((size_t)bytes < sizeof(sgx_quote_body_t)) {
@@ -131,7 +125,6 @@ static int test_quote_interface(void) {
                 sizeof(sgx_quote_body_t));
         return FAILURE;
     }
-    printf("Test quote interface verify done\n");
 
     sgx_quote_body_t* quote_body = (sgx_quote_body_t*)g_quote;
 
@@ -173,28 +166,23 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                          sizeof(user_report_data), /*do_write=*/true);
 
-    printf("Attest quote interface prep bytes size: %ld\n", bytes);
-
     if (bytes != sizeof(user_report_data)) {
-        /* error is already printed by rw_file() */
-        printf("Attest quote interface prep user_data failed %d\n", errno);
+        printf("Attest prep user_data failed %d\n", errno);
         return false;
     }
-
-    printf("Attest quote interface prep done\n");
 
     /* 2. read `quote` file */
     bytes = rw_file("/dev/attestation/quote", (uint8_t*)&g_quote, sizeof(g_quote),
 		    /*do_write=*/false);
     if (bytes < 0) {
-        /* error is already printed by rw_file() */
+        printf("Attest quote interface for user_data failed %d\n", errno);
         return false;
     }
 
     /* Copy out the assertion/quote */
     memcpy(out, g_quote, bytes);
     *size_out = bytes;
-    printf("Test quote interface read done\n");
+    printf("Gramine Attest done\n");
 
     return true;
 }
@@ -215,8 +203,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                     sizeof(user_report_data), /*do_write=*/true);
     if (bytes != sizeof(user_report_data)) {
-        /* error is already printed by rw_file() */
-        printf("Test quote interface prep user_data failed %d\n", errno);
+        printf("Verify prep user_data failed %d\n", errno);
         return false;
     }
 
@@ -224,7 +211,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     bytes = rw_file("/dev/attestation/quote", (uint8_t*)&g_quote, sizeof(g_quote),
 		    /*do_write=*/false);
     if (bytes < 0) {
-        /* error is already printed by rw_file() */
+        printf("Verify quote interface for user_data failed %d\n", errno);
         return FAILURE;
     }
 
@@ -259,14 +246,14 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
         return false;
     }
 
-    printf("\nTest quote interface mr_enclave: size: %d\n", SGX_QUOTE_SIZE);
+    printf("\nGramine verify quote interface mr_enclave: size: %d\n", SGX_QUOTE_SIZE);
     print_bytes(SGX_QUOTE_SIZE, quote_body_expected->report_body.mr_enclave.m);
 
     /* Copy out quote info */
     memcpy(out, quote_body_expected->report_body.mr_signer.m, SGX_QUOTE_SIZE);
     *size_out = SGX_QUOTE_SIZE;
 
-    printf("\nTest quote interface compare done, output: size: %d\n", *size_out);
+    printf("\nGramine verify quote interface compare done, output: size: %d\n", *size_out);
     print_bytes(*size_out, out);
     printf("\n");
 
@@ -276,8 +263,6 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
 int main(int argc, char** argv) {
     int ret;
     size_t len;
-    unsigned char buf[1024];
-    const char* pers = "ssl_server";
     void* ra_tls_attest_lib;
 
     uint8_t* der_key = NULL;
@@ -319,7 +304,7 @@ int main(int argc, char** argv) {
     printf("Test quote interface... %s\n",
             test_quote_interface() == SUCCESS ? "SUCCESS" : "FAIL");
 
-    /* B. Certifier integrated Attest/verify test */
+    /* B. Certifier integrated Attest/Verify test */
     bool cert_result = false;
 
     GramineCertifierFunctions gramineFuncs;

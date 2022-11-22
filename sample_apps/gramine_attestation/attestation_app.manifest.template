@@ -1,4 +1,4 @@
-# RA-TLS manifest file example
+# Attestation manifest file example
 
 loader.entrypoint = "file:{{ gramine.libos }}"
 libos.entrypoint = "/attestation_app"
