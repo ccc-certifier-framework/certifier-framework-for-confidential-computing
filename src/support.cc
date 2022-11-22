@@ -1529,25 +1529,20 @@ void print_key(const key_message& k) {
   if (k.has_key_type()) {
     printf("Key type: %s\n", k.key_type().c_str());
   }
-  printf("Done print key1\n");
   if (k.has_key_format()) {
     printf("Key format: %s\n", k.key_format().c_str());
   }
-  printf("\nDone print key2.1\n");
   if (k.has_rsa_key()) {
     print_rsa_key(k.rsa_key());
   }
-  printf("\nDone print key3\n");
   if (k.has_ecc_key()) {
     print_ecc_key(k.ecc_key());
   }
-  printf("\nDone print key4\n");
   if (k.has_secret_key_bits()) {
     printf("Secret key bits: ");
     print_bytes(k.secret_key_bits().size(), (byte*)k.secret_key_bits().data());
     printf("\n");
   }
-  printf("Done print key4\n");
   if (k.has_certificate() && k.certificate().size() > 0) {
     X509* cert= X509_new();
     if (cert == nullptr)
