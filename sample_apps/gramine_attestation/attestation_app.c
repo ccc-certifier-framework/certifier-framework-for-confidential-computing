@@ -4,9 +4,7 @@
  */
 
 /*
- * SSL server demonstration program (with RA-TLS)
- * This program is originally based on an mbedTLS example ssl_server.c but uses RA-TLS flows (SGX
- * Remote Attestation flows) if RA-TLS library is required by user.
+ * Attest/Verify sample application
  * Note that this program builds against mbedTLS 3.x.
  */
 
@@ -317,9 +315,13 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    /* A. Local test quote interface */
+    printf("Test quote interface... %s\n",
+            test_quote_interface() == SUCCESS ? "SUCCESS" : "FAIL");
+
+    /* B. Certifier integrated Attest/verify test */
     bool cert_result = false;
 
-    /* Certifier local attest and seal tests */
     GramineCertifierFunctions gramineFuncs;
     gramineFuncs.Attest = &Attest;
     gramineFuncs.Verify = &Verify;
