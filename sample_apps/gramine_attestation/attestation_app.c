@@ -16,7 +16,6 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <iostream>
-//#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -36,7 +35,7 @@
 
 #include "mbedtls/sha256.h"
 
-// Certifier
+// SGX includes
 #include "sgx_arch.h"
 #include "sgx_attest.h"
 
@@ -71,25 +70,6 @@ static void my_debug(void* ctx, int level, const char* file, int line, const cha
 
     mbedtls_fprintf((FILE*)ctx, "%s:%04d: %s\n", file, line, str);
     fflush((FILE*)ctx);
-}
-
-static ssize_t file_read(const char* path, char* buf, size_t count) {
-    FILE* f = fopen(path, "r");
-    if (!f)
-        return -errno;
-
-    ssize_t bytes = fread(buf, 1, count, f);
-    if (bytes <= 0) {
-        int errsv = errno;
-        fclose(f);
-        return -errsv;
-    }
-
-    int close_ret = fclose(f);
-    if (close_ret < 0)
-        return -errno;
-
-    return bytes;
 }
 
 static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
@@ -386,8 +366,8 @@ int main(int argc, char** argv) {
     printf("Attestation type:\n");
     char attestation_type_str[32] = {0};
 
-    ret = file_read("/dev/attestation/attestation_type", attestation_type_str,
-                    sizeof(attestation_type_str) - 1);
+    ret = rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
+                  sizeof(attestation_type_str) - 1, /*do_write=*/false);
     if (ret < 0 && ret != -ENOENT) {
         mbedtls_printf("User requested RA-TLS attestation but cannot read SGX-specific file "
                        "/dev/attestation/attestation_type\n");
