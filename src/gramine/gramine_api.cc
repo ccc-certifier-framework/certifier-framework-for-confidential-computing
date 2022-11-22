@@ -130,7 +130,7 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
     return false;
   }
 
-  printf("Done Gramine Verify %d\n", *size_out);
+  printf("Done Gramine Verification via API\n");
 
   return true;
 }
