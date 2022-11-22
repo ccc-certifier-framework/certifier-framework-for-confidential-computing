@@ -10,8 +10,6 @@
  * Note that this program builds against mbedTLS 3.x.
  */
 
-#include "mbedtls/build_info.h"
-
 #include <assert.h>
 #include <dlfcn.h>
 #include <errno.h>
@@ -22,14 +20,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/debug.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/error.h"
-#include "mbedtls/net_sockets.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/x509.h"
-
 #include "mbedtls/sha256.h"
 
 // SGX includes
@@ -48,19 +40,6 @@ typedef unsigned char byte;
 /* RA-TLS: on server, only need ra_tls_create_key_and_crt_der() to create keypair and X.509 cert */
 int (*ra_tls_create_key_and_crt_der_f)(uint8_t** der_key, size_t* der_key_size, uint8_t** der_crt,
                                        size_t* der_crt_size);
-
-#define HTTP_RESPONSE                                    \
-    "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n" \
-    "<h2>mbed TLS Test Server</h2>\r\n"                  \
-    "<p>Successful connection using: %s</p>\r\n"
-
-#define DEBUG_LEVEL 0
-
-#define MALICIOUS_STR "MALICIOUS DATA"
-
-#define CA_CRT_PATH "ssl/ca.crt"
-#define SRV_CRT_PATH "ssl/server.crt"
-#define SRV_KEY_PATH "ssl/server.key"
 
 static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
     ssize_t bytes = 0;
