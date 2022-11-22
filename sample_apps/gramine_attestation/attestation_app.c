@@ -22,9 +22,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define mbedtls_fprintf fprintf
-#define mbedtls_printf printf
-
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/debug.h"
 #include "mbedtls/entropy.h"
@@ -64,13 +61,6 @@ int (*ra_tls_create_key_and_crt_der_f)(uint8_t** der_key, size_t* der_key_size, 
 #define CA_CRT_PATH "ssl/ca.crt"
 #define SRV_CRT_PATH "ssl/server.crt"
 #define SRV_KEY_PATH "ssl/server.key"
-
-static void my_debug(void* ctx, int level, const char* file, int line, const char* str) {
-    ((void)level);
-
-    mbedtls_fprintf((FILE*)ctx, "%s:%04d: %s\n", file, line, str);
-    fflush((FILE*)ctx);
-}
 
 static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
     ssize_t bytes = 0;
@@ -223,7 +213,7 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     }
 
     /* Copy out the assertion/quote */
-    memcpy(out, g_quote, bytes); 
+    memcpy(out, g_quote, bytes);
     *size_out = bytes;
     printf("Test quote interface read done\n");
 
@@ -234,7 +224,8 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     ssize_t bytes;
     int ret = -1;
 
-    printf("Gramine Verify called user_data_size: %d assertion_size: %d\n", user_data_size, assertion_size);
+    printf("Gramine Verify called user_data_size: %d assertion_size: %d\n",
+           user_data_size, assertion_size);
 
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
@@ -243,7 +234,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     mbedtls_sha256(user_data, user_data_size, user_report_data.d, 0);
 
     bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
-                         sizeof(user_report_data), /*do_write=*/true);
+                    sizeof(user_report_data), /*do_write=*/true);
     if (bytes != sizeof(user_report_data)) {
         /* error is already printed by rw_file() */
         printf("Test quote interface prep user_data failed %d\n", errno);
@@ -341,7 +332,7 @@ int main(int argc, char** argv) {
     ret = rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
                   sizeof(attestation_type_str) - 1, /*do_write=*/false);
     if (ret < 0 && ret != -ENOENT) {
-        mbedtls_printf("User requested RA-TLS attestation but cannot read SGX-specific file "
+        printf("User requested RA-TLS attestation but cannot read SGX-specific file "
                        "/dev/attestation/attestation_type\n");
         return 1;
     }
@@ -353,23 +344,23 @@ int main(int argc, char** argv) {
     } else if (!strcmp(attestation_type_str, "epid") || !strcmp(attestation_type_str, "dcap")) {
         ra_tls_attest_lib = dlopen("libra_tls_attest.so", RTLD_LAZY);
         if (!ra_tls_attest_lib) {
-            mbedtls_printf("User requested RA-TLS attestation but cannot find lib\n");
+            printf("User requested RA-TLS attestation but cannot find lib\n");
             return 1;
         }
     } else {
-        mbedtls_printf("Unrecognized remote attestation type: %s\n", attestation_type_str);
+        printf("Unrecognized remote attestation type: %s\n", attestation_type_str);
         return 1;
     }
 
     bool cert_result = false;
 
-    mbedtls_printf("  . Seeding the random number generator...");
+    printf("  . Seeding the random number generator...");
     fflush(stdout);
 
     ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
                                 (const unsigned char*)pers, strlen(pers));
     if (ret != 0) {
-        mbedtls_printf(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
+        printf(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
         goto exit;
     }
 
