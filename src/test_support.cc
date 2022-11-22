@@ -162,6 +162,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
   if (debug_print) {
     printf("\nIntel key: ");
     print_key(intel_key);
+    printf("\n");
   }
 
   // attest key
@@ -770,7 +771,6 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     return false;
   }
 
-  printf("Constructed statements, before Attest\n");
   int size_out = 8192;
   byte attest_out[size_out];
   if (!Attest(enclave_type, serialized_what_to_say.size(),
