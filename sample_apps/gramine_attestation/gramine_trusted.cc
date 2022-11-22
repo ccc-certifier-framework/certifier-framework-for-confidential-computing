@@ -33,14 +33,11 @@
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 
-//extern "C" {
 #include "gramine_trusted.h"
-//}
 
 #include "policy_key.cc"
 
 #define FLAGS_print_all true
-//static string measurement_file("/tmp/binary_trusted_measurements_file.bin");
 static string measurement_file("./binary_trusted_measurements_file.bin");
 #define FLAGS_trusted_measurements_file measurement_file
 #define FLAGS_read_measurement_file true
@@ -55,13 +52,13 @@ static string measurement_file("./binary_trusted_measurements_file.bin");
 static string data_dir = "./app1_data/";
 
 #define FLAGS_policy_store_file "store.bin"
-#define FLAGS_platform_file_name "platform_file.bin" 
+#define FLAGS_platform_file_name "platform_file.bin"
 #define FLAGS_platform_attest_endorsement "platform_attest_endorsement.bin"
-#define FLAGS_attest_key_file "attest_key_file.bin" 
+#define FLAGS_attest_key_file "attest_key_file.bin"
 #define FLAGS_policy_cert_file "policy_cert_file.bin"
 #define FLAGS_measurement_file "example_app.measurement"
 
-static std::string enclave_type; 
+static std::string enclave_type;
 
 cc_trust_data* app_trust_data = nullptr;
 
@@ -173,15 +170,7 @@ bool gramine_seal() {
   return true;
 }
 
-//extern bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out);
-//extern int setFuncs(GramineCertifierFunctions funcs);
-
 bool gramine_setup_certifier_functions(GramineCertifierFunctions gramineFuncs) {
-	/*
-  int arg1;
-  byte arg2;
-  gramine_Attest(sizeof(arg2), &arg2, &arg1, &arg2);
-  */
   setFuncs(gramineFuncs);
   return true;
 }
@@ -237,7 +226,7 @@ bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
     return false;
   }
 
-  simulator_initialized = true;  
+  simulator_initialized = true;
 
   return true;
 }
