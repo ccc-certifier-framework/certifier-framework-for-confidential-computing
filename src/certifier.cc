@@ -1329,7 +1329,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         printf("init_proved_statements: make_simple_vse_clause failed\n");
         return false;
       }
-#endif  // GRAMINE
+#endif  // GRAMINE_CERTIFIER
     } else if (evp.fact_assertion(i).evidence_type() == "cert") {
       // A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
       // construct vse statement.
