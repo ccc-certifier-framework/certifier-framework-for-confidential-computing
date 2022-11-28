@@ -311,6 +311,8 @@ void cc_trust_data::print_trust_data() {
   }
 }
 
+const int max_pad_size_for_store = 512;
+
 bool cc_trust_data::save_store() {
 
   string serialized_store;
@@ -319,8 +321,7 @@ bool cc_trust_data::save_store() {
     return false;
   }
 
-  // FIXME: Proper size determination
-  int size_protected_blob= serialized_store.size() + 4096;
+  int size_protected_blob= serialized_store.size() + max_pad_size_for_store;
   byte protected_blob[size_protected_blob];
 
   byte pkb[cc_helper_symmetric_key_size];
@@ -1054,18 +1055,27 @@ bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_
 
 // Socket and SSL support
 
-// FIXME: Macro 1024 -> X509_NAME_LENGTH ?
 void print_cn_name(X509_NAME* name) {
-  char name_buf[1024];
-  if (X509_NAME_get_text_by_NID(name, NID_commonName, name_buf, 1024) > 0) {
+  int len = X509_NAME_get_text_by_NID(name, NID_commonName, nullptr, 0);
+  if (len <= 0)
+    return;
+  len++;
+
+  char name_buf[len];
+  if (X509_NAME_get_text_by_NID(name, NID_commonName, name_buf, len) > 0) {
     printf(" %s", name_buf);
   }
   printf("\n");
 }
 
 void print_org_name(X509_NAME* name) {
-  char name_buf[1024];
-  if (X509_NAME_get_text_by_NID(name, NID_organizationName, name_buf, 1024) > 0) {
+  int len = X509_NAME_get_text_by_NID(name, NID_organizationName, nullptr, 0);
+  if (len <= 0)
+    return;
+  len++;
+
+  char name_buf[len];
+  if (X509_NAME_get_text_by_NID(name, NID_organizationName, name_buf, len) > 0) {
     printf(" %s", name_buf);
   }
   printf("\n");
@@ -1257,9 +1267,14 @@ bool extract_id_from_cert(X509* in, string* out) {
   if (in == nullptr)
     return false;
   X509_NAME* sname = X509_get_subject_name(in);
-  // FIXME: Macro, we are mixing 1024 and 2048 for names.
-  char name_buf[2048];
-  int n = X509_NAME_get_text_by_NID(sname, NID_organizationName, name_buf, 2048);
+  if (sname == nullptr)
+    return false;
+  int len = X509_NAME_get_text_by_NID(sname, NID_organizationName, nullptr, 0);
+  if (len <= 0)
+    return false;
+  len++;
+  char name_buf[len];
+  int n = X509_NAME_get_text_by_NID(sname, NID_organizationName, name_buf, len);
   if (n <= 0)
     return false;
   out->assign((char*)name_buf, strlen(name_buf)+1);

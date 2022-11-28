@@ -488,9 +488,8 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   int size_e = 0;
   int s = 0;
   bool res = true;
+  int len = -1;
   string subject_name_str;
-  // FIXME: Macro 1024 -> X509_NAME_LENGTH ?
-  char name_buf[1024];
   string* cert_str = nullptr;
 
   if (!GetX509FromCert(cert, x)) {
@@ -520,12 +519,23 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
     goto done;
   }
 
-  if (X509_NAME_get_text_by_NID(sn, NID_commonName, name_buf, 1024) < 0) {
-    printf("Can't X509_NAME_get_text_by_NID\n");
+  len = X509_NAME_get_text_by_NID(sn, NID_commonName, nullptr, 0);
+  if (len < 0) {
+    printf("Can't X509_NAME_get_text_by_NID length\n");
     res = false;
     goto done;
   }
-  subject_name_str.assign((const char*) name_buf);
+  len++;
+  {
+    char name_buf[len];
+    if (X509_NAME_get_text_by_NID(sn, NID_commonName, name_buf, len) < 0) {
+      printf("Can't X509_NAME_get_text_by_NID\n");
+      res = false;
+    }
+    subject_name_str.assign((const char*) name_buf);
+  }
+  if (!res)
+    goto done;
 
   RSA_get0_key(rk, &N, &E, &D);
   rkm = new(rsa_message);
@@ -535,25 +545,44 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
     goto done;
   }
 
-  // FIXME: Need to verify bn_buf size.
   size_n = BN_num_bytes(N);
-  size_e = BN_num_bytes(E);
+  if (size_n <= 0) {
+    printf("Can't get modulus size\n");
+    res = false;
+    goto done;
+  }
 
-  byte bn_buf[8192];
-  s = BN_bn2bin(N, bn_buf);
-  if (s <= 0) {
-    printf("Can't BN_bn2bin\n");
+  {
+    byte bn_n_buf[size_n];
+    s = BN_bn2bin(N, bn_n_buf);
+    if (s <= 0) {
+      printf("Can't BN_bn2bin\n");
+      res = false;
+    } else {
+      rkm->set_public_modulus(bn_n_buf, s);
+    }
+  }
+  if (!res)
+    goto done;
+
+  size_e = BN_num_bytes(E);
+  if (size_e <= 0) {
+    printf("Can't get modulus size\n");
     res = false;
     goto done;
   }
-  rkm->set_public_modulus(bn_buf, s);
-  s = BN_bn2bin(E, bn_buf);
-  if (s <= 0) {
-    printf("Can't BN_bn2bin\n");
-    res = false;
-    goto done;
+  {
+    byte bn_e_buf[size_e];
+    s = BN_bn2bin(E, bn_e_buf);
+    if (s <= 0) {
+      printf("Can't BN_bn2bin\n");
+      res = false;
+    } else {
+      rkm->set_public_exponent(bn_e_buf, s);
+    }
   }
-  rkm->set_public_exponent(bn_buf, s);
+  if (!res)
+    goto done;
 
   k->set_key_name(subject_name_str);
   if (size_n == 128) {
@@ -605,10 +634,6 @@ extern bool asylo_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool asylo_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
-// FIXME: Unsafe output buffer handling. All call sites need to make sure size_out
-// is actually set to actual out buffer size. And all the backends need to check the
-// size. If size is not enough, the function should return failure but populate the
-// size needed so the caller can make a second call if necessary.
 #ifdef GRAMINE_CERTIFIER
 extern bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out);
 extern bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
@@ -617,6 +642,10 @@ extern bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
+// FIXME: Unsafe output buffer handling. All call sites need to make sure size_out
+// is actually set to actual out buffer size. And all the backends need to check the
+// size. If size is not enough, the function should return failure but populate the
+// size needed so the caller can make a second call if necessary.
 bool Seal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
@@ -776,6 +805,10 @@ bool GetParentEnclaveType(string* type) {
 // Protect Support
 // -------------------------------------------------------------------
 
+// the padding size includes an IV and possibly 3 additional blocks
+const int max_key_seal_pad = 512;
+const int protect_key_size = 64;
+
 bool Protect_Blob(const string& enclave_type, key_message& key,
   int size_unencrypted_data, byte* unencrypted_data,
   int* size_protected_blob, byte* blob) {
@@ -785,46 +818,42 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
     return false;
   }
 
-  // FIXME: Proper size determination
-  int size_sealed_key = serialized_key.size() + 512;
+  int size_sealed_key = serialized_key.size() + max_key_seal_pad;
   byte sealed_key[size_sealed_key];
   memset(sealed_key, 0, size_sealed_key);
   string enclave_id("enclave-id");
 
-  // FIXME: Consider either return error number, setting errno, or just print meaningful errors for debugging?
   if (!Seal(enclave_type, enclave_id, serialized_key.size(), (byte*)serialized_key.data(),
         &size_sealed_key, sealed_key)) {
-    printf("Protect_Blob, error 1\n");
+    printf("Protect_Blob, can't seal\n");
     return false;
   }
 
   byte iv[block_size];
   if (!get_random(8 * block_size, iv)) {
-    printf("Protect_Blob, error 2\n");
+    printf("Protect_Blob, can't get random number\n");
     return false;
   }
 
   if (key.key_type() != "aes-256-cbc-hmac-sha256") {
-    printf("Protect_Blob, error 3\n");
+    printf("Protect_Blob, unsupported encryption scheme\n");
     return false;
   }
   if (!key.has_secret_key_bits()) {
-    printf("Protect_Blob, error 4\n");
+    printf("Protect_Blob, no key bits\n");
     return false;
   }
   byte* key_buf = (byte*)key.secret_key_bits().data();
-  // FIXME: Macro for constant
-  if (key.secret_key_bits().size() < 64) {
-    printf("Protect_Blob, error 5\n");
+  if (key.secret_key_bits().size() < protect_key_size) {
+    printf("Protect_Blob, key too small\n");
     return false;
   }
 
-  // FIXME: Proper size determination
-  int size_encrypted = size_unencrypted_data + 128;
+  int size_encrypted = size_unencrypted_data + max_key_seal_pad;
   byte encrypted_data[size_encrypted];
   if (!authenticated_encrypt(unencrypted_data, size_unencrypted_data, key_buf,
             iv, encrypted_data, &size_encrypted)) {
-    printf("Protect_Blob, error 6\n");
+    printf("Protect_Blob, authenticate encryption failed\n");
     return false;
   }
   
@@ -835,7 +864,7 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
   string serialized_blob;
   blob_msg.SerializeToString(&serialized_blob);
   if (((int)serialized_blob.size()) > *size_protected_blob) {
-    printf("Protect_Blob, error 8\n");
+    printf("Protect_Blob, furnished buffer is too small\n");
     return false;
   }
   *size_protected_blob = (int)serialized_blob.size();
@@ -851,15 +880,15 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
   protected_blob_string.assign((char*)protected_blob, size_protected_blob);
   protected_blob_message pb;
   if (!pb.ParseFromString(protected_blob_string)) {
-    printf("Unprotect_Blob error 1\n");
+    printf("Unprotect_Blob, can't parse protected blob message\n");
     return false;
   }
   if (!pb.has_encrypted_key()) {
-    printf("Unprotect_Blob error 2\n");
+    printf("Unprotect_Blob, no encryption key\n");
     return false;
   }
   if (!pb.has_encrypted_data()) {
-    printf("Unprotect_Blob error 3\n");
+    printf("Unprotect_Blob, no encrypted data\n");
     return false;
   }
 
@@ -871,36 +900,35 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
   // Unseal header
   if (!Unseal(enclave_type, enclave_id, pb.encrypted_key().size(), (byte*)pb.encrypted_key().data(),
         &size_unsealed_key, unsealed_key)) {
-    printf("Unprotect_Blob error 4\n");
+    printf("Unprotect_Blob, can't unseal\n");
     return false;
   }
 
   string serialized_key;
   serialized_key.assign((const char*)unsealed_key, size_unsealed_key);
   if (!key->ParseFromString(serialized_key)) {
-    printf("Unprotect_Blob error 5\n");
+    printf("Unprotect_Blob, can't parse unsealed key\n");
     return false;
   }
 
   if (key->key_type() != "aes-256-cbc-hmac-sha256") {
-    printf("Unprotect_Blob error 6\n");
+    printf("Unprotect_Blob, unsupported encryption scheme\n");
     return false;
   }
   if (!key->has_secret_key_bits()) {
-    printf("Unprotect_Blob error 7\n");
+    printf("Unprotect_Blob, no key bits\n");
     return false;
   }
   byte* key_buf = (byte*)key->secret_key_bits().data();
-  // FIXME: Macro for constant
-  if (key->secret_key_bits().size() < 64) {
-    printf("Unprotect_Blob error 8\n");
+  if (key->secret_key_bits().size() < protect_key_size) {
+    printf("Unprotect_Blob, key too small\n");
     return false;
   }
 
   // decrypt encrypted data
   if (!authenticated_decrypt((byte*)pb.encrypted_data().data(), pb.encrypted_data().size(), key_buf,
             unencrypted_data, size_of_unencrypted_data)) {
-    printf("Unprotect_Blob error 9\n");
+    printf("Unprotect_Blob, authenticated decrypt failed\n");
     return false;
   }
   return true;
@@ -1145,11 +1173,14 @@ bool init_axiom(key_message& pk, proved_statements* are_proved) {
   return true;
 }
 
+const int max_key_depth = 30;
+const int max_measurement_size = 512;
+const int max_user_data_size = 4096;
+
 bool init_proved_statements(key_message& pk, evidence_package& evp,
       proved_statements* already_proved) {
 
-  // FIXME: Macro
-  cert_keys_seen_list seen_keys_list(30);
+  cert_keys_seen_list seen_keys_list(max_key_depth);
   // verify already signed assertions, converting to vse_clause
   int nsa = evp.fact_assertion_size();
   for (int i = 0; i < nsa; i++) {
@@ -1177,16 +1208,16 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       const key_message& ks = to_add.subject().key();
       if (!same_key(km, ks)) {
         // wrong key signed message
+        printf("Wrong key signed message\n");
         return false;
       }
       vse_clause* cl_to_insert = already_proved->add_proved();
       cl_to_insert->CopyFrom(to_add);
 #ifdef OE_CERTIFIER
     } else if (evp.fact_assertion(i).evidence_type() == "oe-attestation-report") {
-      // FIXME: Macro
-      size_t user_data_size = 4096;
+      size_t user_data_size = max_user_data_size;
       byte user_data[user_data_size];
-      size_t measurement_out_size = 256;
+      size_t measurement_out_size = max_measurement_size;
       byte measurement_out[measurement_out_size];
 
       if (!oe_Verify((byte *)evp.fact_assertion(i).serialized_evidence().data(),
@@ -1225,10 +1256,9 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
 #endif
 #ifdef ASYLO_CERTIFIER
     } else if (evp.fact_assertion(i).evidence_type() == "asylo-evidence") {
-      // FIXME: Macro
-      int user_data_size = 4096;
+      int user_data_size = max_user_data_size;
       byte user_data[user_data_size];
-      int measurement_out_size = 256;
+      int measurement_out_size = max_measurement_size;
       byte measurement_out[measurement_out_size];
 #ifdef DEBUG
       printf("init_proved_statements: trying asylo_Verify\n");
@@ -1436,8 +1466,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         return false;
       }
 
-      // FIXME: Macro
-      int size_measurement = 64;
+      int size_measurement = max_measurement_size;
       byte measurement[size_measurement];
       extern bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attestation,
           int* size_measurement, byte* measurement);
@@ -2109,8 +2138,7 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& pur
   //      13: "enclave-key is-trusted-for-authentication
 
 
-// FIXME: Better debug flag or clean up
-#if 0
+#ifdef PRINT_ALREADY_PROVED
   printf("construct proof from sev evidence, initial proved statements:\n");
   for (int i = 0; i < already_proved->proved_size(); i++) {
     print_vse_clause(already_proved->proved(i));
@@ -2358,8 +2386,7 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
     return false;
   }
 
-// FIXME: Better debug flag or clean up
-#if 0
+#ifdef PRINT_ALREADY_PROVED
   printf("construct proof from request, initial proved statements:\n");
   for (int i = 0; i < already_proved->proved_size(); i++) {
     print_vse_clause(already_proved->proved(i));
@@ -2445,8 +2472,7 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
     return false;
   }
 
-// FIXME: Better debug flag or clean up
-#if 0
+#ifdef PRINT_ALREADY_PROVED
   printf("proved statements after additions:\n");
   for (int i = 0; i < pf.steps_size(); i++) {
     print_vse_clause(already_proved.proved(i));
@@ -2468,8 +2494,7 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
     return false;
   }
 
-// FIXME: Better debug flag or clean up
-#if 0
+#ifdef PRINT_ALREADY_PROVED
   printf("Proved:"); print_vse_clause(to_prove); printf("\n");
   printf("final proved statements:\n");
   for (int i = 0; i < already_proved.proved_size(); i++) {
