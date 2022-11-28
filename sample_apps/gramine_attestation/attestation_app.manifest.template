@@ -1,0 +1,50 @@
+# Attestation manifest file example
+
+loader.entrypoint = "file:{{ gramine.libos }}"
+libos.entrypoint = "/attestation_app"
+
+loader.log_level = "{{ log_level }}"
+
+loader.env.LD_LIBRARY_PATH = "/usr/local/lib:.:/lib:{{ arch_libdir }}:/usr{{ arch_libdir }}"
+
+loader.insecure__use_cmdline_argv = true
+
+sys.enable_sigterm_injection = true
+
+fs.mounts = [
+  { path = "/lib", uri = "file:{{ gramine.runtimedir() }}" },
+  { path = "/usr/local/lib", uri = "file:/usr/local/lib" },
+  { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
+  { path = "/usr{{ arch_libdir }}", uri = "file:/usr{{ arch_libdir }}" },
+  { path = "/etc", uri = "file:/etc" },
+  { path = "/attestation_app", uri = "file:attestation_app" },
+]
+
+sgx.debug = true
+
+sgx.remote_attestation = "{{ ra_type }}"
+sgx.ra_client_spid = "{{ ra_client_spid }}"
+sgx.ra_client_linkable = {{ 'true' if ra_client_linkable == '1' else 'false' }}
+
+sgx.trusted_files = [
+  "file:{{ gramine.libos }}",
+  "file:attestation_app",
+  "file:libcertifier.so",
+  "file:binary_trusted_measurements_file.bin",
+  "file:{{ gramine.runtimedir() }}/",
+  "file:/usr/local/lib/",
+  "file:{{ arch_libdir }}/",
+  "file:/usr{{ arch_libdir }}/",
+  "file:ssl/ca.crt",
+  "file:ssl/attestation_app.crt",
+  "file:ssl/attestation_app.key",
+]
+
+sgx.allowed_files = [
+  "file:/etc/nsswitch.conf",
+  "file:/etc/ethers",
+  "file:/etc/hosts",
+  "file:/etc/group",
+  "file:/etc/passwd",
+  "file:/etc/gai.conf",
+]

@@ -609,6 +609,14 @@ extern bool asylo_Unseal(int in_size, byte* in, int* size_out, byte* out);
 // is actually set to actual out buffer size. And all the backends need to check the
 // size. If size is not enough, the function should return failure but populate the
 // size needed so the caller can make a second call if necessary.
+#ifdef GRAMINE_CERTIFIER
+extern bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out);
+extern bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
+                  byte *user_data_out, int* size_out, byte* out);
+extern bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
+extern bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
+#endif
+
 bool Seal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
@@ -629,6 +637,11 @@ bool Seal(const string& enclave_type, const string& enclave_id,
 #ifdef ASYLO_CERTIFIER
   if (enclave_type == "asylo-enclave") {
    return asylo_Seal(in_size, in, size_out, out);
+  }
+#endif
+#ifdef GRAMINE_CERTIFIER
+  if (enclave_type == "gramine-enclave") {
+   return gramine_Seal(in_size, in, size_out, out);
   }
 #endif
   if (enclave_type == "application-enclave") {
@@ -658,6 +671,11 @@ bool Unseal(const string& enclave_type, const string& enclave_id,
 #ifdef ASYLO_CERTIFIER
   if (enclave_type == "asylo-enclave") {
    return asylo_Unseal(in_size, in, size_out, out);
+  }
+#endif
+#ifdef GRAMINE_CERTIFIER
+  if (enclave_type == "gramine-enclave") {
+   return gramine_Unseal(in_size, in, size_out, out);
   }
 #endif
   if (enclave_type == "application-enclave") {
@@ -690,6 +708,11 @@ bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
     return asylo_Attest(what_to_say_size, what_to_say, size_out, out);
   }
 #endif
+#ifdef GRAMINE_CERTIFIER
+  if (enclave_type == "gramine-enclave") {
+    return gramine_Attest(what_to_say_size, what_to_say, size_out, out);
+  }
+#endif
   if (enclave_type == "application-enclave") {
     return application_Attest(what_to_say_size, what_to_say, size_out, out);
   }
@@ -711,6 +734,11 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
 #endif
 #ifdef ASYLO_CERTIFIER
   if (enclave_type == "asylo-enclave") {
+    return false;
+  }
+#endif
+#ifdef GRAMINE_CERTIFIER
+  if (enclave_type == "gramine-enclave") {
     return false;
   }
 #endif
@@ -1255,8 +1283,69 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       if (!make_simple_vse_clause(*key_ent, sf, *measurement_ent, cl_to_insert)) {
         printf("init_proved_statements: make_simple_vse_clause failed\n");
         return false;
-    }
+      }
 #endif  // ASYLO
+#ifdef GRAMINE_CERTIFIER
+    } else if (evp.fact_assertion(i).evidence_type() == "gramine-evidence") {
+      int user_data_size = 4096;
+      byte user_data[user_data_size];
+      int measurement_out_size = 256;
+      byte measurement_out[measurement_out_size];
+#ifdef DEBUG
+      printf("init_proved_statements: trying gramine_Verify\n");
+#endif
+
+      string pk_str = pk.SerializeAsString();
+#ifdef DEBUG
+      printf("init_proved_statements: print pk\n");
+      print_bytes(pk_str.size(), (byte*)pk_str.c_str());
+
+      printf("init_proved_statements: print evp\n");
+      print_bytes(evp.fact_assertion(i).serialized_evidence().size(),
+       (byte *)evp.fact_assertion(i).serialized_evidence().data());
+#endif
+
+      if (!gramine_Verify(
+           evp.fact_assertion(i).serialized_evidence().size(),
+           (byte *)evp.fact_assertion(i).serialized_evidence().data(),
+           &user_data_size, user_data, &measurement_out_size,
+           measurement_out)) {
+        printf("init_proved_statements: gramine_Verify failed\n");
+      }
+
+#ifdef DEBUG
+      printf("\ngramine returned user data: size: %d\n", user_data_size);
+      print_bytes(user_data_size, user_data);
+      printf("\ngramine returned measurement: size: %d\n", measurement_out_size);
+      print_bytes(measurement_out_size, measurement_out);
+#endif
+
+      // user_data should be a attestation_user_data
+      string ud_str;
+      ud_str.assign((char*)user_data, user_data_size);
+      attestation_user_data ud;
+      if (!ud.ParseFromString(ud_str))
+        return false;
+
+      entity_message* key_ent = new(entity_message);
+      if (!make_key_entity(ud.enclave_key(), key_ent)) {
+        printf("init_proved_statements: make_key_entity failed\n");
+        return false;
+      }
+      entity_message* measurement_ent = new(entity_message);
+      string m;
+      m.assign((char*)measurement_out, measurement_out_size);
+      if (!make_measurement_entity(m, measurement_ent)) {
+        printf("init_proved_statements: make_measurement_entity failed\n");
+        return false;
+      }
+      vse_clause* cl_to_insert = already_proved->add_proved();
+      string sf("speaks-for");
+      if (!make_simple_vse_clause(*key_ent, sf, *measurement_ent, cl_to_insert)) {
+        printf("init_proved_statements: make_simple_vse_clause failed\n");
+        return false;
+      }
+#endif  // GRAMINE_CERTIFIER
     } else if (evp.fact_assertion(i).evidence_type() == "cert") {
       // A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
       // construct vse statement.
@@ -1780,6 +1869,15 @@ bool get_signed_measurement_claim_from_trusted_list(
     if (c.clause().subject().entity_type() != "measurement") {
       continue;
     }
+
+#ifdef DEBUG
+    printf("\n got measurement size: %ld\n", c.clause().subject().measurement().size());
+    print_bytes(c.clause().subject().measurement().size(), (byte*)c.clause().subject().measurement().data());
+    printf("\n expected measurement size: %ld\n", expected_measurement.size());
+    print_bytes(expected_measurement.size(), (byte*) expected_measurement.data());
+    printf("\n");
+#endif
+
     if (memcmp(c.clause().subject().measurement().data(),
             (byte*) expected_measurement.data(), expected_measurement.size()) == 0) {
       claim->CopyFrom(trusted_measurements.claims(i));
@@ -1881,7 +1979,7 @@ bool add_newfacts_for_sev_attestation(key_message& policy_pk, string& serialized
   return true;
 }
 
-bool add_newfacts_for_oe_asylo_platform_attestation(key_message& policy_pk,
+bool add_newfacts_for_sdk_platform_attestation(key_message& policy_pk,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       proved_statements* already_proved) {
   // At this point, the already_proved should be
@@ -1900,7 +1998,9 @@ bool add_newfacts_for_oe_asylo_platform_attestation(key_message& policy_pk,
   if (!already_proved->proved(2).has_object())
     return false;
   const entity_message& m_ent = already_proved->proved(2).object();
+
   expected_measurement.assign((char*)m_ent.measurement().data(), m_ent.measurement().size());
+
   signed_claim_message sc;
   if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
         trusted_measurements, &sc))
@@ -2119,7 +2219,7 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& pur
   return true;
 }
 
-bool construct_proof_from_oe_asylo_evidence(key_message& policy_pk, const string& purpose,
+bool construct_proof_from_sdk_evidence(key_message& policy_pk, const string& purpose,
       proved_statements* already_proved,
       vse_clause* to_prove, proof* pf) {
 
@@ -2130,12 +2230,14 @@ bool construct_proof_from_oe_asylo_evidence(key_message& policy_pk, const string
   //    "policyKey says measurement is-trusted"
 
   if (!already_proved->proved(2).has_subject()) {
-    printf("Error 1, construct_proof_from_oe_asylo_evidence\n");
+    printf("Error 1, construct_proof_from_sdk_evidence\n");
     return false;
   }
   string it("is-trusted");
-  if (!make_unary_vse_clause(already_proved->proved(2).subject(), it, to_prove))
+  if (!make_unary_vse_clause(already_proved->proved(2).subject(), it, to_prove)) {
+      printf("Error 2, construct_proof_from_sdk_evidence\n");
       return false;
+  }
 
   proof_step* ps = nullptr;
 
@@ -2292,17 +2394,24 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
     if (!construct_proof_from_sev_evidence(policy_pk, purpose, already_proved, to_prove, pf))
       return false;
   } else if (evidence_descriptor == "oe-evidence") {
-    if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
+    if (!add_newfacts_for_sdk_platform_attestation(policy_pk,
               trusted_platforms, trusted_measurements, already_proved))
       return false;
-    return construct_proof_from_oe_asylo_evidence(policy_pk, purpose, already_proved, to_prove, pf);
+    return construct_proof_from_sdk_evidence(policy_pk, purpose, already_proved, to_prove, pf);
   } else if (evidence_descriptor == "asylo-evidence") {
-    if (!add_newfacts_for_oe_asylo_platform_attestation(policy_pk,
+    if (!add_newfacts_for_sdk_platform_attestation(policy_pk,
               trusted_platforms, trusted_measurements, already_proved)) {
       printf("construct_proof_from_full_vse_evidence in add_newfacts_for_asyloplatform_evidence failed\n");
       return false;
     }
-    return construct_proof_from_oe_asylo_evidence(policy_pk, purpose, already_proved, to_prove, pf);
+    return construct_proof_from_sdk_evidence(policy_pk, purpose, already_proved, to_prove, pf);
+  } else if (evidence_descriptor == "gramine-evidence") {
+    if (!add_newfacts_for_sdk_platform_attestation(policy_pk,
+              trusted_platforms, trusted_measurements, already_proved)) {
+      printf("construct_proof_from_full_vse_evidence in add_newfacts_for_gramineplatform_evidence failed\n");
+      return false;
+    }
+    return construct_proof_from_sdk_evidence(policy_pk, purpose, already_proved, to_prove, pf);
   } else {
     return false;
   }
@@ -2397,6 +2506,10 @@ void print_evidence(const evidence& ev) {
         printf("\n");
     }
     if (ev.evidence_type() == "asylo-evidence") {
+        print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
+      printf("\n");
+    }
+    if (ev.evidence_type() == "gramine-evidence") {
         print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
       printf("\n");
     }
@@ -2773,7 +2886,7 @@ bool construct_what_to_say(string& enclave_type,
 
   if (enclave_type != "simulated-enclave" && enclave_type != "application-enclave" &&
       enclave_type != "sev-enclave" && enclave_type != "oe-enclave" &&
-      enclave_type != "asylo-enclave")
+      enclave_type != "asylo-enclave" && enclave_type != "gramine-enclave")
     return false;
 
   attestation_user_data ud;
