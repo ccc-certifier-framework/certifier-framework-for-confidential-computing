@@ -489,6 +489,7 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   int s = 0;
   bool res = true;
   string subject_name_str;
+  // FIXME: Macro 1024 -> X509_NAME_LENGTH ?
   char name_buf[1024];
   string* cert_str = nullptr;
 
@@ -534,6 +535,7 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
     goto done;
   }
 
+  // FIXME: Need to verify bn_buf size.
   size_n = BN_num_bytes(N);
   size_e = BN_num_bytes(E);
 
@@ -603,6 +605,10 @@ extern bool asylo_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool asylo_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
+// FIXME: Unsafe output buffer handling. All call sites need to make sure size_out
+// is actually set to actual out buffer size. And all the backends need to check the
+// size. If size is not enough, the function should return failure but populate the
+// size needed so the caller can make a second call if necessary.
 #ifdef GRAMINE_CERTIFIER
 extern bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out);
 extern bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
@@ -644,6 +650,7 @@ bool Seal(const string& enclave_type, const string& enclave_id,
  return false;
 }
 
+// FIXME: Same as above
 bool Unseal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
@@ -677,6 +684,7 @@ bool Unseal(const string& enclave_type, const string& enclave_id,
  return false;
 }
 
+// FIXME: Same as above
 bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
  int* size_out, byte* out) {
 
@@ -777,11 +785,13 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
     return false;
   }
 
+  // FIXME: Proper size determination
   int size_sealed_key = serialized_key.size() + 512;
   byte sealed_key[size_sealed_key];
   memset(sealed_key, 0, size_sealed_key);
   string enclave_id("enclave-id");
 
+  // FIXME: Consider either return error number, setting errno, or just print meaningful errors for debugging?
   if (!Seal(enclave_type, enclave_id, serialized_key.size(), (byte*)serialized_key.data(),
         &size_sealed_key, sealed_key)) {
     printf("Protect_Blob, error 1\n");
@@ -803,11 +813,13 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
     return false;
   }
   byte* key_buf = (byte*)key.secret_key_bits().data();
+  // FIXME: Macro for constant
   if (key.secret_key_bits().size() < 64) {
     printf("Protect_Blob, error 5\n");
     return false;
   }
 
+  // FIXME: Proper size determination
   int size_encrypted = size_unencrypted_data + 128;
   byte encrypted_data[size_encrypted];
   if (!authenticated_encrypt(unencrypted_data, size_unencrypted_data, key_buf,
@@ -879,6 +891,7 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
     return false;
   }
   byte* key_buf = (byte*)key->secret_key_bits().data();
+  // FIXME: Macro for constant
   if (key->secret_key_bits().size() < 64) {
     printf("Unprotect_Blob error 8\n");
     return false;
@@ -1135,6 +1148,7 @@ bool init_axiom(key_message& pk, proved_statements* are_proved) {
 bool init_proved_statements(key_message& pk, evidence_package& evp,
       proved_statements* already_proved) {
 
+  // FIXME: Macro
   cert_keys_seen_list seen_keys_list(30);
   // verify already signed assertions, converting to vse_clause
   int nsa = evp.fact_assertion_size();
@@ -1169,6 +1183,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       cl_to_insert->CopyFrom(to_add);
 #ifdef OE_CERTIFIER
     } else if (evp.fact_assertion(i).evidence_type() == "oe-attestation-report") {
+      // FIXME: Macro
       size_t user_data_size = 4096;
       byte user_data[user_data_size];
       size_t measurement_out_size = 256;
@@ -1210,6 +1225,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
 #endif
 #ifdef ASYLO_CERTIFIER
     } else if (evp.fact_assertion(i).evidence_type() == "asylo-evidence") {
+      // FIXME: Macro
       int user_data_size = 4096;
       byte user_data[user_data_size];
       int measurement_out_size = 256;
@@ -1420,6 +1436,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         return false;
       }
 
+      // FIXME: Macro
       int size_measurement = 64;
       byte measurement[size_measurement];
       extern bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attestation,
@@ -2092,6 +2109,7 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& pur
   //      13: "enclave-key is-trusted-for-authentication
 
 
+// FIXME: Better debug flag or clean up
 #if 0
   printf("construct proof from sev evidence, initial proved statements:\n");
   for (int i = 0; i < already_proved->proved_size(); i++) {
@@ -2340,6 +2358,7 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
     return false;
   }
 
+// FIXME: Better debug flag or clean up
 #if 0
   printf("construct proof from request, initial proved statements:\n");
   for (int i = 0; i < already_proved->proved_size(); i++) {
@@ -2426,6 +2445,7 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
     return false;
   }
 
+// FIXME: Better debug flag or clean up
 #if 0
   printf("proved statements after additions:\n");
   for (int i = 0; i < pf.steps_size(); i++) {
@@ -2448,6 +2468,7 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
     return false;
   }
 
+// FIXME: Better debug flag or clean up
 #if 0
   printf("Proved:"); print_vse_clause(to_prove); printf("\n");
   printf("final proved statements:\n");

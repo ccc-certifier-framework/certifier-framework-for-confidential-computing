@@ -319,6 +319,7 @@ bool cc_trust_data::save_store() {
     return false;
   }
 
+  // FIXME: Proper size determination
   int size_protected_blob= serialized_store.size() + 4096;
   byte protected_blob[size_protected_blob];
 
@@ -1053,6 +1054,7 @@ bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_
 
 // Socket and SSL support
 
+// FIXME: Macro 1024 -> X509_NAME_LENGTH ?
 void print_cn_name(X509_NAME* name) {
   char name_buf[1024];
   if (X509_NAME_get_text_by_NID(name, NID_commonName, name_buf, 1024) > 0) {
@@ -1255,6 +1257,7 @@ bool extract_id_from_cert(X509* in, string* out) {
   if (in == nullptr)
     return false;
   X509_NAME* sname = X509_get_subject_name(in);
+  // FIXME: Macro, we are mixing 1024 and 2048 for names.
   char name_buf[2048];
   int n = X509_NAME_get_text_by_NID(sname, NID_organizationName, name_buf, 2048);
   if (n <= 0)
