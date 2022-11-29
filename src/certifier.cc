@@ -642,10 +642,8 @@ extern bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
-// FIXME: Unsafe output buffer handling. All call sites need to make sure size_out
-// is actually set to actual out buffer size. And all the backends need to check the
-// size. If size is not enough, the function should return failure but populate the
-// size needed so the caller can make a second call if necessary.
+// FIXME: Fixed for simulated enclave and application service.  If out is NULL,
+//  Seal returns true and the buffer size in size_out.  Do for OE, SEV, ASYLO and Gramine.
 bool Seal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
@@ -679,7 +677,8 @@ bool Seal(const string& enclave_type, const string& enclave_id,
  return false;
 }
 
-// FIXME: Same as above
+// FIXME: Fixed for simulated enclave and application service.  If out is NULL,
+//  Unseal returns true and the buffer size in size_out.  Do for OE, SEV, ASYLO and Gramine.
 bool Unseal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
@@ -713,7 +712,8 @@ bool Unseal(const string& enclave_type, const string& enclave_id,
  return false;
 }
 
-// FIXME: Same as above
+// FIXME: Fixed for simulated enclave and application service.  If out is NULL,
+//  Attest returns true and the buffer size in size_out.  Do for OE, SEV, ASYLO and Gramine.
 bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
  int* size_out, byte* out) {
 

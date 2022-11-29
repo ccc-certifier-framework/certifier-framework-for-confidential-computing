@@ -129,6 +129,8 @@ bool simulated_Getmeasurement(int* size_out, byte* out) {
   return true;
 }
 
+const int max_seal_pad = 256;
+
 bool simulated_Seal(const string& enclave_type, const string& enclave_id,
     int in_size, byte* in, int* size_out, byte* out) {
 
@@ -138,7 +140,11 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
   int input_size = in_size + my_measurement.size();
   byte input[input_size];
 
-  int output_size = in_size + my_measurement.size() + iv_size + 512;
+  int output_size = in_size + my_measurement.size() + iv_size + max_seal_pad;
+  if (out == nullptr) {
+    *size_out = output_size;
+    return true;
+  }
   byte output[output_size];
 
   memset(input, 0, input_size);
@@ -168,8 +174,12 @@ bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
 
   int iv_size = block_size;
   byte iv[iv_size];
-  int output_size = in_size + 128;
+  int output_size = in_size + max_seal_pad;
   byte output[output_size];
+  if (out == nullptr) {
+    *size_out = output_size;
+    return true;
+  }
 
   memset(output, 0, output_size);
   memcpy(iv, in, iv_size);
@@ -228,6 +238,11 @@ bool simulated_Attest(const string& enclave_type,
       signing_alg, my_attestation_key, &serialized_signed_report)) {
     printf("Can't sign report\n");
     return false;
+  }
+
+  if (out == nullptr) {
+    *size_out = (int)serialized_signed_report.size();
+    return true;
   }
   if (*size_out < (int)serialized_signed_report.size()) {
     printf("size out in simulated Attest is too small\n");

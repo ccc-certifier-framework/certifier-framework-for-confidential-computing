@@ -102,20 +102,17 @@ int main(int an, char**av) {
   if (!req.SerializeToString(&serialized_request)) {
     return 1;
   }
-  if (write(sock, (byte*)serialized_request.data(), serialized_request.size()) < 0) {
+  if (sized_socket_write(sock, serialized_request.size(), (byte*)serialized_request.data()) < 0) {
     return 1;
   }
 
   // read response
-  const int max_response_size = 16000;
-  byte response[max_response_size];
   string serialized_response;
-  int n = read(sock, response, max_response_size);
+  int n = sized_socket_read(sock, &serialized_response);
   if (n < 0) {
     printf("Can't read response\n");
     return 1;
   }
-  serialized_response.assign((char*)response, n);
 
   if (!rsp.ParseFromString(serialized_response)) {
     printf("Can't parse response\n");

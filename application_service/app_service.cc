@@ -197,6 +197,8 @@ void delete_child(int signum) {
 
 // ---------------------------------------------------------------------------------
 
+const int max_pad_size = 128;
+
 // The support functions use the helper object
 //    This is just a reference, object is local to main
 cc_trust_data* app_trust_data = nullptr;
@@ -211,11 +213,11 @@ bool soft_Seal(spawned_children* kid, string in, string* out) {
   buffer_to_seal.assign(kid->measurement_.data(), kid->measurement_.size());
   buffer_to_seal.append(in.data(), in.size());
 
-  int t_size = buffer_to_seal.size() + 128;
+  int t_size = buffer_to_seal.size() + max_pad_size;
   byte t_out[t_size];
 
-  byte iv[16];
-  if (!get_random(8 * 16, iv)) {
+  byte iv[block_size];
+  if (!get_random(8 * block_size, iv)) {
     return false;
   }
   if (!authenticated_encrypt((byte*)buffer_to_seal.data(), buffer_to_seal.size(),

@@ -74,6 +74,7 @@ bool application_GetParentEvidence(string* out) {
 }
 
 const int buffer_pad = 2048;
+const int platform_statement_size = 4096;
 
 bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   app_request req;
@@ -109,6 +110,11 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
     printf("application_Seal, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
 #endif
     return false;
+  }
+
+  if (out == nullptr) {
+    *size_out = (int)rsp.args(0).size();
+    return true;
   }
 
   if (*size_out < (int)rsp.args(0).size()) {
@@ -152,6 +158,11 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   if (rsp.function() != "unseal" || rsp.status() != "succeeded") {
     printf("application_Unseal, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
+  }
+
+  if (out == nullptr) {
+    *size_out = (int)rsp.args(0).size();
+    return true;
   }
   if (*size_out < (int)rsp.args(0).size()) {
     printf("application_Unseal, output too big\n");
@@ -201,6 +212,11 @@ bool application_Attest(int in_size, byte* in,
     printf("application_Attest, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
   }
+
+  if (out == nullptr) {
+    *size_out = (int)rsp.args(0).size();
+    return true;
+  }
   if (*size_out < (int)rsp.args(0).size()) {
     printf("application_Attest, output too big\n");
     return false;
@@ -227,8 +243,7 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
   }
 
   // response
-  const int buffer_pad = 4096;
-  int t_size = buffer_pad;
+  int t_size = platform_statement_size;
   byte t_out[t_size];
   int n = read(reader, t_out, t_size);
   if (n < 0) {
@@ -246,6 +261,11 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
   if (rsp.function() != "getplatformstatement" || rsp.status() != "succeeded") {
     printf("application_GetPlatformStatement, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
+  }
+
+  if (out == nullptr) {
+    *size_out = (int)rsp.args(0).size();
+    return true;
   }
   if (*size_out < (int)rsp.args(0).size()) {
     printf("application_GetPlatformStatement, output too big\n");

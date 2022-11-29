@@ -32,7 +32,8 @@ CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64
 CC=g++
 LINK=g++
-PROTO=/usr/local/bin/protoc
+#PROTO=/usr/local/bin/protoc
+PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
@@ -40,6 +41,8 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
 dobj=	$(O)/service_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
+sp_dobj=$(O)/start_program.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 
 
@@ -64,10 +67,13 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
 
-start_program.exe: start_program.cc
+start_program.exe: $(sp_dobj)
+	@echo "start_program.exe"
+	$(LINK) -o $(EXE_DIR)/start_program.exe $(sp_dobj) $(LDFLAGS)
+
+$(O)/start_program.o: start_program.cc
 	@echo "start_program.cc"
-	$(CC) $(CFLAGS) -o $(O)/start_program.exe $(US)/start_program.cc $(S)/certifier.pb.cc \
-	-L $(LOCAL_LIB) -lprotobuf -lgflags -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -lpthread
+	$(CC) $(CFLAGS) -c -o $(O)/start_program.o $(US)/start_program.cc
 
 $(O)/service_example_app.o: $(US)/service_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "compiling service_example_app.cc"

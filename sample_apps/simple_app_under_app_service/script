@@ -101,6 +101,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=
     --output=platform_attest_endorsement.bin
 $CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
 cp policy_key_file.bin policy_cert_file.bin policy.bin attest_key_file.bin platform_attest_endorsement.bin platform_key_file.bin app_service.measurement $APP_SERVICE_DIR/service
+cd service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
   --policyFile=policy.bin --readPolicy=true
 cd $APP_SERVICE_DIR
