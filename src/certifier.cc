@@ -559,7 +559,7 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
       printf("Can't BN_bn2bin\n");
       res = false;
     } else {
-      rkm->set_public_modulus(bn_n_buf, s);
+      rkm->set_public_modulus((byte*)bn_n_buf, s);
     }
   }
   if (!res)
@@ -578,7 +578,7 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
       printf("Can't BN_bn2bin\n");
       res = false;
     } else {
-      rkm->set_public_exponent(bn_e_buf, s);
+      rkm->set_public_exponent((byte*)bn_e_buf, s);
     }
   }
   if (!res)
