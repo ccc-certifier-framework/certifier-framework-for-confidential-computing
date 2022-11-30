@@ -76,6 +76,11 @@ oe_Attest(int what_to_say_size, byte* what_to_say,
       goto exit;
    }
    OE_DEBUG_PRINTF("evidence size: %lu\n", evidence_size);
+   if (out == nullptr) {
+      *size_out = (int)evidence_size;
+      ret = true;
+      goto exit;
+   }
    if (*size_out < evidence_size) {
       printf("Output buffer too small.\n");
       goto exit;

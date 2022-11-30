@@ -634,6 +634,10 @@ bool sev_Attest(int what_to_say_size, byte* what_to_say,
     printf("serialized_sev_attestation serialize failed\n");
     return false;
   }
+  if (out == nullptr) {
+    *size_out = serialized_sev_attestation.size();
+    return true;
+  }
   if (*size_out < (int)serialized_sev_attestation.size()) {
     printf("output buffer too small\n");
     return false;
