@@ -1841,11 +1841,11 @@ bool add_fact_from_signed_claim(signed_claim_message& signed_claim, proved_state
   vse_clause tcl;
   if (verify_signed_assertion_and_extract_clause(k, signed_claim, &tcl)) {
     if (tcl.verb() != "says" || tcl.subject().entity_type() != "key") {
-      printf("Error 1 in add_fact_from_signed_claim\n");
+      printf("Add_fact_from_signed_claim: verify_signed_assertion_and_extract_clause failed\n");
       return false;
     }
     if (!same_key(k, tcl.subject().key())) {
-      printf("Error 2 in add_fact_from_signed_claim\n");
+      printf("Add_fact_from_signed_claim: Different key\n");
       return false;
     }
     vse_clause* c = already_proved->add_proved();
@@ -2018,7 +2018,7 @@ bool add_newfacts_for_sdk_platform_attestation(key_message& policy_pk,
   // Add
   //   "policyKey says measurement is-trusted"
   if (!already_proved->proved(2).has_object()) {
-    printf("Error 1, add_newfacts_for_oeplatform_attestation\n");
+    printf("Add_newfacts_for_oeplatform_attestation: no speaksfor\n");
     return false;
   }
 
@@ -2148,11 +2148,11 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& pur
 #endif
 
   if (already_proved->proved_size() != 7) {
-    printf("construct_proof_from_sev_evidence: Error 0\n");
+    printf("construct_proof_from_sev_evidence: bad size\n");
     return false;
   }
   if (!already_proved->proved(2).has_clause() || !already_proved->proved(2).clause().has_subject()) {
-    printf("construct_proof_from_sev_evidence: Error 1\n");
+    printf("construct_proof_from_sev_evidence: ill formed statement 2\n");
     return false;
   }
   const entity_message& enclave_key = already_proved->proved(4).clause().subject();
