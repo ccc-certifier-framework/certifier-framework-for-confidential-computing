@@ -274,6 +274,38 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     return true;
 }
 
+bool Seal(int in_size, byte* in, int* size_out, byte* out) {
+
+  printf("Seal: Input size: %d\n", in_size);
+
+  /* Get Seal Key */
+
+  /* Seal */
+
+  printf("Done secret seal\n");
+  printf("Seal: Successfully sealed size: %d\n", *size_out);
+
+  return true;
+}
+
+bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
+  printf("Preparing Unsealer size: %d\n", in_size);
+
+  printf("Input to Unseal:\n");
+  print_bytes(in_size, in);
+
+  /* Invoke unseal */
+
+
+  /* Set size */
+
+  printf("Successfully unsealed size: %d, buffer: \n", *size_out);
+  print_bytes(*size_out, out);
+
+  return true;
+}
+
+
 int main(int argc, char** argv) {
     int ret;
     size_t len;
@@ -324,6 +356,8 @@ int main(int argc, char** argv) {
     GramineCertifierFunctions gramineFuncs;
     gramineFuncs.Attest = &Attest;
     gramineFuncs.Verify = &Verify;
+    gramineFuncs.Seal = &Seal;
+    gramineFuncs.Unseal = &Unseal;
 
     gramine_setup_certifier_functions(gramineFuncs);
     printf("Invoking certifier...\n");
