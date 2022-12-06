@@ -381,7 +381,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
 		    /*do_write=*/false);
     if (bytes < 0) {
         printf("Verify quote interface for user_data failed %d\n", errno);
-        return FAILURE;
+        return false;
     }
 
     sgx_quote_body_t* quote_body_expected = (sgx_quote_body_t*)assertion;
@@ -437,6 +437,8 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     unsigned char buf[BUF_SIZE];
     unsigned char enc_buf[in_size];
     mbedtls_gcm_context gcm;
+    int tag_size = TAG_SIZE;
+    int i, j = 0;
 
     printf("Seal: Input size: %d\n", in_size);
 
@@ -479,8 +481,18 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     print_bytes(TAG_SIZE, tag);
     printf("\n");
 
-    memcpy(out, enc_buf, sizeof(enc_buf));
-    *size_out = sizeof(enc_buf);
+    for (i = 0; i < sizeof(int); i++, j++) {
+        out[j] = ((byte*)&tag_size)[i];
+    }
+    for (i = 0; i < TAG_SIZE; i++, j++) {
+        out[j] = tag[i];
+    }
+    for (i = 0; i < sizeof(enc_buf); i++, j++) {
+        out[j] = enc_buf[i];
+    }
+
+    *size_out = j;
+
     printf("Testing seal interface - out:\n");
     print_bytes(*size_out, out);
     printf("\n");
