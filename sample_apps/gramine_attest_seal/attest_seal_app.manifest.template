@@ -1,7 +1,7 @@
 # Attestation manifest file example
 
 loader.entrypoint = "file:{{ gramine.libos }}"
-libos.entrypoint = "/attestation_app"
+libos.entrypoint = "/attest_seal_app"
 
 loader.log_level = "{{ log_level }}"
 
@@ -17,7 +17,7 @@ fs.mounts = [
   { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
   { path = "/usr{{ arch_libdir }}", uri = "file:/usr{{ arch_libdir }}" },
   { path = "/etc", uri = "file:/etc" },
-  { path = "/attestation_app", uri = "file:attestation_app" },
+  { path = "/attest_seal_app", uri = "file:attest_seal_app" },
 ]
 
 sgx.debug = true
@@ -28,7 +28,7 @@ sgx.ra_client_linkable = {{ 'true' if ra_client_linkable == '1' else 'false' }}
 
 sgx.trusted_files = [
   "file:{{ gramine.libos }}",
-  "file:attestation_app",
+  "file:attest_seal_app",
   "file:libcertifier.so",
   "file:binary_trusted_measurements_file.bin",
   "file:{{ gramine.runtimedir() }}/",
@@ -36,8 +36,8 @@ sgx.trusted_files = [
   "file:{{ arch_libdir }}/",
   "file:/usr{{ arch_libdir }}/",
   "file:ssl/ca.crt",
-  "file:ssl/attestation_app.crt",
-  "file:ssl/attestation_app.key",
+  "file:ssl/attest_seal_app.crt",
+  "file:ssl/attest_seal_app.key",
 ]
 
 sgx.allowed_files = [
