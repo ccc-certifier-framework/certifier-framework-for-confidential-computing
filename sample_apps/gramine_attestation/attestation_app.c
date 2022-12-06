@@ -268,7 +268,8 @@ static int test_seal_interface(void) {
 
     if (ret != 0) {
         printf("mbedtls_gcm_setkey failed: %d\n", ret);
-        return FAILURE;
+	status = FAILURE;
+	goto done;
     }
 
     printf("Testing seal interface\n");
@@ -429,17 +430,64 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
 }
 
 bool Seal(int in_size, byte* in, int* size_out, byte* out) {
+    int ret = 0;
+    bool status = true;
+    __sgx_mem_aligned uint8_t key[KEY_SIZE];
+    uint8_t tag[TAG_SIZE];
+    unsigned char buf[BUF_SIZE];
+    unsigned char enc_buf[in_size];
+    mbedtls_gcm_context gcm;
 
     printf("Seal: Input size: %d\n", in_size);
 
-    /* Get Seal Key */
+    memset(enc_buf, 0, sizeof(enc_buf));
 
-    /* Seal */
+    /* Get SGX Sealing Key */
+    if (getkey(&key) == FAILURE) {
+        printf("getkey failed to retrieve SGX Sealing Key\n");
+	return false;
+    }
 
-    printf("Done secret seal\n");
+    /* Use GCM encrypt/decrypt */
+    mbedtls_gcm_init(&gcm);
+    ret = mbedtls_gcm_setkey(&gcm, MBEDTLS_CIPHER_ID_AES, key, 128);
+
+    if (ret != 0) {
+        printf("mbedtls_gcm_setkey failed: %d\n", ret);
+        status = false;
+	goto done;
+    }
+
+    printf("Testing seal interface\n");
+
+    ret = mbedtls_gcm_crypt_and_tag(&gcm, MBEDTLS_GCM_ENCRYPT, BUF_SIZE, key, KEY_SIZE,
+		                    NULL, 0, buf, enc_buf, TAG_SIZE, tag);
+
+    if (ret != 0) {
+        printf("mbedtls_gcm_crypt_and_tag failed: %d\n", ret);
+        status = false;
+	goto done;
+    }
+
+    printf("Testing seal interface - input buf:\n");
+    print_bytes(BUF_SIZE, buf);
+    printf("\n");
+    printf("Testing seal interface - encrypted buf:\n");
+    print_bytes(BUF_SIZE, enc_buf);
+    printf("\n");
+    printf("Testing seal interface - tag:\n");
+    print_bytes(TAG_SIZE, tag);
+    printf("\n");
+
+    memcpy(out, enc_buf, sizeof(enc_buf));
+    *size_out = sizeof(enc_buf);
+    printf("Testing seal interface - out:\n");
+    print_bytes(*size_out, out);
+    printf("\n");
+
     printf("Seal: Successfully sealed size: %d\n", *size_out);
-
-    return true;
+done:
+    return status;
 }
 
 bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
