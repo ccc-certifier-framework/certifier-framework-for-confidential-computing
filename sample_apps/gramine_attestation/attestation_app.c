@@ -47,6 +47,8 @@
 
 #include "gramine_trusted.h"
 
+// #define DEBUG
+
 uint8_t g_quote[SGX_QUOTE_MAX_SIZE];
 
 enum { SUCCESS = 0, FAILURE = -1 };
@@ -272,8 +274,6 @@ static int test_seal_interface(void) {
 	goto done;
     }
 
-    printf("Testing seal interface\n");
-
     ret = mbedtls_gcm_crypt_and_tag(&gcm, MBEDTLS_GCM_ENCRYPT, BUF_SIZE, key, KEY_SIZE,
 		                    NULL, 0, buf, enc_buf, TAG_SIZE, tag);
 
@@ -283,6 +283,7 @@ static int test_seal_interface(void) {
 	goto done;
     }
 
+#ifdef DEBUG
     printf("Testing seal interface - input buf:\n");
     print_bytes(BUF_SIZE, buf);
     printf("\n");
@@ -292,6 +293,7 @@ static int test_seal_interface(void) {
     printf("Testing seal interface - tag:\n");
     print_bytes(TAG_SIZE, tag);
     printf("\n");
+#endif
 
     ret = mbedtls_gcm_auth_decrypt(&gcm, BUF_SIZE, key, KEY_SIZE, NULL, 0,
 		                   tag, TAG_SIZE, enc_buf, dec_buf);
@@ -301,9 +303,11 @@ static int test_seal_interface(void) {
 	goto done;
     }
 
+#ifdef DEBUG
     printf("Testing seal interface - decrypted buf:\n");
     print_bytes(BUF_SIZE, dec_buf);
     printf("\n");
+#endif
 
     ret = memcmp(buf, dec_buf, sizeof(enc_buf));
     if (ret) {
@@ -312,7 +316,6 @@ static int test_seal_interface(void) {
 	goto done;
     }
 
-    printf("Testing seal interface - memcmp success\n");
 done:
     mbedtls_gcm_free(&gcm);
 
@@ -459,8 +462,6 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
 	goto done;
     }
 
-    printf("Testing seal interface\n");
-
     ret = mbedtls_gcm_crypt_and_tag(&gcm, MBEDTLS_GCM_ENCRYPT, in_size, key, KEY_SIZE,
 		                    NULL, 0, in, enc_buf, TAG_SIZE, tag);
 
@@ -470,6 +471,7 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
 	goto done;
     }
 
+#ifdef DEBUG
     printf("Testing seal interface - input buf:\n");
     print_bytes(in_size, in);
     printf("\n");
@@ -479,6 +481,7 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     printf("Testing seal interface - tag:\n");
     print_bytes(TAG_SIZE, tag);
     printf("\n");
+#endif
 
     for (i = 0; i < sizeof(int); i++, j++) {
         out[j] = ((byte*)&in_size)[i];
@@ -492,9 +495,11 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
 
     *size_out = j;
 
+#ifdef DEBUG
     printf("Testing seal interface - out:\n");
     print_bytes(*size_out, out);
     printf("\n");
+#endif
 
     printf("Seal: Successfully sealed size: %d\n", *size_out);
 done:
@@ -511,26 +516,10 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
     int tag_size = TAG_SIZE;
     int enc_size = 0;
     int i, j = 0;
-    printf("Preparing Unsealer size: %d\n", in_size);
 
-    printf("Input to Unseal:\n");
+    printf("Preparing Unseal size: %d input: \n", in_size);
     print_bytes(in_size, in);
-
-    /* Get SGX Sealing Key */
-    if (getkey(&key) == FAILURE) {
-        printf("getkey failed to retrieve SGX Sealing Key\n");
-	return false;
-    }
-
-    /* Use GCM encrypt/decrypt */
-    mbedtls_gcm_init(&gcm);
-    ret = mbedtls_gcm_setkey(&gcm, MBEDTLS_CIPHER_ID_AES, key, 128);
-
-    if (ret != 0) {
-        printf("mbedtls_gcm_setkey failed: %d\n", ret);
-        mbedtls_gcm_free(&gcm);
-	return false;
-    }
+    printf("\n");
 
     for (i = 0; i < sizeof(int); i++, j++) {
         ((byte*)&enc_size)[i] = in[j];
@@ -550,12 +539,30 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
         enc_buf[i] = in[j];
     }
 
+#ifdef DEBUG
     printf("Testing unseal interface - encrypted buf: size: %d\n", enc_size);
     print_bytes(enc_size, enc_buf);
     printf("\n");
     printf("Testing unseal interface - tag:\n");
     print_bytes(TAG_SIZE, tag);
     printf("\n");
+#endif
+
+    /* Get SGX Sealing Key */
+    if (getkey(&key) == FAILURE) {
+        printf("getkey failed to retrieve SGX Sealing Key\n");
+	return false;
+    }
+
+    /* Use GCM encrypt/decrypt */
+    mbedtls_gcm_init(&gcm);
+    ret = mbedtls_gcm_setkey(&gcm, MBEDTLS_CIPHER_ID_AES, key, 128);
+
+    if (ret != 0) {
+        printf("mbedtls_gcm_setkey failed: %d\n", ret);
+	status = false;
+	goto done;
+    }
 
     /* Invoke unseal */
     ret = mbedtls_gcm_auth_decrypt(&gcm, enc_size, key, KEY_SIZE, NULL, 0,
@@ -566,10 +573,11 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
 	goto done;
     }
 
+#ifdef DEBUG
     printf("Testing seal interface - decrypted buf:\n");
     print_bytes(enc_size, dec_buf);
     printf("\n");
-
+#endif
 
     /* Set size */
     *size_out = enc_size;
@@ -577,8 +585,7 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
         out[i] = dec_buf[i];
     }
 
-    printf("Successfully unsealed size: %d, buffer: \n", *size_out);
-    print_bytes(*size_out, out);
+    printf("Successfully unsealed size: %d\n", *size_out);
 
 done:
     mbedtls_gcm_free(&gcm);
