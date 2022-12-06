@@ -242,25 +242,23 @@ static int getkey(sgx_key_128bit_t* key) {
  * \returns 0 if the test succeeds, -1 otherwise.
  */
 static int test_seal_interface(void) {
-    ssize_t bytes;
-
-    uint8_t *iv, *input, *aad, *mac, *out, *output;
-    size_t key_size, input_size, aad_size, out_size;
+    int ret = 0;
+    int status = SUCCESS;
     __sgx_mem_aligned uint8_t key[KEY_SIZE];
     uint8_t tag[TAG_SIZE];
     unsigned char buf[BUF_SIZE];
     unsigned char enc_buf[BUF_SIZE];
     unsigned char dec_buf[BUF_SIZE];
-    int ret = 0;
-    int status = SUCCESS;
     mbedtls_gcm_context gcm;
 
+    /* Test with a small buffer */
     memset(buf, 1, sizeof(buf));
     memset(enc_buf, 0, sizeof(enc_buf));
     memset(dec_buf, 0, sizeof(dec_buf));
 
+    /* Get SGX Sealing Key */
     if (getkey(&key) == FAILURE) {
-        printf("getkey failed\n");
+        printf("getkey failed to retrieve SGX Sealing Key\n");
 	return FAILURE;
     }
 
@@ -287,8 +285,11 @@ static int test_seal_interface(void) {
     printf("Testing seal interface - input buf:\n");
     print_bytes(BUF_SIZE, buf);
     printf("\n");
-    printf("Testing seal interface - encrypt buf:\n");
+    printf("Testing seal interface - encrypted buf:\n");
     print_bytes(BUF_SIZE, enc_buf);
+    printf("\n");
+    printf("Testing seal interface - tag:\n");
+    print_bytes(TAG_SIZE, tag);
     printf("\n");
 
     ret = mbedtls_gcm_auth_decrypt(&gcm, BUF_SIZE, key, KEY_SIZE, NULL, 0,
@@ -299,7 +300,7 @@ static int test_seal_interface(void) {
 	goto done;
     }
 
-    printf("Testing seal interface - decrypt buf:\n");
+    printf("Testing seal interface - decrypted buf:\n");
     print_bytes(BUF_SIZE, dec_buf);
     printf("\n");
 
@@ -506,8 +507,7 @@ int main(int argc, char** argv) {
     printf("Test seal/unseal interface... %s\n",
             test_seal_interface() == SUCCESS ? "SUCCESS" : "FAIL");
 
-    /* B. Certifier integrated Attest/Verify test */
-    /* B. Certifier integrated Attest/Verify test */
+    /* B. Certifier integrated Attest/Verify */
     bool cert_result = false;
 
     GramineCertifierFunctions gramineFuncs;
@@ -522,9 +522,17 @@ int main(int argc, char** argv) {
     cert_result = gramine_local_certify();
     if (!cert_result) {
         printf("gramine_local_certify failed: result = %d\n", cert_result);
-    fflush(stdout);
         goto exit;
     }
+
+    /* Certifier integrated Seal/Unseal */
+    cert_result = gramine_seal();
+    if (!cert_result) {
+        printf("gramine_seal failed: result = %d\n", cert_result);
+        goto exit;
+    }
+
+    printf("Done with certifier tests\n");
     fflush(stdout);
 
 exit:
