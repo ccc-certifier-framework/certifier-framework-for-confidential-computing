@@ -43,6 +43,7 @@
 // SGX includes
 #include "sgx_arch.h"
 #include "sgx_attest.h"
+#include "enclave_api.h"
 
 #include "gramine_trusted.h"
 
@@ -168,6 +169,50 @@ static int test_quote_interface(void) {
     return SUCCESS;
 }
 
+static int getkey() {
+    int ret = 0;
+    ssize_t bytes;
+
+
+    /* 1. write some custom data to `user_report_data` file */
+    sgx_report_data_t user_report_data = {0};
+    uint8_t data[SGX_REPORT_DATA_SIZE];
+
+    /* Test user data */
+    memcpy((uint8_t*) data,
+           "795fa68798a644d32c1d8e2cfe5834f2390e097f0223d94b4758298d1b5501e5", 64);
+
+    memcpy((void*)&user_report_data, (void*)data, sizeof(user_report_data));
+
+    bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
+                         sizeof(user_report_data), /*do_write=*/true);
+    if (bytes != sizeof(user_report_data)) {
+        printf("Test prep user_data failed %d\n", errno);
+        return FAILURE;
+    }
+
+    /* 4. read `report` file */
+    sgx_report_t report;
+    bytes = rw_file("/dev/attestation/report", (uint8_t*)&report, sizeof(report), false);
+    if (bytes != sizeof(report)) {
+        /* error is already printed by file_read_f() */
+        return FAILURE;
+    }
+
+    /* setup key request structure */
+    __sgx_mem_aligned sgx_key_request_t key_request;
+    memset(&key_request, 0, sizeof(key_request));
+    key_request.key_name = SGX_SEAL_KEY;
+    memcpy(&key_request.key_id, &(report.key_id), sizeof(key_request.key_id));
+
+    /* retrieve key via EGETKEY instruction leaf */
+    __sgx_mem_aligned uint8_t key[128 / 8];
+    memset(key, 0, sizeof(key));
+    sgx_getkey(&key_request, (sgx_key_128bit_t*)key);
+
+    return ret;
+}
+
 /*!
  * \brief Test seal interface
  *
@@ -236,6 +281,9 @@ if( ( ret = mbedtls_ctr_drbg_random( &ctr_drbg, key, 32 ) ) != 0 )
     }
 
     printf("Testing seal interface\n");
+
+    //sgx_key_128bit_t seal_key;
+    //struct libos_encrypted_files_key* enc_fs_key;
 #if 0
     ret = mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_ENCRYPT, BUFSIZE, key, buf, enc_buf);
     if (!ret) {
