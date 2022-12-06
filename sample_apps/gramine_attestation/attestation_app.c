@@ -222,9 +222,14 @@ static int getkey(sgx_key_128bit_t* key) {
 
     printf("Got key:\n");
     print_bytes(sizeof(*key), *key);
+    printf("\n");
 
     return SUCCESS;
 }
+
+#define BUF_SIZE 10
+#define TAG_SIZE 16
+#define KEY_SIZE 16
 
 /*!
  * \brief Test seal interface
@@ -241,54 +246,25 @@ static int test_seal_interface(void) {
 
     uint8_t *iv, *input, *aad, *mac, *out, *output;
     size_t key_size, input_size, aad_size, out_size;
-    __sgx_mem_aligned uint8_t key[128 / 8];
-    uint8_t tag[12];
-//#define BUFSIZE         1024
-#define BUFSIZE         10
-    unsigned char buf[BUFSIZE];
-    unsigned char enc_buf[BUFSIZE];
-    unsigned char dec_buf[BUFSIZE];
+    __sgx_mem_aligned uint8_t key[KEY_SIZE];
+    uint8_t tag[TAG_SIZE];
+    unsigned char buf[BUF_SIZE];
+    unsigned char enc_buf[BUF_SIZE];
+    unsigned char dec_buf[BUF_SIZE];
     int ret = 0;
+    int status = SUCCESS;
     mbedtls_gcm_context gcm;
 
-#if 0
-    mbedtls_ctr_drbg_context ctr_drbg;
-    mbedtls_entropy_context entropy;
-    unsigned char key[32];
-
-    char *pers = "aes generate key";
-
-mbedtls_entropy_init( &entropy );
-
-mbedtls_ctr_drbg_init( &ctr_drbg );
-
-if( ( ret = mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy,
-    (unsigned char *) pers, strlen( pers ) ) ) != 0 )
-{
-    printf( " failed\n ! mbedtls_ctr_drbg_init returned -0x%04x\n", -ret );
-    return FAILURE;
-}
-
-if( ( ret = mbedtls_ctr_drbg_random( &ctr_drbg, key, 32 ) ) != 0 )
-{
-    printf( " failed\n ! mbedtls_ctr_drbg_random returned -0x%04x\n", -ret );
-    return FAILURE;
-}
-    mbedtls_aes_context aes;
-    mbedtls_aes_init(&aes);
-#endif
     memset(buf, 1, sizeof(buf));
     memset(enc_buf, 0, sizeof(enc_buf));
     memset(dec_buf, 0, sizeof(dec_buf));
-
-    //mbedtls_aes_setkey_enc(&aes, key, 128);
 
     if (getkey(&key) == FAILURE) {
         printf("getkey failed\n");
 	return FAILURE;
     }
 
-    // GCM
+    /* Use GCM encrypt/decrypt */
     mbedtls_gcm_init(&gcm);
     ret = mbedtls_gcm_setkey(&gcm, MBEDTLS_CIPHER_ID_AES, key, 128);
 
@@ -299,61 +275,46 @@ if( ( ret = mbedtls_ctr_drbg_random( &ctr_drbg, key, 32 ) ) != 0 )
 
     printf("Testing seal interface\n");
 
-    //sgx_key_128bit_t seal_key;
-    //struct libos_encrypted_files_key* enc_fs_key;
-#if 0
-    ret = mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_ENCRYPT, BUFSIZE, key, buf, enc_buf);
-    if (!ret) {
-        printf("mbedtls_aes_crypt_cbc failed\n");
-        return FAILURE;
-    }
-#endif
-    ret = mbedtls_gcm_crypt_and_tag(&gcm, MBEDTLS_GCM_ENCRYPT, BUFSIZE, key, 12, NULL, 0,
-	                            buf, enc_buf, 16, tag);
+    ret = mbedtls_gcm_crypt_and_tag(&gcm, MBEDTLS_GCM_ENCRYPT, BUF_SIZE, key, KEY_SIZE,
+		                    NULL, 0, buf, enc_buf, TAG_SIZE, tag);
 
     if (ret != 0) {
         printf("mbedtls_gcm_crypt_and_tag failed: %d\n", ret);
-        return FAILURE;
+	status = FAILURE;
+	goto done;
     }
 
     printf("Testing seal interface - input buf:\n");
-    print_bytes(BUFSIZE, buf);
+    print_bytes(BUF_SIZE, buf);
     printf("\n");
     printf("Testing seal interface - encrypt buf:\n");
-    print_bytes(BUFSIZE, enc_buf);
+    print_bytes(BUF_SIZE, enc_buf);
     printf("\n");
 
-    ret = mbedtls_gcm_auth_decrypt(&gcm, BUFSIZE, key, 12, NULL, 0, tag, 16, enc_buf, dec_buf);
+    ret = mbedtls_gcm_auth_decrypt(&gcm, BUF_SIZE, key, KEY_SIZE, NULL, 0,
+		                   tag, TAG_SIZE, enc_buf, dec_buf);
     if (ret != 0) {
         printf("mbedtls_gcm_auth_decrypt failed: %d\n", ret);
-        return FAILURE;
+	status = FAILURE;
+	goto done;
     }
-
-#if 0
-    ret = mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_DECRYPT, BUFSIZE, key, enc_buf, dec_buf);
-    if (!ret) {
-        printf("mbedtls_aes_crypt_cbc failed\n");
-        return FAILURE;
-    }
-#endif
 
     printf("Testing seal interface - decrypt buf:\n");
-    print_bytes(BUFSIZE, dec_buf);
+    print_bytes(BUF_SIZE, dec_buf);
     printf("\n");
 
     ret = memcmp(buf, dec_buf, sizeof(enc_buf));
     if (ret) {
         printf("comparison of encrypted and decrypted buffers failed\n");
-        return FAILURE;
+	status = FAILURE;
+	goto done;
     }
 
-    printf("Testing seal interface - memcpy done\n");
-    //mbedtls_aes_free(&aes);
+    printf("Testing seal interface - memcmp success\n");
+done:
     mbedtls_gcm_free(&gcm);
 
-    printf("Test seal done\n");
-
-    return SUCCESS;
+    return status;
 }
 
 bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
