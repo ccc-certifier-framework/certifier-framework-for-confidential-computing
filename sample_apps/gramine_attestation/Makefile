@@ -19,7 +19,7 @@ RA_CLIENT_LINKABLE ?= 0
 all: app epid  # by default, only build EPID because it doesn't rely on additional (DCAP) libs
 
 .PHONY: app
-app: ssl/attestation_app.crt mbedtls/.mbedtls_configured attestation_app.manifest.sgx attestation_app.sig attestation_app.token
+app: ssl/attest_seal_app.crt mbedtls/.mbedtls_configured attest_seal_app.manifest.sgx attest_seal_app.sig attest_seal_app.token
 
 .PHONY: dcap
 #dcap: client_dcap.manifest.sgx client_dcap.sig client_dcap.token
@@ -28,12 +28,12 @@ dcap:
 ############################# SSL DATA DEPENDENCY #############################
 
 # SSL data: key and x.509 self-signed certificate
-ssl/attestation_app.crt: ssl/ca_config.conf
+ssl/attest_seal_app.crt: ssl/ca_config.conf
 	openssl genrsa -out ssl/ca.key 2048
 	openssl req -x509 -new -nodes -key ssl/ca.key -sha256 -days 1024 -out ssl/ca.crt -config ssl/ca_config.conf
-	openssl genrsa -out ssl/attestation_app.key 2048
-	openssl req -new -key ssl/attestation_app.key -out ssl/attestation_app.csr -config ssl/ca_config.conf
-	openssl x509 -req -days 360 -in ssl/attestation_app.csr -CA ssl/ca.crt -CAkey ssl/ca.key -CAcreateserial -out ssl/attestation_app.crt
+	openssl genrsa -out ssl/attest_seal_app.key 2048
+	openssl req -new -key ssl/attest_seal_app.key -out ssl/attest_seal_app.csr -config ssl/ca_config.conf
+	openssl x509 -req -days 360 -in ssl/attest_seal_app.csr -CA ssl/ca.crt -CAkey ssl/ca.key -CAcreateserial -out ssl/attest_seal_app.crt
 
 ############################# MBEDTLS DEPENDENCY ##############################
 
@@ -100,7 +100,7 @@ certifier:
 CFLAGS += -I./mbedtls/include $(SGX_INCLUDE) $(CERTIFIER_CFLAGS)
 LDFLAGS += -ldl -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -L./ -lcertifier $(CERTIFIER_LDFLAGS)
 
-attestation_app: attestation_app.c certifier mbedtls/.mbedtls_configured
+attest_seal_app: attest_seal_app.c certifier mbedtls/.mbedtls_configured
 	#$(CC) $< $(CFLAGS) $(LDFLAGS) -o $@
 	$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
 
@@ -109,7 +109,7 @@ attestation_app: attestation_app.c certifier mbedtls/.mbedtls_configured
 
 ############################### SERVER MANIFEST ###############################
 
-attestation_app.manifest: attestation_app.manifest.template
+attest_seal_app.manifest: attest_seal_app.manifest.template
 	gramine-manifest \
 		-Dlog_level=$(GRAMINE_LOG_LEVEL) \
 		-Darch_libdir=$(ARCH_LIBDIR) \
@@ -120,16 +120,16 @@ attestation_app.manifest: attestation_app.manifest.template
 
 # Make on Ubuntu <= 20.04 doesn't support "Rules with Grouped Targets" (`&:`),
 # see the helloworld example for details on this workaround.
-attestation_app.manifest.sgx attestation_app.sig: sgx_sign_attestation_app
+attest_seal_app.manifest.sgx attest_seal_app.sig: sgx_sign_attest_seal_app
 	@:
 
-.INTERMEDIATE: sgx_sign_attestation_app
-sgx_sign_attestation_app: attestation_app.manifest attestation_app
+.INTERMEDIATE: sgx_sign_attest_seal_app
+sgx_sign_attest_seal_app: attest_seal_app.manifest attest_seal_app
 	gramine-sgx-sign \
 		--manifest $< \
 		--output $<.sgx
 
-attestation_app.token: attestation_app.sig
+attest_seal_app.token: attest_seal_app.sig
 	gramine-sgx-get-token --output $@ --sig $<
 
 ################################## CLEANUP ####################################
@@ -137,8 +137,8 @@ attestation_app.token: attestation_app.sig
 .PHONY: clean
 clean:
 	$(RM) -r \
-		*.token *.sig *.manifest.sgx *.manifest attestation_app *.so *.so.* OUTPUT
+		*.token *.sig *.manifest.sgx *.manifest attest_seal_app *.so *.so.* OUTPUT
 
 .PHONY: distclean
 distclean: clean
-	$(RM) -r mbedtls/ *.tar.gz ssl/ca.* ssl/attestation_app.*
+	$(RM) -r mbedtls/ *.tar.gz ssl/ca.* ssl/attest_seal_app.*
