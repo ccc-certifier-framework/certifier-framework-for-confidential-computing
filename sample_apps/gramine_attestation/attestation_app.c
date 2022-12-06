@@ -169,8 +169,19 @@ static int test_quote_interface(void) {
     return SUCCESS;
 }
 
-static int getkey() {
-    int ret = 0;
+static inline int64_t local_sgx_getkey(sgx_key_request_t * keyrequest,
+                                       sgx_key_128bit_t* key)
+{
+    int64_t rax = EGETKEY;
+    __asm__ volatile(
+    ENCLU "\n"
+    : "+a"(rax)
+    : "b"(keyrequest), "c"(key)
+    : "memory");
+    return rax;
+}
+
+static int getkey(sgx_key_128bit_t* key) {
     ssize_t bytes;
 
 
@@ -206,11 +217,13 @@ static int getkey() {
     memcpy(&key_request.key_id, &(report.key_id), sizeof(key_request.key_id));
 
     /* retrieve key via EGETKEY instruction leaf */
-    __sgx_mem_aligned uint8_t key[128 / 8];
-    memset(key, 0, sizeof(key));
-    sgx_getkey(&key_request, (sgx_key_128bit_t*)key);
+    memset(*key, 0, sizeof(*key));
+    local_sgx_getkey(&key_request, key);
 
-    return ret;
+    printf("Got key:\n");
+    print_bytes(sizeof(*key), *key);
+
+    return SUCCESS;
 }
 
 /*!
@@ -228,7 +241,7 @@ static int test_seal_interface(void) {
 
     uint8_t *iv, *input, *aad, *mac, *out, *output;
     size_t key_size, input_size, aad_size, out_size;
-    uint8_t key[16];
+    __sgx_mem_aligned uint8_t key[128 / 8];
     uint8_t tag[12];
 //#define BUFSIZE         1024
 #define BUFSIZE         10
@@ -265,11 +278,15 @@ if( ( ret = mbedtls_ctr_drbg_random( &ctr_drbg, key, 32 ) ) != 0 )
     mbedtls_aes_init(&aes);
 #endif
     memset(buf, 1, sizeof(buf));
-    memset(key, 2, sizeof(key));
     memset(enc_buf, 0, sizeof(enc_buf));
     memset(dec_buf, 0, sizeof(dec_buf));
 
     //mbedtls_aes_setkey_enc(&aes, key, 128);
+
+    if (getkey(&key) == FAILURE) {
+        printf("getkey failed\n");
+	return FAILURE;
+    }
 
     // GCM
     mbedtls_gcm_init(&gcm);
