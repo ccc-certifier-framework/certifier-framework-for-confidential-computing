@@ -379,12 +379,12 @@ Step 15:  Run the apps to test trusted services
   In app as a server terminal run the following:
     cd $SEV_EXAMPLE_DIR
     $SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
-      --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
+      --policy_store_file=policy_store
 
   In app as a client terminal run the following:
     cd $SEV_EXAMPLE_DIR
     $SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
-      --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
+      --policy_store_file=policy_store
 
 You should see the message "Hi from your secret server" in the client terminal window and
 "Hi from your secret client".   If so, your first Confidential Computing program worked!
