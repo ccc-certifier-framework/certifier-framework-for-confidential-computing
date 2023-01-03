@@ -178,10 +178,10 @@ Step 14:  Run the apps and get admission certificates from Certifier Service
     cd $EXAMPLE_DIR
     $EXAMPLE_DIR/example_app.exe --print_all=true \
       --operation=cold-init --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store --measurement_file="example_app.measurement"
+      --policy_store_file=policy_store
     $EXAMPLE_DIR/example_app.exe --print_all=true \
       --operation=get-certifier --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store --measurement_file="example_app.measurement"
+      --policy_store_file=policy_store
 
 At this point, both versions of the app have their admission certificates.  You can look at
 the output of the terminal running simpleserver for output.  Now all we have to do is have
@@ -195,12 +195,12 @@ Step 15:  Run the apps to test trusted services
   In app as a server terminal run the following:
     cd $EXAMPLE_DIR
     $EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
-      --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
+      --policy_store_file=policy_store
 
   In app as a client terminal run the following:
     cd $EXAMPLE_DIR
     $EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
-      --policy_cert_file=policy_cert_file.bin --policy_store_file=policy_store
+      --policy_store_file=policy_store
 
 You should see the message "Hi from your secret server" in the client terminal window and
 "Hi from your secret client".   If so, your first Confidential Computing program worked!
