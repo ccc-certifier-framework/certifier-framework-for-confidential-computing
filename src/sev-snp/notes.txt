@@ -1,16 +1,20 @@
+environment-is-trusted
+
+  sev-snp-environment-is-trusted
+    platform-is AMD-SEV-SNP
+    amd-sev-platform-is-trusted
+      platform-version is-greater-than?
+      sev-api-major is-greater-than v1
+      sev-api-minor is-greater-than v2
+      no-debug
+      no-keyshare
+      no-send
+    measurement-is-trusted
+
+
+--------------------------------------------------------------
+
 SEV platform policy
-
-
-platform-is AMD-SEV-SNP
-AMD-SEV-SNP platform-is-trusted
-sev-api-major is-greater-than
-sev-api-minor is-greater-than
-no-debug
-no-keyshare
-no-send
-chip-id-is
-flags
-report-version
 
 
 struct attestation_report {
