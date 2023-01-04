@@ -1,15 +1,18 @@
 environment-is-trusted
 
-  sev-snp-environment-is-trusted
-    platform-is AMD-SEV-SNP
-    amd-sev-platform-is-trusted
-      platform-version is-greater-than?
+  platform-is AMD-SEV-SNP
+  sev-snp-platform-is-trusted
       sev-api-major is-greater-than v1
       sev-api-minor is-greater-than v2
-      no-debug
-      no-keyshare
-      no-send
-    measurement-is-trusted
+      debug-is-disallowed
+      keyshare-is-disallowed
+      migration-is-disallowed
+    measurement is-trusted
+
+  platform-is INTEL-SGX
+  sgx-platform-is-trusted
+      microcode-version-is-greater-than v1
+  measurement is-trusted
 
 
 --------------------------------------------------------------
