@@ -144,6 +144,9 @@ void print_entity(const entity_message& em);
 void print_key(const key_message& k);
 void print_rsa_key(const rsa_message& rsa);
 void print_ecc_key(const ecc_message& rsa);
+void print_platform(const platform& pl);
+void print_environment(const environment& env);
+void print_property(const property& prop);
 
 // X509 artifact
 bool produce_artifact(key_message& signing_key, string& issuer_name_str,

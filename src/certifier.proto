@@ -108,6 +108,24 @@ message claim_message {
   optional bytes serialized_claim           = 5;
 };
 
+message property {
+  optional string property_name             = 1;
+  optional string value_type                = 2;
+  optional string comparator                = 3;
+  optional string string_value              = 4;
+  optional int32 int_value                  = 5;
+};
+
+message platform {
+  optional string platform_type             = 1;
+  repeated property properties              = 2;
+};
+
+message environment {
+  optional platform the_platform            = 1;
+  optional entity_message ent               = 2;
+};
+
 //  The claims are in "vse-clause.  Time is
 //  the time the attestation was signed.
 //  Enclave types are "simulated-enclave", "oe-enclave",

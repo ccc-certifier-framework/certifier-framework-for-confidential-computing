@@ -356,6 +356,35 @@ void print_time_point(time_point& t) {
     t.day(), t.hour(), t.minute(), t.seconds());
 }
 
+void print_property(const property& prop) {
+  printf("type: %s\n", prop.property_name().c_str());
+
+  if (prop.value_type() == "int") {
+    if (prop.comparator() == "=") {
+      printf(" = ");
+    } else if (prop.comparator() == ">=") {
+      printf(" >= ");
+    }
+    printf("%d", prop.int_value());
+  } else if (prop.value_type() == "string") {
+    printf("%s", prop.string_value().c_str());
+  } else {
+    return;
+  }
+}
+
+void print_platform(const platform& pl) {
+  printf("platform: %s\n", pl.platform_type().c_str());
+}
+
+void print_environment(const environment& env) {
+  printf("environment\n");
+  print_platform(env.the_platform());
+  printf("\n");
+  print_entity(env.ent());
+  printf("\n");
+}
+
 // -----------------------------------------------------------------------
 
 // Encryption is ssl

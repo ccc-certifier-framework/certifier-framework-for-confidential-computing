@@ -75,7 +75,7 @@ New policy statements
 
   policy-key says platform-class(type, property-class)) platform-is-trusted
   
-  platform-class(type, property-class)
+  platform(type, property-class)
     types are amd-sev-snp, sgx, any
 
 
@@ -83,7 +83,7 @@ New deductions
 
   if policy-key says X then X (already there)
 
-  if platform-class(type, property-class) platform-is-trusted and platform(type, properties) is-platform and
+  if platform-class(type, property) platform-is-trusted and platform(type, properties) is-platform and
       platform(type, properties) satisfies platform-class(type, property-class) then
       platform(type, properties) platform-is-trusted
 
