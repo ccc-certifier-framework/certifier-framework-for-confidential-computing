@@ -67,6 +67,8 @@ $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 embed_policy_key_obj=$(O)/embed_policy_key.o
 appoint_platform_obj= $(O)/appoint_platform.o $(O)/support.o \
 $(O)/certifier.o $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+make_property_obj= $(O)/make_property.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o
 
 
 all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe \
@@ -74,7 +76,7 @@ all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe 
 	$(EXE_DIR)/make_signed_claim_from_vse_clause.exe $(EXE_DIR)/print_vse_clause.exe \
 	$(EXE_DIR)/print_signed_claim.exe $(EXE_DIR)/package_claims.exe \
 	$(EXE_DIR)/print_packaged_claims.exe $(EXE_DIR)/embed_policy_key.exe \
-	$(EXE_DIR)/appoint_platform.exe
+	$(EXE_DIR)/appoint_platform.exe $(EXE_DIR)/make_property.exe
 
 clean:
 	@echo "removing object files"
@@ -204,3 +206,11 @@ $(EXE_DIR)/appoint_platform.exe: $(appoint_platform_obj)
 $(O)/appoint_platform.o: $(S)/appoint_platform.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling appoint_platform.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/appoint_platform.o $(S)/appoint_platform.cc
+
+$(O)/make_property.o: $(S)/make_property.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
+	@echo "compiling make_property.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/make_property.o $(S)/make_property.cc
+
+$(EXE_DIR)/make_property.exe: $(make_property_obj)
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/make_property.exe $(make_property_obj) $(LDFLAGS)

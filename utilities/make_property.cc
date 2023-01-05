@@ -30,7 +30,7 @@ DEFINE_string(output, "prop.bin",  "output file");
 
 bool make_property(string& name, string& type, string& cmp, int int_value,
     string& string_value, property* prop) {
-  prop->set_name(name);
+  prop->set_property_name(name);
   prop->set_comparator(cmp);
   if (type == "int") {
     prop->set_int_value(int_value);
@@ -48,8 +48,9 @@ int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_key_subject == "" && FLAGS_cert_subject == "" && FLAGS_measurement_subject == "") {
-    printf("No subject\n");
+  if (FLAGS_property_name == "") {
+    printf("No property name\n");
+    printf("make_property.exe --property_name=name --property_type=type --comparator=cmp --int_value=3 --string_value=string--output=out_file\n");
     return 1;
   }
 
@@ -61,7 +62,7 @@ int main(int an, char** av) {
   }
 
   string p_out;
-  if (!prop->SaveToString(&p_out)) {
+  if (!prop.SerializeToString(&p_out)) {
     printf("Can't serialize\n");
     return 1;
   }
@@ -71,5 +72,6 @@ int main(int an, char** av) {
       return 1;
     }
 
+  print_property(prop);
   return 0;
 }
