@@ -1,24 +1,4 @@
-environment-is-trusted
-
-  platform-is AMD-SEV-SNP
-  sev-snp-platform-is-trusted
-      sev-api-major is-greater-than v1
-      sev-api-minor is-greater-than v2
-      debug-is-disallowed
-      keyshare-is-disallowed
-      migration-is-disallowed
-    measurement is-trusted
-
-  platform-is INTEL-SGX
-  sgx-platform-is-trusted
-      microcode-version-is-greater-than v1
-  measurement is-trusted
-
-
---------------------------------------------------------------
-
-SEV platform policy
-
+SEV attestation report
 
 struct attestation_report {
   uint32_t    version;                  /* 0x000 */
@@ -46,19 +26,123 @@ struct attestation_report {
   struct signature  signature;          /* 0x2A0 */
 };
 
-Policy bits
-Byte 0
-  0 NODBG
-  1 NOKS (key share)
-  3 NOSEND
-Byte 2
-  API_MAJOR
-  API_MINOR
+SEV platform policy
+  Policy bits
+  Byte 0
+    0 NODBG
+    1 NOKS (key share)
+    3 NOSEND
+  Byte 2
+    API_MAJOR
+    API_MINOR
 
 Attestation report buffer
 
   0x00 (127:0)  Nonce
   0x10 (255:0)  Launch measurement
   0x30 (31:0)   Policy
+
+---------------------------------------------------------------------------------------------------
+
+Old types
+  entity(key or measurement)
+
+New types
+  property(name, value-type, value)
+    value-type: number, string
+  properties(list of (property))
+  property-class(list-of(property-name, value-type, comparitor, value)
+
+  platform(type, properties)
+    platform-type: amd-sev-snp, sgx, ant
+  platform-class(platform-type, list-of(property-class))
+
+  environment(platform, measurement)
+
+New facts (from attestation)
+
+  platform-is platform(type, properties)
+
+  SEV specific properties
+    sev-api-major is number(v1)
+    sev-api-minor is number(v2)
+    keyshare is-disallowed
+    migration is-disallowed
+    debug is-disallowed
+
+
+New policy statements
+
+  policy-key says platform-class(type, property-class)) platform-is-trusted
+  
+  platform-class(type, property-class)
+    types are amd-sev-snp, sgx, any
+
+
+New deductions
+
+  if policy-key says X then X (already there)
+
+  if platform-class(type, property-class) platform-is-trusted and platform(type, properties) is-platform and
+      platform(type, properties) satisfies platform-class(type, property-class) then
+      platform(type, properties) platform-is-trusted
+
+  if platform(type, properties) platform-is-trusted and measurement is-trusted then 
+    environment(platform, measurement) is-trusted
+
+  if environment(platform, measurement) is-trusted and key speaks-for environment then key is-trusted-for-authentication
+
+  satisfies
+    platform-type: any, always true
+    platform-type: amd-sev-snp
+      debug-property is-subset-of debug-property-class
+      keyshare-property is-subset-of keyshare-property-class
+      migrate-property is-subset-of migrate-property-class
+      api-major is-subset-of a
+    platform-type: sgx
+      todo
+
+-------------------------------------------------------------------------------------------------------
+
+
+Current proof
+
+    1. Key[rsa, policyKey, c9d16649…] is-trusted
+   and
+   Key[rsa, policyKey, c9d1664…] says Measurement[cdf3590…]is-trusted
+   imply via rule 3
+   Measurement[cdf35…] is-trusted
+
+    2. Key[rsa, policyKey, c9d16649…] is-trusted
+   and
+   Key[rsa, policyKey, c9d16649…2] says Key[rsa, platformKey, e59709…]  
+   is-trusted-for-attestation
+   imply via rule 5
+   Key[rsa, platformKey, e59709bae…] is-trusted-for-attestation
+
+    3. Key[rsa, platformKey, e59709bae…] is-trusted-for-attestation
+and
+   Key[rsa, platformKey, e59709bae4…] says Key[rsa, attestKey,
+   e3f0bbd20a…] is-trusted-for-attestation
+   imply via rule 5
+   Key[rsa, attestKey, e3f0bbd2…] is-trusted-for-attestation
+
+    4. Key[rsa, attestKey, e3f0bbd2…] is-trusted-for-attestation
+   and
+   Key[rsa, attestKey, e3f0bbd2…] says Key[rsa, app-auth-key,
+    b86447b…] speaks-for Measurement[cdf359…1]
+   imply via rule 6
+   Key[rsa, app-auth-key, b86447b71e…] speaks-for 
+   Measurement[cdf359089b4…]
+
+    5. Measurement[cdf3590…1] is-trusted
+   and
+   Key[rsa, app-auth-key, b86447b71e…] speaks-for   
+   Measurement[cdf35908…]
+   imply via rule 1
+   Key[rsa, app-auth-key, b86447b7…] is-trusted-for-authentication
+
+
+New proof
 
 
