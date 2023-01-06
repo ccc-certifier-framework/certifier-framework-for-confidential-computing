@@ -16,59 +16,84 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// make_environment.exe
+// make_environment.exe  --platform_file=file --measurement_file=file --output=file
 
 DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(property_name, "",  "property name");
-DEFINE_string(property_type, "",  "property type");
-// values are "=", ">="
-DEFINE_string(comparator, "=",  "comparator");
-DEFINE_int32(int_value, 0,  "int value");
-DEFINE_string(string_value, "",  "string value");
-DEFINE_string(output, "prop.bin",  "output file");
+DEFINE_string(platform_file, "",  "platform file");
+DEFINE_string(measurement_file, "",  "measurement file");
+DEFINE_string(output, "",  "output file");
 
-bool make_property(string& name, string& type, string& cmp, int int_value,
-    string& string_value, property* prop) {
-  prop->set_name(name);
-  prop->set_comparator(cmp);
-  if (type == "int") {
-    prop->set_int_value(int_value);
-  } else if (type == "string") {
-    prop->set_string_value(string_value);
+bool calculate_measurement(const string& in, string* out) {
+  size_t size = in.size();
+  char hex[size + 2];
+  memset((byte*)hex, 0, size + 2);
+  const char *pos = (const char *)hex;
+  if (size % 2) {
+    hex[0] = '0';
+    memcpy(hex + 1, (byte*)in.data(), size + 1);
   } else {
-    return false;
+    memcpy(hex, (byte*)in.data(), size + 1);
   }
 
+  printf("Using measurement: %s\n", hex);
+  int measurement_size = strlen(hex) / 2;
+  byte m[measurement_size];
+  size_t count = 0;
+  for (size_t count = 0; count < strlen(hex) / 2 && count < (size_t)measurement_size; count++) {
+    sscanf(pos, "%2hhx", &m[count]);
+    pos += 2;
+  }
+  out->assign((char*)m, measurement_size);
   return true;
 }
-
 
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_key_subject == "" && FLAGS_cert_subject == "" && FLAGS_measurement_subject == "") {
-    printf("No subject\n");
+  if (FLAGS_platform_file == "" && FLAGS_measurement_file == "" && FLAGS_output == "") {
+    printf("Too few arguments\n");
     return 1;
   }
 
-  property prop;
-  if (!make_property(FLAGS_property_name, FLAGS_property_type, FLAGS_comparator,
-        FLAGS_int_value, FLAGS_string_value, &prop)) {
-    printf("Can't make property\n");
+  platform plat;
+  string m_str;
+  string plat_str;
+
+  if (!read_file_into_string(FLAGS_platform_file, &plat_str)) {
+    printf("Can't read platform file\n");
     return 1;
   }
+
+  if (!read_file_into_string(FLAGS_measurement_file, &m_str)) {
+    printf("Can't read measurement file\n");
+    return 1;
+  }
+
+  environment env;
+  if (!env.mutable_the_platform()->ParseFromString(plat_str)) {
+    printf("Can't parse platform file\n");
+    return 1;
+  }
+
+  string meas;
+  if (!calculate_measurement(m_str, &meas)) {
+    printf("Can't calculate measurement\n");
+    return 1;
+  }
+  env.mutable_the_measurement()->assign(meas);
 
   string p_out;
-  if (!prop->SaveToString(&p_out)) {
+  if (!env.SerializeToString(&p_out)) {
     printf("Can't serialize\n");
     return 1;
   }
 
   if (!write_file(FLAGS_output, p_out.size(), (byte*) p_out.data())) {
-      printf("Can't write cert file\n");
+      printf("Can't write output file\n");
       return 1;
     }
 
+  print_environment(env);
   return 0;
 }

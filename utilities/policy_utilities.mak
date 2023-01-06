@@ -71,6 +71,8 @@ make_property_obj= $(O)/make_property.o $(O)/support.o $(O)/certifier.o $(O)/cer
 $(O)/simulated_enclave.o $(O)/application_enclave.o
 combine_properties_obj= $(O)/combine_properties.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o
+make_environment_obj= $(O)/make_environment.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o
 
 
 all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe \
@@ -78,7 +80,8 @@ all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe 
 	$(EXE_DIR)/make_signed_claim_from_vse_clause.exe $(EXE_DIR)/print_vse_clause.exe \
 	$(EXE_DIR)/print_signed_claim.exe $(EXE_DIR)/package_claims.exe \
 	$(EXE_DIR)/print_packaged_claims.exe $(EXE_DIR)/embed_policy_key.exe \
-	$(EXE_DIR)/make_platform.exe $(EXE_DIR)/make_property.exe $(EXE_DIR)/combine_properties.exe
+	$(EXE_DIR)/make_platform.exe $(EXE_DIR)/make_property.exe $(EXE_DIR)/combine_properties.exe \
+	$(EXE_DIR)/make_environment.exe
 
 clean:
 	@echo "removing object files"
@@ -228,3 +231,11 @@ $(O)/combine_properties.o: $(S)/combine_properties.cc $(INC_DIR)/certifier.pb.h 
 $(EXE_DIR)/combine_properties.exe: $(combine_properties_obj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/combine_properties.exe $(combine_properties_obj) $(LDFLAGS)
+
+$(O)/make_environment.o: $(S)/make_environment.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
+	@echo "compiling make_environment.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/make_environment.o $(S)/make_environment.cc
+
+$(EXE_DIR)/make_environment.exe: $(make_environment_obj)
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/make_environment.exe $(make_environment_obj) $(LDFLAGS)
