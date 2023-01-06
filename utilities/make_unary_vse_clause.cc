@@ -20,8 +20,10 @@
 
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(output, "simple_clause.bin",  "output file");
-DEFINE_string(key_subject, "",  "subject file");
-DEFINE_string(measurement_subject, "",  "subject file");
+DEFINE_string(key_subject, "",  "key subject file");
+DEFINE_string(measurement_subject, "",  "measurement subject file");
+DEFINE_string(platform_subject, "",  "platform subject file");
+DEFINE_string(environment_subject, "",  "environment subject file");
 DEFINE_string(verb, "verb",  "verb to use");
 DEFINE_string(cert_subject, "",  "cert file");
 

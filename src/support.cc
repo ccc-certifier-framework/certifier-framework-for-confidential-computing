@@ -375,13 +375,18 @@ void print_property(const property& prop) {
 
 void print_platform(const platform& pl) {
   printf("platform: %s\n", pl.platform_type().c_str());
+  for (int i = 0; i < pl.properties_size(); i++) {
+    print_property(pl.properties(i));
+    printf("\n");
+  }
 }
 
 void print_environment(const environment& env) {
   printf("environment\n");
   print_platform(env.the_platform());
   printf("\n");
-  print_entity(env.ent());
+  printf("measurement: ");
+  print_bytes(env.the_measurement().size(), (byte*)env.the_measurement().data());
   printf("\n");
 }
 
@@ -1625,6 +1630,35 @@ void print_key_descriptor(const key_message& k) {
   }
 }
 
+void print_property_descriptor(const property& p) {
+  printf("%s: ", p.property_name().c_str());
+  if (p.value_type() == "int") {
+    if (p.comparator() != "")
+      printf(" %s", p.comparator().c_str());
+    printf("%d", p.int_value());
+  } else if (p.value_type() == "string") {
+    printf("%s", p.string_value().c_str());
+  } else {
+    return;
+  }
+}
+
+
+void print_platform_descriptor(const platform& pl) {
+    printf("Platform[%s", pl.platform_type().c_str());
+    for (int i = 0; i < pl.properties_size(); i++) {
+      printf(", ");
+      print_property_descriptor(pl.properties(i));
+    }
+    printf("]");
+}
+
+void print_environment_descriptor(const environment& env) {
+    printf("Environment[%s, ", env.the_platform().platform_type().c_str());
+    print_bytes(env.the_measurement().size(), (byte*)env.the_measurement().data());
+    printf("]");
+}
+
 void print_entity_descriptor(const entity_message& e) {
   if (e.entity_type() == "key" && e.has_key()) {
     print_key_descriptor(e.key());
@@ -1632,6 +1666,10 @@ void print_entity_descriptor(const entity_message& e) {
     printf("Measurement[");
     print_bytes((int)e.measurement().size(), (byte*)e.measurement().data());
     printf("] ");
+  } else if (e.entity_type() == "platform" && e.has_platform_ent()) {
+    print_platform_descriptor(e.platform_ent());
+  } else if (e.entity_type() == "environment" && e.has_environment_ent()) {
+    print_environment_descriptor(e.environment_ent());
   } else {
   }
 }

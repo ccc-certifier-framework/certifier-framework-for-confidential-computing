@@ -121,6 +121,9 @@ bool get_vse_clause_from_signed_claim(const signed_claim_message& scm, vse_claus
 void print_bytes(int n, byte* buf);
 void print_key_descriptor(const key_message& k);
 void print_entity_descriptor(const entity_message& e);
+void print_property_descriptor(const property& p);
+void print_platform_descriptor(const platform& pl);
+void print_environment_descriptor(const environment& env);
 void print_vse_clause(const vse_clause c);
 void print_claim(const claim_message& claim);
 void print_signed_claim(const signed_claim_message& signed_claim);

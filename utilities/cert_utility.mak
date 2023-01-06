@@ -31,8 +31,8 @@ I= $(INC_DIR)
 US= .
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/
 
-CFLAGS= $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64
-CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64
+CFLAGS= $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated
+CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated
 CC=g++
 LINK=g++
 # PROTO=/usr/local/bin/protoc

@@ -80,10 +80,31 @@ message protected_blob_message {
   optional bytes encrypted_data             = 2;
 };
 
+message property {
+  optional string property_name             = 1;
+  optional string value_type                = 2;
+  optional string comparator                = 3;
+  optional string string_value              = 4;
+  optional int32 int_value                  = 5;
+};
+
+message platform {
+  optional string platform_type             = 1;
+  repeated property properties              = 2;
+};
+
+message environment {
+  optional platform the_platform            = 1;
+  optional bytes the_measurement            = 2;
+};
+
+// entity types: key, measurement, platform, environment
 message entity_message {
   optional string entity_type               = 1;
   optional key_message key                  = 2;
   optional bytes measurement                = 3;
+  optional platform platform_ent            = 4;
+  optional environment environment_ent      = 5;
 };
 
 // Example 1:  PK "speaks-for" measurement
@@ -106,24 +127,6 @@ message claim_message {
   optional string not_before                = 3;
   optional string not_after                 = 4;
   optional bytes serialized_claim           = 5;
-};
-
-message property {
-  optional string property_name             = 1;
-  optional string value_type                = 2;
-  optional string comparator                = 3;
-  optional string string_value              = 4;
-  optional int32 int_value                  = 5;
-};
-
-message platform {
-  optional string platform_type             = 1;
-  repeated property properties              = 2;
-};
-
-message environment {
-  optional platform the_platform            = 1;
-  optional entity_message ent               = 2;
 };
 
 //  The claims are in "vse-clause.  Time is
