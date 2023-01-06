@@ -65,9 +65,11 @@ $(O)/simulated_enclave.o $(O)/application_enclave.o
 print_packaged_claims_obj= $(O)/print_packaged_claims.o $(O)/support.o $(O)/certifier.o \
 $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 embed_policy_key_obj=$(O)/embed_policy_key.o
-appoint_platform_obj= $(O)/appoint_platform.o $(O)/support.o \
+make_platform_obj= $(O)/make_platform.o $(O)/support.o \
 $(O)/certifier.o $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 make_property_obj= $(O)/make_property.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
+$(O)/simulated_enclave.o $(O)/application_enclave.o
+combine_properties_obj= $(O)/combine_properties.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o
 
 
@@ -76,7 +78,7 @@ all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe 
 	$(EXE_DIR)/make_signed_claim_from_vse_clause.exe $(EXE_DIR)/print_vse_clause.exe \
 	$(EXE_DIR)/print_signed_claim.exe $(EXE_DIR)/package_claims.exe \
 	$(EXE_DIR)/print_packaged_claims.exe $(EXE_DIR)/embed_policy_key.exe \
-	$(EXE_DIR)/appoint_platform.exe $(EXE_DIR)/make_property.exe
+	$(EXE_DIR)/make_platform.exe $(EXE_DIR)/make_property.exe $(EXE_DIR)/combine_properties.exe
 
 clean:
 	@echo "removing object files"
@@ -100,6 +102,10 @@ $(O)/cert_utility.o: $(US)/cert_utility.cc $(INC_DIR)/support.h $(INC_DIR)/certi
 $(O)/key_utility.o: $(US)/key_utility.cc $(INC_DIR)/support.h $(INC_DIR)/certifier.pb.h
 	@echo "compiling key_utility.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/key_utility.o $(US)/key_utility.cc
+
+$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CERT_SRC)/certifier.proto
+	$(PROTO) -I$(S) --cpp_out=$(US) $(CERT_SRC)/certifier.proto
+	mv certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(CERT_SRC)/certifier.pb.cc $(INC_DIR)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
@@ -199,13 +205,13 @@ $(O)/embed_policy_key.o: $(S)/embed_policy_key.cc $(INC_DIR)/certifier.pb.h $(IN
 	@echo "compiling embed_policy_key.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/embed_policy_key.o $(S)/embed_policy_key.cc
 
-$(EXE_DIR)/appoint_platform.exe: $(appoint_platform_obj)
+$(EXE_DIR)/make_platform.exe: $(make_platform_obj)
 	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/appoint_platform.exe $(appoint_platform_obj) $(LDFLAGS)
+	$(LINK) -o $(EXE_DIR)/make_platform.exe $(make_platform_obj) $(LDFLAGS)
 
-$(O)/appoint_platform.o: $(S)/appoint_platform.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
-	@echo "compiling appoint_platform.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/appoint_platform.o $(S)/appoint_platform.cc
+$(O)/make_platform.o: $(S)/make_platform.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
+	@echo "compiling make_platform.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/make_platform.o $(S)/make_platform.cc
 
 $(O)/make_property.o: $(S)/make_property.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling make_property.cc"
@@ -214,3 +220,11 @@ $(O)/make_property.o: $(S)/make_property.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)
 $(EXE_DIR)/make_property.exe: $(make_property_obj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/make_property.exe $(make_property_obj) $(LDFLAGS)
+
+$(O)/combine_properties.o: $(S)/combine_properties.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
+	@echo "compiling combine_properties.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/combine_properties.o $(S)/combine_properties.cc
+
+$(EXE_DIR)/combine_properties.exe: $(combine_properties_obj)
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/combine_properties.exe $(combine_properties_obj) $(LDFLAGS)

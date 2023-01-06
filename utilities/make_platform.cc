@@ -19,56 +19,45 @@
 // make_platform.exe 
 
 DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(property_name, "",  "property name");
-DEFINE_string(property_type, "",  "property type");
-// values are "=", ">="
-DEFINE_string(comparator, "=",  "comparator");
-DEFINE_int32(int_value, 0,  "int value");
-DEFINE_string(string_value, "",  "string value");
-DEFINE_string(output, "prop.bin",  "output file");
-
-bool make_property(string& name, string& type, string& cmp, int int_value,
-    string& string_value, property* prop) {
-  prop->set_name(name);
-  prop->set_comparator(cmp);
-  if (type == "int") {
-    prop->set_int_value(int_value);
-  } else if (type == "string") {
-    prop->set_string_value(string_value);
-  } else {
-    return false;
-  }
-
-  return true;
-}
-
+DEFINE_string(platform_type, "",  "platform type");
+DEFINE_string(properties_file, "",  "properties files");
+DEFINE_string(output, "",  "output file");
 
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_key_subject == "" && FLAGS_cert_subject == "" && FLAGS_measurement_subject == "") {
-    printf("No subject\n");
+  if (FLAGS_platform_type == "") {
+    printf("No platform type\n");
     return 1;
   }
 
-  property prop;
-  if (!make_property(FLAGS_property_name, FLAGS_property_type, FLAGS_comparator,
-        FLAGS_int_value, FLAGS_string_value, &prop)) {
-    printf("Can't make property\n");
-    return 1;
+  platform plat;
+  plat.set_platform_type(FLAGS_platform_type);
+
+  if (FLAGS_properties_file!= "") {
+    string pp_str;
+    if (!read_file_into_string(FLAGS_properties_file, &pp_str)) {
+      printf("Can't read properties file\n");
+      return 1;
+    }
+    if (!plat.mutable_props()->ParseFromString(pp_str)) {
+      printf("Can't parse properties file\n");
+      return 1;
+    }
   }
 
   string p_out;
-  if (!prop->SaveToString(&p_out)) {
+  if (!plat.SerializeToString(&p_out)) {
     printf("Can't serialize\n");
     return 1;
   }
 
   if (!write_file(FLAGS_output, p_out.size(), (byte*) p_out.data())) {
-      printf("Can't write cert file\n");
+      printf("Can't write output file\n");
       return 1;
     }
 
+  print_platform(plat);
   return 0;
 }

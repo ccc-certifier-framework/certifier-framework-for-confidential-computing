@@ -16,7 +16,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// make_unary_vse_clause.exe --key_subject=file --measurement_subject=file --verb="is-trusted" --output=output-file-name
+// make_unary_vse_clause.exe --key_subject=file --measurement_subject=file --platform_subject=file
+//    --environment_subject=file --verb="is-trusted" --output=output-file-name
 
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(output, "simple_clause.bin",  "output file");
@@ -72,6 +73,7 @@ int make_unary_clause_file_utility(entity_message& subject, const string& verb,
     printf("\n");
   }
 
+  print_vse_clause(out_cl);
   return 0;
 }
 
@@ -131,11 +133,51 @@ bool get_measurement_entity_from_file(const string& in, entity_message* em) {
   return true;
 }
 
+bool get_platform_entity_from_file(const string& in, entity_message* em) {
+  int in_size = file_size(in);
+  int in_read = in_size;
+  byte pfp[in_size];
+
+  if (!read_file(in, &in_read, pfp)) {
+    printf("Can't read %s\n", in.c_str());
+    return false;
+  }
+  string pfp_str;
+  pfp_str.assign((char*)pfp, in_size);
+  platform pl;
+  if(!pl.ParseFromString(pfp_str)) {
+    printf("Can't parse platform\n");
+    return false;
+  }
+  em->mutable_platform_ent()->CopyFrom(pl);
+  return true;
+}
+
+bool get_environment_entity_from_file(const string& in, entity_message* em) {
+  int in_size = file_size(in);
+  int in_read = in_size;
+  byte env[in_size];
+
+  if (!read_file(in, &in_read, env)) {
+    printf("Can't read %s\n", in.c_str());
+    return false;
+  }
+  string env_str;
+  env_str.assign((char*)env, in_size);
+  environment en;
+  if(!en.ParseFromString(env_str)) {
+    printf("Can't parse environment\n");
+    return false;
+  }
+  return true;
+}
+
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_key_subject == "" && FLAGS_cert_subject == "" && FLAGS_measurement_subject == "") {
+  if (FLAGS_key_subject == "" && FLAGS_cert_subject == "" && FLAGS_measurement_subject == "" &&
+      FLAGS_platform_subject == "" && FLAGS_environment_subject == "") {
     printf("No subject\n");
     return 1;
   }
@@ -164,6 +206,16 @@ int main(int an, char** av) {
     }
   } else if (FLAGS_measurement_subject != "") {
     if (!get_measurement_entity_from_file(FLAGS_measurement_subject, &sub_ent)) {
+      printf("Can't make subject measurement\n");
+      return 1;
+    }
+  } else if (FLAGS_platform_subject != "") {
+    if (!get_platform_entity_from_file(FLAGS_platform_subject, &sub_ent)) {
+      printf("Can't make subject measurement\n");
+      return 1;
+    }
+  } else if (FLAGS_environment_subject != "") {
+    if (!get_environment_entity_from_file(FLAGS_environment_subject, &sub_ent)) {
       printf("Can't make subject measurement\n");
       return 1;
     }

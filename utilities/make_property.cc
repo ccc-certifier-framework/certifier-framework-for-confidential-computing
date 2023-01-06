@@ -37,6 +37,7 @@ bool make_property(string& name, string& type, string& cmp, int int_value,
   } else if (type == "string") {
     prop->set_string_value(string_value);
   } else {
+    printf("unrecognized type: %s\n", type.c_str());
     return false;
   }
 

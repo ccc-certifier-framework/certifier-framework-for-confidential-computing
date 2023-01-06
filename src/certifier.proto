@@ -88,9 +88,13 @@ message property {
   optional int32 int_value                  = 5;
 };
 
+message properties {
+  repeated property props                   = 1;
+};
+
 message platform {
   optional string platform_type             = 1;
-  repeated property properties              = 2;
+  optional properties props                 = 2;
 };
 
 message environment {

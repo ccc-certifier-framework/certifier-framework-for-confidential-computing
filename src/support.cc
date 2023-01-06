@@ -375,9 +375,9 @@ void print_property(const property& prop) {
 
 void print_platform(const platform& pl) {
   printf("platform: %s\n", pl.platform_type().c_str());
-  for (int i = 0; i < pl.properties_size(); i++) {
-    print_property(pl.properties(i));
-    printf("\n");
+  for (int i = 0; i < pl.props().props_size(); i++) {
+    printf("    ");
+    print_property(pl.props().props(i));
   }
 }
 
@@ -1643,12 +1643,11 @@ void print_property_descriptor(const property& p) {
   }
 }
 
-
 void print_platform_descriptor(const platform& pl) {
     printf("Platform[%s", pl.platform_type().c_str());
-    for (int i = 0; i < pl.properties_size(); i++) {
+    for (int i = 0; i < pl.props().props_size(); i++) {
       printf(", ");
-      print_property_descriptor(pl.properties(i));
+      print_property_descriptor(pl.props().props(i));
     }
     printf("]");
 }
