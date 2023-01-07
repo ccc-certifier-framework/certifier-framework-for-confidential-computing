@@ -24,3 +24,6 @@
 ../make_unary_vse_clause.exe --platform_subject=platform3.bin --verb="is-trusted-platform" --output=istrustedplatform.bin
 
 ../make_indirect_vse_clause.exe --key_subject=policy_key_file.bin --verb="says" --clause=istrustedplatform.bin --output=policy_key_says.bin
+
+# Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says
+#     Platform[amd-sev-snp, no-debug, no-migrate, api-major >= 0, api-minor >= 0] is-trusted-platform
