@@ -1643,13 +1643,13 @@ void print_key_descriptor(const key_message& k) {
 }
 
 void print_property_descriptor(const property& p) {
-  printf("%s: ", p.property_name().c_str());
+  printf("%s", p.property_name().c_str());
   if (p.value_type() == "int") {
     if (p.comparator() != "")
       printf(" %s", p.comparator().c_str());
-    printf("%d", p.int_value());
+    printf(" %d", p.int_value());
   } else if (p.value_type() == "string") {
-    printf("%s", p.string_value().c_str());
+    printf(" %s", p.string_value().c_str());
   } else {
     return;
   }
