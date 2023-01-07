@@ -83,14 +83,18 @@ New deductions
 
   if policy-key says X then X (already there)
 
-  if platform(type, property) platform-is-trusted and platform(type, properties) is-platform and
-      platform(type, properties) satisfies platform(type, property-class) then
-      platform(type, properties) platform-is-trusted
+  if platform(type, property) platform-is-trusted
+     and platform(type, properties) is-platform
+     and platform(type, properties) satisfies platform(type, property-class)
+     then platform(type, properties) platform-is-trusted
 
-  if platform(type, properties) platform-is-trusted and measurement is-trusted then 
-    environment(platform, measurement) is-trusted
+  if platform(type, properties) platform-is-trusted
+     and measurement is-trusted then
+     environment(platform, measurement) is-trusted
 
-  if environment(platform, measurement) is-trusted and key speaks-for environment then key is-trusted-for-authentication
+  if environment(platform, measurement) is-trusted and
+     key speaks-for environment then
+     key is-trusted-for-authentication
 
   satisfies
     platform-type: any, always true

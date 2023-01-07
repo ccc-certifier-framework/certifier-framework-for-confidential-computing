@@ -12,3 +12,5 @@
 
 ../make_property.exe --property_name='api-major' --property_type=int --comparator=">=" --int_value=5 --output=property3.bin
 
+../make_platform.exe --platform_type=any --output=platform2.bin
+
