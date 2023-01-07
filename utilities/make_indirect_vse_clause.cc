@@ -16,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// make_indirect_vse_clause.exe --key_subject=file --measurement_subject=file --verb="says" --clause=file --output=output-file-name
+// make_indirect_vse_clause.exe --key_subject=file --verb="says" --clause=file --output=output-file-name
 
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(output, "simple_clause.bin",  "output file");
