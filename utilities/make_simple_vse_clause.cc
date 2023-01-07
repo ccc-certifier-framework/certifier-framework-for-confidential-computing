@@ -16,8 +16,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// make_simple_vse_clause.exe --key_subject=file --measurement_subject=file --verb="speaks-for"
-//    --key_object=file --measurement_object=file --output=output-file-name
+// make_simple_vse_clause.exe --key_subject=file --measurement_subject=file 
+//  --platform_subject=file --environment_subject=file --verb="speaks-for"
+//  --key_object=file --measurement_object=file --platform_object=file --environment_object=file
+//  --output=output-file-name
 
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(output, "simple_clause.bin",  "output file");
@@ -28,6 +30,8 @@ DEFINE_string(environment_subject, "",  "environment subject file");
 DEFINE_string(verb, "verb",  "verb to use");
 DEFINE_string(key_object, "",  "object file");
 DEFINE_string(measurement_object, "",  "object file");
+DEFINE_string(platform_object, "",  "platform object file");
+DEFINE_string(environment_object, "",  "environment object file");
 
 int make_simple_clause_file_utility(entity_message& subject, const string& verb,
       entity_message& object, const string& output) {
@@ -96,19 +100,63 @@ bool get_measurement_entity_from_file(const string& in, entity_message* em) {
   return true;
 }
 
-bool get_clause_from_file(const string& in, vse_clause* cl) {
-  return false;
+bool get_platform_entity_from_file(const string& in, entity_message* em) {
+  int in_size = file_size(in);
+  int in_read = in_size;
+  byte pfp[in_size];
+
+  if (!read_file(in, &in_read, pfp)) {
+    printf("Can't read %s\n", in.c_str());
+    return false;
+  }
+  string pfp_str;
+  pfp_str.assign((char*)pfp, in_size);
+  platform pl;
+  if(!pl.ParseFromString(pfp_str)) {
+    printf("Can't parse platform\n");
+    return false;
+  }
+  if (!make_platform_entity(pl, em)) {
+    printf("Can't make environemnt entity\n");
+    return false;
+  }
+  return true;
+}
+
+bool get_environment_entity_from_file(const string& in, entity_message* em) {
+  int in_size = file_size(in);
+  int in_read = in_size;
+  byte env[in_size];
+
+  if (!read_file(in, &in_read, env)) {
+    printf("Can't read %s\n", in.c_str());
+    return false;
+  }
+  string env_str;
+  env_str.assign((char*)env, in_size);
+  environment en;
+  if(!en.ParseFromString(env_str)) {
+    printf("Can't parse environment\n");
+    return false;
+  }
+  if (!make_environment_entity(en, em)) {
+    printf("Can't make environemnt entity\n");
+    return false;
+  }
+  return true;
 }
 
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_key_subject == "" && FLAGS_measurement_subject == "") {
+  if (FLAGS_key_subject == "" && FLAGS_measurement_subject == "" &&
+      FLAGS_platform_subject == "" && FLAGS_environment_subject == "") {
     printf("No subject\n");
     return 1;
   }
-  if (FLAGS_key_object == "" && FLAGS_measurement_object == "") {
+  if (FLAGS_key_object == "" && FLAGS_measurement_object == "" &&
+      FLAGS_platform_object == "" && FLAGS_environment_object == "") {
     printf("No object\n");
     return 1;
   }
@@ -131,7 +179,18 @@ int main(int an, char** av) {
       printf("Can't make subject measurement\n");
       return 1;
     }
+  } else if (FLAGS_platform_subject != "") {
+    if (!get_platform_entity_from_file(FLAGS_platform_subject, &sub_ent)) {
+      printf("Can't make subject platform\n");
+      return 1;
+    }
+  } else if (FLAGS_environment_subject != "") {
+    if (!get_environment_entity_from_file(FLAGS_environment_subject, &sub_ent)) {
+      printf("Can't make subject environment\n");
+      return 1;
+    }
   }
+
   if (FLAGS_key_object != "") {
     key_message k;
     if (!get_key_from_file(FLAGS_key_object, &k)) {
@@ -147,10 +206,18 @@ int main(int an, char** av) {
       printf("Can't make object measurement\n");
       return 1;
     }
+  } else if (FLAGS_platform_object != "") {
+    if (!get_platform_entity_from_file(FLAGS_platform_object, &obj_ent)) {
+      printf("Can't make platform object\n");
+      return 1;
+    }
+  } else if (FLAGS_environment_subject != "") {
+    if (!get_environment_entity_from_file(FLAGS_environment_object, &obj_ent)) {
+      printf("Can't make object environment\n");
+      return 1;
+    }
   }
 
   return make_simple_clause_file_utility(sub_ent, FLAGS_verb,
       obj_ent, FLAGS_output);
-
-  return 1;
 }
