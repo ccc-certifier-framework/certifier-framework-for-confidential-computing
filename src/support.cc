@@ -357,7 +357,7 @@ void print_time_point(time_point& t) {
 }
 
 void print_property(const property& prop) {
-  printf("type: %s\n", prop.property_name().c_str());
+  printf("%s", prop.property_name().c_str());
 
   if (prop.value_type() == "int") {
     if (prop.comparator() == "=") {
@@ -369,8 +369,10 @@ void print_property(const property& prop) {
   } else if (prop.value_type() == "string") {
     printf("%s", prop.string_value().c_str());
   } else {
+    printf("property type: %s\n", prop.value_type().c_str());
     return;
   }
+  printf("\n");
 }
 
 void print_platform(const platform& pl) {

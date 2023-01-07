@@ -10,3 +10,5 @@
 ../print_vse_clause.exe --input=simple.bin
 ../make_environment.exe --platform_file=platform.bin --measurement_file=meas.hex --output=environment.bin
 
+../make_property.exe --property_name='api-major' --property_type=int --comparator=">=" --int_value=5 --output=property3.bin
+
