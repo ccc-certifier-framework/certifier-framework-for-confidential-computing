@@ -109,6 +109,8 @@ bool get_random(int num_bits, byte* out);
 
 bool make_key_entity(const key_message& key, entity_message* ent);
 bool make_measurement_entity(const string& measurement, entity_message* ent);
+bool make_platform_entity(platform& plat, entity_message* ent);
+bool make_environment_entity(environment& env, entity_message* ent);
 bool make_unary_vse_clause(const entity_message& subject, string& verb,
     vse_clause* out);
 bool make_simple_vse_clause(const entity_message& subject, string& verb,

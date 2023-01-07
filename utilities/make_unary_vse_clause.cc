@@ -149,7 +149,10 @@ bool get_platform_entity_from_file(const string& in, entity_message* em) {
     printf("Can't parse platform\n");
     return false;
   }
-  em->mutable_platform_ent()->CopyFrom(pl);
+  if (!make_platform_entity(pl, em)) {
+    printf("Can't make environemnt entity\n");
+    return false;
+  }
   return true;
 }
 
@@ -167,6 +170,10 @@ bool get_environment_entity_from_file(const string& in, entity_message* em) {
   environment en;
   if(!en.ParseFromString(env_str)) {
     printf("Can't parse environment\n");
+    return false;
+  }
+  if (!make_environment_entity(en, em)) {
+    printf("Can't make environemnt entity\n");
     return false;
   }
   return true;

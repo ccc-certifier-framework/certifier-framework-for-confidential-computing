@@ -1480,6 +1480,18 @@ bool make_measurement_entity(const string& measurement, entity_message* ent) {
   return true;
 }
 
+bool make_platform_entity(platform& plat, entity_message* ent) {
+  ent->set_entity_type("platform");
+  ent->mutable_platform_ent()->CopyFrom(plat);
+  return true;
+}
+
+bool make_environment_entity(environment& env, entity_message* ent) {
+  ent->set_entity_type("environment");
+  ent->mutable_environment_ent()->CopyFrom(env);
+  return true;
+}
+
 bool make_unary_vse_clause(const entity_message& subject, string& verb,
     vse_clause* out) {
   entity_message* s= new(entity_message);
@@ -1670,6 +1682,7 @@ void print_entity_descriptor(const entity_message& e) {
   } else if (e.entity_type() == "environment" && e.has_environment_ent()) {
     print_environment_descriptor(e.environment_ent());
   } else {
+    printf("entity_type: %s\n", e.entity_type().c_str());
   }
 }
 
