@@ -120,7 +120,7 @@ Policy
 Facts
     1. Platform[amd-sev-snp, attest-key: key, no-debug, no-migrate, api-major = 0, api-minor = 0] is-platform
     2. Key[rsa, attestKey, e3f0bbd2…] says Key[rsa, app-auth-key, b86447b…] speaks-for Measurement[cdf359…1]
-    
+
 
 Proof
 
@@ -129,19 +129,21 @@ Proof
      Measurement[cdf3590…]is-trusted
   2. IF Key[rsa, policyKey, c9d16649…] is-trusted AND
      Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says Key[rsa, platformKey, e59709bae4…]
-       is-trusted-for-attestation THEN 
+       is-trusted-for-attestation THEN
      Key[rsa, platformKey, e59709bae4…] is-trusted-for-attestation
   3. IF Key[rsa, platformKey, e59709bae4…] is-trusted-for-attestation AND Key[rsa, platformKey, e59709bae4…] says
         Key[attest-key] is-trusted-for_attestation THEN
      Key[attest-key] is-trusted-for_attestation
   4. IF Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says
-        Platform[amd-sev-snp, no-debug, no-migrate, api-major >= 0, api-minor >= 0] has-trusted-platform-property AND 
+        Platform[amd-sev-snp, no-debug, no-migrate, api-major >= 0, api-minor >= 0] has-trusted-platform-property AND
      Platform[amd-sev-snp, attest-key: key, no-debug, no-migrate, api-major = 0, api-minor = 0] is-platform AND
      Key[attest-key] is-trusted-for_attestation THEN
      Platform[amd-sev-snp, attest-key: Key[attestKey], no-debug, no-migrate, api-major = 0, api-minor = 0] is-trusted-platform
   5. IF Platform[amd-sev-snp, attest-key: key, no-debug, no-migrate, api-major = 0, api-minor = 0] is-trusted-platform AND
-     Measurement[cdf3590…] is-trusted then Environment[platform, 05c19d5b4a50066c8c991bd920dfa2276e11d3531c91434a734f3b258ab279cd1b3bbe89ef930236af11dc3d28c70f4006] is-trusted
+     Measurement[cdf3590…] is-trusted THEN
+        Environment[platform, 05c19d5b4a50066c8c991bd920d...ab279cd1b3bbe89ef930236af11dc3d28c70f4006] is-trusted
   6. IF Environment[platform, measurement] is-trusted AND
-     Environment[platform, measurement] says Key[rsa, app-auth-key, b86447b…] speaks-for Environment[platform, measurement] THEN
+     Environment[platform, measurement] says
+        Key[rsa, app-auth-key, b86447b…] speaks-for Environment[platform, measurement] THEN
     Key[rsa, app-auth-key, b86447b…] is-trusted-for-authentication
   
