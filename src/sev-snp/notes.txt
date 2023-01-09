@@ -119,11 +119,10 @@ Policy
 
 Facts
     1. Platform[amd-sev-snp, attest-key: key, no-debug, no-migrate, api-major = 0, api-minor = 0] is-platform
-    2. Key[rsa, attestKey, e3f0bbd2…] says Key[rsa, app-auth-key, b86447b…] speaks-for Measurement[cdf359…1]
+    2. Environment[platform, measurement] says Key[rsa, app-auth-key, b86447b…] speaks-for Measurement[cdf359…1]
 
 
 Proof
-
   1. IF Key[rsa, policyKey, c9d16649…] is-trusted AND
      Key[rsa, policyKey, c9d1664…] says Measurement[cdf3590…]is-trusted THEN
      Measurement[cdf3590…]is-trusted
