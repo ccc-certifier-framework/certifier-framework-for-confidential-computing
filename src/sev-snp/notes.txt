@@ -48,20 +48,17 @@ Old types
   entity(key or measurement)
 
 New types
-  property(name, value-type, value)
+  property(name, value-type, comparator, value)
     value-type: number, string
   properties(list of (property))
-  property-class(list-of(property-name, value-type, comparitor, value)
 
   platform(type, properties)
-    platform-type: amd-sev-snp, sgx, ant
-  platform-class(platform-type, list-of(property-class))
-
+    platform-type: amd-sev-snp, sgx, tdx, simulated
   environment(platform, measurement)
 
 New facts (from attestation)
 
-  platform-is platform(type, properties)
+  platform-is platform(type, key, properties)
 
   SEV specific properties
     sev-api-major is number(v1)
@@ -73,15 +70,13 @@ New facts (from attestation)
 
 New policy statements
 
-  policy-key says platform(type, property-class)) platform-is-trusted
-  
+  policy-key says platform(type, key, properties) has-trusted-platform-property
   platform(type, properties)
     types are amd-sev-snp, sgx, any
 
 
 New deductions
 
-  if policy-key says X then X (already there)
 
   if platform(type, property) platform-is-trusted
      and platform(type, properties) is-platform
