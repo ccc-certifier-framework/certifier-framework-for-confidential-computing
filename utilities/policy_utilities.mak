@@ -46,33 +46,33 @@ AR=ar
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
 
-measurement_utility_obj=$(O)/measurement_utility.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
+measurement_utility_obj=$(O)/measurement_utility.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 make_indirect_vse_clause_obj= $(O)/make_indirect_vse_clause.o $(O)/support.o $(O)/certifier.o \
-$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+$(O)/certifier_proofs.o $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 make_simple_vse_clause_obj= $(O)/make_simple_vse_clause.o $(O)/support.o $(O)/certifier.o \
-$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+$(O)/certifier_proofs.o $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 make_unary_vse_clause_obj= $(O)/make_unary_vse_clause.o $(O)/support.o $(O)/certifier.o \
-$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+$(O)/certifier_proofs.o $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 make_signed_claim_from_vse_clause_obj= $(O)/make_signed_claim_from_vse_clause.o $(O)/support.o \
-$(O)/certifier.o $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
-print_vse_clause_obj= $(O)/print_vse_clause.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
-print_signed_claim_obj= $(O)/print_signed_claim.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
-package_claims_obj= $(O)/package_claims.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
-print_packaged_claims_obj= $(O)/print_packaged_claims.o $(O)/support.o $(O)/certifier.o \
+$(O)/certifier.o $(O)/certifier_proofs.o $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+print_vse_clause_obj= $(O)/print_vse_clause.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+print_signed_claim_obj= $(O)/print_signed_claim.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+package_claims_obj= $(O)/package_claims.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+print_packaged_claims_obj= $(O)/print_packaged_claims.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
 $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 embed_policy_key_obj=$(O)/embed_policy_key.o
-make_platform_obj= $(O)/make_platform.o $(O)/support.o \
-$(O)/certifier.o $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
-make_property_obj= $(O)/make_property.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
-combine_properties_obj= $(O)/combine_properties.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
-make_environment_obj= $(O)/make_environment.o $(O)/support.o $(O)/certifier.o $(O)/certifier.pb.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
+make_platform_obj= $(O)/make_platform.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+make_property_obj= $(O)/make_property.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+combine_properties_obj= $(O)/combine_properties.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+make_environment_obj= $(O)/make_environment.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 
 
 all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe \
@@ -106,9 +106,9 @@ $(O)/key_utility.o: $(US)/key_utility.cc $(INC_DIR)/support.h $(INC_DIR)/certifi
 	@echo "compiling key_utility.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/key_utility.o $(US)/key_utility.cc
 
-$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CERT_SRC)/certifier.proto
-	$(PROTO) -I$(S) --cpp_out=$(US) $(CERT_SRC)/certifier.proto
-	mv certifier.pb.h $(I)
+#$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CERT_SRC)/certifier.proto
+#	$(PROTO) -I$(S) --cpp_out=$(US) $(CERT_SRC)/certifier.proto
+#	mv certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(CERT_SRC)/certifier.pb.cc $(INC_DIR)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
@@ -121,6 +121,10 @@ $(O)/support.o: $(CERT_SRC)/support.cc $(INC_DIR)/support.h $(INC_DIR)/certifier
 $(O)/certifier.o: $(CERT_SRC)/certifier.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling certifier.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(CERT_SRC)/certifier.cc
+
+$(O)/certifier_proofs.o: $(CERT_SRC)/certifier_proofs.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
+	@echo "compiling certifier_proofs.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(CERT_SRC)/certifier_proofs.cc
 
 $(O)/simulated_enclave.o: $(CERT_SRC)/simulated_enclave.cc $(INC_DIR)/simulated_enclave.h
 	@echo "compiling simulated_enclave.cc"

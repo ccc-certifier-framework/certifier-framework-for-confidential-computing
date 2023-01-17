@@ -40,9 +40,9 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
-dobj=	$(O)/service_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
-sp_dobj=$(O)/start_program.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+dobj=	$(O)/service_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
+sp_dobj=$(O)/start_program.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 
 
@@ -57,15 +57,14 @@ service_example_app.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/service_example_app.exe $(dobj) $(LDFLAGS)
 
-$(US)/certifier.pb.cc: $(S)/certifier.proto
+$(S)/certifier.pb.cc: $(S)/certifier.proto
 	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto
-	mv $(US)/certifier.pb.h $(I)
+	mv $(S)/certifier.pb.h $(I)
+$(I)/certifier.pb.h: $(S)/certifier.pb.cc
 
-$(I)/certifier.pb.h: $(US)/certifier.pb.cc
-
-$(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
+$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
+	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
 
 start_program.exe: $(sp_dobj)
 	@echo "start_program.exe"
@@ -75,13 +74,17 @@ $(O)/start_program.o: start_program.cc
 	@echo "start_program.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/start_program.o $(US)/start_program.cc
 
-$(O)/service_example_app.o: $(US)/service_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/service_example_app.o: $(US)/service_example_app.cc $(I)/certifier.h $(S)/certifier.pb.cc
 	@echo "compiling service_example_app.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/service_example_app.o $(US)/service_example_app.cc
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(S)/certifier.cc
+
+$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+	@echo "compiling certifier_proofs.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(S)/certifier_proofs.cc
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h
 	@echo "compiling support.cc"
@@ -95,6 +98,6 @@ $(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave
 	@echo "compiling application_enclave.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(S)/application_enclave.cc
 
-$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(S)/certifier.pb.cc
 	@echo "compiling cc_helpers.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc

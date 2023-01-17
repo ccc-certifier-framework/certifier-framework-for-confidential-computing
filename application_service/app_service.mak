@@ -40,11 +40,11 @@ AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
-dobj=	$(O)/app_service.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+dobj=	$(O)/app_service.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
 $(O)/sev_support.o $(O)/sev_report.o
 
-user_dobj= $(O)/test_user.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+user_dobj= $(O)/test_user.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o $(O)/support.o \
 $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 
 
@@ -92,6 +92,10 @@ $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 $(O)/certifier.o: $(LIBSRC)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(LIBSRC)/certifier.cc
+
+$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+	@echo "compiling certifier_proofs.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(S)/certifier_proofs.cc
 
 $(O)/support.o: $(LIBSRC)/support.cc $(I)/support.h
 	@echo "compiling support.cc"

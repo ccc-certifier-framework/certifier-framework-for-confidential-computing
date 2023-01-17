@@ -54,11 +54,11 @@ AR=ar
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
 ifdef ENABLE_SEV
-dobj=	$(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+dobj=	$(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o $(O)/support.o \
 $(O)/application_enclave.o $(O)/simulated_enclave.o \
 $(O)/sev_support.o $(O)/sev_report.o $(O)/cc_helpers.o
 else
-dobj=	$(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
+dobj=	$(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o $(O)/support.o \
 $(O)/application_enclave.o $(O)/simulated_enclave.o $(O)/cc_helpers.o
 endif
 
@@ -90,6 +90,10 @@ $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(S)/certifier.cc
+
+$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+	@echo "compiling certifier_proofs.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(S)/certifier_proofs.cc
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h
 	@echo "compiling support.cc"

@@ -40,8 +40,8 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
-dobj=	$(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
+dobj=	$(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 
 
 all:	example_app.exe
@@ -72,6 +72,10 @@ $(O)/example_app.o: $(US)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(S)/certifier.cc
+
+$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+	@echo "compiling certifier_proofs.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(S)/certifier_proofs.cc
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h
 	@echo "compiling support.cc"
