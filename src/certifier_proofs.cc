@@ -1733,69 +1733,6 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
   return true;
 }
 
-// Use policy statements for init
-bool validate_evidence_from_policy(string& evidence_descriptor, signed_claim_sequence& policy,
-        const string& purpose, evidence_package& evp, key_message& policy_pk) {
-  return false;
-
-/*
- proved_statements already_proved;
-  vse_clause to_prove;
-  proof pf;
-  predicate_dominance predicate_dominance_root;
-
-  if (!init_dominance_tree(predicate_dominance_root)) {
-    printf("validate_evidence: can't init predicate dominance tree\n");
-    return false;
-  }
-
-  if (!init_axiom(policy_pk, &already_proved)) {
-    printf("validate_evidence: can't init axiom\n");
-    return false;
-  }
-
-  if (!construct_proof_from_request(evidence_descriptor, policy_pk, purpose,
-            trusted_platforms, trusted_measurements,
-            evp, &already_proved, &to_prove, &pf)) {
-    printf("validate_evidence: can't construct proof\n");
-    return false;
-  }
-
-#ifdef PRINT_ALREADY_PROVED
-  printf("proved statements after additions:\n");
-  for (int i = 0; i < pf.steps_size(); i++) {
-    print_vse_clause(already_proved.proved(i));
-    printf("\n");
-  }
-  printf("\n");
-
-  printf("to prove : ");
-  print_vse_clause(to_prove);
-  printf("\n\n");
-  printf("proposed proof:\n");
-  print_proof(pf);
-  printf("\n");
-#endif
-
-  if (!verify_proof(policy_pk, to_prove, predicate_dominance_root,
-            &pf, &already_proved)) {
-    printf("verify_proof failed\n");
-    return false;
-  }
-#ifdef PRINT_ALREADY_PROVED
-  printf("Proved:"); print_vse_clause(to_prove); printf("\n");
-  printf("final proved statements:\n");
-  for (int i = 0; i < already_proved.proved_size(); i++) {
-    print_vse_clause(already_proved.proved(i));
-    printf("\n");
-  }
-  printf("\n");
-#endif
-
-  return true;
- */
-}
-
 bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trusted_platforms,
         signed_claim_sequence& trusted_measurements, const string& purpose,
         evidence_package& evp, key_message& policy_pk) {
@@ -1858,3 +1795,305 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
 }
 
 // -------------------------------------------------------------------
+
+/*
+    bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trusted_platforms,
+        signed_claim_sequence& trusted_measurements, const string& purpose,
+        evidence_package& evp, key_message& policy_pk)
+
+        init_dominance_tree(predicate_dominance_root)
+
+        bool construct_proof_from_request(string& evidence_descriptor, key_message& policy_pk,
+             const string& purpose, signed_claim_sequence& trusted_platforms,
+             signed_claim_sequence& trusted_measurements, evidence_package& evp,
+             proved_statements* already_proved, vse_clause* to_prove, proof* pf)
+
+          add_newfacts_for_sev_attestation(policy_pk, serialized_ark_cert,
+              serialized_ask_cert, serialized_vcek_cert,
+              trusted_platforms, trusted_measurements, already_proved)
+        bool init_proved_statements(key_message& pk, evidence_package& evp,
+              proved_statements* already_proved)
+ */
+
+bool add_newfacts_for_sev_attestation_with_plat(key_message& policy_pk, string& serialized_ark_cert,
+      string& serialized_ask_cert, string& serialized_vcek_cert,
+      signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
+      proved_statements* already_proved) {
+
+  // At this point, the already_proved should be
+  //    "policyKey is-trusted"
+  //    "The ARK-key says the ARK-key is-trusted-for-attestation"
+  //    "The ARK-key says the ASK-key is-trusted-for-attestation"
+  //    "The ASK-key says the VCEK-key is-trusted-for-attestation"
+  //    "VCEK says the enclave-key speaks-for the measurement
+  // Add
+  //    "The policy-key says the ARK-key is-trusted-for-attestation
+  //    "The policy-key says the measurement is-trusted
+
+  signed_claim_message sc1;
+  if (!already_proved->proved(1).has_subject()) {
+    printf("add_newfacts_for_sev_attestation: error 1\n");
+    return false;
+  }
+  if (already_proved->proved(1).subject().entity_type() != "key") {
+    printf("add_newfacts_for_sev_attestation: error 2\n");
+    return false;
+  }
+  const key_message& expected_key = already_proved->proved(1).subject().key();
+  if (!get_signed_platform_claim_from_trusted_list(expected_key,
+        trusted_platforms, &sc1)) {
+    printf("add_newfacts_for_sev_attestation: error 3\n");
+    return false;
+  }
+  if (!add_fact_from_signed_claim(sc1, already_proved)) {
+    printf("add_newfacts_for_sev_attestation: error 4\n");
+    return false;
+  }
+
+  if (!already_proved->proved(4).has_clause()) {
+    printf("add_newfacts_for_sev_attestation: error 5\n");
+    return false;
+  }
+  if (!already_proved->proved(4).clause().has_object()) {
+    printf("add_newfacts_for_sev_attestation: error 6\n");
+    return false;
+  }
+  const entity_message& m_ent = already_proved->proved(4).clause().object();
+  string expected_measurement;
+  expected_measurement.assign((char*)m_ent.measurement().data(), m_ent.measurement().size());
+
+  signed_claim_message sc2;
+  if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
+        trusted_measurements, &sc2)) {
+    printf("add_newfacts_for_sev_attestation: error 7\n");
+    return false;
+  }
+  if (!add_fact_from_signed_claim(sc2, already_proved)) {
+    printf("add_newfacts_for_sev_attestation: error 8\n");
+    return false;
+  }
+
+  return true;
+}
+
+//  -----------------------------------------------------------------------------------------------
+
+bool construct_proof_from_sev_evidence_with_plat(key_message& policy_pk, const string& purpose,
+      proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
+
+  // At this point, the already_proved should be
+  //    0: "policyKey is-trusted"
+  //    1: "The policy-key says the ARK-key is-trusted-for-attestation"
+  //    2: "policyKey says measurement is-trusted"
+  //    3. "policyKey says platform[amd-sev-snp, no-debug, no-migrate, api-major >= 0, api-minor >= 0]
+  //            has-trusted-platform-property"
+  //    4: "The ARK-key says the ARK-key is-trusted-for-attestation"
+  //    5: "The ARK-key says the ASK-key is-trusted-for-attestation"
+  //    6: "The ASK-key says the VCEK-key is-trusted-for-attestation"
+  //    7: "VCEK says environment(platform, measurement) is-environment"
+  //    8: "VCEK says enclave-key speaks-for environment"
+
+  // Proof is:
+  //    "policyKey is-trusted" AND policyKey says measurement is-trusted" -->
+  //        "measurement is-trusted" (R3)
+  //    "policyKey is-trusted" AND
+  //        "policy-key says the ARK-key is-trusted-for-attestation" -->
+  //        "the ARK-key is-trusted-for-attestation" (R3)
+  //    "the ARK-key is-trusted-for-attestation" AND
+  //        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
+  //        "the ASK-key is-trusted-for-attestation" (R5)
+  //    "the ASK-key is-trusted-for-attestation" AND
+  //        "the ASK-key says the VCEK-key is-trusted-for-attestation" -->
+  //        "the VCEK-key is-trusted-for-attestation" (R5)
+  //    "VCEK-key is-trusted-for-attestation" AND
+  //        "the VCEK says environment(platform, measurement) is-environment -->
+  //        "environment(platform, measurement) is-environment"
+  //    "environment(platform, measurement) is-environment" AND
+  //        "platform[amd-sev-snp, no-debug,...] has-trusted-platform-property" -->
+  //        "environment(platform, measurement) environment-platform-is-trusted"
+  //    "environment(platform, measurement) is-environment" AND
+  //        "measurement is-trusted" -->
+  //        "environment(platform, measurement) environment-measurement-is-trusted"
+  //    "environment(platform, measurement) environment-platform-is-trusted" AND
+  //        "environment(platform, measurement) environment-measurement-is-trusted"  -->
+  //        "environment(platform, measurement) is-trusted
+  //    "VCEK-key is-trusted-for-attestation" AND
+  //      "VCEK-key says the enclave-key speaks-for the environment()" -->
+  //        "enclave-key speaks-for the environment()"
+  //    "environment(platform, measurement) is-trusted AND
+  //        enclave-key speaks-for environment(platform, measurement)  -->
+  //        enclave-key is-trusted-for-authentication  [or enclave-key is-trusted-for-attestation]
+
+#ifdef PRINT_ALREADY_PROVED
+  printf("construct proof from sev evidence, initial proved statements:\n");
+  for (int i = 0; i < already_proved->proved_size(); i++) {
+    print_vse_clause(already_proved->proved(i));
+    printf("\n");
+  }
+  printf("\n");
+#endif
+
+  if (already_proved->proved_size() != 7) {
+    printf("construct_proof_from_sev_evidence: bad size\n");
+    return false;
+  }
+  if (!already_proved->proved(2).has_clause() || !already_proved->proved(2).clause().has_subject()) {
+    printf("construct_proof_from_sev_evidence: ill formed statement 2\n");
+    return false;
+  }
+  const entity_message& enclave_key = already_proved->proved(4).clause().subject();
+  string it("is-trusted-for-authentication");
+  string it2("is-trusted-for-attestation");
+  if (purpose == "attestation") {
+    if (!make_unary_vse_clause(enclave_key, it2, to_prove))
+        return false;
+  } else {
+    if (!make_unary_vse_clause(enclave_key, it, to_prove))
+        return false;
+  }
+
+  proof_step* ps = nullptr;
+
+  // "policyKey is-trusted" AND "policyKey says ark-key is-trusted-for-attestation"
+  //     --> "ark-key is-trusted-for-attestation"
+  if (!already_proved->proved(4).has_clause()) {
+    printf("construct_proof_from_sev_evidence: Error 2\n");
+    return false;
+  }
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(already_proved->proved(0));
+  ps->mutable_s2()->CopyFrom(already_proved->proved(5));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(5).clause());
+  ps->set_rule_applied(3);
+  const vse_clause& ark_key_is_trusted = ps->conclusion();
+
+  // "policyKey is-trusted" AND "policyKey says measurement is-trusted" --> "measurement is-trusted"
+  if (!already_proved->proved(3).has_clause()) {
+    printf("construct_proof_from_sev_evidence: Error 3\n");
+    return false;
+  }
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(already_proved->proved(0));
+  ps->mutable_s2()->CopyFrom(already_proved->proved(6));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(6).clause());
+  ps->set_rule_applied(3);
+  const vse_clause& measurement_is_trusted = ps->conclusion();
+
+  // "ark-key is-trusted-for-attestation" AND "ark-key says ask-key is-trusted-for-attestation"
+  //      --> "ask-key is-trusted-for-attestation"
+  if (!already_proved->proved(3).has_clause()) {
+    printf("construct_proof_from_sev_evidence: Error 4\n");
+    return false;
+  }
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(ark_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(2));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(2).clause());
+  ps->set_rule_applied(5);
+  const vse_clause& ask_key_is_trusted = ps->conclusion();
+
+  // "ask-key is-trusted-for-attestation" AND "ask-key says vcek-key is-trusted-for-attestation"
+  //      --> "vcek-key is-trusted-for-attestation"
+  if (!already_proved->proved(3).has_clause()) {
+    printf("construct_proof_from_sev_evidence: Error 4\n");
+    return false;
+  }
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(ask_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(3));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(3).clause());
+  ps->set_rule_applied(5);
+  const vse_clause& vcek_key_is_trusted = ps->conclusion();
+
+  // "vcek-Key is-trusted-for-attestation" AND  "vcek-Key says enclaveKey speaks-for measurement"
+  //      --> "enclaveKey speaks-for measurement"
+  if (!already_proved->proved(5).has_clause()) {
+    printf("construct_proof_from_sev_evidence: Error 5\n");
+    return false;
+  }
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(4));
+  ps->mutable_conclusion()->CopyFrom(already_proved->proved(4).clause());
+  ps->set_rule_applied(6);
+  const vse_clause& enclave_speaksfor_measurement = ps->conclusion();
+
+  // "measurement is-trusted" AND "enclaveKey speaks-for measurement"
+  //      --> "enclaveKey is-trusted-for-authentication"
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(measurement_is_trusted);
+  ps->mutable_s2()->CopyFrom(enclave_speaksfor_measurement);
+  ps->mutable_conclusion()->CopyFrom(*to_prove);
+  if (purpose == "attestation") {
+    ps->set_rule_applied(7);
+  } else {
+    ps->set_rule_applied(1);
+  }
+
+  return true;
+}
+
+// Use policy statements for init
+bool validate_evidence_from_policy(string& evidence_descriptor, signed_claim_sequence& policy,
+        const string& purpose, evidence_package& evp, key_message& policy_pk) {
+
+  return false;
+/*
+  proved_statements already_proved;
+  vse_clause to_prove;
+  proof pf;
+  predicate_dominance predicate_dominance_root;
+
+  if (!init_dominance_tree(predicate_dominance_root)) {
+    printf("validate_evidence: can't init predicate dominance tree\n");
+    return false;
+  }
+
+  if (!init_axiom(policy_pk, &already_proved)) {
+    printf("validate_evidence: can't init axiom\n");
+    return false;
+  }
+
+  if (!construct_proof_from_request(evidence_descriptor, policy_pk, purpose,
+            trusted_platforms, trusted_measurements,
+            evp, &already_proved, &to_prove, &pf)) {
+    printf("validate_evidence: can't construct proof\n");
+    return false;
+  }
+
+#ifdef PRINT_ALREADY_PROVED
+  printf("proved statements after additions:\n");
+  for (int i = 0; i < pf.steps_size(); i++) {
+    print_vse_clause(already_proved.proved(i));
+    printf("\n");
+  }
+  printf("\n");
+
+  printf("to prove : ");
+  print_vse_clause(to_prove);
+  printf("\n\n");
+  printf("proposed proof:\n");
+  print_proof(pf);
+  printf("\n");
+#endif
+
+  if (!verify_proof(policy_pk, to_prove, predicate_dominance_root,
+            &pf, &already_proved)) {
+    printf("verify_proof failed\n");
+    return false;
+  }
+#ifdef PRINT_ALREADY_PROVED
+  printf("Proved:"); print_vse_clause(to_prove); printf("\n");
+  printf("final proved statements:\n");
+  for (int i = 0; i < already_proved.proved_size(); i++) {
+    print_vse_clause(already_proved.proved(i));
+    printf("\n");
+  }
+  printf("\n");
+#endif
+
+  return true;
+ */
+}
+
+// -------------------------------------------------------------------------------------
