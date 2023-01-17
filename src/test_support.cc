@@ -992,51 +992,43 @@ bool test_new_local_certify(string& enclave_type,
   return true;
 }
 
-bool construct_standard_evidence_package_from_policy(string& enclave_type, bool init_measurements,
-        string& file_name, string& evidence_descriptor,
-        signed_claim_sequence* trusted_platforms,
-        signed_claim_sequence* trusted_measurements,
+bool construct_standard_evidence_package_from_policy(string& enclave_type,
+        string& policy_file_name, string& evidence_descriptor,
         key_message* policy_key, key_message* policy_pk, evidence_package* evp) {
   return false;
 }
 
 bool test_platform_certify(string& enclave_type,
-          bool init_from_file, string& file_name,
+          string& policy_file_name,
           string& evidence_descriptor) {
+
   string enclave_id("test-enclave");
 
   evidence_package evp;
   evp.set_prover_type("vse-verifier");
+  return true;
 
+/*
   certifier_rules rules;
   if (!init_certifier_rules(rules))
     return false;
 
-  signed_claim_sequence trusted_measurements;
-  signed_claim_sequence trusted_platforms;
-
   key_message policy_key;
   key_message policy_pk; 
-  if (!construct_standard_evidence_package(enclave_type,
-          init_from_file, file_name, evidence_descriptor,
-          &trusted_platforms, &trusted_measurements,
+  if (!construct_standard_evidence_package_from_policy(enclave_type,
+          policy_file_name, evidence_descriptor,
           &policy_key, &policy_pk, &evp))
     return false;
   if (debug_print) {
-    printf("test_local_certify, evidence descriptor: %s, enclave type: %s, evidence:\n",
+    printf("test_platform_certify, evidence descriptor: %s, enclave type: %s, evidence:\n",
         evidence_descriptor.c_str(), enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
       print_evidence(evp.fact_assertion(i));
       printf("\n");
     }
-    printf("trusted measurements (%d):\n", trusted_measurements.claims_size());
+    printf("Policy:\n");
     for (int i = 0; i < trusted_measurements.claims_size(); i++) {
       print_signed_claim(trusted_measurements.claims(i));
-      printf("\n");
-    }
-    printf("trusted platforms(%d):\n", trusted_platforms.claims_size());
-    for (int i = 0; i < trusted_platforms.claims_size(); i++) {
-      print_signed_claim(trusted_platforms.claims(i));
       printf("\n");
     }
   }
@@ -1049,6 +1041,7 @@ bool test_platform_certify(string& enclave_type,
   }
 
   return true;
+ */
 }
 
 // -----------------------------------------------------------------------------

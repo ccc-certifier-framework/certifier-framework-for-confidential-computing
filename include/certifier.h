@@ -55,6 +55,7 @@ const key_message* GetPublicPolicyKey();
 
 bool PublicKeyFromCert(const string& cert, key_message* k);
 
+
 // Policy store
 // -------------------------------------------------------------------
 

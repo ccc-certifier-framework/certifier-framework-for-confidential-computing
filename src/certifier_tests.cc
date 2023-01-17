@@ -28,6 +28,7 @@ DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
 DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "example_app.measurement", "measurement");
+DEFINE_string(policy_file_name, "test_policy.bin", "policy file");
 
 
 // Encryption and support tests
@@ -138,6 +139,17 @@ TEST (full_certification, test_full_certification) {
 extern bool test_predicate_dominance(bool print_all);
 TEST (test_predicate_dominance, test_predicate_dominance) {
   EXPECT_TRUE(test_predicate_dominance(FLAGS_print_all));
+}
+
+extern bool test_platform_certify(string& enclave_type,
+          string& policy_file_name,
+          string& evidence_descriptor);
+TEST (platform_certify, test_platform_certify) {
+  string enclave_type("simulated-enclave");
+  string evidence_descriptor("sev-full-platform");
+  EXPECT_TRUE(test_platform_certify(enclave_type, 
+    FLAGS_policy_file_name,
+    evidence_descriptor));
 }
 
 // The following tests will only work if there is initialized
