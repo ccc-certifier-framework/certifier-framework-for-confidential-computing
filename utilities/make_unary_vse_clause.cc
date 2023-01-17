@@ -74,6 +74,7 @@ int make_unary_clause_file_utility(entity_message& subject, const string& verb,
   }
 
   print_vse_clause(out_cl);
+  printf("\n");
   return 0;
 }
 

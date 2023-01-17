@@ -357,7 +357,7 @@ void print_time_point(time_point& t) {
 }
 
 void print_property(const property& prop) {
-  printf("%s", prop.property_name().c_str());
+  printf("%s: ", prop.property_name().c_str());
 
   if (prop.value_type() == "int") {
     if (prop.comparator() == "=") {
@@ -1645,7 +1645,7 @@ void print_key_descriptor(const key_message& k) {
 }
 
 void print_property_descriptor(const property& p) {
-  printf("%s", p.property_name().c_str());
+  printf("%s: ", p.property_name().c_str());
   if (p.value_type() == "int") {
     if (p.comparator() != "")
       printf(" %s", p.comparator().c_str());
