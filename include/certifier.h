@@ -139,11 +139,10 @@ public:
 };
 void print_store(policy_store& ps);
 
-// -------------------------------------------------------------------
-
 
 // Trusted primitives
 // -------------------------------------------------------------------
+
 bool Seal(const string& enclave_type, const string& enclave_id,
   int in_size, byte* in, int* size_out, byte* out);
 
@@ -161,9 +160,6 @@ bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out);
 
 
-// -------------------------------------------------------------------
-
-
 // Protect Support
 // -------------------------------------------------------------------
 
@@ -179,6 +175,25 @@ bool Unprotect_Blob(const string& enclave_type,
 
 // Claims and proofs
 // -------------------------------------------------------------------
+
+bool check_date_range(const string& nb, const string& na);
+bool make_attestation_user_data(const string& enclave_type,
+       const key_message& enclave_key, attestation_user_data* out);
+bool sign_report(const string& type, const string& report, const string& signing_alg,
+      const key_message& signing_key, string* serialized_signed_report);
+bool verify_report(string& type, string& serialized_signed_report,
+      const key_message& signer_key);
+
+void print_signed_report(const signed_report& sr);
+void print_user_data(attestation_user_data& at);
+void print_attestation_info(vse_attestation_report_info& info);
+
+void print_evidence(const evidence& ev);
+void print_evidence_package(const evidence_package& evp);
+void print_proof_step(const proof_step& ps);
+void print_proof(proof& pf);
+void print_trust_response_message(trust_response_message& m);
+void print_trust_request_message(trust_request_message& m);
 
 class predicate_dominance {
 public:
@@ -199,12 +214,21 @@ public:
 bool dominates(predicate_dominance& root, const string& parent, const string& descendant);
 
 // Certifier proofs
+// -------------------------------------------------------------
+
+bool statement_already_proved(const vse_clause& cl, proved_statements* are_proved);
+
+bool construct_vse_attestation_statement(const key_message& attest_key, const key_message& auth_key,
+        const string& measurement, vse_clause* vse_attest_clause);
+bool construct_what_to_say(string& enclave_type,
+      key_message& enclave_pk, string* what_to_say);
+bool verify_signed_assertion_and_extract_clause(const key_message& key,
+      const signed_claim_message& sc, vse_clause* cl);
+
 bool init_certifier_rules(certifier_rules& rules);
 bool init_axiom(key_message& pk, proved_statements* _proved);
 bool init_proved_statements(key_message& pk, evidence_package& evp,
       proved_statements* already_proved);
-bool verify_signed_assertion_and_extract_clause(const key_message& key,
-      const signed_claim_message& sc, vse_clause* cl);
 
 bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
     const vse_clause& c2, const vse_clause& conclusion);
@@ -222,17 +246,6 @@ bool verify_external_proof_step(predicate_dominance& dom_tree, proof_step& step)
 bool verify_internal_proof_step(predicate_dominance& dom_tree,
         const vse_clause s1, const vse_clause s2,
         const vse_clause conclude, int rule_to_apply);
-bool statement_already_proved(const vse_clause& cl, proved_statements* are_proved);
-
-// -------------------------------------------------------------------
-
-// Certify API
-// -------------------------------------------------------------------
-
-bool construct_vse_attestation_statement(const key_message& attest_key, const key_message& auth_key,
-        const string& measurement, vse_clause* vse_attest_clause);
-bool construct_what_to_say(string& enclave_type,
-      key_message& enclave_pk, string* what_to_say);
 
 bool verify_proof(key_message& policy_pk, vse_clause& to_prove,
         predicate_dominance& dom_tree,
@@ -262,24 +275,5 @@ bool validate_evidence(string& evidence_descriptor,
       const string& purpose, evidence_package& evp, key_message& policy_pk);
 
 // -------------------------------------------------------------------
-
-bool check_date_range(const string& nb, const string& na);
-bool make_attestation_user_data(const string& enclave_type,
-       const key_message& enclave_key, attestation_user_data* out);
-bool sign_report(const string& type, const string& report, const string& signing_alg,
-      const key_message& signing_key, string* serialized_signed_report);
-bool verify_report(string& type, string& serialized_signed_report,
-      const key_message& signer_key);
-
-void print_signed_report(const signed_report& sr);
-void print_user_data(attestation_user_data& at);
-void print_attestation_info(vse_attestation_report_info& info);
-
-void print_evidence(const evidence& ev);
-void print_evidence_package(const evidence_package& evp);
-void print_proof_step(const proof_step& ps);
-void print_proof(proof& pf);
-void print_trust_response_message(trust_response_message& m);
-void print_trust_request_message(trust_request_message& m);
 
 #endif

@@ -1433,6 +1433,11 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         x = nullptr;
       }
 #ifdef SEV_SNP
+    } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation-with-platform") {
+      // Todo: verify and add
+      //    vcek says environment(platform, measurement) is-environment
+      //    vcek says enclaveKey speaks-for environment
+      return false;
     } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
       string t_str;
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
@@ -2444,6 +2449,69 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
   }
 
   return true;
+}
+
+// Use policy statements for init
+bool validate_evidence_from_policy(string& evidence_descriptor, signed_claim_sequence& policy,
+        const string& purpose, evidence_package& evp, key_message& policy_pk) {
+  return false;
+
+/*
+ proved_statements already_proved;
+  vse_clause to_prove;
+  proof pf;
+  predicate_dominance predicate_dominance_root;
+
+  if (!init_dominance_tree(predicate_dominance_root)) {
+    printf("validate_evidence: can't init predicate dominance tree\n");
+    return false;
+  }
+
+  if (!init_axiom(policy_pk, &already_proved)) {
+    printf("validate_evidence: can't init axiom\n");
+    return false;
+  }
+
+  if (!construct_proof_from_request(evidence_descriptor, policy_pk, purpose,
+            trusted_platforms, trusted_measurements,
+            evp, &already_proved, &to_prove, &pf)) {
+    printf("validate_evidence: can't construct proof\n");
+    return false;
+  }
+
+#ifdef PRINT_ALREADY_PROVED
+  printf("proved statements after additions:\n");
+  for (int i = 0; i < pf.steps_size(); i++) {
+    print_vse_clause(already_proved.proved(i));
+    printf("\n");
+  }
+  printf("\n");
+
+  printf("to prove : ");
+  print_vse_clause(to_prove);
+  printf("\n\n");
+  printf("proposed proof:\n");
+  print_proof(pf);
+  printf("\n");
+#endif
+
+  if (!verify_proof(policy_pk, to_prove, predicate_dominance_root,
+            &pf, &already_proved)) {
+    printf("verify_proof failed\n");
+    return false;
+  }
+#ifdef PRINT_ALREADY_PROVED
+  printf("Proved:"); print_vse_clause(to_prove); printf("\n");
+  printf("final proved statements:\n");
+  for (int i = 0; i < already_proved.proved_size(); i++) {
+    print_vse_clause(already_proved.proved(i));
+    printf("\n");
+  }
+  printf("\n");
+#endif
+
+  return true;
+ */
 }
 
 bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trusted_platforms,
