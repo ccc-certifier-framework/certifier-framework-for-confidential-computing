@@ -24,4 +24,32 @@ $UTILITIES/print_vse_clause.exe --input=$TEST_DATA/isenvironment.bin
 
 $UTILITIES/make_unary_vse_clause.exe --environment_subject=$TEST_DATA/environment.bin --verb="is-environment" --output=$TEST_DATA/isenvironment.bin
 
+$UTILITIES/make_unary_vse_clause.exe --cert_subject=$TEST_DATA/ark.der --verb="is-trusted-for-attestation" --output=$TEST_DATA/ark.bin
+$UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file.bin --verb="says" --clause=$TEST_DATA/ark.bin --output=$TEST_DATA/policy_ark.bin 
+$UTILITIES/print_vse_clause.exe --input=$TEST_DATA/policy_ark.bin
 
+$UTILITIES/make_unary_vse_clause.exe --cert_subject=$TEST_DATA/ask.der --verb="is-trusted-for-attestation" --output=$TEST_DATA/ask.bin
+$UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file.bin --verb="says" --clause=$TEST_DATA/ask.bin --output=$TEST_DATA/policy_ask.bin 
+$UTILITIES/print_vse_clause.exe --input=$TEST_DATA/policy_ask.bin
+
+$UTILITIES/measurement_init.exe --mrenclave=$TEST_DATA/meas.hex --out_file=$TEST_DATA/meas.bin
+$UTILITIES/make_unary_vse_clause.exe --measurement_subject=$TEST_DATA/meas.bin --verb="is-trusted" --output=$TEST_DATA/measurement.bin
+$UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file.bin --verb="says" --clause=$TEST_DATA/measurement.bin --output=$TEST_DATA/policy_measurement.bin 
+$UTILITIES/print_vse_clause.exe --input=$TEST_DATA/policy_measurement.bin
+
+#$UTILITIES/make_unary_vse_clause.exe --cert_subject=$TEST_DATA/vcek.der --verb="is-trusted-for-attestation" --output=$TEST_DATA/vcek.bin
+#$UTILITIES/print_vse_clause.exe --input=$TEST_DATA/vcek.bin
+#$UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file.bin --verb="says" --clause=$TEST_DATA/vcek.bin --output=$TEST_DATA/policy_vcek.bin 
+#$UTILITIES/print_vse_clause.exe --input=$TEST_DATA/policy_ask.bin
+
+$UTILITIES/make_signed_claim_from_vse_clause.exe   --vse_file=$TEST_DATA/isplatform.bin --duration=9000 \
+  --private_key_file=$TEST_DATA/policy_key_file.bin --output=$TEST_DATA/signed_isplatform.bin
+$UTILITIES/make_signed_claim_from_vse_clause.exe   --vse_file=$TEST_DATA/policy_ark.bin --duration=9000 \
+  --private_key_file=$TEST_DATA/policy_key_file.bin --output=$TEST_DATA/signed_policy_ark.bin
+$UTILITIES/make_signed_claim_from_vse_clause.exe   --vse_file=$TEST_DATA/policy_ask.bin --duration=9000 \
+  --private_key_file=$TEST_DATA/policy_key_file.bin --output=$TEST_DATA/signed_policy_ask.bin
+$UTILITIES/make_signed_claim_from_vse_clause.exe   --vse_file=$TEST_DATA/policy_measurement.bin --duration=9000 \
+  --private_key_file=$TEST_DATA/policy_key_file.bin --output=$TEST_DATA/signed_policy_measurement.bin
+
+$UTILITIES/package_claims.exe --input=$TEST_DATA/signed_policy_ark.bin,$TEST_DATA/signed_policy_measurement.bin,$TEST_DATA/signed_isplatform.bin --output=$TEST_DATA/policy.bin
+$UTILITIES/print_packaged_claims.exe --input=$TEST_DATA/policy.bin
