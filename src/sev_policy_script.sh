@@ -38,9 +38,9 @@ $UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file
 $UTILITIES/print_vse_clause.exe --input=$TEST_DATA/policy_measurement.bin
 
 $UTILITIES/make_unary_vse_clause.exe --cert_subject=$TEST_DATA/vcek.der --verb="is-trusted-for-attestation" --output=$TEST_DATA/vcek.bin
-#$UTILITIES/print_vse_clause.exe --input=$TEST_DATA/vcek.bin
-#$UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file.bin --verb="says" --clause=$TEST_DATA/vcek.bin --output=$TEST_DATA/policy_vcek.bin 
-#$UTILITIES/print_vse_clause.exe --input=$TEST_DATA/policy_ask.bin
+$UTILITIES/print_vse_clause.exe --input=$TEST_DATA/vcek.bin
+$UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file.bin --verb="says" --clause=$TEST_DATA/vcek.bin --output=$TEST_DATA/policy_vcek.bin 
+$UTILITIES/print_vse_clause.exe --input=$TEST_DATA/policy_vcek.bin
 
 $UTILITIES/make_signed_claim_from_vse_clause.exe   --vse_file=$TEST_DATA/isplatform.bin --duration=9000 \
   --private_key_file=$TEST_DATA/policy_key_file.bin --output=$TEST_DATA/signed_isplatform.bin
@@ -48,8 +48,10 @@ $UTILITIES/make_signed_claim_from_vse_clause.exe   --vse_file=$TEST_DATA/policy_
   --private_key_file=$TEST_DATA/policy_key_file.bin --output=$TEST_DATA/signed_policy_ark.bin
 $UTILITIES/make_signed_claim_from_vse_clause.exe   --vse_file=$TEST_DATA/policy_ask.bin --duration=9000 \
   --private_key_file=$TEST_DATA/policy_key_file.bin --output=$TEST_DATA/signed_policy_ask.bin
+$UTILITIES/make_signed_claim_from_vse_clause.exe   --vse_file=$TEST_DATA/policy_vcek.bin --duration=9000 \
+  --private_key_file=$TEST_DATA/policy_key_file.bin --output=$TEST_DATA/signed_policy_vcek.bin
 $UTILITIES/make_signed_claim_from_vse_clause.exe   --vse_file=$TEST_DATA/policy_measurement.bin --duration=9000 \
   --private_key_file=$TEST_DATA/policy_key_file.bin --output=$TEST_DATA/signed_policy_measurement.bin
 
-$UTILITIES/package_claims.exe --input=$TEST_DATA/signed_policy_ark.bin,$TEST_DATA/signed_policy_measurement.bin,$TEST_DATA/signed_isplatform.bin --output=$TEST_DATA/policy.bin
+$UTILITIES/package_claims.exe --input=$TEST_DATA/signed_policy_ark.bin,$TEST_DATA/signed_policy_measurement.bin,$TEST_DATA/signed_isplatform.bin,$TEST_DATA/signed_policy_ask.bin,$TEST_DATA/signed_policy_vcek.bin --output=$TEST_DATA/policy.bin
 $UTILITIES/print_packaged_claims.exe --input=$TEST_DATA/policy.bin

@@ -1180,8 +1180,8 @@ EC_KEY* key_to_ECC(const key_message& k) {
 }
 
 bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
-  k->set_key_name("ecc-384-private");
   k->set_key_format("vse_key");
+  k->set_key_type("ecc-384-public");
 
   ecc_message* ek = new ecc_message;
   if (ek == nullptr)
@@ -1312,6 +1312,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   // set private_multiplier
   const BIGNUM* pk = EC_KEY_get0_private_key(ecc_key);
   if (pk != nullptr) {
+    k->set_key_type("ecc-384-private");
     sz  = BN_num_bytes(pk);
     byte pm_buf[sz];
     sz  = BN_bn2bin(pk, pm_buf);
