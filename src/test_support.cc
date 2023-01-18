@@ -1019,7 +1019,6 @@ bool test_platform_certify(const string& enclave_type,
     printf("Can't read policy\n");
     return false;
   }
-  return true;
 
   certifier_rules rules;
   if (!init_certifier_rules(rules))
@@ -1038,6 +1037,16 @@ bool test_platform_certify(const string& enclave_type,
     return false;
   }
 
+  if (debug_print) {
+    printf("\nPolicy key:\n");
+    print_key(policy_pk);
+    printf("\nPolicy:\n");
+    for (int i = 0; i < policy_statements.claims_size(); i++) {
+      print_signed_claim(policy_statements.claims(i));
+      printf("\n");
+    }
+  }
+  return true;
   if (!construct_standard_evidence_package_from_policy(enclave_type,
           policy_file_name, evidence_descriptor,
           policy_key, policy_pk, &evp)) {
@@ -1048,11 +1057,6 @@ bool test_platform_certify(const string& enclave_type,
         evidence_descriptor.c_str(), enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
       print_evidence(evp.fact_assertion(i));
-      printf("\n");
-    }
-    printf("Policy:\n");
-    for (int i = 0; i < policy_statements.claims_size(); i++) {
-      print_signed_claim(policy_statements.claims(i));
       printf("\n");
     }
   }
