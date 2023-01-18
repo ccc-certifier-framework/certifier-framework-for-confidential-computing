@@ -98,7 +98,7 @@ bool same_vse_claim(const vse_clause& c1, const vse_clause& c2);
 
 bool generate_new_rsa_key(int num_bits, RSA* r);
 bool key_to_RSA(const key_message& k, RSA* r);
-bool RSA_to_key(RSA* r, key_message* k);
+bool RSA_to_key(const RSA* r, key_message* k);
 
 EC_KEY* generate_new_ecc_key(int num_bits);
 EC_KEY* key_to_ECC(const key_message& kr);

@@ -89,7 +89,7 @@ bool get_key_from_cert_file(const string& in, key_message* k) {
   }
   string cert;
   cert.assign((char*)asn_cert, in_size);
-
+printf("\n\nCalling PublicKeyFromCert\n");
   if (!PublicKeyFromCert(cert, k)) {
     printf("Can't get key from cert\n");
     return false;

@@ -478,14 +478,7 @@ bool GetX509FromCert(const string& cert, X509* x) {
 bool PublicKeyFromCert(const string& cert, key_message* k) {
   X509* x = X509_new();
   EVP_PKEY* epk = nullptr;
-  RSA* rk = nullptr;
   X509_NAME* sn = nullptr;
-  const BIGNUM* N = BN_new();
-  const BIGNUM* E = BN_new();
-  const BIGNUM* D = BN_new();
-  rsa_message* rkm = nullptr;
-  int size_n = 0;
-  int size_e = 0;
   int s = 0;
   bool res = true;
   int len = -1;
@@ -502,12 +495,6 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   epk = X509_get_pubkey(x);
   if (epk == nullptr) {
     printf("Can't get subject key\n");
-    res = false;
-    goto done;
-  }
-  rk = EVP_PKEY_get1_RSA(epk);
-  if (rk == nullptr) {
-    printf("Can't get subject rsa key\n");
     res = false;
     goto done;
   }
@@ -537,6 +524,20 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   if (!res)
     goto done;
 
+{
+  const RSA* rk = nullptr;
+  const BIGNUM* N = BN_new();
+  const BIGNUM* E = BN_new();
+  const BIGNUM* D = BN_new();
+  rsa_message* rkm = nullptr;
+  int size_n = 0;
+  int size_e = 0;
+  rk = EVP_PKEY_get0_RSA(epk);
+  if (rk == nullptr) {
+    printf("Can't get subject rsa key\n");
+    res = false;
+    goto done;
+  }
   RSA_get0_key(rk, &N, &E, &D);
   rkm = new(rsa_message);
   if (rkm == nullptr) {
@@ -581,10 +582,6 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
       rkm->set_public_exponent((byte*)bn_e_buf, s);
     }
   }
-  if (!res)
-    goto done;
-
-  k->set_key_name(subject_name_str);
   if (size_n == 128) {
     k->set_key_type("rsa-1024-public");
   } else if (size_n == 256) {
@@ -596,20 +593,25 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
     res = false;
     goto done;
   }
-  k->set_key_format("vse-key");
   k->set_allocated_rsa_key(rkm);
-
-  cert_str = new(string);
-  cert_str->assign((char*)cert.data(), cert.size());
-  k->set_allocated_certificate(cert_str);
-
-done:
   if (N != nullptr)
     BN_free((BIGNUM*)N);
   if (E != nullptr)
     BN_free((BIGNUM*)E);
   if (D != nullptr)
     BN_free((BIGNUM*)D);
+}
+  if (!res)
+    goto done;
+
+  k->set_key_name(subject_name_str);
+  k->set_key_format("vse-key");
+
+  cert_str = new(string);
+  cert_str->assign((char*)cert.data(), cert.size());
+  k->set_allocated_certificate(cert_str);
+
+done:
   if (epk != nullptr)
     EVP_PKEY_free(epk);
   if (x != nullptr)

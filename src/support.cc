@@ -907,7 +907,7 @@ bool key_to_RSA(const key_message& k, RSA* r) {
   return true;
 }
 
-bool RSA_to_key(RSA* r, key_message* k) {
+bool RSA_to_key(const RSA* r, key_message* k) {
   const BIGNUM* m = nullptr;
   const BIGNUM* e = nullptr;
   const BIGNUM* d = nullptr;

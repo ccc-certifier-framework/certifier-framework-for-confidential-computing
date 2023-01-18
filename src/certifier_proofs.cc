@@ -1937,6 +1937,22 @@ bool add_newfacts_for_sev_attestation_with_plat(key_message& policy_pk, string& 
 //        enclave-key speaks-for environment(platform, measurement)  -->
 //        enclave-key is-trusted-for-authentication  [or enclave-key is-trusted-for-attestation]
 
+bool get_properties_from_sev_attest(byte* attestation, properties* props) {
+  // at->policy is policy
+  // at->measurement is measurement
+  // at->report_data is hash of user_data
+  // at->platform_version is platform data
+  return false;
+}
+
+bool get_measuresurement_from_sev_attest(byte* attestation, string* m) {
+  return false;
+}
+
+bool get_key_from_sev_attest(byte* user_data, byte* attestation, string* m) {
+  return false;
+}
+
 bool construct_proof_from_sev_evidence_with_plat(string& evidence_descriptor,
       key_message& policy_pk, const string& purpose,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
