@@ -24,6 +24,7 @@ DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(trusted_measurements_file, "binary_trusted_measurements_file.bin",  "binary_trusted_measurements_file");
 DEFINE_bool(read_measurement_file, false,  "read measurement file");
 
+DEFINE_string(policy_key_file_name, "policy_key_file.bin", "policy_key file");
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
 DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
@@ -141,14 +142,14 @@ TEST (test_predicate_dominance, test_predicate_dominance) {
   EXPECT_TRUE(test_predicate_dominance(FLAGS_print_all));
 }
 
-extern bool test_platform_certify(string& enclave_type,
-          string& policy_file_name,
-          string& evidence_descriptor);
+extern bool test_platform_certify(const string& enclave_type,
+          const string& policy_file_name, const string& policy_key_file,
+          const string& evidence_descriptor);
 TEST (platform_certify, test_platform_certify) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("sev-full-platform");
   EXPECT_TRUE(test_platform_certify(enclave_type, 
-    FLAGS_policy_file_name,
+    FLAGS_policy_file_name, FLAGS_policy_key_file_name,
     evidence_descriptor));
 }
 

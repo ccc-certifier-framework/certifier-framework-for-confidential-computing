@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const bool debug_print = false;
+bool debug_print = false;
 
 bool read_trusted_binary_measurements_and_sign(string& file_name, key_message& policy_key,
         signed_claim_sequence* list) {
@@ -992,33 +992,57 @@ bool test_new_local_certify(string& enclave_type,
   return true;
 }
 
-bool construct_standard_evidence_package_from_policy(string& enclave_type,
-        string& policy_file_name, string& evidence_descriptor,
-        key_message* policy_key, key_message* policy_pk, evidence_package* evp) {
-  return false;
+bool construct_standard_evidence_package_from_policy(const string& enclave_type,
+        const string& policy_file_name, const string& evidence_descriptor,
+        const key_message& policy_key, const key_message& policy_pk, evidence_package* evp) {
+
+  signed_claim_sequence policy_statements;
+  if (!read_signed_vse_statements(policy_file_name, &policy_statements)) {
+    printf("Can't read policy\n");
+    return false;
+  }
+
+  return true;
 }
 
-bool test_platform_certify(string& enclave_type,
-          string& policy_file_name,
-          string& evidence_descriptor) {
+bool test_platform_certify(const string& enclave_type,
+          const string& policy_file_name, const string& policy_key_file,
+          const string& evidence_descriptor) {
 
   string enclave_id("test-enclave");
-
   evidence_package evp;
   evp.set_prover_type("vse-verifier");
+  debug_print = true;
+
+  signed_claim_sequence policy_statements;
+  if (!read_signed_vse_statements(policy_file_name, &policy_statements)) {
+    printf("Can't read policy\n");
+    return false;
+  }
   return true;
 
-/*
   certifier_rules rules;
   if (!init_certifier_rules(rules))
     return false;
 
   key_message policy_key;
-  key_message policy_pk; 
+  key_message policy_pk;
+  string policy_key_str;
+  if (!read_file_into_string(policy_key_file, &policy_key_str)) {
+    return false;
+  }
+  if (!policy_key.ParseFromString(policy_key_str)) {
+    return false;
+  }
+  if (!private_key_to_public_key(policy_key, &policy_pk)) {
+    return false;
+  }
+
   if (!construct_standard_evidence_package_from_policy(enclave_type,
           policy_file_name, evidence_descriptor,
-          &policy_key, &policy_pk, &evp))
+          policy_key, policy_pk, &evp)) {
     return false;
+  }
   if (debug_print) {
     printf("test_platform_certify, evidence descriptor: %s, enclave type: %s, evidence:\n",
         evidence_descriptor.c_str(), enclave_type.c_str());
@@ -1027,21 +1051,20 @@ bool test_platform_certify(string& enclave_type,
       printf("\n");
     }
     printf("Policy:\n");
-    for (int i = 0; i < trusted_measurements.claims_size(); i++) {
-      print_signed_claim(trusted_measurements.claims(i));
+    for (int i = 0; i < policy_statements.claims_size(); i++) {
+      print_signed_claim(policy_statements.claims(i));
       printf("\n");
     }
   }
 
   string purpose("authentication");
-  if (!validate_evidence(evidence_descriptor, trusted_platforms,
-          trusted_measurements, purpose, evp, policy_pk)) {
+  if (!validate_evidence_from_policy(evidence_descriptor, policy_statements,
+          purpose, evp, policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }
 
   return true;
- */
 }
 
 // -----------------------------------------------------------------------------

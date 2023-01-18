@@ -1085,5 +1085,18 @@ void print_signed_report(const signed_report& sr) {
   printf("\n");
 }
 
+bool read_signed_vse_statements(const string& in, signed_claim_sequence* s) {
+  string str;
+  if(!read_file_into_string(in, &str)) {
+    printf("Can't read %s\n", in.c_str());
+    return false;
+  }
+  if (!s->ParseFromString(str)) {
+    printf("Can't parse claim sequence\n");
+    return false;
+  }
+  return true;
+}
+
 // -----------------------------------------------------------------------------
 

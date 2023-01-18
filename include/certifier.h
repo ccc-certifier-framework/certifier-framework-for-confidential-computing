@@ -195,6 +195,7 @@ void print_proof_step(const proof_step& ps);
 void print_proof(proof& pf);
 void print_trust_response_message(trust_response_message& m);
 void print_trust_request_message(trust_request_message& m);
+bool read_signed_vse_statements(const string& in, signed_claim_sequence* s);
 
 class predicate_dominance {
 public:
@@ -267,13 +268,17 @@ bool construct_proof_from_sdk_evidence(key_message& policy_pk, const string& pur
 bool construct_proof_from_full_vse_evidence(key_message& policy_pk,
       const string& purpose, proved_statements* already_proved,
       vse_clause* to_prove, proof* pf);
-bool construct_proof_from_request(string& evidence_descriptor, key_message& policy_pk,
+bool construct_proof_from_request(const string& evidence_descriptor, key_message& policy_pk,
       const string& purpose, signed_claim_sequence& trusted_platforms,
       signed_claim_sequence& trusted_measurements, evidence_package& evp,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf);
-bool validate_evidence(string& evidence_descriptor,
+bool validate_evidence(const string& evidence_descriptor,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       const string& purpose, evidence_package& evp, key_message& policy_pk);
+
+bool validate_evidence_from_policy(const string& evidence_descriptor,
+        signed_claim_sequence& policy, const string& purpose,
+        evidence_package& evp, key_message& policy_pk);
 
 // -------------------------------------------------------------------
 

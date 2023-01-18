@@ -1663,7 +1663,7 @@ bool construct_proof_from_full_vse_evidence(key_message& policy_pk, const string
   return true;
 }
 
-bool construct_proof_from_request(string& evidence_descriptor, key_message& policy_pk,
+bool construct_proof_from_request(const string& evidence_descriptor, key_message& policy_pk,
       const string& purpose, signed_claim_sequence& trusted_platforms,
       signed_claim_sequence& trusted_measurements, evidence_package& evp,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
@@ -1733,7 +1733,7 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
   return true;
 }
 
-bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trusted_platforms,
+bool validate_evidence(const string& evidence_descriptor, signed_claim_sequence& trusted_platforms,
         signed_claim_sequence& trusted_measurements, const string& purpose,
         evidence_package& evp, key_message& policy_pk) {
 
@@ -1953,7 +1953,7 @@ bool get_key_from_sev_attest(byte* user_data, byte* attestation, string* m) {
   return false;
 }
 
-bool construct_proof_from_sev_evidence_with_plat(string& evidence_descriptor,
+bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
       key_message& policy_pk, const string& purpose,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
 
@@ -2067,7 +2067,7 @@ bool construct_proof_from_sev_evidence_with_plat(string& evidence_descriptor,
 }
 
 // Use policy statements for init
-bool validate_evidence_from_policy(string& evidence_descriptor,
+bool validate_evidence_from_policy(const string& evidence_descriptor,
         signed_claim_sequence& policy, const string& purpose,
         evidence_package& evp, key_message& policy_pk) {
 
