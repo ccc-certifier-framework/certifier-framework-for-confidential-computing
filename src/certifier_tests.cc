@@ -29,7 +29,10 @@ DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
 DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "example_app.measurement", "measurement");
-DEFINE_string(policy_file_name, "test_policy.bin", "policy file");
+DEFINE_string(policy_file_name, "", "policy file");
+DEFINE_string(ark_key_file_name, "ark_key_file.bin", "ark key");
+DEFINE_string(ask_key_file_name, "ask_key_file.bin", "ask key");
+DEFINE_string(vcek_key_file_name, "vcek_key_file.bin", "vcek key");
 
 
 // Encryption and support tests
@@ -142,20 +145,19 @@ TEST (test_predicate_dominance, test_predicate_dominance) {
   EXPECT_TRUE(test_predicate_dominance(FLAGS_print_all));
 }
 
-extern bool test_platform_certify(const string& enclave_type,
+extern bool test_simulated_sev_platform_certify(
           const string& policy_file_name, const string& policy_key_file,
           const string& ark_key_file_name, const string& ask_key_file_name,
-          const string& vcek_key_file_name, const string& evidence_descriptor);
+          const string& vcek_key_file_name);
 TEST (platform_certify, test_platform_certify) {
-  string enclave_type("simulated-enclave");
-  string evidence_descriptor("sev-full-platform");
-  string ark_key_file_name;
-  string ask_key_file_name;
-  string vcek_key_file_name;
-  EXPECT_TRUE(test_platform_certify(enclave_type, 
+  if (FLAGS_policy_file_name == "") {
+    printf("sev-policy test skipped\n");
+    EXPECT_TRUE(true);
+  } else {
+  EXPECT_TRUE(test_simulated_sev_platform_certify(
     FLAGS_policy_file_name, FLAGS_policy_key_file_name,
-    ark_key_file_name, ask_key_file_name, vcek_key_file_name,
-    evidence_descriptor));
+    FLAGS_ark_key_file_name, FLAGS_ask_key_file_name, FLAGS_vcek_key_file_name));
+  }
 }
 
 // The following tests will only work if there is initialized

@@ -56,5 +56,7 @@ $UTILITIES/make_signed_claim_from_vse_clause.exe   --vse_file=$TEST_DATA/policy_
 $UTILITIES/package_claims.exe --input=$TEST_DATA/signed_policy_ark.bin,$TEST_DATA/signed_policy_measurement.bin,$TEST_DATA/signed_isplatform.bin,$TEST_DATA/signed_policy_ask.bin,$TEST_DATA/signed_policy_vcek.bin --output=$TEST_DATA/policy.bin
 $UTILITIES/print_packaged_claims.exe --input=$TEST_DATA/policy.bin
 
-// ./certifier_tests.exe --policy_file_name=./test_data/policy.bin --policy_key_file_name=./test_data/policy_key_file.bin
+// ./certifier_tests.exe --policy_file_name=./test_data/policy.bin --policy_key_file_name=./test_data/policy_key_file.bin \
+// --ark_key_file_name=./test_data/policy_ark.bin --ask_key_file_name=./test_data/policy_ask.bin --vcek_key_file_name=./test_data/policy_vcek.bin
+
 // cert_utility.exe --operation=generate-key --key_type=rsa-2048 --key_name=ARKKey --key_output_file=ark_key_file.bin --cert_output_file=ark_certcert_file.bin

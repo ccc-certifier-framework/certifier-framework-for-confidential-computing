@@ -992,34 +992,59 @@ bool test_new_local_certify(string& enclave_type,
   return true;
 }
 
-bool construct_standard_evidence_package_from_policy(const string& enclave_type,
-        const string& policy_file_name, const string& evidence_descriptor,
-        // const string& ark_key_file_name, const string& ask_key_file_name, const string& vcek_key_file_name,
-        const key_message& policy_key, const key_message& policy_pk, evidence_package* evp) {
-
-  signed_claim_sequence policy_statements;
-  if (!read_signed_vse_statements(policy_file_name, &policy_statements)) {
-    printf("Can't read policy\n");
-    return false;
-  }
-
-  return true;
-}
-
-bool construct_sev_platform_evidence(const string& serialized_ark_cert, const string& serialized_ask_cert,
+bool construct_simulated_sev_platform_evidence(const string& serialized_ark_cert, const string& serialized_ask_cert,
       const string& serialized_vcek_cert, const key_message& vcek, evidence_package* evp) {
   evp->set_prover_type("vse-verifier");
 
   // cert evidence and attestation
+  // replace this with real sev certs and attestation
+/*
+  attestation_user_data ud;
+  if (purpose_ == "authentication") {
+    if (!make_attestation_user_data(enclave_type_,
+          public_auth_key_, &ud)) {
+      printf("cc_trust_data::certify_me: Can't make user data (1)\n");
+      return false;
+    }
+  } else if (purpose_ == "attestation") {
+    if (!make_attestation_user_data(enclave_type_,
+          public_service_key_, &ud)) {
+      printf("cc_trust_data::certify_me: Can't make user data (1)\n");
+      return false;
+    }
+  } else {
+    printf("cc_trust_data::certify_me: neither attestation or authorization\n");
+    return false;
+  }
+  string serialized_ud;
+  if (!ud.SerializeToString(&serialized_ud)) {
+    printf("cc_trust_data::certify_me: Can't serialize user data\n");
+    return false;
+  }
+
+  // Todo: fix size
+  int size_out = 16000;
+  byte out[size_out];
+  if (!Attest(enclave_type_, serialized_ud.size(),
+        (byte*) serialized_ud.data(), &size_out, out)) {
+    printf("cc_trust_data::certify_me: Attest failed\n");
+    return false;
+  }
+  string the_attestation_str;
+  the_attestation_str.assign((char*)out, size_out);
+
+*/
 
   return false;
 }
 
-bool test_platform_certify(const string& enclave_type,
+bool test_simulated_sev_platform_certify(
           const string& policy_file_name, const string& policy_key_file,
           const string& ark_key_file_name, const string& ask_key_file_name,
-          const string& vcek_key_file_name, const string& evidence_descriptor) {
+          const string& vcek_key_file_name) {
 
+  string enclave_type("sev-enclave");
+  string evidence_descriptor("sev-full-platform");
   string enclave_id("test-enclave");
   evidence_package evp;
 
@@ -1136,8 +1161,9 @@ bool test_platform_certify(const string& enclave_type,
   }
 
   // construct evidence package
-  if (!construct_sev_platform_evidence(serialized_ark_cert, serialized_ask_cert, serialized_vcek_cert, 
+  if (!construct_simulated_sev_platform_evidence(serialized_ark_cert, serialized_ask_cert, serialized_vcek_cert, 
           vcek_key, &evp)) {
+    printf("construct_simulated_sev_platform_evidence failed\n");
     return false;
   }
 
@@ -1150,8 +1176,6 @@ bool test_platform_certify(const string& enclave_type,
       printf("\n");
     }
   }
-
-  return true;
 
   if (debug_print) {
     printf("test_platform_certify, evidence descriptor: %s, enclave type: %s, evidence:\n",
