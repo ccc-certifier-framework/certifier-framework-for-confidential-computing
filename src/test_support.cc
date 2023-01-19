@@ -1044,16 +1044,102 @@ bool test_platform_certify(const string& enclave_type,
   if (!private_key_to_public_key(policy_key, &policy_pk)) {
     return false;
   }
+  return true;
 
   // Make ark, ask, vcek certs
-  /* bool produce_artifact(key_message& signing_key, string& issuer_name_str,
-      string& issuer_description_str, key_message& subject_key,
-      string& subject_name_str, string& subject_description_str,
-      uint64_t sn, double secs_duration, X509* x509, bool is_root); */
+
+  key_message ark_key;
+  key_message ark_pk;
+  string ark_key_str;
+  if (!read_file_into_string(ark_key_file_name, &ark_key_str)) {
+    return false;
+  }
+  if (!ark_key.ParseFromString(ark_key_str)) {
+    return false;
+  }
+  if (!private_key_to_public_key(ark_key, &ark_pk)) {
+    return false;
+  }
+
+  key_message ask_key;
+  key_message ask_pk;
+  string ask_key_str;
+  if (!read_file_into_string(ask_key_file_name, &ask_key_str)) {
+    return false;
+  }
+  if (!ask_key.ParseFromString(ask_key_str)) {
+    return false;
+  }
+  if (!private_key_to_public_key(ask_key, &ask_pk)) {
+    return false;
+  }
+
+  key_message vcek_key;
+  key_message vcek_pk;
+  string vcek_key_str;
+  if (!read_file_into_string(vcek_key_file_name, &vcek_key_str)) {
+    return false;
+  }
+  if (!vcek_key.ParseFromString(vcek_key_str)) {
+    return false;
+  }
+  if (!private_key_to_public_key(vcek_key, &vcek_pk)) {
+    return false;
+  }
+
+  string ark_issuer_desc("platform-provider");
+  string ark_issuer_name("AMD");
+  string ark_subject_desc("platform-provider");
+  string ark_subject_name("AMD");
+  X509* x_ark = X509_new();
+  if(!produce_artifact(ark_key,
+          ark_issuer_name, ark_issuer_desc, ark_pk,
+          ark_subject_name, ark_subject_desc, 
+          1ULL, 365.26*86400, x_ark, true)) {
+    return false;
+  }
+  string serialized_ark_cert;
+  if (!x509_to_asn1(x_ark, &serialized_ark_cert)) {
+    return false;
+  }
+
+  string ask_issuer_desc("platform-provider");
+  string ask_issuer_name("AMD");
+  string ask_subject_desc("platform-provider");
+  string ask_subject_name("AMD");
+  X509* x_ask = X509_new();
+  if(!produce_artifact(ask_key,
+          ask_issuer_name, ask_issuer_desc, ask_pk,
+          ask_subject_name, ask_subject_desc, 
+          1ULL, 365.26*86400, x_ask, true)) {
+    return false;
+  }
+  string serialized_ask_cert;
+  if (!x509_to_asn1(x_ask, &serialized_ask_cert)) {
+    return false;
+  }
+
+  string vcek_issuer_desc("platform-provider");
+  string vcek_issuer_name("AMD");
+  string vcek_subject_desc("platform-provider");
+  string vcek_subject_name("AMD");
+  X509* x_vcek = X509_new();
+  if(!produce_artifact(vcek_key,
+          vcek_issuer_name, vcek_issuer_desc, vcek_pk,
+          vcek_subject_name, vcek_subject_desc, 
+          1ULL, 365.26*86400, x_vcek, true)) {
+    return false;
+  }
+  string serialized_vcek_cert;
+  if (!x509_to_asn1(x_vcek, &serialized_vcek_cert)) {
+    return false;
+  }
 
   // construct evidence package
-  // construct_sev_platform_evidence(const string& serialized_ark, const string& serialized_ask,
-  //     const string& serialized_vcek, evidence_package* evp)
+  if (!construct_sev_platform_evidence(serialized_ark_cert, serialized_ask_cert, serialized_vcek_cert, 
+          vcek_key, &evp)) {
+    return false;
+  }
 
   if (debug_print) {
     printf("\nPolicy key:\n");
