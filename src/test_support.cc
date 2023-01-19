@@ -994,6 +994,7 @@ bool test_new_local_certify(string& enclave_type,
 
 bool construct_standard_evidence_package_from_policy(const string& enclave_type,
         const string& policy_file_name, const string& evidence_descriptor,
+        // const string& ark_key_file_name, const string& ask_key_file_name, const string& vcek_key_file_name,
         const key_message& policy_key, const key_message& policy_pk, evidence_package* evp) {
 
   signed_claim_sequence policy_statements;
@@ -1014,8 +1015,8 @@ bool test_platform_certify(const string& enclave_type,
   evp.set_prover_type("vse-verifier");
   debug_print = true;
 
-  signed_claim_sequence policy_statements;
-  if (!read_signed_vse_statements(policy_file_name, &policy_statements)) {
+  signed_claim_sequence signed_statements;
+  if (!read_signed_vse_statements(policy_file_name, &signed_statements)) {
     printf("Can't read policy\n");
     return false;
   }
@@ -1040,9 +1041,9 @@ bool test_platform_certify(const string& enclave_type,
   if (debug_print) {
     printf("\nPolicy key:\n");
     print_key(policy_pk);
-    printf("\nPolicy:\n");
-    for (int i = 0; i < policy_statements.claims_size(); i++) {
-      print_signed_claim(policy_statements.claims(i));
+    printf("\nPolicy and evidence:\n");
+    for (int i = 0; i < signed_statements.claims_size(); i++) {
+      print_signed_claim(signed_statements.claims(i));
       printf("\n");
     }
   }
@@ -1062,7 +1063,7 @@ bool test_platform_certify(const string& enclave_type,
   }
 
   string purpose("authentication");
-  if (!validate_evidence_from_policy(evidence_descriptor, policy_statements,
+  if (!validate_evidence_from_policy(evidence_descriptor, signed_statements,
           purpose, evp, policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
