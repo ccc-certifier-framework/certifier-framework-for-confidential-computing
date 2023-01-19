@@ -144,12 +144,17 @@ TEST (test_predicate_dominance, test_predicate_dominance) {
 
 extern bool test_platform_certify(const string& enclave_type,
           const string& policy_file_name, const string& policy_key_file,
-          const string& evidence_descriptor);
+          const string& ark_key_file_name, const string& ask_key_file_name,
+          const string& vcek_key_file_name, const string& evidence_descriptor);
 TEST (platform_certify, test_platform_certify) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("sev-full-platform");
+  string ark_key_file_name;
+  string ask_key_file_name;
+  string vcek_key_file_name;
   EXPECT_TRUE(test_platform_certify(enclave_type, 
     FLAGS_policy_file_name, FLAGS_policy_key_file_name,
+    ark_key_file_name, ask_key_file_name, vcek_key_file_name,
     evidence_descriptor));
 }
 

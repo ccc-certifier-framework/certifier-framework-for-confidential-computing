@@ -1006,24 +1006,31 @@ bool construct_standard_evidence_package_from_policy(const string& enclave_type,
   return true;
 }
 
+bool construct_sev_platform_evidence(const string& serialized_ark_cert, const string& serialized_ask_cert,
+      const string& serialized_vcek_cert, const key_message& vcek, evidence_package* evp) {
+  evp->set_prover_type("vse-verifier");
+
+  // cert evidence and attestation
+
+  return false;
+}
+
 bool test_platform_certify(const string& enclave_type,
           const string& policy_file_name, const string& policy_key_file,
-          const string& evidence_descriptor) {
+          const string& ark_key_file_name, const string& ask_key_file_name,
+          const string& vcek_key_file_name, const string& evidence_descriptor) {
 
   string enclave_id("test-enclave");
   evidence_package evp;
-  evp.set_prover_type("vse-verifier");
+
   debug_print = true;
 
+  // get policy
   signed_claim_sequence signed_statements;
   if (!read_signed_vse_statements(policy_file_name, &signed_statements)) {
     printf("Can't read policy\n");
     return false;
   }
-
-  certifier_rules rules;
-  if (!init_certifier_rules(rules))
-    return false;
 
   key_message policy_key;
   key_message policy_pk;
@@ -1038,6 +1045,16 @@ bool test_platform_certify(const string& enclave_type,
     return false;
   }
 
+  // Make ark, ask, vcek certs
+  /* bool produce_artifact(key_message& signing_key, string& issuer_name_str,
+      string& issuer_description_str, key_message& subject_key,
+      string& subject_name_str, string& subject_description_str,
+      uint64_t sn, double secs_duration, X509* x509, bool is_root); */
+
+  // construct evidence package
+  // construct_sev_platform_evidence(const string& serialized_ark, const string& serialized_ask,
+  //     const string& serialized_vcek, evidence_package* evp)
+
   if (debug_print) {
     printf("\nPolicy key:\n");
     print_key(policy_pk);
@@ -1047,12 +1064,9 @@ bool test_platform_certify(const string& enclave_type,
       printf("\n");
     }
   }
+
   return true;
-  if (!construct_standard_evidence_package_from_policy(enclave_type,
-          policy_file_name, evidence_descriptor,
-          policy_key, policy_pk, &evp)) {
-    return false;
-  }
+
   if (debug_print) {
     printf("test_platform_certify, evidence descriptor: %s, enclave type: %s, evidence:\n",
         evidence_descriptor.c_str(), enclave_type.c_str());

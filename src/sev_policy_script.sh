@@ -57,3 +57,4 @@ $UTILITIES/package_claims.exe --input=$TEST_DATA/signed_policy_ark.bin,$TEST_DAT
 $UTILITIES/print_packaged_claims.exe --input=$TEST_DATA/policy.bin
 
 // ./certifier_tests.exe --policy_file_name=./test_data/policy.bin --policy_key_file_name=./test_data/policy_key_file.bin
+// cert_utility.exe --operation=generate-key --key_type=rsa-2048 --key_name=ARKKey --key_output_file=ark_key_file.bin --cert_output_file=ark_certcert_file.bin

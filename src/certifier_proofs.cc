@@ -1800,13 +1800,6 @@ bool validate_evidence(const string& evidence_descriptor, signed_claim_sequence&
 //  New style proofs with platform information
 // -------------------------------------------------------------------
 
-bool add_newfacts_for_sev_attestation_with_plat(key_message& policy_pk, string& serialized_ark_cert,
-      string& serialized_ask_cert, string& serialized_vcek_cert,
-      proved_statements* already_proved) {
-
-  return true;
-}
-
 // Policy
 //   1. "policyKey is-trusted"
 //   2: "The policyKey says the ARK-key is-trusted-for-attestation"
@@ -1823,17 +1816,17 @@ bool add_newfacts_for_sev_attestation_with_plat(key_message& policy_pk, string& 
 //    8: "VCEK says environment(platform, measurement) is-environment"
 //    9: "VCEK says enclave-key speaks-for environment"
 
-// At this point, the already_proved should be
+// When we start constructing the proof, already_proved should be
 //    0: "policyKey is-trusted"
 //    1: "The policy-key says the ARK-key is-trusted-for-attestation"
 //    2: "policyKey says measurement is-trusted"
 //    3. "policyKey says platform[amd-sev-snp, no-debug, no-migrate, api-major >= 0, api-minor >= 0]
 //            has-trusted-platform-property"
-//    4: "The ARK-key says the ARK-key is-trusted-for-attestation"
-//    5: "The ARK-key says the ASK-key is-trusted-for-attestation"
-//    6: "The ASK-key says the VCEK-key is-trusted-for-attestation"
-//    7: "VCEK says environment(platform, measurement) is-environment"
-//    8: "VCEK says enclave-key speaks-for environment"
+//    4: "VCEK says environment(platform, measurement) is-environment"
+//    5: "VCEK says enclave-key speaks-for environment"
+//    6: "The ARK-key says the ARK-key is-trusted-for-attestation"
+//    7: "The ARK-key says the ASK-key is-trusted-for-attestation"
+//    8: "The ASK-key says the VCEK-key is-trusted-for-attestation"
 
 // Proof is:
 //    "policyKey is-trusted" AND policyKey says measurement is-trusted" -->
@@ -1893,17 +1886,6 @@ bool construct_proof_from_request_using_policy(const string& evidence_descriptor
       const string& purpose, evidence_package& evp,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
 
-  // First use policy and evp to construct in already proved
-  //    0: "policyKey is-trusted"
-  //    1: "The policy-key says the ARK-key is-trusted-for-attestation"
-  //    2: "policyKey says measurement is-trusted"
-  //    3. "policyKey says platform[amd-sev-snp, no-debug, no-migrate, api-major >= 0, api-minor >= 0]
-  //            has-trusted-platform-property"
-  //    4: "The ARK-key says the ARK-key is-trusted-for-attestation"
-  //    5: "The ARK-key says the ASK-key is-trusted-for-attestation"
-  //    6: "The ASK-key says the VCEK-key is-trusted-for-attestation"
-  //    7: "VCEK says environment(platform, measurement) is-environment"
-  //    8: "VCEK says enclave-key speaks-for environment"
   return false;
 }
 
@@ -1927,7 +1909,7 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
     return false;
   }
 
-  // initialized policy statements using sev evidence to pick
+  // initialize policy statements using sev evidence to pick
   // relevant trusted platform and measurement
 
   // init_proved_statements(key_message& pk, evidence_package& evp,
