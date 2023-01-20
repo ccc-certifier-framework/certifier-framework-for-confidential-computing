@@ -195,6 +195,7 @@ bool generate_key(const string& type, const string& name, key_message* k) {
       printf("Can't convert rsa key to key\n");
       return false;
     }
+    k->set_key_type("rsa-1024-private");
   } else if (type == "rsa-2048") {
     RSA* r= RSA_new();
     if (!generate_new_rsa_key(2048, r)) {
@@ -205,6 +206,7 @@ bool generate_key(const string& type, const string& name, key_message* k) {
       printf("Can't convert rsa key to key\n");
       return false;
     }
+    k->set_key_type("rsa-2048-private");
   } else if (type == "rsa-4096") {
     RSA* r= RSA_new();
     if (!generate_new_rsa_key(4096, r)) {
@@ -215,6 +217,7 @@ bool generate_key(const string& type, const string& name, key_message* k) {
       printf("Can't convert rsa key to key\n");
       return false;
     }
+    k->set_key_type("rsa-4096-private");
   } else if (type == "ecc-384") {
     EC_KEY* ec = generate_new_ecc_key(384);
     if (ec == nullptr) {
@@ -225,13 +228,13 @@ bool generate_key(const string& type, const string& name, key_message* k) {
       printf("Can't convert ecc key to key\n");
       return false;
     }
+    k->set_key_type("ecc-384-private");
   } else  {
     printf("Unknown key type\n");
     return false;
   }
 
   k->set_key_name(name);
-  k->set_key_type(type);
   k->set_key_format("vse-key");
   string str;
   if (!k->SerializeToString(&str)) {

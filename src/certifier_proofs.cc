@@ -155,7 +155,7 @@ bool verify_signed_assertion_and_extract_clause(const key_message& key,
     return false;
   }
 
-  // Deserialize claim to get clasue
+  // Deserialize claim to get clause
   string serialized_claim_string;
   claim_message asserted_claim;
   serialized_claim_string.assign((char*)sc.serialized_claim_message().data(),

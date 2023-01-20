@@ -1659,7 +1659,7 @@ void print_property_descriptor(const property& p) {
 }
 
 void print_platform_descriptor(const platform& pl) {
-    printf("Platform[%s", pl.platform_type().c_str());
+    printf("platform[%s", pl.platform_type().c_str());
     for (int i = 0; i < pl.props().props_size(); i++) {
       printf(", ");
       print_property_descriptor(pl.props().props(i));
@@ -1668,7 +1668,7 @@ void print_platform_descriptor(const platform& pl) {
 }
 
 void print_environment_descriptor(const environment& env) {
-    printf("Environment[%s, ", env.the_platform().platform_type().c_str());
+    printf("environment[%s, ", env.the_platform().platform_type().c_str());
     print_bytes(env.the_measurement().size(), (byte*)env.the_measurement().data());
     printf("]");
 }
