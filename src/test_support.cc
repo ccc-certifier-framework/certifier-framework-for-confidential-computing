@@ -1001,10 +1001,6 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
 
   attestation_report ar;
   memset(&ar, 0, sizeof(ar));
-  if (*size_out < sizeof(ar)) {
-    printf("simulated_sev_Attest: output buffer too small\n");
-    return false;
-  }
 
   if (!digest_message("sha-384", ud_data, ud_size, ar.report_data, 48)) {
     printf("simulated_sev_Attest: can't digest ud\n");
@@ -1045,8 +1041,24 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
   }
   memcpy(ar.signature.r, sig_out, blk_len);
   memcpy(ar.signature.s, &sig_out[blk_len], blk_len);
-  memcpy(out, (byte*)&ar, sizeof(ar));
   EC_KEY_free(eck);
+
+  sev_attestation_message atm;
+  string atm_str;
+
+  atm.mutable_what_was_said()->assign((char*)ud_data, ud_size);
+  atm.mutable_reported_attestation()->assign((char*)&ar, sizeof(ar));
+
+  if (!atm.SerializeToString(&atm_str)) {
+    printf("simulated_sev_Attest: can't sev attestation\n");
+    return false;
+  }
+  if (*size_out < atm_str.size()) {
+    printf("simulated_sev_Attest: output buffer too small\n");
+    return false;
+  }
+  *size_out = atm_str.size();
+  memcpy(out, (byte*)atm_str.data(), *size_out);
 
   return true;
 }
