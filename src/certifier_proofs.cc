@@ -135,7 +135,7 @@ bool dominates(predicate_dominance& root, const string& parent, const string& de
   return pn->is_child(descendant);
 }
 
-//  ---------------------------------------------------------------------------------------------------------
+//  -------------------------------------------------------------------------------------------
 
 bool statement_already_proved(const vse_clause& cl, proved_statements* are_proved) {
  int n = are_proved->proved_size();
@@ -147,7 +147,51 @@ bool statement_already_proved(const vse_clause& cl, proved_statements* are_prove
   return false;
 }
 
-bool add_fact_from_signed_claim(signed_claim_message& signed_claim, proved_statements* already_proved) {
+bool verify_signed_assertion_and_extract_clause(const key_message& key,
+      const signed_claim_message& sc, vse_clause* cl) {
+
+  if (!sc.has_serialized_claim_message() || !sc.has_signing_key() ||
+      !sc.has_signing_algorithm() || !sc.has_signature()) {
+    return false;
+  }
+
+  // Deserialize claim to get clasue
+  string serialized_claim_string;
+  claim_message asserted_claim;
+  serialized_claim_string.assign((char*)sc.serialized_claim_message().data(),
+        (int)sc.serialized_claim_message().size());
+  if (!asserted_claim.ParseFromString(serialized_claim_string)) {
+    printf("verify_signed_assertion_and_extract_clause: can't deserialize\n");
+    return false;
+  }
+
+  if (!asserted_claim.has_claim_format()) {
+    printf("verify_signed_assertion_and_extract_clause: no claim format\n");
+    return false;
+  }
+
+  if (asserted_claim.claim_format() == "vse-clause") {
+
+    string serialized_vse_string;
+    vse_clause asserted_vse;
+    serialized_vse_string.assign((char*)asserted_claim.serialized_claim().data(),
+        (int)asserted_claim.serialized_claim().size());
+    if (!asserted_vse.ParseFromString(serialized_vse_string)) {
+      printf("verify_signed_assertion_and_extract_clause: can't deserialize vse\n");
+      return false;
+    }
+    cl->CopyFrom(asserted_vse);
+  } else {
+    printf("verify_signed_assertion_and_extract_clause: only vse format supported\n");
+    return false;
+  }
+
+  // verify signature
+  return verify_signed_claim(sc, key);
+}
+
+bool add_fact_from_signed_claim(const signed_claim_message& signed_claim,
+      proved_statements* already_proved) {
 
   const key_message& k = signed_claim.signing_key();
   vse_clause tcl;
@@ -473,42 +517,7 @@ bool verify_report(string& type, string& serialized_signed_report,
   return success;
 }
 
-bool verify_signed_assertion_and_extract_clause(const key_message& key,
-      const signed_claim_message& sc, vse_clause* cl) {
-
-  if (!sc.has_serialized_claim_message() || !sc.has_signing_key() ||
-      !sc.has_signing_algorithm() || !sc.has_signature())
-    return false;
-
-  // Deserialize claim to get clasue
-  string serialized_claim_string;
-  claim_message asserted_claim;
-  serialized_claim_string.assign((char*)sc.serialized_claim_message().data(),
-        (int)sc.serialized_claim_message().size());
-  if (!asserted_claim.ParseFromString(serialized_claim_string))
-    return false;
-
-  if (!asserted_claim.has_claim_format())
-    return false;
-
-  if (asserted_claim.claim_format() == "vse-clause") {
-
-    string serialized_vse_string;
-    vse_clause asserted_vse;
-    serialized_vse_string.assign((char*)asserted_claim.serialized_claim().data(),
-        (int)asserted_claim.serialized_claim().size());
-    if (!asserted_vse.ParseFromString(serialized_vse_string))
-      return false;
-    cl->CopyFrom(asserted_vse);
-  } else {
-    return false;
-  }
-
-  // verify signature
-  return verify_signed_claim(sc, key);
-}
-
-//  ---------------------------------------------------------------------------------------------------------
+//  -------------------------------------------------------------------------------------------
 
 /*
   Certifier proofs
@@ -1867,7 +1876,7 @@ bool get_properties_from_sev_attest(byte* attestation, properties* props) {
   return false;
 }
 
-bool get_measuresurement_from_sev_attest(byte* attestation, string* m) {
+bool get_measurement_from_sev_attest(byte* attestation, string* m) {
   return false;
 }
 
@@ -1884,14 +1893,20 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
 bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
       proved_statements* already_proved) {
 
-  /*
-  vse_clause* cl_to_insert = already_proved->add_proved();
-  string sf("speaks-for");
-  if (!make_simple_vse_clause(*key_ent, sf, *measurement_ent, cl_to_insert)) {
-    printf("init_proved_statements: make_simple_vse_clause failed\n");
-    return false;
+  for (int i = 0; i < policy.claims_size(); i++) {
+#if 0
+    const entity_message& em = policy.claims(i).subject();
+    if (!em.entity_type() == "key" || !same_key(policy_pk, em.key())) {
+      printf("init_policy: Policy must have
+    }
+#endif
+    if (!add_fact_from_signed_claim(policy.claims(i), already_proved)) {
+      printf("init_policy: Can't add claim %d\n", i);
+      print_signed_claim(policy.claims(i));
+      printf("\n");
+      return false;
+    }
   }
-   */
 
   return true;
 }
@@ -1901,7 +1916,6 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
         signed_claim_sequence& policy, const string& purpose,
         evidence_package& evp, key_message& policy_pk) {
 
-return true;
   proved_statements already_proved;
   vse_clause to_prove;
   proof pf;
@@ -1922,7 +1936,18 @@ return true;
     return false;
   }
 
+#if 1
+  printf("After init_policy\n");
+  printf("final proved statements:\n");
+  for (int i = 0; i < already_proved.proved_size(); i++) {
+    print_vse_clause(already_proved.proved(i));
+    printf("\n");
+  }
+  printf("\n");
+#endif
+
 return true;
+
   if (!init_proved_statements(policy_pk, evp, &already_proved)) {
     printf("validate_evidence: init_proved_statements\n");
     return false;

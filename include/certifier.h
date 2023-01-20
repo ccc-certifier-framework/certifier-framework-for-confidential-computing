@@ -252,7 +252,7 @@ bool verify_internal_proof_step(predicate_dominance& dom_tree,
 bool verify_proof(key_message& policy_pk, vse_clause& to_prove,
         predicate_dominance& dom_tree,
         proof *the_proof, proved_statements* are_proved);
-bool add_fact_from_signed_claim(signed_claim_message& signedClaim,
+bool add_fact_from_signed_claim(const signed_claim_message& signedClaim,
     proved_statements* already_proved);
 bool add_newfacts_for_sdk_platform_attestation(key_message& policy_pk,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,

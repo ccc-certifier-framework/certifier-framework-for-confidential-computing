@@ -1875,11 +1875,13 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   serialized_claim.assign((char*)signed_claim.serialized_claim_message().data(),
     signed_claim.serialized_claim_message().size());
   claim_message c;
-  if (!c.ParseFromString(serialized_claim))
+  if (!c.ParseFromString(serialized_claim)) {
     return false;
+  }
 
-  if (!c.has_claim_format())
+  if (!c.has_claim_format()) {
     return false;
+  }
   if (c.claim_format() != "vse-clause" && c.claim_format() != "vse-attestation") {
     printf("%s should be vse-clause or vse-attestation\n", c.claim_format().c_str());        
     return false;
@@ -1889,23 +1891,29 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   time_point t_nb;
   time_point t_na;
 
-  if (!time_now(&t_now))
+  if (!time_now(&t_now)) {
     return false;
-  if (!string_to_time(c.not_before(), &t_nb))
+  }
+  if (!string_to_time(c.not_before(), &t_nb)) {
     return false;
-  if (!string_to_time(c.not_after(), &t_na))
+  }
+  if (!string_to_time(c.not_after(), &t_na)) {
     return false;
+  }
 
-  if (compare_time(t_now, t_nb) <  0)
+  if (compare_time(t_now, t_nb) <  0) {
      return false;
-  if (compare_time(t_na, t_now) < 0)
+  }
+  if (compare_time(t_na, t_now) < 0) {
      return false;
+  }
 
   bool success = false;
   if (signed_claim.signing_algorithm() == "rsa-2048-sha256-pkcs-sign") {
     RSA* r = RSA_new();
-    if (!key_to_RSA(key, r))
+    if (!key_to_RSA(key, r)) {
       return false;
+    }
     success = rsa_sha256_verify(r, (int)signed_claim.serialized_claim_message().size(),
         (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
         (byte*)signed_claim.signature().data());
@@ -1919,11 +1927,11 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
         (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
         (byte*)signed_claim.signature().data());
     RSA_free(r);
-    return success;
   } else if (signed_claim.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
     EC_KEY* k = key_to_ECC(key);
-    if (k == nullptr)
+    if (k == nullptr) {
       return false;
+    }
     success = ecc_verify("sha-384", k, (int)signed_claim.serialized_claim_message().size(),
         (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
         (byte*)signed_claim.signature().data());

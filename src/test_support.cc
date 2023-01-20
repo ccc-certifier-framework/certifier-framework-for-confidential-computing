@@ -1172,7 +1172,7 @@ bool test_simulated_sev_platform_certify(
   string enclave_id("test-enclave");
   evidence_package evp;
 
-  debug_print = true;
+  debug_print = false;
 
   // get policy
   signed_claim_sequence signed_statements;
