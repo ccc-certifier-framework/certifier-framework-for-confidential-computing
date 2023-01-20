@@ -1876,14 +1876,17 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
     signed_claim.serialized_claim_message().size());
   claim_message c;
   if (!c.ParseFromString(serialized_claim)) {
+    printf("verify_signed_claim: can't deserialize signed claim\n");
     return false;
   }
 
   if (!c.has_claim_format()) {
+    printf("verify_signed_claim: not claim format\n");
     return false;
   }
   if (c.claim_format() != "vse-clause" && c.claim_format() != "vse-attestation") {
-    printf("%s should be vse-clause or vse-attestation\n", c.claim_format().c_str());        
+    printf("verify_signed_claim: %s should be vse-clause or vse-attestation\n",
+        c.claim_format().c_str());        
     return false;
   }
 
@@ -1902,9 +1905,11 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   }
 
   if (compare_time(t_now, t_nb) <  0) {
-     return false;
+    printf("verify_signed_claim: Bad time compare 1\n");
+    return false;
   }
   if (compare_time(t_na, t_now) < 0) {
+    printf("verify_signed_claim: Bad time compare 2\n");
      return false;
   }
 
@@ -1937,6 +1942,7 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
         (byte*)signed_claim.signature().data());
     EC_KEY_free(k);
   } else {
+    printf("verify_signed_claim: unsupported signing algorithm\n");
     return false;
   }
 

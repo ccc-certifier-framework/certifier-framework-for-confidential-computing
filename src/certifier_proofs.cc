@@ -197,7 +197,9 @@ bool add_fact_from_signed_claim(const signed_claim_message& signed_claim,
   vse_clause tcl;
   if (verify_signed_assertion_and_extract_clause(k, signed_claim, &tcl)) {
     if (tcl.verb() != "says" || tcl.subject().entity_type() != "key") {
-      printf("Add_fact_from_signed_claim: verify_signed_assertion_and_extract_clause failed\n");
+      printf("Add_fact_from_signed_claim: bad subject or verb\n");
+      print_vse_clause(tcl);
+      printf("\n");
       return false;
     }
     if (!same_key(k, tcl.subject().key())) {
@@ -1902,7 +1904,7 @@ bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
 #endif
     if (!add_fact_from_signed_claim(policy.claims(i), already_proved)) {
       printf("init_policy: Can't add claim %d\n", i);
-      print_signed_claim(policy.claims(i));
+      // print_signed_claim(policy.claims(i));
       printf("\n");
       return false;
     }
