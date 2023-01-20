@@ -230,8 +230,9 @@ bool generate_key(const string& type, const string& name, key_message* k) {
     return false;
   }
 
-  k->set_key_type(type);
   k->set_key_name(name);
+  k->set_key_type(type);
+  k->set_key_format("vse-key");
   string str;
   if (!k->SerializeToString(&str)) {
     printf("Can't serialize key\n");

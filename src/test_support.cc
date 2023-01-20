@@ -1,5 +1,6 @@
 #include "certifier.h"
 #include "support.h"
+#include "sev-snp/attestation.h"
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
@@ -992,50 +993,112 @@ bool test_new_local_certify(string& enclave_type,
   return true;
 }
 
-bool construct_simulated_sev_platform_evidence(const string& serialized_ark_cert, const string& serialized_ask_cert,
-      const string& serialized_vcek_cert, const key_message& vcek, evidence_package* evp) {
-  evp->set_prover_type("vse-verifier");
 
-  // cert evidence and attestation
-  // replace this with real sev certs and attestation
-/*
-  attestation_user_data ud;
-  if (purpose_ == "authentication") {
-    if (!make_attestation_user_data(enclave_type_,
-          public_auth_key_, &ud)) {
-      printf("cc_trust_data::certify_me: Can't make user data (1)\n");
+// new platform test
+
+bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
+      int ud_size, byte* ud_data, int* size_out, byte* out) {
+  return false;
+}
+
+bool construct_simulated_sev_platform_evidence(
+      const string& purpose, const string& serialized_ark_cert,
+      const string& serialized_ask_cert, const string& serialized_vcek_cert,
+      const key_message& vcek, evidence_package* evp) {
+
+  evp->set_prover_type("vse-verifier");
+  string enclave_type("sev-enclave");
+
+  // certs
+  evidence* ev = evp->add_fact_assertion();
+  if (ev ==nullptr) {
+    printf("construct_simulated_sev_platform_evidence: Can't add to ark platform evidence\n");
+    return false;
+  }
+  ev->set_evidence_type("cert");
+  ev->set_serialized_evidence(serialized_ark_cert);
+  ev = evp->add_fact_assertion();
+  if (ev ==nullptr) {
+    printf("construct_simulated_sev_platform_evidence: Can't add to ask platform evidence\n");
+    return false;
+  }
+  ev->set_evidence_type("cert");
+  ev->set_serialized_evidence(serialized_vcek_cert);
+  ev = evp->add_fact_assertion();
+  if (ev ==nullptr) {
+    printf("construct_simulated_sev_platform_evidence: Can't add to vcek platform evidence\n");
+    return false;
+  }
+  ev->set_evidence_type("cert");
+  ev->set_serialized_evidence(serialized_vcek_cert);
+
+  attestation_report ar;
+  key_message auth_key;
+  RSA* r= RSA_new();
+    if (!generate_new_rsa_key(2048, r)) {
+      printf("construct_simulated_sev_platform_evidence: Can't generate rsa key\n");
       return false;
     }
-  } else if (purpose_ == "attestation") {
-    if (!make_attestation_user_data(enclave_type_,
-          public_service_key_, &ud)) {
-      printf("cc_trust_data::certify_me: Can't make user data (1)\n");
+    if (!RSA_to_key(r, &auth_key)) {
+      printf("construct_simulated_sev_platform_evidence: Can't convert rsa key to key\n");
+      RSA_free(r);
+      return false;
+    }
+    RSA_free(r);
+
+  // replace this with real sev certs and attestation
+  attestation_user_data ud;
+  if (purpose == "authentication") {
+    if (!make_attestation_user_data(enclave_type,
+          auth_key, &ud)) {
+      printf("construct_simulated_sev_platform_evidence: Can't make user data (1)\n");
+      return false;
+    }
+  } else if (purpose == "attestation") {
+    if (!make_attestation_user_data(enclave_type,
+          auth_key, &ud)) {
+      printf("construct_simulated_sev_platform_evidence: Can't make user data (1)\n");
       return false;
     }
   } else {
-    printf("cc_trust_data::certify_me: neither attestation or authorization\n");
+    printf("construct_simulated_sev_platform_evidence: neither attestation or authorization\n");
     return false;
   }
   string serialized_ud;
   if (!ud.SerializeToString(&serialized_ud)) {
-    printf("cc_trust_data::certify_me: Can't serialize user data\n");
+    printf("construct_simulated_sev_platform_evidence: Can't serialize user data\n");
     return false;
   }
 
-  // Todo: fix size
   int size_out = 16000;
   byte out[size_out];
-  if (!Attest(enclave_type_, serialized_ud.size(),
+#if 0
+  if (!Attest(enclave_type, serialized_ud.size(),
         (byte*) serialized_ud.data(), &size_out, out)) {
-    printf("cc_trust_data::certify_me: Attest failed\n");
+#else
+  if (!simulated_sev_Attest(vcek, enclave_type, serialized_ud.size(),
+        (byte*) serialized_ud.data(), &size_out, out)) {
+#endif
+    printf("construct_simulated_sev_platform_evidence: Attest failed\n");
     return false;
   }
   string the_attestation_str;
   the_attestation_str.assign((char*)out, size_out);
 
-*/
+  ev = evp->add_fact_assertion();
+  if (ev ==nullptr) {
+    printf("construct_simulated_sev_platform_evidence: Can't add to attest platform evidence\n");
+    return false;
+  }
+  ev->set_evidence_type("sev-attestation");
+  ev->set_serialized_evidence(the_attestation_str);
+  ev = evp->add_fact_assertion();
+  if (ev ==nullptr) {
+    printf("construct_simulated_sev_platform_evidence: Can't add to vcek platform evidence\n");
+    return false;
+  }
 
-  return false;
+  return true;
 }
 
 bool test_simulated_sev_platform_certify(
@@ -1053,7 +1116,7 @@ bool test_simulated_sev_platform_certify(
   // get policy
   signed_claim_sequence signed_statements;
   if (!read_signed_vse_statements(policy_file_name, &signed_statements)) {
-    printf("Can't read policy\n");
+    printf("test_simulated_sev_platform_certify: Can't read policy\n");
     return false;
   }
 
@@ -1061,28 +1124,36 @@ bool test_simulated_sev_platform_certify(
   key_message policy_pk;
   string policy_key_str;
   if (!read_file_into_string(policy_key_file, &policy_key_str)) {
+    printf("test_simulated_sev_platform_certify: Can't read policy key\n");
     return false;
   }
   if (!policy_key.ParseFromString(policy_key_str)) {
+    printf("test_simulated_sev_platform_certify: Can't parse policy key\n");
     return false;
   }
   if (!private_key_to_public_key(policy_key, &policy_pk)) {
+    printf("test_simulated_sev_platform_certify: Can't convert policy key\n");
     return false;
   }
-  return true;
 
   // Make ark, ask, vcek certs
-
   key_message ark_key;
   key_message ark_pk;
   string ark_key_str;
   if (!read_file_into_string(ark_key_file_name, &ark_key_str)) {
+    printf("test_simulated_sev_platform_certify: Can't read ark key\n");
     return false;
   }
   if (!ark_key.ParseFromString(ark_key_str)) {
+    printf("test_simulated_sev_platform_certify: Can't parse ark key\n");
     return false;
   }
+  ark_key.set_key_name("ARKKey");
+  ark_key.set_key_type("rsa-2048-private");
+  ark_key.set_key_format("vse-key");
+  print_key(ark_key); printf("\n");
   if (!private_key_to_public_key(ark_key, &ark_pk)) {
+    printf("test_simulated_sev_platform_certify: Can't convert ark key\n");
     return false;
   }
 
@@ -1095,6 +1166,10 @@ bool test_simulated_sev_platform_certify(
   if (!ask_key.ParseFromString(ask_key_str)) {
     return false;
   }
+  ask_key.set_key_name("ASKKey");
+  ask_key.set_key_type("rsa-2048-private");
+  ask_key.set_key_format("vse-key");
+  print_key(ask_key); printf("\n");
   if (!private_key_to_public_key(ask_key, &ask_pk)) {
     return false;
   }
@@ -1108,9 +1183,14 @@ bool test_simulated_sev_platform_certify(
   if (!vcek_key.ParseFromString(vcek_key_str)) {
     return false;
   }
+  vcek_key.set_key_name("VCEKKey");
+  vcek_key.set_key_type("ecc-384-private");
+  vcek_key.set_key_format("vse-key");
+  print_key(vcek_key); printf("\n");
   if (!private_key_to_public_key(vcek_key, &vcek_pk)) {
     return false;
   }
+  print_key(vcek_key); printf("\n");
 
   string ark_issuer_desc("platform-provider");
   string ark_issuer_name("AMD");
@@ -1160,9 +1240,12 @@ bool test_simulated_sev_platform_certify(
     return false;
   }
 
+return true;
+
   // construct evidence package
-  if (!construct_simulated_sev_platform_evidence(serialized_ark_cert, serialized_ask_cert, serialized_vcek_cert, 
-          vcek_key, &evp)) {
+  string purpose("authentication");
+  if (!construct_simulated_sev_platform_evidence(purpose, serialized_ark_cert,
+          serialized_ask_cert, serialized_vcek_cert, vcek_key, &evp)) {
     printf("construct_simulated_sev_platform_evidence failed\n");
     return false;
   }
@@ -1186,7 +1269,6 @@ bool test_simulated_sev_platform_certify(
     }
   }
 
-  string purpose("authentication");
   if (!validate_evidence_from_policy(evidence_descriptor, signed_statements,
           purpose, evp, policy_pk)) {
     printf("validate_evidence failed\n");
