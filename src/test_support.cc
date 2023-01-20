@@ -998,7 +998,57 @@ bool test_new_local_certify(string& enclave_type,
 
 bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
       int ud_size, byte* ud_data, int* size_out, byte* out) {
-  return false;
+
+  attestation_report ar;
+  memset(&ar, 0, sizeof(ar));
+  if (*size_out < sizeof(ar)) {
+    printf("simulated_sev_Attest: output buffer too small\n");
+    return false;
+  }
+
+  if (!digest_message("sha-384", ud_data, ud_size, ar.report_data, 48)) {
+    printf("simulated_sev_Attest: can't digest ud\n");
+    return false;
+  }
+  memset(ar.measurement, 0, 48);
+  ar.version = 1;
+  ar.guest_svn = 1;
+  ar.policy = 0xffff;
+  // ar.family_id[16];
+  // ar.image_id[16];
+  // ar.vmpl;
+  // ar.signature_algo;
+  // ar.tcb_version platform_version;
+  // ar.platform_info;
+  // ar.flags;
+  // ar.reserved0;
+  // ar.host_data[32];
+  // ar.id_key_digest[48];
+  // ar.author_key_digest[48];
+  // ar.report_id[32];
+  // ar.report_id_ma[32];
+  // ar.tcb_version reported_tcb;
+  // ar.reserved1[24];
+  // ar.chip_id[64];
+  // ar.reserved2[192];
+  // ar.signature.r[72];
+  // ar.signature.s[72];
+
+  EC_KEY* eck = key_to_ECC(vcek);
+  int blk_len = ECDSA_size(eck);
+  int sig_size_out = 2 * blk_len;
+  byte sig_out[sig_size_out];
+  if (!ecc_sign("sha-384", eck, sizeof(ar) - sizeof(ar.signature), (byte*)&ar,
+          &sig_size_out, sig_out)) {
+    printf("simulated_sev_Attest: can't ec_sign\n");
+    return false;
+  }
+  memcpy(ar.signature.r, sig_out, blk_len);
+  memcpy(ar.signature.s, &sig_out[blk_len], blk_len);
+  memcpy(out, (byte*)&ar, sizeof(ar));
+  EC_KEY_free(eck);
+
+  return true;
 }
 
 bool construct_simulated_sev_platform_evidence(
@@ -1032,7 +1082,6 @@ bool construct_simulated_sev_platform_evidence(
   ev->set_evidence_type("cert");
   ev->set_serialized_evidence(serialized_vcek_cert);
 
-  attestation_report ar;
   key_message auth_key;
   RSA* r= RSA_new();
     if (!generate_new_rsa_key(2048, r)) {
@@ -1239,8 +1288,6 @@ bool test_simulated_sev_platform_certify(
   if (!x509_to_asn1(x_vcek, &serialized_vcek_cert)) {
     return false;
   }
-
-return true;
 
   // construct evidence package
   string purpose("authentication");
