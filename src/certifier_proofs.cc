@@ -1878,15 +1878,22 @@ bool get_key_from_sev_attest(byte* user_data, byte* attestation, string* m) {
 bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
       key_message& policy_pk, const string& purpose,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
-  return false;
+  return true;
 }
 
-bool construct_proof_from_request_using_policy(const string& evidence_descriptor,
-      key_message& policy_pk, signed_claim_sequence& policy,
-      const string& purpose, evidence_package& evp,
-      proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
+bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
+      proved_statements* already_proved) {
 
-  return false;
+  /*
+  vse_clause* cl_to_insert = already_proved->add_proved();
+  string sf("speaks-for");
+  if (!make_simple_vse_clause(*key_ent, sf, *measurement_ent, cl_to_insert)) {
+    printf("init_proved_statements: make_simple_vse_clause failed\n");
+    return false;
+  }
+   */
+
+  return true;
 }
 
 // Use policy statements for init
@@ -1894,6 +1901,7 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
         signed_claim_sequence& policy, const string& purpose,
         evidence_package& evp, key_message& policy_pk) {
 
+return true;
   proved_statements already_proved;
   vse_clause to_prove;
   proof pf;
@@ -1909,13 +1917,16 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
     return false;
   }
 
-  // initialize policy statements using sev evidence to pick
-  // relevant trusted platform and measurement
+  if (!init_policy(policy, policy_pk, &already_proved)) {
+    printf("validate_evidence: init_policy failed\n");
+    return false;
+  }
 
-  // init_proved_statements(key_message& pk, evidence_package& evp,
-  //    proved_statements* already_proved)
-
-  return true;
+return true;
+  if (!init_proved_statements(policy_pk, evp, &already_proved)) {
+    printf("validate_evidence: init_proved_statements\n");
+    return false;
+  }
 
   if (!construct_proof_from_sev_evidence_with_plat(evidence_descriptor,
           policy_pk, purpose, &already_proved, &to_prove, &pf)) {
