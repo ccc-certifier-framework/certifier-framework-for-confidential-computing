@@ -1718,7 +1718,7 @@ void print_platform_descriptor(const platform& pl) {
 void print_environment_descriptor(const environment& env) {
     printf("environment[");
     print_platform_descriptor(env.the_platform());
-    printf(", ");
+    printf(", measurement: ");
     print_bytes(env.the_measurement().size(), (byte*)env.the_measurement().data());
     printf("]");
 }

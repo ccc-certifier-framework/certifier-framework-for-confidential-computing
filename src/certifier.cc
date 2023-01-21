@@ -1009,10 +1009,9 @@ void print_proof_step(const proof_step& ps) {
 }
 
 void print_proof(proof& pf) {
-  // to_prove
-  // already_proved
   printf("\nproof steps:\n");
   for (int i = 0; i < pf.steps_size(); i++) {
+    printf("\n%2d: ", i);
     print_proof_step(pf.steps(i));
     printf("\n");
   }
