@@ -643,7 +643,14 @@ bool get_major_api_property(const sev_attestation_message& sev_att, property* pr
 }
 
 bool get_minor_api_property(const sev_attestation_message& sev_att, property* prop) {
-  return true;
+  int value = 0;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  value = (int)(((r->policy)>>16)&0xff);
+  string str_name("api_minor");
+  string str_equal("=");
+  string str_type("int");
+  return make_property(str_name, str_type, str_equal, value, str_name, prop);
 }
 
 bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& sev_att,
@@ -2098,14 +2105,6 @@ bool get_properties_from_sev_attest(byte* attestation, properties* props) {
   // at->measurement is measurement
   // at->report_data is hash of user_data
   // at->platform_version is platform data
-  return false;
-}
-
-bool get_measurement_from_sev_attest(byte* attestation, string* m) {
-  return false;
-}
-
-bool get_key_from_sev_attest(byte* user_data, byte* attestation, string* m) {
   return false;
 }
 
