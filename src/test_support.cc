@@ -1085,7 +1085,7 @@ bool construct_simulated_sev_platform_evidence(
     return false;
   }
   ev->set_evidence_type("cert");
-  ev->set_serialized_evidence(serialized_vcek_cert);
+  ev->set_serialized_evidence(serialized_ask_cert);
   ev = evp->add_fact_assertion();
   if (ev ==nullptr) {
     printf("construct_simulated_sev_platform_evidence: Can't add to vcek platform evidence\n");
@@ -1251,9 +1251,9 @@ bool test_simulated_sev_platform_certify(
   }
 
   string ark_issuer_desc("platform-provider");
-  string ark_issuer_name("ARKKey");
+  string ark_issuer_name(ark_key.key_name());
   string ark_subject_desc("platform-provider");
-  string ark_subject_name("ARKKey");
+  string ark_subject_name(ark_key.key_name());
   X509* x_ark = X509_new();
   if(!produce_artifact(ark_key,
           ark_issuer_name, ark_issuer_desc, ark_pk,
@@ -1267,13 +1267,11 @@ bool test_simulated_sev_platform_certify(
     return false;
   }
 
-  string ask_issuer_desc("platform-provider");
-  string ask_issuer_name("ARKKey");
   string ask_subject_desc("platform-provider");
-  string ask_subject_name("ASKKey");
+  string ask_subject_name(ask_key.key_name());
   X509* x_ask = X509_new();
   if(!produce_artifact(ark_key,
-          ask_issuer_name, ask_issuer_desc, ask_pk,
+          ark_issuer_name, ark_issuer_desc, ask_pk,
           ask_subject_name, ask_subject_desc, 
           2ULL, 365.26*86400, x_ask, false)) {
     printf("test_simulated_sev_platform_certify: Can't produce ask artifact\n");
@@ -1285,9 +1283,9 @@ bool test_simulated_sev_platform_certify(
   }
 
   string vcek_issuer_desc("platform-provider");
-  string vcek_issuer_name("ASKKey");
+  string vcek_issuer_name(ask_key.key_name());
   string vcek_subject_desc("platform-provider");
-  string vcek_subject_name("VCEKKey");
+  string vcek_subject_name(vcek_key.key_name());
   X509* x_vcek = X509_new();
   if(!produce_artifact(ask_key,
           vcek_issuer_name, vcek_issuer_desc, vcek_pk,

@@ -827,7 +827,6 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       const key_message* signer_key = get_issuer_key(x, seen_keys_list);
       if (signer_key == nullptr) {
         printf("init_proved_statements: Can't find issuer key\n");
-        X509_print_fp(stdout, x);
         return false;
       }
       EVP_PKEY* signer_pkey = pkey_from_key(*signer_key);
