@@ -580,6 +580,50 @@ bool init_dominance_tree(predicate_dominance& root) {
   return true;
 }
 
+bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& sev_att,
+          const key_message& vcek_key, int size_measurement, byte* measurement,
+          proved_statements* already_proved) {
+
+      attestation_user_data ud;
+      if (!ud.ParseFromString(sev_att.what_was_said())) {
+        return false;
+      }
+      string says_verb("says");
+      string speaks_verb("speaks-for");
+      string m_str;
+      m_str.assign((char*)measurement, size_measurement);
+      entity_message m_ent;
+      if (!make_measurement_entity(m_str, &m_ent)) {
+        printf("sev attest processing, error 7\n");
+        return false;
+      }
+
+      entity_message auth_ent;
+      if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
+        printf("sev attest processing, error 8\n");
+        return false;
+      }
+
+      vse_clause c1;
+      if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
+        printf("sev attest processing, error 9\n");
+        return false;
+      }
+
+      // vcekKey says authKey speaks-for measurement
+      entity_message vcek_ent;
+      if (!make_key_entity(vcek_key, &vcek_ent)) {
+        printf("sev attest processing, error 10\n");
+        return false;
+      }
+      vse_clause* cl = already_proved->add_proved();
+      if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl)) {
+        printf("sev attest processing, error 11\n");
+        return false;
+      }
+  return true;
+}
+
 bool init_axiom(key_message& pk, proved_statements* are_proved) {
   // Add axiom pk is-trusted
   entity_message policy_key_entity;
@@ -906,42 +950,9 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       byte measurement[size_measurement];
       memset(measurement, 0, size_measurement);
 #endif
-
-      attestation_user_data ud;
-      if (!ud.ParseFromString(sev_att.what_was_said())) {
-        return false;
-      }
-      string says_verb("says");
-      string speaks_verb("speaks-for");
-      string m_str;
-      m_str.assign((char*)measurement, size_measurement);
-      entity_message m_ent;
-      if (!make_measurement_entity(m_str, &m_ent)) {
-        printf("sev attest processing, error 7\n");
-        return false;
-      }
-
-      entity_message auth_ent;
-      if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
-        printf("sev attest processing, error 8\n");
-        return false;
-      }
-
-      vse_clause c1;
-      if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
-        printf("sev attest processing, error 9\n");
-        return false;
-      }
-
-      // vcekKey says authKey speaks-for measurement
-      entity_message vcek_ent;
-      if (!make_key_entity(vcek_key, &vcek_ent)) {
-        printf("sev attest processing, error 10\n");
-        return false;
-      }
-      vse_clause* cl = already_proved->add_proved();
-      if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl)) {
-        printf("sev attest processing, error 11\n");
+      if (!add_vse_proved_statements_from_sev_attest(sev_att, vcek_key,
+          size_measurement, measurement, already_proved)) {
+        printf("init_proved_statements: can't dd_vse_proved_statements_from_sev_attest\n");
         return false;
       }
     } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
