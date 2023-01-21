@@ -87,7 +87,7 @@ $UTILITIES/make_signed_claim_from_vse_clause.exe --vse_file=$TEST_DATA/vse_saysm
 --output=$TEST_DATA/signed_policy_measurement.bin
 
 $UTILITIES/package_claims.exe \
---input=$TEST_DATA/signed_policy_ark.bin,$TEST_DATA/signed_policy_measurement.bin,$TEST_DATA/signed_isplatform.bin,$TEST_DATA/signed_policy_ask.bin,$TEST_DATA/signed_policy_vcek.bin \
+--input=$TEST_DATA/signed_policy_ark.bin,$TEST_DATA/signed_policy_measurement.bin,$TEST_DATA/signed_isplatform.bin \
 --output=$TEST_DATA/policy.bin
 
 $UTILITIES/print_packaged_claims.exe --input=$TEST_DATA/policy.bin

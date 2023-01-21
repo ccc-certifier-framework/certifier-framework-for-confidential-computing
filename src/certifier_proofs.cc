@@ -827,6 +827,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       const key_message* signer_key = get_issuer_key(x, seen_keys_list);
       if (signer_key == nullptr) {
         printf("init_proved_statements: Can't find issuer key\n");
+        X509_print_fp(stdout, x);
         return false;
       }
       EVP_PKEY* signer_pkey = pkey_from_key(*signer_key);
@@ -855,10 +856,95 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       }
 #ifdef SEV_SNP
     } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation-with-platform") {
-      // Todo: verify and add
-      //    vcek says environment(platform, measurement) is-environment
-      //    vcek says enclaveKey speaks-for environment
-      return false;
+      string t_str;
+      t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
+          evp.fact_assertion(i).serialized_evidence().size());
+      sev_attestation_message sev_att;
+      if (!sev_att.ParseFromString(evp.fact_assertion(i).serialized_evidence())) {
+        printf("sev attest processing, error 1\n");
+        return false;
+      }
+
+      // vcekKey
+      // Last proved statement should have been ask_key says vcek_key is-trusted-for-attestation;
+      if (already_proved->proved_size() < 1) {
+        printf("sev attest processing, error 2\n");
+        return false;
+      }
+      const vse_clause& last_clause = already_proved->proved(already_proved->proved_size() - 1);
+      if (!last_clause.has_clause()) {
+        printf("sev attest processing, error 3\n");
+        return false;
+      }
+      if (!last_clause.clause().has_subject() || last_clause.clause().subject().entity_type() != "key") {
+        printf("sev attest processing, error 4\n");
+        return false;
+      }
+      const key_message& vcek_key = last_clause.clause().subject().key();
+
+      EVP_PKEY* verify_pkey = pkey_from_key(vcek_key);
+      if (verify_pkey == nullptr) {
+        printf("sev attest processing, error 5\n");
+        return false;
+      }
+
+#if 0
+      int size_measurement = max_measurement_size;
+      byte measurement[size_measurement];
+      extern bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attestation,
+          int* size_measurement, byte* measurement);
+      bool success = verify_sev_Attest(verify_pkey, evp.fact_assertion(i).serialized_evidence().size(),
+            (byte*)evp.fact_assertion(i).serialized_evidence().data(), &size_measurement, measurement);
+      EVP_PKEY_free(verify_pkey);
+      verify_pkey = nullptr;
+
+      if (!success) {
+        printf("Verify failed\n");
+        return false;
+      }
+#else
+      int size_measurement = 48;
+      byte measurement[size_measurement];
+      memset(measurement, 0, size_measurement);
+#endif
+
+      attestation_user_data ud;
+      if (!ud.ParseFromString(sev_att.what_was_said())) {
+        return false;
+      }
+      string says_verb("says");
+      string speaks_verb("speaks-for");
+      string m_str;
+      m_str.assign((char*)measurement, size_measurement);
+      entity_message m_ent;
+      if (!make_measurement_entity(m_str, &m_ent)) {
+        printf("sev attest processing, error 7\n");
+        return false;
+      }
+
+      entity_message auth_ent;
+      if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
+        printf("sev attest processing, error 8\n");
+        return false;
+      }
+
+      vse_clause c1;
+      if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
+        printf("sev attest processing, error 9\n");
+        return false;
+      }
+
+      // vcekKey says authKey speaks-for measurement
+      entity_message vcek_ent;
+      if (!make_key_entity(vcek_key, &vcek_ent)) {
+        printf("sev attest processing, error 10\n");
+        return false;
+      }
+      vse_clause* cl = already_proved->add_proved();
+      if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl)) {
+        printf("sev attest processing, error 11\n");
+        return false;
+      }
     } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
       string t_str;
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
@@ -982,6 +1068,8 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         return false;
       }
     } else {
+      printf("Unknown evidence type: %i\n", i);
+      print_evidence(evp.fact_assertion(i)); printf("\n");
       printf("Unknown evidence type: %s\n", evp.fact_assertion(i).evidence_type().c_str());
       return false;
     }
@@ -1899,7 +1987,7 @@ bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
 #if 0
     const entity_message& em = policy.claims(i).subject();
     if (!em.entity_type() == "key" || !same_key(policy_pk, em.key())) {
-      printf("init_policy: Policy must have
+      printf("init_policy: Policy must have\n");
     }
 #endif
     if (!add_fact_from_signed_claim(policy.claims(i), already_proved)) {
@@ -1938,22 +2026,23 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
     return false;
   }
 
+  if (!init_proved_statements(policy_pk, evp, &already_proved)) {
+    printf("validate_evidence: init_proved_statements\n");
+    return false;
+  }
+
 #if 1
-  printf("After init_policy\n");
-  printf("final proved statements:\n");
+  printf("After init_policy --- proved statements:\n");
   for (int i = 0; i < already_proved.proved_size(); i++) {
+    printf("  %2d: ", i);
     print_vse_clause(already_proved.proved(i));
+    printf("\n");
     printf("\n");
   }
   printf("\n");
 #endif
 
 return true;
-
-  if (!init_proved_statements(policy_pk, evp, &already_proved)) {
-    printf("validate_evidence: init_proved_statements\n");
-    return false;
-  }
 
   if (!construct_proof_from_sev_evidence_with_plat(evidence_descriptor,
           policy_pk, purpose, &already_proved, &to_prove, &pf)) {

@@ -2048,15 +2048,19 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
       signing_key.key_type() == "rsa-2048-private" ||
       signing_key.key_type() == "rsa-4096-private") {
     RSA* signing_rsa_key = RSA_new();
-    if (!key_to_RSA(signing_key, signing_rsa_key))
+    if (!key_to_RSA(signing_key, signing_rsa_key)) {
+      printf("produce_artifact: can't get rsa signing key\n");
       return false;
+    }
     EVP_PKEY* signing_pkey = EVP_PKEY_new();
     EVP_PKEY_set1_RSA(signing_pkey, signing_rsa_key);
     X509_set_pubkey(x509, signing_pkey);
 
     RSA* subject_rsa_key = RSA_new();
-    if (!key_to_RSA(subject_key, subject_rsa_key))
+    if (!key_to_RSA(subject_key, subject_rsa_key)) {
+      printf("produce_artifact: can't get rsa subject key\n");
       return false;
+    }
     EVP_PKEY* subject_pkey = EVP_PKEY_new();
     EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
     X509_set_pubkey(x509, subject_pkey);
@@ -2071,15 +2075,19 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
     RSA_free(subject_rsa_key);
   } else if (signing_key.key_type() == "ecc-384-private") {
     EC_KEY* signing_ecc_key = key_to_ECC(signing_key);
-    if (signing_ecc_key == nullptr)
+    if (signing_ecc_key == nullptr) {
+      printf("produce_artifact: can't get signing key\n");
       return false;
+    }
     EVP_PKEY* signing_pkey = EVP_PKEY_new();
     EVP_PKEY_set1_EC_KEY(signing_pkey, signing_ecc_key);
     X509_set_pubkey(x509, signing_pkey);
 
     EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
-    if (subject_ecc_key == nullptr)
+    if (subject_ecc_key == nullptr) {
+      printf("produce_artifact: can't get subject key\n");
       return false;
+    }
     EVP_PKEY* subject_pkey = EVP_PKEY_new();
     EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
     X509_set_pubkey(x509, subject_pkey);
@@ -2089,7 +2097,7 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
     EC_KEY_free(signing_ecc_key);
     EC_KEY_free(subject_ecc_key);
   } else {
-    printf("Unsupported algorithm\n");
+    printf("produce_artifact: Unsupported algorithm\n");
     return false;
   }
 

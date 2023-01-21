@@ -1013,7 +1013,7 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
   // ar.family_id[16];
   // ar.image_id[16];
   // ar.vmpl;
-  // ar.signature_algo;
+  ar.signature_algo= SIG_ALGO_ECDSA_P384_SHA384;
   // ar.tcb_version platform_version;
   // ar.platform_info;
   // ar.flags;
@@ -1151,13 +1151,8 @@ bool construct_simulated_sev_platform_evidence(
     printf("construct_simulated_sev_platform_evidence: Can't add to attest platform evidence\n");
     return false;
   }
-  ev->set_evidence_type("sev-attestation");
+  ev->set_evidence_type("sev-attestation-with-platform");
   ev->set_serialized_evidence(the_attestation_str);
-  ev = evp->add_fact_assertion();
-  if (ev ==nullptr) {
-    printf("construct_simulated_sev_platform_evidence: Can't add to vcek platform evidence\n");
-    return false;
-  }
 
   return true;
 }
@@ -1212,7 +1207,6 @@ bool test_simulated_sev_platform_certify(
   ark_key.set_key_name("ARKKey");
   ark_key.set_key_type("rsa-2048-private");
   ark_key.set_key_format("vse-key");
-  print_key(ark_key); printf("\n");
   if (!private_key_to_public_key(ark_key, &ark_pk)) {
     printf("test_simulated_sev_platform_certify: Can't convert ark key\n");
     return false;
@@ -1222,16 +1216,18 @@ bool test_simulated_sev_platform_certify(
   key_message ask_pk;
   string ask_key_str;
   if (!read_file_into_string(ask_key_file_name, &ask_key_str)) {
+    printf("test_simulated_sev_platform_certify: Can't read ask  key\n");
     return false;
   }
   if (!ask_key.ParseFromString(ask_key_str)) {
+    printf("test_simulated_sev_platform_certify: Can't parse ask key\n");
     return false;
   }
   ask_key.set_key_name("ASKKey");
   ask_key.set_key_type("rsa-2048-private");
   ask_key.set_key_format("vse-key");
-  print_key(ask_key); printf("\n");
   if (!private_key_to_public_key(ask_key, &ask_pk)) {
+    printf("test_simulated_sev_platform_certify: Can't convert ask key\n");
     return false;
   }
 
@@ -1239,29 +1235,31 @@ bool test_simulated_sev_platform_certify(
   key_message vcek_pk;
   string vcek_key_str;
   if (!read_file_into_string(vcek_key_file_name, &vcek_key_str)) {
+    printf("test_simulated_sev_platform_certify: Can't read vcek key\n");
     return false;
   }
   if (!vcek_key.ParseFromString(vcek_key_str)) {
+    printf("test_simulated_sev_platform_certify: Can't parse vcek key\n");
     return false;
   }
   vcek_key.set_key_name("VCEKKey");
   vcek_key.set_key_type("ecc-384-private");
   vcek_key.set_key_format("vse-key");
-  print_key(vcek_key); printf("\n");
   if (!private_key_to_public_key(vcek_key, &vcek_pk)) {
+    printf("test_simulated_sev_platform_certify: Can't convert vcek key\n");
     return false;
   }
-  print_key(vcek_key); printf("\n");
 
   string ark_issuer_desc("platform-provider");
-  string ark_issuer_name("AMD");
+  string ark_issuer_name("ARKKey");
   string ark_subject_desc("platform-provider");
-  string ark_subject_name("AMD");
+  string ark_subject_name("ARKKey");
   X509* x_ark = X509_new();
   if(!produce_artifact(ark_key,
           ark_issuer_name, ark_issuer_desc, ark_pk,
           ark_subject_name, ark_subject_desc, 
           1ULL, 365.26*86400, x_ark, true)) {
+    printf("test_simulated_sev_platform_certify: Can't produce ark artifact\n");
     return false;
   }
   string serialized_ark_cert;
@@ -1270,14 +1268,15 @@ bool test_simulated_sev_platform_certify(
   }
 
   string ask_issuer_desc("platform-provider");
-  string ask_issuer_name("AMD");
+  string ask_issuer_name("ARKKey");
   string ask_subject_desc("platform-provider");
-  string ask_subject_name("AMD");
+  string ask_subject_name("ASKKey");
   X509* x_ask = X509_new();
-  if(!produce_artifact(ask_key,
+  if(!produce_artifact(ark_key,
           ask_issuer_name, ask_issuer_desc, ask_pk,
           ask_subject_name, ask_subject_desc, 
-          1ULL, 365.26*86400, x_ask, true)) {
+          2ULL, 365.26*86400, x_ask, false)) {
+    printf("test_simulated_sev_platform_certify: Can't produce ask artifact\n");
     return false;
   }
   string serialized_ask_cert;
@@ -1286,14 +1285,15 @@ bool test_simulated_sev_platform_certify(
   }
 
   string vcek_issuer_desc("platform-provider");
-  string vcek_issuer_name("AMD");
+  string vcek_issuer_name("ASKKey");
   string vcek_subject_desc("platform-provider");
-  string vcek_subject_name("AMD");
+  string vcek_subject_name("VCEKKey");
   X509* x_vcek = X509_new();
-  if(!produce_artifact(vcek_key,
+  if(!produce_artifact(ask_key,
           vcek_issuer_name, vcek_issuer_desc, vcek_pk,
           vcek_subject_name, vcek_subject_desc, 
-          1ULL, 365.26*86400, x_vcek, true)) {
+          3ULL, 365.26*86400, x_vcek, false)) {
+    printf("test_simulated_sev_platform_certify: Can't produce vcek artifact\n");
     return false;
   }
   string serialized_vcek_cert;

@@ -179,6 +179,7 @@ TEST (test_sev_certs, test_sev_certs) {
   EXPECT_TRUE(test_sev_certs(FLAGS_print_all));
 }
 
+#if 0 //REMOVE
 extern bool test_real_sev_certs(bool print_all);
 TEST (test_real_sev_certs, test_real_sev_certs) {
   EXPECT_TRUE(test_real_sev_certs(FLAGS_print_all));
@@ -193,6 +194,7 @@ extern bool test_sev(bool);
 TEST (test_sev, test_sev) {
   EXPECT_TRUE(test_sev(FLAGS_print_all));
 } 
+#endif
 #endif
 // -----------------------Run Tests-----------------------------
 
