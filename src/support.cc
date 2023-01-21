@@ -2083,6 +2083,7 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
     add_ext(x509, NID_basic_constraints, "critical,CA:TRUE");
   }
 
+  EVP_PKEY* signing_pkey = EVP_PKEY_new();
   if (signing_key.key_type() == "rsa-1024-private" ||
       signing_key.key_type() == "rsa-2048-private" ||
       signing_key.key_type() == "rsa-4096-private") {
@@ -2091,7 +2092,6 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
       printf("produce_artifact: can't get rsa signing key\n");
       return false;
     }
-    EVP_PKEY* signing_pkey = EVP_PKEY_new();
     EVP_PKEY_set1_RSA(signing_pkey, signing_rsa_key);
     X509_set_pubkey(x509, signing_pkey);
 
@@ -2117,7 +2117,6 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
         printf("produce_artifact: can't get subject key\n");
         return false;
       }
-      EVP_PKEY* subject_pkey = EVP_PKEY_new();
       EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
       X509_set_pubkey(x509, subject_pkey);
       EC_KEY_free(subject_ecc_key);
@@ -2145,19 +2144,39 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
     EVP_PKEY_set1_EC_KEY(signing_pkey, signing_ecc_key);
     X509_set_pubkey(x509, signing_pkey);
 
-    EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
-    if (subject_ecc_key == nullptr) {
-      printf("produce_artifact: can't get subject key\n");
-      return false;
-    }
     EVP_PKEY* subject_pkey = EVP_PKEY_new();
-    EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
-    X509_set_pubkey(x509, subject_pkey);
+    if (subject_key.key_type() == "rsa-1024-public" ||
+        subject_key.key_type() == "rsa-2048-public" ||
+        subject_key.key_type() == "rsa-4096-public" ||
+        subject_key.key_type() == "rsa-1024-private" ||
+        subject_key.key_type() == "rsa-2048-private" ||
+        subject_key.key_type() == "rsa-4096-private") {
+      RSA* subject_rsa_key = RSA_new();
+      if (!key_to_RSA(subject_key, subject_rsa_key)) {
+        printf("produce_artifact: can't get rsa subject key\n");
+        return false;
+      }
+      EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
+      X509_set_pubkey(x509, subject_pkey);
+      RSA_free(subject_rsa_key);
+    } else if (subject_key.key_type() == "ecc-384-public" ||
+               subject_key.key_type() == "ecc-384-private") {
+      EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
+      if (subject_ecc_key == nullptr) {
+        printf("produce_artifact: can't get subject key\n");
+        return false;
+      }
+      EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
+      X509_set_pubkey(x509, subject_pkey);
+      EC_KEY_free(subject_ecc_key);
+    } else {
+        printf("produce_artifact: unknown public key type %s\n",
+          subject_key.key_type().c_str());
+        return false;
+    }
     X509_sign(x509, signing_pkey, EVP_sha384());
     EVP_PKEY_free(signing_pkey);
     EVP_PKEY_free(subject_pkey);
-    EC_KEY_free(signing_ecc_key);
-    EC_KEY_free(subject_ecc_key);
   } else {
     printf("produce_artifact: Unsupported algorithm\n");
     return false;
