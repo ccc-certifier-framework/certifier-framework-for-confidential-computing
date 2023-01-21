@@ -1084,7 +1084,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
 #endif
       if (!add_vse_proved_statements_from_sev_attest(sev_att, vcek_key,
             already_proved)) {
-        printf("init_proved_statements: can't dd_vse_proved_statements_from_sev_attest\n");
+        printf("init_proved_statements: can't add_vse_proved_statements_from_sev_attest\n");
         return false;
       }
     } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
@@ -1093,7 +1093,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
           evp.fact_assertion(i).serialized_evidence().size());
       sev_attestation_message sev_att;
       if (!sev_att.ParseFromString(evp.fact_assertion(i).serialized_evidence())) {
-        printf("sev attest processing, error 1\n");
+        printf("init_proved_statements: can't parse sev_att\n");
         return false;
       }
 
