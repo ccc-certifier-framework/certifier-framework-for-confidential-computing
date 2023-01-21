@@ -647,7 +647,7 @@ bool get_minor_api_property(const sev_attestation_message& sev_att, property* pr
 }
 
 bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& sev_att,
-          const key_message& vcek_key, int size_measurement, byte* measurement,
+          const key_message& vcek_key,
           proved_statements* already_proved) {
 
   properties props;
@@ -682,53 +682,70 @@ bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& se
     }
   }
 
-  // make_platform_entity(platform& plat, entity_message* ent)
+  attestation_user_data ud;
+  if (!ud.ParseFromString(sev_att.what_was_said())) {
+    return false;
+  }
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+
+  string m_str;
+  m_str.assign((char*)r->measurement, 48);
+  entity_message m_ent;
+  if (!make_measurement_entity(m_str, &m_ent)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make measurement entity\n");
+    return false;
+  }
+
+  entity_message auth_ent;
+  if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make measurement entity\n");
+    return false;
+  }
+
   platform current_platform;
-  
+  string type("amd-sev-snp");
+  if (!make_platform(type, props, &vcek_key, &current_platform)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make platform\n");
+    return false;
+  }
 
-    // bool make_platform_entity(platform& plat, entity_message* ent);
-    // bool make_environment_entity(environment& env, entity_message* ent)
+  environment env;
+  entity_message env_ent;
+  if (!make_environment(current_platform, m_str, &env)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make environment\n");
+    return false;
+  }
+  if (!make_environment_entity(env, &env_ent)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make environment entity\n");
+    return false;
+  }
 
-    attestation_user_data ud;
-    if (!ud.ParseFromString(sev_att.what_was_said())) {
-      return false;
-    }
-    string says_verb("says");
-    string speaks_verb("speaks-for");
-    string m_str;
-    m_str.assign((char*)measurement, size_measurement);
-    entity_message m_ent;
-    if (!make_measurement_entity(m_str, &m_ent)) {
-      printf("sev attest processing, error 7\n");
-      return false;
-    }
+  string says_verb("says");
+  string speaks_verb("speaks-for");
+  string is_env_verb("is-environment");
+  vse_clause* cl1 = already_proved->add_proved();
+  if (!make_unary_vse_clause(env_ent, is_env_verb, cl1)) {
+    printf("add_vse_proved_statements_from_sev_attest: can't make environment clause\n");
+    return false;
+  }
 
-    entity_message auth_ent;
-    if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
-      printf("sev attest processing, error 8\n");
-      return false;
-    }
+  vse_clause c1;
+  if (!make_simple_vse_clause(auth_ent, speaks_verb, env_ent, &c1)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make speaks-for clause\n");
+    return false;
+  }
 
-    // is-platform
-    // is-enviornment
-    // speaks-for
-    vse_clause c1;
-    if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
-      printf("sev attest processing, error 9\n");
-      return false;
-    }
-
-    // vcekKey says authKey speaks-for measurement
-    entity_message vcek_ent;
-    if (!make_key_entity(vcek_key, &vcek_ent)) {
-      printf("sev attest processing, error 10\n");
-      return false;
-    }
-    vse_clause* cl = already_proved->add_proved();
-    if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl)) {
-      printf("sev attest processing, error 11\n");
-      return false;
-    }
+  vse_clause* cl2 = already_proved->add_proved();
+  entity_message vcek_ent;
+  if (!make_key_entity(vcek_key, &vcek_ent)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make vcek entity\n");
+    return false;
+  }
+  if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl2)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make says speaks-for\n");
+    return false;
+  }
   return true;
 }
 
@@ -1059,7 +1076,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       memset(measurement, 0, size_measurement);
 #endif
       if (!add_vse_proved_statements_from_sev_attest(sev_att, vcek_key,
-          size_measurement, measurement, already_proved)) {
+            already_proved)) {
         printf("init_proved_statements: can't dd_vse_proved_statements_from_sev_attest\n");
         return false;
       }

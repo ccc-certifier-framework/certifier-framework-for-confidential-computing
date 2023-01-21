@@ -1489,11 +1489,11 @@ bool make_platform_entity(platform& plat, entity_message* ent) {
   return true;
 }
 
-bool make_platform(const string& type, const properties& p, key_message* at,
+bool make_platform(const string& type, const properties& p, const key_message* at,
       platform* plat) {
   plat->set_platform_type(type);
   if (at != nullptr) {
-    plat->CopyFrom(*at);
+    plat->mutable_attest_key()->CopyFrom(*at);
   }
   for (int i = 0; i < p.props_size(); i++) {
     plat->mutable_props()->add_props()->CopyFrom(p.props(i));

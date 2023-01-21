@@ -111,7 +111,7 @@ bool make_key_entity(const key_message& key, entity_message* ent);
 bool make_measurement_entity(const string& measurement, entity_message* ent);
 bool make_property(string& name, string& type, string& cmp, int int_value,
       string& string_value, property* prop);
-bool make_platform(const string& type, const properties& p, key_message* at,
+bool make_platform(const string& type, const properties& p, const key_message* at,
       platform* plat);
 bool make_platform_entity(platform& plat, entity_message* ent);
 bool make_environment_entity(environment& env, entity_message* ent);
