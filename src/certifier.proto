@@ -94,7 +94,8 @@ message properties {
 
 message platform {
   optional string platform_type             = 1;
-  optional properties props                 = 2;
+  optional key_message attest_key           = 2;
+  optional properties props                 = 3;
 };
 
 message environment {

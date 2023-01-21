@@ -1489,9 +1489,48 @@ bool make_platform_entity(platform& plat, entity_message* ent) {
   return true;
 }
 
+bool make_platform(const string& type, const properties& p, key_message* at,
+      platform* plat) {
+  plat->set_platform_type(type);
+  if (at != nullptr) {
+    plat->CopyFrom(*at);
+  }
+  for (int i = 0; i < p.props_size(); i++) {
+    plat->mutable_props()->add_props()->CopyFrom(p.props(i));
+  }
+  
+  return true;
+}
+
+bool make_property(string& name, string& type, string& cmp, int int_value,
+    string& string_value, property* prop) {
+  prop->set_property_name(name);
+  prop->set_comparator(cmp);
+  if (type == "int") {
+    prop->set_value_type("int");
+    prop->set_int_value(int_value);
+  } else if (type == "string") {
+    prop->set_value_type("string");
+    prop->set_string_value(string_value);
+  } else {
+    printf("unrecognized type: %s\n", type.c_str());
+    return false;
+  }
+  printf("\n");
+
+  return true;
+}
+
 bool make_environment_entity(environment& env, entity_message* ent) {
   ent->set_entity_type("environment");
   ent->mutable_environment_ent()->CopyFrom(env);
+  return true;
+}
+
+bool make_environment(const platform& plat, const string& measurement,
+      environment* env) {
+  env->mutable_the_platform()->CopyFrom(plat);
+  env->set_the_measurement(measurement);
   return true;
 }
 

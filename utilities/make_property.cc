@@ -28,26 +28,6 @@ DEFINE_int32(int_value, 0,  "int value");
 DEFINE_string(string_value, "",  "string value");
 DEFINE_string(output, "prop.bin",  "output file");
 
-bool make_property(string& name, string& type, string& cmp, int int_value,
-    string& string_value, property* prop) {
-  prop->set_property_name(name);
-  prop->set_comparator(cmp);
-  if (type == "int") {
-    prop->set_value_type("int");
-    prop->set_int_value(int_value);
-  } else if (type == "string") {
-    prop->set_value_type("string");
-    prop->set_string_value(string_value);
-  } else {
-    printf("unrecognized type: %s\n", type.c_str());
-    return false;
-  }
-  printf("\n");
-
-  return true;
-}
-
-
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

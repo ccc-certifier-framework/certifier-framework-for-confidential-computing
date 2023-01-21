@@ -2,6 +2,7 @@
 #include "certifier.h"
 #include "simulated_enclave.h"
 #include "application_enclave.h"
+#include "attestation.h"
 #include <sys/socket.h>
 #include <netdb.h>
 
@@ -580,47 +581,154 @@ bool init_dominance_tree(predicate_dominance& root) {
   return true;
 }
 
+// policy
+//    byte 0
+//      bit     value
+//      0       debug disallowed when set
+//      1       key sharing is disallowed when setA
+//      3       can't migrate when set
+//    byte 1: API_MAJOR
+//    byte 2: API_MINOR
+bool get_migrate_property(const sev_attestation_message& sev_att, property* prop) {
+  string str_value;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  if ((r->policy&0x4ULL))
+    str_value = "no";
+  else
+    str_value = "yes";
+  string str_name("migrate");
+  string str_equal("=");
+  string str_type("string");
+  return make_property(str_name, str_type, str_equal, 0, str_value, prop);
+}
+
+bool get_key_share_property(const sev_attestation_message& sev_att, property* prop) {
+  string str_value;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  if ((r->policy&0x2ULL))
+    str_value = "no";
+  else
+    str_value = "yes";
+  string str_name("key-share");
+  string str_equal("=");
+  string str_type("string");
+  return make_property(str_name, str_type, str_equal, 0, str_value, prop);
+}
+
+bool get_debug_property(const sev_attestation_message& sev_att, property* prop) {
+  string str_value;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  if ((r->policy&0x1ULL))
+    str_value = "no";
+  else
+    str_value = "yes";
+  string str_name("debug");
+  string str_equal("=");
+  string str_type("string");
+  return make_property(str_name, str_type, str_equal, 0, str_value, prop);
+}
+
+bool get_major_api_property(const sev_attestation_message& sev_att, property* prop) {
+  int value = 0;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  value = (int)(((r->policy)>>8)&0xff);
+  string str_name("api_major");
+  string str_equal("=");
+  string str_type("int");
+  return make_property(str_name, str_type, str_equal, value, str_name, prop);
+}
+
+bool get_minor_api_property(const sev_attestation_message& sev_att, property* prop) {
+  return true;
+}
+
 bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& sev_att,
           const key_message& vcek_key, int size_measurement, byte* measurement,
           proved_statements* already_proved) {
 
-      attestation_user_data ud;
-      if (!ud.ParseFromString(sev_att.what_was_said())) {
-        return false;
-      }
-      string says_verb("says");
-      string speaks_verb("speaks-for");
-      string m_str;
-      m_str.assign((char*)measurement, size_measurement);
-      entity_message m_ent;
-      if (!make_measurement_entity(m_str, &m_ent)) {
-        printf("sev attest processing, error 7\n");
-        return false;
-      }
+  properties props;
+  {
+    property p1;
+    if  (get_migrate_property(sev_att, &p1)) {
+      props.add_props()->CopyFrom(p1);
+    }
+  }
+  {
+    property p1;
+    if  (get_debug_property(sev_att, &p1)) {
+      props.add_props()->CopyFrom(p1);
+    }
+  }
+  {
+    property p1;
+    if  (get_key_share_property(sev_att, &p1)) {
+      props.add_props()->CopyFrom(p1);
+    }
+  }
+  {
+    property p1;
+    if  (get_major_api_property(sev_att, &p1)) {
+      props.add_props()->CopyFrom(p1);
+    }
+  }
+  {
+    property p1;
+    if  (get_minor_api_property(sev_att, &p1)) {
+      props.add_props()->CopyFrom(p1);
+    }
+  }
 
-      entity_message auth_ent;
-      if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
-        printf("sev attest processing, error 8\n");
-        return false;
-      }
+  // make_platform_entity(platform& plat, entity_message* ent)
+  platform current_platform;
+  
 
-      vse_clause c1;
-      if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
-        printf("sev attest processing, error 9\n");
-        return false;
-      }
+    // bool make_platform_entity(platform& plat, entity_message* ent);
+    // bool make_environment_entity(environment& env, entity_message* ent)
 
-      // vcekKey says authKey speaks-for measurement
-      entity_message vcek_ent;
-      if (!make_key_entity(vcek_key, &vcek_ent)) {
-        printf("sev attest processing, error 10\n");
-        return false;
-      }
-      vse_clause* cl = already_proved->add_proved();
-      if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl)) {
-        printf("sev attest processing, error 11\n");
-        return false;
-      }
+    attestation_user_data ud;
+    if (!ud.ParseFromString(sev_att.what_was_said())) {
+      return false;
+    }
+    string says_verb("says");
+    string speaks_verb("speaks-for");
+    string m_str;
+    m_str.assign((char*)measurement, size_measurement);
+    entity_message m_ent;
+    if (!make_measurement_entity(m_str, &m_ent)) {
+      printf("sev attest processing, error 7\n");
+      return false;
+    }
+
+    entity_message auth_ent;
+    if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
+      printf("sev attest processing, error 8\n");
+      return false;
+    }
+
+    // is-platform
+    // is-enviornment
+    // speaks-for
+    vse_clause c1;
+    if (!make_simple_vse_clause(auth_ent, speaks_verb, m_ent, &c1)) {
+      printf("sev attest processing, error 9\n");
+      return false;
+    }
+
+    // vcekKey says authKey speaks-for measurement
+    entity_message vcek_ent;
+    if (!make_key_entity(vcek_key, &vcek_ent)) {
+      printf("sev attest processing, error 10\n");
+      return false;
+    }
+    vse_clause* cl = already_proved->add_proved();
+    if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl)) {
+      printf("sev attest processing, error 11\n");
+      return false;
+    }
   return true;
 }
 
