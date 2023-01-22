@@ -1424,7 +1424,7 @@ bool same_key(const key_message& k1, const key_message& k2) {
   return true;
 }
 
-bool same_measurement(string& m1, string& m2) {
+bool same_measurement(const string& m1, const string& m2) {
   if (m1.size() != m2.size())
     return false;
   if (memcmp((byte*)m1.data(), (byte*)m2.data(), m1.size()) != 0)
@@ -1432,11 +1432,56 @@ bool same_measurement(string& m1, string& m2) {
   return true;
 }
 
+bool satisfying_property(const property& p1, const property& p2) {
+  // Todo
+  // p1 may have ranges
+  return true;
+}
+
+bool same_property(const property& p1, const property& p2) {
+  if (p1.property_name() != p2.property_name())
+    return false;
+  if (p1.value_type() != p2.value_type())
+    return false;
+  if (p1.comparator() != p2.comparator())
+    return false;
+  if (p1.value_type() == "int")
+    return p1.int_value() == p2.int_value();
+  if (p1.value_type() == "string")
+    return p1.string_value() == p2.string_value();
+  return true;
+}
+
+bool same_properties(const properties& p1, const properties& p2) {
+  // Todo
+  return true;
+}
+
+bool same_platform(const platform& p1, const platform& p2) {
+
+  if (p1.platform_type() != p2.platform_type())
+    return false;
+  if (p1.has_attest_key() && p2.has_attest_key()) {
+    if (!same_key(p1.attest_key(), p2.attest_key()))
+      return false;
+  }
+
+  return same_properties(p1.props(), p2.props());
+}
+
+bool same_environment(const environment& e1, const environment& e2) {
+  if (!same_measurement(e1.the_measurement(), e2.the_measurement()))
+    return false;
+  return same_platform(e1.the_platform(), e2.the_platform());
+}
+
 bool same_entity(const entity_message& e1, const entity_message& e2) {
   if (e1.entity_type() != e2.entity_type())
     return false;
+
   if (e1.entity_type() == "key")
     return same_key(e1.key(), e2.key());
+
   if (e1.entity_type() == "measurement") {
     string s1;
     string s2;
@@ -1444,6 +1489,13 @@ bool same_entity(const entity_message& e1, const entity_message& e2) {
     s2.assign((char*)e2.measurement().data(), e2.measurement().size());
     return same_measurement(s1, s2);
   }
+
+  if (e1.entity_type() == "platform")
+    return same_platform(e1.platform_ent(), e2.platform_ent());
+
+  if (e1.entity_type() == "environment")
+    return same_environment(e1.environment_ent(), e2.environment_ent());
+
   return false;
 }
 
