@@ -2079,6 +2079,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
       proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
 
   proof_step* ps = nullptr;
+
   if (already_proved->proved_size() != 9) {
     printf("construct_proof_from_sev_evidence_with_plat: wrong number of proved statements\n");
     return false;
@@ -2216,6 +2217,10 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   }
 
   ps = pf->add_steps();
+  if (ps == nullptr) {
+    printf("construct_proof_from_sev_evidence_with_plat: can't allocate steps\n");
+    return false;
+  }
   ps->mutable_s1()->CopyFrom(environment_platform_is_trusted);
   ps->mutable_s2()->CopyFrom(environment_measurement_is_trusted);
   ps->mutable_conclusion()->CopyFrom(environment_is_trusted);
@@ -2232,6 +2237,10 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   const vse_clause& speaks_for = already_proved->proved(8).clause();
 
   ps = pf->add_steps();
+  if (ps == nullptr) {
+    printf("construct_proof_from_sev_evidence_with_plat: can't allocate steps\n");
+    return false;
+  }
   ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(8));
   ps->mutable_conclusion()->CopyFrom(speaks_for);
@@ -2257,8 +2266,14 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
       return false;
     }
   }
-return true;
+
+#if 0
   ps = pf->add_steps();
+#else
+  printf("\n****num steps: %d\n\n", pf->steps_size());
+  proof_step xps;
+  ps = &xps;
+#endif
   ps->mutable_s1()->CopyFrom(environment_is_trusted);
   ps->mutable_s2()->CopyFrom(speaks_for);
   ps->mutable_conclusion()->CopyFrom(*to_prove);
