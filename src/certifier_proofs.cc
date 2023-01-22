@@ -2068,9 +2068,12 @@ bool validate_evidence(const string& evidence_descriptor, signed_claim_sequence&
 
 bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
       key_message& policy_pk, const string& purpose,
-      proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
+      proved_statements* already_proved, vse_clause* to_prove, proof* pf,
+      // the following is temproary till we figure out the proto problem
+      proof_step* pss, int* num) {
 
   proof_step* ps = nullptr;
+  int step_count = 0;  //temporary
 
   if (already_proved->proved_size() != 9) {
     printf("construct_proof_from_sev_evidence_with_plat: wrong number of proved statements\n");
@@ -2094,6 +2097,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(already_proved->proved(2));
   ps->mutable_conclusion()->CopyFrom(measurement_is_trusted);
   ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "policyKey is-trusted" AND
   //        "policy-key says the ARK-key is-trusted-for-attestation" -->
@@ -2112,6 +2116,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(already_proved->proved(1));
   ps->mutable_conclusion()->CopyFrom(ark_key_is_trusted);
   ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "the ARK-key is-trusted-for-attestation" AND
   //        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
@@ -2130,6 +2135,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(already_proved->proved(5));
   ps->mutable_conclusion()->CopyFrom(ask_key_is_trusted);
   ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "the ASK-key is-trusted-for-attestation" AND
   //        "the ASK-key says the VCEK-key is-trusted-for-attestation" -->
@@ -2147,6 +2153,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(already_proved->proved(6));
   ps->mutable_conclusion()->CopyFrom(vcek_key_is_trusted);
   ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "VCEK-key is-trusted-for-attestation" AND
   //        "the VCEK says environment(platform, measurement) is-environment -->
@@ -2164,6 +2171,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(already_proved->proved(7));
   ps->mutable_conclusion()->CopyFrom(is_environment);
   ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) is-environment" AND
   //        "platform[amd-sev-snp, no-debug,...] has-trusted-platform-property" -->
@@ -2181,6 +2189,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(already_proved->proved(3));
   ps->mutable_conclusion()->CopyFrom(environment_platform_is_trusted);
   ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) is-environment" AND
   //        "measurement is-trusted" -->
@@ -2197,6 +2206,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(measurement_is_trusted);
   ps->mutable_conclusion()->CopyFrom(environment_measurement_is_trusted);
   ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) environment-platform-is-trusted" AND
   //        "environment(platform, measurement) environment-measurement-is-trusted"  -->
@@ -2217,6 +2227,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(environment_measurement_is_trusted);
   ps->mutable_conclusion()->CopyFrom(environment_is_trusted);
   ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "VCEK-key is-trusted-for-attestation" AND
   //      "VCEK-key says the enclave-key speaks-for the environment()" -->
@@ -2237,6 +2248,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(already_proved->proved(8));
   ps->mutable_conclusion()->CopyFrom(speaks_for);
   ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) is-trusted AND
   //        enclave-key speaks-for environment(platform, measurement)  -->
@@ -2270,7 +2282,9 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(speaks_for);
   ps->mutable_conclusion()->CopyFrom(*to_prove);
   ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
 
+  *num = step_count;  // temporary
   return true;
 }
 
@@ -2325,8 +2339,10 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
     return false;
   }
 
+  int num_steps = 20;
+  proof_step steps[num_steps];
   if (!construct_proof_from_sev_evidence_with_plat(evidence_descriptor,
-          policy_pk, purpose, &already_proved, &to_prove, &pf)) {
+          policy_pk, purpose, &already_proved, &to_prove, &pf, steps, &num_steps)) {
     printf("validate_evidence: can't construct proof\n");
     return false;
   }
@@ -2344,7 +2360,16 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
   printf("to prove : ");
   print_vse_clause(to_prove);
   printf("\n");
+  printf("\nproof steps:\n");
+#if 1
+  for (int i = 0; i < num_steps; i++) {
+    printf("\n%2d: ", i);
+    print_proof_step(steps[i]);
+    printf("\n");
+  }
+#else
   print_proof(pf);
+#endif
   printf("\n");
 #endif
 
