@@ -1009,7 +1009,7 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
   memset(ar.measurement, 0, 48);
   ar.version = 1;
   ar.guest_svn = 1;
-  ar.policy = 0xffff;
+  ar.policy = 0xff;
   // ar.family_id[16];
   // ar.image_id[16];
   // ar.vmpl;
