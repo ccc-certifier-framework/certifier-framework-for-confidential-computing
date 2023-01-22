@@ -2052,27 +2052,19 @@ bool validate_evidence(const string& evidence_descriptor, signed_claim_sequence&
 
 // On entry, proved statements is:
 
-//     0: Key[rsa, policyKey, f91d6331b1f...] is-trusted 
-
-//     1: Key[rsa, policyKey, f91d6331b1f...] says Key[rsa, ARKKey, a99f35070...] is-trusted-for-attestation  
-
-//     2: Key[rsa, policyKey, f91d6331b1f...] says Measurement[00000000...]  is-trusted  
-
-//     3: Key[rsa, policyKey, f91d6331b1f...] says platform[amd-sev-snp, key: ] has-trusted-platform-property  
-
-//     4: Key[rsa, ARKKey, a99f3507...] says Key[rsa, ARKKey, a99f3507...] is-trusted-for-attestation  
-
-//     5: Key[rsa, ARKKey, a99f3507...] says Key[rsa, ASKKey, bf9fe86365...] is-trusted-for-attestation  
-
-//     6: Key[rsa, ASKKey, bf9fe86365...] says Key[ecc, VCEKKey, P-384-aa87ca22...] is-trusted-for-attestation  
-
-//     7: Key[ecc, VCEKKey, P-384-aa87ca22...] says environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey,
-//        P-384-aa87ca22...], migrate:  no, debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0],
-//        measurement: 000000000...] is-environment  
-
-//     8: Key[ecc, VCEKKey, P-384-aa87ca22...] says Key[rsa, dd38e0812c4...] speaks-for
-//        environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey, P-384-aa87ca22...], migrate:  no,
-//        debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0], measurement: 00000000000000...]  
+//   0: Key[rsa, policyKey, f91d6331b1f...] is-trusted
+//   1: Key[rsa, policyKey, f91d6331b1f...] says Key[rsa, ARKKey, a99f35070...] is-trusted-for-attestation
+//   2: Key[rsa, policyKey, f91d6331b1f...] says Measurement[00000000...]  is-trusted
+//   3: Key[rsa, policyKey, f91d6331b1f...] says platform[amd-sev-snp, key: ] has-trusted-platform-property
+//   4: Key[rsa, ARKKey, a99f3507...] says Key[rsa, ARKKey, a99f3507...] is-trusted-for-attestation
+//   5: Key[rsa, ARKKey, a99f3507...] says Key[rsa, ASKKey, bf9fe86365...] is-trusted-for-attestation
+//   6: Key[rsa, ASKKey, bf9fe86365...] says Key[ecc, VCEKKey, P-384-aa87ca22...] is-trusted-for-attestation
+//   7: Key[ecc, VCEKKey, P-384-aa87ca22...] says environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey,
+//      P-384-aa87ca22...], migrate:  no, debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0],
+//      measurement: 000000000...] is-environment
+//   8: Key[ecc, VCEKKey, P-384-aa87ca22...] says Key[rsa, dd38e0812c4...] speaks-for
+//      environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey, P-384-aa87ca22...], migrate:  no,
+//      debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0], measurement: 00000000000000...]
 
 bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
       key_message& policy_pk, const string& purpose,
