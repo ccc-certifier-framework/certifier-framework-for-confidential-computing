@@ -2176,8 +2176,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   //        "platform[amd-sev-snp, no-debug,...] has-trusted-platform-property" -->
   //        "environment(platform, measurement) environment-platform-is-trusted" [3, ]
   string env_plat_str("environment-platform-is-trusted");
-  entity_message env_ent;
-  env_ent.CopyFrom(is_environment.subject());
+  const entity_message& env_ent = is_environment.subject();
   vse_clause environment_platform_is_trusted;
   if (!make_unary_vse_clause(env_ent, env_plat_str, &environment_platform_is_trusted)) {
     printf("construct_proof_from_sev_evidence_with_plat: Can't make environment platform is trusted\n");
@@ -2245,8 +2244,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   string att_str("is-trusted-for-attestation");
   vse_clause is_trusted_for_attestation;
   vse_clause is_trusted_for_authentication;
-  entity_message auth_ent;
-  auth_ent.CopyFrom(speaks_for.subject());
+  const entity_message& auth_ent = speaks_for.subject();
 
   if (purpose == "attestation") {
     if (!make_unary_vse_clause(auth_ent, att_str, to_prove)) {
@@ -2330,6 +2328,7 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
 #ifdef PRINT_ALREADY_PROVED
   printf("proved statements after additions:\n");
   for (int i = 0; i < pf.steps_size(); i++) {
+    printf("\n  %2d: ", i);
     print_vse_clause(already_proved.proved(i));
     printf("\n");
   }
