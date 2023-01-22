@@ -731,9 +731,22 @@ bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& se
   string says_verb("says");
   string speaks_verb("speaks-for");
   string is_env_verb("is-environment");
+
+  entity_message vcek_ent;
+  if (!make_key_entity(vcek_key, &vcek_ent)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make vcek entity\n");
+    return false;
+  }
+
+  vse_clause c0;
+  if (!make_unary_vse_clause(env_ent, is_env_verb, &c0)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make environment clause\n");
+    return false;
+  }
+
   vse_clause* cl1 = already_proved->add_proved();
-  if (!make_unary_vse_clause(env_ent, is_env_verb, cl1)) {
-    printf("add_vse_proved_statements_from_sev_attest: can't make environment clause\n");
+  if (!make_indirect_vse_clause(vcek_ent, says_verb, c0, cl1)) {
+    printf("add_vse_proved_statements_from_sev_attest: can't make says environment clause\n");
     return false;
   }
 
@@ -744,11 +757,6 @@ bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& se
   }
 
   vse_clause* cl2 = already_proved->add_proved();
-  entity_message vcek_ent;
-  if (!make_key_entity(vcek_key, &vcek_ent)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't make vcek entity\n");
-    return false;
-  }
   if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl2)) {
     printf("add_vse_proved_statements_from_sev_attest: Can't make says speaks-for\n");
     return false;
@@ -2043,30 +2051,28 @@ bool validate_evidence(const string& evidence_descriptor, signed_claim_sequence&
 
 
 // On entry, proved statements is:
-//  After init_policy --- proved statements:
-//     0: Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] is-trusted 
-//  
-//     1: Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says Key[rsa, ARKKey, a99f3507...]
-//        is-trusted-for-attestation  
-//  
-//     2: Key[rsa, policyKey, f91d6331b1...] says Measurement[0000000...] is-trusted  
-//  
-//     3: Key[rsa, policyKey, f91d6331b1f...] says platform[amd-sev-snp, key: ] has-trusted-platform-property
-//    
-//  
-//     4: Key[rsa, ARKKey, a99f3507]... says Key[rsa, ARKKey, a99f3507...] is-trusted-for-attestation  
-//  
+
+//     0: Key[rsa, policyKey, f91d6331b1f...] is-trusted 
+
+//     1: Key[rsa, policyKey, f91d6331b1f...] says Key[rsa, ARKKey, a99f35070...] is-trusted-for-attestation  
+
+//     2: Key[rsa, policyKey, f91d6331b1f...] says Measurement[00000000...]  is-trusted  
+
+//     3: Key[rsa, policyKey, f91d6331b1f...] says platform[amd-sev-snp, key: ] has-trusted-platform-property  
+
+//     4: Key[rsa, ARKKey, a99f3507...] says Key[rsa, ARKKey, a99f3507...] is-trusted-for-attestation  
+
 //     5: Key[rsa, ARKKey, a99f3507...] says Key[rsa, ASKKey, bf9fe86365...] is-trusted-for-attestation  
-//  
-//     6: Key[rsa, ASKKey, bf9fe86365aa...] says Key[ecc, VCEKKey, P-384-aa87ca22be8...] is-trusted-for-attestation  
-//  
-//     7: environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey, P-384-aa87ca22], 
-//          migrate:  no, debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0], 00000000000...]
-//          is-environment 
-//  
-//     8: Key[ecc, VCEKKey, P-384-aa87ca22be] says Key[rsa, ad9350b71...] speaks-for
-//          environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey, P-384-aa87ca22be
-//          migrate:  no, debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0], 000000...]
+
+//     6: Key[rsa, ASKKey, bf9fe86365...] says Key[ecc, VCEKKey, P-384-aa87ca22...] is-trusted-for-attestation  
+
+//     7: Key[ecc, VCEKKey, P-384-aa87ca22...] says environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey,
+//        P-384-aa87ca22...], migrate:  no, debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0],
+//        measurement: 000000000...] is-environment  
+
+//     8: Key[ecc, VCEKKey, P-384-aa87ca22...] says Key[rsa, dd38e0812c4...] speaks-for
+//        environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey, P-384-aa87ca22...], migrate:  no,
+//        debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0], measurement: 00000000000000...]  
 
 bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
       key_message& policy_pk, const string& purpose,
@@ -2087,10 +2093,11 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
     printf("construct_proof_from_sev_evidence_with_plat: components of first step malformed\n");
     return false;
   }
+  const vse_clause& policy_key_is_trusted = already_proved->proved(0);
   const vse_clause& measurement_is_trusted = already_proved->proved(2).clause();
 
-  ps = pf->add_steps(); 
-  ps->mutable_s1()->CopyFrom(already_proved->proved(0));
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(2));
   ps->mutable_conclusion()->CopyFrom(measurement_is_trusted);
   ps->set_rule_applied(3);
@@ -2098,44 +2105,166 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   //    "policyKey is-trusted" AND
   //        "policy-key says the ARK-key is-trusted-for-attestation" -->
   //        "the ARK-key is-trusted-for-attestation" (R3)  [0, 1]
+  if (!already_proved->proved(1).has_subject() ||
+          !already_proved->proved(1).has_clause() ||
+          !already_proved->proved(1).clause().has_subject() ||
+          already_proved->proved(1).clause().subject().entity_type() != "key") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of second step malformed\n");
+    return false;
+  }
   const vse_clause& ark_key_is_trusted = already_proved->proved(1).clause();
+
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(already_proved->proved(0));
+  ps->mutable_s2()->CopyFrom(already_proved->proved(1));
+  ps->mutable_conclusion()->CopyFrom(ark_key_is_trusted);
+  ps->set_rule_applied(3);
 
   //    "the ARK-key is-trusted-for-attestation" AND
   //        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
   //        "the ASK-key is-trusted-for-attestation" (R5)  [10, 5]
+  if (!already_proved->proved(5).has_subject() ||
+          !already_proved->proved(5).has_clause() ||
+          !already_proved->proved(5).clause().has_subject() ||
+          already_proved->proved(5).clause().subject().entity_type() != "key") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of third step malformed\n");
+    return false;
+  }
   const vse_clause& ask_key_is_trusted = already_proved->proved(5).clause();
+
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(ark_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(5));
+  ps->mutable_conclusion()->CopyFrom(ask_key_is_trusted);
+  ps->set_rule_applied(3);
 
   //    "the ASK-key is-trusted-for-attestation" AND
   //        "the ASK-key says the VCEK-key is-trusted-for-attestation" -->
   //        "the VCEK-key is-trusted-for-attestation" (R5) [11, 6]
+  if (!already_proved->proved(6).has_subject() ||
+          !already_proved->proved(6).has_clause() ||
+          already_proved->proved(6).clause().subject().entity_type() != "key") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of fourth step malformed\n");
+    return false;
+  }
   const vse_clause& vcek_key_is_trusted = already_proved->proved(6).clause();
+
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(ask_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(6));
+  ps->mutable_conclusion()->CopyFrom(vcek_key_is_trusted);
+  ps->set_rule_applied(3);
 
   //    "VCEK-key is-trusted-for-attestation" AND
   //        "the VCEK says environment(platform, measurement) is-environment -->
-  //        "environment(platform, measurement) is-environment" [, 7]
+  //        "environment(platform, measurement) is-environment" [7]
+  if (!already_proved->proved(7).has_subject() ||
+          !already_proved->proved(7).has_clause() ||
+          already_proved->proved(7).clause().subject().entity_type() != "environment") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of fifth step malformed\n");
+    return false;
+  }
   const vse_clause& is_environment = already_proved->proved(7).clause();
+
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(7));
+  ps->mutable_conclusion()->CopyFrom(is_environment);
+  ps->set_rule_applied(3);
 
   //    "environment(platform, measurement) is-environment" AND
   //        "platform[amd-sev-snp, no-debug,...] has-trusted-platform-property" -->
   //        "environment(platform, measurement) environment-platform-is-trusted" [3, ]
+  string env_plat_str("environment-platform-is-trusted");
+  entity_message env_ent;
+  env_ent.CopyFrom(is_environment.subject());
+  vse_clause environment_platform_is_trusted;
+  if (!make_unary_vse_clause(env_ent, env_plat_str, &environment_platform_is_trusted)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't make environment platform is trusted\n");
+    return false;
+  }
+
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(is_environment);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(3));
+  ps->mutable_conclusion()->CopyFrom(environment_platform_is_trusted);
+  ps->set_rule_applied(3);
 
   //    "environment(platform, measurement) is-environment" AND
   //        "measurement is-trusted" -->
   //        "environment(platform, measurement) environment-measurement-is-trusted"
+  string env_measurement_str("environment-measurement-is-trusted");
+  vse_clause environment_measurement_is_trusted;
+  if (!make_unary_vse_clause(env_ent, env_measurement_str, &environment_measurement_is_trusted)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't make environment measurement is trusted\n");
+    return false;
+  }
+
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(is_environment);
+  ps->mutable_s2()->CopyFrom(measurement_is_trusted);
+  ps->mutable_conclusion()->CopyFrom(environment_measurement_is_trusted);
+  ps->set_rule_applied(3);
 
   //    "environment(platform, measurement) environment-platform-is-trusted" AND
   //        "environment(platform, measurement) environment-measurement-is-trusted"  -->
   //        "environment(platform, measurement) is-trusted
+  string is_trusted_str("is-trusted");
+  vse_clause environment_is_trusted;
+  if (!make_unary_vse_clause(env_ent, is_trusted_str, &environment_is_trusted)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't make environment measurement is trusted\n");
+    return false;
+  }
+
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(environment_platform_is_trusted);
+  ps->mutable_s2()->CopyFrom(environment_measurement_is_trusted);
+  ps->mutable_conclusion()->CopyFrom(environment_is_trusted);
+  ps->set_rule_applied(3);
 
   //    "VCEK-key is-trusted-for-attestation" AND
   //      "VCEK-key says the enclave-key speaks-for the environment()" -->
   //        "enclave-key speaks-for the environment()" [, 8]
+  if (!already_proved->proved(8).has_subject() ||
+          !already_proved->proved(8).has_clause()) {
+    printf("construct_proof_from_sev_evidence_with_plat: components of ninth step malformed\n");
+    return false;
+  }
   const vse_clause& speaks_for = already_proved->proved(8).clause();
+
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(8));
+  ps->mutable_conclusion()->CopyFrom(speaks_for);
+  ps->set_rule_applied(3);
 
   //    "environment(platform, measurement) is-trusted AND
   //        enclave-key speaks-for environment(platform, measurement)  -->
-  //        enclave-key is-trusted-for-authentication  [or enclave-key is-trusted-for-attestation
+  //        enclave-key is-trusted-for-authentication  [or enclave-key is-trusted-for-attestation]
+  string auth_str("is-trusted-for-authentication");
+  string att_str("is-trusted-for-attestation");
+  vse_clause is_trusted_for_attestation;
+  vse_clause is_trusted_for_authentication;
+  entity_message auth_ent;
+  auth_ent.CopyFrom(speaks_for.subject());
 
+  if (purpose == "attestation") {
+    if (!make_unary_vse_clause(auth_ent, att_str, to_prove)) {
+      printf("construct_proof_from_sev_evidence_with_plat: can't make is trusted for purpose\n");
+      return false;
+    }
+  } else {
+    if (!make_unary_vse_clause(auth_ent, auth_str, to_prove)) {
+      printf("construct_proof_from_sev_evidence_with_plat: can't make is trusted for purpose\n");
+      return false;
+    }
+  }
+return true;
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(environment_is_trusted);
+  ps->mutable_s2()->CopyFrom(speaks_for);
+  ps->mutable_conclusion()->CopyFrom(*to_prove);
+  ps->set_rule_applied(3);
 
   return true;
 }
@@ -2147,7 +2276,7 @@ bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
 #if 0
     const entity_message& em = policy.claims(i).subject();
     if (!em.entity_type() == "key" || !same_key(policy_pk, em.key())) {
-      printf("init_policy: Policy must have\n");
+      printf("init_policy: the policy key does the saying\n");
     }
 #endif
     if (!add_fact_from_signed_claim(policy.claims(i), already_proved)) {
@@ -2191,17 +2320,6 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
     return false;
   }
 
-#if 1
-  printf("After init_policy --- proved statements:\n");
-  for (int i = 0; i < already_proved.proved_size(); i++) {
-    printf("  %2d: ", i);
-    print_vse_clause(already_proved.proved(i));
-    printf("\n");
-    printf("\n");
-  }
-  printf("\n");
-#endif
-
   if (!construct_proof_from_sev_evidence_with_plat(evidence_descriptor,
           policy_pk, purpose, &already_proved, &to_prove, &pf)) {
     printf("validate_evidence: can't construct proof\n");
@@ -2217,9 +2335,9 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
   }
   printf("\n");
 
-  //printf("to prove : ");
-  //print_vse_clause(to_prove);
-  //printf("\n");
+  printf("to prove : ");
+  print_vse_clause(to_prove);
+  printf("\n");
   print_proof(pf);
   printf("\n");
 #endif
