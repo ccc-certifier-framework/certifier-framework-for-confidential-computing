@@ -214,6 +214,7 @@ message proof_step {
 };
 
 message proof {
+  // First two fields not used
   optional vse_clause to_prove              = 1;
   repeated vse_clause already_proved        = 2;
   repeated proof_step steps                 = 3;
