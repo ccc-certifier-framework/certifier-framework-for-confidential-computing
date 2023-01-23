@@ -377,10 +377,12 @@ void print_property(const property& prop) {
 
 void print_platform(const platform& pl) {
   printf("platform: %s\n", pl.platform_type().c_str());
-  if (pl.has_attest_key()) {
+  if (pl.has_key()) {
     printf("  attest_key: ");
     print_key_descriptor(pl.attest_key());
     printf("\n");
+  } else {
+    printf("  no attest key\n");
   }
   for (int i = 0; i < pl.props().props_size(); i++) {
     printf("  ");
@@ -1479,7 +1481,7 @@ bool satisfying_platform(const platform& p1, const platform& p2) {
 
   if (p1.platform_type() != p2.platform_type())
     return false;
-  if (p1.has_attest_key() && p2.has_attest_key()) {
+  if (p1.has_key() && p2.has_key()) {
     if (!same_key(p1.attest_key(), p2.attest_key()))
       return false;
   }
@@ -1503,12 +1505,13 @@ bool same_platform(const platform& p1, const platform& p2) {
   if (p1.platform_type() != p2.platform_type()) {
     return false;
   }
-  if (p1.has_attest_key() && p2.has_attest_key()) {
-/*
+  if (p1.has_key() && p2.has_key()) {
     if (!same_key(p1.attest_key(), p2.attest_key())) {
+      printf("same_platform fails: keys dont match\n");
+      print_key(p1.attest_key()); printf("\n"); 
+      print_key(p2.attest_key()); printf("\n"); 
       return false;
     }
-*/
   }
 
   bool succeeded = same_properties(p1.props(), p2.props());
@@ -1602,6 +1605,9 @@ bool make_platform(const string& type, const properties& p, const key_message* a
   plat->set_platform_type(type);
   if (at != nullptr) {
     plat->mutable_attest_key()->CopyFrom(*at);
+    plat->set_has_key(true);
+  } else {
+    plat->set_has_key(false);
   }
   for (int i = 0; i < p.props_size(); i++) {
     plat->mutable_props()->add_props()->CopyFrom(p.props(i));
@@ -1807,9 +1813,11 @@ void print_property_descriptor(const property& p) {
 
 void print_platform_descriptor(const platform& pl) {
     printf("platform[%s", pl.platform_type().c_str());
-    if (pl.has_attest_key()) {
+    if (pl.has_key()) {
       printf(", key: ");
       print_key_descriptor(pl.attest_key());
+    } else {
+      printf(", no key");
     }
     for (int i = 0; i < pl.props().props_size(); i++) {
       printf(", ");

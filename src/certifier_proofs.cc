@@ -2,9 +2,9 @@
 #include "certifier.h"
 #include "simulated_enclave.h"
 #include "application_enclave.h"
-#include "attestation.h"
 #include <sys/socket.h>
 #include <netdb.h>
+#include "attestation.h"
 
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
@@ -1450,7 +1450,6 @@ return true;
 //        environment[platform, measurement] environment-measurement is-trusted
 bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
       const vse_clause& c2, const vse_clause& conclusion) {
-return true;
   if (!c1.has_subject() || !c1.has_verb())
     return false;
   if (!c2.has_subject() || !c2.has_verb())
@@ -1465,12 +1464,13 @@ return true;
     return false;
   if (!same_measurement(c1.subject().environment_ent().the_measurement(), c2.subject().measurement()))
     return false;
-  if (!same_entity(c1.subject(), conclusion.subject()))
-    return false;
   string v1("is-environment");
-  string v2("environment-measurement-is-trusted");
-  string v3("is-trusted");
+  string v2("is-trusted");
+  string v3("environment-measurement-is-trusted");
   if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
+    return false;
+// return true;
+  if (!same_entity(c1.subject(), conclusion.subject()))
     return false;
   return true;
 }

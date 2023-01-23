@@ -33,6 +33,7 @@ int main(int an, char** av) {
   }
 
   platform plat;
+  plat.set_has_key(false);
   plat.set_platform_type(FLAGS_platform_type);
 
   if (FLAGS_properties_file!= "") {

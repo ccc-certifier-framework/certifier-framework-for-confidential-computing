@@ -96,6 +96,7 @@ message platform {
   optional string platform_type             = 1;
   optional key_message attest_key           = 2;
   optional properties props                 = 3;
+  optional bool has_key                     = 4;
 };
 
 message environment {

@@ -29,10 +29,10 @@ S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
 I= $(INC_DIR)
 US= .
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/
+INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 
-CFLAGS= $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated
-CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated
+CFLAGS= $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
 CC=g++
 LINK=g++
 # PROTO=/usr/local/bin/protoc
@@ -43,14 +43,14 @@ AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
-dobj=	$(O)/cert_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
+dobj=	$(O)/cert_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
+$(O)/certifier_proofs.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 
-key_dobj=$(O)/key_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
+key_dobj=$(O)/key_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
+$(O)/certifier_proofs.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 
-mobj=	$(O)/measurement_init.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o
+mobj=	$(O)/measurement_init.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
+$(O)/certifier_proofs.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 
 
 all:	cert_utility.exe measurement_init.exe key_utility.exe
