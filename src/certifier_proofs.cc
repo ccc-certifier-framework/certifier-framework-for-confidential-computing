@@ -540,7 +540,7 @@ bool verify_report(string& type, string& serialized_signed_report,
     rule 8 (R8): If environment[platform, measurement] is-environment AND platform-template
       has-trusted-platform-property then environment[platform, measurement]
         environment-platform-is-trusted provided platform properties satisfy platform template
-    rule 9 (R9): If environment[platform, measurement] is-environment AND meassurement is-trusted then
+    rule 9 (R9): If environment[platform, measurement] is-environment AND measurement is-trusted then
         environment[platform, measurement] environment-measurement is-trusted
     rule 10 (R10): If environment[platform, measurement] environment-platform-is-trusted AND
         environment[platform, measurement] environment-measurement-is-trusted then
@@ -2302,7 +2302,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(7));
   ps->mutable_conclusion()->CopyFrom(is_environment);
-  ps->set_rule_applied(3);
+  ps->set_rule_applied(6);
   pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) is-environment" AND
@@ -2320,7 +2320,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s1()->CopyFrom(is_environment);
   ps->mutable_s2()->CopyFrom(already_proved->proved(3));
   ps->mutable_conclusion()->CopyFrom(environment_platform_is_trusted);
-  ps->set_rule_applied(3);
+  ps->set_rule_applied(8);
   pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) is-environment" AND
@@ -2337,7 +2337,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s1()->CopyFrom(is_environment);
   ps->mutable_s2()->CopyFrom(measurement_is_trusted);
   ps->mutable_conclusion()->CopyFrom(environment_measurement_is_trusted);
-  ps->set_rule_applied(3);
+  ps->set_rule_applied(9);
   pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) environment-platform-is-trusted" AND
@@ -2358,7 +2358,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s1()->CopyFrom(environment_platform_is_trusted);
   ps->mutable_s2()->CopyFrom(environment_measurement_is_trusted);
   ps->mutable_conclusion()->CopyFrom(environment_is_trusted);
-  ps->set_rule_applied(3);
+  ps->set_rule_applied(10);
   pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "VCEK-key is-trusted-for-attestation" AND
@@ -2379,7 +2379,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(8));
   ps->mutable_conclusion()->CopyFrom(speaks_for);
-  ps->set_rule_applied(3);
+  ps->set_rule_applied(6);
   pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) is-trusted AND
@@ -2391,18 +2391,6 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   vse_clause is_trusted_for_authentication;
   const entity_message& auth_ent = speaks_for.subject();
 
-  if (purpose == "attestation") {
-    if (!make_unary_vse_clause(auth_ent, att_str, to_prove)) {
-      printf("construct_proof_from_sev_evidence_with_plat: can't make is trusted for purpose\n");
-      return false;
-    }
-  } else {
-    if (!make_unary_vse_clause(auth_ent, auth_str, to_prove)) {
-      printf("construct_proof_from_sev_evidence_with_plat: can't make is trusted for purpose\n");
-      return false;
-    }
-  }
-
 #if 0
   ps = pf->add_steps();
 #else
@@ -2410,10 +2398,24 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   proof_step xps;
   ps = &xps;
 #endif
+
+  if (purpose == "attestation") {
+    if (!make_unary_vse_clause(auth_ent, att_str, to_prove)) {
+      printf("construct_proof_from_sev_evidence_with_plat: can't make is trusted for purpose\n");
+      return false;
+    }
+    ps->set_rule_applied(7);
+  } else {
+    if (!make_unary_vse_clause(auth_ent, auth_str, to_prove)) {
+      printf("construct_proof_from_sev_evidence_with_plat: can't make is trusted for purpose\n");
+      return false;
+    }
+    ps->set_rule_applied(1);
+  }
+
   ps->mutable_s1()->CopyFrom(environment_is_trusted);
   ps->mutable_s2()->CopyFrom(speaks_for);
   ps->mutable_conclusion()->CopyFrom(*to_prove);
-  ps->set_rule_applied(3);
   pss[step_count++].CopyFrom(*ps);  //temporary
 
   *num = step_count;  // temporary
