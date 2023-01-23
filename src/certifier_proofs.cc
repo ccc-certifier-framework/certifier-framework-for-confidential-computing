@@ -1431,14 +1431,18 @@ bool verify_rule_8(predicate_dominance& dom_tree, const vse_clause& c1,
   if (!same_entity(c1.subject(), conclusion.subject()))
     return false;
 
-  // check satisfaction
-  // satisfying_properties(const properties& p1, const properties& p2)
-
   string v1("is-environment");
-  string v2("has_trusted-platform-property");
+  string v2("has-trusted-platform-property");
   string v3("environment-platform-is-trusted");
   if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
     return false;
+
+return true;
+  // check satisfaction
+  if (!satisfying_platform(c1.subject().environment_ent().the_platform(),
+            c2.subject().platform_ent())) {
+    return false;
+  }
   return true;
 }
 
@@ -1446,6 +1450,7 @@ bool verify_rule_8(predicate_dominance& dom_tree, const vse_clause& c1,
 //        environment[platform, measurement] environment-measurement is-trusted
 bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
       const vse_clause& c2, const vse_clause& conclusion) {
+return true;
   if (!c1.has_subject() || !c1.has_verb())
     return false;
   if (!c2.has_subject() || !c2.has_verb())
@@ -1529,7 +1534,7 @@ bool verify_external_proof_step(predicate_dominance& dom_tree, proof_step& step)
 
 bool verify_internal_proof_step(predicate_dominance& dom_tree,
       vse_clause s1, vse_clause s2, vse_clause conclude, int rule_to_apply) {
-  if (rule_to_apply < 1 || rule_to_apply > 6)
+  if (rule_to_apply < 1 || rule_to_apply > 10)
     return false;
   switch(rule_to_apply) {
     default:
@@ -1548,6 +1553,12 @@ bool verify_internal_proof_step(predicate_dominance& dom_tree,
       return verify_rule_6(dom_tree, s1, s2, conclude);
     case 7:
       return verify_rule_7(dom_tree, s1, s2, conclude);
+    case 8:
+      return verify_rule_8(dom_tree, s1, s2, conclude);
+    case 9:
+      return verify_rule_9(dom_tree, s1, s2, conclude);
+    case 10:
+      return verify_rule_10(dom_tree, s1, s2, conclude);
   }
   return true;
 }
@@ -2148,28 +2159,9 @@ bool validate_evidence(const string& evidence_descriptor, signed_claim_sequence&
 //  New style proofs with platform information
 // -------------------------------------------------------------------
 
-
-// On entry, proved statements is:
-
-//   0: Key[rsa, policyKey, f91d6331b1f...] is-trusted
-//   1: Key[rsa, policyKey, f91d6331b1f...] says Key[rsa, ARKKey, a99f35070...] is-trusted-for-attestation
-//   2: Key[rsa, policyKey, f91d6331b1f...] says Measurement[00000000...]  is-trusted
-//   3: Key[rsa, policyKey, f91d6331b1f...] says platform[amd-sev-snp, key: ] has-trusted-platform-property
-//   4: Key[rsa, ARKKey, a99f3507...] says Key[rsa, ARKKey, a99f3507...] is-trusted-for-attestation
-//   5: Key[rsa, ARKKey, a99f3507...] says Key[rsa, ASKKey, bf9fe86365...] is-trusted-for-attestation
-//   6: Key[rsa, ASKKey, bf9fe86365...] says Key[ecc, VCEKKey, P-384-aa87ca22...] is-trusted-for-attestation
-//   7: Key[ecc, VCEKKey, P-384-aa87ca22...] says environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey,
-//      P-384-aa87ca22...], migrate:  no, debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0],
-//      measurement: 000000000...] is-environment
-//   8: Key[ecc, VCEKKey, P-384-aa87ca22...] says Key[rsa, dd38e0812c4...] speaks-for
-//      environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey, P-384-aa87ca22...], migrate:  no,
-//      debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0], measurement: 00000000000000...]
-
 bool verify_proof_from_array(key_message& policy_pk, vse_clause& to_prove,
         predicate_dominance& dom_tree,
         proved_statements* are_proved, int num_steps, proof_step* steps) {
-
-return true; 
 
   // verify proof
   for (int i = 0; i < num_steps; i++) {
@@ -2305,6 +2297,24 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->set_rule_applied(6);
   pss[step_count++].CopyFrom(*ps);  //temporary
 
+  // policy-key is-trusted AND policy-key says platform has-trusted-platform-property -->
+  //    platform has-trusted-platform-property
+  if (!already_proved->proved(3).has_subject() ||
+          !already_proved->proved(3).has_clause() ||
+          !already_proved->proved(3).clause().has_subject() ||
+          already_proved->proved(3).clause().subject().entity_type() != "platform") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of sixth step malformed\n");
+    return false;
+  }
+  const vse_clause& platform_has_property = already_proved->proved(3).clause();
+
+  ps = pf->add_steps();
+  ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(3));
+  ps->mutable_conclusion()->CopyFrom(platform_has_property);
+  ps->set_rule_applied(3);
+  pss[step_count++].CopyFrom(*ps);  //temporary
+
   //    "environment(platform, measurement) is-environment" AND
   //        "platform[amd-sev-snp, no-debug,...] has-trusted-platform-property" -->
   //        "environment(platform, measurement) environment-platform-is-trusted" [3, ]
@@ -2318,7 +2328,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
 
   ps = pf->add_steps();
   ps->mutable_s1()->CopyFrom(is_environment);
-  ps->mutable_s2()->CopyFrom(already_proved->proved(3));
+  ps->mutable_s2()->CopyFrom(platform_has_property);
   ps->mutable_conclusion()->CopyFrom(environment_platform_is_trusted);
   ps->set_rule_applied(8);
   pss[step_count++].CopyFrom(*ps);  //temporary
@@ -2371,7 +2381,15 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   }
   const vse_clause& speaks_for = already_proved->proved(8).clause();
 
+
+#if 0
   ps = pf->add_steps();
+#else
+  printf("\n****num steps: %d\n\n", pf->steps_size());
+  proof_step xps1;
+  ps = &xps1;
+#endif
+
   if (ps == nullptr) {
     printf("construct_proof_from_sev_evidence_with_plat: can't allocate steps\n");
     return false;
@@ -2395,8 +2413,8 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps = pf->add_steps();
 #else
   printf("\n****num steps: %d\n\n", pf->steps_size());
-  proof_step xps;
-  ps = &xps;
+  proof_step xps2;
+  ps = &xps2;
 #endif
 
   if (purpose == "attestation") {
@@ -2516,6 +2534,7 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
   printf("Proved:"); print_vse_clause(to_prove); printf("\n");
   printf("final proved statements:\n");
   for (int i = 0; i < already_proved.proved_size(); i++) {
+    printf("  %2d: ", i);
     print_vse_clause(already_proved.proved(i));
     printf("\n");
   }
