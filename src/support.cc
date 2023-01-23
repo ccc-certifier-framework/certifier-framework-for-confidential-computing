@@ -1432,12 +1432,6 @@ bool same_measurement(const string& m1, const string& m2) {
   return true;
 }
 
-bool satisfying_property(const property& p1, const property& p2) {
-  // Todo
-  // p1 may have ranges
-  return true;
-}
-
 bool same_property(const property& p1, const property& p2) {
   if (p1.property_name() != p2.property_name())
     return false;
@@ -1452,8 +1446,43 @@ bool same_property(const property& p1, const property& p2) {
   return true;
 }
 
+const property* find_property(const string& name, const properties& p) {
+  for (int i = 0; i < p.props_size(); i++) {
+    if (p.props(i).property_name() == name)
+      return &p.props(i);
+  }
+  return nullptr;
+}
+
+bool satisfying_property(const property& p1, const property& p2) {
+  if (p1.comparator() == "=")
+    return same_property(p1, p2);
+  if (p1.comparator() != ">=" || p1.property_name() != p2.property_name() ||
+      p1.value_type() != p2.value_type() || p1.value_type() != "int") {
+    return false;
+  }
+  return p2.int_value() >= p1.int_value();
+}
+
+bool satisfying_properties(const properties& p1, const properties& p2) {
+  for (int i = 0; i < p1.props_size(); i++) {
+    const property* pp2 = find_property(p1.props(i).property_name(), p2);
+    if (pp2 == nullptr)
+      return false;
+    if (!satisfying_property(p1.props(i), *pp2))
+      return false;
+  }
+  return true;
+}
+
 bool same_properties(const properties& p1, const properties& p2) {
-  // Todo
+  for (int i = 0; i < p1.props_size(); i++) {
+    const property* pp2 = find_property(p1.props(i).property_name(), p2);
+    if (pp2 == nullptr)
+      return false;
+    if (!same_property(p1.props(i), *pp2))
+      return false;
+  }
   return true;
 }
 
