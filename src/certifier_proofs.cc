@@ -533,7 +533,7 @@ bool verify_report(string& type, string& serialized_signed_report,
     rule 4 (R4): If key2 speaks-for key1 and key1 is-trusted then key2 is-trusted
     rule 5 (R5): If key1 is-trustedXXX and key1 says key2 is-trustedYYY then key2 is-trustedYYY
           provided is-trustedXXX dominates is-trustedYYY
-   *rule 6 (R6): if key1 is-trustedXXX and key1 says Y then Y   (may want to limit Y later)
+    rule 6 (R6): if key1 is-trustedXXX and key1 says Y then Y (may want to limit Y later)
           provided is-trustedXXX dominates is-trusted-for-attestation
     rule 7 (R7): If environment or measurement is-trusted and key1 speaks-for environment or measurement then
         key1 is-trusted-for-attestation.
@@ -1333,8 +1333,9 @@ bool verify_rule_5(predicate_dominance& dom_tree, const vse_clause& c1,
   return same_vse_claim(c2.clause(), conclusion);
 }
 
-// R6: if key1 is-trustedXXX and key1 says key2 speaks-for measurement then
-//      key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation
+// R6: if key1 is-trustedXXX and key1 says Y then Y
+//    provided is-trustedXXX dominates is-trusted-for-attestation
+//    see possible limitation note below
 bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
       const vse_clause& c2, const vse_clause& conclusion) {
 
@@ -1351,6 +1352,8 @@ bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
   if (c2.verb() != "says")
     return false;
 
+#if 0
+  // maybe this should be limited to speaks-for and is-environment
   if (!c2.clause().has_subject() || !c2.clause().has_verb())
     return false;
   if (!c2.clause().has_object() || c2.clause().has_clause())
@@ -1365,6 +1368,7 @@ bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
 
   if (!same_entity(c1.subject(), c2.subject()))
     return false;
+#endif
 
   string p2("is-trusted-for-attestation");
   if (!dominates(dom_tree, c1.verb(), p2))
@@ -1408,6 +1412,29 @@ bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
   return same_entity(conclusion.subject(), c2.subject());
 }
 
+// R8: If environment[platform, measurement] is-environment AND platform-template
+//      has-trusted-platform-property then environment[platform, measurement]
+//        environment-platform-is-trusted provided platform properties satisfy platform template
+bool verify_rule_8(predicate_dominance& dom_tree, const vse_clause& c1,
+      const vse_clause& c2, const vse_clause& conclusion) {
+  return false;
+}
+
+// R9: If environment[platform, measurement] is-environment AND meassurement is-trusted then
+//        environment[platform, measurement] environment-measurement is-trusted
+bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
+      const vse_clause& c2, const vse_clause& conclusion) {
+  return false;
+}
+
+// R10: If environment[platform, measurement] environment-platform-is-trusted AND
+//        environment[platform, measurement] environment-measurement-is-trusted then
+//        environment[platform, measurement] is-trusted
+bool verify_rule_10(predicate_dominance& dom_tree, const vse_clause& c1,
+      const vse_clause& c2, const vse_clause& conclusion) {
+  return false;
+}
+
 bool verify_external_proof_step(predicate_dominance& dom_tree, proof_step& step) {
   if (!step.has_rule_applied())
     return false;
@@ -1430,6 +1457,12 @@ bool verify_external_proof_step(predicate_dominance& dom_tree, proof_step& step)
     return verify_rule_6(dom_tree, step.s1(), step.s2(), step.conclusion());
   case 7:
     return verify_rule_7(dom_tree, step.s1(), step.s2(), step.conclusion());
+  case 8:
+    return verify_rule_8(dom_tree, step.s1(), step.s2(), step.conclusion());
+  case 9:
+    return verify_rule_9(dom_tree, step.s1(), step.s2(), step.conclusion());
+  case 10:
+    return verify_rule_10(dom_tree, step.s1(), step.s2(), step.conclusion());
   }
   return false;
 }
