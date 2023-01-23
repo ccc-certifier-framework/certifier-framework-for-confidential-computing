@@ -537,12 +537,12 @@ bool verify_report(string& type, string& serialized_signed_report,
           provided is-trustedXXX dominates is-trusted-for-attestation
     rule 7 (R7): If environment or measurement is-trusted and key1 speaks-for environment or measurement then
         key1 is-trusted-for-attestation.
-   *rule 8 (R8): If environment[platform, measurement] is-environment AND platform-template
+    rule 8 (R8): If environment[platform, measurement] is-environment AND platform-template
       has-trusted-platform-property then environment[platform, measurement]
         environment-platform-is-trusted provided platform properties satisfy platform template
-   *rule 9 (R9): If environment[platform, measurement] is-environment AND meassurement is-trusted then
+    rule 9 (R9): If environment[platform, measurement] is-environment AND meassurement is-trusted then
         environment[platform, measurement] environment-measurement is-trusted
-   *rule 10 (R10): If environment[platform, measurement] environment-platform-is-trusted AND
+    rule 10 (R10): If environment[platform, measurement] environment-platform-is-trusted AND
         environment[platform, measurement] environment-measurement-is-trusted then
         environment[platform, measurement] is-trusted
  
@@ -1414,17 +1414,60 @@ bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
 
 // R8: If environment[platform, measurement] is-environment AND platform-template
 //      has-trusted-platform-property then environment[platform, measurement]
-//        environment-platform-is-trusted provided platform properties satisfy platform template
+//        environment-platform-is-trusted
+//      provided platform properties satisfy platform template
 bool verify_rule_8(predicate_dominance& dom_tree, const vse_clause& c1,
       const vse_clause& c2, const vse_clause& conclusion) {
-  return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (!conclusion.has_subject() || !conclusion.has_verb())
+    return false;
+  if (c1.subject().entity_type() != "environment")
+    return false;
+  if (c2.subject().entity_type() != "platform")
+    return false;
+  if (!same_entity(c1.subject(), conclusion.subject()))
+    return false;
+
+  // check satisfaction
+  // satisfying_properties(const properties& p1, const properties& p2)
+
+  string v1("is-environment");
+  string v2("has_trusted-platform-property");
+  string v3("environment-platform-is-trusted");
+  if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
+    return false;
+  return true;
 }
 
-// R9: If environment[platform, measurement] is-environment AND meassurement is-trusted then
+// R9: If environment[platform, measurement] is-environment AND measurement is-trusted then
 //        environment[platform, measurement] environment-measurement is-trusted
 bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
       const vse_clause& c2, const vse_clause& conclusion) {
-  return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (!conclusion.has_subject() || !conclusion.has_verb())
+    return false;
+  if (c1.subject().entity_type() != "environment")
+    return false;
+  if (c2.subject().entity_type() != "measurement")
+    return false;
+  if (!c1.subject().environment_ent().has_the_measurement())
+    return false;
+  if (!same_measurement(c1.subject().environment_ent().the_measurement(), c2.subject().measurement()))
+    return false;
+  if (!same_entity(c1.subject(), conclusion.subject()))
+    return false;
+  string v1("is-environment");
+  string v2("environment-measurement-is-trusted");
+  string v3("is-trusted");
+  if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
+    return false;
+  return true;
 }
 
 // R10: If environment[platform, measurement] environment-platform-is-trusted AND
@@ -1432,7 +1475,24 @@ bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
 //        environment[platform, measurement] is-trusted
 bool verify_rule_10(predicate_dominance& dom_tree, const vse_clause& c1,
       const vse_clause& c2, const vse_clause& conclusion) {
-  return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (!conclusion.has_subject() || !conclusion.has_verb())
+    return false;
+  if (c1.subject().entity_type() != "environment")
+    return false;
+  if (!same_entity(c1.subject(), c2.subject()))
+    return false;
+  if (!same_entity(c1.subject(), conclusion.subject()))
+    return false;
+  string v1("environment-platform-is-trusted");
+  string v2("environment-measurement-is-trusted");
+  string v3("is-trusted");
+  if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
+    return false;
+  return true;
 }
 
 bool verify_external_proof_step(predicate_dominance& dom_tree, proof_step& step) {

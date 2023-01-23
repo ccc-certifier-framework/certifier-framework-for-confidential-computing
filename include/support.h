@@ -99,6 +99,7 @@ bool same_properties(const properties& p1, const properties& p2);
 bool satisfying_property(const property& p1, const property& p2);
 bool satisfying_properties(const properties& p1, const properties& p2);
 bool same_platform(const platform& p1, const platform& p2);
+bool satisfying_platform(const platform& p1, const platform& p2);
 bool same_environment(const environment& e1, const environment& e2);
 bool same_vse_claim(const vse_clause& c1, const vse_clause& c2);
 

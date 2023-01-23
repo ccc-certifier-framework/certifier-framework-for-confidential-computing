@@ -1475,6 +1475,18 @@ bool satisfying_properties(const properties& p1, const properties& p2) {
   return true;
 }
 
+bool satisfying_platform(const platform& p1, const platform& p2) {
+
+  if (p1.platform_type() != p2.platform_type())
+    return false;
+  if (p1.has_attest_key() && p2.has_attest_key()) {
+    if (!same_key(p1.attest_key(), p2.attest_key()))
+      return false;
+  }
+
+  return satisfying_properties(p1.props(), p2.props());
+}
+
 bool same_properties(const properties& p1, const properties& p2) {
   for (int i = 0; i < p1.props_size(); i++) {
     const property* pp2 = find_property(p1.props(i).property_name(), p2);
