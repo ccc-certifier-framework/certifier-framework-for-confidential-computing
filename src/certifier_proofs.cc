@@ -526,18 +526,26 @@ bool verify_report(string& type, string& serialized_signed_report,
   Certifier proofs
 
   Rules
-    rule 1 (R1): If measurement is-trusted and key1 speaks-for measurement then
+    rule 1 (R1): If environment or measurement is-trusted and key1 speaks-for environment or measurement then
         key1 is-trusted-for-authentication.
     rule 2 (R2): If key2 speaks-for key1 and key3 speaks-for key2 then key3 speaks-for key1
-    rule 3 (R3): If key1 is-trusted and key1 says X, then X is true
+    rule 3 (R3): If entity is-trusted and entity says X, then X is true
     rule 4 (R4): If key2 speaks-for key1 and key1 is-trusted then key2 is-trusted
     rule 5 (R5): If key1 is-trustedXXX and key1 says key2 is-trustedYYY then key2 is-trustedYYY
           provided is-trustedXXX dominates is-trustedYYY
-    rule 6 (R6): if key1 is-trustedXXX and key1 says key2 speaks-for measurement then
-        key2 speaks-for measurement
+   *rule 6 (R6): if key1 is-trustedXXX and key1 says Y then Y   (may want to limit Y later)
           provided is-trustedXXX dominates is-trusted-for-attestation
-    rule 7 (R1): If measurement is-trusted and key1 speaks-for measurement then
+    rule 7 (R7): If environment or measurement is-trusted and key1 speaks-for environment or measurement then
         key1 is-trusted-for-attestation.
+   *rule 8 (R8): If environment[platform, measurement] is-environment AND platform-template
+      has-trusted-platform-property then environment[platform, measurement]
+        environment-platform-is-trusted provided platform properties satisfy platform template
+   *rule 9 (R9): If environment[platform, measurement] is-environment AND meassurement is-trusted then
+        environment[platform, measurement] environment-measurement is-trusted
+   *rule 10 (R10): If environment[platform, measurement] environment-platform-is-trusted AND
+        environment[platform, measurement] environment-measurement-is-trusted then
+        environment[platform, measurement] is-trusted
+ 
 
   A statement, X, signed by entity1 is the same as entity1 says X
 
@@ -1227,7 +1235,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
   return true;
 }
 
-// R1: If measurement is-trusted and key1 speaks-for measurement then
+// R1: If measurement or environment is-trusted and key1 speaks-for measurement or environment then
 //    key1 is-trusted-for-authentication.
 bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
         const vse_clause& c2, const vse_clause& conclusion) {
@@ -1239,7 +1247,8 @@ bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
     return false;
   if (c1.verb() != "is-trusted")
     return false;
-  if (c1.subject().entity_type() != "measurement")
+  if (c1.subject().entity_type() != "measurement" &&
+      c1.subject().entity_type() != "environment")
     return false;
 
   if (!c2.has_subject() || !c2.has_verb())
@@ -1248,11 +1257,10 @@ bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
     return false;
   if (!c2.has_object() || c2.has_clause())
     return false;
-  if (c2.object().entity_type() != "measurement")
-    return false;
 
   if (!same_entity(c1.subject(), c2.object()))
     return false;
+
   // Make sure subject of conclusion is subject of c2 and verb "is-trusted"
   if (!conclusion.has_subject() || !conclusion.has_verb() || 
        conclusion.has_object() || conclusion.has_clause())
@@ -1270,7 +1278,7 @@ bool verify_rule_2(predicate_dominance& dom_tree, const vse_clause& c1,
   return false;
 }
 
-// R3: If key1 is-trusted and key1 says X, then X is true
+// R3: If entity is-trusted and entity says X, then X is true
 bool verify_rule_3(predicate_dominance& dom_tree, const vse_clause& c1, const vse_clause& c2, const vse_clause& conclusion) {
   if (!c1.has_subject() || !c1.has_verb())
     return false;
@@ -1365,8 +1373,8 @@ bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
   return same_vse_claim(c2.clause(), conclusion);
 }
 
-// R7: if measurement is-trusted
-//  key2 speaks-for measurement then
+// R7: if measurement or environment is-trusted
+//  key2 speaks-for measurement or environment then
 //  key2 is-trusted-for-attestation
 //      provided is-trustedXXX dominates is-trusted-for-attestation
 bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
@@ -1379,7 +1387,7 @@ bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
     return false;
   if (c1.verb() != "is-trusted")
     return false;
-  if (c1.subject().entity_type() != "measurement")
+  if (c1.subject().entity_type() != "measurement" && c1.subject().entity_type() != "environment")
     return false;
 
   if (!c2.has_subject() || !c2.has_verb())
@@ -1387,8 +1395,6 @@ bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
   if (c2.verb() != "speaks-for")
     return false;
   if (!c2.has_object() || c2.has_clause())
-    return false;
-  if (c2.object().entity_type() != "measurement")
     return false;
 
   if (!same_entity(c1.subject(), c2.object()))
@@ -2167,7 +2173,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s1()->CopyFrom(ark_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(5));
   ps->mutable_conclusion()->CopyFrom(ask_key_is_trusted);
-  ps->set_rule_applied(3);
+  ps->set_rule_applied(5);
   pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "the ASK-key is-trusted-for-attestation" AND
@@ -2185,7 +2191,7 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s1()->CopyFrom(ask_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(6));
   ps->mutable_conclusion()->CopyFrom(vcek_key_is_trusted);
-  ps->set_rule_applied(3);
+  ps->set_rule_applied(5);
   pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "VCEK-key is-trusted-for-attestation" AND
