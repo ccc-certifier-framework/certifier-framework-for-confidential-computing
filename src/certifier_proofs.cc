@@ -2066,6 +2066,39 @@ bool validate_evidence(const string& evidence_descriptor, signed_claim_sequence&
 //      environment[platform[amd-sev-snp, key: Key[ecc, VCEKKey, P-384-aa87ca22...], migrate:  no,
 //      debug:  no, key-share:  no, api_major:  = 255, api_minor:  = 0], measurement: 00000000000000...]
 
+bool verify_proof_from_array(key_message& policy_pk, vse_clause& to_prove,
+        predicate_dominance& dom_tree,
+        proved_statements* are_proved, int num_steps, proof_step* steps) {
+
+return true; 
+
+  // verify proof
+  for (int i = 0; i < num_steps; i++) {
+    bool success;
+    if (!statement_already_proved(steps[i].s1(), are_proved))
+
+    if (!statement_already_proved(steps[i].s2(), are_proved))
+      return false;
+    success = verify_internal_proof_step(dom_tree,
+              steps[i].s1(), steps[i].s2(),
+              steps[i].conclusion(), steps[i].rule_applied());
+    if (!success) {
+      printf("Proof step %d failed, rule: %d\n", i, steps[i].rule_applied());
+      print_vse_clause(steps[i].conclusion()); printf("\n");
+      return false;
+    }
+    vse_clause* to_add = are_proved->add_proved();
+    to_add->CopyFrom(steps[i].conclusion());
+  }
+
+  int n = are_proved->proved_size();
+  if (n < 1)
+    return false;
+  const vse_clause& last_proved = are_proved->proved(n-1);
+  return same_vse_claim(to_prove, last_proved);
+}
+
+
 bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
       key_message& policy_pk, const string& purpose,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf,
@@ -2373,10 +2406,8 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
   printf("\n");
 #endif
 
-return true;
-
-  if (!verify_proof(policy_pk, to_prove, predicate_dominance_root,
-            &pf, &already_proved)) {
+  if (!verify_proof_from_array(policy_pk, to_prove, predicate_dominance_root,
+            &already_proved, num_steps, steps)) {
     printf("verify_proof failed\n");
     return false;
   }
