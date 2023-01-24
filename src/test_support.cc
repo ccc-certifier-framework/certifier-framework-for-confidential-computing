@@ -1053,7 +1053,7 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
     printf("simulated_sev_Attest: can't sev attestation\n");
     return false;
   }
-  if (*size_out < atm_str.size()) {
+  if (*size_out < (int)atm_str.size()) {
     printf("simulated_sev_Attest: output buffer too small\n");
     return false;
   }

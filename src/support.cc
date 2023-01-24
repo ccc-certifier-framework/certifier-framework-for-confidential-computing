@@ -2408,7 +2408,7 @@ const int max_pipe_size = 65536;
 int sized_pipe_write(int fd, int size, byte* buf) {
   if (size > max_pipe_size)
     return -1;
-  if (write(fd, (byte*)&size, sizeof(int)) < sizeof(int))
+  if (write(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
     return -1;
   if (write(fd, buf, size) < size)
     return -1;
@@ -2446,7 +2446,7 @@ int sized_pipe_read(int fd, string* out) {
 
 // little endian only
 int sized_ssl_write(SSL* ssl, int size, byte* buf) {
-  if (SSL_write(ssl, (byte*)&size, sizeof(int)) < sizeof(int))
+  if (SSL_write(ssl, (byte*)&size, sizeof(int)) < (int)sizeof(int))
     return -1;
   if (SSL_write(ssl, buf, size) < size)
     return -1;
@@ -2489,7 +2489,7 @@ int sized_socket_read(int fd, string* out) {
   const int read_stride = 8192;
   byte buf[read_stride];
 
-  if (read(fd, (byte*)&size, sizeof(int)) < sizeof(int))
+  if (read(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
     return -1;
 
   while(total < size) {
@@ -2509,7 +2509,7 @@ int sized_socket_read(int fd, string* out) {
 
 // little endian only
 int sized_socket_write(int fd, int size, byte* buf) {
-  if (write(fd, (byte*)&size, sizeof(int)) < sizeof(int))
+  if (write(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
     return -1;
   if (write(fd, buf, size) < size)
     return -1;

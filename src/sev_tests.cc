@@ -159,7 +159,8 @@ bool test_sev(bool print_all) {
     attestation_report r;
     printf("attestation struct size is %lx, reported attestation size is %lx\n",
       sizeof(attestation_report), sev_att.reported_attestation().size());
-    printf("report starts at: %x, signature starts at %lx\n", &r, &r.signature);
+    printf("report starts at: %lx, signature starts at %lx\n", (long unsigned int)&r,
+        (long unsigned int)&r.signature);
     printf("\nMeasurement size: %d, measurement: ", size_measurement);
     print_bytes(size_measurement, measurement);
     printf("\n");
