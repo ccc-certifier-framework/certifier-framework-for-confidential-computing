@@ -1469,10 +1469,16 @@ bool satisfying_property(const property& p1, const property& p2) {
 bool satisfying_properties(const properties& p1, const properties& p2) {
   for (int i = 0; i < p1.props_size(); i++) {
     const property* pp2 = find_property(p1.props(i).property_name(), p2);
-    if (pp2 == nullptr)
+    if (pp2 == nullptr) {
+      printf("Can't find %s\n", p1.props(i).property_name().c_str());
       return false;
-    if (!satisfying_property(p1.props(i), *pp2))
+    }
+    if (!satisfying_property(p1.props(i), *pp2)) {
+      printf("mismatch\n");
+      print_property(p1.props(i)); printf("\n");
+      print_property(*pp2); printf("\n");
       return false;
+    }
   }
   return true;
 }
@@ -1514,13 +1520,7 @@ bool same_platform(const platform& p1, const platform& p2) {
     }
   }
 
-  bool succeeded = same_properties(p1.props(), p2.props());
-  if (!succeeded) {
-    printf("same_platform failed\n");
-    print_platform(p1);printf("\n");
-    print_platform(p2);printf("\n");
-  }
-  return succeeded;
+  return same_properties(p1.props(), p2.props());
 }
 
 bool same_environment(const environment& e1, const environment& e2) {

@@ -24,6 +24,9 @@ $UTILITIES/make_property.exe --property_name=debug --property_type='string' comp
 $UTILITIES/make_property.exe --property_name=migrate --property_type='string' comparator="=" \
 --string_value=no --output=$TEST_DATA/property2.bin
 
+$UTILITIES/make_property.exe --property_name=key-share --property_type='string' comparator="=" \
+--string_value=no --output=$TEST_DATA/property5.bin
+
 $UTILITIES/make_property.exe --property_name='api-major' --property_type=int --comparator=">=" \
 --int_value=0 --output=$TEST_DATA/property3.bin
 
@@ -31,7 +34,7 @@ $UTILITIES/make_property.exe --property_name='api-minor' --property_type=int --c
 --int_value=0 --output=$TEST_DATA/property4.bin
 
 $UTILITIES/combine_properties.exe \
---in=$TEST_DATA/property1.bin,$TEST_DATA/property2.bin,$TEST_DATA/property3.bin,$TEST_DATA/property4.bin \
+--in=$TEST_DATA/property1.bin,$TEST_DATA/property2.bin,$TEST_DATA/property3.bin,$TEST_DATA/property4.bin,$TEST_DATA/property5.bin \
 --output=$TEST_DATA/properties.bin
 
 $UTILITIES/make_platform.exe --platform_type=amd-sev-snp \

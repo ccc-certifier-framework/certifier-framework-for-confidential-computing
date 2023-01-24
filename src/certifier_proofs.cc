@@ -644,7 +644,7 @@ bool get_major_api_property(const sev_attestation_message& sev_att, property* pr
 
   attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
   value = (int)(((r->policy)>>8)&0xff);
-  string str_name("api_major");
+  string str_name("api-major");
   string str_equal("=");
   string str_type("int");
   return make_property(str_name, str_type, str_equal, value, str_name, prop);
@@ -655,7 +655,7 @@ bool get_minor_api_property(const sev_attestation_message& sev_att, property* pr
 
   attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
   value = (int)(((r->policy)>>16)&0xff);
-  string str_name("api_minor");
+  string str_name("api-minor");
   string str_equal("=");
   string str_type("int");
   return make_property(str_name, str_type, str_equal, value, str_name, prop);
@@ -1437,10 +1437,10 @@ bool verify_rule_8(predicate_dominance& dom_tree, const vse_clause& c1,
   if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
     return false;
 
-return true;
   // check satisfaction
-  if (!satisfying_platform(c1.subject().environment_ent().the_platform(),
-            c2.subject().platform_ent())) {
+  if (!satisfying_platform(c2.subject().platform_ent(),
+          c1.subject().environment_ent().the_platform())) {
+    printf("satisfying platform failed\n");
     return false;
   }
   return true;
@@ -1469,7 +1469,6 @@ bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
   string v3("environment-measurement-is-trusted");
   if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
     return false;
-// return true;
   if (!same_entity(c1.subject(), conclusion.subject()))
     return false;
   return true;
