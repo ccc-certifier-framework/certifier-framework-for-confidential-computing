@@ -145,7 +145,7 @@ TEST (test_predicate_dominance, test_predicate_dominance) {
   EXPECT_TRUE(test_predicate_dominance(FLAGS_print_all));
 }
 
-extern bool test_simulated_sev_platform_certify(
+extern bool test_sev_platform_certify(
           const string& policy_file_name, const string& policy_key_file,
           const string& ark_key_file_name, const string& ask_key_file_name,
           const string& vcek_key_file_name);
@@ -154,7 +154,7 @@ TEST (platform_certify, test_platform_certify) {
     printf("sev-policy test skipped\n");
     EXPECT_TRUE(true);
   } else {
-  EXPECT_TRUE(test_simulated_sev_platform_certify(
+  EXPECT_TRUE(test_sev_platform_certify(
     FLAGS_policy_file_name, FLAGS_policy_key_file_name,
     FLAGS_ark_key_file_name, FLAGS_ask_key_file_name, FLAGS_vcek_key_file_name));
   }
