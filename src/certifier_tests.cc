@@ -151,7 +151,8 @@ TEST (test_predicate_dominance, test_predicate_dominance) {
 extern bool test_sev_platform_certify(
           const string& policy_file_name, const string& policy_key_file,
           const string& ark_key_file_name, const string& ask_key_file_name,
-          const string& vcek_cert_file_name);
+          const string& vcek_key_file_name, const string& ark_cert_file_name,
+          const string& ask_cert_file_name, const string& vcek_cert_file_name);
 TEST (platform_certify, test_platform_certify) {
   if (FLAGS_policy_file_name == "") {
     printf("sev-policy test skipped\n");
@@ -159,7 +160,8 @@ TEST (platform_certify, test_platform_certify) {
   } else {
   EXPECT_TRUE(test_sev_platform_certify(
     FLAGS_policy_file_name, FLAGS_policy_key_file_name,
-    FLAGS_ark_key_file_name, FLAGS_ask_key_file_name, FLAGS_vcek_key_file_name));
+    FLAGS_ark_key_file_name, FLAGS_ask_key_file_name, FLAGS_vcek_key_file_name,
+    FLAGS_ark_cert_file_name, FLAGS_ask_cert_file_name, FLAGS_vcek_cert_file_name));
   }
 }
 

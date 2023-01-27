@@ -336,7 +336,9 @@ bool construct_sev_platform_evidence(
 bool test_sev_platform_certify(
           const string& policy_file_name, const string& policy_key_file,
           const string& ark_key_file_name, const string& ask_key_file_name,
-          const string& vcek_key_file_name) {
+          const string& vcek_key_file_name, const string& ark_cert_file_name,
+          const string& ask_cert_file_name, const string& vcek_cert_file_name) {
+
 
   string enclave_type("sev-enclave");
   string evidence_descriptor("sev-full-platform");
