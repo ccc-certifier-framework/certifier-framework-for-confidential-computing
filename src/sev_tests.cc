@@ -344,7 +344,7 @@ bool test_sev_platform_certify(
   string enclave_id("test-enclave");
   evidence_package evp;
 
-  debug_print = false;
+  bool debug_print = false;
 
 #if 0
   if (!sev_Init(platform_ark_der_file, platform_ask_der_file,
