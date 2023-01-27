@@ -38,7 +38,7 @@ bool test_sev(bool print_all) {
   memset(sealed, 0, sealed_size);
 
   if (!Seal(enclave_type, enclave_id, data_size, data, &sealed_size, sealed)) {
-    printf("test_sev, error 1\n");
+    printf("test_sev, seal error\n");
     return false;
   }
 
@@ -57,7 +57,7 @@ bool test_sev(bool print_all) {
   memset(unsealed, 0, unsealed_size);
 
   if (!Unseal(enclave_type, enclave_id, sealed_size, sealed, &unsealed_size, unsealed)) {
-    printf("test_sev, error 2\n");
+    printf("test_sev, unseal error\n");
     return false;
   }
 
@@ -69,7 +69,7 @@ bool test_sev(bool print_all) {
   }
 
   if (unsealed_size != data_size || memcmp(data, unsealed, data_size) != 0) {
-    printf("test_sev, error 3\n");
+    printf("test_sev, unsealed response wrong\n");
     return false;
   }
 
@@ -168,7 +168,6 @@ bool test_sev(bool print_all) {
 
   return true;
 }
-
 
 // new platform test
 #if 1

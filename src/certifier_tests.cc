@@ -33,6 +33,9 @@ DEFINE_string(policy_file_name, "", "policy file");
 DEFINE_string(ark_key_file_name, "ark_key_file.bin", "ark key");
 DEFINE_string(ask_key_file_name, "ask_key_file.bin", "ask key");
 DEFINE_string(vcek_key_file_name, "vcek_key_file.bin", "vcek key");
+DEFINE_string(ark_cert_file_name, "ark_cert_file.bin", "ark cert");
+DEFINE_string(ask_cert_file_name, "ask_cert_file.bin", "ask cert");
+DEFINE_string(vcek_cert_file_name, "vcek_cert_file.bin", "vcek cert");
 
 
 // Encryption and support tests
@@ -148,7 +151,7 @@ TEST (test_predicate_dominance, test_predicate_dominance) {
 extern bool test_sev_platform_certify(
           const string& policy_file_name, const string& policy_key_file,
           const string& ark_key_file_name, const string& ask_key_file_name,
-          const string& vcek_key_file_name);
+          const string& vcek_cert_file_name);
 TEST (platform_certify, test_platform_certify) {
   if (FLAGS_policy_file_name == "") {
     printf("sev-policy test skipped\n");
@@ -179,7 +182,6 @@ TEST (test_sev_certs, test_sev_certs) {
   EXPECT_TRUE(test_sev_certs(FLAGS_print_all));
 }
 
-#if 0 //REMOVE
 extern bool test_real_sev_certs(bool print_all);
 TEST (test_real_sev_certs, test_real_sev_certs) {
   EXPECT_TRUE(test_real_sev_certs(FLAGS_print_all));
@@ -194,7 +196,6 @@ extern bool test_sev(bool);
 TEST (test_sev, test_sev) {
   EXPECT_TRUE(test_sev(FLAGS_print_all));
 } 
-#endif
 #endif
 // -----------------------Run Tests-----------------------------
 

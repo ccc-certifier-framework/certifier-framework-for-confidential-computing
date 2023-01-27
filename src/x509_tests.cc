@@ -596,6 +596,7 @@ bool test_sev_request(bool print_all) {
 
   key_message auth_private_key;
   key_message auth_public_key;
+
   // Cheat
   auth_private_key.CopyFrom(policy_private_key);
   auth_private_key.set_key_name("authKey");
