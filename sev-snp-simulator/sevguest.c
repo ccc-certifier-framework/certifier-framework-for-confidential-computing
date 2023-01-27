@@ -39,6 +39,7 @@ static struct snp_guest_dev *snp_dev = NULL;;
 static struct attestation_report default_report = {
 	.version = 1,
 	.guest_svn = 1, // Set to 1 for now
+        .policy = 0xff,
 	.signature_algo = SIG_ALGO_ECDSA_P384_SHA384,
 	.platform_info = 0, // SMT disable
 	// TODO: Hardcoded mockup measurement

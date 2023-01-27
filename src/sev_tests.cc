@@ -347,12 +347,12 @@ bool test_sev_platform_certify(
 
   bool debug_print = false;
 
-#if 0
-  if (!sev_Init(platform_ark_der_file, platform_ask_der_file,
-      platform_vcek_der_file)) {
+  // This has no effect for now
+  extern bool sev_Init(const string&, const string&, const string&);
+  if (!sev_Init(ark_cert_file_name, ask_cert_file_name,
+                vcek_cert_file_name)) {
     return false;
   }
-#endif
 
   // get policy
   signed_claim_sequence signed_statements;
@@ -378,6 +378,8 @@ bool test_sev_platform_certify(
   }
 
 #if 1
+  //  For simulated SNP, we don't have real certs so we make some up.
+
   // Make ark, ask, vcek certs
   key_message ark_key;
   key_message ark_pk;
@@ -484,8 +486,14 @@ bool test_sev_platform_certify(
   if (!x509_to_asn1(x_vcek, &serialized_vcek_cert)) {
     return false;
   }
-#else
-  // read cert files
+
+  // The measurement in the simulated SNP is:
+  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
 #endif
 
   // construct evidence package
