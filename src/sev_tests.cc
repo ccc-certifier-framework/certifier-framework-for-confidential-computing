@@ -170,7 +170,10 @@ bool test_sev(bool print_all) {
 }
 
 // new platform test
-#if 1
+// ---------------------------------------------------------------------------------
+
+#if 0
+// This was scaffolding for an earlier version and is no longer needed
 bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
       int ud_size, byte* ud_data, int* size_out, byte* out) {
 
@@ -309,7 +312,7 @@ bool construct_sev_platform_evidence(
 
   int size_out = 16000;
   byte out[size_out];
-#if 0
+#if 1
   if (!Attest(enclave_type, serialized_ud.size(),
         (byte*) serialized_ud.data(), &size_out, out)) {
 #else

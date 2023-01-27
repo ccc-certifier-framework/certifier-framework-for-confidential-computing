@@ -58,7 +58,7 @@ $UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file
 $UTILITIES/print_vse_clause.exe --input=$TEST_DATA/vse_saysarkistrusted.bin
 
 $UTILITIES/measurement_init.exe --mrenclave=\
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 \
+010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 \
 --out_file=$TEST_DATA/meas.bin
 
 $UTILITIES/make_unary_vse_clause.exe --measurement_subject=$TEST_DATA/meas.bin \

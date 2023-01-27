@@ -1090,13 +1090,10 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       verify_pkey = nullptr;
 
       if (!success) {
-        printf("Verify failed\n");
+        printf("expected\n");
+        printf("init_proved_statements: Verify failed\n");
         return false;
       }
-#else
-      int size_measurement = 48;
-      byte measurement[size_measurement];
-      memset(measurement, 0, size_measurement);
 #endif
       if (!add_vse_proved_statements_from_sev_attest(sev_att, vcek_key,
             already_proved)) {
