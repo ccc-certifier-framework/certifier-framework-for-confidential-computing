@@ -2197,7 +2197,7 @@ bool verify_proof_from_array(key_message& policy_pk, vse_clause& to_prove,
 bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
       key_message& policy_pk, const string& purpose,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf,
-      // the following is temproary till we figure out the proto problem
+      // the following is temporary till we figure out the proto problem
       proof_step* pss, int* num) {
 
   proof_step* ps = nullptr;
@@ -2462,6 +2462,13 @@ bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
   }
 
   return true;
+}
+
+// This removes policy statements regarding measurements and platforms that are
+//  not related to target environment
+bool filter_policy(const signed_claim_sequence& policy, const entity_message measurement,
+        const platform plat, signed_claim_sequence* filtered_policy) {
+  return false;
 }
 
 // Use policy statements for init
