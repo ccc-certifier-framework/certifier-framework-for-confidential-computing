@@ -336,7 +336,7 @@ bool construct_sev_platform_evidence(
   return true;
 }
 
-bool test_sev_platform_certify(
+bool test_sev_platform_certify(const bool debug_print,
           const string& policy_file_name, const string& policy_key_file,
           const string& ark_key_file_name, const string& ask_key_file_name,
           const string& vcek_key_file_name, const string& ark_cert_file_name,
@@ -347,8 +347,6 @@ bool test_sev_platform_certify(
   string evidence_descriptor("sev-full-platform");
   string enclave_id("test-enclave");
   evidence_package evp;
-
-  bool debug_print = false;
 
   // This has no effect for now
   extern bool sev_Init(const string&, const string&, const string&);
@@ -489,14 +487,6 @@ bool test_sev_platform_certify(
   if (!x509_to_asn1(x_vcek, &serialized_vcek_cert)) {
     return false;
   }
-
-  // The measurement in the simulated SNP is:
-  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-  //         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
 #endif
 
   // construct evidence package

@@ -1073,13 +1073,21 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       }
       const key_message& vcek_key = last_clause.clause().subject().key();
 
+#ifndef SEV_DUMMY_GUEST
       EVP_PKEY* verify_pkey = pkey_from_key(vcek_key);
       if (verify_pkey == nullptr) {
         printf("sev attest processing, error 5\n");
         return false;
       }
+#else
+      extern EVP_PKEY* get_simulated_vcek_key();
+      EVP_PKEY* verify_pkey = get_simulated_vcek_key();
+      if (verify_pkey == nullptr) {
+        printf("sev attest processing, error 5\n");
+        return false;
+      }
+#endif
 
-#if 0
       int size_measurement = max_measurement_size;
       byte measurement[size_measurement];
       extern bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attestation,
@@ -1094,7 +1102,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         printf("init_proved_statements: Verify failed\n");
         return false;
       }
-#endif
+
       if (!add_vse_proved_statements_from_sev_attest(sev_att, vcek_key,
             already_proved)) {
         printf("init_proved_statements: can't add_vse_proved_statements_from_sev_attest\n");
@@ -2381,7 +2389,6 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
 #if 0
   ps = pf->add_steps();
 #else
-  printf("\n****num steps: %d\n\n", pf->steps_size());
   proof_step xps1;
   ps = &xps1;
 #endif
