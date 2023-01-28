@@ -44,7 +44,7 @@ $UTILITIES/make_unary_vse_clause.exe --platform_subject=$TEST_DATA/platform.bin 
 --verb="has-trusted-platform-property" --output=$TEST_DATA/vse_isplatform.bin
 
 $UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file.bin \
---verb="says" --clause=$TEST_DATA/vse_isplatform.bin --output=$TEST_DATA/vse_saysisplatform.bin 
+--verb="says" --clause=$TEST_DATA/vse_isplatform.bin --output=$TEST_DATA/vse_saysisplatform.bin
 
 $UTILITIES/print_vse_clause.exe --input=$TEST_DATA/vse_saysisplatform.bin
 
@@ -53,7 +53,7 @@ $UTILITIES/make_unary_vse_clause.exe --key_subject=$TEST_DATA/policy_ark_file.bi
 
 $UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file.bin \
 --verb="says" --clause=$TEST_DATA/vse_arkistrusted.bin \
---output=$TEST_DATA/vse_saysarkistrusted.bin 
+--output=$TEST_DATA/vse_saysarkistrusted.bin
 
 $UTILITIES/print_vse_clause.exe --input=$TEST_DATA/vse_saysarkistrusted.bin
 
@@ -65,7 +65,7 @@ $UTILITIES/make_unary_vse_clause.exe --measurement_subject=$TEST_DATA/meas.bin \
 --verb="is-trusted" --output=$TEST_DATA/vse_measurement.bin
 
 $UTILITIES/make_indirect_vse_clause.exe --key_subject=$TEST_DATA/policy_key_file.bin \
---verb="says" --clause=$TEST_DATA/vse_measurement.bin --output=$TEST_DATA/vse_saysmeasurement.bin 
+--verb="says" --clause=$TEST_DATA/vse_measurement.bin --output=$TEST_DATA/vse_saysmeasurement.bin
 
 $UTILITIES/print_vse_clause.exe --input=$TEST_DATA/vse_saysmeasurement.bin
 
@@ -102,4 +102,4 @@ $UTILITIES/print_packaged_claims.exe --input=$TEST_DATA/policy.bin
 #--vcek_key_file_name=./test_data/policy_vcek_file.bin \
 #--ark_cert_file_name=./test_data/ark.der \
 #--ask_cert_file_name=./test_data/ask.der \
-#--vcek_cert_file_name=./test_data/vcek.der 
+#--vcek_cert_file_name=./test_data/vcek.der

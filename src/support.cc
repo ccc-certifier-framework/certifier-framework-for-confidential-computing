@@ -1514,8 +1514,8 @@ bool same_platform(const platform& p1, const platform& p2) {
   if (p1.has_key() && p2.has_key()) {
     if (!same_key(p1.attest_key(), p2.attest_key())) {
       printf("same_platform fails: keys dont match\n");
-      print_key(p1.attest_key()); printf("\n"); 
-      print_key(p2.attest_key()); printf("\n"); 
+      print_key(p1.attest_key()); printf("\n");
+      print_key(p2.attest_key()); printf("\n");
       return false;
     }
   }
@@ -1612,7 +1612,7 @@ bool make_platform(const string& type, const properties& p, const key_message* a
   for (int i = 0; i < p.props_size(); i++) {
     plat->mutable_props()->add_props()->CopyFrom(p.props(i));
   }
-  
+
   return true;
 }
 
@@ -2047,7 +2047,7 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   }
   if (c.claim_format() != "vse-clause" && c.claim_format() != "vse-attestation") {
     printf("verify_signed_claim: %s should be vse-clause or vse-attestation\n",
-        c.claim_format().c_str());        
+        c.claim_format().c_str());
     return false;
   }
 

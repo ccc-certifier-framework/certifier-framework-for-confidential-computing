@@ -545,7 +545,7 @@ bool verify_report(string& type, string& serialized_signed_report,
     rule 10 (R10): If environment[platform, measurement] environment-platform-is-trusted AND
         environment[platform, measurement] environment-measurement-is-trusted then
         environment[platform, measurement] is-trusted
- 
+
 
   A statement, X, signed by entity1 is the same as entity1 says X
 

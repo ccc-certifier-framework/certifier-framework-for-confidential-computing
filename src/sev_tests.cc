@@ -461,7 +461,7 @@ bool test_sev_platform_certify(const bool debug_print,
   X509* x_ask = X509_new();
   if(!produce_artifact(ark_key,
           ark_issuer_name, ark_issuer_desc, ask_pk,
-          ask_subject_name, ask_subject_desc, 
+          ask_subject_name, ask_subject_desc,
           2ULL, 365.26*86400, x_ask, false)) {
     printf("test_sev_platform_certify: Can't produce ask artifact\n");
     return false;
