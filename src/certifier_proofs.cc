@@ -2193,15 +2193,19 @@ bool verify_proof_from_array(key_message& policy_pk, vse_clause& to_prove,
   return same_vse_claim(to_prove, last_proved);
 }
 
+const int max_steps_in_sev_plat_proof = 20;
 
+
+// Originally we passed a protobuf with a repeated field to receive the "proof steps."
+// Unfortunately, protobufs had a buf and wouldn't add more than 9 elements to
+// the repeated field, so we accept and array known to be large enough.
 bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
       key_message& policy_pk, const string& purpose,
-      proved_statements* already_proved, vse_clause* to_prove, proof* pf,
-      // the following is temporary till we figure out the proto problem
+      proved_statements* already_proved, vse_clause* to_prove,
       proof_step* pss, int* num) {
 
   proof_step* ps = nullptr;
-  int step_count = 0;  //temporary
+  int step_count = 0; 
 
   if (already_proved->proved_size() != 9) {
     printf("construct_proof_from_sev_evidence_with_plat: wrong number of proved statements\n");
@@ -2220,12 +2224,15 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   const vse_clause& policy_key_is_trusted = already_proved->proved(0);
   const vse_clause& measurement_is_trusted = already_proved->proved(2).clause();
 
-  ps = pf->add_steps();
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
   ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(2));
   ps->mutable_conclusion()->CopyFrom(measurement_is_trusted);
   ps->set_rule_applied(3);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "policyKey is-trusted" AND
   //        "policy-key says the ARK-key is-trusted-for-attestation" -->
@@ -2239,12 +2246,15 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   }
   const vse_clause& ark_key_is_trusted = already_proved->proved(1).clause();
 
-  ps = pf->add_steps();
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
   ps->mutable_s1()->CopyFrom(already_proved->proved(0));
   ps->mutable_s2()->CopyFrom(already_proved->proved(1));
   ps->mutable_conclusion()->CopyFrom(ark_key_is_trusted);
   ps->set_rule_applied(3);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "the ARK-key is-trusted-for-attestation" AND
   //        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
@@ -2258,12 +2268,15 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   }
   const vse_clause& ask_key_is_trusted = already_proved->proved(5).clause();
 
-  ps = pf->add_steps();
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
   ps->mutable_s1()->CopyFrom(ark_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(5));
   ps->mutable_conclusion()->CopyFrom(ask_key_is_trusted);
   ps->set_rule_applied(5);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "the ASK-key is-trusted-for-attestation" AND
   //        "the ASK-key says the VCEK-key is-trusted-for-attestation" -->
@@ -2276,12 +2289,15 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   }
   const vse_clause& vcek_key_is_trusted = already_proved->proved(6).clause();
 
-  ps = pf->add_steps();
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
   ps->mutable_s1()->CopyFrom(ask_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(6));
   ps->mutable_conclusion()->CopyFrom(vcek_key_is_trusted);
   ps->set_rule_applied(5);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "VCEK-key is-trusted-for-attestation" AND
   //        "the VCEK says environment(platform, measurement) is-environment -->
@@ -2294,12 +2310,15 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   }
   const vse_clause& is_environment = already_proved->proved(7).clause();
 
-  ps = pf->add_steps();
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
   ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(7));
   ps->mutable_conclusion()->CopyFrom(is_environment);
   ps->set_rule_applied(6);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
   // policy-key is-trusted AND policy-key says platform has-trusted-platform-property -->
   //    platform has-trusted-platform-property
@@ -2312,12 +2331,15 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   }
   const vse_clause& platform_has_property = already_proved->proved(3).clause();
 
-  ps = pf->add_steps();
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
   ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(3));
   ps->mutable_conclusion()->CopyFrom(platform_has_property);
   ps->set_rule_applied(3);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) is-environment" AND
   //        "platform[amd-sev-snp, no-debug,...] has-trusted-platform-property" -->
@@ -2330,12 +2352,15 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
     return false;
   }
 
-  ps = pf->add_steps();
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
   ps->mutable_s1()->CopyFrom(is_environment);
   ps->mutable_s2()->CopyFrom(platform_has_property);
   ps->mutable_conclusion()->CopyFrom(environment_platform_is_trusted);
   ps->set_rule_applied(8);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) is-environment" AND
   //        "measurement is-trusted" -->
@@ -2347,12 +2372,15 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
     return false;
   }
 
-  ps = pf->add_steps();
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
   ps->mutable_s1()->CopyFrom(is_environment);
   ps->mutable_s2()->CopyFrom(measurement_is_trusted);
   ps->mutable_conclusion()->CopyFrom(environment_measurement_is_trusted);
   ps->set_rule_applied(9);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) environment-platform-is-trusted" AND
   //        "environment(platform, measurement) environment-measurement-is-trusted"  -->
@@ -2364,7 +2392,11 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
     return false;
   }
 
-  ps = pf->add_steps();
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
   if (ps == nullptr) {
     printf("construct_proof_from_sev_evidence_with_plat: can't allocate steps\n");
     return false;
@@ -2373,7 +2405,6 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s2()->CopyFrom(environment_measurement_is_trusted);
   ps->mutable_conclusion()->CopyFrom(environment_is_trusted);
   ps->set_rule_applied(10);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "VCEK-key is-trusted-for-attestation" AND
   //      "VCEK-key says the enclave-key speaks-for the environment()" -->
@@ -2386,22 +2417,15 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   const vse_clause& speaks_for = already_proved->proved(8).clause();
 
 
-#if 0
-  ps = pf->add_steps();
-#else
-  proof_step xps1;
-  ps = &xps1;
-#endif
-
-  if (ps == nullptr) {
-    printf("construct_proof_from_sev_evidence_with_plat: can't allocate steps\n");
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
     return false;
   }
+  ps = &pss[step_count++];
   ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
   ps->mutable_s2()->CopyFrom(already_proved->proved(8));
   ps->mutable_conclusion()->CopyFrom(speaks_for);
   ps->set_rule_applied(6);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
   //    "environment(platform, measurement) is-trusted AND
   //        enclave-key speaks-for environment(platform, measurement)  -->
@@ -2412,14 +2436,11 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   vse_clause is_trusted_for_authentication;
   const entity_message& auth_ent = speaks_for.subject();
 
-#if 0
-  ps = pf->add_steps();
-#else
-  printf("\n****num steps: %d\n\n", pf->steps_size());
-  proof_step xps2;
-  ps = &xps2;
-#endif
-
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
   if (purpose == "attestation") {
     if (!make_unary_vse_clause(auth_ent, att_str, to_prove)) {
       printf("construct_proof_from_sev_evidence_with_plat: can't make is trusted for purpose\n");
@@ -2437,9 +2458,8 @@ bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descript
   ps->mutable_s1()->CopyFrom(environment_is_trusted);
   ps->mutable_s2()->CopyFrom(speaks_for);
   ps->mutable_conclusion()->CopyFrom(*to_prove);
-  pss[step_count++].CopyFrom(*ps);  //temporary
 
-  *num = step_count;  // temporary
+  *num = step_count;
   return true;
 }
 
@@ -2447,15 +2467,31 @@ bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
       proved_statements* already_proved) {
 
   for (int i = 0; i < policy.claims_size(); i++) {
-#if 0
-    const entity_message& em = policy.claims(i).subject();
-    if (!em.entity_type() == "key" || !same_key(policy_pk, em.key())) {
+#if 1
+    // This is a little wasteful since we parse it in add_fact_from_signed_claim.
+    // Remove this when filter policy is implemented.
+    claim_message cm;
+    if (!cm.ParseFromString(policy.claims(i).serialized_claim_message())) {
+      printf("init_policy: Can't parse serialized claim in policy\n");
+      return false;
+    }
+    if (cm.claim_format() != "vse-clause") {
+      printf("init_policy: policy must be a vse-clause\n");
+      return false;
+    }
+    vse_clause cl;
+    if (!cl.ParseFromString(cm.serialized_claim())) {
+      printf("init_policy: Can't parse serialized policy\n");
+      return false;
+    }
+    const entity_message& em = cl.subject();
+    if (em.entity_type() != "key" || !same_key(policy_pk, em.key())) {
       printf("init_policy: the policy key does the saying\n");
+      return false;
     }
 #endif
     if (!add_fact_from_signed_claim(policy.claims(i), already_proved)) {
       printf("init_policy: Can't add claim %d\n", i);
-      // print_signed_claim(policy.claims(i));
       printf("\n");
       return false;
     }
@@ -2464,10 +2500,37 @@ bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
   return true;
 }
 
-// This removes policy statements regarding measurements and platforms that are
-//  not related to target environment
-bool filter_policy(const signed_claim_sequence& policy, const entity_message measurement,
-        const platform plat, signed_claim_sequence* filtered_policy) {
+// Exactly one satisfying platform and one satisfying measurement should
+// be in the filtered policy.  It there are none or more than one each,
+// it's an error.  Also check the policy key is doing the saying.
+bool filter_policy(const key_message policy_pk, const signed_claim_sequence& policy,
+        const entity_message measurement, const platform plat,
+        signed_claim_sequence* filtered_policy) {
+    for (int i = 0; i < policy.claims_size(); i++) {
+      claim_message cm;
+      if (!cm.ParseFromString(policy.claims(i).serialized_claim_message())) {
+        printf("filter_policy: Can't parse serialized claim in policy\n");
+        return false;
+      }
+      if (cm.claim_format() != "vse-clause") {
+        printf("filter_policy: policy must be a vse-clause\n");
+        return false;
+      }
+      vse_clause cl;
+      if (!cl.ParseFromString(cm.serialized_claim())) {
+        printf("filter_policy: Can't parse serialized policy\n");
+        return false;
+      }
+      const entity_message& em = cl.subject();
+      if (em.entity_type() != "key" || !same_key(policy_pk, em.key())) {
+        printf("filter_policy: the policy key does the saying\n");
+        return false;
+      }
+      // Look for: policy_key says measurement is_trusted and
+      // policy-key says platform[] has trusted-platform-properties.
+      // If match, keep them.  If not, don't. 
+    }
+  // For now, return false.
   return false;
 }
 
@@ -2478,7 +2541,6 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
 
   proved_statements already_proved;
   vse_clause to_prove;
-  proof pf;
   predicate_dominance predicate_dominance_root;
 
   if (!init_dominance_tree(predicate_dominance_root)) {
@@ -2491,6 +2553,23 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
     return false;
   }
 
+  // Todo: Filter the policy first
+#if 0 
+  // The last statement in the evidence package should
+  // be a sev-attestation-with-platform which is a
+  // serialized sev_attestation_message.
+  // Get the actual measurement and platform from that
+  // to filter policy.
+  // See add_vse_proved_statements_from_sev_attest.
+  signed_claim_sequence filtered_policy; 
+  if (!filter_policy(policy_pk, policy,
+        const entity_message measurement, const platform plat,
+        filtered_policy)) {
+    printf("validate_evidence: can't filter policy\n");
+    return false;
+  }
+#endif
+
   if (!init_policy(policy, policy_pk, &already_proved)) {
     printf("validate_evidence: init_policy failed\n");
     return false;
@@ -2501,18 +2580,24 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
     return false;
   }
 
-  int num_steps = 20;
+  int num_steps = max_steps_in_sev_plat_proof;
   proof_step steps[num_steps];
   if (!construct_proof_from_sev_evidence_with_plat(evidence_descriptor,
-          policy_pk, purpose, &already_proved, &to_prove, &pf, steps, &num_steps)) {
+          policy_pk, purpose, &already_proved, &to_prove, steps, &num_steps)) {
     printf("validate_evidence: can't construct proof\n");
     return false;
   }
 
 #define PRINT_ALREADY_PROVED
 #ifdef PRINT_ALREADY_PROVED
+  printf("Evidence submitted:\n");
+  for (int i = 0; i < evp.fact_assertion_size(); i++) {
+    printf("\n  %2d: ", i);
+    print_evidence(evp.fact_assertion(i));
+  }
+  printf("\n");
   printf("proved statements after additions:\n");
-  for (int i = 0; i < pf.steps_size(); i++) {
+  for (int i = 0; i < already_proved.proved_size(); i++) {
     printf("\n  %2d: ", i);
     print_vse_clause(already_proved.proved(i));
     printf("\n");
@@ -2523,15 +2608,12 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
   print_vse_clause(to_prove);
   printf("\n");
   printf("\nproof steps:\n");
-#if 1
+
   for (int i = 0; i < num_steps; i++) {
     printf("\n%2d: ", i);
     print_proof_step(steps[i]);
     printf("\n");
   }
-#else
-  print_proof(pf);
-#endif
   printf("\n");
 #endif
 
