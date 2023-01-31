@@ -2164,8 +2164,8 @@ bool validate_evidence(const string& evidence_descriptor, signed_claim_sequence&
 // -------------------------------------------------------------------
 
 bool verify_proof_from_array(key_message& policy_pk, vse_clause& to_prove,
-        predicate_dominance& dom_tree,
-        proved_statements* are_proved, int num_steps, proof_step* steps) {
+        predicate_dominance& dom_tree, proved_statements* are_proved,
+        int num_steps, proof_step* steps) {
 
   // verify proof
   for (int i = 0; i < num_steps; i++) {
@@ -2197,15 +2197,15 @@ const int max_steps_in_sev_plat_proof = 20;
 
 
 // Originally we passed a protobuf with a repeated field to receive the "proof steps."
-// Unfortunately, protobufs had a buf and wouldn't add more than 9 elements to
-// the repeated field, so we accept and array known to be large enough.
+// Unfortunately, protobufs had a bug and won't add more than 9 elements to
+// the repeated field, so we use an array known to be large enough.
 bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
       key_message& policy_pk, const string& purpose,
       proved_statements* already_proved, vse_clause* to_prove,
       proof_step* pss, int* num) {
 
   proof_step* ps = nullptr;
-  int step_count = 0; 
+  int step_count = 0;
 
   if (already_proved->proved_size() != 9) {
     printf("construct_proof_from_sev_evidence_with_plat: wrong number of proved statements\n");
@@ -2561,7 +2561,7 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
   // Get the actual measurement and platform from that
   // to filter policy.
   // See add_vse_proved_statements_from_sev_attest.
-  signed_claim_sequence filtered_policy; 
+  signed_claim_sequence filtered_policy;
   if (!filter_policy(policy_pk, policy,
         const entity_message measurement, const platform plat,
         filtered_policy)) {
