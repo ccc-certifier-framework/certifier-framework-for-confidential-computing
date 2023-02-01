@@ -2528,38 +2528,110 @@ bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
   return true;
 }
 
+bool is_measurement(const vse_clause& cl) {
+  if (!cl.has_subject() || !cl.has_verb() || cl.has_object() || cl.has_clause())
+    return false;
+  if (cl.subject().entity_type() != "measurement")
+    return false;
+  if (cl.verb() != "is-trusted")
+    return false;
+    
+  return true;
+}
+
+bool is_platform(const vse_clause& cl) {
+  if (!cl.has_subject() || !cl.has_verb() || cl.has_object() || cl.has_clause())
+    return false;
+  if (cl.subject().entity_type() != "platform")
+    return false;
+  if (cl.verb() != "has-trusted-platform-property")
+    return false;
+
+  return true;
+}
+
+// Assumes is_measurement was called to ensure cl has right format
+bool right_measurement(const vse_clause& cl, const string& m) {
+  return same_measurement(m, cl.subject().measurement());
+}
+
+// Assumes is_platform was called to ensure cl has right format
+bool right_platform(const vse_clause& cl, const platform& p) {
+  return satisfying_platform(p, cl.subject().platform_ent());
+}
+
 // Exactly one satisfying platform and one satisfying measurement should
 // be in the filtered policy.  It there are none or more than one each,
 // it's an error.  Also check the policy key is doing the saying.
-bool filter_policy(const key_message policy_pk, const signed_claim_sequence& policy,
-        const entity_message measurement, const platform plat,
+bool filter_policy(const sev_attestation_message& sev_att,
+        const key_message& policy_pk,
+        const signed_claim_sequence& policy,
         signed_claim_sequence* filtered_policy) {
-    for (int i = 0; i < policy.claims_size(); i++) {
-      claim_message cm;
-      if (!cm.ParseFromString(policy.claims(i).serialized_claim_message())) {
-        printf("filter_policy: Can't parse serialized claim in policy\n");
-        return false;
-      }
-      if (cm.claim_format() != "vse-clause") {
-        printf("filter_policy: policy must be a vse-clause\n");
-        return false;
-      }
-      vse_clause cl;
-      if (!cl.ParseFromString(cm.serialized_claim())) {
-        printf("filter_policy: Can't parse serialized policy\n");
-        return false;
-      }
-      const entity_message& em = cl.subject();
-      if (em.entity_type() != "key" || !same_key(policy_pk, em.key())) {
-        printf("filter_policy: the policy key does the saying\n");
-        return false;
-      }
-      // Look for: policy_key says measurement is_trusted and
-      // policy-key says platform[] has trusted-platform-properties.
-      // If match, keep them.  If not, don't. 
+
+  entity_message m_ent;
+  if (!get_measurement_from_sev_attest(sev_att, &m_ent)) {
+      printf("filter_policy: Can't get measurement from attestation\n");
+      return false;
     }
-  // For now, return false.
-  return false;
+  entity_message p_ent;
+  if (!get_platform_from_sev_attest(sev_att, &p_ent) ) {
+      printf("filter_policy: Can't get platform from attestation\n");
+      return false;
+    }
+
+  bool found_measurement = false;
+  bool found_platform = false;
+
+  for (int i = 0; i < policy.claims_size(); i++) {
+    claim_message cm;
+    if (!cm.ParseFromString(policy.claims(i).serialized_claim_message())) {
+      printf("filter_policy: Can't parse serialized claim in policy\n");
+      return false;
+    }
+    if (cm.claim_format() != "vse-clause") {
+      printf("filter_policy: policy must be a vse-clause\n");
+      return false;
+    }
+    vse_clause cl;
+    if (!cl.ParseFromString(cm.serialized_claim())) {
+      printf("filter_policy: Can't parse serialized policy\n");
+      return false;
+    }
+    if (!cl.has_subject()) {
+      printf("filter_policy: policy rule misformatted (1)\n");
+      return false;
+    }
+    const entity_message& em = cl.subject();
+    if (em.entity_type() != "key" || !same_key(policy_pk, em.key())) {
+      printf("filter_policy: the policy key does the saying\n");
+      return false;
+    }
+    // In cl, look for: policy_key says measurement is_trusted and
+    // policy-key says platform[] has trusted-platform-properties.
+    // If match, keep them.  If not, don't.
+    if (!cl.has_clause()) { 
+      printf("filter_policy: policy rule misformatted (2)\n");
+      return false;
+    }
+    if (is_measurement(cl.clause())) {
+      if (found_measurement)
+        continue;
+      if (!right_measurement(cl.clause(), m_ent.measurement()))
+        continue;
+      found_measurement = true;
+    }
+    if (is_platform(cl.clause())) {
+      if (found_platform)
+        continue;
+      if (!right_platform(cl.clause(), p_ent.platform_ent()))
+        continue;
+      found_platform = true;
+    }
+    signed_claim_message* sc = filtered_policy->add_claims();
+    sc->CopyFrom(policy.claims(i));
+  }
+
+  return found_measurement && found_platform;
 }
 
 // Use policy statements for init
@@ -2590,8 +2662,7 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
   // to filter policy.
   // See add_vse_proved_statements_from_sev_attest.
   signed_claim_sequence filtered_policy;
-  if (!filter_policy(policy_pk, policy,
-        const entity_message measurement, const platform plat,
+  if (!filter_policy(sev_att, policy_pk, policy,
         filtered_policy)) {
     printf("validate_evidence: can't filter policy\n");
     return false;
