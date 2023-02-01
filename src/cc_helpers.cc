@@ -1020,9 +1020,17 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
   } else if ("gramine-enclave" == attesting_enclave_type) {
     string et2("gramine-attestation-report");
     ev2->set_evidence_type(et2);
+#if 1
+  // This is without platform verification
   } else if ("sev-enclave" ==  attesting_enclave_type) {
     string et2("sev-attestation");
     ev2->set_evidence_type(et2);
+#else
+  // This is with platform verification
+  } else if ("sev-enclave" ==  attesting_enclave_type) {
+    string et2("sev-attestation-with-platform");
+    ev2->set_evidence_type(et2);
+#endif
   } else {
     return false;
   }
