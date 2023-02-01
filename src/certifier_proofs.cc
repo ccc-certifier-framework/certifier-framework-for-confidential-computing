@@ -661,54 +661,82 @@ bool get_minor_api_property(const sev_attestation_message& sev_att, property* pr
   return make_property(str_name, str_type, str_equal, value, str_name, prop);
 }
 
-bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& sev_att,
-          const key_message& vcek_key,
-          proved_statements* already_proved) {
-
-  properties props;
+bool get_properties_from_sev_attest(const sev_attestation_message& sev_att,
+      properties* ps) {
   {
     property p1;
     if  (get_migrate_property(sev_att, &p1)) {
-      props.add_props()->CopyFrom(p1);
+      ps->add_props()->CopyFrom(p1);
     }
   }
   {
     property p1;
     if  (get_debug_property(sev_att, &p1)) {
-      props.add_props()->CopyFrom(p1);
+      ps->add_props()->CopyFrom(p1);
     }
   }
   {
     property p1;
     if  (get_key_share_property(sev_att, &p1)) {
-      props.add_props()->CopyFrom(p1);
+      ps->add_props()->CopyFrom(p1);
     }
   }
   {
     property p1;
     if  (get_major_api_property(sev_att, &p1)) {
-      props.add_props()->CopyFrom(p1);
+      ps->add_props()->CopyFrom(p1);
     }
   }
   {
     property p1;
     if  (get_minor_api_property(sev_att, &p1)) {
-      props.add_props()->CopyFrom(p1);
+      ps->add_props()->CopyFrom(p1);
     }
+  }
+
+  return true;
+}
+
+bool get_measurement_from_sev_attest(const sev_attestation_message& sev_att,
+      entity_message* ent) {
+  attestation_report* r = (attestation_report*)sev_att.reported_attestation().data();
+  ent->set_entity_type("measurement");
+  ent->set_measurement((char*)r->measurement, 48);
+  return true;
+}
+
+bool get_platform_from_sev_attest(const sev_attestation_message& sev_att,
+      entity_message* ent) {
+  ent->set_entity_type("platform");
+  ent->mutable_platform_ent()->set_platform_type("amd-sev-snp");
+  ent->mutable_platform_ent()->set_has_key(false);
+  if (!get_properties_from_sev_attest(sev_att,
+      ent->mutable_platform_ent()->mutable_props())) {
+    return false;
+  }
+
+  return true;
+}
+
+bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& sev_att,
+          const key_message& vcek_key,
+          proved_statements* already_proved) {
+
+  properties props;
+  if (!get_properties_from_sev_attest(sev_att, &props)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't get properties\n");
+    return false;
   }
 
   attestation_user_data ud;
   if (!ud.ParseFromString(sev_att.what_was_said())) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't parse attestation user data\n");
     return false;
   }
 
-  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
-
-  string m_str;
-  m_str.assign((char*)r->measurement, 48);
   entity_message m_ent;
-  if (!make_measurement_entity(m_str, &m_ent)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't make measurement entity\n");
+  if (!get_measurement_from_sev_attest(sev_att, &m_ent)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't get measurement from sev attest\n");
     return false;
   }
 
@@ -727,7 +755,7 @@ bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& se
 
   environment env;
   entity_message env_ent;
-  if (!make_environment(current_platform, m_str, &env)) {
+  if (!make_environment(current_platform, m_ent.measurement().data(), &env)) {
     printf("add_vse_proved_statements_from_sev_attest: Can't make environment\n");
     return false;
   }
