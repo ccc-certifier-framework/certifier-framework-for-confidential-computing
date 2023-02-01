@@ -1059,10 +1059,6 @@ bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_
 // ----------------------------------------------------------------------------------------------
 // Socket and SSL support
 
-#define DEBUG
-
-// Socket and SSL support
-
 void print_cn_name(X509_NAME* name) {
   int len = X509_NAME_get_text_by_NID(name, NID_commonName, nullptr, 0);
   if (len <= 0)

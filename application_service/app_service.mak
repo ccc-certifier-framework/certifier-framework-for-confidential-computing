@@ -28,8 +28,8 @@ O= $(OBJ_DIR)
 I= $(SRC_DIR)/include
 INCLUDE= -I$(I) -I$(LIBSRC)/sev-snp -I/usr/local/opt/openssl@1.1/include/
 
-CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D DEBUG
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D DEBUG
+CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D DEBUG -Wno-deprecated-declarations
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D DEBUG -Wno-deprecated-declarations
 CC=g++
 LINK=g++
 # PROTO=/usr/local/bin/protoc
@@ -60,10 +60,10 @@ hello_world.exe: hello_world.cc
 	@echo "hello_world.cc"
 	$(CC) $(CFLAGS) -o $(O)/hello_world.exe $(S)/hello_world.cc
 
-send_request.exe: $(O)/send_request.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o
+send_request.exe: $(O)/send_request.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o $(O)/certifier_proofs.o
 	@echo "send_request.exe"
 	$(LINK) -o $(EXE_DIR)/send_request.exe $(O)/send_request.o $(O)/certifier.pb.o \
-	$(O)/certifier.o $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o $(LDFLAGS)
+	$(O)/certifier.o $(O)/certifier_proofs.o $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o $(LDFLAGS)
 
 $(O)/send_request.o: $(S)/send_request.cc
 	@echo "send_request.cc"
@@ -93,9 +93,9 @@ $(O)/certifier.o: $(LIBSRC)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(LIBSRC)/certifier.cc
 
-$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/certifier_proofs.o: $(LIBSRC)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier_proofs.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(S)/certifier_proofs.cc
+	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(LIBSRC)/certifier_proofs.cc
 
 $(O)/support.o: $(LIBSRC)/support.cc $(I)/support.h
 	@echo "compiling support.cc"
