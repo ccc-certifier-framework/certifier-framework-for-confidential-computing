@@ -2557,25 +2557,25 @@ bool right_measurement(const vse_clause& cl, const string& m) {
 
 // Assumes is_platform was called to ensure cl has right format
 bool right_platform(const vse_clause& cl, const platform& p) {
-  return satisfying_platform(p, cl.subject().platform_ent());
+  return satisfying_platform(cl.subject().platform_ent(), p);
 }
 
 // Exactly one satisfying platform and one satisfying measurement should
 // be in the filtered policy.  It there are none or more than one each,
 // it's an error.  Also check the policy key is doing the saying.
-bool filter_policy(const sev_attestation_message& sev_att,
+bool filter_sev_policy(const sev_attestation_message& sev_att,
         const key_message& policy_pk,
         const signed_claim_sequence& policy,
         signed_claim_sequence* filtered_policy) {
 
   entity_message m_ent;
   if (!get_measurement_from_sev_attest(sev_att, &m_ent)) {
-      printf("filter_policy: Can't get measurement from attestation\n");
+      printf("filter_sev_policy: Can't get measurement from attestation\n");
       return false;
     }
   entity_message p_ent;
   if (!get_platform_from_sev_attest(sev_att, &p_ent) ) {
-      printf("filter_policy: Can't get platform from attestation\n");
+      printf("filter_sev_policy: Can't get platform from attestation\n");
       return false;
     }
 
@@ -2585,32 +2585,32 @@ bool filter_policy(const sev_attestation_message& sev_att,
   for (int i = 0; i < policy.claims_size(); i++) {
     claim_message cm;
     if (!cm.ParseFromString(policy.claims(i).serialized_claim_message())) {
-      printf("filter_policy: Can't parse serialized claim in policy\n");
+      printf("filter_sev_policy: Can't parse serialized claim in policy\n");
       return false;
     }
     if (cm.claim_format() != "vse-clause") {
-      printf("filter_policy: policy must be a vse-clause\n");
+      printf("filter_sev_policy: policy must be a vse-clause\n");
       return false;
     }
     vse_clause cl;
     if (!cl.ParseFromString(cm.serialized_claim())) {
-      printf("filter_policy: Can't parse serialized policy\n");
+      printf("filter_sev_policy: Can't parse serialized policy\n");
       return false;
     }
     if (!cl.has_subject()) {
-      printf("filter_policy: policy rule misformatted (1)\n");
+      printf("filter_sev_policy: policy rule misformatted (1)\n");
       return false;
     }
     const entity_message& em = cl.subject();
     if (em.entity_type() != "key" || !same_key(policy_pk, em.key())) {
-      printf("filter_policy: the policy key does the saying\n");
+      printf("filter_sev_policy: the policy key does the saying\n");
       return false;
     }
     // In cl, look for: policy_key says measurement is_trusted and
     // policy-key says platform[] has trusted-platform-properties.
     // If match, keep them.  If not, don't.
     if (!cl.has_clause()) { 
-      printf("filter_policy: policy rule misformatted (2)\n");
+      printf("filter_sev_policy: policy rule misformatted (2)\n");
       return false;
     }
     if (is_measurement(cl.clause())) {
@@ -2653,23 +2653,37 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
     return false;
   }
 
-  // Todo: Filter the policy first
-#if 0 
-  // The last statement in the evidence package should
-  // be a sev-attestation-with-platform which is a
-  // serialized sev_attestation_message.
+  // Filter the policy first
+  //    The last statement in the evidence package should
+  //    be a sev-attestation-with-platform which is a
+  //    serialized sev_attestation_message.
+  int k = evp.fact_assertion_size();
+  if (k < 1) {
+    printf("validate_evidence: empty evidence\n");
+    return false;
+  }
+  const evidence& ev = evp.fact_assertion(k - 1);
+  if (ev.evidence_type() != "sev-attestation-with-platform") {
+    printf("validate_evidence: wrong evidence type\n");
+    return false;
+  }
+
   // Get the actual measurement and platform from that
   // to filter policy.
-  // See add_vse_proved_statements_from_sev_attest.
+  sev_attestation_message sev_att;
+  if (!sev_att.ParseFromString(ev.serialized_evidence())) {
+    printf("validate_evidence: Can't parse sev attestation\n");
+    return false;
+  }
+
   signed_claim_sequence filtered_policy;
-  if (!filter_policy(sev_att, policy_pk, policy,
-        filtered_policy)) {
+  if (!filter_sev_policy(sev_att, policy_pk, policy,
+        &filtered_policy)) {
     printf("validate_evidence: can't filter policy\n");
     return false;
   }
-#endif
 
-  if (!init_policy(policy, policy_pk, &already_proved)) {
+  if (!init_policy(filtered_policy, policy_pk, &already_proved)) {
     printf("validate_evidence: init_policy failed\n");
     return false;
   }
@@ -2694,7 +2708,7 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
     printf("\n  %2d: ", i);
     print_evidence(evp.fact_assertion(i));
   }
-  printf("\n");
+  printf("\n\n");
   printf("proved statements after additions:\n");
   for (int i = 0; i < already_proved.proved_size(); i++) {
     printf("\n  %2d: ", i);

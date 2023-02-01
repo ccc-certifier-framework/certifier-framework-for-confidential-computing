@@ -279,7 +279,7 @@ bool validate_evidence(const string& evidence_descriptor,
 bool get_platform_from_sev_attest(const sev_attestation_message& sev_att, entity_message* ent);
 bool get_measurement_from_sev_attest(const sev_attestation_message& sev_att,
       entity_message* ent);
-bool filter_policy(const sev_attestation_message& sev_att, const key_message& policy_pk,
+bool filter_sev_policy(const sev_attestation_message& sev_att, const key_message& policy_pk,
         const signed_claim_sequence& policy,
         signed_claim_sequence* filtered_policy);
 bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
