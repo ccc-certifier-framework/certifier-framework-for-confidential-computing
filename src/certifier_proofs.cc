@@ -647,10 +647,10 @@ bool get_tcb_version_property(const sev_attestation_message& sev_att, property* 
   string str_name("tcb-version");
   string str_equal("=");
   string str_type("int");
-  value = (((int)r->platform_version.boot_loader) << 24) |
-          (((int)r->platform_version.tee) << 16) |
-          (((int)r->platform_version.snp) << 8) |
-          ((int)r->platform_version.microcode);
+  value = (((uint64_t)r->platform_version.boot_loader) << 24) |
+          (((uint64_t)r->platform_version.tee) << 16) |
+          (((uint64_t)r->platform_version.snp) << 8) |
+          ((uint64_t)r->platform_version.microcode);
   return make_property(str_name, str_type, str_equal, value, str_name, prop);
 }
 

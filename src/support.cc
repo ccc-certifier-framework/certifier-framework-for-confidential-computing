@@ -365,7 +365,7 @@ void print_property(const property& prop) {
     } else if (prop.comparator() == ">=") {
       printf(" >= ");
     }
-    printf("%d", prop.int_value());
+    printf("%lu", prop.int_value());
   } else if (prop.value_type() == "string") {
     printf("%s", prop.string_value().c_str());
   } else {
@@ -1803,7 +1803,7 @@ void print_property_descriptor(const property& p) {
   if (p.value_type() == "int") {
     if (p.comparator() != "")
       printf(" %s", p.comparator().c_str());
-    printf(" %d", p.int_value());
+    printf(" %lu", p.int_value());
   } else if (p.value_type() == "string") {
     printf(" %s", p.string_value().c_str());
   } else {
