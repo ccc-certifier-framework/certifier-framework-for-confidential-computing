@@ -639,6 +639,21 @@ bool get_debug_property(const sev_attestation_message& sev_att, property* prop) 
   return make_property(str_name, str_type, str_equal, 0, str_value, prop);
 }
 
+bool get_tcb_version_property(const sev_attestation_message& sev_att, property* prop) {
+  int value = 0;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  value = (int)(((r->policy)>>8)&0xff);
+  string str_name("tcb-version");
+  string str_equal("=");
+  string str_type("int");
+  value = (((int)r->platform_version.boot_loader) << 24) |
+          (((int)r->platform_version.tee) << 16) |
+          (((int)r->platform_version.snp) << 8) |
+          ((int)r->platform_version.microcode);
+  return make_property(str_name, str_type, str_equal, value, str_name, prop);
+}
+
 bool get_major_api_property(const sev_attestation_message& sev_att, property* prop) {
   int value = 0;
 
@@ -690,6 +705,12 @@ bool get_properties_from_sev_attest(const sev_attestation_message& sev_att,
   {
     property p1;
     if  (get_minor_api_property(sev_att, &p1)) {
+      ps->add_props()->CopyFrom(p1);
+    }
+  }
+  {
+    property p1;
+    if  (get_tcb_version_property(sev_att, &p1)) {
       ps->add_props()->CopyFrom(p1);
     }
   }
