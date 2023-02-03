@@ -148,23 +148,6 @@ TEST (test_predicate_dominance, test_predicate_dominance) {
   EXPECT_TRUE(test_predicate_dominance(FLAGS_print_all));
 }
 
-extern bool test_sev_platform_certify(const bool debug_print,
-          const string& policy_file_name, const string& policy_key_file,
-          const string& ark_key_file_name, const string& ask_key_file_name,
-          const string& vcek_key_file_name, const string& ark_cert_file_name,
-          const string& ask_cert_file_name, const string& vcek_cert_file_name);
-TEST (platform_certify, test_platform_certify) {
-  if (FLAGS_policy_file_name == "") {
-    printf("sev-policy test skipped\n");
-    EXPECT_TRUE(true);
-  } else {
-  EXPECT_TRUE(test_sev_platform_certify(FLAGS_print_all,
-    FLAGS_policy_file_name, FLAGS_policy_key_file_name,
-    FLAGS_ark_key_file_name, FLAGS_ask_key_file_name, FLAGS_vcek_key_file_name,
-    FLAGS_ark_cert_file_name, FLAGS_ask_cert_file_name, FLAGS_vcek_cert_file_name));
-  }
-}
-
 // The following tests will only work if there is initialized
 // policy data in test_data
 extern bool test_x_509_chain(bool print_all);
@@ -178,7 +161,7 @@ TEST (test_x_509_sign, test_x_509_sign) {
 }
 
 // sev tests
-#ifdef ENABLE_SEV
+#ifdef RUN_SEV_TESTS
 extern bool test_sev_certs(bool print_all);
 TEST (test_sev_certs, test_sev_certs) {
   EXPECT_TRUE(test_sev_certs(FLAGS_print_all));
@@ -198,6 +181,23 @@ extern bool test_sev(bool);
 TEST (test_sev, test_sev) {
   EXPECT_TRUE(test_sev(FLAGS_print_all));
 } 
+
+extern bool test_sev_platform_certify(const bool debug_print,
+          const string& policy_file_name, const string& policy_key_file,
+          const string& ark_key_file_name, const string& ask_key_file_name,
+          const string& vcek_key_file_name, const string& ark_cert_file_name,
+          const string& ask_cert_file_name, const string& vcek_cert_file_name);
+TEST (platform_certify, test_platform_certify) {
+  if (FLAGS_policy_file_name == "") {
+    printf("sev-policy test skipped\n");
+    EXPECT_TRUE(true);
+  } else {
+  EXPECT_TRUE(test_sev_platform_certify(FLAGS_print_all,
+    FLAGS_policy_file_name, FLAGS_policy_key_file_name,
+    FLAGS_ark_key_file_name, FLAGS_ask_key_file_name, FLAGS_vcek_key_file_name,
+    FLAGS_ark_cert_file_name, FLAGS_ask_cert_file_name, FLAGS_vcek_cert_file_name));
+  }
+}
 #endif
 
 // -----------------------Run Tests-----------------------------
