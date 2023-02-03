@@ -24,7 +24,7 @@ DEFINE_string(property_name, "",  "property name");
 DEFINE_string(property_type, "",  "property type");
 // values are "=", ">="
 DEFINE_string(comparator, "=",  "comparator");
-DEFINE_int32(int_value, 0,  "int value");
+DEFINE_uint64(int_value, 0,  "int value");
 DEFINE_string(string_value, "",  "string value");
 DEFINE_string(output, "prop.bin",  "output file");
 

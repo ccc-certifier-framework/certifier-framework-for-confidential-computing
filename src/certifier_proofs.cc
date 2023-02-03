@@ -640,10 +640,9 @@ bool get_debug_property(const sev_attestation_message& sev_att, property* prop) 
 }
 
 bool get_tcb_version_property(const sev_attestation_message& sev_att, property* prop) {
-  int value = 0;
+  uint64_t value = 0;
 
   attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
-  value = (int)(((r->policy)>>8)&0xff);
   string str_name("tcb-version");
   string str_equal("=");
   string str_type("int");

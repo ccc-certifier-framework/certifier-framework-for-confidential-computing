@@ -1616,7 +1616,7 @@ bool make_platform(const string& type, const properties& p, const key_message* a
   return true;
 }
 
-bool make_property(string& name, string& type, string& cmp, int int_value,
+bool make_property(string& name, string& type, string& cmp, uint64_t int_value,
     string& string_value, property* prop) {
   prop->set_property_name(name);
   prop->set_comparator(cmp);
