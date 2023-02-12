@@ -4,6 +4,7 @@
 #include "application_enclave.h"
 #include <sys/socket.h>
 #include <netdb.h>
+#include "attestation.h"
 
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
@@ -135,7 +136,7 @@ bool dominates(predicate_dominance& root, const string& parent, const string& de
   return pn->is_child(descendant);
 }
 
-//  ---------------------------------------------------------------------------------------------------------
+//  -------------------------------------------------------------------------------------------
 
 bool statement_already_proved(const vse_clause& cl, proved_statements* are_proved) {
  int n = are_proved->proved_size();
@@ -147,13 +148,59 @@ bool statement_already_proved(const vse_clause& cl, proved_statements* are_prove
   return false;
 }
 
-bool add_fact_from_signed_claim(signed_claim_message& signed_claim, proved_statements* already_proved) {
+bool verify_signed_assertion_and_extract_clause(const key_message& key,
+      const signed_claim_message& sc, vse_clause* cl) {
+
+  if (!sc.has_serialized_claim_message() || !sc.has_signing_key() ||
+      !sc.has_signing_algorithm() || !sc.has_signature()) {
+    return false;
+  }
+
+  // Deserialize claim to get clause
+  string serialized_claim_string;
+  claim_message asserted_claim;
+  serialized_claim_string.assign((char*)sc.serialized_claim_message().data(),
+        (int)sc.serialized_claim_message().size());
+  if (!asserted_claim.ParseFromString(serialized_claim_string)) {
+    printf("verify_signed_assertion_and_extract_clause: can't deserialize\n");
+    return false;
+  }
+
+  if (!asserted_claim.has_claim_format()) {
+    printf("verify_signed_assertion_and_extract_clause: no claim format\n");
+    return false;
+  }
+
+  if (asserted_claim.claim_format() == "vse-clause") {
+
+    string serialized_vse_string;
+    vse_clause asserted_vse;
+    serialized_vse_string.assign((char*)asserted_claim.serialized_claim().data(),
+        (int)asserted_claim.serialized_claim().size());
+    if (!asserted_vse.ParseFromString(serialized_vse_string)) {
+      printf("verify_signed_assertion_and_extract_clause: can't deserialize vse\n");
+      return false;
+    }
+    cl->CopyFrom(asserted_vse);
+  } else {
+    printf("verify_signed_assertion_and_extract_clause: only vse format supported\n");
+    return false;
+  }
+
+  // verify signature
+  return verify_signed_claim(sc, key);
+}
+
+bool add_fact_from_signed_claim(const signed_claim_message& signed_claim,
+      proved_statements* already_proved) {
 
   const key_message& k = signed_claim.signing_key();
   vse_clause tcl;
   if (verify_signed_assertion_and_extract_clause(k, signed_claim, &tcl)) {
     if (tcl.verb() != "says" || tcl.subject().entity_type() != "key") {
-      printf("Add_fact_from_signed_claim: verify_signed_assertion_and_extract_clause failed\n");
+      printf("Add_fact_from_signed_claim: bad subject or verb\n");
+      print_vse_clause(tcl);
+      printf("\n");
       return false;
     }
     if (!same_key(k, tcl.subject().key())) {
@@ -473,59 +520,32 @@ bool verify_report(string& type, string& serialized_signed_report,
   return success;
 }
 
-bool verify_signed_assertion_and_extract_clause(const key_message& key,
-      const signed_claim_message& sc, vse_clause* cl) {
-
-  if (!sc.has_serialized_claim_message() || !sc.has_signing_key() ||
-      !sc.has_signing_algorithm() || !sc.has_signature())
-    return false;
-
-  // Deserialize claim to get clasue
-  string serialized_claim_string;
-  claim_message asserted_claim;
-  serialized_claim_string.assign((char*)sc.serialized_claim_message().data(),
-        (int)sc.serialized_claim_message().size());
-  if (!asserted_claim.ParseFromString(serialized_claim_string))
-    return false;
-
-  if (!asserted_claim.has_claim_format())
-    return false;
-
-  if (asserted_claim.claim_format() == "vse-clause") {
-
-    string serialized_vse_string;
-    vse_clause asserted_vse;
-    serialized_vse_string.assign((char*)asserted_claim.serialized_claim().data(),
-        (int)asserted_claim.serialized_claim().size());
-    if (!asserted_vse.ParseFromString(serialized_vse_string))
-      return false;
-    cl->CopyFrom(asserted_vse);
-  } else {
-    return false;
-  }
-
-  // verify signature
-  return verify_signed_claim(sc, key);
-}
-
-//  ---------------------------------------------------------------------------------------------------------
+//  -------------------------------------------------------------------------------------------
 
 /*
   Certifier proofs
 
   Rules
-    rule 1 (R1): If measurement is-trusted and key1 speaks-for measurement then
+    rule 1 (R1): If environment or measurement is-trusted and key1 speaks-for environment or measurement then
         key1 is-trusted-for-authentication.
     rule 2 (R2): If key2 speaks-for key1 and key3 speaks-for key2 then key3 speaks-for key1
-    rule 3 (R3): If key1 is-trusted and key1 says X, then X is true
+    rule 3 (R3): If entity is-trusted and entity says X, then X is true
     rule 4 (R4): If key2 speaks-for key1 and key1 is-trusted then key2 is-trusted
     rule 5 (R5): If key1 is-trustedXXX and key1 says key2 is-trustedYYY then key2 is-trustedYYY
           provided is-trustedXXX dominates is-trustedYYY
-    rule 6 (R6): if key1 is-trustedXXX and key1 says key2 speaks-for measurement then
-        key2 speaks-for measurement
+    rule 6 (R6): if key1 is-trustedXXX and key1 says Y then Y (may want to limit Y later)
           provided is-trustedXXX dominates is-trusted-for-attestation
-    rule 7 (R1): If measurement is-trusted and key1 speaks-for measurement then
+    rule 7 (R7): If environment or measurement is-trusted and key1 speaks-for environment or measurement then
         key1 is-trusted-for-attestation.
+    rule 8 (R8): If environment[platform, measurement] is-environment AND platform-template
+      has-trusted-platform-property then environment[platform, measurement]
+        environment-platform-is-trusted provided platform properties satisfy platform template
+    rule 9 (R9): If environment[platform, measurement] is-environment AND measurement is-trusted then
+        environment[platform, measurement] environment-measurement is-trusted
+    rule 10 (R10): If environment[platform, measurement] environment-platform-is-trusted AND
+        environment[platform, measurement] environment-measurement-is-trusted then
+        environment[platform, measurement] is-trusted
+
 
   A statement, X, signed by entity1 is the same as entity1 says X
 
@@ -566,6 +586,237 @@ bool init_dominance_tree(predicate_dominance& root) {
       return false;
   }
 
+  return true;
+}
+
+// policy
+//    byte 0
+//      bit     value
+//      0       debug disallowed when set
+//      1       key sharing is disallowed when setA
+//      3       can't migrate when set
+//    byte 1: API_MAJOR
+//    byte 2: API_MINOR
+bool get_migrate_property(const sev_attestation_message& sev_att, property* prop) {
+  string str_value;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  if ((r->policy&0x4ULL))
+    str_value = "no";
+  else
+    str_value = "yes";
+  string str_name("migrate");
+  string str_equal("=");
+  string str_type("string");
+  return make_property(str_name, str_type, str_equal, 0, str_value, prop);
+}
+
+bool get_key_share_property(const sev_attestation_message& sev_att, property* prop) {
+  string str_value;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  if ((r->policy&0x2ULL))
+    str_value = "no";
+  else
+    str_value = "yes";
+  string str_name("key-share");
+  string str_equal("=");
+  string str_type("string");
+  return make_property(str_name, str_type, str_equal, 0, str_value, prop);
+}
+
+bool get_debug_property(const sev_attestation_message& sev_att, property* prop) {
+  string str_value;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  if ((r->policy&0x1ULL))
+    str_value = "no";
+  else
+    str_value = "yes";
+  string str_name("debug");
+  string str_equal("=");
+  string str_type("string");
+  return make_property(str_name, str_type, str_equal, 0, str_value, prop);
+}
+
+bool get_tcb_version_property(const sev_attestation_message& sev_att, property* prop) {
+  uint64_t value = 0;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  string str_name("tcb-version");
+  string str_equal("=");
+  string str_type("int");
+  value = (((uint64_t)r->platform_version.boot_loader) << 24) |
+          (((uint64_t)r->platform_version.tee) << 16) |
+          (((uint64_t)r->platform_version.snp) << 8) |
+          ((uint64_t)r->platform_version.microcode);
+  return make_property(str_name, str_type, str_equal, value, str_name, prop);
+}
+
+bool get_major_api_property(const sev_attestation_message& sev_att, property* prop) {
+  int value = 0;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  value = (int)(((r->policy)>>8)&0xff);
+  string str_name("api-major");
+  string str_equal("=");
+  string str_type("int");
+  return make_property(str_name, str_type, str_equal, value, str_name, prop);
+}
+
+bool get_minor_api_property(const sev_attestation_message& sev_att, property* prop) {
+  int value = 0;
+
+  attestation_report* r= (attestation_report*) sev_att.reported_attestation().data();
+  value = (int)(((r->policy)>>16)&0xff);
+  string str_name("api-minor");
+  string str_equal("=");
+  string str_type("int");
+  return make_property(str_name, str_type, str_equal, value, str_name, prop);
+}
+
+bool get_properties_from_sev_attest(const sev_attestation_message& sev_att,
+      properties* ps) {
+  {
+    property p1;
+    if  (get_migrate_property(sev_att, &p1)) {
+      ps->add_props()->CopyFrom(p1);
+    }
+  }
+  {
+    property p1;
+    if  (get_debug_property(sev_att, &p1)) {
+      ps->add_props()->CopyFrom(p1);
+    }
+  }
+  {
+    property p1;
+    if  (get_key_share_property(sev_att, &p1)) {
+      ps->add_props()->CopyFrom(p1);
+    }
+  }
+  {
+    property p1;
+    if  (get_major_api_property(sev_att, &p1)) {
+      ps->add_props()->CopyFrom(p1);
+    }
+  }
+  {
+    property p1;
+    if  (get_minor_api_property(sev_att, &p1)) {
+      ps->add_props()->CopyFrom(p1);
+    }
+  }
+  {
+    property p1;
+    if  (get_tcb_version_property(sev_att, &p1)) {
+      ps->add_props()->CopyFrom(p1);
+    }
+  }
+
+  return true;
+}
+
+bool get_measurement_from_sev_attest(const sev_attestation_message& sev_att,
+      entity_message* ent) {
+  attestation_report* r = (attestation_report*)sev_att.reported_attestation().data();
+  ent->set_entity_type("measurement");
+  ent->set_measurement((char*)r->measurement, 48);
+  return true;
+}
+
+bool get_platform_from_sev_attest(const sev_attestation_message& sev_att,
+      entity_message* ent) {
+  ent->set_entity_type("platform");
+  ent->mutable_platform_ent()->set_platform_type("amd-sev-snp");
+  ent->mutable_platform_ent()->set_has_key(false);
+  if (!get_properties_from_sev_attest(sev_att,
+      ent->mutable_platform_ent()->mutable_props())) {
+    return false;
+  }
+
+  return true;
+}
+
+bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& sev_att,
+          const key_message& vcek_key,
+          proved_statements* already_proved) {
+
+  properties props;
+  if (!get_properties_from_sev_attest(sev_att, &props)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't get properties\n");
+    return false;
+  }
+
+  attestation_user_data ud;
+  if (!ud.ParseFromString(sev_att.what_was_said())) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't parse attestation user data\n");
+    return false;
+  }
+
+  entity_message m_ent;
+  if (!get_measurement_from_sev_attest(sev_att, &m_ent)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't get measurement from sev attest\n");
+    return false;
+  }
+
+  entity_message auth_ent;
+  if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make measurement entity\n");
+    return false;
+  }
+
+  platform current_platform;
+  string type("amd-sev-snp");
+  if (!make_platform(type, props, &vcek_key, &current_platform)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make platform\n");
+    return false;
+  }
+
+  environment env;
+  entity_message env_ent;
+  if (!make_environment(current_platform, m_ent.measurement().data(), &env)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make environment\n");
+    return false;
+  }
+  if (!make_environment_entity(env, &env_ent)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make environment entity\n");
+    return false;
+  }
+
+  string says_verb("says");
+  string speaks_verb("speaks-for");
+  string is_env_verb("is-environment");
+
+  entity_message vcek_ent;
+  if (!make_key_entity(vcek_key, &vcek_ent)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make vcek entity\n");
+    return false;
+  }
+
+  vse_clause c0;
+  if (!make_unary_vse_clause(env_ent, is_env_verb, &c0)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make environment clause\n");
+    return false;
+  }
+
+  vse_clause* cl1 = already_proved->add_proved();
+  if (!make_indirect_vse_clause(vcek_ent, says_verb, c0, cl1)) {
+    printf("add_vse_proved_statements_from_sev_attest: can't make says environment clause\n");
+    return false;
+  }
+
+  vse_clause c1;
+  if (!make_simple_vse_clause(auth_ent, speaks_verb, env_ent, &c1)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make speaks-for clause\n");
+    return false;
+  }
+
+  vse_clause* cl2 = already_proved->add_proved();
+  if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl2)) {
+    printf("add_vse_proved_statements_from_sev_attest: Can't make says speaks-for\n");
+    return false;
+  }
   return true;
 }
 
@@ -844,17 +1095,74 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       }
 #ifdef SEV_SNP
     } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation-with-platform") {
-      // Todo: verify and add
-      //    vcek says environment(platform, measurement) is-environment
-      //    vcek says enclaveKey speaks-for environment
-      return false;
-    } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
       string t_str;
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
           evp.fact_assertion(i).serialized_evidence().size());
       sev_attestation_message sev_att;
       if (!sev_att.ParseFromString(evp.fact_assertion(i).serialized_evidence())) {
         printf("sev attest processing, error 1\n");
+        return false;
+      }
+
+      // vcekKey
+      // Last proved statement should have been ask_key says vcek_key is-trusted-for-attestation;
+      if (already_proved->proved_size() < 1) {
+        printf("sev attest processing, error 2\n");
+        return false;
+      }
+      const vse_clause& last_clause = already_proved->proved(already_proved->proved_size() - 1);
+      if (!last_clause.has_clause()) {
+        printf("sev attest processing, error 3\n");
+        return false;
+      }
+      if (!last_clause.clause().has_subject() || last_clause.clause().subject().entity_type() != "key") {
+        printf("sev attest processing, error 4\n");
+        return false;
+      }
+      const key_message& vcek_key = last_clause.clause().subject().key();
+
+#ifndef SEV_DUMMY_GUEST
+      EVP_PKEY* verify_pkey = pkey_from_key(vcek_key);
+      if (verify_pkey == nullptr) {
+        printf("sev attest processing, error 5\n");
+        return false;
+      }
+#else
+      extern EVP_PKEY* get_simulated_vcek_key();
+      EVP_PKEY* verify_pkey = get_simulated_vcek_key();
+      if (verify_pkey == nullptr) {
+        printf("sev attest processing, error 5\n");
+        return false;
+      }
+#endif
+
+      int size_measurement = max_measurement_size;
+      byte measurement[size_measurement];
+      extern bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attestation,
+          int* size_measurement, byte* measurement);
+      bool success = verify_sev_Attest(verify_pkey, evp.fact_assertion(i).serialized_evidence().size(),
+            (byte*)evp.fact_assertion(i).serialized_evidence().data(), &size_measurement, measurement);
+      EVP_PKEY_free(verify_pkey);
+      verify_pkey = nullptr;
+
+      if (!success) {
+        printf("expected\n");
+        printf("init_proved_statements: Verify failed\n");
+        return false;
+      }
+
+      if (!add_vse_proved_statements_from_sev_attest(sev_att, vcek_key,
+            already_proved)) {
+        printf("init_proved_statements: can't add_vse_proved_statements_from_sev_attest\n");
+        return false;
+      }
+    } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
+      string t_str;
+      t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
+          evp.fact_assertion(i).serialized_evidence().size());
+      sev_attestation_message sev_att;
+      if (!sev_att.ParseFromString(evp.fact_assertion(i).serialized_evidence())) {
+        printf("init_proved_statements: can't parse sev_att\n");
         return false;
       }
 
@@ -971,6 +1279,8 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         return false;
       }
     } else {
+      printf("Unknown evidence type: %i\n", i);
+      print_evidence(evp.fact_assertion(i)); printf("\n");
       printf("Unknown evidence type: %s\n", evp.fact_assertion(i).evidence_type().c_str());
       return false;
     }
@@ -978,7 +1288,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
   return true;
 }
 
-// R1: If measurement is-trusted and key1 speaks-for measurement then
+// R1: If measurement or environment is-trusted and key1 speaks-for measurement or environment then
 //    key1 is-trusted-for-authentication.
 bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
         const vse_clause& c2, const vse_clause& conclusion) {
@@ -990,7 +1300,8 @@ bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
     return false;
   if (c1.verb() != "is-trusted")
     return false;
-  if (c1.subject().entity_type() != "measurement")
+  if (c1.subject().entity_type() != "measurement" &&
+      c1.subject().entity_type() != "environment")
     return false;
 
   if (!c2.has_subject() || !c2.has_verb())
@@ -999,11 +1310,10 @@ bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
     return false;
   if (!c2.has_object() || c2.has_clause())
     return false;
-  if (c2.object().entity_type() != "measurement")
-    return false;
 
   if (!same_entity(c1.subject(), c2.object()))
     return false;
+
   // Make sure subject of conclusion is subject of c2 and verb "is-trusted"
   if (!conclusion.has_subject() || !conclusion.has_verb() || 
        conclusion.has_object() || conclusion.has_clause())
@@ -1021,7 +1331,7 @@ bool verify_rule_2(predicate_dominance& dom_tree, const vse_clause& c1,
   return false;
 }
 
-// R3: If key1 is-trusted and key1 says X, then X is true
+// R3: If entity is-trusted and entity says X, then X is true
 bool verify_rule_3(predicate_dominance& dom_tree, const vse_clause& c1, const vse_clause& c2, const vse_clause& conclusion) {
   if (!c1.has_subject() || !c1.has_verb())
     return false;
@@ -1076,8 +1386,9 @@ bool verify_rule_5(predicate_dominance& dom_tree, const vse_clause& c1,
   return same_vse_claim(c2.clause(), conclusion);
 }
 
-// R6: if key1 is-trustedXXX and key1 says key2 speaks-for measurement then
-//      key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation
+// R6: if key1 is-trustedXXX and key1 says Y then Y
+//    provided is-trustedXXX dominates is-trusted-for-attestation
+//    see possible limitation note below
 bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
       const vse_clause& c2, const vse_clause& conclusion) {
 
@@ -1094,6 +1405,8 @@ bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
   if (c2.verb() != "says")
     return false;
 
+#if 0
+  // maybe this should be limited to speaks-for and is-environment
   if (!c2.clause().has_subject() || !c2.clause().has_verb())
     return false;
   if (!c2.clause().has_object() || c2.clause().has_clause())
@@ -1108,6 +1421,7 @@ bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
 
   if (!same_entity(c1.subject(), c2.subject()))
     return false;
+#endif
 
   string p2("is-trusted-for-attestation");
   if (!dominates(dom_tree, c1.verb(), p2))
@@ -1116,8 +1430,8 @@ bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
   return same_vse_claim(c2.clause(), conclusion);
 }
 
-// R7: if measurement is-trusted
-//  key2 speaks-for measurement then
+// R7: if measurement or environment is-trusted
+//  key2 speaks-for measurement or environment then
 //  key2 is-trusted-for-attestation
 //      provided is-trustedXXX dominates is-trusted-for-attestation
 bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
@@ -1130,7 +1444,7 @@ bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
     return false;
   if (c1.verb() != "is-trusted")
     return false;
-  if (c1.subject().entity_type() != "measurement")
+  if (c1.subject().entity_type() != "measurement" && c1.subject().entity_type() != "environment")
     return false;
 
   if (!c2.has_subject() || !c2.has_verb())
@@ -1138,8 +1452,6 @@ bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
   if (c2.verb() != "speaks-for")
     return false;
   if (!c2.has_object() || c2.has_clause())
-    return false;
-  if (c2.object().entity_type() != "measurement")
     return false;
 
   if (!same_entity(c1.subject(), c2.object()))
@@ -1151,6 +1463,93 @@ bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
   if (conclusion.verb() != "is-trusted-for-attestation")
     return false;
   return same_entity(conclusion.subject(), c2.subject());
+}
+
+// R8: If environment[platform, measurement] is-environment AND platform-template
+//      has-trusted-platform-property then environment[platform, measurement]
+//        environment-platform-is-trusted
+//      provided platform properties satisfy platform template
+bool verify_rule_8(predicate_dominance& dom_tree, const vse_clause& c1,
+      const vse_clause& c2, const vse_clause& conclusion) {
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (!conclusion.has_subject() || !conclusion.has_verb())
+    return false;
+  if (c1.subject().entity_type() != "environment")
+    return false;
+  if (c2.subject().entity_type() != "platform")
+    return false;
+  if (!same_entity(c1.subject(), conclusion.subject()))
+    return false;
+
+  string v1("is-environment");
+  string v2("has-trusted-platform-property");
+  string v3("environment-platform-is-trusted");
+  if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
+    return false;
+
+  // check satisfaction
+  if (!satisfying_platform(c2.subject().platform_ent(),
+          c1.subject().environment_ent().the_platform())) {
+    printf("satisfying platform failed\n");
+    return false;
+  }
+  return true;
+}
+
+// R9: If environment[platform, measurement] is-environment AND measurement is-trusted then
+//        environment[platform, measurement] environment-measurement is-trusted
+bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
+      const vse_clause& c2, const vse_clause& conclusion) {
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (!conclusion.has_subject() || !conclusion.has_verb())
+    return false;
+  if (c1.subject().entity_type() != "environment")
+    return false;
+  if (c2.subject().entity_type() != "measurement")
+    return false;
+  if (!c1.subject().environment_ent().has_the_measurement())
+    return false;
+  if (!same_measurement(c1.subject().environment_ent().the_measurement(), c2.subject().measurement()))
+    return false;
+  string v1("is-environment");
+  string v2("is-trusted");
+  string v3("environment-measurement-is-trusted");
+  if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
+    return false;
+  if (!same_entity(c1.subject(), conclusion.subject()))
+    return false;
+  return true;
+}
+
+// R10: If environment[platform, measurement] environment-platform-is-trusted AND
+//        environment[platform, measurement] environment-measurement-is-trusted then
+//        environment[platform, measurement] is-trusted
+bool verify_rule_10(predicate_dominance& dom_tree, const vse_clause& c1,
+      const vse_clause& c2, const vse_clause& conclusion) {
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (!conclusion.has_subject() || !conclusion.has_verb())
+    return false;
+  if (c1.subject().entity_type() != "environment")
+    return false;
+  if (!same_entity(c1.subject(), c2.subject()))
+    return false;
+  if (!same_entity(c1.subject(), conclusion.subject()))
+    return false;
+  string v1("environment-platform-is-trusted");
+  string v2("environment-measurement-is-trusted");
+  string v3("is-trusted");
+  if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
+    return false;
+  return true;
 }
 
 bool verify_external_proof_step(predicate_dominance& dom_tree, proof_step& step) {
@@ -1175,13 +1574,19 @@ bool verify_external_proof_step(predicate_dominance& dom_tree, proof_step& step)
     return verify_rule_6(dom_tree, step.s1(), step.s2(), step.conclusion());
   case 7:
     return verify_rule_7(dom_tree, step.s1(), step.s2(), step.conclusion());
+  case 8:
+    return verify_rule_8(dom_tree, step.s1(), step.s2(), step.conclusion());
+  case 9:
+    return verify_rule_9(dom_tree, step.s1(), step.s2(), step.conclusion());
+  case 10:
+    return verify_rule_10(dom_tree, step.s1(), step.s2(), step.conclusion());
   }
   return false;
 }
 
 bool verify_internal_proof_step(predicate_dominance& dom_tree,
       vse_clause s1, vse_clause s2, vse_clause conclude, int rule_to_apply) {
-  if (rule_to_apply < 1 || rule_to_apply > 6)
+  if (rule_to_apply < 1 || rule_to_apply > 10)
     return false;
   switch(rule_to_apply) {
     default:
@@ -1200,6 +1605,12 @@ bool verify_internal_proof_step(predicate_dominance& dom_tree,
       return verify_rule_6(dom_tree, s1, s2, conclude);
     case 7:
       return verify_rule_7(dom_tree, s1, s2, conclude);
+    case 8:
+      return verify_rule_8(dom_tree, s1, s2, conclude);
+    case 9:
+      return verify_rule_9(dom_tree, s1, s2, conclude);
+    case 10:
+      return verify_rule_10(dom_tree, s1, s2, conclude);
   }
   return true;
 }
@@ -1233,6 +1644,9 @@ bool verify_proof(key_message& policy_pk, vse_clause& to_prove,
   const vse_clause& last_proved = are_proved->proved(n-1);
   return same_vse_claim(to_prove, last_proved);
 }
+
+// old style
+// ---------------------------------------------------------------------------------------
 
 bool add_newfacts_for_sev_attestation(key_message& policy_pk, string& serialized_ark_cert,
       string& serialized_ask_cert, string& serialized_vcek_cert,
@@ -1663,7 +2077,7 @@ bool construct_proof_from_full_vse_evidence(key_message& policy_pk, const string
   return true;
 }
 
-bool construct_proof_from_request(string& evidence_descriptor, key_message& policy_pk,
+bool construct_proof_from_request(const string& evidence_descriptor, key_message& policy_pk,
       const string& purpose, signed_claim_sequence& trusted_platforms,
       signed_claim_sequence& trusted_measurements, evidence_package& evp,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
@@ -1733,70 +2147,7 @@ bool construct_proof_from_request(string& evidence_descriptor, key_message& poli
   return true;
 }
 
-// Use policy statements for init
-bool validate_evidence_from_policy(string& evidence_descriptor, signed_claim_sequence& policy,
-        const string& purpose, evidence_package& evp, key_message& policy_pk) {
-  return false;
-
-/*
- proved_statements already_proved;
-  vse_clause to_prove;
-  proof pf;
-  predicate_dominance predicate_dominance_root;
-
-  if (!init_dominance_tree(predicate_dominance_root)) {
-    printf("validate_evidence: can't init predicate dominance tree\n");
-    return false;
-  }
-
-  if (!init_axiom(policy_pk, &already_proved)) {
-    printf("validate_evidence: can't init axiom\n");
-    return false;
-  }
-
-  if (!construct_proof_from_request(evidence_descriptor, policy_pk, purpose,
-            trusted_platforms, trusted_measurements,
-            evp, &already_proved, &to_prove, &pf)) {
-    printf("validate_evidence: can't construct proof\n");
-    return false;
-  }
-
-#ifdef PRINT_ALREADY_PROVED
-  printf("proved statements after additions:\n");
-  for (int i = 0; i < pf.steps_size(); i++) {
-    print_vse_clause(already_proved.proved(i));
-    printf("\n");
-  }
-  printf("\n");
-
-  printf("to prove : ");
-  print_vse_clause(to_prove);
-  printf("\n\n");
-  printf("proposed proof:\n");
-  print_proof(pf);
-  printf("\n");
-#endif
-
-  if (!verify_proof(policy_pk, to_prove, predicate_dominance_root,
-            &pf, &already_proved)) {
-    printf("verify_proof failed\n");
-    return false;
-  }
-#ifdef PRINT_ALREADY_PROVED
-  printf("Proved:"); print_vse_clause(to_prove); printf("\n");
-  printf("final proved statements:\n");
-  for (int i = 0; i < already_proved.proved_size(); i++) {
-    print_vse_clause(already_proved.proved(i));
-    printf("\n");
-  }
-  printf("\n");
-#endif
-
-  return true;
- */
-}
-
-bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trusted_platforms,
+bool validate_evidence(const string& evidence_descriptor, signed_claim_sequence& trusted_platforms,
         signed_claim_sequence& trusted_measurements, const string& purpose,
         evidence_package& evp, key_message& policy_pk) {
 
@@ -1857,4 +2208,565 @@ bool validate_evidence(string& evidence_descriptor, signed_claim_sequence& trust
   return true;
 }
 
+//  New style proofs with platform information
 // -------------------------------------------------------------------
+
+bool verify_proof_from_array(key_message& policy_pk, vse_clause& to_prove,
+        predicate_dominance& dom_tree, proved_statements* are_proved,
+        int num_steps, proof_step* steps) {
+
+  // verify proof
+  for (int i = 0; i < num_steps; i++) {
+    bool success;
+    if (!statement_already_proved(steps[i].s1(), are_proved))
+
+    if (!statement_already_proved(steps[i].s2(), are_proved))
+      return false;
+    success = verify_internal_proof_step(dom_tree,
+              steps[i].s1(), steps[i].s2(),
+              steps[i].conclusion(), steps[i].rule_applied());
+    if (!success) {
+      printf("Proof step %d failed, rule: %d\n", i, steps[i].rule_applied());
+      print_vse_clause(steps[i].conclusion()); printf("\n");
+      return false;
+    }
+    vse_clause* to_add = are_proved->add_proved();
+    to_add->CopyFrom(steps[i].conclusion());
+  }
+
+  int n = are_proved->proved_size();
+  if (n < 1)
+    return false;
+  const vse_clause& last_proved = are_proved->proved(n-1);
+  return same_vse_claim(to_prove, last_proved);
+}
+
+const int max_steps_in_sev_plat_proof = 20;
+
+
+// Originally we passed a protobuf with a repeated field to receive the "proof steps."
+// Unfortunately, protobufs had a bug and won't add more than 9 elements to
+// the repeated field, so we use an array known to be large enough.
+bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
+      key_message& policy_pk, const string& purpose,
+      proved_statements* already_proved, vse_clause* to_prove,
+      proof_step* pss, int* num) {
+
+  proof_step* ps = nullptr;
+  int step_count = 0;
+
+  if (already_proved->proved_size() != 9) {
+    printf("construct_proof_from_sev_evidence_with_plat: wrong number of proved statements\n");
+    return false;
+  }
+
+  // "policyKey is-trusted" AND policyKey says measurement is-trusted" -->
+  //        "measurement is-trusted" (R3)  [0, 2]
+  if (!already_proved->proved(0).has_subject() ||
+          !already_proved->proved(2).has_subject() ||
+          !already_proved->proved(2).has_clause() ||
+          already_proved->proved(2).clause().subject().entity_type() != "measurement") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of first step malformed\n");
+    return false;
+  }
+  const vse_clause& policy_key_is_trusted = already_proved->proved(0);
+  const vse_clause& measurement_is_trusted = already_proved->proved(2).clause();
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(2));
+  ps->mutable_conclusion()->CopyFrom(measurement_is_trusted);
+  ps->set_rule_applied(3);
+
+  //    "policyKey is-trusted" AND
+  //        "policy-key says the ARK-key is-trusted-for-attestation" -->
+  //        "the ARK-key is-trusted-for-attestation" (R3)  [0, 1]
+  if (!already_proved->proved(1).has_subject() ||
+          !already_proved->proved(1).has_clause() ||
+          !already_proved->proved(1).clause().has_subject() ||
+          already_proved->proved(1).clause().subject().entity_type() != "key") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of second step malformed\n");
+    return false;
+  }
+  const vse_clause& ark_key_is_trusted = already_proved->proved(1).clause();
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  ps->mutable_s1()->CopyFrom(already_proved->proved(0));
+  ps->mutable_s2()->CopyFrom(already_proved->proved(1));
+  ps->mutable_conclusion()->CopyFrom(ark_key_is_trusted);
+  ps->set_rule_applied(3);
+
+  //    "the ARK-key is-trusted-for-attestation" AND
+  //        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
+  //        "the ASK-key is-trusted-for-attestation" (R5)  [10, 5]
+  if (!already_proved->proved(5).has_subject() ||
+          !already_proved->proved(5).has_clause() ||
+          !already_proved->proved(5).clause().has_subject() ||
+          already_proved->proved(5).clause().subject().entity_type() != "key") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of third step malformed\n");
+    return false;
+  }
+  const vse_clause& ask_key_is_trusted = already_proved->proved(5).clause();
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  ps->mutable_s1()->CopyFrom(ark_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(5));
+  ps->mutable_conclusion()->CopyFrom(ask_key_is_trusted);
+  ps->set_rule_applied(5);
+
+  //    "the ASK-key is-trusted-for-attestation" AND
+  //        "the ASK-key says the VCEK-key is-trusted-for-attestation" -->
+  //        "the VCEK-key is-trusted-for-attestation" (R5) [11, 6]
+  if (!already_proved->proved(6).has_subject() ||
+          !already_proved->proved(6).has_clause() ||
+          already_proved->proved(6).clause().subject().entity_type() != "key") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of fourth step malformed\n");
+    return false;
+  }
+  const vse_clause& vcek_key_is_trusted = already_proved->proved(6).clause();
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  ps->mutable_s1()->CopyFrom(ask_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(6));
+  ps->mutable_conclusion()->CopyFrom(vcek_key_is_trusted);
+  ps->set_rule_applied(5);
+
+  //    "VCEK-key is-trusted-for-attestation" AND
+  //        "the VCEK says environment(platform, measurement) is-environment -->
+  //        "environment(platform, measurement) is-environment" [7]
+  if (!already_proved->proved(7).has_subject() ||
+          !already_proved->proved(7).has_clause() ||
+          already_proved->proved(7).clause().subject().entity_type() != "environment") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of fifth step malformed\n");
+    return false;
+  }
+  const vse_clause& is_environment = already_proved->proved(7).clause();
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(7));
+  ps->mutable_conclusion()->CopyFrom(is_environment);
+  ps->set_rule_applied(6);
+
+  // policy-key is-trusted AND policy-key says platform has-trusted-platform-property -->
+  //    platform has-trusted-platform-property
+  if (!already_proved->proved(3).has_subject() ||
+          !already_proved->proved(3).has_clause() ||
+          !already_proved->proved(3).clause().has_subject() ||
+          already_proved->proved(3).clause().subject().entity_type() != "platform") {
+    printf("construct_proof_from_sev_evidence_with_plat: components of sixth step malformed\n");
+    return false;
+  }
+  const vse_clause& platform_has_property = already_proved->proved(3).clause();
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  ps->mutable_s1()->CopyFrom(policy_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(3));
+  ps->mutable_conclusion()->CopyFrom(platform_has_property);
+  ps->set_rule_applied(3);
+
+  //    "environment(platform, measurement) is-environment" AND
+  //        "platform[amd-sev-snp, no-debug,...] has-trusted-platform-property" -->
+  //        "environment(platform, measurement) environment-platform-is-trusted" [3, ]
+  string env_plat_str("environment-platform-is-trusted");
+  const entity_message& env_ent = is_environment.subject();
+  vse_clause environment_platform_is_trusted;
+  if (!make_unary_vse_clause(env_ent, env_plat_str, &environment_platform_is_trusted)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't make environment platform is trusted\n");
+    return false;
+  }
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  ps->mutable_s1()->CopyFrom(is_environment);
+  ps->mutable_s2()->CopyFrom(platform_has_property);
+  ps->mutable_conclusion()->CopyFrom(environment_platform_is_trusted);
+  ps->set_rule_applied(8);
+
+  //    "environment(platform, measurement) is-environment" AND
+  //        "measurement is-trusted" -->
+  //        "environment(platform, measurement) environment-measurement-is-trusted"
+  string env_measurement_str("environment-measurement-is-trusted");
+  vse_clause environment_measurement_is_trusted;
+  if (!make_unary_vse_clause(env_ent, env_measurement_str, &environment_measurement_is_trusted)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't make environment measurement is trusted\n");
+    return false;
+  }
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  ps->mutable_s1()->CopyFrom(is_environment);
+  ps->mutable_s2()->CopyFrom(measurement_is_trusted);
+  ps->mutable_conclusion()->CopyFrom(environment_measurement_is_trusted);
+  ps->set_rule_applied(9);
+
+  //    "environment(platform, measurement) environment-platform-is-trusted" AND
+  //        "environment(platform, measurement) environment-measurement-is-trusted"  -->
+  //        "environment(platform, measurement) is-trusted
+  string is_trusted_str("is-trusted");
+  vse_clause environment_is_trusted;
+  if (!make_unary_vse_clause(env_ent, is_trusted_str, &environment_is_trusted)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't make environment measurement is trusted\n");
+    return false;
+  }
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  if (ps == nullptr) {
+    printf("construct_proof_from_sev_evidence_with_plat: can't allocate steps\n");
+    return false;
+  }
+  ps->mutable_s1()->CopyFrom(environment_platform_is_trusted);
+  ps->mutable_s2()->CopyFrom(environment_measurement_is_trusted);
+  ps->mutable_conclusion()->CopyFrom(environment_is_trusted);
+  ps->set_rule_applied(10);
+
+  //    "VCEK-key is-trusted-for-attestation" AND
+  //      "VCEK-key says the enclave-key speaks-for the environment()" -->
+  //        "enclave-key speaks-for the environment()" [, 8]
+  if (!already_proved->proved(8).has_subject() ||
+          !already_proved->proved(8).has_clause()) {
+    printf("construct_proof_from_sev_evidence_with_plat: components of ninth step malformed\n");
+    return false;
+  }
+  const vse_clause& speaks_for = already_proved->proved(8).clause();
+
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  ps->mutable_s1()->CopyFrom(vcek_key_is_trusted);
+  ps->mutable_s2()->CopyFrom(already_proved->proved(8));
+  ps->mutable_conclusion()->CopyFrom(speaks_for);
+  ps->set_rule_applied(6);
+
+  //    "environment(platform, measurement) is-trusted AND
+  //        enclave-key speaks-for environment(platform, measurement)  -->
+  //        enclave-key is-trusted-for-authentication  [or enclave-key is-trusted-for-attestation]
+  string auth_str("is-trusted-for-authentication");
+  string att_str("is-trusted-for-attestation");
+  vse_clause is_trusted_for_attestation;
+  vse_clause is_trusted_for_authentication;
+  const entity_message& auth_ent = speaks_for.subject();
+
+  if (step_count >= (*num - 1)) {
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof step in array\n");
+    return false;
+  }
+  ps = &pss[step_count++];
+  if (purpose == "attestation") {
+    if (!make_unary_vse_clause(auth_ent, att_str, to_prove)) {
+      printf("construct_proof_from_sev_evidence_with_plat: can't make is trusted for purpose\n");
+      return false;
+    }
+    ps->set_rule_applied(7);
+  } else {
+    if (!make_unary_vse_clause(auth_ent, auth_str, to_prove)) {
+      printf("construct_proof_from_sev_evidence_with_plat: can't make is trusted for purpose\n");
+      return false;
+    }
+    ps->set_rule_applied(1);
+  }
+
+  ps->mutable_s1()->CopyFrom(environment_is_trusted);
+  ps->mutable_s2()->CopyFrom(speaks_for);
+  ps->mutable_conclusion()->CopyFrom(*to_prove);
+
+  *num = step_count;
+  return true;
+}
+
+bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
+      proved_statements* already_proved) {
+
+  for (int i = 0; i < policy.claims_size(); i++) {
+#if 1
+    // This is a little wasteful since we parse it in add_fact_from_signed_claim.
+    // Remove this when filter policy is implemented.
+    claim_message cm;
+    if (!cm.ParseFromString(policy.claims(i).serialized_claim_message())) {
+      printf("init_policy: Can't parse serialized claim in policy\n");
+      return false;
+    }
+    if (cm.claim_format() != "vse-clause") {
+      printf("init_policy: policy must be a vse-clause\n");
+      return false;
+    }
+    vse_clause cl;
+    if (!cl.ParseFromString(cm.serialized_claim())) {
+      printf("init_policy: Can't parse serialized policy\n");
+      return false;
+    }
+    const entity_message& em = cl.subject();
+    if (em.entity_type() != "key" || !same_key(policy_pk, em.key())) {
+      printf("init_policy: the policy key does the saying\n");
+      return false;
+    }
+#endif
+    if (!add_fact_from_signed_claim(policy.claims(i), already_proved)) {
+      printf("init_policy: Can't add claim %d\n", i);
+      printf("\n");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool is_measurement(const vse_clause& cl) {
+  if (!cl.has_subject() || !cl.has_verb() || cl.has_object() || cl.has_clause())
+    return false;
+  if (cl.subject().entity_type() != "measurement")
+    return false;
+  if (cl.verb() != "is-trusted")
+    return false;
+    
+  return true;
+}
+
+bool is_platform(const vse_clause& cl) {
+  if (!cl.has_subject() || !cl.has_verb() || cl.has_object() || cl.has_clause())
+    return false;
+  if (cl.subject().entity_type() != "platform")
+    return false;
+  if (cl.verb() != "has-trusted-platform-property")
+    return false;
+
+  return true;
+}
+
+// Assumes is_measurement was called to ensure cl has right format
+bool right_measurement(const vse_clause& cl, const string& m) {
+  return same_measurement(m, cl.subject().measurement());
+}
+
+// Assumes is_platform was called to ensure cl has right format
+bool right_platform(const vse_clause& cl, const platform& p) {
+  return satisfying_platform(cl.subject().platform_ent(), p);
+}
+
+// Exactly one satisfying platform and one satisfying measurement should
+// be in the filtered policy.  It there are none or more than one each,
+// it's an error.  Also check the policy key is doing the saying.
+bool filter_sev_policy(const sev_attestation_message& sev_att,
+        const key_message& policy_pk,
+        const signed_claim_sequence& policy,
+        signed_claim_sequence* filtered_policy) {
+
+  entity_message m_ent;
+  if (!get_measurement_from_sev_attest(sev_att, &m_ent)) {
+      printf("filter_sev_policy: Can't get measurement from attestation\n");
+      return false;
+    }
+  entity_message p_ent;
+  if (!get_platform_from_sev_attest(sev_att, &p_ent) ) {
+      printf("filter_sev_policy: Can't get platform from attestation\n");
+      return false;
+    }
+
+  bool found_measurement = false;
+  bool found_platform = false;
+
+  for (int i = 0; i < policy.claims_size(); i++) {
+    claim_message cm;
+    if (!cm.ParseFromString(policy.claims(i).serialized_claim_message())) {
+      printf("filter_sev_policy: Can't parse serialized claim in policy\n");
+      return false;
+    }
+    if (cm.claim_format() != "vse-clause") {
+      printf("filter_sev_policy: policy must be a vse-clause\n");
+      return false;
+    }
+    vse_clause cl;
+    if (!cl.ParseFromString(cm.serialized_claim())) {
+      printf("filter_sev_policy: Can't parse serialized policy\n");
+      return false;
+    }
+    if (!cl.has_subject()) {
+      printf("filter_sev_policy: policy rule misformatted (1)\n");
+      return false;
+    }
+    const entity_message& em = cl.subject();
+    if (em.entity_type() != "key" || !same_key(policy_pk, em.key())) {
+      printf("filter_sev_policy: the policy key does the saying\n");
+      return false;
+    }
+    // In cl, look for: policy_key says measurement is_trusted and
+    // policy-key says platform[] has trusted-platform-properties.
+    // If match, keep them.  If not, don't.
+    if (!cl.has_clause()) { 
+      printf("filter_sev_policy: policy rule misformatted (2)\n");
+      return false;
+    }
+    if (is_measurement(cl.clause())) {
+      if (found_measurement)
+        continue;
+      if (!right_measurement(cl.clause(), m_ent.measurement()))
+        continue;
+      found_measurement = true;
+    }
+    if (is_platform(cl.clause())) {
+      if (found_platform)
+        continue;
+      if (!right_platform(cl.clause(), p_ent.platform_ent()))
+        continue;
+      found_platform = true;
+    }
+    signed_claim_message* sc = filtered_policy->add_claims();
+    sc->CopyFrom(policy.claims(i));
+  }
+
+  return found_measurement && found_platform;
+}
+
+// Use policy statements for init
+bool validate_evidence_from_policy(const string& evidence_descriptor,
+        signed_claim_sequence& policy, const string& purpose,
+        evidence_package& evp, key_message& policy_pk) {
+
+  proved_statements already_proved;
+  vse_clause to_prove;
+  predicate_dominance predicate_dominance_root;
+
+  if (!init_dominance_tree(predicate_dominance_root)) {
+    printf("validate_evidence: can't init predicate dominance tree\n");
+    return false;
+  }
+
+  if (!init_axiom(policy_pk, &already_proved)) {
+    printf("validate_evidence: can't init axiom\n");
+    return false;
+  }
+
+  // Filter the policy first
+  //    The last statement in the evidence package should
+  //    be a sev-attestation-with-platform which is a
+  //    serialized sev_attestation_message.
+  int k = evp.fact_assertion_size();
+  if (k < 1) {
+    printf("validate_evidence: empty evidence\n");
+    return false;
+  }
+  const evidence& ev = evp.fact_assertion(k - 1);
+  if (ev.evidence_type() != "sev-attestation-with-platform") {
+    printf("validate_evidence: wrong evidence type\n");
+    return false;
+  }
+
+  // Get the actual measurement and platform from that
+  // to filter policy.
+  sev_attestation_message sev_att;
+  if (!sev_att.ParseFromString(ev.serialized_evidence())) {
+    printf("validate_evidence: Can't parse sev attestation\n");
+    return false;
+  }
+
+  signed_claim_sequence filtered_policy;
+  if (!filter_sev_policy(sev_att, policy_pk, policy,
+        &filtered_policy)) {
+    printf("validate_evidence: can't filter policy\n");
+    return false;
+  }
+
+  if (!init_policy(filtered_policy, policy_pk, &already_proved)) {
+    printf("validate_evidence: init_policy failed\n");
+    return false;
+  }
+
+  if (!init_proved_statements(policy_pk, evp, &already_proved)) {
+    printf("validate_evidence: init_proved_statements\n");
+    return false;
+  }
+
+  int num_steps = max_steps_in_sev_plat_proof;
+  proof_step steps[num_steps];
+  if (!construct_proof_from_sev_evidence_with_plat(evidence_descriptor,
+          policy_pk, purpose, &already_proved, &to_prove, steps, &num_steps)) {
+    printf("validate_evidence: can't construct proof\n");
+    return false;
+  }
+
+#define PRINT_ALREADY_PROVED
+#ifdef PRINT_ALREADY_PROVED
+  printf("Evidence submitted:\n");
+  for (int i = 0; i < evp.fact_assertion_size(); i++) {
+    printf("\n  %2d: ", i);
+    print_evidence(evp.fact_assertion(i));
+  }
+  printf("\n\n");
+  printf("proved statements after additions:\n");
+  for (int i = 0; i < already_proved.proved_size(); i++) {
+    printf("\n  %2d: ", i);
+    print_vse_clause(already_proved.proved(i));
+    printf("\n");
+  }
+  printf("\n");
+
+  printf("to prove : ");
+  print_vse_clause(to_prove);
+  printf("\n");
+  printf("\nproof steps:\n");
+
+  for (int i = 0; i < num_steps; i++) {
+    printf("\n%2d: ", i);
+    print_proof_step(steps[i]);
+    printf("\n");
+  }
+  printf("\n");
+#endif
+
+  if (!verify_proof_from_array(policy_pk, to_prove, predicate_dominance_root,
+            &already_proved, num_steps, steps)) {
+    printf("verify_proof failed\n");
+    return false;
+  }
+#ifdef PRINT_ALREADY_PROVED
+  printf("Proved:"); print_vse_clause(to_prove); printf("\n");
+  printf("final proved statements:\n");
+  for (int i = 0; i < already_proved.proved_size(); i++) {
+    printf("  %2d: ", i);
+    print_vse_clause(already_proved.proved(i));
+    printf("\n");
+  }
+  printf("\n");
+#endif
+
+  return true;
+}
+
+// -------------------------------------------------------------------------------------

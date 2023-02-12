@@ -478,14 +478,7 @@ bool GetX509FromCert(const string& cert, X509* x) {
 bool PublicKeyFromCert(const string& cert, key_message* k) {
   X509* x = X509_new();
   EVP_PKEY* epk = nullptr;
-  RSA* rk = nullptr;
   X509_NAME* sn = nullptr;
-  const BIGNUM* N = BN_new();
-  const BIGNUM* E = BN_new();
-  const BIGNUM* D = BN_new();
-  rsa_message* rkm = nullptr;
-  int size_n = 0;
-  int size_e = 0;
   int s = 0;
   bool res = true;
   int len = -1;
@@ -502,12 +495,6 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   epk = X509_get_pubkey(x);
   if (epk == nullptr) {
     printf("Can't get subject key\n");
-    res = false;
-    goto done;
-  }
-  rk = EVP_PKEY_get1_RSA(epk);
-  if (rk == nullptr) {
-    printf("Can't get subject rsa key\n");
     res = false;
     goto done;
   }
@@ -537,79 +524,40 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   if (!res)
     goto done;
 
-  RSA_get0_key(rk, &N, &E, &D);
-  rkm = new(rsa_message);
-  if (rkm == nullptr) {
-    printf("Can't get rsa key\n");
-    res = false;
-    goto done;
-  }
-
-  size_n = BN_num_bytes(N);
-  if (size_n <= 0) {
-    printf("Can't get modulus size\n");
-    res = false;
-    goto done;
-  }
-
-  {
-    byte bn_n_buf[size_n];
-    s = BN_bn2bin(N, bn_n_buf);
-    if (s <= 0) {
-      printf("Can't BN_bn2bin\n");
+  if (EVP_PKEY_base_id(epk) == EVP_PKEY_RSA) {
+    const RSA* rk = nullptr;
+    rk = EVP_PKEY_get0_RSA(epk);
+    if (rk == nullptr) {
       res = false;
-    } else {
-      rkm->set_public_modulus((byte*)bn_n_buf, s);
+      goto done;
     }
-  }
-  if (!res)
-    goto done;
-
-  size_e = BN_num_bytes(E);
-  if (size_e <= 0) {
-    printf("Can't get modulus size\n");
+    if (!RSA_to_key(rk, k)) {
+      res = false;
+      goto done;
+    }
+  } else if (EVP_PKEY_base_id(epk) == EVP_PKEY_EC) {
+    const EC_KEY* ek = EVP_PKEY_get0_EC_KEY(epk);
+    if (ek == nullptr) {
+      res = false;
+      goto done;
+    }
+    if (!ECC_to_key(ek, k)) {
+      res = false;
+      goto done;
+    }
+  } else {
     res = false;
     goto done;
   }
-  {
-    byte bn_e_buf[size_e];
-    s = BN_bn2bin(E, bn_e_buf);
-    if (s <= 0) {
-      printf("Can't BN_bn2bin\n");
-      res = false;
-    } else {
-      rkm->set_public_exponent((byte*)bn_e_buf, s);
-    }
-  }
-  if (!res)
-    goto done;
 
   k->set_key_name(subject_name_str);
-  if (size_n == 128) {
-    k->set_key_type("rsa-1024-public");
-  } else if (size_n == 256) {
-    k->set_key_type("rsa-2048-public");
-  } else if (size_n == 512) {
-    k->set_key_type("rsa-4096-public");
-  } else {
-    printf("Bad key type\n");
-    res = false;
-    goto done;
-  }
   k->set_key_format("vse-key");
-  k->set_allocated_rsa_key(rkm);
 
   cert_str = new(string);
   cert_str->assign((char*)cert.data(), cert.size());
   k->set_allocated_certificate(cert_str);
 
 done:
-  if (N != nullptr)
-    BN_free((BIGNUM*)N);
-  if (E != nullptr)
-    BN_free((BIGNUM*)E);
-  if (D != nullptr)
-    BN_free((BIGNUM*)D);
   if (epk != nullptr)
     EVP_PKEY_free(epk);
   if (x != nullptr)
@@ -1061,10 +1009,9 @@ void print_proof_step(const proof_step& ps) {
 }
 
 void print_proof(proof& pf) {
-  // to_prove
-  // already_proved
   printf("\nproof steps:\n");
   for (int i = 0; i < pf.steps_size(); i++) {
+    printf("\n%2d: ", i);
     print_proof_step(pf.steps(i));
     printf("\n");
   }
@@ -1135,6 +1082,19 @@ void print_signed_report(const signed_report& sr) {
     printf("\n");
   }
   printf("\n");
+}
+
+bool read_signed_vse_statements(const string& in, signed_claim_sequence* s) {
+  string str;
+  if(!read_file_into_string(in, &str)) {
+    printf("Can't read %s\n", in.c_str());
+    return false;
+  }
+  if (!s->ParseFromString(str)) {
+    printf("Can't parse claim sequence\n");
+    return false;
+  }
+  return true;
 }
 
 // -----------------------------------------------------------------------------

@@ -1,6 +1,9 @@
 #    
 #    File: certifier_tests.mak
 
+ENABLE_SEV=1
+#RUN_SEV_TESTS=1
+
 ifndef SRC_DIR
 SRC_DIR=.
 endif
@@ -31,15 +34,20 @@ I= $(INC_DIR)
 ifdef ENABLE_SEV
 INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
 else
-INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/
+INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
 endif
 
 ifdef ENABLE_SEV
-CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D SEV_SNP -D SEV_DUMMY_GUEST
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D SEV_SNP -D SEV_DUMMY_GUEST
+ifdef RUN_SEV_TESTS
+CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11  -Wno-deprecated-declarations -Wno-unused-variable -D X64 -D SEV_SNP -D SEV_DUMMY_GUEST -D RUN_SEV_TESTS
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11  -Wno-deprecated-declarations -Wno-unused-variable -D X64 -D SEV_SNP -D SEV_DUMMY_GUEST -D RUN_SEV_TESTS
 else
-CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64
+CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11  -Wno-deprecated-declarations -Wno-unused-variable -D X64 -D SEV_SNP -D SEV_DUMMY_GUEST
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11  -Wno-deprecated-declarations -Wno-unused-variable -D X64 -D SEV_SNP -D SEV_DUMMY_GUEST
+endif
+else
+CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11  -Wno-deprecated-declarations -Wno-unused-variable -D X64 -D SEV_SNP
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11  -Wno-deprecated-declarations -Wno-unused-variable -D X64 -D SEV_SNP
 endif
 
 CC=g++

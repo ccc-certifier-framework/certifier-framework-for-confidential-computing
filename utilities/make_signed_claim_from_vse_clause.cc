@@ -84,7 +84,7 @@ int main(int an, char** av) {
 
   vse_clause in_cl;
   if (!get_clause_from_file(FLAGS_vse_file, &in_cl)) {
-    printf("Can't get indirect clasue\n");
+    printf("Can't get indirect clause\n");
     return 1;
   }
 

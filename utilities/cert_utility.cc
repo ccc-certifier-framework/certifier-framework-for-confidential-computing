@@ -39,6 +39,11 @@ DEFINE_string(attest_authority_name, "attestAuthority",  "attest authority name"
 DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin",
        "platform attest_endorsement platform key file");
 
+DEFINE_string(key_output_file, "output.bin", "output key file");
+DEFINE_string(key_type, "rsa-2048", "key type");
+DEFINE_string(key_name, "anonymous", "key name");
+DEFINE_string(cert_output_file, "cert_file.bin",  "cert file");
+
 
 bool generate_test_keys() {
   key_message platform_key;
@@ -178,6 +183,74 @@ void test_sig() {
   return;
 }
 
+bool generate_key(const string& type, const string& name, key_message* k) {
+
+  if (type == "rsa-1024") {
+    RSA* r= RSA_new();
+    if (!generate_new_rsa_key(1024, r)) {
+      printf("Can't generate rsa key\n");
+      return false;
+    }
+    if (!RSA_to_key(r, k)) {
+      printf("Can't convert rsa key to key\n");
+      return false;
+    }
+    k->set_key_type("rsa-1024-private");
+  } else if (type == "rsa-2048") {
+    RSA* r= RSA_new();
+    if (!generate_new_rsa_key(2048, r)) {
+      printf("Can't generate rsa key\n");
+      return false;
+    }
+    if (!RSA_to_key(r, k)) {
+      printf("Can't convert rsa key to key\n");
+      return false;
+    }
+    k->set_key_type("rsa-2048-private");
+  } else if (type == "rsa-4096") {
+    RSA* r= RSA_new();
+    if (!generate_new_rsa_key(4096, r)) {
+      printf("Can't generate rsa key\n");
+      return false;
+    }
+    if (!RSA_to_key(r, k)) {
+      printf("Can't convert rsa key to key\n");
+      return false;
+    }
+    k->set_key_type("rsa-4096-private");
+  } else if (type == "ecc-384") {
+    EC_KEY* ec = generate_new_ecc_key(384);
+    if (ec == nullptr) {
+      printf("Can't generate ecc key\n");
+      return false;
+    }
+    if (!ECC_to_key(ec, k)) {
+      printf("Can't convert ecc key to key\n");
+      return false;
+    }
+    k->set_key_type("ecc-384-private");
+  } else  {
+    printf("Unknown key type\n");
+    return false;
+  }
+
+  k->set_key_name(name);
+  k->set_key_format("vse-key");
+  string str;
+  if (!k->SerializeToString(&str)) {
+    printf("Can't serialize key\n");
+    return false;
+  }
+  if (!write_file(FLAGS_key_output_file, str.size(), (byte*)str.data())) {
+    printf("Can't write file\n");
+    return false;
+  }
+  print_key(*k);
+  printf("\n");
+
+  return true;
+}
+
 
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -188,6 +261,9 @@ int main(int an, char** av) {
     printf("cert_utility.exe --operation=generate-policy-key-and-test-keys ");
     printf(" --policy_key_output_file=key_file.bin --policy_cert_output_file=policy_cert_file.bin ");
     printf("--platform_key_output_file=key_file.bin --attest_key_output_file=key_file.bin\n");
+    printf("cert_utility.exe --operation=generate-key --key_type=rsa-2048 --key_name=name\n");
+    printf(" --key_output_file=key_file.bin\n");
+    printf(" --cert_output_file=policy_cert_file.bin\n");
     return 0;
   }  else if (FLAGS_operation == "test-sig") {
     test_sig();
@@ -205,6 +281,12 @@ int main(int an, char** av) {
         printf("Generate test keys failed\n");
         return 1;
       }
+    }
+  } else if ("generate-key") {
+    key_message k;
+    if (!generate_key(FLAGS_key_type, FLAGS_key_name, &k)) {
+        printf("generate key failed\n");
+        return 1;
     }
   } else {
     printf("Unknown operation\n");

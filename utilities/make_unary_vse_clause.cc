@@ -74,6 +74,7 @@ int make_unary_clause_file_utility(entity_message& subject, const string& verb,
   }
 
   print_vse_clause(out_cl);
+  printf("\n");
   return 0;
 }
 
@@ -88,7 +89,6 @@ bool get_key_from_cert_file(const string& in, key_message* k) {
   }
   string cert;
   cert.assign((char*)asn_cert, in_size);
-
   if (!PublicKeyFromCert(cert, k)) {
     printf("Can't get key from cert\n");
     return false;

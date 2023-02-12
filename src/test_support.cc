@@ -1,5 +1,6 @@
 #include "certifier.h"
 #include "support.h"
+#include "sev-snp/attestation.h"
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
@@ -15,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const bool debug_print = false;
+bool debug_print = false;
 
 bool read_trusted_binary_measurements_and_sign(string& file_name, key_message& policy_key,
         signed_claim_sequence* list) {
@@ -991,3 +992,5 @@ bool test_new_local_certify(string& enclave_type,
   }
   return true;
 }
+
+// -----------------------------------------------------------------------------

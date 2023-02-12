@@ -357,7 +357,7 @@ void print_time_point(time_point& t) {
 }
 
 void print_property(const property& prop) {
-  printf("%s", prop.property_name().c_str());
+  printf("%s: ", prop.property_name().c_str());
 
   if (prop.value_type() == "int") {
     if (prop.comparator() == "=") {
@@ -365,7 +365,7 @@ void print_property(const property& prop) {
     } else if (prop.comparator() == ">=") {
       printf(" >= ");
     }
-    printf("%d", prop.int_value());
+    printf("%lu", prop.int_value());
   } else if (prop.value_type() == "string") {
     printf("%s", prop.string_value().c_str());
   } else {
@@ -377,15 +377,22 @@ void print_property(const property& prop) {
 
 void print_platform(const platform& pl) {
   printf("platform: %s\n", pl.platform_type().c_str());
+  if (pl.has_key()) {
+    printf("  attest_key: ");
+    print_key_descriptor(pl.attest_key());
+    printf("\n");
+  } else {
+    printf("  no attest key\n");
+  }
   for (int i = 0; i < pl.props().props_size(); i++) {
-    printf("    ");
+    printf("  ");
     print_property(pl.props().props(i));
   }
 }
 
 void print_environment(const environment& env) {
   printf("environment\n");
-  print_platform(env.the_platform());
+  print_platform_descriptor(env.the_platform());
   printf("\n");
   printf("measurement: ");
   print_bytes(env.the_measurement().size(), (byte*)env.the_measurement().data());
@@ -907,7 +914,7 @@ bool key_to_RSA(const key_message& k, RSA* r) {
   return true;
 }
 
-bool RSA_to_key(RSA* r, key_message* k) {
+bool RSA_to_key(const RSA* r, key_message* k) {
   const BIGNUM* m = nullptr;
   const BIGNUM* e = nullptr;
   const BIGNUM* d = nullptr;
@@ -1180,8 +1187,8 @@ EC_KEY* key_to_ECC(const key_message& k) {
 }
 
 bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
-  k->set_key_name("ecc-384-private");
   k->set_key_format("vse_key");
+  k->set_key_type("ecc-384-public");
 
   ecc_message* ek = new ecc_message;
   if (ek == nullptr)
@@ -1312,6 +1319,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   // set private_multiplier
   const BIGNUM* pk = EC_KEY_get0_private_key(ecc_key);
   if (pk != nullptr) {
+    k->set_key_type("ecc-384-private");
     sz  = BN_num_bytes(pk);
     byte pm_buf[sz];
     sz  = BN_bn2bin(pk, pm_buf);
@@ -1418,7 +1426,7 @@ bool same_key(const key_message& k1, const key_message& k2) {
   return true;
 }
 
-bool same_measurement(string& m1, string& m2) {
+bool same_measurement(const string& m1, const string& m2) {
   if (m1.size() != m2.size())
     return false;
   if (memcmp((byte*)m1.data(), (byte*)m2.data(), m1.size()) != 0)
@@ -1426,11 +1434,108 @@ bool same_measurement(string& m1, string& m2) {
   return true;
 }
 
+bool same_property(const property& p1, const property& p2) {
+  if (p1.property_name() != p2.property_name())
+    return false;
+  if (p1.value_type() != p2.value_type())
+    return false;
+  if (p1.comparator() != p2.comparator())
+    return false;
+  if (p1.value_type() == "int")
+    return p1.int_value() == p2.int_value();
+  if (p1.value_type() == "string")
+    return p1.string_value() == p2.string_value();
+  return true;
+}
+
+const property* find_property(const string& name, const properties& p) {
+  for (int i = 0; i < p.props_size(); i++) {
+    if (p.props(i).property_name() == name)
+      return &p.props(i);
+  }
+  return nullptr;
+}
+
+bool satisfying_property(const property& p1, const property& p2) {
+  if (p1.comparator() == "=")
+    return same_property(p1, p2);
+  if (p1.comparator() != ">=" || p1.property_name() != p2.property_name() ||
+      p1.value_type() != p2.value_type() || p1.value_type() != "int") {
+    return false;
+  }
+  return p2.int_value() >= p1.int_value();
+}
+
+bool satisfying_properties(const properties& p1, const properties& p2) {
+  for (int i = 0; i < p1.props_size(); i++) {
+    const property* pp2 = find_property(p1.props(i).property_name(), p2);
+    if (pp2 == nullptr) {
+      printf("Can't find %s\n", p1.props(i).property_name().c_str());
+      return false;
+    }
+    if (!satisfying_property(p1.props(i), *pp2)) {
+      printf("mismatch\n");
+      print_property(p1.props(i)); printf("\n");
+      print_property(*pp2); printf("\n");
+      return false;
+    }
+  }
+  return true;
+}
+
+bool satisfying_platform(const platform& p1, const platform& p2) {
+
+  if (p1.platform_type() != p2.platform_type())
+    return false;
+  if (p1.has_key() && p2.has_key()) {
+    if (!same_key(p1.attest_key(), p2.attest_key()))
+      return false;
+  }
+
+  return satisfying_properties(p1.props(), p2.props());
+}
+
+bool same_properties(const properties& p1, const properties& p2) {
+  for (int i = 0; i < p1.props_size(); i++) {
+    const property* pp2 = find_property(p1.props(i).property_name(), p2);
+    if (pp2 == nullptr)
+      return false;
+    if (!same_property(p1.props(i), *pp2))
+      return false;
+  }
+  return true;
+}
+
+bool same_platform(const platform& p1, const platform& p2) {
+
+  if (p1.platform_type() != p2.platform_type()) {
+    return false;
+  }
+  if (p1.has_key() && p2.has_key()) {
+    if (!same_key(p1.attest_key(), p2.attest_key())) {
+      printf("same_platform fails: keys dont match\n");
+      print_key(p1.attest_key()); printf("\n");
+      print_key(p2.attest_key()); printf("\n");
+      return false;
+    }
+  }
+
+  return same_properties(p1.props(), p2.props());
+}
+
+bool same_environment(const environment& e1, const environment& e2) {
+  if (!same_measurement(e1.the_measurement(), e2.the_measurement()))
+    return false;
+  return same_platform(e1.the_platform(), e2.the_platform());
+}
+
 bool same_entity(const entity_message& e1, const entity_message& e2) {
   if (e1.entity_type() != e2.entity_type())
     return false;
+
   if (e1.entity_type() == "key")
     return same_key(e1.key(), e2.key());
+
   if (e1.entity_type() == "measurement") {
     string s1;
     string s2;
@@ -1438,6 +1543,13 @@ bool same_entity(const entity_message& e1, const entity_message& e2) {
     s2.assign((char*)e2.measurement().data(), e2.measurement().size());
     return same_measurement(s1, s2);
   }
+
+  if (e1.entity_type() == "platform")
+    return same_platform(e1.platform_ent(), e2.platform_ent());
+
+  if (e1.entity_type() == "environment")
+    return same_environment(e1.environment_ent(), e2.environment_ent());
+
   return false;
 }
 
@@ -1488,9 +1600,51 @@ bool make_platform_entity(platform& plat, entity_message* ent) {
   return true;
 }
 
+bool make_platform(const string& type, const properties& p, const key_message* at,
+      platform* plat) {
+  plat->set_platform_type(type);
+  if (at != nullptr) {
+    plat->mutable_attest_key()->CopyFrom(*at);
+    plat->set_has_key(true);
+  } else {
+    plat->set_has_key(false);
+  }
+  for (int i = 0; i < p.props_size(); i++) {
+    plat->mutable_props()->add_props()->CopyFrom(p.props(i));
+  }
+
+  return true;
+}
+
+bool make_property(string& name, string& type, string& cmp, uint64_t int_value,
+    string& string_value, property* prop) {
+  prop->set_property_name(name);
+  prop->set_comparator(cmp);
+  if (type == "int") {
+    prop->set_value_type("int");
+    prop->set_int_value(int_value);
+  } else if (type == "string") {
+    prop->set_value_type("string");
+    prop->set_string_value(string_value);
+  } else {
+    printf("unrecognized type: %s\n", type.c_str());
+    return false;
+  }
+  printf("\n");
+
+  return true;
+}
+
 bool make_environment_entity(environment& env, entity_message* ent) {
   ent->set_entity_type("environment");
   ent->mutable_environment_ent()->CopyFrom(env);
+  return true;
+}
+
+bool make_environment(const platform& plat, const string& measurement,
+      environment* env) {
+  env->mutable_the_platform()->CopyFrom(plat);
+  env->set_the_measurement(measurement);
   return true;
 }
 
@@ -1645,11 +1799,11 @@ void print_key_descriptor(const key_message& k) {
 }
 
 void print_property_descriptor(const property& p) {
-  printf("%s", p.property_name().c_str());
+  printf("%s: ", p.property_name().c_str());
   if (p.value_type() == "int") {
     if (p.comparator() != "")
       printf(" %s", p.comparator().c_str());
-    printf(" %d", p.int_value());
+    printf(" %lu", p.int_value());
   } else if (p.value_type() == "string") {
     printf(" %s", p.string_value().c_str());
   } else {
@@ -1658,7 +1812,13 @@ void print_property_descriptor(const property& p) {
 }
 
 void print_platform_descriptor(const platform& pl) {
-    printf("Platform[%s", pl.platform_type().c_str());
+    printf("platform[%s", pl.platform_type().c_str());
+    if (pl.has_key()) {
+      printf(", key: ");
+      print_key_descriptor(pl.attest_key());
+    } else {
+      printf(", no key");
+    }
     for (int i = 0; i < pl.props().props_size(); i++) {
       printf(", ");
       print_property_descriptor(pl.props().props(i));
@@ -1667,7 +1827,9 @@ void print_platform_descriptor(const platform& pl) {
 }
 
 void print_environment_descriptor(const environment& env) {
-    printf("Environment[%s, ", env.the_platform().platform_type().c_str());
+    printf("environment[");
+    print_platform_descriptor(env.the_platform());
+    printf(", measurement: ");
     print_bytes(env.the_measurement().size(), (byte*)env.the_measurement().data());
     printf("]");
 }
@@ -1874,13 +2036,18 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   serialized_claim.assign((char*)signed_claim.serialized_claim_message().data(),
     signed_claim.serialized_claim_message().size());
   claim_message c;
-  if (!c.ParseFromString(serialized_claim))
+  if (!c.ParseFromString(serialized_claim)) {
+    printf("verify_signed_claim: can't deserialize signed claim\n");
     return false;
+  }
 
-  if (!c.has_claim_format())
+  if (!c.has_claim_format()) {
+    printf("verify_signed_claim: not claim format\n");
     return false;
+  }
   if (c.claim_format() != "vse-clause" && c.claim_format() != "vse-attestation") {
-    printf("%s should be vse-clause or vse-attestation\n", c.claim_format().c_str());        
+    printf("verify_signed_claim: %s should be vse-clause or vse-attestation\n",
+        c.claim_format().c_str());
     return false;
   }
 
@@ -1888,23 +2055,31 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   time_point t_nb;
   time_point t_na;
 
-  if (!time_now(&t_now))
+  if (!time_now(&t_now)) {
     return false;
-  if (!string_to_time(c.not_before(), &t_nb))
+  }
+  if (!string_to_time(c.not_before(), &t_nb)) {
     return false;
-  if (!string_to_time(c.not_after(), &t_na))
+  }
+  if (!string_to_time(c.not_after(), &t_na)) {
     return false;
+  }
 
-  if (compare_time(t_now, t_nb) <  0)
+  if (compare_time(t_now, t_nb) <  0) {
+    printf("verify_signed_claim: Bad time compare 1\n");
+    return false;
+  }
+  if (compare_time(t_na, t_now) < 0) {
+    printf("verify_signed_claim: Bad time compare 2\n");
      return false;
-  if (compare_time(t_na, t_now) < 0)
-     return false;
+  }
 
   bool success = false;
   if (signed_claim.signing_algorithm() == "rsa-2048-sha256-pkcs-sign") {
     RSA* r = RSA_new();
-    if (!key_to_RSA(key, r))
+    if (!key_to_RSA(key, r)) {
       return false;
+    }
     success = rsa_sha256_verify(r, (int)signed_claim.serialized_claim_message().size(),
         (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
         (byte*)signed_claim.signature().data());
@@ -1918,16 +2093,17 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
         (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
         (byte*)signed_claim.signature().data());
     RSA_free(r);
-    return success;
   } else if (signed_claim.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
     EC_KEY* k = key_to_ECC(key);
-    if (k == nullptr)
+    if (k == nullptr) {
       return false;
+    }
     success = ecc_verify("sha-384", k, (int)signed_claim.serialized_claim_message().size(),
         (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
         (byte*)signed_claim.signature().data());
     EC_KEY_free(k);
   } else {
+    printf("verify_signed_claim: unsupported signing algorithm\n");
     return false;
   }
 
@@ -2029,23 +2205,50 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
     add_ext(x509, NID_basic_constraints, "critical,CA:TRUE");
   }
 
+  EVP_PKEY* signing_pkey = EVP_PKEY_new();
   if (signing_key.key_type() == "rsa-1024-private" ||
       signing_key.key_type() == "rsa-2048-private" ||
       signing_key.key_type() == "rsa-4096-private") {
     RSA* signing_rsa_key = RSA_new();
-    if (!key_to_RSA(signing_key, signing_rsa_key))
+    if (!key_to_RSA(signing_key, signing_rsa_key)) {
+      printf("produce_artifact: can't get rsa signing key\n");
       return false;
-    EVP_PKEY* signing_pkey = EVP_PKEY_new();
+    }
     EVP_PKEY_set1_RSA(signing_pkey, signing_rsa_key);
     X509_set_pubkey(x509, signing_pkey);
 
-    RSA* subject_rsa_key = RSA_new();
-    if (!key_to_RSA(subject_key, subject_rsa_key))
-      return false;
     EVP_PKEY* subject_pkey = EVP_PKEY_new();
-    EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
-    X509_set_pubkey(x509, subject_pkey);
-    if (signing_key.key_type() == "rsa-4096-private") {
+    if (subject_key.key_type() == "rsa-1024-public" ||
+        subject_key.key_type() == "rsa-2048-public" ||
+        subject_key.key_type() == "rsa-4096-public" ||
+        subject_key.key_type() == "rsa-1024-private" ||
+        subject_key.key_type() == "rsa-2048-private" ||
+        subject_key.key_type() == "rsa-4096-private") {
+      RSA* subject_rsa_key = RSA_new();
+      if (!key_to_RSA(subject_key, subject_rsa_key)) {
+        printf("produce_artifact: can't get rsa subject key\n");
+        return false;
+      }
+      EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
+      X509_set_pubkey(x509, subject_pkey);
+      RSA_free(subject_rsa_key);
+    } else if (subject_key.key_type() == "ecc-384-public" ||
+               subject_key.key_type() == "ecc-384-private") {
+      EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
+      if (subject_ecc_key == nullptr) {
+        printf("produce_artifact: can't get subject key\n");
+        return false;
+      }
+      EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
+      X509_set_pubkey(x509, subject_pkey);
+      EC_KEY_free(subject_ecc_key);
+    } else {
+        printf("produce_artifact: unknown public key type %s\n",
+          subject_key.key_type().c_str());
+        return false;
+    }
+    if (signing_key.key_type() == "rsa-4096-private" ||
+        signing_key.key_type() == "ecc-384-private") {
       X509_sign(x509, signing_pkey, EVP_sha384());
     } else {
       X509_sign(x509, signing_pkey, EVP_sha256());
@@ -2053,28 +2256,51 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
     EVP_PKEY_free(signing_pkey);
     EVP_PKEY_free(subject_pkey);
     RSA_free(signing_rsa_key);
-    RSA_free(subject_rsa_key);
   } else if (signing_key.key_type() == "ecc-384-private") {
     EC_KEY* signing_ecc_key = key_to_ECC(signing_key);
-    if (signing_ecc_key == nullptr)
+    if (signing_ecc_key == nullptr) {
+      printf("produce_artifact: can't get signing key\n");
       return false;
+    }
     EVP_PKEY* signing_pkey = EVP_PKEY_new();
     EVP_PKEY_set1_EC_KEY(signing_pkey, signing_ecc_key);
     X509_set_pubkey(x509, signing_pkey);
 
-    EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
-    if (subject_ecc_key == nullptr)
-      return false;
     EVP_PKEY* subject_pkey = EVP_PKEY_new();
-    EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
-    X509_set_pubkey(x509, subject_pkey);
+    if (subject_key.key_type() == "rsa-1024-public" ||
+        subject_key.key_type() == "rsa-2048-public" ||
+        subject_key.key_type() == "rsa-4096-public" ||
+        subject_key.key_type() == "rsa-1024-private" ||
+        subject_key.key_type() == "rsa-2048-private" ||
+        subject_key.key_type() == "rsa-4096-private") {
+      RSA* subject_rsa_key = RSA_new();
+      if (!key_to_RSA(subject_key, subject_rsa_key)) {
+        printf("produce_artifact: can't get rsa subject key\n");
+        return false;
+      }
+      EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
+      X509_set_pubkey(x509, subject_pkey);
+      RSA_free(subject_rsa_key);
+    } else if (subject_key.key_type() == "ecc-384-public" ||
+               subject_key.key_type() == "ecc-384-private") {
+      EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
+      if (subject_ecc_key == nullptr) {
+        printf("produce_artifact: can't get subject key\n");
+        return false;
+      }
+      EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
+      X509_set_pubkey(x509, subject_pkey);
+      EC_KEY_free(subject_ecc_key);
+    } else {
+        printf("produce_artifact: unknown public key type %s\n",
+          subject_key.key_type().c_str());
+        return false;
+    }
     X509_sign(x509, signing_pkey, EVP_sha384());
     EVP_PKEY_free(signing_pkey);
     EVP_PKEY_free(subject_pkey);
-    EC_KEY_free(signing_ecc_key);
-    EC_KEY_free(subject_ecc_key);
   } else {
-    printf("Unsupported algorithm\n");
+    printf("produce_artifact: Unsupported algorithm\n");
     return false;
   }
 
@@ -2182,7 +2408,7 @@ const int max_pipe_size = 65536;
 int sized_pipe_write(int fd, int size, byte* buf) {
   if (size > max_pipe_size)
     return -1;
-  if (write(fd, (byte*)&size, sizeof(int)) < sizeof(int))
+  if (write(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
     return -1;
   if (write(fd, buf, size) < size)
     return -1;
@@ -2220,7 +2446,7 @@ int sized_pipe_read(int fd, string* out) {
 
 // little endian only
 int sized_ssl_write(SSL* ssl, int size, byte* buf) {
-  if (SSL_write(ssl, (byte*)&size, sizeof(int)) < sizeof(int))
+  if (SSL_write(ssl, (byte*)&size, sizeof(int)) < (int)sizeof(int))
     return -1;
   if (SSL_write(ssl, buf, size) < size)
     return -1;
@@ -2263,7 +2489,7 @@ int sized_socket_read(int fd, string* out) {
   const int read_stride = 8192;
   byte buf[read_stride];
 
-  if (read(fd, (byte*)&size, sizeof(int)) < sizeof(int))
+  if (read(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
     return -1;
 
   while(total < size) {
@@ -2283,7 +2509,7 @@ int sized_socket_read(int fd, string* out) {
 
 // little endian only
 int sized_socket_write(int fd, int size, byte* buf) {
-  if (write(fd, (byte*)&size, sizeof(int)) < sizeof(int))
+  if (write(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
     return -1;
   if (write(fd, buf, size) < size)
     return -1;

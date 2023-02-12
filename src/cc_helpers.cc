@@ -881,7 +881,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   }
 
   if (sized_socket_write(sock, serialized_request.size(), (byte*)serialized_request.data()) <
-        serialized_request.size()) {
+        (int)serialized_request.size()) {
     return false;
   }
 
@@ -1020,9 +1020,17 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
   } else if ("gramine-enclave" == attesting_enclave_type) {
     string et2("gramine-attestation-report");
     ev2->set_evidence_type(et2);
+#if 1
+  // This is without platform verification
   } else if ("sev-enclave" ==  attesting_enclave_type) {
     string et2("sev-attestation");
     ev2->set_evidence_type(et2);
+#else
+  // This is with platform verification
+  } else if ("sev-enclave" ==  attesting_enclave_type) {
+    string et2("sev-attestation-with-platform");
+    ev2->set_evidence_type(et2);
+#endif
   } else {
     return false;
   }
@@ -1049,10 +1057,6 @@ bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_
 }
 
 // ----------------------------------------------------------------------------------------------
-// Socket and SSL support
-
-#define DEBUG
-
 // Socket and SSL support
 
 void print_cn_name(X509_NAME* name) {

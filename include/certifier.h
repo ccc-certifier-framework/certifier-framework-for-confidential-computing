@@ -55,6 +55,7 @@ const key_message* GetPublicPolicyKey();
 
 bool PublicKeyFromCert(const string& cert, key_message* k);
 
+
 // Policy store
 // -------------------------------------------------------------------
 
@@ -194,6 +195,7 @@ void print_proof_step(const proof_step& ps);
 void print_proof(proof& pf);
 void print_trust_response_message(trust_response_message& m);
 void print_trust_request_message(trust_request_message& m);
+bool read_signed_vse_statements(const string& in, signed_claim_sequence* s);
 
 class predicate_dominance {
 public:
@@ -250,7 +252,7 @@ bool verify_internal_proof_step(predicate_dominance& dom_tree,
 bool verify_proof(key_message& policy_pk, vse_clause& to_prove,
         predicate_dominance& dom_tree,
         proof *the_proof, proved_statements* are_proved);
-bool add_fact_from_signed_claim(signed_claim_message& signedClaim,
+bool add_fact_from_signed_claim(const signed_claim_message& signedClaim,
     proved_statements* already_proved);
 bool add_newfacts_for_sdk_platform_attestation(key_message& policy_pk,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
@@ -266,13 +268,33 @@ bool construct_proof_from_sdk_evidence(key_message& policy_pk, const string& pur
 bool construct_proof_from_full_vse_evidence(key_message& policy_pk,
       const string& purpose, proved_statements* already_proved,
       vse_clause* to_prove, proof* pf);
-bool construct_proof_from_request(string& evidence_descriptor, key_message& policy_pk,
+bool construct_proof_from_request(const string& evidence_descriptor, key_message& policy_pk,
       const string& purpose, signed_claim_sequence& trusted_platforms,
       signed_claim_sequence& trusted_measurements, evidence_package& evp,
       proved_statements* already_proved, vse_clause* to_prove, proof* pf);
-bool validate_evidence(string& evidence_descriptor,
+bool validate_evidence(const string& evidence_descriptor,
       signed_claim_sequence& trusted_platforms, signed_claim_sequence& trusted_measurements,
       const string& purpose, evidence_package& evp, key_message& policy_pk);
+
+bool get_platform_from_sev_attest(const sev_attestation_message& sev_att, entity_message* ent);
+bool get_measurement_from_sev_attest(const sev_attestation_message& sev_att,
+      entity_message* ent);
+bool filter_sev_policy(const sev_attestation_message& sev_att, const key_message& policy_pk,
+        const signed_claim_sequence& policy,
+        signed_claim_sequence* filtered_policy);
+bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
+      proved_statements* already_proved);
+bool construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
+      key_message& policy_pk, const string& purpose,
+      proved_statements* already_proved, vse_clause* to_prove, proof* pf,
+      // the following is temporary till we figure out the proto problem
+      proof_step* pss, int* num);
+bool verify_proof_from_array(key_message& policy_pk, vse_clause& to_prove,
+        predicate_dominance& dom_tree,
+        proved_statements* are_proved, int num_steps, proof_step* steps);
+bool validate_evidence_from_policy(const string& evidence_descriptor,
+        signed_claim_sequence& policy, const string& purpose,
+        evidence_package& evp, key_message& policy_pk);
 
 // -------------------------------------------------------------------
 

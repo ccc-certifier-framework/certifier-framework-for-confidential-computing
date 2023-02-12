@@ -24,10 +24,18 @@ DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(trusted_measurements_file, "binary_trusted_measurements_file.bin",  "binary_trusted_measurements_file");
 DEFINE_bool(read_measurement_file, false,  "read measurement file");
 
+DEFINE_string(policy_key_file_name, "policy_key_file.bin", "policy_key file");
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
 DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "example_app.measurement", "measurement");
+DEFINE_string(policy_file_name, "", "policy file");
+DEFINE_string(ark_key_file_name, "ark_key_file.bin", "ark key");
+DEFINE_string(ask_key_file_name, "ask_key_file.bin", "ask key");
+DEFINE_string(vcek_key_file_name, "vcek_key_file.bin", "vcek key");
+DEFINE_string(ark_cert_file_name, "ark_cert_file.bin", "ark cert");
+DEFINE_string(ask_cert_file_name, "ask_cert_file.bin", "ask cert");
+DEFINE_string(vcek_cert_file_name, "vcek_cert_file.bin", "vcek cert");
 
 
 // Encryption and support tests
@@ -153,7 +161,7 @@ TEST (test_x_509_sign, test_x_509_sign) {
 }
 
 // sev tests
-#ifdef SEV_SNP
+#ifdef RUN_SEV_TESTS
 extern bool test_sev_certs(bool print_all);
 TEST (test_sev_certs, test_sev_certs) {
   EXPECT_TRUE(test_sev_certs(FLAGS_print_all));
@@ -173,7 +181,25 @@ extern bool test_sev(bool);
 TEST (test_sev, test_sev) {
   EXPECT_TRUE(test_sev(FLAGS_print_all));
 } 
+
+extern bool test_sev_platform_certify(const bool debug_print,
+          const string& policy_file_name, const string& policy_key_file,
+          const string& ark_key_file_name, const string& ask_key_file_name,
+          const string& vcek_key_file_name, const string& ark_cert_file_name,
+          const string& ask_cert_file_name, const string& vcek_cert_file_name);
+TEST (platform_certify, test_platform_certify) {
+  if (FLAGS_policy_file_name == "") {
+    printf("sev-policy test skipped\n");
+    EXPECT_TRUE(true);
+  } else {
+  EXPECT_TRUE(test_sev_platform_certify(FLAGS_print_all,
+    FLAGS_policy_file_name, FLAGS_policy_key_file_name,
+    FLAGS_ark_key_file_name, FLAGS_ask_key_file_name, FLAGS_vcek_key_file_name,
+    FLAGS_ark_cert_file_name, FLAGS_ask_cert_file_name, FLAGS_vcek_cert_file_name));
+  }
+}
 #endif
+
 // -----------------------Run Tests-----------------------------
 
 int main(int an, char** av) {
