@@ -3,7 +3,7 @@
 #ifndef ATTESTATION_H
 #define ATTESTATION_H
 
-#if 1
+#ifndef MACOS
 #include <linux/types.h>
 #else
 typedef unsigned char uint8_t;

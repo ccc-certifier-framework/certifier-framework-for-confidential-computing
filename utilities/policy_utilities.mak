@@ -30,9 +30,10 @@ endif
 S= $(SRC_DIR)
 CERT_SRC=$(CERTIFIER_PROTOTYPE_DIR)/src
 O= $(OBJ_DIR)
-INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
+INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/
 
 CFLAGS= $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+#-D MACOS
 CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
 
 CC=g++
@@ -74,6 +75,9 @@ $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 make_environment_obj= $(O)/make_environment.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
 $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 
+simulated_sev.obj= $(O)/simulated_sev_attest.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+
 
 all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe \
 	$(EXE_DIR)/make_simple_vse_clause.exe $(EXE_DIR)/make_unary_vse_clause.exe \
@@ -81,7 +85,7 @@ all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe 
 	$(EXE_DIR)/print_signed_claim.exe $(EXE_DIR)/package_claims.exe \
 	$(EXE_DIR)/print_packaged_claims.exe $(EXE_DIR)/embed_policy_key.exe \
 	$(EXE_DIR)/make_platform.exe $(EXE_DIR)/make_property.exe $(EXE_DIR)/combine_properties.exe \
-	$(EXE_DIR)/make_environment.exe
+	$(EXE_DIR)/make_environment.exe $(EXE_DIR)/simulated_sev_attest.exe
 
 clean:
 	@echo "removing object files"
@@ -243,3 +247,11 @@ $(O)/make_environment.o: $(S)/make_environment.cc $(INC_DIR)/certifier.pb.h $(IN
 $(EXE_DIR)/make_environment.exe: $(make_environment_obj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/make_environment.exe $(make_environment_obj) $(LDFLAGS)
+
+$(O)/simulated_sev_attest.o: $(S)/simulated_sev_attest.cc
+	@echo "compiling sev_simulated_attest.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/simulated_sev_attest.o $(S)/simulated_sev_attest.cc
+
+$(EXE_DIR)/simulated_sev_attest.exe: $(simulated_sev.obj)
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/simulated_sev_attest.exe $(simulated_sev.obj) $(LDFLAGS)
