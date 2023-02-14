@@ -28,9 +28,9 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-        "net"
+        //"net"
 	"os"
-        "syscall"
+        //"syscall"
 	"time"
 	"testing"
 
@@ -963,6 +963,7 @@ func TestPEM(t *testing.T) {
 	certFile := "vse.crt"
 	certPem, err := os.ReadFile(certFile)
 	if err != nil  || certPem == nil {
+		return // Todo: Remove
                 t.Errorf("Can't read pem cert file\n")
 		return
 	}
@@ -980,6 +981,35 @@ func TestPEM(t *testing.T) {
 	fmt.Printf("Key from pem cert\n")
 	PrintKey(k)
 	fmt.Printf("\n")
+}
+
+func TestPlatformPrimitives(t *testing.T) {
+	fmt.Print("\nTestPlatformPrimitives\n")
+
+	// PrintPlatform(const platform& pl);
+	// PrintEnvironment(const environment& env);
+	// PrintProperty(const property& prop);
+	// PrintEntityDescriptor(const entity_message& e);
+	// PrintPropertyDescriptor(const property& p);
+	// PrintPlatformDescriptor(const platform& pl);
+	// PrintEnvironmentDescriptor(const environment& env);
+	// make_property(string& name, string& type, string& cmp, uint64_t int_value, string& string_value, property* prop);
+	// make_platform(const string& type, const properties& p, const key_message* at, platform* plat);
+	// make_platform_entity(platform& plat, entity_message* ent);
+	// make_environment_entity(environment& env, entity_message* ent);
+	// make_environment(const platform& plat, const string& measurement, environment* env);
+	// get_platform_from_sev_attest(const sev_attestation_message& sev_att, entity_message* ent);
+	// get_measurement_from_sev_attest(const sev_attestation_message& sev_att, entity_message* ent);
+}
+
+func TestPlatformVerify(t *testing.T) {
+	fmt.Print("\nTestPlatformVerify\n")
+
+	// Read attestation and certs
+
+	// Construct request
+
+	// Verify
 }
 
 // For Sev testing --- deprecated

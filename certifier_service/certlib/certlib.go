@@ -40,7 +40,7 @@ import (
 	"time"
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
-	oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
+	// oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 )
 
 type PredicateDominance struct {
@@ -927,6 +927,12 @@ func PrintEntityDescriptor(e *certprotos.EntityMessage) {
 	if e.GetEntityType() == "key" {
 		PrintKeyDescriptor(e.GetKey())
 	}
+	if e.GetEntityType() == "environment" {
+		// Todo: PrintKeyDescriptor(e.GetKey())
+	}
+	if e.GetEntityType() == "platform" {
+		// Todo: PrintKeyDescriptor(e.GetKey())
+	}
 	return
 }
 
@@ -1046,6 +1052,12 @@ func PrintEntity(e *certprotos.EntityMessage) {
 	}
 	if e.GetEntityType() == "measurement" {
 		PrintBytes(e.GetMeasurement())
+	}
+	if e.GetEntityType() == "environment" {
+		// Todo: PrintKeyDescriptor(e.GetKey())
+	}
+	if e.GetEntityType() == "platform" {
+		// Todo: PrintKeyDescriptor(e.GetKey())
 	}
 	return
 }
@@ -1795,6 +1807,8 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 		} else if ev.GetEvidenceType() == "pem-cert-chain" {
 			// nothing to do
+/*
+  Uncomment this comment
 		} else if ev.GetEvidenceType() == "oe-attestation-report" {
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
@@ -1826,6 +1840,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
+*/
 		} else if ev.GetEvidenceType() == "sev-attestation" {
 			// get the key from ps
 			n := len(ps.Proved) - 1
@@ -2409,4 +2424,64 @@ func SizedSocketWrite(conn net.Conn, b []byte) bool {
 		return false
 	}
 	return true
+}
+
+func MakeProperty() *certprotos.Property {
+	return nil
+}
+
+func MakePlatform() *certprotos.Platform {
+	return nil
+}
+
+func MakePlatformEntity() *certprotos.EntityMessage {
+	return nil
+}
+
+func MakeEnvironmentEntity() *certprotos.EntityMessage {
+	return nil
+}
+
+func MakeEnvironment() *certprotos.Environment {
+	return nil
+}
+
+func GetPlatformFromSevAttest() *certprotos.EntityMessage {
+	return nil
+}
+
+func GetMeasurementFromSevAttest() *certprotos.EntityMessage {
+	return nil
+}
+
+func PrintEnvironment(e *certprotos.Environment) {
+}
+
+func PrintPlatform(p *certprotos.Platform) {
+}
+
+func PrintProperty(p *certprotos.Property) {
+}
+
+func PrintEnvironmentDescriptor(e *certprotos.Environment) {
+}
+
+func PrintPlatformDescriptor(p *certprotos.Platform) {
+}
+
+func PrintPropertyDescriptor(p *certprotos.Platform) {
+}
+
+func FilterSevPolicy() {
+}
+
+func InitPolicy() bool {
+	return false
+}
+
+func ConstructProofFromSevPlatformEvidence() {
+}
+
+func VerifyProofFromArray() bool {
+	return false
 }
