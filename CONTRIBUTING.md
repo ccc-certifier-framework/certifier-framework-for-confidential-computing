@@ -85,12 +85,10 @@ simple_app_under_app_service/service_example_app.exe.
 
 ### Formatting Commit Messages
 
-We follow the conventions on [How to Write a Git Commit Message]
-(http://chris.beams.io/posts/git-commit/).
+We follow the conventions on [How to Write a Git Commit Message](http://chris.beams.io/posts/git-commit/).
 
 Be sure to include any related GitHub issue references in the
-commit message.  See [GFM syntax]
-(https://guides.github.com/features/mastering-markdown/#GitHub-flavored-markdown)
+commit message.  See [GFM syntax](https://guides.github.com/features/mastering-markdown/#GitHub-flavored-markdown)
 for referencing issues and commits.
 
 ## Reporting Bugs and Creating Issues
