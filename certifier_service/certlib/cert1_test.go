@@ -1006,19 +1006,27 @@ func TestPlatformPrimitives(t *testing.T) {
 	pl := MakePlatform(t1, nil, props)
 	PrintPlatform(pl);
 
-	// PrintEnvironment(const environment& env);
-	// PrintProperty(const property& prop);
-	// PrintEntityDescriptor(const entity_message& e);
-	// PrintPropertyDescriptor(const property& p);
-	// PrintPlatformDescriptor(const platform& pl);
-	// PrintEnvironmentDescriptor(const environment& env);
-	// make_property(string& name, string& type, string& cmp, uint64_t int_value, string& string_value, property* prop);
-	// make_platform(const string& type, const properties& p, const key_message* at, platform* plat);
-	// make_platform_entity(platform& plat, entity_message* ent);
-	// make_environment_entity(environment& env, entity_message* ent);
-	// make_environment(const platform& plat, const string& measurement, environment* env);
-	// get_platform_from_sev_attest(const sev_attestation_message& sev_att, entity_message* ent);
-	// get_measurement_from_sev_attest(const sev_attestation_message& sev_att, entity_message* ent);
+	measurement := []byte {
+		0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
+		16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+	}
+	e := MakeEnvironment(pl, measurement)
+	if e == nil {
+		fmt.Printf("Can't make environment\n")
+	} else {
+		PrintEnvironment(e)
+	}
+
+	pe := MakePlatformEntity(pl)
+	ee := MakeEnvironmentEntity(e)
+	PrintEntity(pe)
+	PrintEntity(ee)
+
+	fmt.Printf("\n\nDescriptors:\n")
+	PrintEntityDescriptor(ee);
+	fmt.Printf("\n")
+	PrintEntityDescriptor(pe);
+	fmt.Printf("\n\n")
 }
 
 func TestPlatformVerify(t *testing.T) {

@@ -928,10 +928,10 @@ func PrintEntityDescriptor(e *certprotos.EntityMessage) {
 		PrintKeyDescriptor(e.GetKey())
 	}
 	if e.GetEntityType() == "environment" {
-		// Todo: PrintKeyDescriptor(e.GetKey())
+		PrintEnvironmentDescriptor(e.GetEnvironmentEnt())
 	}
 	if e.GetEntityType() == "platform" {
-		// Todo: PrintKeyDescriptor(e.GetKey())
+		PrintPlatformDescriptor(e.GetPlatformEnt())
 	}
 	return
 }
@@ -1054,10 +1054,10 @@ func PrintEntity(e *certprotos.EntityMessage) {
 		PrintBytes(e.GetMeasurement())
 	}
 	if e.GetEntityType() == "environment" {
-		// Todo: PrintKeyDescriptor(e.GetKey())
+		PrintEnvironment(e.EnvironmentEnt)
 	}
 	if e.GetEntityType() == "platform" {
-		// Todo: PrintKeyDescriptor(e.GetKey())
+		PrintPlatform(e.PlatformEnt)
 	}
 	return
 }
@@ -2455,16 +2455,30 @@ func MakePlatform(t string, k *certprotos.KeyMessage, props *certprotos.Properti
 	return plat
 }
 
-func MakePlatformEntity() *certprotos.EntityMessage {
-	return nil
+func MakePlatformEntity(pl *certprotos.Platform) *certprotos.EntityMessage {
+	plEnt := "platform"
+	pe := &certprotos.EntityMessage {
+		EntityType: &plEnt,
+		PlatformEnt: pl,
+	}
+	return pe
 }
 
-func MakeEnvironmentEntity() *certprotos.EntityMessage {
-	return nil
+func MakeEnvironmentEntity(e *certprotos.Environment) *certprotos.EntityMessage {
+	eEnt := "environment"
+	ee := &certprotos.EntityMessage {
+		EntityType: &eEnt,
+		EnvironmentEnt: e,
+	}
+	return ee
 }
 
-func MakeEnvironment() *certprotos.Environment {
-	return nil
+func MakeEnvironment(pl *certprotos.Platform, measurement []byte) *certprotos.Environment {
+	e := &certprotos.Environment {
+		ThePlatform: pl,
+		TheMeasurement: measurement,
+	}
+	return e
 }
 
 func GetPlatformFromSevAttest() *certprotos.EntityMessage {
@@ -2480,6 +2494,13 @@ func PrintEnvironment(e *certprotos.Environment) {
 		return
 	}
 	fmt.Printf("Environment:\n")
+	if e.ThePlatform != nil {
+		PrintPlatform(e.ThePlatform)
+	}
+	if e.TheMeasurement != nil {
+		fmt.Printf("Measurement: ")
+		PrintBytes(e.TheMeasurement)
+	}
 }
 
 func PrintPlatform(p *certprotos.Platform) {
@@ -2541,17 +2562,53 @@ func PrintEnvironmentDescriptor(e *certprotos.Environment) {
 	if e == nil {
 		return
 	}
+	fmt.Printf("environment[")
+	PrintPlatformDescriptor(e.ThePlatform)
+	fmt.Printf(", measurement: ")
+	PrintBytes(e.TheMeasurement)
+	fmt.Printf("]")
 }
 
 func PrintPlatformDescriptor(p *certprotos.Platform) {
-	if p == nil {
+	if p == nil  || p.PlatformType == nil {
 		return
 	}
+	fmt.Printf("platform[%s, ", *p.PlatformType)
+	if p.HasKey != nil && *p.HasKey && p.AttestKey != nil {
+		PrintKeyDescriptor(p.AttestKey)
+		fmt.Printf(", ")
+	}
+	if p.Props != nil {
+		for i := 0; i < len(p.Props.Props); i++ {
+			if i != 0 {
+				fmt.Printf(", ")
+			}
+			PrintPropertyDescriptor(p.Props.Props[i])
+		}
+	}
+	fmt.Printf("]")
 }
 
-func PrintPropertyDescriptor(p *certprotos.Platform) {
-	if p == nil {
+func PrintPropertyDescriptor(p *certprotos.Property) {
+	if p == nil  || p.PropertyName == nil {
 		return
+	}
+	fmt.Printf("%s: ", *p.PropertyName)
+	if p.ValueType == nil {
+		return
+	}
+	if *p.ValueType == "string" {
+		if p.StringValue != nil {
+			fmt.Printf("%s", *p.StringValue)
+		}
+	}
+	if *p.ValueType == "int" {
+		if p.Comparator != nil {
+			fmt.Printf("%s", *p.Comparator)
+		}
+		if p.IntValue != nil {
+			fmt.Printf("%d", *p.IntValue)
+		}
 	}
 }
 
