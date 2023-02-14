@@ -2426,12 +2426,33 @@ func SizedSocketWrite(conn net.Conn, b []byte) bool {
 	return true
 }
 
-func MakeProperty() *certprotos.Property {
-	return nil
+func MakeProperty(name string, t string, sv *string, c *string, iv *uint64) *certprotos.Property {
+	p := &certprotos.Property {
+		PropertyName: &name,
+		ValueType: &t,
+	}
+	if t == "string" {
+		p.StringValue = sv
+	}
+	if t == "int" {
+		p.Comparator = c
+		p.IntValue = iv
+	}
+	return p 
 }
 
-func MakePlatform() *certprotos.Platform {
-	return nil
+func MakePlatform(t string, k *certprotos.KeyMessage, props *certprotos.Properties) *certprotos.Platform {
+	hk := false;
+	if k != nil {
+		hk = true;
+	}
+	plat := &certprotos.Platform {
+		PlatformType: &t,
+		AttestKey: k,
+		Props: props,
+		HasKey: &hk,
+	}
+	return plat
 }
 
 func MakePlatformEntity() *certprotos.EntityMessage {
@@ -2455,21 +2476,83 @@ func GetMeasurementFromSevAttest() *certprotos.EntityMessage {
 }
 
 func PrintEnvironment(e *certprotos.Environment) {
+	if e == nil {
+		return
+	}
+	fmt.Printf("Environment:\n")
 }
 
 func PrintPlatform(p *certprotos.Platform) {
+	if p == nil {
+		return
+	}
+	if (p.PlatformType == nil) {
+		return
+	}
+	fmt.Printf("Platform:\n")
+	fmt.Printf("    Type: %s\n", *p.PlatformType)
+	if p.HasKey != nil && *p.HasKey {
+		fmt.Printf("    HasKey\n")
+	} else {
+		fmt.Printf("    NoKey\n")
+	}
+	if (p.AttestKey != nil) {
+		fmt.Printf("   Key: \n")
+		PrintKey(p.AttestKey)
+	}
+	if (p.Props != nil) {
+		fmt.Printf("    Properties:\n")
+		PrintProperties(p.Props)
+	}
 }
 
 func PrintProperty(p *certprotos.Property) {
+	if p == nil  || p.PropertyName == nil {
+		return
+	}
+	fmt.Printf("        %s: ", *p.PropertyName)
+	if p.ValueType == nil {
+		return
+	}
+	if *p.ValueType == "string" {
+		if p.StringValue == nil {
+			return
+		}
+		fmt.Printf("%s\n", *p.StringValue)
+	} 
+	if *p.ValueType == "int" {
+		if p.IntValue == nil  || p.Comparator == nil {
+			return
+		}
+		fmt.Printf("%s %d\n", *p.Comparator, *p.IntValue)
+	}
+}
+
+func PrintProperties(p *certprotos.Properties) {
+	if p == nil {
+		return
+	}
+	for i := 0; i < len(p.Props); i++ {
+		PrintProperty(p.Props[i])
+	}
 }
 
 func PrintEnvironmentDescriptor(e *certprotos.Environment) {
+	if e == nil {
+		return
+	}
 }
 
 func PrintPlatformDescriptor(p *certprotos.Platform) {
+	if p == nil {
+		return
+	}
 }
 
 func PrintPropertyDescriptor(p *certprotos.Platform) {
+	if p == nil {
+		return
+	}
 }
 
 func FilterSevPolicy() {

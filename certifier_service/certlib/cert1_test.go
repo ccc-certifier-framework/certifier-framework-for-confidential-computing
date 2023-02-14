@@ -986,7 +986,26 @@ func TestPEM(t *testing.T) {
 func TestPlatformPrimitives(t *testing.T) {
 	fmt.Print("\nTestPlatformPrimitives\n")
 
-	// PrintPlatform(const platform& pl);
+	t1 := "amd-sev-snp"
+	props := &certprotos.Properties{}
+	name := "debug"
+	t2 := "string"
+	t3 := "int"
+	sv := "no"
+	c := "="
+	iv := uint64(5)
+	p1 :=  MakeProperty(name, t2, &sv, &c, nil)
+	if p1 != nil {
+		props.Props = append(props.Props, p1)
+	}
+	name2 := "api-major"
+	p2 :=  MakeProperty(name2, t3, nil, &c, &iv)
+	if p2 != nil {
+		props.Props = append(props.Props, p2)
+	}
+	pl := MakePlatform(t1, nil, props)
+	PrintPlatform(pl);
+
 	// PrintEnvironment(const environment& env);
 	// PrintProperty(const property& prop);
 	// PrintEntityDescriptor(const entity_message& e);
