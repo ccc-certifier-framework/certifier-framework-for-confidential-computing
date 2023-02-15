@@ -1030,11 +1030,103 @@ func TestPlatformPrimitives(t *testing.T) {
 }
 
 func TestPlatformVerify(t *testing.T) {
-	fmt.Print("\nTestPlatformVerify\n")
+	cert1File := "test_data/sev_cert1.der"
+	cert2File := "test_data/sev_cert2.der"
+	cert3File := "test_data/sev_cert3.der"
+	attestFile := "test_data/sev_sample_attest.bin"
+	fmt.Printf("\nTestPlatformVerify %s %s %s %s\n", cert1File, cert2File, cert3File, attestFile)
 
 	// Read attestation and certs
+	cert1Der, err := os.ReadFile(cert1File)
+	if err != nil {
+		fmt.Println("Can't read cert1 file, ", err)
+	}
+	cert2Der, err := os.ReadFile(cert2File)
+	if err != nil {
+		fmt.Println("Can't read cert2 file, ", err)
+	}
+	cert3Der, err := os.ReadFile(cert3File)
+	if err != nil {
+		fmt.Println("Can't read cert3 file, ", err)
+	}
+	attestBin, err := os.ReadFile(attestFile)
+	if err != nil {
+		fmt.Println("Can't read attest file, ", err)
+	}
+	PrintBytes(cert1Der)
+	fmt.Printf("\n")
+	PrintBytes(cert2Der)
+	fmt.Printf("\n")
+	PrintBytes(cert3Der)
+	fmt.Printf("\n")
+	PrintBytes(attestBin)
+	fmt.Printf("\n")
+
+	vseVe := "vse-verifier"
+	var fa [](*certprotos.Evidence) = nil
+	evp := &certprotos.EvidencePackage {
+		ProverType: &vseVe,
+		FactAssertion: fa,
+	}
+	et := "cert"
+	ev1 := &certprotos.Evidence {
+		EvidenceType: &et,
+		SerializedEvidence: cert1Der,
+	}
+	ev2 := &certprotos.Evidence {
+		EvidenceType: &et,
+		SerializedEvidence: cert2Der,
+	}
+	ev3 := &certprotos.Evidence {
+		EvidenceType: &et,
+		SerializedEvidence: cert3Der,
+	}
+	enclaveT := "sev-enclave"
+	ud := &certprotos.AttestationUserData {
+		EnclaveType: &enclaveT,
+		//Time: ,
+		//EnclaveKey: ,
+		//PolicyKey: ,
+	}
+	marshalledUd, err := proto.Marshal(ud)
+	if err != nil {
+                t.Errorf("Can't marshal ud\n")
+	}
+	at := &certprotos.SevAttestationMessage {
+		WhatWasSaid: marshalledUd,
+		ReportedAttestation: attestBin,
+	}
+	marshalledAt, err := proto.Marshal(at)
+	if err != nil {
+		t.Errorf("Can't marshal sev-attestation\n")
+	}
+	aet := "sev-attestation"
+	ev4 := &certprotos.Evidence {
+		EvidenceType: &aet,
+		SerializedEvidence: marshalledAt,
+	}
+	fa = append(fa, ev1)
+	fa = append(fa, ev2)
+	fa = append(fa, ev3)
+	fa = append(fa, ev4)
 
 	// Construct request
+	reqTag := "requestor"
+	provTag := "provider"
+	evType := "sev-platform-package"
+	pur := "authentication"
+	req := &certprotos.TrustRequestMessage {
+		RequestingEnclaveTag: &reqTag,
+		ProvidingEnclaveTag: &provTag,
+		SubmittedEvidenceType: &evType,
+		Purpose: &pur,
+		Support: evp,
+	}
+	PrintTrustRequest(req)
+
+	// Decode request
+
+	// ConstructProof
 
 	// Verify
 }
