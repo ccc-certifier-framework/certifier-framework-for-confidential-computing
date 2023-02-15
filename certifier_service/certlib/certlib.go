@@ -695,6 +695,12 @@ func SameEntity(e1 *certprotos.EntityMessage, e2 *certprotos.EntityMessage) bool
 	if  e1.GetEntityType() == "key" {
 		return SameKey(e1.GetKey(), e2.GetKey())
 	}
+	if  e1.GetEntityType() == "platform" {
+		return SamePlatform(e1.GetPlatformEnt(), e2.GetPlatformEnt())
+	}
+	if  e1.GetEntityType() == "environment" {
+		return SameEnvironment(e1.GetEnvironmentEnt(), e2.GetEnvironmentEnt())
+	}
 	return false
 }
 
@@ -2518,6 +2524,157 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
 
 func GetMeasurementFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
 	return MakeMeasurementEntity(binSevAttest[0x90:0xc0])
+}
+
+// Update SameEntity
+func SameProperty(p1 *certprotos.Property,  p2 *certprotos.Property) bool {
+	if p1 == nil || p2 == nil {
+		return false
+	}
+	if p1.PropertyName == nil || p2.PropertyName == nil {
+		return false
+	}
+	if *p1.PropertyName != *p2.PropertyName {
+		return false
+	}
+	return true
+}
+
+/*
+  if (p1.comparator() == "=")
+    return same_property(p1, p2);
+  if (p1.comparator() != ">=" || p1.property_name() != p2.property_name() ||
+      p1.value_type() != p2.value_type() || p1.value_type() != "int") {
+    return false;
+  }
+  return p2.int_value() >= p1.int_value();
+ */
+func SatisfyingProperty(p1 *certprotos.Property, p2 *certprotos.Property) bool {
+	if p1 == nil || p2 == nil || p1.PropertyName == nil || p2.PropertyName == nil {
+		return false
+	}
+	if p1.ValueType == nil || p2.ValueType == nil {
+		return false
+	}
+	if *p1.ValueType != *p2.ValueType {
+		return false
+	}
+	if *p1.ValueType == "string" {
+		if p1.IntValue == nil || p2.IntValue == nil {
+			return false
+		}
+		if *p1.StringValue != *p2.StringValue {
+			return false
+		}
+	}
+	if *p1.ValueType == "int" {
+		if p1.Comparator == nil || p2.Comparator == nil {
+			return false
+		}
+		if *p1.Comparator != *p2.Comparator {
+			return false
+		}
+		if *p1.Comparator == ">=" {
+		} else if *p1.Comparator == "=" {
+			return *p1.IntValue >= *p2.IntValue
+		} else {
+			return *p1.IntValue == *p2.IntValue
+		}
+	}
+	return true
+}
+
+func FindProperty(propName string, p []*certprotos.Property) *certprotos.Property {
+	for i := 0; i < len(p); i++ {
+		if p[i].PropertyName == nil {
+			return nil
+		}
+		if *p[i].PropertyName == propName {
+			return p[i]
+		}
+	}
+	return nil
+}
+
+func SatisfyingProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) bool {
+	if p1 == nil || p2 == nil {
+		return false
+	}
+	if p1.Props == nil || p2.Props == nil {
+		return false
+	}
+	for i := 0; i < len(p1.Props); i++ {
+		if p1.Props[i].PropertyName == nil {
+			return false
+		}
+		pp := FindProperty(*p1.Props[i].PropertyName, p2.Props)
+		if pp == nil {
+			return false
+		}
+		if (!SatisfyingProperty(p1.Props[i], pp)) {
+			return false
+		}
+	}
+	return true
+}
+
+func SameProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) bool {
+	if p1 == nil || p2 == nil {
+		return false
+	}
+	if p1.Props == nil || p2.Props == nil {
+		return false
+	}
+	for i := 0; i < len(p1.Props); i++ {
+		if p1.Props[i].PropertyName == nil {
+			return false
+		}
+		pp := FindProperty(*p1.Props[i].PropertyName, p2.Props)
+		if pp == nil {
+			return false
+		}
+		if (!SameProperty(p1.Props[i], pp)) {
+			return false
+		}
+	}
+	return true
+}
+
+func SameEnvironment(p1 *certprotos.Environment, p2 *certprotos.Environment) bool {
+	if p1 == nil || p2 == nil {
+		return false
+	}
+	if p1.TheMeasurement == nil || p2.TheMeasurement == nil {
+		return false
+	}
+	if !bytes.Equal(p1.TheMeasurement, p2.TheMeasurement) {
+		return false
+	}
+	if p1.ThePlatform == nil || p2.ThePlatform == nil {
+		return false
+	}
+	return SamePlatform(p1.ThePlatform,  p2.ThePlatform);
+}
+
+func SamePlatform(p1 *certprotos.Platform, p2 *certprotos.Platform) bool {
+	if p1.PlatformType == nil || p2.PlatformType == nil {
+		return false
+	}
+	if p1.HasKey == nil || p2.HasKey == nil {
+		return false
+	}
+	if *p1.HasKey != *p2.HasKey {
+		return false
+	}
+	if *p1.HasKey {
+		if p1.AttestKey == nil || p2.AttestKey == nil {
+			return false
+		}
+		if !SameKey(p1.AttestKey, p2.AttestKey) {
+			return false
+		}
+	}
+	return SameProperties(p1.Props, p2.Props)
 }
 
 func PrintEnvironment(e *certprotos.Environment) {
