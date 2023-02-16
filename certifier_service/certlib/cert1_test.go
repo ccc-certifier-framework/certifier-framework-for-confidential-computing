@@ -1027,6 +1027,46 @@ func TestPlatformPrimitives(t *testing.T) {
 	fmt.Printf("\n")
 	PrintEntityDescriptor(pe);
 	fmt.Printf("\n\n")
+
+	if !SameProperty(p1, p1) {
+		t.Errorf("Properties should match\n")
+	}
+	if SameProperty(p1, p2) {
+		t.Errorf("Properties shouldn't match\n")
+	}
+	if !SameEnvironment(e, e) {
+		t.Errorf("Environments should match\n")
+	}
+
+	pl2 := &certprotos.Platform {
+		HasKey: pl.HasKey,
+		PlatformType: pl.PlatformType,
+		AttestKey: pl.AttestKey,
+		Props: pl.Props,
+	}
+	if !SamePlatform(pl, pl2) {
+		t.Errorf("Platforms should match\n")
+	}
+	pl3, _ := proto.Clone(pl).(*certprotos.Platform)
+	if !SamePlatform(pl, pl3) {
+		t.Errorf("Platforms should match\n")
+	}
+
+	if !SatisfyingProperty(p1, p1) {
+		t.Errorf("Properties should satisfy\n")
+	}
+	if SatisfyingProperty(p1, p2) {
+		t.Errorf("Properties shouldn't satisfy\n")
+	}
+	properties := &certprotos.Properties{}
+	properties.Props = append(properties.Props,p1)
+	properties.Props = append(properties.Props, p2)
+	if !SameProperties(properties, properties) {
+		t.Errorf("Series of properties shouldn't match\n")
+	}
+	if !SatisfyingProperties(properties, properties) {
+		t.Errorf("Series of properties shouldn't satisfy\n")
+	}
 }
 
 func TestPlatformVerify(t *testing.T) {

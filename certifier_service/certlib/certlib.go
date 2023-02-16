@@ -2540,15 +2540,6 @@ func SameProperty(p1 *certprotos.Property,  p2 *certprotos.Property) bool {
 	return true
 }
 
-/*
-  if (p1.comparator() == "=")
-    return same_property(p1, p2);
-  if (p1.comparator() != ">=" || p1.property_name() != p2.property_name() ||
-      p1.value_type() != p2.value_type() || p1.value_type() != "int") {
-    return false;
-  }
-  return p2.int_value() >= p1.int_value();
- */
 func SatisfyingProperty(p1 *certprotos.Property, p2 *certprotos.Property) bool {
 	if p1 == nil || p2 == nil || p1.PropertyName == nil || p2.PropertyName == nil {
 		return false
@@ -2560,7 +2551,7 @@ func SatisfyingProperty(p1 *certprotos.Property, p2 *certprotos.Property) bool {
 		return false
 	}
 	if *p1.ValueType == "string" {
-		if p1.IntValue == nil || p2.IntValue == nil {
+		if p1.StringValue == nil || p2.StringValue == nil {
 			return false
 		}
 		if *p1.StringValue != *p2.StringValue {
@@ -2575,8 +2566,9 @@ func SatisfyingProperty(p1 *certprotos.Property, p2 *certprotos.Property) bool {
 			return false
 		}
 		if *p1.Comparator == ">=" {
-		} else if *p1.Comparator == "=" {
 			return *p1.IntValue >= *p2.IntValue
+		} else if *p1.Comparator == "=" {
+			return *p1.IntValue == *p2.IntValue
 		} else {
 			return *p1.IntValue == *p2.IntValue
 		}
