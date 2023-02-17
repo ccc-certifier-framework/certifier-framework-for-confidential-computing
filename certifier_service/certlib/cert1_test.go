@@ -1105,6 +1105,51 @@ func TestPlatformPrimitives(t *testing.T) {
 		PrintProperties(props2)
 		fmt.Printf("\n\n")
 	}
+
+/*
+	  uint64_t    policy;                   // 0x008
+	  uint8_t     report_data[64];          // 0x050
+	  uint8_t     measurement[48];          // 0x090
+	  union tcb_version reported_tcb;       // 0x180
+	};
+*/
+	var ar[0x2A0] byte
+	fakeSevAtt := []byte(ar[0:0x2a0])
+	for i := 0; i < 0x2A0; i++ {
+		fakeSevAtt[i] = 0
+	}
+	fakeSevAtt[8] = 0xff
+	fakeSevAtt[0x50] = 0x01
+	fakeSevAtt[0x51] = 0x01
+	fakeSevAtt[0x52] = 0x01
+	fakeSevAtt[0x53] = 0x01
+	for i := 0; i < 48; i++ {
+		fakeSevAtt[i + 0x90] = byte(i)
+	}
+	m := GetMeasurementFromSevAttest(fakeSevAtt)
+	if m == nil {
+		t.Errorf("Can't get measurement")
+	} else {
+		fmt.Printf("Measurement: ")
+		PrintBytes(m)
+		fmt.Printf("\n")
+	}
+	ud := GetUserDataHashFromSevAttest(fakeSevAtt)
+	if ud == nil {
+		t.Errorf("Can't get user data")
+	} else {
+		fmt.Printf("User data: ")
+		PrintBytes(ud)
+		fmt.Printf("\n")
+	}
+	plat := GetPlatformFromSevAttest(fakeSevAtt)
+	if plat == nil {
+		t.Errorf("Can't get platform")
+	} else {
+		PrintPlatform(plat)
+		fmt.Printf("\n")
+	}
+
 }
 
 func TestPlatformVerify(t *testing.T) {

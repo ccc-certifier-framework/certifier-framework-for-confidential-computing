@@ -2515,15 +2515,90 @@ func MakeEnvironment(pl *certprotos.Platform, measurement []byte) *certprotos.En
 	  struct signature  signature;          // 0x2A0
 	};
 */
-func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
+func GetUserDataHashFromSevAttest(binSevAttest []byte) []byte {
+	return []byte(binSevAttest[0x50:0x90])
+}
+
+func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
+
 	// get properties
+	props := &certprotos.Properties{}
+	pol_byte := binSevAttest[8]
+	major_byte := binSevAttest[9]
+	minor_byte := binSevAttest[10]
+
+	svt := "string"
+	ivt := "int"
+
+	pn1 := "debug"
+	vp1 := "no"
+	ce := "="
+	if pol_byte & 0x01  == 0 {
+		vp1 = "yes"
+	}
+	p1 := MakeProperty(pn1, svt, &vp1, &ce, nil)
+	props.Props = append(props.Props, p1)
+
+	pn2 := "key-share"
+	vp2 := "no"
+	if pol_byte & 0x02  == 0 {
+		vp2 = "yes"
+	}
+	p2 := MakeProperty(pn2, svt, &vp2, &ce, nil)
+	props.Props = append(props.Props, p2)
+
+	pn3 := "migrate"
+	vp3 := "no"
+	if pol_byte & 0x04  == 0 {
+		vp3 = "yes"
+	}
+	p3 := MakeProperty(pn3, svt, &vp3, &ce, nil)
+	props.Props = append(props.Props, p3)
+
+	cge := ">="
+
+	m1iv := uint64(major_byte)
+	pn4 := "api-major"
+	p4 := MakeProperty(pn4, ivt, nil, &cge, &m1iv)
+	props.Props = append(props.Props, p4)
+
+	m2iv := uint64(minor_byte)
+	pn5 := "api-minor"
+	p5 := MakeProperty(pn5, ivt, nil, &cge, &m2iv)
+	props.Props = append(props.Props, p5)
+
+
+	tcb := uint64(binSevAttest[0x180])
+	tcb = (uint64(binSevAttest[0x181]) << 8) | tcb
+	tcb = (uint64(binSevAttest[0x182]) << 16) | tcb
+	tcb = (uint64(binSevAttest[0x183]) << 24) | tcb
+	tcb = (uint64(binSevAttest[0x184]) << 32) | tcb
+	tcb = (uint64(binSevAttest[0x185]) << 40) | tcb
+	tcb = (uint64(binSevAttest[0x186]) << 48) | tcb
+	tcb = (uint64(binSevAttest[0x187]) << 56) | tcb
+
+	pn6 := "tcb-version"
+	p6 := MakeProperty(pn6, ivt, nil, &ce, &tcb)
+	props.Props = append(props.Props, p6)
+
+	t1 := "amd-sev-snp"
+	return MakePlatform(t1, nil, props)
+}
+
+func GetPlatformEntityFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
+	// get properties
+	// api-major, api-minor, tcb-version, debug, migrate, key-share
 	// pl := MakePlatform(t string, k *certprotos.KeyMessage, props *certprotos.Properties)
 	// return MakePlatformEntity(pl)
 	return nil
 }
 
-func GetMeasurementFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
-	return MakeMeasurementEntity(binSevAttest[0x90:0xc0])
+func GetMeasurementFromSevAttest(binSevAttest []byte) []byte {
+	return []byte(binSevAttest[0x90:0xc0])
+}
+
+func GetMeasurementEntityFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
+	return MakeMeasurementEntity(GetMeasurementFromSevAttest(binSevAttest))
 }
 
 func SameProperty(p1 *certprotos.Property,  p2 *certprotos.Property) bool {
