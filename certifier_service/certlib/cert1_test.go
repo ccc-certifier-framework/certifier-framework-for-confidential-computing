@@ -1157,7 +1157,7 @@ func TestPlatformVerify(t *testing.T) {
 	arkCertFile := "test_data/sev_ark_cert.der"
 	askCertFile := "test_data/sev_ask_cert.der"
 	vcekCertFile := "test_data/sev_vcek_cert.der"
-	attestFile := "test_data/sev_trial_attest.bin"
+	attestFile := "test_data/sev_attest.bin"
 	fmt.Printf("\nTestPlatformVerify %s %s %s %s\n", arkCertFile, askCertFile, vcekCertFile, attestFile)
 
 	// Read attestation and certs

@@ -22,6 +22,7 @@ DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(ark_der, "sev_ark_cert.der",  "ark cert file");
 DEFINE_string(ask_der, "sev_ask_cert.der",  "ask cert file");
 DEFINE_string(vcek_der, "sev_vcek_cert.der",  "vcek cert file");
+DEFINE_string(policy_key_file, "policy_key.bin",  "policy key file");
 DEFINE_string(sev_attest, "sev_attest.bin",  "simulated attestation file");
 
 static struct attestation_report default_report = {
@@ -44,7 +45,24 @@ static struct attestation_report default_report = {
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
-  printf("sample_sev_key_generation.exe --ark_der=sev_ark_cert.der --ask_cert=sev_ask_cert.der --vcek_der=sev_vcek_cert.der --sev_attest=sev_attest.bin\n");
+  printf("sample_sev_key_generation.exe --ark_der=sev_ark_cert.der --ask_cert=sev_ask_cert.der --vcek_der=sev_vcek_cert.der --sev_attest=sev_attest.bin --policy_key-policy_key.bin\n");
+
+  // policy key
+  string policy_key_str;
+  key_message policy_key;
+  if (!read_file_into_string(FLAGS_policy_key_file, &policy_key_str)) {
+    printf("Can't read policy key\n");
+    return 1;
+  }
+  if (!policy_key.ParseFromString(policy_key_str)) {
+    printf("Can't parse policy key\n");
+    return 1;
+  }
+  key_message pub_policy_key;
+  if (!private_key_to_public_key(policy_key, &pub_policy_key)) {
+    printf("Can't translate private policy key\n");
+    return 1;
+  }
 
   // Generate keys and certs
   string rsa_type("rsa-4096-private");
@@ -162,24 +180,55 @@ int main(int an, char** av) {
     printf("Can't write %s\n", FLAGS_vcek_der.c_str());
     return 1;
   }
-  EC_KEY_free(ec);
 
   // Attestation
+  attestation_user_data ud;
   sev_attestation_message sev_att;
+  string enclave_type("sev-enclave");
 
+  if (!make_attestation_user_data(enclave_type, pub_policy_key, &ud)) {
+    printf("Can't make user data\n");
+    return 1;
+  }
+  string said_str;
+  if (!ud.SerializeToString(&said_str)) {
+    printf("Can't serialize user data\n");
+    return 1;
+  }
 
-/*
+  sev_attestation_message the_attestation;
+  the_attestation.set_what_was_said(said_str);
+
+  int hash_len= 48;
+  byte user_data_hash[hash_len];
+
+  if (!digest_message("sha-384", (byte*)said_str.data(), said_str.size(), user_data_hash, hash_len)) {
+    printf("digest_message failed\n");
+    return 1;
+  }
+  memcpy(default_report.report_data, user_data_hash, hash_len);
+
+  // sign report, put in in the_attestation
   int size_out = sizeof(signature);
-  if (!ecc_sign("sha-384", eck, sizeof(attestation_report) - sizeof(signature), (byte*) &default_report,
+  if (!ecc_sign("sha-384", ec, sizeof(attestation_report) - sizeof(signature), (byte*) &default_report,
                 &size_out, (byte*)&default_report.signature)) {
     printf("signature failure\n");
     return 1;
   }
-  if (!write_file(FLAGS_output, sizeof(attestation_report), (byte*) &default_report)) {
-    printf("Can't write %s\n", FLAGS_output.c_str());
+  string att_rep;
+  att_rep.assign((char*)&default_report, sizeof(attestation_report));
+  the_attestation.set_reported_attestation(att_rep);
+
+  string sev_attest_str;
+  if (!sev_att.SerializeToString(&sev_attest_str)) {
+    printf("Can't serialize attestation message\n");
     return 1;
   }
-*/
+  if (!write_file(FLAGS_sev_attest, att_rep.size(), (byte*) att_rep.data())) {
+    printf("Can't write %s\n", FLAGS_sev_attest.c_str());
+    return 1;
+  }
+  EC_KEY_free(ec);
 
   return 0;
 }
