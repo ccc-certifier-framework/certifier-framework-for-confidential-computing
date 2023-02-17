@@ -2526,7 +2526,6 @@ func GetMeasurementFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage 
 	return MakeMeasurementEntity(binSevAttest[0x90:0xc0])
 }
 
-// Update SameEntity
 func SameProperty(p1 *certprotos.Property,  p2 *certprotos.Property) bool {
 	if p1 == nil || p2 == nil {
 		return false
@@ -2562,15 +2561,12 @@ func SatisfyingProperty(p1 *certprotos.Property, p2 *certprotos.Property) bool {
 		if p1.Comparator == nil || p2.Comparator == nil {
 			return false
 		}
-		if *p1.Comparator != *p2.Comparator {
-			return false
-		}
-		if *p1.Comparator == ">=" {
-			return *p1.IntValue >= *p2.IntValue
-		} else if *p1.Comparator == "=" {
+		if *p1.Comparator == ">=" && *p2.Comparator == "=" {
+			return *p2.IntValue >= *p1.IntValue
+		} else if *p1.Comparator == "=" && *p2.Comparator == "=" {
 			return *p1.IntValue == *p2.IntValue
 		} else {
-			return *p1.IntValue == *p2.IntValue
+			return false
 		}
 	}
 	return true

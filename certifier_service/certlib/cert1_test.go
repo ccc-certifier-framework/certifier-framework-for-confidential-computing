@@ -1003,6 +1003,7 @@ func TestPlatformPrimitives(t *testing.T) {
 	if p2 != nil {
 		props.Props = append(props.Props, p2)
 	}
+
 	pl := MakePlatform(t1, nil, props)
 	PrintPlatform(pl);
 
@@ -1053,19 +1054,56 @@ func TestPlatformPrimitives(t *testing.T) {
 	}
 
 	if !SatisfyingProperty(p1, p1) {
-		t.Errorf("Properties should satisfy\n")
+		t.Errorf("Properties should satisfy (1)\n")
 	}
 	if SatisfyingProperty(p1, p2) {
-		t.Errorf("Properties shouldn't satisfy\n")
+		t.Errorf("Properties shouldn't satisfy (1)\n")
 	}
 	properties := &certprotos.Properties{}
 	properties.Props = append(properties.Props,p1)
 	properties.Props = append(properties.Props, p2)
 	if !SameProperties(properties, properties) {
-		t.Errorf("Series of properties shouldn't match\n")
+		t.Errorf("Series of properties shouldn't match (2)\n")
 	}
 	if !SatisfyingProperties(properties, properties) {
-		t.Errorf("Series of properties shouldn't satisfy\n")
+		t.Errorf("Series of properties shouldn't satisfy (2)\n")
+	}
+
+	c3 := ">="
+	p3 := MakeProperty(name2, t3, nil, &c3, &iv)
+	props2 := &certprotos.Properties{}
+	if p1 != nil {
+		props2.Props = append(props2.Props, p1)
+	}
+	if p3 != nil {
+		props2.Props = append(props2.Props, p3)
+	}
+	if !SatisfyingProperty(p3, p2) {
+		t.Errorf("Properties should satisfy (3)\n")
+		fmt.Printf("First\n")
+		PrintProperty(p3)
+		fmt.Printf("\n\n")
+		fmt.Printf("Second\n")
+		PrintProperty(p2)
+		fmt.Printf("\n\n")
+	}
+	if SatisfyingProperty(p2, p3) {
+		t.Errorf("Properties should satisfy (3)\n")
+		fmt.Printf("First\n")
+		PrintProperty(p3)
+		fmt.Printf("\n\n")
+		fmt.Printf("Second\n")
+		PrintProperty(p2)
+		fmt.Printf("\n\n")
+	}
+	if !SatisfyingProperties(props2, props) {
+		t.Errorf("Series of properties shouldn't satisfy (3)\n")
+		fmt.Printf("First List\n")
+		PrintProperties(props)
+		fmt.Printf("\n\n")
+		fmt.Printf("Second List\n")
+		PrintProperties(props2)
+		fmt.Printf("\n\n")
 	}
 }
 
