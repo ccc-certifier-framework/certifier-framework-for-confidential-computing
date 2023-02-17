@@ -1153,34 +1153,35 @@ func TestPlatformPrimitives(t *testing.T) {
 }
 
 func TestPlatformVerify(t *testing.T) {
-	cert1File := "test_data/sev_cert1.der"
-	cert2File := "test_data/sev_cert2.der"
-	cert3File := "test_data/sev_cert3.der"
-	attestFile := "test_data/sev_sample_attest.bin"
-	fmt.Printf("\nTestPlatformVerify %s %s %s %s\n", cert1File, cert2File, cert3File, attestFile)
+
+	arkCertFile := "test_data/sev_ark_cert.der"
+	askCertFile := "test_data/sev_ask_cert.der"
+	vcekCertFile := "test_data/sev_vcek_cert.der"
+	attestFile := "test_data/sev_trial_attest.bin"
+	fmt.Printf("\nTestPlatformVerify %s %s %s %s\n", arkCertFile, askCertFile, vcekCertFile, attestFile)
 
 	// Read attestation and certs
-	cert1Der, err := os.ReadFile(cert1File)
+	arkCertDer, err := os.ReadFile(askCertFile)
 	if err != nil {
-		fmt.Println("Can't read cert1 file, ", err)
+		fmt.Println("Can't read ark file, ", err)
 	}
-	cert2Der, err := os.ReadFile(cert2File)
+	askCertDer, err := os.ReadFile(askCertFile)
 	if err != nil {
-		fmt.Println("Can't read cert2 file, ", err)
+		fmt.Println("Can't read ask file, ", err)
 	}
-	cert3Der, err := os.ReadFile(cert3File)
+	vcekCertDer, err := os.ReadFile(vcekCertFile)
 	if err != nil {
-		fmt.Println("Can't read cert3 file, ", err)
+		fmt.Println("Can't read vcek file, ", err)
 	}
 	attestBin, err := os.ReadFile(attestFile)
 	if err != nil {
-		fmt.Println("Can't read attest file, ", err)
+		fmt.Println("Can't read sev_attestation file, ", err)
 	}
-	PrintBytes(cert1Der)
+	PrintBytes(arkCertDer)
 	fmt.Printf("\n")
-	PrintBytes(cert2Der)
+	PrintBytes(askCertDer)
 	fmt.Printf("\n")
-	PrintBytes(cert3Der)
+	PrintBytes(vcekCertDer)
 	fmt.Printf("\n")
 	PrintBytes(attestBin)
 	fmt.Printf("\n")
@@ -1194,40 +1195,23 @@ func TestPlatformVerify(t *testing.T) {
 	et := "cert"
 	ev1 := &certprotos.Evidence {
 		EvidenceType: &et,
-		SerializedEvidence: cert1Der,
+		SerializedEvidence: arkCertDer,
 	}
 	ev2 := &certprotos.Evidence {
 		EvidenceType: &et,
-		SerializedEvidence: cert2Der,
+		SerializedEvidence: arkCertDer,
 	}
 	ev3 := &certprotos.Evidence {
 		EvidenceType: &et,
-		SerializedEvidence: cert3Der,
+		SerializedEvidence: vcekCertDer,
 	}
-	enclaveT := "sev-enclave"
-	ud := &certprotos.AttestationUserData {
-		EnclaveType: &enclaveT,
-		//Time: ,
-		//EnclaveKey: ,
-		//PolicyKey: ,
-	}
-	marshalledUd, err := proto.Marshal(ud)
-	if err != nil {
-                t.Errorf("Can't marshal ud\n")
-	}
-	at := &certprotos.SevAttestationMessage {
-		WhatWasSaid: marshalledUd,
-		ReportedAttestation: attestBin,
-	}
-	marshalledAt, err := proto.Marshal(at)
-	if err != nil {
-		t.Errorf("Can't marshal sev-attestation\n")
-	}
+
 	aet := "sev-attestation"
 	ev4 := &certprotos.Evidence {
 		EvidenceType: &aet,
-		SerializedEvidence: marshalledAt,
+		SerializedEvidence: attestBin,
 	}
+
 	fa = append(fa, ev1)
 	fa = append(fa, ev2)
 	fa = append(fa, ev3)
@@ -1248,6 +1232,11 @@ func TestPlatformVerify(t *testing.T) {
 	PrintTrustRequest(req)
 
 	// Decode request
+
+	sevAtt := certprotos.SevAttestationMessage{}
+	err = proto.Unmarshal(attestBin, &sevAtt)
+	if err != nil {
+	}
 
 	// ConstructProof
 
