@@ -1480,8 +1480,22 @@ func PrintEvidence(ev *certprotos.Evidence) {
 		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "sev-attestation" {
 		PrintBytes(ev.SerializedEvidence)
+	} else if ev.GetEvidenceType() == "cert" {
+		PrintBytes(ev.SerializedEvidence)
 	} else {
 		return
+	}
+}
+
+func PrintEvidencePackage(evp *certprotos.EvidencePackage, printAll bool) {
+	fmt.Printf("\nProver type: %s\n", evp.GetProverType())
+	for i:= 0; i < len(evp.FactAssertion); i++ {
+		ev := evp.FactAssertion[i]
+		if printAll {
+			PrintEvidence(ev)
+		} else {
+			fmt.Printf("    Evidence type: %s\n", ev.GetEvidenceType())
+		}
 	}
 }
 
@@ -2331,27 +2345,8 @@ func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
 		fmt.Printf("\nSubmittedEvidenceType: %s\n", req.GetSubmittedEvidenceType())
 	}
 
-	fmt.Printf("Prover Type: %s\n\n", req.Support.GetProverType())
 	// Support
-	if req.Support != nil {
-		for  i := 0; i < len(req.Support.FactAssertion); i++ {
-			fmt.Printf("\nEvidence %d:\n", i)
-			fmt.Printf("Evidence Type: %s\n", req.Support.FactAssertion[i].GetEvidenceType())
-			if req.Support.FactAssertion[i].GetEvidenceType() == "signed-claim" {
-				signedClaimMsg := certprotos.SignedClaimMessage {}
-				err := proto.Unmarshal(req.Support.FactAssertion[i].GetSerializedEvidence(), &signedClaimMsg)
-				if err != nil {
-					return
-				}
-				PrintSignedClaim(&signedClaimMsg)
-			} else if req.Support.FactAssertion[i].GetEvidenceType() == "oe_evidence" {
-				PrintBytes(req.Support.FactAssertion[i].GetSerializedEvidence())
-			}
-			fmt.Printf("\n")
-		}
-	} else {
-		fmt.Printf("Support is empty\n")
-	}
+	PrintEvidencePackage(req.Support, true)
 	fmt.Printf("\n")
 }
 

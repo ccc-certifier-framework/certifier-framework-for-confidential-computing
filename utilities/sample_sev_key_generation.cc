@@ -224,7 +224,7 @@ int main(int an, char** av) {
     printf("Can't serialize attestation message\n");
     return 1;
   }
-  if (!write_file(FLAGS_sev_attest, att_rep.size(), (byte*) att_rep.data())) {
+  if (!write_file(FLAGS_sev_attest, sev_attest_str.size(), (byte*) sev_attest_str.data())) {
     printf("Can't write %s\n", FLAGS_sev_attest.c_str());
     return 1;
   }

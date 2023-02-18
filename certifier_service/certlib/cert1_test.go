@@ -1178,21 +1178,20 @@ func TestPlatformVerify(t *testing.T) {
         if err != nil {
                 fmt.Println("Can't read sev_attestation file, ", err)
         }
+        fmt.Printf("\narkCert:\n")
         PrintBytes(arkCertDer)
         fmt.Printf("\n")
+        fmt.Printf("\naskCert:\n")
         PrintBytes(askCertDer)
         fmt.Printf("\n")
+        fmt.Printf("\nvcekCert:\n")
         PrintBytes(vcekCertDer)
         fmt.Printf("\n")
+        fmt.Printf("\nAttest:\n")
         PrintBytes(attestBin)
         fmt.Printf("\n")
 
         vseVe := "vse-verifier"
-        var fa [](*certprotos.Evidence) = nil
-        evp := &certprotos.EvidencePackage {
-                ProverType: &vseVe,
-                FactAssertion: fa,
-        }
         et := "cert"
         ev1 := &certprotos.Evidence {
                 EvidenceType: &et,
@@ -1213,10 +1212,13 @@ func TestPlatformVerify(t *testing.T) {
                 SerializedEvidence: attestBin,
         }
 
-        fa = append(fa, ev1)
-        fa = append(fa, ev2)
-        fa = append(fa, ev3)
-        fa = append(fa, ev4)
+        evp := &certprotos.EvidencePackage {
+                ProverType: &vseVe,
+        }
+        evp.FactAssertion = append(evp.FactAssertion, ev1)
+        evp.FactAssertion = append(evp.FactAssertion, ev2)
+        evp.FactAssertion = append(evp.FactAssertion, ev3)
+        evp.FactAssertion = append(evp.FactAssertion, ev4)
 
         // Construct request
         reqTag := "requestor"
