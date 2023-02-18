@@ -183,7 +183,6 @@ int main(int an, char** av) {
 
   // Attestation
   attestation_user_data ud;
-  sev_attestation_message sev_att;
   string enclave_type("sev-enclave");
 
   if (!make_attestation_user_data(enclave_type, pub_policy_key, &ud)) {
@@ -195,9 +194,6 @@ int main(int an, char** av) {
     printf("Can't serialize user data\n");
     return 1;
   }
-
-  sev_attestation_message the_attestation;
-  the_attestation.set_what_was_said(said_str);
 
   int hash_len= 48;
   byte user_data_hash[hash_len];
@@ -215,12 +211,15 @@ int main(int an, char** av) {
     printf("signature failure\n");
     return 1;
   }
+
+  sev_attestation_message the_attestation;
+  the_attestation.set_what_was_said(said_str);
   string att_rep;
   att_rep.assign((char*)&default_report, sizeof(attestation_report));
   the_attestation.set_reported_attestation(att_rep);
 
   string sev_attest_str;
-  if (!sev_att.SerializeToString(&sev_attest_str)) {
+  if (!the_attestation.SerializeToString(&sev_attest_str)) {
     printf("Can't serialize attestation message\n");
     return 1;
   }

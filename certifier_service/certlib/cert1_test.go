@@ -1233,6 +1233,7 @@ func TestPlatformVerify(t *testing.T) {
                 Support: evp,
         }
         PrintTrustRequest(req)
+	fmt.Printf("\n\n")
 
         sevAtt := &certprotos.SevAttestationMessage{}
         err = proto.Unmarshal(attestBin, sevAtt)
