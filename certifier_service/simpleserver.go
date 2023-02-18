@@ -1104,6 +1104,9 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
                         fmt.Printf("AddNewFactsForSevAttestation failed\n")
                         return nil, nil, nil
                 }
+	} else if  evidenceType == "sev-platform-package" {
+		// Todo
+		// init policy
         } else if evidenceType == "augmented-platform-attestation-only" {
                 if !AddNewFactsForAugmentedPlatformAttestation(publicPolicyKey, alreadyProved) {
                         fmt.Printf("AddNewFactsForAugmentedPlatformAttestation failed\n")
@@ -1149,6 +1152,8 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
                         fmt.Printf("ConstructProofFromSevEvidence failed\n")
                         return nil, nil, nil
                 }
+	} else if  evidenceType == "sev-platform-package" {
+		// Todo
         } else if evidenceType == "oe-evidence" {
                 toProve, proof = ConstructProofFromOeEvidence(publicPolicyKey, purpose, *alreadyProved)
                 if toProve == nil {
