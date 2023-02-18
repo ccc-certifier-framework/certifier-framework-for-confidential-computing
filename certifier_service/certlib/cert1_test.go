@@ -1266,14 +1266,25 @@ func TestPlatformVerify(t *testing.T) {
 
         // initPolicy
 	originalPolicy := &certprotos.ProvedStatements{}
+	if !InitAxiom(*ud.PolicyKey, originalPolicy) {
+                fmt.Printf("Can't InitAxiom\n")
+        }
+
 	if !InitPolicy(ud.PolicyKey, signedPolicy, originalPolicy) {
                 fmt.Printf("Can't init policy\n")
         }
+
+	if !InitProvedStatements(*ud.PolicyKey, evp.FactAssertion, originalPolicy) {
+                fmt.Printf("Can't InitProvedStatements\n")
+	}
+
 	fmt.Printf("\nOriginal policy:\n")
 	PrintProvedStatements(originalPolicy)
+
 	if !FilterSevPolicy(evp, originalPolicy, alreadyProved) {
                 fmt.Printf("Can't filterpolicy\n")
         }
+
 	fmt.Printf("\nfiltered policy:\n")
 	PrintProvedStatements(alreadyProved)
 	fmt.Printf("\n")
