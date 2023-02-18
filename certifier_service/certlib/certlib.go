@@ -987,7 +987,16 @@ func PrintAttestationUserData(sr *certprotos.AttestationUserData) {
 		fmt.Printf("Time signed : %s\n", *sr.Time)
 	}
 	if sr.EnclaveKey != nil {
+		fmt.Printf("Enclave key\n");
 		PrintKey(sr.EnclaveKey)
+	} else {
+		fmt.Printf("No enclave key\n");
+	}
+	if sr.PolicyKey != nil {
+		fmt.Printf("Policy key\n");
+		PrintKey(sr.PolicyKey)
+	} else {
+		fmt.Printf("No policy key\n");
 	}
 	return
 }
@@ -1179,6 +1188,15 @@ func VerifySignedAssertion(scm certprotos.SignedClaimMessage, k *certprotos.KeyM
 		return false
 	}
 	return true
+}
+
+func PrintProvedStatements(ps *certprotos.ProvedStatements) {
+	for i := 0; i < len(ps.Proved); i++ {
+		fmt.Printf("\n%02d ", i)
+		v := ps.Proved[i]
+		PrintVseClause(v);
+		fmt.Printf("\n")
+	}
 }
 
 var privateAttestKey *certprotos.KeyMessage = nil
@@ -2862,8 +2880,37 @@ func FilterSevPolicy(evp *certprotos.EvidencePackage, original *certprotos.Prove
 	return true
  }
 
-func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos.SignedClaimSequence, alreadyProved *certprotos.ProvedStatements) bool {
-	return false
+func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos.SignedClaimSequence,
+		alreadyProved *certprotos.ProvedStatements) bool {
+	if publicPolicyKey == nil {
+		fmt.Printf("Policy key empty\n")
+		return false
+	}
+	for i := 0; i < len(signedPolicy.Claims); i++ {
+		sc := signedPolicy.Claims[i]
+		if !VerifySignedClaim(sc, publicPolicyKey) {
+			fmt.Printf("Can't verify signature\n")
+			return false
+		}
+		cm := &certprotos.ClaimMessage{}
+		err := proto.Unmarshal(sc.SerializedClaimMessage, cm)
+		if err != nil {
+			fmt.Printf("Can't unmarshal claim\n")
+			return false
+		}
+		if cm.GetClaimFormat() != "vse-clause" {
+			fmt.Printf("Not vse claim\n")
+			return false
+		}
+		vse := &certprotos.VseClause {}
+		err = proto.Unmarshal(cm.SerializedClaim, vse)
+		if err != nil {
+			fmt.Printf("Can't unmarshal vse claim\n")
+			return false
+		}
+		alreadyProved.Proved = append(alreadyProved.Proved , vse)
+	}
+	return true
 }
 
 func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {

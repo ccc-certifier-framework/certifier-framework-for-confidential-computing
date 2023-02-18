@@ -1247,7 +1247,6 @@ func TestPlatformVerify(t *testing.T) {
         if err != nil {
                 fmt.Printf("Can't unmarshal what was said \n")
         }
-	pubPolicyKey := ud.PolicyKey
 
         // The following is normally done by 
         //      toProve, pf, alreadyProved = ConstructProofFromRequest(evType, evp, pur)
@@ -1262,17 +1261,25 @@ func TestPlatformVerify(t *testing.T) {
 	signedPolicy := &certprotos.SignedClaimSequence{}
 	err = proto.Unmarshal(serializedPolicy, signedPolicy)
 
+	fmt.Printf("\nUser data\n")
+	PrintAttestationUserData(ud)
+
         // initPolicy
 	originalPolicy := &certprotos.ProvedStatements{}
-	if !InitPolicy(pubPolicyKey, signedPolicy, alreadyProved) {
+	if !InitPolicy(ud.PolicyKey, signedPolicy, originalPolicy) {
                 fmt.Printf("Can't init policy\n")
         }
+	fmt.Printf("\nOriginal policy:\n")
+	PrintProvedStatements(originalPolicy)
 	if !FilterSevPolicy(evp, originalPolicy, alreadyProved) {
                 fmt.Printf("Can't filterpolicy\n")
         }
+	fmt.Printf("\nfiltered policy:\n")
+	PrintProvedStatements(alreadyProved)
+	fmt.Printf("\n")
 
         // ConstructProofFromSevPlatformEvidence()
-	toProve, proof := ConstructProofFromSevPlatformEvidence(pubPolicyKey, pur, alreadyProved)
+	toProve, proof := ConstructProofFromSevPlatformEvidence(ud.PolicyKey, pur, alreadyProved)
 	if toProve == nil || proof == nil {
                 fmt.Printf("Can't construct proof\n")
         }

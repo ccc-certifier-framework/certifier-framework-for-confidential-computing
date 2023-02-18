@@ -185,10 +185,13 @@ int main(int an, char** av) {
   attestation_user_data ud;
   string enclave_type("sev-enclave");
 
+  // use policy key as enclave key
   if (!make_attestation_user_data(enclave_type, pub_policy_key, &ud)) {
     printf("Can't make user data\n");
     return 1;
   }
+  ud.mutable_policy_key()->CopyFrom(pub_policy_key);
+
   string said_str;
   if (!ud.SerializeToString(&said_str)) {
     printf("Can't serialize user data\n");

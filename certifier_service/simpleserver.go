@@ -1085,11 +1085,7 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
 
         // Debug
         fmt.Printf("\nInitial proved statements %d\n", len(alreadyProved.Proved))
-        for i := 0; i < len(alreadyProved.Proved); i++ {
-                certlib.PrintVseClause(alreadyProved.Proved[i])
-                fmt.Println("")
-        }
-        fmt.Println("")
+	certlib.PrintProvedStatements(alreadyProved)
 
         // evidenceType should be "full-vse-support", "platform-attestation-only" or
         //      "oe-evidence" or "sev-platform-attestation-only"
