@@ -1158,6 +1158,7 @@ func TestPlatformVerify(t *testing.T) {
         askCertFile := "test_data/sev_ask_cert.der"
         vcekCertFile := "test_data/sev_vcek_cert.der"
         attestFile := "test_data/sev_attest.bin"
+        policyFile := "test_data/sev_policy.bin"
         fmt.Printf("\nTestPlatformVerify %s %s %s %s\n", arkCertFile, askCertFile, vcekCertFile, attestFile)
 
         // Read attestation and certs
@@ -1231,25 +1232,54 @@ func TestPlatformVerify(t *testing.T) {
         }
         PrintTrustRequest(req)
 
-        sevAtt := certprotos.SevAttestationMessage{}
-        err = proto.Unmarshal(attestBin, &sevAtt)
+        sevAtt := &certprotos.SevAttestationMessage{}
+        err = proto.Unmarshal(attestBin, sevAtt)
         if err != nil {
+                fmt.Printf("Can't unmarshal sev attestation\n")
         }
 
-
-        // alreadyProved := &certprotos.ProvedStatements{}
-        // var toProve *certprotos.VseClause = nil
-        // var proof *certprotos.Proof = nil
+	// Get policy Key from ud
+	ud := &certprotos.AttestationUserData {}
+        err = proto.Unmarshal(sevAtt.WhatWasSaid, ud)
+        if err != nil {
+                fmt.Printf("Can't unmarshal what was said \n")
+        }
+	pubPolicyKey := ud.PolicyKey
 
         // The following is normally done by 
         //      toProve, pf, alreadyProved = ConstructProofFromRequest(evType, evp, pur)
-        // Read policy
-        // Filter Policy
-        // initPolicy
-        // ConstructProofFromSevPlatformEvidence()
-        // VerifyProofFromArray()
 
-        // certlib.VerifyProof(publicPolicyKey, toProve, proof, alreadyProved)
+        alreadyProved := &certprotos.ProvedStatements{}
+
+        // Read policy
+        serializedPolicy, err := os.ReadFile(policyFile)
+        if err != nil {
+                fmt.Printf("Can't read policy\n")
+        }
+	signedPolicy := &certprotos.SignedClaimSequence{}
+	err = proto.Unmarshal(serializedPolicy, signedPolicy)
+
+        // initPolicy
+	originalPolicy := &certprotos.ProvedStatements{}
+	if !InitPolicy(pubPolicyKey, signedPolicy, alreadyProved) {
+                fmt.Printf("Can't init policy\n")
+        }
+	if !FilterSevPolicy(evp, originalPolicy, alreadyProved) {
+                fmt.Printf("Can't filterpolicy\n")
+        }
+
+        // ConstructProofFromSevPlatformEvidence()
+	toProve, proof := ConstructProofFromSevPlatformEvidence(pubPolicyKey, pur, alreadyProved)
+	if toProve == nil || proof == nil {
+                fmt.Printf("Can't construct proof\n")
+        }
+
+	/*
+        if !certlib.VerifyProof(publicPolicyKey, toProve, proof, alreadyProved) {
+                fmt.Printf("Proof does not verify\n")
+		return
+        }
+	 */
 }
 
 // For Sev testing --- deprecated

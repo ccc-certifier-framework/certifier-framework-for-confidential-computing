@@ -2863,14 +2863,16 @@ func PrintPropertyDescriptor(p *certprotos.Property) {
 	}
 }
 
-func FilterSevPolicy() {
-}
+func FilterSevPolicy(evp *certprotos.EvidencePackage, original *certprotos.ProvedStatements, alreadyProved *certprotos.ProvedStatements) bool {
+	return true
+ }
 
-func InitPolicy() bool {
+func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos.SignedClaimSequence, alreadyProved *certprotos.ProvedStatements) bool {
 	return false
 }
 
-func ConstructProofFromSevPlatformEvidence() {
+func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
+	return nil, nil
 }
 
 func VerifyProofFromArray() bool {
