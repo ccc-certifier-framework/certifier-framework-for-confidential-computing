@@ -1284,16 +1284,21 @@ func TestPlatformVerify(t *testing.T) {
 	if !FilterSevPolicy(evp, originalPolicy, alreadyProved) {
                 fmt.Printf("Can't filterpolicy\n")
         }
+	alreadyProved = originalPolicy  //Remove later
 
 	fmt.Printf("\nfiltered policy:\n")
 	PrintProvedStatements(alreadyProved)
 	fmt.Printf("\n")
 
         // ConstructProofFromSevPlatformEvidence()
-	toProve, proof := ConstructProofFromSevPlatformEvidence(ud.PolicyKey, pur, alreadyProved)
-	if toProve == nil || proof == nil {
+	_, proof := ConstructProofFromSevPlatformEvidence(ud.PolicyKey, pur, alreadyProved)
+	// toProve, proof := ConstructProofFromSevPlatformEvidence(ud.PolicyKey, pur, alreadyProved)
+	// if toProve == nil || proof == nil {
+	if proof == nil {
                 fmt.Printf("Can't construct proof\n")
-        }
+        } else {
+		PrintProof(proof)
+	}
 
 	/*
         if !certlib.VerifyProof(publicPolicyKey, toProve, proof, alreadyProved) {
