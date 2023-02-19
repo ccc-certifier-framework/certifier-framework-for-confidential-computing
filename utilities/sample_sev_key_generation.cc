@@ -40,6 +40,15 @@ static struct attestation_report default_report = {
                 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
 };
 
+static void reverse_bytes(byte* buffer, size_t size) {
+  if (!buffer || size == 0)
+    return;
+  for (byte *start = buffer, *end = buffer + size - 1; start < end; start++, end--) {
+    byte temp = *start;
+    *start = *end;
+    *end = temp;
+  }
+}
 
 // This generates an sev attestation signed by the key in key_file
 int main(int an, char** av) {
@@ -214,6 +223,8 @@ int main(int an, char** av) {
     printf("signature failure\n");
     return 1;
   }
+  reverse_bytes(default_report.signature.r, sizeof(default_report.signature.r));
+  reverse_bytes(default_report.signature.s, sizeof(default_report.signature.s));
 
   sev_attestation_message the_attestation;
   the_attestation.set_what_was_said(said_str);

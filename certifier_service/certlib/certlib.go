@@ -1499,6 +1499,8 @@ func PrintEvidence(ev *certprotos.Evidence) {
 	} else if ev.GetEvidenceType() == "sev-attestation" {
 		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "cert" {
+		cx509 := Asn1ToX509(ev.SerializedEvidence)
+		fmt.Printf("Issuer: %s, Subject: %s\n", GetIssuerNameFromCert(cx509),* GetSubjectNameFromCert(cx509))
 		PrintBytes(ev.SerializedEvidence)
 	} else {
 		return
@@ -1962,7 +1964,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			issuerName := GetIssuerNameFromCert(cert)
 			signerKey := FindKeySeen(seenList, issuerName)
 			if signerKey == nil {
-				fmt.Printf("InitProvedStatements: signerKey is nil\n")
+				fmt.Printf("InitProvedStatements: signerKey (%s, %s) is nil\n", issuerName, subjKey.GetKeyName())
 				return false
 			}
 

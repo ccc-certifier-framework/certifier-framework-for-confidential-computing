@@ -1162,7 +1162,7 @@ func TestPlatformVerify(t *testing.T) {
         fmt.Printf("\nTestPlatformVerify %s %s %s %s\n", arkCertFile, askCertFile, vcekCertFile, attestFile)
 
         // Read attestation and certs
-        arkCertDer, err := os.ReadFile(askCertFile)
+        arkCertDer, err := os.ReadFile(arkCertFile)
         if err != nil {
                 fmt.Println("Can't read ark file, ", err)
         }
@@ -1199,7 +1199,7 @@ func TestPlatformVerify(t *testing.T) {
         }
         ev2 := &certprotos.Evidence {
                 EvidenceType: &et,
-                SerializedEvidence: arkCertDer,
+                SerializedEvidence: askCertDer,
         }
         ev3 := &certprotos.Evidence {
                 EvidenceType: &et,
