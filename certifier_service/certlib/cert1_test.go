@@ -1291,21 +1291,18 @@ func TestPlatformVerify(t *testing.T) {
 	fmt.Printf("\n")
 
         // ConstructProofFromSevPlatformEvidence()
-	_, proof := ConstructProofFromSevPlatformEvidence(ud.PolicyKey, pur, alreadyProved)
-	// toProve, proof := ConstructProofFromSevPlatformEvidence(ud.PolicyKey, pur, alreadyProved)
-	// if toProve == nil || proof == nil {
-	if proof == nil {
+	toProve, proof := ConstructProofFromSevPlatformEvidence(ud.PolicyKey, pur, alreadyProved)
+	if toProve == nil || proof == nil {
                 fmt.Printf("Can't construct proof\n")
-        } else {
-		PrintProof(proof)
+		return
 	}
 
-	/*
-        if !certlib.VerifyProof(publicPolicyKey, toProve, proof, alreadyProved) {
+	PrintProof(proof)
+        if !VerifyProof(ud.PolicyKey, toProve, proof, alreadyProved) {
                 fmt.Printf("Proof does not verify\n")
 		return
         }
-	 */
+	fmt.Printf("Proof verifies\n")
 }
 
 // For Sev testing --- deprecated

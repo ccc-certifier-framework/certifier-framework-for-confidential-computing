@@ -2420,6 +2420,107 @@ func VerifyRule7(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 	return SameEntity(c.Subject, c2.Subject)
 }
 
+// R8: If environment[platform, measurement] is-environment AND platform-template
+//	has-trusted-platform-property then environment[platform, measurement] 
+func VerifyRule8(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
+return true
+	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
+		return false
+	}
+	if c1.GetVerb() != "is-trusted" {
+		return false
+	}
+	if c1.Subject.GetEntityType() != "measurement" {
+		return false
+	}
+
+	if c2.Subject == nil || c2.Verb == nil || c2.Object == nil || c2.Clause != nil {
+		return false
+	}
+	if c2.GetVerb() != "speaks-for" {
+		return false
+	}
+	if (!SameEntity(c1.Subject, c2.Object)) {
+		return false
+	}
+
+	if c.Subject == nil || c.Verb == nil || c.Object != nil  || c.Clause != nil {
+		return false
+	}
+	if c.GetVerb() != "is-trusted-for-attestation" {
+		return false
+	}
+	return SameEntity(c.Subject, c2.Subject)
+}
+
+// R9:  If environment[platform, measurement] is-environment AND measurement is-trusted then
+//		environment[platform, measurement] environment-measurement is-trusted
+func VerifyRule9(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
+return true
+	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
+		return false
+	}
+	if c1.GetVerb() != "is-trusted" {
+		return false
+	}
+	if c1.Subject.GetEntityType() != "measurement" {
+		return false
+	}
+
+	if c2.Subject == nil || c2.Verb == nil || c2.Object == nil || c2.Clause != nil {
+		return false
+	}
+	if c2.GetVerb() != "speaks-for" {
+		return false
+	}
+	if (!SameEntity(c1.Subject, c2.Object)) {
+		return false
+	}
+
+	if c.Subject == nil || c.Verb == nil || c.Object != nil  || c.Clause != nil {
+		return false
+	}
+	if c.GetVerb() != "is-trusted-for-attestation" {
+		return false
+	}
+	return SameEntity(c.Subject, c2.Subject)
+}
+
+// R10: If environment[platform, measurement] environment-platform-is-trusted AND
+//	environment[platform, measurement] environment-measurement-is-trusted then
+//	environment[platform, measurement] is-trusted
+func VerifyRule10(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
+return true
+	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
+		return false
+	}
+	if c1.GetVerb() != "is-trusted" {
+		return false
+	}
+	if c1.Subject.GetEntityType() != "measurement" {
+		return false
+	}
+
+	if c2.Subject == nil || c2.Verb == nil || c2.Object == nil || c2.Clause != nil {
+		return false
+	}
+	if c2.GetVerb() != "speaks-for" {
+		return false
+	}
+	if (!SameEntity(c1.Subject, c2.Object)) {
+		return false
+	}
+
+	if c.Subject == nil || c.Verb == nil || c.Object != nil  || c.Clause != nil {
+		return false
+	}
+	if c.GetVerb() != "is-trusted-for-attestation" {
+		return false
+	}
+	return SameEntity(c.Subject, c2.Subject)
+}
+
+
 func StatementAlreadyProved(c1 *certprotos.VseClause, ps *certprotos.ProvedStatements) bool {
 	for i := 0; i < len(ps.Proved); i++ {
 		if SameVseClause(c1, ps.Proved[i]) {
@@ -2448,6 +2549,12 @@ func VerifyInternalProofStep(tree *PredicateDominance, c1 *certprotos.VseClause,
 		return VerifyRule6(tree, c1, c2, c)
 	case 7:
 		return VerifyRule7(tree, c1, c2, c)
+	case 8:
+		return VerifyRule8(tree, c1, c2, c)
+	case 9:
+		return VerifyRule9(tree, c1, c2, c)
+	case 10:
+		return VerifyRule10(tree, c1, c2, c)
 	}
 	return false
 }
@@ -2477,10 +2584,13 @@ func VerifyProof(policyKey *certprotos.KeyMessage, toProve *certprotos.VseClause
 		fmt.Printf("Can't init Dominance tree\n");
 		return false;
 	}
+	
+fmt.Printf("\n\n ---------------------------------------------------------- \n\n")
+
 	for i := 0; i < len(p.Steps); i++ {
-		var s1  *certprotos.VseClause = p.Steps[i].S1
-		var s2  *certprotos.VseClause = p.Steps[i].S2
-		var c  *certprotos.VseClause = p.Steps[i].Conclusion
+		s1 := p.Steps[i].S1
+		s2 := p.Steps[i].S2
+		c := p.Steps[i].Conclusion
 		if s1 == nil || s2 == nil || c == nil {
 			fmt.Printf("Bad proof step\n")
 			return false;
@@ -2497,6 +2607,8 @@ func VerifyProof(policyKey *certprotos.KeyMessage, toProve *certprotos.VseClause
 				return true
 			}
 		} else {
+			fmt.Printf("ERROR: Step %d, does not pass\n", i)
+			PrintProofStep("    ", p.Steps[i])
 			return false
 		}
 
