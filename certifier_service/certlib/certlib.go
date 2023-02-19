@@ -2231,6 +2231,7 @@ func PrintProof(pf *certprotos.Proof) {
 }
 
 // R1: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-authentication.
+// R1: If environment is-trusted and key1 speaks-for environment then key1 is-trusted-for-authentication.
 func VerifyRule1(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
 		return false
@@ -2238,27 +2239,27 @@ func VerifyRule1(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 	if c1.GetVerb() != "is-trusted" {
 		return false
 	}
-	if c1.Subject.GetEntityType() != "measurement" {
-		return false
-	}
+	if c1.Subject.GetEntityType() == "measurement" || c1.Subject.GetEntityType() == "environment" {
 
-	if c2.Subject == nil || c2.Verb == nil || c2.Object == nil || c2.Clause != nil {
-		return false
-	}
-	if c2.GetVerb() != "speaks-for" {
-		return false
-	}
-	if (!SameEntity(c1.Subject, c2.Object)) {
-		return false
-	}
+		if c2.Subject == nil || c2.Verb == nil || c2.Object == nil || c2.Clause != nil {
+			return false
+		}
+		if c2.GetVerb() != "speaks-for" {
+			return false
+		}
+		if (!SameEntity(c1.Subject, c2.Object)) {
+			return false
+		}
 
-	if c.Subject == nil || c.Verb == nil || c.Object != nil  || c.Clause != nil {
-		return false
+		if c.Subject == nil || c.Verb == nil || c.Object != nil  || c.Clause != nil {
+			return false
+		}
+		if c.GetVerb() != "is-trusted-for-authentication" {
+			return false
+		}
+		return SameEntity(c.Subject, c2.Subject)
 	}
-	if c.GetVerb() != "is-trusted-for-authentication" {
-		return false
-	}
-	return SameEntity(c.Subject, c2.Subject)
+	return false
 }
 
 // R2: If key2 speaks-for key1 and key3 speaks-for key2 then key3 speaks-for key1
@@ -2304,92 +2305,126 @@ func VerifyRule4(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 
 // R5: If key1 is-trustedXXX and key1 says key2 is-trustedYYY then key2 is-trustedYYY provided is-trustedXXX dominates is-trustedYYY
 func VerifyRule5(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
-	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
+	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil || c2.Clause == nil {
+fmt.Printf("Rule5 err 1\n")
 		return false
 	}
-	if !Dominates(tree, "is-trusted", *c1.Verb) {
-		return false
-	}
+	c3 := c2.Clause
 	if c1.Subject.GetEntityType() != "key" {
+fmt.Printf("Rule5 err 3\n")
 		return false
 	}
 
 	if c2.Subject == nil || c2.Verb == nil || c2.Object != nil || c2.Clause == nil {
+fmt.Printf("Rule5 err 4\n")
 		return false
 	}
 
 	if c2.Subject.GetEntityType() != "key" {
+fmt.Printf("Rule5 err 5\n")
 		return false
 	}
 	if c2.GetVerb() != "says" {
+fmt.Printf("Rule5 err 6\n")
 		return false
 	}
 
-	c3 := c2.Clause
 	if c3.Subject == nil || c3.Verb == nil || c3.Object != nil {
+fmt.Printf("Rule5 err 7\n")
 		return false
 	}
 	if !Dominates(tree, *c1.Verb, *c3.Verb) {
+fmt.Printf("Rule5 err 8\n")
 		return false
 	}
 	if c3.Subject.GetEntityType() != "key" {
+fmt.Printf("Rule5 err 9\n")
 		return false
 	}
 	if !SameEntity(c1.Subject, c2.Subject) {
+fmt.Printf("Rule5 err 10\n")
+		fmt.Printf("c1.Subject: ")
+		PrintEntity(c1.Subject)
+		fmt.Printf("c2.Subject: ")
+		PrintEntity(c2.Subject)
+		fmt.Printf("\n")
 		return false
 	}
 
 	return SameVseClause(c3, c)
 }
 
-// R6: if key1 is-trustedXXX and key1 says key2 speaks-for measurement then
-//	key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation 
+// R6: if key1 is-trustedXXX
+//	 and
+//		key1 says key2 speaks-for measurement then
+//		key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation 
+//	 OR 
+//		key1 says key2 speaks-for environment then key2 speaks-for environment provided is-trustedXXX dominates is-trusted-for-attestation
+//	 OR 
+//		key1 says env is-environment then is-trustedXXX dominates is-trusted-for-attestation
 func VerifyRule6(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
+fmt.Printf("Rule 6, err 1\n")
 		return false
 	}
 	if !Dominates(tree, "is-trusted", *c1.Verb) {
+fmt.Printf("Rule 6, err 2\n")
 		return false
 	}
 	if c1.Subject.GetEntityType() != "key" {
+fmt.Printf("Rule 6, err 3\n")
 		return false
 	}
 
 	if c2.Subject == nil || c2.Verb == nil || c2.Object != nil || c2.Clause == nil {
+fmt.Printf("Rule 6, err 4\n")
 		return false
 	}
 
 	if c2.Subject.GetEntityType() != "key" {
+fmt.Printf("Rule 6, err 5\n")
 		return false
 	}
 	if c2.GetVerb() != "says" {
+fmt.Printf("Rule 6, err 6\n")
 		return false
 	}
 	if !SameEntity(c1.Subject, c2.Subject) {
+fmt.Printf("Rule 6, err 7\n")
 		return false
 	}
 
 	c3 := c2.Clause
-	if c3.Subject == nil || c3.Verb == nil || c3.Object == nil || c3.Clause != nil {
-		return false
-	}
-	if c3.Subject.GetEntityType() != "key" {
-		return false
-	}
-	if *c3.Verb != "speaks-for" {
-		return false
-	}
-	if c3.Object.GetEntityType() != "measurement" {
+	if c3.Subject == nil || c3.Verb == nil {
+fmt.Printf("Rule 6, err 8\n")
 		return false
 	}
 	if !Dominates(tree, *c1.Verb, "is-trusted-for-attestation") {
+fmt.Printf("Rule 6, err 9\n")
 		return false
 	}
-
-	return SameVseClause(c3, c)
+	if *c3.Verb == "speaks-for" {
+		if c3.Object.GetEntityType() != "measurement" && c3.Object.GetEntityType() != "environment" {
+fmt.Printf("Rule 6, err 10\n")
+			return false
+		}
+		if c3.Subject.GetEntityType() != "key" {
+fmt.Printf("Rule 6, err 11\n")
+			return false
+		}
+		return SameVseClause(c3, c)
+	} else if *c3.Verb == "is-environment" {
+		if c3.Subject.GetEntityType() != "environment" {
+fmt.Printf("Rule 6, err 12\n")
+			return false
+		}
+		return SameVseClause(c3, c)
+	}
+	return false
 }
 
-// R7: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-authentication.
+// R7: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-attestation OR
+//     If environment is-trusted and key1 speaks-for environment then key1 is-trusted-for-sttestation
 func VerifyRule7(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
 		return false
@@ -2397,7 +2432,7 @@ func VerifyRule7(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 	if c1.GetVerb() != "is-trusted" {
 		return false
 	}
-	if c1.Subject.GetEntityType() != "measurement" {
+	if c1.Subject.GetEntityType() != "measurement" && c1.Subject.GetEntityType() != "environment" {
 		return false
 	}
 
@@ -3205,7 +3240,7 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	//r4 := int32(4)
 	r5 := int32(5)
 	r6 := int32(6)
-	r7 := int32(7)
+	// r7 := int32(7)
 	r8 := int32(8)
 	r9 := int32(9)
 	r10 := int32(10)
@@ -3291,7 +3326,7 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 		S1: vcekKeyIsTrusted,
 		S2: vcekSaysIsEnvironment,
 		Conclusion: isEnvironment,
-		RuleApplied: &r7,
+		RuleApplied: &r6,
 	}
 	proof.Steps = append(proof.Steps, &ps5)
 
@@ -3374,7 +3409,7 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 		S1: vcekKeyIsTrusted,
 		S2: vcekSaysEnclaveKeySpeaksForEnvironment,
 		Conclusion: enclaveKeySpeaksForEnvironment,
-		RuleApplied: &r3,
+		RuleApplied: &r6,
 	}
 	proof.Steps = append(proof.Steps, &ps11)
 

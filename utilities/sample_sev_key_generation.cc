@@ -107,6 +107,7 @@ int main(int an, char** av) {
     printf("Generate ark cert failed\n");
     return 1;
   }
+  printf("\nARK Cert\n");
   X509_print_fp(stdout, ark_509);
   string ark_der;
   if (!x509_to_asn1(ark_509, &ark_der)) {
@@ -143,6 +144,7 @@ int main(int an, char** av) {
     printf("Generate ark cert failed\n");
     return 1;
   }
+  printf("\nASK Cert\n");
   X509_print_fp(stdout, ask_509);
   string ask_der;
   if (!x509_to_asn1(ask_509, &ask_der)) {
@@ -179,6 +181,7 @@ int main(int an, char** av) {
     printf("Generate ark cert failed\n");
     return 1;
   }
+  printf("\nVCEK Cert\n");
   X509_print_fp(stdout, vcek_509);
   string vcek_der;
   if (!x509_to_asn1(vcek_509, &vcek_der)) {
