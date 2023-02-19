@@ -3135,7 +3135,7 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	//    "the ARK-key is-trusted-for-attestation" AND
 	//        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
 	//        "the ASK-key is-trusted-for-attestation" (R5)  [10, 5]
-	arkKeySaysAskKeyIsTrusted := alreadyProved.Proved[5]
+	arkKeySaysAskKeyIsTrusted := alreadyProved.Proved[6]
 	if arkKeySaysAskKeyIsTrusted.Clause == nil {
 		fmt.Printf("ConstructProofFromPlatformEvidence: ArkKey says Askkey is-trusted-for-attestation is malformed\n")
 		return nil, nil
