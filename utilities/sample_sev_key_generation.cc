@@ -217,17 +217,44 @@ int main(int an, char** av) {
   memcpy(default_report.report_data, user_data_hash, hash_len);
 
   // sign report, put in in the_attestation
-  int size_out = sizeof(signature);
-  byte out[size_out];
-  if (!ecc_sign("sha-384", ec, sizeof(attestation_report) - sizeof(signature), (byte*) &default_report,
-                &size_out, (byte*)&default_report.signature)) {
-    printf("signature failure\n");
+  int size_out = 256;
+  byte out[256];
+  memset(out, 0, size_out);
+
+  int sig_digest_len = 48;
+  byte sig_digest[sig_digest_len];
+  if (!digest_message("sha-384", (byte*)&default_report, sizeof(attestation_report) - sizeof(signature), sig_digest, sig_digest_len)) {
+    printf("digest_message  for whole report failed\n");
     return 1;
   }
-  memcpy(&default_report.signature.r, out, 48);
-  memcpy(&default_report.signature.s, &out[48], 48);
-  reverse_bytes(default_report.signature.r, 72);
-  reverse_bytes(default_report.signature.s, 72);
+  ECDSA_SIG* sig = ECDSA_do_sign((const byte*)sig_digest, sig_digest_len, ec);
+
+  if (sig == nullptr) {
+    printf("Can't sign digest\n");
+    return 1;
+  }
+
+  const BIGNUM* nr = ECDSA_SIG_get0_r(sig);
+  const BIGNUM* ns = ECDSA_SIG_get0_s(sig);
+
+  printf("r: ");
+  BN_print_fp(stdout, nr);
+  printf("\n");
+  printf("s: ");
+  BN_print_fp(stdout, ns);
+  printf("\n");
+
+  BN_bn2bin(nr, default_report.signature.r);
+  BN_bn2bin(ns, default_report.signature.s);
+
+  reverse_bytes(default_report.signature.r, 48);
+  reverse_bytes(default_report.signature.s, 48);
+  printf("r: ");
+  print_bytes(48, default_report.signature.r);
+  printf("\n");
+  printf("s: ");
+  print_bytes(48, default_report.signature.s);
+  printf("\n");
 
   sev_attestation_message the_attestation;
   the_attestation.set_what_was_said(said_str);
