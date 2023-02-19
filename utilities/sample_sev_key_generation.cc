@@ -218,13 +218,16 @@ int main(int an, char** av) {
 
   // sign report, put in in the_attestation
   int size_out = sizeof(signature);
+  byte out[size_out];
   if (!ecc_sign("sha-384", ec, sizeof(attestation_report) - sizeof(signature), (byte*) &default_report,
                 &size_out, (byte*)&default_report.signature)) {
     printf("signature failure\n");
     return 1;
   }
-  reverse_bytes(default_report.signature.r, sizeof(default_report.signature.r));
-  reverse_bytes(default_report.signature.s, sizeof(default_report.signature.s));
+  memcpy(&default_report.signature.r, out, 48);
+  memcpy(&default_report.signature.s, &out[48], 48);
+  reverse_bytes(default_report.signature.r, 72);
+  reverse_bytes(default_report.signature.s, 72);
 
   sev_attestation_message the_attestation;
   the_attestation.set_what_was_said(said_str);

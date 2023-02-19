@@ -2916,6 +2916,52 @@ func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos
 }
 
 func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
+
+	// There should be 9 statements in already proved
+
+	// "policyKey is-trusted" AND policyKey says measurement is-trusted" -->
+	//        "measurement is-trusted" (R3)  [0, 2]
+
+	//    "policyKey is-trusted" AND
+	//        "policy-key says the ARK-key is-trusted-for-attestation" -->
+	//        "the ARK-key is-trusted-for-attestation" (R3)  [0, 1]
+
+
+	//    "the ARK-key is-trusted-for-attestation" AND
+	//        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
+	//        "the ASK-key is-trusted-for-attestation" (R5)  [10, 5]
+
+	//    "the ASK-key is-trusted-for-attestation" AND
+	//        "the ASK-key says the VCEK-key is-trusted-for-attestation" -->
+	//        "the VCEK-key is-trusted-for-attestation" (R5) [11, 6]
+
+	//    "VCEK-key is-trusted-for-attestation" AND
+	//        "the VCEK says environment(platform, measurement) is-environment -->
+	//        "environment(platform, measurement) is-environment" [7]
+
+	//    policy-key is-trusted AND policy-key says platform has-trusted-platform-property -->
+	//    platform has-trusted-platform-property
+
+	//    "environment(platform, measurement) is-environment" AND
+	//        "platform[amd-sev-snp, no-debug,...] has-trusted-platform-property" -->
+	//        "environment(platform, measurement) environment-platform-is-trusted" [3, ]
+
+	//    "environment(platform, measurement) is-environment" AND
+	//        "measurement is-trusted" -->
+	//        "environment(platform, measurement) environment-measurement-is-trusted"
+
+	//    "environment(platform, measurement) environment-platform-is-trusted" AND
+	//        "environment(platform, measurement) environment-measurement-is-trusted"  -->
+	//        "environment(platform, measurement) is-trusted
+
+	//    "VCEK-key is-trusted-for-attestation" AND
+	//      "VCEK-key says the enclave-key speaks-for the environment()" -->
+	//        "enclave-key speaks-for the environment()" [, 8]
+
+	//    "environment(platform, measurement) is-trusted AND
+	//        enclave-key speaks-for environment(platform, measurement)  -->
+	//        enclave-key is-trusted-for-authentication  [or enclave-key is-trusted-for-attestation]
+
 	return nil, nil
 }
 
