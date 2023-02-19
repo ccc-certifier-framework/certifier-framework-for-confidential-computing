@@ -1670,6 +1670,75 @@ func ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey 
 	return MakeIndirectVseClause(vcertKeyEntity, &says_verb, tcl)
 }
 
+
+// vcek says environment is-environment
+func ConstructSevIsEnvironmentStatement(vcekKey *certprotos.KeyMessage, binSevAttest []byte) *certprotos.VseClause {
+	plat := GetPlatformFromSevAttest(binSevAttest)
+	if plat == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't get platform\n")
+		return nil
+	}
+	m := GetMeasurementFromSevAttest(binSevAttest)
+	if m == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't get measurement\n")
+		return nil
+	}
+	e := &certprotos.Environment {
+		ThePlatform: plat,
+		TheMeasurement: m,
+	}
+	isEnvVerb := "is-environment"
+	ee := MakeEnvironmentEntity(e)
+	if ee == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make environment entity\n")
+		return nil
+	}
+	vse := &certprotos.VseClause {
+		Subject: ee,
+		Verb: &isEnvVerb,
+	}
+	ke := MakeKeyEntity(vcekKey)
+	if ke == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make vcek key entity\n")
+		return nil
+	}
+	saysVerb := "says"
+	vseSays := &certprotos.VseClause {
+                Subject: ke,
+                Verb: &saysVerb,
+		Clause: vse,
+        }
+	return vseSays
+}
+			
+// vcekKey says enclaveKey speaksfor environment
+func ConstructSevSpeaksForEnvironmentStatement(vcekKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
+		env *certprotos.EntityMessage) *certprotos.VseClause {
+	eke := MakeKeyEntity(enclaveKey)
+	if eke == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make enclave key entity\n")
+		return nil
+	}
+	speaksForVerb := "speaks-for"
+	vseSpeaksFor := &certprotos.VseClause {
+		Subject: eke,
+		Verb: &speaksForVerb,
+		Object: env,
+	}
+	ke := MakeKeyEntity(vcekKey)
+	if ke == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make vcek key entity\n")
+		return nil
+	}
+	saysVerb := "says"
+	vseSays := &certprotos.VseClause {
+                Subject: ke,
+                Verb: &saysVerb,
+		Clause: vseSpeaksFor,
+        }
+	return vseSays
+}
+
 func LittleToBigEndian(in []byte) []byte {
 	out := make([]byte, len(in))
 	for i := 0; i < len(in); i++ {
@@ -1880,7 +1949,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
-*/
+  Old version
 		} else if ev.GetEvidenceType() == "sev-attestation" {
 			// get the key from ps
 			n := len(ps.Proved) - 1
@@ -1934,6 +2003,79 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
+*/
+		} else if ev.GetEvidenceType() == "sev-attestation" {
+			// get the key from ps
+			n := len(ps.Proved) - 1
+			if n < 0 {
+				fmt.Printf("InitProvedStatements: sev evidence is at wrong position\n")
+				return false
+			}
+			if ps.Proved[n] == nil || ps.Proved[n].Clause == nil ||
+					ps.Proved[n].Clause.Subject == nil {
+				fmt.Printf("InitProvedStatements: Can't get vcek key (1)\n")
+				return false
+			}
+			vcekVerifyKeyEnt := ps.Proved[n].Clause.Subject
+			if vcekVerifyKeyEnt == nil {
+				fmt.Printf("InitProvedStatements: Can't get vcek key (2)\n")
+				return false
+			}
+			if vcekVerifyKeyEnt.GetEntityType() != "key" {
+				fmt.Printf("InitProvedStatements: Can't get vcek key (3)\n")
+				return false
+			}
+			vcekKey := vcekVerifyKeyEnt.Key
+			if vcekKey == nil {
+				fmt.Printf("InitProvedStatements: Can't get vcek key (4)\n")
+				return false
+			}
+			m := VerifySevAttestation(ev.SerializedEvidence, vcekKey)
+			if m == nil {
+				fmt.Printf("InitProvedStatements: VerifySevAttestation failed\n")
+				return false
+			}
+			var am certprotos.SevAttestationMessage
+			err := proto.Unmarshal(ev.SerializedEvidence, &am)
+			if err != nil {
+				fmt.Printf("InitProvedStatements: Can't unmarshal SevAttestationMessage\n")
+				return false
+			}
+			var ud certprotos.AttestationUserData
+			err = proto.Unmarshal(am.WhatWasSaid, &ud)
+			if err != nil {
+				fmt.Printf("InitProvedStatements: Can't unmarshal UserData\n")
+				return false
+			}
+			if ud.EnclaveKey == nil {
+				fmt.Printf("InitProvedStatements: No enclaveKey\n")
+				return false
+			}
+
+			if am.ReportedAttestation == nil {
+				fmt.Printf("InitProvedStatements: No reported attestation\n")
+				return false
+			}
+
+			c1 := ConstructSevIsEnvironmentStatement(vcekKey, am.ReportedAttestation)
+			if c1 == nil {
+				fmt.Printf("InitProvedStatements: ConstructSevIsEnvironmentStatement failed\n")
+				return false
+			}
+			ps.Proved = append(ps.Proved, c1)
+
+			if c1.Clause == nil || c1.Clause.Subject == nil {
+				fmt.Printf("InitProvedStatements: can't get environment\n")
+				return false
+			}
+			env := c1.Clause.Subject
+
+			c2 := ConstructSevSpeaksForEnvironmentStatement(vcekKey, ud.EnclaveKey, env)
+			if c2 == nil {
+				fmt.Printf("InitProvedStatements: ConstructSevSpeaksForEnvironmentStatement failed\n")
+				return false
+			}
+			ps.Proved = append(ps.Proved, c2)
 		} else if ev.GetEvidenceType() == "cert" {
 			// A cert always means "the signing-key says the subject-key is-trusted-for-attestation"
 			// construct vse statement.
@@ -2578,16 +2720,14 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 	p3 := MakeProperty(pn3, svt, &vp3, &ce, nil)
 	props.Props = append(props.Props, p3)
 
-	cge := ">="
-
 	m1iv := uint64(major_byte)
 	pn4 := "api-major"
-	p4 := MakeProperty(pn4, ivt, nil, &cge, &m1iv)
+	p4 := MakeProperty(pn4, ivt, nil, &ce, &m1iv)
 	props.Props = append(props.Props, p4)
 
 	m2iv := uint64(minor_byte)
 	pn5 := "api-minor"
-	p5 := MakeProperty(pn5, ivt, nil, &cge, &m2iv)
+	p5 := MakeProperty(pn5, ivt, nil, &ce, &m2iv)
 	props.Props = append(props.Props, p5)
 
 
@@ -2606,14 +2746,6 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 
 	t1 := "amd-sev-snp"
 	return MakePlatform(t1, nil, props)
-}
-
-func GetPlatformEntityFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
-	// get properties
-	// api-major, api-minor, tcb-version, debug, migrate, key-share
-	// pl := MakePlatform(t string, k *certprotos.KeyMessage, props *certprotos.Properties)
-	// return MakePlatformEntity(pl)
-	return nil
 }
 
 func GetMeasurementFromSevAttest(binSevAttest []byte) []byte {
@@ -2924,27 +3056,6 @@ func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos
 }
 
 /*
-00 Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted 
-
-01 Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says Key[rsa, ARKKey, c7204c11b5ee87ba8ddbbab3b0538dde48a09835] is-trusted-for-attestation 
-
-02 Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708]
- is-trusted 
-
-03 Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says platform[amd-sev-snp, debug: no, migrate: no, api-major: >=0, api-minor: >=0, key-share: no, tcb-version: >=0] has-trusted-platform-property 
-
-04 Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted 
-
-05 Key[rsa, ARKKey, d0971e6e4f758a329c5e339d3e04d0071c8d1425] says Key[rsa, ARKKey, d0971e6e4f758a329c5e339d3e04d0071c8d1425] is-trusted-for-attestation 
-
-06 Key[rsa, ARKKey, d0971e6e4f758a329c5e339d3e04d0071c8d1425] says Key[rsa, ASKKey, c7a0ad7a25fe21763fda36b55a778f3adbdff609] is-trusted-for-attestation 
-
-07 Key[rsa, ASKKey, c7a0ad7a25fe21763fda36b55a778f3adbdff609] says Key[ecc-P-384, VCEKKey, 5af28f1957e40499ff05bc68916fe68c05ea4acbc67f7474ae04552556597594686fc0b73e13f13bc71a68b7ba6a9c98] is-trusted-for-attestation 
-
-08 Key[ecc-P-384, VCEKKey, 5af28f1957e40499ff05bc68916fe68c05ea4acbc67f7474ae04552556597594686fc0b73e13f13bc71a68b7ba6a9c98] says Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] speaks-for Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708]
- */
-
-/*
 	Rules
 		rule 1 (R1): If environment or measurement is-trusted and key1 speaks-for environment or measurement then
 			key1 is-trusted-for-authentication.
@@ -2969,23 +3080,23 @@ func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos
 
 func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
 
-	// There should be 9 statements in already proved
-	if len(alreadyProved.Proved) < 9 {
+	// There should be 10 statements in already proved
+	if len(alreadyProved.Proved) < 10 {
 		fmt.Printf("ConstructProofFromPlatformEvidence: too few statements %d\n", len(alreadyProved.Proved))
 		return nil, nil
 	}
 
 	proof := &certprotos.Proof{}
-	//r1 := int32(1)
+	r1 := int32(1)
 	//r2 := int32(2)
 	r3 := int32(3)
 	//r4 := int32(4)
 	r5 := int32(5)
-	//r6 := int32(6)
+	r6 := int32(6)
 	r7 := int32(7)
-	//r8 := int32(8)
-	//r9 := int32(9)
-	//r10 := int32(10)
+	r8 := int32(8)
+	r9 := int32(9)
+	r10 := int32(10)
 
 	// "policyKey is-trusted" AND policyKey says measurement is-trusted" -->
 	//        "measurement is-trusted" (R3)  [0, 2]
@@ -3020,7 +3131,6 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 		RuleApplied: &r3,
 	}
 	proof.Steps = append(proof.Steps, &ps2)
-
 
 	//    "the ARK-key is-trusted-for-attestation" AND
 	//        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
@@ -3059,7 +3169,7 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	//    "VCEK-key is-trusted-for-attestation" AND
 	//        "the VCEK says environment(platform, measurement) is-environment -->
 	//        "environment(platform, measurement) is-environment" [7]
-	vcekSaysIsEnvironment := askKeySaysVcekKeyIsTrusted  // FIX
+	vcekSaysIsEnvironment := alreadyProved.Proved[8]
 	if vcekSaysIsEnvironment.Clause == nil {
 		fmt.Printf("ConstructProofFromPlatformEvidence: AskKey says vcekKey is-trusted-for-attestation is malformed\n")
 		return nil, nil
@@ -3089,67 +3199,108 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	}
 	proof.Steps = append(proof.Steps, &ps6)
 
-/*
 	//    "environment(platform, measurement) is-environment" AND
 	//        "platform[amd-sev-snp, no-debug,...] has-trusted-platform-property" -->
 	//        "environment(platform, measurement) environment-platform-is-trusted" [3, ]
-	ps7 := certprotos.ProofStep {
+	pitVerb := "environment-platform-is-trusted"
+	environmentPlatformIsTrusted := &certprotos.VseClause {
+		Subject: isEnvironment.Subject,
+		Verb: &pitVerb,
+	}
+	ps8 := certprotos.ProofStep {
 		S1: isEnvironment,
 		S2: platformHasTrustedPlatformProperty,
 		Conclusion: environmentPlatformIsTrusted,
-		RuleApplied: ,
+		RuleApplied: &r8,
 	}
-	proof.Steps = append(proof.Steps, &ps7)
+	proof.Steps = append(proof.Steps, &ps8)
 
 	//    "environment(platform, measurement) is-environment" AND
 	//        "measurement is-trusted" -->
 	//        "environment(platform, measurement) environment-measurement-is-trusted"
-	ps8 := certprotos.ProofStep {
-		S1: isEnvironment,
-		S2: measurement,
-		Conclusion: environmentMeasurementIsTrusted,
-		RuleApplied: ,
+	emitVerb := "environment-measurement-is-trusted"
+	environmentMeasurementIsTrusted := &certprotos.VseClause {
+		Subject: isEnvironment.Subject,
+		Verb: &emitVerb,
 	}
-	proof.Steps = append(proof.Steps, &ps8)
+	ps9 := certprotos.ProofStep {
+		S1: isEnvironment,
+		S2: measurementIsTrusted,
+		Conclusion: environmentMeasurementIsTrusted,
+		RuleApplied: &r9,
+	}
+	proof.Steps = append(proof.Steps, &ps9)
+
 
 	//    "environment(platform, measurement) environment-platform-is-trusted" AND
 	//        "environment(platform, measurement) environment-measurement-is-trusted"  -->
 	//        "environment(platform, measurement) is-trusted
-	ps9 := certprotos.ProofStep {
+	eitVerb := "is-trusted"
+	environmentIsTrusted := &certprotos.VseClause {
+		Subject: isEnvironment.Subject,
+		Verb: &eitVerb,
+	}
+	ps10 := certprotos.ProofStep {
 		S1: environmentMeasurementIsTrusted,
 		S2: environmentPlatformIsTrusted,
 		Conclusion: environmentIsTrusted,
-		RuleApplied: &,
+		RuleApplied: &r10,
 	}
-	proof.Steps = append(proof.Steps, &ps9)
+	proof.Steps = append(proof.Steps, &ps10)
+
 
 	//    "VCEK-key is-trusted-for-attestation" AND
 	//      "VCEK-key says the enclave-key speaks-for the environment()" -->
 	//        "enclave-key speaks-for the environment()" [, 8]
-	ps10 := certprotos.ProofStep {
+	vcekSaysEnclaveKeySpeaksForEnvironment := alreadyProved.Proved[9]
+	if vcekSaysEnclaveKeySpeaksForEnvironment == nil {
+		fmt.Printf("ConstructProofFromPlatformEvidence: vcek says enclavkey speaks-for environment malformed\n")
+		return nil, nil
+	}
+	enclaveKeySpeaksForEnvironment := vcekSaysEnclaveKeySpeaksForEnvironment.Clause
+	ps11 := certprotos.ProofStep {
 		S1: vcekKeyIsTrusted,
 		S2: vcekSaysEnclaveKeySpeaksForEnvironment,
 		Conclusion: enclaveKeySpeaksForEnvironment,
-		RuleApplied: &,
-	}
-	proof.Steps = append(proof.Steps, &ps10)
-
-	//    "environment(platform, measurement) is-trusted AND
-	//        enclave-key speaks-for environment(platform, measurement)  -->
-	//        enclave-key is-trusted-for-authentication  [or enclave-key is-trusted-for-attestation]
-	ps11 := certprotos.ProofStep {
-		S1: ienvironmentIsTrusted,
-		S2: enclaveKeySpeaksForEnvironment,
-		Conclusion: enclaveKeyIsTrusted,
-		RuleApplied: &,
+		RuleApplied: &r3,
 	}
 	proof.Steps = append(proof.Steps, &ps11)
 
-	toProve := enclaveKeyIsTrusted
-*/
+	if purpose == "attestation" {
+		itfaVerb := "is-trusted-for-attestation"
+		enclaveKeyIsTrusted := &certprotos.VseClause {
+			Subject: enclaveKeySpeaksForEnvironment.Subject,
+			Verb: &itfaVerb,
+		}
+		ps12 := certprotos.ProofStep {
+			S1: environmentIsTrusted,
+			S2: enclaveKeySpeaksForEnvironment,
+			Conclusion: enclaveKeyIsTrusted,
+			RuleApplied: &r6,
+		}
+		proof.Steps = append(proof.Steps, &ps12)
 
-	var toProve *certprotos.VseClause = nil  // Remove
-	return toProve, proof 
+		toProve := enclaveKeyIsTrusted
+		return toProve, proof 
+	} else {
+		itfaVerb := "is-trusted-for-authentication"
+		enclaveKeyIsTrusted := &certprotos.VseClause {
+			Subject: enclaveKeySpeaksForEnvironment.Subject,
+			Verb: &itfaVerb,
+		}
+		ps12 := certprotos.ProofStep {
+			S1: environmentIsTrusted,
+			S2: enclaveKeySpeaksForEnvironment,
+			Conclusion: enclaveKeyIsTrusted,
+			RuleApplied: &r1,
+		}
+		proof.Steps = append(proof.Steps, &ps12)
+
+		toProve := enclaveKeyIsTrusted
+		return toProve, proof 
+	}
+
+	return nil, nil
 }
 
 func VerifyProofFromArray() bool {
