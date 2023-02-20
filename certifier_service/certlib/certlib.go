@@ -3409,6 +3409,64 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	return nil, nil
 }
 
-func ValidateEvidenceWithPolicy() bool {
-	return false
+func ValidateEvidenceWithPolicy(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+		signedPolicy *certprotos.SignedClaimSequence, purpose string) bool {
+
+        // initPolicy
+	originalPolicy := &certprotos.ProvedStatements{}
+	if !InitAxiom(*pubPolicyKey, originalPolicy) {
+                fmt.Printf("ValidateEvidenceWithPolicy: Can't InitAxiom\n")
+		return false
+        }
+
+	if !InitPolicy(pubPolicyKey, signedPolicy, originalPolicy) {
+                fmt.Printf("ValidateEvidenceWithPolicy: Can't init policy\n")
+		return false
+        }
+
+	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, originalPolicy) {
+                fmt.Printf("ValidateEvidenceWithPolicy: Can't InitProvedStatements\n")
+		return false
+	}
+
+	// Debug
+	fmt.Printf("\nValidateEvidenceWithPolicy: Original policy:\n")
+	PrintProvedStatements(originalPolicy)
+
+	/*
+	if !FilterSevPolicy(evp, originalPolicy, alreadyProved) {
+                fmt.Printf("Can't filterpolicy\n")
+		return false
+        }
+	 */
+	alreadyProved := originalPolicy  //Remove later
+
+	// Debug
+	fmt.Printf("\nfiltered policy:\n")
+	PrintProvedStatements(alreadyProved)
+	fmt.Printf("\n")
+
+        // ConstructProofFromSevPlatformEvidence()
+	toProve, proof := ConstructProofFromSevPlatformEvidence(pubPolicyKey, purpose, alreadyProved)
+	if toProve == nil || proof == nil {
+                fmt.Printf("ValidateEvidenceWithPolicy: Can't construct proof\n")
+		return false
+	}
+
+	// Debug
+	fmt.Printf("\n")
+	fmt.Printf("ValidateEvidenceWithPolicy: Proof\n")
+	PrintProof(proof)
+	fmt.Printf("\n")
+
+        if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
+		// Debug
+                fmt.Printf("ValidateEvidenceWithPolicy: Proof does not verify\n")
+
+		return false
+        }
+
+	// Debug
+	fmt.Printf("ValidateEvidenceWithPolicy: Proof verifies\n")
+	return true
 }

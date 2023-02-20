@@ -1164,19 +1164,23 @@ func TestPlatformVerify(t *testing.T) {
         // Read attestation and certs
         arkCertDer, err := os.ReadFile(arkCertFile)
         if err != nil {
-                fmt.Println("Can't read ark file, ", err)
+                t.Errorf("Can't read ark file")
+		return
         }
         askCertDer, err := os.ReadFile(askCertFile)
         if err != nil {
-                fmt.Println("Can't read ask file, ", err)
+                t.Errorf("Can't read ask file")
+		return
         }
         vcekCertDer, err := os.ReadFile(vcekCertFile)
         if err != nil {
-                fmt.Println("Can't read vcek file, ", err)
+                t.Errorf("Can't read vcek file")
+		return
         }
         attestBin, err := os.ReadFile(attestFile)
         if err != nil {
-                fmt.Println("Can't read sev_attestation file, ", err)
+                t.Errorf("Can't read sev_attestation file")
+		return
         }
         fmt.Printf("\narkCert:\n")
         PrintBytes(arkCertDer)
@@ -1232,77 +1236,46 @@ func TestPlatformVerify(t *testing.T) {
                 Purpose: &pur,
                 Support: evp,
         }
+	fmt.Printf("\nRequest:\n")
         PrintTrustRequest(req)
 	fmt.Printf("\n\n")
 
         sevAtt := &certprotos.SevAttestationMessage{}
         err = proto.Unmarshal(attestBin, sevAtt)
         if err != nil {
-                fmt.Printf("Can't unmarshal sev attestation\n")
+                t.Errorf("Can't unmarshal sev attestation\n")
+		return
         }
 
 	// Get policy Key from ud
 	ud := &certprotos.AttestationUserData {}
         err = proto.Unmarshal(sevAtt.WhatWasSaid, ud)
         if err != nil {
-                fmt.Printf("Can't unmarshal what was said \n")
+                t.Errorf("Can't unmarshal what was said \n")
+		return
         }
-
-        // The following is normally done by 
-        //      toProve, pf, alreadyProved = ConstructProofFromRequest(evType, evp, pur)
-
-        alreadyProved := &certprotos.ProvedStatements{}
-
-        // Read policy
-        serializedPolicy, err := os.ReadFile(policyFile)
-        if err != nil {
-                fmt.Printf("Can't read policy\n")
-        }
-	signedPolicy := &certprotos.SignedClaimSequence{}
-	err = proto.Unmarshal(serializedPolicy, signedPolicy)
 
 	fmt.Printf("\nUser data\n")
 	PrintAttestationUserData(ud)
 
-        // initPolicy
-	originalPolicy := &certprotos.ProvedStatements{}
-	if !InitAxiom(*ud.PolicyKey, originalPolicy) {
-                fmt.Printf("Can't InitAxiom\n")
+        // Read policy
+        serializedPolicy, err := os.ReadFile(policyFile)
+        if err != nil {
+                t.Errorf("Can't read policy\n")
+		return
         }
-
-	if !InitPolicy(ud.PolicyKey, signedPolicy, originalPolicy) {
-                fmt.Printf("Can't init policy\n")
-        }
-
-	if !InitProvedStatements(*ud.PolicyKey, evp.FactAssertion, originalPolicy) {
-                fmt.Printf("Can't InitProvedStatements\n")
-	}
-
-	fmt.Printf("\nOriginal policy:\n")
-	PrintProvedStatements(originalPolicy)
-
-	if !FilterSevPolicy(evp, originalPolicy, alreadyProved) {
-                fmt.Printf("Can't filterpolicy\n")
-        }
-	alreadyProved = originalPolicy  //Remove later
-
-	fmt.Printf("\nfiltered policy:\n")
-	PrintProvedStatements(alreadyProved)
-	fmt.Printf("\n")
-
-        // ConstructProofFromSevPlatformEvidence()
-	toProve, proof := ConstructProofFromSevPlatformEvidence(ud.PolicyKey, pur, alreadyProved)
-	if toProve == nil || proof == nil {
-                fmt.Printf("Can't construct proof\n")
+	signedPolicy := &certprotos.SignedClaimSequence{}
+	err = proto.Unmarshal(serializedPolicy, signedPolicy)
+	if err != nil {
+                t.Errorf("Can't unmarshal signed policy\n")
 		return
 	}
 
-	PrintProof(proof)
-        if !VerifyProof(ud.PolicyKey, toProve, proof, alreadyProved) {
-                fmt.Printf("Proof does not verify\n")
+	// Validate
+ 	if !ValidateEvidenceWithPolicy(ud.PolicyKey, evp, signedPolicy, pur) {
+                t.Errorf("ValidateEvidenceWithPolicy fails\n")
 		return
-        }
-	fmt.Printf("Proof verifies\n")
+	}
 }
 
 // For Sev testing --- deprecated
