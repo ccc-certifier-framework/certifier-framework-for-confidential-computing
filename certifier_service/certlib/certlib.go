@@ -2479,6 +2479,9 @@ func VerifyRule9(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 	if c1.GetVerb() != "is-environment" {
 		return false
 	}
+	if c2.GetVerb() != "is-trusted" {
+		return false
+	}
 	if c2.Subject.GetEntityType() != "measurement" {
 		return false
 	}
