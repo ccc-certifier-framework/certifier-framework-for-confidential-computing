@@ -2476,6 +2476,9 @@ func VerifyRule9(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil {
 		return false
 	}
+	if c2.Subject == nil || c2.Verb == nil || c2.Object != nil {
+		return false
+	}
 	if c1.GetVerb() != "is-environment" {
 		return false
 	}
