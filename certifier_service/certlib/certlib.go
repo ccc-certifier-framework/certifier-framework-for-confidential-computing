@@ -2488,6 +2488,9 @@ func VerifyRule9(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 	if c.GetVerb() != "environment-measurement-is-trusted" {
 		return false
 	}
+	if (!bytes.Equal(c2.Subject.Measurement, c1.Subject.EnvironmentEnt.TheMeasurement)) {
+		return false
+	}
 	return true
 }
 
@@ -3406,6 +3409,6 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	return nil, nil
 }
 
-func VerifyProofFromArray() bool {
+func ValidateEvidenceWithPolicy() bool {
 	return false
 }
