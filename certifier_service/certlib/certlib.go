@@ -3130,8 +3130,8 @@ func PrintPropertyDescriptor(p *certprotos.Property) {
 	}
 }
 
-func FilterSevPolicy(evp *certprotos.EvidencePackage, original *certprotos.ProvedStatements, alreadyProved *certprotos.ProvedStatements) bool {
-	return true
+func FilterSevPolicy(evp *certprotos.EvidencePackage, original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+	return original 
  }
 
 func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos.SignedClaimSequence,
@@ -3439,13 +3439,11 @@ func ValidateEvidenceWithPolicy(pubPolicyKey *certprotos.KeyMessage, evp *certpr
 	fmt.Printf("\nValidateEvidenceWithPolicy: Original policy:\n")
 	PrintProvedStatements(originalPolicy)
 
-	/*
-	if !FilterSevPolicy(evp, originalPolicy, alreadyProved) {
+	alreadyProved := FilterSevPolicy(evp, originalPolicy)
+	if alreadyProved == nil {
                 fmt.Printf("Can't filterpolicy\n")
 		return false
         }
-	 */
-	alreadyProved := originalPolicy  //Remove later
 
 	// Debug
 	fmt.Printf("\nfiltered policy:\n")
@@ -3461,7 +3459,8 @@ func ValidateEvidenceWithPolicy(pubPolicyKey *certprotos.KeyMessage, evp *certpr
 
 	// Debug
 	fmt.Printf("\n")
-	fmt.Printf("ValidateEvidenceWithPolicy: Proof\n")
+	fmt.Printf("ValidateEvidenceWithPolicy, toProve: ")
+	PrintVseClause(toProve)
 	PrintProof(proof)
 	fmt.Printf("\n")
 
