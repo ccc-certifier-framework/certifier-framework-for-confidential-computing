@@ -3130,8 +3130,95 @@ func PrintPropertyDescriptor(p *certprotos.Property) {
 	}
 }
 
-func FilterSevPolicy(evp *certprotos.EvidencePackage, original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
-	return original 
+func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+	n := len(evp.FactAssertion);
+	ev := evp.FactAssertion[n - 1]
+	if ev.GetEvidenceType() != "sev-attestation" {
+		fmt.Printf("FilterPolicy: sev attestation expected\n")
+		return nil
+	}
+	sevAtt := &certprotos.SevAttestationMessage{}
+	err := proto.Unmarshal(ev.SerializedEvidence, sevAtt)
+	if err != nil {
+		fmt.Printf("FilterPolicy: can't unmarshal attest claim\n")
+		return nil
+	}
+	if sevAtt.ReportedAttestation == nil {
+		fmt.Printf("FilterPolicy: empty sev attestation\n")
+		return nil
+	}
+	pl := GetPlatformFromSevAttest(sevAtt.ReportedAttestation)
+	if pl == nil {
+		fmt.Printf("FilterPolicy: can't get platform from attestation\n")
+		return nil
+	}
+	m := GetMeasurementFromSevAttest(sevAtt.ReportedAttestation)
+	if m == nil {
+		fmt.Printf("FilterPolicy: can't get measurement from attestation\n")
+		return nil
+	}
+	foundMeasurement := false
+	foundPlatform := false
+	alreadyProved := &certprotos.ProvedStatements{}
+	alreadyProved.Proved = append(alreadyProved.Proved, original.Proved[0])
+	for i := 1; i < len(original.Proved); i++ {
+		vcm := original.Proved[i]
+		if vcm.Subject == nil || vcm.Subject.EntityType == nil || vcm.Subject.GetEntityType() != "key" {
+			fmt.Printf("FilterPolicy: Policy not signed by policy key\n")
+			return nil
+		}
+		if !SameKey(vcm.Subject.Key, policyKey) {
+			fmt.Printf("FilterPolicy: Policy not signed by policy key\n")
+			return nil
+		}
+		cl := vcm.Clause
+		if cl == nil || cl.Subject == nil || cl.Verb == nil {
+			fmt.Printf("FilterPolicy: Policy statement %d malformed (1)\n", i)
+			PrintVseClause(vcm)
+			fmt.Printf("\n")
+			return nil
+		}
+		// Is statement policyKey says measurement is-trusted
+		if cl.Subject.GetEntityType() == "measurement" && cl.GetVerb() == "is-trusted" {
+			if foundMeasurement {
+				continue
+			}
+			if cl.Subject.Measurement == nil {
+				continue
+			}
+			if bytes.Equal(cl.Subject.Measurement, m) {
+				foundMeasurement = true
+			} else {
+				continue
+			}
+		}
+		// Is statement policyKey says platform has-trusted-platform-property
+		if cl.Subject.GetEntityType() == "platform" && cl.GetVerb() == "has-trusted-platform-property" {
+			if cl.Subject.PlatformEnt == nil || cl.Subject.PlatformEnt.GetPlatformType() != pl.GetPlatformType() {
+				continue
+			}
+			if foundPlatform {
+				continue
+			}
+			if SatisfyingProperties(cl.Subject.PlatformEnt.Props, pl.Props) {
+				foundPlatform = true
+			} else {
+				continue
+			}
+		}
+		alreadyProved.Proved = append(alreadyProved.Proved, vcm)
+	}
+	if !foundMeasurement {
+		fmt.Printf("FilterPolicy: measurement is empty\n")
+		return nil
+	}
+	if !foundPlatform {
+		fmt.Printf("FilterPolicy: platform is empty\n")
+		return nil
+	}
+	// return original 
+	return alreadyProved 
  }
 
 func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos.SignedClaimSequence,
@@ -3430,16 +3517,11 @@ func ValidateEvidenceWithPolicy(pubPolicyKey *certprotos.KeyMessage, evp *certpr
 		return false
         }
 
-	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, originalPolicy) {
-                fmt.Printf("ValidateEvidenceWithPolicy: Can't InitProvedStatements\n")
-		return false
-	}
-
 	// Debug
-	fmt.Printf("\nValidateEvidenceWithPolicy: Original policy:\n")
+	fmt.Printf("\nValidateEvidenceWithPolicy, Original policy:\n")
 	PrintProvedStatements(originalPolicy)
 
-	alreadyProved := FilterSevPolicy(evp, originalPolicy)
+	alreadyProved := FilterSevPolicy(pubPolicyKey, evp, originalPolicy)
 	if alreadyProved == nil {
                 fmt.Printf("Can't filterpolicy\n")
 		return false
@@ -3449,6 +3531,15 @@ func ValidateEvidenceWithPolicy(pubPolicyKey *certprotos.KeyMessage, evp *certpr
 	fmt.Printf("\nfiltered policy:\n")
 	PrintProvedStatements(alreadyProved)
 	fmt.Printf("\n")
+
+	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, alreadyProved) {
+                fmt.Printf("ValidateEvidenceWithPolicy: Can't InitProvedStatements\n")
+		return false
+	}
+
+	// Debug
+	fmt.Printf("\nValidateEvidenceWithPolicy, proved:\n")
+	PrintProvedStatements(originalPolicy)
 
         // ConstructProofFromSevPlatformEvidence()
 	toProve, proof := ConstructProofFromSevPlatformEvidence(pubPolicyKey, purpose, alreadyProved)
