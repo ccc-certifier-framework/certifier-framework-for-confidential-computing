@@ -3,6 +3,11 @@ export CERTIFIER_PROTOTYPE=../../..
 export UTILITIES=$CERTIFIER_PROTOTYPE/utilities
 export TEST_DATA=.
 
+# generate sev certs
+$CERTIFIER_PROTOTYPE/utilities/sample_sev_key_generation.exe --ark_der=./sev_ark_cert.der --ask_der=./sev_ask_cert.der \
+--vcek_der=./sev_vcek_cert.der --sev_attest=./sev_attest.bin --policy_key_file=./policy_key_file.bin
+
+
 # Policy
 #   1. "policyKey is-trusted"
 #   2: "The policyKey says the ARK-key is-trusted-for-attestation"
