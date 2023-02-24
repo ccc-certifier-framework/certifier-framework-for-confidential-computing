@@ -1,7 +1,7 @@
-#include <gflags/gflags.h>
 #include "certifier.h"
 #include "support.h"
 #include "attestation.h"
+#include <gflags/gflags.h>
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
