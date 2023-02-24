@@ -2202,6 +2202,15 @@ func InitCerifierRules(cr *certprotos.CertifierRules) bool {
 		key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation 
 	rule 7 (R7): If measurement is-trusted and key1 speaks-for measurement then
 		key1 is-trusted-for-attestation.
+	rule 8 (R8): If environment[platform, measurement] is-environment AND platform-template
+		has-trusted-platform-property then environment[platform, measurement]
+		environment-platform-is-trusted provided platform properties satisfy platform template
+	rule 9 (R9): If environment[platform, measurement] is-environment AND measurement is-trusted then
+		environment[platform, measurement] environment-measurement is-trusted
+	rule 10 (R10): If environment[platform, measurement] environment-platform-is-trusted AND
+		environment[platform, measurement] environment-measurement-is-trusted then
+		environment[platform, measurement] is-trusted
+
  */
 
 	return true;
@@ -2764,7 +2773,7 @@ func MakeEnvironment(pl *certprotos.Platform, measurement []byte) *certprotos.En
 	return e
 }
 
-// Caution:  This can change if attestation.h changes
+// Caution:  This can change if attestation.h below changes
 /*
 	struct attestation_report {
 	  uint32_t    version;                  // 0x000
