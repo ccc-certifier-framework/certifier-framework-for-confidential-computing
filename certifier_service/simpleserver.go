@@ -73,7 +73,13 @@ func initLog() bool {
 
 
 var policyInitialized bool = false
+
+//	These will be replaced with the new InitPolicy framework
+//	--------------------------------------------------------------------------------------
+
+/* not needed
 var signedPolicyStatements *certprotos.SignedClaimSequence = nil
+ */
 
 // There are really only two kinds of initialzed policy now:
 //      policy-key says Measurement[] is-trusted
@@ -194,6 +200,8 @@ func initPolicy(thePolicyFile string) bool {
         return true
 }
 
+//	This stays with new InitPolicy
+
 // At init, we retrieve the policy key and the rules to evaluate
 func initCertifierService() bool {
         // Debug
@@ -246,6 +254,9 @@ func initCertifierService() bool {
         return true
 }
 
+//	--------------------------------------------------------------------------------------
+
+//	This moves to certlib
 func AddFactFromSignedClaim(signedClaim *certprotos.SignedClaimMessage,
                 alreadyProved *certprotos.ProvedStatements) bool {
 
@@ -265,6 +276,11 @@ func AddFactFromSignedClaim(signedClaim *certprotos.SignedClaimMessage,
         }
         return true
 }
+
+//	--------------------------------------------------------------------------------------
+
+// These should move to a new proofs subdirectory
+//	--------------------------------------------------------------------------------------
 
 func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage, alreadyProved *certprotos.ProvedStatements) bool {
         // At this point, the already_proved should be
@@ -1013,6 +1029,23 @@ func ConstructProofFromSevEvidence(publicPolicyKey *certprotos.KeyMessage,
         return toProve, proof
 }
 
+func getAppMeasurementFromProvedStatements(appKeyEntity *certprotos.EntityMessage,
+                alreadyProved *certprotos.ProvedStatements) []byte {
+
+        for i := 0; i < len(alreadyProved.Proved); i++ {
+                if certlib.SameEntity(alreadyProved.Proved[i].GetSubject(), appKeyEntity) {
+                        if alreadyProved.Proved[i].GetVerb() == "speaks-for" {
+                                if alreadyProved.Proved[i].Object != nil &&
+                                        alreadyProved.Proved[i].Object.GetEntityType() == "measurement" {
+                                        return alreadyProved.Proved[i].Object.Measurement
+                                }
+                        }
+                }
+        }
+        return nil
+}
+
+//	--------------------------------------------------------------------------------------
 
 //      ConstructProofFromRequest first checks evidence and make sure each evidence
 //            component is verified and it put in alreadyProved Statements
@@ -1022,7 +1055,10 @@ func ConstructProofFromSevEvidence(publicPolicyKey *certprotos.KeyMessage,
 //
 //      Returns the proof goal (toProve), the proof steps (proof), 
 //            and a list of true statements (alreadyProved)
-func ConstructProofFromRequest(evidenceType string, support *certprotos.EvidencePackage, purpose string) (*certprotos.VseClause, *certprotos.Proof, *certprotos.ProvedStatements) {
+func ConstructProofFromRequest(evidenceType string,
+                support *certprotos.EvidencePackage,
+                purpose string) (*certprotos.VseClause,
+                *certprotos.Proof, *certprotos.ProvedStatements) {
 
         // Debug
         fmt.Printf("\nConstructProofFromRequest\n")
@@ -1042,6 +1078,9 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
                 fmt.Printf("Only vse verifier supported\n")
                 return nil, nil, nil
         }
+
+// ValidateEvidenceWithPolicy(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+                //signedPolicy *certprotos.SignedClaimSequence, purpose string)
 
         alreadyProved := &certprotos.ProvedStatements{}
         var toProve *certprotos.VseClause = nil
@@ -1175,22 +1214,6 @@ func ConstructProofFromRequest(evidenceType string, support *certprotos.Evidence
         return toProve, proof, alreadyProved
 }
 
-func getAppMeasurementFromProvedStatements(appKeyEntity *certprotos.EntityMessage,
-                alreadyProved *certprotos.ProvedStatements) []byte {
-
-        for i := 0; i < len(alreadyProved.Proved); i++ {
-                if certlib.SameEntity(alreadyProved.Proved[i].GetSubject(), appKeyEntity) {
-                        if alreadyProved.Proved[i].GetVerb() == "speaks-for" {
-                                if alreadyProved.Proved[i].Object != nil &&
-                                        alreadyProved.Proved[i].Object.GetEntityType() == "measurement" {
-                                        return alreadyProved.Proved[i].Object.Measurement
-                                }
-                        }
-                }
-        }
-        return nil
-}
-
 func logRequest(b []byte) *string {
         if b == nil {
                 return nil
@@ -1277,6 +1300,9 @@ func serviceThread(conn net.Conn, client string) {
         response.RequestingEnclaveTag = request.RequestingEnclaveTag
         response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
         response.Status = &failed
+
+//	Move to ValidateProofWithoutPolicy
+//	-------------------------------------------------------------------------
 
         // Construct the proof
         var purpose string
@@ -1382,6 +1408,10 @@ func serviceThread(conn net.Conn, client string) {
                 response.Status = &failed
         }
 
+	//	--------------------------------------------------------------------------------------------------
+
+	//	Generate Admissions certificate
+
         // Debug
         fmt.Printf("Sending response\n")
         certlib.PrintTrustReponse(&response)
@@ -1403,6 +1433,8 @@ func serviceThread(conn net.Conn, client string) {
         }
         return
 }
+
+//	------------------------------------------------------------------------------------
 
 
 func server(serverAddr string, arg string) {

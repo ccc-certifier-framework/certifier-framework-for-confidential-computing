@@ -43,6 +43,8 @@ import (
 	// oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 )
 
+//  --------------------------------------------------------------------
+
 type PredicateDominance struct {
 	Predicate string
 	FirstChild *PredicateDominance
@@ -1127,6 +1129,416 @@ func MakeSignedClaim(s *certprotos.ClaimMessage, k *certprotos.KeyMessage) *cert
 	return &sm
 }
 
+func SameProperty(p1 *certprotos.Property,  p2 *certprotos.Property) bool {
+	if p1 == nil || p2 == nil {
+		return false
+	}
+	if p1.PropertyName == nil || p2.PropertyName == nil {
+		return false
+	}
+	if *p1.PropertyName != *p2.PropertyName {
+		return false
+	}
+	return true
+}
+
+func SatisfyingProperty(p1 *certprotos.Property, p2 *certprotos.Property) bool {
+	if p1 == nil || p2 == nil || p1.PropertyName == nil || p2.PropertyName == nil {
+		return false
+	}
+	if p1.ValueType == nil || p2.ValueType == nil {
+		return false
+	}
+	if *p1.ValueType != *p2.ValueType {
+		return false
+	}
+	if *p1.ValueType == "string" {
+		if p1.StringValue == nil || p2.StringValue == nil {
+			return false
+		}
+		if *p1.StringValue != *p2.StringValue {
+			return false
+		}
+	}
+	if *p1.ValueType == "int" {
+		if p1.Comparator == nil || p2.Comparator == nil {
+			return false
+		}
+		if *p1.Comparator == ">=" && *p2.Comparator == "=" {
+			return *p2.IntValue >= *p1.IntValue
+		} else if *p1.Comparator == "=" && *p2.Comparator == "=" {
+			return *p1.IntValue == *p2.IntValue
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
+func FindProperty(propName string, p []*certprotos.Property) *certprotos.Property {
+	for i := 0; i < len(p); i++ {
+		if p[i].PropertyName == nil {
+			return nil
+		}
+		if *p[i].PropertyName == propName {
+			return p[i]
+		}
+	}
+	return nil
+}
+
+func SatisfyingProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) bool {
+	if p1 == nil || p2 == nil {
+		return false
+	}
+	if p1.Props == nil || p2.Props == nil {
+		return false
+	}
+	for i := 0; i < len(p1.Props); i++ {
+		if p1.Props[i].PropertyName == nil {
+			return false
+		}
+		pp := FindProperty(*p1.Props[i].PropertyName, p2.Props)
+		if pp == nil {
+			return false
+		}
+		if (!SatisfyingProperty(p1.Props[i], pp)) {
+			return false
+		}
+	}
+	return true
+}
+
+func SameProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) bool {
+	if p1 == nil || p2 == nil {
+		return false
+	}
+	if p1.Props == nil || p2.Props == nil {
+		return false
+	}
+	for i := 0; i < len(p1.Props); i++ {
+		if p1.Props[i].PropertyName == nil {
+			return false
+		}
+		pp := FindProperty(*p1.Props[i].PropertyName, p2.Props)
+		if pp == nil {
+			return false
+		}
+		if (!SameProperty(p1.Props[i], pp)) {
+			return false
+		}
+	}
+	return true
+}
+
+func SameEnvironment(p1 *certprotos.Environment, p2 *certprotos.Environment) bool {
+	if p1 == nil || p2 == nil {
+		return false
+	}
+	if p1.TheMeasurement == nil || p2.TheMeasurement == nil {
+		return false
+	}
+	if !bytes.Equal(p1.TheMeasurement, p2.TheMeasurement) {
+		return false
+	}
+	if p1.ThePlatform == nil || p2.ThePlatform == nil {
+		return false
+	}
+	return SamePlatform(p1.ThePlatform,  p2.ThePlatform);
+}
+
+func SamePlatform(p1 *certprotos.Platform, p2 *certprotos.Platform) bool {
+	if p1.PlatformType == nil || p2.PlatformType == nil {
+		return false
+	}
+	if p1.HasKey == nil || p2.HasKey == nil {
+		return false
+	}
+	if *p1.HasKey != *p2.HasKey {
+		return false
+	}
+	if *p1.HasKey {
+		if p1.AttestKey == nil || p2.AttestKey == nil {
+			return false
+		}
+		if !SameKey(p1.AttestKey, p2.AttestKey) {
+			return false
+		}
+	}
+	return SameProperties(p1.Props, p2.Props)
+}
+
+func PrintEnvironment(e *certprotos.Environment) {
+	if e == nil {
+		return
+	}
+	fmt.Printf("Environment:\n")
+	if e.ThePlatform != nil {
+		PrintPlatform(e.ThePlatform)
+	}
+	if e.TheMeasurement != nil {
+		fmt.Printf("Measurement: ")
+		PrintBytes(e.TheMeasurement)
+	}
+}
+
+func PrintPlatform(p *certprotos.Platform) {
+	if p == nil {
+		return
+	}
+	if (p.PlatformType == nil) {
+		return
+	}
+	fmt.Printf("Platform:\n")
+	fmt.Printf("    Type: %s\n", *p.PlatformType)
+	if p.HasKey != nil && *p.HasKey {
+		fmt.Printf("    HasKey\n")
+	} else {
+		fmt.Printf("    NoKey\n")
+	}
+	if (p.AttestKey != nil) {
+		fmt.Printf("   Key: \n")
+		PrintKey(p.AttestKey)
+	}
+	if (p.Props != nil) {
+		fmt.Printf("    Properties:\n")
+		PrintProperties(p.Props)
+	}
+}
+
+func PrintProperty(p *certprotos.Property) {
+	if p == nil  || p.PropertyName == nil {
+		return
+	}
+	fmt.Printf("        %s: ", *p.PropertyName)
+	if p.ValueType == nil {
+		return
+	}
+	if *p.ValueType == "string" {
+		if p.StringValue == nil {
+			return
+		}
+		fmt.Printf("%s\n", *p.StringValue)
+	} 
+	if *p.ValueType == "int" {
+		if p.IntValue == nil  || p.Comparator == nil {
+			return
+		}
+		fmt.Printf("%s %d\n", *p.Comparator, *p.IntValue)
+	}
+}
+
+func PrintProperties(p *certprotos.Properties) {
+	if p == nil {
+		return
+	}
+	for i := 0; i < len(p.Props); i++ {
+		PrintProperty(p.Props[i])
+	}
+}
+
+func PrintEnvironmentDescriptor(e *certprotos.Environment) {
+	if e == nil {
+		return
+	}
+	fmt.Printf("environment[")
+	PrintPlatformDescriptor(e.ThePlatform)
+	fmt.Printf(", measurement: ")
+	PrintBytes(e.TheMeasurement)
+	fmt.Printf("]")
+}
+
+func PrintPlatformDescriptor(p *certprotos.Platform) {
+	if p == nil  || p.PlatformType == nil {
+		return
+	}
+	fmt.Printf("platform[%s, ", *p.PlatformType)
+	if p.HasKey != nil && *p.HasKey && p.AttestKey != nil {
+		PrintKeyDescriptor(p.AttestKey)
+		fmt.Printf(", ")
+	}
+	if p.Props != nil {
+		for i := 0; i < len(p.Props.Props); i++ {
+			if i != 0 {
+				fmt.Printf(", ")
+			}
+			PrintPropertyDescriptor(p.Props.Props[i])
+		}
+	}
+	fmt.Printf("]")
+}
+
+func PrintPropertyDescriptor(p *certprotos.Property) {
+	if p == nil  || p.PropertyName == nil {
+		return
+	}
+	fmt.Printf("%s: ", *p.PropertyName)
+	if p.ValueType == nil {
+		return
+	}
+	if *p.ValueType == "string" {
+		if p.StringValue != nil {
+			fmt.Printf("%s", *p.StringValue)
+		}
+	}
+	if *p.ValueType == "int" {
+		if p.Comparator != nil {
+			fmt.Printf("%s", *p.Comparator)
+		}
+		if p.IntValue != nil {
+			fmt.Printf("%d", *p.IntValue)
+		}
+	}
+}
+
+func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
+	fmt.Printf("\nRequest:\n")
+	fmt.Printf("Requesting Enclave Tag : %s\n", req.GetRequestingEnclaveTag())
+	fmt.Printf("Providing Enclave Tag: %s\n", req.GetProvidingEnclaveTag())
+	if req.Purpose != nil {
+		fmt.Printf("Purpose: %s\n", *req.Purpose)
+	}
+	if req.SubmittedEvidenceType != nil {
+		fmt.Printf("\nSubmittedEvidenceType: %s\n", req.GetSubmittedEvidenceType())
+	}
+
+	// Support
+	PrintEvidencePackage(req.Support, true)
+	fmt.Printf("\n")
+}
+
+func PrintTrustReponse(res *certprotos.TrustResponseMessage) {
+	// Status
+	// RequestingEnclaveTag
+	// ProvidingEnclaveTag
+	// Artifact
+	fmt.Printf("\nResponse:\n")
+	fmt.Printf("Status: %s\n", res.GetStatus())
+	fmt.Printf("Requesting Enclave Tag : %s\n", res.GetRequestingEnclaveTag())
+	fmt.Printf("Providing Enclave Tag: %s\n", res.GetProvidingEnclaveTag())
+	if res.Artifact != nil {
+		fmt.Printf("Artifact: ")
+		PrintBytes(res.Artifact)
+		fmt.Printf("\n")
+	}
+	fmt.Printf("\n")
+}
+
+func GetVseFromSignedClaim(sc *certprotos.SignedClaimMessage) *certprotos.VseClause {
+	claimMsg := certprotos.ClaimMessage {}
+	err := proto.Unmarshal(sc.SerializedClaimMessage, &claimMsg)
+	if err != nil {
+		return nil
+	}
+	vseClause :=  certprotos.VseClause {}
+	if claimMsg.GetClaimFormat() == "vse-clause" {
+		err = proto.Unmarshal(claimMsg.SerializedClaim, &vseClause)
+		if err != nil {
+			return nil
+		}
+	} else {
+		return nil
+	}
+	return &vseClause
+}
+
+func SizedSocketRead(conn net.Conn) []byte {
+	bsize := make([]byte, 4)
+	n, err := conn.Read(bsize)
+	if err != nil {
+		fmt.Printf("SizedSocketRead, error: %d\n", n)
+		return nil
+	}
+	size := int(bsize[0]) +  256 * int(bsize[1]) + 256 * 256 * int(bsize[2])
+	b := make([]byte, size)
+	total := 0
+	for ; total < size; {
+		n, err = conn.Read(b[total:])
+		if err != nil {
+			fmt.Printf("SizedSocketRead, error: %d\n", n)
+			return nil
+		}
+		total = total + n
+	}
+	return b
+}
+
+func SizedSocketWrite(conn net.Conn, b []byte) bool {
+	size := len(b)
+	bs := make([]byte, 4)
+	bs[0] = byte(size&0xff)
+	bs[1] = byte((size>>8)&0xff)
+	bs[2] = byte((size>>16)&0xff)
+	bs[3] = 0
+	_, err := conn.Write(bs)
+	if err != nil {
+		fmt.Printf("SizedSocketWrite error(1)\n")
+		return false
+	}
+	_, err = conn.Write(b)
+	if err != nil {
+		fmt.Print(err)
+		fmt.Printf("SizedSocketWrite error(2)\n")
+		return false
+	}
+	return true
+}
+
+func MakeProperty(name string, t string, sv *string, c *string, iv *uint64) *certprotos.Property {
+	p := &certprotos.Property {
+		PropertyName: &name,
+		ValueType: &t,
+	}
+	if t == "string" {
+		p.StringValue = sv
+	}
+	if t == "int" {
+		p.Comparator = c
+		p.IntValue = iv
+	}
+	return p 
+}
+
+func MakePlatform(t string, k *certprotos.KeyMessage, props *certprotos.Properties) *certprotos.Platform {
+	hk := false;
+	if k != nil {
+		hk = true;
+	}
+	plat := &certprotos.Platform {
+		PlatformType: &t,
+		AttestKey: k,
+		Props: props,
+		HasKey: &hk,
+	}
+	return plat
+}
+
+func MakePlatformEntity(pl *certprotos.Platform) *certprotos.EntityMessage {
+	plEnt := "platform"
+	pe := &certprotos.EntityMessage {
+		EntityType: &plEnt,
+		PlatformEnt: pl,
+	}
+	return pe
+}
+
+func MakeEnvironmentEntity(e *certprotos.Environment) *certprotos.EntityMessage {
+	eEnt := "environment"
+	ee := &certprotos.EntityMessage {
+		EntityType: &eEnt,
+		EnvironmentEnt: e,
+	}
+	return ee
+}
+
+func MakeEnvironment(pl *certprotos.Platform, measurement []byte) *certprotos.Environment {
+	e := &certprotos.Environment {
+		ThePlatform: pl,
+		TheMeasurement: measurement,
+	}
+	return e
+}
+
 func VerifySignedClaim(c *certprotos.SignedClaimMessage, k *certprotos.KeyMessage) bool {
 	PK := rsa.PublicKey{}
 	pK := rsa.PrivateKey{}
@@ -1199,123 +1611,6 @@ func PrintProvedStatements(ps *certprotos.ProvedStatements) {
 	}
 }
 
-var privateAttestKey *certprotos.KeyMessage = nil
-var publicAttestKey *certprotos.KeyMessage = nil
-var rsaPublicAttestKey rsa.PublicKey
-var rsaPrivateAttestKey rsa.PrivateKey
-var sealingKey [64]byte
-var sealIv [16]byte
-var simulatedInitialized  bool = false
-
-func InitSimulatedEnclave() bool {
-	privateAttestKey = MakeVseRsaKey(2048)
-	var tk  string = "simulatedAttestKey"
-	privateAttestKey.KeyName = &tk
-	publicAttestKey = InternalPublicFromPrivateKey(privateAttestKey)
-	if publicAttestKey == nil {
-		return false
-	}
-	if !GetRsaKeysFromInternal(privateAttestKey, &rsaPrivateAttestKey, &rsaPublicAttestKey) {
-		return false
-	}
-	// now initialize sealing key and iv
-	for i := 0; i < 64; i++ {
-		sealingKey[i] = byte(i)
-	}
-	for i := 0; i < 16; i++ {
-		sealIv[i] = byte(i + 17)
-	}
-	simulatedInitialized = true
-	return true
-}
-
-func simultatedGetMeasurement(etype string, id string) []byte {
-	m := make([]byte, 32)
-	for i := 0; i < 32; i++ {
-		m[i] = byte(i)
-	}
-	return m
-}
-
-func simultatedSeal(eType string, eId string, toSeal []byte) []byte {
-	if !simulatedInitialized {
-		return nil
-	}
-	return AuthenticatedEncrypt(toSeal, sealingKey[0:64], sealIv[0:16])
-}
-
-func simultatedUnseal(eType string, eId string, toUnseal []byte) []byte {
-	if !simulatedInitialized {
-		return nil
-	}
-	return AuthenticatedDecrypt(toUnseal, sealingKey[0:64])
-}
-
-func simultatedAttest(eType string, toSay []byte) []byte {
-	if !simulatedInitialized {
-		return nil
-	}
-	// toSay is a serilized attestation, turn it into a signed claim
-	tn := TimePointNow()
-	tf := TimePointPlus(tn, 365 * 86400)
-	nb := TimePointToString(tn)
-	na := TimePointToString(tf)
-	cl1 := MakeClaim(toSay, "vse-attestation", "attestation", nb, na)
-	serCl, err := proto.Marshal(cl1)
-	if err != nil {
-		return nil
-	}
-	sc := certprotos.SignedClaimMessage {}
-	sc.SerializedClaimMessage = serCl
-	sc.SigningKey = publicAttestKey
-	var ss string = "rsa-2048-sha256-pkcs-sign"
-	sc.SigningAlgorithm = &ss
-	sig := RsaSha256Sign(&rsaPrivateAttestKey, toSay)
-	sc.Signature = sig
-	serSignedClaim, err := proto.Marshal(&sc)
-	if err != nil {
-		return nil
-	}
-	return serSignedClaim
-}
-
-func GetMeasurement(eType string, id string) []byte {
-	if eType == "simulated-enclave" {
-		return simultatedGetMeasurement(eType, id)
-	}
-	return nil
-}
-
-func Seal(eType string, eId string, toSeal []byte) []byte {
-	if eType == "simulated-enclave" {
-		return simultatedSeal(eType, eId, toSeal)
-	}
-	return nil
-}
-
-func Unseal(eType string, eId string, toUnseal []byte) []byte {
-	if eType == "simulated-enclave" {
-		return simultatedUnseal(eType, eId, toUnseal)
-	}
-	return nil
-}
-
-func Attest(eType string, toSay []byte) []byte {
-	if eType == "simulated-enclave" {
-		return simultatedAttest(eType, toSay)
-	}
-	return nil
-}
-
-func VerifyAttestation(eType string, attestBlob []byte, k *certprotos.KeyMessage) bool {
-	sc := certprotos.SignedClaimMessage {}
-	err := proto.Unmarshal(attestBlob, &sc)
-	if err != nil {
-		return false
-	}
-	return VerifySignedClaim(&sc, k)
-}
-
 func Asn1ToX509 (in []byte) *x509.Certificate {
 	cert, err := x509.ParseCertificate(in)
 	if err != nil {
@@ -1330,59 +1625,6 @@ func X509ToAsn1(cert *x509.Certificate) []byte {
 		return nil
 	}
 	return out
-}
-
-func ProducePlatformRule(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
-		subjKey *certprotos.KeyMessage, durationSeconds float64) []byte {
-
-	// Return signed claim: issuer-Key says subjKey is-trusted-for-attestation
-	s1 := MakeKeyEntity(subjKey)
-	if s1 == nil {
-		return nil
-	}
-	isTrustedForAttest := "is-trusted-for-attestation"
-	c1 :=  MakeUnaryVseClause(s1, &isTrustedForAttest)
-	if c1 == nil {
-		return nil
-	}
-	issuerPublic := InternalPublicFromPrivateKey(issuerKey)
-	if issuerPublic == nil {
-		fmt.Printf("Can't make isser public from private\n")
-		return nil
-	}
-	s2 := MakeKeyEntity(issuerPublic)
-	if s2 == nil {
-		return nil
-	}
-	saysVerb := "says"
-	c2 := MakeIndirectVseClause(s2, &saysVerb, c1)
-	if c2 == nil {
-		return nil
-	}
-
-	tn := TimePointNow()
-	tf := TimePointPlus(tn, 365 * 86400)
-	nb := TimePointToString(tn)
-	na := TimePointToString(tf)
-	ser, err := proto.Marshal(c2)
-	if err != nil {
-		return nil
-	}
-	cl1 := MakeClaim(ser, "vse-clause", "platform-rule", nb, na)
-	if cl1 == nil {
-		return nil
-	}
-
-	rule := MakeSignedClaim(cl1, issuerKey)
-	if rule == nil {
-		return nil
-	}
-	ssc, err := proto.Marshal(rule)
-	if err != nil {
-		return nil
-	}
-
-	return ssc
 }
 
 func ProduceAdmissionCert(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
@@ -1519,6 +1761,155 @@ func PrintEvidencePackage(evp *certprotos.EvidencePackage, printAll bool) {
 	}
 }
 
+type CertKeysSeen struct {
+	name string
+	pk  certprotos.KeyMessage
+}
+
+type CertSeenList struct {
+	maxSize int
+	size int
+	keysSeen [30]CertKeysSeen
+}
+
+func AddKeySeen(list *CertSeenList, k *certprotos.KeyMessage) bool {
+	if (list.maxSize - 1) <= list.size {
+		return false
+	}
+	entry := &list.keysSeen[list.size]
+	list.size = list.size + 1
+	entry.name = k.GetKeyName()
+	entry.pk = *k
+	return true
+}
+
+func FindKeySeen(list *CertSeenList, name string) *certprotos.KeyMessage {
+	for j := 0; j < list.size; j++ {
+		if list.keysSeen[j].name == name {
+			return &list.keysSeen[j].pk
+		}
+	}
+	return nil
+}
+
+//  --------------------------------------------------------------------
+
+//  Simulated enclave
+//  --------------------------------------------------------------------
+
+var privateAttestKey *certprotos.KeyMessage = nil
+var publicAttestKey *certprotos.KeyMessage = nil
+var rsaPublicAttestKey rsa.PublicKey
+var rsaPrivateAttestKey rsa.PrivateKey
+var sealingKey [64]byte
+var sealIv [16]byte
+var simulatedInitialized  bool = false
+
+func InitSimulatedEnclave() bool {
+	privateAttestKey = MakeVseRsaKey(2048)
+	var tk  string = "simulatedAttestKey"
+	privateAttestKey.KeyName = &tk
+	publicAttestKey = InternalPublicFromPrivateKey(privateAttestKey)
+	if publicAttestKey == nil {
+		return false
+	}
+	if !GetRsaKeysFromInternal(privateAttestKey, &rsaPrivateAttestKey, &rsaPublicAttestKey) {
+		return false
+	}
+	// now initialize sealing key and iv
+	for i := 0; i < 64; i++ {
+		sealingKey[i] = byte(i)
+	}
+	for i := 0; i < 16; i++ {
+		sealIv[i] = byte(i + 17)
+	}
+	simulatedInitialized = true
+	return true
+}
+
+func simultatedGetMeasurement(etype string, id string) []byte {
+	m := make([]byte, 32)
+	for i := 0; i < 32; i++ {
+		m[i] = byte(i)
+	}
+	return m
+}
+
+func simultatedSeal(eType string, eId string, toSeal []byte) []byte {
+	if !simulatedInitialized {
+		return nil
+	}
+	return AuthenticatedEncrypt(toSeal, sealingKey[0:64], sealIv[0:16])
+}
+
+func simultatedUnseal(eType string, eId string, toUnseal []byte) []byte {
+	if !simulatedInitialized {
+		return nil
+	}
+	return AuthenticatedDecrypt(toUnseal, sealingKey[0:64])
+}
+
+func simultatedAttest(eType string, toSay []byte) []byte {
+	if !simulatedInitialized {
+		return nil
+	}
+	// toSay is a serilized attestation, turn it into a signed claim
+	tn := TimePointNow()
+	tf := TimePointPlus(tn, 365 * 86400)
+	nb := TimePointToString(tn)
+	na := TimePointToString(tf)
+	cl1 := MakeClaim(toSay, "vse-attestation", "attestation", nb, na)
+	serCl, err := proto.Marshal(cl1)
+	if err != nil {
+		return nil
+	}
+	sc := certprotos.SignedClaimMessage {}
+	sc.SerializedClaimMessage = serCl
+	sc.SigningKey = publicAttestKey
+	var ss string = "rsa-2048-sha256-pkcs-sign"
+	sc.SigningAlgorithm = &ss
+	sig := RsaSha256Sign(&rsaPrivateAttestKey, toSay)
+	sc.Signature = sig
+	serSignedClaim, err := proto.Marshal(&sc)
+	if err != nil {
+		return nil
+	}
+	return serSignedClaim
+}
+
+func GetMeasurement(eType string, id string) []byte {
+	if eType == "simulated-enclave" {
+		return simultatedGetMeasurement(eType, id)
+	}
+	return nil
+}
+
+func Seal(eType string, eId string, toSeal []byte) []byte {
+	if eType == "simulated-enclave" {
+		return simultatedSeal(eType, eId, toSeal)
+	}
+	return nil
+}
+
+func Unseal(eType string, eId string, toUnseal []byte) []byte {
+	if eType == "simulated-enclave" {
+		return simultatedUnseal(eType, eId, toUnseal)
+	}
+	return nil
+}
+
+func Attest(eType string, toSay []byte) []byte {
+	if eType == "simulated-enclave" {
+		return simultatedAttest(eType, toSay)
+	}
+	return nil
+}
+
+//  --------------------------------------------------------------------
+
+//  Proofs
+//  --------------------------------------------------------------------
+
 func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
 	// add pk is-trusted to proved statenments
 	ke := MakeKeyEntity(&pk)
@@ -1526,6 +1917,59 @@ func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
 	vc :=  MakeUnaryVseClause(ke, &ist)
 	ps.Proved = append(ps.Proved, vc)
 	return true
+}
+
+func ProducePlatformRule(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
+		subjKey *certprotos.KeyMessage, durationSeconds float64) []byte {
+
+	// Return signed claim: issuer-Key says subjKey is-trusted-for-attestation
+	s1 := MakeKeyEntity(subjKey)
+	if s1 == nil {
+		return nil
+	}
+	isTrustedForAttest := "is-trusted-for-attestation"
+	c1 :=  MakeUnaryVseClause(s1, &isTrustedForAttest)
+	if c1 == nil {
+		return nil
+	}
+	issuerPublic := InternalPublicFromPrivateKey(issuerKey)
+	if issuerPublic == nil {
+		fmt.Printf("Can't make isser public from private\n")
+		return nil
+	}
+	s2 := MakeKeyEntity(issuerPublic)
+	if s2 == nil {
+		return nil
+	}
+	saysVerb := "says"
+	c2 := MakeIndirectVseClause(s2, &saysVerb, c1)
+	if c2 == nil {
+		return nil
+	}
+
+	tn := TimePointNow()
+	tf := TimePointPlus(tn, 365 * 86400)
+	nb := TimePointToString(tn)
+	na := TimePointToString(tf)
+	ser, err := proto.Marshal(c2)
+	if err != nil {
+		return nil
+	}
+	cl1 := MakeClaim(ser, "vse-clause", "platform-rule", nb, na)
+	if cl1 == nil {
+		return nil
+	}
+
+	rule := MakeSignedClaim(cl1, issuerKey)
+	if rule == nil {
+		return nil
+	}
+	ssc, err := proto.Marshal(rule)
+	if err != nil {
+		return nil
+	}
+
+	return ssc
 }
 
 func ConstructVseAttestClaim(attestKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
@@ -1597,37 +2041,6 @@ func CheckTimeRange(nb *string, na *string) bool {
 		return false
 	}
 	return true
-}
-
-type CertKeysSeen struct {
-	name string
-	pk  certprotos.KeyMessage
-}
-
-type CertSeenList struct {
-	maxSize int
-	size int
-	keysSeen [30]CertKeysSeen
-}
-
-func AddKeySeen(list *CertSeenList, k *certprotos.KeyMessage) bool {
-	if (list.maxSize - 1) <= list.size {
-		return false
-	}
-	entry := &list.keysSeen[list.size]
-	list.size = list.size + 1
-	entry.name = k.GetKeyName()
-	entry.pk = *k
-	return true
-}
-
-func FindKeySeen(list *CertSeenList, name string) *certprotos.KeyMessage {
-	for j := 0; j < list.size; j++ {
-		if list.keysSeen[j].name == name {
-			return &list.keysSeen[j].pk
-		}
-	}
-	return nil
 }
 
 func ConstructVseAttestationFromCert(subjKey *certprotos.KeyMessage, signerKey *certprotos.KeyMessage) *certprotos.VseClause {
@@ -2625,154 +3038,6 @@ func VerifyProof(policyKey *certprotos.KeyMessage, toProve *certprotos.VseClause
 	return false
 }
 
-func PrintTrustRequest(req *certprotos.TrustRequestMessage) {
-	fmt.Printf("\nRequest:\n")
-	fmt.Printf("Requesting Enclave Tag : %s\n", req.GetRequestingEnclaveTag())
-	fmt.Printf("Providing Enclave Tag: %s\n", req.GetProvidingEnclaveTag())
-	if req.Purpose != nil {
-		fmt.Printf("Purpose: %s\n", *req.Purpose)
-	}
-	if req.SubmittedEvidenceType != nil {
-		fmt.Printf("\nSubmittedEvidenceType: %s\n", req.GetSubmittedEvidenceType())
-	}
-
-	// Support
-	PrintEvidencePackage(req.Support, true)
-	fmt.Printf("\n")
-}
-
-func PrintTrustReponse(res *certprotos.TrustResponseMessage) {
-	// Status
-	// RequestingEnclaveTag
-	// ProvidingEnclaveTag
-	// Artifact
-	fmt.Printf("\nResponse:\n")
-	fmt.Printf("Status: %s\n", res.GetStatus())
-	fmt.Printf("Requesting Enclave Tag : %s\n", res.GetRequestingEnclaveTag())
-	fmt.Printf("Providing Enclave Tag: %s\n", res.GetProvidingEnclaveTag())
-	if res.Artifact != nil {
-		fmt.Printf("Artifact: ")
-		PrintBytes(res.Artifact)
-		fmt.Printf("\n")
-	}
-	fmt.Printf("\n")
-}
-
-func GetVseFromSignedClaim(sc *certprotos.SignedClaimMessage) *certprotos.VseClause {
-	claimMsg := certprotos.ClaimMessage {}
-	err := proto.Unmarshal(sc.SerializedClaimMessage, &claimMsg)
-	if err != nil {
-		return nil
-	}
-	vseClause :=  certprotos.VseClause {}
-	if claimMsg.GetClaimFormat() == "vse-clause" {
-		err = proto.Unmarshal(claimMsg.SerializedClaim, &vseClause)
-		if err != nil {
-			return nil
-		}
-	} else {
-		return nil
-	}
-	return &vseClause
-}
-
-func SizedSocketRead(conn net.Conn) []byte {
-	bsize := make([]byte, 4)
-	n, err := conn.Read(bsize)
-	if err != nil {
-		fmt.Printf("SizedSocketRead, error: %d\n", n)
-		return nil
-	}
-	size := int(bsize[0]) +  256 * int(bsize[1]) + 256 * 256 * int(bsize[2])
-	b := make([]byte, size)
-	total := 0
-	for ; total < size; {
-		n, err = conn.Read(b[total:])
-		if err != nil {
-			fmt.Printf("SizedSocketRead, error: %d\n", n)
-			return nil
-		}
-		total = total + n
-	}
-	return b
-}
-
-func SizedSocketWrite(conn net.Conn, b []byte) bool {
-	size := len(b)
-	bs := make([]byte, 4)
-	bs[0] = byte(size&0xff)
-	bs[1] = byte((size>>8)&0xff)
-	bs[2] = byte((size>>16)&0xff)
-	bs[3] = 0
-	_, err := conn.Write(bs)
-	if err != nil {
-		fmt.Printf("SizedSocketWrite error(1)\n")
-		return false
-	}
-	_, err = conn.Write(b)
-	if err != nil {
-		fmt.Print(err)
-		fmt.Printf("SizedSocketWrite error(2)\n")
-		return false
-	}
-	return true
-}
-
-func MakeProperty(name string, t string, sv *string, c *string, iv *uint64) *certprotos.Property {
-	p := &certprotos.Property {
-		PropertyName: &name,
-		ValueType: &t,
-	}
-	if t == "string" {
-		p.StringValue = sv
-	}
-	if t == "int" {
-		p.Comparator = c
-		p.IntValue = iv
-	}
-	return p 
-}
-
-func MakePlatform(t string, k *certprotos.KeyMessage, props *certprotos.Properties) *certprotos.Platform {
-	hk := false;
-	if k != nil {
-		hk = true;
-	}
-	plat := &certprotos.Platform {
-		PlatformType: &t,
-		AttestKey: k,
-		Props: props,
-		HasKey: &hk,
-	}
-	return plat
-}
-
-func MakePlatformEntity(pl *certprotos.Platform) *certprotos.EntityMessage {
-	plEnt := "platform"
-	pe := &certprotos.EntityMessage {
-		EntityType: &plEnt,
-		PlatformEnt: pl,
-	}
-	return pe
-}
-
-func MakeEnvironmentEntity(e *certprotos.Environment) *certprotos.EntityMessage {
-	eEnt := "environment"
-	ee := &certprotos.EntityMessage {
-		EntityType: &eEnt,
-		EnvironmentEnt: e,
-	}
-	return ee
-}
-
-func MakeEnvironment(pl *certprotos.Platform, measurement []byte) *certprotos.Environment {
-	e := &certprotos.Environment {
-		ThePlatform: pl,
-		TheMeasurement: measurement,
-	}
-	return e
-}
-
 // Caution:  This can change if attestation.h below changes
 /*
 	struct attestation_report {
@@ -2875,268 +3140,6 @@ func GetMeasurementFromSevAttest(binSevAttest []byte) []byte {
 
 func GetMeasurementEntityFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
 	return MakeMeasurementEntity(GetMeasurementFromSevAttest(binSevAttest))
-}
-
-func SameProperty(p1 *certprotos.Property,  p2 *certprotos.Property) bool {
-	if p1 == nil || p2 == nil {
-		return false
-	}
-	if p1.PropertyName == nil || p2.PropertyName == nil {
-		return false
-	}
-	if *p1.PropertyName != *p2.PropertyName {
-		return false
-	}
-	return true
-}
-
-func SatisfyingProperty(p1 *certprotos.Property, p2 *certprotos.Property) bool {
-	if p1 == nil || p2 == nil || p1.PropertyName == nil || p2.PropertyName == nil {
-		return false
-	}
-	if p1.ValueType == nil || p2.ValueType == nil {
-		return false
-	}
-	if *p1.ValueType != *p2.ValueType {
-		return false
-	}
-	if *p1.ValueType == "string" {
-		if p1.StringValue == nil || p2.StringValue == nil {
-			return false
-		}
-		if *p1.StringValue != *p2.StringValue {
-			return false
-		}
-	}
-	if *p1.ValueType == "int" {
-		if p1.Comparator == nil || p2.Comparator == nil {
-			return false
-		}
-		if *p1.Comparator == ">=" && *p2.Comparator == "=" {
-			return *p2.IntValue >= *p1.IntValue
-		} else if *p1.Comparator == "=" && *p2.Comparator == "=" {
-			return *p1.IntValue == *p2.IntValue
-		} else {
-			return false
-		}
-	}
-	return true
-}
-
-func FindProperty(propName string, p []*certprotos.Property) *certprotos.Property {
-	for i := 0; i < len(p); i++ {
-		if p[i].PropertyName == nil {
-			return nil
-		}
-		if *p[i].PropertyName == propName {
-			return p[i]
-		}
-	}
-	return nil
-}
-
-func SatisfyingProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) bool {
-	if p1 == nil || p2 == nil {
-		return false
-	}
-	if p1.Props == nil || p2.Props == nil {
-		return false
-	}
-	for i := 0; i < len(p1.Props); i++ {
-		if p1.Props[i].PropertyName == nil {
-			return false
-		}
-		pp := FindProperty(*p1.Props[i].PropertyName, p2.Props)
-		if pp == nil {
-			return false
-		}
-		if (!SatisfyingProperty(p1.Props[i], pp)) {
-			return false
-		}
-	}
-	return true
-}
-
-func SameProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) bool {
-	if p1 == nil || p2 == nil {
-		return false
-	}
-	if p1.Props == nil || p2.Props == nil {
-		return false
-	}
-	for i := 0; i < len(p1.Props); i++ {
-		if p1.Props[i].PropertyName == nil {
-			return false
-		}
-		pp := FindProperty(*p1.Props[i].PropertyName, p2.Props)
-		if pp == nil {
-			return false
-		}
-		if (!SameProperty(p1.Props[i], pp)) {
-			return false
-		}
-	}
-	return true
-}
-
-func SameEnvironment(p1 *certprotos.Environment, p2 *certprotos.Environment) bool {
-	if p1 == nil || p2 == nil {
-		return false
-	}
-	if p1.TheMeasurement == nil || p2.TheMeasurement == nil {
-		return false
-	}
-	if !bytes.Equal(p1.TheMeasurement, p2.TheMeasurement) {
-		return false
-	}
-	if p1.ThePlatform == nil || p2.ThePlatform == nil {
-		return false
-	}
-	return SamePlatform(p1.ThePlatform,  p2.ThePlatform);
-}
-
-func SamePlatform(p1 *certprotos.Platform, p2 *certprotos.Platform) bool {
-	if p1.PlatformType == nil || p2.PlatformType == nil {
-		return false
-	}
-	if p1.HasKey == nil || p2.HasKey == nil {
-		return false
-	}
-	if *p1.HasKey != *p2.HasKey {
-		return false
-	}
-	if *p1.HasKey {
-		if p1.AttestKey == nil || p2.AttestKey == nil {
-			return false
-		}
-		if !SameKey(p1.AttestKey, p2.AttestKey) {
-			return false
-		}
-	}
-	return SameProperties(p1.Props, p2.Props)
-}
-
-func PrintEnvironment(e *certprotos.Environment) {
-	if e == nil {
-		return
-	}
-	fmt.Printf("Environment:\n")
-	if e.ThePlatform != nil {
-		PrintPlatform(e.ThePlatform)
-	}
-	if e.TheMeasurement != nil {
-		fmt.Printf("Measurement: ")
-		PrintBytes(e.TheMeasurement)
-	}
-}
-
-func PrintPlatform(p *certprotos.Platform) {
-	if p == nil {
-		return
-	}
-	if (p.PlatformType == nil) {
-		return
-	}
-	fmt.Printf("Platform:\n")
-	fmt.Printf("    Type: %s\n", *p.PlatformType)
-	if p.HasKey != nil && *p.HasKey {
-		fmt.Printf("    HasKey\n")
-	} else {
-		fmt.Printf("    NoKey\n")
-	}
-	if (p.AttestKey != nil) {
-		fmt.Printf("   Key: \n")
-		PrintKey(p.AttestKey)
-	}
-	if (p.Props != nil) {
-		fmt.Printf("    Properties:\n")
-		PrintProperties(p.Props)
-	}
-}
-
-func PrintProperty(p *certprotos.Property) {
-	if p == nil  || p.PropertyName == nil {
-		return
-	}
-	fmt.Printf("        %s: ", *p.PropertyName)
-	if p.ValueType == nil {
-		return
-	}
-	if *p.ValueType == "string" {
-		if p.StringValue == nil {
-			return
-		}
-		fmt.Printf("%s\n", *p.StringValue)
-	} 
-	if *p.ValueType == "int" {
-		if p.IntValue == nil  || p.Comparator == nil {
-			return
-		}
-		fmt.Printf("%s %d\n", *p.Comparator, *p.IntValue)
-	}
-}
-
-func PrintProperties(p *certprotos.Properties) {
-	if p == nil {
-		return
-	}
-	for i := 0; i < len(p.Props); i++ {
-		PrintProperty(p.Props[i])
-	}
-}
-
-func PrintEnvironmentDescriptor(e *certprotos.Environment) {
-	if e == nil {
-		return
-	}
-	fmt.Printf("environment[")
-	PrintPlatformDescriptor(e.ThePlatform)
-	fmt.Printf(", measurement: ")
-	PrintBytes(e.TheMeasurement)
-	fmt.Printf("]")
-}
-
-func PrintPlatformDescriptor(p *certprotos.Platform) {
-	if p == nil  || p.PlatformType == nil {
-		return
-	}
-	fmt.Printf("platform[%s, ", *p.PlatformType)
-	if p.HasKey != nil && *p.HasKey && p.AttestKey != nil {
-		PrintKeyDescriptor(p.AttestKey)
-		fmt.Printf(", ")
-	}
-	if p.Props != nil {
-		for i := 0; i < len(p.Props.Props); i++ {
-			if i != 0 {
-				fmt.Printf(", ")
-			}
-			PrintPropertyDescriptor(p.Props.Props[i])
-		}
-	}
-	fmt.Printf("]")
-}
-
-func PrintPropertyDescriptor(p *certprotos.Property) {
-	if p == nil  || p.PropertyName == nil {
-		return
-	}
-	fmt.Printf("%s: ", *p.PropertyName)
-	if p.ValueType == nil {
-		return
-	}
-	if *p.ValueType == "string" {
-		if p.StringValue != nil {
-			fmt.Printf("%s", *p.StringValue)
-		}
-	}
-	if *p.ValueType == "int" {
-		if p.Comparator != nil {
-			fmt.Printf("%s", *p.Comparator)
-		}
-		if p.IntValue != nil {
-			fmt.Printf("%d", *p.IntValue)
-		}
-	}
 }
 
 func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
