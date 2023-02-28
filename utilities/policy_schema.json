@@ -1,0 +1,330 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "https://github.com/vmware-research/certifier-framework-for-confidential-computing",
+    "type": "object",
+    "title": "The Certifier Policy Schema",
+    "required": [
+        "policyKey",
+        "measurements"
+    ],
+    "properties": {
+        "policyKey": {
+            "type": "string",
+            "title": "The policyKey Schema"
+        },
+        "platforms": {
+            "type": "array",
+            "title": "The platforms properties Schema",
+            "items": {
+                "type": "array",
+                "title": "Properties for a single platform",
+                "items": {
+                    "type": "object",
+                    "title": "A single property",
+                    "required": [
+                        "comparator",
+                        "type",
+                        "name",
+                        "value"
+                    ],
+                    "properties": {
+                        "comparator": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "value": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "measurements": {
+            "type": "array",
+            "title": "The trusted measurements Schema",
+            "items": {
+                "type": "string",
+                "title": "A single measurement to be trusted"
+            }
+        },
+        "claims": {
+            "type": "array",
+            "title": "The claims Schema",
+            "items": {
+                "type": "object",
+                "required": [
+                    "verb"
+                ],
+
+                "allOf": [{
+                        "oneOf": [{
+                                "required": [
+                                    "keySubject"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "certSubject"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "measurementSubject"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "platformSubject"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "environmentSubject"
+                                ]
+                            }
+                        ]
+                    },
+
+                    {
+                        "oneOf": [{
+                                "required": [
+                                    "unaryClause"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "simpleClause"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "indirectClause"
+                                ]
+                            }
+                        ]
+                    }
+                ],
+
+                "properties": {
+                    "unaryClause": {"$ref": "#/$defs/unaryClause"},
+                    "simpleClause": {"$ref": "#/$defs/simpleClause"},
+
+                    "indirectClause": {
+                        "type": "object",
+                        "required": [
+                            "verb"
+                        ],
+
+                        "allOf": [{
+                                "oneOf": [{
+                                        "required": [
+                                            "keySubject"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "certSubject"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "measurementSubject"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "platformSubject"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "environmentSubject"
+                                        ]
+                                    }
+                                ]
+                            },
+
+                            {
+                                "oneOf": [{
+                                        "required": [
+                                            "unaryClause"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "simpleClause"
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+
+                        "properties": {
+                            "unaryClause": {"$ref": "#/$defs/unaryClause"},
+                            "simpleClause": {"$ref": "#/$defs/simpleClause"},
+
+                            "verb": {
+                                "type": "string"
+                            },
+
+                            "keySubject": {
+                                "type": "string"
+                            },
+                            "certSubject": {
+                                "type": "string"
+                            },
+                            "measurementSubject": {
+                                "type": "string"
+                            },
+                            "platformSubject": {
+                                "type": "string"
+                            },
+                            "environmentSubject": {
+                                "type": "string"
+                            }
+                        }
+                    },
+
+                    "verb": {
+                        "type": "string"
+                    },
+
+                    "keySubject": {
+                        "type": "string"
+                    },
+                    "certSubject": {
+                        "type": "string"
+                    },
+                    "measurementSubject": {
+                        "type": "string"
+                    },
+                    "platformSubject": {
+                        "type": "string"
+                    },
+                    "environmentSubject": {
+                        "type": "string"
+                    },
+
+                    "signingKey": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+
+    "$defs": {
+        "unaryClause": {
+            "type": "object",
+            "title": "The unaryClause Schema",
+            "required": [
+                "verb"
+            ],
+            "oneOf": [{
+                    "required": [
+                        "keySubject"
+                    ]
+                },
+                {
+                    "required": [
+                        "certSubject"
+                    ]
+                },
+                {
+                    "required": [
+                        "measurementSubject"
+                    ]
+                },
+                {
+                    "required": [
+                        "platformSubject"
+                    ]
+                },
+                {
+                    "required": [
+                        "environmentSubject"
+                    ]
+                }
+            ],
+            "properties": {
+                "keySubject": {
+                    "type": "string"
+                },
+                "certSubject": {
+                    "type": "string"
+                },
+                "measurementSubject": {
+                    "type": "string"
+                },
+                "platformSubject": {
+                    "type": "string"
+                },
+                "environmentSubject": {
+                    "type": "string"
+                },
+                "verb": {
+                    "type": "string"
+                }
+            }
+        },
+
+        "simpleClause": {
+            "type": "object",
+            "title": "The simpleClause Schema",
+            "required": [
+                "verb"
+            ],
+            "oneOf": [{
+                    "required": [
+                        "keySubject"
+                    ]
+                },
+                {
+                    "required": [
+                        "certSubject"
+                    ]
+                },
+                {
+                    "required": [
+                        "measurementSubject"
+                    ]
+                },
+                {
+                    "required": [
+                        "platformSubject"
+                    ]
+                },
+                {
+                    "required": [
+                        "environmentSubject"
+                    ]
+                }
+            ],
+            "properties": {
+                "keySubject": {
+                    "type": "string"
+                },
+                "certSubject": {
+                    "type": "string"
+                },
+                "measurementSubject": {
+                    "type": "string"
+                },
+                "platformSubject": {
+                    "type": "string"
+                },
+                "environmentSubject": {
+                    "type": "string"
+                },
+                "verb": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
