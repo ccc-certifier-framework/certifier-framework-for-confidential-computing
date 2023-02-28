@@ -77,10 +77,6 @@ var policyInitialized bool = false
 //	These will be replaced with the new InitPolicy framework
 //	--------------------------------------------------------------------------------------
 
-/* not needed
-var signedPolicyStatements *certprotos.SignedClaimSequence = nil
- */
-
 // There are really only two kinds of initialzed policy now:
 //      policy-key says Measurement[] is-trusted
 //      policy-key says Key[] is-trusted-for-attestation
@@ -256,6 +252,9 @@ func initCertifierService() bool {
 
 //	--------------------------------------------------------------------------------------
 
+// These should move to a new proofs subdirectory
+//	--------------------------------------------------------------------------------------
+
 //	This moves to certlib
 func AddFactFromSignedClaim(signedClaim *certprotos.SignedClaimMessage,
                 alreadyProved *certprotos.ProvedStatements) bool {
@@ -277,9 +276,6 @@ func AddFactFromSignedClaim(signedClaim *certprotos.SignedClaimMessage,
         return true
 }
 
-//	--------------------------------------------------------------------------------------
-
-// These should move to a new proofs subdirectory
 //	--------------------------------------------------------------------------------------
 
 func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage, alreadyProved *certprotos.ProvedStatements) bool {
@@ -1047,6 +1043,9 @@ func getAppMeasurementFromProvedStatements(appKeyEntity *certprotos.EntityMessag
 
 //	--------------------------------------------------------------------------------------
 
+//	Stays in simpleserver
+//	--------------------------------------------------------------------------------------
+
 //      ConstructProofFromRequest first checks evidence and make sure each evidence
 //            component is verified and it put in alreadyProved Statements
 //      Next, alreadyProved is augmented to include additional true statements
@@ -1302,7 +1301,6 @@ func serviceThread(conn net.Conn, client string) {
         response.Status = &failed
 
 //	Move to ValidateProofWithoutPolicy
-//	-------------------------------------------------------------------------
 
         // Construct the proof
         var purpose string
@@ -1407,10 +1405,6 @@ func serviceThread(conn net.Conn, client string) {
                 fmt.Printf("Verifying proof failed\n")
                 response.Status = &failed
         }
-
-	//	--------------------------------------------------------------------------------------------------
-
-	//	Generate Admissions certificate
 
         // Debug
         fmt.Printf("Sending response\n")
