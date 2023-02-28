@@ -1627,6 +1627,31 @@ func X509ToAsn1(cert *x509.Certificate) []byte {
 	return out
 }
 
+func CheckTimeRange(nb *string, na *string) bool {
+	if nb == nil || na == nil {
+		return false
+	}
+	tn := TimePointNow()
+	tb := StringToTimePoint(*nb)
+	ta := StringToTimePoint(*na)
+	if tn == nil || ta == nil && tb == nil {
+		return false
+	}
+	if CompareTimePoints(tb, tn) > 0 || CompareTimePoints(ta, tn) < 0 {
+		fmt.Printf("CheckTimeRange out of range\n")
+		return false
+	}
+	return true
+}
+
+func LittleToBigEndian(in []byte) []byte {
+	out := make([]byte, len(in))
+	for i := 0; i < len(in); i++ {
+		out[len(in) - 1 - i] = in[i]
+	}
+	return out
+}
+
 func ProduceAdmissionCert(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
 		subjKey *certprotos.KeyMessage, subjName string, subjOrg string,
 		serialNumber uint64, durationSeconds float64) *x509.Certificate {
@@ -1792,6 +1817,31 @@ func FindKeySeen(list *CertSeenList, name string) *certprotos.KeyMessage {
 	return nil
 }
 
+func StripPemHeaderAndTrailer(pem string) *string {
+	sl := strings.Split(pem, "\n")
+	if len(sl) < 3 {
+		return nil
+	}
+	s := strings.Join(sl[1:len(sl)-2], "\n")
+	return &s
+}
+
+func KeyFromPemFormat(pem string) *certprotos.KeyMessage {
+	// base64 decode pem
+	der, err := b64.StdEncoding.DecodeString(pem)
+	if err != nil || der == nil {
+		fmt.Printf("KeyFromPemFormat: base64 decode error\n")
+		return nil
+	}
+	cert := Asn1ToX509(der)
+	if cert == nil {
+		fmt.Printf("KeyFromPemFormat: Can't convert cert\n")
+		return nil
+	}
+
+	return GetSubjectKey(cert)
+}
+
 //  --------------------------------------------------------------------
 
 //  Simulated enclave
@@ -1919,380 +1969,128 @@ func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
 	return true
 }
 
-func ProducePlatformRule(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
-		subjKey *certprotos.KeyMessage, durationSeconds float64) []byte {
-
-	// Return signed claim: issuer-Key says subjKey is-trusted-for-attestation
-	s1 := MakeKeyEntity(subjKey)
-	if s1 == nil {
+func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+	n := len(evp.FactAssertion);
+	ev := evp.FactAssertion[n - 1]
+	if ev.GetEvidenceType() != "sev-attestation" {
+		fmt.Printf("FilterPolicy: sev attestation expected\n")
 		return nil
 	}
-	isTrustedForAttest := "is-trusted-for-attestation"
-	c1 :=  MakeUnaryVseClause(s1, &isTrustedForAttest)
-	if c1 == nil {
-		return nil
-	}
-	issuerPublic := InternalPublicFromPrivateKey(issuerKey)
-	if issuerPublic == nil {
-		fmt.Printf("Can't make isser public from private\n")
-		return nil
-	}
-	s2 := MakeKeyEntity(issuerPublic)
-	if s2 == nil {
-		return nil
-	}
-	saysVerb := "says"
-	c2 := MakeIndirectVseClause(s2, &saysVerb, c1)
-	if c2 == nil {
-		return nil
-	}
-
-	tn := TimePointNow()
-	tf := TimePointPlus(tn, 365 * 86400)
-	nb := TimePointToString(tn)
-	na := TimePointToString(tf)
-	ser, err := proto.Marshal(c2)
+	sevAtt := &certprotos.SevAttestationMessage{}
+	err := proto.Unmarshal(ev.SerializedEvidence, sevAtt)
 	if err != nil {
+		fmt.Printf("FilterPolicy: can't unmarshal attest claim\n")
 		return nil
 	}
-	cl1 := MakeClaim(ser, "vse-clause", "platform-rule", nb, na)
-	if cl1 == nil {
+	if sevAtt.ReportedAttestation == nil {
+		fmt.Printf("FilterPolicy: empty sev attestation\n")
 		return nil
 	}
-
-	rule := MakeSignedClaim(cl1, issuerKey)
-	if rule == nil {
+	pl := GetPlatformFromSevAttest(sevAtt.ReportedAttestation)
+	if pl == nil {
+		fmt.Printf("FilterPolicy: can't get platform from attestation\n")
 		return nil
 	}
-	ssc, err := proto.Marshal(rule)
-	if err != nil {
+	m := GetMeasurementFromSevAttest(sevAtt.ReportedAttestation)
+	if m == nil {
+		fmt.Printf("FilterPolicy: can't get measurement from attestation\n")
 		return nil
 	}
-
-	return ssc
-}
-
-func ConstructVseAttestClaim(attestKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
-		measurement []byte) *certprotos.VseClause {
-	am := MakeKeyEntity(attestKey)
-	if am == nil {
-		fmt.Printf("Can't make attest entity\n")
+	foundMeasurement := false
+	foundPlatform := false
+	alreadyProved := &certprotos.ProvedStatements{}
+	alreadyProved.Proved = append(alreadyProved.Proved, original.Proved[0])
+	for i := 1; i < len(original.Proved); i++ {
+		vcm := original.Proved[i]
+		if vcm.Subject == nil || vcm.Subject.EntityType == nil || vcm.Subject.GetEntityType() != "key" {
+			fmt.Printf("FilterPolicy: Policy not signed by policy key\n")
+			return nil
+		}
+		if !SameKey(vcm.Subject.Key, policyKey) {
+			fmt.Printf("FilterPolicy: Policy not signed by policy key\n")
+			return nil
+		}
+		cl := vcm.Clause
+		if cl == nil || cl.Subject == nil || cl.Verb == nil {
+			fmt.Printf("FilterPolicy: Policy statement %d malformed (1)\n", i)
+			PrintVseClause(vcm)
+			fmt.Printf("\n")
+			return nil
+		}
+		// Is statement policyKey says measurement is-trusted
+		if cl.Subject.GetEntityType() == "measurement" && cl.GetVerb() == "is-trusted" {
+			if foundMeasurement {
+				continue
+			}
+			if cl.Subject.Measurement == nil {
+				continue
+			}
+			if bytes.Equal(cl.Subject.Measurement, m) {
+				foundMeasurement = true
+			} else {
+				continue
+			}
+		}
+		// Is statement policyKey says platform has-trusted-platform-property
+		if cl.Subject.GetEntityType() == "platform" && cl.GetVerb() == "has-trusted-platform-property" {
+			if cl.Subject.PlatformEnt == nil || cl.Subject.PlatformEnt.GetPlatformType() != pl.GetPlatformType() {
+				continue
+			}
+			if foundPlatform {
+				continue
+			}
+			if SatisfyingProperties(cl.Subject.PlatformEnt.Props, pl.Props) {
+				foundPlatform = true
+			} else {
+				continue
+			}
+		}
+		alreadyProved.Proved = append(alreadyProved.Proved, vcm)
+	}
+	if !foundMeasurement {
+		fmt.Printf("FilterPolicy: measurement is empty\n")
 		return nil
 	}
-	em := MakeKeyEntity(enclaveKey)
-	if em == nil {
-		fmt.Printf("Can't make enclave entity\n")
+	if !foundPlatform {
+		fmt.Printf("FilterPolicy: platform is empty\n")
 		return nil
 	}
-	mm := MakeMeasurementEntity(measurement)
-	if mm == nil {
-		fmt.Printf("Can't make measurement entity\n")
-		return nil
-	}
-	says := "says"
-	speaks_for := "speaks-for"
-	c1 := MakeSimpleVseClause(em, &speaks_for, mm)
-	return MakeIndirectVseClause(am, &says, c1)
-}
+	// return original 
+	return alreadyProved 
+ }
 
-func VerifyReport(etype string, pk *certprotos.KeyMessage, serialized []byte) bool {
-	if etype != "vse-attestation-report" {
+func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos.SignedClaimSequence,
+		alreadyProved *certprotos.ProvedStatements) bool {
+	if publicPolicyKey == nil {
+		fmt.Printf("Policy key empty\n")
 		return false
 	}
-	sr := certprotos.SignedReport{}
-	err := proto.Unmarshal(serialized, &sr)
-	if err != nil {
-		fmt.Printf("Can't unmarshal signed report\n")
-		return false
-	}
-	k := sr.SigningKey
-	if !SameKey(k, pk) {
-		return false
-	}
-	if sr.Report == nil || sr.Signature == nil {
-		return false
-	}
-
-	rPK := rsa.PublicKey{}
-	rpK := rsa.PrivateKey{}
-	if GetRsaKeysFromInternal(k, &rpK, &rPK) == false {
-		fmt.Printf("VerifyReport: error 1\n")
-		return false
-	}
-
-	if RsaSha256Verify(&rPK, sr.Report, sr.Signature) {
-		return true;
-	}
-	return false
-}
-
-func CheckTimeRange(nb *string, na *string) bool {
-	if nb == nil || na == nil {
-		return false
-	}
-	tn := TimePointNow()
-	tb := StringToTimePoint(*nb)
-	ta := StringToTimePoint(*na)
-	if tn == nil || ta == nil && tb == nil {
-		return false
-	}
-	if CompareTimePoints(tb, tn) > 0 || CompareTimePoints(ta, tn) < 0 {
-		fmt.Printf("CheckTimeRange out of range\n")
-		return false
+	for i := 0; i < len(signedPolicy.Claims); i++ {
+		sc := signedPolicy.Claims[i]
+		if !VerifySignedClaim(sc, publicPolicyKey) {
+			fmt.Printf("Can't verify signature\n")
+			return false
+		}
+		cm := &certprotos.ClaimMessage{}
+		err := proto.Unmarshal(sc.SerializedClaimMessage, cm)
+		if err != nil {
+			fmt.Printf("Can't unmarshal claim\n")
+			return false
+		}
+		if cm.GetClaimFormat() != "vse-clause" {
+			fmt.Printf("Not vse claim\n")
+			return false
+		}
+		vse := &certprotos.VseClause {}
+		err = proto.Unmarshal(cm.SerializedClaim, vse)
+		if err != nil {
+			fmt.Printf("Can't unmarshal vse claim\n")
+			return false
+		}
+		alreadyProved.Proved = append(alreadyProved.Proved , vse)
 	}
 	return true
-}
-
-func ConstructVseAttestationFromCert(subjKey *certprotos.KeyMessage, signerKey *certprotos.KeyMessage) *certprotos.VseClause {
-	subjectKeyEntity := MakeKeyEntity(subjKey)
-	if subjectKeyEntity == nil {
-		return nil
-	}
-	signerKeyEntity := MakeKeyEntity(signerKey)
-	if signerKeyEntity == nil {
-		return nil
-	}
-	t_verb := "is-trusted-for-attestation"
-	tcl := MakeUnaryVseClause(subjectKeyEntity, &t_verb)
-	if tcl == nil {
-		return nil
-	}
-	s_verb := "says"
-	return MakeIndirectVseClause(signerKeyEntity, &s_verb, tcl)
-}
-
-func ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage, measurement []byte) *certprotos.VseClause {
-	vcertKeyEntity := MakeKeyEntity(vcertKey)
-	if vcertKeyEntity == nil {
-		return nil
-	}
-	enclaveKeyEntity := MakeKeyEntity(enclaveKey)
-	if enclaveKeyEntity == nil {
-		return nil
-	}
-	measurementEntity := MakeMeasurementEntity(measurement)
-	if measurementEntity == nil {
-		return nil
-	}
-	speaks_verb := "speaks-for"
-	tcl := MakeSimpleVseClause(enclaveKeyEntity, &speaks_verb, measurementEntity)
-	if tcl == nil {
-		return nil
-	}
-	says_verb := "says"
-	return MakeIndirectVseClause(vcertKeyEntity, &says_verb, tcl)
-}
-
-
-// vcek says environment is-environment
-func ConstructSevIsEnvironmentStatement(vcekKey *certprotos.KeyMessage, binSevAttest []byte) *certprotos.VseClause {
-	plat := GetPlatformFromSevAttest(binSevAttest)
-	if plat == nil {
-		fmt.Printf("ConstructSevIsEnvironmentStatement: can't get platform\n")
-		return nil
-	}
-	m := GetMeasurementFromSevAttest(binSevAttest)
-	if m == nil {
-		fmt.Printf("ConstructSevIsEnvironmentStatement: can't get measurement\n")
-		return nil
-	}
-	e := &certprotos.Environment {
-		ThePlatform: plat,
-		TheMeasurement: m,
-	}
-	isEnvVerb := "is-environment"
-	ee := MakeEnvironmentEntity(e)
-	if ee == nil {
-		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make environment entity\n")
-		return nil
-	}
-	vse := &certprotos.VseClause {
-		Subject: ee,
-		Verb: &isEnvVerb,
-	}
-	ke := MakeKeyEntity(vcekKey)
-	if ke == nil {
-		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make vcek key entity\n")
-		return nil
-	}
-	saysVerb := "says"
-	vseSays := &certprotos.VseClause {
-                Subject: ke,
-                Verb: &saysVerb,
-		Clause: vse,
-        }
-	return vseSays
-}
-			
-// vcekKey says enclaveKey speaksfor environment
-func ConstructSevSpeaksForEnvironmentStatement(vcekKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
-		env *certprotos.EntityMessage) *certprotos.VseClause {
-	eke := MakeKeyEntity(enclaveKey)
-	if eke == nil {
-		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make enclave key entity\n")
-		return nil
-	}
-	speaksForVerb := "speaks-for"
-	vseSpeaksFor := &certprotos.VseClause {
-		Subject: eke,
-		Verb: &speaksForVerb,
-		Object: env,
-	}
-	ke := MakeKeyEntity(vcekKey)
-	if ke == nil {
-		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make vcek key entity\n")
-		return nil
-	}
-	saysVerb := "says"
-	vseSays := &certprotos.VseClause {
-                Subject: ke,
-                Verb: &saysVerb,
-		Clause: vseSpeaksFor,
-        }
-	return vseSays
-}
-
-func LittleToBigEndian(in []byte) []byte {
-	out := make([]byte, len(in))
-	for i := 0; i < len(in); i++ {
-		out[len(in) - 1 - i] = in[i]
-	}
-	return out
-}
-
-//	Returns measurement
-//	serialized is the serialized sev_attestation_message
-func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
-	var am certprotos.SevAttestationMessage
-	err := proto.Unmarshal(serialized, &am)
-	if err != nil {
-		fmt.Printf("VerifySevAttestation: Can't unmarshal SevAttestationMessage\n")
-		return nil
-	}
-
-	ptr := am.ReportedAttestation
-	if ptr == nil {
-		fmt.Printf("VerifySevAttestation: am.ReportedAttestation is wrong\n")
-		return nil
-	}
-
-	// Get public key so we can check the attestation
-	_, PK, err := GetEccKeysFromInternal(k)
-	if err!= nil || PK == nil {
-		fmt.Printf("VerifySevAttestation: Can't extract key.\n")
-		return nil
-	}
-
-	// hash the userdata and compare it to the one in the report
-	hd := ptr[0x50:0x80]
-
-	if am.WhatWasSaid == nil {
-		fmt.Printf("VerifySevAttestation: WhatWasSaid is nil.\n")
-		return nil
-	}
-	hashed := sha512.Sum384(am.WhatWasSaid)
-
-	// Debug
-	fmt.Printf("Hashed user data in report: ")
-	PrintBytes(hd)
-	fmt.Printf(", and,\n")
-	PrintBytes(hashed[0:48])
-	fmt.Printf("\n")
-
-	if !bytes.Equal(hashed[0:48], hd[0:48]) {
-		fmt.Printf("VerifySevAttestation: Hash of user data is not the same as in the report\n")
-		return nil
-	}
-
-	hashOfHeader := sha512.Sum384(ptr[0:0x2a0])
-
-	// Debug
-	fmt.Printf("VerifySevAttestation, vcekKey: ")
-	PrintKey(k)
-	fmt.Printf("\n")
-	fmt.Printf("VerifySevAttestation, report (%x): ", len(am.ReportedAttestation))
-	PrintBytes(ptr[0:len(am.ReportedAttestation)])
-	fmt.Printf("\n")
-	outFile := "test_attestation.bin"
-	err = os.WriteFile(outFile, ptr[0:len(am.ReportedAttestation)], 0666)
-	if err != nil {
-		fmt.Printf("Write failed\n")
-	}
-	fmt.Printf("VerifySevAttestation, Header of report: ")
-	PrintBytes(ptr[0:0x2a0])
-	fmt.Printf("\n")
-	fmt.Printf("VerifySevAttestation, Hashed header of report: ")
-	PrintBytes(hashOfHeader[0:48])
-	fmt.Printf("\n")
-	fmt.Printf("VerifySevAttestation, measurement: ")
-	PrintBytes(ptr[0x90: 0xc0])
-	fmt.Printf("\n")
-	fmt.Printf("VerifySevAttestation, signature:\n    ")
-	PrintBytes(ptr[0x2a0:0x2d0])
-	fmt.Printf("\n    ")
-	PrintBytes(ptr[0x2e8:0x318])
-	fmt.Printf("\n")
-
-	reversedR := LittleToBigEndian(ptr[0x2a0:0x2d0])
-	reversedS := LittleToBigEndian(ptr[0x2e8:0x318])
-	if reversedR == nil || reversedS == nil {
-		fmt.Printf("VerifySevAttestation: reversed bytes failed\n")
-		return nil
-	}
-
-	fmt.Printf("VerifySevAttestation, signature reversed:\n    ")
-	PrintBytes(reversedR)
-	fmt.Printf("\n    ")
-	PrintBytes(reversedS)
-	fmt.Printf("\n")
-
-	r :=  new(big.Int).SetBytes(reversedR)
-	s :=  new(big.Int).SetBytes(reversedS)
-	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
-		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
-		return nil
-	}
-
-	// return measurement if successful from am.ReportedAttestation->measurement
-	return ptr[0x90: 0xc0]
-}
-
-func ConstructEnclaveKeySpeaksForMeasurement(k *certprotos.KeyMessage, m []byte) *certprotos.VseClause {
-	e1 := MakeKeyEntity(k)
-	if e1 == nil {
-		return nil
-	}
-	e2 := MakeMeasurementEntity(m)
-	if e1 == nil {
-		return nil
-	}
-	speaks_for := "speaks-for"
-        return MakeSimpleVseClause(e1, &speaks_for, e2)
-}
-
-func StripPemHeaderAndTrailer(pem string) *string {
-	sl := strings.Split(pem, "\n")
-	if len(sl) < 3 {
-		return nil
-	}
-	s := strings.Join(sl[1:len(sl)-2], "\n")
-	return &s
-}
-
-func KeyFromPemFormat(pem string) *certprotos.KeyMessage {
-	// base64 decode pem
-	der, err := b64.StdEncoding.DecodeString(pem)
-	if err != nil || der == nil {
-		fmt.Printf("KeyFromPemFormat: base64 decode error\n")
-		return nil
-	}
-	cert := Asn1ToX509(der)
-	if cert == nil {
-		fmt.Printf("KeyFromPemFormat: Can't convert cert\n")
-		return nil
-	}
-
-	return GetSubjectKey(cert)
 }
 
 func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.Evidence,
@@ -2650,6 +2448,436 @@ func PrintProof(pf *certprotos.Proof) {
 		ps := pf.Steps[i]
 		PrintProofStep("    ", ps)
 	}
+}
+
+func ProducePlatformRule(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
+		subjKey *certprotos.KeyMessage, durationSeconds float64) []byte {
+
+	// Return signed claim: issuer-Key says subjKey is-trusted-for-attestation
+	s1 := MakeKeyEntity(subjKey)
+	if s1 == nil {
+		return nil
+	}
+	isTrustedForAttest := "is-trusted-for-attestation"
+	c1 :=  MakeUnaryVseClause(s1, &isTrustedForAttest)
+	if c1 == nil {
+		return nil
+	}
+	issuerPublic := InternalPublicFromPrivateKey(issuerKey)
+	if issuerPublic == nil {
+		fmt.Printf("Can't make isser public from private\n")
+		return nil
+	}
+	s2 := MakeKeyEntity(issuerPublic)
+	if s2 == nil {
+		return nil
+	}
+	saysVerb := "says"
+	c2 := MakeIndirectVseClause(s2, &saysVerb, c1)
+	if c2 == nil {
+		return nil
+	}
+
+	tn := TimePointNow()
+	tf := TimePointPlus(tn, 365 * 86400)
+	nb := TimePointToString(tn)
+	na := TimePointToString(tf)
+	ser, err := proto.Marshal(c2)
+	if err != nil {
+		return nil
+	}
+	cl1 := MakeClaim(ser, "vse-clause", "platform-rule", nb, na)
+	if cl1 == nil {
+		return nil
+	}
+
+	rule := MakeSignedClaim(cl1, issuerKey)
+	if rule == nil {
+		return nil
+	}
+	ssc, err := proto.Marshal(rule)
+	if err != nil {
+		return nil
+	}
+
+	return ssc
+}
+
+func ConstructVseAttestClaim(attestKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
+		measurement []byte) *certprotos.VseClause {
+	am := MakeKeyEntity(attestKey)
+	if am == nil {
+		fmt.Printf("Can't make attest entity\n")
+		return nil
+	}
+	em := MakeKeyEntity(enclaveKey)
+	if em == nil {
+		fmt.Printf("Can't make enclave entity\n")
+		return nil
+	}
+	mm := MakeMeasurementEntity(measurement)
+	if mm == nil {
+		fmt.Printf("Can't make measurement entity\n")
+		return nil
+	}
+	says := "says"
+	speaks_for := "speaks-for"
+	c1 := MakeSimpleVseClause(em, &speaks_for, mm)
+	return MakeIndirectVseClause(am, &says, c1)
+}
+
+func ConstructVseAttestationFromCert(subjKey *certprotos.KeyMessage, signerKey *certprotos.KeyMessage) *certprotos.VseClause {
+	subjectKeyEntity := MakeKeyEntity(subjKey)
+	if subjectKeyEntity == nil {
+		return nil
+	}
+	signerKeyEntity := MakeKeyEntity(signerKey)
+	if signerKeyEntity == nil {
+		return nil
+	}
+	t_verb := "is-trusted-for-attestation"
+	tcl := MakeUnaryVseClause(subjectKeyEntity, &t_verb)
+	if tcl == nil {
+		return nil
+	}
+	s_verb := "says"
+	return MakeIndirectVseClause(signerKeyEntity, &s_verb, tcl)
+}
+
+func ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage, measurement []byte) *certprotos.VseClause {
+	vcertKeyEntity := MakeKeyEntity(vcertKey)
+	if vcertKeyEntity == nil {
+		return nil
+	}
+	enclaveKeyEntity := MakeKeyEntity(enclaveKey)
+	if enclaveKeyEntity == nil {
+		return nil
+	}
+	measurementEntity := MakeMeasurementEntity(measurement)
+	if measurementEntity == nil {
+		return nil
+	}
+	speaks_verb := "speaks-for"
+	tcl := MakeSimpleVseClause(enclaveKeyEntity, &speaks_verb, measurementEntity)
+	if tcl == nil {
+		return nil
+	}
+	says_verb := "says"
+	return MakeIndirectVseClause(vcertKeyEntity, &says_verb, tcl)
+}
+
+
+// vcek says environment is-environment
+func ConstructSevIsEnvironmentStatement(vcekKey *certprotos.KeyMessage, binSevAttest []byte) *certprotos.VseClause {
+	plat := GetPlatformFromSevAttest(binSevAttest)
+	if plat == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't get platform\n")
+		return nil
+	}
+	m := GetMeasurementFromSevAttest(binSevAttest)
+	if m == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't get measurement\n")
+		return nil
+	}
+	e := &certprotos.Environment {
+		ThePlatform: plat,
+		TheMeasurement: m,
+	}
+	isEnvVerb := "is-environment"
+	ee := MakeEnvironmentEntity(e)
+	if ee == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make environment entity\n")
+		return nil
+	}
+	vse := &certprotos.VseClause {
+		Subject: ee,
+		Verb: &isEnvVerb,
+	}
+	ke := MakeKeyEntity(vcekKey)
+	if ke == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make vcek key entity\n")
+		return nil
+	}
+	saysVerb := "says"
+	vseSays := &certprotos.VseClause {
+                Subject: ke,
+                Verb: &saysVerb,
+		Clause: vse,
+        }
+	return vseSays
+}
+			
+// vcekKey says enclaveKey speaksfor environment
+func ConstructSevSpeaksForEnvironmentStatement(vcekKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
+		env *certprotos.EntityMessage) *certprotos.VseClause {
+	eke := MakeKeyEntity(enclaveKey)
+	if eke == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make enclave key entity\n")
+		return nil
+	}
+	speaksForVerb := "speaks-for"
+	vseSpeaksFor := &certprotos.VseClause {
+		Subject: eke,
+		Verb: &speaksForVerb,
+		Object: env,
+	}
+	ke := MakeKeyEntity(vcekKey)
+	if ke == nil {
+		fmt.Printf("ConstructSevIsEnvironmentStatement: can't make vcek key entity\n")
+		return nil
+	}
+	saysVerb := "says"
+	vseSays := &certprotos.VseClause {
+                Subject: ke,
+                Verb: &saysVerb,
+		Clause: vseSpeaksFor,
+        }
+	return vseSays
+}
+
+func ConstructEnclaveKeySpeaksForMeasurement(k *certprotos.KeyMessage, m []byte) *certprotos.VseClause {
+	e1 := MakeKeyEntity(k)
+	if e1 == nil {
+		return nil
+	}
+	e2 := MakeMeasurementEntity(m)
+	if e1 == nil {
+		return nil
+	}
+	speaks_for := "speaks-for"
+        return MakeSimpleVseClause(e1, &speaks_for, e2)
+}
+
+// Caution:  This can change if attestation.h below changes
+/*
+	struct attestation_report {
+	  uint32_t    version;                  // 0x000
+	  uint32_t    guest_svn;                // 0x004
+	  uint64_t    policy;                   // 0x008
+	  uint8_t     family_id[16];            // 0x010
+	  uint8_t     image_id[16];             // 0x020
+	  uint32_t    vmpl;                     // 0x030
+	  uint32_t    signature_algo;           // 0x034
+	  union tcb_version platform_version;   // 0x038
+	  uint64_t    platform_info;            // 0x040
+	  uint32_t    flags;                    // 0x048
+	  uint32_t    reserved0;                // 0x04C
+	  uint8_t     report_data[64];          // 0x050
+	  uint8_t     measurement[48];          // 0x090
+	  uint8_t     host_data[32];            // 0x0C0
+	  uint8_t     id_key_digest[48];        // 0x0E0
+	  uint8_t     author_key_digest[48];    // 0x110
+	  uint8_t     report_id[32];            // 0x140
+	  uint8_t     report_id_ma[32];         // 0x160
+	  union tcb_version reported_tcb;       // 0x180
+	  uint8_t     reserved1[24];            // 0x188
+	  uint8_t     chip_id[64];              // 0x1A0
+	  uint8_t     reserved2[192];           // 0x1E0
+	  struct signature  signature;          // 0x2A0
+	};
+*/
+func GetUserDataHashFromSevAttest(binSevAttest []byte) []byte {
+	return []byte(binSevAttest[0x50:0x90])
+}
+
+func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
+
+	// get properties
+	props := &certprotos.Properties{}
+	pol_byte := binSevAttest[8]
+	major_byte := binSevAttest[9]
+	minor_byte := binSevAttest[10]
+
+	svt := "string"
+	ivt := "int"
+
+	pn1 := "debug"
+	vp1 := "no"
+	ce := "="
+	if pol_byte & 0x01  == 0 {
+		vp1 = "yes"
+	}
+	p1 := MakeProperty(pn1, svt, &vp1, &ce, nil)
+	props.Props = append(props.Props, p1)
+
+	pn2 := "key-share"
+	vp2 := "no"
+	if pol_byte & 0x02  == 0 {
+		vp2 = "yes"
+	}
+	p2 := MakeProperty(pn2, svt, &vp2, &ce, nil)
+	props.Props = append(props.Props, p2)
+
+	pn3 := "migrate"
+	vp3 := "no"
+	if pol_byte & 0x04  == 0 {
+		vp3 = "yes"
+	}
+	p3 := MakeProperty(pn3, svt, &vp3, &ce, nil)
+	props.Props = append(props.Props, p3)
+
+	m1iv := uint64(major_byte)
+	pn4 := "api-major"
+	p4 := MakeProperty(pn4, ivt, nil, &ce, &m1iv)
+	props.Props = append(props.Props, p4)
+
+	m2iv := uint64(minor_byte)
+	pn5 := "api-minor"
+	p5 := MakeProperty(pn5, ivt, nil, &ce, &m2iv)
+	props.Props = append(props.Props, p5)
+
+
+	tcb := uint64(binSevAttest[0x180])
+	tcb = (uint64(binSevAttest[0x181]) << 8) | tcb
+	tcb = (uint64(binSevAttest[0x182]) << 16) | tcb
+	tcb = (uint64(binSevAttest[0x183]) << 24) | tcb
+	tcb = (uint64(binSevAttest[0x184]) << 32) | tcb
+	tcb = (uint64(binSevAttest[0x185]) << 40) | tcb
+	tcb = (uint64(binSevAttest[0x186]) << 48) | tcb
+	tcb = (uint64(binSevAttest[0x187]) << 56) | tcb
+
+	pn6 := "tcb-version"
+	p6 := MakeProperty(pn6, ivt, nil, &ce, &tcb)
+	props.Props = append(props.Props, p6)
+
+	t1 := "amd-sev-snp"
+	return MakePlatform(t1, nil, props)
+}
+
+func GetMeasurementFromSevAttest(binSevAttest []byte) []byte {
+	return []byte(binSevAttest[0x90:0xc0])
+}
+
+func GetMeasurementEntityFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
+	return MakeMeasurementEntity(GetMeasurementFromSevAttest(binSevAttest))
+}
+
+func VerifyReport(etype string, pk *certprotos.KeyMessage, serialized []byte) bool {
+	if etype != "vse-attestation-report" {
+		return false
+	}
+	sr := certprotos.SignedReport{}
+	err := proto.Unmarshal(serialized, &sr)
+	if err != nil {
+		fmt.Printf("Can't unmarshal signed report\n")
+		return false
+	}
+	k := sr.SigningKey
+	if !SameKey(k, pk) {
+		return false
+	}
+	if sr.Report == nil || sr.Signature == nil {
+		return false
+	}
+
+	rPK := rsa.PublicKey{}
+	rpK := rsa.PrivateKey{}
+	if GetRsaKeysFromInternal(k, &rpK, &rPK) == false {
+		fmt.Printf("VerifyReport: error 1\n")
+		return false
+	}
+
+	if RsaSha256Verify(&rPK, sr.Report, sr.Signature) {
+		return true;
+	}
+	return false
+}
+
+//	Returns measurement
+//	serialized is the serialized sev_attestation_message
+func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
+	var am certprotos.SevAttestationMessage
+	err := proto.Unmarshal(serialized, &am)
+	if err != nil {
+		fmt.Printf("VerifySevAttestation: Can't unmarshal SevAttestationMessage\n")
+		return nil
+	}
+
+	ptr := am.ReportedAttestation
+	if ptr == nil {
+		fmt.Printf("VerifySevAttestation: am.ReportedAttestation is wrong\n")
+		return nil
+	}
+
+	// Get public key so we can check the attestation
+	_, PK, err := GetEccKeysFromInternal(k)
+	if err!= nil || PK == nil {
+		fmt.Printf("VerifySevAttestation: Can't extract key.\n")
+		return nil
+	}
+
+	// hash the userdata and compare it to the one in the report
+	hd := ptr[0x50:0x80]
+
+	if am.WhatWasSaid == nil {
+		fmt.Printf("VerifySevAttestation: WhatWasSaid is nil.\n")
+		return nil
+	}
+	hashed := sha512.Sum384(am.WhatWasSaid)
+
+	// Debug
+	fmt.Printf("Hashed user data in report: ")
+	PrintBytes(hd)
+	fmt.Printf(", and,\n")
+	PrintBytes(hashed[0:48])
+	fmt.Printf("\n")
+
+	if !bytes.Equal(hashed[0:48], hd[0:48]) {
+		fmt.Printf("VerifySevAttestation: Hash of user data is not the same as in the report\n")
+		return nil
+	}
+
+	hashOfHeader := sha512.Sum384(ptr[0:0x2a0])
+
+	// Debug
+	fmt.Printf("VerifySevAttestation, vcekKey: ")
+	PrintKey(k)
+	fmt.Printf("\n")
+	fmt.Printf("VerifySevAttestation, report (%x): ", len(am.ReportedAttestation))
+	PrintBytes(ptr[0:len(am.ReportedAttestation)])
+	fmt.Printf("\n")
+	outFile := "test_attestation.bin"
+	err = os.WriteFile(outFile, ptr[0:len(am.ReportedAttestation)], 0666)
+	if err != nil {
+		fmt.Printf("Write failed\n")
+	}
+	fmt.Printf("VerifySevAttestation, Header of report: ")
+	PrintBytes(ptr[0:0x2a0])
+	fmt.Printf("\n")
+	fmt.Printf("VerifySevAttestation, Hashed header of report: ")
+	PrintBytes(hashOfHeader[0:48])
+	fmt.Printf("\n")
+	fmt.Printf("VerifySevAttestation, measurement: ")
+	PrintBytes(ptr[0x90: 0xc0])
+	fmt.Printf("\n")
+	fmt.Printf("VerifySevAttestation, signature:\n    ")
+	PrintBytes(ptr[0x2a0:0x2d0])
+	fmt.Printf("\n    ")
+	PrintBytes(ptr[0x2e8:0x318])
+	fmt.Printf("\n")
+
+	reversedR := LittleToBigEndian(ptr[0x2a0:0x2d0])
+	reversedS := LittleToBigEndian(ptr[0x2e8:0x318])
+	if reversedR == nil || reversedS == nil {
+		fmt.Printf("VerifySevAttestation: reversed bytes failed\n")
+		return nil
+	}
+
+	fmt.Printf("VerifySevAttestation, signature reversed:\n    ")
+	PrintBytes(reversedR)
+	fmt.Printf("\n    ")
+	PrintBytes(reversedS)
+	fmt.Printf("\n")
+
+	r :=  new(big.Int).SetBytes(reversedR)
+	s :=  new(big.Int).SetBytes(reversedS)
+	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
+		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
+		return nil
+	}
+
+	// return measurement if successful from am.ReportedAttestation->measurement
+	return ptr[0x90: 0xc0]
 }
 
 // R1: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-authentication.
@@ -3038,234 +3266,6 @@ func VerifyProof(policyKey *certprotos.KeyMessage, toProve *certprotos.VseClause
 	return false
 }
 
-// Caution:  This can change if attestation.h below changes
-/*
-	struct attestation_report {
-	  uint32_t    version;                  // 0x000
-	  uint32_t    guest_svn;                // 0x004
-	  uint64_t    policy;                   // 0x008
-	  uint8_t     family_id[16];            // 0x010
-	  uint8_t     image_id[16];             // 0x020
-	  uint32_t    vmpl;                     // 0x030
-	  uint32_t    signature_algo;           // 0x034
-	  union tcb_version platform_version;   // 0x038
-	  uint64_t    platform_info;            // 0x040
-	  uint32_t    flags;                    // 0x048
-	  uint32_t    reserved0;                // 0x04C
-	  uint8_t     report_data[64];          // 0x050
-	  uint8_t     measurement[48];          // 0x090
-	  uint8_t     host_data[32];            // 0x0C0
-	  uint8_t     id_key_digest[48];        // 0x0E0
-	  uint8_t     author_key_digest[48];    // 0x110
-	  uint8_t     report_id[32];            // 0x140
-	  uint8_t     report_id_ma[32];         // 0x160
-	  union tcb_version reported_tcb;       // 0x180
-	  uint8_t     reserved1[24];            // 0x188
-	  uint8_t     chip_id[64];              // 0x1A0
-	  uint8_t     reserved2[192];           // 0x1E0
-	  struct signature  signature;          // 0x2A0
-	};
-*/
-func GetUserDataHashFromSevAttest(binSevAttest []byte) []byte {
-	return []byte(binSevAttest[0x50:0x90])
-}
-
-func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
-
-	// get properties
-	props := &certprotos.Properties{}
-	pol_byte := binSevAttest[8]
-	major_byte := binSevAttest[9]
-	minor_byte := binSevAttest[10]
-
-	svt := "string"
-	ivt := "int"
-
-	pn1 := "debug"
-	vp1 := "no"
-	ce := "="
-	if pol_byte & 0x01  == 0 {
-		vp1 = "yes"
-	}
-	p1 := MakeProperty(pn1, svt, &vp1, &ce, nil)
-	props.Props = append(props.Props, p1)
-
-	pn2 := "key-share"
-	vp2 := "no"
-	if pol_byte & 0x02  == 0 {
-		vp2 = "yes"
-	}
-	p2 := MakeProperty(pn2, svt, &vp2, &ce, nil)
-	props.Props = append(props.Props, p2)
-
-	pn3 := "migrate"
-	vp3 := "no"
-	if pol_byte & 0x04  == 0 {
-		vp3 = "yes"
-	}
-	p3 := MakeProperty(pn3, svt, &vp3, &ce, nil)
-	props.Props = append(props.Props, p3)
-
-	m1iv := uint64(major_byte)
-	pn4 := "api-major"
-	p4 := MakeProperty(pn4, ivt, nil, &ce, &m1iv)
-	props.Props = append(props.Props, p4)
-
-	m2iv := uint64(minor_byte)
-	pn5 := "api-minor"
-	p5 := MakeProperty(pn5, ivt, nil, &ce, &m2iv)
-	props.Props = append(props.Props, p5)
-
-
-	tcb := uint64(binSevAttest[0x180])
-	tcb = (uint64(binSevAttest[0x181]) << 8) | tcb
-	tcb = (uint64(binSevAttest[0x182]) << 16) | tcb
-	tcb = (uint64(binSevAttest[0x183]) << 24) | tcb
-	tcb = (uint64(binSevAttest[0x184]) << 32) | tcb
-	tcb = (uint64(binSevAttest[0x185]) << 40) | tcb
-	tcb = (uint64(binSevAttest[0x186]) << 48) | tcb
-	tcb = (uint64(binSevAttest[0x187]) << 56) | tcb
-
-	pn6 := "tcb-version"
-	p6 := MakeProperty(pn6, ivt, nil, &ce, &tcb)
-	props.Props = append(props.Props, p6)
-
-	t1 := "amd-sev-snp"
-	return MakePlatform(t1, nil, props)
-}
-
-func GetMeasurementFromSevAttest(binSevAttest []byte) []byte {
-	return []byte(binSevAttest[0x90:0xc0])
-}
-
-func GetMeasurementEntityFromSevAttest(binSevAttest []byte) *certprotos.EntityMessage {
-	return MakeMeasurementEntity(GetMeasurementFromSevAttest(binSevAttest))
-}
-
-func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
-	n := len(evp.FactAssertion);
-	ev := evp.FactAssertion[n - 1]
-	if ev.GetEvidenceType() != "sev-attestation" {
-		fmt.Printf("FilterPolicy: sev attestation expected\n")
-		return nil
-	}
-	sevAtt := &certprotos.SevAttestationMessage{}
-	err := proto.Unmarshal(ev.SerializedEvidence, sevAtt)
-	if err != nil {
-		fmt.Printf("FilterPolicy: can't unmarshal attest claim\n")
-		return nil
-	}
-	if sevAtt.ReportedAttestation == nil {
-		fmt.Printf("FilterPolicy: empty sev attestation\n")
-		return nil
-	}
-	pl := GetPlatformFromSevAttest(sevAtt.ReportedAttestation)
-	if pl == nil {
-		fmt.Printf("FilterPolicy: can't get platform from attestation\n")
-		return nil
-	}
-	m := GetMeasurementFromSevAttest(sevAtt.ReportedAttestation)
-	if m == nil {
-		fmt.Printf("FilterPolicy: can't get measurement from attestation\n")
-		return nil
-	}
-	foundMeasurement := false
-	foundPlatform := false
-	alreadyProved := &certprotos.ProvedStatements{}
-	alreadyProved.Proved = append(alreadyProved.Proved, original.Proved[0])
-	for i := 1; i < len(original.Proved); i++ {
-		vcm := original.Proved[i]
-		if vcm.Subject == nil || vcm.Subject.EntityType == nil || vcm.Subject.GetEntityType() != "key" {
-			fmt.Printf("FilterPolicy: Policy not signed by policy key\n")
-			return nil
-		}
-		if !SameKey(vcm.Subject.Key, policyKey) {
-			fmt.Printf("FilterPolicy: Policy not signed by policy key\n")
-			return nil
-		}
-		cl := vcm.Clause
-		if cl == nil || cl.Subject == nil || cl.Verb == nil {
-			fmt.Printf("FilterPolicy: Policy statement %d malformed (1)\n", i)
-			PrintVseClause(vcm)
-			fmt.Printf("\n")
-			return nil
-		}
-		// Is statement policyKey says measurement is-trusted
-		if cl.Subject.GetEntityType() == "measurement" && cl.GetVerb() == "is-trusted" {
-			if foundMeasurement {
-				continue
-			}
-			if cl.Subject.Measurement == nil {
-				continue
-			}
-			if bytes.Equal(cl.Subject.Measurement, m) {
-				foundMeasurement = true
-			} else {
-				continue
-			}
-		}
-		// Is statement policyKey says platform has-trusted-platform-property
-		if cl.Subject.GetEntityType() == "platform" && cl.GetVerb() == "has-trusted-platform-property" {
-			if cl.Subject.PlatformEnt == nil || cl.Subject.PlatformEnt.GetPlatformType() != pl.GetPlatformType() {
-				continue
-			}
-			if foundPlatform {
-				continue
-			}
-			if SatisfyingProperties(cl.Subject.PlatformEnt.Props, pl.Props) {
-				foundPlatform = true
-			} else {
-				continue
-			}
-		}
-		alreadyProved.Proved = append(alreadyProved.Proved, vcm)
-	}
-	if !foundMeasurement {
-		fmt.Printf("FilterPolicy: measurement is empty\n")
-		return nil
-	}
-	if !foundPlatform {
-		fmt.Printf("FilterPolicy: platform is empty\n")
-		return nil
-	}
-	// return original 
-	return alreadyProved 
- }
-
-func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos.SignedClaimSequence,
-		alreadyProved *certprotos.ProvedStatements) bool {
-	if publicPolicyKey == nil {
-		fmt.Printf("Policy key empty\n")
-		return false
-	}
-	for i := 0; i < len(signedPolicy.Claims); i++ {
-		sc := signedPolicy.Claims[i]
-		if !VerifySignedClaim(sc, publicPolicyKey) {
-			fmt.Printf("Can't verify signature\n")
-			return false
-		}
-		cm := &certprotos.ClaimMessage{}
-		err := proto.Unmarshal(sc.SerializedClaimMessage, cm)
-		if err != nil {
-			fmt.Printf("Can't unmarshal claim\n")
-			return false
-		}
-		if cm.GetClaimFormat() != "vse-clause" {
-			fmt.Printf("Not vse claim\n")
-			return false
-		}
-		vse := &certprotos.VseClause {}
-		err = proto.Unmarshal(cm.SerializedClaim, vse)
-		if err != nil {
-			fmt.Printf("Can't unmarshal vse claim\n")
-			return false
-		}
-		alreadyProved.Proved = append(alreadyProved.Proved , vse)
-	}
-	return true
-}
-
 /*
 	Rules
 		rule 1 (R1): If environment or measurement is-trusted and key1 speaks-for environment or measurement then
@@ -3578,3 +3578,5 @@ func ValidateEvidenceWithPolicy(pubPolicyKey *certprotos.KeyMessage, evp *certpr
 	fmt.Printf("ValidateEvidenceWithPolicy: Proof verifies\n")
 	return true
 }
+
+//  --------------------------------------------------------------------
