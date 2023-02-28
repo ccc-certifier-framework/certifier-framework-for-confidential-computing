@@ -519,6 +519,27 @@ func PrintProof(pf *certprotos.Proof) {
 	}
 }
 
+func AddFactFromSignedClaim(signedClaim *certprotos.SignedClaimMessage,
+	alreadyProved *certprotos.ProvedStatements) bool {
+
+	k := signedClaim.SigningKey
+	tcl := certprotos.VseClause{}
+	if VerifySignedAssertion(*signedClaim, k, &tcl) {
+		// make sure the saying key in tcl is the same key that signed it
+		if tcl.GetVerb() == "says" && tcl.GetSubject().GetEntityType() == "key" {
+			if SameKey(k, tcl.GetSubject().GetKey()) {
+				alreadyProved.Proved = append(alreadyProved.Proved, &tcl)
+			} else {
+				return false
+			}
+		}
+	} else {
+		return false
+	}
+	return true
+}
+
+
 func ProducePlatformRule(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
 		subjKey *certprotos.KeyMessage, durationSeconds float64) []byte {
 
@@ -1647,3 +1668,6 @@ func ValidateEvidenceWithPolicy(pubPolicyKey *certprotos.KeyMessage, evp *certpr
 	fmt.Printf("ValidateEvidenceWithPolicy: Proof verifies\n")
 	return true
 }
+
+// the following will be redone in the new style
+

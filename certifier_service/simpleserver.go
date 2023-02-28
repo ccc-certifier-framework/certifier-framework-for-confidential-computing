@@ -19,7 +19,6 @@ package main
 import (
         "bytes"
         "crypto/x509"
-        //"crypto/rsa"
         "flag"
         "fmt"
         "encoding/hex"
@@ -255,29 +254,6 @@ func initCertifierService() bool {
 // These should move to a new proofs subdirectory
 //	--------------------------------------------------------------------------------------
 
-//	This moves to certlib
-func AddFactFromSignedClaim(signedClaim *certprotos.SignedClaimMessage,
-                alreadyProved *certprotos.ProvedStatements) bool {
-
-        k := signedClaim.SigningKey
-        tcl := certprotos.VseClause{}
-        if certlib.VerifySignedAssertion(*signedClaim, k, &tcl) {
-                // make sure the saying key in tcl is the same key that signed it
-                if tcl.GetVerb() == "says" && tcl.GetSubject().GetEntityType() == "key" {
-                        if certlib.SameKey(k, tcl.GetSubject().GetKey()) {
-                                alreadyProved.Proved = append(alreadyProved.Proved, &tcl)
-                        } else {
-                                return false
-                        }
-                }
-        } else {
-                return false
-        }
-        return true
-}
-
-//	--------------------------------------------------------------------------------------
-
 func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage, alreadyProved *certprotos.ProvedStatements) bool {
         // At this point, the already_proved should be
         //    "policyKey is-trusted"
@@ -339,12 +315,12 @@ func AddNewFactsForOePlatformAttestation(publicPolicyKey *certprotos.KeyMessage,
 		return false
 	}
 
-	if !AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
+	if !certlib.AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
 		fmt.Printf("AddNewFactsForOeEvidence, Couldn't AddFactFromSignedClaim, Error 1\n")
 		return false
 	}
 
-	if !AddFactFromSignedClaim(signedPolicyKeySaysPlatformKeyIsTrusted, alreadyProved) {
+	if !certlib.AddFactFromSignedClaim(signedPolicyKeySaysPlatformKeyIsTrusted, alreadyProved) {
 		fmt.Printf("AddNewFactsForOeEvidence, Couldn't AddFactFromSignedClaim, Error 2\n")
 		return false
 	}
@@ -416,12 +392,12 @@ func AddNewFactsForSevEvidence(publicPolicyKey *certprotos.KeyMessage,
                 return false
         }
 
-        if !AddFactFromSignedClaim(signedPolicyKeySaysPlatformKeyIsTrusted, alreadyProved) {
+        if !certlib.AddFactFromSignedClaim(signedPolicyKeySaysPlatformKeyIsTrusted, alreadyProved) {
                 fmt.Printf("Couldn't AddFactFromSignedClaim, Error 2\n")
                 return false
         }
 
-        if !AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
+        if !certlib.AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
                 fmt.Printf("Couldn't AddFactFromSignedClaim, Error 1\n")
                 return false
         }
@@ -497,12 +473,12 @@ func AddNewFactsForAbbreviatedPlatformAttestation(publicPolicyKey *certprotos.Ke
         certlib.PrintSignedClaim(signedPolicyKeySaysPlatformKeyIsTrusted)
         fmt.Printf("\n")
 
-        if !AddFactFromSignedClaim(signedPolicyKeySaysPlatformKeyIsTrusted, alreadyProved) {
+        if !certlib.AddFactFromSignedClaim(signedPolicyKeySaysPlatformKeyIsTrusted, alreadyProved) {
                 fmt.Printf("Couldn't AddFactFromSignedClaim, Error 2\n")
                 return false
         }
 
-        if !AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
+        if !certlib.AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
                 fmt.Printf("Couldn't AddFactFromSignedClaim, Error 1\n")
                 return false
         }
@@ -555,7 +531,7 @@ func AddNewFactsForAugmentedPlatformAttestation(publicPolicyKey *certprotos.KeyM
         certlib.PrintSignedClaim(signedPolicyKeySaysMeasurementIsTrusted)
         fmt.Printf("\n")
 
-        if !AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
+        if !certlib.AddFactFromSignedClaim(signedPolicyKeySaysMeasurementIsTrusted, alreadyProved) {
                 fmt.Printf("Couldn't AddFactFromSignedClaim, Error 1\n")
                 return false
         }
