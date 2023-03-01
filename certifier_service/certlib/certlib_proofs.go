@@ -1605,6 +1605,20 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 }
 
 // returns book, toProve, measurement
+func ValidateSimulatedEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
+                *certprotos.VseClause, []byte) {
+	return false, nil, nil
+}
+
+// returns book, toProve, measurement
+func ValidateOeEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
+                *certprotos.VseClause, []byte) {
+	return false, nil, nil
+}
+
+// returns book, toProve, measurement
 func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
                 *certprotos.VseClause, []byte) {

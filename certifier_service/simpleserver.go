@@ -214,16 +214,30 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 	var success bool
 
         if evType == "full-vse-support" {
+		success, toProve, measurement = certlib.ValidateSimulatedEvidence(pubKey, ep, originalPolicy, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateSimulatedEvidence failed\n")
+			return false, nil
+		}
         } else if evType == "platform-attestation-only" {
-        } else if evType == "sev-evidence" {
+		success, toProve, measurement = certlib.ValidateSimulatedEvidence(pubKey, ep, originalPolicy, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateSimulatedEvidence failed\n")
+			return false, nil
+		}
+        } else if evType == "sev-platform-package" {
 		success, toProve, measurement = certlib.ValidateSevEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
 			return false, nil
 		}
-	} else if evType == "sev-platform-package" {
         } else if evType == "augmented-platform-attestation-only" {
         } else if evType == "oe-evidence" {
+		success, toProve, measurement = certlib.ValidateOeEvidence(pubKey, ep, originalPolicy, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
+			return false, nil
+		}
         } else {
                 fmt.Printf("ValidateRequestAndObtainToken: Invalid Evidence type: %s\n", evType)
                 return false, nil
