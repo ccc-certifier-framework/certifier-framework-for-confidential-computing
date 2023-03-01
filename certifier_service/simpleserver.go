@@ -18,6 +18,7 @@ package main
 
 import (
         "crypto/x509"
+	"encoding/hex"
         "flag"
         "fmt"
         "io/ioutil"
@@ -241,50 +242,36 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
                 return false, nil
         }
 
-	if toProve == nil {
+	// Produce Artifact
+	var artifact []byte = nil
+	if toProve.Subject == nil && toProve.Subject.Key == nil &&
+			toProve.Subject.Key.KeyName == nil {
+		fmt.Printf("ValidateRequestAndObtainToken: toProve check failed\n")
+		certlib.PrintVseClause(toProve)
+		fmt.Printf("\n")
+		return false, nil
 	}
-	if measurement == nil {
-	}
-
-/*
-// Produce Artifact
-if toProve.Subject == nil && toProve.Subject.Key == nil &&
-		toProve.Subject.Key.KeyName == nil {
-	fmt.Printf("toProve check failed\n")
-	certlib.PrintVseClause(toProve)
-	fmt.Println()
-	response.Status = &failed
-} else {
 	if purpose == "attestation" {
-		sr := certlib.ProducePlatformRule(&privatePolicyKey, policyCert,
+		artifact := certlib.ProducePlatformRule(privatePolicyKey, policyCert,
 			toProve.Subject.Key, duration)
-		if sr == nil {
-			response.Status = &succeeded
-		} else {
-			response.Status = &succeeded
-			response.Artifact = sr
+		if artifact == nil {
+			return false, nil
 		}
 	} else {
-		m := certlib.GetAppMeasurementFromProvedStatements(appKeyEntity,  alreadyProved)
-		if m != nil {
-			appOrgName = "Measured-" + hex.EncodeToString(m)
+		var appOrgName string
+		if measurement != nil {
+			appOrgName = "Measured-" + hex.EncodeToString(measurement)
 		}
 		sn = sn + 1
 		org := "CertifierUsers"
-		cert := certlib.ProduceAdmissionCert(&privatePolicyKey, policyCert,
-			toProve.Subject.Key, org,
-			appOrgName, sn, duration)
-		if cert == nil {
-			fmt.Printf("certlib.ProduceAdmissionCert returned nil\n")
-			response.Status = &failed
-		} else {
-			response.Status = &succeeded
-			response.Artifact = cert.Raw
+		artifact := certlib.ProduceAdmissionCert(privatePolicyKey, policyCert,
+			toProve.Subject.Key, org, appOrgName, sn, duration)
+		if artifact == nil {
+			return false, nil
 		}
 	}
-}
- */
-  return false, nil
+
+  return true, artifact
 }
 
 // Procedure is:
