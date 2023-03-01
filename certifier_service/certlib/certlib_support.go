@@ -1493,7 +1493,7 @@ func MakeProperty(name string, t string, sv *string, c *string, iv *uint64) *cer
 		p.Comparator = c
 		p.IntValue = iv
 	}
-	return p 
+	return p
 }
 
 func MakePlatform(t string, k *certprotos.KeyMessage, props *certprotos.Properties) *certprotos.Platform {

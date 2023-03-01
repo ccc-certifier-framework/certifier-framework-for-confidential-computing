@@ -1285,8 +1285,8 @@ func TestPlatformVerify(t *testing.T) {
 
 
 	// Validate
- 	success, toProve, measurement := ValidateSevEvidence(ud.PolicyKey, evp, originalPolicy, pur)
- 	if !success {
+	success, toProve, measurement := ValidateSevEvidence(ud.PolicyKey, evp, originalPolicy, pur)
+	if !success {
                 t.Errorf("ValidateSevEvidence fails\n")
 		return
 	}
