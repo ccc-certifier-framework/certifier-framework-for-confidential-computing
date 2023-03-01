@@ -320,10 +320,10 @@ func serviceThread(conn net.Conn, client string) {
 		response.Status = &failed
 	}
 
-
         // Debug
         fmt.Printf("Sending response\n")
         certlib.PrintTrustReponse(&response)
+        fmt.Printf("\n")
 
         // send response
         rb, err := proto.Marshal(&response)
@@ -338,7 +338,7 @@ func serviceThread(conn net.Conn, client string) {
         if response.Status != nil && *response.Status == "succeeded" {
                 logEvent("Successful request", b, rb)
         } else {
-                logEvent("Failed Request", b, rb)
+                logEvent("Failed request", b, rb)
         }
         return
 }
@@ -349,7 +349,7 @@ func serviceThread(conn net.Conn, client string) {
 func server(serverAddr string, arg string) {
 
         if initCertifierService() != true {
-                fmt.Println("Server: failed to initialize server")
+                fmt.Printf("server: failed to initialize server\n")
                 os.Exit(1)
         }
 
@@ -358,10 +358,10 @@ func server(serverAddr string, arg string) {
         var conn net.Conn
 
         // Listen for clients.
-        fmt.Printf("simpleserver: Listening\n")
+        fmt.Printf("server: listening\n")
         sock, err = net.Listen("tcp", serverAddr)
         if err != nil {
-                fmt.Printf("simpleserver, listen error: ", err, "\n")
+                fmt.Printf("server, listen error: ", err, "\n")
                 return
         }
 
@@ -370,7 +370,7 @@ func server(serverAddr string, arg string) {
                 fmt.Printf("server: at accept\n")
                 conn, err = sock.Accept()
                 if err != nil {
-                        fmt.Printf("simpleserver: can't accept connection: %s\n", err.Error())
+                        fmt.Printf("server: can't accept connection: %s\n", err.Error())
                         continue
                 }
                 // Todo: maybe get client name and client IP for logging.
@@ -389,5 +389,5 @@ func main() {
 
         // later this may turn into a TLS connection, we'll see
         server(serverAddr, arg)
-        fmt.Printf("simpleserver: done\n")
+        fmt.Printf("server: done\n")
 }
