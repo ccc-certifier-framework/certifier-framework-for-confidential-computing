@@ -1091,7 +1091,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         x = nullptr;
       }
 #ifdef SEV_SNP
-    } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation-with-platform") {
+    } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
       string t_str;
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
           evp.fact_assertion(i).serialized_evidence().size());
@@ -2672,7 +2672,7 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
 
   // Filter the policy first
   //    The last statement in the evidence package should
-  //    be a sev-attestation-with-platform which is a
+  //    be a sev-attestation which is a
   //    serialized sev_attestation_message.
   int k = evp.fact_assertion_size();
   if (k < 1) {
@@ -2680,7 +2680,7 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
     return false;
   }
   const evidence& ev = evp.fact_assertion(k - 1);
-  if (ev.evidence_type() != "sev-attestation-with-platform") {
+  if (ev.evidence_type() != "sev-attestation") {
     printf("validate_evidence: wrong evidence type\n");
     return false;
   }
