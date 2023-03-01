@@ -21,7 +21,7 @@ import (
         "crypto/x509"
         "flag"
         "fmt"
-        // "encoding/hex"
+        "encoding/hex"
         "io/ioutil"
         "log"
         "net"
@@ -48,11 +48,10 @@ var enableLog = flag.Bool("enableLog", false, "enable logging")
 var logDir = flag.String("logDir", ".", "log directory")
 var logFile = flag.String("logFile", "simpleserver.log", "log file name")
 
-var privatePolicyKey *certprotos.KeyMessage = nil
+var privatePolicyKey certprotos.KeyMessage
 var publicPolicyKey *certprotos.KeyMessage = nil
 var serializedPolicyCert []byte
 var policyCert *x509.Certificate = nil
-
 var sn uint64 = uint64(time.Now().UnixNano())
 var duration float64 = 365.0 * 86400
 
@@ -78,7 +77,7 @@ var policyInitialized bool = false
 // At init, we retrieve the policy key and the rules to evaluate
 func initCertifierService() bool {
         // Debug
-        fmt.Printf("Initializing CertifierService, Policy key file: %s, Policy cert file: %s\n", *policyKeyFile, *policyCertFile)
+        fmt.Printf("initCertifierService, Policy key file: %s, Policy cert file: %s\n", *policyKeyFile, *policyCertFile)
 
         if *enableLog {
                 logging = initLog()
@@ -86,47 +85,42 @@ func initCertifierService() bool {
 
         serializedKey, err := os.ReadFile(*policyKeyFile)
         if err != nil {
-                fmt.Println("Simple_server: can't read key file, ", err)
+                fmt.Println("can't read key file, ", err)
                 return false
         }
 
         serializedPolicyCert, err := os.ReadFile(*policyCertFile)
         if err != nil {
-                fmt.Println("Simpleserver: can't read policy cert file, ", err)
-                return false
+                fmt.Println("can't certkey file, ", err)
         }
         policyCert, err = x509.ParseCertificate(serializedPolicyCert)
         if err != nil {
-                fmt.Println("Simpleserver: Can't Parse policy cert, ", err)
+                fmt.Println("Can't Parse policy cert, ", err)
                 return false
         }
 
-	privatePolicyKey := &certprotos.KeyMessage {}
-        err = proto.Unmarshal(serializedKey, privatePolicyKey)
+        err = proto.Unmarshal(serializedKey, &privatePolicyKey)
         if err != nil {
-                fmt.Printf("SimpleServer: Can't unmarshal serialized policy key\n")
                 return false
         }
 
-        publicPolicyKey = certlib.InternalPublicFromPrivateKey(privatePolicyKey)
+        publicPolicyKey = certlib.InternalPublicFromPrivateKey(&privatePolicyKey)
         if publicPolicyKey == nil {
-                fmt.Printf("SimpleServer: Can't get public policy key\n")
                 return false
         }
 
         if *readPolicy && policyFile != nil {
                 policyInitialized = initPolicy(*policyFile)
                 if !policyInitialized {
-                        fmt.Printf("SimpleServer: Couldn't initialize policy\n")
+                        fmt.Printf("Error: Couldn't initialize policy\n")
                         return false
                 }
         } else {
-                fmt.Printf("SimpleServer: readPolicy must be true\n")
+                fmt.Printf("Error: readPolicy must be true\n")
                 return false
         }
 
         if !certlib.InitSimulatedEnclave() {
-                fmt.Printf("SimpleServer: Can't init simulated enclave\n")
                 return false
         }
         return true
@@ -182,9 +176,8 @@ func logEvent(msg string, req []byte, resp []byte) {
         }
 }
 
-func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certprotos.KeyMessage,
-		evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
-  return false, nil
+func ValidateRequestAndObtainToken(evType string, purpose string, ep *certprotos.EvidencePackage) []byte {
+  return nil
 }
 
 // Procedure is:
@@ -224,18 +217,113 @@ func serviceThread(conn net.Conn, client string) {
         response := certprotos.TrustResponseMessage{}
         response.RequestingEnclaveTag = request.RequestingEnclaveTag
         response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
+        response.Status = &failed
 
-	outcome, artifact := ValidateRequestAndObtainToken(publicPolicyKey, privatePolicyKey,
-		request.GetSubmittedEvidenceType(), request.GetPurpose(),
-		request.Support)
+//	Move to ValidateProofWithoutPolicy
 
-	if outcome {
-		response.Status = &succeeded
-		response.Artifact = artifact
-	} else {
-		response.Status = &failed
-	}
+        // Construct the proof
+        var purpose string
+        if  request.Purpose == nil {
+                purpose =  "authentication"
+        } else {
+                purpose =  *request.Purpose
+        }
+        toProve, proof, alreadyProved := ConstructProofFromRequest(
+                        request.GetSubmittedEvidenceType(), request.GetSupport(),
+                        purpose)
+        if toProve == nil || proof == nil || alreadyProved == nil {
+                // Debug
+                fmt.Printf("Constructing Proof fails\n")
+                logEvent("Can't construct proof from request", b, nil)
 
+                // Debug
+                fmt.Printf("Sending response\n")
+                certlib.PrintTrustReponse(&response)
+
+                // send response
+                rb, err := proto.Marshal(&response)
+                if err != nil {
+                        logEvent("Couldn't marshall request", b, nil)
+                        return
+                }
+		if !certlib.SizedSocketWrite(conn, rb) {
+                        fmt.Printf("SizedSocketWrite failed\n")
+                        return
+		}
+                if response.Status != nil && *response.Status == "succeeded" {
+                        logEvent("Successful request", b, rb)
+                } else {
+                        logEvent("Failed Request", b, rb)
+                }
+                        return
+        } else {
+                // Debug
+                fmt.Printf("Constructing Proof succeeded\n")
+        }
+        appKeyEntity := toProve.GetSubject()
+
+        // Debug
+        if toProve != nil {
+                fmt.Printf("To prove: ")
+                certlib.PrintVseClause(toProve)
+                fmt.Printf("\n")
+        }
+
+        // Verify proof and send response
+        var appOrgName string = "anonymous"
+        if  toProve.Subject.Key != nil && toProve.Subject.Key.KeyName != nil {
+                appOrgName = *toProve.Subject.Key.KeyName
+        }
+
+        // Debug
+        fmt.Printf("Verifying proof %d steps\n", len(proof.Steps))
+
+        // Check proof
+        if proof == nil {
+                response.Status = &failed
+        } else if certlib.VerifyProof(publicPolicyKey, toProve, proof, alreadyProved) {
+                fmt.Printf("Proof verified\n")
+                // Produce Artifact
+                if toProve.Subject == nil && toProve.Subject.Key == nil &&
+                                toProve.Subject.Key.KeyName == nil {
+                        fmt.Printf("toProve check failed\n")
+                        certlib.PrintVseClause(toProve)
+                        fmt.Println()
+                        response.Status = &failed
+                } else {
+                        if purpose == "attestation" {
+                                sr := certlib.ProducePlatformRule(&privatePolicyKey, policyCert,
+                                        toProve.Subject.Key, duration)
+                                if sr == nil {
+                                        response.Status = &succeeded
+                                } else {
+                                        response.Status = &succeeded
+                                        response.Artifact = sr
+                                }
+                        } else {
+                                // find statement appKey speaks-for measurement in alreadyProved and reset appOrgName
+                                m := certlib.GetAppMeasurementFromProvedStatements(appKeyEntity,  alreadyProved)
+                                if m != nil {
+                                        appOrgName = "Measured-" + hex.EncodeToString(m)
+                                }
+                                sn = sn + 1
+                                org := "CertifierUsers"
+                                cert := certlib.ProduceAdmissionCert(&privatePolicyKey, policyCert,
+                                        toProve.Subject.Key, org,
+                                        appOrgName, sn, duration)
+                                if cert == nil {
+                                        fmt.Printf("certlib.ProduceAdmissionCert returned nil\n")
+                                        response.Status = &failed
+                                } else {
+                                        response.Status = &succeeded
+                                        response.Artifact = cert.Raw
+                                }
+                        }
+                }
+        } else {
+                fmt.Printf("Verifying proof failed\n")
+                response.Status = &failed
+        }
 
         // Debug
         fmt.Printf("Sending response\n")
