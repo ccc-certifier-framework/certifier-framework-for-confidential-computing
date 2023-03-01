@@ -214,8 +214,8 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 	var success bool
 
 	// Todo: Change this type to "vse-attestation-package"
-        if evType == "platform-attestation-only"  || evType == "platform-attestation-only" {
-		success, toProve, measurement = certlib.ValidateSimulatedEvidence(pubKey, ep, originalPolicy, purpose)
+        if evType == "platform-attestation-only"  || evType == "augmented-platform-attestation-only" {
+		success, toProve, measurement = certlib.ValidateInternalEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSimulatedEvidence failed\n")
 			return false, nil
@@ -226,13 +226,14 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
 			return false, nil
 		}
-        } else if evType == "augmented-platform-attestation-only" {
         } else if evType == "oe-evidence" {
 		success, toProve, measurement = certlib.ValidateOeEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
 			return false, nil
 		}
+        } else if evType == "gramine-evidence" {
+		return false, nil
         } else {
                 fmt.Printf("ValidateRequestAndObtainToken: Invalid Evidence type: %s\n", evType)
                 return false, nil

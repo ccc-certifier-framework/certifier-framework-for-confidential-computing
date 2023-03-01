@@ -38,7 +38,7 @@ func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
 	return true
 }
 
-func FilterSimulatedPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
 	return original
 }
@@ -1308,9 +1308,9 @@ func VerifyProof(policyKey *certprotos.KeyMessage, toProve *certprotos.VseClause
 func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
         // At this point, the evidence should be
         //      "policyKey is-trusted"
-        //      "platform-key says enclaveKey speaks-for measurement
-        //      "policyKey says measurement is-trusted"
         //      "policyKey says platformKey is-trusted-for-attestation"
+        //      "policyKey says measurement is-trusted"
+        //      "platform-key says enclaveKey speaks-for measurement
 
 	// Debug
 	fmt.Printf("ConstructProofFromOeEvidence, %d statements\n", len(alreadyProved.Proved))
@@ -1417,8 +1417,8 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
         return toProve, proof
 }
 
-// This is also used for Application enclave
-func ConstructProofFromSimulatedPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
+// This is used for simulated enclave and the application enclave
+func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
 	// At this point, already proved should contain
 	//      "policyKey is-trusted"
 	//      "policyKey says platformKey is-trusted-for-attestation"
@@ -1427,7 +1427,7 @@ func ConstructProofFromSimulatedPlatformEvidence(publicPolicyKey *certprotos.Key
 	//      "attestKey says enclaveKey speaks-for measurement"
 
         // Debug
-        fmt.Printf("ConstructProofFromSimulatedPlatformEvidence entries %d\n", len(alreadyProved.Proved))
+        fmt.Printf("ConstructProofFromInternalPlatformEvidence entries %d\n", len(alreadyProved.Proved))
 
         proof := &certprotos.Proof{}
         r1 := int32(1)
@@ -1752,7 +1752,7 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 }
 
 // returns success, toProve, measurement
-func ValidateSimulatedEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
                 *certprotos.VseClause, []byte) {
 
@@ -1760,7 +1760,7 @@ func ValidateSimulatedEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certpro
 	fmt.Printf("\nValidateSevEvidence, Original policy:\n")
 	PrintProvedStatements(originalPolicy)
 
-	alreadyProved := FilterSimulatedPolicy(pubPolicyKey, evp, originalPolicy)
+	alreadyProved := FilterInternalPolicy(pubPolicyKey, evp, originalPolicy)
 	if alreadyProved == nil {
                 fmt.Printf("Can't filterpolicy\n")
 		return false, nil, nil
@@ -1780,8 +1780,8 @@ func ValidateSimulatedEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certpro
 	fmt.Printf("\nValidateSevEvidence, proved:\n")
 	PrintProvedStatements(originalPolicy)
 
-        // ConstructProofFromSimulatedPlatformEvidence()
-	toProve, proof := ConstructProofFromSimulatedPlatformEvidence(pubPolicyKey, purpose, alreadyProved)
+        // ConstructProofFromInternalPlatformEvidence()
+	toProve, proof := ConstructProofFromInternalPlatformEvidence(pubPolicyKey, purpose, alreadyProved)
 	if toProve == nil || proof == nil {
                 fmt.Printf("ValidateSevEvidence: Can't construct proof\n")
 		return false, nil, nil
@@ -1789,24 +1789,24 @@ func ValidateSimulatedEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certpro
 
 	// Debug
 	fmt.Printf("\n")
-	fmt.Printf("ValidateSimulatedEvidence, toProve: ")
+	fmt.Printf("ValidateInternalEvidence, toProve: ")
 	PrintVseClause(toProve)
 	fmt.Printf("\n")
 	PrintProof(proof)
 	fmt.Printf("\n")
 
         if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
-                fmt.Printf("ValidateSimulatedEvidence: Proof does not verify\n")
+                fmt.Printf("ValidateInternalEvidence: Proof does not verify\n")
 		return false, nil, nil
         }
 
 	// Debug
-	fmt.Printf("ValidateSimulatedEvidence: Proof verifies\n")
+	fmt.Printf("ValidateInternalEvidence: Proof verifies\n")
 
 	me := alreadyProved.Proved[2]
 	if me.Clause == nil || me.Clause.Subject == nil ||
 			me.Clause.Subject.GetEntityType() != "measurement" {
-                fmt.Printf("ValidateSimulatedEvidence: Proof does not verify\n")
+                fmt.Printf("ValidateInternalEvidence: Proof does not verify\n")
 		return false, nil, nil
 	}
 
