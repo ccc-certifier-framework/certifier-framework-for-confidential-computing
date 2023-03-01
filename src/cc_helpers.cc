@@ -840,12 +840,14 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   request.set_requesting_enclave_tag("requesting-enclave");
   request.set_providing_enclave_tag("providing-enclave");
   if (enclave_type_ == "application-enclave") {
+    // Todo: Change this type to "vse-attestation-package"
     request.set_submitted_evidence_type("augmented-platform-attestation-only");
   } else if (enclave_type_ == "sev-enclave") {
     request.set_submitted_evidence_type("sev-platform-package");
   } else if (enclave_type_ == "oe-enclave") {
     request.set_submitted_evidence_type("oe-evidence");
   } else {
+    // Todo: Change this type to "vse-attestation-package"
     request.set_submitted_evidence_type("platform-attestation-only");
   }
   request.set_purpose(purpose_);

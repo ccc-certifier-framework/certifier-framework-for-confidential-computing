@@ -206,19 +206,15 @@ func logEvent(msg string, req []byte, resp []byte) {
 func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certprotos.KeyMessage,
 		evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
 
-        // evidenceType should be "full-vse-support", "platform-attestation-only" or
+        // evidenceType should be "vse-attestation-package", "gramine-evidence",
         //      "oe-evidence" or "sev-platform-attestation-only" or "sev-platform-package"
+	// "full-vse-support" and  "platform-attestation-only" are deprecated
 	var toProve *certprotos.VseClause = nil
 	var measurement []byte = nil
 	var success bool
 
-        if evType == "full-vse-support" {
-		success, toProve, measurement = certlib.ValidateSimulatedEvidence(pubKey, ep, originalPolicy, purpose)
-		if !success {
-			fmt.Printf("ValidateRequestAndObtainToken: ValidateSimulatedEvidence failed\n")
-			return false, nil
-		}
-        } else if evType == "platform-attestation-only" {
+	// Todo: Change this type to "vse-attestation-package"
+        if evType == "platform-attestation-only"  || evType == "platform-attestation-only" {
 		success, toProve, measurement = certlib.ValidateSimulatedEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSimulatedEvidence failed\n")

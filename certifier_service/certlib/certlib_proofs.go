@@ -1417,13 +1417,14 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
         return toProve, proof
 }
 
+// This is also used for Application enclave
 func ConstructProofFromSimulatedPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
 	// At this point, already proved should contain
 	//      "policyKey is-trusted"
-	//      "platformKey says attestationKey is-trusted-for-attestation
-	//      "attestKey says enclaveKey speaks-for measurement"
 	//      "policyKey says platformKey is-trusted-for-attestation"
 	//      "policyKey says measurement is-trusted"
+	//      "platformKey says attestationKey is-trusted-for-attestation
+	//      "attestKey says enclaveKey speaks-for measurement"
 
         // Debug
         fmt.Printf("ConstructProofFromSimulatedPlatformEvidence entries %d\n", len(alreadyProved.Proved))
