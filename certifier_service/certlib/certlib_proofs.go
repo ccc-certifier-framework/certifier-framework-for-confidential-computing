@@ -1604,20 +1604,10 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	return nil, nil
 }
 
+// returns book, toProve, measurement
 func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-		signedPolicy *certprotos.SignedClaimSequence, purpose string) bool {
-
-        // initPolicy
-	originalPolicy := &certprotos.ProvedStatements{}
-	if !InitAxiom(*pubPolicyKey, originalPolicy) {
-                fmt.Printf("ValidateSevEvidence: Can't InitAxiom\n")
-		return false
-        }
-
-	if !InitPolicy(pubPolicyKey, signedPolicy, originalPolicy) {
-                fmt.Printf("ValidateSevEvidence: Can't init policy\n")
-		return false
-        }
+		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
+                *certprotos.VseClause, []byte) {
 
 	// Debug
 	fmt.Printf("\nValidateSevEvidence, Original policy:\n")
@@ -1626,7 +1616,7 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	alreadyProved := FilterSevPolicy(pubPolicyKey, evp, originalPolicy)
 	if alreadyProved == nil {
                 fmt.Printf("Can't filterpolicy\n")
-		return false
+		return false, nil, nil
         }
 
 	// Debug
@@ -1636,7 +1626,7 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 
 	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, alreadyProved) {
                 fmt.Printf("ValidateSevEvidence: Can't InitProvedStatements\n")
-		return false
+		return false, nil, nil
 	}
 
 	// Debug
@@ -1647,7 +1637,7 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	toProve, proof := ConstructProofFromSevPlatformEvidence(pubPolicyKey, purpose, alreadyProved)
 	if toProve == nil || proof == nil {
                 fmt.Printf("ValidateSevEvidence: Can't construct proof\n")
-		return false
+		return false, nil, nil
 	}
 
 	// Debug
@@ -1660,13 +1650,20 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
         if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
 		// Debug
                 fmt.Printf("ValidateSevEvidence: Proof does not verify\n")
-
-		return false
+		return false, nil, nil
         }
 
 	// Debug
 	fmt.Printf("ValidateSevEvidence: Proof verifies\n")
-	return true
+
+	me := alreadyProved.Proved[2]
+	if me.Clause == nil || me.Clause.Subject == nil ||
+			me.Clause.Subject.GetEntityType() != "measurement" {
+                fmt.Printf("ValidateSevEvidence: Proof does not verify\n")
+		return false, nil, nil
+	}
+
+	return true, toProve, me.Clause.Subject.Measurement
 }
 
 //	the following will be redone in the new style

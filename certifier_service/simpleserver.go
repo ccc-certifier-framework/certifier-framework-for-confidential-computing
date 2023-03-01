@@ -135,6 +135,11 @@ func initCertifierService() bool {
 	        return false
 	}
 
+	if !certlib.InitAxiom(*publicPolicyKey, originalPolicy) {
+                fmt.Printf("SimpleServer: Can't InitAxiom\n")
+                return false
+        }
+
 	policyInitialized = certlib.InitPolicy(publicPolicyKey, signedPolicy, originalPolicy)
 
 	if !policyInitialized {
@@ -204,17 +209,69 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 
         // evidenceType should be "full-vse-support", "platform-attestation-only" or
         //      "oe-evidence" or "sev-platform-attestation-only" or "sev-platform-package"
+	var toProve *certprotos.VseClause = nil
+	var measurement []byte = nil
+	var success bool
+
         if evType == "full-vse-support" {
         } else if evType == "platform-attestation-only" {
         } else if evType == "sev-evidence" {
+		success, toProve, measurement = certlib.ValidateSevEvidence(pubKey, ep, originalPolicy, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
+			return false, nil
+		}
 	} else if evType == "sev-platform-package" {
         } else if evType == "augmented-platform-attestation-only" {
         } else if evType == "oe-evidence" {
-        } else if evType == "sev-platform-attestation-only" {
         } else {
-                fmt.Printf("Invalid Evidence type: %s\n", evType)
+                fmt.Printf("ValidateRequestAndObtainToken: Invalid Evidence type: %s\n", evType)
                 return false, nil
         }
+
+	if toProve == nil {
+	}
+	if measurement == nil {
+	}
+
+/*
+// Produce Artifact
+if toProve.Subject == nil && toProve.Subject.Key == nil &&
+		toProve.Subject.Key.KeyName == nil {
+	fmt.Printf("toProve check failed\n")
+	certlib.PrintVseClause(toProve)
+	fmt.Println()
+	response.Status = &failed
+} else {
+	if purpose == "attestation" {
+		sr := certlib.ProducePlatformRule(&privatePolicyKey, policyCert,
+			toProve.Subject.Key, duration)
+		if sr == nil {
+			response.Status = &succeeded
+		} else {
+			response.Status = &succeeded
+			response.Artifact = sr
+		}
+	} else {
+		m := certlib.GetAppMeasurementFromProvedStatements(appKeyEntity,  alreadyProved)
+		if m != nil {
+			appOrgName = "Measured-" + hex.EncodeToString(m)
+		}
+		sn = sn + 1
+		org := "CertifierUsers"
+		cert := certlib.ProduceAdmissionCert(&privatePolicyKey, policyCert,
+			toProve.Subject.Key, org,
+			appOrgName, sn, duration)
+		if cert == nil {
+			fmt.Printf("certlib.ProduceAdmissionCert returned nil\n")
+			response.Status = &failed
+		} else {
+			response.Status = &succeeded
+			response.Artifact = cert.Raw
+		}
+	}
+}
+ */
 
   return false, nil
 }

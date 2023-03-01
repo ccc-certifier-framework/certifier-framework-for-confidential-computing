@@ -1271,11 +1271,31 @@ func TestPlatformVerify(t *testing.T) {
 		return
 	}
 
+	// initPolicy
+	originalPolicy := &certprotos.ProvedStatements{}
+	if !InitAxiom(*ud.PolicyKey, originalPolicy) {
+		fmt.Printf("ValidateSevEvidence: Can't InitAxiom\n")
+		return
+	}
+
+	if !InitPolicy(ud.PolicyKey, signedPolicy, originalPolicy) {
+		fmt.Printf("ValidateSevEvidence: Can't init policy\n")
+		return
+	}
+
+
 	// Validate
- 	if !ValidateSevEvidence(ud.PolicyKey, evp, signedPolicy, pur) {
+ 	success, toProve, measurement := ValidateSevEvidence(ud.PolicyKey, evp, originalPolicy, pur)
+ 	if !success {
                 t.Errorf("ValidateSevEvidence fails\n")
 		return
 	}
+	fmt.Printf("Proved: ");
+	PrintVseClause(toProve)
+	fmt.Printf("\n")
+	fmt.Printf("Measurement: ");
+	PrintBytes(measurement)
+	fmt.Printf("\n")
 }
 
 // For Sev testing --- deprecated
