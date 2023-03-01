@@ -1,0 +1,40 @@
+Building the Policy Generator:
+
+You will need the json-schema-validator library which in turn depends on the
+JSON for Modern C++ library. Follow the following instructions to have them
+built and installed on your system:
+
+git clone https://github.com/nlohmann/json.git
+cd json
+mkdir build
+cd build
+cmake ..
+make
+make install
+
+git clone https://github.com/pboettch/json-schema-validator.git
+cd json-schema-validator
+mkdir build
+cd build
+cmake .. -DBUILD_SHARED_LIBS=ON ..
+make
+make install
+
+Both libraries should be install under /usr/local by default. If this is not
+the case, remember to update the JSON_VALIDATOR variable in
+policy_generator.mak.
+
+The Policy Generator utility can then be built using:
+
+make -f policy_generator.mak
+
+You can then use the generator by invoking:
+
+policy_generator.exe --policy_input=<your policy JSON>
+
+By default, the generator is using policy_schema.json in the same directory as
+schema input. If you want to use a custom schema, use the --schema_input
+option:
+
+policy_generator.exe --policy_input=<your policy JSON> --schema_input=<your schema JSON>
+

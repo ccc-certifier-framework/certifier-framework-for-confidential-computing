@@ -1,0 +1,49 @@
+{
+  "policyKey" : "policy_key_file.bin",
+
+  "platforms": [[{
+      "comparator": "eq",
+      "type": "string",
+      "name": "debug",
+      "value": "no"
+    },
+    {
+      "comparator": "eq",
+      "type": "string",
+      "name": "migrate",
+      "value": "no"
+    },
+    {
+      "comparator": "eq",
+      "type": "string",
+      "name": "key-share",
+      "value": "no"
+    },
+    {
+      "comparator": "ge",
+      "type": "int",
+      "name": "api-major",
+      "value": 0
+    },
+    {
+      "comparator": "ge",
+      "type": "int",
+      "name": "api-minor",
+      "value": 0
+    }
+  ]],
+
+  "measurements" : [
+    "010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708"
+  ],
+
+  "claims" : [{
+      "unaryClause" :  {
+        "keySubject" : "policy_ark_file.bin",
+        "verb" : "is-trusted-for-attestation"
+      },
+      "verb" : "says",
+      "keySubject" : "policy_key_file.bin"
+    }
+  ]
+}
