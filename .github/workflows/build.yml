@@ -21,7 +21,7 @@ jobs:
       run: |
         cd src
         make -f certifier.mak
-        make clean -f certifier_tests.mak
+        rm ./*.o
         make -f certifier_tests.mak
         ./certifier_tests.exe
         cd ../utilities
