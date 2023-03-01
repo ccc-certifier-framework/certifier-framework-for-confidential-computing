@@ -42,8 +42,8 @@ var policyKeyFile = flag.String("policy_key_file", "policy_key_file.bin", "key f
 var policyCertFile = flag.String("policy_cert_file", "policy_cert_file.bin", "cert file name")
 var readPolicy = flag.Bool("readPolicy", true, "read policy")
 var policyFile = flag.String("policyFile", "./certlib/policy.bin", "policy file name")
-var loggingSequenceNumber = *flag.Int("loggingSequenceNumber", 1,  "sequence number for logging")
 
+var loggingSequenceNumber = *flag.Int("loggingSequenceNumber", 1,  "sequence number for logging")
 var enableLog = flag.Bool("enableLog", false, "enable logging")
 var logDir = flag.String("logDir", ".", "log directory")
 var logFile = flag.String("logFile", "simpleserver.log", "log file name")
@@ -73,6 +73,8 @@ func initLog() bool {
 
 
 var policyInitialized bool = false
+var signedPolicy *certprotos.SignedClaimSequence = &certprotos.SignedClaimSequence {}
+var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements {}
 
 
 // At init, we retrieve the policy key and the rules to evaluate
@@ -114,16 +116,31 @@ func initCertifierService() bool {
                 return false
         }
 
-        if *readPolicy && policyFile != nil {
-                policyInitialized = initPolicy(*policyFile)
-                if !policyInitialized {
-                        fmt.Printf("SimpleServer: Couldn't initialize policy\n")
-                        return false
-                }
-        } else {
-                fmt.Printf("SimpleServer: readPolicy must be true\n")
-                return false
-        }
+	// This should change to an InitPolicy call
+        if policyFile == nil {
+	        fmt.Printf("SimpleServer: No policy file\n")
+		return false
+	}
+
+	// Read policy
+	serializedPolicy, err := os.ReadFile(*policyFile)
+	if err != nil {
+	        fmt.Printf("SimpleServer: Can't read policy\n")
+	        return false
+	}
+
+	err = proto.Unmarshal(serializedPolicy, signedPolicy)
+	if err != nil {
+	        fmt.Printf("SimpleServer: Can't unmarshal signed policy\n")
+	        return false
+	}
+
+	policyInitialized = certlib.InitPolicy(publicPolicyKey, signedPolicy, originalPolicy)
+
+	if !policyInitialized {
+		fmt.Printf("SimpleServer: Couldn't initialize policy\n")
+		return false
+	}
 
         if !certlib.InitSimulatedEnclave() {
                 fmt.Printf("SimpleServer: Can't init simulated enclave\n")
@@ -184,6 +201,21 @@ func logEvent(msg string, req []byte, resp []byte) {
 
 func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certprotos.KeyMessage,
 		evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
+
+        // evidenceType should be "full-vse-support", "platform-attestation-only" or
+        //      "oe-evidence" or "sev-platform-attestation-only" or "sev-platform-package"
+        if evType == "full-vse-support" {
+        } else if evType == "platform-attestation-only" {
+        } else if evType == "sev-evidence" {
+	} else if evType == "sev-platform-package" {
+        } else if evType == "augmented-platform-attestation-only" {
+        } else if evType == "oe-evidence" {
+        } else if evType == "sev-platform-attestation-only" {
+        } else {
+                fmt.Printf("Invalid Evidence type: %s\n", evType)
+                return false, nil
+        }
+
   return false, nil
 }
 
@@ -309,6 +341,7 @@ func main() {
 }
 
 //	--------------------------------------------------------------------------------------
+
 
 //	The following will be removed
 

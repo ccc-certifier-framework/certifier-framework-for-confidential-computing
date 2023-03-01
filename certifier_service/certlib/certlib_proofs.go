@@ -1604,23 +1604,23 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	return nil, nil
 }
 
-func ValidateEvidenceWithPolicy(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		signedPolicy *certprotos.SignedClaimSequence, purpose string) bool {
 
         // initPolicy
 	originalPolicy := &certprotos.ProvedStatements{}
 	if !InitAxiom(*pubPolicyKey, originalPolicy) {
-                fmt.Printf("ValidateEvidenceWithPolicy: Can't InitAxiom\n")
+                fmt.Printf("ValidateSevEvidence: Can't InitAxiom\n")
 		return false
         }
 
 	if !InitPolicy(pubPolicyKey, signedPolicy, originalPolicy) {
-                fmt.Printf("ValidateEvidenceWithPolicy: Can't init policy\n")
+                fmt.Printf("ValidateSevEvidence: Can't init policy\n")
 		return false
         }
 
 	// Debug
-	fmt.Printf("\nValidateEvidenceWithPolicy, Original policy:\n")
+	fmt.Printf("\nValidateSevEvidence, Original policy:\n")
 	PrintProvedStatements(originalPolicy)
 
 	alreadyProved := FilterSevPolicy(pubPolicyKey, evp, originalPolicy)
@@ -1635,37 +1635,37 @@ func ValidateEvidenceWithPolicy(pubPolicyKey *certprotos.KeyMessage, evp *certpr
 	fmt.Printf("\n")
 
 	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, alreadyProved) {
-                fmt.Printf("ValidateEvidenceWithPolicy: Can't InitProvedStatements\n")
+                fmt.Printf("ValidateSevEvidence: Can't InitProvedStatements\n")
 		return false
 	}
 
 	// Debug
-	fmt.Printf("\nValidateEvidenceWithPolicy, proved:\n")
+	fmt.Printf("\nValidateSevEvidence, proved:\n")
 	PrintProvedStatements(originalPolicy)
 
         // ConstructProofFromSevPlatformEvidence()
 	toProve, proof := ConstructProofFromSevPlatformEvidence(pubPolicyKey, purpose, alreadyProved)
 	if toProve == nil || proof == nil {
-                fmt.Printf("ValidateEvidenceWithPolicy: Can't construct proof\n")
+                fmt.Printf("ValidateSevEvidence: Can't construct proof\n")
 		return false
 	}
 
 	// Debug
 	fmt.Printf("\n")
-	fmt.Printf("ValidateEvidenceWithPolicy, toProve: ")
+	fmt.Printf("ValidateSevEvidence, toProve: ")
 	PrintVseClause(toProve)
 	PrintProof(proof)
 	fmt.Printf("\n")
 
         if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
 		// Debug
-                fmt.Printf("ValidateEvidenceWithPolicy: Proof does not verify\n")
+                fmt.Printf("ValidateSevEvidence: Proof does not verify\n")
 
 		return false
         }
 
 	// Debug
-	fmt.Printf("ValidateEvidenceWithPolicy: Proof verifies\n")
+	fmt.Printf("ValidateSevEvidence: Proof verifies\n")
 	return true
 }
 

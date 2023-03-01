@@ -1272,8 +1272,8 @@ func TestPlatformVerify(t *testing.T) {
 	}
 
 	// Validate
- 	if !ValidateEvidenceWithPolicy(ud.PolicyKey, evp, signedPolicy, pur) {
-                t.Errorf("ValidateEvidenceWithPolicy fails\n")
+ 	if !ValidateSevEvidence(ud.PolicyKey, evp, signedPolicy, pur) {
+                t.Errorf("ValidateSevEvidence fails\n")
 		return
 	}
 }
