@@ -33,27 +33,28 @@ cd $SEV_EXAMPLE_DIR/provisioning
 
 $CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=5c19d5b4a50066c8c991bd920dfa2276e11d3531c91434a734f3b258ab279cd1b3bbe89ef930236af11dc3d28c70f406 --out_file=sev_example_app.measurement
 
-# For simulated enclave
+# For simulated sev
 $CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 --out_file=sev_example_app.measurement
 
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
-  --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
-  --output=ts1.bin
+#ark key is trusted
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert-subject=ark_cert.der \
+  --verb="is-trusted-for-attestation" --output=ts1.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1.bin
-
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert-subject=ark_cert.der \
-  --verb="is-trusted-for-attestation" --output=ts2.bin
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-  --verb="says" --clause=ts2.bin --output=vse_policy2.bin
-
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
   --vse_file=vse_policy1.bin --duration=9000 \
   --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
 
+#measurement is-trusted
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+  --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
+  --output=ts2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+  --verb="says" --clause=ts2.bin --output=vse_policy2.bin
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
   --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
 
+#trusted platform
 $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=debug --property_type='string' comparator="=" \
 --string_value=no --output=property1.bin
 
@@ -80,11 +81,9 @@ $CERTIFIER_PROTOTYPE/utilities/make_platform.exe --platform_type=amd-sev-snp \
 --properties_file=properties.bin --output=platform.bin
 
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --platform_subject=platform.bin \
---verb="has-trusted-platform-property" --output=vse_isplatform.bin
-
+--verb="has-trusted-platform-property" --output=ts3.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
---verb="says" --clause=vse_isplatform.bin --output=vse_policy3.bin
-
+--verb="says" --clause=ts3.bin --output=vse_policy3.bin
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
   --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_3.bin
 
