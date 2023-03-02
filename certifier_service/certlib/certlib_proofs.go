@@ -168,9 +168,13 @@ func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos
 
 func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.Evidence,
 		ps *certprotos.ProvedStatements) bool {
+
+	/*
+	This is done earlier now
 	if !InitAxiom(pk, ps) {
 		return false
 	}
+	*/
 
 	seenList := new (CertSeenList)
 	seenList.maxSize = 30
@@ -1531,8 +1535,8 @@ func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyM
 
 func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
 
-	// There should be 10 statements in already proved
-	if len(alreadyProved.Proved) < 10 {
+	// There should be 9 statements in already proved
+	if len(alreadyProved.Proved) < 9 {
 		fmt.Printf("ConstructProofFromPlatformEvidence: too few statements %d\n", len(alreadyProved.Proved))
 		return nil, nil
 	}
@@ -1583,7 +1587,7 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	//    "the ARK-key is-trusted-for-attestation" AND
 	//        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
 	//        "the ASK-key is-trusted-for-attestation" (R5)  [10, 5]
-	arkKeySaysAskKeyIsTrusted := alreadyProved.Proved[6]
+	arkKeySaysAskKeyIsTrusted := alreadyProved.Proved[5]
 	if arkKeySaysAskKeyIsTrusted.Clause == nil {
 		fmt.Printf("ConstructProofFromPlatformEvidence: ArkKey says Askkey is-trusted-for-attestation is malformed\n")
 		return nil, nil
@@ -1600,7 +1604,7 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	//    "the ASK-key is-trusted-for-attestation" AND
 	//        "the ASK-key says the VCEK-key is-trusted-for-attestation" -->
 	//        "the VCEK-key is-trusted-for-attestation" (R5) [11, 6]
-	askKeySaysVcekKeyIsTrusted := alreadyProved.Proved[7]
+	askKeySaysVcekKeyIsTrusted := alreadyProved.Proved[6]
 	if askKeySaysVcekKeyIsTrusted.Clause == nil {
 		fmt.Printf("ConstructProofFromPlatformEvidence: AskKey says vcekKey is-trusted-for-attestation is malformed\n")
 		return nil, nil
@@ -1617,7 +1621,7 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	//    "VCEK-key is-trusted-for-attestation" AND
 	//        "the VCEK says environment(platform, measurement) is-environment -->
 	//        "environment(platform, measurement) is-environment" [7]
-	vcekSaysIsEnvironment := alreadyProved.Proved[8]
+	vcekSaysIsEnvironment := alreadyProved.Proved[7]
 	if vcekSaysIsEnvironment.Clause == nil {
 		fmt.Printf("ConstructProofFromPlatformEvidence: AskKey says vcekKey is-trusted-for-attestation is malformed\n")
 		return nil, nil
@@ -1700,7 +1704,7 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 	//    "VCEK-key is-trusted-for-attestation" AND
 	//      "VCEK-key says the enclave-key speaks-for the environment()" -->
 	//        "enclave-key speaks-for the environment()" [, 8]
-	vcekSaysEnclaveKeySpeaksForEnvironment := alreadyProved.Proved[9]
+	vcekSaysEnclaveKeySpeaksForEnvironment := alreadyProved.Proved[8]
 	if vcekSaysEnclaveKeySpeaksForEnvironment == nil {
 		fmt.Printf("ConstructProofFromPlatformEvidence: vcek says enclavkey speaks-for environment malformed\n")
 		return nil, nil
