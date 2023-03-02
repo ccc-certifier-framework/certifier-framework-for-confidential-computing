@@ -31,6 +31,9 @@ cd $SEV_EXAMPLE_DIR/provisioning
 
 $CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=5c19d5b4a50066c8c991bd920dfa2276e11d3531c91434a734f3b258ab279cd1b3bbe89ef930236af11dc3d28c70f406 --out_file=sev_example_app.measurement
 
+# For simulated enclave
+$CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 --out_file=sev_example_app.measurement
+
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
   --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
   --output=ts1.bin
@@ -45,10 +48,45 @@ $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
   --vse_file=vse_policy1.bin --duration=9000 \
   --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
   --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
 
-$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=debug --property_type='string' comparator="=" \
+--string_value=no --output=property1.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=migrate --property_type='string' comparator="=" \
+--string_value=no --output=property2.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=key-share --property_type='string' comparator="=" \
+--string_value=no --output=property5.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name='api-major' --property_type=int --comparator=">=" \
+--int_value=0 --output=property3.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name='api-minor' --property_type=int --comparator=">=" \
+--int_value=0 --output=property4.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name='tcb-version' --property_type=int --comparator=">=" \
+--int_value=0 --output=property6.bin
+
+$CERTIFIER_PROTOTYPE/utilities/combine_properties.exe \
+--in=property1.bin,property2.bin,property3.bin,property4.bin,property5.bin,property6.bin \
+--output=properties.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_platform.exe --platform_type=amd-sev-snp \
+--properties_file=properties.bin --output=platform.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --platform_subject=platform.bin \
+--verb="has-trusted-platform-property" --output=vse_isplatform.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+--verb="says" --clause=vse_isplatform.bin --output=vse_policy3.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
+  --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_3.bin
+
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin\
   --output=policy.bin
 
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
