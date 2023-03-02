@@ -589,6 +589,7 @@ bool init_dominance_tree(predicate_dominance& root) {
   return true;
 }
 
+#ifdef SEV_SNP
 // policy
 //    byte 0
 //      bit     value
@@ -819,6 +820,7 @@ bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& se
   }
   return true;
 }
+#endif
 
 bool init_axiom(key_message& pk, proved_statements* are_proved) {
   // Add axiom pk is-trusted
@@ -2580,6 +2582,7 @@ bool right_platform(const vse_clause& cl, const platform& p) {
   return satisfying_platform(cl.subject().platform_ent(), p);
 }
 
+#ifdef SEV_SNP
 // Exactly one satisfying platform and one satisfying measurement should
 // be in the filtered policy.  It there are none or more than one each,
 // it's an error.  Also check the policy key is doing the saying.
@@ -2768,5 +2771,6 @@ bool validate_evidence_from_policy(const string& evidence_descriptor,
 
   return true;
 }
+#endif
 
 // -------------------------------------------------------------------------------------
