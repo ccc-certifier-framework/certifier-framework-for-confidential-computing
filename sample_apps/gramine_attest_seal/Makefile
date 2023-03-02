@@ -74,6 +74,7 @@ CERTIFIER_SRC_PATH = ../../src
 
 .SECONDARY: certifier
 CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/certifier.cc             \
+                $(CERTIFIER_SRC_PATH)/certifier_proofs.cc      \
                 $(CERTIFIER_SRC_PATH)/support.cc               \
 		$(CERTIFIER_SRC_PATH)/simulated_enclave.cc     \
 		$(CERTIFIER_SRC_PATH)/application_enclave.cc   \
