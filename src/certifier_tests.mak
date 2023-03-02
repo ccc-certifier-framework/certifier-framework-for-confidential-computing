@@ -2,7 +2,7 @@
 #    File: certifier_tests.mak
 
 ENABLE_SEV=1
-#RUN_SEV_TESTS=1
+RUN_SEV_TESTS=1
 
 ifndef SRC_DIR
 SRC_DIR=.

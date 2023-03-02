@@ -23,6 +23,8 @@ $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin
 # make app and compute app measurement
 cd $SEV_EXAMPLE_DIR
 make -f sev_example_app.mak
+# or if you're running with the SEV simulator
+make -f sev_example_app_with_dummy.mak
 
 # copy the der files
 

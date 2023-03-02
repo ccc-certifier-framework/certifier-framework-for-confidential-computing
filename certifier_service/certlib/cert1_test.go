@@ -1287,7 +1287,6 @@ func TestPlatformVerify(t *testing.T) {
 		return
 	}
 
-
 	// Validate
 	success, toProve, measurement := ValidateSevEvidence(ud.PolicyKey, evp, originalPolicy, pur)
 	if !success {

@@ -1761,7 +1761,7 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
                 *certprotos.VseClause, []byte) {
 
 	// Debug
-	fmt.Printf("\nValidateSevEvidence, Original policy:\n")
+	fmt.Printf("\nValidateInternalEvidence, Original policy:\n")
 	PrintProvedStatements(originalPolicy)
 
 	alreadyProved := FilterInternalPolicy(pubPolicyKey, evp, originalPolicy)
@@ -1776,18 +1776,18 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
 	fmt.Printf("\n")
 
 	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, alreadyProved) {
-                fmt.Printf("ValidateSevEvidence: Can't InitProvedStatements\n")
+                fmt.Printf("ValidateInternalEvidence: Can't InitProvedStatements\n")
 		return false, nil, nil
 	}
 
 	// Debug
-	fmt.Printf("\nValidateSevEvidence, proved:\n")
+	fmt.Printf("\nValidateInternalEvidence, proved:\n")
 	PrintProvedStatements(originalPolicy)
 
         // ConstructProofFromInternalPlatformEvidence()
 	toProve, proof := ConstructProofFromInternalPlatformEvidence(pubPolicyKey, purpose, alreadyProved)
 	if toProve == nil || proof == nil {
-                fmt.Printf("ValidateSevEvidence: Can't construct proof\n")
+                fmt.Printf("ValidateInternalEvidence: Can't construct proof\n")
 		return false, nil, nil
 	}
 
@@ -1850,6 +1850,37 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 		return false, nil, nil
 	}
 
+	// After InitProved alreadyProved should be:
+	//
+	//  00 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] is-trusted 
+	//  01 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
+	//	Key[rsa, ARKKey, c36d3343d69d9d8000d32d0979adff876e98ec79] is-trusted-for-attestation 
+	//  02 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
+	//      Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708] is-trusted 
+	//  03 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
+	//	platform[amd-sev-snp, debug: no, migrate: no, api-major: >=0, api-minor: >=0, key-share: no,
+	//		tcb-version: >=0] has-trusted-platform-property 
+	//  04 Key[rsa, ARKKey, c36d3343d69d9d8000d32d0979adff876e98ec79] says
+	//	Key[rsa, ARKKey, c36d3343d69d9d8000d32d0979adff876e98ec79] is-trusted-for-attestation 
+	//  05 Key[rsa, ARKKey, c36d3343d69d9d8000d32d0979adff876e98ec79] says
+	//	Key[rsa, ASKKey, c87c716e16df326f58c5fe026eb55133d57239ff] is-trusted-for-attestation 
+	//  06 Key[rsa, ASKKey, c87c716e16df326f58c5fe026eb55133d57239ff] says
+	//	Key[ecc-P-384, VCEKKey,
+	//	d8a35da4a4780fe58fe5a02e5aec7d40fa7452ca89ca4c6620181228b3e4e9c41ab9a200875a2b6e044ae73936408d27]
+	//	is-trusted-for-attestation 
+	//  07 Key[ecc-P-384, VCEKKey,
+	//	d8a35da4a4780fe58fe5a02e5aec7d40fa7452ca89ca4c6620181228b3e4e9c41ab9a200875a2b6e044ae73936408d27]
+	//	says environment[platform[amd-sev-snp, debug: no, key-share: no, migrate: no, api-major: =0,
+	//	api-minor: =0, tcb-version: =0],
+	//	measurement: 010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708]
+	//	is-environment 
+	//  08 Key[ecc-P-384, VCEKKey,
+	//	d8a35da4a4780fe58fe5a02e5aec7d40fa7452ca89ca4c6620181228b3e4e9c41ab9a200875a2b6e044ae73936408d27] says
+	//	Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] speaks-for
+	//	environment[platform[amd-sev-snp, debug: no, key-share: no, migrate: no, api-major: =0,
+	//	api-minor: =0, tcb-version: =0], measurement:
+	//	010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708]
+
 	// Debug
 	fmt.Printf("\nValidateSevEvidence, proved:\n")
 	PrintProvedStatements(originalPolicy)
@@ -1876,6 +1907,8 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 
 	// Debug
 	fmt.Printf("ValidateSevEvidence: Proof verifies\n")
+	fmt.Printf("\nProved statements\n")
+        PrintProvedStatements(alreadyProved);
 
 	me := alreadyProved.Proved[2]
 	if me.Clause == nil || me.Clause.Subject == nil ||
