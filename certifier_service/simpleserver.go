@@ -79,7 +79,8 @@ var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements {
 // At init, we retrieve the policy key and the rules to evaluate
 func initCertifierService() bool {
         // Debug
-        fmt.Printf("Initializing CertifierService, Policy key file: %s, Policy cert file: %s\n", *policyKeyFile, *policyCertFile)
+        fmt.Printf("Initializing CertifierService, Policy key file: %s, Policy cert file: %s, Policy file: %s\n",
+          *policyKeyFile, *policyCertFile, *policyFile)
 
         if *enableLog {
                 logging = initLog()
