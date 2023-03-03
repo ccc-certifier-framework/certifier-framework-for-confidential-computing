@@ -22,7 +22,6 @@ import (
 	"crypto/rsa"
 	"crypto/sha512"
 	"crypto/x509"
-	"os"
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	// oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
@@ -866,19 +865,6 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 
 	hashOfHeader := sha512.Sum384(ptr[0:0x2a0])
-
-	// Debug
-	fmt.Printf("\nvcekKey: ")
-	PrintKey(k)
-	fmt.Printf("\n")
-	fmt.Printf("VerifySevAttestation, report (%x)\n", len(am.ReportedAttestation))
-	PrintBytes(ptr[0:len(am.ReportedAttestation)])
-	fmt.Printf("\n")
-	outFile := "test_attestation.bin"
-	err = os.WriteFile(outFile, ptr[0:len(am.ReportedAttestation)], 0666)
-	if err != nil {
-		fmt.Printf("Write failed\n")
-	}
 
 	sig := ptr[0x2a0:0x330]
 	rb := sig[0:48];

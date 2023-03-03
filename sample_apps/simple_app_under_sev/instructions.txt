@@ -257,14 +257,15 @@ Step3a: Make sure there are der encoded versions of the ARK, ASK and VCEK certif
         cd $SEV_EXAMPLE_DIR/provisioning
         $CERTIFIER_PROTOTYPE/utilities/simulated_sev_key_generation.exe --ark_der=sev_ark_cert.der \
         --ask_der=sev_ask_cert.der --vcek_der=sev_vcek_cert.der \
-        --vcek_key_file=$CERTIFIER_PROTOTYPE/sev-snp-simulator/test/ec-secp384r1-pub-key.pem
+        --vcek_key_file=$CERTIFIER_PROTOTYPE/src/ec-secp384r1-pub-key.pem
         mv ark_cert.der ark_cert.der.old
         mv ask_cert.der ask_cert.der.old
         mv vcek_cert.der vcek_cert.der.old
         mv sev_ark_cert.der ark_cert.der
         mv sev_ask_cert.der ask_cert.der
         mv sev_vcek_cert.der vcek_cert.der
-    You must run the applications below as root for the simulated enclave.
+    You must run the applications below as root for the simulated enclave.  Make sure the keys come
+    from $CERTIFIER_PROTOTYPE/src/ec-secp384r1-pub-key.pem and not the simulator.
 
 
 Step 4: Embed the policy key in sev_example_app.
