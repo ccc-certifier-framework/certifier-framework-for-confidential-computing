@@ -822,6 +822,7 @@ func VerifyReport(etype string, pk *certprotos.KeyMessage, serialized []byte) bo
 //	Returns measurement
 //	serialized is the serialized sev_attestation_message
 func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
+
 	var am certprotos.SevAttestationMessage
 	err := proto.Unmarshal(serialized, &am)
 	if err != nil {
@@ -852,11 +853,11 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	hashed := sha512.Sum384(am.WhatWasSaid)
 
 	// Debug
-	fmt.Printf("Hashed user data in report: ")
+	fmt.Printf("\nHashed user data in report: ")
 	PrintBytes(hd)
-	fmt.Printf(", and,\n")
+	fmt.Printf("\nCalculated: \n")
 	PrintBytes(hashed[0:48])
-	fmt.Printf("\n")
+	fmt.Printf("\n\n")
 
 	if !bytes.Equal(hashed[0:48], hd[0:48]) {
 		fmt.Printf("VerifySevAttestation: Hash of user data is not the same as in the report\n")
@@ -878,24 +879,28 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 		fmt.Printf("Write failed\n")
 	}
 
+	sig := ptr[0x2a0:0x330]
+	rb := sig[0:48];
+	sb := sig[72:120]
+	measurement := ptr[0x90: 0xc0]
+
 	// Debug
-	fmt.Printf("VerifySevAttestation, Header of report: ")
-	PrintBytes(ptr[0:0x2a0])
-	fmt.Printf("\n")
-	fmt.Printf("VerifySevAttestation, Hashed header of report: ")
+	fmt.Printf("\nVerifySevAttestation, Hashed header of report: ")
 	PrintBytes(hashOfHeader[0:48])
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, measurement: ")
-	PrintBytes(ptr[0x90: 0xc0])
+	PrintBytes(measurement)
 	fmt.Printf("\n")
 	fmt.Printf("VerifySevAttestation, signature:\n    ")
-	PrintBytes(ptr[0x2a0:0x2d0])
+	PrintBytes(sig)
+	fmt.Printf("\nR: ")
+	PrintBytes(rb)
+	fmt.Printf("\nS: ")
+	PrintBytes(sb)
 	fmt.Printf("\n    ")
-	PrintBytes(ptr[0x2e8:0x318])
-	fmt.Printf("\n")
 
-	reversedR := LittleToBigEndian(ptr[0x2a0:0x2d0])
-	reversedS := LittleToBigEndian(ptr[0x2e8:0x318])
+	reversedR := LittleToBigEndian(rb)
+	reversedS := LittleToBigEndian(sb)
 	if reversedR == nil || reversedS == nil {
 		fmt.Printf("VerifySevAttestation: reversed bytes failed\n")
 		return nil
@@ -916,7 +921,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 
 	// return measurement if successful from am.ReportedAttestation->measurement
-	return ptr[0x90: 0xc0]
+	return measurement //ptr[0x90: 0xc0]
 }
 
 // R1: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-authentication.

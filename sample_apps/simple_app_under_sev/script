@@ -120,6 +120,8 @@ cp ./* $SEV_EXAMPLE_DIR/app2_data
 cd $CERTIFIER_PROTOTYPE/certifier_service
 go build simpleserver.go
 
+# For simulated sev, you must run the programs below as root
+
 #run server
 cd $SEV_EXAMPLE_DIR/service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
