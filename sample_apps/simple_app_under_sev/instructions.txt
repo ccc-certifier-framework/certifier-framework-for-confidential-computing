@@ -277,13 +277,27 @@ Step 7: Author the policy for the security domain and produce the signed claims 
        $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
           --verb="says" --clause=ts1.bin --output=vse_policy1.bin
 
-    b. Construct statement "policy-key says the platform-key is-trusted-for-attestation"
-       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=ark_cert.der \
-          --verb="is-trusted-for-attestation" --output=ts2.bin
-       $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-          --verb="says" --clause=ts2.bin --output=vse_policy2.bin
+    b. Construct platform key policy
 
-    c. Write the platform policy
+      $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert-subject=ark_cert.der \
+        --verb="is-trusted-for-attestation" --output=ts1.bin
+      $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+        --verb="says" --clause=ts1.bin --output=vse_policy1.bin
+      $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
+        --vse_file=vse_policy1.bin --duration=9000 \
+        --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+
+    c. Construct the measurement policy
+      $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+        --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
+        --output=ts2.bin
+      $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+        --verb="says" --clause=ts2.bin --output=vse_policy2.bin
+      $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
+        --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
+
+    d. Construct the trusted platform policy
+
       $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=debug --property_type='string' comparator="=" \
       --string_value=no --output=property1.bin
       $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=migrate --property_type='string' comparator="=" \
@@ -302,24 +316,15 @@ Step 7: Author the policy for the security domain and produce the signed claims 
       $CERTIFIER_PROTOTYPE/utilities/make_platform.exe --platform_type=amd-sev-snp \
       --properties_file=properties.bin --output=platform.bin
       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --platform_subject=platform.bin \
-      --verb="has-trusted-platform-property" --output=vse_isplatform.bin
+      --verb="has-trusted-platform-property" --output=ts3.bin
       $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-      --verb="says" --clause=vse_isplatform.bin --output=vse_policy3.bin
-
-    d. Produce the signed claims for each vse policy statement.
-       $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
-          --vse_file=vse_policy1.bin --duration=9000 \
-          --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
-       $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
-          --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
+      --verb="says" --clause=ts3.bin --output=vse_policy3.bin
       $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
         --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_3.bin
 
-
-    e. Combine signed policy statements for Certifier Service use.
-       $CERTIFIER_PROTOTYPE/utilities/package_claims.exe \
-          --input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin\
-          --output=policy.bin
+    e. Package the policy for the certifier
+      $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin\
+        --output=policy.bin
 
     f. [optional] Print the policy
        $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
