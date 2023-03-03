@@ -843,7 +843,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 		return nil
 	}
 
-	// hash the userdata and compare it to the one in the report
+	// hd is the hash of the user data in the report
 	hd := ptr[0x50:0x80]
 
 	if am.WhatWasSaid == nil {
@@ -853,11 +853,12 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	hashed := sha512.Sum384(am.WhatWasSaid)
 
 	// Debug
-	fmt.Printf("\nHashed user data in report: ")
+	fmt.Printf("\nVerifySevAttestation\n")
+	fmt.Printf("\nUser data hash in report: ")
 	PrintBytes(hd)
-	fmt.Printf("\nCalculated: \n")
+	fmt.Printf("\nCalculated: ")
 	PrintBytes(hashed[0:48])
-	fmt.Printf("\n\n")
+	fmt.Printf("\n")
 
 	if !bytes.Equal(hashed[0:48], hd[0:48]) {
 		fmt.Printf("VerifySevAttestation: Hash of user data is not the same as in the report\n")
@@ -867,10 +868,10 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	hashOfHeader := sha512.Sum384(ptr[0:0x2a0])
 
 	// Debug
-	fmt.Printf("VerifySevAttestation, vcekKey: ")
+	fmt.Printf("\nvcekKey: ")
 	PrintKey(k)
 	fmt.Printf("\n")
-	fmt.Printf("VerifySevAttestation, report (%x): ", len(am.ReportedAttestation))
+	fmt.Printf("VerifySevAttestation, report (%x)\n", len(am.ReportedAttestation))
 	PrintBytes(ptr[0:len(am.ReportedAttestation)])
 	fmt.Printf("\n")
 	outFile := "test_attestation.bin"
@@ -885,19 +886,19 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	measurement := ptr[0x90: 0xc0]
 
 	// Debug
-	fmt.Printf("\nVerifySevAttestation, Hashed header of report: ")
+	fmt.Printf("\nHashed report header: ")
 	PrintBytes(hashOfHeader[0:48])
 	fmt.Printf("\n")
-	fmt.Printf("VerifySevAttestation, measurement: ")
+	fmt.Printf("Measurement: ")
 	PrintBytes(measurement)
 	fmt.Printf("\n")
-	fmt.Printf("VerifySevAttestation, signature:\n    ")
+	fmt.Printf("Signature structure: ")
 	PrintBytes(sig)
-	fmt.Printf("\nR: ")
+	fmt.Printf("\n  R: ")
 	PrintBytes(rb)
-	fmt.Printf("\nS: ")
+	fmt.Printf("\n  S: ")
 	PrintBytes(sb)
-	fmt.Printf("\n    ")
+	fmt.Printf("\n")
 
 	reversedR := LittleToBigEndian(rb)
 	reversedS := LittleToBigEndian(sb)
@@ -907,9 +908,10 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 
 	// Debug
-	fmt.Printf("VerifySevAttestation, signature reversed:\n    ")
+	fmt.Printf("  Reversed R: ");
 	PrintBytes(reversedR)
-	fmt.Printf("\n    ")
+	fmt.Printf("\n")
+	fmt.Printf("  Reversed S: ");
 	PrintBytes(reversedS)
 	fmt.Printf("\n")
 
@@ -920,8 +922,8 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 		return nil
 	}
 
-	// return measurement if successful from am.ReportedAttestation->measurement
-	return measurement //ptr[0x90: 0xc0]
+	// return measurement, if successful
+	return measurement
 }
 
 // R1: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-authentication.
