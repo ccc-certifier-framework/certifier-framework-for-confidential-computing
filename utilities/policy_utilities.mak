@@ -79,6 +79,9 @@ simulated_sev.obj= $(O)/simulated_sev_attest.o $(O)/support.o $(O)/certifier.o $
 $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 sample_sev_key_generation.obj= $(O)/sample_sev_key_generation.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
 $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+simulated_sev_key_generation.obj= $(O)/simulated_sev_key_generation.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
+$(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+
 
 
 all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe \
@@ -87,7 +90,8 @@ all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe 
 	$(EXE_DIR)/print_signed_claim.exe $(EXE_DIR)/package_claims.exe \
 	$(EXE_DIR)/print_packaged_claims.exe $(EXE_DIR)/embed_policy_key.exe \
 	$(EXE_DIR)/make_platform.exe $(EXE_DIR)/make_property.exe $(EXE_DIR)/combine_properties.exe \
-	$(EXE_DIR)/make_environment.exe $(EXE_DIR)/simulated_sev_attest.exe $(EXE_DIR)/sample_sev_key_generation.exe
+	$(EXE_DIR)/make_environment.exe $(EXE_DIR)/simulated_sev_attest.exe $(EXE_DIR)/sample_sev_key_generation.exe \
+	$(EXE_DIR)/simulated_sev_key_generation.exe
 
 clean:
 	@echo "removing object files"
@@ -265,3 +269,11 @@ $(O)/sample_sev_key_generation.o: $(S)/sample_sev_key_generation.cc
 $(EXE_DIR)/sample_sev_key_generation.exe: $(sample_sev_key_generation.obj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/sample_sev_key_generation.exe $(sample_sev_key_generation.obj) $(LDFLAGS)
+
+$(O)/simulated_sev_key_generation.o: $(S)/simulated_sev_key_generation.cc
+	@echo "compiling simulated_sev_key_generation.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/simulated_sev_key_generation.o $(S)/simulated_sev_key_generation.cc
+
+$(EXE_DIR)/simulated_sev_key_generation.exe: $(simulated_sev_key_generation.obj)
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/simulated_sev_key_generation.exe $(simulated_sev_key_generation.obj) $(LDFLAGS)

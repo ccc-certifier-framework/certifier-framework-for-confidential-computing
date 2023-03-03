@@ -1766,6 +1766,7 @@ func PrintEvidence(ev *certprotos.Evidence) {
 		cx509 := Asn1ToX509(ev.SerializedEvidence)
 		fmt.Printf("Issuer: %s, Subject: %s\n", GetIssuerNameFromCert(cx509),* GetSubjectNameFromCert(cx509))
 		PrintBytes(ev.SerializedEvidence)
+		fmt.Printf("\n")
 	} else {
 		return
 	}

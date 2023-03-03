@@ -247,8 +247,24 @@ Step 3: Generate the policy key and self-signed cert
     cd $SEV_EXAMPLE_DIR/provisioning
     $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key \
     --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin 
+
 Step3a: Make sure there are der encoded versions of the ARK, ASK and VCEK certificates in
-    the provisioning directory.
+    the provisioning directory.  For Sev, these certs come from the platform.  The script
+    provides an alternate way to compile the application in a simulated evironment provided
+    by sev-snp-simulator.  For that environment, compilation script include -D SEV_DUMMY_GUEST.
+    To test agains this environment, you must generate a ARK, ASK and VCEK certificates
+    that are compatible with the sev-snp-simulator keys.  To do this:
+        cd $SEV_EXAMPLE_DIR/provisioning
+        $CERTIFIER_PROTOTYPE/utilities/simulated_sev_key_generation.exe --ark_der=sev_ark_cert.der \
+        --ask_der=sev_ask_cert.der --vcek_der=sev_vcek_cert.der \
+        --vcek_key_file=$CERTIFIER_PROTOTYPE/sev-snp-simulator/test/ec-secp384r1-pub-key.pem
+        mv ark_cert.der ark_cert.der.old
+        mv ask_cert.der ask_cert.der.old
+        mv vcek_cert.der vcek_cert.der.old
+        mv sev_ark_cert.der ark_cert.der
+        mv sev_ask_cert.der ask_cert.der
+        mv sev_vcek_cert.der vcek_cert.der
+    You must run the applications below as root for the simulated enclave.
 
 
 Step 4: Embed the policy key in sev_example_app.

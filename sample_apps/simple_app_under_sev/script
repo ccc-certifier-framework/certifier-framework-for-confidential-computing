@@ -31,10 +31,21 @@ make -f sev_example_app_with_dummy.mak
 # build policy
 cd $SEV_EXAMPLE_DIR/provisioning
 
+# For real sev
 $CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=5c19d5b4a50066c8c991bd920dfa2276e11d3531c91434a734f3b258ab279cd1b3bbe89ef930236af11dc3d28c70f406 --out_file=sev_example_app.measurement
 
 # For simulated sev
 $CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 --out_file=sev_example_app.measurement
+$CERTIFIER_PROTOTYPE/utilities/simulated_sev_key_generation.exe --ark_der=sev_ark_cert.der \
+  --ask_der=sev_ask_cert.der --vcek_der=sev_vcek_cert.der \
+  --vcek_key_file=$CERTIFIER_PROTOTYPE/sev-snp-simulator/test/ec-secp384r1-pub-key.pem
+mv ark_cert.der ark_cert.der.old
+mv ask_cert.der ask_cert.der.old
+mv vcek_cert.der vcek_cert.der.old
+mv sev_ark_cert.der ark_cert.der
+mv sev_ask_cert.der ask_cert.der
+mv sev_vcek_cert.der vcek_cert.der
+
 
 #ark key is trusted
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert-subject=ark_cert.der \
