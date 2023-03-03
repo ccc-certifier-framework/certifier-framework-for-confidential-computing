@@ -73,18 +73,19 @@ mbedtls/.mbedtls_configured: mbedtls/.mbedtls_downloaded
 CERTIFIER_SRC_PATH = ../../src
 
 .SECONDARY: certifier
-CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/certifier.cc             \
-                $(CERTIFIER_SRC_PATH)/certifier_proofs.cc      \
-                $(CERTIFIER_SRC_PATH)/support.cc               \
-		$(CERTIFIER_SRC_PATH)/simulated_enclave.cc     \
-		$(CERTIFIER_SRC_PATH)/application_enclave.cc   \
-		$(CERTIFIER_SRC_PATH)/cc_helpers.cc            \
-		$(CERTIFIER_SRC_PATH)/test_support.cc          \
-		$(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc   \
-		$(CERTIFIER_SRC_PATH)/certifier.pb.cc          \
+CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/certifier.cc                  \
+                $(CERTIFIER_SRC_PATH)/certifier_proofs.cc           \
+                $(CERTIFIER_SRC_PATH)/support.cc                    \
+		$(CERTIFIER_SRC_PATH)/simulated_enclave.cc          \
+		$(CERTIFIER_SRC_PATH)/application_enclave.cc        \
+		$(CERTIFIER_SRC_PATH)/cc_helpers.cc                 \
+		$(CERTIFIER_SRC_PATH)/test_support.cc               \
+		$(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc        \
+		$(CERTIFIER_SRC_PATH)/gramine/gramine_api_impl.cc   \
+		$(CERTIFIER_SRC_PATH)/certifier.pb.cc               \
 		$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal/gramine_trusted.cc \
 
-CERTIFIER_INCLUDE = -I$(CERTIFIER_SRC_PATH)/../include -I$(CERTIFIER_SRC_PATH)/gramine -I$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal
+CERTIFIER_INCLUDE = -I$(CERTIFIER_SRC_PATH)/../include -I$(CERTIFIER_SRC_PATH)/gramine -I$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal $(SGX_INCLUDE) -I$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal/./mbedtls/include
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE) -DGRAMINE_CERTIFIER
 CERTIFIER_LDFLAGS = -lssl -lcrypto
 CERTIFIER_LDFLAGS += -L./ -L/usr/local/lib
@@ -92,7 +93,8 @@ CERTIFIER_LDFLAGS += `pkg-config --cflags --libs protobuf`
 GPP=g++
 
 certifier:
-	$(GPP) -shared -fPIC -o libcertifier.so $(CERTIFIER_CFLAGS) $(CERTIFIER_SRC) $(CERTIFIER_LDFLAGS)
+	$(GPP) -shared -fPIC -o libcertifier.so $(CERTIFIER_CFLAGS) $(CERTIFIER_SRC) mbedtls/.mbedtls_configured $(CERTIFIER_LDFLAGS)
+
 ######################### CLIENT/SERVER EXECUTABLES ###########################
 
 # TODO: use `$(shell pkg-config --cflags mbedtls_gramine)` instead of local mbedtls includes
