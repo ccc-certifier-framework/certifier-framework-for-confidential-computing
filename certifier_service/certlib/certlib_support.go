@@ -1840,6 +1840,24 @@ func KeyFromPemFormat(pem string) *certprotos.KeyMessage {
 	return GetSubjectKey(cert)
 }
 
+func PrintX509Cert(cert *x509.Certificate) {
+	fmt.Printf("Certificate %d\n", cert.SerialNumber)
+	fmt.Printf("\tSubject: %+v\n", cert.Subject)
+	fmt.Printf("\tIssuer: %+v\n", cert.Issuer)
+	if cert.IsCA {
+		fmt.Printf("\tRoot cert\n")
+	} else {
+	}
+		fmt.Printf("\tSubordinate cert\n")
+	fmt.Printf("\tDNS Names: %+v\n", cert.DNSNames)
+	fmt.Printf("\tEmailAddresses: %+v\n", cert.EmailAddresses)
+	fmt.Printf("\tIPAddresses: %+v\n", cert.IPAddresses)
+	fmt.Printf("\tKeyUsage: %+v\n", cert.KeyUsage)
+	fmt.Printf("\tNot before: %+v\n", cert.NotBefore)
+	fmt.Printf("\tNot after : %+v\n", cert.NotAfter)
+	fmt.Printf("\tSignature Alg: %+v\n", cert.SignatureAlgorithm)
+}
+
 //  --------------------------------------------------------------------
 
 //  Simulated enclave

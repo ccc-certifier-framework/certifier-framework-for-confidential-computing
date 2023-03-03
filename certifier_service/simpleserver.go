@@ -260,7 +260,7 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 		return false, nil
 	}
 	if purpose == "attestation" {
-		artifact := certlib.ProducePlatformRule(privKey, policyCert,
+		artifact = certlib.ProducePlatformRule(privKey, policyCert,
 			toProve.Subject.Key, duration)
 		if artifact == nil {
 			return false, nil
@@ -274,14 +274,31 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 		appOrgName = "Measured-" + hex.EncodeToString(measurement)
 		sn = sn + 1
 		org := "CertifierUsers"
-		artifact := certlib.ProduceAdmissionCert(privKey, policyCert,
+		cert := certlib.ProduceAdmissionCert(privKey, policyCert,
 			toProve.Subject.Key, org, appOrgName, sn, duration)
+		if cert == nil {
+			fmt.Printf("ValidateRequestAndObtainToken: x509 certificate is nil\n")
+			return false, nil
+		}
+
+		// Debug
+		certlib.PrintX509Cert(cert)
+		artifact = certlib.X509ToAsn1(cert)
 		if artifact == nil {
+			fmt.Printf("ValidateRequestAndObtainToken: Asn1 artifact is nil\n")
 			return false, nil
 		}
 	}
 
-  return true, artifact
+	// DEBUG
+	if artifact == nil {
+		fmt.Printf("ValidateRequestAndObtainToken: why is the artifact nil?\n")
+	}
+	fmt.Printf("Artifact:\n")
+	certlib.PrintBytes(artifact)
+	fmt.Printf("\n")
+
+	return true, artifact
 }
 
 // Procedure is:
