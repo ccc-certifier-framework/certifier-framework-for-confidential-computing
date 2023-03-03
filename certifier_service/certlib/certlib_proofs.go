@@ -169,13 +169,6 @@ func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos
 func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.Evidence,
 		ps *certprotos.ProvedStatements) bool {
 
-	/*
-	This is done earlier now
-	if !InitAxiom(pk, ps) {
-		return false
-	}
-	*/
-
 	seenList := new (CertSeenList)
 	seenList.maxSize = 30
 	seenList.size = 0
@@ -884,6 +877,8 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	if err != nil {
 		fmt.Printf("Write failed\n")
 	}
+
+	// Debug
 	fmt.Printf("VerifySevAttestation, Header of report: ")
 	PrintBytes(ptr[0:0x2a0])
 	fmt.Printf("\n")
@@ -906,6 +901,7 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 		return nil
 	}
 
+	// Debug
 	fmt.Printf("VerifySevAttestation, signature reversed:\n    ")
 	PrintBytes(reversedR)
 	fmt.Printf("\n    ")
@@ -1883,7 +1879,7 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 
 	// Debug
 	fmt.Printf("\nValidateSevEvidence, proved:\n")
-	PrintProvedStatements(originalPolicy)
+	PrintProvedStatements(alreadyProved)
 
         // ConstructProofFromSevPlatformEvidence()
 	toProve, proof := ConstructProofFromSevPlatformEvidence(pubPolicyKey, purpose, alreadyProved)

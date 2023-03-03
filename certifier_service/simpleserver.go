@@ -103,7 +103,7 @@ func initCertifierService() bool {
                 return false
         }
 
-	privatePolicyKey := &certprotos.KeyMessage {}
+	privatePolicyKey = &certprotos.KeyMessage {}
         err = proto.Unmarshal(serializedKey, privatePolicyKey)
         if err != nil {
                 fmt.Printf("SimpleServer: Can't unmarshal serialized policy key\n")
@@ -242,27 +242,39 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 
 	// Produce Artifact
 	var artifact []byte = nil
-	if toProve.Subject == nil && toProve.Subject.Key == nil &&
+	if toProve == nil || toProve.Subject == nil || toProve.Subject.Key == nil ||
 			toProve.Subject.Key.KeyName == nil {
 		fmt.Printf("ValidateRequestAndObtainToken: toProve check failed\n")
-		certlib.PrintVseClause(toProve)
-		fmt.Printf("\n")
+                if toProve != nil {
+			certlib.PrintVseClause(toProve)
+			fmt.Printf("\n")
+		}
+		return false, nil
+	}
+	if policyCert == nil {
+		fmt.Printf("ValidateRequestAndObtainToken: policyCert is nil\n")
+		return false, nil
+	}
+	if privKey == nil {
+		fmt.Printf("ValidateRequestAndObtainToken: privatePolicyKey is nil\n")
 		return false, nil
 	}
 	if purpose == "attestation" {
-		artifact := certlib.ProducePlatformRule(privatePolicyKey, policyCert,
+		artifact := certlib.ProducePlatformRule(privKey, policyCert,
 			toProve.Subject.Key, duration)
 		if artifact == nil {
 			return false, nil
 		}
 	} else {
 		var appOrgName string
-		if measurement != nil {
-			appOrgName = "Measured-" + hex.EncodeToString(measurement)
+		if measurement == nil {
+			fmt.Printf("ValidateRequestAndObtainToken: measurement is nil\n")
+			return false, nil
 		}
+		appOrgName = "Measured-" + hex.EncodeToString(measurement)
 		sn = sn + 1
 		org := "CertifierUsers"
-		artifact := certlib.ProduceAdmissionCert(privatePolicyKey, policyCert,
+		artifact := certlib.ProduceAdmissionCert(privKey, policyCert,
 			toProve.Subject.Key, org, appOrgName, sn, duration)
 		if artifact == nil {
 			return false, nil
@@ -349,7 +361,7 @@ func serviceThread(conn net.Conn, client string) {
 
 func server(serverAddr string, arg string) {
 
-        if initCertifierService() != true {
+        if !initCertifierService() {
                 fmt.Printf("server: failed to initialize server\n")
                 os.Exit(1)
         }
