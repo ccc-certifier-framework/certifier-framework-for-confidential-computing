@@ -1303,7 +1303,8 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
         //      "policyKey is-trusted"
         //      "policyKey says platformKey is-trusted-for-attestation"
         //      "policyKey says measurement is-trusted"
-        //      "platform-key says enclaveKey speaks-for measurement
+	//	"platformKey says the attestationKey is-trusted-for-attestation
+        //      "attestationKey says enclaveKey speaks-for measurement
 
 	// Debug
 	fmt.Printf("ConstructProofFromOeEvidence, %d statements\n", len(alreadyProved.Proved))
@@ -1412,14 +1413,14 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
 
 // This is used for simulated enclave and the application enclave
 func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
-	// At this point, already proved should contain
-	//      "policyKey is-trusted"
-	//      "policyKey says platformKey is-trusted-for-attestation"
-	//      "policyKey says measurement is-trusted"
-	//      "platformKey says attestationKey is-trusted-for-attestation
-	//      "attestKey says enclaveKey speaks-for measurement"
+	// At this point, the evidence should be
+	//      0: "policyKey is-trusted"
+        //      1: "policyKey says platformKey is-trusted-for-attestation"
+        //      2: "policyKey says measurement is-trusted"
+        //      3: "platformKey says the attestationKey is-trusted-for-attestation
+        //      4: "attestationKey says enclaveKey speaks-for measurement
 
-        // Debug
+        // Debu4
         fmt.Printf("ConstructProofFromInternalPlatformEvidence entries %d\n", len(alreadyProved.Proved))
 
         proof := &certprotos.Proof{}
@@ -1430,27 +1431,28 @@ func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyM
         r7 := int32(7)
 
         policyKeyIsTrusted := alreadyProved.Proved[0]
-        policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[4]
-        measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
-        ps1 := certprotos.ProofStep {
-                S1: policyKeyIsTrusted,
-                S2: policyKeySaysMeasurementIsTrusted,
-                Conclusion: measurementIsTrusted,
-                RuleApplied: &r3,
-        }
-        proof.Steps = append(proof.Steps, &ps1)
 
-        policyKeySaysPlatformKeyIsTrusted := alreadyProved.Proved[3]
+        policyKeySaysPlatformKeyIsTrusted := alreadyProved.Proved[1]
         platformKeyIsTrusted := policyKeySaysPlatformKeyIsTrusted.Clause
-        ps2 := certprotos.ProofStep {
+        ps1 := certprotos.ProofStep {
                 S1: policyKeyIsTrusted,
                 S2: policyKeySaysPlatformKeyIsTrusted,
                 Conclusion: platformKeyIsTrusted,
                 RuleApplied: &r5,
         }
+        proof.Steps = append(proof.Steps, &ps1)
+
+        policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[2]
+        measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
+        ps2 := certprotos.ProofStep {
+                S1: policyKeyIsTrusted,
+                S2: policyKeySaysMeasurementIsTrusted,
+                Conclusion: measurementIsTrusted,
+                RuleApplied: &r3,
+        }
         proof.Steps = append(proof.Steps, &ps2)
 
-        platformKeySaysAttestKeyIsTrusted := alreadyProved.Proved[1]
+        platformKeySaysAttestKeyIsTrusted := alreadyProved.Proved[3]
         attestKeyIsTrusted := platformKeySaysAttestKeyIsTrusted.Clause
         ps3 := certprotos.ProofStep {
                 S1: platformKeyIsTrusted,
@@ -1460,7 +1462,7 @@ func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyM
         }
         proof.Steps = append(proof.Steps, &ps3)
 
-        attestKeySaysEnclaveKeySpeaksForMeasurement := alreadyProved.Proved[2]
+        attestKeySaysEnclaveKeySpeaksForMeasurement := alreadyProved.Proved[4]
         enclaveKeySpeaksForMeasurement := attestKeySaysEnclaveKeySpeaksForMeasurement.Clause
         ps4 := certprotos.ProofStep {
         S1: attestKeyIsTrusted,
@@ -1768,6 +1770,15 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
                 fmt.Printf("ValidateInternalEvidence: Can't InitProvedStatements\n")
 		return false, nil, nil
 	}
+
+	// After InitProvedStatements already proved will be:
+	//	00: Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe]] is-trusted
+	//	01: Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says
+	//		Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] is-trusted-for-attestation 
+	//	02: Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says Measurement[adfa183074db7eda63566e5645dddb8c012422be7f3bded45e90c53784d1028f]  is-trusted 
+	//	03 Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] says attestKey is-trusted-for-attestation 
+	//	04 Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] says authenticationKey speaks-for measurement
+	// Statements 3 and 4 are part of the applications evidence package
 
 	// Debug
 	fmt.Printf("\nValidateInternalEvidence, proved:\n")

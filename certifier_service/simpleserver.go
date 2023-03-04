@@ -215,7 +215,8 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 	var success bool
 
 	// Todo: Change this type to "vse-attestation-package"
-        if evType == "platform-attestation-only"  || evType == "augmented-platform-attestation-only" {
+        // Used to include "platform-attestation-only"  and "augmented-platform-attestation-only"
+        if evType == "vse-attestation-package" {
 		success, toProve, measurement = certlib.ValidateInternalEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSimulatedEvidence failed\n")
@@ -275,15 +276,6 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 fmt.Printf("\n")
 		sn = sn + 1
 		org := "CertifierUsers"
-
-fmt.Printf("Issuer: \n")
-certlib.PrintKey(privKey)
-fmt.Printf("\n")
-fmt.Printf("org name: %s\n", appOrgName)
-fmt.Printf("subj key :\n")
-certlib.PrintKey(toProve.Subject.Key)
-fmt.Printf("\n")
-fmt.Printf("sn: %d, duration: %lf\n", sn, duration)
 
 		cert := certlib.ProduceAdmissionCert(privKey, policyCert,
 			toProve.Subject.Key, org, appOrgName, sn, duration)
