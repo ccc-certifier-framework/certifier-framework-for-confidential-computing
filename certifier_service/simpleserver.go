@@ -272,8 +272,19 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 			return false, nil
 		}
 		appOrgName = "Measured-" + hex.EncodeToString(measurement)
+fmt.Printf("\n")
 		sn = sn + 1
 		org := "CertifierUsers"
+
+fmt.Printf("Issuer: \n")
+certlib.PrintKey(privKey)
+fmt.Printf("\n")
+fmt.Printf("org name: %s\n", appOrgName)
+fmt.Printf("subj key :\n")
+certlib.PrintKey(toProve.Subject.Key)
+fmt.Printf("\n")
+fmt.Printf("sn: %d, duration: %lf\n", sn, duration)
+
 		cert := certlib.ProduceAdmissionCert(privKey, policyCert,
 			toProve.Subject.Key, org, appOrgName, sn, duration)
 		if cert == nil {
@@ -283,7 +294,7 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 
 		// Debug
 		certlib.PrintX509Cert(cert)
-		artifact = certlib.X509ToAsn1(cert)
+		artifact = cert.Raw
 		if artifact == nil {
 			fmt.Printf("ValidateRequestAndObtainToken: Asn1 artifact is nil\n")
 			return false, nil

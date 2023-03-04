@@ -1619,6 +1619,7 @@ func Asn1ToX509 (in []byte) *x509.Certificate {
 func X509ToAsn1(cert *x509.Certificate) []byte {
 	out, err := asn1.Marshal(cert)
 	if err != nil {
+                fmt.Printf("X509ToAsn1 error: %s\n", err.Error())
 		return nil
 	}
 	return out
