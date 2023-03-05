@@ -14,31 +14,44 @@
         },
         "platforms": {
             "type": "array",
-            "title": "The platforms properties Schema",
+            "title": "The platforms type Schema",
             "items": {
-                "type": "array",
-                "title": "Properties for a single platform",
-                "items": {
-                    "type": "object",
-                    "title": "A single property",
-                    "required": [
-                        "comparator",
-                        "type",
-                        "name",
-                        "value"
-                    ],
-                    "properties": {
-                        "comparator": {
-                            "type": "string"
-                        },
-                        "type": {
-                            "type": "string"
-                        },
-                        "name": {
-                            "type": "string"
-                        },
-                        "value": {
-                            "type": "string"
+                "type": "object",
+                "required": [
+                    "type",
+                    "props"
+                ],
+
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "props": {
+                        "type": "array",
+                        "title": "Properties for a single platform",
+                        "items": {
+                            "type": "object",
+                            "title": "A single property",
+                            "required": [
+                                "comparator",
+                                "type",
+                                "name",
+                                "value"
+                            ],
+                            "properties": {
+                                "comparator": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
                         }
                     }
                 }
@@ -305,6 +318,27 @@
                     ]
                 }
             ],
+            "oneOf": [{
+                    "required": [
+                        "keyObject"
+                    ]
+                },
+                {
+                    "required": [
+                        "measurementObject"
+                    ]
+                },
+                {
+                    "required": [
+                        "platformObject"
+                    ]
+                },
+                {
+                    "required": [
+                        "environmentObject"
+                    ]
+                }
+            ],
             "properties": {
                 "keySubject": {
                     "type": "string"
@@ -319,6 +353,18 @@
                     "type": "string"
                 },
                 "environmentSubject": {
+                    "type": "string"
+                },
+                "keyObject": {
+                    "type": "string"
+                },
+                "measurementObject": {
+                    "type": "string"
+                },
+                "platformObject": {
+                    "type": "string"
+                },
+                "environmentObject": {
                     "type": "string"
                 },
                 "verb": {
