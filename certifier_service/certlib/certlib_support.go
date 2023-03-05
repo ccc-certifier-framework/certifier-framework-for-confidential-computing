@@ -986,13 +986,13 @@ func PrintAttestationUserData(sr *certprotos.AttestationUserData) {
 		fmt.Printf("Time signed : %s\n", *sr.Time)
 	}
 	if sr.EnclaveKey != nil {
-		fmt.Printf("Enclave key\n");
+		fmt.Printf("Enclave key:\n");
 		PrintKey(sr.EnclaveKey)
 	} else {
 		fmt.Printf("No enclave key\n");
 	}
 	if sr.PolicyKey != nil {
-		fmt.Printf("Policy key\n");
+		fmt.Printf("Policy key:\n");
 		PrintKey(sr.PolicyKey)
 	} else {
 		fmt.Printf("No policy key\n");
@@ -1758,6 +1758,7 @@ func PrintEvidence(ev *certprotos.Evidence) {
 			return
 		}
 		PrintSignedClaim(&sc)
+		fmt.Printf("\n")
 	} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
 		sr := certprotos.SignedReport{}
 		err:= proto.Unmarshal(ev.SerializedEvidence, &sr)
@@ -1765,8 +1766,10 @@ func PrintEvidence(ev *certprotos.Evidence) {
 			return
 		}
 		PrintSignedReport(&sr)
+		fmt.Printf("\n")
 	} else if ev.GetEvidenceType() == "oe-attestation-report" {
 		PrintBytes(ev.SerializedEvidence)
+		fmt.Printf("\n")
 	} else if ev.GetEvidenceType() == "sev-attestation" {
 		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "cert" {
@@ -1785,6 +1788,7 @@ func PrintEvidencePackage(evp *certprotos.EvidencePackage, printAll bool) {
 		ev := evp.FactAssertion[i]
 		if printAll {
 			PrintEvidence(ev)
+			fmt.Printf("\n\n")
 		} else {
 			fmt.Printf("    Evidence type: %s\n", ev.GetEvidenceType())
 		}

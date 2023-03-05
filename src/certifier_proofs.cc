@@ -1258,6 +1258,12 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         return false;
       }
 
+#if 1
+      printf("attestation report:\n");
+      print_attestation_info(info);
+      printf("\n");
+#endif
+
       if (!check_date_range(info.not_before(), info.not_after())) {
         printf("check_date_range failed\n");
         return false;

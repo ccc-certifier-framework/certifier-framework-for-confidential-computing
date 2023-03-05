@@ -463,7 +463,7 @@ bool cc_trust_data::get_trust_data_from_store() {
     const key_message* sk = store_.get_authentication_key_by_index(index);
     private_service_key_.CopyFrom(*sk);
     if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
-      printf("Can't transform to public key\n");
+      printf("get_trust_data_from_store: Can't transform to public key\n");
       return false;
     }
     cc_service_key_initialized_ = true;
@@ -471,7 +471,7 @@ bool cc_trust_data::get_trust_data_from_store() {
     string sealing_key_tag("sealing-key");
     index = store_.get_storage_info_index_by_tag(sealing_key_tag);
     if (index < 0) {
-      printf("Can't get sealing-key\n");
+      printf("get_trust_data_from_store: Can't get sealing-key\n");
       return false;
     }
     const storage_info_message* skm = store_.get_storage_info_by_index(index);
@@ -499,28 +499,44 @@ bool cc_trust_data::get_trust_data_from_store() {
     string auth_key_tag("auth-key");
     int index = store_.get_authentication_key_index_by_tag(auth_key_tag);
     if (index < 0) {
-      printf("Can't find authentication key\n");
+      printf("get_trust_data_from_store: Can't find authentication key\n");
       return false;
     }
     const key_message* ak = store_.get_authentication_key_by_index(index);
     if (ak == nullptr) {
-      printf("Can't retrieve authentication key\n");
+      printf("get_trust_data_from_store: Can't retrieve authentication key\n");
       return false;
     }
     private_auth_key_.CopyFrom(*ak);
     if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
-      printf("Can't transform to public key\n");
+      printf("get_trust_data_from_store: Can't transform to public key\n");
       return false;
     }
+#ifdef DEBUG
+    printf("Warm restart auth key:\n");
+    printf("Private auth key:\n");
+    print_key(private_auth_key_);
+    printf("\n");
+    printf("Public auth key:\n");
+    print_key(public_auth_key_);
+    printf("\n");
+#endif
     cc_auth_key_initialized_ = true;
     if (private_auth_key_.has_certificate()) {
       cc_is_certified_ = true;
+#ifdef DEBUG
+      X509* x = X509_new();
+      if (asn1_to_x509(private_auth_key_.certificate(), x)) {
+        X509_print_fp(stdout, x);
+      }
+      X509_free(x);
+#endif
     }
 
     string symmetric_key_tag("app-symmetric-key");
     index = store_.get_storage_info_index_by_tag(symmetric_key_tag);
     if (index < 0) {
-      printf("Can't get app-symmetric-key\n");
+      printf("get_trust_data_from_store: Can't get app-symmetric-key\n");
       return false;
     }
     const storage_info_message* skm = store_.get_storage_info_by_index(index);
@@ -799,17 +815,45 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
 
   attestation_user_data ud;
   if (purpose_ == "authentication") {
+#ifdef DEBUG
+    printf("\n---In certify me\n");
+    printf("Filling ud with public auth key:\n");
+    print_key(public_auth_key_);
+    printf("\n");
+#endif
+
     if (!make_attestation_user_data(enclave_type_,
           public_auth_key_, &ud)) {
       printf("cc_trust_data::certify_me: Can't make user data (1)\n");
       return false;
     }
+#ifdef DEBUG
+    printf("\n---In certify me\n");
+    printf("key in attestation user data:\n");
+    print_key(ud.enclave_key());
+    printf("\nprivate auth key:\n");
+    print_key(private_auth_key_);
+    printf("\npublic auth key:\n");
+    print_key(public_auth_key_);
+    printf("\n");
+    printf("User data:\n");
+    print_user_data(ud);
+    printf("\n");
+#endif
   } else if (purpose_ == "attestation") {
     if (!make_attestation_user_data(enclave_type_,
           public_service_key_, &ud)) {
       printf("cc_trust_data::certify_me: Can't make user data (1)\n");
       return false;
     }
+#ifdef DEBUG
+    printf("\n---In certify me\n");
+    printf("private service key:\n");
+    print_key(private_service_key_);
+    printf("\npublic service key:\n");
+    print_key(public_service_key_);
+    printf("\n");
+#endif
   } else {
     printf("cc_trust_data::certify_me: neither attestation or authorization\n");
     return false;
@@ -913,12 +957,16 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     private_auth_key_.set_certificate(response.artifact());
 
 #ifdef DEBUG
+    printf("\nAfter cert assigned\n");
+    printf("private key:\n");
+    print_key(private_auth_key_);
+    printf("\n");
     X509* art_cert = X509_new();
-    string d_str;
-    d_str.assign((char*)response.artifact().data(),response.artifact().size());
-    if (asn1_to_x509(d_str, art_cert)) {
+    if (asn1_to_x509(private_auth_key_.certificate(), art_cert)) {
+      printf("Cert:\n");
       X509_print_fp(stdout, art_cert);
     }
+    X509_free(art_cert);
 #endif
 
     // Update store with cert and save it
@@ -928,7 +976,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       printf("cc_trust_data::certify_me: Can't find authentication key in store\n");
       return false;
     }
-    ((key_message*) km)->set_certificate((byte*)response.artifact().data(), response.artifact().size());
+    ((key_message*) km)->set_certificate(response.artifact());
     cc_auth_key_initialized_ = true;
     cc_is_certified_ = true;
 
@@ -965,6 +1013,10 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     return false;
   }
 
+  if (!put_trust_data_in_store()) {
+    printf("certify_me: Can't put trust data in store\n");
+    return false;
+  }
   return save_store();
 }
 
@@ -1331,6 +1383,13 @@ bool load_server_certs_and_key(X509* root_cert,
 #else
   if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
       printf("SSL_CTX_use_cert_and_key failed\n");
+#ifdef DEBUG
+      printf("cert:\n");
+      X509_print_fp(stdout, x509_auth_key_cert);
+      printf("key:\n");
+      print_key(private_key);
+      printf("\n");
+#endif
       return false;
   }
 #endif

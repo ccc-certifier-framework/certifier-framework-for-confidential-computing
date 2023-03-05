@@ -39,7 +39,15 @@ func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
 
 func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
-	return original
+	// Todo: Fix
+        filtered :=  &certprotos.ProvedStatements {}
+	for i := 0; i < len(original.Proved); i++ {
+		from := original.Proved[i]
+		to :=  proto.Clone(from).(*certprotos.VseClause)
+		filtered.Proved = append(filtered.Proved, to)
+	}
+
+	return filtered
 }
 
 func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
@@ -398,12 +406,16 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				fmt.Printf("Can't unmarshal user data\n")
 				return false
 			}
+
 			if VerifyReport("vse-attestation-report", k, ev.GetSerializedEvidence()) {
 				if CheckTimeRange(info.NotBefore, info.NotAfter) {
 					cl := ConstructVseAttestClaim(k, ud.EnclaveKey, info.VerifiedMeasurement)
 					ps.Proved = append(ps.Proved, cl)
 				}
-			}
+			} else {
+				fmt.Printf("InitProvedStatements: vse-attestation-report fails to verify\n")
+				return false
+                        }
 		} else {
 			fmt.Printf("Unknown evidence type\n")
 			return false
@@ -542,17 +554,17 @@ func ConstructVseAttestClaim(attestKey *certprotos.KeyMessage, enclaveKey *certp
 		measurement []byte) *certprotos.VseClause {
 	am := MakeKeyEntity(attestKey)
 	if am == nil {
-		fmt.Printf("Can't make attest entity\n")
+		fmt.Printf("ConstructVseAttestClaim: Can't make attest entity\n")
 		return nil
 	}
 	em := MakeKeyEntity(enclaveKey)
 	if em == nil {
-		fmt.Printf("Can't make enclave entity\n")
+		fmt.Printf("ConstructVseAttestClaim: Can't make enclave entity\n")
 		return nil
 	}
 	mm := MakeMeasurementEntity(measurement)
 	if mm == nil {
-		fmt.Printf("Can't make measurement entity\n")
+		fmt.Printf("ConstructVseAttestClaim: Can't make measurement entity\n")
 		return nil
 	}
 	says := "says"
@@ -1777,16 +1789,15 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
 	}
 
 	// After InitProvedStatements already proved will be:
-	//	00: Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe]] is-trusted
-	//	01: Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says
-	//		Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] is-trusted-for-attestation
-	//	02: Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says Measurement[adfa183074db7eda63566e5645dddb8c012422be7f3bded45e90c53784d1028f]  is-trusted
-	//	03 Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] says attestKey is-trusted-for-attestation 
-	//	04 Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] says authenticationKey speaks-for measurement
-	// Statements 3 and 4 are part of the applications evidence package
+        //    00 Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] is-trusted
+        //    01 Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] is-trusted-for-attestation
+        //    02 Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says Measurement[617ac0a68393b4c0b359a76d0fab9015af0801273e13bd366fca57a7af4fe6cc] is-trusted
+        //    03 Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] says Key[rsa, attestKey, f19938982e3f7e16f524de5f7b47d3e39e32df07] is-trusted-for-attestation
+        //    04 Key[rsa, attestKey, f19938982e3f7e16f524de5f7b47d3e39e32df07] says Key[rsa, auth-key, ce3c7cc9b6e7bc733a95434bda226ef4d74e620f] speaks-for Measurement[617ac0a68393b4c0b359a76d0fab9015af0801273e13bd366fca57a7af4fe6cc]
+
 
 	// Debug
-	fmt.Printf("\nValidateInternalEvidence: proved:\n")
+	fmt.Printf("\nValidateInternalEvidence: after InitProved:\n")
 	PrintProvedStatements(alreadyProved)
 
         // ConstructProofFromInternalPlatformEvidence()
@@ -1886,7 +1897,7 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	//	010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708]
 
 	// Debug
-	fmt.Printf("\nValidateSevEvidence, proved:\n")
+	fmt.Printf("\nValidateSevEvidence, after InitProved:\n")
 	PrintProvedStatements(alreadyProved)
 
         // ConstructProofFromSevPlatformEvidence()
