@@ -1289,7 +1289,7 @@ func VerifyProof(policyKey *certprotos.KeyMessage, toProve *certprotos.VseClause
 				return true
 			}
 		} else {
-			fmt.Printf("ERROR: Step %d, does not pass\n", i)
+			fmt.Printf("VerifyProof error: Step %d, does not pass\n", i)
 			PrintProofStep("    ", p.Steps[i])
 			return false
 		}
@@ -1757,17 +1757,17 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
                 *certprotos.VseClause, []byte) {
 
 	// Debug
-	fmt.Printf("\nValidateInternalEvidence, Original policy:\n")
+	fmt.Printf("\nValidateInternalEvidence: original policy:\n")
 	PrintProvedStatements(originalPolicy)
 
 	alreadyProved := FilterInternalPolicy(pubPolicyKey, evp, originalPolicy)
 	if alreadyProved == nil {
-                fmt.Printf("Can't filterpolicy\n")
+                fmt.Printf("ValidateInternalEvidence: Can't filterpolicy\n")
 		return false, nil, nil
         }
 
 	// Debug
-	fmt.Printf("\nfiltered policy:\n")
+	fmt.Printf("\nValidateInternalEvidence: filtered policy:\n")
 	PrintProvedStatements(alreadyProved)
 	fmt.Printf("\n")
 
@@ -1779,15 +1779,15 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
 	// After InitProvedStatements already proved will be:
 	//	00: Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe]] is-trusted
 	//	01: Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says
-	//		Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] is-trusted-for-attestation 
-	//	02: Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says Measurement[adfa183074db7eda63566e5645dddb8c012422be7f3bded45e90c53784d1028f]  is-trusted 
+	//		Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] is-trusted-for-attestation
+	//	02: Key[rsa, policyKey, a5fc2b7e629fbbfb04b056a993a473af3540bbfe] says Measurement[adfa183074db7eda63566e5645dddb8c012422be7f3bded45e90c53784d1028f]  is-trusted
 	//	03 Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] says attestKey is-trusted-for-attestation 
 	//	04 Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] says authenticationKey speaks-for measurement
 	// Statements 3 and 4 are part of the applications evidence package
 
 	// Debug
-	fmt.Printf("\nValidateInternalEvidence, proved:\n")
-	PrintProvedStatements(originalPolicy)
+	fmt.Printf("\nValidateInternalEvidence: proved:\n")
+	PrintProvedStatements(alreadyProved)
 
         // ConstructProofFromInternalPlatformEvidence()
 	toProve, proof := ConstructProofFromInternalPlatformEvidence(pubPolicyKey, purpose, alreadyProved)

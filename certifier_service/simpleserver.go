@@ -259,6 +259,7 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 		fmt.Printf("ValidateRequestAndObtainToken: privatePolicyKey is nil\n")
 		return false, nil
 	}
+
 	if purpose == "attestation" {
 		artifact = certlib.ProducePlatformRule(privKey, policyCert,
 			toProve.Subject.Key, duration)
@@ -272,9 +273,13 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 			return false, nil
 		}
 		appOrgName = "Measured-" + hex.EncodeToString(measurement)
-fmt.Printf("\n")
 		sn = sn + 1
 		org := "CertifierUsers"
+
+		// Debug
+		fmt.Printf("Enclave key is:\n")
+		certlib.PrintKey(toProve.Subject.Key);
+		fmt.Printf("\norg: %s, appOrgName: %s\n", org, appOrgName)
 
 		cert := certlib.ProduceAdmissionCert(privKey, policyCert,
 			toProve.Subject.Key, org, appOrgName, sn, duration)

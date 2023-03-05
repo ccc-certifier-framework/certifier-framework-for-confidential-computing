@@ -767,7 +767,6 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
       return false;
     }
-  // Todo: fix size
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(serialized_ask_cert);
     ev = platform_evidence.add_assertion();
@@ -821,7 +820,6 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     return false;
   }
 
-  // Todo: fix size
   int size_out = 16000;
   byte out[size_out];
   if (!Attest(enclave_type_, serialized_ud.size(),
@@ -847,7 +845,6 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   } else if (enclave_type_ == "oe-enclave") {
     request.set_submitted_evidence_type("oe-evidence");
   } else {
-    // Todo: Change this type to "vse-attestation-package"
     request.set_submitted_evidence_type("vse-attestation-package");
   }
   request.set_purpose(purpose_);
@@ -1368,6 +1365,7 @@ void server_dispatch(const string& host_name, int port,
       string& asn1_root_cert, key_message& private_key,
       const string& private_key_cert, void (*func)(secure_authenticated_channel&)) {
 
+  OPENSSL_init_ssl(0, NULL);
   SSL_load_error_strings();
 
   X509* root_cert = X509_new();
