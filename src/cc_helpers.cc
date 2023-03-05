@@ -767,6 +767,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
       return false;
     }
+  // Todo: fix size
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(serialized_ask_cert);
     ev = platform_evidence.add_assertion();
@@ -839,16 +840,15 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   //   to prevent MITM attacks?  Probably not.
   request.set_requesting_enclave_tag("requesting-enclave");
   request.set_providing_enclave_tag("providing-enclave");
-  if (enclave_type_ == "application-enclave") {
-    // Todo: Change this type to "vse-attestation-package"
-    request.set_submitted_evidence_type("augmented-platform-attestation-only");
+  if (enclave_type_ == "application-enclave" || enclave_type_ == "simulated-enclave") {
+    request.set_submitted_evidence_type("vse-attestation-package");
   } else if (enclave_type_ == "sev-enclave") {
     request.set_submitted_evidence_type("sev-platform-package");
   } else if (enclave_type_ == "oe-enclave") {
     request.set_submitted_evidence_type("oe-evidence");
   } else {
     // Todo: Change this type to "vse-attestation-package"
-    request.set_submitted_evidence_type("platform-attestation-only");
+    request.set_submitted_evidence_type("vse-attestation-package");
   }
   request.set_purpose(purpose_);
 
@@ -993,6 +993,7 @@ bool cc_trust_data::run_peer_certificationservice(const string& host_name, int p
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
+#define DEBUG
 bool construct_platform_evidence_package(string& attesting_enclave_type, const string& purpose,
       evidence_list& platform_assertions, string& serialized_attestation,
       evidence_package* ep) {
@@ -1001,6 +1002,14 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
   string et("signed-claim");
   ep->set_prover_type(pt);
 
+#ifdef DEBUG
+  printf("construct_platform_evidence_package %d existing assertions\n",
+      platform_assertions.assertion_size());
+  for (int i = 0; i < platform_assertions.assertion_size(); i++) {
+    print_evidence(platform_assertions.assertion(i));
+    printf("\n");
+  }
+#endif
   for (int i = 0; i < platform_assertions.assertion_size(); i++) {
     const evidence& ev_from = platform_assertions.assertion(i);
     evidence* ev_to = ep->add_fact_assertion();
@@ -1022,17 +1031,9 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
   } else if ("gramine-enclave" == attesting_enclave_type) {
     string et2("gramine-attestation-report");
     ev2->set_evidence_type(et2);
-#if 1
-  // This is without platform verification
   } else if ("sev-enclave" ==  attesting_enclave_type) {
     string et2("sev-attestation");
     ev2->set_evidence_type(et2);
-#else
-  // This is with platform verification
-  } else if ("sev-enclave" ==  attesting_enclave_type) {
-    string et2("sev-attestation-with-platform");
-    ev2->set_evidence_type(et2);
-#endif
   } else {
     return false;
   }
@@ -1040,6 +1041,7 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
   ev2->set_serialized_evidence(serialized_attestation);
   return true;
 }
+#undef DEBUG
 
 // Todo: This isn't used
 bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_key_is_trusted,

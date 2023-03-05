@@ -1420,8 +1420,13 @@ func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyM
         //      3: "platformKey says the attestationKey is-trusted-for-attestation
         //      4: "attestationKey says enclaveKey speaks-for measurement
 
-        // Debu4
+        // Debug
         fmt.Printf("ConstructProofFromInternalPlatformEvidence entries %d\n", len(alreadyProved.Proved))
+
+	if len(alreadyProved.Proved) < 5 {
+		fmt.Printf("ConstructProofFromInternalPlatformEvidence: too few proved statements\n")
+		return nil, nil
+	}
 
         proof := &certprotos.Proof{}
         r1 := int32(1)
@@ -1814,8 +1819,7 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
 		return false, nil, nil
 	}
 
-
-	return false, nil, nil
+	return true, toProve, me.Clause.Subject.Measurement
 }
 
 // returns success, toProve, measurement

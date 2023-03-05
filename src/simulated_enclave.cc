@@ -63,12 +63,12 @@ bool simulated_Init(const string& asn1_policy_cert, const string& attest_key_fil
 
   int m_size = file_size(measurement_file);
   if (m_size < 0) {
-    printf("simulated_Init, error 1\n");
+    printf("simulated_Init: Can't get measurement file size %s\n", measurement_file.c_str());
     return false;
   }
   byte m[m_size];
   if (!read_file(measurement_file, &m_size, m)) {
-    printf("simulated_Init, error 2\n");
+    printf("simulated_Init: Can't read measurement file %s\n", measurement_file.c_str());
     return false;
   }
   my_measurement.assign((char*)m, m_size);

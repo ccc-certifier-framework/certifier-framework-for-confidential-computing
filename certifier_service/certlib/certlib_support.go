@@ -1540,19 +1540,19 @@ func VerifySignedClaim(c *certprotos.SignedClaimMessage, k *certprotos.KeyMessag
 	PK := rsa.PublicKey{}
 	pK := rsa.PrivateKey{}
 	if GetRsaKeysFromInternal(k, &pK, &PK) == false {
-		fmt.Printf("VerifySignedClaim: error 1\n")
+		fmt.Printf("VerifySignedClaim: Can't get RSA keys\n")
 		return false
 	}
 
 	cm := certprotos.ClaimMessage{}
 	err := proto.Unmarshal(c.SerializedClaimMessage, &cm)
 	if err != nil {
-		fmt.Printf("VerifySignedClaim: error 2\n")
+		fmt.Printf("VerifySignedClaim: Can't Unmarshal Claim\n")
 		return false
 	}
 
 	if cm.GetClaimFormat() != "vse-clause" && cm.GetClaimFormat() != "vse-attestation" {
-		fmt.Printf("VerifySignedClaim: error 3\n")
+		fmt.Printf("VerifySignedClaim: Unsupported claim format\n")
 		return false
 	}
 
@@ -1561,7 +1561,7 @@ func VerifySignedClaim(c *certprotos.SignedClaimMessage, k *certprotos.KeyMessag
 	ta := StringToTimePoint(cm.GetNotAfter())
 	if ta != nil && tb != nil {
 		if CompareTimePoints(tb, tn) > 0 || CompareTimePoints(ta, tn) < 0 {
-			fmt.Printf("VerifySignedClaim: error 4\n")
+			fmt.Printf("VerifySignedClaim: Time violation\n")
 			return false
 		}
 	}
@@ -1585,15 +1585,17 @@ func VerifySignedAssertion(scm certprotos.SignedClaimMessage, k *certprotos.KeyM
 	cm := certprotos.ClaimMessage{}
 	err := proto.Unmarshal(scm.GetSerializedClaimMessage(), &cm)
 	if err != nil {
+		fmt.Printf("VerifySignedAssertion: Can't unmarshal claim\n")
 		return false
 	}
 	if cm.GetClaimFormat() == cl_str {
 		err = proto.Unmarshal(cm.GetSerializedClaim(), vseClause)
 		if err != nil {
-			fmt.Printf("VerifySignedAssertion, Error 2\n")
+			fmt.Printf("VerifySignedAssertion: Can't unmarshal vse claim\n")
 			return false
 		}
 	} else {
+		fmt.Printf("VerifySignedAssertion: Must be Vse clause\n")
 		return false
 	}
 	return true
@@ -1671,23 +1673,25 @@ func ProduceAdmissionCert(issuerKey *certprotos.KeyMessage, issuerCert *x509.Cer
 	spK := rsa.PrivateKey{}
 	sPK := rsa.PublicKey{}
 	if !GetRsaKeysFromInternal(subjKey, &spK, &sPK) {
+		fmt.Printf("ProduceAdmissionCert: Can't get Rsa sunject key\n")
 		return nil
 	}
 
 	ipK := rsa.PrivateKey{}
 	iPK := rsa.PublicKey{}
 	if !GetRsaKeysFromInternal(issuerKey, &ipK, &iPK) {
+		fmt.Printf("ProduceAdmissionCert: Can't get Rsa issuer keys\n")
 		return nil
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &cert, issuerCert, &sPK, crypto.Signer(&ipK))
 	if err != nil {
-		fmt.Printf("error 3\n")
-		fmt.Println(err)
+		fmt.Printf("ProduceAdmissionCert: Can't Create Certificate\n")
 		return nil
 	}
 	newCert, err := x509.ParseCertificate(derBytes)
 	if err != nil {
+		fmt.Printf("ProduceAdmissionCert: Can't Parse Certificate\n")
 		return nil
 	}
 	return newCert
@@ -1711,6 +1715,7 @@ func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
 	if ok {
 		k := certprotos.KeyMessage{}
 		if !GetInternalKeyFromRsaPublicKey(*name, PKrsa, &k) {
+			fmt.Printf("GetSubjectKey: Can't internal rsa public key\n")
 			return nil
 		}
 		return  &k
@@ -1719,6 +1724,7 @@ func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
 	if ok {
 		k := certprotos.KeyMessage{}
 		if !GetInternalKeyFromEccPublicKey(*name, PKecc, &k) {
+			fmt.Printf("GetSubjectKey: Can't internal ecc public key\n")
 			return nil
 		}
 		return  &k

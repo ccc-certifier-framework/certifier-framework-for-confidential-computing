@@ -214,12 +214,11 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 	var measurement []byte = nil
 	var success bool
 
-	// Todo: Change this type to "vse-attestation-package"
         // Used to include "platform-attestation-only"  and "augmented-platform-attestation-only"
         if evType == "vse-attestation-package" {
 		success, toProve, measurement = certlib.ValidateInternalEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
-			fmt.Printf("ValidateRequestAndObtainToken: ValidateSimulatedEvidence failed\n")
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateInternalEvidence failed\n")
 			return false, nil
 		}
         } else if evType == "sev-platform-package" {
