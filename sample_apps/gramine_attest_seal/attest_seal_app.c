@@ -422,7 +422,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     print_bytes(SGX_QUOTE_SIZE, quote_body_expected->report_body.mr_enclave.m);
 
     /* Copy out quote info */
-    memcpy(out, quote_body_expected->report_body.mr_signer.m, SGX_QUOTE_SIZE);
+    memcpy(out, quote_body_expected->report_body.mr_enclave.m, SGX_QUOTE_SIZE);
     *size_out = SGX_QUOTE_SIZE;
 
     printf("\nGramine verify quote interface compare done, output: \n");

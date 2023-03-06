@@ -30,7 +30,6 @@ sgx.trusted_files = [
   "file:{{ gramine.libos }}",
   "file:attest_seal_app",
   "file:libcertifier.so",
-  "file:binary_trusted_measurements_file.bin",
   "file:{{ gramine.runtimedir() }}/",
   "file:/usr/local/lib/",
   "file:{{ arch_libdir }}/",
@@ -47,4 +46,7 @@ sgx.allowed_files = [
   "file:/etc/group",
   "file:/etc/passwd",
   "file:/etc/gai.conf",
+  "file:/etc/ssl/certs/ca-certificates.crt",
+  "file:/etc/sgx_default_qcnl.conf",
+  "file:binary_trusted_measurements_file.bin",
 ]
