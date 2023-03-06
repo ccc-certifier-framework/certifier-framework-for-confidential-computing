@@ -13,6 +13,13 @@
 // limitations under the License.
 
 #include <iostream>
+#include <stdlib.h>
+
+#include "support.h"
+#include "certifier.h"
+#include "simulated_enclave.h"
+#include "application_enclave.h"
+#include "cc_helpers.h"
 
 #ifndef _GRAMINE_API_H_
 #define _GRAMINE_API_H_
@@ -27,5 +34,7 @@ typedef struct GramineCertifierFunctions {
 } GramineCertifierFunctions;
 
 void setFuncs(GramineCertifierFunctions funcs);
+
+bool gramine_Init(const string& pem_cert_chain_file);
 
 #endif // #ifdef _GRAMINE_API_H_
