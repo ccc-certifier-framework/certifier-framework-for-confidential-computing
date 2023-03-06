@@ -47,8 +47,7 @@ static string measurement_file("./binary_trusted_measurements_file.bin");
 #define FLAGS_policy_host "localhost"
 #define FLAGS_policy_port 8123
 #define FLAGS_server_app_host "localhost"
-//#define FLAGS_server_app_port 8124
-#define FLAGS_server_app_port 39431
+#define FLAGS_server_app_port 8124
 static string data_dir = "./app1_data/";
 
 #define FLAGS_policy_store_file "store.bin"
@@ -183,7 +182,7 @@ bool gramine_setup_certifier_functions(GramineCertifierFunctions gramineFuncs) {
   setFuncs(gramineFuncs);
   return true;
 }
-
+#if 0
 bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
   static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
@@ -423,3 +422,4 @@ done:
   app_trust_data->clear_sensitive_data();
   return ret;
 }
+#endif
