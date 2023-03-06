@@ -138,16 +138,25 @@ bool certifier_test_seal(void) {
   return true;
 }
 
+extern RSA* rsa_attestation_key;
+extern key_message my_attestation_key;
+
 bool gramine_local_certify() {
   string enclave_type("gramine-enclave");
   string evidence_descriptor("gramine-evidence");
-  extern bool simulator_init(void);
-  if (!simulator_initialized) {
-    if (!simulator_init()) {
-      return false;
-    }
-    simulator_initialized = true;
+
+  if (!gramine_Init(FLAGS_trusted_measurements_file)) {
+    printf("gramine_Init: Can't read measurement file\n");
+    return false;
   }
+
+  rsa_attestation_key = RSA_new();
+  if (!generate_new_rsa_key(2048, rsa_attestation_key))
+    return false;
+  if (!RSA_to_key(rsa_attestation_key, &my_attestation_key))
+    return false;
+  my_attestation_key.set_key_type("rsa-2048-private");
+  my_attestation_key.set_key_name("attestKey");
 
   if (!test_local_certify(enclave_type,
     FLAGS_read_measurement_file,
