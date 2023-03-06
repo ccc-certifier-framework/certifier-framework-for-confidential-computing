@@ -208,17 +208,21 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 		evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
 
         // evidenceType should be "vse-attestation-package", "gramine-evidence",
-        //      "oe-evidence" or "sev-platform-attestation-only" or "sev-platform-package"
-	// "full-vse-support" and  "platform-attestation-only" are deprecated
+        //      "oe-evidence" or "sev-platform-package"
 	var toProve *certprotos.VseClause = nil
 	var measurement []byte = nil
 	var success bool
 
-        // Used to include "platform-attestation-only"  and "augmented-platform-attestation-only"
         if evType == "vse-attestation-package" {
 		success, toProve, measurement = certlib.ValidateInternalEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateInternalEvidence failed\n")
+			return false, nil
+		}
+        } else if evType == "app_service_attestation-package" {
+		success, toProve, measurement = certlib.ValidateAppServiceEvidence(pubKey, ep, originalPolicy, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateAppServiceEvidence failed\n")
 			return false, nil
 		}
         } else if evType == "sev-platform-package" {
