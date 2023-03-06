@@ -34,7 +34,7 @@ mkdir -p service
 # build policy
 cd $SERVICE_EXAMPLE_DIR/provisioning
 
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="is-trusted-for-attestation" --output=ts1.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1.bin
@@ -74,19 +74,24 @@ go build simpleserver.go
 
 #Build and provision the application service
 cd $APP_SERVICE_DIR
+
 make -f app_service.mak
+
 cd $APP_SERVICE_DIR/provisioning
+
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
+    --verb="is-trusted-for-attestation" --output=ts1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+    --verb="says" --clause=ts1.bin --output=vse_policy1.bin
+
 $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../app_service.exe \
       --output=app_service.measurement
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
     --measurement_subject=app_service.measurement --verb="is-trusted" \
-    --output=ts1.bin
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-    --verb="says" --clause=ts1.bin --output=vse_policy1.bin
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
-    --verb="is-trusted-for-attestation" --output=ts2.bin
+    --output=ts2.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
     --verb="says" --clause=ts2.bin --output=vse_policy2.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
     --vse_file=vse_policy1.bin --duration=9000 \
     --private_key_file=policy_key_file.bin --output=signed_claim_1.bin

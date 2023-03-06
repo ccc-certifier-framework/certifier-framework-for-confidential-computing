@@ -219,12 +219,6 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateInternalEvidence failed\n")
 			return false, nil
 		}
-        } else if evType == "app_service_attestation-package" {
-		success, toProve, measurement = certlib.ValidateAppServiceEvidence(pubKey, ep, originalPolicy, purpose)
-		if !success {
-			fmt.Printf("ValidateRequestAndObtainToken: ValidateAppServiceEvidence failed\n")
-			return false, nil
-		}
         } else if evType == "sev-platform-package" {
 		success, toProve, measurement = certlib.ValidateSevEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
