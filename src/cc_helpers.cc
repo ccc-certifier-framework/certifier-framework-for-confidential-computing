@@ -1042,7 +1042,6 @@ bool cc_trust_data::run_peer_certificationservice(const string& host_name, int p
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
-#define DEBUG
 bool construct_platform_evidence_package(string& attesting_enclave_type, const string& purpose,
       evidence_list& platform_assertions, string& serialized_attestation,
       evidence_package* ep) {
@@ -1090,7 +1089,6 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
   ev2->set_serialized_evidence(serialized_attestation);
   return true;
 }
-#undef DEBUG
 
 // Todo: This isn't used
 bool add_policy_key_says_platform_key_is_trusted(signed_claim_message& platform_key_is_trusted,
