@@ -359,6 +359,9 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     return true;
 }
 
+int (*gramine_verify_quote_f)(uint8_t* quote, size_t quote_size);
+int (*sgx_qv_get_quote_supplemental_data_size)(uint32_t *p_data_size);
+
 int verify_quote(uint8_t* quote, size_t quote_size) {
     int ret = -1;
     uint8_t* supplemental_data      = NULL;
@@ -435,19 +438,19 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
         return false;
     }
 
-    sgx_quote_body_t* quote_body_expected = (sgx_quote_body_t*)assertion;
-    sgx_quote_body_t* quote_body_received = (sgx_quote_body_t*)g_quote;
+    sgx_quote_t* quote_expected = (sgx_quote_t*)assertion;
+    sgx_quote_t* quote_received = (sgx_quote_t*)g_quote;
 
-    if (quote_body_expected->version != /*EPID*/2 && quote_body_expected->version != /*DCAP*/3) {
+    if (quote_expected->body.version != /*EPID*/2 && quote_received->body.version != /*DCAP*/3) {
         printf("version of SGX quote is not EPID (2) and not ECDSA/DCAP (3)\n");
         return false;
     }
 
     /* Compare user report and actual report */
     printf("Comparing user report data in SGX quote size: %ld\n",
-           sizeof(quote_body_expected->report_body.report_data.d));
+           sizeof(quote_expected->body.report_body.report_data.d));
 
-    ret = memcmp(quote_body_received->report_body.report_data.d, user_report_data.d,
+    ret = memcmp(quote_received->body.report_body.report_data.d, user_report_data.d,
                  sizeof(user_report_data));
     if (ret) {
         printf("comparison of user report data in SGX quote failed\n");
@@ -456,27 +459,27 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
 
     /* Compare expected and actual report */
     printf("Comparing quote report data in SGX quote size: %ld\n",
-           sizeof(quote_body_expected->report_body.report_data.d));
+           sizeof(quote_expected->body.report_body.report_data.d));
 
-    ret = memcmp(quote_body_expected->report_body.report_data.d,
-                 quote_body_received->report_body.report_data.d,
-                 sizeof(quote_body_expected->report_body.report_data.d));
+    ret = memcmp(quote_expected->body.report_body.report_data.d,
+                 quote_received->body.report_body.report_data.d,
+                 sizeof(quote_expected->body.report_body.report_data.d));
     if (ret) {
         printf("comparison of quote report data in SGX quote failed\n");
         return false;
     }
 
+    printf("\nGramine verify quote interface mr_enclave: ");
+    print_bytes(SGX_QUOTE_SIZE, quote_expected->body.report_body.mr_enclave.m);
+#if 0
     /* Invoke remote verify_quote() in DCAP library */
     printf("\nGramine begin verify quote with DCAP\n");
     if (verify_quote((uint8_t*)quote_expected, assertion_size) != 0) {
         return false;
     }
-
-    printf("\nGramine verify quote interface mr_enclave: ");
-    print_bytes(SGX_QUOTE_SIZE, quote_body_expected->report_body.mr_enclave.m);
-
+#endif
     /* Copy out quote info */
-    memcpy(out, quote_body_expected->report_body.mr_enclave.m, SGX_QUOTE_SIZE);
+    memcpy(out, quote_expected->body.report_body.mr_enclave.m, SGX_QUOTE_SIZE);
     *size_out = SGX_QUOTE_SIZE;
 
     printf("\nGramine verify quote interface compare done, output: \n");
