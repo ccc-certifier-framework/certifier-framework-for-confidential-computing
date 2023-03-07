@@ -90,19 +90,18 @@ static inline int64_t local_sgx_getkey(sgx_key_request_t * keyrequest,
     return rax;
 }
 
+extern string measurement_string;
+
 static int getkey(sgx_key_128bit_t* key) {
     ssize_t bytes;
 
-
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
-    uint8_t data[SGX_REPORT_DATA_SIZE];
 
-    /* Test user data */
-    memcpy((uint8_t*) data,
-           "795fa68798a644d32c1d8e2cfe5834f2390e097f0223d94b4758298d1b5501e5", 64);
+    mbedtls_sha256((byte*)measurement_string.c_str(), SGX_REPORT_DATA_SIZE,
+		    user_report_data.d, 0);
 
-    memcpy((void*)&user_report_data, (void*)data, sizeof(user_report_data));
+    printf("Get key user_data size: %ld\n", sizeof(user_report_data));
 
     bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                          sizeof(user_report_data), /*do_write=*/true);

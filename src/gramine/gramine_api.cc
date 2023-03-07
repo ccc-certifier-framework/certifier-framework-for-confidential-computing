@@ -26,23 +26,27 @@
 
 GramineCertifierFunctions gramineFuncs;
 
-string pem_cert_chain;
-bool pem_cert_chain_initialized = false;
+string measurement_string;
+bool measurement_initialized = false;
 
-bool gramine_Init(const string& pem_cert_chain_file) {
+bool gramine_Init(const string& measurement_file) {
   extern bool certifier_parent_enclave_type_intitalized;
   extern string certifier_parent_enclave_type;
 
   /* Setup Gramine specific API calls */
-  printf("gramine_Init: Setting up Gramine functions...\n");
   gramine_setup_certifier_functions(&gramineFuncs);
 
-  if (!read_file_into_string(pem_cert_chain_file, &pem_cert_chain)) {
+  if (!read_file_into_string(measurement_file, &measurement_string)) {
     printf("gramine_Init: Can't read pem cert chain file\n");
-    return false;
   }
 
-  pem_cert_chain_initialized = true;
+#ifdef DEBUG
+  printf("gramine_Init: Setting up mr_enclave measurement: ");
+  print_bytes(32, (byte*)measurement_string.c_str());
+  printf("\n");
+#endif
+
+  measurement_initialized = true;
   certifier_parent_enclave_type = "hardware";
   certifier_parent_enclave_type_intitalized = true;
 
