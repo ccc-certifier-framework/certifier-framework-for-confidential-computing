@@ -405,6 +405,13 @@ done:
     return status;
 }
 
+void gramine_setup_certifier_functions(GramineCertifierFunctions *gramineFuncs) {
+    gramineFuncs->Attest = &Attest;
+    gramineFuncs->Verify = &Verify;
+    gramineFuncs->Seal = &Seal;
+    gramineFuncs->Unseal = &Unseal;
+}
+
 #if 0
 bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   byte assertion[MAX_ASSERTION_SIZE];

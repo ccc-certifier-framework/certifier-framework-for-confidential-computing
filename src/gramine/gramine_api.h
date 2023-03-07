@@ -25,7 +25,6 @@
 #define _GRAMINE_API_H_
 
 typedef unsigned char byte;
-
 typedef struct GramineCertifierFunctions {
   bool (*Attest)(int claims_size, byte* claims, int* size_out, byte* out);
   bool (*Verify)(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out);
@@ -33,7 +32,7 @@ typedef struct GramineCertifierFunctions {
   bool (*Unseal)(int in_size, byte* in, int* size_out, byte* out);
 } GramineCertifierFunctions;
 
-void setFuncs(GramineCertifierFunctions funcs);
+void gramine_setup_certifier_functions(GramineCertifierFunctions *gramineFuncs);
 
 bool gramine_Init(const string& pem_cert_chain_file);
 
