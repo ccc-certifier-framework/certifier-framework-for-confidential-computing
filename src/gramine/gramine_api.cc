@@ -26,15 +26,6 @@
 
 GramineCertifierFunctions gramineFuncs;
 
-#if 0
-void setFuncs(GramineCertifierFunctions funcs) {
-  gramineFuncs.Attest = funcs.Attest;
-  gramineFuncs.Verify = funcs.Verify;
-  gramineFuncs.Seal = funcs.Seal;
-  gramineFuncs.Unseal = funcs.Unseal;
-}
-#endif
-
 string pem_cert_chain;
 bool pem_cert_chain_initialized = false;
 
