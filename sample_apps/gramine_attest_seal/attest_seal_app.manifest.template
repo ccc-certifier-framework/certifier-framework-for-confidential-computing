@@ -42,6 +42,7 @@ sgx.trusted_files = [
 sgx.allowed_files = [
   "file:/etc/nsswitch.conf",
   "file:/etc/ethers",
+  "file:/etc/host.conf",
   "file:/etc/hosts",
   "file:/etc/group",
   "file:/etc/passwd",
