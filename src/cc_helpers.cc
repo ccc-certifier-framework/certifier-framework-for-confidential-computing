@@ -103,16 +103,16 @@ bool cc_trust_data::initialize_application_enclave_data(const string& parent_enc
     int in_fd, int out_fd) {
 
    if (!cc_policy_info_initialized_) {
-      printf("Policy key must be initialized first\n");
+      printf("initialize_application_enclave_data: Policy key must be initialized first\n");
       return false;
     }
 
     if (enclave_type_ != "application-enclave") {
-      printf("Not a application enclave\n");
+      printf("initialize_application_enclave_data: Not a application enclave\n");
       return false;
     }
     if (!application_Init(parent_enclave_type, in_fd, out_fd)) {
-      printf("Can't init application-enclave\n");
+      printf("initialize_application_enclave_data: Can't init application-enclave\n");
       return false;
     }
   cc_provider_provisioned_ = true;
@@ -123,17 +123,17 @@ bool cc_trust_data::initialize_simulated_enclave_data(const string& attest_key_f
       const string& measurement_file_name, const string& attest_endorsement_file_name) {
 
     if (!cc_policy_info_initialized_) {
-      printf("Policy key must be initialized first\n");
+      printf("initialize_simulated_enclave_data: Policy key must be initialized first\n");
       return false;
     }
 
     if (enclave_type_ != "simulated-enclave") {
-      printf("Not a simulated enclave\n");
+      printf("initialize_simulated_enclave_data: Not a simulated enclave\n");
       return false;
     }
     if (!simulated_Init(serialized_policy_cert_, attest_key_file_name, measurement_file_name,
            attest_endorsement_file_name)) {
-      printf("simulated_init failed\n");
+      printf("initialize_simulated_enclave_data: simulated_init failed\n");
       return false;
     }
   cc_provider_provisioned_ = true;
@@ -185,11 +185,11 @@ bool cc_trust_data::init_policy_key(int asn1_cert_size, byte* asn1_cert) {
   if (x509_policy_cert_ == nullptr)
     return false;
   if (!asn1_to_x509(serialized_policy_cert_, x509_policy_cert_)) {
-    printf("Can't translate cert\n");
+    printf("init_policy_key: Can't translate cert\n");
     return false;
   }
   if (!PublicKeyFromCert(serialized_policy_cert_, &public_policy_key_)) {
-    printf("Can't get public policy key\n");
+    printf("init_policy_key: Can't get public policy key\n");
     return false;
   }
   cc_policy_info_initialized_ = true;
@@ -198,7 +198,7 @@ bool cc_trust_data::init_policy_key(int asn1_cert_size, byte* asn1_cert) {
 
 void cc_trust_data::print_trust_data() {
   if (!cc_basic_data_initialized_) {
-    printf("No trust info initialized\n");
+    printf("print_trust_data: No trust info initialized\n");
     return;
   }
   printf("\nTrust data, enclave_type: %s, purpose: %s, policy file: %s\n",
@@ -371,7 +371,7 @@ bool cc_trust_data::fetch_store() {
 
   if (!Unprotect_Blob(enclave_type_, size_protected_blob, protected_blob,
         &pk, &size_unprotected_blob, unprotected_blob)) {
-    printf("fetch_store can't Unprotect\n");
+    printf("fetch_store: can't Unprotect\n");
     return false;
   }
 
@@ -379,7 +379,7 @@ bool cc_trust_data::fetch_store() {
   string serialized_store;
   serialized_store.assign((char*)unprotected_blob, size_unprotected_blob);
   if (!store_.Deserialize(serialized_store)) {
-    printf("fetch_store can't deserialize store\n");
+    printf("fetch_store: can't deserialize store\n");
     return false;
   }
 
@@ -394,7 +394,7 @@ void cc_trust_data::clear_sensitive_data() {
 bool cc_trust_data::put_trust_data_in_store() {
 
   if (!store_.replace_policy_key(public_policy_key_)) {
-    printf("Can't store policy key\n");
+    printf("put_trust_data_in_store: Can't store policy key\n");
     return false;
   }
 
@@ -414,14 +414,14 @@ bool cc_trust_data::put_trust_data_in_store() {
     sk->CopyFrom(service_sealing_key_);
     sm.set_allocated_storage_key(sk);
     if (!store_.add_storage_info(sm)) {
-      printf("Can't store sealing keys\n");
+      printf("put_trust_data_in_store: Can't store sealing keys\n");
       return false;
     }
 
     if (cc_service_platform_rule_initialized_) {
       string rule_tag("platform-rule");
       if (!store_.add_signed_claim(rule_tag, platform_rule_)) {
-        printf("Can't add platform rule\n");
+        printf("put_trust_data_in_store: Can't add platform rule\n");
       }
     }
     return true;
@@ -431,7 +431,7 @@ bool cc_trust_data::put_trust_data_in_store() {
 
     string auth_tag("auth-key");
     if (!store_.add_authentication_key(auth_tag, private_auth_key_)) {
-      printf("Can't store auth key\n");
+      printf("put_trust_data_in_store: Can't store auth key\n");
       return false;
     }
     string symmetric_key_tag("app-symmetric-key");
@@ -442,7 +442,7 @@ bool cc_trust_data::put_trust_data_in_store() {
     sk->CopyFrom(symmetric_key_);
     sm.set_allocated_storage_key(sk);
     if (!store_.add_storage_info(sm)) {
-      printf("Can't store app symmetric key\n");
+      printf("put_trust_data_in_store: Can't store app symmetric key\n");
       return false;
     }
     return true;
@@ -1278,7 +1278,7 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
   freeaddrinfo(result);
 
   if (listen(sfd, 10) != 0) {
-    printf("cant listen\n");
+    printf("open_server_socket: cant listen\n");
     return false;
   }
 
@@ -1343,7 +1343,7 @@ bool load_server_certs_and_key(X509* root_cert,
   // Todo: Add other key types
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key, r)) {
-    printf("key_to_RSA failed\n");
+    printf("load_server_certs_and_key: key_to_RSA failed\n");
     return false;
   }
   EVP_PKEY* auth_private_key = EVP_PKEY_new();
@@ -1354,33 +1354,33 @@ bool load_server_certs_and_key(X509* root_cert,
   auth_cert_str.assign((char*)private_key.certificate().data(),
         private_key.certificate().size());
   if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
-      printf("asn1_to_x509 failed\n");
+      printf("load_server_certs_and_key: asn1_to_x509 failed\n");
       return false;
   }
 
   STACK_OF(X509)* stack = sk_X509_new_null();
   if (sk_X509_push(stack, root_cert) == 0) {
-    printf("sk_X509_push failed\n");
+    printf("load_server_certs_and_key: sk_X509_push failed\n");
     return false;
   }
 
 #ifdef BORING_SSL
   if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
-      printf("use cert failed\n");
+      printf("load_server_certs_and_key: use cert failed\n");
       return false;
   }
   if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
-      printf("use priv key failed\n");
+      printf("load_server_certs_and_key: use priv key failed\n");
       return false;
   }
 
   if (!SSL_CTX_set1_chain(ctx, stack)) {
-    printf("set1 chain error\n");
+    printf("load_server_certs_and_key: set1 chain error\n");
     return false;
   }
 #else
   if (SSL_CTX_use_cert_and_key(ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
-      printf("SSL_CTX_use_cert_and_key failed\n");
+      printf("load_server_certs_and_key: SSL_CTX_use_cert_and_key failed\n");
 #ifdef DEBUG
       printf("cert:\n");
       X509_print_fp(stdout, x509_auth_key_cert);
@@ -1393,7 +1393,7 @@ bool load_server_certs_and_key(X509* root_cert,
 #endif
 
   if (!SSL_CTX_check_private_key(ctx)) {
-      printf("SSL_CTX_check_private_key failed\n");
+      printf("load_server_certs_and_key: SSL_CTX_check_private_key failed\n");
       return false;
   }
   SSL_CTX_add_client_CA(ctx, root_cert);
@@ -1427,14 +1427,14 @@ void server_dispatch(const string& host_name, int port,
 
   X509* root_cert = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert)) {
-    printf("Can't convert cert\n");
+    printf("server_dispatch: Can't convert cert\n");
     return;
   }
 
   // Get a socket.
   int sock = -1;
   if (!open_server_socket(host_name, port, &sock)) {
-    printf("Can't open server socket\n");
+    printf("server_dispatch: Can't open server socket\n");
     return;
   }
 
@@ -1442,7 +1442,7 @@ void server_dispatch(const string& host_name, int port,
   SSL_METHOD* method = (SSL_METHOD*) TLS_server_method();
   SSL_CTX* ctx = SSL_CTX_new(method);
   if (ctx == NULL) {
-    printf("SSL_CTX_new failed (1)\n");
+    printf("server_dispatch: SSL_CTX_new failed (1)\n");
     return;
   }
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
@@ -1456,7 +1456,7 @@ void server_dispatch(const string& host_name, int port,
 #endif
 
   if (!load_server_certs_and_key(root_cert, private_key, ctx)) {
-    printf("SSL_CTX_new failed (2)\n");
+    printf("server_dispatch: SSL_CTX_new failed (2)\n");
     return;
   }
 
@@ -1466,7 +1466,7 @@ void server_dispatch(const string& host_name, int port,
 #if 0
   // This is unnecessary usually.
   if(!isRoot()) {
-    printf("This program must be run as root/sudo user!!");
+    printf("server_dispatch: This program must be run as root/sudo user!!");
     return false;
   }
 #endif
@@ -1541,19 +1541,19 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
   asn1_root_cert_.assign((char*)asn1_root_cert.data(), asn1_root_cert.size());
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
-    printf("Client: root cert invalid\n");
+    printf("init_client_ssl: root cert invalid\n");
     return false;
   }
 
   const SSL_METHOD* method = TLS_client_method();
   if(method == nullptr) {
-    printf("Can't get method\n");
+    printf("init_client_ssl: Can't get method\n");
     return false;
   }
 
   ssl_ctx_ = SSL_CTX_new(method);
   if(ssl_ctx_ == nullptr) {
-    printf("Can't get SSL_CTX\n");
+    printf("init_client_ssl: Can't get SSL_CTX\n");
     return false;
   }
 
@@ -1575,12 +1575,12 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
   SSL_CTX_set_options(ssl_ctx_, flags);
 
   if (!load_client_certs_and_key()) {
-    printf("load_client_certs_and_key failed\n");
+    printf("init_client_ssl: load_client_certs_and_key failed\n");
     return false;
   }
 
   if (!open_client_socket(host_name, port, &sock_)) {
-    printf("Can't open client socket\n");
+    printf("init_client_ssl: Can't open client socket\n");
     return false;
   }
 
@@ -1592,7 +1592,7 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
   int ret = SSL_connect(ssl_);
   if (ret <= 0) {
     int err = SSL_get_error(ssl_, ret);
-    printf("ssl_connect failed, err: %d\n", err);
+    printf("init_client_ssl: ssl_connect failed, err: %d\n", err);
     return false;
   }
 
@@ -1601,7 +1601,7 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
   if (peer_cert_ != nullptr) {
     peer_id_.clear();
     if (!extract_id_from_cert(peer_cert_, &peer_id_)) {
-      printf("Client: Can't extract id\n");
+      printf("init_client_ssl: Can't extract id\n");
     }
   }
 
@@ -1622,7 +1622,7 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
   // Todo: Add other key types
   RSA* r = RSA_new();
   if (!key_to_RSA(private_key_, r)) {
-    printf("load_client_certs_and_key, error 1\n");
+    printf("load_client_certs_and_key: Can't convert to RSA key\n");
     return false;
   }
   EVP_PKEY* auth_private_key = EVP_PKEY_new();
@@ -1632,7 +1632,7 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
   string auth_cert_str;
   auth_cert_str.assign((char*)private_key_.certificate().data(), private_key_.certificate().size());
   if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
-    printf("load_client_certs_and_key, error 2\n");
+    printf("load_client_certs_and_key: can't translate der to X509\n");
     return false;
   }
 
@@ -1645,16 +1645,16 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
 #endif
 
   if (!SSL_CTX_use_certificate(ssl_ctx_, x509_auth_key_cert)) {
-      printf("use cert failed\n");
+      printf("load_client_certs_and_key: use cert failed\n");
       return false;
   }
   if (!SSL_CTX_use_PrivateKey(ssl_ctx_, auth_private_key)) {
-      printf("use priv key failed\n");
+      printf("load_client_certs_and_key: use priv key failed\n");
       return false;
   }
 
   if (!SSL_CTX_check_private_key(ssl_ctx_) ) {
-    printf("load_client_certs_and_key, error 6\n");
+    printf("load_client_certs_and_key: private key check failed\n");
     return false;
   }
 
@@ -1662,7 +1662,7 @@ bool secure_authenticated_channel::load_client_certs_and_key() {
   SSL_CTX_add1_chain_cert(ssl_ctx_, root_cert_);
 #else
   if (SSL_CTX_use_cert_and_key(ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0 ) {
-    printf("load_client_certs_and_key, error 5\n");
+    printf("load_client_certs_and_key: use_cert_and_key failed\n");
     return false;
   }
 
@@ -1688,7 +1688,7 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
   // accept and carry out auth
   int res = SSL_accept(ssl_);
   if (res != 1) {
-    printf("Server: Can't SSL_accept connection\n");
+    printf("server_channel_accept_and_auth: Can't SSL_accept connection\n");
     unsigned long code = ERR_get_error();
     printf("Accept error: %s\n", ERR_lib_error_string(code));
     print_ssl_error(SSL_get_error(ssl_, res));
@@ -1708,15 +1708,15 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
   peer_cert_ = SSL_get_peer_certificate(ssl_);
   if (peer_cert_ != nullptr) {
     if (!extract_id_from_cert(peer_cert_, &peer_id_)) {
-      printf("Client: Can't extract id\n");
+      printf("server_channel_accept_and_auth: Can't extract id\n");
     }
   }
 
 #ifdef DEBUG
     if(peer_cert_) {
-      printf("Server: Peer cert presented in nego\n");
+      printf("server_channel_accept_and_auth: Peer cert presented in nego\n");
     } else {
-      printf("Server: No peer cert presented in nego\n");
+      printf("server_channel_accept_and_auth: No peer cert presented in nego\n");
     }
 #endif
 
@@ -1734,7 +1734,7 @@ bool secure_authenticated_channel::init_server_ssl(const string& host_name, int 
   asn1_root_cert_.assign((char*)asn1_root_cert.data(), asn1_root_cert.size());
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
-    printf("Client auth failed at server\n");
+    printf("init_server_ssl: Can't translate der to X509\n");
     return false;
   }
   return true;
