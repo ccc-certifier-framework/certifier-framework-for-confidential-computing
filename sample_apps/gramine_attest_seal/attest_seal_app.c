@@ -359,60 +359,39 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     return true;
 }
 
-int (*gramine_verify_quote_f)(uint8_t* quote, size_t quote_size);
-int (*sgx_qv_get_quote_supplemental_data_size)(uint32_t *p_data_size);
+int (*gramine_verify_quote_f)(size_t quote_size, uint8_t* quote, size_t *mr_size, uint8_t* mr);
 
-int verify_quote(uint8_t* quote, size_t quote_size) {
+int verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint8_t* mr) {
     int ret = -1;
     uint8_t* supplemental_data      = NULL;
     uint32_t supplemental_data_size = 0;
 
-    sgx_quote_body_t* quote_body = &(((sgx_quote_t*)quote)->body);
-    uint32_t collateral_expiration_status  = 1;
     void* ra_tls_verify_lib           = NULL;
-    void* sgx_verify_lib           = NULL;
-
-    time_t current_time = time(NULL);
-    if (current_time == ((time_t)-1)) {
-        ret = MBEDTLS_ERR_X509_FATAL_ERROR;
-        goto out;
-    }
-
-    sgx_verify_lib = dlopen("libsgx_dcap_quoteverify.so", RTLD_LAZY);
-    sgx_qv_get_quote_supplemental_data_size = (int(*)(uint32_t*))dlsym(sgx_verify_lib, "sgx_qv_get_quote_supplemental_data_size");
-    ret = sgx_qv_get_quote_supplemental_data_size(&supplemental_data_size);
-    printf("Function address to be called: %p\n", sgx_qv_get_quote_supplemental_data_size);
-    if (ret != 0) {
-        printf("Quote: supplemental data failed: %d\n", ret);
-        goto out;
-    }
-    printf("Supplemental data size: %d\n", supplemental_data_size);
-
-    supplemental_data = (uint8_t*)malloc(supplemental_data_size);
-    if (!supplemental_data) {
-        ret = MBEDTLS_ERR_X509_ALLOC_FAILED;
-        goto out;
-    }
 
     ra_tls_verify_lib = dlopen("libra_tls_verify_dcap.so", RTLD_LAZY);
 
-    gramine_verify_quote_f = (int(*)(uint8_t*,size_t))(dlsym(ra_tls_verify_lib, "gramine_verify_quote"));
+    gramine_verify_quote_f = (int(*)(size_t, uint8_t*, size_t*, uint8_t*))(dlsym(ra_tls_verify_lib, "gramine_verify_quote"));
 
-    printf("Verify function address to be called: %p\n", gramine_verify_quote_f);
-    ret = gramine_verify_quote_f((uint8_t*)quote, (size_t) quote_size);
+    printf("New Function address to be called: %p\n", gramine_verify_quote_f);
+    ret = gramine_verify_quote_f(quote_size, quote, mr_size, mr);
+    printf("MR returned: %ld\n", *mr_size);
+    print_bytes(*mr_size, mr);
 
     if (ret != 0) {
-        printf("Quote: supplemental data failed: %d\n", ret);
-        goto out;
+      printf("\nRemote verification failed: %d\n", ret);
+      goto out;
+    } else {
+      printf("\nRemote verification successful\n");
     }
 out:
-    free(supplemental_data);
     return ret;
 }
 
 bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out) {
     ssize_t bytes;
     int ret = -1;
+    uint8_t mr[SGX_QUOTE_SIZE];
+    size_t mr_size;
 
     printf("Gramine Verify called user_data_size: %d assertion_size: %d\n",
            user_data_size, assertion_size);
@@ -471,13 +450,14 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
 
     printf("\nGramine verify quote interface mr_enclave: ");
     print_bytes(SGX_QUOTE_SIZE, quote_expected->body.report_body.mr_enclave.m);
-#if 0
+//#if 0
     /* Invoke remote verify_quote() in DCAP library */
     printf("\nGramine begin verify quote with DCAP\n");
-    if (verify_quote((uint8_t*)quote_expected, assertion_size) != 0) {
+    if (verify_quote(assertion_size, (uint8_t*)quote_expected, &mr_size, mr) != 0) {
+        printf("\nGramine begin verify quote with DCAP failed\n");
         return false;
     }
-#endif
+//#endif
     /* Copy out quote info */
     memcpy(out, quote_expected->body.report_body.mr_enclave.m, SGX_QUOTE_SIZE);
     *size_out = SGX_QUOTE_SIZE;
