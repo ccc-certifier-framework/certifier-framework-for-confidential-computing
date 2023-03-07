@@ -363,19 +363,14 @@ int (*gramine_verify_quote_f)(size_t quote_size, uint8_t* quote, size_t *mr_size
 
 int verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint8_t* mr) {
     int ret = -1;
-    uint8_t* supplemental_data      = NULL;
-    uint32_t supplemental_data_size = 0;
-
     void* ra_tls_verify_lib           = NULL;
 
     ra_tls_verify_lib = dlopen("libra_tls_verify_dcap.so", RTLD_LAZY);
 
     gramine_verify_quote_f = (int(*)(size_t, uint8_t*, size_t*, uint8_t*))(dlsym(ra_tls_verify_lib, "gramine_verify_quote"));
 
-    printf("New Function address to be called: %p\n", gramine_verify_quote_f);
+    printf("Verification function address to be called: %p\n", gramine_verify_quote_f);
     ret = gramine_verify_quote_f(quote_size, quote, mr_size, mr);
-    printf("MR returned: %ld\n", *mr_size);
-    print_bytes(*mr_size, mr);
 
     if (ret != 0) {
       printf("\nRemote verification failed: %d\n", ret);
@@ -383,6 +378,10 @@ int verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint8_t* mr
     } else {
       printf("\nRemote verification successful\n");
     }
+
+    printf("MR enclave returned: %ld\n", *mr_size);
+    print_bytes(*mr_size, mr);
+
 out:
     return ret;
 }
@@ -450,14 +449,14 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
 
     printf("\nGramine verify quote interface mr_enclave: ");
     print_bytes(SGX_QUOTE_SIZE, quote_expected->body.report_body.mr_enclave.m);
-//#if 0
+
     /* Invoke remote verify_quote() in DCAP library */
     printf("\nGramine begin verify quote with DCAP\n");
     if (verify_quote(assertion_size, (uint8_t*)quote_expected, &mr_size, mr) != 0) {
         printf("\nGramine begin verify quote with DCAP failed\n");
         return false;
     }
-//#endif
+
     /* Copy out quote info */
     memcpy(out, quote_expected->body.report_body.mr_enclave.m, SGX_QUOTE_SIZE);
     *size_out = SGX_QUOTE_SIZE;
