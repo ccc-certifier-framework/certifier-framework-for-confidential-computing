@@ -177,8 +177,9 @@ bool gramine_seal() {
   printf("Sealing test succeeded\n");
   return true;
 }
-
+#if 0
 bool gramine_setup_certifier_functions(GramineCertifierFunctions gramineFuncs) {
   setFuncs(gramineFuncs);
   return true;
 }
+#endif

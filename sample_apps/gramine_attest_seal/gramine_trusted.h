@@ -18,4 +18,4 @@
 
 bool gramine_local_certify();
 bool gramine_seal();
-bool gramine_setup_certifier_functions(GramineCertifierFunctions gramineFuncs);
+//bool gramine_setup_certifier_functions(GramineCertifierFunctions gramineFuncs);

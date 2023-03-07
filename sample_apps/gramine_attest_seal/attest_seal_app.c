@@ -321,7 +321,7 @@ done:
 
     return status;
 }
-
+#if 0
 bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     ssize_t bytes;
 
@@ -627,7 +627,7 @@ done:
     mbedtls_gcm_free(&gcm);
     return status;
 }
-
+#endif
 
 int main(int argc, char** argv) {
     int ret;
@@ -644,6 +644,7 @@ int main(int argc, char** argv) {
     mbedtls_ssl_config_init(&conf);
 
     printf("Attestation type:\n");
+
     char attestation_type_str[SGX_QUOTE_SIZE] = {0};
 
     ret = rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
@@ -678,7 +679,7 @@ int main(int argc, char** argv) {
 
     /* B. Certifier integrated Attest/Verify */
     bool cert_result = false;
-
+#if 0
     GramineCertifierFunctions gramineFuncs;
     gramineFuncs.Attest = &Attest;
     gramineFuncs.Verify = &Verify;
@@ -686,6 +687,7 @@ int main(int argc, char** argv) {
     gramineFuncs.Unseal = &Unseal;
 
     gramine_setup_certifier_functions(gramineFuncs);
+#endif
     printf("Invoking certifier...\n");
 
     cert_result = gramine_local_certify();
@@ -693,6 +695,7 @@ int main(int argc, char** argv) {
         printf("gramine_local_certify failed: result = %d\n", cert_result);
         goto exit;
     }
+    fflush(stdout);
 
     /* Certifier integrated Seal/Unseal */
     cert_result = gramine_seal();
