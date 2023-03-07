@@ -37,6 +37,19 @@ func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
 	return true
 }
 
+func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+	// Todo: Fix
+        filtered :=  &certprotos.ProvedStatements {}
+	for i := 0; i < len(original.Proved); i++ {
+		from := original.Proved[i]
+		to :=  proto.Clone(from).(*certprotos.VseClause)
+		filtered.Proved = append(filtered.Proved, to)
+	}
+
+	return filtered
+}
+
 func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
 	// Todo: Fix
@@ -1837,7 +1850,64 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
 func ValidateOeEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
                 *certprotos.VseClause, []byte) {
-	return false, nil, nil
+
+	// Debug
+	fmt.Printf("\nValidateOeEvidence, Original policy:\n")
+	PrintProvedStatements(originalPolicy)
+
+	alreadyProved := FilterOePolicy(pubPolicyKey, evp, originalPolicy)
+	if alreadyProved == nil {
+                fmt.Printf("ValidateOeEvidence: Can't filterpolicy\n")
+		return false, nil, nil
+        }
+
+	// Debug
+	fmt.Printf("\nfiltered policy:\n")
+	PrintProvedStatements(alreadyProved)
+	fmt.Printf("\n")
+
+	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, alreadyProved) {
+                fmt.Printf("ValidateOeEvidence: Can't InitProvedStatements\n")
+		return false, nil, nil
+	}
+
+	// Debug
+	fmt.Printf("\nValidateOeEvidence, after InitProved:\n")
+	PrintProvedStatements(alreadyProved)
+
+        // ConstructProofFromSevPlatformEvidence()
+	toProve, proof := ConstructProofFromSevPlatformEvidence(pubPolicyKey, purpose, alreadyProved)
+	if toProve == nil || proof == nil {
+                fmt.Printf("ValidateOeEvidence: Can't construct proof\n")
+		return false, nil, nil
+	}
+
+	// Debug
+	fmt.Printf("\n")
+	fmt.Printf("ValidateOeEvidence, toProve: ")
+	PrintVseClause(toProve)
+	fmt.Printf("\n")
+	PrintProof(proof)
+	fmt.Printf("\n")
+
+        if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
+                fmt.Printf("ValidateOeEvidence: Proof does not verify\n")
+		return false, nil, nil
+        }
+
+	// Debug
+	fmt.Printf("ValidateOeEvidence: Proof verifies\n")
+	fmt.Printf("\nProved statements\n")
+        PrintProvedStatements(alreadyProved);
+
+	me := alreadyProved.Proved[2]
+	if me.Clause == nil || me.Clause.Subject == nil ||
+			me.Clause.Subject.GetEntityType() != "measurement" {
+                fmt.Printf("ValidateOeEvidence: Proof does not verify\n")
+		return false, nil, nil
+	}
+
+	return true, toProve, me.Clause.Subject.Measurement
 }
 
 // returns success, toProve, measurement
