@@ -1336,11 +1336,12 @@ func VerifyProof(policyKey *certprotos.KeyMessage, toProve *certprotos.VseClause
 
 func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
         // At this point, the evidence should be
-        //      "policyKey is-trusted"
-        //      "policyKey says platformKey is-trusted-for-attestation"
-        //      "policyKey says measurement is-trusted"
-	//	"platformKey says the attestationKey is-trusted-for-attestation
-        //      "attestationKey says enclaveKey speaks-for measurement
+        //      00: "policyKey is-trusted"
+        //      01: "Key[rsa, policyKey, f2663e9ca042fcd261ab051b3a4e3ac83d79afdd] says
+	//		Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] is-trusted-for-attestation"
+        //      02: "policyKey says measurement is-trusted"
+	//	03: "Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] says
+	//		Key[rsa, auth-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]
 
 	// Debug
 	fmt.Printf("ConstructProofFromOeEvidence, %d statements\n", len(alreadyProved.Proved))
@@ -1353,21 +1354,23 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
 		fmt.Printf("ConstructProofFromOeEvidence: too few statements\n")
 		return nil, nil
 	}
+
 	policyKeyIsTrusted :=  alreadyProved.Proved[0]
-	platformSaysEnclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[1]
+	policyKeySaysPlatformKeyIsTrustedForAttestation := alreadyProved.Proved[1]
+	policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[2]
+	platformSaysEnclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[3]
+
 	if platformSaysEnclaveKeySpeaksForMeasurement.Clause == nil {
 		fmt.Printf("ConstructProofFromOeEvidence: can't get enclaveKeySpeaksForMeasurement\n")
 		return nil, nil
 	}
 	enclaveKeySpeaksForMeasurement :=  platformSaysEnclaveKeySpeaksForMeasurement.Clause
-	policyKeySaysMeasurementIsTrusted :=  alreadyProved.Proved[2]
 	if policyKeyIsTrusted == nil || enclaveKeySpeaksForMeasurement == nil ||
 			policyKeySaysMeasurementIsTrusted == nil {
 		fmt.Printf("ConstructProofFromOeEvidence: Error 4\n")
 		return nil, nil
 	}
 
-	policyKeySaysPlatformKeyIsTrustedForAttestation := alreadyProved.Proved[3]
 	if policyKeySaysPlatformKeyIsTrustedForAttestation.Clause == nil {
 		fmt.Printf("ConstructProofFromOeEvidence: Can't get platformKeyIsTrustedForAttestation\n")
 		return nil, nil
