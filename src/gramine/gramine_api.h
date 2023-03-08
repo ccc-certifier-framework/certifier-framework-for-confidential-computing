@@ -21,6 +21,11 @@
 #include "application_enclave.h"
 #include "cc_helpers.h"
 
+// SGX includes
+#include "sgx_arch.h"
+#include "sgx_attest.h"
+#include "enclave_api.h"
+
 #ifndef _GRAMINE_API_H_
 #define _GRAMINE_API_H_
 
@@ -32,8 +37,10 @@ typedef struct GramineCertifierFunctions {
   bool (*Unseal)(int in_size, byte* in, int* size_out, byte* out);
 } GramineCertifierFunctions;
 
-void gramine_setup_certifier_functions(GramineCertifierFunctions *gramineFuncs);
+bool gramine_Init(const string& measurement_file);
+int gramine_Getkey(const string user_data, sgx_key_128bit_t* key);
+int gramine_Sgx_Getkey(const string user_data, sgx_key_128bit_t* key);
 
-bool gramine_Init(const string& pem_cert_chain_file);
+void gramine_setup_certifier_functions(GramineCertifierFunctions *gramineFuncs);
 
 #endif // #ifdef _GRAMINE_API_H_

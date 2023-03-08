@@ -167,64 +167,6 @@ static int test_quote_interface(void) {
     return SUCCESS;
 }
 
-static inline int64_t local_sgx_getkey(sgx_key_request_t * keyrequest,
-                                       sgx_key_128bit_t* key)
-{
-    int64_t rax = EGETKEY;
-    __asm__ volatile(
-    ENCLU "\n"
-    : "+a"(rax)
-    : "b"(keyrequest), "c"(key)
-    : "memory");
-    return rax;
-}
-
-static int getkey(sgx_key_128bit_t* key) {
-    ssize_t bytes;
-
-
-    /* 1. write some custom data to `user_report_data` file */
-    sgx_report_data_t user_report_data = {0};
-    uint8_t data[SGX_REPORT_DATA_SIZE];
-
-    /* Test user data */
-    memcpy((uint8_t*) data,
-           "795fa68798a644d32c1d8e2cfe5834f2390e097f0223d94b4758298d1b5501e5", 64);
-
-    memcpy((void*)&user_report_data, (void*)data, sizeof(user_report_data));
-
-    bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
-                         sizeof(user_report_data), /*do_write=*/true);
-    if (bytes != sizeof(user_report_data)) {
-        printf("Test prep user_data failed %d\n", errno);
-        return FAILURE;
-    }
-
-    /* 4. read `report` file */
-    sgx_report_t report;
-    bytes = rw_file("/dev/attestation/report", (uint8_t*)&report, sizeof(report), false);
-    if (bytes != sizeof(report)) {
-        /* error is already printed by file_read_f() */
-        return FAILURE;
-    }
-
-    /* setup key request structure */
-    __sgx_mem_aligned sgx_key_request_t key_request;
-    memset(&key_request, 0, sizeof(key_request));
-    key_request.key_name = SGX_SEAL_KEY;
-    memcpy(&key_request.key_id, &(report.key_id), sizeof(key_request.key_id));
-
-    /* retrieve key via EGETKEY instruction leaf */
-    memset(*key, 0, sizeof(*key));
-    local_sgx_getkey(&key_request, key);
-
-    printf("Got key:\n");
-    print_bytes(sizeof(*key), *key);
-    printf("\n");
-
-    return SUCCESS;
-}
-
 #define BUF_SIZE 10
 #define TAG_SIZE 16
 #define KEY_SIZE 16
@@ -254,8 +196,11 @@ static int test_seal_interface(void) {
     memset(enc_buf, 0, sizeof(enc_buf));
     memset(dec_buf, 0, sizeof(dec_buf));
 
+    /* Test user data */
+    unsigned char user_data[] = "795fa68798a644d32c1d8e2cfe5834f2390e097f0223d94b4758298d1b5501e5";
+
     /* Get SGX Sealing Key */
-    if (getkey(&key) == FAILURE) {
+    if (gramine_Getkey((const char*)user_data, &key) == FAILURE) {
         printf("getkey failed to retrieve SGX Sealing Key\n");
 	return FAILURE;
     }

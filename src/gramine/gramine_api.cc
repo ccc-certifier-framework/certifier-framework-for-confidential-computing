@@ -12,14 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <iostream>
-#include <stdlib.h>
-
-#include "support.h"
-#include "certifier.h"
-#include "simulated_enclave.h"
-#include "application_enclave.h"
-#include "cc_helpers.h"
 #include "gramine_api.h"
 
 #define MAX_ASSERTION_SIZE 5000
@@ -181,4 +173,8 @@ bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
 
   printf("Done Gramine Unseal %d\n", *size_out);
   return true;
+}
+
+int gramine_Getkey(const string user_data, sgx_key_128bit_t* key) {
+  return gramine_Sgx_Getkey(user_data, key);
 }

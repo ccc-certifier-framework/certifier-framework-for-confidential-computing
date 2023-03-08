@@ -12,15 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <iostream>
-#include <stdlib.h>
 #include <dlfcn.h>
 
-#include "support.h"
-#include "certifier.h"
-#include "simulated_enclave.h"
-#include "application_enclave.h"
-#include "cc_helpers.h"
 #include "gramine_api.h"
 
 #include "mbedtls/ssl.h"
@@ -30,11 +23,6 @@
 #include "mbedtls/gcm.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
-
-// SGX includes
-#include "sgx_arch.h"
-#include "sgx_attest.h"
-#include "enclave_api.h"
 
 #define MAX_ASSERTION_SIZE 5000
 
@@ -90,15 +78,13 @@ static inline int64_t local_sgx_getkey(sgx_key_request_t * keyrequest,
     return rax;
 }
 
-extern string measurement_string;
-
-static int getkey(sgx_key_128bit_t* key) {
+int gramine_Sgx_Getkey(const string user_data, sgx_key_128bit_t* key) {
     ssize_t bytes;
 
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
 
-    mbedtls_sha256((byte*)measurement_string.c_str(), SGX_REPORT_DATA_SIZE,
+    mbedtls_sha256((byte*)user_data.c_str(), SGX_REPORT_DATA_SIZE,
 		    user_report_data.d, 0);
 
     printf("Get key user_data size: %ld\n", sizeof(user_report_data));
@@ -281,6 +267,8 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     return true;
 }
 
+extern string measurement_string;
+
 bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     int ret = 0;
     bool status = true;
@@ -296,7 +284,7 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     memset(enc_buf, 0, sizeof(enc_buf));
 
     /* Get SGX Sealing Key */
-    if (getkey(&key) == FAILURE) {
+    if (gramine_Sgx_Getkey(measurement_string, &key) == FAILURE) {
         printf("getkey failed to retrieve SGX Sealing Key\n");
 	return false;
     }
@@ -398,7 +386,7 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
 #endif
 
     /* Get SGX Sealing Key */
-    if (getkey(&key) == FAILURE) {
+    if (gramine_Sgx_Getkey(measurement_string, &key) == FAILURE) {
         printf("getkey failed to retrieve SGX Sealing Key\n");
 	return false;
     }
