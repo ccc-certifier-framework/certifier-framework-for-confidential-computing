@@ -44,6 +44,7 @@ RSA* rsa_attestation_key = nullptr;
 
 bool simulated_GetAttestClaim(signed_claim_message* out) {
   if (!my_data_initialized) {
+    printf("simulated_GetAttestClaim: data not initialized\n");
     return false;
   }
   out->CopyFrom(my_attest_claim);
@@ -52,6 +53,7 @@ bool simulated_GetAttestClaim(signed_claim_message* out) {
 
 bool simulated_GetPlatformClaim(signed_claim_message* out) {
   if (!my_data_initialized) {
+    printf("simulated_GetPlatformClaim: data not initialized\n");
     return false;
   }
   out->CopyFrom(my_platform_claim);
@@ -80,37 +82,41 @@ bool simulated_Init(const string& asn1_policy_cert, const string& attest_key_fil
   // get attest key
   int at_size = file_size(attest_key_file);
   if (at_size < 0) {
+    printf("simulated_Init: attest key size is wrong\n");
     return false;
   }
   byte at[at_size];
   if (!read_file(attest_key_file, &at_size, at)) {
+    printf("simulated_Init: Can't read attest key\n");
     return false;
   }
   string serialized_attest_key;
   serialized_attest_key.assign((char*)at, at_size);
   if (!my_attestation_key.ParseFromString(serialized_attest_key)) {
+    printf("simulated_Init: Can't parse attest key\n");
     return false;
   }
 
   my_attestation_key.set_key_name("attestKey");
   rsa_attestation_key = RSA_new();
   if (!key_to_RSA(my_attestation_key, rsa_attestation_key)) {
-    printf("Can't recover attestation key\n");
+    printf("simulated_Init: Can't recover attestation key\n");
     return false;
   }
 
   int a_size = file_size(attest_key_signed_claim_file);
   if (a_size < 0) {
-      return false;
+    printf("simulated_Init: attest signed claim size is wrong\n");
+    return false;
   }
   byte a_buf[a_size];
   if (!read_file(attest_key_signed_claim_file, &a_size, a_buf)) {
-    printf("Can't read attest claim\n");
+    printf("simulated_Init: Can't read attest claim\n");
     return false;
   }
   serialized_attest_claim.assign((char*)a_buf, a_size);
   if (!my_attest_claim.ParseFromString(serialized_attest_claim)) {
-    printf("Can't parse attest claim\n");
+    printf("simulated_Init: Can't parse attest claim\n");
     return false;
   }
 
@@ -150,7 +156,7 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
   memset(input, 0, input_size);
   memset(output, 0, output_size);
   if (!get_random(8 * block_size, iv)) {
-    printf("getrandom FAILED\n");
+    printf("simulated_Seal: getrandom FAILED\n");
     return false;
   }
 
@@ -161,8 +167,10 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
 
   // output is iv, encrypted bytes
   int real_output_size = output_size;
-  if (!authenticated_encrypt(input, input_size, sealing_key, iv, output, &real_output_size))
+  if (!authenticated_encrypt(input, input_size, sealing_key, iv, output, &real_output_size)) {
+    printf("simulated_Seal: authenticated encrypt failed\n");
     return false;
+  }
  
   memcpy(out, output, real_output_size);
   *size_out = real_output_size;
@@ -186,10 +194,13 @@ bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
 
   int real_output_size = output_size;
   if (!authenticated_decrypt(in, in_size, (byte*)sealing_key,
-          output, &real_output_size))
+          output, &real_output_size)) {
+    printf("simulated_Unseal: authenticated decrypt failed\n");
     return false;
+  }
 
   if (memcmp((void*)output, (byte*)my_measurement.data(), (int)my_measurement.size()) != 0) {
+    printf("simulated_Unseal: measurement mismatch\n");
     return false;
   }
   real_output_size -= my_measurement.size();
@@ -236,7 +247,7 @@ bool simulated_Attest(const string& enclave_type,
 
   if (!sign_report(type, serialized_report_info,
       signing_alg, my_attestation_key, &serialized_signed_report)) {
-    printf("Can't sign report\n");
+    printf("simulated_Attest: Can't sign report\n");
     return false;
   }
 
@@ -245,7 +256,7 @@ bool simulated_Attest(const string& enclave_type,
     return true;
   }
   if (*size_out < (int)serialized_signed_report.size()) {
-    printf("size out in simulated Attest is too small\n");
+    printf("simulated_Attest: size out in simulated Attest is too small\n");
     return false;
   }
   memset(out, 0, *size_out);
@@ -258,22 +269,22 @@ bool simulated_Verify(string& serialized_signed_report) {
   string type("vse-attestation-report");
 
   if (!verify_report(type, serialized_signed_report, my_attestation_key)) {
-    printf("verify_report failed\n");
+    printf("simulated_Verify: verify_report failed\n");
     return false;
   }
 
   signed_report sr;
   if (!sr.ParseFromString(serialized_signed_report)) {
-    printf("Can't parse serialized_signed_report\n");
+    printf("simulated_Verify: Can't parse serialized_signed_report\n");
     return false;
   }
   if (!sr.has_report_format() || sr.report_format() != "vse-attestation-report") {
-    printf("simulated_Verify 1 failed\n");
+    printf("simulated_Verify: signed report malformed\n");
     return false;
   }
   vse_attestation_report_info info;
   if (!info.ParseFromString(sr.report())) {
-    printf("simulated_Verify 2 failed\n");
+    printf("simulated_Verify: Can't parse report\n");
     return false;
   }
   if (info.verified_measurement() != my_measurement) {
@@ -283,7 +294,7 @@ bool simulated_Verify(string& serialized_signed_report) {
     printf("my       measurement: ");
     print_bytes(my_measurement.size(), (byte*)my_measurement.data());
     printf("\n");
-    printf("simulated_Verify 3 failed\n");
+    printf("simulated_Verify: simulated_Verify 3 failed\n");
     return false;
   }
   return check_date_range(info.not_before(), info.not_after());
@@ -304,10 +315,14 @@ bool simulator_init() {
     sealing_key[i]= (5*i)%16;
   
   rsa_attestation_key = RSA_new();
-  if (!generate_new_rsa_key(2048, rsa_attestation_key))
+  if (!generate_new_rsa_key(2048, rsa_attestation_key)) {
+    printf("simulator_init: Can't generate RSA key\n");
     return false;
-  if (!RSA_to_key(rsa_attestation_key, &my_attestation_key))
+  }
+  if (!RSA_to_key(rsa_attestation_key, &my_attestation_key)) {
+    printf("simulator_init: Can't convert RSA key to internal\n");
     return false;
+  }
   my_attestation_key.set_key_type("rsa-2048-private");
   my_attestation_key.set_key_name("attestKey");
 

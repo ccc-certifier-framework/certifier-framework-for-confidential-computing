@@ -52,7 +52,7 @@ bool application_GetParentEvidence(string* out) {
   string req_str;
   req.SerializeToString(&req_str);
   if (sized_pipe_write(writer, req_str.size(), (byte*)req_str.data()) < 0) {
-    printf("sized_pipe_write failed\n");
+    printf("application_Init: sized_pipe_write failed\n");
     return false;
   }
 
@@ -60,13 +60,15 @@ bool application_GetParentEvidence(string* out) {
   string rsp_str;
   int n= sized_pipe_read(reader, &rsp_str);
   if (n < 0) {
-    printf("sized_pipe_read failed\n");
+    printf("application_Init: sized_pipe_read failed\n");
     return false;
   }
   if (!rsp.ParseFromString(rsp_str)) {
+    printf("application_Init: Can't parse response\n");
     return false;
   }
   if (rsp.function() != "getparentevidence" || rsp.status() != "succeeded") {
+    printf("application_Init: Not GetParentEvidence call\n");
     return false;
   }
   out->assign((char*)rsp.args(0).data(), (int)rsp.args(0).size());
@@ -89,7 +91,7 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   string req_str;
   req.SerializeToString(&req_str);
   if (sized_pipe_write(writer, req_str.size(), (byte*)req_str.data()) < 0) {
-    printf("sized_pipe_write failed\n");
+    printf("application_Seal: sized_pipe_write failed\n");
     return false;
   }
 
@@ -98,17 +100,17 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   byte t_out[t_size];
   int n = read(reader, t_out, t_size);
   if (n < 0) {
+    printf("application_Seal: read failed\n");
     return false;
   }
   string rsp_str;
   rsp_str.assign((char*)t_out, n);
   if (!rsp.ParseFromString(rsp_str)) {
+    printf("application_Seal: Can't parse response\n");
     return false;
   }
   if (rsp.function() != "seal" || rsp.status() != "succeeded") {
-#ifdef DEBUG
-    printf("application_Seal, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
-#endif
+    printf("application_Seal: function: %s, status: %s is wrong\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
   }
 
@@ -118,7 +120,7 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   }
 
   if (*size_out < (int)rsp.args(0).size()) {
-    printf("application_Seal, output too big\n");
+    printf("application_Seal: output too big\n");
     return false;
   }
   *size_out = (int)rsp.args(0).size();
@@ -138,7 +140,7 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   string req_str;
   req.SerializeToString(&req_str);
   if (sized_pipe_write(writer, req_str.size(), (byte*)req_str.data()) < 0) {
-    printf("sized_pipe_write failed\n");
+    printf("application_Unseal: sized_pipe_write failed\n");
     return false;
   }
 
@@ -147,16 +149,18 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   byte t_out[t_size];
   int n= read(reader, t_out, t_size);
   if (n < 0) {
+    printf("application_Unseal: read failed\n");
     return false;
   }
 
   string rsp_str;
   rsp_str.assign((char*)t_out, n);
   if (!rsp.ParseFromString(rsp_str)) {
+    printf("application_Unseal: Can't parse response\n");
     return false;
   }
   if (rsp.function() != "unseal" || rsp.status() != "succeeded") {
-    printf("application_Unseal, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
+    printf("application_Unseal: function: %s, status: %s is wrong\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
   }
 
@@ -165,7 +169,7 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
     return true;
   }
   if (*size_out < (int)rsp.args(0).size()) {
-    printf("application_Unseal, output too big\n");
+    printf("application_Unseal: output too big\n");
     return false;
   }
   *size_out = (int)rsp.args(0).size();
@@ -188,7 +192,7 @@ bool application_Attest(int in_size, byte* in,
   string req_str;
   req.SerializeToString(&req_str);
   if (sized_pipe_write(writer, req_str.size(), (byte*)req_str.data()) < 0) {
-    printf("sized_pipe_write failed\n");
+    printf("application_Attest: sized_pipe_write failed\n");
     return false;
   }
 
@@ -197,7 +201,7 @@ bool application_Attest(int in_size, byte* in,
   byte t_out[t_size];
   int n = read(reader, t_out, t_size);
   if (n < 0) {
-    printf("application_Attest, read failed\n");
+    printf("application_Attest: read failed\n");
     return false;
   }
 
@@ -209,7 +213,7 @@ bool application_Attest(int in_size, byte* in,
   }
 
   if (rsp.function() != "attest" || rsp.status() != "succeeded") {
-    printf("application_Attest, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
+    printf("application_Attest, function: %s, status: %s is wrong\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
   }
 
@@ -218,7 +222,7 @@ bool application_Attest(int in_size, byte* in,
     return true;
   }
   if (*size_out < (int)rsp.args(0).size()) {
-    printf("application_Attest, output too big\n");
+    printf("application_Attest: output too big\n");
     return false;
   }
   *size_out = (int)rsp.args(0).size();
@@ -238,7 +242,7 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
   string req_str;
   req.SerializeToString(&req_str);
   if (sized_pipe_write(writer, req_str.size(), (byte*)req_str.data()) < 0) {
-    printf("sized_pipe_write failed\n");
+    printf("application_GetPlatformStatement: sized_pipe_write failed\n");
     return false;
   }
 
@@ -247,19 +251,19 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
   byte t_out[t_size];
   int n = read(reader, t_out, t_size);
   if (n < 0) {
-    printf("bad read\n");
+    printf("application_GetPlatformStatement: bad read\n");
     return false;
   }
 
   string rsp_str;
   rsp_str.assign((char*)t_out, n);
   if (!rsp.ParseFromString(rsp_str)) {
-    printf("bad ParseFromString\n");
+    printf("application_GetPlatformStatement: bad ParseFromString\n");
     return false;
   }
 
   if (rsp.function() != "getplatformstatement" || rsp.status() != "succeeded") {
-    printf("application_GetPlatformStatement, function: %s, status: %s\n", rsp.function().c_str(), rsp.status().c_str());
+    printf("application_GetPlatformStatement: function: %s, status: %s is wrong\n", rsp.function().c_str(), rsp.status().c_str());
     return false;
   }
 
@@ -268,7 +272,7 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
     return true;
   }
   if (*size_out < (int)rsp.args(0).size()) {
-    printf("application_GetPlatformStatement, output too big\n");
+    printf("application_GetPlatformStatement: output too big\n");
     return false;
   }
   *size_out = (int)rsp.args(0).size();

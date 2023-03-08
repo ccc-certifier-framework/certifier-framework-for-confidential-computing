@@ -486,7 +486,7 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   string* cert_str = nullptr;
 
   if (!GetX509FromCert(cert, x)) {
-    printf("Can't get X509 from cert\n");
+    printf("PublicKeyFromCert: Can't get X509 from cert\n");
     res = false;
     goto done;
   }
@@ -494,21 +494,21 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   // make key message for public policy key from cert
   epk = X509_get_pubkey(x);
   if (epk == nullptr) {
-    printf("Can't get subject key\n");
+    printf("PublicKeyFromCert: Can't get subject key\n");
     res = false;
     goto done;
   }
 
   sn = X509_get_subject_name(x);
   if (sn == nullptr) {
-    printf("Can't get subject name\n");
+    printf("PublicKeyFromCert: Can't get subject name\n");
     res = false;
     goto done;
   }
 
   len = X509_NAME_get_text_by_NID(sn, NID_commonName, nullptr, 0);
   if (len < 0) {
-    printf("Can't X509_NAME_get_text_by_NID length\n");
+    printf("PublicKeyFromCert: Can't X509_NAME_get_text_by_NID length\n");
     res = false;
     goto done;
   }
@@ -516,7 +516,7 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   {
     char name_buf[len];
     if (X509_NAME_get_text_by_NID(sn, NID_commonName, name_buf, len) < 0) {
-      printf("Can't X509_NAME_get_text_by_NID\n");
+      printf("PublicKeyFromCert: Can't X509_NAME_get_text_by_NID\n");
       res = false;
     }
     subject_name_str.assign((const char*) name_buf);
@@ -528,20 +528,24 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
     const RSA* rk = nullptr;
     rk = EVP_PKEY_get0_RSA(epk);
     if (rk == nullptr) {
+      printf("PublicKeyFromCert: Can't get RSA key from evp\n");
       res = false;
       goto done;
     }
     if (!RSA_to_key(rk, k)) {
+      printf("PublicKeyFromCert: Can't get internal key from RSA key\n");
       res = false;
       goto done;
     }
   } else if (EVP_PKEY_base_id(epk) == EVP_PKEY_EC) {
     const EC_KEY* ek = EVP_PKEY_get0_EC_KEY(epk);
     if (ek == nullptr) {
+      printf("PublicKeyFromCert: Can't get ECC key from evp\n");
       res = false;
       goto done;
     }
     if (!ECC_to_key(ek, k)) {
+      printf("PublicKeyFromCert: Can't convert ECC key to internal key\n");
       res = false;
       goto done;
     }
@@ -773,7 +777,7 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
 
   if (!Seal(enclave_type, enclave_id, serialized_key.size(), (byte*)serialized_key.data(),
         &size_sealed_key, sealed_key)) {
-    printf("Protect_Blob, can't seal\n");
+    printf("Protect_Blob: can't seal\n");
     return false;
   }
 
@@ -784,16 +788,16 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
   }
 
   if (key.key_type() != "aes-256-cbc-hmac-sha256") {
-    printf("Protect_Blob, unsupported encryption scheme\n");
+    printf("Protect_Blob: unsupported encryption scheme\n");
     return false;
   }
   if (!key.has_secret_key_bits()) {
-    printf("Protect_Blob, no key bits\n");
+    printf("Protect_Blob: no key bits\n");
     return false;
   }
   byte* key_buf = (byte*)key.secret_key_bits().data();
   if (key.secret_key_bits().size() < protect_key_size) {
-    printf("Protect_Blob, key too small\n");
+    printf("Protect_Blob: key too small\n");
     return false;
   }
 
@@ -801,7 +805,7 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
   byte encrypted_data[size_encrypted];
   if (!authenticated_encrypt(unencrypted_data, size_unencrypted_data, key_buf,
             iv, encrypted_data, &size_encrypted)) {
-    printf("Protect_Blob, authenticate encryption failed\n");
+    printf("Protect_Blob: authenticate encryption failed\n");
     return false;
   }
   
@@ -812,7 +816,7 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
   string serialized_blob;
   blob_msg.SerializeToString(&serialized_blob);
   if (((int)serialized_blob.size()) > *size_protected_blob) {
-    printf("Protect_Blob, furnished buffer is too small\n");
+    printf("Protect_Blob: furnished buffer is too small\n");
     return false;
   }
   *size_protected_blob = (int)serialized_blob.size();
@@ -828,15 +832,15 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
   protected_blob_string.assign((char*)protected_blob, size_protected_blob);
   protected_blob_message pb;
   if (!pb.ParseFromString(protected_blob_string)) {
-    printf("Unprotect_Blob, can't parse protected blob message\n");
+    printf("Unprotect_Blob: can't parse protected blob message\n");
     return false;
   }
   if (!pb.has_encrypted_key()) {
-    printf("Unprotect_Blob, no encryption key\n");
+    printf("Unprotect_Blob: no encryption key\n");
     return false;
   }
   if (!pb.has_encrypted_data()) {
-    printf("Unprotect_Blob, no encrypted data\n");
+    printf("Unprotect_Blob: no encrypted data\n");
     return false;
   }
 
@@ -848,14 +852,14 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
   // Unseal header
   if (!Unseal(enclave_type, enclave_id, pb.encrypted_key().size(), (byte*)pb.encrypted_key().data(),
         &size_unsealed_key, unsealed_key)) {
-    printf("Unprotect_Blob, can't unseal\n");
+    printf("Unprotect_Blob: can't unseal\n");
     return false;
   }
 
   string serialized_key;
   serialized_key.assign((const char*)unsealed_key, size_unsealed_key);
   if (!key->ParseFromString(serialized_key)) {
-    printf("Unprotect_Blob, can't parse unsealed key\n");
+    printf("Unprotect_Blob: can't parse unsealed key\n");
     return false;
   }
 
@@ -864,19 +868,19 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
     return false;
   }
   if (!key->has_secret_key_bits()) {
-    printf("Unprotect_Blob, no key bits\n");
+    printf("Unprotect_Blob: no key bits\n");
     return false;
   }
   byte* key_buf = (byte*)key->secret_key_bits().data();
   if (key->secret_key_bits().size() < protect_key_size) {
-    printf("Unprotect_Blob, key too small\n");
+    printf("Unprotect_Blob: key too small\n");
     return false;
   }
 
   // decrypt encrypted data
   if (!authenticated_decrypt((byte*)pb.encrypted_data().data(), pb.encrypted_data().size(), key_buf,
             unencrypted_data, size_of_unencrypted_data)) {
-    printf("Unprotect_Blob, authenticated decrypt failed\n");
+    printf("Unprotect_Blob: authenticated decrypt failed\n");
     return false;
   }
   return true;
@@ -1087,11 +1091,11 @@ void print_signed_report(const signed_report& sr) {
 bool read_signed_vse_statements(const string& in, signed_claim_sequence* s) {
   string str;
   if(!read_file_into_string(in, &str)) {
-    printf("Can't read %s\n", in.c_str());
+    printf("read_signed_vse_statements: Can't read %s\n", in.c_str());
     return false;
   }
   if (!s->ParseFromString(str)) {
-    printf("Can't parse claim sequence\n");
+    printf("read_signed_vse_statements: Can't parse claim sequence\n");
     return false;
   }
   return true;
