@@ -63,6 +63,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=
     --duration=9000 --private_key_file=platform_key_file.bin \
     --output=platform_attest_endorsement.bin
 $CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
+
 cp policy_key_file.bin policy_cert_file.bin policy.bin attest_key_file.bin platform_attest_endorsement.bin platform_key_file.bin app_service.measurement $APP_SERVICE_DIR/service
 
 # run certifier_service
