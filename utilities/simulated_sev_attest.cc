@@ -22,19 +22,76 @@ DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(key_file, "../certifier_service/certlib/test_data/ec-secp384r1-priv-key.pem",  "private key file name");
 DEFINE_string(output, "signed_sev_attest.bin",  "simulated attest file");
 
+/ *
+  From a real Sev machine
+
+    Version: 2
+    Guest SVN: 0
+  Policy: 0x30000
+    - Debugging Allowed:       No
+    - Migration Agent Allowed: No
+    - SMT Allowed:             Yes
+    - Min. ABI Major:          0
+    - Min. ABI Minor:          0
+  Family ID:
+    00000000000000000000000000000000
+  Image ID:
+    00000000000000000000000000000000
+  VMPL: 0
+  Signature Algorithm: 1 (ECDSA P-384 with SHA-384)
+  Platform Version: 03000000000008115
+    - Boot Loader SVN:   3
+    - TEE SVN:           0
+    - SNP firmware SVN:  8
+    - Microcode SVN:    115
+   - Microcode SVN:    115
+  Platform Info: 0x3
+    - SMT Enabled: Yes
+  Author Key Enabled: Yes
+    Report Data:
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+  Measurement:
+    5c19d5b4a50066c8c991bd920dfa2276e11d3531c91434a7
+    34f3b258ab279cd1b3bbe89ef930236af11dc3d28c70f406
+  Host Data:
+    0000000000000000000000000000000000000000000000000000000000000000
+  ID Key Digest:
+    000000000000000000000000000000000000000000000000
+    000000000000000000000000000000000000000000000000
+  Author Key Digest:
+    000000000000000000000000000000000000000000000000
+    000000000000000000000000000000000000000000000000
+  Report ID:
+    e2af014dad028f1f2adf3c1b0f896a4e43307596fc75b9242c706764d82e620d
+  Migration Agent Report ID:
+    ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+  Reported TCB: 03000000000008115
+  - Boot Loader SVN:   3
+  - TEE SVN:           0
+  - SNP firmware SVN:  8
+  - Microcode SVN:    115
+  Chip ID:
+    d30d7b8575881faa90edf4fb4f7a1c52a0beedef9321af3780abd4b4c16cf5c8
+    132d9d15d6537f3704de10afe7e8d989c7959654c38be1905cf9506ea737976f
+ */
 static struct attestation_report default_report = {
-        .version = 1,
-        .guest_svn = 1, // Set to 1 for now
-        .policy = 0xff,
-        .signature_algo = SIG_ALGO_ECDSA_P384_SHA384,
-        .platform_info = 0, // SMT disable
-        // TODO: Hardcoded mockup measurement
-        .measurement = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+  .version = 1,     // should be 2
+  .guest_svn = 1,   // Set to 1 for now
+  .policy = 0x03,   // 0x30000
+  .signature_algo = SIG_ALGO_ECDSA_P384_SHA384,
+  .platform_info = 0, // SMT disable --- should be 0x03?
+  // Hardcoded mockup measurement
+  .measurement = {
+          0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+          0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+          0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+          0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+          0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+          0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+  // .platform_info=0x3,
+  // .platform_version.raw = 0x03000000000008115ULL,
+  // .reported_tcb.raw = 0x03000000000008115ULL,
 };
 
 int read_key_file(const string& filename, EVP_PKEY **key, bool priv) {
