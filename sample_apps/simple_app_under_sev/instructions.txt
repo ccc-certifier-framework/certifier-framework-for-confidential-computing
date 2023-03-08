@@ -319,14 +319,14 @@ Step 7: Author the policy for the security domain and produce the signed claims 
       --string_value=no --output=property1.bin
       $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=migrate --property_type='string' comparator="=" \
       --string_value=no --output=property2.bin
-      $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=key-share --property_type='string' comparator="=" \
+      $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=smt --property_type='string' comparator="=" \
       --string_value=no --output=property5.bin
       $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name='api-major' --property_type=int --comparator=">=" \
       --int_value=0 --output=property3.bin
       $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name='api-minor' --property_type=int --comparator=">=" \
       --int_value=0 --output=property4.bin
-      $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name='tcb-version' --property_type=int --comparator=">=" \
-      --int_value=0 --output=property6.bin
+      $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name='tcb-version' --property_type=int --comparator="=" \
+      --int_value=0x03000000000008115 --output=property6.bin
       $CERTIFIER_PROTOTYPE/utilities/combine_properties.exe \
       --in=property1.bin,property2.bin,property3.bin,property4.bin,property5.bin,property6.bin \
       --output=properties.bin

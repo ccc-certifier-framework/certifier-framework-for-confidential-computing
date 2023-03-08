@@ -126,6 +126,7 @@ func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 				continue
 			}
 		}
+
 		// Is statement policyKey says platform has-trusted-platform-property
 		if cl.Subject.GetEntityType() == "platform" && cl.GetVerb() == "has-trusted-platform-property" {
 			if cl.Subject.PlatformEnt == nil || cl.Subject.PlatformEnt.GetPlatformType() != pl.GetPlatformType() {
@@ -740,13 +741,20 @@ func GetUserDataHashFromSevAttest(binSevAttest []byte) []byte {
 	return []byte(binSevAttest[0x50:0x90])
 }
 
+/*
+	Policy byte:
+		Bit 3: Guest can be activated on multiple sockets.
+		Bit 2: Debugging disallowed if 0
+		Bit 1: Migration disallowed if 0
+		Bit 0: SMT disallowed if 0
+ */
 func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 
 	// get properties
 	props := &certprotos.Properties{}
-	pol_byte := binSevAttest[8]
+	pol_byte := binSevAttest[10]
 	major_byte := binSevAttest[9]
-	minor_byte := binSevAttest[10]
+	minor_byte := binSevAttest[8]
 
 	svt := "string"
 	ivt := "int"
@@ -754,15 +762,15 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 	pn1 := "debug"
 	vp1 := "no"
 	ce := "="
-	if pol_byte & 0x01  == 0 {
+	if pol_byte & 0x04  == 1 {
 		vp1 = "yes"
 	}
 	p1 := MakeProperty(pn1, svt, &vp1, &ce, nil)
 	props.Props = append(props.Props, p1)
 
-	pn2 := "key-share"
+	pn2 := "smt"
 	vp2 := "no"
-	if pol_byte & 0x02  == 0 {
+	if pol_byte & 0x01  == 1 {
 		vp2 = "yes"
 	}
 	p2 := MakeProperty(pn2, svt, &vp2, &ce, nil)
@@ -770,7 +778,7 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 
 	pn3 := "migrate"
 	vp3 := "no"
-	if pol_byte & 0x04  == 0 {
+	if pol_byte & 0x02  == 1 {
 		vp3 = "yes"
 	}
 	p3 := MakeProperty(pn3, svt, &vp3, &ce, nil)
@@ -795,6 +803,9 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 	tcb = (uint64(binSevAttest[0x185]) << 40) | tcb
 	tcb = (uint64(binSevAttest[0x186]) << 48) | tcb
 	tcb = (uint64(binSevAttest[0x187]) << 56) | tcb
+
+	// DEBUG
+	fmt.Printf("tcb: %08x\n", tcb)
 
 	pn6 := "tcb-version"
 	p6 := MakeProperty(pn6, ivt, nil, &ce, &tcb)
@@ -1955,7 +1966,7 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	//	is-trusted-for-attestation 
 	//  07 Key[ecc-P-384, VCEKKey,
 	//	d8a35da4a4780fe58fe5a02e5aec7d40fa7452ca89ca4c6620181228b3e4e9c41ab9a200875a2b6e044ae73936408d27]
-	//	says environment[platform[amd-sev-snp, debug: no, key-share: no, migrate: no, api-major: =0,
+	//	says environment[platform[amd-sev-snp, debug: no, smt: no, migrate: no, api-major: =0,
 	//	api-minor: =0, tcb-version: =0],
 	//	measurement: 010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708]
 	//	is-environment 

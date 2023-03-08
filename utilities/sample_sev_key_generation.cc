@@ -80,22 +80,20 @@ DEFINE_string(sev_attest, "sev_attest.bin",  "simulated attestation file");
 
 
 static struct attestation_report default_report = {
-  .version = 1,     // should be 2
-  .guest_svn = 1,   // Set to 1 for now
-  .policy = 0x03,   // 0x30000
+  .version = 2,
+  .guest_svn = 1,
+  .policy = 0x00000ULL,  // no migrate, debug or SMT
   .signature_algo = SIG_ALGO_ECDSA_P384_SHA384,
   .platform_info = 0, // SMT disable --- should be 0x03?
-  // Hardcoded mockup measurement
+  // Hardcoded measurement
   .measurement = {
      0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
      0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
      0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
      0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
      0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-  // .platform_info=0x3,
-  // .platform_version.raw = 0x03000000000008115ULL,
-  // .reported_tcb.raw = 0x03000000000008115ULL,
+     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+  },
 };
 
 static void reverse_bytes(byte* buffer, size_t size) {
@@ -130,6 +128,8 @@ int main(int an, char** av) {
     printf("Can't translate private policy key\n");
     return 1;
   }
+  default_report.reported_tcb.raw = 0x03000000000008115ULL;
+  default_report.platform_version.raw = 0x03000000000008115ULL;
 
   // Generate keys and certs
   string rsa_type("rsa-4096-private");

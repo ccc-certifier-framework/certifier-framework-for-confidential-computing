@@ -1143,12 +1143,14 @@ func SatisfyingProperty(p1 *certprotos.Property, p2 *certprotos.Property) bool {
 	if p1 == nil || p2 == nil || p1.PropertyName == nil || p2.PropertyName == nil {
 		return false
 	}
+
 	if p1.ValueType == nil || p2.ValueType == nil {
 		return false
 	}
 	if *p1.ValueType != *p2.ValueType {
 		return false
 	}
+
 	if *p1.ValueType == "string" {
 		if p1.StringValue == nil || p2.StringValue == nil {
 			return false
@@ -1197,6 +1199,7 @@ func SatisfyingProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) 
 		}
 		pp := FindProperty(*p1.Props[i].PropertyName, p2.Props)
 		if pp == nil {
+			fmt.Printf("Can't find property %s\n", *p1.Props[i].PropertyName)
 			return false
 		}
 		if (!SatisfyingProperty(p1.Props[i], pp)) {

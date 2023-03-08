@@ -22,7 +22,7 @@ DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(key_file, "../certifier_service/certlib/test_data/ec-secp384r1-priv-key.pem",  "private key file name");
 DEFINE_string(output, "signed_sev_attest.bin",  "simulated attest file");
 
-/ *
+/*
   From a real Sev machine
 
     Version: 2
@@ -89,9 +89,6 @@ static struct attestation_report default_report = {
           0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
           0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
           0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-  // .platform_info=0x3,
-  // .platform_version.raw = 0x03000000000008115ULL,
-  // .reported_tcb.raw = 0x03000000000008115ULL,
 };
 
 int read_key_file(const string& filename, EVP_PKEY **key, bool priv) {
@@ -133,6 +130,9 @@ int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   printf("simulated_sev_attest.exe.exe --key_file=ecc-384-private.pem --output=test_sev_attest.bin\n");
+
+  default_report.reported_tcb.raw = 0x03000000000008115ULL;
+  default_report.platform_version.raw = 0x03000000000008115ULL;
 
   EVP_PKEY* pkey = nullptr;
   if (read_key_file(FLAGS_key_file, &pkey, true) < 0) {
