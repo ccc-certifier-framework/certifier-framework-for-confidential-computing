@@ -56,10 +56,6 @@ enum { SUCCESS = 0, FAILURE = -1 };
 // Certifier
 typedef unsigned char byte;
 
-/* RA-TLS: on server, only need ra_tls_create_key_and_crt_der() to create keypair and X.509 cert */
-int (*ra_tls_create_key_and_crt_der_f)(uint8_t** der_key, size_t* der_key_size, uint8_t** der_crt,
-                                       size_t* der_crt_size);
-
 #define SGX_QUOTE_SIZE 32
 
 static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
@@ -336,14 +332,12 @@ int main(int argc, char** argv) {
     mbedtls_ssl_init(&ssl);
     mbedtls_ssl_config_init(&conf);
 
-    printf("Attestation type:\n");
-
     char attestation_type_str[SGX_QUOTE_SIZE] = {0};
 
     ret = rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
                   sizeof(attestation_type_str) - 1, /*do_write=*/false);
     if (ret < 0 && ret != -ENOENT) {
-        printf("User requested RA-TLS attestation but cannot read SGX-specific file "
+        printf("User requested SGX attestation but cannot read SGX-specific file "
                        "/dev/attestation/attestation_type\n");
         return 1;
     }
@@ -351,7 +345,6 @@ int main(int argc, char** argv) {
 
     if (ret == -ENOENT || !strcmp(attestation_type_str, "none")) {
         ra_tls_attest_lib = NULL;
-        ra_tls_create_key_and_crt_der_f = NULL;
     } else if (!strcmp(attestation_type_str, "epid") || !strcmp(attestation_type_str, "dcap")) {
         ra_tls_attest_lib = dlopen("libra_tls_attest.so", RTLD_LAZY);
         if (!ra_tls_attest_lib) {

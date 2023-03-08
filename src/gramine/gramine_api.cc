@@ -37,7 +37,7 @@ bool gramine_Init(const string& measurement_file) {
   gramine_setup_certifier_functions(&gramineFuncs);
 
   if (!read_file_into_string(measurement_file, &measurement_string)) {
-    printf("gramine_Init: Can't read pem cert chain file\n");
+    printf("gramine_Init: Can't read measurement file\n");
   }
 
 #ifdef DEBUG
