@@ -34,7 +34,7 @@
 #include <openssl/err.h>
 
 #include "gramine_trusted.h"
-
+#if 0
 #include "policy_key.cc"
 
 #define FLAGS_print_all true
@@ -177,3 +177,4 @@ bool gramine_seal() {
   printf("Sealing test succeeded\n");
   return true;
 }
+#endif

@@ -83,7 +83,7 @@ CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/certifier.cc                  \
 		$(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc        \
 		$(CERTIFIER_SRC_PATH)/gramine/gramine_api_impl.cc   \
 		$(CERTIFIER_SRC_PATH)/certifier.pb.cc               \
-		$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal/gramine_trusted.cc \
+		#$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal/gramine_trusted.cc \
 
 CERTIFIER_INCLUDE = -I$(CERTIFIER_SRC_PATH)/../include -I$(CERTIFIER_SRC_PATH)/gramine -I$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal $(SGX_INCLUDE) -I$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal/./mbedtls/include
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE) -DGRAMINE_CERTIFIER
