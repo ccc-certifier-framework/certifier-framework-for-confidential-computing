@@ -102,8 +102,8 @@ void print_bytes(int n, byte* buf) {
     printf("%02x", buf[i]);
 }
 
-string measurement_file = "./binary_trusted_measurements_file.bin";
 uint8_t measurement[SGX_REPORT_DATA_SIZE];
+#define measurement_file "./binary_trusted_measurements_file.bin"
 
 static int test_attest_verify(void) {
     return 0;
@@ -206,7 +206,7 @@ static int test_seal_interface(void) {
     unsigned char user_data[] = "795fa68798a644d32c1d8e2cfe5834f2390e097f0223d94b4758298d1b5501e5";
 
     /* Get SGX Sealing Key */
-    if (gramine_Getkey((const char*)user_data, &key) == FAILURE) {
+    if (gramine_Getkey(user_data, &key) == FAILURE) {
         printf("getkey failed to retrieve SGX Sealing Key\n");
 	return FAILURE;
     }
@@ -273,6 +273,15 @@ int main(int argc, char** argv) {
     int ret;
     size_t len;
     void* ra_tls_attest_lib;
+
+    bool status = false;
+
+    status = gramine_Init(measurement_file, measurement);
+    if (status != true) {
+        printf("gramine_Init failed\n");
+	return -1;
+    }
+
 #if 0
     mbedtls_ssl_context ssl;
     mbedtls_ssl_config conf;

@@ -78,13 +78,13 @@ static inline int64_t local_sgx_getkey(sgx_key_request_t * keyrequest,
     return rax;
 }
 
-int gramine_Sgx_Getkey(const string user_data, sgx_key_128bit_t* key) {
+int gramine_Sgx_Getkey(byte *user_data, sgx_key_128bit_t* key) {
     ssize_t bytes;
 
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
 
-    mbedtls_sha256((byte*)user_data.c_str(), SGX_REPORT_DATA_SIZE,
+    mbedtls_sha256((byte*)user_data, SGX_REPORT_DATA_SIZE,
 		    user_report_data.d, 0);
 
     printf("Get key user_data size: %ld\n", sizeof(user_report_data));
@@ -267,7 +267,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     return true;
 }
 
-extern string measurement_string;
+extern byte *measurement;
 
 bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     int ret = 0;
@@ -284,7 +284,7 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     memset(enc_buf, 0, sizeof(enc_buf));
 
     /* Get SGX Sealing Key */
-    if (gramine_Sgx_Getkey(measurement_string, &key) == FAILURE) {
+    if (gramine_Sgx_Getkey(measurement, &key) == FAILURE) {
         printf("getkey failed to retrieve SGX Sealing Key\n");
 	return false;
     }
@@ -386,7 +386,7 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
 #endif
 
     /* Get SGX Sealing Key */
-    if (gramine_Sgx_Getkey(measurement_string, &key) == FAILURE) {
+    if (gramine_Sgx_Getkey(measurement, &key) == FAILURE) {
         printf("getkey failed to retrieve SGX Sealing Key\n");
 	return false;
     }

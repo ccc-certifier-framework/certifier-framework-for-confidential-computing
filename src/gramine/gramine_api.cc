@@ -19,7 +19,7 @@
 
 GramineCertifierFunctions gramineFuncs;
 
-string measurement_string;
+uint8_t measurement[SGX_REPORT_DATA_SIZE];
 bool measurement_initialized = false;
 
 static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
@@ -52,7 +52,7 @@ static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write
     return ret < 0 ? ret : bytes;
 }
 
-bool gramine_Init(const string& measurement_file, string& measurement_out) {
+bool gramine_Init(const string& measurement_file, byte *measurement_out) {
   char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
   void* ra_tls_attest_lib;
   size_t ret = 0;
@@ -66,39 +66,41 @@ bool gramine_Init(const string& measurement_file, string& measurement_out) {
   ret = rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
                 sizeof(attestation_type_str) - 1, /*do_write=*/false);
   if (ret < 0 && ret != -ENOENT) {
-      printf("User requested SGX attestation but cannot read SGX-specific file "
-             "/dev/attestation/attestation_type\n");
-      return false;
+    printf("User requested SGX attestation but cannot read SGX-specific file "
+           "/dev/attestation/attestation_type\n");
+    return false;
   }
   printf("Attestation type: %s\n", attestation_type_str);
 
   if (ret == -ENOENT || !strcmp(attestation_type_str, "none")) {
-      ra_tls_attest_lib = NULL;
+    ra_tls_attest_lib = NULL;
   } else if (!strcmp(attestation_type_str, "epid") || !strcmp(attestation_type_str, "dcap")) {
-      ra_tls_attest_lib = dlopen("libra_tls_attest.so", RTLD_LAZY);
-      if (!ra_tls_attest_lib) {
-          printf("User requested RA-TLS attestation but cannot find lib\n");
-          return false;
-      }
+   ra_tls_attest_lib = dlopen("libra_tls_attest.so", RTLD_LAZY);
+    if (!ra_tls_attest_lib) {
+        printf("User requested RA-TLS attestation but cannot find lib\n");
+        return false;
+    }
   } else {
-      printf("Unrecognized remote attestation type: %s\n", attestation_type_str);
-      return false;
+    printf("Unrecognized remote attestation type: %s\n", attestation_type_str);
+    return false;
   }
 
   /* Setup Gramine specific API calls */
   gramine_setup_certifier_functions(&gramineFuncs);
 
-  if (!read_file_into_string(measurement_file, &measurement_string)) {
+  ret = rw_file(measurement_file.c_str(), measurement, SGX_REPORT_DATA_SIZE, false);
+  if (ret < 0 && ret != -ENOENT) {
     printf("gramine_Init: Can't read measurement file\n");
+    return false;
   }
 
 #ifdef DEBUG
   printf("gramine_Init: Setting up mr_enclave measurement: ");
-  print_bytes(32, (byte*)measurement_string.c_str());
+  print_bytes(32, measurement);
   printf("\n");
 #endif
 
-  measurement_out = measurement_string;
+  memcpy(measurement_out, measurement, SGX_REPORT_DATA_SIZE);
   measurement_initialized = true;
 
   return true;
@@ -234,6 +236,6 @@ bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   return true;
 }
 
-int gramine_Getkey(const string user_data, sgx_key_128bit_t* key) {
+int gramine_Getkey(byte *user_data, sgx_key_128bit_t* key) {
   return gramine_Sgx_Getkey(user_data, key);
 }
