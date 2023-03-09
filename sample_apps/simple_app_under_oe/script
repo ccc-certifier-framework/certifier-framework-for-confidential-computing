@@ -1,11 +1,10 @@
 #
 # Helpful script to run example
 #
-
+#export GOROOT=/usr/local/go
+#export PATH=$PATH:$GOROOT/bin
+#export GO111MODULE=off
 export GOPATH=$HOME
-export GOROOT=/usr/local/go
-export PATH=$PATH:$GOROOT/bin
-export GO111MODULE=off
 export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
 export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_oe
 
@@ -29,14 +28,17 @@ make
 make dump_mrenclave
 
 # build policy
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
-  --measurement_subject=binary_trusted_measurements_file.bin --verb="is-trusted" \
-  --output=ts1.bin
+cd $EXAMPLE_DIR/provisioning
+
+
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=vse.cer.der \
+  --verb="is-trusted-for-attestation" --output=ts1.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=vse.cer.der \
-  --verb="is-trusted-for-attestation" --output=ts2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+  --measurement_subject=binary_trusted_measurements_file.bin --verb="is-trusted" \
+  --output=ts2.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts2.bin --output=vse_policy2.bin
 

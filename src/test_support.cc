@@ -382,6 +382,7 @@ bool construct_standard_evidence_package(string& enclave_type, bool init_measure
     ev4->set_evidence_type("signed-claim");
     ev4->set_serialized_evidence((byte*) t_str.data(), t_str.size());
   } else if (evidence_descriptor == "platform-attestation-only") {
+    // Todo: Change this type to "vse-attestation-package"
     // Evidence should be
     //    sc3: "platformKey says attestKey is-trusted
     //    sc4: "attestKey says enclaveKey speaks-for measurement (attest)
@@ -821,6 +822,7 @@ bool construct_standard_constrained_evidence_package(string& enclave_type,
     ev4->set_evidence_type("signed-claim");
     ev4->set_serialized_evidence((byte*) t_str.data(), t_str.size());
   } else if (evidence_descriptor == "platform-attestation-only") {
+    // Todo: Change this type to "vse-attestation-package"
     // Evidence should be
     //    sc3: "platformKey says attestKey is-trusted-for-attestation
     //    sc4: "attestKey says enclaveKey speaks-for measurement (attest)

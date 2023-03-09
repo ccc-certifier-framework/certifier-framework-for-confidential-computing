@@ -1,7 +1,6 @@
 #    
 #    File: cert_utility.mak
 
-
 ifndef SRC_DIR
 SRC_DIR=..
 endif
@@ -32,6 +31,7 @@ US= .
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 
 CFLAGS= $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+#For MAC, -D MACOS should be included
 CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
 CC=g++
 LINK=g++

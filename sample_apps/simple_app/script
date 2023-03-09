@@ -2,10 +2,10 @@
 # Helpful script to run example
 #
 
+#export GOROOT=/usr/local/go
+#export PATH=$PATH:$GOROOT/bin
+#export GO111MODULE=off
 export GOPATH=$HOME
-export GOROOT=/usr/local/go
-export PATH=$PATH:$GOROOT/bin
-export GO111MODULE=off
 export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
 export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app
 
@@ -27,30 +27,33 @@ make -f example_app.mak
 
 # build policy
 cd $EXAMPLE_DIR/provisioning
+
+#policyKey says platformKey is-trused-for-attestation
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
+  --verb="is-trusted-for-attestation" --output=ts1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+  --verb="says" --clause=ts1.bin --output=vse_policy1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1.bin \
+  --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+
+# policy key says measurement is-trusted
 $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../example_app.exe \
       --output=example_app.measurement
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
   --measurement_subject=example_app.measurement --verb="is-trusted" \
-  --output=ts1.bin
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-  --verb="says" --clause=ts1.bin --output=vse_policy1.bin
-
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
-  --verb="is-trusted-for-attestation" --output=ts2.bin
+  --output=ts2.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts2.bin --output=vse_policy2.bin
-
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
-  --vse_file=vse_policy1.bin --duration=9000 \
-  --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
-  --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
+  --vse_file=vse_policy2.bin --duration=9000 \
+  --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
 
 $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
   --output=policy.bin
 
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 
+# This gets included from the app
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=attest_key_file.bin \
   --verb="is-trusted-for-attestation" --output=tsc1.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=platform_key_file.bin \

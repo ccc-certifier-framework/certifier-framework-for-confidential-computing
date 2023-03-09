@@ -330,7 +330,7 @@ bool construct_sev_platform_evidence(
     printf("construct_sev_platform_evidence: Can't add to attest platform evidence\n");
     return false;
   }
-  ev->set_evidence_type("sev-attestation-with-platform");
+  ev->set_evidence_type("sev-attestation");
   ev->set_serialized_evidence(the_attestation_str);
 
   return true;

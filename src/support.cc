@@ -134,7 +134,9 @@ bool write_file(const string& file_name, int size, byte* data) {
   if (out < 0)
     return false;
   if (write(out, data, size) < 0) {
-    printf("write failed\n");
+    printf("write_file: write failed\n");
+    close(out);
+    return false;
   }
   close(out);
   return true;
@@ -153,17 +155,23 @@ int file_size(const string& file_name) {
 bool read_file(const string& file_name, int* size, byte* data) {
   struct stat file_info;
 
-  if (stat(file_name.c_str(), &file_info) != 0)
+  if (stat(file_name.c_str(), &file_info) != 0) {
+    printf("read_file: Can't stat\n");
     return false;
-  if (!S_ISREG(file_info.st_mode))
+  }
+  if (!S_ISREG(file_info.st_mode)) {
     return false;
+  }
   int bytes_in_file = (int)file_info.st_size;
   if (bytes_in_file > *size) {
+    printf("read_file: Buffer too small\n");
     return false;
   }
   int fd = ::open(file_name.c_str(), O_RDONLY);
-  if (fd < 0)
+  if (fd < 0) {
+    printf("read_file: open failed\n");
     return false;
+  }
   int n = (int)read(fd, data, bytes_in_file);
   close(fd);
   *size = n;
@@ -581,7 +589,7 @@ bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key
   memset(out, 0, *out_size);
 
   if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size)) {
-    printf("encrypt failed\n");
+    printf("authenticated_encrypt: encrypt failed\n");
     return false;
   }
   memcpy(out, iv, block_size);
@@ -596,6 +604,7 @@ bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key
     HMAC(EVP_sha384(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
     *out_size = cipher_size + hmac_size;
   } else {
+    printf("authenticated_encrypt: unsupported alg\n");
     return false;
   }
   return true;
@@ -622,19 +631,24 @@ bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *ke
   if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
     HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
     if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
+      printf("authenticated_decrypt: HMAC failed\n");
       return false;
     }
   } else if (strcmp(alg_name, "aes-256-cbc-hmac-sha384") == 0) {
     HMAC(EVP_sha384(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
     if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
+      printf("authenticated_decrypt: HMAC failed\n");
       return false;
     }
   } else {
+    printf("authenticated_decrypt: unsupported HMAC\n");
     return false;
   }
 
-  if (!decrypt(in + block_size, msg_with_iv_size - block_size, key, in, out, &plain_size))
+  if (!decrypt(in + block_size, msg_with_iv_size - block_size, key, in, out, &plain_size)) {
+    printf("authenticated_decrypt: decrypt failed\n");
     return false;
+  }
   *out_size = plain_size;
   return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
@@ -759,29 +773,36 @@ bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* sig_size, byt
   unsigned int size_digest = 0;
   if (strcmp("sha-256", alg) == 0) {
     if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha256(), nullptr, private_key) <= 0) {
+        printf("rsa_sign: EVP_DigestSignInit failed\n");
         return false;
     }
     if (EVP_DigestSignUpdate(sign_ctx, msg, size) <= 0) {
+        printf("rsa_sign: EVP_DigestSignUpdate failed\n");
       return false;
     }
     size_t t = *sig_size;
     if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
+        printf("rsa_sign: EVP_DigestSignFinal failed\n");
         return false;
     }
     *sig_size = t;
   } else if(strcmp("sha-384", alg) == 0) {
     if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha384(), nullptr, private_key) <= 0) {
+        printf("rsa_sign: EVP_DigestSignInit failed\n");
         return false;
     }
     if (EVP_DigestSignUpdate(sign_ctx, msg, size) <= 0) {
+        printf("rsa_sign: EVP_DigestSignUpdate failed\n");
       return false;
     }
     size_t t = *sig_size;
     if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
+        printf("rsa_sign: EVP_DigestSignFinal failed\n");
         return false;
     }
     *sig_size = t;
   } else {
+    printf("rsa_sign: unsuported digest\n");
     return false;
   }
   EVP_MD_CTX_destroy(sign_ctx);
@@ -796,24 +817,32 @@ bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, by
     byte digest[size_digest];
     memset(digest, 0, size_digest);
 
-    if (!digest_message("sha-256", (const byte*) msg, size, digest, size_digest))
+    if (!digest_message("sha-256", (const byte*) msg, size, digest, size_digest)) {
+      printf("rsa_verify: digest_message failed\n");
       return false;
+    }
     int size_decrypted = RSA_size(key);
     byte decrypted[size_decrypted];
     memset(decrypted, 0, size_decrypted);
     int n = RSA_public_encrypt(sig_size, sig, decrypted, key, RSA_NO_PADDING);
-    if (n < 0)
+    if (n < 0) {
+      printf("rsa_verify: RSA_public_encrypt failed\n");
       return false;
-    if (memcmp(digest, &decrypted[n - size_digest], size_digest) != 0)
+    }
+    if (memcmp(digest, &decrypted[n - size_digest], size_digest) != 0) {
+      printf("rsa_verify: digests don't match\n");
       return false;
+    }
 
     const int check_size = 16;
     byte check_buf[16] = {
       0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
       0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     };
-    if (memcmp(check_buf, decrypted, check_size) != 0)
+    if (memcmp(check_buf, decrypted, check_size) != 0) {
+      printf("rsa_verify: Bad header\n");
       return false;
+    }
     return memcmp(digest, &decrypted[n - size_digest], size_digest) == 0;
   } else if (strcmp("sha-384", alg) == 0) {
     unsigned int size_digest = digest_output_byte_size("sha-384");
@@ -827,17 +856,22 @@ bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, by
     byte decrypted[size_decrypted];
     memset(decrypted, 0, size_decrypted);
     int n = RSA_public_encrypt(sig_size, sig, decrypted, key, RSA_NO_PADDING);
-    if (n < 0)
+    if (n < 0) {
+      printf("rsa_verify: RSA_public_encrypt failed\n");
       return false;
+    }
     const int check_size = 16;
     byte check_buf[16] = {
       0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
       0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     };
-    if (memcmp(check_buf, decrypted, check_size) != 0)
+    if (memcmp(check_buf, decrypted, check_size) != 0) {
+      printf("rsa_verify: Bad header\n");
       return false;
+    }
     return memcmp(digest, &decrypted[n - size_digest], size_digest) == 0;
   } else {
+    printf("rsa_verify: unsupported digest\n");
     return false;
   }
 }
@@ -1096,24 +1130,24 @@ bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig,
 
 EC_KEY* generate_new_ecc_key(int num_bits) {
   if (num_bits != 384) {
-    printf("Only P-384 supported\n");
+    printf("generate_new_ecc_key: Only P-384 supported\n");
     return nullptr;
   }
   EC_KEY* ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
   if (ecc_key == nullptr) {
-    printf("Can't get curve by name\n");
+    printf("generate_new_ecc_key: Can't get curve by name\n");
     return nullptr;
   }
 
   if (1 != EC_KEY_generate_key(ecc_key)) {
-    printf("Can't generate key\n");
+    printf("generate_new_ecc_key: Can't generate key\n");
     return nullptr;
   }
 
   BN_CTX* ctx = BN_CTX_new();
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
-    printf("Can't get group (1)\n");
+    printf("generate_new_ecc_key: Can't get group (1)\n");
     return nullptr;
   }
   BIGNUM* pt_x = BN_new();
@@ -1133,7 +1167,7 @@ EC_KEY* key_to_ECC(const key_message& k) {
   }
   EC_KEY* ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
   if (ecc_key == nullptr) {
-    printf("Can't get curve by name\n");
+    printf("key_to_ECC: Can't get curve by name\n");
     return nullptr;
   }
 
@@ -1152,7 +1186,7 @@ EC_KEY* key_to_ECC(const key_message& k) {
   // set public point
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
-    printf("Can't get group (1)\n");
+    printf("key_to_ECC: Can't get group (1)\n");
     return nullptr;
   }
   const BIGNUM* p_pt_x =  BN_bin2bn((byte*)(k.ecc_key().public_point().x().data()),
@@ -1204,7 +1238,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
 
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
-    printf("Can't get group (2)\n");
+    printf("ECC_to_key: Can't get group (2)\n");
     return false;
   }
 
@@ -1219,7 +1253,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   if (BN_num_bytes(p) == 48) {
     ek->set_curve_name("P-384");
   } else {
-    printf("Only P-384 supported\n");
+    printf("ECC_to_key: Only P-384 supported\n");
     return false;
   }
 
@@ -1246,7 +1280,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   // set base_point
   const EC_POINT* generator = EC_GROUP_get0_generator(group);
   if (generator == nullptr) {
-    printf("Can't get base point\n");
+    printf("ECC_to_key: Can't get base point\n");
     BN_CTX_free(ctx);
     return false;
   }
@@ -1254,7 +1288,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   BIGNUM* y = BN_new();
   if (EC_POINT_get_affine_coordinates_GFp(group,
         generator, x, y, ctx) != 1) {
-    printf("Can't get affine coordinates\n");
+    printf("ECC_to_key: Can't get affine coordinates\n");
     BN_CTX_free(ctx);
     return false;
   }
@@ -1276,7 +1310,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   // set public_point
   const EC_POINT* pub_pt= EC_KEY_get0_public_key(ecc_key);
   if (pub_pt == nullptr) {
-    printf("Can't get public point\n");
+    printf("ECC_to_key: Can't get public point\n");
     BN_CTX_free(ctx);
     return false;
   }
@@ -1285,7 +1319,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   BIGNUM* yy = BN_new();
   if (EC_POINT_get_affine_coordinates_GFp(group,
         pub_pt, xx, yy, ctx) != 1) {
-    printf("Can't get affine coordinates\n");
+    printf("ECC_to_key: Can't get affine coordinates\n");
     BN_CTX_free(ctx);
     return false;
   }
@@ -1305,7 +1339,7 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   // set order_of_base_point
   BIGNUM* order = BN_new();
   if (EC_GROUP_get_order(group, order, ctx) != 1) {
-    printf("Can't get order\n");
+    printf("ECC_to_key: Can't get order\n");
     BN_free(order);
     BN_CTX_free(ctx);
     return false;
@@ -1627,7 +1661,7 @@ bool make_property(string& name, string& type, string& cmp, uint64_t int_value,
     prop->set_value_type("string");
     prop->set_string_value(string_value);
   } else {
-    printf("unrecognized type: %s\n", type.c_str());
+    printf("make_property: unrecognized type: %s\n", type.c_str());
     return false;
   }
   printf("\n");
@@ -2419,11 +2453,11 @@ int sized_pipe_write(int fd, int size, byte* buf) {
 int sized_pipe_read(int fd, string* out) {
   int size = 0;
   if (read(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int)) {
-    printf("sized_pipe_read error 1\n");
+    printf("sized_pipe_read: bad read size \n");
     return -1;
   }
   if (size > max_pipe_size) {
-    printf("sized_pipe_read error 2\n");
+    printf("sized_pipe_read: larger than pipe buffer\n");
     return -1;
   }
 
@@ -2433,7 +2467,7 @@ int sized_pipe_read(int fd, string* out) {
   while (cur_size < size) {
     n = read(fd, &buf[cur_size], size - cur_size);
     if (n < 0) {
-      printf("sized_pipe_read error 3\n");
+      printf("sized_pipe_read: read failed\n");
       return -1;
     }
     cur_size += n;
