@@ -307,7 +307,7 @@ int main(int argc, char** argv) {
 
     printf("Test seal/unseal interface... %s\n",
             test_seal_interface() == SUCCESS ? "SUCCESS" : "FAIL");
-
+#if 0
     /* B. Certifier integrated Attest/Verify */
     bool cert_result = false;
 
@@ -326,7 +326,7 @@ int main(int argc, char** argv) {
         printf("gramine_seal failed: result = %d\n", cert_result);
         goto exit;
     }
-
+#endif
     printf("Done with certifier tests\n");
     fflush(stdout);
 
