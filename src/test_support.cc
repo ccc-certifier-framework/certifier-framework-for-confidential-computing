@@ -1,6 +1,8 @@
 #include "certifier.h"
 #include "support.h"
+#ifdef SEV_SNP
 #include "sev-snp/attestation.h"
+#endif
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
