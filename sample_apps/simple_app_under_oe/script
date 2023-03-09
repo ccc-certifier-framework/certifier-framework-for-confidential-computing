@@ -28,6 +28,8 @@ make
 make dump_mrenclave
 
 # build policy
+cd $EXAMPLE_DIR/provisioning
+
 
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=vse.cer.der \
   --verb="is-trusted-for-attestation" --output=ts1.bin
