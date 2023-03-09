@@ -1888,7 +1888,7 @@ func ValidateOeEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Evi
 	PrintProvedStatements(alreadyProved)
 
         // ConstructProofFromSevPlatformEvidence()
-	toProve, proof := ConstructProofFromSevPlatformEvidence(pubPolicyKey, purpose, alreadyProved)
+	toProve, proof := ConstructProofFromOeEvidence(pubPolicyKey, purpose, alreadyProved)
 	if toProve == nil || proof == nil {
                 fmt.Printf("ValidateOeEvidence: Can't construct proof\n")
 		return false, nil, nil
