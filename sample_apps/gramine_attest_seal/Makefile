@@ -90,6 +90,7 @@ CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE) -DGRAMINE_CERTIFIER
 CERTIFIER_LDFLAGS = -lssl -lcrypto
 CERTIFIER_LDFLAGS += -L./ -L/usr/local/lib
 CERTIFIER_LDFLAGS += `pkg-config --cflags --libs protobuf`
+CERTIFIER_LDFLAGS += $(shell pkg-config --libs mbedtls_gramine)
 GPP=g++
 
 certifier:

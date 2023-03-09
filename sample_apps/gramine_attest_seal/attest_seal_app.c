@@ -23,7 +23,6 @@
  */
 
 #include <assert.h>
-#include <dlfcn.h>
 #include <errno.h>
 #include <iostream>
 #include <stdlib.h>
@@ -101,6 +100,13 @@ uint8_t user_quote[64];
 void print_bytes(int n, byte* buf) {
   for(int i = 0; i < n; i++)
     printf("%02x", buf[i]);
+}
+
+string measurement_file = "./binary_trusted_measurements_file.bin";
+uint8_t measurement[SGX_REPORT_DATA_SIZE];
+
+static int test_attest_verify(void) {
+    return 0;
 }
 
 /*!
@@ -267,10 +273,7 @@ int main(int argc, char** argv) {
     int ret;
     size_t len;
     void* ra_tls_attest_lib;
-
-    uint8_t* der_key = NULL;
-    uint8_t* der_crt = NULL;
-
+#if 0
     mbedtls_ssl_context ssl;
     mbedtls_ssl_config conf;
 
@@ -300,7 +303,7 @@ int main(int argc, char** argv) {
         printf("Unrecognized remote attestation type: %s\n", attestation_type_str);
         return 1;
     }
-
+#endif
     /* A. Gramine Local Tests */
     printf("Test quote interface... %s\n",
             test_quote_interface() == SUCCESS ? "SUCCESS" : "FAIL");

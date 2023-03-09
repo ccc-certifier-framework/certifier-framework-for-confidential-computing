@@ -15,15 +15,75 @@
 #include "gramine_api.h"
 
 #define MAX_ASSERTION_SIZE 5000
+#define ATTESTATION_TYPE_SIZE 32
 
 GramineCertifierFunctions gramineFuncs;
 
 string measurement_string;
 bool measurement_initialized = false;
 
-bool gramine_Init(const string& measurement_file) {
-  extern bool certifier_parent_enclave_type_intitalized;
-  extern string certifier_parent_enclave_type;
+static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
+    ssize_t bytes = 0;
+    ssize_t ret = 0;
+
+    int fd = open(path, do_write ? O_WRONLY : O_RDONLY);
+    if (fd < 0)
+        return fd;
+
+    while ((ssize_t)len > bytes) {
+        if (do_write)
+            ret = write(fd, buf + bytes, len - bytes);
+        else
+            ret = read(fd, buf + bytes, len - bytes);
+
+        if (ret > 0) {
+            bytes += ret;
+        } else if (ret == 0) {
+            /* end of file */
+            break;
+        } else {
+            if (ret < 0 && (errno == EAGAIN || errno == EINTR))
+                continue;
+            break;
+        }
+    }
+
+    close(fd);
+    return ret < 0 ? ret : bytes;
+}
+
+bool gramine_Init(const string& measurement_file, string& measurement_out) {
+  char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
+  void* ra_tls_attest_lib;
+  size_t ret = 0;
+
+  mbedtls_ssl_context ssl;
+  mbedtls_ssl_config conf;
+
+  mbedtls_ssl_init(&ssl);
+  mbedtls_ssl_config_init(&conf);
+
+  ret = rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
+                sizeof(attestation_type_str) - 1, /*do_write=*/false);
+  if (ret < 0 && ret != -ENOENT) {
+      printf("User requested SGX attestation but cannot read SGX-specific file "
+             "/dev/attestation/attestation_type\n");
+      return false;
+  }
+  printf("Attestation type: %s\n", attestation_type_str);
+
+  if (ret == -ENOENT || !strcmp(attestation_type_str, "none")) {
+      ra_tls_attest_lib = NULL;
+  } else if (!strcmp(attestation_type_str, "epid") || !strcmp(attestation_type_str, "dcap")) {
+      ra_tls_attest_lib = dlopen("libra_tls_attest.so", RTLD_LAZY);
+      if (!ra_tls_attest_lib) {
+          printf("User requested RA-TLS attestation but cannot find lib\n");
+          return false;
+      }
+  } else {
+      printf("Unrecognized remote attestation type: %s\n", attestation_type_str);
+      return false;
+  }
 
   /* Setup Gramine specific API calls */
   gramine_setup_certifier_functions(&gramineFuncs);
@@ -38,9 +98,8 @@ bool gramine_Init(const string& measurement_file) {
   printf("\n");
 #endif
 
+  measurement_out = measurement_string;
   measurement_initialized = true;
-  certifier_parent_enclave_type = "hardware";
-  certifier_parent_enclave_type_intitalized = true;
 
   return true;
 }

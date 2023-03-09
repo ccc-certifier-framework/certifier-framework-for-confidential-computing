@@ -14,12 +14,21 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <dlfcn.h>
 
 #include "support.h"
 #include "certifier.h"
 #include "simulated_enclave.h"
 #include "application_enclave.h"
 #include "cc_helpers.h"
+
+#include "mbedtls/ssl.h"
+#include "mbedtls/x509.h"
+#include "mbedtls/sha256.h"
+#include "mbedtls/aes.h"
+#include "mbedtls/gcm.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
 
 // SGX includes
 #include "sgx_arch.h"
