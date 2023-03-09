@@ -287,14 +287,7 @@ Step 6: Obtain the measurement of the trusted application for ths security domai
 Step 7: Author the policy for the security domain and produce the signed claims the apps need.
     cd $SEV_EXAMPLE_DIR/provisioning
 
-    a. Construct statement "policy-key says sev_example_app-measurement is-trusted"
-       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
-          --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
-          --output=ts1.bin
-       $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-          --verb="says" --clause=ts1.bin --output=vse_policy1.bin
-
-    b. Construct platform key policy
+    a. Construct platform key policy
 
       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert-subject=ark_cert.der \
         --verb="is-trusted-for-attestation" --output=ts1.bin
@@ -304,7 +297,7 @@ Step 7: Author the policy for the security domain and produce the signed claims 
         --vse_file=vse_policy1.bin --duration=9000 \
         --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
 
-    c. Construct the measurement policy
+    b. Construct the measurement policy
       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
         --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
         --output=ts2.bin
@@ -313,7 +306,7 @@ Step 7: Author the policy for the security domain and produce the signed claims 
       $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
         --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
 
-    d. Construct the trusted platform policy
+    c. Construct the trusted platform policy
 
       $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=debug --property_type='string' comparator="=" \
       --string_value=no --output=property1.bin
@@ -339,11 +332,11 @@ Step 7: Author the policy for the security domain and produce the signed claims 
       $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
         --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_3.bin
 
-    e. Package the policy for the certifier
+    d. Package the policy for the certifier
       $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin\
         --output=policy.bin
 
-    f. [optional] Print the policy
+    e. [optional] Print the policy
        $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 
 
