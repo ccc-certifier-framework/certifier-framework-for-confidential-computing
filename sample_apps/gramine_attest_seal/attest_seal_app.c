@@ -266,36 +266,6 @@ int main(int argc, char** argv) {
 	return -1;
     }
 #if 0
-    mbedtls_ssl_context ssl;
-    mbedtls_ssl_config conf;
-
-    mbedtls_ssl_init(&ssl);
-    mbedtls_ssl_config_init(&conf);
-
-    char attestation_type_str[SGX_QUOTE_SIZE] = {0};
-
-    ret = rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
-                  sizeof(attestation_type_str) - 1, /*do_write=*/false);
-    if (ret < 0 && ret != -ENOENT) {
-        printf("User requested SGX attestation but cannot read SGX-specific file "
-                       "/dev/attestation/attestation_type\n");
-        return 1;
-    }
-    printf("Attestation type: %s\n", attestation_type_str);
-
-    if (ret == -ENOENT || !strcmp(attestation_type_str, "none")) {
-        ra_tls_attest_lib = NULL;
-    } else if (!strcmp(attestation_type_str, "epid") || !strcmp(attestation_type_str, "dcap")) {
-        ra_tls_attest_lib = dlopen("libra_tls_attest.so", RTLD_LAZY);
-        if (!ra_tls_attest_lib) {
-            printf("User requested RA-TLS attestation but cannot find lib\n");
-            return 1;
-        }
-    } else {
-        printf("Unrecognized remote attestation type: %s\n", attestation_type_str);
-        return 1;
-    }
-
     /* A. Gramine Local Tests */
     printf("Test quote interface... %s\n",
             test_quote_interface() == SUCCESS ? "SUCCESS" : "FAIL");
