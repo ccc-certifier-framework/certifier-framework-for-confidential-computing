@@ -24,6 +24,8 @@ Both libraries should be install under /usr/local by default. If this is not
 the case, remember to update the JSON_VALIDATOR variable in
 policy_generator.mak.
 
+Add /usr/local/lib to /etc/ld.so.conf and run ldconfig if not already done.
+
 The Policy Generator utility can then be built using:
 
 make -f policy_generator.mak
