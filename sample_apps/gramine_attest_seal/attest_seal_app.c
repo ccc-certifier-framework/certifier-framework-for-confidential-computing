@@ -44,7 +44,8 @@
 #include "sgx_attest.h"
 #include "enclave_api.h"
 
-#include "gramine_trusted.h"
+#include "attestation.h"
+#include "gramine_api.h"
 
 // #define DEBUG
 
@@ -172,7 +173,7 @@ static int test_quote_interface(void) {
 
     return SUCCESS;
 }
-
+#if 0
 #define BUF_SIZE 10
 #define TAG_SIZE 16
 #define KEY_SIZE 16
@@ -268,13 +269,19 @@ done:
 
     return status;
 }
-
+#endif
 int main(int argc, char** argv) {
     int ret;
     size_t len;
     void* ra_tls_attest_lib;
+    int mr_size;
+    int measurement_size;
+    int assertion_size;
 
     bool status = false;
+    byte assertion[MAX_ASSERTION_SIZE];
+    byte measurement_recd[SGX_REPORT_DATA_SIZE];
+    byte mr_recd[SGX_QUOTE_SIZE];
 
     status = gramine_Init(measurement_file, measurement);
     if (status != true) {
@@ -282,6 +289,17 @@ int main(int argc, char** argv) {
 	return -1;
     }
 
+    status = gramine_Attest(SGX_REPORT_DATA_SIZE, measurement, &assertion_size, assertion);
+    if (status != true) {
+        printf("gramine_Init failed\n");
+	return -1;
+    }
+
+    status = gramine_Verify(assertion_size, assertion, &measurement_size, measurement_recd, &mr_size, mr_recd);
+    if (status != true) {
+        printf("gramine_Init failed\n");
+	return -1;
+    }
 #if 0
     mbedtls_ssl_context ssl;
     mbedtls_ssl_config conf;
@@ -312,14 +330,14 @@ int main(int argc, char** argv) {
         printf("Unrecognized remote attestation type: %s\n", attestation_type_str);
         return 1;
     }
-#endif
+
     /* A. Gramine Local Tests */
     printf("Test quote interface... %s\n",
             test_quote_interface() == SUCCESS ? "SUCCESS" : "FAIL");
 
     printf("Test seal/unseal interface... %s\n",
             test_seal_interface() == SUCCESS ? "SUCCESS" : "FAIL");
-#if 0
+
     /* B. Certifier integrated Attest/Verify */
     bool cert_result = false;
 

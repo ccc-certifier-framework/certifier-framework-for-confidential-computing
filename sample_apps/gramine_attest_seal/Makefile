@@ -85,8 +85,8 @@ CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/certifier.cc                  \
 		$(CERTIFIER_SRC_PATH)/certifier.pb.cc               \
 		#$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal/gramine_trusted.cc \
 
-CERTIFIER_INCLUDE = -I$(CERTIFIER_SRC_PATH)/../include -I$(CERTIFIER_SRC_PATH)/gramine -I$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal $(SGX_INCLUDE) -I$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal/./mbedtls/include
-CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE) -DGRAMINE_CERTIFIER
+CERTIFIER_INCLUDE = -I$(CERTIFIER_SRC_PATH)/../include -I$(CERTIFIER_SRC_PATH)/gramine -I$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal $(SGX_INCLUDE)
+CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE) -DGRAMINE_CERTIFIER -I./mbedtls/include
 CERTIFIER_LDFLAGS = -lssl -lcrypto
 CERTIFIER_LDFLAGS += -L./ -L/usr/local/lib
 CERTIFIER_LDFLAGS += `pkg-config --cflags --libs protobuf`
@@ -99,7 +99,7 @@ certifier:
 ######################### CLIENT/SERVER EXECUTABLES ###########################
 
 # TODO: use `$(shell pkg-config --cflags mbedtls_gramine)` instead of local mbedtls includes
-CFLAGS += -I./mbedtls/include $(SGX_INCLUDE) $(CERTIFIER_CFLAGS)
+CFLAGS += -I./mbedtls/include $(SGX_INCLUDE) $(CERTIFIER_CFLAGS) $(CERTIFIER_INCLUDE)
 LDFLAGS += -ldl -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -L./ -lcertifier $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
 
 attest_seal_app: attest_seal_app.c certifier mbedtls/.mbedtls_configured
