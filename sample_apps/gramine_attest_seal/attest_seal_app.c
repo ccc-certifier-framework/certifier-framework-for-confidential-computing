@@ -22,28 +22,6 @@
  * Note that this program builds against mbedTLS 3.x.
  */
 
-#include <assert.h>
-#include <errno.h>
-#include <iostream>
-#include <stdlib.h>
-#include <string.h>
-
-#include <unistd.h>
-#include <fcntl.h>
-
-#include "mbedtls/ssl.h"
-#include "mbedtls/x509.h"
-#include "mbedtls/sha256.h"
-#include "mbedtls/aes.h"
-#include "mbedtls/gcm.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/ctr_drbg.h"
-
-// SGX includes
-#include "sgx_arch.h"
-#include "sgx_attest.h"
-#include "enclave_api.h"
-
 #include "attestation.h"
 #include "gramine_api.h"
 
@@ -55,8 +33,6 @@ enum { SUCCESS = 0, FAILURE = -1 };
 
 // Certifier
 typedef unsigned char byte;
-
-#define SGX_QUOTE_SIZE 32
 
 static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
     ssize_t bytes = 0;
@@ -96,19 +72,8 @@ static const char* paths[] = {
     "/dev/attestation/protected_files_key",
 };
 
-uint8_t user_quote[64];
-
-void print_bytes(int n, byte* buf) {
-  for(int i = 0; i < n; i++)
-    printf("%02x", buf[i]);
-}
-
 uint8_t measurement[SGX_REPORT_DATA_SIZE];
 #define measurement_file "./binary_trusted_measurements_file.bin"
-
-static int test_attest_verify(void) {
-    return 0;
-}
 
 /*!
  * \brief Test quote interface (currently SGX quote obtained from the Quoting Enclave).
@@ -281,7 +246,7 @@ int main(int argc, char** argv) {
     bool status = false;
     byte assertion[MAX_ASSERTION_SIZE];
     byte measurement_recd[SGX_REPORT_DATA_SIZE];
-    byte mr_recd[SGX_QUOTE_SIZE];
+    byte mr_recd[SGX_HASH_SIZE];
 
     status = gramine_Init(measurement_file, measurement);
     if (status != true) {

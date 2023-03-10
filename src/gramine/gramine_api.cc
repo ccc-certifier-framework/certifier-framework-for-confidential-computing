@@ -52,7 +52,7 @@ static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write
     return ret < 0 ? ret : bytes;
 }
 
-bool gramine_Init(const string& measurement_file, byte *measurement_out) {
+bool gramine_Init(const char *measurement_file, byte *measurement_out) {
   char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
   void* ra_tls_attest_lib;
   size_t ret = 0;
@@ -88,7 +88,7 @@ bool gramine_Init(const string& measurement_file, byte *measurement_out) {
   /* Setup Gramine specific API calls */
   gramine_setup_certifier_functions(&gramineFuncs);
 
-  ret = rw_file(measurement_file.c_str(), measurement, SGX_REPORT_DATA_SIZE, false);
+  ret = rw_file(measurement_file, measurement, SGX_REPORT_DATA_SIZE, false);
   if (ret < 0 && ret != -ENOENT) {
     printf("gramine_Init: Can't read measurement file\n");
     return false;

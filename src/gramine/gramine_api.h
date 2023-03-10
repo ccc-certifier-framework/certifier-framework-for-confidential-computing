@@ -13,23 +13,13 @@
 // limitations under the License.
 
 #include <iostream>
+#include <sys/types.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <fcntl.h>
+#include <string.h>
 
-#include "support.h"
-#include "certifier.h"
-#include "simulated_enclave.h"
-#include "application_enclave.h"
-#include "cc_helpers.h"
-/*
-#include "mbedtls/ssl.h"
-#include "mbedtls/x509.h"
-#include "mbedtls/sha256.h"
-#include "mbedtls/aes.h"
-#include "mbedtls/gcm.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/ctr_drbg.h"
-*/
 // SGX includes
 #include "sgx_arch.h"
 #include "sgx_attest.h"
@@ -41,6 +31,13 @@
 #define MAX_ASSERTION_SIZE 5000
 
 typedef unsigned char byte;
+
+inline void print_bytes(int n, byte* buf) {
+  for(int i = 0; i < n; i++)
+    printf("%02x", buf[i]);
+}
+
+typedef unsigned char byte;
 typedef struct GramineCertifierFunctions {
   bool (*Attest)(int claims_size, byte* claims, int* size_out, byte* out);
   bool (*Verify)(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out);
@@ -48,7 +45,7 @@ typedef struct GramineCertifierFunctions {
   bool (*Unseal)(int in_size, byte* in, int* size_out, byte* out);
 } GramineCertifierFunctions;
 
-bool gramine_Init(const string& measurement_file, byte *measurement_out);
+bool gramine_Init(const char *measurement_file, byte *measurement_out);
 int gramine_Getkey(byte *user_data, sgx_key_128bit_t* key);
 int gramine_Sgx_Getkey(byte *user_data, sgx_key_128bit_t* key);
 
