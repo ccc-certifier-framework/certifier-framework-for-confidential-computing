@@ -24,8 +24,6 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 
-#define MAX_ASSERTION_SIZE 5000
-
 #define BUF_SIZE 10
 #define TAG_SIZE 16
 #define KEY_SIZE 16

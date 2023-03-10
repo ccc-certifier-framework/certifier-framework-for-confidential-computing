@@ -14,8 +14,8 @@
 
 #include <iostream>
 
-#ifndef _GRAMINE_API_H_
-#define _GRAMINE_API_H_
+#ifndef _GRAMINE_ATTESTATION_H_
+#define _GRAMINE_ATTESTATION_H_
 
 typedef unsigned char byte;
 
@@ -27,4 +27,4 @@ extern bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
-#endif // #ifdef _GRAMINE_API_H_
+#endif // #ifdef _GRAMINE_ATTESTATION_H_

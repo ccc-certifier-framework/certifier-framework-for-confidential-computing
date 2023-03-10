@@ -56,13 +56,13 @@ bool gramine_Init(const string& measurement_file, byte *measurement_out) {
   char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
   void* ra_tls_attest_lib;
   size_t ret = 0;
-
+/*
   mbedtls_ssl_context ssl;
   mbedtls_ssl_config conf;
 
   mbedtls_ssl_init(&ssl);
   mbedtls_ssl_config_init(&conf);
-
+*/
   ret = rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
                 sizeof(attestation_type_str) - 1, /*do_write=*/false);
   if (ret < 0 && ret != -ENOENT) {

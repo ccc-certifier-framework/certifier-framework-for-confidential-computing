@@ -21,7 +21,7 @@
 #include "simulated_enclave.h"
 #include "application_enclave.h"
 #include "cc_helpers.h"
-
+/*
 #include "mbedtls/ssl.h"
 #include "mbedtls/x509.h"
 #include "mbedtls/sha256.h"
@@ -29,7 +29,7 @@
 #include "mbedtls/gcm.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
-
+*/
 // SGX includes
 #include "sgx_arch.h"
 #include "sgx_attest.h"
@@ -37,6 +37,8 @@
 
 #ifndef _GRAMINE_API_H_
 #define _GRAMINE_API_H_
+
+#define MAX_ASSERTION_SIZE 5000
 
 typedef unsigned char byte;
 typedef struct GramineCertifierFunctions {
