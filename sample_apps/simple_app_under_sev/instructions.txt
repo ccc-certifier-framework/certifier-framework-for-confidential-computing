@@ -278,16 +278,24 @@ Step 5: Compile sev_example_app with the embedded policy_key
     make -f sev_example_app.mak
 
 
-Step 6: Obtain the measurement of the trusted application for ths security domain.
-    cd $SEV_EXAMPLE_DIR/provisioning
-    $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../sev_example_app.exe \
-      --output=sev_example_app.measurement
-
-
-Step 7: Author the policy for the security domain and produce the signed claims the apps need.
+Step 6: Author the policy for the security domain and produce the signed claims the apps need.
     cd $SEV_EXAMPLE_DIR/provisioning
 
-    a. Construct platform key policy
+    The policies can be generated either manually or through the policy generator tool.
+
+Step 6.a: Manual policy generation
+
+    a. Obtain the measurement of the trusted application for ths security domain.
+
+      cd $SEV_EXAMPLE_DIR/provisioning
+      $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --mrenclave=<HASH> \
+        --output=sev_example_app.measurement
+
+      Replace <HASH> with your actual measurement from sev-snp-measure. Or use:
+      010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708
+      if you are using the sev-snp-simulator.
+
+    b. Construct platform key policy
 
       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert-subject=ark_cert.der \
         --verb="is-trusted-for-attestation" --output=ts1.bin
@@ -297,7 +305,7 @@ Step 7: Author the policy for the security domain and produce the signed claims 
         --vse_file=vse_policy1.bin --duration=9000 \
         --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
 
-    b. Construct the measurement policy
+    c. Construct the measurement policy
       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
         --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
         --output=ts2.bin
@@ -306,7 +314,7 @@ Step 7: Author the policy for the security domain and produce the signed claims 
       $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
         --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
 
-    c. Construct the trusted platform policy
+    d. Construct the trusted platform policy
 
       $CERTIFIER_PROTOTYPE/utilities/make_property.exe --property_name=debug --property_type='string' comparator="=" \
       --string_value=no --output=property1.bin
@@ -332,15 +340,31 @@ Step 7: Author the policy for the security domain and produce the signed claims 
       $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
         --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_3.bin
 
-    d. Package the policy for the certifier
+    e. Package the policy for the certifier
       $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin\
         --output=policy.bin
 
-    e. [optional] Print the policy
+    f. [optional] Print the policy
        $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 
+Step 6.b: Policy Generator
 
-Step 8: Build SimpleServer:
+    a. Edit policy file
+
+      Open sev_policy.json and replace trusted measurements in the
+      "measurements" property with the expected measurement. Use:
+      010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708
+      if you are using the sev-snp-simulator.
+
+    b. Run Policy Generator:
+
+      $CERTIFIER_PROTOTYPE/utilities/policy_generator.exe --policy_input=../sev_policy.json \
+        --schema_input=$CERTIFIER_PROTOTYPE/utilities/policy_schema.json --util_path=$CERTIFIER_PROTOTYPE/utilities
+
+    c. [optional] Print the policy
+       $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+
+Step 7: Build SimpleServer:
   You should have gotten the protobuf compiler (protoc) for go when you got go.
   If not:
     go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
@@ -361,16 +385,16 @@ Step 8: Build SimpleServer:
     go build simpleserver.go
 
 
-Step 9: Create directories for app data
+Step 8: Create directories for app data
     cd $SEV_EXAMPLE_DIR
     mkdir app1_data app2_data
 
 
-Step 10: Create a directory for service data
+Step 9: Create a directory for service data
     mkdir $SEV_EXAMPLE_DIR/service
 
 
-Step 11: Provision the app files
+Step 10: Provision the app files
     Note: These files are required for the "simulated-enclave" which cannot measure the
     example app and needs a provisioned attestation key and platform cert.  On real
     hardware, these are not needed.
@@ -380,19 +404,19 @@ Step 11: Provision the app files
     cp ./* $SEV_EXAMPLE_DIR/app2_data
 
 
-Step 12: Provision the service files
+Step 11: Provision the service files
     cd $SEV_EXAMPLE_DIR/provisioning
     cp policy_key_file.bin policy_cert_file.bin policy.bin $SEV_EXAMPLE_DIR/service
 
 
-Step 13: Start the Certifier Service
+Step 12: Start the Certifier Service
   In a new terminal window:
     cd $SEV_EXAMPLE_DIR/service
     $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
       --policyFile=policy.bin --readPolicy=true
 
 
-Step 14:  Run the apps and get admission certificates from Certifier Service
+Step 13:  Run the apps and get admission certificates from Certifier Service
   Open two new terminals (one for the app as a client and one for the app as a server):
 
   In app as a client terminal run the following:
@@ -415,7 +439,7 @@ the apps connect to each other for the final test.  The Certifier Service is no 
 at this point.
 
 
-Step 15:  Run the apps to test trusted services
+Step 14:  Run the apps to test trusted services
 -----------------------------------------------
 
   In app as a server terminal run the following:
