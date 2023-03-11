@@ -757,6 +757,14 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 	svt := "string"
 	ivt := "int"
 
+	pn0 := "single-socket"
+	vp0 := "no"
+	if pol_byte & 0x08  == 1 {
+		vp0 = "yes"
+	}
+	p0 := MakeProperty(pn0, svt, &vp0, &ce, nil)
+	props.Props = append(props.Props, p0)
+
 	pn1 := "debug"
 	vp1 := "no"
 	ce := "="

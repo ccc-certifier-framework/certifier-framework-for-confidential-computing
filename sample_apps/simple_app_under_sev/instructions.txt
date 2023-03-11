@@ -454,3 +454,44 @@ Step 14:  Run the apps to test trusted services
 
 You should see the message "Hi from your secret server" in the client terminal window and
 "Hi from your secret client".   If so, your first Confidential Computing program worked!
+
+
+-----------------------------------------------------------------------------------------
+
+
+
+Further notes on attestation in Sev
+
+Here is the sev attestation structure and supporting data structures:
+
+union tcb_version {
+  struct {
+    uint8_t boot_loader;
+    uint8_t tee;
+    uint8_t reserved[4];
+    uint8_t snp;
+    uint8_t microcode;
+  };
+  uint64_t raw;
+};
+
+We decode the folllowing from the attestation report:
+
+  single-socket:  bit 4 in the policy byte
+  debug: bit 3 in policy byte
+  migrate: bit 2 in policy byte
+  smt: but 1 in policy mask
+  abi-majori: byte 2 in 64 bit policy
+  abi-minor: byte 1 in 64 bit policy
+  tcb-version:  We currently record this as the 64 bit raw value.
+
+If any of these properties is not specified in the "trused-platform-property", any value works.
+
+Other values in the report that we may want to inspect, in the future are:
+
+TSME: TSME enablement status on the platform. From PLATFORM_INFO in the report.
+FAMILY_ID/IMAGE_ID: Provided at launch.
+VMPL: The request VMPL for this report.
+REPORT_ID/REPORT_ID_MA: Report ID of guest and migration agent.
+CHIP_ID: If MaskChipId is set to 0, Identifier unique to the chip. This may be useful for revocation when a chip is
+         reported as broken.
