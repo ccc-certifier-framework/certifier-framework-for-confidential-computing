@@ -756,6 +756,7 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 
 	svt := "string"
 	ivt := "int"
+	ce := "="
 
 	pn0 := "single-socket"
 	vp0 := "no"
@@ -767,7 +768,6 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 
 	pn1 := "debug"
 	vp1 := "no"
-	ce := "="
 	if pol_byte & 0x04  == 1 {
 		vp1 = "yes"
 	}
