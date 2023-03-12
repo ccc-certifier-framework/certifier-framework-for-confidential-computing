@@ -16,6 +16,7 @@
 
 #include "gramine_api.h"
 
+
 #include "mbedtls/ssl.h"
 #include "mbedtls/x509.h"
 #include "mbedtls/sha256.h"
@@ -24,11 +25,10 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 
-#define BUF_SIZE 10
-#define TAG_SIZE 16
 #define KEY_SIZE 16
 
 #define SGX_QUOTE_SIZE 32
+#define DEBUG
 
 uint8_t g_quote[SGX_QUOTE_MAX_SIZE];
 
@@ -81,9 +81,6 @@ int gramine_Sgx_Getkey(byte *user_data, sgx_key_128bit_t* key) {
 
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
-
-    mbedtls_sha256((byte*)user_data, SGX_REPORT_DATA_SIZE,
-		    user_report_data.d, 0);
 
     printf("Get key user_data size: %ld\n", sizeof(user_report_data));
 
@@ -282,7 +279,7 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     memset(enc_buf, 0, sizeof(enc_buf));
 
     /* Get SGX Sealing Key */
-    if (gramine_Sgx_Getkey(measurement, &key) == FAILURE) {
+    if (gramine_Sgx_Getkey(measurement, (sgx_key_128bit_t*)key) == FAILURE) {
         printf("getkey failed to retrieve SGX Sealing Key\n");
 	return false;
     }
@@ -337,6 +334,7 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
 #endif
 
     printf("Seal: Successfully sealed size: %d\n", *size_out);
+
 done:
     mbedtls_gcm_free(&gcm);
     return status;
@@ -384,7 +382,7 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
 #endif
 
     /* Get SGX Sealing Key */
-    if (gramine_Sgx_Getkey(measurement, &key) == FAILURE) {
+    if (gramine_Sgx_Getkey(measurement, (sgx_key_128bit_t*)key) == FAILURE) {
         printf("getkey failed to retrieve SGX Sealing Key\n");
 	return false;
     }

@@ -237,6 +237,7 @@ done:
 #endif
 
 #define BUF_SIZE 10
+#define MAX_TAG_SIZE 20
 
 int main(int argc, char** argv) {
     int ret;
@@ -254,8 +255,10 @@ int main(int argc, char** argv) {
     byte mr_recd[SGX_HASH_SIZE];
 
     byte buf[BUF_SIZE];
-    byte enc_buf[BUF_SIZE];
+    byte enc_buf[BUF_SIZE + MAX_TAG_SIZE];
     byte dec_buf[BUF_SIZE];
+
+    printf("gramine_Attest test begin\n");
 
     status = gramine_Init(measurement_file, measurement);
     if (status != true) {
@@ -288,23 +291,18 @@ int main(int argc, char** argv) {
 	return -1;
     }
 
-    status = gramine_Unseal(BUF_SIZE, enc_buf, &unsealed_size, dec_buf);
+    status = gramine_Unseal(BUF_SIZE + MAX_TAG_SIZE, enc_buf, &unsealed_size, dec_buf);
     if (status != true) {
         printf("gramine_Unseal failed\n");
 	return -1;
     }
 
-    if (sealed_size != unsealed_size) {
+    if (sealed_size != unsealed_size + MAX_TAG_SIZE) {
         printf("gramine seal/unseal size failed\n");
 	return -1;
     }
 
-    if (sealed_size != unsealed_size) {
-        printf("gramine seal/unseal size failed\n");
-	return -1;
-    }
-
-    ret = memcmp(buf, dec_buf, sizeof(enc_buf));
+    ret = memcmp(buf, dec_buf, sizeof(dec_buf));
     if (ret) {
         printf("comparison of encrypted and decrypted buffers failed\n");
 	return -1;
@@ -318,7 +316,7 @@ int main(int argc, char** argv) {
     print_bytes(BUF_SIZE, enc_buf);
     printf("\n");
     printf("Testing seal interface - tag:\n");
-    print_bytes(TAG_SIZE, tag);
+    print_bytes(MAX_TAG_SIZE, tag);
     printf("\n");
 #endif
 
