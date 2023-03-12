@@ -235,6 +235,9 @@ done:
     return status;
 }
 #endif
+
+#define BUF_SIZE 10
+
 int main(int argc, char** argv) {
     int ret;
     size_t len;
@@ -242,11 +245,17 @@ int main(int argc, char** argv) {
     int mr_size;
     int measurement_size;
     int assertion_size;
+    int sealed_size;
+    int unsealed_size;
 
     bool status = false;
     byte assertion[MAX_ASSERTION_SIZE];
     byte measurement_recd[SGX_REPORT_DATA_SIZE];
     byte mr_recd[SGX_HASH_SIZE];
+
+    byte buf[BUF_SIZE];
+    byte enc_buf[BUF_SIZE];
+    byte dec_buf[BUF_SIZE];
 
     status = gramine_Init(measurement_file, measurement);
     if (status != true) {
@@ -256,15 +265,64 @@ int main(int argc, char** argv) {
 
     status = gramine_Attest(SGX_REPORT_DATA_SIZE, measurement, &assertion_size, assertion);
     if (status != true) {
-        printf("gramine_Init failed\n");
+        printf("gramine_Assist failed\n");
 	return -1;
     }
 
     status = gramine_Verify(assertion_size, assertion, &measurement_size, measurement_recd, &mr_size, mr_recd);
     if (status != true) {
-        printf("gramine_Init failed\n");
+        printf("gramine_Verify failed\n");
 	return -1;
     }
+
+    /* Test with a small buffer */
+    memset(buf, 1, sizeof(buf));
+    memset(enc_buf, 0, sizeof(enc_buf));
+    memset(dec_buf, 0, sizeof(dec_buf));
+
+    printf("gramine_Seal test begin\n");
+
+    status = gramine_Seal(BUF_SIZE, buf, &sealed_size, enc_buf);
+    if (status != true) {
+        printf("gramine_Seal failed\n");
+	return -1;
+    }
+
+    status = gramine_Unseal(BUF_SIZE, enc_buf, &unsealed_size, dec_buf);
+    if (status != true) {
+        printf("gramine_Unseal failed\n");
+	return -1;
+    }
+
+    if (sealed_size != unsealed_size) {
+        printf("gramine seal/unseal size failed\n");
+	return -1;
+    }
+
+    if (sealed_size != unsealed_size) {
+        printf("gramine seal/unseal size failed\n");
+	return -1;
+    }
+
+    ret = memcmp(buf, dec_buf, sizeof(enc_buf));
+    if (ret) {
+        printf("comparison of encrypted and decrypted buffers failed\n");
+	return -1;
+    }
+
+#ifdef DEBUG
+    printf("Testing seal interface - input buf:\n");
+    print_bytes(BUF_SIZE, buf);
+    printf("\n");
+    printf("Testing seal interface - encrypted buf:\n");
+    print_bytes(BUF_SIZE, enc_buf);
+    printf("\n");
+    printf("Testing seal interface - tag:\n");
+    print_bytes(TAG_SIZE, tag);
+    printf("\n");
+#endif
+
+    printf("gramine_Seal test successful\n");
 #if 0
     /* A. Gramine Local Tests */
     printf("Test quote interface... %s\n",
