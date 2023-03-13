@@ -72,7 +72,6 @@ static const char* paths[] = {
     "/dev/attestation/protected_files_key",
 };
 
-uint8_t measurement[SGX_REPORT_DATA_SIZE];
 #define measurement_file "./binary_trusted_measurements_file.bin"
 
 /*!
@@ -240,20 +239,21 @@ done:
 #define BUF_STORAGE_SIZE 4
 #define TAG_SIZE 16
 #define MAX_TAG_SIZE (BUF_STORAGE_SIZE + TAG_SIZE)
+#define USER_DATA_SIZE 256
 
 int main(int argc, char** argv) {
     int ret;
     size_t len;
     void* ra_tls_attest_lib;
     int mr_size;
-    int measurement_size;
+    int ud_recd_size;
     int assertion_size;
     int sealed_size;
     int unsealed_size;
 
     bool status = false;
     byte assertion[MAX_ASSERTION_SIZE];
-    byte measurement_recd[SGX_REPORT_DATA_SIZE];
+    byte ud_recd[USER_DATA_SIZE];
     byte mr_recd[SGX_HASH_SIZE];
 
     byte buf[BUF_SIZE];
@@ -262,19 +262,24 @@ int main(int argc, char** argv) {
 
     printf("gramine_Attest test begin\n");
 
-    status = gramine_Init(measurement_file, measurement);
+    status = gramine_Init(measurement_file);
     if (status != true) {
         printf("gramine_Init failed\n");
 	return -1;
     }
 
-    status = gramine_Attest(SGX_REPORT_DATA_SIZE, measurement, &assertion_size, assertion);
+    byte user_data[USER_DATA_SIZE];
+    for (int i = 0; i < USER_DATA_SIZE; i++) {
+      user_data[i] = (byte)i;
+    }
+
+    status = gramine_Attest(USER_DATA_SIZE, user_data, &assertion_size, assertion);
     if (status != true) {
         printf("gramine_Assist failed\n");
 	return -1;
     }
 
-    status = gramine_Verify(assertion_size, assertion, &measurement_size, measurement_recd, &mr_size, mr_recd);
+    status = gramine_Verify(assertion_size, assertion, &ud_recd_size, ud_recd, &mr_size, mr_recd);
     if (status != true) {
         printf("gramine_Verify failed\n");
 	return -1;

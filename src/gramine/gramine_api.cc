@@ -16,11 +16,12 @@
 
 #define MAX_ASSERTION_SIZE 5000
 #define ATTESTATION_TYPE_SIZE 32
+#define MAX_CERT_SIZE 2048
 
 GramineCertifierFunctions gramineFuncs;
 
-uint8_t measurement[SGX_REPORT_DATA_SIZE];
-bool measurement_initialized = false;
+uint8_t cert[MAX_CERT_SIZE];
+bool cert_initialized = false;
 
 static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
     ssize_t bytes = 0;
@@ -52,7 +53,17 @@ static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write
     return ret < 0 ? ret : bytes;
 }
 
-bool gramine_Init(const char *measurement_file, byte *measurement_out) {
+int file_size(const char *file_name) {
+  struct stat file_info;
+
+  if (stat(file_name, &file_info) != 0)
+    return false;
+  if (!S_ISREG(file_info.st_mode))
+    return false;
+  return (int)file_info.st_size;
+}
+
+bool gramine_Init(const char *cert_file) {
   char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
   void* ra_tls_attest_lib;
   size_t ret = 0;
@@ -82,20 +93,24 @@ bool gramine_Init(const char *measurement_file, byte *measurement_out) {
   /* Setup Gramine specific API calls */
   gramine_setup_certifier_functions(&gramineFuncs);
 
-  ret = rw_file(measurement_file, measurement, SGX_REPORT_DATA_SIZE, false);
+  int size = file_size(cert_file);
+  if (size < 0) {
+    printf("Error reading file size\n");
+    return false;
+  }
+  ret = rw_file(cert_file, cert, size, false);
   if (ret < 0 && ret != -ENOENT) {
-    printf("gramine_Init: Can't read measurement file\n");
+    printf("gramine_Init: Can't read cert file\n");
     return false;
   }
 
 #ifdef DEBUG
-  printf("gramine_Init: Setting up mr_enclave measurement: ");
-  print_bytes(32, measurement);
+  printf("gramine_Init: Setting up cert: ");
+  print_bytes(size, cert);
   printf("\n");
 #endif
 
-  memcpy(measurement_out, measurement, SGX_REPORT_DATA_SIZE);
-  measurement_initialized = true;
+  cert_initialized = true;
 
   return true;
 }

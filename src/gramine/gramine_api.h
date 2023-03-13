@@ -14,6 +14,9 @@
 
 #include <iostream>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <stdint.h>
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <dlfcn.h>
@@ -54,7 +57,7 @@ typedef struct GramineCertifierFunctions {
   bool (*Unseal)(int in_size, byte* in, int* size_out, byte* out);
 } GramineCertifierFunctions;
 
-bool gramine_Init(const char *measurement_file, byte *measurement_out);
+bool gramine_Init(const char *cert_file);
 int gramine_Getkey(byte *user_data, sgx_key_128bit_t* key);
 int gramine_Sgx_Getkey(byte *user_data, sgx_key_128bit_t* key);
 
