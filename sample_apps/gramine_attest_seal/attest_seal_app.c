@@ -237,7 +237,9 @@ done:
 #endif
 
 #define BUF_SIZE 10
-#define MAX_TAG_SIZE 20
+#define BUF_STORAGE_SIZE 4
+#define TAG_SIZE 16
+#define MAX_TAG_SIZE (BUF_STORAGE_SIZE + TAG_SIZE)
 
 int main(int argc, char** argv) {
     int ret;
