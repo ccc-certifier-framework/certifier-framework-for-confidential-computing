@@ -30,8 +30,6 @@
 #define SGX_QUOTE_SIZE 32
 #define DEBUG
 
-uint8_t g_quote[SGX_QUOTE_MAX_SIZE];
-
 enum { SUCCESS = 0, FAILURE = -1 };
 
 static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
@@ -115,6 +113,7 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
 
 bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     ssize_t bytes;
+    uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
     printf("Attest quote interface, claims size: %d\n", claims_size);
     print_bytes(claims_size, claims);
@@ -135,7 +134,7 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     }
 
     /* 2. read `quote` file */
-    bytes = rw_file("/dev/attestation/quote", (uint8_t*)&g_quote, sizeof(g_quote),
+    bytes = rw_file("/dev/attestation/quote", (uint8_t*)&quote, sizeof(quote),
 		    /*do_write=*/false);
     if (bytes < 0) {
         printf("Attest quote interface for user_data failed %d\n", errno);
@@ -143,7 +142,7 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     }
 
     /* Copy out the assertion/quote */
-    memcpy(out, g_quote, bytes);
+    memcpy(out, quote, bytes);
     *size_out = bytes;
     printf("Gramine Attest done\n");
 
@@ -182,6 +181,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     int ret = -1;
     uint8_t mr[SGX_QUOTE_SIZE];
     size_t mr_size;
+    uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
     printf("Gramine Verify called user_data_size: %d assertion_size: %d\n",
            user_data_size, assertion_size);
@@ -200,7 +200,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     }
 
     /* 2. read `quote` file */
-    bytes = rw_file("/dev/attestation/quote", (uint8_t*)&g_quote, sizeof(g_quote),
+    bytes = rw_file("/dev/attestation/quote", (uint8_t*)&quote, sizeof(quote),
 		    /*do_write=*/false);
     if (bytes < 0) {
         printf("Verify quote interface for user_data failed %d\n", errno);
@@ -208,7 +208,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     }
 
     sgx_quote_t* quote_expected = (sgx_quote_t*)assertion;
-    sgx_quote_t* quote_received = (sgx_quote_t*)g_quote;
+    sgx_quote_t* quote_received = (sgx_quote_t*)quote;
 
     if (quote_expected->body.version != /*EPID*/2 && quote_received->body.version != /*DCAP*/3) {
         printf("version of SGX quote is not EPID (2) and not ECDSA/DCAP (3)\n");
