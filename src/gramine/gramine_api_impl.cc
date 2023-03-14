@@ -25,10 +25,9 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 
+//#define DEBUG
 #define KEY_SIZE 16
-
 #define SGX_QUOTE_SIZE 32
-#define DEBUG
 
 enum { SUCCESS = 0, FAILURE = -1 };
 
@@ -104,9 +103,11 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
     memset(*key, 0, sizeof(*key));
     local_sgx_getkey(&key_request, key);
 
+#ifdef DEBUG
     printf("Got key:\n");
     print_bytes(sizeof(*key), *key);
     printf("\n");
+#endif
 
     return SUCCESS;
 }
@@ -116,7 +117,9 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
     printf("Attest quote interface, claims size: %d\n", claims_size);
+#ifdef DEBUG
     print_bytes(claims_size, claims);
+#endif
 
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
@@ -271,7 +274,11 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     int tag_size = TAG_SIZE;
     int i, j = 0;
 
-    printf("Seal: Input size: %d\n", in_size);
+    printf("Seal: Input size: %d \n", in_size);
+#ifdef DEBUG
+    print_bytes(in_size, in);
+#endif
+    printf("\n");
 
     memset(enc_buf, 0, sizeof(enc_buf));
 
@@ -347,8 +354,10 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
     int enc_size = 0;
     int i, j = 0;
 
-    printf("Preparing Unseal size: %d input: \n", in_size);
+    printf("Preparing Unseal size: %d \n", in_size);
+#ifdef DEBUG
     print_bytes(in_size, in);
+#endif
     printf("\n");
 
     for (i = 0; i < sizeof(int); i++, j++) {

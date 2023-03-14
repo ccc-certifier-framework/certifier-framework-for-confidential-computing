@@ -237,7 +237,7 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
 
 bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
   bool result = false;
-  printf("Invoking Gramine Seal %d\n", in_size);
+  printf("Invoking Gramine Seal size: %d\n", in_size);
 
   result = (*gramineFuncs.Seal)(in_size, in, size_out, out);
   if (!result) {
@@ -245,13 +245,13 @@ bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
     return false;
   }
 
-  printf("Done Gramine Seal %d\n", *size_out);
+  printf("Done Gramine Seal size: %d\n", *size_out);
   return true;
 }
 
 bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   bool result = false;
-  printf("Invoking Gramine Unseal %d\n", in_size);
+  printf("Invoking Gramine Unseal size: %d\n", in_size);
 
   result = (*gramineFuncs.Unseal)(in_size, in, size_out, out);
   if (!result) {
@@ -259,7 +259,7 @@ bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
     return false;
   }
 
-  printf("Done Gramine Unseal %d\n", *size_out);
+  printf("Done Gramine Unseal size: %d\n", *size_out);
   return true;
 }
 

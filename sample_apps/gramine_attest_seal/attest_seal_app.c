@@ -12,11 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* SPDX-License-Identifier: Apache-2.0 */
-/* Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
- *               2020, Intel Labs
- */
-
 /*
  * Attest/Verify sample application
  * Note that this program builds against mbedTLS 3.x.
@@ -43,7 +38,6 @@ typedef unsigned char byte;
 int main(int argc, char** argv) {
     int ret;
     size_t len;
-    void* ra_tls_attest_lib;
     int mr_size;
     int ud_recd_size;
     int assertion_size;
@@ -59,7 +53,7 @@ int main(int argc, char** argv) {
     byte enc_buf[BUF_SIZE + MAX_TAG_SIZE];
     byte dec_buf[BUF_SIZE];
 
-    printf("gramine_Attest test begin\n");
+    printf("gramine_Attest/gramine_Verify test begin\n");
 
     status = gramine_Init(measurement_file, cert_file);
     if (status != true) {
@@ -67,15 +61,15 @@ int main(int argc, char** argv) {
 	return -1;
     }
 
+    /* Attest/Verify with SGX quote verification */
     byte user_data[USER_DATA_SIZE];
     for (int i = 0; i < USER_DATA_SIZE; i++) {
       user_data[i] = (byte)i;
     }
 
-    /* Attest/Verify with SGX quote verification */
     status = gramine_Attest(USER_DATA_SIZE, user_data, &assertion_size, assertion);
     if (status != true) {
-        printf("gramine_Assist failed\n");
+        printf("gramine_Attest failed\n");
 	return -1;
     }
 
@@ -84,13 +78,14 @@ int main(int argc, char** argv) {
         printf("gramine_Verify failed\n");
 	return -1;
     }
+    printf("gramine_Attest/gramine_Verify test successful\n");
 
     /* Sealing test with a small buffer */
     memset(buf, 1, sizeof(buf));
     memset(enc_buf, 0, sizeof(enc_buf));
     memset(dec_buf, 0, sizeof(dec_buf));
 
-    printf("gramine_Seal test begin\n");
+    printf("gramine_Seal/gramine_Unseal test begin\n");
 
     status = gramine_Seal(BUF_SIZE, buf, &sealed_size, enc_buf);
     if (status != true) {
@@ -105,13 +100,13 @@ int main(int argc, char** argv) {
     }
 
     if (sealed_size != unsealed_size + MAX_TAG_SIZE) {
-        printf("gramine seal/unseal size failed\n");
+        printf("Gramine seal/unseal size failed\n");
 	return -1;
     }
 
     ret = memcmp(buf, dec_buf, sizeof(dec_buf));
     if (ret) {
-        printf("comparison of encrypted and decrypted buffers failed\n");
+        printf("Gramine comparison of encrypted and decrypted buffers failed\n");
 	return -1;
     }
 
@@ -127,14 +122,10 @@ int main(int argc, char** argv) {
     printf("\n");
 #endif
 
-    printf("gramine_Seal test successful\n");
-    printf("Done with certifier tests\n");
+    printf("gramine_Seal/gramine_Unseal test successful\n");
 
 exit:
     fflush(stdout);
-
-    if (ra_tls_attest_lib)
-        dlclose(ra_tls_attest_lib);
 
     return ret;
 }
