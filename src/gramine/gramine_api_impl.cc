@@ -76,13 +76,10 @@ static inline int64_t local_sgx_getkey(sgx_key_request_t * keyrequest,
     return rax;
 }
 
-int gramine_Sgx_Getkey(byte *user_data, sgx_key_128bit_t* key) {
+int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
     ssize_t bytes;
 
-    /* 1. write some custom data to `user_report_data` file */
-    sgx_report_data_t user_report_data = {0};
-
-    printf("Get key user_data size: %ld\n", sizeof(user_report_data));
+    printf("Get key user_report_data size: %ld\n", sizeof(user_report_data));
 
     bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                          sizeof(user_report_data), /*do_write=*/true);
