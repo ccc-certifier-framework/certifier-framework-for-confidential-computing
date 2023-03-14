@@ -26,6 +26,7 @@
 #include "mbedtls/ctr_drbg.h"
 
 //#define DEBUG
+
 #define KEY_SIZE 16
 #define SGX_QUOTE_SIZE 32
 

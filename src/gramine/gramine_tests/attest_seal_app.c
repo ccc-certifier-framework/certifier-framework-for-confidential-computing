@@ -20,7 +20,7 @@
 #include "attestation.h"
 #include "gramine_api.h"
 
-// #define DEBUG
+//#define DEBUG
 
 enum { SUCCESS = 0, FAILURE = -1 };
 
@@ -117,8 +117,6 @@ int main(int argc, char** argv) {
     printf("Testing seal interface - encrypted buf:\n");
     print_bytes(BUF_SIZE, enc_buf);
     printf("\n");
-    printf("Testing seal interface - tag:\n");
-    print_bytes(MAX_TAG_SIZE, tag);
     printf("\n");
 #endif
 

@@ -32,7 +32,7 @@ ssl/attest_seal_app.crt: ssl/ca_config.conf
 	openssl x509 -req -days 360 -in ssl/attest_seal_app.csr -CA ssl/ca.crt -CAkey ssl/ca.key -CAcreateserial -out ssl/attest_seal_app.crt
 
 ######################### GRAMINE/SGX VARIABLES ###############################
-GRAMINE_SRC_PATH = ../../../gramine/gramine
+GRAMINE_SRC_PATH = ../../../../gramine/gramine
 SGX_INCLUDE = -I$(GRAMINE_SRC_PATH)/pal/src/host/linux-sgx -I$(GRAMINE_SRC_PATH)/tools/sgx/ra-tls
 SGX_LDFLAGS = -Wl,--enable-new-dtags $(shell pkg-config --libs sgx_util)
 
@@ -70,13 +70,13 @@ mbedtls/.mbedtls_configured: mbedtls/.mbedtls_downloaded
 	touch $@
 
 ######################### CERTIFIER ###########################
-CERTIFIER_SRC_PATH = ../../src
+CERTIFIER_SRC_PATH = ../../
 
 .SECONDARY: certifier
 CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc        \
 		$(CERTIFIER_SRC_PATH)/gramine/gramine_api_impl.cc   \
 
-CERTIFIER_INCLUDE = -I$(CERTIFIER_SRC_PATH)/../include -I$(CERTIFIER_SRC_PATH)/gramine -I$(CERTIFIER_SRC_PATH)/../sample_apps/gramine_attest_seal $(SGX_INCLUDE) -I./mbedtls/include
+CERTIFIER_INCLUDE = -I. -I$(CERTIFIER_SRC_PATH)/../include -I$(CERTIFIER_SRC_PATH)/gramine $(SGX_INCLUDE) -I./mbedtls/include
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE) -DGRAMINE_CERTIFIER
 CERTIFIER_LDFLAGS = -lssl -lcrypto
 CERTIFIER_LDFLAGS += -L./ -L/usr/local/lib
@@ -93,7 +93,7 @@ certifier:
 CFLAGS += $(CERTIFIER_CFLAGS)
 LDFLAGS += -ldl -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -L./ -lcertifier $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
 
-attest_seal_app: attest_seal_app.c certifier mbedtls/.mbedtls_configured
+attest_seal_app: attest_seal_app.c mbedtls/.mbedtls_configured certifier
 	$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
 
 ############################### SERVER MANIFEST ###############################
