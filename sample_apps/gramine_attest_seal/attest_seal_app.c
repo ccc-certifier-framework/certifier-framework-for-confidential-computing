@@ -73,6 +73,7 @@ static const char* paths[] = {
 };
 
 #define measurement_file "./binary_trusted_measurements_file.bin"
+#define cert_file "./ssl/ca.crt"
 
 /*!
  * \brief Test quote interface (currently SGX quote obtained from the Quoting Enclave).
@@ -262,7 +263,7 @@ int main(int argc, char** argv) {
 
     printf("gramine_Attest test begin\n");
 
-    status = gramine_Init(measurement_file);
+    status = gramine_Init(measurement_file, cert_file);
     if (status != true) {
         printf("gramine_Init failed\n");
 	return -1;
