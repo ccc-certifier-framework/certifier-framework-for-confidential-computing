@@ -5,8 +5,10 @@ Instructions for building and running the sample application under oe and genera
 
 The structure of an OE application is diferent from other applications in sample_apps because
 of the partitioning of the application into "trusted" and "untrusted" portions.  So, unlike
-other applications there is not a single "example_app.cc" that gets built.  Todo:  Ye should
-say a littl emore about the structure of the application.
+other applications there is not a single "example_app.cc" that gets built. Instead, the simple
+application is split into the host and enclave parts. The normal Certifier interfaces used by
+other simple apps are now wrapped as ECALLs that can be called by the host application into the
+enclave.
 
 $CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.  On my
 computer, it is in =~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing.
@@ -51,10 +53,10 @@ Step 5: Compile example_app with the embedded policy_key
     make
     make dump_mrenclave
 
-Step 6: In addition to making the binary, make will produce a file, binary_trusted_measurements_file.bin
-containing the application measurement.  The platform key should have been provisioned in a pem file called
-vse.crt which you should copy into the provisioning directory.  Translate vse.crt, which is in pem format,
-into der by:
+Step 6: In addition to making the binary, make will provide instructions to produce
+binary_trusted_measurements_file.bin containing the application measurement. The platform key should
+have been provisioned in a pem file called vse.crt which you should copy into the provisioning directory.
+Translate vse.crt, which is in pem format, into der by:
     cd $EXAMPLE_DIR/provisioning
     openssl x509 -in vse.crt -inform pem -out vse.crt.der -outform der
 
@@ -146,13 +148,13 @@ Step 14:  Run the apps and get admission certificates from Certifier Service
 
   In app as a client terminal run the following:
     cd $EXAMPLE_DIR
-    ./host/host enclave/enclave cold-init app1_data
-    ./host/host enclave/enclave get-certifier app1_data
+    ./host/host enclave/enclave.signed cold-init $EXAMPLE_DIR/app1_data
+    ./host/host enclave/enclave.signed get-certifier $EXAMPLE_DIR/app1_data
 
   In app as a server terminal run the following:
     cd $EXAMPLE_DIR
-    ./host/host enclave/enclave cold-init app2_data
-    ./host/host enclave/enclave get-certifier app2_data
+    ./host/host enclave/enclave.signed cold-init $EXAMPLE_DIR/app2_data
+    ./host/host enclave/enclave.signed get-certifier $EXAMPLE_DIR/app2_data
 
 At this point, both versions of the app have their admission certificates.  You can look at
 the output of the terminal running simpleserver for output.  Now all we have to do is have
@@ -165,11 +167,11 @@ Step 15:  Run the apps to test trusted services
 
   In app as a server terminal run the following:
     cd $EXAMPLE_DIR
-    ./host/host enclave/enclave run-app-as-server app2_data
+    ./host/host enclave/enclave.signed run-app-as-server $EXAMPLE_DIR/app2_data
 
   In app as a client terminal run the following:
     cd $EXAMPLE_DIR
-    ./host/host enclave/enclave run-app-as-client app1_data
+    ./host/host enclave/enclave.signed run-app-as-client $EXAMPLE_DIR/app1_data
 
 You should see the message "Hi from your secret server" in the client terminal window and
 "Hi from your secret client".   If so, your first Confidential Computing program worked!

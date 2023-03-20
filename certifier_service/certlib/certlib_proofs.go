@@ -226,8 +226,11 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				fmt.Printf("InitProvedStatements: missing cert chain in oe evidence\n")
 				return false
 			}
+			// Ignore SGX TCB level check for now
 			serializedUD, m, err  := oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
-				evidenceList[i-1].SerializedEvidence)
+				nil, false)
+			//serializedUD, m, err  := oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
+			//	evidenceList[i-1].SerializedEvidence, false)
 			if err != nil || serializedUD == nil || m == nil {
 				return false
 			}

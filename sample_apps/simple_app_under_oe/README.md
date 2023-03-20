@@ -79,10 +79,10 @@ make
 
 Step 6: Obtain the measurement of the trusted application for the security domain.
 ```bash
-cd $EXAMPLE_DIR/provisioning
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../enclave/enclave.signed \
-      --output=example_app.measurement
+cd $EXAMPLE_DIR
+make dump_mrenclave
 ```
+Follow the instructions at the bottom of the output to generate binary_trusted_measurements_file.bin
 
 Step 7: Author the policy for the security domain and produce the signed claims the apps need.
 ```bash
@@ -90,7 +90,7 @@ cd $EXAMPLE_DIR/provisioning
 
 # a. Construct statement "policy-key says example_app-measurement is-trusted"
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
-   --measurement_subject=example_app.measurement --verb="is-trusted" \
+   --measurement_subject=binary_trusted_measurements_file.bin --verb="is-trusted" \
    --output=ts1.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
    --verb="says" --clause=ts1.bin --output=vse_policy1.bin

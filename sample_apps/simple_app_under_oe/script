@@ -31,7 +31,7 @@ make dump_mrenclave
 cd $EXAMPLE_DIR/provisioning
 
 
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=vse.cer.der \
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=vse.crt.der \
   --verb="is-trusted-for-attestation" --output=ts1.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1.bin
@@ -76,18 +76,18 @@ $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
 
 # initialize client app
 cd $EXAMPLE_DIR
-./host/host enclave/enclave cold-init app1_data
+./host/host enclave/enclave.signed cold-init $EXAMPLE_DIR/app1_data
 # get client app certified
-./host/host enclave/enclave get-certifier app1_data
+./host/host enclave/enclave.signed get-certifier $EXAMPLE_DIR/app1_data
 
 # initialize server app
-./host/host enclave/enclave cold-init app2_data
+./host/host enclave/enclave.signed cold-init $EXAMPLE_DIR/app2_data
 # get server app certified
-./host/host enclave/enclave get-certifier app2_data
+./host/host enclave/enclave.signed get-certifier $EXAMPLE_DIR/app2_data
 
 #run the app
 cd $EXAMPLE_DIR
-./host/host enclave/enclave run-app-as-server app2_data
+./host/host enclave/enclave.signed run-app-as-server $EXAMPLE_DIR/app2_data
 cd $EXAMPLE_DIR
-./host/host enclave/enclave run-app-as-client app1_data
+./host/host enclave/enclave.signed run-app-as-client $EXAMPLE_DIR/app1_data
 

@@ -173,7 +173,8 @@ bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
       return false;
     }
 
-    string cert(FLAGS_certificate_file);
+    string cert(data_dir);
+    cert.append(FLAGS_certificate_file);
     if (!app_trust_data->initialize_oe_enclave_data(cert)) {
       printf("Can't init OE enclave\n");
       return false;

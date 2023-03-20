@@ -311,7 +311,7 @@ void cc_trust_data::print_trust_data() {
   }
 }
 
-const int max_pad_size_for_store = 512;
+const int max_pad_size_for_store = 1024;
 
 bool cc_trust_data::save_store() {
 

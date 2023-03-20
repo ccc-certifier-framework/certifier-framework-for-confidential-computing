@@ -15,6 +15,10 @@ oe_Seal (int seal_policy, int in_size, byte* in, int opt_size, byte* opt,
   size_t blob_size;
   uint64_t host_addr = 0;
 
+  if (!size_out || !out) {
+    return result;
+  }
+
   const oe_seal_setting_t settings[] = {OE_SEAL_SET_POLICY(seal_policy)};
   ret = oe_seal(
     NULL,
@@ -34,6 +38,12 @@ oe_Seal (int seal_policy, int in_size, byte* in, int opt_size, byte* opt,
   if (blob_size > UINT32_MAX)
   {
     OE_DEBUG_PRINTF("blob_size is too large\n");
+    goto exit;
+  }
+
+  if (*size_out < (int) blob_size) {
+    OE_DEBUG_PRINTF("Output buffer is too small\n");
+    *size_out = (int) blob_size;
     goto exit;
   }
 
