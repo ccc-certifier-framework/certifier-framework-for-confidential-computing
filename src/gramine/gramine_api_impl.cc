@@ -16,7 +16,6 @@
 
 #include "gramine_api.h"
 
-
 #include "mbedtls/ssl.h"
 #include "mbedtls/x509.h"
 #include "mbedtls/sha256.h"
@@ -28,7 +27,7 @@
 //#define DEBUG
 
 #define KEY_SIZE 16
-#define SGX_QUOTE_SIZE 32
+#define SGX_MR_SIZE 32
 
 enum { SUCCESS = 0, FAILURE = -1 };
 
@@ -86,7 +85,7 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
         return FAILURE;
     }
 
-    /* 4. read `report` file */
+    /* read `report` file */
     sgx_report_t report;
     bytes = gramine_rw_file("/dev/attestation/report", (uint8_t*)&report, sizeof(report), false);
     if (bytes != sizeof(report)) {
@@ -155,7 +154,7 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
 
 int (*gramine_verify_quote_f)(size_t quote_size, uint8_t* quote, size_t *mr_size, uint8_t* mr);
 
-int verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint8_t* mr) {
+int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint8_t* mr) {
     int ret = -1;
     void* ra_tls_verify_lib           = NULL;
 
@@ -183,7 +182,7 @@ out:
 bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out) {
     ssize_t bytes;
     int ret = -1;
-    uint8_t mr[SGX_QUOTE_SIZE];
+    uint8_t mr[SGX_MR_SIZE];
     size_t mr_size;
     uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
@@ -243,18 +242,18 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     }
 
     printf("\nGramine verify quote interface mr_enclave: ");
-    gramine_print_bytes(SGX_QUOTE_SIZE, quote_expected->body.report_body.mr_enclave.m);
+    gramine_print_bytes(SGX_MR_SIZE, quote_expected->body.report_body.mr_enclave.m);
 
-    /* Invoke remote verify_quote() in DCAP library */
-    printf("\nGramine begin verify quote with DCAP\n");
-    if (verify_quote(assertion_size, (uint8_t*)quote_expected, &mr_size, mr) != 0) {
+    /* Invoke remote_verify_quote() in DCAP library */
+    printf("\nGramine begin remote verify quote with DCAP\n");
+    if (remote_verify_quote(assertion_size, (uint8_t*)quote_expected, &mr_size, mr) != 0) {
         printf("\nGramine begin verify quote with DCAP failed\n");
         return false;
     }
 
     /* Copy out quote info */
-    memcpy(out, quote_expected->body.report_body.mr_enclave.m, SGX_QUOTE_SIZE);
-    *size_out = SGX_QUOTE_SIZE;
+    memcpy(out, quote_expected->body.report_body.mr_enclave.m, SGX_MR_SIZE);
+    *size_out = SGX_MR_SIZE;
 
     printf("\nGramine verify quote interface compare done, output: \n");
     gramine_print_bytes(*size_out, out);

@@ -49,7 +49,6 @@ inline void gramine_print_bytes(int n, byte* buf) {
     printf("%02x", buf[i]);
 }
 
-typedef unsigned char byte;
 typedef struct GramineFunctions {
   bool (*Attest)(int claims_size, byte* claims, int* size_out, byte* out);
   bool (*Verify)(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out);

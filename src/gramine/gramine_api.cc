@@ -16,7 +16,6 @@
 
 //#define DEBUG
 
-#define MAX_ASSERTION_SIZE 5000
 #define ATTESTATION_TYPE_SIZE 32
 #define MAX_CERT_SIZE 2048
 
