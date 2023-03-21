@@ -32,7 +32,7 @@
 
 enum { SUCCESS = 0, FAILURE = -1 };
 
-static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
+ssize_t gramine_rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
     ssize_t bytes = 0;
     ssize_t ret = 0;
 
@@ -79,7 +79,7 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
 
     printf("Get key user_report_data size: %ld\n", sizeof(user_report_data));
 
-    bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
+    bytes = gramine_rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                          sizeof(user_report_data), /*do_write=*/true);
     if (bytes != sizeof(user_report_data)) {
         printf("Test prep user_data failed %d\n", errno);
@@ -88,7 +88,7 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
 
     /* 4. read `report` file */
     sgx_report_t report;
-    bytes = rw_file("/dev/attestation/report", (uint8_t*)&report, sizeof(report), false);
+    bytes = gramine_rw_file("/dev/attestation/report", (uint8_t*)&report, sizeof(report), false);
     if (bytes != sizeof(report)) {
         /* error is already printed by file_read_f() */
         return FAILURE;
@@ -106,7 +106,7 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
 
 #ifdef DEBUG
     printf("Got key:\n");
-    print_bytes(sizeof(*key), *key);
+    gramine_print_bytes(sizeof(*key), *key);
     printf("\n");
 #endif
 
@@ -119,7 +119,7 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
 
     printf("Attest quote interface, claims size: %d\n", claims_size);
 #ifdef DEBUG
-    print_bytes(claims_size, claims);
+    gramine_print_bytes(claims_size, claims);
 #endif
 
     /* 1. write some custom data to `user_report_data` file */
@@ -129,7 +129,7 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
 
     printf("Attest quote interface prep user_data size: %ld\n", sizeof(user_report_data));
 
-    bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
+    bytes = gramine_rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                          sizeof(user_report_data), /*do_write=*/true);
 
     if (bytes != sizeof(user_report_data)) {
@@ -138,7 +138,7 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     }
 
     /* 2. read `quote` file */
-    bytes = rw_file("/dev/attestation/quote", (uint8_t*)&quote, sizeof(quote),
+    bytes = gramine_rw_file("/dev/attestation/quote", (uint8_t*)&quote, sizeof(quote),
 		    /*do_write=*/false);
     if (bytes < 0) {
         printf("Attest quote interface for user_data failed %d\n", errno);
@@ -174,7 +174,7 @@ int verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint8_t* mr
     }
 
     printf("MR enclave returned: %ld\n", *mr_size);
-    print_bytes(*mr_size, mr);
+    gramine_print_bytes(*mr_size, mr);
 
 out:
     return ret;
@@ -196,7 +196,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     /* Get a SHA256 of user_data */
     mbedtls_sha256(user_data, user_data_size, user_report_data.d, 0);
 
-    bytes = rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
+    bytes = gramine_rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                     sizeof(user_report_data), /*do_write=*/true);
     if (bytes != sizeof(user_report_data)) {
         printf("Verify prep user_data failed %d\n", errno);
@@ -204,7 +204,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     }
 
     /* 2. read `quote` file */
-    bytes = rw_file("/dev/attestation/quote", (uint8_t*)&quote, sizeof(quote),
+    bytes = gramine_rw_file("/dev/attestation/quote", (uint8_t*)&quote, sizeof(quote),
 		    /*do_write=*/false);
     if (bytes < 0) {
         printf("Verify quote interface for user_data failed %d\n", errno);
@@ -243,7 +243,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     }
 
     printf("\nGramine verify quote interface mr_enclave: ");
-    print_bytes(SGX_QUOTE_SIZE, quote_expected->body.report_body.mr_enclave.m);
+    gramine_print_bytes(SGX_QUOTE_SIZE, quote_expected->body.report_body.mr_enclave.m);
 
     /* Invoke remote verify_quote() in DCAP library */
     printf("\nGramine begin verify quote with DCAP\n");
@@ -257,7 +257,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     *size_out = SGX_QUOTE_SIZE;
 
     printf("\nGramine verify quote interface compare done, output: \n");
-    print_bytes(*size_out, out);
+    gramine_print_bytes(*size_out, out);
     printf("\n");
 
     return true;
@@ -277,7 +277,7 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
 
     printf("Seal: Input size: %d \n", in_size);
 #ifdef DEBUG
-    print_bytes(in_size, in);
+    gramine_print_bytes(in_size, in);
 #endif
     printf("\n");
 
@@ -310,13 +310,13 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
 
 #ifdef DEBUG
     printf("Testing seal interface - input buf:\n");
-    print_bytes(in_size, in);
+    gramine_print_bytes(in_size, in);
     printf("\n");
     printf("Testing seal interface - encrypted buf:\n");
-    print_bytes(sizeof(enc_buf), enc_buf);
+    gramine_print_bytes(sizeof(enc_buf), enc_buf);
     printf("\n");
     printf("Testing seal interface - tag:\n");
-    print_bytes(TAG_SIZE, tag);
+    gramine_print_bytes(TAG_SIZE, tag);
     printf("\n");
 #endif
 
@@ -334,7 +334,7 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
 
 #ifdef DEBUG
     printf("Testing seal interface - out:\n");
-    print_bytes(*size_out, out);
+    gramine_print_bytes(*size_out, out);
     printf("\n");
 #endif
 
@@ -357,7 +357,7 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
 
     printf("Preparing Unseal size: %d \n", in_size);
 #ifdef DEBUG
-    print_bytes(in_size, in);
+    gramine_print_bytes(in_size, in);
 #endif
     printf("\n");
 
@@ -381,10 +381,10 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
 
 #ifdef DEBUG
     printf("Testing unseal interface - encrypted buf: size: %d\n", enc_size);
-    print_bytes(enc_size, enc_buf);
+    gramine_print_bytes(enc_size, enc_buf);
     printf("\n");
     printf("Testing unseal interface - tag:\n");
-    print_bytes(TAG_SIZE, tag);
+    gramine_print_bytes(TAG_SIZE, tag);
     printf("\n");
 #endif
 
@@ -415,7 +415,7 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
 
 #ifdef DEBUG
     printf("Testing seal interface - decrypted buf:\n");
-    print_bytes(enc_size, dec_buf);
+    gramine_print_bytes(enc_size, dec_buf);
     printf("\n");
 #endif
 
@@ -432,7 +432,7 @@ done:
     return status;
 }
 
-void gramine_setup_certifier_functions(GramineCertifierFunctions *gramineFuncs) {
+void gramine_setup_functions(GramineFunctions *gramineFuncs) {
     gramineFuncs->Attest = &Attest;
     gramineFuncs->Verify = &Verify;
     gramineFuncs->Seal = &Seal;

@@ -20,43 +20,13 @@
 #define ATTESTATION_TYPE_SIZE 32
 #define MAX_CERT_SIZE 2048
 
-GramineCertifierFunctions gramineFuncs;
+GramineFunctions gramineFuncs;
 
 uint8_t cert[MAX_CERT_SIZE];
 uint8_t measurement[SGX_REPORT_DATA_SIZE];
 bool cert_initialized = false;
 
-static ssize_t rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
-    ssize_t bytes = 0;
-    ssize_t ret = 0;
-
-    int fd = open(path, do_write ? O_WRONLY : O_RDONLY);
-    if (fd < 0)
-        return fd;
-
-    while ((ssize_t)len > bytes) {
-        if (do_write)
-            ret = write(fd, buf + bytes, len - bytes);
-        else
-            ret = read(fd, buf + bytes, len - bytes);
-
-        if (ret > 0) {
-            bytes += ret;
-        } else if (ret == 0) {
-            /* end of file */
-            break;
-        } else {
-            if (ret < 0 && (errno == EAGAIN || errno == EINTR))
-                continue;
-            break;
-        }
-    }
-
-    close(fd);
-    return ret < 0 ? ret : bytes;
-}
-
-int file_size(const char *file_name) {
+int gramine_file_size(const char *file_name) {
   struct stat file_info;
 
   if (stat(file_name, &file_info) != 0)
@@ -71,7 +41,7 @@ bool gramine_Init(const char *measurement_file, const char *cert_file) {
   void* ra_tls_attest_lib;
   size_t ret = 0;
 
-  ret = rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
+  ret = gramine_rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
                 sizeof(attestation_type_str) - 1, /*do_write=*/false);
   if (ret < 0 && ret != -ENOENT) {
     printf("User requested SGX attestation but cannot read SGX-specific file "
@@ -94,14 +64,14 @@ bool gramine_Init(const char *measurement_file, const char *cert_file) {
   }
 
   /* Setup Gramine specific API calls */
-  gramine_setup_certifier_functions(&gramineFuncs);
+  gramine_setup_functions(&gramineFuncs);
 
-  int size = file_size(measurement_file);
+  int size = gramine_file_size(measurement_file);
   if (size < 0) {
     printf("Error reading file size for measurement\n");
     return false;
   }
-  ret = rw_file(measurement_file, measurement, size, false);
+  ret = gramine_rw_file(measurement_file, measurement, size, false);
   if (ret < 0 && ret != -ENOENT) {
     printf("gramine_Init: Can't read measurement file\n");
     return false;
@@ -109,16 +79,16 @@ bool gramine_Init(const char *measurement_file, const char *cert_file) {
 
 #ifdef DEBUG
   printf("gramine_Init: Setting up measurement: ");
-  print_bytes(size, measurement);
+  gramine_print_bytes(size, measurement);
   printf("\n");
 #endif
 
-  size = file_size(cert_file);
+  size = gramine_file_size(cert_file);
   if (size < 0) {
     printf("Error reading file size for certificate\n");
     return false;
   }
-  ret = rw_file(cert_file, cert, size, false);
+  ret = gramine_rw_file(cert_file, cert, size, false);
   if (ret < 0 && ret != -ENOENT) {
     printf("gramine_Init: Can't read cert file\n");
     return false;
@@ -126,7 +96,7 @@ bool gramine_Init(const char *measurement_file, const char *cert_file) {
 
 #ifdef DEBUG
   printf("gramine_Init: Setting up cert: ");
-  print_bytes(size, cert);
+  gramine_print_bytes(size, cert);
   printf("\n");
 #endif
 
@@ -144,7 +114,7 @@ bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   printf("Invoking Gramine Attest %d\n", claims_size);
 
 #ifdef DEBUG
-  print_bytes(claims_size, claims);
+  gramine_print_bytes(claims_size, claims);
   printf("\n");
 #endif
 
@@ -178,7 +148,7 @@ bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
 
   printf("Done Gramine Attest assertion size %d:\n", *size_out);
 #ifdef DEBUG
-  print_bytes(*size_out, out);
+  gramine_print_bytes(*size_out, out);
 #endif
 
   return true;
@@ -193,7 +163,7 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
 
   printf("\nInput claims sent to gramine_Verify claims_size %d\n", claims_size);
 #ifdef DEBUG
-  print_bytes(claims_size, claims);
+  gramine_print_bytes(claims_size, claims);
 #endif
 
   int i, j = 0;
@@ -207,7 +177,7 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
 
 #ifdef DEBUG
   printf("\nAssertion:\n");
-  print_bytes(assertion_size, assertion);
+  gramine_print_bytes(assertion_size, assertion);
 #endif
 
   for (i = 0; i < sizeof(int); i++, j++) {
@@ -220,7 +190,7 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
 
 #ifdef DEBUG
   printf("\nuser_data_out:\n");
-  print_bytes(*user_data_out_size, user_data_out);
+  gramine_print_bytes(*user_data_out_size, user_data_out);
 #endif
 
   printf("Invoking Gramine Verify %d\n", claims_size);
