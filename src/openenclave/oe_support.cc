@@ -14,8 +14,8 @@ bool oe_Init(const string& pem_cert_chain_file) {
   extern bool certifier_parent_enclave_type_intitalized;
   extern string certifier_parent_enclave_type; 
    if (!read_file_into_string(pem_cert_chain_file, &pem_cert_chain)) {
-    printf("oe_Init: Can't read pem cert chain file\n");
-    return false;
+    printf("oe_Init: No pem cert chain file. Assume empty endorsement.\n");
+    pem_cert_chain = "";
   }
 
   pem_cert_chain_initialized = true;

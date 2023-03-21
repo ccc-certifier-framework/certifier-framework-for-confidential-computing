@@ -222,15 +222,17 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
 			// from the return values.  Then add it to proved statements
-			if i < 1  || evidenceList[i-1].GetEvidenceType() != "pem-cert-chain" {
-				fmt.Printf("InitProvedStatements: missing cert chain in oe evidence\n")
-				return false
-			}
 			// Ignore SGX TCB level check for now
-			serializedUD, m, err  := oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
-				nil, false)
-			//serializedUD, m, err  := oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
-			//	evidenceList[i-1].SerializedEvidence, false)
+			var serializedUD, m []byte
+			var err error
+			if i < 1  || evidenceList[i-1].GetEvidenceType() != "pem-cert-chain" {
+				// No endorsement presented
+				serializedUD, m, err  = oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
+					nil, false)
+			} else {
+				serializedUD, m, err  = oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
+					evidenceList[i-1].SerializedEvidence, false)
+			}
 			if err != nil || serializedUD == nil || m == nil {
 				return false
 			}
@@ -240,13 +242,18 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			// Get platform key from pem file
-			stripped := StripPemHeaderAndTrailer(string(evidenceList[i-1].SerializedEvidence))
-			if stripped == nil {
-				fmt.Printf("InitProvedStatements: Bad PEM\n")
-				return false
+			var cl *certprotos.VseClause
+			if i >= 1 {
+				stripped := StripPemHeaderAndTrailer(string(evidenceList[i-1].SerializedEvidence))
+				if stripped == nil {
+					fmt.Printf("InitProvedStatements: Bad PEM\n")
+					return false
+				}
+				k := KeyFromPemFormat(*stripped)
+				cl = ConstructOESpeaksForStatement(k, ud.EnclaveKey, m)
+			} else {
+				cl = ConstructOESpeaksForStatement(nil, ud.EnclaveKey, m)
 			}
-			k := KeyFromPemFormat(*stripped)
-			cl := ConstructSevSpeaksForStatement(k, ud.EnclaveKey, m)
 			if cl == nil {
 				fmt.Printf("InitProvedStatements: ConstructEnclaveKeySpeaksForMeasurement failed\n")
 				return false
@@ -606,10 +613,13 @@ func ConstructVseAttestationFromCert(subjKey *certprotos.KeyMessage, signerKey *
 	return MakeIndirectVseClause(signerKeyEntity, &s_verb, tcl)
 }
 
-func ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage, measurement []byte) *certprotos.VseClause {
-	vcertKeyEntity := MakeKeyEntity(vcertKey)
-	if vcertKeyEntity == nil {
-		return nil
+func ConstructOESpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage, measurement []byte) *certprotos.VseClause {
+	var vcertKeyEntity *certprotos.EntityMessage = nil
+	if vcertKey != nil {
+		vcertKeyEntity = MakeKeyEntity(vcertKey)
+		if vcertKeyEntity == nil {
+			return nil
+		}
 	}
 	enclaveKeyEntity := MakeKeyEntity(enclaveKey)
 	if enclaveKeyEntity == nil {
@@ -623,6 +633,9 @@ func ConstructSevSpeaksForStatement(vcertKey *certprotos.KeyMessage, enclaveKey 
 	tcl := MakeSimpleVseClause(enclaveKeyEntity, &speaks_verb, measurementEntity)
 	if tcl == nil {
 		return nil
+	}
+	if vcertKey == nil {
+		return tcl
 	}
 	says_verb := "says"
 	return MakeIndirectVseClause(vcertKeyEntity, &says_verb, tcl)
@@ -1343,22 +1356,80 @@ func VerifyProof(policyKey *certprotos.KeyMessage, toProve *certprotos.VseClause
 	return false
 }
 
-func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
-        // At this point, the evidence should be
-        //      00: "policyKey is-trusted"
-        //      01: "Key[rsa, policyKey, f2663e9ca042fcd261ab051b3a4e3ac83d79afdd] says
-	//		Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] is-trusted-for-attestation"
-        //      02: "policyKey says measurement is-trusted"
-	//	03: "Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] says
-	//		Key[rsa, auth-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]
-
-	// Debug
-	fmt.Printf("ConstructProofFromOeEvidence, %d statements\n", len(alreadyProved.Proved))
-	for i := 0; i < len(alreadyProved.Proved);  i++ {
-		PrintVseClause(alreadyProved.Proved[i])
-		fmt.Printf("\n")
+func ConstructProofFromOeEvidenceWithoutEndorsement(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
+	if len(alreadyProved.Proved) < 3 {
+		fmt.Printf("ConstructProofFromOeEvidence: too few statements\n")
+		return nil, nil
 	}
 
+	policyKeyIsTrusted :=  alreadyProved.Proved[0]
+	policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[1]
+	enclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[2]
+
+	if policyKeyIsTrusted == nil || enclaveKeySpeaksForMeasurement == nil ||
+			policyKeySaysMeasurementIsTrusted == nil {
+		fmt.Printf("ConstructProofFromOeEvidence: Error 4\n")
+		return nil, nil
+	}
+
+        proof := &certprotos.Proof{}
+        r1 := int32(1)
+        r3 := int32(3)
+        r7 := int32(7)
+
+	enclaveKey := enclaveKeySpeaksForMeasurement.Subject
+	if enclaveKey == nil || enclaveKey.GetEntityType() != "key" {
+		fmt.Printf("ConstructProofFromOeEvidence: Bad enclave key\n")
+		return nil, nil
+	}
+        var toProve *certprotos.VseClause = nil
+	if purpose == "authentication" {
+		verb := "is-trusted-for-authentication"
+		toProve = MakeUnaryVseClause(enclaveKey, &verb)
+	} else {
+		verb := "is-trusted-for-attestation"
+		toProve = MakeUnaryVseClause(enclaveKey, &verb)
+	}
+
+	measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
+	if measurementIsTrusted == nil {
+		fmt.Printf("ConstructProofFromOeEvidence: Can't get measurement\n")
+		return nil, nil
+	}
+	ps1 := certprotos.ProofStep {
+		S1: policyKeyIsTrusted,
+		S2: policyKeySaysMeasurementIsTrusted,
+		Conclusion: measurementIsTrusted,
+		RuleApplied: &r3,
+	}
+	proof.Steps = append(proof.Steps, &ps1)
+
+	// measurement is-trusted and enclaveKey speaks-for measurement -->
+	//	enclaveKey is-trusted-for-authentication (r1) or
+	//	enclaveKey is-trusted-for-attestation (r7)
+	if purpose == "authentication" {
+		ps2 := certprotos.ProofStep {
+			S1: measurementIsTrusted,
+			S2: enclaveKeySpeaksForMeasurement,
+			Conclusion: toProve,
+			RuleApplied: &r1,
+		}
+		proof.Steps = append(proof.Steps, &ps2)
+	} else {
+		ps2 := certprotos.ProofStep {
+			S1: measurementIsTrusted,
+			S2: enclaveKeySpeaksForMeasurement,
+			Conclusion: toProve,
+			RuleApplied: &r7,
+		}
+		proof.Steps = append(proof.Steps, &ps2)
+	}
+
+        return toProve, proof
+
+}
+
+func ConstructProofFromOeEvidenceWithEndorsement(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
 	if len(alreadyProved.Proved) < 4 {
 		fmt.Printf("ConstructProofFromOeEvidence: too few statements\n")
 		return nil, nil
@@ -1457,6 +1528,34 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
 	}
 
         return toProve, proof
+}
+
+func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
+        // At this point, the evidence should be
+        //      00: "policyKey is-trusted"
+        //      01: "Key[rsa, policyKey, f2663e9ca042fcd261ab051b3a4e3ac83d79afdd] says
+	//		Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] is-trusted-for-attestation"
+        //      02: "policyKey says measurement is-trusted"
+	//	03: "Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] says
+	//		Key[rsa, auth-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]
+	// Or:
+        //      00: "policyKey is-trusted"
+        //      01: "policyKey says measurement is-trusted"
+	//      02: "Key[rsa, auth-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]"
+
+
+	// Debug
+	fmt.Printf("ConstructProofFromOeEvidence, %d statements\n", len(alreadyProved.Proved))
+	for i := 0; i < len(alreadyProved.Proved);  i++ {
+		PrintVseClause(alreadyProved.Proved[i])
+		fmt.Printf("\n")
+	}
+
+	if len(alreadyProved.Proved) > 3 {
+		return ConstructProofFromOeEvidenceWithEndorsement(publicPolicyKey, purpose, alreadyProved)
+	} else {
+		return ConstructProofFromOeEvidenceWithoutEndorsement(publicPolicyKey, purpose, alreadyProved)
+	}
 }
 
 // This is used for simulated enclave and the application enclave
@@ -1831,7 +1930,6 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
         //    03 Key[rsa, platformKey, c1c06db41296c2dc3ecb2e4a1290f39925699d4d] says Key[rsa, attestKey, f19938982e3f7e16f524de5f7b47d3e39e32df07] is-trusted-for-attestation
         //    04 Key[rsa, attestKey, f19938982e3f7e16f524de5f7b47d3e39e32df07] says Key[rsa, auth-key, ce3c7cc9b6e7bc733a95434bda226ef4d74e620f] speaks-for Measurement[617ac0a68393b4c0b359a76d0fab9015af0801273e13bd366fca57a7af4fe6cc]
 
-
 	// Debug
 	fmt.Printf("\nValidateInternalEvidence: after InitProved:\n")
 	PrintProvedStatements(alreadyProved)
@@ -1923,14 +2021,17 @@ func ValidateOeEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Evi
 	fmt.Printf("\nProved statements\n")
         PrintProvedStatements(alreadyProved);
 
-	me := alreadyProved.Proved[2]
-	if me.Clause == nil || me.Clause.Subject == nil ||
-			me.Clause.Subject.GetEntityType() != "measurement" {
-                fmt.Printf("ValidateOeEvidence: Proof does not verify\n")
-		return false, nil, nil
+	var me *certprotos.VseClause
+	for i := 1; i <= len(alreadyProved.Proved);  i++ {
+		me = alreadyProved.Proved[i]
+		if me.Clause != nil && me.Clause.Subject != nil &&
+				me.Clause.Subject.GetEntityType() == "measurement" {
+			return true, toProve, me.Clause.Subject.Measurement
+		}
 	}
 
-	return true, toProve, me.Clause.Subject.Measurement
+	fmt.Printf("ValidateOeEvidence: Proof does not verify\n")
+	return false, nil, nil
 }
 
 // returns success, toProve, measurement
