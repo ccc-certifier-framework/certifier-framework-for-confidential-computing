@@ -20,8 +20,6 @@
 #include "attestation.h"
 #include "gramine_api.h"
 
-//#define DEBUG
-
 enum { SUCCESS = 0, FAILURE = -1 };
 
 // Certifier
@@ -112,10 +110,10 @@ int main(int argc, char** argv) {
 
 #ifdef DEBUG
     printf("Testing seal interface - input buf:\n");
-    print_bytes(BUF_SIZE, buf);
+    gramine_print_bytes(BUF_SIZE, buf);
     printf("\n");
     printf("Testing seal interface - encrypted buf:\n");
-    print_bytes(BUF_SIZE, enc_buf);
+    gramine_print_bytes(BUF_SIZE, enc_buf);
     printf("\n");
     printf("\n");
 #endif

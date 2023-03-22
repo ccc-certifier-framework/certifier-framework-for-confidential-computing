@@ -42,6 +42,8 @@
 #define MAX_ASSERTION_SIZE 5000
 #define TAG_SIZE 16
 
+//#define DEBUG
+
 typedef unsigned char byte;
 
 inline void gramine_print_bytes(int n, byte* buf) {

@@ -24,8 +24,6 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 
-//#define DEBUG
-
 #define KEY_SIZE 16
 #define SGX_MR_SIZE 32
 
@@ -76,7 +74,9 @@ static inline int64_t local_sgx_getkey(sgx_key_request_t * keyrequest,
 int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
     ssize_t bytes;
 
+#ifdef DEBUG
     printf("Get key user_report_data size: %ld\n", sizeof(user_report_data));
+#endif
 
     bytes = gramine_rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                          sizeof(user_report_data), /*do_write=*/true);
@@ -116,8 +116,8 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     ssize_t bytes;
     uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
-    printf("Attest quote interface, claims size: %d\n", claims_size);
 #ifdef DEBUG
+    printf("Attest quote interface, claims size: %d\n", claims_size);
     gramine_print_bytes(claims_size, claims);
 #endif
 
@@ -126,7 +126,9 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
 
     mbedtls_sha256(claims, claims_size, user_report_data.d, 0);
 
+#ifdef DEBUG
     printf("Attest quote interface prep user_data size: %ld\n", sizeof(user_report_data));
+#endif
 
     bytes = gramine_rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                          sizeof(user_report_data), /*do_write=*/true);
@@ -147,7 +149,10 @@ bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
     /* Copy out the assertion/quote */
     memcpy(out, quote, bytes);
     *size_out = bytes;
+
+#ifdef DEBUG
     printf("Gramine Attest done\n");
+#endif
 
     return true;
 }
@@ -162,18 +167,20 @@ int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint
 
     gramine_verify_quote_f = (int(*)(size_t, uint8_t*, size_t*, uint8_t*))(dlsym(ra_tls_verify_lib, "gramine_verify_quote"));
 
+#ifdef DEBUG
     printf("Verification function address to be called: %p\n", gramine_verify_quote_f);
+#endif
     ret = gramine_verify_quote_f(quote_size, quote, mr_size, mr);
 
     if (ret != 0) {
       printf("\nRemote verification failed: %d\n", ret);
       goto out;
-    } else {
-      printf("\nRemote verification successful\n");
     }
 
+#ifdef DEBUG
     printf("MR enclave returned: %ld\n", *mr_size);
     gramine_print_bytes(*mr_size, mr);
+#endif
 
 out:
     return ret;
@@ -186,8 +193,10 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     size_t mr_size;
     uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
+#ifdef DEBUG
     printf("Gramine Verify called user_data_size: %d assertion_size: %d\n",
            user_data_size, assertion_size);
+#endif
 
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
@@ -218,9 +227,11 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
         return false;
     }
 
+#ifdef DEBUG
     /* Compare user report and actual report */
     printf("Comparing user report data in SGX quote size: %ld\n",
            sizeof(quote_expected->body.report_body.report_data.d));
+#endif
 
     ret = memcmp(quote_received->body.report_body.report_data.d, user_report_data.d,
                  sizeof(user_report_data));
@@ -229,9 +240,11 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
         return false;
     }
 
+#ifdef DEBUG
     /* Compare expected and actual report */
     printf("Comparing quote report data in SGX quote size: %ld\n",
            sizeof(quote_expected->body.report_body.report_data.d));
+#endif
 
     ret = memcmp(quote_expected->body.report_body.report_data.d,
                  quote_received->body.report_body.report_data.d,
@@ -241,11 +254,16 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
         return false;
     }
 
+#ifdef DEBUG
     printf("\nGramine verify quote interface mr_enclave: ");
     gramine_print_bytes(SGX_MR_SIZE, quote_expected->body.report_body.mr_enclave.m);
+#endif
 
     /* Invoke remote_verify_quote() in DCAP library */
+#ifdef DEBUG
     printf("\nGramine begin remote verify quote with DCAP\n");
+#endif
+
     if (remote_verify_quote(assertion_size, (uint8_t*)quote_expected, &mr_size, mr) != 0) {
         printf("\nGramine begin verify quote with DCAP failed\n");
         return false;
@@ -255,9 +273,11 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
     memcpy(out, quote_expected->body.report_body.mr_enclave.m, SGX_MR_SIZE);
     *size_out = SGX_MR_SIZE;
 
+#ifdef DEBUG
     printf("\nGramine verify quote interface compare done, output: \n");
     gramine_print_bytes(*size_out, out);
     printf("\n");
+#endif
 
     return true;
 }
@@ -274,11 +294,11 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     int tag_size = TAG_SIZE;
     int i, j = 0;
 
-    printf("Seal: Input size: %d \n", in_size);
 #ifdef DEBUG
+    printf("Seal: Input size: %d \n", in_size);
     gramine_print_bytes(in_size, in);
-#endif
     printf("\n");
+#endif
 
     memset(enc_buf, 0, sizeof(enc_buf));
 
@@ -335,9 +355,8 @@ bool Seal(int in_size, byte* in, int* size_out, byte* out) {
     printf("Testing seal interface - out:\n");
     gramine_print_bytes(*size_out, out);
     printf("\n");
-#endif
-
     printf("Seal: Successfully sealed size: %d\n", *size_out);
+#endif
 
 done:
     mbedtls_gcm_free(&gcm);
@@ -354,11 +373,11 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
     int enc_size = 0;
     int i, j = 0;
 
-    printf("Preparing Unseal size: %d \n", in_size);
 #ifdef DEBUG
+    printf("Preparing Unseal size: %d \n", in_size);
     gramine_print_bytes(in_size, in);
-#endif
     printf("\n");
+#endif
 
     for (i = 0; i < sizeof(int); i++, j++) {
         ((byte*)&enc_size)[i] = in[j];
@@ -424,7 +443,9 @@ bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
         out[i] = dec_buf[i];
     }
 
+#ifdef DEBUG
     printf("Successfully unsealed size: %d\n", *size_out);
+#endif
 
 done:
     mbedtls_gcm_free(&gcm);
