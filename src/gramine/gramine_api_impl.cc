@@ -112,7 +112,7 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
     return SUCCESS;
 }
 
-bool Attest(int claims_size, byte* claims, int* size_out, byte* out) {
+bool gramine_attest_impl(int claims_size, byte* claims, int* size_out, byte* out) {
     ssize_t bytes;
     uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
@@ -186,7 +186,7 @@ out:
     return ret;
 }
 
-bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out) {
+bool gramine_verify_impl(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out) {
     ssize_t bytes;
     int ret = -1;
     uint8_t mr[SGX_MR_SIZE];
@@ -284,7 +284,7 @@ bool Verify(int user_data_size, byte* user_data, int assertion_size, byte *asser
 
 extern byte *measurement;
 
-bool Seal(int in_size, byte* in, int* size_out, byte* out) {
+bool gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out) {
     int ret = 0;
     bool status = true;
     __sgx_mem_aligned uint8_t key[KEY_SIZE];
@@ -363,7 +363,7 @@ done:
     return status;
 }
 
-bool Unseal(int in_size, byte* in, int* size_out, byte* out) {
+bool gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out) {
     int ret = 0;
     bool status = true;
     __sgx_mem_aligned uint8_t key[KEY_SIZE];
@@ -453,8 +453,8 @@ done:
 }
 
 void gramine_setup_functions(GramineFunctions *gramineFuncs) {
-    gramineFuncs->Attest = &Attest;
-    gramineFuncs->Verify = &Verify;
-    gramineFuncs->Seal = &Seal;
-    gramineFuncs->Unseal = &Unseal;
+    gramineFuncs->Attest = &gramine_attest_impl;
+    gramineFuncs->Verify = &gramine_verify_impl;
+    gramineFuncs->Seal = &gramine_seal_impl;
+    gramineFuncs->Unseal = &gramine_unseal_impl;
 }
