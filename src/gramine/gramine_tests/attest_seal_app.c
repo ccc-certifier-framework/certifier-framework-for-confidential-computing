@@ -20,21 +20,19 @@
 #include "attestation.h"
 #include "gramine_api.h"
 
-enum { SUCCESS = 0, FAILURE = -1 };
-
 // Certifier
 typedef unsigned char byte;
 
 #define measurement_file "./binary_trusted_measurements_file.bin"
 #define cert_file "./ssl/ca.crt"
-#define BUF_SIZE 10
+#define BUF_SIZE 128
 #define BUF_STORAGE_SIZE 4
 #define TAG_SIZE 16
 #define MAX_TAG_SIZE (BUF_STORAGE_SIZE + TAG_SIZE)
 #define USER_DATA_SIZE 256
 
 int main(int argc, char** argv) {
-    int ret;
+    int ret = 0;
     size_t len;
     int mr_size;
     int ud_recd_size;
@@ -56,7 +54,7 @@ int main(int argc, char** argv) {
     status = gramine_Init(measurement_file, cert_file);
     if (status != true) {
         printf("gramine_Init failed\n");
-	return -1;
+	return 1;
     }
 
     /* Attest/Verify with SGX quote verification */
@@ -68,18 +66,20 @@ int main(int argc, char** argv) {
     status = gramine_Attest(USER_DATA_SIZE, user_data, &assertion_size, assertion);
     if (status != true) {
         printf("gramine_Attest failed\n");
-	return -1;
+	return 1;
     }
 
     status = gramine_Verify(assertion_size, assertion, &ud_recd_size, ud_recd, &mr_size, mr_recd);
     if (status != true) {
         printf("gramine_Verify failed\n");
-	return -1;
+	return 1;
     }
     printf("gramine_Attest/gramine_Verify test successful\n");
 
     /* Sealing test with a small buffer */
-    memset(buf, 1, sizeof(buf));
+    for (int i = 0; i < BUF_SIZE; i++) {
+        buf[i] = (byte)i;
+    }
     memset(enc_buf, 0, sizeof(enc_buf));
     memset(dec_buf, 0, sizeof(dec_buf));
 
@@ -88,24 +88,24 @@ int main(int argc, char** argv) {
     status = gramine_Seal(BUF_SIZE, buf, &sealed_size, enc_buf);
     if (status != true) {
         printf("gramine_Seal failed\n");
-	return -1;
+	return 1;
     }
 
     status = gramine_Unseal(BUF_SIZE + MAX_TAG_SIZE, enc_buf, &unsealed_size, dec_buf);
     if (status != true) {
         printf("gramine_Unseal failed\n");
-	return -1;
+	return 1;
     }
 
     if (sealed_size != unsealed_size + MAX_TAG_SIZE) {
         printf("Gramine seal/unseal size failed\n");
-	return -1;
+	return 1;
     }
 
     ret = memcmp(buf, dec_buf, sizeof(dec_buf));
     if (ret) {
         printf("Gramine comparison of encrypted and decrypted buffers failed\n");
-	return -1;
+	return 1;
     }
 
 #ifdef DEBUG
