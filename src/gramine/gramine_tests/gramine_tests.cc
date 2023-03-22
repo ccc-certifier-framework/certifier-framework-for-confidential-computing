@@ -13,15 +13,11 @@
 // limitations under the License.
 
 /*
- * Attest/Verify sample application
- * Note that this program builds against mbedTLS 3.x.
+ * Attest/Verify/Seal/Unseal tests
  */
 
 #include "attestation.h"
 #include "gramine_api.h"
-
-// Certifier
-typedef unsigned char byte;
 
 #define measurement_file "./binary_trusted_measurements_file.bin"
 #define cert_file "./ssl/ca.crt"

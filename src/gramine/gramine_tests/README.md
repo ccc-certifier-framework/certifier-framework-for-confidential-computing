@@ -1,6 +1,6 @@
 # Gramine tests for Attest/Verify, Seal/Unseal core APIs on SGX platform
 
-The attest_seal_app implements tests for the core APIs needed by Certifier. The tests demonstrate how to Attest/Verify an enclave and provide Seal/Unseal functionality for secrets management. The steps below describe the setup and work needed to run these tests.
+The gramine_tests implement tests for the core APIs needed by Certifier. The tests demonstrate how to Attest/Verify an enclave and provide Seal/Unseal functionality for secrets management. The steps below describe the setup and work needed to run these tests.
 
 1. Clone Gramine
 ```
@@ -44,7 +44,7 @@ cd certifier/src/gramine/gramine_tests
 
 7. Run tests
 ```
-gramine-sgx ./attest_seal_app dcap
+gramine-sgx ./gramine_tests dcap
 ```
 
 Tests should return successful results for Attest/Verify and Seal/Unseal.

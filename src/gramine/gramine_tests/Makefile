@@ -19,17 +19,17 @@ RA_CLIENT_LINKABLE ?= 0
 all: app
 
 .PHONY: app
-app: ssl/attest_seal_app.crt mbedtls/.mbedtls_configured attest_seal_app.manifest.sgx attest_seal_app.sig attest_seal_app.token
+app: ssl/gramine_tests.crt mbedtls/.mbedtls_configured gramine_tests.manifest.sgx gramine_tests.sig gramine_tests.token
 
 ############################# SSL DATA DEPENDENCY #############################
 
 # SSL data: key and x.509 self-signed certificate
-ssl/attest_seal_app.crt: ssl/ca_config.conf
+ssl/gramine_tests.crt: ssl/ca_config.conf
 	openssl genrsa -out ssl/ca.key 2048
 	openssl req -x509 -new -nodes -key ssl/ca.key -sha256 -days 1024 -out ssl/ca.crt -config ssl/ca_config.conf
-	openssl genrsa -out ssl/attest_seal_app.key 2048
-	openssl req -new -key ssl/attest_seal_app.key -out ssl/attest_seal_app.csr -config ssl/ca_config.conf
-	openssl x509 -req -days 360 -in ssl/attest_seal_app.csr -CA ssl/ca.crt -CAkey ssl/ca.key -CAcreateserial -out ssl/attest_seal_app.crt
+	openssl genrsa -out ssl/gramine_tests.key 2048
+	openssl req -new -key ssl/gramine_tests.key -out ssl/gramine_tests.csr -config ssl/ca_config.conf
+	openssl x509 -req -days 360 -in ssl/gramine_tests.csr -CA ssl/ca.crt -CAkey ssl/ca.key -CAcreateserial -out ssl/gramine_tests.crt
 
 ######################### GRAMINE/SGX VARIABLES ###############################
 GRAMINE_SRC_PATH = ../../../../gramine/gramine
@@ -93,12 +93,12 @@ certifier:
 CFLAGS += $(CERTIFIER_CFLAGS)
 LDFLAGS += -ldl -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -L./ -lcertifier $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
 
-attest_seal_app: attest_seal_app.c mbedtls/.mbedtls_configured certifier
+gramine_tests: gramine_tests.cc mbedtls/.mbedtls_configured certifier
 	$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
 
 ############################### SERVER MANIFEST ###############################
 
-attest_seal_app.manifest: attest_seal_app.manifest.template
+gramine_tests.manifest: gramine_tests.manifest.template
 	gramine-manifest \
 		-Dlog_level=$(GRAMINE_LOG_LEVEL) \
 		-Darch_libdir=$(ARCH_LIBDIR) \
@@ -109,16 +109,16 @@ attest_seal_app.manifest: attest_seal_app.manifest.template
 
 # Make on Ubuntu <= 20.04 doesn't support "Rules with Grouped Targets" (`&:`),
 # see the helloworld example for details on this workaround.
-attest_seal_app.manifest.sgx attest_seal_app.sig: sgx_sign_attest_seal_app
+gramine_tests.manifest.sgx gramine_tests.sig: sgx_sign_gramine_tests
 	@:
 
-.INTERMEDIATE: sgx_sign_attest_seal_app
-sgx_sign_attest_seal_app: attest_seal_app.manifest attest_seal_app
+.INTERMEDIATE: sgx_sign_gramine_tests
+sgx_sign_gramine_tests: gramine_tests.manifest gramine_tests
 	gramine-sgx-sign \
 		--manifest $< \
 		--output $<.sgx
 
-attest_seal_app.token: attest_seal_app.sig
+gramine_tests.token: gramine_tests.sig
 	gramine-sgx-get-token --output $@ --sig $<
 
 ################################## CLEANUP ####################################
@@ -126,8 +126,8 @@ attest_seal_app.token: attest_seal_app.sig
 .PHONY: clean
 clean:
 	$(RM) -r \
-		*.token *.sig *.manifest.sgx *.manifest attest_seal_app *.so *.so.* OUTPUT
+		*.token *.sig *.manifest.sgx *.manifest gramine_tests *.so *.o *.a *.so.* OUTPUT
 
 .PHONY: distclean
 distclean: clean
-	$(RM) -r mbedtls/ *.tar.gz ssl/ca.* ssl/attest_seal_app.*
+	$(RM) -r mbedtls/ *.tar.gz ssl/ca.* ssl/gramine_tests.*
