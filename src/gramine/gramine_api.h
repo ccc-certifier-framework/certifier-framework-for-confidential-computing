@@ -58,7 +58,7 @@ typedef struct GramineFunctions {
   bool (*Unseal)(int in_size, byte* in, int* size_out, byte* out);
 } GramineFunctions;
 
-bool gramine_Init(const char *measurement_file, const char *cert_file);
+bool gramine_Init(const char *cert_file);
 int gramine_Getkey(byte *user_report_data, sgx_key_128bit_t* key);
 int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key);
 

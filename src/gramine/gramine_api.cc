@@ -20,7 +20,6 @@
 GramineFunctions gramineFuncs;
 
 uint8_t cert[MAX_CERT_SIZE];
-uint8_t measurement[SGX_REPORT_DATA_SIZE];
 bool cert_initialized = false;
 
 int gramine_file_size(const char *file_name) {
@@ -33,7 +32,7 @@ int gramine_file_size(const char *file_name) {
   return (int)file_info.st_size;
 }
 
-bool gramine_Init(const char *measurement_file, const char *cert_file) {
+bool gramine_Init(const char *cert_file) {
   char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
   void* ra_tls_attest_lib;
   size_t ret = 0;
@@ -66,24 +65,7 @@ bool gramine_Init(const char *measurement_file, const char *cert_file) {
   /* Setup Gramine specific API calls */
   gramine_setup_functions(&gramineFuncs);
 
-  int size = gramine_file_size(measurement_file);
-  if (size < 0) {
-    printf("Error reading file size for measurement\n");
-    return false;
-  }
-  ret = gramine_rw_file(measurement_file, measurement, size, false);
-  if (ret < 0 && ret != -ENOENT) {
-    printf("gramine_Init: Can't read measurement file\n");
-    return false;
-  }
-
-#ifdef DEBUG
-  printf("gramine_Init: Setting up measurement: ");
-  gramine_print_bytes(size, measurement);
-  printf("\n");
-#endif
-
-  size = gramine_file_size(cert_file);
+  int size = gramine_file_size(cert_file);
   if (size < 0) {
     printf("Error reading file size for certificate\n");
     return false;

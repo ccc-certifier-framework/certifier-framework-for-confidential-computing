@@ -26,6 +26,7 @@
 
 #define KEY_SIZE 16
 #define SGX_MR_SIZE 32
+#define USER_DATA_SIZE 256
 
 enum { SUCCESS = 0, FAILURE = -1 };
 
@@ -288,7 +289,27 @@ bool gramine_verify_impl(int user_data_size, byte* user_data, int assertion_size
     return true;
 }
 
-extern byte *measurement;
+bool gramine_get_measurement(byte *measurement) {
+    bool status = true;
+    byte assertion[MAX_ASSERTION_SIZE];
+    byte user_data[USER_DATA_SIZE];
+    int assertion_size;
+
+    for (int i = 0; i < USER_DATA_SIZE; i++) {
+      user_data[i] = (byte)i;
+    }
+
+    status = gramine_attest_impl(USER_DATA_SIZE, user_data, &assertion_size, assertion);
+    if (status != true) {
+        printf("gramine Attest failed\n");
+        return status;
+    }
+
+    sgx_quote_t* quote = (sgx_quote_t*)assertion;
+    memcpy(measurement, quote->body.report_body.mr_enclave.m, SGX_MR_SIZE);
+
+    return status;
+}
 
 bool gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out) {
     int ret = 0;
@@ -299,6 +320,7 @@ bool gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out) {
     mbedtls_gcm_context gcm;
     int tag_size = TAG_SIZE;
     int i, j = 0;
+    uint8_t measurement[SGX_MR_SIZE];
 
 #ifdef DEBUG
     printf("Seal: Input size: %d \n", in_size);
@@ -307,6 +329,11 @@ bool gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out) {
 #endif
 
     memset(enc_buf, 0, sizeof(enc_buf));
+
+    if (gramine_get_measurement(measurement) != true) {
+        printf("get_Measurement during Seal failed\n");
+       return false;
+    }
 
     /* Get SGX Sealing Key */
     if (gramine_Sgx_Getkey(measurement, (sgx_key_128bit_t*)key) == FAILURE) {
@@ -378,6 +405,7 @@ bool gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out) {
     int tag_size = TAG_SIZE;
     int enc_size = 0;
     int i, j = 0;
+    uint8_t measurement[SGX_MR_SIZE];
 
 #ifdef DEBUG
     printf("Preparing Unseal size: %d \n", in_size);
@@ -411,6 +439,11 @@ bool gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out) {
     gramine_print_bytes(TAG_SIZE, tag);
     printf("\n");
 #endif
+
+    if (gramine_get_measurement(measurement) != true) {
+        printf("get_Measurement during Seal failed\n");
+       return false;
+    }
 
     /* Get SGX Sealing Key */
     if (gramine_Sgx_Getkey(measurement, (sgx_key_128bit_t*)key) == FAILURE) {

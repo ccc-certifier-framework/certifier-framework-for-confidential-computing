@@ -19,7 +19,6 @@
 #include "attestation.h"
 #include "gramine_api.h"
 
-#define measurement_file "./binary_trusted_measurements_file.bin"
 #define cert_file "./ssl/ca.crt"
 #define BUF_SIZE 128
 #define BUF_STORAGE_SIZE 4
@@ -47,7 +46,7 @@ int main(int argc, char** argv) {
 
     printf("gramine_Attest/gramine_Verify test begin\n");
 
-    status = gramine_Init(measurement_file, cert_file);
+    status = gramine_Init(cert_file);
     if (status != true) {
         printf("gramine_Init failed\n");
 	return 1;

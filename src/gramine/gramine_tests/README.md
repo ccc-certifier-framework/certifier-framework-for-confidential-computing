@@ -32,17 +32,8 @@ Follow instructions here to build Gramine: https://gramine.readthedocs.io/en/sta
 cd certifier/src/gramine/gramine_tests
 make app dcap RA_TYPE=dcap
 ```
-Note mrenclave printed in above step.
 
-6. Setup app measurement
-```
-cd certifier/utilities
-make -f cert_utility.mak measurement_init.exe
-cd certifier/src/gramine/gramine_tests
-../utilities/measurement_init.exe --out_file=binary_trusted_measurements_file.bin --mrenclave=<mr_enclave_from_above>
-```
-
-7. Run tests
+6. Run tests
 ```
 gramine-sgx ./gramine_tests dcap
 ```
