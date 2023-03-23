@@ -25,11 +25,14 @@ import (
 	"unsafe"
 )
 
-func OEHostVerifyEvidence(evidence []byte, endorsements []byte) ([]byte, []byte, error) {
+func OEHostVerifyEvidence(evidence []byte, endorsements []byte, tcb bool) ([]byte, []byte, error) {
 	evidencePtr := C.CBytes(evidence)
 	defer C.free(evidencePtr)
-	endorsementsPtr := C.CBytes(endorsements)
-	defer C.free(endorsementsPtr)
+	endorsementsPtr := unsafe.Pointer(uintptr(0))
+	if endorsements != nil {
+		endorsementsPtr = C.CBytes(endorsements)
+		defer C.free(endorsementsPtr)
+	}
 
 	customClaimOutSize := C.ulong(4096)
 	customClaimOut := C.malloc(customClaimOutSize)
@@ -37,12 +40,13 @@ func OEHostVerifyEvidence(evidence []byte, endorsements []byte) ([]byte, []byte,
 	measurementSize := C.ulong(256)
 	measurementOut := C.malloc(measurementSize)
 	defer C.free(unsafe.Pointer(measurementOut))
+	checkTCB := C.bool(tcb)
 
 	ret := C.oe_host_verify_evidence((*C.uchar)(evidencePtr),
 		C.ulong(len(evidence)),
 		(*C.uchar)(endorsementsPtr), C.ulong(len(endorsements)),
 		(*C.uchar)(customClaimOut), &customClaimOutSize,
-		(*C.uchar)(measurementOut), &measurementSize)
+		(*C.uchar)(measurementOut), &measurementSize, checkTCB)
 
 	if !ret {
 		return nil, nil, fmt.Errorf("oe_host_verify_evidence failed");
@@ -66,7 +70,7 @@ func OEHostVerifyEvidence(evidence []byte, endorsements []byte) ([]byte, []byte,
  *  if err != nil {
  *          fmt.Printf("Failed to read endorsements file: %s\n", err.Error())
  *  }
- *  outCustomClaims, outMeasurement, err := oeverify.OEHostVerifyEvidence(evidence, endorsements)
+ *  outCustomClaims, outMeasurement, err := oeverify.OEHostVerifyEvidence(evidence, endorsements, false)
  *  if err != nil {
  *          fmt.Printf("OEHostVerifyEvidence failed: %s\n", err.Error())
  *  }

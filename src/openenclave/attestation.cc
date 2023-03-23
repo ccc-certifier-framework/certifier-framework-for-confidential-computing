@@ -6,9 +6,8 @@
 #include <openenclave/attestation/sgx/evidence.h>
 #include <openenclave/bits/report.h>
 
-// VSE Attestation Format UUID. Use local attestation for efficiency.
-// Change to OE_FORMAT_UUID_VSE_REMOTE_ATTESTATION for remote attestation.
-static oe_uuid_t vse_format_uuid = {OE_FORMAT_UUID_SGX_LOCAL_ATTESTATION};
+// SGX Attestation Format UUID.
+static oe_uuid_t vse_format_uuid = {OE_FORMAT_UUID_SGX_ECDSA};
 
 bool
 oe_Attest(int what_to_say_size, byte* what_to_say,

@@ -311,7 +311,7 @@ void cc_trust_data::print_trust_data() {
   }
 }
 
-const int max_pad_size_for_store = 512;
+const int max_pad_size_for_store = 1024;
 
 bool cc_trust_data::save_store() {
 
@@ -800,13 +800,15 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
       printf("cc_trust_data::certify_me: Can't get pem-chain\n");
       return false;
     }
-    evidence* ev = platform_evidence.add_assertion();
-    if (ev ==nullptr) {
-      printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
-      return false;
+    if (pem_cert_chain != "") {
+      evidence* ev = platform_evidence.add_assertion();
+      if (ev ==nullptr) {
+        printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
+        return false;
+      }
+      ev->set_evidence_type("pem-cert-chain");
+      ev->set_serialized_evidence(pem_cert_chain);
     }
-    ev->set_evidence_type("pem-cert-chain");
-    ev->set_serialized_evidence(pem_cert_chain);
 #endif
   } else {
     printf("cc_trust_data::certify_me: Unknown enclave type\n");

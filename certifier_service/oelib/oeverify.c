@@ -1,5 +1,5 @@
 #include "oeverify.h"
-#include <openenclave/attestation/vse/evidence.h>
+#include <openenclave/attestation/sgx/evidence.h>
 #include <openenclave/attestation/verifier.h>
 #include <openenclave/attestation/custom_claims.h>
 
@@ -26,10 +26,12 @@ bool oe_host_verify_evidence(
     uint8_t* custom_claim_out,
     size_t* custom_claim_size,
     uint8_t* measurement_out,
-    size_t* measurement_size)
+    size_t* measurement_size,
+    bool check_tcb)
 {
     bool result = false;
-    static const oe_uuid_t _uuid = {OE_FORMAT_UUID_SGX_LOCAL_ATTESTATION};
+    oe_result_t oe_res;
+    static const oe_uuid_t _uuid = {OE_FORMAT_UUID_SGX_ECDSA};
     const oe_policy_t* policies = NULL;
     size_t policies_size = 0;
     oe_claim_t* claims = NULL;
@@ -39,18 +41,22 @@ bool oe_host_verify_evidence(
     size_t custom_claims_length = 0;
 
     if (!custom_claim_out || !measurement_out ||
-        !evidence || !endorsements) {
-       return false;
+        !evidence) {
+        return false;
+    }
+
+    if (!endorsements != !endorsements_size) {
+        return false;
     }
 
     if (!oe_verifier_initialized) {
         if (oe_verifier_initialize() != OE_OK) {
             fprintf (stderr, "Failed to initialize oe verifier\n");
-            result = false;;
+            return false;
         }
     }
 
-    result = (OE_OK == oe_verify_evidence(
+    oe_res = oe_verify_evidence(
         &_uuid,
         evidence,
         evidence_size,
@@ -59,7 +65,10 @@ bool oe_host_verify_evidence(
         policies,
         policies_size,
         &claims,
-        &claims_length));
+        &claims_length);
+
+    result = (check_tcb ? oe_res == OE_OK :
+             (oe_res == OE_OK || oe_res == OE_TCB_LEVEL_INVALID));
 
     if (result) {
         // Extract the measurement
@@ -110,8 +119,6 @@ bool oe_host_verify_evidence(
                custom_claims[0].value_size);
         *custom_claim_size = custom_claims[0].value_size;
     }
-
-    result = true;
 
 err:
     if (claims)

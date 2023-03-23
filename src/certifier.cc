@@ -758,7 +758,7 @@ bool GetParentEnclaveType(string* type) {
 // -------------------------------------------------------------------
 
 // the padding size includes an IV and possibly 3 additional blocks
-const int max_key_seal_pad = 512;
+const int max_key_seal_pad = 1024;
 const int protect_key_size = 64;
 
 bool Protect_Blob(const string& enclave_type, key_message& key,

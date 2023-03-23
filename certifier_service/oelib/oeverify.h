@@ -13,4 +13,5 @@ bool oe_host_verify_evidence(
     uint8_t* custom_claim_out,
     size_t* custom_claim_size,
     uint8_t* measurement_out,
-    size_t* measurement_size);
+    size_t* measurement_size,
+    bool check_tcb);
