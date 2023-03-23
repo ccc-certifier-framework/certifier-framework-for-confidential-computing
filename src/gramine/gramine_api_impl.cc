@@ -97,6 +97,12 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
     __sgx_mem_aligned sgx_key_request_t key_request;
     memset(&key_request, 0, sizeof(key_request));
     key_request.key_name = SGX_SEAL_KEY;
+
+    key_request.key_policy = SGX_KEYPOLICY_MRENCLAVE;
+    key_request.attribute_mask.flags = SGX_FLAGS_MASK_CONST;
+    key_request.attribute_mask.xfrm  = SGX_XFRM_MASK_CONST;
+    key_request.misc_mask            = SGX_MISCSELECT_MASK_CONST;
+
     memcpy(&key_request.key_id, &(report.key_id), sizeof(key_request.key_id));
 
     /* retrieve key via EGETKEY instruction leaf */
@@ -105,7 +111,7 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
 
 #ifdef DEBUG
     printf("Got key:\n");
-    gramine_print_bytes(sizeof(*key), *key);
+    gramine_print_bytes(sizeof(*key), (byte*)key);
     printf("\n");
 #endif
 
