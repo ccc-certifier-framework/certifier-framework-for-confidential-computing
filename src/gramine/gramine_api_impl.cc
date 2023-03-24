@@ -193,15 +193,13 @@ out:
     return ret;
 }
 
-bool gramine_verify_impl(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out) {
+bool gramine_local_verify_impl(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out) {
     ssize_t bytes;
     int ret = -1;
-    uint8_t mr[SGX_MR_SIZE];
-    size_t mr_size;
     uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
 #ifdef DEBUG
-    printf("Gramine Verify called user_data_size: %d assertion_size: %d\n",
+    printf("Gramine Local Verify called user_data_size: %d assertion_size: %d\n",
            user_data_size, assertion_size);
 #endif
 
@@ -266,6 +264,33 @@ bool gramine_verify_impl(int user_data_size, byte* user_data, int assertion_size
     gramine_print_bytes(SGX_MR_SIZE, quote_expected->body.report_body.mr_enclave.m);
 #endif
 
+    /* Copy out quote info */
+    memcpy(out, quote_expected->body.report_body.mr_enclave.m, SGX_MR_SIZE);
+    *size_out = SGX_MR_SIZE;
+
+#ifdef DEBUG
+    printf("\nGramine verify quote interface compare done, output: \n");
+    gramine_print_bytes(*size_out, out);
+    printf("\n");
+#endif
+
+    return true;
+}
+
+bool gramine_remote_verify_impl(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out) {
+    ssize_t bytes;
+    int ret = -1;
+    uint8_t mr[SGX_MR_SIZE];
+    size_t mr_size;
+    uint8_t quote[SGX_QUOTE_MAX_SIZE];
+
+#ifdef DEBUG
+    printf("Gramine Remote Verify called user_data_size: %d assertion_size: %d\n",
+           user_data_size, assertion_size);
+#endif
+
+    sgx_quote_t* quote_expected = (sgx_quote_t*)assertion;
+
     /* Invoke remote_verify_quote() in DCAP library */
 #ifdef DEBUG
     printf("\nGramine begin remote verify quote with DCAP\n");
@@ -273,6 +298,24 @@ bool gramine_verify_impl(int user_data_size, byte* user_data, int assertion_size
 
     if (remote_verify_quote(assertion_size, (uint8_t*)quote_expected, &mr_size, mr) != 0) {
         printf("\nGramine begin verify quote with DCAP failed\n");
+        return false;
+    }
+
+    /* Compare user report and actual report */
+#ifdef DEBUG
+    printf("Comparing user report data in SGX quote size: %ld\n",
+           sizeof(quote_expected->body.report_body.report_data.d));
+#endif
+
+    sgx_report_data_t user_report_data = {0};
+
+    /* Get a SHA256 of user_data */
+    mbedtls_sha256(user_data, user_data_size, user_report_data.d, 0);
+
+    ret = memcmp(quote_expected->body.report_body.report_data.d, user_report_data.d,
+                 sizeof(user_report_data));
+    if (ret) {
+        printf("comparison of user report data in SGX quote failed\n");
         return false;
     }
 
@@ -493,7 +536,11 @@ done:
 
 void gramine_setup_functions(GramineFunctions *gramineFuncs) {
     gramineFuncs->Attest = &gramine_attest_impl;
-    gramineFuncs->Verify = &gramine_verify_impl;
+#ifdef GRAMINE_LOCAL_VERIFY
+    gramineFuncs->Verify = &gramine_local_verify_impl;
+#else
+    gramineFuncs->Verify = &gramine_remote_verify_impl;
+#endif
     gramineFuncs->Seal = &gramine_seal_impl;
     gramineFuncs->Unseal = &gramine_unseal_impl;
 }
