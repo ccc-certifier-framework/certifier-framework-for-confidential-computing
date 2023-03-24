@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 
     ret = gramine_rw_file(cert_file, cert, cert_size, false);
     if (ret < 0 && ret != -ENOENT) {
-        printf("gramine_Init: Can't read cert file\n");
+        printf("Can't read cert file\n");
         return false;
     }
 

@@ -20,7 +20,7 @@
 typedef unsigned char byte;
 
 #ifdef GRAMINE_CERTIFIER
-extern bool gramine_Init(const char *measurement_file, const char *cert_file);
+extern bool gramine_Init(const int cert_size, byte *cert);
 extern bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out);
 extern bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
                   byte *user_data_out, int* size_out, byte* out);
