@@ -27,13 +27,18 @@ git commit -m "Gramine verification with DCAP needed by certifier"
 4. Build Gramine
 Follow instructions here to build Gramine: https://gramine.readthedocs.io/en/stable/devel/building.html
 
-5. Build Gramine-Certifier tests
+5. Setup MBedTLS
 ```
 cd certifier/src/gramine/gramine_tests
+./script1
+```
+
+6. Build Gramine-Certifier tests
+```
 make app dcap RA_TYPE=dcap
 ```
 
-6. Run tests
+7. Run tests
 ```
 gramine-sgx ./gramine_tests dcap
 ```

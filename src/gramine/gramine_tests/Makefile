@@ -19,7 +19,7 @@ RA_CLIENT_LINKABLE ?= 0
 all: app
 
 .PHONY: app
-app: ssl/gramine_tests.crt mbedtls/.mbedtls_configured gramine_tests.manifest.sgx gramine_tests.sig gramine_tests.token
+app: ssl/gramine_tests.crt gramine_tests.manifest.sgx gramine_tests.sig gramine_tests.token
 
 ############################# SSL DATA DEPENDENCY #############################
 
@@ -35,39 +35,6 @@ ssl/gramine_tests.crt: ssl/ca_config.conf
 GRAMINE_SRC_PATH = ../../../../gramine/gramine
 SGX_INCLUDE = -I$(GRAMINE_SRC_PATH)/pal/src/host/linux-sgx -I$(GRAMINE_SRC_PATH)/tools/sgx/ra-tls
 SGX_LDFLAGS = -Wl,--enable-new-dtags $(shell pkg-config --libs sgx_util)
-
-############################# MBEDTLS DEPENDENCY ##############################
-
-# This download is done to get headers in include/, because we currently fail to provide the headers
-# (`pkg-config --cflags mbedtls_gramine` in the below CFLAGS line returns a non-existing directory).
-# TODO: install mbedtls_gramine headers during Gramine install, and use them in below CFLAGS line.
-
-MBEDTLS_VERSION ?= 3.2.1
-MBEDTLS_SRC ?= mbedtls-$(MBEDTLS_VERSION).tar.gz
-MBEDTLS_URI ?= \
-	https://github.com/ARMmbed/mbedtls/archive \
-	https://packages.gramineproject.io/distfiles
-MBEDTLS_HASH ?= 5850089672560eeaca03dc36678ee8573bb48ef6e38c94f5ce349af60c16da33
-
-ifeq ($(DEBUG),1)
-MBED_BUILD_TYPE=Debug
-else
-MBED_BUILD_TYPE=Release
-endif
-
-$(MBEDTLS_SRC):
-	$(GRAMINE_SRC_PATH)/CI-Examples/common_tools/download --output $@ $(foreach mirror,$(MBEDTLS_URI),--url $(mirror)/$(MBEDTLS_SRC)) --sha256 $(MBEDTLS_HASH)
-
-.SECONDARY: mbedtls/.mbedtls_downloaded
-mbedtls/.mbedtls_downloaded: $(MBEDTLS_SRC)
-	tar --touch -xzf $(MBEDTLS_SRC)
-	mv mbedtls-mbedtls-$(MBEDTLS_VERSION) mbedtls
-	touch $@
-
-.SECONDARY: mbedtls/.mbedtls_configured
-mbedtls/.mbedtls_configured: mbedtls/.mbedtls_downloaded
-	cd mbedtls && ./scripts/config.pl set MBEDTLS_CMAC_C MBEDTLS_ERROR_C
-	touch $@
 
 ######################### CERTIFIER ###########################
 CERTIFIER_SRC_PATH = ../../
@@ -85,15 +52,14 @@ CERTIFIER_LDFLAGS += $(shell pkg-config --libs mbedtls_gramine)
 GPP=g++
 
 certifier:
-	$(GPP) -shared -fPIC -o libcertifier.so $(CERTIFIER_CFLAGS) $(CERTIFIER_SRC) mbedtls/.mbedtls_configured $(CERTIFIER_LDFLAGS)
+	$(GPP) -shared -fPIC -o libcertifier.so $(CERTIFIER_CFLAGS) $(CERTIFIER_SRC) $(CERTIFIER_LDFLAGS)
 
 ######################### CLIENT/SERVER EXECUTABLES ###########################
 
-# TODO: use `$(shell pkg-config --cflags mbedtls_gramine)` instead of local mbedtls includes
 CFLAGS += $(CERTIFIER_CFLAGS)
 LDFLAGS += -ldl -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -L./ -lcertifier $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
 
-gramine_tests: gramine_tests.cc mbedtls/.mbedtls_configured certifier
+gramine_tests: gramine_tests.cc certifier
 	$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
 
 ############################### SERVER MANIFEST ###############################
