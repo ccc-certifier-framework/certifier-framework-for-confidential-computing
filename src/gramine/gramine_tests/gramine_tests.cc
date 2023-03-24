@@ -25,6 +25,9 @@
 #define TAG_SIZE 16
 #define MAX_TAG_SIZE (BUF_STORAGE_SIZE + TAG_SIZE)
 #define USER_DATA_SIZE 256
+#define MAX_CERT_SIZE 2048
+
+byte cert[MAX_CERT_SIZE];
 
 int main(int argc, char** argv) {
     int ret = 0;
@@ -44,13 +47,31 @@ int main(int argc, char** argv) {
     byte enc_buf[BUF_SIZE + MAX_TAG_SIZE];
     byte dec_buf[BUF_SIZE];
 
-    printf("gramine_Attest/gramine_Verify test begin\n");
+    int cert_size = gramine_file_size(cert_file);
 
-    status = gramine_Init(cert_file);
+    if (cert_size < 0) {
+        printf("Error reading file size for certificate\n");
+        return false;
+    }
+
+    if (cert_size > MAX_CERT_SIZE) {
+        printf("Certificate file too large\n");
+        return false;
+    }
+
+    ret = gramine_rw_file(cert_file, cert, cert_size, false);
+    if (ret < 0 && ret != -ENOENT) {
+        printf("gramine_Init: Can't read cert file\n");
+        return false;
+    }
+
+    status = gramine_Init(ret, cert);
     if (status != true) {
         printf("gramine_Init failed\n");
 	return 1;
     }
+
+    printf("gramine_Attest/gramine_Verify test begin\n");
 
     /* Attest/Verify with SGX quote verification */
     byte user_data[USER_DATA_SIZE];
