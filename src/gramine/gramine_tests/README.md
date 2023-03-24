@@ -33,12 +33,17 @@ cd certifier/src/gramine/gramine_tests
 ./script1
 ```
 
-6. Build Gramine-Certifier tests
+6. Setup SSL Certificate
+```
+./script2
+```
+
+7. Build Gramine-Certifier tests
 ```
 make app dcap RA_TYPE=dcap
 ```
 
-7. Run tests
+8. Run tests
 ```
 gramine-sgx ./gramine_tests dcap
 ```

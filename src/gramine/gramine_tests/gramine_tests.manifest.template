@@ -49,5 +49,4 @@ sgx.allowed_files = [
   "file:/etc/gai.conf",
   "file:/etc/ssl/certs/ca-certificates.crt",
   "file:/etc/sgx_default_qcnl.conf",
-  "file:binary_trusted_measurements_file.bin",
 ]

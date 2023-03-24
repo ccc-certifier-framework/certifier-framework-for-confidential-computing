@@ -19,17 +19,7 @@ RA_CLIENT_LINKABLE ?= 0
 all: app
 
 .PHONY: app
-app: ssl/gramine_tests.crt gramine_tests.manifest.sgx gramine_tests.sig gramine_tests.token
-
-############################# SSL DATA DEPENDENCY #############################
-
-# SSL data: key and x.509 self-signed certificate
-ssl/gramine_tests.crt: ssl/ca_config.conf
-	openssl genrsa -out ssl/ca.key 2048
-	openssl req -x509 -new -nodes -key ssl/ca.key -sha256 -days 1024 -out ssl/ca.crt -config ssl/ca_config.conf
-	openssl genrsa -out ssl/gramine_tests.key 2048
-	openssl req -new -key ssl/gramine_tests.key -out ssl/gramine_tests.csr -config ssl/ca_config.conf
-	openssl x509 -req -days 360 -in ssl/gramine_tests.csr -CA ssl/ca.crt -CAkey ssl/ca.key -CAcreateserial -out ssl/gramine_tests.crt
+app: gramine_tests.manifest.sgx gramine_tests.sig gramine_tests.token
 
 ######################### GRAMINE/SGX VARIABLES ###############################
 GRAMINE_SRC_PATH = ../../../../gramine/gramine
@@ -54,7 +44,7 @@ GPP=g++
 certifier:
 	$(GPP) -shared -fPIC -o libcertifier.so $(CERTIFIER_CFLAGS) $(CERTIFIER_SRC) $(CERTIFIER_LDFLAGS)
 
-######################### CLIENT/SERVER EXECUTABLES ###########################
+######################### TEST APP EXECUTABLES ################################
 
 CFLAGS += $(CERTIFIER_CFLAGS)
 LDFLAGS += -ldl -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -L./ -lcertifier $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
@@ -62,7 +52,7 @@ LDFLAGS += -ldl -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine
 gramine_tests: gramine_tests.cc certifier
 	$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
 
-############################### SERVER MANIFEST ###############################
+########################### TEST APP MANIFEST #################################
 
 gramine_tests.manifest: gramine_tests.manifest.template
 	gramine-manifest \
@@ -73,8 +63,6 @@ gramine_tests.manifest: gramine_tests.manifest.template
 		-Dra_client_linkable=$(RA_CLIENT_LINKABLE) \
 		$< > $@
 
-# Make on Ubuntu <= 20.04 doesn't support "Rules with Grouped Targets" (`&:`),
-# see the helloworld example for details on this workaround.
 gramine_tests.manifest.sgx gramine_tests.sig: sgx_sign_gramine_tests
 	@:
 

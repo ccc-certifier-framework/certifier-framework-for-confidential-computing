@@ -19,7 +19,7 @@
 #include "attestation.h"
 #include "gramine_api.h"
 
-#define cert_file "./ssl/ca.crt"
+#define cert_file "./ssl/gramine_tests.crt"
 #define BUF_SIZE 128
 #define BUF_STORAGE_SIZE 4
 #define TAG_SIZE 16
