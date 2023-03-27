@@ -23,7 +23,7 @@ app: gramine_tests.manifest.sgx gramine_tests.sig gramine_tests.token
 
 ######################### GRAMINE/SGX VARIABLES ###############################
 GRAMINE_SRC_PATH = ../../../../gramine/gramine
-SGX_INCLUDE = -I$(GRAMINE_SRC_PATH)/pal/src/host/linux-sgx -I$(GRAMINE_SRC_PATH)/tools/sgx/ra-tls
+SGX_INCLUDE = -I$(GRAMINE_SRC_PATH)/pal/src/host/linux-sgx
 SGX_LDFLAGS = -Wl,--enable-new-dtags $(shell pkg-config --libs sgx_util)
 
 ######################### CERTIFIER ###########################
