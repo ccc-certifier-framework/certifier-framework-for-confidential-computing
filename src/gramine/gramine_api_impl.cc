@@ -15,6 +15,7 @@
 #include <dlfcn.h>
 
 #include "gramine_api.h"
+#include "gramine_verify_dcap.h"
 
 #include "mbedtls/ssl.h"
 #include "mbedtls/x509.h"
@@ -164,32 +165,103 @@ bool gramine_attest_impl(int claims_size, byte* claims, int* size_out, byte* out
     return true;
 }
 
-int (*gramine_verify_quote_f)(size_t quote_size, uint8_t* quote, size_t *mr_size, uint8_t* mr);
-
 int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint8_t* mr) {
-    int ret = -1;
-    void* ra_tls_verify_lib           = NULL;
+    int ret;
+    void* sgx_verify_lib = NULL;
+    uint8_t* supplemental_data      = NULL;
+    uint32_t supplemental_data_size = 0;
+    uint32_t collateral_expiration_status  = 1;
+    sgx_ql_qv_result_t verification_result = SGX_QL_QV_RESULT_UNSPECIFIED;
 
-    ra_tls_verify_lib = dlopen("libra_tls_verify_dcap.so", RTLD_LAZY);
+    time_t current_time = time(NULL);
+    if (current_time == ((time_t)-1)) {
+        ret = -1;
+        goto out;
+    }
 
-    gramine_verify_quote_f = (int(*)(size_t, uint8_t*, size_t*, uint8_t*))(dlsym(ra_tls_verify_lib, "gramine_verify_quote"));
+    sgx_verify_lib = dlopen("libsgx_dcap_quoteverify.so", RTLD_LAZY);
+    if (!sgx_verify_lib) {
+        printf("User requested SGX attestation but cannot find lib\n");
+        return false;
+    }
+
+    sgx_qv_get_quote_supplemental_data_size = (int(*)(uint32_t*))dlsym(sgx_verify_lib, "sgx_qv_get_quote_supplemental_data_size");
 
 #ifdef DEBUG
-    printf("Verification function address to be called: %p\n", gramine_verify_quote_f);
+    printf("Supplemental data size address to be called: %p\n", sgx_qv_get_quote_supplemental_data_size);
 #endif
-    ret = gramine_verify_quote_f(quote_size, quote, mr_size, mr);
+
+    /* call into libsgx_dcap_quoteverify to get supplemental data size */
+    ret = sgx_qv_get_quote_supplemental_data_size(&supplemental_data_size);
+    if (ret) {
+        ret = -1;
+        goto out;
+    }
+
+    supplemental_data = (uint8_t*)malloc(supplemental_data_size);
+    if (!supplemental_data) {
+        ret = -1;
+        goto out;
+    }
+
+#ifdef DEBUG
+    printf("%s: Quote Size: %ld Quote:\n", __FUNCTION__, quote_size);
+    gramine_print_bytes(quote_size, (uint8_t*)quote);
+    printf("%s: Quote Version: %d\n", __FUNCTION__, ((sgx_quote_t*)quote)->body.version);
+#endif
+
+    sgx_qv_verify_quote = (int(*)(const uint8_t*, uint32_t, void*,
+                           const time_t, uint32_t*, sgx_ql_qv_result_t*, void*,
+                           uint32_t, uint8_t*))dlsym(sgx_verify_lib, "sgx_qv_verify_quote");
+#ifdef DEBUG
+    printf("Verify function address to be called: %p with size: %ld\n",
+                    sgx_qv_verify_quote, quote_size);
+#endif
+
+    /* call into libsgx_dcap_quoteverify to verify ECDSA-based SGX quote */
+    ret = sgx_qv_verify_quote((uint8_t*)quote, (uint32_t)quote_size, NULL,
+                              current_time, &collateral_expiration_status,
+			      &verification_result, NULL, supplemental_data_size,
+                              supplemental_data);
+    if (ret) {
+        printf("%s: Quote Failed: %d\n", __FUNCTION__, ret);
+        ret = -1;
+        goto out;
+    }
+
+#ifdef DEBUG
+    printf("%s: Supplemental size: %d data:\n", __FUNCTION__, supplemental_data_size);
+    gramine_print_bytes(supplemental_data_size, (uint8_t*)supplemental_data);
+    printf("%s: Quote verification done with result %d %s\n", __FUNCTION__, verification_result, sgx_ql_qv_result_to_str(verification_result));
+#endif
 
     if (ret != 0) {
       printf("\nRemote verification failed: %d\n", ret);
       goto out;
     }
 
+    if (verification_result != SGX_QL_QV_RESULT_OK &&
+	verification_result != SGX_QL_QV_RESULT_OUT_OF_DATE_CONFIG_NEEDED) {
+      printf("\nGramine acceptable verification result failed\n");
+      goto out;
+    }
+
+    *mr_size = SGX_MR_SIZE;
+    memcpy(mr, ((sgx_quote_t*)quote)->body.report_body.mr_enclave.m, SGX_MR_SIZE);
+
 #ifdef DEBUG
     printf("MR enclave returned: %ld\n", *mr_size);
     gramine_print_bytes(*mr_size, mr);
+    printf("\n");
 #endif
 
 out:
+    free(supplemental_data);
+
+#ifdef DEBUG
+    printf("Verify done with result: %d\n", ret);
+#endif
+
     return ret;
 }
 
@@ -232,8 +304,8 @@ bool gramine_local_verify_impl(int user_data_size, byte* user_data, int assertio
         return false;
     }
 
-#ifdef DEBUG
     /* Compare user report and actual report */
+#ifdef DEBUG
     printf("Comparing user report data in SGX quote size: %ld\n",
            sizeof(quote_expected->body.report_body.report_data.d));
 #endif
