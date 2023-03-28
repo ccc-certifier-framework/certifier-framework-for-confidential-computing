@@ -100,15 +100,15 @@ sudo ninja -C build/ install
 
 # Steps to run Gramine tests:
 -----------------------------
-Tests use the installed Gramine SDK, Intel SGX/DCAP drivers and MBedTLS libraries for
+Tests use the installed Gramine SDK, Intel SGX/DCAP drivers and MbedTLS libraries for
 core API tests.
  
-4. Setup MBedTLS
-This script obtains the MBedTLS library and configures it to be used by any application.
-Gramine APIs use the MBedTLS to encrypt/decrypt buffers or to obtain hashes.
+4. Setup MbedTLS
+This script obtains the MbedTLS library and configures it to be used by an application.
+Gramine APIs use the MbedTLS to encrypt/decrypt buffers or to obtain hashes.
 ```
 cd certifier/src/gramine/gramine_tests
-./script1
+./configureMbedTLS
 ```
 
 5. Setup SSL Certificate
@@ -116,7 +116,7 @@ This script generates a self-signed SSL certificate and key for verifying the ap
 Standard OpenSSL calls are used to setup this certificate which can be verified by an
 external service in the future.
 ```
-./script2
+./configureSSLCert
 ```
 
 6. Build Gramine-Certifier tests
