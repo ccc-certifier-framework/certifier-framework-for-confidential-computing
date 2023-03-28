@@ -16,7 +16,6 @@
  * Attest/Verify/Seal/Unseal tests
  */
 
-#include "attestation.h"
 #include "gramine_api.h"
 
 #define cert_file "./ssl/gramine_tests.crt"

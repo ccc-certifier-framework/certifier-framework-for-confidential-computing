@@ -46,6 +46,15 @@
 
 typedef unsigned char byte;
 
+#ifdef GRAMINE_CERTIFIER
+bool gramine_Init(const int cert_size, byte *cert);
+bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out);
+bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
+                    byte *user_data_out, int* size_out, byte* out);
+bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
+bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
+#endif
+
 inline void gramine_print_bytes(int n, byte* buf) {
   for(int i = 0; i < n; i++)
     printf("%02x", buf[i]);
