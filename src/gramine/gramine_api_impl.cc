@@ -166,7 +166,7 @@ bool gramine_attest_impl(int claims_size, byte* claims, int* size_out, byte* out
 }
 
 int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint8_t* mr) {
-    int ret;
+    int ret = -1;
     void* sgx_verify_lib = NULL;
     uint8_t* supplemental_data      = NULL;
     uint32_t supplemental_data_size = 0;
@@ -175,7 +175,6 @@ int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint
 
     time_t current_time = time(NULL);
     if (current_time == ((time_t)-1)) {
-        ret = -1;
         goto out;
     }
 
@@ -240,9 +239,15 @@ int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint
       goto out;
     }
 
+    /*
+     * The out of date config and software hardening are acceptable for now. Users will
+     * be given an option to change this behavior in a later patch.
+     */
     if (verification_result != SGX_QL_QV_RESULT_OK &&
-	verification_result != SGX_QL_QV_RESULT_OUT_OF_DATE_CONFIG_NEEDED) {
-      printf("\nGramine acceptable verification result failed\n");
+	verification_result != SGX_QL_QV_RESULT_OUT_OF_DATE_CONFIG_NEEDED &&
+	verification_result != SGX_QL_QV_RESULT_SW_HARDENING_NEEDED) {
+      printf("\nGramine acceptable verification failed: %d %s\n", verification_result, sgx_ql_qv_result_to_str(verification_result));
+      ret = -1;
       goto out;
     }
 
