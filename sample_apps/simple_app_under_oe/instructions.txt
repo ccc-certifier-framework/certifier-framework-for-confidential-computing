@@ -54,41 +54,47 @@ Step 5: Compile example_app with the embedded policy_key
     make dump_mrenclave
 
 Step 6: In addition to making the binary, make will provide instructions to produce
-binary_trusted_measurements_file.bin containing the application measurement. The platform key should
-have been provisioned in a pem file called vse.crt which you should copy into the provisioning directory.
-Translate vse.crt, which is in pem format, into der by:
-    cd $EXAMPLE_DIR/provisioning
-    openssl x509 -in vse.crt -inform pem -out vse.crt.der -outform der
-
+binary_trusted_measurements_file.bin containing the application measurement.
 
 Step 7: Author the policy for the security domain and produce the signed claims the apps need.
 
+    The policies can be generated either manually or through the policy generator tool.
+
     cd $EXAMPLE_DIR/provisioning
 
-    a. Construct statement "policy-key says the platform-key is-trusted-for-attestation"
-       $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=vse.crt.der \
-          --verb="is-trusted-for-attestation" --output=ts2.bin
-       $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-          --verb="says" --clause=ts2.bin --output=vse_policy2.bin
-
-    b. Construct statement "policy-key says measurement is-trusted"
+Step 7.a: Manual policy generation
+    a. Construct statement "policy-key says measurement is-trusted"
        $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe \
           --measurement_subject=binary_trusted_measurements_file.bin --verb="is-trusted" --output=ts1.bin
        $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
           --verb="says" --clause=ts1.bin --output=vse_policy1.bin
 
-    c. Produce the signed claims for each vse policy statement.
+    b. Produce the signed claims for each vse policy statement.
        $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
           --vse_file=vse_policy1.bin --duration=9000 \
           --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
-       $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
-          --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
 
-    d. Combine signed policy statements for Certifier Service use.
-       $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
+    c. Combine signed policy statements for Certifier Service use.
+       $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin \
           --output=policy.bin
 
-    e. [optional] Print the policy
+    d. [optional] Print the policy
+       $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+
+Step 7.b: Policy Generator
+
+    a. Edit policy file
+
+      Open oe_policy.json and replace trusted measurements in the
+      "measurements" property with the expected measurement from
+      make dump_mrenclave.
+
+    b. Run Policy Generator:
+
+      $CERTIFIER_PROTOTYPE/utilities/policy_generator.exe --policy_input=../oe_policy.json \
+        --schema_input=$CERTIFIER_PROTOTYPE/utilities/policy_schema.json --util_path=$CERTIFIER_PROTOTYPE/utilities
+
+    c. [optional] Print the policy
        $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 
 Step 8: Build SimpleServer:
