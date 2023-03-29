@@ -46,11 +46,14 @@ OS - Ubuntu 20.04 or later with Linux kernel 5.11 or higher
 ------------------------
 1. Clone Gramine
 ```
-git clone https://github.com/gramineproject/gramine.git
+mkdir gramine
+cd gramine
+git clone https://github.com/gramineproject/gramine.git gramine
 ```
 
 2. Clone Certifier
-Clone certifier in the same parent directory as Gramine above.
+cd ..
+Clone certifier in the same directory as the parent of the outer gramine dir above.
 
 ```
 git clone https://github.com/vmware-research/certifier-framework-for-confidential-computing.git certifier
@@ -139,7 +142,7 @@ controls the trusted enclave's TCB. The gramine-sgx-token is run to obtain secur
 parameters such as MR_ENCLAVE, MR_SIGNER and other SGX attributes which can be used to
 verify the enclave and the SGX platform. MR_ENCLAVE is the measurement of the enclave.
 ```
-make app dcap RA_TYPE=dcap
+make app RA_TYPE=dcap
 ```
 
 7. Run tests

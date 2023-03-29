@@ -66,7 +66,7 @@ static inline int64_t local_sgx_getkey(sgx_key_request_t * keyrequest,
 {
     int64_t rax = EGETKEY;
     __asm__ volatile(
-    ENCLU "\n"
+    "enclu"
     : "+a"(rax)
     : "b"(keyrequest), "c"(key)
     : "memory");

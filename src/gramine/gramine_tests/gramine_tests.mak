@@ -47,7 +47,7 @@ certifier:
 ######################### TEST APP EXECUTABLES ################################
 
 CFLAGS += $(CERTIFIER_CFLAGS)
-LDFLAGS += -ldl -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -L./ -lcertifier $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
+LDFLAGS += -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -L./ -lcertifier -ldl $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
 
 gramine_tests: gramine_tests.cc certifier
 	$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
