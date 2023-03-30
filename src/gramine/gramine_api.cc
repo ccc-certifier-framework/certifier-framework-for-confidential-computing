@@ -78,55 +78,23 @@ bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* attestat
   return true;
 }
 
-bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
-                    byte *user_data_out, int* size_out, byte* out) {
-#if 0
-  byte assertion[MAX_ASSERTION_SIZE];
-  memset(assertion, 0, MAX_ASSERTION_SIZE);
-  int assertion_size = 0;
+bool gramine_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out) {
   bool result = false;
 
 #ifdef DEBUG
-  printf("\nInput claims sent to gramine_Verify claims_size %d\n", claims_size);
-  gramine_print_bytes(claims_size, claims);
+  printf("\nInput data sent to gramine_Verify size: %d\n", what_to_say_size);
+  gramine_print_bytes(what_to_say_size, what_to_say);
+  printf("\nAttestation size: %d\n", attestation_size);
+  gramine_print_bytes(attestation_size, attestation);
 #endif
-
-  int i, j = 0;
-  for (i = 0; i < sizeof(int); i++, j++) {
-    ((byte*)&assertion_size)[i] = claims[j];
-  }
-
-  for (i = 0; i < assertion_size; i++, j++) {
-    assertion[i] = claims[j];
-  }
-
-#ifdef DEBUG
-  printf("\nAttestation size:\n");
-  gramine_print_bytes(assertion_size, assertion);
-#endif
-
-  for (i = 0; i < sizeof(int); i++, j++) {
-    ((byte*)user_data_out_size)[i] = claims[j];
-  }
-
-  for (i = 0; i < *user_data_out_size; i++, j++) {
-    user_data_out[i] = claims[j];
-  }
-
-#ifdef DEBUG
-  printf("\nuser_data_out:\n");
-  gramine_print_bytes(*user_data_out_size, user_data_out);
-  printf("Invoking Gramine Verify %d\n", claims_size);
-#endif
-
+#if 0
   result = (*gramineFuncs.Verify)
-           (*user_data_out_size, user_data_out, assertion_size,
-             assertion, size_out, out);
+           (what_to_say_size, what_to_say, attestation_size,
+           attestation, measurement_out_size, measurement_out);
   if (!result) {
     printf("Gramine verify failed\n");
     return false;
   }
-
 #endif
 #ifdef DEBUG
   printf("Done Gramine Verification via API\n");
