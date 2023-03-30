@@ -55,25 +55,27 @@ bool gramine_Init(const int cert_size, byte *cert) {
   return true;
 }
 
-bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
+bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
+#if 0
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
   int assertion_size = 0;
+#endif
   bool result = false;
 
 #ifdef DEBUG
-  printf("Invoking Gramine Attest %d\n", claims_size);
-  gramine_print_bytes(claims_size, claims);
+  printf("Invoking Gramine Attest %d\n", what_to_say_size);
+  gramine_print_bytes(what_to_say_size, what_to_say);
   printf("\n");
 #endif
 
-  result = (*gramineFuncs.Attest)
-           (claims_size, claims, &assertion_size, assertion);
+  result = (*gramineFuncs.Attest) (what_to_say_size, what_to_say, size_out, out);
   if (!result) {
     printf("Gramine attest failed\n");
     return false;
   }
 
+#if 0
   int total_size = assertion_size + claims_size + (sizeof(int) * 2);
 
   int i, j = 0;
@@ -94,9 +96,9 @@ bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   }
 
   *size_out = j;
-
+#endif
 #ifdef DEBUG
-  printf("Done Gramine Attest assertion size %d:\n", *size_out);
+  printf("Done Gramine Attest attestation size %d:\n", *size_out);
   gramine_print_bytes(*size_out, out);
 #endif
 
@@ -105,6 +107,7 @@ bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
 
 bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
                     byte *user_data_out, int* size_out, byte* out) {
+#if 0
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
   int assertion_size = 0;
@@ -125,7 +128,7 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
   }
 
 #ifdef DEBUG
-  printf("\nAssertion:\n");
+  printf("\nAttestation size:\n");
   gramine_print_bytes(assertion_size, assertion);
 #endif
 
@@ -151,10 +154,10 @@ bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
     return false;
   }
 
+#endif
 #ifdef DEBUG
   printf("Done Gramine Verification via API\n");
 #endif
-
   return true;
 }
 
@@ -174,7 +177,6 @@ bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
 #ifdef DEBUG
   printf("Done Gramine Seal size: %d\n", *size_out);
 #endif
-
   return true;
 }
 

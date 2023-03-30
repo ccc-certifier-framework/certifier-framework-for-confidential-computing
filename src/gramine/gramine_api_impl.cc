@@ -120,19 +120,19 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
     return SUCCESS;
 }
 
-bool gramine_attest_impl(int claims_size, byte* claims, int* size_out, byte* out) {
+bool gramine_attest_impl(const int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
     ssize_t bytes;
     uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
 #ifdef DEBUG
-    printf("Attest quote interface, claims size: %d\n", claims_size);
-    gramine_print_bytes(claims_size, claims);
+    printf("Attest quote interface, what_to_say size: %d\n", what_to_say_size);
+    gramine_print_bytes(what_to_say_size, what_to_say);
 #endif
 
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
 
-    mbedtls_sha256(claims, claims_size, user_report_data.d, 0);
+    mbedtls_sha256(what_to_say, what_to_say_size, user_report_data.d, 0);
 
 #ifdef DEBUG
     printf("Attest quote interface prep user_data size: %ld\n", sizeof(user_report_data));
