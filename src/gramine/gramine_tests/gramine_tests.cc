@@ -33,12 +33,12 @@ int main(int argc, char** argv) {
     size_t len;
     int mr_size;
     int ud_recd_size;
-    int assertion_size;
+    int attestation_size;
     int sealed_size;
     int unsealed_size;
 
     bool status = false;
-    byte assertion[MAX_ASSERTION_SIZE];
+    byte attestation[MAX_ATTESTATION_SIZE];
     byte ud_recd[USER_DATA_SIZE];
     byte mr_recd[SGX_HASH_SIZE];
 
@@ -78,13 +78,13 @@ int main(int argc, char** argv) {
       user_data[i] = (byte)i;
     }
 
-    status = gramine_Attest(USER_DATA_SIZE, user_data, &assertion_size, assertion);
+    status = gramine_Attest(USER_DATA_SIZE, user_data, &attestation_size, attestation);
     if (status != true) {
         printf("gramine_Attest failed\n");
 	return 1;
     }
 
-    status = gramine_Verify(assertion_size, assertion, &ud_recd_size, ud_recd, &mr_size, mr_recd);
+    status = gramine_Verify(attestation_size, attestation, &ud_recd_size, ud_recd, &mr_size, mr_recd);
     if (status != true) {
         printf("gramine_Verify failed\n");
 	return 1;

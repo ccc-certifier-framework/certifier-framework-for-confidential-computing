@@ -120,7 +120,7 @@ int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
     return SUCCESS;
 }
 
-bool gramine_attest_impl(const int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
+bool gramine_attest_impl(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
     ssize_t bytes;
     uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
@@ -154,9 +154,9 @@ bool gramine_attest_impl(const int what_to_say_size, byte* what_to_say, int* siz
         return false;
     }
 
-    /* Copy out the assertion/quote */
-    memcpy(out, quote, bytes);
-    *size_out = bytes;
+    /* Copy out the attestation/quote */
+    memcpy(attestation_out, quote, bytes);
+    *attestation_size_out = bytes;
 
 #ifdef DEBUG
     printf("Gramine Attest done\n");
@@ -411,7 +411,7 @@ bool gramine_remote_verify_impl(int user_data_size, byte* user_data, int asserti
 
 bool gramine_get_measurement(byte *measurement) {
     bool status = true;
-    byte assertion[MAX_ASSERTION_SIZE];
+    byte attestation[MAX_ATTESTATION_SIZE];
     byte user_data[USER_DATA_SIZE];
     int assertion_size;
 
@@ -419,13 +419,13 @@ bool gramine_get_measurement(byte *measurement) {
       user_data[i] = (byte)i;
     }
 
-    status = gramine_attest_impl(USER_DATA_SIZE, user_data, &assertion_size, assertion);
+    status = gramine_attest_impl(USER_DATA_SIZE, user_data, &assertion_size, attestation);
     if (status != true) {
         printf("gramine Attest failed\n");
         return status;
     }
 
-    sgx_quote_t* quote = (sgx_quote_t*)assertion;
+    sgx_quote_t* quote = (sgx_quote_t*)attestation;
     memcpy(measurement, quote->body.report_body.mr_enclave.m, SGX_MR_SIZE);
 
     return status;

@@ -55,12 +55,7 @@ bool gramine_Init(const int cert_size, byte *cert) {
   return true;
 }
 
-bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
-#if 0
-  byte assertion[MAX_ASSERTION_SIZE];
-  memset(assertion, 0, MAX_ASSERTION_SIZE);
-  int assertion_size = 0;
-#endif
+bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
   bool result = false;
 
 #ifdef DEBUG
@@ -69,37 +64,15 @@ bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* size_out
   printf("\n");
 #endif
 
-  result = (*gramineFuncs.Attest) (what_to_say_size, what_to_say, size_out, out);
+  result = (*gramineFuncs.Attest) (what_to_say_size, what_to_say, attestation_size_out, attestation_out);
   if (!result) {
     printf("Gramine attest failed\n");
     return false;
   }
 
-#if 0
-  int total_size = assertion_size + claims_size + (sizeof(int) * 2);
-
-  int i, j = 0;
-  for (i = 0; i < sizeof(int); i++, j++) {
-    out[j] = ((byte*)&assertion_size)[i];
-  }
-
-  for (i = 0; i < assertion_size; i++, j++) {
-    out[j] = assertion[i];
-  }
-
-  for (i = 0; i < sizeof(int); i++, j++) {
-    out[j] = ((byte*)&claims_size)[i];
-  }
-
-  for (i = 0; i < claims_size; i++, j++) {
-    out[j] = claims[i];
-  }
-
-  *size_out = j;
-#endif
 #ifdef DEBUG
-  printf("Done Gramine Attest attestation size %d:\n", *size_out);
-  gramine_print_bytes(*size_out, out);
+  printf("Done Gramine Attest attestation size %d:\n", *attestation_size_out);
+  gramine_print_bytes(*attestation_size_out, attestation_out);
 #endif
 
   return true;

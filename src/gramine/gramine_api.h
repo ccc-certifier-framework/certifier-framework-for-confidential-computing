@@ -39,7 +39,7 @@
 #ifndef _GRAMINE_API_H_
 #define _GRAMINE_API_H_
 
-#define MAX_ASSERTION_SIZE 5000
+#define MAX_ATTESTATION_SIZE 5000
 #define TAG_SIZE 16
 
 #define DEBUG
@@ -48,7 +48,7 @@ typedef unsigned char byte;
 
 #ifdef GRAMINE_CERTIFIER
 bool gramine_Init(const int cert_size, byte *cert);
-bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* size_out, byte* out);
+bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out);
 bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
                     byte *user_data_out, int* size_out, byte* out);
 
@@ -62,7 +62,7 @@ inline void gramine_print_bytes(int n, byte* buf) {
 }
 
 typedef struct GramineFunctions {
-  bool (*Attest)(const int what_to_say_size, byte* what_to_say, int* size_out, byte* out);
+  bool (*Attest)(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out);
   bool (*Verify)(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out);
   bool (*Seal)(int in_size, byte* in, int* size_out, byte* out);
   bool (*Unseal)(int in_size, byte* in, int* size_out, byte* out);
