@@ -87,15 +87,15 @@ bool gramine_Verify(const int what_to_say_size, byte* what_to_say, const int att
   printf("\nAttestation size: %d\n", attestation_size);
   gramine_print_bytes(attestation_size, attestation);
 #endif
-#if 0
+
   result = (*gramineFuncs.Verify)
            (what_to_say_size, what_to_say, attestation_size,
-           attestation, measurement_out_size, measurement_out);
+            attestation, measurement_out_size, measurement_out);
   if (!result) {
     printf("Gramine verify failed\n");
     return false;
   }
-#endif
+
 #ifdef DEBUG
   printf("Done Gramine Verification via API\n");
 #endif

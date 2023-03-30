@@ -132,6 +132,7 @@ bool gramine_attest_impl(const int what_to_say_size, byte* what_to_say, int* att
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
 
+    /* Get a SHA256 of user_data/what_to_say */
     mbedtls_sha256(what_to_say, what_to_say_size, user_report_data.d, 0);
 
 #ifdef DEBUG
@@ -270,26 +271,26 @@ out:
     return ret;
 }
 
-bool gramine_local_verify_impl(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out) {
+bool gramine_local_verify_impl(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out) {
     ssize_t bytes;
     int ret = -1;
     uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
 #ifdef DEBUG
-    printf("Gramine Local Verify called user_data_size: %d assertion_size: %d\n",
-           user_data_size, assertion_size);
+    printf("Gramine Local Verify called what_to_say_size: %d attestation_size: %d\n",
+           what_to_say_size, attestation_size);
 #endif
 
     /* 1. write some custom data to `user_report_data` file */
     sgx_report_data_t user_report_data = {0};
 
-    /* Get a SHA256 of user_data */
-    mbedtls_sha256(user_data, user_data_size, user_report_data.d, 0);
+    /* Get a SHA256 of user_data/what_to_say */
+    mbedtls_sha256(what_to_say, what_to_say_size, user_report_data.d, 0);
 
     bytes = gramine_rw_file("/dev/attestation/user_report_data", (uint8_t*)&user_report_data,
                     sizeof(user_report_data), /*do_write=*/true);
     if (bytes != sizeof(user_report_data)) {
-        printf("Verify prep user_data failed %d\n", errno);
+        printf("Verify prep user_report_data failed %d\n", errno);
         return false;
     }
 
@@ -297,15 +298,15 @@ bool gramine_local_verify_impl(int user_data_size, byte* user_data, int assertio
     bytes = gramine_rw_file("/dev/attestation/quote", (uint8_t*)&quote, sizeof(quote),
 		    /*do_write=*/false);
     if (bytes < 0) {
-        printf("Verify quote interface for user_data failed %d\n", errno);
+        printf("Verify quote interface for user_report_data failed %d\n", errno);
         return false;
     }
 
-    sgx_quote_t* quote_expected = (sgx_quote_t*)assertion;
+    sgx_quote_t* quote_expected = (sgx_quote_t*)attestation;
     sgx_quote_t* quote_received = (sgx_quote_t*)quote;
 
     if (quote_expected->body.version != /*EPID*/2 && quote_received->body.version != /*DCAP*/3) {
-        printf("version of SGX quote is not EPID (2) and not ECDSA/DCAP (3)\n");
+        printf("Version of SGX quote is not EPID (2) and not ECDSA/DCAP (3)\n");
         return false;
     }
 
@@ -342,19 +343,19 @@ bool gramine_local_verify_impl(int user_data_size, byte* user_data, int assertio
 #endif
 
     /* Copy out quote info */
-    memcpy(out, quote_expected->body.report_body.mr_enclave.m, SGX_MR_SIZE);
-    *size_out = SGX_MR_SIZE;
+    memcpy(measurement_out, quote_expected->body.report_body.mr_enclave.m, SGX_MR_SIZE);
+    *measurement_out_size = SGX_MR_SIZE;
 
 #ifdef DEBUG
     printf("\nGramine verify quote interface compare done, output: \n");
-    gramine_print_bytes(*size_out, out);
+    gramine_print_bytes(*measurement_out_size, measurement_out);
     printf("\n");
 #endif
 
     return true;
 }
 
-bool gramine_remote_verify_impl(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out) {
+bool gramine_remote_verify_impl(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out) {
     ssize_t bytes;
     int ret = -1;
     uint8_t mr[SGX_MR_SIZE];
@@ -362,18 +363,18 @@ bool gramine_remote_verify_impl(int user_data_size, byte* user_data, int asserti
     uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
 #ifdef DEBUG
-    printf("Gramine Remote Verify called user_data_size: %d assertion_size: %d\n",
-           user_data_size, assertion_size);
+    printf("Gramine Remote Verify called what_to_say_size: %d attestation_size: %d\n",
+           what_to_say_size, attestation_size);
 #endif
 
-    sgx_quote_t* quote_expected = (sgx_quote_t*)assertion;
+    sgx_quote_t* quote_expected = (sgx_quote_t*)attestation;
 
     /* Invoke remote_verify_quote() in DCAP library */
 #ifdef DEBUG
     printf("\nGramine begin remote verify quote with DCAP\n");
 #endif
 
-    if (remote_verify_quote(assertion_size, (uint8_t*)quote_expected, &mr_size, mr) != 0) {
+    if (remote_verify_quote(attestation_size, (uint8_t*)quote_expected, &mr_size, mr) != 0) {
         printf("\nGramine begin verify quote with DCAP failed\n");
         return false;
     }
@@ -386,8 +387,8 @@ bool gramine_remote_verify_impl(int user_data_size, byte* user_data, int asserti
 
     sgx_report_data_t user_report_data = {0};
 
-    /* Get a SHA256 of user_data */
-    mbedtls_sha256(user_data, user_data_size, user_report_data.d, 0);
+    /* Get a SHA256 of user_data/what_to_say */
+    mbedtls_sha256(what_to_say, what_to_say_size, user_report_data.d, 0);
 
     ret = memcmp(quote_expected->body.report_body.report_data.d, user_report_data.d,
                  sizeof(user_report_data));
@@ -397,12 +398,12 @@ bool gramine_remote_verify_impl(int user_data_size, byte* user_data, int asserti
     }
 
     /* Copy out quote info */
-    memcpy(out, quote_expected->body.report_body.mr_enclave.m, SGX_MR_SIZE);
-    *size_out = SGX_MR_SIZE;
+    memcpy(measurement_out, quote_expected->body.report_body.mr_enclave.m, SGX_MR_SIZE);
+    *measurement_out_size = SGX_MR_SIZE;
 
 #ifdef DEBUG
     printf("\nGramine verify quote interface compare done, output: \n");
-    gramine_print_bytes(*size_out, out);
+    gramine_print_bytes(*measurement_out_size, measurement_out);
     printf("\n");
 #endif
 
@@ -413,13 +414,13 @@ bool gramine_get_measurement(byte *measurement) {
     bool status = true;
     byte attestation[MAX_ATTESTATION_SIZE];
     byte user_data[USER_DATA_SIZE];
-    int assertion_size;
+    int attestation_size;
 
     for (int i = 0; i < USER_DATA_SIZE; i++) {
       user_data[i] = (byte)i;
     }
 
-    status = gramine_attest_impl(USER_DATA_SIZE, user_data, &assertion_size, attestation);
+    status = gramine_attest_impl(USER_DATA_SIZE, user_data, &attestation_size, attestation);
     if (status != true) {
         printf("gramine Attest failed\n");
         return status;
