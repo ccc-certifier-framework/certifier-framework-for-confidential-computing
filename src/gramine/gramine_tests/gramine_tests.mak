@@ -84,4 +84,4 @@ clean:
 
 .PHONY: distclean
 distclean: clean
-	$(RM) -r mbedtls/ *.tar.gz ssl/ca.* ssl/gramine_tests.*
+	$(RM) -r mbedtls/ *.tar.gz

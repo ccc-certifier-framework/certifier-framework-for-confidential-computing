@@ -245,7 +245,7 @@ int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size, uint
      */
     if (verification_result != SGX_QL_QV_RESULT_OK &&
 	verification_result != SGX_QL_QV_RESULT_OUT_OF_DATE_CONFIG_NEEDED &&
-	verification_result != SGX_QL_QV_RESULT_SW_HARDENING_NEEDED) {
+	verification_result != SGX_QL_QV_RESULT_CONFIG_AND_SW_HARDENING_NEEDED) {
       printf("\nGramine acceptable verification failed: %d %s\n", verification_result, sgx_ql_qv_result_to_str(verification_result));
       ret = -1;
       goto out;

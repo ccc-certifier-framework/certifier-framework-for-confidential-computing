@@ -8,15 +8,13 @@ These tests do not depend on the Certifier and run as stand-alone tests.
 The tests demonstrate how to Attest/Verify an enclave and provide Seal/Unseal
 functionality for secrets management.
 
-The tests run in a Gramine enclave. First, the tests initialize the Gramine library with a
-self-signed SSL certificate. This certificate can be verified to be authentic. The
-Attestation API is initialized with a sample user data and the gramine_Attest returns
-the SGX quote for this enclave. The SGX quote contains the enclave measurement. Later,
-the gramine_Verify is invoked to validate this SGX quote in two ways - first a local
-verify that can be invoked within the enclave and validate the quote is shown when
-GRAMINE_LOCAL_VERIFY is defined. Secondly, the remote verification invokes the SGX quote
-verification library to validate the SGX quote. This remote verification functionality
-can be integrated with an external service.
+The tests run in a Gramine enclave. The Attestation API is initialized with a sample user
+data and the gramine_Attest returns the SGX quote for this enclave. The SGX quote contains
+the enclave measurement. Later, the gramine_Verify is invoked to validate this SGX quote in
+two ways - first a local verify that can be invoked within the enclave and validate the
+quote is shown when GRAMINE_LOCAL_VERIFY is defined. Secondly, the remote verification
+invokes the SGX quote verification library to validate the SGX quote. This remote
+verification functionality can be integrated with an external service.
 
 The gramine_Seal demonstrates how to seal secrets with the help of SGX sealing key
 obtained from the platform and custom GCM encryption with a sealing tag added to the
@@ -31,8 +29,14 @@ Provisioning Certification Service(PCS). The certificates are cached locally. Wh
 quote is received, users can compare the certificates embedded in the quote against these
 cached certificates.
 
+Some Gramine applications are built with a self-signed SSL certificate with the SGX quote
+embedded in it. This certificate is used for establishing a trusted communication channel.
+Certifier will not use this approach and will use another admission certificate.
+
 This test uses two scripts, a Makefile and the SGX manifest to setup. The manifest
-contains the files to be trusted as part of the SGX enclave.
+contains the files to be trusted as part of the SGX enclave. The manifest also specifies
+the gramine.libos entrypoint, library paths included, file system mounts that are to be
+part of the enclave. SGX specific environment variables can also be set in the manifest.
 
 The steps below describe the setup and work needed to run the Gramine tests.
 
@@ -123,17 +127,7 @@ cd certifier/src/gramine/gramine_tests
 ./configureMbedTLS
 ```
 
-5. Setup SSL Certificate
-This script generates a self-signed SSL certificate and key for verifying the application
-Standard OpenSSL calls are used to setup this certificate which can be verified by an
-external service in the future. Currently this certificate is a single SSL certificate
-for the enclave. This root certificate can be augmented with the platform certificate
-chain and externally verify the entire chain.
-```
-./configureSSLCert
-```
-
-6. Build Gramine-Certifier tests
+5. Build Gramine-Certifier tests
 This command builds the tests as an application that is run within a Gramine enclave.
 First, the make builds a binary with the Gramine library and Gramine tests. This binary
 in conjunction with the files listed in the Gramine manifest are packaged together. They
@@ -142,10 +136,15 @@ controls the trusted enclave's TCB. The gramine-sgx-token is run to obtain secur
 parameters such as MR_ENCLAVE, MR_SIGNER and other SGX attributes which can be used to
 verify the enclave and the SGX platform. MR_ENCLAVE is the measurement of the enclave.
 ```
-make app RA_TYPE=dcap
+make -f gramine_tests.mak app RA_TYPE=dcap
 ```
 
-7. Run tests
+To clean up built files:
+```
+make -f gramine_tests.mak clean
+```
+
+6. Run tests
 Tests will run the Attest/Verify and Seal/Unseal tests and return a success/failure
 result. Gramine automatically talks to the configured DCAP libraries and SGX QV libraries
 which in turn communicate with the remote Intel PCS to verify the obtained SGX quote
@@ -156,6 +155,6 @@ it can validate with these cached certificates. The remote verification in this 
 talks to the DCAP library and verifies the obtained SGX quote. The SGX quote contains
 security characteristics such as MR_ENCLAVE, MR_SIGNER, PROD_ID and CPU_SVN to be used
 for verification of the enclave and the SGX platform.
-``
+```
 gramine-sgx ./gramine_tests dcap
 ```

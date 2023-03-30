@@ -34,9 +34,7 @@ sgx.trusted_files = [
   "file:/usr/local/lib/",
   "file:{{ arch_libdir }}/",
   "file:/usr{{ arch_libdir }}/",
-  "file:ssl/ca.crt",
-  "file:ssl/gramine_tests.crt",
-  "file:ssl/gramine_tests.key",
+  "file:gramine_tests.crt",
 ]
 
 sgx.allowed_files = [

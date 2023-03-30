@@ -30,7 +30,6 @@ int gramine_file_size(const char *file_name) {
 
 bool gramine_Init(const int cert_size, byte *cert) {
   char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
-  void* ra_tls_attest_lib;
   size_t ret = 0;
 
   ret = gramine_rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
@@ -45,16 +44,8 @@ bool gramine_Init(const int cert_size, byte *cert) {
   printf("Attestation type: %s\n", attestation_type_str);
 #endif
 
-  if (ret == -ENOENT || !strcmp(attestation_type_str, "none")) {
-    ra_tls_attest_lib = NULL;
-  } else if (!strcmp(attestation_type_str, "epid") || !strcmp(attestation_type_str, "dcap")) {
-   ra_tls_attest_lib = dlopen("libra_tls_attest.so", RTLD_LAZY);
-    if (!ra_tls_attest_lib) {
-        printf("User requested RA-TLS attestation but cannot find lib\n");
-        return false;
-    }
-  } else {
-    printf("Unrecognized remote attestation type: %s\n", attestation_type_str);
+  if (strcmp(attestation_type_str, "dcap")) {
+    printf("Unsupported remote attestation type: %s\n", attestation_type_str);
     return false;
   }
 
