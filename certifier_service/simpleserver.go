@@ -228,11 +228,17 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
         } else if evType == "oe-evidence" {
 		success, toProve, measurement = certlib.ValidateOeEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
-			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateOeEvidence failed\n")
 			return false, nil
 		}
         } else if evType == "gramine-evidence" {
 		return false, nil
+		// Todo: Call when ready
+		success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, originalPolicy, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateGramineEvidence failed\n")
+			return false, nil
+		}
         } else {
                 fmt.Printf("ValidateRequestAndObtainToken: Invalid Evidence type: %s\n", evType)
                 return false, nil
