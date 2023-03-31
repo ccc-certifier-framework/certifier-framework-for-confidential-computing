@@ -886,7 +886,7 @@ func VerifyReport(etype string, pk *certprotos.KeyMessage, serialized []byte) bo
 	rPK := rsa.PublicKey{}
 	rpK := rsa.PrivateKey{}
 	if GetRsaKeysFromInternal(k, &rpK, &rPK) == false {
-		fmt.Printf("VerifyReport: error 1\n")
+		fmt.Printf("VerifyReport: Can't convert rsa key from internal\n")
 		return false
 	}
 
@@ -1388,7 +1388,7 @@ func ConstructProofFromOeEvidenceWithoutEndorsement(publicPolicyKey *certprotos.
 
 	if policyKeyIsTrusted == nil || enclaveKeySpeaksForMeasurement == nil ||
 			policyKeySaysMeasurementIsTrusted == nil {
-		fmt.Printf("ConstructProofFromOeEvidence: Error 4\n")
+		fmt.Printf("ConstructProofFromOeEvidence: Clauses absent\n")
 		return nil, nil
 	}
 
@@ -1467,7 +1467,7 @@ func ConstructProofFromOeEvidenceWithEndorsement(publicPolicyKey *certprotos.Key
 	enclaveKeySpeaksForMeasurement :=  platformSaysEnclaveKeySpeaksForMeasurement.Clause
 	if policyKeyIsTrusted == nil || enclaveKeySpeaksForMeasurement == nil ||
 			policyKeySaysMeasurementIsTrusted == nil {
-		fmt.Printf("ConstructProofFromOeEvidence: Error 4\n")
+		fmt.Printf("ConstructProofFromOeEvidence: clauses absent\n")
 		return nil, nil
 	}
 
