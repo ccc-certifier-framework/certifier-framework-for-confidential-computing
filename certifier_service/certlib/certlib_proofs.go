@@ -2168,7 +2168,7 @@ func ConstructGramineClaim(enclaveKey *certprotos.KeyMessage,
 }
 
 func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, error) {
-	// serializedUD, m, err 
+	// Returns: success, serialized user data, measurement, err 
 	ga := certprotos.GramineAttestationMessage{}
 	err := proto.Unmarshal(serializedEvidence, &ga)
 	if err != nil {
