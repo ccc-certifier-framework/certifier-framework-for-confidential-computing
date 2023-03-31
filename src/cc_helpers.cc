@@ -760,6 +760,23 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     }
     ev->set_evidence_type("signed-claim");
     ev->set_serialized_evidence(str_s);
+#ifdef GRAMINE_CERTIFIER
+  } else if (enclave_type_ == "gramine-enclave") {
+    extern bool gramine_platform_cert_initialized;
+    extern string gramine_platform_cert;
+    if (!gramine_platform_cert_initialized) {
+      printf("cc_trust_data::certify_me: gramine certs not initialized\n");
+      return false;
+    }
+    evidence* ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
+      return false;
+    }
+    ev->set_evidence_type("cert");
+    ev->set_serialized_evidence(gramine_platform_cert);
+    // May add more certs later
+#endif
 #ifdef SEV_SNP
   } else if (enclave_type_ == "sev-enclave") {
     extern bool plat_certs_initialized;
@@ -888,6 +905,8 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     request.set_submitted_evidence_type("vse-attestation-package");
   } else if (enclave_type_ == "sev-enclave") {
     request.set_submitted_evidence_type("sev-platform-package");
+  } else if (enclave_type_ == "gramine-enclave") {
+    request.set_submitted_evidence_type("gramine-platform-package");
   } else if (enclave_type_ == "oe-enclave") {
     request.set_submitted_evidence_type("oe-evidence");
   } else {
