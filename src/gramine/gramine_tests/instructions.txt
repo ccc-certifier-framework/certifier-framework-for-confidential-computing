@@ -29,11 +29,7 @@ Provisioning Certification Service(PCS). The certificates are cached locally. Wh
 quote is received, users can compare the certificates embedded in the quote against these
 cached certificates.
 
-This test uses two scripts, a Makefile and the SGX manifest to setup. The manifest
-contains the files to be trusted as part of the SGX enclave. The manifest also specifies
-the gramine.libos entrypoint, library paths included, file system mounts that are to be
-part of the enclave. SGX specific environment variables can also be set in the manifest.
-
+This test uses two scripts, a Makefile and the SGX manifest to setup.
 The steps below describe building and running the Gramine tests.
 
 
@@ -162,4 +158,8 @@ Some Gramine applications are built with a self-signed SSL certificate with the 
 embedded in it. This certificate is used for establishing a trusted communication channel.
 This is not required and we do not generate either the key or the self-signed cert.
 
-Describe template file here
+The manifest contains the files to be trusted as part of the SGX enclave. The manifest
+also specifies the gramine.libos entrypoint, library paths included, file system mounts
+that are to be part of the enclave. SGX specific environment variables can also be set in
+the manifest.
+
