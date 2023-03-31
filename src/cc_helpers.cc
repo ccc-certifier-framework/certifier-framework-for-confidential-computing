@@ -906,7 +906,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
   } else if (enclave_type_ == "sev-enclave") {
     request.set_submitted_evidence_type("sev-platform-package");
   } else if (enclave_type_ == "gramine-enclave") {
-    request.set_submitted_evidence_type("gramine-platform-package");
+    request.set_submitted_evidence_type("gramine-evidence");
   } else if (enclave_type_ == "oe-enclave") {
     request.set_submitted_evidence_type("oe-evidence");
   } else {

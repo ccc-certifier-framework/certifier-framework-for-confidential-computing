@@ -220,13 +220,17 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			// nothing to do
 		} else if ev.GetEvidenceType() == "gramine-report" {
 			// Todo: call serializedUD, m, err  := gramine.GramineHostVerifyReport
-			// like Oe.  We'll eventually construct and add clause for attestation claim
-			// cl := ConstructGramineClaim(attestKey, enclaveKey, measurement)
-			// if cl == nil {
-			// 	fmt.Printf("InitProvedStatements: ConstructGramineClaim failed\n")
-			// 	return false
-			// }
-			// ps.Proved = append(ps.Proved, cl)
+			// like Oe.  Till then, make up fake m.
+			m := make([]byte, 32)
+			for i := 0; i < 32; i++ {
+				m[i] = byte(i)
+			}
+			cl := ConstructGramineClaim(attestKey, enclaveKey, m)
+			if cl == nil {
+			 	fmt.Printf("InitProvedStatements: ConstructGramineClaim failed\n")
+			 	return false
+			}
+			ps.Proved = append(ps.Proved, cl)
 			fmt.Printf("Gramine report not yet supported\n")
 			return false
 		} else if ev.GetEvidenceType() == "oe-attestation-report" {
