@@ -16,6 +16,7 @@ package certlib
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"math/big"
 	"crypto/ecdsa"
@@ -218,21 +219,25 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 		} else if ev.GetEvidenceType() == "pem-cert-chain" {
 			// nothing to do
-		} else if ev.GetEvidenceType() == "gramine-report" {
-			// Todo: call serializedUD, m, err  := gramine.GramineHostVerifyReport
-			// like Oe.  Till then, make up fake m.
-			m := make([]byte, 32)
-			for i := 0; i < 32; i++ {
-				m[i] = byte(i)
+		} else if ev.GetEvidenceType() == "gramine-attestation" {
+			serializedUD, m, err  := VerifyGramineAttestation(ev.SerializedEvidence)
+			if err != nil {
+				fmt.Printf("InitProvedStatements: Can't verify gramine evidence\n")
+				return false
 			}
-			cl := ConstructGramineClaim(attestKey, enclaveKey, m)
+			// get enclave key from ud
+			ud := certprotos.AttestationUserData{}
+			err = proto.Unmarshal(serializedUD, &ud)
+			if err != nil {
+				fmt.Printf("InitProvedStatements: Can't unmarshal user data\n")
+				return false
+			}
+			cl := ConstructGramineClaim(ud.EnclaveKey, m)
 			if cl == nil {
 			 	fmt.Printf("InitProvedStatements: ConstructGramineClaim failed\n")
 			 	return false
 			}
 			ps.Proved = append(ps.Proved, cl)
-			fmt.Printf("Gramine report not yet supported\n")
-			return false
 		} else if ev.GetEvidenceType() == "oe-attestation-report" {
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
@@ -2144,15 +2149,9 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	return true, toProve, me.Clause.Subject.Measurement
 }
 
-func ConstructGramineClaim(attestKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
+func ConstructGramineClaim(enclaveKey *certprotos.KeyMessage,
 		measurement []byte) *certprotos.VseClause {
 
-	// Todo: fix this
-	am := MakeKeyEntity(attestKey)
-	if am == nil {
-		fmt.Printf("ConstructGramineClaim: Can't make attest entity\n")
-		return nil
-	}
 	em := MakeKeyEntity(enclaveKey)
 	if em == nil {
 		fmt.Printf("ConstructGramineClaim: Can't make enclave entity\n")
@@ -2163,10 +2162,25 @@ func ConstructGramineClaim(attestKey *certprotos.KeyMessage, enclaveKey *certpro
 		fmt.Printf("ConstructGramineClaim: Can't make measurement entity\n")
 		return nil
 	}
-	says := "says"
 	speaks_for := "speaks-for"
-	c1 := MakeSimpleVseClause(em, &speaks_for, mm)
-	return MakeIndirectVseClause(am, &says, c1)
+	return MakeSimpleVseClause(em, &speaks_for, mm)
+}
+
+func VerifyGramineAttestation(serializedEvidence []byte) ([]byte, []byte, error) {
+	// serializedUD, m, err 
+	ga := certprotos.GramineAttestationMessage{}
+	err := proto.Unmarshal(serializedEvidence, &ga)
+	if err != nil {
+		fmt.Printf("VerifyGramineAttestation: Can't unmarshal gramine attestation\n")
+		return nil, nil, errors.New("Can't unmarshal gramine attestation")
+	}
+	// Call the cgo gramine verify function eventually
+	// For now, fake it
+	m := make([]byte, 48)
+	for i := 0; i < 48; i++ {
+		m[i]= byte(i)
+	} 
+	return ga.WhatWasSaid, m, nil
 }
 
 
@@ -2189,10 +2203,8 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
         // At this point, the evidence should be
         //      00: "policyKey is-trusted"
         //      01: "Key[rsa, policyKey, f2663e9ca042fcd261ab051b3a4e3ac83d79afdd] says
-	//		Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] is-trusted-for-attestation"
-        //      02: "policyKey says measurement is-trusted"
-	//	03: "Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] says
-	//		Key[rsa, auth-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]
+	//		Key[rsa, platform, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] is-trusted-for-attestation"
+        //      02: "Key[rsa, enclave-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]
 
 	// Debug
 	fmt.Printf("ConstructProofFromGramineEvidence, %d statements\n", len(alreadyProved.Proved))
@@ -2201,7 +2213,7 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
 		fmt.Printf("\n")
 	}
 
-	if len(alreadyProved.Proved) < 4 {
+	if len(alreadyProved.Proved) < 3 {
 		fmt.Printf("ConstructProofFromGramineEvidence: too few statements\n")
 		return nil, nil
 	}
@@ -2209,16 +2221,11 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
 	policyKeyIsTrusted :=  alreadyProved.Proved[0]
 	policyKeySaysPlatformKeyIsTrustedForAttestation := alreadyProved.Proved[1]
 	policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[2]
-	platformSaysEnclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[3]
+	enclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[3]
 
-	if platformSaysEnclaveKeySpeaksForMeasurement.Clause == nil {
-		fmt.Printf("ConstructProofFromGramineEvidence: can't get enclaveKeySpeaksForMeasurement\n")
-		return nil, nil
-	}
-	enclaveKeySpeaksForMeasurement :=  platformSaysEnclaveKeySpeaksForMeasurement.Clause
 	if policyKeyIsTrusted == nil || enclaveKeySpeaksForMeasurement == nil ||
 			policyKeySaysMeasurementIsTrusted == nil {
-		fmt.Printf("ConstructProofFromGramineEvidence: Error 4\n")
+		fmt.Printf("ConstructProofFromGramineEvidence: evidence missing\n")
 		return nil, nil
 	}
 
@@ -2226,12 +2233,11 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
 		fmt.Printf("ConstructProofFromGramineEvidence: Can't get platformKeyIsTrustedForAttestation\n")
 		return nil, nil
 	}
-	platformKeyIsTrustedForAttestation := policyKeySaysPlatformKeyIsTrustedForAttestation.Clause
+	// platformKeyIsTrustedForAttestation := policyKeySaysPlatformKeyIsTrustedForAttestation.Clause
 
         proof := &certprotos.Proof{}
         r1 := int32(1)
         r3 := int32(3)
-        r6 := int32(6)
         r7 := int32(7)
 
 	enclaveKey := enclaveKeySpeaksForMeasurement.Subject
@@ -2260,22 +2266,6 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
 		RuleApplied: &r3,
 	}
 	proof.Steps = append(proof.Steps, &ps1)
-
-	ps2 := certprotos.ProofStep {
-		S1: policyKeyIsTrusted,
-		S2: policyKeySaysPlatformKeyIsTrustedForAttestation,
-		Conclusion: platformKeyIsTrustedForAttestation,
-		RuleApplied: &r3,
-	}
-	proof.Steps = append(proof.Steps, &ps2)
-
-	ps3 := certprotos.ProofStep {
-		S1: platformKeyIsTrustedForAttestation,
-		S2: platformSaysEnclaveKeySpeaksForMeasurement,
-		Conclusion: enclaveKeySpeaksForMeasurement,
-		RuleApplied: &r6,
-	}
-	proof.Steps = append(proof.Steps, &ps3)
 
 	// measurement is-trusted and enclaveKey speaks-for measurement -->
 	//	enclaveKey is-trusted-for-authentication (r1) or
