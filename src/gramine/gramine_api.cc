@@ -13,10 +13,15 @@
 // limitations under the License.
 
 #include "gramine_api.h"
+#include <string>
+
+using std::string;
 
 #define ATTESTATION_TYPE_SIZE 32
 
 GramineFunctions gramineFuncs;
+bool gramine_platform_cert_initialized = false;
+string gramine_platform_cert;
 
 int gramine_file_size(const char *file_name) {
   struct stat file_info;
@@ -31,6 +36,11 @@ int gramine_file_size(const char *file_name) {
 bool gramine_Init(const int cert_size, byte *cert) {
   char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
   size_t ret = 0;
+
+  if (cert_size > 0) {
+    gramine_platform_cert.assign((char*)cert, cert_size);
+    gramine_platform_cert_initialized = true;
+  }
 
   ret = gramine_rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
                 sizeof(attestation_type_str) - 1, /*do_write=*/false);

@@ -5,7 +5,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -587,9 +586,9 @@ extern bool asylo_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
 #ifdef GRAMINE_CERTIFIER
-extern bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out);
-extern bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
-                  byte *user_data_out, int* size_out, byte* out);
+extern bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* size_out, byte* out);
+extern bool gramine_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size,
+                  byte *attestation, int* size_out, byte* out);
 extern bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
