@@ -53,7 +53,8 @@ func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePa
 
 func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
-	// Todo: Fix
+
+	// Todo: Fix.  Normally Internale is used for tests and need not be filtered.
         filtered :=  &certprotos.ProvedStatements {}
 	for i := 0; i < len(original.Proved); i++ {
 		from := original.Proved[i]
@@ -220,8 +221,8 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 		} else if ev.GetEvidenceType() == "pem-cert-chain" {
 			// nothing to do
 		} else if ev.GetEvidenceType() == "gramine-attestation" {
-			serializedUD, m, err  := VerifyGramineAttestation(ev.SerializedEvidence)
-			if err != nil {
+			succeeded, serializedUD, m, err  := VerifyGramineAttestation(ev.SerializedEvidence)
+			if !succeeded || err != nil {
 				fmt.Printf("InitProvedStatements: Can't verify gramine evidence\n")
 				return false
 			}
@@ -2166,13 +2167,13 @@ func ConstructGramineClaim(enclaveKey *certprotos.KeyMessage,
 	return MakeSimpleVseClause(em, &speaks_for, mm)
 }
 
-func VerifyGramineAttestation(serializedEvidence []byte) ([]byte, []byte, error) {
+func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, error) {
 	// serializedUD, m, err 
 	ga := certprotos.GramineAttestationMessage{}
 	err := proto.Unmarshal(serializedEvidence, &ga)
 	if err != nil {
 		fmt.Printf("VerifyGramineAttestation: Can't unmarshal gramine attestation\n")
-		return nil, nil, errors.New("Can't unmarshal gramine attestation")
+		return false, nil, nil, errors.New("Can't unmarshal gramine attestation")
 	}
 	// Call the cgo gramine verify function eventually
 	// For now, fake it
@@ -2180,12 +2181,13 @@ func VerifyGramineAttestation(serializedEvidence []byte) ([]byte, []byte, error)
 	for i := 0; i < 48; i++ {
 		m[i]= byte(i)
 	} 
-	return ga.WhatWasSaid, m, nil
+	return true, ga.WhatWasSaid, m, nil
 }
 
 
 func FilterGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+
 	// Todo: Fix
         filtered :=  &certprotos.ProvedStatements {}
 	for i := 0; i < len(original.Proved); i++ {
