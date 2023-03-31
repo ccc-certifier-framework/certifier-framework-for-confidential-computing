@@ -628,8 +628,8 @@ bool Seal(const string& enclave_type, const string& enclave_id,
  return false;
 }
 
-// FIXME: Fixed for simulated enclave and application service.  If out is NULL,
-//  Unseal returns true and the buffer size in size_out.  Do for OE, SEV, ASYLO and Gramine.
+// Buffer overflow check: Done for SEV, OE, simulated enclave and application service.
+// If out is NULL, Unseal returns true and the buffer size in size_out.  Check Gramine.
 bool Unseal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
@@ -663,8 +663,7 @@ bool Unseal(const string& enclave_type, const string& enclave_id,
  return false;
 }
 
-// FIXME: Fixed for simulated enclave and application service.  If out is NULL,
-//  Attest returns true and the buffer size in size_out.  Do for OE, SEV, ASYLO and Gramine.
+//  Buffer overflow check: Attest returns true and the buffer size in size_out.  Check on Gramine.
 bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
  int* size_out, byte* out) {
 
@@ -690,7 +689,8 @@ bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
 #endif
 #ifdef GRAMINE_CERTIFIER
   if (enclave_type == "gramine-enclave") {
-    // Gramine attest returns an attestation, not a gramine_attestation message
+    // Gramine attest returns an attestation, not a
+    // serialized gramine_attestation_message.
     int t_size = *size_out;
     if (!gramine_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
       return false;
@@ -706,9 +706,13 @@ bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
     if (!gam.SerializeToString(&serialized_gramine_at)) {
       return false;
     }
+    if (*size_out < serialized_gramine_at.size()) {
+      return false;
+    }
     memset(out, 0, *size_out);
     memcpy(out, (byte*)serialized_gramine_at.data(), serialized_gramine_at.size());
     *size_out = serialized_gramine_at.size();
+    return true;
   }
 #endif
   if (enclave_type == "application-enclave") {
