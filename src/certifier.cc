@@ -593,8 +593,8 @@ extern bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
-// FIXME: Fixed for simulated enclave and application service.  If out is NULL,
-//  Seal returns true and the buffer size in size_out.  Do for OE, SEV, ASYLO and Gramine.
+// Buffer overflow check: Seal returns true and the buffer size in size_out.
+// Check on Gramine.
 bool Seal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
