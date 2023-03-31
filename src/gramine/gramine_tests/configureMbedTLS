@@ -1,0 +1,26 @@
+# Script 1 to configure MBedTLS
+
+export MBEDTLS_VERSION=3.2.1
+export MBEDTLS_SRC=mbedtls-$MBEDTLS_VERSION.tar.gz
+export MBEDTLS_URI=https://github.com/ARMmbed/mbedtls/archive
+export GRAMINE_DISTFILES=https://packages.gramineproject.io/distfiles
+export MBEDTLS_HASH=5850089672560eeaca03dc36678ee8573bb48ef6e38c94f5ce349af60c16da33
+export GRAMINE_SRC_PATH=../../../../gramine/gramine
+
+if [ -d "mbedtls" ]
+then
+    echo "Done configuring MbedTLS"
+    exit
+fi
+
+$GRAMINE_SRC_PATH/CI-Examples/common_tools/download --output $MBEDTLS_SRC --url $MBEDTLS_URI/$MBEDTLS_SRC --url $GRAMINE_DISTFILES/$MBEDTLS_SRC --sha256 $MBEDTLS_HASH
+
+tar --touch -xzf $MBEDTLS_SRC
+mv mbedtls-mbedtls-$MBEDTLS_VERSION mbedtls
+touch mbedtls/.mbedtls_downloaded
+
+cd mbedtls && ./scripts/config.pl set MBEDTLS_CMAC_C MBEDTLS_ERROR_C
+cd ..
+touch mbedtls/.mbedtls_configured
+
+echo "Done configuring MbedTLS"

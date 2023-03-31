@@ -1,7 +1,7 @@
 # Attestation manifest file example
 
 loader.entrypoint = "file:{{ gramine.libos }}"
-libos.entrypoint = "/attest_seal_app"
+libos.entrypoint = "/gramine_tests"
 
 loader.log_level = "{{ log_level }}"
 
@@ -17,7 +17,7 @@ fs.mounts = [
   { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
   { path = "/usr{{ arch_libdir }}", uri = "file:/usr{{ arch_libdir }}" },
   { path = "/etc", uri = "file:/etc" },
-  { path = "/attest_seal_app", uri = "file:attest_seal_app" },
+  { path = "/gramine_tests", uri = "file:gramine_tests" },
 ]
 
 sgx.debug = true
@@ -28,25 +28,23 @@ sgx.ra_client_linkable = {{ 'true' if ra_client_linkable == '1' else 'false' }}
 
 sgx.trusted_files = [
   "file:{{ gramine.libos }}",
-  "file:attest_seal_app",
+  "file:gramine_tests",
   "file:libcertifier.so",
   "file:{{ gramine.runtimedir() }}/",
   "file:/usr/local/lib/",
   "file:{{ arch_libdir }}/",
   "file:/usr{{ arch_libdir }}/",
-  "file:ssl/ca.crt",
-  "file:ssl/attest_seal_app.crt",
-  "file:ssl/attest_seal_app.key",
+  "file:gramine_tests.crt",
 ]
 
 sgx.allowed_files = [
   "file:/etc/nsswitch.conf",
   "file:/etc/ethers",
+  "file:/etc/host.conf",
   "file:/etc/hosts",
   "file:/etc/group",
   "file:/etc/passwd",
   "file:/etc/gai.conf",
   "file:/etc/ssl/certs/ca-certificates.crt",
   "file:/etc/sgx_default_qcnl.conf",
-  "file:binary_trusted_measurements_file.bin",
 ]

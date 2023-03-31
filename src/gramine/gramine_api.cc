@@ -12,132 +12,102 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <iostream>
-#include <stdlib.h>
-
-#include "support.h"
-#include "certifier.h"
-#include "simulated_enclave.h"
-#include "application_enclave.h"
-#include "cc_helpers.h"
 #include "gramine_api.h"
 
-#define MAX_ASSERTION_SIZE 5000
+#define ATTESTATION_TYPE_SIZE 32
 
-GramineCertifierFunctions gramineFuncs;
+GramineFunctions gramineFuncs;
 
-void setFuncs(GramineCertifierFunctions funcs) {
-  gramineFuncs.Attest = funcs.Attest;
-  gramineFuncs.Verify = funcs.Verify;
-  gramineFuncs.Seal = funcs.Seal;
-  gramineFuncs.Unseal = funcs.Unseal;
+int gramine_file_size(const char *file_name) {
+  struct stat file_info;
+
+  if (stat(file_name, &file_info) != 0)
+    return false;
+  if (!S_ISREG(file_info.st_mode))
+    return false;
+  return (int)file_info.st_size;
 }
 
-bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
-  byte assertion[MAX_ASSERTION_SIZE];
-  memset(assertion, 0, MAX_ASSERTION_SIZE);
-  int assertion_size = 0;
-  bool result = false;
+bool gramine_Init(const int cert_size, byte *cert) {
+  char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
+  size_t ret = 0;
 
-  printf("Invoking Gramine Attest %d\n", claims_size);
+  ret = gramine_rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
+                sizeof(attestation_type_str) - 1, /*do_write=*/false);
+  if (ret < 0 && ret != -ENOENT) {
+    printf("User requested SGX attestation but cannot read SGX-specific file "
+           "/dev/attestation/attestation_type\n");
+    return false;
+  }
 
 #ifdef DEBUG
-  print_bytes(claims_size, claims);
+  printf("Attestation type: %s\n", attestation_type_str);
+#endif
+
+  if (strcmp(attestation_type_str, "dcap")) {
+    printf("Unsupported remote attestation type: %s\n", attestation_type_str);
+    return false;
+  }
+
+  /* Setup Gramine specific API calls */
+  gramine_setup_functions(&gramineFuncs);
+
+  return true;
+}
+
+bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
+  bool result = false;
+
+#ifdef DEBUG
+  printf("Invoking Gramine Attest %d\n", what_to_say_size);
+  gramine_print_bytes(what_to_say_size, what_to_say);
   printf("\n");
 #endif
 
-  result = (*gramineFuncs.Attest)
-           (claims_size, claims, &assertion_size, assertion);
+  result = (*gramineFuncs.Attest) (what_to_say_size, what_to_say, attestation_size_out, attestation_out);
   if (!result) {
     printf("Gramine attest failed\n");
     return false;
   }
 
-  int total_size = assertion_size + claims_size + (sizeof(int) * 2);
-
-  int i, j = 0;
-  for (i = 0; i < sizeof(int); i++, j++) {
-    out[j] = ((byte*)&assertion_size)[i];
-  }
-
-  for (i = 0; i < assertion_size; i++, j++) {
-    out[j] = assertion[i];
-  }
-
-  for (i = 0; i < sizeof(int); i++, j++) {
-    out[j] = ((byte*)&claims_size)[i];
-  }
-
-  for (i = 0; i < claims_size; i++, j++) {
-    out[j] = claims[i];
-  }
-
-  *size_out = j;
-
-  printf("Done Gramine Attest assertion size %d:\n", *size_out);
 #ifdef DEBUG
-  print_bytes(*size_out, out);
+  printf("Done Gramine Attest attestation size %d:\n", *attestation_size_out);
+  gramine_print_bytes(*attestation_size_out, attestation_out);
 #endif
 
   return true;
 }
 
-bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
-                  byte *user_data_out, int* size_out, byte* out) {
-  byte assertion[MAX_ASSERTION_SIZE];
-  memset(assertion, 0, MAX_ASSERTION_SIZE);
-  int assertion_size = 0;
+bool gramine_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out) {
   bool result = false;
 
-  printf("\nInput claims sent to gramine_Verify claims_size %d\n", claims_size);
 #ifdef DEBUG
-  print_bytes(claims_size, claims);
+  printf("\nInput data sent to gramine_Verify size: %d\n", what_to_say_size);
+  gramine_print_bytes(what_to_say_size, what_to_say);
+  printf("\nAttestation size: %d\n", attestation_size);
+  gramine_print_bytes(attestation_size, attestation);
 #endif
 
-  int i, j = 0;
-  for (i = 0; i < sizeof(int); i++, j++) {
-    ((byte*)&assertion_size)[i] = claims[j];
-  }
-
-  for (i = 0; i < assertion_size; i++, j++) {
-    assertion[i] = claims[j];
-  }
-
-#ifdef DEBUG
-  printf("\nAssertion:\n");
-  print_bytes(assertion_size, assertion);
-#endif
-
-  for (i = 0; i < sizeof(int); i++, j++) {
-    ((byte*)user_data_out_size)[i] = claims[j];
-  }
-
-  for (i = 0; i < *user_data_out_size; i++, j++) {
-    user_data_out[i] = claims[j];
-  }
-
-#ifdef DEBUG
-  printf("\nuser_data_out:\n");
-  print_bytes(*user_data_out_size, user_data_out);
-#endif
-
-  printf("Invoking Gramine Verify %d\n", claims_size);
   result = (*gramineFuncs.Verify)
-           (*user_data_out_size, user_data_out, assertion_size,
-             assertion, size_out, out);
+           (what_to_say_size, what_to_say, attestation_size,
+            attestation, measurement_out_size, measurement_out);
   if (!result) {
     printf("Gramine verify failed\n");
     return false;
   }
 
+#ifdef DEBUG
   printf("Done Gramine Verification via API\n");
-
+#endif
   return true;
 }
 
 bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
   bool result = false;
-  printf("Invoking Gramine Seal %d\n", in_size);
+
+#ifdef DEBUG
+  printf("Invoking Gramine Seal size: %d\n", in_size);
+#endif
 
   result = (*gramineFuncs.Seal)(in_size, in, size_out, out);
   if (!result) {
@@ -145,13 +115,18 @@ bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
     return false;
   }
 
-  printf("Done Gramine Seal %d\n", *size_out);
+#ifdef DEBUG
+  printf("Done Gramine Seal size: %d\n", *size_out);
+#endif
   return true;
 }
 
 bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   bool result = false;
-  printf("Invoking Gramine Unseal %d\n", in_size);
+
+#ifdef DEBUG
+  printf("Invoking Gramine Unseal size: %d\n", in_size);
+#endif
 
   result = (*gramineFuncs.Unseal)(in_size, in, size_out, out);
   if (!result) {
@@ -159,6 +134,13 @@ bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
     return false;
   }
 
-  printf("Done Gramine Unseal %d\n", *size_out);
+#ifdef DEBUG
+  printf("Done Gramine Unseal size: %d\n", *size_out);
+#endif
+
   return true;
+}
+
+int gramine_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
+  return gramine_Sgx_Getkey(user_report_data, key);
 }
