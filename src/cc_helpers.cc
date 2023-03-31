@@ -1098,7 +1098,7 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
     string et2("asylo-attestation-report");
     ev2->set_evidence_type(et2);
   } else if ("gramine-enclave" == attesting_enclave_type) {
-    string et2("gramine-attestation-report");
+    string et2("gramine-attestation");
     ev2->set_evidence_type(et2);
   } else if ("sev-enclave" ==  attesting_enclave_type) {
     string et2("sev-attestation");
