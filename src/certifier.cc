@@ -690,7 +690,25 @@ bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
 #endif
 #ifdef GRAMINE_CERTIFIER
   if (enclave_type == "gramine-enclave") {
-    return gramine_Attest(what_to_say_size, what_to_say, size_out, out);
+    // Gramine attest returns an attestation, not a gramine_attestation message
+    int t_size = *size_out;
+    if (!gramine_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
+      return false;
+    }
+    string ra;
+    string wws;
+    ra.assign((char*)out, t_size_out);
+    wws.assign((char*)what_to_say, what_to_say_size);
+    gramine_attestation_message gam;
+    gam.set_what_was_said(wws);
+    gam.set_reported_attestation(ra);
+    string serialized_gramine_at;
+    if (!gam.SerializeToString(&serialized_gramine_at)) {
+      return false;
+    }
+    memset(out, 0, *size_out);
+    memcpy(out, (byte*)serialized_gramine_at.data(), serialized_gramine_at.size());
+    *size_out = serialized_gramine_at.size();
   }
 #endif
   if (enclave_type == "application-enclave") {
