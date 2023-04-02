@@ -1398,6 +1398,7 @@ func TestSevSignatures(t *testing.T) {
 func TestGramineVerify(t *testing.T) {
 
         policyKeyFile := "test_data/policy_key_file.bin"
+        enclaveKeyFile := "test_data/attest_key_file.bin"
         intelCertFile := "test_data/intel_cert.der"
         attestFile := "test_data/attest_file.bin"
         fmt.Printf("\nTestGramineVerify %s %s %s\n", policyKeyFile, intelCertFile, attestFile)
@@ -1411,30 +1412,75 @@ func TestGramineVerify(t *testing.T) {
                 t.Errorf("Can't read policy key file")
 		return
         }
-
-        policyKey := certprotos.GramineAttestationMessage{}
+        policyKey := certprotos.KeyMessage {}
         err = proto.Unmarshal(serializedPolicyKey, &policyKey)
         if err != nil {
                 t.Errorf("Can't unmarshal policy key\n")
 		return
         }
 
-        // Read attestation and certs
+	// Read enclave key and unmarshal
+        serializedEnclaveKey, err := os.ReadFile(enclaveKeyFile)
+        if err != nil {
+                t.Errorf("Can't read enclave key file")
+		return
+        }
+        enclaveKey := certprotos.KeyMessage {}
+        err = proto.Unmarshal(serializedEnclaveKey, &enclaveKey)
+        if err != nil {
+                t.Errorf("Can't unmarshal enclave key\n")
+		return
+        }
+
+        // Read cert and binary attestation
         intelCertDer, err := os.ReadFile(intelCertFile)
         if err != nil {
                 t.Errorf("Can't read intel file")
 		return
         }
-        attestBin, err := os.ReadFile(attestFile)
+        gramineAttestBin, err := os.ReadFile(attestFile)
         if err != nil {
-                t.Errorf("Can't read gramine_attestation file")
+                t.Errorf("Can't read gramine attestation file")
 		return
         }
+
+	// User data
+	ud := &certprotos.AttestationUserData {}
+
+	enclaveType := "gramine-enclave"
+	ud.EnclaveType = &enclaveType
+	tn := TimePointNow()
+	strTn := TimePointToString(tn)
+	ud.Time := &strTn
+	ud.EnclaveKey = &enclaveKey
+	ud.PolicyKey = &policyKey
+
+	fmt.Printf("\nUser data\n")
+	PrintAttestationUserData(ud)
+
+	// Serialize User Data
+	serializedUD, err := proto.Marshal(ud)
+	if err != nil {
+                t.Errorf("Can't serialize user data")
+		return
+	}
+
+	// GramineAttestationMessage
+        gramineAttMsg := &certprotos.GramineAttestationMessage{}
+	gramineAttMsg.WhatWasSaid = serializedUD
+	gramineAttMsg.ReportedAttestation = gramineAttestBin
+
+	serializedGramineAttestMsg, err := proto.Marshal(gramineAttMsg)
+	if err != nil {
+                t.Errorf("Can't serialized gramine attest message")
+		return
+	}
+
         fmt.Printf("\nintelCert:\n")
         PrintBytes(intelCertDer)
         fmt.Printf("\n")
-        fmt.Printf("\nAttest:\n")
-        PrintBytes(attestBin)
+        fmt.Printf("\nGramine Attest:\n")
+        PrintBytes(gramineAttestBin)
         fmt.Printf("\n")
 
 	// Write policy
@@ -1458,7 +1504,7 @@ func TestGramineVerify(t *testing.T) {
         aet := "gramine-attestation"
         ev2 := &certprotos.Evidence {
                 EvidenceType: &aet,
-                SerializedEvidence: attestBin,
+                SerializedEvidence: serializedGramineAttestsMsg,
         }
 
         evp := &certprotos.EvidencePackage {
@@ -1482,24 +1528,6 @@ func TestGramineVerify(t *testing.T) {
 	fmt.Printf("\nRequest:\n")
         PrintTrustRequest(req)
 	fmt.Printf("\n\n")
-
-        gramineAtt := &certprotos.GramineAttestationMessage{}
-        err = proto.Unmarshal(attestBin, gramineAtt)
-        if err != nil {
-                t.Errorf("Can't unmarshal gramine attestation\n")
-		return
-        }
-
-	// Get policy Key from ud
-	ud := &certprotos.AttestationUserData {}
-        err = proto.Unmarshal(sevAtt.WhatWasSaid, ud)
-        if err != nil {
-                t.Errorf("Can't unmarshal what was said \n")
-		return
-        }
-
-	fmt.Printf("\nUser data\n")
-	PrintAttestationUserData(ud)
 
 	// Deserialize policy
 	signedPolicy := &certprotos.SignedClaimSequence{}
