@@ -770,7 +770,7 @@ bool cc_trust_data::certify_me(const string& host_name, int port) {
     }
     evidence* ev = platform_evidence.add_assertion();
     if (ev ==nullptr) {
-      printf("cc_trust_data::certify_me: Can't add to platform evidence\n");
+      printf("cc_trust_data::certify_me: Can't add to gramine platform evidence\n");
       return false;
     }
     ev->set_evidence_type("cert");
