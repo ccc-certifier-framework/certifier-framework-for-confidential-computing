@@ -1394,3 +1394,145 @@ func TestSevSignatures(t *testing.T) {
         return
 }
 */
+
+func TestGramineVerify(t *testing.T) {
+
+        policyKeyFile := "test_data/policy_key_file.bin"
+        intelCertFile := "test_data/intel_cert.der"
+        attestFile := "test_data/attest_file.bin"
+        fmt.Printf("\nTestGramineVerify %s %s %s\n", policyKeyFile, intelCertFile, attestFile)
+
+/*
+	Uncomment when ready
+
+	// Read policy key and unmarshal
+        serializedPolicyKey, err := os.ReadFile(policyKeyFile)
+        if err != nil {
+                t.Errorf("Can't read policy key file")
+		return
+        }
+
+        policyKey := certprotos.GramineAttestationMessage{}
+        err = proto.Unmarshal(serializedPolicyKey, &policyKey)
+        if err != nil {
+                t.Errorf("Can't unmarshal policy key\n")
+		return
+        }
+
+        // Read attestation and certs
+        intelCertDer, err := os.ReadFile(intelCertFile)
+        if err != nil {
+                t.Errorf("Can't read intel file")
+		return
+        }
+        attestBin, err := os.ReadFile(attestFile)
+        if err != nil {
+                t.Errorf("Can't read gramine_attestation file")
+		return
+        }
+        fmt.Printf("\nintelCert:\n")
+        PrintBytes(intelCertDer)
+        fmt.Printf("\n")
+        fmt.Printf("\nAttest:\n")
+        PrintBytes(attestBin)
+        fmt.Printf("\n")
+
+	// Write policy
+	// 	1. policyKey says intelKey is-trusted-for-attestation
+	// 	2. policyKey says measurement is-trusted
+
+	// fake measurement for now
+	m := make([]byte, 48)
+	for i := 0; i < 48, i++) {
+		m[i] = byte(i)
+	}
+
+	// Put serialized policy in serializedPolicy
+
+        vseVe := "vse-verifier"
+        et := "cert"
+        ev1 := &certprotos.Evidence {
+                EvidenceType: &et,
+                SerializedEvidence: intelCertDer,
+        }
+        aet := "gramine-attestation"
+        ev2 := &certprotos.Evidence {
+                EvidenceType: &aet,
+                SerializedEvidence: attestBin,
+        }
+
+        evp := &certprotos.EvidencePackage {
+                ProverType: &vseVe,
+        }
+        evp.FactAssertion = append(evp.FactAssertion, ev1)
+        evp.FactAssertion = append(evp.FactAssertion, ev2)
+
+        // Construct request
+        reqTag := "requestor"
+        provTag := "provider"
+        evType := "gramine-evidence"
+        pur := "authentication"
+        req := &certprotos.TrustRequestMessage {
+                RequestingEnclaveTag: &reqTag,
+                ProvidingEnclaveTag: &provTag,
+                SubmittedEvidenceType: &evType,
+                Purpose: &pur,
+                Support: evp,
+        }
+	fmt.Printf("\nRequest:\n")
+        PrintTrustRequest(req)
+	fmt.Printf("\n\n")
+
+        gramineAtt := &certprotos.GramineAttestationMessage{}
+        err = proto.Unmarshal(attestBin, gramineAtt)
+        if err != nil {
+                t.Errorf("Can't unmarshal gramine attestation\n")
+		return
+        }
+
+	// Get policy Key from ud
+	ud := &certprotos.AttestationUserData {}
+        err = proto.Unmarshal(sevAtt.WhatWasSaid, ud)
+        if err != nil {
+                t.Errorf("Can't unmarshal what was said \n")
+		return
+        }
+
+	fmt.Printf("\nUser data\n")
+	PrintAttestationUserData(ud)
+
+	// Deserialize policy
+	signedPolicy := &certprotos.SignedClaimSequence{}
+	err = proto.Unmarshal(serializedPolicy, signedPolicy)
+	if err != nil {
+                t.Errorf("Can't unmarshal signed policy\n")
+		return
+	}
+
+	// initPolicy
+	originalPolicy := &certprotos.ProvedStatements{}
+	if !InitAxiom(*ud.PolicyKey, originalPolicy) {
+		fmt.Printf("ValidateGramineEvidence: Can't InitAxiom\n")
+		return
+	}
+
+	if !InitPolicy(ud.PolicyKey, signedPolicy, originalPolicy) {
+		fmt.Printf("ValidateGramineEvidence: Can't init policy\n")
+		return
+	}
+
+	// Validate
+	success, toProve, measurement := ValidateGramineEvidence(ud.PolicyKey, evp, originalPolicy, pur)
+	if !success {
+                fmt.Printf("ValidateGramineEvidence fails\n")
+		return
+	}
+	fmt.Printf("ValidateGramineEvidence succeeds\n")
+	fmt.Printf("Proved: ");
+	PrintVseClause(toProve)
+	fmt.Printf("\n")
+	fmt.Printf("Measurement: ");
+	PrintBytes(measurement)
+	fmt.Printf("\n")
+ */
+}
