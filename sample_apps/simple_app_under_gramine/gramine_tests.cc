@@ -16,6 +16,9 @@
  * Attest/Verify/Seal/Unseal tests
  */
 
+#include <gtest/gtest.h>
+#include <gflags/gflags.h>
+
 #include "gramine_api.h"
 
 #define cert_file "gramine_tests.crt"
@@ -25,6 +28,26 @@
 #define MAX_TAG_SIZE (BUF_STORAGE_SIZE + TAG_SIZE)
 #define USER_DATA_SIZE 256
 #define MAX_CERT_SIZE 2048
+
+// operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server
+DEFINE_bool(print_all, false,  "verbose");
+DEFINE_string(operation, "", "operation");
+
+DEFINE_string(policy_host, "localhost", "address for policy server");
+DEFINE_int32(policy_port, 8123, "port for policy server");
+DEFINE_string(data_dir, "./app1_data/", "directory for application data");
+
+DEFINE_string(server_app_host, "localhost", "address for app server");
+DEFINE_int32(server_app_port, 8124, "port for server app server");
+
+DEFINE_string(policy_store_file, "store.bin", "policy store file name");
+
+// The test app performs five possible roles
+//    cold-init: This creates application keys and initializes the policy store.
+//    warm-restart:  This retrieves the policy store data.
+//    get-certifier: This obtains the app admission cert naming the public app key from the service.
+//    run-app-as-client: This runs the app as a server.
+//    run-app-as-server: This runs the app as a client
 
 byte cert[MAX_CERT_SIZE];
 
