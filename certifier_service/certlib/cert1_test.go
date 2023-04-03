@@ -1403,9 +1403,6 @@ func TestGramineVerify(t *testing.T) {
         attestFile := "test_data/attest_file.bin"
         fmt.Printf("\nTestGramineVerify %s %s %s\n", policyKeyFile, intelCertFile, attestFile)
 
-/*
-	Uncomment when ready
-
 	// Read policy key and unmarshal
         serializedPolicyKey, err := os.ReadFile(policyKeyFile)
         if err != nil {
@@ -1451,7 +1448,7 @@ func TestGramineVerify(t *testing.T) {
 	ud.EnclaveType = &enclaveType
 	tn := TimePointNow()
 	strTn := TimePointToString(tn)
-	ud.Time := &strTn
+	ud.Time = &strTn
 	ud.EnclaveKey = &enclaveKey
 	ud.PolicyKey = &policyKey
 
@@ -1482,18 +1479,15 @@ func TestGramineVerify(t *testing.T) {
         fmt.Printf("\nGramine Attest:\n")
         PrintBytes(gramineAttestBin)
         fmt.Printf("\n")
-
-	// Write policy
-	// 	1. policyKey says intelKey is-trusted-for-attestation
-	// 	2. policyKey says measurement is-trusted
+        fmt.Printf("\nSerialized Gramine attest:\n")
+        PrintBytes(serializedGramineAttestMsg)
+        fmt.Printf("\n")
 
 	// fake measurement for now
 	m := make([]byte, 48)
-	for i := 0; i < 48, i++) {
+	for i := 0; i < 48; i++ {
 		m[i] = byte(i)
 	}
-
-	// Put serialized policy in serializedPolicy
 
         vseVe := "vse-verifier"
         et := "cert"
@@ -1504,7 +1498,7 @@ func TestGramineVerify(t *testing.T) {
         aet := "gramine-attestation"
         ev2 := &certprotos.Evidence {
                 EvidenceType: &aet,
-                SerializedEvidence: serializedGramineAttestsMsg,
+                SerializedEvidence: serializedGramineAttestMsg,
         }
 
         evp := &certprotos.EvidencePackage {
@@ -1529,28 +1523,147 @@ func TestGramineVerify(t *testing.T) {
         PrintTrustRequest(req)
 	fmt.Printf("\n\n")
 
-	// Deserialize policy
-	signedPolicy := &certprotos.SignedClaimSequence{}
-	err = proto.Unmarshal(serializedPolicy, signedPolicy)
-	if err != nil {
-                t.Errorf("Can't unmarshal signed policy\n")
+
+	// Write policy
+	// 	1. policyKey says intelKey is-trusted-for-attestation
+	// 	2. policyKey says measurement is-trusted
+	publicPolicyKey := InternalPublicFromPrivateKey(&policyKey)
+        if publicPolicyKey == nil {
+                t.Errorf("Can't make public policy key\n")
+		return
+        }
+        e1 := MakeKeyEntity(publicPolicyKey)
+        if e1 == nil {
+                t.Errorf("Can't make public policy entity\n")
+		return
+        }
+	intelCert := Asn1ToX509(intelCertDer)
+        if intelCert == nil {
+                t.Errorf("Can't make oublic policy key\n")
+		return
+        }
+	intelKey := GetSubjectKey(intelCert)
+        if intelKey == nil {
+                t.Errorf("Can't make intel key\n")
+		return
+        }
+        e2 := MakeKeyEntity(intelKey)
+        if e2 == nil {
+                t.Errorf("Can't make intel key entity\n")
+		return
+        }
+	t_verb := "is-trusted-for-attestation"
+        c1 := MakeUnaryVseClause(e2, &t_verb)
+        if c1 == nil {
+                t.Errorf("Can't make unary clause 1\n")
+		return
+        }
+
+        saysVerb := "says"
+        c2 := MakeIndirectVseClause(e1, &saysVerb, c1)
+        if c2 == nil {
+                t.Errorf("Can't make indirect clause 1\n")
+		return
+        }
+
+        tf := TimePointPlus(tn, 365 * 86400)
+        nb := TimePointToString(tn)
+        na := TimePointToString(tf)
+        rule1, err := proto.Marshal(c2)
+        if err != nil {
+                t.Errorf("Can't serialize first rule\n")
+		return
+        }
+        cl1 := MakeClaim(rule1, "vse-clause", "platform-rule", nb, na)
+        if cl1 == nil {
+                t.Errorf("Can't serialize first claim\n")
+		return
+        }
+	sc1 := MakeSignedClaim(cl1, &policyKey)
+        if sc1 == nil {
+                t.Errorf("Can't sign first rule\n")
+		return
+        }
+
+        e3 := MakeMeasurementEntity(m)
+        if e3 == nil {
+                t.Errorf("Can't make measurement entity\n")
+		return
+        }
+	t2_verb := "is-trusted"
+        c3 := MakeUnaryVseClause(e3, &t2_verb)
+        if c1 == nil {
+                t.Errorf("Can't make unary clause 2\n")
+		return
+        }
+
+        c4 := MakeIndirectVseClause(e1, &saysVerb, c3)
+        if c4 == nil {
+                t.Errorf("Can't make indirect clause 2\n")
+		return
+        }
+
+        rule2, err := proto.Marshal(c4)
+        if err != nil {
+                t.Errorf("Can't serialize second rule\n")
+		return
+        }
+        cl2 := MakeClaim(rule2, "vse-clause", "measurement-rule", nb, na)
+        if cl2 == nil {
+                t.Errorf("Can't serialize second claim\n")
+		return
+        }
+	sc2 := MakeSignedClaim(cl2, &policyKey)
+        if sc2 == nil {
+                t.Errorf("Can't sign second rule\n")
+		return
+        }
+
+	fmt.Printf("Policy 1:\n")
+	PrintSignedClaim(sc1)
+	fmt.Printf("\nPolicy 2:\n")
+	PrintSignedClaim(sc2)
+	fmt.Printf("\n")
+
+	fmt.Printf("Vse policy 1:\n")
+	PrintVseClause(c2)
+	fmt.Printf("\nVse policy 2:\n")
+	PrintVseClause(c4)
+	fmt.Printf("\n")
+
+	alreadyProved := &certprotos.ProvedStatements{}
+	if !InitAxiom(*publicPolicyKey, alreadyProved) {
+                t.Errorf("Can't InitAxiom\n")
 		return
 	}
 
-	// initPolicy
-	originalPolicy := &certprotos.ProvedStatements{}
-	if !InitAxiom(*ud.PolicyKey, originalPolicy) {
-		fmt.Printf("ValidateGramineEvidence: Can't InitAxiom\n")
-		return
-	}
+	alreadyProved.Proved = append(alreadyProved.Proved, c2)
+	alreadyProved.Proved = append(alreadyProved.Proved, c4)
 
-	if !InitPolicy(ud.PolicyKey, signedPolicy, originalPolicy) {
-		fmt.Printf("ValidateGramineEvidence: Can't init policy\n")
+	publicEnclaveKey := InternalPublicFromPrivateKey(&enclaveKey)
+        if publicPolicyKey == nil {
+                t.Errorf("Can't make public policy key\n")
 		return
+        }
+	c5:= ConstructGramineClaim(publicEnclaveKey, m)
+        if c5 == nil {
+                t.Errorf("Can't construct gramine claim\n")
+		return
+        }
+
+/*
+	alreadyProved.Proved = append(alreadyProved.Proved, c5)
+	fmt.Printf("\nProved on entry\n")
+	for i := 0; i < len(alreadyProved.Proved);  i++ {
+		fmt.Printf("%02d: ", i)
+		PrintVseClause(alreadyProved.Proved[i])
+		fmt.Printf("\n")
 	}
+ */
+
 
 	// Validate
-	success, toProve, measurement := ValidateGramineEvidence(ud.PolicyKey, evp, originalPolicy, pur)
+	success, toProve, measurement := ValidateGramineEvidence(&policyKey, evp, alreadyProved, pur)
 	if !success {
                 fmt.Printf("ValidateGramineEvidence fails\n")
 		return
@@ -1562,5 +1675,4 @@ func TestGramineVerify(t *testing.T) {
 	fmt.Printf("Measurement: ");
 	PrintBytes(measurement)
 	fmt.Printf("\n")
- */
 }
