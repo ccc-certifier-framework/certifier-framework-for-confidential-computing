@@ -2203,10 +2203,14 @@ func FilterGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.Evide
 func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string,
 		alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
         // At this point, the evidence should be
-        //      00: "policyKey is-trusted"
-        //      01: "Key[rsa, policyKey, f2663e9ca042fcd261ab051b3a4e3ac83d79afdd] says
-	//		Key[rsa, platform, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] is-trusted-for-attestation"
-        //      02: "Key[rsa, enclave-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]
+	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
+	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+	//		Key[rsa, ARKKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+	//		Measurement[0001020304050607...] is-trusted
+	//	Key[rsa, ARKKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] says
+	//		Key[rsa, ARKKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+	//	Key[rsa, attestKey, b223d5da6674c6bde7feac29801e3b69bb286320] speaks-for Measurement[00010203...]
 
 	// Debug
 	fmt.Printf("ConstructProofFromGramineEvidence, %d statements\n", len(alreadyProved.Proved))
@@ -2215,7 +2219,7 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
 		fmt.Printf("\n")
 	}
 
-	if len(alreadyProved.Proved) < 3 {
+	if len(alreadyProved.Proved) < 5 {
 		fmt.Printf("ConstructProofFromGramineEvidence: too few statements\n")
 		return nil, nil
 	}
@@ -2223,7 +2227,7 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
 	policyKeyIsTrusted :=  alreadyProved.Proved[0]
 	policyKeySaysPlatformKeyIsTrustedForAttestation := alreadyProved.Proved[1]
 	policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[2]
-	enclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[3]
+	enclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[4]
 
 	if policyKeyIsTrusted == nil || enclaveKeySpeaksForMeasurement == nil ||
 			policyKeySaysMeasurementIsTrusted == nil {
