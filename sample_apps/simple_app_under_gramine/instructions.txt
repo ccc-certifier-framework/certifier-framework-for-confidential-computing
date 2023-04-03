@@ -1,26 +1,23 @@
-# Gramine tests for Attest/Verify, Seal/Unseal core APIs on SGX platform
+Instructions for building and running the sample application and generating policy for
+                 the Certifier Service using the policy utilities under Gramine. 
+======================================================================================
 
 # Overview:
 -----------
-The gramine_tests are tests of the core APIs/primitives implemented in src/gramine. 
-These APIs are used by the certifier to access Gramine trust primitives.
-These tests do not depend on the Certifier and run as stand-alone tests.
-The tests demonstrate how to Attest/Verify an enclave and provide Seal/Unseal
-functionality for secrets management.
+This uses the same application as in .../sample_app but under Gramine.
+This example embeds the policy key in the application using embed_policy_key.exe.
 
-The tests run in a Gramine enclave. First, the API is initialized.  gramine_Attest
-returns the SGX quote for this enclave. The SGX quote contains the enclave measurement.
-Next, the gramine_Verify is invoked to validate this SGX quote in one of two ways -
-first a local verify that can be invoked within the enclave and validate the
-quote is shown when GRAMINE_LOCAL_VERIFY is defined. Secondly, the remote verification
-invokes the SGX quote verification library to validate the SGX quote. This remote
-verification functionality can be integrated with an external service.
+$CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.  On my
+computer, it is in ~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing.
+It is helpful to have a shell variable for it:
 
-The gramine_Seal demonstrates how to seal secrets with an SGX sealing key
-obtained from the platform using GCM encryption with a sealing tag added to the
-header of the encrypted buffer. The gramine_Unseal when provided with the correct sealing
-key, will be able to decrypt the encrypted buffer and verify the original contents.
-MbedTLS library is used to provide seal/unseal/hashing functions.
+export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
+
+$GRAMINE_EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable is useful.
+
+export GRAMINE_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_gramine
+
+-----------------------------------------------------------------------------
 
 A Gramine enclave uses SGX instructions to generate SGX quotes and reports. On initial
 deployment, Gramine communicates with the Quoting Enclave(QE) to get the SGX quote.
@@ -29,8 +26,8 @@ Provisioning Certification Service(PCS). The certificates are cached locally. Wh
 quote is received, users can compare the certificates embedded in the quote against these
 cached certificates.
 
-This test uses two scripts, a Makefile and the SGX manifest to setup.
-The steps below describe building and running the Gramine tests.
+This app uses two scripts, a Makefile and the SGX manifest to setup.
+The steps below describe building and running the Gramine example app.
 
 
 # System Requirements:
@@ -107,10 +104,14 @@ ninja -C build/
 sudo ninja -C build/ install
 ```
 
-# Steps to run Gramine tests:
------------------------------
-Tests use the installed Gramine SDK, Intel SGX/DCAP drivers and MbedTLS libraries for
-core API tests.
+# Obtain Intel Certificates:
+----------------------------
+TBD
+
+# Steps to run Gramine app:
+---------------------------
+App uses the installed Gramine SDK, Intel SGX/DCAP drivers and MbedTLS libraries for
+basic functionality.
  
 4. Setup MbedTLS
 This script obtains the MbedTLS library and configures it to be used by an application.
@@ -120,9 +121,9 @@ cd certifier/src/gramine/gramine_tests
 ./configureMbedTLS
 ```
 
-5. Build Gramine-Certifier tests
-This command builds the tests as an application that is run within a Gramine enclave.
-First, the make builds a binary with the Gramine library and Gramine tests. This binary
+5. Build Gramine-Certifier app 
+This command builds the application that is run within a Gramine enclave.
+First, the make builds a binary with the Gramine library and the Gramine app. This binary
 in conjunction with the files listed in the Gramine manifest are packaged together. They
 are input to the gramine-sgx-sign to obtain an SGX specific manifest file which
 controls the trusted enclave's TCB. The gramine-sgx-token is run to obtain security
@@ -137,14 +138,14 @@ To clean up built files:
 make -f gramine_tests.mak clean
 ```
 
-6. Run tests
-Tests will run the Attest/Verify and Seal/Unseal tests and return a success/failure
+6. Run app
+App will run the simple server and client app and return a success/failure
 result. Gramine automatically talks to the configured DCAP libraries and SGX QV libraries
 which in turn communicate with the remote Intel PCS to verify the obtained SGX quote
 after comparing it with the cached certificates. The Gramine application enclave through
 the Gramine SDK, talks to the Quoting Enclave which in turn interacts with the Intel PCE
 and the PCS. The quote verifier caches these certificates and when an SGX quote arrives,
-it can validate with these cached certificates. The remote verification in this test
+it can validate with these cached certificates. The remote verification in this app 
 talks to the DCAP library and verifies the obtained SGX quote. The SGX quote contains
 security characteristics such as MR_ENCLAVE, MR_SIGNER, PROD_ID and CPU_SVN to be used
 for verification of the enclave and the SGX platform.
@@ -162,4 +163,3 @@ The manifest contains the files to be trusted as part of the SGX enclave. The ma
 also specifies the gramine.libos entrypoint, library paths included, file system mounts
 that are to be part of the enclave. SGX specific environment variables can also be set in
 the manifest.
-
