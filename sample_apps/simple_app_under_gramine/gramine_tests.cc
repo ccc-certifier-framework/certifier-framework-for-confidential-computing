@@ -49,6 +49,11 @@ DEFINE_string(policy_store_file, "store.bin", "policy store file name");
 //    run-app-as-client: This runs the app as a server.
 //    run-app-as-server: This runs the app as a client
 
+#include "policy_key.cc"
+
+// -----------------------------------------------------------------------------------------
+
+
 byte cert[MAX_CERT_SIZE];
 
 int main(int argc, char** argv) {

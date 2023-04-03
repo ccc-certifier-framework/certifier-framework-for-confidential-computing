@@ -106,14 +106,15 @@ sudo ninja -C build/ install
 
 # Obtain Intel Certificates:
 ----------------------------
-TBD
+4. TBD
 
 # Steps to run Gramine app:
 ---------------------------
 App uses the installed Gramine SDK, Intel SGX/DCAP drivers and MbedTLS libraries for
 basic functionality.
  
-4. Setup MbedTLS
+5. Setup MbedTLS
+----------------
 This script obtains the MbedTLS library and configures it to be used by an application.
 Gramine APIs use the MbedTLS to encrypt/decrypt buffers or to obtain hashes.
 ```
@@ -121,7 +122,20 @@ cd certifier/src/gramine/gramine_tests
 ./configureMbedTLS
 ```
 
-5. Build Gramine-Certifier app 
+6. Setup policy key and certificate
+-----------------------------------
+6a. Generate the policy key and self-signed cert
+```
+mkdir $GRAMINE_EXAMPLE_DIR/provisioning
+cd $GRAMINE_EXAMPLE_DIR/provisioning
+$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key \
+    --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin
+```
+
+6b. Embed the policy key in Gramine example_app.
+$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin --output=../policy_key.cc
+
+6. Build Gramine-Certifier app
 This command builds the application that is run within a Gramine enclave.
 First, the make builds a binary with the Gramine library and the Gramine app. This binary
 in conjunction with the files listed in the Gramine manifest are packaged together. They
@@ -138,7 +152,7 @@ To clean up built files:
 make -f gramine_tests.mak clean
 ```
 
-6. Run app
+7. Run app
 App will run the simple server and client app and return a success/failure
 result. Gramine automatically talks to the configured DCAP libraries and SGX QV libraries
 which in turn communicate with the remote Intel PCS to verify the obtained SGX quote
@@ -154,7 +168,7 @@ gramine-sgx ./gramine_tests dcap
 ```
 
 Additional Notes
-
+----------------
 Some Gramine applications are built with a self-signed SSL certificate with the SGX quote
 embedded in it. This certificate is used for establishing a trusted communication channel.
 This is not required and we do not generate either the key or the self-signed cert.
