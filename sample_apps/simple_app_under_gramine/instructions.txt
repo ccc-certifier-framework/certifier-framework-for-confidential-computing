@@ -144,6 +144,7 @@ controls the trusted enclave's TCB. The gramine-sgx-token is run to obtain secur
 parameters such as MR_ENCLAVE, MR_SIGNER and other SGX attributes which can be used to
 verify the enclave and the SGX platform. MR_ENCLAVE is the measurement of the enclave.
 ```
+cd $GRAMINE_EXAMPLE_DIR
 make -f gramine_tests.mak app RA_TYPE=dcap
 ```
 
@@ -152,7 +153,51 @@ To clean up built files:
 make -f gramine_tests.mak clean
 ```
 
-7. Run app
+7. Policy generation
+--------------------
+Author the policy for the security domain and produce the signed claims the apps need.
+
+7a. Obtain the measurement of the trusted application
+MR_ENCLAVE_HASH is printed in the output of gramine-sgx-get-token after building the
+app in the step above.
+
+```
+cd $GRAMINE_EXAMPLE_DIR/provisioning
+$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --mrenclave=<MR_ENCLAVE_HASH> \
+        --output=gramine_app.measurement
+```
+
+7b. Construct platform key policy
+```
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert-subject=sgx.cert.der \
+        --verb="is-trusted-for-attestation" --output=ts1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+        --verb="says" --clause=ts1.bin --output=vse_policy1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
+        --vse_file=vse_policy1.bin --duration=9000 \
+        --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+```
+
+7c. Construct the measurement policy
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+        --measurement_subject=gramine_app.measurement --verb="is-trusted" \
+        --output=ts2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+        --verb="says" --clause=ts2.bin --output=vse_policy2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
+        --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
+
+7d. Construct the trusted platform policy
+TBD.
+
+7e. Package the policy for the certifier
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
+  --output=policy.bin
+
+7f. [optional] Print the policy
+$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+
+8. Run app
 App will run the simple server and client app and return a success/failure
 result. Gramine automatically talks to the configured DCAP libraries and SGX QV libraries
 which in turn communicate with the remote Intel PCS to verify the obtained SGX quote
