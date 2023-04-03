@@ -197,7 +197,59 @@ $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,sig
 7f. [optional] Print the policy
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 
-8. Run app
+
+8. Setup and run Certifier Service/SimpleServer:
+------------------------------------------------
+8a. Compile the protobuf
+```
+cd $CERTIFIER_PROTOTYPE
+cd certifier_service/certprotos
+protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
+cd certifier_service/oelib
+make dummy
+```
+
+This should produce a go file for the certifier protobufs called certifier.pb.go in certprotos.
+
+8c. Now build simpleclient and simpeserver:
+```
+cd $CERTIFIER_PROTOTYPE/certifier_service
+go build simpleserver.go
+```
+
+8d. Create directories for app and service data
+```
+cd $GRAMINE_EXAMPLE_DIR
+mkdir -p app1_data app2_data service
+```
+
+8e. Provision the app files
+```
+cd $GRAMINE_EXAMPLE_DIR/provisioning
+cp ./* $GRAMINE_EXAMPLE_DIR/app1_data
+cp ./* $GRAMINE_EXAMPLE_DIR/app2_data
+```
+
+8f. Provision the service files
+cd $GRAMINE_EXAMPLE_DIR/provisioning
+cp policy_key_file.bin policy_cert_file.bin policy.bin $GRAMINE_EXAMPLE_DIR/service
+
+8g. Start the Certifier Service
+In a new terminal window:
+```
+cd $GRAMINE_EXAMPLE_DIR/service
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+      --policyFile=policy.bin --readPolicy=true
+```
+
+9. Run the apps after getting admission certificates from Certifier Service
+---------------
+9a. Get admission certificates
+TBD.
+
+9b. Run the apps to test trusted services
+TBD.
+
 App will run the simple server and client app and return a success/failure
 result. Gramine automatically talks to the configured DCAP libraries and SGX QV libraries
 which in turn communicate with the remote Intel PCS to verify the obtained SGX quote
