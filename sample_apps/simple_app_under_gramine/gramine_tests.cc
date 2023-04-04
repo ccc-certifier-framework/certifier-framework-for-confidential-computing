@@ -214,7 +214,7 @@ int main(int an, char** av) {
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf("sev_example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
+    printf("gramine_example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
     printf("\t --data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
     printf("\t --ark_cert_file=./service/milan_ark_cert.der --ask_cert_file=./service/milan_ask_cert.der --vcek_cert_file=./service/milan_vcek_cert.der\n");
@@ -223,7 +223,7 @@ int main(int an, char** av) {
   }
 
   SSL_library_init();
-  string enclave_type("sev-enclave");
+  string enclave_type("gramine-enclave");
   string purpose("authentication");
 
   string store_file(FLAGS_data_dir);
@@ -240,10 +240,10 @@ int main(int an, char** av) {
     return 1;
   }
 
-  // Init sev enclave
-  if (!app_trust_data->initialize_sev_enclave_data(FLAGS_ark_cert_file,
+  // Init gramine enclave
+  if (!app_trust_data->initialize_gramine_enclave_data(FLAGS_ark_cert_file,
         FLAGS_ask_cert_file, FLAGS_vcek_cert_file)) {
-    printf("Can't init sev enclave\n");
+    printf("Can't init gramine enclave\n");
     return 1;
   }
 
