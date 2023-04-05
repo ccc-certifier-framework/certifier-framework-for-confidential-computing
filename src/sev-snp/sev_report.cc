@@ -169,7 +169,7 @@ void print_migration_agent_report_id(struct attestation_report *report) {
 
 void print_reported_tcb(struct attestation_report *report) {
   if (report) {
-    print_tcb_version("Reported TCB", &report->platform_version);
+    print_tcb_version("Reported TCB", &report->reported_tcb);
   }
 }
 
