@@ -1775,6 +1775,8 @@ func PrintEvidence(ev *certprotos.Evidence) {
 		fmt.Printf("\n")
 	} else if ev.GetEvidenceType() == "sev-attestation" {
 		PrintBytes(ev.SerializedEvidence)
+	} else if ev.GetEvidenceType() == "gramine-attestation" {
+		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "cert" {
 		cx509 := Asn1ToX509(ev.SerializedEvidence)
 		fmt.Printf("Issuer: %s, Subject: %s\n", GetIssuerNameFromCert(cx509),* GetSubjectNameFromCert(cx509))

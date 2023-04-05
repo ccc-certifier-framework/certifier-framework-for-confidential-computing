@@ -232,8 +232,6 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 			return false, nil
 		}
         } else if evType == "gramine-evidence" {
-		return false, nil
-		// Todo: Call when ready
 		success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateGramineEvidence failed\n")

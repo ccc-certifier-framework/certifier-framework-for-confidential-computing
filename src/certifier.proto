@@ -192,6 +192,12 @@ message sev_attestation_message {
   optional bytes reported_attestation       = 2;
 };
 
+// This is actually the same as for sev
+message gramine_attestation_message {
+  optional bytes what_was_said              = 1;
+  optional bytes reported_attestation       = 2;
+};
+
 // Current value for prover_type is "vse-verifier"
 // maybe support "opa-verifier" later
 message evidence_package {

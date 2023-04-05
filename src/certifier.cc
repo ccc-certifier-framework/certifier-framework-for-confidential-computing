@@ -5,7 +5,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -587,15 +586,15 @@ extern bool asylo_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
 #ifdef GRAMINE_CERTIFIER
-extern bool gramine_Attest(int claims_size, byte* claims, int* size_out, byte* out);
-extern bool gramine_Verify(int claims_size, byte* claims, int *user_data_out_size,
-                  byte *user_data_out, int* size_out, byte* out);
+extern bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* size_out, byte* out);
+extern bool gramine_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size,
+                  byte *attestation, int* size_out, byte* out);
 extern bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
-// FIXME: Fixed for simulated enclave and application service.  If out is NULL,
-//  Seal returns true and the buffer size in size_out.  Do for OE, SEV, ASYLO and Gramine.
+// Buffer overflow check: Seal returns true and the buffer size in size_out.
+// Check on Gramine.
 bool Seal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
@@ -629,8 +628,8 @@ bool Seal(const string& enclave_type, const string& enclave_id,
  return false;
 }
 
-// FIXME: Fixed for simulated enclave and application service.  If out is NULL,
-//  Unseal returns true and the buffer size in size_out.  Do for OE, SEV, ASYLO and Gramine.
+// Buffer overflow check: Done for SEV, OE, simulated enclave and application service.
+// If out is NULL, Unseal returns true and the buffer size in size_out.  Check Gramine.
 bool Unseal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
@@ -664,8 +663,7 @@ bool Unseal(const string& enclave_type, const string& enclave_id,
  return false;
 }
 
-// FIXME: Fixed for simulated enclave and application service.  If out is NULL,
-//  Attest returns true and the buffer size in size_out.  Do for OE, SEV, ASYLO and Gramine.
+//  Buffer overflow check: Attest returns true and the buffer size in size_out.  Check on Gramine.
 bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
  int* size_out, byte* out) {
 
@@ -691,7 +689,30 @@ bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
 #endif
 #ifdef GRAMINE_CERTIFIER
   if (enclave_type == "gramine-enclave") {
-    return gramine_Attest(what_to_say_size, what_to_say, size_out, out);
+    // Gramine attest returns an attestation, not a
+    // serialized gramine_attestation_message.
+    int t_size = *size_out;
+    if (!gramine_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
+      return false;
+    }
+    string ra;
+    string wws;
+    ra.assign((char*)out, t_size_out);
+    wws.assign((char*)what_to_say, what_to_say_size);
+    gramine_attestation_message gam;
+    gam.set_what_was_said(wws);
+    gam.set_reported_attestation(ra);
+    string serialized_gramine_at;
+    if (!gam.SerializeToString(&serialized_gramine_at)) {
+      return false;
+    }
+    if (*size_out < serialized_gramine_at.size()) {
+      return false;
+    }
+    memset(out, 0, *size_out);
+    memcpy(out, (byte*)serialized_gramine_at.data(), serialized_gramine_at.size());
+    *size_out = serialized_gramine_at.size();
+    return true;
   }
 #endif
   if (enclave_type == "application-enclave") {
