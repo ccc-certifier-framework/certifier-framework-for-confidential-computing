@@ -140,6 +140,10 @@ bool cc_trust_data::initialize_simulated_enclave_data(const string& attest_key_f
   return true;
 }
 
+bool cc_trust_data::initialize_gramine_enclave_data(const int size, byte* cert) {
+  return true;
+}
+
 bool cc_trust_data::initialize_sev_enclave_data(const string& platform_ark_der_file,
       const string& platform_ask_der_file,
       const string& platform_vcek_der_file) {
