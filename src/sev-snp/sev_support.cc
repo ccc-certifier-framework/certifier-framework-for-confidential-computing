@@ -549,18 +549,27 @@ bool kdf(int key_len, byte* key, int iter,
   return true;
 }
 
-bool sev_get_final_keys(int final_key_size, byte* final_key) {
+/*
+ * Derive sealing keys by issuing guest requests. By default, the Certifier ties
+ * sealing keys to the platform and the application identity. As a result, the
+ * default sealing key is derived from VCEK and the policy includes:
+ *   - FIELD_MEASUREMENT_MASK: Application identity
+ *   - FIELD_POLICY_MASK: DEBUG, MIGRATE_MA, etc.
+ *
+ * Specify root_key and fields explicitly otherwise. Fields that can be mixed
+ * into the key:
+ *
+ *   FIELD_POLICY_MASK    | FIELD_IMAGE_ID_MASK
+ *   FIELD_FAMILY_ID_MASK | FIELD_MEASUREMENT_MASK
+ *   FIELD_GUEST_SVN_MASK | FIELD_TCB_VERSION_MASK
+ */
+bool sev_get_final_keys(int final_key_size, byte* final_key, bool root_key = false,
+    uint64_t fields = FIELD_MEASUREMENT_MASK | FIELD_POLICY_MASK) {
   struct sev_key_options opt = {0};
   byte key[MSG_KEY_RSP_DERIVED_KEY_SIZE] = {0};
   int size = MSG_KEY_RSP_DERIVED_KEY_SIZE;
-  opt.do_root_key = true;
-  /*
-   * Select which fieds are mixed into the key:
-   *   FIELD_POLICY_MASK    | FIELD_IMAGE_ID_MASK
-   *   FIELD_FAMILY_ID_MASK | FIELD_MEASUREMENT_MASK
-   *   FIELD_GUEST_SVN_MASK | FIELD_TCB_VERSION_MASK
-   */
-  opt.fields = FIELD_MEASUREMENT_MASK;
+  opt.do_root_key = root_key;
+  opt.fields = fields;
 
   if (EXIT_SUCCESS != sev_request_key(&opt, key, size))
     return false;
