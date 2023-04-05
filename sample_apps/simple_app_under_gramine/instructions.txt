@@ -118,7 +118,7 @@ basic functionality.
 This script obtains the MbedTLS library and configures it to be used by an application.
 Gramine APIs use the MbedTLS to encrypt/decrypt buffers or to obtain hashes.
 ```
-cd certifier/src/gramine/gramine_tests
+cd certifier/src/gramine/gramine_example_app
 ./configureMbedTLS
 ```
 
@@ -145,12 +145,12 @@ parameters such as MR_ENCLAVE, MR_SIGNER and other SGX attributes which can be u
 verify the enclave and the SGX platform. MR_ENCLAVE is the measurement of the enclave.
 ```
 cd $GRAMINE_EXAMPLE_DIR
-make -f gramine_tests.mak app RA_TYPE=dcap
+make -f gramine_example_app.mak app RA_TYPE=dcap
 ```
 
 To clean up built files:
 ```
-make -f gramine_tests.mak clean
+make -f gramine_example_app.mak clean
 ```
 
 7. Policy generation
@@ -261,7 +261,7 @@ talks to the DCAP library and verifies the obtained SGX quote. The SGX quote con
 security characteristics such as MR_ENCLAVE, MR_SIGNER, PROD_ID and CPU_SVN to be used
 for verification of the enclave and the SGX platform.
 ```
-gramine-sgx ./gramine_tests dcap
+gramine-sgx ./gramine_example_app dcap
 ```
 
 Additional Notes

@@ -1,7 +1,7 @@
 # Attestation manifest file example
 
 loader.entrypoint = "file:{{ gramine.libos }}"
-libos.entrypoint = "/gramine_tests"
+libos.entrypoint = "/gramine_example_app"
 
 loader.log_level = "{{ log_level }}"
 
@@ -17,7 +17,7 @@ fs.mounts = [
   { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
   { path = "/usr{{ arch_libdir }}", uri = "file:/usr{{ arch_libdir }}" },
   { path = "/etc", uri = "file:/etc" },
-  { path = "/gramine_tests", uri = "file:gramine_tests" },
+  { path = "/gramine_example_app", uri = "file:gramine_example_app" },
 ]
 
 sgx.debug = true
@@ -28,13 +28,13 @@ sgx.ra_client_linkable = {{ 'true' if ra_client_linkable == '1' else 'false' }}
 
 sgx.trusted_files = [
   "file:{{ gramine.libos }}",
-  "file:gramine_tests",
+  "file:gramine_example_app",
   "file:libcertifier.so",
   "file:{{ gramine.runtimedir() }}/",
   "file:/usr/local/lib/",
   "file:{{ arch_libdir }}/",
   "file:/usr{{ arch_libdir }}/",
-  "file:gramine_tests.crt",
+  "file:gramine_example_app.crt",
 ]
 
 sgx.allowed_files = [
