@@ -32,6 +32,7 @@ import (
         certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
         certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
         //oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
+        gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
 
 var serverHost = flag.String("host", "localhost", "address for client/server")
@@ -425,6 +426,21 @@ func main() {
         var serverAddr string
         serverAddr = *serverHost + ":" + *serverPort
         var arg string = "something"
+
+        attestation, err := os.ReadFile("attestation.bin")
+        if err != nil {
+                fmt.Printf("Failed to read attestation file: %s\n", err.Error())
+        }
+        var what_to_say []byte
+        what_to_say = make([]byte, 256)
+        for i := 0; i < 256; i++ {
+                what_to_say[i] = byte(i)
+        }
+        outMeasurement, err := gramineverify.GramineVerify(what_to_say, attestation)
+        if err != nil {
+                fmt.Printf("GramineVerify failed: %s\n", err.Error())
+        }
+        fmt.Printf("Measurement length: %d\n", len(outMeasurement));
 
         // later this may turn into a TLS connection, we'll see
         server(serverAddr, arg)
