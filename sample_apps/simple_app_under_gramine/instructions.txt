@@ -92,7 +92,14 @@ sudo ninja -C build/ install
 
 # Obtain Intel Certificates:
 ----------------------------
-4. TBD
+4. PCKIDRetrievalTool is used to obtain the Intel platform certificates that include the
+root certificate and the PCK certificate chain. Install and run the SGX PCK ID retrieval
+tool:
+```
+sudo apt install sgx-pck-id-retrieval-tool
+```
+Currently we use the Intel Root Certificate obtained by running the tool above. Copy the
+root certificate to gramine_example_app.crt (file to be renamed later).
 
 # Steps to run Gramine app:
 ---------------------------
@@ -186,7 +193,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=
         --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
 
 7d. Construct the trusted platform policy
-TBD.
+TBD in a later step.
 
 7e. Package the policy for the certifier
 $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
@@ -243,10 +250,10 @@ $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
 9. Run the apps after getting admission certificates from Certifier Service
 ---------------
 9a. Get admission certificates
-TBD.
+TBD in a later step.
 
 9b. Run the apps to test trusted services
-TBD.
+TBD in a later step.
 
 App will run the simple server and client app and return a success/failure
 result. Gramine automatically talks to the configured DCAP libraries and SGX QV libraries
