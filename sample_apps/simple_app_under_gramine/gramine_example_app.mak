@@ -19,7 +19,7 @@ RA_CLIENT_LINKABLE ?= 0
 all: app
 
 .PHONY: app
-app: gramine_tests.manifest.sgx gramine_tests.sig gramine_tests.token
+app: gramine_example_app.manifest.sgx gramine_example_app.sig gramine_example_app.token
 
 ######################### GRAMINE/SGX VARIABLES ###############################
 GRAMINE_SRC_PATH = ../../../gramine/gramine
@@ -49,12 +49,12 @@ certifier:
 CFLAGS += $(CERTIFIER_CFLAGS)
 LDFLAGS += -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -L./ -lcertifier -ldl -lgtest -lgflags $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
 
-gramine_tests: gramine_tests.cc certifier
+gramine_example_app: gramine_example_app.cc certifier
 	$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
 
 ########################### TEST APP MANIFEST #################################
 
-gramine_tests.manifest: gramine_tests.manifest.template
+gramine_example_app.manifest: gramine_example_app.manifest.template
 	gramine-manifest \
 		-Dlog_level=$(GRAMINE_LOG_LEVEL) \
 		-Darch_libdir=$(ARCH_LIBDIR) \
@@ -63,16 +63,16 @@ gramine_tests.manifest: gramine_tests.manifest.template
 		-Dra_client_linkable=$(RA_CLIENT_LINKABLE) \
 		$< > $@
 
-gramine_tests.manifest.sgx gramine_tests.sig: sgx_sign_gramine_tests
+gramine_example_app.manifest.sgx gramine_example_app.sig: sgx_sign_gramine_example_app
 	@:
 
-.INTERMEDIATE: sgx_sign_gramine_tests
-sgx_sign_gramine_tests: gramine_tests.manifest gramine_tests
+.INTERMEDIATE: sgx_sign_gramine_example_app
+sgx_sign_gramine_example_app: gramine_example_app.manifest gramine_example_app
 	gramine-sgx-sign \
 		--manifest $< \
 		--output $<.sgx
 
-gramine_tests.token: gramine_tests.sig
+gramine_example_app.token: gramine_example_app.sig
 	gramine-sgx-get-token --output $@ --sig $<
 
 ################################## CLEANUP ####################################
@@ -80,7 +80,7 @@ gramine_tests.token: gramine_tests.sig
 .PHONY: clean
 clean:
 	$(RM) -r \
-		*.token *.sig *.manifest.sgx *.manifest gramine_tests *.so *.o *.a *.so.* OUTPUT
+		*.token *.sig *.manifest.sgx *.manifest gramine_example_app *.so *.o *.a *.so.* OUTPUT
 
 .PHONY: distclean
 distclean: clean

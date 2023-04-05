@@ -21,7 +21,7 @@
 
 #include "gramine_api.h"
 
-#define cert_file "gramine_tests.crt"
+#define cert_file "gramine_example_app.crt"
 #define BUF_SIZE 128
 #define BUF_STORAGE_SIZE 4
 #define TAG_SIZE 16
