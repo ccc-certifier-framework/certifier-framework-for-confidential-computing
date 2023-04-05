@@ -54,7 +54,7 @@ func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePa
 func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
 
-	// Todo: Fix.  Normally Internale is used for tests and need not be filtered.
+	// Todo: Fix.  Normally the policy used for tests need not be filtered, but we should do it anyway.
         filtered :=  &certprotos.ProvedStatements {}
 	for i := 0; i < len(original.Proved); i++ {
 		from := original.Proved[i]

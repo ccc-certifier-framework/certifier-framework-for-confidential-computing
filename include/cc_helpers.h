@@ -92,6 +92,7 @@ public:
   bool initialize_sev_enclave_data(const string& platform_ark_der_file,
       const string& platform_ask_der_file,
       const string& platform_vcek_der_file);
+  bool initialize_gramine_enclave_data(const int size, byte* cert);
   bool initialize_oe_enclave_data(const string& file);
   bool initialize_application_enclave_data(const string& parent_enclave_type,
           int in_fd, int out_fd);
