@@ -5,20 +5,6 @@ Instructions for building and running the sample application and generating poli
 # Overview:
 -----------
 This uses the same application as in .../sample_app but under Gramine.
-This example embeds the policy key in the application using embed_policy_key.exe.
-
-$CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.  On my
-computer, it is in ~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing.
-It is helpful to have a shell variable for it:
-
-export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
-
-$GRAMINE_EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable is useful.
-
-export GRAMINE_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_gramine
-
------------------------------------------------------------------------------
-
 A Gramine enclave uses SGX instructions to generate SGX quotes and reports. On initial
 deployment, Gramine communicates with the Quoting Enclave(QE) to get the SGX quote.
 The QE talks to the PCE to obtain the attestation collateral with the help of Intel
@@ -112,13 +98,25 @@ sudo ninja -C build/ install
 ---------------------------
 App uses the installed Gramine SDK, Intel SGX/DCAP drivers and MbedTLS libraries for
 basic functionality.
- 
+
+This example embeds the policy key in the application using embed_policy_key.exe.
+
+$CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.  On my
+computer, it is in ~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing.
+It is helpful to have a shell variable for it:
+
+export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
+
+$GRAMINE_EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable is useful.
+
+export GRAMINE_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_gramine
+
 5. Setup MbedTLS
 ----------------
 This script obtains the MbedTLS library and configures it to be used by an application.
 Gramine APIs use the MbedTLS to encrypt/decrypt buffers or to obtain hashes.
 ```
-cd certifier/src/gramine/gramine_example_app
+cd $GRAMINE_EXAMPLE_DIR
 ./configureMbedTLS
 ```
 
