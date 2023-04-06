@@ -25,8 +25,8 @@ import (
 	"crypto/x509"
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
-	oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
-	gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
+	//oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
+	//gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
 
 
@@ -236,8 +236,8 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 			cl := ConstructGramineClaim(ud.EnclaveKey, m)
 			if cl == nil {
-			 	fmt.Printf("InitProvedStatements: ConstructGramineClaim failed\n")
-			 	return false
+				fmt.Printf("InitProvedStatements: ConstructGramineClaim failed\n")
+				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "oe-attestation-report" {
@@ -249,11 +249,15 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			var err error
 			if i < 1  || evidenceList[i-1].GetEvidenceType() != "pem-cert-chain" {
 				// No endorsement presented
+				/* REMOVE
 				serializedUD, m, err  = oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
 					nil, false)
+				 */
 			} else {
+				/* REMOVE
 				serializedUD, m, err  = oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
 					evidenceList[i-1].SerializedEvidence, false)
+				 */
 			}
 			if err != nil || serializedUD == nil || m == nil {
 				return false
@@ -2169,7 +2173,7 @@ func ConstructGramineClaim(enclaveKey *certprotos.KeyMessage,
 }
 
 func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, error) {
-	// Returns: success, serialized user data, measurement, err 
+	// Returns: success, serialized user data, measurement, err
 	ga := certprotos.GramineAttestationMessage{}
 	err := proto.Unmarshal(serializedEvidence, &ga)
 	if err != nil {
@@ -2178,17 +2182,17 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 	}
 
 	// Call the cgo gramine verify function eventually
+	/* REMOVE comment and comment out next section
 	success, m := gramineverify.GramineVerify(ga.WhatWasSaid, ga.ReportedAttestation)
 	return success, ga.WhatWasSaid, m, nil
+	 */
 
-	/*
 	// for testing
 	m := make([]byte, 48)
 	for i := 0; i < 48; i++ {
 		m[i]= byte(i)
-	} 
+	}
 	return true, ga.WhatWasSaid, m, nil
-	 */
 }
 
 
