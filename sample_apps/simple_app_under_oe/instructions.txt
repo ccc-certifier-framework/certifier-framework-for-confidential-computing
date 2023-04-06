@@ -113,7 +113,7 @@ Step 8: Build SimpleServer:
     make dummy
 
   This should produce a go file for the certifier protobufs called certifier.pb.go in certprotos.
-  Now build simpleclient and simpeserver:
+  Now build simpeserver:
     cd $CERTIFIER_PROTOTYPE/certifier_service
     go build simpleserver.go
 
