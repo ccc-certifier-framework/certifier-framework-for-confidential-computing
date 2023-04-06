@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /*
- * Attest/Verify/Seal/Unseal tests
+ * Gramine simple app
  */
 
 #include <gtest/gtest.h>
@@ -21,7 +21,11 @@
 
 #include "gramine_api.h"
 
-#define cert_file "gramine_example_app.crt"
+#include "support.h"
+#include "certifier.h"
+#include "simulated_enclave.h"
+#include "cc_helpers.h"
+
 #define BUF_SIZE 128
 #define BUF_STORAGE_SIZE 4
 #define TAG_SIZE 16
@@ -41,6 +45,7 @@ DEFINE_string(server_app_host, "localhost", "address for app server");
 DEFINE_int32(server_app_port, 8124, "port for server app server");
 
 DEFINE_string(policy_store_file, "store.bin", "policy store file name");
+DEFINE_string(gramine_cert_file, "gramine_example_app.crt", "certificate file name");
 
 // The test app performs five possible roles
 //    cold-init: This creates application keys and initializes the policy store.
@@ -50,13 +55,14 @@ DEFINE_string(policy_store_file, "store.bin", "policy store file name");
 //    run-app-as-server: This runs the app as a client
 
 #include "policy_key.cc"
-//cc_trust_data* app_trust_data = nullptr;
+cc_trust_data* app_trust_data = nullptr;
+
+byte cert[MAX_CERT_SIZE];
 
 // -----------------------------------------------------------------------------------------
 
 
-byte cert[MAX_CERT_SIZE];
-
+#if 0
 int main(int argc, char** argv) {
     int ret = 0;
     size_t len;
@@ -167,8 +173,8 @@ exit:
 
     return ret;
 }
+#endif
 
-#if 0
 void client_application(secure_authenticated_channel& channel) {
 
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
@@ -209,6 +215,7 @@ bool run_me_as_server(const string& host_name, int port,
 }
 
 int main(int an, char** av) {
+  int ret = 0;
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
@@ -217,7 +224,7 @@ int main(int an, char** av) {
     printf("gramine_example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
     printf("\t --data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
-    printf("\t --ark_cert_file=./service/milan_ark_cert.der --ask_cert_file=./service/milan_ask_cert.der --vcek_cert_file=./service/milan_vcek_cert.der\n");
+    printf("\t --gramine_cert_file=gramine_example_app.crt\n");
     printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server\n");
     return 0;
   }
@@ -241,8 +248,25 @@ int main(int an, char** av) {
   }
 
   // Init gramine enclave
-  if (!app_trust_data->initialize_gramine_enclave_data(FLAGS_ark_cert_file,
-        FLAGS_ask_cert_file, FLAGS_vcek_cert_file)) {
+  int cert_size = file_size(FLAGS_gramine_cert_file);
+
+  if (cert_size < 0) {
+        printf("Error reading file size for certificate\n");
+        return false;
+  }
+
+  if (cert_size > MAX_CERT_SIZE) {
+        printf("Certificate file too large\n");
+        return false;
+  }
+
+  ret = gramine_rw_file(FLAGS_gramine_cert_file.c_str(), cert, cert_size, false);
+  if (ret < 0 && ret != -ENOENT) {
+      printf("Can't read cert file\n");
+      return false;
+  }
+
+  if (!app_trust_data->initialize_gramine_enclave_data(cert_size, cert)) {
     printf("Can't init gramine enclave\n");
     return 1;
   }
@@ -254,7 +278,6 @@ int main(int an, char** av) {
   string hmac_alg("sha-256-hmac");
 
   // Carry out operation
-  int ret = 0;
   if (FLAGS_operation == "cold-init") {
     if (!app_trust_data->cold_init(public_key_alg,
         symmetric_key_alg, hash_alg, hmac_alg)) {
@@ -322,4 +345,3 @@ done:
   }
   return ret;
 }
-#endif
