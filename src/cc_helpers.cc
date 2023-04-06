@@ -3,6 +3,9 @@
 #include "simulated_enclave.h"
 #include "application_enclave.h"
 #include "cc_helpers.h"
+#ifdef GRAMINE_CERTIFIER
+#include "gramine_api.h"
+#endif
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -141,6 +144,9 @@ bool cc_trust_data::initialize_simulated_enclave_data(const string& attest_key_f
 }
 
 bool cc_trust_data::initialize_gramine_enclave_data(const int size, byte* cert) {
+#ifdef GRAMINE_CERTIFIER
+  return gramine_Init(size, cert);
+#endif
   return true;
 }
 
