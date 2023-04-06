@@ -4,7 +4,9 @@
 #include "application_enclave.h"
 #include <sys/socket.h>
 #include <netdb.h>
+#ifdef SEV_SNP
 #include "attestation.h"
+#endif
 
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
