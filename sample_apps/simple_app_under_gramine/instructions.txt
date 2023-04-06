@@ -4,7 +4,7 @@ Instructions for building and running the sample application and generating poli
 
 # Overview:
 -----------
-This uses the same application as in .../sample_app but under Gramine.
+This app is similar to the application in .../sample_app but runs in a Gramine enclave.
 A Gramine enclave uses SGX instructions to generate SGX quotes and reports. On initial
 deployment, Gramine communicates with the Quoting Enclave(QE) to get the SGX quote.
 The QE talks to the PCE to obtain the attestation collateral with the help of Intel
@@ -100,6 +100,8 @@ sudo apt install sgx-pck-id-retrieval-tool
 ```
 Currently we use the Intel Root Certificate obtained by running the tool above. Copy the
 root certificate to gramine_example_app.crt (file to be renamed later).
+More info on how to run is detailed here:
+https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/tools/PCKRetrievalTool
 
 # Steps to run Gramine app:
 ---------------------------
@@ -252,23 +254,23 @@ $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
 9. Run the apps after getting admission certificates from Certifier Service
 ---------------
 9a. Get admission certificates
-  Open two new terminals (one for the app as a client and one for the app as a server):
+Open two new terminals (one for the app as a client and one for the app as a server):
 
-  In app as a client terminal run the following:
+In app as a client terminal run the following:
 ```
-    cd $GRAMINE_EXAMPLE_DIR
-    gramine-sgx gramine_example_app --print_all=true \
+cd $GRAMINE_EXAMPLE_DIR
+gramine-sgx gramine_example_app --print_all=true \
       --operation=cold-init --data_dir=./app1_data/ --policy_store_file=policy_store
-    gramine-sgx gramine_example_app --print_all=true \
+gramine-sgx gramine_example_app --print_all=true \
       --operation=get-certifier --data_dir=./app1_data/ --policy_store_file=policy_store
 ```
 
-  In app as a server terminal run the following:
+In app as a server terminal run the following:
 ```
-    cd $GRAMINE_EXAMPLE_DIR
-    gramine-sgx gramine_example_app --print_all=true \
+cd $GRAMINE_EXAMPLE_DIR
+gramine-sgx gramine_example_app --print_all=true \
       --operation=cold-init --data_dir=./app2_data/ --policy_store_file=policy_store
-    gramine-sgx gramine_example_app --print_all=true \
+gramine-sgx gramine_example_app --print_all=true \
       --operation=get-certifier --data_dir=./app2_data/ --policy_store_file=policy_store
 ```
 
@@ -280,15 +282,15 @@ at this point.
 9b. Run the apps to test trusted services
 In app as a server terminal run the following:
 ```
-    cd $GRAMINE_EXAMPLE_DIR
-    gramine-sgx gramine_example_app --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
+cd $GRAMINE_EXAMPLE_DIR
+gramine-sgx gramine_example_app --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
       --policy_store_file=policy_store
 ```
 
 In app as a client terminal run the following:
 ```
-    cd $GRAMINE_EXAMPLE_DIR
-    gramine-sgx gramine_example_app --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
+cd $GRAMINE_EXAMPLE_DIR
+gramine-sgx gramine_example_app --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
       --policy_store_file=policy_store
 ```
 
