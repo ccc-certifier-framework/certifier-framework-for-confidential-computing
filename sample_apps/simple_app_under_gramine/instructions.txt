@@ -250,10 +250,48 @@ $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
 9. Run the apps after getting admission certificates from Certifier Service
 ---------------
 9a. Get admission certificates
-TBD in a later step.
+  Open two new terminals (one for the app as a client and one for the app as a server):
+
+  In app as a client terminal run the following:
+```
+    cd $GRAMINE_EXAMPLE_DIR
+    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true \
+      --operation=cold-init --data_dir=./app1_data/ --policy_store_file=policy_store
+    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true \
+      --operation=get-certifier --data_dir=./app1_data/ --policy_store_file=policy_store
+```
+
+  In app as a server terminal run the following:
+```
+    cd $GRAMINE_EXAMPLE_DIR
+    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true \
+      --operation=cold-init --data_dir=./app2_data/ --policy_store_file=policy_store
+    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true \
+      --operation=get-certifier --data_dir=./app2_data/ --policy_store_file=policy_store
+```
+
+At this point, both versions of the app have their admission certificates.  You can look at
+the output of the terminal running simpleserver for output.  Now all we have to do is have
+the apps connect to each other for the final test.  The Certifier Service is no longer needed
+at this point.
 
 9b. Run the apps to test trusted services
-TBD in a later step.
+In app as a server terminal run the following:
+```
+    cd $GRAMINE_EXAMPLE_DIR
+    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
+      --policy_store_file=policy_store
+```
+
+  In app as a client terminal run the following:
+```
+    cd $GRAMINE_EXAMPLE_DIR
+    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
+      --policy_store_file=policy_store
+```
+
+You should see the message "Hi from your secret server" in the client terminal window and
+"Hi from your secret client".   If so, your first Confidential Computing program worked!
 
 App will run the simple server and client app and return a success/failure
 result. Gramine automatically talks to the configured DCAP libraries and SGX QV libraries
@@ -265,9 +303,6 @@ it can validate with these cached certificates. The remote verification in this 
 talks to the DCAP library and verifies the obtained SGX quote. The SGX quote contains
 security characteristics such as MR_ENCLAVE, MR_SIGNER, PROD_ID and CPU_SVN to be used
 for verification of the enclave and the SGX platform.
-```
-gramine-sgx ./gramine_example_app dcap
-```
 
 Additional Notes
 ----------------
