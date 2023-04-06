@@ -168,8 +168,8 @@ app in the step above.
 
 ```
 cd $GRAMINE_EXAMPLE_DIR/provisioning
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --mrenclave=<MR_ENCLAVE_HASH> \
-        --output=gramine_app.measurement
+$CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --out_file=gramine_app.measurement \
+    --mrenclave=<MR_ENCLAVE_HASH>
 ```
 
 7b. Construct platform key policy
@@ -210,13 +210,15 @@ $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 cd $CERTIFIER_PROTOTYPE
 cd certifier_service/certprotos
 protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
-cd certifier_service/oelib
+cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
 make dummy
+cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib/
+make
 ```
 
 This should produce a go file for the certifier protobufs called certifier.pb.go in certprotos.
 
-8c. Now build simpleclient and simpeserver:
+8c. Now build simpleserver:
 ```
 cd $CERTIFIER_PROTOTYPE/certifier_service
 go build simpleserver.go
@@ -255,18 +257,18 @@ $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
   In app as a client terminal run the following:
 ```
     cd $GRAMINE_EXAMPLE_DIR
-    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true \
+    gramine-sgx gramine_example_app --print_all=true \
       --operation=cold-init --data_dir=./app1_data/ --policy_store_file=policy_store
-    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true \
+    gramine-sgx gramine_example_app --print_all=true \
       --operation=get-certifier --data_dir=./app1_data/ --policy_store_file=policy_store
 ```
 
   In app as a server terminal run the following:
 ```
     cd $GRAMINE_EXAMPLE_DIR
-    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true \
+    gramine-sgx gramine_example_app --print_all=true \
       --operation=cold-init --data_dir=./app2_data/ --policy_store_file=policy_store
-    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true \
+    gramine-sgx gramine_example_app --print_all=true \
       --operation=get-certifier --data_dir=./app2_data/ --policy_store_file=policy_store
 ```
 
@@ -279,14 +281,14 @@ at this point.
 In app as a server terminal run the following:
 ```
     cd $GRAMINE_EXAMPLE_DIR
-    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
+    gramine-sgx gramine_example_app --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
       --policy_store_file=policy_store
 ```
 
-  In app as a client terminal run the following:
+In app as a client terminal run the following:
 ```
     cd $GRAMINE_EXAMPLE_DIR
-    $GRAMINE_EXAMPLE_DIR/gramine_example_app --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
+    gramine-sgx gramine_example_app --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
       --policy_store_file=policy_store
 ```
 
