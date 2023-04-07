@@ -1,0 +1,331 @@
+Instructions for building and running the sample application and generating policy for
+                 the Certifier Service using the policy utilities under Gramine. 
+======================================================================================
+
+# Overview:
+-----------
+This app is similar to the application in .../sample_app but runs in a Gramine enclave.
+This sample application demonstrates a simple client and server setup that can certify
+with the Certifier Service to get admission certificates. Once certified, the client and
+server can talk to each other through a mutually trusted and authenticated TLS connection.
+
+A Gramine enclave uses SGX instructions to generate SGX quotes and reports. On initial
+deployment, Gramine communicates with the Quoting Enclave(QE) to get the SGX quote.
+The QE talks to the PCE to obtain the attestation collateral with the help of Intel
+Provisioning Certification Service(PCS). The certificates are cached locally. When an SGX
+quote is received, users can compare the certificates embedded in the quote against these
+cached certificates.
+
+This app uses two scripts, a Makefile and the SGX manifest to setup.
+The steps below describe building and running the Gramine example app.
+
+
+# System Requirements:
+----------------------
+Platform - Intel Coffee Lake or later with Intel SGX, Intel SPS and Intel ME. Intel NUCs
+with SGX capability should also work as long as they support Intel FLC.
+OS - Ubuntu 20.04 or later with Linux kernel 5.11 or higher
+
+# Software Repositories:
+------------------------
+1. Clone Gramine
+```
+mkdir gramine
+cd gramine
+git clone https://github.com/gramineproject/gramine.git gramine
+```
+
+2. Clone Certifier
+cd ..
+Clone certifier in the same directory as the parent of the outer gramine dir above.
+
+```
+git clone https://github.com/vmware-research/certifier-framework-for-confidential-computing.git certifier
+```
+
+# Steps to install Gramine:
+---------------------------
+3. Build Gramine
+Steps required to build Gramine are provided here:
+https://gramine.readthedocs.io/en/stable/devel/building.html
+
+Detailed required steps from the link above are listed here:
+
+3a. First install a Linux OS such as Ubuntu 20.04 with Linux kernel 5.11 or higher which
+has SGX drivers built in. SGX drivers help in setting up the SGX-specific instructions
+on the CPU and the QE/PCE.
+
+3b. Install common dependencies as in the link above:
+```
+sudo apt-get install -y build-essential \
+    autoconf bison gawk nasm ninja-build pkg-config python3 python3-click \
+    python3-jinja2 python3-pip python3-pyelftools wget
+sudo python3 -m pip install 'meson>=0.56' 'tomli>=1.1.0' 'tomli-w>=0.4.0'
+```
+
+3c. Install SGX dependencies as in the link above:
+```
+sudo apt-get install -y libprotobuf-c-dev protobuf-c-compiler \
+    protobuf-compiler python3-cryptography python3-pip python3-protobuf
+```
+
+3d. Install Intel SGX SDK/PSW as in the link above:
+If using kernel 5.11 or higher, SGX drivers are already built in and need not be
+installed explicitly.
+This link provides all the steps required:
+https://download.01.org/intel-sgx/sgx-dcap/1.14/linux/docs/Intel_SGX_SW_Installation_Guide_for_Linux.pdf
+This document also has steps to configure PCCS on local machine to ensure Intel PCS
+communication is setup correctly.
+
+3e. Install dependencies for DCAP:
+```
+curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | sudo apt-key add -
+echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main' | sudo tee /etc/apt/sources.list.d/intel-sgx.list
+# (if you're on Ubuntu 18.04, write "bionic" instead of "focal" above)
+
+sudo apt-get update
+sudo apt-get install libsgx-dcap-quote-verify-dev
+```
+
+3f. Build Gramine
+```
+meson setup build/ --buildtype=release -Ddirect=enabled -Dsgx=enabled -Dsgx_driver=upstream -Ddcap=enabled
+ninja -C build/
+sudo ninja -C build/ install
+```
+
+# Obtain Intel Certificates:
+----------------------------
+4. PCKIDRetrievalTool is used to obtain the Intel platform certificates that include the
+root certificate and the PCK certificate chain. Install and run the SGX PCK ID retrieval
+tool:
+```
+sudo apt install sgx-pck-id-retrieval-tool
+```
+Currently we use the Intel Root Certificate obtained by running the tool above. Copy the
+root certificate to gramine_example_app.crt (file to be renamed later).
+More info on how to run is detailed here:
+https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/tools/PCKRetrievalTool
+
+# Steps to run Gramine app:
+---------------------------
+App uses the installed Gramine SDK, Intel SGX/DCAP drivers and MbedTLS libraries for
+basic functionality.
+
+This example embeds the policy key in the application using embed_policy_key.exe.
+
+$CERTIFIER_PROTOTYPE is the top level directory for the certifier repository. This can be
+in a path such as:
+~/src/github.com/<user>/crypto/v2/certifier-framework-for-confidential-computing.
+It is helpful to have a shell variable for it:
+
+export CERTIFIER_PROTOTYPE=~/src/github.com/<user>/crypto/v2/certifier-framework-for-confidential-computing
+
+$GRAMINE_EXAMPLE_DIR is the directory containing the example application. We can export
+the path using:
+
+export GRAMINE_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_gramine
+
+5. Setup MbedTLS
+----------------
+This script obtains the MbedTLS library and configures it to be used by an application.
+Gramine APIs use the MbedTLS to encrypt/decrypt buffers or to obtain hashes.
+```
+cd $GRAMINE_EXAMPLE_DIR
+./configureMbedTLS
+```
+
+6. Setup policy key and certificate
+-----------------------------------
+6a. Generate the policy key and self-signed cert
+```
+mkdir $GRAMINE_EXAMPLE_DIR/provisioning
+cd $GRAMINE_EXAMPLE_DIR/provisioning
+$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key \
+    --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin
+```
+
+6b. Embed the policy key in Gramine example_app.
+$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin --output=../policy_key.cc
+
+6. Build Gramine-Certifier app
+This command builds the application that is run within a Gramine enclave.
+First, the make builds a binary with the Gramine library and the Gramine app. This binary
+in conjunction with the files listed in the Gramine manifest are packaged together. They
+are input to the gramine-sgx-sign to obtain an SGX specific manifest file which
+controls the trusted enclave's TCB. The gramine-sgx-token is run to obtain security
+parameters such as MR_ENCLAVE, MR_SIGNER and other SGX attributes which can be used to
+verify the enclave and the SGX platform. MR_ENCLAVE is the measurement of the enclave.
+```
+cd $GRAMINE_EXAMPLE_DIR
+make -f gramine_example_app.mak app RA_TYPE=dcap
+```
+
+To clean up built files:
+```
+make -f gramine_example_app.mak clean
+```
+
+7. Policy generation
+--------------------
+Author the policy for the security domain and produce the signed claims the apps need.
+
+7a. Obtain the measurement of the trusted application
+MR_ENCLAVE_HASH is printed in the output of gramine-sgx-get-token after building the
+app in the step above.
+
+```
+cd $GRAMINE_EXAMPLE_DIR/provisioning
+$CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --out_file=gramine_app.measurement \
+    --mrenclave=<MR_ENCLAVE_HASH>
+```
+
+7b. Construct platform key policy
+```
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert-subject=sgx.cert.der \
+        --verb="is-trusted-for-attestation" --output=ts1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+        --verb="says" --clause=ts1.bin --output=vse_policy1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
+        --vse_file=vse_policy1.bin --duration=9000 \
+        --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+```
+
+7c. Construct the measurement policy
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+        --measurement_subject=gramine_app.measurement --verb="is-trusted" \
+        --output=ts2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+        --verb="says" --clause=ts2.bin --output=vse_policy2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
+        --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
+
+7d. Construct the trusted platform policy
+TBD in a later step.
+
+7e. Package the policy for the certifier
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
+  --output=policy.bin
+
+7f. [optional] Print the policy
+$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+
+
+8. Setup and run Certifier Service/SimpleServer:
+------------------------------------------------
+8a. Compile the protobuf
+```
+cd $CERTIFIER_PROTOTYPE
+cd certifier_service/certprotos
+protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
+cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
+make dummy
+cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib/
+make
+```
+
+This should produce a go file for the certifier protobufs called certifier.pb.go in
+certprotos.
+
+8c. Now build simpleserver:
+```
+cd $CERTIFIER_PROTOTYPE/certifier_service
+go build simpleserver.go
+```
+
+8d. Create directories for app and service data
+```
+cd $GRAMINE_EXAMPLE_DIR
+mkdir -p app1_data app2_data service
+```
+
+8e. Provision the app files
+```
+cd $GRAMINE_EXAMPLE_DIR/provisioning
+cp ./* $GRAMINE_EXAMPLE_DIR/app1_data
+cp ./* $GRAMINE_EXAMPLE_DIR/app2_data
+```
+
+8f. Provision the service files
+cd $GRAMINE_EXAMPLE_DIR/provisioning
+cp policy_key_file.bin policy_cert_file.bin policy.bin $GRAMINE_EXAMPLE_DIR/service
+
+8g. Start the Certifier Service
+In a new terminal window:
+```
+cd $GRAMINE_EXAMPLE_DIR/service
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+      --policyFile=policy.bin --readPolicy=true
+```
+
+9. Run the apps after getting admission certificates from Certifier Service
+---------------
+9a. Get admission certificates
+Ensure the policy_store for each app has been added to the manifest of trusted files. If
+other files are needed to be trusted, ensure the manifest file includes the file in the
+section sgx.allowed_files.
+
+Open two new terminals (one for the app as a client and one for the app as a server):
+
+In app as a client terminal run the following:
+```
+cd $GRAMINE_EXAMPLE_DIR
+gramine-sgx gramine_example_app --print_all=true \
+      --operation=cold-init --data_dir=./app1_data/ --policy_store_file=policy_store
+gramine-sgx gramine_example_app --print_all=true \
+      --operation=get-certifier --data_dir=./app1_data/ --policy_store_file=policy_store
+```
+
+In app as a server terminal run the following:
+```
+cd $GRAMINE_EXAMPLE_DIR
+gramine-sgx gramine_example_app --print_all=true \
+      --operation=cold-init --data_dir=./app2_data/ --policy_store_file=policy_store
+gramine-sgx gramine_example_app --print_all=true \
+      --operation=get-certifier --data_dir=./app2_data/ --policy_store_file=policy_store
+```
+
+At this point, both versions of the app have their admission certificates. Output and
+results are printed on each of the terminals running the app and the service.
+Now all we have to do is have the apps connect to each other for the final test.
+The Certifier Service is no longer needed at this point.
+
+9b. Run the apps to test trusted services
+In app as a server terminal run the following:
+```
+cd $GRAMINE_EXAMPLE_DIR
+gramine-sgx gramine_example_app --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
+      --policy_store_file=policy_store
+```
+
+In app as a client terminal run the following:
+```
+cd $GRAMINE_EXAMPLE_DIR
+gramine-sgx gramine_example_app --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
+      --policy_store_file=policy_store
+```
+
+You should see the message "Hi from your secret server" in the client terminal window and
+"Hi from your secret client".   If so, your first Confidential Computing program worked!
+
+As shown, apps run the server and client in a Gramine enclave and return a success/failure.
+Gramine automatically talks to the configured DCAP libraries and SGX QV libraries
+which in turn communicate with the remote Intel PCS to verify the obtained SGX quote
+after comparing it with the cached certificates. The Gramine application enclave through
+the Gramine SDK, talks to the Quoting Enclave which in turn interacts with the Intel PCE
+and the PCS. The quote verifier caches these certificates and when an SGX quote arrives,
+it can validate with these cached certificates. The remote verification in this app 
+talks to the DCAP library and verifies the obtained SGX quote. The SGX quote contains
+security characteristics such as MR_ENCLAVE, MR_SIGNER, PROD_ID and CPU_SVN to be used
+for verification of the enclave and the SGX platform.
+
+Additional Notes
+----------------
+Some Gramine applications are built with a self-signed SSL certificate with the SGX quote
+embedded in it. This certificate is used for establishing a trusted communication channel.
+This is not required and we do not generate either the key or the self-signed cert.
+
+The manifest contains the files to be trusted as part of the SGX enclave. The manifest
+also specifies the gramine.libos entrypoint, library paths included, file system mounts
+that are to be part of the enclave. SGX specific environment variables can also be set in
+the manifest.
