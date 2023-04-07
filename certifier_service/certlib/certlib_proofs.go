@@ -25,7 +25,7 @@ import (
 	"crypto/x509"
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
-	//oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
+	oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 	//gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
 
@@ -249,15 +249,11 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			var err error
 			if i < 1  || evidenceList[i-1].GetEvidenceType() != "pem-cert-chain" {
 				// No endorsement presented
-				/* REMOVE
 				serializedUD, m, err  = oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
 					nil, false)
-				 */
 			} else {
-				/* REMOVE
 				serializedUD, m, err  = oeverify.OEHostVerifyEvidence(evidenceList[i].SerializedEvidence,
 					evidenceList[i-1].SerializedEvidence, false)
-				 */
 			}
 			if err != nil || serializedUD == nil || m == nil {
 				return false
