@@ -5,6 +5,10 @@ Instructions for building and running the sample application and generating poli
 # Overview:
 -----------
 This app is similar to the application in .../sample_app but runs in a Gramine enclave.
+This sample application demonstrates a simple client and server setup that can certify
+with the Certifier Service to get admission certificates. Once certified, the client and
+server can talk to each other through a mutually trusted and authenticated TLS connection.
+
 A Gramine enclave uses SGX instructions to generate SGX quotes and reports. On initial
 deployment, Gramine communicates with the Quoting Enclave(QE) to get the SGX quote.
 The QE talks to the PCE to obtain the attestation collateral with the help of Intel
@@ -110,13 +114,15 @@ basic functionality.
 
 This example embeds the policy key in the application using embed_policy_key.exe.
 
-$CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.  On my
-computer, it is in ~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing.
+$CERTIFIER_PROTOTYPE is the top level directory for the certifier repository. This can be
+in a path such as:
+~/src/github.com/<user>/crypto/v2/certifier-framework-for-confidential-computing.
 It is helpful to have a shell variable for it:
 
-export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
+export CERTIFIER_PROTOTYPE=~/src/github.com/<user>/crypto/v2/certifier-framework-for-confidential-computing
 
-$GRAMINE_EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable is useful.
+$GRAMINE_EXAMPLE_DIR is the directory containing the example application. We can export
+the path using:
 
 export GRAMINE_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_gramine
 
@@ -218,7 +224,8 @@ cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib/
 make
 ```
 
-This should produce a go file for the certifier protobufs called certifier.pb.go in certprotos.
+This should produce a go file for the certifier protobufs called certifier.pb.go in
+certprotos.
 
 8c. Now build simpleserver:
 ```
@@ -254,6 +261,10 @@ $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
 9. Run the apps after getting admission certificates from Certifier Service
 ---------------
 9a. Get admission certificates
+Ensure the policy_store for each app has been added to the manifest of trusted files. If
+other files are needed to be trusted, ensure the manifest file includes the file in the
+section sgx.allowed_files.
+
 Open two new terminals (one for the app as a client and one for the app as a server):
 
 In app as a client terminal run the following:
@@ -274,10 +285,10 @@ gramine-sgx gramine_example_app --print_all=true \
       --operation=get-certifier --data_dir=./app2_data/ --policy_store_file=policy_store
 ```
 
-At this point, both versions of the app have their admission certificates.  You can look at
-the output of the terminal running simpleserver for output.  Now all we have to do is have
-the apps connect to each other for the final test.  The Certifier Service is no longer needed
-at this point.
+At this point, both versions of the app have their admission certificates. Output and
+results are printed on each of the terminals running the app and the service.
+Now all we have to do is have the apps connect to each other for the final test.
+The Certifier Service is no longer needed at this point.
 
 9b. Run the apps to test trusted services
 In app as a server terminal run the following:
@@ -297,8 +308,8 @@ gramine-sgx gramine_example_app --print_all=true --operation=run-app-as-client -
 You should see the message "Hi from your secret server" in the client terminal window and
 "Hi from your secret client".   If so, your first Confidential Computing program worked!
 
-App will run the simple server and client app and return a success/failure
-result. Gramine automatically talks to the configured DCAP libraries and SGX QV libraries
+As shown, apps run the server and client in a Gramine enclave and return a success/failure.
+Gramine automatically talks to the configured DCAP libraries and SGX QV libraries
 which in turn communicate with the remote Intel PCS to verify the obtained SGX quote
 after comparing it with the cached certificates. The Gramine application enclave through
 the Gramine SDK, talks to the Quoting Enclave which in turn interacts with the Intel PCE

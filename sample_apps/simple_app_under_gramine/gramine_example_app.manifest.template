@@ -47,4 +47,6 @@ sgx.allowed_files = [
   "file:/etc/gai.conf",
   "file:/etc/ssl/certs/ca-certificates.crt",
   "file:/etc/sgx_default_qcnl.conf",
+  "file:app1_data/policy_store",
+  "file:app2_data/policy_store",
 ]
