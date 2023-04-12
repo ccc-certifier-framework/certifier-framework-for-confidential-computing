@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gramineverify.h"
+#include "gramine_verify.h"
 
-bool gramine_Verify(const int what_to_say_size, byte* what_to_say,
+bool gramine_Lib_Verify(const int what_to_say_size, byte* what_to_say,
     const int attestation_size, byte* attestation,
     int* measurement_out_size, byte* measurement_out) {
     return false;
