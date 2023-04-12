@@ -26,7 +26,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
-	//gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
+	gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
 
 
@@ -2177,16 +2177,11 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 		return false, nil, nil, errors.New("Can't unmarshal gramine attestation")
 	}
 
-	// Call the cgo gramine verify function eventually
-	/* REMOVE comment and comment out next section
-	success, m := gramineverify.GramineVerify(ga.WhatWasSaid, ga.ReportedAttestation)
-	return success, ga.WhatWasSaid, m, nil
-	 */
-
-	// for testing
-	m := make([]byte, 48)
-	for i := 0; i < 48; i++ {
-		m[i]= byte(i)
+	// Call the cgo gramine verify function
+	m, err := gramineverify.GramineVerify(ga.WhatWasSaid, ga.ReportedAttestation)
+	if err != nil {
+		fmt.Printf("VerifyGramineAttestation: gramine verify failed\n")
+		return false, ga.WhatWasSaid, m, nil
 	}
 	return true, ga.WhatWasSaid, m, nil
 }
