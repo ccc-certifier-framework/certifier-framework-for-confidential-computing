@@ -33,7 +33,7 @@ func GramineVerify(what_to_say []byte, attestation []byte) ([]byte, error) {
 	measurementSize := C.int(256)
 	measurementOut := C.malloc(C.ulong(measurementSize))
 	defer C.free(unsafe.Pointer(measurementOut))
-	ret := C.gramine_Lib_Verify(C.int(len(what_to_say)), (*C.uchar)(what_to_say_ptr),
+	ret := C.graminelib_Verify(C.int(len(what_to_say)), (*C.uchar)(what_to_say_ptr),
 		C.int(len(attestation)), (*C.uchar)(attestation_ptr),
 		&measurementSize, (*C.uchar)(measurementOut))
 	if !ret {
