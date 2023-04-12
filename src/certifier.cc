@@ -691,6 +691,7 @@ bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
   if (enclave_type == "gramine-enclave") {
     // Gramine attest returns an attestation, not a
     // serialized gramine_attestation_message.
+    int t_size_out;
     int t_size = *size_out;
     if (!gramine_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
       return false;
