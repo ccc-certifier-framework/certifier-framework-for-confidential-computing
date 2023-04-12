@@ -30,3 +30,6 @@ dummy:
 
 clean:
 	rm -f libgramineverify.so *.o
+
+distclean:
+	rm -r mbedtls/ *.tar.gz
