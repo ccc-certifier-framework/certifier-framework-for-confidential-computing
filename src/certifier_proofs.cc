@@ -7,6 +7,9 @@
 #ifdef SEV_SNP
 #include "attestation.h"
 #endif
+#ifdef GRAMINE_CERTIFIER
+#include "gramine_api.h"
+#endif
 
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
@@ -1027,7 +1030,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       if (!gramine_Verify(
            evp.fact_assertion(i).serialized_evidence().size(),
            (byte *)evp.fact_assertion(i).serialized_evidence().data(),
-           &user_data_size, user_data, &measurement_out_size,
+           user_data_size, user_data, &measurement_out_size,
            measurement_out)) {
         printf("init_proved_statements: gramine_Verify failed\n");
       }

@@ -2,7 +2,7 @@ GRAMINE_SRC_PATH = ../../../gramine/gramine
 SGX_INCLUDE = -I$(GRAMINE_SRC_PATH)/pal/src/host/linux-sgx
 SGX_LDFLAGS = -Wl,--enable-new-dtags $(shell pkg-config --libs sgx_util)
 CERTIFIER_SRC_PATH = ../../
-CERTIFIER_INCLUDE = -I. -I$(CERTIFIER_SRC_PATH)/include -I$(CERTIFIER_SRC_PATH)/src/gramine $(SGX_INCLUDE)
+CERTIFIER_INCLUDE = -I. -I$(CERTIFIER_SRC_PATH)/include -I$(CERTIFIER_SRC_PATH)/src/gramine $(SGX_INCLUDE) -I./mbedtls/include
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE) -DGRAMINE_CERTIFIER
 CERTIFIER_LDFLAGS = -lssl -lcrypto
 CERTIFIER_LDFLAGS += -L./ -L/usr/local/lib
@@ -30,3 +30,6 @@ dummy:
 
 clean:
 	rm -f libgramineverify.so *.o
+
+distclean:
+	rm -r mbedtls/ *.tar.gz
