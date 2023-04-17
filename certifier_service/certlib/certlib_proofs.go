@@ -381,7 +381,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				}
 			}
 			issuerName := GetIssuerNameFromCert(cert)
-			signerKey := FindKeySeen(seenList, issuerName)
+			signerKey := FindKeySeen(seenList, subjKey.GetKeyName())
 			if signerKey == nil {
 				fmt.Printf("InitProvedStatements: signerKey (%s, %s) is nil\n", issuerName, subjKey.GetKeyName())
 				return false
