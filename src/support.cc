@@ -1250,10 +1250,14 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
     return false;
   }
 
-  if (BN_num_bytes(p) == 48) {
+  int bignum_size = BN_num_bytes(p);
+
+  if (bignum_size == 48) {
     ek->set_curve_name("P-384");
+  } else if (bignum_size == 32) {
+    ek->set_curve_name("P-256");
   } else {
-    printf("ECC_to_key: Only P-384 supported\n");
+    printf("ECC_to_key: BigNum size not supported: %d\n", bignum_size);
     return false;
   }
 
