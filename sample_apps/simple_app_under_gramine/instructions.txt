@@ -103,9 +103,14 @@ tool:
 sudo apt install sgx-pck-id-retrieval-tool
 ```
 Currently we use the Intel Root Certificate obtained by running the tool above. Copy the
-root certificate to gramine_example_app.crt (file to be renamed later).
+certificate chain to a file named intel.pem (file to be renamed later).
 More info on how to run is detailed here:
 https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/tools/PCKRetrievalTool
+
+Convert the pem file to der format using
+```
+openssl x509 -in intel.pem -inform pem -out sgx.cert.der -outform der
+```
 
 # Steps to run Gramine app:
 ---------------------------
