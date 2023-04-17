@@ -16,7 +16,7 @@ The Certifier Service provides support for scalable, policy driven
 trust management including attestation evaluation, application upgrade
 and other Confidential Computing Trust services.
 
-This project was started at the VMware Inc.
+This project was started at VMware Inc.
 
 Except as expressly noted in individual source files, the code and
 accompanying material is licensed for general use under the Apache
@@ -31,14 +31,15 @@ licenses.
 
 The repository contains the complete Certifier Framework source and a number of
 examples as well as complete instructions.  In particular, the sample in
-sample_apps/simple_app policy is a complete guide on building and developing
-an application, and policy as well as deploying a service.
+sample_apps/simple_app [example_app.cc](sample_apps/simple_app/example_app.cc)
+policy is a complete guide on building and developing an application, and
+policy as well as deploying a service.
 
 ## Documentation and Installation
 
 Instructions on building the Certifier Framework for Confidential Computing can
-be found in INSTALL.md and additional documentation can be found in the Doc
-subdirectory.
+be found in [INSTALL.md](INSTALL.md) and additional documentation can be found
+in the Doc subdirectory.
 
 ## Feedback and questions
 

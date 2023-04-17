@@ -7,92 +7,123 @@ which includes this INSTALL.md file, is denoted $(CERTIFIER).
 The Ubuntu 20.04 install guide can be found in
 [Ubuntu Install](./Doc/install-certifier-Ubuntu-20.04.md).
 
-Read the Guide in the Doc directory to understand the basic nomenclature
-and programs you will build and use.
+Read the [Guide](Doc/Guide.pdf) in the Doc directory to understand the
+basic nomenclature and programs you will build and use.
 
 
-Certifier API
--------------
+# Certifier API
 
-The certifier API is in the src directory.  To compile and run the
-certifier API tests:
+The certifier API is in the src/ directory.
 
-  cd $(CERTIFIER)/src
-  make clean -f certifier_tests.mak
-  make -f certifier_tests.mak
-  ./certifier_tests.exe [--print_all=true]
+## Setup steps
 
+You will need to install the following packages:
+
+```shell
+$ sudo apt-get update -y
+$ sudo apt-get install -y protobuf-compiler
+$ sudo apt-get install -y libgtest-dev/jammy
+$ sudo apt-get install -y libgflags-dev/jammy
+$ sudo apt-get install -y protoc-gen-go
+$ sudo apt-get install -y golang-go
+$ sudo apt-get install -y libmbedtls-dev/jammy
+```
+
+## To compile and run the certifier API tests
+
+```shell
+  $ cd $(CERTIFIER)/src
+  $ make -f certifier_tests.mak clean
+  $ make -f certifier_tests.mak
+  $ ./certifier_tests.exe [--print_all=true]
+```
 If you are compiling the certifier tests win sev enabled (This is
-indicated by ENABLE_SEV=1 in the mak file), you must run the
-tests as root and must install the simulated SEV driver (see
+indicated by ENABLE_SEV=1 in the [certifier_tests.mak](src/certifier_tests.mak) file),
+you must run the tests as root and must install the simulated SEV driver (see
 below).
 
-  sudo ./certifier_tests.exe --print_all=true
+```shell
+$ sudo ./certifier_tests.exe --print_all=true
+```
 
 Otherwise
 
-  ./certifier_tests.exe --print_all=true
+```shell
+$ ./certifier_tests.exe --print_all=true
+```
 
 should work fine.
 
-Once your sure the certifier works, compile and make the
-certifier library:
+Once you are sure the certifier works, compile and make the certifier library:
 
-  cd $(CERTIFIER)/src
-  make clean -f certifier.mak
-  make -f certifier.mak
+```shell
+ $ cd $(CERTIFIER)/src
+ $ make -f certifier.mak clean
+ $ make -f certifier.mak
+```
+
+# Certifier Service
+
+The certifier service is in the [certifier_service](./certifier_service/) directory
+and contains two subdirectories: [certlib](./certifier_service/certlib/) and
+[certprotos](./certifier_service/certprotos/).
+
+To compile the certlib tests:
+
+  ```shell
+  $ cd $(CERTIFIER)/certifier_service/certprotos
+  $ protoc --go_opt=paths=source_relative --go_out=. --go_opt=Mcertifier.proto= ./certifier.proto
+  $ cd ../certlib
+  $ go test
+```
+To compile and run the Certifier Service and test it, follow
+the [instructions](./sample_apps/simple_app/instructions.txt)
+in the [sample_apps/simple_app](./sample_apps/simple_app/) example.
 
 
-Certifier Service
------------------
-
-The certifier service is in the certifier_service directory and contains
-two subdirectories: certlib and certprotos.  To compile the certlib tests:
-
-  cd $(CERTIFIER)/certifier_service/certprotos
-  protoc --go_opt=paths=source_relative --go_out=. --go_opt=Mcertifier.proto= ./certifier.proto
-  cd ../certlib
-  go test
-
-To compile and run the Certifier Service and test it, follow the instructions in
-sample_apps/simple_example.
-
-
-Utilities
----------
+# Utilities
 
 There are utilities in the utilities subdirectory.  To compile them:
 
-  cd $(CERTIFIER)/utilities
-  make clean -f cert_utility.mak
-  make -f cert_utility.mak
-  make clean -f policy_utilities.mak
-  make -f policy_utilities.mak
+```shell
+$ cd $(CERTIFIER)/utilities
+$ make -f cert_utility.mak clean
+$ make -f cert_utility.mak
+$ make -f policy_utilities.mak clean
+$ make -f policy_utilities.mak
+```
 
 There is a Linux driver that simulates the SEV functions in sev-snp-simulator.
-Portions of this code are GPL'd and the build driver is GPL'd.  This is the
-only directory that contains GPL licensed code and it is not included in the
-certifier API or certifier service, so all other code in the Certifier Framework
-for Confidential Computing is not affected by GPL license terms.  To build this
-and install it on Linux:
+Portions of this code are GPL licensed and the build driver is also GPL licensed.
+This is the only directory that contains GPL licensed code and it is not included in
+the certifier API or certifier service, so all other code in the Certifier Framework
+for Confidential Computing is not affected by GPL license terms.
 
-  cd $(CERTIFIER)/sev-snp-simulator
-  make sev-guest
-  sudo make insmod (You must be root to install the module)
-  cd $(CERTIFIER)/sev-snp-simulator/test
-  make sev-test
-  sudo sev-test (You must be root to run the test)
+To build this and install it on Linux: (RESOLVE: These steps did not work; got diff errors. Sort it out during review.)
 
-There is a sample app in sample_apps/simple_app. To compile:
+```shell
+$ cd $(CERTIFIER)/sev-snp-simulator
+$ make sev-guest
+$ sudo make insmod     # (You must be root to install the module)
+$ cd $(CERTIFIER)/sev-snp-simulator/test
+$ make sev-test
+$ sudo sev-test        # (You must be root to run the test)
+```
 
-  cd $(CERTIFIER)/sample_apps/simple_app
-  make clean -f example_app.mak
-  make -f example_app.mak
+To compile the sample app in [sample_apps/simple_app](sample_apps/simple_app/):
 
-Instructions on running the app are in instructions.txt as well as
-notes on provisioning a policy key in policy_key_notes.txt.
-This example illustrates very nearly all that is needed
-to run a "real" app.
+```shell
+$ cd $(CERTIFIER)/sample_apps/simple_app
+$ make -f example_app.mak clean
+$ make -f example_app.mak
+```
+
+Instructions on running the app are in
+[instructions.txt](./sample_apps/simple_app/instructions.txt)
+as well as notes on provisioning a policy key in
+[policy_key_notes.txt](./sample_apps/simple_app/policy_key_notes.txt).
+
+This example illustrates very nearly all that is needed to run a "real" app.
 
 There is also an application service that provides Confidential Computing
 support for application programs on encrypted virtual machine platforms.
