@@ -366,22 +366,31 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
 	km.KeyType = &ktype
 	format := "vse-key"
 	km.KeyFormat = &format
+	var BNSize int
+	BNSize = 48
+	var nm string
+	nm = "P-384"
 	if PK.Curve == nil {
 		fmt.Printf("No curve\n")
 		return false
 	}
 	p := PK.Curve.Params()
-	if p.BitSize != 384 {
+	if p.BitSize == 256 {
+		BNSize = 32
+		nm = "P-256"
+	} else if p.BitSize == 384 {
+		BNSize = 48
+		nm = "P-384"
+	} else {
 		return false
 	}
 	if p.P == nil  || p.B == nil || p.Gx == nil || p.Gy == nil || PK.X == nil || PK.Y == nil {
 		return false
 	}
 	km.EccKey = new(certprotos.EccMessage)
-	nm := "P-384"
 	km.EccKey.CurveName = &nm
 
-	km.EccKey.CurveP = make([]byte, 48)
+	km.EccKey.CurveP = make([]byte, BNSize)
 	km.EccKey.CurveP = p.P.FillBytes(km.EccKey.CurveP)
 
         // A is -3
@@ -389,21 +398,21 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
         t.SetInt64(-3)
         a := new(big.Int)
         a.Add(t, p.P)
-        km.EccKey.CurveA = make([]byte, 48)
+        km.EccKey.CurveA = make([]byte, BNSize)
 	km.EccKey.CurveA = a.FillBytes(km.EccKey.CurveA)
 
-	km.EccKey.CurveB = make([]byte, 48)
+	km.EccKey.CurveB = make([]byte, BNSize)
 	km.EccKey.CurveB = p.B.FillBytes(km.EccKey.CurveB)
 
 	km.EccKey.PublicPoint = new(certprotos.PointMessage)
-	km.EccKey.PublicPoint.X = make([]byte, 48)
-	km.EccKey.PublicPoint.Y = make([]byte, 48)
+	km.EccKey.PublicPoint.X = make([]byte, BNSize)
+	km.EccKey.PublicPoint.Y = make([]byte, BNSize)
 	km.EccKey.PublicPoint.X = PK.X.FillBytes(km.EccKey.PublicPoint.X)
 	km.EccKey.PublicPoint.Y = PK.Y.FillBytes(km.EccKey.PublicPoint.Y)
 
 	km.EccKey.BasePoint = new(certprotos.PointMessage)
-	km.EccKey.BasePoint.X = make([]byte, 48)
-	km.EccKey.BasePoint.Y = make([]byte, 48)
+	km.EccKey.BasePoint.X = make([]byte, BNSize)
+	km.EccKey.BasePoint.Y = make([]byte, BNSize)
 	km.EccKey.BasePoint.X = p.Gx.FillBytes(km.EccKey.BasePoint.X)
 	km.EccKey.BasePoint.Y = p.Gy.FillBytes(km.EccKey.BasePoint.Y)
 	return true
