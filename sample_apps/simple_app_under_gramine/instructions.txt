@@ -102,8 +102,8 @@ tool:
 ```
 sudo apt install sgx-pck-id-retrieval-tool
 ```
-Currently we use the Intel Root Certificate obtained by running the tool above. Copy the
-certificate chain to a file named intel.pem (file to be renamed later).
+Currently we use the Intel root certificate obtained by running the tool above. Copy the
+root certificate to a file named intel.pem (file to be renamed later).
 More info on how to run is detailed here:
 https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/tools/PCKRetrievalTool
 
