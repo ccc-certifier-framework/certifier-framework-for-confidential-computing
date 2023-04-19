@@ -369,7 +369,6 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
 	var BNSize int
 	BNSize = 48
 	var nm string
-	nm = "P-384"
 	if PK.Curve == nil {
 		fmt.Printf("No curve\n")
 		return false
