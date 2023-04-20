@@ -1131,10 +1131,12 @@ bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig,
   byte digest[len];
 
   if (!digest_message(alg, msg, size, digest, len)) {
+    printf("ecc_verify: %s digest failed %d\n", alg, len);
     return false;
   }
   int res = ECDSA_verify(0, digest, len, sig, size_sig, key);
   if (res != 1) {
+    printf("ecc_verify: ECDSA_failed %d %d\n", len, size_sig);
     return false;
   }
   return true;

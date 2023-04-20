@@ -352,10 +352,13 @@ bool test_public_keys(bool print_all) {
   if (print_all) {
     printf("ecc sign out %d : ", size_out); print_bytes(size_out, out); printf("\n");
   }
+#if 1
+  // TODO: sometimes this faults
   if (!ecc_verify("sha-256", ecc_key, size_data, data, size_out, out)) {
     printf("ecc_verify failed\n");
     return false;
   }
+#endif
 
   key_message priv_km2;
   key_message pub_km2;

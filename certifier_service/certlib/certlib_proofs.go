@@ -240,6 +240,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
+/*
 		} else if ev.GetEvidenceType() == "oe-attestation-report" {
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
@@ -281,6 +282,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
+*/
 		} else if ev.GetEvidenceType() == "sev-attestation" {
 			// get the key from ps
 			n := len(ps.Proved) - 1
@@ -2177,6 +2179,7 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 		return false, nil, nil, errors.New("Can't unmarshal gramine attestation")
 	}
 
+/*
 	// Call the cgo gramine verify function
 	m, err := gramineverify.GramineVerify(ga.WhatWasSaid, ga.ReportedAttestation)
 	if err != nil {
@@ -2184,6 +2187,8 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 		return false, ga.WhatWasSaid, m, nil
 	}
 	return true, ga.WhatWasSaid, m, nil
+ */
+	return false, nil, nil, nil
 }
 
 
