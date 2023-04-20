@@ -317,6 +317,8 @@ bool test_public_keys(bool print_all) {
 
   EC_KEY_free(ecc_key);
 
+  size_out = 2048;
+  size_recovered = 2048;
   memset(data, 0, size_data);
   memset(out, 0, size_out);
   memset(recovered, 0, size_recovered);
@@ -339,7 +341,6 @@ bool test_public_keys(bool print_all) {
     print_key((const key_message&)km4);
   }
 
-#if 0
   if (print_all) {
     printf("public to encrypt: "); print_bytes(size_data, data); printf("\n");
   }
@@ -349,13 +350,12 @@ bool test_public_keys(bool print_all) {
     return false;
   }
   if (print_all) {
-    printf("ecc sign out    : "); print_bytes(size_out, out); printf("\n");
+    printf("ecc sign out %d : ", size_out); print_bytes(size_out, out); printf("\n");
   }
   if (!ecc_verify("sha-256", ecc_key, size_data, data, size_out, out)) {
     printf("ecc_verify failed\n");
     return false;
   }
-#endif
 
   key_message priv_km2;
   key_message pub_km2;
@@ -364,8 +364,8 @@ bool test_public_keys(bool print_all) {
     return false;
   }
 
-  priv_km.set_key_name("test-key");
-  priv_km.set_key_type("ecc-256-private");
+  priv_km2.set_key_name("test-key");
+  priv_km2.set_key_type("ecc-256-private");
   if (print_all) {
     printf("Key:\n");
     print_key(priv_km2);

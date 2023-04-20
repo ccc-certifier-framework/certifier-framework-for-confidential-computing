@@ -1108,14 +1108,18 @@ bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, 
   byte digest[len];
 
   int blk_len = ECDSA_size(key);
-  if (*size_out < 2 * blk_len)
+  if (*size_out < 2 * blk_len) {
+    printf("ecc_sign: size_out too small %d %d\n", *size_out, blk_len);
     return false;
+  }
 
   if (!digest_message(alg, msg, size, digest, len)) {
+    printf("ecc_sign: digest fails\n");
     return false;
   }
   unsigned int sz = (unsigned int) *size_out;
   if (ECDSA_sign(0, digest, len, out, &sz, key) != 1) {
+    printf("ecc_sign: ECDSA_sign fails\n");
     return false;
   }
   *size_out = (int) sz;
