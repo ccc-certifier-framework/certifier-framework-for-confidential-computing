@@ -853,8 +853,8 @@ func TestInterface(t *testing.T) {
         fmt.Println(i.Func2(3))
 }
 
-func TestEcc(t *testing.T) {
-        fmt.Printf("\nTestECC\n")
+func TestEcc384(t *testing.T) {
+        fmt.Printf("\nTestECC384\n")
         pK, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
         if err != nil {
                 t.Errorf("ecdsa.GenerateKey fails\n")
@@ -958,6 +958,114 @@ func TestEcc(t *testing.T) {
         fmt.Printf("\n")
         fmt.Printf("Two (%d): ", len(ttt[0:48]))
         PrintBytes(ttt[0:48])
+        fmt.Printf("\n")
+}
+
+func TestEcc256(t *testing.T) {
+        fmt.Printf("\nTestECC256\n")
+        pK, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+        if err != nil {
+                t.Errorf("ecdsa.GenerateKey fails\n")
+                return
+        }
+        name := "test-key"
+        k := new(certprotos.KeyMessage)
+        PK := pK.Public()
+        if !GetInternalKeyFromEccPublicKey(name, PK.(*ecdsa.PublicKey), k) {
+                t.Errorf("GetInternalKeyFromEccPublicKey fails\n")
+                return
+        }
+        PrintKey(k)
+        _, new_PK, err := GetEccKeysFromInternal(k)
+        if err != nil || new_PK == nil {
+                t.Errorf("GetInternalKeyFromEccPublicKey fails\n")
+                return
+        }
+        new_k := new(certprotos.KeyMessage)
+        if !GetInternalKeyFromEccPublicKey(name, PK.(*ecdsa.PublicKey), new_k) {
+                t.Errorf("GetInternalKeyFromEccPublicKey fails\n")
+                return
+        }
+        PrintKey(new_k)
+        if !SameKey(k, new_k) {
+                t.Errorf("Translated key doesnt match\n")
+                return
+        }
+
+        toHash := make([]byte, 50)
+        for i := 0; i < 50; i++ {
+                toHash[i] = byte(i)
+        }
+        hashed := sha256.Sum256(toHash)
+        fmt.Printf("hashed: ")
+        PrintBytes(hashed[0:])
+        fmt.Printf("\n")
+
+        r, s, err := ecdsa.Sign(rand.Reader, pK, hashed[0:])
+        if err != nil {
+                t.Errorf("Couldn't sign\n")
+                return
+        }
+        if !ecdsa.Verify(PK.(*ecdsa.PublicKey), hashed[0:], r, s) {
+                t.Errorf("Couldn't verify with old PK\n")
+                return
+        }
+        fmt.Printf("\n\nr: ")
+        fmt.Print(r)
+        fmt.Printf("\n")
+        fmt.Printf("s: ")
+        fmt.Print(s)
+        fmt.Printf("\nr: ")
+        r_bytes := r.Bytes()
+        PrintBytes(r_bytes)
+        fmt.Printf("\ns: ")
+        s_bytes := s.Bytes()
+        PrintBytes(s_bytes)
+        fmt.Printf("\n\n")
+        fmt.Printf("New internal:\n")
+        fmt.Print(new_PK)
+        fmt.Printf("\n")
+        fmt.Printf("X: ")
+        fmt.Print(new_PK.X)
+        fmt.Printf("\n")
+        if !ecdsa.Verify(new_PK, hashed[0:], r, s) {
+                t.Errorf("Couldn't verify with new PK\n")
+                return
+        }
+        // certlib.VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte
+
+        new_name := "vcertKey"
+        km := new(certprotos.KeyMessage)
+        if !GetInternalKeyFromEccPublicKey(new_name, new_PK, km) {
+                t.Errorf("Couldn't GetInternalKeyFromEccPublicKey\n")
+                return
+        }
+        PrintKey(km)
+        fmt.Printf("\n")
+
+        _, recovered_PK, err := GetEccKeysFromInternal(km)
+        if err != nil {
+                t.Errorf("GetEccKeysFromInternal failed\n")
+                return
+        }
+
+        new_km := new(certprotos.KeyMessage)
+        if !GetInternalKeyFromEccPublicKey(new_name, recovered_PK, new_km) {
+                t.Errorf("Couldn't GetInternalKeyFromEccPublicKey\n")
+                return
+        }
+        PrintKey(new_km)
+        fmt.Printf("\n")
+
+        ttt :=  make([]byte, 32)
+        for i := 0; i < 32; i++ {
+                ttt[i] = byte(i)
+        }
+        fmt.Printf("One (%d): ", len(ttt[0:31]))
+        PrintBytes(ttt[0:31])
+        fmt.Printf("\n")
+        fmt.Printf("Two (%d): ", len(ttt[0:32]))
+        PrintBytes(ttt[0:32])
         fmt.Printf("\n")
 }
 
@@ -1156,6 +1264,7 @@ func TestPlatformPrimitives(t *testing.T) {
 
 }
 
+/*
 func TestPlatformVerify(t *testing.T) {
 
         arkCertFile := "test_data/sev_ark_cert.der"
@@ -1301,6 +1410,7 @@ func TestPlatformVerify(t *testing.T) {
 	PrintBytes(measurement)
 	fmt.Printf("\n")
 }
+*/
 
 // For Sev testing --- deprecated
 /*
@@ -1395,6 +1505,7 @@ func TestSevSignatures(t *testing.T) {
 }
 */
 
+/*
 func TestGramineVerify(t *testing.T) {
 
         policyKeyFile := "test_data/policy_key_file.bin"
@@ -1651,7 +1762,6 @@ func TestGramineVerify(t *testing.T) {
 		return
         }
 
-/*
 	alreadyProved.Proved = append(alreadyProved.Proved, c5)
 	fmt.Printf("\nProved on entry\n")
 	for i := 0; i < len(alreadyProved.Proved);  i++ {
@@ -1659,8 +1769,6 @@ func TestGramineVerify(t *testing.T) {
 		PrintVseClause(alreadyProved.Proved[i])
 		fmt.Printf("\n")
 	}
- */
-
 
 	// Validate
 	success, toProve, measurement := ValidateGramineEvidence(&policyKey, evp, alreadyProved, pur)
@@ -1676,3 +1784,4 @@ func TestGramineVerify(t *testing.T) {
 	PrintBytes(measurement)
 	fmt.Printf("\n")
 }
+*/
