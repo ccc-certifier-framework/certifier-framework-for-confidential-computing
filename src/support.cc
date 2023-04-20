@@ -57,6 +57,10 @@ name_size cipher_block_byte_name_size[] = {
   {"rsa-4096-sha384-pkcs-sign", 512},
   {"rsa-4096-private", 512},
   {"rsa-4096-public", 512},
+  {"ecc-384-public", 48},
+  {"ecc-384-private", 48},
+  {"ecc-256-public", 32},
+  {"ecc-256-private", 32},
 };
 
 name_size cipher_key_byte_name_size[] = {
@@ -675,6 +679,10 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
     alg_type = ecc_alg_type;
     out->set_key_type("ecc-384-public");
     n_bytes = cipher_block_byte_size("ecc-384-public");
+  } else if (in.key_type() == "ecc-256-private") {
+    alg_type = ecc_alg_type;
+    out->set_key_type("ecc-256-public");
+    n_bytes = cipher_block_byte_size("ecc-256-public");
   } else {
     printf("private_key_to_public_key: bad key type\n");
     return false;
