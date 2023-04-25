@@ -1,14 +1,3 @@
-#include <gflags/gflags.h>
-#include "certifier.h"
-#include "support.h"
-#include "attestation.h"
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/bio.h>
-#include <openssl/pem.h>
-#include <openssl/sha.h>
-
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <gflags/gflags.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
+#include <openssl/bio.h>
+#include <openssl/pem.h>
+#include <openssl/sha.h>
+#include "certifier.h"
+#include "support.h"
+#include "attestation.h"
 
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(ark_der, "sev_ark_cert.der",  "ark cert file");

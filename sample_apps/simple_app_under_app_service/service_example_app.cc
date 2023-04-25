@@ -1,24 +1,3 @@
-#include <gtest/gtest.h>
-#include <gflags/gflags.h>
-
-#include "support.h"
-#include "certifier.h"
-#include "simulated_enclave.h"
-#include "application_enclave.h"
-#include "cc_helpers.h"
-
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include  <netdb.h>
-#include <openssl/ssl.h>
-#include <openssl/rsa.h>
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/hmac.h>
-#include <openssl/err.h>
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <gtest/gtest.h>
+#include <gflags/gflags.h>
+
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include  <netdb.h>
+#include <openssl/ssl.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/hmac.h>
+#include <openssl/err.h>
+
+#include "support.h"
+#include "certifier.h"
+#include "simulated_enclave.h"
+#include "application_enclave.h"
+#include "cc_helpers.h"
 
 // operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false,  "verbose");

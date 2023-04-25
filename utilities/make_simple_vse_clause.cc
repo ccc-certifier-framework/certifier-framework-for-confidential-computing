@@ -1,7 +1,3 @@
-#include <gflags/gflags.h>
-#include "certifier.h"
-#include "support.h"
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +16,10 @@
 //  --platform_subject=file --environment_subject=file --verb="speaks-for"
 //  --key_object=file --measurement_object=file --platform_object=file --environment_object=file
 //  --output=output-file-name
+
+#include <gflags/gflags.h>
+#include "certifier.h"
+#include "support.h"
 
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(output, "simple_clause.bin",  "output file");
