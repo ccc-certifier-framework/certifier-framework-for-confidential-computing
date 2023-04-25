@@ -15,21 +15,26 @@ jobs:
     - uses: actions/checkout@v3
     - name: dependencies
       run: |
-        sudo apt update
-        sudo apt install libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler
+        sudo apt update -y
+        sudo apt install -y libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go
     - name: make
       run: |
+        #! ---------------------------------------------------------------------
         #! Check that core certifier programs still compile
         cd src
+        make -f certifier_tests.mak clean
         make -f certifier.mak
-        rm ./*.o
+        make -f certifier.mak clean
         make -f certifier_tests.mak
         ./certifier_tests.exe
-        #! Check that utilities programs still compile
-        cd ../utilities
-        make -f cert_utility.mak
-        make -f policy_utilities.mak
+        #! ---------------------------------------------------------------------
+        #! Compile and build simple_app. Execute script to exercise simple_app
+        #! This will also check that utilities programs still compile
+        cd ../sample_apps/simple_app
+        ./cleanup.sh
+        ./run_example.sh
+        #! ---------------------------------------------------------------------
         #! Few other miscellaneous checks
-        cd ../certifier_service/oelib
+        cd ../../certifier_service/oelib
         make clean
         make dummy
