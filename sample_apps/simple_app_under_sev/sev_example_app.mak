@@ -45,9 +45,9 @@ $(O)/sev_report.o $(O)/cc_helpers.o
 all:	sev_example_app.exe
 clean:
 	@echo "removing object files"
-	rm $(O)/*.o
+	rm -rf $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/sev_example_app.exe
+	rm -rf $(EXE_DIR)/sev_example_app.exe
 
 sev_example_app.exe: $(dobj) 
 	@echo "linking executable files"

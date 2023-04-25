@@ -33,8 +33,8 @@ LDFLAGS= -L$(LOCAL_LIB) -lnlohmann_json_schema_validator -lgflags
 all:	$(EXE_DIR)/policy_generator.exe
 
 clean:
-	rm $(O)/policy_generator.o
-	rm $(EXE_DIR)/policy_generator.exe
+	rm -rf $(O)/policy_generator.o
+	rm -rf $(EXE_DIR)/policy_generator.exe
 
 $(EXE_DIR)/policy_generator.exe: $(EXE_DIR)/policy_generator.o
 	$(LD) -o $(EXE_DIR)/policy_generator.exe policy_generator.o $(LDFLAGS)

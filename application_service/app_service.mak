@@ -52,9 +52,9 @@ all:	app_service.exe hello_world.exe send_request.exe test_user.exe
 
 clean:
 	@echo "removing object files"
-	rm $(O)/*.o
+	rm -rf $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/app_service.exe
+	rm -rf $(EXE_DIR)/app_service.exe
 
 hello_world.exe: hello_world.cc
 	@echo "hello_world.cc"

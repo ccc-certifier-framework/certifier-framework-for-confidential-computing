@@ -49,9 +49,9 @@ $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
 all:	service_example_app.exe start_program.exe
 clean:
 	@echo "removing object files"
-	rm $(O)/*.o
+	rm -rf $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/service_example_app.exe
+	rm -rf $(EXE_DIR)/service_example_app.exe
 
 service_example_app.exe: $(dobj) 
 	@echo "linking executable files"
