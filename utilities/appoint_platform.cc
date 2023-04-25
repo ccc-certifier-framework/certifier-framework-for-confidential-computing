@@ -1,7 +1,3 @@
-#include <gflags/gflags.h>
-#include "certifier.h"
-#include "support.h"
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +13,10 @@
 // limitations under the License.
 
 // appoint_platform.exe --policy_key=file --cert_file=ark_cert.bin --output=output-file-name
+
+#include <gflags/gflags.h>
+#include "certifier.h"
+#include "support.h"
 
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(output, "simple_clause.bin",  "output file");

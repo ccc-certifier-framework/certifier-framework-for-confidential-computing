@@ -1,13 +1,3 @@
-#include <fstream>
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <vector>
-#include <stdio.h>
-#include <gflags/gflags.h>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json-schema.hpp>
-
 //  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <vector>
+#include <stdio.h>
+#include <gflags/gflags.h>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json-schema.hpp>
 
 using namespace std;
 using nlohmann::json;

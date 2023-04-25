@@ -1,23 +1,3 @@
-#include <openssl/ssl.h>
-#include <openssl/rsa.h>
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/hmac.h>
-#include <openssl/x509v3.h>
-#include <openssl/ecdsa.h>
- #include <openssl/bn.h>
- #include <openssl/evp.h>
- #include <openssl/ec.h>
-
-#include "support.h" 
-#include "certifier.pb.h" 
-
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <string>
-using std::string;
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +11,26 @@ using std::string;
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#include <openssl/ssl.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/hmac.h>
+#include <openssl/x509v3.h>
+#include <openssl/ecdsa.h>
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/ec.h>
+
+#include "support.h" 
+#include "certifier.pb.h" 
+
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <string>
+using std::string;
 
 // -----------------------------------------------------------------------
 
