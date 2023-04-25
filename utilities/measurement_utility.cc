@@ -1,7 +1,3 @@
-#include <gflags/gflags.h>
-#include "certifier.h"
-#include "support.h"
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // make_measurement.exe --type=hash --input=input-file --output=output-file
+
+#include <gflags/gflags.h>
+#include "certifier.h"
+#include "support.h"
+
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(type, "hash",  "measurement type");
 DEFINE_string(input, "measurement_utility.exe",  "input file");
