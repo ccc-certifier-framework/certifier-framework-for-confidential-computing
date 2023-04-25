@@ -104,16 +104,6 @@ void server_application(secure_authenticated_channel& channel) {
   channel.write(strlen(msg), (byte*)msg);
 }
 
-bool run_me_as_server(const string& host_name, int port,
-      string& asn1_policy_cert, key_message& private_key,
-      string& private_key_cert) {
-
-  printf("running as server\n");
-  server_dispatch(host_name, port, asn1_policy_cert, private_key,
-      private_key_cert, server_application);
-  return true;
-}
-
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -196,7 +186,7 @@ int main(int an, char** av) {
       goto done;
     }
 
-    printf("running as client\n");
+    printf("Running App as client\n");
     if (!app_trust_data->cc_auth_key_initialized_ ||
         !app_trust_data->cc_policy_info_initialized_) {
       printf("trust data not initialized\n");
@@ -221,12 +211,15 @@ int main(int an, char** av) {
       ret = 1;
       goto done;
     }
-    printf("running as server\n");
-    server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
-        app_trust_data->serialized_policy_cert_,
-          app_trust_data->private_auth_key_,
-          app_trust_data->private_auth_key_.certificate(),
-          server_application);
+    printf("Running App as server\n");
+    if (!server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+                         app_trust_data->serialized_policy_cert_,
+                         app_trust_data->private_auth_key_,
+                         app_trust_data->private_auth_key_.certificate(),
+                         server_application)) {
+      ret = 1;
+      goto done;
+    }
   } else {
     printf("Unknown operation\n");
   }

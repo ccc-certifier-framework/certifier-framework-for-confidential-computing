@@ -676,7 +676,8 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
     out->set_key_type("ecc-384-public");
     n_bytes = cipher_block_byte_size("ecc_384-public");
   } else {
-    printf("private_key_to_public_key: bad key type\n");
+    // Shut compiler warning about n_bytes set-but-not-used
+    printf("private_key_to_public_key: bad key type (n_bytes=%d)\n", n_bytes);
     return false;
   }
 
@@ -922,7 +923,8 @@ bool key_to_RSA(const key_message& k, RSA* r) {
     key_size_bits= 4096;
     private_key = false;
   } else {
-    return false;
+    // Shut compiler warning about key_size_bits set-but-not-used
+    return (key_size_bits != 0);
   }
 
   if (!k.has_rsa_key()) {

@@ -173,9 +173,9 @@ public:
   bool get_peer_id(string* out);
 };
 
-void server_dispatch(const string& host_name, int port,
-      string& asn1_root_cert, key_message& private_key,
-      const string& private_key_cert, void (*)(secure_authenticated_channel&));
+bool server_dispatch(const string& host_name, int port,
+                     string& asn1_root_cert, key_message& private_key,
+                     const string& private_key_cert, void (*)(secure_authenticated_channel&));
 
 #endif
 
