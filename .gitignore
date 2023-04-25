@@ -2,3 +2,14 @@
 *.o
 *.swp
 *.swo
+*.pb.h
+*.pb.cc
+*.pb.go
+*.so
+*.cmd
+*.exe
+*.bin
+app1_data/
+app2_data/
+simpleserver
+provisioning/

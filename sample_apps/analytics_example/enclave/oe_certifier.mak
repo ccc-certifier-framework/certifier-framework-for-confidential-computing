@@ -41,9 +41,9 @@ dobj=	$(O)/oe_certifier.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o
 all:	oe_certifier.exe
 clean:
 	@echo "removing object files"
-	rm $(O)/*.o
+	rm -rf $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/oe_certifier.exe
+	rm -rf $(EXE_DIR)/oe_certifier.exe
 
 oe_certifier.exe: $(dobj) 
 	@echo "linking executable files"
