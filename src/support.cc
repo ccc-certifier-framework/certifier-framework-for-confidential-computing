@@ -57,6 +57,10 @@ name_size cipher_block_byte_name_size[] = {
   {"rsa-4096-sha384-pkcs-sign", 512},
   {"rsa-4096-private", 512},
   {"rsa-4096-public", 512},
+  {"ecc-384-public", 48},
+  {"ecc-384-private", 48},
+  {"ecc-256-public", 32},
+  {"ecc-256-private", 32},
 };
 
 name_size cipher_key_byte_name_size[] = {
@@ -674,7 +678,11 @@ bool private_key_to_public_key(const key_message& in, key_message* out) {
   } else if (in.key_type() == "ecc-384-private") {
     alg_type = ecc_alg_type;
     out->set_key_type("ecc-384-public");
-    n_bytes = cipher_block_byte_size("ecc_384-public");
+    n_bytes = cipher_block_byte_size("ecc-384-public");
+  } else if (in.key_type() == "ecc-256-private") {
+    alg_type = ecc_alg_type;
+    out->set_key_type("ecc-256-public");
+    n_bytes = cipher_block_byte_size("ecc-256-public");
   } else {
     printf("private_key_to_public_key: bad key type\n");
     return false;
@@ -1100,14 +1108,18 @@ bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, 
   byte digest[len];
 
   int blk_len = ECDSA_size(key);
-  if (*size_out < 2 * blk_len)
+  if (*size_out < 2 * blk_len) {
+    printf("ecc_sign: size_out too small %d %d\n", *size_out, blk_len);
     return false;
+  }
 
   if (!digest_message(alg, msg, size, digest, len)) {
+    printf("ecc_sign: digest fails\n");
     return false;
   }
   unsigned int sz = (unsigned int) *size_out;
   if (ECDSA_sign(0, digest, len, out, &sz, key) != 1) {
+    printf("ecc_sign: ECDSA_sign fails\n");
     return false;
   }
   *size_out = (int) sz;
@@ -1119,21 +1131,28 @@ bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig,
   byte digest[len];
 
   if (!digest_message(alg, msg, size, digest, len)) {
+    printf("ecc_verify: %s digest failed %d\n", alg, len);
     return false;
   }
   int res = ECDSA_verify(0, digest, len, sig, size_sig, key);
   if (res != 1) {
+    printf("ecc_verify: ECDSA_failed %d %d\n", len, size_sig);
     return false;
   }
   return true;
 }
 
 EC_KEY* generate_new_ecc_key(int num_bits) {
-  if (num_bits != 384) {
-    printf("generate_new_ecc_key: Only P-384 supported\n");
+
+  EC_KEY* ecc_key = nullptr;
+  if (num_bits == 384) {
+    ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
+  } else if (num_bits == 256) {
+    ecc_key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+  } else {
+    printf("generate_new_ecc_key: Only P-256 and P-384 supported\n");
     return nullptr;
   }
-  EC_KEY* ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
   if (ecc_key == nullptr) {
     printf("generate_new_ecc_key: Can't get curve by name\n");
     return nullptr;
@@ -1161,11 +1180,16 @@ EC_KEY* generate_new_ecc_key(int num_bits) {
 
 // Todo: free k on error
 EC_KEY* key_to_ECC(const key_message& k) {
-  if (k.key_type() != "ecc-384-private" && k.key_type() != "ecc-384-public") {
+
+  EC_KEY* ecc_key = nullptr;
+  if (k.key_type() == "ecc-384-private" || k.key_type() == "ecc-384-public") {
+    ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
+  } else if (k.key_type() == "ecc-256-private" || k.key_type() == "ecc-256-public") {
+    ecc_key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+  } else {
     printf("key_to_ECC: wrong type %s\n", k.key_type().c_str());
     return nullptr;
   }
-  EC_KEY* ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
   if (ecc_key == nullptr) {
     printf("key_to_ECC: Can't get curve by name\n");
     return nullptr;
@@ -1222,7 +1246,6 @@ EC_KEY* key_to_ECC(const key_message& k) {
 
 bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   k->set_key_format("vse_key");
-  k->set_key_type("ecc-384-public");
 
   ecc_message* ek = new ecc_message;
   if (ek == nullptr)
@@ -1250,10 +1273,16 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
     return false;
   }
 
-  if (BN_num_bytes(p) == 48) {
+  int modulus_size = BN_num_bytes(p);
+
+  if (modulus_size == 48) {
+    k->set_key_type("ecc-384-public");
     ek->set_curve_name("P-384");
+  } else if (modulus_size == 32) {
+    k->set_key_type("ecc-256-public");
+    ek->set_curve_name("P-256");
   } else {
-    printf("ECC_to_key: Only P-384 supported\n");
+    printf("ECC_to_key: Modulus size not supported: %d\n", modulus_size);
     return false;
   }
 
@@ -1353,7 +1382,13 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   // set private_multiplier
   const BIGNUM* pk = EC_KEY_get0_private_key(ecc_key);
   if (pk != nullptr) {
-    k->set_key_type("ecc-384-private");
+    if (modulus_size == 48) {
+      k->set_key_type("ecc-384-private");
+    } else if (modulus_size == 32) {
+      k->set_key_type("ecc-256-private");
+    } else {
+      return false;
+    }
     sz  = BN_num_bytes(pk);
     byte pm_buf[sz];
     sz  = BN_bn2bin(pk, pm_buf);
@@ -1368,8 +1403,14 @@ bool ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
 bool make_certifier_ecc_key(int n,  key_message* k) {
   if (k == nullptr)
     return false;
-  if (n != 384)
+  if (n == 384) {
+    k->set_key_type("ecc-384-private");
+  } else if (n == 256) {
+    k->set_key_type("ecc-256-private");
+  } else {
+    printf("make_certifier_ecc_key: unsupported key size\n");
     return false;
+  }
 
   EC_KEY* ek = generate_new_ecc_key(n);
   if (ek == nullptr)
@@ -1377,7 +1418,6 @@ bool make_certifier_ecc_key(int n,  key_message* k) {
 
   k->set_key_name("test-key-2");
   k->set_key_format("vse-key");
-  k->set_key_type("ecc-384-private");
   if (!ECC_to_key(ek, k)) {
     return false;
   }
@@ -1438,6 +1478,23 @@ bool same_key(const key_message& k1, const key_message& k2) {
       return false;
     return (memcmp(k1.secret_key_bits().data(), k2.secret_key_bits().data(), k1.secret_key_bits().size()) == 0);
   } else if (k1.key_type() == "ecc-384-public" || k1.key_type() == "ecc-384-private") {
+    const ecc_message& em1 = k1.ecc_key();
+    const ecc_message& em2 = k2.ecc_key();
+    if (em1.curve_p().size() != em2.curve_p().size() ||
+        memcmp(em1.curve_p().data(),em2.curve_p().data(), em1.curve_p().size()) != 0)
+      return false;
+    if (em1.curve_a().size() != em2.curve_a().size() ||
+          memcmp(em1.curve_a().data(),em1.curve_a().data(), em2.curve_a().size()) != 0)
+      return false;
+    if (em1.curve_b().size() != em2.curve_b().size() ||
+           memcmp(em1.curve_b().data(),em1.curve_b().data(), em2.curve_b().size()) != 0)
+      return false;
+    if (!same_point(em1.base_point(), em2.base_point()))
+      return false;
+    if (!same_point(em1.public_point(), em2.public_point()))
+      return false;
+    return true;
+  } else if (k1.key_type() == "ecc-256-public" || k1.key_type() == "ecc-256-private") {
     const ecc_message& em1 = k1.ecc_key();
     const ecc_message& em2 = k2.ecc_key();
     if (em1.curve_p().size() != em2.curve_p().size() ||
@@ -1815,7 +1872,8 @@ void print_key_descriptor(const key_message& k) {
       }
       printf("]");
     }
-  } else if (k.key_type() == "ecc-384-private" || k.key_type() == "ecc-384-public") {
+  } else if (k.key_type() == "ecc-384-private" || k.key_type() == "ecc-384-public" ||
+        k.key_type() == "ecc-256-private" || k.key_type() == "ecc-256-public") {
     printf("Key[ecc, ");
     if (k.has_key_name()) {
       printf("%s, ", k.key_name().c_str());
@@ -2055,6 +2113,25 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
       return false;
     out->set_allocated_signing_key(psk);
     out->set_signature((void*)sig, sig_size);
+  } else if (strcmp(alg, "ecc-256-sha256-pkcs-sign") == 0) {
+    EC_KEY* k = key_to_ECC(key);
+    if (k == nullptr) {
+      printf("make_signed_claim: to_ECC failed\n");
+      return false;
+    }
+    sig_size = 2 * ECDSA_size(k);
+    byte sig[sig_size];
+
+    success = ecc_sign("sha-256", k, serialized_claim.size(), (byte*)serialized_claim.data(),
+      &sig_size, sig);
+    EC_KEY_free(k);
+
+    // sign serialized claim
+    key_message* psk = new key_message;
+    if (!private_key_to_public_key(key, psk))
+      return false;
+    out->set_allocated_signing_key(psk);
+    out->set_signature((void*)sig, sig_size);
   } else {
     return false;
   }
@@ -2133,6 +2210,15 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
       return false;
     }
     success = ecc_verify("sha-384", k, (int)signed_claim.serialized_claim_message().size(),
+        (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
+        (byte*)signed_claim.signature().data());
+    EC_KEY_free(k);
+  } else if (signed_claim.signing_algorithm() == "ecc-256-sha256-pkcs-sign") {
+    EC_KEY* k = key_to_ECC(key);
+    if (k == nullptr) {
+      return false;
+    }
+    success = ecc_verify("sha-256", k, (int)signed_claim.serialized_claim_message().size(),
         (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
         (byte*)signed_claim.signature().data());
     EC_KEY_free(k);
@@ -2267,7 +2353,9 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
       X509_set_pubkey(x509, subject_pkey);
       RSA_free(subject_rsa_key);
     } else if (subject_key.key_type() == "ecc-384-public" ||
-               subject_key.key_type() == "ecc-384-private") {
+               subject_key.key_type() == "ecc-384-private" ||
+               subject_key.key_type() == "ecc-256-public" ||
+               subject_key.key_type() == "ecc-256-private") {
       EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
       if (subject_ecc_key == nullptr) {
         printf("produce_artifact: can't get subject key\n");
@@ -2290,7 +2378,8 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
     EVP_PKEY_free(signing_pkey);
     EVP_PKEY_free(subject_pkey);
     RSA_free(signing_rsa_key);
-  } else if (signing_key.key_type() == "ecc-384-private") {
+  } else if (signing_key.key_type() == "ecc-384-private" ||
+            signing_key.key_type() == "ecc-256-private") {
     EC_KEY* signing_ecc_key = key_to_ECC(signing_key);
     if (signing_ecc_key == nullptr) {
       printf("produce_artifact: can't get signing key\n");
@@ -2316,7 +2405,9 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
       X509_set_pubkey(x509, subject_pkey);
       RSA_free(subject_rsa_key);
     } else if (subject_key.key_type() == "ecc-384-public" ||
-               subject_key.key_type() == "ecc-384-private") {
+               subject_key.key_type() == "ecc-384-private" ||
+               subject_key.key_type() == "ecc-256-public" ||
+               subject_key.key_type() == "ecc-256-private") {
       EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
       if (subject_ecc_key == nullptr) {
         printf("produce_artifact: can't get subject key\n");
@@ -2375,7 +2466,9 @@ bool verify_artifact(X509& cert, key_message& verify_key,
     EVP_PKEY_free(subject_pkey);
   // Todo: Make this work
   } else if (verify_key.key_type() == "ecc-384-public" ||
-             verify_key.key_type() == "ecc-384-private") {
+             verify_key.key_type() == "ecc-384-private" ||
+             verify_key.key_type() == "ecc-256-public" ||
+             verify_key.key_type() == "ecc-256-private") {
     EVP_PKEY* verify_pkey = EVP_PKEY_new();
     EC_KEY* verify_ecc_key = key_to_ECC(verify_key);
     if (verify_ecc_key == nullptr) 
@@ -2586,6 +2679,8 @@ bool key_from_pkey(EVP_PKEY* pkey, const string& name, key_message* k) {
     }
     if (size == 384) {
       k->set_key_type("ecc-384-public");
+    } else if (size == 256) {
+      k->set_key_type("ecc-256-public");
     } else {
       return false;
     }
@@ -2665,7 +2760,9 @@ EVP_PKEY* pkey_from_key(const key_message& k) {
     }
     return pkey;
   } else if (k.key_type() == "ecc-384-public" ||
-             k.key_type() == "ecc-384-private") {
+             k.key_type() == "ecc-384-private" ||
+             k.key_type() == "ecc-256-public" ||
+             k.key_type() == "ecc-256-private") {
     EC_KEY* ecc_key = key_to_ECC(k);
     if (ecc_key == nullptr) {
       EVP_PKEY_free(pkey);
@@ -2718,6 +2815,8 @@ bool x509_to_public_key(X509* x, key_message* k) {
     }
     if (size == 384) {
       k->set_key_type("ecc-384-public");
+    } else if (size == 256) {
+      k->set_key_type("ecc-256-public");
     } else {
       return false;
     }
@@ -2771,8 +2870,27 @@ bool make_root_key_with_cert(string& type, string& name, string& issuer_name, ke
       return false;
     k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
     X509_free(cert);
-  } else if (type == "ecc_384-private") {
+  } else if (type == "ecc-384-private") {
     if (!make_certifier_ecc_key(384,  k))
+      return false;
+    k->set_key_format("vse-key");
+    k->set_key_type(type);
+    k->set_key_name(name);
+    double duration = 5.0 * 86400.0 * 365.0;
+    X509* cert = X509_new();
+    if (cert == nullptr)
+      return false;
+    if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name, root_name,
+                      01L, duration, cert, true)) {
+      return false;
+    }
+    string cert_asn;
+    if (!x509_to_asn1(cert, &cert_asn))
+      return false;
+    k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
+    X509_free(cert);
+  } else if (type == "ecc-256-private") {
+    if (!make_certifier_ecc_key(256,  k))
       return false;
     k->set_key_format("vse-key");
     k->set_key_type(type);

@@ -316,6 +316,81 @@ bool test_public_keys(bool print_all) {
   }
 
   EC_KEY_free(ecc_key);
+
+  size_out = 2048;
+  size_recovered = 2048;
+  memset(data, 0, size_data);
+  memset(out, 0, size_out);
+  memset(recovered, 0, size_recovered);
+  memcpy(data, (byte*)msg, size_data);
+
+  EC_KEY* ecc_key2 = generate_new_ecc_key(256);
+  if (ecc_key == nullptr) {
+    printf("Can't generate new ecc key\n");
+    return false;
+  }
+  if (ecc_key == nullptr)
+    return false;
+  key_message km4;
+  if (!ECC_to_key(ecc_key2, &km4)) {
+    printf("Can't ECC to key\n");
+    return false;
+  }
+  if (print_all) {
+    printf("\n");
+    print_key((const key_message&)km4);
+  }
+
+  if (print_all) {
+    printf("public to encrypt: "); print_bytes(size_data, data); printf("\n");
+  }
+  if (!ecc_sign("sha-256", ecc_key2, size_data, data, &size_out, out)) {
+    printf("ecc_sign failed\n");
+    printf("Sig size: %d\n", size_out);
+    return false;
+  }
+  if (print_all) {
+    printf("ecc sign out %d : ", size_out); print_bytes(size_out, out); printf("\n");
+  }
+#if 1
+  // TODO: sometimes this faults
+  if (!ecc_verify("sha-256", ecc_key, size_data, data, size_out, out)) {
+    printf("ecc_verify failed\n");
+    return false;
+  }
+#endif
+
+  key_message priv_km2;
+  key_message pub_km2;
+  if (!ECC_to_key(ecc_key2, &priv_km2)) {
+    printf("ECC_to_key failed\n");
+    return false;
+  }
+
+  priv_km2.set_key_name("test-key");
+  priv_km2.set_key_type("ecc-256-private");
+  if (print_all) {
+    printf("Key:\n");
+    print_key(priv_km2);
+    printf("\n");
+  }
+
+  if (!private_key_to_public_key(priv_km2, &pub_km2)) {
+    printf("ECC private_key_to_public_key failed\n");
+    return false;
+  }
+
+  if (print_all) {
+    printf("Key:\n");
+    print_key(pub_km2);
+    printf("\n");
+
+    printf("Descriptor: ");
+    print_key_descriptor(pub_km2);
+    printf("\n");
+  }
+
+  EC_KEY_free(ecc_key2);
   return true;
 }
 
