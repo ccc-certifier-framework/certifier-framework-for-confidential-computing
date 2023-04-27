@@ -95,9 +95,9 @@ all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe 
 
 clean:
 	@echo "removing object files"
-	rm $(O)/*.o
+	rm -rf $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/*.exe
+	rm -rf $(EXE_DIR)/*.exe
 
 $(EXE_DIR)/measurement_utility.exe: $(measurement_utility_obj) 
 	@echo "linking executable files"

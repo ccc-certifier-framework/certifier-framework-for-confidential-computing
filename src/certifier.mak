@@ -64,9 +64,9 @@ endif
 all:	$(CL)/certifier.a
 clean:
 	@echo "removing object files"
-	rm $(O)/*.o
+	rm -rf $(O)/*.o
 	@echo "removing executable file"
-	rm $(CL)/certifier.a
+	rm -rf $(CL)/certifier.a
 
 $(CL)/certifier.a: $(dobj)
 	@echo "linking certifier library"

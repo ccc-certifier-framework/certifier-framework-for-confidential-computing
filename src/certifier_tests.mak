@@ -96,9 +96,9 @@ all:	certifier_tests.exe test_channel.exe pipe_read_test.exe
 
 clean:
 	@echo "removing object files"
-	rm $(O)/*.o
+	rm -rf $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/certifier_tests.exe $(EXE_DIR)/pipe_read_test.exe $(EXE_DIR)/test_channel.exe
+	rm -rf $(EXE_DIR)/certifier_tests.exe $(EXE_DIR)/pipe_read_test.exe $(EXE_DIR)/test_channel.exe
 
 certifier_tests.exe: $(dobj) 
 	@echo "linking executable files"

@@ -56,9 +56,9 @@ $(O)/certifier_proofs.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 all:	cert_utility.exe measurement_init.exe key_utility.exe
 clean:
 	@echo "removing object files"
-	rm $(O)/*.o
+	rm -rf $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/cert_utility.exe
+	rm -rf $(EXE_DIR)/cert_utility.exe
 
 cert_utility.exe: $(dobj) 
 	@echo "linking executable files"
