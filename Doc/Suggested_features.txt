@@ -1,0 +1,17 @@
+Suggestions for upgrade
+
+  1. Language bindings for python (rust? go? java? c#?)
+  2. TDX
+  3. write/read/open/close _encrypted
+  4. Key rotation
+  5. C++-->Rust-->C++
+  6. confidential containers
+  7. Nitro
+  8. platform attestation for SGX
+  9. Test notes
+ 10. Fuzz
+ 11. Perf tests
+ 12. RNG
+ 13 GCM in authenticated encryption
+
+
