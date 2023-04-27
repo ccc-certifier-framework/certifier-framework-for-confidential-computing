@@ -24,11 +24,17 @@ DEFINE_string(properties_file, "",  "properties files");
 DEFINE_string(output, "",  "output file");
 
 int main(int an, char** av) {
+  string usage("Generate platform-specific serialization of certificate. RESOLVE: Fix msg");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
+  string usage_str("--platform_type=amd-sev-snp "
+                   "--properties_file=<properties.bin> "
+                   "--output=<platform.bin>");
   if (FLAGS_platform_type == "") {
     printf("No platform type\n");
+    printf("%s %s\n", av[0], usage_str.c_str());
     return 1;
   }
 

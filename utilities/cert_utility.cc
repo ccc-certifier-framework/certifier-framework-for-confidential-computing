@@ -252,17 +252,26 @@ bool generate_key(const string& type, const string& name, key_message* k) {
 
 
 int main(int an, char** av) {
+  string usage("Certifier utility to generate policy-keys and test-keys");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   if (FLAGS_operation == "") {
-    printf("cert_utility.exe --operation=generate-policy-key --policy_key_output_file=key_file.bin");
-    printf(" --policy_cert_output_file=policy_cert_file.bin\n");
-    printf("cert_utility.exe --operation=generate-policy-key-and-test-keys ");
-    printf(" --policy_key_output_file=key_file.bin --policy_cert_output_file=policy_cert_file.bin ");
-    printf("--platform_key_output_file=key_file.bin --attest_key_output_file=key_file.bin\n");
-    printf("cert_utility.exe --operation=generate-key --key_type=rsa-2048 --key_name=name\n");
-    printf(" --key_output_file=key_file.bin\n");
-    printf(" --cert_output_file=policy_cert_file.bin\n");
+    printf("%s: %s\n", av[0], usage.c_str());
+    printf("\n%s --operation=generate-policy-key "
+           "--policy_key_output_file=<key_file.bin> "
+           "--policy_cert_output_file=<policy_cert_file.bin>\n",
+           av[0]);
+
+    printf("\n%s --operation=generate-policy-key-and-test-keys "
+           "--policy_key_output_file=<key_file.bin> "
+           "--policy_cert_output_file=<policy_cert_file.bin> "
+           "--platform_key_output_file=<key_file.bin> "
+           "--attest_key_output_file=<key_file.bin>\n", av[0]);
+
+    printf("\n%s --operation=generate-key --key_type=rsa-2048 --key_name=name "
+           "--key_output_file=<key_file.bin> "
+           "--cert_output_file=<policy_cert_file.bin>\n", av[0]);
     return 0;
   }  else if (FLAGS_operation == "test-sig") {
     test_sig();

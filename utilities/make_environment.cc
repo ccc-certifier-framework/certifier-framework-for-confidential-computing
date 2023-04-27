@@ -48,10 +48,15 @@ bool calculate_measurement(const string& in, string* out) {
 }
 
 int main(int an, char** av) {
+  string usage("Generate platform measurement to output file");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
   if (FLAGS_platform_file == "" && FLAGS_measurement_file == "" && FLAGS_output == "") {
+    printf("%s: %s\n", av[0], usage.c_str());
+    printf("%s --platform_file=<file> --measurement_file=<file> --output=<file>\n",
+           av[0]);
     printf("Too few arguments\n");
     return 1;
   }

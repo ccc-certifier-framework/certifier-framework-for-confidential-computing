@@ -29,12 +29,17 @@ DEFINE_string(string_value, "",  "string value");
 DEFINE_string(output, "prop.bin",  "output file");
 
 int main(int an, char** av) {
+  string usage("Specify the trusted platform policy property RESOLVE: Fix msg");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
+  string usage_str("--property_name=<name> --property_type=<type> "
+                   "--comparator=<cmp> --int_value=3 "
+                   "--string_value=<string> --output=<output_file>");
   if (FLAGS_property_name == "") {
     printf("No property name\n");
-    printf("make_property.exe --property_name=name --property_type=type --comparator=cmp --int_value=3 --string_value=string--output=out_file\n");
+    printf("%s %s\n", av[0], usage_str.c_str());
     return 1;
   }
 

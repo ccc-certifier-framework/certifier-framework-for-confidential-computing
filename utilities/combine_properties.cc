@@ -52,12 +52,14 @@ bool get_input_file_names(const string& name, int* num, string* names) {
 }
 
 int main(int an, char** av) {
+  string usage("Combine properties from multiple files into one output file");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
   if (FLAGS_in == "") {
-    printf("No input files\n");
-    printf("combine_properties.exe --in=name --output=out_file\n");
+    printf("%s: No input files\n", usage.c_str());
+    printf("%s --in=name --output=<out_file>\n", av[0]);
     return 1;
   }
 
