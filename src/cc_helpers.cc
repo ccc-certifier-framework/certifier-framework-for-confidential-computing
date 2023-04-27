@@ -1281,7 +1281,7 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
 
   s = getaddrinfo(host_name.c_str(), port_str, &hints, &result);
   if (s != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+    fprintf(stderr, "%s: getaddrinfo: %s\n", __func__, gai_strerror(s));
     return false;
   }
 
@@ -1302,14 +1302,15 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
   }
 
   if (rp == NULL) {
-    fprintf(stderr, "Could not bind\n");
+    fprintf(stderr, "%s: Could not bind to %s:%d\n",
+            __func__, host_name.c_str(), port);
     return false;
   }
 
   freeaddrinfo(result);
 
   if (listen(sfd, 10) != 0) {
-    printf("open_server_socket: cant listen\n");
+    printf("%s: cant listen\n", __func__);
     return false;
   }
 
@@ -1449,7 +1450,7 @@ bool load_server_certs_and_key(X509* root_cert,
   return true;
 }
 
-void server_dispatch(const string& host_name, int port,
+bool server_dispatch(const string& host_name, int port,
       string& asn1_root_cert, key_message& private_key,
       const string& private_key_cert, void (*func)(secure_authenticated_channel&)) {
 
@@ -1459,14 +1460,15 @@ void server_dispatch(const string& host_name, int port,
   X509* root_cert = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert)) {
     printf("server_dispatch: Can't convert cert\n");
-    return;
+    return false;
   }
 
   // Get a socket.
   int sock = -1;
   if (!open_server_socket(host_name, port, &sock)) {
-    printf("server_dispatch: Can't open server socket\n");
-    return;
+    printf("%s: Can't open server socket to %s:%d\n",
+            __func__, host_name.c_str(), port);
+    return false;
   }
 
   // Set up TLS handshake data.
@@ -1474,7 +1476,7 @@ void server_dispatch(const string& host_name, int port,
   SSL_CTX* ctx = SSL_CTX_new(method);
   if (ctx == NULL) {
     printf("server_dispatch: SSL_CTX_new failed (1)\n");
-    return;
+    return false;
   }
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
   X509_STORE_add_cert(cs, root_cert);
@@ -1488,7 +1490,7 @@ void server_dispatch(const string& host_name, int port,
 
   if (!load_server_certs_and_key(root_cert, private_key, ctx)) {
     printf("server_dispatch: SSL_CTX_new failed (2)\n");
-    return;
+    return false;
   }
 
   const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
@@ -1524,6 +1526,7 @@ void server_dispatch(const string& host_name, int port,
     nc.sock_ = client;
     nc.server_channel_accept_and_auth(func);
   }
+  return true;
 }
 
 secure_authenticated_channel::secure_authenticated_channel(string& role) {
