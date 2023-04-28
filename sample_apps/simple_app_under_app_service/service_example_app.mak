@@ -41,9 +41,10 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
 dobj=	$(O)/service_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
-$(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
+$(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o
+
 sp_dobj=$(O)/start_program.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o $(O)/support.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o
+$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o
 
 
 all:	service_example_app.exe start_program.exe
@@ -101,3 +102,8 @@ $(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave
 $(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(S)/certifier.pb.cc
 	@echo "compiling cc_helpers.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc
+
+$(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
+	@echo "compiling cc_useful.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cc_useful.o $(S)/cc_useful.cc
+

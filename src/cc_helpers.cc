@@ -32,6 +32,7 @@
 #ifdef GRAMINE_CERTIFIER
 #include "gramine_api.h"
 #endif
+#include "cc_useful.h"
 
 
 //  This is a collection of functions that accomplish almost all the
@@ -1167,49 +1168,33 @@ void print_org_name(X509_NAME* name) {
   printf("\n");
 }
 
+/* Declare an array of SSL Error codes mapped to an error description */
+optlookup Ssl_errors[] =
+  {
+      DCL_OPTLOOKUP(SSL_ERROR_NONE                 , "No ssl error")
+    , DCL_OPTLOOKUP(SSL_ERROR_WANT_READ            , "want read error")
+    , DCL_OPTLOOKUP(SSL_ERROR_WANT_WRITE           , "want write error")
+#ifndef BORING_SSL
+    , DCL_OPTLOOKUP(SSL_ERROR_WANT_CONNECT         , "want connect error")
+    , DCL_OPTLOOKUP(SSL_ERROR_WANT_ASYNC           , "want async error")
+    , DCL_OPTLOOKUP(SSL_ERROR_WANT_CLIENT_HELLO_CB , "want client hello error")
+#endif   // BORING_SSL
+    , DCL_OPTLOOKUP(SSL_ERROR_WANT_ACCEPT          , "want accept error")
+    , DCL_OPTLOOKUP(SSL_ERROR_WANT_X509_LOOKUP     , "want X509 lookup error")
+    , DCL_OPTLOOKUP(SSL_ERROR_SSL                  , "generic ssl error")
+    , DCL_OPTLOOKUP(SSL_ERROR_SYSCALL              , "syscall error")
+    , DCL_OPTLOOKUP(SSL_ERROR_ZERO_RETURN          , "zero return error")
+    , DCL_OPTLOOKUP_TERM()
+  };
+
+// Method to convert SSL error-code to human-readable string, a la' strerror()
+static inline const char * ssl_strerror(int code) {
+  const char *msg = optbyid(Ssl_errors, code);
+  return(msg ? msg : "Unknown ssl error, " CC_TO_STR(code));
+}
+
 void print_ssl_error(int code) {
-  switch(code) {
-  case SSL_ERROR_NONE:
-    printf("No ssl error\n");
-    break;
-  case SSL_ERROR_WANT_READ:
-    printf("want read ssl error\n");
-    break;
-  case SSL_ERROR_WANT_WRITE:
-    printf("want write ssl error\n");
-    break;
-#ifndef BORING_SSL
-  case SSL_ERROR_WANT_CONNECT:
-    printf("want connect ssl error\n");
-    break;
-#endif
-  case SSL_ERROR_WANT_ACCEPT:
-    printf("want accept ssl error\n");
-    break;
-  case SSL_ERROR_WANT_X509_LOOKUP:
-    printf("want lookup ssl error\n");
-    break;
-#ifndef BORING_SSL
-  case SSL_ERROR_WANT_ASYNC:
-    printf("want async ssl error\n");
-    break;
-  case SSL_ERROR_WANT_CLIENT_HELLO_CB:
-    printf("wantclient hello  ssl error\n");
-    break;
-#endif
-  case SSL_ERROR_SSL:
-    printf("ssl error error\n");
-    break;
-  case SSL_ERROR_SYSCALL:
-    printf("ssl error syscall\n");
-    break;
-  case SSL_ERROR_ZERO_RETURN:
-    printf("ssl error zero return\n");
-    break;
-  default:
-    printf("Unknown ssl error, %d\n", code);
-    break;
-  }
+  printf("%s\n", ssl_strerror(code));
 }
 
 // Socket and SSL support
@@ -1626,7 +1611,8 @@ bool secure_authenticated_channel::init_client_ssl(const string& host_name, int 
   int ret = SSL_connect(ssl_);
   if (ret <= 0) {
     int err = SSL_get_error(ssl_, ret);
-    printf("init_client_ssl: ssl_connect failed, err: %d\n", err);
+    printf("init_client_ssl: ssl_connect failed, ret=%d, err=%d: %s\n",
+           ret, err, ssl_strerror(err));
     return false;
   }
 
@@ -1722,7 +1708,8 @@ void secure_authenticated_channel::server_channel_accept_and_auth(
   // accept and carry out auth
   int res = SSL_accept(ssl_);
   if (res != 1) {
-    printf("server_channel_accept_and_auth: Can't SSL_accept connection\n");
+    printf("server_channel_accept_and_auth: Can't SSL_accept connection"
+           ", res=%d\n", res);
     unsigned long code = ERR_get_error();
     printf("Accept error: %s\n", ERR_lib_error_string(code));
     print_ssl_error(SSL_get_error(ssl_, res));
