@@ -19,11 +19,17 @@ jobs:
         sudo apt install libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler
     - name: make
       run: |
+        #! Check that core certifier programs still compile
         cd src
         make -f certifier.mak
         rm ./*.o
         make -f certifier_tests.mak
         ./certifier_tests.exe
+        #! Check that utilities programs still compile
         cd ../utilities
         make -f cert_utility.mak
         make -f policy_utilities.mak
+        #! Few other miscellaneous checks
+        cd ../certifier_service/oelib
+        make clean
+        make dummy

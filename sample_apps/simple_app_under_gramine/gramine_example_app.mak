@@ -38,6 +38,7 @@ CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc        \
 		$(CERTIFIER_SRC_PATH)/simulated_enclave.cc          \
 		$(CERTIFIER_SRC_PATH)/application_enclave.cc        \
 		$(CERTIFIER_SRC_PATH)/cc_helpers.cc                 \
+		$(CERTIFIER_SRC_PATH)/cc_useful.cc                  \
 		$(CERTIFIER_SRC_PATH)/test_support.cc               \
 		$(CERTIFIER_SRC_PATH)/certifier.pb.cc               \
 
