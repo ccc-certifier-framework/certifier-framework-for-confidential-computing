@@ -240,7 +240,6 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
-/*
 		} else if ev.GetEvidenceType() == "oe-attestation-report" {
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
@@ -282,7 +281,6 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
-*/
 		} else if ev.GetEvidenceType() == "sev-attestation" {
 			// get the key from ps
 			n := len(ps.Proved) - 1
