@@ -530,7 +530,6 @@ bool digest_message(const char* alg, const byte* message, int message_len,
 
 bool aes_256_cbc_sha256_encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
-
   int blk_size =  cipher_block_byte_size("aes-256-cbc-hmac-sha256");
   int key_size =  cipher_key_byte_size("aes-256-cbc-hmac-sha256");
   int mac_size =  mac_output_byte_size("aes-256-cbc-hmac-sha256");
@@ -539,7 +538,7 @@ bool aes_256_cbc_sha256_encrypt(byte* in, int in_len, byte *key,
   memset(out, 0, *out_size);
 
   if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size)) {
-    printf("authenticated_encrypt: encrypt failed\n");
+    printf("aes_256_cbc_sha256_encrypt: encrypt failed\n");
     return false;
   }
   memcpy(out, iv, block_size);
@@ -553,17 +552,76 @@ bool aes_256_cbc_sha256_encrypt(byte* in, int in_len, byte *key,
 
 bool aes_256_cbc_sha256_decrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
-  return false;
+  int blk_size =  cipher_block_byte_size("aes-256-cbc-hmac-sha256");
+  int key_size =  cipher_key_byte_size("aes-256-cbc-hmac-sha256");
+  int mac_size =  mac_output_byte_size("aes-256-cbc-hmac-sha256");
+  int cipher_size = *out_size - blk_size;
+
+  int plain_size = *out_size - blk_size - mac_size;
+  int msg_with_iv_size = in_len - mac_size;
+  unsigned int hmac_size = mac_size;
+
+  byte hmac_out[hmac_size];
+  HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
+  if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
+    printf("aes_256_cbc_sha256_decrypt: HMAC failed\n");
+    return false;
+  }
+
+  if (!decrypt(in + block_size, msg_with_iv_size - block_size, key, in, out, &plain_size)) {
+    printf("aes_256_cbc_sha256_decrypt: decrypt failed\n");
+    return false;
+  }
+  *out_size = plain_size;
+  return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
 
 bool aes_256_cbc_sha384_encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
-  return false;
+  int blk_size =  cipher_block_byte_size("aes-256-cbc-hmac-sha384");
+  int key_size =  cipher_key_byte_size("aes-256-cbc-hmac-sha384");
+  int mac_size =  mac_output_byte_size("aes-256-cbc-hmac-sha384");
+  int cipher_size = *out_size - blk_size;
+
+  memset(out, 0, *out_size);
+
+  if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size)) {
+    printf("aes_256_cbc_sha384_encrypt: encrypt failed\n");
+    return false;
+  }
+  memcpy(out, iv, block_size);
+  cipher_size += block_size;
+  unsigned int hmac_size = mac_size;
+  HMAC(EVP_sha384(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
+  *out_size = cipher_size + hmac_size;
+
+  return true;
 }
 
 bool aes_256_cbc_sha384_decrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
-  return false;
+  int blk_size =  cipher_block_byte_size("aes-256-cbc-hmac-sha384");
+  int key_size =  cipher_key_byte_size("aes-256-cbc-hmac-sha384");
+  int mac_size =  mac_output_byte_size("aes-256-cbc-hmac-sha384");
+  int cipher_size = *out_size - blk_size;
+
+  int plain_size = *out_size - blk_size - mac_size;
+  int msg_with_iv_size = in_len - mac_size;
+  unsigned int hmac_size = mac_size;
+
+  byte hmac_out[hmac_size];
+  HMAC(EVP_sha384(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
+  if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
+    printf("aes_256_cbc_sha384_decrypt: HMAC failed\n");
+    return false;
+  }
+
+  if (!decrypt(in + block_size, msg_with_iv_size - block_size, key, in, out, &plain_size)) {
+    printf("aes_256_cbc_sha384_decrypt: decrypt failed\n");
+    return false;
+  }
+  *out_size = plain_size;
+  return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
 
 bool aes_256_gcm_encrypt(byte* in, int in_len, byte *key,
