@@ -529,7 +529,7 @@ bool digest_message(const char* alg, const byte* message, int message_len,
 }
 
 // Still needed?
-#if 1
+#if 0
 bool authenticated_encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
 

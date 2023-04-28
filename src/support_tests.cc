@@ -106,7 +106,7 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("input: "); print_bytes(in_size, plain); printf("\n");
   }
 
-  if (!authenticated_encrypt(plain, in_size, key, iv, cipher, &size_encrypt_out)) {
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256", plain, in_size, key, iv, cipher, &size_encrypt_out)) {
     printf("authenticated encrypt failed\n");
     return false;
   }
@@ -115,7 +115,7 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("iv: "); print_bytes(block_size, iv); printf("\n");
     printf("cipher: "); print_bytes(size_encrypt_out, cipher); printf("\n");
   }
-  if (!authenticated_decrypt(cipher, size_encrypt_out, key,
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", cipher, size_encrypt_out, key,
             decrypted, &size_decrypt_out)) {
     printf("authenticated decrypt failed\n");
     return false;
