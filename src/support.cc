@@ -682,7 +682,7 @@ bool aes_256_gcm_encrypt(byte* in, int in_len, byte *key,
     goto done;
   }
   memcpy(out + ciphertext_len, tag, blk_size);
-  *out_size = ciphertext_len + tag_len;
+  *out_size = ciphertext_len;
 
 done:
   if (ctx != nullptr) {
@@ -705,8 +705,9 @@ bool aes_256_gcm_decrypt(byte* in, int in_len, byte *key,
   byte* aad = nullptr;
   int len;
   int plaintext_len;
-  int stream_len = in_len - 2 * blk_size;
+  int stream_len = in_len - blk_size;
 
+  memset(tag, 0, blk_size);
   if(!(ctx = EVP_CIPHER_CTX_new())) {
     return false;
   }
@@ -739,13 +740,18 @@ bool aes_256_gcm_decrypt(byte* in, int in_len, byte *key,
   }
 
   // Finalize
-  if (!EVP_DecryptFinal_ex(ctx, out + len, &len)) {
+  if (!EVP_DecryptFinal_ex(ctx, in + in_len - blk_size, &len)) {
+printf("ERROR 8\n");
     ret = false;
     goto done;
   }
 
+*out_size = stream_len;
+goto done;
+
   *out_size = plaintext_len + len;
   if (memcmp(in + in_len, tag, blk_size) != 0) {
+printf("ERROR 9\n");
     ret = false;
     goto done;
   }
