@@ -1560,16 +1560,18 @@ bool make_certifier_ecc_key(int n,  key_message* k) {
 
 bool get_random(int num_bits, byte* out) {
   bool ret = true;
-
-#if 1
-  int in = open("/dev/urandom", O_RDONLY, 0644);
-#else
-  // Todo: should be /dev/random
-  int in = open("/dev/random", O_RDONLY, 0644);
-#endif
+  int k = 0;
   int n = ((num_bits + num_bits_in_byte - 1) / num_bits_in_byte);
-  if (read(in, out, n) != n)
-    ret = false;
+
+  int in = open("/dev/random", O_RDONLY, 0644);
+  while (k < n) {
+    int m = read(in, out + k, n - k);
+    if (m < 0) {
+      ret = false;
+      break;
+    }
+    k += m;
+  }
   close(in);
   return ret;
 }
