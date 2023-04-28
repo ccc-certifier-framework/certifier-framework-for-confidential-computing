@@ -528,63 +528,57 @@ bool digest_message(const char* alg, const byte* message, int message_len,
   return true;
 }
 
-// Still needed?
-#if 0
-bool authenticated_encrypt(byte* in, int in_len, byte *key,
+bool aes_256_cbc_sha256_encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
 
-  const char* alg_name = "aes-256-cbc-hmac-sha256";
-  int blk_size =  cipher_block_byte_size(alg_name);
-  int key_size =  cipher_key_byte_size(alg_name);
-  int mac_size =  mac_output_byte_size(alg_name);
+  int blk_size =  cipher_block_byte_size("aes-256-cbc-hmac-sha256");
+  int key_size =  cipher_key_byte_size("aes-256-cbc-hmac-sha256");
+  int mac_size =  mac_output_byte_size("aes-256-cbc-hmac-sha256");
   int cipher_size = *out_size - blk_size;
+
   memset(out, 0, *out_size);
 
-  if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size))
+  if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size)) {
+    printf("authenticated_encrypt: encrypt failed\n");
     return false;
+  }
   memcpy(out, iv, block_size);
   cipher_size += block_size;
-
   unsigned int hmac_size = mac_size;
   HMAC(EVP_sha256(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
   *out_size = cipher_size + hmac_size;
+
   return true;
 }
 
-bool authenticated_decrypt(byte* in, int in_len, byte *key,
-            byte *out, int* out_size) {
-
-  const char* alg_name = "aes-256-cbc-hmac-sha256";
-  int blk_size =  cipher_block_byte_size(alg_name);
-  int key_size =  cipher_key_byte_size(alg_name);
-  int mac_size =  mac_output_byte_size(alg_name);
-  int cipher_size = *out_size - blk_size;
-
-  int plain_size = *out_size - blk_size - mac_size;
-
-  int msg_with_iv_size = in_len - mac_size;
-  unsigned int hmac_size = mac_size;
-  byte hmac_out[hmac_size];
-
-  HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
-  if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
-    return false;
-  }
-
-  if (!decrypt(in + block_size, msg_with_iv_size - block_size, key, in, out, &plain_size))
-    return false;
-  *out_size = plain_size;
-  return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
+bool aes_256_cbc_sha256_decrypt(byte* in, int in_len, byte *key,
+            byte *iv, byte *out, int* out_size) {
+  return false;
 }
-#endif
+
+bool aes_256_cbc_sha384_encrypt(byte* in, int in_len, byte *key,
+            byte *iv, byte *out, int* out_size) {
+  return false;
+}
+
+bool aes_256_cbc_sha384_decrypt(byte* in, int in_len, byte *key,
+            byte *iv, byte *out, int* out_size) {
+  return false;
+}
+
+bool aes_256_gcm_encrypt(byte* in, int in_len, byte *key,
+            byte *iv, byte *out, int* out_size) {
+  return false;
+}
+
+bool aes_256_gcm_decrypt(byte* in, int in_len, byte *key,
+            byte *iv, byte *out, int* out_size) {
+  return false;
+}
 
 bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
 
-  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-256-cbc-hmac-sha384") != 0) {
-    printf("Only aes-256-cbc-hmac-sha256 and aes-256-cbc-hmac-sha384 for now\n");
-    return false;
-  }
   int blk_size =  cipher_block_byte_size(alg_name);
   int key_size =  cipher_key_byte_size(alg_name);
   int mac_size =  mac_output_byte_size(alg_name);
@@ -607,8 +601,11 @@ bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key
     unsigned int hmac_size = mac_size;
     HMAC(EVP_sha384(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
     *out_size = cipher_size + hmac_size;
+  } else if (strcmp(alg_name, "aes-256-gcm") == 0) {
+    printf("authenticated_decrypt: unsupported algorithm %s\n", alg_name);
+    return false;
   } else {
-    printf("authenticated_encrypt: unsupported alg\n");
+    printf("authenticated_decrypt: unsupported algorithm %s\n", alg_name);
     return false;
   }
   return true;
@@ -616,11 +613,6 @@ bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key
 
 bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *key,
             byte *out, int* out_size) {
-
-  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") != 0 && strcmp(alg_name, "aes-256-cbc-hmac-sha384") != 0) {
-    printf("Only aes-256-cbc-hmac-sha256 and aes-384-cbc-hmac-sha384 for now\n");
-    return false;
-  }
 
   int blk_size =  cipher_block_byte_size(alg_name);
   int key_size =  cipher_key_byte_size(alg_name);
@@ -632,6 +624,7 @@ bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *ke
   unsigned int hmac_size = mac_size;
 
   byte hmac_out[hmac_size];
+
   if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
     HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
     if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
@@ -644,8 +637,11 @@ bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *ke
       printf("authenticated_decrypt: HMAC failed\n");
       return false;
     }
+  } else if (strcmp(alg_name, "aes-256-gcm") == 0) {
+    printf("authenticated_decrypt: unsupported algorithm %s\n", alg_name);
+    return false;
   } else {
-    printf("authenticated_decrypt: unsupported HMAC\n");
+    printf("authenticated_decrypt: unsupported algorithm %s\n", alg_name);
     return false;
   }
 
