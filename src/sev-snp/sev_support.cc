@@ -595,7 +595,7 @@ bool sev_Seal(int in_size, byte* in, int* size_out, byte* out) {
     return false;
 
   // Encrypt and integrity protect
-  if (!authenticated_encrypt(in, in_size, final_key, iv, out, size_out))
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256", in, in_size, final_key, iv, out, size_out))
     return false;
   return true;
 }
@@ -611,7 +611,7 @@ bool sev_Unseal(int in_size, byte* in, int* size_out, byte* out) {
 #endif
 
   // decrypt and integity check
-  if (!authenticated_decrypt(in, in_size, final_key, out, size_out))
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", in, in_size, final_key, out, size_out))
     return false;
   return true;
 }
