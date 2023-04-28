@@ -91,7 +91,6 @@ name_size mac_byte_name_size[] = {
   {"hmac-sha256", 32},
   {"aes-256-cbc-hmac-sha256", 32},
   {"aes-256-cbc-hmac-sha384", 48},
-  {"aes-256-gcm", 32},
 };
 
 int cipher_block_byte_size(const char* alg_name) {
@@ -625,16 +624,136 @@ bool aes_256_cbc_sha384_decrypt(byte* in, int in_len, byte *key,
   return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
 
+// We use 128 bit tag
 bool aes_256_gcm_encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
-  printf("authenticated_encrypt: unsupported algorithm gcm\n");
-  return false;
+  EVP_CIPHER_CTX *ctx = nullptr;
+  int len;
+  int ciphertext_len;
+  int blk_size =  cipher_block_byte_size("aes-256");
+  int key_size =  cipher_key_byte_size("aes-256");
+  int tag_len = 0;
+  byte tag[16];
+  int aad_len = 0;
+  byte* aad = nullptr;
+  bool ret = true;
+
+  if(!(ctx = EVP_CIPHER_CTX_new())) {
+    return false;
+  }
+
+  if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr)) {
+    ret = false;
+    goto done;
+  }
+
+  // set IV length
+  if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, blk_size, nullptr)) {
+    ret = false;
+    goto done;
+  }
+  if(1 != EVP_EncryptInit_ex(ctx, nullptr, nullptr, key, iv)) {
+    ret = false;
+    goto done;
+  }
+
+  memcpy(out, iv, blk_size);
+
+  if(1 != EVP_EncryptUpdate(ctx, nullptr, &len, aad, aad_len)) {
+    ret = false;
+    goto done;
+  }
+  if(1 != EVP_EncryptUpdate(ctx, out + blk_size, &len, in, in_len)) {
+    ret = false;
+    goto done;
+  }
+  ciphertext_len = len + blk_size;
+
+  // Finalize
+  if(1 != EVP_EncryptFinal_ex(ctx, out + len, &len)) {
+    ret = false;
+    goto done;
+  }
+  ciphertext_len += len;
+
+  tag_len = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, blk_size, tag);
+  if(tag_len <= 0) {
+    ret = false;
+    goto done;
+  }
+  memcpy(out + ciphertext_len, tag, blk_size);
+  *out_size = ciphertext_len + tag_len;
+
+done:
+  if (ctx != nullptr) {
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = nullptr;
+  }
+  return ret;
 }
 
+// We use 128 bit tag
 bool aes_256_gcm_decrypt(byte* in, int in_len, byte *key,
             byte *out, int* out_size) {
-  printf("authenticated_decrypt: unsupported algorithm gcm\n");
-  return false;
+  EVP_CIPHER_CTX *ctx = nullptr;
+  int blk_size =  cipher_block_byte_size("aes-256");
+  int key_size =  cipher_key_byte_size("aes-256");
+  byte* iv = in;
+  bool ret = true;
+  byte tag[16];
+  int aad_len = 0;
+  byte* aad = nullptr;
+  int len;
+  int plaintext_len;
+  int stream_len = in_len - 2 * blk_size;
+
+  if(!(ctx = EVP_CIPHER_CTX_new())) {
+    return false;
+  }
+  if(!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr)) {
+    ret = false;
+    goto done;
+  }
+  if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, blk_size, nullptr)) {
+    ret = false;
+    goto done;
+  }
+  if(!EVP_DecryptInit_ex(ctx, nullptr, nullptr, key, iv)) {
+    ret = false;
+    goto done;
+  }
+
+  if(!EVP_DecryptUpdate(ctx, nullptr, &len, aad, aad_len)) {
+    ret = false;
+    goto done;
+  }
+  if(!EVP_DecryptUpdate(ctx, out, &len, in + blk_size, stream_len)) {
+    ret = false;
+    goto done;
+  }
+  plaintext_len = len;
+
+  if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, blk_size, tag)) {
+    ret = false;
+    goto done;
+  }
+
+  // Finalize
+  if (!EVP_DecryptFinal_ex(ctx, out + len, &len)) {
+    ret = false;
+    goto done;
+  }
+
+  *out_size = plaintext_len + len;
+  if (memcmp(in + in_len, tag, blk_size) != 0) {
+    ret = false;
+    goto done;
+  }
+
+done:
+  if (ctx != nullptr)
+    EVP_CIPHER_CTX_free(ctx);
+  return ret;
 }
 
 bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key,
