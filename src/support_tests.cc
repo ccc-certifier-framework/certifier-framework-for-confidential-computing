@@ -15,6 +15,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+bool test_random(bool print_all) {
+  int n = 128;
+  byte out[n];
+
+  memset(out, 0, n);
+  if (!get_random(n * 8, out)) {
+    return false;
+  }
+
+  if (print_all) {
+    printf("Random bytes: ");
+    print_bytes(n, out);
+    printf("\n");
+  }
+  return true;
+}
+
 bool test_encrypt(bool print_all) {
   const int in_size = 2 * block_size;
   const int out_size = in_size + 128;
