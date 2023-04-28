@@ -91,6 +91,7 @@ name_size mac_byte_name_size[] = {
   {"hmac-sha256", 32},
   {"aes-256-cbc-hmac-sha256", 32},
   {"aes-256-cbc-hmac-sha384", 48},
+  {"aes-256-gcm", 32},
 };
 
 int cipher_block_byte_size(const char* alg_name) {
@@ -417,8 +418,8 @@ void print_environment(const environment& env) {
 //    Set up a context
 //    Initialize the encryption operation
 //    Providing plaintext bytes to be encrypted
-//    Finalising the encryption operation
-//    During initialisation we will provide an EVP_CIPHER object.
+//    Finalizing the encryption operation
+//    During initialization we will provide an EVP_CIPHER object.
 //      In this case we are using EVP_aes_256_cbc(),
 //      which uses the AES algorithm with a 256-bit key in 
 //      CBC mode.
@@ -551,7 +552,7 @@ bool aes_256_cbc_sha256_encrypt(byte* in, int in_len, byte *key,
 }
 
 bool aes_256_cbc_sha256_decrypt(byte* in, int in_len, byte *key,
-            byte *iv, byte *out, int* out_size) {
+            byte *out, int* out_size) {
   int blk_size =  cipher_block_byte_size("aes-256-cbc-hmac-sha256");
   int key_size =  cipher_key_byte_size("aes-256-cbc-hmac-sha256");
   int mac_size =  mac_output_byte_size("aes-256-cbc-hmac-sha256");
@@ -599,7 +600,7 @@ bool aes_256_cbc_sha384_encrypt(byte* in, int in_len, byte *key,
 }
 
 bool aes_256_cbc_sha384_decrypt(byte* in, int in_len, byte *key,
-            byte *iv, byte *out, int* out_size) {
+            byte *out, int* out_size) {
   int blk_size =  cipher_block_byte_size("aes-256-cbc-hmac-sha384");
   int key_size =  cipher_key_byte_size("aes-256-cbc-hmac-sha384");
   int mac_size =  mac_output_byte_size("aes-256-cbc-hmac-sha384");
@@ -626,89 +627,44 @@ bool aes_256_cbc_sha384_decrypt(byte* in, int in_len, byte *key,
 
 bool aes_256_gcm_encrypt(byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
+  printf("authenticated_encrypt: unsupported algorithm gcm\n");
   return false;
 }
 
 bool aes_256_gcm_decrypt(byte* in, int in_len, byte *key,
-            byte *iv, byte *out, int* out_size) {
+            byte *out, int* out_size) {
+  printf("authenticated_decrypt: unsupported algorithm gcm\n");
   return false;
 }
 
 bool authenticated_encrypt(const char* alg_name, byte* in, int in_len, byte *key,
             byte *iv, byte *out, int* out_size) {
 
-  int blk_size =  cipher_block_byte_size(alg_name);
-  int key_size =  cipher_key_byte_size(alg_name);
-  int mac_size =  mac_output_byte_size(alg_name);
-  int cipher_size = *out_size - blk_size;
-
-  memset(out, 0, *out_size);
-
-  if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size)) {
-    printf("authenticated_encrypt: encrypt failed\n");
-    return false;
-  }
-  memcpy(out, iv, block_size);
-  cipher_size += block_size;
-
   if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
-    unsigned int hmac_size = mac_size;
-    HMAC(EVP_sha256(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
-    *out_size = cipher_size + hmac_size;
+    return aes_256_cbc_sha256_encrypt(in, in_len, key, iv, out, out_size);
   } else if (strcmp(alg_name, "aes-256-cbc-hmac-sha384") == 0) {
-    unsigned int hmac_size = mac_size;
-    HMAC(EVP_sha384(), &key[key_size / 2], mac_size, out, cipher_size, out + cipher_size, &hmac_size);
-    *out_size = cipher_size + hmac_size;
+    return aes_256_cbc_sha384_encrypt(in, in_len, key, iv, out, out_size);
   } else if (strcmp(alg_name, "aes-256-gcm") == 0) {
-    printf("authenticated_decrypt: unsupported algorithm %s\n", alg_name);
-    return false;
+    return aes_256_gcm_encrypt(in, in_len, key, iv, out, out_size);
   } else {
     printf("authenticated_decrypt: unsupported algorithm %s\n", alg_name);
     return false;
   }
-  return true;
 }
 
-bool authenticated_decrypt(const char* alg_name , byte* in, int in_len, byte *key,
+bool authenticated_decrypt(const char* alg_name, byte* in, int in_len, byte *key,
             byte *out, int* out_size) {
 
-  int blk_size =  cipher_block_byte_size(alg_name);
-  int key_size =  cipher_key_byte_size(alg_name);
-  int mac_size =  mac_output_byte_size(alg_name);
-  int cipher_size = *out_size - blk_size;
-
-  int plain_size = *out_size - blk_size - mac_size;
-  int msg_with_iv_size = in_len - mac_size;
-  unsigned int hmac_size = mac_size;
-
-  byte hmac_out[hmac_size];
-
   if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
-    HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
-    if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
-      printf("authenticated_decrypt: HMAC failed\n");
-      return false;
-    }
+    return aes_256_cbc_sha256_decrypt(in, in_len, key, out, out_size);
   } else if (strcmp(alg_name, "aes-256-cbc-hmac-sha384") == 0) {
-    HMAC(EVP_sha384(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
-    if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
-      printf("authenticated_decrypt: HMAC failed\n");
-      return false;
-    }
+    return aes_256_cbc_sha384_decrypt(in, in_len, key, out, out_size);
   } else if (strcmp(alg_name, "aes-256-gcm") == 0) {
-    printf("authenticated_decrypt: unsupported algorithm %s\n", alg_name);
-    return false;
+    return aes_256_gcm_decrypt(in, in_len, key, out, out_size);
   } else {
     printf("authenticated_decrypt: unsupported algorithm %s\n", alg_name);
     return false;
   }
-
-  if (!decrypt(in + block_size, msg_with_iv_size - block_size, key, in, out, &plain_size)) {
-    printf("authenticated_decrypt: decrypt failed\n");
-    return false;
-  }
-  *out_size = plain_size;
-  return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
 
 const int rsa_alg_type = 1;
