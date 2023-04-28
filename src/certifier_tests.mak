@@ -66,13 +66,13 @@ ifdef ENABLE_SEV
 dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
 $(O)/support.o $(O)/simulated_enclave.o \
 $(O)/certificate_tests.o $(O)/claims_tests.o $(O)/primitive_tests.o \
-$(O)/cc_helpers.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
+$(O)/cc_helpers.o $(O)/cc_useful.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
 $(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o \
 $(O)/x509_tests.o
 
 channel_dobj=	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
 $(O)/certifier_proofs.o  $(O)/simulated_enclave.o $(O)/application_enclave.o \
-$(O)/cc_helpers.o $(O)/sev_support.o $(O)/sev_report.o 
+$(O)/cc_helpers.o $(O)/cc_useful.o $(O)/sev_support.o $(O)/sev_report.o
 
 pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
 $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o
@@ -81,12 +81,13 @@ else
 
 dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
 $(O)/support.o $(O)/simulated_enclave.o \
-$(O)/cc_helpers.o $(O)/application_enclave.o $(O)/claims_tests.o $(O)/primitive_tests.o \
+$(O)/cc_helpers.o $(O)/cc_useful.o $(O)/application_enclave.o $(O)/claims_tests.o $(O)/primitive_tests.o \
 $(O)/certificate_tests.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
 $(O)/x509_tests.o
 
 channel_dobj=	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
 $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
+$(O)/cc_useful.o
 
 pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o  \
 $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o
@@ -155,6 +156,10 @@ $(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certi
 $(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.pb.h $(I)/cc_helpers.h
 	@echo "compiling cc_helpers.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc
+
+$(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
+	@echo "compiling cc_useful.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cc_useful.o $(S)/cc_useful.cc
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h
 	@echo "compiling support.cc"
