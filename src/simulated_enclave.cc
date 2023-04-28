@@ -167,7 +167,8 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
 
   // output is iv, encrypted bytes
   int real_output_size = output_size;
-  if (!authenticated_encrypt(input, input_size, sealing_key, iv, output, &real_output_size)) {
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256", input, input_size, sealing_key,
+        iv, output, &real_output_size)) {
     printf("simulated_Seal: authenticated encrypt failed\n");
     return false;
   }
@@ -193,7 +194,7 @@ bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
   memcpy(iv, in, iv_size);
 
   int real_output_size = output_size;
-  if (!authenticated_decrypt(in, in_size, (byte*)sealing_key,
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", in, in_size, (byte*)sealing_key,
           output, &real_output_size)) {
     printf("simulated_Unseal: authenticated decrypt failed\n");
     return false;
