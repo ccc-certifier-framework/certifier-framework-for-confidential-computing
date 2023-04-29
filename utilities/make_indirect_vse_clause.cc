@@ -113,16 +113,22 @@ bool get_measurement_entity_from_file(const string& in, entity_message* em) {
 }
 
 int main(int an, char** av) {
+  string usage("Generate certificate keys in different formats to output file");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
+  string usage_str("--key_subject=<file> --verb=\"says\" --clause=<file> "
+                   "--output=<output-file-name>");
   if (FLAGS_key_subject == "" && FLAGS_measurement_subject == "") {
-    printf("No subject\n");
+    printf("No key or measurement subject\n");
+    printf("%s: %s\n", av[0], usage_str.c_str());
     return 1;
   }
 
   if (FLAGS_clause == "") {
     printf("No clause file\n");
+    printf("%s %s\n", av[0], usage_str.c_str());
     return 1;
   }
 

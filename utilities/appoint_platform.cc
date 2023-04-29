@@ -67,16 +67,21 @@ bool get_key_from_cert_file(const string& in, key_message* k) {
 }
 
 int main(int an, char** av) {
+  gflags::SetUsageMessage("Sample key-mgmt utility: RESOLVE - Fix message");
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
+  string usage_str("--policy_key=<file> --cert_file=<ark_cert.bin> "
+                   "--output=<output-file-name>";
   if (FLAGS_policy_key_file == "") {
     printf("No policy key\n");
+    printf("%s %s\n", av[0], usage_str.c_str());
     return 1;
   }
 
   if (FLAGS_cert_file == "") {
     printf("No cert\n");
+    printf("%s: %s\n", av[0], usage_str.c_str());
     return 1;
   }
 
