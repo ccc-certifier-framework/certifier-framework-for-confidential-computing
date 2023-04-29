@@ -135,6 +135,8 @@ return true;
 }
 
 int main(int an, char** av) {
+  string usage("Generate policy certificate to embed policy key in sample app");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   if (FLAGS_input == "") {
