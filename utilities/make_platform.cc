@@ -24,7 +24,7 @@ DEFINE_string(properties_file, "",  "properties files");
 DEFINE_string(output, "",  "output file");
 
 int main(int an, char** av) {
-  string usage("Generate platform-specific serialization of certificate. RESOLVE: Fix msg");
+  string usage("Construct platform characteristics for platform verification policy");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
