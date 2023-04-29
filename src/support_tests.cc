@@ -15,6 +15,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+bool test_random(bool print_all) {
+  int n = 128;
+  byte out[n];
+
+  memset(out, 0, n);
+  if (!get_random(n * 8, out)) {
+    return false;
+  }
+
+  if (print_all) {
+    printf("Random bytes: ");
+    print_bytes(n, out);
+    printf("\n");
+  }
+  return true;
+}
+
 bool test_encrypt(bool print_all) {
   const int in_size = 2 * block_size;
   const int out_size = in_size + 128;
@@ -106,23 +123,23 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("input: "); print_bytes(in_size, plain); printf("\n");
   }
 
-  if (!authenticated_encrypt(plain, in_size, key, iv, cipher, &size_encrypt_out)) {
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256", plain, in_size, key, iv, cipher, &size_encrypt_out)) {
     printf("authenticated encrypt failed\n");
     return false;
   }
   if (print_all) {
-    printf("authenticated encrypt succeeded, in_size: %d, out_size is %d\n", in_size, size_encrypt_out);
+    printf("authenticated encrypt for aes-256-cbc-hmac-sha256 succeeded, in_size: %d, out_size is %d\n", in_size, size_encrypt_out);
     printf("iv: "); print_bytes(block_size, iv); printf("\n");
     printf("cipher: "); print_bytes(size_encrypt_out, cipher); printf("\n");
   }
-  if (!authenticated_decrypt(cipher, size_encrypt_out, key,
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", cipher, size_encrypt_out, key,
             decrypted, &size_decrypt_out)) {
     printf("authenticated decrypt failed\n");
     return false;
   }
 
   if (print_all) {
-    printf("authenticated decrypt succeeded, out_size is %d\n", size_decrypt_out);
+    printf("authenticated decrypt for aes-256-cbc-hmac-sha256 succeeded, out_size is %d\n", size_decrypt_out);
     printf("decrypted: "); print_bytes(size_decrypt_out, decrypted); printf("\n");
     printf("\n");
   }
@@ -131,7 +148,6 @@ bool test_authenticated_encrypt(bool print_all) {
     return false;
   }
 
-  const char* alg = "aes-256-cbc-hmac-sha384";
   size_encrypt_out = out_size;
   size_decrypt_out = out_size;
   int size_in = 32;
@@ -140,23 +156,51 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("input: "); print_bytes(in_size, plain); printf("\n");
   }
 
-  if (!authenticated_encrypt(alg, plain, in_size, key, iv, cipher, &size_encrypt_out)) {
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha384", plain, in_size, key, iv, cipher, &size_encrypt_out)) {
     printf("authenticated encrypt failed\n");
     return false;
   }
   if (print_all) {
-    printf("authenticated encrypt succeeded, in_size: %d, out_size is %d\n", in_size, size_encrypt_out);
+    printf("authenticated encrypt for aes-256-cbc-hmac-sha384 succeeded, in_size: %d, out_size is %d\n", in_size, size_encrypt_out);
     printf("iv: "); print_bytes(block_size, iv); printf("\n");
     printf("cipher: "); print_bytes(size_encrypt_out, cipher); printf("\n");
   }
-  if (!authenticated_decrypt(alg, cipher, size_encrypt_out, key,
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha384", cipher, size_encrypt_out, key,
             decrypted, &size_decrypt_out)) {
     printf("authenticated decrypt failed\n");
     return false;
   }
 
   if (print_all) {
-    printf("authenticated decrypt succeeded, out_size is %d\n", size_decrypt_out);
+    printf("authenticated decrypt for aes-256-cbc-hmac-sha384 succeeded, out_size is %d\n", size_decrypt_out);
+    printf("decrypted: "); print_bytes(size_decrypt_out, decrypted); printf("\n");
+    printf("\n");
+  }
+  if (size_decrypt_out != size_in || memcmp(plain, decrypted, size_in) != 0) {
+    printf("comparison failed\n");
+    return false;
+  }
+
+  size_encrypt_out = out_size;
+  size_decrypt_out = out_size;
+
+  if (!authenticated_encrypt("aes-256-gcm", plain, in_size, key, iv, cipher, &size_encrypt_out)) {
+    printf("authenticated encrypt for aes-256-gcm failed\n");
+    return false;
+  }
+  if (print_all) {
+    printf("authenticated encrypt for aes-256-gcm succeeded, in_size: %d, out_size is %d\n", in_size, size_encrypt_out);
+    printf("iv: "); print_bytes(block_size, iv); printf("\n");
+    printf("cipher: "); print_bytes(size_encrypt_out, cipher); printf("\n");
+  }
+  if (!authenticated_decrypt("aes-256-gcm", cipher, size_encrypt_out, key,
+            decrypted, &size_decrypt_out)) {
+    printf("authenticated decrypt for aes-256-gcm failed\n");
+    return false;
+  }
+
+  if (print_all) {
+    printf("authenticated decrypt for aes-256-gcm succeeded, out_size is %d\n", size_decrypt_out);
     printf("decrypted: "); print_bytes(size_decrypt_out, decrypted); printf("\n");
     printf("\n");
   }

@@ -825,8 +825,8 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
 
   int size_encrypted = size_unencrypted_data + max_key_seal_pad;
   byte encrypted_data[size_encrypted];
-  if (!authenticated_encrypt(unencrypted_data, size_unencrypted_data, key_buf,
-            iv, encrypted_data, &size_encrypted)) {
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256",  unencrypted_data, size_unencrypted_data,
+          key_buf, iv, encrypted_data, &size_encrypted)) {
     printf("Protect_Blob: authenticate encryption failed\n");
     return false;
   }
@@ -900,8 +900,8 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
   }
 
   // decrypt encrypted data
-  if (!authenticated_decrypt((byte*)pb.encrypted_data().data(), pb.encrypted_data().size(), key_buf,
-            unencrypted_data, size_of_unencrypted_data)) {
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", (byte*)pb.encrypted_data().data(),
+          pb.encrypted_data().size(), key_buf, unencrypted_data, size_of_unencrypted_data)) {
     printf("Unprotect_Blob: authenticated decrypt failed\n");
     return false;
   }

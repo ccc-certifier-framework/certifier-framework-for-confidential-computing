@@ -39,6 +39,10 @@ DEFINE_string(vcek_cert_file_name, "vcek_cert_file.bin", "vcek cert");
 
 
 // Encryption and support tests
+extern bool test_random(bool print_all);
+TEST (test_random, test_random) {
+  EXPECT_TRUE(test_random(FLAGS_print_all));
+}
 extern bool test_digest(bool print_all);
 TEST (test_digest, test_digest) {
   EXPECT_TRUE(test_digest(FLAGS_print_all));
