@@ -44,6 +44,7 @@ name_size cipher_block_byte_name_size[] = {
   {"aes-256", 16},
   {"aes-256-cbc-hmac-sha256", 16},
   {"aes-256-cbc-hmac-sha384", 16},
+  {"aes-256-gcm", 16},
   {"aes-128", 16},
   {"aes-128-cbc-hmac-sha256", 16},
   {"rsa-2048-sha256-pkcs-sign", 256},
@@ -67,6 +68,7 @@ name_size cipher_key_byte_name_size[] = {
   {"aes-256", 32},
   {"aes-256-cbc-hmac-sha256", 64},
   {"aes-256-cbc-hmac-sha384", 64},
+  {"aes-256-gcm", 32},
   {"rsa-2048-sha256-pkcs-sign", 256},
   {"rsa-2048", 256},
   {"rsa-1024-sha256-pkcs-sign", 128},
@@ -91,6 +93,7 @@ name_size mac_byte_name_size[] = {
   {"hmac-sha256", 32},
   {"aes-256-cbc-hmac-sha256", 32},
   {"aes-256-cbc-hmac-sha384", 48},
+  {"aes-256-gcm", 16},
 };
 
 int cipher_block_byte_size(const char* alg_name) {
