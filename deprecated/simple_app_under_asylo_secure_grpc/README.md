@@ -1,5 +1,15 @@
 # Asylo Secure GRPC Server and Client with Certifier Framework
 
+- **simple_app_under_asylo_secure_grpc/** - Asylo is an open source platform for developing
+  enclave applications. This is a sample program that can be run using attestation
+  provided by
+  [Asylo](https://asylo.dev/docs/guides/quickstart.html)
+  over secure enclave
+  [gRPC communication channels](https://github.com/google/asylo-site/blob/master/_docs/reference/grpc_auth.md).
+
+  The sample program shows how to build an Asylo Secure gRPC Server and Client with Certifier
+  Framework.
+
 ```
 git clone 
 https://github.com/vmware-research/certifier-framework-for-confidential-computing.git
