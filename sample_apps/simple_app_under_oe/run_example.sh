@@ -79,6 +79,7 @@ function usage() {
 # ###########################################################################
 Steps=("show_env"
         "do_cleanup"
+        "rm_non_git_files"
         "build_utilities"
         "gen_policy_and_self_signed_cert"
         "emded_policy_in_example_app"
@@ -153,6 +154,26 @@ function run_cmd() {
    "$@"
 
    set +x
+}
+
+# ###########################################################################
+# Deep-clean the build-env to remove artifacts (e.g. generated files, binaries
+# etc.) that may have been produced by other steps. We run this to ensure
+# that this script will run successfully w/o any dependencies on executing
+# some prior steps.
+# ###########################################################################
+function rm_non_git_files() {
+    pushd "${CERT_PROTO}" > /dev/null 2>&1
+
+    echo "${Me}: Delete all files not tracked by git"
+    # shellcheck disable=SC2046
+    run_cmd rm -rf $(git ls-files . --exclude-standard --others)
+
+    echo "${Me}: Delete all files not tracked by git that are also ignored"
+    # shellcheck disable=SC2046
+    run_cmd rm -rf $(git ls-files . --exclude-standard --others --ignored)
+
+    popd > /dev/null 2>&1
 }
 
 # ###########################################################################

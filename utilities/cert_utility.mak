@@ -13,12 +13,15 @@ endif
 ifndef INC_DIR
 INC_DIR=../include
 endif
+
 #ifndef GOOGLE_INCLUDE
 #GOOGLE_INCLUDE=/usr/local/include/g
 #endif
+
 ifndef LOCAL_LIB
 LOCAL_LIB=/usr/local/lib
 endif
+
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
