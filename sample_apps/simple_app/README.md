@@ -20,14 +20,17 @@ You can use this script to Build and run example program simple_app.
    - Run individual step in sequence.
 
 Usage: run_example.sh [--help | --list]
-  To run the example program          : ./run_example.sh
-  To setup the example program        : ./run_example.sh setup
-  To run and test the example program : ./run_example.sh run_test
-  To list the individual steps        : ./run_example.sh --list
-  To run an individual step           : ./run_example.sh <step name>
+  To setup and run the example program, end-to-end : ./run_example.sh
+  To setup the example program                     : ./run_example.sh setup
+  To run and test the example program              : ./run_example.sh run_test
+  To list the individual steps                     : ./run_example.sh --list
+  To run an individual step                        : ./run_example.sh <step name>
 ```
 
 - To setup and run the simple_app: `$ run_example.sh`
+  In this mode, any artifacts produced by previous steps will be deleted, so
+  you can exercise a clean end-to-end run of this script.
+
 - In case there is any cleanup needed, issue: `$ cleanup.sh`
 - You can perform the setup once, and execute the test multiple times as follows:
 
