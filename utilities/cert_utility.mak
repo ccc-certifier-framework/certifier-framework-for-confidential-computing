@@ -30,14 +30,16 @@ I= $(INC_DIR)
 US= .
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 
-CFLAGS= $(INCLUDE) -O3 -g -Werror -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+# Compilation of protobuf files could run into some errors, so avoid using
+# -Werror for those targets
+CFLAGS_NOERROR = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+CFLAGS = $(CFLAGS_NOERROR) -Werror
 #For MAC, -D MACOS should be included
 CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
 CC=g++
 LINK=g++
 # PROTO=/usr/local/bin/protoc
-# Point this to the right place, if you have to.
-# I had to do the above on my machine.
+# Point this to the right place, if you have to. I had to do the above on my machine.
 PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
@@ -55,8 +57,8 @@ $(O)/certifier_proofs.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 
 all:	cert_utility.exe measurement_init.exe key_utility.exe
 clean:
-	@echo "removing object files"
-	rm -rf $(O)/*.o
+	@echo "removing object and generated files"
+	rm -rf $(O)/*.o $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/cert_utility.exe
 
@@ -90,7 +92,7 @@ $(US)/certifier.pb.cc $(I)/certifier.pb.h: $(S)/certifier.proto
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c  -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
+	$(CC) $(CFLAGS_NOERROR) -c  -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h $(I)/certifier.pb.h
 	@echo "compiling support.cc"
