@@ -13,6 +13,7 @@ endif
 ifndef INC_DIR
 INC_DIR=../include
 endif
+
 #ifndef GOOGLE_INCLUDE
 #GOOGLE_INCLUDE=/usr/local/include/g
 #endif
@@ -25,7 +26,6 @@ endif
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
-
 
 S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
@@ -43,8 +43,7 @@ CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-dep
 CC=g++
 LINK=g++
 # PROTO=/usr/local/bin/protoc
-# Point this to the right place, if you have to.
-# I had to do the above on my machine.
+# Point this to the right place, if you have to. I had to do the above on my machine.
 PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
@@ -62,8 +61,8 @@ $(O)/certifier_proofs.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 
 all:	cert_utility.exe measurement_init.exe key_utility.exe
 clean:
-	@echo "removing object files"
-	rm -rf $(O)/*.o
+	@echo "removing object and generated files"
+	rm -rf $(O)/*.o $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/cert_utility.exe
 

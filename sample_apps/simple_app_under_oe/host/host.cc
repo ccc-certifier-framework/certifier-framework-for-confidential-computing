@@ -37,6 +37,9 @@ void sigint_handler(int s){
 }
 
 
+/*
+ * Returns: 0 - if operation succeeds, non-zero otherwise.
+ */
 int main(int argc, const char* argv[])
 {
     oe_result_t result;
@@ -45,6 +48,7 @@ int main(int argc, const char* argv[])
 
     uint32_t flags = OE_ENCLAVE_FLAG_DEBUG;
     bool ret = 0;
+    int  rv = 1;  // Assume failure, until we know otherwise
 
     if (argc < 3)
     {
@@ -77,12 +81,11 @@ int main(int argc, const char* argv[])
         goto exit;
     }
 
-    
     if (argc == 4)  // has data_dir
         data_dir = argv[3];
     else
         data_dir = "app1_data";
-    
+
     result = certifier_init(enclave, &ret, data_dir.c_str(), data_dir.size());
     if (result != OE_OK) {
         fprintf(stderr, "certifier_init failed: result=%u (%s)\n",
@@ -108,6 +111,7 @@ int main(int argc, const char* argv[])
         }
     } else if (strcmp(argv[2], "get-certifier") == 0) {
         result = certify_me(enclave, &ret);
+        printf("certify_me(): result=%d, ret=%d\n", result, ret);
         if (result != OE_OK) {
             fprintf(stderr, "certifier_init failed: result=%u (%s)\n",
                     result, oe_result_str(result));
@@ -140,15 +144,15 @@ int main(int argc, const char* argv[])
 
     if (ret) {
         printf("%s succeeded!\n", argv[2]);
+        rv = 0;
     } else {
         printf("%s failed!\n", argv[2]);
     }
-
 
 exit:
     // Clean up the enclave if we created one
     if (enclave)
         oe_terminate_enclave(enclave);
 
-    return ret;
+    return rv;
 }

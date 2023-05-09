@@ -61,12 +61,11 @@ You can use this script to Build and run example programs.
 
 **Usage**:
 ```shell
-run_example.sh [-h | --help] < sample-app-name > [ setup | run_test | --list ]
+run_example.sh [-h | --help | --list] <sample-app-name> [ setup | run_test ]
 
   To setup and run the simple_app program, end-to-end : ./run_example.sh simple_app
   To setup the simple_app program                     : ./run_example.sh simple_app setup
   To run and test the simple_app program              : ./run_example.sh simple_app run_test
-  To list the individual steps for simple_app         : ./run_example.sh simple_app --list
   To run an individual step of the simple_app         : ./run_example.sh simple_app <step name>
 ```
 
@@ -83,5 +82,5 @@ $ run_example.sh simple_app setup
 $ run_example.sh simple_app run_test
 $ run_example.sh simple_app run_test
 ```
-- List the individual steps of the setup / test: `$ run_example.sh simple_app --list`
-- Execute each step in the order listed. E.g., `$ run_example.sh  simple_app get_measurement_of_trusted_app`
+- List the individual steps of the setup / test: `$ run_example.sh --list simple_app`
+- Execute each step in the order listed. E.g., `$ run_example.sh simple_app get_measurement_of_trusted_app`
