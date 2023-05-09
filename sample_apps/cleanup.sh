@@ -21,7 +21,7 @@ function cleanup_stale_procs() {
     # pid, and / or use 'pgrep --signal pkill' to kill such processes, because in
     # case the process does not exist, 'pgrep' will exit with $rc=1. This will cause
     # this entire script to abort prematurely before cleanup is finished.
-    for procname in simpleserver example_app.exe run_example.sh
+    for procname in simpleserver example_app.exe run_example.sh host
     do
         # shellcheck disable=SC2046,SC2009
         if [ $(ps -ef | grep -E "${procname}" \

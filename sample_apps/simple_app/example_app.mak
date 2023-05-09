@@ -28,7 +28,10 @@ US=.
 I= $(SRC_DIR)/include
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 
-CFLAGS=$(INCLUDE) -O3 -g -Wall -Werror -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+# Compilation of protobuf files could run into some errors, so avoid using
+# # -Werror for those targets
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS = $(CFLAGS_NOERROR) -Werror
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 CC=g++
 LINK=g++
@@ -64,7 +67,7 @@ $(I)/certifier.pb.h: $(US)/certifier.pb.cc
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
+	$(CC) $(CFLAGS_NOERROR) -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
 
 $(O)/example_app.o: $(US)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "compiling example_app.cc"
