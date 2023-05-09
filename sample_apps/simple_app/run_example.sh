@@ -29,7 +29,6 @@ Client_app_data="./app1_data/"
 Srvr_app_data="./app2_data/"
 
 SimpleServer_PID=0
-AppAsServer_PID=0
 Found_step=0        # While looking thru Steps[] for user-specified fn-name
 
 # ###########################################################################
@@ -67,18 +66,19 @@ function usage() {
 
    # Computed elapsed hours, mins, seconds from total elapsed seconds
    echo "Usage: $Me [--help | --list]"
-   echo "  To run the example program          : ./${Me}"
-   echo "  To setup the example program        : ./${Me} setup"
-   echo "  To run and test the example program : ./${Me} run_test"
-   echo "  To list the individual steps        : ./${Me} --list"
-   echo "  To run an individual step           : ./${Me} <step name>"
+   echo "  To setup and run the example program, end-to-end : ./${Me}"
+   echo "  To setup the example program                     : ./${Me} setup"
+   echo "  To run and test the example program              : ./${Me} run_test"
+   echo "  To list the individual steps                     : ./${Me} --list"
+   echo "  To run an individual step                        : ./${Me} <step name>"
 }
 
 # ###########################################################################
 # Dump the list of functions, one for each step, that user can invoke.
 # Ref: https://www.freecodecamp.org/news/bash-array-how-to-declare-an-array-of-strings-in-a-bash-script/
 # ###########################################################################
-Steps=("show_env"
+Steps=( "rm_non_git_files"
+        "show_env"
         "do_cleanup"
         "build_utilities"
         "gen_policy_and_self_signed_cert"
@@ -154,6 +154,26 @@ function run_cmd() {
    "$@"
 
    set +x
+}
+
+# ###########################################################################
+# Deep-clean the build-env to remove artifacts (e.g. generated files, binaries
+# etc.) that may have been produced by other steps. We run this to ensure
+# that this script will run successfully w/o any dependencies on executing
+# some prior steps.
+# ###########################################################################
+function rm_non_git_files() {
+    pushd "${CERT_PROTO}" > /dev/null 2>&1
+
+    echo "${Me}: Delete all files not tracked by git"
+    # shellcheck disable=SC2046
+    run_cmd rm -rf $(git ls-files . --exclude-standard --others)
+
+    echo "${Me}: Delete all files not tracked by git that are also ignored"
+    # shellcheck disable=SC2046
+    run_cmd rm -rf $(git ls-files . --exclude-standard --others --ignored)
+
+    popd > /dev/null 2>&1
 }
 
 # ###########################################################################
@@ -551,18 +571,25 @@ function run_app_as_client_make_trusted_request() {
 
 # ###########################################################################
 function show_env() {
-   echo "Environment variables, script globals:"
+   echo
+   echo "**** Environment variables, script globals: ****"
    env | grep -E "CERT_PROTO|EXAMPLE_DIR"
 
-   local numCPUs=`grep "^processor" /proc/cpuinfo | wc -l`
-   local cpuModel=`grep "model name" /proc/cpuinfo | head -1 | cut -f2 -d':'`
-   local cpuVendor=`grep "vendor_id" /proc/cpuinfo | head -1 | cut -f2 -d':'`
-   local totalMemGB=`free -g | grep "^Mem:" | awk '{print $2}'`
+   local numCPUs=0
+   local cpuModel=0
+   local cpuVendor=0
+   local totalMemGB=0
+
+   numCPUs=$(grep -c "^processor" /proc/cpuinfo)
+   cpuModel=$(grep "model name" /proc/cpuinfo | head -1 | cut -f2 -d':')
+   cpuVendor=$(grep "vendor_id" /proc/cpuinfo | head -1 | cut -f2 -d':')
+   totalMemGB=$(free -g | grep "^Mem:" | awk '{print $2}')
 
     echo
     uname -a
-    echo "${cpuVendor}, ${numCPUs} CPUs, ${totalMemGB} GB, ${cpuModel}"
-    ping -4 -c 1 `uname -n` | head -2
+    echo
+    echo "${Me}: ${cpuVendor}, ${numCPUs} CPUs, ${totalMemGB} GB, ${cpuModel}"
+    ping -4 -c 1 "$(uname -n | head -2)"
 
     echo
     lsb_release -a
@@ -633,6 +660,7 @@ if [ $# -eq 1 ]; then
     # Else, it's a valid step / function name. Execute it.
     # shellcheck disable=SC2048
     $1
+    echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd) Completed $1."
     exit 0
 fi
 
@@ -645,8 +673,10 @@ if [ ! -d "${PROV_DIR}" ]; then mkdir "${PROV_DIR}"; fi
 #     ${str}
 # done
 
-setup
+# For a full end2end run, also clean-up build-env of stale artifacts
+rm_non_git_files
 
+setup
 run_test
 
 # Cleanup running processes ...

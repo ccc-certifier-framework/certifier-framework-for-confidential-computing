@@ -28,8 +28,11 @@ TARGET_MACHINE_TYPE= x64
 endif
 
 S= $(SRC_DIR)
-CERT_SRC=$(CERTIFIER_PROTOTYPE_DIR)/src
 O= $(OBJ_DIR)
+I= $(INC_DIR)
+US= .
+CERT_SRC=$(CERTIFIER_PROTOTYPE_DIR)/src
+
 INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/
 
 CFLAGS= $(INCLUDE) -O3 -g -Wall -Werror -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
@@ -116,9 +119,9 @@ $(O)/key_utility.o: $(US)/key_utility.cc $(INC_DIR)/support.h $(INC_DIR)/certifi
 	@echo "compiling key_utility.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/key_utility.o $(US)/key_utility.cc
 
-#$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CERT_SRC)/certifier.proto
-#	$(PROTO) -I$(S) --cpp_out=$(US) $(CERT_SRC)/certifier.proto
-#	mv certifier.pb.h $(I)
+$(CERT_SRC)/certifier.pb.cc $(I)/certifier.pb.h: $(CERT_SRC)/certifier.proto
+	$(PROTO) -I$(S) --proto_path=$(CERT_SRC) --cpp_out=$(CERT_SRC) $(CERT_SRC)/certifier.proto
+	mv $(CERT_SRC)/certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(CERT_SRC)/certifier.pb.cc $(INC_DIR)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"

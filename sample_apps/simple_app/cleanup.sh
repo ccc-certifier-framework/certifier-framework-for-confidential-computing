@@ -12,6 +12,8 @@ Me=$(basename "$0")
 parent_pid=-99999
 if [ $# -eq 1 ]; then parent_pid="$1"; fi
 
+Killed_some_procs=0
+
 # ##############################################################################
 function cleanup_stale_procs() {
 
@@ -34,6 +36,7 @@ function cleanup_stale_procs() {
             # kill -9 ${pid}
             kill -s SIGKILL ${pid} || :
             set +x
+            Killed_some_procs=1
         fi
     done
 }
@@ -43,4 +46,9 @@ if [ ${parent_pid} -gt 0 ]; then
    echo "${Me}: Cleanup stale processes (parent_pid=${parent_pid}) ..."
 fi
 cleanup_stale_procs
+
+# To let open sockets be drained etc ... Empirical fix to get stuff running on CI
+if [ "${Killed_some_procs}" = "1" ]; then
+   echo "${Me}: $(TZ="America/Los_Angeles" date) Completed."
+fi
 exit 0

@@ -33,6 +33,8 @@ jobs:
         cd ../sample_apps/simple_app
         ./cleanup.sh
         ./run_example.sh
+        ./cleanup.sh
+
         #! ---------------------------------------------------------------------
         #! Few other miscellaneous checks
         cd ../../certifier_service/oelib
