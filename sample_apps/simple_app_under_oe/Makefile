@@ -23,6 +23,7 @@ cleanall: clean
 
 dump_mrenclave:
 	oesign dump --enclave-image=./enclave/enclave.signed
+	@echo "\e[1;31m Build measurement_init.exe with make -f cert_utility.mak measurement_init.exe in utilities directory\e[1;m"
 	@echo "\e[1;31m Invoke measurement_init.exe --mrenclave=xxx --out_file=binary_trusted_measurements_file.bin\e[1;m"
 	@echo "\e[1;31m Replace 'xxx' with the mrenclave string from the output above\e[1;m"
-	@echo "\e[1;31m Build measurement_init.exe with make -f cert_utility.mak measurement_init.exe in utilities directory\e[1;m"
+	@echo "\e[0;m"

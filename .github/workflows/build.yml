@@ -29,11 +29,21 @@ jobs:
         ./certifier_tests.exe
         #! ---------------------------------------------------------------------
         cd ../sample_apps
-        #! Exercise help / usage / list options
+        #! Exercise help / usage / list options, for default simple_app
         ./run_example.sh -h
-        ./run_example.sh simple_app --list
+        ./run_example.sh --help
+        ./run_example.sh --list
+        ./run_example.sh --list simple_app
 
-        #! Compile and build simple_app. Execute script to exercise simple_app
+        #! Re-run help / usage / list options, for simple_app_under_oe
+        ./run_example.sh --help simple_app_under_oe
+        ./run_example.sh --list simple_app_under_oe
+
+        ./run_example.sh simple_app show_env
+        ./run_example.sh simple_app_under_oe show_env
+
+        #! ---------------------------------------------------------------------
+        #! Test: Execute script to compile, build and run simple_app.
         #! This will also check that utilities programs still compile
         ./cleanup.sh
         ./run_example.sh simple_app
