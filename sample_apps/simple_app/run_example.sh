@@ -80,6 +80,7 @@ function usage() {
 Steps=( "rm_non_git_files"
         "show_env"
         "do_cleanup"
+        "rm_non_git_files"
         "build_utilities"
         "gen_policy_and_self_signed_cert"
         "emded_policy_in_example_app"
