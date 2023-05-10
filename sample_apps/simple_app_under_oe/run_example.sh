@@ -28,8 +28,12 @@ Client_app_data="./app1_data/"
 Srvr_app_data="./app2_data/"
 
 SimpleServer_PID=0
-AppAsServer_PID=0
 Found_step=0        # While looking thru Steps[] for user-specified fn-name
+
+# build_utilites needs access to OpenSSL libraries, that may live on a diff
+# dir location, depending on how OpenSSL was installed on diff machines.
+# User can over-ride our default by specifying LOCAL_LIB env-var
+Local_lib_path=${LOCAL_LIB:-/usr/local/lib64}
 
 # ###########################################################################
 # Set trap handlers for all errors. Needs -E (-o errtrace): Ensures that ERR
@@ -187,7 +191,7 @@ function build_utilities() {
          run_cmd make -f ${mkf} clean
          clean_done=1
       fi
-      LOCAL_LIB=/usr/local/lib64 run_cmd make -f ${mkf}
+      LOCAL_LIB=${Local_lib_path} run_cmd make -f ${mkf}
    done
 
    popd > /dev/null 2>&1
@@ -573,20 +577,28 @@ function run_app_as_client_make_trusted_request() {
 function show_env() {
    echo "Environment variables, script globals:"
    env | grep -E "CERT_PROTO|EXAMPLE_DIR"
+   echo "LOCAL_LIB=${Local_lib_path}"
 
-   local numCPUs=`grep "^processor" /proc/cpuinfo | wc -l`
-   local cpuModel=`grep "model name" /proc/cpuinfo | head -1 | cut -f2 -d':'`
-   local cpuVendor=`grep "vendor_id" /proc/cpuinfo | head -1 | cut -f2 -d':'`
-   local totalMemGB=`free -g | grep "^Mem:" | awk '{print $2}'`
+   local numCPUs=0
+   local cpuModel=0
+   local cpuVendor=0
+   local totalMemGB=0
+
+   numCPUs=$(grep -c "^processor" /proc/cpuinfo)
+   cpuModel=$(grep "model name" /proc/cpuinfo | head -1 | cut -f2 -d':')
+   cpuVendor=$(grep "vendor_id" /proc/cpuinfo | head -1 | cut -f2 -d':')
+   totalMemGB=$(free -g | grep "^Mem:" | awk '{print $2}')
 
     echo
     uname -a
-    echo "${cpuVendor}, ${numCPUs} CPUs, ${totalMemGB} GB, ${cpuModel}"
-    ping -4 -c 1 `uname -n` | head -2
+    echo
+    echo "${Me}: ${cpuVendor}, ${numCPUs} CPUs, ${totalMemGB} GB, ${cpuModel}"
+    ping -4 -c 1 "$(uname -n | head -2)"
 
     echo
     lsb_release -a
 }
+
 
 # ###########################################################################
 # Execute a list of steps starting from: from_step, to: to_step, both inclusive

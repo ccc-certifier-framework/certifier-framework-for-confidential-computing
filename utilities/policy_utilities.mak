@@ -22,7 +22,7 @@ endif
 #endif
 
 ifndef LOCAL_LIB
-LOCAL_LIB=/usr/local/lib
+LOCAL_LIB=/usr/local/lib64
 endif
 
 ifndef TARGET_MACHINE_TYPE
@@ -51,7 +51,6 @@ PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
-
 
 measurement_utility_obj=$(O)/measurement_utility.o $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
 $(O)/certifier.pb.o $(O)/simulated_enclave.o $(O)/application_enclave.o
