@@ -187,7 +187,7 @@ bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
 }
 
 void clear_sensitive_data() {
-  // Todo: clear symmetric and private keys
+  // TODO: clear symmetric and private keys
   //    Not necessary on most platforms
 }
 
@@ -200,7 +200,7 @@ bool warm_restart() {
   return app_trust_data->warm_restart();
 }
 
-// Todo: replace with new cc_trust_data interface
+// TODO: replace with new cc_trust_data interface
 bool certify_me() {
   return app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port);
 }

@@ -106,8 +106,8 @@ Steps=( "rm_non_git_files"
         "mk_dirs_for_test"
         "provision_app_service_files"
         "start_certifier_service"
-        "run_app_as_server_talk_to_Cert_Service"
         "run_app_as_client_talk_to_Cert_Service"
+        "run_app_as_server_talk_to_Cert_Service"
         "run_app_as_server_offers_trusted_service"
         "run_app_as_client_make_trusted_request"
 )
@@ -488,6 +488,7 @@ function provision_app_service_files() {
 function start_certifier_service() {
     pushd "${EXAMPLE_DIR}"/service > /dev/null 2>&1
 
+    run_cmd
     echo
     outfile="${PROV_DIR}/cert.service.out"
     echo "$Me: Starting Certifier Service ..."
@@ -514,14 +515,16 @@ function start_certifier_service() {
 function run_app_as_server_talk_to_Cert_Service() {
     pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
 
-    run_cmd ./host/host enclave/enclave.signed     \
-                cold-init                           \
+    run_cmd ./host/host                     \
+                enclave/enclave.signed      \
+                cold-init                   \
                 "${EXAMPLE_DIR}"/app2_data
 
     run_cmd sleep 1
 
-    run_cmd ./host/host enclave/enclave.signed     \
-                get-certifier                       \
+    run_cmd ./host/host                     \
+                enclave/enclave.signed      \
+                get-certifier               \
                 "${EXAMPLE_DIR}"/app2_data
 
     popd > /dev/null 2>&1
@@ -535,21 +538,17 @@ function run_app_as_server_talk_to_Cert_Service() {
 function run_app_as_client_talk_to_Cert_Service() {
     pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
 
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
-                --data_dir="${Client_app_data}"                 \
-                --operation=cold-init                           \
-                --measurement_file="example_app.measurement"    \
-                --policy_store_file=policy_store                \
-                --print_all=true
+    run_cmd ./host/host                     \
+                enclave/enclave.signed      \
+                cold-init                   \
+                "${EXAMPLE_DIR}"/app1_data
 
     run_cmd sleep 1
 
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
-                --data_dir="${Client_app_data}"                 \
-                --operation=get-certifier                       \
-                --measurement_file="example_app.measurement"    \
-                --policy_store_file=policy_store                \
-                --print_all=true
+    run_cmd ./host/host                     \
+                enclave/enclave.signed      \
+                get-certifier               \
+                "${EXAMPLE_DIR}"/app1_data
 
     popd > /dev/null 2>&1
 }
@@ -563,11 +562,10 @@ function run_app_as_server_offers_trusted_service() {
     pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
 
     # Run app as a server: In app as a server terminal run the following:
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe        \
-                --data_dir="${Srvr_app_data}"       \
-                --operation=run-app-as-server       \
-                --policy_store_file=policy_store    \
-                --print_all=true &
+    run_cmd ./host/host                 \
+                enclave/enclave.signed  \
+                run-app-as-server       \
+                $EXAMPLE_DIR/app2_data &
 
     run_cmd sleep 5
 
@@ -584,11 +582,10 @@ function run_app_as_client_make_trusted_request() {
     pushd "${EXAMPLE_DIR}" >/dev/null 2>&1
 
     # Run app as a client: In app as a client terminal run the following:
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe        \
-                --data_dir="${Client_app_data}"     \
-                --operation=run-app-as-client       \
-                --policy_store_file=policy_store    \
-                --print_all=true
+    run_cmd ./host/host                 \
+                enclave/enclave.signed  \
+                run-app-as-client       \
+                $EXAMPLE_DIR/app1_data
 
     popd > /dev/null 2>&1
     # Report this, for debugging on CI-machines
