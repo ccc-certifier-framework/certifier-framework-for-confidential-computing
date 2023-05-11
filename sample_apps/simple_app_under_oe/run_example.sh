@@ -335,6 +335,19 @@ function produce_signed_claims_for_vse_policy_statement() {
 }
 
 # ###########################################################################
+# Combine signed policy statements for Certifier Service use.
+# ###########################################################################
+function combine_policy_stmts() {
+   pushd "${PROV_DIR}" > /dev/null 2>&1
+
+   run_cmd "${CERT_UTILS}"/package_claims.exe   \
+               --input=signed_claim_1.bin       \
+               --output=policy.bin
+
+   popd > /dev/null 2>&1
+}
+
+# ###########################################################################
 # Print the policy (Optional)
 # ###########################################################################
 function print_policy() {
@@ -382,8 +395,15 @@ function edit_policy_file() {
     popd > /dev/null 2>&1
 }
 
+# ###########################################################################
 function run_policy_generator() {
     pushd "${PROV_DIR}" > /dev/null 2>&1
+
+    run_cmd "${CERTIFIER_PROTOTYPE}"/utilities/policy_generator.exe     \
+                --policy_input=../oe_policy.json                    \
+                --schema_input="${CERTIFIER_PROTOTYPE}"/utilities/policy_schema.json \
+                --util_path="${CERTIFIER_PROTOTYPE}"/utilities
+
     popd > /dev/null 2>&1
 }
 
@@ -408,7 +428,7 @@ function build_simple_server() {
     pushd "${CERT_PROTO}" > /dev/null 2>&1
 
     # Compiler the protobuf
-    cd certifier_service/certprotos
+    run_cmd cd certifier_service/certprotos
     run_cmd protoc                              \
                 --go_opt=paths=source_relative  \
                 --go_out=.                      \
@@ -416,17 +436,17 @@ function build_simple_server() {
 
     # Compile the oelib for OE host verification
     # Likely, user does not have OE SDK installed or does not want to enable OE:
-    # This should produce a go file for the certifier protobufs
+    # This should produce a Go file for the certifier protobufs
     # called certifier.pb.go in certprotos.
-    cd "${CERT_PROTO}"/certifier_service/oelib
-    run_cmd make dummy
+    run_cmd cd "${CERT_PROTO}"/certifier_service/oelib
+    run_cmd make
 
     cd "${CERT_PROTO}"/certifier_service/graminelib
     run_cmd make dummy
 
     # Now, build simpleserver:
-    cd "${CERT_PROTO}"/certifier_service
-    rm -rf simpleserver
+    run_cmd cd "${CERT_PROTO}"/certifier_service
+    run_cmd rm -rf simpleserver
     run_cmd go build simpleserver.go
 
     popd > /dev/null 2>&1
@@ -494,21 +514,15 @@ function start_certifier_service() {
 function run_app_as_server_talk_to_Cert_Service() {
     pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
 
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
-                --data_dir="${Srvr_app_data}"                   \
-                --operation=cold-init                           \
-                --measurement_file="example_app.measurement"    \
-                --policy_store_file=policy_store                \
-                --print_all=true
+    run_cmd ./host/host enclave/enclave.signed     \
+                cold-init                           \
+                "${EXAMPLE_DIR}"/app2_data
 
     run_cmd sleep 1
 
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
-                --data_dir="${Srvr_app_data}"                   \
-                --operation=get-certifier                       \
-                --measurement_file="example_app.measurement"    \
-                --policy_store_file=policy_store                \
-                --print_all=true
+    run_cmd ./host/host enclave/enclave.signed     \
+                get-certifier                       \
+                "${EXAMPLE_DIR}"/app2_data
 
     popd > /dev/null 2>&1
 }
@@ -641,6 +655,7 @@ function run_steps() {
 # ###########################################################################
 function setup() {
     run_steps "show_env" "author_policy"
+    run_cmd generate_policy
     run_steps "build_simple_server" "provision_app_service_files"
 }
 
