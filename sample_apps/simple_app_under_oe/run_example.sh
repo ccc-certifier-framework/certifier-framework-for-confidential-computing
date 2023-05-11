@@ -81,9 +81,9 @@ function usage() {
 # Dump the list of functions, one for each step, that user can invoke.
 # Ref: https://www.freecodecamp.org/news/bash-array-how-to-declare-an-array-of-strings-in-a-bash-script/
 # ###########################################################################
-Steps=("show_env"
+Steps=( "rm_non_git_files"
+        "show_env"
         "do_cleanup"
-        "rm_non_git_files"
         "build_utilities"
         "gen_policy_and_self_signed_cert"
         "emded_policy_in_example_app"
@@ -223,11 +223,25 @@ function emded_policy_in_example_app() {
 }
 
 # ###########################################################################
+# Do some cleanup of previously-generated protobuf-files. We are using a
+# specific 'protoc' compiler in this 'make' step below (enclave/Makefile).
+# It's likely that protobuf files generated while building the utilities
+# could be incompatible in format with the hard-coded version of protoc
+# used in this step.
+# ###########################################################################
 function compile_app() {
+   pushd "${CERT_UTILS}" > /dev/null 2>&1
+
+   run_cmd rm -rf certifier.pb.cc
+   cd ../include
+   run_cmd rm -rf certifier.pb.h
+
+   popd > /dev/null 2>&1
+
    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
 
-   run_cmd make -f example_app.mak clean
-   run_cmd make -f example_app.mak
+   run_cmd make
+   run_cmd make dump_mrenclave
 
    popd > /dev/null 2>&1
 }
@@ -677,6 +691,8 @@ if [ ! -d "${PROV_DIR}" ]; then mkdir "${PROV_DIR}"; fi
 #     ${str}
 # done
 
+#  For a full end2end run, also clean-up build-env of stale artifacts
+rm_non_git_files
 setup
 
 run_test
