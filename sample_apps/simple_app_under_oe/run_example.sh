@@ -35,6 +35,9 @@ Found_step=0        # While looking thru Steps[] for user-specified fn-name
 # User can over-ride our default by specifying LOCAL_LIB env-var
 Local_lib_path=${LOCAL_LIB:-/usr/local/lib64}
 
+# Sub-tools uswed in this script
+Jq=$(command -v jq)
+
 # ###########################################################################
 # Set trap handlers for all errors. Needs -E (-o errtrace): Ensures that ERR
 # traps (see below) get inherited by functions, command substitutions, and
@@ -93,11 +96,12 @@ Steps=( "rm_non_git_files"
           # These sub-step fns are subsumed under author_policy()
           "construct_policyKey_platform_is_trusted"
           "produce_signed_claims_for_vse_policy_statement"
-          "construct_policyKey_measurement_is_trusted"
           "combine_policy_stmts"
           "print_policy"
-          "construct_platform_key_attestation_stmt_sign_it"
-          "print_signed_claim"
+        "generate_policy"
+          # These sub-step fns are subsumed under author_policy()
+          "edit_policy_file"
+          "run_policy_generator"
         "build_simple_server"
         "mk_dirs_for_test"
         "provision_app_service_files"
@@ -331,51 +335,6 @@ function produce_signed_claims_for_vse_policy_statement() {
 }
 
 # ###########################################################################
-# Construct policy key says measurement is-trusted
-# ###########################################################################
-function construct_policyKey_measurement_is_trusted() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
-
-   run_cmd "${CERT_UTILS}"/measurement_utility.exe  \
-               --type=hash                          \
-               --input=../example_app.exe           \
-               --output=example_app.measurement
-
-   run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe            \
-               --key_subject=""                                 \
-               --measurement_subject=example_app.measurement    \
-               --verb="is-trusted"                              \
-               --output=ts2.bin
-
-   run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
-               --key_subject=policy_key_file.bin            \
-               --verb="says"                                \
-               --clause=ts2.bin                             \
-               --output=vse_policy2.bin
-
-   run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
-               --vse_file=vse_policy2.bin                           \
-               --duration=9000                                      \
-               --private_key_file=policy_key_file.bin               \
-               --output=signed_claim_2.bin
-
-   popd > /dev/null 2>&1
-}
-
-# ###########################################################################
-# Combine signed policy statements for Certifier Service use.
-# ###########################################################################
-function combine_policy_stmts() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
-
-   run_cmd "${CERT_UTILS}"/package_claims.exe   \
-               --input=signed_claim_1.bin       \
-               --output=policy.bin
-
-   popd > /dev/null 2>&1
-}
-
-# ###########################################################################
 # Print the policy (Optional)
 # ###########################################################################
 function print_policy() {
@@ -387,31 +346,45 @@ function print_policy() {
 }
 
 # ###########################################################################
-# Construct statement:
-# "platform-key says attestation-key is-trusted-for-attestation"
-# and sign it
+function generate_policy() {
+    pushd "${PROV_DIR}" > /dev/null 2>&1
+
+    edit_policy_file
+    run_policy_generator
+
+    popd > /dev/null 2>&1
+}
+
 # ###########################################################################
-function construct_platform_key_attestation_stmt_sign_it() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+# Edit the policy.json file to replace trusted measurements of the
+# "measurements" property with expected measurements from
+# 'make dump_mrenclave'
+# ###########################################################################
+function edit_policy_file() {
+    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
 
-   run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
-               --key_subject=attest_key_file.bin        \
-               --verb="is-trusted-for-attestation"      \
-               --output=tsc1.bin
+    policy_json_file="./oe_policy.json"
+    local policy_json_file_old="${policy_json_file}.old"
+    run_cmd cp -p ${policy_json_file} ${policy_json_file_old}
 
-   run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
-               --key_subject=platform_key_file.bin          \
-               --verb="says"                                \
-               --clause=tsc1.bin                            \
-               --output=vse_policy3.bin
+    local mrsigner=""
+    set -x
+    mrsigner=$(make dump_mrenclave | grep "^mrsigner" | cut -f2 -d'=')
+    set +x
 
-   run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
-               --vse_file=vse_policy3.bin                           \
-               --duration=9000                                      \
-               --private_key_file=platform_key_file.bin             \
-               --output=platform_attest_endorsement.bin
+    set +x
+    ${Jq} '.measurements = [ "mrsigner" ]' "${policy_json_file}"    \
+        | sed -e "s/mrsigner/${mrsigner}/g"                         \
+        > ${policy_json_file}.tmp
 
-   popd > /dev/null 2>&1
+    run_cmd mv ${policy_json_file}.tmp ${policy_json_file}
+
+    popd > /dev/null 2>&1
+}
+
+function run_policy_generator() {
+    pushd "${PROV_DIR}" > /dev/null 2>&1
+    popd > /dev/null 2>&1
 }
 
 # ###########################################################################
