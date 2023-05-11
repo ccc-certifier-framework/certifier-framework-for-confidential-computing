@@ -9,7 +9,15 @@
 *.cmd
 *.exe
 *.bin
+*.pem
 app1_data/
 app2_data/
 simpleserver
 provisioning/
+host
+enclave
+*attestation_t.h
+*attestation_t.c
+*attestation_u.h
+*attestation_u.c
+*attestation_args.h
