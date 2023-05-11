@@ -90,12 +90,14 @@ Steps=( "rm_non_git_files"
         "compile_app"
         "get_measurement_of_trusted_app"
         "author_policy"
-        "construct_policyKey_platform_is_trusted"
-        "construct_policyKey_measurement_is_trusted"
-        "combine_policy_stmts"
-        "print_policy"
-        "construct_platform_key_attestation_stmt_sign_it"
-        "print_signed_claim"
+          # These sub-step fns are subsumed under author_policy()
+          "construct_policyKey_platform_is_trusted"
+          "produce_signed_claims_for_vse_policy_statement"
+          "construct_policyKey_measurement_is_trusted"
+          "combine_policy_stmts"
+          "print_policy"
+          "construct_platform_key_attestation_stmt_sign_it"
+          "print_signed_claim"
         "build_simple_server"
         "mk_dirs_for_test"
         "provision_app_service_files"
@@ -250,12 +252,25 @@ function compile_app() {
 # Obtain the measurement of the trusted application for the security domain.
 # ###########################################################################
 function get_measurement_of_trusted_app() {
+   pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+
+   run_cmd
+
+   # Grab mrenclave name from 'dump' output
+   set -x
+   local mrenclave=""
+   mrenclave=$(oesign dump --enclave-image=./enclave/enclave.signed \
+                | grep "^mrenclave" \
+                | cut -f2 -d'=')
+   set +x
+
+   popd > /dev/null 2>&1
+
    pushd "${PROV_DIR}" > /dev/null 2>&1
 
-   run_cmd "$CERT_UTILS"/measurement_utility.exe    \
-               --type=hash                          \
-               --input=../example_app.exe           \
-               --output=example_app.measurement
+   run_cmd "$CERT_UTILS"/measurement_init.exe                   \
+               --mrenclave="${mrenclave}"                       \
+               --out_file=binary_trusted_measurements_file.bin
 
    popd > /dev/null 2>&1
 }
@@ -268,17 +283,15 @@ function get_measurement_of_trusted_app() {
 function author_policy() {
     pushd "${PROV_DIR}" > /dev/null 2>&1
 
+    run_cmd
+
     construct_policyKey_platform_is_trusted
 
-    construct_policyKey_measurement_is_trusted
+    produce_signed_claims_for_vse_policy_statement
 
     combine_policy_stmts
 
     print_policy
-
-    construct_platform_key_attestation_stmt_sign_it
-
-    print_signed_claim
 
     popd > /dev/null 2>&1
 }
@@ -290,7 +303,7 @@ function construct_policyKey_platform_is_trusted() {
    pushd "${PROV_DIR}" > /dev/null 2>&1
 
    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
-               --key_subject=platform_key_file.bin      \
+               --measurement_subject=binary_trusted_measurements_file.bin \
                --verb="is-trusted-for-attestation"      \
                --output=ts1.bin
 
@@ -299,6 +312,14 @@ function construct_policyKey_platform_is_trusted() {
                --verb="says"                            \
                --clause=ts1.bin                         \
                --output=vse_policy1.bin
+
+   popd > /dev/null 2>&1
+}
+
+# ###########################################################################
+# Construct policy key says platformKey is-trused-for-attestation
+function produce_signed_claims_for_vse_policy_statement() {
+   pushd "${PROV_DIR}" > /dev/null 2>&1
 
    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
                --vse_file=vse_policy1.bin                           \
@@ -347,8 +368,8 @@ function construct_policyKey_measurement_is_trusted() {
 function combine_policy_stmts() {
    pushd "${PROV_DIR}" > /dev/null 2>&1
 
-   run_cmd "${CERT_UTILS}"/package_claims.exe                   \
-               --input=signed_claim_1.bin,signed_claim_2.bin    \
+   run_cmd "${CERT_UTILS}"/package_claims.exe   \
+               --input=signed_claim_1.bin       \
                --output=policy.bin
 
    popd > /dev/null 2>&1
@@ -642,9 +663,12 @@ function run_steps() {
 
 # ###########################################################################
 # Do initial setup of the sample app test-case
+# As the sub-steps array has nested fn-calls, run a collection of steps
+# to avoid re-running sub-fns nested under author_policy()
 # ###########################################################################
 function setup() {
-    run_steps "show_env" "provision_app_service_files"
+    run_steps "show_env" "author_policy"
+    run_steps "build_simple_server" "provision_app_service_files"
 }
 
 # ###########################################################################
