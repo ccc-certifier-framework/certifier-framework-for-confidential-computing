@@ -23,6 +23,8 @@
 // Policy store
 // -------------------------------------------------------------------
 
+extern string authenticated_encryption_algorithm;
+
 void print_store(policy_store& ps) {
   printf("num_ts: %d\n", ps.num_ts_);
   printf("num_tsc: %d\n", ps.num_tsc_);
@@ -808,11 +810,6 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
     printf("Protect_Blob, can't get random number\n");
     return false;
   }
-
-  if (key.key_type() != "aes-256-cbc-hmac-sha256") {
-    printf("Protect_Blob: unsupported encryption scheme\n");
-    return false;
-  }
   if (!key.has_secret_key_bits()) {
     printf("Protect_Blob: no key bits\n");
     return false;
@@ -825,7 +822,8 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
 
   int size_encrypted = size_unencrypted_data + max_key_seal_pad;
   byte encrypted_data[size_encrypted];
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256",  unencrypted_data, size_unencrypted_data,
+  if (!authenticated_encrypt(authenticated_encryption_algorithm.c_str(),
+          unencrypted_data, size_unencrypted_data,
           key_buf, iv, encrypted_data, &size_encrypted)) {
     printf("Protect_Blob: authenticate encryption failed\n");
     return false;
@@ -900,7 +898,7 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
   }
 
   // decrypt encrypted data
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", (byte*)pb.encrypted_data().data(),
+  if (!authenticated_decrypt(authenticated_encryption_algorithm.c_str(), (byte*)pb.encrypted_data().data(),
           pb.encrypted_data().size(), key_buf, unencrypted_data, size_of_unencrypted_data)) {
     printf("Unprotect_Blob: authenticated decrypt failed\n");
     return false;
