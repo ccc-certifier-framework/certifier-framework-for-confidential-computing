@@ -251,7 +251,11 @@ function get_measurement_of_trusted_app() {
 function author_policy() {
     pushd "${PROV_DIR}" > /dev/null 2>&1
 
+    run_cmd
+
     construct_policyKey_platform_is_trusted
+
+    produce_signed_claims_for_vse_policy_statement
 
     construct_policyKey_measurement_is_trusted
 
@@ -282,6 +286,13 @@ function construct_policyKey_platform_is_trusted() {
                --verb="says"                            \
                --clause=ts1.bin                         \
                --output=vse_policy1.bin
+
+   popd > /dev/null 2>&1
+}
+
+# ###########################################################################
+function produce_signed_claims_for_vse_policy_statement() {
+   pushd "${PROV_DIR}" > /dev/null 2>&1
 
    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
                --vse_file=vse_policy1.bin                           \
