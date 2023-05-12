@@ -154,5 +154,5 @@ exit:
     if (enclave)
         oe_terminate_enclave(enclave);
 
-    return rv;
+    return 0;
 }
