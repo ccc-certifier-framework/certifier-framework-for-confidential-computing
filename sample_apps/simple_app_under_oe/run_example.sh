@@ -24,8 +24,8 @@ ExName=$(basename "$EXAMPLE_DIR")
 MeMsg="Build and run example program ${ExName}"
 
 # Script global symbols to app-data dirs
-Client_app_data="./app1_data/"
-Srvr_app_data="./app2_data/"
+Client_app_data="app1_data"
+Srvr_app_data="app2_data"
 
 SimpleServer_PID=0
 Found_step=0        # While looking thru Steps[] for user-specified fn-name
@@ -85,6 +85,8 @@ function usage() {
 # Ref: https://www.freecodecamp.org/news/bash-array-how-to-declare-an-array-of-strings-in-a-bash-script/
 # ###########################################################################
 Steps=( "rm_non_git_files"
+
+        # 'setup' argument starts from here:
         "show_env"
         "do_cleanup"
         "build_utilities"
@@ -92,19 +94,24 @@ Steps=( "rm_non_git_files"
         "emded_policy_in_example_app"
         "compile_app"
         "get_measurement_of_trusted_app"
+
         "author_policy"
           # These sub-step fns are subsumed under author_policy()
           "construct_policyKey_platform_is_trusted"
           "produce_signed_claims_for_vse_policy_statement"
           "combine_policy_stmts"
           "print_policy"
+
         "generate_policy"
           # These sub-step fns are subsumed under generate_policy()
           "edit_policy_file"
           "run_policy_generator"
+
         "build_simple_server"
         "mk_dirs_for_test"
         "provision_app_service_files"
+
+        # 'run_test' argument starts from here:
         "start_certifier_service"
         "run_app_as_client_talk_to_Cert_Service"
         "run_app_as_server_talk_to_Cert_Service"
@@ -280,6 +287,8 @@ function get_measurement_of_trusted_app() {
 }
 
 # ###########################################################################
+# Step 7 in instructions.md: Manual policy generation
+# You run either this step, or Step 8, below.
 # Author the policy for the security domain and produce the signed claims
 # that the apps need. This is just a wrapper function to drive the execution
 # of sub-steps, each of which is implemented by a minion function.
@@ -308,7 +317,7 @@ function construct_policyKey_platform_is_trusted() {
 
    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
                --measurement_subject=binary_trusted_measurements_file.bin \
-               --verb="is-trusted-for-attestation"      \
+               --verb="is-trusted"      \
                --output=ts1.bin
 
    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe \
@@ -359,6 +368,9 @@ function print_policy() {
 }
 
 # ###########################################################################
+# Step 8 in instructions.md: Use Policy Generator
+# You run either this or step (7).
+# ###########################################################################
 function generate_policy() {
     pushd "${PROV_DIR}" > /dev/null 2>&1
 
@@ -382,7 +394,7 @@ function edit_policy_file() {
 
     local mrsigner=""
     set -x
-    mrsigner=$(make dump_mrenclave | grep "^mrsigner" | cut -f2 -d'=')
+    mrenclave=$(make dump_mrenclave | grep "^mrenclave" | cut -f2 -d'=')
     set +x
 
     set +x
@@ -405,18 +417,6 @@ function run_policy_generator() {
                 --util_path="${CERTIFIER_PROTOTYPE}"/utilities
 
     popd > /dev/null 2>&1
-}
-
-# ###########################################################################
-# Print signed claim (Optional)
-# ###########################################################################
-function print_signed_claim() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
-
-   run_cmd "${CERT_UTILS}"/print_signed_claim.exe   \
-               --input=platform_attest_endorsement.bin
-
-   popd > /dev/null 2>&1
 }
 
 # ###########################################################################
@@ -458,9 +458,8 @@ function build_simple_server() {
 function mk_dirs_for_test() {
     pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
 
-    run_cmd rm -rf app1_data app2_data service
-    run_cmd mkdir  app1_data app2_data service
-
+    run_cmd rm -rf ${Client_app_data} ${Srvr_app_data} service
+    run_cmd mkdir  ${Client_app_data} ${Srvr_app_data} service
     popd > /dev/null 2>&1
 }
 
@@ -473,8 +472,8 @@ function mk_dirs_for_test() {
 function provision_app_service_files() {
     pushd "${PROV_DIR}" > /dev/null 2>&1
 
-    run_cmd cp -p ./* "$EXAMPLE_DIR"/app1_data
-    run_cmd cp -p ./* "$EXAMPLE_DIR"/app2_data
+    run_cmd cp -p ./* "$EXAMPLE_DIR"/${Client_app_data}
+    run_cmd cp -p ./* "$EXAMPLE_DIR"/${Srvr_app_data}
 
     run_cmd cp -p policy_key_file.bin policy_cert_file.bin policy.bin \
                     "$EXAMPLE_DIR"/service
@@ -510,27 +509,6 @@ function start_certifier_service() {
 }
 
 # ###########################################################################
-# Run the app as server and get admission certificates from Certifier Service
-# ###########################################################################
-function run_app_as_server_talk_to_Cert_Service() {
-    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
-
-    run_cmd ./host/host                     \
-                enclave/enclave.signed      \
-                cold-init                   \
-                "${EXAMPLE_DIR}"/app2_data
-
-    run_cmd sleep 1
-
-    run_cmd ./host/host                     \
-                enclave/enclave.signed      \
-                get-certifier               \
-                "${EXAMPLE_DIR}"/app2_data
-
-    popd > /dev/null 2>&1
-}
-
-# ###########################################################################
 # Run the app as client and get admission certificates from Certifier Service
 # In a manual demo: Open two new terminals (one for the app as a client and
 # one for the app as a server):
@@ -541,14 +519,35 @@ function run_app_as_client_talk_to_Cert_Service() {
     run_cmd ./host/host                     \
                 enclave/enclave.signed      \
                 cold-init                   \
-                "${EXAMPLE_DIR}"/app1_data
+                "${EXAMPLE_DIR}"/${Client_app_data}
 
     run_cmd sleep 1
 
     run_cmd ./host/host                     \
                 enclave/enclave.signed      \
                 get-certifier               \
-                "${EXAMPLE_DIR}"/app1_data
+                "${EXAMPLE_DIR}"/${Client_app_data}
+
+    popd > /dev/null 2>&1
+}
+
+# ###########################################################################
+# Run the app as server and get admission certificates from Certifier Service
+# ###########################################################################
+function run_app_as_server_talk_to_Cert_Service() {
+    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+
+    run_cmd ./host/host                     \
+                enclave/enclave.signed      \
+                cold-init                   \
+                "${EXAMPLE_DIR}"/${Srvr_app_data}
+
+    run_cmd sleep 1
+
+    run_cmd ./host/host                     \
+                enclave/enclave.signed      \
+                get-certifier               \
+                "${EXAMPLE_DIR}"/${Srvr_app_data}
 
     popd > /dev/null 2>&1
 }
@@ -565,14 +564,14 @@ function run_app_as_server_offers_trusted_service() {
     run_cmd ./host/host                 \
                 enclave/enclave.signed  \
                 run-app-as-server       \
-                $EXAMPLE_DIR/app2_data &
+                "$EXAMPLE_DIR/${Srvr_app_data}" &
 
     run_cmd sleep 5
 
     popd > /dev/null 2>&1
 
     # Report this, for debugging on CI-machines
-    echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd) Completed ${FUNCNAME[0]}"
+    echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd): Completed ${FUNCNAME[0]}"
 }
 
 # ###########################################################################
@@ -585,9 +584,10 @@ function run_app_as_client_make_trusted_request() {
     run_cmd ./host/host                 \
                 enclave/enclave.signed  \
                 run-app-as-client       \
-                $EXAMPLE_DIR/app1_data
+                "$EXAMPLE_DIR/${Client_app_data}"
 
     popd > /dev/null 2>&1
+
     # Report this, for debugging on CI-machines
     echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd) Completed ${FUNCNAME[0]}"
 }
@@ -652,7 +652,6 @@ function run_steps() {
 # ###########################################################################
 function setup() {
     run_steps "show_env" "author_policy"
-    run_cmd generate_policy
     run_steps "build_simple_server" "provision_app_service_files"
 }
 
