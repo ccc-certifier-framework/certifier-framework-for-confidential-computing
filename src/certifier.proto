@@ -36,6 +36,7 @@ message rsa_message {
   optional bytes private_q                  = 5;
   optional bytes private_dp                 = 6;
   optional bytes private_dq                 = 7;
+  optional bytes private_iqmp               = 8;
 };
 
 message point_message {
