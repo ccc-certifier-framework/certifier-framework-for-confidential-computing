@@ -29,7 +29,9 @@ typedef long unsigned uint64_t;
 #define SIG_ALGO_ECDSA_P384_SHA384      0x1
 
 #define PLATFORM_INFO_SMT_EN_SHIFT      0
+#define PLATFORM_INFO_TSME_EN_SHIFT     1
 #define PLATFORM_INFO_SMT_EN_MASK       (1UL << (PLATFORM_INFO_SMT_EN_SHIFT))
+#define PLATFORM_INFO_TSME_EN_MASK      (1UL << (PLATFORM_INFO_TSME_EN_SHIFT))
 
 #define AUTHOR_KEY_EN_SHIFT     0
 #define AUTHOR_KEY_EN_MASK      (1UL << (AUTHOR_KEY_EN_SHIFT))
@@ -61,8 +63,8 @@ struct attestation_report {
   uint32_t    signature_algo;           /* 0x034 */
   union tcb_version platform_version;   /* 0x038 */
   uint64_t    platform_info;            /* 0x040 */
-  uint32_t    flags;                    /* 0x048 */
-  uint32_t    reserved0;                /* 0x04C */
+  uint32_t    reserved0;                /* 0x048 */
+  uint32_t    reserved1;                /* 0x04C */
   uint8_t     report_data[64];          /* 0x050 */
   uint8_t     measurement[48];          /* 0x090 */
   uint8_t     host_data[32];            /* 0x0C0 */
@@ -71,11 +73,23 @@ struct attestation_report {
   uint8_t     report_id[32];            /* 0x140 */
   uint8_t     report_id_ma[32];         /* 0x160 */
   union tcb_version reported_tcb;       /* 0x180 */
-  uint8_t     reserved1[24];            /* 0x188 */
+  uint8_t     reserved2[0x1A0 - 0x188]; /* 0x188 */
   uint8_t     chip_id[64];              /* 0x1A0 */
-  uint8_t     reserved2[192];           /* 0x1E0 */
+  union tcb_version committed_tcb;      /* 0x1E0 */
+  uint8_t     current_build;            /* 0x1E8 */
+  uint8_t     current_minor;            /* 0x1E9 */
+  uint8_t     current_major;            /* 0x1EA */
+  uint8_t     reserved4;                /* 0x1EB */
+  uint8_t     committed_build;          /* 0x1EC */
+  uint8_t     committed_minor;          /* 0x1ED */
+  uint8_t     committed_major;          /* 0x1EE */
+  uint8_t     reserved5;                /* 0x1EF */
+  union tcb_version launch_tcb;         /* 0x1F0 */
+  uint8_t     reserved6[0x2A0-0x1F8];   /* 0x1F8 */
   struct signature  signature;          /* 0x2A0 */
 };
+
+static_assert(sizeof(struct attestation_report) == 0x4A0, "Error, static assertion failed");
 
 struct msg_report_resp {
   uint32_t status;
