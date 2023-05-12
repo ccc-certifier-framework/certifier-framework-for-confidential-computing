@@ -204,7 +204,7 @@ func logEvent(msg string, req []byte, resp []byte) {
         }
 }
 
-func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certprotos.KeyMessage,
+func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessage, privKey *certprotos.KeyMessage,
 		evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
 
         // evidenceType should be "vse-attestation-package", "gramine-evidence",
@@ -283,7 +283,7 @@ func ValidateRequestAndObtainToken(pubKey *certprotos.KeyMessage, privKey *certp
 		certlib.PrintKey(toProve.Subject.Key);
 		fmt.Printf("\norg: %s, appOrgName: %s\n", org, appOrgName)
 
-		cert := certlib.ProduceAdmissionCert(privKey, policyCert,
+		cert := certlib.ProduceAdmissionCert(remoteIP, privKey, policyCert,
 			toProve.Subject.Key, org, appOrgName, sn, duration)
 		if cert == nil {
 			fmt.Printf("ValidateRequestAndObtainToken: x509 certificate is nil\n")
@@ -348,7 +348,11 @@ func serviceThread(conn net.Conn, client string) {
         response.RequestingEnclaveTag = request.RequestingEnclaveTag
         response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
 
-	outcome, artifact := ValidateRequestAndObtainToken(publicPolicyKey, privatePolicyKey,
+	var remoteIP string
+	if remoteAddr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
+		remoteIP = remoteAddr.IP.String()
+	}
+	outcome, artifact := ValidateRequestAndObtainToken(remoteIP, publicPolicyKey, privatePolicyKey,
 		request.GetSubmittedEvidenceType(), request.GetPurpose(),
 		request.Support)
 
