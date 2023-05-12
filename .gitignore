@@ -14,8 +14,8 @@ app1_data/
 app2_data/
 simpleserver
 provisioning/
-host
-enclave
+host/host
+enclave/enclave
 *attestation_t.h
 *attestation_t.c
 *attestation_u.h
