@@ -1692,7 +1692,7 @@ func LittleToBigEndian(in []byte) []byte {
 	return out
 }
 
-func ProduceAdmissionCert(issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
+func ProduceAdmissionCert(remoteIP string, issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
 		subjKey *certprotos.KeyMessage, subjName string, subjOrg string,
 		serialNumber uint64, durationSeconds float64) *x509.Certificate {
 
@@ -1709,6 +1709,9 @@ func ProduceAdmissionCert(issuerKey *certprotos.KeyMessage, issuerCert *x509.Cer
 		ExtKeyUsage:	   []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:	      x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
+	}
+	if remoteIP != "" {
+		cert.IPAddresses = []net.IP{net.ParseIP(remoteIP)}
 	}
 	spK := rsa.PrivateKey{}
 	sPK := rsa.PublicKey{}
