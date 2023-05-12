@@ -649,9 +649,25 @@ function run_steps() {
 # Do initial setup of the sample app test-case
 # As the sub-steps array has nested fn-calls, run a collection of steps
 # to avoid re-running sub-fns nested under author_policy()
+#
+# For OE-app, we have two ways to manage policy generation.
+# Default is manual step by running a collection of utility programs.
+#
+# Optionally, user can hand-edit policy.json file and stick-in the
+# generated measurement. This is also automated under 'generate_policy' step.
+# So, user can invoke this script as:
+#   $ run_example.sh setup generate_policy
+#
+# If the 2nd arg is provided, manually execute that sub-step's function.
 # ###########################################################################
 function setup() {
-    run_steps "show_env" "author_policy"
+    local setup_arg="$1"
+    run_steps "show_env" "get_measurement_of_trusted_app"
+    if [ "${setup_arg}" = "" ]; then
+        author_policy
+    else
+        ${setup_arg}
+    fi
     run_steps "build_simple_server" "provision_app_service_files"
 }
 
@@ -666,8 +682,8 @@ function run_test() {
 # main() begins here
 # ##################################################################
 
-# Simple command-line arg processing. Expect just one arg, if any.
-if [ $# -eq 1 ]; then
+# Simple command-line arg processing. Expect just one/two args, if any.
+if [ $# -ge 1 ]; then
     if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
         usage
         exit 0
@@ -684,9 +700,14 @@ if [ $# -eq 1 ]; then
         echo "${Me}: Invalid step name provided: $1"
         exit 1
     fi
+
+    setup_arg=""
+    if [ $# -gt 1 ]; then
+        setup_arg="$2"
+    fi
     # Else, it's a valid step / function name. Execute it.
     # shellcheck disable=SC2048
-    $1
+    $1 "${setup_arg}"
     exit 0
 fi
 
@@ -701,7 +722,9 @@ if [ ! -d "${PROV_DIR}" ]; then mkdir "${PROV_DIR}"; fi
 
 #  For a full end2end run, also clean-up build-env of stale artifacts
 rm_non_git_files
-setup
+
+# In the default mode, with no args, setup is run by sub-step author_policy
+setup ""
 
 run_test
 

@@ -31,6 +31,15 @@ jobs:
         #! Compile and build simple_app. Execute script to exercise simple_app
         #! This will also check that utilities programs still compile
         cd ../sample_apps/simple_app
+
+        #! ---------------------------------------------------------------------
+        #! Run basic help / usage interfaces
+        ./run_example.sh -h
+        ./run_example.sh --help
+        ./run_example.sh --list
+
+        #! ---------------------------------------------------------------------
+        #! Run through an end-to-end build and test of simple_app program
         ./cleanup.sh
         ./run_example.sh
         ./cleanup.sh
