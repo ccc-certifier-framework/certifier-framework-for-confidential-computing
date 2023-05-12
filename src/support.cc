@@ -1087,6 +1087,39 @@ bool key_to_RSA(const key_message& k, RSA* r) {
   if (1 != RSA_set0_key(r, n, e, d)) {
     return false;
   }
+  if (private_key) {
+    BIGNUM *p = nullptr;
+    BIGNUM *q = nullptr;
+    BIGNUM *dmp1 = nullptr;
+    BIGNUM *dmq1 = nullptr;
+    BIGNUM *iqmp = nullptr;
+    if (rsa_key_data.has_private_p()) {
+      p = BN_bin2bn((const byte*) rsa_key_data.private_p().data(),
+                (int)rsa_key_data.private_p().size(), NULL);
+    }
+    if (rsa_key_data.has_private_q()) {
+      q = BN_bin2bn((const byte*) rsa_key_data.private_q().data(),
+                (int)rsa_key_data.private_q().size(), NULL);
+    }
+    if (rsa_key_data.has_private_dp()) {
+      dmp1 = BN_bin2bn((const byte*) rsa_key_data.private_dp().data(),
+                (int)rsa_key_data.private_dp().size(), NULL);
+    }
+    if (rsa_key_data.has_private_dq()) {
+      dmq1 = BN_bin2bn((const byte*) rsa_key_data.private_dq().data(),
+                (int)rsa_key_data.private_dq().size(), NULL);
+    }
+    if (rsa_key_data.has_private_iqmp()) {
+      iqmp = BN_bin2bn((const byte*) rsa_key_data.private_iqmp().data(),
+                (int)rsa_key_data.private_iqmp().size(), NULL);
+    }
+    if (1 != RSA_set0_factors(r, p, q)) {
+      return false;
+    }
+    if (1 != RSA_set0_crt_params(r, dmp1, dmq1, iqmp)) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -1094,9 +1127,16 @@ bool RSA_to_key(const RSA* r, key_message* k) {
   const BIGNUM* m = nullptr;
   const BIGNUM* e = nullptr;
   const BIGNUM* d = nullptr;
+  const BIGNUM* p = nullptr;
+  const BIGNUM* q = nullptr;
+  const BIGNUM* dmp1 = nullptr;
+  const BIGNUM* dmq1 = nullptr;
+  const BIGNUM* iqmp = nullptr;
   
   k->set_key_format("vse-key");
   RSA_get0_key(r, &m, &e, &d);
+  RSA_get0_factors(r, &p, &q);
+  RSA_get0_crt_params(r, &dmp1, &dmq1, &iqmp);
 
   int rsa_size = RSA_bits(r);
   if (rsa_size == 1024) {
@@ -1142,6 +1182,36 @@ bool RSA_to_key(const RSA* r, key_message* k) {
     memset(d_b, 0, size);
     i = BN_bn2bin(d, d_b);
     rsa->set_private_exponent((void*)d_b, i);
+
+    size = BN_num_bytes(p);
+    byte p_b[size];
+    memset(p_b, 0, size);
+    i = BN_bn2bin(p, p_b);
+    rsa->set_private_p((void*)p_b, i);
+
+    size = BN_num_bytes(q);
+    byte q_b[size];
+    memset(q_b, 0, size);
+    i = BN_bn2bin(q, q_b);
+    rsa->set_private_q((void*)q_b, i);
+
+    size = BN_num_bytes(dmp1);
+    byte dmp1_b[size];
+    memset(dmp1_b, 0, size);
+    i = BN_bn2bin(dmp1, dmp1_b);
+    rsa->set_private_dp((void*)dmp1_b, i);
+
+    size = BN_num_bytes(dmq1);
+    byte dmq1_b[size];
+    memset(dmq1_b, 0, size);
+    i = BN_bn2bin(dmq1, dmq1_b);
+    rsa->set_private_dq((void*)dmq1_b, i);
+
+    size = BN_num_bytes(iqmp);
+    byte iqmp_b[size];
+    memset(iqmp_b, 0, size);
+    i = BN_bn2bin(iqmp, iqmp_b);
+    rsa->set_private_iqmp((void*)iqmp_b, i);
   }
   return true;
 }
@@ -2430,6 +2500,7 @@ bool produce_artifact(key_message& signing_key, string& issuer_name_str,
   ASN1_INTEGER* a = ASN1_INTEGER_new();
   ASN1_INTEGER_set_uint64(a, sn);
   X509_set_serialNumber(x509, a);
+  X509_set_version(x509, 2L);
 
   X509_NAME* subject_name =  X509_NAME_new();
   X509_NAME_add_entry_by_txt(subject_name, "CN", MBSTRING_ASC,
