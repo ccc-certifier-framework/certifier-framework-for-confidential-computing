@@ -99,7 +99,7 @@ Steps=( "rm_non_git_files"
           "combine_policy_stmts"
           "print_policy"
         "generate_policy"
-          # These sub-step fns are subsumed under author_policy()
+          # These sub-step fns are subsumed under generate_policy()
           "edit_policy_file"
           "run_policy_generator"
         "build_simple_server"
