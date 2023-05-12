@@ -73,11 +73,20 @@ function usage() {
 
    # Computed elapsed hours, mins, seconds from total elapsed seconds
    echo "Usage: $Me [--help | --list]"
-   echo "  To run the example program          : ./${Me}"
-   echo "  To setup the example program        : ./${Me} setup"
+   echo "  To build-and-run the example program : ./${Me}"
+   echo "  To cleanup left-over artifacts       : ./${Me} rm_non_git_files"
+   echo "  To setup the example program         : ./${Me} setup"
+   echo "  To run and test the example program  : ./${Me} run_test"
+   echo "  To list the individual steps         : ./${Me} --list"
+   echo "  To run an individual step            : ./${Me} <step name>"
+}
+
+function usage_oe() {
+   echo
+   echo "For sample_app_under_oe, you can alternatively use this script "
+   echo "to generate the policy by editing the measurement in the policy JSON file:"
+   echo "  To setup the example program        : ./${Me} setup generate_policy"
    echo "  To run and test the example program : ./${Me} run_test"
-   echo "  To list the individual steps        : ./${Me} --list"
-   echo "  To run an individual step           : ./${Me} <step name>"
 }
 
 # ###########################################################################
@@ -392,16 +401,22 @@ function edit_policy_file() {
     local policy_json_file_old="${policy_json_file}.old"
     run_cmd cp -p ${policy_json_file} ${policy_json_file_old}
 
-    local mrsigner=""
+    # Grab the 'mrenclave' term from 'make' output
+    local mrenclave=""
     set -x
     mrenclave=$(make dump_mrenclave | grep "^mrenclave" | cut -f2 -d'=')
     set +x
 
-    set +x
-    ${Jq} '.measurements = [ "mrsigner" ]' "${policy_json_file}"    \
-        | sed -e "s/mrsigner/${mrsigner}/g"                         \
+    # Update json file using 'jq' tool, to replace value of the
+    # 'measurement' key with generic term 'mrenclave'. Then do a text
+    # replacement of this with the mrenclave grabbed above.
+    set -x
+    ${Jq} '.measurements = [ "mrenclave" ]' "${policy_json_file}"    \
+        | sed -e "s/mrenclave/${mrenclave}/g"                         \
         > ${policy_json_file}.tmp
+    set +x
 
+    # Update policy.json file with json.tmp file, created above.
     run_cmd mv ${policy_json_file}.tmp ${policy_json_file}
 
     popd > /dev/null 2>&1
@@ -686,6 +701,7 @@ function run_test() {
 if [ $# -ge 1 ]; then
     if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
         usage
+        usage_oe
         exit 0
     fi
     if [ "$1" == "--list" ]; then
