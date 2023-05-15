@@ -16,9 +16,12 @@ endif
 #ifndef GOOGLE_INCLUDE
 #GOOGLE_INCLUDE=/usr/local/include/g
 #endif
+
+# Allows user to over-ride libs path externally depending on machine's install
 ifndef LOCAL_LIB
 LOCAL_LIB=/usr/local/lib
 endif
+
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
@@ -30,7 +33,11 @@ I= $(INC_DIR)
 US= .
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 
-CFLAGS= $(INCLUDE) -O3 -g -Werror -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+# Compilation of protobuf files could run into some errors, so avoid using
+# -Werror for those targets
+CFLAGS_NOERROR = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+CFLAGS = $(CFLAGS_NOERROR) -Werror
+
 #For MAC, -D MACOS should be included
 CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
 CC=g++
@@ -90,7 +97,7 @@ $(US)/certifier.pb.cc $(I)/certifier.pb.h: $(S)/certifier.proto
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c  -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
+	$(CC) $(CFLAGS_NOERROR) -c  -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h $(I)/certifier.pb.h
 	@echo "compiling support.cc"

@@ -21,7 +21,11 @@ endif
 #GOOGLE_INCLUDE=/usr/local/include/google
 #endif
 
+# Allows user to over-ride libs path externally depending on machine's install
+ifndef LOCAL_LIB
 LOCAL_LIB=/usr/local/lib
+endif
+
 
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
@@ -35,7 +39,8 @@ CERT_SRC=$(CERTIFIER_PROTOTYPE_DIR)/src
 
 INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/
 
-CFLAGS= $(INCLUDE) -O3 -g -Wall -Werror -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+CFLAGS_NOERROR = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+CFLAGS = $(CFLAGS_NOERROR) -Werror
 CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
 # For Mac: -D MACOS should be defined
 
@@ -125,7 +130,7 @@ $(CERT_SRC)/certifier.pb.cc $(I)/certifier.pb.h: $(CERT_SRC)/certifier.proto
 
 $(O)/certifier.pb.o: $(CERT_SRC)/certifier.pb.cc $(INC_DIR)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c  -o $(O)/certifier.pb.o $(CERT_SRC)/certifier.pb.cc
+	$(CC) $(CFLAGS_NOERROR) -c  -o $(O)/certifier.pb.o $(CERT_SRC)/certifier.pb.cc
 
 $(O)/support.o: $(CERT_SRC)/support.cc $(INC_DIR)/support.h $(INC_DIR)/certifier.pb.h
 	@echo "compiling support.cc"
