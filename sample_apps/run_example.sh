@@ -8,27 +8,19 @@ set -Eeuo pipefail
 # Setup script globals, to establish curdir and root path to Certifier code base
 Me=$(basename "$0")
 
-
-# Establish full dirpath where this script lives
+SampleAppName="simple_app"
 pushd "$(dirname "$0")" > /dev/null 2>&1
-EXAMPLE_DIR=$(pwd); export EXAMPLE_DIR
+Cleanup="$(pwd)/cleanup.sh"
 popd > /dev/null 2>&1
 
-Cleanup="${EXAMPLE_DIR}/cleanup.sh"
-PROV_DIR="${EXAMPLE_DIR}/provisioning"
-
-# shellcheck disable=SC2046
-CERT_PROTO="$(dirname $(dirname "$EXAMPLE_DIR"))"; export CERT_PROTO
-CERT_UTILS="${CERT_PROTO}/utilities"
-ExName=$(basename "$EXAMPLE_DIR")
-
-MeMsg="Build and run example program ${ExName}"
+MeMsg="Build and run example program"
 
 # Script global symbols to app-data dirs
 Client_app_data="./app1_data/"
 Srvr_app_data="./app2_data/"
 
 SimpleServer_PID=0
+Valid_app=0         # While looking thru SampleApps[] for supported app
 Found_step=0        # While looking thru Steps[] for user-specified fn-name
 
 # ###########################################################################
@@ -52,25 +44,54 @@ function do_cleanup() {
 }
 trap cleanup ERR
 
+# List of sample-apps supported, currently
+SampleApps=( "simple_app"
+           )
+
+# ###########################################################################
+function list_apps() {
+    echo "List of sample applications you can execute with this script:"
+    echo
+    for str in "${SampleApps[@]}"; do
+        echo "  - ${str}"
+    done
+}
+
+function is_valid_app() {
+    local fn="$1"
+    for i in "${!SampleApps[@]}"; do
+        if [ "${fn}" == "${SampleApps[$i]}" ]; then
+            Valid_app=1
+            return
+        fi
+    done
+    Valid_app=0
+    return
+}
+
 # ##################################################################
 # Print help / usage
 # ##################################################################
+function usage_brief() {
+   echo "Usage: $Me [-h | --help] <sample-app-name> [ setup | run_test | --list ]"
+   list_apps
+}
+
 function usage() {
 
-   echo "You can use this script to ${MeMsg}.
+   echo "You can use this script to ${MeMsg}
 
    - Setup and execute the example program.
    - List the individual steps needed to setup the example program.
-   - Run individual step in sequence.
+   - Run individual steps in sequence.
 "
-
-   # Computed elapsed hours, mins, seconds from total elapsed seconds
-   echo "Usage: $Me [--help | --list]"
-   echo "  To setup and run the example program, end-to-end : ./${Me}"
-   echo "  To setup the example program                     : ./${Me} setup"
-   echo "  To run and test the example program              : ./${Me} run_test"
-   echo "  To list the individual steps                     : ./${Me} --list"
-   echo "  To run an individual step                        : ./${Me} <step name>"
+   usage_brief
+   echo
+   echo "  To setup and run the ${SampleAppName} program, end-to-end : ./${Me} ${SampleAppName} "
+   echo "  To setup the ${SampleAppName} program                     : ./${Me} ${SampleAppName} setup"
+   echo "  To run and test the ${SampleAppName} program              : ./${Me} ${SampleAppName} run_test"
+   echo "  To list the individual steps for ${SampleAppName}         : ./${Me} ${SampleAppName} --list"
+   echo "  To run an individual step of the ${SampleAppName}         : ./${Me} ${SampleAppName} <step name>"
 }
 
 # ###########################################################################
@@ -103,7 +124,8 @@ Steps=( "rm_non_git_files"
 )
 
 function list_steps() {
-    echo "List of individual steps you can execute, in this order:"
+    local app_name="$1"
+    echo "List of individual steps you can execute for ${app_name}, in this order:"
     echo
     for str in "${Steps[@]}"; do
         echo "  ${str}"
@@ -639,32 +661,60 @@ function run_test() {
 # main() begins here
 # ##################################################################
 
-# Simple command-line arg processing. Expect just one arg, if any.
-if [ $# -eq 1 ]; then
-    if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
+# Simple command-line arg processing. Expect at least one arg, sample-app-name
+if [ $# -eq 0 ]; then
+    usage_brief
+    exit 1
+fi
+if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
         usage
         exit 0
-    fi
-    if [ "$1" == "--list" ]; then
-        list_steps
+fi
+
+is_valid_app "$1"
+if [ "${Valid_app}" == "0" ]; then
+    echo "${Me}: Sample program name '$1' is currently not supported."
+    exit 1
+fi
+
+# ----------------------------------------------------------------
+# Having established name of valid sample app, setup env variables
+# and script globals that will be used downstream.
+# Establish full dirpath where this script lives
+# ----------------------------------------------------------------
+SampleAppName="$1"
+pushd "$(dirname "$0")" > /dev/null 2>&1
+EXAMPLE_DIR=$(pwd)/${SampleAppName}; export EXAMPLE_DIR
+popd > /dev/null 2>&1
+
+PROV_DIR="${EXAMPLE_DIR}/provisioning"
+
+# shellcheck disable=SC2046
+CERT_PROTO="$(dirname $(dirname "$EXAMPLE_DIR"))"; export CERT_PROTO
+CERT_UTILS="${CERT_PROTO}/utilities"
+
+if [ $# -eq 2 ]; then
+    if [ "$2" == "--list" ]; then
+        list_steps "$1"
         exit 0
     fi
 
     # Execute a user-supplied name of a function implementing a step.
     # If a wrong name was supplied, we will error out.
-    is_valid_step "$1"
+    is_valid_step "$2"
     if [ "${Found_step}" == "0" ]; then
-        echo "${Me}: Invalid step name provided: $1"
+        echo "${Me}: Invalid step name, $2, provided for $1."
         exit 1
     fi
+
     # Else, it's a valid step / function name. Execute it.
     # shellcheck disable=SC2048
-    $1
+    $2
     echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd) Completed $1."
     exit 0
 fi
 
-echo "${Me}: $(TZ="America/Los_Angeles" date) ${MeMsg}"
+echo "${Me}: $(TZ="America/Los_Angeles" date) ${MeMsg} ${SampleAppName}"
 
 if [ ! -d "${PROV_DIR}" ]; then mkdir "${PROV_DIR}"; fi
 

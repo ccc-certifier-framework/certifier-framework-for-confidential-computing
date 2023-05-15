@@ -28,15 +28,19 @@ jobs:
         make -f certifier_tests.mak
         ./certifier_tests.exe
         #! ---------------------------------------------------------------------
+        cd ../sample_apps
+        #! Exercise help / usage / list options
+        ./run_example.sh -h
+        ./run_example.sh simple_app --list
+
         #! Compile and build simple_app. Execute script to exercise simple_app
         #! This will also check that utilities programs still compile
-        cd ../sample_apps/simple_app
         ./cleanup.sh
-        ./run_example.sh
+        ./run_example.sh simple_app
         ./cleanup.sh
 
         #! ---------------------------------------------------------------------
         #! Few other miscellaneous checks
-        cd ../../certifier_service/oelib
+        cd ../certifier_service/oelib
         make clean
         make dummy
