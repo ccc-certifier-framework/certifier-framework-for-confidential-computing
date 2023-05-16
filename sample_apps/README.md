@@ -7,18 +7,18 @@ that demonstrate how to implement the Certifier APIs on different platforms.
   provisioning and using the Certifier Service with simulated enclaves.
   This simple_app can be run on any Linux machine without need for specialized hardware.
 
-- **simple_app_under_gramine/** - This application is similar to the sample program,
-  simple_app/, but one that can be run in Gramine enclaves. The app uses Intel SGX
-  enclaves on Linux platform using the
-  [Gramine library](https://github.com/gramineproject/gramine).
-  A Gramine enclave uses SGX instructions to generate SGX quotes and reports.
-
 - **simple_app_under_oe/** - This is a sample program that can be run on Intel SGX
   enclaves on Linux platform using the
   [Open Enclave SDK](https://openenclave.io/sdk/), referred briefly as 'OE'.
   Unlike the simple_app example program, an OE-application is partitioned into
   "untrusted" and "trusted" portions, also known as the host and enclave parts,
   respectively.
+
+- **simple_app_under_gramine/** - This application is similar to the sample
+  program, simple_app/, but one that can be run in Gramine enclaves. The app
+  uses Intel SGX enclaves on Linux platform using the
+  [Gramine library](https://github.com/gramineproject/gramine).
+  A Gramine enclave uses SGX instructions to generate SGX quotes and reports.
 
 - **simple_app_under_sev/** - This is the same sample program as in simple_app/
   but one that can be run on
@@ -31,7 +31,7 @@ that demonstrate how to implement the Certifier APIs on different platforms.
 
 - **simple_app_under_app_service/** - This application is similar to the sample program,
    simple_app/, but runs under the application service. The example currently runs
-   under a simulated-enclave and will eventually be ported to run under 
+   under a simulated-enclave and will eventually be ported to run under
    AMD Secure Nested Paging (AMD SEV-SNP).
 
 - **att_systemd_service/** - This is an example of using Certifier APIs to implement
@@ -50,10 +50,14 @@ instructions (e.g., [instructions.md](./simple_app/instructions.md)
 for the simple_app) in a self-contained script to execute some of the
 sample application programs.
 
+**NOTE:** If there any discrepancies in the steps documented in the app-specific
+      `instructions.md` file, the steps implemented by this driver script
+      override.
+
 ```shell
 $ ./run_example.sh --help
 ```
-You can use this script to Build and run example programs.
+You can use this script to build and run example programs.
 
    - Setup and execute the example program.
    - List the individual steps needed to setup the example program.

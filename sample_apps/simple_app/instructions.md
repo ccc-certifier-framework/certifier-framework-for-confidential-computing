@@ -80,7 +80,7 @@ cd $EXAMPLE_DIR
 make -f example_app.mak
 ```
 
-## Step 6: Obtain the measurement of the trusted application for ths security domain.
+## Step 6: Obtain the measurement of the trusted application for this security domain.
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
@@ -89,7 +89,6 @@ $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe \
       --input=../example_app.exe                         \
       --output=example_app.measurement
 ```
-
 
 ## Step 7: Author the policy for the security domain and produce the signed claims the apps need
 
@@ -121,7 +120,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe  \
       --output=signed_claim_1.bin
 ```
 
-### b. Construct  policy key says measurement is-trusted
+### c. Construct  policy key says measurement is-trusted
 
 ```shell
 $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe    \
@@ -148,7 +147,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe  \
       --output=signed_claim_2.bin
 ```
 
-### c. Combine signed policy statements for Certifier Service use
+### d. Combine signed policy statements for Certifier Service use
 
 ```shell
 $CERTIFIER_PROTOTYPE/utilities/package_claims.exe   \
@@ -156,7 +155,7 @@ $CERTIFIER_PROTOTYPE/utilities/package_claims.exe   \
       --output=policy.bin
 ```
 
-### d. [optional] Print the policy
+### e. [optional] Print the policy
 
 ```shell
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin

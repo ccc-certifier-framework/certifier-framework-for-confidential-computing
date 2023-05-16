@@ -37,6 +37,16 @@ Local_lib_path=${LOCAL_LIB:-/usr/local/lib}
 # Sub-tools used in this script
 Jq=jq    # Needed for OE app; will be established later on.
 
+# --------------------------------------------------------------------------------
+# sample_app_under_gramine uses MbedTLS library, which needs to be downloaded.
+# And some minor configuration is done as part of setup_MbedTLS(). We want to
+# avoid downloading repos frequently, so provide this global variable to
+# detect if this dir exists. If so, rm_non_git_files() will do special-case
+# handling of these contents.
+# --------------------------------------------------------------------------------
+MbedTLS_dir="mbedtls"
+Simple_App_under_gramine_MbedTLS_dir="sample_apps/simple_app_under_gramine/${MbedTLS_dir}"
+
 # ###########################################################################
 # Set trap handlers for all errors. Needs -E (-o errtrace): Ensures that ERR
 # traps (see below) get inherited by functions, command substitutions, and
@@ -61,6 +71,7 @@ trap cleanup ERR
 # List of sample-apps supported, currently
 SampleApps=( "simple_app"
              "simple_app_under_oe"
+             "simple_app_under_gramine"
            )
 
 # ###########################################################################
@@ -110,7 +121,7 @@ function usage() {
     echo "  To run an individual step of the ${SampleAppName}         : ./${Me} ${SampleAppName} <step name>"
     echo " "
     # Indentation to align with previous output lines.
-    echo "  Cleanup stale artificats from build area            : ./${Me} rm_non_git_files"
+    echo "  Cleanup stale artifacts from build area             : ./${Me} rm_non_git_files"
     echo "  Show the environment used to build-and-run a program: ./${Me} ${SampleAppName} show_env"
 
     local test_app="simple_app_under_oe"
@@ -119,7 +130,7 @@ function usage() {
     echo "  Setup and run the simple_app_under_oe program : ./${Me} --dry-run ${test_app}"
     echo "  Setup simple_app_under_oe program             : ./${Me} --dry-run ${test_app} setup"
     echo "  Run and test the simple_app_under_oe program  : ./${Me} --dry-run ${test_app} run_test"
-    echo "  Cleanup stale artificats from build area      : ./${Me} --dry-run rm_non_git_files"
+    echo "  Cleanup stale artifacts from build area       : ./${Me} --dry-run rm_non_git_files"
 }
 
 # ---- Open-Enclave app-specific help/usage output
@@ -228,8 +239,12 @@ function list_steps() {
             list_steps_for_app "${Steps_OE[@]}"
             ;;
 
+        "simple_app_under_gramine")
+            list_steps_for_app "${Steps[@]}"
+            ;;
+
         *)
-            echo "${Me}: Unknown sample app name '${app_name}'."
+            echo "${Me}:${LINENO} Unknown sample app name '${app_name}'."
             return
             ;;
     esac
@@ -267,8 +282,12 @@ function is_valid_step() {
             check_steps_for_app "${Steps_OE[@]}"
             ;;
 
+        "simple_app_under_gramine")
+            check_steps_for_app "${Steps[@]}"
+            ;;
+
         *)
-            echo "${Me}: Unknown sample app name '${app_name}'."
+            echo "${Me}:${LINENO} Unknown sample app name '${SampleAppName}'."
             return
             ;;
     esac
@@ -346,6 +365,15 @@ function rm_non_git_files() {
     run_cmd
     run_pushd "${CERT_PROTO}"
 
+    local MbedTLS_dir_exists=0
+    # Use full dir-path so this works cleanly under --dry-run mode, too.
+    if [ -d "${CERT_PROTO}/${Simple_App_under_gramine_MbedTLS_dir}" ]; then
+        set -x
+        mv "${CERT_PROTO}/${Simple_App_under_gramine_MbedTLS_dir}" /tmp
+        set +x
+        MbedTLS_dir_exists=1
+    fi
+
     echo "${Me}: Delete all files not tracked by git"
 
     # shellcheck disable=SC2046
@@ -355,6 +383,12 @@ function rm_non_git_files() {
     # shellcheck disable=SC2046
     run_cmd rm -rf $(git ls-files . --exclude-standard --others --ignored)
 
+    # Restore mbedtls/, if it was saved-off previously.
+    if [ ${MbedTLS_dir_exists} -eq 1 ]; then
+        set -x
+        mv /tmp/${MbedTLS_dir} "${CERT_PROTO}"/${Simple_App_under_gramine_MbedTLS_dir}
+        set +x
+    fi
     run_popd
 }
 
@@ -381,12 +415,19 @@ function gen_policy_and_self_signed_cert() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
-    run_cmd "$CERT_UTILS"/cert_utility.exe                       \
-                --operation=generate-policy-key-and-test-keys    \
-                --policy_key_output_file=policy_key_file.bin     \
-                --policy_cert_output_file=policy_cert_file.bin   \
-                --platform_key_output_file=platform_key_file.bin \
-                --attest_key_output_file=attest_key_file.bin
+    if [ "${SampleAppName}" = "simple_app_under_gramine" ]; then
+       run_cmd "$CERT_UTILS"/cert_utility.exe                       \
+                   --operation=generate-policy-key                  \
+                   --policy_key_output_file=policy_key_file.bin     \
+                   --policy_cert_output_file=policy_cert_file.bin
+    else
+       run_cmd "$CERT_UTILS"/cert_utility.exe                       \
+                   --operation=generate-policy-key-and-test-keys    \
+                   --policy_key_output_file=policy_key_file.bin     \
+                   --policy_cert_output_file=policy_cert_file.bin   \
+                   --platform_key_output_file=platform_key_file.bin \
+                   --attest_key_output_file=attest_key_file.bin
+    fi
 
     run_popd
 }
@@ -442,7 +483,31 @@ function compile_simple_app_under_oe() {
 }
 
 # ###########################################################################
+function compile_simple_app_under_gramine() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd cp -p "$HOME"/sgx.cert.der .
+    run_cmd make -f gramine_example_app.mak clean
+    run_cmd make -f gramine_example_app.mak app RA_TYPE=dcap
+
+    # Gramine-app's Makefile target creates a differently-named app, but this
+    # script expects a diff name. Create a soft-link to reconcile app-exe names.
+    run_cmd rm -rf example_app.exe
+    run_cmd ln -s gramine_example_app example_app.exe
+
+    run_popd
+}
+
+# ###########################################################################
 # Obtain the measurement of the trusted application for the security domain.
+# The app-specific sub-functions generate the app's measurement in an output
+# file, which will be used downstream to create the policy for the app.
+#
+# simple_app                : example_app.measurement
+# simple_app_under_oe       : binary_trusted_measurements_file.bin
+# simple_app_under_gramine  : example_app.measurement
+#
 # ###########################################################################
 function get_measurement_of_trusted_app() {
     run_cmd
@@ -488,11 +553,46 @@ function get_measurement_of_trusted_simple_app_under_oe() {
     run_popd
 }
 
+# ###########################################################################
+function get_measurement_of_trusted_simple_app_under_gramine() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    # Grab mrenclave name from 'gramine-sgx-sign' output
+    local mrenclave="some-hash-string-that-will-come-from-gramine-sgx-sign"
+
+    # 'make' in compile_simple_app_under_gramine() has already run this utility
+    # to produce a manifest.sgx output file that will be used elsewhere. We are
+    # re-running this utility to grab the measurement. So, provide a tmp-output
+    # file so as to not clobber something that has already been generated.
+    local sgx_sign_tmp_outfile="gramine_example_app.manifest.sgx.tmp"
+    if [ $DryRun -eq 0 ]; then
+        set -x
+        mrenclave=$(gramine-sgx-sign --manifest gramine_example_app.manifest    \
+                                     --output ${sgx_sign_tmp_outfile} \
+                        | grep -A2 -E "^Measurement:" | tail -1 | tr -d ' ')
+        set +x
+    fi
+    run_popd
+
+    run_pushd "${PROV_DIR}"
+
+    run_cmd "$CERT_UTILS"/measurement_init.exe                   \
+                --mrenclave="${mrenclave}"                       \
+                --out_file=example_app.measurement
+
+    run_popd
+}
 
 # ###########################################################################
 # Author the policy for the security domain and produce the signed claims
 # that the apps need. This is just a wrapper function to drive the execution
 # of sub-steps, each of which is implemented by a minion function.
+#
+# If you make changes, verify that the changes apply for the following
+# apps that share this function:
+#   - simple_app
+#   - simple_app_under_gramine
 # ###########################################################################
 function author_policy() {
     run_cmd
@@ -508,9 +608,12 @@ function author_policy() {
 
     print_policy
 
-    construct_platform_key_attestation_stmt_sign_it
+    # RESOLVE: X-check v/s instructions. These steps seem to be n/a for Gramine App
+    if [ "${SampleAppName}" = "simple_app" ]; then
+        construct_platform_key_attestation_stmt_sign_it
 
-    print_signed_claim
+        print_signed_claim
+    fi
 
     run_popd
 }
@@ -583,6 +686,26 @@ function construct_policyKey_platform_is_trusted_simple_app_under_oe() {
 }
 
 # ###########################################################################
+function construct_policyKey_platform_is_trusted_simple_app_under_gramine() {
+    run_cmd
+    run_pushd "${PROV_DIR}"
+
+    # The docs state that this certificate should exist at a known location.
+    run_cmd cp -p "$HOME"/sgx.cert.der .
+    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe   \
+                --cert-subject=sgx.cert.der             \
+                --verb="is-trusted-for-attestation"     \
+                --output=ts1.bin
+
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe    \
+                --key_subject=policy_key_file.bin           \
+                --verb="says"                               \
+                --clause=ts1.bin                            \
+                --output=vse_policy1.bin
+    run_popd
+}
+
+# ###########################################################################
 function produce_signed_claims_for_vse_policy_statement() {
     run_cmd
     run_pushd "${PROV_DIR}"
@@ -602,11 +725,6 @@ function produce_signed_claims_for_vse_policy_statement() {
 function construct_policyKey_measurement_is_trusted() {
     run_cmd
     run_pushd "${PROV_DIR}"
-
-    run_cmd "${CERT_UTILS}"/measurement_utility.exe  \
-                --type=hash                          \
-                --input=../example_app.exe           \
-                --output=example_app.measurement
 
     run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe            \
                 --key_subject=""                                 \
@@ -638,7 +756,7 @@ function combine_policy_stmts() {
 
     signed_claims="signed_claim_1.bin"
     case "${SampleAppName}" in
-        "simple_app")
+        "simple_app" | "simple_app_under_gramine")
             signed_claims="${signed_claims},signed_claim_2.bin"
             ;;
     esac
@@ -797,14 +915,21 @@ function build_simple_server() {
     # Likely, user does not have OE SDK installed or does not want to enable OE:
     # This should produce a Go file for the certifier protobufs
     # called certifier.pb.go in certprotos.
-    make_arg=""
-    if [ "${SampleAppName}" = "simple_app" ]; then make_arg=dummy; fi
+    make_arg="dummy"
+    if [ "${SampleAppName}" = "simple_app_under_oe" ]; then
+        make_arg=""
+    fi
 
     run_cmd cd "${CERT_PROTO}"/certifier_service/oelib
+    # shellcheck disable=SC2086
     run_cmd make ${make_arg}
 
+    if [ "${SampleAppName}" = "simple_app_under_gramine" ]; then
+        make_arg=""
+    fi
     run_cmd cd "${CERT_PROTO}"/certifier_service/graminelib
-    run_cmd make dummy
+    # shellcheck disable=SC2086
+    run_cmd make ${make_arg}
 
     # Now, build simpleserver:
     run_cmd cd "${CERT_PROTO}"/certifier_service
@@ -931,6 +1056,33 @@ function run_simple_app_under_oe_as_server_talk_to_Cert_Service() {
     run_popd
 }
 
+# ###########################################################################
+# NOTE: The gramine-sgx utility may return some non-fatal warnings but continues
+# to execute. However, it returns a non-zero $rc, which causes this script
+# to fail. So, a pattern you will see, henceforth, is to execute this
+# utility with "|| 0", which will w/a the non-zero $rc by returning success.
+# ###########################################################################
+
+function run_simple_app_under_gramine_as_server_talk_to_Cert_Service() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd gramine-sgx gramine_example_app         \
+                --data_dir="./${Srvr_app_data}/"    \
+                --operation=cold-init               \
+                --policy_store_file=policy_store    \
+                --print_all=true || 0
+
+    run_cmd sleep 1
+
+    run_cmd gramine-sgx gramine_example_app         \
+                --data_dir="./${Srvr_app_data}/"    \
+                --operation=get-certifier           \
+                --policy_store_file=policy_store    \
+                --print_all=true || 0
+
+    run_popd
+}
 
 # ###########################################################################
 # Run the app as client and get admission certificates from Certifier Service
@@ -986,6 +1138,28 @@ function run_simple_app_under_oe_as_client_talk_to_Cert_Service() {
 }
 
 # ###########################################################################
+function run_simple_app_under_gramine_as_client_talk_to_Cert_Service() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd gramine-sgx gramine_example_app \
+        --data_dir="./${Client_app_data}/"  \
+        --operation=cold-init               \
+        --policy_store_file=policy_store    \
+        --print_all=true || 0
+
+    run_cmd sleep 1
+
+    run_cmd gramine-sgx gramine_example_app \
+        --data_dir="./${Client_app_data}/"  \
+        --operation=get-certifier           \
+        --policy_store_file=policy_store    \
+        --print_all=true || 0
+
+    run_popd
+}
+
+# ###########################################################################
 # Run the apps to test trusted services. This is a two-part exercise:
 #  - run_app_as_server_trusted_service()
 #  - run_app_as_client_make_trusted_request()
@@ -1035,6 +1209,26 @@ function run_simple_app_under_oe_as_server_offers_trusted_service() {
     echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd): Completed ${FUNCNAME[0]}"
 }
 
+# ###########################################################################
+function run_simple_app_under_gramine_as_server_offers_trusted_service() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    # Run app as a server: In app as a server terminal run the following:
+    run_cmd gramine-sgx gramine_example_app         \
+                --data_dir=./"${Srvr_app_data}"/    \
+                --operation=run-app-as-server       \
+                --policy_store_file=policy_store    \
+                --print_all=true || 0 &
+
+    run_cmd sleep 5
+
+    run_popd
+
+    # Report this, for debugging on CI-machines
+    echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd): Completed ${FUNCNAME[0]}"
+}
+
 
 # ###########################################################################
 # Run the app-as-a-trusted client sending request to trusted server:
@@ -1071,6 +1265,24 @@ function run_simple_app_under_oe_as_client_make_trusted_request() {
                 enclave/enclave.signed          \
                 run-app-as-client               \
                 "$EXAMPLE_DIR/${Client_app_data}"
+
+    run_popd
+
+    # Report this, for debugging on CI-machines
+    echo "${Me}: $(TZ="America/Los_Angeles" date) Completed ${FUNCNAME[0]} ${DryRun_msg}."
+}
+
+# ###########################################################################
+function run_simple_app_under_gramine_as_client_make_trusted_request() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    # Run app as a client: In app as a client terminal run the following:
+    run_cmd gramine-sgx gramine_example_app         \
+                --data_dir="./${Client_app_data}/"  \
+                --operation=run-app-as-client       \
+                --policy_store_file=policy_store    \
+                --print_all=true || 0
 
     run_popd
 
@@ -1184,6 +1396,29 @@ function setup_with_auto_policy_generation_for_OE() {
 }
 
 # ###########################################################################
+function setup_simple_app_under_gramine() {
+    run_cmd
+    setup_MbedTLS
+    run_steps "show_env" "get_measurement_of_trusted_app"
+    author_policy
+    run_steps "build_simple_server" "provision_app_service_files"
+}
+
+# ###########################################################################
+# One-time special-case setup of MbedTLS libraries. We cannot do this outside
+# this script as, for full e2e run, this script will run rm_non_git_files.
+# That will clean-up the setup done by the configure script run below.
+# ###########################################################################
+function setup_MbedTLS() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd ./configureMbedTLS
+
+    run_popd
+}
+
+# ###########################################################################
 # After setup is done, run-the-test, setting up Cert Service etc.
 # This should be common for all sample apps.
 # ###########################################################################
@@ -1266,7 +1501,7 @@ if [ $# -eq 2 ]; then
     # If a wrong name was supplied, we will error out.
     is_valid_step "$2"
     if [ "${Found_step}" == "0" ]; then
-        echo "${Me}: Invalid step name, $2, provided for $1."
+        echo "${Me}:${LINENO} Invalid step name, $2, provided for $1."
         exit 1
     fi
 
