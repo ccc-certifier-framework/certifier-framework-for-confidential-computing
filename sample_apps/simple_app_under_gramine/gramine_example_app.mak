@@ -8,6 +8,11 @@ GRAMINE_LOG_LEVEL = error
 CFLAGS += -O2
 endif
 
+# Allows user to over-ride libs path externally depending on machine's install
+ifndef LOCAL_LIB
+LOCAL_LIB=/usr/local/lib
+endif
+
 CFLAGS += -fPIE
 LDFLAGS += -pie
 
@@ -24,7 +29,12 @@ app: gramine_example_app.manifest.sgx gramine_example_app.sig gramine_example_ap
 ######################### GRAMINE/SGX VARIABLES ###############################
 GRAMINE_SRC_PATH = ../../../gramine/gramine
 SGX_INCLUDE = -I$(GRAMINE_SRC_PATH)/pal/src/host/linux-sgx
-SGX_LDFLAGS = -Wl,--enable-new-dtags $(shell pkg-config --libs sgx_util)
+
+# NOTE: It was thought, during early-dev days that we will need to include
+#       this sgx_util library. However, that was deemed as no longer needed.
+#       Hence, skip the search using pkg-config
+# SGX_LDFLAGS = -Wl,--enable-new-dtags $(shell pkg-config --libs sgx_util)
+SGX_LDFLAGS = -Wl,--enable-new-dtags
 
 ######################### CERTIFIER ###########################
 CERTIFIER_SRC_PATH = ../../src
@@ -45,7 +55,7 @@ CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc        \
 CERTIFIER_INCLUDE = -I. -I$(CERTIFIER_SRC_PATH)/../include -I$(CERTIFIER_SRC_PATH)/gramine $(SGX_INCLUDE) -I./mbedtls/include
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE) -DGRAMINE_CERTIFIER
 CERTIFIER_LDFLAGS = -lssl -lcrypto
-CERTIFIER_LDFLAGS += -L./ -L/usr/local/lib
+CERTIFIER_LDFLAGS += -L./ -L$(LOCAL_LIB)
 CERTIFIER_LDFLAGS += `pkg-config --cflags --libs protobuf`
 CERTIFIER_LDFLAGS += $(shell pkg-config --libs mbedtls_gramine)
 GPP=g++
@@ -56,7 +66,7 @@ certifier:
 ######################### TEST APP EXECUTABLES ################################
 
 CFLAGS += $(CERTIFIER_CFLAGS)
-LDFLAGS += -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -L./ -lcertifier -ldl -lgtest -lgflags -lpthread $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
+LDFLAGS += -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L$(LOCAL_LIB) -L./ -lcertifier -ldl -lgtest -lgflags -lpthread $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
 
 gramine_example_app: gramine_example_app.cc certifier
 	$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
@@ -75,13 +85,18 @@ gramine_example_app.manifest: gramine_example_app.manifest.template
 gramine_example_app.manifest.sgx gramine_example_app.sig: sgx_sign_gramine_example_app
 	@:
 
+# Produces gramine_example_app.manifest.sgx
 .INTERMEDIATE: sgx_sign_gramine_example_app
 sgx_sign_gramine_example_app: gramine_example_app.manifest gramine_example_app
+	@echo
+	@echo make sgx_sign_gramine_example_app
 	gramine-sgx-sign \
 		--manifest $< \
 		--output $<.sgx
 
 gramine_example_app.token: gramine_example_app.sig
+	@echo
+	@echo make gramine_example_app.token
 	gramine-sgx-get-token --output $@ --sig $<
 
 ################################## CLEANUP ####################################

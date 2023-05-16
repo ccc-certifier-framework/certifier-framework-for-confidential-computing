@@ -5,15 +5,23 @@ libos.entrypoint = "/gramine_example_app"
 
 loader.log_level = "{{ log_level }}"
 
-loader.env.LD_LIBRARY_PATH = "/usr/local/lib:.:/lib:{{ arch_libdir }}:/usr{{ arch_libdir }}"
+loader.env.LD_LIBRARY_PATH = "/usr/local/lib64:/usr/local/lib:.:/lib:{{ arch_libdir }}:/usr{{ arch_libdir }}"
 
 loader.insecure__use_cmdline_argv = true
 
 sys.enable_sigterm_injection = true
 
+# ---------------------------------------------------------------------------
+# NOTE: On the sgx-enabled machine where this sample app is tested,
+#       we have OpenSSL libs at /usr/local/lib64. Hence, include that
+#       path here, below, and further below in sgx.trusted_files[].
+#       For a customer deployment, this script will need to be manually
+#       updated to list the location where these libs live.
+# ---------------------------------------------------------------------------
 fs.mounts = [
   { path = "/lib", uri = "file:{{ gramine.runtimedir() }}" },
   { path = "/usr/local/lib", uri = "file:/usr/local/lib" },
+  { path = "/usr/local/lib64", uri = "file:/usr/local/lib64" },
   { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
   { path = "/usr{{ arch_libdir }}", uri = "file:/usr{{ arch_libdir }}" },
   { path = "/etc", uri = "file:/etc" },
@@ -32,6 +40,8 @@ sgx.trusted_files = [
   "file:libcertifier.so",
   "file:{{ gramine.runtimedir() }}/",
   "file:/usr/local/lib/",
+  "file:/usr/local/lib/",
+  "file:/usr/local/lib64/",
   "file:{{ arch_libdir }}/",
   "file:/usr{{ arch_libdir }}/",
   "file:sgx.cert.der",
