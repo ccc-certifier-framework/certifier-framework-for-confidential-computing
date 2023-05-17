@@ -7,8 +7,6 @@
 #include <openenclave/attestation/verifier.h>
 #include <openenclave/bits/report.h>
 #include <openenclave/bits/module.h>
-#include "certifier.h"
-#include "support.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -22,9 +20,8 @@
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 
-#include "certifier.h"
-#include "support.h"
-#include "cc_helpers.h"
+#include "certifier_framework.h"
+#include "certifier_utilities.h"
 #include "../policy_key.cc"
 
 #define FLAGS_print_all true

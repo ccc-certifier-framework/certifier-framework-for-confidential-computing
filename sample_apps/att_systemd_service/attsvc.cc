@@ -21,10 +21,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <filesystem>
-#include <certifier.h>
-#include <support.h>
-#include <simulated_enclave.h>
-#include <cc_helpers.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -38,6 +34,7 @@
 #include <openssl/rand.h>
 #include <openssl/hmac.h>
 #include <openssl/err.h>
+#include <certifier_framework.h>
 
 #ifdef ATT_DEBUG
 #define ATT_LOG(priority, format, ...)  printf(format"\n", ##__VA_ARGS__)
