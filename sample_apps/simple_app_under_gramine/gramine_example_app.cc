@@ -21,10 +21,8 @@
 
 #include "gramine_api.h"
 
-#include "support.h"
-#include "certifier.h"
-#include "simulated_enclave.h"
-#include "cc_helpers.h"
+#include "certifier_framework.h"
+#include "certifier_utilities.h"
 
 // operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false,  "verbose");
