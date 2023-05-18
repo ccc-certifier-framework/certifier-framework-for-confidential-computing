@@ -43,6 +43,20 @@ jobs:
         ./run_example.sh simple_app_under_oe show_env
 
         #! ---------------------------------------------------------------------
+        #! Exercise various interfaces in --dry-run mode. This will ensure that
+        #! script's execution logic will likely work for different sample apps,
+        #! when tested on the appropriate platform and environment.
+        #! ---------------------------------------------------------------------
+        ./run_example.sh --dry-run simple_app
+        ./run_example.sh --dry-run simple_app setup
+        ./run_example.sh --dry-run simple_app run_test
+
+        ./run_example.sh --dry-run simple_app_under_oe
+        ./run_example.sh --dry-run simple_app_under_oe setup
+        ./run_example.sh --dry-run simple_app_under_oe run_test
+        ./run_example.sh --dry-run simple_app_under_oe setup_with_auto_policy_generation_for_OE
+
+        #! ---------------------------------------------------------------------
         #! Test: Execute script to compile, build and run simple_app.
         #! This will also check that utilities programs still compile
         ./cleanup.sh

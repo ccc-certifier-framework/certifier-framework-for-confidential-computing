@@ -26,6 +26,8 @@ Srvr_app_data="app2_data"
 SimpleServer_PID=0
 Valid_app=0         # While looking thru SampleApps[] for supported app
 Found_step=0        # While looking thru Steps[] for user-specified fn-name
+DryRun=0            # --dry-run will turn this ON; off by default
+DryRun_msg=""
 
 # build_utilites needs access to OpenSSL libraries, that may live on a diff
 # dir location, depending on how OpenSSL was installed on diff machines.
@@ -64,7 +66,7 @@ SampleApps=( "simple_app"
 # ###########################################################################
 function list_apps() {
     echo "List of sample applications you can execute with this script:"
-    echo
+    echo " "
     for str in "${SampleApps[@]}"; do
         echo "  - ${str}"
     done
@@ -86,7 +88,7 @@ function is_valid_app() {
 # Print help / usage
 # ##################################################################
 function usage_brief() {
-   echo "Usage: $Me [-h | --help | --list] <sample-app-name> [ setup | run_test ]"
+   echo "Usage: $Me [-h | --help | --list | --dry-run] <sample-app-name> [ setup | run_test ]"
    list_apps
 }
 
@@ -100,21 +102,29 @@ function usage() {
    - Run individual steps in sequence.
 "
    usage_brief
-   echo
+   echo " "
    echo "  To setup and run the ${SampleAppName} program, end-to-end : ./${Me} ${SampleAppName} "
    echo "  To setup the ${SampleAppName} program                     : ./${Me} ${SampleAppName} setup"
    echo "  To run and test the ${SampleAppName} program              : ./${Me} ${SampleAppName} run_test"
    echo "  To list the individual steps for ${SampleAppName}         : ./${Me} ${SampleAppName} --list"
    echo "  To run an individual step of the ${SampleAppName}         : ./${Me} ${SampleAppName} <step name>"
-   echo
+   echo " "
    # Indentation to align with previous output lines.
    echo "  Cleanup stale artificats from build area            : ./${Me} rm_non_git_files"
    echo "  Show the environment used to build-and-run a program: ./${Me} ${SampleAppName} show_env"
+
+   local test_app="simple_app_under_oe"
+   echo " "
+   echo "Dry-run execution mode to inspect tasks performed:"
+   echo "  Setup and run the simple_app_under_oe program : ./${Me} --dry-run ${test_app}"
+   echo "  Setup simple_app_under_oe program             : ./${Me} --dry-run ${test_app} setup"
+   echo "  Run and test the simple_app_under_oe program  : ./${Me} --dry-run ${test_app} run_test"
+   echo "  Cleanup stale artificats from build area      : ./${Me} --dry-run rm_non_git_files"
 }
 
 # ---- Open-Enclave app-specific help/usage output
 function usage_OE() {
-   echo
+   echo " "
    echo "For simple_app_under_oe, you can alternatively use this script "
    echo "to generate the policy by editing the measurement in the policy JSON file:"
    echo "  To setup the example program        : ./${Me} simple_app_under_oe setup_with_auto_policy_generation_for_OE"
@@ -207,7 +217,7 @@ Steps_OE=( "rm_non_git_files"
 function list_steps() {
     local app_name="$1"
     echo "List of individual steps you can execute for ${app_name}, in this order:"
-    echo
+    echo " "
     case "${app_name}" in
         "simple_app")
             list_steps_for_app "${Steps[@]}"
@@ -283,19 +293,46 @@ This_fn=""
 # Wrapper to run a command w/ parameters.
 # ###########################################################################
 function run_cmd() {
-   echo
+   echo " "
    This_fn="${FUNCNAME[1]}"
    if [ "${Prev_fn}" != "${This_fn}" ]; then
        echo "******************************************************************************"
        echo "${Me}: Running ${FUNCNAME[1]} "
-       echo
        Prev_fn="${This_fn}"
    fi
-   set -x
+   # Only execute the commands if --dry-run is OFF
+   if [ ${DryRun} -eq 0 ]; then
+        set -x
 
-   "$@"
+        "$@"
 
-   set +x
+        set +x
+    else
+        # Print what would have been executed, so user can learn from this.
+        echo "$@"
+    fi
+}
+
+# ###########################################################################
+# Wrappers around pushd / popd to also honor --dry-run mode, so user can
+# inspect changes to dirs before running various commands.
+# ###########################################################################
+function run_pushd() {
+    local todir="$1"
+    if [ ${DryRun} -eq 0 ]; then
+        pushd "${todir}" > /dev/null 2>&1
+    else
+        echo "pushd ${todir}"
+    fi
+}
+
+function run_popd() {
+    if [ ${DryRun} -eq 0 ]; then
+        popd > /dev/null 2>&1
+    else
+        echo        # Blank-line for readability of commands in dry-run mode
+        echo "popd"
+    fi
 }
 
 # ###########################################################################
@@ -305,9 +342,11 @@ function run_cmd() {
 # some prior steps.
 # ###########################################################################
 function rm_non_git_files() {
-    pushd "${CERT_PROTO}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${CERT_PROTO}"
 
     echo "${Me}: Delete all files not tracked by git"
+
     # shellcheck disable=SC2046
     run_cmd rm -rf $(git ls-files . --exclude-standard --others)
 
@@ -315,12 +354,13 @@ function rm_non_git_files() {
     # shellcheck disable=SC2046
     run_cmd rm -rf $(git ls-files . --exclude-standard --others --ignored)
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
 function build_utilities() {
-   pushd "${CERT_PROTO}/utilities" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${CERT_PROTO}/utilities"
 
    clean_done=0
    for mkf in cert_utility.mak policy_utilities.mak;
@@ -332,12 +372,13 @@ function build_utilities() {
       LOCAL_LIB=${Local_lib_path} run_cmd make -f ${mkf}
    done
 
-   popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
 function gen_policy_and_self_signed_cert() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
    run_cmd "$CERT_UTILS"/cert_utility.exe                       \
                --operation=generate-policy-key-and-test-keys    \
@@ -346,18 +387,19 @@ function gen_policy_and_self_signed_cert() {
                --platform_key_output_file=platform_key_file.bin \
                --attest_key_output_file=attest_key_file.bin
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
 function emded_policy_in_example_app() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
    run_cmd "$CERT_UTILS"/embed_policy_key.exe   \
                --input=policy_cert_file.bin     \
                --output=../policy_key.cc
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
@@ -383,30 +425,32 @@ function compile_app() {
 
 # ###########################################################################
 function compile_simple_app() {
-   pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${EXAMPLE_DIR}"
 
    run_cmd make -f example_app.mak clean
    run_cmd make -f example_app.mak
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
 function compile_simple_app_under_oe() {
-   pushd "${CERT_UTILS}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${CERT_UTILS}"
 
    run_cmd rm -rf certifier.pb.cc
    cd ../include
    run_cmd rm -rf certifier.pb.h
 
-   popd > /dev/null 2>&1
+   run_popd
 
-   pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+   run_pushd "${EXAMPLE_DIR}"
 
    run_cmd make
    run_cmd make dump_mrenclave
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
@@ -432,39 +476,41 @@ function get_measurement_of_trusted_app() {
 
 # ###########################################################################
 function get_measurement_of_trusted_simple_app() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
    run_cmd "$CERT_UTILS"/measurement_utility.exe    \
                --type=hash                          \
                --input=../example_app.exe           \
                --output=example_app.measurement
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
 function get_measurement_of_trusted_simple_app_under_oe() {
-   pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
-
    run_cmd
+   run_pushd "${EXAMPLE_DIR}"
 
    # Grab mrenclave name from 'dump' output
-   set -x
-   local mrenclave=""
-   mrenclave=$(oesign dump --enclave-image=./enclave/enclave.signed \
-                | grep "^mrenclave" \
-                | cut -f2 -d'=')
-   set +x
+    local mrenclave="some-hash-string-that-will-come-from-oesign-dump"
+    if [ $DryRun -eq 0 ]; then
+        set -x
+        mrenclave=$(oesign dump --enclave-image=./enclave/enclave.signed \
+                    | grep "^mrenclave" \
+                    | cut -f2 -d'=')
+        set +x
+    fi
 
-   popd > /dev/null 2>&1
+   run_popd
 
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_pushd "${PROV_DIR}"
 
    run_cmd "$CERT_UTILS"/measurement_init.exe                   \
                --mrenclave="${mrenclave}"                       \
                --out_file=binary_trusted_measurements_file.bin
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 
@@ -474,9 +520,8 @@ function get_measurement_of_trusted_simple_app_under_oe() {
 # of sub-steps, each of which is implemented by a minion function.
 # ###########################################################################
 function author_policy() {
-    pushd "${PROV_DIR}" > /dev/null 2>&1
-
     run_cmd
+    run_pushd "${PROV_DIR}"
 
     construct_policyKey_platform_is_trusted
 
@@ -492,7 +537,7 @@ function author_policy() {
 
     print_signed_claim
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
@@ -503,9 +548,8 @@ function author_policy() {
 # of sub-steps, each of which is implemented by a minion function.
 # ###########################################################################
 function manual_policy_generation_for_OE() {
-    pushd "${PROV_DIR}" > /dev/null 2>&1
-
     run_cmd
+    run_pushd "${PROV_DIR}"
 
     construct_policyKey_platform_is_trusted
 
@@ -515,7 +559,7 @@ function manual_policy_generation_for_OE() {
 
     print_policy
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
@@ -540,7 +584,8 @@ function construct_policyKey_platform_is_trusted() {
 
 # ###########################################################################
 function construct_policyKey_platform_is_trusted_simple_app() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
                --key_subject=platform_key_file.bin      \
@@ -553,12 +598,13 @@ function construct_policyKey_platform_is_trusted_simple_app() {
                --clause=ts1.bin                         \
                --output=vse_policy1.bin
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
 function construct_policyKey_platform_is_trusted_simple_app_under_oe() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
                --measurement_subject=binary_trusted_measurements_file.bin \
@@ -571,12 +617,13 @@ function construct_policyKey_platform_is_trusted_simple_app_under_oe() {
                --clause=ts1.bin                         \
                --output=vse_policy1.bin
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
 function produce_signed_claims_for_vse_policy_statement() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
                --vse_file=vse_policy1.bin                           \
@@ -584,14 +631,15 @@ function produce_signed_claims_for_vse_policy_statement() {
                --private_key_file=policy_key_file.bin               \
                --output=signed_claim_1.bin
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
 # Construct policy key says measurement is-trusted
 # ###########################################################################
 function construct_policyKey_measurement_is_trusted() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
    run_cmd "${CERT_UTILS}"/measurement_utility.exe  \
                --type=hash                          \
@@ -616,14 +664,15 @@ function construct_policyKey_measurement_is_trusted() {
                --private_key_file=policy_key_file.bin               \
                --output=signed_claim_2.bin
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
 # Combine signed policy statements for Certifier Service use.
 # ###########################################################################
 function combine_policy_stmts() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
     signed_claims="signed_claim_1.bin"
     case "${SampleAppName}" in
@@ -635,18 +684,19 @@ function combine_policy_stmts() {
                --input=${signed_claims}             \
                --output=policy.bin
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
 # Print the policy (Optional)
 # ###########################################################################
 function print_policy() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
    run_cmd "${CERT_UTILS}"/print_packaged_claims.exe --input=policy.bin
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
@@ -655,7 +705,8 @@ function print_policy() {
 # and sign it
 # ###########################################################################
 function construct_platform_key_attestation_stmt_sign_it() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
                --key_subject=attest_key_file.bin        \
@@ -674,19 +725,20 @@ function construct_platform_key_attestation_stmt_sign_it() {
                --private_key_file=platform_key_file.bin             \
                --output=platform_attest_endorsement.bin
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
 # Print signed claim (Optional)
 # ###########################################################################
 function print_signed_claim() {
-   pushd "${PROV_DIR}" > /dev/null 2>&1
+   run_cmd
+   run_pushd "${PROV_DIR}"
 
    run_cmd "${CERT_UTILS}"/print_signed_claim.exe   \
                --input=platform_attest_endorsement.bin
 
-   popd > /dev/null 2>&1
+   run_popd
 }
 
 # ###########################################################################
@@ -694,14 +746,13 @@ function print_signed_claim() {
 # You run either this or step (7).
 # ###########################################################################
 function automated_policy_generation_for_OE() {
-    pushd "${PROV_DIR}" > /dev/null 2>&1
-
     run_cmd
+    run_pushd "${PROV_DIR}"
 
     edit_policy_file_OE
     run_policy_generator_OE
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
@@ -710,44 +761,48 @@ function automated_policy_generation_for_OE() {
 # 'make dump_mrenclave'
 # ###########################################################################
 function edit_policy_file_OE() {
-    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
     policy_json_file="./oe_policy.json"
     local policy_json_file_old="${policy_json_file}.old"
     run_cmd cp -p ${policy_json_file} ${policy_json_file_old}
 
-    # Grab the 'mrenclave' term from 'make' output
-    local mrenclave=""
-    set -x
-    mrenclave=$(make dump_mrenclave | grep "^mrenclave" | cut -f2 -d'=')
-    set +x
+    if [ $DryRun -eq 0 ]; then
+        # Grab the 'mrenclave' term from 'make' output
+        local mrenclave=""
+        set -x
+        mrenclave=$(make dump_mrenclave | grep "^mrenclave" | cut -f2 -d'=')
+        set +x
 
-    # Update json file using 'jq' tool, to replace value of the
-    # 'measurement' key with generic term 'mrenclave'. Then do a text
-    # replacement of this with the mrenclave grabbed above.
-    set -x
-    Jq=$(command -v jq)
-    ${Jq} '.measurements = [ "mrenclave" ]' "${policy_json_file}"    \
-        | sed -e "s/mrenclave/${mrenclave}/g"                         \
-        > ${policy_json_file}.tmp
-    set +x
+        # Update json file using 'jq' tool, to replace value of the
+        # 'measurement' key with generic term 'mrenclave'. Then do a text
+        # replacement of this with the mrenclave grabbed above.
+        set -x
+        Jq=$(command -v jq)
+        ${Jq} '.measurements = [ "mrenclave" ]' "${policy_json_file}"    \
+            | sed -e "s/mrenclave/${mrenclave}/g"                         \
+            > ${policy_json_file}.tmp
+        set +x
+    fi
 
     # Update policy.json file with json.tmp file, created above.
     run_cmd mv ${policy_json_file}.tmp ${policy_json_file}
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
 function run_policy_generator_OE() {
-    pushd "${PROV_DIR}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-    run_cmd "${CERTIFIER_PROTOTYPE}"/utilities/policy_generator.exe     \
+    run_cmd "${CERT_PROTO}"/utilities/policy_generator.exe     \
                 --policy_input=../oe_policy.json                    \
-                --schema_input="${CERTIFIER_PROTOTYPE}"/utilities/policy_schema.json \
-                --util_path="${CERTIFIER_PROTOTYPE}"/utilities
+                --schema_input="${CERT_PROTO}"/utilities/policy_schema.json \
+                --util_path="${CERT_PROTO}"/utilities
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
@@ -756,10 +811,11 @@ function run_policy_generator_OE() {
 #   $ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 # ###########################################################################
 function build_simple_server() {
-    pushd "${CERT_PROTO}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${CERT_PROTO}"
 
     # Compiler the protobuf
-    cd certifier_service/certprotos
+    run_cmd cd certifier_service/certprotos
     run_cmd protoc                              \
                 --go_opt=paths=source_relative  \
                 --go_out=.                      \
@@ -772,30 +828,36 @@ function build_simple_server() {
     make_arg=""
     if [ "${SampleAppName}" = "simple_app" ]; then make_arg=dummy; fi
 
-    cd "${CERT_PROTO}"/certifier_service/oelib
+    run_cmd cd "${CERT_PROTO}"/certifier_service/oelib
     run_cmd make ${make_arg}
 
-    cd "${CERT_PROTO}"/certifier_service/graminelib
+    run_cmd cd "${CERT_PROTO}"/certifier_service/graminelib
     run_cmd make dummy
 
     # Now, build simpleserver:
-    cd "${CERT_PROTO}"/certifier_service
-    rm -rf simpleserver
+    run_cmd cd "${CERT_PROTO}"/certifier_service
+    run_cmd rm -rf simpleserver
     run_cmd go build simpleserver.go
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
 # Re-create dirs for app and service data
 # ###########################################################################
 function mk_dirs_for_test() {
-    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
-    run_cmd rm -rf ${Client_app_data} ${Srvr_app_data} service
-    run_cmd mkdir  ${Client_app_data} ${Srvr_app_data} service
+    # Do this w/o checking for dry-run, so mkdir will succeed.
+    # Otherwise, other steps that need .../service/ sub-dir to exist will fail
+    # to run when script is executed in --dry-run mode.
+    set -x
+    rm -rf ${Client_app_data} ${Srvr_app_data} service
+    mkdir  ${Client_app_data} ${Srvr_app_data} service
+    set +x
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
@@ -805,7 +867,8 @@ function mk_dirs_for_test() {
 # On real hardware, these are not needed.
 # ###########################################################################
 function provision_app_service_files() {
-    pushd "${PROV_DIR}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
     run_cmd cp -p ./* "$EXAMPLE_DIR"/${Client_app_data}
     run_cmd cp -p ./* "$EXAMPLE_DIR"/${Srvr_app_data}
@@ -813,16 +876,17 @@ function provision_app_service_files() {
     run_cmd cp -p policy_key_file.bin policy_cert_file.bin policy.bin \
                     "$EXAMPLE_DIR"/service
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
 # Start the Certifier Service: This will need to be killed manually.
 # ###########################################################################
 function start_certifier_service() {
-    pushd "${EXAMPLE_DIR}"/service > /dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"/service
 
-    echo
+    echo " "
     outfile="${PROV_DIR}/cert.service.out"
     echo "$Me: Starting Certifier Service ..."
     echo "$Me: To see messages from Certifier Server: tail -f ${outfile}"
@@ -832,14 +896,16 @@ function start_certifier_service() {
                 --readPolicy=true                           \
                 > "${outfile}" 2>&1 &
 
-    popd > /dev/null 2>&1
-    sleep 5
+    run_popd
+    run_cmd sleep 5
 
-    echo "$Me: Kill this server process when the test is completed."
-    # shellcheck disable=SC2009
-    ps -ef | grep simpleserver | grep -v grep
+    if [ $DryRun -eq 0 ]; then
+        echo "$Me: Kill this server process when the test is completed."
+        # shellcheck disable=SC2009
+        ps -ef | grep simpleserver | grep -v grep
 
-    SimpleServer_PID=$(pgrep simpleserver)
+        SimpleServer_PID=$(pgrep simpleserver)
+    fi
 }
 
 # ###########################################################################
@@ -864,7 +930,8 @@ function run_app_as_server_talk_to_Cert_Service() {
 
 # ###########################################################################
 function run_simple_app_as_server_talk_to_Cert_Service() {
-    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
     run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
                 --data_dir="./${Srvr_app_data}/"                \
@@ -882,12 +949,13 @@ function run_simple_app_as_server_talk_to_Cert_Service() {
                 --policy_store_file=policy_store                \
                 --print_all=true
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
 function run_simple_app_under_oe_as_server_talk_to_Cert_Service() {
-    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
     run_cmd ./host/host                             \
                 enclave/enclave.signed              \
@@ -901,7 +969,7 @@ function run_simple_app_under_oe_as_server_talk_to_Cert_Service() {
                 get-certifier                       \
                 "${EXAMPLE_DIR}"/${Srvr_app_data}
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 
@@ -929,7 +997,8 @@ function run_app_as_client_talk_to_Cert_Service() {
 
 # ###########################################################################
 function run_simple_app_as_client_talk_to_Cert_Service() {
-    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
     run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
                 --data_dir="./${Client_app_data}/"              \
@@ -947,12 +1016,13 @@ function run_simple_app_as_client_talk_to_Cert_Service() {
                 --policy_store_file=policy_store                \
                 --print_all=true
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
 function run_simple_app_under_oe_as_client_talk_to_Cert_Service() {
-    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
     run_cmd ./host/host                             \
                 enclave/enclave.signed              \
@@ -966,7 +1036,7 @@ function run_simple_app_under_oe_as_client_talk_to_Cert_Service() {
                 get-certifier                       \
                 "${EXAMPLE_DIR}"/${Client_app_data}
 
-    popd > /dev/null 2>&1
+    run_popd
 }
 
 # ###########################################################################
@@ -993,7 +1063,9 @@ function run_app_as_server_offers_trusted_service() {
 
 # ###########################################################################
 function run_simple_app_as_server_offers_trusted_service() {
-    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+    sleep 1
 
     # Run app as a server: In app as a server terminal run the following:
     run_cmd "${EXAMPLE_DIR}"/example_app.exe        \
@@ -1004,15 +1076,17 @@ function run_simple_app_as_server_offers_trusted_service() {
 
     run_cmd sleep 5
 
-    popd > /dev/null 2>&1
+    run_popd
 
     # Report this, for debugging on CI-machines
+    echo " "
     echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd) Completed ${FUNCNAME[0]}"
 }
 
 # ###########################################################################
 function run_simple_app_under_oe_as_server_offers_trusted_service() {
-    pushd "${EXAMPLE_DIR}" > /dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
     # Run app as a server: In app as a server terminal run the following:
     run_cmd ./host/host                         \
@@ -1022,7 +1096,7 @@ function run_simple_app_under_oe_as_server_offers_trusted_service() {
 
     run_cmd sleep 5
 
-    popd > /dev/null 2>&1
+    run_popd
 
     # Report this, for debugging on CI-machines
     echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd): Completed ${FUNCNAME[0]}"
@@ -1051,7 +1125,8 @@ function run_app_as_client_make_trusted_request() {
 
 # ###########################################################################
 function run_simple_app_as_client_make_trusted_request() {
-    pushd "${EXAMPLE_DIR}" >/dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
     # Run app as a client: In app as a client terminal run the following:
     run_cmd "${EXAMPLE_DIR}"/example_app.exe        \
@@ -1060,14 +1135,16 @@ function run_simple_app_as_client_make_trusted_request() {
                 --policy_store_file=policy_store    \
                 --print_all=true
 
-    popd > /dev/null 2>&1
+    run_popd
     # Report this, for debugging on CI-machines
-    echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd) Completed ${FUNCNAME[0]}"
+    echo " "
+    echo "${Me}: $(TZ="America/Los_Angeles" date) Completed ${FUNCNAME[0]} ${DryRun_msg}."
 }
 
 # ###########################################################################
 function run_simple_app_under_oe_as_client_make_trusted_request() {
-    pushd "${EXAMPLE_DIR}" >/dev/null 2>&1
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
     # Run app as a client: In app as a client terminal run the following:
     run_cmd ./host/host                         \
@@ -1075,37 +1152,40 @@ function run_simple_app_under_oe_as_client_make_trusted_request() {
                 run-app-as-client               \
                 "$EXAMPLE_DIR/${Client_app_data}"
 
-    popd > /dev/null 2>&1
+    run_popd
 
     # Report this, for debugging on CI-machines
-    echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd) Completed ${FUNCNAME[0]}"
+    echo "${Me}: $(TZ="America/Los_Angeles" date) Completed ${FUNCNAME[0]} ${DryRun_msg}."
 }
 
 # ###########################################################################
 function show_env() {
-   echo
+   echo " "
    echo "**** Environment variables, script globals: ****"
    env | grep -E "CERT_PROTO|EXAMPLE_DIR"
    echo "LOCAL_LIB=${Local_lib_path}"
 
-   local numCPUs=0
-   local cpuModel=0
-   local cpuVendor=0
-   local totalMemGB=0
-
-   numCPUs=$(grep -c "^processor" /proc/cpuinfo)
-   cpuModel=$(grep "model name" /proc/cpuinfo | head -1 | cut -f2 -d':')
-   cpuVendor=$(grep "vendor_id" /proc/cpuinfo | head -1 | cut -f2 -d':')
-   totalMemGB=$(free -g | grep "^Mem:" | awk '{print $2}')
-
-    echo
+    echo " "
     uname -a
-    echo
-    echo "${Me}: ${cpuVendor}, ${numCPUs} CPUs, ${totalMemGB} GB, ${cpuModel}"
-    ping -4 -c 1 "$(uname -n | head -2)"
+    # Likely, will fail on macOSX, so run in dry-run mode
+    if [ $DryRun -eq 0 ]; then
+        local numCPUs=0
+        local cpuModel=0
+        local cpuVendor=0
+        local totalMemGB=0
 
-    echo
-    lsb_release -a
+        numCPUs=$(grep -c "^processor" /proc/cpuinfo)
+        cpuModel=$(grep "model name" /proc/cpuinfo | head -1 | cut -f2 -d':')
+        cpuVendor=$(grep "vendor_id" /proc/cpuinfo | head -1 | cut -f2 -d':')
+        totalMemGB=$(free -g | grep "^Mem:" | awk '{print $2}')
+
+        echo " "
+        echo "${Me}: ${cpuVendor}, ${numCPUs} CPUs, ${totalMemGB} GB, ${cpuModel}"
+        ping -4 -c 1 "$(uname -n | head -2)"
+
+        echo " "
+        lsb_release -a
+    fi
 }
 
 # ###########################################################################
@@ -1161,6 +1241,7 @@ function setup() {
 # to avoid re-running sub-fns nested under author_policy()
 # ###########################################################################
 function setup_simple_app() {
+    run_cmd
     run_steps "show_env" "get_measurement_of_trusted_app"
     author_policy
     run_steps "build_simple_server" "provision_app_service_files"
@@ -1236,6 +1317,17 @@ if [ "$1" == "--list" ]; then
     exit 0
 fi
 
+if [ "$1" == "--dry-run" ]; then
+    echo " "
+    echo "${Me}: ****************************************************"
+    echo "${Me}: ******** Executing script in dry-run mode. *********"
+    echo "${Me}: ****************************************************"
+    echo " "
+    DryRun=1
+    DryRun_msg="in dry-run mode"
+    shift
+fi
+
 if [ "$1" == "rm_non_git_files" ]; then
     $1
     exit 0
@@ -1275,7 +1367,7 @@ if [ $# -eq 2 ]; then
     # shellcheck disable=SC2048
     $2 "${SampleAppName}"
 
-    echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd) Completed $2 for $1."
+    echo "${Me}: $(TZ="America/Los_Angeles" date) Completed $2 ${DryRun_msg} for $1."
     exit 0
 fi
 
@@ -1300,4 +1392,4 @@ trap "" ERR
 # shellcheck disable=SC2086
 if [ ${SimpleServer_PID} -ne 0 ]; then kill -9 "${SimpleServer_PID}"; fi
 
-echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd) Completed."
+echo "${Me}: $(TZ="America/Los_Angeles" date) Completed ${DryRun_msg}."
