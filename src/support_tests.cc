@@ -641,6 +641,24 @@ bool test_time(bool print_all) {
     printf("later: ");
     print_time_point(t_later);
   }
+
+  time_t now;
+  struct tm tm_time;
+  time_point tp;
+
+  time(&now);
+  if (!time_t_to_tm_time(&now, &tm_time)) {
+    return false;
+  }
+  if (!tm_time_to_time_point(&tm_time, &tp)) {
+    return false;
+  }
+
+  if (print_all) {
+    printf("Current time: ");
+    print_time_point(tp);
+    printf("\n");
+  }
   return true;
 }
 

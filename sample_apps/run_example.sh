@@ -153,7 +153,7 @@ Steps=( "rm_non_git_files"
         "do_cleanup"
         "build_utilities"
         "gen_policy_and_self_signed_cert"
-        "emded_policy_in_example_app"
+        "embed_policy_in_example_app"
         "compile_app"
         "get_measurement_of_trusted_app"
 
@@ -187,7 +187,7 @@ Steps_OE=( "rm_non_git_files"
            "do_cleanup"
            "build_utilities"
            "gen_policy_and_self_signed_cert"
-           "emded_policy_in_example_app"
+           "embed_policy_in_example_app"
            "compile_app"
            "get_measurement_of_trusted_app"
 
@@ -433,7 +433,7 @@ function gen_policy_and_self_signed_cert() {
 }
 
 # ###########################################################################
-function emded_policy_in_example_app() {
+function embed_policy_in_example_app() {
     run_cmd
     run_pushd "${PROV_DIR}"
 

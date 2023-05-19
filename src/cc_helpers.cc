@@ -74,6 +74,7 @@ extern string gramine_platform_cert;
 
 certifier::framework::cc_trust_data::cc_trust_data(const string& enclave_type, const string& purpose,
     const string& policy_store_name) {
+
   if (purpose == "authentication" || purpose == "attestation") {
     purpose_= purpose;
     cc_basic_data_initialized_ = true;
@@ -353,18 +354,27 @@ bool certifier::framework::cc_trust_data::save_store() {
   int size_protected_blob= serialized_store.size() + max_pad_size_for_store;
   byte protected_blob[size_protected_blob];
 
-  byte pkb[cc_helper_symmetric_key_size];
-  if (!get_random(8 * cc_helper_symmetric_key_size, pkb))
+  byte pkb[max_symmetric_key_size_];
+  memset(pkb, 0, max_symmetric_key_size_);
+
+  int num_key_bytes = cipher_key_byte_size(symmetric_key_algorithm_.c_str());
+  if (num_key_bytes <=0) {
+    printf("save_store: can't get key size\n");
     return false;
+  }
+  if (!get_random(8 * num_key_bytes, pkb)) {
+    printf("save_store: can't generate key\n");
+    return false;
+  }
   key_message pk;
   pk.set_key_name("protect-key");
-  pk.set_key_type("aes-256-cbc-hmac-sha256");
+  pk.set_key_type(symmetric_key_algorithm_);
   pk.set_key_format("vse-key");
-  pk.set_secret_key_bits(pkb, cc_helper_symmetric_key_size);
+  pk.set_secret_key_bits(pkb, num_key_bytes);
 
   if (!Protect_Blob(enclave_type_, pk, serialized_store.size(),
           (byte*)serialized_store.data(), &size_protected_blob, protected_blob)) {
-    printf("save_store can't protect blob\n");
+    printf("save_store: can't protect blob\n");
     return false;
   }
 
@@ -427,6 +437,29 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
     return false;
   }
 
+  const string pka("public_key_algorithm");
+  int pki = store_.get_blob_index_by_tag(pka);
+  if (pki >= 0) {
+    tagged_blob_message* tbp = store_.tagged_blob_[pki];
+    tbp->set_b(public_key_algorithm_.data(), public_key_algorithm_.size()+1);
+  } else {
+    if (!store_.add_blob(pka, public_key_algorithm_)) {
+      printf("cold_init: Can't add public key algorithm to store\n");
+      return false;
+    }
+  }
+  const string ska("symmetric_key_algorithm");
+  int ski = store_.get_blob_index_by_tag(ska);
+  if (ski >= 0) {
+    tagged_blob_message* tbp = store_.tagged_blob_[ski];
+    tbp->set_b(symmetric_key_algorithm_.data(), symmetric_key_algorithm_.size()+1);
+  } else {
+    if (!store_.add_blob(ska, symmetric_key_algorithm_)) {
+      printf("cold_init: Can't add symmetric key algorithm to store\n");
+      return false;
+    }
+  }
+
   if (purpose_ == "attestation") {
 
     // put private service key and symmetric keys in store
@@ -480,6 +513,19 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
 }
 
 bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
+
+  const string pka("public_key_algorithm");
+  int pki = store_.get_blob_index_by_tag(pka);
+  if (pki >= 0) {
+    tagged_blob_message* tbp = store_.tagged_blob_[pki];
+    public_key_algorithm_ = tbp->b().c_str();
+  }
+  const string ska("symmetric_key_algorithm");
+  int ski = store_.get_blob_index_by_tag(ska);
+  if (ski >= 0) {
+    tagged_blob_message* tbp = store_.tagged_blob_[ski];
+    symmetric_key_algorithm_ = tbp->b().c_str();
+  }
 
   if (purpose_ == "attestation") {
 
@@ -585,13 +631,31 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
 //  hash_alg can be sha-256 (soon: sha-384, sha-512)
 //  hmac-alg can be sha-256-hmac (soon: sha-384-hmac, sha-512-hmac)
 bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg,
-        const string& symmetric_key_alg,
-        const string& hash_alg, const string& hmac_alg) {
+        const string& symmetric_key_alg) {
 
   if (!cc_policy_info_initialized_) {
       printf("cold_init: policy key should have been initialized\n");
       return false;
   }
+
+  public_key_algorithm_ = public_key_alg;
+  symmetric_key_algorithm_ = symmetric_key_alg;
+
+  // Make up symmetric keys (e.g.-for sealing)for app
+  int num_key_bytes;
+  if (symmetric_key_alg == "aes-256-cbc-hmac-sha256" ||
+      symmetric_key_alg == "aes-256-cbc-hmac-sha384" ||
+      symmetric_key_alg == "aes-256-gcm") {
+    num_key_bytes = cipher_key_byte_size(symmetric_key_alg.c_str());
+    if (num_key_bytes <= 0) {
+      printf("cold_init: Can't recover symmetric alg key size\n");
+      return false;
+    }
+  } else {
+    printf("cold_init: unsupported encryption algorithm\n");
+    return false;
+  }
+  memset(symmetric_key_bytes_, 0, max_symmetric_key_size_);
 
   if (purpose_ == "authentication") {
 
@@ -600,23 +664,14 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
       printf("cold_init: Can't store policy key\n");
       return false;
     }
-
-    // Make up symmetric keys for app
-    // Right now, the symmertric keys and hmac key are the same for all algs.
-    if (symmetric_key_alg != "aes-256") {
-      printf("cold_init: only aes-256 supported now\n");
-      return false;
-    }
-    if (!get_random(8 * cc_helper_symmetric_key_size, symmetric_key_bytes_)) {
+    if (!get_random(num_key_bytes, symmetric_key_bytes_)) {
       printf("cold_init: Can't get random bytes for app key\n");
       return false;
     }
-    if (!get_random(8 * cc_helper_symmetric_key_size, symmetric_key_bytes_))
-      return false;
     symmetric_key_.set_key_name("app-symmetric-key");
-    symmetric_key_.set_key_type("aes-256-cbc-hmac-sha256");
+    symmetric_key_.set_key_type(symmetric_key_alg);
     symmetric_key_.set_key_format("vse-key");
-    symmetric_key_.set_secret_key_bits(symmetric_key_bytes_, cc_helper_symmetric_key_size);
+    symmetric_key_.set_secret_key_bits(symmetric_key_bytes_, 8 * num_key_bytes);
     cc_symmetric_key_initialized_ = true;
 
     // make app auth private and public key
@@ -651,21 +706,15 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
 
   } else if (purpose_ == "attestation") {
 
-    // Make up sealing keys for app
-    // Right now, the symmertric keys and hmac key are the same for all algs.
-    if (symmetric_key_alg != "aes-256") {
-      printf("cold_init: only aes-256 supported now\n");
-      return false;
-    }
-    if (!get_random(8 * cc_helper_symmetric_key_size, service_symmetric_key_)) {
+    if (!get_random(num_key_bytes, symmetric_key_bytes_)) {
       printf("cold_init: Can't get random bytes for app key\n");
       return false;
     }
     symmetric_key_.set_key_name("sealing-key");
-    symmetric_key_.set_key_type("aes-256-cbc-hmac-sha256");
+    symmetric_key_.set_key_type(symmetric_key_alg);
     symmetric_key_.set_key_format("vse-key");
-    symmetric_key_.set_secret_key_bits(service_symmetric_key_, cc_helper_symmetric_key_size);
-    cc_sealing_key_initialized_ = true;
+    symmetric_key_.set_secret_key_bits(service_symmetric_key_, 8 * num_key_bytes);
+    cc_sealing_key_initialized_= true;
 
     // make app service private and public key
     if (public_key_alg == "rsa-2048") {
@@ -759,6 +808,102 @@ bool certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim(signed_clai
     return true;
   }
   return false;
+}
+
+bool certifier::framework::cc_trust_data::recertify_me(const string& host_name, int port, bool generate_new_key) {
+
+  if (generate_new_key) {
+
+    if (purpose_ == "authentication") {
+
+    // make app auth private and public key
+      if (public_key_algorithm_ == "rsa-2048") {
+        if (!make_certifier_rsa_key(2048,  &private_auth_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else if (public_key_algorithm_ == "rsa-4096") {
+        if (!make_certifier_rsa_key(4096,  &private_auth_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else if (public_key_algorithm_ == "ecc-384") {
+        if (!make_certifier_ecc_key(384,  &private_auth_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else {
+          printf("recertify_me: Unsupported public key algorithm\n");
+          return false;
+      }
+
+      private_auth_key_.set_key_name("auth-key");
+      if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
+        printf("recertify_me: Can't make public Auth key\n");
+        return false;
+      }
+
+      cc_auth_key_initialized_ = true;
+
+    } else if (purpose_ == "attestation") {
+
+      // make app service private and public key
+      if (public_key_algorithm_ == "rsa-2048") {
+        if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else if (public_key_algorithm_ == "rsa-4096") {
+        if (!make_certifier_rsa_key(4096,  &private_service_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else if (public_key_algorithm_ == "ecc-384") {
+        if (!make_certifier_ecc_key(384,  &private_service_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else {
+          printf("recertify_me: Unsupported public key algorithm\n");
+          return false;
+      }
+
+      private_service_key_.set_key_name("service-attest-key");
+      if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
+        printf("recertify_me: Can't make public service key\n");
+        return false;
+      }
+
+      string service_tag("service-attest-key");
+      if (!store_.add_authentication_key(service_tag, private_service_key_)) {
+        printf("recertify_me: Can't store auth key\n");
+        return false;
+      }
+
+      cc_service_key_initialized_= true;
+
+    } else {
+      printf("recertify_me: invalid recertify_me purpose\n");
+      return false;
+    }
+  }
+
+  if (!certify_me(host_name, port)) {
+      printf("recertify_me: certify_me failed\n");
+      return false;
+  }
+
+  if (!put_trust_data_in_store()) {
+    printf("recertify_me: Can't put trust data in store\n");
+    return false;
+  }
+
+  if (!save_store()) {
+    printf("recertify_me: Can't save store\n");
+    return false;
+  }
+  cc_policy_store_initialized_ = true;
+  return true;
 }
 
 bool certifier::framework::cc_trust_data::certify_me(const string& host_name, int port) {
@@ -949,7 +1094,7 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
   // Serialize request
   string serialized_request;
   if (!request.SerializeToString(&serialized_request)) {
-    printf("certifier::framework::cc_trust_data::certify_me: error 8\n");
+    printf("certifier::framework::cc_trust_data::certify_me: Can't serialize request\n");
     return false;
   }
 

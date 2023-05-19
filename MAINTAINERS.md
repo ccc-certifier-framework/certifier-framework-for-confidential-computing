@@ -1,2 +1,2 @@
-jmanferdelli@vmware.com, yel@vmware.com, ajaishankar@vmware.com, johnmanferdelli@hotmail.com
+jmanferdelli@vmware.com, yel@vmware.com, agurajada@vmware.com, johnmanferdelli@hotmail.com
 
