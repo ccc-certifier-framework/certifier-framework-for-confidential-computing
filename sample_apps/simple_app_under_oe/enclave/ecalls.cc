@@ -24,6 +24,9 @@
 #include "certifier_utilities.h"
 #include "../policy_key.cc"
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
 #define FLAGS_print_all true
 #define FLAGS_operation ""
 #define FLAGS_policy_host "localhost"

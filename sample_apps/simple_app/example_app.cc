@@ -29,6 +29,7 @@
 
 #include "certifier_framework.h"
 
+using namespace certifier::framework;
 
 // operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false,  "verbose");

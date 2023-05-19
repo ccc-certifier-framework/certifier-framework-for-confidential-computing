@@ -6,12 +6,15 @@
 #include <openssl/hmac.h>
 #include <openssl/x509v3.h>
 
-#include "support.h" 
-#include "simulated_enclave.h" 
-#include "certifier.pb.h" 
+#include "support.h"
+#include "simulated_enclave.h"
+#include "certifier.pb.h"
 
 #include <string>
+
 using std::string;
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //

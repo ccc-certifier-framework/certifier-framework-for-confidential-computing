@@ -8,6 +8,8 @@
 
 #include "certifier_utilities.h"
 
+using namespace certifier::utilities;
+
 DEFINE_string(server_app_host, "localhost", "address for application requests");
 DEFINE_int32(server_app_port, 8127, "port for application requests");
 DEFINE_string(executable, "service_example_app.exe", "executable to run");

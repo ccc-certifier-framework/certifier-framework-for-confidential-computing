@@ -18,6 +18,8 @@
 #include "certifier.h"
 #include "support.h"
 
+using namespace certifier::utilities;
+
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(vse_file, "vse_claim.bin",  "clause file");
 DEFINE_string(output, "signed_claim.bin",  "output file");
