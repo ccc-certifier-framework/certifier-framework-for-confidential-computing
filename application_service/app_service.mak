@@ -105,9 +105,9 @@ $(O)/cc_helpers.o: $(LIBSRC)/cc_helpers.cc $(I)/cc_helpers.h
 	@echo "compiling cc_helpers.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(LIBSRC)/cc_helpers.cc
 
-$(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
+$(O)/cc_useful.o: $(LIBSRC)/cc_useful.cc $(I)/cc_useful.h
 	@echo "compiling cc_useful.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/cc_useful.o $(S)/cc_useful.cc
+	$(CC) $(CFLAGS) -c -o $(O)/cc_useful.o $(LIBSRC)/cc_useful.cc
 
 $(O)/simulated_enclave.o: $(LIBSRC)/simulated_enclave.cc $(I)/simulated_enclave.h
 	@echo "compiling simulated_enclave.cc"
