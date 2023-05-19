@@ -213,6 +213,7 @@ namespace certifier {
       bool save_store();
       bool fetch_store();
       void clear_sensitive_data();
+      // This changes
       bool cold_init(const string& public_key_alg, const string& symmetric_key_alg,
                      const string& hash_alg, const string& hmac_alg);
       bool warm_restart();
