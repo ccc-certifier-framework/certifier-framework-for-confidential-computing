@@ -40,6 +40,7 @@ namespace certifier {
       bool policy_key_valid_;
 
       key_message policy_key_;
+      string encryption_algorithm_;
 
       int max_num_ts_;
       int num_ts_;
@@ -63,7 +64,7 @@ namespace certifier {
     public:
 
       policy_store();
-      policy_store(int max_trusted_services, int max_trusted_signed_claims,
+      policy_store(const string enc_alg, int max_trusted_services, int max_trusted_signed_claims,
           int max_storage_infos, int max_claims, int max_keys, int max_blobs);
       ~policy_store();
 
@@ -137,17 +138,22 @@ namespace certifier {
     bool Unprotect_Blob(const string& enclave_type,
       int size_protected_blob, byte* protected_blob,
       key_message* key, int* size_of_unencrypted_data, byte* data);
+    bool Reprotect_Blob(const string& enclave_type, key_message* key,
+      int size_protected_blob, byte* protected_blob,
+      int* size_new_encrypted_blob, byte* data);
 
 
     class cc_trust_data {
-    private:
-      static const int cc_helper_symmetric_key_size = 64;
+
+    static const int max_symmetric_key_size_ = 64;
 
     public:
       bool cc_basic_data_initialized_;
       string purpose_;
       string enclave_type_;
       string store_file_name_;
+      string public_key_algorithm_;
+      string symmetric_key_algorithm_;
 
       bool cc_policy_info_initialized_;
       string serialized_policy_cert_;
@@ -166,7 +172,7 @@ namespace certifier {
       key_message public_auth_key_;
 
       bool cc_symmetric_key_initialized_;
-      byte symmetric_key_bytes_[cc_helper_symmetric_key_size];
+      byte symmetric_key_bytes_[max_symmetric_key_size_];
       key_message symmetric_key_;
 
       // For attest
@@ -182,7 +188,7 @@ namespace certifier {
 
       // This is the sealing key
       bool cc_sealing_key_initialized_;
-      byte service_symmetric_key_[cc_helper_symmetric_key_size];
+      byte service_symmetric_key_[max_symmetric_key_size_];
       key_message service_sealing_key_;
 
       // For peer-to-peer certification
@@ -214,8 +220,8 @@ namespace certifier {
       bool fetch_store();
       void clear_sensitive_data();
       // This changes
-      bool cold_init(const string& public_key_alg, const string& symmetric_key_alg,
-                     const string& hash_alg, const string& hmac_alg);
+      bool cold_init(const string& public_key_alg, const string& symmetric_key_alg);
+      bool reinit();
       bool warm_restart();
       bool certify_me(const string& host_name, int port);
       bool GetPlatformSaysAttestClaim(signed_claim_message* scm);

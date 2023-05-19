@@ -25,9 +25,8 @@ using namespace certifier::utilities;
 // Policy store
 // -------------------------------------------------------------------
 
-extern string authenticated_encryption_algorithm;
-
 void certifier::framework::print_store(policy_store& ps) {
+  printf("Algorithm: %s\n", ps.encryption_algorithm_.c_str());
   printf("num_ts: %d\n", ps.num_ts_);
   printf("num_tsc: %d\n", ps.num_tsc_);
   printf("num_si: %d\n", ps.num_si_);
@@ -37,6 +36,7 @@ void certifier::framework::print_store(policy_store& ps) {
 
 certifier::framework::policy_store::policy_store() {
   policy_key_valid_ = false;
+  encryption_algorithm_ = "aes-256-cbc-hmac-sha256";
 
   max_num_ts_ = MAX_NUM_ENTRIES;
   max_num_tsc_ = MAX_NUM_ENTRIES;
@@ -61,9 +61,12 @@ certifier::framework::policy_store::policy_store() {
   num_blobs_ = 0;
 }
 
-certifier::framework::policy_store::policy_store(int max_trusted_services, int max_trusted_signed_claims,
+certifier::framework::policy_store::policy_store(const string enc_alg,
+int max_trusted_services, int max_trusted_signed_claims,
       int max_storage_infos, int max_claims, int max_keys, int max_blobs) {
+
   policy_key_valid_ = false;
+  encryption_algorithm_ = enc_alg;
 
   max_num_ts_ = max_trusted_services;
   max_num_tsc_ = max_trusted_signed_claims;
@@ -793,6 +796,7 @@ bool certifier::framework::Protect_Blob(const string& enclave_type, key_message&
 
   string serialized_key;
   if (!key.SerializeToString(&serialized_key)) {
+    printf("Protect_Blob: can't serialize key\n");
     return false;
   }
 
@@ -824,7 +828,7 @@ bool certifier::framework::Protect_Blob(const string& enclave_type, key_message&
 
   int size_encrypted = size_unencrypted_data + max_key_seal_pad;
   byte encrypted_data[size_encrypted];
-  if (!authenticated_encrypt(authenticated_encryption_algorithm.c_str(),
+  if (!authenticated_encrypt(key.key_type().c_str(),
           unencrypted_data, size_unencrypted_data,
           key_buf, iv, encrypted_data, &size_encrypted)) {
     printf("Protect_Blob: authenticate encryption failed\n");
@@ -900,12 +904,18 @@ bool certifier::framework::Unprotect_Blob(const string& enclave_type, int size_p
   }
 
   // decrypt encrypted data
-  if (!authenticated_decrypt(authenticated_encryption_algorithm.c_str(), (byte*)pb.encrypted_data().data(),
+  if (!authenticated_decrypt(key->key_type().c_str(), (byte*)pb.encrypted_data().data(),
           pb.encrypted_data().size(), key_buf, unencrypted_data, size_of_unencrypted_data)) {
     printf("Unprotect_Blob: authenticated decrypt failed\n");
     return false;
   }
   return true;
+}
+
+bool certifier::framework::Reprotect_Blob(const string& enclave_type, key_message* key,
+      int size_protected_blob, byte* protected_blob,
+      int* size_new_encrypted_blob, byte* data) {
+  return false;
 }
 
 // -------------------------------------------------------------------

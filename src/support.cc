@@ -35,9 +35,6 @@ using std::string;
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-string authenticated_encryption_algorithm("aes-256-cbc-hmac-sha256");
-
-
 // -----------------------------------------------------------------------
 
 class name_size {
