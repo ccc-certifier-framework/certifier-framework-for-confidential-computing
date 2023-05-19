@@ -407,20 +407,7 @@ function emded_policy_in_example_app() {
 # caller cannot pass-in the sample-app-name. So, fall back to using
 # a global variable.
 function compile_app() {
-    case "${SampleAppName}" in
-        "simple_app")
-            compile_simple_app
-            ;;
-
-        "simple_app_under_oe")
-            compile_simple_app_under_oe ""
-            ;;
-
-        *)
-            echo "${Me}: Unknown sample app name '${app_name}'."
-            return
-            ;;
-    esac
+    compile_"${SampleAppName}"
 }
 
 # ###########################################################################
@@ -458,20 +445,7 @@ function compile_simple_app_under_oe() {
 # ###########################################################################
 function get_measurement_of_trusted_app() {
     run_cmd
-    case "${SampleAppName}" in
-        "simple_app")
-            get_measurement_of_trusted_simple_app
-            ;;
-
-        "simple_app_under_oe")
-            get_measurement_of_trusted_simple_app_under_oe
-            ;;
-
-        *)
-            echo "${Me}: Unknown sample app name '${app_name}'."
-            return
-            ;;
-    esac
+    get_measurement_of_trusted_"${SampleAppName}"
 }
 
 # ###########################################################################
@@ -566,20 +540,7 @@ function manual_policy_generation_for_OE() {
 # Construct policy key says platformKey is-trused-for-attestation
 # ###########################################################################
 function construct_policyKey_platform_is_trusted() {
-    case "${SampleAppName}" in
-        "simple_app")
-            construct_policyKey_platform_is_trusted_simple_app
-            ;;
-
-        "simple_app_under_oe")
-            construct_policyKey_platform_is_trusted_simple_app_under_oe
-            ;;
-
-        *)
-            echo "${Me}: Unknown sample app name '${app_name}'."
-            return
-            ;;
-    esac
+    construct_policyKey_platform_is_trusted_"${SampleAppName}"
 }
 
 # ###########################################################################
@@ -912,20 +873,7 @@ function start_certifier_service() {
 # Run the app as server and get admission certificates from Certifier Service
 # ###########################################################################
 function run_app_as_server_talk_to_Cert_Service() {
-    case "${SampleAppName}" in
-        "simple_app")
-            run_simple_app_as_server_talk_to_Cert_Service
-            ;;
-
-        "simple_app_under_oe")
-            run_simple_app_under_oe_as_server_talk_to_Cert_Service
-            ;;
-
-        *)
-            echo "${Me}: Unknown sample app name '${app_name}'."
-            return
-            ;;
-    esac
+    run_"${SampleAppName}"_as_server_talk_to_Cert_Service
 }
 
 # ###########################################################################
@@ -979,20 +927,7 @@ function run_simple_app_under_oe_as_server_talk_to_Cert_Service() {
 # one for the app as a server):
 # ###########################################################################
 function run_app_as_client_talk_to_Cert_Service() {
-    case "${SampleAppName}" in
-        "simple_app")
-            run_simple_app_as_client_talk_to_Cert_Service
-            ;;
-
-        "simple_app_under_oe")
-            run_simple_app_under_oe_as_client_talk_to_Cert_Service
-            ;;
-
-        *)
-            echo "${Me}: Unknown sample app name '${app_name}'."
-            return
-            ;;
-    esac
+    run_"${SampleAppName}"_as_client_talk_to_Cert_Service
 }
 
 # ###########################################################################
@@ -1045,20 +980,7 @@ function run_simple_app_under_oe_as_client_talk_to_Cert_Service() {
 #  - run_app_as_client_make_trusted_request()
 # ###########################################################################
 function run_app_as_server_offers_trusted_service() {
-    case "${SampleAppName}" in
-        "simple_app")
-            run_simple_app_as_server_offers_trusted_service
-            ;;
-
-        "simple_app_under_oe")
-            run_simple_app_under_oe_as_server_offers_trusted_service
-            ;;
-
-        *)
-            echo "${Me}: Unknown sample app name '${app_name}'."
-            return
-            ;;
-    esac
+    run_"${SampleAppName}"_as_server_offers_trusted_service
 }
 
 # ###########################################################################
@@ -1107,20 +1029,7 @@ function run_simple_app_under_oe_as_server_offers_trusted_service() {
 # Run the app-as-a-trusted client sending request to trusted server:
 # ###########################################################################
 function run_app_as_client_make_trusted_request() {
-    case "${SampleAppName}" in
-        "simple_app")
-            run_simple_app_as_client_make_trusted_request
-            ;;
-
-        "simple_app_under_oe")
-            run_simple_app_under_oe_as_client_make_trusted_request
-            ;;
-
-        *)
-            echo "${Me}: Unknown sample app name '${app_name}'."
-            return
-            ;;
-    esac
+    run_"${SampleAppName}"_as_client_make_trusted_request
 }
 
 # ###########################################################################
@@ -1219,20 +1128,7 @@ function run_steps() {
 # ###########################################################################
 function setup() {
     local app_name="$1"
-    case "${app_name}" in
-        "simple_app")
-            setup_simple_app
-            ;;
-
-        "simple_app_under_oe")
-            setup_simple_app_for_oe ""
-            ;;
-
-        *)
-            echo "${Me}: Unknown sample app name '${app_name}'."
-            return
-            ;;
-    esac
+    setup_"${app_name}" ""
 }
 
 # ###########################################################################
@@ -1254,11 +1150,11 @@ function setup_simple_app() {
 # Optionally, user can hand-edit policy.json file and stick-in the
 # generated measurement. This is also automated under 'generate_policy' step.
 # So, user can invoke this script as:
-#   $ run_example.sh simple_app_under_oe setup setup_with_auto_policy_generation_for_OE
+#   $ run_example.sh simple_app_under_oe setup_with_auto_policy_generation_for_OE
 #
 # If the 2nd arg is provided, manually execute that sub-step's function.
 # ###########################################################################
-function setup_simple_app_for_oe() {
+function setup_simple_app_under_oe() {
     local setup_arg="$1"
     run_steps "show_env" "get_measurement_of_trusted_app"
     if [ "${setup_arg}" = "" ]; then
@@ -1273,7 +1169,7 @@ function setup_simple_app_for_oe() {
 # Run setup for OE-app, but manage policy by editing JSON file.
 # ###########################################################################
 function setup_with_auto_policy_generation_for_OE() {
-    setup_simple_app_for_oe "automated_policy_generation_for_OE"
+    setup_simple_app_under_oe "automated_policy_generation_for_OE"
 }
 
 # ###########################################################################
