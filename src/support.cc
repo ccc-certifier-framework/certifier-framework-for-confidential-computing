@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <inttypes.h>
 #include <openssl/ssl.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
@@ -387,7 +388,7 @@ void certifier::utilities::print_property(const property& prop) {
     } else if (prop.comparator() == ">=") {
       printf(" >= ");
     }
-    printf("%lu", prop.int_value());
+    printf("%" PRIu64, prop.int_value());
   } else if (prop.value_type() == "string") {
     printf("%s", prop.string_value().c_str());
   } else {
@@ -2109,7 +2110,7 @@ void print_property_descriptor(const property& p) {
   if (p.value_type() == "int") {
     if (p.comparator() != "")
       printf(" %s", p.comparator().c_str());
-    printf(" %lu", p.int_value());
+    printf(" %" PRIu64, p.int_value());
   } else if (p.value_type() == "string") {
     printf(" %s", p.string_value().c_str());
   } else {
