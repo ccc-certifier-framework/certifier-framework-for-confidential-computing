@@ -1,5 +1,7 @@
 #include <gflags/gflags.h>
 
+#include <certifier_framework.h>
+#include <certifier_utilities.h>
 #include <support.h>
 #include <gflags/gflags.h>
 #include <sys/socket.h>
@@ -10,6 +12,9 @@
 DEFINE_string(server_app_host, "localhost", "address for application requests");
 DEFINE_int32(server_app_port, 8127, "port for application requests");
 DEFINE_string(executable, "hello_world.exe", "executable to run");
+
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 int main(int an, char**av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
