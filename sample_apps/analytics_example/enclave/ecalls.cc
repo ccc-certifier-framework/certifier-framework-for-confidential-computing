@@ -26,6 +26,9 @@
 
 #include "analytics_app.cc"
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
 #define FLAGS_print_all true
 static string measurement_file("/tmp/binary_trusted_measurements_file.bin");
 #define FLAGS_trusted_measurements_file measurement_file

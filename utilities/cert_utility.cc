@@ -15,6 +15,8 @@
 #include <gflags/gflags.h>
 #include "support.h"
 
+using namespace certifier::utilities;
+
 DEFINE_bool(print_all, false,  "verbose");
 // "generate-policy-key-and-test-keys" is the other option
 DEFINE_string(operation, "",  "generate policy key and self-signed cert");

@@ -36,6 +36,8 @@
 #include <openssl/err.h>
 #include <certifier_framework.h>
 
+using namespace certifier::framework;
+
 #ifdef ATT_DEBUG
 #define ATT_LOG(priority, format, ...)  printf(format"\n", ##__VA_ARGS__)
 #else

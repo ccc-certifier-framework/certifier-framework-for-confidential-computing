@@ -30,6 +30,9 @@
 #include "certifier_framework.h"
 #include "certifier_utilities.h"
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
 // operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(operation, "", "operation");
