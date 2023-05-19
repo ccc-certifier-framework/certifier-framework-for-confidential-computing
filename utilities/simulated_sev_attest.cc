@@ -17,6 +17,7 @@
 #include "attestation.h"
 #include <gflags/gflags.h>
 
+using namespace certifier::utilities;
 
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(key_file, "../certifier_service/certlib/test_data/ec-secp384r1-priv-key.pem",  "private key file name");

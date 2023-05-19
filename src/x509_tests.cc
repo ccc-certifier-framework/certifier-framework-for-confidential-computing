@@ -3,6 +3,9 @@
 #include "simulated_enclave.h"
 #include "application_enclave.h"
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");

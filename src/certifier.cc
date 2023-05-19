@@ -19,13 +19,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 // Policy store
 // -------------------------------------------------------------------
 
 extern string authenticated_encryption_algorithm;
 
-void print_store(policy_store& ps) {
+void certifier::framework::print_store(policy_store& ps) {
   printf("num_ts: %d\n", ps.num_ts_);
   printf("num_tsc: %d\n", ps.num_tsc_);
   printf("num_si: %d\n", ps.num_si_);
@@ -33,7 +35,7 @@ void print_store(policy_store& ps) {
   printf("num_tkm: %d\n", ps.num_tkm_);
 }
 
-policy_store::policy_store() {
+certifier::framework::policy_store::policy_store() {
   policy_key_valid_ = false;
 
   max_num_ts_ = MAX_NUM_ENTRIES;
@@ -59,7 +61,7 @@ policy_store::policy_store() {
   num_blobs_ = 0;
 }
 
-policy_store::policy_store(int max_trusted_services, int max_trusted_signed_claims,
+certifier::framework::policy_store::policy_store(int max_trusted_services, int max_trusted_signed_claims,
       int max_storage_infos, int max_claims, int max_keys, int max_blobs) {
   policy_key_valid_ = false;
 
@@ -85,38 +87,38 @@ policy_store::policy_store(int max_trusted_services, int max_trusted_signed_clai
   num_blobs_ = 0;
 }
 
-policy_store::~policy_store() {
+certifier::framework::policy_store::~policy_store() {
   // Todo: clean up sensitive values
   //    not necessary on most platfroms
 }
 
-void policy_store::clear_policy_store() {
+void certifier::framework::policy_store::clear_policy_store() {
   // Todo: not necessary on most platfroms
 }
 
-bool policy_store::replace_policy_key(key_message& k) {
+bool certifier::framework::policy_store::replace_policy_key(key_message& k) {
   policy_key_valid_ = true;
   policy_key_.CopyFrom((const key_message)k);
   return true;
 }
 
-const key_message* policy_store::get_policy_key() {
+const key_message* certifier::framework::policy_store::get_policy_key() {
   if (!policy_key_valid_)
     return nullptr;
   return &policy_key_;
 }
 
-int policy_store::get_num_trusted_services() {
+int certifier::framework::policy_store::get_num_trusted_services() {
   return num_ts_;
 }
 
-const trusted_service_message* policy_store::get_trusted_service_info_by_index(int n) {
+const trusted_service_message* certifier::framework::policy_store::get_trusted_service_info_by_index(int n) {
   if (n >= num_ts_)
     return nullptr;
   return ts_[n];
 }
 
-bool policy_store::add_trusted_service(trusted_service_message& to_add) {
+bool certifier::framework::policy_store::add_trusted_service(trusted_service_message& to_add) {
   if ((num_ts_+1) >= max_num_ts_)
     return true;
   trusted_service_message* t = new(trusted_service_message);
@@ -126,7 +128,7 @@ bool policy_store::add_trusted_service(trusted_service_message& to_add) {
   return true;
 }
 
-int policy_store::get_trusted_service_index_by_tag(const string tag) {
+int certifier::framework::policy_store::get_trusted_service_index_by_tag(const string tag) {
   for (int i = 0; i < num_ts_; i++) {
     if (ts_[i]->tag() == tag)
       return i;
@@ -134,7 +136,7 @@ int policy_store::get_trusted_service_index_by_tag(const string tag) {
   return -1;
 }
 
-void policy_store::delete_trusted_service_by_index(int n) {
+void certifier::framework::policy_store::delete_trusted_service_by_index(int n) {
   if (n >= num_ts_)
     return;
   const trusted_service_message* deleted = get_trusted_service_info_by_index(n);
@@ -145,17 +147,17 @@ void policy_store::delete_trusted_service_by_index(int n) {
   delete deleted;
 }
 
-int policy_store::get_num_storage_info() {
+int certifier::framework::policy_store::get_num_storage_info() {
   return num_si_;
 }
 
-const storage_info_message* policy_store::get_storage_info_by_index(int n) {
+const storage_info_message* certifier::framework::policy_store::get_storage_info_by_index(int n) {
   if (n >= num_si_)
     return nullptr;
   return si_[n];
 }
 
-bool policy_store::add_storage_info(storage_info_message& to_add) {
+bool certifier::framework::policy_store::add_storage_info(storage_info_message& to_add) {
   if ((num_si_ + 1) >= max_num_si_)
     return false;
   storage_info_message* t = new(storage_info_message);
@@ -165,7 +167,7 @@ bool policy_store::add_storage_info(storage_info_message& to_add) {
   return true;
 }
 
-void policy_store::delete_storage_info_by_index(int n) {
+void certifier::framework::policy_store::delete_storage_info_by_index(int n) {
   if (n >= num_si_)
     return;
   const storage_info_message* deleted = get_storage_info_by_index(n);
@@ -176,7 +178,7 @@ void policy_store::delete_storage_info_by_index(int n) {
   delete deleted;
 }
 
-int policy_store::get_storage_info_index_by_tag(const string& tag) {
+int certifier::framework::policy_store::get_storage_info_index_by_tag(const string& tag) {
   for (int i = 0; i < num_si_; i++) {
     if (si_[i]->tag() == tag)
       return i;
@@ -184,17 +186,17 @@ int policy_store::get_storage_info_index_by_tag(const string& tag) {
   return -1;
 }
 
-int policy_store::get_num_claims() {
+int certifier::framework::policy_store::get_num_claims() {
   return num_tc_;
 }
 
-const claim_message* policy_store::get_claim_by_index(int n) {
+const claim_message* certifier::framework::policy_store::get_claim_by_index(int n) {
   if (n >= num_tc_)
     return nullptr;
   return &(tc_[n]->claim());
 }
 
-bool policy_store::add_claim(const string& tag, const claim_message& to_add) {
+bool certifier::framework::policy_store::add_claim(const string& tag, const claim_message& to_add) {
   if ((num_tc_ + 1) >= max_num_tc_)
     return false;
   tagged_claim* t = new(tagged_claim);
@@ -205,7 +207,7 @@ bool policy_store::add_claim(const string& tag, const claim_message& to_add) {
   return true;
 }
 
-void policy_store::delete_claim_by_index(int n) {
+void certifier::framework::policy_store::delete_claim_by_index(int n) {
   if (n >= num_tc_)
     return;
   const tagged_claim* deleted = tc_[n];
@@ -216,7 +218,7 @@ void policy_store::delete_claim_by_index(int n) {
   delete deleted;
 }
 
-int policy_store::get_claim_index_by_tag(const string& tag) { // to do
+int certifier::framework::policy_store::get_claim_index_by_tag(const string& tag) { // to do
   for (int i = 0; i < num_tc_; i++) {
     if (tc_[i]->tag() == tag)
       return i;
@@ -224,7 +226,7 @@ int policy_store::get_claim_index_by_tag(const string& tag) { // to do
   return -1;
 }
 
-bool policy_store::add_authentication_key(const string& tag, const key_message& k) {
+bool certifier::framework::policy_store::add_authentication_key(const string& tag, const key_message& k) {
   if ((num_tkm_ + 1) >= max_num_tkm_)
     return false;
   channel_key_message* t = new(channel_key_message);
@@ -235,7 +237,7 @@ bool policy_store::add_authentication_key(const string& tag, const key_message& 
   return true;
 }
 
-const key_message* policy_store::get_authentication_key_by_tag(const string& tag) {
+const key_message* certifier::framework::policy_store::get_authentication_key_by_tag(const string& tag) {
   for (int i = 0; i < num_tkm_; i++) {
     if (tkm_[i]->tag() == tag)
       return &(tkm_[i]->auth_key());
@@ -243,13 +245,13 @@ const key_message* policy_store::get_authentication_key_by_tag(const string& tag
   return nullptr;
 }
 
-const key_message* policy_store::get_authentication_key_by_index(int i) {
+const key_message* certifier::framework::policy_store::get_authentication_key_by_index(int i) {
   if (i >= num_tkm_)
     return nullptr;
   return &(tkm_[i]->auth_key());
 }
 
-int policy_store::get_authentication_key_index_by_tag(const string& tag) {
+int certifier::framework::policy_store::get_authentication_key_index_by_tag(const string& tag) {
   for (int i = 0; i < num_tkm_; i++) {
     if (tkm_[i]->tag() == tag)
       return i;
@@ -257,7 +259,7 @@ int policy_store::get_authentication_key_index_by_tag(const string& tag) {
   return -1;
 }
 
-void policy_store::delete_authentication_key_by_index(int n) {
+void certifier::framework::policy_store::delete_authentication_key_by_index(int n) {
   if (n >= num_tkm_)
     return;
   const key_message* deleted = get_authentication_key_by_index(n);
@@ -268,7 +270,7 @@ void policy_store::delete_authentication_key_by_index(int n) {
   delete deleted;
 }
 
-bool policy_store::Serialize(string* out) {
+bool certifier::framework::policy_store::Serialize(string* out) {
   policy_store_message psm;
 
   // Copy data to psm
@@ -309,7 +311,7 @@ bool policy_store::Serialize(string* out) {
   return true;
 }
 
-bool policy_store::Deserialize(string& in) {
+bool certifier::framework::policy_store::Deserialize(string& in) {
   policy_store_message psm;
 
   if (!psm.ParseFromString(in))
@@ -366,13 +368,13 @@ bool policy_store::Deserialize(string& in) {
   return true;
 }
 
-const signed_claim_message* policy_store::get_signed_claim_by_index(int n) {
+const signed_claim_message* certifier::framework::policy_store::get_signed_claim_by_index(int n) {
   if (n >= num_tsc_)
     return nullptr;
   return &(tsc_[n]->sc());
 }
 
-bool policy_store::add_signed_claim(const string& tag, const signed_claim_message& to_add) {
+bool certifier::framework::policy_store::add_signed_claim(const string& tag, const signed_claim_message& to_add) {
   if ((num_tsc_ + 1) >= max_num_tsc_)
     return false;
   tagged_signed_claim* t = new(tagged_signed_claim);
@@ -383,7 +385,7 @@ bool policy_store::add_signed_claim(const string& tag, const signed_claim_messag
   return true;
 }
 
-int policy_store::get_signed_claim_index_by_tag(const string& tag) {
+int certifier::framework::policy_store::get_signed_claim_index_by_tag(const string& tag) {
   for (int i = 0; i < num_tsc_; i++) {
     if (tsc_[i]->tag() == tag)
       return i;
@@ -391,7 +393,7 @@ int policy_store::get_signed_claim_index_by_tag(const string& tag) {
   return -1;
 }
 
-void policy_store::delete_signed_claim_by_index(int n) {
+void certifier::framework::policy_store::delete_signed_claim_by_index(int n) {
   if (n >= num_tsc_)
     return;
   const signed_claim_message* deleted = get_signed_claim_by_index(n);
@@ -402,7 +404,7 @@ void policy_store::delete_signed_claim_by_index(int n) {
   delete deleted;
 }
 
-bool policy_store::add_blob(const string& tag, const string& s) {
+bool certifier::framework::policy_store::add_blob(const string& tag, const string& s) {
   if (num_blobs_ >= max_num_blobs_)
     return false;
   int n = get_blob_index_by_tag(tag);
@@ -415,26 +417,26 @@ bool policy_store::add_blob(const string& tag, const string& s) {
   return true;
 }
 
-const string* policy_store::get_blob_by_tag(const string& tag) {
+const string* certifier::framework::policy_store::get_blob_by_tag(const string& tag) {
   int index = get_blob_index_by_tag(tag);
   if (index < 0)
     return nullptr;
   return &tagged_blob_[index]->b();
 }
 
-const tagged_blob_message* policy_store::get_tagged_blob_info_by_index(int n) {
+const tagged_blob_message* certifier::framework::policy_store::get_tagged_blob_info_by_index(int n) {
   if (n >= num_blobs_)
     return nullptr;
   return tagged_blob_[n];
 }
 
-const string* policy_store::get_blob_by_index(int index) {
+const string* certifier::framework::policy_store::get_blob_by_index(int index) {
   if (index >= num_blobs_)
     return nullptr;
   return &(tagged_blob_[index]->b());
 }
 
-int policy_store::get_blob_index_by_tag(const string& tag) {
+int certifier::framework::policy_store::get_blob_index_by_tag(const string& tag) {
   for (int i = 0; i < num_blobs_; i++) {
     if (tag == tagged_blob_[i]->tag())
       return i;
@@ -442,7 +444,7 @@ int policy_store::get_blob_index_by_tag(const string& tag) {
   return -1;
 }
 
-void policy_store::delete_blob_by_index(int index) {
+void certifier::framework::policy_store::delete_blob_by_index(int index) {
   if (index >= num_blobs_)
     return;
   const tagged_blob_message* deleted = get_tagged_blob_info_by_index(index);
@@ -454,7 +456,7 @@ void policy_store::delete_blob_by_index(int index) {
 
 }
 
-int policy_store::get_num_blobs() {
+int certifier::framework::policy_store::get_num_blobs() {
   return num_blobs_;
 }
 
@@ -597,7 +599,7 @@ extern bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
 
 // Buffer overflow check: Seal returns true and the buffer size in size_out.
 // Check on Gramine.
-bool Seal(const string& enclave_type, const string& enclave_id,
+bool certifier::framework::Seal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
   if (enclave_type == "simulated-enclave") {
@@ -632,7 +634,7 @@ bool Seal(const string& enclave_type, const string& enclave_id,
 
 // Buffer overflow check: Done for SEV, OE, simulated enclave and application service.
 // If out is NULL, Unseal returns true and the buffer size in size_out.  Check Gramine.
-bool Unseal(const string& enclave_type, const string& enclave_id,
+bool certifier::framework::Unseal(const string& enclave_type, const string& enclave_id,
  int in_size, byte* in, int* size_out, byte* out) {
 
   if (enclave_type == "simulated-enclave") {
@@ -666,7 +668,7 @@ bool Unseal(const string& enclave_type, const string& enclave_id,
 }
 
 //  Buffer overflow check: Attest returns true and the buffer size in size_out.  Check on Gramine.
-bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
+bool certifier::framework::Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
  int* size_out, byte* out) {
 
   if (enclave_type == "simulated-enclave") {
@@ -785,7 +787,7 @@ bool GetParentEnclaveType(string* type) {
 const int max_key_seal_pad = 1024;
 const int protect_key_size = 64;
 
-bool Protect_Blob(const string& enclave_type, key_message& key,
+bool certifier::framework::Protect_Blob(const string& enclave_type, key_message& key,
   int size_unencrypted_data, byte* unencrypted_data,
   int* size_protected_blob, byte* blob) {
 
@@ -844,7 +846,7 @@ bool Protect_Blob(const string& enclave_type, key_message& key,
   return true;
 }
 
-bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
+bool certifier::framework::Unprotect_Blob(const string& enclave_type, int size_protected_blob,
       byte* protected_blob, key_message* key, int* size_of_unencrypted_data,
       byte* unencrypted_data) {
 
@@ -908,7 +910,7 @@ bool Unprotect_Blob(const string& enclave_type, int size_protected_blob,
 
 // -------------------------------------------------------------------
 
-bool check_date_range(const string& nb, const string& na) {
+bool certifier::utilities::check_date_range(const string& nb, const string& na) {
   time_point t_now;
   time_point t_nb;
   time_point t_na;

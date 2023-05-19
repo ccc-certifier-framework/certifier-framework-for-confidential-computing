@@ -15,6 +15,8 @@
 #include <gflags/gflags.h>
 #include "support.h"
 
+using namespace certifier::utilities;
+
 DEFINE_bool(print_all, false,  "verbose");
 
 DEFINE_bool(is_root, false,  "verbose");

@@ -43,12 +43,18 @@
 #include "certifier.h"
 #include "support.h"
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
 #define SEV_GUEST_DEVICE  "/dev/sev-guest"
 
 #ifdef SEV_DUMMY_GUEST
 #define SEV_ECDSA_PRIV_KEY  "ec-secp384r1-priv-key.pem"
 #define SEV_ECDSA_PUB_KEY  "ec-secp384r1-pub-key.pem"
 #endif
+
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 static void reverse_bytes(uint8_t *buffer, size_t size) {
   if (!buffer || size == 0)
