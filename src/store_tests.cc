@@ -66,8 +66,10 @@ bool test_protect(bool print_all) {
   }
 
   if (!Protect_Blob(enclave_type, key_start, (int)strlen(secret_data), (byte*)secret_data,
-          &serialized_blob_size, serialized_blob))
+          &serialized_blob_size, serialized_blob)) {
+    printf("Can't protect\n");
     return false;
+  }
 
   string protected_blob_string;
   protected_blob_string.assign((char*)serialized_blob, serialized_blob_size);
@@ -84,8 +86,10 @@ bool test_protect(bool print_all) {
 
   // unprotect it
   if (!Unprotect_Blob(enclave_type, serialized_blob_size, serialized_blob,
-             &key_end, &size_unencrypted_data, unencrypted_data))
+             &key_end, &size_unencrypted_data, unencrypted_data)) {
+    printf("Unprotect(1) failed\n");
     return false;
+  }
 
   if (print_all) {
     printf("recovered key\n");
@@ -97,6 +101,37 @@ bool test_protect(bool print_all) {
   if (!same_key(key_start, key_end))
     return false;
   if (memcmp(unencrypted_data, (byte*)secret_data, strlen(secret_data)) != 0)
+    return false;
+
+  key_message new_key;
+  int size_reprotected_data = serialized_blob_size + 5;
+  byte reprotected_data[size_reprotected_data];
+  memset(reprotected_data, 0, size_reprotected_data);
+  if (!Reprotect_Blob(enclave_type, &new_key, serialized_blob_size, serialized_blob,
+          &size_reprotected_data, reprotected_data)) {
+    printf("Reprotect failed\n");
+    return false;
+  }
+
+  // unprotect it
+  key_message newer_key;
+  int size_unencrypted_data2 = 512;
+  byte unencrypted_data2[size_unencrypted_data2];
+  memset(unencrypted_data2, 0, size_unencrypted_data2);
+  if (!Unprotect_Blob(enclave_type, size_reprotected_data, reprotected_data,
+             &newer_key, &size_unencrypted_data2, unencrypted_data2)) {
+    printf("Unprotect(2) failed\n");
+    return false;
+  }
+
+  if (print_all) {
+    printf("recovered key\n");
+    print_key(newer_key);
+    printf("recovered data(%d): ", size_unencrypted_data2);
+    print_bytes(size_unencrypted_data2, unencrypted_data2);
+    printf("\n");
+  }
+  if (memcmp(unencrypted_data2, (byte*)secret_data, strlen(secret_data)) != 0)
     return false;
 
   return true;

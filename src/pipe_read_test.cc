@@ -27,7 +27,7 @@ int main(int an, char** av) {
   int fd[2];
   if (pipe2(fd, O_DIRECT) < 0) {
     printf("Pipe failed\n");
-    return false;
+    return 0;
   }
 
   const int buf_size = 100;

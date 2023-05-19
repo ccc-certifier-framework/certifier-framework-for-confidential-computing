@@ -55,6 +55,11 @@ namespace certifier {
     bool get_random(int num_bits, byte* out);
 
     // Serialized time: YYYY-MM-DDTHH:mm:ss. sssZ
+    bool time_t_to_tm_time(time_t* t, struct tm *tm_time);
+    bool tm_time_to_time_point(struct tm* tm_time, time_point* tp);
+    bool asn1_time_to_tm_time(const ASN1_TIME* s, struct tm *tm_time);
+    bool get_not_before_from_cert(X509* c, time_point* tp);
+    bool get_not_after_from_cert(X509* c, time_point* tp);
     bool time_now(time_point* t);
     bool time_to_string(time_point& t, string* s);
     bool string_to_time(const string& s, time_point* t);

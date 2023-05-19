@@ -63,9 +63,7 @@ key_message symmertic_key_for_protect;
 
 // Standard algorithms for the enclave
 string public_key_alg("rsa-2048");
-string symmetric_key_alg("aes-256");
-string hash_alg("sha-256");
-string hmac_alg("sha-256-hmac");
+string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
 void print_trust_data() {
   if (!trust_data_initialized)
@@ -192,8 +190,7 @@ void clear_sensitive_data() {
 }
 
 bool cold_init() {
-  return app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
-                                   hash_alg, hmac_alg);
+  return app_trust_data->cold_init(public_key_alg, symmetric_key_alg);
 }
 
 bool warm_restart() {
