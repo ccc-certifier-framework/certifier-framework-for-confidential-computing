@@ -915,7 +915,38 @@ bool certifier::framework::Unprotect_Blob(const string& enclave_type, int size_p
 bool certifier::framework::Reprotect_Blob(const string& enclave_type, key_message* key,
       int size_protected_blob, byte* protected_blob,
       int* size_new_encrypted_blob, byte* data) {
-  return false;
+
+  key_message new_key;
+  int size_unencrypted_data = size_protected_blob;
+  byte unencrypted_data[size_unencrypted_data];
+
+  if (!Unprotect_Blob(enclave_type, size_protected_blob, protected_blob,
+          &new_key, &size_unencrypted_data, unencrypted_data)) {
+    printf("Reprotect_Blob: Can't unprotect\n");
+    return false;
+  }
+
+  // Generate new key
+  int size_byte_key = cipher_key_byte_size(new_key.key_type().c_str());
+  if (size_byte_key <= 0) {
+    printf("Reprotect_Blob: Can't get key size\n");
+    return false;
+  }
+  if (new_key.secret_key_bits().size() < size_byte_key) {
+    printf("Reprotect_Blob: key buffer too small\n");
+    return false;
+  }
+  if (!get_random(8 * size_byte_key, (byte*)new_key.secret_key_bits().data())) {
+    printf("Reprotect_Blob: Can't generate key\n");
+    return false;
+  }
+
+  if (!Protect_Blob(enclave_type, new_key, size_unencrypted_data, unencrypted_data,
+        size_new_encrypted_blob, data)) {
+    printf("Reprotect_Blob: Can't Protect\n");
+    return false;
+  }
+  return true;
 }
 
 // -------------------------------------------------------------------
