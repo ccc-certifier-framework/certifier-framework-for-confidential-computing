@@ -774,8 +774,100 @@ bool certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim(signed_clai
   return false;
 }
 
-bool certifier::framework::cc_trust_data::reinit() {
-  return false;
+bool certifier::framework::cc_trust_data::recertify_me(const string& host_name, int port, bool generate_new_key) {
+
+  if (generate_new_key) {
+
+    if (purpose_ == "authentication") {
+
+    // make app auth private and public key
+      if (public_key_algorithm_ == "rsa-2048") {
+        if (!make_certifier_rsa_key(2048,  &private_auth_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else if (public_key_algorithm_ == "rsa-4096") {
+        if (!make_certifier_rsa_key(4096,  &private_auth_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else if (public_key_algorithm_ == "ecc-384") {
+        if (!make_certifier_ecc_key(384,  &private_auth_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else {
+          printf("recertify_me: Unsupported public key algorithm\n");
+          return false;
+      }
+
+      private_auth_key_.set_key_name("auth-key");
+      if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
+        printf("recertify_me: Can't make public Auth key\n");
+        return false;
+      }
+
+      cc_auth_key_initialized_ = true;
+
+    } else if (purpose_ == "attestation") {
+
+      // make app service private and public key
+      if (public_key_algorithm_ == "rsa-2048") {
+        if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else if (public_key_algorithm_ == "rsa-4096") {
+        if (!make_certifier_rsa_key(4096,  &private_service_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else if (public_key_algorithm_ == "ecc-384") {
+        if (!make_certifier_ecc_key(384,  &private_service_key_)) {
+          printf("recertify_me: Can't generate App private key\n");
+          return false;
+        }
+      } else {
+          printf("recertify_me: Unsupported public key algorithm\n");
+          return false;
+      }
+
+      private_service_key_.set_key_name("service-attest-key");
+      if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
+        printf("recertify_me: Can't make public service key\n");
+        return false;
+      }
+
+      string service_tag("service-attest-key");
+      if (!store_.add_authentication_key(service_tag, private_service_key_)) {
+        printf("recertify_me: Can't store auth key\n");
+        return false;
+      }
+
+      cc_service_key_initialized_= true;
+
+    } else {
+      printf("recertify_me: invalid recertify_me purpose\n");
+      return false;
+    }
+  }
+
+  if (!certify_me(host_name, port)) {
+      printf("recertify_me: certify_me failed\n");
+      return false;
+  }
+
+  if (!put_trust_data_in_store()) {
+    printf("recertify_me: Can't put trust data in store\n");
+    return false;
+  }
+
+  if (!save_store()) {
+    printf("recertify_me: Can't save store\n");
+    return false;
+  }
+  cc_policy_store_initialized_ = true;
+  return true;
 }
 
 bool certifier::framework::cc_trust_data::certify_me(const string& host_name, int port) {
@@ -966,7 +1058,7 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
   // Serialize request
   string serialized_request;
   if (!request.SerializeToString(&serialized_request)) {
-    printf("certifier::framework::cc_trust_data::certify_me: error 8\n");
+    printf("certifier::framework::cc_trust_data::certify_me: Can't serialize request\n");
     return false;
   }
 

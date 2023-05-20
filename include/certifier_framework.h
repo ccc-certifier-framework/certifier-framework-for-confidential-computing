@@ -219,11 +219,10 @@ namespace certifier {
       bool save_store();
       bool fetch_store();
       void clear_sensitive_data();
-      // This changes
       bool cold_init(const string& public_key_alg, const string& symmetric_key_alg);
-      bool reinit();
       bool warm_restart();
       bool certify_me(const string& host_name, int port);
+      bool recertify_me(const string& host_name, int port, bool generate_new_key);
       bool GetPlatformSaysAttestClaim(signed_claim_message* scm);
       void print_trust_data();
 
