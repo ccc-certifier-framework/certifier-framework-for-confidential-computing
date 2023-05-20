@@ -88,47 +88,47 @@ function is_valid_app() {
 # Print help / usage
 # ##################################################################
 function usage_brief() {
-   echo "Usage: $Me [-h | --help | --list | --dry-run] <sample-app-name> [ setup | run_test ]"
-   list_apps
+    echo "Usage: $Me [-h | --help | --list | --dry-run] <sample-app-name> [ setup | run_test ]"
+    list_apps
 }
 
 # ---- Generic help/usage output
 function usage() {
 
-   echo "You can use this script to ${MeMsg}
+    echo "You can use this script to ${MeMsg}
 
    - Setup and execute the example program.
    - List the individual steps needed to setup the example program.
    - Run individual steps in sequence.
 "
-   usage_brief
-   echo " "
-   echo "  To setup and run the ${SampleAppName} program, end-to-end : ./${Me} ${SampleAppName} "
-   echo "  To setup the ${SampleAppName} program                     : ./${Me} ${SampleAppName} setup"
-   echo "  To run and test the ${SampleAppName} program              : ./${Me} ${SampleAppName} run_test"
-   echo "  To list the individual steps for ${SampleAppName}         : ./${Me} ${SampleAppName} --list"
-   echo "  To run an individual step of the ${SampleAppName}         : ./${Me} ${SampleAppName} <step name>"
-   echo " "
-   # Indentation to align with previous output lines.
-   echo "  Cleanup stale artificats from build area            : ./${Me} rm_non_git_files"
-   echo "  Show the environment used to build-and-run a program: ./${Me} ${SampleAppName} show_env"
+    usage_brief
+    echo " "
+    echo "  To setup and run the ${SampleAppName} program, end-to-end : ./${Me} ${SampleAppName} "
+    echo "  To setup the ${SampleAppName} program                     : ./${Me} ${SampleAppName} setup"
+    echo "  To run and test the ${SampleAppName} program              : ./${Me} ${SampleAppName} run_test"
+    echo "  To list the individual steps for ${SampleAppName}         : ./${Me} ${SampleAppName} --list"
+    echo "  To run an individual step of the ${SampleAppName}         : ./${Me} ${SampleAppName} <step name>"
+    echo " "
+    # Indentation to align with previous output lines.
+    echo "  Cleanup stale artificats from build area            : ./${Me} rm_non_git_files"
+    echo "  Show the environment used to build-and-run a program: ./${Me} ${SampleAppName} show_env"
 
-   local test_app="simple_app_under_oe"
-   echo " "
-   echo "Dry-run execution mode to inspect tasks performed:"
-   echo "  Setup and run the simple_app_under_oe program : ./${Me} --dry-run ${test_app}"
-   echo "  Setup simple_app_under_oe program             : ./${Me} --dry-run ${test_app} setup"
-   echo "  Run and test the simple_app_under_oe program  : ./${Me} --dry-run ${test_app} run_test"
-   echo "  Cleanup stale artificats from build area      : ./${Me} --dry-run rm_non_git_files"
+    local test_app="simple_app_under_oe"
+    echo " "
+    echo "Dry-run execution mode to inspect tasks performed:"
+    echo "  Setup and run the simple_app_under_oe program : ./${Me} --dry-run ${test_app}"
+    echo "  Setup simple_app_under_oe program             : ./${Me} --dry-run ${test_app} setup"
+    echo "  Run and test the simple_app_under_oe program  : ./${Me} --dry-run ${test_app} run_test"
+    echo "  Cleanup stale artificats from build area      : ./${Me} --dry-run rm_non_git_files"
 }
 
 # ---- Open-Enclave app-specific help/usage output
 function usage_OE() {
-   echo " "
-   echo "For simple_app_under_oe, you can alternatively use this script "
-   echo "to generate the policy by editing the measurement in the policy JSON file:"
-   echo "  To setup the example program        : ./${Me} simple_app_under_oe setup_with_auto_policy_generation_for_OE"
-   echo "  To run and test the example program : ./${Me} simple_app_under_oe run_test"
+    echo " "
+    echo "For simple_app_under_oe, you can alternatively use this script "
+    echo "to generate the policy by editing the measurement in the policy JSON file:"
+    echo "  To setup the example program        : ./${Me} simple_app_under_oe setup_with_auto_policy_generation_for_OE"
+    echo "  To run and test the example program : ./${Me} simple_app_under_oe run_test"
 }
 
 # ###########################################################################
@@ -293,15 +293,15 @@ This_fn=""
 # Wrapper to run a command w/ parameters.
 # ###########################################################################
 function run_cmd() {
-   echo " "
-   This_fn="${FUNCNAME[1]}"
-   if [ "${Prev_fn}" != "${This_fn}" ]; then
-       echo "******************************************************************************"
-       echo "${Me}: Running ${FUNCNAME[1]} "
-       Prev_fn="${This_fn}"
-   fi
-   # Only execute the commands if --dry-run is OFF
-   if [ ${DryRun} -eq 0 ]; then
+    echo " "
+    This_fn="${FUNCNAME[1]}"
+    if [ "${Prev_fn}" != "${This_fn}" ]; then
+        echo "******************************************************************************"
+        echo "${Me}: Running ${FUNCNAME[1]} "
+        Prev_fn="${This_fn}"
+    fi
+    # Only execute the commands if --dry-run is OFF
+    if [ ${DryRun} -eq 0 ]; then
         set -x
 
         "$@"
@@ -362,44 +362,44 @@ function build_utilities() {
     run_cmd
     run_pushd "${CERT_PROTO}/utilities"
 
-   clean_done=0
-   for mkf in cert_utility.mak policy_utilities.mak;
-   do
-      if [ "${clean_done}" -eq 0 ]; then
-         run_cmd make -f ${mkf} clean
-         clean_done=1
-      fi
-      LOCAL_LIB=${Local_lib_path} run_cmd make -f ${mkf}
-   done
+    clean_done=0
+    for mkf in cert_utility.mak policy_utilities.mak;
+    do
+        if [ "${clean_done}" -eq 0 ]; then
+            run_cmd make -f ${mkf} clean
+            clean_done=1
+        fi
+        LOCAL_LIB=${Local_lib_path} run_cmd make -f ${mkf}
+    done
 
     run_popd
 }
 
 # ###########################################################################
 function gen_policy_and_self_signed_cert() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "$CERT_UTILS"/cert_utility.exe                       \
-               --operation=generate-policy-key-and-test-keys    \
-               --policy_key_output_file=policy_key_file.bin     \
-               --policy_cert_output_file=policy_cert_file.bin   \
-               --platform_key_output_file=platform_key_file.bin \
-               --attest_key_output_file=attest_key_file.bin
+    run_cmd "$CERT_UTILS"/cert_utility.exe                       \
+                --operation=generate-policy-key-and-test-keys    \
+                --policy_key_output_file=policy_key_file.bin     \
+                --policy_cert_output_file=policy_cert_file.bin   \
+                --platform_key_output_file=platform_key_file.bin \
+                --attest_key_output_file=attest_key_file.bin
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
 function emded_policy_in_example_app() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "$CERT_UTILS"/embed_policy_key.exe   \
-               --input=policy_cert_file.bin     \
-               --output=../policy_key.cc
+    run_cmd "$CERT_UTILS"/embed_policy_key.exe   \
+                --input=policy_cert_file.bin     \
+                --output=../policy_key.cc
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
@@ -412,32 +412,32 @@ function compile_app() {
 
 # ###########################################################################
 function compile_simple_app() {
-   run_cmd
-   run_pushd "${EXAMPLE_DIR}"
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
-   run_cmd make -f example_app.mak clean
-   run_cmd make -f example_app.mak
+    run_cmd make -f example_app.mak clean
+    run_cmd make -f example_app.mak
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
 function compile_simple_app_under_oe() {
-   run_cmd
-   run_pushd "${CERT_UTILS}"
+    run_cmd
+    run_pushd "${CERT_UTILS}"
 
-   run_cmd rm -rf certifier.pb.cc
-   cd ../include
-   run_cmd rm -rf certifier.pb.h
+    run_cmd rm -rf certifier.pb.cc
+    cd ../include
+    run_cmd rm -rf certifier.pb.h
 
-   run_popd
+    run_popd
 
-   run_pushd "${EXAMPLE_DIR}"
+    run_pushd "${EXAMPLE_DIR}"
 
-   run_cmd make
-   run_cmd make dump_mrenclave
+    run_cmd make
+    run_cmd make dump_mrenclave
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
@@ -450,21 +450,21 @@ function get_measurement_of_trusted_app() {
 
 # ###########################################################################
 function get_measurement_of_trusted_simple_app() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "$CERT_UTILS"/measurement_utility.exe    \
-               --type=hash                          \
-               --input=../example_app.exe           \
-               --output=example_app.measurement
+    run_cmd "$CERT_UTILS"/measurement_utility.exe    \
+                --type=hash                          \
+                --input=../example_app.exe           \
+                --output=example_app.measurement
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
 function get_measurement_of_trusted_simple_app_under_oe() {
-   run_cmd
-   run_pushd "${EXAMPLE_DIR}"
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
 
    # Grab mrenclave name from 'dump' output
     local mrenclave="some-hash-string-that-will-come-from-oesign-dump"
@@ -476,15 +476,15 @@ function get_measurement_of_trusted_simple_app_under_oe() {
         set +x
     fi
 
-   run_popd
+    run_popd
 
-   run_pushd "${PROV_DIR}"
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "$CERT_UTILS"/measurement_init.exe                   \
-               --mrenclave="${mrenclave}"                       \
-               --out_file=binary_trusted_measurements_file.bin
+    run_cmd "$CERT_UTILS"/measurement_init.exe                   \
+                --mrenclave="${mrenclave}"                       \
+                --out_file=binary_trusted_measurements_file.bin
 
-   run_popd
+    run_popd
 }
 
 
@@ -545,95 +545,95 @@ function construct_policyKey_platform_is_trusted() {
 
 # ###########################################################################
 function construct_policyKey_platform_is_trusted_simple_app() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
-               --key_subject=platform_key_file.bin      \
-               --verb="is-trusted-for-attestation"      \
-               --output=ts1.bin
+    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
+                --key_subject=platform_key_file.bin      \
+                --verb="is-trusted-for-attestation"      \
+                --output=ts1.bin
 
-   run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe \
-               --key_subject=policy_key_file.bin        \
-               --verb="says"                            \
-               --clause=ts1.bin                         \
-               --output=vse_policy1.bin
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe \
+                --key_subject=policy_key_file.bin        \
+                --verb="says"                            \
+                --clause=ts1.bin                         \
+                --output=vse_policy1.bin
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
 function construct_policyKey_platform_is_trusted_simple_app_under_oe() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
-               --measurement_subject=binary_trusted_measurements_file.bin \
-               --verb="is-trusted"      \
-               --output=ts1.bin
+    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe                       \
+                --measurement_subject=binary_trusted_measurements_file.bin  \
+                --verb="is-trusted"                                         \
+                --output=ts1.bin
 
-   run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe \
-               --key_subject=policy_key_file.bin        \
-               --verb="says"                            \
-               --clause=ts1.bin                         \
-               --output=vse_policy1.bin
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe \
+                --key_subject=policy_key_file.bin        \
+                --verb="says"                            \
+                --clause=ts1.bin                         \
+                --output=vse_policy1.bin
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
 function produce_signed_claims_for_vse_policy_statement() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
-               --vse_file=vse_policy1.bin                           \
-               --duration=9000                                      \
-               --private_key_file=policy_key_file.bin               \
-               --output=signed_claim_1.bin
+    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
+                --vse_file=vse_policy1.bin                           \
+                --duration=9000                                      \
+                --private_key_file=policy_key_file.bin               \
+                --output=signed_claim_1.bin
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
 # Construct policy key says measurement is-trusted
 # ###########################################################################
 function construct_policyKey_measurement_is_trusted() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "${CERT_UTILS}"/measurement_utility.exe  \
-               --type=hash                          \
-               --input=../example_app.exe           \
-               --output=example_app.measurement
+    run_cmd "${CERT_UTILS}"/measurement_utility.exe  \
+                --type=hash                          \
+                --input=../example_app.exe           \
+                --output=example_app.measurement
 
-   run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe            \
-               --key_subject=""                                 \
-               --measurement_subject=example_app.measurement    \
-               --verb="is-trusted"                              \
-               --output=ts2.bin
+    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe            \
+                --key_subject=""                                 \
+                --measurement_subject=example_app.measurement    \
+                --verb="is-trusted"                              \
+                --output=ts2.bin
 
-   run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
-               --key_subject=policy_key_file.bin            \
-               --verb="says"                                \
-               --clause=ts2.bin                             \
-               --output=vse_policy2.bin
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
+                --key_subject=policy_key_file.bin            \
+                --verb="says"                                \
+                --clause=ts2.bin                             \
+                --output=vse_policy2.bin
 
-   run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
-               --vse_file=vse_policy2.bin                           \
-               --duration=9000                                      \
-               --private_key_file=policy_key_file.bin               \
-               --output=signed_claim_2.bin
+    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
+                --vse_file=vse_policy2.bin                           \
+                --duration=9000                                      \
+                --private_key_file=policy_key_file.bin               \
+                --output=signed_claim_2.bin
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
 # Combine signed policy statements for Certifier Service use.
 # ###########################################################################
 function combine_policy_stmts() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
     signed_claims="signed_claim_1.bin"
     case "${SampleAppName}" in
@@ -641,23 +641,23 @@ function combine_policy_stmts() {
             signed_claims="${signed_claims},signed_claim_2.bin"
             ;;
     esac
-   run_cmd "${CERT_UTILS}"/package_claims.exe       \
-               --input=${signed_claims}             \
-               --output=policy.bin
+    run_cmd "${CERT_UTILS}"/package_claims.exe       \
+                --input=${signed_claims}             \
+                --output=policy.bin
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
 # Print the policy (Optional)
 # ###########################################################################
 function print_policy() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "${CERT_UTILS}"/print_packaged_claims.exe --input=policy.bin
+    run_cmd "${CERT_UTILS}"/print_packaged_claims.exe --input=policy.bin
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
@@ -666,40 +666,40 @@ function print_policy() {
 # and sign it
 # ###########################################################################
 function construct_platform_key_attestation_stmt_sign_it() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
-               --key_subject=attest_key_file.bin        \
-               --verb="is-trusted-for-attestation"      \
-               --output=tsc1.bin
+    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
+                --key_subject=attest_key_file.bin        \
+                --verb="is-trusted-for-attestation"      \
+                --output=tsc1.bin
 
-   run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
-               --key_subject=platform_key_file.bin          \
-               --verb="says"                                \
-               --clause=tsc1.bin                            \
-               --output=vse_policy3.bin
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
+                --key_subject=platform_key_file.bin          \
+                --verb="says"                                \
+                --clause=tsc1.bin                            \
+                --output=vse_policy3.bin
 
-   run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
-               --vse_file=vse_policy3.bin                           \
-               --duration=9000                                      \
-               --private_key_file=platform_key_file.bin             \
-               --output=platform_attest_endorsement.bin
+    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
+                --vse_file=vse_policy3.bin                           \
+                --duration=9000                                      \
+                --private_key_file=platform_key_file.bin             \
+                --output=platform_attest_endorsement.bin
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
 # Print signed claim (Optional)
 # ###########################################################################
 function print_signed_claim() {
-   run_cmd
-   run_pushd "${PROV_DIR}"
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
-   run_cmd "${CERT_UTILS}"/print_signed_claim.exe   \
-               --input=platform_attest_endorsement.bin
+    run_cmd "${CERT_UTILS}"/print_signed_claim.exe      \
+                --input=platform_attest_endorsement.bin
 
-   run_popd
+    run_popd
 }
 
 # ###########################################################################
@@ -741,8 +741,8 @@ function edit_policy_file_OE() {
         # replacement of this with the mrenclave grabbed above.
         set -x
         Jq=$(command -v jq)
-        ${Jq} '.measurements = [ "mrenclave" ]' "${policy_json_file}"    \
-            | sed -e "s/mrenclave/${mrenclave}/g"                         \
+        ${Jq} '.measurements = [ "mrenclave" ]' "${policy_json_file}"   \
+            | sed -e "s/mrenclave/${mrenclave}/g"                       \
             > ${policy_json_file}.tmp
         set +x
     fi
@@ -758,8 +758,8 @@ function run_policy_generator_OE() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
-    run_cmd "${CERT_PROTO}"/utilities/policy_generator.exe     \
-                --policy_input=../oe_policy.json                    \
+    run_cmd "${CERT_PROTO}"/utilities/policy_generator.exe                  \
+                --policy_input=../oe_policy.json                            \
                 --schema_input="${CERT_PROTO}"/utilities/policy_schema.json \
                 --util_path="${CERT_PROTO}"/utilities
 
@@ -1069,10 +1069,10 @@ function run_simple_app_under_oe_as_client_make_trusted_request() {
 
 # ###########################################################################
 function show_env() {
-   echo " "
-   echo "**** Environment variables, script globals: ****"
-   env | grep -E "CERT_PROTO|EXAMPLE_DIR"
-   echo "LOCAL_LIB=${Local_lib_path}"
+    echo " "
+    echo "**** Environment variables, script globals: ****"
+    env | grep -E "CERT_PROTO|EXAMPLE_DIR"
+    echo "LOCAL_LIB=${Local_lib_path}"
 
     echo " "
     uname -a
