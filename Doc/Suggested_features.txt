@@ -15,5 +15,7 @@ Suggestions for upgrade
  13. RNG --- finished
  14  GCM in authenticated encryption --- finished except for call in protect_blob
  15. GPU support
+ 16. valgrind for memory leaks
+ 17. Support RSA-3072
 
 
