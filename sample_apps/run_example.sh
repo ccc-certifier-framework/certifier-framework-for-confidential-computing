@@ -194,6 +194,7 @@ Steps_OE=( "rm_non_git_files"
            "automated_policy_generation_for_OE"
               # These sub-step fns are subsumed under automated_policy_generation_for_OE()
               "edit_policy_file_OE"
+              "build_policy_generator_OE"
               "run_policy_generator_OE"
 
            "build_simple_server"
@@ -711,6 +712,7 @@ function automated_policy_generation_for_OE() {
     run_pushd "${PROV_DIR}"
 
     edit_policy_file_OE
+    build_policy_generator_OE
     run_policy_generator_OE
 
     run_popd
@@ -750,6 +752,15 @@ function edit_policy_file_OE() {
     # Update policy.json file with json.tmp file, created above.
     run_cmd mv ${policy_json_file}.tmp ${policy_json_file}
 
+    run_popd
+}
+
+# ###########################################################################
+function build_policy_generator_OE() {
+    run_cmd
+    run_pushd "${CERT_PROTO}/utilities"
+    local mkf="policy_generator.mak"
+    LOCAL_LIB=${Local_lib_path} run_cmd make -f ${mkf}
     run_popd
 }
 
