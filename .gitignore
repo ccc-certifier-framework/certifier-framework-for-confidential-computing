@@ -21,3 +21,7 @@ enclave/enclave
 *attestation_u.h
 *attestation_u.c
 *attestation_args.h
+
+# These platform-specific files will be provided by the user.
+*/simple_app_under_sev/platform_data/*.json
+*/simple_app_under_sev/platform_data/*.der
