@@ -29,6 +29,8 @@ Found_step=0        # While looking thru Steps[] for user-specified fn-name
 DryRun=0            # --dry-run will turn this ON; off by default
 DryRun_msg=""
 
+RunSudo=0           # Only some commands for SEV-app need to run as sudo
+
 # build_utilites needs access to OpenSSL libraries, that may live on a diff
 # dir location, depending on how OpenSSL was installed on diff machines.
 # User can over-ride our default by specifying LOCAL_LIB env-var
@@ -46,6 +48,10 @@ Jq=jq    # Needed for OE app; will be established later on.
 # --------------------------------------------------------------------------------
 MbedTLS_dir="mbedtls"
 Simple_App_under_gramine_MbedTLS_dir="sample_apps/simple_app_under_gramine/${MbedTLS_dir}"
+
+# Work-instructions for SEV-app need following files pre-populated by the user.
+#
+Platform_data_files_SEV="sev_policy.json ark_cert.der ask_cert.der vcek_cert.der"
 
 # ###########################################################################
 # Set trap handlers for all errors. Needs -E (-o errtrace): Ensures that ERR
@@ -72,6 +78,7 @@ trap cleanup ERR
 SampleApps=( "simple_app"
              "simple_app_under_oe"
              "simple_app_under_gramine"
+             "simple_app_under_sev"
            )
 
 # ###########################################################################
@@ -142,6 +149,18 @@ function usage_OE() {
     echo "  To run and test the example program : ./${Me} simple_app_under_oe run_test"
 }
 
+# ---- SEV-SNP Enclave app-specific help/usage output
+function usage_SEV() {
+    echo " "
+    echo "For simple_app_under_sev, you can alternatively use this script "
+    echo "to generate the policy supplying the measurement in the policy JSON file:"
+    echo "Pre-populate simple_app_under_sev/platform_data/ with these required files:"
+    echo "  ${Platform_data_files_SEV}"
+    echo " "
+    echo "  To setup the example program        : ./${Me} simple_app_under_sev setup_with_auto_policy_generation_for_SEV"
+    echo "  To run and test the example program : ./${Me} simple_app_under_sev run_test"
+}
+
 # ###########################################################################
 # Dump the list of functions, one for each step, that user can invoke.
 # Ref: https://www.freecodecamp.org/news/bash-array-how-to-declare-an-array-of-strings-in-a-bash-script/
@@ -150,7 +169,7 @@ Steps=( "rm_non_git_files"
 
         # 'setup' argument starts from here:
         "show_env"
-        "do_cleanup"
+        # "do_cleanup"
         "build_utilities"
         "gen_policy_and_self_signed_cert"
         "embed_policy_in_example_app"
@@ -205,7 +224,7 @@ Steps_OE=( "rm_non_git_files"
            "automated_policy_generation_for_OE"
               # These sub-step fns are subsumed under automated_policy_generation_for_OE()
               "edit_policy_file_OE"
-              "build_policy_generator_OE"
+              "build_policy_generator"
               "run_policy_generator_OE"
 
            "build_simple_server"
@@ -222,6 +241,50 @@ Steps_OE=( "rm_non_git_files"
            "run_app_as_client_talk_to_Cert_Service"
            "run_app_as_server_offers_trusted_service"
            "run_app_as_client_make_trusted_request"
+)
+
+Steps_SEV=( "rm_non_git_files"
+
+            # 'setup' argument starts from here:
+            "show_env"
+            "do_cleanup"
+            "build_utilities"
+            "gen_policy_and_self_signed_cert"
+            "emded_policy_in_example_app"
+            "compile_app"
+            "get_measurement_of_trusted_app"
+
+            # --------------------------------------------------------------
+            # If user is running individual steps, they have to run
+            #  - either manual_policy_generation_for_SEV,
+            #  - or     automated_policy_generation_for_SEV
+            "manual_policy_generation_for_SEV"
+              # These sub-step fns are subsumed under author_policy()
+               "construct_policyKey_platform_is_trusted"
+               "produce_signed_claims_for_vse_policy_statement"
+               "combine_policy_stmts"
+               "print_policy"
+
+            "automated_policy_generation_for_SEV"
+              # These sub-step fns are subsumed under automated_policy_generation_for_SEV()
+               "edit_policy_file_SEV"
+               "build_policy_generator_SEV"
+               "run_policy_generator_SEV"
+
+            "build_simple_server"
+            "mk_dirs_for_test"
+            "provision_app_service_files"
+            # 'setup' argument ends here.
+
+            # Special-case interface to invoke automated_policy_generation_for_SEV()"
+            "setup_with_auto_policy_generation_for_SEV"
+
+            # 'run_test' argument starts from here:
+            "start_certifier_service"
+            "run_app_as_server_talk_to_Cert_Service"
+            "run_app_as_client_talk_to_Cert_Service"
+            "run_app_as_server_offers_trusted_service"
+            "run_app_as_client_make_trusted_request"
 )
 
 # --------------------------------------------------------------------------
@@ -241,6 +304,10 @@ function list_steps() {
 
         "simple_app_under_gramine")
             list_steps_for_app "${Steps[@]}"
+            ;;
+
+        "simple_app_under_sev")
+            list_steps_for_app "${Steps_SEV[@]}"
             ;;
 
         *)
@@ -286,6 +353,10 @@ function is_valid_step() {
             check_steps_for_app "${Steps[@]}"
             ;;
 
+        "simple_app_under_sev")
+            check_steps_for_app "${Steps_SEV[@]}"
+            ;;
+
         *)
             echo "${Me}:${LINENO} Unknown sample app name '${SampleAppName}'."
             return
@@ -311,6 +382,11 @@ This_fn=""
 
 # ###########################################################################
 # Wrapper to run a command w/ parameters.
+#
+# Ref:
+# How to find array-length for $@ passed as an array to a function
+# https://stackoverflow.com/questions/16461656/how-to-pass-array-as-an-argument-to-a-function-in-bash
+#
 # ###########################################################################
 function run_cmd() {
     echo " "
@@ -320,13 +396,24 @@ function run_cmd() {
         echo "${Me}: Running ${FUNCNAME[1]} "
         Prev_fn="${This_fn}"
     fi
+
     # Only execute the commands if --dry-run is OFF
     if [ ${DryRun} -eq 0 ]; then
-        set -x
 
-        "$@"
-
-        set +x
+        # For tracing, some functions simply invoke this run_cmd() with
+        # no arguments. Just 'sudo' will fail, so side-step this usage 'issue'.
+        local args_array=("$@")
+        local array_len=0
+        array_len=$((${#args_array[@]}))
+        if [ "${RunSudo}" -eq 1 ] && [ "${array_len}" -gt "1" ]; then
+            set -x
+            sudo "$@"
+            set +x
+        else
+            set -x
+            "$@"
+            set +x
+        fi
     else
         # Print what would have been executed, so user can learn from this.
         echo "$@"
@@ -415,7 +502,9 @@ function gen_policy_and_self_signed_cert() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
-    if [ "${SampleAppName}" = "simple_app_under_gramine" ]; then
+    if [ "${SampleAppName}" = "simple_app_under_gramine" ] \
+        || [ "${SampleAppName}" = "simple_app_under_sev" ];
+    then
        run_cmd "$CERT_UTILS"/cert_utility.exe                       \
                    --operation=generate-policy-key                  \
                    --policy_key_output_file=policy_key_file.bin     \
@@ -500,6 +589,17 @@ function compile_simple_app_under_gramine() {
 }
 
 # ###########################################################################
+function compile_simple_app_under_sev() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd make -f sev_example_app.mak clean
+    run_cmd make -f sev_example_app.mak
+
+    run_popd
+}
+
+# ###########################################################################
 # Obtain the measurement of the trusted application for the security domain.
 # The app-specific sub-functions generate the app's measurement in an output
 # file, which will be used downstream to create the policy for the app.
@@ -507,6 +607,7 @@ function compile_simple_app_under_gramine() {
 # simple_app                : example_app.measurement
 # simple_app_under_oe       : binary_trusted_measurements_file.bin
 # simple_app_under_gramine  : example_app.measurement
+# simple_app_under_sev      : example_app.measurement
 #
 # ###########################################################################
 function get_measurement_of_trusted_app() {
@@ -585,6 +686,36 @@ function get_measurement_of_trusted_simple_app_under_gramine() {
 }
 
 # ###########################################################################
+function get_measurement_of_trusted_simple_app_under_sev() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    # Grab mrenclave as Measurement entry that is registered in default
+    # policy.json file for this program. User is expected to have updated
+    # that to specify the policy for the sev-snp platform being used.
+    local policy_json_file="./sev_policy.json"
+    local mrenclave="some-hash-string-that-will-grep-from-"${policy_json_file}
+
+    if [ $DryRun -eq 0 ]; then
+        set -x
+        mrenclave=$(grep -A1 measurements ${policy_json_file}   \
+                        | tail -1 | sed 's/"//g' | tr -d ' ')
+        set +x
+    fi
+
+    run_popd
+
+    run_pushd "${PROV_DIR}"
+
+    # RESOLVE: Fix docs; step refers to measurement_utility.exe --mrenclave ... etc.
+    run_cmd "$CERT_UTILS"/measurement_init.exe  \
+            --mrenclave="${mrenclave}"          \
+            --out_file=example_app.measurement
+
+    run_popd
+}
+
+# ###########################################################################
 # Author the policy for the security domain and produce the signed claims
 # that the apps need. This is just a wrapper function to drive the execution
 # of sub-steps, each of which is implemented by a minion function.
@@ -619,11 +750,14 @@ function author_policy() {
 }
 
 # ###########################################################################
-# Step 7 in instructions.md: Manual policy generation
-# You run either this step, or Step 8, below.
+# Similar to author_policy() that is run for simple_app()
+#
 # Author the policy for the security domain and produce the signed claims
 # that the apps need. This is just a wrapper function to drive the execution
 # of sub-steps, each of which is implemented by a minion function.
+#
+# Step 7 in instructions.md: Manual policy generation
+# You run either this step, or Step 8, below.
 # ###########################################################################
 function manual_policy_generation_for_OE() {
     run_cmd
@@ -636,6 +770,15 @@ function manual_policy_generation_for_OE() {
     combine_policy_stmts
 
     print_policy
+
+    run_popd
+}
+
+# ###########################################################################
+# RESOLVE: Fill this out.
+function manual_policy_generation_for_SEV() {
+    run_cmd
+    run_pushd "${PROV_DIR}"
 
     run_popd
 }
@@ -694,6 +837,25 @@ function construct_policyKey_platform_is_trusted_simple_app_under_gramine() {
     run_cmd cp -p "$HOME"/sgx.cert.der .
     run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe   \
                 --cert-subject=sgx.cert.der             \
+                --verb="is-trusted-for-attestation"     \
+                --output=ts1.bin
+
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe    \
+                --key_subject=policy_key_file.bin           \
+                --verb="says"                               \
+                --clause=ts1.bin                            \
+                --output=vse_policy1.bin
+    run_popd
+}
+
+# ###########################################################################
+function construct_policyKey_platform_is_trusted_simple_app_under_sev() {
+    run_cmd
+    run_pushd "${PROV_DIR}"
+
+    # The docs state that this certificate should exist at a known location.
+    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe   \
+                --cert-subject=ark_cert.der             \
                 --verb="is-trusted-for-attestation"     \
                 --output=ts1.bin
 
@@ -822,7 +984,7 @@ function print_signed_claim() {
 }
 
 # ###########################################################################
-# Step 8 in instructions.md: Use Policy Generator
+# Step 8 in instructions.md: Use Automated Policy Generator
 # You run either this or step (7).
 # ###########################################################################
 function automated_policy_generation_for_OE() {
@@ -830,7 +992,7 @@ function automated_policy_generation_for_OE() {
     run_pushd "${PROV_DIR}"
 
     edit_policy_file_OE
-    build_policy_generator_OE
+    build_policy_generator
     run_policy_generator_OE
 
     run_popd
@@ -874,7 +1036,8 @@ function edit_policy_file_OE() {
 }
 
 # ###########################################################################
-function build_policy_generator_OE() {
+# Shared by OE- and SEV-app's steps
+function build_policy_generator() {
     run_cmd
     run_pushd "${CERT_PROTO}/utilities"
     local mkf="policy_generator.mak"
@@ -885,14 +1048,87 @@ function build_policy_generator_OE() {
 # ###########################################################################
 function run_policy_generator_OE() {
     run_cmd
+    run_policy_generator_for_app "../oe_policy.json"
+}
+
+# ###########################################################################
+# Shared function, receives JSON-policy file as input
+# ###########################################################################
+function run_policy_generator_for_app() {
+    local policy_input_json="$1"
+    run_cmd
     run_pushd "${PROV_DIR}"
 
     run_cmd "${CERT_PROTO}"/utilities/policy_generator.exe                  \
-                --policy_input=../oe_policy.json                            \
+                --policy_input="${policy_input_json}"                       \
                 --schema_input="${CERT_PROTO}"/utilities/policy_schema.json \
                 --util_path="${CERT_PROTO}"/utilities
 
     run_popd
+}
+
+# ###########################################################################
+# Step 8 in instructions.md: Use Automated Policy Generator
+# You run either this or step (7).
+# ###########################################################################
+function automated_policy_generation_for_SEV() {
+    run_cmd
+    check_platform_data_files_SEV
+
+    run_pushd "${PROV_DIR}"
+
+    # This does not exist, as we expect user to hand-edit and provide us a
+    # JSON-policy file
+    # edit_policy_file_SEV
+
+    # Building policy_generator.exe is same command for OE-app
+    build_policy_generator
+    run_policy_generator_SEV
+
+    run_popd
+}
+
+# ###########################################################################
+# Work-instructions, and this script, expect that the user has populated
+# few required files in the platform_data/ sub-dir for SEV-app.
+# If required files exist, distribute them to the appropriate sub-dirs
+# so downstream steps find the right files as needed.
+# ###########################################################################
+function check_platform_data_files_SEV() {
+    local fulldir=""
+    local currdir=""
+
+    run_pushd "${EXAMPLE_DIR}/platform_data"
+    pwd
+
+    fulldir=$(pwd)
+
+    # shellcheck disable=SC2046
+    currdir="$(basename $(dirname "${fulldir}"))/$(basename "${fulldir}")"
+
+    nerrors=0
+    # for file in sev_policy.json ark_cert.der ask_cert.der vcek_cert.der;
+    for file in ${Platform_data_files_SEV}
+    do
+        if [ ! -f "${file}" ] && [ "${DryRun}" = 0 ]; then
+            echo "${Me}:${LINENO}: Expected to find ${file} in ${currdir}"
+            nerrors=$((nerrors + 1))
+        fi
+    done
+    if [ "${nerrors}" -gt 0 ]; then
+        exit 1
+    fi
+
+    run_cmd cp -p sev_policy.json ../
+    run_cmd cp -p ./*.der "${PROV_DIR}"
+
+    run_popd
+}
+
+# ###########################################################################
+function run_policy_generator_SEV() {
+    run_cmd
+    run_policy_generator_for_app "../sev_policy.json"
 }
 
 # ###########################################################################
@@ -915,7 +1151,7 @@ function build_simple_server() {
     # Likely, user does not have OE SDK installed or does not want to enable OE:
     # This should produce a Go file for the certifier protobufs
     # called certifier.pb.go in certprotos.
-    make_arg="dummy"
+    local make_arg="dummy"
     if [ "${SampleAppName}" = "simple_app_under_oe" ]; then
         make_arg=""
     fi
@@ -924,6 +1160,7 @@ function build_simple_server() {
     # shellcheck disable=SC2086
     run_cmd make ${make_arg}
 
+    make_arg="dummy"
     if [ "${SampleAppName}" = "simple_app_under_gramine" ]; then
         make_arg=""
     fi
@@ -972,6 +1209,10 @@ function provision_app_service_files() {
 
     run_cmd cp -p policy_key_file.bin policy_cert_file.bin policy.bin \
                     "$EXAMPLE_DIR"/service
+
+    if [ "${SampleAppName}" = "simple_app_under_sev" ]; then
+        run_cmd cp -p ./*.der "$EXAMPLE_DIR"/service
+    fi
 
     run_popd
 }
@@ -1062,7 +1303,6 @@ function run_simple_app_under_oe_as_server_talk_to_Cert_Service() {
 # to fail. So, a pattern you will see, henceforth, is to execute this
 # utility with "|| 0", which will w/a the non-zero $rc by returning success.
 # ###########################################################################
-
 function run_simple_app_under_gramine_as_server_talk_to_Cert_Service() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
@@ -1080,6 +1320,26 @@ function run_simple_app_under_gramine_as_server_talk_to_Cert_Service() {
                 --operation=get-certifier           \
                 --policy_store_file=policy_store    \
                 --print_all=true || 0
+
+    run_popd
+}
+
+# ###########################################################################
+function run_simple_app_under_sev_as_server_talk_to_Cert_Service() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd "${EXAMPLE_DIR}"/sev_example_app.exe    \
+                --data_dir="./${Srvr_app_data}/"    \
+                --operation=cold-init               \
+                --policy_store_file=policy_store    \
+                --print_all=true
+
+    run_cmd "${EXAMPLE_DIR}"/sev_example_app.exe    \
+                --data_dir="./${Srvr_app_data}/"    \
+                --operation=get-certifier           \
+                --policy_store_file=policy_store    \
+                --print_all=true
 
     run_popd
 }
@@ -1142,20 +1402,42 @@ function run_simple_app_under_gramine_as_client_talk_to_Cert_Service() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
 
-    run_cmd gramine-sgx gramine_example_app \
-        --data_dir="./${Client_app_data}/"  \
-        --operation=cold-init               \
-        --policy_store_file=policy_store    \
-        --print_all=true || 0
+    run_cmd gramine-sgx gramine_example_app         \
+                --data_dir="./${Client_app_data}/"  \
+                --operation=cold-init               \
+                --policy_store_file=policy_store    \
+                --print_all=true || 0
 
     run_cmd sleep 1
 
-    run_cmd gramine-sgx gramine_example_app \
-        --data_dir="./${Client_app_data}/"  \
-        --operation=get-certifier           \
-        --policy_store_file=policy_store    \
-        --print_all=true || 0
+    run_cmd gramine-sgx gramine_example_app         \
+                --data_dir="./${Client_app_data}/"  \
+                --operation=get-certifier           \
+                --policy_store_file=policy_store    \
+                --print_all=true || 0
 
+    run_popd
+}
+
+# ###########################################################################
+function run_simple_app_under_sev_as_client_talk_to_Cert_Service() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd "${EXAMPLE_DIR}"/sev_example_app.exe    \
+                --data_dir="./${Client_app_data}/"  \
+                --operation=cold-init               \
+                --policy_store_file=policy_store    \
+                --print_all=true
+
+    # Otherwise, we've seen ioctl I/O errors on SEV-SNP machine.
+    run_cmd sleep 5
+
+    run_cmd "${EXAMPLE_DIR}"/sev_example_app.exe    \
+                --data_dir="./${Client_app_data}/"  \
+                --operation=get-certifier           \
+                --policy_store_file=policy_store    \
+                --print_all=true
     run_popd
 }
 
@@ -1170,12 +1452,19 @@ function run_app_as_server_offers_trusted_service() {
 
 # ###########################################################################
 function run_simple_app_as_server_offers_trusted_service() {
+    run_app_by_name_as_server_offers_trusted_service "example_app.exe"
+}
+
+# ###########################################################################
+# Shared method, takes app-name as a parameter
+# ###########################################################################
+function run_app_by_name_as_server_offers_trusted_service() {
+    local app_name_exe="$1"
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
-    sleep 1
 
     # Run app as a server: In app as a server terminal run the following:
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe        \
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"        \
                 --data_dir="./${Srvr_app_data}/"    \
                 --operation=run-app-as-server       \
                 --policy_store_file=policy_store    \
@@ -1229,6 +1518,10 @@ function run_simple_app_under_gramine_as_server_offers_trusted_service() {
     echo "${Me}: $(TZ="America/Los_Angeles" date) $(pwd): Completed ${FUNCNAME[0]}"
 }
 
+# ###########################################################################
+function run_simple_app_under_sev_as_server_offers_trusted_service() {
+    run_app_by_name_as_server_offers_trusted_service "sev_example_app.exe"
+}
 
 # ###########################################################################
 # Run the app-as-a-trusted client sending request to trusted server:
@@ -1239,11 +1532,24 @@ function run_app_as_client_make_trusted_request() {
 
 # ###########################################################################
 function run_simple_app_as_client_make_trusted_request() {
+    run_app_by_name_as_client_make_trusted_request "example_app.exe"
+}
+
+# ###########################################################################
+function run_simple_app_under_sev_as_client_make_trusted_request() {
+    run_app_by_name_as_client_make_trusted_request "sev_example_app.exe"
+}
+
+# ###########################################################################
+# Shared method, takes app-name as a parameter
+# ###########################################################################
+function run_app_by_name_as_client_make_trusted_request() {
+    local app_name_exe="$1"
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
 
     # Run app as a client: In app as a client terminal run the following:
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe        \
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"        \
                 --data_dir="./${Client_app_data}/"  \
                 --operation=run-app-as-client       \
                 --policy_store_file=policy_store    \
@@ -1293,9 +1599,13 @@ function run_simple_app_under_gramine_as_client_make_trusted_request() {
 # ###########################################################################
 function show_env() {
     echo " "
+    PATH="/home/rgerganov/go/bin:${PATH}"; export PATH
+
     echo "**** Environment variables, script globals: ****"
-    env | grep -E "CERT_PROTO|EXAMPLE_DIR"
+    env | grep -w -E "CERT_PROTO|EXAMPLE_DIR|PATH"
+    echo "PROV_DIR=${PROV_DIR}"
     echo "LOCAL_LIB=${Local_lib_path}"
+    echo "protoc-gen-go: " "$(command -v protoc-gen-go)"
 
     echo " "
     uname -a
@@ -1368,6 +1678,7 @@ function setup_simple_app() {
 
 # ###########################################################################
 # For OE-app, we have two ways to manage policy generation.
+#
 # Default is manual step by running a collection of utility programs.
 #
 # Optionally, user can hand-edit policy.json file and stick-in the
@@ -1419,6 +1730,39 @@ function setup_MbedTLS() {
 }
 
 # ###########################################################################
+# For SEV-app, we have two ways to manage policy generation (very similar
+# to what is supported for OE-app).
+#
+# Default is manual step by running a collection of utility programs.
+#
+# Optionally, user can hand-edit policy.json file and stick-in the
+# generated measurement. This is also automated under 'generate_policy' step.
+# So, user can invoke this script as:
+#   $ run_example.sh simple_app_under_sev setup_with_auto_policy_generation_for_SEV
+#
+# If the 2nd arg is provided, manually execute that sub-step's function.
+# ###########################################################################
+function setup_simple_app_under_sev() {
+    local setup_arg="$1"
+    check_platform_data_files_SEV
+    run_steps "show_env" "get_measurement_of_trusted_app"
+    if [ "${setup_arg}" = "" ]; then
+        manual_policy_generation_for_SEV
+    else
+        ${setup_arg}
+    fi
+    run_steps "build_simple_server" "provision_app_service_files"
+}
+
+# ###########################################################################
+# Run setup for SEV-app, but use the user-specified policy from user-edited
+# JSON-policy file.
+# ###########################################################################
+function setup_with_auto_policy_generation_for_SEV() {
+    setup_simple_app_under_sev "automated_policy_generation_for_SEV"
+}
+
+# ###########################################################################
 # After setup is done, run-the-test, setting up Cert Service etc.
 # This should be common for all sample apps.
 # ###########################################################################
@@ -1438,8 +1782,12 @@ fi
 
 if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
     usage
-    if [ $# -eq 2 ] && [ "$2" = "simple_app_under_oe" ]; then
-        usage_OE
+    if [ $# -eq 2 ]; then
+        if [ "$2" = "simple_app_under_oe" ]; then
+            usage_OE
+        elif [ "$2" = "simple_app_under_sev" ]; then
+            usage_SEV
+        fi
     fi
     exit 0
 fi
@@ -1460,25 +1808,23 @@ if [ "$1" == "--list" ]; then
 fi
 
 if [ "$1" == "--dry-run" ]; then
-    echo " "
-    echo "${Me}: ****************************************************"
-    echo "${Me}: ******** Executing script in dry-run mode. *********"
-    echo "${Me}: ****************************************************"
-    echo " "
     DryRun=1
     DryRun_msg="in dry-run mode"
     shift
 fi
 
-if [ "$1" == "rm_non_git_files" ]; then
-    $1
-    exit 0
-fi
+if [ $# -ge 1 ]; then
+    if [ "$1" == "rm_non_git_files" ]; then
+        $1
+        exit 0
+    fi
 
-is_valid_app "$1"
-if [ "${Valid_app}" == "0" ]; then
-    echo "${Me}: Sample program name '$1' is currently not supported."
-    exit 1
+    is_valid_app "$1"
+    if [ "${Valid_app}" == "0" ]; then
+        echo "${Me}: Sample program name '$1' is currently not supported."
+        exit 1
+    fi
+    SampleAppName="$1"
 fi
 
 # ----------------------------------------------------------------
@@ -1486,7 +1832,14 @@ fi
 # and script globals that will be used downstream.
 # Establish full dirpath where this script lives
 # ----------------------------------------------------------------
-SampleAppName="$1"
+if [ "${DryRun}" = 1 ]; then
+    echo " "
+    echo "${Me}: **************************************************************************"
+    echo "${Me}: ******** Executing script ${DryRun_msg} for $*"
+    echo "${Me}: **************************************************************************"
+    echo " "
+fi
+
 pushd "$(dirname "$0")" > /dev/null 2>&1
 EXAMPLE_DIR=$(pwd)/${SampleAppName}; export EXAMPLE_DIR
 popd > /dev/null 2>&1
@@ -1503,6 +1856,13 @@ if [ $# -eq 2 ]; then
     if [ "${Found_step}" == "0" ]; then
         echo "${Me}:${LINENO} Invalid step name, $2, provided for $1."
         exit 1
+    fi
+
+    # By the nature of the platform, commands for this app have to run
+    # as 'root'.
+    if [ "${SampleAppName}" = "simple_app_under_sev" ] \
+        && [ "$2" = "run_test" ]; then
+        RunSudo=1
     fi
 
     # Else, it's a valid step / function name. Execute it.

@@ -111,8 +111,9 @@ Follow these instructions.
 
 ## Author the policy for the security domain and produce the signed claims the apps need.
 
-The policies can be generated either manually or through the policy generator tool.
-In the steps below, follow either step (7) or step (8).
+The policies can be generated either manually or through the Policy Generator tool.
+In the steps below, follow either step (7), below, or step (8),
+ [Use Automated Policy Generator](#Step-8-Use-Automated-Policy-Generator).
 
 ```shell
 cd $EXAMPLE_DIR/provisioning
