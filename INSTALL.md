@@ -93,6 +93,48 @@ $ make -f policy_utilities.mak clean
 $ make -f policy_utilities.mak
 ```
 
+If you wish to use the Policy Generator instead of manually composing the
+policies, you need to build it in utilities. The Policy Generator requires the
+json-schema-validator library which in turn depends on the JSON for Modern C++
+library.
+
+Follow these instructions to have them built and installed on your system:
+
+```shell
+$ cd $(CERTIFIER)/utilities
+$ git clone https://github.com/nlohmann/json.git
+$ cd json
+$ mkdir build
+$ cd build
+
+$ cmake ..
+$ make
+$ sudo make install
+$ cd ..
+
+$ git clone https://github.com/pboettch/json-schema-validator.git
+$ cd json-schema-validator
+$ mkdir build
+$ cd build
+
+$ cmake .. -DBUILD_SHARED_LIBS=ON ..
+$ make
+$ sudo make install
+$ cd ..
+```
+
+Both libraries should be installed under `/usr/local` by default. If this is
+not the case, remember to update the JSON_VALIDATOR variable in the
+policy_generator.mak makefile. Add `/usr/local/lib` to `/etc/ld.so.conf` and
+run ldconfig if not already done.
+
+The Policy Generator utility can then be built using:
+
+```shell
+$ cd $(CERTIFIER)/utilities
+$ make -f policy_generator.mak
+```
+
 There is a Linux driver that simulates the SEV functions in sev-snp-simulator.
 Portions of this code are GPL licensed and the build driver is also GPL licensed.
 This is the only directory that contains GPL licensed code and it is not included in
