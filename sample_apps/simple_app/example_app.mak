@@ -46,9 +46,12 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 dobj=	$(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
       $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
       $(O)/cc_useful.o
+robj=	$(O)/example_key_rotation.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+      $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
+      $(O)/cc_useful.o
 
 
-all:	example_app.exe
+all:	example_app.exe example_key_rotation.exe
 clean:
 	@echo "removing object files"
 	rm -rf $(O)/*.o
@@ -58,6 +61,10 @@ clean:
 example_app.exe: $(dobj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/example_app.exe $(dobj) $(LDFLAGS)
+
+example_key_rotation.exe: $(robj) 
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/example_key_rotation.exe $(robj) $(LDFLAGS)
 
 $(US)/certifier.pb.cc: $(S)/certifier.proto
 	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto
@@ -72,6 +79,10 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 $(O)/example_app.o: $(US)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "compiling example_app.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/example_app.o $(US)/example_app.cc
+
+$(O)/example_key_rotation.o: $(US)/example_key_rotation.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "compiling example_app.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/example_key_rotation.o $(US)/example_key_rotation.cc
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"

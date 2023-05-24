@@ -206,6 +206,51 @@ bool certifier::utilities::read_file_into_string(const string& file_name, string
 
 // -----------------------------------------------------------------------
 
+bool certifier::utilities::time_t_to_tm_time(time_t* t, struct tm *tm_time) {
+  gmtime_r(t, tm_time);
+  return true;
+}
+
+bool certifier::utilities::tm_time_to_time_point(struct tm* tm_time, time_point* tp) {
+  tp->set_year(tm_time->tm_year + 1900);
+  tp->set_month(tm_time->tm_mon + 1);
+  tp->set_day(tm_time->tm_mday);
+  tp->set_hour(tm_time->tm_hour);
+  tp->set_minute(tm_time->tm_min);
+  tp->set_seconds(tm_time->tm_sec);
+  return true;
+}
+
+bool certifier::utilities::asn1_time_to_tm_time(const ASN1_TIME* s, struct tm *tm_time) {
+  if (1 != ASN1_TIME_to_tm(s, tm_time))
+    return false;
+  return true;
+}
+
+bool certifier::utilities::get_not_before_from_cert(X509* c, time_point* tp) {
+  const ASN1_TIME* asc_time = X509_getm_notBefore(c);
+  if (asc_time == nullptr)
+    return false;
+  struct tm tm_time;
+  if (!asn1_time_to_tm_time(asc_time, &tm_time))
+    return false;
+  if (!tm_time_to_time_point(&tm_time, tp))
+    return false;
+  return true;
+}
+
+bool certifier::utilities::get_not_after_from_cert(X509* c, time_point* tp) {
+  const ASN1_TIME* asc_time = X509_getm_notAfter(c);
+  if (asc_time == nullptr)
+    return false;
+  struct tm tm_time;
+  if (!asn1_time_to_tm_time(asc_time, &tm_time))
+    return false;
+  if (!tm_time_to_time_point(&tm_time, tp))
+    return false;
+  return true;
+}
+
 bool certifier::utilities::time_now(time_point* t) {
   time_t now;
   struct tm current_time;
@@ -384,7 +429,7 @@ void certifier::utilities::print_property(const property& prop) {
     } else if (prop.comparator() == ">=") {
       printf(" >= ");
     }
-    printf("%lu", prop.int_value());
+    printf("%llu", prop.int_value());
   } else if (prop.value_type() == "string") {
     printf("%s", prop.string_value().c_str());
   } else {
@@ -2106,7 +2151,7 @@ void print_property_descriptor(const property& p) {
   if (p.value_type() == "int") {
     if (p.comparator() != "")
       printf(" %s", p.comparator().c_str());
-    printf(" %lu", p.int_value());
+    printf(" %llu", p.int_value());
   } else if (p.value_type() == "string") {
     printf(" %s", p.string_value().c_str());
   } else {
