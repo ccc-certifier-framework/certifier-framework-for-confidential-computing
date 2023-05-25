@@ -60,7 +60,7 @@ sev_example_app.exe: $(dobj)
 
 $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
+	$(CC) $(CFLAGS) -Wno-array-bounds -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
 
 $(O)/sev_example_app.o: $(US)/sev_example_app.cc $(I)/certifier.h $(S)/certifier.pb.cc
 	@echo "compiling sev_example_app.cc"

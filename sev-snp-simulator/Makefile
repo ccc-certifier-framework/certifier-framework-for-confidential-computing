@@ -1,6 +1,7 @@
 MODULE_NAME := sevnull
 DEV_PATH := /dev/sev-guest
 EXTRA_CFLAGS  += -g -std=gnu99  -Wfatal-errors
+OPENSSL := openssl
 
 
 ifneq ($(KERNELRELEASE),) 	# kernelspace
@@ -23,6 +24,14 @@ modules:
 modules_install:
 	make -C $(LINUX_KERNEL_PATH) M=$(CURRENT_PATH) modules_install
 
+keys:
+	rm -rf keys
+	mkdir keys
+	$(OPENSSL) ecparam -name secp384r1 -genkey -noout -out keys/ec-secp384r1-priv-key.pem
+	$(OPENSSL) ec -in keys/ec-secp384r1-priv-key.pem -pubout > keys/ec-secp384r1-pub-key.pem
+	sudo rm -rf /etc/certifier-snp-sim
+	sudo mkdir /etc/certifier-snp-sim
+	sudo cp keys/* /etc/certifier-snp-sim/
 
 insmod:
 	sudo insmod $(MODULE_NAME).ko
@@ -37,6 +46,7 @@ rmmod:
 clean:
 	make -C $(LINUX_KERNEL_PATH) M=$(CURRENT_PATH) clean
 	rm -f modules.order Module.symvers Module.markers
+	rm -rf keys
 
 .PHNOY:
 	modules modules_install clean

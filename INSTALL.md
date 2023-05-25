@@ -141,12 +141,13 @@ This is the only directory that contains GPL licensed code and it is not include
 the certifier API or certifier service, so all other code in the Certifier Framework
 for Confidential Computing is not affected by GPL license terms.
 
-To build this and install it on Linux: (RESOLVE: These steps did not work; got diff errors. Sort it out during review.)
+To build this and install it on Linux:
 
 ```shell
 $ cd $(CERTIFIER)/sev-snp-simulator
-$ make sev-guest
-$ sudo make insmod     # (You must be root to install the module)
+$ make
+$ make keys
+$ make insmod
 $ cd $(CERTIFIER)/sev-snp-simulator/test
 $ make sev-test
 $ sudo sev-test        # (You must be root to run the test)
