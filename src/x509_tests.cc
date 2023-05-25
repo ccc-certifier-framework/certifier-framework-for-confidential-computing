@@ -135,6 +135,22 @@ bool test_x_509_chain(bool print_all) {
     return false;
   }
 
+  time_point t1_before, t1_after;
+  // asn1_time_to_tm_time(const ASN1_TIME* s, struct tm *tm_time);
+  if (!get_not_before_from_cert(cert1, &t1_before)) {
+    printf("get_not_before_from_cert failed\n");
+    return false;
+  }
+  if (!get_not_after_from_cert(cert1, &t1_after)) {
+    printf("get_not_after_from_cert failed\n");
+    return false;
+  }
+
+  if (print_all) {
+    printf("Time before: "); print_time_point(t1_before); printf("\n");
+    printf("Time after : "); print_time_point(t1_after); printf("\n");
+  }
+
   // pub key from second cert
   key_message* pub_subject_key2 = new key_message;
   if (!x509_to_public_key(cert2, pub_subject_key2)) {
