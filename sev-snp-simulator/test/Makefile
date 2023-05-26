@@ -15,10 +15,6 @@ all: $(TARGETS)
 sev-test: sev-test.o sev-ecdsa.o report.o
 	$(CC) $(CFLAGS) -DPROG_NAME=$@ -o $@ $^ $(OPENSSL_LDFLAGS)
 
-sev-keys:
-	$(OPENSSL) ecparam -name secp384r1 -genkey -noout -out ec-secp384r1-priv-key.pem
-	$(OPENSSL) ec -in ec-secp384r1-priv-key.pem -pubout > ec-secp384r1-pub-key.pem
-
 clean:
 	$(RM) $(TARGETS) $(OBJECTS) cscope.*
 
