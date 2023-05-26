@@ -49,8 +49,8 @@ using namespace certifier::utilities;
 #define SEV_GUEST_DEVICE  "/dev/sev-guest"
 
 #ifdef SEV_DUMMY_GUEST
-#define SEV_ECDSA_PRIV_KEY  "ec-secp384r1-priv-key.pem"
-#define SEV_ECDSA_PUB_KEY  "ec-secp384r1-pub-key.pem"
+#define SEV_ECDSA_PRIV_KEY  "/etc/certifier-snp-sim/ec-secp384r1-priv-key.pem"
+#define SEV_ECDSA_PUB_KEY  "/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem"
 #endif
 
 using namespace certifier::framework;

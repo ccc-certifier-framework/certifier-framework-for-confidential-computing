@@ -96,7 +96,7 @@ $(US)/certifier.pb.cc $(I)/certifier.pb.h: $(S)/certifier.proto
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS_NOERROR) -c  -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
+	$(CC) $(CFLAGS_NOERROR) -Wno-array-bounds -c  -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h $(I)/certifier.pb.h
 	@echo "compiling support.cc"
