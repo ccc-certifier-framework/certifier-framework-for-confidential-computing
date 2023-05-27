@@ -107,9 +107,7 @@ bool run_me_as_server(const string& host_name, int port,
 
 // Standard algorithms for the enclave
 string public_key_alg("rsa-2048");
-string symmetric_key_alg("aes-256");;
-string hash_alg("sha-256");
-string hmac_alg("sha-256-hmac");
+string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
 int main(int an, char** av) {
 
@@ -169,8 +167,7 @@ int main(int an, char** av) {
   // Carry out operations as before
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
-          hash_alg, hmac_alg)) {
+    if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg)) {
       printf("cold-init failed\n");
       ret = 1;
     }
