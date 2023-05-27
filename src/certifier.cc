@@ -932,7 +932,7 @@ bool certifier::framework::Reprotect_Blob(const string& enclave_type, key_messag
     printf("Reprotect_Blob: Can't get key size\n");
     return false;
   }
-  if (new_key.secret_key_bits().size() < size_byte_key) {
+  if (new_key.secret_key_bits().size() < (size_t)size_byte_key) {
     printf("Reprotect_Blob: key buffer too small\n");
     return false;
   }

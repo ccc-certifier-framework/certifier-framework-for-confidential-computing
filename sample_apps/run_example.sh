@@ -106,7 +106,7 @@ function usage() {
    echo "  To setup and run the ${SampleAppName} program, end-to-end : ./${Me} ${SampleAppName} "
    echo "  To setup the ${SampleAppName} program                     : ./${Me} ${SampleAppName} setup"
    echo "  To run and test the ${SampleAppName} program              : ./${Me} ${SampleAppName} run_test"
-   echo "  To list the individual steps for ${SampleAppName}         : ./${Me} ${SampleAppName} --list"
+   echo "  To list the individual steps for ${SampleAppName}         : ./${Me} --list ${SampleAppName}"
    echo "  To run an individual step of the ${SampleAppName}         : ./${Me} ${SampleAppName} <step name>"
    echo " "
    # Indentation to align with previous output lines.
@@ -142,7 +142,7 @@ Steps=( "rm_non_git_files"
         "do_cleanup"
         "build_utilities"
         "gen_policy_and_self_signed_cert"
-        "emded_policy_in_example_app"
+        "embed_policy_in_example_app"
         "compile_app"
         "get_measurement_of_trusted_app"
 
@@ -176,7 +176,7 @@ Steps_OE=( "rm_non_git_files"
            "do_cleanup"
            "build_utilities"
            "gen_policy_and_self_signed_cert"
-           "emded_policy_in_example_app"
+           "embed_policy_in_example_app"
            "compile_app"
            "get_measurement_of_trusted_app"
 
@@ -391,7 +391,7 @@ function gen_policy_and_self_signed_cert() {
 }
 
 # ###########################################################################
-function emded_policy_in_example_app() {
+function embed_policy_in_example_app() {
    run_cmd
    run_pushd "${PROV_DIR}"
 

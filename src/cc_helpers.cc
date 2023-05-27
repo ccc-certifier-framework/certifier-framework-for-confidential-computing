@@ -449,10 +449,9 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
     }
   }
   const string ska("symmetric_key_algorithm");
-  int ski = store_.get_blob_index_by_tag(pka);
+  int ski = store_.get_blob_index_by_tag(ska);
   if (ski >= 0) {
-    tagged_blob_message* tbp = store_.tagged_blob_[pki];
-    tbp->set_b(symmetric_key_algorithm_);
+    tagged_blob_message* tbp = store_.tagged_blob_[ski];
     tbp->set_b(symmetric_key_algorithm_.data(), symmetric_key_algorithm_.size()+1);
   } else {
     if (!store_.add_blob(ska, symmetric_key_algorithm_)) {
@@ -522,9 +521,9 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
     public_key_algorithm_ = tbp->b().c_str();
   }
   const string ska("symmetric_key_algorithm");
-  int ski = store_.get_blob_index_by_tag(pka);
+  int ski = store_.get_blob_index_by_tag(ska);
   if (ski >= 0) {
-    tagged_blob_message* tbp = store_.tagged_blob_[pki];
+    tagged_blob_message* tbp = store_.tagged_blob_[ski];
     symmetric_key_algorithm_ = tbp->b().c_str();
   }
 
