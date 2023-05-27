@@ -437,6 +437,30 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
     return false;
   }
 
+  const string pka("public_key_algorithm");
+  int pki = store_.get_blob_index_by_tag(pka);
+  if (pki >= 0) {
+    tagged_blob_message* tbp = store_.tagged_blob_[pki];
+    tbp->set_b(public_key_algorithm_.data(), public_key_algorithm_.size()+1);
+  } else {
+    if (!store_.add_blob(pka, public_key_algorithm_)) {
+      printf("cold_init: Can't add public key algorithm to store\n");
+      return false;
+    }
+  }
+  const string ska("symmetric_key_algorithm");
+  int ski = store_.get_blob_index_by_tag(pka);
+  if (ski >= 0) {
+    tagged_blob_message* tbp = store_.tagged_blob_[pki];
+    tbp->set_b(symmetric_key_algorithm_);
+    tbp->set_b(symmetric_key_algorithm_.data(), symmetric_key_algorithm_.size()+1);
+  } else {
+    if (!store_.add_blob(ska, symmetric_key_algorithm_)) {
+      printf("cold_init: Can't add symmetric key algorithm to store\n");
+      return false;
+    }
+  }
+
   if (purpose_ == "attestation") {
 
     // put private service key and symmetric keys in store
@@ -490,6 +514,19 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
 }
 
 bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
+
+  const string pka("public_key_algorithm");
+  int pki = store_.get_blob_index_by_tag(pka);
+  if (pki >= 0) {
+    tagged_blob_message* tbp = store_.tagged_blob_[pki];
+    public_key_algorithm_ = tbp->b().c_str();
+  }
+  const string ska("symmetric_key_algorithm");
+  int ski = store_.get_blob_index_by_tag(pka);
+  if (ski >= 0) {
+    tagged_blob_message* tbp = store_.tagged_blob_[pki];
+    symmetric_key_algorithm_ = tbp->b().c_str();
+  }
 
   if (purpose_ == "attestation") {
 
