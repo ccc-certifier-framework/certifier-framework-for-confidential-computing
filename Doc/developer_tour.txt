@@ -2,21 +2,21 @@ Nuts and bolts of the Certifier Framework with a real example.
 
 
 
-A "Security Domain" is defined by a policy key by a domain owner, say Salesforce,
+A "Security Domain" is defined by a policy key by a domain owner, say ServiceCo,
 to protect  some set of programs that enforce policy using Confidential Computing.
 
 
-1. Salesforce generates a policy key and a self signed cert.  Private key is used by
+1. ServiceCo generates a policy key and a self signed cert.  Private key is used by
 the certifier service.
 
-2. The policy cert is conceptually embedded in an application.  In the Salesforce case,
-embedding the key in an application customized the application for Salesforce.  Note
-that the application plus key is the unforgeable "measurement" of the Salesforce application
+2. The policy cert is conceptually embedded in an application.  In the ServiceCo case,
+embedding the key in an application customized the application for ServiceCo.  Note
+that the application plus key is the unforgeable "measurement" of the ServiceCo application
 and is reflected in the "quote" or "attestation that comes from the program.
 
-3. All the Salesforces apps (with key) are measured.
+3. All the ServiceCos apps (with key) are measured.
 
-4. Salesforce generates (using utilities) the policy for the domain.
+4. ServiceCo generates (using utilities) the policy for the domain.
 
 
 Here is an example of policy for an encrypted VM hosted by SEV:
