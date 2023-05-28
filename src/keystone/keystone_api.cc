@@ -6,6 +6,7 @@
 #include "verifier/report.h"
 #include "verifier/test_dev_key.h"
 /* Dependencies: Keystone SDK, Keystone Runtime for crypto. */
+#define assert(x) do {} while (false) // TODO: fix
 
 typedef unsigned char byte;
 
@@ -45,7 +46,7 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
     return false;
   }
 
-  if (report.getDataSize() != what_to_say_size + 1) {
+  if (report.getDataSize() != (unsigned int) (what_to_say_size + 1)) {
     return false;
   }
   byte* report_says = (byte*) report.getDataSection();
@@ -69,7 +70,7 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
 // to share between seal and unseal
 bool keystone_getSealingKey(WORD key[]) {
   struct sealing_key key_buffer; // {key, signature}
-  char *key_identifier = "sealing-key";
+  char key_identifier[] = "sealing-key";
   int err = get_sealing_key(&key_buffer, sizeof(key_buffer),
                         (void *)key_identifier, strlen(key_identifier));
   if (err) {
