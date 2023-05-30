@@ -62,7 +62,7 @@ example_app.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/example_app.exe $(dobj) $(LDFLAGS)
 
-example_key_rotation.exe: $(robj) 
+example_key_rotation.exe: $(robj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/example_key_rotation.exe $(robj) $(LDFLAGS)
 
