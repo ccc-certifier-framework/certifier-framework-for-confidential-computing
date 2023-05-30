@@ -1,8 +1,6 @@
-#include "app/eapp_utils.h"
 #include "app/syscall.h"
 #include "app/string.h"
 #include "crypto/aes.h"
-#include "edge/edge_common.h"
 #include "verifier/report.h"
 #include "verifier/test_dev_key.h"
 /* Dependencies: Keystone SDK, Keystone Runtime for crypto. */
@@ -19,6 +17,10 @@ bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out);
 bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
+// TODO: remove me
+int main(int argc, char** argv) {
+    return 0;
+}
 
 typedef struct KeystoneFunctions {
   bool (*Attest)(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out);
@@ -28,7 +30,7 @@ typedef struct KeystoneFunctions {
 } KeystoneFunctions;
 
 bool keystone_Init(const int cert_size, byte *cert) {
-
+    return true;
 }
 
 bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
