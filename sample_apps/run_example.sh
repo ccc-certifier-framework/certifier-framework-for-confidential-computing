@@ -433,7 +433,7 @@ function gen_policy_and_self_signed_cert() {
 }
 
 # ###########################################################################
-function emded_policy_in_example_app() {
+function embed_policy_in_example_app() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
