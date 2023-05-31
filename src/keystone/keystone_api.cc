@@ -1,5 +1,7 @@
-#include "app/syscall.h"
-#include "app/string.h"
+extern "C" {
+  #include "app/syscall.h"
+  #include "app/string.h"
+}
 #include "crypto/aes.h"
 #include "verifier/report.h"
 #include "verifier/test_dev_key.h"
@@ -17,11 +19,6 @@ bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out);
 bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
-// TODO: remove me
-int main(int argc, char** argv) {
-    return 0;
-}
-
 typedef struct KeystoneFunctions {
   bool (*Attest)(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out);
   bool (*Verify)(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out);
@@ -30,13 +27,13 @@ typedef struct KeystoneFunctions {
 } KeystoneFunctions;
 
 bool keystone_Init(const int cert_size, byte *cert) {
-    return true;
+  return true;
 }
 
 bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
-    assert(what_to_say_size <= 1024);
-    *attestation_size_out = 1352;
-    return attest_enclave((void *) attestation_out, what_to_say, what_to_say_size);
+  assert(what_to_say_size <= 1024);
+  *attestation_size_out = 1352;
+  return attest_enclave((void *) attestation_out, what_to_say, what_to_say_size);
 }
 
 bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out) {
