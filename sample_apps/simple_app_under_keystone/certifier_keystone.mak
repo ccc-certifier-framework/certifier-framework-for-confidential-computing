@@ -39,7 +39,8 @@ S = $(SRC_DIR)/src
 O = $(OBJ_DIR)
 SEV_S = $(S)/keystone
 I = $(SRC_DIR)/include
-CFLAGS += -I$(I)
+CFLAGS += -I$(I) -I$(SEV_S) # TODO: rework -I$(SEV_S)
+LDFLAGS +=
 
 $(O)/keystone_aes.o: $(KEYSTONE_RT_SRC)/crypto/aes.c
 	@echo "compiling keystone_aes.o"
@@ -62,11 +63,8 @@ dobj = certifier.a $(internal-dobj) # TODO: maybe move certifier library mix-in 
 
 # TODO: maybe fix?
 keystone_certifier_app: $(dobj) $(KEYSTONE_SDK_LIB)
-	@echo "linking executable files"
+	@echo "linking executable file keystone_certifier_app"
 	$(LINK) -o $(EXE_DIR)/keystone_certifier_app $(dobj) $(LDFLAGS)
-
-clean:
-	rm -f $(internal-dobj) $(EXE_DIR)/keystone_certifier_app $(O)/dummy_main.o $(EXE_DIR)/keystone_api
 
 # testing Keystone compilation & linking only
 keystone_api: $(O)/keystone_api.o $(O)/keystone_aes.o $(KEYSTONE_SDK_LIB)
@@ -77,3 +75,18 @@ keystone_api: $(O)/keystone_api.o $(O)/keystone_aes.o $(KEYSTONE_SDK_LIB)
 	$(LINK) -o $(EXE_DIR)/keystone_api $(O)/dummy_main.o $(O)/keystone_api.o $(O)/keystone_aes.o $(LDFLAGS)
 	rm $(O)/dummy_main.o $(EXE_DIR)/keystone_api
 	@echo "KEYSTONE LINK TEST SUCCESS"
+
+# uses keystone_api and not certifier
+$(O)/bare_app.o: ./bare_app.cc
+	@echo "compiling bare_app.cc"
+	mkdir -p $(O)
+	$(CC) $(CFLAGS) -c -o $(O)/bare_app.o ./bare_app.cc
+
+bare-dobj = $(O)/keystone_api.o $(O)/keystone_aes.o $(O)/bare_app.o
+
+bare_app: $(bare-dobj) $(KEYSTONE_SDK_LIB)
+	@echo "linking executable file bare_app"
+	$(LINK) -o $(EXE_DIR)/bare_app $(bare-dobj) $(LDFLAGS)
+
+clean:
+	rm -f $(internal-dobj) $(EXE_DIR)/keystone_certifier_app $(O)/dummy_main.o $(EXE_DIR)/keystone_api $(bare-dobj)
