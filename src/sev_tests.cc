@@ -19,6 +19,9 @@
 
 #include "attestation.h"
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
 extern bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation, byte* the_attestation,
       int* size_measurement, byte* measurement);
 extern EVP_PKEY* get_simulated_vcek_key();
@@ -122,7 +125,8 @@ bool test_sev(bool print_all) {
     return false;
   }
   EVP_PKEY* verify_pkey = sev_get_vcek_pubkey(x509_vcek);
-#endif
+#endif   /* SEV_DUMMY_GUEST */
+
   if (verify_pkey == nullptr)
     return false;
   bool success = verify_sev_Attest(verify_pkey, size_out, out, &size_measurement, measurement);
@@ -240,7 +244,7 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
 
   return true;
 }
-#endif
+#endif   /* 0 dead-code scaffolding for an earlier version */
 
 bool construct_sev_platform_evidence(
       const string& purpose, const string& serialized_ark_cert,
@@ -318,7 +322,8 @@ bool construct_sev_platform_evidence(
 #else
   if (!simulated_sev_Attest(vcek, enclave_type, serialized_ud.size(),
         (byte*) serialized_ud.data(), &size_out, out)) {
-#endif
+#endif   /* 1 */
+
     printf("construct_sev_platform_evidence: Attest failed\n");
     return false;
   }
@@ -487,7 +492,7 @@ bool test_sev_platform_certify(const bool debug_print,
   if (!x509_to_asn1(x_vcek, &serialized_vcek_cert)) {
     return false;
   }
-#endif
+#endif   /* 1 */
 
   // construct evidence package
   string purpose("authentication");

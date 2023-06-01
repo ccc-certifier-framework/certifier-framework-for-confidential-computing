@@ -16,19 +16,35 @@ jobs:
     - name: dependencies
       run: |
         sudo apt update -y
-        sudo apt install -y libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go
+        sudo apt install -y libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake
     - name: make
       run: |
+        echo "******************************************************************"
+        echo "* Check that core certifier programs still compile and clear tests"
+        echo "******************************************************************"
+        echo " "
         #! ---------------------------------------------------------------------
-        #! Check that core certifier programs still compile
-        cd src
+        #! Check that core certifier programs still compile and clear tests
+        #! ---------------------------------------------------------------------
+        pushd src
+        make -f certifier.mak clean
         make -f certifier_tests.mak clean
         make -f certifier.mak
         make -f certifier.mak clean
+
+        make -f certifier_tests.mak clean
         make -f certifier_tests.mak
         ./certifier_tests.exe
-        #! ---------------------------------------------------------------------
-        cd ../sample_apps
+        popd
+
+        echo " "
+        echo "******************************************************************"
+        echo "* Exercise run_example with --help, --list arguments ..."
+        echo "******************************************************************"
+        echo " "
+
+        pushd ./sample_apps
+
         #! Exercise help / usage / list options, for default simple_app
         ./run_example.sh -h
         ./run_example.sh --help
@@ -55,6 +71,11 @@ jobs:
         #! script's execution logic will likely work for different sample apps,
         #! when tested on the appropriate platform and environment.
         #! ---------------------------------------------------------------------
+        echo " "
+        echo "******************************************************************"
+        echo "* Exercise run_example with --dry-run argument ..."
+        echo "******************************************************************"
+        echo " "
         ./run_example.sh --dry-run simple_app
         ./run_example.sh --dry-run simple_app setup
         ./run_example.sh --dry-run simple_app run_test
@@ -74,14 +95,90 @@ jobs:
         ./run_example.sh --dry-run simple_app_under_sev setup_with_auto_policy_generation_for_SEV
 
         #! ---------------------------------------------------------------------
-        #! Test: Execute script to compile, build and run simple_app.
         #! This will also check that utilities programs still compile
+        echo " "
+        echo "******************************************************************"
+        echo "* Test: Execute script to compile, build and run simple_app."
+        echo "******************************************************************"
+        echo " "
         ./cleanup.sh
         ./run_example.sh simple_app
         ./cleanup.sh
 
-        #! ---------------------------------------------------------------------
-        #! Few other miscellaneous checks
-        cd ../certifier_service/oelib
+        popd
+
+        echo " "
+        echo "*************************************************************************************"
+        echo "* Build and install SEV-SNP simulator, to run Cert tests with simulated SEV-enabled."
+        echo "*************************************************************************************"
+        echo " "
+        pushd ./sev-snp-simulator
+
+        make clean
+        make
+        make keys
+
+        #! You may need this in your dev-box, but on CI this will not be needed
+        #! as we have not run 'insmod', yet.
+        #! make rmmod
+
+        make insmod
+
+        echo " "
+        echo "******************************************************************"
+        echo "* Run sev-test ... "
+        echo "******************************************************************"
+        echo " "
+
+        pushd ./test
+        make sev-test
+        sudo ./sev-test
+
+        popd
+        popd
+
+        echo " "
+        echo "******************************************************************"
+        echo "* Check that Certifier tests run clean with simulated SEV-enabled."
+        echo "******************************************************************"
+        echo " "
+
+        pushd src
+        make -f certifier_tests.mak clean
+        ENABLE_SEV=1 make -f certifier_tests.mak
+        sudo ./certifier_tests.exe --print_all=true
+
+        echo " "
+        echo "******************************************************************"
+        echo "* Check that Certifier builds with simulated SEV-enabled."
+        echo "******************************************************************"
+        echo " "
+        make -f certifier.mak clean
+        make -f certifier_tests.mak clean
+        ENABLE_SEV=1 make -f certifier.mak
+        popd
+
+        #! Run script that will setup s/w required to build Policy Generator for SEV-app
+        ./CI/scripts/setup-JSON-schema-validator-for-SEV-apps.sh
+
+        echo " "
+        echo "******************************************************************"
+        echo "* Run simple_app_under_sev in simulated-SEV environment."
+        echo "******************************************************************"
+        echo " "
+        pushd ./sample_apps
+
+        ./run_example.sh simple_app_under_sev setup
+        sudo ./run_example.sh simple_app_under_sev run_test
+
+        sudo ./cleanup.sh
+        popd
+
+        echo " "
+        echo "******************************************************************"
+        echo "* Few other miscellaneous checks"
+        echo "******************************************************************"
+        echo " "
+        cd ./certifier_service/oelib
         make clean
         make dummy

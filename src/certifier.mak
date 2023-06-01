@@ -1,5 +1,5 @@
 #    
-#    File: certifier_tests.mak
+#    File: certifier.mak
 
 ENABLE_SEV=1
 
@@ -43,21 +43,24 @@ endif
 
 CC=g++
 LINK=g++
+
+# Point this to the right place, if you have to, based on your machine's install:
 # PROTO=/usr/local/bin/protoc
-# Point this to the right place, if you have to.
-# I had to do the above on my machine.
 PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
+# ----------------------------------------------------------------------
+# Define list of objects for common case which will be extended for
+# ENABLE_SEV build mode.
+# ----------------------------------------------------------------------
+dobj = $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o        \
+       $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o  \
+       $(O)/cc_helpers.o $(O)/cc_useful.o
+
 ifdef ENABLE_SEV
-dobj=	$(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o $(O)/support.o \
-$(O)/application_enclave.o $(O)/simulated_enclave.o \
-$(O)/sev_support.o $(O)/sev_report.o $(O)/cc_helpers.o $(O)/cc_useful.o
-else
-dobj=	$(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o $(O)/support.o \
-$(O)/application_enclave.o $(O)/simulated_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o
+dobj += $(O)/sev_support.o $(O)/sev_report.o
 endif
 
 
@@ -65,13 +68,12 @@ all:	$(CL)/certifier.a
 clean:
 	@echo "removing object files"
 	rm -rf $(O)/*.o
-	@echo "removing executable file"
+	@echo "removing executable files"
 	rm -rf $(CL)/certifier.a
 
 $(CL)/certifier.a: $(dobj)
 	@echo "linking certifier library"
 	$(AR) rcs $(CL)/certifier.a $(dobj)
-
 
 $(S)/certifier.pb.cc $(I)/certifier.pb.h: $(S)/certifier.proto
 	$(PROTO) --cpp_out=$(S) $(S)/certifier.proto

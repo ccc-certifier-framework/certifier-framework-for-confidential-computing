@@ -54,43 +54,37 @@ endif
 
 CC=g++
 LINK=g++
+# Point this to the right place, if you have to, based on your machine's install:
 # PROTO=/usr/local/bin/protoc
-# Point this to the right place, if you have to.
-# I had to do the above on my machine.
 PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
+# ----------------------------------------------------------------------
+# Define list of objects for common case which will be extended for
+# ENABLE_SEV build mode.
+# ----------------------------------------------------------------------
+dobj = $(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o               \
+       $(O)/certifier_proofs.o $(O)/support.o $(O)/simulated_enclave.o           \
+       $(O)/cc_helpers.o $(O)/cc_useful.o $(O)/application_enclave.o             \
+       $(O)/claims_tests.o $(O)/primitive_tests.o $(O)/certificate_tests.o       \
+       $(O)/store_tests.o $(O)/support_tests.o $(O)/x509_tests.o
+
+channel_dobj =	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o          \
+               $(O)/certifier_proofs.o $(O)/support.o $(O)/simulated_enclave.o   \
+               $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o
+
+pipe_read_dobj = $(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o      \
+                 $(O)/certifier_proofs.o  $(O)/support.o $(O)/simulated_enclave.o \
+                 $(O)/application_enclave.o
+
 ifdef ENABLE_SEV
-dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
-$(O)/support.o $(O)/simulated_enclave.o \
-$(O)/certificate_tests.o $(O)/claims_tests.o $(O)/primitive_tests.o \
-$(O)/cc_helpers.o $(O)/cc_useful.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
-$(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o \
-$(O)/x509_tests.o
+dobj +=	$(O)/sev_tests.o $(O)/sev_support.o $(O)/sev_report.o
 
-channel_dobj=	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/support.o \
-$(O)/certifier_proofs.o  $(O)/simulated_enclave.o $(O)/application_enclave.o \
-$(O)/cc_helpers.o $(O)/cc_useful.o $(O)/sev_support.o $(O)/sev_report.o
+channel_dobj += $(O)/sev_support.o $(O)/sev_report.o
 
-pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
-$(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/sev_support.o $(O)/sev_report.o
-
-else
-
-dobj=	$(O)/certifier_tests.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
-$(O)/support.o $(O)/simulated_enclave.o \
-$(O)/cc_helpers.o $(O)/cc_useful.o $(O)/application_enclave.o $(O)/claims_tests.o $(O)/primitive_tests.o \
-$(O)/certificate_tests.o $(O)/sev_tests.o $(O)/store_tests.o $(O)/support_tests.o \
-$(O)/x509_tests.o
-
-channel_dobj=	$(O)/test_channel.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
-$(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
-$(O)/cc_useful.o
-
-pipe_read_dobj=	$(O)/pipe_read_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o  \
-$(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+pipe_read_dobj += $(O)/sev_support.o $(O)/sev_report.o
 endif
 
 all:	certifier_tests.exe test_channel.exe pipe_read_test.exe
@@ -98,7 +92,7 @@ all:	certifier_tests.exe test_channel.exe pipe_read_test.exe
 clean:
 	@echo "removing object files"
 	rm -rf $(O)/*.o
-	@echo "removing executable file"
+	@echo "removing executable files"
 	rm -rf $(EXE_DIR)/certifier_tests.exe $(EXE_DIR)/pipe_read_test.exe $(EXE_DIR)/test_channel.exe
 
 certifier_tests.exe: $(dobj) 

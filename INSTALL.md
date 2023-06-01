@@ -2,18 +2,30 @@ Installing The Certifier Framework for Confidential Computing
 =============================================================
 
 In this description, the top level directory of this repository,
-which includes this INSTALL.md file, is denoted $(CERTIFIER).
+which includes this `INSTALL.md` file, is denoted $(CERTIFIER).
 
 The Ubuntu 20.04 install guide can be found in
 [Ubuntu Install](./Doc/install-certifier-Ubuntu-20.04.md).
 
-Read the [Guide](Doc/Guide.pdf) in the Doc directory to understand the
+Read the [Guide](./Doc/Guide.pdf) in the `Doc/` directory to understand the
 basic nomenclature and programs you will build and use.
+
+## Hardware Requirements
+
+Most programs can use a "simulated_enclave" for prototyping and can compile
+and run on Linux or macOS.
+
+- To run programs that use SGX, you must run on SGX capable hardware.
+- We use Open Enclaves or Asylo to support SGX.
+- To run programs that use AMD SEV-SNP, you must run on AMD SEV-SNP hardware
+  under a compliant VMM and in a VM that supports AMD SEV-SNP primitives.
+  - See [SEV-SNP Simulator](#SEV-SNP-Simulator-utility) to setup a SEV-SNP
+    simulator on Linux VMs to run sample app under SEV-SNP.
 
 
 # Certifier API
 
-The certifier API is in the src/ directory.
+The Certifier API is in the `src/` directory.
 
 ## Setup steps
 
@@ -27,9 +39,10 @@ $ sudo apt-get install -y libgflags-dev/jammy
 $ sudo apt-get install -y protoc-gen-go
 $ sudo apt-get install -y golang-go
 $ sudo apt-get install -y libmbedtls-dev/jammy
+$ sudo apt-get install -y libssl-dev
 ```
 
-## To compile and run the certifier API tests
+## To compile and run the Certifier API tests
 
 ```shell
   $ cd $(CERTIFIER)/src
@@ -37,24 +50,28 @@ $ sudo apt-get install -y libmbedtls-dev/jammy
   $ make -f certifier_tests.mak
   $ ./certifier_tests.exe [--print_all=true]
 ```
-If you are compiling the certifier tests win sev enabled (This is
-indicated by ENABLE_SEV=1 in the [certifier_tests.mak](src/certifier_tests.mak) file),
-you must run the tests as root and must install the simulated SEV driver (see
-below).
+
+### Certifier API tests with SEV-enabled
+
+If you are compiling the Certifier tests with SEV-enabled you must first install
+the simulated SEV driver and then run the tests as root.
+
+See the [SEV-SNP Simulator utility](#SEV-SNP-Simulator-utility) section
+for how-to setup and install the SEV-SNP simulator.
+
+(Running SEV-enabled tests is indicated by `ENABLE_SEV=1` in the
+[certifier_tests.mak](./src/certifier_tests.mak) file.)
 
 ```shell
+$ ENABLE_SEV=1 make -f certifier_tests.mak clean
+$ ENABLE_SEV=1 make -f certifier_tests.mak
+
 $ sudo ./certifier_tests.exe --print_all=true
 ```
 
-Otherwise
+------
 
-```shell
-$ ./certifier_tests.exe --print_all=true
-```
-
-should work fine.
-
-Once you are sure the certifier works, compile and make the certifier library:
+Once you are sure the Certifier works, compile and make the Certifier library:
 
 ```shell
  $ cd $(CERTIFIER)/src
@@ -64,9 +81,9 @@ Once you are sure the certifier works, compile and make the certifier library:
 
 # Certifier Service
 
-The certifier service is in the [certifier_service](./certifier_service/) directory
-and contains two subdirectories: [certlib](./certifier_service/certlib/) and
-[certprotos](./certifier_service/certprotos/).
+The Certifier Service is in the [certifier_service/](./certifier_service/) directory
+and contains two subdirectories: [certlib/](./certifier_service/certlib/) and
+[certprotos/](./certifier_service/certprotos/).
 
 To compile the certlib tests:
 
@@ -77,13 +94,13 @@ To compile the certlib tests:
   $ go test
 ```
 To compile and run the Certifier Service and test it, follow
-the [instructions](./sample_apps/simple_app/instructions.txt)
+the [instructions](./sample_apps/simple_app/instructions.md)
 in the [sample_apps/simple_app](./sample_apps/simple_app/) example.
 
 
 # Utilities
 
-There are utilities in the utilities subdirectory.  To compile them:
+There are utilities in the `utilities/` subdirectory.  To compile them:
 
 ```shell
 $ cd $(CERTIFIER)/utilities
@@ -93,12 +110,17 @@ $ make -f policy_utilities.mak clean
 $ make -f policy_utilities.mak
 ```
 
-If you wish to use the Policy Generator instead of manually composing the
-policies, you need to build it in utilities. The Policy Generator requires the
-json-schema-validator library which in turn depends on the JSON for Modern C++
-library.
+## Building the Policy Generator - Setup Required
 
-Follow these instructions to have them built and installed on your system:
+If you wish to use the Policy Generator instead of manually composing the
+policies, you need to build the Generator in the `utilities/` directory.
+The Policy Generator requires the json-schema-validator library which in turn
+depends on the JSON for Modern C++ library.
+
+Follow these instructions to have these software packages built and installed
+on your system. You may be able to use the
+[setup-JSON-schema-validator-for-SEV-apps.sh](./CI/scripts/setup-JSON-schema-validator-for-SEV-apps.sh)
+which automates these steps in our CI-environment.
 
 ```shell
 $ cd $(CERTIFIER)/utilities
@@ -125,8 +147,10 @@ $ cd ..
 
 Both libraries should be installed under `/usr/local` by default. If this is
 not the case, remember to update the JSON_VALIDATOR variable in the
-policy_generator.mak makefile. Add `/usr/local/lib` to `/etc/ld.so.conf` and
-run ldconfig if not already done.
+`utilities/policy_generator.mak` makefile.
+Add `/usr/local/lib` to `/etc/ld.so.conf` and run ldconfig if not already done.
+
+## Build the Policy Generator utility
 
 The Policy Generator utility can then be built using:
 
@@ -135,23 +159,17 @@ $ cd $(CERTIFIER)/utilities
 $ make -f policy_generator.mak
 ```
 
-There is a Linux driver that simulates the SEV functions in sev-snp-simulator.
+## SEV-SNP Simulator utility
+
+There is a Linux driver in the `sev-snp-simulator/` directory that simulates
+the SEV functions.
+
 Portions of this code are GPL licensed and the build driver is also GPL licensed.
 This is the only directory that contains GPL licensed code and it is not included in
-the certifier API or certifier service, so all other code in the Certifier Framework
+the Certifier API or Certifier Service, so all other code in the Certifier Framework
 for Confidential Computing is not affected by GPL license terms.
 
-To build this and install it on Linux:
-
-```shell
-$ cd $(CERTIFIER)/sev-snp-simulator
-$ make
-$ make keys
-$ make insmod
-$ cd $(CERTIFIER)/sev-snp-simulator/test
-$ make sev-test
-$ sudo sev-test        # (You must be root to run the test)
-```
+## Compile the sample app
 
 To compile the sample app in [sample_apps/simple_app](sample_apps/simple_app/):
 
@@ -162,22 +180,17 @@ $ make -f example_app.mak
 ```
 
 Instructions on running the app are in
-[instructions.txt](./sample_apps/simple_app/instructions.txt)
-as well as notes on provisioning a policy key in
-[policy_key_notes.txt](./sample_apps/simple_app/policy_key_notes.txt).
+[instructions.md](./sample_apps/simple_app/instructions.md)
+and notes on provisioning a policy key are in
+[policy_key_notes.md](./sample_apps/simple_app/policy_key_notes.md).
 
 This example illustrates very nearly all that is needed to run a "real" app.
 
 There is also an application service that provides Confidential Computing
 support for application programs on encrypted virtual machine platforms.
 For instructions on building and running this service in an encrypted
-virtual machine, read application_service/instructions.txt.
-
-Most programs can use a "simulated_enclave" for prototyping and can compile
-and run on linux or mac os.  To run programs that use SGX, you must run on
-SGX capable hardware.  We use Open Enclaves or Asylo to support SGX.
-To run programs that use AMD SEV-SNP, you must run on AMD SEV-SNP hardware
-under a compliant VMM and in a VM that supports AMD SEV-SNP primitives.
+virtual machine, refer to
+ [application_service/instructions.md](./application_service/instructions.md).
 
 
 Additional packages required
@@ -197,7 +210,7 @@ Google protobuf which can be obtained at https://github.com/protocolbuffers/prot
 
 Openssl which contains crypto libraries and TLS support.
 
-We use git as the repository framework.
+We use Git as the repository framework.
 
 You must install these as well as standard C++ compilers and libraries.  The
 Certifier Service is written in Go, so you also need to install that to build and use
