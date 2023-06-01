@@ -1,5 +1,8 @@
 # Simple App under AMD Secure Encrypted Virtualization (SEV)
 
+This example app shows all the major steps in a Confidential Computing program,
+running under AMD SEV-SNP.
+
 This document gives
 [detailed instructions](#Steps-to-build-and-run-Simple-App-under-AMD-SEV-SNP)
  for building and running the sample application on the
@@ -20,7 +23,14 @@ This uses the same application as in [simple_app](../simple_app/example_app.cc).
 This example embeds the policy key in the application using the
 `embed_policy_key.exe`.
 
--------------------------------------------------------------------------
+## Simulated SEV-SNP Environment
+
+We also support a SEV-SNP simulator which can be configured and installed
+on any Linux host / VM. The steps to build and install the simulator and to
+build-and-run the sample app under the simulator are documented below.
+
+----
+
 # Steps to build-and-run Simple App under AMD SEV-SNP
 
 $CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.
@@ -56,10 +66,36 @@ directory before running these commands:
 
 See [platform_data/README.md](./platform_data/README) for more details.
 
+## SEV-SNP Simulator utility
+
+There is a Linux driver in the `sev-snp-simulator/` directory that simulates
+the SEV functions.
+
+Portions of this code are GPL licensed and the build driver is also GPL licensed.
+This is the only directory that contains GPL licensed code and it is not included in
+the Certifier API or Certifier Service, so all other code in the Certifier Framework
+for Confidential Computing is not affected by GPL license terms.
+
+To build this and install it on Linux:
+
+```shell
+$ cd $(CERTIFIER)/sev-snp-simulator
+$ make
+$ make keys
+$ make insmod
+$ cd $(CERTIFIER)/sev-snp-simulator/test
+$ make sev-test
+$ sudo ./sev-test        # (You must be root to run the test)
+```
+
+**NOTE**: The [run_example.sh](../run_example.sh) script does not perform this one-time
+          setup. You need to do this step before running that script.
+
+-----
 ## Step 1: Build the utilities
 ```shell
-cd $CERTIFIER_PROTOTYPE
-cd utilities
+cd $CERTIFIER_PROTOTYPE/utilities
+
 make -f cert_utility.mak clean
 make -f cert_utility.mak
 make -f policy_utilities.mak
@@ -73,21 +109,26 @@ mkdir $EXAMPLE_DIR/provisioning
 ## Step 3: Generate the policy key and self-signed certificate
 ```shell
 cd $EXAMPLE_DIR/provisioning
+
 $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe       \
       --operation=generate-policy-key                 \
       --policy_key_output_file=policy_key_file.bin    \
       --policy_cert_output_file=policy_cert_file.bin
 ```
 
-### Step3a: Use der-encoded versions of the certificates
+### Step 3(a): Use der-encoded versions of the certificates
 
 Make sure there are der-encoded versions of the ARK, ASK and VCEK certificates in
 the provisioning directory.  For SEV, these certificates come from the platform.
+
 The script provides an alternate way to compile the application in a simulated
 evironment provided by sev-snp-simulator.
 
-For that environment, compilation script include -D SEV_DUMMY_GUEST.
-To test agains this environment, you must generate a ARK, ASK and VCEK certificates
+For that simulated environment, the compilation script,
+[sev_example_app.mak](./sev_example_app.mak), supports passing-in `-DSEV_DUMMY_GUEST`
+via the `CFLAGS` env-variable.
+
+To test against this environment, you must generate an ARK, ASK and VCEK certificates
 that are compatible with the sev-snp-simulator keys.
 
 To do this:
@@ -99,16 +140,16 @@ $CERTIFIER_PROTOTYPE/utilities/simulated_sev_key_generation.exe            \
          --ark_der=sev_ark_cert.der                                        \
          --ask_der=sev_ask_cert.der                                        \
          --vcek_der=sev_vcek_cert.der                                      \
-        --vcek_key_file=$CERTIFIER_PROTOTYPE/src/ec-secp384r1-pub-key.pem
+         --vcek_key_file=/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem
 
-mv ark_cert.der ark_cert.der.old
-mv ask_cert.der ask_cert.der.old
-mv vcek_cert.der vcek_cert.der.old
-mv sev_ark_cert.der ark_cert.der
-mv sev_ask_cert.der ask_cert.der
-mv sev_vcek_cert.der vcek_cert.der
+# Save existing cert.der files as .old files
+$ for der in ark_cert.der ask_cert.der vcek_cert.der; do cp -p ${der} ${der}.old; done
+
+# cp over newly created sev*.der files as cert.der files
+$ for der in ark_cert.der ask_cert.der vcek_cert.der; do cp -p sev_${der} ${der}; done
 ```
 
+# RESOLVE: This comment seems wrong ... fix it.
 **NOTE:** You must run the applications below as root for the simulated enclave.
         Make sure the keys come from
         $CERTIFIER_PROTOTYPE/src/ec-secp384r1-pub-key.pem and not from the simulator.
@@ -122,7 +163,6 @@ $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe     \
         --output=../policy_key.cc
 ```
 
-
 ## Step 5: Compile SEV-example_app with the embedded policy_key
 ```shell
 cd $EXAMPLE_DIR
@@ -131,26 +171,29 @@ make -f sev_example_app.mak clean
 make -f sev_example_app.mak
 ```
 
+NOTE: If you are running in a SEV-simulated environment, do:
+```shell
+CFLAGS='-DSEV_DUMMY_GUEST' make -f sev_example_app.mak
+```
 ## Step 6: Obtain the measurement of the trusted application for this security domain
 
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-# RESOLVE: Fix this instruction. Script implemented measurement_init.exe
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe  \
-        --mrenclave=<HASH>                              \
-        --output=example_app.measurement
+$CERTIFIER_PROTOTYPE/utilities/measurement_init.exe   \
+        --mrenclave=<HASH>                            \
+        --out_file=example_app.measurement
 ```
 Replace <HASH> with your actual measurement from `sev-snp-measure`.
 
-Or use:
+If you are using the [sev-snp-simulator](./../../INSTALL.md), use:
+
 ```
 010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708
 ```
-if you are using the sev-snp-simulator.
 
 
-## Author the policy for the security domain and produce the signed claims the apps need.
+## Author the policy for the security domain and produce the signed claims the apps need
 
 The policies can be generated either manually or through the Policy Generator tool.
 In the steps below, follow either step (7), below, or step (8),
@@ -286,18 +329,18 @@ $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 ```
 ## Step 8: Use Automated Policy Generator
 
-NOTE: You have to implement either one of step (6) or step (7).
+NOTE: You have to implement either one of step (7) or this step (8).
 
 ### a. Edit policy file
 
 Open sev_policy.json and replace trusted measurements in the
 "measurements" property with the expected measurement.
 
-Use:
+If you are using the sev-snp-simulator, use:
+
 ```
 010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708
 ```
-if you are using the sev-snp-simulator.
 
 **NOTE:** The default [sev_policy.json](./sev_policy.json) provided in this repo
       is custom-crafted to specify the policy and measurement for the SEV-SNP
@@ -317,6 +360,8 @@ LOCAL_LIB=/usr/local/lib64 make -f policy_generator.mak
 ### c. Run Policy Generator:
 
 ```shell
+cd $EXAMPLE_DIR/provisioning
+
 $CERTIFIER_PROTOTYPE/utilities/policy_generator.exe                         \
         --policy_input=../sev_policy.json                                   \
         --schema_input=$CERTIFIER_PROTOTYPE/utilities/policy_schema.json    \
@@ -338,14 +383,14 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 ```
 Compile the protobuf
 ```shell
-cd $CERTIFIER_PROTOTYPE
-cd certifier_service/certprotos
+cd $CERTIFIER_PROTOTYPE/certifier_service/certprotos
+
 protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
 ```
 Compile the oelib for OE host verification
 ```shell
-cd $CERTIFIER_PROTOTYPE
-cd certifier_service/oelib
+cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
+
 make
 ```
 If you do not have OE SDK installed or do not want to enable OE:
@@ -353,11 +398,12 @@ If you do not have OE SDK installed or do not want to enable OE:
 make dummy
 ```
 
-This should produce a go file for the certifier protobufs called certifier.pb.go in certprotos.
+This should produce a Go file for the certifier protobufs called certifier.pb.go in certprotos.
 
-Now build  simpeserver:
+Now build simpleserver:
 ```shell
 cd $CERTIFIER_PROTOTYPE/certifier_service
+
 go build simpleserver.go
 ```
 
@@ -376,6 +422,7 @@ hardware, these are not needed.
 
 ```shell
 cd $EXAMPLE_DIR/provisioning
+
 cp -p ./* $EXAMPLE_DIR/app1_data
 cp -p ./* $EXAMPLE_DIR/app2_data
 ```
@@ -384,6 +431,7 @@ cp -p ./* $EXAMPLE_DIR/app2_data
 ## Step 11: Provision the service files
 ```shell
 cd $EXAMPLE_DIR/provisioning
+
 cp -p policy_key_file.bin policy_cert_file.bin policy.bin $EXAMPLE_DIR/service
 cp -p *.der $EXAMPLE_DIR/service
 ```
@@ -470,7 +518,7 @@ $EXAMPLE_DIR/sev_example_app.exe            \
 You should see the message "Hi from your secret server" in the client terminal
 window and "Hi from your secret client".
 
-If so, **your first Confidential Computing program worked!**
+If so, **your first Confidential Computing program using AMD SEV-SNP worked!**
 
 ------
 ## General notes on building and running an SEV-enabled VM under KVM
