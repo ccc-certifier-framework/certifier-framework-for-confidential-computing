@@ -27,7 +27,10 @@ SimpleServer_PID=0
 Valid_app=0         # While looking thru SampleApps[] for supported app
 Found_step=0        # While looking thru Steps[] for user-specified fn-name
 DryRun=0            # --dry-run will turn this ON; off by default
+DryRunTag=" "
 DryRun_msg=""
+
+RunTag=""           # Short description of which app is being tested
 
 RunSudo=0           # Only some commands for SEV-app need to run as sudo
 
@@ -51,7 +54,17 @@ Simple_App_under_gramine_MbedTLS_dir="sample_apps/simple_app_under_gramine/${Mbe
 
 # Work-instructions for SEV-app need following files pre-populated by the user.
 #
-Platform_data_files_SEV="sev_policy.json ark_cert.der ask_cert.der vcek_cert.der"
+Platform_cert_files_SEV="ark_cert.der ask_cert.der vcek_cert.der"
+Platform_data_files_SEV="sev_policy.json ${Platform_cert_files_SEV}"
+
+# Normal usage (esp for testing) will be on simulated SEV-SNP environment
+# Unknown env; will be determined later on.
+CC_SIMULATED_SEV="${CC_SIMULATED_SEV:- -1}"
+
+# In simulated-SEV env, pre-install setup of sev-snp-simulator/ would have
+# installed this permission file. If it does not exist, that means the
+# setup hasn't been done. (We will fail simulated-sev execution.)
+CC_vcek_key_file_SIM_SEV="/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem"
 
 # ###########################################################################
 # Set trap handlers for all errors. Needs -E (-o errtrace): Ensures that ERR
@@ -152,13 +165,22 @@ function usage_OE() {
 # ---- SEV-SNP Enclave app-specific help/usage output
 function usage_SEV() {
     echo " "
-    echo "For simple_app_under_sev, you can alternatively use this script "
+    echo "For simple_app_under_sev, you use this script "
     echo "to generate the policy supplying the measurement in the policy JSON file:"
-    echo "Pre-populate simple_app_under_sev/platform_data/ with these required files:"
-    echo "  ${Platform_data_files_SEV}"
     echo " "
-    echo "  To setup the example program        : ./${Me} simple_app_under_sev setup_with_auto_policy_generation_for_SEV"
-    echo "  To run and test the example program : ./${Me} simple_app_under_sev run_test"
+    echo "-- (Default) In a SEV-SNP simulated platform, using the Automated Policy Generator:"
+    echo "   - Build and install the SEV-SNP Simulator utility"
+    echo "  To setup the example program        :      ./${Me} simple_app_under_sev setup"
+    echo "  To run and test the example program : sudo ./${Me} simple_app_under_sev run_test"
+    echo " "
+    echo "-- On SEV-SNP enabled hardware platform:"
+    echo "   Pre-populate simple_app_under_sev/platform_data/ with these required files:"
+    echo "   ${Platform_data_files_SEV}"
+    echo " "
+    echo "  To setup the example program        :      ./${Me} simple_app_under_sev setup_with_auto_policy_generation_for_SEV"
+    echo "  To run and test the example program : sudo ./${Me} simple_app_under_sev run_test"
+    echo " "
+    echo "  To cleanup after a run              : sudo ./cleanup.sh"
 }
 
 # ###########################################################################
@@ -250,13 +272,14 @@ Steps_SEV=( "rm_non_git_files"
             "do_cleanup"
             "build_utilities"
             "gen_policy_and_self_signed_cert"
+            "gen_certificates_for_simulated_SEV"
             "emded_policy_in_example_app"
             "compile_app"
             "get_measurement_of_trusted_app"
 
             # --------------------------------------------------------------
             # If user is running individual steps, they have to run
-            #  - either manual_policy_generation_for_SEV,
+            #  - either manual_policy_generation_for_SEV (currently, unsupported),
             #  - or     automated_policy_generation_for_SEV
             "manual_policy_generation_for_SEV"
               # These sub-step fns are subsumed under author_policy()
@@ -268,7 +291,7 @@ Steps_SEV=( "rm_non_git_files"
             "automated_policy_generation_for_SEV"
               # These sub-step fns are subsumed under automated_policy_generation_for_SEV()
                "edit_policy_file_SEV"
-               "build_policy_generator_SEV"
+               "build_policy_generator"
                "run_policy_generator_SEV"
 
             "build_simple_server"
@@ -278,6 +301,9 @@ Steps_SEV=( "rm_non_git_files"
 
             # Special-case interface to invoke automated_policy_generation_for_SEV()"
             "setup_with_auto_policy_generation_for_SEV"
+
+            # Special-case interface to run on simulated SEV platform
+            "setup_with_auto_policy_generation_for_simulated_SEV"
 
             # 'run_test' argument starts from here:
             "start_certifier_service"
@@ -392,20 +418,28 @@ function run_cmd() {
     echo " "
     This_fn="${FUNCNAME[1]}"
     if [ "${Prev_fn}" != "${This_fn}" ]; then
-        echo "******************************************************************************"
-        echo "${Me}: Running ${FUNCNAME[1]} "
+        echo "**************************************************************************************************************"
+        echo "${Me}: ${RunTag}: Running${DryRunTag}${FUNCNAME[1]} "
         Prev_fn="${This_fn}"
+    fi
+
+    # For tracing, some functions simply invoke this run_cmd() with
+    # no arguments. Just 'sudo' will fail, so side-step this usage 'issue'.
+    local args_array=("$@")
+    local array_len=0
+    array_len=$((${#args_array[@]}))
+
+    local echo_sudo=""
+    local run_sudo=0
+    if [ "${RunSudo}" -eq 1 ] && [ "${array_len}" -gt "1" ]; then
+        echo_sudo="sudo "
+        run_sudo=1
     fi
 
     # Only execute the commands if --dry-run is OFF
     if [ ${DryRun} -eq 0 ]; then
 
-        # For tracing, some functions simply invoke this run_cmd() with
-        # no arguments. Just 'sudo' will fail, so side-step this usage 'issue'.
-        local args_array=("$@")
-        local array_len=0
-        array_len=$((${#args_array[@]}))
-        if [ "${RunSudo}" -eq 1 ] && [ "${array_len}" -gt "1" ]; then
+        if [ "${run_sudo}" -eq 1 ]; then
             set -x
             sudo "$@"
             set +x
@@ -416,7 +450,7 @@ function run_cmd() {
         fi
     else
         # Print what would have been executed, so user can learn from this.
-        echo "$@"
+        echo "${echo_sudo}$@"
     fi
 }
 
@@ -519,6 +553,47 @@ function gen_policy_and_self_signed_cert() {
     fi
 
     run_popd
+
+    # As we are drilling through generic Steps[] array, we need
+    # to do a side-bar to handle simulated-SEV certificates.
+    if [ "${CC_SIMULATED_SEV}" -eq 1 ]; then
+        gen_certificates_for_simulated_SEV
+    fi
+}
+
+# ###########################################################################
+# Ggenerate an ARK, ASK and VCEK certificates that are compatible with the
+# sev-snp-simulator keys.
+# ###########################################################################
+function gen_certificates_for_simulated_SEV() {
+    # This step appears in the general list of steps for 'setup'.
+    # Skip it, if we are not in a simulated SEV environment.
+    if [ "${CC_SIMULATED_SEV}" -ne 1 ]; then
+        return;
+    fi
+
+    run_cmd
+    run_pushd "${PROV_DIR}"
+
+    run_cmd "${CERT_UTILS}"/simulated_sev_key_generation.exe    \
+             --ark_der=sev_ark_cert.der                         \
+             --ask_der=sev_ask_cert.der                         \
+             --vcek_der=sev_vcek_cert.der                       \
+             --vcek_key_file="${CC_vcek_key_file_SIM_SEV}"
+
+    # Save existing cert.der files as .old files
+    for der in ${Platform_cert_files_SEV}
+    do
+        run_cmd cp -p "${der}" "${der}.old"
+    done
+
+    # cp over newly created sev*.der files as cert.der files
+    for der in ${Platform_cert_files_SEV}
+    do
+        run_cmd cp -p sev_"${der}" "${der}"
+    done
+
+    run_popd
 }
 
 # ###########################################################################
@@ -594,7 +669,10 @@ function compile_simple_app_under_sev() {
     run_pushd "${EXAMPLE_DIR}"
 
     run_cmd make -f sev_example_app.mak clean
+
+    export CFLAGS="-DSEV_DUMMY_GUEST"
     run_cmd make -f sev_example_app.mak
+    unset CFLAGS
 
     run_popd
 }
@@ -707,7 +785,6 @@ function get_measurement_of_trusted_simple_app_under_sev() {
 
     run_pushd "${PROV_DIR}"
 
-    # RESOLVE: Fix docs; step refers to measurement_utility.exe --mrenclave ... etc.
     run_cmd "$CERT_UTILS"/measurement_init.exe  \
             --mrenclave="${mrenclave}"          \
             --out_file=example_app.measurement
@@ -779,6 +856,9 @@ function manual_policy_generation_for_OE() {
 function manual_policy_generation_for_SEV() {
     run_cmd
     run_pushd "${PROV_DIR}"
+
+    echo "${Me}: Currently this method is unsupported for SEV-platform."
+    exit 1
 
     run_popd
 }
@@ -1039,9 +1119,13 @@ function edit_policy_file_OE() {
 # Shared by OE- and SEV-app's steps
 function build_policy_generator() {
     run_cmd
+
     run_pushd "${CERT_PROTO}/utilities"
+
     local mkf="policy_generator.mak"
+    run_cmd make -f ${mkf} clean
     LOCAL_LIB=${Local_lib_path} run_cmd make -f ${mkf}
+
     run_popd
 }
 
@@ -1049,6 +1133,21 @@ function build_policy_generator() {
 function run_policy_generator_OE() {
     run_cmd
     run_policy_generator_for_app "../oe_policy.json"
+}
+
+# ###########################################################################
+function run_policy_generator_SEV() {
+    run_cmd
+
+    # Set this env-var, so policy_generator.exe can find
+    # nlohmann_json_schema_validator from known lib-path.
+    # This is a CI-friendly w/a to instructions that require sudo to edit
+    # /etc/ld.so.conf, and then to run 'ldconfig'.
+    set -x
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-${Local_lib_path}}; export LD_LIBRARY_PATH
+    set +x
+
+    run_policy_generator_for_app "../sev_policy.json"
 }
 
 # ###########################################################################
@@ -1063,25 +1162,24 @@ function run_policy_generator_for_app() {
                 --policy_input="${policy_input_json}"                       \
                 --schema_input="${CERT_PROTO}"/utilities/policy_schema.json \
                 --util_path="${CERT_PROTO}"/utilities
-
     run_popd
 }
 
 # ###########################################################################
 # Step 8 in instructions.md: Use Automated Policy Generator
 # You run either this or step (7).
+# NOTE: This function executes both for SEV-SNP platform and for
+#       simulated-SEV environment (on Linux VMs).
 # ###########################################################################
 function automated_policy_generation_for_SEV() {
     run_cmd
-    check_platform_data_files_SEV
-
     run_pushd "${PROV_DIR}"
 
     # This does not exist, as we expect user to hand-edit and provide us a
     # JSON-policy file
     # edit_policy_file_SEV
 
-    # Building policy_generator.exe is same command for OE-app
+    # Building policy_generator.exe is same command as for OE-app
     build_policy_generator
     run_policy_generator_SEV
 
@@ -1107,7 +1205,6 @@ function check_platform_data_files_SEV() {
     currdir="$(basename $(dirname "${fulldir}"))/$(basename "${fulldir}")"
 
     nerrors=0
-    # for file in sev_policy.json ark_cert.der ask_cert.der vcek_cert.der;
     for file in ${Platform_data_files_SEV}
     do
         if [ ! -f "${file}" ] && [ "${DryRun}" = 0 ]; then
@@ -1123,12 +1220,6 @@ function check_platform_data_files_SEV() {
     run_cmd cp -p ./*.der "${PROV_DIR}"
 
     run_popd
-}
-
-# ###########################################################################
-function run_policy_generator_SEV() {
-    run_cmd
-    run_policy_generator_for_app "../sev_policy.json"
 }
 
 # ###########################################################################
@@ -1682,7 +1773,9 @@ function setup_simple_app() {
 # Default is manual step by running a collection of utility programs.
 #
 # Optionally, user can hand-edit policy.json file and stick-in the
-# generated measurement. This is also automated under 'generate_policy' step.
+# generated measurement. This is also automated under 'run_policy_generator*()'
+# step, using the policy_generator.exe executable.
+#
 # So, user can invoke this script as:
 #   $ run_example.sh simple_app_under_oe setup_with_auto_policy_generation_for_OE
 #
@@ -1703,6 +1796,7 @@ function setup_simple_app_under_oe() {
 # Run setup for OE-app, but manage policy by editing JSON file.
 # ###########################################################################
 function setup_with_auto_policy_generation_for_OE() {
+    RunTag="${RunTag} auto-policy generation"
     setup_simple_app_under_oe "automated_policy_generation_for_OE"
 }
 
@@ -1733,21 +1827,38 @@ function setup_MbedTLS() {
 # For SEV-app, we have two ways to manage policy generation (very similar
 # to what is supported for OE-app).
 #
-# Default is manual step by running a collection of utility programs.
+# - Manual policy generation: By running a collection of utility programs.
+#   Currently unsupported.
 #
-# Optionally, user can hand-edit policy.json file and stick-in the
-# generated measurement. This is also automated under 'generate_policy' step.
+# - Automated policy generation: Optionally, user can hand-edit policy.json
+#   file and stick-in the generated measurement. This is also automated under
+#   'run_policy_generator*()' step, using the policy_generator.exe executable.
+#
 # So, user can invoke this script as:
 #   $ run_example.sh simple_app_under_sev setup_with_auto_policy_generation_for_SEV
+#
+# Additionally, we can run the sample-app on:
+#   1. Simulated SEV-enabled platform on any Linux machine (default).
+#   2. Real SEV-enabled h/w platform
 #
 # If the 2nd arg is provided, manually execute that sub-step's function.
 # ###########################################################################
 function setup_simple_app_under_sev() {
     local setup_arg="$1"
-    check_platform_data_files_SEV
-    run_steps "show_env" "get_measurement_of_trusted_app"
+
+    run_cmd
+
+    # If user just said 'setup', assume they are running in simulated-SEV env
     if [ "${setup_arg}" = "" ]; then
-        manual_policy_generation_for_SEV
+        CC_SIMULATED_SEV=1
+        RunTag="${RunTag} simulated-SEV"
+        check_perm_files_simulated_SEV
+    fi
+
+    run_steps "show_env" "get_measurement_of_trusted_app"
+
+    if [ "${setup_arg}" = "" ]; then
+        automated_policy_generation_for_SEV
     else
         ${setup_arg}
     fi
@@ -1756,10 +1867,46 @@ function setup_simple_app_under_sev() {
 
 # ###########################################################################
 # Run setup for SEV-app, but use the user-specified policy from user-edited
-# JSON-policy file.
+# JSON-policy file. This method is meant to be used on a real SEV-platform.
 # ###########################################################################
 function setup_with_auto_policy_generation_for_SEV() {
+    CC_SIMULATED_SEV=0
+    check_platform_data_files_SEV
+    RunTag="${RunTag} auto-policy generation"
     setup_simple_app_under_sev "automated_policy_generation_for_SEV"
+}
+
+# ###########################################################################
+# Run setup for SEV-app, but use the user-specified policy from default
+# JSON-policy file, in a simulated SEV environment.
+# NOTE: Currently, this interface is not exposed, but retain this function
+#       in case we ever support manual policy generation for SEV-app.
+#       At that time, this function can be exposed to the end-user.
+# ###########################################################################
+function setup_with_auto_policy_generation_for_simulated_SEV() {
+    check_perm_files_simulated_SEV
+    CC_SIMULATED_SEV=1
+    RunTag="${RunTag} simulated-SEV"
+    setup_simple_app_under_sev "automated_policy_generation_for_SEV"
+}
+
+# ###########################################################################
+# Work-instructions, and this script, expect that the user has done the
+# build-and-setup of simulated SEV environment, using 'make' targets in
+# the sev-snp-simulator/ dir. Check for its artifacts, and fail execution
+# if the key permission file is not found.
+# ###########################################################################
+function check_perm_files_simulated_SEV() {
+
+    run_cmd
+    local file=${CC_vcek_key_file_SIM_SEV}
+    local sim_dir="${CERT_PROTO}/sev-snp-simulator"
+
+    if [ ! -f "${file}" ] && [ "${DryRun}" = 0 ]; then
+        echo "${Me}:${LINENO}: Expected to find permission file: ${file}"
+        echo "${Me} Please do the setup of simulated SEV environment using the scripts in ${sim_dir}, and re-try."
+        exit 1
+    fi
 }
 
 # ###########################################################################
@@ -1809,7 +1956,8 @@ fi
 
 if [ "$1" == "--dry-run" ]; then
     DryRun=1
-    DryRun_msg="in dry-run mode"
+    DryRunTag=" dry-run "
+    DryRun_msg="in${DryRunTag}mode"
     shift
 fi
 
@@ -1826,6 +1974,8 @@ if [ $# -ge 1 ]; then
     fi
     SampleAppName="$1"
 fi
+
+RunTag="${SampleAppName}"
 
 # ----------------------------------------------------------------
 # Having established name of valid sample app, setup env variables
@@ -1869,7 +2019,7 @@ if [ $# -eq 2 ]; then
     # shellcheck disable=SC2048
     $2 "${SampleAppName}"
 
-    echo "${Me}: $(TZ="America/Los_Angeles" date) Completed $2 ${DryRun_msg} for $1."
+    echo "${Me}: $(TZ="America/Los_Angeles" date) Completed $2 ${DryRun_msg} for ${RunTag}."
     exit 0
 fi
 
@@ -1894,4 +2044,4 @@ trap "" ERR
 # shellcheck disable=SC2086
 if [ ${SimpleServer_PID} -ne 0 ]; then kill -9 "${SimpleServer_PID}"; fi
 
-echo "${Me}: $(TZ="America/Los_Angeles" date) Completed ${DryRun_msg}."
+echo "${Me}: $(TZ="America/Los_Angeles" date) Completed ${DryRun_msg} for ${RunTag}."
