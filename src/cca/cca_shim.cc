@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "support.h"
-#include "cca_shim.h"
+#include "cca.h"
 
 bool cca_Init(const int cert_size, byte *cert) {
   return true;

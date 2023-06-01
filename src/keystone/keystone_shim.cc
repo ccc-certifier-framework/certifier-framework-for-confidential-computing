@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "support.h"
-#include "keystone_shim.h"
+#include "keystone.h"
 
 bool keystone_Init(const int cert_size, byte *cert) {
   return true;
