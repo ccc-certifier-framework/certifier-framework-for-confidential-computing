@@ -96,19 +96,56 @@ func InitPolicyPool(pool *PolicyPool) bool {
 }
 
 // Returns the single policy statement naming the relevant platform key policy statement for a this evidence package
-func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string, evp *certprotos.EvidencePackage) *certprotos.VseClause {
 	// find the platform key needed from evp and the corresponding policy rule
+	ev_list := evp.FactAssertion
+	if ev_list == nil {
+		return nil
+	}
+	var match certprotos.Evidence = nil
+	// find platformKey says attestationKey is-trusted-for-attestation
+	for i := 0; i < len(ev_list); i++ {
+		ev :=  ev_list[i]
+		if ev == nil {
+			continue
+		}
+		cl := ev.Clause
+		if cl == nil {
+			continue
+		}
+		if (cl.Verb == nil || cl.GetVerb() != "is-trusted-for-attestation" {
+			continue
+		}
+		match = ev
+	}
+	if match == nil {
+		return nil
+	}
+	// Look for match.Subject says anotherKey is-trusted-for-attestation
+	// Find rule that says policyKey says match.Subject is-trusted-for-attestation and return it
 	return nil
 }
 
 // Returns the single policy statement naming the relevant measurement policy statement for a this evidence package
-func GetRelevantMeasurementPolicy(pool *PolicyPool, evp *certprotos.EvidencePackage) *certprotos.VseClause {
-	// find the measurement key needed from evp and the corresponding policy rule
+func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+	// Find the attestation
+	// Extract the measurement from the attestation
+	// search pool for policyKey says measurement is-trusted and return it
+	if evType == "vse-attestation-package" {
+	} else if evType == "sev-platform-package" {
+	} else if evType == "oe-evidence" {
+	} else if evType == "gramine-evidence" {
+	} else {
+	}
+
 	return nil
 }
 
 // Returns the single policy statement naming the relevant trusted-platform policy statement for a this evidence package
-func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evType string, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+	// Find "environment(platform, measurement) is-environment"
+	// Extract platform
+	// Find platform policy that matches platform and return it
 	return nil
 }
 
