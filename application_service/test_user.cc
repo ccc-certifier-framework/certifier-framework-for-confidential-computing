@@ -18,6 +18,12 @@
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 
+#include <certifier_framework.h>
+#include <certifier_utilities.h>
+
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
 int main(int an, char**av) {
   string enclave("application-enclave");
   string id("1");

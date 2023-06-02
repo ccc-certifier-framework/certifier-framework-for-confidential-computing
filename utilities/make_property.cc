@@ -19,6 +19,8 @@
 #include "certifier.h"
 #include "support.h"
 
+using namespace certifier::utilities;
+
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(property_name, "",  "property name");
 DEFINE_string(property_type, "",  "property type");

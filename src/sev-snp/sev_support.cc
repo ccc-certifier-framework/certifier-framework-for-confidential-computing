@@ -43,12 +43,18 @@
 #include "certifier.h"
 #include "support.h"
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
 #define SEV_GUEST_DEVICE  "/dev/sev-guest"
 
 #ifdef SEV_DUMMY_GUEST
-#define SEV_ECDSA_PRIV_KEY  "ec-secp384r1-priv-key.pem"
-#define SEV_ECDSA_PUB_KEY  "ec-secp384r1-pub-key.pem"
+#define SEV_ECDSA_PRIV_KEY  "/etc/certifier-snp-sim/ec-secp384r1-priv-key.pem"
+#define SEV_ECDSA_PUB_KEY  "/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem"
 #endif
+
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 static void reverse_bytes(uint8_t *buffer, size_t size) {
   if (!buffer || size == 0)
@@ -299,7 +305,9 @@ int sev_request_key(struct sev_key_options *options, uint8_t *key, size_t size) 
   fd = open(SEV_GUEST_DEVICE, O_RDWR);
   if (fd == -1) {
     rc = errno;
-    perror("open");
+    char error[64];
+    snprintf(error, sizeof(error), "[%d] open %s, errno=%d", __LINE__, SEV_GUEST_DEVICE, rc);
+    perror(error);
     goto out;
   }
 
@@ -308,7 +316,9 @@ int sev_request_key(struct sev_key_options *options, uint8_t *key, size_t size) 
   if (rc == -1) {
     rc = errno;
     perror("ioctl");
-    fprintf(stderr, "firmware error %llu\n", guest_req.fw_err);
+    fprintf(stderr, "[%s:%d] ioctl key=%lu, firmware error %llu\n",
+	    __func__, __LINE__,
+	    SNP_GET_DERIVED_KEY, guest_req.fw_err);
     goto out_close;
   }
 
@@ -449,7 +459,9 @@ int sev_get_report(const uint8_t *data, size_t data_size,
   fd = open(SEV_GUEST_DEVICE, O_RDWR);
   if (fd == -1) {
     rc = errno;
-    perror("open");
+    char error[64];
+    snprintf(error, sizeof(error), "[%d] open %s, errno=%d", __LINE__, SEV_GUEST_DEVICE, rc);
+    perror(error);
     goto out;
   }
 

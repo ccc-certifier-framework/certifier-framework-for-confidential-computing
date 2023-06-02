@@ -128,7 +128,7 @@ $(CERT_SRC)/certifier.pb.cc $(I)/certifier.pb.h: $(CERT_SRC)/certifier.proto
 
 $(O)/certifier.pb.o: $(CERT_SRC)/certifier.pb.cc $(INC_DIR)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS_NOERROR) -c  -o $(O)/certifier.pb.o $(CERT_SRC)/certifier.pb.cc
+	$(CC) $(CFLAGS_NOERROR) -Warray-bounds -c  -o $(O)/certifier.pb.o $(CERT_SRC)/certifier.pb.cc
 
 $(O)/support.o: $(CERT_SRC)/support.cc $(INC_DIR)/support.h $(INC_DIR)/certifier.pb.h
 	@echo "compiling support.cc"

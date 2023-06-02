@@ -18,6 +18,8 @@
 #include "certifier.h"
 #include "support.h"
 
+using namespace certifier::utilities;
+
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(in, "",  "input files");
 DEFINE_string(output, "",  "output file");

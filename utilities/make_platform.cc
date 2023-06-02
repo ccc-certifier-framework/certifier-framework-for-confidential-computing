@@ -18,6 +18,8 @@
 #include "certifier.h"
 #include "support.h"
 
+using namespace certifier::utilities;
+
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(platform_type, "",  "platform type");
 DEFINE_string(properties_file, "",  "properties files");

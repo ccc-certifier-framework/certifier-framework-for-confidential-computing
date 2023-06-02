@@ -26,6 +26,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 // Proof support
 // -----------------------------------------------------------------------
@@ -1295,7 +1297,7 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
         return false;
       }
 
-#if 1
+#ifdef DEBUG
       printf("attestation report:\n");
       print_attestation_info(info);
       printf("\n");

@@ -36,12 +36,7 @@
 #include <openssl/evp.h>
 #include "certifier.pb.h"
 
-#ifndef byte
-typedef unsigned char byte;
-#endif
-
-using std::string;
-
+#include "certifier_framework.h"
 
 // Some Data and access functions
 // -------------------------------------------------------------------
@@ -56,104 +51,6 @@ const key_message* GetPublicPolicyKey();
 bool PublicKeyFromCert(const string& cert, key_message* k);
 
 
-// Policy store
-// -------------------------------------------------------------------
-
-class policy_store {
-public:
-  enum {MAX_NUM_ENTRIES = 200};
-  bool policy_key_valid_;
-
-  key_message policy_key_;
-
-  int max_num_ts_;
-  int num_ts_;
-  trusted_service_message** ts_;
-  int max_num_tsc_;
-  int num_tsc_;
-  tagged_signed_claim** tsc_;
-  int max_num_si_;
-  int num_si_;
-  storage_info_message** si_;
-  int max_num_tc_;
-  int num_tc_;
-  tagged_claim** tc_;
-  int max_num_tkm_;
-  int num_tkm_;
-  channel_key_message** tkm_;
-  int max_num_blobs_;
-  int num_blobs_;
-  tagged_blob_message** tagged_blob_;
-
-public:
-
-  policy_store();
-  policy_store(int max_trusted_services, int max_trusted_signed_claims,
-      int max_storage_infos, int max_claims, int max_keys, int max_blobs);
-  ~policy_store();
-
-  bool replace_policy_key(key_message& k);
-  const key_message* get_policy_key();
-
-  int get_num_trusted_services();
-  const trusted_service_message* get_trusted_service_info_by_index(int n);
-  int get_trusted_service_index_by_tag(const string tag);
-  bool add_trusted_service(trusted_service_message& to_add);
-  void delete_trusted_service_by_index(int n);
-
-  int get_num_storage_info();
-  const storage_info_message* get_storage_info_by_index(int n);
-  bool add_storage_info(storage_info_message& to_add);
-  int get_storage_info_index_by_tag(const string& tag);
-  void delete_storage_info_by_index(int n);
-
-  int get_num_claims();
-  const claim_message* get_claim_by_index(int n);
-  bool add_claim(const string& tag, const claim_message& to_add);
-  int get_claim_index_by_tag(const string& tag);
-  void delete_claim_by_index(int n);
-
-  int get_num_signed_claims();
-  const signed_claim_message* get_signed_claim_by_index(int n);
-  int get_signed_claim_index_by_tag(const string& tag);
-  bool add_signed_claim(const string& tag, const signed_claim_message& to_add);
-  void delete_signed_claim_by_index(int n);
-
-  bool add_authentication_key(const string& tag, const key_message& k);
-  const key_message* get_authentication_key_by_tag(const string& tag);
-  const key_message* get_authentication_key_by_index(int index);
-  int get_authentication_key_index_by_tag(const string& tag);
-  void delete_authentication_key_by_index(int index);
-
-  bool add_blob(const string& tag, const string& s);
-  const string* get_blob_by_tag(const string& tag);
-  const string* get_blob_by_index(int index);
-  const tagged_blob_message* get_tagged_blob_info_by_index(int n);
-  int get_blob_index_by_tag(const string& tag);
-  void delete_blob_by_index(int index);
-  int get_num_blobs();
-
-  bool Serialize(string* out);
-  bool Deserialize(string& in);
-
-  void clear_policy_store();
-};
-void print_store(policy_store& ps);
-
-
-// Trusted primitives
-// -------------------------------------------------------------------
-
-bool Seal(const string& enclave_type, const string& enclave_id,
-  int in_size, byte* in, int* size_out, byte* out);
-
-bool Unseal(const string& enclave_type, const string& enclave_id,
-  int in_size, byte* in, int* size_out, byte* out);
-
-bool Attest(const string& enclave_type,
-  int what_to_say_size, byte* what_to_say,
-  int* size_out, byte* out);
-
 bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_type,
       string* out);
 
@@ -161,23 +58,9 @@ bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
   int* size_out, byte* out);
 
 
-// Protect Support
-// -------------------------------------------------------------------
-
-bool Protect_Blob(const string& enclave_type,
-  key_message& key, int size_unencrypted_data, byte* unencrypted_data,
-  int* size_protected_blob, byte* blob);
-bool Unprotect_Blob(const string& enclave_type,
-  int size_protected_blob, byte* protected_blob,
-  key_message* key, int* size_of_unencrypted_data, byte* data);
-
-// -------------------------------------------------------------------
-
-
 // Claims and proofs
 // -------------------------------------------------------------------
 
-bool check_date_range(const string& nb, const string& na);
 bool make_attestation_user_data(const string& enclave_type,
        const key_message& enclave_key, attestation_user_data* out);
 bool sign_report(const string& type, const string& report, const string& signing_alg,

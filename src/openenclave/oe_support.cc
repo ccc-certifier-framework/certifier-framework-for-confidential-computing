@@ -7,6 +7,8 @@
 #include <certifier.h>
 #include <support.h>
 
+using namespace certifier::utilities;
+
 string pem_cert_chain;
 bool pem_cert_chain_initialized = false;
 

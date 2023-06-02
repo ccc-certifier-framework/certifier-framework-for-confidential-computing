@@ -37,7 +37,6 @@ DEFINE_string(ark_cert_file_name, "ark_cert_file.bin", "ark cert");
 DEFINE_string(ask_cert_file_name, "ask_cert_file.bin", "ask cert");
 DEFINE_string(vcek_cert_file_name, "vcek_cert_file.bin", "vcek cert");
 
-
 // Encryption and support tests
 extern bool test_random(bool print_all);
 TEST (test_random, test_random) {

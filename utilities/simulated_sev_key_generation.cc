@@ -22,6 +22,8 @@
 #include "support.h"
 #include "attestation.h"
 
+using namespace certifier::utilities;
+
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(ark_der, "sev_ark_cert.der",  "ark cert file");
 DEFINE_string(ask_der, "sev_ask_cert.der",  "ask cert file");

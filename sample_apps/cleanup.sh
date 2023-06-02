@@ -21,7 +21,7 @@ function cleanup_stale_procs() {
     # pid, and / or use 'pgrep --signal pkill' to kill such processes, because in
     # case the process does not exist, 'pgrep' will exit with $rc=1. This will cause
     # this entire script to abort prematurely before cleanup is finished.
-    for procname in simpleserver example_app.exe run_example.sh host
+    for procname in simpleserver example_app.exe run_example.sh host gramine/sgx/loader sev_example_app.exe
     do
         # shellcheck disable=SC2046,SC2009
         if [ $(ps -ef | grep -E "${procname}" \
@@ -29,8 +29,16 @@ function cleanup_stale_procs() {
         then
             echo
             ps -ef | grep -E "${procname}" | grep -v -w -E 'grep|vi|vim'
+            # Workaround: Handle procname so pgrep can succeed
+            if [ "${procname}" = "gramine/sgx/loader" ]; then
+                procname="loader"
+            fi
             set -x
-            pid=$(pgrep "${procname}")
+            # Somehow this does not work for programs started as root
+            # pid=$(pgrep "${procname}")
+            pid=$(ps -ef | grep -w "${procname}" \
+		   | grep -v -w -E "grep|vi|vim|${parent_pid}" \
+		   | awk '{print $2}')
 
             # shellcheck disable=SC2086
             # kill -9 ${pid}

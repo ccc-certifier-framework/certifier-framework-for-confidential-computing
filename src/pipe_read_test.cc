@@ -5,6 +5,8 @@
 #include "support.h"
 #include "simulated_enclave.h"
 
+using namespace certifier::utilities;
+
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +27,7 @@ int main(int an, char** av) {
   int fd[2];
   if (pipe2(fd, O_DIRECT) < 0) {
     printf("Pipe failed\n");
-    return false;
+    return 0;
   }
 
   const int buf_size = 100;

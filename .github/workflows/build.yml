@@ -42,6 +42,37 @@ jobs:
         ./run_example.sh simple_app show_env
         ./run_example.sh simple_app_under_oe show_env
 
+        #! Re-run help / usage / list options, for simple_app_under_gramine
+        ./run_example.sh --help simple_app_under_gramine
+        ./run_example.sh --list simple_app_under_gramine
+
+        #! Re-run help / usage / list options, for simple_app_under_sev
+        ./run_example.sh --help simple_app_under_sev
+        ./run_example.sh --list simple_app_under_sev
+
+        #! ---------------------------------------------------------------------
+        #! Exercise various interfaces in --dry-run mode. This will ensure that
+        #! script's execution logic will likely work for different sample apps,
+        #! when tested on the appropriate platform and environment.
+        #! ---------------------------------------------------------------------
+        ./run_example.sh --dry-run simple_app
+        ./run_example.sh --dry-run simple_app setup
+        ./run_example.sh --dry-run simple_app run_test
+
+        ./run_example.sh --dry-run simple_app_under_oe
+        ./run_example.sh --dry-run simple_app_under_oe setup
+        ./run_example.sh --dry-run simple_app_under_oe run_test
+        ./run_example.sh --dry-run simple_app_under_oe setup_with_auto_policy_generation_for_OE
+
+        ./run_example.sh --dry-run simple_app_under_gramine
+        ./run_example.sh --dry-run simple_app_under_gramine setup
+        ./run_example.sh --dry-run simple_app_under_gramine run_test
+
+        ./run_example.sh --dry-run simple_app_under_sev
+        ./run_example.sh --dry-run simple_app_under_sev setup
+        ./run_example.sh --dry-run simple_app_under_sev run_test
+        ./run_example.sh --dry-run simple_app_under_sev setup_with_auto_policy_generation_for_SEV
+
         #! ---------------------------------------------------------------------
         #! Test: Execute script to compile, build and run simple_app.
         #! This will also check that utilities programs still compile

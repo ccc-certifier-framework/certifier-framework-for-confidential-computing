@@ -3,6 +3,9 @@
 #include "simulated_enclave.h"
 #include "application_enclave.h"
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -130,6 +133,22 @@ bool test_x_509_chain(bool print_all) {
   if (signing_pkey1 == nullptr) {
     printf("\nsigning_pkey1 is NULL\n");
     return false;
+  }
+
+  time_point t1_before, t1_after;
+  // asn1_time_to_tm_time(const ASN1_TIME* s, struct tm *tm_time);
+  if (!get_not_before_from_cert(cert1, &t1_before)) {
+    printf("get_not_before_from_cert failed\n");
+    return false;
+  }
+  if (!get_not_after_from_cert(cert1, &t1_after)) {
+    printf("get_not_after_from_cert failed\n");
+    return false;
+  }
+
+  if (print_all) {
+    printf("Time before: "); print_time_point(t1_before); printf("\n");
+    printf("Time after : "); print_time_point(t1_after); printf("\n");
   }
 
   // pub key from second cert

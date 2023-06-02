@@ -1,11 +1,14 @@
 #include <gflags/gflags.h>
 
-#include <support.h>
 #include <gflags/gflags.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
+#include "certifier_utilities.h"
+
+using namespace certifier::utilities;
 
 DEFINE_string(server_app_host, "localhost", "address for application requests");
 DEFINE_int32(server_app_port, 8127, "port for application requests");

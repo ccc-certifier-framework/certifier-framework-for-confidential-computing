@@ -27,6 +27,9 @@
 #include <linux/memfd.h>
 #include <sys/mman.h>
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -74,6 +77,8 @@ DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der", "ark cert file name
 DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der", "ask cert file name");
 DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der", "vcek cert file name");
 
+
+extern string authenticated_encryption_algorithm;
 
 //#define DEBUG
 
@@ -220,8 +225,8 @@ bool soft_Seal(spawned_children* kid, string in, string* out) {
   if (!get_random(8 * block_size, iv)) {
     return false;
   }
-  if (!authenticated_encrypt((byte*)buffer_to_seal.data(), buffer_to_seal.size(),
-        app_trust_data->service_symmetric_key_, iv, t_out, &t_size)) {
+  if (!authenticated_encrypt(authenticated_encryption_algorithm.c_str(), (byte*)buffer_to_seal.data(),
+        buffer_to_seal.size(), app_trust_data->service_symmetric_key_, iv, t_out, &t_size)) {
     printf("soft_Seal: authenticated encrypt failed\n");
     return false;
   }
@@ -237,8 +242,8 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
   int t_size = in.size();
   byte t_out[t_size];
 
-  if (!authenticated_decrypt((byte*)in.data(), in.size(), app_trust_data->service_symmetric_key_,
-            t_out, &t_size)) {
+  if (!authenticated_decrypt(authenticated_encryption_algorithm.c_str(), (byte*)in.data(), in.size(),
+          app_trust_data->service_symmetric_key_, t_out, &t_size)) {
     printf("soft_Unseal: authenticated decrypt failed\n");
     return false;
   }

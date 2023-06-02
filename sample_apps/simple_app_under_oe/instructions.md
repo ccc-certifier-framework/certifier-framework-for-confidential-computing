@@ -111,8 +111,9 @@ Follow these instructions.
 
 ## Author the policy for the security domain and produce the signed claims the apps need.
 
-The policies can be generated either manually or through the policy generator tool.
-In the steps below, follow either step (7) or step (8).
+The policies can be generated either manually or through the Policy Generator tool.
+In the steps below, follow either step (7), below, or step (8),
+ [Use Automated Policy Generator](#Step-8-Use-Automated-Policy-Generator).
 
 ```shell
 cd $EXAMPLE_DIR/provisioning
@@ -157,7 +158,7 @@ $CERTIFIER_PROTOTYPE/utilities/package_claims.exe     \
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 ```
 
-## Step 8: Use Policy Generator
+## Step 8: Use Automated Policy Generator
 
 ### a. Edit policy file
 
@@ -165,7 +166,14 @@ Open `simple_app_under_oe/oe_policy.json` and replace trusted measurements
 in the "measurements" property with the expected measurement from
 `make dump_mrenclave`.
 
-### b. Run Policy Generator
+### b. Build the Policy Generator
+
+```shell
+cd $CERTIFIER_PROTOTYPE/utilities
+LOCAL_LIB=/usr/local/lib64 make -f policy_generator.mak
+```
+
+### c. Run Policy Generator
 
 ```shell
 cd $EXAMPLE_DIR/provisioning
