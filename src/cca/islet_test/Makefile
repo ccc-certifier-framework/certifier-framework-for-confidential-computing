@@ -12,10 +12,15 @@ LDFLAGS += $(ISLET_LDFLAGS)
 .PHONY: attest_seal_test
 attest_seal_test: attest_seal_test.cc
 	@$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
+	@LD_LIBRARY_PATH=$(ISLET_PATH)/lib ./$@
+
+.PHONY: shim_test
+shim_test: shim_test.cc ../cca_shim.cc
+	@$(GPP) $^ $(CFLAGS) $(LDFLAGS) -o $@
+	@LD_LIBRARY_PATH=$(ISLET_PATH)/lib ./$@
 
 .PHONY: test
-test: attest_seal_test
-	@LD_LIBRARY_PATH=$(ISLET_PATH)/lib ./attest_seal_test
+test: attest_seal_test shim_test
 
 .PHONY: clean
 clean:
