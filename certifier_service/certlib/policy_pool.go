@@ -12,16 +12,61 @@ type PolicyPool struct {
 
 // policyKey says platformKey is-trusted-for-attestation
 func isPlatformKeyStatement(vse *certprotos.VseClause) bool {
+	if vse.Clause == nil {
+		return false
+	}
+	if vse.Clause.Subject == nil {
+		return false
+	}
+	if vse.Clause.Subject.EntityType == nil {
+		return false
+	}
+	if vse.Clause.Verb == nil {
+		return false
+	}
+	if vse.Clause.Subject.GetEntityType() == "key" && vse.Clause.GetVerb() == "is-trusted-for-attestation" {
+		return true
+	}
 	return false
 }
 
 // policyKey says platform has-trusted-platform-property
 func isPlatformFeatureStatement(vse *certprotos.VseClause) bool {
+	if vse.Clause == nil {
+		return false
+	}
+	if vse.Clause.Subject == nil {
+		return false
+	}
+	if vse.Clause.Subject.EntityType == nil {
+		return false
+	}
+	if vse.Clause.Verb == nil {
+		return false
+	}
+	if vse.Clause.Subject.GetEntityType() == "platform" && vse.Clause.GetVerb() == "has-trusted-platform-property" {
+		return true
+	}
 	return false
 }
 
 // policyKey says measurement is-trusted
 func isMeasurementStatement(vse *certprotos.VseClause) bool {
+	if vse.Clause == nil {
+		return false
+	}
+	if vse.Clause.Subject == nil {
+		return false
+	}
+	if vse.Clause.Subject.EntityType == nil {
+		return false
+	}
+	if vse.Clause.Verb == nil {
+		return false
+	}
+	if vse.Clause.Subject.GetEntityType() == "measurement" && vse.Clause.GetVerb() == "is-trusted" {
+		return true
+	}
 	return false
 }
 
@@ -50,15 +95,20 @@ func InitPolicyPool(pool *PolicyPool) bool {
 	return true
 }
 
-func GetRelevantPlatformKeyPolicy(ps *certprotos.ProvedStatements, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+// Returns the single policy statement naming the relevant platform key policy statement for a this evidence package
+func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+	// find the platform key needed from evp and the corresponding policy rule
 	return nil
 }
 
-func GetRelevantMeasurementPolicy(ps *certprotos.ProvedStatements, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+// Returns the single policy statement naming the relevant measurement policy statement for a this evidence package
+func GetRelevantMeasurementPolicy(pool *PolicyPool, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+	// find the measurement key needed from evp and the corresponding policy rule
 	return nil
 }
 
-func GetRelevantPlatformFeaturePolicy(ps *certprotos.ProvedStatements, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+// Returns the single policy statement naming the relevant trusted-platform policy statement for a this evidence package
+func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evp *certprotos.EvidencePackage) *certprotos.VseClause {
 	return nil
 }
 
