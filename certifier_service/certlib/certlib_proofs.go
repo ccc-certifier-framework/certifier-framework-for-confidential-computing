@@ -413,6 +413,17 @@ func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evType string, evp *cert
 }
 
 
+// Filtered OePolicy should be
+//      00: "policyKey is-trusted"
+//      01: "Key[rsa, policyKey, f2663e9ca042fcd261ab051b3a4e3ac83d79afdd] says
+//		Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] is-trusted-for-attestation"
+//      02: "policyKey says measurement is-trusted"
+//	03: "Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] says
+//		Key[rsa, auth-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]
+// Or:
+//      00: "policyKey is-trusted"
+//      01: "policyKey says measurement is-trusted"
+//      02: "Key[rsa, auth-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]"
 func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		policyPool *PolicyPool) *certprotos.ProvedStatements {
 	// Todo: Fix
@@ -427,20 +438,49 @@ func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePa
 	return filtered
 }
 
+// Filtered Policy should be
+//      0: "policyKey is-trusted"
+//      1: "policyKey says platformKey is-trusted-for-attestation"
+//      2: "policyKey says measurement is-trusted"
 func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+		policyPool *PolicyPool) *certprotos.ProvedStatements {
 
-	// Todo: Fix.  Normally the policy used for tests need not be filtered, but we should do it anyway.
-        filtered :=  &certprotos.ProvedStatements {}
-	for i := 0; i < len(original.Proved); i++ {
-		from := original.Proved[i]
-		to :=  proto.Clone(from).(*certprotos.VseClause)
-		filtered.Proved = append(filtered.Proved, to)
+	filtered := &certprotos.ProvedStatements
+
+	// policyKey is-trusted
+	from := original.Proved[0]
+	to :=  proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	// This should be passed in
+	evType := "vse-attestation-package"
+
+	from = GetRelevantPlatformKeyPolicy(policyPool, evType, evp)
+	if from == nil {
+		return nil
 	}
+	to :=  proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
+	if from == nil {
+		return nil
+	}
+	to :=  proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
 
 	return filtered
 }
 
+// Filtered Policy should be
+//	00 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] is-trusted 
+//	01 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
+//	Key[rsa, ARKKey, c36d3343d69d9d8000d32d0979adff876e98ec79] is-trusted-for-attestation 
+//	02 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
+//      Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708] is-trusted 
+//	03 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
+//	platform[amd-sev-snp, debug: no, migrate: no, api-major: >=0, api-minor: >=0, key-share: no,
+//		tcb-version: >=0] has-trusted-platform-property 
 func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		policyPool *PolicyPool) *certprotos.ProvedStatements {
 
@@ -2306,7 +2346,7 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
 	fmt.Printf("\nValidateInternalEvidence: original policy:\n")
 	PrintProvedStatements(policyPool.AllPolicy)
 
-	alreadyProved := FilterInternalPolicy(pubPolicyKey, evp, policyPool.AllPolicy)
+	alreadyProved := FilterInternalPolicy(pubPolicyKey, evp, policyPool)
 	if alreadyProved == nil {
                 fmt.Printf("ValidateInternalEvidence: Can't filterpolicy\n")
 		return false, nil, nil
@@ -2563,7 +2603,12 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 	return true, ga.WhatWasSaid, m, nil
 }
 
-
+// Filtered policy should be
+//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
+//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+//              Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+//              Measurement[0001020304050607...] is-trusted
 func FilterGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		policyPool *PolicyPool) *certprotos.ProvedStatements {
 
@@ -2585,11 +2630,11 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
         // At this point, the evidence should be
 	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
 	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-	//		Key[rsa, ARKKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+	//		Key[rsa, PlatformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
 	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
 	//		Measurement[0001020304050607...] is-trusted
-	//	Key[rsa, ARKKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] says
-	//		Key[rsa, ARKKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+	//	Key[rsa, PlatformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] says
+	//		Key[rsa, attestKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
 	//	Key[rsa, attestKey, b223d5da6674c6bde7feac29801e3b69bb286320] speaks-for Measurement[00010203...]
 
 	// Debug
