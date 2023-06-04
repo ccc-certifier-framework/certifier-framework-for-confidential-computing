@@ -418,22 +418,32 @@ func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evType string, evp *cert
 //      01: "Key[rsa, policyKey, f2663e9ca042fcd261ab051b3a4e3ac83d79afdd] says
 //		Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] is-trusted-for-attestation"
 //      02: "policyKey says measurement is-trusted"
-//	03: "Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] says
-//		Key[rsa, auth-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]
-// Or:
-//      00: "policyKey is-trusted"
-//      01: "policyKey says measurement is-trusted"
-//      02: "Key[rsa, auth-key, b1d19c10ec7782660191d7ee4e3a2511fad8f882] speaks-for Measurement[4204...]"
 func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		policyPool *PolicyPool) *certprotos.ProvedStatements {
-	// Todo: Fix
-	original := policyPool.AllPolicy
-        filtered :=  &certprotos.ProvedStatements {}
-	for i := 0; i < len(original.Proved); i++ {
-		from := original.Proved[i]
-		to :=  proto.Clone(from).(*certprotos.VseClause)
-		filtered.Proved = append(filtered.Proved, to)
+
+	filtered := &certprotos.ProvedStatements{}
+
+	// policyKey is-trusted
+	from := policyPool.AllPolicy.Proved[0]
+	to :=  proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	// This should be passed in
+	evType := "gramine-evidence"
+
+	from = GetRelevantPlatformKeyPolicy(policyPool, evType, evp)
+	if from == nil {
+		return nil
 	}
+	to =  proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
+	if from == nil {
+		return nil
+	}
+	to =  proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
 
 	return filtered
 }
@@ -445,10 +455,10 @@ func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePa
 func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		policyPool *PolicyPool) *certprotos.ProvedStatements {
 
-	filtered := &certprotos.ProvedStatements
+	filtered := &certprotos.ProvedStatements{}
 
 	// policyKey is-trusted
-	from := original.Proved[0]
+	from := policyPool.AllPolicy.Proved[0]
 	to :=  proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
 
@@ -459,14 +469,14 @@ func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.Evid
 	if from == nil {
 		return nil
 	}
-	to :=  proto.Clone(from).(*certprotos.VseClause)
+	to =  proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
 
 	from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
 	if from == nil {
 		return nil
 	}
-	to :=  proto.Clone(from).(*certprotos.VseClause)
+	to =  proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
 
 	return filtered
@@ -483,7 +493,7 @@ func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.Evid
 //		tcb-version: >=0] has-trusted-platform-property 
 func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		policyPool *PolicyPool) *certprotos.ProvedStatements {
-
+/*
 	original := policyPool.AllPolicy
 	n := len(evp.FactAssertion);
 	ev := evp.FactAssertion[n - 1]
@@ -572,6 +582,43 @@ func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 		return nil
 	}
 	return alreadyProved
+ */
+
+	filtered := &certprotos.ProvedStatements{}
+
+	// policyKey is-trusted
+	from := policyPool.AllPolicy.Proved[0]
+	to :=  proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	// This should be passed in
+	evType := "sev-evidence"
+
+	// policyKey says platformKey is-trusted-for-attestation
+	from = GetRelevantPlatformKeyPolicy(policyPool, evType, evp)
+	if from == nil {
+		return nil
+	}
+	to =  proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	// policyKey says measurement is-trusted-for-attestation
+	from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
+	if from == nil {
+		return nil
+	}
+	to =  proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	// policyKey says platform has-trusted-platform-policy
+	from = GetRelevantPlatformFeaturePolicy(policyPool, evType, evp)
+	if from == nil {
+		return nil
+	}
+	to =  proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	return filtered
  }
 
 func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos.SignedClaimSequence,
