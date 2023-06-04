@@ -148,7 +148,7 @@ func InitPolicyPool(pool *PolicyPool, original *certprotos.ProvedStatements) boo
 			pool.MeasurementPolicy.Proved = append(pool.MeasurementPolicy.Proved, from)
 		}
 	}
-	pool.Initialized = true	
+	pool.Initialized = true
 	return true
 }
 
@@ -405,7 +405,7 @@ func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evType string, evp *cert
 		if cl.Subject.GetEntityType() != "platform" || cl.GetVerb() != "has-trusted-platform-property" {
 			continue
 		}
-		// Make sue platform matches cl properties
+		// Make sure platform matches cl properties
 		return s
 	}
 
@@ -483,14 +483,14 @@ func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.Evid
 }
 
 // Filtered Policy should be
-//	00 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] is-trusted 
+//	00 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] is-trusted
 //	01 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
-//	Key[rsa, ARKKey, c36d3343d69d9d8000d32d0979adff876e98ec79] is-trusted-for-attestation 
+//	Key[rsa, ARKKey, c36d3343d69d9d8000d32d0979adff876e98ec79] is-trusted-for-attestation
 //	02 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
-//      Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708] is-trusted 
+//      Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708] is-trusted
 //	03 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
 //	platform[amd-sev-snp, debug: no, migrate: no, api-major: >=0, api-minor: >=0, key-share: no,
-//		tcb-version: >=0] has-trusted-platform-property 
+//		tcb-version: >=0] has-trusted-platform-property
 func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		policyPool *PolicyPool) *certprotos.ProvedStatements {
 /*
