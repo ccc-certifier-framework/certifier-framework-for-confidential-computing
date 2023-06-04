@@ -39,6 +39,380 @@ func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
 	return true
 }
 
+
+/*
+	This is policy pool management.  When evidence comes in, this selects the subset of
+	the original policy to use in the proof.
+
+	InitPolicyPool puts policy first in AllPolicy
+	PlatformKeyStatements is the list of policy statements about platform keys
+	MeasurementsStatements is the list of policy statements about programs (measurements)
+	PlatformFeatureStatements is a list of policy about platform policy
+
+	After pool is initialized, use GetRelevantPlatformKeyPolicy, GetRelevantMeasurementPolicy
+	and PlatformFeatureStatements to retrieve the policies relevant to the specified
+	EvidencePackage when constructing proofs.  Each must return the single relevant
+	policy statement of the named type needed in the constructed proof
+ */
+
+type PolicyPool struct {
+	Initialized bool
+	// Contains all the policy statements
+	AllPolicy *certprotos.ProvedStatements
+	// Contains platform key policy statements
+	PlatformKeyPolicy *certprotos.ProvedStatements
+	// Contains trusted measurement statements
+	MeasurementPolicy *certprotos.ProvedStatements
+	// Contains platform features statements
+	PlatformFeaturePolicy *certprotos.ProvedStatements
+}
+
+// policyKey says platformKey is-trusted-for-attestation
+func isPlatformKeyStatement(vse *certprotos.VseClause) bool {
+	if vse.Clause == nil {
+		return false
+	}
+	if vse.Clause.Subject == nil {
+		return false
+	}
+	if vse.Clause.Subject.EntityType == nil {
+		return false
+	}
+	if vse.Clause.Verb == nil {
+		return false
+	}
+	if vse.Clause.Subject.GetEntityType() == "key" && vse.Clause.GetVerb() == "is-trusted-for-attestation" {
+		return true
+	}
+	return false
+}
+
+// policyKey says platform has-trusted-platform-property
+func isPlatformFeatureStatement(vse *certprotos.VseClause) bool {
+	if vse.Clause == nil {
+		return false
+	}
+	if vse.Clause.Subject == nil {
+		return false
+	}
+	if vse.Clause.Subject.EntityType == nil {
+		return false
+	}
+	if vse.Clause.Verb == nil {
+		return false
+	}
+	if vse.Clause.Subject.GetEntityType() == "platform" && vse.Clause.GetVerb() == "has-trusted-platform-property" {
+		return true
+	}
+	return false
+}
+
+// policyKey says measurement is-trusted
+func isPlatformMeasurementStatement(vse *certprotos.VseClause) bool {
+	if vse.Clause == nil {
+		return false
+	}
+	if vse.Clause.Subject == nil {
+		return false
+	}
+	if vse.Clause.Subject.EntityType == nil {
+		return false
+	}
+	if vse.Clause.Verb == nil {
+		return false
+	}
+	if vse.Clause.Subject.GetEntityType() == "measurement" && vse.Clause.GetVerb() == "is-trusted" {
+		return true
+	}
+	return false
+}
+
+func InitPolicyPool(pool *PolicyPool, original *certprotos.ProvedStatements) bool {
+
+	pool.AllPolicy = nil
+	pool.PlatformKeyPolicy = nil
+	pool.MeasurementPolicy = nil
+	pool.PlatformFeaturePolicy = nil
+
+	for i := 0; i < len(original.Proved); i++ {
+		from := original.Proved[i]
+		pool.AllPolicy.Proved = append(pool.AllPolicy.Proved, from)
+		// to :=  proto.Clone(from).(*certprotos.VseClause)
+		if isPlatformKeyStatement(from) {
+			pool.PlatformKeyPolicy.Proved = append(pool.PlatformKeyPolicy.Proved, from)
+		}
+		if isPlatformFeatureStatement(from) {
+			pool.PlatformFeaturePolicy.Proved = append(pool.PlatformFeaturePolicy.Proved, from)
+		}
+		if isPlatformMeasurementStatement(from) {
+			pool.MeasurementPolicy.Proved = append(pool.MeasurementPolicy.Proved, from)
+		}
+	}
+	pool.Initialized = true	
+	return true
+}
+
+// Returns the single policy statement naming the relevant platform key policy statement for a this evidence package
+func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+
+	// find the platform key needed from evp and the corresponding policy rule
+	ev_list := evp.FactAssertion
+	if ev_list == nil {
+		return nil
+	}
+	var match *certprotos.VseClause= nil
+
+	// find platformKey says attestationKey is-trusted-for-attestation
+	for i := 0; i < len(ev_list); i++ {
+		ev :=  ev_list[i]
+		if ev == nil {
+			continue
+		}
+		if ev.GetEvidenceType() != "signed-claim" {
+			continue;
+		}
+		signedClaimMsg := certprotos.SignedClaimMessage{}
+		err := proto.Unmarshal(ev.SerializedEvidence, &signedClaimMsg)
+		if err != nil {
+			continue
+		}
+		claimMsg := certprotos.ClaimMessage{}
+		err = proto.Unmarshal(signedClaimMsg.SerializedClaimMessage, &claimMsg)
+		if err != nil {
+			continue
+		}
+		if claimMsg.GetClaimFormat() != "vse-clause" {
+			continue
+		}
+		cl := certprotos.VseClause{}
+		err = proto.Unmarshal(claimMsg.SerializedClaim, &cl)
+		if err != nil {
+			continue
+		}
+		if cl.Subject == nil || cl.Verb == nil || cl.GetVerb() != "is-trusted-for-attestation" {
+			continue
+		}
+		match = &cl
+	}
+	if match == nil {
+		return nil
+	}
+	platKey := match.Subject
+	if platKey.GetEntityType() != "key" {
+		return nil
+	}
+
+	// Find rule that says policyKey says match.Subject is-trusted-for-attestation and return it
+	for i := 0; i < len(pool.PlatformKeyPolicy.Proved); i++ {
+		cl := pool.PlatformKeyPolicy.Proved[i]
+		if cl == nil {
+			return nil
+		}
+		if cl.Clause == nil  || cl.Clause.Subject == nil {
+			return nil
+		}
+		if SameEntity(platKey, cl.Clause.Subject) {
+			return cl
+		}
+	}
+	return nil
+}
+
+func getVseMeasurementFromAttestation(evBuf []byte) []byte {
+	sr := certprotos.SignedReport{}
+	err := proto.Unmarshal(evBuf, &sr)
+	if err != nil {
+		fmt.Printf("getVseMeasurementFromAttestation: Can't unmarshal signed report\n")
+		return nil
+	}
+	info := certprotos.VseAttestationReportInfo{}
+	err = proto.Unmarshal(sr.GetReport(), &info)
+	if err != nil {
+		fmt.Printf("getVseMeasurementFromAttestation: Can't unmarshal info\n")
+		return nil
+	}
+	ud := certprotos.AttestationUserData{}
+	err = proto.Unmarshal(info.GetUserData(), &ud)
+	if err != nil {
+		fmt.Printf("getVseMeasurementFromAttestation: Can't unmarshal user data\n")
+		return nil
+	}
+
+	return nil
+}
+
+func getSevMeasurementFromAttestation(evBuf []byte) []byte {
+	var am certprotos.SevAttestationMessage
+	err := proto.Unmarshal(evBuf, &am)
+	if err != nil {
+		fmt.Printf("getSevMeasurementFromAttestation: Can't unmarshal SevAttestationMessage\n")
+		return nil
+	}
+	return GetMeasurementFromSevAttest(am.ReportedAttestation)
+}
+
+func getGramineMeasurementFromAttestation(evBuf []byte) []byte {
+	succeeded, _, m, err  := VerifyGramineAttestation(evBuf)
+	if !succeeded || err != nil {
+		fmt.Printf("getGramineMeasurementFromAttestation: Can't verify gramine evidence\n")
+		return nil
+	}
+	return m
+}
+
+func getOeMeasurementFromAttestation(prevEvidence *certprotos.Evidence, curEvidence *certprotos.Evidence) []byte {
+	var serializedUD, m []byte
+	var err error
+	if prevEvidence != nil {
+		serializedUD, m, err  = oeverify.OEHostVerifyEvidence(curEvidence.SerializedEvidence, prevEvidence.SerializedEvidence, false)
+	} else {
+		// No endorsement presented
+		serializedUD, m, err  = oeverify.OEHostVerifyEvidence(curEvidence.SerializedEvidence, nil, false)
+	}
+	if err != nil || serializedUD == nil || m == nil {
+		return nil
+	}
+	return m
+}
+
+// Returns the single policy statement naming the relevant measurement policy statement for a this evidence package
+func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+
+	ev_list := evp.FactAssertion
+	if ev_list == nil {
+		return nil
+	}
+
+	// find attestation and get measurement
+	var measurement []byte = nil
+	for i := 0; i < len(ev_list); i++ {
+		ev :=  ev_list[i]
+		if ev == nil {
+			continue
+		}
+
+		if  ev.GetEvidenceType() == "signed-claim" {
+			continue
+		} else if ev.GetEvidenceType() == "pem-cert-chain" {
+			continue
+		} else if ev.GetEvidenceType() == "cert" {
+			continue
+		} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
+			measurement = getVseMeasurementFromAttestation(ev.SerializedEvidence)
+			break
+		} else if ev.GetEvidenceType() == "sev-attestation" {
+			measurement = getSevMeasurementFromAttestation(ev.SerializedEvidence)
+			break
+		} else if ev.GetEvidenceType() == "gramine-attestation" {
+			measurement = getGramineMeasurementFromAttestation(ev.SerializedEvidence)
+			break
+		} else if ev.GetEvidenceType() == "oe-attestation-report" {
+			if i < 1 || ev_list[i-1].GetEvidenceType() != "pem-cert-chain" {
+				measurement = getOeMeasurementFromAttestation(nil, ev_list[i])
+			} else {
+				measurement = getOeMeasurementFromAttestation(ev_list[i - 1], ev_list[i])
+			}
+			break
+		} else {
+			continue
+		}
+	}
+	if measurement == nil {
+		return nil
+	}
+
+	// look for policyKey says Measurement[] is-trusted
+	for i := 0; i < len(pool.MeasurementPolicy.Proved); i++ {
+		s := pool.MeasurementPolicy.Proved[i]
+		if s == nil {
+			continue
+		}
+		cl := s.Clause
+		if cl == nil || cl.Subject == nil || cl.Verb == nil {
+			continue
+		}
+		if cl.Subject.GetEntityType() != "measurement" || cl.GetVerb() != "is-trusted" {
+			continue
+		}
+		if bytes.Equal(measurement, cl.Subject.Measurement) {
+			return s
+		}
+	}
+
+	return nil
+}
+
+// Returns the single policy statement naming the relevant trusted-platform policy statement for a this evidence package
+func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evType string, evp *certprotos.EvidencePackage) *certprotos.VseClause {
+
+	ev_list := evp.FactAssertion
+	if ev_list == nil {
+		return nil
+	}
+
+	var platform *certprotos.Platform = nil
+
+	// Find "attestationKey says environment(platform, measurement) is-environment"
+	for i := 0; i < len(ev_list); i++ {
+		ev :=  ev_list[i]
+		if ev == nil {
+			continue
+		}
+		if ev.GetEvidenceType() != "signed-claim" {
+			continue;
+		}
+		signedClaimMsg := certprotos.SignedClaimMessage{}
+		err := proto.Unmarshal(ev.SerializedEvidence, &signedClaimMsg)
+		if err != nil {
+			continue
+		}
+		claimMsg := certprotos.ClaimMessage{}
+		err = proto.Unmarshal(signedClaimMsg.SerializedClaimMessage, &claimMsg)
+		if err != nil {
+			continue
+		}
+		if claimMsg.GetClaimFormat() != "vse-clause" {
+			continue
+		}
+		cl := certprotos.VseClause{}
+		err = proto.Unmarshal(claimMsg.SerializedClaim, &cl)
+		if err != nil {
+			continue
+		}
+		if cl.Clause == nil  || cl.Clause.Subject == nil {
+			continue
+		}
+		if cl.Clause.Subject.GetEntityType() != "environment" || cl.Clause.Verb == nil || cl.Clause.GetVerb() != "is-environment" {
+			continue
+		}
+		platform = cl.Clause.Subject.PlatformEnt
+		break
+	}
+	if platform == nil {
+		return nil
+	}
+
+	// look for policyKey says platform has-trusted-platform-property and match properties
+	for i := 0; i < len(pool.PlatformFeaturePolicy.Proved); i++ {
+		s := pool.PlatformFeaturePolicy.Proved[i]
+		if s == nil {
+			continue
+		}
+		cl := s.Clause
+		if cl == nil || cl.Clause == nil || cl.Subject == nil || cl.Verb == nil {
+			continue
+		}
+		if cl.Subject.GetEntityType() != "platform" || cl.GetVerb() != "has-trusted-platform-property" {
+			continue
+		}
+		// Make sue platform matches cl properties
+		return s
+	}
+
+	return nil
+}
+
+
 func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
 	// Todo: Fix
