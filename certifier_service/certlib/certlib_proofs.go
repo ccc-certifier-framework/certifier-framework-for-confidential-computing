@@ -414,8 +414,9 @@ func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evType string, evp *cert
 
 
 func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+		policyPool *PolicyPool) *certprotos.ProvedStatements {
 	// Todo: Fix
+	original := policyPool.AllPolicy
         filtered :=  &certprotos.ProvedStatements {}
 	for i := 0; i < len(original.Proved); i++ {
 		from := original.Proved[i]
@@ -441,7 +442,9 @@ func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.Evid
 }
 
 func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+		policyPool *PolicyPool) *certprotos.ProvedStatements {
+
+	original := policyPool.AllPolicy
 	n := len(evp.FactAssertion);
 	ev := evp.FactAssertion[n - 1]
 	if ev.GetEvidenceType() != "sev-attestation" {
@@ -2296,14 +2299,14 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 
 // returns success, toProve, measurement
 func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
+		policyPool *PolicyPool, purpose string) (bool,
                 *certprotos.VseClause, []byte) {
 
 	// Debug
 	fmt.Printf("\nValidateInternalEvidence: original policy:\n")
-	PrintProvedStatements(originalPolicy)
+	PrintProvedStatements(policyPool.AllPolicy)
 
-	alreadyProved := FilterInternalPolicy(pubPolicyKey, evp, originalPolicy)
+	alreadyProved := FilterInternalPolicy(pubPolicyKey, evp, policyPool.AllPolicy)
 	if alreadyProved == nil {
                 fmt.Printf("ValidateInternalEvidence: Can't filterpolicy\n")
 		return false, nil, nil
@@ -2365,14 +2368,14 @@ func ValidateInternalEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
 
 // returns success, toProve, measurement
 func ValidateOeEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
+		policyPool *PolicyPool, purpose string) (bool,
                 *certprotos.VseClause, []byte) {
 
 	// Debug
 	fmt.Printf("\nValidateOeEvidence, Original policy:\n")
-	PrintProvedStatements(originalPolicy)
+	PrintProvedStatements(policyPool.AllPolicy)
 
-	alreadyProved := FilterOePolicy(pubPolicyKey, evp, originalPolicy)
+	alreadyProved := FilterOePolicy(pubPolicyKey, evp, policyPool)
 	if alreadyProved == nil {
                 fmt.Printf("ValidateOeEvidence: Can't filterpolicy\n")
 		return false, nil, nil
@@ -2432,14 +2435,14 @@ func ValidateOeEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Evi
 
 // returns success, toProve, measurement
 func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
+		policyPool *PolicyPool, purpose string) (bool,
                 *certprotos.VseClause, []byte) {
 
 	// Debug
 	fmt.Printf("\nValidateSevEvidence, Original policy:\n")
-	PrintProvedStatements(originalPolicy)
+	PrintProvedStatements(policyPool.AllPolicy)
 
-	alreadyProved := FilterSevPolicy(pubPolicyKey, evp, originalPolicy)
+	alreadyProved := FilterSevPolicy(pubPolicyKey, evp, policyPool)
 	if alreadyProved == nil {
                 fmt.Printf("Can't filterpolicy\n")
 		return false, nil, nil
@@ -2562,9 +2565,10 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 
 
 func FilterGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+		policyPool *PolicyPool) *certprotos.ProvedStatements {
 
 	// Todo: Fix
+	original := policyPool.AllPolicy
         filtered :=  &certprotos.ProvedStatements {}
 	for i := 0; i < len(original.Proved); i++ {
 		from := original.Proved[i]
@@ -2675,16 +2679,14 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
 
 // returns success, toProve, measurement
 func ValidateGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
+		policyPool *PolicyPool, purpose string) (bool,
                 *certprotos.VseClause, []byte) {
-
-	// Todo: Fix
 
 	// Debug
 	fmt.Printf("\nValidateGramineEvidence, Original policy:\n")
-	PrintProvedStatements(originalPolicy)
+	PrintProvedStatements(policyPool.AllPolicy)
 
-	alreadyProved := FilterGraminePolicy(pubPolicyKey, evp, originalPolicy)
+	alreadyProved := FilterGraminePolicy(pubPolicyKey, evp, policyPool)
 	if alreadyProved == nil {
                 fmt.Printf("ValidateGramineEvidence: Can't filterpolicy\n")
 		return false, nil, nil
