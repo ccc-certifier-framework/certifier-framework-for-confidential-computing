@@ -1,3 +1,17 @@
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include <gtest/gtest.h>
 #include <gflags/gflags.h>
 
@@ -29,20 +43,6 @@
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
-
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 
 DEFINE_string(parent_enclave, "simulated-enclave", "parent enclave");
 DEFINE_bool(help_me, false, "Want help?");
@@ -358,7 +358,8 @@ void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   bool continue_loop = true;
 
 #ifdef DEBUG
-  printf("\napplication service loop: %d %d\n", read_fd, write_fd);
+  printf("[%d] Application Service loop: read_fd=%d write_fd=%d\n",
+         __LINE__, read_fd, write_fd);
 #endif
   while(continue_loop) {
     bool succeeded = false;
@@ -371,6 +372,7 @@ void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
     }
     app_request req;
     if (!req.ParseFromString(str_app_req)) {
+      printf("[%d] Request read: %s\n", __LINE__, str_app_req.c_str());
       goto finishreq;
     }
 
@@ -416,6 +418,7 @@ finishreq:
             (int)str_app_rsp.size()) {
       printf("Response write failed\n");
     }
+
 #ifdef DEBUG
     printf("Service loop: ended\n");
 #endif
@@ -424,7 +427,7 @@ finishreq:
 
 bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
 #ifdef DEBUG
-  printf("start_app_service_loop\n");
+  printf("\n[%d] %s\n", __LINE__, __func__);
 #endif
 #ifndef NOTHREAD
   std::thread* t = new std::thread(app_service_loop, kid, read_fd, write_fd);
@@ -487,25 +490,29 @@ bool process_run_request(run_request& req) {
 #endif
 
   int fd1[2];
-  int fd2[2];
   if (pipe2(fd1, O_DIRECT) < 0) {
     printf("Pipe 1 failed\n");
     return false;
   }
+
+  int fd2[2];
   if (pipe2(fd2, O_DIRECT) < 0) {
     printf("Pipe 2 failed\n");
     return false;
   }
-
-#ifdef DEBUG
-  printf("pipes made %d %d %d %d\n", fd1[0], fd1[1], fd2[0], fd2[1]);
-#endif
 
   // Is this what I want?
   int parent_read_fd = fd2[0];
   int parent_write_fd = fd1[1];
   int child_read_fd = fd1[0];
   int child_write_fd = fd2[1];
+
+#ifdef DEBUG
+  printf("pipes made: fds[]:"
+         "  parent_read_fd = %d, parent_write_fd = %d,"
+         "  child_read_fd = %d,  child_write_fd = %d\n",
+         parent_read_fd, parent_write_fd, child_read_fd, child_write_fd);
+#endif
 
   // fork and get pid
   pid_t pid = fork();
@@ -523,7 +530,7 @@ bool process_run_request(run_request& req) {
     // Change process owner
     struct passwd* ent = getpwnam(FLAGS_guest_login_name.c_str());
     if (ent == nullptr) {
-      printf("Guest is not a user\n");
+      printf("Login '%s' is not a user\n", FLAGS_guest_login_name.c_str());
 #ifdef INMEMEXEC
       free(file_buffer);
       close(mem_fd);
@@ -588,7 +595,7 @@ bool process_run_request(run_request& req) {
     //    close(child_write_fd);
 
 #ifdef DEBUG
-    printf("parent returned, read: %d, write: %d\n", parent_read_fd, parent_write_fd);
+    printf("parent returned, readfd=%d, writefd=%d\n", parent_read_fd, parent_write_fd);
 #endif
 
     // add it to lists
@@ -643,7 +650,7 @@ bool app_request_server() {
 
   unsigned int len = 0;
   while (1) {
-    printf("application_service server at accept\n");
+    printf("[%d] application_service server at accept\n", __LINE__);
     struct sockaddr_in addr;
     int client = accept(sd, (struct sockaddr*)&addr, &len);
 #ifdef DEBUG
@@ -668,7 +675,7 @@ bool app_request_server() {
     if (FLAGS_run_policy != "all") {
       // Todo: Fix - check certificate?
     }
-    printf("at process_run_request: %s\n", req.location().c_str());
+    printf("[%d] at process_run_request: %s\n", __LINE__, req.location().c_str());
     ret = process_run_request(req);
 
 done:
@@ -697,18 +704,24 @@ done:
 string public_key_alg("rsa-2048");
 string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
-
 int main(int an, char** av) {
+  string usage("Application Service utility");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_help_me) {
-    printf("app_service.exe --print_all=true|false --policy_host=policy-host-address --policy_port=policy-host-port\n");
-    printf("\t --service_dir=-directory-for-service-data --server_service_host=my-server-host-address --server_service_port=server-host-port\n");
-    printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
-    printf("\t --host_enclave_type=\"simulated-enclave\"");
-    return 0;
+    printf("\
+app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
+                --policy_port=policy-host-port \n\
+                --service_dir=-directory-for-service-data \n\
+                --server_service_host=my-server-host-address \n\
+                --server_service_port=server-host-port \n\
+                --policy_cert_file=self-signed-policy-cert-file-name \n\
+                --policy_store_file=policy-store-file-name \n\
+                --host_enclave_type=\"simulated-enclave\"\n");
+   return 0;
   }
 
   SSL_library_init();

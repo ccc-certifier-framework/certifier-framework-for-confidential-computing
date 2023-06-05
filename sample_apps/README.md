@@ -30,9 +30,9 @@ that demonstrate how to implement the Certifier APIs on different platforms.
   tested under SEV-SNP.
 
 - **simple_app_under_app_service/** - This application is similar to the sample program,
-   simple_app/, but runs under the application service. The example currently runs
-   under a simulated-enclave and will eventually be ported to run under
-   AMD Secure Nested Paging (AMD SEV-SNP).
+   simple_app/, but runs under the Application Service. The example currently runs
+   under a simulated-enclave and can be run on any Linux host. This will eventually
+   be ported to run under AMD Secure Nested Paging (AMD SEV-SNP).
 
 - **att_systemd_service/** - This is an example of using Certifier APIs to implement
   attestation for system utilities, like the systemd service. The example runs
@@ -65,7 +65,8 @@ You can use this script to build and run example programs.
 
 **Usage**:
 ```shell
-run_example.sh [-h | --help | --list] <sample-app-name> [ setup | run_test ]
+Usage: run_example.sh [-h | --help | --list] <sample-app-name>
+Usage: run_example.sh [--dry-run] <sample-app-name> [ setup | run_test ]
 
   To setup and run the simple_app program, end-to-end : ./run_example.sh simple_app
   To setup the simple_app program                     : ./run_example.sh simple_app setup

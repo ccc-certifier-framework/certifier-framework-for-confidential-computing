@@ -1,5 +1,5 @@
 #    
-#    File: service_example_app.mak
+#    File: simple_app_under_app_service/example_app.mak (service_example_app.mak)
 
 
 ifndef SRC_DIR

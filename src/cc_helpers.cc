@@ -389,6 +389,8 @@ bool certifier::framework::cc_trust_data::fetch_store() {
 
   int size_protected_blob = file_size(store_file_name_);
   if (size_protected_blob < 0) {
+    printf("%s(): Invalid size_protected_blob=%d for store file name='%s'\n",
+           __func__, size_protected_blob, store_file_name_.c_str());
     return false;
   }
   byte protected_blob[size_protected_blob];
@@ -399,7 +401,7 @@ bool certifier::framework::cc_trust_data::fetch_store() {
   memset(unprotected_blob, 0, size_unprotected_blob);
 
   if (!read_file(store_file_name_, &size_protected_blob, protected_blob)) {
-    printf("fetch_store can't read %s\n", store_file_name_.c_str());
+    printf("%s(): Can't read %s\n", __func__, store_file_name_.c_str());
     return false;
   }
 
@@ -410,7 +412,7 @@ bool certifier::framework::cc_trust_data::fetch_store() {
 
   if (!Unprotect_Blob(enclave_type_, size_protected_blob, protected_blob,
         &pk, &size_unprotected_blob, unprotected_blob)) {
-    printf("fetch_store: can't Unprotect\n");
+    printf("%s(): Can't Unprotect\n", __func__);
     return false;
   }
 
@@ -418,7 +420,7 @@ bool certifier::framework::cc_trust_data::fetch_store() {
   string serialized_store;
   serialized_store.assign((char*)unprotected_blob, size_unprotected_blob);
   if (!store_.Deserialize(serialized_store)) {
-    printf("fetch_store: can't deserialize store\n");
+    printf("%s(): Can't deserialize store\n", __func__);
     return false;
   }
 
@@ -652,7 +654,8 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
       return false;
     }
   } else {
-    printf("cold_init: unsupported encryption algorithm\n");
+    printf("cold_init: unsupported encryption algorithm: '%s'\n",
+           symmetric_key_alg.c_str());
     return false;
   }
   memset(symmetric_key_bytes_, 0, max_symmetric_key_size_);
@@ -1270,6 +1273,8 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
     string et2("sev-attestation");
     ev2->set_evidence_type(et2);
   } else {
+    printf("%s:%d:%s: - can't add attestation\n",
+           __FILE__, __LINE__, __func__);
     return false;
   }
 
@@ -1852,7 +1857,7 @@ bool certifier::framework::secure_authenticated_channel::load_client_certs_and_k
       print_cn_name(name);
     }
   }
-#endif
+#endif // DEBUG
 #endif // BORING_SSL
   return true;
 }

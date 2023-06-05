@@ -17,6 +17,8 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 int main(int an, char**av) {
+  string usage("Application Service helper 'send' utility");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
