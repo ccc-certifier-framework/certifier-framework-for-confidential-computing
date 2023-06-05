@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "support.h"
+//#include "support.h"
 #include "keystone_api.h"
+#include <string.h>
 
 bool keystone_test(const int cert_size, byte *cert) {
 
@@ -48,9 +49,9 @@ bool keystone_test(const int cert_size, byte *cert) {
 
     int size_what_to_say = 256;
     byte what_to_say[size_secret];
-    int size_attestation = 512;
-    byte attestation[size_sealed_secret];
-    int size_measurement = 64;
+    int size_attestation = 1352;
+    byte attestation[size_attestation];
+    int size_measurement = 64 * 2;
     byte measurement[size_measurement];
 
     for (int i = 0; i < size_what_to_say; i++) {
@@ -68,8 +69,12 @@ bool keystone_test(const int cert_size, byte *cert) {
         return false;
     }
     printf("Measurement: ");
-    print_bytes(size_measurement, measurement);
+//    print_bytes(size_measurement, measurement);
     printf("\n");
 
     return true;
+}
+
+int main(int argc, char** argv) {
+    return keystone_test(0, NULL);
 }

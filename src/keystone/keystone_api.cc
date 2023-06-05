@@ -14,8 +14,8 @@ bool keystone_Init(const int cert_size, byte *cert) {
 }
 
 bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
-  assert(what_to_say_size <= 1024);
-  *attestation_size_out = 1352;
+  assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
+  *attestation_size_out = sizeof(struct report_t);
   return attest_enclave((void *) attestation_out, what_to_say, what_to_say_size);
 }
 
@@ -32,13 +32,10 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
     return false;
   }
   byte* report_says = (byte*) report.getDataSection();
-  for (int i = 0; i < attestation_size; i++) {
-    if (*(report_says++) != *(what_to_say++)) {
-      return false;
-    }
+  if (memcmp(what_to_say, report_says, what_to_say_size) != 0) {
+    return false;
   }
 
-  // qq: sm and enclave measurement can both be in measurement_out?
   *measurement_out_size = MDSIZE * 2;
   memcpy(measurement_out, report.getSmHash(), MDSIZE);
   memcpy(measurement_out + MDSIZE, report.getEnclaveHash(), MDSIZE);
