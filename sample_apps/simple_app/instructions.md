@@ -23,7 +23,7 @@ $CERTIFIER_PROTOTYPE is the top level directory for the Certifier repository.
 It is helpful to have a shell variable for it, e.g., :
 
 ```shell
-export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
+export CERTIFIER_PROTOTYPE=~/Projects/certifier-framework-for-confidential-computing
 ```
 
 $EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable
@@ -37,8 +37,7 @@ export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app
 ## Step 1: Build the utilities
 
 ```shell
-cd $CERTIFIER_PROTOTYPE
-cd utilities
+cd $CERTIFIER_PROTOTYPE/utilities
 make -f cert_utility.mak
 make -f policy_utilities.mak
 ```
@@ -54,7 +53,7 @@ mkdir $EXAMPLE_DIR/provisioning
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe        \
+$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe          \
       --operation=generate-policy-key-and-test-keys      \
       --policy_key_output_file=policy_key_file.bin       \
       --policy_cert_output_file=policy_cert_file.bin     \
@@ -68,7 +67,7 @@ This will also generate the attestation key and platform key for these tests.
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe    \
+$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe      \
       --input=policy_cert_file.bin                       \
       --output=../policy_key.cc
 ```
@@ -77,6 +76,7 @@ $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe    \
 
 ```shell
 cd $EXAMPLE_DIR
+
 make -f example_app.mak
 ```
 
@@ -84,10 +84,10 @@ make -f example_app.mak
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe \
-      --type=hash                                        \
-      --input=../example_app.exe                         \
-      --output=example_app.measurement
+$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe      \
+        --type=hash                                         \
+        --input=../example_app.exe                          \
+        --output=example_app.measurement
 ```
 
 ## Step 7: Author the policy for the security domain and produce the signed claims the apps need
@@ -99,48 +99,43 @@ cd $EXAMPLE_DIR/provisioning
 ### a. Construct policyKey says platformKey is-trusted-for-attestation
 
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe  \
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe    \
       --key_subject=platform_key_file.bin                   \
       --verb="is-trusted-for-attestation"                   \
       --output=ts1.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe  \
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe    \
       --key_subject=policy_key_file.bin                        \
       --verb="says"                                            \
       --clause=ts1.bin                                         \
       --output=vse_policy1.bin
 ```
 
-### b. Produce the signed claims for each vse policy statement.
-```shell
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe  \
-      --vse_file=vse_policy1.bin                                        \
-      --duration=9000                                                   \
-      --private_key_file=policy_key_file.bin                            \
-      --output=signed_claim_1.bin
-```
-
-### c. Construct  policy key says measurement is-trusted
+### b. Construct  policy key says measurement is-trusted
 
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe    \
-      --type=hash                                           \
-      --input=../example_app.exe                            \
-      --output=example_app.measurement
-
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe  \
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe    \
       --key_subject=""                                      \
       --measurement_subject=example_app.measurement         \
       --verb="is-trusted"                                   \
       --output=ts2.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe  \
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe    \
       --key_subject=policy_key_file.bin                        \
       --verb="says"                                            \
       --clause=ts2.bin                                         \
       --output=vse_policy2.bin
+```
 
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe  \
+### c. Produce the signed claims for each vse policy statement.
+```shell
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe    \
+      --vse_file=vse_policy1.bin                                        \
+      --duration=9000                                                   \
+      --private_key_file=policy_key_file.bin                            \
+      --output=signed_claim_1.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe    \
       --vse_file=vse_policy2.bin                                        \
       --duration=9000                                                   \
       --private_key_file=policy_key_file.bin                            \
@@ -150,7 +145,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe  \
 ### d. Combine signed policy statements for Certifier Service use
 
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/package_claims.exe   \
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe     \
       --input=signed_claim_1.bin,signed_claim_2.bin   \
       --output=policy.bin
 ```
@@ -164,18 +159,18 @@ $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 ### f. Construct statement "platform-key says attestation-key is-trusted-for-attestation" and sign it
 
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe  \
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe    \
       --key_subject=attest_key_file.bin                     \
       --verb="is-trusted-for-attestation"                   \
       --output=tsc1.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe  \
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe    \
       --key_subject=platform_key_file.bin                      \
       --verb="says"                                            \
       --clause=tsc1.bin                                        \
       --output=vse_policy3.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe  \
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe    \
       --vse_file=vse_policy3.bin                                        \
       --duration=9000                                                   \
       --private_key_file=platform_key_file.bin                          \
@@ -200,15 +195,15 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 Compile the protobuf
 
 ```shell
-cd $CERTIFIER_PROTOTYPE
-cd certifier_service/certprotos
+cd $CERTIFIER_PROTOTYPE/certifier_service/certprotos
+
 protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
 ```
   Compile the oelib for OE host verification
 
 ```shell
-cd $CERTIFIER_PROTOTYPE
-cd certifier_service/oelib
+cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
+
 make
 ```
 
@@ -217,11 +212,12 @@ make
 make dummy
 ```
 
-This should produce a go file for the certifier protobufs called certifier.pb.go in certprotos.
+This should produce a Go file for the certifier protobufs called certifier.pb.go in certprotos.
 Now build simpleserver:
 
 ```shell
 cd $CERTIFIER_PROTOTYPE/certifier_service
+
 go build simpleserver.go
 ```
 
@@ -229,6 +225,7 @@ go build simpleserver.go
 
 ```shell
 cd $EXAMPLE_DIR
+
 mkdir app1_data app2_data
 ```
 
@@ -246,6 +243,7 @@ On real hardware, these are not needed.
 
 ```shell
 cd $EXAMPLE_DIR/provisioning
+
 cp -p ./* $EXAMPLE_DIR/app1_data
 cp -p ./* $EXAMPLE_DIR/app2_data
 ```
@@ -254,6 +252,7 @@ cp -p ./* $EXAMPLE_DIR/app2_data
 ## Step 12: Provision the service files
 ```shell
 cd $EXAMPLE_DIR/provisioning
+
 cp -p policy_key_file.bin policy_cert_file.bin policy.bin $EXAMPLE_DIR/service
 ```
 
@@ -263,7 +262,8 @@ In a new terminal window:
 
 ```shell
 cd $EXAMPLE_DIR/service
-$CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver   \
       --policyFile=policy.bin                         \
       --readPolicy=true
 ```
@@ -277,14 +277,14 @@ In the app-as-a-client terminal run the following:
 ```shell
 cd $EXAMPLE_DIR
 
-$EXAMPLE_DIR/example_app.exe                     \
+$EXAMPLE_DIR/example_app.exe                       \
       --data_dir=./app1_data/                      \
       --operation=cold-init                        \
       --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
       --print_all=true
 
-$EXAMPLE_DIR/example_app.exe                     \
+$EXAMPLE_DIR/example_app.exe                       \
       --data_dir=./app1_data/                      \
       --operation=get-certifier                    \
       --measurement_file="example_app.measurement" \
@@ -297,14 +297,14 @@ In the app-as-a-server terminal run the following:
 ```shell
 cd $EXAMPLE_DIR
 
-$EXAMPLE_DIR/example_app.exe                     \
+$EXAMPLE_DIR/example_app.exe                       \
       --data_dir=./app2_data/                      \
       --operation=cold-init                        \
       --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
       --print_all=true
 
-$EXAMPLE_DIR/example_app.exe                     \
+$EXAMPLE_DIR/example_app.exe                       \
       --data_dir=./app2_data/                      \
       --operation=get-certifier                    \
       --measurement_file="example_app.measurement" \
@@ -326,7 +326,7 @@ at this point.**
 
 cd $EXAMPLE_DIR
 
-$EXAMPLE_DIR/example_app.exe         \
+$EXAMPLE_DIR/example_app.exe           \
       --data_dir=./app2_data/          \
       --operation=run-app-as-server    \
       --policy_store_file=policy_store \
@@ -338,7 +338,7 @@ $EXAMPLE_DIR/example_app.exe         \
 ```shell
 cd $EXAMPLE_DIR
 
-$EXAMPLE_DIR/example_app.exe         \
+$EXAMPLE_DIR/example_app.exe           \
       --data_dir=./app1_data/          \
       --operation=run-app-as-client    \
       --policy_store_file=policy_store \
@@ -396,28 +396,28 @@ The operations are: _cold-init_, _warm-restart_, _get-certifier_ and _run-app-as
 **NOTE: --data_dir=./app1_data/** in these examples.
 
 ```shell
-./example_app.exe                             \
+./example_app.exe                               \
       --data_dir=./app1_data/                   \
       --operation=cold-init                     \
       --policy_cert_file=policy_cert_file.bin   \
       --policy_store_file=policy_store          \
       --print_all=true
 
-./example_app.exe                             \
+./example_app.exe                               \
       --data_dir=./app1_data/                   \
       --operation=warm-restart                  \
       --policy_cert_file=policy_cert_file.bin   \
       --policy_store_file=policy_store          \
       --print_all=true
 
-./example_app.exe                             \
+./example_app.exe                               \
       --data_dir=./app1_data/                   \
       --operation=get-certifier                 \
       --policy_cert_file=policy_cert_file.bin   \
       --policy_store_file=policy_store          \
       --print_all=true
 
-./example_app.exe                             \
+./example_app.exe                               \
       --data_dir=./app1_data/                   \
       --operation=run-app-as-client             \
       --policy_cert_file=policy_cert_file.bin   \
@@ -434,28 +434,28 @@ Similar sequence of commands can be run in the app-as-a-server terminal, with th
 ### b. Produce the signed claims for each vse policy statement.
 ```shell
 
-example_app.exe                             \
+example_app.exe                                 \
       --data_dir=./app2_data/                   \
       --operation=cold-init                     \
       --policy_cert_file=policy_cert_file.bin   \
       --policy_store_file=policy_store          \
       --print_all=true
 
-./example_app.exe                             \
+./example_app.exe                               \
       --data_dir=./app2_data/                   \
       --operation=warm-restart                  \
       --policy_cert_file=policy_cert_file.bin   \
       --policy_store_file=policy_store          \
       --print_all=true
 
-./example_app.exe                             \
+./example_app.exe                               \
       --data_dir=./app2_data/                   \
       --operation=get-certifier                 \
       --policy_cert_file=policy_cert_file.bin   \
       --policy_store_file=policy_store          \
       --print_all=true
 
-./example_app.exe                             \
+./example_app.exe                               \
       --data_dir=./app2_data/                   \
       --operation=run-app-as-server             \
       --policy_cert_file=policy_cert_file.bin   \

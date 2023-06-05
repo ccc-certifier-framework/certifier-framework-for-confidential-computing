@@ -14,6 +14,8 @@ pushd "$(dirname "$0")" > /dev/null 2>&1
 # shellcheck disable=SC2046
 CERT_PROTO="$(dirname $(pwd))"; export CERT_PROTO
 
+# All errors will trigger cleanup script, unless overrriden by --no-cleanup arg
+DoCleanup=1
 Cleanup="$(pwd)/cleanup.sh"
 popd > /dev/null 2>&1
 
@@ -24,6 +26,8 @@ Client_app_data="app1_data"
 Srvr_app_data="app2_data"
 
 SimpleServer_PID=0
+# ApplicationServer_PID=0
+
 Valid_app=0         # While looking thru SampleApps[] for supported app
 Found_step=0        # While looking thru Steps[] for user-specified fn-name
 DryRun=0            # --dry-run will turn this ON; off by default
@@ -76,7 +80,9 @@ function cleanup() {
     set +x
     echo "${Me}: Failed command, ${BASH_COMMAND}, at line $(caller) while executing function ${This_fn}"
 
-    do_cleanup
+    if [ "${DoCleanup}" = 1 ]; then
+        do_cleanup
+    fi
 }
 
 # ###########################################################################
@@ -92,10 +98,14 @@ SampleApps=( "simple_app"
              "simple_app_under_oe"
              "simple_app_under_gramine"
              "simple_app_under_sev"
+             # Not quite an "app", but this is needed for simple_app_under_app_service
+             "application_service"
+             "simple_app_under_app_service"
            )
 
 # ###########################################################################
 function list_apps() {
+    echo " "
     echo "List of sample applications you can execute with this script:"
     echo " "
     for str in "${SampleApps[@]}"; do
@@ -118,8 +128,13 @@ function is_valid_app() {
 # ##################################################################
 # Print help / usage
 # ##################################################################
+function usage_help() {
+    echo "Usage: $Me [-h | --help | --list] <sample-app-name>"
+}
+
 function usage_brief() {
-    echo "Usage: $Me [-h | --help | --list | --dry-run] <sample-app-name> [ setup | run_test ]"
+    usage_help
+    echo "Usage: $Me [--dry-run] <sample-app-name> [ setup | run_test ]"
     list_apps
 }
 
@@ -155,8 +170,9 @@ function usage() {
 
 # ---- Open-Enclave app-specific help/usage output
 function usage_OE() {
+    local app_name="$1"
     echo " "
-    echo "For simple_app_under_oe, you can alternatively use this script "
+    echo "For ${app_name}, you can alternatively use this script "
     echo "to generate the policy by editing the measurement in the policy JSON file:"
     echo "  To setup the example program        : ./${Me} simple_app_under_oe setup_with_auto_policy_generation_for_OE"
     echo "  To run and test the example program : ./${Me} simple_app_under_oe run_test"
@@ -164,8 +180,9 @@ function usage_OE() {
 
 # ---- SEV-SNP Enclave app-specific help/usage output
 function usage_SEV() {
+    local app_name="$1"
     echo " "
-    echo "For simple_app_under_sev, you use this script "
+    echo "For ${app_name}, you can use this script "
     echo "to generate the policy supplying the measurement in the policy JSON file:"
     echo " "
     echo "-- (Default) In a SEV-SNP simulated platform, using the Automated Policy Generator:"
@@ -181,6 +198,39 @@ function usage_SEV() {
     echo "  To run and test the example program : sudo ./${Me} simple_app_under_sev run_test"
     echo " "
     echo "  To cleanup after a run              : sudo ./cleanup.sh"
+}
+
+# ---- Sample app under Application Service help/usage output
+function usage_app_service_common() {
+    echo " "
+    echo "You can use this script to first setup the Application Service"
+    echo "and then to build-and-test the simple_app running under the Application Service."
+}
+
+function usage_APP_SERVICE() {
+    local app_name="$1"
+    usage_app_service_common
+    echo " "
+    echo "-- Setup and administer the Application Service:"
+    echo "  To build-and-setup the Application Service      : ./${Me} application_service setup"
+   usage_run_test_application_service
+}
+
+# ---- 'run_test' usage for application_service
+function usage_run_test_application_service() {
+    echo "  To start the Certifier and Application Services : ./${Me} application_service start"
+}
+
+function usage_simple_app_under_app_service() {
+    usage_app_service_common
+
+    local app_svc="application_service"
+    local app_name="simple_app_under_app_service"
+    echo " "
+    echo "For simple_app_under_app_service, you must first  : ./${Me} ${app_svc} setup"
+    echo "Then, build-and-setup the simple app              : ./${Me} ${app_name} setup"
+    echo "Start the Certifier and Application services      : ./${Me} ${app_svc} start"
+    echo "Run the simple app to use the Application service : ./${Me} ${app_name} run_test"
 }
 
 # ###########################################################################
@@ -201,26 +251,33 @@ Steps=( "rm_non_git_files"
         "author_policy"
             # These sub-step fns are subsumed under author_policy()
             "construct_policyKey_platform_is_trusted"
-            "produce_signed_claims_for_vse_policy_statement"
             "construct_policyKey_measurement_is_trusted"
+            "produce_signed_claims_for_vse_policy_statement"
             "combine_policy_stmts"
             "print_policy"
             "construct_platform_key_attestation_stmt_sign_it"
             "print_signed_claim"
 
         "build_simple_server"
-        "mk_dirs_for_test"
+        "mkdirs_for_test"
         "provision_app_service_files"
         # 'setup' argument ends here.
 
         # 'run_test' argument starts from here:
+        # ----------------------------------------------------------------------
+        # To keep the interfaces clean, this set is shared by simple_app and
+        # simple_app_under_app_service. However, in the callee we farm-off
+        # control to app_service-specific run-function.
+        # ----------------------------------------------------------------------
         "start_certifier_service"
         "run_app_as_server_talk_to_Cert_Service"
         "run_app_as_client_talk_to_Cert_Service"
         "run_app_as_server_offers_trusted_service"
         "run_app_as_client_make_trusted_request"
+        # 'run_test' argument ends here.
 )
 
+# Steps to build-and-test simple_app_under_oe
 Steps_OE=( "rm_non_git_files"
 
            # 'setup' argument starts from here:
@@ -250,7 +307,7 @@ Steps_OE=( "rm_non_git_files"
               "run_policy_generator_OE"
 
            "build_simple_server"
-           "mk_dirs_for_test"
+           "mkdirs_for_test"
            "provision_app_service_files"
            # 'setup' argument ends here.
 
@@ -265,6 +322,7 @@ Steps_OE=( "rm_non_git_files"
            "run_app_as_client_make_trusted_request"
 )
 
+# Steps to build-and-test simple_app_under_sev (SEV-SNP)
 Steps_SEV=( "rm_non_git_files"
 
             # 'setup' argument starts from here:
@@ -295,7 +353,7 @@ Steps_SEV=( "rm_non_git_files"
                "run_policy_generator_SEV"
 
             "build_simple_server"
-            "mk_dirs_for_test"
+            "mkdirs_for_test"
             "provision_app_service_files"
             # 'setup' argument ends here.
 
@@ -312,6 +370,36 @@ Steps_SEV=( "rm_non_git_files"
             "run_app_as_server_offers_trusted_service"
             "run_app_as_client_make_trusted_request"
 )
+
+# Steps to build-and-test application_service/
+Steps_APP_SERVICE=( "rm_non_git_files"
+                    "show_env"
+                    "build_utilities"
+                    "gen_policy_and_self_signed_cert"
+                    "embed_policy_in_example_app"
+                    "compile_app"
+                    "get_measurement_of_trusted_app"
+
+                    "author_policy"
+                        # These sub-step fns are subsumed under author_policy()
+                        "construct_policyKey_platform_is_trusted"
+                        "construct_policyKey_measurement_is_trusted"
+                        "produce_signed_claims_for_vse_policy_statement"
+                        "combine_policy_stmts"
+                        "print_policy"
+                        "construct_platform_key_attestation_stmt_sign_it"
+                        "print_signed_claim"
+
+                    "build_simple_server"
+                    "mkdirs_for_test"
+                    "provision_app_service_files"
+                    # 'setup' argument ends here.
+
+                    # 'run_test' argument starts from here:
+                    "start"
+                      "start_certifier_service"
+                      "start_application_service"
+                  )
 
 # --------------------------------------------------------------------------
 # Driver function to list steps for a given valid app name
@@ -334,6 +422,14 @@ function list_steps() {
 
         "simple_app_under_sev")
             list_steps_for_app "${Steps_SEV[@]}"
+            ;;
+
+        "simple_app_under_app_service")
+            list_steps_for_app "${Steps[@]}"
+            ;;
+
+        "application_service")
+            list_steps_for_app "${Steps_APP_SERVICE[@]}"
             ;;
 
         *)
@@ -361,13 +457,17 @@ function list_steps_for_app() {
 function is_valid_step() {
     local fn="$1"
     # Special-case setup and run-test functions
-    if [ "${fn}" == "setup" ] || [ "${fn}" == "run_test" ]; then
+    if [ "${fn}" == "setup" ] || [ "${fn}" == "run_test" ] \
+    || [ "${fn}" == "start_certifier_service" ] \
+    || [ "${fn}" == "start_application_service" ] \
+    || [ "${fn}" == "start" ];
+    then
         Found_step=1
         return
     fi
 
     case "${SampleAppName}" in
-        "simple_app")
+        "simple_app" | "simple_app_under_app_service")
             check_steps_for_app "${Steps[@]}"
             ;;
 
@@ -381,6 +481,10 @@ function is_valid_step() {
 
         "simple_app_under_sev")
             check_steps_for_app "${Steps_SEV[@]}"
+            ;;
+
+        "application_service")
+            check_steps_for_app "${Steps_APP_SERVICE[@]}"
             ;;
 
         *)
@@ -431,7 +535,7 @@ function run_cmd() {
 
     local echo_sudo=""
     local run_sudo=0
-    if [ "${RunSudo}" -eq 1 ] && [ "${array_len}" -gt "1" ]; then
+    if [ "${RunSudo}" -eq 1 ] && [ ${array_len} -gt 1 ]; then
         echo_sudo="sudo "
         run_sudo=1
     fi
@@ -450,6 +554,7 @@ function run_cmd() {
         fi
     else
         # Print what would have been executed, so user can learn from this.
+        # shellcheck disable=SC2145
         echo "${echo_sudo}$@"
     fi
 }
@@ -516,6 +621,11 @@ function rm_non_git_files() {
 # ###########################################################################
 function build_utilities() {
     run_cmd
+    if [ "${SampleAppName}" = "simple_app_under_app_service" ]; then
+        echo "${Me}: Skipping ..."
+        return
+    fi
+
     run_pushd "${CERT_PROTO}/utilities"
 
     clean_done=0
@@ -534,6 +644,12 @@ function build_utilities() {
 # ###########################################################################
 function gen_policy_and_self_signed_cert() {
     run_cmd
+
+    if [ "${SampleAppName}" = "simple_app_under_app_service" ]; then
+        echo "${Me}: Skipping ..."
+        return
+    fi
+
     run_pushd "${PROV_DIR}"
 
     if [ "${SampleAppName}" = "simple_app_under_gramine" ] \
@@ -612,12 +728,25 @@ function embed_policy_in_example_app() {
 # As this function is executed through a table of function names,
 # caller cannot pass-in the sample-app-name. So, fall back to using
 # a global variable.
+# ###########################################################################
 function compile_app() {
     compile_"${SampleAppName}"
 }
 
 # ###########################################################################
 function compile_simple_app() {
+    run_cmd
+    compile_app_common
+}
+
+# ###########################################################################
+function compile_simple_app_under_app_service() {
+    run_cmd
+    compile_app_common
+}
+
+# ###########################################################################
+function compile_app_common() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
 
@@ -678,6 +807,17 @@ function compile_simple_app_under_sev() {
 }
 
 # ###########################################################################
+function compile_application_service() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd make -f app_service.mak clean
+    run_cmd make -f app_service.mak
+
+    run_popd
+}
+
+# ###########################################################################
 # Obtain the measurement of the trusted application for the security domain.
 # The app-specific sub-functions generate the app's measurement in an output
 # file, which will be used downstream to create the policy for the app.
@@ -695,13 +835,35 @@ function get_measurement_of_trusted_app() {
 
 # ###########################################################################
 function get_measurement_of_trusted_simple_app() {
+    get_measurement_of_app_by_name "example_app.exe"
+}
+
+# ###########################################################################
+function get_measurement_of_trusted_application_service() {
+    get_measurement_of_app_by_name "app_service.exe"
+}
+
+# ###########################################################################
+function get_measurement_of_trusted_simple_app_under_app_service() {
+    get_measurement_of_app_by_name "service_example_app.exe"
+}
+
+# ###########################################################################
+# Work-horse function shared between different apps.
+# ###########################################################################
+function get_measurement_of_app_by_name() {
+    local app_name_exe="$1"
     run_cmd
     run_pushd "${PROV_DIR}"
 
+    measurement_file="example_app.measurement"
+    if [ "${SampleAppName}" = "application_service" ]; then
+        measurement_file="app_service.measurement"
+    fi
     run_cmd "$CERT_UTILS"/measurement_utility.exe    \
                 --type=hash                          \
-                --input=../example_app.exe           \
-                --output=example_app.measurement
+                --input="../${app_name_exe}"           \
+                --output="${measurement_file}"
 
     run_popd
 }
@@ -799,31 +961,29 @@ function get_measurement_of_trusted_simple_app_under_sev() {
 #
 # If you make changes, verify that the changes apply for the following
 # apps that share this function:
+#
 #   - simple_app
 #   - simple_app_under_gramine
+#   - application_service
 # ###########################################################################
 function author_policy() {
+    # Minions handle pushd/popd to appropriate app-specific sub-dir
     run_cmd
-    run_pushd "${PROV_DIR}"
 
     construct_policyKey_platform_is_trusted
 
-    produce_signed_claims_for_vse_policy_statement
-
     construct_policyKey_measurement_is_trusted
+
+    produce_signed_claims_for_vse_policy_statement
 
     combine_policy_stmts
 
     print_policy
 
-    # RESOLVE: X-check v/s instructions. These steps seem to be n/a for Gramine App
-    if [ "${SampleAppName}" = "simple_app" ]; then
+    if [ "${SampleAppName}" != "simple_app_under_gramine" ]; then
         construct_platform_key_attestation_stmt_sign_it
-
         print_signed_claim
     fi
-
-    run_popd
 }
 
 # ###########################################################################
@@ -872,11 +1032,35 @@ function construct_policyKey_platform_is_trusted() {
 
 # ###########################################################################
 function construct_policyKey_platform_is_trusted_simple_app() {
+    construct_policyKey_platform_is_trusted_app
+}
+
+# ###########################################################################
+function construct_policyKey_platform_is_trusted_application_service() {
+    construct_policyKey_platform_is_trusted_app
+}
+
+# ###########################################################################
+function construct_policyKey_platform_is_trusted_simple_app_under_app_service() {
+    construct_policyKey_platform_is_trusted_app
+}
+
+# ###########################################################################
+# Work-horse function shared between different apps.
+# ###########################################################################
+function construct_policyKey_platform_is_trusted_app() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
+    local key_subject_file="platform_key_file.bin"
+
+    # The app and App Service should share the same policy_key_file.bin.
+    if [ "${SampleAppName}" = "simple_app_under_app_service" ]; then
+        key_subject_file="policy_key_file.bin"
+    fi
+
     run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
-                --key_subject=platform_key_file.bin      \
+                --key_subject="${key_subject_file}"      \
                 --verb="is-trusted-for-attestation"      \
                 --output=ts1.bin
 
@@ -948,6 +1132,32 @@ function construct_policyKey_platform_is_trusted_simple_app_under_sev() {
 }
 
 # ###########################################################################
+# Construct policy key says measurement is-trusted
+# ###########################################################################
+function construct_policyKey_measurement_is_trusted() {
+    run_cmd
+    run_pushd "${PROV_DIR}"
+
+    measurement_file="example_app.measurement"
+    if [ "${SampleAppName}" = "application_service" ]; then
+        measurement_file="app_service.measurement"
+    fi
+    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe            \
+                --key_subject=""                                 \
+                --measurement_subject="${measurement_file}"      \
+                --verb="is-trusted"                              \
+                --output=ts2.bin
+
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
+                --key_subject=policy_key_file.bin            \
+                --verb="says"                                \
+                --clause=ts2.bin                             \
+                --output=vse_policy2.bin
+
+    run_popd
+}
+
+# ###########################################################################
 function produce_signed_claims_for_vse_policy_statement() {
     run_cmd
     run_pushd "${PROV_DIR}"
@@ -957,28 +1167,6 @@ function produce_signed_claims_for_vse_policy_statement() {
                 --duration=9000                                      \
                 --private_key_file=policy_key_file.bin               \
                 --output=signed_claim_1.bin
-
-    run_popd
-}
-
-# ###########################################################################
-# Construct policy key says measurement is-trusted
-# ###########################################################################
-function construct_policyKey_measurement_is_trusted() {
-    run_cmd
-    run_pushd "${PROV_DIR}"
-
-    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe            \
-                --key_subject=""                                 \
-                --measurement_subject=example_app.measurement    \
-                --verb="is-trusted"                              \
-                --output=ts2.bin
-
-    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
-                --key_subject=policy_key_file.bin            \
-                --verb="says"                                \
-                --clause=ts2.bin                             \
-                --output=vse_policy2.bin
 
     run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
                 --vse_file=vse_policy2.bin                           \
@@ -998,7 +1186,10 @@ function combine_policy_stmts() {
 
     signed_claims="signed_claim_1.bin"
     case "${SampleAppName}" in
-        "simple_app" | "simple_app_under_gramine")
+          "simple_app"                  \
+        | "simple_app_under_gramine"    \
+        | "application_service"         \
+        | "simple_app_under_app_service" )
             signed_claims="${signed_claims},signed_claim_2.bin"
             ;;
     esac
@@ -1028,6 +1219,14 @@ function print_policy() {
 # ###########################################################################
 function construct_platform_key_attestation_stmt_sign_it() {
     run_cmd
+
+    local private_key_file="platform_key_file.bin"
+
+    if [ "${SampleAppName}" = "simple_app_under_app_service" ]; then
+        private_key_file="policy_key_file.bin"
+        echo "${Me}: Re-setting key_subject & private_key_file inputs: ${private_key_file}"
+    fi
+
     run_pushd "${PROV_DIR}"
 
     run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
@@ -1035,16 +1234,16 @@ function construct_platform_key_attestation_stmt_sign_it() {
                 --verb="is-trusted-for-attestation"      \
                 --output=tsc1.bin
 
-    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
-                --key_subject=platform_key_file.bin          \
-                --verb="says"                                \
-                --clause=tsc1.bin                            \
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe    \
+                --key_subject="${private_key_file}"         \
+                --verb="says"                               \
+                --clause=tsc1.bin                           \
                 --output=vse_policy3.bin
 
-    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
-                --vse_file=vse_policy3.bin                           \
-                --duration=9000                                      \
-                --private_key_file=platform_key_file.bin             \
+    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe   \
+                --vse_file=vse_policy3.bin                          \
+                --duration=9000                                     \
+                --private_key_file="${private_key_file}"            \
                 --output=platform_attest_endorsement.bin
 
     run_popd
@@ -1229,6 +1428,11 @@ function check_platform_data_files_SEV() {
 # ###########################################################################
 function build_simple_server() {
     run_cmd
+    if [ "${SampleAppName}" = "simple_app_under_app_service" ]; then
+        echo "${Me}: Skipping ..."
+        return
+    fi
+
     run_pushd "${CERT_PROTO}"
 
     # Compiler the protobuf
@@ -1270,16 +1474,23 @@ function build_simple_server() {
 # ###########################################################################
 # Re-create dirs for app and service data
 # ###########################################################################
-function mk_dirs_for_test() {
+function mkdirs_for_test() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
 
     # Do this w/o checking for dry-run, so mkdir will succeed.
     # Otherwise, other steps that need .../service/ sub-dir to exist will fail
     # to run when script is executed in --dry-run mode.
+    # App Service only needs the Certifier Service to start-up. So no need
+    # to create the other client-/server-test data dirs.
     set -x
+
     rm -rf ${Client_app_data} ${Srvr_app_data} service
-    mkdir  ${Client_app_data} ${Srvr_app_data} service
+    mkdir service
+    if [ "${SampleAppName}" != "application_service" ]; then
+        mkdir  ${Client_app_data} ${Srvr_app_data}
+    fi
+
     set +x
 
     run_popd
@@ -1287,24 +1498,66 @@ function mk_dirs_for_test() {
 
 # ###########################################################################
 # Provision the app and service files
-# Note: These files are required for the "simulated-enclave" which cannot measure
-# the example app and needs a provisioned attestation key and platform cert.
-# On real hardware, these are not needed.
+# Note: These files are required for the "simulated-enclave" which cannot
+#       measure the example app and needs a provisioned attestation key and
+#       platform cert. On real hardware, these are not needed.
 # ###########################################################################
 function provision_app_service_files() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
-    run_cmd cp -p ./* "$EXAMPLE_DIR"/${Client_app_data}
-    run_cmd cp -p ./* "$EXAMPLE_DIR"/${Srvr_app_data}
-
     run_cmd cp -p policy_key_file.bin policy_cert_file.bin policy.bin \
-                    "$EXAMPLE_DIR"/service
+                    "${EXAMPLE_DIR}"/service
 
-    if [ "${SampleAppName}" = "simple_app_under_sev" ]; then
-        run_cmd cp -p ./*.der "$EXAMPLE_DIR"/service
+    if [ "${SampleAppName}" = "application_service" ]; then
+        run_cmd cp -p attest*.bin platform*.bin "${EXAMPLE_DIR}"/service
+        run_cmd cp -p app_service.measurement   "${EXAMPLE_DIR}"/service
+
+    else
+        run_cmd cp -p ./* "${EXAMPLE_DIR}"/${Client_app_data}
+        run_cmd cp -p ./* "${EXAMPLE_DIR}"/${Srvr_app_data}
     fi
 
+    if [ "${SampleAppName}" = "simple_app_under_sev" ]; then
+        run_cmd cp -p ./*.der "${EXAMPLE_DIR}"/service
+    fi
+
+    run_popd
+}
+
+# ###########################################################################
+# For this app, one needs to have setup the Application Service earlier.
+# That setup process would have created policy / certificate files which are
+# needed by this test (and are not re-created). Check that each required
+# file exists, cp it over if it does; otherwise, raise a fatal error.
+# ###########################################################################
+function cp_over_app_service_policy_cert_files() {
+    run_cmd
+    run_pushd "${PROV_DIR}"
+
+    app_service_prov_dir="${CERT_PROTO}/application_service/provisioning"
+    if [ "${DryRun}" = 0 ] && [ ! -d "${app_service_prov_dir}" ]; then
+        echo "${Me}:${LINENO}: Application Service provisioning dir not found, Expected: ${app_service_prov_dir}"
+        exit 2
+    fi
+
+    # reqd_files="policy_key_file.bin policy_cert_file.bin policy.bin"
+    # Created by 'setup' of Application Service; See gen_policy_and_self_signed_cert()
+    reqd_files="policy_key_file.bin policy_cert_file.bin platform_key_file.bin attest_key_file.bin"
+
+    # Recreated in construct_platform_key_attestation_stmt_sign_it()
+    reqd_files="${reqd_files} platform_attest_endorsement.bin"
+
+    for file in ${reqd_files}; do
+        reqd_file="${app_service_prov_dir}/${file}"
+
+        if [ "${DryRun}" = 0 ] && [ ! -f "${reqd_file}" ]; then
+            echo "${Me}:${LINENO}: Required file not found: ${reqd_file}"
+            exit 3
+        else
+            run_cmd cp -p "${reqd_file}" ./
+        fi
+    done
     run_popd
 }
 
@@ -1319,6 +1572,12 @@ function start_certifier_service() {
     outfile="${PROV_DIR}/cert.service.out"
     echo "$Me: Starting Certifier Service ..."
     echo "$Me: To see messages from Certifier Server: tail -f ${outfile}"
+
+    if [ $DryRun -eq 1 ]; then
+        run_cmd "${CERT_PROTO}"/certifier_service/simpleserver  \
+                    --policyFile=policy.bin                     \
+                    --readPolicy=true
+    fi
 
     run_cmd "${CERT_PROTO}"/certifier_service/simpleserver  \
                 --policyFile=policy.bin                     \
@@ -1341,12 +1600,14 @@ function start_certifier_service() {
 # Run the app as server and get admission certificates from Certifier Service
 # ###########################################################################
 function run_app_as_server_talk_to_Cert_Service() {
+    # Will re-direct for "simple_app_under_app_service"
     run_"${SampleAppName}"_as_server_talk_to_Cert_Service
 }
 
 # ###########################################################################
 function run_simple_app_as_server_talk_to_Cert_Service() {
     run_cmd
+
     run_pushd "${EXAMPLE_DIR}"
 
     run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
@@ -1441,12 +1702,14 @@ function run_simple_app_under_sev_as_server_talk_to_Cert_Service() {
 # one for the app as a server):
 # ###########################################################################
 function run_app_as_client_talk_to_Cert_Service() {
+    # Will re-direct for "simple_app_under_app_service"
     run_"${SampleAppName}"_as_client_talk_to_Cert_Service
 }
 
 # ###########################################################################
 function run_simple_app_as_client_talk_to_Cert_Service() {
     run_cmd
+
     run_pushd "${EXAMPLE_DIR}"
 
     run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
@@ -1552,6 +1815,7 @@ function run_simple_app_as_server_offers_trusted_service() {
 function run_app_by_name_as_server_offers_trusted_service() {
     local app_name_exe="$1"
     run_cmd
+
     run_pushd "${EXAMPLE_DIR}"
 
     # Run app as a server: In app as a server terminal run the following:
@@ -1579,7 +1843,7 @@ function run_simple_app_under_oe_as_server_offers_trusted_service() {
     run_cmd ./host/host                         \
                 enclave/enclave.signed          \
                 run-app-as-server               \
-                "$EXAMPLE_DIR/${Srvr_app_data}" &
+                "${EXAMPLE_DIR}/${Srvr_app_data}" &
 
     run_cmd sleep 5
 
@@ -1661,7 +1925,7 @@ function run_simple_app_under_oe_as_client_make_trusted_request() {
     run_cmd ./host/host                         \
                 enclave/enclave.signed          \
                 run-app-as-client               \
-                "$EXAMPLE_DIR/${Client_app_data}"
+                "${EXAMPLE_DIR}/${Client_app_data}"
 
     run_popd
 
@@ -1685,6 +1949,47 @@ function run_simple_app_under_gramine_as_client_make_trusted_request() {
 
     # Report this, for debugging on CI-machines
     echo "${Me}: $(TZ="America/Los_Angeles" date) Completed ${FUNCNAME[0]} ${DryRun_msg}."
+}
+
+# ###########################################################################
+function start_services() {
+    run_cmd
+
+    start_certifier_service
+    start_application_service
+}
+
+# ###########################################################################
+# Start the Application Service: This will need to be killed manually, or
+# by the 'stop' command.
+# ###########################################################################
+function start_application_service() {
+    run_cmd
+
+    run_pushd "${EXAMPLE_DIR}"
+
+    echo " "
+    outfile="${PROV_DIR}/appln.service.out"
+    echo "$Me: Starting Application Service ..."
+    echo "$Me: To see messages from the Application Service: tail -f ${outfile}"
+
+    local exe_name="app_service.exe"
+
+    run_cmd "${EXAMPLE_DIR}"/${exe_name}                                            \
+                  --policy_cert_file="policy_cert_file.bin"                         \
+                  --service_dir="./service/"                                        \
+                  --service_policy_store="policy_store"                             \
+                  --host_enclave_type="simulated-enclave"                           \
+                  --platform_file_name="platform_file.bin"                          \
+                  --platform_attest_endorsement="platform_attest_endorsement.bin"   \
+                  --attest_key_file="attest_key_file.bin"                           \
+                  --measurement_file="app_service.measurement"                      \
+                  --cold_init_service=true                                          \
+                  --guest_login_name="${USER}"                                      \
+                  > ${outfile} 2>&1 &
+
+    run_popd
+    run_cmd sleep 5
 }
 
 # ###########################################################################
@@ -1761,6 +2066,29 @@ function setup() {
 # to avoid re-running sub-fns nested under author_policy()
 # ###########################################################################
 function setup_simple_app() {
+    run_cmd
+    setup_app_by_name
+}
+
+# ###########################################################################
+# Run through steps to setup the Application Service. These are
+# quite similar to what one needs to do 'setup' any other sample program.
+# ###########################################################################
+function setup_application_service() {
+    run_cmd
+    setup_app_by_name
+}
+
+# ###########################################################################
+# Exact same setup as for simple_app()
+function setup_simple_app_under_app_service() {
+    run_cmd
+    cp_over_app_service_policy_cert_files
+    setup_app_by_name
+}
+
+# Common setup method, shared by simple_app and application_service
+function setup_app_by_name() {
     run_cmd
     run_steps "show_env" "get_measurement_of_trusted_app"
     author_policy
@@ -1914,7 +2242,100 @@ function check_perm_files_simulated_SEV() {
 # This should be common for all sample apps.
 # ###########################################################################
 function run_test() {
-    run_steps "start_certifier_service" "run_app_as_client_make_trusted_request"
+    if [ "${SampleAppName}" = "application_service" ]; then
+        usage_run_test_application_service
+        exit 0
+    else
+        run_steps "start_certifier_service" "run_app_as_client_make_trusted_request"
+    fi
+}
+
+# ###########################################################################
+# run_test for simple_app_under_app_service/: This requires that the
+# Certifier Service & Application Service have been manually pre-started.
+# ###########################################################################
+function run_test_simple_app_under_app_service() {
+
+    run_simple_app_under_app_service_as_server_talk_to_Cert_Service
+    run_simple_app_as_client_talk_to_Cert_Service
+}
+
+# ###########################################################################
+# This is identical to run_app_as_server_talk_to_Cert_Service(), but here
+# we have the sample-app, service_example_app.exe, being kicked-off by
+# an executor, start_program.exe, to run under the auspices of the
+# Application Service.
+# ###########################################################################
+function run_simple_app_under_app_service_as_server_talk_to_Cert_Service() {
+
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd "${EXAMPLE_DIR}"/start_program.exe                              \
+            --executable="${EXAMPLE_DIR}"/service_example_app.exe   \
+            --args="--print_all=true,--operation=cold-init,--data_dir=${EXAMPLE_DIR}/${Srvr_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
+
+    run_cmd sleep 5
+
+    run_cmd "${EXAMPLE_DIR}"/start_program.exe                              \
+            --executable="${EXAMPLE_DIR}"/service_example_app.exe   \
+            --args="--print_all=true,--operation=get-certifier,--data_dir=${EXAMPLE_DIR}/${Srvr_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
+
+    run_popd
+}
+
+# ###########################################################################
+# This is identical to run_app_as_client_talk_to_Cert_Service(). See comments
+# for sibling-server 'run' function, above.
+# ###########################################################################
+function run_simple_app_under_app_service_as_client_talk_to_Cert_Service() {
+
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd "${EXAMPLE_DIR}"/start_program.exe                              \
+            --executable="${EXAMPLE_DIR}"/service_example_app.exe   \
+            --args="--print_all=true,--operation=cold-init,--data_dir=${EXAMPLE_DIR}/${Client_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
+
+    run_cmd sleep 5
+
+    run_cmd "${EXAMPLE_DIR}"/start_program.exe                              \
+            --executable="${EXAMPLE_DIR}"/service_example_app.exe   \
+            --args="--print_all=true,--operation=get-certifier,--data_dir=${EXAMPLE_DIR}/${Client_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
+
+    run_popd
+}
+
+# ###########################################################################
+# This is identical to run_app_as_server_offers_trusted_service(). See comments
+# for sibling-server 'run' function, above.
+# ###########################################################################
+function run_simple_app_under_app_service_as_server_offers_trusted_service() {
+
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd "${EXAMPLE_DIR}"/start_program.exe                              \
+            --executable="${EXAMPLE_DIR}"/service_example_app.exe   \
+            --args="--print_all=true,--operation=run-app-as-server,--data_dir=${EXAMPLE_DIR}/${Srvr_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
+
+    run_popd
+}
+
+# ###########################################################################
+# This is identical to run_app_as_client_make_trusted_request(). See comments
+# for sibling-server 'run' function, above.
+# ###########################################################################
+function run_simple_app_under_app_service_as_client_make_trusted_request() {
+
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    run_cmd "${EXAMPLE_DIR}"/start_program.exe                              \
+            --executable="${EXAMPLE_DIR}"/service_example_app.exe   \
+            --args="--print_all=true,--operation=run-app-as-client,--data_dir=${EXAMPLE_DIR}/${Client_app_data}/,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
+
+    run_popd
 }
 
 # ##################################################################
@@ -1928,13 +2349,34 @@ if [ $# -eq 0 ]; then
 fi
 
 if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
-    usage
+
+    if [ $# -gt 2 ]; then
+        usage_help
+        exit 2
+    fi
+
+    if [ $# -eq 2 ] && [ "$2" = "application_service" ]; then
+        usage_APP_SERVICE "$2"
+        exit 0
+    fi
+
     if [ $# -eq 2 ]; then
-        if [ "$2" = "simple_app_under_oe" ]; then
-            usage_OE
-        elif [ "$2" = "simple_app_under_sev" ]; then
-            usage_SEV
+        # Expect 2nd arg to be a valid app name
+        is_valid_app "$2"
+        if [ "${Valid_app}" == "0" ]; then
+            echo
+            echo "${Me}:${LINENO} Sample program name '$2' is currently not supported."
+            exit 1
         fi
+        if [ "$2" = "simple_app_under_oe" ]; then
+            usage_OE "$2"
+        elif [ "$2" = "simple_app_under_sev" ]; then
+            usage_SEV "$2"
+        elif [ "$2" = "simple_app_under_app_service" ]; then
+            usage_simple_app_under_app_service
+        fi
+    else
+        usage
     fi
     exit 0
 fi
@@ -1946,7 +2388,7 @@ if [ "$1" == "--list" ]; then
         # Assume 2nd arg is app name
         is_valid_app "$2"
         if [ "${Valid_app}" == "0" ]; then
-            echo "${Me}: Sample program name '$2' is currently not supported."
+            echo "${Me}:${LINENO} Sample program name '$2' is currently not supported."
             exit 1
         fi
         list_steps "$2"
@@ -1959,6 +2401,9 @@ if [ "$1" == "--dry-run" ]; then
     DryRunTag=" dry-run "
     DryRun_msg="in${DryRunTag}mode"
     shift
+elif [ "$1" == "--no-cleanup" ]; then
+    DoCleanup=0
+    shift
 fi
 
 if [ $# -ge 1 ]; then
@@ -1969,7 +2414,7 @@ if [ $# -ge 1 ]; then
 
     is_valid_app "$1"
     if [ "${Valid_app}" == "0" ]; then
-        echo "${Me}: Sample program name '$1' is currently not supported."
+        echo "${Me}:${LINENO} Sample program name '$1' is currently not supported."
         exit 1
     fi
     SampleAppName="$1"
@@ -1991,10 +2436,17 @@ if [ "${DryRun}" = 1 ]; then
 fi
 
 pushd "$(dirname "$0")" > /dev/null 2>&1
+
+# Manage dir-location for setting up Application Service
+if [ "${SampleAppName}" = "application_service" ]; then
+    cd ..
+fi
+
 EXAMPLE_DIR=$(pwd)/${SampleAppName}; export EXAMPLE_DIR
 popd > /dev/null 2>&1
 
 PROV_DIR="${EXAMPLE_DIR}/provisioning"
+if [ ! -d "${PROV_DIR}" ]; then mkdir "${PROV_DIR}"; fi
 
 CERT_UTILS="${CERT_PROTO}/utilities"
 
@@ -2008,11 +2460,24 @@ if [ $# -eq 2 ]; then
         exit 1
     fi
 
-    # By the nature of the platform, commands for this app have to run
-    # as 'root'.
-    if [ "${SampleAppName}" = "simple_app_under_sev" ] \
-        && [ "$2" = "run_test" ]; then
-        RunSudo=1
+    # By nature of the platform, commands for this app have to run as 'root'.
+    if [ "${SampleAppName}" = "application_service" ]; then
+        if [ "$2" = "setup" ] || [ "$2" = "run_test" ]; then
+            $2 $1
+        elif [ "$2" = "start_certifier_service" ]; then
+            start_certifier_service
+
+        elif [ "$2" = "start_application_service" ]; then
+            start_application_service
+
+        elif [ "$2" = "start" ]; then
+            # This will start both services
+            start_services
+        else
+            echo "${Me}:${LINENO} Invalid step name, $2, provided for $1."
+            exit 1
+        fi
+        exit 0
     fi
 
     # Else, it's a valid step / function name. Execute it.
@@ -2024,8 +2489,6 @@ if [ $# -eq 2 ]; then
 fi
 
 echo "${Me}: $(TZ="America/Los_Angeles" date) ${MeMsg} ${SampleAppName}"
-
-if [ ! -d "${PROV_DIR}" ]; then mkdir "${PROV_DIR}"; fi
 
 # Run through the list of steps as arranged in Steps[] sequence
 # for str in "${Steps[@]}"; do

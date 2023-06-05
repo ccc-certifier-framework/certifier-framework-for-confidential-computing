@@ -1582,20 +1582,23 @@ func ConstructProofFromOeEvidence(publicPolicyKey *certprotos.KeyMessage, purpos
 
 // This is used for simulated enclave and the application enclave
 func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string, alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
-	// At this point, the evidence should be
-	//      0: "policyKey is-trusted"
+        // At this point, the evidence should be
+        //      0: "policyKey is-trusted"
         //      1: "policyKey says platformKey is-trusted-for-attestation"
         //      2: "policyKey says measurement is-trusted"
         //      3: "platformKey says the attestationKey is-trusted-for-attestation
         //      4: "attestationKey says enclaveKey speaks-for measurement
-
         // Debug
         fmt.Printf("ConstructProofFromInternalPlatformEvidence entries %d\n", len(alreadyProved.Proved))
 
-	if len(alreadyProved.Proved) < 5 {
-		fmt.Printf("ConstructProofFromInternalPlatformEvidence: too few proved statements\n")
-		return nil, nil
-	}
+        if len(alreadyProved.Proved) < 5 {
+            fmt.Printf("ConstructProofFromInternalPlatformEvidence: too few proved statements\n")
+
+            fmt.Printf("\nProved statements (Check for missing statements here):\n")
+            PrintProvedStatements(alreadyProved);
+
+            return nil, nil
+        }
 
         proof := &certprotos.Proof{}
         r1 := int32(1)
