@@ -15,7 +15,11 @@ SDK](https://github.com/openenclave/openenclave).
 ## Instructions for building and running the test
 
 $CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.
-export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
+It is helpful to have a shell variable for it, e.g., :
+
+```shell
+export CERTIFIER_PROTOTYPE=~/Projects/certifier-framework-for-confidential-computing
+```
 
 Step 1: Setup Open Enclave SDK with SGX
 
