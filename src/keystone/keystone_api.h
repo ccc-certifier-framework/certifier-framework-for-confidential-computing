@@ -21,7 +21,9 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <fcntl.h>
-#include <string.h>
+extern "C" {
+  #include "app/string.h"
+}
 
 #ifndef byte
 typedef unsigned char byte;

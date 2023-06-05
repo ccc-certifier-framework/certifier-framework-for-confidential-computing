@@ -16,7 +16,7 @@
 
 #include "keystone_api.h"
 
-bool keystone_test(const int cert_size, byte *cert) {
+bool keystone_test() {
     int size_secret = 32;
     byte secret[size_secret];
     int size_sealed_secret = 128;
@@ -32,7 +32,7 @@ bool keystone_test(const int cert_size, byte *cert) {
         printf("keystone_Seal fails\n");
         return false;
     }
-    if (!keystone_Unseal(size_sealed_secret, sealed_secret, &size_unsealed_secret, unsealed_secret) {
+    if (!keystone_Unseal(size_sealed_secret, sealed_secret, &size_unsealed_secret, unsealed_secret)) {
         printf("keystone_Unseal fails\n");
         return false;
     }
@@ -57,13 +57,15 @@ bool keystone_test(const int cert_size, byte *cert) {
         printf("keystone_Attest fails\n");
         return false;
     }
-    if (!keystone_Verify(size_what_to_say_size, what_to_say,
-                         size_attestation_size, attestation, &size_measurement, measurement)) {
+    if (!keystone_Verify(size_what_to_say, what_to_say,
+                         size_attestation, attestation, &size_measurement, measurement)) {
         printf("keystone_Verify fails\n");
         return false;
     }
     printf("Measurement: ");
-    print_bytes(size_measurement, measurement);
+    for (int i = 0; i < size_measurement; i++) {
+        printf("%x", measurement[i]);
+    }
     printf("\n");
 
     return true;
