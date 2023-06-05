@@ -17,7 +17,7 @@
 
 bool keystone_test(const int cert_size, byte *cert) {
 
-    if (!keystone_Init(cert_size, cert) {
+    if (!keystone_Init(cert_size, cert)) {
         printf("keystone_Init fails\n");
         return false;
     }
@@ -28,6 +28,10 @@ bool keystone_test(const int cert_size, byte *cert) {
     byte sealed_secret[size_sealed_secret];
     int size_unsealed_secret = 128;
     byte unsealed_secret[size_unsealed_secret];
+
+    for (int i = 0; i < size_secret; i++) {
+        secret[i] = (byte)i;
+    }
 
     if (!keystone_Seal(size_secret, secret, &size_sealed_secret, sealed_secret)) {
         printf("keystone_Seal fails\n");
@@ -49,7 +53,7 @@ bool keystone_test(const int cert_size, byte *cert) {
     int size_measurement = 64;
     byte measurement[size_measurement];
 
-    for (int i = 0; i < 256; i++) {
+    for (int i = 0; i < size_what_to_say; i++) {
         what_to_say[i] = (byte)i;
     }
 
