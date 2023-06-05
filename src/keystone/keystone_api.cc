@@ -1,4 +1,5 @@
 #include "keystone_api.h"
+/* Dependencies: Keystone SDK, Keystone Runtime for crypto. */
 extern "C" {
   #include "app/syscall.h"
   #include "app/string.h"
@@ -6,7 +7,7 @@ extern "C" {
 #include "crypto/aes.h"
 #include "verifier/report.h"
 #include "verifier/test_dev_key.h"
-/* Dependencies: Keystone SDK, Keystone Runtime for crypto. */
+#define assert(x) do { if (!(x)) { printf("Custom assert failed.\n"); exit(17); } } while (false) // TODO: replace
 
 bool keystone_Init(const int cert_size, byte *cert) {
   return true;
