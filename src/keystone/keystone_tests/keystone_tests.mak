@@ -20,7 +20,7 @@ ifndef OBJ_DIR
     OBJ_DIR = ./build
 endif
 ifndef EXE_DIR
-    EXE_DIR = .
+    EXE_DIR = OBJ_DIR
 endif
 
 # TODO: add flags for linking in rest of certifier
