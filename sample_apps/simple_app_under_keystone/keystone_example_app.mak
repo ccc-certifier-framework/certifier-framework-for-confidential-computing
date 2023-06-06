@@ -62,7 +62,7 @@ internal-dobj = $(O)/keystone_api.o $(O)/keystone_aes.o $(O)/example_app.o
 dobj = certifier.a $(internal-dobj) # TODO: maybe move certifier library mix-in to $(LDFLAGS)
 
 # TODO: maybe fix?
-keystone_certifier_app: $(dobj) $(KEYSTONE_SDK_LIB)
+keystone_example_app: $(dobj) $(KEYSTONE_SDK_LIB)
 	@echo "linking executable file keystone_certifier_app"
 	$(LINK) -o $(EXE_DIR)/keystone_certifier_app $(dobj) $(LDFLAGS)
 

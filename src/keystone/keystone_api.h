@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <fcntl.h>
-//#include <string.h>
+//#include <string.h> // todo: does keystone prefer "app/string.h"?
 
 #ifndef byte
 typedef unsigned char byte;
