@@ -249,9 +249,7 @@ int main(int argc, char *argv[]) {
 
   // Standard algorithms for the enclave
   string public_key_alg("rsa-2048");
-  string symmetric_key_alg("aes-256");;
-  string hash_alg("sha-256");
-  string hmac_alg("sha-256-hmac");
+  string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
   if (!file_exists(store_file)) {
     ATT_LOG(LOG_INFO, "Performing cold initialization...");
@@ -266,8 +264,7 @@ int main(int argc, char *argv[]) {
     if (!app_trust_data->warm_restart()) {
       ATT_LOG(LOG_INFO, "warm-restart failed");
       /* Attemp cold init */
-      if (!app_trust_data->cold_init(public_key_alg,
-          symmetric_key_alg, hash_alg, hmac_alg)) {
+      if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg)) {
         ATT_LOG(LOG_INFO, "cold-init failed");
         ret = 1;
         goto done;

@@ -145,7 +145,7 @@ namespace certifier {
 
     class cc_trust_data {
 
-    static const int max_symmetric_key_size_ = 64;
+    static const int max_symmetric_key_size_ = 128;
 
     public:
       bool cc_basic_data_initialized_;

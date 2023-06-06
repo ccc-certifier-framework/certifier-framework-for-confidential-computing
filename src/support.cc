@@ -71,7 +71,7 @@ name_size cipher_block_byte_name_size[] = {
 name_size cipher_key_byte_name_size[] = {
   {"aes-256", 32},
   {"aes-256-cbc-hmac-sha256", 64},
-  {"aes-256-cbc-hmac-sha384", 64},
+  {"aes-256-cbc-hmac-sha384", 96},
   {"aes-256-gcm", 32},
   {"rsa-2048-sha256-pkcs-sign", 256},
   {"rsa-2048", 256},
