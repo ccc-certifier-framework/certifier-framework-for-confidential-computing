@@ -57,7 +57,7 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 # ----------------------------------------------------------------------
 dobj = $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o        \
        $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o  \
-       $(O)/cc_helpers.o $(O)/cc_useful.o
+       $(O)/cc_helpers.o $(O)/cc_useful.o $(O)/keystone_api.o
 
 ifdef ENABLE_SEV
 dobj += $(O)/sev_support.o $(O)/sev_report.o
@@ -114,6 +114,10 @@ $(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/cc_helpers.h
 $(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
 	@echo "compiling cc_useful.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/cc_useful.o $(S)/cc_useful.cc
+
+$(O)/keystone_api.o: $(S)/keystone/keystone_api.cc $(S)/keystone/keystone_api.h
+	@echo "compiling keystone_api.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/keystone_api.o $(S)/keystone/keystone_api.cc
 
 ifdef ENABLE_SEV
 SEV_S=$(S)/sev-snp
