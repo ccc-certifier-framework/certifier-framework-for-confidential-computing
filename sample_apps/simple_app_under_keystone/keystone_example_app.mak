@@ -1,8 +1,8 @@
 # git clone keystone
 # export KEYSTONE_ROOT_DIR = /keystone # or wherever desired, same as clone
-# make -f certifier_keystone.mak keystone_certifier_app
+# make -f keystone_example_app.mak keystone_certifier_app
 # for testing Keystone compile + link (this currently works)
-# make -f certifier_keystone.mak keystone_api
+# make -f keystone_example_app.mak keystone_api
 
 ifndef KEYSTONE_ROOT_DIR
     KEYSTONE_ROOT_DIR = /keystone

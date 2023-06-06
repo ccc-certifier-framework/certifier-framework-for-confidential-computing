@@ -43,6 +43,7 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
   return true;
 }
 
+// (128, 44), (192, 52), or (256, 60)
 #define AES_KEY_LEN 128
 #define AES_SCHEDULE_LEN 44
 
