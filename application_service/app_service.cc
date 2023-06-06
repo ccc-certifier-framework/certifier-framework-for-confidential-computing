@@ -78,8 +78,6 @@ DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der", "ask cert file name
 DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der", "vcek cert file name");
 
 
-extern string authenticated_encryption_algorithm;
-
 //#define DEBUG
 
 // ---------------------------------------------------------------------------------
@@ -225,7 +223,7 @@ bool soft_Seal(spawned_children* kid, string in, string* out) {
   if (!get_random(8 * block_size, iv)) {
     return false;
   }
-  if (!authenticated_encrypt(authenticated_encryption_algorithm.c_str(), (byte*)buffer_to_seal.data(),
+  if (!authenticated_encrypt(app_trust_data->symmetric_key_algorithm_.c_str(), (byte*)buffer_to_seal.data(),
         buffer_to_seal.size(), app_trust_data->service_symmetric_key_, iv, t_out, &t_size)) {
     printf("soft_Seal: authenticated encrypt failed\n");
     return false;
@@ -242,7 +240,7 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
   int t_size = in.size();
   byte t_out[t_size];
 
-  if (!authenticated_decrypt(authenticated_encryption_algorithm.c_str(), (byte*)in.data(), in.size(),
+  if (!authenticated_decrypt(app_trust_data->symmetric_key_algorithm_.c_str(), (byte*)in.data(), in.size(),
           app_trust_data->service_symmetric_key_, t_out, &t_size)) {
     printf("soft_Unseal: authenticated decrypt failed\n");
     return false;
@@ -764,8 +762,7 @@ int main(int an, char** av) {
 
   // initialize and certify service data
   if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
-    if (!helper.cold_init(public_key_alg, symmetric_key_alg,
-            hash_alg, hmac_alg)) {
+    if (!helper.cold_init(public_key_alg, symmetric_key_alg)) {
       printf("cold-init failed\n");
       return 1;
     }
