@@ -33,6 +33,9 @@
 #include "gramine_api.h"
 #endif
 #include "cc_useful.h"
+#ifdef KEYSTONE_CERTIFIER
+#include "keystone_api.h"
+#endif
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -225,6 +228,35 @@ bool certifier::framework::cc_trust_data::init_policy_key(int asn1_cert_size, by
   cc_policy_info_initialized_ = true;
   return true;
 }
+
+bool certifier::framework::cc_trust_data::initialize_keystone_enclave_data(const string& attest_key_file_name,
+      const string& measurement_file_name, const string& attest_endorsement_file_name) {
+
+#ifdef KEYSTONE_CERTIFIER
+    if (!cc_policy_info_initialized_) {
+      printf("initialize_simulated_enclave_data: Policy key must be initialized first\n");
+      return false;
+    }
+
+    if (enclave_type_ != "keystone-enclave") {
+      printf("initialize_keystone_enclave_data: Not a simulated enclave\n");
+      return false;
+    }
+    // Todo
+    byte der_cert[100];
+    if (!keystone_Init(0, der_cert)) {
+           attest_endorsement_file_name)) {
+      printf("initialize_keystone_enclave_data: keystone_init failed\n");
+      return false;
+    }
+  cc_provider_provisioned_ = true;
+
+  return true;
+#else
+  return false;
+#endif
+}
+
 
 void certifier::framework::cc_trust_data::print_trust_data() {
   if (!cc_basic_data_initialized_) {
