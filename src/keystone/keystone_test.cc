@@ -76,7 +76,9 @@ bool keystone_test(const int cert_size, byte *cert) {
         printf("keystone_Attest() fails\n");
         return false;
     }
-    printf("Attest succeeded\n");
+    printf("Attest succeeded %d\n", size_attestation);
+    print_bytes(size_attestation, attestation);
+    printf("\n");
     if (!keystone_Verify(size_what_to_say, what_to_say,
                          size_attestation, attestation, &size_measurement, measurement)) {
         printf("keystone_Verify() fails\n");

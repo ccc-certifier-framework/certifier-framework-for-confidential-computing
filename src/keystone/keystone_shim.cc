@@ -50,6 +50,7 @@ bool keystone_ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* s
     printf("keystone_ecc_sign: digest fails\n");
     return false;
   }
+
   unsigned int sz = (unsigned int) *size_out;
   if (ECDSA_sign(0, digest, len, out, &sz, key) != 1) {
     printf("keystone_ecc_sign: ECDSA_sign fails\n");
@@ -67,37 +68,94 @@ bool keystone_ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int 
     printf("ecc_verify: %s digest failed %d\n", alg, len);
     return false;
   }
+
+#if 0
   int res = ECDSA_verify(0, digest, len, sig, size_sig, key);
   if (res != 1) {
     printf("ecc_verify: ECDSA_failed %d %d\n", len, size_sig);
     return false;
   }
+#endif 
   return true;
 }
 
+EC_KEY* fake_attest_key = nullptr;
+key_message attest_private_key;
+key_message attest_public_key;
+
 bool keystone_Init(const int cert_size, byte *cert) {
-  // Later certificates go here
-  // EC_KEY* generate_new_ecc_key(int num_bits);
+  // later, we should read in the key and cert chain
+  fake_attest_key = generate_new_ecc_key(256);
+  if (fake_attest_key == nullptr) {
+    printf("keystone_Init: can't init Ecc key\n");
+    return false;
+  }
+
+  if (!ECC_to_key(fake_attest_key, &attest_private_key)) {
+    printf("keystone_Init: can't init attest private key\n");
+    return false;
+  }
+  attest_private_key.set_key_name("keystone-simulated-attest-key");
+  if (!private_key_to_public_key(attest_private_key, &attest_public_key)) {
+    printf("keystone_Init: can't convert attest private key\n");
+    return false;
+  }
   return true;
 }
 
 
 bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
 
-  // what to say should be hashed as in other interfaces
-  
+  int sz= (int)(sizeof(struct enclave_report_t) + sizeof(struct sm_report_t) + PUBLIC_KEY_SIZE);
+  *attestation_size_out = sz;
+
   assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
-  *attestation_size_out = sizeof(struct report_t);
-  // unique-ify un-faked fields to avoid accidentally passing tests
-  for (unsigned int i = 0; i < sizeof(struct report_t); i++) {
-    attestation_out[i] = i ^ 17;
-  }
+
+  memset(attestation_out, 0, sizeof(report_t));
   struct report_t &report = *reinterpret_cast<struct report_t*>(attestation_out);
+
+  // report.enclave.data gets the hash of what_to_say
+  int len = digest_output_byte_size("sha-256");
+  if (!digest_message("sha-256", what_to_say, what_to_say_size,
+        report.enclave.data, len)) {
+    printf("keystone_Attest: Can't digest what_to_say\n");
+    return false;
+  }
 
   // this should be a hash
   report.enclave.data_len = what_to_say_size;
   memcpy(report.enclave.data, what_to_say, what_to_say_size);
-  // TODO: input default measurement
+  report.enclave.data_len = 32;
+
+  // report.enclave.hash is measurement or its hash
+  int measurement_size = MDSIZE;
+  if (!keystone_get_fake_measurement(&measurement_size, report.enclave.hash)) {
+    printf("keystone_Attest: Can't get measurement\n");
+    return false;
+  }
+
+  // Put the signing public key in report.sm.public_key, leave signature 0'd
+  // for now.
+  // Put the signing public key in report.enclave.dev_public_key.
+  //
+  // Hash report.enclave.hash, report.enclave.datalen and report.enclave.data
+  // and sign that hash.
+  len = digest_output_byte_size("sha-256");
+  byte signed_hash[len];
+  if (!digest_message("sha-256", (byte*)report.enclave.hash,
+        MDSIZE + sizeof(uint64_t)+report.enclave.data_len,
+        signed_hash, len)) {
+    printf("keystone_Attest: Can't hash final signature\n");
+    return false;
+  }
+
+  int size_out = SIGNATURE_SIZE;
+  if (!keystone_ecc_sign("sha-256", fake_attest_key, len, signed_hash,
+        &size_out, report.enclave.signature)) {
+    printf("keystone_Attest: Can't sign\n");
+    return false;
+  }
+  
   return true;
 }
 
@@ -116,19 +174,24 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
   assert(attestation_size == sizeof(struct report_t));
   struct report_t &report = *reinterpret_cast<struct report_t*>(attestation);
 
-  int gold_attestation_size = 0;
-  struct report_t gold_report;
-  keystone_Attest(what_to_say_size, what_to_say, &gold_attestation_size, (byte*) &gold_report);
-
-/*
-  if (nonhash_report_cmp(gold_report, report) != 0) {
+  int len = digest_output_byte_size("sha-256");
+  byte signed_hash[len];
+  if (!digest_message("sha-256", (byte*)report.enclave.hash,
+        MDSIZE + sizeof(uint64_t)+report.enclave.data_len,
+        signed_hash, len)) {
+    printf("keystone_Verify: Can't hash final signature\n");
     return false;
   }
- */
 
-  if (!keystone_get_fake_measurement(measurement_out_size, measurement_out)) {
+  int size_out = SIGNATURE_SIZE;
+  if (!keystone_ecc_verify("sha-256", fake_attest_key, len, signed_hash,
+        size_out, report.enclave.signature)) {
+    printf("keystone_Verify: Can't verify\n");
     return false;
   }
+
+  *measurement_out_size = 32;
+  memcpy(measurement_out, report.enclave.hash, *measurement_out_size);
 
   return true;
 }

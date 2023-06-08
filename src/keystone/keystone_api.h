@@ -43,8 +43,9 @@ bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out);
 // BEGIN copied Keys.hpp
 #define ATTEST_DATA_MAXLEN 1024
 #define MDSIZE 64
-#define SIGNATURE_SIZE 64
-#define PUBLIC_KEY_SIZE 32
+#define SIGNATURE_SIZE 144
+// it was #define SIGNATURE_SIZE 64
+#define PUBLIC_KEY_SIZE 64
 // END copied Keys.hpp
 
 // BEGIN copied Report.hpp
@@ -57,7 +58,7 @@ bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out);
 struct enclave_report_t {
   byte hash[MDSIZE];
   uint64_t data_len;
-  byte data[ATTEST_DATA_MAXLEN];
+  byte data[32];  // this was ATTEST_DATA_MAXLEN
   byte signature[SIGNATURE_SIZE];
 };
 
