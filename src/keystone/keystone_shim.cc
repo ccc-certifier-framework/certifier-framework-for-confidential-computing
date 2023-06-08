@@ -78,27 +78,92 @@ bool keystone_ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int 
   return true;
 }
 
+string key_file("emulated_keystone_key.bin");
+string cert_file("emulated_keystone_key_cert.bin");
 EC_KEY* fake_attest_key = nullptr;
 key_message attest_private_key;
 key_message attest_public_key;
 
 bool keystone_Init(const int cert_size, byte *cert) {
   // later, we should read in the key and cert chain
-  fake_attest_key = generate_new_ecc_key(256);
-  if (fake_attest_key == nullptr) {
-    printf("keystone_Init: can't init Ecc key\n");
-    return false;
+  int size_key = file_size(key_file);
+  int size_cert = file_size(cert_file);
+
+  if (size_key <= 0 || size_cert <= 0) {
+    fake_attest_key = generate_new_ecc_key(256);
+    if (fake_attest_key == nullptr) {
+      printf("keystone_Init: can't init Ecc key\n");
+      return false;
+    }
+
+    if (!ECC_to_key(fake_attest_key, &attest_private_key)) {
+      printf("keystone_Init: can't init attest private key\n");
+      return false;
+    }
+    attest_private_key.set_key_name("keystone-simulated-attest-key");
+    if (!private_key_to_public_key(attest_private_key, &attest_public_key)) {
+      printf("keystone_Init: can't convert attest private key\n");
+      return false;
+    }
+
+    string key_str;
+    if (!attest_private_key.SerializeToString(&key_str)) {
+      return false;
+    }
+    if (!write_file(key_file, key_str.size(), (byte*) key_str.data())) {
+      return false;
+    }
+
+    // generate self signed cert
+    string name("KeystoneAuthority");
+    string desc("Authority");
+    X509* crt = X509_new();
+    if (!produce_artifact(attest_private_key, name,
+          desc, attest_public_key, name, desc,
+          94720, 86400 * 365.26, crt, true)) {
+      X509_free(crt);
+      return false;
+    }
+
+    string cert_str;
+    if (!x509_to_asn1(crt, &cert_str)) {
+      printf("keystone_Init: Cant save key\n");
+      X509_free(crt);
+      return false;
+    }
+    X509_free(crt);
+    if (!write_file(cert_file, cert_str.size(), (byte*) cert_str.data())) {
+      printf("keystone_Init: Cant save cert\n");
+      return false;
+    }
+
+  } else {
+    string key_str;
+    string cert_str;
+    if (!read_file_into_string(key_file, &key_str)) {
+      printf("keystone_Init: Cant read key\n");
+      return false;
+    }
+    if (!read_file_into_string(cert_file, &cert_str)) {
+      printf("keystone_Init: Cant read cert\n");
+      return false;
+    }
+
+    if (!attest_private_key.ParseFromString(key_str)) {
+      printf("keystone_Init: Cant deserialize cert\n");
+      return false;
+    }
+    if (!private_key_to_public_key(attest_private_key, &attest_public_key)) {
+      printf("keystone_Init: Cant make public attest key\n");
+      return false;
+    }
+    fake_attest_key = key_to_ECC(attest_private_key);
+    if (fake_attest_key == nullptr) {
+      printf("keystone_Init: Cant convert attest key\n");
+      return false;
+    }
   }
 
-  if (!ECC_to_key(fake_attest_key, &attest_private_key)) {
-    printf("keystone_Init: can't init attest private key\n");
-    return false;
-  }
-  attest_private_key.set_key_name("keystone-simulated-attest-key");
-  if (!private_key_to_public_key(attest_private_key, &attest_public_key)) {
-    printf("keystone_Init: can't convert attest private key\n");
-    return false;
-  }
   return true;
 }
 
