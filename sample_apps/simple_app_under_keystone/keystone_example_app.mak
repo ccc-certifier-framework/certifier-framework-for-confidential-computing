@@ -27,7 +27,7 @@ O= $(OBJ_DIR)
 KS=$(S)/keystone
 US=.
 I= $(SRC_DIR)/include
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(US)
+INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(KS)
 
 # Compilation of protobuf files could run into some errors, so avoid using
 # # -Werror for those targets

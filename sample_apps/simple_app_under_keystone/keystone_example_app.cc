@@ -134,15 +134,15 @@ int main(int an, char** av) {
   }
 
   string platform_attest_file_name(FLAGS_data_dir);
-  platform_attest_file_name.append(FLAGS_platform_attest_endorsement);
   string measurement_file_name(FLAGS_data_dir);
   measurement_file_name.append(FLAGS_measurement_file);
-  string attest_endorsement_file_name(FLAGS_data_dir);
-  attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
+  string attest_key_file_name(FLAGS_data_dir);
+  attest_key_file_name.append(FLAGS_attest_key_file);
 
   string endorsement_cert;
 
-  if (!app_trust_data->initialize_keystone_enclave_data(endorsement_cert.size(), endorsement_cert.data())) {
+  if (!app_trust_data->initialize_keystone_enclave_data(attest_key_file_name,
+          measurement_file_name, platform_attest_file_name)) {
     printf("Can't init keystone enclave\n");
     return 1;
   }
