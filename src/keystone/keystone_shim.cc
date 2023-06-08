@@ -69,13 +69,12 @@ bool keystone_ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int 
     return false;
   }
 
-#if 0
   int res = ECDSA_verify(0, digest, len, sig, size_sig, key);
   if (res != 1) {
     printf("ecc_verify: ECDSA_failed %d %d\n", len, size_sig);
     return false;
   }
-#endif 
+
   return true;
 }
 
@@ -155,6 +154,7 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attesta
     printf("keystone_Attest: Can't sign\n");
     return false;
   }
+  report.enclave.size_sig = size_out;
   
   return true;
 }
@@ -183,9 +183,8 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
     return false;
   }
 
-  int size_out = SIGNATURE_SIZE;
   if (!keystone_ecc_verify("sha-256", fake_attest_key, len, signed_hash,
-        size_out, report.enclave.signature)) {
+        report.enclave.size_sig, report.enclave.signature)) {
     printf("keystone_Verify: Can't verify\n");
     return false;
   }

@@ -56,6 +56,7 @@ bool keystone_test(const int cert_size, byte *cert) {
         printf("Sealed and unsealed secrets do not match\n");
         return false;
     }
+    printf("\n");
 
     int size_what_to_say = 256;
     byte what_to_say[size_what_to_say];
@@ -76,15 +77,15 @@ bool keystone_test(const int cert_size, byte *cert) {
         printf("keystone_Attest() fails\n");
         return false;
     }
-    printf("Attest succeeded %d\n", size_attestation);
+    printf("\nAttest succeeded %d\n", size_attestation);
     print_bytes(size_attestation, attestation);
-    printf("\n");
+    printf("\n\n");
     if (!keystone_Verify(size_what_to_say, what_to_say,
                          size_attestation, attestation, &size_measurement, measurement)) {
         printf("keystone_Verify() fails\n");
         return false;
     }
-    printf("Verify succeeded\n");
+    printf("Verify succeeded\n\n");
     printf("Measurement: ");
     print_bytes(size_measurement, measurement);
     printf("\n");

@@ -60,6 +60,7 @@ struct enclave_report_t {
   uint64_t data_len;
   byte data[32];  // this was ATTEST_DATA_MAXLEN
   byte signature[SIGNATURE_SIZE];
+  int size_sig;  // Remove?
 };
 
 // The hash in sm_report_t is the hash of the cpu embedded
