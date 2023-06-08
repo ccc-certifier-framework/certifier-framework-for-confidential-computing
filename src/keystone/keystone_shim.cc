@@ -220,7 +220,7 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attesta
     return false;
   }
   report.enclave.size_sig = size_out;
-  
+
   return true;
 }
 

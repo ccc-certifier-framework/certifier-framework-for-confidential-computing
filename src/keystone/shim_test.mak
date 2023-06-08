@@ -1,4 +1,4 @@
-#    
+#
 #    File: shim_test.mak
 
 ifndef SRC_DIR

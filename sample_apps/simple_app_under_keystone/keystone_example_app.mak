@@ -1,4 +1,4 @@
-#    
+#
 #    File: keystone_example_app.mak
 
 
