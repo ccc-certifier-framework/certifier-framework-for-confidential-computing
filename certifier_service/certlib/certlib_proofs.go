@@ -1178,6 +1178,7 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 		return nil
 	}
 
+/*
 	// Debug
 	fmt.Printf("  Reversed R: ");
 	PrintBytes(reversedR)
@@ -1189,6 +1190,8 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	r :=  new(big.Int).SetBytes(reversedR)
 	s :=  new(big.Int).SetBytes(reversedS)
 	if !ecdsa.Verify(PK, signedHash[0:32], r, s) {
+*/
+	if !ecdsa.VerifyASN1(PK, signedHash[0:32], sig[0:sigSize]) {
 		fmt.Printf("VerifyKeystoneAttestation: ecdsa.Verify failed\n")
                 // Todo: Fix
 		// return nil
