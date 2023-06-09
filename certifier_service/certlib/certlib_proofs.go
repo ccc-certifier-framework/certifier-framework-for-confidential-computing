@@ -283,12 +283,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "keystone-attestation" {
-			// get the key from ps
-			n := len(ps.Proved) - 1
-			if n < 0 {
-				fmt.Printf("InitProvedStatements: keystone evidence is at wrong position\n")
-				return false
-			}
+			n := 1
 			if ps.Proved[n] == nil || ps.Proved[n].Clause == nil ||
 					ps.Proved[n].Clause.Subject == nil {
 				fmt.Printf("InitProvedStatements: Can't get attestKey key (1)\n")

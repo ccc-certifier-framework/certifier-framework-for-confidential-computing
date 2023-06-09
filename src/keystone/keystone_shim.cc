@@ -29,10 +29,31 @@ bool keystone_getSealingKey(byte* key) {
   return true;
 }
 
+bool g_m_initialized = false;
+const int g_m_size = 32;
+byte g_measurement[g_m_size];
+string g_measurement_file_name("./provisioning/keystone_example_app.measurement");
+
 bool keystone_get_fake_measurement(int* size, byte* measurement) {
-  for (int i = 0; i < 32; i++)
-    measurement[i] = i;
-  *size = 32;
+
+  if (!g_m_initialized) {
+    int n = file_size(g_measurement_file_name);
+    string str_measurement;
+    if (n > 0 && read_file_into_string(g_measurement_file_name, &str_measurement)) {
+      byte* p = (byte*) str_measurement.data();
+      for (int i = 0; i < g_m_size; i++)
+        g_measurement[i] = p[i];
+    } else {
+      for (int i = 0; i < g_m_size; i++)
+        g_measurement[i] = i;
+    }
+    g_m_initialized = true;
+  }
+
+  for (int i = 0; i < g_m_size; i++)
+     measurement[i] = g_measurement[i];
+  *size = g_m_size;
+
   return true;
 }
 
