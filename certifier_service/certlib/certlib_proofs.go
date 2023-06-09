@@ -1128,41 +1128,48 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 		return nil
 	}
 
-	// compute hash of signed quantities in enclave report: hash, datalen, data
-
 	if am.WhatWasSaid == nil {
 		fmt.Printf("VerifyKeystoneAttestation: WhatWasSaid is nil.\n")
 		return nil
 	}
 	hashedWhatWasSaid := sha256.Sum256(am.WhatWasSaid)
-	// This should be the same as data and data_len should be 32
+
+	// Compute hash of hash, datalen, data in enclave report
+	// This is what was signed
+	signedHash := sha256.Sum256(ptr[0:104])
 
 	// Debug
 	fmt.Printf("\nVerifyKeystoneAttestation\n")
+
 	fmt.Printf("\nUser data hash in report: ")
 	PrintBytes(hashedWhatWasSaid[0:32])
+	fmt.Printf("\n")
+
+	fmt.Printf("\nHash to sign: ")
+	PrintBytes(signedHash[0:32])
+	fmt.Printf("\n")
 
 	measurement := ptr[0: 32]
-
-/*
 	sig := ptr[104:248]
 	byteSize := ptr[248:252]
+	sigSize := int(byteSize[0]) + 256 * int(byteSize[1]) + 256 * 256 * int(byteSize[2]) +256 * 256 * 256 * int(byteSize[3])
 
 	// Debug
-	fmt.Printf("\nHashed report header: ")
-	PrintBytes(hashOfHeader[0:48])
+	fmt.Printf("\nHash of WhatWasSaid: ")
+	PrintBytes(hashedWhatWasSaid[0:32])
 	fmt.Printf("\n")
 	fmt.Printf("Measurement: ")
 	PrintBytes(measurement)
 	fmt.Printf("\n")
-	fmt.Printf("Signature structure: ")
+	fmt.Printf("Signature: ")
 	PrintBytes(sig)
-	fmt.Printf("\n  R: ")
-	PrintBytes(rb)
-	fmt.Printf("\n  S: ")
-	PrintBytes(sb)
+	fmt.Printf("\n")
+	fmt.Printf("\nsig size (%d): ", sigSize)
+	PrintBytes(byteSize)
 	fmt.Printf("\n")
 
+	// check signature
+/*
 	reversedR := LittleToBigEndian(rb)
 	reversedS := LittleToBigEndian(sb)
 	if reversedR == nil || reversedS == nil {
@@ -2501,8 +2508,6 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
 func ValidateGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
                 *certprotos.VseClause, []byte) {
-
-	// Todo: Fix
 
 	// Debug
 	fmt.Printf("\nValidateGramineEvidence, Original policy:\n")
