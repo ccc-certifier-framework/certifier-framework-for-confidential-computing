@@ -1133,21 +1133,16 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 		return nil
 	}
 	hashedWhatWasSaid := sha256.Sum256(am.WhatWasSaid)
-
+        // Todo: check this is the data in the report
+        reportData := ptr[72:104]
+	if !bytes.Equal(reportData[:], hashedWhatWasSaid[:]) {
+		fmt.Printf("VerifyKeystoneAttestation: WhatWasSaid hash does not match data.\n")
+		return nil
+	}
+  
 	// Compute hash of hash, datalen, data in enclave report
 	// This is what was signed
 	signedHash := sha256.Sum256(ptr[0:104])
-
-	// Debug
-	fmt.Printf("\nVerifyKeystoneAttestation\n")
-
-	fmt.Printf("\nUser data hash in report: ")
-	PrintBytes(hashedWhatWasSaid[0:32])
-	fmt.Printf("\n")
-
-	fmt.Printf("\nHash to sign: ")
-	PrintBytes(signedHash[:])
-	fmt.Printf("\n")
 
 	measurement := ptr[0: 32]
 	sig := ptr[104:248]
@@ -1155,21 +1150,23 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	sigSize := int(byteSize[0]) + 256 * int(byteSize[1]) + 256 * 256 * int(byteSize[2]) +256 * 256 * 256 * int(byteSize[3])
 
 	// Debug
+	fmt.Printf("\nVerifyKeystoneAttestation\n")
+	fmt.Printf("\nUser data hash in report: ")
+	PrintBytes(hashedWhatWasSaid[0:32])
+	fmt.Printf("\n")
+	fmt.Printf("\nHash to sign: ")
+	PrintBytes(signedHash[:])
 	fmt.Printf("\nMeasurement: ")
 	PrintBytes(measurement)
 	fmt.Printf("\n")
-	fmt.Printf("\nSignature: ")
+	fmt.Printf("\nSignature (%d): ", sigSize)
 	PrintBytes(sig[0:sigSize])
 	fmt.Printf("\n")
-	fmt.Printf("\nsig size (%d): ", sigSize)
-	PrintBytes(byteSize)
-	fmt.Printf("\n")
-	fmt.Printf("Verification key: \n")
+	fmt.Printf("\nVerification key: \n")
         PrintKey(k)
 	fmt.Printf("\n")
 
 	// check signature
-
 /*
 	// obviously we should do this a better way
 	// first byte is 30 next byte is size of doublet
