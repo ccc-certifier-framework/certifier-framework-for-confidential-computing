@@ -189,12 +189,11 @@ bool keystone_Init(const int cert_size, byte *cert) {
 }
 
 
-bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
+bool keystone_Attest(const int what_to_say_size, byte* what_to_say,
+      int* attestation_size_out, byte* attestation_out) {
 
   int sz= (int)(sizeof(struct enclave_report_t) + sizeof(struct sm_report_t) + PUBLIC_KEY_SIZE);
   *attestation_size_out = sz;
-
-  assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
 
   memset(attestation_out, 0, sizeof(report_t));
   struct report_t &report = *reinterpret_cast<struct report_t*>(attestation_out);
@@ -260,6 +259,19 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
   print_bytes(MDSIZE + sizeof(uint64_t)+report.enclave.data_len, (byte*)report.enclave.hash);
   printf("\n");
 #endif
+
+  // report.enclave.data should be hash of what_to_say
+  int len = digest_output_byte_size("sha-256");
+  byte expected_data[len];
+  if (!digest_message("sha-256", what_to_say, what_to_say_size,
+        expected_data, len)) {
+    printf("keystone_Verify: Can't digest what_to_say\n");
+    return false;
+  }
+  if ((int)report.enclave.data_len != len || memcmp(expected_data, report.enclave.data, len) != 0) {
+    printf("keystone_Verify: reported data is not hash of what_to_say\n");
+    return false;
+  }
 
   if (!keystone_ecc_verify("sha-256", fake_attest_key, MDSIZE + sizeof(uint64_t)+report.enclave.data_len,
         (byte*)report.enclave.hash, report.enclave.size_sig, report.enclave.signature)) {
