@@ -24,11 +24,60 @@ import (
 	"crypto/sha512"
 	"crypto/sha256"
 	"crypto/x509"
+	"crypto/rand"
+	"os"
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 	gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
+
+func testSign(PK1 *ecdsa.PublicKey) {
+
+	fmt.Printf("\n***testSign\n")
+	keyFile := "emulated_keystone_key.bin"
+	serializedKey, err := os.ReadFile(keyFile)
+	if err != nil {
+		fmt.Printf("testSign: Can't read key file\n")
+		return
+	}
+	privateKey := certprotos.KeyMessage{}
+	err = proto.Unmarshal(serializedKey, &privateKey)
+	if err != nil {
+		fmt.Printf("testSign: Can't deserialize key\n")
+		return
+	}
+	pK, PK, err := GetEccKeysFromInternal(&privateKey)
+	if err != nil || PK == nil || pK == nil {
+		fmt.Printf("testSign: Can't convertkey\n")
+		return
+	}
+	toHash := []byte{1,2,3,4,5,6,7,8,9}
+	hashed := sha256.Sum256(toHash)
+
+	signed, err := ecdsa.SignASN1(rand.Reader, pK, hashed[:])
+	if err != nil {
+		fmt.Printf("testSign: Can't sign\n")
+		return
+	}
+
+	fmt.Printf("\nhashed: ")
+	PrintBytes(hashed[:])
+	fmt.Printf("\nsigned: ")
+	PrintBytes(signed[:])
+	fmt.Printf("\n")
+	if ecdsa.VerifyASN1(PK, hashed[:], signed[:]) {
+		fmt.Printf("testSign: Verify succeeded (1)\n")
+	} else {
+		fmt.Printf("testSign: Verify failed (1)\n")
+	}
+	if ecdsa.VerifyASN1(PK1, hashed[:], signed[:]) {
+		fmt.Printf("testSign: Verify succeeded (2)\n")
+	} else {
+		fmt.Printf("testSign: Verify failed (2)\n")
+	}
+	fmt.Printf("\n")
+}
 
 
 func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
@@ -1133,7 +1182,6 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 		return nil
 	}
 	hashedWhatWasSaid := sha256.Sum256(am.WhatWasSaid)
-        // Todo: check this is the data in the report
         reportData := ptr[72:104]
 	if !bytes.Equal(reportData[:], hashedWhatWasSaid[:]) {
 		fmt.Printf("VerifyKeystoneAttestation: WhatWasSaid hash does not match data.\n")
@@ -1145,21 +1193,21 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	signedHash := sha256.Sum256(ptr[0:104])
 
 	measurement := ptr[0: 32]
-	sig := ptr[104:248]
 	byteSize := ptr[248:252]
 	sigSize := int(byteSize[0]) + 256 * int(byteSize[1]) + 256 * 256 * int(byteSize[2]) +256 * 256 * 256 * int(byteSize[3])
+	sig := ptr[104:(104+sigSize)]
 
 	// Debug
 	fmt.Printf("\nVerifyKeystoneAttestation\n")
 	fmt.Printf("\nUser data hash in report: ")
 	PrintBytes(hashedWhatWasSaid[0:32])
 	fmt.Printf("\n")
-	fmt.Printf("\nHash to sign: ")
+	fmt.Printf("Hash to sign: ")
 	PrintBytes(signedHash[:])
 	fmt.Printf("\nMeasurement: ")
 	PrintBytes(measurement)
 	fmt.Printf("\n")
-	fmt.Printf("\nSignature (%d): ", sigSize)
+	fmt.Printf("Signature (%d): ", sigSize)
 	PrintBytes(sig[0:sigSize])
 	fmt.Printf("\n")
 	fmt.Printf("\nVerification key: \n")
@@ -1215,8 +1263,9 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	s :=  new(big.Int).SetBytes(reversedS)
 	if !ecdsa.Verify(PK, signedHash[0:32], r, s) {
 */
+	testSign(PK)
 
-	if !ecdsa.VerifyASN1(PK, signedHash[:], sig[0:sigSize]) {
+	if !ecdsa.VerifyASN1(PK, signedHash[:], sig[:]) {
 		fmt.Printf("VerifyKeystoneAttestation: ecdsa.Verify failed\n")
                 // Todo: Fix
 		// return nil

@@ -199,16 +199,6 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attesta
   memset(attestation_out, 0, sizeof(report_t));
   struct report_t &report = *reinterpret_cast<struct report_t*>(attestation_out);
 
-  memset(report.sm.hash, 0, MDSIZE);
-  memset(report.sm.public_key, 0, PUBLIC_KEY_SIZE);
-  memset(report.sm.signature, 0, SIGNATURE_SIZE);
-
-  memset(report.enclave.hash, 0, MDSIZE);
-  memset((byte*)&report.enclave.data_len, 0, 4);
-  memset((byte*)&report.enclave.data, 0, 32);
-  memset(report.enclave.signature, 0, SIGNATURE_SIZE);
-  memset((byte*)&report.enclave.size_sig, 0, 4);
-
   // report.enclave.data gets the hash of what_to_say
   int len = digest_output_byte_size("sha-256");
   if (!digest_message("sha-256", what_to_say, what_to_say_size,
@@ -216,7 +206,7 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attesta
     printf("keystone_Attest: Can't digest what_to_say\n");
     return false;
   }
-  report.enclave.data_len = 32;
+  report.enclave.data_len = len;
 
   // report.enclave.hash is measurement or its hash
   int measurement_size = MDSIZE;
@@ -240,7 +230,7 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attesta
     return false;
   }
 
-#if 0
+#if 1
   printf("Hashing: ");
   print_bytes(MDSIZE + sizeof(uint64_t)+report.enclave.data_len, (byte*)report.enclave.hash);
   printf("\n");
@@ -301,6 +291,9 @@ bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
   byte key[64];
 
   memset(iv, 0, 16);
+  if (!get_random(128, iv)) {
+    return false;
+  }
   if (!keystone_getSealingKey(key)) {
     return false;
   }
