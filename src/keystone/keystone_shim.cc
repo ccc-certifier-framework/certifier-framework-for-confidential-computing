@@ -216,8 +216,6 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attesta
     printf("keystone_Attest: Can't digest what_to_say\n");
     return false;
   }
-
-  // this should be a hash
   report.enclave.data_len = 32;
 
   // report.enclave.hash is measurement or its hash
@@ -241,6 +239,15 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attesta
     printf("keystone_Attest: Can't hash final signature\n");
     return false;
   }
+
+#if 0
+  printf("Hashing: ");
+  print_bytes(MDSIZE + sizeof(uint64_t)+report.enclave.data_len, (byte*)report.enclave.hash);
+  printf("\n");
+  printf("Hash: ");
+  print_bytes(len, signed_hash);
+  printf("\n");
+#endif
 
   int size_out = SIGNATURE_SIZE;
   if (!keystone_ecc_sign("sha-256", fake_attest_key, len, signed_hash,

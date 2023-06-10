@@ -1171,7 +1171,6 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	// check signature
 	// obviously we should do this a better way
 
-/*
 	// first byte is 30 next byte is size of doublet
 	// next is 02 tag and size of r (which should be 32)
 	// next is 02 tag and size of s
@@ -1183,7 +1182,7 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (2)\n")
 	}
 	s1 := int(sig[3])
-	rb := sig[4:(3+s1)];
+	rb := sig[4:(4+s1)];
 
 	if sig[4+s1] != 0x02 {
 		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (3)\n")
@@ -1192,7 +1191,7 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	if (s1 + s2 + 6) != sigSize {
 		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (4)\n")
 	}
-	sb := sig[(6+s1):(sigSize - 1)]
+	sb := sig[(6+s1):sigSize]
 	reversedR := LittleToBigEndian(rb)
 	reversedS := LittleToBigEndian(sb)
 	if reversedR == nil || reversedS == nil {
@@ -1217,8 +1216,6 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	r :=  new(big.Int).SetBytes(reversedR)
 	s :=  new(big.Int).SetBytes(reversedS)
 	if !ecdsa.Verify(PK, signedHash[0:32], r, s) {
-*/
-	if !ecdsa.VerifyASN1(PK, signedHash[0:32], sig[0:sigSize]) {
 		fmt.Printf("VerifyKeystoneAttestation: ecdsa.Verify failed\n")
                 // Todo: Fix
 		// return nil
