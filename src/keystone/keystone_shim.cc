@@ -215,10 +215,10 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attesta
     return false;
   }
 
-  // Put the signing public key in report.sm.public_key, leave signature 0'd
+  // Put the signing public key in report.sm.public_key eventually, leave signature 0'd
   // for now.
-  // Put the signing public key in report.enclave.dev_public_key.
-  //
+  // Put the signing public key in report.enclave.dev_public_key, eventually.
+
   // Hash report.enclave.hash, report.enclave.datalen and report.enclave.data
   // and sign that hash.
   len = digest_output_byte_size("sha-256");

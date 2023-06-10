@@ -1198,6 +1198,7 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	sig := ptr[104:(104+sigSize)]
 
 	// Debug
+	testSign(PK)
 	fmt.Printf("\nVerifyKeystoneAttestation\n")
 	fmt.Printf("\nUser data hash in report: ")
 	PrintBytes(hashedWhatWasSaid[0:32])
@@ -1209,9 +1210,6 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	fmt.Printf("\n")
 	fmt.Printf("Signature (%d): ", sigSize)
 	PrintBytes(sig[0:sigSize])
-	fmt.Printf("\n")
-	fmt.Printf("\nVerification key: \n")
-        PrintKey(k)
 	fmt.Printf("\n")
 
 	// check signature
@@ -1263,11 +1261,10 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	s :=  new(big.Int).SetBytes(reversedS)
 	if !ecdsa.Verify(PK, signedHash[0:32], r, s) {
 */
-	testSign(PK)
 
 	if !ecdsa.VerifyASN1(PK, signedHash[:], sig[:]) {
 		fmt.Printf("VerifyKeystoneAttestation: ecdsa.Verify failed\n")
-                // Todo: Fix
+                // Todo: why does this fail?
 		// return nil
 	} else {
 		fmt.Printf("VerifyKeystoneAttestation: ecdsa.Verify succeeded\n")
