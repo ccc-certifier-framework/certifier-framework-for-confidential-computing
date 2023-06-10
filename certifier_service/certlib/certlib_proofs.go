@@ -1146,7 +1146,7 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	fmt.Printf("\n")
 
 	fmt.Printf("\nHash to sign: ")
-	PrintBytes(signedHash[0:32])
+	PrintBytes(signedHash[:])
 	fmt.Printf("\n")
 
 	measurement := ptr[0: 32]
@@ -1155,22 +1155,23 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	sigSize := int(byteSize[0]) + 256 * int(byteSize[1]) + 256 * 256 * int(byteSize[2]) +256 * 256 * 256 * int(byteSize[3])
 
 	// Debug
-	fmt.Printf("\nHash of WhatWasSaid: ")
-	PrintBytes(hashedWhatWasSaid[0:32])
-	fmt.Printf("\n")
-	fmt.Printf("Measurement: ")
+	fmt.Printf("\nMeasurement: ")
 	PrintBytes(measurement)
 	fmt.Printf("\n")
-	fmt.Printf("Signature: ")
+	fmt.Printf("\nSignature: ")
 	PrintBytes(sig[0:sigSize])
 	fmt.Printf("\n")
 	fmt.Printf("\nsig size (%d): ", sigSize)
 	PrintBytes(byteSize)
 	fmt.Printf("\n")
+	fmt.Printf("Verification key: \n")
+        PrintKey(k)
+	fmt.Printf("\n")
 
 	// check signature
-	// obviously we should do this a better way
 
+/*
+	// obviously we should do this a better way
 	// first byte is 30 next byte is size of doublet
 	// next is 02 tag and size of r (which should be 32)
 	// next is 02 tag and size of s
@@ -1216,6 +1217,9 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	r :=  new(big.Int).SetBytes(reversedR)
 	s :=  new(big.Int).SetBytes(reversedS)
 	if !ecdsa.Verify(PK, signedHash[0:32], r, s) {
+*/
+
+	if !ecdsa.VerifyASN1(PK, signedHash[:], sig[0:sigSize]) {
 		fmt.Printf("VerifyKeystoneAttestation: ecdsa.Verify failed\n")
                 // Todo: Fix
 		// return nil
