@@ -224,12 +224,12 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say,
 
 #if 1
   printf("signing: ");
-  print_bytes(MDSIZE + sizeof(uint64_t)+report.enclave.data_len, (byte*)report.enclave.hash);
+  print_bytes(MDSIZE + sizeof(uint64_t) + report.enclave.data_len, (byte*)report.enclave.hash);
   printf("\n");
 #endif
 
   int size_out = SIGNATURE_SIZE;
-  if (!keystone_ecc_sign("sha-256", fake_attest_key, MDSIZE + sizeof(uint64_t)+report.enclave.data_len,
+  if (!keystone_ecc_sign("sha-256", fake_attest_key, MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
         (byte*)report.enclave.hash, &size_out, report.enclave.signature)) {
     printf("keystone_Attest: Can't sign\n");
     return false;
@@ -239,16 +239,6 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say,
   return true;
 }
 
-// true = different
-bool nonhash_report_cmp(struct report_t& a, struct report_t& b) {
-  return (a.enclave.data_len != b.enclave.data_len)
-    || memcmp(a.enclave.data, b.enclave.data, ATTEST_DATA_MAXLEN)
-    || memcmp(a.enclave.signature, b.enclave.signature, SIGNATURE_SIZE)
-    || memcmp(a.sm.public_key, b.sm.public_key, PUBLIC_KEY_SIZE)
-    || memcmp(a.sm.signature, b.sm.signature, SIGNATURE_SIZE)
-    || memcmp(a.dev_public_key, b.dev_public_key, PUBLIC_KEY_SIZE);
-}
-
 bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size,
       byte* attestation, int* measurement_out_size, byte* measurement_out) {
   assert(attestation_size == sizeof(struct report_t));
@@ -256,7 +246,7 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
 
 #if 1
   printf("verifying: ");
-  print_bytes(MDSIZE + sizeof(uint64_t)+report.enclave.data_len, (byte*)report.enclave.hash);
+  print_bytes(MDSIZE + sizeof(uint64_t) + report.enclave.data_len, (byte*)report.enclave.hash);
   printf("\n");
 #endif
 
@@ -273,7 +263,7 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
     return false;
   }
 
-  if (!keystone_ecc_verify("sha-256", fake_attest_key, MDSIZE + sizeof(uint64_t)+report.enclave.data_len,
+  if (!keystone_ecc_verify("sha-256", fake_attest_key, MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
         (byte*)report.enclave.hash, report.enclave.size_sig, report.enclave.signature)) {
     printf("keystone_Verify: Can't verify\n");
     return false;
