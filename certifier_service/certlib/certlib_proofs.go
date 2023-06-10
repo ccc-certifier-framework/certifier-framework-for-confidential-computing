@@ -1187,15 +1187,15 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 		fmt.Printf("VerifyKeystoneAttestation: WhatWasSaid hash does not match data.\n")
 		return nil
 	}
-  
-	// Compute hash of hash, datalen, data in enclave report
-	// This is what was signed
-	signedHash := sha256.Sum256(ptr[0:104])
 
 	measurement := ptr[0: 32]
 	byteSize := ptr[248:252]
 	sigSize := int(byteSize[0]) + 256 * int(byteSize[1]) + 256 * 256 * int(byteSize[2]) +256 * 256 * 256 * int(byteSize[3])
 	sig := ptr[104:(104+sigSize)]
+
+	// Compute hash of hash, datalen, data in enclave report
+	// This is what was signed
+	signedHash := sha256.Sum256(ptr[0:104])
 
 	// Debug
 	testSign(PK)
@@ -1203,65 +1203,18 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	fmt.Printf("\nUser data hash in report: ")
 	PrintBytes(hashedWhatWasSaid[0:32])
 	fmt.Printf("\n")
-	fmt.Printf("Hash to sign: ")
+	fmt.Printf("Hashing: ")
+	PrintBytes(ptr[0:104])
+	fmt.Printf("\nHash   : ")
 	PrintBytes(signedHash[:])
 	fmt.Printf("\nMeasurement: ")
 	PrintBytes(measurement)
 	fmt.Printf("\n")
 	fmt.Printf("Signature (%d): ", sigSize)
 	PrintBytes(sig[0:sigSize])
-	fmt.Printf("\n")
+	fmt.Printf("\n\n")
 
 	// check signature
-/*
-	// obviously we should do this a better way
-	// first byte is 30 next byte is size of doublet
-	// next is 02 tag and size of r (which should be 32)
-	// next is 02 tag and size of s
-
-	if sig[0] != 0x30 {
-		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (1)\n")
-	}
-	if sig[2] != 0x02 {
-		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (2)\n")
-	}
-	s1 := int(sig[3])
-	rb := sig[4:(4+s1)];
-
-	if sig[4+s1] != 0x02 {
-		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (3)\n")
-	}
-	s2 := int(sig[5+s1])
-	if (s1 + s2 + 6) != sigSize {
-		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (4)\n")
-	}
-	sb := sig[(6+s1):sigSize]
-	reversedR := LittleToBigEndian(rb)
-	reversedS := LittleToBigEndian(sb)
-	if reversedR == nil || reversedS == nil {
-		fmt.Printf("VerifyKeystoneAttestation: reversed bytes failed\n")
-		return nil
-	}
-
-	// Debug
-	fmt.Printf("  R: ");
-	PrintBytes(rb)
-	fmt.Printf("\n")
-	fmt.Printf("  S: ");
-	PrintBytes(sb)
-	fmt.Printf("\n")
-	fmt.Printf("  Reversed R: ");
-	PrintBytes(reversedR)
-	fmt.Printf("\n")
-	fmt.Printf("  Reversed S: ");
-	PrintBytes(reversedS)
-	fmt.Printf("\n")
-
-	r :=  new(big.Int).SetBytes(reversedR)
-	s :=  new(big.Int).SetBytes(reversedS)
-	if !ecdsa.Verify(PK, signedHash[0:32], r, s) {
-*/
-
 	if !ecdsa.VerifyASN1(PK, signedHash[:], sig[:]) {
 		fmt.Printf("VerifyKeystoneAttestation: ecdsa.Verify failed\n")
                 // Todo: why does this fail?

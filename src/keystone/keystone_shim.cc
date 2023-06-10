@@ -221,27 +221,17 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attesta
 
   // Hash report.enclave.hash, report.enclave.datalen and report.enclave.data
   // and sign that hash.
-  len = digest_output_byte_size("sha-256");
-  byte signed_hash[len];
-  if (!digest_message("sha-256", (byte*)report.enclave.hash,
-        MDSIZE + sizeof(uint64_t)+report.enclave.data_len,
-        signed_hash, len)) {
-    printf("keystone_Attest: Can't hash final signature\n");
-    return false;
-  }
+  //
 
 #if 1
-  printf("Hashing: ");
+  printf("signing: ");
   print_bytes(MDSIZE + sizeof(uint64_t)+report.enclave.data_len, (byte*)report.enclave.hash);
-  printf("\n");
-  printf("Hash: ");
-  print_bytes(len, signed_hash);
   printf("\n");
 #endif
 
   int size_out = SIGNATURE_SIZE;
-  if (!keystone_ecc_sign("sha-256", fake_attest_key, len, signed_hash,
-        &size_out, report.enclave.signature)) {
+  if (!keystone_ecc_sign("sha-256", fake_attest_key, MDSIZE + sizeof(uint64_t)+report.enclave.data_len,
+        (byte*)report.enclave.hash, &size_out, report.enclave.signature)) {
     printf("keystone_Attest: Can't sign\n");
     return false;
   }
@@ -265,17 +255,14 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
   assert(attestation_size == sizeof(struct report_t));
   struct report_t &report = *reinterpret_cast<struct report_t*>(attestation);
 
-  int len = digest_output_byte_size("sha-256");
-  byte signed_hash[len];
-  if (!digest_message("sha-256", (byte*)report.enclave.hash,
-        MDSIZE + sizeof(uint64_t)+report.enclave.data_len,
-        signed_hash, len)) {
-    printf("keystone_Verify: Can't hash final signature\n");
-    return false;
-  }
+#if 1
+  printf("verifying: ");
+  print_bytes(MDSIZE + sizeof(uint64_t)+report.enclave.data_len, (byte*)report.enclave.hash);
+  printf("\n");
+#endif
 
-  if (!keystone_ecc_verify("sha-256", fake_attest_key, len, signed_hash,
-        report.enclave.size_sig, report.enclave.signature)) {
+  if (!keystone_ecc_verify("sha-256", fake_attest_key, MDSIZE + sizeof(uint64_t)+report.enclave.data_len,
+        (byte*)report.enclave.hash, report.enclave.size_sig, report.enclave.signature)) {
     printf("keystone_Verify: Can't verify\n");
     return false;
   }
