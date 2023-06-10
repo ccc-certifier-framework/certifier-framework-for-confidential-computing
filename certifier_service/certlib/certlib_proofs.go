@@ -1162,15 +1162,37 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 	PrintBytes(measurement)
 	fmt.Printf("\n")
 	fmt.Printf("Signature: ")
-	PrintBytes(sig)
+	PrintBytes(sig[0:sigSize])
 	fmt.Printf("\n")
 	fmt.Printf("\nsig size (%d): ", sigSize)
 	PrintBytes(byteSize)
 	fmt.Printf("\n")
 
 	// check signature
-	rb := sig[0:32];
-	sb := sig[32:sigSize]
+	// obviously we should do this a better way
+
+/*
+	// first byte is 30 next byte is size of doublet
+	// next is 02 tag and size of r (which should be 32)
+	// next is 02 tag and size of s
+
+	if sig[0] != 0x30 {
+		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (1)\n")
+	}
+	if sig[2] != 0x02 {
+		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (2)\n")
+	}
+	s1 := int(sig[3])
+	rb := sig[4:(3+s1)];
+
+	if sig[4+s1] != 0x02 {
+		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (3)\n")
+	}
+	s2 := int(sig[5+s1])
+	if (s1 + s2 + 6) != sigSize {
+		fmt.Printf("VerifyKeystoneAttestation: bad der encoding (4)\n")
+	}
+	sb := sig[(6+s1):(sigSize - 1)]
 	reversedR := LittleToBigEndian(rb)
 	reversedS := LittleToBigEndian(sb)
 	if reversedR == nil || reversedS == nil {
@@ -1178,8 +1200,13 @@ func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []by
 		return nil
 	}
 
-/*
 	// Debug
+	fmt.Printf("  R: ");
+	PrintBytes(rb)
+	fmt.Printf("\n")
+	fmt.Printf("  S: ");
+	PrintBytes(sb)
+	fmt.Printf("\n")
 	fmt.Printf("  Reversed R: ");
 	PrintBytes(reversedR)
 	fmt.Printf("\n")
