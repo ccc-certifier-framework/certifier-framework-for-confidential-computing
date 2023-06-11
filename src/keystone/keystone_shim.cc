@@ -296,6 +296,18 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say,
   printf("\n");
 #endif
 
+#if 0
+  // Cross check
+  int size_measurement_test = 64;
+  byte measurement_test[size_measurement_test];
+  
+  if (keystone_Verify(what_to_say_size, what_to_say, *attestation_size_out,
+      attestation_out, &size_measurement_test, measurement_test)) {
+    printf("keystone_Attest: attest verifies\n");
+  } else {
+    printf("keystone_Attest: attest does not verify\n");
+  }
+#endif
   return true;
 }
 
