@@ -35,7 +35,8 @@ bool attestation_test() {
   if (!cca_Attest(what_to_say.size(), (byte*)what_to_say.c_str(), &report_len, report))
     return false;
 
-  if (!cca_Verify(what_to_say.size(), what_was_said, report_len, report, &measurement_len, measurement))
+  if (!cca_Verify(what_to_say.size(), what_was_said, report_len, report,
+                  &measurement_len, measurement))
     return false;
 
   printf("What was said: %s\n", (char*) what_was_said);

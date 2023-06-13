@@ -18,111 +18,43 @@ jobs:
         sudo apt update -y
         sudo apt install -y libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake
 
-    - name: test-core-certifier-programs
+    - name: test-ISLET-SDK-shim_test
       run: |
-        echo "******************************************************************"
-        echo "* Check that core certifier programs still compile and clear tests"
-        echo "******************************************************************"
+        echo "**********************************************************"
+        echo "* Download ISLET SDK, build the library and run shim_test"
+        echo "**********************************************************"
         echo " "
-        pushd src
+        pushd src/cca
 
-        #! ---------------------------------------------------------------------
-        #! Check that core certifier programs still compile and clear tests
-        #! ---------------------------------------------------------------------
-        make -f certifier.mak clean
-        make -f certifier_tests.mak clean
-        make -f certifier.mak
-        make -f certifier.mak clean
+        ../../third_party/islet/setup.sh
 
-        make -f certifier_tests.mak clean
-        make -f certifier_tests.mak
-        ./certifier_tests.exe
+        echo " "
+        set -x
+        cd islet_test/
+        make clean
+        make shim_test
+        set +x
+        echo " "
 
-        popd
-
-    - name: test-run_example-help-list-args
+    - name: test-run_example-simple_app_under_cca
       run: |
         echo " "
-        echo "******************************************************************"
-        echo "* Exercise run_example with --help, --list arguments ..."
-        echo "******************************************************************"
+        echo "**********************************************************************"
+        echo "* Test: Execute script to compile, build and run simple_app_under_cca "
+        echo "**********************************************************************"
         echo " "
         pushd ./sample_apps
 
-        #! Exercise help / usage / list options, for default simple_app
-        ./run_example.sh -h
-        ./run_example.sh --help
-        ./run_example.sh --list
-        ./run_example.sh --list simple_app
+        ./cleanup.sh
 
-        #! Re-run help / usage / list options, for simple_app_under_oe
-        ./run_example.sh --help simple_app_under_oe
-        ./run_example.sh --list simple_app_under_oe
+        ./run_example.sh --dry-run simple_app_under_cca
 
-        ./run_example.sh simple_app show_env
-        ./run_example.sh simple_app_under_oe show_env
+        ./run_example.sh --dry-run simple_app_under_cca setup
 
-        #! Re-run help / usage / list options, for simple_app_under_gramine
-        ./run_example.sh --help simple_app_under_gramine
-        ./run_example.sh --list simple_app_under_gramine
-
-        #! Re-run help / usage / list options, for simple_app_under_sev
-        ./run_example.sh --help simple_app_under_sev
-        ./run_example.sh --list simple_app_under_sev
-
-        #! Re-run help / usage / list options, for application_service
-        ./run_example.sh --help application_service
-        ./run_example.sh --list application_service
-
-        #! Re-run help / usage / list options, for simple_app_under_app_service
-        ./run_example.sh --help simple_app_under_app_service
-        ./run_example.sh --list simple_app_under_app_service
-
-        ./run_example.sh --help simple_app_under_keystone
-        ./run_example.sh --list simple_app_under_keystone
+        ./cleanup.sh
 
         popd
 
-    - name: test-run_example-dry-run
-      run: |
-        #! ---------------------------------------------------------------------
-        #! Exercise various interfaces in --dry-run mode. This will ensure that
-        #! script's execution logic will likely work for different sample apps,
-        #! when tested on the appropriate platform and environment.
-        #! ---------------------------------------------------------------------
-        echo " "
-        echo "******************************************************************"
-        echo "* Exercise run_example with --dry-run argument ..."
-        echo "******************************************************************"
-        echo " "
-        pushd ./sample_apps
-
-        ./run_example.sh --dry-run simple_app
-        ./run_example.sh --dry-run simple_app setup
-        ./run_example.sh --dry-run simple_app run_test
-
-        ./run_example.sh --dry-run simple_app_under_oe
-        ./run_example.sh --dry-run simple_app_under_oe setup
-        ./run_example.sh --dry-run simple_app_under_oe run_test
-        ./run_example.sh --dry-run simple_app_under_oe setup_with_auto_policy_generation_for_OE
-
-        ./run_example.sh --dry-run simple_app_under_gramine
-        ./run_example.sh --dry-run simple_app_under_gramine setup
-        ./run_example.sh --dry-run simple_app_under_gramine run_test
-
-        ./run_example.sh --dry-run simple_app_under_sev
-        ./run_example.sh --dry-run simple_app_under_sev setup
-        ./run_example.sh --dry-run simple_app_under_sev run_test
-        ./run_example.sh --dry-run simple_app_under_sev setup_with_auto_policy_generation_for_SEV
-
-        ./run_example.sh --dry-run application_service
-        ./run_example.sh --dry-run application_service setup
-
-        #! Should do nothing but just emit usage messages
-        ./run_example.sh --dry-run application_service run_test
-
-        ./run_example.sh --dry-run simple_app_under_keystone
-        popd
 
     - name: test-run_example-simple_app
       run: |
@@ -144,141 +76,6 @@ jobs:
         ./run_example.sh simple_app
         ./cleanup.sh
 
-        popd
-
-    - name: test-build-and-setup-App-Service-and-simple_app_under_app_service
-      run: |
-        echo " "
-        echo "***************************************"
-        echo "* Build-and-setup Application Service "
-        echo "***************************************"
-        echo " "
-        pushd ./sample_apps
-
-        ./run_example.sh application_service setup
-
-        echo " "
-        echo "*************************************************************"
-        echo "* Build-and-setup simple_app_under_app_service/ and run_test"
-        echo "*************************************************************"
-        echo " "
-
-        echo " "
-        echo "---- simple_app_under_app_service/ setup ----"
-        echo " "
-        ./run_example.sh simple_app_under_app_service setup
-
-        #! Start Certifier Service & Application Service together first.
-        ./run_example.sh --no-cleanup application_service start
-
-        #! Allow some time for App Service to get Certified ...
-        sleep 10
-
-        #! Once Application Service has been certified, we no longer need
-        #! this Certifier Service. Kill it, so app itself can start its
-        #! own Certifier Service.
-        ps -ef | grep simpleserver
-
-        set -x
-        kill -9 $(pgrep simpleserver)
-        set +x
-
-        echo " "
-        echo "---- simple_app_under_app_service/ run_test ----"
-        echo " "
-
-        #! Now, run the test for simple_app_under_app_service
-        ./run_example.sh simple_app_under_app_service run_test
-
-        sleep 2
-
-        #! Check for 'Hi" messages from Application Service
-        tail -30 ../application_service/provisioning/appln.service.out
-
-        sudo ./cleanup.sh
-        popd
-
-        echo " "
-        echo "**** Check for any stale left-over processes ****"
-        ps -ef | grep -v -E 'root|^sys'
-        echo " "
-
-    - name: test-build-and-install-sev-snp-simulator
-      run: |
-        echo " "
-        echo "*************************************************************************************"
-        echo "* Build and install SEV-SNP simulator, to run Cert tests with simulated SEV-enabled."
-        echo "*************************************************************************************"
-        echo " "
-        pushd ./sev-snp-simulator
-
-        make clean
-        make
-        make keys
-
-        #! You may need this in your dev-box, but on CI this will not be needed
-        #! as we have not run 'insmod', yet.
-        #! make rmmod
-
-        make insmod
-
-        popd
-
-    - name: test-sev-snp-simulator-sev-test
-      run: |
-        echo " "
-        echo "******************************************************************"
-        echo "* Run sev-snp-simulator sev-test ... "
-        echo "******************************************************************"
-        echo " "
-        pushd ./sev-snp-simulator/test
-
-        make sev-test
-        sudo ./sev-test
-
-        popd
-
-    - name: test-certifier-build-and-test-simulated-SEV-mode
-      run: |
-        echo " "
-        echo "******************************************************************"
-        echo "* Check that Certifier tests run clean with simulated SEV-enabled."
-        echo "******************************************************************"
-        echo " "
-        pushd src
-
-        make -f certifier_tests.mak clean
-        ENABLE_SEV=1 make -f certifier_tests.mak
-        sudo ./certifier_tests.exe --print_all=true
-
-        echo " "
-        echo "******************************************************************"
-        echo "* Check that Certifier builds with simulated SEV-enabled."
-        echo "******************************************************************"
-        echo " "
-        make -f certifier.mak clean
-        make -f certifier_tests.mak clean
-        ENABLE_SEV=1 make -f certifier.mak
-
-        popd
-
-        #! Run script that will setup s/w required to build Policy Generator for SEV-app
-        ./CI/scripts/setup-JSON-schema-validator-for-SEV-apps.sh
-
-    - name: test-simple_app_under_sev-simulated-SEV-mode
-      run: |
-        echo " "
-        echo "******************************************************************"
-        echo "* Run simple_app_under_sev in simulated-SEV environment."
-        echo "******************************************************************"
-        echo " "
-        pushd ./sample_apps
-
-        ./run_example.sh rm_non_git_files
-        ./run_example.sh simple_app_under_sev setup
-        sudo ./run_example.sh simple_app_under_sev run_test
-
-        sudo ./cleanup.sh
         popd
 
     - name: test-simple_app_under_keystone-using-shim

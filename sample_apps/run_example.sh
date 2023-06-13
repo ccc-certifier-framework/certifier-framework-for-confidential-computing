@@ -1,5 +1,20 @@
 #!/bin/bash
 # ##############################################################################
+#  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# ##############################################################################
 # run_example.sh - Driver script to build things needed to run sample-apps
 # ##############################################################################
 
@@ -38,6 +53,9 @@ RunTag=""           # Short description of which app is being tested
 
 RunSudo=0           # Only some commands for SEV-app need to run as sudo
 
+# Default is to 'make clean' before compiling any code. Override by --no-make-clean
+DoMakeClean=1
+
 # build_utilites needs access to OpenSSL libraries, that may live on a diff
 # dir location, depending on how OpenSSL was installed on diff machines.
 # User can over-ride our default by specifying LOCAL_LIB env-var
@@ -55,6 +73,12 @@ Jq=jq    # Needed for OE app; will be established later on.
 # --------------------------------------------------------------------------------
 MbedTLS_dir="mbedtls"
 Simple_App_under_gramine_MbedTLS_dir="sample_apps/simple_app_under_gramine/${MbedTLS_dir}"
+
+# --------------------------------------------------------------------------------
+# sample_app_under_cca uses ISLET SDK, which needs to be downloaded. To avoid
+# downloading repos frequently, provide this global variable to see if it has
+# been downloaded before.
+ISLET_ROOT="${CERT_PROTO}/third_party/islet"
 
 # Work-instructions for SEV-app need following files pre-populated by the user.
 #
@@ -102,6 +126,7 @@ SampleApps=( "simple_app"
              "application_service"
              "simple_app_under_app_service"
              "simple_app_under_keystone"
+             "simple_app_under_cca"
            )
 
 # ###########################################################################
@@ -137,6 +162,9 @@ function usage_brief() {
     usage_help
     echo "Usage: $Me [--dry-run] <sample-app-name> [ setup | run_test ]"
     list_apps
+    echo " "
+    echo "Extended usage for script development / testing:"
+    echo "Usage: $Me [--no-cleanup | --no-make-clean ] <sample-app-name> [ setup | run_test ]"
 }
 
 # ---- Generic help/usage output
@@ -410,7 +438,9 @@ function list_steps() {
     echo " "
     case "${app_name}" in
           "simple_app" \
-        | "simple_app_under_keystone")
+        | "simple_app_under_keystone" \
+        | "simple_app_under_app_service" \
+        | "simple_app_under_cca")
             list_steps_for_app "${Steps[@]}"
             ;;
 
@@ -424,10 +454,6 @@ function list_steps() {
 
         "simple_app_under_sev")
             list_steps_for_app "${Steps_SEV[@]}"
-            ;;
-
-        "simple_app_under_app_service")
-            list_steps_for_app "${Steps[@]}"
             ;;
 
         "application_service")
@@ -471,7 +497,8 @@ function is_valid_step() {
     case "${SampleAppName}" in
           "simple_app" \
         | "simple_app_under_app_service" \
-        | "simple_app_under_keystone")
+        | "simple_app_under_keystone" \
+        | "simple_app_under_cca")
             check_steps_for_app "${Steps[@]}"
             ;;
 
@@ -604,6 +631,24 @@ function rm_non_git_files() {
         MbedTLS_dir_exists=1
     fi
 
+    local tmp_islet_dir="/tmp/islet-save"
+    mkdir "${tmp_islet_dir}"
+    local Islet_remote_exists=0
+    if [ -d "${ISLET_ROOT}/remote" ]; then
+        set -x
+        mv "${ISLET_ROOT}/remote" "${tmp_islet_dir}"
+        set +x
+        Islet_remote_exists=1
+    fi
+
+    local Islet_lib_exists=0
+    if [ -d "${ISLET_ROOT}/lib" ]; then
+        set -x
+        mv "${ISLET_ROOT}/lib" "${tmp_islet_dir}"
+        set +x
+        Islet_lib_exists=1
+    fi
+
     echo "${Me}: Delete all files not tracked by git"
 
     # shellcheck disable=SC2046
@@ -619,6 +664,16 @@ function rm_non_git_files() {
         mv /tmp/${MbedTLS_dir} "${CERT_PROTO}"/${Simple_App_under_gramine_MbedTLS_dir}
         set +x
     fi
+
+    # Restore Islete-related dirs, if they were saved-off previously
+    if [ ${Islet_remote_exists} -eq 1 ] || [ ${Islet_lib_exists} -eq 1 ]; then
+        set -x
+        mv ${tmp_islet_dir}/* "${ISLET_ROOT}"
+        set +x
+    fi
+
+    rm -rf "${tmp_islet_dir}"
+
     run_popd
 }
 
@@ -633,9 +688,10 @@ function build_utilities() {
     run_pushd "${CERT_PROTO}/utilities"
 
     clean_done=0
+    if [ ${DoMakeClean} -eq 0 ]; then clean_done=1; else clean_done=0; fi
     for mkf in cert_utility.mak policy_utilities.mak;
     do
-        if [ "${clean_done}" -eq 0 ]; then
+        if [ ${clean_done} -eq 0 ]; then
             run_cmd make -f ${mkf} clean
             clean_done=1
         fi
@@ -761,11 +817,25 @@ function compile_simple_app_under_keystone() {
 }
 
 # ###########################################################################
+function compile_simple_app_under_cca() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+    if [ ! -f ./example_app.mak ]; then
+        run_cmd ln -s cca_example_app.mak example_app.mak
+    fi
+
+    run_popd
+    compile_app_common
+}
+
+# ###########################################################################
 function compile_app_common() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
 
-    run_cmd make -f example_app.mak clean
+    if [ ${DoMakeClean} -eq 1 ]; then
+        run_cmd make -f example_app.mak clean
+    fi
     run_cmd make -f example_app.mak
 
     run_popd
@@ -796,7 +866,9 @@ function compile_simple_app_under_gramine() {
     run_pushd "${EXAMPLE_DIR}"
 
     run_cmd cp -p "$HOME"/sgx.cert.der .
-    run_cmd make -f gramine_example_app.mak clean
+    if [ ${DoMakeClean} -eq 1 ]; then
+        run_cmd make -f gramine_example_app.mak clean
+    fi
     run_cmd make -f gramine_example_app.mak app RA_TYPE=dcap
 
     # Gramine-app's Makefile target creates a differently-named app, but this
@@ -812,7 +884,9 @@ function compile_simple_app_under_sev() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
 
-    run_cmd make -f sev_example_app.mak clean
+    if [ ${DoMakeClean} -eq 1 ]; then
+        run_cmd make -f sev_example_app.mak clean
+    fi
 
     export CFLAGS="-DSEV_DUMMY_GUEST"
     run_cmd make -f sev_example_app.mak
@@ -826,7 +900,9 @@ function compile_application_service() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
 
-    run_cmd make -f app_service.mak clean
+    if [ ${DoMakeClean} -eq 1 ]; then
+        run_cmd make -f app_service.mak clean
+    fi
     run_cmd make -f app_service.mak
 
     run_popd
@@ -866,6 +942,11 @@ function get_measurement_of_trusted_simple_app_under_app_service() {
 # ###########################################################################
 function get_measurement_of_trusted_simple_app_under_keystone() {
     get_measurement_of_app_by_name "keystone_example_app.exe"
+}
+
+# ###########################################################################
+function get_measurement_of_trusted_simple_app_under_cca() {
+    get_measurement_of_app_by_name "cca_example_app.exe"
 }
 
 # ###########################################################################
@@ -986,6 +1067,7 @@ function get_measurement_of_trusted_simple_app_under_sev() {
 #   - simple_app_under_gramine
 #   - application_service
 #   - simple_app_under_keystone
+#   - simple_app_under_cca
 # ###########################################################################
 function author_policy() {
     # Minions handle pushd/popd to appropriate app-specific sub-dir
@@ -1071,6 +1153,11 @@ function construct_policyKey_platform_is_trusted_simple_app_under_app_service() 
 
 # ###########################################################################
 function construct_policyKey_platform_is_trusted_simple_app_under_keystone() {
+    construct_policyKey_platform_is_trusted_app
+}
+
+# ###########################################################################
+function construct_policyKey_platform_is_trusted_simple_app_under_cca() {
     construct_policyKey_platform_is_trusted_app
 }
 
@@ -1224,6 +1311,7 @@ function combine_policy_stmts() {
         | "simple_app_under_gramine"    \
         | "simple_app_under_keystone"   \
         | "application_service"         \
+        | "simple_app_under_cca"        \
         | "simple_app_under_app_service" )
             signed_claims="${signed_claims},signed_claim_2.bin"
             ;;
@@ -1357,7 +1445,9 @@ function build_policy_generator() {
     run_pushd "${CERT_PROTO}/utilities"
 
     local mkf="policy_generator.mak"
-    run_cmd make -f ${mkf} clean
+    if [ ${DoMakeClean} -eq 1 ]; then
+        run_cmd make -f ${mkf} clean
+    fi
     LOCAL_LIB=${Local_lib_path} run_cmd make -f ${mkf}
 
     run_popd
@@ -1660,6 +1750,15 @@ function run_simple_app_under_keystone_as_server_talk_to_Cert_Service() {
 }
 
 # ###########################################################################
+function run_simple_app_under_cca_as_server_talk_to_Cert_Service() {
+    run_cmd
+    set -x
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-${ISLET_ROOT}/lib}; export LD_LIBRARY_PATH
+    set +x
+    run_app_by_name_as_server_talk_to_Cert_Service "cca_example_app.exe"
+}
+
+# ###########################################################################
 function run_app_by_name_as_server_talk_to_Cert_Service() {
     local app_name_exe="$1"
     run_cmd
@@ -1775,6 +1874,15 @@ function run_simple_app_under_keystone_as_client_talk_to_Cert_Service() {
 }
 
 # ###########################################################################
+function run_simple_app_under_cca_as_client_talk_to_Cert_Service() {
+    run_cmd
+    set -x
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-${ISLET_ROOT}/lib}; export LD_LIBRARY_PATH
+    set +x
+    run_app_by_name_as_client_talk_to_Cert_Service "cca_example_app.exe"
+}
+
+# ###########################################################################
 function run_app_by_name_as_client_talk_to_Cert_Service() {
     local app_name_exe="$1"
     run_cmd
@@ -1884,6 +1992,11 @@ function run_simple_app_under_keystone_as_server_offers_trusted_service() {
 }
 
 # ###########################################################################
+function run_simple_app_under_cca_as_server_offers_trusted_service() {
+    run_app_by_name_as_server_offers_trusted_service "cca_example_app.exe"
+}
+
+# ###########################################################################
 # Shared method, takes app-name as a parameter
 # ###########################################################################
 function run_app_by_name_as_server_offers_trusted_service() {
@@ -1972,6 +2085,11 @@ function run_simple_app_under_sev_as_client_make_trusted_request() {
 # ###########################################################################
 function run_simple_app_under_keystone_as_client_make_trusted_request() {
     run_app_by_name_as_client_make_trusted_request "keystone_example_app.exe"
+}
+
+# ###########################################################################
+function run_simple_app_under_cca_as_client_make_trusted_request() {
+    run_app_by_name_as_client_make_trusted_request "cca_example_app.exe"
 }
 
 # ###########################################################################
@@ -2163,6 +2281,12 @@ function setup_application_service() {
 function setup_simple_app_under_app_service() {
     run_cmd
     cp_over_app_service_policy_cert_files
+    setup_app_by_name
+}
+
+# ###########################################################################
+function setup_simple_app_under_cca() {
+    run_cmd
     setup_app_by_name
 }
 
@@ -2509,13 +2633,24 @@ if [ "$1" == "--list" ]; then
     exit 0
 fi
 
+# -----------------------------------------------------------------------------
+# Hard-coded argument passing; works for now ...
+#   [--dry-run] [--no-cleanup] [--no-make-clean]
+# -----------------------------------------------------------------------------
 if [ "$1" == "--dry-run" ]; then
     DryRun=1
     DryRunTag=" dry-run "
     DryRun_msg="in${DryRunTag}mode"
     shift
-elif [ "$1" == "--no-cleanup" ]; then
+fi
+
+if [ "$1" == "--no-cleanup" ]; then
     DoCleanup=0
+    shift
+fi
+
+if [ "$1" == "--no-make-clean" ]; then
+    DoMakeClean=0
     shift
 fi
 

@@ -37,7 +37,8 @@ extern "C" {
 ///
 /// # Note
 /// This API currently returns hard-coded report to simulate attest operation.
-/// In future, this will be finalized to support reports signed by RMM.
+/// In future, this will be finalized to support reports signed by the
+/// Realm Management Monitor (RMM).
 /// `User data` could be used as nonce to prevent reply attack.
 islet_status_t islet_attest(const unsigned char *user_data,
                             int user_data_len,
@@ -64,7 +65,8 @@ void islet_print_claims(const unsigned char *claims, int claims_len);
 ///
 /// # Note
 /// This API currently seals with a hard-coded key, to simulate seal operation.
-/// In future, this will be finalized to support keys derived from HES.
+/// In future, this will be finalized to support keys derived from CCA Hardware
+/// Enforced Security (HES).
 islet_status_t islet_seal(const unsigned char *plaintext,
                           int plaintext_len,
                           unsigned char *sealed_out,

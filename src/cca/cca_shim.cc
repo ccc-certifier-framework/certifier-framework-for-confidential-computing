@@ -1,4 +1,4 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cca.h"
-
 #include <islet.h>
+#include "cca.h"
 
 // Some reasonable size to allocate an attestation report on-stack buffers.
 // Typical attestation report size is over 1K.
@@ -29,13 +28,16 @@ bool cca_Init(const int cert_size, byte *cert) {
 
 bool cca_Attest(const int what_to_say_size, byte* what_to_say,
                 int* attestation_size_out, byte* attestation_out) {
-  islet_status_t rv = islet_attest(what_to_say, what_to_say_size, attestation_out, attestation_size_out);
+
+  islet_status_t rv = islet_attest(what_to_say, what_to_say_size,
+                                   attestation_out, attestation_size_out);
+  printf("%s(): rv=%d\n", __func__, rv);
   return rv == ISLET_SUCCESS;
 }
 
 bool cca_Verify(const int what_to_say_size, byte* what_to_say,
-                const int attestation_size, byte* attestation, int* measurement_out_size,
-                byte* measurement_out) {
+                const int attestation_size, byte* attestation,
+                int* measurement_out_size, byte* measurement_out) {
   byte claims[BUFFER_SIZE];
 
   int claims_len = 0;
@@ -51,7 +53,8 @@ bool cca_Verify(const int what_to_say_size, byte* what_to_say,
   if (rv != ISLET_SUCCESS)
     return false;
 
-  rv = islet_parse(CLAIM_TITLE_RIM, claims, claims_len, measurement_out, measurement_out_size);
+  rv = islet_parse(CLAIM_TITLE_RIM, claims, claims_len, measurement_out,
+                   measurement_out_size);
   return rv == ISLET_SUCCESS;
 }
 

@@ -1,4 +1,4 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,11 +52,12 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 // The test app performs five possible roles
 //    cold-init: This creates application keys and initializes the policy store.
 //    warm-restart:  This retrieves the policy store data.
-//    get-certifier: This obtains the app admission cert naming the public app key from the service.
+//    get-certifier: This obtains the app admission cert from the service, naming the public app key.
 //    run-app-as-client: This runs the app as a server.
 //    run-app-as-server: This runs the app as a client
 
-#include "policy_key.cc"
+#include "policy_key.cc"    // generated file
+
 cc_trust_data* app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
@@ -103,22 +104,31 @@ void server_application(secure_authenticated_channel& channel) {
 }
 
 int main(int an, char** av) {
-  string usage("Keystone-based simple app");
+  string usage("AMD CCA-based simple app");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
     printf("%s: %s\n\n", av[0], usage.c_str());
-    printf("example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
-    printf("\t --data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
-    printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
+    printf("\
+%s --print_all=true|false \n\
+                      --operation=op \n\
+                      --policy_host=policy-host-address \n\
+                      --policy_port=policy-host-port\n\
+                      --data_dir=-directory-for-app-data \n\
+                      --server_app_host=my-server-host-address \n\
+                      --server_app_port=server-host-port\n\
+                      --policy_cert_file=self-signed-policy-cert-file-name \n\
+                      --policy_store_file=policy-store-file-name\n\n",
+           av[0]);
     printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server\n");
     return 0;
   }
 
   SSL_library_init();
-  string enclave_type("keystone-enclave");
+  string enclave_type("cca-enclave");
   string purpose("authentication");
 
   string store_file(FLAGS_data_dir);
@@ -143,9 +153,10 @@ int main(int an, char** av) {
 
   string endorsement_cert;
 
-  if (!app_trust_data->initialize_keystone_enclave_data(attest_key_file_name,
-          measurement_file_name, platform_attest_file_name)) {
-    printf("Can't init keystone enclave\n");
+  if (!app_trust_data->initialize_cca_enclave_data(attest_key_file_name,
+                                                   measurement_file_name,
+                                                   platform_attest_file_name)) {
+    printf("Can't init CCA enclave\n");
     return 1;
   }
 
