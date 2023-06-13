@@ -5,27 +5,32 @@ An on-device confidential computing framework by leveraging ARMv9 CCA.
 An open source SDK which provides confidential computing primitives to enclaves.
 
 ## [CCA Shim](./cca_shim.cc)
-A shimmed layer between `Certifier` and `CCA` that emulates the functions of the HW without any HW or emulator.
+A shim layer between the `Certifier` and `CCA` that emulates the functions of
+the hardware without any hardware or emulator.
 
 ## SW Components
 ```
-Certifier API
--------------
-CCA Shim
--------------
-ISLET SDK
--------------
-Host (x86_64)
+┌───────────────┐
+│ Certifier API │
+├───────────────┤
+│ CCA Shim      │
+├───────────────┤
+│ ISLET SDK     │
+├───────────────┤
+│ Host (x86_64) │
+└───────────────┘
 ```
 
-## How to build applications on x86_64
-### Clone ISLET SDK & Setup Rust environment & Build the library
+## How to build applications using CCA on x86_64
+### Setup: ISLET SDK and Rust Environment
+
+Use the following script to clone the ISLET SDK, setup the Rust environment
+and then build the library
 ```sh
 $ ../../third_party/islet/setup.sh
 ```
-
 ### Build [the sample app](./islet_test/shim_test.cc) and Run it
-Check `User data` and `Measurement` parsed from the attestation report.
+Check the `User data` and `Measurement` parsed from the attestation report.
 
 ```sh
 $ cd islet_test

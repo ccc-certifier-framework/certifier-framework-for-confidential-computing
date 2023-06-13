@@ -122,6 +122,11 @@ jobs:
         ./run_example.sh --dry-run application_service run_test
 
         ./run_example.sh --dry-run simple_app_under_keystone
+
+        ./run_example.sh --dry-run simple_app_under_cca
+        ./run_example.sh --dry-run simple_app_under_cca setup
+        ./run_example.sh --dry-run simple_app_under_cca run_test
+
         popd
 
     - name: test-run_example-simple_app
@@ -295,6 +300,44 @@ jobs:
         ./run_example.sh simple_app_under_keystone run_test
 
         ./cleanup.sh
+        popd
+
+    - name: test-ISLET-SDK-shim_test
+      run: |
+        echo "**********************************************************"
+        echo "* Download ISLET SDK, build the library and run shim_test"
+        echo "**********************************************************"
+        echo " "
+        pushd src/cca
+
+        ../../third_party/islet/setup.sh
+
+        echo " "
+        set -x
+        cd islet_test/
+        make clean
+        make shim_test
+
+        echo " "
+        make attest_seal_test
+        set +x
+        echo " "
+
+    - name: test-run_example-simple_app_under_cca-using-shim
+      run: |
+        echo " "
+        echo "********************************************************************************"
+        echo "* Test: Execute script to compile, build and run simple_app_under_cca using shim"
+        echo "********************************************************************************"
+        echo " "
+        pushd ./sample_apps
+
+        ./cleanup.sh
+
+        ./run_example.sh simple_app_under_cca
+
+        ./cleanup.sh
+
         popd
 
     - name: test-miscellaneous

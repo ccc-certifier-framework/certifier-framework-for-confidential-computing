@@ -33,9 +33,14 @@
 #include "gramine_api.h"
 #endif
 #include "cc_useful.h"
+
 #ifdef KEYSTONE_CERTIFIER
 #include "keystone_api.h"
 #endif
+
+#ifdef CCA_CERTIFIER
+#include "cca.h"
+#endif  // CCA_CERTIFIER
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -242,6 +247,7 @@ bool certifier::framework::cc_trust_data::initialize_keystone_enclave_data(const
       printf("initialize_keystone_enclave_data: Not a simulated enclave\n");
       return false;
     }
+
     int m_size = file_size(measurement_file_name);
     if (m_size < 0) {
         printf("%s(): Invalid size=%d of measurement file '%s'.\n",
@@ -253,6 +259,35 @@ bool certifier::framework::cc_trust_data::initialize_keystone_enclave_data(const
     byte der_cert[100];
     if (!keystone_Init(0, der_cert)) {
       printf("initialize_keystone_enclave_data: keystone_init failed\n");
+      return false;
+    }
+  cc_provider_provisioned_ = true;
+
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool certifier::framework::cc_trust_data::initialize_cca_enclave_data(
+                const string& attest_key_file_name,
+                const string& measurement_file_name,
+                const string& attest_endorsement_file_name) {
+
+#ifdef CCA_CERTIFIER
+    if (!cc_policy_info_initialized_) {
+      printf("%s(): Policy key must be initialized first\n", __func__);
+      return false;
+    }
+
+    if (enclave_type_ != "cca-enclave") {
+      printf("%s(): '%s' is not a simulated enclave\n", __func__, enclave_type_.c_str());
+      return false;
+    }
+    // TODO
+    byte der_cert[100];
+    if (!cca_Init(0, der_cert)) {
+      printf("%s(): cca_Init failed\n", __func__);
       return false;
     }
   cc_provider_provisioned_ = true;
@@ -484,7 +519,7 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
     tbp->set_b(public_key_algorithm_.data(), public_key_algorithm_.size()+1);
   } else {
     if (!store_.add_blob(pka, public_key_algorithm_)) {
-      printf("cold_init: Can't add public key algorithm to store\n");
+      printf("%s(): Can't add public key algorithm to store\n", __func__);
       return false;
     }
   }
@@ -495,7 +530,7 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
     tbp->set_b(symmetric_key_algorithm_.data(), symmetric_key_algorithm_.size()+1);
   } else {
     if (!store_.add_blob(ska, symmetric_key_algorithm_)) {
-      printf("cold_init: Can't add symmetric key algorithm to store\n");
+      printf("%s(): Can't add symmetric key algorithm to store\n", __func__);
       return false;
     }
   }
@@ -957,6 +992,9 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
   }
 
   evidence_list platform_evidence;
+  printf("%s():%d: enclave_type_ = '%s', purpose_ = '%s'\n",
+         __func__, __LINE__, enclave_type_.c_str(), purpose_.c_str());
+
   if (enclave_type_ == "simulated-enclave" || enclave_type_ == "application-enclave") {
     signed_claim_message signed_platform_says_attest_key_is_trusted;
     if (!GetPlatformSaysAttestClaim(&signed_platform_says_attest_key_is_trusted)) {
@@ -990,10 +1028,18 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
     ev->set_serialized_evidence(gramine_platform_cert);
     // May add more certs later
 #endif
+
 #ifdef KEYSTONE_CERTIFIER
   } else if (enclave_type_ == "keystone-enclave") {
-    // Todo
+    // Todo: Add cert when it's available
 #endif
+
+#ifdef CCA_CERTIFIER
+  } else if (enclave_type_ == "cca-enclave") {
+
+    // Add CCA certificate
+#endif  // CCA_CERTIFIER
+
 #ifdef SEV_SNP
   } else if (enclave_type_ == "sev-enclave") {
     if (!plat_certs_initialized) {
@@ -1098,7 +1144,7 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
   byte out[size_out];
   if (!Attest(enclave_type_, serialized_ud.size(),
         (byte*) serialized_ud.data(), &size_out, out)) {
-    printf("certifier::framework::cc_trust_data::certify_me: Attest failed\n");
+    printf("certifier::framework::cc_trust_data::certify_me():%d: Attest failed\n", __LINE__);
     return false;
   }
   string the_attestation_str;
@@ -1120,6 +1166,8 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
     request.set_submitted_evidence_type("gramine-evidence");
   } else if (enclave_type_ == "keystone-enclave") {
     request.set_submitted_evidence_type("keystone-evidence");
+  } else if (enclave_type_ == "cca-enclave") {
+    request.set_submitted_evidence_type("cca-evidence");
   } else if (enclave_type_ == "oe-enclave") {
     request.set_submitted_evidence_type("oe-evidence");
   } else {
@@ -1318,6 +1366,9 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
     ev2->set_evidence_type(et2);
   } else if ("sev-enclave" ==  attesting_enclave_type) {
     string et2("sev-attestation");
+    ev2->set_evidence_type(et2);
+  } else if ("cca-enclave" == attesting_enclave_type) {
+    string et2("cca-attestation");
     ev2->set_evidence_type(et2);
   } else {
     printf("%s:%d:%s: - can't add attestation\n",

@@ -17,5 +17,6 @@ Suggestions for upgrade
  15. Test notes
  16. GPU support
  17. C++-->Rust-->C++ (Microsoft suggestion)
+ 18. Example scripts to run certifier in TEE.
 
 
