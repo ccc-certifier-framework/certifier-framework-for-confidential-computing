@@ -25,3 +25,7 @@ enclave/enclave
 # These platform-specific files will be provided by the user.
 */simple_app_under_sev/platform_data/*.json
 */simple_app_under_sev/platform_data/*.der
+
+# Ignore ISLET-related download and build artifacts
+*shim_test
+*.tar.gz
