@@ -1,11 +1,4 @@
-#include "support.h"
-#include "certifier.h"
-#include "simulated_enclave.h"
-#include "application_enclave.h"
-#include <sys/socket.h>
-#include <netdb.h>
-
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#include <sys/socket.h>
+#include <netdb.h>
+#include "support.h"
+#include "certifier.h"
+#include "simulated_enclave.h"
+#include "application_enclave.h"
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -610,6 +610,10 @@ extern bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const
   byte* attestation, int* measurement_out_size, byte* measurement_out);
 #endif
 
+#ifdef CCA_CERTIFIER
+#include "cca.h"
+#endif  // CCA_CERTIFIER
+
 // Buffer overflow check: Seal returns true and the buffer size in size_out.
 // Check on Gramine.
 bool certifier::framework::Seal(const string& enclave_type, const string& enclave_id,
@@ -642,6 +646,11 @@ bool certifier::framework::Seal(const string& enclave_type, const string& enclav
 #ifdef KEYSTONE_CERTIFIER
   if (enclave_type == "keystone-enclave") {
    return keystone_Seal(in_size, in, size_out, out);
+  }
+#endif
+#ifdef CCA_CERTIFIER
+  if (enclave_type == "cca-enclave") {
+   return cca_Seal(in_size, in, size_out, out);
   }
 #endif
   if (enclave_type == "application-enclave") {
@@ -684,6 +693,11 @@ bool certifier::framework::Unseal(const string& enclave_type, const string& encl
    return keystone_Unseal(in_size, in, size_out, out);
   }
 #endif
+#ifdef CCA_CERTIFIER
+  if (enclave_type == "cca-enclave") {
+   return cca_Unseal(in_size, in, size_out, out);
+  }
+#endif  // CCA_CERTIFIER
   if (enclave_type == "application-enclave") {
     return application_Unseal(in_size, in, size_out, out);
   }
@@ -770,6 +784,36 @@ bool certifier::framework::Attest(const string& enclave_type, int what_to_say_si
     return true;
   }
 #endif
+#ifdef CCA_CERTIFIER
+  if (enclave_type == "cca-enclave") {
+    int t_size_out;
+    int t_size = *size_out;
+    if (!cca_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
+      printf("Attest: cca_Attest failed\n");
+      return false;
+    }
+    string ra;
+    string wws;
+    ra.assign((char*)out, t_size_out);
+    wws.assign((char*)what_to_say, what_to_say_size);
+    cca_attestation_message cam;
+    cam.set_what_was_said(wws);
+    cam.set_reported_attestation(ra);
+    string serialized_cca_at;
+    if (!cam.SerializeToString(&serialized_cca_at)) {
+      printf("Attest: cca Serialize to string \n");
+      return false;
+    }
+    if (*size_out < (int)serialized_cca_at.size()) {
+      printf("Attest: cca output too small\n");
+      return false;
+    }
+    memset(out, 0, *size_out);
+    memcpy(out, (byte*)serialized_cca_at.data(), serialized_cca_at.size());
+    *size_out = serialized_cca_at.size();
+    return true;
+  }
+#endif  // CCA_CERTIFIER
   if (enclave_type == "application-enclave") {
     return application_Attest(what_to_say_size, what_to_say, size_out, out);
   }
@@ -801,6 +845,11 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
 #endif
 #ifdef KEYSTONE_CERTIFIER
   if (enclave_type == "keystone-enclave") {
+    return false;
+  }
+#endif
+#ifdef CCA_CERTIFIER
+  if (enclave_type == "cca-enclave") {
     return false;
   }
 #endif
@@ -1048,6 +1097,10 @@ void print_evidence(const evidence& ev) {
       printf("\n");
     }
     if (ev.evidence_type() == "keystone-evidence") {
+        print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
+      printf("\n");
+    }
+    if (ev.evidence_type() == "cca-evidence") {
         print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
       printf("\n");
     }

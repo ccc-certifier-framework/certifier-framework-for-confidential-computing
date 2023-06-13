@@ -1,4 +1,4 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#ifndef __CCA_CCA_H__
 
 #include <iostream>
 #include <sys/types.h>
@@ -32,3 +34,5 @@ bool cca_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_
 bool cca_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out);
 bool cca_Seal(int in_size, byte* in, int* size_out, byte* out);
 bool cca_Unseal(int in_size, byte* in, int* size_out, byte* out);
+
+#endif  //  __CCA_CCA_H__
