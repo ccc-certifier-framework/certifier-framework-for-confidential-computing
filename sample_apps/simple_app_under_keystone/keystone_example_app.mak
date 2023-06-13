@@ -1,92 +1,106 @@
-# git clone keystone
-# export KEYSTONE_ROOT_DIR = /keystone # or wherever desired, same as clone
-# make -f keystone_example_app.mak keystone_certifier_app
-# for testing Keystone compile + link (this currently works)
-# make -f keystone_example_app.mak keystone_api
+#
+#    File: keystone_example_app.mak
 
-ifndef KEYSTONE_ROOT_DIR
-    KEYSTONE_ROOT_DIR = /keystone
-endif
 
-# all the Keystone headers, srcs, and libs
-KEYSTONE_SDK_INCLUDE = $(KEYSTONE_ROOT_DIR)/sdk/build64/include
-KEYSTONE_SDK_LIB_DIR = $(KEYSTONE_ROOT_DIR)/sdk/build64/lib
-KEYSTONE_SDK_LIBS = -lkeystone-host -lkeystone-eapp -lkeystone-edge -lkeystone-verifier
-KEYSTONE_RT_INCLUDE = $(KEYSTONE_ROOT_DIR)/runtime/include
-KEYSTONE_RT_SRC = $(KEYSTONE_ROOT_DIR)/runtime
-KEYSTONE_FLAGS = -DUSE_PAGE_CRYPTO
-
-# RISC-V cross compiler
-CC = riscv64-unknown-linux-gnu-g++
-LINK = riscv64-unknown-linux-gnu-g++
-# flags from Keystone
-CFLAGS = -Wall -fno-builtin -I$(KEYSTONE_SDK_INCLUDE) -I$(KEYSTONE_RT_INCLUDE)
-LDFLAGS = -static -L$(KEYSTONE_SDK_LIB_DIR) $(KEYSTONE_SDK_LIBS)
-
-# Example app building
 ifndef SRC_DIR
-    SRC_DIR = ../..
+SRC_DIR=../..
 endif
 ifndef OBJ_DIR
-    OBJ_DIR = ./build
+OBJ_DIR=.
 endif
 ifndef EXE_DIR
-    EXE_DIR = OBJ_DIR
+EXE_DIR=.
+endif
+#ifndef GOOGLE_INCLUDE
+#GOOGLE_INCLUDE=/usr/local/include/g
+#endif
+ifndef LOCAL_LIB
+LOCAL_LIB=/usr/local/lib
+endif
+ifndef TARGET_MACHINE_TYPE
+TARGET_MACHINE_TYPE= x64
 endif
 
-# TODO: add flags for linking in rest of certifier
-S = $(SRC_DIR)/src
-O = $(OBJ_DIR)
-SEV_S = $(S)/keystone
-I = $(SRC_DIR)/include
-CFLAGS += -I$(I) -I$(SEV_S) # TODO: rework -I$(SEV_S)
-LDFLAGS +=
 
-$(O)/keystone_aes.o: $(KEYSTONE_RT_SRC)/crypto/aes.c
-	@echo "compiling keystone_aes.o"
-	mkdir -p $(O)
-	$(CC) $(CFLAGS) $(KEYSTONE_FLAGS) -c -o $(O)/keystone_aes.o $(KEYSTONE_RT_SRC)/crypto/aes.c
+S= $(SRC_DIR)/src
+O= $(OBJ_DIR)
+KS=$(S)/keystone
+US=.
+I= $(SRC_DIR)/include
+INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(KS)
 
-$(O)/keystone_api.o: $(SEV_S)/keystone_api.cc
-	@echo "compiling keystone_api.cc"
-	mkdir -p $(O)
-	$(CC) $(CFLAGS) -c -o $(O)/keystone_api.o $(SEV_S)/keystone_api.cc
+# Compilation of protobuf files could run into some errors, so avoid using
+# # -Werror for those targets
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -D KEYSTONE_CERTIFIER
+CFLAGS = $(CFLAGS_NOERROR) -Werror
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CC=g++
+LINK=g++
+#PROTO=/usr/local/bin/protoc
+PROTO=protoc
+AR=ar
+#export LD_LIBRARY_PATH=/usr/local/lib
+LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
-# TODO: maybe fix?
-$(O)/example_app.o: ./example_app.cc
-	@echo "compiling example_app.cc"
-	mkdir -p $(O)
-	$(CC) $(CFLAGS) -c -o $(O)/example_app.o ./example_app.cc
+# Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
+#  if you link in the certifier library certifier.a.
+dobj=	$(O)/keystone_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+      $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
+      $(O)/cc_useful.o $(O)/keystone_shim.o
 
-internal-dobj = $(O)/keystone_api.o $(O)/keystone_aes.o $(O)/example_app.o
-dobj = certifier.a $(internal-dobj) # TODO: maybe move certifier library mix-in to $(LDFLAGS)
-
-# TODO: maybe fix?
-keystone_example_app: $(dobj) $(KEYSTONE_SDK_LIB)
-	@echo "linking executable file keystone_certifier_app"
-	$(LINK) -o $(EXE_DIR)/keystone_certifier_app $(dobj) $(LDFLAGS)
-
-# testing Keystone compilation & linking only
-keystone_api: $(O)/keystone_api.o $(O)/keystone_aes.o $(KEYSTONE_SDK_LIB)
-	@echo "testing linking into keystone_api"
-	echo "int main(int argc, char** argv) { return 0; }" >> $(O)/dummy_main.c
-	$(CC) $(CFLAGS) -c -o $(O)/dummy_main.o $(O)/dummy_main.c
-	rm $(O)/dummy_main.c
-	$(LINK) -o $(EXE_DIR)/keystone_api $(O)/dummy_main.o $(O)/keystone_api.o $(O)/keystone_aes.o $(LDFLAGS)
-	rm $(O)/dummy_main.o $(EXE_DIR)/keystone_api
-	@echo "KEYSTONE LINK TEST SUCCESS"
-
-# uses keystone_api and not certifier
-$(O)/bare_app.o: ./bare_app.cc
-	@echo "compiling bare_app.cc"
-	mkdir -p $(O)
-	$(CC) $(CFLAGS) -c -o $(O)/bare_app.o ./bare_app.cc
-
-bare-dobj = $(O)/keystone_api.o $(O)/keystone_aes.o $(O)/bare_app.o
-
-bare_app: $(bare-dobj) $(KEYSTONE_SDK_LIB)
-	@echo "linking executable file bare_app"
-	$(LINK) -o $(EXE_DIR)/bare_app $(bare-dobj) $(LDFLAGS)
-
+all:	keystone_example_app.exe
 clean:
-	rm -f $(internal-dobj) $(EXE_DIR)/keystone_certifier_app $(O)/dummy_main.o $(EXE_DIR)/keystone_api $(bare-dobj)
+	@echo "removing object files"
+	rm -rf $(O)/*.o
+	@echo "removing executable file"
+	rm -rf $(EXE_DIR)/keystone_example_app.exe
+
+keystone_example_app.exe: $(dobj) 
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/keystone_example_app.exe $(dobj) $(LDFLAGS)
+
+$(US)/certifier.pb.cc: $(S)/certifier.proto
+	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto
+	mv $(US)/certifier.pb.h $(I)
+
+$(I)/certifier.pb.h: $(US)/certifier.pb.cc
+
+$(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
+	@echo "compiling certifier.pb.cc"
+	$(CC) $(CFLAGS_NOERROR) -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
+
+$(O)/keystone_example_app.o: $(US)/keystone_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "compiling keystone_example_app.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/keystone_example_app.o $(US)/keystone_example_app.cc
+
+$(O)/keystone_shim.o: $(KS)/keystone_shim.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "compiling keystone_shim.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/keystone_shim.o $(KS)/keystone_shim.cc
+
+$(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
+	@echo "compiling certifier.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(S)/certifier.cc
+
+$(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
+	@echo "compiling certifier_proofs.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(S)/certifier_proofs.cc
+
+$(O)/support.o: $(S)/support.cc $(I)/support.h
+	@echo "compiling support.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/support.o $(S)/support.cc
+
+$(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
+	@echo "compiling simulated_enclave.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/simulated_enclave.o $(S)/simulated_enclave.cc
+
+$(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
+	@echo "compiling application_enclave.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(S)/application_enclave.cc
+
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "compiling cc_helpers.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc
+
+$(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
+	@echo "compiling cc_useful.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/cc_useful.o $(S)/cc_useful.cc

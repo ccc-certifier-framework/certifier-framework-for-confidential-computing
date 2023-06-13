@@ -22,12 +22,62 @@ import (
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/sha512"
+	"crypto/sha256"
 	"crypto/x509"
+	"crypto/rand"
+	"os"
 	"google.golang.org/protobuf/proto"
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 	gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
+
+func testSign(PK1 *ecdsa.PublicKey) {
+
+	fmt.Printf("\n***testSign\n")
+	keyFile := "emulated_keystone_key.bin"
+	serializedKey, err := os.ReadFile(keyFile)
+	if err != nil {
+		fmt.Printf("testSign: Can't read key file\n")
+		return
+	}
+	privateKey := certprotos.KeyMessage{}
+	err = proto.Unmarshal(serializedKey, &privateKey)
+	if err != nil {
+		fmt.Printf("testSign: Can't deserialize key\n")
+		return
+	}
+	pK, PK, err := GetEccKeysFromInternal(&privateKey)
+	if err != nil || PK == nil || pK == nil {
+		fmt.Printf("testSign: Can't convertkey\n")
+		return
+	}
+	toHash := []byte{1,2,3,4,5,6,7,8,9}
+	hashed := sha256.Sum256(toHash)
+
+	signed, err := ecdsa.SignASN1(rand.Reader, pK, hashed[:])
+	if err != nil {
+		fmt.Printf("testSign: Can't sign\n")
+		return
+	}
+
+	fmt.Printf("\nhashed: ")
+	PrintBytes(hashed[:])
+	fmt.Printf("\nsigned: ")
+	PrintBytes(signed[:])
+	fmt.Printf("\n")
+	if ecdsa.VerifyASN1(PK, hashed[:], signed[:]) {
+		fmt.Printf("testSign: Verify succeeded (1)\n")
+	} else {
+		fmt.Printf("testSign: Verify failed (1)\n")
+	}
+	if ecdsa.VerifyASN1(PK1, hashed[:], signed[:]) {
+		fmt.Printf("testSign: Verify succeeded (2)\n")
+	} else {
+		fmt.Printf("testSign: Verify failed (2)\n")
+	}
+	fmt.Printf("\n")
+}
 
 
 func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
@@ -281,6 +331,61 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
+		} else if ev.GetEvidenceType() == "keystone-attestation" {
+			n := 1
+			if ps.Proved[n] == nil || ps.Proved[n].Clause == nil ||
+					ps.Proved[n].Clause.Subject == nil {
+				fmt.Printf("InitProvedStatements: Can't get attestKey key (1)\n")
+				return false
+			}
+			attestKeyVerifyKeyEnt := ps.Proved[n].Clause.Subject
+			if attestKeyVerifyKeyEnt == nil {
+				fmt.Printf("InitProvedStatements: Can't get attestKey key (2)\n")
+				return false
+			}
+			if attestKeyVerifyKeyEnt.GetEntityType() != "key" {
+				fmt.Printf("InitProvedStatements: Can't get attestKey key (3)\n")
+				return false
+			}
+			attestKey := attestKeyVerifyKeyEnt.Key
+			if attestKey == nil {
+				fmt.Printf("InitProvedStatements: Can't get attestKey key (4)\n")
+				return false
+			}
+			m := VerifyKeystoneAttestation(ev.SerializedEvidence, attestKey)
+			if m == nil {
+				fmt.Printf("InitProvedStatements: VerifyKeystoneAttestation failed\n")
+				return false
+			}
+			var am certprotos.KeystoneAttestationMessage
+			err := proto.Unmarshal(ev.SerializedEvidence, &am)
+			if err != nil {
+				fmt.Printf("InitProvedStatements: Can't unmarshal KeystoneAttestationMessage\n")
+				return false
+			}
+			var ud certprotos.AttestationUserData
+			err = proto.Unmarshal(am.WhatWasSaid, &ud)
+			if err != nil {
+				fmt.Printf("InitProvedStatements: Can't unmarshal UserData\n")
+				return false
+			}
+			if ud.EnclaveKey == nil {
+				fmt.Printf("InitProvedStatements: No enclaveKey\n")
+				return false
+			}
+
+			if am.ReportedAttestation == nil {
+				fmt.Printf("InitProvedStatements: No reported attestation\n")
+				return false
+			}
+
+			mEnt := MakeMeasurementEntity(m)
+			c2 := ConstructKeystoneSpeaksForMeasurementStatement(attestKey, ud.EnclaveKey, mEnt)
+			if c2 == nil {
+				fmt.Printf("InitProvedStatements: ConstructKeystoneSpeaksForEnvironmentStatement failed\n")
+				return false
+			}
+			ps.Proved = append(ps.Proved, c2)
 		} else if ev.GetEvidenceType() == "sev-attestation" {
 			// get the key from ps
 			n := len(ps.Proved) - 1
@@ -745,6 +850,34 @@ func ConstructEnclaveKeySpeaksForMeasurement(k *certprotos.KeyMessage, m []byte)
         return MakeSimpleVseClause(e1, &speaks_for, e2)
 }
 
+// attestKey says enclaveKey speaksfor environment
+func ConstructKeystoneSpeaksForMeasurementStatement(attestKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
+		mEnt *certprotos.EntityMessage) *certprotos.VseClause {
+	eke := MakeKeyEntity(enclaveKey)
+	if eke == nil {
+		fmt.Printf("ConstructKeystoneIsEnvironmentStatement: can't make enclave key entity\n")
+		return nil
+	}
+	speaksForVerb := "speaks-for"
+	vseSpeaksFor := &certprotos.VseClause {
+		Subject: eke,
+		Verb: &speaksForVerb,
+		Object: mEnt,
+	}
+	ke := MakeKeyEntity(attestKey)
+	if ke == nil {
+		fmt.Printf("ConstructKeystoneIsEnvironmentStatement: can't make attest key entity\n")
+		return nil
+	}
+	saysVerb := "says"
+	vseSays := &certprotos.VseClause {
+                Subject: ke,
+                Verb: &saysVerb,
+		Clause: vseSpeaksFor,
+        }
+	return vseSays
+}
+
 // Caution:  This can change if attestation.h below changes
 /*
 	struct attestation_report {
@@ -987,6 +1120,107 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
 		return nil
 	}
+
+	// return measurement, if successful
+	return measurement
+}
+
+/*
+	Keystone attestation layout
+		struct enclave_report_t {
+		  byte hash[MDSIZE];
+		  uint64_t data_len;
+		  byte data[32];  // this was ATTEST_DATA_MAXLEN
+		  byte signature[SIGNATURE_SIZE];
+		  int size_sig;  // Remove?
+		};
+
+		// The hash in sm_report_t is the hash of the cpu embedded
+		// security code/Monitor that provides the trusted primitives.
+		struct sm_report_t {
+		  byte hash[MDSIZE];
+		  byte public_key[PUBLIC_KEY_SIZE];
+		  byte signature[SIGNATURE_SIZE];
+		};
+
+		// Usually the dev_public_key int report_t below
+		// and the public_key in sm_report_t are the
+		// same trusted key of the manufacturer and will
+		// come with a cert chain in Init.
+		struct report_t {
+		  struct enclave_report_t enclave;
+		  struct sm_report_t sm;
+		  byte dev_public_key[PUBLIC_KEY_SIZE];
+		};
+ */
+//	Returns measurement
+//	serialized is the serialized keystone_attestation_message
+func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
+
+	var am certprotos.KeystoneAttestationMessage
+	err := proto.Unmarshal(serialized, &am)
+	if err != nil {
+		fmt.Printf("VerifyKeystoneAttestation: Can't unmarshal SevAttestationMessage\n")
+		return nil
+	}
+
+	ptr := am.ReportedAttestation
+	if ptr == nil {
+		fmt.Printf("VerifyKeystoneAttestation: am.ReportedAttestation is wrong\n")
+		return nil
+	}
+
+	// Get public key so we can check the attestation
+	_, PK, err := GetEccKeysFromInternal(k)
+	if err!= nil || PK == nil {
+		fmt.Printf("VerifyKeystoneAttestation: Can't extract key.\n")
+		return nil
+	}
+
+	if am.WhatWasSaid == nil {
+		fmt.Printf("VerifyKeystoneAttestation: WhatWasSaid is nil.\n")
+		return nil
+	}
+	hashedWhatWasSaid := sha256.Sum256(am.WhatWasSaid)
+        reportData := ptr[72:104]
+	if !bytes.Equal(reportData[:], hashedWhatWasSaid[:]) {
+		fmt.Printf("VerifyKeystoneAttestation: WhatWasSaid hash does not match data.\n")
+		return nil
+	}
+
+	measurement := ptr[0: 32]
+	byteSize := ptr[248:252]
+	sigSize := int(byteSize[0]) + 256 * int(byteSize[1]) + 256 * 256 * int(byteSize[2]) +256 * 256 * 256 * int(byteSize[3])
+	sig := ptr[104:(104+sigSize)]
+
+	// Compute hash of hash, datalen, data in enclave report
+	// This is what was signed
+	signedHash := sha256.Sum256(ptr[0:104])
+
+	// Debug
+	testSign(PK)
+	fmt.Printf("\nVerifyKeystoneAttestation\n")
+	fmt.Printf("Hashing       : ")
+	PrintBytes(ptr[0:104])
+	fmt.Printf("\n")
+	fmt.Printf("Hash          : ")
+	PrintBytes(signedHash[:])
+	fmt.Printf("\n")
+	fmt.Printf("Measurement   : ")
+	PrintBytes(measurement)
+	fmt.Printf("\n")
+	fmt.Printf("Signature (%d): ", sigSize)
+	PrintBytes(sig[0:sigSize])
+	fmt.Printf("\n\n")
+
+	// check signature
+	if !ecdsa.VerifyASN1(PK, signedHash[:], sig[:]) {
+		fmt.Printf("VerifyKeystoneAttestation: ecdsa.Verify failed\n")
+                // Todo: why does this fail?
+		// return nil
+	} else {
+		fmt.Printf("VerifyKeystoneAttestation: ecdsa.Verify succeeded\n")
+        }
 
 	// return measurement, if successful
 	return measurement
@@ -2307,8 +2541,6 @@ func ValidateGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certproto
 		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
                 *certprotos.VseClause, []byte) {
 
-	// Todo: Fix
-
 	// Debug
 	fmt.Printf("\nValidateGramineEvidence, Original policy:\n")
 	PrintProvedStatements(originalPolicy)
@@ -2330,7 +2562,7 @@ func ValidateGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certproto
 	}
 
 	// Debug
-	fmt.Printf("\nValidateOeEvidence, after InitProved:\n")
+	fmt.Printf("\nValidateGramineEvidence, after InitProved:\n")
 	PrintProvedStatements(alreadyProved)
 
         // ConstructProofFromSevPlatformEvidence()
@@ -2362,6 +2594,213 @@ func ValidateGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certproto
 	if me.Clause == nil || me.Clause.Subject == nil ||
 			me.Clause.Subject.GetEntityType() != "measurement" {
                 fmt.Printf("ValidateGramineEvidence: Proof does not verify\n")
+		return false, nil, nil
+	}
+
+	return true, toProve, me.Clause.Subject.Measurement
+}
+
+
+func FilterKeystonePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+
+	// Todo: Fix when we import new filter framework
+        filtered :=  &certprotos.ProvedStatements {}
+	for i := 0; i < len(original.Proved); i++ {
+		from := original.Proved[i]
+		to :=  proto.Clone(from).(*certprotos.VseClause)
+		filtered.Proved = append(filtered.Proved, to)
+	}
+
+	return filtered
+}
+
+
+func ConstructProofFromKeystoneEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string,
+		alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
+        // At this point, the evidence should be
+	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
+	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+	//		Key[rsa, AttestKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+	//		Measurement[0001020304050607...] is-trusted
+	//	Key attestKey says Key[rsa, enclaveKey, b223d5da6674c6bde7feac29801e3b69bb286320] speaks-for Measurement[00010203...]
+
+	// Debug
+	fmt.Printf("ConstructProofFromKeystoneEvidence, %d statements\n", len(alreadyProved.Proved))
+	for i := 0; i < len(alreadyProved.Proved);  i++ {
+		PrintVseClause(alreadyProved.Proved[i])
+		fmt.Printf("\n")
+	}
+
+	if len(alreadyProved.Proved) < 4 {
+		fmt.Printf("ConstructProofFromKeystoneEvidence: too few statements\n")
+		return nil, nil
+	}
+
+	policyKeyIsTrusted :=  alreadyProved.Proved[0]
+	policyKeySaysAttestKeyIsTrustedForAttestation := alreadyProved.Proved[1]
+	policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[2]
+	if alreadyProved.Proved[3].Clause == nil {
+		fmt.Printf("ConstructProofFromKeystoneEvidence: malformed attestation\n")
+		return nil, nil
+	}
+	attestKeySaysEnclaveKeySpeaksForMeasurement := alreadyProved.Proved[3]
+	enclaveKeySpeaksForMeasurement :=  alreadyProved.Proved[3].Clause
+
+	if policyKeyIsTrusted == nil || enclaveKeySpeaksForMeasurement == nil ||
+			policyKeySaysMeasurementIsTrusted == nil {
+		fmt.Printf("ConstructProofFromKeystoneEvidence: evidence missing\n")
+		return nil, nil
+	}
+
+	if policyKeySaysAttestKeyIsTrustedForAttestation.Clause == nil {
+		fmt.Printf("ConstructProofFromKeystoneEvidence: Can't get platformKeyIsTrustedForAttestation\n")
+		return nil, nil
+	}
+
+        proof := &certprotos.Proof{}
+        r1 := int32(1)
+        r3 := int32(3)
+        r6 := int32(6)
+        r7 := int32(7)
+
+	enclaveKey := enclaveKeySpeaksForMeasurement.Subject
+	if enclaveKey == nil || enclaveKey.GetEntityType() != "key" {
+		fmt.Printf("ConstructProofFromKeystoneEvidence: Bad enclave key\n")
+		return nil, nil
+	}
+        var toProve *certprotos.VseClause = nil
+	if purpose == "authentication" {
+		verb := "is-trusted-for-authentication"
+		toProve = MakeUnaryVseClause(enclaveKey, &verb)
+	} else {
+		verb := "is-trusted-for-attestation"
+		toProve = MakeUnaryVseClause(enclaveKey, &verb)
+	}
+
+	measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
+	if measurementIsTrusted == nil {
+		fmt.Printf("ConstructProofFromKeystoneEvidence: Can't get measurement\n")
+		return nil, nil
+	}
+	ps1 := certprotos.ProofStep {
+		S1: policyKeyIsTrusted,
+		S2: policyKeySaysMeasurementIsTrusted,
+		Conclusion: measurementIsTrusted,
+		RuleApplied: &r3,
+	}
+	proof.Steps = append(proof.Steps, &ps1)
+
+	// add policyKey is-trusted AND
+	// policyKey says attestKey is-trusted-for-attestation -->
+	// attestKey is-trusted-for-attestation
+	if policyKeySaysAttestKeyIsTrustedForAttestation.Clause == nil {
+		fmt.Printf("ConstructProofFromKeystoneEvidence: Can't malformed attestation key appointment\n")
+		return nil, nil
+	}
+	attestKeyIsTrustedForAttestation := policyKeySaysAttestKeyIsTrustedForAttestation.Clause
+	ps2 := certprotos.ProofStep {
+		S1: policyKeyIsTrusted,
+		S2: policyKeySaysAttestKeyIsTrustedForAttestation,
+		Conclusion: attestKeyIsTrustedForAttestation,
+		RuleApplied: &r3,
+	}
+	proof.Steps = append(proof.Steps, &ps2)
+
+	// add attestKey is-trusted-for-attestation AND
+	// attestKey says enclaveKey speaks-for measurement -->
+	// enclaveKey speaks-for measurement
+	ps3 := certprotos.ProofStep {
+		S1: attestKeyIsTrustedForAttestation,
+		S2: attestKeySaysEnclaveKeySpeaksForMeasurement,
+		Conclusion: enclaveKeySpeaksForMeasurement,
+		RuleApplied: &r6,
+	}
+	proof.Steps = append(proof.Steps, &ps3)
+
+	// measurement is-trusted and enclaveKey speaks-for measurement -->
+	//	enclaveKey is-trusted-for-authentication (r1) or
+	//	enclaveKey is-trusted-for-attestation (r7)
+	if purpose == "authentication" {
+		ps4 := certprotos.ProofStep {
+			S1: measurementIsTrusted,
+			S2: enclaveKeySpeaksForMeasurement,
+			Conclusion: toProve,
+			RuleApplied: &r1,
+		}
+		proof.Steps = append(proof.Steps, &ps4)
+	} else {
+		ps4 := certprotos.ProofStep {
+			S1: measurementIsTrusted,
+			S2: enclaveKeySpeaksForMeasurement,
+			Conclusion: toProve,
+			RuleApplied: &r7,
+		}
+		proof.Steps = append(proof.Steps, &ps4)
+	}
+
+        return toProve, proof
+}
+
+// returns success, toProve, measurement
+func ValidateKeystoneEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
+                *certprotos.VseClause, []byte) {
+
+	// Debug
+	fmt.Printf("\nValidateKeystoneEvidence, Original policy:\n")
+	PrintProvedStatements(originalPolicy)
+
+	alreadyProved := FilterKeystonePolicy(pubPolicyKey, evp, originalPolicy)
+	if alreadyProved == nil {
+                fmt.Printf("ValidateKeystoneEvidence: Can't filterpolicy\n")
+		return false, nil, nil
+        }
+
+	// Debug
+	fmt.Printf("\nfiltered policy:\n")
+	PrintProvedStatements(alreadyProved)
+	fmt.Printf("\n")
+
+	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, alreadyProved) {
+                fmt.Printf("ValidateKeystoneEvidence: Can't InitProvedStatements\n")
+		return false, nil, nil
+	}
+
+	// Debug
+	fmt.Printf("\nValidateKeystoneEvidence, after InitProved:\n")
+	PrintProvedStatements(alreadyProved)
+
+        // ConstructProofFromSevPlatformEvidence()
+	toProve, proof := ConstructProofFromKeystoneEvidence(pubPolicyKey, purpose, alreadyProved)
+	if toProve == nil || proof == nil {
+                fmt.Printf("ValidateKeystoneEvidence: Can't construct proof\n")
+		return false, nil, nil
+	}
+
+	// Debug
+	fmt.Printf("\n")
+	fmt.Printf("ValidateKeystoneEvidence, toProve: ")
+	PrintVseClause(toProve)
+	fmt.Printf("\n")
+	PrintProof(proof)
+	fmt.Printf("\n")
+
+        if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
+                fmt.Printf("ValidateKeystoneEvidence: Proof does not verify\n")
+		return false, nil, nil
+        }
+
+	// Debug
+	fmt.Printf("ValidateKeystoneEvidence: Proof verifies\n")
+	fmt.Printf("\nProved statements\n")
+        PrintProvedStatements(alreadyProved);
+
+	me := alreadyProved.Proved[2]
+	if me.Clause == nil || me.Clause.Subject == nil ||
+			me.Clause.Subject.GetEntityType() != "measurement" {
+                fmt.Printf("ValidateKeystoneEvidence: Proof does not verify\n")
 		return false, nil, nil
 	}
 

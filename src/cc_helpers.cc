@@ -33,6 +33,9 @@
 #include "gramine_api.h"
 #endif
 #include "cc_useful.h"
+#ifdef KEYSTONE_CERTIFIER
+#include "keystone_api.h"
+#endif
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -225,6 +228,34 @@ bool certifier::framework::cc_trust_data::init_policy_key(int asn1_cert_size, by
   cc_policy_info_initialized_ = true;
   return true;
 }
+
+bool certifier::framework::cc_trust_data::initialize_keystone_enclave_data(const string& attest_key_file_name,
+      const string& measurement_file_name, const string& attest_endorsement_file_name) {
+
+#ifdef KEYSTONE_CERTIFIER
+    if (!cc_policy_info_initialized_) {
+      printf("initialize_keystone_enclave_data: Policy key must be initialized first\n");
+      return false;
+    }
+
+    if (enclave_type_ != "keystone-enclave") {
+      printf("initialize_keystone_enclave_data: Not a simulated enclave\n");
+      return false;
+    }
+    // Todo
+    byte der_cert[100];
+    if (!keystone_Init(0, der_cert)) {
+      printf("initialize_keystone_enclave_data: keystone_init failed\n");
+      return false;
+    }
+  cc_provider_provisioned_ = true;
+
+  return true;
+#else
+  return false;
+#endif
+}
+
 
 void certifier::framework::cc_trust_data::print_trust_data() {
   if (!cc_basic_data_initialized_) {
@@ -952,6 +983,10 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
     ev->set_serialized_evidence(gramine_platform_cert);
     // May add more certs later
 #endif
+#ifdef KEYSTONE_CERTIFIER
+  } else if (enclave_type_ == "keystone-enclave") {
+    // Todo
+#endif
 #ifdef SEV_SNP
   } else if (enclave_type_ == "sev-enclave") {
     if (!plat_certs_initialized) {
@@ -1076,6 +1111,8 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
     request.set_submitted_evidence_type("sev-platform-package");
   } else if (enclave_type_ == "gramine-enclave") {
     request.set_submitted_evidence_type("gramine-evidence");
+  } else if (enclave_type_ == "keystone-enclave") {
+    request.set_submitted_evidence_type("keystone-evidence");
   } else if (enclave_type_ == "oe-enclave") {
     request.set_submitted_evidence_type("oe-evidence");
   } else {
@@ -1268,6 +1305,9 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
     ev2->set_evidence_type(et2);
   } else if ("gramine-enclave" == attesting_enclave_type) {
     string et2("gramine-attestation");
+    ev2->set_evidence_type(et2);
+  } else if ("keystone-enclave" == attesting_enclave_type) {
+    string et2("keystone-attestation");
     ev2->set_evidence_type(et2);
   } else if ("sev-enclave" ==  attesting_enclave_type) {
     string et2("sev-attestation");
