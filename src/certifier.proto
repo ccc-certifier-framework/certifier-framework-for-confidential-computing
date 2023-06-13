@@ -185,6 +185,11 @@ message evidence_list {
   repeated evidence assertion               = 1;
 };
 
+message cca_attestation_message {
+  optional bytes what_was_said              = 1;
+  optional bytes reported_attestation       = 2;
+};
+
 message keystone_attestation_message {
   optional bytes what_was_said              = 1;
   optional bytes reported_attestation       = 2;

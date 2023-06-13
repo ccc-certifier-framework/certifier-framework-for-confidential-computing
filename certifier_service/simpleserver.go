@@ -31,6 +31,8 @@ import (
         "github.com/golang/protobuf/proto"
         certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
         certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
+
+        // NOTE: Enable this line when you enable the test-code in main().
         //gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
 
@@ -241,6 +243,12 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 		success, toProve, measurement = certlib.ValidateKeystoneEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateKeystoneEvidence failed\n")
+			return false, nil
+		}
+        } else if evType == "cca-evidence" {
+		success, toProve, measurement = certlib.ValidateCCAEvidence(pubKey, ep, originalPolicy, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateCCAEvidence failed\n")
 			return false, nil
 		}
         } else {
