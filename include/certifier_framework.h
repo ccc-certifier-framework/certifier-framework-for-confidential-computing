@@ -211,6 +211,8 @@ namespace certifier {
       bool initialize_oe_enclave_data(const string& file);
       bool initialize_application_enclave_data(const string& parent_enclave_type,
               int in_fd, int out_fd);
+      bool initialize_keystone_enclave_data(const string& attest_key_file_name,
+          const string& measurement_file_name, const string& attest_endorsement_file_name);
 
       bool cc_all_initialized();
       bool init_policy_key(int asn1_cert_size, byte* asn1_cert);
