@@ -600,6 +600,16 @@ extern bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
 extern bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
+#ifdef KEYSTONE_CERTIFIER
+extern bool keystone_Init(const int size, byte* der_cert);
+extern bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out);
+extern bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out);
+extern bool keystone_Attest(int what_to_say_size, byte* what_to_say,
+    int* size_out, byte* out);
+extern bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size,
+  byte* attestation, int* measurement_out_size, byte* measurement_out);
+#endif
+
 // Buffer overflow check: Seal returns true and the buffer size in size_out.
 // Check on Gramine.
 bool certifier::framework::Seal(const string& enclave_type, const string& enclave_id,
@@ -627,6 +637,11 @@ bool certifier::framework::Seal(const string& enclave_type, const string& enclav
 #ifdef GRAMINE_CERTIFIER
   if (enclave_type == "gramine-enclave") {
    return gramine_Seal(in_size, in, size_out, out);
+  }
+#endif
+#ifdef KEYSTONE_CERTIFIER
+  if (enclave_type == "keystone-enclave") {
+   return keystone_Seal(in_size, in, size_out, out);
   }
 #endif
   if (enclave_type == "application-enclave") {
@@ -662,6 +677,11 @@ bool certifier::framework::Unseal(const string& enclave_type, const string& encl
 #ifdef GRAMINE_CERTIFIER
   if (enclave_type == "gramine-enclave") {
    return gramine_Unseal(in_size, in, size_out, out);
+  }
+#endif
+#ifdef KEYSTONE_CERTIFIER
+  if (enclave_type == "keystone-enclave") {
+   return keystone_Unseal(in_size, in, size_out, out);
   }
 #endif
   if (enclave_type == "application-enclave") {
@@ -723,6 +743,33 @@ bool certifier::framework::Attest(const string& enclave_type, int what_to_say_si
     return true;
   }
 #endif
+#ifdef KEYSTONE_CERTIFIER
+  if (enclave_type == "keystone-enclave") {
+    int t_size_out;
+    int t_size = *size_out;
+    if (!keystone_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
+      return false;
+    }
+    string ra;
+    string wws;
+    ra.assign((char*)out, t_size_out);
+    wws.assign((char*)what_to_say, what_to_say_size);
+    keystone_attestation_message kam;
+    kam.set_what_was_said(wws);
+    kam.set_reported_attestation(ra);
+    string serialized_keystone_at;
+    if (!kam.SerializeToString(&serialized_keystone_at)) {
+      return false;
+    }
+    if (*size_out < (int)serialized_keystone_at.size()) {
+      return false;
+    }
+    memset(out, 0, *size_out);
+    memcpy(out, (byte*)serialized_keystone_at.data(), serialized_keystone_at.size());
+    *size_out = serialized_keystone_at.size();
+    return true;
+  }
+#endif
   if (enclave_type == "application-enclave") {
     return application_Attest(what_to_say_size, what_to_say, size_out, out);
   }
@@ -749,6 +796,11 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
 #endif
 #ifdef GRAMINE_CERTIFIER
   if (enclave_type == "gramine-enclave") {
+    return false;
+  }
+#endif
+#ifdef KEYSTONE_CERTIFIER
+  if (enclave_type == "keystone-enclave") {
     return false;
   }
 #endif
@@ -992,6 +1044,10 @@ void print_evidence(const evidence& ev) {
       printf("\n");
     }
     if (ev.evidence_type() == "gramine-evidence") {
+        print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
+      printf("\n");
+    }
+    if (ev.evidence_type() == "keystone-evidence") {
         print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
       printf("\n");
     }

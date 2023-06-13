@@ -70,7 +70,7 @@ shim-dobj = $(O)/keystone_shim.o $(O)/keystone_test.o
 
 tests_bare_shim: $(shim-dobj)
 	@echo "linking executable file tests_bare_shim"
-	$(LINK) -o $(EXE_DIR)/tests_bare_shim $(shim-dobj) $(LDFLAGS)
+	$(LINK) -o ./tests_bare_shim $(shim-dobj) $(LDFLAGS)
 
 clean:
 	rm -f $(internal-dobj) $(shim-dobj) $(EXE_DIR)/tests $(EXE_DIR)/tests_bare $(EXE_DIR)/tests_bare_shim

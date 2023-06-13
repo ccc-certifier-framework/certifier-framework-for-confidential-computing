@@ -1,0 +1,17 @@
+Install riscV tool chain
+
+git clone https://github.com/riscv-collab/riscv-gnu-toolchain
+
+
+To install the keystone api
+
+git clone https://github.com/keystone-enclave/keystone-sdk
+
+mkdir build
+cd build
+export KEYSTONE_SDK_DIR=/home/jlm/src/github.com/keystone-enclave/keystone-sdk/sdk
+cmake ..
+make
+make install
+
+export KEYSTONE_SDK_LIB=~/src/github.com/keystone-enclave/keystone-sdk/sdk

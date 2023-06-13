@@ -62,7 +62,8 @@ bool nonhash_report_cmp(struct report_t& a, struct report_t& b) {
     || memcmp(a.dev_public_key, b.dev_public_key, PUBLIC_KEY_SIZE);
 }
 
-bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out) {
+bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size,
+      byte* attestation, int* measurement_out_size, byte* measurement_out) {
   assert(attestation_size == sizeof(struct report_t));
   struct report_t &report = *reinterpret_cast<struct report_t*>(attestation);
 
