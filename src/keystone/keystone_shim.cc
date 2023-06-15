@@ -1,12 +1,3 @@
-#include "keystone_api.h"
-#include "certifier_framework.h"
-#include "certifier_utilities.h"
-#include <string.h>
-
-using std::string;
-using namespace certifier::utilities;
-
-
 //  Copyright (c) 2021-22, VMware Inc, and the Regents of the University of California.
 //    All rights reserved.
 //
@@ -22,6 +13,13 @@ using namespace certifier::utilities;
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string.h>
+#include "keystone_api.h"
+#include "certifier_framework.h"
+#include "certifier_utilities.h"
+
+using std::string;
+using namespace certifier::utilities;
 
 bool keystone_getSealingKey(byte* key) {
   for (int i = 0; i < 64; i++)
@@ -32,7 +30,10 @@ bool keystone_getSealingKey(byte* key) {
 bool g_m_initialized = false;
 const int g_m_size = 32;
 byte g_measurement[g_m_size];
-string g_measurement_file_name("./provisioning/keystone_example_app.measurement");
+
+// Keep name consistent with what is being used by other apps.
+// This simplifies the logic in driver run_example.sh script.
+string g_measurement_file_name("./provisioning/example_app.measurement");
 
 bool keystone_get_fake_measurement(int* size, byte* measurement) {
 
