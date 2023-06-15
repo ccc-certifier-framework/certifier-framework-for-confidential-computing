@@ -57,8 +57,14 @@ all:	$(CL)/keystone_test.exe
 clean:
 	@echo "removing object files"
 	rm -rf $(O)/*.o
+	@echo "removing generated emulated_keystone files"
+	rm -rf ./emulated_keystone_*
 	@echo "removing executable files"
 	rm -rf $(CL)/keystone_test.exe
+
+$(SRC_DIR)/certifier.pb.cc $(I)/certifier.pb.h: $(SRC_DIR)/certifier.proto
+	$(PROTO) --proto_path=$(SRC_DIR) --cpp_out=$(S) $(SRC_DIR)/certifier.proto
+	mv $(S)/certifier.pb.h $(I)
 
 $(CL)/keystone_test.exe: $(dobj)
 	@echo "linking certifier library"
@@ -74,7 +80,7 @@ $(O)/keystone_shim.o: $(S)/keystone_shim.cc $(I)/certifier.pb.h $(I)/certifier.h
 
 $(O)/certifier.pb.o: $(SRC_DIR)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -Wno-array-bounds -c -o $(O)/certifier.pb.o $(SRC_DIR)/certifier.pb.cc
+	$(CC) $(CFLAGS) -Wno-array-bounds -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
 
 $(O)/certifier.o: $(SRC_DIR)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"
