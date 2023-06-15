@@ -78,6 +78,9 @@ jobs:
         ./run_example.sh --help simple_app_under_app_service
         ./run_example.sh --list simple_app_under_app_service
 
+        ./run_example.sh --help simple_app_under_keystone
+        ./run_example.sh --list simple_app_under_keystone
+
         popd
 
     - name: test-run_example-dry-run
@@ -118,6 +121,7 @@ jobs:
         #! Should do nothing but just emit usage messages
         ./run_example.sh --dry-run application_service run_test
 
+        ./run_example.sh --dry-run simple_app_under_keystone
         popd
 
     - name: test-run_example-simple_app
@@ -142,7 +146,7 @@ jobs:
 
         popd
 
-    - name: test-build-and-setup-App-Service-and-Simple-App
+    - name: test-build-and-setup-App-Service-and-simple_app_under_app_service
       run: |
         echo " "
         echo "***************************************"
@@ -270,10 +274,27 @@ jobs:
         echo " "
         pushd ./sample_apps
 
+        ./run_example.sh rm_non_git_files
         ./run_example.sh simple_app_under_sev setup
         sudo ./run_example.sh simple_app_under_sev run_test
 
         sudo ./cleanup.sh
+        popd
+
+    - name: test-simple_app_under_keystone-using-shim
+      run: |
+        echo " "
+        echo "********************************************"
+        echo "* Run simple_app_under_keystone using shim"
+        echo "********************************************"
+        echo " "
+        pushd ./sample_apps
+
+        ./run_example.sh rm_non_git_files
+        ./run_example.sh simple_app_under_keystone setup
+        ./run_example.sh simple_app_under_keystone run_test
+
+        ./cleanup.sh
         popd
 
     - name: test-miscellaneous

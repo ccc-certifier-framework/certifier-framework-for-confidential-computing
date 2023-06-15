@@ -101,6 +101,7 @@ SampleApps=( "simple_app"
              # Not quite an "app", but this is needed for simple_app_under_app_service
              "application_service"
              "simple_app_under_app_service"
+             "simple_app_under_keystone"
            )
 
 # ###########################################################################
@@ -408,7 +409,8 @@ function list_steps() {
     echo "List of individual steps you can execute for ${app_name}, in this order:"
     echo " "
     case "${app_name}" in
-        "simple_app")
+          "simple_app" \
+        | "simple_app_under_keystone")
             list_steps_for_app "${Steps[@]}"
             ;;
 
@@ -467,7 +469,9 @@ function is_valid_step() {
     fi
 
     case "${SampleAppName}" in
-        "simple_app" | "simple_app_under_app_service")
+          "simple_app" \
+        | "simple_app_under_app_service" \
+        | "simple_app_under_keystone")
             check_steps_for_app "${Steps[@]}"
             ;;
 
@@ -746,6 +750,17 @@ function compile_simple_app_under_app_service() {
 }
 
 # ###########################################################################
+function compile_simple_app_under_keystone() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+    run_cmd rm -rf example_app.mak
+    run_cmd ln -s keystone_example_app.mak example_app.mak
+    run_popd
+
+    compile_app_common
+}
+
+# ###########################################################################
 function compile_app_common() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
@@ -849,6 +864,11 @@ function get_measurement_of_trusted_simple_app_under_app_service() {
 }
 
 # ###########################################################################
+function get_measurement_of_trusted_simple_app_under_keystone() {
+    get_measurement_of_app_by_name "keystone_example_app.exe"
+}
+
+# ###########################################################################
 # Work-horse function shared between different apps.
 # ###########################################################################
 function get_measurement_of_app_by_name() {
@@ -860,9 +880,9 @@ function get_measurement_of_app_by_name() {
     if [ "${SampleAppName}" = "application_service" ]; then
         measurement_file="app_service.measurement"
     fi
-    run_cmd "$CERT_UTILS"/measurement_utility.exe    \
-                --type=hash                          \
-                --input="../${app_name_exe}"           \
+    run_cmd "$CERT_UTILS"/measurement_utility.exe   \
+                --type=hash                         \
+                --input="../${app_name_exe}"        \
                 --output="${measurement_file}"
 
     run_popd
@@ -965,6 +985,7 @@ function get_measurement_of_trusted_simple_app_under_sev() {
 #   - simple_app
 #   - simple_app_under_gramine
 #   - application_service
+#   - simple_app_under_keystone
 # ###########################################################################
 function author_policy() {
     # Minions handle pushd/popd to appropriate app-specific sub-dir
@@ -980,10 +1001,13 @@ function author_policy() {
 
     print_policy
 
-    if [ "${SampleAppName}" != "simple_app_under_gramine" ]; then
+    case "${SampleAppName}" in
+          "simple_app"  \
+        | "application_service")
         construct_platform_key_attestation_stmt_sign_it
         print_signed_claim
-    fi
+        ;;
+    esac
 }
 
 # ###########################################################################
@@ -1046,21 +1070,31 @@ function construct_policyKey_platform_is_trusted_simple_app_under_app_service() 
 }
 
 # ###########################################################################
+function construct_policyKey_platform_is_trusted_simple_app_under_keystone() {
+    construct_policyKey_platform_is_trusted_app
+}
+
+# ###########################################################################
 # Work-horse function shared between different apps.
 # ###########################################################################
 function construct_policyKey_platform_is_trusted_app() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
+    local subject_arg="--key_subject"
     local key_subject_file="platform_key_file.bin"
 
     # The app and App Service should share the same policy_key_file.bin.
     if [ "${SampleAppName}" = "simple_app_under_app_service" ]; then
         key_subject_file="policy_key_file.bin"
+
+    elif [ "${SampleAppName}" = "simple_app_under_keystone" ]; then
+        subject_arg="--cert_subject"
+        key_subject_file="emulated_keystone_key_cert.bin"
     fi
 
     run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
-                --key_subject="${key_subject_file}"      \
+                "${subject_arg}"="${key_subject_file}"   \
                 --verb="is-trusted-for-attestation"      \
                 --output=ts1.bin
 
@@ -1188,6 +1222,7 @@ function combine_policy_stmts() {
     case "${SampleAppName}" in
           "simple_app"                  \
         | "simple_app_under_gramine"    \
+        | "simple_app_under_keystone"   \
         | "application_service"         \
         | "simple_app_under_app_service" )
             signed_claims="${signed_claims},signed_claim_2.bin"
@@ -1504,10 +1539,17 @@ function mkdirs_for_test() {
 # ###########################################################################
 function provision_app_service_files() {
     run_cmd
+    # To see exactly what will be copied in --dry-run mode, do a real pushd/popd
     run_pushd "${PROV_DIR}"
+    if [ ${DryRun} -eq 1 ]; then pushd "${PROV_DIR}"; fi
 
-    run_cmd cp -p policy_key_file.bin policy_cert_file.bin policy.bin \
-                    "${EXAMPLE_DIR}"/service
+    local bin_files_list="policy_key_file.bin policy_cert_file.bin policy.bin"
+    if [ "${SampleAppName}" = "simple_app_under_keystone" ]; then
+        bin_files_list="${bin_files_list} emulated_keystone_*"
+    fi
+
+    # shellcheck disable=SC2086
+    run_cmd cp -p ${bin_files_list} "${EXAMPLE_DIR}"/service
 
     if [ "${SampleAppName}" = "application_service" ]; then
         run_cmd cp -p attest*.bin platform*.bin "${EXAMPLE_DIR}"/service
@@ -1523,6 +1565,7 @@ function provision_app_service_files() {
     fi
 
     run_popd
+    if [ ${DryRun} -eq 1 ]; then popd; fi
 }
 
 # ###########################################################################
@@ -1607,10 +1650,23 @@ function run_app_as_server_talk_to_Cert_Service() {
 # ###########################################################################
 function run_simple_app_as_server_talk_to_Cert_Service() {
     run_cmd
+    run_app_by_name_as_server_talk_to_Cert_Service "example_app.exe"
+}
+
+# ###########################################################################
+function run_simple_app_under_keystone_as_server_talk_to_Cert_Service() {
+    run_cmd
+    run_app_by_name_as_server_talk_to_Cert_Service "keystone_example_app.exe"
+}
+
+# ###########################################################################
+function run_app_by_name_as_server_talk_to_Cert_Service() {
+    local app_name_exe="$1"
+    run_cmd
 
     run_pushd "${EXAMPLE_DIR}"
 
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
                 --data_dir="./${Srvr_app_data}/"                \
                 --operation=cold-init                           \
                 --measurement_file="example_app.measurement"    \
@@ -1619,7 +1675,7 @@ function run_simple_app_as_server_talk_to_Cert_Service() {
 
     run_cmd sleep 1
 
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
                 --data_dir="./${Srvr_app_data}/"                \
                 --operation=get-certifier                       \
                 --measurement_file="example_app.measurement"    \
@@ -1709,10 +1765,23 @@ function run_app_as_client_talk_to_Cert_Service() {
 # ###########################################################################
 function run_simple_app_as_client_talk_to_Cert_Service() {
     run_cmd
+    run_app_by_name_as_client_talk_to_Cert_Service "example_app.exe"
+}
+
+# ###########################################################################
+function run_simple_app_under_keystone_as_client_talk_to_Cert_Service() {
+    run_cmd
+    run_app_by_name_as_client_talk_to_Cert_Service "keystone_example_app.exe"
+}
+
+# ###########################################################################
+function run_app_by_name_as_client_talk_to_Cert_Service() {
+    local app_name_exe="$1"
+    run_cmd
 
     run_pushd "${EXAMPLE_DIR}"
 
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
                 --data_dir="./${Client_app_data}/"              \
                 --operation=cold-init                           \
                 --measurement_file="example_app.measurement"    \
@@ -1721,7 +1790,7 @@ function run_simple_app_as_client_talk_to_Cert_Service() {
 
     run_cmd sleep 1
 
-    run_cmd "${EXAMPLE_DIR}"/example_app.exe                    \
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
                 --data_dir="./${Client_app_data}/"              \
                 --operation=get-certifier                       \
                 --measurement_file="example_app.measurement"    \
@@ -1810,6 +1879,11 @@ function run_simple_app_as_server_offers_trusted_service() {
 }
 
 # ###########################################################################
+function run_simple_app_under_keystone_as_server_offers_trusted_service() {
+    run_app_by_name_as_server_offers_trusted_service "keystone_example_app.exe"
+}
+
+# ###########################################################################
 # Shared method, takes app-name as a parameter
 # ###########################################################################
 function run_app_by_name_as_server_offers_trusted_service() {
@@ -1893,6 +1967,11 @@ function run_simple_app_as_client_make_trusted_request() {
 # ###########################################################################
 function run_simple_app_under_sev_as_client_make_trusted_request() {
     run_app_by_name_as_client_make_trusted_request "sev_example_app.exe"
+}
+
+# ###########################################################################
+function run_simple_app_under_keystone_as_client_make_trusted_request() {
+    run_app_by_name_as_client_make_trusted_request "keystone_example_app.exe"
 }
 
 # ###########################################################################
@@ -1986,7 +2065,7 @@ function start_application_service() {
                   --measurement_file="app_service.measurement"                      \
                   --cold_init_service=true                                          \
                   --guest_login_name="${USER}"                                      \
-                  > ${outfile} 2>&1 &
+                  > "${outfile}" 2>&1 &
 
     run_popd
     run_cmd sleep 5
@@ -2093,6 +2172,40 @@ function setup_app_by_name() {
     run_steps "show_env" "get_measurement_of_trusted_app"
     author_policy
     run_steps "build_simple_server" "provision_app_service_files"
+}
+
+# ###########################################################################
+# This is very similar to the steps followed for most other apps, as
+# implemented by setup_app_by_name(). -BUT- as we are still dealing with a
+# Keystone-shim, 'simpleserver' is built with the emulated key/cert files.
+# So, we need to provision those first before building the Certifier service.
+# ###########################################################################
+function setup_simple_app_under_keystone() {
+    run_cmd
+    setup_emulated_keystone_shim_bins
+
+    run_steps "show_env" "get_measurement_of_trusted_app"
+    author_policy
+    run_steps "mkdirs_for_test" "provision_app_service_files"
+    build_simple_server
+}
+
+# ###########################################################################
+# Keystone-shim support: This is temporary.
+# ###########################################################################
+function setup_emulated_keystone_shim_bins() {
+    run_cmd
+    run_pushd "${CERT_PROTO}"/src/keystone
+
+    run_cmd make -f shim_test.mak clean
+    run_cmd make -f shim_test.mak
+
+    run_cmd ./keystone_test.exe
+
+    run_cmd cp -p emulated_keystone_key.bin emulated_keystone_key_cert.bin \
+                "${PROV_DIR}"
+
+    run_popd
 }
 
 # ###########################################################################
@@ -2463,7 +2576,7 @@ if [ $# -eq 2 ]; then
     # By nature of the platform, commands for this app have to run as 'root'.
     if [ "${SampleAppName}" = "application_service" ]; then
         if [ "$2" = "setup" ] || [ "$2" = "run_test" ]; then
-            $2 $1
+            $2 "$1"
         elif [ "$2" = "start_certifier_service" ]; then
             start_certifier_service
 
