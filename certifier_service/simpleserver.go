@@ -17,21 +17,21 @@
 package main
 
 import (
-        "crypto/x509"
+	"crypto/x509"
 	"encoding/hex"
-        "flag"
-        "fmt"
-        "io/ioutil"
-        "log"
-        "net"
-        "os"
-        "strconv"
-        "time"
+	"flag"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net"
+	"os"
+	"strconv"
+	"time"
 
-        "github.com/golang/protobuf/proto"
-        certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
-        certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
-        //gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
+	"github.com/golang/protobuf/proto"
+	certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
+	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	//gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
 
 var serverHost = flag.String("host", "localhost", "address for client/server")
@@ -42,7 +42,7 @@ var policyCertFile = flag.String("policy_cert_file", "policy_cert_file.bin", "ce
 var readPolicy = flag.Bool("readPolicy", true, "read policy")
 var policyFile = flag.String("policyFile", "./certlib/policy.bin", "policy file name")
 
-var loggingSequenceNumber = *flag.Int("loggingSequenceNumber", 1,  "sequence number for logging")
+var loggingSequenceNumber = *flag.Int("loggingSequenceNumber", 1, "sequence number for logging")
 var enableLog = flag.Bool("enableLog", false, "enable logging")
 var logDir = flag.String("logDir", ".", "log directory")
 var logFile = flag.String("logFile", "simpleserver.log", "log file name")
@@ -58,87 +58,86 @@ var duration float64 = 365.0 * 86400
 var logging bool = false
 var logger *log.Logger
 var dataPacketFileNum int = loggingSequenceNumber
+
 func initLog() bool {
-        name := *logDir + "/" + *logFile
-        logFiled, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-        if err != nil {
-                fmt.Printf("Can't open log file\n")
-                return false
-        }
-        logger = log.New(logFiled, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-        logger.Println("Starting simpleserver")
-        return true
+	name := *logDir + "/" + *logFile
+	logFiled, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		fmt.Printf("Can't open log file\n")
+		return false
+	}
+	logger = log.New(logFiled, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	logger.Println("Starting simpleserver")
+	return true
 }
 
-
 var policyInitialized bool = false
-var signedPolicy *certprotos.SignedClaimSequence = &certprotos.SignedClaimSequence {}
-var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements {}
-
+var signedPolicy *certprotos.SignedClaimSequence = &certprotos.SignedClaimSequence{}
+var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements{}
 
 // At init, we retrieve the policy key and the rules to evaluate
 func initCertifierService() bool {
-        // Debug
-        fmt.Printf("Initializing CertifierService, Policy key file: %s, Policy cert file: %s, Policy file: %s\n",
-          *policyKeyFile, *policyCertFile, *policyFile)
+	// Debug
+	fmt.Printf("Initializing CertifierService, Policy key file: %s, Policy cert file: %s, Policy file: %s\n",
+		*policyKeyFile, *policyCertFile, *policyFile)
 
-        if *enableLog {
-                logging = initLog()
-        }
+	if *enableLog {
+		logging = initLog()
+	}
 
-        serializedKey, err := os.ReadFile(*policyKeyFile)
-        if err != nil {
-                fmt.Println("Simple_server: can't read key file, ", err)
-                return false
-        }
+	serializedKey, err := os.ReadFile(*policyKeyFile)
+	if err != nil {
+		fmt.Println("Simple_server: can't read key file, ", err)
+		return false
+	}
 
-        serializedPolicyCert, err := os.ReadFile(*policyCertFile)
-        if err != nil {
-                fmt.Println("Simpleserver: can't read policy cert file, ", err)
-                return false
-        }
-        policyCert, err = x509.ParseCertificate(serializedPolicyCert)
-        if err != nil {
-                fmt.Println("Simpleserver: Can't Parse policy cert, ", err)
-                return false
-        }
+	serializedPolicyCert, err := os.ReadFile(*policyCertFile)
+	if err != nil {
+		fmt.Println("Simpleserver: can't read policy cert file, ", err)
+		return false
+	}
+	policyCert, err = x509.ParseCertificate(serializedPolicyCert)
+	if err != nil {
+		fmt.Println("Simpleserver: Can't Parse policy cert, ", err)
+		return false
+	}
 
-	privatePolicyKey = &certprotos.KeyMessage {}
-        err = proto.Unmarshal(serializedKey, privatePolicyKey)
-        if err != nil {
-                fmt.Printf("SimpleServer: Can't unmarshal serialized policy key\n")
-                return false
-        }
+	privatePolicyKey = &certprotos.KeyMessage{}
+	err = proto.Unmarshal(serializedKey, privatePolicyKey)
+	if err != nil {
+		fmt.Printf("SimpleServer: Can't unmarshal serialized policy key\n")
+		return false
+	}
 
-        publicPolicyKey = certlib.InternalPublicFromPrivateKey(privatePolicyKey)
-        if publicPolicyKey == nil {
-                fmt.Printf("SimpleServer: Can't get public policy key\n")
-                return false
-        }
+	publicPolicyKey = certlib.InternalPublicFromPrivateKey(privatePolicyKey)
+	if publicPolicyKey == nil {
+		fmt.Printf("SimpleServer: Can't get public policy key\n")
+		return false
+	}
 
 	// This should change to an InitPolicy call
-        if policyFile == nil {
-	        fmt.Printf("SimpleServer: No policy file\n")
+	if policyFile == nil {
+		fmt.Printf("SimpleServer: No policy file\n")
 		return false
 	}
 
 	// Read policy
 	serializedPolicy, err := os.ReadFile(*policyFile)
 	if err != nil {
-	        fmt.Printf("SimpleServer: Can't read policy\n")
-	        return false
+		fmt.Printf("SimpleServer: Can't read policy\n")
+		return false
 	}
 
 	err = proto.Unmarshal(serializedPolicy, signedPolicy)
 	if err != nil {
-	        fmt.Printf("SimpleServer: Can't unmarshal signed policy\n")
-	        return false
+		fmt.Printf("SimpleServer: Can't unmarshal signed policy\n")
+		return false
 	}
 
 	if !certlib.InitAxiom(*publicPolicyKey, originalPolicy) {
-                fmt.Printf("SimpleServer: Can't InitAxiom\n")
-                return false
-        }
+		fmt.Printf("SimpleServer: Can't InitAxiom\n")
+		return false
+	}
 
 	policyInitialized = certlib.InitPolicy(publicPolicyKey, signedPolicy, originalPolicy)
 
@@ -147,113 +146,113 @@ func initCertifierService() bool {
 		return false
 	}
 
-        if !certlib.InitSimulatedEnclave() {
-                fmt.Printf("SimpleServer: Can't init simulated enclave\n")
-                return false
-        }
-        return true
+	if !certlib.InitSimulatedEnclave() {
+		fmt.Printf("SimpleServer: Can't init simulated enclave\n")
+		return false
+	}
+	return true
 }
 
 //	--------------------------------------------------------------------------------------
 
 func logRequest(b []byte) *string {
-        if b == nil {
-                return nil
-        }
-        s := strconv.Itoa(dataPacketFileNum)
-        dataPacketFileNum = dataPacketFileNum + 1
-        fileName := *logDir + "/" + "SSReq" + "-" + s
-        if ioutil.WriteFile(fileName, b, 0666)  != nil {
-                fmt.Printf("Can't write %s\n", fileName)
-                return nil
-        }
-        return &fileName
+	if b == nil {
+		return nil
+	}
+	s := strconv.Itoa(dataPacketFileNum)
+	dataPacketFileNum = dataPacketFileNum + 1
+	fileName := *logDir + "/" + "SSReq" + "-" + s
+	if ioutil.WriteFile(fileName, b, 0666) != nil {
+		fmt.Printf("Can't write %s\n", fileName)
+		return nil
+	}
+	return &fileName
 }
 
 func logResponse(b []byte) *string {
-        if b == nil {
-                return nil
-        }
-        s := strconv.Itoa(dataPacketFileNum)
-        dataPacketFileNum = dataPacketFileNum + 1
-        fileName := *logDir + "/" + "SSRsp" + "-" + s
-        if ioutil.WriteFile(fileName, b, 0666)  != nil {
-                fmt.Printf("Can't write %s\n", fileName)
-                return nil
-        }
-        return &fileName
+	if b == nil {
+		return nil
+	}
+	s := strconv.Itoa(dataPacketFileNum)
+	dataPacketFileNum = dataPacketFileNum + 1
+	fileName := *logDir + "/" + "SSRsp" + "-" + s
+	if ioutil.WriteFile(fileName, b, 0666) != nil {
+		fmt.Printf("Can't write %s\n", fileName)
+		return nil
+	}
+	return &fileName
 }
 
 // Todo: Consider logging the proof and IP address too.
 func logEvent(msg string, req []byte, resp []byte) {
-        if !logging {
-                return
-        }
-        reqName := logRequest(req)
-        respName := logResponse(resp)
-        logger.Printf("%s, ", msg)
-        if reqName != nil {
-                logger.Printf("%s ,", reqName)
-        } else {
-                logger.Printf("No request,")
-        }
-        if respName != nil {
-                logger.Printf("%s\n", respName)
-        } else {
-                logger.Printf("No response\n")
-        }
+	if !logging {
+		return
+	}
+	reqName := logRequest(req)
+	respName := logResponse(resp)
+	logger.Printf("%s, ", msg)
+	if reqName != nil {
+		logger.Printf("%s ,", reqName)
+	} else {
+		logger.Printf("No request,")
+	}
+	if respName != nil {
+		logger.Printf("%s\n", respName)
+	} else {
+		logger.Printf("No response\n")
+	}
 }
 
 func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessage, privKey *certprotos.KeyMessage,
-		evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
+	evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
 
-        // evidenceType should be "vse-attestation-package", "gramine-evidence",
-        //      "oe-evidence" or "sev-platform-package"
+	// evidenceType should be "vse-attestation-package", "gramine-evidence",
+	//      "oe-evidence" or "sev-platform-package"
 	var toProve *certprotos.VseClause = nil
 	var measurement []byte = nil
 	var success bool
 
-        if evType == "vse-attestation-package" {
+	if evType == "vse-attestation-package" {
 		success, toProve, measurement = certlib.ValidateInternalEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateInternalEvidence failed\n")
 			return false, nil
 		}
-        } else if evType == "sev-platform-package" {
+	} else if evType == "sev-platform-package" {
 		success, toProve, measurement = certlib.ValidateSevEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
 			return false, nil
 		}
-        } else if evType == "oe-evidence" {
+	} else if evType == "oe-evidence" {
 		success, toProve, measurement = certlib.ValidateOeEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateOeEvidence failed\n")
 			return false, nil
 		}
-        } else if evType == "gramine-evidence" {
+	} else if evType == "gramine-evidence" {
 		success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateGramineEvidence failed\n")
 			return false, nil
 		}
-        } else if evType == "keystone-evidence" {
+	} else if evType == "keystone-evidence" {
 		success, toProve, measurement = certlib.ValidateKeystoneEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateKeystoneEvidence failed\n")
 			return false, nil
 		}
-        } else {
-                fmt.Printf("ValidateRequestAndObtainToken: Invalid Evidence type: %s\n", evType)
-                return false, nil
-        }
+	} else {
+		fmt.Printf("ValidateRequestAndObtainToken: Invalid Evidence type: %s\n", evType)
+		return false, nil
+	}
 
 	// Produce Artifact
 	var artifact []byte = nil
 	if toProve == nil || toProve.Subject == nil || toProve.Subject.Key == nil ||
-			toProve.Subject.Key.KeyName == nil {
+		toProve.Subject.Key.KeyName == nil {
 		fmt.Printf("ValidateRequestAndObtainToken: toProve check failed\n")
-                if toProve != nil {
+		if toProve != nil {
 			certlib.PrintVseClause(toProve)
 			fmt.Printf("\n")
 		}
@@ -286,7 +285,7 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 
 		// Debug
 		fmt.Printf("Enclave key is:\n")
-		certlib.PrintKey(toProve.Subject.Key);
+		certlib.PrintKey(toProve.Subject.Key)
 		fmt.Printf("\norg: %s, appOrgName: %s\n", org, appOrgName)
 
 		cert := certlib.ProduceAdmissionCert(remoteIP, privKey, policyCert,
@@ -330,29 +329,29 @@ func serviceThread(conn net.Conn, client string) {
 
 	b := certlib.SizedSocketRead(conn)
 	if b == nil {
-                logEvent("Can't read request", nil, nil)
-                return
+		logEvent("Can't read request", nil, nil)
+		return
 	}
 
-        request:= &certprotos.TrustRequestMessage{}
-        err := proto.Unmarshal(b, request)
-        if err != nil {
-                fmt.Println("serviceThread: Failed to decode request", err)
-                logEvent("Can't unmarshal request", nil, nil)
-                return
-        }
+	request := &certprotos.TrustRequestMessage{}
+	err := proto.Unmarshal(b, request)
+	if err != nil {
+		fmt.Println("serviceThread: Failed to decode request", err)
+		logEvent("Can't unmarshal request", nil, nil)
+		return
+	}
 
-        // Debug
-        fmt.Printf("serviceThread: Trust request received:\n")
-        certlib.PrintTrustRequest(request)
+	// Debug
+	fmt.Printf("serviceThread: Trust request received:\n")
+	certlib.PrintTrustRequest(request)
 
-        // Prepare response
-        succeeded := "succeeded"
-        failed := "failed"
+	// Prepare response
+	succeeded := "succeeded"
+	failed := "failed"
 
-        response := certprotos.TrustResponseMessage{}
-        response.RequestingEnclaveTag = request.RequestingEnclaveTag
-        response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
+	response := certprotos.TrustResponseMessage{}
+	response.RequestingEnclaveTag = request.RequestingEnclaveTag
+	response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
 
 	var remoteIP string
 	if remoteAddr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
@@ -369,93 +368,92 @@ func serviceThread(conn net.Conn, client string) {
 		response.Status = &failed
 	}
 
-        // Debug
-        fmt.Printf("Sending response\n")
-        certlib.PrintTrustReponse(&response)
-        fmt.Printf("\n")
+	// Debug
+	fmt.Printf("Sending response\n")
+	certlib.PrintTrustReponse(&response)
+	fmt.Printf("\n")
 
-        // send response
-        rb, err := proto.Marshal(&response)
-        if err != nil {
-                logEvent("Couldn't marshall request", b, nil)
-                return
-        }
-	if !certlib.SizedSocketWrite(conn, rb) {
-                fmt.Printf("SizedSocketWrite failed (2)\n")
-                return
+	// send response
+	rb, err := proto.Marshal(&response)
+	if err != nil {
+		logEvent("Couldn't marshall request", b, nil)
+		return
 	}
-        if response.Status != nil && *response.Status == "succeeded" {
-                logEvent("Successful request", b, rb)
-        } else {
-                logEvent("Failed request", b, rb)
-        }
-        return
+	if !certlib.SizedSocketWrite(conn, rb) {
+		fmt.Printf("SizedSocketWrite failed (2)\n")
+		return
+	}
+	if response.Status != nil && *response.Status == "succeeded" {
+		logEvent("Successful request", b, rb)
+	} else {
+		logEvent("Failed request", b, rb)
+	}
+	return
 }
 
 //	------------------------------------------------------------------------------------
 
-
 func server(serverAddr string, arg string) {
 
-        if !initCertifierService() {
-                fmt.Printf("server: failed to initialize server\n")
-                os.Exit(1)
-        }
+	if !initCertifierService() {
+		fmt.Printf("server: failed to initialize server\n")
+		os.Exit(1)
+	}
 
-        var sock net.Listener
-        var err error
-        var conn net.Conn
+	var sock net.Listener
+	var err error
+	var conn net.Conn
 
-        // Listen for clients.
-        fmt.Printf("server: listening\n")
-        sock, err = net.Listen("tcp", serverAddr)
-        if err != nil {
-                fmt.Printf("server, listen error: ", err, "\n")
-                return
-        }
+	// Listen for clients.
+	fmt.Printf("server: listening\n")
+	sock, err = net.Listen("tcp", serverAddr)
+	if err != nil {
+		fmt.Printf("server, listen error: ", err, "\n")
+		return
+	}
 
-        // Service client connections.
-        for {
-                fmt.Printf("server: at accept\n")
-                conn, err = sock.Accept()
-                if err != nil {
-                        fmt.Printf("server: can't accept connection: %s\n", err.Error())
-                        continue
-                }
-                // Todo: maybe get client name and client IP for logging.
-                var clientName string = "blah"
-                go serviceThread(conn, clientName)
-        }
+	// Service client connections.
+	for {
+		fmt.Printf("server: at accept\n")
+		conn, err = sock.Accept()
+		if err != nil {
+			fmt.Printf("server: can't accept connection: %s\n", err.Error())
+			continue
+		}
+		// Todo: maybe get client name and client IP for logging.
+		var clientName string = "blah"
+		go serviceThread(conn, clientName)
+	}
 }
 
 func main() {
 
-        flag.Parse()
+	flag.Parse()
 
-        var serverAddr string
-        serverAddr = *serverHost + ":" + *serverPort
-        var arg string = "something"
+	var serverAddr string
+	serverAddr = *serverHost + ":" + *serverPort
+	var arg string = "something"
 
-/*
-	REMOVE: This is a test
-        attestation, err := os.ReadFile("attestation.bin")
-        if err != nil {
-                fmt.Printf("Failed to read attestation file: %s\n", err.Error())
-        }
+	/*
+	   	REMOVE: This is a test
+	           attestation, err := os.ReadFile("attestation.bin")
+	           if err != nil {
+	                   fmt.Printf("Failed to read attestation file: %s\n", err.Error())
+	           }
 
-        var what_to_say []byte
-        what_to_say = make([]byte, 256)
-        for i := 0; i < 256; i++ {
-                what_to_say[i] = byte(i)
-        }
-        outMeasurement, err := gramineverify.GramineVerify(what_to_say, attestation)
-        if err != nil {
-                fmt.Printf("GramineVerify failed: %s\n", err.Error())
-        }
-        fmt.Printf("Measurement length: %d\n", len(outMeasurement));
- */
+	           var what_to_say []byte
+	           what_to_say = make([]byte, 256)
+	           for i := 0; i < 256; i++ {
+	                   what_to_say[i] = byte(i)
+	           }
+	           outMeasurement, err := gramineverify.GramineVerify(what_to_say, attestation)
+	           if err != nil {
+	                   fmt.Printf("GramineVerify failed: %s\n", err.Error())
+	           }
+	           fmt.Printf("Measurement length: %d\n", len(outMeasurement));
+	*/
 
-        // later this may turn into a TLS connection, we'll see
-        server(serverAddr, arg)
-        fmt.Printf("server: done\n")
+	// later this may turn into a TLS connection, we'll see
+	server(serverAddr, arg)
+	fmt.Printf("server: done\n")
 }
