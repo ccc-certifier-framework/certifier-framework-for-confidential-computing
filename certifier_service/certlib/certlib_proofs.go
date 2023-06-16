@@ -208,6 +208,7 @@ func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 
 func InitPolicy(publicPolicyKey *certprotos.KeyMessage, signedPolicy *certprotos.SignedClaimSequence,
 	alreadyProved *certprotos.ProvedStatements) bool {
+
 	if publicPolicyKey == nil {
 		fmt.Printf("Policy key empty\n")
 		return false

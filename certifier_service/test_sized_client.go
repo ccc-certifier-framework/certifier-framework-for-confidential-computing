@@ -3,12 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
-        "net"
+	"net"
 
 	certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
 )
 
-func client (conn net.Conn) bool {
+func client(conn net.Conn) bool {
 	fmt.Printf("At client\n")
 	b := []byte{5, 6, 7, 8, 9, 10}
 	if !certlib.SizedSocketWrite(conn, b) {
@@ -24,7 +24,7 @@ func client (conn net.Conn) bool {
 	if !bytes.Equal(b, nb) {
 		return false
 	}
-        return true
+	return true
 }
 
 func Run() {
@@ -56,5 +56,5 @@ func Run() {
 
 func main() {
 
-        Run()
+	Run()
 }

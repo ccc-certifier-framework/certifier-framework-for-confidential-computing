@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-        "net"
+	"net"
 
 	certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
 )
@@ -14,7 +14,7 @@ func service(conn net.Conn) {
 		return
 	}
 	conn.Close()
-        return
+	return
 }
 
 func Run() {
@@ -46,4 +46,3 @@ func main() {
 
 	Run()
 }
-

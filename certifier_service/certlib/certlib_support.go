@@ -16,36 +16,36 @@ package certlib
 
 import (
 	"bytes"
-	"encoding/asn1"
-	"fmt"
-	"math/big"
 	"crypto"
 	"crypto/aes"
+	"crypto/cipher"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
 	b64 "encoding/base64"
 	"errors"
+	"fmt"
+	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	"google.golang.org/protobuf/proto"
+	"math/big"
 	"net"
 	"strings"
 	"time"
-	"google.golang.org/protobuf/proto"
-	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	// oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 )
 
 //  --------------------------------------------------------------------
 
 type PredicateDominance struct {
-	Predicate string
+	Predicate  string
 	FirstChild *PredicateDominance
-	Next *PredicateDominance
+	Next       *PredicateDominance
 }
 
 func Spaces(i int) {
@@ -54,7 +54,7 @@ func Spaces(i int) {
 	}
 }
 
-func PrintDominanceNode (ind int, node *PredicateDominance) {
+func PrintDominanceNode(ind int, node *PredicateDominance) {
 	if node == nil {
 		fmt.Printf("\n")
 		return
@@ -64,9 +64,9 @@ func PrintDominanceNode (ind int, node *PredicateDominance) {
 }
 
 func PrintDominanceTree(ind int, tree *PredicateDominance) {
-	PrintDominanceNode (ind, tree)
+	PrintDominanceNode(ind, tree)
 	for n := tree.FirstChild; n != nil; n = n.Next {
-		PrintDominanceTree(ind + 2, n)
+		PrintDominanceTree(ind+2, n)
 	}
 }
 
@@ -76,7 +76,7 @@ func FindNode(node *PredicateDominance, pred string) *PredicateDominance {
 	}
 	for n := node.FirstChild; n != nil; n = n.Next {
 		ret := FindNode(n, pred)
-		if ret !=  nil {
+		if ret != nil {
 			return ret
 		}
 		n = n.Next
@@ -90,15 +90,15 @@ func Insert(r *PredicateDominance, parent string, descendant string) bool {
 		return false
 	}
 
-	ret :=  FindNode(r, parent)
+	ret := FindNode(r, parent)
 	if ret == nil {
 		return false
 	}
-	oldFirst :=  ret.FirstChild
-	pd := &PredicateDominance {
-		Predicate: descendant,
+	oldFirst := ret.FirstChild
+	pd := &PredicateDominance{
+		Predicate:  descendant,
 		FirstChild: nil,
-		Next: oldFirst,
+		Next:       oldFirst,
 	}
 	ret.FirstChild = pd
 	return true
@@ -136,13 +136,13 @@ func InitDominance(root *PredicateDominance) bool {
 	root.Next = nil
 
 	if !Insert(root, "is-trusted", "is-trusted-for-attestation") {
-		return false;
+		return false
 	}
 	if !Insert(root, "is-trusted", "is-trusted-for-authentication") {
-		return false;
+		return false
 	}
 
-	return true;
+	return true
 }
 
 func PrintTimePoint(tp *certprotos.TimePoint) {
@@ -171,12 +171,12 @@ func TimePointNow() *certprotos.TimePoint {
 	h := int32(t.Hour())
 	mi := int32(t.Minute())
 	sec := float64(t.Second())
-	tp := certprotos.TimePoint {
-		Year: &y,
-		Month: &mo,
-		Day: &d,
-		Hour: &h,
-		Minute: &mi,
+	tp := certprotos.TimePoint{
+		Year:    &y,
+		Month:   &mo,
+		Day:     &d,
+		Hour:    &h,
+		Minute:  &mi,
 		Seconds: &sec,
 	}
 	return &tp
@@ -186,40 +186,40 @@ func TimePointNow() *certprotos.TimePoint {
 // if t1 the same as t2, return 0
 // if t1 is earlier than t2, return -1
 func CompareTimePoints(t1 *certprotos.TimePoint, t2 *certprotos.TimePoint) int {
-	if (t1.GetYear() > t2.GetYear()) {
+	if t1.GetYear() > t2.GetYear() {
 		return 1
 	}
-	if (t1.GetYear() < t2.GetYear()) {
+	if t1.GetYear() < t2.GetYear() {
 		return -1
 	}
-	if (t1.GetMonth() > t2.GetMonth()) {
+	if t1.GetMonth() > t2.GetMonth() {
 		return 1
 	}
-	if (t1.GetMonth() < t2.GetMonth()) {
+	if t1.GetMonth() < t2.GetMonth() {
 		return -1
 	}
-	if (t1.GetDay() > t2.GetDay()) {
+	if t1.GetDay() > t2.GetDay() {
 		return 1
 	}
-	if (t1.GetDay() < t2.GetDay()) {
+	if t1.GetDay() < t2.GetDay() {
 		return -1
 	}
-	if (t1.GetHour() > t2.GetHour()) {
+	if t1.GetHour() > t2.GetHour() {
 		return 1
 	}
-	if (t1.GetHour() < t2.GetHour()) {
+	if t1.GetHour() < t2.GetHour() {
 		return -1
 	}
-	if (t1.GetMinute() > t2.GetMinute()) {
+	if t1.GetMinute() > t2.GetMinute() {
 		return 1
 	}
-	if (t1.GetMinute() < t2.GetMinute()) {
+	if t1.GetMinute() < t2.GetMinute() {
 		return -1
 	}
-	if (t1.GetSeconds() > t2.GetSeconds()) {
+	if t1.GetSeconds() > t2.GetSeconds() {
 		return 1
 	}
-	if (t1.GetSeconds() < t2.GetSeconds()) {
+	if t1.GetSeconds() < t2.GetSeconds() {
 		return -1
 	}
 	return 0
@@ -236,11 +236,11 @@ func TimePointPlus(t *certprotos.TimePoint, d float64) *certprotos.TimePoint {
 	tp.Year = &yy
 	tp.Month = &mm
 	tp.Day = &dd
-	tp.Hour= &hh
+	tp.Hour = &hh
 	tp.Minute = &mmi
 	tp.Seconds = &ss
 
-	ns := t.GetSeconds() + d;
+	ns := t.GetSeconds() + d
 	ny := int32(ns / (365.0 * 86400))
 	*tp.Year += ny
 	ns -= float64(ny) * 365.0 * 86400
@@ -252,19 +252,19 @@ func TimePointPlus(t *certprotos.TimePoint, d float64) *certprotos.TimePoint {
 	ns -= float64(nm * 60)
 	*tp.Seconds = ns
 	nm += *tp.Minute
-	i:= int32(nm / 60)
-	*tp.Minute = nm - 60 * i
+	i := int32(nm / 60)
+	*tp.Minute = nm - 60*i
 	nh += i + *tp.Hour
 	i = int32(nh / 24)
-	*tp.Hour = nh - 24 * i
+	*tp.Hour = nh - 24*i
 	nd += i + *tp.Day
 	var exitFlag = false
-	mo:= *tp.Month
+	mo := *tp.Month
 	for {
 		if exitFlag {
 			break
 		}
-		switch(1 + ((mo - 1) % 12)) {
+		switch 1 + ((mo - 1) % 12) {
 		case 2:
 			if nd <= 28 {
 				exitFlag = true
@@ -291,9 +291,9 @@ func TimePointPlus(t *certprotos.TimePoint, d float64) *certprotos.TimePoint {
 			}
 		}
 	}
-	ny =  (mo - 1) / 12
+	ny = (mo - 1) / 12
 	*tp.Year += ny
-	*tp.Month =  mo  -  ny * 12
+	*tp.Month = mo - ny*12
 	return &tp
 }
 
@@ -309,21 +309,21 @@ func StringToTimePoint(s string) *certprotos.TimePoint {
 	tp.Year = &y
 	tp.Month = &m
 	tp.Day = &d
-	tp.Hour= &h
+	tp.Hour = &h
 	tp.Minute = &mi
 	tp.Seconds = &sec
 	return &tp
 }
 
 func SamePoint(p1 *certprotos.PointMessage, p2 *certprotos.PointMessage) bool {
-	if p1.X == nil || p1.Y == nil || p2.X == nil || p2.Y ==nil {
+	if p1.X == nil || p1.Y == nil || p2.X == nil || p2.Y == nil {
 		return false
 	}
 	return bytes.Equal(p1.X, p2.X) && bytes.Equal(p1.Y, p2.Y)
 }
 
 func GetEccKeysFromInternal(k *certprotos.KeyMessage) (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
-	if  k == nil || k.EccKey == nil {
+	if k == nil || k.EccKey == nil {
 		fmt.Printf("GetEccKeysFromInternal: no ecc key\n")
 		return nil, nil, errors.New("EccKey")
 	}
@@ -331,7 +331,7 @@ func GetEccKeysFromInternal(k *certprotos.KeyMessage) (*ecdsa.PrivateKey, *ecdsa
 		fmt.Printf("GetEccKeysFromInternal: no public point\n")
 		return nil, nil, errors.New("EccKey")
 	}
-	if k.EccKey.BasePoint == nil  {
+	if k.EccKey.BasePoint == nil {
 		fmt.Printf("GetEccKeysFromInternal: no base\n")
 		return nil, nil, errors.New("no base point")
 	}
@@ -340,41 +340,41 @@ func GetEccKeysFromInternal(k *certprotos.KeyMessage) (*ecdsa.PrivateKey, *ecdsa
 	tY := new(big.Int).SetBytes(k.EccKey.PublicPoint.Y)
 
 	if k.GetKeyType() == "ecc-384-public" {
-		PK := &ecdsa.PublicKey {
+		PK := &ecdsa.PublicKey{
 			Curve: elliptic.P384(),
-			X: tX,
-			Y: tY,
+			X:     tX,
+			Y:     tY,
 		}
 		return nil, PK, nil
 	} else if k.GetKeyType() == "ecc-384-private" {
-		PK := &ecdsa.PublicKey {
+		PK := &ecdsa.PublicKey{
 			Curve: elliptic.P384(),
-			X: tX,
-			Y: tY,
+			X:     tX,
+			Y:     tY,
 		}
 		D := new(big.Int).SetBytes(k.EccKey.PrivateMultiplier)
-		pK := &ecdsa.PrivateKey {
+		pK := &ecdsa.PrivateKey{
 			PublicKey: *PK,
-			D: D,
+			D:         D,
 		}
 		return pK, PK, nil
 	} else if k.GetKeyType() == "ecc-256-public" {
-		PK := &ecdsa.PublicKey {
+		PK := &ecdsa.PublicKey{
 			Curve: elliptic.P256(),
-			X: tX,
-			Y: tY,
+			X:     tX,
+			Y:     tY,
 		}
 		return nil, PK, nil
 	} else if k.GetKeyType() == "ecc-256-private" {
-		PK := &ecdsa.PublicKey {
+		PK := &ecdsa.PublicKey{
 			Curve: elliptic.P256(),
-			X: tX,
-			Y: tY,
+			X:     tX,
+			Y:     tY,
 		}
 		D := new(big.Int).SetBytes(k.EccKey.PrivateMultiplier)
-		pK := &ecdsa.PrivateKey {
+		pK := &ecdsa.PrivateKey{
 			PublicKey: *PK,
-			D: D,
+			D:         D,
 		}
 		return pK, PK, nil
 	} else {
@@ -396,7 +396,7 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
 		return false
 	}
 
-	byteSize := 1 + p.BitSize / 8
+	byteSize := 1 + p.BitSize/8
 	if p.BitSize == 256 {
 		nm = "P-256"
 		ktype = "ecc-256-public"
@@ -408,7 +408,7 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
 		return false
 	}
 	km.KeyType = &ktype
-	if p.P == nil  || p.B == nil || p.Gx == nil || p.Gy == nil || PK.X == nil || PK.Y == nil {
+	if p.P == nil || p.B == nil || p.Gx == nil || p.Gy == nil || PK.X == nil || PK.Y == nil {
 		return false
 	}
 	km.EccKey = new(certprotos.EccMessage)
@@ -417,13 +417,13 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
 	km.EccKey.CurveP = make([]byte, byteSize)
 	km.EccKey.CurveP = p.P.FillBytes(km.EccKey.CurveP)
 
-        // A is -3
-        t := new(big.Int)
-        t.SetInt64(-3)
-        a := new(big.Int)
-        a.Add(t, p.P)
+	// A is -3
+	t := new(big.Int)
+	t.SetInt64(-3)
+	a := new(big.Int)
+	a.Add(t, p.P)
 
-        km.EccKey.CurveA = make([]byte, byteSize)
+	km.EccKey.CurveA = make([]byte, byteSize)
 	km.EccKey.CurveA = a.FillBytes(km.EccKey.CurveA)
 
 	km.EccKey.CurveB = make([]byte, byteSize)
@@ -477,17 +477,17 @@ func GetInternalKeyFromRsaPublicKey(name string, PK *rsa.PublicKey, km *certprot
 	km.GetRsaKey().PublicModulus = PK.N.Bytes()
 	e := big.Int{}
 	e.SetUint64(uint64(PK.E))
-	km.GetRsaKey().PublicExponent= e.Bytes()
+	km.GetRsaKey().PublicExponent = e.Bytes()
 	return true
 }
 
 func GetInternalKeyFromRsaPrivateKey(name string, pK *rsa.PrivateKey, km *certprotos.KeyMessage) bool {
 	km.RsaKey = &certprotos.RsaMessage{}
-	km.GetRsaKey().PublicModulus =  pK.PublicKey.N.Bytes()
+	km.GetRsaKey().PublicModulus = pK.PublicKey.N.Bytes()
 	e := big.Int{}
 	e.SetUint64(uint64(pK.PublicKey.E))
-	km.GetRsaKey().PublicExponent=  e.Bytes()
-	km.GetRsaKey().PrivateExponent =  pK.D.Bytes()
+	km.GetRsaKey().PublicExponent = e.Bytes()
+	km.GetRsaKey().PrivateExponent = pK.D.Bytes()
 	return true
 }
 
@@ -509,7 +509,7 @@ func InternalPublicFromPrivateKey(privateKey *certprotos.KeyMessage) *certprotos
 	publicKey.KeyType = &kt
 	publicKey.KeyName = privateKey.KeyName
 	publicKey.KeyFormat = privateKey.KeyFormat
-	r := certprotos.RsaMessage {}
+	r := certprotos.RsaMessage{}
 	publicKey.RsaKey = &r
 	r.PublicModulus = privateKey.GetRsaKey().PublicModulus
 	r.PublicExponent = privateKey.GetRsaKey().PublicExponent
@@ -529,13 +529,13 @@ func MakeRsaKey(n int) *rsa.PrivateKey {
 }
 
 func MakeVseRsaKey(n int) *certprotos.KeyMessage {
-	pK :=  MakeRsaKey(n)
+	pK := MakeRsaKey(n)
 	if pK == nil {
 		return nil
 	}
-	km := certprotos.KeyMessage {}
+	km := certprotos.KeyMessage{}
 	var kf string
-	if  n == 1024 {
+	if n == 1024 {
 		kf = "rsa-1024-private"
 	} else if n == 2048 {
 		kf = "rsa-2048-private"
@@ -544,7 +544,7 @@ func MakeVseRsaKey(n int) *certprotos.KeyMessage {
 	} else {
 		return nil
 	}
-	km.KeyType  = &kf
+	km.KeyType = &kf
 	if GetInternalKeyFromRsaPrivateKey("generatedKey", pK, &km) == false {
 		return nil
 	}
@@ -561,7 +561,7 @@ func RsaPrivateDecrypt(r *rsa.PrivateKey, in []byte) []byte {
 
 func RsaSha256Verify(r *rsa.PublicKey, in []byte, sig []byte) bool {
 	hashed := sha256.Sum256(in)
-	err:= rsa.VerifyPKCS1v15(r, crypto.SHA256, hashed[0:32], sig)
+	err := rsa.VerifyPKCS1v15(r, crypto.SHA256, hashed[0:32], sig)
 	if err == nil {
 		return true
 	}
@@ -593,7 +593,6 @@ func FakeRsaSha256Verify(r *rsa.PublicKey, in []byte, sig []byte) bool {
 	return false
 }
 
-
 func Digest(in []byte) [32]byte {
 	return sha256.Sum256(in)
 }
@@ -601,16 +600,16 @@ func Digest(in []byte) [32]byte {
 func Pad(in []byte) []byte {
 	var inLen int = len(in)
 	var outLen int
-	if inLen %  aes.BlockSize != 0 {
+	if inLen%aes.BlockSize != 0 {
 		outLen = ((inLen + aes.BlockSize - 1) / aes.BlockSize) * aes.BlockSize
 	} else {
 		outLen = inLen + aes.BlockSize
 	}
-	out:= make([]byte, outLen)
+	out := make([]byte, outLen)
 	for i := 0; i < inLen; i++ {
 		out[i] = in[i]
 	}
-	out[inLen] = 0x80;
+	out[inLen] = 0x80
 	for i := inLen + 1; i < outLen; i++ {
 		out[i] = 0
 	}
@@ -633,7 +632,7 @@ func Encrypt(in []byte, key []byte, iv []byte) []byte {
 		return nil
 	}
 	padded := Pad(in)
-	out :=  make([]byte, aes.BlockSize+len(padded))
+	out := make([]byte, aes.BlockSize+len(padded))
 	for i := 0; i < aes.BlockSize; i++ {
 		out[i] = iv[i]
 	}
@@ -648,7 +647,7 @@ func Decrypt(in []byte, key []byte) []byte {
 		return nil
 	}
 	iv := in[0:aes.BlockSize]
-	out :=  make([]byte, len(in))
+	out := make([]byte, len(in))
 	mode := cipher.NewCBCDecrypter(c, iv)
 	mode.CryptBlocks(out, in[16:])
 	return Depad(out)
@@ -665,7 +664,7 @@ func AuthenticatedEncrypt(in []byte, key []byte, iv []byte) []byte {
 		out[i] = cip[i]
 	}
 	for i := 0; i < len(computedMac); i++ {
-		out[i + len(cip)] = computedMac[i]
+		out[i+len(cip)] = computedMac[i]
 	}
 	return out
 }
@@ -673,7 +672,7 @@ func AuthenticatedEncrypt(in []byte, key []byte, iv []byte) []byte {
 func AuthenticatedDecrypt(in []byte, key []byte) []byte {
 	// check hmac and decrypt
 	mac := hmac.New(sha256.New, key[32:])
-	n:= len(in) - 32
+	n := len(in) - 32
 	fmt.Printf("n= %d\n", n)
 	_, _ = mac.Write(in[0:n])
 	computedMac := mac.Sum(nil)
@@ -689,17 +688,17 @@ func SameMeasurement(m1 []byte, m2 []byte) bool {
 }
 
 func SameKey(k1 *certprotos.KeyMessage, k2 *certprotos.KeyMessage) bool {
-	if (k1.GetKeyType() != k2.GetKeyType()) {
+	if k1.GetKeyType() != k2.GetKeyType() {
 		return false
 	}
-	if k1.GetKeyType() == "rsa-2048-private"  || k1.GetKeyType() == "rsa-2048-public" ||
-		k1.GetKeyType() == "rsa-4096-private"  || k1.GetKeyType() == "rsa-4096-public" ||
-		k1.GetKeyType() == "rsa-1024-private"  || k1.GetKeyType() == "rsa-1024-public" {
+	if k1.GetKeyType() == "rsa-2048-private" || k1.GetKeyType() == "rsa-2048-public" ||
+		k1.GetKeyType() == "rsa-4096-private" || k1.GetKeyType() == "rsa-4096-public" ||
+		k1.GetKeyType() == "rsa-1024-private" || k1.GetKeyType() == "rsa-1024-public" {
 		return bytes.Equal(k1.RsaKey.PublicModulus, k2.RsaKey.PublicModulus) &&
 			bytes.Equal(k1.RsaKey.PublicExponent, k2.RsaKey.PublicExponent)
 	}
-	if k1.GetKeyType() == "ecc-384-private"  || k1.GetKeyType() == "ecc-384-public"  ||
-			k1.GetKeyType() == "ecc-256-private"  || k1.GetKeyType() == "ecc-256-public" {
+	if k1.GetKeyType() == "ecc-384-private" || k1.GetKeyType() == "ecc-384-public" ||
+		k1.GetKeyType() == "ecc-256-private" || k1.GetKeyType() == "ecc-256-public" {
 		if k1.EccKey == nil || k2.EccKey == nil {
 			return false
 		}
@@ -710,7 +709,7 @@ func SameKey(k1 *certprotos.KeyMessage, k2 *certprotos.KeyMessage) bool {
 			return false
 		}
 		if k1.EccKey.CurveName == nil || k2.EccKey.CurveName == nil ||
-				*k1.EccKey.CurveName != *k2.EccKey.CurveName {
+			*k1.EccKey.CurveName != *k2.EccKey.CurveName {
 			return false
 		}
 		return SamePoint(k1.EccKey.BasePoint, k2.EccKey.BasePoint) &&
@@ -723,23 +722,23 @@ func SameEntity(e1 *certprotos.EntityMessage, e2 *certprotos.EntityMessage) bool
 	if e1.GetEntityType() != e2.GetEntityType() {
 		return false
 	}
-	if  e1.GetEntityType() == "measurement" {
+	if e1.GetEntityType() == "measurement" {
 		return SameMeasurement(e1.GetMeasurement(), e2.GetMeasurement())
 	}
-	if  e1.GetEntityType() == "key" {
+	if e1.GetEntityType() == "key" {
 		return SameKey(e1.GetKey(), e2.GetKey())
 	}
-	if  e1.GetEntityType() == "platform" {
+	if e1.GetEntityType() == "platform" {
 		return SamePlatform(e1.GetPlatformEnt(), e2.GetPlatformEnt())
 	}
-	if  e1.GetEntityType() == "environment" {
+	if e1.GetEntityType() == "environment" {
 		return SameEnvironment(e1.GetEnvironmentEnt(), e2.GetEnvironmentEnt())
 	}
 	return false
 }
 
 func SameVseClause(c1 *certprotos.VseClause, c2 *certprotos.VseClause) bool {
-	if c1.Subject == nil ||  c2.Subject == nil {
+	if c1.Subject == nil || c2.Subject == nil {
 		return false
 	}
 	if !SameEntity(c1.GetSubject(), c2.GetSubject()) {
@@ -748,8 +747,8 @@ func SameVseClause(c1 *certprotos.VseClause, c2 *certprotos.VseClause) bool {
 	if c1.GetVerb() != c2.GetVerb() {
 		return false
 	}
-	if (c1.Object == nil && c2.Object != nil)  ||
-		(c1.Object != nil &&  c2.Object == nil) {
+	if (c1.Object == nil && c2.Object != nil) ||
+		(c1.Object != nil && c2.Object == nil) {
 		return false
 	}
 	if c1.Object != nil {
@@ -757,9 +756,9 @@ func SameVseClause(c1 *certprotos.VseClause, c2 *certprotos.VseClause) bool {
 			return false
 		}
 	}
-	if (c1.GetClause() == nil  && c2.GetClause() != nil ) ||
-		(c1.GetClause() != nil  && c2.GetClause() == nil) {
-			return false
+	if (c1.GetClause() == nil && c2.GetClause() != nil) ||
+		(c1.GetClause() != nil && c2.GetClause() == nil) {
+		return false
 	}
 	if c1.GetClause() != nil {
 		return SameVseClause(c1.GetClause(), c2.GetClause())
@@ -768,7 +767,7 @@ func SameVseClause(c1 *certprotos.VseClause, c2 *certprotos.VseClause) bool {
 }
 
 func MakeKeyEntity(k *certprotos.KeyMessage) *certprotos.EntityMessage {
-	keye := certprotos.EntityMessage {}
+	keye := certprotos.EntityMessage{}
 	var kn string = "key"
 	keye.EntityType = &kn
 	keye.Key = k
@@ -776,7 +775,7 @@ func MakeKeyEntity(k *certprotos.KeyMessage) *certprotos.EntityMessage {
 }
 
 func MakeMeasurementEntity(m []byte) *certprotos.EntityMessage {
-	me := certprotos.EntityMessage {}
+	me := certprotos.EntityMessage{}
 	measName := "measurement"
 	me.EntityType = &measName
 	me.Measurement = m
@@ -802,19 +801,19 @@ func MakeIndirectVseClause(subject *certprotos.EntityMessage, verb *string, cl *
 	vseClause := certprotos.VseClause{}
 	vseClause.Subject = subject
 	vseClause.Verb = verb
-	vseClause.Clause=cl
+	vseClause.Clause = cl
 	return &vseClause
 }
 
 func PrintBytes(b []byte) {
-	for i := 0; i < len(b); i++  {
+	for i := 0; i < len(b); i++ {
 		fmt.Printf("%02x", b[i])
 	}
 	return
 }
 
 func PrintEccKey(e *certprotos.EccMessage) {
-	fmt.Printf("curve: %s\n", e.GetCurveName());
+	fmt.Printf("curve: %s\n", e.GetCurveName())
 	if e.CurveP != nil {
 		fmt.Printf("P: ")
 		PrintBytes(e.CurveP)
@@ -850,7 +849,7 @@ func PrintEccKey(e *certprotos.EccMessage) {
 			fmt.Printf(")\n")
 		}
 	}
-	if e.OrderOfBasePoint!= nil {
+	if e.OrderOfBasePoint != nil {
 		fmt.Printf("Order of Base Point: ")
 		PrintBytes(e.OrderOfBasePoint)
 		fmt.Printf("\n")
@@ -909,19 +908,19 @@ func PrintKey(k *certprotos.KeyMessage) {
 	}
 
 	if k.GetKeyType() == "rsa-1024-public" || k.GetKeyType() == "rsa-2048-public" ||
-                k.GetKeyType() == "rsa-4096-public" || k.GetKeyType() == "rsa-1024-private" ||
-                k.GetKeyType() == "rsa-2048-private" || k.GetKeyType() == "rsa-4096-private" {
-	        if k.GetRsaKey() != nil {
-		        PrintRsaKey(k.GetRsaKey())
-                }
-        } else if k.GetKeyType() == "ecc-384-public" || k.GetKeyType() == "ecc-384-private" ||
-			k.GetKeyType() == "ecc-256-public" || k.GetKeyType() == "ecc-256-private" {
-	        if k.EccKey != nil {
-		        PrintEccKey(k.EccKey)
-                }
+		k.GetKeyType() == "rsa-4096-public" || k.GetKeyType() == "rsa-1024-private" ||
+		k.GetKeyType() == "rsa-2048-private" || k.GetKeyType() == "rsa-4096-private" {
+		if k.GetRsaKey() != nil {
+			PrintRsaKey(k.GetRsaKey())
+		}
+	} else if k.GetKeyType() == "ecc-384-public" || k.GetKeyType() == "ecc-384-private" ||
+		k.GetKeyType() == "ecc-256-public" || k.GetKeyType() == "ecc-256-private" {
+		if k.EccKey != nil {
+			PrintEccKey(k.EccKey)
+		}
 	} else {
-                 fmt.Printf("Unknown key type\n")
-        }
+		fmt.Printf("Unknown key type\n")
+	}
 	return
 }
 
@@ -943,7 +942,7 @@ func PrintKeyDescriptor(k *certprotos.KeyMessage) {
 		fmt.Printf("]")
 	}
 	if k.GetKeyType() == "ecc-384-private" || k.GetKeyType() == "ecc-384-public" ||
-			k.GetKeyType() == "ecc-256-private" || k.GetKeyType() == "ecc-256-public" {
+		k.GetKeyType() == "ecc-256-private" || k.GetKeyType() == "ecc-256-public" {
 		if k.GetEccKey() == nil {
 			fmt.Printf("Key[ecc] Bad key")
 			return
@@ -1019,20 +1018,20 @@ func PrintAttestationUserData(sr *certprotos.AttestationUserData) {
 	if sr.EnclaveType != nil {
 		fmt.Printf("Enclave type: %s\n", *sr.EnclaveType)
 	}
-	if sr.Time!= nil {
+	if sr.Time != nil {
 		fmt.Printf("Time signed : %s\n", *sr.Time)
 	}
 	if sr.EnclaveKey != nil {
-		fmt.Printf("Enclave key:\n");
+		fmt.Printf("Enclave key:\n")
 		PrintKey(sr.EnclaveKey)
 	} else {
-		fmt.Printf("No enclave key\n");
+		fmt.Printf("No enclave key\n")
 	}
 	if sr.PolicyKey != nil {
-		fmt.Printf("Policy key:\n");
+		fmt.Printf("Policy key:\n")
 		PrintKey(sr.PolicyKey)
 	} else {
-		fmt.Printf("No policy key\n");
+		fmt.Printf("No policy key\n")
 	}
 	return
 }
@@ -1045,10 +1044,10 @@ func PrintVseAttestationReportInfo(info *certprotos.VseAttestationReportInfo) {
 		fmt.Printf("Measurement : ")
 		PrintBytes(info.VerifiedMeasurement)
 	}
-	if info.NotBefore!= nil  && info.NotAfter != nil {
+	if info.NotBefore != nil && info.NotAfter != nil {
 		fmt.Printf("Valid between: %s and %s\n", *info.NotBefore, *info.NotAfter)
 	}
-	if info.UserData!= nil {
+	if info.UserData != nil {
 		fmt.Printf("User Data   : ")
 		PrintBytes(info.UserData)
 	}
@@ -1127,21 +1126,21 @@ func MakeSignedClaim(s *certprotos.ClaimMessage, k *certprotos.KeyMessage) *cert
 	if k.GetKeyType() == "" {
 		return nil
 	}
-	sm := certprotos.SignedClaimMessage {}
+	sm := certprotos.SignedClaimMessage{}
 	if k.GetKeyType() == "rsa-1024-private" {
 		var ss string = "rsa-1024-sha256-pkcs-sign"
-		sm.SigningAlgorithm =  &ss
+		sm.SigningAlgorithm = &ss
 	} else if k.GetKeyType() == "rsa-2048-private" {
 		var ss string = "rsa-2048-sha256-pkcs-sign"
-		sm.SigningAlgorithm =  &ss
+		sm.SigningAlgorithm = &ss
 	} else if k.GetKeyType() == "rsa-4096-private" {
 		var ss string = "rsa-4096-sha384-pkcs-sign"
-		sm.SigningAlgorithm =  &ss
+		sm.SigningAlgorithm = &ss
 	} else {
 		return nil
 	}
 
-	psk :=  InternalPublicFromPrivateKey(k)
+	psk := InternalPublicFromPrivateKey(k)
 	sm.SigningKey = psk
 
 	PK := rsa.PublicKey{}
@@ -1163,7 +1162,7 @@ func MakeSignedClaim(s *certprotos.ClaimMessage, k *certprotos.KeyMessage) *cert
 	return &sm
 }
 
-func SameProperty(p1 *certprotos.Property,  p2 *certprotos.Property) bool {
+func SameProperty(p1 *certprotos.Property, p2 *certprotos.Property) bool {
 	if p1 == nil || p2 == nil {
 		return false
 	}
@@ -1239,7 +1238,7 @@ func SatisfyingProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) 
 			fmt.Printf("Can't find property %s\n", *p1.Props[i].PropertyName)
 			return false
 		}
-		if (!SatisfyingProperty(p1.Props[i], pp)) {
+		if !SatisfyingProperty(p1.Props[i], pp) {
 			return false
 		}
 	}
@@ -1261,7 +1260,7 @@ func SameProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) bool {
 		if pp == nil {
 			return false
 		}
-		if (!SameProperty(p1.Props[i], pp)) {
+		if !SameProperty(p1.Props[i], pp) {
 			return false
 		}
 	}
@@ -1281,7 +1280,7 @@ func SameEnvironment(p1 *certprotos.Environment, p2 *certprotos.Environment) boo
 	if p1.ThePlatform == nil || p2.ThePlatform == nil {
 		return false
 	}
-	return SamePlatform(p1.ThePlatform,  p2.ThePlatform);
+	return SamePlatform(p1.ThePlatform, p2.ThePlatform)
 }
 
 func SamePlatform(p1 *certprotos.Platform, p2 *certprotos.Platform) bool {
@@ -1323,7 +1322,7 @@ func PrintPlatform(p *certprotos.Platform) {
 	if p == nil {
 		return
 	}
-	if (p.PlatformType == nil) {
+	if p.PlatformType == nil {
 		return
 	}
 	fmt.Printf("Platform:\n")
@@ -1333,18 +1332,18 @@ func PrintPlatform(p *certprotos.Platform) {
 	} else {
 		fmt.Printf("    NoKey\n")
 	}
-	if (p.AttestKey != nil) {
+	if p.AttestKey != nil {
 		fmt.Printf("   Key: \n")
 		PrintKey(p.AttestKey)
 	}
-	if (p.Props != nil) {
+	if p.Props != nil {
 		fmt.Printf("    Properties:\n")
 		PrintProperties(p.Props)
 	}
 }
 
 func PrintProperty(p *certprotos.Property) {
-	if p == nil  || p.PropertyName == nil {
+	if p == nil || p.PropertyName == nil {
 		return
 	}
 	fmt.Printf("        %s: ", *p.PropertyName)
@@ -1356,9 +1355,9 @@ func PrintProperty(p *certprotos.Property) {
 			return
 		}
 		fmt.Printf("%s\n", *p.StringValue)
-	} 
+	}
 	if *p.ValueType == "int" {
-		if p.IntValue == nil  || p.Comparator == nil {
+		if p.IntValue == nil || p.Comparator == nil {
 			return
 		}
 		fmt.Printf("%s %d\n", *p.Comparator, *p.IntValue)
@@ -1386,7 +1385,7 @@ func PrintEnvironmentDescriptor(e *certprotos.Environment) {
 }
 
 func PrintPlatformDescriptor(p *certprotos.Platform) {
-	if p == nil  || p.PlatformType == nil {
+	if p == nil || p.PlatformType == nil {
 		return
 	}
 	fmt.Printf("platform[%s, ", *p.PlatformType)
@@ -1406,7 +1405,7 @@ func PrintPlatformDescriptor(p *certprotos.Platform) {
 }
 
 func PrintPropertyDescriptor(p *certprotos.Property) {
-	if p == nil  || p.PropertyName == nil {
+	if p == nil || p.PropertyName == nil {
 		return
 	}
 	fmt.Printf("%s: ", *p.PropertyName)
@@ -1462,12 +1461,12 @@ func PrintTrustReponse(res *certprotos.TrustResponseMessage) {
 }
 
 func GetVseFromSignedClaim(sc *certprotos.SignedClaimMessage) *certprotos.VseClause {
-	claimMsg := certprotos.ClaimMessage {}
+	claimMsg := certprotos.ClaimMessage{}
 	err := proto.Unmarshal(sc.SerializedClaimMessage, &claimMsg)
 	if err != nil {
 		return nil
 	}
-	vseClause :=  certprotos.VseClause {}
+	vseClause := certprotos.VseClause{}
 	if claimMsg.GetClaimFormat() == "vse-clause" {
 		err = proto.Unmarshal(claimMsg.SerializedClaim, &vseClause)
 		if err != nil {
@@ -1486,10 +1485,10 @@ func SizedSocketRead(conn net.Conn) []byte {
 		fmt.Printf("SizedSocketRead, error: %d\n", n)
 		return nil
 	}
-	size := int(bsize[0]) +  256 * int(bsize[1]) + 256 * 256 * int(bsize[2])
+	size := int(bsize[0]) + 256*int(bsize[1]) + 256*256*int(bsize[2])
 	b := make([]byte, size)
 	total := 0
-	for ; total < size; {
+	for total < size {
 		n, err = conn.Read(b[total:])
 		if err != nil {
 			fmt.Printf("SizedSocketRead, error: %d\n", n)
@@ -1503,9 +1502,9 @@ func SizedSocketRead(conn net.Conn) []byte {
 func SizedSocketWrite(conn net.Conn, b []byte) bool {
 	size := len(b)
 	bs := make([]byte, 4)
-	bs[0] = byte(size&0xff)
-	bs[1] = byte((size>>8)&0xff)
-	bs[2] = byte((size>>16)&0xff)
+	bs[0] = byte(size & 0xff)
+	bs[1] = byte((size >> 8) & 0xff)
+	bs[2] = byte((size >> 16) & 0xff)
 	bs[3] = 0
 	_, err := conn.Write(bs)
 	if err != nil {
@@ -1522,9 +1521,9 @@ func SizedSocketWrite(conn net.Conn, b []byte) bool {
 }
 
 func MakeProperty(name string, t string, sv *string, c *string, iv *uint64) *certprotos.Property {
-	p := &certprotos.Property {
+	p := &certprotos.Property{
 		PropertyName: &name,
-		ValueType: &t,
+		ValueType:    &t,
 	}
 	if t == "string" {
 		p.StringValue = sv
@@ -1537,23 +1536,23 @@ func MakeProperty(name string, t string, sv *string, c *string, iv *uint64) *cer
 }
 
 func MakePlatform(t string, k *certprotos.KeyMessage, props *certprotos.Properties) *certprotos.Platform {
-	hk := false;
+	hk := false
 	if k != nil {
-		hk = true;
+		hk = true
 	}
-	plat := &certprotos.Platform {
+	plat := &certprotos.Platform{
 		PlatformType: &t,
-		AttestKey: k,
-		Props: props,
-		HasKey: &hk,
+		AttestKey:    k,
+		Props:        props,
+		HasKey:       &hk,
 	}
 	return plat
 }
 
 func MakePlatformEntity(pl *certprotos.Platform) *certprotos.EntityMessage {
 	plEnt := "platform"
-	pe := &certprotos.EntityMessage {
-		EntityType: &plEnt,
+	pe := &certprotos.EntityMessage{
+		EntityType:  &plEnt,
 		PlatformEnt: pl,
 	}
 	return pe
@@ -1561,16 +1560,16 @@ func MakePlatformEntity(pl *certprotos.Platform) *certprotos.EntityMessage {
 
 func MakeEnvironmentEntity(e *certprotos.Environment) *certprotos.EntityMessage {
 	eEnt := "environment"
-	ee := &certprotos.EntityMessage {
-		EntityType: &eEnt,
+	ee := &certprotos.EntityMessage{
+		EntityType:     &eEnt,
 		EnvironmentEnt: e,
 	}
 	return ee
 }
 
 func MakeEnvironment(pl *certprotos.Platform, measurement []byte) *certprotos.Environment {
-	e := &certprotos.Environment {
-		ThePlatform: pl,
+	e := &certprotos.Environment{
+		ThePlatform:    pl,
 		TheMeasurement: measurement,
 	}
 	return e
@@ -1617,7 +1616,7 @@ func VerifySignedClaim(c *certprotos.SignedClaimMessage, k *certprotos.KeyMessag
 func VerifySignedAssertion(scm certprotos.SignedClaimMessage, k *certprotos.KeyMessage, vseClause *certprotos.VseClause) bool {
 	// verify signed claim and extract vse clause
 	if !VerifySignedClaim(&scm, k) {
-		return false;
+		return false
 	}
 	// extract clause
 	cl_str := "vse-clause"
@@ -1645,12 +1644,12 @@ func PrintProvedStatements(ps *certprotos.ProvedStatements) {
 	for i := 0; i < len(ps.Proved); i++ {
 		fmt.Printf("\n%02d ", i)
 		v := ps.Proved[i]
-		PrintVseClause(v);
+		PrintVseClause(v)
 		fmt.Printf("\n")
 	}
 }
 
-func Asn1ToX509 (in []byte) *x509.Certificate {
+func Asn1ToX509(in []byte) *x509.Certificate {
 	cert, err := x509.ParseCertificate(in)
 	if err != nil {
 		return nil
@@ -1661,7 +1660,7 @@ func Asn1ToX509 (in []byte) *x509.Certificate {
 func X509ToAsn1(cert *x509.Certificate) []byte {
 	out, err := asn1.Marshal(cert)
 	if err != nil {
-                fmt.Printf("X509ToAsn1 error: %s\n", err.Error())
+		fmt.Printf("X509ToAsn1 error: %s\n", err.Error())
 		return nil
 	}
 	return out
@@ -1687,27 +1686,27 @@ func CheckTimeRange(nb *string, na *string) bool {
 func LittleToBigEndian(in []byte) []byte {
 	out := make([]byte, len(in))
 	for i := 0; i < len(in); i++ {
-		out[len(in) - 1 - i] = in[i]
+		out[len(in)-1-i] = in[i]
 	}
 	return out
 }
 
 func ProduceAdmissionCert(remoteIP string, issuerKey *certprotos.KeyMessage, issuerCert *x509.Certificate,
-		subjKey *certprotos.KeyMessage, subjName string, subjOrg string,
-		serialNumber uint64, durationSeconds float64) *x509.Certificate {
+	subjKey *certprotos.KeyMessage, subjName string, subjOrg string,
+	serialNumber uint64, durationSeconds float64) *x509.Certificate {
 
 	dur := int64(durationSeconds * 1000 * 1000 * 1000)
 	cert := x509.Certificate{
 		SerialNumber: big.NewInt(int64(serialNumber)),
-		Subject: pkix.Name {
-			CommonName: subjName,
+		Subject: pkix.Name{
+			CommonName:   subjName,
 			Organization: []string{subjOrg},
 		},
-		NotBefore:	     time.Now(),
-		NotAfter:	      time.Now().Add(time.Duration(dur)),
-		IsCA:		  false,
-		ExtKeyUsage:	   []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:	      x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Duration(dur)),
+		IsCA:                  false,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
 	}
 	if remoteIP != "" {
@@ -1761,7 +1760,7 @@ func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
 			fmt.Printf("GetSubjectKey: Can't internal rsa public key\n")
 			return nil
 		}
-		return  &k
+		return &k
 	}
 	PKecc, ok := cert.PublicKey.(*ecdsa.PublicKey)
 	if ok {
@@ -1770,12 +1769,12 @@ func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
 			fmt.Printf("GetSubjectKey: Can't internal ecc public key\n")
 			return nil
 		}
-		return  &k
+		return &k
 	}
 	return nil
 }
 
-func GetIssuerKey(cert *x509.Certificate) *certprotos.KeyMessage{
+func GetIssuerKey(cert *x509.Certificate) *certprotos.KeyMessage {
 	return nil
 }
 
@@ -1783,7 +1782,7 @@ func VerifyAdmissionCert(policyCert *x509.Certificate, cert *x509.Certificate) b
 	certPool := x509.NewCertPool()
 	certPool.AddCert(policyCert)
 	opts := x509.VerifyOptions{
-		Roots:   certPool,
+		Roots: certPool,
 	}
 
 	if _, err := cert.Verify(opts); err != nil {
@@ -1796,7 +1795,7 @@ func PrintEvidence(ev *certprotos.Evidence) {
 	fmt.Printf("Evidence type: %s\n", ev.GetEvidenceType())
 	if ev.GetEvidenceType() == "signed-claim" {
 		sc := certprotos.SignedClaimMessage{}
-		err:= proto.Unmarshal(ev.SerializedEvidence, &sc)
+		err := proto.Unmarshal(ev.SerializedEvidence, &sc)
 		if err != nil {
 			return
 		}
@@ -1804,7 +1803,7 @@ func PrintEvidence(ev *certprotos.Evidence) {
 		fmt.Printf("\n")
 	} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
 		sr := certprotos.SignedReport{}
-		err:= proto.Unmarshal(ev.SerializedEvidence, &sr)
+		err := proto.Unmarshal(ev.SerializedEvidence, &sr)
 		if err != nil {
 			return
 		}
@@ -1819,7 +1818,7 @@ func PrintEvidence(ev *certprotos.Evidence) {
 		PrintBytes(ev.SerializedEvidence)
 	} else if ev.GetEvidenceType() == "cert" {
 		cx509 := Asn1ToX509(ev.SerializedEvidence)
-		fmt.Printf("Issuer: %s, Subject: %s\n", GetIssuerNameFromCert(cx509),* GetSubjectNameFromCert(cx509))
+		fmt.Printf("Issuer: %s, Subject: %s\n", GetIssuerNameFromCert(cx509), *GetSubjectNameFromCert(cx509))
 		PrintBytes(ev.SerializedEvidence)
 		fmt.Printf("\n")
 	} else {
@@ -1829,7 +1828,7 @@ func PrintEvidence(ev *certprotos.Evidence) {
 
 func PrintEvidencePackage(evp *certprotos.EvidencePackage, printAll bool) {
 	fmt.Printf("\nProver type: %s\n", evp.GetProverType())
-	for i:= 0; i < len(evp.FactAssertion); i++ {
+	for i := 0; i < len(evp.FactAssertion); i++ {
 		ev := evp.FactAssertion[i]
 		if printAll {
 			PrintEvidence(ev)
@@ -1842,12 +1841,12 @@ func PrintEvidencePackage(evp *certprotos.EvidencePackage, printAll bool) {
 
 type CertKeysSeen struct {
 	name string
-	pk  certprotos.KeyMessage
+	pk   certprotos.KeyMessage
 }
 
 type CertSeenList struct {
-	maxSize int
-	size int
+	maxSize  int
+	size     int
 	keysSeen [30]CertKeysSeen
 }
 
@@ -1904,7 +1903,7 @@ func PrintX509Cert(cert *x509.Certificate) {
 		fmt.Printf("\tRoot cert\n")
 	} else {
 	}
-		fmt.Printf("\tSubordinate cert\n")
+	fmt.Printf("\tSubordinate cert\n")
 	fmt.Printf("\tDNS Names: %+v\n", cert.DNSNames)
 	fmt.Printf("\tEmailAddresses: %+v\n", cert.EmailAddresses)
 	fmt.Printf("\tIPAddresses: %+v\n", cert.IPAddresses)
@@ -1925,11 +1924,11 @@ var rsaPublicAttestKey rsa.PublicKey
 var rsaPrivateAttestKey rsa.PrivateKey
 var sealingKey [64]byte
 var sealIv [16]byte
-var simulatedInitialized  bool = false
+var simulatedInitialized bool = false
 
 func InitSimulatedEnclave() bool {
 	privateAttestKey = MakeVseRsaKey(2048)
-	var tk  string = "simulatedAttestKey"
+	var tk string = "simulatedAttestKey"
 	privateAttestKey.KeyName = &tk
 	publicAttestKey = InternalPublicFromPrivateKey(privateAttestKey)
 	if publicAttestKey == nil {
@@ -1977,7 +1976,7 @@ func simultatedAttest(eType string, toSay []byte) []byte {
 	}
 	// toSay is a serilized attestation, turn it into a signed claim
 	tn := TimePointNow()
-	tf := TimePointPlus(tn, 365 * 86400)
+	tf := TimePointPlus(tn, 365*86400)
 	nb := TimePointToString(tn)
 	na := TimePointToString(tf)
 	cl1 := MakeClaim(toSay, "vse-attestation", "attestation", nb, na)
@@ -1985,7 +1984,7 @@ func simultatedAttest(eType string, toSay []byte) []byte {
 	if err != nil {
 		return nil
 	}
-	sc := certprotos.SignedClaimMessage {}
+	sc := certprotos.SignedClaimMessage{}
 	sc.SerializedClaimMessage = serCl
 	sc.SigningKey = publicAttestKey
 	var ss string = "rsa-2048-sha256-pkcs-sign"
@@ -2026,4 +2025,3 @@ func Attest(eType string, toSay []byte) []byte {
 	}
 	return nil
 }
-
