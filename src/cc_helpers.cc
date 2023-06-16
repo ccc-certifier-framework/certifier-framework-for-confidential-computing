@@ -242,7 +242,14 @@ bool certifier::framework::cc_trust_data::initialize_keystone_enclave_data(const
       printf("initialize_keystone_enclave_data: Not a simulated enclave\n");
       return false;
     }
-    // Todo
+    int m_size = file_size(measurement_file_name);
+    if (m_size < 0) {
+        printf("%s(): Invalid size=%d of measurement file '%s'.\n",
+               __func__, m_size, measurement_file_name.c_str());
+        return false;
+    }
+
+    // TODO
     byte der_cert[100];
     if (!keystone_Init(0, der_cert)) {
       printf("initialize_keystone_enclave_data: keystone_init failed\n");
