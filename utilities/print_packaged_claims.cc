@@ -31,6 +31,8 @@ int main(int an, char** av) {
   int in_read = in_size;
 
   if (in_size <= 0) {
+    printf("Invalid size=%d for input file '%s'.\n",
+            in_size,  FLAGS_input.c_str());
     return 1;
   }
 
@@ -38,7 +40,7 @@ int main(int an, char** av) {
   string all_bufs;
 
   if (!read_file(FLAGS_input, &in_read, buf)) {
-    printf("Can't read %s\n", FLAGS_input.c_str());
+    printf("Can't read input file '%s'.\n", FLAGS_input.c_str());
     return 1;
   }
 

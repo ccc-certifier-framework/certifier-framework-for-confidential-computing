@@ -85,7 +85,11 @@ bool read_file(string file_name, int* size, byte* data) {
 bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) {
   int cert_size = file_size(asn1_cert_file);
   if (cert_size <= 0)
+  {
+    printf("Invalid size=%d for input file '%s'.\n",
+           cert_size, asn1_cert_file.c_str());
     return false;
+  }
   byte bin_cert[cert_size];
  
   int t_size = cert_size;
