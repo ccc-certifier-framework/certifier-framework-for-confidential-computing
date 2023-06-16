@@ -30,7 +30,7 @@ bool get_signed_from_file(const string& in, signed_claim_message* sc) {
   byte serialized_cm[in_size];
 
   if (!read_file(in, &in_read, serialized_cm)) {
-    printf("Can't read %s\n", in.c_str());
+    printf("Can't read input file '%s'.\n", in.c_str());
     return false;
   }
   string cm_str;
@@ -48,7 +48,7 @@ int main(int an, char** av) {
 
   signed_claim_message sc;
   if (!get_signed_from_file(FLAGS_input, &sc)) {
-    printf("Can't get signed claim fro, file\n");
+    printf("Can't get signed claim from file '%s'.\n", FLAGS_input.c_str());
     return 1;
   }
 
