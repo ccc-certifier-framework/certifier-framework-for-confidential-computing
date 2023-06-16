@@ -1036,28 +1036,13 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
 
 #ifdef KEYSTONE_CERTIFIER
   } else if (enclave_type_ == "keystone-enclave") {
-    // Todo
+    // Todo: Add cert when it's available
 #endif
 
 #ifdef CCA_CERTIFIER
   } else if (enclave_type_ == "cca-enclave") {
-    /*
-     * TODO: Tried some test code, similar to what was done in
-     * shim_test.cc:attestation_test() ... but does not seem right ...
-    */
-    printf("%s(): CCA-certifier code to be added here ...\n", __func__);
-    byte report[CCA_BUFFER_SIZE];
-    byte what_was_said[CCA_BUFFER_SIZE];
-    int report_len = 0;
 
-    memset(report, 0, sizeof(report));
-    memset(what_was_said, 0, sizeof(what_was_said));
-
-    std::string what_to_say("User Custom data");
-    if (!cca_Attest(what_to_say.size(), (byte*)what_to_say.c_str(), &report_len, report))
-      return false;
-
-    // FIXME: Add code to certify here
+    // Add CCA certificate
 #endif  // CCA_CERTIFIER
 
 #ifdef SEV_SNP

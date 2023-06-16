@@ -14,6 +14,10 @@
 
 #include <islet.h>
 #include "cca.h"
+#include "certifier_framework.h"
+#include "certifier_utilities.h"
+
+using namespace certifier::utilities;
 
 // Some reasonable size to allocate an attestation report on-stack buffers.
 // Typical attestation report size is over 1K.
@@ -29,11 +33,27 @@ bool cca_Init(const int cert_size, byte *cert) {
 bool cca_Attest(const int what_to_say_size, byte* what_to_say,
                 int* attestation_size_out, byte* attestation_out) {
 
-  islet_status_t rv = islet_attest(what_to_say, what_to_say_size,
+  int len = digest_output_byte_size("sha-256");
+  byte cca_what_to_say[len];
+  if (!digest_message("sha-256", what_to_say, what_to_say_size,
+        cca_what_to_say, len)) {
+    printf("cca_Attest: Can't digest what_to_say\n");
+    return false;
+  }
+
+  islet_status_t rv = islet_attest(cca_what_to_say, len,
                                    attestation_out, attestation_size_out);
   printf("%s(): rv=%d\n", __func__, rv);
   return rv == ISLET_SUCCESS;
 }
+
+#if 0
+static void print_buf(int sz, byte* buf) {
+  for (int i = 0; i < sz; i++)
+    printf("%02x", buf[i]);
+  printf("\n");
+}
+#endif
 
 bool cca_Verify(const int what_to_say_size, byte* what_to_say,
                 const int attestation_size, byte* attestation,
@@ -41,7 +61,6 @@ bool cca_Verify(const int what_to_say_size, byte* what_to_say,
   byte claims[BUFFER_SIZE];
 
   int claims_len = 0;
-  int user_data_len = 0;
 
   memset(claims, 0, sizeof(claims));
 
@@ -49,8 +68,21 @@ bool cca_Verify(const int what_to_say_size, byte* what_to_say,
   if (rv != ISLET_SUCCESS)
     return false;
 
-  rv = islet_parse(CLAIM_TITLE_USER_DATA, claims, claims_len, what_to_say, &user_data_len);
+  int len = digest_output_byte_size("sha-256");
+  byte cca_what_to_say_expected[len];
+  if (!digest_message("sha-256", what_to_say, what_to_say_size,
+        cca_what_to_say_expected, len)) {
+    printf("cca_Verify: Can't digest what_to_say\n");
+    return false;
+  }
+
+  byte cca_what_to_say_returned[2*len];
+  int user_data_len = len;
+  rv = islet_parse(CLAIM_TITLE_USER_DATA, claims, claims_len, cca_what_to_say_returned, &user_data_len);
   if (rv != ISLET_SUCCESS)
+    return false;
+
+  if (memcmp(cca_what_to_say_returned, cca_what_to_say_expected, len) != 0)
     return false;
 
   rv = islet_parse(CLAIM_TITLE_RIM, claims, claims_len, measurement_out,

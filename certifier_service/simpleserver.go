@@ -243,6 +243,12 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateKeystoneEvidence failed\n")
 			return false, nil
 		}
+        } else if evType == "cca-evidence" {
+		success, toProve, measurement = certlib.ValidateCCAEvidence(pubKey, ep, originalPolicy, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateCCAEvidence failed\n")
+			return false, nil
+		}
         } else {
                 fmt.Printf("ValidateRequestAndObtainToken: Invalid Evidence type: %s\n", evType)
                 return false, nil

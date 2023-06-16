@@ -1,0 +1,174 @@
+#!/bin/bash
+
+export GOPATH=$HOME
+
+pushd "$(dirname "$0")" > /dev/null 2>&1
+
+cd ../..
+CERTIFIER_PROTOTYPE="$(pwd)"; export CERTIFIER_PROTOTYPE
+
+popd
+
+export CCA_EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app_under_cca
+export CCA_SRC=$CERTIFIER_PROTOTYPE/src/cca
+export ISLET_PATH=$CERTIFIER_PROTOTYPE/third_party/islet
+export ISLET_LIB=$ISLET_PATH/lib
+
+sudo ldconfig $ISLET_LIB
+
+
+env | grep -E 'CERTIFIER_PROTOTYPE|CCA_EXAMPLE_DIR|CCA_SRC'
+
+# Make directories
+set -x
+rm -rf $CCA_EXAMPLE_DIR/{provisioning,service,app1_data,app2_data}
+
+mkdir -p $CCA_EXAMPLE_DIR/provisioning
+mkdir -p $CCA_EXAMPLE_DIR/service
+mkdir -p $CCA_EXAMPLE_DIR/app1_data
+mkdir -p $CCA_EXAMPLE_DIR/app2_data
+
+cd $CCA_SRC
+
+# You should see two binary files for the private signing key for the cca shim and its self-signed cert
+# named emulated_cca_key.bin and emulated_cca_key_cert.bin.  If not, build the shim test and run it.
+
+cd islet_test
+make shim_test
+
+
+#build the utilities
+cd $CERTIFIER_PROTOTYPE
+cd utilities
+make -f cert_utility.mak
+make -f policy_utilities.mak
+
+
+#generate the keys
+cd $CCA_EXAMPLE_DIR/provisioning
+
+$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
+    --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin \
+    --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
+
+
+# embed policy key and compile app
+cd $CCA_EXAMPLE_DIR/provisioning
+
+$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin --output=../policy_key.cc
+
+# make app and compute app measurement
+cd $CCA_EXAMPLE_DIR
+make -f cca_example_app.mak
+
+$CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=6190EB90B293886C172EC644DAFB7E33EE2CEA6541ABE15300D96380DF525BF9 --out_file=example_app.measurement
+
+# write the policy
+cd $CCA_EXAMPLE_DIR/provisioning
+
+# temporary hack
+cp policy_cert_file.bin emulated_cca_key_cert.bin
+
+# policyKey says the attestationKey is-trusted-for-attestation
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=emulated_cca_key_cert.bin \
+  --verb="is-trusted-for-attestation" --output=ts1.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+  --verb="says" --clause=ts1.bin --output=vse_policy1.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+  --measurement_subject=example_app.measurement --verb="is-trusted" \
+  --output=ts2.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+  --verb="says" --clause=ts2.bin --output=vse_policy2.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1.bin \
+  --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
+  --vse_file=vse_policy2.bin --duration=9000 \
+  --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
+
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
+  --output=policy.bin
+
+$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+
+# -----------------------------------------------------------------------------
+# NOTE: This arrangement is critical for this app to run cleanly.
+#       As we are working with a shim, simpleserver needs to be built with
+#       emulated key/cert bin files. So, provision them first.
+# provision service and apps
+# -----------------------------------------------------------------------------
+cd $CCA_EXAMPLE_DIR/provisioning
+cp  -p ./* $CCA_EXAMPLE_DIR/service
+cp  -p ./* $CCA_EXAMPLE_DIR/app1_data
+cp  -p ./* $CCA_EXAMPLE_DIR/app2_data
+
+#compile the server
+cd $CERTIFIER_PROTOTYPE/certifier_service/certprotos
+
+protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
+
+cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
+make dummy
+
+cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
+make dummy
+
+cd $CERTIFIER_PROTOTYPE/certifier_service
+
+go build simpleserver.go
+
+#run server
+cd $CCA_EXAMPLE_DIR/service
+
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver --policyFile=policy.bin --readPolicy=true &
+
+sleep 5
+
+# initialize client app
+cd $CCA_EXAMPLE_DIR
+
+$CCA_EXAMPLE_DIR/cca_example_app.exe --print_all=true \
+      --operation=cold-init --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store
+
+sleep 5
+
+# get client app certified
+# need to build libislet_sdk.so
+$CCA_EXAMPLE_DIR/cca_example_app.exe --print_all=true \
+      --operation=get-certifier --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store
+
+sleep 5
+
+# initialize server app
+$CCA_EXAMPLE_DIR/cca_example_app.exe --print_all=true \
+      --operation=cold-init --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store
+
+sleep 5
+
+# get server app certified
+$CCA_EXAMPLE_DIR/cca_example_app.exe --print_all=true \
+      --operation=get-certifier --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
+       --policy_store_file=policy_store
+
+sleep 5
+
+#run the app
+cd $CCA_EXAMPLE_DIR
+
+$CCA_EXAMPLE_DIR/cca_example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
+      --policy_store_file=policy_store --measurement_file="example_app.measurement" &
+
+sleep 5
+
+cd $CCA_EXAMPLE_DIR
+
+$CCA_EXAMPLE_DIR/cca_example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
+      --policy_store_file=policy_store --measurement_file="example_app.measurement"
+

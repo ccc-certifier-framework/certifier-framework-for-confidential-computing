@@ -789,6 +789,7 @@ bool certifier::framework::Attest(const string& enclave_type, int what_to_say_si
     int t_size_out;
     int t_size = *size_out;
     if (!cca_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
+      printf("Attest: cca_Attest failed\n");
       return false;
     }
     string ra;
@@ -800,9 +801,11 @@ bool certifier::framework::Attest(const string& enclave_type, int what_to_say_si
     cam.set_reported_attestation(ra);
     string serialized_cca_at;
     if (!cam.SerializeToString(&serialized_cca_at)) {
+      printf("Attest: cca Serialize to string \n");
       return false;
     }
     if (*size_out < (int)serialized_cca_at.size()) {
+      printf("Attest: cca output too small\n");
       return false;
     }
     memset(out, 0, *size_out);
