@@ -41,9 +41,12 @@ mv islet-certifier-v1.0.1-beta "$ISLET"
 # Install rust to build ISLET SDK
 "$ISLET/scripts/deps/rust.sh"
 
+. "$HOME/.cargo/env"
 # Build ISLET SDK (simulated version for x86_64)
 cd "$ISLET_SDK" && cargo build
 
 mkdir -p "$ISLET_INC" "$ISLET_LIB"
 cp -p "$TARGET_HDR" "$ISLET_INC"
 cp -p "$TARGET_LIB" "$ISLET_LIB"
+
+echo "Restart your shell or source ~/.bashrc"
