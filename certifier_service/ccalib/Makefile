@@ -1,17 +1,17 @@
-GRAMINE_SRC_PATH = ../../../gramine/gramine
-SGX_INCLUDE = -I$(GRAMINE_SRC_PATH)/pal/src/host/linux-sgx
-SGX_LDFLAGS = -Wl,--enable-new-dtags $(shell pkg-config --libs sgx_util)
+#
+# certifier_service/ccalib/Makefile
+#
+
 CERTIFIER_SRC_PATH = ../../
-CERTIFIER_INCLUDE = -I. -I$(CERTIFIER_SRC_PATH)/include -I$(CERTIFIER_SRC_PATH)/src/gramine $(SGX_INCLUDE) -I./mbedtls/include
-CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE) -DGRAMINE_CERTIFIER
+CERTIFIER_INCLUDE = -I . -I $(CERTIFIER_SRC_PATH)/include -I $(CERTIFIER_SRC_PATH)/src/cca
+CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE)
 CERTIFIER_LDFLAGS = -lssl -lcrypto
 CERTIFIER_LDFLAGS += -L./ -L/usr/local/lib
 CERTIFIER_LDFLAGS += `pkg-config --cflags --libs protobuf`
-CERTIFIER_LDFLAGS += $(shell pkg-config --libs mbedtls_gramine)
 
 CFLAGS += $(CERTIFIER_CFLAGS)
 LDFLAGS=
-LDFLAGS += -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L/usrl/local/lib -ldl $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
+LDFLAGS += -Wl,--enable-new-dtags -L /usrl/local/lib -ldl $(CERTIFIER_LDFLAGS)
 
 .PHONY: all build dummy clean
 
@@ -25,11 +25,8 @@ build:
 
 dummy:
 	@ echo "Compilers used: $(CC), $(CXX)"
-	$(CXX)  -g -fPIC -c gramine_verify_dummy.cc
-	$(CXX) -shared -o libgramineverify.so gramine_verify_dummy.o
+	$(CXX)  -g -fPIC -c cca_verify_dummy.cc
+	$(CXX) -shared -o libccaverify.so cca_verify_dummy.o
 
 clean:
-	rm -f libgramineverify.so *.o
-
-distclean:
-	rm -r mbedtls/ *.tar.gz
+	rm -f libccaverify.so *.o
