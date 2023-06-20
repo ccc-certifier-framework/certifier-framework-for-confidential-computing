@@ -33,6 +33,9 @@ jobs:
         cd islet_test/
         make clean
         make shim_test
+
+        echo " "
+        make attest_seal_test
         set +x
         echo " "
 
