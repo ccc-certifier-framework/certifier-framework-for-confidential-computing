@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gramine_verify.h"
+#include "cca_verify.h"
+#include "cca.h"
 
-extern bool gramine_remote_verify_impl(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out);
-
-bool graminelib_Verify(const int what_to_say_size, byte* what_to_say,
-    const int attestation_size, byte* attestation,
-    int* measurement_out_size, byte* measurement_out) {
+bool ccalib_Verify(const int what_to_say_size, byte* what_to_say,
+                   const int attestation_size, byte* attestation,
+                   int* measurement_out_size, byte* measurement_out) {
   bool result = false;
 
-  result = gramine_remote_verify_impl
-           (what_to_say_size, what_to_say, attestation_size,
-            attestation, measurement_out_size, measurement_out);
+  result = cca_Verify(what_to_say_size, what_to_say,
+                      attestation_size, attestation,
+                      measurement_out_size, measurement_out);
   if (!result) {
-    printf("Gramine verify failed\n");
+    printf("%s:%d::%s(): CCA verify failed\n",
+           __FILE__, __LINE__, __func__);
     return false;
   }
 
