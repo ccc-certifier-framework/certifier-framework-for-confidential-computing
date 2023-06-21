@@ -8,16 +8,16 @@ CERTIFIER_ROOT = ../..
 CERTIFIER_INCLUDE = -I . -I $(CERTIFIER_ROOT)/include -I $(CERTIFIER_ROOT)/src/cca
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE)
 CERTIFIER_LDFLAGS =
-CERTIFIER_LDFLAGS += -L /usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+CERTIFIER_LDFLAGS += -lcrypto -lssl
 
 ISLET_PATH = $(CERTIFIER_ROOT)/third_party/islet
 ISLET_INCLUDE = -I $(ISLET_PATH)/include
-ISLET_LDFLAGS = -L $(ISLET_PATH)/lib -lislet_sdk
+ISLET_LDFLAGS = -L $(ISLET_PATH)/lib -ldl -lislet_sdk
 
 CFLAGS += $(CERTIFIER_CFLAGS) $(ISLET_INCLUDE)
 CFLAGS += -g -Wall -Wno-unused-variable -Werror
 LDFLAGS=
-LDFLAGS += -ldl -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -pthread $(CERTIFIER_LDFLAGS) $(ISLET_LDFLAGS)
+LDFLAGS += -L $(LOCAL_LIB) -ldl -lprotobuf -lgtest -lgflags -pthread $(CERTIFIER_LDFLAGS) $(ISLET_LDFLAGS)
 
 CCAVERIFYLIB = libccaverify.so
 

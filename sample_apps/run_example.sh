@@ -1726,12 +1726,6 @@ function start_certifier_service() {
     else
 
         echo "${CERT_PROTO}/certifier_service/simpleserver --policyFile=policy.bin --readPolicy=true"
-
-        set -x
-        LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-XXX}
-        LD_LIBRARY_PATH="${CERT_PROTO}/certifier_service/ccalib:${LD_LIBRARY_PATH}"
-        export LD_LIBRARY_PATH
-        set +x
         run_cmd "${CERT_PROTO}"/certifier_service/simpleserver  \
                     --policyFile=policy.bin                     \
                     --readPolicy=true                           \
