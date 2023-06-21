@@ -31,6 +31,8 @@ import (
         "github.com/golang/protobuf/proto"
         certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
         certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
+
+        // NOTE: Enable this line when you enable the test-code in main().
         //gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
 

@@ -30,6 +30,7 @@ import (
 	certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	oeverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 	gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
+	ccaverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/ccaverify"
 )
 
 func testSign(PK1 *ecdsa.PublicKey) {
@@ -1284,13 +1285,22 @@ func VerifyCCAAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 
 	// Todo: Fix
+    /*
 	measurement := []byte {
 		0x61, 0x90, 0xEB, 0x90, 0xB2, 0x93, 0x88, 0x6C,
 		0x17, 0x2E, 0xC6, 0x44, 0xDA, 0xFB, 0x7E, 0x33,
 		0xEE, 0x2C, 0xEA, 0x65, 0x41, 0xAB, 0xE1, 0x53,
 		0x00, 0xD9, 0x63, 0x80, 0xDF, 0x52, 0x5B, 0xF9,
 	}
-	return measurement
+    */
+	// return measurement
+    // Call the C-Go CCA verify function
+    m, err := ccaverify.CcaVerify(am.WhatWasSaid, am.ReportedAttestation)
+    if err != nil {
+        fmt.Printf("VerifyCCAAttestation: CcaVerify() failed\n")
+        return nil
+    }
+    return m
 }
 
 //	Returns measurement

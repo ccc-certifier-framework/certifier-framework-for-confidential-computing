@@ -1,27 +1,23 @@
-Instructions for building gramine certifier C to Go interfaces
-==============================================================
+# Instructions for building CCA certifier C to Go interfaces
 
-$CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.
+$CERTIFIER_PROTOTYPE is the top level directory for the Certifier repository.
 
-1. Step 1: Download MbedTLS
-```
-cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
-./configureMbedTLS
-```
-
-2. Build the library
-```
+## Build the library
+```shell
 make
 ```
 
-To cleanup:
-```
+### To cleanup:
+```shell
 make clean
 make distclean
 ```
 
-3. Build simpleserver:
-```
-cd $CERTIFIER_PROTOTYPE/certifier_service
+##. Build simpleserver:
+```shell
+cd $CERTIFIER_PROTOTYPE/certifier_service/certprotos
+protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
+
+cd ../
 go build simpleserver.go
 ```
