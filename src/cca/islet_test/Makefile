@@ -41,7 +41,7 @@ all: attest_seal_test
 CFLAGS_NOERROR = -I $(I) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -D CCA_CERTIFIER
 CFLAGS += $(CFLAGS_NOERROR) -Werror $(ISLET_INCLUDE) $(CERTIFIER_INCLUDE)
 
-LDFLAGS = $(ISLET_LDFLAGS) -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L /usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS = $(ISLET_LDFLAGS) -L $(LOCAL_LIB) -lprotobuf -L /usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
 .PHONY: attest_seal_test
 attest_seal_test: attest_seal_test.cc
