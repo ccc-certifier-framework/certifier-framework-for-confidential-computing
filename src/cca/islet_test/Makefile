@@ -47,15 +47,14 @@ LDFLAGS = $(ISLET_LDFLAGS) -L $(LOCAL_LIB) -lprotobuf -L /usr/local/opt/openssl@
 attest_seal_test: attest_seal_test.cc
 	@echo "Compiling $<"
 	@$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
-	@LD_LIBRARY_PATH=$(ISLET_PATH)/remote/out/x86_64-unknown-linux-gnu/debug ./$@
+	LD_LIBRARY_PATH=$(ISLET_PATH)/lib ./$@
 
 .PHONY: shim_test
-# shim_test: shim_test.cc ../cca_shim.cc $(dobj)
 shim_test: $(dobj)
 	@echo "\nLinking $@"
 	$(GPP) -o $@ $^ $(LDFLAGS)
 	@echo "\nExecute $@:"
-	LD_LIBRARY_PATH=$(ISLET_PATH)/remote/out/x86_64-unknown-linux-gnu/debug ./$@
+	LD_LIBRARY_PATH=$(ISLET_PATH)/lib ./$@
 
 $(O)/shim_test.o: shim_test.cc
 	@echo "\nCompiling $<"
