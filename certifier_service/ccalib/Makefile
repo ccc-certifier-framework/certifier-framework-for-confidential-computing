@@ -21,16 +21,35 @@ LDFLAGS += -L $(LOCAL_LIB) -ldl -lprotobuf -lgtest -lgflags -pthread $(CERTIFIER
 
 CCAVERIFYLIB = libccaverify.so
 
+CS = $(CERTIFIER_ROOT)/src
+CCAS = $(CERTIFIER_ROOT)/src/cca
+S = $(CERTIFIER_ROOT)/certifier_service/ccalib
+
+OBJ_DIR = .
+O = $(OBJ_DIR)
+
+dobj = $(O)/cca_verify.o $(O)/cca_shim.o $(O)/support.o
+
 .PHONY: all build dummy clean
 
 all: build
 
-build:
+build: $(CCAVERIFYLIB)
 	@ echo "Compilers used: $(CC), $(CXX)"
-	$(CXX) -fPIC -c $(CFLAGS) cca_verify.cc
-	$(CXX) -fPIC -c $(CFLAGS) $(CERTIFIER_ROOT)/src/cca/cca_shim.cc
-	$(CXX) -fPIC -c $(CFLAGS) -Wno-deprecated-declarations $(CERTIFIER_ROOT)/src/support.cc
-	$(CXX) -shared -o $(CCAVERIFYLIB) cca_verify.o cca_shim.o support.o $(LDFLAGS)
+	$(CXX) -shared -o $(CCAVERIFYLIB) $(dobj) $(LDFLAGS)
+
+$(CCAVERIFYLIB): $(dobj)
+$(O)/cca_verify.o: $(S)/cca_verify.cc
+	@ echo "Compiling $<"
+	$(CXX) -fPIC $(CFLAGS) -c $< -o $@
+
+$(O)/cca_shim.o: $(CCAS)/cca_shim.cc
+	@ echo "Compiling $<"
+	$(CXX) -fPIC $(CFLAGS) -c $< -o $@
+
+$(O)/support.o: $(CS)/support.cc
+	@ echo "Compiling $<"
+	$(CXX) -fPIC $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
 
 dummy:
 	@ echo "Compilers used: $(CC), $(CXX)"
