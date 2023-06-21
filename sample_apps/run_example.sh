@@ -1567,6 +1567,12 @@ function build_simple_server() {
                 --go_out=.                      \
                 --go_opt=M=certifier.proto ./certifier.proto
 
+    # --------------------------------------------------------------------------
+    # Certifier Service has C-Go wrappers that only come into play on specific
+    # platforms. For sample apps on other platforms, provide a dummy routine
+    # so that the respective platform-specific lib<platform>verify.so can be
+    # built.
+    # --------------------------------------------------------------------------
     # Compile the oelib for OE host verification
     # Likely, user does not have OE SDK installed or does not want to enable OE:
     # This should produce a Go file for the certifier protobufs
@@ -1575,7 +1581,6 @@ function build_simple_server() {
     if [ "${SampleAppName}" = "simple_app_under_oe" ]; then
         make_arg=""
     fi
-
     run_cmd cd "${CERT_PROTO}"/certifier_service/oelib
     # shellcheck disable=SC2086
     run_cmd make ${make_arg}
@@ -1588,7 +1593,15 @@ function build_simple_server() {
     # shellcheck disable=SC2086
     run_cmd make ${make_arg}
 
-    # Now, build simpleserver:
+    make_arg="dummy"
+    if [ "${SampleAppName}" = "simple_app_under_cca" ]; then
+        make_arg=""
+    fi
+    run_cmd cd "${CERT_PROTO}"/certifier_service/ccalib
+    # shellcheck disable=SC2086
+    run_cmd make ${make_arg}
+
+    # Now, build the simpleserver:
     run_cmd cd "${CERT_PROTO}"/certifier_service
     run_cmd rm -rf simpleserver
     run_cmd go build simpleserver.go
@@ -1710,12 +1723,20 @@ function start_certifier_service() {
         run_cmd "${CERT_PROTO}"/certifier_service/simpleserver  \
                     --policyFile=policy.bin                     \
                     --readPolicy=true
-    fi
+    else
 
-    run_cmd "${CERT_PROTO}"/certifier_service/simpleserver  \
-                --policyFile=policy.bin                     \
-                --readPolicy=true                           \
-                > "${outfile}" 2>&1 &
+        echo "${CERT_PROTO}/certifier_service/simpleserver --policyFile=policy.bin --readPolicy=true"
+
+        set -x
+        LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-XXX}
+        LD_LIBRARY_PATH="${CERT_PROTO}/certifier_service/ccalib:${LD_LIBRARY_PATH}"
+        export LD_LIBRARY_PATH
+        set +x
+        run_cmd "${CERT_PROTO}"/certifier_service/simpleserver  \
+                    --policyFile=policy.bin                     \
+                    --readPolicy=true                           \
+                    > "${outfile}" 2>&1 &
+    fi
 
     run_popd
     run_cmd sleep 5
