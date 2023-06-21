@@ -54,6 +54,8 @@ jobs:
 
         ./run_example.sh --dry-run simple_app_under_cca setup
 
+        ./run_example.sh simple_app_under_cca
+
         ./cleanup.sh
 
         popd

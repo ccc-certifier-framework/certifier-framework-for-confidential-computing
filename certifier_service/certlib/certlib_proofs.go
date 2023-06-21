@@ -355,19 +355,19 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 			m := VerifyCCAAttestation(ev.SerializedEvidence, attestKey)
 			if m == nil {
-				fmt.Printf("InitProvedStatements: VerifyKeystoneAttestation failed\n")
+				fmt.Printf("InitProvedStatements: VerifyCCAAttestation failed\n")
 				return false
 			}
 			var am certprotos.CcaAttestationMessage
 			err := proto.Unmarshal(ev.SerializedEvidence, &am)
 			if err != nil {
-				fmt.Printf("InitProvedStatements: Can't unmarshal KeystoneAttestationMessage\n")
+				fmt.Printf("InitProvedStatements: Can't unmarshal CcaAttestationMessage\n")
 				return false
 			}
 			var ud certprotos.AttestationUserData
 			err = proto.Unmarshal(am.WhatWasSaid, &ud)
 			if err != nil {
-				fmt.Printf("InitProvedStatements: Can't unmarshal UserData\n")
+				fmt.Printf("InitProvedStatements: Can't unmarshal AttestationUserData\n")
 				return false
 			}
 			if ud.EnclaveKey == nil {
@@ -383,7 +383,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			mEnt := MakeMeasurementEntity(m)
 			c2 := ConstructCCASpeaksForMeasurementStatement(attestKey, ud.EnclaveKey, mEnt)
 			if c2 == nil {
-				fmt.Printf("InitProvedStatements: ConstructCCASpeaksForEnvironmentStatement failed\n")
+				fmt.Printf("InitProvedStatements: ConstructCCASpeaksForMeasurementStatement failed\n")
 				return false
 			}
 			ps.Proved = append(ps.Proved, c2)
@@ -438,7 +438,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			mEnt := MakeMeasurementEntity(m)
 			c2 := ConstructKeystoneSpeaksForMeasurementStatement(attestKey, ud.EnclaveKey, mEnt)
 			if c2 == nil {
-				fmt.Printf("InitProvedStatements: ConstructKeystoneSpeaksForEnvironmentStatement failed\n")
+				fmt.Printf("InitProvedStatements: ConstructKeystoneSpeaksForMeasurementStatement failed\n")
 				return false
 			}
 			ps.Proved = append(ps.Proved, c2)
@@ -3129,7 +3129,6 @@ func ValidateCCAEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	fmt.Printf("\nValidateCCAEvidence, after InitProved:\n")
 	PrintProvedStatements(alreadyProved)
 
-        // ConstructProofFromSevPlatformEvidence()
 	toProve, proof := ConstructProofFromCCAEvidence(pubPolicyKey, purpose, alreadyProved)
 	if toProve == nil || proof == nil {
                 fmt.Printf("ValidateKeystoneEvidence: Can't construct proof\n")
@@ -3144,20 +3143,20 @@ func ValidateCCAEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	PrintProof(proof)
 	fmt.Printf("\n")
 
-        if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
-                fmt.Printf("ValidateCCAEvidence: Proof does not verify\n")
+	if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
+		fmt.Printf("ValidateCCAEvidence: Proof does not verify\n")
 		return false, nil, nil
-        }
+	}
 
 	// Debug
 	fmt.Printf("ValidateCCAEvidence: Proof verifies\n")
 	fmt.Printf("\nProved statements\n")
-        PrintProvedStatements(alreadyProved);
+	PrintProvedStatements(alreadyProved);
 
 	me := alreadyProved.Proved[2]
 	if me.Clause == nil || me.Clause.Subject == nil ||
 			me.Clause.Subject.GetEntityType() != "measurement" {
-                fmt.Printf("ValidateCCAEvidence: Proof does not verify\n")
+		fmt.Printf("ValidateCCAEvidence: Proof does not verify\n")
 		return false, nil, nil
 	}
 

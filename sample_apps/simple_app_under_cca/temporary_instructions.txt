@@ -28,12 +28,11 @@ mkdir -p $CCA_EXAMPLE_DIR/service
 mkdir -p $CCA_EXAMPLE_DIR/app1_data
 mkdir -p $CCA_EXAMPLE_DIR/app2_data
 
-cd $CCA_SRC
+# You should see cca_Attest() succeeding. A hard-coded measurement will
+# be printed out by this utility. This hard-coded measurement is used
+# below by measurement_init.exe --mrenclave=... command.
 
-# You should see two binary files for the private signing key for the cca shim and its self-signed cert
-# named emulated_cca_key.bin and emulated_cca_key_cert.bin.  If not, build the shim test and run it.
-
-cd islet_test
+cd $CCA_SRC/islet_test
 make shim_test
 
 
@@ -67,7 +66,7 @@ $CERTIFIER_PROTOTYPE/utilities/measurement_init.exe --mrenclave=6190EB90B293886C
 cd $CCA_EXAMPLE_DIR/provisioning
 
 # temporary hack
-cp policy_cert_file.bin emulated_cca_key_cert.bin
+cp -p policy_cert_file.bin emulated_cca_key_cert.bin
 
 # policyKey says the attestationKey is-trusted-for-attestation
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --cert_subject=emulated_cca_key_cert.bin \
@@ -102,9 +101,9 @@ $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 # provision service and apps
 # -----------------------------------------------------------------------------
 cd $CCA_EXAMPLE_DIR/provisioning
-cp  -p ./* $CCA_EXAMPLE_DIR/service
-cp  -p ./* $CCA_EXAMPLE_DIR/app1_data
-cp  -p ./* $CCA_EXAMPLE_DIR/app2_data
+cp -p ./* $CCA_EXAMPLE_DIR/service
+cp -p ./* $CCA_EXAMPLE_DIR/app1_data
+cp -p ./* $CCA_EXAMPLE_DIR/app2_data
 
 #compile the server
 cd $CERTIFIER_PROTOTYPE/certifier_service/certprotos
@@ -116,6 +115,9 @@ make dummy
 
 cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
 make dummy
+
+cd $CERTIFIER_PROTOTYPE/certifier_service/ccalib
+make
 
 cd $CERTIFIER_PROTOTYPE/certifier_service
 

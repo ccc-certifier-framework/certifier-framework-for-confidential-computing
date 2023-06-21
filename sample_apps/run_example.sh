@@ -665,7 +665,7 @@ function rm_non_git_files() {
         set +x
     fi
 
-    # Restore Islete-related dirs, if they were saved-off previously
+    # Restore Islet-related dirs, if they were saved-off previously
     if [ ${Islet_remote_exists} -eq 1 ] || [ ${Islet_lib_exists} -eq 1 ]; then
         set -x
         mv ${tmp_islet_dir}/* "${ISLET_ROOT}"
@@ -734,6 +734,8 @@ function gen_policy_and_self_signed_cert() {
     # to do a side-bar to handle simulated-SEV certificates.
     if [ "${CC_SIMULATED_SEV}" -eq 1 ]; then
         gen_certificates_for_simulated_SEV
+    elif [ "${SampleAppName}" = "simple_app_under_cca" ]; then
+        setup_emulated_cca_shim_bins
     fi
 }
 
@@ -773,6 +775,17 @@ function gen_certificates_for_simulated_SEV() {
 }
 
 # ###########################################################################
+# FIXME: CCA-shim support: This is temporary.
+# ###########################################################################
+function setup_emulated_cca_shim_bins() {
+    run_cmd
+    run_pushd "${PROV_DIR}"
+
+    run_cmd cp -p policy_cert_file.bin emulated_cca_key_cert.bin
+
+    run_popd
+}
+
 function embed_policy_in_example_app() {
     run_cmd
     run_pushd "${PROV_DIR}"
@@ -826,6 +839,7 @@ function compile_simple_app_under_cca() {
 
     run_popd
     compile_app_common
+    run_cmd rm -rf example_app.mak
 }
 
 # ###########################################################################
@@ -917,6 +931,7 @@ function compile_application_service() {
 # simple_app_under_oe       : binary_trusted_measurements_file.bin
 # simple_app_under_gramine  : example_app.measurement
 # simple_app_under_sev      : example_app.measurement
+# simple_app_under_cca      : example_app.measurement
 #
 # ###########################################################################
 function get_measurement_of_trusted_app() {
@@ -945,8 +960,25 @@ function get_measurement_of_trusted_simple_app_under_keystone() {
 }
 
 # ###########################################################################
+# Currently, we hard-code the app's measurement. Eventually this routine
+# will want to look like the following, calling the common method
+# get_measurement_of_app_by_name to work on "cca_example_app.exe"
+# ###########################################################################
 function get_measurement_of_trusted_simple_app_under_cca() {
-    get_measurement_of_app_by_name "cca_example_app.exe"
+    # FIXME: This is left here for future-use
+    # get_measurement_of_app_by_name "cca_example_app.exe"
+
+    run_cmd
+    local mrenclave="6190EB90B293886C172EC644DAFB7E33EE2CEA6541ABE15300D96380DF525BF9"
+    local measurement_file="example_app.measurement"
+
+    run_pushd "${PROV_DIR}"
+
+    run_cmd "$CERT_UTILS"/measurement_init.exe      \
+                --mrenclave="${mrenclave}"          \
+                --out_file="${measurement_file}"
+
+    run_popd
 }
 
 # ###########################################################################
@@ -957,7 +989,7 @@ function get_measurement_of_app_by_name() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
-    measurement_file="example_app.measurement"
+    local measurement_file="example_app.measurement"
     if [ "${SampleAppName}" = "application_service" ]; then
         measurement_file="app_service.measurement"
     fi
@@ -1178,6 +1210,10 @@ function construct_policyKey_platform_is_trusted_app() {
     elif [ "${SampleAppName}" = "simple_app_under_keystone" ]; then
         subject_arg="--cert_subject"
         key_subject_file="emulated_keystone_key_cert.bin"
+
+    elif [ "${SampleAppName}" = "simple_app_under_cca" ]; then
+        subject_arg="--cert_subject"
+        key_subject_file="emulated_cca_key_cert.bin"
     fi
 
     run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
@@ -1439,6 +1475,7 @@ function edit_policy_file_OE() {
 
 # ###########################################################################
 # Shared by OE- and SEV-app's steps
+# ###########################################################################
 function build_policy_generator() {
     run_cmd
 
@@ -1475,7 +1512,7 @@ function run_policy_generator_SEV() {
 }
 
 # ###########################################################################
-# Shared function, receives JSON-policy file as input
+# Shared OE/SEV-function, receives JSON-policy file as input
 # ###########################################################################
 function run_policy_generator_for_app() {
     local policy_input_json="$1"
@@ -1719,6 +1756,12 @@ function start_certifier_service() {
     echo "$Me: Starting Certifier Service ..."
     echo "$Me: To see messages from Certifier Server: tail -f ${outfile}"
 
+    # Need access to libislet_sdk.so at run-time
+    if [ "${SampleAppName}" = "simple_app_under_cca" ]; then
+        set -x
+        LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-${ISLET_ROOT}/lib}; export LD_LIBRARY_PATH
+        set +x
+    fi
     if [ $DryRun -eq 1 ]; then
         run_cmd "${CERT_PROTO}"/certifier_service/simpleserver  \
                     --policyFile=policy.bin                     \
@@ -2330,7 +2373,9 @@ function setup_simple_app_under_keystone() {
 }
 
 # ###########################################################################
-# Keystone-shim support: This is temporary.
+# FIXME: Keystone-shim support: This is temporary.
+# Generate and provision the two binary files for the private signing key for
+# the Keystone shim and its self-signed cert, named as below.
 # ###########################################################################
 function setup_emulated_keystone_shim_bins() {
     run_cmd
