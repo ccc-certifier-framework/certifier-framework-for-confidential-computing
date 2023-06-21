@@ -87,7 +87,7 @@ test: attest_seal_test shim_test
 .PHONY: clean
 clean:
 	@echo "removing generated files"
-	rm -rf $(I)certifier.pb.h $(US)/certifier.pb.cc
+	rm -rf $(I)/certifier.pb.h $(US)/certifier.pb.cc
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable files"

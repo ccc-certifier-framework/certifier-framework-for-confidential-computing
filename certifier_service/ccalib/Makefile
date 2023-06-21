@@ -3,8 +3,11 @@
 #
 
 LOCAL_LIB=/usr/local/lib
+PROTO=protoc
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 CERTIFIER_ROOT = ../..
+
 CERTIFIER_INCLUDE = -I . -I $(CERTIFIER_ROOT)/include -I $(CERTIFIER_ROOT)/src/cca
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE)
 CERTIFIER_LDFLAGS =
@@ -27,34 +30,47 @@ S = $(CERTIFIER_ROOT)/certifier_service/ccalib
 
 OBJ_DIR = .
 O = $(OBJ_DIR)
+I = $(CERTIFIER_ROOT)/include
 
-dobj = $(O)/cca_verify.o $(O)/cca_shim.o $(O)/support.o
+dobj = $(O)/certifier.pb.o $(O)/cca_verify.o $(O)/cca_shim.o $(O)/support.o
 
 .PHONY: all build dummy clean
 
 all: build
 
 build: $(CCAVERIFYLIB)
-	@ echo "Compilers used: $(CC), $(CXX)"
+	@echo " \nCompilers used: $(CC), $(CXX). Linking $<"
 	$(CXX) -shared -o $(CCAVERIFYLIB) $(dobj) $(LDFLAGS)
 
 $(CCAVERIFYLIB): $(dobj)
+
+$(O)/certifier.pb.o: $(CS)/certifier.pb.cc $(I)/certifier.pb.h
+	@echo " \nCompiling $<"
+	$(CC) -fPIC $(CFLAGS) -Wno-array-bounds -c $< -o $@
+
+$(CS)/certifier.pb.cc $(I)/certifier.pb.h: $(CS)/certifier.proto
+	@echo "\nGenerate protobuf files"
+	$(PROTO) --proto_path=$(CS) --cpp_out=$(CS) $<
+	mv $(CS)/certifier.pb.h $(I)
+
 $(O)/cca_verify.o: $(S)/cca_verify.cc
-	@ echo "Compiling $<"
+	@ echo " \nCompiling $<"
 	$(CXX) -fPIC $(CFLAGS) -c $< -o $@
 
 $(O)/cca_shim.o: $(CCAS)/cca_shim.cc
-	@ echo "Compiling $<"
+	@ echo " \nCompiling $<"
 	$(CXX) -fPIC $(CFLAGS) -c $< -o $@
 
 $(O)/support.o: $(CS)/support.cc
-	@ echo "Compiling $<"
+	@ echo " \nCompiling $<"
 	$(CXX) -fPIC $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
 
 dummy:
-	@ echo "Compilers used: $(CC), $(CXX)"
+	@ echo " \nCompilers used: $(CC), $(CXX)"
 	$(CXX) -fPIC -c cca_verify_dummy.cc
 	$(CXX) -shared -o $(CCAVERIFYLIB) cca_verify_dummy.o
 
 clean:
-	rm -f *.o $(CCAVERIFYLIB)
+	@echo "Removing generated files"
+	rm -rf $(I)/certifier.pb.h $(CS)/certifier.pb.cc
+	rm -rf *.o $(CCAVERIFYLIB)

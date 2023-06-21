@@ -16,7 +16,7 @@ package ccaverify
 
 /*
 #cgo CFLAGS: -g -Wall -I ../ccalib
-#cgo LDFLAGS: -L ../ccalib -lccaverify -Wl,-rpath=./ccalib:../../certifier_service/ccalib:../../../certifier_service/ccalib -Wl,-rpath=islet_sdk:../third_party/islet/lib
+#cgo LDFLAGS: -L ../ccalib -lccaverify -Wl,-rpath=./ccalib:../../certifier_service/ccalib:../../../certifier_service/ccalib -L ../../third_party/islet/lib -lislet_sdk -Wl,-rpath=./:./../third_party/islet/lib:./../../third_party/islet/lib:./../../../third_party/islet/lib
 #include "cca_verify.h"
 */
 import "C"
