@@ -1756,12 +1756,6 @@ function start_certifier_service() {
     echo "$Me: Starting Certifier Service ..."
     echo "$Me: To see messages from Certifier Server: tail -f ${outfile}"
 
-    # Need access to libislet_sdk.so at run-time
-    if [ "${SampleAppName}" = "simple_app_under_cca" ]; then
-        set -x
-        LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-${ISLET_ROOT}/lib}; export LD_LIBRARY_PATH
-        set +x
-    fi
     if [ $DryRun -eq 1 ]; then
         run_cmd "${CERT_PROTO}"/certifier_service/simpleserver  \
                     --policyFile=policy.bin                     \
@@ -1810,9 +1804,6 @@ function run_simple_app_under_keystone_as_server_talk_to_Cert_Service() {
 # ###########################################################################
 function run_simple_app_under_cca_as_server_talk_to_Cert_Service() {
     run_cmd
-    set -x
-    LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-${ISLET_ROOT}/lib}; export LD_LIBRARY_PATH
-    set +x
     run_app_by_name_as_server_talk_to_Cert_Service "cca_example_app.exe"
 }
 
@@ -1934,9 +1925,6 @@ function run_simple_app_under_keystone_as_client_talk_to_Cert_Service() {
 # ###########################################################################
 function run_simple_app_under_cca_as_client_talk_to_Cert_Service() {
     run_cmd
-    set -x
-    LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-${ISLET_ROOT}/lib}; export LD_LIBRARY_PATH
-    set +x
     run_app_by_name_as_client_talk_to_Cert_Service "cca_example_app.exe"
 }
 
@@ -2345,6 +2333,11 @@ function setup_simple_app_under_app_service() {
 # ###########################################################################
 function setup_simple_app_under_cca() {
     run_cmd
+    # Some steps need access to libislet_sdk.so at run-time
+    set -x
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-${ISLET_ROOT}/lib}; export LD_LIBRARY_PATH
+    set +x
+
     setup_app_by_name
 }
 
