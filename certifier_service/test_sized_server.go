@@ -4,7 +4,7 @@ import (
 	"fmt"
         "net"
 
-	certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
+	certlib "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certlib"
 )
 
 func service(conn net.Conn) {
