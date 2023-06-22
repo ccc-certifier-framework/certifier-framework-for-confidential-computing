@@ -35,7 +35,7 @@ import (
         "testing"
 
         "github.com/golang/protobuf/proto"
-        certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+        certprotos "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 )
 
 func TestEntity(t *testing.T) {

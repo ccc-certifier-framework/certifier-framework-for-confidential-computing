@@ -27,8 +27,8 @@ import (
 	"os"
 
 	"github.com/golang/protobuf/proto"
-	certprotos "github.com/jlmucb/crypto/v2/certifier/certifier_service/certprotos"
-	certlib "github.com/jlmucb/crypto/v2/certifier/certifier_service/certlib"
+	certprotos "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	certlib    "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certlib"
 )
 
 var serverHost = flag.String("host", "localhost", "address for client/server")
