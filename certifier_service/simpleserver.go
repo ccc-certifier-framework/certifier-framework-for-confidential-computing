@@ -18,7 +18,7 @@ package main
 
 import (
         "crypto/x509"
-	"encoding/hex"
+        "encoding/hex"
         "flag"
         "fmt"
         "io/ioutil"
@@ -29,11 +29,10 @@ import (
         "time"
 
         "github.com/golang/protobuf/proto"
-        certprotos "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certprotos"
-        certlib "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/certlib"
-
-        // NOTE: Enable this line when you enable the test-code in main().
-        //gramineverify "github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
+        certprotos    "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+        certlib       "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certlib"
+     // NOTE: Enable this line when you enable the test-code in main().
+     // gramineverify "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
 
 var serverHost = flag.String("host", "localhost", "address for client/server")

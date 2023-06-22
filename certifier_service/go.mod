@@ -1,4 +1,4 @@
-module github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing/certifier_service
+module github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service
 
 go 1.18
 
