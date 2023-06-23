@@ -2,9 +2,9 @@
 #    File: example_app.mak
 
 
-ifndef SRC_DIR
-SRC_DIR=../..
-endif
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ../..
+
 ifndef OBJ_DIR
 OBJ_DIR=.
 endif
@@ -22,10 +22,12 @@ TARGET_MACHINE_TYPE= x64
 endif
 
 
-S= $(SRC_DIR)/src
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
+
+S= $(CERTIFIER_ROOT)/src
 O= $(OBJ_DIR)
 US=.
-I= $(SRC_DIR)/include
+I= $(CERTIFIER_ROOT)/include
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 
 # Compilation of protobuf files could run into some errors, so avoid using
@@ -35,7 +37,6 @@ CFLAGS = $(CFLAGS_NOERROR) -Werror
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 CC=g++
 LINK=g++
-#PROTO=/usr/local/bin/protoc
 PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
@@ -53,6 +54,8 @@ robj=	$(O)/example_key_rotation.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/cert
 
 all:	example_app.exe example_key_rotation.exe
 clean:
+	@echo "removing generated files"
+	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable file"
@@ -66,8 +69,8 @@ example_key_rotation.exe: $(robj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/example_key_rotation.exe $(robj) $(LDFLAGS)
 
-$(US)/certifier.pb.cc: $(S)/certifier.proto
-	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto
+$(US)/certifier.pb.cc: $(CP)/certifier.proto
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
 	mv $(US)/certifier.pb.h $(I)
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc

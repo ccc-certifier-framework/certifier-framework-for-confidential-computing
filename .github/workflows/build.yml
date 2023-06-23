@@ -171,7 +171,7 @@ jobs:
         echo " "
         echo "---- simple_app_under_app_service/ setup ----"
         echo " "
-        ./run_example.sh simple_app_under_app_service setup
+        ./run_example.sh --no-make-clean simple_app_under_app_service setup
 
         #! Start Certifier Service & Application Service together first.
         ./run_example.sh --no-cleanup application_service start
