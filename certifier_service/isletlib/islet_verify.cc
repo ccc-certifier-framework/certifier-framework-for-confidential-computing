@@ -12,25 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __CCALIB_CCA_VERIFY_H__
+#include "islet_verify.h"
+#include "islet_api.h"
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
+bool isletlib_Verify(const int what_to_say_size, byte* what_to_say,
+                     const int attestation_size, byte* attestation,
+                     int* measurement_out_size, byte* measurement_out) {
+  bool result = false;
 
-typedef unsigned char byte;
+  result = islet_Verify(what_to_say_size, what_to_say,
+                        attestation_size, attestation,
+                        measurement_out_size, measurement_out);
+  if (!result) {
+    printf("%s:%d: %s() failed\n",
+           __FILE__, __LINE__, __func__);
+    return false;
+  }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+  return true;
 
-bool ccalib_Verify(const int what_to_say_size, byte* what_to_say,
-                   const int attestation_size, byte* attestation,
-                   int* measurement_out_size, byte* measurement_out);
-
-#ifdef __cplusplus
 }
-#endif
-
-#endif  // __CCALIB_CCA_VERIFY_H__
