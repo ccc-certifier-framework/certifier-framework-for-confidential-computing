@@ -610,9 +610,9 @@ extern bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const
   byte* attestation, int* measurement_out_size, byte* measurement_out);
 #endif
 
-#ifdef CCA_CERTIFIER
-#include "cca.h"
-#endif  // CCA_CERTIFIER
+#ifdef ISLET_CERTIFIER
+#include "islet_api.h"
+#endif  // ISLET_CERTIFIER
 
 // Buffer overflow check: Seal returns true and the buffer size in size_out.
 // Check on Gramine.
@@ -648,9 +648,9 @@ bool certifier::framework::Seal(const string& enclave_type, const string& enclav
    return keystone_Seal(in_size, in, size_out, out);
   }
 #endif
-#ifdef CCA_CERTIFIER
-  if (enclave_type == "cca-enclave") {
-   return cca_Seal(in_size, in, size_out, out);
+#ifdef ISLET_CERTIFIER
+  if (enclave_type == "islet-enclave") {
+   return islet_Seal(in_size, in, size_out, out);
   }
 #endif
   if (enclave_type == "application-enclave") {
@@ -693,11 +693,11 @@ bool certifier::framework::Unseal(const string& enclave_type, const string& encl
    return keystone_Unseal(in_size, in, size_out, out);
   }
 #endif
-#ifdef CCA_CERTIFIER
-  if (enclave_type == "cca-enclave") {
-   return cca_Unseal(in_size, in, size_out, out);
+#ifdef ISLET_CERTIFIER
+  if (enclave_type == "islet-enclave") {
+   return islet_Unseal(in_size, in, size_out, out);
   }
-#endif  // CCA_CERTIFIER
+#endif  // ISLET_CERTIFIER
   if (enclave_type == "application-enclave") {
     return application_Unseal(in_size, in, size_out, out);
   }
@@ -784,36 +784,36 @@ bool certifier::framework::Attest(const string& enclave_type, int what_to_say_si
     return true;
   }
 #endif
-#ifdef CCA_CERTIFIER
-  if (enclave_type == "cca-enclave") {
+#ifdef ISLET_CERTIFIER
+  if (enclave_type == "islet-enclave") {
     int t_size_out;
     int t_size = *size_out;
-    if (!cca_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
-      printf("Attest: cca_Attest failed\n");
+    if (!islet_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
+      printf("Attest: islet_Attest failed\n");
       return false;
     }
     string ra;
     string wws;
     ra.assign((char*)out, t_size_out);
     wws.assign((char*)what_to_say, what_to_say_size);
-    cca_attestation_message cam;
-    cam.set_what_was_said(wws);
-    cam.set_reported_attestation(ra);
-    string serialized_cca_at;
-    if (!cam.SerializeToString(&serialized_cca_at)) {
-      printf("Attest: cca Serialize to string \n");
+    islet_attestation_message iam;
+    iam.set_what_was_said(wws);
+    iam.set_reported_attestation(ra);
+    string serialized_islet_at;
+    if (!iam.SerializeToString(&serialized_islet_at)) {
+      printf("Attest: Islet Serialize to string \n");
       return false;
     }
-    if (*size_out < (int)serialized_cca_at.size()) {
-      printf("Attest: cca output too small\n");
+    if (*size_out < (int)serialized_islet_at.size()) {
+      printf("Attest: Islet output too small\n");
       return false;
     }
     memset(out, 0, *size_out);
-    memcpy(out, (byte*)serialized_cca_at.data(), serialized_cca_at.size());
-    *size_out = serialized_cca_at.size();
+    memcpy(out, (byte*)serialized_islet_at.data(), serialized_islet_at.size());
+    *size_out = serialized_islet_at.size();
     return true;
   }
-#endif  // CCA_CERTIFIER
+#endif  // ISLET_CERTIFIER
   if (enclave_type == "application-enclave") {
     return application_Attest(what_to_say_size, what_to_say, size_out, out);
   }
@@ -848,8 +848,8 @@ bool GetParentEvidence(const string& enclave_type, const string& parent_enclave_
     return false;
   }
 #endif
-#ifdef CCA_CERTIFIER
-  if (enclave_type == "cca-enclave") {
+#ifdef ISLET_CERTIFIER
+  if (enclave_type == "islet-enclave") {
     return false;
   }
 #endif
@@ -1100,7 +1100,7 @@ void print_evidence(const evidence& ev) {
         print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
       printf("\n");
     }
-    if (ev.evidence_type() == "cca-evidence") {
+    if (ev.evidence_type() == "islet-evidence") {
         print_bytes(ev.serialized_evidence().size(), (byte*)ev.serialized_evidence().data());
       printf("\n");
     }

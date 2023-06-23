@@ -1,5 +1,5 @@
 #
-# certifier_service/ccalib/Makefile
+# certifier_service/isletlib/Makefile
 #
 
 LOCAL_LIB=/usr/local/lib
@@ -8,7 +8,7 @@ PROTO=protoc
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 CERTIFIER_ROOT = ../..
 
-CERTIFIER_INCLUDE = -I . -I $(CERTIFIER_ROOT)/include -I $(CERTIFIER_ROOT)/src/cca
+CERTIFIER_INCLUDE = -I . -I $(CERTIFIER_ROOT)/include -I $(CERTIFIER_ROOT)/src/islet
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE)
 CERTIFIER_LDFLAGS =
 CERTIFIER_LDFLAGS += -lcrypto -lssl
@@ -22,29 +22,29 @@ CFLAGS += -g -Wall -Wno-unused-variable -Werror
 LDFLAGS=
 LDFLAGS += -L $(LOCAL_LIB) -ldl -lprotobuf -lgtest -lgflags -pthread $(CERTIFIER_LDFLAGS) $(ISLET_LDFLAGS)
 
-CCAVERIFYLIB = libccaverify.so
+ISLET_VERIFY_LIB = libisletverify.so
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
 CS = $(CERTIFIER_ROOT)/src
-CCAS = $(CERTIFIER_ROOT)/src/cca
-S = $(CERTIFIER_ROOT)/certifier_service/ccalib
+ISLET_S = $(CERTIFIER_ROOT)/src/islet
+S = $(CERTIFIER_ROOT)/certifier_service/isletlib
 
 OBJ_DIR = .
 O = $(OBJ_DIR)
 I = $(CERTIFIER_ROOT)/include
 
-dobj = $(O)/certifier.pb.o $(O)/cca_verify.o $(O)/cca_shim.o $(O)/support.o
+dobj = $(O)/certifier.pb.o $(O)/islet_verify.o $(O)/islet_shim.o $(O)/support.o
 
 .PHONY: all build dummy clean
 
 all: build
 
-build: $(CCAVERIFYLIB)
+build: $(ISLET_VERIFY_LIB)
 	@echo " \nCompilers used: $(CC), $(CXX). Linking $<"
-	$(CXX) -shared -o $(CCAVERIFYLIB) $(dobj) $(LDFLAGS)
+	$(CXX) -shared -o $(ISLET_VERIFY_LIB) $(dobj) $(LDFLAGS)
 
-$(CCAVERIFYLIB): $(dobj)
+$(ISLET_VERIFY_LIB): $(dobj)
 
 $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo " \nCompiling $<"
@@ -55,11 +55,11 @@ $(S)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(CP) --cpp_out=$(S) $<
 	mv $(S)/certifier.pb.h $(I)
 
-$(O)/cca_verify.o: $(S)/cca_verify.cc
+$(O)/islet_verify.o: $(S)/islet_verify.cc
 	@ echo " \nCompiling $<"
 	$(CXX) -fPIC $(CFLAGS) -c $< -o $@
 
-$(O)/cca_shim.o: $(CCAS)/cca_shim.cc
+$(O)/islet_shim.o: $(ISLET_S)/islet_shim.cc
 	@ echo " \nCompiling $<"
 	$(CXX) -fPIC $(CFLAGS) -c $< -o $@
 
@@ -69,10 +69,10 @@ $(O)/support.o: $(CS)/support.cc
 
 dummy:
 	@ echo " \nCompilers used: $(CC), $(CXX)"
-	$(CXX) -fPIC -c cca_verify_dummy.cc
-	$(CXX) -shared -o $(CCAVERIFYLIB) cca_verify_dummy.o
+	$(CXX) -fPIC -c islet_verify_dummy.cc
+	$(CXX) -shared -o $(ISLET_VERIFY_LIB) islet_verify_dummy.o
 
 clean:
 	@echo "Removing generated files"
 	rm -rf $(I)/certifier.pb.h $(S)/certifier.pb.h $(S)/certifier.pb.cc
-	rm -rf *.o $(CCAVERIFYLIB)
+	rm -rf *.o $(ISLET_VERIFY_LIB)

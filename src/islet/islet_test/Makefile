@@ -37,7 +37,7 @@ ISLET_LDFLAGS= -L $(ISLET_PATH)/lib -lislet_sdk
 CERTIFIER_INCLUDE= -I ../../../include
 
 # List of dependent objects
-dobj = $(O)/certifier.pb.o $(O)/shim_test.o $(O)/cca_shim.o $(O)/support.o
+dobj = $(O)/certifier.pb.o $(O)/shim_test.o $(O)/islet_shim.o $(O)/support.o
 
 .PHONY: all
 all: attest_seal_test
@@ -66,7 +66,7 @@ $(O)/shim_test.o: shim_test.cc
 	@echo "\nCompiling $<"
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(O)/cca_shim.o: ../cca_shim.cc
+$(O)/islet_shim.o: ../islet_shim.cc
 	@echo "\nCompiling $<"
 	$(CC) $(CFLAGS) -c $< -o $@
 
