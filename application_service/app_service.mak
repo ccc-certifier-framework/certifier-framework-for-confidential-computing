@@ -1,6 +1,8 @@
 #    
 #    File: app_service.mak
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ..
 
 ifndef SRC_DIR
 SRC_DIR=..
@@ -21,9 +23,11 @@ ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
 
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
 LIBSRC= $(SRC_DIR)/src
 S= $(SRC_DIR)/application_service
+US= $(S)
 O= $(OBJ_DIR)
 I= $(SRC_DIR)/include
 INCLUDE= -I$(I) -I$(LIBSRC)/sev-snp -I/usr/local/opt/openssl@1.1/include/
@@ -51,6 +55,8 @@ $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_us
 all:	app_service.exe hello_world.exe send_request.exe test_user.exe
 
 clean:
+	@echo "removing generated files"
+	rm -rf $(S)/certifier.pb.cc $(S)/certifier.pb.h $(I)/certifier.pb.h
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable file"
@@ -77,17 +83,17 @@ test_user.exe: $(user_dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/test_user.exe $(user_dobj) $(LDFLAGS)
 
-$(S)/certifier.pb.cc: $(LIBSRC)/certifier.proto
-	$(PROTO) --proto_path=$(LIBSRC) --cpp_out=$(S) $(LIBSRC)/certifier.proto
+$(US)/certifier.pb.cc: $(CP)/certifier.proto
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
 	mv certifier.pb.h $(I)
 
 $(O)/app_service.o: $(S)/app_service.cc $(S)/certifier.pb.cc
 	@echo "compiling app_service.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/app_service.o $(S)/app_service.cc
 
-$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
+$(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
+	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
 
 $(O)/certifier.o: $(LIBSRC)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"

@@ -1,6 +1,8 @@
 #
 #    File: cca_example_app.mak
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ../..
 
 ifndef SRC_DIR
 SRC_DIR=../..
@@ -33,6 +35,8 @@ ISLET_PATH = $(CERT_ROOT)/third_party/islet
 ISLET_INCLUDE= -I$(ISLET_PATH)/include
 ISLET_LDFLAGS= -L$(ISLET_PATH)/lib -lislet_sdk
 
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
+
 S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
 CCAS=$(S)/cca
@@ -62,7 +66,7 @@ dobj=	$(O)/cca_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier
 all:	cca_example_app.exe
 clean:
 	@echo "removing generated files"
-	rm -rf $(I)/certifier.pb.h $(US)/certifier.pb.cc
+	rm -rf $(I)/certifier.pb.h $(US)/certifier.pb.cc $(US)/certifier.pb.h
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable file"
@@ -72,8 +76,8 @@ cca_example_app.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/cca_example_app.exe $(dobj) $(LDFLAGS)
 
-$(US)/certifier.pb.cc: $(S)/certifier.proto
-	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto
+$(US)/certifier.pb.cc: $(CP)/certifier.proto
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
 	mv $(US)/certifier.pb.h $(I)
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc

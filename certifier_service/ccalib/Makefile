@@ -24,6 +24,8 @@ LDFLAGS += -L $(LOCAL_LIB) -ldl -lprotobuf -lgtest -lgflags -pthread $(CERTIFIER
 
 CCAVERIFYLIB = libccaverify.so
 
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
+
 CS = $(CERTIFIER_ROOT)/src
 CCAS = $(CERTIFIER_ROOT)/src/cca
 S = $(CERTIFIER_ROOT)/certifier_service/ccalib
@@ -44,14 +46,14 @@ build: $(CCAVERIFYLIB)
 
 $(CCAVERIFYLIB): $(dobj)
 
-$(O)/certifier.pb.o: $(CS)/certifier.pb.cc $(I)/certifier.pb.h
+$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo " \nCompiling $<"
 	$(CC) -fPIC $(CFLAGS) -Wno-array-bounds -c $< -o $@
 
-$(CS)/certifier.pb.cc $(I)/certifier.pb.h: $(CS)/certifier.proto
+$(S)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
 	@echo "\nGenerate protobuf files"
-	$(PROTO) --proto_path=$(CS) --cpp_out=$(CS) $<
-	mv $(CS)/certifier.pb.h $(I)
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(S) $<
+	mv $(S)/certifier.pb.h $(I)
 
 $(O)/cca_verify.o: $(S)/cca_verify.cc
 	@ echo " \nCompiling $<"
@@ -72,5 +74,5 @@ dummy:
 
 clean:
 	@echo "Removing generated files"
-	rm -rf $(I)/certifier.pb.h $(CS)/certifier.pb.cc
+	rm -rf $(I)/certifier.pb.h $(S)/certifier.pb.h $(S)/certifier.pb.cc
 	rm -rf *.o $(CCAVERIFYLIB)

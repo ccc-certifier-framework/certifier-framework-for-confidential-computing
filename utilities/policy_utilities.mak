@@ -1,14 +1,14 @@
 #    
 #    File: policy_utillities.mak
 
-ifndef CERTIFIER_PROTOTYPE_DIR
-CERTIFIER_PROTOTYPE_DIR=..
+ifndef CERTIFIER_ROOT
+CERTIFIER_ROOT=..
 endif
 ifndef SRC_DIR
-SRC_DIR=$(CERTIFIER_PROTOTYPE_DIR)/utilities
+SRC_DIR=$(CERTIFIER_ROOT)/utilities
 endif
 ifndef INC_DIR
-INC_DIR=$(CERTIFIER_PROTOTYPE_DIR)/include
+INC_DIR=$(CERTIFIER_ROOT)/include
 endif
 ifndef OBJ_DIR
 OBJ_DIR=.
@@ -30,11 +30,13 @@ ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
 
+CERT_SRC=$(CERTIFIER_ROOT)/src
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
+
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
 US= .
-CERT_SRC=$(CERTIFIER_PROTOTYPE_DIR)/src
 
 INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/
 
@@ -100,6 +102,8 @@ all:	$(EXE_DIR)/measurement_utility.exe $(EXE_DIR)/make_indirect_vse_clause.exe 
 	$(EXE_DIR)/simulated_sev_key_generation.exe
 
 clean:
+	@echo "removing generated files"
+	rm -rf $(CERT_SRC)/certifier.pb.cc $(CERT_SRC)/certifier.pb.h $(I)/certifier.pb.h
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable file"
@@ -108,7 +112,7 @@ clean:
 $(EXE_DIR)/measurement_utility.exe: $(measurement_utility_obj) 
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/measurement_utility.exe $(measurement_utility_obj) $(LDFLAGS)
-#-L $(CERTIFIER_PROTOTYPE_DIR)/certifier.a
+#-L $(CERTIFIER_ROOT)/certifier.a
 
 $(O)/measurement_utility.o: $(S)/measurement_utility.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "compiling measurement_utility.cc"
@@ -122,8 +126,9 @@ $(O)/key_utility.o: $(US)/key_utility.cc $(INC_DIR)/support.h $(INC_DIR)/certifi
 	@echo "compiling key_utility.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/key_utility.o $(US)/key_utility.cc
 
-$(CERT_SRC)/certifier.pb.cc $(I)/certifier.pb.h: $(CERT_SRC)/certifier.proto
-	$(PROTO) -I$(S) --proto_path=$(CERT_SRC) --cpp_out=$(CERT_SRC) $(CERT_SRC)/certifier.proto
+# Generate certifier.pb.cc in src/ dir, using proto file from certprotos/
+$(CERT_SRC)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(CERT_SRC) $<
 	mv $(CERT_SRC)/certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(CERT_SRC)/certifier.pb.cc $(INC_DIR)/certifier.pb.h

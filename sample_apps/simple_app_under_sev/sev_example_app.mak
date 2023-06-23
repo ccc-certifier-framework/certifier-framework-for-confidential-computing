@@ -1,6 +1,9 @@
 #    
 #    File: sev_example_app.mak
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ../..
+
 ifndef SRC_DIR
 SRC_DIR=../..
 endif
@@ -20,6 +23,8 @@ ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
 
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
+
 S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
 US=.
@@ -34,6 +39,7 @@ CFLAGS1 += $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D SEV
 CC=g++
 LINK=g++
 #PROTO=/usr/local/bin/protoc
+PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
@@ -47,6 +53,8 @@ $(O)/sev_report.o $(O)/cc_helpers.o $(O)/cc_useful.o
 
 all:	sev_example_app.exe
 clean:
+	@echo "removing generated files"
+	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable file"
@@ -56,16 +64,15 @@ sev_example_app.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/sev_example_app.exe $(dobj) $(LDFLAGS)
 
-#$(US)/certifier.pb.cc: $(S)/certifier.proto
-#	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto
-#	mv $(US)/certifier.pb.h $(I)
-#$(I)/certifier.pb.h: $(S)/certifier.pb.cc
+$(US)/certifier.pb.cc: $(CP)/certifier.proto
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
+	mv certifier.pb.h $(I)
 
-$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
+$(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -Wno-array-bounds -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
+	$(CC) $(CFLAGS) -Wno-array-bounds -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
 
-$(O)/sev_example_app.o: $(US)/sev_example_app.cc $(I)/certifier.h $(S)/certifier.pb.cc
+$(O)/sev_example_app.o: $(US)/sev_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "compiling sev_example_app.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/sev_example_app.o $(US)/sev_example_app.cc
 
@@ -89,7 +96,7 @@ $(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave
 	@echo "compiling application_enclave.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(S)/application_enclave.cc
 
-$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(S)/certifier.pb.cc
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "compiling cc_helpers.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc
 

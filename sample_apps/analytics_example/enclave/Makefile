@@ -12,8 +12,14 @@ CRYPTO_LDFLAGS=$(shell pkg-config oeenclave-$(COMPILER) --variable=${OE_CRYPTO_L
 PROTO=../../../openenclave_test/protobufs-bin/bin/protoc
 PROTO_INCL=-I../../../openenclave_test/protobufs-bin/include
 PROTO_LIB=-L../../../openenclave_test/protobufs-bin/lib -lprotobuf -loeenclave -loelibcxx -loelibc -loesyscall -loecore -loesyscall -loecore -loehostsock -loehostresolver
-CERT_SRC=../../../src
-CERT_INCL=-I../../../include -I../../../src
+
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ../../..
+
+CERT_SRC = $(CERTIFIER_ROOT)/src
+CERT_INCL=-I$(CERTIFIER_ROOT)/include -I$(CERT_SRC)
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
+
 DATAFRAME_INCL=-I../third_party/DataFrame/include
 DATAFRAME_LIB=../third_party/DataFrame/build/libDataFrame.a 
 
@@ -45,9 +51,8 @@ build:
 	oeedger8r ../attestation.edl --trusted --trusted-dir ./ \
 		--search-path $(INCDIR) \
 		--search-path $(INCDIR)/openenclave/edl/sgx
-	$(PROTO) -I$(CERT_SRC) --cpp_out=. $(CERT_SRC)/certifier.proto
-	$(PROTO) -I$(CERT_SRC) --cpp_out=$(CERT_SRC) $(CERT_SRC)/certifier.proto
-	$(CXX) -g -Wno-shift-op-parentheses -c $(CXXFLAGS) $(INCLUDES) $(PROTO_INCL) $(CERT_INCL) $(DATAFRAME_INCL) -I. -I.. -std=c++17 -DOE_API_VERSION=2 ecalls.cc $(CERT_SRC)/support.cc $(CERT_SRC)/test_support.cc $(CERT_SRC)/simulated_enclave.cc $(CERT_SRC)/application_enclave.cc $(CERT_SRC)/certifier.cc $(CERT_SRC)/certifier_proofs.cc certifier.pb.cc $(CERT_SRC)/openenclave/attestation.cc $(CERT_SRC)/openenclave/sealing.cc $(CERT_SRC)/cc_helpers.cc $(CERT_SRC)/cc_useful.cc
+	$(PROTO) --cpp_out=. --proto_path=$(CP) $(CP)/certifier.proto
+	$(CXX) -g -Wno-shift-op-parentheses -c $(CXXFLAGS) $(INCLUDES) $(PROTO_INCL) $(CERT_INCL) $(DATAFRAME_INCL) -I. -I.. -std=c++17 -DOE_API_VERSION=2 ecalls.cc $(CERT_SRC)/support.cc $(CERT_SRC)/test_support.cc $(CERT_SRC)/simulated_enclave.cc $(CERT_SRC)/application_enclave.cc $(CERT_SRC)/certifier.cc $(CERT_SRC)/certifier_proofs.cc ./certifier.pb.cc $(CERT_SRC)/openenclave/attestation.cc $(CERT_SRC)/openenclave/sealing.cc $(CERT_SRC)/cc_helpers.cc $(CERT_SRC)/cc_useful.cc
 	$(CC) -g -c $(CFLAGS) $(CINCLUDES) -I.. -DOE_API_VERSION=2 ./attestation_t.c
 	$(CXX) -o enclave ecalls.o attestation_t.o certifier.pb.o certifier.o certifier_proofs.o support.o test_support.o simulated_enclave.o attestation.o sealing.o application_enclave.o cc_helpers.o cc_useful.o $(SEAL_PLUGINS) $(DATAFRAME_LIB) $(LDFLAGS) $(CRYPTO_LDFLAGS) $(PROTO_LIB)  -loehostfs
 	strip enclave
