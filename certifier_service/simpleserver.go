@@ -244,10 +244,10 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateKeystoneEvidence failed\n")
 			return false, nil
 		}
-        } else if evType == "cca-evidence" {
-		success, toProve, measurement = certlib.ValidateCCAEvidence(pubKey, ep, originalPolicy, purpose)
+        } else if evType == "islet-evidence" {
+		success, toProve, measurement = certlib.ValidateIsletEvidence(pubKey, ep, originalPolicy, purpose)
 		if !success {
-			fmt.Printf("ValidateRequestAndObtainToken: ValidateCCAEvidence failed\n")
+			fmt.Printf("ValidateRequestAndObtainToken: ValidateIsletEvidence failed\n")
 			return false, nil
 		}
         } else {

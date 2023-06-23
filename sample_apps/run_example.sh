@@ -75,7 +75,7 @@ MbedTLS_dir="mbedtls"
 Simple_App_under_gramine_MbedTLS_dir="sample_apps/simple_app_under_gramine/${MbedTLS_dir}"
 
 # --------------------------------------------------------------------------------
-# sample_app_under_cca uses ISLET SDK, which needs to be downloaded. To avoid
+# simple_app_under_islet uses ISLET SDK, which needs to be downloaded. To avoid
 # downloading repos frequently, provide this global variable to see if it has
 # been downloaded before.
 ISLET_ROOT="${CERT_PROTO}/third_party/islet"
@@ -126,7 +126,7 @@ SampleApps=( "simple_app"
              "application_service"
              "simple_app_under_app_service"
              "simple_app_under_keystone"
-             "simple_app_under_cca"
+             "simple_app_under_islet"
            )
 
 # ###########################################################################
@@ -195,6 +195,11 @@ function usage() {
     echo "  Setup simple_app_under_oe program             : ./${Me} --dry-run ${test_app} setup"
     echo "  Run and test the simple_app_under_oe program  : ./${Me} --dry-run ${test_app} run_test"
     echo "  Cleanup stale artifacts from build area       : ./${Me} --dry-run rm_non_git_files"
+    echo " "
+    echo "Options meant for developer usage:"
+    echo "  --no-cleanup    : When errors occur, suppress executing cleanup.sh, which will kill active processes."
+    echo "  --no-make-clean : Skip 'make clean' when re-building programs."
+
 }
 
 # ---- Open-Enclave app-specific help/usage output
@@ -441,7 +446,7 @@ function list_steps() {
           "simple_app" \
         | "simple_app_under_keystone" \
         | "simple_app_under_app_service" \
-        | "simple_app_under_cca")
+        | "simple_app_under_islet")
             list_steps_for_app "${Steps[@]}"
             ;;
 
@@ -499,7 +504,7 @@ function is_valid_step() {
           "simple_app" \
         | "simple_app_under_app_service" \
         | "simple_app_under_keystone" \
-        | "simple_app_under_cca")
+        | "simple_app_under_islet")
             check_steps_for_app "${Steps[@]}"
             ;;
 
@@ -735,8 +740,8 @@ function gen_policy_and_self_signed_cert() {
     # to do a side-bar to handle simulated-SEV certificates.
     if [ "${CC_SIMULATED_SEV}" -eq 1 ]; then
         gen_certificates_for_simulated_SEV
-    elif [ "${SampleAppName}" = "simple_app_under_cca" ]; then
-        setup_emulated_cca_shim_bins
+    elif [ "${SampleAppName}" = "simple_app_under_islet" ]; then
+        setup_cca_emulated_islet_shim_bins
     fi
 }
 
@@ -776,17 +781,18 @@ function gen_certificates_for_simulated_SEV() {
 }
 
 # ###########################################################################
-# FIXME: CCA-shim support: This is temporary.
+# FIXME: CCA-shim support: This is temporary till Islet package is productized.
 # ###########################################################################
-function setup_emulated_cca_shim_bins() {
+function setup_cca_emulated_islet_shim_bins() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
-    run_cmd cp -p policy_cert_file.bin emulated_cca_key_cert.bin
+    run_cmd cp -p policy_cert_file.bin cca_emulated_islet_key_cert.bin
 
     run_popd
 }
 
+# ###########################################################################
 function embed_policy_in_example_app() {
     run_cmd
     run_pushd "${PROV_DIR}"
@@ -831,16 +837,16 @@ function compile_simple_app_under_keystone() {
 }
 
 # ###########################################################################
-function compile_simple_app_under_cca() {
+function compile_simple_app_under_islet() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
     if [ ! -f ./example_app.mak ]; then
-        run_cmd ln -s cca_example_app.mak example_app.mak
+        run_cmd ln -s islet_example_app.mak example_app.mak
     fi
 
-    run_popd
     compile_app_common
     run_cmd rm -rf example_app.mak
+    run_popd
 }
 
 # ###########################################################################
@@ -932,7 +938,7 @@ function compile_application_service() {
 # simple_app_under_oe       : binary_trusted_measurements_file.bin
 # simple_app_under_gramine  : example_app.measurement
 # simple_app_under_sev      : example_app.measurement
-# simple_app_under_cca      : example_app.measurement
+# simple_app_under_islet    : example_app.measurement
 #
 # ###########################################################################
 function get_measurement_of_trusted_app() {
@@ -963,11 +969,11 @@ function get_measurement_of_trusted_simple_app_under_keystone() {
 # ###########################################################################
 # Currently, we hard-code the app's measurement. Eventually this routine
 # will want to look like the following, calling the common method
-# get_measurement_of_app_by_name to work on "cca_example_app.exe"
+# get_measurement_of_app_by_name to work on "islet_example_app.exe"
 # ###########################################################################
-function get_measurement_of_trusted_simple_app_under_cca() {
+function get_measurement_of_trusted_simple_app_under_islet() {
     # FIXME: This is left here for future-use
-    # get_measurement_of_app_by_name "cca_example_app.exe"
+    # get_measurement_of_app_by_name "islet_example_app.exe"
 
     run_cmd
     local mrenclave="6190EB90B293886C172EC644DAFB7E33EE2CEA6541ABE15300D96380DF525BF9"
@@ -1100,7 +1106,7 @@ function get_measurement_of_trusted_simple_app_under_sev() {
 #   - simple_app_under_gramine
 #   - application_service
 #   - simple_app_under_keystone
-#   - simple_app_under_cca
+#   - simple_app_under_islet
 # ###########################################################################
 function author_policy() {
     # Minions handle pushd/popd to appropriate app-specific sub-dir
@@ -1190,7 +1196,7 @@ function construct_policyKey_platform_is_trusted_simple_app_under_keystone() {
 }
 
 # ###########################################################################
-function construct_policyKey_platform_is_trusted_simple_app_under_cca() {
+function construct_policyKey_platform_is_trusted_simple_app_under_islet() {
     construct_policyKey_platform_is_trusted_app
 }
 
@@ -1212,9 +1218,9 @@ function construct_policyKey_platform_is_trusted_app() {
         subject_arg="--cert_subject"
         key_subject_file="emulated_keystone_key_cert.bin"
 
-    elif [ "${SampleAppName}" = "simple_app_under_cca" ]; then
+    elif [ "${SampleAppName}" = "simple_app_under_islet" ]; then
         subject_arg="--cert_subject"
-        key_subject_file="emulated_cca_key_cert.bin"
+        key_subject_file="cca_emulated_islet_key_cert.bin"
     fi
 
     run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
@@ -1348,7 +1354,7 @@ function combine_policy_stmts() {
         | "simple_app_under_gramine"    \
         | "simple_app_under_keystone"   \
         | "application_service"         \
-        | "simple_app_under_cca"        \
+        | "simple_app_under_islet"        \
         | "simple_app_under_app_service" )
             signed_claims="${signed_claims},signed_claim_2.bin"
             ;;
@@ -1632,10 +1638,10 @@ function build_simple_server() {
     run_cmd make ${make_arg}
 
     make_arg="dummy"
-    if [ "${SampleAppName}" = "simple_app_under_cca" ]; then
+    if [ "${SampleAppName}" = "simple_app_under_islet" ]; then
         make_arg=""
     fi
-    run_cmd cd "${CERT_PROTO}"/certifier_service/ccalib
+    run_cmd cd "${CERT_PROTO}"/certifier_service/isletlib
     # shellcheck disable=SC2086
     run_cmd make ${make_arg}
 
@@ -1803,9 +1809,9 @@ function run_simple_app_under_keystone_as_server_talk_to_Cert_Service() {
 }
 
 # ###########################################################################
-function run_simple_app_under_cca_as_server_talk_to_Cert_Service() {
+function run_simple_app_under_islet_as_server_talk_to_Cert_Service() {
     run_cmd
-    run_app_by_name_as_server_talk_to_Cert_Service "cca_example_app.exe"
+    run_app_by_name_as_server_talk_to_Cert_Service "islet_example_app.exe"
 }
 
 # ###########################################################################
@@ -1924,9 +1930,9 @@ function run_simple_app_under_keystone_as_client_talk_to_Cert_Service() {
 }
 
 # ###########################################################################
-function run_simple_app_under_cca_as_client_talk_to_Cert_Service() {
+function run_simple_app_under_islet_as_client_talk_to_Cert_Service() {
     run_cmd
-    run_app_by_name_as_client_talk_to_Cert_Service "cca_example_app.exe"
+    run_app_by_name_as_client_talk_to_Cert_Service "islet_example_app.exe"
 }
 
 # ###########################################################################
@@ -2039,8 +2045,8 @@ function run_simple_app_under_keystone_as_server_offers_trusted_service() {
 }
 
 # ###########################################################################
-function run_simple_app_under_cca_as_server_offers_trusted_service() {
-    run_app_by_name_as_server_offers_trusted_service "cca_example_app.exe"
+function run_simple_app_under_islet_as_server_offers_trusted_service() {
+    run_app_by_name_as_server_offers_trusted_service "islet_example_app.exe"
 }
 
 # ###########################################################################
@@ -2135,8 +2141,8 @@ function run_simple_app_under_keystone_as_client_make_trusted_request() {
 }
 
 # ###########################################################################
-function run_simple_app_under_cca_as_client_make_trusted_request() {
-    run_app_by_name_as_client_make_trusted_request "cca_example_app.exe"
+function run_simple_app_under_islet_as_client_make_trusted_request() {
+    run_app_by_name_as_client_make_trusted_request "islet_example_app.exe"
 }
 
 # ###########################################################################
@@ -2245,6 +2251,7 @@ function show_env() {
     env | grep -w -E "CERT_PROTO|EXAMPLE_DIR|PATH"
     echo "PROV_DIR=${PROV_DIR}"
     echo "LOCAL_LIB=${Local_lib_path}"
+    echo "DoMakeClean=${Local_lib_path}"
     echo "protoc-gen-go: " "$(command -v protoc-gen-go)"
 
     echo " "
@@ -2332,7 +2339,7 @@ function setup_simple_app_under_app_service() {
 }
 
 # ###########################################################################
-function setup_simple_app_under_cca() {
+function setup_simple_app_under_islet() {
     run_cmd
     # Some steps need access to libislet_sdk.so at run-time
     set -x
@@ -2536,9 +2543,13 @@ function run_test() {
     if [ "${SampleAppName}" = "application_service" ]; then
         usage_run_test_application_service
         exit 0
-    else
-        run_steps "start_certifier_service" "run_app_as_client_make_trusted_request"
+    elif [ "${SampleAppName}" = "simple_app_under_islet" ]; then
+        # Some steps need access to libislet_sdk.so at run-time
+        set -x
+        LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-${ISLET_ROOT}/lib}; export LD_LIBRARY_PATH
+        set +x
     fi
+    run_steps "start_certifier_service" "run_app_as_client_make_trusted_request"
 }
 
 # ###########################################################################

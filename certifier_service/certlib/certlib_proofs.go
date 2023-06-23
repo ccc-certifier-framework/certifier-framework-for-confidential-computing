@@ -30,7 +30,7 @@ import (
 	certprotos    "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	oeverify      "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 	gramineverify "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
-	ccaverify     "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/ccaverify"
+	isletverify     "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/isletverify"
 )
 
 func testSign(PK1 *ecdsa.PublicKey) {
@@ -332,7 +332,7 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				return false
 			}
 			ps.Proved = append(ps.Proved, cl)
-		} else if ev.GetEvidenceType() == "cca-attestation" {
+		} else if ev.GetEvidenceType() == "islet-attestation" {
 			n := 1
 			if ps.Proved[n] == nil || ps.Proved[n].Clause == nil ||
 					ps.Proved[n].Clause.Subject == nil {
@@ -353,15 +353,15 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				fmt.Printf("InitProvedStatements: Can't get attestKey key (4)\n")
 				return false
 			}
-			m := VerifyCCAAttestation(ev.SerializedEvidence, attestKey)
+			m := VerifyIsletAttestation(ev.SerializedEvidence, attestKey)
 			if m == nil {
-				fmt.Printf("InitProvedStatements: VerifyCCAAttestation failed\n")
+				fmt.Printf("InitProvedStatements: VerifyIsletAttestation failed\n")
 				return false
 			}
-			var am certprotos.CcaAttestationMessage
+			var am certprotos.IsletAttestationMessage
 			err := proto.Unmarshal(ev.SerializedEvidence, &am)
 			if err != nil {
-				fmt.Printf("InitProvedStatements: Can't unmarshal CcaAttestationMessage\n")
+				fmt.Printf("InitProvedStatements: Can't unmarshal IsletAttestationMessage\n")
 				return false
 			}
 			var ud certprotos.AttestationUserData
@@ -381,9 +381,9 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 
 			mEnt := MakeMeasurementEntity(m)
-			c2 := ConstructCCASpeaksForMeasurementStatement(attestKey, ud.EnclaveKey, mEnt)
+			c2 := ConstructIsletSpeaksForMeasurementStatement(attestKey, ud.EnclaveKey, mEnt)
 			if c2 == nil {
-				fmt.Printf("InitProvedStatements: ConstructCCASpeaksForMeasurementStatement failed\n")
+				fmt.Printf("InitProvedStatements: ConstructIsletSpeaksForMeasurementStatement failed\n")
 				return false
 			}
 			ps.Proved = append(ps.Proved, c2)
@@ -909,11 +909,11 @@ func ConstructEnclaveKeySpeaksForMeasurement(k *certprotos.KeyMessage, m []byte)
  */
 
 // attestKey says enclaveKey speaksfor environment
-func ConstructCCASpeaksForMeasurementStatement(attestKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
+func ConstructIsletSpeaksForMeasurementStatement(attestKey *certprotos.KeyMessage, enclaveKey *certprotos.KeyMessage,
 		mEnt *certprotos.EntityMessage) *certprotos.VseClause {
 	eke := MakeKeyEntity(enclaveKey)
 	if eke == nil {
-		fmt.Printf("ConstructCCAIsEnvironmentStatement: can't make enclave key entity\n")
+		fmt.Printf("ConstructIsletIsEnvironmentStatement: can't make enclave key entity\n")
 		return nil
 	}
 	speaksForVerb := "speaks-for"
@@ -924,7 +924,7 @@ func ConstructCCASpeaksForMeasurementStatement(attestKey *certprotos.KeyMessage,
 	}
 	ke := MakeKeyEntity(attestKey)
 	if ke == nil {
-		fmt.Printf("ConstructCCAIsEnvironmentStatement: can't make attest key entity\n")
+		fmt.Printf("ConstructIsletIsEnvironmentStatement: can't make attest key entity\n")
 		return nil
 	}
 	saysVerb := "says"
@@ -1245,10 +1245,10 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
  *
  * Option 1:
  *
- *  - Figure out how to write this fn. How to verify evidence provided by CCA-shim?
- *  - CCA-shim provides an attest function which generates an evidence report
+ *  - Figure out how to write this fn. How to verify evidence provided by Islet-shim?
+ *  - Islet-shim provides an attest function which generates an evidence report
  *  - Need to write something to generate an evidence package on top of that evidence.
- *  - Write a fn that calls CCA-Attest(), packages it together before sending it to
+ *  - Write a fn that calls Islet-Attest(), packages it together before sending it to
  *    the Cert service.
  *
  *    Most straightforward way to verify is to have a public-key (may be 'k' here)
@@ -1266,29 +1266,29 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
  * Option 2: (Always available but we give up platform verification and trust the
  *            SDK to do it.)
  *
- *  - Write Go code to call cca_Verify() externally
- *  - Dev VerifyCCAAttestation () which will call islet_verify()
+ *  - Write Go code to call islet_Verify() externally
+ *  - Dev VerifyIsletAttestation () which will call islet_verify()
  */
 
 //	Returns measurement
-//	serialized is the serialized cca_attestation_message
-func VerifyCCAAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
+//	serialized is the serialized islet_attestation_message
+func VerifyIsletAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 
-	var am certprotos.CcaAttestationMessage
+	var am certprotos.IsletAttestationMessage
 	err := proto.Unmarshal(serialized, &am)
 	if err != nil {
-		fmt.Printf("VerifyCCAAttestation: Can't unmarshal SevAttestationMessage\n")
+		fmt.Printf("VerifyIsletAttestation: Can't unmarshal SevAttestationMessage\n")
 		return nil
 	}
 
 	ptr := am.ReportedAttestation
 	if ptr == nil {
-		fmt.Printf("VerifyCCAAttestation: am.ReportedAttestation is wrong\n")
+		fmt.Printf("VerifyIsletAttestation: am.ReportedAttestation is wrong\n")
 		return nil
 	}
 
     /*
-     * This is the hard-coded measurement provided by CCA-shim.
+     * This is the hard-coded measurement provided by Islet-shim.
      *
 	measurement := []byte {
 		0x61, 0x90, 0xEB, 0x90, 0xB2, 0x93, 0x88, 0x6C,
@@ -1298,10 +1298,10 @@ func VerifyCCAAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
     */
 	// return measurement
-    // Call the C-Go CCA verify function
-    m, err := ccaverify.CcaVerify(am.WhatWasSaid, am.ReportedAttestation)
+    // Call the C-Go Islet verify function
+    m, err := isletverify.IsletVerify(am.WhatWasSaid, am.ReportedAttestation)
     if err != nil {
-        fmt.Printf("VerifyCCAAttestation: CcaVerify() failed\n")
+        fmt.Printf("VerifyIsletAttestation: IsletVerify() failed\n")
         return nil
     }
     return m
@@ -2962,7 +2962,7 @@ func ValidateKeystoneEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
 }
 
 
-func FilterCCAPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+func FilterIsletPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
 
 	// Todo: Fix when we import new filter framework
@@ -2977,7 +2977,7 @@ func FilterCCAPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 }
 
 
-func ConstructProofFromCCAEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string,
+func ConstructProofFromIsletEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string,
 		alreadyProved *certprotos.ProvedStatements)  (*certprotos.VseClause, *certprotos.Proof) {
         // At this point, the evidence should be
 	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
@@ -2988,14 +2988,14 @@ func ConstructProofFromCCAEvidence(publicPolicyKey *certprotos.KeyMessage, purpo
 	//	Key attestKey says Key[rsa, enclaveKey, b223d5da6674c6bde7feac29801e3b69bb286320] speaks-for Measurement[00010203...]
 
 	// Debug
-	fmt.Printf("ConstructProofFromCCAEvidence, %d statements\n", len(alreadyProved.Proved))
+	fmt.Printf("ConstructProofFromIsletEvidence, %d statements\n", len(alreadyProved.Proved))
 	for i := 0; i < len(alreadyProved.Proved);  i++ {
 		PrintVseClause(alreadyProved.Proved[i])
 		fmt.Printf("\n")
 	}
 
 	if len(alreadyProved.Proved) < 4 {
-		fmt.Printf("ConstructProofFromCCAEvidence: too few statements\n")
+		fmt.Printf("ConstructProofFromIsletEvidence: too few statements\n")
 		return nil, nil
 	}
 
@@ -3003,7 +3003,7 @@ func ConstructProofFromCCAEvidence(publicPolicyKey *certprotos.KeyMessage, purpo
 	policyKeySaysAttestKeyIsTrustedForAttestation := alreadyProved.Proved[1]
 	policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[2]
 	if alreadyProved.Proved[3].Clause == nil {
-		fmt.Printf("ConstructProofFromCCAEvidence: malformed attestation\n")
+		fmt.Printf("ConstructProofFromIsletEvidence: malformed attestation\n")
 		return nil, nil
 	}
 	attestKeySaysEnclaveKeySpeaksForMeasurement := alreadyProved.Proved[3]
@@ -3011,12 +3011,12 @@ func ConstructProofFromCCAEvidence(publicPolicyKey *certprotos.KeyMessage, purpo
 
 	if policyKeyIsTrusted == nil || enclaveKeySpeaksForMeasurement == nil ||
 			policyKeySaysMeasurementIsTrusted == nil {
-		fmt.Printf("ConstructProofFromCCAEvidence: evidence missing\n")
+		fmt.Printf("ConstructProofFromIsletEvidence: evidence missing\n")
 		return nil, nil
 	}
 
 	if policyKeySaysAttestKeyIsTrustedForAttestation.Clause == nil {
-		fmt.Printf("ConstructProofFromCCAEvidence: Can't get platformKeyIsTrustedForAttestation\n")
+		fmt.Printf("ConstructProofFromIsletEvidence: Can't get platformKeyIsTrustedForAttestation\n")
 		return nil, nil
 	}
 
@@ -3028,7 +3028,7 @@ func ConstructProofFromCCAEvidence(publicPolicyKey *certprotos.KeyMessage, purpo
 
 	enclaveKey := enclaveKeySpeaksForMeasurement.Subject
 	if enclaveKey == nil || enclaveKey.GetEntityType() != "key" {
-		fmt.Printf("ConstructProofFromCCAEvidence: Bad enclave key\n")
+		fmt.Printf("ConstructProofFromIsletEvidence: Bad enclave key\n")
 		return nil, nil
 	}
         var toProve *certprotos.VseClause = nil
@@ -3042,7 +3042,7 @@ func ConstructProofFromCCAEvidence(publicPolicyKey *certprotos.KeyMessage, purpo
 
 	measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
 	if measurementIsTrusted == nil {
-		fmt.Printf("ConstructProofFromCCAEvidence: Can't get measurement\n")
+		fmt.Printf("ConstructProofFromIsletEvidence: Can't get measurement\n")
 		return nil, nil
 	}
 	ps1 := certprotos.ProofStep {
@@ -3057,7 +3057,7 @@ func ConstructProofFromCCAEvidence(publicPolicyKey *certprotos.KeyMessage, purpo
 	// policyKey says attestKey is-trusted-for-attestation -->
 	// attestKey is-trusted-for-attestation
 	if policyKeySaysAttestKeyIsTrustedForAttestation.Clause == nil {
-		fmt.Printf("ConstructProofFromCCAEvidence: Can't malformed attestation key appointment\n")
+		fmt.Printf("ConstructProofFromIsletEvidence: Can't malformed attestation key appointment\n")
 		return nil, nil
 	}
 	attestKeyIsTrustedForAttestation := policyKeySaysAttestKeyIsTrustedForAttestation.Clause
@@ -3105,17 +3105,17 @@ func ConstructProofFromCCAEvidence(publicPolicyKey *certprotos.KeyMessage, purpo
 }
 
 // returns success, toProve, measurement
-func ValidateCCAEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+func ValidateIsletEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 		originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
                 *certprotos.VseClause, []byte) {
 
 	// Debug
-	fmt.Printf("\nValidateCCAEvidence, Original policy:\n")
+	fmt.Printf("\nValidateIsletEvidence, Original policy:\n")
 	PrintProvedStatements(originalPolicy)
 
-	alreadyProved := FilterCCAPolicy(pubPolicyKey, evp, originalPolicy)
+	alreadyProved := FilterIsletPolicy(pubPolicyKey, evp, originalPolicy)
 	if alreadyProved == nil {
-                fmt.Printf("ValidateCCAEvidence: Can't filterpolicy\n")
+                fmt.Printf("ValidateIsletEvidence: Can't filterpolicy\n")
 		return false, nil, nil
         }
 
@@ -3125,15 +3125,15 @@ func ValidateCCAEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	fmt.Printf("\n")
 
 	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, alreadyProved) {
-                fmt.Printf("ValidateCCAEvidence: Can't InitProvedStatements\n")
+                fmt.Printf("ValidateIsletEvidence: Can't InitProvedStatements\n")
 		return false, nil, nil
 	}
 
 	// Debug
-	fmt.Printf("\nValidateCCAEvidence, after InitProved:\n")
+	fmt.Printf("\nValidateIsletEvidence, after InitProved:\n")
 	PrintProvedStatements(alreadyProved)
 
-	toProve, proof := ConstructProofFromCCAEvidence(pubPolicyKey, purpose, alreadyProved)
+	toProve, proof := ConstructProofFromIsletEvidence(pubPolicyKey, purpose, alreadyProved)
 	if toProve == nil || proof == nil {
                 fmt.Printf("ValidateKeystoneEvidence: Can't construct proof\n")
 		return false, nil, nil
@@ -3141,26 +3141,26 @@ func ValidateCCAEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 
 	// Debug
 	fmt.Printf("\n")
-	fmt.Printf("ValidateCCAEvidence, toProve: ")
+	fmt.Printf("ValidateIsletEvidence, toProve: ")
 	PrintVseClause(toProve)
 	fmt.Printf("\n")
 	PrintProof(proof)
 	fmt.Printf("\n")
 
 	if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
-		fmt.Printf("ValidateCCAEvidence: Proof does not verify\n")
+		fmt.Printf("ValidateIsletEvidence: Proof does not verify\n")
 		return false, nil, nil
 	}
 
 	// Debug
-	fmt.Printf("ValidateCCAEvidence: Proof verifies\n")
+	fmt.Printf("ValidateIsletEvidence: Proof verifies\n")
 	fmt.Printf("\nProved statements\n")
 	PrintProvedStatements(alreadyProved);
 
 	me := alreadyProved.Proved[2]
 	if me.Clause == nil || me.Clause.Subject == nil ||
 			me.Clause.Subject.GetEntityType() != "measurement" {
-		fmt.Printf("ValidateCCAEvidence: Proof does not verify\n")
+		fmt.Printf("ValidateIsletEvidence: Proof does not verify\n")
 		return false, nil, nil
 	}
 

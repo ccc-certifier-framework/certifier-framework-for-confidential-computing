@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cca_verify.h"
+#include "islet_verify.h"
 
-bool ccalib_Verify(const int what_to_say_size, byte* what_to_say,
-                   const int attestation_size, byte* attestation,
-                   int* measurement_out_size, byte* measurement_out) {
+bool isletlib_Verify(const int what_to_say_size, byte* what_to_say,
+                     const int attestation_size, byte* attestation,
+                     int* measurement_out_size, byte* measurement_out) {
     return false;
 }

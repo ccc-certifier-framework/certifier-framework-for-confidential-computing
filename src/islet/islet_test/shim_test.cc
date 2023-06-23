@@ -14,7 +14,7 @@
  *  limitations under the License
  */
 
-#include "../cca.h"
+#include "../islet_api.h"
 
 static void print_buf(int sz, byte* buf) {
   for (int i = 0; i < sz; i++)
@@ -39,10 +39,10 @@ bool attestation_test() {
 
   std::string what_to_say("User Custom data");
 
-  if (!cca_Attest(what_to_say.size(), (byte*)what_to_say.data(), &report_len, report))
+  if (!islet_Attest(what_to_say.size(), (byte*)what_to_say.data(), &report_len, report))
     return false;
 
-  if (!cca_Verify(what_to_say.size(), (byte*)what_to_say.data(), report_len, report,
+  if (!islet_Verify(what_to_say.size(), (byte*)what_to_say.data(), report_len, report,
                   &measurement_len, measurement))
     return false;
 
@@ -69,10 +69,10 @@ bool sealing_test() {
   memset(unsealed, 0, sizeof(unsealed));
 
   std::string plaintext("Plaintext");
-  if (!cca_Seal(plaintext.size(), (byte *)plaintext.c_str(), &sealed_len, sealed))
+  if (!islet_Seal(plaintext.size(), (byte *)plaintext.c_str(), &sealed_len, sealed))
     return false;
 
-  if (!cca_Unseal(sealed_len, sealed, &unsealed_len, unsealed))
+  if (!islet_Unseal(sealed_len, sealed, &unsealed_len, unsealed))
     return false;
 
   printf("Success sealing round trip.\n");

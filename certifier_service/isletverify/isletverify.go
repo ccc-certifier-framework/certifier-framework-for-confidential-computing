@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ccaverify
+package isletverify
 
 /*
-#cgo CFLAGS: -g -Wall -I ../ccalib
-#cgo LDFLAGS: -L ../ccalib -lccaverify -Wl,-rpath=./ccalib:../../certifier_service/ccalib:../../../certifier_service/ccalib
-#include "cca_verify.h"
+#cgo CFLAGS: -g -Wall -I ../isletlib
+#cgo LDFLAGS: -L ../isletlib -lisletverify -Wl,-rpath=./isletlib:../../certifier_service/isletlib:../../../certifier_service/isletlib
+#include "islet_verify.h"
 */
 import "C"
 import (
@@ -25,7 +25,7 @@ import (
 	"unsafe"
 )
 
-func CcaVerify(what_to_say []byte, attestation []byte) ([]byte, error) {
+func IsletVerify(what_to_say []byte, attestation []byte) ([]byte, error) {
 	what_to_say_ptr := C.CBytes(what_to_say)
 	defer C.free(what_to_say_ptr)
 	attestation_ptr := C.CBytes(attestation)
@@ -33,11 +33,11 @@ func CcaVerify(what_to_say []byte, attestation []byte) ([]byte, error) {
 	measurementSize := C.int(256)
 	measurementOut := C.malloc(C.ulong(measurementSize))
 	defer C.free(unsafe.Pointer(measurementOut))
-	ret := C.ccalib_Verify(C.int(len(what_to_say)), (*C.uchar)(what_to_say_ptr),
-		                   C.int(len(attestation)), (*C.uchar)(attestation_ptr),
-		                   &measurementSize, (*C.uchar)(measurementOut))
+	ret := C.isletlib_Verify(C.int(len(what_to_say)), (*C.uchar)(what_to_say_ptr),
+		                     C.int(len(attestation)), (*C.uchar)(attestation_ptr),
+		                     &measurementSize, (*C.uchar)(measurementOut))
 	if !ret {
-		return nil, fmt.Errorf("CcaVerify failed");
+		return nil, fmt.Errorf("IsletVerify failed");
 	}
 	outMeasurement := C.GoBytes(unsafe.Pointer(measurementOut),
 		                        C.int(measurementSize))
@@ -55,9 +55,9 @@ func CcaVerify(what_to_say []byte, attestation []byte) ([]byte, error) {
  *  if err != nil {
  *          fmt.Printf("Failed to read whattosay file: %s\n", err.Error())
  *  }
- *  outMeasurement, err := ccaverify.CcaVerify(whattosay, attestation)
+ *  outMeasurement, err := isletverify.IsletVerify(whattosay, attestation)
  *  if err != nil {
- *          fmt.Printf("CcaVerify failed: %s\n", err.Error())
+ *          fmt.Printf("IsletVerify failed: %s\n", err.Error())
  *  }
  *  fmt.Printf("Measurement length: %d\n", len(outMeasurement));
  */
