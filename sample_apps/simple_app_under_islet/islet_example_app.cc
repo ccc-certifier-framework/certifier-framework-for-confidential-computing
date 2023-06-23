@@ -128,7 +128,7 @@ int main(int an, char** av) {
   }
 
   SSL_library_init();
-  string enclave_type("cca-enclave");
+  string enclave_type("islet-enclave");
   string purpose("authentication");
 
   string store_file(FLAGS_data_dir);
@@ -153,10 +153,10 @@ int main(int an, char** av) {
 
   string endorsement_cert;
 
-  if (!app_trust_data->initialize_cca_enclave_data(attest_key_file_name,
-                                                   measurement_file_name,
-                                                   platform_attest_file_name)) {
-    printf("Can't init CCA enclave\n");
+  if (!app_trust_data->initialize_islet_enclave_data(attest_key_file_name,
+                                                     measurement_file_name,
+                                                     platform_attest_file_name)) {
+    printf("Can't init Islet enclave\n");
     return 1;
   }
 

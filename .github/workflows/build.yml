@@ -123,9 +123,9 @@ jobs:
 
         ./run_example.sh --dry-run simple_app_under_keystone
 
-        ./run_example.sh --dry-run simple_app_under_cca
-        ./run_example.sh --dry-run simple_app_under_cca setup
-        ./run_example.sh --dry-run simple_app_under_cca run_test
+        ./run_example.sh --dry-run simple_app_under_islet
+        ./run_example.sh --dry-run simple_app_under_islet setup
+        ./run_example.sh --dry-run simple_app_under_islet run_test
 
         popd
 
@@ -308,7 +308,7 @@ jobs:
         echo "* Download ISLET SDK, build the library and run shim_test"
         echo "**********************************************************"
         echo " "
-        pushd src/cca
+        pushd src/islet
 
         ../../third_party/islet/setup.sh
 
@@ -323,18 +323,23 @@ jobs:
         set +x
         echo " "
 
-    - name: test-run_example-simple_app_under_cca-using-shim
+    - name: test-run_example-simple_app_under_islet-using-shim
       run: |
         echo " "
-        echo "********************************************************************************"
-        echo "* Test: Execute script to compile, build and run simple_app_under_cca using shim"
-        echo "********************************************************************************"
+        echo "***********************************************************************************"
+        echo "* Test: Execute script to compile, build and run simple_app_under_islet using shim"
+        echo "***********************************************************************************"
         echo " "
         pushd ./sample_apps
 
         ./cleanup.sh
 
-        ./run_example.sh simple_app_under_cca
+        ./run_example.sh rm_non_git_files
+
+        #! Break it up into setup / run_test, to verify that the run_test phase
+        #! also correctly establishes LD_LIBRARY_PATH internally.
+        ./run_example.sh simple_app_under_islet setup
+        ./run_example.sh simple_app_under_islet run_test
 
         ./cleanup.sh
 

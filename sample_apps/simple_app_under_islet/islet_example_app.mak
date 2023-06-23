@@ -1,5 +1,5 @@
 #
-#    File: cca_example_app.mak
+#    File: islet_example_app.mak
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 CERTIFIER_ROOT = ../..
@@ -39,14 +39,14 @@ CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
 S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
-CCAS=$(S)/cca
+ISLET_S=$(S)/islet
 US=.
 I= $(SRC_DIR)/include
-INCLUDE= $(ISLET_INCLUDE) -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(CCAS)
+INCLUDE= $(ISLET_INCLUDE) -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(ISLET_S)
 
 # Compilation of protobuf files could run into some errors, so avoid using
 # # -Werror for those targets
-CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -D CCA_CERTIFIER
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -D ISLET_CERTIFIER
 CFLAGS = $(CFLAGS_NOERROR) -Werror
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 CC=g++
@@ -59,22 +59,22 @@ LDFLAGS= $(ISLET_LDFLAGS) -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread 
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
-dobj=	$(O)/cca_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+dobj=	$(O)/islet_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
       $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
-      $(O)/cc_useful.o $(O)/cca_shim.o
+      $(O)/cc_useful.o $(O)/islet_shim.o
 
-all:	cca_example_app.exe
+all:	islet_example_app.exe
 clean:
 	@echo "removing generated files"
 	rm -rf $(I)/certifier.pb.h $(US)/certifier.pb.cc $(US)/certifier.pb.h
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/cca_example_app.exe
+	rm -rf $(EXE_DIR)/islet_example_app.exe
 
-cca_example_app.exe: $(dobj)
+islet_example_app.exe: $(dobj)
 	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/cca_example_app.exe $(dobj) $(LDFLAGS)
+	$(LINK) -o $(EXE_DIR)/islet_example_app.exe $(dobj) $(LDFLAGS)
 
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
@@ -86,13 +86,13 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
 	$(CC) $(CFLAGS_NOERROR) -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
 
-$(O)/cca_example_app.o: $(US)/cca_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
-	@echo "compiling cca_example_app.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/cca_example_app.o $(US)/cca_example_app.cc
+$(O)/islet_example_app.o: $(US)/islet_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "compiling islet_example_app.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/islet_example_app.o $(US)/islet_example_app.cc
 
-$(O)/cca_shim.o: $(CCAS)/cca_shim.cc $(I)/certifier.h $(US)/certifier.pb.cc
-	@echo "compiling cca_shim.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/cca_shim.o $(CCAS)/cca_shim.cc
+$(O)/islet_shim.o: $(ISLET_S)/islet_shim.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "compiling islet_shim.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/islet_shim.o $(ISLET_S)/islet_shim.cc
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"

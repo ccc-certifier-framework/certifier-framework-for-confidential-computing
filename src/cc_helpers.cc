@@ -38,9 +38,9 @@
 #include "keystone_api.h"
 #endif
 
-#ifdef CCA_CERTIFIER
-#include "cca.h"
-#endif  // CCA_CERTIFIER
+#ifdef ISLET_CERTIFIER
+#include "islet_api.h"
+#endif  // ISLET_CERTIFIER
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -269,25 +269,25 @@ bool certifier::framework::cc_trust_data::initialize_keystone_enclave_data(const
 #endif
 }
 
-bool certifier::framework::cc_trust_data::initialize_cca_enclave_data(
+bool certifier::framework::cc_trust_data::initialize_islet_enclave_data(
                 const string& attest_key_file_name,
                 const string& measurement_file_name,
                 const string& attest_endorsement_file_name) {
 
-#ifdef CCA_CERTIFIER
+#ifdef ISLET_CERTIFIER
     if (!cc_policy_info_initialized_) {
       printf("%s(): Policy key must be initialized first\n", __func__);
       return false;
     }
 
-    if (enclave_type_ != "cca-enclave") {
+    if (enclave_type_ != "islet-enclave") {
       printf("%s(): '%s' is not a simulated enclave\n", __func__, enclave_type_.c_str());
       return false;
     }
     // TODO
     byte der_cert[100];
-    if (!cca_Init(0, der_cert)) {
-      printf("%s(): cca_Init failed\n", __func__);
+    if (!islet_Init(0, der_cert)) {
+      printf("%s(): islet_Init failed\n", __func__);
       return false;
     }
   cc_provider_provisioned_ = true;
@@ -1034,11 +1034,11 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
     // Todo: Add cert when it's available
 #endif
 
-#ifdef CCA_CERTIFIER
-  } else if (enclave_type_ == "cca-enclave") {
+#ifdef ISLET_CERTIFIER
+  } else if (enclave_type_ == "islet-enclave") {
 
     // Add CCA certificate
-#endif  // CCA_CERTIFIER
+#endif  // ISLET_CERTIFIER
 
 #ifdef SEV_SNP
   } else if (enclave_type_ == "sev-enclave") {
@@ -1166,8 +1166,8 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
     request.set_submitted_evidence_type("gramine-evidence");
   } else if (enclave_type_ == "keystone-enclave") {
     request.set_submitted_evidence_type("keystone-evidence");
-  } else if (enclave_type_ == "cca-enclave") {
-    request.set_submitted_evidence_type("cca-evidence");
+  } else if (enclave_type_ == "islet-enclave") {
+    request.set_submitted_evidence_type("islet-evidence");
   } else if (enclave_type_ == "oe-enclave") {
     request.set_submitted_evidence_type("oe-evidence");
   } else {
@@ -1367,8 +1367,8 @@ bool construct_platform_evidence_package(string& attesting_enclave_type, const s
   } else if ("sev-enclave" ==  attesting_enclave_type) {
     string et2("sev-attestation");
     ev2->set_evidence_type(et2);
-  } else if ("cca-enclave" == attesting_enclave_type) {
-    string et2("cca-attestation");
+  } else if ("islet-enclave" == attesting_enclave_type) {
+    string et2("islet-attestation");
     ev2->set_evidence_type(et2);
   } else {
     printf("%s:%d:%s: - can't add attestation\n",
