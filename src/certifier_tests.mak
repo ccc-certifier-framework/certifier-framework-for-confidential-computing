@@ -4,6 +4,9 @@
 #ENABLE_SEV=1
 #RUN_SEV_TESTS=1
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ..
+
 ifndef SRC_DIR
 SRC_DIR=.
 endif
@@ -26,6 +29,8 @@ LOCAL_LIB=/usr/local/lib
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
+
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
@@ -90,6 +95,8 @@ endif
 all:	certifier_tests.exe test_channel.exe pipe_read_test.exe
 
 clean:
+	@echo "removing generated files"
+	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable files"
@@ -99,8 +106,8 @@ certifier_tests.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/certifier_tests.exe $(dobj) $(LDFLAGS)
 
-$(S)/certifier.pb.cc $(I)/certifier.pb.h: $(S)/certifier.proto
-	$(PROTO) --cpp_out=$(S) $(S)/certifier.proto
+$(S)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
+	$(PROTO) --cpp_out=$(S) --proto_path $(CP) $<
 	mv $(S)/certifier.pb.h $(I)
 
 $(O)/support_tests.o: $(S)/support_tests.cc $(I)/certifier.pb.h $(I)/certifier.h

@@ -256,10 +256,11 @@ function usage_simple_app_under_app_service() {
     local app_svc="application_service"
     local app_name="simple_app_under_app_service"
     echo " "
-    echo "For simple_app_under_app_service, you must first  : ./${Me} ${app_svc} setup"
-    echo "Then, build-and-setup the simple app              : ./${Me} ${app_name} setup"
-    echo "Start the Certifier and Application services      : ./${Me} ${app_svc} start"
-    echo "Run the simple app to use the Application service : ./${Me} ${app_name} run_test"
+    echo "For simple_app_under_app_service, you must first   : ./${Me} ${app_svc} setup"
+    echo "Then, build-and-setup the simple app               : ./${Me} --no-make-clean ${app_name} setup"
+    echo "Start the Certifier and Application services       : ./${Me} --no-cleanup ${app_svc} start"
+    echo "Stop the Certifier Service started for App Service : kill -9 \$(pgrep simpleserver)"
+    echo "Run the simple app to use the Application service  : ./${Me} ${app_name} run_test"
 }
 
 # ###########################################################################
