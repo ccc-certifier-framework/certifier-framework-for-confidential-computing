@@ -6,6 +6,9 @@ CC=g++
 GPP=g++
 PROTO=protoc
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ../../..
+
 # Symbol to CERTIFIER_ROOT/src/ dir
 ifndef SRC_DIR
 SRC_DIR=../..
@@ -18,6 +21,8 @@ endif
 ifndef LOCAL_LIB
 LOCAL_LIB=/usr/local/lib
 endif
+
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
 S = $(SRC_DIR)
 O = $(OBJ_DIR)
@@ -70,9 +75,9 @@ $(O)/support.o: $(S)/support.cc $(I)/support.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Dependencies on protobuf and other Certifier files
-$(US)/certifier.pb.cc: $(S)/certifier.proto
+$(US)/certifier.pb.cc: $(CP)/certifier.proto
 	@echo "\nGenerate protobuf files"
-	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
 	mv $(US)/certifier.pb.h $(I)
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
@@ -87,7 +92,7 @@ test: attest_seal_test shim_test
 .PHONY: clean
 clean:
 	@echo "removing generated files"
-	rm -rf $(I)/certifier.pb.h $(US)/certifier.pb.cc
+	rm -rf $(I)/certifier.pb.h $(US)/certifier.pb.h $(US)/certifier.pb.cc
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable files"

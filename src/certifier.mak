@@ -3,6 +3,9 @@
 
 ENABLE_SEV=1
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ..
+
 ifndef SRC_DIR
 SRC_DIR=.
 endif
@@ -25,6 +28,8 @@ LOCAL_LIB=/usr/local/lib
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
+
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
@@ -66,6 +71,8 @@ endif
 
 all:	$(CL)/certifier.a
 clean:
+	@echo "removing generated files"
+	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable files"
@@ -75,8 +82,8 @@ $(CL)/certifier.a: $(dobj)
 	@echo "linking certifier library"
 	$(AR) rcs $(CL)/certifier.a $(dobj)
 
-$(S)/certifier.pb.cc $(I)/certifier.pb.h: $(S)/certifier.proto
-	$(PROTO) --cpp_out=$(S) $(S)/certifier.proto
+$(S)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
+	$(PROTO) --cpp_out=$(S) --proto_path $(CP) $<
 	mv $(S)/certifier.pb.h $(I)
 
 $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifier.h $(S)/test_support.cc

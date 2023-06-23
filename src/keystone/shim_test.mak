@@ -2,6 +2,9 @@
 # File: src/keystone/shim_test.mak
 # #############################################################################
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ../..
+
 ifndef SRC_DIR
 SRC_DIR=..
 endif
@@ -24,6 +27,8 @@ LOCAL_LIB=/usr/local/lib
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
+
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
 S= $(SRC_DIR)/keystone
 O= $(OBJ_DIR)
@@ -56,6 +61,8 @@ dobj = $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o        \
 
 all:	$(CL)/keystone_test.exe
 clean:
+	@echo "removing generated files"
+	rm -rf $(S)/certifier.pb.cc $(S)/certifier.pb.h $(I)/certifier.pb.h
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing generated emulated_keystone files"
@@ -63,8 +70,8 @@ clean:
 	@echo "removing executable files"
 	rm -rf $(CL)/keystone_test.exe
 
-$(SRC_DIR)/certifier.pb.cc $(I)/certifier.pb.h: $(SRC_DIR)/certifier.proto
-	$(PROTO) --proto_path=$(SRC_DIR) --cpp_out=$(S) $(SRC_DIR)/certifier.proto
+$(S)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(S) $<
 	mv $(S)/certifier.pb.h $(I)
 
 $(CL)/keystone_test.exe: $(dobj)
@@ -79,9 +86,9 @@ $(O)/keystone_shim.o: $(S)/keystone_shim.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling keystone_shim.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/keystone_shim.o $(S)/keystone_shim.cc
 
-$(O)/certifier.pb.o: $(SRC_DIR)/certifier.pb.cc $(I)/certifier.pb.h
+$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -Wno-array-bounds -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
+	$(CC) $(CFLAGS) -Wno-array-bounds -c -o $(O)/certifier.pb.o $<
 
 $(O)/certifier.o: $(SRC_DIR)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling certifier.cc"

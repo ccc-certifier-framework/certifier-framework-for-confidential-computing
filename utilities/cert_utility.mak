@@ -1,6 +1,9 @@
 #    
 #    File: cert_utility.mak
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ..
+
 ifndef SRC_DIR
 SRC_DIR=..
 endif
@@ -26,6 +29,8 @@ endif
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
+
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
 S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
@@ -62,7 +67,7 @@ $(O)/certifier_proofs.o $(O)/simulated_enclave.o $(O)/application_enclave.o
 all:	cert_utility.exe measurement_init.exe key_utility.exe
 clean:
 	@echo "removing object and generated files"
-	rm -rf $(O)/*.o $(US)/certifier.pb.cc $(I)/certifier.pb.h
+	rm -rf $(O)/*.o $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/cert_utility.exe
 
@@ -90,8 +95,8 @@ $(O)/key_utility.o: $(US)/key_utility.cc $(I)/support.h $(I)/certifier.pb.h
 	@echo "compiling key_utility.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/key_utility.o $(US)/key_utility.cc
 
-$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(S)/certifier.proto
-	$(PROTO) -I$(S) --cpp_out=$(US) $(S)/certifier.proto
+$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
+	$(PROTO) --cpp_out=$(US) --proto_path $(CP) $<
 	mv certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h

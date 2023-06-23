@@ -1,6 +1,8 @@
 #    
 #    File: simple_app_under_app_service/example_app.mak (service_example_app.mak)
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ../..
 
 ifndef SRC_DIR
 SRC_DIR=../..
@@ -21,6 +23,7 @@ ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
 
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
 S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
@@ -49,6 +52,8 @@ $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_us
 
 all:	service_example_app.exe start_program.exe
 clean:
+	@echo "removing generated files"
+	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable file"
@@ -58,14 +63,14 @@ service_example_app.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/service_example_app.exe $(dobj) $(LDFLAGS)
 
-$(S)/certifier.pb.cc: $(S)/certifier.proto
-	$(PROTO) --proto_path=$(S) --cpp_out=$(US) $(S)/certifier.proto
-	mv $(S)/certifier.pb.h $(I)
-$(I)/certifier.pb.h: $(S)/certifier.pb.cc
+$(I)/certifier.pb.h: $(US)/certifier.pb.cc
+$(US)/certifier.pb.cc: $(CP)/certifier.proto
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
+	mv $(US)/certifier.pb.h $(I)
 
-$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
+$(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
+	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
 
 start_program.exe: $(sp_dobj)
 	@echo "start_program.exe"
@@ -75,7 +80,7 @@ $(O)/start_program.o: start_program.cc
 	@echo "start_program.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/start_program.o $(US)/start_program.cc
 
-$(O)/service_example_app.o: $(US)/service_example_app.cc $(I)/certifier.h $(S)/certifier.pb.cc
+$(O)/service_example_app.o: $(US)/service_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "compiling service_example_app.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/service_example_app.o $(US)/service_example_app.cc
 
@@ -99,7 +104,7 @@ $(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave
 	@echo "compiling application_enclave.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(S)/application_enclave.cc
 
-$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(S)/certifier.pb.cc
+$(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "compiling cc_helpers.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc
 
