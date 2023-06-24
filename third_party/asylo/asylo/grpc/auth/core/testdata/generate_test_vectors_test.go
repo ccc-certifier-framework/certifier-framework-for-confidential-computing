@@ -25,9 +25,9 @@ import (
 	"fmt"
 	"io"
 
-	"log"
 	"github.com/golang/crypto/curve25519"
 	"github.com/golang/crypto/hkdf"
+	"log"
 )
 
 var (

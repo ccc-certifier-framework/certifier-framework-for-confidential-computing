@@ -34,13 +34,13 @@ func IsletVerify(what_to_say []byte, attestation []byte) ([]byte, error) {
 	measurementOut := C.malloc(C.ulong(measurementSize))
 	defer C.free(unsafe.Pointer(measurementOut))
 	ret := C.isletlib_Verify(C.int(len(what_to_say)), (*C.uchar)(what_to_say_ptr),
-		                     C.int(len(attestation)), (*C.uchar)(attestation_ptr),
-		                     &measurementSize, (*C.uchar)(measurementOut))
+		C.int(len(attestation)), (*C.uchar)(attestation_ptr),
+		&measurementSize, (*C.uchar)(measurementOut))
 	if !ret {
-		return nil, fmt.Errorf("IsletVerify failed");
+		return nil, fmt.Errorf("IsletVerify failed")
 	}
 	outMeasurement := C.GoBytes(unsafe.Pointer(measurementOut),
-		                        C.int(measurementSize))
+		C.int(measurementSize))
 	return outMeasurement, nil
 }
 

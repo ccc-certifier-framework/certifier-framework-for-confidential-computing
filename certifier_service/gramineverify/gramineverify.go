@@ -37,7 +37,7 @@ func GramineVerify(what_to_say []byte, attestation []byte) ([]byte, error) {
 		C.int(len(attestation)), (*C.uchar)(attestation_ptr),
 		&measurementSize, (*C.uchar)(measurementOut))
 	if !ret {
-		return nil, fmt.Errorf("gramine_Verify failed");
+		return nil, fmt.Errorf("gramine_Verify failed")
 	}
 	outMeasurement := C.GoBytes(unsafe.Pointer(measurementOut),
 		C.int(measurementSize))
