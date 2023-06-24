@@ -49,7 +49,7 @@ func OEHostVerifyEvidence(evidence []byte, endorsements []byte, tcb bool) ([]byt
 		(*C.uchar)(measurementOut), &measurementSize, checkTCB)
 
 	if !ret {
-		return nil, nil, fmt.Errorf("oe_host_verify_evidence failed");
+		return nil, nil, fmt.Errorf("oe_host_verify_evidence failed")
 	}
 	outCustomClaims := C.GoBytes(unsafe.Pointer(customClaimOut),
 		C.int(customClaimOutSize))
