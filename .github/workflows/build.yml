@@ -18,6 +18,11 @@ jobs:
         sudo apt update -y
         sudo apt install -y libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake
 
+
+    - name: test-code-formatting
+      run: |
+        ./CI/scripts/check-gofmt.sh
+
     - name: test-core-certifier-programs
       run: |
         echo "******************************************************************"
