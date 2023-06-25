@@ -1,3 +1,5 @@
+Note -- Keystone recommends using Docker because using the pre-made image is usually faster than manually setting things up with below, and it wil enable you to run the Keystone enclave unlike the sdk.
+
 Install riscV tool chain
 
 git clone https://github.com/riscv-collab/riscv-gnu-toolchain

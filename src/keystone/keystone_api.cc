@@ -1,8 +1,8 @@
 #include "keystone_api.h"
+#include <cstring>
 /* Dependencies: Keystone SDK, Keystone Runtime for crypto. */
 extern "C" {
   #include "app/syscall.h"
-  #include "app/string.h"
 }
 #include "crypto/aes.h"
 #include "verifier/report.h"
@@ -14,9 +14,20 @@ bool keystone_Init(const int cert_size, byte *cert) {
 }
 
 bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
+  /* Do not edit if at all possible.
+   * The sensible way of writing this function triggers bugs in either attest_enclave or C++ compiler.
+   */
   assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
+
+  byte what_to_say_copy[what_to_say_size];
+  memcpy(what_to_say_copy, what_to_say, what_to_say_size);
+
+  bool ret = attest_enclave((void *) attestation_out, what_to_say_copy, what_to_say_size) == 0;
+
+  memcpy(what_to_say, what_to_say_copy, what_to_say_size);
   *attestation_size_out = sizeof(struct report_t);
-  return attest_enclave((void *) attestation_out, what_to_say, what_to_say_size);
+
+  return ret;
 }
 
 bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size,
@@ -29,7 +40,7 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int at
     return false;
   }
 
-  if (report.getDataSize() != (unsigned int) (what_to_say_size + 1)) {
+  if (report.getDataSize() != (unsigned int) what_to_say_size) {
     return false;
   }
   byte* report_says = (byte*) report.getDataSection();
@@ -63,7 +74,7 @@ bool keystone_getSealingKey(WORD key[]) {
 
 bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
   WORD key[AES_SCHEDULE_LEN];
-  if (keystone_getSealingKey(key)) {
+  if (!keystone_getSealingKey(key)) {
     return false;
   }
   BYTE iv[AES_BLOCK_SIZE];
@@ -75,7 +86,7 @@ bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
 
 bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   WORD key[AES_SCHEDULE_LEN];
-  if (keystone_getSealingKey(key)) {
+  if (!keystone_getSealingKey(key)) {
     return false;
   }
   BYTE iv[AES_BLOCK_SIZE];

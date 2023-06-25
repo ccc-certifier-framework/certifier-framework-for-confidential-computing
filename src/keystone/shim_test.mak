@@ -59,7 +59,7 @@ dobj = $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o        \
        $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o  \
        $(O)/cc_helpers.o $(O)/cc_useful.o $(O)/keystone_shim.o $(O)/keystone_test.o
 
-all:	$(CL)/keystone_test.exe
+all:	$(EXE_DIR)/keystone_test.exe
 clean:
 	@echo "removing generated files"
 	rm -rf $(S)/certifier.pb.cc $(S)/certifier.pb.h $(I)/certifier.pb.h
@@ -68,13 +68,13 @@ clean:
 	@echo "removing generated emulated_keystone files"
 	rm -rf ./emulated_keystone_*
 	@echo "removing executable files"
-	rm -rf $(CL)/keystone_test.exe
+	rm -rf $(EXE_DIR)/keystone_test.exe
 
 $(S)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(CP) --cpp_out=$(S) $<
 	mv $(S)/certifier.pb.h $(I)
 
-$(CL)/keystone_test.exe: $(dobj)
+$(EXE_DIR)/keystone_test.exe: $(dobj)
 	@echo "linking certifier library"
 	$(LINK) -o $(EXE_DIR)/keystone_test.exe $(dobj) $(LDFLAGS)
 

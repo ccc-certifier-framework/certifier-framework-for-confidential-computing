@@ -15,9 +15,9 @@
 // Special thanks to Evgeny Pobachienko, UCB.
 
 #include <iostream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdint.h>
+// #include <sys/types.h>
+// #include <sys/stat.h>
+// #include <stdint.h>
 
 #include <unistd.h>
 #include <stdlib.h>
