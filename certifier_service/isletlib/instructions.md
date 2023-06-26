@@ -1,4 +1,4 @@
-# Instructions for building CCA Certifier C to Go interfaces
+# Instructions for building Islet Certifier C to Go interfaces
 
 $CERTIFIER_PROTOTYPE is the top level directory for the Certifier repository.
 
