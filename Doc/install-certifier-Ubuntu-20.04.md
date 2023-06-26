@@ -3,10 +3,11 @@
 
 ### Setup Environment variables 
 
+cd ~/Projects
 git clone https://github.com/vmware-research/certifier-framework-for-confidential-computing.git
-export CERTIFIER=certifier-framework-for-confidential-computing
-export CERTIFIER_PROTOTYPE=$CERTIFIER
-export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_app
+
+export CERTIFIER=~/Projects/certifier-framework-for-confidential-computing
+export EXAMPLE_DIR=$CERTIFIER/sample_app
 
 ### Install Dependencies
 ```

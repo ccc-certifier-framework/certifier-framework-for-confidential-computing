@@ -15,7 +15,7 @@ $CERTIFIER_PROTOTYPE is the top level directory for the Certifier repository.
 It is helpful to have a shell variable for it, e.g.,:
 
 ```shell
-export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
+export CERTIFIER_PROTOTYPE=~/Projects/certifier-framework-for-confidential-computing
 ```
 
 $EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable
