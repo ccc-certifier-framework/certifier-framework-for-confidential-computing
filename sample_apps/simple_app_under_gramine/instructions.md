@@ -331,7 +331,7 @@ $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe \
 
 ## Step 8: Build SimpleServer
 
-### a. Compile the protobuf and the cgo interface
+### a. Compile the protobuf and the C-Go interface
 ```shell
 cd $CERTIFIER_PROTOTYPE
 
