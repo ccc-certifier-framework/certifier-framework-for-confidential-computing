@@ -1,5 +1,6 @@
-SEV attestation report
+# SEV attestation report
 
+```
 struct attestation_report {
   uint32_t    version;                  /* 0x000 */
   uint32_t    guest_svn;                /* 0x004 */
@@ -25,8 +26,10 @@ struct attestation_report {
   uint8_t     reserved2[192];           /* 0x1E0 */
   struct signature  signature;          /* 0x2A0 */
 };
+```
 
-SEV platform policy
+## SEV platform policy
+```
   Policy bits
   Byte 0
     0 NODBG
@@ -66,16 +69,15 @@ New facts (from attestation)
     keyshare is-disallowed
     migration is-disallowed
     debug is-disallowed
+```
 
-
-New policy statements
+## New policy statements
 
   policy-key says platform(type, key, properties) has-trusted-platform-property
   platform(type, properties)
     types are amd-sev-snp, sgx, any
 
-
-New deductions
+## New deductions
 
 
   if platform(type, property) platform-is-trusted
@@ -101,24 +103,25 @@ New deductions
     platform-type: sgx
       todo
 
--------------------------------------------------------------------------------------------------------
+----
 
 
-Policy
-  1. "policyKey is-trusted"
-  2: "The policyKey says the ARK-key is-trusted-for-attestation"
-  3: "policyKey says measurement is-trusted"
-  4. "policyKey says platform[amd-sev-snp, no-debug, no-migrate, api-major >= 0, api-minor >= 0]
+### Policy
+1. "policyKey is-trusted"
+2: "The policyKey says the ARK-key is-trusted-for-attestation"
+3: "policyKey says measurement is-trusted"
+4. "policyKey says platform[amd-sev-snp, no-debug, no-migrate, api-major >= 0, api-minor >= 0]
          has-trusted-platform-property"
 
-From attestation:
-  1. environment(platform[amd-sev-snp, attest-key: key, no-debug, no-migrate, api-major = 0, api-minor = 0],
+### From attestation:
+1. environment(platform[amd-sev-snp, attest-key: key, no-debug, no-migrate, api-major = 0, api-minor = 0],
          measurement[measurement]) is-environment
-  2. key[rsa, enclaveKey, b86447b…] speaks-for environment(platform, measurement)
+2. key[rsa, enclaveKey, b86447b…] speaks-for environment(platform, measurement)
 
 
-new constructproof
+### New constructproof
 
+```
 // At this point, the already_proved should be
 //    0: "policyKey is-trusted"
 //    1: "The policy-key says the ARK-key is-trusted-for-attestation"
@@ -161,3 +164,4 @@ new constructproof
 //    "environment(platform, measurement) is-trusted AND
 //        enclave-key speaks-for environment(platform, measurement)  -->
 //        enclave-key is-trusted-for-authentication  [or enclave-key is-trusted-for-attestation]
+```

@@ -36,12 +36,71 @@ jobs:
         #! ---------------------------------------------------------------------
         make -f certifier.mak clean
         make -f certifier_tests.mak clean
+
         make -f certifier.mak
         make -f certifier.mak clean
 
-        make -f certifier_tests.mak clean
         make -f certifier_tests.mak
         ./certifier_tests.exe
+
+        popd
+
+    - name: unit-test-certlib-utility-programs
+      run: |
+        echo "******************************************************************"
+        echo "* Check core Certlib interfaces for utility programs"
+        echo "******************************************************************"
+        echo " "
+        pushd utilities
+
+        # Build utilities
+        make -f cert_utility.mak
+        make -f policy_utilities.mak
+
+        popd
+
+        pushd ./certifier_service/certlib/test_data
+
+        echo " "
+        echo "---- Running utilities/cert_utility.exe ... ----"
+        echo " "
+        set -x
+        ../../../utilities/cert_utility.exe                    \
+            --operation=generate-policy-key-and-test-keys      \
+            --policy_key_output_file=policy_key_file.bin       \
+            --policy_cert_output_file=policy_cert_file.bin     \
+            --platform_key_output_file=platform_key_file.bin   \
+            --attest_key_output_file=attest_key_file.bin
+        set +x
+
+        set -x
+        ./generate_policy.sh
+        set +x
+
+        popd
+
+        #! Setup dummy libraries for Certifier Service to link with
+        pushd ./certifier_service/
+
+        cd ./graminelib/
+        make dummy
+
+        cd ../oelib
+        make dummy
+
+        cd ../isletlib/
+        make dummy
+
+        cd ../certprotos
+        protoc --go_opt=paths=source_relative --go_out=. --go_opt=Mcertifier.proto= ./certifier.proto
+
+        echo " "
+        echo "---- Running certlib/go test ... ----"
+        echo " "
+        #! Run certlib/ Go unit-tests, which use policy_key_file.bin policy_cert_file.bin
+        #! from test_data/ dir.
+        cd ../certlib
+        go test
 
         popd
 

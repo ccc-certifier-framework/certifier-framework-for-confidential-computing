@@ -1,4 +1,4 @@
-SEV SNP VCEK Certificate and Trust Chain
+# SEV SNP VCEK Certificate and Trust Chain
 
 The SEV-SNP VCEK (Versioned Chip Endorsement Key) public key is need to
 validate the attestation report signed by the hardware using the chip TCB
