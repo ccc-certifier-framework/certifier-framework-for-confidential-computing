@@ -34,6 +34,19 @@ that demonstrate how to implement the Certifier APIs on different platforms.
    under a simulated-enclave and can be run on any Linux host. This will eventually
    be ported to run under AMD Secure Nested Paging (AMD SEV-SNP).
 
+- **simple_app_under_keystone/** - This application is similar to the sample program,
+   simple_app/, but runs under a [Keystone enclave](https://keystone-enclave.org/),
+   which is an an open-source TEE framework for RISC-V processors.
+   Currently, only shim-support is provided to build-and-run the sample app
+   on any Linux host.
+
+- **simple_app_under_islet/** - This application is similar to the sample program,
+   simple_app/, but runs under the [Islet SDK](https://github.com/Samsung/islet)
+   which implements the
+   [ARMv9 Confidential Computing Architecture CCA](https://www.arm.com/architecture/security-features/arm-confidential-compute-architecture)
+  specification. Currently, only shim-support is provided to build-and-run the
+  sample app on any Linux host.
+
 - **att_systemd_service/** - This is an example of using Certifier APIs to implement
   attestation for system utilities, like the systemd service. The example runs
   in AMD SEV-SNP enabled guest VM. This example for the systemd service is
@@ -43,6 +56,7 @@ that demonstrate how to implement the Certifier APIs on different platforms.
   the Certifier framework. This sample application demonstrates how to conduct
   privacy preserving data analytics with the Certifier Framework on Open Enclave (OE).
 
+----
 # run_example.sh - Setup and run test for sample application programs
 
 This script packages the steps documented in the corresponding
@@ -89,3 +103,23 @@ $ run_example.sh simple_app run_test
 ```
 - List the individual steps of the setup / test: `$ run_example.sh --list simple_app`
 - Execute each step in the order listed. E.g., `$ run_example.sh simple_app get_measurement_of_trusted_app`
+
+## App-specific help / usage
+
+This script implements platform-specific support for running different sample apps
+under different security enclaves. To get app-specific usage, do:
+
+```shell
+$ run_example.sh --help <sample-app-name>
+```
+
+Example:
+```shell
+$ ./run_example.sh --help simple_app_under_oe
+
+For simple_app_under_oe, you can alternatively use this script
+to generate the policy by editing the measurement in the policy JSON file:
+  To setup the example program        : ./run_example.sh simple_app_under_oe setup_with_auto_policy_generation_for_OE
+  To run and test the example program : ./run_example.sh simple_app_under_oe run_test
+
+```
