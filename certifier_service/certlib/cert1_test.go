@@ -113,8 +113,8 @@ func TestDominance(t *testing.T) {
 func TestKeys(t *testing.T) {
 	fmt.Print("\nTestKeys\n")
 
-	keyFile := "policy_key_file.bin"
-	certFile := "policy_cert_file.bin"
+	keyFile := "./test_data/policy_key_file.bin"
+	certFile := "./test_data/policy_cert_file.bin"
 	fmt.Printf("Key file: %s, Cert file: %s\n", keyFile, certFile)
 	serializedKey, err := os.ReadFile(keyFile)
 	if err != nil {
@@ -799,7 +799,7 @@ func TestArtifacts(t *testing.T) {
 		t.Error("Can't parse parent Certificate")
 	}
 
-	cert := ProduceAdmissionCert(privateIssuerKey, newParentCert, subjKey, "testSubject", "",
+	cert := ProduceAdmissionCert("", privateIssuerKey, newParentCert, subjKey, "testSubject", "",
 		uint64(5), 365.0*86400)
 	fmt.Println("")
 	if cert == nil {

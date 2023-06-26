@@ -2,40 +2,42 @@
 # Privacy Preserving data analytics with Certifier Framework 
 
 This sample application demonstrates how to conduct privacy preserving data analytics with 
-the Certifier Framework on openenclave. It has the following properties: 
-* Demonstrates how to securely use certifier framework  
-   * configures custom trusted policy and security domain
-   * conducts data analytics only on certified secure enclaves  
-* Deploys an existing openenclave application with the certifier framework
-* End-to-end privacy preserving data analytics 
-   * protects the dataset sent to the enclave
-   * protects the result returned from the enclave
-   * secures the analytics computation done in the enclave
+the Certifier Framework on OpenEnclave. It has the following properties: 
+* Demonstrates how to securely use the Certifier Framework
+   * Configures custom trusted policy and security domain
+   * Conducts data analytics only on certified secure enclaves 
+* Deploys an existing OpenEnclave application with the Certifier Framework
+* End-to-end privacy preserving data analytics
+   * Protects the dataset sent to the enclave
+   * Protects the result returned from the enclave
+   * Secures the analytics computation done in the enclave
 
-**Note:** 
-The existing demostration has been tested with SGX hardware mode and simulation mode, but it 
-does not leverage the openenclave's interface for getting and verifying the measurement.
-Future release will fix this issue.  
+**Note:**
+The existing demostration has been tested with SGX hardware mode and simulation mode, but it
+does not leverage the OpenEnclave's interface for getting and verifying the measurement.
+Future release will fix this issue.
 
-### On Simulated Enclave 
+### On Simulated Enclave
 
-#### Prerequisites 
-The example is build on [Open Enclave](https://github.com/openenclave/openenclave). 
-Please refer to the [link](https://github.com/openenclave/openenclave/tree/master/docs/GettingStartedDocs#hardware-drivers)
- for instructions. The example also relies on the protobuf built specifically with 
- openenclave libc, which the instructions can be found [here](../../openenclave_test/instructions.txt)
+#### Prerequisites
+The example is built on [Open Enclave](https://github.com/OpenEnclave/OpenEnclave).
+Please refer to the [link](https://github.com/OpenEnclave/OpenEnclave/tree/master/docs/GettingStartedDocs#hardware-drivers)
+ for instructions.
+ 
+ The example also relies on the protobuf built specifically with 
+ OpenEnclave libc, for which the instructions can be found [here](../../OpenEnclave_test/instructions.txt)
 
 To configure the environment variables for this project, run 
-```
+```shell
 export CERTIFIER=~/certifier-github-mirror
 export CERTIFIER_PROTOTYPE=$CERTIFIER
 export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/analytics_example
 export PATH=$PATH:/usr/local/go/bin && export PATH=$PATH:$(go env GOPATH)/bin
-source /opt/openenclave/share/openenclave/openenclaverc
+source /opt/OpenEnclave/share/OpenEnclave/OpenEnclaverc
 ```
 `$CERTIFIER` is the top level directory for the certifier repository.
 
-#### Build and Run
+### Build and Run
 
 Step 1: Load the third party libraries 
 ```bash
@@ -44,12 +46,11 @@ chmod +x ./load_dataframe.sh
 ./load_dataframe.sh
 ```
 This will load and build the [Dataframe](https://github.com/hosseinmoein/DataFrame)
-dependency of the project with openenclave SDK.
+dependency of the project with OpenEnclave SDK.
 
 Step 1: Build the utilities
 ```bash
-cd $CERTIFIER_PROTOTYPE
-cd utilities
+cd $CERTIFIER_PROTOTYPE/utilities
 make -f cert_utility.mak
 make -f policy_utilities.mak
 ```
@@ -59,6 +60,7 @@ Step 2: Generate the policy key and self-signed cert
 ```bash
 mkdir $EXAMPLE_DIR/provisioning
 cd $EXAMPLE_DIR/provisioning
+
 $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
     --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin \
     --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
@@ -68,6 +70,7 @@ This will also generate the attestation key and platform key for the these tests
 Step 3: Embed the policy key in example_app.
 ```bash
 cd $EXAMPLE_DIR/provisioning
+
 $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin --output=../policy_key.cc
 ```
 
@@ -92,12 +95,14 @@ cd $EXAMPLE_DIR/provisioning
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
    --measurement_subject=example_app.measurement --verb="is-trusted" \
    --output=ts1.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
    --verb="says" --clause=ts1.bin --output=vse_policy1.bin
 
 # b. Construct statement "policy-key says the platform-key is-trusted-for-attestation"
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
    --verb="is-trusted-for-attestation" --output=ts2.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
    --verb="says" --clause=ts2.bin --output=vse_policy2.bin
 
@@ -105,6 +110,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
    --vse_file=vse_policy1.bin --duration=9000 \
    --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
    --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
 
@@ -115,8 +121,10 @@ $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,sig
 # e. Construct statement "platform-key says attestation-key is-trusted-for-attestation" and sign it
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=attest_key_file.bin \
    --verb="is-trusted-for-attestation" --output=tsc1.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=platform_key_file.bin \
    --verb="says" --clause=tsc1.bin --output=vse_policy3.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
    --duration=9000 --private_key_file=platform_key_file.bin \
    --output=platform_attest_endorsement.bin

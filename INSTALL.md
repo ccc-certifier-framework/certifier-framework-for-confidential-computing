@@ -1,8 +1,7 @@
-Installing The Certifier Framework for Confidential Computing 
-=============================================================
+# Installing The Certifier Framework for Confidential Computing
 
 In this description, the top level directory of this repository,
-which includes this `INSTALL.md` file, is denoted $(CERTIFIER).
+which includes this `INSTALL.md` file, is denoted $CERTIFIER.
 
 The Ubuntu 20.04 install guide can be found in
 [Ubuntu Install](./Doc/install-certifier-Ubuntu-20.04.md).
@@ -45,7 +44,7 @@ $ sudo apt-get install -y libssl-dev
 ## To compile and run the Certifier API tests
 
 ```shell
-  $ cd $(CERTIFIER)/src
+  $ cd $CERTIFIER/src
   $ make -f certifier_tests.mak clean
   $ make -f certifier_tests.mak
   $ ./certifier_tests.exe [--print_all=true]
@@ -74,9 +73,25 @@ $ sudo ./certifier_tests.exe --print_all=true
 Once you are sure the Certifier works, compile and make the Certifier library:
 
 ```shell
- $ cd $(CERTIFIER)/src
+ $ cd $CERTIFIER/src
  $ make -f certifier.mak clean
  $ make -f certifier.mak
+```
+
+# Utilities
+
+There are utility programs in the `utilities/` subdirectory. Different steps
+in the Certifier workflow use these programs.
+
+To compile them:
+
+```shell
+$ cd $CERTIFIER/utilities
+$ make -f cert_utility.mak clean
+$ make -f policy_utilities.mak clean
+
+$ make -f cert_utility.mak
+$ make -f policy_utilities.mak
 ```
 
 # Certifier Service
@@ -85,30 +100,49 @@ The Certifier Service is in the [certifier_service/](./certifier_service/) direc
 and contains two subdirectories: [certlib/](./certifier_service/certlib/) and
 [certprotos/](./certifier_service/certprotos/).
 
-To compile the certlib tests:
+Certlib unit-tests require some input data in test_data/ dir. Generate it as follows:
 
-  ```shell
-  $ cd $(CERTIFIER)/certifier_service/certprotos
-  $ protoc --go_opt=paths=source_relative --go_out=. --go_opt=Mcertifier.proto= ./certifier.proto
-  $ cd ../certlib
-  $ go test
+```shell
+cd $CERTIFIER/certifier_service/certlib/test_data
+
+$CERTIFIER/utilities/cert_utility.exe                 \
+   --operation=generate-policy-key-and-test-keys      \
+   --policy_key_output_file=policy_key_file.bin       \
+   --policy_cert_output_file=policy_cert_file.bin     \
+   --platform_key_output_file=platform_key_file.bin   \
+   --attest_key_output_file=attest_key_file.bin
+```
+
+Setup dummy libraries for Certifier Service to link with:
+
+```shell
+cd $CERTIFIER/certifier_service/graminelib
+make dummy
+
+cd ../oelib
+make dummy
+
+cd ../isletlib/
+make dummy
+```
+
+To compile the Certlib tests:
+
+```shell
+cd $CERTIFIER/certifier_service/certprotos
+protoc --go_opt=paths=source_relative --go_out=. --go_opt=Mcertifier.proto= ./certifier.proto
+```
+
+Run the Certifier library unit-tests:
+
+```shell
+$ cd ../certlib
+$ go test
 ```
 To compile and run the Certifier Service and test it, follow
 the [instructions](./sample_apps/simple_app/instructions.md)
 in the [sample_apps/simple_app](./sample_apps/simple_app/) example.
 
-
-# Utilities
-
-There are utilities in the `utilities/` subdirectory.  To compile them:
-
-```shell
-$ cd $(CERTIFIER)/utilities
-$ make -f cert_utility.mak clean
-$ make -f cert_utility.mak
-$ make -f policy_utilities.mak clean
-$ make -f policy_utilities.mak
-```
 
 ## Building the Policy Generator - Setup Required
 
@@ -123,7 +157,7 @@ on your system. You may be able to use the
 which automates these steps in our CI-environment.
 
 ```shell
-$ cd $(CERTIFIER)/utilities
+$ cd $CERTIFIER/utilities
 $ git clone https://github.com/nlohmann/json.git
 $ cd json
 $ mkdir build
@@ -155,7 +189,7 @@ Add `/usr/local/lib` to `/etc/ld.so.conf` and run ldconfig if not already done.
 The Policy Generator utility can then be built using:
 
 ```shell
-$ cd $(CERTIFIER)/utilities
+$ cd $CERTIFIER/utilities
 $ make -f policy_generator.mak
 ```
 
@@ -174,7 +208,7 @@ for Confidential Computing is not affected by GPL license terms.
 To compile the sample app in [sample_apps/simple_app](sample_apps/simple_app/):
 
 ```shell
-$ cd $(CERTIFIER)/sample_apps/simple_app
+$ cd $CERTIFIER/sample_apps/simple_app
 $ make -f example_app.mak clean
 $ make -f example_app.mak
 ```
