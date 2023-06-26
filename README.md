@@ -3,7 +3,7 @@
 ## Overview
 
 The Certifier Framework for Confidential Computing consists of a client API
-called the certifier API and server based policy evaluation server called
+called the Certifier API and server-based policy evaluation server called
 the Certifier Service.
 
 The Certifier API greatly simplifies and unifies programming and
@@ -22,7 +22,7 @@ Except as expressly noted in individual source files, the code and
 accompanying material is licensed for general use under the Apache
 2.0 License. Some test drivers are licensed under GPL 2.0; fortunately,
 there are very few affected files and none of the GPL code is
-required in the certifier API, sample applications, utilities or
+required in the Certifier API, sample applications, utilities or
 the Certifier Service.
 
 Please consult the LICENSE file for APACHE 2.0 details and terms.

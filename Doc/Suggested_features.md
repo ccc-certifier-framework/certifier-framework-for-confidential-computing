@@ -1,22 +1,22 @@
-Suggestions for upgrade
+# Enhancements and Feature Requests
 
-  1. Language bindings for python (rust? go? java? c#?)
-  2. TDX, Keystone, CCA
-  3. platform attestation for SGX
-  4. write/read/open/close _encrypted (DoD request)
-  5. integration with confidential containers from IBM
-  6. Key rotation --- done
-  7. RNG --- finished
-  8  GCM in authenticated encryption --- finished except for call in protect_blob
-  9. valgrind for memory leaks
- 10. Support RSA-3072
- 11. Perf tests
- 12. Fuzz
- 13. Nitro
- 14. Other token formats
- 15. Test notes
- 16. GPU support
- 17. C++-->Rust-->C++ (Microsoft suggestion)
- 18. Example scripts to run certifier in TEE.
+1. Language bindings for python (Possibly also for Rust? Go? Java? C#?)
+1. TDX, Keystone, CCA
+1. Platform attestation for SGX
+1. Write/read/open/close _encrypted (DoD request)
+1. Integration with confidential containers from IBM
+1. Key rotation --- done
+1. RNG --- finished
+1  GCM in authenticated encryption --- finished except for call in protect_blob
+1. valgrind for memory leaks
+1. Support RSA-3072
+1. Perf tests
+1. Fuzz testing
+1. Nitro support
+1. Other token formats
+1. Test notes
+1. GPU support
+1. C++ --> Rust --> C++ (Microsoft suggestion)
+1. Example scripts to run certifier in TEE.
 
 
