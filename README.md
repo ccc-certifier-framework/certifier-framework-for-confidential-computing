@@ -8,12 +8,12 @@ the Certifier Service.
 
 The Certifier API greatly simplifies and unifies programming and
 operations support for multi-vendor Confidential Computing platforms
-by providing simple client trust management including attestation evaluation,
+by providing simple client trust management, including attestation evaluation,
 secure storage, platform initialization, secret sharing, secure channels
 and other services.
 
-The Certifier Service provides support for scalable, policy driven
-trust management including attestation evaluation, application upgrade
+The Certifier Service provides support for scalable, policy-driven
+trust management, including attestation evaluation, application upgrade
 and other Confidential Computing Trust services.
 
 This project was started at VMware Inc.
@@ -30,10 +30,10 @@ By using this software you agree to those terms of the respective
 licenses.
 
 The repository contains the complete Certifier Framework source and a number of
-examples as well as complete instructions.  In particular, the sample in
-sample_apps/simple_app [example_app.cc](sample_apps/simple_app/example_app.cc)
-policy is a complete guide on building and developing an application, and
-policy as well as deploying a service.
+examples as well as complete instructions.  In particular, the sample program
+in sample_apps/simple_app [example_app.cc](sample_apps/simple_app/example_app.cc)
+is a complete guide for building and developing an application, and
+policy, as well as deploying a service.
 
 ## Documentation and Installation
 

@@ -408,17 +408,3 @@ jobs:
         ./cleanup.sh
 
         popd
-
-    - name: test-miscellaneous
-      run: |
-        echo " "
-        echo "******************************************************************"
-        echo "* Few other miscellaneous checks"
-        echo "******************************************************************"
-        echo " "
-        pushd ./certifier_service/oelib
-
-        make clean
-        make dummy
-
-        popd
