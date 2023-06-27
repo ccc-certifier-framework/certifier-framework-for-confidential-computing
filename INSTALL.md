@@ -1,5 +1,4 @@
-Installing The Certifier Framework for Confidential Computing 
-=============================================================
+# Installing The Certifier Framework for Confidential Computing
 
 In this description, the top level directory of this repository,
 which includes this `INSTALL.md` file, is denoted $(CERTIFIER).
