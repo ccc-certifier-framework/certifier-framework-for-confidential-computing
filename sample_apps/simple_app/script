@@ -9,6 +9,11 @@ export GOPATH=$HOME
 export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
 export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app
 
+# Compile utilities
+cd $CERTIFIER_PROTOTYPE/utilities
+make -f cert_utility.mak
+make -f policy_utilities.mak
+
 # Create keys
 mkdir -p $EXAMPLE_DIR/provisioning
 cd $EXAMPLE_DIR/provisioning

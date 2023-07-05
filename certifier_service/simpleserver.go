@@ -72,9 +72,8 @@ func initLog() bool {
 	return true
 }
 
-var policyInitialized bool = false
 var signedPolicy *certprotos.SignedClaimSequence = &certprotos.SignedClaimSequence{}
-var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements{}
+var policyPool certlib.PolicyPool
 
 // At init, we retrieve the policy key and the rules to evaluate
 func initCertifierService() bool {
@@ -91,6 +90,7 @@ func initCertifierService() bool {
 		fmt.Println("Simple_server: can't read key file, ", err)
 		return false
 	}
+	fmt.Printf("Read policy key file\n")
 
 	serializedPolicyCert, err := os.ReadFile(*policyCertFile)
 	if err != nil {
@@ -102,6 +102,7 @@ func initCertifierService() bool {
 		fmt.Println("Simpleserver: Can't Parse policy cert, ", err)
 		return false
 	}
+	fmt.Printf("Parsed certificate\n")
 
 	privatePolicyKey = &certprotos.KeyMessage{}
 	err = proto.Unmarshal(serializedKey, privatePolicyKey)
@@ -116,7 +117,6 @@ func initCertifierService() bool {
 		return false
 	}
 
-	// This should change to an InitPolicy call
 	if policyFile == nil {
 		fmt.Printf("SimpleServer: No policy file\n")
 		return false
@@ -128,29 +128,40 @@ func initCertifierService() bool {
 		fmt.Printf("SimpleServer: Can't read policy\n")
 		return false
 	}
+	fmt.Printf("Read Policy\n")
 
 	err = proto.Unmarshal(serializedPolicy, signedPolicy)
 	if err != nil {
 		fmt.Printf("SimpleServer: Can't unmarshal signed policy\n")
 		return false
 	}
+	fmt.Printf("Deserialized Policy\n")
 
+	var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements{}
 	if !certlib.InitAxiom(*publicPolicyKey, originalPolicy) {
 		fmt.Printf("SimpleServer: Can't InitAxiom\n")
 		return false
 	}
+	fmt.Printf("InitAxiom succeeded\n")
 
-	policyInitialized = certlib.InitPolicy(publicPolicyKey, signedPolicy, originalPolicy)
-
-	if !policyInitialized {
+	if !certlib.InitPolicy(publicPolicyKey, signedPolicy, originalPolicy) {
 		fmt.Printf("SimpleServer: Couldn't initialize policy\n")
 		return false
 	}
+	fmt.Printf("InitPolicy succeeded\n")
+
+	if !certlib.InitPolicyPool(&policyPool, originalPolicy) {
+		fmt.Printf("SimpleServer: Can't init policy pool\n")
+		return false
+	}
+	fmt.Printf("InitPolicyPool succeeded\n")
 
 	if !certlib.InitSimulatedEnclave() {
 		fmt.Printf("SimpleServer: Can't init simulated enclave\n")
 		return false
 	}
+	fmt.Printf("InitSimulatedEnclave succeeded, all initialized\n")
+
 	return true
 }
 
@@ -205,7 +216,7 @@ func logEvent(msg string, req []byte, resp []byte) {
 }
 
 func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessage, privKey *certprotos.KeyMessage,
-	evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
+	policyPool *certlib.PolicyPool, evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
 
 	// evidenceType should be "vse-attestation-package", "gramine-evidence",
 	//      "oe-evidence" or "sev-platform-package"
@@ -214,37 +225,37 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 	var success bool
 
 	if evType == "vse-attestation-package" {
-		success, toProve, measurement = certlib.ValidateInternalEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateInternalEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateInternalEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "sev-platform-package" {
-		success, toProve, measurement = certlib.ValidateSevEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateSevEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "oe-evidence" {
-		success, toProve, measurement = certlib.ValidateOeEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateOeEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateOeEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "gramine-evidence" {
-		success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateGramineEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "keystone-evidence" {
-		success, toProve, measurement = certlib.ValidateKeystoneEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateKeystoneEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateKeystoneEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "islet-evidence" {
-		success, toProve, measurement = certlib.ValidateIsletEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateIsletEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateIsletEvidence failed\n")
 			return false, nil
@@ -365,7 +376,7 @@ func serviceThread(conn net.Conn, client string) {
 		remoteIP = remoteAddr.IP.String()
 	}
 	outcome, artifact := ValidateRequestAndObtainToken(remoteIP, publicPolicyKey, privatePolicyKey,
-		request.GetSubmittedEvidenceType(), request.GetPurpose(),
+		&policyPool, request.GetSubmittedEvidenceType(), request.GetPurpose(),
 		request.Support)
 
 	if outcome {

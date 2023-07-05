@@ -208,6 +208,17 @@ bool generate_key(const string& type, const string& name, key_message* k) {
       return false;
     }
     k->set_key_type("rsa-2048-private");
+  } else if (type == "rsa-3072") {
+    RSA* r= RSA_new();
+    if (!generate_new_rsa_key(3072, r)) {
+      printf("Can't generate rsa key\n");
+      return false;
+    }
+    if (!RSA_to_key(r, k)) {
+      printf("Can't convert rsa key to key\n");
+      return false;
+    }
+    k->set_key_type("rsa-3072-private");
   } else if (type == "rsa-4096") {
     RSA* r= RSA_new();
     if (!generate_new_rsa_key(4096, r)) {
