@@ -467,6 +467,8 @@ func GetInternalKeyFromRsaPublicKey(name string, PK *rsa.PublicKey, km *certprot
 		kt = "rsa-1024-public"
 	} else if modLen == 256 {
 		kt = "rsa-2048-public"
+	} else if modLen == 384 {
+		kt = "rsa-3072-public"
 	} else if modLen == 512 {
 		kt = "rsa-4096-public"
 	} else {
@@ -497,6 +499,8 @@ func InternalPublicFromPrivateKey(privateKey *certprotos.KeyMessage) *certprotos
 		kt = "rsa-1024-public"
 	} else if privateKey.GetKeyType() == "rsa-2048-private" {
 		kt = "rsa-2048-public"
+	} else if privateKey.GetKeyType() == "rsa-3072-private" {
+		kt = "rsa-3072-public"
 	} else if privateKey.GetKeyType() == "rsa-4096-private" {
 		kt = "rsa-4096-public"
 	} else {
@@ -539,6 +543,8 @@ func MakeVseRsaKey(n int) *certprotos.KeyMessage {
 		kf = "rsa-1024-private"
 	} else if n == 2048 {
 		kf = "rsa-2048-private"
+	} else if n == 3072 {
+		kf = "rsa-3072-private"
 	} else if n == 4096 {
 		kf = "rsa-4096-private"
 	} else {
@@ -692,6 +698,7 @@ func SameKey(k1 *certprotos.KeyMessage, k2 *certprotos.KeyMessage) bool {
 		return false
 	}
 	if k1.GetKeyType() == "rsa-2048-private" || k1.GetKeyType() == "rsa-2048-public" ||
+		k1.GetKeyType() == "rsa-3072-private" || k1.GetKeyType() == "rsa-3072-public" ||
 		k1.GetKeyType() == "rsa-4096-private" || k1.GetKeyType() == "rsa-4096-public" ||
 		k1.GetKeyType() == "rsa-1024-private" || k1.GetKeyType() == "rsa-1024-public" {
 		return bytes.Equal(k1.RsaKey.PublicModulus, k2.RsaKey.PublicModulus) &&
@@ -908,7 +915,8 @@ func PrintKey(k *certprotos.KeyMessage) {
 	}
 
 	if k.GetKeyType() == "rsa-1024-public" || k.GetKeyType() == "rsa-2048-public" ||
-		k.GetKeyType() == "rsa-4096-public" || k.GetKeyType() == "rsa-1024-private" ||
+		k.GetKeyType() == "rsa-3072-public" || k.GetKeyType() == "rsa-4096-public" ||
+		k.GetKeyType() == "rsa-1024-private" || k.GetKeyType() == "rsa-3072-private" ||
 		k.GetKeyType() == "rsa-2048-private" || k.GetKeyType() == "rsa-4096-private" {
 		if k.GetRsaKey() != nil {
 			PrintRsaKey(k.GetRsaKey())
@@ -931,6 +939,7 @@ func PrintKeyDescriptor(k *certprotos.KeyMessage) {
 
 	if k.GetKeyType() == "rsa-2048-private" || k.GetKeyType() == "rsa-2048-public" ||
 		k.GetKeyType() == "rsa-4096-private" || k.GetKeyType() == "rsa-4096-public" ||
+		k.GetKeyType() == "rsa-3072-private" || k.GetKeyType() == "rsa-3072-public" ||
 		k.GetKeyType() == "rsa-1024-private" || k.GetKeyType() == "rsa-1024-public" {
 		fmt.Printf("Key[rsa, ")
 		if k.GetKeyName() != "" {
@@ -1135,6 +1144,9 @@ func MakeSignedClaim(s *certprotos.ClaimMessage, k *certprotos.KeyMessage) *cert
 		sm.SigningAlgorithm = &ss
 	} else if k.GetKeyType() == "rsa-4096-private" {
 		var ss string = "rsa-4096-sha384-pkcs-sign"
+		sm.SigningAlgorithm = &ss
+	} else if k.GetKeyType() == "rsa-3072-private" {
+		var ss string = "rsa-3072-sha384-pkcs-sign"
 		sm.SigningAlgorithm = &ss
 	} else {
 		return nil
@@ -1715,7 +1727,7 @@ func ProduceAdmissionCert(remoteIP string, issuerKey *certprotos.KeyMessage, iss
 	spK := rsa.PrivateKey{}
 	sPK := rsa.PublicKey{}
 	if !GetRsaKeysFromInternal(subjKey, &spK, &sPK) {
-		fmt.Printf("ProduceAdmissionCert: Can't get Rsa sunject key\n")
+		fmt.Printf("ProduceAdmissionCert: Can't get Rsa subject key\n")
 		return nil
 	}
 

@@ -151,6 +151,65 @@ bool test_signed_claims(bool print_all) {
     return false;
   }
 
+  // RSA-3072
+  key_message my_medium_rsa_key;
+  if (!make_certifier_rsa_key(3072,  &my_medium_rsa_key)) {
+    printf("test_signed_claims: make_certifier_rsa_key failed (3072)\n");
+    return false;
+  }
+  my_medium_rsa_key.set_key_name("my-medium-rsa-key");
+  my_medium_rsa_key.set_key_type("rsa-3072-private");
+  my_medium_rsa_key.set_key_format("vse-key");
+
+  if (print_all) {
+    printf("RSA-3072 key: \n");
+    print_key(my_medium_rsa_key);
+    printf("\n");
+  }
+
+  key_message my_medium_public_rsa_key;
+  if (!private_key_to_public_key(my_medium_rsa_key, &my_medium_public_rsa_key)) {
+    printf("test_signed_claims: private_key_to_public_key failed (2)\n");
+    return false;
+  }
+  entity_message e13;
+  if (!make_key_entity(my_medium_public_rsa_key, &e13)) {
+    printf("test_signed_claims: make_entity 13 failed\n");
+    return false;
+  }
+  vse_clause clause13;
+  vse_clause clause14;
+  if (!make_simple_vse_clause((const entity_message)e13, s2, (const entity_message)e2, &clause13)) {
+    return false;
+  }
+  if (!make_indirect_vse_clause((const entity_message)e13, s1, clause13, &clause14)) {
+    printf("test_signed_claims: make clause 13 failed\n");
+    return false;
+  }
+
+  claim_message claim12;
+  signed_claim_message signed_claim12;
+  string serialized_vse12;
+  clause14.SerializeToString(&serialized_vse12);
+  if (!make_claim(serialized_vse12.size(), (byte*)serialized_vse12.data(), vse_clause_format, n1,
+        nb, na, &claim12)) {
+    printf("test_signed_claims: make clause 12 failed\n");
+      return false;
+  }
+  if (print_all) {
+    printf("\nClaims for signing:\n");
+    print_claim(claim12);
+    printf("\n");
+  }
+  if(!make_signed_claim("rsa-3072-sha384-pkcs-sign", claim12, my_medium_rsa_key, &signed_claim12)) {
+    printf("test_signed_claims: make_signed_claim failed (3072)\n");
+    return false;
+  }
+  if (!verify_signed_claim(signed_claim12, my_medium_public_rsa_key)) {
+    printf("my_medium_rsa_key verified failed\n");
+    return false;
+  }
+
   // RSA-4096
   key_message my_big_rsa_key;
   if (!make_certifier_rsa_key(4096,  &my_big_rsa_key)) {

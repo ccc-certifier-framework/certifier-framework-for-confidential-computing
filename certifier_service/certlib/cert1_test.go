@@ -799,7 +799,8 @@ func TestArtifacts(t *testing.T) {
 		t.Error("Can't parse parent Certificate")
 	}
 
-	cert := ProduceAdmissionCert("", privateIssuerKey, newParentCert, subjKey, "testSubject", "",
+	remoteIP := "192.2.2.1"
+	cert := ProduceAdmissionCert(remoteIP, privateIssuerKey, newParentCert, subjKey, "testSubject", "",
 		uint64(5), 365.0*86400)
 	fmt.Println("")
 	if cert == nil {

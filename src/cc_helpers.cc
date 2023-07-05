@@ -756,6 +756,11 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
         printf("cold_init: Can't generate App private key\n");
         return false;
       }
+    } else if (public_key_alg == "rsa-3072") {
+      if (!make_certifier_rsa_key(3072,  &private_auth_key_)) {
+        printf("cold_init: Can't generate App private key\n");
+        return false;
+      }
     } else if (public_key_alg == "rsa-4096") {
       if (!make_certifier_rsa_key(4096,  &private_auth_key_)) {
         printf("cold_init: Can't generate App private key\n");
@@ -795,6 +800,11 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
     // make app service private and public key
     if (public_key_alg == "rsa-2048") {
       if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
+        printf("cold_init: Can't generate App private key\n");
+        return false;
+      }
+    } else if (public_key_alg == "rsa-3072") {
+      if (!make_certifier_rsa_key(3072,  &private_service_key_)) {
         printf("cold_init: Can't generate App private key\n");
         return false;
       }

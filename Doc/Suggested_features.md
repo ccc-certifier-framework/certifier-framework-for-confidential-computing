@@ -7,7 +7,7 @@
 4. Nitro support
 5. Investigate fragile mutual auth TLS connections
 6. Integration with Confidential Containers from IBM
-7. Support RSA-3072
+7. Support RSA-3072 --- Done with FilterPolicy integration.
 8. Platform attestation for SGX
 9. Write/read/open/close_encrypted (DoD request)
 10. GPU support

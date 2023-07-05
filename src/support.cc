@@ -81,6 +81,9 @@ name_size cipher_key_byte_name_size[] = {
   {"rsa-2048-public", 256},
   {"rsa-1024-private", 128},
   {"rsa-1024-public", 128},
+  {"rsa-3072-sha384-pkcs-sign", 384},
+  {"rsa-3072-private", 384},
+  {"rsa-3072-public", 384},
   {"rsa-4096-sha384-pkcs-sign", 512},
   {"rsa-4096-private", 512},
   {"rsa-4096-public", 512},
@@ -854,6 +857,10 @@ bool certifier::utilities::private_key_to_public_key(const key_message& in,
     alg_type = rsa_alg_type;
     out->set_key_type("rsa-1024-public");
     n_bytes = cipher_block_byte_size("rsa-1024-public");
+  } else if (in.key_type() == "rsa-3072-private") {
+    alg_type = rsa_alg_type;
+    out->set_key_type("rsa-3072-public");
+    n_bytes = cipher_block_byte_size("rsa-3072-public");
   } else if (in.key_type() == "rsa-4096-private") {
     alg_type = rsa_alg_type;
     out->set_key_type("rsa-4096-public");
@@ -914,6 +921,8 @@ bool make_certifier_rsa_key(int n,  key_message* k) {
     k->set_key_type("rsa-1024-private");
   } else if (n == 4096) {
     k->set_key_type("rsa-4096-private");
+  } else if (n == 3072) {
+    k->set_key_type("rsa-3072-private");
   } else {
     RSA_free(r);
     return false;
@@ -1113,6 +1122,12 @@ bool key_to_RSA(const key_message& k, RSA* r) {
   } else if (k.key_type() == "rsa-4096-public") {
     key_size_bits= 4096;
     private_key = false;
+  } else if (k.key_type() == "rsa-3072-private") {
+    key_size_bits= 3072;
+    private_key = true;
+  } else if (k.key_type() == "rsa-3072-public") {
+    key_size_bits= 3072;
+    private_key = false;
   } else {
     // Shut compiler warning about key_size_bits set-but-not-used
     return (key_size_bits != 0);
@@ -1205,6 +1220,11 @@ bool RSA_to_key(const RSA* r, key_message* k) {
       k->set_key_type("rsa-4096-public");
     else
       k->set_key_type("rsa-4096-private");
+  } else if (rsa_size == 3072) {
+    if (d == nullptr)
+      k->set_key_type("rsa-3072-public");
+    else
+      k->set_key_type("rsa-3072-private");
   } else {
     return false;
   }
@@ -1718,6 +1738,7 @@ bool same_key(const key_message& k1, const key_message& k2) {
     return false;
   if (k1.key_type() == "rsa-2048-private" || k1.key_type() == "rsa-2048-public" ||
       k1.key_type() == "rsa-1024-private" || k1.key_type() == "rsa-1024-public" ||
+      k1.key_type() == "rsa-3072-private" || k1.key_type() == "rsa-3072-public" ||
       k1.key_type() == "rsa-4096-private" || k1.key_type() == "rsa-4096-public") {
     string b1, b2;
     if (!k1.has_rsa_key() || !k2.has_rsa_key())
@@ -2114,6 +2135,7 @@ void print_key_descriptor(const key_message& k) {
     return;
 
   if (k.key_type() == "rsa-2048-private" || k.key_type() == "rsa-2048-public" ||
+      k.key_type() == "rsa-3072-private" || k.key_type() == "rsa-3072-public" ||
       k.key_type() == "rsa-1024-private" || k.key_type() == "rsa-1024-public" ||
       k.key_type() == "rsa-4096-private" || k.key_type() == "rsa-4096-public") {
     printf("Key[rsa, ");
@@ -2326,6 +2348,32 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
     out->set_allocated_signing_key(psk);
     out->set_signing_algorithm(alg);
     out->set_signature((void*)sig, sig_size);
+  } else if (strcmp(alg, "rsa-3072-sha384-pkcs-sign") == 0) {
+    RSA* r = RSA_new();
+    if (!key_to_RSA(key, r)) {
+      printf("make_signed_claim: key_to_RSA failed\n");
+      return false;
+    }
+
+    sig_size = RSA_size(r);
+    byte sig[sig_size];
+    success = rsa_sign("sha-384", r, serialized_claim.size(), (byte*)serialized_claim.data(),
+      &sig_size, sig);
+    if (!success) {
+      printf("make_signed_claim: rsa_sign failed\n");
+      return false;
+    }
+    RSA_free(r);
+
+    // sign serialized claim
+    key_message* psk = new key_message;
+    if (!private_key_to_public_key(key, psk)) {
+      printf("make_signed_claim: private_key_to_public_key failed\n");
+      return false;
+    }
+    out->set_allocated_signing_key(psk);
+    out->set_signing_algorithm(alg);
+    out->set_signature((void*)sig, sig_size);
   } else if (strcmp(alg, "rsa-4096-sha384-pkcs-sign") == 0) {
     RSA* r = RSA_new();
     if (!key_to_RSA(key, r)) {
@@ -2366,8 +2414,10 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
 
     // sign serialized claim
     key_message* psk = new key_message;
-    if (!private_key_to_public_key(key, psk))
+    if (!private_key_to_public_key(key, psk)) {
+      printf("make_signed_claim: private_key_to_public_key failed\n");
       return false;
+    }
     out->set_allocated_signing_key(psk);
     out->set_signature((void*)sig, sig_size);
   } else if (strcmp(alg, "ecc-256-sha256-pkcs-sign") == 0) {
@@ -2396,9 +2446,23 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
 }
 
 bool verify_signed_claim(const signed_claim_message& signed_claim, const key_message& key) {
-  if (!signed_claim.has_serialized_claim_message() || !signed_claim.has_signing_key() ||
-      !signed_claim.has_signing_algorithm() || !signed_claim.has_signature())
+
+  if (!signed_claim.has_serialized_claim_message()) {
+    printf("verify_signed_claim: no serialized claim\n");
     return false;
+  }
+  if (!signed_claim.has_signing_key()) {
+    printf("verify_signed_claim: no signing key\n");
+    return false;
+  }
+  if (!signed_claim.has_signing_algorithm()) {
+    printf("verify_signed_claim: no signing alg\n");
+    return false;
+  }
+  if (!signed_claim.has_signature()) {
+    printf("verify_signed_claim: no signature\n");
+    return false;
+  }
 
   string serialized_claim;
   serialized_claim.assign((char*)signed_claim.serialized_claim_message().data(),
@@ -2424,12 +2488,15 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   time_point t_na;
 
   if (!time_now(&t_now)) {
+    printf("verify_signed_claim: time_now failed\n");
     return false;
   }
   if (!string_to_time(c.not_before(), &t_nb)) {
+    printf("verify_signed_claim: string_to_time failed\n");
     return false;
   }
   if (!string_to_time(c.not_after(), &t_na)) {
+    printf("verify_signed_claim: string_to_time failed\n");
     return false;
   }
 
@@ -2446,15 +2513,27 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   if (signed_claim.signing_algorithm() == "rsa-2048-sha256-pkcs-sign") {
     RSA* r = RSA_new();
     if (!key_to_RSA(key, r)) {
+      printf("verify_signed_claim: key_to_RSA failed\n");
       return false;
     }
     success = rsa_sha256_verify(r, (int)signed_claim.serialized_claim_message().size(),
         (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
         (byte*)signed_claim.signature().data());
     RSA_free(r);
+  } else if (signed_claim.signing_algorithm() == "rsa-3072-sha384-pkcs-sign") {
+    RSA* r = RSA_new();
+    if (!key_to_RSA(key, r)) {
+      printf("verify_signed_claim: key_to_RSA failed\n");
+      return false;
+    }
+    success = rsa_verify("sha-384", r, (int)signed_claim.serialized_claim_message().size(),
+        (byte*)signed_claim.serialized_claim_message().data(), (int)signed_claim.signature().size(),
+        (byte*)signed_claim.signature().data());
+    RSA_free(r);
   } else if (signed_claim.signing_algorithm() == "rsa-4096-sha384-pkcs-sign") {
     RSA* r = RSA_new();
     if (!key_to_RSA(key, r)) {
+      printf("verify_signed_claim: key_to_RSA failed\n");
       return false;
     }
     success = rsa_verify("sha-384", r, (int)signed_claim.serialized_claim_message().size(),
@@ -2464,6 +2543,7 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   } else if (signed_claim.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
     EC_KEY* k = key_to_ECC(key);
     if (k == nullptr) {
+      printf("verify_signed_claim: key_to_ECC failed\n");
       return false;
     }
     success = ecc_verify("sha-384", k, (int)signed_claim.serialized_claim_message().size(),
@@ -2587,6 +2667,7 @@ bool certifier::utilities::produce_artifact(
   EVP_PKEY* signing_pkey = EVP_PKEY_new();
   if (signing_key.key_type() == "rsa-1024-private" ||
       signing_key.key_type() == "rsa-2048-private" ||
+      signing_key.key_type() == "rsa-3072-private" ||
       signing_key.key_type() == "rsa-4096-private") {
     RSA* signing_rsa_key = RSA_new();
     if (!key_to_RSA(signing_key, signing_rsa_key)) {
@@ -2600,8 +2681,10 @@ bool certifier::utilities::produce_artifact(
     if (subject_key.key_type() == "rsa-1024-public" ||
         subject_key.key_type() == "rsa-2048-public" ||
         subject_key.key_type() == "rsa-4096-public" ||
+        subject_key.key_type() == "rsa-3072-public" ||
         subject_key.key_type() == "rsa-1024-private" ||
         subject_key.key_type() == "rsa-2048-private" ||
+        subject_key.key_type() == "rsa-3072-private" ||
         subject_key.key_type() == "rsa-4096-private") {
       RSA* subject_rsa_key = RSA_new();
       if (!key_to_RSA(subject_key, subject_rsa_key)) {
@@ -2651,9 +2734,11 @@ bool certifier::utilities::produce_artifact(
     EVP_PKEY* subject_pkey = EVP_PKEY_new();
     if (subject_key.key_type() == "rsa-1024-public" ||
         subject_key.key_type() == "rsa-2048-public" ||
+        subject_key.key_type() == "rsa-3072-public" ||
         subject_key.key_type() == "rsa-4096-public" ||
         subject_key.key_type() == "rsa-1024-private" ||
         subject_key.key_type() == "rsa-2048-private" ||
+        subject_key.key_type() == "rsa-3072-private" ||
         subject_key.key_type() == "rsa-4096-private") {
       RSA* subject_rsa_key = RSA_new();
       if (!key_to_RSA(subject_key, subject_rsa_key)) {
@@ -2704,9 +2789,11 @@ bool certifier::utilities::verify_artifact(X509& cert, key_message& verify_key,
   bool success = false;
   if (verify_key.key_type() == "rsa-1024-public" ||
       verify_key.key_type() == "rsa-1024-private" ||
+      verify_key.key_type() == "rsa-2048-public" ||
       verify_key.key_type() == "rsa-2048-private" ||
-      verify_key.key_type() == "rsa-2048-private" ||
-      verify_key.key_type() == "rsa-4096-private" ||
+      verify_key.key_type() == "rsa-3072-public" ||
+      verify_key.key_type() == "rsa-3072-private" ||
+      verify_key.key_type() == "rsa-4096-public" ||
       verify_key.key_type() == "rsa-4096-private") {
     EVP_PKEY* verify_pkey = EVP_PKEY_new();
     RSA* verify_rsa_key = RSA_new();
@@ -2922,6 +3009,9 @@ bool key_from_pkey(EVP_PKEY* pkey, const string& name, key_message* k) {
     case 2048:
       k->set_key_type("rsa-2048-public");
       break;
+    case 3072:
+      k->set_key_type("rsa-3072-public");
+      break;
     case 4096:
       k->set_key_type("rsa-4096-public");
       break;
@@ -3004,6 +3094,7 @@ EVP_PKEY* pkey_from_key(const key_message& k) {
   EVP_PKEY* pkey = EVP_PKEY_new();
 
   if (k.key_type() == "rsa-1024-public" || k.key_type() == "rsa-1024-private" ||
+      k.key_type() == "rsa-3072-public" || k.key_type() == "rsa-3072-private" ||
       k.key_type() == "rsa-2048-public" || k.key_type() == "rsa-2048-private" ||
       k.key_type() == "rsa-4096-public" || k.key_type() == "rsa-4096-private") {
     RSA* rsa_key = RSA_new();
@@ -3058,6 +3149,9 @@ bool x509_to_public_key(X509* x, key_message* k) {
     case 2048:
       k->set_key_type("rsa-2048-public");
       break;
+    case 3072:
+      k->set_key_type("rsa-3072-public");
+      break;
     case 4096:
       k->set_key_type("rsa-4096-public");
       break;
@@ -3103,12 +3197,14 @@ bool certifier::utilities::make_root_key_with_cert(string& type, string& name,
       string& issuer_name, key_message* k) {
   string root_name("root");
 
-  if (type == "rsa-4096-private" || type == "rsa-2048-private" || type == "rsa-1024-private") {
+  if (type == "rsa-4096-private" || type == "rsa-2048-private" || type == "rsa-3072-private"|| type == "rsa-1024-private") {
     int n = 2048;
     if (type == "rsa-2048-private")
       n = 2048;
     else if (type == "rsa-1024-private")
       n = 1024;
+    else if (type == "rsa-3072-private")
+      n = 3072;
     else if (type == "rsa-4096-private")
       n = 4096;
 
