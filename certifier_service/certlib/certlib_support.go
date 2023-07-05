@@ -1715,7 +1715,7 @@ func ProduceAdmissionCert(remoteIP string, issuerKey *certprotos.KeyMessage, iss
 	spK := rsa.PrivateKey{}
 	sPK := rsa.PublicKey{}
 	if !GetRsaKeysFromInternal(subjKey, &spK, &sPK) {
-		fmt.Printf("ProduceAdmissionCert: Can't get Rsa sunject key\n")
+		fmt.Printf("ProduceAdmissionCert: Can't get Rsa subject key\n")
 		return nil
 	}
 

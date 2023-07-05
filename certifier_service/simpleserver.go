@@ -72,9 +72,8 @@ func initLog() bool {
 	return true
 }
 
-var policyInitialized bool = false
 var signedPolicy *certprotos.SignedClaimSequence = &certprotos.SignedClaimSequence{}
-var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements{}
+var policyPool certlib.PolicyPool
 
 // At init, we retrieve the policy key and the rules to evaluate
 func initCertifierService() bool {
@@ -135,15 +134,19 @@ func initCertifierService() bool {
 		return false
 	}
 
+	var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements{}
 	if !certlib.InitAxiom(*publicPolicyKey, originalPolicy) {
 		fmt.Printf("SimpleServer: Can't InitAxiom\n")
 		return false
 	}
 
-	policyInitialized = certlib.InitPolicy(publicPolicyKey, signedPolicy, originalPolicy)
-
-	if !policyInitialized {
+	if !certlib.InitPolicy(publicPolicyKey, signedPolicy, originalPolicy) {
 		fmt.Printf("SimpleServer: Couldn't initialize policy\n")
+		return false
+	}
+
+	if !certlib.InitPolicyPool(&policyPool, originalPolicy) {
+		fmt.Printf("SimpleServer: Can't init policy pool\n")
 		return false
 	}
 
@@ -205,7 +208,7 @@ func logEvent(msg string, req []byte, resp []byte) {
 }
 
 func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessage, privKey *certprotos.KeyMessage,
-	evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
+	policyPool *certlib.PolicyPool, evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
 
 	// evidenceType should be "vse-attestation-package", "gramine-evidence",
 	//      "oe-evidence" or "sev-platform-package"
@@ -214,25 +217,25 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 	var success bool
 
 	if evType == "vse-attestation-package" {
-		success, toProve, measurement = certlib.ValidateInternalEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateInternalEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateInternalEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "sev-platform-package" {
-		success, toProve, measurement = certlib.ValidateSevEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateSevEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateSevEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "oe-evidence" {
-		success, toProve, measurement = certlib.ValidateOeEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateOeEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateOeEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "gramine-evidence" {
-		success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateGramineEvidence failed\n")
 			return false, nil
@@ -365,7 +368,7 @@ func serviceThread(conn net.Conn, client string) {
 		remoteIP = remoteAddr.IP.String()
 	}
 	outcome, artifact := ValidateRequestAndObtainToken(remoteIP, publicPolicyKey, privatePolicyKey,
-		request.GetSubmittedEvidenceType(), request.GetPurpose(),
+		&policyPool, request.GetSubmittedEvidenceType(), request.GetPurpose(),
 		request.Support)
 
 	if outcome {
