@@ -241,13 +241,13 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 			return false, nil
 		}
 	} else if evType == "keystone-evidence" {
-		success, toProve, measurement = certlib.ValidateKeystoneEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateKeystoneEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateKeystoneEvidence failed\n")
 			return false, nil
 		}
 	} else if evType == "islet-evidence" {
-		success, toProve, measurement = certlib.ValidateIsletEvidence(pubKey, ep, originalPolicy, purpose)
+		success, toProve, measurement = certlib.ValidateIsletEvidence(pubKey, ep, policyPool, purpose)
 		if !success {
 			fmt.Printf("ValidateRequestAndObtainToken: ValidateIsletEvidence failed\n")
 			return false, nil

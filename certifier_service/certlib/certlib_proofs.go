@@ -33,6 +33,15 @@ import (
 	"os"
 )
 
+func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
+	// add pk is-trusted to proved statenments
+	ke := MakeKeyEntity(&pk)
+	ist := "is-trusted"
+	vc := MakeUnaryVseClause(ke, &ist)
+	ps.Proved = append(ps.Proved, vc)
+	return true
+}
+
 func testSign(PK1 *ecdsa.PublicKey) {
 
 	fmt.Printf("\n***testSign\n")
@@ -318,6 +327,7 @@ func getOeMeasurementFromAttestation(prevEvidence *certprotos.Evidence, curEvide
 // Returns the single policy statement naming the relevant measurement policy statement for a this evidence package
 func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string, evp *certprotos.EvidencePackage) *certprotos.VseClause {
 
+	ev_list := evp.FactAssertion
 	if ev_list == nil {
 		return nil
 	}
@@ -2808,7 +2818,6 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	fmt.Printf("\nValidateSevEvidence, Original policy:\n")
 	PrintProvedStatements(policyPool.AllPolicy)
 
-	alreadyProved := FilterSevPolicy(pubPolicyKey, evp, originalPolicy)
 	alreadyProved := FilterSevPolicy(pubPolicyKey, evp, policyPool)
 	if alreadyProved == nil {
 		fmt.Printf("Can't filterpolicy\n")
@@ -3113,9 +3122,10 @@ func ValidateGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certproto
 }
 
 func FilterKeystonePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-	original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+	policyPool *PolicyPool) *certprotos.ProvedStatements {
 
 	// Todo: Fix when we import new filter framework
+	original := policyPool.AllPolicy
 	filtered := &certprotos.ProvedStatements{}
 	for i := 0; i < len(original.Proved); i++ {
 		from := original.Proved[i]
@@ -3255,14 +3265,14 @@ func ConstructProofFromKeystoneEvidence(publicPolicyKey *certprotos.KeyMessage, 
 
 // returns success, toProve, measurement
 func ValidateKeystoneEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-	originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
+	policyPool *PolicyPool, purpose string) (bool,
 	*certprotos.VseClause, []byte) {
 
 	// Debug
 	fmt.Printf("\nValidateKeystoneEvidence, Original policy:\n")
-	PrintProvedStatements(originalPolicy)
+	PrintProvedStatements(policyPool.AllPolicy)
 
-	alreadyProved := FilterKeystonePolicy(pubPolicyKey, evp, originalPolicy)
+	alreadyProved := FilterKeystonePolicy(pubPolicyKey, evp, policyPool)
 	if alreadyProved == nil {
 		fmt.Printf("ValidateKeystoneEvidence: Can't filterpolicy\n")
 		return false, nil, nil
@@ -3318,9 +3328,10 @@ func ValidateKeystoneEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprot
 }
 
 func FilterIsletPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-	original *certprotos.ProvedStatements) *certprotos.ProvedStatements {
+	policyPool *PolicyPool) *certprotos.ProvedStatements {
 
 	// Todo: Fix when we import new filter framework
+	original := policyPool.AllPolicy
 	filtered := &certprotos.ProvedStatements{}
 	for i := 0; i < len(original.Proved); i++ {
 		from := original.Proved[i]
@@ -3460,14 +3471,14 @@ func ConstructProofFromIsletEvidence(publicPolicyKey *certprotos.KeyMessage, pur
 
 // returns success, toProve, measurement
 func ValidateIsletEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
-	originalPolicy *certprotos.ProvedStatements, purpose string) (bool,
+	policyPool *PolicyPool, purpose string) (bool,
 	*certprotos.VseClause, []byte) {
 
 	// Debug
 	fmt.Printf("\nValidateIsletEvidence, Original policy:\n")
-	PrintProvedStatements(originalPolicy)
+	PrintProvedStatements(policyPool.AllPolicy)
 
-	alreadyProved := FilterIsletPolicy(pubPolicyKey, evp, originalPolicy)
+	alreadyProved := FilterIsletPolicy(pubPolicyKey, evp, policyPool)
 	if alreadyProved == nil {
 		fmt.Printf("ValidateIsletEvidence: Can't filterpolicy\n")
 		return false, nil, nil
