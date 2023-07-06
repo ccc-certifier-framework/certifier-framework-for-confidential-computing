@@ -38,12 +38,12 @@ CL=..
 
 INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
 
+CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+
+CFLAGS  = $(CFLAGS_COMMON) -O3
+
 ifdef ENABLE_SEV
-CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D SEV_SNP -Wno-deprecated-declarations
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D SEV_SNP -Wno-deprecated-declarations
-else
-CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS  += -D SEV_SNP
 endif
 
 CC=g++
@@ -68,7 +68,6 @@ ifdef ENABLE_SEV
 dobj += $(O)/sev_support.o $(O)/sev_report.o
 endif
 
-
 all:	$(CL)/certifier.a
 clean:
 	@echo "removing generated files"
@@ -84,61 +83,61 @@ $(CL)/certifier.a: $(dobj)
 
 $(I)/certifier.pb.h: $(S)/certifier.pb.cc
 $(S)/certifier.pb.cc: $(CP)/certifier.proto
-	$(PROTO) --cpp_out=$(S) --proto_path $(CP) $<
+	$(PROTO) --cpp_out=$(S) --proto_path $(<D) $<
 	mv $(S)/certifier.pb.h $(I)
 
 $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifier.h $(S)/test_support.cc
-	@echo "compiling certifier_tests.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier_tests.o $(S)/certifier_tests.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
-	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -Wno-array-bounds -c -o $(O)/certifier.pb.o $(S)/certifier.pb.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -Wno-array-bounds -o $(@D)/$@ -c $<
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling certifier.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(S)/certifier.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling certifier_proofs.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(S)/certifier_proofs.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h
-	@echo "compiling support.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/support.o $(S)/support.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
-	@echo "compiling simulated_enclave.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/simulated_enclave.o $(S)/simulated_enclave.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
-	@echo "compiling application_enclave.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(S)/application_enclave.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/cc_helpers.h
-	@echo "compiling cc_helpers.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
-	@echo "compiling cc_useful.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/cc_useful.o $(S)/cc_useful.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/keystone_shim.o: $(S)/keystone/keystone_shim.cc $(S)/keystone/keystone_api.h
-	@echo "compiling keystone_shim.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/keystone_shim.o $(S)/keystone/keystone_shim.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 ifdef ENABLE_SEV
 SEV_S=$(S)/sev-snp
 
 $(O)/sev_support.o: $(SEV_S)/sev_support.cc \
-$(I)/certifier.h $(I)/support.h $(SEV_S)/attestation.h  $(SEV_S)/sev_guest.h  \
-$(SEV_S)/snp_derive_key.h
-	@echo "compiling sev_support.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/sev_support.o $(SEV_S)/sev_support.cc
+                    $(I)/certifier.h $(I)/support.h $(SEV_S)/attestation.h  \
+                    $(SEV_S)/sev_guest.h  $(SEV_S)/snp_derive_key.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/sev_report.o: $(SEV_S)/sev_report.cc \
-$(I)/certifier.h $(I)/support.h $(SEV_S)/attestation.h  $(SEV_S)/sev_guest.h  \
-$(SEV_S)/snp_derive_key.h
-	@echo "compiling sev_report.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/sev_report.o $(SEV_S)/sev_report.cc
+                   $(I)/certifier.h $(I)/support.h $(SEV_S)/attestation.h  \
+                   $(SEV_S)/sev_guest.h  $(SEV_S)/snp_derive_key.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 endif

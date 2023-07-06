@@ -37,12 +37,10 @@ CL=..
 
 INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I .
 
+CFLAGS = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+
 ifdef ENABLE_SEV
-CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D SEV_SNP -Wno-deprecated-declarations
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D SEV_SNP -Wno-deprecated-declarations
-else
-CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS += -D SEV_SNP
 endif
 
 CC=g++
@@ -59,7 +57,7 @@ dobj = $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o        \
        $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o  \
        $(O)/cc_helpers.o $(O)/cc_useful.o $(O)/keystone_shim.o $(O)/keystone_test.o
 
-all:	$(CL)/keystone_test.exe
+all:	$(EXE_DIR)/keystone_test.exe
 clean:
 	@echo "removing generated files"
 	rm -rf $(S)/certifier.pb.cc $(S)/certifier.pb.h $(I)/certifier.pb.h
@@ -72,50 +70,50 @@ clean:
 
 $(I)/certifier.pb.h: $(S)/certifier.pb.cc
 $(S)/certifier.pb.cc: $(CP)/certifier.proto
-	$(PROTO) --proto_path=$(CP) --cpp_out=$(S) $<
-	mv $(S)/certifier.pb.h $(I)
+	$(PROTO) --proto_path=$(CP) --cpp_out=$(@D) $<
+	mv $(@D)/certifier.pb.h $(I)
 
-$(CL)/keystone_test.exe: $(dobj)
-	@echo "linking certifier library"
-	$(LINK) -o $(EXE_DIR)/keystone_test.exe $(dobj) $(LDFLAGS)
+$(EXE_DIR)/keystone_test.exe: $(dobj)
+	@echo "\nlinking $@"
+	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
 
 $(O)/keystone_test.o: $(S)/keystone_test.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling keystone_test.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/keystone_test.o $(S)/keystone_test.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -c -o $(@D)/$@ -c $<
 
 $(O)/keystone_shim.o: $(S)/keystone_shim.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling keystone_shim.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/keystone_shim.o $(S)/keystone_shim.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -c -o $(@D)/$@ -c $<
 
 $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
-	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -Wno-array-bounds -c -o $(O)/certifier.pb.o $<
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -Wno-array-bounds -o $(@D)/$@ -c $<
 
 $(O)/certifier.o: $(SRC_DIR)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling certifier.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(SRC_DIR)/certifier.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -c -o $(@D)/$@ -c $<
 
 $(O)/certifier_proofs.o: $(SRC_DIR)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling certifier_proofs.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(SRC_DIR)/certifier_proofs.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -c -o $(@D)/$@ -c $<
 
 $(O)/support.o: $(SRC_DIR)/support.cc $(I)/support.h
-	@echo "compiling support.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/support.o $(SRC_DIR)/support.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -c -o $(@D)/$@ -c $<
 
 $(O)/simulated_enclave.o: $(SRC_DIR)/simulated_enclave.cc $(I)/simulated_enclave.h
-	@echo "compiling simulated_enclave.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/simulated_enclave.o $(SRC_DIR)/simulated_enclave.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -c -o $(@D)/$@ -c $<
 
 $(O)/application_enclave.o: $(SRC_DIR)/application_enclave.cc $(I)/application_enclave.h
-	@echo "compiling application_enclave.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(SRC_DIR)/application_enclave.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -c -o $(@D)/$@ -c $<
 
 $(O)/cc_helpers.o: $(SRC_DIR)/cc_helpers.cc $(I)/cc_helpers.h
-	@echo "compiling cc_helpers.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(SRC_DIR)/cc_helpers.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -c -o $(@D)/$@ -c $<
 
 $(O)/cc_useful.o: $(SRC_DIR)/cc_useful.cc $(I)/cc_useful.h
-	@echo "compiling cc_useful.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/cc_useful.o $(SRC_DIR)/cc_useful.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -c -o $(@D)/$@ -c $<
 
