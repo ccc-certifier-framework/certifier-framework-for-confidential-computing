@@ -52,12 +52,12 @@ dobj = certifier.a $(internal-dobj) # TODO: maybe move certifier library mix-in 
 
 # TODO: maybe fix?
 tests: $(dobj) $(KEYSTONE_SDK_LIB)
-	@echo "linking executable file tests"
+	@echo "linking executable $@"
 	$(LINK) -o $(EXE_DIR)/tests $(dobj) $(LDFLAGS)
 
 # uses keystone_api and not certifier
 tests_bare: $(internal-dobj) $(KEYSTONE_SDK_LIB)
-	@echo "linking executable file tests_bare"
+	@echo "linking executable $@"
 	$(LINK) -o $(EXE_DIR)/tests_bare $(internal-dobj) $(LDFLAGS)
 
 # does not use keystone
@@ -69,7 +69,7 @@ $(O)/keystone_shim.o: ./keystone_shim.cc
 shim-dobj = $(O)/keystone_shim.o $(O)/keystone_test.o
 
 tests_bare_shim: $(shim-dobj)
-	@echo "linking executable file tests_bare_shim"
+	@echo "linking executable $@"
 	$(LINK) -o ./tests_bare_shim $(shim-dobj) $(LDFLAGS)
 
 clean:

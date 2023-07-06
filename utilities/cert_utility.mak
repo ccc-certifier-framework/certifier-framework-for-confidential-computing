@@ -5,7 +5,7 @@
 CERTIFIER_ROOT = ..
 
 ifndef SRC_DIR
-SRC_DIR=..
+SRC_DIR=$(CERTIFIER_ROOT)/src
 endif
 ifndef OBJ_DIR
 OBJ_DIR=.
@@ -32,7 +32,7 @@ endif
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
-S= $(SRC_DIR)/src
+S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
 US= .
@@ -54,15 +54,15 @@ AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
-dobj=	$(O)/cert_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
-$(O)/certifier_proofs.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+common_objs = $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
+              $(O)/certifier_proofs.o $(O)/simulated_enclave.o \
+              $(O)/application_enclave.o
 
-key_dobj=$(O)/key_utility.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
-$(O)/certifier_proofs.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+dobj =	$(O)/cert_utility.o $(common_objs)
 
-mobj=	$(O)/measurement_init.o $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
-$(O)/certifier_proofs.o $(O)/simulated_enclave.o $(O)/application_enclave.o
+key_dobj = $(O)/key_utility.o $(common_objs)
 
+mobj = $(O)/measurement_init.o $(common_objs)
 
 all:	cert_utility.exe measurement_init.exe key_utility.exe
 clean:
@@ -72,54 +72,54 @@ clean:
 	rm -rf $(EXE_DIR)/cert_utility.exe
 
 cert_utility.exe: $(dobj) 
-	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/cert_utility.exe $(dobj) $(LDFLAGS)
+	@echo "\nlinking executable $@"
+	$(LINK) $(dobj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
 key_utility.exe: $(key_dobj)
-	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/key_utility.exe $(key_dobj) $(LDFLAGS)
+	@echo "\nlinking executable $@"
+	$(LINK) $(key_dobj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
 measurement_init.exe: $(mobj)
-	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/measurement_init.exe $(mobj) $(LDFLAGS)
+	@echo "\nlinking executable $@"
+	$(LINK) $(mobj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
 $(O)/measurement_init.o: $(US)/measurement_init.cc
-	@echo "compiling measurement_init.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/measurement_init.o $(US)/measurement_init.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/cert_utility.o: $(US)/cert_utility.cc $(I)/support.h $(I)/certifier.pb.h
-	@echo "compiling cert_utility.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/cert_utility.o $(US)/cert_utility.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/key_utility.o: $(US)/key_utility.cc $(I)/support.h $(I)/certifier.pb.h
-	@echo "compiling key_utility.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/key_utility.o $(US)/key_utility.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
-	$(PROTO) --cpp_out=$(US) --proto_path $(CP) $<
-	mv certifier.pb.h $(I)
+	$(PROTO) --cpp_out=$(US) --proto_path $(<D) $<
+	mv $(@D)/certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
-	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS_NOERROR) -Wno-array-bounds -c  -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS_NOERROR) -Wno-array-bounds -o $(@D)/$@ -c $<
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h $(I)/certifier.pb.h
-	@echo "compiling support.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/support.o $(S)/support.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling certifier.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(S)/certifier.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling certifier_proofs.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(S)/certifier_proofs.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
-	@echo "compiling simulated_enclave.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/simulated_enclave.o $(S)/simulated_enclave.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
-	@echo "compiling application_enclave.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(S)/application_enclave.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
