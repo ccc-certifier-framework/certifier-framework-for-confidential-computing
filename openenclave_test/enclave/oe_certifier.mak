@@ -46,7 +46,7 @@ clean:
 	rm -rf $(EXE_DIR)/oe_certifier.exe
 
 oe_certifier.exe: $(dobj) 
-	@echo "linking executable files"
+	@echo "linking executable $@"
 	$(LINK) -o $(EXE_DIR)/oe_certifier.exe $(dobj) $(LDFLAGS)
 
 certifier.pb.cc certifier.pb.h: $(S)/certifier.proto

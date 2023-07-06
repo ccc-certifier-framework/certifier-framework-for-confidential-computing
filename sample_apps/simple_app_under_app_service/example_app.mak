@@ -32,7 +32,6 @@ I= $(SRC_DIR)/include
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 CC=g++
 LINK=g++
 #PROTO=/usr/local/bin/protoc
@@ -43,12 +42,13 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
-dobj=	$(O)/service_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
-$(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o
+dobj = $(O)/service_example_app.o $(O)/certifier.pb.o $(O)/certifier.o \
+       $(O)/certifier_proofs.o $(O)/support.o $(O)/simulated_enclave.o \
+       $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o
 
-sp_dobj=$(O)/start_program.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o $(O)/support.o \
-$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o
-
+sp_dobj = $(O)/start_program.o $(O)/certifier.pb.o $(O)/certifier.o \
+          $(O)/certifier_proofs.o $(O)/support.o $(O)/simulated_enclave.o \
+          $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o
 
 all:	service_example_app.exe start_program.exe
 clean:
@@ -59,56 +59,55 @@ clean:
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/service_example_app.exe
 
-service_example_app.exe: $(dobj) 
-	@echo "linking executable files"
-	$(LINK) -o $(EXE_DIR)/service_example_app.exe $(dobj) $(LDFLAGS)
+$(EXE_DIR)/service_example_app.exe: $(dobj)
+	@echo "\nlinking executable $@"
+	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
-	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
-	mv $(US)/certifier.pb.h $(I)
+	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
+	mv $(@D)/certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
-	@echo "compiling certifier.pb.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.pb.o $(US)/certifier.pb.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-start_program.exe: $(sp_dobj)
-	@echo "start_program.exe"
-	$(LINK) -o $(EXE_DIR)/start_program.exe $(sp_dobj) $(LDFLAGS)
+$(EXE_DIR)/start_program.exe: $(sp_dobj)
+	@echo "\nlinking executable $@"
+	$(LINK) $(sp_dobj) $(LDFLAGS) -o $(@D)/$@
 
 $(O)/start_program.o: start_program.cc
-	@echo "start_program.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/start_program.o $(US)/start_program.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/service_example_app.o: $(US)/service_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
-	@echo "compiling service_example_app.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/service_example_app.o $(US)/service_example_app.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling certifier.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier.o $(S)/certifier.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling certifier_proofs.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/certifier_proofs.o $(S)/certifier_proofs.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h
-	@echo "compiling support.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/support.o $(S)/support.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
-	@echo "compiling simulated_enclave.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/simulated_enclave.o $(S)/simulated_enclave.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
-	@echo "compiling application_enclave.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/application_enclave.o $(S)/application_enclave.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
-	@echo "compiling cc_helpers.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/cc_helpers.o $(S)/cc_helpers.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
-	@echo "compiling cc_useful.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/cc_useful.o $(S)/cc_useful.cc
-
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<

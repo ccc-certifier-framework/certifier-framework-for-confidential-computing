@@ -31,7 +31,7 @@ CERTIFIER_SRC_PATH = ../../
 
 .SECONDARY: certifier
 CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc        \
-		$(CERTIFIER_SRC_PATH)/gramine/gramine_api_impl.cc   \
+		        $(CERTIFIER_SRC_PATH)/gramine/gramine_api_impl.cc   \
 
 CERTIFIER_INCLUDE = -I. -I$(CERTIFIER_SRC_PATH)/../include -I$(CERTIFIER_SRC_PATH)/gramine $(SGX_INCLUDE) -I./mbedtls/include
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE) -DGRAMINE_CERTIFIER
