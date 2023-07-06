@@ -379,4 +379,3 @@ bool test_predicate_dominance(bool print_all) {
 
   return true;
 }
-

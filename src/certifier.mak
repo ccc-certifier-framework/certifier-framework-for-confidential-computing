@@ -41,10 +41,13 @@ INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
 CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 
 CFLAGS  = $(CFLAGS_COMMON) -O3
+CFLAGS_PIC =
 
 ifdef ENABLE_SEV
 CFLAGS  += -D SEV_SNP
 endif
+
+CFLAGS += $(CFLAGS_PIC)
 
 CC=g++
 LINK=g++
@@ -53,6 +56,11 @@ LINK=g++
 # PROTO=/usr/local/bin/protoc
 PROTO=protoc
 AR=ar
+
+# Definitions needed for generating Python bindings
+SWIG=swig
+PY_INCLUDE = -I /usr/include/python3.10/
+
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
@@ -68,18 +76,35 @@ ifdef ENABLE_SEV
 dobj += $(O)/sev_support.o $(O)/sev_report.o
 endif
 
-all:	$(CL)/certifier.a
+# Objs needed to build Certifer Framework shared lib for use by Python module
+cfsl_dobj := $(dobj) $(O)/certifier_framework_wrap.o
+
+CERTIFIER_LIB = certifier.a
+CERTIFIER_SHARED_LIB = libcertifier_framework.so
+
+all:	$(CL)/$(CERTIFIER_LIB)
+
+# NOTE: Default target 'all' does -not- include this target
+# Separate target provided to build the shared library which requires
+# rebuilding all objects with CFLAGS_PIC = -fpic flag.
+sharedlib:	$(CL)/$(CERTIFIER_SHARED_LIB)
+
 clean:
 	@echo "removing generated files"
-	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc
+	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/certifier_framework_wrap.cc
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable files"
-	rm -rf $(CL)/certifier.a
+	rm -rf $(CL)/$(CERTIFIER_LIB) $(CL)/$(CERTIFIER_SHARED_LIB)
 
-$(CL)/certifier.a: $(dobj)
-	@echo "linking certifier library"
-	$(AR) rcs $(CL)/certifier.a $(dobj)
+$(CL)/$(CERTIFIER_LIB): $(dobj)
+	@echo "\nLinking certifier library $@"
+	$(AR) rcs $(CL)/$(CERTIFIER_LIB) $(dobj)
+
+sharedlib: CFLAGS_PIC = -fpic
+$(CL)/$(CERTIFIER_SHARED_LIB): $(cfsl_dobj)
+	@echo "\nLinking certifier shared library $@"
+	$(LINK) -shared $(cfsl_dobj) -o $@ $(LDFLAGS)
 
 $(I)/certifier.pb.h: $(S)/certifier.pb.cc
 $(S)/certifier.pb.cc: $(CP)/certifier.proto
@@ -97,6 +122,16 @@ $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+# Ref: https://stackoverflow.com/questions/12369131/swig-and-python3-surplus-underscore
+# Use -interface arg to overcome double __ issue in generated SWIG_init #define
+$(S)/certifier_framework_wrap.cc: $(I)/certifier_framework.i $(S)/certifier.cc
+	@echo "\nGenerating $@"
+	$(SWIG) -v -python -c++ -Wall -interface libcertifier_framework -o $(@D)/$@ $<
+
+$(O)/certifier_framework_wrap.o: $(S)/certifier_framework_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
+	@echo "compiling $<"
+	$(CC) $(CFLAGS) $(PY_INCLUDE) -o $(@D)/$@ -c $<
 
 $(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "\ncompiling $<"

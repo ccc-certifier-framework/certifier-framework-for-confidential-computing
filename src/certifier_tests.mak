@@ -35,6 +35,7 @@ CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
+CL=..
 
 INCLUDE = -I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I $(S)/gramine
 
@@ -52,12 +53,21 @@ endif
 
 endif
 
+CFLAGS_PIC =
+
+CFLAGS += $(CFLAGS_PIC)
+
 CC=g++
 LINK=g++
 # Point this to the right place, if you have to, based on your machine's install:
 # PROTO=/usr/local/bin/protoc
 PROTO=protoc
 AR=ar
+
+# Definitions needed for generating Python bindings
+SWIG=swig
+PY_INCLUDE = -I /usr/include/python3.10/
+
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
@@ -73,6 +83,11 @@ dobj = $(O)/certifier_tests.o $(common_objs) \
        $(O)/cc_helpers.o $(O)/cc_useful.o \
        $(O)/claims_tests.o $(O)/primitive_tests.o $(O)/certificate_tests.o       \
        $(O)/store_tests.o $(O)/support_tests.o $(O)/x509_tests.o
+
+# Objs needed to build Certifer tests shared lib for use by Python module
+cftests_sl_dobj := $(dobj) $(O)/certifier_tests_wrap.o
+
+CERTIFIER_TESTS_SHARED_LIB = libcertifier_tests.so
 
 channel_dobj = $(O)/test_channel.o $(common_objs) \
                $(O)/cc_helpers.o $(O)/cc_useful.o
@@ -91,17 +106,28 @@ endif
 
 all:	certifier_tests.exe test_channel.exe pipe_read_test.exe
 
+# NOTE: Default target 'all' does -not- include this target
+# Separate target provided to build the shared library which requires
+# rebuilding all objects with CFLAGS_PIC = -fpic flag.
+sharedlib:	$(CL)/$(CERTIFIER_TESTS_SHARED_LIB)
+
 clean:
 	@echo "removing generated files"
-	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc
+	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/certifier_tests_wrap.cc
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable files"
 	rm -rf $(EXE_DIR)/certifier_tests.exe $(EXE_DIR)/pipe_read_test.exe $(EXE_DIR)/test_channel.exe
+	rm -rf $(CL)/$(CERTIFIER_TESTS_SHARED_LIB)
 
 certifier_tests.exe: $(dobj) 
 	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/certifier_tests.exe $(dobj) $(LDFLAGS)
+
+sharedlib: CFLAGS_PIC = -fpic
+$(CL)/$(CERTIFIER_TESTS_SHARED_LIB): $(cftests_sl_dobj)
+	@echo "\nLinking certifier tests shared library $@"
+	$(LINK) -shared $(cftests_sl_dobj) -o $@ $(LDFLAGS)
 
 $(I)/certifier.pb.h: $(S)/certifier.pb.cc
 $(S)/certifier.pb.cc: $(CP)/certifier.proto
@@ -139,6 +165,16 @@ $(O)/sev_tests.o: $(S)/sev_tests.cc $(I)/certifier.pb.h $(I)/certifier.h
 $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifier.h $(S)/test_support.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+# Ref: https://stackoverflow.com/questions/12369131/swig-and-python3-surplus-underscore
+# Use -interface arg to overcome double __ issue in generated SWIG_init #define
+$(S)/certifier_tests_wrap.cc: $(I)/certifier_tests.i $(S)/certifier_tests.cc
+	@echo "\nGenerating $@"
+	$(SWIG) -v -python -c++ -Wall -Werror -interface libcertifier_tests -o $(@D)/$@ $<
+
+$(O)/certifier_tests_wrap.o: $(S)/certifier_tests_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
+	@echo "compiling $<"
+	$(CC) $(CFLAGS) $(PY_INCLUDE) -o $(@D)/$@ -c $<
 
 $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"

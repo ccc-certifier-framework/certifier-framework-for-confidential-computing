@@ -13,21 +13,24 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    #! -------------------------------------------------------------------------
     - name: dependencies
       run: |
         sudo apt update -y
         sudo apt install -y libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake
+        sudo apt install -y python3 pylint
+        pip install pytest
 
+        # Needed for Python bindings support
+        sudo apt install -y swig
 
-    - name: test-code-formatting
-      run: |
-        ./CI/scripts/check-gofmt.sh
-
+    #! -------------------------------------------------------------------------
     - name: test-core-certifier-programs
       run: |
         echo " "
         echo "******************************************************************"
         echo "* Check that core certifier programs still compile and clear tests"
+        echo "* (Also builds shared libraries for use by Python bindings.)"
         echo "******************************************************************"
         echo " "
         pushd src
@@ -39,13 +42,66 @@ jobs:
         make -f certifier_tests.mak clean
 
         make -j2 -f certifier.mak
+
+        # We need to clean here, otherwise make certifier_tests.mak will run
+        # into some protobuf-related errors.
         make -f certifier.mak clean
 
         make -j2 -f certifier_tests.mak
         ./certifier_tests.exe
 
+        # Rebuild both shared libraries as 'all' target does not build these.
+        # Rebuild special-target which will invoke -fPIC flag during compilation.
+        set -x
+        make -f certifier.mak --always-make -j2 sharedlib
+        make -f certifier_tests.mak --always-make -j2 sharedlib
+        set +x
+
         popd
 
+        #! Sanity check that the shared library was built correctly and can be loaded
+        #! python3 -c "import libcertifier_framework; help(libcertifier_framework)"
+        #! python3 -c "import libcertifier_tests; help(libcertifier_tests)"
+
+    #! -------------------------------------------------------------------------
+    #! Code formatting runs pylint, so this step can only come after
+    #! test-core-certifier-programs where the shared libraries (imported by
+    #! Pytests code) are built.
+    #! -------------------------------------------------------------------------
+    - name: test-code-formatting
+      run: |
+        ./CI/scripts/check-gofmt.sh
+
+        set -x
+        PYTHONPATH=. pylint tests/pytests/*.py
+        set +x
+
+    #! -------------------------------------------------------------------------
+    - name: test-cert_framework-pytests
+      run: |
+        echo " "
+        echo "**************************************************************"
+        echo " Test Python bindings' to Certifier Framework shared library "
+        echo "**************************************************************"
+        echo " "
+
+        export PYTHONPATH=$(pwd)
+
+        pushd tests/pytests
+
+        # Run one case showing verbose outputs of each library's contents.
+        # Run each py file separately as 'pytest -v' (on all files) craps out.
+        set -x
+        pytest --capture=tee-sys test_cert_framework_basic.py -k test_getmembers_of_cc_framework
+
+        PYTHONUNBUFFERED=TRUE pytest -v test_cert_framework_basic.py
+
+        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_certifier_tests.py
+
+        set +x
+        popd
+
+    #! -------------------------------------------------------------------------
     - name: unit-test-certlib-utility-programs
       run: |
         echo " "
@@ -106,6 +162,7 @@ jobs:
 
         popd
 
+    #! -------------------------------------------------------------------------
     - name: test-run_example-help-list-args
       run: |
         echo " "
@@ -149,6 +206,7 @@ jobs:
 
         popd
 
+    #! -------------------------------------------------------------------------
     - name: test-run_example-dry-run
       run: |
         #! ---------------------------------------------------------------------
@@ -195,6 +253,7 @@ jobs:
 
         popd
 
+    #! -------------------------------------------------------------------------
     - name: test-run_example-simple_app
       run: |
         #! ---------------------------------------------------------------------
@@ -217,6 +276,7 @@ jobs:
 
         popd
 
+    #! -------------------------------------------------------------------------
     - name: test-build-and-setup-App-Service-and-simple_app_under_app_service
       run: |
         echo " "
@@ -274,6 +334,7 @@ jobs:
         ps -ef | grep -v -E 'root|^sys'
         echo " "
 
+    #! -------------------------------------------------------------------------
     - name: test-build-and-install-sev-snp-simulator
       run: |
         echo " "
@@ -295,6 +356,7 @@ jobs:
 
         popd
 
+    #! -------------------------------------------------------------------------
     - name: test-sev-snp-simulator-sev-test
       run: |
         echo " "
@@ -309,6 +371,7 @@ jobs:
 
         popd
 
+    #! -------------------------------------------------------------------------
     - name: test-certifier-build-and-test-simulated-SEV-mode
       run: |
         echo " "
@@ -336,6 +399,7 @@ jobs:
         #! Run script that will setup s/w required to build Policy Generator for SEV-app
         ./CI/scripts/setup-JSON-schema-validator-for-SEV-apps.sh
 
+    #! -------------------------------------------------------------------------
     - name: test-simple_app_under_sev-simulated-SEV-mode
       run: |
         echo " "
@@ -352,6 +416,7 @@ jobs:
         sudo ./cleanup.sh
         popd
 
+    #! -------------------------------------------------------------------------
     - name: test-simple_app_under_keystone-using-shim
       run: |
         echo " "
@@ -368,6 +433,7 @@ jobs:
         ./cleanup.sh
         popd
 
+    #! -------------------------------------------------------------------------
     - name: test-ISLET-SDK-shim_test
       run: |
         echo "**********************************************************"
@@ -389,6 +455,7 @@ jobs:
         set +x
         echo " "
 
+    #! -------------------------------------------------------------------------
     - name: test-run_example-simple_app_under_islet-using-shim
       run: |
         echo " "
