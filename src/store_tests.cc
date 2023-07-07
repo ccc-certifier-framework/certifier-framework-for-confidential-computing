@@ -1,9 +1,3 @@
-#include "certifier.h"
-#include "support.h"
-
-using namespace certifier::framework;
-using namespace certifier::utilities;
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +11,12 @@ using namespace certifier::utilities;
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#include "certifier.h"
+#include "support.h"
+
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 bool test_protect(bool print_all) {
 
@@ -65,8 +65,9 @@ bool test_protect(bool print_all) {
     print_key(key_start);
   }
 
-  if (!Protect_Blob(enclave_type, key_start, (int)strlen(secret_data), (byte*)secret_data,
-          &serialized_blob_size, serialized_blob)) {
+  if (!Protect_Blob(enclave_type, key_start,
+                    (int)strlen(secret_data), (byte*)secret_data,
+                    &serialized_blob_size, serialized_blob)) {
     printf("Can't protect\n");
     return false;
   }
@@ -86,7 +87,7 @@ bool test_protect(bool print_all) {
 
   // unprotect it
   if (!Unprotect_Blob(enclave_type, serialized_blob_size, serialized_blob,
-             &key_end, &size_unencrypted_data, unencrypted_data)) {
+                      &key_end, &size_unencrypted_data, unencrypted_data)) {
     printf("Unprotect(1) failed\n");
     return false;
   }
@@ -98,17 +99,21 @@ bool test_protect(bool print_all) {
     print_bytes(size_unencrypted_data, unencrypted_data);
     printf("\n");
   }
+
+  // Unprotect should return the key used for protecting the data
   if (!same_key(key_start, key_end))
     return false;
+
+  // Unencrypted data should come out same as what was fed-in to protect
   if (memcmp(unencrypted_data, (byte*)secret_data, strlen(secret_data)) != 0)
     return false;
 
-  key_message new_key;
+  key_message new_key; // ? RESOLVE: This is uninit'ed. Don't we want to supply a new key here?
   int size_reprotected_data = serialized_blob_size + 5;
   byte reprotected_data[size_reprotected_data];
   memset(reprotected_data, 0, size_reprotected_data);
   if (!Reprotect_Blob(enclave_type, &new_key, serialized_blob_size, serialized_blob,
-          &size_reprotected_data, reprotected_data)) {
+                      &size_reprotected_data, reprotected_data)) {
     printf("Reprotect failed\n");
     return false;
   }
@@ -119,7 +124,7 @@ bool test_protect(bool print_all) {
   byte unencrypted_data2[size_unencrypted_data2];
   memset(unencrypted_data2, 0, size_unencrypted_data2);
   if (!Unprotect_Blob(enclave_type, size_reprotected_data, reprotected_data,
-             &newer_key, &size_unencrypted_data2, unencrypted_data2)) {
+                      &newer_key, &size_unencrypted_data2, unencrypted_data2)) {
     printf("Unprotect(2) failed\n");
     return false;
   }
@@ -143,15 +148,22 @@ bool test_policy_store(bool print_all) {
   key_message pk;
   if (!make_certifier_rsa_key(2048,  &pk))
     return false;
+
+  // Upon a new Certifier's make, default policy key is still uninitialized
+  const key_message* pkt = ps.get_policy_key();
+  if (pkt != nullptr)
+    return false;
+
   if (!ps.replace_policy_key(pk))
     return false;
-  const key_message* pkt = ps.get_policy_key();
+
+  pkt = ps.get_policy_key();
   if (pkt == nullptr)
     return false;
   if (!same_key(pk, *pkt))
     return false;
   if (print_all) {
-    printf("policy-key repace/get works\n");
+    printf("policy-key replace/get works\n");
   }
 
   key_message ak;
@@ -182,7 +194,13 @@ bool test_policy_store(bool print_all) {
   lu = ps.get_trusted_service_index_by_tag(sm_tag);
   if (lu < 0)
     return false;
-  const trusted_service_message* tsmt = ps.get_trusted_service_info_by_index(lu);
+
+  // Out-of-bounds index should be trapped correctly by lookup method
+  const trusted_service_message* tsmt = ps.get_trusted_service_info_by_index(-1);
+  if (tsmt != nullptr)
+    return false;
+
+  tsmt = ps.get_trusted_service_info_by_index(lu);
   if (tsmt == nullptr)
     return false;
 
@@ -234,7 +252,13 @@ bool test_policy_store(bool print_all) {
   lu = ps.get_claim_index_by_tag(tc_tag);
   if (lu < 0)
     return false;
-  const claim_message* fc = ps.get_claim_by_index(lu);
+
+  // Out-of-bounds index should be trapped correctly by lookup method
+  const claim_message* fc = ps.get_claim_by_index(-1);
+  if (fc != nullptr)
+    return false;
+
+  fc = ps.get_claim_by_index(lu);
   if (fc == nullptr)
     return false;
 
@@ -250,6 +274,10 @@ bool test_policy_store(bool print_all) {
   string bs2;
   bs2.assign((char*)t_bs2, 3);
   string lab_s2("string-2");
+
+  // No blobs have been added, yet
+  if (ps.get_num_blobs() != 0)
+    return false;
 
   if (!ps.add_blob(lab_s1, bs1)) {
     return false;
@@ -275,13 +303,23 @@ bool test_policy_store(bool print_all) {
   sk->set_not_before("2021-08-01T05:09:50.000000Z");
   sk->set_not_after("2026-08-01T05:09:50.000000Z");
   smi.set_allocated_storage_key(sk);
+
+  // Not storage has been added, yet.
+  if (ps.get_num_storage_info() != 0)
+    return false;
   if (!ps.add_storage_info(smi))
     return false;
   lu = ps.get_storage_info_index_by_tag(si_tag);
   if (lu < 0)
     return false;
-  const storage_info_message* sim = ps.get_storage_info_by_index(lu);
-  if (fc == nullptr)
+
+  // Out-of-bounds index should be trapped correctly by lookup method
+  const storage_info_message* sim = ps.get_storage_info_by_index(-1);
+  if (sim != nullptr)
+    return false;
+
+  sim = ps.get_storage_info_by_index(lu);
+  if (sim == nullptr)
     return false;
 
   int nc = ps.get_num_claims();
@@ -314,18 +352,83 @@ bool test_policy_store(bool print_all) {
     printf("\n");
   }
 
+  // Out-of-bounds index should be trapped correctly by lookup method
+  const string* tsbs = ps.get_blob_by_index(-1);
+  if (tsbs != nullptr)
+    return false;
+
   int ntb = ps.get_num_blobs();
+
+  // Out-of-bounds index should be trapped correctly by lookup method
+  tsbs = ps.get_blob_by_index(ntb + 1);
+  if (tsbs != nullptr)
+    return false;
+
+  // Out-of-bounds index should be trapped correctly by lookup method
+  const tagged_blob_message* tsb = ps.get_tagged_blob_info_by_index(-1);
+  if (tsb != nullptr)
+    return false;
+
   if (print_all) {
     printf("%d blobs\n", ntb);
     for (int i = 0; i < ntb; i++) {
-      const tagged_blob_message* tsb = ps.get_tagged_blob_info_by_index(i);
+      tsb = ps.get_tagged_blob_info_by_index(i);
       printf("blob %d, tag %s: ", i, tsb->tag().c_str());
       print_bytes(tsb->b().size(), (byte*)tsb->b().data());
       printf("\n");
     }
     printf("\n");
   }
- 
+
+  return true;
+}
+
+bool test_policy_store_signed_claims(bool print_all) {
+
+  // Create a Policy store to test out APIs to manage up to 3 signed_claims
+  policy_store * ps = new policy_store("aes-256-cbc-hmac-sha256",
+                                       0, 3, 0, 0, 0, 0);
+
+  if (ps->get_num_signed_claims() != 0)
+    return false;
+
+  // Adding up to 3 signed_claims should succeed
+  string signed_claim_msg_tag1("claim_msg_tag1");
+  signed_claim_message signed_claim1;
+  if (!ps->add_signed_claim(signed_claim_msg_tag1, signed_claim1))
+    return false;
+
+  string signed_claim_msg_tag2("claim_msg_tag2");
+  signed_claim_message signed_claim2;
+  if (!ps->add_signed_claim(signed_claim_msg_tag2, signed_claim2))
+    return false;
+
+  string signed_claim_msg_tag3("claim_msg_tag3");
+  signed_claim_message signed_claim3;
+  if (!ps->add_signed_claim(signed_claim_msg_tag3, signed_claim3))
+    return false;
+
+  // This should fail as we have exceeded signed_claims capacity
+  string signed_claim_msg_tag4("claim_msg_tag4");
+  signed_claim_message signed_claim4;
+  if (ps->add_signed_claim(signed_claim_msg_tag4, signed_claim4))
+    return false;
+
+  // Out-of-bounds index should be trapped correctly by lookup method
+  const signed_claim_message* scm_out = ps->get_signed_claim_by_index(-1);
+  if (scm_out != nullptr)
+    return false;
+
+  // Should return a valid index for a valid tag
+  int index = ps->get_signed_claim_index_by_tag(signed_claim_msg_tag2);
+  if (index < 0)
+    return false;
+
+  // Should return an invalid index for an invalid tag
+  index = ps->get_signed_claim_index_by_tag(signed_claim_msg_tag4);
+  if (index != -1)
+    return false;
+
   return true;
 }
 
@@ -384,13 +487,14 @@ bool test_init_and_recover_containers(bool print_all) {
   int size_encrypted = serialized_store.size() + 512;
   byte encrypted[size_encrypted];
 
-  if (!Protect_Blob(enclave_type, storage_key, serialized_store.size(), (byte*)serialized_store.data(),
-        &size_encrypted, encrypted))
+  if (!Protect_Blob(enclave_type, storage_key,
+                    serialized_store.size(), (byte*)serialized_store.data(),
+                    &size_encrypted, encrypted))
     return false;
   int size_recovered = serialized_store.size() + 512;
   byte recovered[size_encrypted];
   if (!Unprotect_Blob(enclave_type, size_encrypted, encrypted,
-        &recovered_storage_key, &size_recovered, recovered))
+                      &recovered_storage_key, &size_recovered, recovered))
     return false;
 
   string recovered_serialized_store;

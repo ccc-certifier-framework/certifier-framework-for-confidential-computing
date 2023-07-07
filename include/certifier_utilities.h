@@ -39,13 +39,14 @@ namespace certifier {
     bool read_file_into_string(const string& file_name, string* out);
 
     bool digest_message(const char* alg, const byte* message, int message_len,
-        byte* digest, unsigned int digest_len);
+                        byte* digest, unsigned int digest_len);
 
 
     bool authenticated_encrypt(const char* alg, byte* in, int in_len, byte *key,
-                byte *iv, byte *out, int* out_size);
+                               byte *iv, byte *out, int* out_size);
+
     bool authenticated_decrypt(const char* alg, byte* in, int in_len, byte *key,
-                byte *out, int* out_size);
+                               byte *out, int* out_size);
 
     EC_KEY* generate_new_ecc_key(int num_bits);
     EC_KEY* key_to_ECC(const key_message& kr);
@@ -77,13 +78,16 @@ namespace certifier {
 
     // X509 artifact
     bool produce_artifact(key_message& signing_key, string& issuer_name_str,
-          string& issuer_description_str, key_message& subject_key,
-          string& subject_name_str, string& subject_description_str,
-          uint64_t sn, double secs_duration, X509* x509, bool is_root);
+                          string& issuer_description_str,
+                          key_message& subject_key, string& subject_name_str,
+                          string& subject_description_str, uint64_t sn,
+                          double secs_duration, X509* x509, bool is_root);
+
     bool verify_artifact(X509& cert, key_message& verify_key,
-        string* issuer_name_str, string* issuer_description_str,
-        key_message* subject_key, string* subject_name_str, string* subject_description_str,
-        uint64_t* sn);
+                         string* issuer_name_str,
+                         string* issuer_description_str,
+                         key_message* subject_key,string* subject_name_str,
+                         string* subject_description_str, uint64_t* sn);
 
     int cipher_block_byte_size(const char* alg_name);
     int cipher_key_byte_size(const char* alg_name);
@@ -92,7 +96,9 @@ namespace certifier {
 
     bool asn1_to_x509(const string& in, X509 *x);
     bool x509_to_asn1(X509 *x, string* out);
-    bool make_root_key_with_cert(string& type, string& name, string& issuer_name, key_message* k);
+
+    bool make_root_key_with_cert(string& type, string& name,
+                                 string& issuer_name, key_message* k);
 
     bool check_date_range(const string& nb, const string& na);
 
@@ -101,4 +107,4 @@ namespace certifier {
   }
 }
 
-#endif
+#endif // _CERTIFIER_UTILITIES_H__

@@ -1,3 +1,17 @@
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include <openssl/ssl.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
@@ -15,21 +29,6 @@
 using std::string;
 using namespace certifier::framework;
 using namespace certifier::utilities;
-
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 
 // simulated enclave data
 bool my_data_initialized = false;
@@ -63,8 +62,10 @@ bool simulated_GetPlatformClaim(signed_claim_message* out) {
   return true;
 }
 
-bool simulated_Init(const string& asn1_policy_cert, const string& attest_key_file,
-      const string& measurement_file, const string& attest_key_signed_claim_file) {
+bool simulated_Init(const string& asn1_policy_cert,
+                    const string& attest_key_file,
+                    const string& measurement_file,
+                    const string& attest_key_signed_claim_file) {
 
   int m_size = file_size(measurement_file);
   if (m_size < 0) {
@@ -141,7 +142,7 @@ bool simulated_Getmeasurement(int* size_out, byte* out) {
 const int max_seal_pad = 256;
 
 bool simulated_Seal(const string& enclave_type, const string& enclave_id,
-    int in_size, byte* in, int* size_out, byte* out) {
+                    int in_size, byte* in, int* size_out, byte* out) {
 
   const int iv_size = block_size;
   byte iv[iv_size];
@@ -163,7 +164,7 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
     return false;
   }
 
-  // input: concatinate measurment_size bytes of measurement and in
+  // input: concatinate measurement_size bytes of measurement and
   // then encrypt it and give it back.
   memcpy(input, (byte*)my_measurement.data(), my_measurement.size());
   memcpy(input + my_measurement.size(), in, in_size);
@@ -182,7 +183,7 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
 }
 
 bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
-      int in_size, byte* in, int* size_out, byte* out) {
+                      int in_size, byte* in, int* size_out, byte* out) {
 
   int iv_size = block_size;
   byte iv[iv_size];
@@ -216,8 +217,8 @@ bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
 // Attestation is a signed_claim_message
 // with a vse_claim_message claim
 bool simulated_Attest(const string& enclave_type,
-  int what_to_say_size, byte* what_to_say,
-  int* size_out, byte* out) {
+                      int what_to_say_size, byte* what_to_say,
+                      int* size_out, byte* out) {
 
   vse_attestation_report_info report_info;
   string serialized_report_info;
@@ -270,7 +271,7 @@ bool simulated_Attest(const string& enclave_type,
 }
 
 bool simulated_Verify(string& serialized_signed_report) {
-  string type("vse-attestation-report");
+                      string type("vse-attestation-report");
 
   if (!verify_report(type, serialized_signed_report, my_attestation_key)) {
     printf("simulated_Verify: verify_report failed\n");
