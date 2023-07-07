@@ -70,7 +70,8 @@ clean:
 	@echo "removing executable files"
 	rm -rf $(CL)/keystone_test.exe
 
-$(S)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
+$(I)/certifier.pb.h: $(S)/certifier.pb.cc
+$(S)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(CP) --cpp_out=$(S) $<
 	mv $(S)/certifier.pb.h $(I)
 

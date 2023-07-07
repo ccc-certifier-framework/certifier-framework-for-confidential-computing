@@ -64,6 +64,14 @@ Local_lib_path=${LOCAL_LIB:-/usr/local/lib}
 # Sub-tools used in this script
 Jq=jq    # Needed for OE app; will be established later on.
 
+NumCPUs=1
+if [ "$(uname -s)" = "Linux" ]; then
+    NumCPUs=$(grep -c "^processor" /proc/cpuinfo)
+fi
+# Cap # of -j threads for make to 8
+NumMakeThreads=${NumCPUs}
+if [ "${NumMakeThreads}" -gt 8 ]; then NumMakeThreads=8; fi
+
 # --------------------------------------------------------------------------------
 # sample_app_under_gramine uses MbedTLS library, which needs to be downloaded.
 # And some minor configuration is done as part of setup_MbedTLS(). We want to
@@ -436,6 +444,9 @@ Steps_APP_SERVICE=( "rm_non_git_files"
                       "start_application_service"
                   )
 
+# Steps to build-and-test sample_app_under_keystone/ (Debug use.)
+Steps_Keystone=( "setup_emulated_keystone_shim_bins"
+               )
 # --------------------------------------------------------------------------
 # Driver function to list steps for a given valid app name
 function list_steps() {
@@ -503,7 +514,6 @@ function is_valid_step() {
     case "${SampleAppName}" in
           "simple_app" \
         | "simple_app_under_app_service" \
-        | "simple_app_under_keystone" \
         | "simple_app_under_islet")
             check_steps_for_app "${Steps[@]}"
             ;;
@@ -522,6 +532,12 @@ function is_valid_step() {
 
         "application_service")
             check_steps_for_app "${Steps_APP_SERVICE[@]}"
+            ;;
+
+        "simple_app_under_keystone")
+            check_steps_for_app "${Steps[@]}"
+            [ ${Found_step} == 1 ] \
+            || check_steps_for_app "${Steps_Keystone[@]}"
             ;;
 
         *)
@@ -701,7 +717,7 @@ function build_utilities() {
             run_cmd make -f ${mkf} clean
             clean_done=1
         fi
-        LOCAL_LIB=${Local_lib_path} run_cmd make -f ${mkf}
+        LOCAL_LIB=${Local_lib_path} run_cmd make -j "${NumMakeThreads}" -f ${mkf}
     done
 
     run_popd
@@ -857,7 +873,7 @@ function compile_app_common() {
     if [ ${DoMakeClean} -eq 1 ]; then
         run_cmd make -f example_app.mak clean
     fi
-    run_cmd make -f example_app.mak
+    run_cmd make -j "${NumMakeThreads}" -f example_app.mak
 
     run_popd
 }
@@ -890,7 +906,7 @@ function compile_simple_app_under_gramine() {
     if [ ${DoMakeClean} -eq 1 ]; then
         run_cmd make -f gramine_example_app.mak clean
     fi
-    run_cmd make -f gramine_example_app.mak app RA_TYPE=dcap
+    run_cmd make -j "${NumMakeThreads}" -f gramine_example_app.mak app RA_TYPE=dcap
 
     # Gramine-app's Makefile target creates a differently-named app, but this
     # script expects a diff name. Create a soft-link to reconcile app-exe names.
@@ -910,7 +926,7 @@ function compile_simple_app_under_sev() {
     fi
 
     export CFLAGS="-DSEV_DUMMY_GUEST"
-    run_cmd make -f sev_example_app.mak
+    run_cmd make -j "${NumMakeThreads}" -f sev_example_app.mak
     unset CFLAGS
 
     run_popd
@@ -924,7 +940,7 @@ function compile_application_service() {
     if [ ${DoMakeClean} -eq 1 ]; then
         run_cmd make -f app_service.mak clean
     fi
-    run_cmd make -f app_service.mak
+    run_cmd make -j "${NumMakeThreads}" -f app_service.mak
 
     run_popd
 }
@@ -1492,7 +1508,7 @@ function build_policy_generator() {
     if [ ${DoMakeClean} -eq 1 ]; then
         run_cmd make -f ${mkf} clean
     fi
-    LOCAL_LIB=${Local_lib_path} run_cmd make -f ${mkf}
+    LOCAL_LIB=${Local_lib_path} run_cmd make -j "${NumMakeThreads}" -f ${mkf}
 
     run_popd
 }
@@ -1643,7 +1659,7 @@ function build_simple_server() {
     fi
     run_cmd cd "${CERT_PROTO}"/certifier_service/isletlib
     # shellcheck disable=SC2086
-    run_cmd make ${make_arg}
+    run_cmd make -j "${NumMakeThreads}" ${make_arg}
 
     # Now, build the simpleserver:
     run_cmd cd "${CERT_PROTO}"/certifier_service
@@ -2256,14 +2272,14 @@ function show_env() {
 
     echo " "
     uname -a
-    # Likely, will fail on macOSX, so run in dry-run mode
+    # Likely, will fail on macOSX, so don't run in dry-run mode
     if [ $DryRun -eq 0 ]; then
         local numCPUs=0
         local cpuModel=0
         local cpuVendor=0
         local totalMemGB=0
 
-        numCPUs=$(grep -c "^processor" /proc/cpuinfo)
+        numCPUs=${NumCPUs}
         cpuModel=$(grep "model name" /proc/cpuinfo | head -1 | cut -f2 -d':')
         cpuVendor=$(grep "vendor_id" /proc/cpuinfo | head -1 | cut -f2 -d':')
         totalMemGB=$(free -g | grep "^Mem:" | awk '{print $2}')
@@ -2383,7 +2399,7 @@ function setup_emulated_keystone_shim_bins() {
     run_pushd "${CERT_PROTO}"/src/keystone
 
     run_cmd make -f shim_test.mak clean
-    run_cmd make -f shim_test.mak
+    run_cmd make -j "${NumMakeThreads}" -f shim_test.mak
 
     run_cmd ./keystone_test.exe
 

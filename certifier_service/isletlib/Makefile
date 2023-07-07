@@ -46,14 +46,15 @@ build: $(ISLET_VERIFY_LIB)
 
 $(ISLET_VERIFY_LIB): $(dobj)
 
-$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
-	@echo " \nCompiling $<"
-	$(CC) -fPIC $(CFLAGS) -Wno-array-bounds -c $< -o $@
-
-$(S)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
+$(I)/certifier.pb.h: $(S)/certifier.pb.cc
+$(S)/certifier.pb.cc: $(CP)/certifier.proto
 	@echo "\nGenerate protobuf files"
 	$(PROTO) --proto_path=$(CP) --cpp_out=$(S) $<
 	mv $(S)/certifier.pb.h $(I)
+
+$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
+	@echo " \nCompiling $<"
+	$(CC) -fPIC $(CFLAGS) -Wno-array-bounds -c $< -o $@
 
 $(O)/islet_verify.o: $(S)/islet_verify.cc
 	@ echo " \nCompiling $<"

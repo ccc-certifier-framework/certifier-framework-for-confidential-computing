@@ -106,7 +106,8 @@ certifier_tests.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/certifier_tests.exe $(dobj) $(LDFLAGS)
 
-$(S)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
+$(I)/certifier.pb.h: $(S)/certifier.pb.cc
+$(S)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --cpp_out=$(S) --proto_path $(CP) $<
 	mv $(S)/certifier.pb.h $(I)
 
