@@ -64,11 +64,10 @@ keystone_example_app.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/keystone_example_app.exe $(dobj) $(LDFLAGS)
 
+$(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
 	mv $(US)/certifier.pb.h $(I)
-
-$(I)/certifier.pb.h: $(US)/certifier.pb.cc
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "compiling certifier.pb.cc"

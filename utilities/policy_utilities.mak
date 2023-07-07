@@ -127,7 +127,8 @@ $(O)/key_utility.o: $(US)/key_utility.cc $(INC_DIR)/support.h $(INC_DIR)/certifi
 	$(CC) $(CFLAGS) -c -o $(O)/key_utility.o $(US)/key_utility.cc
 
 # Generate certifier.pb.cc in src/ dir, using proto file from certprotos/
-$(CERT_SRC)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
+$(I)/certifier.pb.h: $(CERT_SRC)/certifier.pb.cc
+$(CERT_SRC)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(CP) --cpp_out=$(CERT_SRC) $<
 	mv $(CERT_SRC)/certifier.pb.h $(I)
 

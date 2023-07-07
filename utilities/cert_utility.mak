@@ -95,7 +95,8 @@ $(O)/key_utility.o: $(US)/key_utility.cc $(I)/support.h $(I)/certifier.pb.h
 	@echo "compiling key_utility.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/key_utility.o $(US)/key_utility.cc
 
-$(US)/certifier.pb.cc $(I)/certifier.pb.h: $(CP)/certifier.proto
+$(I)/certifier.pb.h: $(US)/certifier.pb.cc
+$(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --cpp_out=$(US) --proto_path $(CP) $<
 	mv certifier.pb.h $(I)
 

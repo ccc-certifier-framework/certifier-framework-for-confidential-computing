@@ -25,6 +25,7 @@ jobs:
 
     - name: test-core-certifier-programs
       run: |
+        echo " "
         echo "******************************************************************"
         echo "* Check that core certifier programs still compile and clear tests"
         echo "******************************************************************"
@@ -37,16 +38,17 @@ jobs:
         make -f certifier.mak clean
         make -f certifier_tests.mak clean
 
-        make -f certifier.mak
+        make -j2 -f certifier.mak
         make -f certifier.mak clean
 
-        make -f certifier_tests.mak
+        make -j2 -f certifier_tests.mak
         ./certifier_tests.exe
 
         popd
 
     - name: unit-test-certlib-utility-programs
       run: |
+        echo " "
         echo "******************************************************************"
         echo "* Check core Certlib interfaces for utility programs"
         echo "******************************************************************"
@@ -54,8 +56,8 @@ jobs:
         pushd utilities
 
         # Build utilities
-        make -f cert_utility.mak
-        make -f policy_utilities.mak
+        make -j2 -f cert_utility.mak
+        make -j2 -f policy_utilities.mak
 
         popd
 
@@ -317,7 +319,7 @@ jobs:
         pushd src
 
         make -f certifier_tests.mak clean
-        ENABLE_SEV=1 make -f certifier_tests.mak
+        ENABLE_SEV=1 make -j2 -f certifier_tests.mak
         sudo ./certifier_tests.exe --print_all=true
 
         echo " "
@@ -327,7 +329,7 @@ jobs:
         echo " "
         make -f certifier.mak clean
         make -f certifier_tests.mak clean
-        ENABLE_SEV=1 make -f certifier.mak
+        ENABLE_SEV=1 make -j2 -f certifier.mak
 
         popd
 
