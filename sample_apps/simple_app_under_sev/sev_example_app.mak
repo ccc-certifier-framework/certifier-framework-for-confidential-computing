@@ -64,6 +64,7 @@ sev_example_app.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/sev_example_app.exe $(dobj) $(LDFLAGS)
 
+$(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(CP) --cpp_out=$(US) $<
 	mv certifier.pb.h $(I)

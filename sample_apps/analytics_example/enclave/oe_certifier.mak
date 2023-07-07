@@ -49,7 +49,8 @@ oe_certifier.exe: $(dobj)
 	@echo "linking executable files"
 	$(LINK) -o $(EXE_DIR)/oe_certifier.exe $(dobj) $(LDFLAGS)
 
-certifier.pb.cc certifier.pb.h: $(S)/certifier.proto
+certifier.pb.h: certifier.pb.cc
+certifier.pb.cc: $(S)/certifier.proto
 	$(PROTO) -I$(S) --cpp_out=. $(S)/certifier.proto
 
 $(O)/oe_certifier.o: oe_certifier.cc certifier.pb.h $(S)/certifier.h
