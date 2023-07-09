@@ -76,11 +76,11 @@ $(O)/send_request.o: $(S)/send_request.cc
 	$(CC) $(CFLAGS) -c -o $(O)/send_request.o $(S)/send_request.cc
 
 app_service.exe: $(dobj) 
-	@echo "linking executable files"
+	@echo "linking executable $@"
 	$(LINK) -o $(EXE_DIR)/app_service.exe $(dobj) $(LDFLAGS)
 
 test_user.exe: $(user_dobj) 
-	@echo "linking executable files"
+	@echo "linking executable $@"
 	$(LINK) -o $(EXE_DIR)/test_user.exe $(user_dobj) $(LDFLAGS)
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc

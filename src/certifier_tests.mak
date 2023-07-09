@@ -100,7 +100,7 @@ clean:
 	rm -rf $(EXE_DIR)/certifier_tests.exe $(EXE_DIR)/pipe_read_test.exe $(EXE_DIR)/test_channel.exe
 
 certifier_tests.exe: $(dobj) 
-	@echo "\nlinking executable files"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/certifier_tests.exe $(dobj) $(LDFLAGS)
 
 $(I)/certifier.pb.h: $(S)/certifier.pb.cc
@@ -189,7 +189,7 @@ $(SEV_S)/snp_derive_key.h
 endif
 
 pipe_read_test.exe: $(pipe_read_dobj) 
-	@echo "\nlinking executable files"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/pipe_read_test.exe $(pipe_read_dobj) $(LDFLAGS)
 
 $(O)/pipe_read_test.o: $(S)/pipe_read_test.cc
@@ -197,7 +197,7 @@ $(O)/pipe_read_test.o: $(S)/pipe_read_test.cc
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 test_channel.exe: $(channel_dobj) 
-	@echo "\nlinking executable files"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/test_channel.exe $(channel_dobj) $(LDFLAGS)
 
 $(O)/test_channel.o: $(S)/test_channel.cc

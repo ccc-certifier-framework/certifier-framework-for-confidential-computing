@@ -60,7 +60,7 @@ clean:
 	rm -rf $(EXE_DIR)/service_example_app.exe
 
 service_example_app.exe: $(dobj) 
-	@echo "linking executable files"
+	@echo "linking executable $@"
 	$(LINK) -o $(EXE_DIR)/service_example_app.exe $(dobj) $(LDFLAGS)
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
