@@ -62,11 +62,11 @@ clean:
 	rm -rf $(EXE_DIR)/example_app.exe
 
 $(EXE_DIR)/example_app.exe: $(dobj)
-	@echo "\nlinking executable files"
+	@echo "\nlinking executable $@"
 	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
 
 $(EXE_DIR)/example_key_rotation.exe: $(robj)
-	@echo "\nlinking executable files"
+	@echo "\nlinking executable $@"
 	$(LINK) $(robj) $(LDFLAGS) -o $(@D)/$@
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
