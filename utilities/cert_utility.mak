@@ -98,7 +98,7 @@ $(O)/key_utility.o: $(US)/key_utility.cc $(I)/support.h $(I)/certifier.pb.h
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --cpp_out=$(US) --proto_path $(<D) $<
-	mv $(US)/certifier.pb.h $(I)
+	mv $(@D)/certifier.pb.h $(I)
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"

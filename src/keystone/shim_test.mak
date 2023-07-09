@@ -37,7 +37,7 @@ CL=..
 
 INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I .
 
-CFLAGS = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS = $(INCLUDE) -O3 -g -D X64 -std=c++11 -Wall -Wno-unused-variable -Wno-deprecated-declarations
 
 ifdef ENABLE_SEV
 CFLAGS += -D SEV_SNP
