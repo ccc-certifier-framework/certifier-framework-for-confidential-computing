@@ -41,7 +41,6 @@ INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-sn
 
 CFLAGS_NOERROR = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
 CFLAGS = $(CFLAGS_NOERROR) -Werror
-CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
 # For Mac: -D MACOS should be defined
 
 CC=g++
@@ -116,11 +115,11 @@ clean:
 	rm -rf $(CERT_SRC)/certifier.pb.cc $(CERT_SRC)/certifier.pb.h $(I)/certifier.pb.h
 	@echo "removing object files"
 	rm -rf $(O)/*.o
-	@echo "removing executable file"
+	@echo "removing executables"
 	rm -rf $(EXE_DIR)/*.exe
 
 $(EXE_DIR)/measurement_utility.exe: $(measurement_utility_obj) 
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) $(measurement_utility_obj) $(LDFLAGS) -o $(@D)/$@
 
 $(O)/measurement_utility.o: $(S)/measurement_utility.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -166,7 +165,7 @@ $(O)/make_indirect_vse_clause.o: $(S)/make_indirect_vse_clause.cc $(INC_DIR)/cer
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/make_indirect_vse_clause.exe: $(make_indirect_vse_clause_obj) 
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/make_indirect_vse_clause.exe $(make_indirect_vse_clause_obj) $(LDFLAGS)
 
 $(O)/make_simple_vse_clause.o: $(S)/make_simple_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -174,7 +173,7 @@ $(O)/make_simple_vse_clause.o: $(S)/make_simple_vse_clause.cc $(INC_DIR)/certifi
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/make_simple_vse_clause.exe: $(make_simple_vse_clause_obj) 
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/make_simple_vse_clause.exe $(make_simple_vse_clause_obj) $(LDFLAGS)
 
 $(O)/make_unary_vse_clause.o: $(S)/make_unary_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -182,7 +181,7 @@ $(O)/make_unary_vse_clause.o: $(S)/make_unary_vse_clause.cc $(INC_DIR)/certifier
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/make_unary_vse_clause.exe: $(make_unary_vse_clause_obj) 
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/make_unary_vse_clause.exe $(make_unary_vse_clause_obj) $(LDFLAGS)
 
 $(O)/make_signed_claim_from_vse_clause.o: $(S)/make_signed_claim_from_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -190,11 +189,11 @@ $(O)/make_signed_claim_from_vse_clause.o: $(S)/make_signed_claim_from_vse_clause
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/make_signed_claim_from_vse_clause.exe: $(make_signed_claim_from_vse_clause_obj) 
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/make_signed_claim_from_vse_clause.exe $(make_signed_claim_from_vse_clause_obj) $(LDFLAGS)
 
 $(EXE_DIR)/print_vse_clause.exe: $(print_vse_clause_obj) 
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/print_vse_clause.exe $(print_vse_clause_obj) $(LDFLAGS)
 
 $(O)/print_vse_clause.o: $(S)/print_vse_clause.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -202,7 +201,7 @@ $(O)/print_vse_clause.o: $(S)/print_vse_clause.cc $(INC_DIR)/certifier.pb.h $(IN
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/print_signed_claim.exe: $(print_signed_claim_obj) 
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/print_signed_claim.exe $(print_signed_claim_obj) $(LDFLAGS)
 
 $(O)/print_signed_claim.o: $(S)/print_signed_claim.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -210,7 +209,7 @@ $(O)/print_signed_claim.o: $(S)/print_signed_claim.cc $(INC_DIR)/certifier.pb.h 
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/package_claims.exe: $(package_claims_obj) 
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/package_claims.exe $(package_claims_obj) $(LDFLAGS)
 
 $(O)/package_claims.o: $(S)/package_claims.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -218,7 +217,7 @@ $(O)/package_claims.o: $(S)/package_claims.cc $(INC_DIR)/certifier.pb.h $(INC_DI
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/print_packaged_claims.exe: $(print_packaged_claims_obj) 
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/print_packaged_claims.exe $(print_packaged_claims_obj) $(LDFLAGS)
 
 print_packaged_claims.o: $(S)/print_packaged_claims.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -226,7 +225,7 @@ print_packaged_claims.o: $(S)/print_packaged_claims.cc $(INC_DIR)/certifier.pb.h
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/embed_policy_key.exe: $(embed_policy_key_obj)
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/embed_policy_key.exe $(embed_policy_key_obj) $(LDFLAGS)
 
 $(O)/embed_policy_key.o: $(S)/embed_policy_key.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -234,7 +233,7 @@ $(O)/embed_policy_key.o: $(S)/embed_policy_key.cc $(INC_DIR)/certifier.pb.h $(IN
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/make_platform.exe: $(make_platform_obj)
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/make_platform.exe $(make_platform_obj) $(LDFLAGS)
 
 $(O)/make_platform.o: $(S)/make_platform.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -246,7 +245,7 @@ $(O)/make_property.o: $(S)/make_property.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/make_property.exe: $(make_property_obj)
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/make_property.exe $(make_property_obj) $(LDFLAGS)
 
 $(O)/combine_properties.o: $(S)/combine_properties.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -254,7 +253,7 @@ $(O)/combine_properties.o: $(S)/combine_properties.cc $(INC_DIR)/certifier.pb.h 
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/combine_properties.exe: $(combine_properties_obj)
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/combine_properties.exe $(combine_properties_obj) $(LDFLAGS)
 
 $(O)/make_environment.o: $(S)/make_environment.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
@@ -262,7 +261,7 @@ $(O)/make_environment.o: $(S)/make_environment.cc $(INC_DIR)/certifier.pb.h $(IN
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/make_environment.exe: $(make_environment_obj)
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/make_environment.exe $(make_environment_obj) $(LDFLAGS)
 
 $(O)/simulated_sev_attest.o: $(S)/simulated_sev_attest.cc
@@ -270,7 +269,7 @@ $(O)/simulated_sev_attest.o: $(S)/simulated_sev_attest.cc
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/simulated_sev_attest.exe: $(simulated_sev.obj)
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/simulated_sev_attest.exe $(simulated_sev.obj) $(LDFLAGS)
 
 $(O)/sample_sev_key_generation.o: $(S)/sample_sev_key_generation.cc
@@ -278,7 +277,7 @@ $(O)/sample_sev_key_generation.o: $(S)/sample_sev_key_generation.cc
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/sample_sev_key_generation.exe: $(sample_sev_key_generation.obj)
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/sample_sev_key_generation.exe $(sample_sev_key_generation.obj) $(LDFLAGS)
 
 $(O)/simulated_sev_key_generation.o: $(S)/simulated_sev_key_generation.cc
@@ -286,5 +285,5 @@ $(O)/simulated_sev_key_generation.o: $(S)/simulated_sev_key_generation.cc
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/simulated_sev_key_generation.exe: $(simulated_sev_key_generation.obj)
-	@echo "\nlinking executable file $@"
+	@echo "\nlinking executable $@"
 	$(LINK) -o $(EXE_DIR)/simulated_sev_key_generation.exe $(simulated_sev_key_generation.obj) $(LDFLAGS)
