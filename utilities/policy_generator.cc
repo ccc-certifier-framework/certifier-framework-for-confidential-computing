@@ -433,9 +433,9 @@ static bool generate_measurement_policy(string policyKey,
                                         vector<string> measurements,
                                         bool script)
 {
+    int i = 1;
     for (auto mea : measurements) {
         string cmd, claim_file;
-        int i = 1;
         cmd = string_format("%s --mrenclave=%s --out_file=%s",
                             (FLAGS_util_path + MEASUREMENT_INIT_CMD).c_str(),
                             mea.c_str(), "meas.bin");
@@ -563,11 +563,11 @@ static bool generate_claim_policy(string policyKey,
         {ENVIRONMENT_SUBJECT, "environment"},
     };
 
+    int i = 1;
     for (auto claim : claims) {
         string cmd, clauseFile, claimFile, signedClaimFile;
         string actual_sub, cleanup_cmd = "";
         pair<string, string> p;
-        int i = 1;
         claimFile = string_format("claim%d.bin", i);
         signedClaimFile = string_format("signed_claim%d.bin", i);
         clauseFile = generate_clause(policyKey, claim.cl, claim.ctype, script);
