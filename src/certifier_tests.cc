@@ -1,10 +1,3 @@
-#include <gtest/gtest.h>
-#include <gflags/gflags.h>
-
-#include "certifier.h"
-#include "support.h"
-#include "simulated_enclave.h"
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#include <gtest/gtest.h>
+#include <gflags/gflags.h>
+
+#include "certifier.h"
+#include "support.h"
+#include "simulated_enclave.h"
 
 
 DEFINE_bool(print_all, false,  "verbose");
@@ -96,6 +96,12 @@ extern bool test_policy_store(bool print_all);
 TEST (policy_store, test_policy_store) {
   EXPECT_TRUE(test_policy_store(FLAGS_print_all));
 }
+
+extern bool test_policy_store_signed_claims(bool print_all);
+TEST (policy_store, test_policy_store_signed_claims) {
+  EXPECT_TRUE(test_policy_store_signed_claims(FLAGS_print_all));
+}
+
 extern bool test_init_and_recover_containers(bool print_all);
 TEST (init_and_recover_containers, test_init_and_recover_containers) {
   EXPECT_TRUE(test_init_and_recover_containers(FLAGS_print_all));
