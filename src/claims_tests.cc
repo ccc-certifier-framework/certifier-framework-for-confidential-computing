@@ -1,9 +1,3 @@
-#include "certifier.h"
-#include "support.h"
-
-using namespace certifier::framework;
-using namespace certifier::utilities;
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +12,11 @@ using namespace certifier::utilities;
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "certifier.h"
+#include "support.h"
+
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 bool test_claims_1(bool print_all) {
   key_message k;

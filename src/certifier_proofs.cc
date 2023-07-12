@@ -1,17 +1,3 @@
-#include "support.h"
-#include "certifier.h"
-#include "simulated_enclave.h"
-#include "application_enclave.h"
-#include <sys/socket.h>
-#include <netdb.h>
-#ifdef SEV_SNP
-#include "attestation.h"
-#endif
-#ifdef GRAMINE_CERTIFIER
-#include "gramine_api.h"
-#endif
-
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#include "support.h"
+#include "certifier.h"
+#include "simulated_enclave.h"
+#include "application_enclave.h"
+#include <sys/socket.h>
+#include <netdb.h>
+#ifdef SEV_SNP
+#include "attestation.h"
+#endif
+#ifdef GRAMINE_CERTIFIER
+#include "gramine_api.h"
+#endif
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
