@@ -1,10 +1,3 @@
-#include <gtest/gtest.h>
-#include <gflags/gflags.h>
-
-#include "certifier.h"
-#include "support.h"
-#include "simulated_enclave.h"
-
 //  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <gtest/gtest.h>
+#include <gflags/gflags.h>
+
+#include "certifier.h"
+#include "support.h"
+#include "simulated_enclave.h"
 
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(trusted_measurements_file, "binary_trusted_measurements_file.bin",  "binary_trusted_measurements_file");
