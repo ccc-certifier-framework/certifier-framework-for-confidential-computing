@@ -49,7 +49,7 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 
 
 // The test demonstrates key rotation of the public key
-// For an example of rotating keys for Protect_Blob, see the certifier_tests.
+// For an example of rotating keys for protect_blob, see the certifier_tests.
 
 #include "policy_key.cc"
 cc_trust_data* app_trust_data = nullptr;
