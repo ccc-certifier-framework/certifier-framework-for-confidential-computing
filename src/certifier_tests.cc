@@ -91,10 +91,12 @@ extern bool test_protect(bool print_all);
 TEST (protect, test_protect) {
   EXPECT_TRUE(test_protect(FLAGS_print_all));
 }
+
 extern bool test_policy_store(bool print_all);
 TEST (policy_store, test_policy_store) {
   EXPECT_TRUE(test_policy_store(FLAGS_print_all));
 }
+
 extern bool test_init_and_recover_containers(bool print_all);
 TEST (init_and_recover_containers, test_init_and_recover_containers) {
   EXPECT_TRUE(test_init_and_recover_containers(FLAGS_print_all));

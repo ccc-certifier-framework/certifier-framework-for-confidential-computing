@@ -348,8 +348,8 @@ bool certifier::utilities::add_interval_to_time_point(time_point& t_in, double h
   hours -= ((double)h_add);
   int min_add = hours * 60.0;
   hours -= ((double)min_add) * 60.0;
-  // hours is now seconds to add
 
+  // hours is now seconds to add
   y += y_add;
   m += m_add;
   d += d_add;

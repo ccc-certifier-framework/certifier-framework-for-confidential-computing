@@ -445,7 +445,7 @@ bool certifier::framework::cc_trust_data::save_store() {
   pk.set_key_format("vse-key");
   pk.set_secret_key_bits(pkb, num_key_bytes);
 
-  if (!Protect_Blob(enclave_type_, pk, serialized_store.size(),
+  if (!protect_blob(enclave_type_, pk, serialized_store.size(),
           (byte*)serialized_store.data(), &size_protected_blob, protected_blob)) {
     printf("save_store: can't protect blob\n");
     return false;
@@ -483,7 +483,7 @@ bool certifier::framework::cc_trust_data::fetch_store() {
   pk.set_key_type("aes-256-cbc-hmac-sha256");
   pk.set_key_format("vse-key");
 
-  if (!Unprotect_Blob(enclave_type_, size_protected_blob, protected_blob,
+  if (!unprotect_blob(enclave_type_, size_protected_blob, protected_blob,
         &pk, &size_unprotected_blob, unprotected_blob)) {
     printf("%s(): Can't Unprotect\n", __func__);
     return false;
@@ -505,60 +505,81 @@ void certifier::framework::cc_trust_data::clear_sensitive_data() {
   // Not necessary on most platforms.
 }
 
+//  cc_trust_data relies on the following data in the store
+//    public_policy_key
+//    public_key_algorithm
+//    symmetric_key_algorithm
+//    For attestation
+//      service-attest-key
+//      sealing-key
+//    For authentication
+//      auth-key
+//      app-symmetric-key
+//    Some platforms require obtaining a platform rule; in that case, it
+//    will also be stored.
+//  initialized cert is in the array initialized_cert with size initialized_cert_size
+//  These are set in embed+policy_key.cc.
 bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
 
-  if (!store_.replace_policy_key(public_policy_key_)) {
-    printf("put_trust_data_in_store: Can't store policy key\n");
+  store_.policy_key_.CopyFrom(public_policy_key_);
+  store_.policy_key_valid_ = true;
+
+  const string string_type("string");
+  const string key_type("key");
+  const string signed_claim_type("signed_claim");
+
+  const string symmetric_key_algorithm_tag("symmetric-key-algorithm");
+  const string public_key_alg_tag("public-key-algorithm");
+  const string service_key_tag("service-attest-key");
+  const string sealing_key_tag("sealing-key");
+
+  string value;
+
+  if (!store_.update_or_insert(public_key_alg_tag, string_type, public_key_algorithm_)) {
+    printf("put_trust_data_in_store: can't set public key algorithm\n");
     return false;
   }
 
-  const string pka("public_key_algorithm");
-  int pki = store_.get_blob_index_by_tag(pka);
-  if (pki >= 0) {
-    tagged_blob_message* tbp = store_.tagged_blob_[pki];
-    tbp->set_b(public_key_algorithm_.data(), public_key_algorithm_.size()+1);
-  } else {
-    if (!store_.add_blob(pka, public_key_algorithm_)) {
-      printf("%s(): Can't add public key algorithm to store\n", __func__);
-      return false;
-    }
-  }
-  const string ska("symmetric_key_algorithm");
-  int ski = store_.get_blob_index_by_tag(ska);
-  if (ski >= 0) {
-    tagged_blob_message* tbp = store_.tagged_blob_[ski];
-    tbp->set_b(symmetric_key_algorithm_.data(), symmetric_key_algorithm_.size()+1);
-  } else {
-    if (!store_.add_blob(ska, symmetric_key_algorithm_)) {
-      printf("%s(): Can't add symmetric key algorithm to store\n", __func__);
-      return false;
-    }
+  const string symmetric_key_algorithm_type("symmetric-key-algorithm");
+  if (!store_.update_or_insert(symmetric_key_algorithm_tag, string_type,
+      symmetric_key_algorithm_)) {
+    printf("put_trust_data_in_store: can't set symmetric key algorithm\n");
+    return false;
   }
 
   if (purpose_ == "attestation") {
 
     // put private service key and symmetric keys in store
-    string service_key_tag("service-attest-key");
-    if (!store_.add_authentication_key(service_key_tag, private_service_key_)) {
-      printf("Can't store service key\n");
+    value.clear();
+    if (!private_service_key_.SerializeToString(&value)) {
+      printf("put_trust_data_in_store: can't serialize private service key\n");
+      return false;
+    }
+    if (!store_.update_or_insert(service_key_tag, key_type, value)) {
+      printf("put_trust_data_in_store: can't set private service key\n");
       return false;
     }
     string sealing_key_tag("sealing-key");
-    storage_info_message sm;
-    sm.set_storage_type("key");
-    sm.set_tag(sealing_key_tag);
-    key_message* sk = new(key_message);
-    sk->CopyFrom(service_sealing_key_);
-    sm.set_allocated_storage_key(sk);
-    if (!store_.add_storage_info(sm)) {
-      printf("put_trust_data_in_store: Can't store sealing keys\n");
+    value.clear();
+    if (!service_sealing_key_.SerializeToString(&value)) {
+      printf("put_trust_data_in_store: can't serialize sealing key\n");
+      return false;
+    }
+    if (!store_.update_or_insert(sealing_key_tag, key_type, value)) {
+      printf("put_trust_data_in_store: can't set sealing key\n");
       return false;
     }
 
     if (cc_service_platform_rule_initialized_) {
       string rule_tag("platform-rule");
-      if (!store_.add_signed_claim(rule_tag, platform_rule_)) {
-        printf("put_trust_data_in_store: Can't add platform rule\n");
+      value.clear();
+      if (!platform_rule_.SerializeToString(&value)) {
+        printf("put_trust_data_in_store: can't serialize platform rule\n");
+        return false;
+      }
+      if (!store_.update_or_insert(rule_tag, signed_claim_type, value)) {
+        printf("put_trust_data_in_store: can't set platform rule\n");
+        return false;
       }
     }
     return true;
@@ -567,97 +588,148 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
   if (purpose_ == "authentication") {
 
     string auth_tag("auth-key");
-    if (!store_.add_authentication_key(auth_tag, private_auth_key_)) {
-      printf("put_trust_data_in_store: Can't store auth key\n");
-      return false;
-    }
     string symmetric_key_tag("app-symmetric-key");
-    storage_info_message sm;
-    sm.set_storage_type("symmetric-key");
-    sm.set_tag(symmetric_key_tag);
-    key_message* sk = new(key_message);
-    sk->CopyFrom(symmetric_key_);
-    sm.set_allocated_storage_key(sk);
-    if (!store_.add_storage_info(sm)) {
-      printf("put_trust_data_in_store: Can't store app symmetric key\n");
+
+    value.clear();
+    if (!private_auth_key_.SerializeToString(&value)) {
+      printf("put_trust_data_in_store: can't serialize auth-key\n");
       return false;
     }
+    if (!store_.update_or_insert(auth_tag, key_type, value)) {
+      printf("put_trust_data_in_store: can't set serialized auth-key\n");
+      return false;
+    }
+    value.clear();
+    if (!symmetric_key_.SerializeToString(&value)) {
+      printf("put_trust_data_in_store: can't serialize app symmetric key\n");
+      return false;
+    }
+    if (!store_.update_or_insert(symmetric_key_tag, key_type, value)) {
+      printf("put_trust_data_in_store: can't set serialized app symmetric key\n");
+      return false;
+    }
+
+    // Debug
+    // printf("put_trust_data_from_store: outgoing store\n");
+    // store_.print();
+
     return true;
   }
+
   return false;
 }
 
 bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
 
-  const string pka("public_key_algorithm");
-  int pki = store_.get_blob_index_by_tag(pka);
-  if (pki >= 0) {
-    tagged_blob_message* tbp = store_.tagged_blob_[pki];
-    public_key_algorithm_ = tbp->b().c_str();
+  const string string_type("string");
+  const string key_type("key");
+  const string signed_claim_type("signed_claim");
+
+  const string symmetric_key_alg_tag("symmetric-key-algorithm");
+  const string public_key_alg_tag("public-key-algorithm");
+  const string service_key_tag("service-attest-key");
+  const string sealing_key_tag("sealing-key");
+
+  int ent;
+  string value;
+
+  // Debug
+  // printf("get_trust_data_from_store: incoming store\n");
+  // store_.print();
+
+  ent = store_.find_entry(public_key_alg_tag, string_type);
+  if (ent < 0) {
+    printf("get_trust_data_from_store: Can't get public key algorithm\n");
+    return false;
   }
-  const string ska("symmetric_key_algorithm");
-  int ski = store_.get_blob_index_by_tag(ska);
-  if (ski >= 0) {
-    tagged_blob_message* tbp = store_.tagged_blob_[ski];
-    symmetric_key_algorithm_ = tbp->b().c_str();
+  if (!store_.get(ent, &public_key_algorithm_)) {
+    printf("get_trust_data_from_store: Can't get public key algorithm\n");
+    return false;
+  }
+  ent = store_.find_entry(symmetric_key_alg_tag, string_type);
+  if (ent < 0) {
+    printf("get_trust_data_from_store: Can't get symmetric key algorithm\n");
+    return false;
+  }
+  if (!store_.get(ent, &symmetric_key_algorithm_)) {
+    printf("get_trust_data_from_store: Can't get symmetric key algorithm\n");
+    return false;
   }
 
   if (purpose_ == "attestation") {
 
     // put private service key and symmetric keys in store
     string service_key_tag("service-attest-key");
-    int index = store_.get_authentication_key_index_by_tag(service_key_tag);
-    if (index < 0) {
+    ent = store_.find_entry(service_key_tag, key_type);
+    if (ent < 0) {
+      printf("get_trust_data_from_store: Can't get service-attest-key\n");
       return false;
     }
-    const key_message* sk = store_.get_authentication_key_by_index(index);
-    private_service_key_.CopyFrom(*sk);
+    value.clear();
+    if (!store_.get(ent, &value)) {
+      printf("get_trust_data_from_store: Can't get service-attest-key\n");
+      return false;
+    }
+    if (!private_service_key_.ParseFromString(value)) {
+      printf("get_trust_data_from_store: Can't parse private service key\n");
+      return false;
+    }
     if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
       printf("get_trust_data_from_store: Can't transform to public key\n");
       return false;
     }
     cc_service_key_initialized_ = true;
 
-    string sealing_key_tag("sealing-key");
-    index = store_.get_storage_info_index_by_tag(sealing_key_tag);
-    if (index < 0) {
+    ent = store_.find_entry(sealing_key_tag, key_type);
+    if (ent < 0) {
       printf("get_trust_data_from_store: Can't get sealing-key\n");
       return false;
     }
-    const storage_info_message* skm = store_.get_storage_info_by_index(index);
-    if (skm == nullptr)
+    value.clear();
+    if (!store_.get(ent, &value)) {
+      printf("get_trust_data_from_store: Can't get sealing-key\n");
       return false;
-    service_sealing_key_.CopyFrom(skm->storage_key());
+    }
+    if (!service_sealing_key_.ParseFromString(value)) {
+      printf("get_trust_data_from_store: Can't parse sealing-key\n");
+      return false;
+    }
     cc_symmetric_key_initialized_ = true;
 
     // platform rule?
     string rule_tag("platform-rule");
-    index = store_.get_signed_claim_index_by_tag(rule_tag);
-    if (index >= 0) {
-      const signed_claim_message* psm = store_.get_signed_claim_by_index(index);
-      if (psm != nullptr) {
-        platform_rule_.CopyFrom(*psm);
+    ent = store_.find_entry(rule_tag, signed_claim_type);
+    if (ent  >= 0) {
+      value.clear();
+      if (!store_.get(ent, &value)) {
+        printf("get_trust_data_from_store: Can't get signed claim\n");
+        return false;
       }
+      if (!platform_rule_.ParseFromString(value))
+        return false;
       cc_service_platform_rule_initialized_ = true;
-      cc_is_certified_ = true;
     }
+    cc_is_certified_ = true;
     return true;
   }
 
   if (purpose_ == "authentication") {
 
     string auth_key_tag("auth-key");
-    int index = store_.get_authentication_key_index_by_tag(auth_key_tag);
-    if (index < 0) {
-      printf("get_trust_data_from_store: Can't find authentication key\n");
+    ent = store_.find_entry(auth_key_tag, key_type);
+    if (ent < 0) {
+      printf("get_trust_data_from_store: Can't get auth-key\n");
       return false;
     }
-    const key_message* ak = store_.get_authentication_key_by_index(index);
-    if (ak == nullptr) {
-      printf("get_trust_data_from_store: Can't retrieve authentication key\n");
+    value.clear();
+    if (!store_.get(ent, &value)) {
+        printf("get_trust_data_from_store: Can't get auth-key\n");
+        return false;
+      }
+    if (!private_auth_key_.ParseFromString(value)) {
+      printf("get_trust_data_from_store: Can't parse auth key\n");
       return false;
     }
-    private_auth_key_.CopyFrom(*ak);
     if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
       printf("get_trust_data_from_store: Can't transform to public key\n");
       return false;
@@ -684,15 +756,20 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
     }
 
     string symmetric_key_tag("app-symmetric-key");
-    index = store_.get_storage_info_index_by_tag(symmetric_key_tag);
-    if (index < 0) {
+    ent = store_.find_entry(symmetric_key_tag, key_type);
+    if (ent < 0) {
       printf("get_trust_data_from_store: Can't get app-symmetric-key\n");
       return false;
     }
-    const storage_info_message* skm = store_.get_storage_info_by_index(index);
-    if (skm == nullptr)
+    value.clear();
+    if (!store_.get(ent, &value)) {
+      printf("get_trust_data_from_store: Can't parse app-symmetric-key\n");
       return false;
-    symmetric_key_.CopyFrom(skm->storage_key());
+    }
+    if (!symmetric_key_.ParseFromString(value)) {
+      printf("get_trust_data_from_store: Can't parse app-symmetric-key\n");
+      return false;
+    }
     cc_symmetric_key_initialized_ = true;
 
     return true;
@@ -736,10 +813,7 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
   if (purpose_ == "authentication") {
 
     // put private auth key and symmetric keys in store
-    if (!store_.replace_policy_key(public_policy_key_)) {
-      printf("cold_init: Can't store policy key\n");
-      return false;
-    }
+    store_.policy_key_.CopyFrom(public_policy_key_);
     if (!get_random(num_key_bytes, symmetric_key_bytes_)) {
       printf("cold_init: Can't get random bytes for app key\n");
       return false;
@@ -826,12 +900,6 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
     private_service_key_.set_key_name("service-attest-key");
     if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
       printf("cold_init: Can't make public service key\n");
-      return false;
-    }
-
-    string service_tag("service-attest-key");
-    if (!store_.add_authentication_key(service_tag, private_service_key_)) {
-      printf("cold_init: Can't store auth key\n");
       return false;
     }
 
@@ -957,12 +1025,6 @@ bool certifier::framework::cc_trust_data::recertify_me(const string& host_name, 
       private_service_key_.set_key_name("service-attest-key");
       if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
         printf("recertify_me: Can't make public service key\n");
-        return false;
-      }
-
-      string service_tag("service-attest-key");
-      if (!store_.add_authentication_key(service_tag, private_service_key_)) {
-        printf("recertify_me: Can't store auth key\n");
         return false;
       }
 
@@ -1245,6 +1307,7 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
 
   // Store the admissions certificate cert or platform rule
   if (purpose_ == "authentication") {
+
     public_auth_key_.set_certificate(response.artifact());
     private_auth_key_.set_certificate(response.artifact());
 
@@ -1260,29 +1323,13 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
     }
     X509_free(art_cert);
 #endif
-
-    // Update store with cert and save it
-    string auth_tag("auth-key");
-    const key_message* km = store_.get_authentication_key_by_tag(auth_tag);
-    if (km == nullptr) {
-      printf("certifier::framework::cc_trust_data::certify_me: Can't find authentication key in store\n");
-      return false;
-    }
-    ((key_message*) km)->set_certificate(response.artifact());
     cc_auth_key_initialized_ = true;
     cc_is_certified_ = true;
 
   } else if (purpose_ == "attestation") {
 
-    // Update store and save it
-    string key_tag("service-attest-key");
-    const key_message* km = store_.get_authentication_key_by_tag(key_tag);
-    if (km == nullptr) {
-      if (!store_.add_authentication_key(key_tag, private_service_key_)) {
-        printf("certifier::framework::cc_trust_data::certify_me: Can't find service key in store\n");
-        return false;
-      }
-    }
+    public_service_key_.set_certificate(response.artifact());
+    private_service_key_.set_certificate(response.artifact());
 
     // Set platform_rule
     string pr_str;
@@ -1292,11 +1339,6 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
       return false;
     }
 
-    // Update store with platform_rule and save it
-    string platform_rule_tag("platform-rule");
-    if (!store_.add_signed_claim(platform_rule_tag, platform_rule_)) {
-      printf("certifier::framework::cc_trust_data::certify_me: Can't add platform rule\n");
-    }
     cc_service_platform_rule_initialized_ = true;
     cc_is_certified_ = true;
 
@@ -1323,20 +1365,22 @@ bool certifier::framework::cc_trust_data::recover_peer_certification_data() {
   return false;
 }
 
-bool certifier::framework::cc_trust_data::get_peer_certification(const string& host_name, int port) {
+bool certifier::framework::cc_trust_data::get_peer_certification(const string& host_name,
+      int port) {
   return false;
 }
 
-bool certifier::framework::cc_trust_data::run_peer_certificationservice(const string& host_name, int port) {
+bool certifier::framework::cc_trust_data::run_peer_certification_service(
+      const string& host_name, int port) {
   return false;
 }
 
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
-bool construct_platform_evidence_package(string& attesting_enclave_type, const string& purpose,
-      evidence_list& platform_assertions, string& serialized_attestation,
-      evidence_package* ep) {
+bool construct_platform_evidence_package(string& attesting_enclave_type,
+      const string& purpose, evidence_list& platform_assertions,
+      string& serialized_attestation, evidence_package* ep) {
 
   string pt("vse-verifier");
   string et("signed-claim");
@@ -1734,12 +1778,10 @@ bool certifier::framework::server_dispatch(const string& host_name, int port,
   X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
   X509_STORE_add_cert(cs, root_cert);
 
-#if 1
   X509* x509_auth_cert = X509_new();
   if (asn1_to_x509(private_key_cert, x509_auth_cert)) {
     X509_STORE_add_cert(cs, x509_auth_cert);
   }
-#endif
 
   if (!load_server_certs_and_key(root_cert, private_key, ctx)) {
     printf("server_dispatch: SSL_CTX_new failed (2)\n");
@@ -1847,12 +1889,10 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(const s
   X509_STORE* cs = SSL_CTX_get_cert_store(ssl_ctx_);
   X509_STORE_add_cert(cs, root_cert_);
 
-#if 1
   X509* x509_auth_cert = X509_new();
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
     X509_STORE_add_cert(cs, x509_auth_cert);
   }
-#endif
 
   // For debugging: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
   SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER, nullptr);

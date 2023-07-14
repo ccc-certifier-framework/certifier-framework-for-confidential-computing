@@ -21,8 +21,8 @@ option go_package = "github.com/jlmucb/crypto/v2/certifier_prototype/certifier_s
 
 // YYYY-MM-DDTHH:mm:ss.sssZ
 message time_point {
-  optional int32 year                       = 1;
   // January = 1
+  optional int32 year                       = 1;
   optional int32 month                      = 2;
   optional int32 day                        = 3;
   optional int32 hour                       = 4;
@@ -283,14 +283,16 @@ message tagged_claims_sequence {
   repeated tagged_claim claims              = 1;
 };
 
+message policy_store_entry {
+  optional string tag                                       = 1;
+  optional string type                                      = 2;
+  optional bytes value                                      = 3;
+};
+
 message policy_store_message {
   optional key_message policy_key                           = 1;
-  repeated trusted_service_message trusted_services         = 2;
-  repeated channel_key_message channel_authentication_keys  = 3;
-  repeated tagged_claim claims                              = 4;
-  repeated storage_info_message storage_info                = 5;
-  repeated tagged_signed_claim signed_claims                = 6;
-  repeated tagged_blob_message blobs                        = 7;
+  optional int32 max_ents                                   = 2;
+  repeated policy_store_entry entries                       = 3;
 };
 
 message claims_sequence {
