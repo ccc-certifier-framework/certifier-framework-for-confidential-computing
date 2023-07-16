@@ -14,6 +14,7 @@
 
 #include <sys/socket.h>
 #include <netdb.h>
+#include <algorithm>
 #include "support.h"
 #include "certifier.h"
 #include "simulated_enclave.h"
@@ -246,6 +247,101 @@ bool GetX509FromCert(const string& cert, X509* x) {
   return asn1_to_x509(cert, x);
 }
 
+#ifdef SEV_SNP
+
+#define EXT_STRUCT_VERSION  "1.3.6.1.4.1.3704.1.1"
+#define EXT_PRODUCT_NAME    "1.3.6.1.4.1.3704.1.2"
+#define EXT_BLSPL           "1.3.6.1.4.1.3704.1.3.1"
+#define EXT_TEESPL          "1.3.6.1.4.1.3704.1.3.2"
+#define EXT_SNPSPL          "1.3.6.1.4.1.3704.1.3.3"
+#define EXT_SPL4            "1.3.6.1.4.1.3704.1.3.4"
+#define EXT_SPL5            "1.3.6.1.4.1.3704.1.3.5"
+#define EXT_SPL6            "1.3.6.1.4.1.3704.1.3.6"
+#define EXT_SPL7            "1.3.6.1.4.1.3704.1.3.7"
+#define EXT_UCODESPL        "1.3.6.1.4.1.3704.1.3.8"
+#define EXT_HWID            "1.3.6.1.4.1.3704.1.4"
+
+static bool vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *value) {
+  int nid = -1, idx = -1, extlen = -1;
+  X509_EXTENSION *ex = NULL;
+  ASN1_STRING *extvalue = NULL;
+  const unsigned char *vals = NULL;
+
+  // Use OID for both lname and sname so OBJ_create does not fail
+  nid = OBJ_create(oid, oid, oid);
+  if (nid == NID_undef) {
+    printf("Failed to create NID\n");
+    return false;
+  }
+  idx = X509_get_ext_by_NID(vcek, nid, -1);
+  if (idx == -1) {
+    return false;
+  }
+
+  ex = X509_get_ext(vcek, idx);
+  extvalue = X509_EXTENSION_get_data(ex);
+  extlen = ASN1_STRING_length(extvalue);
+  vals = ASN1_STRING_get0_data(extvalue);
+
+  if (vals[0] != 0x2) {
+    printf("Invalid extension type!\n");
+    return false;
+  }
+
+  if (vals[1] != 0x1 && vals[1] != 0x2) {
+    printf("Invalid extension length!\n");
+    return false;
+  }
+
+  *value = vals[extlen - 1];
+  return true;
+}
+
+uint64_t get_tcb_version_from_vcek(X509 *vcek) {
+  unsigned char blSPL, teeSPL, snpSPL, ucodeSPL;
+  uint64_t tcb_version = (uint64_t)-1;
+
+  if (vcek_ext_byte_value(vcek, EXT_BLSPL, &blSPL) &&
+      vcek_ext_byte_value(vcek, EXT_TEESPL, &teeSPL) &&
+      vcek_ext_byte_value(vcek, EXT_SNPSPL, &snpSPL) &&
+      vcek_ext_byte_value(vcek, EXT_UCODESPL, &ucodeSPL)) {
+    tcb_version = blSPL | ((uint64_t)teeSPL << 8) | ((uint64_t)snpSPL << 48) |
+                  ((uint64_t)ucodeSPL << 56);
+  }
+
+  return tcb_version;
+}
+
+bool get_chipid_from_vcek(X509 *vcek, unsigned char *chipid, int idlen) {
+  int nid = -1, idx = -1, extlen = -1;
+  X509_EXTENSION *ex = NULL;
+  ASN1_STRING *extvalue = NULL;
+  const unsigned char *vals = NULL;
+
+  nid = OBJ_create(EXT_HWID, EXT_HWID, EXT_HWID);
+  if (nid == NID_undef) {
+    printf("Failed to create NID\n");
+    return false;
+  }
+  idx = X509_get_ext_by_NID(vcek, nid, -1);
+  if (idx == -1) {
+    return false;
+  }
+
+  ex = X509_get_ext(vcek, idx);
+  extvalue = X509_EXTENSION_get_data(ex);
+  extlen = ASN1_STRING_length(extvalue);
+  vals = ASN1_STRING_get0_data(extvalue);
+
+  if (idlen < extlen || chipid == nullptr) {
+    return false;
+  }
+
+  std::copy(vals, vals + extlen, chipid);
+  return true;
+}
+#endif
+
 bool PublicKeyFromCert(const string& cert, key_message* k) {
   X509* x = X509_new();
   EVP_PKEY* epk = nullptr;
@@ -255,6 +351,10 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   int len = -1;
   string subject_name_str;
   string* cert_str = nullptr;
+#ifdef SEV_SNP
+  enum {CHIP_ID_SIZE = 64};
+  unsigned char chipid[CHIP_ID_SIZE];
+#endif
 
   if (!GetX509FromCert(cert, x)) {
     printf("PublicKeyFromCert: Can't get X509 from cert\n");
@@ -331,6 +431,16 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   cert_str = new(string);
   cert_str->assign((char*)cert.data(), cert.size());
   k->set_allocated_certificate(cert_str);
+
+#ifdef SEV_SNP
+  // If we have VCEK in the policy in the future, this takes care of the extensions.
+  k->set_snp_tcb_version(get_tcb_version_from_vcek(x));
+  memset(chipid, 0, CHIP_ID_SIZE);
+  if (!get_chipid_from_vcek(x, chipid, CHIP_ID_SIZE)) {
+    printf("Failed to retrieve HWID from VCEK extensions\n");
+  }
+  k->set_snp_chipid(chipid, CHIP_ID_SIZE);
+#endif
 
 done:
   if (epk != nullptr)

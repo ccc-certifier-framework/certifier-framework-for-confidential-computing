@@ -1475,6 +1475,14 @@ func GetUserDataHashFromSevAttest(binSevAttest []byte) []byte {
 	return []byte(binSevAttest[0x50:0x90])
 }
 
+func GetTcbVersionFromSevAttest(binSevAttest []byte) uint64 {
+	tcb := uint64(0)
+	for i := 0; i < 8; i++ {
+		tcb |= uint64(binSevAttest[0x180+i]) << (8 * i)
+	}
+	return tcb
+}
+
 /*
 	Policy byte:
 		Bit 3: Guest can be activated on multiple sockets.
@@ -1536,14 +1544,7 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 	p5 := MakeProperty(pn5, ivt, nil, &ce, &m2iv)
 	props.Props = append(props.Props, p5)
 
-	tcb := uint64(binSevAttest[0x180])
-	tcb = (uint64(binSevAttest[0x181]) << 8) | tcb
-	tcb = (uint64(binSevAttest[0x182]) << 16) | tcb
-	tcb = (uint64(binSevAttest[0x183]) << 24) | tcb
-	tcb = (uint64(binSevAttest[0x184]) << 32) | tcb
-	tcb = (uint64(binSevAttest[0x185]) << 40) | tcb
-	tcb = (uint64(binSevAttest[0x186]) << 48) | tcb
-	tcb = (uint64(binSevAttest[0x187]) << 56) | tcb
+	tcb := GetTcbVersionFromSevAttest(binSevAttest)
 
 	// DEBUG
 	fmt.Printf("tcb: %08x\n", tcb)
@@ -1683,6 +1684,30 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	if !ecdsa.Verify(PK, hashOfHeader[0:48], r, s) {
 		fmt.Printf("VerifySevAttestation: ecdsa.Verify failed\n")
 		return nil
+	}
+
+	vcekTcbVer := k.GetSnpTcbVersion()
+	// TODO: Test whether the VCEK TCB Version is valid for now.
+	// This will be removed in the future after the simulator change.
+	if vcekTcbVer != ^uint64(0) {
+		tcbVer := GetTcbVersionFromSevAttest(ptr)
+		if vcekTcbVer != tcbVer {
+			fmt.Printf("VerifySevAttestation: Platform TCB Version check failed\n")
+			fmt.Printf("VCEK TCB Version: %08x\n", vcekTcbVer)
+			fmt.Printf("Platform TCB Version: %08x\n", tcbVer)
+			return nil
+		}
+		chipid := ptr[0x1A0:0x1E0]
+		if !bytes.Equal(chipid, k.GetSnpChipid()) {
+			fmt.Printf("VerifySevAttestation: Chipid check failed\n")
+			fmt.Printf("VCEK HwID: ")
+			PrintBytes(k.GetSnpChipid())
+			fmt.Printf("\n")
+			fmt.Printf("Platform Chip ID: ")
+			PrintBytes(chipid)
+			fmt.Printf("\n")
+			return nil
+		}
 	}
 
 	// return measurement, if successful
