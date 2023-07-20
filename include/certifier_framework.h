@@ -170,6 +170,7 @@ public:
       key_message service_sealing_key_;
 
       // The domains I get certified in
+      int max_num_certified_domains_;
       int num_certified_domains_;
       certifiers** certified_domains_;
 

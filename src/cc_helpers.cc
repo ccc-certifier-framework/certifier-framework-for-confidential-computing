@@ -102,6 +102,12 @@ certifier::framework::cc_trust_data::cc_trust_data(const string& enclave_type, c
   x509_policy_cert_ = nullptr;
   cc_is_certified_ = false;
   peer_data_initialized_ = false;
+  max_num_certified_domains_ = 10; // fix
+  num_certified_domains_ = 0;
+  certified_domains_ = new certifiers*[max_num_certified_domains_];
+  for (int i = 0; i < max_num_certified_domains_; i++) {
+      certified_domains_[i] = nullptr;
+  }
 }
 
 certifier::framework::cc_trust_data::cc_trust_data() {
@@ -115,6 +121,16 @@ certifier::framework::cc_trust_data::cc_trust_data() {
   cc_provider_provisioned_ = false;
   x509_policy_cert_ = nullptr;
   cc_is_certified_ = false;
+  
+  for (int i = 0; i < num_certified_domains_; i++) {
+      if (certified_domains_[i] != nullptr) {
+        delete certified_domains_[i];
+        certified_domains_[i] = nullptr;
+      }
+  }
+  delete certified_domains_;
+  certified_domains_ = nullptr;
+  num_certified_domains_ = 0;
 }
 
 certifier::framework::cc_trust_data::~cc_trust_data() {
