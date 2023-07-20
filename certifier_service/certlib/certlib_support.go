@@ -1759,6 +1759,18 @@ func GetSubjectNameFromCert(cert *x509.Certificate) *string {
 	return &cert.Subject.CommonName
 }
 
+func GetVcekExtValue(ext pkix.Extension) (uint8, error) {
+	if ext.Value[0] != 0x2 {
+		fmt.Printf("Invalid extension type!\n")
+		return 0, errors.New("Invalid extension type")
+	}
+	if ext.Value[1] != 0x1 && ext.Value[1] != 0x2 {
+		fmt.Printf("Invalid extension length!\n")
+		return 0, errors.New("Invalid extension length")
+	}
+	return ext.Value[ext.Value[1]+1], nil
+}
+
 func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
 	name := GetSubjectNameFromCert(cert)
 	if name == nil {
@@ -1781,8 +1793,74 @@ func GetSubjectKey(cert *x509.Certificate) *certprotos.KeyMessage {
 			fmt.Printf("GetSubjectKey: Can't internal ecc public key\n")
 			return nil
 		}
+
+		// Look for AMD VCEK cert extensions if they exist
+		oidBlSPL := "1.3.6.1.4.1.3704.1.3.1"
+		oidTeeSPL := "1.3.6.1.4.1.3704.1.3.2"
+		oidSnpSPL := "1.3.6.1.4.1.3704.1.3.3"
+		oidUcodeSPL := "1.3.6.1.4.1.3704.1.3.8"
+		oidHwID := "1.3.6.1.4.1.3704.1.4"
+		const hwIDLen = 64
+		snpExtExist := false
+		var blSPL, teeSPL, snpSPL, ucodeSPL uint8
+		for _, ext := range cert.Extensions {
+			var err error
+			if strings.Contains(ext.Id.String(), oidBlSPL) {
+				blSPL, err = GetVcekExtValue(ext)
+				if err == nil {
+					snpExtExist = true
+				} else {
+					snpExtExist = false
+					break
+				}
+			} else if strings.Contains(ext.Id.String(), oidTeeSPL) {
+				teeSPL, err = GetVcekExtValue(ext)
+				if err == nil {
+					snpExtExist = true
+				} else {
+					snpExtExist = false
+					break
+				}
+			} else if strings.Contains(ext.Id.String(), oidSnpSPL) {
+				snpSPL, err = GetVcekExtValue(ext)
+				if err == nil {
+					snpExtExist = true
+				} else {
+					snpExtExist = false
+					break
+				}
+			} else if strings.Contains(ext.Id.String(), oidUcodeSPL) {
+				ucodeSPL, err = GetVcekExtValue(ext)
+				if err == nil {
+					snpExtExist = true
+				} else {
+					snpExtExist = false
+					break
+				}
+			} else if strings.Contains(ext.Id.String(), oidHwID) {
+				if hwIDLen != len(ext.Value) {
+					fmt.Printf("Wrong HwID length: %d\n", len(ext.Value))
+					snpExtExist = false
+					k.SnpChipid = make([]byte, 0, hwIDLen)
+					break
+				} else {
+					snpExtExist = true
+					k.SnpChipid = ext.Value
+				}
+			}
+		}
+		var tcbVer uint64
+		if snpExtExist {
+			tcbVer = uint64(blSPL) | uint64(teeSPL)<<8 | uint64(snpSPL)<<48 | uint64(ucodeSPL)<<56
+			fmt.Printf("AMD VCEK extensions exist. TCB_VERSION: %08x\n", tcbVer)
+		} else {
+			tcbVer = ^uint64(0)
+		}
+		k.SnpTcbVersion = &tcbVer
+
 		return &k
 	}
+
 	return nil
 }
 

@@ -73,6 +73,9 @@ message key_message {
   optional bytes other_key_formats          = 8;
   optional string not_before                = 9;
   optional string not_after                 = 10;
+  // Optional SEV-SNP VCEK specific fields
+  optional uint64 snp_tcb_version           = 11;
+  optional bytes snp_chipid                 = 12;
 };
 
 message protected_blob_message {
