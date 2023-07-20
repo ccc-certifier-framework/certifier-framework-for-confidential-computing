@@ -15,6 +15,8 @@
 # ##############################################################################
 """
 test_cert_framework_basic.py - Basic pytests for Certifier Framework shared library.
+Test cases probe into and directly exercise a few built-in methods available through
+the shared library, just as a way of sanity verification of the shared library.
 """
 from inspect import getdoc, getmembers, isbuiltin, isclass, ismodule
 
@@ -70,6 +72,20 @@ def test_cf_policy_store_basic():
     assert libcf.policy_store_num_ents__get(policy_store) == 0
 
     libcf.policy_store__print(policy_store)
+
+    libcf.delete_policy_store(policy_store)
+
+# ##############################################################################
+def test_cf_policy_store_policy_key():
+    """
+    Exercise interfaces related to policy_key handling.
+    """
+    policy_store = libcf.new_policy_store()
+
+    # By default, policy key is invalid.
+    assert libcf.policy_store_is_policy_key_valid(policy_store) is False
+
+    result = libcf.policy_store_set_policy_key(policy_store, 'sample-policy-key')
 
     libcf.delete_policy_store(policy_store)
 
