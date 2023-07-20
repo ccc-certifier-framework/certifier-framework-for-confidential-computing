@@ -87,7 +87,7 @@ public:
       bool set_policy_key(const key_message key);
 
       void print();
-      bool Serialize(string* out);
+      bool Serialize(string* psout);
       bool Deserialize(string& in);
     };
 
@@ -248,7 +248,7 @@ public:
       int read(int size, byte* b);
       int write(int size, byte* b);
       void close();
-      bool get_peer_id(string* out);
+      bool get_peer_id(string* out_peer_id);
     };
 
     bool server_dispatch(const string& host_name, int port,

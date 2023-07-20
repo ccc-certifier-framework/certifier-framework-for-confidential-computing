@@ -2089,7 +2089,7 @@ void certifier::framework::secure_authenticated_channel::close() {
   }
 }
 
-bool certifier::framework::secure_authenticated_channel::get_peer_id(string* out) {
-  out->assign((char*)peer_id_.data(), peer_id_.size());
+bool certifier::framework::secure_authenticated_channel::get_peer_id(string* out_peer_id) {
+  out_peer_id->assign((char*)peer_id_.data(), peer_id_.size());
   return true;
 }
