@@ -2,11 +2,12 @@
 // *****************************************************************************
 // A large-ish collection of Certifier tests, defined in certifier_tests.cc and
 // related *_tests.cc files, are exposed through Swig generated Python bindings.
-// All those Certifier tests are invoked thru pytest, test_certifier_tests.py .
 // This interface file makes that glue possible through the build process(es).
+//
+// All those Certifier tests are invoked thru pytest, test_libcertifier_tests.py .
 // *****************************************************************************
 
-%module libcertifier_tests
+%module certifier_tests
 
 %{
 #include "certifier_tests.h"

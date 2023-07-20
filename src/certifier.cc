@@ -158,7 +158,7 @@ void certifier::framework::policy_store::print() {
   }
 }
 
-bool certifier::framework::policy_store::Serialize(string *out) {
+bool certifier::framework::policy_store::Serialize(string *psout) {
   policy_store_message psm;
 
   psm.set_max_ents(max_num_ents_);
@@ -171,7 +171,7 @@ bool certifier::framework::policy_store::Serialize(string *out) {
     pe->set_value(se->value_);
   }
 
-  return (psm.SerializeToString(out));
+  return (psm.SerializeToString(psout));
 }
 
 bool certifier::framework::policy_store::Deserialize(string &in) {
@@ -304,7 +304,7 @@ bool get_chipid_from_vcek(X509 *vcek, unsigned char *chipid, int idlen) {
   std::copy(vals, vals + extlen, chipid);
   return true;
 }
-#endif
+#endif  // SEV_SNP
 
 bool PublicKeyFromCert(const string &cert, key_message *k) {
   X509 *     x = X509_new();

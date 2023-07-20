@@ -183,6 +183,7 @@ int main(int an, char **av) {
 
   // Carry out operation
   if (FLAGS_operation == "cold-init") {
+<<<<<<< HEAD
     if (!app_trust_data->cold_init(public_key_alg,
                                    symmetric_key_alg,
                                    initialized_cert_size,
@@ -192,6 +193,17 @@ int main(int an, char **av) {
                                    FLAGS_policy_port,
                                    FLAGS_server_app_host,
                                    FLAGS_server_app_port)) {
+=======
+    if (!app_trust_data->cold_init(public_key_alg,
+                                   symmetric_key_alg,
+                                   initialized_cert,
+                                   initialized_cert_size,
+                                   "simple-app-home_domain",
+                                   FLAGS_policy_host,
+                                   FLAGS_policy_port,
+                                   FLAGS_server_app_host,
+                                   FLAGS_server_app_port)) {
+>>>>>>> d422663 ((#141) Extend Python bindings to exercise more Py-interfaces. Add tests.)
 
       printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
       ret = 1;
