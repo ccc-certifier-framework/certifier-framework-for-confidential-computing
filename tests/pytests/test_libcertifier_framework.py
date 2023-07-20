@@ -14,7 +14,16 @@
 # limitations under the License.
 # ##############################################################################
 """
-test_cert_framework_basic.py - Basic pytests for Certifier Framework shared library.
+Basic pytests for Certifier Framework shared library, libcertifier_framework.so
+
+Test cases probe into and directly exercise a few built-in methods available
+through the shared library, just as a way of sanity verification of the
+interfaces exported from the shared library.
+
+All test cases are named 'test_cfslib_*' => Certfier Framework Shared Library
+
+The methods exported via this shared library are the public interfaces
+declared in include/certifier_framework.h .
 """
 from inspect import getdoc, getmembers, isbuiltin, isclass, ismodule
 
@@ -25,7 +34,7 @@ import libcertifier_framework as libcf
 
 # ##############################################################################
 # To see output, run: pytest --capture=tee-sys -v
-def test_getmembers_of_cc_framework():
+def test_cfslib_getmembers_of_libcertifier_framework():
     """
     Test basic coherence of Certifier Framework's shared module imported here.
     """
@@ -54,7 +63,7 @@ def test_getmembers_of_cc_framework():
         print(' -', item[0], item[1])
 
 # ##############################################################################
-def test_cf_cc_trust_data_default_ctor():
+def test_cfslib_cc_trust_data_default_ctor():
     """
     Basic exerciser for an empty cc_trust_data() object.
     """
@@ -65,7 +74,7 @@ def test_cf_cc_trust_data_default_ctor():
     libcf.delete_cc_trust_data(cctd)
 
 # ##############################################################################
-def test_cf_cc_trust_data():
+def test_cfslib_cc_trust_data():
     """
     Instantiate a cc_trust_data() object with some arguments.
     """
@@ -77,7 +86,7 @@ def test_cf_cc_trust_data():
     libcf.delete_cc_trust_data(cctd)
 
 # ##############################################################################
-def test_cf_cc_trust_data_add_or_update_new_domain():
+def test_cfslib_cc_trust_data_add_or_update_new_domain():
     """
     Exercise add_or_update_new_domain(), which will create a new certified_domain()
     object. Dismantiling this cc_trust_data() will test the destructor of that
@@ -95,7 +104,7 @@ def test_cf_cc_trust_data_add_or_update_new_domain():
     libcf.delete_cc_trust_data(cctd)
 
 # ##############################################################################
-def test_cf_cc_trust_data_certify_secondary_domain_not_found():
+def test_cfslib_cc_trust_data_certify_secondary_domain_not_found():
     """
     Exercise certify_secondary_domain(). (Verifies fix to handle a secondary
     domain that is not found; leading to null domain ptr.)
@@ -116,9 +125,18 @@ def test_cf_cc_trust_data_certify_secondary_domain_not_found():
     libcf.delete_cc_trust_data(cctd)
 
 # ##############################################################################
-def test_cf_policy_store_basic():
+def test_cfslib_store_entry_basic():
     """
-    This test case shows ways to exercise basic interfaces in Py-bindings.
+    This test case exercises basic interfaces to store_entry() class.
+    """
+    store_entry = libcf.new_store_entry()
+    libcf.store_entry__print(store_entry)
+    libcf.delete_store_entry(store_entry)
+
+# ##############################################################################
+def test_cfslib_policy_store_basic():
+    """
+    This test case exercises basic interfaces to policy_store() class.
     """
     policy_store = libcf.new_policy_store()
 
@@ -136,7 +154,7 @@ def test_cf_policy_store_basic():
     libcf.delete_policy_store(policy_store)
 
 # ##############################################################################
-def test_cf_policy_store_update_or_insert():
+def test_cfslib_policy_store_update_or_insert():
     """
     Exercise basic update_or_insert() to add 2 entries. Verify # of entries.
     Exercise basic print.
@@ -157,7 +175,7 @@ def test_cf_policy_store_update_or_insert():
     libcf.delete_policy_store(policy_store)
 
 # ##############################################################################
-def test_cf_policy_store_find_entry():
+def test_cfslib_policy_store_find_entry():
     """
     Exercise find_entry() interface and verify correctness.
     """
@@ -198,7 +216,7 @@ def test_cf_policy_store_find_entry():
     libcf.delete_policy_store(policy_store)
 
 # ##############################################################################
-def test_cf_policy_store_delete_entry():
+def test_cfslib_policy_store_delete_entry():
     """
     Exercise delete_entry() interface and verify correctness.
     """
@@ -230,3 +248,36 @@ def test_cf_policy_store_delete_entry():
     assert result is False
 
     libcf.delete_policy_store(policy_store)
+
+# ##############################################################################
+def test_cfslib_cc_trust_data():
+    """
+    Exercise few interfaces of class cc_trust_data()
+    """
+    trust_data = libcf.new_cc_trust_data("simulated_enclave", 'attestation', 'fake_policy_store')
+    assert libcf.cc_trust_data_cc_all_initialized(trust_data) is False
+
+    result = libcf.cc_trust_data_initialize_simulated_enclave_data(trust_data,
+                                                                   'attest_key_file_name',
+                                                                   'measurement_file_name',
+                                                                   'attest_endorsement_file_name')
+    assert result is False
+    libcf.delete_cc_trust_data(trust_data)
+
+# ##############################################################################
+def test_cfslib_secure_authenticated_channel():
+    """
+    Exercise few interfaces of class secure_authenticated_channel()
+    """
+    sac_role = 'client'
+    sac = libcf.new_secure_authenticated_channel(sac_role)
+
+    result = libcf.secure_authenticated_channel_load_client_certs_and_key(sac)
+    assert result is False
+
+    peer_id = ''
+    result = libcf.secure_authenticated_channel_get_peer_id(sac, peer_id)
+    assert result is True
+    print("Peer-ID: '", peer_id, "'")
+
+    libcf.delete_secure_authenticated_channel(sac)

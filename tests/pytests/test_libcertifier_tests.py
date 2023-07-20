@@ -14,10 +14,16 @@
 # limitations under the License.
 # ##############################################################################
 """
-test_certifier_tests.py - Basic pytests to exercise Certifier Tests.
+Basic pytests to exercise Certifier Tests shared library.
+
+Test cases probe into and directly exercise a few built-in methods available
+through the shared library, just as a way of sanity verification of the shared
+library.
+
 certifier_tests.cc has a collection of C++ unit-tests for different
 sub-systems. This Python driver invokes those tests to ensure that
 the Python bindings still work correctly.
+
 """
 from inspect import getmembers, isbuiltin, ismodule
 
@@ -39,7 +45,7 @@ def test_getmembers_of_certifier_tests():
 
     # Verify existence of few key methods of Certifier tests from diff .h files
     # If we find one, we expect build would have picked up all other test fns
-    # from that test.cc file.
+    # from that <test>.cc file.
     for item in [  'test_seal'              # From primitive_tests.h
                  , 'test_signed_claims'     # From claims_tests.h
                  , 'test_protect'           # From store_tests.h
@@ -59,10 +65,16 @@ def test_exec_certifier_tests():
     """
     Execute all Certifier tests from the shared library.
     This test-case drives execution of all C++ unit-tests in one single swoop.
+
+    Certifier gtest unit-tests are all carefully constructed to have a
+    single interface: <test-case-name>(bool print_all)
+    So, here, we simply execute all test-case methods found, as a way to
+    verify that basic functionality still works and can be exercised through
+    these Python bindings.
     """
     cft_builtin_methods = getmembers(libct, isbuiltin)
 
     for item in cft_builtin_methods:
-        print('\n**** Execute pytest: ', item[0], ' ****\n', flush=True)
+        print(' \n**** Execute pytest: ', item[0], ' ****\n\n', flush=True)
         # pylint: disable-next=exec-used
         exec('libct.' + item[0] + '(True)')

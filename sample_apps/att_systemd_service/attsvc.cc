@@ -223,8 +223,8 @@ int main(int argc, char *argv[]) {
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size,
-                                       initialized_cert)) {
+  if (!app_trust_data->init_policy_key(initialized_cert,
+                                       initialized_cert_size)) {
     ATT_LOG(LOG_INFO, "Can't init policy key.");
     return 1;
   }
