@@ -133,6 +133,7 @@ public:
       string public_key_algorithm_;
       string symmetric_key_algorithm_;
 
+      // For home security domain only
       bool cc_policy_info_initialized_;
       string serialized_policy_cert_;
       X509* x509_policy_cert_;
@@ -141,14 +142,23 @@ public:
       bool cc_policy_store_initialized_;
       policy_store store_;
 
+      // platform initialized?
       bool cc_provider_provisioned_;
+
+      // home domain certified?
       bool cc_is_certified_;
 
-      // For auth
+      bool home_admissions_cert_valid_;
+      string serialized_home_admissions_cert_;
+      // if purpose is attestation, serialized_home_admissions_cert_
+      // is the same as the serialized_service_cert_, so remove it later
+
+      // auth key is the same in all domains
       bool cc_auth_key_initialized_;
       key_message private_auth_key_;
       key_message public_auth_key_;
 
+      //  symmetric key is the same in any domain
       bool cc_symmetric_key_initialized_;
       byte symmetric_key_bytes_[max_symmetric_key_size_];
       key_message symmetric_key_;
@@ -165,16 +175,18 @@ public:
       signed_claim_message platform_rule_;
 
       // This is the sealing key
+      // Maybe delete this and use symmetric_key_ for all purposes?
       bool cc_sealing_key_initialized_;
       byte service_symmetric_key_[max_symmetric_key_size_];
       key_message service_sealing_key_;
 
-      // The domains I get certified in
+      // The domains I get certified in.
+      // If purpose is attestation, there can only be one.
       int max_num_certified_domains_;
       int num_certified_domains_;
       certifiers** certified_domains_;
 
-      // For peer-to-peer certification
+      // For peer-to-peer certification (not used now)
       bool peer_data_initialized_;
       key_message local_policy_key_;
       string local_policy_cert_;
