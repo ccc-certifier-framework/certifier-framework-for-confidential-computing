@@ -14,7 +14,7 @@
 # limitations under the License.
 # ##############################################################################
 """
-test_certifier_tests.py - Basic pytests to exercise Certifier Tests.
+Basic pytests to exercise Certifier Tests.
 
 Test cases probe into and directly exercise a few built-in methods available
 through the shared library, just as a way of sanity verification of the shared

@@ -14,9 +14,11 @@
 # limitations under the License.
 # ##############################################################################
 """
-test_cert_framework_basic.py - Basic pytests for Certifier Framework shared library.
-Test cases probe into and directly exercise a few built-in methods available through
-the shared library, just as a way of sanity verification of the shared library.
+Basic pytests for Certifier Framework shared library.
+
+Test cases probe into and directly exercise a few built-in methods available
+through the shared library, just as a way of sanity verification of the shared
+library.
 """
 from inspect import getdoc, getmembers, isbuiltin, isclass, ismodule
 
