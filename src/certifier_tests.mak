@@ -87,7 +87,8 @@ dobj = $(O)/certifier_tests.o $(common_objs) \
 # Objs needed to build Certifer tests shared lib for use by Python module
 cftests_sl_dobj := $(dobj) $(O)/certifier_tests_wrap.o
 
-CERTIFIER_TESTS_SHARED_LIB = libcertifier_tests.so
+LIBCERTIFIER_TESTS         = libcertifier_tests
+CERTIFIER_TESTS_SHARED_LIB = $(LIBCERTIFIER_TESTS).so
 
 channel_dobj = $(O)/test_channel.o $(common_objs) \
                $(O)/cc_helpers.o $(O)/cc_useful.o
@@ -168,9 +169,10 @@ $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifi
 
 # Ref: https://stackoverflow.com/questions/12369131/swig-and-python3-surplus-underscore
 # Use -interface arg to overcome double __ issue in generated SWIG_init #define
+#     -outdir specifies output-dir for generated *.py file.
 $(S)/certifier_tests_wrap.cc: $(I)/certifier_tests.i $(S)/certifier_tests.cc
 	@echo "\nGenerating $@"
-	$(SWIG) -v -python -c++ -Wall -Werror -interface libcertifier_tests -o $(@D)/$@ $<
+	$(SWIG) -v -python -c++ -Wall -Werror -interface $(LIBCERTIFIER_TESTS) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
 
 $(O)/certifier_tests_wrap.o: $(S)/certifier_tests_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling $<"

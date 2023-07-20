@@ -14,7 +14,7 @@
 # limitations under the License.
 # ##############################################################################
 """
-Basic pytests to exercise Certifier Tests.
+Basic pytests to exercise Certifier Tests shared library.
 
 Test cases probe into and directly exercise a few built-in methods available
 through the shared library, just as a way of sanity verification of the shared

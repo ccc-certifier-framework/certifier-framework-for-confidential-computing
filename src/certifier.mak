@@ -80,7 +80,9 @@ endif
 cfsl_dobj := $(dobj) $(O)/certifier_framework_wrap.o
 
 CERTIFIER_LIB = certifier.a
-CERTIFIER_SHARED_LIB = libcertifier_framework.so
+
+LIBCERTIFIER         = libcertifier_framework
+CERTIFIER_SHARED_LIB = $(LIBCERTIFIER).so
 
 all:	$(CL)/$(CERTIFIER_LIB)
 
@@ -125,9 +127,10 @@ $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 
 # Ref: https://stackoverflow.com/questions/12369131/swig-and-python3-surplus-underscore
 # Use -interface arg to overcome double __ issue in generated SWIG_init #define
+#     -outdir specifies output-dir for generated *.py file.
 $(S)/certifier_framework_wrap.cc: $(I)/certifier_framework.i $(S)/certifier.cc
 	@echo "\nGenerating $@"
-	$(SWIG) -v -python -c++ -Wall -interface libcertifier_framework -o $(@D)/$@ $<
+	$(SWIG) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
 
 $(O)/certifier_framework_wrap.o: $(S)/certifier_framework_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling $<"

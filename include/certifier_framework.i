@@ -6,7 +6,7 @@
 // This interface file makes that glue possible through the build process(es).
 // *****************************************************************************
 
-%module libcertifier_framework
+%module certifier_framework
 %include "std_string.i"
 
 %{

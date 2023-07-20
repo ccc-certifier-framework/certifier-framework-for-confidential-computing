@@ -94,12 +94,14 @@ jobs:
         # Run one case showing verbose outputs of each library's contents.
         # Run each py file separately as 'pytest -v' (on all files) craps out.
         set -x
-        pytest --capture=tee-sys test_cert_framework_basic.py -k test_getmembers_of_cc_framework
+        pytest --capture=tee-sys test_libcertifier_framework_basic.py -k test_getmembers_of_cc_framework
 
-        PYTHONUNBUFFERED=TRUE pytest -v test_cert_framework_basic.py
+        # Capture output from individual Certifier tests that are run
+        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_libcertifier_tests.py
 
-        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_certifier_tests.py
+        PYTHONUNBUFFERED=TRUE pytest -v test_libcertifier_framework_basic.py
 
+        PYTHONUNBUFFERED=TRUE pytest -v test_certifier_framework.py
         set +x
         popd
 

@@ -6,7 +6,7 @@
 // This interface file makes that glue possible through the build process(es).
 // *****************************************************************************
 
-%module libcertifier_tests
+%module certifier_tests
 
 %{
 #include "certifier_tests.h"
