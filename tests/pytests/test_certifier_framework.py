@@ -73,8 +73,8 @@ def test_add_find_single_entry():
     """
     pstore = cfm.policy_store()
 
-    tag1 = 'tag-1'
-    type1 = 'string'
+    tag1   = 'tag-1'
+    type1  = 'string'
     value1 = 'Entry-1'
     result = pstore.update_or_insert(tag1, type1, value1)
     assert result is True
@@ -99,19 +99,22 @@ def test_update_single_entry():
     """
     pstore = cfm.policy_store()
 
-    tag1 = 'tag-1'
-    type1 = 'string'
+    tag1   = 'tag-1'
+    type1  = 'string'
     value1 = 'Entry-1'
     result = pstore.update_or_insert(tag1, type1, value1)
     assert result is True
 
     # Insert another entry, so we can check that find()'s getting the right one
-    tag2 = 'tag-1'
-    type2 = 'string'
-    value2 = 'Entry-1'
+    tag2   = 'tag-2'
+    type2  = 'string'
+    value2 = 'Entry-2'
     result = pstore.update_or_insert(tag2, type2, value2)
     assert result is True
 
+    assert pstore.get_num_entries() == 2
+
+    # Unique on (tag, type), so this will update existing entry
     newvalue1 = 'Updated-Entry-1'
     result = pstore.update_or_insert(tag1, type1, newvalue1)
     assert result is True
@@ -122,7 +125,46 @@ def test_update_single_entry():
     # Retrieve newly inserted entry and validate its contents
     this_entry = cfm.store_entry()
     this_entry = pstore.get_entry(entry1_idx)
-    assert this_entry.tag_ == tag1
-    assert this_entry.type_ == type1
+    assert this_entry.tag_   == tag1
+    assert this_entry.type_  == type1
     assert this_entry.value_ != value1
     assert this_entry.value_ == newvalue1
+
+# ##############################################################################
+def test_delete_single_entry():
+    """
+    Insert a few entries. Verify that we can delete a specific entry.
+    """
+    pstore = cfm.policy_store()
+
+    tag1   = 'tag-1'
+    type1  = 'string'
+    value1 = 'Entry-1'
+    result = pstore.update_or_insert(tag1, type1, value1)
+    assert result is True
+
+    tag2   = 'tag-2'
+    type2  = 'string'
+    value2 = 'Entry-2'
+    result = pstore.update_or_insert(tag2, type2, value2)
+    assert result is True
+
+    tag3   = 'tag-3'
+    type3  = 'string'
+    value3 = 'Entry-3'
+    result = pstore.update_or_insert(tag3, type3, value3)
+    assert result is True
+
+    nentries = 3
+    assert pstore.get_num_entries() == nentries
+
+    # Deleting non-existing entry should fail
+    assert pstore.delete_entry(nentries) is False
+
+    del_idx = pstore.find_entry(tag2, type2)
+    result = pstore.delete_entry(del_idx)
+    assert result is True
+
+    nentries -= 1
+
+    assert pstore.get_num_entries() == nentries
