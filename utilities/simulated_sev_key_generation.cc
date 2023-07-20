@@ -179,7 +179,7 @@ int main(int an, char** av) {
 
   X509* vcek_509 = X509_new();
   if (!produce_artifact(ask_vse_key, ask_name, ask_desc_str, pub_vcek_vse_key,
-          vcek_name, vcek_desc_str, 1ULL, 86400 * 365.25, vcek_509, false)) {
+          vcek_name, vcek_desc_str, 1ULL, 86400 * 365.25, vcek_509, false, true)) {
     printf("Generate ark cert failed\n");
     return 1;
   }
