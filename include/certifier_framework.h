@@ -118,27 +118,6 @@ public:
       int* size_new_encrypted_blob, byte* data);
 
 
-    // Certification Anchors
-    class certifiers {
-    public:
-      string domain_name_;
-      string domain_policy_cert_;
-      string host_;
-      int port_;
-      bool is_certified_;
-      string admissions_cert_;
-      string service_host_;
-      int service_port_;
-
-      certifiers();
-      ~certifiers();
-
-      bool add_new_domain(const string& domain_name, const string& cert,
-            const string& host, int port, const string& service_host, int service_port);
-      bool get_certified_status();
-      bool certify_domain();
-    };
-
 
     class cc_trust_data {
 
@@ -189,6 +168,9 @@ public:
       byte service_symmetric_key_[max_symmetric_key_size_];
       key_message service_sealing_key_;
 
+      // The domains I get certified in
+      certifiers_message my_certified_domains_;
+
       // For peer-to-peer certification
       bool peer_data_initialized_;
       key_message local_policy_key_;
@@ -236,8 +218,33 @@ public:
       bool get_peer_certification(const string& host_name, int port);
       bool run_peer_certification_service(const string& host_name, int port);
 
-      bool get_certifier_from_store();
+      bool get_certifiers_from_store();
       bool put_certifiers_in_store();
+    };
+
+    // Certification Anchors
+    class certifiers {
+    private:
+      // should be const, don't delete it
+      cc_trust_data* owner_;
+
+    public:
+      string domain_name_;
+      string domain_policy_cert_;
+      string host_;
+      int port_;
+      bool is_certified_;
+      string admissions_cert_;
+      string service_host_;
+      int service_port_;
+
+      certifiers(cc_trust_data* owner);
+      ~certifiers();
+
+      bool add_new_domain(const string& domain_name, const string& cert,
+            const string& host, int port, const string& service_host, int service_port);
+      bool get_certified_status();
+      bool certify_domain(const string& purpose, bool recertify);
     };
 
     class secure_authenticated_channel {

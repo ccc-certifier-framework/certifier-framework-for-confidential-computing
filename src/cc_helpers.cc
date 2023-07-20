@@ -1375,7 +1375,7 @@ bool certifier::framework::cc_trust_data::run_peer_certification_service(
   return false;
 }
 
-bool certifier::framework::cc_trust_data::get_certifier_from_store() {
+bool certifier::framework::cc_trust_data::get_certifiers_from_store() {
   return false;
 }
 
@@ -1383,7 +1383,8 @@ bool certifier::framework::cc_trust_data::put_certifiers_in_store() {
   return false;
 }
 
-certifier::framework::certifiers::certifiers() {
+certifier::framework::certifiers::certifiers(cc_trust_data* owner) {
+  owner_ = owner;
 }
 
 certifier::framework::certifiers::~certifiers() {
@@ -1400,8 +1401,329 @@ bool certifier::framework::certifiers::get_certified_status() {
   return is_certified_;
 }
 
-bool certifier::framework::certifiers::certify_domain() {
-  return false;
+// add auth-key and symmetric key
+bool certifier::framework::certifiers::certify_domain(const string& purpose, bool recertify) {
+
+  // owner has enclave_type, keys, and store.
+  if (owner_ == nullptr) {
+    return false;
+  }
+
+  evidence_list platform_evidence;
+  printf("%s():%d: enclave_type_ = '%s', purpose_ = '%s'\n",
+         __func__, __LINE__, owner_->enclave_type_.c_str(), owner_->purpose_.c_str());
+
+  if (owner_->enclave_type_ == "simulated-enclave" || owner_->enclave_type_ == "application-enclave") {
+    signed_claim_message signed_platform_says_attest_key_is_trusted;
+    if (!owner_->GetPlatformSaysAttestClaim(&signed_platform_says_attest_key_is_trusted)) {
+      printf("%s() error, line: %d, Can't get signed attest claim\n",
+         __func__, __LINE__);
+      return false;
+    }
+    string str_s;
+    if (!signed_platform_says_attest_key_is_trusted.SerializeToString(&str_s)) {
+      printf("%s() error, line: %d, Can't serialize signed attest claim\n",
+         __func__, __LINE__);
+      return false;
+    }
+    evidence* ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("%s() error, line: %d,: Can't add to platform evidence\n",
+         __func__, __LINE__);
+      return false;
+    }
+    ev->set_evidence_type("signed-claim");
+    ev->set_serialized_evidence(str_s);
+#ifdef GRAMINE_CERTIFIER
+  } else if (owner_->enclave_type_ == "gramine-enclave") {
+    if (!gramine_platform_cert_initialized) {
+      printf("%s() error, line: %d, gramine certs not initialized\n"
+         __func__, __LINE__);
+      return false;
+    }
+    evidence* ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("%s() error, line: %d, Can't add to gramine platform evidence\n",)
+         __func__, __LINE__);
+      return false;
+    }
+    ev->set_evidence_type("cert");
+    ev->set_serialized_evidence(gramine_platform_cert);
+    // May add more certs later
+#endif
+
+#ifdef KEYSTONE_CERTIFIER
+  } else if (owner_->enclave_type_ == "keystone-enclave") {
+    // Todo: Add cert when it's available
+#endif
+
+#ifdef ISLET_CERTIFIER
+  } else if (enclave_type_ == "islet-enclave") {
+
+    // Add CCA certificate
+#endif  // ISLET_CERTIFIER
+
+#ifdef SEV_SNP
+  } else if (owner_->enclave_type_ == "sev-enclave") {
+    if (!plat_certs_initialized) {
+      printf("%s() error, line: %d, sev certs not initialized\n");
+         __func__, __LINE__);
+      return false;
+    }
+    evidence* ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("%s() error, line: %d, Can't add to platform evidence\n",
+         __func__, __LINE__);
+      return false;
+    }
+    ev->set_evidence_type("cert");
+    ev->set_serialized_evidence(serialized_ark_cert);
+    ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("%s() error, line: %d, Can't add to platform evidence\n",
+         __func__, __LINE__);
+      return false;
+    }
+    ev->set_evidence_type("cert");
+    ev->set_serialized_evidence(serialized_ask_cert);
+    ev = platform_evidence.add_assertion();
+    if (ev ==nullptr) {
+      printf("%s() error, line: %d, Can't add to platform evidence\n",
+         __func__, __LINE__);
+      return false;
+    }
+    ev->set_evidence_type("cert");
+    ev->set_serialized_evidence(serialized_vcek_cert);
+#endif
+#ifdef OE_CERTIFIER
+  } else if (owner_->enclave_type_ == "oe-enclave") {
+    if (!owner_->cc_provider_provisioned_) {
+      printf("%s() error, line: %d, Can't get pem-chain\n",
+         __func__, __LINE__);
+      return false;
+    }
+    if (pem_cert_chain != "") {
+      evidence* ev = platform_evidence.add_assertion();
+      if (ev ==nullptr) {
+        printf("%s() error, line: %d, Can't add to platform evidence\n",
+         __func__, __LINE__);
+        return false;
+      }
+      ev->set_evidence_type("pem-cert-chain");
+      ev->set_serialized_evidence(pem_cert_chain);
+    }
+#endif
+  } else {
+    printf("%s() error, line: %d, Unknown enclave type\n",
+         __func__, __LINE__);
+    return false;
+  }
+
+  attestation_user_data ud;
+  if (owner_->purpose_ == "authentication") {
+#ifdef DEBUG
+    printf("\n---In certify_domainme\n");
+    printf("Filling ud with public auth key:\n");
+    print_key(owner_->public_auth_key_);
+    printf("\n");
+#endif
+
+    if (!make_attestation_user_data(owner_->enclave_type_,
+          owner_->public_auth_key_, &ud)) {
+      printf("%s() error, line: %d, Can't make user data (1)\n",
+         __func__, __LINE__);
+      return false;
+    }
+#ifdef DEBUG
+    printf("\n---In certify me\n");
+    printf("key in attestation user data:\n");
+    print_key(ud.enclave_key());
+    printf("\nprivate auth key:\n");
+    print_key(owner_->private_auth_key_);
+    printf("\npublic auth key:\n");
+    print_key(owner_->public_auth_key_);
+    printf("\n");
+    printf("User data:\n");
+    print_user_data(ud);
+    printf("\n");
+#endif
+  } else if (owner_->purpose_ == "attestation") {
+    if (!make_attestation_user_data(owner_->enclave_type_,
+          owner_->public_service_key_, &ud)) {
+      printf("%s() error, line: %d, Can't make user data (1)\n",
+         __func__, __LINE__);
+      return false;
+    }
+#ifdef DEBUG
+    printf("\n---In certify_domain\n");
+    printf("private service key:\n");
+    print_key(owner_->private_service_key_);
+    printf("\npublic service key:\n");
+    print_key(owner_->public_service_key_);
+    printf("\n");
+#endif
+  } else {
+    printf("%s() error, line: %d, neither attestation or authorization\n",
+         __func__, __LINE__);
+    return false;
+  }
+  string serialized_ud;
+  if (!ud.SerializeToString(&serialized_ud)) {
+    printf("%s() error, line: %d, Can't serialize user data\n",
+         __func__, __LINE__);
+    return false;
+  }
+
+  int size_out = 16000;
+  byte out[size_out];
+  if (!Attest(owner_->enclave_type_, serialized_ud.size(),
+        (byte*) serialized_ud.data(), &size_out, out)) {
+    printf("%s() error, line: %d,  Attest failed\n",
+         __func__, __LINE__);
+    return false;
+  }
+  string the_attestation_str;
+  the_attestation_str.assign((char*)out, size_out);
+
+  // Get certified
+  trust_request_message request;
+  trust_response_message response;
+
+  // Should trust_request_message should be signed by auth key
+  //   to prevent MITM attacks?  Probably not.
+  request.set_requesting_enclave_tag("requesting-enclave");
+  request.set_providing_enclave_tag("providing-enclave");
+  if (owner_->enclave_type_ == "application-enclave" || owner_->enclave_type_ == "simulated-enclave") {
+    request.set_submitted_evidence_type("vse-attestation-package");
+  } else if (owner_->enclave_type_ == "sev-enclave") {
+    request.set_submitted_evidence_type("sev-platform-package");
+  } else if (owner_->enclave_type_ == "gramine-enclave") {
+    request.set_submitted_evidence_type("gramine-evidence");
+  } else if (owner_->enclave_type_ == "keystone-enclave") {
+    request.set_submitted_evidence_type("keystone-evidence");
+  } else if (owner_->enclave_type_ == "islet-enclave") {
+    request.set_submitted_evidence_type("islet-evidence");
+  } else if (owner_->enclave_type_ == "oe-enclave") {
+    request.set_submitted_evidence_type("oe-evidence");
+  } else {
+    request.set_submitted_evidence_type("vse-attestation-package");
+  }
+  request.set_purpose(owner_->purpose_);
+
+  // Construct the evidence package
+  // Put initialized platform evidence and attestation in the following order:
+  //  platform_says_attest_key_is_trusted, the_attestation
+  evidence_package* ep = new(evidence_package);
+  if (!construct_platform_evidence_package(owner_->enclave_type_, owner_->purpose_, platform_evidence,
+        the_attestation_str, ep))  {
+    printf("%s() error, line: %d, construct_platform_evidence_package failed\n",
+         __func__, __LINE__);
+    return false;
+  }
+  request.set_allocated_support(ep);
+
+  // Serialize request
+  string serialized_request;
+  if (!request.SerializeToString(&serialized_request)) {
+    printf("%s() error, line: %d, Can't serialize request\n",
+         __func__, __LINE__);
+    return false;
+  }
+
+#ifdef DEBUG
+  printf("\nRequest:\n");
+  print_trust_request_message(request);
+#endif
+
+  // Open socket and send request.
+  int sock = -1;
+  if (!open_client_socket(host_, port_, &sock)) {
+    printf("%s() error, line: %d, Can't open request socket\n",
+         __func__, __LINE__);
+    return false;
+  }
+
+  if (sized_socket_write(sock, serialized_request.size(), (byte*)serialized_request.data()) <
+        (int)serialized_request.size()) {
+    return false;
+  }
+
+  // Read response from Certifier Service.
+  string serialized_response;
+  int resp_size = sized_socket_read(sock, &serialized_response);
+  if (resp_size < 0) {
+     printf("%s() error, line: %d, Can't read response\n",
+         __func__, __LINE__);
+    return false;
+  }
+  if (!response.ParseFromString(serialized_response)) {
+    printf("%s() error, line: %d, Can't parse response\n",
+         __func__, __LINE__);
+    return false;
+  }
+  close(sock);
+
+#ifdef DEBUG
+  printf("\nResponse:\n");
+  print_trust_response_message(response);
+#endif
+
+  if (response.status() != "succeeded") {
+    printf("%s() error, line: %d, Certification failed\n",
+         __func__, __LINE__);
+    return false;
+  }
+
+  // Store the admissions certificate cert or platform rule
+  if (owner_->purpose_ == "authentication") {
+
+    owner_->public_auth_key_.set_certificate(response.artifact());
+    owner_->private_auth_key_.set_certificate(response.artifact());
+
+#ifdef DEBUG
+    printf("\nAfter cert assigned\n");
+    printf("private key:\n");
+    print_key(owner_->private_auth_key_);
+    printf("\n");
+    X509* art_cert = X509_new();
+    if (asn1_to_x509(owner_->private_auth_key_.certificate(), art_cert)) {
+      printf("Cert:\n");
+      X509_print_fp(stdout, art_cert);
+    }
+    X509_free(art_cert);
+#endif
+    owner_->cc_auth_key_initialized_ = true;
+    owner_->cc_is_certified_ = true;
+
+  } else if (owner_->purpose_ == "attestation") {
+
+    owner_->public_service_key_.set_certificate(response.artifact());
+    owner_->private_service_key_.set_certificate(response.artifact());
+
+    // Set platform_rule
+    string pr_str;
+    pr_str.assign((char*)response.artifact().data(),response.artifact().size());
+    if (!owner_->platform_rule_.ParseFromString(pr_str)) {
+      printf("%s() error, line: %d, Can't parse platform rule\n",
+         __func__, __LINE__);
+      return false;
+    }
+
+    owner_->cc_service_platform_rule_initialized_ = true;
+    owner_->cc_is_certified_ = true;
+
+  } else {
+    printf("%s() error, line: %d, Unknown purpose\n",
+         __func__, __LINE__);
+    return false;
+  }
+
+  if (!owner_->put_trust_data_in_store()) {
+    printf("%s() error, line: %d, Can't put trust data in store\n",
+         __func__, __LINE__);
+    return false;
+  }
+  return owner_->save_store();
 }
 
 // --------------------------------------------------------------------------------------
