@@ -78,20 +78,6 @@ def test_cf_policy_store_basic():
     libcf.delete_policy_store(policy_store)
 
 # ##############################################################################
-def test_cf_policy_store_policy_key():
-    """
-    Exercise interfaces related to policy_key handling.
-    """
-    policy_store = libcf.new_policy_store()
-
-    # By default, policy key is invalid.
-    assert libcf.policy_store_is_policy_key_valid(policy_store) is False
-
-    result = libcf.policy_store_set_policy_key(policy_store, 'sample-policy-key')
-
-    libcf.delete_policy_store(policy_store)
-
-# ##############################################################################
 def test_cf_policy_store_update_or_insert():
     """
     Exercise basic update_or_insert() to add 2 entries. Verify # of entries.

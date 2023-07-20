@@ -72,8 +72,10 @@ jobs:
       run: |
         ./CI/scripts/check-gofmt.sh
 
+        #! Some new pytests trip warning:
+        #!  - W0212: Access to a protected member _print of a client class
         set -x
-        PYTHONPATH=. pylint tests/pytests/*.py
+        PYTHONPATH=. pylint --disable W0212 tests/pytests/*.py
         set +x
 
     #! -------------------------------------------------------------------------
