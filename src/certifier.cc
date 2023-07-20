@@ -300,7 +300,7 @@ bool get_chipid_from_vcek(X509 *vcek, unsigned char *chipid, int idlen) {
   std::copy(vals, vals + extlen, chipid);
   return true;
 }
-#endif
+#endif   // SEV_SNP
 
 bool PublicKeyFromCert(const string& cert, key_message* k) {
   X509* x = X509_new();

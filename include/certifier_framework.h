@@ -80,7 +80,7 @@ public:
               const string& type, const string& value);
 
       void print();
-      bool Serialize(string* out);
+      bool Serialize(string* psout);
       bool Deserialize(string& in);
     };
 
@@ -222,7 +222,7 @@ public:
                                          const string& attest_endorsement_file_name);
 
       bool cc_all_initialized();
-      bool init_policy_key(int asn1_cert_size, byte* asn1_cert);
+      bool init_policy_key(byte* asn1_cert, int asn1_cert_size);
       bool put_trust_data_in_store();
       bool get_trust_data_from_store();
       bool save_store();
@@ -235,7 +235,7 @@ public:
       bool generate_service_key(bool regen);
 
       bool cold_init(const string& public_key_alg, const string& symmetric_key_alg,
-                     int asn1_cert_size, byte* asn1_cert,
+                     byte* asn1_cert, int asn1_cert_size,
                      const string& home_domain_name, const string& home_host,
                      int home_port, const string& service_host, int service_port);
       bool warm_restart();
@@ -323,7 +323,7 @@ public:
       int read(int size, byte* b);
       int write(int size, byte* b);
       void close();
-      bool get_peer_id(string* out);
+      bool get_peer_id(string* out_peer_id);
     };
 
     bool server_dispatch(const string& host_name, int port,
