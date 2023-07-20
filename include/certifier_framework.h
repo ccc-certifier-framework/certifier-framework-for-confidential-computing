@@ -118,6 +118,7 @@ public:
       int* size_new_encrypted_blob, byte* data);
 
 
+    class certifiers;
 
     class cc_trust_data {
 
@@ -169,7 +170,8 @@ public:
       key_message service_sealing_key_;
 
       // The domains I get certified in
-      certifiers_message my_certified_domains_;
+      int num_certified_domains_;
+      certifiers** certified_domains_;
 
       // For peer-to-peer certification
       bool peer_data_initialized_;
@@ -244,7 +246,7 @@ public:
       bool add_new_domain(const string& domain_name, const string& cert,
             const string& host, int port, const string& service_host, int service_port);
       bool get_certified_status();
-      bool certify_domain(const string& purpose, bool recertify);
+      bool certify_domain(bool recertify);
     };
 
     class secure_authenticated_channel {
