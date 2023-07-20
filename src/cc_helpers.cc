@@ -624,6 +624,12 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
         return false;
       }
     }
+
+    if (!put_certifiers_in_store()) {
+        printf("%s() error, line %d, can't set certifiers data\n",
+         __func__, __LINE__);
+        return false;
+    }
     return true;
   }
 
@@ -653,6 +659,12 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
       printf("%s() error, line %d, can't set serialized app symmetric key\n",
          __func__, __LINE__);
       return false;
+    }
+
+    if (!put_certifiers_in_store()) {
+        printf("%s() error, line %d, can't set certifiers data\n",
+         __func__, __LINE__);
+        return false;
     }
 
     // Debug
@@ -702,6 +714,12 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
   }
   if (!store_.get(ent, &symmetric_key_algorithm_)) {
     printf("%s() error, line %d, Can't get symmetric key algorithm\n",
+         __func__, __LINE__);
+    return false;
+  }
+
+  if (!get_certifiers_from_store()) {
+    printf("%s() error, line %d, Can't get certifiers from store\n",
          __func__, __LINE__);
     return false;
   }
@@ -1052,6 +1070,32 @@ bool certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim(signed_clai
   return false;
 }
 
+bool certifier::framework::cc_trust_data::add_new_domain(const string& domain_name,
+      const string& cert, const string& host, int port,
+      const string& service_host, int service_port) {
+
+  // don't duplicate
+  certifiers* found = nullptr;
+  for (int i = 0; i < num_certified_domains_; i++) {
+    certifiers* c = certified_domains_[i];
+    if (c != nullptr && domain_name == c->domain_name_) {
+      found = c;
+      break;
+    }
+  }
+
+  if (found == nullptr) {
+    if (num_certified_domains_ >=  max_num_certified_domains_) {
+      return false;
+    }
+
+    found= certified_domains_[num_certified_domains_++];
+  }
+
+  return found->init_certifier_data(domain_name,
+      cert, host, port, service_host, service_port);
+}
+
 bool certifier::framework::cc_trust_data::recertify_me(const string& host_name, int port,
       bool generate_new_key) {
 
@@ -1245,11 +1289,19 @@ certifier::framework::certifiers::certifiers(cc_trust_data* owner) {
 certifier::framework::certifiers::~certifiers() {
 }
 
-bool certifier::framework::certifiers::add_new_domain(const string& domain_name,
+bool certifier::framework::certifiers::init_certifier_data(const string& domain_name,
       const string& cert, const string& host, int port,
       const string& service_host, int service_port) {
 
-  return false;
+  domain_name_= domain_name;
+  domain_policy_cert_.assign(cert.data(), cert.size());
+  host_ = host;
+  port_= port;
+  is_certified_ = false;
+  service_host_ = service_host;
+  service_port_ = service_port;
+
+  return true;
 }
 
 bool certifier::framework::certifiers::get_certified_status() {
@@ -1290,6 +1342,7 @@ bool certifier::framework::certifiers::certify_domain(bool recertify) {
     }
     ev->set_evidence_type("signed-claim");
     ev->set_serialized_evidence(str_s);
+
 #ifdef GRAMINE_CERTIFIER
   } else if (owner_->enclave_type_ == "gramine-enclave") {
     if (!gramine_platform_cert_initialized) {
@@ -1525,12 +1578,9 @@ bool certifier::framework::certifiers::certify_domain(bool recertify) {
   // Store the admissions certificate cert or platform rule
   if (owner_->purpose_ == "authentication") {
     admissions_cert_.assign((char*)response.artifact().data(), response.artifact().size());
-    owner_->public_auth_key_.set_certificate(response.artifact());
-    owner_->private_auth_key_.set_certificate(response.artifact());
-
+    // owner_->public_auth_key_.set_certificate(response.artifact());
+    // owner_->private_auth_key_.set_certificate(response.artifact());
     // These should be set in cc_trust_data and ONLY for the home domain
-    owner_->cc_auth_key_initialized_ = true;
-    owner_->cc_is_certified_ = true;
 
   } else if (owner_->purpose_ == "attestation") {
 
@@ -1549,7 +1599,6 @@ bool certifier::framework::certifiers::certify_domain(bool recertify) {
 
     // These should be set in cc_trust_data and ONLY for the home domain
     owner_->cc_service_platform_rule_initialized_ = true;
-    owner_->cc_is_certified_ = true;
 
   } else {
     printf("%s() error, line: %d, Unknown purpose\n",
