@@ -9,6 +9,10 @@
 %module certifier_framework
 %include "std_string.i"
 
+// Xform interfaces returning a string output param to return string * as a function
+%apply string *OUTPUT { string *v }                 // get()
+%apply string *OUTPUT { string *psout }             // Serialize()
+
 %{
 #include "certifier_framework.h"
 %}

@@ -133,7 +133,7 @@ def test_update_or_insert():
 # ##############################################################################
 def test_policy_store_put():
     """
-    Test updating value of a single entry using put() interface.
+    Test updating value of a single entry using the put() interface.
     """
     pstore = cfm.policy_store()
 
@@ -179,6 +179,26 @@ def test_policy_store_put():
     assert this_entry.value_ == value2
 
 # ##############################################################################
+def test_policy_store_get():
+    """
+    Test retrieving value of a single entry using the get() interface.
+    """
+    pstore = cfm.policy_store()
+
+    tag1   = 'tag-1'
+    type1  = 'string'
+    value1 = 'Entry-1'
+    result = pstore.update_or_insert(tag1, type1, value1)
+    assert result is True
+
+    entry1_idx = pstore.find_entry(tag1, type1)
+    assert entry1_idx == 0
+
+    (result, found_val) = pstore.get(entry1_idx)
+    assert result is True
+    assert found_val == value1
+
+# ##############################################################################
 def test_delete_single_entry():
     """
     Insert a few entries. Verify that we can delete a specific entry.
@@ -216,3 +236,31 @@ def test_delete_single_entry():
     nentries -= 1
 
     assert pstore.get_num_entries() == nentries
+
+# ##############################################################################
+def test_policy_store_serialize():
+    """
+    Exercise the Serialize() interface of policy_store.
+    """
+    pstore = cfm.policy_store()
+
+    tag1   = 'tag-1'
+    type1  = 'string'
+    value1 = 'Entry-1'
+    result = pstore.update_or_insert(tag1, type1, value1)
+    assert result is True
+
+    # Insert another entry, so we can check that update()'s getting the right one
+    tag2   = 'tag-2'
+    type2  = 'string'
+    value2 = 'Entry-2'
+    result = pstore.update_or_insert(tag2, type2, value2)
+    assert result is True
+
+    assert pstore.get_num_entries() == 2
+
+    (result, serialized) = pstore.Serialize()
+    assert result is True
+    assert len(serialized) > 0
+    # Does not quite work due to some embedded non-printable chars in stream
+    # print("Serialized Policy Store contents: ,", serialized, "'")

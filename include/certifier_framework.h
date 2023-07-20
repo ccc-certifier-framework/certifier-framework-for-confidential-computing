@@ -87,7 +87,7 @@ public:
       bool set_policy_key(const key_message key);
 
       void print();
-      bool Serialize(string* out);
+      bool Serialize(string* psout);
       bool Deserialize(string& in);
     };
 
