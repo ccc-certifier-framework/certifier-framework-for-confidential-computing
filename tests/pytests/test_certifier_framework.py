@@ -65,3 +65,64 @@ def test_policy_store():
 
     print()
     pstore._print()
+
+# ##############################################################################
+def test_add_find_single_entry():
+    """
+    Test adding a single entry and find entry interfaces.
+    """
+    pstore = cfm.policy_store()
+
+    tag1 = 'tag-1'
+    type1 = 'string'
+    value1 = 'Entry-1'
+    result = pstore.update_or_insert(tag1, type1, value1)
+    assert result is True
+
+    # find on non-existent entry should return invalid index.
+    assert pstore.find_entry('unknown-tag', type1) < 0
+
+    entry1_idx = pstore.find_entry(tag1, type1)
+    assert entry1_idx == 0
+
+    # Retrieve newly inserted entry and validate its contents
+    this_entry = cfm.store_entry()
+    this_entry = pstore.get_entry(entry1_idx)
+    assert this_entry.tag_ == tag1
+    assert this_entry.type_ == type1
+    assert this_entry.value_ == value1
+
+# ##############################################################################
+def test_update_single_entry():
+    """
+    Test updating contents of a single entry and validate find()'s return.
+    """
+    pstore = cfm.policy_store()
+
+    tag1 = 'tag-1'
+    type1 = 'string'
+    value1 = 'Entry-1'
+    result = pstore.update_or_insert(tag1, type1, value1)
+    assert result is True
+
+    # Insert another entry, so we can check that find()'s getting the right one
+    tag2 = 'tag-1'
+    type2 = 'string'
+    value2 = 'Entry-1'
+    result = pstore.update_or_insert(tag2, type2, value2)
+    assert result is True
+
+    newvalue1 = 'Updated-Entry-1'
+    result = pstore.update_or_insert(tag1, type1, newvalue1)
+    assert result is True
+
+    entry1_idx = pstore.find_entry(tag1, type1)
+    assert entry1_idx == 0
+
+    # Retrieve newly inserted entry and validate its contents
+    this_entry = cfm.store_entry()
+    this_entry = pstore.get_entry(entry1_idx)
+    assert this_entry.tag_ == tag1
+    assert this_entry.type_ == type1
+    assert this_entry.value_ != value1
+    assert this_entry.value_ == newvalue1
