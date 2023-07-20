@@ -93,7 +93,7 @@ def test_add_find_single_entry():
     assert this_entry.value_ == value1
 
 # ##############################################################################
-def test_update_single_entry():
+def test_update_or_insert():
     """
     Test updating contents of a single entry and validate find()'s return.
     """
@@ -105,7 +105,7 @@ def test_update_single_entry():
     result = pstore.update_or_insert(tag1, type1, value1)
     assert result is True
 
-    # Insert another entry, so we can check that find()'s getting the right one
+    # Insert another entry, so we can check that update()'s getting the right one
     tag2   = 'tag-2'
     type2  = 'string'
     value2 = 'Entry-2'
@@ -129,6 +129,54 @@ def test_update_single_entry():
     assert this_entry.type_  == type1
     assert this_entry.value_ != value1
     assert this_entry.value_ == newvalue1
+
+# ##############################################################################
+def test_policy_store_put():
+    """
+    Test updating value of a single entry using put() interface.
+    """
+    pstore = cfm.policy_store()
+
+    tag1   = 'tag-1'
+    type1  = 'string'
+    value1 = 'Entry-1'
+    result = pstore.update_or_insert(tag1, type1, value1)
+    assert result is True
+
+    # Insert another entry, so we can check that update()'s getting the right one
+    tag2   = 'tag-2'
+    type2  = 'string'
+    value2 = 'Entry-2'
+    result = pstore.update_or_insert(tag2, type2, value2)
+    assert result is True
+
+    assert pstore.get_num_entries() == 2
+
+    entry1_idx = pstore.find_entry(tag1, type1)
+    assert entry1_idx == 0
+
+    newvalue1 = 'Updated-Entry-1'
+    result = pstore.put(entry1_idx, newvalue1)
+    assert result is True
+
+    # Retrieve newly inserted entry and validate its contents
+    this_entry = cfm.store_entry()
+    this_entry = pstore.get_entry(entry1_idx)
+    assert this_entry.tag_   == tag1
+    assert this_entry.type_  == type1
+    assert this_entry.value_ != value1
+    assert this_entry.value_ == newvalue1
+
+    # Verify that the other entry is undisturbed
+    entry2_idx = pstore.find_entry(tag2, type2)
+    assert entry2_idx == 1
+
+    # Retrieve newly inserted entry and validate its contents
+    this_entry = cfm.store_entry()
+    this_entry = pstore.get_entry(entry2_idx)
+    assert this_entry.tag_   == tag2
+    assert this_entry.type_  == type2
+    assert this_entry.value_ == value2
 
 # ##############################################################################
 def test_delete_single_entry():
