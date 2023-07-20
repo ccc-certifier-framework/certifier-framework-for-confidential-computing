@@ -1375,6 +1375,35 @@ bool certifier::framework::cc_trust_data::run_peer_certification_service(
   return false;
 }
 
+bool certifier::framework::cc_trust_data::get_certifier_from_store() {
+  return false;
+}
+
+bool certifier::framework::cc_trust_data::put_certifiers_in_store() {
+  return false;
+}
+
+certifier::framework::certifiers::certifiers() {
+}
+
+certifier::framework::certifiers::~certifiers() {
+}
+
+bool certifier::framework::certifiers::add_new_domain(const string& domain_name,
+      const string& cert, const string& host, int port,
+      const string& service_host, int service_port) {
+
+  return false;
+}
+
+bool certifier::framework::certifiers::get_certified_status() {
+  return is_certified_;
+}
+
+bool certifier::framework::certifiers::certify_domain() {
+  return false;
+}
+
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 

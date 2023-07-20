@@ -336,7 +336,16 @@ message app_response {
   repeated bytes args                       = 3;
 };
 
-message tagged_blob_message {
-  optional string tag                       = 1;
-  optional bytes b                          = 2;
+message certifier_entry {
+  optional string domain_name               = 1;
+  optional bytes domain_cert                = 2;
+  optional string domain_host               = 3;
+  optional int32 domain_port                = 4;
+  optional bytes admissions_cert            = 5;
+  optional string service_host              = 6;
+  optional int32 service_port               = 7;
+};
+
+message certifiers_message {
+  repeated certifier_entry my_certifiers    = 1;
 };

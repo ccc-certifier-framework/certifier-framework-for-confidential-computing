@@ -118,8 +118,29 @@ public:
       int* size_new_encrypted_blob, byte* data);
 
 
-    class cc_trust_data {
+    // Certification Anchors
+    class certifiers {
+    public:
+      string domain_name_;
+      string domain_policy_cert_;
+      string host_;
+      int port_;
+      bool is_certified_;
+      string admissions_cert_;
+      string service_host_;
+      int service_port_;
 
+      certifiers();
+      ~certifiers();
+
+      bool add_new_domain(const string& domain_name, const string& cert,
+            const string& host, int port, const string& service_host, int service_port);
+      bool get_certified_status();
+      bool certify_domain();
+    };
+
+
+    class cc_trust_data {
 
     public:
       // Python swig bindings need this to be public, to size other array decls
@@ -214,6 +235,9 @@ public:
       bool recover_peer_certification_data();
       bool get_peer_certification(const string& host_name, int port);
       bool run_peer_certification_service(const string& host_name, int port);
+
+      bool get_certifier_from_store();
+      bool put_certifiers_in_store();
     };
 
     class secure_authenticated_channel {
