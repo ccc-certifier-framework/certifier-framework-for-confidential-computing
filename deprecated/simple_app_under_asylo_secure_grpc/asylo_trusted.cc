@@ -222,8 +222,8 @@ bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size) {
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size,
-                                       initialized_cert)) {
+  if (!app_trust_data->init_policy_key(initialized_cert,
+                                       initialized_cert_size)) {
     printf("Can't init policy key\n");
     return false;
   }

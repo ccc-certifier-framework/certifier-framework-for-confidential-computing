@@ -249,8 +249,8 @@ bool certifier::framework::cc_trust_data::initialize_oe_enclave_data(
 #endif
 }
 
-bool certifier::framework::cc_trust_data::init_policy_key(int   asn1_cert_size,
-                                                          byte *asn1_cert) {
+bool certifier::framework::cc_trust_data::init_policy_key(byte *asn1_cert,
+                                                          int asn1_cert_size) {
   serialized_policy_cert_.assign((char *)asn1_cert, asn1_cert_size);
 
   x509_policy_cert_ = X509_new();
@@ -1132,8 +1132,8 @@ bool certifier::framework::cc_trust_data::generate_service_key(bool regen) {
 bool certifier::framework::cc_trust_data::cold_init(
     const string &public_key_alg,
     const string &symmetric_key_alg,
-    int           asn1_cert_size,
     byte *        asn1_cert,
+    int           asn1_cert_size,
     const string &home_domain_name,
     const string &home_host,
     int           home_port,
@@ -1330,7 +1330,7 @@ bool certifier::framework::cc_trust_data::certify_primary_domain() {
     return true;
 
   // primary domain should be entry 0
-  // if not already certifier, certify
+  // if not already certified, certify
   if (num_certified_domains_ <= 0) {
     printf("%s() error, line %d, primary domain\n", __func__, __LINE__);
     return false;
@@ -1340,8 +1340,6 @@ bool certifier::framework::cc_trust_data::certify_primary_domain() {
   // Debug: print primary certifier data
   certified_domains_[0]->print_certifiers_entry();
 #endif
-
-
   if (!certified_domains_[0]->certify_domain()) {
     printf("%s() error, line %d, can't certify primary domain\n",
            __func__,
@@ -1373,7 +1371,6 @@ bool certifier::framework::cc_trust_data::certify_secondary_domain(
       break;
     }
   }
-
   return (found ? found->certify_domain() : false);
 }
 
@@ -2659,7 +2656,7 @@ void certifier::framework::secure_authenticated_channel::close() {
 }
 
 bool certifier::framework::secure_authenticated_channel::get_peer_id(
-    string *out) {
-  out->assign((char *)peer_id_.data(), peer_id_.size());
+    string *out_peer_id) {
+  out_peer_id->assign((char *)peer_id_.data(), peer_id_.size());
   return true;
 }

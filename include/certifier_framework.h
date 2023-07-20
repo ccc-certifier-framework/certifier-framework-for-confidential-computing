@@ -78,14 +78,12 @@ class policy_store {
   bool          delete_entry(unsigned ent);
   bool          get(unsigned ent, string *v);
   bool          put(unsigned ent, const string v);
-
-  bool update_or_insert(const string &tag,
-                        const string &type,
-                        const string &value);
-
-  void print();
-  bool Serialize(string *out);
-  bool Deserialize(string &in);
+  bool          update_or_insert(const string &tag,
+                                 const string &type,
+                                 const string &value);
+  void          print();
+  bool          Serialize(string *psout);
+  bool          Deserialize(string &in);
 };
 
 // Trusted primitives
@@ -252,7 +250,7 @@ class cc_trust_data {
       const string &attest_endorsement_file_name);
 
   bool cc_all_initialized();
-  bool init_policy_key(int asn1_cert_size, byte *asn1_cert);
+  bool init_policy_key(byte *asn1_cert, int asn1_cert_size);
   bool put_trust_data_in_store();
   bool get_trust_data_from_store();
   bool save_store();
@@ -266,8 +264,8 @@ class cc_trust_data {
 
   bool cold_init(const string &public_key_alg,
                  const string &symmetric_key_alg,
-                 int           asn1_cert_size,
                  byte *        asn1_cert,
+                 int           asn1_cert_size,
                  const string &home_domain_name,
                  const string &home_host,
                  int           home_port,
@@ -369,7 +367,7 @@ class secure_authenticated_channel {
   int  read(int size, byte *b);
   int  write(int size, byte *b);
   void close();
-  bool get_peer_id(string *out);
+  bool get_peer_id(string *out_peer_id);
 };
 
 bool server_dispatch(const string &host_name,
