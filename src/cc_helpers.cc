@@ -729,6 +729,11 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
     return false;
   }
 
+  if (num_certified_domains_ > 0 && certified_domains_[0]->is_certified_) {
+    home_admissions_cert_valid_ = true;
+    serialized_home_admissions_cert_ = certified_domains_[0]->admissions_cert_;
+  }
+
   if (purpose_ == "attestation") {
 
     // put private service key and symmetric keys in store
@@ -1157,6 +1162,8 @@ bool certifier::framework::cc_trust_data::certify_home_domain() {
   } else {
     printf("%s():%d error, unknown purpose\n", __func__, __LINE__);
   }
+  home_admissions_cert_valid_ = true;
+  serialized_home_admissions_cert_ = certified_domains_[0]->admissions_cert_;
 
   return true;
 }
@@ -1996,6 +2003,7 @@ bool extract_id_from_cert(X509* in, string* out) {
 // Loads server side certs and keys.
 bool load_server_certs_and_key(X509* root_cert, key_message& private_key,
       const string& private_key_cert, SSL_CTX* ctx) {
+
   // load auth key, policy_cert and certificate chain
   // Todo: Add other key types
   RSA* r = RSA_new();
@@ -2054,7 +2062,8 @@ bool load_server_certs_and_key(X509* root_cert, key_message& private_key,
 #endif
 
   if (!SSL_CTX_check_private_key(ctx)) {
-      printf("load_server_certs_and_key: SSL_CTX_check_private_key failed\n");
+      printf("%s() error, line %d, SSL_CTX_check_private_key failed\n",
+         __func__, __LINE__);
       return false;
   }
   SSL_CTX_add_client_CA(ctx, root_cert);
@@ -2081,7 +2090,8 @@ bool load_server_certs_and_key(X509* root_cert, key_message& private_key,
 
 bool certifier::framework::server_dispatch(const string& host_name, int port,
       string& asn1_root_cert, key_message& private_key,
-      const string& private_key_cert, void (*func)(secure_authenticated_channel&)) {
+      const string& private_key_cert,
+      void (*func)(secure_authenticated_channel&)) {
 
   OPENSSL_init_ssl(0, NULL);
   SSL_load_error_strings();
