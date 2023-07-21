@@ -238,8 +238,6 @@ public:
       bool GetPlatformSaysAttestClaim(signed_claim_message* scm);
       void print_trust_data();
 
-      bool certify_me(certifiers* c);
-      bool recertify_me(certifiers* c, bool generate_new_key);
       bool certify_home_domain();
       bool certify_secondary_domain(const string& domain_name);
 
@@ -279,8 +277,9 @@ public:
       bool init_certifier_data(const string& domain_name,
         const string& cert, const string& host, int port,
         const string& service_host, int service_port);
+
       bool get_certified_status();
-      bool certify_domain(bool recertify);
+      bool certify_domain(bool recertify, bool generate_new_key);
       void print_certifiers_entry();
     };
 

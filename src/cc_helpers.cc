@@ -1114,131 +1114,6 @@ bool certifier::framework::cc_trust_data::add_new_domain(const string& domain_na
       cert, host, port, service_host, service_port);
 }
 
-bool certifier::framework::cc_trust_data::certify_me(certifiers* c) {
-
-  for (int i = 0; i < num_certified_domains_; i++) {
-    certifiers* c = certified_domains_[i];
-    if (!c->certify_domain(false)) {
-      return false;
-    }
-    if (i == 0) {
-      // Home domain
-      // Copy keys into principal sturcture
-    }
-  }
-  return true;
-}
-
-bool certifier::framework::cc_trust_data::recertify_me(certifiers* c, bool generate_new_key) {
-
-  // Todo: if you change the auth key, you must recertify in all domains
-  if (generate_new_key) {
-
-    if (purpose_ == "authentication") {
-
-    // make app auth private and public key
-      if (public_key_algorithm_ == "rsa-2048") {
-        if (!make_certifier_rsa_key(2048,  &private_auth_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-            __func__, __LINE__);
-          return false;
-        }
-      } else if (public_key_algorithm_ == "rsa-4096") {
-        if (!make_certifier_rsa_key(4096,  &private_auth_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-          __func__, __LINE__);
-          return false;
-        }
-      } else if (public_key_algorithm_ == "ecc-384") {
-        if (!make_certifier_ecc_key(384,  &private_auth_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-            __func__, __LINE__);
-          return false;
-        }
-      } else {
-          printf("%s() error, line %d, Unsupported public key algorithm\n",
-            __func__, __LINE__);
-          return false;
-      }
-
-      private_auth_key_.set_key_name("auth-key");
-      if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
-        printf("%s() error, line %d, Can't make public Auth key\n",
-          __func__, __LINE__);
-        return false;
-      }
-
-      cc_auth_key_initialized_ = true;
-
-    } else if (purpose_ == "attestation") {
-
-      // make app service private and public key
-      if (public_key_algorithm_ == "rsa-2048") {
-        if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-            __func__, __LINE__);
-          return false;
-        }
-      } else if (public_key_algorithm_ == "rsa-4096") {
-        if (!make_certifier_rsa_key(4096,  &private_service_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-            __func__, __LINE__);
-          return false;
-        }
-      } else if (public_key_algorithm_ == "ecc-384") {
-        if (!make_certifier_ecc_key(384,  &private_service_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-            __func__, __LINE__);
-          return false;
-        }
-      } else {
-          printf("%s() error, line %d, Unsupported public key algorithm\n",
-            __func__, __LINE__);
-          return false;
-      }
-
-      private_service_key_.set_key_name("service-attest-key");
-      if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
-        printf("%s() error, line %d, Can't make public service key\n",
-          __func__, __LINE__);
-        return false;
-      }
-
-      cc_service_key_initialized_= true;
-
-    } else {
-      printf("%s() error, line %d, invalid recertify_me purpose\n",
-         __func__, __LINE__);
-      return false;
-    }
-  }
-
-#if 0
-  // Todo: fix
-  if (!certify_me(host_name, port)) {
-      printf("%s() error, line %d, certify_me failed\n",
-         __func__, __LINE__);
-      return false;
-  }
-
-  if (!put_trust_data_in_store()) {
-    printf("%s() error, line %d, Can't put trust data in store\n",
-         __func__, __LINE__);
-    return false;
-  }
-
-  if (!save_store()) {
-    printf("%s() error, line %d, Can't save store\n",
-         __func__, __LINE__);
-    return false;
-  }
-  cc_policy_store_initialized_ = true;
-  return true;
-#else
-  return false;
-#endif
-}
-
 bool certifier::framework::cc_trust_data::certify_home_domain() {
 
   if (!cc_all_initialized()) {
@@ -1265,7 +1140,7 @@ bool certifier::framework::cc_trust_data::certify_home_domain() {
   certified_domains_[0]->print_certifiers_entry();
   
 
-  if (!certify_me(certified_domains_[0])) {
+  if (!certified_domains_[0]->certify_domain(false, false)) {
       printf("%s() error, line %d, can't certify home domain\n",
          __func__, __LINE__);
       return false;
@@ -1292,7 +1167,7 @@ bool certifier::framework::cc_trust_data::certify_secondary_domain(const string&
     }
   }
 
-  return certify_me(found);
+  return found->certify_domain(false, false);
 }
 
 bool certifier::framework::cc_trust_data::init_peer_certification_data(const string& public_key_alg) {
@@ -1432,13 +1307,97 @@ bool certifier::framework::certifiers::get_certified_status() {
 }
 
 // add auth-key and symmetric key
-bool certifier::framework::certifiers::certify_domain(bool recertify) {
+bool certifier::framework::certifiers::certify_domain(bool recertify, bool generate_new_key) {
 
   // owner has enclave_type, keys, and store.
   if (owner_ == nullptr) {
     printf("%s():%d, no owner pointer\n", __func__, __LINE__);
     return false;
   }
+
+#if 0
+  // Todo: if you change the auth key, you must recertify in all domains
+  if (generate_new_key) {
+
+    if (purpose_ == "authentication") {
+
+    // make app auth private and public key
+      if (public_key_algorithm_ == "rsa-2048") {
+        if (!make_certifier_rsa_key(2048,  &private_auth_key_)) {
+          printf("%s() error, line %d, Can't generate App private key\n",
+            __func__, __LINE__);
+          return false;
+        }
+      } else if (public_key_algorithm_ == "rsa-4096") {
+        if (!make_certifier_rsa_key(4096,  &private_auth_key_)) {
+          printf("%s() error, line %d, Can't generate App private key\n",
+          __func__, __LINE__);
+          return false;
+        }
+      } else if (public_key_algorithm_ == "ecc-384") {
+        if (!make_certifier_ecc_key(384,  &private_auth_key_)) {
+          printf("%s() error, line %d, Can't generate App private key\n",
+            __func__, __LINE__);
+          return false;
+        }
+      } else {
+          printf("%s() error, line %d, Unsupported public key algorithm\n",
+            __func__, __LINE__);
+          return false;
+      }
+
+      private_auth_key_.set_key_name("auth-key");
+      if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
+        printf("%s() error, line %d, Can't make public Auth key\n",
+          __func__, __LINE__);
+        return false;
+      }
+
+      cc_auth_key_initialized_ = true;
+
+    } else if (purpose_ == "attestation") {
+
+      // make app service private and public key
+      if (public_key_algorithm_ == "rsa-2048") {
+        if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
+          printf("%s() error, line %d, Can't generate App private key\n",
+            __func__, __LINE__);
+          return false;
+        }
+      } else if (public_key_algorithm_ == "rsa-4096") {
+        if (!make_certifier_rsa_key(4096,  &private_service_key_)) {
+          printf("%s() error, line %d, Can't generate App private key\n",
+            __func__, __LINE__);
+          return false;
+        }
+      } else if (public_key_algorithm_ == "ecc-384") {
+        if (!make_certifier_ecc_key(384,  &private_service_key_)) {
+          printf("%s() error, line %d, Can't generate App private key\n",
+            __func__, __LINE__);
+          return false;
+        }
+      } else {
+          printf("%s() error, line %d, Unsupported public key algorithm\n",
+            __func__, __LINE__);
+          return false;
+      }
+
+      private_service_key_.set_key_name("service-attest-key");
+      if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
+        printf("%s() error, line %d, Can't make public service key\n",
+          __func__, __LINE__);
+        return false;
+      }
+
+      cc_service_key_initialized_= true;
+
+    } else {
+      printf("%s() error, line %d, invalid recertify_me purpose\n",
+         __func__, __LINE__);
+      return false;
+    }
+  }
+#endif
 
   evidence_list platform_evidence;
   printf("%s():%d: enclave_type_ = '%s', purpose_ = '%s'\n",
@@ -1701,6 +1660,7 @@ bool certifier::framework::certifiers::certify_domain(bool recertify) {
   // Store the admissions certificate cert or platform rule
   if (owner_->purpose_ == "authentication") {
     admissions_cert_.assign((char*)response.artifact().data(), response.artifact().size());
+    is_certified_ = true;
     // owner_->public_auth_key_.set_certificate(response.artifact());
     // owner_->private_auth_key_.set_certificate(response.artifact());
     // These should be set in cc_trust_data and ONLY for the home domain
