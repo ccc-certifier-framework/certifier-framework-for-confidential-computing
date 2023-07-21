@@ -1261,6 +1261,10 @@ bool certifier::framework::cc_trust_data::certify_home_domain() {
       return false;
   }
 
+  // Debug: print home certifier data
+  certified_domains_[0]->print_certifiers_entry();
+  
+
   if (!certify_me(certified_domains_[0])) {
       printf("%s() error, line %d, can't certify home domain\n",
          __func__, __LINE__);
@@ -1313,31 +1317,77 @@ bool certifier::framework::cc_trust_data::run_peer_certification_service(
 }
 
 bool certifier::framework::cc_trust_data::get_certifiers_from_store() {
-  /*
-      message certifier_entry {
-        optional string domain_name               = 1;
-        optional bytes domain_cert                = 2;
-        optional string domain_host               = 3;
-        optional int32 domain_port                = 4;
-        optional bytes admissions_cert            = 5;
-        optional string service_host              = 6;
-        optional int32 service_port               = 7;
-      };
 
-      string domain_name_;
-      string domain_policy_cert_;
-      string host_;
-      int port_;
-      bool is_certified_;
-      string admissions_cert_;
-      string service_host_;
-      int service_port_;
-   */
-  return false;
+  int ent = store_.find_entry("all-certifiers", "certifiers_message");
+  if (ent < 0) {
+    printf("%s() error, line %d, no certifiers entries\n",
+      __func__, __LINE__);
+    return false;
+  }
+
+  certifiers_message cert_messages;
+  string serialized_cert_messages;
+  store_.get(ent, &serialized_cert_messages);
+  if (!cert_messages.ParseFromString(serialized_cert_messages)) {
+    printf("%s() error, line %d, can't parse certifiers\n",
+      __func__, __LINE__);
+    return false;
+  }
+
+  // empty existing certifiers and reinit
+  for (int i = 0; i < num_certified_domains_; i++) {
+      if (certified_domains_[i] != nullptr) {
+        delete certified_domains_[i];
+        certified_domains_[i] = nullptr;
+      }
+  }
+  num_certified_domains_ = 0;
+  if (cert_messages.my_certifiers_size() > max_num_certified_domains_) {
+    printf("%s() error, line %d, too many certifiers\n",
+      __func__, __LINE__);
+    return false;
+  }
+  for (int i = 0; i < cert_messages.my_certifiers_size(); i++) {
+    const certifier_entry& cm = cert_messages.my_certifiers(i);
+    certifiers* ce = new certifiers(this);
+    certified_domains_[i] = ce;
+    ce->domain_name_ = cm.domain_name();
+    ce->domain_policy_cert_ = cm.domain_cert();
+    ce->host_ = cm.domain_host();
+    ce->port_ = cm.domain_port();
+    ce->is_certified_ = cm.is_certified();;
+    ce->admissions_cert_ = cm.admissions_cert();
+    ce->service_host_ = cm.service_host();
+    ce->service_port_ = cm.service_port();
+  }
+  return true;
 }
 
 bool certifier::framework::cc_trust_data::put_certifiers_in_store() {
-  return false;
+  certifiers_message cert_messages;
+  string serialized_cert_messages;
+
+  for (int i = 0; i < num_certified_domains_; i++) {
+    certifier_entry* cm = cert_messages.add_my_certifiers();
+    certifiers* ce = certified_domains_[i];
+
+    cm->set_domain_name(ce->domain_name_);
+    cm->set_domain_cert(ce->domain_policy_cert_);
+    cm->set_domain_host(ce->host_);
+    cm->set_domain_port(ce->port_);
+    cm->set_is_certified(ce->is_certified_);
+    if (ce->is_certified_)
+      cm->set_admissions_cert(ce->admissions_cert_);
+    cm->set_service_host(ce->service_host_);
+    cm->set_service_port(ce->service_port_);
+  }
+
+  if (!cert_messages.SerializeToString(&serialized_cert_messages)) {
+    printf("%s() error, line %d, can't serialize\n",
+      __func__, __LINE__);
+    return false;
+  }
+  return store_.update_or_insert("all-certifiers", "certifiers_message", serialized_cert_messages);
 }
 
 certifier::framework::certifiers::certifiers(cc_trust_data* owner) {
@@ -1360,6 +1410,21 @@ bool certifier::framework::certifiers::init_certifier_data(const string& domain_
   service_port_ = service_port;
 
   return true;
+}
+
+void certifier::framework::certifiers::print_certifiers_entry() {
+      printf("\nDomain name: %s\n", domain_name_.c_str());
+      printf("Domain policy cert: ");
+      print_bytes((int)domain_policy_cert_.size(), (byte*)domain_policy_cert_.data());
+      printf("Host: %s, port: %d\n", host_.c_str(), port_);;
+      if (is_certified_) {
+        printf("Certified with Admissions cert: ");
+        print_bytes((int)admissions_cert_.size(), (byte*)admissions_cert_.data());
+      } else {
+        printf("Not certified\n");
+      }
+      printf("Service host: %s, service port: %d\n", service_host_.c_str(),
+             service_port_);;
 }
 
 bool certifier::framework::certifiers::get_certified_status() {

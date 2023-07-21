@@ -257,6 +257,7 @@ public:
     };
 
     // Certification Anchors
+
     class certifiers {
     private:
       // should be const, don't delete it
@@ -280,6 +281,7 @@ public:
         const string& service_host, int service_port);
       bool get_certified_status();
       bool certify_domain(bool recertify);
+      void print_certifiers_entry();
     };
 
     class secure_authenticated_channel {
