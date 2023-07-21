@@ -274,7 +274,7 @@ public:
       certifiers(cc_trust_data* owner);
       ~certifiers();
 
-      bool init_certifier_data(const string& domain_name,
+      bool init_certifiers_data(const string& domain_name,
         const string& cert, const string& host, int port,
         const string& service_host, int service_port);
 

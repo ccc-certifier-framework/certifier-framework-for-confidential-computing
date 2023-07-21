@@ -46,8 +46,9 @@ void print_ssl_error(int code);
 // The functions below are used by BORING_SSL
 // Eventually they will be deprecated
 #if 1
-bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key, SSL_CTX* ctx);
-bool init_client_ssl(X509* x509_root_cert, key_message& private_key,
+bool load_server_certs_and_key(X509* x509_root_cert, key_message& private_key,
+      const string& private_key_cert, SSL_CTX* ctx);
+bool init_client_ssl(X509* x509_root_cert, key_message& private_key, const string& private_key_cert,
     const string& host_name, int port, int* p_sd, SSL_CTX** p_ctx, SSL** p_ssl);
 void close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl);
 #endif

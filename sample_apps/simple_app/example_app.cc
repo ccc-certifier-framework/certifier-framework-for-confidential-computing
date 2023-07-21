@@ -156,10 +156,15 @@ int main(int an, char** av) {
   // Carry out operation
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg)) {
+    if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
+          initialized_cert_size, initialized_cert, "simple-app-home_domain",
+          FLAGS_policy_host, FLAGS_policy_port,
+          FLAGS_server_app_host, FLAGS_server_app_port)) {
       printf("cold-init failed\n");
       ret = 1;
     }
+    // Debug
+    app_trust_data->print_trust_data();
   } else if (FLAGS_operation == "warm-restart") {
     if (!app_trust_data->warm_restart()) {
       printf("warm-restart failed\n");
@@ -167,10 +172,17 @@ int main(int an, char** av) {
     }
 
   } else if (FLAGS_operation == "get-certifier") {
-    if (!app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
+    if (!app_trust_data->warm_restart()) {
+      printf("warm-restart failed\n");
+      ret = 1;
+    }
+    if (!app_trust_data->certify_home_domain()) {
       printf("certification failed\n");
       ret = 1;
     }
+    // Debug
+    app_trust_data->print_trust_data();
+
   } else if (FLAGS_operation == "run-app-as-client") {
     string my_role("client");
     secure_authenticated_channel channel(my_role);

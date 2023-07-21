@@ -441,6 +441,11 @@ void certifier::framework::cc_trust_data::print_trust_data() {
   } else {
     printf("all not initialized\n");
   }
+
+  printf("Number of certifiers: %d\n", num_certified_domains_);
+  for (int i = 0; i < num_certified_domains_; i++) {
+    certified_domains_[i]->print_certifiers_entry();
+  }
 }
 
 const int max_pad_size_for_store = 1024;
@@ -692,8 +697,8 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
   string value;
 
   // Debug
-  // printf("get_trust_data_from_store: incoming store\n");
-  // store_.print();
+  printf("get_trust_data_from_store: incoming store\n");
+  store_.print();
 
   ent = store_.find_entry(public_key_alg_tag, string_type);
   if (ent < 0) {
@@ -868,12 +873,6 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
         const string& home_domain_name, const string& home_host, int home_port,
         const string& service_host, int service_port) {
 
-  // Initialize home_domain data
-  if (!init_policy_key(asn1_cert_size, asn1_cert)) {
-      printf("%s() error, line %d, can't init home policy key\n",
-         __func__, __LINE__);
-      return false;
-  }
   if (!cc_policy_info_initialized_) {
       printf("%s() error, line %d, policy key should have been initialized\n",
          __func__, __LINE__);
@@ -884,6 +883,9 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
   // get home domain name from policy key
   domain_cert.assign((char*)asn1_cert, asn1_cert_size);
   if (num_certified_domains_ != 0) {
+      printf("%s() error, line %d, there should be no certified domains yet\n",
+         __func__, __LINE__);
+      return false;
   }
   if (!add_new_domain(home_domain_name, domain_cert, home_host, home_port,
         service_host, service_port)) {
@@ -1107,10 +1109,13 @@ bool certifier::framework::cc_trust_data::add_new_domain(const string& domain_na
       return false;
     }
 
-    found= certified_domains_[num_certified_domains_++];
+    found = new certifiers(this);
+    certified_domains_[num_certified_domains_++] = found;
   }
 
-  return found->init_certifier_data(domain_name,
+printf("num_certified_domains_: %d\n", num_certified_domains_);
+
+  return found->init_certifiers_data(domain_name,
       cert, host, port, service_host, service_port);
 }
 
@@ -1216,6 +1221,7 @@ bool certifier::framework::cc_trust_data::get_certifiers_from_store() {
         certified_domains_[i] = nullptr;
       }
   }
+
   num_certified_domains_ = 0;
   if (cert_messages.my_certifiers_size() > max_num_certified_domains_) {
     printf("%s() error, line %d, too many certifiers\n",
@@ -1225,7 +1231,7 @@ bool certifier::framework::cc_trust_data::get_certifiers_from_store() {
   for (int i = 0; i < cert_messages.my_certifiers_size(); i++) {
     const certifier_entry& cm = cert_messages.my_certifiers(i);
     certifiers* ce = new certifiers(this);
-    certified_domains_[i] = ce;
+    certified_domains_[num_certified_domains_++] = ce;
     ce->domain_name_ = cm.domain_name();
     ce->domain_policy_cert_ = cm.domain_cert();
     ce->host_ = cm.domain_host();
@@ -1272,7 +1278,7 @@ certifier::framework::certifiers::certifiers(cc_trust_data* owner) {
 certifier::framework::certifiers::~certifiers() {
 }
 
-bool certifier::framework::certifiers::init_certifier_data(const string& domain_name,
+bool certifier::framework::certifiers::init_certifiers_data(const string& domain_name,
       const string& cert, const string& host, int port,
       const string& service_host, int service_port) {
 
@@ -1291,7 +1297,7 @@ void certifier::framework::certifiers::print_certifiers_entry() {
       printf("\nDomain name: %s\n", domain_name_.c_str());
       printf("Domain policy cert: ");
       print_bytes((int)domain_policy_cert_.size(), (byte*)domain_policy_cert_.data());
-      printf("Host: %s, port: %d\n", host_.c_str(), port_);;
+      printf("\nHost: %s, port: %d\n", host_.c_str(), port_);;
       if (is_certified_) {
         printf("Certified with Admissions cert: ");
         print_bytes((int)admissions_cert_.size(), (byte*)admissions_cert_.data());
@@ -1988,8 +1994,8 @@ bool extract_id_from_cert(X509* in, string* out) {
 }
 
 // Loads server side certs and keys.
-bool load_server_certs_and_key(X509* root_cert,
-      key_message& private_key, SSL_CTX* ctx) {
+bool load_server_certs_and_key(X509* root_cert, key_message& private_key,
+      const string& private_key_cert, SSL_CTX* ctx) {
   // load auth key, policy_cert and certificate chain
   // Todo: Add other key types
   RSA* r = RSA_new();
@@ -2002,12 +2008,9 @@ bool load_server_certs_and_key(X509* root_cert,
   EVP_PKEY_set1_RSA(auth_private_key, r);
 
   X509* x509_auth_key_cert= X509_new();
-  string auth_cert_str;
-  auth_cert_str.assign((char*)private_key.certificate().data(),
-        private_key.certificate().size());
-  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
-      printf("%s() error, line %d, asn1_to_x509 failed\n",
-         __func__, __LINE__);
+  if (!asn1_to_x509(private_key_cert, x509_auth_key_cert)) {
+      printf("%s() error, line %d, asn1_to_x509 failed %d\n",
+         __func__, __LINE__, (int)private_key_cert.size());
       return false;
   }
 
@@ -2114,7 +2117,7 @@ bool certifier::framework::server_dispatch(const string& host_name, int port,
     X509_STORE_add_cert(cs, x509_auth_cert);
   }
 
-  if (!load_server_certs_and_key(root_cert, private_key, ctx)) {
+  if (!load_server_certs_and_key(root_cert, private_key, private_key_cert, ctx)) {
     printf("%s() error, line %d, SSL_CTX_new failed (2)\n",
          __func__, __LINE__);
     return false;
@@ -2220,6 +2223,7 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(const s
     return false;
   }
 
+  asn1_my_cert_ = auth_cert;
   X509_STORE* cs = SSL_CTX_get_cert_store(ssl_ctx_);
   X509_STORE_add_cert(cs, root_cert_);
 
@@ -2295,11 +2299,9 @@ bool certifier::framework::secure_authenticated_channel::load_client_certs_and_k
   EVP_PKEY_set1_RSA(auth_private_key, r);
 
   X509* x509_auth_key_cert= X509_new();
-  string auth_cert_str;
-  auth_cert_str.assign((char*)private_key_.certificate().data(), private_key_.certificate().size());
-  if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
-    printf("%s() error, line %d, can't translate der to X509\n",
-         __func__, __LINE__);
+  if (!asn1_to_x509(asn1_my_cert_, x509_auth_key_cert)) {
+    printf("%s() error, line %d, can't translate der to X509 %d\n",
+         __func__, __LINE__, (int)asn1_my_cert_.size());
     return false;
   }
 
