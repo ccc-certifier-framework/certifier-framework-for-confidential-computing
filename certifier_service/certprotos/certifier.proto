@@ -341,9 +341,10 @@ message certifier_entry {
   optional bytes domain_cert                = 2;
   optional string domain_host               = 3;
   optional int32 domain_port                = 4;
-  optional bytes admissions_cert            = 5;
-  optional string service_host              = 6;
-  optional int32 service_port               = 7;
+  optional bool is_certified                = 6;
+  optional bytes admissions_cert            = 7;
+  optional string service_host              = 8;
+  optional int32 service_port               = 9;
 };
 
 message certifiers_message {

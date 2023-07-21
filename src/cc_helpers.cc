@@ -861,15 +861,33 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
   return false;
 }
 
-//  public_key_alg can be rsa-2048 (soon: rsa-1024, rsa-4096, ecc-384)
-//  symmetric_key_alg can be aes-256
-//  hash_alg can be sha-256 (soon: sha-384, sha-512)
-//  hmac-alg can be sha-256-hmac (soon: sha-384-hmac, sha-512-hmac)
+//  public_key_alg can be rsa-2048, rsa-1024, rsa-3072, rsa-4096, ecc-384
+//  symmetric_key_alg can be aes-256-cbc-hmac-sha256, aes-256-cbc-hmac-sha384 or aes-256-gcm
 bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg,
-        const string& symmetric_key_alg) {
+        const string& symmetric_key_alg, int asn1_cert_size, byte* asn1_cert,
+        const string& home_domain_name, const string& home_host, int home_port,
+        const string& service_host, int service_port) {
 
+  // Initialize home_domain data
+  if (!init_policy_key(asn1_cert_size, asn1_cert)) {
+      printf("%s() error, line %d, can't init home policy key\n",
+         __func__, __LINE__);
+      return false;
+  }
   if (!cc_policy_info_initialized_) {
       printf("%s() error, line %d, policy key should have been initialized\n",
+         __func__, __LINE__);
+      return false;
+  }
+
+  string domain_cert;
+  // get home domain name from policy key
+  domain_cert.assign((char*)asn1_cert, asn1_cert_size);
+  if (num_certified_domains_ != 0) {
+  }
+  if (!add_new_domain(home_domain_name, domain_cert, home_host, home_port,
+        service_host, service_port)) {
+      printf("%s() error, line %d, certifiers should be empty for cold init\n",
          __func__, __LINE__);
       return false;
   }
@@ -1096,8 +1114,22 @@ bool certifier::framework::cc_trust_data::add_new_domain(const string& domain_na
       cert, host, port, service_host, service_port);
 }
 
-bool certifier::framework::cc_trust_data::recertify_me(const string& host_name, int port,
-      bool generate_new_key) {
+bool certifier::framework::cc_trust_data::certify_me(certifiers* c) {
+
+  for (int i = 0; i < num_certified_domains_; i++) {
+    certifiers* c = certified_domains_[i];
+    if (!c->certify_domain(false)) {
+      return false;
+    }
+    if (i == 0) {
+      // Home domain
+      // Copy keys into principal sturcture
+    }
+  }
+  return true;
+}
+
+bool certifier::framework::cc_trust_data::recertify_me(certifiers* c, bool generate_new_key) {
 
   // Todo: if you change the auth key, you must recertify in all domains
   if (generate_new_key) {
@@ -1181,6 +1213,7 @@ bool certifier::framework::cc_trust_data::recertify_me(const string& host_name, 
     }
   }
 
+#if 0
   // Todo: fix
   if (!certify_me(host_name, port)) {
       printf("%s() error, line %d, certify_me failed\n",
@@ -1201,9 +1234,12 @@ bool certifier::framework::cc_trust_data::recertify_me(const string& host_name, 
   }
   cc_policy_store_initialized_ = true;
   return true;
+#else
+  return false;
+#endif
 }
 
-bool certifier::framework::cc_trust_data::certify_me(const string& host_name, int port) {
+bool certifier::framework::cc_trust_data::certify_home_domain() {
 
   if (!cc_all_initialized()) {
     if (!warm_restart()) {
@@ -1213,24 +1249,46 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name, in
     }
   }
 
-  for (int i = 0; i < num_certified_domains_; i++) {
-    certifiers* c = certified_domains_[i];
-    if (!c->certify_domain(false)) {
+  // already certified
+  if (cc_is_certified_)
+    return true;
+
+  // home should be entry 0
+  // if not already certifier, certify
+  if (num_certified_domains_ <= 0) {
+      printf("%s() error, line %d, home domain\n",
+         __func__, __LINE__);
+      return false;
+  }
+
+  if (!certify_me(certified_domains_[0])) {
+      printf("%s() error, line %d, can't certify home domain\n",
+         __func__, __LINE__);
       return false;
     }
-    if (i == 0) {
-      // Home domain
-      // Copy keys into principal sturcture
-      if (purpose_ == "authentication")
-        cc_auth_key_initialized_ = true;
-      else if (purpose_ == "attestation") {
-        cc_is_certified_ = true;
-      } else {
-          printf("%s():%d error, unknown purpose\n", __func__, __LINE__);
-      }
+  if (purpose_ == "authentication")
+    cc_auth_key_initialized_ = true;
+  else if (purpose_ == "attestation") {
+    cc_is_certified_ = true;
+  } else {
+    printf("%s():%d error, unknown purpose\n", __func__, __LINE__);
+  }
+
+  return true;
+}
+
+bool certifier::framework::cc_trust_data::certify_secondary_domain(const string& domain_name) {
+
+  // find it
+  certifiers* found = nullptr;
+  for (int i = 1; i < num_certified_domains_; i++) {
+    if (certified_domains_[i] != nullptr && certified_domains_[i]->domain_name_ == domain_name) {
+      found = certified_domains_[i];
+      break;
     }
   }
-  return true;
+
+  return certify_me(found);
 }
 
 bool certifier::framework::cc_trust_data::init_peer_certification_data(const string& public_key_alg) {

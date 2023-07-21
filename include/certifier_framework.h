@@ -118,6 +118,16 @@ public:
       int* size_new_encrypted_blob, byte* data);
 
 
+    class domain_info {
+    public:
+      string domain_name_;
+      string domain_policy_cert_;
+      string host_;
+      int port_;
+      string service_host_;
+      int service_port_;
+    };
+
     class certifiers;
 
     class cc_trust_data {
@@ -220,12 +230,18 @@ public:
       bool save_store();
       bool fetch_store();
       void clear_sensitive_data();
-      bool cold_init(const string& public_key_alg, const string& symmetric_key_alg);
+      bool cold_init(const string& public_key_alg, const string& symmetric_key_alg,
+                     int asn1_cert_size, byte* asn1_cert,
+                     const string& home_domain_name, const string& home_host,
+                     int home_port, const string& service_host, int service_port);
       bool warm_restart();
-      bool certify_me(const string& host_name, int port);
-      bool recertify_me(const string& host_name, int port, bool generate_new_key);
       bool GetPlatformSaysAttestClaim(signed_claim_message* scm);
       void print_trust_data();
+
+      bool certify_me(certifiers* c);
+      bool recertify_me(certifiers* c, bool generate_new_key);
+      bool certify_home_domain();
+      bool certify_secondary_domain(const string& domain_name);
 
       // For peer-to-peer certification (not used yet)
       bool init_peer_certification_data(const string& public_key_alg);
@@ -233,6 +249,9 @@ public:
       bool get_peer_certification(const string& host_name, int port);
       bool run_peer_certification_service(const string& host_name, int port);
 
+      // multi-domain support
+      bool add_new_domain(const string& domain_name, const string& cert, const string& host, int port,
+          const string& service_host, int service_port);
       bool get_certifiers_from_store();
       bool put_certifiers_in_store();
     };
@@ -256,8 +275,9 @@ public:
       certifiers(cc_trust_data* owner);
       ~certifiers();
 
-      bool add_new_domain(const string& domain_name, const string& cert,
-            const string& host, int port, const string& service_host, int service_port);
+      bool init_certifier_data(const string& domain_name,
+        const string& cert, const string& host, int port,
+        const string& service_host, int service_port);
       bool get_certified_status();
       bool certify_domain(bool recertify);
     };
