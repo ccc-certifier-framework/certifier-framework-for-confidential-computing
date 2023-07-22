@@ -224,7 +224,7 @@ bool soft_Seal(spawned_children* kid, string in, string* out) {
     return false;
   }
   if (!authenticated_encrypt(app_trust_data->symmetric_key_algorithm_.c_str(), (byte*)buffer_to_seal.data(),
-        buffer_to_seal.size(), app_trust_data->sealing_key_, iv, t_out, &t_size)) {
+        buffer_to_seal.size(), app_trust_data->sealing_key_bytes_, iv, t_out, &t_size)) {
     printf("soft_Seal: authenticated encrypt failed\n");
     return false;
   }
@@ -242,7 +242,7 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
 
   if (!authenticated_decrypt(app_trust_data->symmetric_key_algorithm_.c_str(),
           (byte*)in.data(), in.size(),
-          app_trust_data->sealing_key_, t_out, &t_size)) {
+          app_trust_data->sealing_key_bytes_, t_out, &t_size)) {
     printf("soft_Unseal: authenticated decrypt failed\n");
     return false;
   }
