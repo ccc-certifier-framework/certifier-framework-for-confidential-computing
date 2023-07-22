@@ -130,6 +130,7 @@ public:
       static const int max_symmetric_key_size_ = 128;
 
       bool cc_basic_data_initialized_;
+
       string purpose_;
       string enclave_type_;
       string store_file_name_;
@@ -161,11 +162,6 @@ public:
       key_message private_auth_key_;
       key_message public_auth_key_;
 
-      //  symmetric key is the same in any domain
-      bool cc_symmetric_key_initialized_;
-      byte symmetric_key_bytes_[max_symmetric_key_size_];
-      key_message symmetric_key_;
-
       // For attest
       bool cc_service_key_initialized_;
       key_message private_service_key_;
@@ -177,10 +173,14 @@ public:
       bool cc_service_platform_rule_initialized_;
       signed_claim_message platform_rule_;
 
+      //  symmetric key is the same in any domain
+      bool cc_symmetric_key_initialized_;
+      byte symmetric_key_bytes_[max_symmetric_key_size_];
+      key_message symmetric_key_;
+
       // This is the sealing key
-      // Maybe delete this and use symmetric_key_ for all purposes?
       bool cc_sealing_key_initialized_;
-      byte sealing_key_[max_symmetric_key_size_];
+      byte sealing_key_bytes_[max_symmetric_key_size_];
       key_message service_sealing_key_;
 
       // The domains I get certified in.
@@ -194,6 +194,8 @@ public:
       key_message local_policy_key_;
       string local_policy_cert_;
 
+
+      enum {MAX_NUM_CERTIFIERS = 32};
       cc_trust_data();
       cc_trust_data(const string& enclave_type, const string& purpose,
           const string& policy_store_name);
@@ -223,6 +225,12 @@ public:
       bool save_store();
       bool fetch_store();
       void clear_sensitive_data();
+
+      bool generate_symmetric_key(bool regen);
+      bool generate_sealing_key(bool regen);
+      bool generate_auth_key(bool regen);
+      bool generate_service_key(bool regen);
+
       bool cold_init(const string& public_key_alg, const string& symmetric_key_alg,
                      int asn1_cert_size, byte* asn1_cert,
                      const string& home_domain_name, const string& home_host,

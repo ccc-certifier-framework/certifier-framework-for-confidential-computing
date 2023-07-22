@@ -102,7 +102,7 @@ certifier::framework::cc_trust_data::cc_trust_data(const string& enclave_type, c
   x509_policy_cert_ = nullptr;
   cc_is_certified_ = false;
   peer_data_initialized_ = false;
-  max_num_certified_domains_ = 10; // fix
+  max_num_certified_domains_ = MAX_NUM_CERTIFIERS;
   num_certified_domains_ = 0;
   certified_domains_ = new certifiers*[max_num_certified_domains_];
   for (int i = 0; i < max_num_certified_domains_; i++) {
@@ -352,17 +352,17 @@ void certifier::framework::cc_trust_data::print_trust_data() {
     print_key(private_auth_key_);
     printf("\n\n");
   }
-  if (cc_symmetric_key_initialized_) {
-    printf("\nSymmetric key\n");
-    print_key(symmetric_key_);
-    printf("\n\n");
-  }
-
   if (cc_service_key_initialized_) {
     printf("\nPrivate service key\n");
     print_key(private_service_key_);
     printf("\nPublic service key\n");
     print_key(public_service_key_);
+    printf("\n\n");
+  }
+
+  if (cc_symmetric_key_initialized_) {
+    printf("\nSymmetric key\n");
+    print_key(symmetric_key_);
     printf("\n\n");
   }
   if (cc_sealing_key_initialized_) {
@@ -376,6 +376,7 @@ void certifier::framework::cc_trust_data::print_trust_data() {
     print_bytes(serialized_service_cert_.size(), (byte*)serialized_service_cert_.data());
     printf("\n\n");
   }
+
   if (cc_service_platform_rule_initialized_) {
     printf("platform rule:\n");
     print_signed_claim(platform_rule_);
@@ -873,6 +874,170 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
   return false;
 }
 
+// If regen is true, replace them even if they are valid
+bool certifier::framework::cc_trust_data::generate_symmetric_key(bool regen) {
+
+  if (cc_symmetric_key_initialized_ && !regen)
+    return true;
+
+  // Make up symmetric keys (e.g.-for sealing)for app
+  int num_key_bytes;
+  if (symmetric_key_algorithm_ == "aes-256-cbc-hmac-sha256" ||
+      symmetric_key_algorithm_ == "aes-256-cbc-hmac-sha384" ||
+      symmetric_key_algorithm_ == "aes-256-gcm") {
+    num_key_bytes = cipher_key_byte_size(symmetric_key_algorithm_.c_str());
+    if (num_key_bytes <= 0) {
+      printf("%s() error, line %d, Can't recover symmetric alg key size\n",
+         __func__, __LINE__);
+      return false;
+    }
+  } else {
+    printf("%s() error, line %d, unsupported encryption algorithm: '%s'\n",
+         __func__, __LINE__, symmetric_key_algorithm_.c_str());
+    return false;
+  }
+  memset(symmetric_key_bytes_, 0, max_symmetric_key_size_);
+  if (!get_random(num_key_bytes, symmetric_key_bytes_)) {
+      printf("%s() error, line %d, Can't get random bytes for app key\n",
+         __func__, __LINE__);
+      return false;
+    }
+    symmetric_key_.set_key_name("app-symmetric-key");
+    symmetric_key_.set_key_type(symmetric_key_algorithm_);
+    symmetric_key_.set_key_format("vse-key");
+    symmetric_key_.set_secret_key_bits(symmetric_key_bytes_, 8 * num_key_bytes);
+
+  return true;
+}
+
+bool certifier::framework::cc_trust_data::generate_sealing_key(bool regen) {
+
+  if (cc_sealing_key_initialized_ && !regen)
+    return true;
+
+  // Make up symmetric keys (e.g.-for sealing)for app
+  int num_key_bytes;
+  if (symmetric_key_algorithm_ == "aes-256-cbc-hmac-sha256" ||
+      symmetric_key_algorithm_ == "aes-256-cbc-hmac-sha384" ||
+      symmetric_key_algorithm_ == "aes-256-gcm") {
+    num_key_bytes = cipher_key_byte_size(symmetric_key_algorithm_.c_str());
+    if (num_key_bytes <= 0) {
+      printf("%s() error, line %d, Can't get symmetric alg key size\n",
+        __func__, __LINE__);
+      return false;
+    }
+  } else {
+    printf("%s() error, line %d, unsupported encryption algorithm: '%s'\n",
+         __func__, __LINE__, symmetric_key_algorithm_.c_str());
+    return false;
+  }
+  memset(sealing_key_bytes_, 0, max_symmetric_key_size_);
+      if (!get_random(num_key_bytes, sealing_key_bytes_)) {
+      printf("%s() error, line %d, Can't get random bytes for app key\n",
+         __func__, __LINE__);
+      return false;
+    }
+    service_sealing_key_.set_key_name("sealing-key");
+    service_sealing_key_.set_key_type(symmetric_key_algorithm_);
+    service_sealing_key_.set_key_format("vse-key");
+    service_sealing_key_.set_secret_key_bits(sealing_key_bytes_, 8 * num_key_bytes);
+
+  return true;
+}
+
+bool certifier::framework::cc_trust_data::generate_auth_key(bool regen) {
+
+  if (cc_auth_key_initialized_ && !regen)
+    return true;
+
+  // make app auth private and public key
+  if (public_key_algorithm_ == "rsa-2048") {
+    if (!make_certifier_rsa_key(2048,  &private_auth_key_)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+       __func__, __LINE__);
+      return false;
+    }
+  } else if (public_key_algorithm_ == "rsa-3072") {
+    if (!make_certifier_rsa_key(3072,  &private_auth_key_)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+       __func__, __LINE__);
+      return false;
+    }
+  } else if (public_key_algorithm_ == "rsa-4096") {
+    if (!make_certifier_rsa_key(4096,  &private_auth_key_)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+       __func__, __LINE__);
+      return false;
+    }
+  } else if (public_key_algorithm_ == "ecc-384") {
+    if (!make_certifier_ecc_key(384,  &private_auth_key_)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+       __func__, __LINE__);
+      return false;
+    }
+  } else {
+      printf("%s() error, line %d, Unsupported public key algorithm\n",
+       __func__, __LINE__);
+      return false;
+  }
+
+  private_auth_key_.set_key_name("auth-key");
+  printf("KEY TYPE: %s\n", public_key_algorithm_.c_str());
+  if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
+    printf("%s() error, line %d, Can't make public Auth key\n",
+       __func__, __LINE__);
+    return false;
+  }
+
+  return true;
+}
+
+bool certifier::framework::cc_trust_data::generate_service_key(bool regen) {
+
+  if (cc_service_key_initialized_ && !regen)
+    return true;
+
+  // make app service private and public key
+  if (public_key_algorithm_ == "rsa-2048") {
+    if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+       __func__, __LINE__);
+      return false;
+    }
+  } else if (public_key_algorithm_ == "rsa-3072") {
+    if (!make_certifier_rsa_key(3072,  &private_service_key_)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+       __func__, __LINE__);
+      return false;
+    }
+  } else if (public_key_algorithm_ == "rsa-4096") {
+    if (!make_certifier_rsa_key(4096,  &private_service_key_)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+        __func__, __LINE__);
+      return false;
+    }
+  } else if (public_key_algorithm_ == "ecc-384") {
+    if (!make_certifier_ecc_key(384,  &private_service_key_)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+        __func__, __LINE__);
+      return false;
+    }
+  } else {
+      printf("%s() error, line %d, Unsupported public key algorithm\n",
+        __func__, __LINE__);
+      return false;
+  }
+
+  private_service_key_.set_key_name("service-attest-key");
+  if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
+    printf("%s() error, line %d, Can't make public service key\n",
+       __func__, __LINE__);
+    return false;
+  }
+
+  return true;
+}
+
 //  public_key_alg can be rsa-2048, rsa-1024, rsa-3072, rsa-4096, ecc-384
 //  symmetric_key_alg can be aes-256-cbc-hmac-sha256, aes-256-cbc-hmac-sha384 or aes-256-gcm
 bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg,
@@ -904,133 +1069,37 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
   symmetric_key_algorithm_ = symmetric_key_alg;
 
   // Make up symmetric keys (e.g.-for sealing)for app
-  int num_key_bytes;
-  if (symmetric_key_alg == "aes-256-cbc-hmac-sha256" ||
-      symmetric_key_alg == "aes-256-cbc-hmac-sha384" ||
-      symmetric_key_alg == "aes-256-gcm") {
-    num_key_bytes = cipher_key_byte_size(symmetric_key_alg.c_str());
-    if (num_key_bytes <= 0) {
-      printf("%s() error, line %d, Can't recover symmetric alg key size\n",
+  if (!generate_symmetric_key(true)) {
+      printf("%s() error, line %d, Can't generate symmetric key\n",
+         __func__, __LINE__);
+      return false;
+  }
+  cc_symmetric_key_initialized_ = true;
+  if (purpose_ == "attestation") {
+    if (!generate_sealing_key(true)) {
+      printf("%s() error, line %d, Can't generate sealing key\n",
          __func__, __LINE__);
       return false;
     }
-  } else {
-    printf("%s() error, line %d, unsupported encryption algorithm: '%s'\n",
-         __func__, __LINE__, symmetric_key_alg.c_str());
-    return false;
   }
-  memset(symmetric_key_bytes_, 0, max_symmetric_key_size_);
+  cc_sealing_key_initialized_= true;
 
   if (purpose_ == "authentication") {
 
-    // put private auth key and symmetric keys in store
-#if 0
-    store_.policy_key_.CopyFrom(public_policy_key_);
-#endif
-    if (!get_random(num_key_bytes, symmetric_key_bytes_)) {
-      printf("%s() error, line %d, Can't get random bytes for app key\n",
-         __func__, __LINE__);
-      return false;
-    }
-    symmetric_key_.set_key_name("app-symmetric-key");
-    symmetric_key_.set_key_type(symmetric_key_alg);
-    symmetric_key_.set_key_format("vse-key");
-    symmetric_key_.set_secret_key_bits(symmetric_key_bytes_, 8 * num_key_bytes);
-    cc_symmetric_key_initialized_ = true;
-
-    // make app auth private and public key
-    if (public_key_alg == "rsa-2048") {
-      if (!make_certifier_rsa_key(2048,  &private_auth_key_)) {
-        printf("%s() error, line %d, Can't generate App private key\n",
-         __func__, __LINE__);
+    if (!generate_auth_key(true)) {
+        printf("%s() error, line %d, Can't generate auth key\n",
+          __func__, __LINE__);
         return false;
       }
-    } else if (public_key_alg == "rsa-3072") {
-      if (!make_certifier_rsa_key(3072,  &private_auth_key_)) {
-        printf("%s() error, line %d, Can't generate App private key\n",
-         __func__, __LINE__);
-        return false;
-      }
-    } else if (public_key_alg == "rsa-4096") {
-      if (!make_certifier_rsa_key(4096,  &private_auth_key_)) {
-        printf("%s() error, line %d, Can't generate App private key\n",
-         __func__, __LINE__);
-        return false;
-      }
-    } else if (public_key_alg == "ecc-384") {
-      if (!make_certifier_ecc_key(384,  &private_auth_key_)) {
-        printf("%s() error, line %d, Can't generate App private key\n",
-         __func__, __LINE__);
-        return false;
-      }
-    } else {
-        printf("%s() error, line %d, Unsupported public key algorithm\n",
-         __func__, __LINE__);
-        return false;
-    }
-
-    private_auth_key_.set_key_name("auth-key");
-    if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
-      printf("%s() error, line %d, Can't make public Auth key\n",
-         __func__, __LINE__);
-      return false;
-    }
-
-    cc_symmetric_key_initialized_ = true;
     cc_auth_key_initialized_ = true;
 
   } else if (purpose_ == "attestation") {
 
-    if (!get_random(num_key_bytes, symmetric_key_bytes_)) {
-      printf("%s() error, line %d, Can't get random bytes for app key\n",
-         __func__, __LINE__);
-      return false;
-    }
-    symmetric_key_.set_key_name("sealing-key");
-    symmetric_key_.set_key_type(symmetric_key_alg);
-    symmetric_key_.set_key_format("vse-key");
-    symmetric_key_.set_secret_key_bits(sealing_key_, 8 * num_key_bytes);
-    cc_sealing_key_initialized_= true;
-
-    // make app service private and public key
-    if (public_key_alg == "rsa-2048") {
-      if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
-        printf("%s() error, line %d, Can't generate App private key\n",
-         __func__, __LINE__);
-        return false;
-      }
-    } else if (public_key_alg == "rsa-3072") {
-      if (!make_certifier_rsa_key(3072,  &private_service_key_)) {
-        printf("%s() error, line %d, Can't generate App private key\n",
-         __func__, __LINE__);
-        return false;
-      }
-    } else if (public_key_alg == "rsa-4096") {
-      if (!make_certifier_rsa_key(4096,  &private_service_key_)) {
-        printf("%s() error, line %d, Can't generate App private key\n",
+    if (!generate_service_key(true)) {
+        printf("%s() error, line %d, Can't generate service key\n",
           __func__, __LINE__);
         return false;
       }
-    } else if (public_key_alg == "ecc-384") {
-      if (!make_certifier_ecc_key(384,  &private_service_key_)) {
-        printf("%s() error, line %d, Can't generate App private key\n",
-          __func__, __LINE__);
-        return false;
-      }
-    } else {
-        printf("%s() error, line %d, Unsupported public key algorithm\n",
-          __func__, __LINE__);
-        return false;
-    }
-
-    private_service_key_.set_key_name("service-attest-key");
-    if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
-      printf("%s() error, line %d, Can't make public service key\n",
-         __func__, __LINE__);
-      return false;
-    }
-
-    cc_sealing_key_initialized_= true;
     cc_service_key_initialized_= true;
 
   } else {
@@ -1333,86 +1402,6 @@ bool certifier::framework::certifiers::certify_domain() {
 
 #if 0
   // Todo: if you change the auth key, you must recertify in all domains
-  if (generate_new_key) {
-
-    if (purpose_ == "authentication") {
-
-    // make app auth private and public key
-      if (public_key_algorithm_ == "rsa-2048") {
-        if (!make_certifier_rsa_key(2048,  &private_auth_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-            __func__, __LINE__);
-          return false;
-        }
-      } else if (public_key_algorithm_ == "rsa-4096") {
-        if (!make_certifier_rsa_key(4096,  &private_auth_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-          __func__, __LINE__);
-          return false;
-        }
-      } else if (public_key_algorithm_ == "ecc-384") {
-        if (!make_certifier_ecc_key(384,  &private_auth_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-            __func__, __LINE__);
-          return false;
-        }
-      } else {
-          printf("%s() error, line %d, Unsupported public key algorithm\n",
-            __func__, __LINE__);
-          return false;
-      }
-
-      private_auth_key_.set_key_name("auth-key");
-      if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
-        printf("%s() error, line %d, Can't make public Auth key\n",
-          __func__, __LINE__);
-        return false;
-      }
-
-      cc_auth_key_initialized_ = true;
-
-    } else if (purpose_ == "attestation") {
-
-      // make app service private and public key
-      if (public_key_algorithm_ == "rsa-2048") {
-        if (!make_certifier_rsa_key(2048,  &private_service_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-            __func__, __LINE__);
-          return false;
-        }
-      } else if (public_key_algorithm_ == "rsa-4096") {
-        if (!make_certifier_rsa_key(4096,  &private_service_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-            __func__, __LINE__);
-          return false;
-        }
-      } else if (public_key_algorithm_ == "ecc-384") {
-        if (!make_certifier_ecc_key(384,  &private_service_key_)) {
-          printf("%s() error, line %d, Can't generate App private key\n",
-            __func__, __LINE__);
-          return false;
-        }
-      } else {
-          printf("%s() error, line %d, Unsupported public key algorithm\n",
-            __func__, __LINE__);
-          return false;
-      }
-
-      private_service_key_.set_key_name("service-attest-key");
-      if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
-        printf("%s() error, line %d, Can't make public service key\n",
-          __func__, __LINE__);
-        return false;
-      }
-
-      cc_service_key_initialized_= true;
-
-    } else {
-      printf("%s() error, line %d, invalid recertify_me purpose\n",
-         __func__, __LINE__);
-      return false;
-    }
-  }
 #endif
 
   evidence_list platform_evidence;

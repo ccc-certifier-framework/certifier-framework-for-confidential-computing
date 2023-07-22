@@ -874,8 +874,9 @@ bool certifier::utilities::private_key_to_public_key(const key_message& in,
     out->set_key_type("ecc-256-public");
     n_bytes = cipher_block_byte_size("ecc-256-public");
   } else {
-    // Shut compiler warning about n_bytes set-but-not-used
-    printf("private_key_to_public_key: bad key type (n_bytes=%d)\n", n_bytes);
+      printf("%s() error, line %d, private_key_to_public_key: bad key type (n_bytes=%d)\n",
+        __func__, __LINE__, n_bytes);
+
     return false;
   }
 
