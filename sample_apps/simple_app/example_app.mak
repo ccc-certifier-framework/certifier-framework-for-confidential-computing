@@ -52,7 +52,7 @@ robj = $(O)/example_key_rotation.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/cer
        $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
        $(O)/cc_useful.o
 
-all:	example_app.exe   # todo: example_key_rotation.exe
+all:	example_app.exe example_key_rotation.exe
 clean:
 	@echo "removing generated files"
 	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h

@@ -700,8 +700,8 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
   string value;
 
   // Debug
-  printf("get_trust_data_from_store: incoming store\n");
-  store_.print();
+  // printf("get_trust_data_from_store: incoming store\n");
+  // store_.print();
 
   ent = store_.find_entry(public_key_alg_tag, string_type);
   if (ent < 0) {
