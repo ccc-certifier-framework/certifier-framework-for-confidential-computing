@@ -1,10 +1,10 @@
 # Enhancements and Feature Requests
 
 0. Apply to Confidential Computing Consortium
-1. Language bindings for python (Possibly also for Rust? Go? Java? C#?)
+1. Language bindings for python (Possibly also for Rust? Go? Java? C#?)  --- done by Aditya
 2. Switch to smphost tools
 3. Example to run Certifier in TEE with key provisioning and resilient access to many certifier services.
-4. Example of multi-domain certification (and API connection over secure channel)
+4. Example of multi-domain certification (and API connection over secure channel)  -- done with this checkin
 5. Nitro support
 6. Investigate fragile mutual auth TLS connections
 7. Integration with Confidential Containers from IBM

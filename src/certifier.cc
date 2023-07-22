@@ -164,6 +164,7 @@ bool certifier::framework::policy_store::put(unsigned ent, const string v) {
   void certifier::framework::policy_store::print() {
     printf("Number of entries: %d, max number of ents: %d\n",
         num_ents_, max_num_ents_);
+
     if (policy_key_valid_) {
       printf("Policy key:\n");
       print_key(policy_key_);
@@ -270,7 +271,8 @@ static bool vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *valu
   // Use OID for both lname and sname so OBJ_create does not fail
   nid = OBJ_create(oid, oid, oid);
   if (nid == NID_undef) {
-    printf("Failed to create NID\n");
+    printf("%s() error, line %d, Failed to create NID\n",
+      __func__, __LINE__);
     return false;
   }
   idx = X509_get_ext_by_NID(vcek, nid, -1);
@@ -284,12 +286,14 @@ static bool vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *valu
   vals = ASN1_STRING_get0_data(extvalue);
 
   if (vals[0] != 0x2) {
-    printf("Invalid extension type!\n");
+    printf("%s() error, line %d, Invalid extension type!\n",
+      __func__, __LINE__);
     return false;
   }
 
   if (vals[1] != 0x1 && vals[1] != 0x2) {
-    printf("Invalid extension length!\n");
+    printf("%s() error, line %d, Invalid extension length!\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -320,7 +324,8 @@ bool get_chipid_from_vcek(X509 *vcek, unsigned char *chipid, int idlen) {
 
   nid = OBJ_create(EXT_HWID, EXT_HWID, EXT_HWID);
   if (nid == NID_undef) {
-    printf("Failed to create NID\n");
+    printf("%s() error, line %d, Failed to create NID\n",
+      __func__, __LINE__);
     return false;
   }
   idx = X509_get_ext_by_NID(vcek, nid, -1);
@@ -357,7 +362,8 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
 #endif
 
   if (!GetX509FromCert(cert, x)) {
-    printf("PublicKeyFromCert: Can't get X509 from cert\n");
+    printf("%s() error, line %d, PublicKeyFromCert: Can't get X509 from cert\n",
+      __func__, __LINE__);
     res = false;
     goto done;
   }
@@ -365,21 +371,24 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   // make key message for public policy key from cert
   epk = X509_get_pubkey(x);
   if (epk == nullptr) {
-    printf("PublicKeyFromCert: Can't get subject key\n");
+    printf("%s() error, line %d, PublicKeyFromCert: Can't get subject key\n",
+      __func__, __LINE__);
     res = false;
     goto done;
   }
 
   sn = X509_get_subject_name(x);
   if (sn == nullptr) {
-    printf("PublicKeyFromCert: Can't get subject name\n");
+    printf("%s() error, line %d, PublicKeyFromCert: Can't get subject name\n",
+      __func__, __LINE__);
     res = false;
     goto done;
   }
 
   len = X509_NAME_get_text_by_NID(sn, NID_commonName, nullptr, 0);
   if (len < 0) {
-    printf("PublicKeyFromCert: Can't X509_NAME_get_text_by_NID length\n");
+    printf("%s() error, line %d, PublicKeyFromCert: Can't X509_NAME_get_text_by_NID length\n",
+      __func__, __LINE__);
     res = false;
     goto done;
   }
@@ -387,7 +396,8 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   {
     char name_buf[len];
     if (X509_NAME_get_text_by_NID(sn, NID_commonName, name_buf, len) < 0) {
-      printf("PublicKeyFromCert: Can't X509_NAME_get_text_by_NID\n");
+      printf("%s() error, line %d, PublicKeyFromCert: Can't X509_NAME_get_text_by_NID\n",
+        __func__, __LINE__);
       res = false;
     }
     subject_name_str.assign((const char*) name_buf);
@@ -399,24 +409,28 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
     const RSA* rk = nullptr;
     rk = EVP_PKEY_get0_RSA(epk);
     if (rk == nullptr) {
-      printf("PublicKeyFromCert: Can't get RSA key from evp\n");
+      printf("%s() error, line %d, PublicKeyFromCert: Can't get RSA key from evp\n",
+      __func__, __LINE__);
       res = false;
       goto done;
     }
     if (!RSA_to_key(rk, k)) {
-      printf("PublicKeyFromCert: Can't get internal key from RSA key\n");
+      printf("%s() error, line %d, PublicKeyFromCert: Can't get internal key from RSA key\n",
+        __func__, __LINE__);
       res = false;
       goto done;
     }
   } else if (EVP_PKEY_base_id(epk) == EVP_PKEY_EC) {
     const EC_KEY* ek = EVP_PKEY_get0_EC_KEY(epk);
     if (ek == nullptr) {
-      printf("PublicKeyFromCert: Can't get ECC key from evp\n");
+      printf("%s() error, line %d, PublicKeyFromCert: Can't get ECC key from evp\n",
+        __func__, __LINE__);
       res = false;
       goto done;
     }
     if (!ECC_to_key(ek, k)) {
-      printf("PublicKeyFromCert: Can't convert ECC key to internal key\n");
+      printf("%s() error, line %d, PublicKeyFromCert: Can't convert ECC key to internal key\n",
+        __func__, __LINE__);
       res = false;
       goto done;
     }
@@ -437,7 +451,8 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
   k->set_snp_tcb_version(get_tcb_version_from_vcek(x));
   memset(chipid, 0, CHIP_ID_SIZE);
   if (!get_chipid_from_vcek(x, chipid, CHIP_ID_SIZE)) {
-    printf("Failed to retrieve HWID from VCEK extensions\n");
+    printf("%s() error, line %d, Failed to retrieve HWID from VCEK extensions\n",
+      __func__, __LINE__);
   }
   k->set_snp_chipid(chipid, CHIP_ID_SIZE);
 #endif
@@ -637,6 +652,8 @@ bool certifier::framework::Attest(const string& enclave_type, int what_to_say_si
     int t_size_out;
     int t_size = *size_out;
     if (!keystone_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
+      printf("%s() error, line %d, keystone_Attest failed\n",
+        __func__, __LINE__);
       return false;
     }
     string ra;
@@ -648,9 +665,13 @@ bool certifier::framework::Attest(const string& enclave_type, int what_to_say_si
     kam.set_reported_attestation(ra);
     string serialized_keystone_at;
     if (!kam.SerializeToString(&serialized_keystone_at)) {
+      printf("%s() error, line %d, serialize failed\n",
+        __func__, __LINE__);
       return false;
     }
     if (*size_out < (int)serialized_keystone_at.size()) {
+      printf("%s() error, line %d, serialize failed\n",
+        __func__, __LINE__);
       return false;
     }
     memset(out, 0, *size_out);
@@ -664,7 +685,8 @@ bool certifier::framework::Attest(const string& enclave_type, int what_to_say_si
     int t_size_out;
     int t_size = *size_out;
     if (!islet_Attest(what_to_say_size, what_to_say, &t_size_out, out)) {
-      printf("Attest: islet_Attest failed\n");
+      printf("%s() error, line %d, islet_Attest failed\n",
+        __func__, __LINE__);
       return false;
     }
     string ra;
@@ -676,11 +698,13 @@ bool certifier::framework::Attest(const string& enclave_type, int what_to_say_si
     iam.set_reported_attestation(ra);
     string serialized_islet_at;
     if (!iam.SerializeToString(&serialized_islet_at)) {
-      printf("Attest: Islet Serialize to string \n");
+      printf("%s() error, line %d, Islet Serialize to string \n",
+        __func__, __LINE__);
       return false;
     }
     if (*size_out < (int)serialized_islet_at.size()) {
-      printf("Attest: Islet output too small\n");
+      printf("%s() error, line %d, Islet output too small\n",
+        __func__, __LINE__);
       return false;
     }
     memset(out, 0, *size_out);
@@ -772,7 +796,8 @@ bool certifier::framework::protect_blob(const string& enclave_type, key_message&
 
   string serialized_key;
   if (!key.SerializeToString(&serialized_key)) {
-    printf("protect_blob: can't serialize key\n");
+    printf("%s() error, line %d, protect_blob can't serialize key\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -783,22 +808,26 @@ bool certifier::framework::protect_blob(const string& enclave_type, key_message&
 
   if (!Seal(enclave_type, enclave_id, serialized_key.size(), (byte*)serialized_key.data(),
         &size_sealed_key, sealed_key)) {
-    printf("protect_blob: can't seal\n");
+    printf("%s() error, line %d, protect_blob can't seal\n",
+      __func__, __LINE__);
     return false;
   }
 
   byte iv[block_size];
   if (!get_random(8 * block_size, iv)) {
-    printf("protect_blob, can't get random number\n");
+    printf("%s() error, line %d, protect_blob can't get random number\n",
+      __func__, __LINE__);
     return false;
   }
   if (!key.has_secret_key_bits()) {
-    printf("protect_blob: no key bits\n");
+    printf("%s() error, line %d, protect_blob: no key bits\n",
+      __func__, __LINE__);
     return false;
   }
   byte* key_buf = (byte*)key.secret_key_bits().data();
   if (key.secret_key_bits().size() < protect_key_size) {
-    printf("protect_blob: key too small\n");
+    printf("%s() error, line %d, protect_blob: key too small\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -807,7 +836,8 @@ bool certifier::framework::protect_blob(const string& enclave_type, key_message&
   if (!authenticated_encrypt(key.key_type().c_str(),
           unencrypted_data, size_unencrypted_data,
           key_buf, iv, encrypted_data, &size_encrypted)) {
-    printf("protect_blob: authenticate encryption failed\n");
+    printf("%s() error, line %d, protect_blob: authenticate encryption failed\n",
+      __func__, __LINE__);
     return false;
   }
   
@@ -818,7 +848,8 @@ bool certifier::framework::protect_blob(const string& enclave_type, key_message&
   string serialized_blob;
   blob_msg.SerializeToString(&serialized_blob);
   if (((int)serialized_blob.size()) > *size_protected_blob) {
-    printf("protect_blob: furnished buffer is too small\n");
+    printf("%s() error, line %d, protect_blob: furnished buffer is too small\n",
+      __func__, __LINE__);
     return false;
   }
   *size_protected_blob = (int)serialized_blob.size();
@@ -834,15 +865,18 @@ bool certifier::framework::unprotect_blob(const string& enclave_type, int size_p
   protected_blob_string.assign((char*)protected_blob, size_protected_blob);
   protected_blob_message pb;
   if (!pb.ParseFromString(protected_blob_string)) {
-    printf("unprotect_blob: can't parse protected blob message\n");
+    printf("%s() error, line %d, unprotect_blob: can't parse protected blob message\n",
+      __func__, __LINE__);
     return false;
   }
   if (!pb.has_encrypted_key()) {
-    printf("unprotect_blob: no encryption key\n");
+    printf("%s() error, line %d, unprotect_blob: no encryption key\n",
+      __func__, __LINE__);
     return false;
   }
   if (!pb.has_encrypted_data()) {
-    printf("unprotect_blob: no encrypted data\n");
+    printf("%s() error, line %d, unprotect_blob: no encrypted data\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -854,35 +888,41 @@ bool certifier::framework::unprotect_blob(const string& enclave_type, int size_p
   // Unseal header
   if (!Unseal(enclave_type, enclave_id, pb.encrypted_key().size(), (byte*)pb.encrypted_key().data(),
         &size_unsealed_key, unsealed_key)) {
-    printf("unprotect_blob: can't unseal\n");
+    printf("%s() error, line %d, unprotect_blob: can't unseal\n",
+      __func__, __LINE__);
     return false;
   }
 
   string serialized_key;
   serialized_key.assign((const char*)unsealed_key, size_unsealed_key);
   if (!key->ParseFromString(serialized_key)) {
-    printf("unprotect_blob: can't parse unsealed key\n");
+    printf("%s() error, line %d, unprotect_blob: can't parse unsealed key\n",
+      __func__, __LINE__);
     return false;
   }
 
   if (key->key_type() != "aes-256-cbc-hmac-sha256") {
-    printf("unprotect_blob, unsupported encryption scheme\n");
+    printf("%s() error, line %d, unprotect_blob, unsupported encryption scheme\n",
+      __func__, __LINE__);
     return false;
   }
   if (!key->has_secret_key_bits()) {
-    printf("unprotect_blob: no key bits\n");
+    printf("%s() error, line %d, unprotect_blob: no key bits\n",
+      __func__, __LINE__);
     return false;
   }
   byte* key_buf = (byte*)key->secret_key_bits().data();
   if (key->secret_key_bits().size() < protect_key_size) {
-    printf("unprotect_blob: key too small\n");
+    printf("%s() error, line %d, unprotect_blob: key too small\n",
+      __func__, __LINE__);
     return false;
   }
 
   // decrypt encrypted data
   if (!authenticated_decrypt(key->key_type().c_str(), (byte*)pb.encrypted_data().data(),
           pb.encrypted_data().size(), key_buf, unencrypted_data, size_of_unencrypted_data)) {
-    printf("unprotect_blob: authenticated decrypt failed\n");
+    printf("%s() error, line %d, unprotect_blob: authenticated decrypt failed\n",
+      __func__, __LINE__);
     return false;
   }
   return true;
@@ -898,28 +938,33 @@ bool certifier::framework::reprotect_blob(const string& enclave_type, key_messag
 
   if (!unprotect_blob(enclave_type, size_protected_blob, protected_blob,
           &new_key, &size_unencrypted_data, unencrypted_data)) {
-    printf("reprotect_blob: Can't unprotect\n");
+    printf("%s() error, line %d, reprotect_blob: Can't unprotect\n",
+      __func__, __LINE__);
     return false;
   }
 
   // Generate new key
   int size_byte_key = cipher_key_byte_size(new_key.key_type().c_str());
   if (size_byte_key <= 0) {
-    printf("reprotect_blob: Can't get key size\n");
+    printf("%s() error, line %d, reprotect_blob: Can't get key size\n",
+      __func__, __LINE__);
     return false;
   }
   if (new_key.secret_key_bits().size() < (size_t)size_byte_key) {
-    printf("reprotect_blob: key buffer too small\n");
+    printf("%s() error, line %d, reprotect_blob: key buffer too small\n",
+      __func__, __LINE__);
     return false;
   }
   if (!get_random(8 * size_byte_key, (byte*)new_key.secret_key_bits().data())) {
-    printf("reprotect_blob: Can't generate key\n");
+    printf("%s() error, line %d, reprotect_blob: Can't generate key\n",
+      __func__, __LINE__);
     return false;
   }
 
   if (!protect_blob(enclave_type, new_key, size_unencrypted_data, unencrypted_data,
         size_new_encrypted_blob, data)) {
-    printf("reprotect_blob: Can't Protect\n");
+    printf("%s() error, line %d, reprotect_blob: Can't Protect\n",
+      __func__, __LINE__);
     return false;
   }
   return true;
@@ -1142,7 +1187,8 @@ bool read_signed_vse_statements(const string& in, signed_claim_sequence* s) {
     return false;
   }
   if (!s->ParseFromString(str)) {
-    printf("read_signed_vse_statements: Can't parse claim sequence\n");
+    printf("%s() error, line %d, read_signed_vse_statements: Can't parse claim sequence\n",
+      __func__, __LINE__);
     return false;
   }
   return true;
