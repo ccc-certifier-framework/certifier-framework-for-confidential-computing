@@ -265,9 +265,8 @@ message policy_store_entry {
 };
 
 message policy_store_message {
-  optional key_message policy_key                           = 1;
-  optional int32 max_ents                                   = 2;
-  repeated policy_store_entry entries                       = 3;
+  optional int32 max_ents                                   = 1;
+  repeated policy_store_entry entries                       = 2;
 };
 
 message claims_sequence {

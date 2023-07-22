@@ -45,14 +45,12 @@ using namespace certifier::utilities;
     max_num_ents_ = max_ents;
     num_ents_ = 0;
     entry_ = new store_entry*[max_ents];
-    policy_key_valid_ = false;
   }
 
   certifier::framework::policy_store::policy_store() {
     max_num_ents_ = MAX_NUM_ENTRIES;
     num_ents_ = 0;
     entry_ = new store_entry*[MAX_NUM_ENTRIES];
-    policy_key_valid_ = false;
   }
 
   certifier::framework::policy_store::~policy_store() {
@@ -61,23 +59,6 @@ using namespace certifier::utilities;
       entry_[i] = nullptr;
     }
     num_ents_ = 0;
-    policy_key_valid_ = false;
-  }
-
-  const key_message* policy_store::get_policy_key() {
-    if (!policy_key_valid_)
-      return nullptr;
-    return &policy_key_;
-  }
-
-  bool policy_store::set_policy_key(const key_message key) {
-    policy_key_.CopyFrom(key);
-    policy_key_valid_ = true;
-    return true;
-  }
-
-  bool certifier::framework::policy_store::is_policy_key_valid() {
-    return policy_key_valid_;
   }
 
   unsigned certifier::framework::policy_store::get_num_entries() {
@@ -165,12 +146,6 @@ bool certifier::framework::policy_store::put(unsigned ent, const string v) {
     printf("Number of entries: %d, max number of ents: %d\n",
         num_ents_, max_num_ents_);
 
-    if (policy_key_valid_) {
-      printf("Policy key:\n");
-      print_key(policy_key_);
-    } else {
-      printf("No policy key\n");
-    }
     for (unsigned i = 0; i < num_ents_; i++) {
       printf("  Entry %3d: ", i);
       entry_[i]->print();
@@ -182,12 +157,6 @@ bool certifier::framework::policy_store::put(unsigned ent, const string v) {
     policy_store_message psm;
 
     psm.set_max_ents(max_num_ents_);
-    // Put it in psm
-    if (policy_key_valid_) {
-      key_message* alloc_key = new key_message;
-      alloc_key->CopyFrom(policy_key_);
-      psm.set_allocated_policy_key(alloc_key);
-    }
 
     for (unsigned i = 0; i < num_ents_; i++) {
       policy_store_entry* pe = psm.add_entries();
@@ -212,12 +181,7 @@ bool certifier::framework::policy_store::put(unsigned ent, const string v) {
     } else {
       max_num_ents_ = MAX_NUM_ENTRIES;
     }
-    if (psm.has_policy_key()) {
-      policy_key_.CopyFrom(psm.policy_key());
-      policy_key_valid_ = true;
-    } else {
-      policy_key_valid_ = false;
-    }
+
     for (int i = 0; i < psm.entries_size(); i++) {
       const policy_store_entry& pe = psm.entries(i);
       store_entry* se = new store_entry();

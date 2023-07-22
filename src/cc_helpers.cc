@@ -560,8 +560,10 @@ void certifier::framework::cc_trust_data::clear_sensitive_data() {
 //  These are set in embed+policy_key.cc.
 bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
 
+#if 0
   store_.policy_key_.CopyFrom(public_policy_key_);
   store_.policy_key_valid_ = true;
+#endif
 
   const string string_type("string");
   const string key_type("key");
@@ -922,7 +924,9 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
   if (purpose_ == "authentication") {
 
     // put private auth key and symmetric keys in store
+#if 0
     store_.policy_key_.CopyFrom(public_policy_key_);
+#endif
     if (!get_random(num_key_bytes, symmetric_key_bytes_)) {
       printf("%s() error, line %d, Can't get random bytes for app key\n",
          __func__, __LINE__);
@@ -985,7 +989,7 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
     symmetric_key_.set_key_name("sealing-key");
     symmetric_key_.set_key_type(symmetric_key_alg);
     symmetric_key_.set_key_format("vse-key");
-    symmetric_key_.set_secret_key_bits(service_symmetric_key_, 8 * num_key_bytes);
+    symmetric_key_.set_secret_key_bits(sealing_key_, 8 * num_key_bytes);
     cc_sealing_key_initialized_= true;
 
     // make app service private and public key

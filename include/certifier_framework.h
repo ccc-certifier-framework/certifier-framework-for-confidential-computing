@@ -59,9 +59,6 @@ namespace certifier {
       unsigned num_ents_;
       store_entry** entry_;
 
-      bool policy_key_valid_;
-      key_message policy_key_;
-
     public:
       policy_store(unsigned max_ents);
       policy_store();
@@ -70,7 +67,6 @@ namespace certifier {
 private:
       bool add_entry(const string& tag, const string& type, const string& value);
 public:
-      bool is_policy_key_valid();
       unsigned get_num_entries();
       int find_entry(const string& tag, const string& type);
       const string* tag(unsigned ent);
@@ -82,9 +78,6 @@ public:
 
       bool update_or_insert(const string& tag,
               const string& type, const string& value);
-
-      const key_message* get_policy_key();
-      bool set_policy_key(const key_message key);
 
       void print();
       bool Serialize(string* out);
@@ -187,7 +180,7 @@ public:
       // This is the sealing key
       // Maybe delete this and use symmetric_key_ for all purposes?
       bool cc_sealing_key_initialized_;
-      byte service_symmetric_key_[max_symmetric_key_size_];
+      byte sealing_key_[max_symmetric_key_size_];
       key_message service_sealing_key_;
 
       // The domains I get certified in.
