@@ -1462,7 +1462,7 @@ bool certifier::framework::certifiers::certify_domain() {
 #ifdef SEV_SNP
   } else if (owner_->enclave_type_ == "sev-enclave") {
     if (!plat_certs_initialized) {
-      printf("%s() error, line: %d, sev certs not initialized\n");
+      printf("%s() error, line: %d, sev certs not initialized\n",
          __func__, __LINE__);
       return false;
     }
