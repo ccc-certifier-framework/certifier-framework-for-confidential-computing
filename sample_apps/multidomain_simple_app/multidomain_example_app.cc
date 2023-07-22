@@ -182,7 +182,7 @@ int main(int an, char** av) {
         __func__, __LINE__);
       ret = 1;
     }
-    if (!app_trust_data->certify_home_domain()) {
+    if (!app_trust_data->certify_me()) {
       printf("%s() error, line %d, certification failed\n",
         __func__, __LINE__);
       ret = 1;
@@ -210,8 +210,8 @@ int main(int an, char** av) {
       goto done;
     }
 
-    if (!app_trust_data->home_admissions_cert_valid_) {
-      printf("%s() error, line %d, home admissions cert not valid\n",
+    if (!app_trust_data->primary_admissions_cert_valid_) {
+      printf("%s() error, line %d, primary admissions cert not valid\n",
         __func__, __LINE__);
       ret = 1;
       goto done;
@@ -219,7 +219,7 @@ int main(int an, char** av) {
     if (!channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
           app_trust_data->serialized_policy_cert_,
           app_trust_data->private_auth_key_,
-          app_trust_data->serialized_home_admissions_cert_)) {
+          app_trust_data->serialized_primary_admissions_cert_)) {
       printf("%s() error, line %d, Can't init client app\n",
         __func__, __LINE__);
       ret = 1;
@@ -239,7 +239,7 @@ int main(int an, char** av) {
     if (!server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
                          app_trust_data->serialized_policy_cert_,
                          app_trust_data->private_auth_key_,
-                         app_trust_data->serialized_home_admissions_cert_,
+                         app_trust_data->serialized_primary_admissions_cert_,
                          server_application)) {
       ret = 1;
       goto done;

@@ -7,7 +7,7 @@ utilities.
 This version of simple_app is like simple_app except that the client and the server
 are in two different policy domains.  Each certifies to their home domain's certifier
 but they also certify to another certifier service.  The initialization up to and
-including the initial certification (performed by certify_home_domain()) is identical
+including the initial certification (performed by certify_me()) is identical
 to simple_example but then the client an the server certify to another domain by first
 recording it's data using
   add_new_domain(home_domain_name, domain_cert, home_host, home_port, service_host, service_port)
@@ -18,7 +18,7 @@ where
   home_port is the port number of the secondary domain's certifier_service
   service_host is the ip address of the program's server ip address (when the app runs as a server)
   service_port is the port number of the program's service port
-Programs first call certify_home_domain() to certify to their home domain and
+Programs first call certify_me() to certify to their home domain and
 certify_secondary_domain(const string& domain_name) on any secondary certifier they need to
 talk to.  When calling secure authenticated channel, the client provides the admissions certificate
 from the target server's home_domain and everythig works as usual after that.

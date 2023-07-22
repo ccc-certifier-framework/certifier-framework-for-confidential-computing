@@ -44,15 +44,11 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
-dobj = $(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+dobj = $(O)/multidomain_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
        $(O)/cc_useful.o
 
-robj = $(O)/example_key_rotation.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
-       $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
-       $(O)/cc_useful.o
-
-all:	example_app.exe example_key_rotation.exe
+all:	example_app.exe
 clean:
 	@echo "removing generated files"
 	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
@@ -65,10 +61,6 @@ $(EXE_DIR)/example_app.exe: $(dobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
 
-$(EXE_DIR)/example_key_rotation.exe: $(robj)
-	@echo "\nlinking executable $@"
-	$(LINK) $(robj) $(LDFLAGS) -o $(@D)/$@
-
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
@@ -78,11 +70,7 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
 
-$(O)/example_app.o: $(US)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
-	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
-
-$(O)/example_key_rotation.o: $(US)/example_key_rotation.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/multidomain_example_app.o: $(US)/multidomain_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
