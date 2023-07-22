@@ -76,7 +76,17 @@ the policy store currently only through cc_trust_app, you will notice no changes
 as being simpler and more flexible, you can now have multiple policy stores for other
 program data.  For example, you may wish to store your own authentication keys or symmetric
 keys for services unrelated to a certifier_service in a seperate store.  This is now easy
-to do.            
+to do.
 
 A few variable names have changed in cc_trust_data but these were not generally exposed by
 the earlier interface.
+
+
+Squashed checkin message:
+
+  Multi-security domain support ann examples
+
+  This provides and API allowing applications to be certified and open trusted channels with programs
+  in other security domains as might be important in a data economy scenario with multiple data providers.
+  policy_store has also been simplified and error messages fixed.  The cc_trust_data class has also been
+  simplified.
