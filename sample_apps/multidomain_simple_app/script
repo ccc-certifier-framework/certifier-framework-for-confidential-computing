@@ -22,6 +22,9 @@ $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-
     --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin \
     --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
 
+$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
+    --policy_key_output_file=policy_key_file2.bin --policy_cert_output_file=policy_cert_file2.bin
+
 # embed policy key and compile app
 cd $MULTIDOMAIN_EXAMPLE_DIR/provisioning
 $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin --output=../policy_key.cc
