@@ -143,7 +143,7 @@ public:
       string public_key_algorithm_;
       string symmetric_key_algorithm_;
 
-      // For home security domain only
+      // For primary security domain only
       bool cc_policy_info_initialized_;
       string serialized_policy_cert_;
       X509* x509_policy_cert_;
@@ -155,12 +155,12 @@ public:
       // platform initialized?
       bool cc_provider_provisioned_;
 
-      // home domain certified?
+      // primary domain certified?
       bool cc_is_certified_;
 
-      bool home_admissions_cert_valid_;
-      string serialized_home_admissions_cert_;
-      // if purpose is attestation, serialized_home_admissions_cert_
+      bool primary_admissions_cert_valid_;
+      string serialized_primary_admissions_cert_;
+      // Note: if purpose is attestation, serialized_home_admissions_cert_
       // is the same as the serialized_service_cert_, so remove it later
 
       // auth key is the same in all domains
@@ -238,8 +238,9 @@ public:
       bool GetPlatformSaysAttestClaim(signed_claim_message* scm);
       void print_trust_data();
 
-      bool certify_home_domain();
+      bool certify_primary_domain();
       bool certify_secondary_domain(const string& domain_name);
+      bool certify_me() {return certify_primary_domain();};
 
       // For peer-to-peer certification (not used yet)
       bool init_peer_certification_data(const string& public_key_alg);
@@ -279,7 +280,7 @@ public:
         const string& service_host, int service_port);
 
       bool get_certified_status();
-      bool certify_domain(bool recertify, bool generate_new_key);
+      bool certify_domain();
       void print_certifiers_entry();
     };
 

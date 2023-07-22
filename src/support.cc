@@ -2569,26 +2569,6 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
 
 // -----------------------------------------------------------------------
 
-void print_storage_info(const storage_info_message& smi) {
-  printf("\nStorage info:\n");
-  if (smi.has_storage_type())
-    printf("Storage type: %s\n", smi.storage_type().c_str());
-  if (smi.has_storage_descriptor())
-    printf("Storage descriptor: %s\n", smi.storage_descriptor().c_str());
-  if (smi.has_address())
-    printf("address: %s\n", smi.address().c_str());
-  if (smi.has_storage_key())
-    print_key(smi.storage_key());
-}
-
-void print_trusted_service_message(const trusted_service_message& tsm) {
-  printf("\nTrusted service\n");
-  if (tsm.has_trusted_service_address())
-    printf("Service address: %s\n", tsm.trusted_service_address().c_str());
-  if (tsm.has_trusted_service_key())
-    print_key(tsm.trusted_service_key());
-}
-
 void print_protected_blob(protected_blob_message& pb) {
   if (pb.has_encrypted_key()) {
     printf("encrypted_key (%d): ", (int)pb.encrypted_key().size());

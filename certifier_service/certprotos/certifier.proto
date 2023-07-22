@@ -258,34 +258,6 @@ message trust_response_message {
   optional bytes artifact                   = 4;
 };
 
-message storage_info_message {
-  optional string storage_type              = 1;
-  optional string storage_descriptor        = 2;
-  optional string address                   = 3;
-  optional key_message storage_key          = 4;
-  optional string tag                       = 5;
-};
-
-message channel_key_message {
-  optional string tag                       = 1;
-  optional key_message auth_key             = 2;
-};
-
-message trusted_service_message {
-  optional string trusted_service_address   = 1;
-  optional key_message trusted_service_key  = 2;
-  optional string tag                       = 3;
-};
-
-message tagged_claim {
-  optional string tag                       = 1;
-  optional claim_message claim              = 2;
-};
-
-message tagged_claims_sequence {
-  repeated tagged_claim claims              = 1;
-};
-
 message policy_store_entry {
   optional string tag                                       = 1;
   optional string type                                      = 2;

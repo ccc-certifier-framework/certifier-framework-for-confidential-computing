@@ -730,8 +730,8 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
   }
 
   if (num_certified_domains_ > 0 && certified_domains_[0]->is_certified_) {
-    home_admissions_cert_valid_ = true;
-    serialized_home_admissions_cert_ = certified_domains_[0]->admissions_cert_;
+    primary_admissions_cert_valid_ = true;
+    serialized_primary_admissions_cert_ = certified_domains_[0]->admissions_cert_;
   }
 
   if (purpose_ == "attestation") {
@@ -885,7 +885,6 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
   }
 
   string domain_cert;
-  // get home domain name from policy key
   domain_cert.assign((char*)asn1_cert, asn1_cert_size);
   if (num_certified_domains_ != 0) {
       printf("%s() error, line %d, there should be no certified domains yet\n",
@@ -1124,7 +1123,7 @@ printf("num_certified_domains_: %d\n", num_certified_domains_);
       cert, host, port, service_host, service_port);
 }
 
-bool certifier::framework::cc_trust_data::certify_home_domain() {
+bool certifier::framework::cc_trust_data::certify_primary_domain() {
 
   if (!cc_all_initialized()) {
     if (!warm_restart()) {
@@ -1138,20 +1137,20 @@ bool certifier::framework::cc_trust_data::certify_home_domain() {
   if (cc_is_certified_)
     return true;
 
-  // home should be entry 0
+  // primary domain should be entry 0
   // if not already certifier, certify
   if (num_certified_domains_ <= 0) {
-      printf("%s() error, line %d, home domain\n",
+      printf("%s() error, line %d, primary domain\n",
          __func__, __LINE__);
       return false;
   }
 
-  // Debug: print home certifier data
+  // Debug: print primary certifier data
   certified_domains_[0]->print_certifiers_entry();
   
 
-  if (!certified_domains_[0]->certify_domain(false, false)) {
-      printf("%s() error, line %d, can't certify home domain\n",
+  if (!certified_domains_[0]->certify_domain()) {
+      printf("%s() error, line %d, can't certify primary domain\n",
          __func__, __LINE__);
       return false;
     }
@@ -1162,8 +1161,8 @@ bool certifier::framework::cc_trust_data::certify_home_domain() {
   } else {
     printf("%s():%d error, unknown purpose\n", __func__, __LINE__);
   }
-  home_admissions_cert_valid_ = true;
-  serialized_home_admissions_cert_ = certified_domains_[0]->admissions_cert_;
+  primary_admissions_cert_valid_ = true;
+  serialized_primary_admissions_cert_ = certified_domains_[0]->admissions_cert_;
 
   return true;
 }
@@ -1179,7 +1178,7 @@ bool certifier::framework::cc_trust_data::certify_secondary_domain(const string&
     }
   }
 
-  return found->certify_domain(false, false);
+  return found->certify_domain();
 }
 
 bool certifier::framework::cc_trust_data::init_peer_certification_data(const string& public_key_alg) {
@@ -1320,7 +1319,7 @@ bool certifier::framework::certifiers::get_certified_status() {
 }
 
 // add auth-key and symmetric key
-bool certifier::framework::certifiers::certify_domain(bool recertify, bool generate_new_key) {
+bool certifier::framework::certifiers::certify_domain() {
 
   // owner has enclave_type, keys, and store.
   if (owner_ == nullptr) {
@@ -1674,13 +1673,11 @@ bool certifier::framework::certifiers::certify_domain(bool recertify, bool gener
   if (owner_->purpose_ == "authentication") {
     admissions_cert_.assign((char*)response.artifact().data(), response.artifact().size());
     is_certified_ = true;
-    // owner_->public_auth_key_.set_certificate(response.artifact());
-    // owner_->private_auth_key_.set_certificate(response.artifact());
-    // These should be set in cc_trust_data and ONLY for the home domain
 
   } else if (owner_->purpose_ == "attestation") {
 
-    // These should be set in cc_trust_data and ONLY for the home domain
+    // These should be set in cc_trust_data and ONLY for the primary domain
+    // Todo
     owner_->public_service_key_.set_certificate(response.artifact());
     owner_->private_service_key_.set_certificate(response.artifact());
 
@@ -1693,7 +1690,7 @@ bool certifier::framework::certifiers::certify_domain(bool recertify, bool gener
       return false;
     }
 
-    // These should be set in cc_trust_data and ONLY for the home domain
+    // These should be set in cc_trust_data and ONLY for the primary domain
     owner_->cc_service_platform_rule_initialized_ = true;
 
   } else {
