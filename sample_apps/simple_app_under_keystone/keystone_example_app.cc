@@ -183,7 +183,7 @@ int main(int an, char** av) {
       ret = 1;
       goto done;
     }
-    if (!app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
+    if (!app_trust_data->certify_me()) {
       printf("%s() error, line %d, certification failed\n",
         __func__, __LINE__);
       ret = 1;

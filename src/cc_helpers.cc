@@ -1454,7 +1454,7 @@ bool certifier::framework::certifiers::certify_domain() {
 #endif
 
 #ifdef ISLET_CERTIFIER
-  } else if (enclave_type_ == "islet-enclave") {
+  } else if (owner_->enclave_type_ == "islet-enclave") {
 
     // Add CCA certificate
 #endif  // ISLET_CERTIFIER
