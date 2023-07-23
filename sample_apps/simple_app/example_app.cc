@@ -166,6 +166,7 @@ int main(int an, char** av) {
       printf("%s() error, line %d, cold-init failed\n",
         __func__, __LINE__);
       ret = 1;
+      goto done;
     }
     // Debug
     app_trust_data->print_trust_data();
@@ -174,6 +175,7 @@ int main(int an, char** av) {
       printf("%s() error, line %d, warm-restart failed\n",
         __func__, __LINE__);
       ret = 1;
+      goto done;
     }
 
   } else if (FLAGS_operation == "get-certifier") {
@@ -181,11 +183,13 @@ int main(int an, char** av) {
       printf("%s() error, line %d, warm-restart failed\n",
         __func__, __LINE__);
       ret = 1;
+      goto done;
     }
     if (!app_trust_data->certify_me()) {
       printf("%s() error, line %d, certification failed\n",
         __func__, __LINE__);
       ret = 1;
+      goto done;
     }
     // Debug
     app_trust_data->print_trust_data();

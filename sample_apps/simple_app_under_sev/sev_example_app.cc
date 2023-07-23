@@ -155,12 +155,14 @@ int main(int an, char** av) {
       printf("%s() error, line %d, cold-init failed\n",
          __func__, __LINE__);
       ret = 1;
+      goto done;
     }
   } else if (FLAGS_operation == "warm-restart") {
     if (!app_trust_data->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n",
          __func__, __LINE__);
       ret = 1;
+      goto done;
     }
 
   } else if (FLAGS_operation == "get-certifier") {
@@ -168,11 +170,13 @@ int main(int an, char** av) {
       printf("%s() error, line %d, warm-restart failed\n",
         __func__, __LINE__);
       ret = 1;
+      goto done;
     }
     if (!app_trust_data->certify_me()) {
       printf("%s() error, line %d, certification failed\n",
          __func__, __LINE__);
       ret = 1;
+      goto done;
     }
   } else if (FLAGS_operation == "run-app-as-client") {
     if (!app_trust_data->warm_restart()) {
@@ -217,6 +221,13 @@ int main(int an, char** av) {
       ret = 1;
       goto done;
     }
+    if (!app_trust_data->primary_admissions_cert_valid_) {
+      printf("%s() error, line %d, primary admissions cert not valid\n",
+        __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+
     printf("running as server\n");
     server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
         app_trust_data->serialized_policy_cert_,
