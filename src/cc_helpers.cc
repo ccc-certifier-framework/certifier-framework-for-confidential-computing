@@ -982,7 +982,6 @@ bool certifier::framework::cc_trust_data::generate_auth_key(bool regen) {
   }
 
   private_auth_key_.set_key_name("auth-key");
-  printf("KEY TYPE: %s\n", public_key_algorithm_.c_str());
   if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
     printf("%s() error, line %d, Can't make public Auth key\n",
        __func__, __LINE__);
