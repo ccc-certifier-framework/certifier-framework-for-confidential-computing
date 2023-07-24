@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-#include <gflags/gflags.h>
-
-#include <sys/socket.h>
 #include <arpa/inet.h>
+#include <gflags/gflags.h>
+#include <gtest/gtest.h>
+#include <netdb.h>
 #include <netinet/in.h>
-#include  <netdb.h>
-#include <openssl/ssl.h>
-#include <openssl/rsa.h>
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/hmac.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#include <sys/socket.h>
 
 #include "certifier_framework.h"
 
 using namespace certifier::framework;
 
-// operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server
-DEFINE_bool(print_all, false,  "verbose");
+// operations are: cold-init, warm-restart, get-certifier, run-app-as-client,
+// run-app-as-server
+DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(operation, "", "operation");
 
 DEFINE_string(policy_host, "localhost", "address for policy server");
@@ -44,26 +45,28 @@ DEFINE_int32(server_app_port, 8124, "port for server app server");
 
 DEFINE_string(policy_store_file, "store.bin", "policy store file name");
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
+DEFINE_string(platform_attest_endorsement,
+              "platform_attest_endorsement.bin",
+              "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "example_app.measurement", "measurement");
-
 
 // The test app performs five possible roles
 //    cold-init: This creates application keys and initializes the policy store.
 //    warm-restart:  This retrieves the policy store data.
-//    get-certifier: This obtains the app admission cert from the service, naming the public app key.
-//    run-app-as-client: This runs the app as a server.
-//    run-app-as-server: This runs the app as a client
+//    get-certifier: This obtains the app admission cert from the service,
+//    naming the public app key. run-app-as-client: This runs the app as a
+//    server. run-app-as-server: This runs the app as a client
 
-#include "policy_key.cc"    // generated file
+#include "policy_key.cc"  // generated file
 
-cc_trust_data* app_trust_data = nullptr;
+cc_trust_data *app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
-void client_application(secure_authenticated_channel& channel) {
-
+void
+client_application(secure_authenticated_channel &channel)
+{
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
     printf("Client peer cert is:\n");
@@ -73,18 +76,18 @@ void client_application(secure_authenticated_channel& channel) {
   }
 
   // client sends a message over authenticated, encrypted channel
-  const char* msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
 
   // Get server response over authenticated, encrypted channel and print it
   string out;
-  int n = channel.read(&out);
+  int    n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
 }
 
-
-void server_application(secure_authenticated_channel& channel) {
-
+void
+server_application(secure_authenticated_channel &channel)
+{
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
     printf("Server peer cert is:\n");
@@ -95,15 +98,17 @@ void server_application(secure_authenticated_channel& channel) {
 
   // Read message from client over authenticated, encrypted channel
   string out;
-  int n = channel.read(&out);
-  printf("SSL server read: %s\n", (const char*) out.data());
+  int    n = channel.read(&out);
+  printf("SSL server read: %s\n", (const char *)out.data());
 
   // Reply over authenticated, encrypted channel
-  const char* msg = "Hi from your secret server\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret server\n";
+  channel.write(strlen(msg), (byte *)msg);
 }
 
-int main(int an, char** av) {
+int
+main(int an, char **av)
+{
   string usage("ARM CCA-based simple app");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -123,7 +128,8 @@ int main(int an, char** av) {
                       --policy_cert_file=self-signed-policy-cert-file-name \n\
                       --policy_store_file=policy-store-file-name\n\n",
            av[0]);
-    printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server\n");
+    printf("Operations are: cold-init, warm-restart, get-certifier, "
+           "run-app-as-client, run-app-as-server\n");
     return 0;
   }
 
@@ -140,7 +146,8 @@ int main(int an, char** av) {
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert)) {
+  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert))
+  {
     printf("Can't init policy key\n");
     return 1;
   }
@@ -155,7 +162,8 @@ int main(int an, char** av) {
 
   if (!app_trust_data->initialize_islet_enclave_data(attest_key_file_name,
                                                      measurement_file_name,
-                                                     platform_attest_file_name)) {
+                                                     platform_attest_file_name))
+  {
     printf("Can't init Islet enclave\n");
     return 1;
   }
@@ -183,7 +191,7 @@ int main(int an, char** av) {
       ret = 1;
     }
   } else if (FLAGS_operation == "run-app-as-client") {
-    string my_role("client");
+    string                       my_role("client");
     secure_authenticated_channel channel(my_role);
 
     if (!app_trust_data->warm_restart()) {
@@ -193,24 +201,28 @@ int main(int an, char** av) {
     }
 
     printf("Running App as client\n");
-    if (!app_trust_data->cc_auth_key_initialized_ ||
-        !app_trust_data->cc_policy_info_initialized_) {
+    if (!app_trust_data->cc_auth_key_initialized_
+        || !app_trust_data->cc_policy_info_initialized_)
+    {
       printf("trust data not initialized\n");
       ret = 1;
       goto done;
     }
 
-    if (!channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
-          app_trust_data->serialized_policy_cert_,
-          app_trust_data->private_auth_key_,
-          app_trust_data->private_auth_key_.certificate())) {
+    if (!channel.init_client_ssl(
+            FLAGS_server_app_host,
+            FLAGS_server_app_port,
+            app_trust_data->serialized_policy_cert_,
+            app_trust_data->private_auth_key_,
+            app_trust_data->private_auth_key_.certificate()))
+    {
       printf("Can't init client app\n");
       ret = 1;
       goto done;
     }
 
-  // This is the actual application code.
-  client_application(channel);
+    // This is the actual application code.
+    client_application(channel);
   } else if (FLAGS_operation == "run-app-as-server") {
     if (!app_trust_data->warm_restart()) {
       printf("warm-restart failed\n");
@@ -218,11 +230,13 @@ int main(int an, char** av) {
       goto done;
     }
     printf("Running App as server\n");
-    if (!server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+    if (!server_dispatch(FLAGS_server_app_host,
+                         FLAGS_server_app_port,
                          app_trust_data->serialized_policy_cert_,
                          app_trust_data->private_auth_key_,
                          app_trust_data->private_auth_key_.certificate(),
-                         server_application)) {
+                         server_application))
+    {
       ret = 1;
       goto done;
     }

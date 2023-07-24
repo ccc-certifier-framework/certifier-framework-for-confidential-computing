@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <fcntl.h>
 #include <gflags/gflags.h>
-#include <stdio.h>
+#include <openssl/evp.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-#include <string>
 #include <memory>
-
-#include <openssl/evp.h>
+#include <string>
 
 #ifndef byte
 typedef unsigned char byte;
@@ -33,13 +33,14 @@ typedef unsigned char byte;
 
 using std::string;
 
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(input, "policy_cert.bin", "X509 policy certificate");
+DEFINE_string(output, "policy.include.cc", "policy cert inclusion file");
+DEFINE_string(array_name, "initialized_cert", "Name of byte array");
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(input, "policy_cert.bin",  "X509 policy certificate");
-DEFINE_string(output, "policy.include.cc",  "policy cert inclusion file");
-DEFINE_string(array_name, "initialized_cert",  "Name of byte array");
-
-bool write_file(string file_name, int size, byte* data) {
+bool
+write_file(string file_name, int size, byte *data)
+{
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (out < 0)
     return false;
@@ -52,7 +53,9 @@ bool write_file(string file_name, int size, byte* data) {
   return true;
 }
 
-int file_size(string file_name) {
+int
+file_size(string file_name)
+{
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0)
@@ -62,7 +65,9 @@ int file_size(string file_name) {
   return (int)file_info.st_size;
 }
 
-bool read_file(string file_name, int* size, byte* data) {
+bool
+read_file(string file_name, int *size, byte *data)
+{
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0)
@@ -82,18 +87,20 @@ bool read_file(string file_name, int* size, byte* data) {
   return true;
 }
 
-bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) {
+bool
+generate_policy_cert_in_code(string &asn1_cert_file, string &include_file)
+{
   int cert_size = file_size(asn1_cert_file);
-  if (cert_size <= 0)
-  {
+  if (cert_size <= 0) {
     printf("Invalid size=%d for input file '%s'.\n",
-           cert_size, asn1_cert_file.c_str());
+           cert_size,
+           asn1_cert_file.c_str());
     return false;
   }
   byte bin_cert[cert_size];
- 
+
   int t_size = cert_size;
-  if(!read_file(asn1_cert_file, &t_size, bin_cert))
+  if (!read_file(asn1_cert_file, &t_size, bin_cert))
     return false;
 
   int out = open(include_file.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
@@ -101,44 +108,46 @@ bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) 
     return false;
 
   // array_name
-  string array_name = FLAGS_array_name;
-  string size_name = array_name + "_size";
-  const int buf_size = 128;
+  string    array_name = FLAGS_array_name;
+  string    size_name  = array_name + "_size";
+  const int buf_size   = 128;
 
   char t_buf[buf_size];
   memset(t_buf, 0, buf_size);
   sprintf(t_buf, "int %s = %d;\n", size_name.c_str(), t_size);
-  if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
+  if (write(out, (byte *)t_buf, strlen(t_buf)) < 0) {
     printf("Bad write\n");
   }
   memset(t_buf, 0, buf_size);
   sprintf(t_buf, "byte %s[%d] = {\n    ", array_name.c_str(), t_size);
-  const char* s2 = "\n};\n\n";
+  const char *s2 = "\n};\n\n";
 
-  if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
+  if (write(out, (byte *)t_buf, strlen(t_buf)) < 0) {
     printf("Bad write\n");
   }
   for (int i = 0; i < t_size; i++) {
     memset(t_buf, 0, buf_size);
     sprintf(t_buf, "0x%02x, ", bin_cert[i]);
-    if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
+    if (write(out, (byte *)t_buf, strlen(t_buf)) < 0) {
       printf("Bad write\n");
     }
-    if ((i%8) == 7) {
-      if (write(out, (byte*)"\n    ", 5) < 0) {
+    if ((i % 8) == 7) {
+      if (write(out, (byte *)"\n    ", 5) < 0) {
         printf("Bad write\n");
       }
     }
   }
-  if (write(out, (byte*)s2, strlen(s2)) < 0) {
+  if (write(out, (byte *)s2, strlen(s2)) < 0) {
     printf("Bad write\n");
   }
   close(out);
 
-return true;
+  return true;
 }
 
-int main(int an, char** av) {
+int
+main(int an, char **av)
+{
   string usage("Generate policy certificate to embed policy key in sample app");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);

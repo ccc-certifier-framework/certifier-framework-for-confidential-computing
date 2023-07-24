@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,10 +16,13 @@
 #ifndef __STORE_TESTS_H__
 #define __STORE_TESTS_H__
 
-bool test_protect(bool print_all);
+bool
+test_protect(bool print_all);
 
-bool test_policy_store(bool print_all);
+bool
+test_policy_store(bool print_all);
 
-bool test_init_and_recover_containers(bool print_all);
+bool
+test_init_and_recover_containers(bool print_all);
 
 #endif  // __STORE_TESTS_H__

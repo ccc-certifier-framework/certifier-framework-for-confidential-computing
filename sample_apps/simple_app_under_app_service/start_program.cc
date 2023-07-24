@@ -1,10 +1,8 @@
-#include <gflags/gflags.h>
-
-#include <gflags/gflags.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
+#include <gflags/gflags.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 #include "certifier_utilities.h"
 
@@ -17,11 +15,12 @@ DEFINE_string(args, "service_example_app.exe", "service example arguments");
 
 #define DEBUG
 
-
-bool parse_args(const string& in, int* num_an, string* av) {
+bool
+parse_args(const string &in, int *num_an, string *av)
+{
   // for now, just assume commas can only be delimiters
-  const char* start = in.c_str();
-  const char* end = start;
+  const char *start = in.c_str();
+  const char *end   = start;
 
   *num_an = 0;
   while (end != nullptr) {
@@ -40,7 +39,9 @@ bool parse_args(const string& in, int* num_an, string* av) {
   return true;
 }
 
-void print_run_request(run_request& r) {
+void
+print_run_request(run_request &r)
+{
   if (r.has_location()) {
     printf("Executable: %s\n", r.location().c_str());
   }
@@ -49,22 +50,23 @@ void print_run_request(run_request& r) {
   }
 }
 
-int main(int an, char**av) {
+int
+main(int an, char **av)
+{
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  run_request req;
+  run_request  req;
   run_response rsp;
-
 
   // Set executable
   printf("Executable: %s\n", FLAGS_executable.c_str());
   req.set_location(FLAGS_executable);
 
   // Set flags
-  const int max_args= 15;
-  int num_args = max_args;
-  string s_args[max_args];
+  const int max_args = 15;
+  int       num_args = max_args;
+  string    s_args[max_args];
   if (!parse_args(FLAGS_args, &num_args, s_args)) {
     printf("Can't parse argument list\n");
     num_args = 0;
@@ -84,19 +86,19 @@ int main(int an, char**av) {
 
   // dial service
   struct sockaddr_in address;
-  memset((byte*)&address, 0, sizeof(struct sockaddr_in));
+  memset((byte *)&address, 0, sizeof(struct sockaddr_in));
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0) {
     return 1;
   }
-  struct hostent* he = gethostbyname(FLAGS_server_app_host.c_str());
+  struct hostent *he = gethostbyname(FLAGS_server_app_host.c_str());
   if (he == nullptr) {
     return 1;
   }
   memcpy(&(address.sin_addr.s_addr), he->h_addr, he->h_length);
   address.sin_family = AF_INET;
-  address.sin_port = htons(FLAGS_server_app_port);
-  if(connect(sock,(struct sockaddr *) &address, sizeof(address)) != 0) {
+  address.sin_port   = htons(FLAGS_server_app_port);
+  if (connect(sock, (struct sockaddr *)&address, sizeof(address)) != 0) {
     return 1;
   }
 
@@ -105,13 +107,17 @@ int main(int an, char**av) {
   if (!req.SerializeToString(&serialized_request)) {
     return 1;
   }
-  if (sized_socket_write(sock, serialized_request.size(), (byte*)serialized_request.data()) < 0) {
+  if (sized_socket_write(sock,
+                         serialized_request.size(),
+                         (byte *)serialized_request.data())
+      < 0)
+  {
     return 1;
   }
 
   // read response
   string serialized_response;
-  int n = sized_socket_read(sock, &serialized_response);
+  int    n = sized_socket_read(sock, &serialized_response);
   if (n < 0) {
     printf("Can't read response\n");
     return 1;

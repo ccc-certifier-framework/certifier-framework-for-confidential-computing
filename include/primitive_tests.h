@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +16,10 @@
 #ifndef __PRIMITIVE_TESTS_H__
 #define __PRIMITIVE_TESTS_H__
 
-bool test_seal(bool print_all);
+bool
+test_seal(bool print_all);
 
-bool test_attest(bool print_all);
+bool
+test_attest(bool print_all);
 
 #endif  // __PRIMITIVE_TESTS_H__

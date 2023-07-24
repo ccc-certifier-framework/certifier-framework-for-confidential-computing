@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,34 +13,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
+#include <arpa/inet.h>
 #include <gflags/gflags.h>
+#include <gtest/gtest.h>
+#include <linux/memfd.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#include <pwd.h>
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
-#include "support.h"
-#include "certifier.h"
-#include "simulated_enclave.h"
-#include "application_enclave.h"
-#include "certifier.pb.h"
-#include "cc_helpers.h"
 #include <mutex>
 #include <thread>
 
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <openssl/ssl.h>
-#include <openssl/rsa.h>
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/hmac.h>
-#include <openssl/err.h>
-
-#include <pwd.h>
-#include <unistd.h>
-#include <linux/memfd.h>
-#include <sys/mman.h>
+#include "application_enclave.h"
+#include "cc_helpers.h"
+#include "certifier.h"
+#include "certifier.pb.h"
+#include "simulated_enclave.h"
+#include "support.h"
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -48,8 +48,8 @@ DEFINE_string(parent_enclave, "simulated-enclave", "parent enclave");
 DEFINE_bool(help_me, false, "Want help?");
 DEFINE_bool(cold_init_service, false, "Start over");
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_bool(print_log, false,  "print log");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_bool(print_log, false, "print log");
 DEFINE_string(log_file_name, "service.log", "service log file");
 
 DEFINE_string(policy_cert_file, "policy_cert_file.bin", "policy_cert");
@@ -57,26 +57,37 @@ DEFINE_string(policy_host, "localhost", "address for policy server");
 DEFINE_int32(policy_port, 8123, "port for policy server");
 
 DEFINE_string(service_dir, "./service/", "directory for service data");
-DEFINE_string(service_policy_store, "policy_store.bin", "policy store for service");
+DEFINE_string(service_policy_store,
+              "policy_store.bin",
+              "policy store for service");
 
 DEFINE_string(server_app_host, "localhost", "address for application requests");
 DEFINE_int32(server_app_port, 8127, "port for application requests");
 
-DEFINE_string(run_policy, "all", "what programs to run");  // "signed" is other possibility
+DEFINE_string(run_policy,
+              "all",
+              "what programs to run");  // "signed" is other possibility
 DEFINE_string(host_enclave_type, "simulated-enclave", "Primary enclave");
 
 // For simulated enclave only
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
+DEFINE_string(platform_attest_endorsement,
+              "platform_attest_endorsement.bin",
+              "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "app_service.measurement", "measurement");
 
 DEFINE_string(guest_login_name, "jlm", "guest name");
 
-DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der", "ark cert file name");
-DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der", "ask cert file name");
-DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der", "vcek cert file name");
-
+DEFINE_string(ark_cert_file,
+              "./service/milan_ark_cert.der",
+              "ark cert file name");
+DEFINE_string(ask_cert_file,
+              "./service/milan_ask_cert.der",
+              "ask cert file name");
+DEFINE_string(vcek_cert_file,
+              "./service/milan_vcek_cert.der",
+              "vcek cert file name");
 
 //#define DEBUG
 
@@ -85,37 +96,41 @@ DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der", "vcek cert file n
 #include "policy_key.cc"
 
 class spawned_children {
-public:
-  bool valid_;
-  string app_name_;
-  string location_;
-  string measurement_;
-  int pid_;
-  int parent_read_fd_;
-  int parent_write_fd_;
-  std::thread * thread_obj_;
-  spawned_children* next_;
+ public:
+  bool              valid_;
+  string            app_name_;
+  string            location_;
+  string            measurement_;
+  int               pid_;
+  int               parent_read_fd_;
+  int               parent_write_fd_;
+  std::thread *     thread_obj_;
+  spawned_children *next_;
 };
 
-std::mutex kid_mtx;
-spawned_children* my_kids = nullptr;
+std::mutex        kid_mtx;
+spawned_children *my_kids = nullptr;
 
-spawned_children* new_kid() {
-  spawned_children* nk = new(spawned_children);
+spawned_children *
+new_kid()
+{
+  spawned_children *nk = new (spawned_children);
   if (nk == nullptr)
     return nullptr;
   kid_mtx.lock();
-  nk->valid_ = false;
-  nk->next_ = my_kids;
+  nk->valid_      = false;
+  nk->next_       = my_kids;
   nk->thread_obj_ = nullptr;
-  my_kids = nk;
+  my_kids         = nk;
   kid_mtx.unlock();
   return nk;
 }
 
-spawned_children* find_kid(int pid) {
+spawned_children *
+find_kid(int pid)
+{
   kid_mtx.lock();
-  spawned_children* k = my_kids;
+  spawned_children *k = my_kids;
   while (k != nullptr) {
     if (k->pid_ == pid)
       break;
@@ -125,7 +140,9 @@ spawned_children* find_kid(int pid) {
   return k;
 }
 
-void remove_kid(int pid) {
+void
+remove_kid(int pid)
+{
   kid_mtx.lock();
   if (my_kids == nullptr) {
     kid_mtx.unlock();
@@ -135,13 +152,13 @@ void remove_kid(int pid) {
     delete my_kids;
     my_kids = nullptr;
   }
-  spawned_children* k = my_kids;
+  spawned_children *k = my_kids;
   while (k != nullptr) {
     if (k->next_ == nullptr)
       break;
     if (k->next_->pid_ == pid) {
-      spawned_children* to_remove = k->next_;
-      k->next_ = to_remove->next_;
+      spawned_children *to_remove = k->next_;
+      k->next_                    = to_remove->next_;
       delete to_remove;
       break;
     }
@@ -150,52 +167,56 @@ void remove_kid(int pid) {
   kid_mtx.unlock();
 }
 
-bool measure_binary(const string& file, string* m) {
+bool
+measure_binary(const string &file, string *m)
+{
   int size = file_size(file.c_str());
   if (size <= 0) {
     printf("Can't get executable file\n");
     return false;
   }
-  byte* file_contents = (byte*)malloc(size);
-  int bytes_read = size;
+  byte *file_contents = (byte *)malloc(size);
+  int   bytes_read    = size;
   if (!read_file(file, &bytes_read, file_contents) || bytes_read < size) {
     printf("Executable read failed\n");
     free(file_contents);
     return false;
   }
-  byte digest[32];
+  byte         digest[32];
   unsigned int len = 32;
-  if (!digest_message("sha256", file_contents, bytes_read,
-          digest, len)) {
+  if (!digest_message("sha256", file_contents, bytes_read, digest, len)) {
     printf("Digest failed\n");
     free(file_contents);
     return false;
   }
-  m->assign((char*)digest, (int)len);
+  m->assign((char *)digest, (int)len);
   free(file_contents);
   return true;
 }
 
-bool measure_in_mem_binary(byte* file_contents, int size, string* m) {
-  byte digest[32];
+bool
+measure_in_mem_binary(byte *file_contents, int size, string *m)
+{
+  byte         digest[32];
   unsigned int len = 32;
-  if (!digest_message("sha256", file_contents, (unsigned) size,
-          digest, len)) {
+  if (!digest_message("sha256", file_contents, (unsigned)size, digest, len)) {
     printf("Digest failed\n");
     return false;
   }
-  m->assign((char*)digest, (int)len);
+  m->assign((char *)digest, (int)len);
   return true;
 }
 
-void delete_child(int signum) {
-    int pid = wait(nullptr);
-    spawned_children* c = find_kid(pid);
-    if (c->thread_obj_ != nullptr) {
-      delete c->thread_obj_;
-    }
-    // close parent fds/
-    remove_kid(pid);
+void
+delete_child(int signum)
+{
+  int               pid = wait(nullptr);
+  spawned_children *c   = find_kid(pid);
+  if (c->thread_obj_ != nullptr) {
+    delete c->thread_obj_;
+  }
+  // close parent fds/
+  remove_kid(pid);
 }
 
 // ---------------------------------------------------------------------------------
@@ -204,10 +225,11 @@ const int max_pad_size = 128;
 
 // The support functions use the helper object
 //    This is just a reference, object is local to main
-cc_trust_data* app_trust_data = nullptr;
+cc_trust_data *app_trust_data = nullptr;
 
-
-bool soft_Seal(spawned_children* kid, string in, string* out) {
+bool
+soft_Seal(spawned_children *kid, string in, string *out)
+{
 #ifdef DEBUG
   printf("soft_Seal\n");
 #endif
@@ -216,32 +238,45 @@ bool soft_Seal(spawned_children* kid, string in, string* out) {
   buffer_to_seal.assign(kid->measurement_.data(), kid->measurement_.size());
   buffer_to_seal.append(in.data(), in.size());
 
-  int t_size = buffer_to_seal.size() + max_pad_size;
+  int  t_size = buffer_to_seal.size() + max_pad_size;
   byte t_out[t_size];
 
   byte iv[block_size];
   if (!get_random(8 * block_size, iv)) {
     return false;
   }
-  if (!authenticated_encrypt(app_trust_data->symmetric_key_algorithm_.c_str(), (byte*)buffer_to_seal.data(),
-        buffer_to_seal.size(), app_trust_data->service_symmetric_key_, iv, t_out, &t_size)) {
+  if (!authenticated_encrypt(app_trust_data->symmetric_key_algorithm_.c_str(),
+                             (byte *)buffer_to_seal.data(),
+                             buffer_to_seal.size(),
+                             app_trust_data->service_symmetric_key_,
+                             iv,
+                             t_out,
+                             &t_size))
+  {
     printf("soft_Seal: authenticated encrypt failed\n");
     return false;
   }
-  out->assign((char*)t_out, t_size);
+  out->assign((char *)t_out, t_size);
   return true;
 }
 
-bool soft_Unseal(spawned_children* kid, string in, string* out) {
+bool
+soft_Unseal(spawned_children *kid, string in, string *out)
+{
 #ifdef DEBUG
   printf("soft_Unseal\n");
 #endif
 
-  int t_size = in.size();
+  int  t_size = in.size();
   byte t_out[t_size];
 
-  if (!authenticated_decrypt(app_trust_data->symmetric_key_algorithm_.c_str(), (byte*)in.data(), in.size(),
-          app_trust_data->service_symmetric_key_, t_out, &t_size)) {
+  if (!authenticated_decrypt(app_trust_data->symmetric_key_algorithm_.c_str(),
+                             (byte *)in.data(),
+                             in.size(),
+                             app_trust_data->service_symmetric_key_,
+                             t_out,
+                             &t_size))
+  {
     printf("soft_Unseal: authenticated decrypt failed\n");
     return false;
   }
@@ -250,20 +285,23 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
   print_bytes(t_size, t_out);
   printf("\n");
   printf("Measurment: ");
-  print_bytes(kid->measurement_.size(), (byte*)kid->measurement_.data());
+  print_bytes(kid->measurement_.size(), (byte *)kid->measurement_.data());
   printf("\n");
 #endif
-  if (memcmp(t_out, (byte*)kid->measurement_.data(),
-      kid->measurement_.size()) != 0) {
+  if (memcmp(t_out, (byte *)kid->measurement_.data(), kid->measurement_.size())
+      != 0)
+  {
     printf("soft_Unseal: mis-matched measurements\n");
     return false;
   }
-  out->assign((char*)&t_out[kid->measurement_.size()],
-        t_size - kid->measurement_.size());
+  out->assign((char *)&t_out[kid->measurement_.size()],
+              t_size - kid->measurement_.size());
   return true;
 }
 
-bool soft_Attest(spawned_children* kid, string in, string* out) {
+bool
+soft_Attest(spawned_children *kid, string in, string *out)
+{
 #ifdef DEBUG
   printf("soft_Attest\n");
 #endif
@@ -275,10 +313,10 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
   }
 
   vse_attestation_report_info report_info;
-  string serialized_report_info;
+  string                      serialized_report_info;
   report_info.set_enclave_type("application-enclave");
 
-  string nb, na;
+  string     nb, na;
   time_point tn, tf;
   if (!time_now(&tn))
     return false;
@@ -292,28 +330,35 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
   report_info.set_not_before(nb);
   report_info.set_not_after(na);
   // in should be a serialized attestation_user_data
-  report_info.set_user_data((byte*)in.data(), in.size());
-  report_info.set_verified_measurement((byte*)kid->measurement_.data(),
-    kid->measurement_.size());
+  report_info.set_user_data((byte *)in.data(), in.size());
+  report_info.set_verified_measurement((byte *)kid->measurement_.data(),
+                                       kid->measurement_.size());
   if (!report_info.SerializeToString(&serialized_report_info)) {
     return false;
   }
 
   const string type("vse-attestation-report");
-  string signing_alg;
+  string       signing_alg;
 
   if (app_trust_data->private_service_key_.key_type() == "rsa-2048-private") {
     signing_alg.assign("rsa-2048-sha256-pkcs-sign");
-  } else if (app_trust_data->private_service_key_.key_type() == "rsa-4096-private") {
+  } else if (app_trust_data->private_service_key_.key_type()
+             == "rsa-4096-private")
+  {
     signing_alg.assign("rsa-4096-sha384-pkcs-sign");
-  } else if (app_trust_data->private_service_key_.key_type() == "ecc-384-private") {
+  } else if (app_trust_data->private_service_key_.key_type()
+             == "ecc-384-private") {
     signing_alg.assign("ecc-384-sha384-pkcs-sign");
   } else {
     return false;
   }
 
-  if (!sign_report(type, serialized_report_info,
-      signing_alg, app_trust_data->private_service_key_, out)) {
+  if (!sign_report(type,
+                   serialized_report_info,
+                   signing_alg,
+                   app_trust_data->private_service_key_,
+                   out))
+  {
     printf("Can't sign report\n");
     return false;
   }
@@ -321,7 +366,9 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
   return true;
 }
 
-bool soft_GetPlatformStatement(spawned_children* kid, string* out) {
+bool
+soft_GetPlatformStatement(spawned_children *kid, string *out)
+{
 #ifdef DEBUG
   printf("soft_GetPlatformStatement\n");
 #endif
@@ -333,7 +380,9 @@ bool soft_GetPlatformStatement(spawned_children* kid, string* out) {
   return true;
 }
 
-bool soft_GetParentEvidence(spawned_children* kid, string* out) {
+bool
+soft_GetParentEvidence(spawned_children *kid, string *out)
+{
 #ifdef DEBUG
   printf("soft_GetPlatformStatement\n");
 #endif
@@ -346,7 +395,9 @@ bool soft_GetParentEvidence(spawned_children* kid, string* out) {
 }
 
 // This Getmeasurement stays
-bool soft_Getmeasurement(spawned_children* kid, string* out) {
+bool
+soft_Getmeasurement(spawned_children *kid, string *out)
+{
 #ifdef DEBUG
   printf("soft_Getmeasurement\n");
 #endif
@@ -354,19 +405,23 @@ bool soft_Getmeasurement(spawned_children* kid, string* out) {
   return true;
 }
 
-void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
+void
+app_service_loop(spawned_children *kid, int read_fd, int write_fd)
+{
   bool continue_loop = true;
 
 #ifdef DEBUG
   printf("[%d] Application Service loop: read_fd=%d write_fd=%d\n",
-         __LINE__, read_fd, write_fd);
+         __LINE__,
+         read_fd,
+         write_fd);
 #endif
-  while(continue_loop) {
-    bool succeeded = false;
+  while (continue_loop) {
+    bool   succeeded = false;
     string in;
     string out;
     string str_app_req;
-    int n = sized_pipe_read(read_fd, &str_app_req);
+    int    n = sized_pipe_read(read_fd, &str_app_req);
     if (n <= 0) {
       continue;
     }
@@ -378,20 +433,20 @@ void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
 
     printf("app_service_loop, service requested: %s\n", req.function().c_str());
     if (req.function() == "seal") {
-        in = req.args(0);
-        succeeded= soft_Seal(kid, in, &out);
+      in        = req.args(0);
+      succeeded = soft_Seal(kid, in, &out);
     } else if (req.function() == "unseal") {
-        in = req.args(0);
-        succeeded= soft_Unseal(kid, in, &out);
+      in        = req.args(0);
+      succeeded = soft_Unseal(kid, in, &out);
     } else if (req.function() == "attest") {
-        in = req.args(0);
-        succeeded= soft_Attest(kid, in, &out);
+      in        = req.args(0);
+      succeeded = soft_Attest(kid, in, &out);
     } else if (req.function() == "getmeasurement") {
-        succeeded= soft_Getmeasurement(kid, &out);
+      succeeded = soft_Getmeasurement(kid, &out);
     } else if (req.function() == "getplatformstatement") {
-        succeeded= soft_GetPlatformStatement(kid, &out);
+      succeeded = soft_GetPlatformStatement(kid, &out);
     } else if (req.function() == "getcerts") {
-        succeeded= soft_GetParentEvidence(kid, &out);
+      succeeded = soft_GetParentEvidence(kid, &out);
     }
 
 finishreq:
@@ -402,7 +457,7 @@ finishreq:
       printf("Service response: failed\n");
 #endif
     app_response rsp;
-    string str_app_rsp;
+    string       str_app_rsp;
     rsp.set_function(req.function());
 
     if (succeeded) {
@@ -414,8 +469,9 @@ finishreq:
     if (!rsp.SerializeToString(&str_app_rsp)) {
       printf("Can't serialize response\n");
     }
-    if (write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size()) <
-            (int)str_app_rsp.size()) {
+    if (write(write_fd, (byte *)str_app_rsp.data(), str_app_rsp.size())
+        < (int)str_app_rsp.size())
+    {
       printf("Response write failed\n");
     }
 
@@ -425,12 +481,14 @@ finishreq:
   }
 }
 
-bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
+bool
+start_app_service_loop(spawned_children *kid, int read_fd, int write_fd)
+{
 #ifdef DEBUG
   printf("\n[%d] %s\n", __LINE__, __func__);
 #endif
 #ifndef NOTHREAD
-  std::thread* t = new std::thread(app_service_loop, kid, read_fd, write_fd);
+  std::thread *t   = new std::thread(app_service_loop, kid, read_fd, write_fd);
   kid->thread_obj_ = t;
   t->detach();
 #else
@@ -440,8 +498,9 @@ bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
 }
 
 #define INMEMEXEC
-bool process_run_request(run_request& req) {
-
+bool
+process_run_request(run_request &req)
+{
   // measure binary
   string m;
 #ifndef INMEMEXEC
@@ -463,8 +522,8 @@ bool process_run_request(run_request& req) {
     return false;
   }
 
-  int fsz = file_size(req.location());
-  byte* file_buffer = (byte*)malloc(fsz);
+  int   fsz         = file_size(req.location());
+  byte *file_buffer = (byte *)malloc(fsz);
 
   if (!read_file(req.location(), &fsz, file_buffer)) {
     printf("Can't read executable\n");
@@ -502,16 +561,19 @@ bool process_run_request(run_request& req) {
   }
 
   // Is this what I want?
-  int parent_read_fd = fd2[0];
+  int parent_read_fd  = fd2[0];
   int parent_write_fd = fd1[1];
-  int child_read_fd = fd1[0];
-  int child_write_fd = fd2[1];
+  int child_read_fd   = fd1[0];
+  int child_write_fd  = fd2[1];
 
 #ifdef DEBUG
   printf("pipes made: fds[]:"
          "  parent_read_fd = %d, parent_write_fd = %d,"
          "  child_read_fd = %d,  child_write_fd = %d\n",
-         parent_read_fd, parent_write_fd, child_read_fd, child_write_fd);
+         parent_read_fd,
+         parent_write_fd,
+         child_read_fd,
+         child_write_fd);
 #endif
 
   // fork and get pid
@@ -528,7 +590,7 @@ bool process_run_request(run_request& req) {
     close(parent_write_fd);
 
     // Change process owner
-    struct passwd* ent = getpwnam(FLAGS_guest_login_name.c_str());
+    struct passwd *ent = getpwnam(FLAGS_guest_login_name.c_str());
     if (ent == nullptr) {
       printf("Login '%s' is not a user\n", FLAGS_guest_login_name.c_str());
 #ifdef INMEMEXEC
@@ -544,7 +606,7 @@ bool process_run_request(run_request& req) {
     printf("Changing to gid: %d, uid: %d\n", gid, uid);
 #endif
     ent = nullptr;
-    if (setgid(gid) != 0 || setuid (uid) != 0) {
+    if (setgid(gid) != 0 || setuid(uid) != 0) {
       printf("Can't seettuid\n");
 #ifdef INMEMEXEC
       free(file_buffer);
@@ -555,23 +617,23 @@ bool process_run_request(run_request& req) {
 
 #ifdef DEBUG
     printf("Child about to exec %s, read: %d, write: %d\n",
-        req.location().c_str(), child_read_fd, child_write_fd);
+           req.location().c_str(),
+           child_read_fd,
+           child_write_fd);
 #endif
 
-    string n1 = std::to_string(child_read_fd);
-    string n2 = std::to_string(child_write_fd);
-    int num_args = req.args_size();
-    char **argv = new char*[num_args + 3];
+    string n1       = std::to_string(child_read_fd);
+    string n2       = std::to_string(child_write_fd);
+    int    num_args = req.args_size();
+    char **argv     = new char *[num_args + 3];
     for (int i = 0; i < num_args; i++) {
-      argv[i] = (char*)req.args(i).c_str();
+      argv[i] = (char *)req.args(i).c_str();
     }
-    argv[num_args] = (char*)n1.c_str();
-    argv[num_args + 1] = (char*)n2.c_str();
+    argv[num_args]     = (char *)n1.c_str();
+    argv[num_args + 1] = (char *)n2.c_str();
     argv[num_args + 2] = nullptr;
 
-    char *envp[1]= {
-      nullptr
-    };
+    char *envp[1] = {nullptr};
 
 #ifndef INMEMEXEC
     if (execve(req.location().c_str(), argv, envp) < 0) {
@@ -595,21 +657,24 @@ bool process_run_request(run_request& req) {
     //    close(child_write_fd);
 
 #ifdef DEBUG
-    printf("parent returned, readfd=%d, writefd=%d\n", parent_read_fd, parent_write_fd);
+    printf("parent returned, readfd=%d, writefd=%d\n",
+           parent_read_fd,
+           parent_write_fd);
 #endif
 
     // add it to lists
-    spawned_children* nk = new_kid();
+    spawned_children *nk = new_kid();
     if (nk == nullptr) {
       printf("Can't add kid\n");
       return false;
     }
     nk->location_ = req.location();
-    nk->measurement_.assign((char*)m.data(), m.size());;
-    nk->pid_ = pid;
-    nk->parent_read_fd_ = parent_read_fd;
+    nk->measurement_.assign((char *)m.data(), m.size());
+    ;
+    nk->pid_             = pid;
+    nk->parent_read_fd_  = parent_read_fd;
     nk->parent_write_fd_ = parent_write_fd;
-    nk->valid_ = true;
+    nk->valid_           = true;
     if (!start_app_service_loop(nk, parent_read_fd, parent_write_fd)) {
       printf("Couldn't start service loop\n");
       return false;
@@ -618,11 +683,13 @@ bool process_run_request(run_request& req) {
   return true;
 }
 
-bool app_request_server() {
+bool
+app_request_server()
+{
   // This is the TCP server that requests to start
   // protected programs.
-  const char* hostname = FLAGS_server_app_host.c_str();
-  int port= FLAGS_server_app_port;
+  const char *       hostname = FLAGS_server_app_host.c_str();
+  int                port     = FLAGS_server_app_port;
   struct sockaddr_in addr;
 
   struct hostent *he = nullptr;
@@ -636,10 +703,10 @@ bool app_request_server() {
     return false;
   }
   memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = *(long*)(he->h_addr);
-  if (bind(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
+  addr.sin_family      = AF_INET;
+  addr.sin_port        = htons(port);
+  addr.sin_addr.s_addr = *(long *)(he->h_addr);
+  if (bind(sd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
     printf("bind failed\n");
     return false;
   }
@@ -652,14 +719,14 @@ bool app_request_server() {
   while (1) {
     printf("[%d] application_service server at accept\n", __LINE__);
     struct sockaddr_in addr;
-    int client = accept(sd, (struct sockaddr*)&addr, &len);
+    int                client = accept(sd, (struct sockaddr *)&addr, &len);
 #ifdef DEBUG
     printf("\nclient: %d\n", client);
 #endif
 
     // read run request
     string str_req;
-    int n = sized_socket_read(client, &str_req);
+    int    n = sized_socket_read(client, &str_req);
     if (n < 0) {
       printf("Read failed in application server\n");
       continue;
@@ -667,7 +734,7 @@ bool app_request_server() {
 
     // This should be a serialized run_request
     run_request req;
-    bool ret = false;
+    bool        ret = false;
     if (!req.ParseFromString(str_req)) {
       goto done;
     }
@@ -675,7 +742,9 @@ bool app_request_server() {
     if (FLAGS_run_policy != "all") {
       // Todo: Fix - check certificate?
     }
-    printf("[%d] at process_run_request: %s\n", __LINE__, req.location().c_str());
+    printf("[%d] at process_run_request: %s\n",
+           __LINE__,
+           req.location().c_str());
     ret = process_run_request(req);
 
 done:
@@ -687,7 +756,9 @@ done:
     }
     string str_resp;
     if (resp.SerializeToString(&str_resp)) {
-      if (sized_socket_write(client, str_resp.size(), (byte*)str_resp.data()) < (int)str_resp.size()) {
+      if (sized_socket_write(client, str_resp.size(), (byte *)str_resp.data())
+          < (int)str_resp.size())
+      {
         printf("Write failed\n");
       }
     }
@@ -699,12 +770,13 @@ done:
 
 // ------------------------------------------------------------------------------
 
-
 // Standard algorithms for the enclave
 string public_key_alg("rsa-2048");
 string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
-int main(int an, char** av) {
+int
+main(int an, char **av)
+{
   string usage("Application Service utility");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -721,7 +793,7 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
                 --policy_cert_file=self-signed-policy-cert-file-name \n\
                 --policy_store_file=policy-store-file-name \n\
                 --host_enclave_type=\"simulated-enclave\"\n");
-   return 0;
+    return 0;
   }
 
   SSL_library_init();
@@ -740,7 +812,6 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
   }
 
   if (FLAGS_host_enclave_type == "simulated-enclave") {
-
     // Init simulated enclave
     string attest_key_file_name(FLAGS_service_dir);
     attest_key_file_name.append(FLAGS_attest_key_file);
@@ -752,7 +823,9 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
     attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
     if (!helper.initialize_simulated_enclave_data(attest_key_file_name,
-      measurement_file_name, attest_endorsement_file_name)) {
+                                                  measurement_file_name,
+                                                  attest_endorsement_file_name))
+    {
       printf("Can't init simulated enclave\n");
       return 1;
     }
@@ -762,10 +835,12 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
   } else if (FLAGS_host_enclave_type == "sev-enclave") {
     // Init sev enclave
     if (!helper.initialize_sev_enclave_data(FLAGS_ark_cert_file,
-        FLAGS_ask_cert_file, FLAGS_vcek_cert_file)) {
-    printf("Can't init sev-enclave\n");
-    return 1;
-  }
+                                            FLAGS_ask_cert_file,
+                                            FLAGS_vcek_cert_file))
+    {
+      printf("Can't init sev-enclave\n");
+      return 1;
+    }
   } else {
     printf("Unsupported host enclave\n");
     return 1;
@@ -779,10 +854,10 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
     }
 
     if (!helper.certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
-        printf("certification failed\n");
-        return 1;
-      }
-  } else  if (!helper.warm_restart()) {
+      printf("certification failed\n");
+      return 1;
+    }
+  } else if (!helper.warm_restart()) {
     printf("warm-restart failed\n");
     return 1;
   }

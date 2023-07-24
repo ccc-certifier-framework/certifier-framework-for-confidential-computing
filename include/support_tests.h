@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,28 +16,40 @@
 #ifndef __SUPPORT_TESTS_H__
 #define __SUPPORT_TESTS_H__
 
-bool test_random(bool print_all);
+bool
+test_random(bool print_all);
 
-bool test_encrypt(bool print_all);
+bool
+test_encrypt(bool print_all);
 
-bool test_authenticated_encrypt(bool print_all);
+bool
+test_authenticated_encrypt(bool print_all);
 
-bool test_public_keys(bool print_all);
+bool
+test_public_keys(bool print_all);
 
-bool test_digest(bool print_all);
+bool
+test_digest(bool print_all);
 
-bool test_sign_and_verify(bool print_all);
+bool
+test_sign_and_verify(bool print_all);
 
-bool test_time(bool print_all);
+bool
+test_time(bool print_all);
 
-bool test_key_translation(bool print_all);
+bool
+test_key_translation(bool print_all);
 
-bool test_artifact(bool print_all);
+bool
+test_artifact(bool print_all);
 
-bool test_local_certify(bool print_all);
+bool
+test_local_certify(bool print_all);
 
-bool test_new_local_certify(bool print_all);
+bool
+test_new_local_certify(bool print_all);
 
-bool test_partial_local_certify(bool print_all);
+bool
+test_partial_local_certify(bool print_all);
 
 #endif  // __SUPPORT_TESTS_H__
