@@ -3,4 +3,6 @@
 # #############################################################################
 Language:      Cpp
 BasedOnStyle:  Google
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
