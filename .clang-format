@@ -7,3 +7,14 @@ AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
+
+ContinuationIndentWidth: 4
+
+IndentWidth:     2
+
+MaxEmptyLinesToKeep: 2
+
+PointerAlignment: Right
+SpacesBeforeTrailingComments: 2
+TabWidth:        2
+UseTab:          Never
