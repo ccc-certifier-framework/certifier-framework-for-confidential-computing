@@ -70,6 +70,14 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
 
+$(O)/multidomain_server_app.o: $(US)/multidomain_server_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/multidomain_client_app.o: $(US)/multidomain_client_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
 $(O)/multidomain_example_app.o: $(US)/multidomain_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<

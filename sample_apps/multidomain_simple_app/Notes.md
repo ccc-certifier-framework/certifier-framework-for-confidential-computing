@@ -3,7 +3,8 @@
 
 The example app shows all the major steps in a Confidential Computing program.
 These steps are made much simpler by the Certifier API as indicated in
-[instructions.md](./instructions.md).
+[instructions.md](./instructions.md).  multidomain-simpe_app adds certifying
+in two different domains.
 
 ## For the Certifier Service
   1. Generate all the keys and the self-signed policy certificate:

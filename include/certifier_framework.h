@@ -240,7 +240,6 @@ public:
       void print_trust_data();
 
       bool certify_primary_domain();
-      bool certify_secondary_domain(const string& domain_name);
       bool certify_me() {return certify_primary_domain();};
 
       // For peer-to-peer certification (not used yet)
@@ -252,6 +251,7 @@ public:
       // multi-domain support
       bool add_new_domain(const string& domain_name, const string& cert, const string& host, int port,
           const string& service_host, int service_port);
+      bool certify_secondary_domain(const string& domain_name);
       bool get_certifiers_from_store();
       bool put_certifiers_in_store();
     };

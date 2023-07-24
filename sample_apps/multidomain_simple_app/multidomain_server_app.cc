@@ -56,7 +56,7 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 //    run-app-as-client: This runs the app as a server.
 //    run-app-as-server: This runs the app as a client
 
-#include "policy_key.cc"
+#include "server_policy_key.cc"
 cc_trust_data* app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
@@ -191,43 +191,9 @@ int main(int an, char** av) {
     app_trust_data->print_trust_data();
 
   } else if (FLAGS_operation == "run-app-as-client") {
-    string my_role("client");
-    secure_authenticated_channel channel(my_role);
-
-    if (!app_trust_data->warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n",
-        __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-
-    printf("Running App as client\n");
-    if (!app_trust_data->cc_auth_key_initialized_ ||
-        !app_trust_data->cc_policy_info_initialized_) {
-      printf("%s() error, line %d, trust data not initialized\n",
-        __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-
-    if (!app_trust_data->primary_admissions_cert_valid_) {
-      printf("%s() error, line %d, primary admissions cert not valid\n",
-        __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-    if (!channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
-          app_trust_data->serialized_policy_cert_,
-          app_trust_data->private_auth_key_,
-          app_trust_data->serialized_primary_admissions_cert_)) {
-      printf("%s() error, line %d, Can't init client app\n",
-        __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-
-  // This is the actual application code.
-  client_application(channel);
+    printf("%s() error, line %d, Server only app\n",
+    ret = 1;
+    goto done;
   } else if (FLAGS_operation == "run-app-as-server") {
     if (!app_trust_data->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n",
