@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,21 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// make_signed_claim_from_vse_clause.exe --vse_file=file --duration=hours --private_key_file=key=key-file --output=output-file-name
+// make_signed_claim_from_vse_clause.exe --vse_file=file --duration=hours
+// --private_key_file=key=key-file --output=output-file-name
 
 #include <gflags/gflags.h>
+
 #include "certifier.h"
 #include "support.h"
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(vse_file, "vse_claim.bin",  "clause file");
-DEFINE_string(output, "signed_claim.bin",  "output file");
-DEFINE_string(private_key_file, "",  "signing key");
-DEFINE_double(duration, 24,  "validity in hours");
-DEFINE_string(descipt, "",  "descriptor");
-DEFINE_string(signing_alg, "rsa-2048-sha256-pkcs-sign",  "signing algorithm");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(vse_file, "vse_claim.bin", "clause file");
+DEFINE_string(output, "signed_claim.bin", "output file");
+DEFINE_string(private_key_file, "", "signing key");
+DEFINE_double(duration, 24, "validity in hours");
+DEFINE_string(descipt, "", "descriptor");
+DEFINE_string(signing_alg, "rsa-2048-sha256-pkcs-sign", "signing algorithm");
 
 bool get_clause_from_file(const string& in, vse_clause* cl) {
   int in_size = file_size(in);
@@ -50,7 +53,7 @@ bool get_key_from_file(const string& in, key_message* k) {
   int in_size = file_size(in);
   int in_read = in_size;
   byte serialized_key[in_size];
-  
+
   if (!read_file(in, &in_read, serialized_key)) {
     printf("Can't read %s\n", in.c_str());
     return false;
@@ -117,10 +120,11 @@ int main(int an, char** av) {
     return 1;
   }
   string format("vse-clause");
-  string descriptor= FLAGS_descipt;
+  string descriptor = FLAGS_descipt;
   claim_message cm_out;
-  if (!make_claim(serialized_vse_claim.size(), (byte*) serialized_vse_claim.data(),
-      format, descriptor, not_before, not_after, &cm_out)) {
+  if (!make_claim(serialized_vse_claim.size(),
+                  (byte*)serialized_vse_claim.data(), format, descriptor,
+                  not_before, not_after, &cm_out)) {
     printf("Can't make claim\n");
     return 1;
   }
@@ -129,7 +133,8 @@ int main(int an, char** av) {
   printf("\n");
 
   signed_claim_message sc_out;
-  if (!make_signed_claim(FLAGS_signing_alg.c_str(), cm_out, signing_key, &sc_out)) {
+  if (!make_signed_claim(FLAGS_signing_alg.c_str(), cm_out, signing_key,
+                         &sc_out)) {
     printf("Can't make claim\n");
     return 1;
   }
@@ -142,7 +147,7 @@ int main(int an, char** av) {
     printf("Can't serialize signed claim\n");
     return 1;
   }
-  if (!write_file(FLAGS_output, sc_str.size(), (byte*) sc_str.data())) {
+  if (!write_file(FLAGS_output, sc_str.size(), (byte*)sc_str.data())) {
     printf("Can't write %s\n", FLAGS_output.c_str());
     return 1;
   }

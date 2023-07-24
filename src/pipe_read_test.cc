@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
 #include <gflags/gflags.h>
+#include <gtest/gtest.h>
 
 #include "certifier.h"
-#include "support.h"
 #include "simulated_enclave.h"
+#include "support.h"
 
 using namespace certifier::utilities;
 
 int main(int an, char** av) {
-
   int fd[2];
   if (pipe2(fd, O_DIRECT) < 0) {
     printf("Pipe failed\n");
@@ -31,15 +31,13 @@ int main(int an, char** av) {
 
   const int buf_size = 100;
   byte buf[buf_size];
-  for (int i = 0; i < buf_size; i++)
-      buf[i] = (byte) 2 * i;
-
+  for (int i = 0; i < buf_size; i++) buf[i] = (byte)2 * i;
 
   bool res = true;
   const int num_tests = 20;
   int pid = fork();
   if (pid < 0) {
-  } else if (pid == 0) {    // child
+  } else if (pid == 0) {  // child
     close(fd[0]);
     for (int i = 0; i < num_tests; i++) {
       int k = 4 * i + 1;

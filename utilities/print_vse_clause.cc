@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,13 +16,14 @@
 // print_vse_clause.exe --input=filename
 
 #include <gflags/gflags.h>
+
 #include "certifier.h"
 #include "support.h"
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(input, "measurement_utility.exe",  "input file");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(input, "measurement_utility.exe", "input file");
 
 bool get_clause_from_file(const string& in, vse_clause* cl) {
   int in_size = file_size(in);

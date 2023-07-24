@@ -1,10 +1,8 @@
-#include <gflags/gflags.h>
-
-#include <gflags/gflags.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
+#include <gflags/gflags.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 #include "certifier_utilities.h"
 
@@ -17,7 +15,6 @@ DEFINE_string(args, "service_example_app.exe", "service example arguments");
 
 #define DEBUG
 
-
 bool parse_args(const string& in, int* num_an, string* av) {
   // for now, just assume commas can only be delimiters
   const char* start = in.c_str();
@@ -29,8 +26,7 @@ bool parse_args(const string& in, int* num_an, string* av) {
       av[*num_an].assign(start, end - start);
       av[*num_an].append('\0', 1);
       (*num_an)++;
-      if (*end == '\0')
-        return true;
+      if (*end == '\0') return true;
       end++;
       start = end;
     }
@@ -49,20 +45,19 @@ void print_run_request(run_request& r) {
   }
 }
 
-int main(int an, char**av) {
+int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
   run_request req;
   run_response rsp;
 
-
   // Set executable
   printf("Executable: %s\n", FLAGS_executable.c_str());
   req.set_location(FLAGS_executable);
 
   // Set flags
-  const int max_args= 15;
+  const int max_args = 15;
   int num_args = max_args;
   string s_args[max_args];
   if (!parse_args(FLAGS_args, &num_args, s_args)) {
@@ -72,7 +67,7 @@ int main(int an, char**av) {
 
   // req.args
   for (int i = 0; i < num_args; i++) {
-    string *n_a = req.add_args();
+    string* n_a = req.add_args();
     n_a->assign(s_args[i]);
   }
 
@@ -96,7 +91,7 @@ int main(int an, char**av) {
   memcpy(&(address.sin_addr.s_addr), he->h_addr, he->h_length);
   address.sin_family = AF_INET;
   address.sin_port = htons(FLAGS_server_app_port);
-  if(connect(sock,(struct sockaddr *) &address, sizeof(address)) != 0) {
+  if (connect(sock, (struct sockaddr*)&address, sizeof(address)) != 0) {
     return 1;
   }
 
@@ -105,7 +100,8 @@ int main(int an, char**av) {
   if (!req.SerializeToString(&serialized_request)) {
     return 1;
   }
-  if (sized_socket_write(sock, serialized_request.size(), (byte*)serialized_request.data()) < 0) {
+  if (sized_socket_write(sock, serialized_request.size(),
+                         (byte*)serialized_request.data()) < 0) {
     return 1;
   }
 

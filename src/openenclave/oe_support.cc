@@ -1,11 +1,13 @@
-#include "sealing.h"
+#include <certifier.h>
 #include <openenclave/corelibc/stdlib.h>
 #include <openenclave/enclave.h>
 #include <openenclave/seal.h>
-#include <string>
 #include <stdio.h>
-#include <certifier.h>
 #include <support.h>
+
+#include <string>
+
+#include "sealing.h"
 
 using namespace certifier::utilities;
 
@@ -14,8 +16,8 @@ bool pem_cert_chain_initialized = false;
 
 bool oe_Init(const string& pem_cert_chain_file) {
   extern bool certifier_parent_enclave_type_intitalized;
-  extern string certifier_parent_enclave_type; 
-   if (!read_file_into_string(pem_cert_chain_file, &pem_cert_chain)) {
+  extern string certifier_parent_enclave_type;
+  if (!read_file_into_string(pem_cert_chain_file, &pem_cert_chain)) {
     printf("oe_Init: No pem cert chain file. Assume empty endorsement.\n");
     pem_cert_chain = "";
   }

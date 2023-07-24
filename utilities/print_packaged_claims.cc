@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,13 +16,14 @@
 // print_packaged_claims.exe --input=input-file
 
 #include <gflags/gflags.h>
+
 #include "certifier.h"
 #include "support.h"
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(input, "simple_clause.bin",  "input file");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(input, "simple_clause.bin", "input file");
 
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -31,8 +33,8 @@ int main(int an, char** av) {
   int in_read = in_size;
 
   if (in_size <= 0) {
-    printf("Invalid size=%d for input file '%s'.\n",
-            in_size,  FLAGS_input.c_str());
+    printf("Invalid size=%d for input file '%s'.\n", in_size,
+           FLAGS_input.c_str());
     return 1;
   }
 

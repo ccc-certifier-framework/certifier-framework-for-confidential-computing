@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,22 +15,22 @@
 
 #ifndef __ISLET_API_H__
 
-#include <iostream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdint.h>
-
-#include <unistd.h>
-#include <stdlib.h>
 #include <dlfcn.h>
 #include <fcntl.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <iostream>
 
 #ifndef byte
 typedef unsigned char byte;
 #endif
 
-bool islet_Init(const int cert_size, byte *cert);
+bool islet_Init(const int cert_size, byte* cert);
 
 bool islet_Attest(const int what_to_say_size, byte* what_to_say,
                   int* attestation_size_out, byte* attestation_out);

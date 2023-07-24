@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,18 +21,14 @@ using namespace certifier::utilities;
 
 bool test_claims_1(bool print_all) {
   key_message k;
-  if(!make_certifier_rsa_key(1024, &k))
-    return false;
+  if (!make_certifier_rsa_key(1024, &k)) return false;
   key_message k1;
-  if (!private_key_to_public_key(k, &k1))
-    return false;
+  if (!private_key_to_public_key(k, &k1)) return false;
   entity_message e1;
   entity_message e2;
-  if (!make_key_entity(k1, &e1))
-    return false;
+  if (!make_key_entity(k1, &e1)) return false;
   extern string my_measurement;
-  if (!make_measurement_entity(my_measurement, &e2))
-    return false;
+  if (!make_measurement_entity(my_measurement, &e2)) return false;
   vse_clause clause1;
   string s1("is-trusted");
   string s2("says");
@@ -39,16 +36,21 @@ bool test_claims_1(bool print_all) {
   if (!make_unary_vse_clause((const entity_message)e1, s1, &clause1))
     return false;
   vse_clause clause2;
-  if (!make_indirect_vse_clause((const entity_message)e1, s2, clause1, &clause2))
+  if (!make_indirect_vse_clause((const entity_message)e1, s2, clause1,
+                                &clause2))
     return false;
   vse_clause clause3;
-  if (!make_simple_vse_clause((const entity_message)e1, s3, (const entity_message)e2, &clause3))
+  if (!make_simple_vse_clause((const entity_message)e1, s3,
+                              (const entity_message)e2, &clause3))
     return false;
 
   if (print_all) {
-    print_vse_clause(clause1); printf("\n");
-    print_vse_clause(clause2); printf("\n");
-    print_vse_clause(clause3); printf("\n");
+    print_vse_clause(clause1);
+    printf("\n");
+    print_vse_clause(clause2);
+    printf("\n");
+    print_vse_clause(clause3);
+    printf("\n");
   }
 
   claim_message full_claim;
@@ -58,8 +60,8 @@ bool test_claims_1(bool print_all) {
   string d1("basic speaks-for-claim");
   string nb("2021-08-01T05:09:50.000000Z");
   string na("2026-08-01T05:09:50.000000Z");
-  if (!make_claim(serialized_claim.size(), (byte*)serialized_claim.data(), f1, d1,
-                  nb, na, &full_claim))
+  if (!make_claim(serialized_claim.size(), (byte*)serialized_claim.data(), f1,
+                  d1, nb, na, &full_claim))
     return false;
 
   if (print_all) {
@@ -86,12 +88,11 @@ bool test_signed_claims(bool print_all) {
   // make up rsa private keys and measurement
   string my_measurement;
   byte m[32];
-  for (int i = 0; i < 32; i++)
-    m[i] = i;
+  for (int i = 0; i < 32; i++) m[i] = i;
   my_measurement.assign((char*)m, 32);
 
   key_message my_rsa_key;
-  if (!make_certifier_rsa_key(2048,  &my_rsa_key)) {
+  if (!make_certifier_rsa_key(2048, &my_rsa_key)) {
     printf("test_signed_claims: make_certifier_rsa_key failed (1)\n");
     return false;
   }
@@ -106,19 +107,19 @@ bool test_signed_claims(bool print_all) {
   }
   entity_message e1;
   entity_message e2;
-  if (!make_key_entity(my_public_rsa_key, &e1))
-    return false;
+  if (!make_key_entity(my_public_rsa_key, &e1)) return false;
 
-  if (!make_measurement_entity(my_measurement, &e2))
-    return false;
+  if (!make_measurement_entity(my_measurement, &e2)) return false;
   string s1("says");
   string s2("speaks-for");
   string vse_clause_format("vse-clause");
   vse_clause clause1;
   vse_clause clause2;
-  if (!make_simple_vse_clause((const entity_message)e1, s2, (const entity_message)e2, &clause1))
+  if (!make_simple_vse_clause((const entity_message)e1, s2,
+                              (const entity_message)e2, &clause1))
     return false;
-  if (!make_indirect_vse_clause((const entity_message)e1, s1, clause1, &clause2))
+  if (!make_indirect_vse_clause((const entity_message)e1, s1, clause1,
+                                &clause2))
     return false;
 
   string serialized_vse1;
@@ -134,17 +135,18 @@ bool test_signed_claims(bool print_all) {
   time_to_string(t_nb, &nb);
   time_to_string(t_na, &na);
   string n1("description");
-  if (!make_claim(serialized_vse1.size(), (byte*)serialized_vse1.data(), vse_clause_format, n1,
-    nb, na, &claim1))
-      return false;
+  if (!make_claim(serialized_vse1.size(), (byte*)serialized_vse1.data(),
+                  vse_clause_format, n1, nb, na, &claim1))
+    return false;
   if (print_all) {
     printf("\nClaims for signing:\n");
     print_claim(claim1);
     printf("\n");
   }
   signed_claim_message signed_claim1;
-  if(!make_signed_claim("rsa-2048-sha256-pkcs-sign", claim1, my_rsa_key, &signed_claim1))
-      return false;
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", claim1, my_rsa_key,
+                         &signed_claim1))
+    return false;
   if (!verify_signed_claim(signed_claim1, my_public_rsa_key)) {
     printf("my_rsa_key verified failed\n");
     return false;
@@ -152,7 +154,7 @@ bool test_signed_claims(bool print_all) {
 
   // RSA-3072
   key_message my_medium_rsa_key;
-  if (!make_certifier_rsa_key(3072,  &my_medium_rsa_key)) {
+  if (!make_certifier_rsa_key(3072, &my_medium_rsa_key)) {
     printf("test_signed_claims: make_certifier_rsa_key failed (3072)\n");
     return false;
   }
@@ -167,7 +169,8 @@ bool test_signed_claims(bool print_all) {
   }
 
   key_message my_medium_public_rsa_key;
-  if (!private_key_to_public_key(my_medium_rsa_key, &my_medium_public_rsa_key)) {
+  if (!private_key_to_public_key(my_medium_rsa_key,
+                                 &my_medium_public_rsa_key)) {
     printf("test_signed_claims: private_key_to_public_key failed (2)\n");
     return false;
   }
@@ -178,10 +181,12 @@ bool test_signed_claims(bool print_all) {
   }
   vse_clause clause13;
   vse_clause clause14;
-  if (!make_simple_vse_clause((const entity_message)e13, s2, (const entity_message)e2, &clause13)) {
+  if (!make_simple_vse_clause((const entity_message)e13, s2,
+                              (const entity_message)e2, &clause13)) {
     return false;
   }
-  if (!make_indirect_vse_clause((const entity_message)e13, s1, clause13, &clause14)) {
+  if (!make_indirect_vse_clause((const entity_message)e13, s1, clause13,
+                                &clause14)) {
     printf("test_signed_claims: make clause 13 failed\n");
     return false;
   }
@@ -190,17 +195,18 @@ bool test_signed_claims(bool print_all) {
   signed_claim_message signed_claim12;
   string serialized_vse12;
   clause14.SerializeToString(&serialized_vse12);
-  if (!make_claim(serialized_vse12.size(), (byte*)serialized_vse12.data(), vse_clause_format, n1,
-        nb, na, &claim12)) {
+  if (!make_claim(serialized_vse12.size(), (byte*)serialized_vse12.data(),
+                  vse_clause_format, n1, nb, na, &claim12)) {
     printf("test_signed_claims: make clause 12 failed\n");
-      return false;
+    return false;
   }
   if (print_all) {
     printf("\nClaims for signing:\n");
     print_claim(claim12);
     printf("\n");
   }
-  if(!make_signed_claim("rsa-3072-sha384-pkcs-sign", claim12, my_medium_rsa_key, &signed_claim12)) {
+  if (!make_signed_claim("rsa-3072-sha384-pkcs-sign", claim12,
+                         my_medium_rsa_key, &signed_claim12)) {
     printf("test_signed_claims: make_signed_claim failed (3072)\n");
     return false;
   }
@@ -211,7 +217,7 @@ bool test_signed_claims(bool print_all) {
 
   // RSA-4096
   key_message my_big_rsa_key;
-  if (!make_certifier_rsa_key(4096,  &my_big_rsa_key)) {
+  if (!make_certifier_rsa_key(4096, &my_big_rsa_key)) {
     printf("test_signed_claims: make_certifier_rsa_key failed (1)\n");
     return false;
   }
@@ -231,28 +237,30 @@ bool test_signed_claims(bool print_all) {
     return false;
   }
   entity_message e3;
-  if (!make_key_entity(my_big_public_rsa_key, &e3))
-    return false;
+  if (!make_key_entity(my_big_public_rsa_key, &e3)) return false;
   vse_clause clause3;
   vse_clause clause4;
-  if (!make_simple_vse_clause((const entity_message)e3, s2, (const entity_message)e2, &clause3))
+  if (!make_simple_vse_clause((const entity_message)e3, s2,
+                              (const entity_message)e2, &clause3))
     return false;
-  if (!make_indirect_vse_clause((const entity_message)e3, s1, clause3, &clause4))
+  if (!make_indirect_vse_clause((const entity_message)e3, s1, clause3,
+                                &clause4))
     return false;
 
   claim_message claim2;
   signed_claim_message signed_claim2;
   string serialized_vse2;
   clause4.SerializeToString(&serialized_vse2);
-  if (!make_claim(serialized_vse2.size(), (byte*)serialized_vse2.data(), vse_clause_format, n1,
-        nb, na, &claim2))
-      return false;
+  if (!make_claim(serialized_vse2.size(), (byte*)serialized_vse2.data(),
+                  vse_clause_format, n1, nb, na, &claim2))
+    return false;
   if (print_all) {
     printf("\nClaims for signing:\n");
     print_claim(claim2);
     printf("\n");
   }
-  if(!make_signed_claim("rsa-4096-sha384-pkcs-sign", claim2, my_big_rsa_key, &signed_claim2)) {
+  if (!make_signed_claim("rsa-4096-sha384-pkcs-sign", claim2, my_big_rsa_key,
+                         &signed_claim2)) {
     printf("test_signed_claims: make_signed_claim failed (2)\n");
     return false;
   }
@@ -264,7 +272,7 @@ bool test_signed_claims(bool print_all) {
   // ECC-384
   key_message my_ecc_key;
   key_message my_ecc_public_key;
-  if (!make_certifier_ecc_key(384,  &my_ecc_key)) {
+  if (!make_certifier_ecc_key(384, &my_ecc_key)) {
     printf("test_signed_claims: make_certifier_ecc_key failed (1)\n");
     return false;
   }
@@ -282,21 +290,22 @@ bool test_signed_claims(bool print_all) {
     return false;
   }
   entity_message e5;
-  if (!make_key_entity(my_ecc_public_key, &e5))
-    return false;
+  if (!make_key_entity(my_ecc_public_key, &e5)) return false;
   vse_clause clause5;
   vse_clause clause6;
-  if (!make_simple_vse_clause((const entity_message)e5, s2, (const entity_message)e2, &clause5))
+  if (!make_simple_vse_clause((const entity_message)e5, s2,
+                              (const entity_message)e2, &clause5))
     return false;
-  if (!make_indirect_vse_clause((const entity_message)e5, s1, clause5, &clause6))
+  if (!make_indirect_vse_clause((const entity_message)e5, s1, clause5,
+                                &clause6))
     return false;
 
   claim_message claim3;
   string serialized_vse3;
   clause6.SerializeToString(&serialized_vse3);
-  if (!make_claim(serialized_vse3.size(), (byte*)serialized_vse3.data(), vse_clause_format, n1,
-        nb, na, &claim3))
-      return false;
+  if (!make_claim(serialized_vse3.size(), (byte*)serialized_vse3.data(),
+                  vse_clause_format, n1, nb, na, &claim3))
+    return false;
   if (print_all) {
     printf("\nClaims for signing:\n");
     print_claim(claim3);
@@ -304,7 +313,8 @@ bool test_signed_claims(bool print_all) {
   }
 
   signed_claim_message signed_claim3;
-  if(!make_signed_claim("ecc-384-sha384-pkcs-sign", claim3, my_ecc_key, &signed_claim3)) {
+  if (!make_signed_claim("ecc-384-sha384-pkcs-sign", claim3, my_ecc_key,
+                         &signed_claim3)) {
     printf("test_signed_claims: make_signed_claim failed (3)\n");
     return false;
   }
@@ -322,13 +332,9 @@ bool test_signed_claims(bool print_all) {
 //    without gtest
 #include "test_support.cc"
 
-bool test_certify_steps(bool print_all) {
-  return true;
-}
+bool test_certify_steps(bool print_all) { return true; }
 
-bool test_full_certification(bool print_all) {
-  return true;
-}
+bool test_full_certification(bool print_all) { return true; }
 
 // policy-key says intel-key is-trusted-for-attestation
 // intel-key says attestation-key is-trusted-for-attestation
@@ -338,8 +344,8 @@ bool test_full_certification(bool print_all) {
 
 const int num_is_trusted_kids = 2;
 const char* kids[2] = {
-  "is-trusted-for-attestation",
-  "is-trusted-for-authentication",
+    "is-trusted-for-attestation",
+    "is-trusted-for-authentication",
 };
 
 bool init_top_level_is_trusted(predicate_dominance& root) {
@@ -348,8 +354,7 @@ bool init_top_level_is_trusted(predicate_dominance& root) {
   string descendant;
   for (int i = 0; i < num_is_trusted_kids; i++) {
     descendant.assign(kids[i]);
-    if (!root.insert(root.predicate_, descendant))
-      return false;
+    if (!root.insert(root.predicate_, descendant)) return false;
   }
   return true;
 }
@@ -370,12 +375,9 @@ bool test_predicate_dominance(bool print_all) {
   string it2("is-trusted-for-authentication");
   string it3("is-trusted-for-crap");
 
-  if (!dominates(root, it, it1))
-    return false;
-  if (!dominates(root, it, it2))
-    return false;
-  if (dominates(root, it, it3))
-    return false;
+  if (!dominates(root, it, it1)) return false;
+  if (!dominates(root, it, it2)) return false;
+  if (dominates(root, it, it3)) return false;
 
   return true;
 }

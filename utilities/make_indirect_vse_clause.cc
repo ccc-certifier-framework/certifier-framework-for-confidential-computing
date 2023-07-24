@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// make_indirect_vse_clause.exe --key_subject=file --verb="says" --clause=file --output=output-file-name
+// make_indirect_vse_clause.exe --key_subject=file --verb="says" --clause=file
+// --output=output-file-name
 
 #include <gflags/gflags.h>
+
 #include "certifier.h"
 #include "support.h"
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(output, "simple_clause.bin",  "output file");
-DEFINE_string(key_subject, "",  "subject file");
-DEFINE_string(measurement_subject, "",  "subject file");
-DEFINE_string(platform_subject, "",  "platform subject file");
-DEFINE_string(environment_subject, "",  "environment subject file");
-DEFINE_string(verb, "verb",  "verb to use");
-DEFINE_string(clause, "",  "clause file");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(output, "simple_clause.bin", "output file");
+DEFINE_string(key_subject, "", "subject file");
+DEFINE_string(measurement_subject, "", "subject file");
+DEFINE_string(platform_subject, "", "platform subject file");
+DEFINE_string(environment_subject, "", "environment subject file");
+DEFINE_string(verb, "verb", "verb to use");
+DEFINE_string(clause, "", "clause file");
 
 bool get_clause_from_file(const string& in, vse_clause* cl) {
   int in_size = file_size(in);
@@ -47,9 +50,9 @@ bool get_clause_from_file(const string& in, vse_clause* cl) {
   return true;
 }
 
-int make_indirect_clause_file_utility(entity_message& subject, const string& verb,
-      vse_clause& in_cl, const string& output) {
-
+int make_indirect_clause_file_utility(entity_message& subject,
+                                      const string& verb, vse_clause& in_cl,
+                                      const string& output) {
   vse_clause out_cl;
   string v = verb;
   if (!make_indirect_vse_clause(subject, v, in_cl, &out_cl)) {
@@ -81,7 +84,7 @@ bool get_key_from_file(const string& in, key_message* k) {
   int in_size = file_size(in);
   int in_read = in_size;
   byte serialized_key[in_size];
-  
+
   if (!read_file(in, &in_read, serialized_key)) {
     printf("Can't read %s\n", in.c_str());
     return false;
@@ -120,8 +123,9 @@ int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  string usage_str("--key_subject=<file> --verb=\"says\" --clause=<file> "
-                   "--output=<output-file-name>");
+  string usage_str(
+      "--key_subject=<file> --verb=\"says\" --clause=<file> "
+      "--output=<output-file-name>");
   if (FLAGS_key_subject == "" && FLAGS_measurement_subject == "") {
     printf("No key or measurement subject\n");
     printf("%s: %s\n", av[0], usage_str.c_str());
@@ -161,6 +165,6 @@ int main(int an, char** av) {
     }
   }
 
-  return make_indirect_clause_file_utility(sub_ent, FLAGS_verb,
-      in_cl, FLAGS_output);
+  return make_indirect_clause_file_utility(sub_ent, FLAGS_verb, in_cl,
+                                           FLAGS_output);
 }

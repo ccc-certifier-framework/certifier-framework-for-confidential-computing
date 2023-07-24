@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <fcntl.h>
 #include <gflags/gflags.h>
-#include <stdio.h>
+#include <openssl/evp.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-#include <string>
 #include <memory>
-
-#include <openssl/evp.h>
+#include <string>
 
 #ifndef byte
 typedef unsigned char byte;
@@ -33,16 +33,14 @@ typedef unsigned char byte;
 
 using std::string;
 
-
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(input, "policy_cert.bin",  "X509 policy certificate");
-DEFINE_string(output, "policy.include.cc",  "policy cert inclusion file");
-DEFINE_string(array_name, "initialized_cert",  "Name of byte array");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(input, "policy_cert.bin", "X509 policy certificate");
+DEFINE_string(output, "policy.include.cc", "policy cert inclusion file");
+DEFINE_string(array_name, "initialized_cert", "Name of byte array");
 
 bool write_file(string file_name, int size, byte* data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-  if (out < 0)
-    return false;
+  if (out < 0) return false;
   if (write(out, data, size) < 0) {
     printf("Can't write file\n");
     close(out);
@@ -55,50 +53,43 @@ bool write_file(string file_name, int size, byte* data) {
 int file_size(string file_name) {
   struct stat file_info;
 
-  if (stat(file_name.c_str(), &file_info) != 0)
-    return false;
-  if (!S_ISREG(file_info.st_mode))
-    return false;
+  if (stat(file_name.c_str(), &file_info) != 0) return false;
+  if (!S_ISREG(file_info.st_mode)) return false;
   return (int)file_info.st_size;
 }
 
 bool read_file(string file_name, int* size, byte* data) {
   struct stat file_info;
 
-  if (stat(file_name.c_str(), &file_info) != 0)
-    return false;
-  if (!S_ISREG(file_info.st_mode))
-    return false;
+  if (stat(file_name.c_str(), &file_info) != 0) return false;
+  if (!S_ISREG(file_info.st_mode)) return false;
   int bytes_in_file = (int)file_info.st_size;
   if (bytes_in_file > *size) {
     return false;
   }
   int fd = ::open(file_name.c_str(), O_RDONLY);
-  if (fd < 0)
-    return false;
+  if (fd < 0) return false;
   int n = (int)read(fd, data, bytes_in_file);
   close(fd);
   *size = n;
   return true;
 }
 
-bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) {
+bool generate_policy_cert_in_code(string& asn1_cert_file,
+                                  string& include_file) {
   int cert_size = file_size(asn1_cert_file);
-  if (cert_size <= 0)
-  {
-    printf("Invalid size=%d for input file '%s'.\n",
-           cert_size, asn1_cert_file.c_str());
+  if (cert_size <= 0) {
+    printf("Invalid size=%d for input file '%s'.\n", cert_size,
+           asn1_cert_file.c_str());
     return false;
   }
   byte bin_cert[cert_size];
- 
+
   int t_size = cert_size;
-  if(!read_file(asn1_cert_file, &t_size, bin_cert))
-    return false;
+  if (!read_file(asn1_cert_file, &t_size, bin_cert)) return false;
 
   int out = open(include_file.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-  if (out < 0)
-    return false;
+  if (out < 0) return false;
 
   // array_name
   string array_name = FLAGS_array_name;
@@ -124,7 +115,7 @@ bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) 
     if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
       printf("Bad write\n");
     }
-    if ((i%8) == 7) {
+    if ((i % 8) == 7) {
       if (write(out, (byte*)"\n    ", 5) < 0) {
         printf("Bad write\n");
       }
@@ -135,7 +126,7 @@ bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) 
   }
   close(out);
 
-return true;
+  return true;
 }
 
 int main(int an, char** av) {
@@ -152,7 +143,6 @@ int main(int an, char** av) {
     return 1;
   }
 
-  if (!generate_policy_cert_in_code(FLAGS_input, FLAGS_output))
-    return 1;
+  if (!generate_policy_cert_in_code(FLAGS_input, FLAGS_output)) return 1;
   return 0;
 }

@@ -17,8 +17,7 @@
 #include "../islet_api.h"
 
 static void print_buf(int sz, byte* buf) {
-  for (int i = 0; i < sz; i++)
-    printf("%02x", buf[i]);
+  for (int i = 0; i < sz; i++) printf("%02x", buf[i]);
   printf("\n");
 }
 
@@ -39,16 +38,17 @@ bool attestation_test() {
 
   std::string what_to_say("User Custom data");
 
-  if (!islet_Attest(what_to_say.size(), (byte*)what_to_say.data(), &report_len, report))
+  if (!islet_Attest(what_to_say.size(), (byte*)what_to_say.data(), &report_len,
+                    report))
     return false;
 
-  if (!islet_Verify(what_to_say.size(), (byte*)what_to_say.data(), report_len, report,
-                  &measurement_len, measurement))
+  if (!islet_Verify(what_to_say.size(), (byte*)what_to_say.data(), report_len,
+                    report, &measurement_len, measurement))
     return false;
 
   printf("report size: %d\n", report_len);
   print_buf(report_len, report);
-  printf("What was said originally: %s\n", (char*) what_to_say.c_str());
+  printf("What was said originally: %s\n", (char*)what_to_say.c_str());
   printf("Measurement: ");
   for (int i = 0; i < measurement_len; i++) {
     printf("%02X", measurement[i]);
@@ -69,11 +69,11 @@ bool sealing_test() {
   memset(unsealed, 0, sizeof(unsealed));
 
   std::string plaintext("Plaintext");
-  if (!islet_Seal(plaintext.size(), (byte *)plaintext.c_str(), &sealed_len, sealed))
+  if (!islet_Seal(plaintext.size(), (byte*)plaintext.c_str(), &sealed_len,
+                  sealed))
     return false;
 
-  if (!islet_Unseal(sealed_len, sealed, &unsealed_len, unsealed))
-    return false;
+  if (!islet_Unseal(sealed_len, sealed, &unsealed_len, unsealed)) return false;
 
   printf("Success sealing round trip.\n");
 
@@ -83,8 +83,7 @@ bool sealing_test() {
 int main() {
   bool rv = attestation_test();
   printf("Attestation test %s.\n", (rv ? "succeeded" : "failed"));
-  if (!rv)
-    return -1;
+  if (!rv) return -1;
 
   rv = sealing_test();
   printf("Sealing test %s.\n", (rv ? "succeeded" : "failed"));

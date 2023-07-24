@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,38 +14,43 @@
 // limitations under the License.
 
 #include <gflags/gflags.h>
+
 #include "support.h"
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
+DEFINE_bool(print_all, false, "verbose");
 // "generate-policy-key-and-test-keys" is the other option
-DEFINE_string(operation, "",  "generate policy key and self-signed cert");
+DEFINE_string(operation, "", "generate policy key and self-signed cert");
 
-DEFINE_string(policy_key_name, "policyKey",  "key name");
-DEFINE_string(policy_key_type, "rsa-2048-private",  "policy key type");
-DEFINE_string(policy_authority_name, "policyAuthority",  "policy authority name");
-DEFINE_string(policy_key_output_file, "policy_key_file.bin",  "policy key file");
-DEFINE_string(policy_cert_output_file, "policy_cert_file.bin",  "policy cert file");
+DEFINE_string(policy_key_name, "policyKey", "key name");
+DEFINE_string(policy_key_type, "rsa-2048-private", "policy key type");
+DEFINE_string(policy_authority_name, "policyAuthority",
+              "policy authority name");
+DEFINE_string(policy_key_output_file, "policy_key_file.bin", "policy key file");
+DEFINE_string(policy_cert_output_file, "policy_cert_file.bin",
+              "policy cert file");
 
-DEFINE_string(platform_key_name, "platformKey",  "key name");
-DEFINE_string(platform_key_type, "rsa-2048-private",  "platform key type");
-DEFINE_string(platform_authority_name, "platformAuthority",  "platform authority name");
-DEFINE_string(platform_key_output_file, "platform_key_file.bin",  "platform key file");
+DEFINE_string(platform_key_name, "platformKey", "key name");
+DEFINE_string(platform_key_type, "rsa-2048-private", "platform key type");
+DEFINE_string(platform_authority_name, "platformAuthority",
+              "platform authority name");
+DEFINE_string(platform_key_output_file, "platform_key_file.bin",
+              "platform key file");
 
-DEFINE_string(attest_key_name, "attestKey",  "key name");
-DEFINE_string(attest_key_type, "rsa-2048-private",  "attest key type");
-DEFINE_string(attest_key_output_file, "attest_key_file.bin",  "attest key file");
-DEFINE_string(attest_authority_name, "attestAuthority",  "attest authority name");
+DEFINE_string(attest_key_name, "attestKey", "key name");
+DEFINE_string(attest_key_type, "rsa-2048-private", "attest key type");
+DEFINE_string(attest_key_output_file, "attest_key_file.bin", "attest key file");
+DEFINE_string(attest_authority_name, "attestAuthority",
+              "attest authority name");
 
 DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin",
-       "platform attest_endorsement platform key file");
+              "platform attest_endorsement platform key file");
 
 DEFINE_string(key_output_file, "output.bin", "output key file");
 DEFINE_string(key_type, "rsa-2048", "key type");
 DEFINE_string(key_name, "anonymous", "key name");
-DEFINE_string(cert_output_file, "cert_file.bin",  "cert file");
-
+DEFINE_string(cert_output_file, "cert_file.bin", "cert file");
 
 bool generate_test_keys() {
   key_message platform_key;
@@ -53,35 +59,34 @@ bool generate_test_keys() {
   int n = 2048;
   if (FLAGS_platform_key_type == "rsa-2048-private")
     n = 2048;
-  else if (FLAGS_platform_key_type  == "rsa-1024-private")
+  else if (FLAGS_platform_key_type == "rsa-1024-private")
     n = 1024;
-  if (!make_certifier_rsa_key(n,  &platform_key)) {
+  if (!make_certifier_rsa_key(n, &platform_key)) {
     return false;
   }
   platform_key.set_key_name(FLAGS_platform_key_name);
   platform_key.set_key_type(FLAGS_platform_key_type);
   string serialized_platform_key;
-  if (!platform_key.SerializeToString(&serialized_platform_key))
-    return false;
-  if (!write_file(FLAGS_platform_key_output_file, serialized_platform_key.size(),
-        (byte*)serialized_platform_key.data()))
+  if (!platform_key.SerializeToString(&serialized_platform_key)) return false;
+  if (!write_file(FLAGS_platform_key_output_file,
+                  serialized_platform_key.size(),
+                  (byte*)serialized_platform_key.data()))
     return false;
 
   n = 2048;
   if (FLAGS_attest_key_type == "rsa-2048-private")
     n = 2048;
-  else if (FLAGS_attest_key_type  == "rsa-1024-private")
+  else if (FLAGS_attest_key_type == "rsa-1024-private")
     n = 1024;
-  if (!make_certifier_rsa_key(n,  &attest_key)) {
+  if (!make_certifier_rsa_key(n, &attest_key)) {
     return false;
   }
   attest_key.set_key_name(FLAGS_attest_key_name);
   attest_key.set_key_type(FLAGS_attest_key_type);
   string serialized_attest_key;
-  if (!attest_key.SerializeToString(&serialized_attest_key))
-    return false;
+  if (!attest_key.SerializeToString(&serialized_attest_key)) return false;
   if (!write_file(FLAGS_attest_key_output_file, serialized_attest_key.size(),
-        (byte*)serialized_attest_key.data()))
+                  (byte*)serialized_attest_key.data()))
     return false;
 
   printf("\nGenerated platform key:\n");
@@ -97,20 +102,21 @@ bool generate_test_keys() {
 
 bool generate_policy_key() {
   key_message policy_key;
-  key_message policy_pk; // public policy key
+  key_message policy_pk;  // public policy key
 
-  if (!make_root_key_with_cert(FLAGS_policy_key_type, FLAGS_policy_key_name, FLAGS_policy_authority_name, &policy_key))
+  if (!make_root_key_with_cert(FLAGS_policy_key_type, FLAGS_policy_key_name,
+                               FLAGS_policy_authority_name, &policy_key))
     return false;
-  if (!private_key_to_public_key(policy_key, &policy_pk))
-    return false;
+  if (!private_key_to_public_key(policy_key, &policy_pk)) return false;
 
   string serialized_key;
-  if (!policy_key.SerializeToString(&serialized_key))
+  if (!policy_key.SerializeToString(&serialized_key)) return false;
+  if (!write_file(FLAGS_policy_key_output_file, serialized_key.size(),
+                  (byte*)serialized_key.data()))
     return false;
-  if (!write_file(FLAGS_policy_key_output_file, serialized_key.size(), (byte*) serialized_key.data()))
-    return false;
-  if (!write_file(FLAGS_policy_cert_output_file, policy_key.certificate().size(),
-        (byte*) policy_key.certificate().data()))
+  if (!write_file(FLAGS_policy_cert_output_file,
+                  policy_key.certificate().size(),
+                  (byte*)policy_key.certificate().data()))
     return false;
 
   printf("\nGenerated policy key:\n");
@@ -138,8 +144,10 @@ void test_sig() {
   int signed_endorsement_size = file_size(FLAGS_platform_attest_endorsement);
   byte serialized_endorsement[signed_endorsement_size + 1];
   size = signed_endorsement_size;
-  if (!read_file(FLAGS_platform_attest_endorsement, &size, serialized_endorsement)) {
-    printf("Can't read endorsement file %s\n", FLAGS_platform_attest_endorsement.c_str());
+  if (!read_file(FLAGS_platform_attest_endorsement, &size,
+                 serialized_endorsement)) {
+    printf("Can't read endorsement file %s\n",
+           FLAGS_platform_attest_endorsement.c_str());
     return;
   }
   string endorsement_str;
@@ -152,13 +160,14 @@ void test_sig() {
   claim_message cl;
   string serialized_claim_str;
   serialized_claim_str.assign((char*)scm.serialized_claim_message().data(),
-      scm.serialized_claim_message().size());
+                              scm.serialized_claim_message().size());
   if (!cl.ParseFromString(serialized_claim_str)) {
     printf("Can't deserialize claim\n");
     return;
   }
   printf("serialized: \n");
-  print_bytes(scm.serialized_claim_message().size(), (byte*)scm.serialized_claim_message().data());
+  print_bytes(scm.serialized_claim_message().size(),
+              (byte*)scm.serialized_claim_message().data());
   printf("\n");
 
   byte dec_buf[256];
@@ -170,8 +179,9 @@ void test_sig() {
     return;
   }
 
-  int n = RSA_public_encrypt(scm.signature().size(), (byte*)scm.signature().data(),
-            dec_buf, r, RSA_NO_PADDING);
+  int n =
+      RSA_public_encrypt(scm.signature().size(), (byte*)scm.signature().data(),
+                         dec_buf, r, RSA_NO_PADDING);
   if (n < 0) {
     printf("public encrypt failed\n");
     return;
@@ -185,9 +195,8 @@ void test_sig() {
 }
 
 bool generate_key(const string& type, const string& name, key_message* k) {
-
   if (type == "rsa-1024") {
-    RSA* r= RSA_new();
+    RSA* r = RSA_new();
     if (!generate_new_rsa_key(1024, r)) {
       printf("Can't generate rsa key\n");
       return false;
@@ -198,7 +207,7 @@ bool generate_key(const string& type, const string& name, key_message* k) {
     }
     k->set_key_type("rsa-1024-private");
   } else if (type == "rsa-2048") {
-    RSA* r= RSA_new();
+    RSA* r = RSA_new();
     if (!generate_new_rsa_key(2048, r)) {
       printf("Can't generate rsa key\n");
       return false;
@@ -209,7 +218,7 @@ bool generate_key(const string& type, const string& name, key_message* k) {
     }
     k->set_key_type("rsa-2048-private");
   } else if (type == "rsa-3072") {
-    RSA* r= RSA_new();
+    RSA* r = RSA_new();
     if (!generate_new_rsa_key(3072, r)) {
       printf("Can't generate rsa key\n");
       return false;
@@ -220,7 +229,7 @@ bool generate_key(const string& type, const string& name, key_message* k) {
     }
     k->set_key_type("rsa-3072-private");
   } else if (type == "rsa-4096") {
-    RSA* r= RSA_new();
+    RSA* r = RSA_new();
     if (!generate_new_rsa_key(4096, r)) {
       printf("Can't generate rsa key\n");
       return false;
@@ -241,7 +250,7 @@ bool generate_key(const string& type, const string& name, key_message* k) {
       return false;
     }
     k->set_key_type("ecc-384-private");
-  } else  {
+  } else {
     printf("Unknown key type\n");
     return false;
   }
@@ -263,7 +272,6 @@ bool generate_key(const string& type, const string& name, key_message* k) {
   return true;
 }
 
-
 int main(int an, char** av) {
   string usage("Certifier utility to generate policy-keys and test-keys");
   gflags::SetUsageMessage(usage);
@@ -271,22 +279,27 @@ int main(int an, char** av) {
 
   if (FLAGS_operation == "") {
     printf("%s: %s\n", av[0], usage.c_str());
-    printf("\n%s --operation=generate-policy-key "
-           "--policy_key_output_file=<key_file.bin> "
-           "--policy_cert_output_file=<policy_cert_file.bin>\n",
-           av[0]);
+    printf(
+        "\n%s --operation=generate-policy-key "
+        "--policy_key_output_file=<key_file.bin> "
+        "--policy_cert_output_file=<policy_cert_file.bin>\n",
+        av[0]);
 
-    printf("\n%s --operation=generate-policy-key-and-test-keys "
-           "--policy_key_output_file=<key_file.bin> "
-           "--policy_cert_output_file=<policy_cert_file.bin> "
-           "--platform_key_output_file=<key_file.bin> "
-           "--attest_key_output_file=<key_file.bin>\n", av[0]);
+    printf(
+        "\n%s --operation=generate-policy-key-and-test-keys "
+        "--policy_key_output_file=<key_file.bin> "
+        "--policy_cert_output_file=<policy_cert_file.bin> "
+        "--platform_key_output_file=<key_file.bin> "
+        "--attest_key_output_file=<key_file.bin>\n",
+        av[0]);
 
-    printf("\n%s --operation=generate-key --key_type=rsa-2048 --key_name=name "
-           "--key_output_file=<key_file.bin> "
-           "--cert_output_file=<policy_cert_file.bin>\n", av[0]);
+    printf(
+        "\n%s --operation=generate-key --key_type=rsa-2048 --key_name=name "
+        "--key_output_file=<key_file.bin> "
+        "--cert_output_file=<policy_cert_file.bin>\n",
+        av[0]);
     return 0;
-  }  else if (FLAGS_operation == "test-sig") {
+  } else if (FLAGS_operation == "test-sig") {
     test_sig();
   } else if (FLAGS_operation == "generate-policy-key" ||
              FLAGS_operation == "generate-policy-key-and-test-keys") {
@@ -306,8 +319,8 @@ int main(int an, char** av) {
   } else if ("generate-key") {
     key_message k;
     if (!generate_key(FLAGS_key_type, FLAGS_key_name, &k)) {
-        printf("generate key failed\n");
-        return 1;
+      printf("generate key failed\n");
+      return 1;
     }
   } else {
     printf("Unknown operation\n");

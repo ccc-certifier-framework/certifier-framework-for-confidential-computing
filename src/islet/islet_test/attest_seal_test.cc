@@ -16,9 +16,9 @@
 
 #include <islet.h>
 
+#include <cstring>
 #include <iostream>
 #include <string>
-#include <cstring>
 
 // Some reasonable size to allocate an attestation report on-stack buffers.
 // Typical attestation report size is over 1K.
@@ -43,12 +43,12 @@ bool attestation_test() {
 
   // -- Attest -- //
   std::string user_data("User Custom data");
-  if (islet_attest((const byte*)user_data.c_str(), user_data.size(), report, &report_len))
+  if (islet_attest((const byte*)user_data.c_str(), user_data.size(), report,
+                   &report_len))
     return false;
 
   // -- Verify -- //
-  if (islet_verify(report, report_len, claims, &claims_len))
-    return false;
+  if (islet_verify(report, report_len, claims, &claims_len)) return false;
 
   islet_print_claims(claims, claims_len);
 
@@ -56,13 +56,14 @@ bool attestation_test() {
   if (islet_parse(CLAIM_TITLE_USER_DATA, claims, claims_len, value, &value_len))
     return false;
 
-  printf("Claim[User data]: %s\n", (char*) value);
+  printf("Claim[User data]: %s\n", (char*)value);
 
   memset(value, 0, sizeof(value));
-  if (islet_parse(CLAIM_TITLE_PLATFORM_PROFILE, claims, claims_len, value, &value_len))
+  if (islet_parse(CLAIM_TITLE_PLATFORM_PROFILE, claims, claims_len, value,
+                  &value_len))
     return false;
 
-  printf("Claim[Platform  profile]: %s\n", (char*) value);
+  printf("Claim[Platform  profile]: %s\n", (char*)value);
 
   return true;
 }
@@ -79,12 +80,12 @@ bool sealing_test() {
 
   // -- Seal -- //
   std::string plaintext("Plaintext");
-  if (islet_seal((const byte*)plaintext.c_str(), plaintext.size(), sealed, &sealed_len))
+  if (islet_seal((const byte*)plaintext.c_str(), plaintext.size(), sealed,
+                 &sealed_len))
     return false;
 
   // -- Unseal -- //
-  if (islet_unseal(sealed, sealed_len, unsealed, &unsealed_len))
-    return false;
+  if (islet_unseal(sealed, sealed_len, unsealed, &unsealed_len)) return false;
 
   printf("Success sealing round trip.\n");
 
@@ -94,8 +95,7 @@ bool sealing_test() {
 int main() {
   bool rv = attestation_test();
   printf("Attestation test %s.\n", (rv ? "succeeded" : "failed"));
-  if (!rv)
-    return -1;
+  if (!rv) return -1;
 
   rv = sealing_test();
   printf("Sealing test %s.\n", (rv ? "succeeded" : "failed"));

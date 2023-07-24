@@ -1,6 +1,13 @@
-#include "keystone_api.h"
 #include <string.h>
-#define assert(x) do { if (!(x)) { printf("Custom assert failed.\n"); exit(17); } } while (false) // TODO: replace
+
+#include "keystone_api.h"
+#define assert(x)                        \
+  do {                                   \
+    if (!(x)) {                          \
+      printf("Custom assert failed.\n"); \
+      exit(17);                          \
+    }                                    \
+  } while (false)  // TODO: replace
 
 #ifdef KEYSTONE_PRESENT
 #include "verifier/report.h"
@@ -34,18 +41,18 @@ struct report_t {
 // END copied Report.hpp
 #endif
 
-bool keystone_Init(const int cert_size, byte *cert) {
-  return true;
-}
+bool keystone_Init(const int cert_size, byte* cert) { return true; }
 
-bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
+bool keystone_Attest(const int what_to_say_size, byte* what_to_say,
+                     int* attestation_size_out, byte* attestation_out) {
   assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
   *attestation_size_out = sizeof(struct report_t);
   // unique-ify un-faked fields to avoid accidentally passing tests
   for (unsigned int i = 0; i < sizeof(struct report_t); i++) {
     attestation_out[i] = i ^ 17;
   }
-  struct report_t &report = *reinterpret_cast<struct report_t*>(attestation_out);
+  struct report_t& report =
+      *reinterpret_cast<struct report_t*>(attestation_out);
   report.enclave.data_len = what_to_say_size;
   memcpy(report.enclave.data, what_to_say, what_to_say_size);
   // TODO: input default measurement
@@ -54,22 +61,24 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attesta
 
 // true = different
 bool nonhash_report_cmp(struct report_t& a, struct report_t& b) {
-  return (a.enclave.data_len != b.enclave.data_len)
-    || memcmp(a.enclave.data, b.enclave.data, ATTEST_DATA_MAXLEN)
-    || memcmp(a.enclave.signature, b.enclave.signature, SIGNATURE_SIZE)
-    || memcmp(a.sm.public_key, b.sm.public_key, PUBLIC_KEY_SIZE)
-    || memcmp(a.sm.signature, b.sm.signature, SIGNATURE_SIZE)
-    || memcmp(a.dev_public_key, b.dev_public_key, PUBLIC_KEY_SIZE);
+  return (a.enclave.data_len != b.enclave.data_len) ||
+         memcmp(a.enclave.data, b.enclave.data, ATTEST_DATA_MAXLEN) ||
+         memcmp(a.enclave.signature, b.enclave.signature, SIGNATURE_SIZE) ||
+         memcmp(a.sm.public_key, b.sm.public_key, PUBLIC_KEY_SIZE) ||
+         memcmp(a.sm.signature, b.sm.signature, SIGNATURE_SIZE) ||
+         memcmp(a.dev_public_key, b.dev_public_key, PUBLIC_KEY_SIZE);
 }
 
-bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size,
-      byte* attestation, int* measurement_out_size, byte* measurement_out) {
+bool keystone_Verify(const int what_to_say_size, byte* what_to_say,
+                     const int attestation_size, byte* attestation,
+                     int* measurement_out_size, byte* measurement_out) {
   assert(attestation_size == sizeof(struct report_t));
-  struct report_t &report = *reinterpret_cast<struct report_t*>(attestation);
+  struct report_t& report = *reinterpret_cast<struct report_t*>(attestation);
 
   int gold_attestation_size = 0;
   struct report_t gold_report;
-  keystone_Attest(what_to_say_size, what_to_say, &gold_attestation_size, (byte*) &gold_report);
+  keystone_Attest(what_to_say_size, what_to_say, &gold_attestation_size,
+                  (byte*)&gold_report);
 
   if (nonhash_report_cmp(gold_report, report) != 0) {
     return false;
