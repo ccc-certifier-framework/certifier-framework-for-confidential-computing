@@ -59,6 +59,10 @@ AR=ar
 
 # Definitions needed for generating Python bindings
 SWIG=swig
+
+# -Wallkw: Enable keyword warnings for all the supported languages
+SWIG_FLAGS = -Wallkw
+
 PY_INCLUDE = -I /usr/include/python3.10/
 
 #export LD_LIBRARY_PATH=/usr/local/lib
@@ -130,7 +134,7 @@ $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 #     -outdir specifies output-dir for generated *.py file.
 $(S)/certifier_framework_wrap.cc: $(I)/certifier_framework.i $(S)/certifier.cc
 	@echo "\nGenerating $@"
-	$(SWIG) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	$(SWIG) $(SWIG_FLAGS) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
 
 $(O)/certifier_framework_wrap.o: $(S)/certifier_framework_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling $<"

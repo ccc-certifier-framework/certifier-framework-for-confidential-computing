@@ -19,6 +19,8 @@ Basic pytests for Certifier Framework Python module.
 """
 
 # To resolve references to module, run as: PYTHONPATH=../.. pytest <filename>.py
+# import certifier_pb2 as cert_pbi
+
 import certifier_framework as cfm
 
 # ##############################################################################
@@ -67,9 +69,18 @@ def test_policy_store():
     pstore._print()
 
 # ##############################################################################
+def test_make_key_message():
+    """
+    Exercise C++ interface to make a key_message{} object.
+    RESOLVE: This stub case seems to work ... figure out where to go next with this.
+    """
+    # key_msg = cert_pbi.key_message()
+    pass
+
+# ##############################################################################
 def test_add_find_single_entry():
     """
-    Test adding a single entry and find entry interfaces.
+    Test policy_store() adding a single entry and find entry interfaces.
     """
     pstore = cfm.policy_store()
 
@@ -95,7 +106,7 @@ def test_add_find_single_entry():
 # ##############################################################################
 def test_update_or_insert():
     """
-    Test updating contents of a single entry and validate find()'s return.
+    Test policy_store() update contents of a single entry and validate find()'s return.
     """
     pstore = cfm.policy_store()
 
@@ -264,3 +275,26 @@ def test_policy_store_serialize():
     assert len(serialized) > 0
     # Does not quite work due to some embedded non-printable chars in stream
     # print("Serialized Policy Store contents: ,", serialized, "'")
+
+# ##############################################################################
+# Test cases for class cc_trust_data()
+# ##############################################################################
+
+# ##############################################################################
+def test_cc_trust_data():
+    """ Basic exerciser of methods for an empty cc_trust_data() object."""
+
+    cctd = cfm.cc_trust_data()
+    assert cctd.cc_all_initialized() is False
+
+    public_key_alg = "public-key-alg"
+    symmetric_key_alg = "symmetric-key-alg"
+    assert cctd.cold_init(public_key_alg, symmetric_key_alg) is False
+
+    asn1_cert_size = 1024
+    # asn1_cert = bytearray("some-asn1-certificate-junk-test-string", 'utf-8')
+    asn1_cert = "some-asn1-certificate-junk-test-string".encode()
+    print(asn1_cert)
+    # assert cctd.init_policy_key(asn1_cert_size, asn1_cert) is False
+
+    pass
