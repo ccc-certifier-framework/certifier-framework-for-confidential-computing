@@ -7,3 +7,22 @@ AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
+
+BraceWrapping:
+  AfterCaseLabel:  true
+  AfterClass:      false
+
+  # Multi-line if() and for() control statements will have their
+  # opening { come on a new line, for readability.
+  AfterControlStatement: MultiLine
+
+ContinuationIndentWidth: 4
+
+IndentWidth:     2
+
+MaxEmptyLinesToKeep: 2
+
+PointerAlignment: Right
+SpacesBeforeTrailingComments: 2
+TabWidth:        2
+UseTab:          Never
