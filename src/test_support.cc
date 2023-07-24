@@ -39,7 +39,8 @@ bool read_trusted_binary_measurements_and_sign(string& file_name,
   }
 
   key_message policy_pk;
-  if (!private_key_to_public_key(policy_key, &policy_pk)) return false;
+  if (!private_key_to_public_key(policy_key, &policy_pk))
+    return false;
   entity_message policy_key_entity;
   if (!make_key_entity(policy_pk, &policy_key_entity)) {
     return false;
@@ -71,13 +72,15 @@ bool read_trusted_binary_measurements_and_sign(string& file_name,
     vse_clause c1;
     vse_clause c2;
 
-    if (!make_unary_vse_clause(measurement_entity, it_verb, &c1)) return false;
+    if (!make_unary_vse_clause(measurement_entity, it_verb, &c1))
+      return false;
 
     if (!make_indirect_vse_clause(policy_key_entity, says_verb, c1, &c2))
       return false;
 
     string serialized_vse;
-    if (!c2.SerializeToString(&serialized_vse)) return false;
+    if (!c2.SerializeToString(&serialized_vse))
+      return false;
 
     // policy_key says measurement is-trusted
     claim_message claim;
@@ -102,11 +105,13 @@ bool read_trusted_binary_measurements_and_sign(string& file_name,
 
 bool construct_keys(string key_name, string format, key_message* public_key,
                     key_message* private_key) {
-  if (!make_certifier_rsa_key(2048, private_key)) return false;
+  if (!make_certifier_rsa_key(2048, private_key))
+    return false;
   private_key->set_key_name(key_name);
   private_key->set_key_format(format);
 
-  if (!private_key_to_public_key(*private_key, public_key)) return false;
+  if (!private_key_to_public_key(*private_key, public_key))
+    return false;
   return true;
 }
 
@@ -169,7 +174,8 @@ bool construct_standard_evidence_package(
   // attest key
   key_message attest_pk;
   extern key_message my_attestation_key;
-  if (!private_key_to_public_key(my_attestation_key, &attest_pk)) return false;
+  if (!private_key_to_public_key(my_attestation_key, &attest_pk))
+    return false;
   if (debug_print) {
     printf("\nAttest key: ");
     print_key(attest_pk);
@@ -190,7 +196,8 @@ bool construct_standard_evidence_package(
 
   // measurement entity
   entity_message measurement_entity;
-  if (!make_measurement_entity(meas, &measurement_entity)) return false;
+  if (!make_measurement_entity(meas, &measurement_entity))
+    return false;
   if (debug_print) {
     printf("Measurement: ");
     print_entity(measurement_entity);
@@ -204,39 +211,50 @@ bool construct_standard_evidence_package(
 
   //  c1: enclave-measurement is-trusted
   vse_clause c1;
-  if (!make_unary_vse_clause(measurement_entity, is_trusted, &c1)) return false;
+  if (!make_unary_vse_clause(measurement_entity, is_trusted, &c1))
+    return false;
 
   // c2: intel-key is-trusted
   vse_clause c2;
   entity_message intel_key_entity;
-  if (!make_key_entity(intel_pk, &intel_key_entity)) return false;
-  if (!make_unary_vse_clause(intel_key_entity, is_trusted, &c2)) return false;
+  if (!make_key_entity(intel_pk, &intel_key_entity))
+    return false;
+  if (!make_unary_vse_clause(intel_key_entity, is_trusted, &c2))
+    return false;
 
   // c3: attestation-key is-trusted
   vse_clause c3;
   entity_message attest_key_entity;
-  if (!make_key_entity(attest_pk, &attest_key_entity)) return false;
-  if (!make_unary_vse_clause(attest_key_entity, is_trusted, &c3)) return false;
+  if (!make_key_entity(attest_pk, &attest_key_entity))
+    return false;
+  if (!make_unary_vse_clause(attest_key_entity, is_trusted, &c3))
+    return false;
 
   // c4: enclave-authentication-key is-trusted
   vse_clause c4;
   entity_message enclave_key_entity;
-  if (!make_key_entity(enclave_pk, &enclave_key_entity)) return false;
-  if (!make_unary_vse_clause(enclave_key_entity, is_trusted, &c4)) return false;
+  if (!make_key_entity(enclave_pk, &enclave_key_entity))
+    return false;
+  if (!make_unary_vse_clause(enclave_key_entity, is_trusted, &c4))
+    return false;
 
   // c5: policy-key says measurement is-trusted
   vse_clause c5;
   entity_message policy_key_entity;
-  if (!make_key_entity(*policy_pk, &policy_key_entity)) return false;
-  if (!make_indirect_vse_clause(policy_key_entity, says, c1, &c5)) return false;
+  if (!make_key_entity(*policy_pk, &policy_key_entity))
+    return false;
+  if (!make_indirect_vse_clause(policy_key_entity, says, c1, &c5))
+    return false;
 
   // c6: policy-key says intel-key is-trusted
   vse_clause c6;
-  if (!make_indirect_vse_clause(policy_key_entity, says, c2, &c6)) return false;
+  if (!make_indirect_vse_clause(policy_key_entity, says, c2, &c6))
+    return false;
 
   // c7: intel-key says attestation-key is-trusted
   vse_clause c7;
-  if (!make_indirect_vse_clause(intel_key_entity, says, c3, &c7)) return false;
+  if (!make_indirect_vse_clause(intel_key_entity, says, c3, &c7))
+    return false;
 
   // c8: enclave-authentication-key speaks-for enclave-measurement
   vse_clause c8;
@@ -247,7 +265,8 @@ bool construct_standard_evidence_package(
   // c9: attestation-key says enclave-authentication-key speaks-for
   // enclave-measurement
   vse_clause c9;
-  if (!make_indirect_vse_clause(attest_key_entity, says, c8, &c9)) return false;
+  if (!make_indirect_vse_clause(attest_key_entity, says, c8, &c9))
+    return false;
 
   // Construct signed statements
   //    C1: policy-key says enclave-measurement is-trusted (signed c5)
@@ -261,12 +280,17 @@ bool construct_standard_evidence_package(
   string s_na;
   double hours_to_add = 365.0 * 24.0;
 
-  if (!time_now(&t_nb)) return false;
-  if (!time_to_string(t_nb, &s_nb)) return false;
-  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na)) return false;
+  if (!time_now(&t_nb))
+    return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
+    return false;
 
-  if (!time_to_string(t_nb, &s_nb)) return false;
-  if (!time_to_string(t_na, &s_na)) return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!time_to_string(t_na, &s_na))
+    return false;
 
   string vse_clause_format("vse-clause");
   string d1("policy-key says enclave-measurement is-trusted");
@@ -346,7 +370,8 @@ bool construct_standard_evidence_package(
     evidence* ev4 = evp->add_fact_assertion();
 
     string t_str;
-    if (!sc3.SerializeToString(&t_str)) return false;
+    if (!sc3.SerializeToString(&t_str))
+      return false;
     ev1->set_evidence_type("signed-claim");
     ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
     t_str.clear();
@@ -355,12 +380,14 @@ bool construct_standard_evidence_package(
     ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
-    if (!sc1.SerializeToString(&t_str)) return false;
+    if (!sc1.SerializeToString(&t_str))
+      return false;
     ev3->set_evidence_type("signed-claim");
     ev3->set_serialized_evidence((byte*)t_str.data(), t_str.size());
     t_str.clear();
 
-    if (!sc2.SerializeToString(&t_str)) return false;
+    if (!sc2.SerializeToString(&t_str))
+      return false;
     ev4->set_evidence_type("signed-claim");
     ev4->set_serialized_evidence((byte*)t_str.data(), t_str.size());
   } else if (evidence_descriptor == "platform-attestation-only") {
@@ -375,7 +402,8 @@ bool construct_standard_evidence_package(
     evidence* ev2 = evp->add_fact_assertion();
 
     string t_str;
-    if (!sc3.SerializeToString(&t_str)) return false;
+    if (!sc3.SerializeToString(&t_str))
+      return false;
     ev1->set_evidence_type("signed-claim");
     ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
     t_str.clear();
@@ -401,7 +429,8 @@ bool construct_standard_evidence_package(
     evidence* ev2 = evp->add_fact_assertion();
 
     string t_str;
-    if (!sc3.SerializeToString(&t_str)) return false;
+    if (!sc3.SerializeToString(&t_str))
+      return false;
     ev1->set_evidence_type("signed-claim");
     ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
     t_str.clear();
@@ -427,7 +456,8 @@ bool construct_standard_evidence_package(
     evidence* ev2 = evp->add_fact_assertion();
 
     string t_str;
-    if (!sc3.SerializeToString(&t_str)) return false;
+    if (!sc3.SerializeToString(&t_str))
+      return false;
     ev1->set_evidence_type("signed-claim");
     ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
     t_str.clear();
@@ -453,7 +483,8 @@ bool construct_standard_evidence_package(
     evidence* ev2 = evp->add_fact_assertion();
 
     string t_str;
-    if (!sc3.SerializeToString(&t_str)) return false;
+    if (!sc3.SerializeToString(&t_str))
+      return false;
     ev1->set_evidence_type("signed-claim");
     ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
     t_str.clear();
@@ -485,7 +516,8 @@ bool test__local_certify(string& enclave_type, bool init_from_file,
   evp.set_prover_type("vse-verifier");
 
   certifier_rules rules;
-  if (!init_certifier_rules(rules)) return false;
+  if (!init_certifier_rules(rules))
+    return false;
 
   signed_claim_sequence trusted_measurements;
   signed_claim_sequence trusted_platforms;
@@ -617,7 +649,8 @@ bool construct_standard_constrained_evidence_package(
   // attest key
   key_message attest_pk;
   extern key_message my_attestation_key;
-  if (!private_key_to_public_key(my_attestation_key, &attest_pk)) return false;
+  if (!private_key_to_public_key(my_attestation_key, &attest_pk))
+    return false;
   if (debug_print) {
     printf("\nAttest key: ");
     print_key(attest_pk);
@@ -638,7 +671,8 @@ bool construct_standard_constrained_evidence_package(
 
   // measurement entity
   entity_message measurement_entity;
-  if (!make_measurement_entity(meas, &measurement_entity)) return false;
+  if (!make_measurement_entity(meas, &measurement_entity))
+    return false;
   if (debug_print) {
     printf("Measurement: ");
     print_entity(measurement_entity);
@@ -654,19 +688,22 @@ bool construct_standard_constrained_evidence_package(
 
   //  c1: enclave-measurement is-trusted
   vse_clause c1;
-  if (!make_unary_vse_clause(measurement_entity, is_trusted, &c1)) return false;
+  if (!make_unary_vse_clause(measurement_entity, is_trusted, &c1))
+    return false;
 
   // c2: intel-key is-trusted-for-attestation
   vse_clause c2;
   entity_message intel_key_entity;
-  if (!make_key_entity(intel_pk, &intel_key_entity)) return false;
+  if (!make_key_entity(intel_pk, &intel_key_entity))
+    return false;
   if (!make_unary_vse_clause(intel_key_entity, is_trusted_for_attestation, &c2))
     return false;
 
   // c3: attestation-key is-trusted-for-attestation
   vse_clause c3;
   entity_message attest_key_entity;
-  if (!make_key_entity(attest_pk, &attest_key_entity)) return false;
+  if (!make_key_entity(attest_pk, &attest_key_entity))
+    return false;
   if (!make_unary_vse_clause(attest_key_entity, is_trusted_for_attestation,
                              &c3))
     return false;
@@ -674,7 +711,8 @@ bool construct_standard_constrained_evidence_package(
   // c4: enclave-authentication-key is-trusted-for-authentication
   vse_clause c4;
   entity_message enclave_key_entity;
-  if (!make_key_entity(enclave_pk, &enclave_key_entity)) return false;
+  if (!make_key_entity(enclave_pk, &enclave_key_entity))
+    return false;
   if (!make_unary_vse_clause(enclave_key_entity, is_trusted_for_authentication,
                              &c4))
     return false;
@@ -682,16 +720,20 @@ bool construct_standard_constrained_evidence_package(
   // c5: policy-key says measurement is-trusted
   vse_clause c5;
   entity_message policy_key_entity;
-  if (!make_key_entity(*policy_pk, &policy_key_entity)) return false;
-  if (!make_indirect_vse_clause(policy_key_entity, says, c1, &c5)) return false;
+  if (!make_key_entity(*policy_pk, &policy_key_entity))
+    return false;
+  if (!make_indirect_vse_clause(policy_key_entity, says, c1, &c5))
+    return false;
 
   // c6: policy-key says intel-key is-trusted-for-attestation
   vse_clause c6;
-  if (!make_indirect_vse_clause(policy_key_entity, says, c2, &c6)) return false;
+  if (!make_indirect_vse_clause(policy_key_entity, says, c2, &c6))
+    return false;
 
   // c7: intel-key says attestation-key is-trusted-for-attestation
   vse_clause c7;
-  if (!make_indirect_vse_clause(intel_key_entity, says, c3, &c7)) return false;
+  if (!make_indirect_vse_clause(intel_key_entity, says, c3, &c7))
+    return false;
 
   // c8: enclave-authentication-key speaks-for enclave-measurement
   vse_clause c8;
@@ -702,7 +744,8 @@ bool construct_standard_constrained_evidence_package(
   // c9: attestation-key says enclave-authentication-key speaks-for
   // enclave-measurement
   vse_clause c9;
-  if (!make_indirect_vse_clause(attest_key_entity, says, c8, &c9)) return false;
+  if (!make_indirect_vse_clause(attest_key_entity, says, c8, &c9))
+    return false;
 
   // Construct signed statements
   //    C1: policy-key says enclave-measurement is-trusted (signed c5)
@@ -716,12 +759,17 @@ bool construct_standard_constrained_evidence_package(
   string s_na;
   double hours_to_add = 365.0 * 24.0;
 
-  if (!time_now(&t_nb)) return false;
-  if (!time_to_string(t_nb, &s_nb)) return false;
-  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na)) return false;
+  if (!time_now(&t_nb))
+    return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
+    return false;
 
-  if (!time_to_string(t_nb, &s_nb)) return false;
-  if (!time_to_string(t_na, &s_na)) return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!time_to_string(t_na, &s_na))
+    return false;
 
   string vse_clause_format("vse-clause");
   string d1("policy-key says enclave-measurement is-trusted");
@@ -800,7 +848,8 @@ bool construct_standard_constrained_evidence_package(
     evidence* ev4 = evp->add_fact_assertion();
 
     string t_str;
-    if (!sc3.SerializeToString(&t_str)) return false;
+    if (!sc3.SerializeToString(&t_str))
+      return false;
     ev1->set_evidence_type("signed-claim");
     ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
     t_str.clear();
@@ -809,12 +858,14 @@ bool construct_standard_constrained_evidence_package(
     ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
-    if (!sc1.SerializeToString(&t_str)) return false;
+    if (!sc1.SerializeToString(&t_str))
+      return false;
     ev3->set_evidence_type("signed-claim");
     ev3->set_serialized_evidence((byte*)t_str.data(), t_str.size());
     t_str.clear();
 
-    if (!sc2.SerializeToString(&t_str)) return false;
+    if (!sc2.SerializeToString(&t_str))
+      return false;
     ev4->set_evidence_type("signed-claim");
     ev4->set_serialized_evidence((byte*)t_str.data(), t_str.size());
   } else if (evidence_descriptor == "platform-attestation-only") {
@@ -829,7 +880,8 @@ bool construct_standard_constrained_evidence_package(
     evidence* ev2 = evp->add_fact_assertion();
 
     string t_str;
-    if (!sc3.SerializeToString(&t_str)) return false;
+    if (!sc3.SerializeToString(&t_str))
+      return false;
     ev1->set_evidence_type("signed-claim");
     ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
     t_str.clear();
@@ -856,7 +908,8 @@ bool construct_standard_constrained_evidence_package(
     evidence* ev2 = evp->add_fact_assertion();
 
     string t_str;
-    if (!sc3.SerializeToString(&t_str)) return false;
+    if (!sc3.SerializeToString(&t_str))
+      return false;
     ev1->set_evidence_type("signed-claim");
     ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
     t_str.clear();
@@ -951,7 +1004,8 @@ bool test__new_local_certify(string& enclave_type, bool init_from_file,
   evp.set_prover_type("vse-verifier");
 
   certifier_rules rules;
-  if (!init_certifier_rules(rules)) return false;
+  if (!init_certifier_rules(rules))
+    return false;
 
   signed_claim_sequence trusted_measurements;
   signed_claim_sequence trusted_platforms;

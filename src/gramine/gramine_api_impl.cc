@@ -37,7 +37,8 @@ ssize_t gramine_rw_file(const char* path, uint8_t* buf, size_t len,
   ssize_t ret = 0;
 
   int fd = open(path, do_write ? O_WRONLY : O_RDONLY);
-  if (fd < 0) return fd;
+  if (fd < 0)
+    return fd;
 
   while ((ssize_t)len > bytes) {
     if (do_write)
@@ -51,7 +52,8 @@ ssize_t gramine_rw_file(const char* path, uint8_t* buf, size_t len,
       /* end of file */
       break;
     } else {
-      if (ret < 0 && (errno == EAGAIN || errno == EINTR)) continue;
+      if (ret < 0 && (errno == EAGAIN || errno == EINTR))
+        continue;
       break;
     }
   }

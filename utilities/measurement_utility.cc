@@ -69,7 +69,8 @@ int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_type == "hash") return hash_utility(FLAGS_input, FLAGS_output);
+  if (FLAGS_type == "hash")
+    return hash_utility(FLAGS_input, FLAGS_output);
 
   return 1;
 }

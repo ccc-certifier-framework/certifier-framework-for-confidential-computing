@@ -84,7 +84,8 @@ bool test_sev(bool print_all) {
   attestation_user_data ud;
   ud.set_enclave_type("sev-enclave");
   RSA* r = RSA_new();
-  if (!generate_new_rsa_key(2048, r)) return false;
+  if (!generate_new_rsa_key(2048, r))
+    return false;
   key_message private_auth_key;
   key_message public_auth_key;
   if (!RSA_to_key(r, &private_auth_key)) {
@@ -129,7 +130,8 @@ bool test_sev(bool print_all) {
   EVP_PKEY* verify_pkey = sev_get_vcek_pubkey(x509_vcek);
 #endif /* SEV_DUMMY_GUEST */
 
-  if (verify_pkey == nullptr) return false;
+  if (verify_pkey == nullptr)
+    return false;
   bool success = verify_sev_Attest(verify_pkey, size_out, out,
                                    &size_measurement, measurement);
   EVP_PKEY_free(verify_pkey);

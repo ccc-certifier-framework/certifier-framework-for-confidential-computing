@@ -65,7 +65,8 @@ bool islet_Verify(const int what_to_say_size, byte* what_to_say,
 
   islet_status_t rv =
       islet_verify(attestation, attestation_size, claims, &claims_len);
-  if (rv != ISLET_SUCCESS) return false;
+  if (rv != ISLET_SUCCESS)
+    return false;
 
   int len = digest_output_byte_size("sha-256");
   byte islet_what_to_say_expected[len];
@@ -79,7 +80,8 @@ bool islet_Verify(const int what_to_say_size, byte* what_to_say,
   int user_data_len = len;
   rv = islet_parse(CLAIM_TITLE_USER_DATA, claims, claims_len,
                    islet_what_to_say_returned, &user_data_len);
-  if (rv != ISLET_SUCCESS) return false;
+  if (rv != ISLET_SUCCESS)
+    return false;
 
   if (memcmp(islet_what_to_say_returned, islet_what_to_say_expected, len) != 0)
     return false;

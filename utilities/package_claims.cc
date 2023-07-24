@@ -35,7 +35,8 @@ bool get_claim_from_block(const string& block, signed_claim_message* sc) {
 }
 
 const char* next_comma(const char* p) {
-  if (p == nullptr) return nullptr;
+  if (p == nullptr)
+    return nullptr;
   while (*p != ',' && *p != '\0') p++;
   return p;
 }
@@ -50,7 +51,8 @@ bool get_input_file_names(const string& name, int* num, string* names) {
       names[*num].append(start, end - start);
     }
     (*num)++;
-    if (*end == '\0') break;
+    if (*end == '\0')
+      break;
     start = end + 1;
   }
   return true;

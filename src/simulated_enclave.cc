@@ -133,7 +133,8 @@ bool simulated_Init(const string& asn1_policy_cert,
 }
 
 bool simulated_Getmeasurement(int* size_out, byte* out) {
-  if (*size_out < simulated_measurment_size) return false;
+  if (*size_out < simulated_measurment_size)
+    return false;
   *size_out = simulated_measurment_size;
   memcpy(out, (byte*)my_measurement.data(), my_measurement.size());
   return true;
@@ -225,10 +226,14 @@ bool simulated_Attest(const string& enclave_type, int what_to_say_size,
   // simulated_Attest returns a serialized signed_report
   string nb, na;
   time_point tn, tf;
-  if (!time_now(&tn)) return false;
-  if (!add_interval_to_time_point(tn, 24.0 * 365.0, &tf)) return false;
-  if (!time_to_string(tn, &nb)) return false;
-  if (!time_to_string(tf, &na)) return false;
+  if (!time_now(&tn))
+    return false;
+  if (!add_interval_to_time_point(tn, 24.0 * 365.0, &tf))
+    return false;
+  if (!time_to_string(tn, &nb))
+    return false;
+  if (!time_to_string(tf, &na))
+    return false;
 
   report_info.set_not_before(nb);
   report_info.set_not_after(na);

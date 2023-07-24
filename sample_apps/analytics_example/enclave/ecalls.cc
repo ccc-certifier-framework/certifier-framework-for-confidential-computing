@@ -72,7 +72,8 @@ string public_key_alg("rsa-2048");
 string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
 void print_trust_data() {
-  if (!trust_data_initialized) return;
+  if (!trust_data_initialized)
+    return;
   printf("\nTrust data:\n");
   printf("\nPolicy key\n");
   print_key(publicPolicyKey);
@@ -328,7 +329,8 @@ bool temp_test() {
 
   int res = X509_STORE_CTX_init(ctx, cs, x509_auth_key_cert, stack);
   X509_STORE_CTX_set_cert(ctx, x509_auth_key_cert);
-  if (res == 0) printf("X509_STORE_CTX_init failed\n");
+  if (res == 0)
+    printf("X509_STORE_CTX_init failed\n");
 
   res = X509_verify_cert(ctx);
   if (res == 1) {

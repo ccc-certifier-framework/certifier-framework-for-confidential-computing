@@ -28,8 +28,10 @@ string gramine_platform_cert;
 int gramine_file_size(const char* file_name) {
   struct stat file_info;
 
-  if (stat(file_name, &file_info) != 0) return false;
-  if (!S_ISREG(file_info.st_mode)) return false;
+  if (stat(file_name, &file_info) != 0)
+    return false;
+  if (!S_ISREG(file_info.st_mode))
+    return false;
   return (int)file_info.st_size;
 }
 

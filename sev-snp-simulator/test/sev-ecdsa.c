@@ -27,7 +27,8 @@
 #include <string.h>
 
 static void reverse_bytes(uint8_t *buffer, size_t size) {
-  if (!buffer || size == 0) return;
+  if (!buffer || size == 0)
+    return;
 
   for (uint8_t *start = buffer, *end = buffer + size - 1; start < end;
        start++, end--) {
@@ -172,7 +173,8 @@ int sev_ecdsa_sign(const void *msg, size_t msg_size, EVP_PKEY *key,
   /* Store the R & S components of the ID block signature */
   rc = get_ecdsa_sig_rs_bytes(ossl_sig, sig_size, sig->r, sig->s, &r_size,
                               &s_size);
-  if (rc != EXIT_SUCCESS) goto out_sig;
+  if (rc != EXIT_SUCCESS)
+    goto out_sig;
 
   reverse_bytes(sig->r, r_size);
   reverse_bytes(sig->s, s_size);

@@ -42,7 +42,8 @@ DEFINE_string(mrenclave, "", "Measurement Hex String");
 
 bool write_file(string file_name, int size, byte* data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-  if (out < 0) return false;
+  if (out < 0)
+    return false;
   if (write(out, data, size) < 0) {
     printf("Can't write file\n");
     close(out);
@@ -55,22 +56,27 @@ bool write_file(string file_name, int size, byte* data) {
 int file_size(string file_name) {
   struct stat file_info;
 
-  if (stat(file_name.c_str(), &file_info) != 0) return false;
-  if (!S_ISREG(file_info.st_mode)) return false;
+  if (stat(file_name.c_str(), &file_info) != 0)
+    return false;
+  if (!S_ISREG(file_info.st_mode))
+    return false;
   return (int)file_info.st_size;
 }
 
 bool read_file(string file_name, int* size, byte* data) {
   struct stat file_info;
 
-  if (stat(file_name.c_str(), &file_info) != 0) return false;
-  if (!S_ISREG(file_info.st_mode)) return false;
+  if (stat(file_name.c_str(), &file_info) != 0)
+    return false;
+  if (!S_ISREG(file_info.st_mode))
+    return false;
   int bytes_in_file = (int)file_info.st_size;
   if (bytes_in_file > *size) {
     return false;
   }
   int fd = ::open(file_name.c_str(), O_RDONLY);
-  if (fd < 0) return false;
+  if (fd < 0)
+    return false;
   int n = (int)read(fd, data, bytes_in_file);
   close(fd);
   *size = n;
@@ -81,10 +87,14 @@ bool digest_message(const byte* message, int message_len, byte* digest,
                     unsigned int digest_len) {
   EVP_MD_CTX* mdctx;
 
-  if ((mdctx = EVP_MD_CTX_new()) == NULL) return false;
-  if (1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL)) return false;
-  if (1 != EVP_DigestUpdate(mdctx, message, message_len)) return false;
-  if (1 != EVP_DigestFinal_ex(mdctx, digest, &digest_len)) return false;
+  if ((mdctx = EVP_MD_CTX_new()) == NULL)
+    return false;
+  if (1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
+    return false;
+  if (1 != EVP_DigestUpdate(mdctx, message, message_len))
+    return false;
+  if (1 != EVP_DigestFinal_ex(mdctx, digest, &digest_len))
+    return false;
   EVP_MD_CTX_free(mdctx);
 
   return true;

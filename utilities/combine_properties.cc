@@ -27,7 +27,8 @@ DEFINE_string(in, "", "input files");
 DEFINE_string(output, "", "output file");
 
 const char* next_comma(const char* p) {
-  if (p == nullptr) return nullptr;
+  if (p == nullptr)
+    return nullptr;
   while (*p != ',' && *p != '\0') p++;
   return p;
 }
@@ -45,7 +46,8 @@ bool get_input_file_names(const string& name, int* num, string* names) {
       names[count].append(start, end - start);
     }
     count++;
-    if (*end == '\0') break;
+    if (*end == '\0')
+      break;
     start = end + 1;
   }
   *num = count;

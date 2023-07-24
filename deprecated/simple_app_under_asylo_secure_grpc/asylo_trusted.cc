@@ -79,7 +79,8 @@ key_message symmertic_key_for_protect;
 bool connected = false;
 
 void print_trust_data() {
-  if (!trust_data_initialized) return;
+  if (!trust_data_initialized)
+    return;
   printf("\nTrust data:\n");
   printf("\nPolicy key\n");
   print_key(publicPolicyKey);

@@ -151,7 +151,8 @@ int certifier::utilities::mac_output_byte_size(const char* alg_name) {
 bool certifier::utilities::write_file(const string& file_name, int size,
                                       byte* data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-  if (out < 0) return false;
+  if (out < 0)
+    return false;
   if (write(out, data, size) < 0) {
     printf("write_file: write failed\n");
     close(out);
@@ -164,8 +165,10 @@ bool certifier::utilities::write_file(const string& file_name, int size,
 int certifier::utilities::file_size(const string& file_name) {
   struct stat file_info;
 
-  if (stat(file_name.c_str(), &file_info) != 0) return -1;
-  if (!S_ISREG(file_info.st_mode)) return -1;
+  if (stat(file_name.c_str(), &file_info) != 0)
+    return -1;
+  if (!S_ISREG(file_info.st_mode))
+    return -1;
   return (int)file_info.st_size;
 }
 
@@ -233,25 +236,32 @@ bool certifier::utilities::tm_time_to_time_point(struct tm* tm_time,
 
 bool certifier::utilities::asn1_time_to_tm_time(const ASN1_TIME* s,
                                                 struct tm* tm_time) {
-  if (1 != ASN1_TIME_to_tm(s, tm_time)) return false;
+  if (1 != ASN1_TIME_to_tm(s, tm_time))
+    return false;
   return true;
 }
 
 bool certifier::utilities::get_not_before_from_cert(X509* c, time_point* tp) {
   const ASN1_TIME* asc_time = X509_getm_notBefore(c);
-  if (asc_time == nullptr) return false;
+  if (asc_time == nullptr)
+    return false;
   struct tm tm_time;
-  if (!asn1_time_to_tm_time(asc_time, &tm_time)) return false;
-  if (!tm_time_to_time_point(&tm_time, tp)) return false;
+  if (!asn1_time_to_tm_time(asc_time, &tm_time))
+    return false;
+  if (!tm_time_to_time_point(&tm_time, tp))
+    return false;
   return true;
 }
 
 bool certifier::utilities::get_not_after_from_cert(X509* c, time_point* tp) {
   const ASN1_TIME* asc_time = X509_getm_notAfter(c);
-  if (asc_time == nullptr) return false;
+  if (asc_time == nullptr)
+    return false;
   struct tm tm_time;
-  if (!asn1_time_to_tm_time(asc_time, &tm_time)) return false;
-  if (!tm_time_to_time_point(&tm_time, tp)) return false;
+  if (!asn1_time_to_tm_time(asc_time, &tm_time))
+    return false;
+  if (!tm_time_to_time_point(&tm_time, tp))
+    return false;
   return true;
 }
 
@@ -298,18 +308,30 @@ bool certifier::utilities::string_to_time(const string& s, time_point* t) {
 // 0 if t1 == t2
 // -1 if t1 < t2
 int certifier::utilities::compare_time(time_point& t1, time_point& t2) {
-  if (t1.year() > t2.year()) return 1;
-  if (t1.year() < t2.year()) return -1;
-  if (t1.month() > t2.month()) return 1;
-  if (t1.month() < t2.month()) return -1;
-  if (t1.day() > t2.day()) return 1;
-  if (t1.day() < t2.day()) return -1;
-  if (t1.hour() > t2.hour()) return 1;
-  if (t1.hour() < t2.hour()) return -1;
-  if (t1.minute() > t2.minute()) return 1;
-  if (t1.minute() < t2.minute()) return -1;
-  if (t1.seconds() > t2.seconds()) return 1;
-  if (t1.seconds() < t2.seconds()) return -1;
+  if (t1.year() > t2.year())
+    return 1;
+  if (t1.year() < t2.year())
+    return -1;
+  if (t1.month() > t2.month())
+    return 1;
+  if (t1.month() < t2.month())
+    return -1;
+  if (t1.day() > t2.day())
+    return 1;
+  if (t1.day() < t2.day())
+    return -1;
+  if (t1.hour() > t2.hour())
+    return 1;
+  if (t1.hour() < t2.hour())
+    return -1;
+  if (t1.minute() > t2.minute())
+    return 1;
+  if (t1.minute() < t2.minute())
+    return -1;
+  if (t1.seconds() > t2.seconds())
+    return 1;
+  if (t1.seconds() < t2.seconds())
+    return -1;
   return 0;
 }
 
@@ -365,25 +387,29 @@ bool certifier::utilities::add_interval_to_time_point(time_point& t_in,
     switch (d) {
       case 2:
         if (y % 4 == 0) {
-          if (d <= 29) break;
+          if (d <= 29)
+            break;
           d -= 29;
           m += 1;
           break;
         }
         break;
-        if (d <= 28) break;
+        if (d <= 28)
+          break;
         d -= 28;
         m += 1;
         break;
       case 4:
       case 6:
       case 11:
-        if (d <= 30) break;
+        if (d <= 30)
+          break;
         d -= 30;
         m += 1;
         break;
       default:
-        if (d <= 31) break;
+        if (d <= 31)
+          break;
         d -= 31;
         m += 1;
         break;
@@ -491,7 +517,8 @@ bool encrypt(byte* in, int in_len, byte* key, byte* iv, byte* out,
   out_len += len;
 
 done:
-  if (ctx != nullptr) EVP_CIPHER_CTX_free(ctx);
+  if (ctx != nullptr)
+    EVP_CIPHER_CTX_free(ctx);
   *out_size = out_len;
   return ret;
 }
@@ -523,7 +550,8 @@ bool decrypt(byte* in, int in_len, byte* key, byte* iv, byte* out,
   out_len += len;
 
 done:
-  if (ctx != nullptr) EVP_CIPHER_CTX_free(ctx);
+  if (ctx != nullptr)
+    EVP_CIPHER_CTX_free(ctx);
   *size_out = out_len;
   return ret;
 }
@@ -532,26 +560,36 @@ bool certifier::utilities::digest_message(const char* alg, const byte* message,
                                           int message_len, byte* digest,
                                           unsigned int digest_len) {
   int n = digest_output_byte_size(alg);
-  if (n < 0) return false;
-  if (n > (int)digest_len) return false;
+  if (n < 0)
+    return false;
+  if (n > (int)digest_len)
+    return false;
 
   EVP_MD_CTX* mdctx;
 
   if (strcmp(alg, "sha-256") == 0 || strcmp(alg, "sha256") == 0) {
-    if ((mdctx = EVP_MD_CTX_new()) == NULL) return false;
-    if (1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL)) return false;
+    if ((mdctx = EVP_MD_CTX_new()) == NULL)
+      return false;
+    if (1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
+      return false;
   } else if (strcmp(alg, "sha-384") == 0) {
-    if ((mdctx = EVP_MD_CTX_new()) == NULL) return false;
-    if (1 != EVP_DigestInit_ex(mdctx, EVP_sha384(), NULL)) return false;
+    if ((mdctx = EVP_MD_CTX_new()) == NULL)
+      return false;
+    if (1 != EVP_DigestInit_ex(mdctx, EVP_sha384(), NULL))
+      return false;
   } else if (strcmp(alg, "sha-512") == 0) {
-    if ((mdctx = EVP_MD_CTX_new()) == NULL) return false;
-    if (1 != EVP_DigestInit_ex(mdctx, EVP_sha512(), NULL)) return false;
+    if ((mdctx = EVP_MD_CTX_new()) == NULL)
+      return false;
+    if (1 != EVP_DigestInit_ex(mdctx, EVP_sha512(), NULL))
+      return false;
   } else {
     return false;
   }
 
-  if (1 != EVP_DigestUpdate(mdctx, message, message_len)) return false;
-  if (1 != EVP_DigestFinal_ex(mdctx, digest, &digest_len)) return false;
+  if (1 != EVP_DigestUpdate(mdctx, message, message_len))
+    return false;
+  if (1 != EVP_DigestFinal_ex(mdctx, digest, &digest_len))
+    return false;
   EVP_MD_CTX_free(mdctx);
 
   return true;
@@ -788,7 +826,8 @@ bool aes_256_gcm_decrypt(byte* in, int in_len, byte* key, byte* out,
   *out_size = plaintext_len;
 
 done:
-  if (ctx != nullptr) EVP_CIPHER_CTX_free(ctx);
+  if (ctx != nullptr)
+    EVP_CIPHER_CTX_free(ctx);
   return ret;
 }
 
@@ -886,7 +925,8 @@ bool certifier::utilities::private_key_to_public_key(const key_message& in,
 }
 
 bool make_certifier_rsa_key(int n, key_message* k) {
-  if (k == nullptr) return false;
+  if (k == nullptr)
+    return false;
 
   RSA* r = RSA_new();
   if (!generate_new_rsa_key(n, r)) {
@@ -1278,7 +1318,8 @@ bool RSA_to_key(const RSA* r, key_message* k) {
 }
 
 void print_point(const point_message& pt) {
-  if (!pt.has_x() || !pt.has_y()) return;
+  if (!pt.has_x() || !pt.has_y())
+    return;
 
   BIGNUM* x = BN_new();
   BIGNUM* y = BN_new();
@@ -1519,14 +1560,16 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   k->set_key_format("vse_key");
 
   ecc_message* ek = new ecc_message;
-  if (ek == nullptr) return false;
+  if (ek == nullptr)
+    return false;
 
   if (ecc_key == nullptr) {
     return false;
   }
 
   BN_CTX* ctx = BN_CTX_new();
-  if (ctx == nullptr) return false;
+  if (ctx == nullptr)
+    return false;
 
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
@@ -1668,7 +1711,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
 }
 
 bool make_certifier_ecc_key(int n, key_message* k) {
-  if (k == nullptr) return false;
+  if (k == nullptr)
+    return false;
   if (n == 384) {
     k->set_key_type("ecc-384-private");
   } else if (n == 256) {
@@ -1679,7 +1723,8 @@ bool make_certifier_ecc_key(int n, key_message* k) {
   }
 
   EC_KEY* ek = generate_new_ecc_key(n);
-  if (ek == nullptr) return false;
+  if (ek == nullptr)
+    return false;
 
   k->set_key_name("test-key-2");
   k->set_key_format("vse-key");
@@ -1712,15 +1757,20 @@ bool certifier::utilities::get_random(int num_bits, byte* out) {
 
 // may want to check leading 0's
 bool same_point(const point_message& pt1, const point_message& pt2) {
-  if (pt1.x().size() != pt2.x().size()) return false;
-  if (pt1.y().size() != pt2.y().size()) return false;
-  if (memcmp(pt1.x().data(), pt1.x().data(), pt1.x().size()) != 0) return false;
-  if (memcmp(pt1.y().data(), pt1.y().data(), pt1.y().size()) != 0) return false;
+  if (pt1.x().size() != pt2.x().size())
+    return false;
+  if (pt1.y().size() != pt2.y().size())
+    return false;
+  if (memcmp(pt1.x().data(), pt1.x().data(), pt1.x().size()) != 0)
+    return false;
+  if (memcmp(pt1.y().data(), pt1.y().data(), pt1.y().size()) != 0)
+    return false;
   return true;
 }
 
 bool same_key(const key_message& k1, const key_message& k2) {
-  if (k1.key_type() != k2.key_type()) return false;
+  if (k1.key_type() != k2.key_type())
+    return false;
   if (k1.key_type() == "rsa-2048-private" ||
       k1.key_type() == "rsa-2048-public" ||
       k1.key_type() == "rsa-1024-private" ||
@@ -1730,7 +1780,8 @@ bool same_key(const key_message& k1, const key_message& k2) {
       k1.key_type() == "rsa-4096-private" ||
       k1.key_type() == "rsa-4096-public") {
     string b1, b2;
-    if (!k1.has_rsa_key() || !k2.has_rsa_key()) return false;
+    if (!k1.has_rsa_key() || !k2.has_rsa_key())
+      return false;
     if (k1.rsa_key().public_modulus() != k2.rsa_key().public_modulus())
       return false;
     if (k1.rsa_key().public_exponent() != k2.rsa_key().public_exponent())
@@ -1738,7 +1789,8 @@ bool same_key(const key_message& k1, const key_message& k2) {
     return true;
   } else if (k1.key_type() == "aes-256-cbc-hmac-sha256" ||
              k1.key_type() == "aes-256-cbc" || k1.key_type() == "aes-256") {
-    if (!k1.has_secret_key_bits()) return false;
+    if (!k1.has_secret_key_bits())
+      return false;
     if (k1.secret_key_bits().size() != k2.secret_key_bits().size())
       return false;
     return (memcmp(k1.secret_key_bits().data(), k2.secret_key_bits().data(),
@@ -1759,8 +1811,10 @@ bool same_key(const key_message& k1, const key_message& k2) {
         memcmp(em1.curve_b().data(), em1.curve_b().data(),
                em2.curve_b().size()) != 0)
       return false;
-    if (!same_point(em1.base_point(), em2.base_point())) return false;
-    if (!same_point(em1.public_point(), em2.public_point())) return false;
+    if (!same_point(em1.base_point(), em2.base_point()))
+      return false;
+    if (!same_point(em1.public_point(), em2.public_point()))
+      return false;
     return true;
   } else if (k1.key_type() == "ecc-256-public" ||
              k1.key_type() == "ecc-256-private") {
@@ -1778,8 +1832,10 @@ bool same_key(const key_message& k1, const key_message& k2) {
         memcmp(em1.curve_b().data(), em1.curve_b().data(),
                em2.curve_b().size()) != 0)
       return false;
-    if (!same_point(em1.base_point(), em2.base_point())) return false;
-    if (!same_point(em1.public_point(), em2.public_point())) return false;
+    if (!same_point(em1.base_point(), em2.base_point()))
+      return false;
+    if (!same_point(em1.public_point(), em2.public_point()))
+      return false;
     return true;
   } else {
     return false;
@@ -1788,16 +1844,22 @@ bool same_key(const key_message& k1, const key_message& k2) {
 }
 
 bool same_measurement(const string& m1, const string& m2) {
-  if (m1.size() != m2.size()) return false;
-  if (memcmp((byte*)m1.data(), (byte*)m2.data(), m1.size()) != 0) return false;
+  if (m1.size() != m2.size())
+    return false;
+  if (memcmp((byte*)m1.data(), (byte*)m2.data(), m1.size()) != 0)
+    return false;
   return true;
 }
 
 bool same_property(const property& p1, const property& p2) {
-  if (p1.property_name() != p2.property_name()) return false;
-  if (p1.value_type() != p2.value_type()) return false;
-  if (p1.comparator() != p2.comparator()) return false;
-  if (p1.value_type() == "int") return p1.int_value() == p2.int_value();
+  if (p1.property_name() != p2.property_name())
+    return false;
+  if (p1.value_type() != p2.value_type())
+    return false;
+  if (p1.comparator() != p2.comparator())
+    return false;
+  if (p1.value_type() == "int")
+    return p1.int_value() == p2.int_value();
   if (p1.value_type() == "string")
     return p1.string_value() == p2.string_value();
   return true;
@@ -1805,13 +1867,15 @@ bool same_property(const property& p1, const property& p2) {
 
 const property* find_property(const string& name, const properties& p) {
   for (int i = 0; i < p.props_size(); i++) {
-    if (p.props(i).property_name() == name) return &p.props(i);
+    if (p.props(i).property_name() == name)
+      return &p.props(i);
   }
   return nullptr;
 }
 
 bool satisfying_property(const property& p1, const property& p2) {
-  if (p1.comparator() == "=") return same_property(p1, p2);
+  if (p1.comparator() == "=")
+    return same_property(p1, p2);
   if (p1.comparator() != ">=" || p1.property_name() != p2.property_name() ||
       p1.value_type() != p2.value_type() || p1.value_type() != "int") {
     return false;
@@ -1839,9 +1903,11 @@ bool satisfying_properties(const properties& p1, const properties& p2) {
 }
 
 bool satisfying_platform(const platform& p1, const platform& p2) {
-  if (p1.platform_type() != p2.platform_type()) return false;
+  if (p1.platform_type() != p2.platform_type())
+    return false;
   if (p1.has_key() && p2.has_key()) {
-    if (!same_key(p1.attest_key(), p2.attest_key())) return false;
+    if (!same_key(p1.attest_key(), p2.attest_key()))
+      return false;
   }
 
   return satisfying_properties(p1.props(), p2.props());
@@ -1850,8 +1916,10 @@ bool satisfying_platform(const platform& p1, const platform& p2) {
 bool same_properties(const properties& p1, const properties& p2) {
   for (int i = 0; i < p1.props_size(); i++) {
     const property* pp2 = find_property(p1.props(i).property_name(), p2);
-    if (pp2 == nullptr) return false;
-    if (!same_property(p1.props(i), *pp2)) return false;
+    if (pp2 == nullptr)
+      return false;
+    if (!same_property(p1.props(i), *pp2))
+      return false;
   }
   return true;
 }
@@ -1881,9 +1949,11 @@ bool same_environment(const environment& e1, const environment& e2) {
 }
 
 bool same_entity(const entity_message& e1, const entity_message& e2) {
-  if (e1.entity_type() != e2.entity_type()) return false;
+  if (e1.entity_type() != e2.entity_type())
+    return false;
 
-  if (e1.entity_type() == "key") return same_key(e1.key(), e2.key());
+  if (e1.entity_type() == "key")
+    return same_key(e1.key(), e2.key());
 
   if (e1.entity_type() == "measurement") {
     string s1;
@@ -1909,18 +1979,22 @@ bool same_vse_claim(const vse_clause& c1, const vse_clause& c2) {
     return false;
 
   if (c1.has_subject()) {
-    if (!same_entity(c1.subject(), c2.subject())) return false;
+    if (!same_entity(c1.subject(), c2.subject()))
+      return false;
   }
 
   if (c1.has_verb()) {
-    if (c1.verb() != c2.verb()) return false;
+    if (c1.verb() != c2.verb())
+      return false;
   }
 
   if (c1.has_object()) {
-    if (!same_entity(c1.object(), c2.object())) return false;
+    if (!same_entity(c1.object(), c2.object()))
+      return false;
   }
 
-  if (c1.has_clause()) return same_vse_claim(c1.clause(), c2.clause());
+  if (c1.has_clause())
+    return same_vse_claim(c1.clause(), c2.clause());
 
   return true;
 }
@@ -2096,7 +2170,8 @@ void certifier::utilities::print_key(const key_message& k) {
   }
   if (k.has_certificate() && k.certificate().size() > 0) {
     X509* cert = X509_new();
-    if (cert == nullptr) return;
+    if (cert == nullptr)
+      return;
     string in;
     in.assign((char*)k.certificate().data(), k.certificate().size());
     if (!asn1_to_x509(in, cert)) {
@@ -2109,7 +2184,8 @@ void certifier::utilities::print_key(const key_message& k) {
 }
 
 void print_key_descriptor(const key_message& k) {
-  if (!k.has_key_type()) return;
+  if (!k.has_key_type())
+    return;
 
   if (k.key_type() == "rsa-2048-private" || k.key_type() == "rsa-2048-public" ||
       k.key_type() == "rsa-3072-private" || k.key_type() == "rsa-3072-public" ||
@@ -2121,7 +2197,8 @@ void print_key_descriptor(const key_message& k) {
     }
     if (k.has_rsa_key()) {
       int l = (int)k.rsa_key().public_modulus().size();
-      if (l > 20) l = 20;
+      if (l > 20)
+        l = 20;
       if (k.rsa_key().has_public_modulus()) {
         print_bytes(l, (byte*)k.rsa_key().public_modulus().data());
       }
@@ -2152,7 +2229,8 @@ void print_key_descriptor(const key_message& k) {
 void print_property_descriptor(const property& p) {
   printf("%s: ", p.property_name().c_str());
   if (p.value_type() == "int") {
-    if (p.comparator() != "") printf(" %s", p.comparator().c_str());
+    if (p.comparator() != "")
+      printf(" %s", p.comparator().c_str());
     printf(" %" PRIu64, p.int_value());
   } else if (p.value_type() == "string") {
     printf(" %s", p.string_value().c_str());
@@ -2243,7 +2321,8 @@ void print_claim(const claim_message& claim) {
 
 void print_signed_claim(const signed_claim_message& signed_claim) {
   printf("\nSigned claim\n");
-  if (!signed_claim.has_serialized_claim_message()) return;
+  if (!signed_claim.has_serialized_claim_message())
+    return;
   claim_message cl;
   string s_claim;
   s_claim.assign((char*)signed_claim.serialized_claim_message().data(),
@@ -2282,7 +2361,8 @@ void print_signed_claim(const signed_claim_message& signed_claim) {
 }
 
 void certifier::utilities::print_entity(const entity_message& em) {
-  if (!em.has_entity_type()) printf("%s entity\n", em.entity_type().c_str());
+  if (!em.has_entity_type())
+    printf("%s entity\n", em.entity_type().c_str());
   if (em.entity_type() == "key") {
     print_key(em.key());
   } else if (em.entity_type() == "measurement") {
@@ -2417,7 +2497,8 @@ bool make_signed_claim(const char* alg, const claim_message& claim,
 
     // sign serialized claim
     key_message* psk = new key_message;
-    if (!private_key_to_public_key(key, psk)) return false;
+    if (!private_key_to_public_key(key, psk))
+      return false;
     out->set_allocated_signing_key(psk);
     out->set_signature((void*)sig, sig_size);
   } else {
@@ -2567,15 +2648,18 @@ void print_storage_info(const storage_info_message& smi) {
     printf("Storage type: %s\n", smi.storage_type().c_str());
   if (smi.has_storage_descriptor())
     printf("Storage descriptor: %s\n", smi.storage_descriptor().c_str());
-  if (smi.has_address()) printf("address: %s\n", smi.address().c_str());
-  if (smi.has_storage_key()) print_key(smi.storage_key());
+  if (smi.has_address())
+    printf("address: %s\n", smi.address().c_str());
+  if (smi.has_storage_key())
+    print_key(smi.storage_key());
 }
 
 void print_trusted_service_message(const trusted_service_message& tsm) {
   printf("\nTrusted service\n");
   if (tsm.has_trusted_service_address())
     printf("Service address: %s\n", tsm.trusted_service_address().c_str());
-  if (tsm.has_trusted_service_key()) print_key(tsm.trusted_service_key());
+  if (tsm.has_trusted_service_key())
+    print_key(tsm.trusted_service_key());
 }
 
 void print_protected_blob(protected_blob_message& pb) {
@@ -2604,7 +2688,8 @@ int add_ext(X509* cert, int nid, const char* value) {
 
   X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
   ex = X509V3_EXT_nconf_nid(NULL, &ctx, nid, value);
-  if (!ex) return 0;
+  if (!ex)
+    return 0;
 
   X509_add_ext(cert, ex, -1);
   X509_EXTENSION_free(ex);
@@ -2874,12 +2959,14 @@ bool certifier::utilities::verify_artifact(
       verify_key.key_type() == "rsa-4096-private") {
     EVP_PKEY* verify_pkey = EVP_PKEY_new();
     RSA* verify_rsa_key = RSA_new();
-    if (!key_to_RSA(verify_key, verify_rsa_key)) return false;
+    if (!key_to_RSA(verify_key, verify_rsa_key))
+      return false;
     EVP_PKEY_set1_RSA(verify_pkey, verify_rsa_key);
 
     EVP_PKEY* subject_pkey = X509_get_pubkey(&cert);
     RSA* subject_rsa_key = EVP_PKEY_get1_RSA(subject_pkey);
-    if (!RSA_to_key(subject_rsa_key, subject_key)) return false;
+    if (!RSA_to_key(subject_rsa_key, subject_key))
+      return false;
     success = (X509_verify(&cert, verify_pkey) == 1);
     RSA_free(verify_rsa_key);
     RSA_free(subject_rsa_key);
@@ -2892,12 +2979,14 @@ bool certifier::utilities::verify_artifact(
              verify_key.key_type() == "ecc-256-private") {
     EVP_PKEY* verify_pkey = EVP_PKEY_new();
     EC_KEY* verify_ecc_key = key_to_ECC(verify_key);
-    if (verify_ecc_key == nullptr) return false;
+    if (verify_ecc_key == nullptr)
+      return false;
     EVP_PKEY_set1_EC_KEY(verify_pkey, verify_ecc_key);
 
     EVP_PKEY* subject_pkey = X509_get_pubkey(&cert);
     EC_KEY* subject_ecc_key = EVP_PKEY_get1_EC_KEY(subject_pkey);
-    if (!ECC_to_key(subject_ecc_key, subject_key)) return false;
+    if (!ECC_to_key(subject_ecc_key, subject_key))
+      return false;
     success = (X509_verify(&cert, verify_pkey) == 1);
     EC_KEY_free(verify_ecc_key);
     EC_KEY_free(subject_ecc_key);
@@ -2930,7 +3019,8 @@ bool certifier::utilities::asn1_to_x509(const string& in, X509* x) {
 
   byte* p = (byte*)in.data();
   d2i_X509(&x, (const byte**)&p, len);
-  if (x == nullptr) return false;
+  if (x == nullptr)
+    return false;
   return true;
 }
 
@@ -2952,9 +3042,12 @@ bool certifier::utilities::x509_to_asn1(X509* x, string* out) {
 // little endian only
 const int max_pipe_size = 65536;
 int sized_pipe_write(int fd, int size, byte* buf) {
-  if (size > max_pipe_size) return -1;
-  if (write(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int)) return -1;
-  if (write(fd, buf, size) < size) return -1;
+  if (size > max_pipe_size)
+    return -1;
+  if (write(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
+    return -1;
+  if (write(fd, buf, size) < size)
+    return -1;
   return size;
 }
 
@@ -2989,8 +3082,10 @@ int sized_pipe_read(int fd, string* out) {
 
 // little endian only
 int sized_ssl_write(SSL* ssl, int size, byte* buf) {
-  if (SSL_write(ssl, (byte*)&size, sizeof(int)) < (int)sizeof(int)) return -1;
-  if (SSL_write(ssl, buf, size) < size) return -1;
+  if (SSL_write(ssl, (byte*)&size, sizeof(int)) < (int)sizeof(int))
+    return -1;
+  if (SSL_write(ssl, buf, size) < size)
+    return -1;
   return size;
 }
 
@@ -2999,7 +3094,8 @@ int sized_ssl_read(SSL* ssl, string* out) {
   out->clear();
   int size = 0;
   int n = SSL_read(ssl, (byte*)&size, sizeof(int));
-  if (n < 0) return n;
+  if (n < 0)
+    return n;
 
   int total = 0;
   const int read_stride = 8192;
@@ -3029,7 +3125,8 @@ int certifier::utilities::sized_socket_read(int fd, string* out) {
   const int read_stride = 8192;
   byte buf[read_stride];
 
-  if (read(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int)) return -1;
+  if (read(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
+    return -1;
 
   while (total < size) {
     if ((size - total) > read_stride)
@@ -3048,15 +3145,18 @@ int certifier::utilities::sized_socket_read(int fd, string* out) {
 
 // little endian only
 int certifier::utilities::sized_socket_write(int fd, int size, byte* buf) {
-  if (write(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int)) return -1;
-  if (write(fd, buf, size) < size) return -1;
+  if (write(fd, (byte*)&size, sizeof(int)) < (int)sizeof(int))
+    return -1;
+  if (write(fd, buf, size) < size)
+    return -1;
   return size;
 }
 
 // -----------------------------------------------------------------------
 
 bool key_from_pkey(EVP_PKEY* pkey, const string& name, key_message* k) {
-  if (pkey == nullptr) return false;
+  if (pkey == nullptr)
+    return false;
   if (EVP_PKEY_base_id(pkey) == EVP_PKEY_RSA) {
     int size = EVP_PKEY_bits(pkey);
     RSA* rsa_key = EVP_PKEY_get1_RSA(pkey);
@@ -3121,13 +3221,15 @@ cert_keys_seen_list::~cert_keys_seen_list() {
 
 key_message* cert_keys_seen_list::find_key_seen(const string& name) {
   for (int i = 0; i < size_; i++) {
-    if (entries_[i]->issuer_name_ == name) return entries_[i]->k_;
+    if (entries_[i]->issuer_name_ == name)
+      return entries_[i]->k_;
   }
   return nullptr;
 }
 
 bool cert_keys_seen_list::add_key_seen(key_message* k) {
-  if (size_ >= (max_size_ - 1)) return false;
+  if (size_ >= (max_size_ - 1))
+    return false;
   entries_[size_] = new cert_keys_seen;
   entries_[size_]->issuer_name_.assign(k->key_name());
   entries_[size_]->k_ = k;
@@ -3272,51 +3374,60 @@ bool certifier::utilities::make_root_key_with_cert(string& type, string& name,
     else if (type == "rsa-4096-private")
       n = 4096;
 
-    if (!make_certifier_rsa_key(n, k)) return false;
+    if (!make_certifier_rsa_key(n, k))
+      return false;
     k->set_key_format("vse-key");
     k->set_key_type(type);
     k->set_key_name(name);
     double duration = 5.0 * 86400.0 * 365.0;
     X509* cert = X509_new();
-    if (cert == nullptr) return false;
+    if (cert == nullptr)
+      return false;
     if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name,
                           root_name, 01L, duration, cert, true)) {
       return false;
     }
     string cert_asn;
-    if (!x509_to_asn1(cert, &cert_asn)) return false;
+    if (!x509_to_asn1(cert, &cert_asn))
+      return false;
     k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
     X509_free(cert);
   } else if (type == "ecc-384-private") {
-    if (!make_certifier_ecc_key(384, k)) return false;
+    if (!make_certifier_ecc_key(384, k))
+      return false;
     k->set_key_format("vse-key");
     k->set_key_type(type);
     k->set_key_name(name);
     double duration = 5.0 * 86400.0 * 365.0;
     X509* cert = X509_new();
-    if (cert == nullptr) return false;
+    if (cert == nullptr)
+      return false;
     if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name,
                           root_name, 01L, duration, cert, true)) {
       return false;
     }
     string cert_asn;
-    if (!x509_to_asn1(cert, &cert_asn)) return false;
+    if (!x509_to_asn1(cert, &cert_asn))
+      return false;
     k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
     X509_free(cert);
   } else if (type == "ecc-256-private") {
-    if (!make_certifier_ecc_key(256, k)) return false;
+    if (!make_certifier_ecc_key(256, k))
+      return false;
     k->set_key_format("vse-key");
     k->set_key_type(type);
     k->set_key_name(name);
     double duration = 5.0 * 86400.0 * 365.0;
     X509* cert = X509_new();
-    if (cert == nullptr) return false;
+    if (cert == nullptr)
+      return false;
     if (!produce_artifact(*k, issuer_name, root_name, *k, issuer_name,
                           root_name, 01L, duration, cert, true)) {
       return false;
     }
     string cert_asn;
-    if (!x509_to_asn1(cert, &cert_asn)) return false;
+    if (!x509_to_asn1(cert, &cert_asn))
+      return false;
     k->set_certificate((byte*)cert_asn.data(), cert_asn.size());
     X509_free(cert);
   } else {

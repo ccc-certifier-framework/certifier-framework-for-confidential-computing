@@ -67,7 +67,8 @@ bool generate_test_keys() {
   platform_key.set_key_name(FLAGS_platform_key_name);
   platform_key.set_key_type(FLAGS_platform_key_type);
   string serialized_platform_key;
-  if (!platform_key.SerializeToString(&serialized_platform_key)) return false;
+  if (!platform_key.SerializeToString(&serialized_platform_key))
+    return false;
   if (!write_file(FLAGS_platform_key_output_file,
                   serialized_platform_key.size(),
                   (byte*)serialized_platform_key.data()))
@@ -84,7 +85,8 @@ bool generate_test_keys() {
   attest_key.set_key_name(FLAGS_attest_key_name);
   attest_key.set_key_type(FLAGS_attest_key_type);
   string serialized_attest_key;
-  if (!attest_key.SerializeToString(&serialized_attest_key)) return false;
+  if (!attest_key.SerializeToString(&serialized_attest_key))
+    return false;
   if (!write_file(FLAGS_attest_key_output_file, serialized_attest_key.size(),
                   (byte*)serialized_attest_key.data()))
     return false;
@@ -107,10 +109,12 @@ bool generate_policy_key() {
   if (!make_root_key_with_cert(FLAGS_policy_key_type, FLAGS_policy_key_name,
                                FLAGS_policy_authority_name, &policy_key))
     return false;
-  if (!private_key_to_public_key(policy_key, &policy_pk)) return false;
+  if (!private_key_to_public_key(policy_key, &policy_pk))
+    return false;
 
   string serialized_key;
-  if (!policy_key.SerializeToString(&serialized_key)) return false;
+  if (!policy_key.SerializeToString(&serialized_key))
+    return false;
   if (!write_file(FLAGS_policy_key_output_file, serialized_key.size(),
                   (byte*)serialized_key.data()))
     return false;

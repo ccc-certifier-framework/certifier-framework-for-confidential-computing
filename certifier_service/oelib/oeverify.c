@@ -9,7 +9,8 @@ static bool oe_verifier_initialized = false;
 static const oe_claim_t* _find_claim(const oe_claim_t* claims,
                                      size_t claims_size, const char* name) {
   for (size_t i = 0; i < claims_size; i++) {
-    if (strcmp(claims[i].name, name) == 0) return &(claims[i]);
+    if (strcmp(claims[i].name, name) == 0)
+      return &(claims[i]);
   }
   return NULL;
 }
@@ -99,6 +100,7 @@ bool oe_host_verify_evidence(uint8_t* evidence, size_t evidence_size,
   }
 
 err:
-  if (claims) oe_free_claims(claims, claims_length);
+  if (claims)
+    oe_free_claims(claims, claims_length);
   return result;
 }

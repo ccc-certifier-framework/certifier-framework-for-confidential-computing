@@ -73,7 +73,8 @@ bool sealing_test() {
                   sealed))
     return false;
 
-  if (!islet_Unseal(sealed_len, sealed, &unsealed_len, unsealed)) return false;
+  if (!islet_Unseal(sealed_len, sealed, &unsealed_len, unsealed))
+    return false;
 
   printf("Success sealing round trip.\n");
 
@@ -83,7 +84,8 @@ bool sealing_test() {
 int main() {
   bool rv = attestation_test();
   printf("Attestation test %s.\n", (rv ? "succeeded" : "failed"));
-  if (!rv) return -1;
+  if (!rv)
+    return -1;
 
   rv = sealing_test();
   printf("Sealing test %s.\n", (rv ? "succeeded" : "failed"));
