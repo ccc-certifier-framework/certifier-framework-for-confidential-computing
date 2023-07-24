@@ -132,7 +132,8 @@ static bool certifier_notification(cc_trust_data* app_trust_data,
 
 static char* trim_space(char* str, int size) {
   int end = strnlen(str, size) - 1;
-  while (isspace(str[0])) str++;
+  while (isspace(str[0]))
+    str++;
   while (isspace(str[end])) {
     str[end] = '\0';
     end--;

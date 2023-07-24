@@ -161,7 +161,8 @@ bool test_init_and_recover_containers(bool print_all) {
   key_message storage_key;
   int size_storage_key = 64;
   byte sk[size_storage_key];
-  for (int i = 0; i < 64; i++) sk[i] = i % 16;
+  for (int i = 0; i < 64; i++)
+    sk[i] = i % 16;
   storage_key.set_secret_key_bits((void*)sk, size_storage_key);
   time_point t_nb;
   time_point t_na;

@@ -96,7 +96,8 @@ static const oe_claim_t* _find_claim(const oe_claim_t* claims,
 #ifdef OE_DEBUG
 static void _print_hex(const uint8_t* data, size_t size) {
   int i;
-  for (i = 0; i < size; i++) printf("%02x", data[i]);
+  for (i = 0; i < size; i++)
+    printf("%02x", data[i]);
 }
 #endif
 

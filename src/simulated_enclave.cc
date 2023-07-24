@@ -83,7 +83,8 @@ bool simulated_Init(const string& asn1_policy_cert,
   my_measurement.assign((char*)m, m_size);
 
   // For reproducability, make this a fixed key
-  for (int i = 0; i < sealing_key_size; i++) sealing_key[i] = (5 * i) % 16;
+  for (int i = 0; i < sealing_key_size; i++)
+    sealing_key[i] = (5 * i) % 16;
 
   // get attest key
   int at_size = file_size(attest_key_file);
@@ -311,9 +312,11 @@ bool simulated_GetParentEvidence(string* out) { return false; }
 bool simulator_init() {
   // makeup attestation key and measurement and sealing key
   byte m[simulated_measurment_size];
-  for (int i = 0; i < simulated_measurment_size; i++) m[i] = (byte)i;
+  for (int i = 0; i < simulated_measurment_size; i++)
+    m[i] = (byte)i;
   my_measurement.assign((char*)m, simulated_measurment_size);
-  for (int i = 0; i < sealing_key_size; i++) sealing_key[i] = (5 * i) % 16;
+  for (int i = 0; i < sealing_key_size; i++)
+    sealing_key[i] = (5 * i) % 16;
 
   rsa_attestation_key = RSA_new();
   if (!generate_new_rsa_key(2048, rsa_attestation_key)) {

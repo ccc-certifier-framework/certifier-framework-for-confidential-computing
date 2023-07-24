@@ -34,7 +34,8 @@ bool test_sev(bool print_all) {
   string enclave_type("sev-enclave");
   string enclave_id("test-enclave");
   byte data[data_size];
-  for (int i = 0; i < data_size; i++) data[i] = i;
+  for (int i = 0; i < data_size; i++)
+    data[i] = i;
 
   byte sealed[512];
   int sealed_size = 512;

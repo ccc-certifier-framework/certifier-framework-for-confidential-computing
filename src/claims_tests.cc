@@ -92,7 +92,8 @@ bool test_signed_claims(bool print_all) {
   // make up rsa private keys and measurement
   string my_measurement;
   byte m[32];
-  for (int i = 0; i < 32; i++) m[i] = i;
+  for (int i = 0; i < 32; i++)
+    m[i] = i;
   my_measurement.assign((char*)m, 32);
 
   key_message my_rsa_key;

@@ -31,7 +31,8 @@ int main(int an, char** av) {
 
   const int buf_size = 100;
   byte buf[buf_size];
-  for (int i = 0; i < buf_size; i++) buf[i] = (byte)2 * i;
+  for (int i = 0; i < buf_size; i++)
+    buf[i] = (byte)2 * i;
 
   bool res = true;
   const int num_tests = 20;

@@ -59,7 +59,8 @@ bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #endif
 
 inline void gramine_print_bytes(int n, byte* buf) {
-  for (int i = 0; i < n; i++) printf("%02x", buf[i]);
+  for (int i = 0; i < n; i++)
+    printf("%02x", buf[i]);
 }
 
 typedef struct GramineFunctions {

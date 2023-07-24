@@ -33,7 +33,8 @@ bool make_enclave_name(string enclave_type, string* enclave_name) {
 
   if (enclave_type != "simulated-enclave")
     return false;
-  for (int i = 0; i < measurement_size; i++) m[i] = i;
+  for (int i = 0; i < measurement_size; i++)
+    m[i] = i;
   char hex[65];
   int pos = 0;
   hex[64] = 0;
