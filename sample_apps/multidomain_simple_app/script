@@ -41,26 +41,46 @@ make -f multidomain_example_app.mak
 cd $MULTIDOMAIN_EXAMPLE_DIR/provisioning
 
 #policyKey says platformKey is-trused-for-attestation
+
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
   --verb="is-trusted-for-attestation" --output=ts1.bin
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-  --verb="says" --clause=ts1.bin --output=vse_policy1.bin
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1.bin \
-  --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
+  --verb="says" --clause=ts1.bin --output=vse_policy1a.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1a.bin \
+  --duration=9000 --private_key_file=server_policy_key_file.bin --output=signed_claim_1a.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client_policy_key_file.bin \
+  --verb="says" --clause=ts1.bin --output=vse_policy1b.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1b.bin \
+  -$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+  --measurement_subject=multidomain_client_app.measurement --verb="is-trusted" \
+  --output=ts2b.bin-duration=9000 --private_key_file=client_policy_key_file.bin --output=signed_claim_1b.bin
 
 # policy key says measurement is-trusted
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../example_app.exe \
-      --output=example_app.measurement
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
-  --measurement_subject=example_app.measurement --verb="is-trusted" \
-  --output=ts2.bin
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-  --verb="says" --clause=ts2.bin --output=vse_policy2.bin
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
-  --vse_file=vse_policy2.bin --duration=9000 \
-  --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
+$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../multidomain_client_app.exe \
+      --output=multidomain_client_app.measurement
+$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../multidomain_server_app.exe \
+      --output=multidomain_server_app.measurement
 
-$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+  --measurement_subject=multidomain_server_app.measurement --verb="is-trusted" \
+  --output=ts2a.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
+  --verb="says" --clause=ts2a.bin --output=vse_policy2a.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
+  --vse_file=vse_policy2a.bin --duration=9000 \
+  --private_key_file=server_policy_key_file.bin --output=signed_claim_2a.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+  --measurement_subject=multidomain_client_app.measurement --verb="is-trusted" \
+  --output=ts2b.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client_policy_key_file.bin \
+  --verb="says" --clause=ts2b.bin --output=vse_policy2b.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
+  --vse_file=vse_policy2b.bin --duration=9000 \
+  --private_key_file=server_policy_key_file.bin --output=signed_claim_2b.bin
+
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1a.bin,signed_claim_1b.bin,signed_claim_2a.bin,signed_claim_2b.bin \
   --output=policy.bin
 
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
@@ -78,12 +98,14 @@ $CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_en
 # provision service and apps
 cd $MULTIDOMAIN_EXAMPLE_DIR
 mkdir -p app1_data app2_data
-mkdir -p service
+mkdir -p client_service
+mkdir -p sever_service
 
 # provision service and apps
 cd $MULTIDOMAIN_EXAMPLE_DIR/provisioning
 
-cp ./* $MULTIDOMAIN_EXAMPLE_DIR/service
+cp ./* $MULTIDOMAIN_EXAMPLE_DIR/client_service
+cp ./* $MULTIDOMAIN_EXAMPLE_DIR/server_service
 cp ./* $MULTIDOMAIN_EXAMPLE_DIR/app1_data
 cp ./* $MULTIDOMAIN_EXAMPLE_DIR/app2_data
 
@@ -98,34 +120,37 @@ cd $CERTIFIER_PROTOTYPE/certifier_service
 go build simpleserver.go
 
 #run server
-cd $MULTIDOMAIN_EXAMPLE_DIR/service
+cd $MULTIDOMAIN_EXAMPLE_DIR/server_service
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+      --policyFile=policy.bin --readPolicy=true
+cd $MULTIDOMAIN_EXAMPLE_DIR/client_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
       --policyFile=policy.bin --readPolicy=true
 
 # initialize client app
 cd $MULTIDOMAIN_EXAMPLE_DIR
 $MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=cold-init --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
+      --operation=cold-init --data_dir=./app1_data/ --measurement_file="multidomain_client_app.measurement" \
       --policy_store_file=policy_store
 # get client app certified
 $MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=get-certifier --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
+      --operation=get-certifier --data_dir=./app1_data/ --measurement_file="multidomain_client_app.measurement" \
       --policy_store_file=policy_store
 
 # initialize server app
 $MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=cold-init --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
+      --operation=cold-init --data_dir=./app2_data/ --measurement_file="multidomain_server_app.measurement" \
       --policy_store_file=policy_store
 # get server app certified
 $MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true \
-      --operation=get-certifier --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
+      --operation=get-certifier --data_dir=./app2_data/ --measurement_file="multidomain_server_app.measurement" \
        --policy_store_file=policy_store
 
 #run the app
 cd $MULTIDOMAIN_EXAMPLE_DIR
 $MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
-      --policy_store_file=policy_store --measurement_file="example_app.measurement"
+      --policy_store_file=policy_store --measurement_file="multidomain_server_app.measurement"
 cd $MULTIDOMAIN_EXAMPLE_DIR
 $MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
-      --policy_store_file=policy_store --measurement_file="example_app.measurement"
+      --policy_store_file=policy_store --measurement_file="multidomain_client_app.measurement"
 
