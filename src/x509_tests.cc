@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,21 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "certifier.h"
-#include "support.h"
-#include "simulated_enclave.h"
 #include "application_enclave.h"
+#include "certifier.h"
+#include "simulated_enclave.h"
+#include "support.h"
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
 bool test_x_509_chain(bool print_all) {
-
   cert_keys_seen_list list(20);
 
   // Make up three level cert chain
   key_message k1;
-  if (!make_certifier_rsa_key(4096,  &k1)) {
+  if (!make_certifier_rsa_key(4096, &k1)) {
     return false;
   }
   k1.set_key_name("ark-key");
@@ -36,7 +36,7 @@ bool test_x_509_chain(bool print_all) {
     return false;
   }
   key_message k2;
-  if (!make_certifier_rsa_key(4096,  &k2)) {
+  if (!make_certifier_rsa_key(4096, &k2)) {
     return false;
   }
   k2.set_key_name("ask-key");
@@ -46,7 +46,7 @@ bool test_x_509_chain(bool print_all) {
     return false;
   }
   key_message k3;
-  if (!make_certifier_rsa_key(4096,  &k3)) {
+  if (!make_certifier_rsa_key(4096, &k3)) {
     return false;
   }
   k3.set_key_name("vcek-key");
@@ -75,9 +75,9 @@ bool test_x_509_chain(bool print_all) {
   string vcek_str("vcek-key");
   string vcek_desc_str("AMD-vcek-key");
 
-  X509* cert1 =X509_new();
-  if (!produce_artifact(k1, ark_str, ark_desc_str, pub_k1,
-            ark_str, ark_desc_str, 1L, 150000.0, cert1, true)) {
+  X509* cert1 = X509_new();
+  if (!produce_artifact(k1, ark_str, ark_desc_str, pub_k1, ark_str,
+                        ark_desc_str, 1L, 150000.0, cert1, true)) {
     return false;
   }
   if (print_all) {
@@ -86,9 +86,9 @@ bool test_x_509_chain(bool print_all) {
     printf("\n");
   }
 
-  X509* cert2 =X509_new();
-  if (!produce_artifact(k1, ark_str, ark_desc_str, pub_k2,
-            ask_str, ask_desc_str, 1L, 150000.0, cert2, false)) {
+  X509* cert2 = X509_new();
+  if (!produce_artifact(k1, ark_str, ark_desc_str, pub_k2, ask_str,
+                        ask_desc_str, 1L, 150000.0, cert2, false)) {
     return false;
   }
   if (print_all) {
@@ -97,9 +97,9 @@ bool test_x_509_chain(bool print_all) {
     printf("\n");
   }
 
-  X509* cert3 =X509_new();
-  if (!produce_artifact(k2, ask_str, ask_desc_str, pub_k3,
-            vcek_str, vcek_desc_str, 1L, 150000.0, cert3, false)) {
+  X509* cert3 = X509_new();
+  if (!produce_artifact(k2, ask_str, ask_desc_str, pub_k3, vcek_str,
+                        vcek_desc_str, 1L, 150000.0, cert3, false)) {
     return false;
   }
   if (print_all) {
@@ -146,8 +146,12 @@ bool test_x_509_chain(bool print_all) {
   }
 
   if (print_all) {
-    printf("Time before: "); print_time_point(t1_before); printf("\n");
-    printf("Time after : "); print_time_point(t1_after); printf("\n");
+    printf("Time before: ");
+    print_time_point(t1_before);
+    printf("\n");
+    printf("Time after : ");
+    print_time_point(t1_after);
+    printf("\n");
   }
 
   // pub key from second cert
@@ -216,10 +220,11 @@ bool test_x_509_chain(bool print_all) {
   }
 
   vse_clause cl;
-  if (!construct_vse_attestation_from_cert(*pub_subject_key3, *issuer3_key, &cl)) {
-      printf("Can't construct vse attestation from cert\n");
-      return false;
-   }
+  if (!construct_vse_attestation_from_cert(*pub_subject_key3, *issuer3_key,
+                                           &cl)) {
+    printf("Can't construct vse attestation from cert\n");
+    return false;
+  }
 
   if (print_all) {
     printf("Statement: \n");
@@ -234,11 +239,10 @@ bool test_x_509_chain(bool print_all) {
 }
 
 bool test_x_509_sign(bool print_all) {
-
   string issuer_common_name("Tester-cert");
   string issuer_desc("JLM");
   key_message k1;
-  if (!make_certifier_rsa_key(4096,  &k1)) {
+  if (!make_certifier_rsa_key(4096, &k1)) {
     return false;
   }
   k1.set_key_name(issuer_common_name);
@@ -248,9 +252,10 @@ bool test_x_509_sign(bool print_all) {
     return false;
   }
 
-  X509* cert1 =X509_new();
+  X509* cert1 = X509_new();
   if (!produce_artifact(k1, issuer_common_name, issuer_desc, pub_k1,
-         issuer_common_name, issuer_desc, 1L, 150000.0, cert1, true)) {
+                        issuer_common_name, issuer_desc, 1L, 150000.0, cert1,
+                        true)) {
     return false;
   }
   if (print_all) {
@@ -288,7 +293,7 @@ bool test_sev_certs(bool print_all) {
     return false;
   }
 
-  X509* cert1 =X509_new();
+  X509* cert1 = X509_new();
   if (!asn1_to_x509(ark_der_str, cert1)) {
     return false;
   }
@@ -303,10 +308,9 @@ bool test_sev_certs(bool print_all) {
       printf("ark cert does not verify (%d)\n", ret);
     }
   }
-  if (!success)
-    return false;
+  if (!success) return false;
 
-  X509* cert2 =X509_new();
+  X509* cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
     return false;
   }
@@ -320,8 +324,7 @@ bool test_sev_certs(bool print_all) {
       printf("ask cert does not verify (%d)\n", ret);
     }
   }
-  if (!success)
-    return false;
+  if (!success) return false;
 
   key_message ark_key;
   if (!x509_to_public_key(cert1, &ark_key)) {
@@ -374,7 +377,7 @@ bool test_real_sev_certs(bool print_all) {
     return false;
   }
 
-  X509* cert1 =X509_new();
+  X509* cert1 = X509_new();
   if (!asn1_to_x509(ark_der_str, cert1)) {
     return false;
   }
@@ -394,10 +397,9 @@ bool test_real_sev_certs(bool print_all) {
       printf("ark cert does not verify (%d)\n", ret);
     }
   }
-  if (!success)
-    return false;
+  if (!success) return false;
 
-  X509* cert2 =X509_new();
+  X509* cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
     return false;
   }
@@ -417,10 +419,9 @@ bool test_real_sev_certs(bool print_all) {
       printf("ask cert does not verify (%d)\n", ret);
     }
   }
-  if (!success)
-    return false;
+  if (!success) return false;
 
-  X509* cert3 =X509_new();
+  X509* cert3 = X509_new();
   if (!asn1_to_x509(vcek_der_str, cert3)) {
     return false;
   }
@@ -439,9 +440,7 @@ bool test_real_sev_certs(bool print_all) {
       printf("vcek cert does not verify (%d)\n", ret);
     }
   }
-  if (!success)
-    return false;
-
+  if (!success) return false;
 
   key_message ark_key;
   if (!x509_to_public_key(cert1, &ark_key)) {
@@ -482,7 +481,6 @@ bool test_real_sev_certs(bool print_all) {
 
 // Should only run is SEV_SNP is defined
 bool test_sev_request(bool print_all) {
-
   if (print_all) {
     printf("\n\ntest_sev_request\n\n");
   }
@@ -506,7 +504,7 @@ bool test_sev_request(bool print_all) {
     return false;
   }
 
-  X509* cert1 =X509_new();
+  X509* cert1 = X509_new();
   if (!asn1_to_x509(ark_der_str, cert1)) {
     return false;
   }
@@ -521,10 +519,9 @@ bool test_sev_request(bool print_all) {
       printf("ark cert does not verify (%d)\n", ret);
     }
   }
-  if (!success)
-    return false;
+  if (!success) return false;
 
-  X509* cert2 =X509_new();
+  X509* cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
     return false;
   }
@@ -539,10 +536,9 @@ bool test_sev_request(bool print_all) {
       printf("ask cert does not verify (%d)\n", ret);
     }
   }
-  if (!success)
-    return false;
+  if (!success) return false;
 
-  X509* cert3 =X509_new();
+  X509* cert3 = X509_new();
   if (!asn1_to_x509(vcek_der_str, cert3)) {
     return false;
   }
@@ -556,8 +552,7 @@ bool test_sev_request(bool print_all) {
       printf("vcek cert does not verify (%d)\n", ret);
     }
   }
-  if (!success)
-    return false;
+  if (!success) return false;
 
   key_message ark_key;
   if (!x509_to_public_key(cert1, &ark_key)) {
@@ -648,11 +643,10 @@ bool test_sev_request(bool print_all) {
   ev->set_evidence_type("cert");
   ev->set_serialized_evidence(vcek_der_str);
 
-  if (!make_attestation_user_data(enclave_type,
-          auth_public_key, &ud)) {
-      printf("Can't make user data (1)\n");
-      return false;
-    }
+  if (!make_attestation_user_data(enclave_type, auth_public_key, &ud)) {
+    printf("Can't make user data (1)\n");
+    return false;
+  }
   if (!ud.SerializeToString(&serialized_ud)) {
     printf("Can't serialize user data\n");
     return false;
@@ -660,7 +654,8 @@ bool test_sev_request(bool print_all) {
 
   int size_out = 8192;
   byte out[size_out];
-  if (!Attest(enclave_type, serialized_ud.size(), (byte*) serialized_ud.data(), &size_out, out)) {
+  if (!Attest(enclave_type, serialized_ud.size(), (byte*)serialized_ud.data(),
+              &size_out, out)) {
     printf("Attest failed\n");
     return false;
   }
@@ -671,8 +666,7 @@ bool test_sev_request(bool print_all) {
   ev->set_serialized_evidence(at_str);
 
   byte m[48];
-  for (int i = 0; i < 48; i++)
-    m[i] = (i%8) + 1;
+  for (int i = 0; i < 48; i++) m[i] = (i % 8) + 1;
   string measurement_str;
   measurement_str.assign((char*)m, 48);
 
@@ -718,17 +712,12 @@ bool test_sev_request(bool print_all) {
   time_point t_na;
   double hours_to_add = 365.0 * 24.0;
 
-  if (!time_now(&t_nb))
-    return false;
-  if (!time_to_string(t_nb, &s_nb))
-    return false;
-  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
-    return false;
+  if (!time_now(&t_nb)) return false;
+  if (!time_to_string(t_nb, &s_nb)) return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na)) return false;
 
-  if (!time_to_string(t_nb, &s_nb))
-    return false;
-  if (!time_to_string(t_na, &s_na))
-    return false;
+  if (!time_to_string(t_nb, &s_nb)) return false;
+  if (!time_to_string(t_na, &s_na)) return false;
 
   string tm1_ser_vse;
   if (!c2.SerializeToString(&tm1_ser_vse)) {
@@ -739,13 +728,15 @@ bool test_sev_request(bool print_all) {
   string format("vse-clause");
   string descriptor;
   claim_message cm1;
-  if (!make_claim(tm1_ser_vse.size(), (byte*) tm1_ser_vse.data(), format, descriptor, s_nb, s_na, &cm1)) {
+  if (!make_claim(tm1_ser_vse.size(), (byte*)tm1_ser_vse.data(), format,
+                  descriptor, s_nb, s_na, &cm1)) {
     printf("serialize claim failed (1)\n");
     return false;
   }
 
   signed_claim_message* scm1 = trusted_measurements.add_claims();
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm1, policy_private_key, scm1)) {
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm1, policy_private_key,
+                         scm1)) {
     printf("sign claim failed (3)\n");
     return false;
   }
@@ -775,13 +766,15 @@ bool test_sev_request(bool print_all) {
     return false;
   }
   claim_message cm2;
-  if (!make_claim(tm2_ser_vse.size(), (byte*) tm2_ser_vse.data(), format, descriptor, s_nb, s_na, &cm2)) {
+  if (!make_claim(tm2_ser_vse.size(), (byte*)tm2_ser_vse.data(), format,
+                  descriptor, s_nb, s_na, &cm2)) {
     printf("serialize claim failed (3)\n");
     return false;
   }
 
   signed_claim_message* scm2 = trusted_platforms.add_claims();
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm2, policy_private_key, scm2)) {
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm2, policy_private_key,
+                         scm2)) {
     printf("sign claim failed (4)\n");
     return false;
   }
@@ -796,14 +789,14 @@ bool test_sev_request(bool print_all) {
     printf("\nEvidence package\n");
     print_evidence_package(evp);
     printf("\n");
-
   }
 
   return true;
 
   string purpose("authentication");
   if (!validate_evidence(evidence_descriptor, trusted_platforms,
-        trusted_measurements, purpose, evp, policy_public_key)) {
+                         trusted_measurements, purpose, evp,
+                         policy_public_key)) {
     printf("validate_evidence\n");
     return false;
   }

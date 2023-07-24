@@ -5,10 +5,11 @@
 
 #include <stdint.h>
 
-#define BITS_PER_BYTE  (8)
+#define BITS_PER_BYTE (8)
 
-#define SECG_EC_P384_POINT_SIZE_BITS  (384)
-#define SECG_EC_P384_POINT_SIZE  ((SECG_EC_P384_POINT_SIZE_BITS)/(BITS_PER_BYTE))
+#define SECG_EC_P384_POINT_SIZE_BITS (384)
+#define SECG_EC_P384_POINT_SIZE \
+  ((SECG_EC_P384_POINT_SIZE_BITS) / (BITS_PER_BYTE))
 
 struct ec_point_384 {
   uint8_t w;
@@ -21,4 +22,4 @@ union secg_ec_point_384 {
   uint8_t bytes[sizeof(struct ec_point_384)];
 };
 
-#endif  /* SECG_SEC1_H */
+#endif /* SECG_SEC1_H */

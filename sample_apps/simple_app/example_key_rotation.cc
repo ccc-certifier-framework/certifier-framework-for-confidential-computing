@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-#include <gflags/gflags.h>
-
-#include <sys/socket.h>
 #include <arpa/inet.h>
+#include <gflags/gflags.h>
+#include <gtest/gtest.h>
+#include <netdb.h>
 #include <netinet/in.h>
-#include  <netdb.h>
-#include <openssl/ssl.h>
-#include <openssl/rsa.h>
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/hmac.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#include <sys/socket.h>
 
 #include "certifier_framework.h"
 #include "certifier_utilities.h"
@@ -33,8 +33,9 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-// operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server
-DEFINE_bool(print_all, false,  "verbose");
+// operations are: cold-init, warm-restart, get-certifier, run-app-as-client,
+// run-app-as-server
+DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(operation, "", "operation");
 
 DEFINE_string(policy_host, "localhost", "address for policy server");
@@ -43,10 +44,10 @@ DEFINE_string(data_dir, "./app1_data/", "directory for application data");
 
 DEFINE_string(policy_store_file, "store.bin", "policy store file name");
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin", "platform endorsement of attest key");
+DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin",
+              "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "example_app.measurement", "measurement");
-
 
 // The test demonstrates key rotation of the public key
 // For an example of rotating keys for protect_blob, see the certifier_tests.
@@ -62,9 +63,13 @@ int main(int an, char** av) {
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf("example_key_rotation.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
+    printf(
+        "example_key_rotation.exe --print_all=true|false --operation=op "
+        "--policy_host=policy-host-address --policy_port=policy-host-port\n");
     printf("\t --data_dir=-directory-for-app-data\n");
-    printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
+    printf(
+        "\t --policy_cert_file=self-signed-policy-cert-file-name "
+        "--policy_store_file=policy-store-file-name\n");
     return 0;
   }
 
@@ -82,7 +87,8 @@ int main(int an, char** av) {
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert)) {
+  if (!app_trust_data->init_policy_key(initialized_cert_size,
+                                       initialized_cert)) {
     printf("Can't init policy key\n");
     return 1;
   }
@@ -97,8 +103,9 @@ int main(int an, char** av) {
   string attest_endorsement_file_name(FLAGS_data_dir);
   attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
-  if (!app_trust_data->initialize_simulated_enclave_data(attest_key_file_name,
-      measurement_file_name, attest_endorsement_file_name)) {
+  if (!app_trust_data->initialize_simulated_enclave_data(
+          attest_key_file_name, measurement_file_name,
+          attest_endorsement_file_name)) {
     printf("Can't init simulated enclave\n");
     return 1;
   }
@@ -145,8 +152,8 @@ int main(int an, char** av) {
   time_point two_days_from_now;
 
   if (!get_not_after_from_cert(x509_cert, &expires)) {
-      printf("Can't get expitation time");
-      return 1;
+    printf("Can't get expitation time");
+    return 1;
   }
 
   if (!time_now(&now)) {
@@ -163,7 +170,8 @@ int main(int an, char** av) {
     return 0;
   }
 
-  if (!app_trust_data->recertify_me(FLAGS_policy_host, FLAGS_policy_port, true)) {
+  if (!app_trust_data->recertify_me(FLAGS_policy_host, FLAGS_policy_port,
+                                    true)) {
     printf("recertify me failed\n");
     return 0;
   }

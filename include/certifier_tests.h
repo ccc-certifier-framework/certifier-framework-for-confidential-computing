@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,10 +20,10 @@
 // which defines the SWIG interface for the Python bindings for the
 // certifier_tests.so shared library.
 
-#include "primitive_tests.h"
 #include "claims_tests.h"
+#include "primitive_tests.h"
 #include "store_tests.h"
-#include "x509_tests.h"
 #include "support_tests.h"
+#include "x509_tests.h"
 
 #endif  // __CERTIFIER_TESTS_H__
