@@ -56,7 +56,8 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 static void reverse_bytes(uint8_t *buffer, size_t size) {
-  if (!buffer || size == 0) return;
+  if (!buffer || size == 0)
+    return;
   for (uint8_t *start = buffer, *end = buffer + size - 1; start < end;
        start++, end--) {
     uint8_t temp = *start;
@@ -196,7 +197,8 @@ int sev_ecdsa_sign(const void *msg, size_t msg_size, EVP_PKEY *key,
   /* Store the R & S components of the ID block signature */
   rc = get_ecdsa_sig_rs_bytes(ossl_sig, sig_size, sig->r, sig->s, &r_size,
                               &s_size);
-  if (rc != EXIT_SUCCESS) goto out_sig;
+  if (rc != EXIT_SUCCESS)
+    goto out_sig;
 
   reverse_bytes(sig->r, r_size);
   reverse_bytes(sig->s, s_size);
@@ -406,7 +408,8 @@ exit:
 EVP_PKEY *get_simulated_vcek_key() {
   EVP_PKEY *key = NULL;
   int rc = read_key_file(SEV_ECDSA_PUB_KEY, &key, false);
-  if (rc != EXIT_SUCCESS) return nullptr;
+  if (rc != EXIT_SUCCESS)
+    return nullptr;
   return key;
 }
 #endif  // SEV_DUMMY_GUEST
@@ -451,7 +454,8 @@ int sev_get_report(const uint8_t *data, size_t data_size,
   }
 
   memset(&req, 0, sizeof(req));
-  if (data) memcpy(&req.user_data, data, data_size);
+  if (data)
+    memcpy(&req.user_data, data, data_size);
 
   memset(&resp, 0, sizeof(resp));
   memset(&guest_req, 0, sizeof(guest_req));
@@ -585,9 +589,11 @@ bool sev_get_final_keys(int final_key_size, byte *final_key,
   opt.do_root_key = root_key;
   opt.fields = fields;
 
-  if (EXIT_SUCCESS != sev_request_key(&opt, key, size)) return false;
+  if (EXIT_SUCCESS != sev_request_key(&opt, key, size))
+    return false;
 
-  if (!kdf(size, key, 100, final_key_size, final_key)) return false;
+  if (!kdf(size, key, 100, final_key_size, final_key))
+    return false;
   return true;
 }
 
@@ -602,7 +608,8 @@ bool sev_Seal(int in_size, byte *in, int *size_out, byte *out) {
 #endif
 
   byte iv[32];
-  if (!get_random(256, iv)) return false;
+  if (!get_random(256, iv))
+    return false;
 
   // Encrypt and integrity protect
   if (!authenticated_encrypt("aes-256-cbc-hmac-sha256", in, in_size, final_key,
@@ -848,7 +855,8 @@ exit:
 int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
   FILE *pFile = NULL;
   pFile = fopen(file_name, "re");
-  if (!pFile) return EXIT_FAILURE;
+  if (!pFile)
+    return EXIT_FAILURE;
 
   // printf("Reading from file: %s\n", file_name.c_str());
   *x509_cert = PEM_read_X509(pFile, NULL, NULL, NULL);
@@ -870,7 +878,8 @@ static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert,
   do {
     // Create the store
     store = X509_STORE_new();
-    if (!store) break;
+    if (!store)
+      break;
 
     // Add the parent cert to the store
     if (X509_STORE_add_cert(store, parent_cert) != 1) {
@@ -912,14 +921,17 @@ static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert,
           "Error verifying cert: %s\n",
           X509_verify_cert_error_string(X509_STORE_CTX_get_error(store_ctx)));
 
-    if (ret != 1) break;
+    if (ret != 1)
+      break;
 
     ret = true;
   } while (0);
 
   // Cleanup
-  if (store_ctx) X509_STORE_CTX_free(store_ctx);
-  if (store) X509_STORE_free(store);
+  if (store_ctx)
+    X509_STORE_CTX_free(store_ctx);
+  if (store)
+    X509_STORE_free(store);
 
   return ret;
 }

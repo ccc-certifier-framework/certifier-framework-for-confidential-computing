@@ -67,7 +67,8 @@ certifier::framework::policy_store::~policy_store() {
 }
 
 const key_message* policy_store::get_policy_key() {
-  if (!policy_key_valid_) return nullptr;
+  if (!policy_key_valid_)
+    return nullptr;
   return &policy_key_;
 }
 
@@ -88,7 +89,8 @@ unsigned certifier::framework::policy_store::get_num_entries() {
 bool certifier::framework::policy_store::add_entry(const string& tag,
                                                    const string& type,
                                                    const string& value) {
-  if (num_ents_ >= max_num_ents_) return false;
+  if (num_ents_ >= max_num_ents_)
+    return false;
   entry_[num_ents_] = new store_entry;
   entry_[num_ents_]->tag_ = tag;
   entry_[num_ents_]->type_ = type;
@@ -100,35 +102,41 @@ bool certifier::framework::policy_store::add_entry(const string& tag,
 int certifier::framework::policy_store::find_entry(const string& tag,
                                                    const string& type) {
   for (unsigned i = 0; i < num_ents_; i++) {
-    if (entry_[i]->tag_ == tag && entry_[i]->type_ == type) return (int)i;
+    if (entry_[i]->tag_ == tag && entry_[i]->type_ == type)
+      return (int)i;
   }
   return -1;
 }
 
 bool certifier::framework::policy_store::get(unsigned ent, string* v) {
-  if (ent >= num_ents_) return false;
+  if (ent >= num_ents_)
+    return false;
   *v = entry_[ent]->value_;
   return true;
 }
 
 bool certifier::framework::policy_store::put(unsigned ent, const string v) {
-  if (ent < 0 || ent >= num_ents_) return false;
+  if (ent < 0 || ent >= num_ents_)
+    return false;
   entry_[ent]->value_ = v;
   return true;
 }
 
 const string* certifier::framework::policy_store::tag(unsigned ent) {
-  if (ent >= num_ents_) return nullptr;
+  if (ent >= num_ents_)
+    return nullptr;
   return &entry_[ent]->tag_;
 }
 
 const string* certifier::framework::policy_store::type(unsigned ent) {
-  if (ent >= num_ents_) return nullptr;
+  if (ent >= num_ents_)
+    return nullptr;
   return &entry_[ent]->type_;
 }
 
 store_entry* certifier::framework::policy_store::get_entry(unsigned ent) {
-  if (ent >= num_ents_) return nullptr;
+  if (ent >= num_ents_)
+    return nullptr;
   return entry_[ent];
 }
 
@@ -139,12 +147,14 @@ bool certifier::framework::policy_store::update_or_insert(const string& tag,
   if (ent < 0) {
     return add_entry(tag, type, value);
   }
-  if (!put(ent, value)) return false;
+  if (!put(ent, value))
+    return false;
   return true;
 }
 
 bool certifier::framework::policy_store::delete_entry(unsigned ent) {
-  if (ent >= num_ents_) return false;
+  if (ent >= num_ents_)
+    return false;
 
   delete entry_[ent];
   for (unsigned i = ent; i < num_ents_; i++) {
@@ -196,7 +206,8 @@ bool certifier::framework::policy_store::Serialize(string* out) {
 bool certifier::framework::policy_store::Deserialize(string& in) {
   policy_store_message psm;
 
-  if (!psm.ParseFromString(in)) return false;
+  if (!psm.ParseFromString(in))
+    return false;
 
   if (psm.has_max_ents()) {
     max_num_ents_ = psm.max_ents();
@@ -230,7 +241,8 @@ bool certifier::framework::policy_store::Deserialize(string& in) {
 bool certifier_public_policy_key_initialized = false;
 key_message certifier_public_policy_key;
 const key_message* GetPublicPolicyKey() {
-  if (!certifier_public_policy_key_initialized) return nullptr;
+  if (!certifier_public_policy_key_initialized)
+    return nullptr;
   return &certifier_public_policy_key;
 }
 
@@ -384,7 +396,8 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
     }
     subject_name_str.assign((const char*)name_buf);
   }
-  if (!res) goto done;
+  if (!res)
+    goto done;
 
   if (EVP_PKEY_base_id(epk) == EVP_PKEY_RSA) {
     const RSA* rk = nullptr;
@@ -435,8 +448,10 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
 #endif
 
 done:
-  if (epk != nullptr) EVP_PKEY_free(epk);
-  if (x != nullptr) X509_free(x);
+  if (epk != nullptr)
+    EVP_PKEY_free(epk);
+  if (x != nullptr)
+    X509_free(x);
   return res;
 }
 
@@ -748,7 +763,8 @@ bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
 bool certifier_parent_enclave_type_intitalized = false;
 string certifier_parent_enclave_type;
 bool GetParentEnclaveType(string* type) {
-  if (!certifier_parent_enclave_type_intitalized) return false;
+  if (!certifier_parent_enclave_type_intitalized)
+    return false;
   *type = certifier_parent_enclave_type;
   return true;
 }
@@ -931,9 +947,12 @@ bool certifier::utilities::check_date_range(const string& nb,
   time_point t_nb;
   time_point t_na;
 
-  if (!time_now(&t_now)) return false;
-  if (!string_to_time(nb, &t_nb)) return false;
-  if (!string_to_time(na, &t_na)) return false;
+  if (!time_now(&t_now))
+    return false;
+  if (!string_to_time(nb, &t_nb))
+    return false;
+  if (!string_to_time(na, &t_na))
+    return false;
 
   if (compare_time(t_now, t_nb) < 0 || compare_time(t_na, t_now) < 0) {
     printf("No longer valid\n");
@@ -952,7 +971,8 @@ void print_evidence(const evidence& ev) {
       sc_st.assign((char*)ev.serialized_evidence().data(),
                    ev.serialized_evidence().size());
       signed_claim_message sc;
-      if (sc.ParseFromString(sc_st)) print_signed_claim(sc);
+      if (sc.ParseFromString(sc_st))
+        print_signed_claim(sc);
     }
     if (ev.evidence_type() == "oe-attestation-report") {
       print_bytes(ev.serialized_evidence().size(),

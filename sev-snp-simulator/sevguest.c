@@ -150,13 +150,15 @@ static int get_report(struct snp_guest_dev *snp_dev,
   default_report.platform_version.raw = 0x03000000000008115ULL;
   lockdep_assert_held(&snp_cmd_mutex);
 
-  if (!arg->req_data || !arg->resp_data) return -EINVAL;
+  if (!arg->req_data || !arg->resp_data)
+    return -EINVAL;
 
   if (copy_from_user(&req, (void __user *)arg->req_data, sizeof(req)))
     return -EFAULT;
 
   report_resp = kzalloc(sizeof(*report_resp), GFP_KERNEL_ACCOUNT);
-  if (!report_resp) return -ENOMEM;
+  if (!report_resp)
+    return -ENOMEM;
 
   // Composing dummy report
   memcpy(&report_resp->report, &default_report, sizeof(default_report));
@@ -189,7 +191,8 @@ static int get_derived_key(struct snp_guest_dev *snp_dev,
 
   lockdep_assert_held(&snp_cmd_mutex);
 
-  if (!arg->req_data || !arg->resp_data) return -EINVAL;
+  if (!arg->req_data || !arg->resp_data)
+    return -EINVAL;
 
   if (copy_from_user(&req, (void __user *)arg->req_data, sizeof(req)))
     return -EFAULT;
@@ -229,7 +232,8 @@ static long snp_guest_ioctl(struct file *file, unsigned int ioctl,
   struct snp_guest_request_ioctl input;
   int ret = -ENOTTY;
 
-  if (copy_from_user(&input, argp, sizeof(input))) return -EFAULT;
+  if (copy_from_user(&input, argp, sizeof(input)))
+    return -EFAULT;
 
   input.fw_err = 0xff;
 
@@ -251,7 +255,8 @@ static long snp_guest_ioctl(struct file *file, unsigned int ioctl,
 
   mutex_unlock(&snp_cmd_mutex);
 
-  if (input.fw_err && copy_to_user(argp, &input, sizeof(input))) return -EFAULT;
+  if (input.fw_err && copy_to_user(argp, &input, sizeof(input)))
+    return -EFAULT;
 
   return ret;
 }
@@ -324,7 +329,8 @@ static void sev_guest_cleanup_module(void) {
     kfree(snp_dev);
   }
 
-  if (sev_class) class_destroy(sev_class);
+  if (sev_class)
+    class_destroy(sev_class);
 
   unregister_chrdev_region(MKDEV(sev_major, 0), 1);
   return;

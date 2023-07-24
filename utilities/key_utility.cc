@@ -58,7 +58,8 @@ bool generate_key(const string& name, const string& type,
   priv->set_key_name(name);
   priv->set_key_type(type);
   priv->set_key_format("vse-key");
-  if (!private_key_to_public_key(*priv, pub)) return false;
+  if (!private_key_to_public_key(*priv, pub))
+    return false;
 
   return true;
 }

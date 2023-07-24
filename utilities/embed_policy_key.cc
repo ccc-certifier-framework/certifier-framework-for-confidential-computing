@@ -40,7 +40,8 @@ DEFINE_string(array_name, "initialized_cert", "Name of byte array");
 
 bool write_file(string file_name, int size, byte* data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-  if (out < 0) return false;
+  if (out < 0)
+    return false;
   if (write(out, data, size) < 0) {
     printf("Can't write file\n");
     close(out);
@@ -53,22 +54,27 @@ bool write_file(string file_name, int size, byte* data) {
 int file_size(string file_name) {
   struct stat file_info;
 
-  if (stat(file_name.c_str(), &file_info) != 0) return false;
-  if (!S_ISREG(file_info.st_mode)) return false;
+  if (stat(file_name.c_str(), &file_info) != 0)
+    return false;
+  if (!S_ISREG(file_info.st_mode))
+    return false;
   return (int)file_info.st_size;
 }
 
 bool read_file(string file_name, int* size, byte* data) {
   struct stat file_info;
 
-  if (stat(file_name.c_str(), &file_info) != 0) return false;
-  if (!S_ISREG(file_info.st_mode)) return false;
+  if (stat(file_name.c_str(), &file_info) != 0)
+    return false;
+  if (!S_ISREG(file_info.st_mode))
+    return false;
   int bytes_in_file = (int)file_info.st_size;
   if (bytes_in_file > *size) {
     return false;
   }
   int fd = ::open(file_name.c_str(), O_RDONLY);
-  if (fd < 0) return false;
+  if (fd < 0)
+    return false;
   int n = (int)read(fd, data, bytes_in_file);
   close(fd);
   *size = n;
@@ -86,10 +92,12 @@ bool generate_policy_cert_in_code(string& asn1_cert_file,
   byte bin_cert[cert_size];
 
   int t_size = cert_size;
-  if (!read_file(asn1_cert_file, &t_size, bin_cert)) return false;
+  if (!read_file(asn1_cert_file, &t_size, bin_cert))
+    return false;
 
   int out = open(include_file.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-  if (out < 0) return false;
+  if (out < 0)
+    return false;
 
   // array_name
   string array_name = FLAGS_array_name;
@@ -143,6 +151,7 @@ int main(int an, char** av) {
     return 1;
   }
 
-  if (!generate_policy_cert_in_code(FLAGS_input, FLAGS_output)) return 1;
+  if (!generate_policy_cert_in_code(FLAGS_input, FLAGS_output))
+    return 1;
   return 0;
 }

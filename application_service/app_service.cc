@@ -107,7 +107,8 @@ spawned_children* my_kids = nullptr;
 
 spawned_children* new_kid() {
   spawned_children* nk = new (spawned_children);
-  if (nk == nullptr) return nullptr;
+  if (nk == nullptr)
+    return nullptr;
   kid_mtx.lock();
   nk->valid_ = false;
   nk->next_ = my_kids;
@@ -121,7 +122,8 @@ spawned_children* find_kid(int pid) {
   kid_mtx.lock();
   spawned_children* k = my_kids;
   while (k != nullptr) {
-    if (k->pid_ == pid) break;
+    if (k->pid_ == pid)
+      break;
     k = k->next_;
   }
   kid_mtx.unlock();
@@ -140,7 +142,8 @@ void remove_kid(int pid) {
   }
   spawned_children* k = my_kids;
   while (k != nullptr) {
-    if (k->next_ == nullptr) break;
+    if (k->next_ == nullptr)
+      break;
     if (k->next_->pid_ == pid) {
       spawned_children* to_remove = k->next_;
       k->next_ = to_remove->next_;
@@ -282,10 +285,14 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
 
   string nb, na;
   time_point tn, tf;
-  if (!time_now(&tn)) return false;
-  if (!add_interval_to_time_point(tn, 24.0 * 365.0, &tf)) return false;
-  if (!time_to_string(tn, &nb)) return false;
-  if (!time_to_string(tf, &na)) return false;
+  if (!time_now(&tn))
+    return false;
+  if (!add_interval_to_time_point(tn, 24.0 * 365.0, &tf))
+    return false;
+  if (!time_to_string(tn, &nb))
+    return false;
+  if (!time_to_string(tf, &na))
+    return false;
 
   report_info.set_not_before(nb);
   report_info.set_not_after(na);

@@ -265,10 +265,12 @@ bool test_authenticated_encrypt(bool print_all) {
 bool test_public_keys(bool print_all) {
   RSA* r1 = RSA_new();
 
-  if (!generate_new_rsa_key(2048, r1)) return false;
+  if (!generate_new_rsa_key(2048, r1))
+    return false;
 
   key_message km1;
-  if (!RSA_to_key(r1, &km1)) return false;
+  if (!RSA_to_key(r1, &km1))
+    return false;
   if (print_all) {
     print_key((const key_message&)km1);
   }
@@ -291,7 +293,8 @@ bool test_public_keys(bool print_all) {
     print_bytes(size_data, data);
     printf("\n");
   }
-  if (!rsa_public_encrypt(r1, data, size_data, out, &size_out)) return false;
+  if (!rsa_public_encrypt(r1, data, size_data, out, &size_out))
+    return false;
   if (print_all) {
     printf("public encrypted: ");
     print_bytes(size_out, out);
@@ -305,10 +308,12 @@ bool test_public_keys(bool print_all) {
     printf("\n");
   }
   RSA_free(r1);
-  if (memcmp(data, recovered, size_recovered) != 0) return false;
+  if (memcmp(data, recovered, size_recovered) != 0)
+    return false;
 
   RSA* r2 = RSA_new();
-  if (!generate_new_rsa_key(4096, r2)) return false;
+  if (!generate_new_rsa_key(4096, r2))
+    return false;
 
   size_out = 2048;
   size_recovered = 2048;
@@ -332,7 +337,8 @@ bool test_public_keys(bool print_all) {
     print_bytes(size_data, data);
     printf("\n");
   }
-  if (!rsa_public_encrypt(r2, data, size_data, out, &size_out)) return false;
+  if (!rsa_public_encrypt(r2, data, size_data, out, &size_out))
+    return false;
   if (print_all) {
     printf("public encrypted: ");
     print_bytes(size_out, out);
@@ -346,7 +352,8 @@ bool test_public_keys(bool print_all) {
     printf("\n");
   }
   RSA_free(r2);
-  if (memcmp(data, recovered, size_recovered) != 0) return false;
+  if (memcmp(data, recovered, size_recovered) != 0)
+    return false;
 
   // ECC
   size_out = 2048;
@@ -356,7 +363,8 @@ bool test_public_keys(bool print_all) {
     printf("Can't generate new ecc key\n");
     return false;
   }
-  if (ecc_key == nullptr) return false;
+  if (ecc_key == nullptr)
+    return false;
   key_message km3;
   if (!ECC_to_key(ecc_key, &km3)) {
     printf("Can't ECC to key\n");
@@ -430,7 +438,8 @@ bool test_public_keys(bool print_all) {
     printf("Can't generate new ecc key\n");
     return false;
   }
-  if (ecc_key == nullptr) return false;
+  if (ecc_key == nullptr)
+    return false;
   key_message km4;
   if (!ECC_to_key(ecc_key2, &km4)) {
     printf("Can't ECC to key\n");
@@ -667,10 +676,12 @@ bool test_sign_and_verify(bool print_all) {
 bool test_key_translation(bool print_all) {
   key_message k1;
 
-  if (!make_certifier_rsa_key(2048, &k1)) return false;
+  if (!make_certifier_rsa_key(2048, &k1))
+    return false;
 
   RSA* r2 = RSA_new();
-  if (!key_to_RSA(k1, r2)) return false;
+  if (!key_to_RSA(k1, r2))
+    return false;
   if (print_all) {
     int nb = RSA_bits(r2);
     printf("BITS: %d\n", nb);
@@ -678,11 +689,14 @@ bool test_key_translation(bool print_all) {
   key_message k2;
   RSA_to_key(r2, &k2);
   RSA_free(r2);
-  if (!same_key(k1, k2)) return false;
+  if (!same_key(k1, k2))
+    return false;
 
   key_message k3;
-  if (!make_certifier_rsa_key(2048, &k3)) return false;
-  if (same_key(k1, k3)) return false;
+  if (!make_certifier_rsa_key(2048, &k3))
+    return false;
+  if (same_key(k1, k3))
+    return false;
   return true;
 }
 
@@ -694,10 +708,14 @@ bool test_time(bool print_all) {
   string s_later;
   double hours_to_add = 365.0 * 24.0;
 
-  if (!time_now(&t_now)) return false;
-  if (!time_to_string(t_now, &s_now)) return false;
-  if (!string_to_time(s_now, &t_test)) return false;
-  if (!add_interval_to_time_point(t_now, hours_to_add, &t_later)) return false;
+  if (!time_now(&t_now))
+    return false;
+  if (!time_to_string(t_now, &s_now))
+    return false;
+  if (!string_to_time(s_now, &t_test))
+    return false;
+  if (!add_interval_to_time_point(t_now, hours_to_add, &t_later))
+    return false;
   if (print_all) {
     printf("now: ");
     print_time_point(t_now);

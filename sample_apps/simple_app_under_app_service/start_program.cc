@@ -26,7 +26,8 @@ bool parse_args(const string& in, int* num_an, string* av) {
       av[*num_an].assign(start, end - start);
       av[*num_an].append('\0', 1);
       (*num_an)++;
-      if (*end == '\0') return true;
+      if (*end == '\0')
+        return true;
       end++;
       start = end;
     }

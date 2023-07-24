@@ -14,9 +14,11 @@ static void print_byte_array(const char *label, const uint8_t *array,
 
   size_t wrap = size;
 
-  if (size > MAX_LINE / CHARS_PER_BYTE - sizeof(INDENT)) wrap = size / 2;
+  if (size > MAX_LINE / CHARS_PER_BYTE - sizeof(INDENT))
+    wrap = size / 2;
 
-  if (label) printf("%s:\n", label);
+  if (label)
+    printf("%s:\n", label);
 
   printf(INDENT);
 

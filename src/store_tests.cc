@@ -33,12 +33,17 @@ bool test_protect(bool print_all) {
   string s_na;
   double hours_to_add = 365.0 * 24.0;
 
-  if (!time_now(&t_nb)) return false;
-  if (!time_to_string(t_nb, &s_nb)) return false;
-  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na)) return false;
+  if (!time_now(&t_nb))
+    return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
+    return false;
 
-  if (!time_to_string(t_nb, &s_nb)) return false;
-  if (!time_to_string(t_na, &s_na)) return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!time_to_string(t_na, &s_na))
+    return false;
 
   const char* key_str =
       "I am a secret key. Dont tell anyone what I am or else. Here it is";
@@ -95,7 +100,8 @@ bool test_protect(bool print_all) {
     print_bytes(size_unencrypted_data, unencrypted_data);
     printf("\n");
   }
-  if (!same_key(key_start, key_end)) return false;
+  if (!same_key(key_start, key_end))
+    return false;
   if (memcmp(unencrypted_data, (byte*)secret_data, strlen(secret_data)) != 0)
     return false;
 
@@ -140,14 +146,17 @@ bool test_init_and_recover_containers(bool print_all) {
   // make up standard keys
   key_message policy_key;
   key_message policy_pk;
-  if (!make_certifier_rsa_key(2048, &policy_key)) return false;
+  if (!make_certifier_rsa_key(2048, &policy_key))
+    return false;
   policy_key.set_key_name("policy-key");
   policy_key.set_key_format("vse-key");
-  if (!private_key_to_public_key(policy_key, &policy_pk)) return false;
+  if (!private_key_to_public_key(policy_key, &policy_pk))
+    return false;
   ps.policy_key_.CopyFrom(policy_key);
   ps.policy_key_valid_ = true;
   string serialized_store;
-  if (!ps.Serialize(&serialized_store)) return false;
+  if (!ps.Serialize(&serialized_store))
+    return false;
 
   key_message storage_key;
   int size_storage_key = 64;
@@ -160,12 +169,17 @@ bool test_init_and_recover_containers(bool print_all) {
   string s_na;
   double hours_to_add = 365.0 * 24.0;
 
-  if (!time_now(&t_nb)) return false;
-  if (!time_to_string(t_nb, &s_nb)) return false;
-  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na)) return false;
+  if (!time_now(&t_nb))
+    return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
+    return false;
 
-  if (!time_to_string(t_nb, &s_nb)) return false;
-  if (!time_to_string(t_na, &s_na)) return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!time_to_string(t_na, &s_na))
+    return false;
   storage_key.set_key_name("storage-key");
   storage_key.set_key_type("aes-256-cbc-hmac-sha256");
   storage_key.set_key_format("vse-key");
@@ -191,11 +205,14 @@ bool test_init_and_recover_containers(bool print_all) {
   string recovered_serialized_store;
   recovered_serialized_store.assign((char*)recovered, size_recovered);
   policy_store recovered_ps;
-  if (!recovered_ps.Deserialize(recovered_serialized_store)) return false;
+  if (!recovered_ps.Deserialize(recovered_serialized_store))
+    return false;
 
   const key_message* recovered_policy_key = recovered_ps.get_policy_key();
-  if (recovered_policy_key == nullptr) return false;
-  if (!same_key(policy_key, *recovered_policy_key)) return false;
+  if (recovered_policy_key == nullptr)
+    return false;
+  if (!same_key(policy_key, *recovered_policy_key))
+    return false;
   if (print_all) {
     printf("test_init_and_recover_containers succeeded\n");
   }
@@ -206,27 +223,35 @@ bool test_policy_store(bool print_all) {
   policy_store ps(policy_store::MAX_NUM_ENTRIES);
 
   key_message pk;
-  if (!make_certifier_rsa_key(2048, &pk)) return false;
+  if (!make_certifier_rsa_key(2048, &pk))
+    return false;
 
   time_point t_nb;
-  if (!time_now(&t_nb)) return false;
+  if (!time_now(&t_nb))
+    return false;
   string s_nb;
-  if (!time_to_string(t_nb, &s_nb)) return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
 
   double hours_to_add = 365.0 * 24.0;
   time_point t_na;
-  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na)) return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
+    return false;
   string s_na;
-  if (!time_to_string(t_na, &s_na)) return false;
+  if (!time_to_string(t_na, &s_na))
+    return false;
 
   pk.set_not_before(s_nb);
   pk.set_not_after(s_na);
 
-  if (!ps.set_policy_key(pk)) return false;
+  if (!ps.set_policy_key(pk))
+    return false;
 
   const key_message* pkt = ps.get_policy_key();
-  if (pkt == nullptr) return false;
-  if (!same_key(pk, *pkt)) return false;
+  if (pkt == nullptr)
+    return false;
+  if (!same_key(pk, *pkt))
+    return false;
   if (print_all) {
     printf("policy-key store/retrieve works\n");
   }

@@ -187,9 +187,12 @@ static bool digest_sha384(const void *msg, size_t msg_len, uint8_t *digest,
   do {
     SHA512_CTX context;
 
-    if (SHA384_Init(&context) != 1) break;
-    if (SHA384_Update(&context, (void *)msg, msg_len) != 1) break;
-    if (SHA384_Final(digest, &context) != 1) break;
+    if (SHA384_Init(&context) != 1)
+      break;
+    if (SHA384_Update(&context, (void *)msg, msg_len) != 1)
+      break;
+    if (SHA384_Final(digest, &context) != 1)
+      break;
 
     ret = true;
   } while (0);
@@ -253,7 +256,8 @@ int get_report(const uint8_t *data, size_t data_size,
 
   /* Initialize data structures */
   memset(&req, 0, sizeof(req));
-  if (data) memcpy(&req.user_data, data, data_size);
+  if (data)
+    memcpy(&req.user_data, data, data_size);
 
   memset(&resp, 0, sizeof(resp));
 

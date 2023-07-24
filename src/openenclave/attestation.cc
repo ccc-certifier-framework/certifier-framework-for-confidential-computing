@@ -75,16 +75,20 @@ bool oe_Attest(int what_to_say_size, byte* what_to_say, int* size_out,
   ret = true;
 
 exit:
-  if (format_settings != nullptr) free(format_settings);
-  if (custom_claims_buffer != nullptr) free(custom_claims_buffer);
-  if (evidence != nullptr) free(evidence);
+  if (format_settings != nullptr)
+    free(format_settings);
+  if (custom_claims_buffer != nullptr)
+    free(custom_claims_buffer);
+  if (evidence != nullptr)
+    free(evidence);
   return ret;
 }
 
 static const oe_claim_t* _find_claim(const oe_claim_t* claims,
                                      size_t claims_size, const char* name) {
   for (size_t i = 0; i < claims_size; i++) {
-    if (strcmp(claims[i].name, name) == 0) return &(claims[i]);
+    if (strcmp(claims[i].name, name) == 0)
+      return &(claims[i]);
   }
   return nullptr;
 }
@@ -254,6 +258,7 @@ bool oe_Verify(const uint8_t* evidence, size_t evidence_size,
   ret = true;
 
 exit:
-  if (claims != nullptr) oe_free_claims(claims, claims_length);
+  if (claims != nullptr)
+    oe_free_claims(claims, claims_length);
   return ret;
 }

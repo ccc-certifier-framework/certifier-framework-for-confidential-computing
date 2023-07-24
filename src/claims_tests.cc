@@ -21,14 +21,18 @@ using namespace certifier::utilities;
 
 bool test_claims_1(bool print_all) {
   key_message k;
-  if (!make_certifier_rsa_key(1024, &k)) return false;
+  if (!make_certifier_rsa_key(1024, &k))
+    return false;
   key_message k1;
-  if (!private_key_to_public_key(k, &k1)) return false;
+  if (!private_key_to_public_key(k, &k1))
+    return false;
   entity_message e1;
   entity_message e2;
-  if (!make_key_entity(k1, &e1)) return false;
+  if (!make_key_entity(k1, &e1))
+    return false;
   extern string my_measurement;
-  if (!make_measurement_entity(my_measurement, &e2)) return false;
+  if (!make_measurement_entity(my_measurement, &e2))
+    return false;
   vse_clause clause1;
   string s1("is-trusted");
   string s2("says");
@@ -107,9 +111,11 @@ bool test_signed_claims(bool print_all) {
   }
   entity_message e1;
   entity_message e2;
-  if (!make_key_entity(my_public_rsa_key, &e1)) return false;
+  if (!make_key_entity(my_public_rsa_key, &e1))
+    return false;
 
-  if (!make_measurement_entity(my_measurement, &e2)) return false;
+  if (!make_measurement_entity(my_measurement, &e2))
+    return false;
   string s1("says");
   string s2("speaks-for");
   string vse_clause_format("vse-clause");
@@ -237,7 +243,8 @@ bool test_signed_claims(bool print_all) {
     return false;
   }
   entity_message e3;
-  if (!make_key_entity(my_big_public_rsa_key, &e3)) return false;
+  if (!make_key_entity(my_big_public_rsa_key, &e3))
+    return false;
   vse_clause clause3;
   vse_clause clause4;
   if (!make_simple_vse_clause((const entity_message)e3, s2,
@@ -290,7 +297,8 @@ bool test_signed_claims(bool print_all) {
     return false;
   }
   entity_message e5;
-  if (!make_key_entity(my_ecc_public_key, &e5)) return false;
+  if (!make_key_entity(my_ecc_public_key, &e5))
+    return false;
   vse_clause clause5;
   vse_clause clause6;
   if (!make_simple_vse_clause((const entity_message)e5, s2,
@@ -354,7 +362,8 @@ bool init_top_level_is_trusted(predicate_dominance& root) {
   string descendant;
   for (int i = 0; i < num_is_trusted_kids; i++) {
     descendant.assign(kids[i]);
-    if (!root.insert(root.predicate_, descendant)) return false;
+    if (!root.insert(root.predicate_, descendant))
+      return false;
   }
   return true;
 }
@@ -375,9 +384,12 @@ bool test_predicate_dominance(bool print_all) {
   string it2("is-trusted-for-authentication");
   string it3("is-trusted-for-crap");
 
-  if (!dominates(root, it, it1)) return false;
-  if (!dominates(root, it, it2)) return false;
-  if (dominates(root, it, it3)) return false;
+  if (!dominates(root, it, it1))
+    return false;
+  if (!dominates(root, it, it2))
+    return false;
+  if (dominates(root, it, it3))
+    return false;
 
   return true;
 }

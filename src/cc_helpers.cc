@@ -229,7 +229,8 @@ bool certifier::framework::cc_trust_data::init_policy_key(int asn1_cert_size,
   serialized_policy_cert_.assign((char*)asn1_cert, asn1_cert_size);
 
   x509_policy_cert_ = X509_new();
-  if (x509_policy_cert_ == nullptr) return false;
+  if (x509_policy_cert_ == nullptr)
+    return false;
   if (!asn1_to_x509(serialized_policy_cert_, x509_policy_cert_)) {
     printf("init_policy_key: Can't translate cert\n");
     return false;
@@ -711,7 +712,8 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
         printf("get_trust_data_from_store: Can't get signed claim\n");
         return false;
       }
-      if (!platform_rule_.ParseFromString(value)) return false;
+      if (!platform_rule_.ParseFromString(value))
+        return false;
       cc_service_platform_rule_initialized_ = true;
     }
     cc_is_certified_ = true;
@@ -1505,7 +1507,8 @@ bool add_policy_key_says_platform_key_is_trusted(
   signed_claim_message sc;
   sc.CopyFrom(platform_key_is_trusted);
   string serialized_sc;
-  if (!sc.SerializeToString(&serialized_sc)) return false;
+  if (!sc.SerializeToString(&serialized_sc))
+    return false;
   ev->set_serialized_evidence((byte*)serialized_sc.data(),
                               serialized_sc.size());
   return true;
@@ -1516,7 +1519,8 @@ bool add_policy_key_says_platform_key_is_trusted(
 
 void print_cn_name(X509_NAME* name) {
   int len = X509_NAME_get_text_by_NID(name, NID_commonName, nullptr, 0);
-  if (len <= 0) return;
+  if (len <= 0)
+    return;
   len++;
 
   char name_buf[len];
@@ -1528,7 +1532,8 @@ void print_cn_name(X509_NAME* name) {
 
 void print_org_name(X509_NAME* name) {
   int len = X509_NAME_get_text_by_NID(name, NID_organizationName, nullptr, 0);
-  if (len <= 0) return;
+  if (len <= 0)
+    return;
   len++;
 
   char name_buf[len];
@@ -1595,9 +1600,11 @@ bool open_client_socket(const string& host_name, int port, int* soc) {
   // and) try the next address.
   for (rp = result; rp != NULL; rp = rp->ai_next) {
     sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-    if (sfd == -1) continue;
+    if (sfd == -1)
+      continue;
 
-    if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1) break;
+    if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
+      break;
 
     close(sfd);
   }
@@ -1642,9 +1649,11 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
   // and) try the next address.
   for (rp = result; rp != NULL; rp = rp->ai_next) {
     sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-    if (sfd == -1) continue;
+    if (sfd == -1)
+      continue;
 
-    if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0) break;
+    if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
+      break;
 
     close(sfd);
   }
@@ -1699,15 +1708,19 @@ int verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
 // ----------------------------------------------------------------------------------
 
 bool extract_id_from_cert(X509* in, string* out) {
-  if (in == nullptr) return false;
+  if (in == nullptr)
+    return false;
   X509_NAME* sname = X509_get_subject_name(in);
-  if (sname == nullptr) return false;
+  if (sname == nullptr)
+    return false;
   int len = X509_NAME_get_text_by_NID(sname, NID_organizationName, nullptr, 0);
-  if (len <= 0) return false;
+  if (len <= 0)
+    return false;
   len++;
   char name_buf[len];
   int n = X509_NAME_get_text_by_NID(sname, NID_organizationName, name_buf, len);
-  if (n <= 0) return false;
+  if (n <= 0)
+    return false;
   out->assign((char*)name_buf, strlen(name_buf) + 1);
   return true;
 }
@@ -1892,18 +1905,22 @@ certifier::framework::secure_authenticated_channel::
   role_.clear();
   channel_initialized_ = false;
   // delete?
-  if (ssl_ctx_ != nullptr) SSL_CTX_free(ssl_ctx_);
+  if (ssl_ctx_ != nullptr)
+    SSL_CTX_free(ssl_ctx_);
   ssl_ctx_ = nullptr;
-  if (store_ctx_ != nullptr) X509_STORE_CTX_free(store_ctx_);
+  if (store_ctx_ != nullptr)
+    X509_STORE_CTX_free(store_ctx_);
   store_ctx_ = nullptr;
   // delete?
   ssl_ = nullptr;
-  if (sock_ > 0) ::close(sock_);
+  if (sock_ > 0)
+    ::close(sock_);
   sock_ = -1;
   // delete?
   my_cert_ = nullptr;
   // delete?
-  if (peer_cert_ != nullptr) X509_free(peer_cert_);
+  if (peer_cert_ != nullptr)
+    X509_free(peer_cert_);
   peer_cert_ = nullptr;
   peer_id_.clear();
 }

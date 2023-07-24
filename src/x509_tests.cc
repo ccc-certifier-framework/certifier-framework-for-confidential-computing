@@ -308,7 +308,8 @@ bool test_sev_certs(bool print_all) {
       printf("ark cert does not verify (%d)\n", ret);
     }
   }
-  if (!success) return false;
+  if (!success)
+    return false;
 
   X509* cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
@@ -324,7 +325,8 @@ bool test_sev_certs(bool print_all) {
       printf("ask cert does not verify (%d)\n", ret);
     }
   }
-  if (!success) return false;
+  if (!success)
+    return false;
 
   key_message ark_key;
   if (!x509_to_public_key(cert1, &ark_key)) {
@@ -397,7 +399,8 @@ bool test_real_sev_certs(bool print_all) {
       printf("ark cert does not verify (%d)\n", ret);
     }
   }
-  if (!success) return false;
+  if (!success)
+    return false;
 
   X509* cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
@@ -419,7 +422,8 @@ bool test_real_sev_certs(bool print_all) {
       printf("ask cert does not verify (%d)\n", ret);
     }
   }
-  if (!success) return false;
+  if (!success)
+    return false;
 
   X509* cert3 = X509_new();
   if (!asn1_to_x509(vcek_der_str, cert3)) {
@@ -440,7 +444,8 @@ bool test_real_sev_certs(bool print_all) {
       printf("vcek cert does not verify (%d)\n", ret);
     }
   }
-  if (!success) return false;
+  if (!success)
+    return false;
 
   key_message ark_key;
   if (!x509_to_public_key(cert1, &ark_key)) {
@@ -519,7 +524,8 @@ bool test_sev_request(bool print_all) {
       printf("ark cert does not verify (%d)\n", ret);
     }
   }
-  if (!success) return false;
+  if (!success)
+    return false;
 
   X509* cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
@@ -536,7 +542,8 @@ bool test_sev_request(bool print_all) {
       printf("ask cert does not verify (%d)\n", ret);
     }
   }
-  if (!success) return false;
+  if (!success)
+    return false;
 
   X509* cert3 = X509_new();
   if (!asn1_to_x509(vcek_der_str, cert3)) {
@@ -552,7 +559,8 @@ bool test_sev_request(bool print_all) {
       printf("vcek cert does not verify (%d)\n", ret);
     }
   }
-  if (!success) return false;
+  if (!success)
+    return false;
 
   key_message ark_key;
   if (!x509_to_public_key(cert1, &ark_key)) {
@@ -712,12 +720,17 @@ bool test_sev_request(bool print_all) {
   time_point t_na;
   double hours_to_add = 365.0 * 24.0;
 
-  if (!time_now(&t_nb)) return false;
-  if (!time_to_string(t_nb, &s_nb)) return false;
-  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na)) return false;
+  if (!time_now(&t_nb))
+    return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
+    return false;
 
-  if (!time_to_string(t_nb, &s_nb)) return false;
-  if (!time_to_string(t_na, &s_na)) return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!time_to_string(t_na, &s_na))
+    return false;
 
   string tm1_ser_vse;
   if (!c2.SerializeToString(&tm1_ser_vse)) {

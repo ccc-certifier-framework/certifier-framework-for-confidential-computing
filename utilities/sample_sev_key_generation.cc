@@ -99,7 +99,8 @@ static struct attestation_report default_report = {
 };
 
 static void reverse_bytes(byte* buffer, size_t size) {
-  if (!buffer || size == 0) return;
+  if (!buffer || size == 0)
+    return;
   for (byte *start = buffer, *end = buffer + size - 1; start < end;
        start++, end--) {
     byte temp = *start;

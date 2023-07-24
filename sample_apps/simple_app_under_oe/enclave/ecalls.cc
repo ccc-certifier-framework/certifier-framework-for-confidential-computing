@@ -62,7 +62,8 @@ string public_key_alg("rsa-2048");
 string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
 void print_trust_data() {
-  if (!trust_data_initialized) return;
+  if (!trust_data_initialized)
+    return;
   printf("\nTrust data:\n");
   printf("\nPolicy key\n");
   print_key(publicPolicyKey);

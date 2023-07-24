@@ -50,7 +50,8 @@ predicate_dominance::~predicate_dominance() {
 }
 
 predicate_dominance* predicate_dominance::find_node(const string& pred) {
-  if (predicate_ == pred) return this;
+  if (predicate_ == pred)
+    return this;
 
   predicate_dominance* current = first_child_;
   predicate_dominance* t = nullptr;
@@ -58,7 +59,8 @@ predicate_dominance* predicate_dominance::find_node(const string& pred) {
   // breadth first search
   while (current != nullptr) {
     t = find_node(pred);
-    if (t != nullptr) return t;
+    if (t != nullptr)
+      return t;
     current = current->next_;
   }
 
@@ -66,7 +68,8 @@ predicate_dominance* predicate_dominance::find_node(const string& pred) {
   current = first_child_;
   while (current != nullptr) {
     t = current->find_node(pred);
-    if (t != nullptr) return t;
+    if (t != nullptr)
+      return t;
     current = current->next_;
   }
 
@@ -77,8 +80,10 @@ predicate_dominance* predicate_dominance::find_node(const string& pred) {
 bool predicate_dominance::insert(const string& parent,
                                  const string& descendant) {
   predicate_dominance* t = find_node(parent);
-  if (t == nullptr) return false;
-  if (dominates(*t, parent, descendant)) return true;
+  if (t == nullptr)
+    return false;
+  if (dominates(*t, parent, descendant))
+    return true;
 
   predicate_dominance* to_add = new (predicate_dominance);
   to_add->predicate_.assign(descendant);
@@ -92,13 +97,15 @@ bool predicate_dominance::is_child(const string& descendant) {
   predicate_dominance* current = first_child_;
 
   while (current != nullptr) {
-    if (current->predicate_ == descendant) return true;
+    if (current->predicate_ == descendant)
+      return true;
     current = current->next_;
   }
 
   current = first_child_;
   while (current != nullptr) {
-    if (current->is_child(descendant)) return true;
+    if (current->is_child(descendant))
+      return true;
     current = current->next_;
   }
   return false;
@@ -128,9 +135,11 @@ void predicate_dominance::print_descendants(int indent) {
 
 bool dominates(predicate_dominance& root, const string& parent,
                const string& descendant) {
-  if (parent == descendant) return true;
+  if (parent == descendant)
+    return true;
   predicate_dominance* pn = root.find_node(parent);
-  if (pn == nullptr) return false;
+  if (pn == nullptr)
+    return false;
   return pn->is_child(descendant);
 }
 
@@ -141,7 +150,8 @@ bool statement_already_proved(const vse_clause& cl,
   int n = are_proved->proved_size();
   for (int i = 0; i < n; i++) {
     const vse_clause& in_list = are_proved->proved(i);
-    if (same_vse_claim(cl, in_list)) return true;
+    if (same_vse_claim(cl, in_list))
+      return true;
   }
   return false;
 }
@@ -299,12 +309,15 @@ bool get_signed_platform_claim_from_trusted_list(
     string it1_verb("is-trusted");
     string it2_verb("is-trusted-for-attestation");
     // policy-key says platform-key is-trusted-for-attestation
-    if (c.verb() != says_verb) continue;
-    if (!c.has_clause() || !c.clause().has_verb()) continue;
+    if (c.verb() != says_verb)
+      continue;
+    if (!c.has_clause() || !c.clause().has_verb())
+      continue;
     if ((c.clause().verb() != it1_verb && c.clause().verb() != it2_verb) ||
         !c.clause().has_subject())
       continue;
-    if (c.clause().subject().entity_type() != "key") continue;
+    if (c.clause().subject().entity_type() != "key")
+      continue;
     if (same_key(c.clause().subject().key(), expected_key)) {
       claim->CopyFrom(trusted_platforms.claims(i));
       return true;
@@ -360,9 +373,11 @@ bool make_attestation_user_data(const string& enclave_type,
                                 attestation_user_data* out) {
   out->set_enclave_type(enclave_type);
   time_point t_now;
-  if (!time_now(&t_now)) return false;
+  if (!time_now(&t_now))
+    return false;
   string time_str;
-  if (!time_to_string(t_now, &time_str)) return false;
+  if (!time_to_string(t_now, &time_str))
+    return false;
   out->set_time(time_str);
   out->mutable_enclave_key()->CopyFrom(enclave_key);
   return true;
@@ -642,7 +657,8 @@ bool init_dominance_tree(predicate_dominance& root) {
   string descendant;
   for (int i = 0; i < num_is_trusted_kids; i++) {
     descendant.assign(kids[i]);
-    if (!root.insert(root.predicate_, descendant)) return false;
+    if (!root.insert(root.predicate_, descendant))
+      return false;
   }
 
   return true;
@@ -913,7 +929,8 @@ bool init_axiom(key_message& pk, proved_statements* are_proved) {
   // Add axiom pk is-trusted
   entity_message policy_key_entity;
   vse_clause axiom;
-  if (!make_key_entity(pk, &policy_key_entity)) return false;
+  if (!make_key_entity(pk, &policy_key_entity))
+    return false;
   string is_trusted_verb("is-trusted");
   if (!make_unary_vse_clause(policy_key_entity, is_trusted_verb, &axiom))
     return false;
@@ -1153,7 +1170,8 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       // cert is self signed.
 
       X509* x = X509_new();
-      if (x == nullptr) return false;
+      if (x == nullptr)
+        return false;
       if (!asn1_to_x509(evp.fact_assertion(i).serialized_evidence(), x)) {
         printf("init_proved_statements: Can't asn convert cert\n");
         return false;
@@ -1440,18 +1458,25 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
 bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
                    const vse_clause& c2, const vse_clause& conclusion) {
   // Make sure clauses are in the right form.
-  if (!c1.has_subject() || !c1.has_verb()) return false;
-  if (c1.has_object() || c1.has_clause()) return false;
-  if (c1.verb() != "is-trusted") return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (c1.has_object() || c1.has_clause())
+    return false;
+  if (c1.verb() != "is-trusted")
+    return false;
   if (c1.subject().entity_type() != "measurement" &&
       c1.subject().entity_type() != "environment")
     return false;
 
-  if (!c2.has_subject() || !c2.has_verb()) return false;
-  if (c2.verb() != "speaks-for") return false;
-  if (!c2.has_object() || c2.has_clause()) return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (c2.verb() != "speaks-for")
+    return false;
+  if (!c2.has_object() || c2.has_clause())
+    return false;
 
-  if (!same_entity(c1.subject(), c2.object())) return false;
+  if (!same_entity(c1.subject(), c2.object()))
+    return false;
 
   // Make sure subject of conclusion is subject of c2 and verb "is-trusted"
   if (!conclusion.has_subject() || !conclusion.has_verb() ||
@@ -1474,14 +1499,21 @@ bool verify_rule_2(predicate_dominance& dom_tree, const vse_clause& c1,
 // R3: If entity is-trusted and entity says X, then X is true
 bool verify_rule_3(predicate_dominance& dom_tree, const vse_clause& c1,
                    const vse_clause& c2, const vse_clause& conclusion) {
-  if (!c1.has_subject() || !c1.has_verb()) return false;
-  if (c1.has_object() || c1.has_clause()) return false;
-  if (c1.verb() != "is-trusted") return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (c1.has_object() || c1.has_clause())
+    return false;
+  if (c1.verb() != "is-trusted")
+    return false;
 
-  if (!c2.has_subject() || !c2.has_verb()) return false;
-  if (c2.has_object() || !c2.has_clause()) return false;
-  if (c2.verb() != "says") return false;
-  if (!same_entity(c1.subject(), c2.subject())) return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (c2.has_object() || !c2.has_clause())
+    return false;
+  if (c2.verb() != "says")
+    return false;
+  if (!same_entity(c1.subject(), c2.subject()))
+    return false;
   return same_vse_claim(c2.clause(), conclusion);
 }
 
@@ -1496,18 +1528,27 @@ bool verify_rule_4(predicate_dominance& dom_tree, const vse_clause& c1,
 //    provided is-trustedXXX dominates is-trustedYYY
 bool verify_rule_5(predicate_dominance& dom_tree, const vse_clause& c1,
                    const vse_clause& c2, const vse_clause& conclusion) {
-  if (!c1.has_subject() || !c1.has_verb()) return false;
-  if (c1.has_object() || c1.has_clause()) return false;
-  if (!c2.has_subject() || !c2.has_verb()) return false;
-  if (c2.verb() != "says") return false;
-  if (c2.has_object() || !c2.has_clause()) return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (c1.has_object() || c1.has_clause())
+    return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (c2.verb() != "says")
+    return false;
+  if (c2.has_object() || !c2.has_clause())
+    return false;
 
-  if (!same_entity(c1.subject(), c2.subject())) return false;
+  if (!same_entity(c1.subject(), c2.subject()))
+    return false;
 
-  if (!c2.clause().has_subject() || !c2.clause().has_verb()) return false;
-  if (c2.clause().has_object() || c2.clause().has_clause()) return false;
+  if (!c2.clause().has_subject() || !c2.clause().has_verb())
+    return false;
+  if (c2.clause().has_object() || c2.clause().has_clause())
+    return false;
 
-  if (!dominates(dom_tree, c1.verb(), c2.clause().verb())) return false;
+  if (!dominates(dom_tree, c1.verb(), c2.clause().verb()))
+    return false;
   return same_vse_claim(c2.clause(), conclusion);
 }
 
@@ -1516,13 +1557,18 @@ bool verify_rule_5(predicate_dominance& dom_tree, const vse_clause& c1,
 //    see possible limitation note below
 bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
                    const vse_clause& c2, const vse_clause& conclusion) {
-  if (!c1.has_subject() || !c1.has_verb()) return false;
-  if (c1.has_object() || c1.has_clause()) return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (c1.has_object() || c1.has_clause())
+    return false;
   string p1 = c1.verb();
 
-  if (!c2.has_subject() || !c2.has_verb()) return false;
-  if (c2.has_object() || !c2.has_clause()) return false;
-  if (c2.verb() != "says") return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (c2.has_object() || !c2.has_clause())
+    return false;
+  if (c2.verb() != "says")
+    return false;
 
 #if 0
   // maybe this should be limited to speaks-for and is-environment
@@ -1543,7 +1589,8 @@ bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
 #endif
 
   string p2("is-trusted-for-attestation");
-  if (!dominates(dom_tree, c1.verb(), p2)) return false;
+  if (!dominates(dom_tree, c1.verb(), p2))
+    return false;
 
   return same_vse_claim(c2.clause(), conclusion);
 }
@@ -1555,23 +1602,31 @@ bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
 bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
                    const vse_clause& c2, const vse_clause& conclusion) {
   // Make sure clauses are in the right form.
-  if (!c1.has_subject() || !c1.has_verb()) return false;
-  if (c1.has_object() || c1.has_clause()) return false;
-  if (c1.verb() != "is-trusted") return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (c1.has_object() || c1.has_clause())
+    return false;
+  if (c1.verb() != "is-trusted")
+    return false;
   if (c1.subject().entity_type() != "measurement" &&
       c1.subject().entity_type() != "environment")
     return false;
 
-  if (!c2.has_subject() || !c2.has_verb()) return false;
-  if (c2.verb() != "speaks-for") return false;
-  if (!c2.has_object() || c2.has_clause()) return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (c2.verb() != "speaks-for")
+    return false;
+  if (!c2.has_object() || c2.has_clause())
+    return false;
 
-  if (!same_entity(c1.subject(), c2.object())) return false;
+  if (!same_entity(c1.subject(), c2.object()))
+    return false;
   // Make sure subject of conclusion is subject of c2 and verb "is-trusted"
   if (!conclusion.has_subject() || !conclusion.has_verb() ||
       conclusion.has_object() || conclusion.has_clause())
     return false;
-  if (conclusion.verb() != "is-trusted-for-attestation") return false;
+  if (conclusion.verb() != "is-trusted-for-attestation")
+    return false;
   return same_entity(conclusion.subject(), c2.subject());
 }
 
@@ -1582,12 +1637,18 @@ bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
 //      provided platform properties satisfy platform template
 bool verify_rule_8(predicate_dominance& dom_tree, const vse_clause& c1,
                    const vse_clause& c2, const vse_clause& conclusion) {
-  if (!c1.has_subject() || !c1.has_verb()) return false;
-  if (!c2.has_subject() || !c2.has_verb()) return false;
-  if (!conclusion.has_subject() || !conclusion.has_verb()) return false;
-  if (c1.subject().entity_type() != "environment") return false;
-  if (c2.subject().entity_type() != "platform") return false;
-  if (!same_entity(c1.subject(), conclusion.subject())) return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (!conclusion.has_subject() || !conclusion.has_verb())
+    return false;
+  if (c1.subject().entity_type() != "environment")
+    return false;
+  if (c2.subject().entity_type() != "platform")
+    return false;
+  if (!same_entity(c1.subject(), conclusion.subject()))
+    return false;
 
   string v1("is-environment");
   string v2("has-trusted-platform-property");
@@ -1609,12 +1670,18 @@ bool verify_rule_8(predicate_dominance& dom_tree, const vse_clause& c1,
 //        environment[platform, measurement] environment-measurement is-trusted
 bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
                    const vse_clause& c2, const vse_clause& conclusion) {
-  if (!c1.has_subject() || !c1.has_verb()) return false;
-  if (!c2.has_subject() || !c2.has_verb()) return false;
-  if (!conclusion.has_subject() || !conclusion.has_verb()) return false;
-  if (c1.subject().entity_type() != "environment") return false;
-  if (c2.subject().entity_type() != "measurement") return false;
-  if (!c1.subject().environment_ent().has_the_measurement()) return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (!conclusion.has_subject() || !conclusion.has_verb())
+    return false;
+  if (c1.subject().entity_type() != "environment")
+    return false;
+  if (c2.subject().entity_type() != "measurement")
+    return false;
+  if (!c1.subject().environment_ent().has_the_measurement())
+    return false;
   if (!same_measurement(c1.subject().environment_ent().the_measurement(),
                         c2.subject().measurement()))
     return false;
@@ -1623,7 +1690,8 @@ bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
   string v3("environment-measurement-is-trusted");
   if (c1.verb() != v1 || c2.verb() != v2 || conclusion.verb() != v3)
     return false;
-  if (!same_entity(c1.subject(), conclusion.subject())) return false;
+  if (!same_entity(c1.subject(), conclusion.subject()))
+    return false;
   return true;
 }
 
@@ -1633,12 +1701,18 @@ bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
 //        then environment[platform, measurement] is-trusted
 bool verify_rule_10(predicate_dominance& dom_tree, const vse_clause& c1,
                     const vse_clause& c2, const vse_clause& conclusion) {
-  if (!c1.has_subject() || !c1.has_verb()) return false;
-  if (!c2.has_subject() || !c2.has_verb()) return false;
-  if (!conclusion.has_subject() || !conclusion.has_verb()) return false;
-  if (c1.subject().entity_type() != "environment") return false;
-  if (!same_entity(c1.subject(), c2.subject())) return false;
-  if (!same_entity(c1.subject(), conclusion.subject())) return false;
+  if (!c1.has_subject() || !c1.has_verb())
+    return false;
+  if (!c2.has_subject() || !c2.has_verb())
+    return false;
+  if (!conclusion.has_subject() || !conclusion.has_verb())
+    return false;
+  if (c1.subject().entity_type() != "environment")
+    return false;
+  if (!same_entity(c1.subject(), c2.subject()))
+    return false;
+  if (!same_entity(c1.subject(), conclusion.subject()))
+    return false;
   string v1("environment-platform-is-trusted");
   string v2("environment-measurement-is-trusted");
   string v3("is-trusted");
@@ -1649,8 +1723,10 @@ bool verify_rule_10(predicate_dominance& dom_tree, const vse_clause& c1,
 
 bool verify_external_proof_step(predicate_dominance& dom_tree,
                                 proof_step& step) {
-  if (!step.has_rule_applied()) return false;
-  if (!step.has_s1() || !step.has_s2() || !step.has_conclusion()) return false;
+  if (!step.has_rule_applied())
+    return false;
+  if (!step.has_s1() || !step.has_s2() || !step.has_conclusion())
+    return false;
   switch (step.rule_applied()) {
     default:
       return false;
@@ -1681,7 +1757,8 @@ bool verify_external_proof_step(predicate_dominance& dom_tree,
 bool verify_internal_proof_step(predicate_dominance& dom_tree, vse_clause s1,
                                 vse_clause s2, vse_clause conclude,
                                 int rule_to_apply) {
-  if (rule_to_apply < 1 || rule_to_apply > 10) return false;
+  if (rule_to_apply < 1 || rule_to_apply > 10)
+    return false;
   switch (rule_to_apply) {
     default:
       return false;
@@ -1976,9 +2053,11 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk,
   string it("is-trusted-for-authentication");
   string it2("is-trusted-for-attestation");
   if (purpose == "attestation") {
-    if (!make_unary_vse_clause(enclave_key, it2, to_prove)) return false;
+    if (!make_unary_vse_clause(enclave_key, it2, to_prove))
+      return false;
   } else {
-    if (!make_unary_vse_clause(enclave_key, it, to_prove)) return false;
+    if (!make_unary_vse_clause(enclave_key, it, to_prove))
+      return false;
   }
 
   proof_step* ps = nullptr;
@@ -2135,7 +2214,8 @@ bool construct_proof_from_full_vse_evidence(key_message& policy_pk,
   const entity_message& enclave_key =
       already_proved->proved(2).clause().subject();
   string it("is-trusted-for-authentication");
-  if (!make_unary_vse_clause(enclave_key, it, to_prove)) return false;
+  if (!make_unary_vse_clause(enclave_key, it, to_prove))
+    return false;
 
   proof_step* ps = nullptr;
 
@@ -2768,8 +2848,10 @@ bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
 bool is_measurement(const vse_clause& cl) {
   if (!cl.has_subject() || !cl.has_verb() || cl.has_object() || cl.has_clause())
     return false;
-  if (cl.subject().entity_type() != "measurement") return false;
-  if (cl.verb() != "is-trusted") return false;
+  if (cl.subject().entity_type() != "measurement")
+    return false;
+  if (cl.verb() != "is-trusted")
+    return false;
 
   return true;
 }
@@ -2777,8 +2859,10 @@ bool is_measurement(const vse_clause& cl) {
 bool is_platform(const vse_clause& cl) {
   if (!cl.has_subject() || !cl.has_verb() || cl.has_object() || cl.has_clause())
     return false;
-  if (cl.subject().entity_type() != "platform") return false;
-  if (cl.verb() != "has-trusted-platform-property") return false;
+  if (cl.subject().entity_type() != "platform")
+    return false;
+  if (cl.verb() != "has-trusted-platform-property")
+    return false;
 
   return true;
 }
@@ -2847,13 +2931,17 @@ bool filter_sev_policy(const sev_attestation_message& sev_att,
       return false;
     }
     if (is_measurement(cl.clause())) {
-      if (found_measurement) continue;
-      if (!right_measurement(cl.clause(), m_ent.measurement())) continue;
+      if (found_measurement)
+        continue;
+      if (!right_measurement(cl.clause(), m_ent.measurement()))
+        continue;
       found_measurement = true;
     }
     if (is_platform(cl.clause())) {
-      if (found_platform) continue;
-      if (!right_platform(cl.clause(), p_ent.platform_ent())) continue;
+      if (found_platform)
+        continue;
+      if (!right_platform(cl.clause(), p_ent.platform_ent()))
+        continue;
       found_platform = true;
     }
     signed_claim_message* sc = filtered_policy->add_claims();

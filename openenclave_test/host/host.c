@@ -88,7 +88,8 @@ int main(int argc, const char* argv[]) {
 
 exit:
   // Clean up the enclave if we created one
-  if (enclave) oe_terminate_enclave(enclave);
+  if (enclave)
+    oe_terminate_enclave(enclave);
 
   return ret;
 }

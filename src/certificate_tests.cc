@@ -19,8 +19,10 @@
 using namespace certifier::utilities;
 
 char hex_digit(byte v) {
-  if (v >= 0 && v <= 9) return '0' + v;
-  if (v >= 10 && v <= 15) return 'a' + v - 10;
+  if (v >= 0 && v <= 9)
+    return '0' + v;
+  if (v >= 10 && v <= 15)
+    return 'a' + v - 10;
   return ' ';
 }
 
@@ -29,7 +31,8 @@ bool make_enclave_name(string enclave_type, string* enclave_name) {
   byte m[measurement_size];
   string enclave_id;
 
-  if (enclave_type != "simulated-enclave") return false;
+  if (enclave_type != "simulated-enclave")
+    return false;
   for (int i = 0; i < measurement_size; i++) m[i] = i;
   char hex[65];
   int pos = 0;
@@ -51,7 +54,8 @@ bool test_artifact(bool print_all) {
   string enclave_type("simulated-enclave");
 
   string subject_name_str;
-  if (!make_enclave_name(enclave_type, &subject_name_str)) return false;
+  if (!make_enclave_name(enclave_type, &subject_name_str))
+    return false;
   if (print_all)
     printf("Subject (Enclave) name: %s\n", subject_name_str.c_str());
   string subject_description_str("writer");
@@ -59,14 +63,17 @@ bool test_artifact(bool print_all) {
   double secs_duration = 60.0 * 60.0 * 24.0 * 365.0;
   uint64_t sn = 1;
 
-  if (!make_certifier_rsa_key(2048, &signing_key)) return false;
-  if (!make_certifier_rsa_key(2048, &subject_key)) return false;
+  if (!make_certifier_rsa_key(2048, &signing_key))
+    return false;
+  if (!make_certifier_rsa_key(2048, &subject_key))
+    return false;
   if (!produce_artifact(signing_key, issuer_name_str, issuer_description_str,
                         subject_key, subject_name_str, subject_description_str,
                         sn, secs_duration, cert, true))
     return false;
 
-  if (print_all) X509_print_fp(stdout, cert);
+  if (print_all)
+    X509_print_fp(stdout, cert);
 
   uint64_t recovered_sn;
   string recovered_subject_name_str;
