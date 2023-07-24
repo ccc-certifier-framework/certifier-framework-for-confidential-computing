@@ -674,7 +674,8 @@ bool test_sev_request(bool print_all) {
   ev->set_serialized_evidence(at_str);
 
   byte m[48];
-  for (int i = 0; i < 48; i++) m[i] = (i % 8) + 1;
+  for (int i = 0; i < 48; i++)
+    m[i] = (i % 8) + 1;
   string measurement_str;
   measurement_str.assign((char*)m, 48);
 

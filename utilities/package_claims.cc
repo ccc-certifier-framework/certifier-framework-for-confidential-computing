@@ -37,7 +37,8 @@ bool get_claim_from_block(const string& block, signed_claim_message* sc) {
 const char* next_comma(const char* p) {
   if (p == nullptr)
     return nullptr;
-  while (*p != ',' && *p != '\0') p++;
+  while (*p != ',' && *p != '\0')
+    p++;
   return p;
 }
 

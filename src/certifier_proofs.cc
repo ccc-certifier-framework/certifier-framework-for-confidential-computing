@@ -112,7 +112,8 @@ bool predicate_dominance::is_child(const string& descendant) {
 }
 
 static void indent_spaces(int indent) {
-  for (int i = 0; i < indent; i++) printf(" ");
+  for (int i = 0; i < indent; i++)
+    printf(" ");
 }
 
 void predicate_dominance::print_tree(int indent) {

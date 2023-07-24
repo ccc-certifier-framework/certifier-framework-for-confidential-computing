@@ -24,7 +24,8 @@ using std::string;
 using namespace certifier::utilities;
 
 bool keystone_getSealingKey(byte* key) {
-  for (int i = 0; i < 64; i++) key[i] = i ^ 0x33;
+  for (int i = 0; i < 64; i++)
+    key[i] = i ^ 0x33;
   return true;
 }
 
@@ -43,14 +44,17 @@ bool keystone_get_fake_measurement(int* size, byte* measurement) {
     if (n > 0 &&
         read_file_into_string(g_measurement_file_name, &str_measurement)) {
       byte* p = (byte*)str_measurement.data();
-      for (int i = 0; i < g_m_size; i++) g_measurement[i] = p[i];
+      for (int i = 0; i < g_m_size; i++)
+        g_measurement[i] = p[i];
     } else {
-      for (int i = 0; i < g_m_size; i++) g_measurement[i] = i;
+      for (int i = 0; i < g_m_size; i++)
+        g_measurement[i] = i;
     }
     g_m_initialized = true;
   }
 
-  for (int i = 0; i < g_m_size; i++) measurement[i] = g_measurement[i];
+  for (int i = 0; i < g_m_size; i++)
+    measurement[i] = g_measurement[i];
   *size = g_m_size;
 
   return true;

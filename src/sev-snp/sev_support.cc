@@ -524,7 +524,8 @@ out:
 //      ...
 //      Uc = PRF(Password, Uc−1)
 void xor_in(int size, byte *result, byte *in) {
-  for (int i = 0; i < size; i++) result[i] ^= in[i];
+  for (int i = 0; i < size; i++)
+    result[i] ^= in[i];
 }
 
 const int hmac_size = 32;

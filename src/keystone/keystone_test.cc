@@ -61,7 +61,8 @@ bool keystone_test(const int cert_size, byte* cert) {
 
   int size_what_to_say = 256;
   byte what_to_say[size_what_to_say];
-  for (int i = 0; i < size_what_to_say; i++) what_to_say[i] = i;
+  for (int i = 0; i < size_what_to_say; i++)
+    what_to_say[i] = i;
 
   int size_attestation = SIZE_ATTESTATION;
   byte attestation[size_attestation];

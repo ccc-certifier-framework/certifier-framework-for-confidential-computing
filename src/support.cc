@@ -2113,7 +2113,8 @@ bool make_claim(int size, byte* serialized_claim, string& format,
 // -----------------------------------------------------------------------
 
 void certifier::utilities::print_bytes(int n, byte* buf) {
-  for (int i = 0; i < n; i++) printf("%02x", buf[i]);
+  for (int i = 0; i < n; i++)
+    printf("%02x", buf[i]);
 }
 
 void certifier::utilities::print_rsa_key(const rsa_message& rsa) {

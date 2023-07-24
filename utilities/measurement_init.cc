@@ -119,7 +119,8 @@ int main(int an, char** av) {
 
   if (FLAGS_test_measurement == true) {
     measurement_size = 32;
-    for (int i = 0; i < measurement_size; i++) m[i] = (byte)i;
+    for (int i = 0; i < measurement_size; i++)
+      m[i] = (byte)i;
     if (!write_file(FLAGS_out_file, measurement_size, m)) {
       printf("Can't write %s\n", FLAGS_out_file.c_str());
       return 1;

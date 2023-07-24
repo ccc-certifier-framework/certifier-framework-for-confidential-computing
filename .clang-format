@@ -6,3 +6,4 @@ BasedOnStyle:  Google
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false

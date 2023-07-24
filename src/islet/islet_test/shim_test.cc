@@ -17,7 +17,8 @@
 #include "../islet_api.h"
 
 static void print_buf(int sz, byte* buf) {
-  for (int i = 0; i < sz; i++) printf("%02x", buf[i]);
+  for (int i = 0; i < sz; i++)
+    printf("%02x", buf[i]);
   printf("\n");
 }
 

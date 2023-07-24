@@ -29,7 +29,8 @@ DEFINE_string(output, "", "output file");
 const char* next_comma(const char* p) {
   if (p == nullptr)
     return nullptr;
-  while (*p != ',' && *p != '\0') p++;
+  while (*p != ',' && *p != '\0')
+    p++;
   return p;
 }
 

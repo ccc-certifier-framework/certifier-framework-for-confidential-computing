@@ -58,8 +58,10 @@ bool test_encrypt(bool print_all) {
   memset(iv, 0, iv_size);
   memset(decrypted, 0, in_size);
 
-  for (int i = 0; i < key_size; i++) key[i] = (byte)(i % 16);
-  for (int i = 0; i < blk_size; i++) iv[i] = (byte)(i % 16);
+  for (int i = 0; i < key_size; i++)
+    key[i] = (byte)(i % 16);
+  for (int i = 0; i < blk_size; i++)
+    iv[i] = (byte)(i % 16);
   const char* msg = "this is a message of length 32.";
   memcpy(plain, (byte*)msg, 32);
 
@@ -119,9 +121,11 @@ bool test_authenticated_encrypt(bool print_all) {
   memset(iv, 0, iv_size);
   memset(decrypted, 0, decrypt_size);
 
-  for (int i = 0; i < key_size; i++) key[i] = (byte)(i % 16);
+  for (int i = 0; i < key_size; i++)
+    key[i] = (byte)(i % 16);
 
-  for (int i = 0; i < block_size; i++) iv[i] = (byte)(i % 16);
+  for (int i = 0; i < block_size; i++)
+    iv[i] = (byte)(i % 16);
   const char* msg = "this is a message of length 32.";
   memcpy(plain, (byte*)msg, 32);
 
