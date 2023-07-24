@@ -16,24 +16,22 @@ make -f policy_utilities.mak
 
 # Create keys
 mkdir -p $MULTIDOMAIN_EXAMPLE_DIR/provisioning
+
 cd $MULTIDOMAIN_EXAMPLE_DIR/provisioning
 
 $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
-    --client_policy_key_output_file=client_policy_key_file.bin --policy_cert_output_file=client_policy_cert_file.bin \
+    --policy_key_output_file=client_policy_key_file.bin --policy_cert_output_file=client_policy_cert_file.bin \
     --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
 
 $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
-    --server_policy_key_output_file=server_policy_key_file.bin --policy_cert_output_file=server_policy_cert_file.bin \
+    --policy_key_output_file=server_policy_key_file.bin --policy_cert_output_file=server_policy_cert_file.bin \
     --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
 
-
-$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
-    --policy_key_output_file=policy_key_file2.bin --policy_cert_output_file=policy_cert_file2.bin
 
 # embed policy key and compile app
 cd $MULTIDOMAIN_EXAMPLE_DIR/provisioning
-$CERTIFIER_PROTOTYPE/utilities/embed_client_policy_key.exe --input=client_policy_cert_file.bin --output=../client_policy_key.cc
-$CERTIFIER_PROTOTYPE/utilities/embed_server_policy_key.exe --input=server_policy_cert_file.bin --output=../server_policy_key.cc
+$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=client_policy_cert_file.bin --output=../client_policy_key.cc
+$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=server_policy_cert_file.bin --output=../server_policy_key.cc
 
 # make app and compute app measurement
 cd $MULTIDOMAIN_EXAMPLE_DIR

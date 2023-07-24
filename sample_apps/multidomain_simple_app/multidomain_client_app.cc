@@ -199,12 +199,13 @@ int main(int an, char** av) {
     // now server domain
     string server_domain_name;
     string server_domain_cert;
-    string server_host;
-    int server_port;
-    string server_service_host;
-    int server_service_port;
+    int server_port= 8122;
+    string server_host = 0;
+    string server_service_host = FLAGS_server_app_host;
+    int server_service_port = 8124;
+
     if (!app_trust_data->add_new_domain(server_domain_name, server_domain_cert, server_host, server_port,
-	    server_service_host, server_service_port)	{
+	    server_service_host, server_service_port))	{
       printf("%s() error, line %d, Can't add_new_domain\n",
         __func__, __LINE__);
       ret = 1;
@@ -238,7 +239,7 @@ int main(int an, char** av) {
 
     // Use certified_domain[1] here
     certifiers* cd = app_trust_data->certified_domains_[1];
-    if (!cd->is_certified_) {)
+    if (!cd->is_certified_) {
       printf("%s() error, line %d, secondary admissions cert not valid\n",
         __func__, __LINE__);
       ret = 1;
@@ -247,7 +248,7 @@ int main(int an, char** av) {
 
     if (!channel.init_client_ssl(cd->service_host_, cd->service_port_,
           cd->domain_policy_cert_,
-          cd->owner_->private_auth_key_,
+          app_trust_data->private_auth_key_,
           cd->admissions_cert_)) {
       printf("%s() error, line %d, Can't init client app\n",
         __func__, __LINE__);

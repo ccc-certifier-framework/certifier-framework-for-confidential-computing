@@ -44,11 +44,14 @@ LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
-dobj = $(O)/multidomain_example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+client_dobj = $(O)/multidomain_client_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+       $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
+       $(O)/cc_useful.o
+server_dobj = $(O)/multidomain_client_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
        $(O)/cc_useful.o
 
-all:	example_app.exe
+all:	multidomain_server_app.exe multidomain_client_app.exe
 clean:
 	@echo "removing generated files"
 	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
@@ -57,9 +60,13 @@ clean:
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/example_app.exe
 
-$(EXE_DIR)/example_app.exe: $(dobj)
+$(EXE_DIR)/multidomain_client_app.exe: $(client_dobj)
 	@echo "\nlinking executable $@"
-	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
+	$(LINK) $(client_dobj) $(LDFLAGS) -o $(@D)/$@
+
+$(EXE_DIR)/multidomain_server_app.exe: $(server_dobj)
+	@echo "\nlinking executable $@"
+	$(LINK) $(server_dobj) $(LDFLAGS) -o $(@D)/$@
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
