@@ -20,10 +20,12 @@ mkdir -p $MULTIDOMAIN_EXAMPLE_DIR/provisioning
 cd $MULTIDOMAIN_EXAMPLE_DIR/provisioning
 
 $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
+    --policy_key_name=client-policy-key \
     --policy_key_output_file=client_policy_key_file.bin --policy_cert_output_file=client_policy_cert_file.bin \
     --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
 
 $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
+    --policy_key_name=server-policy-key \
     --policy_key_output_file=server_policy_key_file.bin --policy_cert_output_file=server_policy_cert_file.bin \
     --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
 
@@ -35,7 +37,7 @@ $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=server_policy_cert_f
 
 # make app and compute app measurement
 cd $MULTIDOMAIN_EXAMPLE_DIR
-make -f multidomain_example_app.mak
+make -f multidomain_app.mak
 
 # build policy
 cd $MULTIDOMAIN_EXAMPLE_DIR/provisioning
@@ -51,10 +53,10 @@ $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client
   --verb="says" --clause=ts1.bin --output=vse_policy1b.bin
 
 # vse_policy1a.bin is server-policy-key says platform-key is-trusted-for-attestation
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client_policy_key_file.bin \
-  --verb="says" --clause=ts1.bin --output=vse_policy1b.bin
-# vse_policy1b.bin is client-policy-key says platform-key is-trusted-for-attestation
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
+  --verb="says" --clause=ts1.bin --output=vse_policy1a.bin
+# vse_policy1b.bin is client-policy-key says platform-key is-trusted-for-attestation
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client_policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1b.bin
 
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1a.bin \
@@ -64,7 +66,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=
 
 
 # policy key says measurement is-trusted
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../multidomain_server_app.exe \
+$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../multidomain_client_app.exe \
       --output=multidomain_client_app.measurement
 $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../multidomain_server_app.exe \
       --output=multidomain_server_app.measurement
@@ -83,7 +85,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server
   --verb="says" --clause=ts2a.bin --output=vse_policy2a.bin
 # vse_policy2b is server-policy-key says client_measurement is-trusted
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
-  --verb="says" --clause=ts2b.bin --output=vse_policy1b.bin
+  --verb="says" --clause=ts2b.bin --output=vse_policy2b.bin
 # vse_policy2c is client-policy-key says server_measurement is-trusted
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client_policy_key_file.bin \
   --verb="says" --clause=ts2a.bin --output=vse_policy2c.bin

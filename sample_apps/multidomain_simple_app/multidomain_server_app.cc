@@ -192,6 +192,7 @@ int main(int an, char** av) {
 
   } else if (FLAGS_operation == "run-app-as-client") {
     printf("%s() error, line %d, Server only app\n",
+        __func__, __LINE__);
     ret = 1;
     goto done;
   } else if (FLAGS_operation == "run-app-as-server") {
