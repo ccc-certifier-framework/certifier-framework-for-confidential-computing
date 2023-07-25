@@ -57,11 +57,14 @@ LINK=g++
 PROTO=protoc
 AR=ar
 
-# Definitions needed for generating Python bindings
+# Definitions needed for generating Python bindings using SWIG tool
 SWIG=swig
 
 # -Wallkw: Enable keyword warnings for all the supported languages
 SWIG_FLAGS = -Wallkw
+
+# Base of Certifier Framework's interface file for use by SWIG
+SWIG_CERT_INTERFACE = certifier_framework
 
 PY_INCLUDE = -I /usr/include/python3.10/
 
@@ -81,11 +84,11 @@ dobj += $(O)/sev_support.o $(O)/sev_report.o
 endif
 
 # Objs needed to build Certifer Framework shared lib for use by Python module
-cfsl_dobj := $(dobj) $(O)/certifier_framework_wrap.o
+cfsl_dobj := $(dobj) $(O)/$(SWIG_CERT_INTERFACE)_wrap.o
 
 CERTIFIER_LIB = certifier.a
 
-LIBCERTIFIER         = libcertifier_framework
+LIBCERTIFIER         = lib$(SWIG_CERT_INTERFACE)
 CERTIFIER_SHARED_LIB = $(LIBCERTIFIER).so
 
 all:	$(CL)/$(CERTIFIER_LIB)
@@ -97,7 +100,9 @@ sharedlib:	$(CL)/$(CERTIFIER_SHARED_LIB)
 
 clean:
 	@echo "removing generated files"
-	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/certifier_framework_wrap.cc
+	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc
+	@echo "removing generated Python files"
+	rm -rf $(CERTIFIER_ROOT)/$(SWIG_CERT_INTERFACE).py $(CERTIFIER_ROOT)/certifier_pb2.py
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable files"
@@ -135,11 +140,11 @@ $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 # Ref: https://stackoverflow.com/questions/12369131/swig-and-python3-surplus-underscore
 # Use -interface arg to overcome double __ issue in generated SWIG_init #define
 #     -outdir specifies output-dir for generated *.py file.
-$(S)/certifier_framework_wrap.cc: $(I)/certifier_framework.i $(S)/certifier.cc
+$(S)/$(SWIG_CERT_INTERFACE)_wrap.cc: $(I)/$(SWIG_CERT_INTERFACE).i $(S)/certifier.cc
 	@echo "\nGenerating $@"
 	$(SWIG) $(SWIG_FLAGS) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
 
-$(O)/certifier_framework_wrap.o: $(S)/certifier_framework_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/$(SWIG_CERT_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling $<"
 	$(CC) $(CFLAGS) $(PY_INCLUDE) -o $(@D)/$@ -c $<
 
