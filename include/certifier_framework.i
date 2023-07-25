@@ -14,9 +14,9 @@
 %include "std_string.i"
 
 
-// Xform interfaces returning a string output param to return string * as a function
-%apply string *OUTPUT { string *v }                 // get()
-%apply string *OUTPUT { string *psout }             // Serialize()
+// Xform interfaces returning a string output param to return string * <function>
+%apply string *OUTPUT { string *v }                 // policy_store()->get()
+%apply string *OUTPUT { string *psout }             // policy_store()->Serialize()
 
 %{
 #include "certifier_framework.h"

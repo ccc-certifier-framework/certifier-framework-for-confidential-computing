@@ -114,8 +114,11 @@ $(CL)/$(CERTIFIER_SHARED_LIB): $(cfsl_dobj)
 
 $(I)/certifier.pb.h: $(S)/certifier.pb.cc
 $(S)/certifier.pb.cc: $(CP)/certifier.proto
-	$(PROTO) --cpp_out=$(S) --proto_path $(<D) $<
+	@echo "\nGenerate cpp sources from proto file $<"
+	$(PROTO) --cpp_out=$(@D) --proto_path $(<D) $<
 	mv $(S)/certifier.pb.h $(I)
+	@echo "\nGenerate python interface bindings from proto file $<"
+	$(PROTO) --python_out=$(CERTIFIER_ROOT) --proto_path $(<D) $<
 
 $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifier.h $(S)/test_support.cc
 	@echo "\ncompiling $<"
