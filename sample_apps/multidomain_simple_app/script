@@ -44,46 +44,78 @@ cd $MULTIDOMAIN_EXAMPLE_DIR/provisioning
 
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
   --verb="is-trusted-for-attestation" --output=ts1.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1a.bin
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1a.bin \
-  --duration=9000 --private_key_file=server_policy_key_file.bin --output=signed_claim_1a.bin
-
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client_policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1b.bin
+
+# vse_policy1a.bin is server-policy-key says platform-key is-trusted-for-attestation
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client_policy_key_file.bin \
+  --verb="says" --clause=ts1.bin --output=vse_policy1b.bin
+# vse_policy1b.bin is client-policy-key says platform-key is-trusted-for-attestation
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
+  --verb="says" --clause=ts1.bin --output=vse_policy1b.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1a.bin \
+  --duration=9000 --private_key_file=server_policy_key_file.bin --output=signed_claim_1a.bin
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1b.bin \
-  -$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
-  --measurement_subject=multidomain_client_app.measurement --verb="is-trusted" \
-  --output=ts2b.bin-duration=9000 --private_key_file=client_policy_key_file.bin --output=signed_claim_1b.bin
+  --duration=9000 --private_key_file=client_policy_key_file.bin --output=signed_claim_1b.bin
+
 
 # policy key says measurement is-trusted
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../multidomain_client_app.exe \
+$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../multidomain_server_app.exe \
       --output=multidomain_client_app.measurement
 $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../multidomain_server_app.exe \
       --output=multidomain_server_app.measurement
 
+#ts2a is server-measurement is-trusted
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
   --measurement_subject=multidomain_server_app.measurement --verb="is-trusted" \
   --output=ts2a.bin
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
-  --verb="says" --clause=ts2a.bin --output=vse_policy2a.bin
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
-  --vse_file=vse_policy2a.bin --duration=9000 \
-  --private_key_file=server_policy_key_file.bin --output=signed_claim_2a.bin
-
+#ts2b is client-measurement is-trusted
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
   --measurement_subject=multidomain_client_app.measurement --verb="is-trusted" \
   --output=ts2b.bin
+
+# vse_policy2a is server-policy-key says server_measurement is-trusted
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
+  --verb="says" --clause=ts2a.bin --output=vse_policy2a.bin
+# vse_policy2b is server-policy-key says client_measurement is-trusted
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
+  --verb="says" --clause=ts2b.bin --output=vse_policy1b.bin
+# vse_policy2c is client-policy-key says server_measurement is-trusted
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client_policy_key_file.bin \
-  --verb="says" --clause=ts2b.bin --output=vse_policy2b.bin
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
-  --vse_file=vse_policy2b.bin --duration=9000 \
-  --private_key_file=server_policy_key_file.bin --output=signed_claim_2b.bin
+  --verb="says" --clause=ts2a.bin --output=vse_policy2c.bin
+# vse_policy2d is client-policy-key says client_measurement is-trusted
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client_policy_key_file.bin \
+  --verb="says" --clause=ts2b.bin --output=vse_policy2d.bin
 
-$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1a.bin,signed_claim_1b.bin,signed_claim_2a.bin,signed_claim_2b.bin \
-  --output=policy.bin
+#Both measurements are trusted in both domains
 
-$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+#server-policy-key signs vse_policy2a and policy2b
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2a.bin \
+  duration=9000 --private_key_file=server_policy_key_file.bin --output=server_signed_claim_2a.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2b.bin \
+  duration=9000 --private_key_file=server_policy_key_file.bin --output=server_signed_claim_2b.bin
+
+#client-policy-key signs vse_policy2c and policy2d
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2c.bin \
+  duration=9000 --private_key_file=client_policy_key_file.bin --output=client_signed_claim_2a.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2d.bin \
+  duration=9000 --private_key_file=client_policy_key_file.bin --output=client_signed_claim_2b.bin
+
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1a.bin,server_signed_claim_2a.bin,server_signed_claim_2b.bin \
+  --output=server_policy.bin
+$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=server_policy.bin
+
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1b.bin,client_signed_claim_2a.bin,client_signed_claim_2b.bin \
+  --output=client_policy.bin
+
+
+$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=server_policy.bin
+
+$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=client_policy.bin
 
 # This gets included from the app
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=attest_key_file.bin \
