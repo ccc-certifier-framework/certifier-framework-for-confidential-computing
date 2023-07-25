@@ -114,9 +114,7 @@ $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=server_policy.b
 $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1b.bin,client_signed_claim_2a.bin,client_signed_claim_2b.bin \
   --output=client_policy.bin
 
-
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=server_policy.bin
-
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=client_policy.bin
 
 # This gets included from the app
@@ -153,38 +151,39 @@ make dummy
 cd $CERTIFIER_PROTOTYPE/certifier_service
 go build simpleserver.go
 
-#run server
+#run certifier server for server policy in one window
 cd $MULTIDOMAIN_EXAMPLE_DIR/server_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-      --policyFile=policy.bin --readPolicy=true
+      --policyFile=server_policy.bin --policyKeyFile=server_policy_key_file.bin --readPolicy=true
+#run certifier server for client policy in one window
 cd $MULTIDOMAIN_EXAMPLE_DIR/client_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-      --policyFile=policy.bin --readPolicy=true
+      --policyFile=client_policy.bin --policyKeyFile=client_policy_key_file.bin --readPolicy=true
 
 # initialize client app
 cd $MULTIDOMAIN_EXAMPLE_DIR
-$MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true \
+$MULTIDOMAIN_EXAMPLE_DIR/multidomain_client_app.exe --print_all=true \
       --operation=cold-init --data_dir=./app1_data/ --measurement_file="multidomain_client_app.measurement" \
       --policy_store_file=policy_store
 # get client app certified
-$MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true \
+$MULTIDOMAIN_EXAMPLE_DIR/multidomain_client_app.exe --print_all=true \
       --operation=get-certifier --data_dir=./app1_data/ --measurement_file="multidomain_client_app.measurement" \
       --policy_store_file=policy_store
 
 # initialize server app
-$MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true \
+$MULTIDOMAIN_EXAMPLE_DIR/multidomain_server_app.exe --print_all=true \
       --operation=cold-init --data_dir=./app2_data/ --measurement_file="multidomain_server_app.measurement" \
       --policy_store_file=policy_store
 # get server app certified
-$MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true \
+$MULTIDOMAIN_EXAMPLE_DIR/multidomain_server_app.exe --print_all=true \
       --operation=get-certifier --data_dir=./app2_data/ --measurement_file="multidomain_server_app.measurement" \
        --policy_store_file=policy_store
 
 #run the app
 cd $MULTIDOMAIN_EXAMPLE_DIR
-$MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
+$MULTIDOMAIN_EXAMPLE_DIR/multidomain_server_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
       --policy_store_file=policy_store --measurement_file="multidomain_server_app.measurement"
 cd $MULTIDOMAIN_EXAMPLE_DIR
-$MULTIDOMAIN_EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
+$MULTIDOMAIN_EXAMPLE_DIR/multidomain_client_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
       --policy_store_file=policy_store --measurement_file="multidomain_client_app.measurement"
 

@@ -74,6 +74,8 @@ print_signed_claim_obj = $(O)/print_signed_claim.o $(common_objs)
 
 package_claims_obj = $(O)/package_claims.o $(common_objs)
 
+package_claims_obj = $(O)/print_packaged_claims.o $(common_objs)
+
 print_packaged_claims_obj = $(O)/print_packaged_claims.o $(common_objs)
 
 embed_policy_key_obj=$(O)/embed_policy_key.o
@@ -101,6 +103,7 @@ all:	$(EXE_DIR)/measurement_utility.exe \
 	    $(EXE_DIR)/make_property.exe \
 	    $(EXE_DIR)/make_environment.exe \
 	    $(EXE_DIR)/package_claims.exe \
+	    $(EXE_DIR)/print_packaged_claims.exe \
 	    $(EXE_DIR)/embed_policy_key.exe \
 	    $(EXE_DIR)/combine_properties.exe \
 	    $(EXE_DIR)/sample_sev_key_generation.exe \
@@ -207,6 +210,10 @@ $(EXE_DIR)/print_signed_claim.exe: $(print_signed_claim_obj)
 $(O)/print_signed_claim.o: $(S)/print_signed_claim.cc $(INC_DIR)/certifier.pb.h $(INC_DIR)/certifier.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(EXE_DIR)/print_packaged_claims.exe: $(packaged_claims_obj) 
+	@echo "\nlinking executable $@"
+	$(LINK) -o $(EXE_DIR)/print_packaged_claims.exe $(packaged_claims_obj) $(LDFLAGS)
 
 $(EXE_DIR)/package_claims.exe: $(package_claims_obj) 
 	@echo "\nlinking executable $@"
