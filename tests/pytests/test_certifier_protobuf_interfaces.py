@@ -72,7 +72,7 @@ def test_certifier_pb2_describe_vse_clause():
     """
     Describe layout of 'vse_clause' class, verifying some expected member fields.
     """
-    print('\nMember-fields in protobuf-generated classvse_clause key_message:')
+    print('\nMember-fields in protobuf-generated class vse_clause:')
 
     for attr in get_attrs(cert_pbi.vse_clause):
         print(' -', attr)
@@ -80,6 +80,40 @@ def test_certifier_pb2_describe_vse_clause():
     print('\nMethods in protobuf-generated class, vse_clause:')
     for func in get_functions(cert_pbi.vse_clause):
         print(' -', func)
+
+# ##############################################################################
+def test_certifier_pb2_describe_rsa_message():
+    """
+    Describe layout of 'rsa_message' class, verifying some expected member fields.
+    """
+    print('\nMember-fields in protobuf-generated class rsa_message:')
+
+    for attr in get_attrs(cert_pbi.rsa_message):
+        print(' -', attr)
+
+    print('\nMethods in protobuf-generated class, rsa_message:')
+    for func in get_functions(cert_pbi.rsa_message):
+        print(' -', func)
+
+# ##############################################################################
+def test_time_point():
+    """
+    Exercise class time_point() basic interfaces.
+    """
+    timept = cert_pbi.time_point()
+    timept.year    = 2023
+    timept.month   = 7
+    timept.day     = 24
+    timept.hour    = 17
+    timept.minute  = 50
+    timept.seconds = 20.23
+
+    timept_serialized = timept.SerializeToString()
+    print(timept_serialized)
+
+    newtimept = timept.FromString(timept_serialized)
+    assert newtimept == timept
+
 
 # ##############################################################################
 def get_attrs(klass):
@@ -94,5 +128,4 @@ def get_functions(klass):
     """Return a list of functions in a protobuf-generated class."""
     return [k for k in klass.__dict__.keys()
             if not k.startswith('__') and not k.endswith('__')
-               and "function" in str(klass.__dict__[k])
           ]
