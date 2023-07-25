@@ -15,7 +15,6 @@
 # ##############################################################################
 """
 Basic pytests for Certifier Framework Python module.
-
 """
 
 # To resolve references to module, run as: PYTHONPATH=../.. pytest <filename>.py
@@ -75,7 +74,7 @@ def test_make_key_message():
     RESOLVE: This stub case seems to work ... figure out where to go next with this.
     """
     # key_msg = cert_pbi.key_message()
-    pass
+    assert 1 == 1 + 0
 
 # ##############################################################################
 def test_add_find_single_entry():
@@ -291,10 +290,9 @@ def test_cc_trust_data():
     symmetric_key_alg = "symmetric-key-alg"
     assert cctd.cold_init(public_key_alg, symmetric_key_alg) is False
 
-    asn1_cert_size = 1024
+    # RESOLVE: Fix this test case.
+    # asn1_cert_size = 1024
     # asn1_cert = bytearray("some-asn1-certificate-junk-test-string", 'utf-8')
     asn1_cert = "some-asn1-certificate-junk-test-string".encode()
     print(asn1_cert)
     # assert cctd.init_policy_key(asn1_cert_size, asn1_cert) is False
-
-    pass

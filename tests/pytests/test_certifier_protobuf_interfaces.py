@@ -21,7 +21,7 @@ See certifier.mak for the command issued.
 """
 from inspect import getmembers, isclass, ismodule
 
-# To resolve references to module and protobuf-python interfacee issues, run as:
+# To resolve references to module and protobuf-python interface issues, run as:
 # PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python PYTHONPATH=../.. pytest <filename>.py
 import certifier_pb2 as cert_pbi
 
@@ -96,6 +96,20 @@ def test_certifier_pb2_describe_rsa_message():
         print(' -', func)
 
 # ##############################################################################
+def test_certifier_pb2_describe_time_point():
+    """
+    Describe layout of 'time_point' class, verifying some expected member fields.
+    """
+    print('\nMember-fields in protobuf-generated class time_point:')
+
+    for attr in get_attrs(cert_pbi.time_point):
+        print(' -', attr)
+
+    print('\nMethods in protobuf-generated class, time_point:')
+    for func in get_functions(cert_pbi.time_point):
+        print(' -', func)
+
+# ##############################################################################
 def test_time_point():
     """
     Exercise class time_point() basic interfaces.
@@ -111,7 +125,7 @@ def test_time_point():
     timept_serialized = timept.SerializeToString()
     print(timept_serialized)
 
-    newtimept = timept.FromString(timept_serialized)
+    newtimept = cert_pbi.time_point.FromString(timept_serialized)
     assert newtimept == timept
 
 

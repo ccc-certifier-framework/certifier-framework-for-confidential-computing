@@ -56,6 +56,7 @@ LINK=g++
 # PROTO=/usr/local/bin/protoc
 PROTO=protoc
 AR=ar
+LL = ls -aFlrt
 
 # Definitions needed for generating Python bindings using SWIG tool
 SWIG=swig
@@ -124,6 +125,7 @@ $(S)/certifier.pb.cc: $(CP)/certifier.proto
 	mv $(S)/certifier.pb.h $(I)
 	@echo "\nGenerate python interface bindings from proto file $<"
 	$(PROTO) --python_out=$(CERTIFIER_ROOT) --proto_path $(<D) $<
+	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifier.h $(S)/test_support.cc
 	@echo "\ncompiling $<"
@@ -143,6 +145,7 @@ $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc: $(I)/$(SWIG_CERT_INTERFACE).i $(S)/certifier.cc
 	@echo "\nGenerating $@"
 	$(SWIG) $(SWIG_FLAGS) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/$(SWIG_CERT_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling $<"

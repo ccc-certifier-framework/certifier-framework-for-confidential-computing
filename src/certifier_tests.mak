@@ -63,6 +63,7 @@ LINK=g++
 # PROTO=/usr/local/bin/protoc
 PROTO=protoc
 AR=ar
+LL = ls -aFlrt
 
 # Definitions needed for generating Python bindings
 SWIG=swig
@@ -173,6 +174,7 @@ $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifi
 $(S)/certifier_tests_wrap.cc: $(I)/certifier_tests.i $(S)/certifier_tests.cc
 	@echo "\nGenerating $@"
 	$(SWIG) -v -python -c++ -Wall -Werror -interface $(LIBCERTIFIER_TESTS) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/certifier_tests_wrap.o: $(S)/certifier_tests_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling $<"
