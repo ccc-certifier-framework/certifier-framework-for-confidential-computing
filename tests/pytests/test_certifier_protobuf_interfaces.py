@@ -29,54 +29,70 @@ import certifier_pb2 as cert_pbi
 # ##############################################################################
 # To see output, run: pytest --capture=tee-sys -v
 def test_certifier_pb2_basic():
-    """ Basic test of generated certifier_pb2.py module."""
+    """
+    Basic test of generated certifier_pb2.py module.
+    Verify existence of an expected list of class-names. Print list of classes.
+    """
 
     assert ismodule(cert_pbi) is True
 
     pb2_classes = getmembers(cert_pbi, isclass)
+    pb2_class_names = [ item[0] for item in pb2_classes]
+
+    # Verify that some expected classes exist
+    for pb_class in [  'ecc_message'
+                     , 'key_message'
+                     , 'rsa_message'
+                     , 'protected_blob_message'
+                     , 'vse_clause'
+                    ]:
+        assert pb_class in pb2_class_names
 
     print( )
-    # get_attrs(cert_pbi.key_message)
+    print('protobuf-generated class names in certifier_pb2.py:')
+    for class_name in pb2_classes:
+        print(' ', class_name)
 
-    for attr in get_attrs1(cert_pbi.key_message):
+# ##############################################################################
+def test_certifier_pb2_describe_key_message():
+    """
+    Describe layout of 'key_message' class, verifying some expected member fields.
+    """
+    print('\nMember-fields in protobuf-generated class, key_message:')
+
+    for attr in get_attrs(cert_pbi.key_message):
         print(' -', attr)
 
-    # print(get_attrs(cert_pbi.key_message))
+    print('\nMethods in protobuf-generated class, key_message:')
+    for func in get_functions(cert_pbi.key_message):
+        print(' -', func)
 
-    # pr_attrs(cert_pbi.key_message)
-    # print(getmembers(cert_pbi.key_message, isclass))
+# ##############################################################################
+def test_certifier_pb2_describe_vse_clause():
+    """
+    Describe layout of 'vse_clause' class, verifying some expected member fields.
+    """
+    print('\nMember-fields in protobuf-generated classvse_clause key_message:')
 
-    print( )
-    # for class_name in pb2_classes:
-    #     print(' ', class_name)
+    for attr in get_attrs(cert_pbi.vse_clause):
+        print(' -', attr)
 
-def get_attrs0(klass):
-    return [(k , klass.__dict__[k]) for k in klass.__dict__.keys()
-            if not k.startswith('__') and not k.endswith('__')
-               # and '_FieldProperty' in klass.__dict__[k]
-          ]
+    print('\nMethods in protobuf-generated class, vse_clause:')
+    for func in get_functions(cert_pbi.vse_clause):
+        print(' -', func)
 
-def get_attrs1(klass):
+# ##############################################################################
+def get_attrs(klass):
+    """Return a list of member-fields 'attributes' in a protobuf-generated class."""
     return [k for k in klass.__dict__.keys()
             if not k.startswith('__') and not k.endswith('__')
-               and k != 'DESCRIPTOR'
                and "_FieldProperty" in str(klass.__dict__[k])
           ]
 
-def get_attrs(klass):
-    result = []
-    for k in klass.__dict__.keys():
-        if k.startswith('__') or k.endswith('__'):
-            continue
-        # print(klass.__dict__.items)
-        if "_FieldProperty" not in str(klass.__dict__[k]):
-            continue
-        print(k)
-        print((klass.__dict__)[k])
-        result += k
-
-    return result
-
-def pr_attrs(klass):
-    # print([(k, test_dict[k]) for k in test_dict])
-    print([(k, klass.__dict__[k]) for k in klass.__dict__.keys() if not k.startswith('__') and not k.endswith('__')])
+# ##############################################################################
+def get_functions(klass):
+    """Return a list of functions in a protobuf-generated class."""
+    return [k for k in klass.__dict__.keys()
+            if not k.startswith('__') and not k.endswith('__')
+               and "function" in str(klass.__dict__[k])
+          ]
