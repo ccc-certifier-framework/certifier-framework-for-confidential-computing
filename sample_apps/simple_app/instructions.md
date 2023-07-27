@@ -5,7 +5,7 @@ application and generating the policy for the Certifier Service using the policy
 utilities.
 
 This simple_app sample program provides an example of initializing
-and provisioning the Certifier Service with utility generated keys,
+and provisioning the Certifier Service with utility-generated keys,
 measurements and policy.
 
 The sample program will still need to construct the statement "The attestation-key says the

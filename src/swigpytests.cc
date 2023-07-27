@@ -1,0 +1,137 @@
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// ****************************************************************************
+// swigpytests.cc : To test swigpytests.i SWIG interfaces.
+// These are just dummy class definitions, based on the stuff defined in
+// certifier_framework.h . See swigpytests.h for details.
+// ****************************************************************************
+
+#include <string.h>
+#include "swigpytests.h"
+
+using namespace swigpytests;
+
+// ****************************************************************************
+swigpytests::cc_trust_data::cc_trust_data() {
+  serialized_policy_cert_ = "Unknown-root-cert";
+}
+
+swigpytests::cc_trust_data::~cc_trust_data() {}
+
+// ****************************************************************************
+swigpytests::secure_authenticated_channel::secure_authenticated_channel() {
+  role_ = "Undefined-role";
+}
+
+swigpytests::secure_authenticated_channel::secure_authenticated_channel(
+    string &role) {
+  role_ = role;
+}
+
+swigpytests::secure_authenticated_channel::~secure_authenticated_channel() {}
+
+bool swigpytests::secure_authenticated_channel::init_client_ssl(
+    const string &asn1_root_cert) {  // In
+
+  asn1_root_cert_ = asn1_root_cert;
+  swig_wrap_fn_name_.assign("init_client_ssl-const-string-asn1_root_cert");
+  printf(" Executed %s():%d ... %s\n",
+         __func__,
+         __LINE__,
+         swig_wrap_fn_name_.c_str());
+  return true;
+}
+
+bool swigpytests::secure_authenticated_channel::init_client_ssl(
+    string &asn1_root_cert_io,  // In/Out
+    int     port) {                 // In
+  // Update root-certificate with user-supplied certificate (in)
+  asn1_root_cert_ = asn1_root_cert_io;
+
+  port_ = port;
+
+  // Return some new certificate string via user-supplied certificate arg. (out)
+  asn1_root_cert_io.assign("New root Certificate");
+  swig_wrap_fn_name_.assign(
+      "init_client_ssl-const-string-asn1_root_cert_io-port");
+  printf(" Executed %s():%d ... %s\n",
+         __func__,
+         __LINE__,
+         swig_wrap_fn_name_.c_str());
+  return true;
+}
+
+bool swigpytests::secure_authenticated_channel::init_client_ssl(
+    int           port,
+    const string &asn1_root_cert) {  // In
+  asn1_root_cert_ = asn1_root_cert;
+  port_ = port;
+  swig_wrap_fn_name_.assign("init_client_ssl-port-const-string-asn1_root_cert");
+  printf(" Executed %s():%d ... %s\n",
+         __func__,
+         __LINE__,
+         swig_wrap_fn_name_.c_str());
+  return true;
+}
+
+bool swigpytests::secure_authenticated_channel::init_client_ssl(
+    const string &host_name,      // In
+    int           port,           // In
+    string &      asn1_root_cert_io) {  // In/Out
+  host_name_ = host_name;
+  port_ = port;
+
+  // Update root-certificate with user-supplied certificate (in)
+  asn1_root_cert_ = asn1_root_cert_io;
+
+  // Return some new certificate string via user-supplied certificate arg. (out)
+  asn1_root_cert_io.assign("New root Certificate");
+  swig_wrap_fn_name_.assign(
+      "init_client_ssl-host_name-port-string-asn1_root_cert_io");
+  printf(" Executed %s():%d ... %s\n",
+         __func__,
+         __LINE__,
+         swig_wrap_fn_name_.c_str());
+  return true;
+}
+
+bool swigpytests::secure_authenticated_channel::init_client_ssl(
+    const string &host_name,
+    int           port,
+    string &      asn1_root_cert_io,
+    const string &asn1_my_cert_pvtkey) {
+  host_name_ = host_name;
+  port_ = port;
+
+  // Update root-certificate with user-supplied certificate (in/out)
+  asn1_root_cert_ = asn1_root_cert_io;
+
+  // Update private-certificate with user-supplied private certificate (in/out)
+  asn1_my_cert_ = asn1_my_cert_pvtkey;
+
+  // Return some new certificate string via user-supplied certificate arg.
+  asn1_root_cert_io.assign("New root Certificate");
+
+  // clang-format off
+  swig_wrap_fn_name_.assign(
+      "init_client_ssl-host_name-port-string-asn1_root_cert_io-const-string-asn1_my_cert_pvtkey");
+  // clang-format on
+  printf(" Executed %s():%d ... %s\n",
+         __func__,
+         __LINE__,
+         swig_wrap_fn_name_.c_str());
+  return true;
+}

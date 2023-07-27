@@ -64,6 +64,7 @@ jobs:
         # Rebuild special-target which will invoke -fPIC flag during compilation.
         set -x
         make -f certifier.mak --always-make -j2 sharedlib
+        make -f certifier.mak --always-make -j2 swigpytestssharedlib
         make -f certifier_tests.mak --always-make -j2 sharedlib
         set +x
 
@@ -120,15 +121,23 @@ jobs:
 
         PYTHONUNBUFFERED=TRUE pytest -v test_libcertifier_framework.py
 
-        PYTHONUNBUFFERED=TRUE pytest -v test_certifier_framework.py
+        # NOTE: Some test cases in test_certifier_framework.py need the Certifier Service
+        # to be up-and-running. That needs several build-and-setup steps which are part
+        # of a simple_app execution test. Execution of those cases is hence moved downstream.
+        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v -m "not needs_cert_service" \
+            test_certifier_framework.py
 
         # Just run the basic case of this test to see classes created in generated Python module
         PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
-        pytest --capture=tee-sys -v test_certifier_protobuf_interfaces.py -k test_certifier_pb2_basic
+            pytest --capture=tee-sys -v test_certifier_protobuf_interfaces.py \
+                -k test_certifier_pb2_basic
 
         # Re-run entire test w/o capturing output
         PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
-        pytest -v test_certifier_protobuf_interfaces.py
+            pytest -v test_certifier_protobuf_interfaces.py
+
+        # Exercise SWIG-Python bindings standalone unit-tests
+        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_libswigpytests.py
 
         set +x
         popd
@@ -307,6 +316,41 @@ jobs:
         set +x
 
         ./run_example.sh simple_app
+
+        # cp'over some certificate / policy / measurement bin files that were provisioned
+        # for running the simple_app. The test cases in below test need these files to
+        # invoke (& verify) the steps under 'get-certified' target.
+        pytest_data_dir="../tests/pytests/data/"
+
+        for binfile in attest_key_file.bin \
+                       policy_cert_file.bin \
+                       platform_attest_endorsement.bin \
+                       example_app.measurement
+        do
+            set -x
+            cp -p simple_app/provisioning/${binfile} ${pytest_data_dir}
+            set +x
+        done
+
+        # Rebuild shared library that pytest needs
+        pushd ../src
+        make -f certifier.mak --always-make -j2 sharedlib
+        popd
+
+        # Re-start Certifier Service as script, above, would have shut it down
+        ./cleanup.sh
+        ./run_example.sh simple_app start_certifier_service
+
+        # Run Python test, in which some test cases need Certifier Service to be up.
+        pushd ../
+
+        set -x
+        PYTHONUNBUFFERED=TRUE PYTHONPATH=./ \
+            pytest --capture=tee-sys -v -m needs_cert_service tests/pytests/test_certifier_framework.py
+        set +x
+
+        popd
+
         ./cleanup.sh
 
         popd

@@ -39,7 +39,7 @@ CL=..
 
 INCLUDE = -I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I $(S)/gramine
 
-CFLAGS_COMMON = $(INCLUDE) -g -std=c++11 -D X64 -Wall -Wno-unused-variable -Wno-deprecated-declarations
+CFLAGS_COMMON = $(INCLUDE) -g -std=c++17 -D X64 -Wall -Wno-unused-variable -Wno-deprecated-declarations
 
 CFLAGS  = $(CFLAGS_COMMON) -O3
 
@@ -67,6 +67,13 @@ LL = ls -aFlrt
 
 # Definitions needed for generating Python bindings
 SWIG=swig
+
+# -Wallkw: Enable keyword warnings for all the supported languages
+SWIG_FLAGS = -Wallkw
+
+# Base of Certifier tests's interface file for use by SWIG
+SWIG_CERT_TESTS_INTERFACE = certifier_tests
+
 PY_INCLUDE = -I /usr/include/python3.10/
 
 #export LD_LIBRARY_PATH=/usr/local/lib
@@ -86,9 +93,9 @@ dobj = $(O)/certifier_tests.o $(common_objs) \
        $(O)/store_tests.o $(O)/support_tests.o $(O)/x509_tests.o
 
 # Objs needed to build Certifer tests shared lib for use by Python module
-cftests_sl_dobj := $(dobj) $(O)/certifier_tests_wrap.o
+cftests_sl_dobj := $(dobj) $(O)/$(SWIG_CERT_TESTS_INTERFACE)_wrap.o
 
-LIBCERTIFIER_TESTS         = libcertifier_tests
+LIBCERTIFIER_TESTS         = lib$(SWIG_CERT_TESTS_INTERFACE)
 CERTIFIER_TESTS_SHARED_LIB = $(LIBCERTIFIER_TESTS).so
 
 channel_dobj = $(O)/test_channel.o $(common_objs) \
@@ -115,11 +122,14 @@ sharedlib:	$(CL)/$(CERTIFIER_TESTS_SHARED_LIB)
 
 clean:
 	@echo "removing generated files"
-	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/certifier_tests_wrap.cc
+	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/$(SWIG_CERT_TESTS_INTERFACE)_wrap.cc
+	@echo "removing generated Python files"
+	rm -rf $(CERTIFIER_ROOT)/$(SWIG_CERT_TESTS_INTERFACE).py
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable files"
 	rm -rf $(EXE_DIR)/certifier_tests.exe $(EXE_DIR)/pipe_read_test.exe $(EXE_DIR)/test_channel.exe
+	@echo "removing shared libraries"
 	rm -rf $(CL)/$(CERTIFIER_TESTS_SHARED_LIB)
 
 certifier_tests.exe: $(dobj) 
@@ -171,12 +181,12 @@ $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifi
 # Ref: https://stackoverflow.com/questions/12369131/swig-and-python3-surplus-underscore
 # Use -interface arg to overcome double __ issue in generated SWIG_init #define
 #     -outdir specifies output-dir for generated *.py file.
-$(S)/certifier_tests_wrap.cc: $(I)/certifier_tests.i $(S)/certifier_tests.cc
+$(S)/$(SWIG_CERT_TESTS_INTERFACE)_wrap.cc: $(I)/$(SWIG_CERT_TESTS_INTERFACE).i $(S)/$(SWIG_CERT_TESTS_INTERFACE).cc
 	@echo "\nGenerating $@"
 	$(SWIG) -v -python -c++ -Wall -Werror -interface $(LIBCERTIFIER_TESTS) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
-$(O)/certifier_tests_wrap.o: $(S)/certifier_tests_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
+$(O)/$(SWIG_CERT_TESTS_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_TESTS_INTERFACE)_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "compiling $<"
 	$(CC) $(CFLAGS) $(PY_INCLUDE) -o $(@D)/$@ -c $<
 

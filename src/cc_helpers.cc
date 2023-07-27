@@ -2035,7 +2035,7 @@ bool open_client_socket(const string &host_name, int port, int *soc) {
   }
 
   if (rp == NULL) {
-    fprintf(stderr, "Could not connect\n");
+    fprintf(stderr, "Could not connect to %s:%d\n", host_name.c_str(), port);
     return false;
   }
 
@@ -2250,7 +2250,7 @@ bool load_server_certs_and_key(X509 *        root_cert,
 bool certifier::framework::server_dispatch(
     const string &host_name,
     int           port,
-    string &      asn1_root_cert,
+    const string &asn1_root_cert,
     key_message & private_key,
     const string &private_key_cert,
     void (*func)(secure_authenticated_channel &)) {
@@ -2318,6 +2318,10 @@ bool certifier::framework::server_dispatch(
   //SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 #endif
 
+  // Testing hook: Allow pytests to invoke with NULL 'func' hdlr.
+  if (!func)
+    return true;
+
   while (1) {
 #ifdef DEBUG
     printf("at accept\n");
@@ -2359,7 +2363,10 @@ certifier::framework::secure_authenticated_channel::
     ~secure_authenticated_channel() {
   role_.clear();
   channel_initialized_ = false;
-  // delete?
+
+  // ? FIXME - Seems to cause a memory leak detected in pytests
+  // delete private_key_
+
   if (ssl_ctx_ != nullptr)
     SSL_CTX_free(ssl_ctx_);
   ssl_ctx_ = nullptr;
@@ -2383,7 +2390,7 @@ certifier::framework::secure_authenticated_channel::
 bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     const string &host_name,
     int           port,
-    string &      asn1_root_cert,
+    const string &asn1_root_cert,
     key_message & private_key,
     const string &auth_cert) {
 
@@ -2391,16 +2398,18 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   SSL_load_error_strings();
 
   private_key_.CopyFrom(private_key);
+
   asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
+
   root_cert_ = X509_new();
-  if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
+  if (!asn1_to_x509(asn1_root_cert_, root_cert_)) {
     printf("%s() error, line %d, init_client_ssl: root cert invalid\n",
            __func__,
            __LINE__);
-    if (asn1_root_cert.size() == 0) {
+    if (asn1_root_cert_.size() == 0) {
       printf("root cert empty\n");
     } else {
-      print_bytes(asn1_root_cert.size(), (byte *)asn1_root_cert.data());
+      print_bytes(asn1_root_cert_.size(), (byte *)asn1_root_cert_.data());
       printf("\n");
     }
     return false;
@@ -2442,9 +2451,12 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   }
 
   if (!open_client_socket(host_name, port, &sock_)) {
-    printf("%s() error, line %d, Can't open client socket\n",
-           __func__,
-           __LINE__);
+    printf(
+        "%s() error, line %d, Can't open client socket: host='%s', port=%d\n",
+        __func__,
+        __LINE__,
+        host_name.c_str(),
+        port);
     return false;
   }
 
@@ -2615,7 +2627,7 @@ void certifier::framework::secure_authenticated_channel::
 bool certifier::framework::secure_authenticated_channel::init_server_ssl(
     const string &host_name,
     int           port,
-    string &      asn1_root_cert,
+    const string &asn1_root_cert,
     key_message & private_key,
     const string &auth_cert) {
   SSL_load_error_strings();
