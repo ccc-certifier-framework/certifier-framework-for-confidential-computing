@@ -250,7 +250,7 @@ def test_cfslib_policy_store_delete_entry():
     libcf.delete_policy_store(policy_store)
 
 # ##############################################################################
-def test_cfslib_cc_trust_data():
+def test_cfslib_cc_trust_data_authentication():
     """
     Exercise few interfaces of class cc_trust_data()
     """

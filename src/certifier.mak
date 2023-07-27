@@ -38,7 +38,8 @@ CL=..
 
 INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
 
-CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+# Need to use C++17; otherwise runs into: string_view.h:52:21: note: 'std::string_view' is only available from C++17 onwards
+CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 
 CFLAGS  = $(CFLAGS_COMMON) -O3
 CFLAGS_PIC =
@@ -90,6 +91,7 @@ cfsl_dobj := $(dobj) $(O)/$(SWIG_CERT_INTERFACE)_wrap.o
 CERTIFIER_LIB = certifier.a
 
 LIBCERTIFIER         = lib$(SWIG_CERT_INTERFACE)
+LIBCERTIFIER_PB      = lib$(SWIG_CERT_PB_INTERFACE)
 CERTIFIER_SHARED_LIB = $(LIBCERTIFIER).so
 
 all:	$(CL)/$(CERTIFIER_LIB)
@@ -124,7 +126,7 @@ $(S)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --cpp_out=$(@D) --proto_path $(<D) $<
 	mv $(S)/certifier.pb.h $(I)
 	@echo "\nGenerate python interface bindings from proto file $<"
-	$(PROTO) --python_out=$(CERTIFIER_ROOT) --proto_path $(<D) $<
+	$(PROTO) --python_out=$(CERTIFIER_ROOT) --pyi_out=$(CERTIFIER_ROOT) --proto_path $(<D) $<
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifier.h $(S)/test_support.cc
@@ -148,7 +150,7 @@ $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc: $(I)/$(SWIG_CERT_INTERFACE).i $(S)/certifie
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/$(SWIG_CERT_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling $<"
+	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) $(PY_INCLUDE) -fpermissive -o $(@D)/$@ -c $<
 
 $(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
