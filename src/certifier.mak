@@ -55,11 +55,25 @@ LINK=g++
 # Point this to the right place, if you have to, based on your machine's install:
 # PROTO=/usr/local/bin/protoc
 PROTO=protoc
+
+# protoc --python_out will generate this file
+PROTOC_PB2_PY = certifier_pb2.py
 AR=ar
 LL = ls -aFlrt
 
+# -----------------------------------------------------------------------------
 # Definitions needed for generating Python bindings using SWIG tool
 SWIG=swig
+
+# SWIG Debugging flags: Invoke as: $ SWIG_DEBUG=1 make ...
+#   -debug-tmsearch : Show typemap rules searched while processing interface
+#   -debug-tmused   : Show typemap rules finally applied
+#   -E              : Add this to display preprocessed output
+SWIG_DEBUG_FLAGS =
+ifdef SWIG_DEBUG
+SWIG_DEBUG_FLAGS = -debug-tmsearch -debug-tmused -E
+endif
+
 
 # -Wallkw: Enable keyword warnings for all the supported languages
 SWIG_FLAGS = -Wallkw
@@ -67,10 +81,14 @@ SWIG_FLAGS = -Wallkw
 # Base of Certifier Framework's interface file for use by SWIG
 SWIG_CERT_INTERFACE = certifier_framework
 
+# Base of SWIG-Pytest's interface file for use by SWIG
+SWIG_PYTEST_INTERFACE = swigpytests
+
 PY_INCLUDE = -I /usr/include/python3.10/
 
 #export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB)
 
 # ----------------------------------------------------------------------
 # Define list of objects for common case which will be extended for
@@ -87,10 +105,17 @@ endif
 # Objs needed to build Certifer Framework shared lib for use by Python module
 cfsl_dobj := $(dobj) $(O)/$(SWIG_CERT_INTERFACE)_wrap.o
 
+# Objs needed to build SWIG Pytest shared lib for use by Python pytest module
+swig_pytest_dobjs := $(O)/$(SWIG_PYTEST_INTERFACE).o $(O)/$(SWIG_PYTEST_INTERFACE)_wrap.o
+
 CERTIFIER_LIB = certifier.a
 
 LIBCERTIFIER         = lib$(SWIG_CERT_INTERFACE)
+LIBCERTIFIER_PB      = lib$(SWIG_CERT_PB_INTERFACE)
 CERTIFIER_SHARED_LIB = $(LIBCERTIFIER).so
+
+LIBSWIGPYTEST         = lib$(SWIG_PYTEST_INTERFACE)
+SWIGPYTEST_SHARED_LIB = lib$(SWIG_PYTEST_INTERFACE).so
 
 all:	$(CL)/$(CERTIFIER_LIB)
 
@@ -98,16 +123,17 @@ all:	$(CL)/$(CERTIFIER_LIB)
 # Separate target provided to build the shared library which requires
 # rebuilding all objects with CFLAGS_PIC = -fpic flag.
 sharedlib:	$(CL)/$(CERTIFIER_SHARED_LIB)
+swigpytestssharedlib: $(CL)/$(SWIGPYTEST_SHARED_LIB)
 
 clean:
 	@echo "removing generated files"
 	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc
 	@echo "removing generated Python files"
-	rm -rf $(CERTIFIER_ROOT)/$(SWIG_CERT_INTERFACE).py $(CERTIFIER_ROOT)/certifier_pb2.py
+	rm -rf $(CERTIFIER_ROOT)/$(SWIG_CERT_INTERFACE).py $(CERTIFIER_ROOT)/$(SWIG_PYTEST_INTERFACE).py $(CERTIFIER_ROOT)/$(PROTOC_PB2_PY)
 	@echo "removing object files"
 	rm -rf $(O)/*.o
-	@echo "removing executable files"
-	rm -rf $(CL)/$(CERTIFIER_LIB) $(CL)/$(CERTIFIER_SHARED_LIB)
+	@echo "removing shared libraries"
+	rm -rf $(CL)/$(CERTIFIER_LIB) $(CL)/$(CERTIFIER_SHARED_LIB)  $(CL)/$(SWIGPYTEST_SHARED_LIB)
 
 $(CL)/$(CERTIFIER_LIB): $(dobj)
 	@echo "\nLinking certifier library $@"
@@ -118,12 +144,17 @@ $(CL)/$(CERTIFIER_SHARED_LIB): $(cfsl_dobj)
 	@echo "\nLinking certifier shared library $@"
 	$(LINK) -shared $(cfsl_dobj) -o $@ $(LDFLAGS)
 
+swigpytestssharedlib: CFLAGS_PIC = -fpic
+$(CL)/$(SWIGPYTEST_SHARED_LIB): $(swig_pytest_dobjs)
+	@echo "\nLinking SWIG-Pytest shared library $@"
+	$(LINK) -shared $(swig_pytest_dobjs) -o $@ $(LDFLAGS_SWIGPYTEST)
+
 $(I)/certifier.pb.h: $(S)/certifier.pb.cc
 $(S)/certifier.pb.cc: $(CP)/certifier.proto
 	@echo "\nGenerate cpp sources from proto file $<"
 	$(PROTO) --cpp_out=$(@D) --proto_path $(<D) $<
 	mv $(S)/certifier.pb.h $(I)
-	@echo "\nGenerate python interface bindings from proto file $<"
+	@echo "\nGenerate python interface bindings, $(PROTOC_PB2_PY) from proto file $<"
 	$(PROTO) --python_out=$(CERTIFIER_ROOT) --proto_path $(<D) $<
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
@@ -144,11 +175,11 @@ $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 #     -outdir specifies output-dir for generated *.py file.
 $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc: $(I)/$(SWIG_CERT_INTERFACE).i $(S)/certifier.cc
 	@echo "\nGenerating $@"
-	$(SWIG) $(SWIG_FLAGS) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	$(SWIG) $(SWIG_FLAGS) $(SWIG_DEBUG_FLAGS) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/$(SWIG_CERT_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling $<"
+	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) $(PY_INCLUDE) -fpermissive -o $(@D)/$@ -c $<
 
 $(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
@@ -194,3 +225,17 @@ $(O)/sev_report.o: $(SEV_S)/sev_report.cc \
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 endif
+
+# Rules to build SWIG-Pytest related code / wrappers
+$(O)/swigpytests.o: $(S)/swigpytests.cc $(I)/swigpytests.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(S)/$(SWIG_PYTEST_INTERFACE)_wrap.cc: $(I)/$(SWIG_PYTEST_INTERFACE).i $(S)/$(SWIG_PYTEST_INTERFACE).cc
+	@echo "\nGenerating $@"
+	$(SWIG) $(SWIG_FLAGS) $(SWIG_DEBUG_FLAGS) -v -python -c++ -Wall -interface $(LIBSWIGPYTEST) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	$(LL) $(CERTIFIER_ROOT)/*.py*
+
+$(O)/$(SWIG_PYTEST_INTERFACE)_wrap.o: $(S)/$(SWIG_PYTEST_INTERFACE)_wrap.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) $(PY_INCLUDE) -fpermissive -o $(@D)/$@ -c $<

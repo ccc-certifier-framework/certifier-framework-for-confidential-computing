@@ -18,10 +18,11 @@
 %pybuffer_binary(byte* asn1_cert, int asn1_cert_size)   // cc_trust_data()->init_policy_key()
 
 // Xform interfaces returning a string output param to return string * <function>
-%apply string * OUTPUT { string *v }             // policy_store()->get()
-%apply string * OUTPUT { string *psout }         // policy_store()->Serialize()
-%apply string * INPUT  { string& role};          // secure_authenticated_channel() constructor
-%apply string * INPUT  { string * out_peer_id};  // secure_authenticated_channel()->get_peer_id()
+%apply string * OUTPUT { string *v };            // policy_store()->get()
+%apply string * OUTPUT { string *psout };        // policy_store()->Serialize()
+
+%apply string * INPUT  { string& role };         // secure_authenticated_channel() constructor
+%apply string * INPUT  { string * out_peer_id }; // secure_authenticated_channel()->get_peer_id()
 
 %{
 #include "certifier_framework.h"
