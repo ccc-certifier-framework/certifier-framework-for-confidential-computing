@@ -66,6 +66,8 @@ SWIG_FLAGS = -Wallkw
 
 # Base of Certifier Framework's interface file for use by SWIG
 SWIG_CERT_INTERFACE = certifier_framework
+# Certifier protobuf headers' SWIG-interface file
+SWIG_CERT_PB_INTERFACE = certifier_pb
 
 PY_INCLUDE = -I /usr/include/python3.10/
 
@@ -85,11 +87,12 @@ dobj += $(O)/sev_support.o $(O)/sev_report.o
 endif
 
 # Objs needed to build Certifer Framework shared lib for use by Python module
-cfsl_dobj := $(dobj) $(O)/$(SWIG_CERT_INTERFACE)_wrap.o
+cfsl_dobj := $(dobj) $(O)/$(SWIG_CERT_INTERFACE)_wrap.o $(O)/$(SWIG_CERT_PB_INTERFACE)_wrap.o
 
 CERTIFIER_LIB = certifier.a
 
 LIBCERTIFIER         = lib$(SWIG_CERT_INTERFACE)
+LIBCERTIFIER_PB      = lib$(SWIG_CERT_PB_INTERFACE)
 CERTIFIER_SHARED_LIB = $(LIBCERTIFIER).so
 
 all:	$(CL)/$(CERTIFIER_LIB)
@@ -148,7 +151,16 @@ $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc: $(I)/$(SWIG_CERT_INTERFACE).i $(S)/certifie
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/$(SWIG_CERT_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
-	@echo "compiling $<"
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) $(PY_INCLUDE) -o $(@D)/$@ -c $<
+
+$(S)/$(SWIG_CERT_PB_INTERFACE)_wrap.cc: $(I)/$(SWIG_CERT_PB_INTERFACE).i $(S)/certifier.cc
+	@echo "\nGenerating $@"
+	$(SWIG) $(SWIG_FLAGS) -v -python -c++ -Wall -interface $(LIBCERTIFIER_PB) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	$(LL) $(CERTIFIER_ROOT)/*.py*
+
+$(O)/$(SWIG_CERT_PB_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_PB_INTERFACE)_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
+	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) $(PY_INCLUDE) -o $(@D)/$@ -c $<
 
 $(O)/certifier_proofs.o: $(S)/certifier_proofs.cc $(I)/certifier.pb.h $(I)/certifier.h
