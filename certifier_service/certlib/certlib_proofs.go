@@ -1687,27 +1687,23 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 	}
 
 	vcekTcbVer := k.GetSnpTcbVersion()
-	// TODO: Test whether the VCEK TCB Version is valid for now.
-	// This will be removed in the future after the simulator change.
-	if vcekTcbVer != ^uint64(0) {
-		tcbVer := GetTcbVersionFromSevAttest(ptr)
-		if vcekTcbVer != tcbVer {
-			fmt.Printf("VerifySevAttestation: Platform TCB Version check failed\n")
-			fmt.Printf("VCEK TCB Version: %08x\n", vcekTcbVer)
-			fmt.Printf("Platform TCB Version: %08x\n", tcbVer)
-			return nil
-		}
-		chipid := ptr[0x1A0:0x1E0]
-		if !bytes.Equal(chipid, k.GetSnpChipid()) {
-			fmt.Printf("VerifySevAttestation: Chipid check failed\n")
-			fmt.Printf("VCEK HwID: ")
-			PrintBytes(k.GetSnpChipid())
-			fmt.Printf("\n")
-			fmt.Printf("Platform Chip ID: ")
-			PrintBytes(chipid)
-			fmt.Printf("\n")
-			return nil
-		}
+	tcbVer := GetTcbVersionFromSevAttest(ptr)
+	if vcekTcbVer != tcbVer {
+		fmt.Printf("VerifySevAttestation: Platform TCB Version check failed\n")
+		fmt.Printf("VCEK TCB Version: %08x\n", vcekTcbVer)
+		fmt.Printf("Platform TCB Version: %08x\n", tcbVer)
+		return nil
+	}
+	chipid := ptr[0x1A0:0x1E0]
+	if !bytes.Equal(chipid, k.GetSnpChipid()) {
+		fmt.Printf("VerifySevAttestation: Chipid check failed\n")
+		fmt.Printf("VCEK HwID: ")
+		PrintBytes(k.GetSnpChipid())
+		fmt.Printf("\n")
+		fmt.Printf("Platform Chip ID: ")
+		PrintBytes(chipid)
+		fmt.Printf("\n")
+		return nil
 	}
 
 	// return measurement, if successful
