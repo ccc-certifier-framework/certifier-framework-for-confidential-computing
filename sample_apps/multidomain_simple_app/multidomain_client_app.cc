@@ -100,7 +100,7 @@ int main(int an, char** av) {
     printf("\t--data_dir=-directory-for-app-data\n");
     printf("\t--server_app_host=my-server-host-address --server_app_port=server-host-port\n");
     printf("\t--policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
-    printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server\n");
+    printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client\n");
     return 0;
   }
 
@@ -149,7 +149,7 @@ int main(int an, char** av) {
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
     if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
-          initialized_cert_size, initialized_cert, "simple-app-client-home_domain",
+          initialized_cert_size, initialized_cert, "simple-app-client-home-domain",
           FLAGS_primary_policy_host, FLAGS_primary_policy_port,
           FLAGS_server_app_host, FLAGS_server_app_port)) {
       printf("%s() error, line %d, cold-init failed\n",
@@ -192,7 +192,7 @@ int main(int an, char** av) {
     //app_trust_data->print_trust_data();
 
     // now server domain
-    string server_domain_name = "simple-app-server-home_domain";
+    string server_domain_name = "simple-app-server-home-domain";
     string server_cert_file_name(FLAGS_data_dir);
     server_cert_file_name.append(FLAGS_secondary_cert_file);
     string server_domain_cert;

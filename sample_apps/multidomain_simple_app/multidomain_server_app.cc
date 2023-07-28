@@ -87,10 +87,11 @@ int main(int an, char** av) {
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf("multidomain_server_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
-    printf("\t --data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
+    printf("multidomain_server_app.exe --print_all=true|false --operation=op\n");
+    printf("\t--policy_host=policy-host-address --policy_port=policy-host-port\n");
+    printf("\t--data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
-    printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server\n");
+    printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-server\n");
     return 0;
   }
 
@@ -139,7 +140,7 @@ int main(int an, char** av) {
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
     if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
-          initialized_cert_size, initialized_cert, "simple-app-home_domain",
+          initialized_cert_size, initialized_cert, "simple-app-server-home-domain",
           FLAGS_policy_host, FLAGS_policy_port,
           FLAGS_server_app_host, FLAGS_server_app_port)) {
       printf("%s() error, line %d, cold-init failed\n",
