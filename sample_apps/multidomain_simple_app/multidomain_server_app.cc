@@ -61,28 +61,6 @@ cc_trust_data* app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
-#if 0
-void client_application(secure_authenticated_channel& channel) {
-
-  printf("Client peer id is %s\n", channel.peer_id_.c_str());
-  if (channel.peer_cert_ != nullptr) {
-    printf("Client peer cert is:\n");
-#ifdef DEBUG
-    X509_print_fp(stdout, channel.peer_cert_);
-#endif
-  }
-
-  // client sends a message over authenticated, encrypted channel
-  const char* msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte*)msg);
-
-  // Get server response over authenticated, encrypted channel and print it
-  string out;
-  int n = channel.read(&out);
-  printf("SSL client read: %s\n", out.data());
-}
-#endif
-
 void server_application(secure_authenticated_channel& channel) {
 
   printf("Server peer id is %s\n", channel.peer_id_.c_str());

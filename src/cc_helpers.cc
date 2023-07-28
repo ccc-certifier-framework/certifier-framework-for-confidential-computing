@@ -1335,8 +1335,9 @@ bool certifier::framework::cc_trust_data::put_certifiers_in_store() {
     cm->set_domain_host(ce->host_);
     cm->set_domain_port(ce->port_);
     cm->set_is_certified(ce->is_certified_);
-    if (ce->is_certified_)
+    if (ce->is_certified_) {
       cm->set_admissions_cert(ce->admissions_cert_);
+    }
     cm->set_service_host(ce->service_host_);
     cm->set_service_port(ce->service_port_);
   }
@@ -1379,6 +1380,7 @@ void certifier::framework::certifiers::print_certifiers_entry() {
       if (is_certified_) {
         printf("Certified with Admissions cert: ");
         print_bytes((int)admissions_cert_.size(), (byte*)admissions_cert_.data());
+        printf("\n");
       } else {
         printf("Not certified\n");
       }
@@ -1399,9 +1401,7 @@ bool certifier::framework::certifiers::certify_domain() {
     return false;
   }
 
-#if 0
-  // Todo: if you change the auth key, you must recertify in all domains
-#endif
+  // Note: if you change the auth key, you must recertify in all domains
 
   evidence_list platform_evidence;
   printf("%s():%d: enclave_type_ = '%s', purpose_ = '%s'\n",
@@ -1661,10 +1661,10 @@ bool certifier::framework::certifiers::certify_domain() {
     return false;
   }
 
+  is_certified_ = true;
   // Store the admissions certificate cert or platform rule
   if (owner_->purpose_ == "authentication") {
     admissions_cert_.assign((char*)response.artifact().data(), response.artifact().size());
-    is_certified_ = true;
 
   } else if (owner_->purpose_ == "attestation") {
 
@@ -2194,8 +2194,10 @@ certifier::framework::secure_authenticated_channel::~secure_authenticated_channe
   peer_id_.clear();
 }
 
-bool certifier::framework::secure_authenticated_channel::init_client_ssl(const string& host_name, int port,
-        string& asn1_root_cert, key_message& private_key, const string& auth_cert) {
+bool certifier::framework::secure_authenticated_channel::init_client_ssl(
+      const string& host_name, int port,
+      string& asn1_root_cert, key_message& private_key,
+      const string& auth_cert) {
 
   OPENSSL_init_ssl(0, NULL);
   SSL_load_error_strings();
@@ -2204,7 +2206,14 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(const s
   asn1_root_cert_.assign((char*)asn1_root_cert.data(), asn1_root_cert.size());
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
-    printf("init_client_ssl: root cert invalid\n");
+    printf("%s() error, line %d, init_client_ssl: root cert invalid\n",
+         __func__, __LINE__);
+    if (asn1_root_cert.size() == 0) {
+      printf("root cert empty\n");
+    } else {
+      print_bytes(asn1_root_cert.size(), (byte*)asn1_root_cert.data());
+      printf("\n");
+    }
     return false;
   }
 

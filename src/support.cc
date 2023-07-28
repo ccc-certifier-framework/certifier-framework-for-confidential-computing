@@ -200,14 +200,14 @@ bool certifier::utilities::read_file(const string& file_name, int* size, byte* d
 bool certifier::utilities::read_file_into_string(const string& file_name, string* out) {
   int size = file_size(file_name);
   if (size < 0) {
-    printf("%s() error, line: %d, read_file_into_string: Can't size input file\n",
-         __func__, __LINE__);
+    printf("%s() error, line: %d, read_file_into_string: Can't size input file %s\n",
+         __func__, __LINE__, file_name.c_str());
     return false;
   }
   byte buf[size];
   if (!read_file(file_name, &size, buf)) {
-    printf("%s() error, line: %d, read_file_into_string: Can't read file\n",
-         __func__, __LINE__);
+    printf("%s() error, line: %d, read_file_into_string: Can't read file %s\n",
+         __func__, __LINE__, file_name.c_str());
     return false;
   }
 
