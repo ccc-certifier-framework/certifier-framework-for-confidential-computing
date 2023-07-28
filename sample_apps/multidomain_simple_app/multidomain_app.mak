@@ -1,4 +1,4 @@
-#    
+#
 #    File: example_app.mak
 
 

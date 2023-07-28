@@ -79,7 +79,7 @@ Here is an example of such a program and its interactions with the Certifier API
   string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
   // Initialize keys
-  app_trust_data->cold_init(public_key_alg, symmetric_key_alg, 
+  app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
           initialized_cert_size, initialized_cert,
           home_domain_name, FLAGS_policy_host, FLAGS_policy_port,
           FLAGS_server_app_host, FLAGS_server_app_port);

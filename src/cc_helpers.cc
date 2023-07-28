@@ -121,7 +121,7 @@ certifier::framework::cc_trust_data::cc_trust_data() {
   cc_provider_provisioned_ = false;
   x509_policy_cert_ = nullptr;
   cc_is_certified_ = false;
-  
+
   for (int i = 0; i < num_certified_domains_; i++) {
       if (certified_domains_[i] != nullptr) {
         delete certified_domains_[i];

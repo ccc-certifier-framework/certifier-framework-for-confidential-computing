@@ -54,7 +54,7 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 //    warm-restart:  This retrieves the policy store data.
 //    get-certifier: This obtains the app admission cert naming the public app key from the service.
 //    run-app-as-client: This runs the app as a client.
-//    run-app-as-server: This runs the app as server 
+//    run-app-as-server: This runs the app as server.
 
 #include "policy_key.cc"
 cc_trust_data* app_trust_data = nullptr;
