@@ -17,6 +17,7 @@ jobs:
     - name: dependencies
       run: |
         sudo apt update -y
+
         sudo apt install -y clang-format-11 libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake
         sudo apt install -y python3 pylint
         pip install pytest
@@ -24,6 +25,7 @@ jobs:
         # Needed for Python bindings support
         sudo apt install -y swig
 
+        sudo apt install -y protobuf-compiler libprotobuf-dev
         set -x
         which protoc
 
@@ -37,10 +39,19 @@ jobs:
 
         echo " "
         ls -aFlrt /usr/local/include
+        set +x
+
+        sudo apt install -y protoc-gen-go golang-go
+
+        sudo apt install -y python3 pylint
+        pip install pytest
+
+        # Needed for Python bindings support
+        sudo apt install -y swig
 
         echo " "
         which swig
-        swig --version
+        swig -version
 
         echo " "
         which g++
