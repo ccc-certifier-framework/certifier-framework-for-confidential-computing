@@ -47,11 +47,6 @@ cd $MULTIDOMAIN_EXAMPLE_DIR/provisioning
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
   --verb="is-trusted-for-attestation" --output=ts1.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
-  --verb="says" --clause=ts1.bin --output=vse_policy1a.bin
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=client_policy_key_file.bin \
-  --verb="says" --clause=ts1.bin --output=vse_policy1b.bin
-
 # vse_policy1a.bin is server-policy-key says platform-key is-trusted-for-attestation
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=server_policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1a.bin
@@ -103,16 +98,12 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=
 
 #client-policy-key signs vse_policy2c and policy2d
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2c.bin \
-  duration=9000 --private_key_file=client_policy_key_file.bin --output=client_signed_claim_2a.bin
+  duration=9000 --private_key_file=client_policy_key_file.bin --output=client_signed_claim_2c.bin
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2d.bin \
-  duration=9000 --private_key_file=client_policy_key_file.bin --output=client_signed_claim_2b.bin
+  duration=9000 --private_key_file=client_policy_key_file.bin --output=client_signed_claim_2d.bin
 
-$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1a.bin,server_signed_claim_2a.bin,server_signed_claim_2b.bin \
-  --output=server_policy.bin
-$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=server_policy.bin
-
-$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1b.bin,client_signed_claim_2a.bin,client_signed_claim_2b.bin \
-  --output=client_policy.bin
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1a.bin,server_signed_claim_2a.bin,server_signed_claim_2b.bin --output=server_policy.bin
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1b.bin,client_signed_claim_2c.bin,client_signed_claim_2d.bin --output=client_policy.bin
 
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=server_policy.bin
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=client_policy.bin
@@ -131,7 +122,7 @@ $CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_en
 cd $MULTIDOMAIN_EXAMPLE_DIR
 mkdir -p app1_data app2_data
 mkdir -p client_service
-mkdir -p sever_service
+mkdir -p server_service
 
 # provision service and apps
 cd $MULTIDOMAIN_EXAMPLE_DIR/provisioning
@@ -153,12 +144,14 @@ go build simpleserver.go
 
 #run certifier server for server policy in one window
 cd $MULTIDOMAIN_EXAMPLE_DIR/server_service
-$CERTIFIER_PROTOTYPE/certifier_service/simpleserver --serverPort=8121 \
-      --policyFile=server_policy.bin --policyKeyFile=server_policy_key_file.bin --readPolicy=true
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver --port=8121 \
+	--policyFile=server_policy.bin --policy_key_file=server_policy_key_file.bin \
+	--policy_cert_file=server_policy_cert_file.bin --readPolicy=true
 #run certifier server for client policy in one window
 cd $MULTIDOMAIN_EXAMPLE_DIR/client_service
-$CERTIFIER_PROTOTYPE/certifier_service/simpleserver --serverPort=8122 \
-      --policyFile=client_policy.bin --policyKeyFile=client_policy_key_file.bin --readPolicy=true
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver --port=8122 \
+	--policyFile=client_policy.bin --policy_key_file=client_policy_key_file.bin \
+	--policy_cert_file=client_policy_cert_file.bin --readPolicy=true
 
 # initialize client app
 cd $MULTIDOMAIN_EXAMPLE_DIR
