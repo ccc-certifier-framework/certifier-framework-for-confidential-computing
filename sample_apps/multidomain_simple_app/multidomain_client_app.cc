@@ -81,6 +81,7 @@ void client_application(secure_authenticated_channel& channel) {
 }
 
 
+#if 0
 void server_application(secure_authenticated_channel& channel) {
 
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
@@ -100,6 +101,7 @@ void server_application(secure_authenticated_channel& channel) {
   const char* msg = "Hi from your secret server\n";
   channel.write(strlen(msg), (byte*)msg);
 }
+#endif
 
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -199,10 +201,12 @@ int main(int an, char** av) {
     // now server domain
     string server_domain_name;
     string server_domain_cert;
-    int server_port= 8122;
-    string server_host = 0;
+    int server_port= FLAGS_policy_port;
+    string server_host = FLAGS_policy_host;
     string server_service_host = FLAGS_server_app_host;
-    int server_service_port = 8124;
+    int server_service_port = FLAGS_server_app_port;
+
+    printf("Certifying secondary domain\n");
 
     if (!app_trust_data->add_new_domain(server_domain_name, server_domain_cert, server_host, server_port,
 	    server_service_host, server_service_port))	{

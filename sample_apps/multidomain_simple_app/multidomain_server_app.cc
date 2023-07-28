@@ -61,6 +61,7 @@ cc_trust_data* app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
+#if 0
 void client_application(secure_authenticated_channel& channel) {
 
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
@@ -80,7 +81,7 @@ void client_application(secure_authenticated_channel& channel) {
   int n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
 }
-
+#endif
 
 void server_application(secure_authenticated_channel& channel) {
 
