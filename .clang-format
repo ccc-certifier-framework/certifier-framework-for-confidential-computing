@@ -15,6 +15,18 @@ BraceWrapping:
   # Multi-line if() and for() control statements will have their
   # opening { come on a new line, for readability.
   AfterControlStatement: MultiLine
+  AfterEnum:       false
+  AfterFunction:   true
+  AfterObjCDeclaration: false
+  AfterStruct:     false
+  AfterUnion:      false
+  AfterExternBlock: false
+  BeforeCatch:     false
+  BeforeElse:      false
+  IndentBraces:    false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
 
 ContinuationIndentWidth: 4
 
