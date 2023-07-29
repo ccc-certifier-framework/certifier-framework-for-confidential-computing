@@ -250,8 +250,11 @@ bool keystone_Verify(const int what_to_say_size,
   // report.enclave.data should be hash of what_to_say
   int  len = digest_output_byte_size("sha-256");
   byte expected_data[len];
-  if (!digest_message(
-          "sha-256", what_to_say, what_to_say_size, expected_data, len)) {
+  if (!digest_message("sha-256",
+                      what_to_say,
+                      what_to_say_size,
+                      expected_data,
+                      len)) {
     printf("keystone_Verify: Can't digest what_to_say\n");
     return false;
   }
@@ -291,8 +294,11 @@ bool keystone_Attest(const int what_to_say_size,
 
   // report.enclave.data gets the hash of what_to_say
   int len = digest_output_byte_size("sha-256");
-  if (!digest_message(
-          "sha-256", what_to_say, what_to_say_size, report.enclave.data, len)) {
+  if (!digest_message("sha-256",
+                      what_to_say,
+                      what_to_say_size,
+                      report.enclave.data,
+                      len)) {
     printf("keystone_Attest: Can't digest what_to_say\n");
     return false;
   }
@@ -362,8 +368,13 @@ bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
     return false;
   }
 
-  if (!authenticated_encrypt(
-          "aes-256-cbc-hmac-sha256", in, in_size, key, iv, out, size_out)) {
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256",
+                             in,
+                             in_size,
+                             key,
+                             iv,
+                             out,
+                             size_out)) {
     return false;
   }
   return true;
@@ -377,8 +388,12 @@ bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out) {
     return false;
   }
 
-  if (!authenticated_decrypt(
-          "aes-256-cbc-hmac-sha256", in, in_size, key, out, size_out)) {
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256",
+                             in,
+                             in_size,
+                             key,
+                             out,
+                             size_out)) {
     return false;
   }
   return true;

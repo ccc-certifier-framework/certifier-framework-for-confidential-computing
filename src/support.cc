@@ -299,8 +299,14 @@ bool certifier::utilities::time_to_string(time_point& t, string* s) {
 bool certifier::utilities::string_to_time(const string& s, time_point* t) {
   int    y, m, d, h, min;
   double secs;
-  sscanf(
-      s.c_str(), "%04d-%02d-%02dT%02d:%02d:%lfZ", &y, &m, &d, &h, &min, &secs);
+  sscanf(s.c_str(),
+         "%04d-%02d-%02dT%02d:%02d:%lfZ",
+         &y,
+         &m,
+         &d,
+         &h,
+         &min,
+         &secs);
   t->set_year(y);
   t->set_month(m);
   t->set_day(d);
@@ -1017,8 +1023,11 @@ bool rsa_public_encrypt(
 
 bool rsa_private_decrypt(
     RSA* key, byte* enc_data, int data_len, byte* decrypted, int* size_out) {
-  int n = RSA_private_decrypt(
-      data_len, enc_data, decrypted, key, RSA_PKCS1_PADDING);
+  int n = RSA_private_decrypt(data_len,
+                              enc_data,
+                              decrypted,
+                              key,
+                              RSA_PKCS1_PADDING);
   if (n <= 0) {
     printf("rsa_private_decrypt: RSA_private_decrypt failed %d, %d\n",
            data_len,
@@ -1047,8 +1056,11 @@ bool rsa_sign(
 
   unsigned int size_digest = 0;
   if (strcmp("sha-256", alg) == 0) {
-    if (EVP_DigestSignInit(
-            sign_ctx, nullptr, EVP_sha256(), nullptr, private_key) <= 0) {
+    if (EVP_DigestSignInit(sign_ctx,
+                           nullptr,
+                           EVP_sha256(),
+                           nullptr,
+                           private_key) <= 0) {
       printf("rsa_sign: EVP_DigestSignInit failed\n");
       return false;
     }
@@ -1063,8 +1075,11 @@ bool rsa_sign(
     }
     *sig_size = t;
   } else if (strcmp("sha-384", alg) == 0) {
-    if (EVP_DigestSignInit(
-            sign_ctx, nullptr, EVP_sha384(), nullptr, private_key) <= 0) {
+    if (EVP_DigestSignInit(sign_ctx,
+                           nullptr,
+                           EVP_sha384(),
+                           nullptr,
+                           private_key) <= 0) {
       printf("rsa_sign: EVP_DigestSignInit failed\n");
       return false;
     }
@@ -1094,8 +1109,11 @@ bool rsa_verify(
     byte         digest[size_digest];
     memset(digest, 0, size_digest);
 
-    if (!digest_message(
-            "sha-256", (const byte*)msg, size, digest, size_digest)) {
+    if (!digest_message("sha-256",
+                        (const byte*)msg,
+                        size,
+                        digest,
+                        size_digest)) {
       printf("rsa_verify: digest_message failed\n");
       return false;
     }
@@ -1140,8 +1158,11 @@ bool rsa_verify(
     unsigned int size_digest = digest_output_byte_size("sha-384");
     byte         digest[size_digest];
     memset(digest, 0, size_digest);
-    if (!digest_message(
-            "sha-384", (const byte*)msg, size, digest, size_digest)) {
+    if (!digest_message("sha-384",
+                        (const byte*)msg,
+                        size,
+                        digest,
+                        size_digest)) {
       printf("digest_message failed\n");
       return false;
     }
@@ -3089,8 +3110,10 @@ bool certifier::utilities::verify_artifact(X509&        cert,
   X509_NAME* subject_name = X509_get_subject_name(&cert);
   const int  max_buf      = 2048;
   char       name_buf[max_buf];
-  if (X509_NAME_get_text_by_NID(
-          subject_name, NID_commonName, name_buf, max_buf) < 0)
+  if (X509_NAME_get_text_by_NID(subject_name,
+                                NID_commonName,
+                                name_buf,
+                                max_buf) < 0)
     success = false;
   else {
     subject_name_str->assign((const char*)name_buf);
@@ -3331,8 +3354,10 @@ key_message* get_issuer_key(X509* x, cert_keys_seen_list& list) {
   const int  max_buf = 2048;
   char       name_buf[max_buf];
   X509_NAME* issuer_name = X509_get_issuer_name(x);
-  if (X509_NAME_get_text_by_NID(
-          issuer_name, NID_commonName, name_buf, max_buf) < 0) {
+  if (X509_NAME_get_text_by_NID(issuer_name,
+                                NID_commonName,
+                                name_buf,
+                                max_buf) < 0) {
     printf("get_issuer_key: Can't get name from NID\n");
     return nullptr;
   }
@@ -3434,8 +3459,10 @@ bool x509_to_public_key(X509* x, key_message* k) {
   const int  max_buf      = 2048;
   char       name_buf[max_buf];
   memset(name_buf, 0, max_buf);
-  if (X509_NAME_get_text_by_NID(
-          subject_name, NID_commonName, name_buf, max_buf) < 0) {
+  if (X509_NAME_get_text_by_NID(subject_name,
+                                NID_commonName,
+                                name_buf,
+                                max_buf) < 0) {
     printf("x509_to_public_key: can't get subject_name\n");
     return false;
   }

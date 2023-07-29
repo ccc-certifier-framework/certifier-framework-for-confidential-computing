@@ -148,8 +148,9 @@ bool construct_standard_evidence_package(
   // Construct measurement
   string meas;
   if (init_measurements) {
-    if (!read_trusted_binary_measurements_and_sign(
-            file_name, *policy_key, trusted_measurements))
+    if (!read_trusted_binary_measurements_and_sign(file_name,
+                                                   *policy_key,
+                                                   trusted_measurements))
       return false;
 
     if (debug_print) {
@@ -271,8 +272,10 @@ bool construct_standard_evidence_package(
 
   // c8: enclave-authentication-key speaks-for enclave-measurement
   vse_clause c8;
-  if (!make_simple_vse_clause(
-          enclave_key_entity, speaks_for, measurement_entity, &c8))
+  if (!make_simple_vse_clause(enclave_key_entity,
+                              speaks_for,
+                              measurement_entity,
+                              &c8))
     return false;
 
   // c9: attestation-key says enclave-authentication-key speaks-for
@@ -364,8 +367,9 @@ bool construct_standard_evidence_package(
     return false;
 
   string serialized_what_to_say;
-  if (!construct_what_to_say(
-          enclave_type, enclave_pk, &serialized_what_to_say)) {
+  if (!construct_what_to_say(enclave_type,
+                             enclave_pk,
+                             &serialized_what_to_say)) {
     return false;
   }
 
@@ -663,8 +667,9 @@ bool construct_standard_constrained_evidence_package(
   string meas;
 
   if (init_measurements) {
-    if (!read_trusted_binary_measurements_and_sign(
-            file_name, *policy_key, trusted_measurements))
+    if (!read_trusted_binary_measurements_and_sign(file_name,
+                                                   *policy_key,
+                                                   trusted_measurements))
       return false;
 
     if (debug_print) {
@@ -757,8 +762,9 @@ bool construct_standard_constrained_evidence_package(
   entity_message attest_key_entity;
   if (!make_key_entity(attest_pk, &attest_key_entity))
     return false;
-  if (!make_unary_vse_clause(
-          attest_key_entity, is_trusted_for_attestation, &c3))
+  if (!make_unary_vse_clause(attest_key_entity,
+                             is_trusted_for_attestation,
+                             &c3))
     return false;
 
   // c4: enclave-authentication-key is-trusted-for-authentication
@@ -766,8 +772,9 @@ bool construct_standard_constrained_evidence_package(
   entity_message enclave_key_entity;
   if (!make_key_entity(enclave_pk, &enclave_key_entity))
     return false;
-  if (!make_unary_vse_clause(
-          enclave_key_entity, is_trusted_for_authentication, &c4))
+  if (!make_unary_vse_clause(enclave_key_entity,
+                             is_trusted_for_authentication,
+                             &c4))
     return false;
 
   // c5: policy-key says measurement is-trusted
@@ -790,8 +797,10 @@ bool construct_standard_constrained_evidence_package(
 
   // c8: enclave-authentication-key speaks-for enclave-measurement
   vse_clause c8;
-  if (!make_simple_vse_clause(
-          enclave_key_entity, speaks_for, measurement_entity, &c8))
+  if (!make_simple_vse_clause(enclave_key_entity,
+                              speaks_for,
+                              measurement_entity,
+                              &c8))
     return false;
 
   // c9: attestation-key says enclave-authentication-key speaks-for
@@ -883,8 +892,9 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   string serialized_what_to_say;
-  if (!construct_what_to_say(
-          enclave_type, enclave_pk, &serialized_what_to_say)) {
+  if (!construct_what_to_say(enclave_type,
+                             enclave_pk,
+                             &serialized_what_to_say)) {
     return false;
   }
 
@@ -1145,8 +1155,10 @@ bool test_new_local_certify(bool print_all) {
            enclave_type.c_str(),
            evidence_descriptor.c_str());
   }
-  return test__new_local_certify(
-      enclave_type, false, unused, evidence_descriptor);
+  return test__new_local_certify(enclave_type,
+                                 false,
+                                 unused,
+                                 evidence_descriptor);
 }
 
 // -----------------------------------------------------------------------------

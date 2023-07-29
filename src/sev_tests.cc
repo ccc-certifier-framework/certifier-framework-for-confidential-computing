@@ -142,8 +142,11 @@ bool test_sev(bool print_all) {
 
   if (verify_pkey == nullptr)
     return false;
-  bool success = verify_sev_Attest(
-      verify_pkey, size_out, out, &size_measurement, measurement);
+  bool success = verify_sev_Attest(verify_pkey,
+                                   size_out,
+                                   out,
+                                   &size_measurement,
+                                   measurement);
   EVP_PKEY_free(verify_pkey);
   verify_pkey = nullptr;
 
@@ -580,8 +583,11 @@ bool test_sev_platform_certify(const bool    debug_print,
     }
   }
 
-  if (!validate_evidence_from_policy(
-          evidence_descriptor, signed_statements, purpose, evp, policy_pk)) {
+  if (!validate_evidence_from_policy(evidence_descriptor,
+                                     signed_statements,
+                                     purpose,
+                                     evp,
+                                     policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }

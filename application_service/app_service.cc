@@ -706,8 +706,9 @@ bool app_request_server() {
     if (FLAGS_run_policy != "all") {
       // Todo: Fix - check certificate?
     }
-    printf(
-        "[%d] at process_run_request: %s\n", __LINE__, req.location().c_str());
+    printf("[%d] at process_run_request: %s\n",
+           __LINE__,
+           req.location().c_str());
     ret = process_run_request(req);
 
   done:
@@ -795,8 +796,9 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
     return 1;
   } else if (FLAGS_host_enclave_type == "sev-enclave") {
     // Init sev enclave
-    if (!helper.initialize_sev_enclave_data(
-            FLAGS_ark_cert_file, FLAGS_ask_cert_file, FLAGS_vcek_cert_file)) {
+    if (!helper.initialize_sev_enclave_data(FLAGS_ark_cert_file,
+                                            FLAGS_ask_cert_file,
+                                            FLAGS_vcek_cert_file)) {
       printf("Can't init sev-enclave\n");
       return 1;
     }

@@ -100,8 +100,11 @@ bool run_me_as_client(const string& host_name,
   printf("running as client\n");
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
-  if (!channel.init_client_ssl(
-          host_name, port, asn1_policy_cert, private_key, private_key_cert)) {
+  if (!channel.init_client_ssl(host_name,
+                               port,
+                               asn1_policy_cert,
+                               private_key,
+                               private_key_cert)) {
     printf("Can't init client app\n");
     return false;
   }
@@ -229,8 +232,10 @@ int main(int an, char** av) {
 
   // make admissions cert
   string auth_cert;
-  if (!make_admissions_cert(
-          FLAGS_operation, policy_key, auth_key, &auth_cert)) {
+  if (!make_admissions_cert(FLAGS_operation,
+                            policy_key,
+                            auth_key,
+                            &auth_cert)) {
     printf("Can't make admissions cert\n");
     return 1;
   }

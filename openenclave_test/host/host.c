@@ -23,8 +23,12 @@ int main(int argc, const char* argv[]) {
   }
 
   // Create the enclave
-  result = oe_create_attestation_enclave(
-      argv[1], OE_ENCLAVE_TYPE_AUTO, flags, NULL, 0, &enclave);
+  result = oe_create_attestation_enclave(argv[1],
+                                         OE_ENCLAVE_TYPE_AUTO,
+                                         flags,
+                                         NULL,
+                                         0,
+                                         &enclave);
   if (result != OE_OK) {
     fprintf(stderr,
             "oe_create_attestation_enclave(): result=%u (%s)\n",

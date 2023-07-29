@@ -147,8 +147,9 @@ int main(int an, char** av) {
   }
 
   // Init sev enclave
-  if (!app_trust_data->initialize_sev_enclave_data(
-          FLAGS_ark_cert_file, FLAGS_ask_cert_file, FLAGS_vcek_cert_file)) {
+  if (!app_trust_data->initialize_sev_enclave_data(FLAGS_ark_cert_file,
+                                                   FLAGS_ask_cert_file,
+                                                   FLAGS_vcek_cert_file)) {
     printf("Can't init sev enclave\n");
     return 1;
   }

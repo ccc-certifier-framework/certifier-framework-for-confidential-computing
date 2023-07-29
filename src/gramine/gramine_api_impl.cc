@@ -89,8 +89,10 @@ int gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key) {
 
   /* read `report` file */
   sgx_report_t report;
-  bytes = gramine_rw_file(
-      "/dev/attestation/report", (uint8_t*)&report, sizeof(report), false);
+  bytes = gramine_rw_file("/dev/attestation/report",
+                          (uint8_t*)&report,
+                          sizeof(report),
+                          false);
   if (bytes != sizeof(report)) {
     /* error is already printed by file_read_f() */
     return FAILURE;
@@ -197,8 +199,9 @@ int remote_verify_quote(size_t   quote_size,
     return false;
   }
 
-  sgx_qv_get_quote_supplemental_data_size = (int (*)(uint32_t*))dlsym(
-      sgx_verify_lib, "sgx_qv_get_quote_supplemental_data_size");
+  sgx_qv_get_quote_supplemental_data_size =
+      (int (*)(uint32_t*))dlsym(sgx_verify_lib,
+                                "sgx_qv_get_quote_supplemental_data_size");
 
 #ifdef DEBUG
   printf("Supplemental data size address to be called: %p\n",
@@ -434,8 +437,10 @@ bool gramine_remote_verify_impl(const int what_to_say_size,
   printf("\nGramine begin remote verify quote with DCAP\n");
 #endif
 
-  if (remote_verify_quote(
-          attestation_size, (uint8_t*)quote_expected, &mr_size, mr) != 0) {
+  if (remote_verify_quote(attestation_size,
+                          (uint8_t*)quote_expected,
+                          &mr_size,
+                          mr) != 0) {
     printf("\nGramine begin verify quote with DCAP failed\n");
     return false;
   }
@@ -484,8 +489,10 @@ bool gramine_get_measurement(byte* measurement) {
     user_data[i] = (byte)i;
   }
 
-  status = gramine_attest_impl(
-      USER_DATA_SIZE, user_data, &attestation_size, attestation);
+  status = gramine_attest_impl(USER_DATA_SIZE,
+                               user_data,
+                               &attestation_size,
+                               attestation);
   if (status != true) {
     printf("gramine Attest failed\n");
     return status;
@@ -657,8 +664,16 @@ bool gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out) {
   }
 
   /* Invoke unseal */
-  ret = mbedtls_gcm_auth_decrypt(
-      &gcm, enc_size, key, KEY_SIZE, NULL, 0, tag, TAG_SIZE, enc_buf, dec_buf);
+  ret = mbedtls_gcm_auth_decrypt(&gcm,
+                                 enc_size,
+                                 key,
+                                 KEY_SIZE,
+                                 NULL,
+                                 0,
+                                 tag,
+                                 TAG_SIZE,
+                                 enc_buf,
+                                 dec_buf);
   if (ret != 0) {
     printf("mbedtls_gcm_auth_decrypt failed: %d\n", ret);
     status = false;

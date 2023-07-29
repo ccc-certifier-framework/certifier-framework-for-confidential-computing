@@ -255,8 +255,10 @@ bool cold_init() {
   string hash_alg("sha-256");
   string hmac_alg("sha-256-hmac");
 
-  if (!app_trust_data->cold_init(
-          public_key_alg, symmetric_key_alg, hash_alg, hmac_alg)) {
+  if (!app_trust_data->cold_init(public_key_alg,
+                                 symmetric_key_alg,
+                                 hash_alg,
+                                 hmac_alg)) {
     printf("cold-init failed\n");
     return false;
   }
@@ -336,8 +338,9 @@ void asylo_server_dispatch(const string& host_name,
   SSL_CTX_set_options(ctx, flags);
 
   // Verify peer
-  SSL_CTX_set_verify(
-      ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
+  SSL_CTX_set_verify(ctx,
+                     SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+                     nullptr);
   // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
 
   unsigned int len = 0;
@@ -352,8 +355,11 @@ void asylo_server_dispatch(const string& host_name,
     int                client = accept(sock, (struct sockaddr*)&addr, &len);
     string             my_role("server");
     secure_authenticated_channel nc(my_role);
-    if (!nc.init_server_ssl(
-            host_name, port, asn1_root_cert, private_key, private_key_cert)) {
+    if (!nc.init_server_ssl(host_name,
+                            port,
+                            asn1_root_cert,
+                            private_key,
+                            private_key_cert)) {
       continue;
     }
     nc.ssl_ = SSL_new(ctx);

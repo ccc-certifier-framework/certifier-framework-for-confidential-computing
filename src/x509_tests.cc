@@ -244,8 +244,9 @@ bool test_x_509_chain(bool print_all) {
   }
 
   vse_clause cl;
-  if (!construct_vse_attestation_from_cert(
-          *pub_subject_key3, *issuer3_key, &cl)) {
+  if (!construct_vse_attestation_from_cert(*pub_subject_key3,
+                                           *issuer3_key,
+                                           &cl)) {
     printf("Can't construct vse attestation from cert\n");
     return false;
   }
@@ -788,8 +789,10 @@ bool test_sev_request(bool print_all) {
   }
 
   signed_claim_message* scm1 = trusted_measurements.add_claims();
-  if (!make_signed_claim(
-          "rsa-2048-sha256-pkcs-sign", cm1, policy_private_key, scm1)) {
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
+                         cm1,
+                         policy_private_key,
+                         scm1)) {
     printf("sign claim failed (3)\n");
     return false;
   }
@@ -831,8 +834,10 @@ bool test_sev_request(bool print_all) {
   }
 
   signed_claim_message* scm2 = trusted_platforms.add_claims();
-  if (!make_signed_claim(
-          "rsa-2048-sha256-pkcs-sign", cm2, policy_private_key, scm2)) {
+  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
+                         cm2,
+                         policy_private_key,
+                         scm2)) {
     printf("sign claim failed (4)\n");
     return false;
   }

@@ -149,8 +149,9 @@ int main(int an, char** av) {
     } else {
       printf("Certificate does not verify\n");
     }
-    if (!write_file(
-            FLAGS_cert_output_file, asn_cert.size(), (byte*)asn_cert.data())) {
+    if (!write_file(FLAGS_cert_output_file,
+                    asn_cert.size(),
+                    (byte*)asn_cert.data())) {
       printf("Can't write cert file\n");
       return 1;
     }

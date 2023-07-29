@@ -575,8 +575,12 @@ bool certifier::framework::Unseal(const string& enclave_type,
                                   int*          size_out,
                                   byte*         out) {
   if (enclave_type == "simulated-enclave") {
-    return simulated_Unseal(
-        enclave_type, enclave_id, in_size, in, size_out, out);
+    return simulated_Unseal(enclave_type,
+                            enclave_id,
+                            in_size,
+                            in,
+                            size_out,
+                            out);
   }
 #ifdef OE_CERTIFIER
   if (enclave_type == "oe-enclave") {
@@ -622,8 +626,11 @@ bool certifier::framework::Attest(const string& enclave_type,
                                   int*          size_out,
                                   byte*         out) {
   if (enclave_type == "simulated-enclave") {
-    return simulated_Attest(
-        enclave_type, what_to_say_size, what_to_say, size_out, out);
+    return simulated_Attest(enclave_type,
+                            what_to_say_size,
+                            what_to_say,
+                            size_out,
+                            out);
   }
 
 #ifdef OE_CERTIFIER
@@ -665,8 +672,9 @@ bool certifier::framework::Attest(const string& enclave_type,
       return false;
     }
     memset(out, 0, *size_out);
-    memcpy(
-        out, (byte*)serialized_gramine_at.data(), serialized_gramine_at.size());
+    memcpy(out,
+           (byte*)serialized_gramine_at.data(),
+           serialized_gramine_at.size());
     *size_out = serialized_gramine_at.size();
     return true;
   }

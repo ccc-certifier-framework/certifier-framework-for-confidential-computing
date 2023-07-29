@@ -36,14 +36,19 @@ bool islet_Attest(const int what_to_say_size,
                   byte*     attestation_out) {
   int  len = digest_output_byte_size("sha-256");
   byte islet_what_to_say[len];
-  if (!digest_message(
-          "sha-256", what_to_say, what_to_say_size, islet_what_to_say, len)) {
+  if (!digest_message("sha-256",
+                      what_to_say,
+                      what_to_say_size,
+                      islet_what_to_say,
+                      len)) {
     printf("islet_Attest: Can't digest what_to_say\n");
     return false;
   }
 
-  islet_status_t rv = islet_attest(
-      islet_what_to_say, len, attestation_out, attestation_size_out);
+  islet_status_t rv = islet_attest(islet_what_to_say,
+                                   len,
+                                   attestation_out,
+                                   attestation_size_out);
   printf("%s(): rv=%d\n", __func__, rv);
   return rv == ISLET_SUCCESS;
 }

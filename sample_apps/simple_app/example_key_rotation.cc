@@ -172,8 +172,9 @@ int main(int an, char** av) {
     return 0;
   }
 
-  if (!app_trust_data->recertify_me(
-          FLAGS_policy_host, FLAGS_policy_port, true)) {
+  if (!app_trust_data->recertify_me(FLAGS_policy_host,
+                                    FLAGS_policy_port,
+                                    true)) {
     printf("recertify me failed\n");
     return 0;
   }

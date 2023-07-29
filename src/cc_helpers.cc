@@ -565,15 +565,17 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
 
   string value;
 
-  if (!store_.update_or_insert(
-          public_key_alg_tag, string_type, public_key_algorithm_)) {
+  if (!store_.update_or_insert(public_key_alg_tag,
+                               string_type,
+                               public_key_algorithm_)) {
     printf("put_trust_data_in_store: can't set public key algorithm\n");
     return false;
   }
 
   const string symmetric_key_algorithm_type("symmetric-key-algorithm");
-  if (!store_.update_or_insert(
-          symmetric_key_algorithm_tag, string_type, symmetric_key_algorithm_)) {
+  if (!store_.update_or_insert(symmetric_key_algorithm_tag,
+                               string_type,
+                               symmetric_key_algorithm_)) {
     printf("put_trust_data_in_store: can't set symmetric key algorithm\n");
     return false;
   }
@@ -1360,8 +1362,9 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name,
     return false;
   }
 
-  if (sized_socket_write(
-          sock, serialized_request.size(), (byte*)serialized_request.data()) <
+  if (sized_socket_write(sock,
+                         serialized_request.size(),
+                         (byte*)serialized_request.data()) <
       (int)serialized_request.size()) {
     return false;
   }
@@ -1802,8 +1805,11 @@ bool load_server_certs_and_key(X509*        root_cert,
     return false;
   }
 #else
-  if (SSL_CTX_use_cert_and_key(
-          ctx, x509_auth_key_cert, auth_private_key, stack, 1) <= 0) {
+  if (SSL_CTX_use_cert_and_key(ctx,
+                               x509_auth_key_cert,
+                               auth_private_key,
+                               stack,
+                               1) <= 0) {
     printf("load_server_certs_and_key: SSL_CTX_use_cert_and_key failed\n");
 #ifdef DEBUG
     printf("cert:\n");
@@ -1900,8 +1906,9 @@ bool certifier::framework::server_dispatch(
 #endif
 
   // Verify peer
-  SSL_CTX_set_verify(
-      ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
+  SSL_CTX_set_verify(ctx,
+                     SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+                     nullptr);
   // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
   // SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 
@@ -1914,8 +1921,11 @@ bool certifier::framework::server_dispatch(
     int                client = accept(sock, (struct sockaddr*)&addr, &len);
     string             my_role("server");
     secure_authenticated_channel nc(my_role);
-    if (!nc.init_server_ssl(
-            host_name, port, asn1_root_cert, private_key, private_key_cert)) {
+    if (!nc.init_server_ssl(host_name,
+                            port,
+                            asn1_root_cert,
+                            private_key,
+                            private_key_cert)) {
       continue;
     }
     nc.ssl_ = SSL_new(ctx);
@@ -2100,8 +2110,11 @@ bool certifier::framework::secure_authenticated_channel::
 #ifdef BORING_SSL
   SSL_CTX_add1_chain_cert(ssl_ctx_, root_cert_);
 #else
-  if (SSL_CTX_use_cert_and_key(
-          ssl_ctx_, x509_auth_key_cert, auth_private_key, stack, 1) <= 0) {
+  if (SSL_CTX_use_cert_and_key(ssl_ctx_,
+                               x509_auth_key_cert,
+                               auth_private_key,
+                               stack,
+                               1) <= 0) {
     printf("load_client_certs_and_key: use_cert_and_key failed\n");
     return false;
   }

@@ -292,9 +292,10 @@ static int exec_cmd(const string& command, bool print = false) {
   }
   try {
     size_t bytesread;
-    while ((bytesread = fread(
-                buffer.data(), sizeof(buffer.at(0)), sizeof(buffer), pipe)) !=
-           0) {
+    while ((bytesread = fread(buffer.data(),
+                              sizeof(buffer.at(0)),
+                              sizeof(buffer),
+                              pipe)) != 0) {
       result += string(buffer.data(), bytesread);
     }
   } catch (...) {
@@ -418,8 +419,11 @@ static bool generate_platform_policy(string           policyKey,
       } else {
         all_props.append(",").append(prop_path);
       }
-      cmd = make_property_cmd(
-          prop.name, prop.type, prop.comparator, prop.value, prop_path);
+      cmd = make_property_cmd(prop.name,
+                              prop.type,
+                              prop.comparator,
+                              prop.value,
+                              prop_path);
       RUN_CMD(cmd, script, false);
     }
     combine_cmd =
@@ -443,8 +447,11 @@ static bool generate_platform_policy(string           policyKey,
                                       "has-trusted-platform-property",
                                       "isplatform.bin");
     RUN_CMD(claim_cmd, script, false);
-    claim_cmd = make_indirect_clause_cmd(
-        "key", policyKey, "says", "isplatform.bin", "saysisplatform.bin");
+    claim_cmd = make_indirect_clause_cmd("key",
+                                         policyKey,
+                                         "says",
+                                         "isplatform.bin",
+                                         "saysisplatform.bin");
     RUN_CMD(claim_cmd, script, false);
     claim_cmd = make_signed_claim_cmd("saysisplatform.bin",
                                       "9000",
@@ -471,15 +478,22 @@ static bool generate_measurement_policy(string         policyKey,
                         mea.c_str(),
                         "meas.bin");
     RUN_CMD(cmd, script, false);
-    cmd = make_unary_clause_cmd(
-        "measurement", "meas.bin", "is-trusted", "measurement.bin");
+    cmd = make_unary_clause_cmd("measurement",
+                                "meas.bin",
+                                "is-trusted",
+                                "measurement.bin");
     RUN_CMD(cmd, script, false);
-    cmd = make_indirect_clause_cmd(
-        "key", policyKey, "says", "measurement.bin", "saysmeasurement.bin");
+    cmd = make_indirect_clause_cmd("key",
+                                   policyKey,
+                                   "says",
+                                   "measurement.bin",
+                                   "saysmeasurement.bin");
     RUN_CMD(cmd, script, false);
     claim_file = string_format("signed_measurement%d.bin", i++);
-    cmd        = make_signed_claim_cmd(
-        "saysmeasurement.bin", "9000", policyKey, claim_file);
+    cmd        = make_signed_claim_cmd("saysmeasurement.bin",
+                                "9000",
+                                policyKey,
+                                claim_file);
     RUN_CMD(cmd, script, false);
     signed_claims.push_back(claim_file);
     cmd = "rm -rf meas.bin measurement.bin saysmeasurement.bin";
@@ -538,8 +552,10 @@ static string generate_clause(string      policyKey,
   cleanup_cmd            = p.second;
 
   if (ct == UNARY_CLAUSE) {
-    cmd = make_unary_clause_cmd(
-        sname[cl.stype], actual_sub, cl.verb, "clause.bin");
+    cmd = make_unary_clause_cmd(sname[cl.stype],
+                                actual_sub,
+                                cl.verb,
+                                "clause.bin");
     RUN_CMD(cmd, script, "");
   } else if (ct == SIMPLE_CLAUSE) {
     cmd = make_simple_clause_cmd(sname[cl.stype],
@@ -555,8 +571,10 @@ static string generate_clause(string      policyKey,
     actual_ssub            = s.first;
     scleanup_cmd           = s.second;
     if (cl.ctype == UNARY_CLAUSE) {
-      cmd = make_unary_clause_cmd(
-          sname[cl.sstype], actual_ssub, cl.sverb, "subclause.bin");
+      cmd = make_unary_clause_cmd(sname[cl.sstype],
+                                  actual_ssub,
+                                  cl.sverb,
+                                  "subclause.bin");
       RUN_CMD(cmd, script, "");
     } else if (cl.ctype == SIMPLE_CLAUSE) {
       // TODO: Handle special objects
@@ -570,8 +588,11 @@ static string generate_clause(string      policyKey,
     } else {
       return "";
     }
-    cmd = make_indirect_clause_cmd(
-        sname[cl.stype], actual_sub, cl.verb, "subclause.bin", "clause.bin");
+    cmd = make_indirect_clause_cmd(sname[cl.stype],
+                                   actual_sub,
+                                   cl.verb,
+                                   "subclause.bin",
+                                   "clause.bin");
     RUN_CMD(cmd, script, "");
     cmd = "rm -rf subclause.bin";
     RUN_CMD(cmd, script, "");
@@ -614,8 +635,11 @@ static bool generate_claim_policy(string        policyKey,
     p           = subject_conversion(claim.stype, claim.sub, script);
     actual_sub  = p.first;
     cleanup_cmd = p.second;
-    cmd         = make_indirect_clause_cmd(
-        sname[claim.stype], actual_sub, claim.verb, clauseFile, claimFile);
+    cmd         = make_indirect_clause_cmd(sname[claim.stype],
+                                   actual_sub,
+                                   claim.verb,
+                                   clauseFile,
+                                   claimFile);
     RUN_CMD(cmd, script, false);
     cmd = make_signed_claim_cmd(claimFile,
                                 "9000",
@@ -803,8 +827,11 @@ int main(int argc, char* argv[]) {
   }
 
   /* Policy generation */
-  if (!generate_policy(
-          policyKey, platforms, measurements, claims, FLAGS_script)) {
+  if (!generate_policy(policyKey,
+                       platforms,
+                       measurements,
+                       claims,
+                       FLAGS_script)) {
     cerr << "Policy generation failed!" << endl;
     return EXIT_FAILURE;
   }

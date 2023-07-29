@@ -49,8 +49,9 @@ int main(int an, char** av) {
     return 1;
   }
   // write request
-  if (sized_socket_write(
-          sock, serialized_request.size(), (byte*)serialized_request.data()) <
+  if (sized_socket_write(sock,
+                         serialized_request.size(),
+                         (byte*)serialized_request.data()) <
       (int)serialized_request.size()) {
     printf("send_request, socket write failed\n");
     return 1;

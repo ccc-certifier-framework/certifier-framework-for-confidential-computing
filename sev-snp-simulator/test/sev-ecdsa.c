@@ -179,8 +179,12 @@ int sev_ecdsa_sign(const void *         msg,
   }
 
   /* Store the R & S components of the ID block signature */
-  rc = get_ecdsa_sig_rs_bytes(
-      ossl_sig, sig_size, sig->r, sig->s, &r_size, &s_size);
+  rc = get_ecdsa_sig_rs_bytes(ossl_sig,
+                              sig_size,
+                              sig->r,
+                              sig->s,
+                              &r_size,
+                              &s_size);
   if (rc != EXIT_SUCCESS)
     goto out_sig;
 
