@@ -27,7 +27,7 @@ DEFINE_string(policy_key_file, "", "policy key file");
 DEFINE_string(cert_file, "", "cert file");
 
 bool
-get_key_from_file(const string& in, key_message* k)
+get_key_from_file(const string &in, key_message *k)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -39,7 +39,7 @@ get_key_from_file(const string& in, key_message* k)
   }
 
   string k_str;
-  k_str.assign((char*)serialized_key, in_size);
+  k_str.assign((char *)serialized_key, in_size);
   if (!k->ParseFromString(k_str)) {
     printf("Can't parse key\n");
     return false;
@@ -48,7 +48,7 @@ get_key_from_file(const string& in, key_message* k)
 }
 
 bool
-get_key_from_cert_file(const string& in, key_message* k)
+get_key_from_cert_file(const string &in, key_message *k)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -59,9 +59,9 @@ get_key_from_cert_file(const string& in, key_message* k)
     return false;
   }
   string str_cert;
-  str_cert.assign((char*)serialized_cert, in_read);
+  str_cert.assign((char *)serialized_cert, in_read);
 
-  X509* x = X509_new();
+  X509 *x = X509_new();
   if (!asn1_to_x509(str_cert, x)) {
     printf("Can't asn1 convert\n");
     return false;
@@ -74,7 +74,7 @@ get_key_from_cert_file(const string& in, key_message* k)
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::SetUsageMessage("Sample key-mgmt utility: RESOLVE - Fix message");
   gflags::ParseCommandLineFlags(&an, &av, true);

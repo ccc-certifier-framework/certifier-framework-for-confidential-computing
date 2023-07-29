@@ -58,6 +58,11 @@ CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 3
 ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+
+# Do not allow file-specific variations in pointer alignment.
+# Apply PointerAlignment consistently.
+DerivePointerAlignment: false
 
 FixNamespaceComments: true
 

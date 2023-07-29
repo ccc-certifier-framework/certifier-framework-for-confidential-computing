@@ -32,7 +32,7 @@
 enum { SUCCESS = 0, FAILURE = -1 };
 
 ssize_t
-gramine_rw_file(const char* path, uint8_t* buf, size_t len, bool do_write)
+gramine_rw_file(const char *path, uint8_t *buf, size_t len, bool do_write)
 {
   ssize_t bytes = 0;
   ssize_t ret   = 0;
@@ -64,7 +64,7 @@ gramine_rw_file(const char* path, uint8_t* buf, size_t len, bool do_write)
 }
 
 static inline int64_t
-local_sgx_getkey(sgx_key_request_t* keyrequest, sgx_key_128bit_t* key)
+local_sgx_getkey(sgx_key_request_t *keyrequest, sgx_key_128bit_t *key)
 {
   int64_t rax = EGETKEY;
   __asm__ volatile("enclu" : "+a"(rax) : "b"(keyrequest), "c"(key) : "memory");
@@ -72,7 +72,7 @@ local_sgx_getkey(sgx_key_request_t* keyrequest, sgx_key_128bit_t* key)
 }
 
 int
-gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key)
+gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t *key)
 {
   ssize_t bytes;
 
@@ -81,7 +81,7 @@ gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key)
 #endif
 
   bytes = gramine_rw_file("/dev/attestation/user_report_data",
-                          (uint8_t*)&user_report_data,
+                          (uint8_t *)&user_report_data,
                           sizeof(user_report_data),
                           /*do_write=*/true);
   if (bytes != sizeof(user_report_data)) {
@@ -92,7 +92,7 @@ gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key)
   /* read `report` file */
   sgx_report_t report;
   bytes = gramine_rw_file("/dev/attestation/report",
-                          (uint8_t*)&report,
+                          (uint8_t *)&report,
                           sizeof(report),
                           false);
   if (bytes != sizeof(report)) {
@@ -118,7 +118,7 @@ gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key)
 
 #ifdef DEBUG
   printf("Got key:\n");
-  gramine_print_bytes(sizeof(*key), (byte*)key);
+  gramine_print_bytes(sizeof(*key), (byte *)key);
   printf("\n");
 #endif
 
@@ -127,9 +127,9 @@ gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key)
 
 bool
 gramine_attest_impl(const int what_to_say_size,
-                    byte*     what_to_say,
-                    int*      attestation_size_out,
-                    byte*     attestation_out)
+                    byte *    what_to_say,
+                    int *     attestation_size_out,
+                    byte *    attestation_out)
 {
   ssize_t bytes;
   uint8_t quote[SGX_QUOTE_MAX_SIZE];
@@ -151,7 +151,7 @@ gramine_attest_impl(const int what_to_say_size,
 #endif
 
   bytes = gramine_rw_file("/dev/attestation/user_report_data",
-                          (uint8_t*)&user_report_data,
+                          (uint8_t *)&user_report_data,
                           sizeof(user_report_data),
                           /*do_write=*/true);
 
@@ -162,7 +162,7 @@ gramine_attest_impl(const int what_to_say_size,
 
   /* 2. read `quote` file */
   bytes = gramine_rw_file("/dev/attestation/quote",
-                          (uint8_t*)&quote,
+                          (uint8_t *)&quote,
                           sizeof(quote),
                           /*do_write=*/false);
   if (bytes < 0) {
@@ -183,13 +183,13 @@ gramine_attest_impl(const int what_to_say_size,
 
 int
 remote_verify_quote(size_t   quote_size,
-                    uint8_t* quote,
-                    size_t*  mr_size,
-                    uint8_t* mr)
+                    uint8_t *quote,
+                    size_t * mr_size,
+                    uint8_t *mr)
 {
   int                ret                          = -1;
-  void*              sgx_verify_lib               = NULL;
-  uint8_t*           supplemental_data            = NULL;
+  void *             sgx_verify_lib               = NULL;
+  uint8_t *          supplemental_data            = NULL;
   uint32_t           supplemental_data_size       = 0;
   uint32_t           collateral_expiration_status = 1;
   sgx_ql_qv_result_t verification_result = SGX_QL_QV_RESULT_UNSPECIFIED;
@@ -206,8 +206,8 @@ remote_verify_quote(size_t   quote_size,
   }
 
   sgx_qv_get_quote_supplemental_data_size =
-      (int (*)(uint32_t*))dlsym(sgx_verify_lib,
-                                "sgx_qv_get_quote_supplemental_data_size");
+      (int (*)(uint32_t *))dlsym(sgx_verify_lib,
+                                 "sgx_qv_get_quote_supplemental_data_size");
 
 #ifdef DEBUG
   printf("Supplemental data size address to be called: %p\n",
@@ -221,7 +221,7 @@ remote_verify_quote(size_t   quote_size,
     goto out;
   }
 
-  supplemental_data = (uint8_t*)malloc(supplemental_data_size);
+  supplemental_data = (uint8_t *)malloc(supplemental_data_size);
   if (!supplemental_data) {
     ret = -1;
     goto out;
@@ -229,22 +229,22 @@ remote_verify_quote(size_t   quote_size,
 
 #ifdef DEBUG
   printf("%s: Quote Size: %ld Quote:\n", __FUNCTION__, quote_size);
-  gramine_print_bytes(quote_size, (uint8_t*)quote);
+  gramine_print_bytes(quote_size, (uint8_t *)quote);
   printf("%s: Quote Version: %d\n",
          __FUNCTION__,
-         ((sgx_quote_t*)quote)->body.version);
+         ((sgx_quote_t *)quote)->body.version);
 #endif
 
   sgx_qv_verify_quote =
-      (int (*)(const uint8_t*,
+      (int (*)(const uint8_t *,
                uint32_t,
-               void*,
+               void *,
                const time_t,
-               uint32_t*,
-               sgx_ql_qv_result_t*,
-               void*,
+               uint32_t *,
+               sgx_ql_qv_result_t *,
+               void *,
                uint32_t,
-               uint8_t*))dlsym(sgx_verify_lib, "sgx_qv_verify_quote");
+               uint8_t *))dlsym(sgx_verify_lib, "sgx_qv_verify_quote");
 #ifdef DEBUG
   printf("Verify function address to be called: %p with size: %ld\n",
          sgx_qv_verify_quote,
@@ -252,7 +252,7 @@ remote_verify_quote(size_t   quote_size,
 #endif
 
   /* call into libsgx_dcap_quoteverify to verify ECDSA-based SGX quote */
-  ret = sgx_qv_verify_quote((uint8_t*)quote,
+  ret = sgx_qv_verify_quote((uint8_t *)quote,
                             (uint32_t)quote_size,
                             NULL,
                             current_time,
@@ -271,7 +271,7 @@ remote_verify_quote(size_t   quote_size,
   printf("%s: Supplemental size: %d data:\n",
          __FUNCTION__,
          supplemental_data_size);
-  gramine_print_bytes(supplemental_data_size, (uint8_t*)supplemental_data);
+  gramine_print_bytes(supplemental_data_size, (uint8_t *)supplemental_data);
   printf("%s: Quote verification done with result %d %s\n",
          __FUNCTION__,
          verification_result,
@@ -299,7 +299,9 @@ remote_verify_quote(size_t   quote_size,
   }
 
   *mr_size = SGX_MR_SIZE;
-  memcpy(mr, ((sgx_quote_t*)quote)->body.report_body.mr_enclave.m, SGX_MR_SIZE);
+  memcpy(mr,
+         ((sgx_quote_t *)quote)->body.report_body.mr_enclave.m,
+         SGX_MR_SIZE);
 
 #ifdef DEBUG
   printf("MR enclave returned: %ld\n", *mr_size);
@@ -319,11 +321,11 @@ out:
 
 bool
 gramine_local_verify_impl(const int what_to_say_size,
-                          byte*     what_to_say,
+                          byte *    what_to_say,
                           const int attestation_size,
-                          byte*     attestation,
-                          int*      measurement_out_size,
-                          byte*     measurement_out)
+                          byte *    attestation,
+                          int *     measurement_out_size,
+                          byte *    measurement_out)
 {
   ssize_t bytes;
   int     ret = -1;
@@ -343,7 +345,7 @@ gramine_local_verify_impl(const int what_to_say_size,
   mbedtls_sha256(what_to_say, what_to_say_size, user_report_data.d, 0);
 
   bytes = gramine_rw_file("/dev/attestation/user_report_data",
-                          (uint8_t*)&user_report_data,
+                          (uint8_t *)&user_report_data,
                           sizeof(user_report_data),
                           /*do_write=*/true);
   if (bytes != sizeof(user_report_data)) {
@@ -353,7 +355,7 @@ gramine_local_verify_impl(const int what_to_say_size,
 
   /* 2. read `quote` file */
   bytes = gramine_rw_file("/dev/attestation/quote",
-                          (uint8_t*)&quote,
+                          (uint8_t *)&quote,
                           sizeof(quote),
                           /*do_write=*/false);
   if (bytes < 0) {
@@ -361,8 +363,8 @@ gramine_local_verify_impl(const int what_to_say_size,
     return false;
   }
 
-  sgx_quote_t* quote_expected = (sgx_quote_t*)attestation;
-  sgx_quote_t* quote_received = (sgx_quote_t*)quote;
+  sgx_quote_t *quote_expected = (sgx_quote_t *)attestation;
+  sgx_quote_t *quote_received = (sgx_quote_t *)quote;
 
   if (quote_expected->body.version != /*EPID*/ 2
       && quote_received->body.version != /*DCAP*/ 3)
@@ -422,11 +424,11 @@ gramine_local_verify_impl(const int what_to_say_size,
 
 bool
 gramine_remote_verify_impl(const int what_to_say_size,
-                           byte*     what_to_say,
+                           byte *    what_to_say,
                            const int attestation_size,
-                           byte*     attestation,
-                           int*      measurement_out_size,
-                           byte*     measurement_out)
+                           byte *    attestation,
+                           int *     measurement_out_size,
+                           byte *    measurement_out)
 {
   ssize_t bytes;
   int     ret = -1;
@@ -441,7 +443,7 @@ gramine_remote_verify_impl(const int what_to_say_size,
          attestation_size);
 #endif
 
-  sgx_quote_t* quote_expected = (sgx_quote_t*)attestation;
+  sgx_quote_t *quote_expected = (sgx_quote_t *)attestation;
 
   /* Invoke remote_verify_quote() in DCAP library */
 #ifdef DEBUG
@@ -449,7 +451,7 @@ gramine_remote_verify_impl(const int what_to_say_size,
 #endif
 
   if (remote_verify_quote(attestation_size,
-                          (uint8_t*)quote_expected,
+                          (uint8_t *)quote_expected,
                           &mr_size,
                           mr)
       != 0)
@@ -493,7 +495,7 @@ gramine_remote_verify_impl(const int what_to_say_size,
 }
 
 bool
-gramine_get_measurement(byte* measurement)
+gramine_get_measurement(byte *measurement)
 {
   bool status = true;
   byte attestation[MAX_ATTESTATION_SIZE];
@@ -513,14 +515,14 @@ gramine_get_measurement(byte* measurement)
     return status;
   }
 
-  sgx_quote_t* quote = (sgx_quote_t*)attestation;
+  sgx_quote_t *quote = (sgx_quote_t *)attestation;
   memcpy(measurement, quote->body.report_body.mr_enclave.m, SGX_MR_SIZE);
 
   return status;
 }
 
 bool
-gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out)
+gramine_seal_impl(int in_size, byte *in, int *size_out, byte *out)
 {
   int                       ret    = 0;
   bool                      status = true;
@@ -546,7 +548,7 @@ gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out)
   }
 
   /* Get SGX Sealing Key */
-  if (gramine_Sgx_Getkey(measurement, (sgx_key_128bit_t*)key) == FAILURE) {
+  if (gramine_Sgx_Getkey(measurement, (sgx_key_128bit_t *)key) == FAILURE) {
     printf("getkey failed to retrieve SGX Sealing Key\n");
     return false;
   }
@@ -592,7 +594,7 @@ gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out)
 #endif
 
   for (i = 0; i < sizeof(int); i++, j++) {
-    out[j] = ((byte*)&in_size)[i];
+    out[j] = ((byte *)&in_size)[i];
   }
   for (i = 0; i < TAG_SIZE; i++, j++) {
     out[j] = tag[i];
@@ -616,7 +618,7 @@ done:
 }
 
 bool
-gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out)
+gramine_unseal_impl(int in_size, byte *in, int *size_out, byte *out)
 {
   int                       ret    = 0;
   bool                      status = true;
@@ -635,7 +637,7 @@ gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out)
 #endif
 
   for (i = 0; i < sizeof(int); i++, j++) {
-    ((byte*)&enc_size)[i] = in[j];
+    ((byte *)&enc_size)[i] = in[j];
   }
 
   for (i = 0; i < TAG_SIZE; i++, j++) {
@@ -667,7 +669,7 @@ gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out)
   }
 
   /* Get SGX Sealing Key */
-  if (gramine_Sgx_Getkey(measurement, (sgx_key_128bit_t*)key) == FAILURE) {
+  if (gramine_Sgx_Getkey(measurement, (sgx_key_128bit_t *)key) == FAILURE) {
     printf("getkey failed to retrieve SGX Sealing Key\n");
     return false;
   }
@@ -721,7 +723,7 @@ done:
 }
 
 void
-gramine_setup_functions(GramineFunctions* gramineFuncs)
+gramine_setup_functions(GramineFunctions *gramineFuncs)
 {
   gramineFuncs->Attest = &gramine_attest_impl;
 #ifdef GRAMINE_LOCAL_VERIFY

@@ -15,7 +15,7 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   string usage("Application Service helper 'send' utility");
   gflags::SetUsageMessage(usage);
@@ -27,19 +27,19 @@ main(int an, char** av)
 
   // dial service
   struct sockaddr_in address;
-  memset((byte*)&address, 0, sizeof(struct sockaddr_in));
+  memset((byte *)&address, 0, sizeof(struct sockaddr_in));
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0) {
     return 1;
   }
-  struct hostent* he = gethostbyname(FLAGS_server_app_host.c_str());
+  struct hostent *he = gethostbyname(FLAGS_server_app_host.c_str());
   if (he == nullptr) {
     return 1;
   }
   memcpy(&(address.sin_addr.s_addr), he->h_addr, he->h_length);
   address.sin_family = AF_INET;
   address.sin_port   = htons(FLAGS_server_app_port);
-  if (connect(sock, (struct sockaddr*)&address, sizeof(address)) != 0) {
+  if (connect(sock, (struct sockaddr *)&address, sizeof(address)) != 0) {
     return 1;
   }
 
@@ -53,7 +53,7 @@ main(int an, char** av)
   // write request
   if (sized_socket_write(sock,
                          serialized_request.size(),
-                         (byte*)serialized_request.data())
+                         (byte *)serialized_request.data())
       < (int)serialized_request.size())
   {
     printf("send_request, socket write failed\n");

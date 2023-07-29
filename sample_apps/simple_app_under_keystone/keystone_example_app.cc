@@ -59,12 +59,12 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 //    run-app-as-server: This runs the app as a client
 
 #include "policy_key.cc"
-cc_trust_data* app_trust_data = nullptr;
+cc_trust_data *app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
 void
-client_application(secure_authenticated_channel& channel)
+client_application(secure_authenticated_channel &channel)
 {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -75,8 +75,8 @@ client_application(secure_authenticated_channel& channel)
   }
 
   // client sends a message over authenticated, encrypted channel
-  const char* msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
 
   // Get server response over authenticated, encrypted channel and print it
   string out;
@@ -85,7 +85,7 @@ client_application(secure_authenticated_channel& channel)
 }
 
 void
-server_application(secure_authenticated_channel& channel)
+server_application(secure_authenticated_channel &channel)
 {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -98,15 +98,15 @@ server_application(secure_authenticated_channel& channel)
   // Read message from client over authenticated, encrypted channel
   string out;
   int    n = channel.read(&out);
-  printf("SSL server read: %s\n", (const char*)out.data());
+  printf("SSL server read: %s\n", (const char *)out.data());
 
   // Reply over authenticated, encrypted channel
-  const char* msg = "Hi from your secret server\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret server\n";
+  channel.write(strlen(msg), (byte *)msg);
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   string usage("Keystone-based simple app");
   gflags::ParseCommandLineFlags(&an, &av, true);

@@ -26,7 +26,7 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(input, "simple_clause.bin", "input file");
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -49,7 +49,7 @@ main(int an, char** av)
     return 1;
   }
 
-  all_bufs.assign((char*)buf, in_size);
+  all_bufs.assign((char *)buf, in_size);
   buffer_sequence seq;
   if (!seq.ParseFromString(all_bufs)) {
     printf("Can't deserialize %s\n", FLAGS_input.c_str());
@@ -58,7 +58,7 @@ main(int an, char** av)
 
   printf("\n %d blocks\n", seq.block_size());
   for (int i = 0; i < seq.block_size(); i++) {
-    const string&        s = seq.block(i);
+    const string &       s = seq.block(i);
     signed_claim_message sc;
 
     if (!sc.ParseFromString(s)) {

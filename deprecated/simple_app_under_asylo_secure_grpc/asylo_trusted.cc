@@ -58,20 +58,20 @@ static string data_dir = "./app1_data/";
 
 static std::string enclave_type;
 
-cc_trust_data* app_trust_data = nullptr;
+cc_trust_data *app_trust_data = nullptr;
 
 static bool simulator_initialized = false;
 bool
-test_local_certify(string& enclave_type,
+test_local_certify(string &enclave_type,
                    bool    init_from_file,
-                   string& file_name,
-                   string& evidence_descriptor);
+                   string &file_name,
+                   string &evidence_descriptor);
 
 bool        trust_data_initialized = false;
 key_message privatePolicyKey;
 key_message publicPolicyKey;
 string      serializedPolicyCert;
-X509*       policy_cert = nullptr;
+X509 *      policy_cert = nullptr;
 
 policy_store pStore;
 key_message  privateAppKey;
@@ -90,7 +90,7 @@ print_trust_data()
   printf("\nPolicy key\n");
   print_key(publicPolicyKey);
   printf("\nPolicy cert\n");
-  print_bytes(serializedPolicyCert.size(), (byte*)serializedPolicyCert.data());
+  print_bytes(serializedPolicyCert.size(), (byte *)serializedPolicyCert.data());
   printf("\n");
   printf("\nPrivate app auth key\n");
   print_key(privateAppKey);
@@ -202,7 +202,7 @@ asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs)
 }
 
 bool
-certifier_init(char* usr_data_dir, size_t usr_data_dir_size)
+certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
 {
   static const char rnd_seed[] =
       "string to make the random number generator think it has entropy";
@@ -307,32 +307,32 @@ certify_me()
 }
 
 void
-server_application(secure_authenticated_channel& channel)
+server_application(secure_authenticated_channel &channel)
 {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
   string out;
   int    n = channel.read(&out);
-  printf("SSL server read: %s\n", (const char*)out.data());
+  printf("SSL server read: %s\n", (const char *)out.data());
 
   // Reply over authenticated, encrypted channel
-  const char* msg = "Hi from your secret server\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret server\n";
+  channel.write(strlen(msg), (byte *)msg);
   connected = true;
 }
 
 void
-asylo_server_dispatch(const string& host_name,
+asylo_server_dispatch(const string &host_name,
                       int           port,
-                      string&       asn1_root_cert,
-                      key_message&  private_key,
-                      const string& private_key_cert,
-                      void (*func)(secure_authenticated_channel&))
+                      string &      asn1_root_cert,
+                      key_message & private_key,
+                      const string &private_key_cert,
+                      void (*func)(secure_authenticated_channel &))
 {
   SSL_load_error_strings();
 
-  X509* root_cert = X509_new();
+  X509 *root_cert = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert)) {
     printf("Can't convert cert\n");
     return;
@@ -346,13 +346,13 @@ asylo_server_dispatch(const string& host_name,
   }
 
   // Set up TLS handshake data.
-  SSL_METHOD* method = (SSL_METHOD*)TLS_server_method();
-  SSL_CTX*    ctx    = SSL_CTX_new(method);
+  SSL_METHOD *method = (SSL_METHOD *)TLS_server_method();
+  SSL_CTX *   ctx    = SSL_CTX_new(method);
   if (ctx == NULL) {
     printf("SSL_CTX_new failed (1)\n");
     return;
   }
-  X509_STORE* cs = SSL_CTX_get_cert_store(ctx);
+  X509_STORE *cs = SSL_CTX_get_cert_store(ctx);
   X509_STORE_add_cert(cs, root_cert);
 
   if (!load_server_certs_and_key(root_cert, private_key, ctx)) {
@@ -378,7 +378,7 @@ asylo_server_dispatch(const string& host_name,
     printf("at accept\n");
 #endif
     struct sockaddr_in addr;
-    int                client = accept(sock, (struct sockaddr*)&addr, &len);
+    int                client = accept(sock, (struct sockaddr *)&addr, &len);
     string             my_role("server");
     secure_authenticated_channel nc(my_role);
     if (!nc.init_server_ssl(host_name,
@@ -421,13 +421,13 @@ done:
 }
 
 void
-client_application(secure_authenticated_channel& channel)
+client_application(secure_authenticated_channel &channel)
 {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
   // client sends a message over authenticated, encrypted channel
-  const char* msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
 
   // Get server response over authenticated, encrypted channel and print it
   string out;

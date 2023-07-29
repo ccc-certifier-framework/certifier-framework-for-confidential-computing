@@ -32,7 +32,7 @@ DEFINE_string(descipt, "", "descriptor");
 DEFINE_string(signing_alg, "rsa-2048-sha256-pkcs-sign", "signing algorithm");
 
 bool
-get_clause_from_file(const string& in, vse_clause* cl)
+get_clause_from_file(const string &in, vse_clause *cl)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -43,7 +43,7 @@ get_clause_from_file(const string& in, vse_clause* cl)
     return false;
   }
   string cl_str;
-  cl_str.assign((char*)serialized_cl, in_size);
+  cl_str.assign((char *)serialized_cl, in_size);
   if (!cl->ParseFromString(cl_str)) {
     printf("Can't parse clause\n");
     return false;
@@ -52,7 +52,7 @@ get_clause_from_file(const string& in, vse_clause* cl)
 }
 
 bool
-get_key_from_file(const string& in, key_message* k)
+get_key_from_file(const string &in, key_message *k)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -63,7 +63,7 @@ get_key_from_file(const string& in, key_message* k)
     return false;
   }
   string k_str;
-  k_str.assign((char*)serialized_key, in_size);
+  k_str.assign((char *)serialized_key, in_size);
   if (!k->ParseFromString(k_str)) {
     printf("Can't parse key\n");
     return false;
@@ -72,7 +72,7 @@ get_key_from_file(const string& in, key_message* k)
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -129,7 +129,7 @@ main(int an, char** av)
   string        descriptor = FLAGS_descipt;
   claim_message cm_out;
   if (!make_claim(serialized_vse_claim.size(),
-                  (byte*)serialized_vse_claim.data(),
+                  (byte *)serialized_vse_claim.data(),
                   format,
                   descriptor,
                   not_before,
@@ -160,7 +160,7 @@ main(int an, char** av)
     printf("Can't serialize signed claim\n");
     return 1;
   }
-  if (!write_file(FLAGS_output, sc_str.size(), (byte*)sc_str.data())) {
+  if (!write_file(FLAGS_output, sc_str.size(), (byte *)sc_str.data())) {
     printf("Can't write %s\n", FLAGS_output.c_str());
     return 1;
   }

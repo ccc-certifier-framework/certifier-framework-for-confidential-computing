@@ -44,7 +44,7 @@ certifier::framework::store_entry::print()
   if (type_ == "string") {
     printf("%s\n", value_.c_str());
   } else {
-    print_bytes((int)value_.size(), (byte*)value_.data());
+    print_bytes((int)value_.size(), (byte *)value_.data());
   }
 }
 
@@ -52,7 +52,7 @@ certifier::framework::policy_store::policy_store(unsigned max_ents)
 {
   max_num_ents_     = max_ents;
   num_ents_         = 0;
-  entry_            = new store_entry*[max_ents];
+  entry_            = new store_entry *[max_ents];
   policy_key_valid_ = false;
 }
 
@@ -60,7 +60,7 @@ certifier::framework::policy_store::policy_store()
 {
   max_num_ents_     = MAX_NUM_ENTRIES;
   num_ents_         = 0;
-  entry_            = new store_entry*[MAX_NUM_ENTRIES];
+  entry_            = new store_entry *[MAX_NUM_ENTRIES];
   policy_key_valid_ = false;
 }
 
@@ -74,7 +74,7 @@ certifier::framework::policy_store::~policy_store()
   policy_key_valid_ = false;
 }
 
-const key_message*
+const key_message *
 policy_store::get_policy_key()
 {
   if (!policy_key_valid_)
@@ -103,9 +103,9 @@ certifier::framework::policy_store::get_num_entries()
 }
 
 bool
-certifier::framework::policy_store::add_entry(const string& tag,
-                                              const string& type,
-                                              const string& value)
+certifier::framework::policy_store::add_entry(const string &tag,
+                                              const string &type,
+                                              const string &value)
 {
   if (num_ents_ >= max_num_ents_)
     return false;
@@ -118,8 +118,8 @@ certifier::framework::policy_store::add_entry(const string& tag,
 }
 
 int
-certifier::framework::policy_store::find_entry(const string& tag,
-                                               const string& type)
+certifier::framework::policy_store::find_entry(const string &tag,
+                                               const string &type)
 {
   for (unsigned i = 0; i < num_ents_; i++) {
     if (entry_[i]->tag_ == tag && entry_[i]->type_ == type)
@@ -129,7 +129,7 @@ certifier::framework::policy_store::find_entry(const string& tag,
 }
 
 bool
-certifier::framework::policy_store::get(unsigned ent, string* v)
+certifier::framework::policy_store::get(unsigned ent, string *v)
 {
   if (ent >= num_ents_)
     return false;
@@ -146,7 +146,7 @@ certifier::framework::policy_store::put(unsigned ent, const string v)
   return true;
 }
 
-const string*
+const string *
 certifier::framework::policy_store::tag(unsigned ent)
 {
   if (ent >= num_ents_)
@@ -154,7 +154,7 @@ certifier::framework::policy_store::tag(unsigned ent)
   return &entry_[ent]->tag_;
 }
 
-const string*
+const string *
 certifier::framework::policy_store::type(unsigned ent)
 {
   if (ent >= num_ents_)
@@ -162,7 +162,7 @@ certifier::framework::policy_store::type(unsigned ent)
   return &entry_[ent]->type_;
 }
 
-store_entry*
+store_entry *
 certifier::framework::policy_store::get_entry(unsigned ent)
 {
   if (ent >= num_ents_)
@@ -171,9 +171,9 @@ certifier::framework::policy_store::get_entry(unsigned ent)
 }
 
 bool
-certifier::framework::policy_store::update_or_insert(const string& tag,
-                                                     const string& type,
-                                                     const string& value)
+certifier::framework::policy_store::update_or_insert(const string &tag,
+                                                     const string &type,
+                                                     const string &value)
 {
   int ent = find_entry(tag, type);
   if (ent < 0) {
@@ -219,21 +219,21 @@ certifier::framework::policy_store::print()
 }
 
 bool
-certifier::framework::policy_store::Serialize(string* out)
+certifier::framework::policy_store::Serialize(string *out)
 {
   policy_store_message psm;
 
   psm.set_max_ents(max_num_ents_);
   // Put it in psm
   if (policy_key_valid_) {
-    key_message* alloc_key = new key_message;
+    key_message *alloc_key = new key_message;
     alloc_key->CopyFrom(policy_key_);
     psm.set_allocated_policy_key(alloc_key);
   }
 
   for (unsigned i = 0; i < num_ents_; i++) {
-    policy_store_entry* pe = psm.add_entries();
-    store_entry*        se = entry_[i];
+    policy_store_entry *pe = psm.add_entries();
+    store_entry *       se = entry_[i];
     pe->set_tag(se->tag_);
     pe->set_type(se->type_);
     pe->set_value(se->value_);
@@ -243,7 +243,7 @@ certifier::framework::policy_store::Serialize(string* out)
 }
 
 bool
-certifier::framework::policy_store::Deserialize(string& in)
+certifier::framework::policy_store::Deserialize(string &in)
 {
   policy_store_message psm;
 
@@ -262,8 +262,8 @@ certifier::framework::policy_store::Deserialize(string& in)
     policy_key_valid_ = false;
   }
   for (int i = 0; i < psm.entries_size(); i++) {
-    const policy_store_entry& pe = psm.entries(i);
-    store_entry*              se = new store_entry();
+    const policy_store_entry &pe = psm.entries(i);
+    store_entry *             se = new store_entry();
     entry_[i]                    = se;
     se->tag_                     = pe.tag();
     se->type_                    = pe.type();
@@ -281,7 +281,7 @@ certifier::framework::policy_store::Deserialize(string& in)
 
 bool        certifier_public_policy_key_initialized = false;
 key_message certifier_public_policy_key;
-const key_message*
+const key_message *
 GetPublicPolicyKey()
 {
   if (!certifier_public_policy_key_initialized)
@@ -290,7 +290,7 @@ GetPublicPolicyKey()
 }
 
 bool
-GetX509FromCert(const string& cert, X509* x)
+GetX509FromCert(const string &cert, X509 *x)
 {
   return asn1_to_x509(cert, x);
 }
@@ -310,12 +310,12 @@ GetX509FromCert(const string& cert, X509* x)
 #define EXT_HWID           "1.3.6.1.4.1.3704.1.4"
 
 static bool
-vcek_ext_byte_value(X509* vcek, const char* oid, unsigned char* value)
+vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *value)
 {
   int                  nid = -1, idx = -1, extlen = -1;
-  X509_EXTENSION*      ex       = NULL;
-  ASN1_STRING*         extvalue = NULL;
-  const unsigned char* vals     = NULL;
+  X509_EXTENSION *     ex       = NULL;
+  ASN1_STRING *        extvalue = NULL;
+  const unsigned char *vals     = NULL;
 
   // Use OID for both lname and sname so OBJ_create does not fail
   nid = OBJ_create(oid, oid, oid);
@@ -348,7 +348,7 @@ vcek_ext_byte_value(X509* vcek, const char* oid, unsigned char* value)
 }
 
 uint64_t
-get_tcb_version_from_vcek(X509* vcek)
+get_tcb_version_from_vcek(X509 *vcek)
 {
   unsigned char blSPL, teeSPL, snpSPL, ucodeSPL;
   uint64_t      tcb_version = (uint64_t)-1;
@@ -365,12 +365,12 @@ get_tcb_version_from_vcek(X509* vcek)
 }
 
 bool
-get_chipid_from_vcek(X509* vcek, unsigned char* chipid, int idlen)
+get_chipid_from_vcek(X509 *vcek, unsigned char *chipid, int idlen)
 {
   int                  nid = -1, idx = -1, extlen = -1;
-  X509_EXTENSION*      ex       = NULL;
-  ASN1_STRING*         extvalue = NULL;
-  const unsigned char* vals     = NULL;
+  X509_EXTENSION *     ex       = NULL;
+  ASN1_STRING *        extvalue = NULL;
+  const unsigned char *vals     = NULL;
 
   nid = OBJ_create(VCEK_EXT_HWID, VCEK_EXT_HWID, VCEK_EXT_HWID);
   if (nid == NID_undef) {
@@ -397,16 +397,16 @@ get_chipid_from_vcek(X509* vcek, unsigned char* chipid, int idlen)
 #endif
 
 bool
-PublicKeyFromCert(const string& cert, key_message* k)
+PublicKeyFromCert(const string &cert, key_message *k)
 {
-  X509*      x   = X509_new();
-  EVP_PKEY*  epk = nullptr;
-  X509_NAME* sn  = nullptr;
+  X509 *     x   = X509_new();
+  EVP_PKEY * epk = nullptr;
+  X509_NAME *sn  = nullptr;
   int        s   = 0;
   bool       res = true;
   int        len = -1;
   string     subject_name_str;
-  string*    cert_str = nullptr;
+  string *   cert_str = nullptr;
 #ifdef SEV_SNP
   enum { CHIP_ID_SIZE = 64 };
   unsigned char chipid[CHIP_ID_SIZE];
@@ -446,13 +446,13 @@ PublicKeyFromCert(const string& cert, key_message* k)
       printf("PublicKeyFromCert: Can't X509_NAME_get_text_by_NID\n");
       res = false;
     }
-    subject_name_str.assign((const char*)name_buf);
+    subject_name_str.assign((const char *)name_buf);
   }
   if (!res)
     goto done;
 
   if (EVP_PKEY_base_id(epk) == EVP_PKEY_RSA) {
-    const RSA* rk = nullptr;
+    const RSA *rk = nullptr;
     rk            = EVP_PKEY_get0_RSA(epk);
     if (rk == nullptr) {
       printf("PublicKeyFromCert: Can't get RSA key from evp\n");
@@ -465,7 +465,7 @@ PublicKeyFromCert(const string& cert, key_message* k)
       goto done;
     }
   } else if (EVP_PKEY_base_id(epk) == EVP_PKEY_EC) {
-    const EC_KEY* ek = EVP_PKEY_get0_EC_KEY(epk);
+    const EC_KEY *ek = EVP_PKEY_get0_EC_KEY(epk);
     if (ek == nullptr) {
       printf("PublicKeyFromCert: Can't get ECC key from evp\n");
       res = false;
@@ -485,7 +485,7 @@ PublicKeyFromCert(const string& cert, key_message* k)
   k->set_key_format("vse-key");
 
   cert_str = new (string);
-  cert_str->assign((char*)cert.data(), cert.size());
+  cert_str->assign((char *)cert.data(), cert.size());
   k->set_allocated_certificate(cert_str);
 
 #ifdef SEV_SNP
@@ -509,71 +509,71 @@ done:
 
 #ifdef SEV_SNP
 extern bool
-sev_Init(const string& platform_certs_file);
+sev_Init(const string &platform_certs_file);
 extern bool
-sev_GetParentEvidence(string* out);
+sev_GetParentEvidence(string *out);
 extern bool
-sev_Seal(int in_size, byte* in, int* size_out, byte* out);
+sev_Seal(int in_size, byte *in, int *size_out, byte *out);
 extern bool
-sev_Unseal(int in_size, byte* in, int* size_out, byte* out);
+sev_Unseal(int in_size, byte *in, int *size_out, byte *out);
 extern bool
-sev_Attest(int what_to_say_size, byte* what_to_say, int* size_out, byte* out);
+sev_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out);
 #endif
 
 #ifdef ASYLO_CERTIFIER
 extern bool
-asylo_Attest(int claims_size, byte* claims, int* size_out, byte* out);
+asylo_Attest(int claims_size, byte *claims, int *size_out, byte *out);
 extern bool
 asylo_Verify(int   claims_size,
-             byte* claims,
-             int*  user_data_out_size,
-             byte* user_data_out,
-             int*  size_out,
-             byte* out);
+             byte *claims,
+             int * user_data_out_size,
+             byte *user_data_out,
+             int * size_out,
+             byte *out);
 extern bool
-asylo_Seal(int in_size, byte* in, int* size_out, byte* out);
+asylo_Seal(int in_size, byte *in, int *size_out, byte *out);
 extern bool
-asylo_Unseal(int in_size, byte* in, int* size_out, byte* out);
+asylo_Unseal(int in_size, byte *in, int *size_out, byte *out);
 #endif
 
 #ifdef GRAMINE_CERTIFIER
 extern bool
 gramine_Attest(const int what_to_say_size,
-               byte*     what_to_say,
-               int*      size_out,
-               byte*     out);
+               byte *    what_to_say,
+               int *     size_out,
+               byte *    out);
 extern bool
 gramine_Verify(const int what_to_say_size,
-               byte*     what_to_say,
+               byte *    what_to_say,
                const int attestation_size,
-               byte*     attestation,
-               int*      size_out,
-               byte*     out);
+               byte *    attestation,
+               int *     size_out,
+               byte *    out);
 extern bool
-gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
+gramine_Seal(int in_size, byte *in, int *size_out, byte *out);
 extern bool
-gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
+gramine_Unseal(int in_size, byte *in, int *size_out, byte *out);
 #endif
 
 #ifdef KEYSTONE_CERTIFIER
 extern bool
-keystone_Init(const int size, byte* der_cert);
+keystone_Init(const int size, byte *der_cert);
 extern bool
-keystone_Seal(int in_size, byte* in, int* size_out, byte* out);
+keystone_Seal(int in_size, byte *in, int *size_out, byte *out);
 extern bool
-keystone_Unseal(int in_size, byte* in, int* size_out, byte* out);
+keystone_Unseal(int in_size, byte *in, int *size_out, byte *out);
 extern bool
 keystone_Attest(int   what_to_say_size,
-                byte* what_to_say,
-                int*  size_out,
-                byte* out);
+                byte *what_to_say,
+                int * size_out,
+                byte *out);
 extern bool
 keystone_Verify(const int what_to_say_size,
-                byte*     what_to_say,
+                byte *    what_to_say,
                 const int attestation_size,
-                byte*     attestation,
-                int*      measurement_out_size,
-                byte*     measurement_out);
+                byte *    attestation,
+                int *     measurement_out_size,
+                byte *    measurement_out);
 #endif
 
 #ifdef ISLET_CERTIFIER
@@ -583,12 +583,12 @@ keystone_Verify(const int what_to_say_size,
 // Buffer overflow check: Seal returns true and the buffer size in size_out.
 // Check on Gramine.
 bool
-certifier::framework::Seal(const string& enclave_type,
-                           const string& enclave_id,
+certifier::framework::Seal(const string &enclave_type,
+                           const string &enclave_id,
                            int           in_size,
-                           byte*         in,
-                           int*          size_out,
-                           byte*         out)
+                           byte *        in,
+                           int *         size_out,
+                           byte *        out)
 {
   if (enclave_type == "simulated-enclave") {
     return simulated_Seal(enclave_type, enclave_id, in_size, in, size_out, out);
@@ -633,12 +633,12 @@ certifier::framework::Seal(const string& enclave_type,
 // service. If out is NULL, Unseal returns true and the buffer size in size_out.
 // Check Gramine.
 bool
-certifier::framework::Unseal(const string& enclave_type,
-                             const string& enclave_id,
+certifier::framework::Unseal(const string &enclave_type,
+                             const string &enclave_id,
                              int           in_size,
-                             byte*         in,
-                             int*          size_out,
-                             byte*         out)
+                             byte *        in,
+                             int *         size_out,
+                             byte *        out)
 {
   if (enclave_type == "simulated-enclave") {
     return simulated_Unseal(enclave_type,
@@ -687,11 +687,11 @@ certifier::framework::Unseal(const string& enclave_type,
 //  Buffer overflow check: Attest returns true and the buffer size in size_out.
 //  Check on Gramine.
 bool
-certifier::framework::Attest(const string& enclave_type,
+certifier::framework::Attest(const string &enclave_type,
                              int           what_to_say_size,
-                             byte*         what_to_say,
-                             int*          size_out,
-                             byte*         out)
+                             byte *        what_to_say,
+                             int *         size_out,
+                             byte *        out)
 {
   if (enclave_type == "simulated-enclave") {
     return simulated_Attest(enclave_type,
@@ -727,8 +727,8 @@ certifier::framework::Attest(const string& enclave_type,
     }
     string ra;
     string wws;
-    ra.assign((char*)out, t_size_out);
-    wws.assign((char*)what_to_say, what_to_say_size);
+    ra.assign((char *)out, t_size_out);
+    wws.assign((char *)what_to_say, what_to_say_size);
     gramine_attestation_message gam;
     gam.set_what_was_said(wws);
     gam.set_reported_attestation(ra);
@@ -741,7 +741,7 @@ certifier::framework::Attest(const string& enclave_type,
     }
     memset(out, 0, *size_out);
     memcpy(out,
-           (byte*)serialized_gramine_at.data(),
+           (byte *)serialized_gramine_at.data(),
            serialized_gramine_at.size());
     *size_out = serialized_gramine_at.size();
     return true;
@@ -756,8 +756,8 @@ certifier::framework::Attest(const string& enclave_type,
     }
     string ra;
     string wws;
-    ra.assign((char*)out, t_size_out);
-    wws.assign((char*)what_to_say, what_to_say_size);
+    ra.assign((char *)out, t_size_out);
+    wws.assign((char *)what_to_say, what_to_say_size);
     keystone_attestation_message kam;
     kam.set_what_was_said(wws);
     kam.set_reported_attestation(ra);
@@ -770,7 +770,7 @@ certifier::framework::Attest(const string& enclave_type,
     }
     memset(out, 0, *size_out);
     memcpy(out,
-           (byte*)serialized_keystone_at.data(),
+           (byte *)serialized_keystone_at.data(),
            serialized_keystone_at.size());
     *size_out = serialized_keystone_at.size();
     return true;
@@ -786,8 +786,8 @@ certifier::framework::Attest(const string& enclave_type,
     }
     string ra;
     string wws;
-    ra.assign((char*)out, t_size_out);
-    wws.assign((char*)what_to_say, what_to_say_size);
+    ra.assign((char *)out, t_size_out);
+    wws.assign((char *)what_to_say, what_to_say_size);
     islet_attestation_message iam;
     iam.set_what_was_said(wws);
     iam.set_reported_attestation(ra);
@@ -801,7 +801,7 @@ certifier::framework::Attest(const string& enclave_type,
       return false;
     }
     memset(out, 0, *size_out);
-    memcpy(out, (byte*)serialized_islet_at.data(), serialized_islet_at.size());
+    memcpy(out, (byte *)serialized_islet_at.data(), serialized_islet_at.size());
     *size_out = serialized_islet_at.size();
     return true;
   }
@@ -814,9 +814,9 @@ certifier::framework::Attest(const string& enclave_type,
 }
 
 bool
-GetParentEvidence(const string& enclave_type,
-                  const string& parent_enclave_type,
-                  string*       out)
+GetParentEvidence(const string &enclave_type,
+                  const string &parent_enclave_type,
+                  string *      out)
 {
 #ifdef OE_CERTIFIER
   if (enclave_type == "oe-enclave") {
@@ -855,10 +855,10 @@ GetParentEvidence(const string& enclave_type,
 }
 
 bool
-GetPlatformStatement(const string& enclave_type,
-                     const string& enclave_id,
-                     int*          size_out,
-                     byte*         out)
+GetPlatformStatement(const string &enclave_type,
+                     const string &enclave_id,
+                     int *         size_out,
+                     byte *        out)
 {
   if (enclave_type == "application-enclave") {
 #ifdef DEBUG
@@ -875,7 +875,7 @@ GetPlatformStatement(const string& enclave_type,
 bool   certifier_parent_enclave_type_intitalized = false;
 string certifier_parent_enclave_type;
 bool
-GetParentEnclaveType(string* type)
+GetParentEnclaveType(string *type)
 {
   if (!certifier_parent_enclave_type_intitalized)
     return false;
@@ -893,12 +893,12 @@ const int max_key_seal_pad = 1024;
 const int protect_key_size = 64;
 
 bool
-certifier::framework::protect_blob(const string& enclave_type,
-                                   key_message&  key,
+certifier::framework::protect_blob(const string &enclave_type,
+                                   key_message & key,
                                    int           size_unencrypted_data,
-                                   byte*         unencrypted_data,
-                                   int*          size_protected_blob,
-                                   byte*         blob)
+                                   byte *        unencrypted_data,
+                                   int *         size_protected_blob,
+                                   byte *        blob)
 {
   string serialized_key;
   if (!key.SerializeToString(&serialized_key)) {
@@ -914,7 +914,7 @@ certifier::framework::protect_blob(const string& enclave_type,
   if (!Seal(enclave_type,
             enclave_id,
             serialized_key.size(),
-            (byte*)serialized_key.data(),
+            (byte *)serialized_key.data(),
             &size_sealed_key,
             sealed_key))
   {
@@ -931,7 +931,7 @@ certifier::framework::protect_blob(const string& enclave_type,
     printf("protect_blob: no key bits\n");
     return false;
   }
-  byte* key_buf = (byte*)key.secret_key_bits().data();
+  byte *key_buf = (byte *)key.secret_key_bits().data();
   if (key.secret_key_bits().size() < protect_key_size) {
     printf("protect_blob: key too small\n");
     return false;
@@ -952,8 +952,8 @@ certifier::framework::protect_blob(const string& enclave_type,
   }
 
   protected_blob_message blob_msg;
-  blob_msg.set_encrypted_key((void*)sealed_key, size_sealed_key);
-  blob_msg.set_encrypted_data((void*)encrypted_data, size_encrypted);
+  blob_msg.set_encrypted_key((void *)sealed_key, size_sealed_key);
+  blob_msg.set_encrypted_data((void *)encrypted_data, size_encrypted);
 
   string serialized_blob;
   blob_msg.SerializeToString(&serialized_blob);
@@ -962,20 +962,20 @@ certifier::framework::protect_blob(const string& enclave_type,
     return false;
   }
   *size_protected_blob = (int)serialized_blob.size();
-  memcpy(blob, (byte*)serialized_blob.data(), *size_protected_blob);
+  memcpy(blob, (byte *)serialized_blob.data(), *size_protected_blob);
   return true;
 }
 
 bool
-certifier::framework::unprotect_blob(const string& enclave_type,
+certifier::framework::unprotect_blob(const string &enclave_type,
                                      int           size_protected_blob,
-                                     byte*         protected_blob,
-                                     key_message*  key,
-                                     int*          size_of_unencrypted_data,
-                                     byte*         unencrypted_data)
+                                     byte *        protected_blob,
+                                     key_message * key,
+                                     int *         size_of_unencrypted_data,
+                                     byte *        unencrypted_data)
 {
   string protected_blob_string;
-  protected_blob_string.assign((char*)protected_blob, size_protected_blob);
+  protected_blob_string.assign((char *)protected_blob, size_protected_blob);
   protected_blob_message pb;
   if (!pb.ParseFromString(protected_blob_string)) {
     printf("unprotect_blob: can't parse protected blob message\n");
@@ -999,7 +999,7 @@ certifier::framework::unprotect_blob(const string& enclave_type,
   if (!Unseal(enclave_type,
               enclave_id,
               pb.encrypted_key().size(),
-              (byte*)pb.encrypted_key().data(),
+              (byte *)pb.encrypted_key().data(),
               &size_unsealed_key,
               unsealed_key))
   {
@@ -1008,7 +1008,7 @@ certifier::framework::unprotect_blob(const string& enclave_type,
   }
 
   string serialized_key;
-  serialized_key.assign((const char*)unsealed_key, size_unsealed_key);
+  serialized_key.assign((const char *)unsealed_key, size_unsealed_key);
   if (!key->ParseFromString(serialized_key)) {
     printf("unprotect_blob: can't parse unsealed key\n");
     return false;
@@ -1022,7 +1022,7 @@ certifier::framework::unprotect_blob(const string& enclave_type,
     printf("unprotect_blob: no key bits\n");
     return false;
   }
-  byte* key_buf = (byte*)key->secret_key_bits().data();
+  byte *key_buf = (byte *)key->secret_key_bits().data();
   if (key->secret_key_bits().size() < protect_key_size) {
     printf("unprotect_blob: key too small\n");
     return false;
@@ -1030,7 +1030,7 @@ certifier::framework::unprotect_blob(const string& enclave_type,
 
   // decrypt encrypted data
   if (!authenticated_decrypt(key->key_type().c_str(),
-                             (byte*)pb.encrypted_data().data(),
+                             (byte *)pb.encrypted_data().data(),
                              pb.encrypted_data().size(),
                              key_buf,
                              unencrypted_data,
@@ -1043,12 +1043,12 @@ certifier::framework::unprotect_blob(const string& enclave_type,
 }
 
 bool
-certifier::framework::reprotect_blob(const string& enclave_type,
-                                     key_message*  key,
+certifier::framework::reprotect_blob(const string &enclave_type,
+                                     key_message * key,
                                      int           size_protected_blob,
-                                     byte*         protected_blob,
-                                     int*          size_new_encrypted_blob,
-                                     byte*         data)
+                                     byte *        protected_blob,
+                                     int *         size_new_encrypted_blob,
+                                     byte *        data)
 {
   key_message new_key;
   int         size_unencrypted_data = size_protected_blob;
@@ -1075,7 +1075,8 @@ certifier::framework::reprotect_blob(const string& enclave_type,
     printf("reprotect_blob: key buffer too small\n");
     return false;
   }
-  if (!get_random(8 * size_byte_key, (byte*)new_key.secret_key_bits().data())) {
+  if (!get_random(8 * size_byte_key, (byte *)new_key.secret_key_bits().data()))
+  {
     printf("reprotect_blob: Can't generate key\n");
     return false;
   }
@@ -1096,7 +1097,7 @@ certifier::framework::reprotect_blob(const string& enclave_type,
 // -------------------------------------------------------------------
 
 bool
-certifier::utilities::check_date_range(const string& nb, const string& na)
+certifier::utilities::check_date_range(const string &nb, const string &na)
 {
   time_point t_now;
   time_point t_nb;
@@ -1119,13 +1120,13 @@ certifier::utilities::check_date_range(const string& nb, const string& na)
 // -------------------------------------------------------------------
 
 void
-print_evidence(const evidence& ev)
+print_evidence(const evidence &ev)
 {
   if (ev.has_evidence_type()) {
     printf("Evidence type: %s\n", ev.evidence_type().c_str());
     if (ev.evidence_type() == "signed-claim") {
       string sc_st;
-      sc_st.assign((char*)ev.serialized_evidence().data(),
+      sc_st.assign((char *)ev.serialized_evidence().data(),
                    ev.serialized_evidence().size());
       signed_claim_message sc;
       if (sc.ParseFromString(sc_st))
@@ -1133,33 +1134,33 @@ print_evidence(const evidence& ev)
     }
     if (ev.evidence_type() == "oe-attestation-report") {
       print_bytes(ev.serialized_evidence().size(),
-                  (byte*)ev.serialized_evidence().data());
+                  (byte *)ev.serialized_evidence().data());
       printf("\n");
     }
     if (ev.evidence_type() == "asylo-evidence") {
       print_bytes(ev.serialized_evidence().size(),
-                  (byte*)ev.serialized_evidence().data());
+                  (byte *)ev.serialized_evidence().data());
       printf("\n");
     }
     if (ev.evidence_type() == "gramine-evidence") {
       print_bytes(ev.serialized_evidence().size(),
-                  (byte*)ev.serialized_evidence().data());
+                  (byte *)ev.serialized_evidence().data());
       printf("\n");
     }
     if (ev.evidence_type() == "keystone-evidence") {
       print_bytes(ev.serialized_evidence().size(),
-                  (byte*)ev.serialized_evidence().data());
+                  (byte *)ev.serialized_evidence().data());
       printf("\n");
     }
     if (ev.evidence_type() == "islet-evidence") {
       print_bytes(ev.serialized_evidence().size(),
-                  (byte*)ev.serialized_evidence().data());
+                  (byte *)ev.serialized_evidence().data());
       printf("\n");
     }
     if (ev.evidence_type() == "cert") {
       printf("Cert: ");
       print_bytes(ev.serialized_evidence().size(),
-                  (byte*)ev.serialized_evidence().data());
+                  (byte *)ev.serialized_evidence().data());
       printf("\n");
     }
     if (ev.evidence_type() == "signed-vse-attestation-report") {
@@ -1171,14 +1172,14 @@ print_evidence(const evidence& ev)
     }
     if (ev.evidence_type() == "sev-attestation") {
       print_bytes(ev.serialized_evidence().size(),
-                  (byte*)ev.serialized_evidence().data());
+                  (byte *)ev.serialized_evidence().data());
       printf("\n");
     }
   }
 }
 
 void
-print_evidence_package(const evidence_package& evp)
+print_evidence_package(const evidence_package &evp)
 {
   printf("Evidence package.  Prover: %s\n", evp.prover_type().c_str());
   for (int i = 0; i < evp.fact_assertion_size(); i++) {
@@ -1189,7 +1190,7 @@ print_evidence_package(const evidence_package& evp)
 }
 
 void
-print_trust_request_message(trust_request_message& m)
+print_trust_request_message(trust_request_message &m)
 {
   if (m.has_requesting_enclave_tag()) {
     printf("Requesting enclave     :  %s\n",
@@ -1211,7 +1212,7 @@ print_trust_request_message(trust_request_message& m)
 }
 
 void
-print_trust_response_message(trust_response_message& m)
+print_trust_response_message(trust_response_message &m)
 {
   if (m.has_status()) {
     printf("Status                 :  %s\n", m.status().c_str());
@@ -1225,13 +1226,13 @@ print_trust_response_message(trust_response_message& m)
   }
   if (m.has_artifact()) {
     printf("Artifact               : \n");
-    print_bytes((int)m.artifact().size(), (byte*)m.artifact().data());
+    print_bytes((int)m.artifact().size(), (byte *)m.artifact().data());
     printf("\n");
   }
 }
 
 void
-print_proof_step(const proof_step& ps)
+print_proof_step(const proof_step &ps)
 {
   if (ps.has_s1()) {
     print_vse_clause(ps.s1());
@@ -1250,7 +1251,7 @@ print_proof_step(const proof_step& ps)
 }
 
 void
-print_proof(proof& pf)
+print_proof(proof &pf)
 {
   printf("\nproof steps:\n");
   for (int i = 0; i < pf.steps_size(); i++) {
@@ -1261,7 +1262,7 @@ print_proof(proof& pf)
 }
 
 void
-print_attestation_info(vse_attestation_report_info& r)
+print_attestation_info(vse_attestation_report_info &r)
 {
   printf("\nvse attestation report\n");
   if (r.has_enclave_type()) {
@@ -1270,7 +1271,7 @@ print_attestation_info(vse_attestation_report_info& r)
   if (r.has_verified_measurement()) {
     printf("Measurement: ");
     print_bytes(r.verified_measurement().size(),
-                (byte*)r.verified_measurement().data());
+                (byte *)r.verified_measurement().data());
     printf("\n");
   }
   if (r.has_not_before() && r.has_not_after()) {
@@ -1279,14 +1280,14 @@ print_attestation_info(vse_attestation_report_info& r)
   }
   if (r.has_user_data()) {
     printf("User data  : ");
-    print_bytes(r.user_data().size(), (byte*)r.user_data().data());
+    print_bytes(r.user_data().size(), (byte *)r.user_data().data());
     printf("\n");
   }
   printf("\n");
 }
 
 void
-print_user_data(attestation_user_data& ud)
+print_user_data(attestation_user_data &ud)
 {
   printf("\nUser data\n");
   if (ud.has_enclave_type()) {
@@ -1306,7 +1307,7 @@ print_user_data(attestation_user_data& ud)
 }
 
 void
-print_signed_report(const signed_report& sr)
+print_signed_report(const signed_report &sr)
 {
   printf("\nSigned report\n");
   if (sr.has_report_format()) {
@@ -1314,7 +1315,7 @@ print_signed_report(const signed_report& sr)
   }
   if (sr.has_report()) {
     printf("Report     :\n");
-    print_bytes(sr.report().size(), (byte*)sr.report().data());
+    print_bytes(sr.report().size(), (byte *)sr.report().data());
     printf("\n");
   }
   if (sr.has_signing_key()) {
@@ -1327,14 +1328,14 @@ print_signed_report(const signed_report& sr)
   }
   if (sr.has_signature()) {
     printf("Signature   :\n");
-    print_bytes(sr.signature().size(), (byte*)sr.signature().data());
+    print_bytes(sr.signature().size(), (byte *)sr.signature().data());
     printf("\n");
   }
   printf("\n");
 }
 
 bool
-read_signed_vse_statements(const string& in, signed_claim_sequence* s)
+read_signed_vse_statements(const string &in, signed_claim_sequence *s)
 {
   string str;
   if (!read_file_into_string(in, &str)) {

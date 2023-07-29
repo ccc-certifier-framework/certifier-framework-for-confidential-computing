@@ -37,21 +37,21 @@ static string data_dir = "app1_data";
 #define FLAGS_certificate_file  "vse.crt"
 
 static std::string enclave_type;
-cc_trust_data*     app_trust_data = nullptr;
+cc_trust_data *    app_trust_data = nullptr;
 
 static bool oe_initialized          = false;
 static bool openenclave_initialized = false;
 bool
-test_local_certify(string& enclave_type,
+test_local_certify(string &enclave_type,
                    bool    init_from_file,
-                   string& file_name,
-                   string& evidence_descriptor);
+                   string &file_name,
+                   string &evidence_descriptor);
 
 bool        trust_data_initialized = false;
 key_message privatePolicyKey;
 key_message publicPolicyKey;
 string      serializedPolicyCert;
-X509*       policy_cert = nullptr;
+X509 *      policy_cert = nullptr;
 
 policy_store pStore;
 key_message  privateAppKey;
@@ -73,7 +73,7 @@ print_trust_data()
   printf("\nPolicy key\n");
   print_key(publicPolicyKey);
   printf("\nPolicy cert\n");
-  print_bytes(serializedPolicyCert.size(), (byte*)serializedPolicyCert.data());
+  print_bytes(serializedPolicyCert.size(), (byte *)serializedPolicyCert.data());
   printf("\n");
   printf("\nPrivate app auth key\n");
   print_key(privateAppKey);
@@ -88,7 +88,7 @@ extern "C" {
 bool
 openenclave_init(void);
 bool
-certifier_init(char*, size_t);
+certifier_init(char *, size_t);
 
 bool
 cold_init(void);
@@ -134,7 +134,7 @@ openenclave_init(void)
 }
 
 bool
-certifier_init(char* usr_data_dir, size_t usr_data_dir_size)
+certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
 {
   oe_result_t       result = OE_OK;
   static const char rnd_seed[] =
@@ -222,7 +222,7 @@ certify_me()
 }
 
 void
-server_application(secure_authenticated_channel& channel)
+server_application(secure_authenticated_channel &channel)
 {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -235,11 +235,11 @@ server_application(secure_authenticated_channel& channel)
   // Read message from client over authenticated, encrypted channel
   string out;
   int    n = channel.read(&out);
-  printf("SSL server read: %s\n", (const char*)out.data());
+  printf("SSL server read: %s\n", (const char *)out.data());
 
   // Reply over authenticated, encrypted channel
-  const char* msg = "Hi from your secret server\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret server\n";
+  channel.write(strlen(msg), (byte *)msg);
 }
 
 bool
@@ -260,7 +260,7 @@ run_me_as_server()
 }
 
 void
-client_application(secure_authenticated_channel& channel)
+client_application(secure_authenticated_channel &channel)
 {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -271,8 +271,8 @@ client_application(secure_authenticated_channel& channel)
   }
 
   // client sends a message over authenticated, encrypted channel
-  const char* msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
 
   // Get server response over authenticated, encrypted channel and print it
   string out;

@@ -29,11 +29,11 @@ DEFINE_string(output, "measurement_utility.exe.measurement", "output file");
 
 const int sha256_size = 32;
 int
-hash_utility(string& input, string& output)
+hash_utility(string &input, string &output)
 {
   int          in_size = file_size(input);
   int          in_read = in_size;
-  byte*        to_hash = (byte*)malloc(in_size * sizeof(byte) + 1);
+  byte *       to_hash = (byte *)malloc(in_size * sizeof(byte) + 1);
   byte         out[sha256_size];
   unsigned int out_len = sha256_size;
 
@@ -68,7 +68,7 @@ hash_utility(string& input, string& output)
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

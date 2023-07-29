@@ -23,7 +23,7 @@
 using namespace certifier::utilities;
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   int fd[2];
   if (pipe2(fd, O_DIRECT) < 0) {
@@ -56,7 +56,7 @@ main(int an, char** av)
         res = false;
       } else {
         printf("Bytes out: %d, ", k);
-        print_bytes(out.size(), (byte*)out.data());
+        print_bytes(out.size(), (byte *)out.data());
         printf("\n");
       }
     }

@@ -46,19 +46,19 @@ using std::string;
 #define _APPLICATION_ENCLAVE_H__
 
 bool
-application_Init(const string& parent_enclave_type, int read_fd, int write_fd);
+application_Init(const string &parent_enclave_type, int read_fd, int write_fd);
 bool
-application_Seal(int in_size, byte* in, int* size_out, byte* out);
+application_Seal(int in_size, byte *in, int *size_out, byte *out);
 bool
-application_Unseal(int in_size, byte* in, int* size_out, byte* out);
+application_Unseal(int in_size, byte *in, int *size_out, byte *out);
 bool
 application_Attest(int   what_to_say_size,
-                   byte* what_to_say,
-                   int*  size_out,
-                   byte* out);
+                   byte *what_to_say,
+                   int * size_out,
+                   byte *out);
 bool
-application_GetParentEvidence(string* out);
+application_GetParentEvidence(string *out);
 bool
-application_GetPlatformStatement(int* size_out, byte* out);
+application_GetPlatformStatement(int *size_out, byte *out);
 
 #endif

@@ -29,17 +29,17 @@ DEFINE_string(measurement_file, "", "measurement file");
 DEFINE_string(output, "", "output file");
 
 bool
-calculate_measurement(const string& in, string* out)
+calculate_measurement(const string &in, string *out)
 {
   size_t size = in.size();
   char   hex[size + 2];
-  memset((byte*)hex, 0, size + 2);
-  const char* pos = (const char*)hex;
+  memset((byte *)hex, 0, size + 2);
+  const char *pos = (const char *)hex;
   if (size % 2) {
     hex[0] = '0';
-    memcpy(hex + 1, (byte*)in.data(), size + 1);
+    memcpy(hex + 1, (byte *)in.data(), size + 1);
   } else {
-    memcpy(hex, (byte*)in.data(), size + 1);
+    memcpy(hex, (byte *)in.data(), size + 1);
   }
 
   printf("Using measurement: %s\n", hex);
@@ -53,12 +53,12 @@ calculate_measurement(const string& in, string* out)
     sscanf(pos, "%2hhx", &m[count]);
     pos += 2;
   }
-  out->assign((char*)m, measurement_size);
+  out->assign((char *)m, measurement_size);
   return true;
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   string usage("Generate platform measurement to output file");
   gflags::SetUsageMessage(usage);
@@ -109,7 +109,7 @@ main(int an, char** av)
     return 1;
   }
 
-  if (!write_file(FLAGS_output, p_out.size(), (byte*)p_out.data())) {
+  if (!write_file(FLAGS_output, p_out.size(), (byte *)p_out.data())) {
     printf("Can't write output file\n");
     return 1;
   }

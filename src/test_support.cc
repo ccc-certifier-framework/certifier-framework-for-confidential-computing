@@ -25,9 +25,9 @@ using namespace certifier::utilities;
 bool debug_print = false;
 
 bool
-read_trusted_binary_measurements_and_sign(string&                file_name,
-                                          key_message&           policy_key,
-                                          signed_claim_sequence* list)
+read_trusted_binary_measurements_and_sign(string &               file_name,
+                                          key_message &          policy_key,
+                                          signed_claim_sequence *list)
 {
   int size = file_size(file_name);
   if (size < 0) {
@@ -65,7 +65,7 @@ read_trusted_binary_measurements_and_sign(string&                file_name,
   int       left             = size;
   while (left >= measurement_size) {
     string measurement;
-    measurement.assign((char*)&file_contents[current], measurement_size);
+    measurement.assign((char *)&file_contents[current], measurement_size);
     entity_message measurement_entity;
     if (!make_measurement_entity(measurement, &measurement_entity)) {
       return false;
@@ -89,7 +89,7 @@ read_trusted_binary_measurements_and_sign(string&                file_name,
     string        n1("description");
     string        vse_clause_format("vse-clause");
     if (!make_claim(serialized_vse.size(),
-                    (byte*)serialized_vse.data(),
+                    (byte *)serialized_vse.data(),
                     vse_clause_format,
                     n1,
                     nb,
@@ -100,7 +100,7 @@ read_trusted_binary_measurements_and_sign(string&                file_name,
     if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", claim, policy_key, &sc))
       return false;
 
-    signed_claim_message* scm = list->add_claims();
+    signed_claim_message *scm = list->add_claims();
     scm->CopyFrom(sc);
 
     left -= measurement_size;
@@ -113,8 +113,8 @@ read_trusted_binary_measurements_and_sign(string&                file_name,
 bool
 construct_keys(string       key_name,
                string       format,
-               key_message* public_key,
-               key_message* private_key)
+               key_message *public_key,
+               key_message *private_key)
 {
   if (!make_certifier_rsa_key(2048, private_key))
     return false;
@@ -127,15 +127,15 @@ construct_keys(string       key_name,
 }
 
 bool
-construct_standard_evidence_package(string&                enclave_type,
+construct_standard_evidence_package(string &               enclave_type,
                                     bool                   init_measurements,
-                                    string&                file_name,
-                                    string&                evidence_descriptor,
-                                    signed_claim_sequence* trusted_platforms,
-                                    signed_claim_sequence* trusted_measurements,
-                                    key_message*           policy_key,
-                                    key_message*           policy_pk,
-                                    evidence_package*      evp)
+                                    string &               file_name,
+                                    string &               evidence_descriptor,
+                                    signed_claim_sequence *trusted_platforms,
+                                    signed_claim_sequence *trusted_measurements,
+                                    key_message *          policy_key,
+                                    key_message *          policy_pk,
+                                    evidence_package *     evp)
 {
   string policy_key_name("policy-key");
   string key_format("vse-key");
@@ -169,13 +169,13 @@ construct_standard_evidence_package(string&                enclave_type,
     vse_clause c;
     if (!get_vse_clause_from_signed_claim(trusted_measurements->claims(0), &c))
       return false;
-    meas.assign((char*)c.clause().subject().measurement().data(),
+    meas.assign((char *)c.clause().subject().measurement().data(),
                 c.clause().subject().measurement().size());
   } else {
     byte m[32];
     for (int i = 0; i < 32; i++)
       m[i] = i;
-    meas.assign((char*)m, 32);
+    meas.assign((char *)m, 32);
   }
 
   // Construct intel-key
@@ -330,7 +330,7 @@ construct_standard_evidence_package(string&                enclave_type,
 
   claim_message cl1;
   if (!make_claim(serialized_cl1.size(),
-                  (byte*)serialized_cl1.data(),
+                  (byte *)serialized_cl1.data(),
                   vse_clause_format,
                   d1,
                   s_nb,
@@ -344,7 +344,7 @@ construct_standard_evidence_package(string&                enclave_type,
 
   claim_message cl2;
   if (!make_claim(serialized_cl2.size(),
-                  (byte*)serialized_cl2.data(),
+                  (byte *)serialized_cl2.data(),
                   vse_clause_format,
                   d2,
                   s_nb,
@@ -358,7 +358,7 @@ construct_standard_evidence_package(string&                enclave_type,
 
   claim_message cl3;
   if (!make_claim(serialized_cl3.size(),
-                  (byte*)serialized_cl3.data(),
+                  (byte *)serialized_cl3.data(),
                   vse_clause_format,
                   d3,
                   s_nb,
@@ -381,12 +381,12 @@ construct_standard_evidence_package(string&                enclave_type,
 
   if (!Attest(enclave_type,
               serialized_what_to_say.size(),
-              (byte*)serialized_what_to_say.data(),
+              (byte *)serialized_what_to_say.data(),
               &size_out,
               attest_out))
     return false;
   string final_serialized_attest;
-  final_serialized_attest.assign((char*)attest_out, size_out);
+  final_serialized_attest.assign((char *)attest_out, size_out);
 
   evp->set_prover_type("vse-verifier");
 
@@ -402,32 +402,32 @@ construct_standard_evidence_package(string&                enclave_type,
     //    sc1: "policyKey says measurement is-trusted"
     //    sc2: "policyKey says platformKey is-trusted"
 
-    evidence* ev1 = evp->add_fact_assertion();
-    evidence* ev2 = evp->add_fact_assertion();
-    evidence* ev3 = evp->add_fact_assertion();
-    evidence* ev4 = evp->add_fact_assertion();
+    evidence *ev1 = evp->add_fact_assertion();
+    evidence *ev2 = evp->add_fact_assertion();
+    evidence *ev3 = evp->add_fact_assertion();
+    evidence *ev4 = evp->add_fact_assertion();
 
     string t_str;
     if (!sc3.SerializeToString(&t_str))
       return false;
     ev1->set_evidence_type("signed-claim");
-    ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev1->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     ev2->set_evidence_type("signed-vse-attestation-report");
-    ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
+    ev2->set_serialized_evidence((byte *)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
     if (!sc1.SerializeToString(&t_str))
       return false;
     ev3->set_evidence_type("signed-claim");
-    ev3->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev3->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     if (!sc2.SerializeToString(&t_str))
       return false;
     ev4->set_evidence_type("signed-claim");
-    ev4->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev4->set_serialized_evidence((byte *)t_str.data(), t_str.size());
   } else if (evidence_descriptor == "platform-attestation-only") {
     // Todo: Change this type to "vse-attestation-package"
     // Evidence should be
@@ -436,25 +436,25 @@ construct_standard_evidence_package(string&                enclave_type,
     //    sc1 --> trusted_measurements
     //    sc2 --> trusted platforms
 
-    evidence* ev1 = evp->add_fact_assertion();
-    evidence* ev2 = evp->add_fact_assertion();
+    evidence *ev1 = evp->add_fact_assertion();
+    evidence *ev2 = evp->add_fact_assertion();
 
     string t_str;
     if (!sc3.SerializeToString(&t_str))
       return false;
     ev1->set_evidence_type("signed-claim");
-    ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev1->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     ev2->set_evidence_type("signed-vse-attestation-report");
-    ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
+    ev2->set_serialized_evidence((byte *)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
     if (!init_measurements) {
-      signed_claim_message* nsc1 = trusted_measurements->add_claims();
+      signed_claim_message *nsc1 = trusted_measurements->add_claims();
       nsc1->CopyFrom(sc1);
     }
-    signed_claim_message* nsc2 = trusted_platforms->add_claims();
+    signed_claim_message *nsc2 = trusted_platforms->add_claims();
     nsc2->CopyFrom(sc2);
   } else if (evidence_descriptor == "oe-evidence") {
     // Evidence should be
@@ -463,25 +463,25 @@ construct_standard_evidence_package(string&                enclave_type,
     //    sc1 --> trusted_measurements
     //    sc2 --> trusted platforms
 
-    evidence* ev1 = evp->add_fact_assertion();
-    evidence* ev2 = evp->add_fact_assertion();
+    evidence *ev1 = evp->add_fact_assertion();
+    evidence *ev2 = evp->add_fact_assertion();
 
     string t_str;
     if (!sc3.SerializeToString(&t_str))
       return false;
     ev1->set_evidence_type("signed-claim");
-    ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev1->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     ev2->set_evidence_type("oe-attestation-report");
-    ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
+    ev2->set_serialized_evidence((byte *)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
     if (!init_measurements) {
-      signed_claim_message* nsc1 = trusted_measurements->add_claims();
+      signed_claim_message *nsc1 = trusted_measurements->add_claims();
       nsc1->CopyFrom(sc1);
     }
-    signed_claim_message* nsc2 = trusted_platforms->add_claims();
+    signed_claim_message *nsc2 = trusted_platforms->add_claims();
     nsc2->CopyFrom(sc2);
   } else if (evidence_descriptor == "asylo-evidence") {
     // Evidence should be
@@ -490,25 +490,25 @@ construct_standard_evidence_package(string&                enclave_type,
     //    sc1 --> trusted_measurements
     //    sc2 --> trusted platforms
 
-    evidence* ev1 = evp->add_fact_assertion();
-    evidence* ev2 = evp->add_fact_assertion();
+    evidence *ev1 = evp->add_fact_assertion();
+    evidence *ev2 = evp->add_fact_assertion();
 
     string t_str;
     if (!sc3.SerializeToString(&t_str))
       return false;
     ev1->set_evidence_type("signed-claim");
-    ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev1->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     ev2->set_evidence_type("asylo-evidence");
-    ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
+    ev2->set_serialized_evidence((byte *)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
     if (!init_measurements) {
-      signed_claim_message* nsc1 = trusted_measurements->add_claims();
+      signed_claim_message *nsc1 = trusted_measurements->add_claims();
       nsc1->CopyFrom(sc1);
     }
-    signed_claim_message* nsc2 = trusted_platforms->add_claims();
+    signed_claim_message *nsc2 = trusted_platforms->add_claims();
     nsc2->CopyFrom(sc2);
   } else if (evidence_descriptor == "gramine-evidence") {
     // Evidence should be
@@ -517,26 +517,26 @@ construct_standard_evidence_package(string&                enclave_type,
     //    sc1 --> trusted_measurements
     //    sc2 --> trusted platforms
 
-    evidence* ev1 = evp->add_fact_assertion();
-    evidence* ev2 = evp->add_fact_assertion();
+    evidence *ev1 = evp->add_fact_assertion();
+    evidence *ev2 = evp->add_fact_assertion();
 
     string t_str;
     if (!sc3.SerializeToString(&t_str))
       return false;
     ev1->set_evidence_type("signed-claim");
-    ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev1->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     ev2->set_evidence_type("gramine-evidence");
-    ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
+    ev2->set_serialized_evidence((byte *)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
     if (!init_measurements) {
-      signed_claim_message* nsc1 = trusted_measurements->add_claims();
+      signed_claim_message *nsc1 = trusted_measurements->add_claims();
       nsc1->CopyFrom(sc1);
     }
 
-    signed_claim_message* nsc2 = trusted_platforms->add_claims();
+    signed_claim_message *nsc2 = trusted_platforms->add_claims();
     nsc2->CopyFrom(sc2);
   } else {
     printf("Bad evidence descriptor\n");
@@ -547,10 +547,10 @@ construct_standard_evidence_package(string&                enclave_type,
 }
 
 bool
-test__local_certify(string& enclave_type,
+test__local_certify(string &enclave_type,
                     bool    init_from_file,
-                    string& file_name,
-                    string& evidence_descriptor)
+                    string &file_name,
+                    string &evidence_descriptor)
 {
   string enclave_id("test-enclave");
 
@@ -651,15 +651,15 @@ test_partial_local_certify(bool print_all)
 
 bool
 construct_standard_constrained_evidence_package(
-    string&                enclave_type,
+    string &               enclave_type,
     bool                   init_measurements,
-    string&                file_name,
-    string&                evidence_descriptor,
-    signed_claim_sequence* trusted_platforms,
-    signed_claim_sequence* trusted_measurements,
-    key_message*           policy_key,
-    key_message*           policy_pk,
-    evidence_package*      evp)
+    string &               file_name,
+    string &               evidence_descriptor,
+    signed_claim_sequence *trusted_platforms,
+    signed_claim_sequence *trusted_measurements,
+    key_message *          policy_key,
+    key_message *          policy_pk,
+    evidence_package *     evp)
 {
   string policy_key_name("policy-key");
   string key_format("vse-key");
@@ -694,13 +694,13 @@ construct_standard_constrained_evidence_package(
     vse_clause c;
     if (!get_vse_clause_from_signed_claim(trusted_measurements->claims(0), &c))
       return false;
-    meas.assign((char*)c.clause().subject().measurement().data(),
+    meas.assign((char *)c.clause().subject().measurement().data(),
                 c.clause().subject().measurement().size());
   } else {
     byte m[32];
     for (int i = 0; i < 32; i++)
       m[i] = i;
-    meas.assign((char*)m, 32);
+    meas.assign((char *)m, 32);
   }
 
   // Construct intel-key
@@ -861,7 +861,7 @@ construct_standard_constrained_evidence_package(
 
   claim_message cl1;
   if (!make_claim(serialized_cl1.size(),
-                  (byte*)serialized_cl1.data(),
+                  (byte *)serialized_cl1.data(),
                   vse_clause_format,
                   d1,
                   s_nb,
@@ -875,7 +875,7 @@ construct_standard_constrained_evidence_package(
 
   claim_message cl2;
   if (!make_claim(serialized_cl2.size(),
-                  (byte*)serialized_cl2.data(),
+                  (byte *)serialized_cl2.data(),
                   vse_clause_format,
                   d2,
                   s_nb,
@@ -889,7 +889,7 @@ construct_standard_constrained_evidence_package(
 
   claim_message cl3;
   if (!make_claim(serialized_cl3.size(),
-                  (byte*)serialized_cl3.data(),
+                  (byte *)serialized_cl3.data(),
                   vse_clause_format,
                   d3,
                   s_nb,
@@ -911,12 +911,12 @@ construct_standard_constrained_evidence_package(
   byte attest_out[size_out];
   if (!Attest(enclave_type,
               serialized_what_to_say.size(),
-              (byte*)serialized_what_to_say.data(),
+              (byte *)serialized_what_to_say.data(),
               &size_out,
               attest_out))
     return false;
   string final_serialized_attest;
-  final_serialized_attest.assign((char*)attest_out, size_out);
+  final_serialized_attest.assign((char *)attest_out, size_out);
 
   evp->set_prover_type("vse-verifier");
 
@@ -932,32 +932,32 @@ construct_standard_constrained_evidence_package(
     //    sc1: "policyKey says measurement is-trusted"
     //    sc2: "policyKey says platformKey is-trusted-for-attestation"
 
-    evidence* ev1 = evp->add_fact_assertion();
-    evidence* ev2 = evp->add_fact_assertion();
-    evidence* ev3 = evp->add_fact_assertion();
-    evidence* ev4 = evp->add_fact_assertion();
+    evidence *ev1 = evp->add_fact_assertion();
+    evidence *ev2 = evp->add_fact_assertion();
+    evidence *ev3 = evp->add_fact_assertion();
+    evidence *ev4 = evp->add_fact_assertion();
 
     string t_str;
     if (!sc3.SerializeToString(&t_str))
       return false;
     ev1->set_evidence_type("signed-claim");
-    ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev1->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     ev2->set_evidence_type("signed-vse-attestation-report");
-    ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
+    ev2->set_serialized_evidence((byte *)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
     if (!sc1.SerializeToString(&t_str))
       return false;
     ev3->set_evidence_type("signed-claim");
-    ev3->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev3->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     if (!sc2.SerializeToString(&t_str))
       return false;
     ev4->set_evidence_type("signed-claim");
-    ev4->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev4->set_serialized_evidence((byte *)t_str.data(), t_str.size());
   } else if (evidence_descriptor == "platform-attestation-only") {
     // Todo: Change this type to "vse-attestation-package"
     // Evidence should be
@@ -966,25 +966,25 @@ construct_standard_constrained_evidence_package(
     //    sc1 --> trusted_measurements
     //    sc2 --> trusted platforms
 
-    evidence* ev1 = evp->add_fact_assertion();
-    evidence* ev2 = evp->add_fact_assertion();
+    evidence *ev1 = evp->add_fact_assertion();
+    evidence *ev2 = evp->add_fact_assertion();
 
     string t_str;
     if (!sc3.SerializeToString(&t_str))
       return false;
     ev1->set_evidence_type("signed-claim");
-    ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev1->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     ev2->set_evidence_type("signed-vse-attestation-report");
-    ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
+    ev2->set_serialized_evidence((byte *)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
     if (!init_measurements) {
-      signed_claim_message* nsc1 = trusted_measurements->add_claims();
+      signed_claim_message *nsc1 = trusted_measurements->add_claims();
       nsc1->CopyFrom(sc1);
     }
-    signed_claim_message* nsc2 = trusted_platforms->add_claims();
+    signed_claim_message *nsc2 = trusted_platforms->add_claims();
     nsc2->CopyFrom(sc2);
 
   } else if (evidence_descriptor == "oe-evidence") {
@@ -994,25 +994,25 @@ construct_standard_constrained_evidence_package(
     //    sc1 --> trusted_measurements
     //    sc2 --> trusted platforms
 
-    evidence* ev1 = evp->add_fact_assertion();
-    evidence* ev2 = evp->add_fact_assertion();
+    evidence *ev1 = evp->add_fact_assertion();
+    evidence *ev2 = evp->add_fact_assertion();
 
     string t_str;
     if (!sc3.SerializeToString(&t_str))
       return false;
     ev1->set_evidence_type("signed-claim");
-    ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev1->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     ev2->set_evidence_type("oe-attestation-report");
-    ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
+    ev2->set_serialized_evidence((byte *)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
     if (!init_measurements) {
-      signed_claim_message* nsc1 = trusted_measurements->add_claims();
+      signed_claim_message *nsc1 = trusted_measurements->add_claims();
       nsc1->CopyFrom(sc1);
     }
-    signed_claim_message* nsc2 = trusted_platforms->add_claims();
+    signed_claim_message *nsc2 = trusted_platforms->add_claims();
     nsc2->CopyFrom(sc2);
   } else if (evidence_descriptor == "asylo-evidence") {
     // Evidence should be
@@ -1021,8 +1021,8 @@ construct_standard_constrained_evidence_package(
     //    sc1 --> trusted_measurements
     //    sc2 --> trusted platforms
 
-    evidence* ev1 = evp->add_fact_assertion();
-    evidence* ev2 = evp->add_fact_assertion();
+    evidence *ev1 = evp->add_fact_assertion();
+    evidence *ev2 = evp->add_fact_assertion();
 
     string t_str;
     if (!sc3.SerializeToString(&t_str)) {
@@ -1030,21 +1030,21 @@ construct_standard_constrained_evidence_package(
       return false;
     }
     ev1->set_evidence_type("signed-claim");
-    ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev1->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     ev2->set_evidence_type("asylo-evidence");
-    ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
+    ev2->set_serialized_evidence((byte *)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
     printf("\n Asylo evidence\n");
     print_bytes(final_serialized_attest.size(),
-                (byte*)final_serialized_attest.c_str());
+                (byte *)final_serialized_attest.c_str());
     if (!init_measurements) {
-      signed_claim_message* nsc1 = trusted_measurements->add_claims();
+      signed_claim_message *nsc1 = trusted_measurements->add_claims();
       nsc1->CopyFrom(sc1);
     }
-    signed_claim_message* nsc2 = trusted_platforms->add_claims();
+    signed_claim_message *nsc2 = trusted_platforms->add_claims();
     printf("\n Successfully added asylo evidence\n");
   } else if (evidence_descriptor == "gramine-evidence") {
     // Evidence should be
@@ -1053,8 +1053,8 @@ construct_standard_constrained_evidence_package(
     //    sc1 --> trusted_measurements
     //    sc2 --> trusted platforms
 
-    evidence* ev1 = evp->add_fact_assertion();
-    evidence* ev2 = evp->add_fact_assertion();
+    evidence *ev1 = evp->add_fact_assertion();
+    evidence *ev2 = evp->add_fact_assertion();
 
     string t_str;
     if (!sc3.SerializeToString(&t_str)) {
@@ -1062,21 +1062,21 @@ construct_standard_constrained_evidence_package(
       return false;
     }
     ev1->set_evidence_type("signed-claim");
-    ev1->set_serialized_evidence((byte*)t_str.data(), t_str.size());
+    ev1->set_serialized_evidence((byte *)t_str.data(), t_str.size());
     t_str.clear();
 
     ev2->set_evidence_type("gramine-evidence");
-    ev2->set_serialized_evidence((byte*)final_serialized_attest.data(),
+    ev2->set_serialized_evidence((byte *)final_serialized_attest.data(),
                                  final_serialized_attest.size());
 
     printf("\n Gramine evidence\n");
     print_bytes(final_serialized_attest.size(),
-                (byte*)final_serialized_attest.c_str());
+                (byte *)final_serialized_attest.c_str());
     if (!init_measurements) {
-      signed_claim_message* nsc1 = trusted_measurements->add_claims();
+      signed_claim_message *nsc1 = trusted_measurements->add_claims();
       nsc1->CopyFrom(sc1);
     }
-    signed_claim_message* nsc2 = trusted_platforms->add_claims();
+    signed_claim_message *nsc2 = trusted_platforms->add_claims();
     printf("\n Successfully added gramine evidence\n");
   } else {
     printf("Bad evidence descriptor\n");
@@ -1087,10 +1087,10 @@ construct_standard_constrained_evidence_package(
 }
 
 bool
-test__new_local_certify(string& enclave_type,
+test__new_local_certify(string &enclave_type,
                         bool    init_from_file,
-                        string& file_name,
-                        string& evidence_descriptor)
+                        string &file_name,
+                        string &evidence_descriptor)
 {
   string enclave_id("test-enclave");
 

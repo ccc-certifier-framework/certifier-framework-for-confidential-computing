@@ -28,7 +28,7 @@ DEFINE_string(properties_file, "", "properties files");
 DEFINE_string(output, "", "output file");
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   string usage(
       "Construct platform characteristics for platform verification policy");
@@ -67,7 +67,7 @@ main(int an, char** av)
     return 1;
   }
 
-  if (!write_file(FLAGS_output, p_out.size(), (byte*)p_out.data())) {
+  if (!write_file(FLAGS_output, p_out.size(), (byte *)p_out.data())) {
     printf("Can't write output file\n");
     return 1;
   }

@@ -79,7 +79,7 @@ generate_test_keys()
     return false;
   if (!write_file(FLAGS_platform_key_output_file,
                   serialized_platform_key.size(),
-                  (byte*)serialized_platform_key.data()))
+                  (byte *)serialized_platform_key.data()))
     return false;
 
   n = 2048;
@@ -97,7 +97,7 @@ generate_test_keys()
     return false;
   if (!write_file(FLAGS_attest_key_output_file,
                   serialized_attest_key.size(),
-                  (byte*)serialized_attest_key.data()))
+                  (byte *)serialized_attest_key.data()))
     return false;
 
   printf("\nGenerated platform key:\n");
@@ -130,11 +130,11 @@ generate_policy_key()
     return false;
   if (!write_file(FLAGS_policy_key_output_file,
                   serialized_key.size(),
-                  (byte*)serialized_key.data()))
+                  (byte *)serialized_key.data()))
     return false;
   if (!write_file(FLAGS_policy_cert_output_file,
                   policy_key.certificate().size(),
-                  (byte*)policy_key.certificate().data()))
+                  (byte *)policy_key.certificate().data()))
     return false;
 
   printf("\nGenerated policy key:\n");
@@ -154,7 +154,7 @@ test_sig()
     return;
   }
   string platform_key_str;
-  platform_key_str.assign((char*)serialized_key, size);
+  platform_key_str.assign((char *)serialized_key, size);
   key_message platform_key;
   if (!platform_key.ParseFromString(platform_key_str)) {
     printf("Can't parse key file\n");
@@ -173,7 +173,7 @@ test_sig()
     return;
   }
   string endorsement_str;
-  endorsement_str.assign((char*)serialized_endorsement, size);
+  endorsement_str.assign((char *)serialized_endorsement, size);
   signed_claim_message scm;
   if (!scm.ParseFromString(endorsement_str)) {
     printf("Can't endorsement file\n");
@@ -181,7 +181,7 @@ test_sig()
   }
   claim_message cl;
   string        serialized_claim_str;
-  serialized_claim_str.assign((char*)scm.serialized_claim_message().data(),
+  serialized_claim_str.assign((char *)scm.serialized_claim_message().data(),
                               scm.serialized_claim_message().size());
   if (!cl.ParseFromString(serialized_claim_str)) {
     printf("Can't deserialize claim\n");
@@ -189,20 +189,20 @@ test_sig()
   }
   printf("serialized: \n");
   print_bytes(scm.serialized_claim_message().size(),
-              (byte*)scm.serialized_claim_message().data());
+              (byte *)scm.serialized_claim_message().data());
   printf("\n");
 
   byte dec_buf[256];
   memset(dec_buf, 0, 256);
 
-  RSA* r = RSA_new();
+  RSA *r = RSA_new();
   if (!key_to_RSA(platform_key, r)) {
     printf("Can't convert key to rsa key\n");
     return;
   }
 
   int n = RSA_public_encrypt(scm.signature().size(),
-                             (byte*)scm.signature().data(),
+                             (byte *)scm.signature().data(),
                              dec_buf,
                              r,
                              RSA_NO_PADDING);
@@ -219,10 +219,10 @@ test_sig()
 }
 
 bool
-generate_key(const string& type, const string& name, key_message* k)
+generate_key(const string &type, const string &name, key_message *k)
 {
   if (type == "rsa-1024") {
-    RSA* r = RSA_new();
+    RSA *r = RSA_new();
     if (!generate_new_rsa_key(1024, r)) {
       printf("Can't generate rsa key\n");
       return false;
@@ -233,7 +233,7 @@ generate_key(const string& type, const string& name, key_message* k)
     }
     k->set_key_type("rsa-1024-private");
   } else if (type == "rsa-2048") {
-    RSA* r = RSA_new();
+    RSA *r = RSA_new();
     if (!generate_new_rsa_key(2048, r)) {
       printf("Can't generate rsa key\n");
       return false;
@@ -244,7 +244,7 @@ generate_key(const string& type, const string& name, key_message* k)
     }
     k->set_key_type("rsa-2048-private");
   } else if (type == "rsa-3072") {
-    RSA* r = RSA_new();
+    RSA *r = RSA_new();
     if (!generate_new_rsa_key(3072, r)) {
       printf("Can't generate rsa key\n");
       return false;
@@ -255,7 +255,7 @@ generate_key(const string& type, const string& name, key_message* k)
     }
     k->set_key_type("rsa-3072-private");
   } else if (type == "rsa-4096") {
-    RSA* r = RSA_new();
+    RSA *r = RSA_new();
     if (!generate_new_rsa_key(4096, r)) {
       printf("Can't generate rsa key\n");
       return false;
@@ -266,7 +266,7 @@ generate_key(const string& type, const string& name, key_message* k)
     }
     k->set_key_type("rsa-4096-private");
   } else if (type == "ecc-384") {
-    EC_KEY* ec = generate_new_ecc_key(384);
+    EC_KEY *ec = generate_new_ecc_key(384);
     if (ec == nullptr) {
       printf("Can't generate ecc key\n");
       return false;
@@ -288,7 +288,7 @@ generate_key(const string& type, const string& name, key_message* k)
     printf("Can't serialize key\n");
     return false;
   }
-  if (!write_file(FLAGS_key_output_file, str.size(), (byte*)str.data())) {
+  if (!write_file(FLAGS_key_output_file, str.size(), (byte *)str.data())) {
     printf("Can't write file\n");
     return false;
   }
@@ -299,7 +299,7 @@ generate_key(const string& type, const string& name, key_message* k)
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   string usage("Certifier utility to generate policy-keys and test-keys");
   gflags::SetUsageMessage(usage);

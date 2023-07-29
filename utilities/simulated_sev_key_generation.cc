@@ -33,11 +33,11 @@ DEFINE_string(vcek_der, "sev_vcek_cert.der", "vcek cert file");
 DEFINE_string(vcek_key_file, "ec-secp384r1-pub-key.pem", "vcek key file");
 
 int
-read_vcek_file(const char* filename, EVP_PKEY** key, bool priv)
+read_vcek_file(const char *filename, EVP_PKEY **key, bool priv)
 {
   int       rc = -EXIT_FAILURE;
-  EVP_PKEY* pkey;
-  FILE*     file = NULL;
+  EVP_PKEY *pkey;
+  FILE *    file = NULL;
 
   pkey = EVP_PKEY_new();
   file = fopen(filename, "r");
@@ -69,7 +69,7 @@ out:
 
 // This generates an sev attestation signed by the key in key_file
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
@@ -90,7 +90,7 @@ main(int an, char** av)
   // ARK
   key_message ark_vse_key;
   key_message pub_ark_vse_key;
-  RSA*        r1 = RSA_new();
+  RSA *       r1 = RSA_new();
   if (!generate_new_rsa_key(4096, r1)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -105,7 +105,7 @@ main(int an, char** av)
     return 1;
   }
 
-  X509* ark_509 = X509_new();
+  X509 *ark_509 = X509_new();
   if (!produce_artifact(ark_vse_key,
                         ark_name,
                         ark_desc_str,
@@ -127,7 +127,7 @@ main(int an, char** av)
     printf("Can't convert ARK to der\n");
     return 1;
   }
-  if (!write_file(FLAGS_ark_der, ark_der.size(), (byte*)ark_der.data())) {
+  if (!write_file(FLAGS_ark_der, ark_der.size(), (byte *)ark_der.data())) {
     printf("Can't write %s\n", FLAGS_ark_der.c_str());
     return 1;
   }
@@ -136,7 +136,7 @@ main(int an, char** av)
   // ASK
   key_message ask_vse_key;
   key_message pub_ask_vse_key;
-  RSA*        r2 = RSA_new();
+  RSA *       r2 = RSA_new();
   if (!generate_new_rsa_key(4096, r2)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -151,7 +151,7 @@ main(int an, char** av)
     return 1;
   }
 
-  X509* ask_509 = X509_new();
+  X509 *ask_509 = X509_new();
   if (!produce_artifact(ark_vse_key,
                         ark_name,
                         ark_desc_str,
@@ -173,7 +173,7 @@ main(int an, char** av)
     printf("Can't convert ASK to der\n");
     return 1;
   }
-  if (!write_file(FLAGS_ask_der, ask_der.size(), (byte*)ask_der.data())) {
+  if (!write_file(FLAGS_ask_der, ask_der.size(), (byte *)ask_der.data())) {
     printf("Can't write %s\n", FLAGS_ask_der.c_str());
     return 1;
   }
@@ -182,7 +182,7 @@ main(int an, char** av)
   // VCEK
   key_message pub_vcek_vse_key;
 
-  EVP_PKEY* key = NULL;
+  EVP_PKEY *key = NULL;
   int       rc  = read_vcek_file(FLAGS_vcek_key_file.c_str(), &key, false);
   if (rc != EXIT_SUCCESS) {
     printf("Can't read vcek public key\n");
@@ -190,7 +190,7 @@ main(int an, char** av)
   }
 
   // simulated_sev_key_generation
-  EC_KEY* ec = EVP_PKEY_get1_EC_KEY(key);
+  EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);
   if (ec == nullptr) {
     printf("Can't get ecc key\n");
     return 1;
@@ -201,7 +201,7 @@ main(int an, char** av)
   }
   pub_vcek_vse_key.set_key_name(vcek_name);
 
-  X509* vcek_509 = X509_new();
+  X509 *vcek_509 = X509_new();
   if (!produce_artifact(ask_vse_key,
                         ask_name,
                         ask_desc_str,
@@ -222,7 +222,7 @@ main(int an, char** av)
     printf("Can't convert ASK to der\n");
     return 1;
   }
-  if (!write_file(FLAGS_vcek_der, vcek_der.size(), (byte*)vcek_der.data())) {
+  if (!write_file(FLAGS_vcek_der, vcek_der.size(), (byte *)vcek_der.data())) {
     printf("Can't write %s\n", FLAGS_vcek_der.c_str());
     return 1;
   }

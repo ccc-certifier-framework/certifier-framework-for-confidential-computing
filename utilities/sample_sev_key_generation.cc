@@ -99,7 +99,7 @@ static struct attestation_report default_report = {
 };
 
 static void
-reverse_bytes(byte* buffer, size_t size)
+reverse_bytes(byte *buffer, size_t size)
 {
   if (!buffer || size == 0)
     return;
@@ -114,7 +114,7 @@ reverse_bytes(byte* buffer, size_t size)
 
 // This generates an sev attestation signed by the key in key_file
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
@@ -154,7 +154,7 @@ main(int an, char** av)
   // ARK
   key_message ark_vse_key;
   key_message pub_ark_vse_key;
-  RSA*        r1 = RSA_new();
+  RSA *       r1 = RSA_new();
   if (!generate_new_rsa_key(4096, r1)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -169,7 +169,7 @@ main(int an, char** av)
     return 1;
   }
 
-  X509* ark_509 = X509_new();
+  X509 *ark_509 = X509_new();
   if (!produce_artifact(ark_vse_key,
                         ark_name,
                         ark_desc_str,
@@ -191,7 +191,7 @@ main(int an, char** av)
     printf("Can't convert ARK to der\n");
     return 1;
   }
-  if (!write_file(FLAGS_ark_der, ark_der.size(), (byte*)ark_der.data())) {
+  if (!write_file(FLAGS_ark_der, ark_der.size(), (byte *)ark_der.data())) {
     printf("Can't write %s\n", FLAGS_ark_der.c_str());
     return 1;
   }
@@ -200,7 +200,7 @@ main(int an, char** av)
   // ASK
   key_message ask_vse_key;
   key_message pub_ask_vse_key;
-  RSA*        r2 = RSA_new();
+  RSA *       r2 = RSA_new();
   if (!generate_new_rsa_key(4096, r2)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -215,7 +215,7 @@ main(int an, char** av)
     return 1;
   }
 
-  X509* ask_509 = X509_new();
+  X509 *ask_509 = X509_new();
   if (!produce_artifact(ark_vse_key,
                         ark_name,
                         ark_desc_str,
@@ -237,7 +237,7 @@ main(int an, char** av)
     printf("Can't convert ASK to der\n");
     return 1;
   }
-  if (!write_file(FLAGS_ask_der, ask_der.size(), (byte*)ask_der.data())) {
+  if (!write_file(FLAGS_ask_der, ask_der.size(), (byte *)ask_der.data())) {
     printf("Can't write %s\n", FLAGS_ask_der.c_str());
     return 1;
   }
@@ -246,7 +246,7 @@ main(int an, char** av)
   // VCEK
   key_message vcek_vse_key;
   key_message pub_vcek_vse_key;
-  EC_KEY*     ec = generate_new_ecc_key(384);
+  EC_KEY *    ec = generate_new_ecc_key(384);
   if (ec == nullptr) {
     printf("Can't generate ecc key\n");
     return 1;
@@ -261,7 +261,7 @@ main(int an, char** av)
     return 1;
   }
 
-  X509* vcek_509 = X509_new();
+  X509 *vcek_509 = X509_new();
   if (!produce_artifact(ask_vse_key,
                         ask_name,
                         ask_desc_str,
@@ -283,7 +283,7 @@ main(int an, char** av)
     printf("Can't convert ASK to der\n");
     return 1;
   }
-  if (!write_file(FLAGS_vcek_der, vcek_der.size(), (byte*)vcek_der.data())) {
+  if (!write_file(FLAGS_vcek_der, vcek_der.size(), (byte *)vcek_der.data())) {
     printf("Can't write %s\n", FLAGS_vcek_der.c_str());
     return 1;
   }
@@ -309,7 +309,7 @@ main(int an, char** av)
   byte user_data_hash[hash_len];
 
   if (!digest_message("sha-384",
-                      (byte*)said_str.data(),
+                      (byte *)said_str.data(),
                       said_str.size(),
                       user_data_hash,
                       hash_len))
@@ -327,7 +327,7 @@ main(int an, char** av)
   int  sig_digest_len = 48;
   byte sig_digest[sig_digest_len];
   if (!digest_message("sha-384",
-                      (byte*)&default_report,
+                      (byte *)&default_report,
                       sizeof(attestation_report) - sizeof(signature),
                       sig_digest,
                       sig_digest_len))
@@ -335,15 +335,15 @@ main(int an, char** av)
     printf("digest_message  for whole report failed\n");
     return 1;
   }
-  ECDSA_SIG* sig = ECDSA_do_sign((const byte*)sig_digest, sig_digest_len, ec);
+  ECDSA_SIG *sig = ECDSA_do_sign((const byte *)sig_digest, sig_digest_len, ec);
 
   if (sig == nullptr) {
     printf("Can't sign digest\n");
     return 1;
   }
 
-  const BIGNUM* nr = ECDSA_SIG_get0_r(sig);
-  const BIGNUM* ns = ECDSA_SIG_get0_s(sig);
+  const BIGNUM *nr = ECDSA_SIG_get0_r(sig);
+  const BIGNUM *ns = ECDSA_SIG_get0_s(sig);
 
   printf("r: ");
   BN_print_fp(stdout, nr);
@@ -367,7 +367,7 @@ main(int an, char** av)
   sev_attestation_message the_attestation;
   the_attestation.set_what_was_said(said_str);
   string att_rep;
-  att_rep.assign((char*)&default_report, sizeof(attestation_report));
+  att_rep.assign((char *)&default_report, sizeof(attestation_report));
   the_attestation.set_reported_attestation(att_rep);
 
   string sev_attest_str;
@@ -377,7 +377,7 @@ main(int an, char** av)
   }
   if (!write_file(FLAGS_sev_attest,
                   sev_attest_str.size(),
-                  (byte*)sev_attest_str.data()))
+                  (byte *)sev_attest_str.data()))
   {
     printf("Can't write %s\n", FLAGS_sev_attest.c_str());
     return 1;

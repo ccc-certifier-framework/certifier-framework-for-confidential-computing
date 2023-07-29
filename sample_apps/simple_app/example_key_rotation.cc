@@ -54,12 +54,12 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 // For an example of rotating keys for protect_blob, see the certifier_tests.
 
 #include "policy_key.cc"
-cc_trust_data* app_trust_data = nullptr;
+cc_trust_data *app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -124,7 +124,7 @@ main(int an, char** av)
 
   // Get certificate
   string der_cert;
-  X509*  x509_cert = X509_new();
+  X509 * x509_cert = X509_new();
   if (purpose == "authentication") {
     if (!app_trust_data->cc_auth_key_initialized_) {
       printf("Auth key uninitialized");

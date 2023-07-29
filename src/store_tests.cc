@@ -47,16 +47,16 @@ test_protect(bool print_all)
   if (!time_to_string(t_na, &s_na))
     return false;
 
-  const char* key_str =
+  const char *key_str =
       "I am a secret key. Dont tell anyone what I am or else. Here it is";
-  const char* secret_data = "I am a secret data.  Protect me.";
+  const char *secret_data = "I am a secret data.  Protect me.";
 
   key_start.set_key_name("Test key");
   key_start.set_key_type("aes-256-cbc-hmac-sha256");
   key_start.set_key_format("vse-key");
   key_start.set_not_before(s_nb);
   key_start.set_not_after(s_na);
-  key_start.set_secret_key_bits((void*)key_str, 64);
+  key_start.set_secret_key_bits((void *)key_str, 64);
 
   // protect it
   int  serialized_blob_size = 1024;
@@ -71,7 +71,7 @@ test_protect(bool print_all)
   if (!protect_blob(enclave_type,
                     key_start,
                     (int)strlen(secret_data),
-                    (byte*)secret_data,
+                    (byte *)secret_data,
                     &serialized_blob_size,
                     serialized_blob))
   {
@@ -80,7 +80,7 @@ test_protect(bool print_all)
   }
 
   string protected_blob_string;
-  protected_blob_string.assign((char*)serialized_blob, serialized_blob_size);
+  protected_blob_string.assign((char *)serialized_blob, serialized_blob_size);
   pb.ParseFromString(protected_blob_string);
 
   if (print_all) {
@@ -113,7 +113,7 @@ test_protect(bool print_all)
   }
   if (!same_key(key_start, key_end))
     return false;
-  if (memcmp(unencrypted_data, (byte*)secret_data, strlen(secret_data)) != 0)
+  if (memcmp(unencrypted_data, (byte *)secret_data, strlen(secret_data)) != 0)
     return false;
 
   key_message new_key;
@@ -154,7 +154,7 @@ test_protect(bool print_all)
     print_bytes(size_unencrypted_data2, unencrypted_data2);
     printf("\n");
   }
-  if (memcmp(unencrypted_data2, (byte*)secret_data, strlen(secret_data)) != 0)
+  if (memcmp(unencrypted_data2, (byte *)secret_data, strlen(secret_data)) != 0)
     return false;
 
   return true;
@@ -185,7 +185,7 @@ test_init_and_recover_containers(bool print_all)
   byte        sk[size_storage_key];
   for (int i = 0; i < 64; i++)
     sk[i] = i % 16;
-  storage_key.set_secret_key_bits((void*)sk, size_storage_key);
+  storage_key.set_secret_key_bits((void *)sk, size_storage_key);
   time_point t_nb;
   time_point t_na;
   string     s_nb;
@@ -208,7 +208,7 @@ test_init_and_recover_containers(bool print_all)
   storage_key.set_key_format("vse-key");
   storage_key.set_not_before(s_nb);
   storage_key.set_not_after(s_na);
-  storage_key.set_secret_key_bits((void*)sk, 64);
+  storage_key.set_secret_key_bits((void *)sk, 64);
 
   key_message recovered_storage_key;
 
@@ -219,7 +219,7 @@ test_init_and_recover_containers(bool print_all)
   if (!protect_blob(enclave_type,
                     storage_key,
                     serialized_store.size(),
-                    (byte*)serialized_store.data(),
+                    (byte *)serialized_store.data(),
                     &size_encrypted,
                     encrypted))
     return false;
@@ -234,12 +234,12 @@ test_init_and_recover_containers(bool print_all)
     return false;
 
   string recovered_serialized_store;
-  recovered_serialized_store.assign((char*)recovered, size_recovered);
+  recovered_serialized_store.assign((char *)recovered, size_recovered);
   policy_store recovered_ps;
   if (!recovered_ps.Deserialize(recovered_serialized_store))
     return false;
 
-  const key_message* recovered_policy_key = recovered_ps.get_policy_key();
+  const key_message *recovered_policy_key = recovered_ps.get_policy_key();
   if (recovered_policy_key == nullptr)
     return false;
   if (!same_key(policy_key, *recovered_policy_key))
@@ -280,7 +280,7 @@ test_policy_store(bool print_all)
   if (!ps.set_policy_key(pk))
     return false;
 
-  const key_message* pkt = ps.get_policy_key();
+  const key_message *pkt = ps.get_policy_key();
   if (pkt == nullptr)
     return false;
   if (!same_key(pk, *pkt))
@@ -302,7 +302,7 @@ test_policy_store(bool print_all)
 
   tag1  = "test-entry-1";
   type1 = "binary";
-  value1.assign((const char*)bin, sizeof(bin));
+  value1.assign((const char *)bin, sizeof(bin));
   if (!ps.update_or_insert(tag1, type1, value1)) {
     printf("Error:Can't add entry\n");
     return false;
@@ -310,7 +310,7 @@ test_policy_store(bool print_all)
 
   tag1  = "test-entry-2";
   type1 = "binary";
-  value1.assign((const char*)bin, sizeof(bin));
+  value1.assign((const char *)bin, sizeof(bin));
   if (!ps.update_or_insert(tag1, type1, value1)) {
     printf("Error:Can't add entry\n");
     return false;
@@ -318,7 +318,7 @@ test_policy_store(bool print_all)
 
   tag1  = "test-entry-3";
   type1 = "binary";
-  value1.assign((const char*)bin, sizeof(bin));
+  value1.assign((const char *)bin, sizeof(bin));
   if (!ps.update_or_insert(tag1, type1, value1)) {
     printf("Error: Can't update or insert entry\n");
     return false;
@@ -344,7 +344,7 @@ test_policy_store(bool print_all)
     return false;
   }
 
-  store_entry* p_ent = ps.get_entry(ent);
+  store_entry *p_ent = ps.get_entry(ent);
   if (p_ent == nullptr) {
     printf("Error: can't get entry pointer 1\n");
     return false;

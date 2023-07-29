@@ -29,7 +29,7 @@ hex_digit(byte v)
 }
 
 bool
-make_enclave_name(string enclave_type, string* enclave_name)
+make_enclave_name(string enclave_type, string *enclave_name)
 {
   int    measurement_size = 32;
   byte   m[measurement_size];
@@ -46,14 +46,14 @@ make_enclave_name(string enclave_type, string* enclave_name)
     hex[2 * i]     = hex_digit(m[i] >> 4);
     hex[2 * i + 1] = hex_digit(m[i] & 0xff);
   }
-  enclave_name->append((const char*)hex);
+  enclave_name->append((const char *)hex);
   return true;
 }
 
 bool
 test_artifact(bool print_all)
 {
-  X509*       cert = X509_new();
+  X509 *      cert = X509_new();
   key_message signing_key;
   key_message subject_key;
   string      issuer_name_str("Policy-key");  // eventually serialized key

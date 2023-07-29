@@ -106,7 +106,7 @@ typedef struct platform {
 } platform;
 
 void
-print_claim(claim& c, const string prefix = "")
+print_claim(claim &c, const string prefix = "")
 {
   map<clause_type, string> cname = {
       {SIMPLE_CLAUSE, "simpleClause"},
@@ -154,7 +154,7 @@ print_claim(claim& c, const string prefix = "")
 }
 
 void
-from_json(const json& j, property& p)
+from_json(const json &j, property &p)
 {
   map<string, string> cmap = {
       {"eq", "="},
@@ -174,7 +174,7 @@ from_json(const json& j, property& p)
 }
 
 void
-from_json(const json& j, clause& cl)
+from_json(const json &j, clause &cl)
 {
   clause tmp_cl;
 
@@ -241,7 +241,7 @@ from_json(const json& j, clause& cl)
 }
 
 void
-from_json(const json& j, claim& c)
+from_json(const json &j, claim &c)
 {
   j.at("verb").get_to(c.verb);
 
@@ -290,13 +290,13 @@ vector<string> signed_claims;
 vector<string> intermediate_files;
 
 static int
-exec_cmd(const string& command, bool print = false)
+exec_cmd(const string &command, bool print = false)
 {
   int                     exitcode = -1;
   array<char, 512 * 1024> buffer{};
   string                  result;
 
-  FILE* pipe = popen(command.c_str(), "r");
+  FILE *pipe = popen(command.c_str(), "r");
   if (pipe == nullptr) {
     return -1;
   }
@@ -322,7 +322,7 @@ exec_cmd(const string& command, bool print = false)
 
 template <class... Args>
 string
-string_format(const string& format, Args... args)
+string_format(const string &format, Args... args)
 {
   int size = snprintf(nullptr, 0, format.c_str(), args...) + 1;
   if (size <= 0) {
@@ -752,7 +752,7 @@ done:
 }
 
 int
-main(int argc, char* argv[])
+main(int argc, char *argv[])
 {
   json_validator validator;  // create validator
   json           policy_schema, policy;
@@ -778,7 +778,7 @@ main(int argc, char* argv[])
 
   try {
     validator.set_root_schema(policy_schema);  // insert root-schema
-  } catch (const exception& e) {
+  } catch (const exception &e) {
     cerr << "Validation of schema failed: " << e.what() << "\n";
     return EXIT_FAILURE;
   }
@@ -789,7 +789,7 @@ main(int argc, char* argv[])
   try {
     validator.validate(policy);  // validate the document - uses the default
                                  // throwing error-handler
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     cerr << "Validation failed: " << e.what() << "\n";
     return EXIT_FAILURE;
   }

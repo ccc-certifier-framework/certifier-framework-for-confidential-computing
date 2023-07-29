@@ -103,11 +103,11 @@ test_attest(bool print_all)
   byte out[size_out];
   if (!Attest(enclave_type,
               serialized_ud.size(),
-              (byte*)serialized_ud.data(),
+              (byte *)serialized_ud.data(),
               &size_out,
               out))
     return false;
   string serialized_signed_report;
-  serialized_signed_report.assign((char*)out, size_out);
+  serialized_signed_report.assign((char *)out, size_out);
   return simulated_Verify(serialized_signed_report);
 }

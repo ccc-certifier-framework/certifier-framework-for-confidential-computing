@@ -33,11 +33,11 @@ DEFINE_string(key_output_file, "test_key_file.bin", "test key file");
 DEFINE_string(cert_output_file, "test_cert_file.bin", "test cert file");
 
 bool
-generate_key(const string& name,
-             const string& type,
-             const string& authority,
-             key_message*  priv,
-             key_message*  pub)
+generate_key(const string &name,
+             const string &type,
+             const string &authority,
+             key_message * priv,
+             key_message * pub)
 {
   int n = 0;
   if (type == "rsa-4096-private") {
@@ -69,7 +69,7 @@ generate_key(const string& name,
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   string usage("Generate certificate keys in different formats to output file");
   gflags::SetUsageMessage(usage);
@@ -111,14 +111,14 @@ main(int an, char** av)
   }
   if (!write_file(FLAGS_key_output_file,
                   serialized_key.size(),
-                  (byte*)serialized_key.data()))
+                  (byte *)serialized_key.data()))
   {
     printf("Can't write key file\n");
     return 1;
   }
   string asn_cert;
   if (FLAGS_generate_cert) {
-    X509* cert = X509_new();
+    X509 *cert = X509_new();
     if (!produce_artifact(priv,
                           FLAGS_key_name,
                           FLAGS_key_name,
@@ -158,7 +158,7 @@ main(int an, char** av)
     }
     if (!write_file(FLAGS_cert_output_file,
                     asn_cert.size(),
-                    (byte*)asn_cert.data()))
+                    (byte *)asn_cert.data()))
     {
       printf("Can't write cert file\n");
       return 1;

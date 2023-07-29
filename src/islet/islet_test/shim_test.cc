@@ -17,7 +17,7 @@
 #include "../islet_api.h"
 
 static void
-print_buf(int sz, byte* buf)
+print_buf(int sz, byte *buf)
 {
   for (int i = 0; i < sz; i++)
     printf("%02x", buf[i]);
@@ -44,13 +44,13 @@ attestation_test()
   std::string what_to_say("User Custom data");
 
   if (!islet_Attest(what_to_say.size(),
-                    (byte*)what_to_say.data(),
+                    (byte *)what_to_say.data(),
                     &report_len,
                     report))
     return false;
 
   if (!islet_Verify(what_to_say.size(),
-                    (byte*)what_to_say.data(),
+                    (byte *)what_to_say.data(),
                     report_len,
                     report,
                     &measurement_len,
@@ -59,7 +59,7 @@ attestation_test()
 
   printf("report size: %d\n", report_len);
   print_buf(report_len, report);
-  printf("What was said originally: %s\n", (char*)what_to_say.c_str());
+  printf("What was said originally: %s\n", (char *)what_to_say.c_str());
   printf("Measurement: ");
   for (int i = 0; i < measurement_len; i++) {
     printf("%02X", measurement[i]);
@@ -83,7 +83,7 @@ sealing_test()
 
   std::string plaintext("Plaintext");
   if (!islet_Seal(plaintext.size(),
-                  (byte*)plaintext.c_str(),
+                  (byte *)plaintext.c_str(),
                   &sealed_len,
                   sealed))
     return false;
