@@ -109,7 +109,8 @@ main(int an, char** av)
   }
   if (sized_socket_write(sock,
                          serialized_request.size(),
-                         (byte*)serialized_request.data()) < 0)
+                         (byte*)serialized_request.data())
+      < 0)
   {
     return 1;
   }

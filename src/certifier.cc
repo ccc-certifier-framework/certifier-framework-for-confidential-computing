@@ -350,13 +350,13 @@ get_tcb_version_from_vcek(X509* vcek)
   unsigned char blSPL, teeSPL, snpSPL, ucodeSPL;
   uint64_t      tcb_version = (uint64_t)-1;
 
-  if (vcek_ext_byte_value(vcek, EXT_BLSPL, &blSPL) &&
-      vcek_ext_byte_value(vcek, EXT_TEESPL, &teeSPL) &&
-      vcek_ext_byte_value(vcek, EXT_SNPSPL, &snpSPL) &&
-      vcek_ext_byte_value(vcek, EXT_UCODESPL, &ucodeSPL))
+  if (vcek_ext_byte_value(vcek, EXT_BLSPL, &blSPL)
+      && vcek_ext_byte_value(vcek, EXT_TEESPL, &teeSPL)
+      && vcek_ext_byte_value(vcek, EXT_SNPSPL, &snpSPL)
+      && vcek_ext_byte_value(vcek, EXT_UCODESPL, &ucodeSPL))
   {
-    tcb_version = blSPL | ((uint64_t)teeSPL << 8) | ((uint64_t)snpSPL << 48) |
-                  ((uint64_t)ucodeSPL << 56);
+    tcb_version = blSPL | ((uint64_t)teeSPL << 8) | ((uint64_t)snpSPL << 48)
+                  | ((uint64_t)ucodeSPL << 56);
   }
 
   return tcb_version;

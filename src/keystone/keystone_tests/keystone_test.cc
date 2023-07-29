@@ -61,8 +61,8 @@ keystone_test(const int cert_size, byte* cert)
            size_unsealed_secret,
            size_secret);
     return false;
-  } else if ((memcmp_rc =
-                  memcmp(secret, unsealed_secret, size_unsealed_secret)) != 0)
+  } else if ((memcmp_rc = memcmp(secret, unsealed_secret, size_unsealed_secret))
+             != 0)
   {
     printf("Sealed and unsealed secrets do not match, memcmp_rc=%d\n",
            memcmp_rc);

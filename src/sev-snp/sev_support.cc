@@ -273,7 +273,8 @@ sev_ecdsa_verify(const void *         digest,
     if (ECDSA_do_verify((byte *)digest,
                         (uint32_t)digest_size,
                         ecdsa_sig,
-                        pub_ec_key) != 1)
+                        pub_ec_key)
+        != 1)
     {
       printf("ECDSA_do_verify failed\n");
       ECDSA_SIG_free(ecdsa_sig);

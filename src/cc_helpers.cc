@@ -131,14 +131,14 @@ bool
 certifier::framework::cc_trust_data::cc_all_initialized()
 {
   if (purpose_ == "authentication") {
-    return cc_basic_data_initialized_ & cc_auth_key_initialized_ &
-           cc_symmetric_key_initialized_ & cc_policy_info_initialized_ &
-           cc_provider_provisioned_ & cc_policy_store_initialized_;
+    return cc_basic_data_initialized_ & cc_auth_key_initialized_
+           & cc_symmetric_key_initialized_ & cc_policy_info_initialized_
+           & cc_provider_provisioned_ & cc_policy_store_initialized_;
   } else if (purpose_ == "attestation") {
-    return cc_basic_data_initialized_ & cc_service_key_initialized_ &
-           cc_sealing_key_initialized_ & cc_policy_info_initialized_ &
-           cc_service_platform_rule_initialized_ & cc_provider_provisioned_ &
-           cc_policy_store_initialized_;
+    return cc_basic_data_initialized_ & cc_service_key_initialized_
+           & cc_sealing_key_initialized_ & cc_policy_info_initialized_
+           & cc_service_platform_rule_initialized_ & cc_provider_provisioned_
+           & cc_policy_store_initialized_;
   } else {
     return false;
   }
@@ -866,9 +866,9 @@ certifier::framework::cc_trust_data::cold_init(const string& public_key_alg,
 
   // Make up symmetric keys (e.g.-for sealing)for app
   int num_key_bytes;
-  if (symmetric_key_alg == "aes-256-cbc-hmac-sha256" ||
-      symmetric_key_alg == "aes-256-cbc-hmac-sha384" ||
-      symmetric_key_alg == "aes-256-gcm")
+  if (symmetric_key_alg == "aes-256-cbc-hmac-sha256"
+      || symmetric_key_alg == "aes-256-cbc-hmac-sha384"
+      || symmetric_key_alg == "aes-256-gcm")
   {
     num_key_bytes = cipher_key_byte_size(symmetric_key_alg.c_str());
     if (num_key_bytes <= 0) {
@@ -1153,8 +1153,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
          enclave_type_.c_str(),
          purpose_.c_str());
 
-  if (enclave_type_ == "simulated-enclave" ||
-      enclave_type_ == "application-enclave")
+  if (enclave_type_ == "simulated-enclave"
+      || enclave_type_ == "application-enclave")
   {
     signed_claim_message signed_platform_says_attest_key_is_trusted;
     if (!GetPlatformSaysAttestClaim(
@@ -1342,8 +1342,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
   //   to prevent MITM attacks?  Probably not.
   request.set_requesting_enclave_tag("requesting-enclave");
   request.set_providing_enclave_tag("providing-enclave");
-  if (enclave_type_ == "application-enclave" ||
-      enclave_type_ == "simulated-enclave")
+  if (enclave_type_ == "application-enclave"
+      || enclave_type_ == "simulated-enclave")
   {
     request.set_submitted_evidence_type("vse-attestation-package");
   } else if (enclave_type_ == "sev-enclave") {
@@ -1401,8 +1401,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
 
   if (sized_socket_write(sock,
                          serialized_request.size(),
-                         (byte*)serialized_request.data()) <
-      (int)serialized_request.size())
+                         (byte*)serialized_request.data())
+      < (int)serialized_request.size())
   {
     return false;
   }
@@ -1545,8 +1545,8 @@ construct_platform_evidence_package(string&           attesting_enclave_type,
 
   // add attestation
   evidence* ev2 = ep->add_fact_assertion();
-  if ("simulated-enclave" == attesting_enclave_type ||
-      "application-enclave" == attesting_enclave_type)
+  if ("simulated-enclave" == attesting_enclave_type
+      || "application-enclave" == attesting_enclave_type)
   {
     string et2("signed-vse-attestation-report");
     ev2->set_evidence_type(et2);
@@ -1881,7 +1881,8 @@ load_server_certs_and_key(X509*        root_cert,
                                x509_auth_key_cert,
                                auth_private_key,
                                stack,
-                               1) <= 0)
+                               1)
+      <= 0)
   {
     printf("load_server_certs_and_key: SSL_CTX_use_cert_and_key failed\n");
 #ifdef DEBUG
@@ -2195,7 +2196,8 @@ certifier::framework::secure_authenticated_channel::load_client_certs_and_key()
                                x509_auth_key_cert,
                                auth_private_key,
                                stack,
-                               1) <= 0)
+                               1)
+      <= 0)
   {
     printf("load_client_certs_and_key: use_cert_and_key failed\n");
     return false;

@@ -87,10 +87,10 @@ main(int an, char** av)
   key_message priv;
   key_message pub;
   string      serialized_key;
-  if (strcmp(FLAGS_key_type.c_str(), "rsa-1024-private") == 0 ||
-      strcmp(FLAGS_key_type.c_str(), "rsa-2048-private") == 0 ||
-      strcmp(FLAGS_key_type.c_str(), "rsa-4096-private") == 0 ||
-      strcmp(FLAGS_key_type.c_str(), "ecc-384-private") == 0)
+  if (strcmp(FLAGS_key_type.c_str(), "rsa-1024-private") == 0
+      || strcmp(FLAGS_key_type.c_str(), "rsa-2048-private") == 0
+      || strcmp(FLAGS_key_type.c_str(), "rsa-4096-private") == 0
+      || strcmp(FLAGS_key_type.c_str(), "ecc-384-private") == 0)
   {
     if (!generate_key(FLAGS_key_name,
                       FLAGS_key_type,

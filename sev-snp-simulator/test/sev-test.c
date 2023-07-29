@@ -418,9 +418,9 @@ main(int argc, char *argv[])
 
   opt.do_root_key = true;
   opt.svn         = 1;
-  opt.fields = FIELD_POLICY_MASK | FIELD_IMAGE_ID_MASK | FIELD_FAMILY_ID_MASK |
-               FIELD_MEASUREMENT_MASK | FIELD_GUEST_SVN_MASK |
-               FIELD_TCB_VERSION_MASK;
+  opt.fields = FIELD_POLICY_MASK | FIELD_IMAGE_ID_MASK | FIELD_FAMILY_ID_MASK
+               | FIELD_MEASUREMENT_MASK | FIELD_GUEST_SVN_MASK
+               | FIELD_TCB_VERSION_MASK;
 
   rc = request_key(&opt, key, sizeof(key));
   if (rc != EXIT_SUCCESS) {

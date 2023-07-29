@@ -302,10 +302,10 @@ exec_cmd(const string& command, bool print = false)
   }
   try {
     size_t bytesread;
-    while ((bytesread = fread(buffer.data(),
-                              sizeof(buffer.at(0)),
-                              sizeof(buffer),
-                              pipe)) != 0)
+    while (
+        (bytesread =
+             fread(buffer.data(), sizeof(buffer.at(0)), sizeof(buffer), pipe))
+        != 0)
     {
       result += string(buffer.data(), bytesread);
     }

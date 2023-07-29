@@ -199,8 +199,8 @@ main(int an, char** av)
       goto done;
     }
     printf("running as client\n");
-    if (!app_trust_data->cc_auth_key_initialized_ ||
-        !app_trust_data->cc_policy_info_initialized_)
+    if (!app_trust_data->cc_auth_key_initialized_
+        || !app_trust_data->cc_policy_info_initialized_)
     {
       printf("trust data not initialized\n");
       ret = 1;

@@ -359,8 +359,8 @@ test_policy_store(bool print_all)
     return false;
   }
 
-  if (p_ent->value_.size() != sizeof(bin) ||
-      memcmp(bin, p_ent->value_.data(), sizeof(bin)) != 0)
+  if (p_ent->value_.size() != sizeof(bin)
+      || memcmp(bin, p_ent->value_.data(), sizeof(bin)) != 0)
   {
     printf("Error: Retrieved value failure\n");
     return false;

@@ -71,12 +71,12 @@ keystone_Attest(const int what_to_say_size,
 bool
 nonhash_report_cmp(struct report_t& a, struct report_t& b)
 {
-  return (a.enclave.data_len != b.enclave.data_len) ||
-         memcmp(a.enclave.data, b.enclave.data, ATTEST_DATA_MAXLEN) ||
-         memcmp(a.enclave.signature, b.enclave.signature, SIGNATURE_SIZE) ||
-         memcmp(a.sm.public_key, b.sm.public_key, PUBLIC_KEY_SIZE) ||
-         memcmp(a.sm.signature, b.sm.signature, SIGNATURE_SIZE) ||
-         memcmp(a.dev_public_key, b.dev_public_key, PUBLIC_KEY_SIZE);
+  return (a.enclave.data_len != b.enclave.data_len)
+         || memcmp(a.enclave.data, b.enclave.data, ATTEST_DATA_MAXLEN)
+         || memcmp(a.enclave.signature, b.enclave.signature, SIGNATURE_SIZE)
+         || memcmp(a.sm.public_key, b.sm.public_key, PUBLIC_KEY_SIZE)
+         || memcmp(a.sm.signature, b.sm.signature, SIGNATURE_SIZE)
+         || memcmp(a.dev_public_key, b.dev_public_key, PUBLIC_KEY_SIZE);
 }
 
 bool
