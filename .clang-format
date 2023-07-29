@@ -85,6 +85,8 @@ PointerAlignment: Right
 ReflowComments: true
 
 SortIncludes:    false
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
 SpaceBeforeAssignmentOperators: true
 SpacesBeforeTrailingComments: 2
 SpaceBeforeParens: ControlStatements
