@@ -39,8 +39,8 @@ typedef unsigned char byte;
 #include "certifier.pb.h"
 
 #ifdef OE_CERTIFIER
-#include "openenclave/attestation.h"
-#include "openenclave/sealing.h"
+#  include "openenclave/attestation.h"
+#  include "openenclave/sealing.h"
 #endif
 
 #include "certifier_utilities.h"
@@ -48,7 +48,7 @@ typedef unsigned char byte;
 using std::string;
 
 #ifndef _SUPPORT_H__
-#define _SUPPORT_H__
+#  define _SUPPORT_H__
 
 bool
 encrypt(byte *in, int in_len, byte *key, byte *iv, byte *out, int *out_size);

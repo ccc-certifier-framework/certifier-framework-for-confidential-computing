@@ -15,16 +15,16 @@
 
 #ifndef __ISLETLIB_ISLET_VERIFY_H__
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+#  include <stdbool.h>
+#  include <stdint.h>
+#  include <stdio.h>
+#  include <stdlib.h>
 
 typedef unsigned char byte;
 
-#ifdef __cplusplus
+#  ifdef __cplusplus
 extern "C" {
-#endif
+#  endif
 
 bool
 isletlib_Verify(const int what_to_say_size,
@@ -34,8 +34,8 @@ isletlib_Verify(const int what_to_say_size,
                 int *     measurement_out_size,
                 byte *    measurement_out);
 
-#ifdef __cplusplus
+#  ifdef __cplusplus
 }
-#endif
+#  endif
 
 #endif  // __ISLETLIB_ISLET_VERIFY_H__

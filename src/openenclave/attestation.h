@@ -16,7 +16,7 @@
 using std::string;
 
 #ifndef _ATTESTATION_H__
-#define _ATTESTATION_H__
+#  define _ATTESTATION_H__
 
 bool
 oe_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out);

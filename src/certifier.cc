@@ -297,17 +297,17 @@ GetX509FromCert(const string &cert, X509 *x)
 
 #ifdef SEV_SNP
 
-#define EXT_STRUCT_VERSION "1.3.6.1.4.1.3704.1.1"
-#define EXT_PRODUCT_NAME   "1.3.6.1.4.1.3704.1.2"
-#define EXT_BLSPL          "1.3.6.1.4.1.3704.1.3.1"
-#define EXT_TEESPL         "1.3.6.1.4.1.3704.1.3.2"
-#define EXT_SNPSPL         "1.3.6.1.4.1.3704.1.3.3"
-#define EXT_SPL4           "1.3.6.1.4.1.3704.1.3.4"
-#define EXT_SPL5           "1.3.6.1.4.1.3704.1.3.5"
-#define EXT_SPL6           "1.3.6.1.4.1.3704.1.3.6"
-#define EXT_SPL7           "1.3.6.1.4.1.3704.1.3.7"
-#define EXT_UCODESPL       "1.3.6.1.4.1.3704.1.3.8"
-#define EXT_HWID           "1.3.6.1.4.1.3704.1.4"
+#  define EXT_STRUCT_VERSION "1.3.6.1.4.1.3704.1.1"
+#  define EXT_PRODUCT_NAME   "1.3.6.1.4.1.3704.1.2"
+#  define EXT_BLSPL          "1.3.6.1.4.1.3704.1.3.1"
+#  define EXT_TEESPL         "1.3.6.1.4.1.3704.1.3.2"
+#  define EXT_SNPSPL         "1.3.6.1.4.1.3704.1.3.3"
+#  define EXT_SPL4           "1.3.6.1.4.1.3704.1.3.4"
+#  define EXT_SPL5           "1.3.6.1.4.1.3704.1.3.5"
+#  define EXT_SPL6           "1.3.6.1.4.1.3704.1.3.6"
+#  define EXT_SPL7           "1.3.6.1.4.1.3704.1.3.7"
+#  define EXT_UCODESPL       "1.3.6.1.4.1.3704.1.3.8"
+#  define EXT_HWID           "1.3.6.1.4.1.3704.1.4"
 
 static bool
 vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *value)
@@ -577,7 +577,7 @@ keystone_Verify(const int what_to_say_size,
 #endif
 
 #ifdef ISLET_CERTIFIER
-#include "islet_api.h"
+#  include "islet_api.h"
 #endif  // ISLET_CERTIFIER
 
 // Buffer overflow check: Seal returns true and the buffer size in size_out.

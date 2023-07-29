@@ -15,20 +15,20 @@
 
 #ifndef __ISLET_API_H__
 
-#include <dlfcn.h>
-#include <fcntl.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#  include <dlfcn.h>
+#  include <fcntl.h>
+#  include <stdint.h>
+#  include <stdlib.h>
+#  include <string.h>
+#  include <sys/stat.h>
+#  include <sys/types.h>
+#  include <unistd.h>
 
-#include <iostream>
+#  include <iostream>
 
-#ifndef byte
+#  ifndef byte
 typedef unsigned char byte;
-#endif
+#  endif
 
 bool
 islet_Init(const int cert_size, byte *cert);

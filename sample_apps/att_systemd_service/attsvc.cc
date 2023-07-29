@@ -40,16 +40,16 @@
 using namespace certifier::framework;
 
 #ifdef ATT_DEBUG
-#define ATT_LOG(priority, format, ...) printf(format "\n", ##__VA_ARGS__)
+#  define ATT_LOG(priority, format, ...) printf(format "\n", ##__VA_ARGS__)
 #else
-#define ATT_LOG(priority, format, ...)                                         \
-  do {                                                                         \
-    openlog("VMware Attestation Service",                                      \
-            LOG_CONS | LOG_PID | LOG_NDELAY,                                   \
-            LOG_LOCAL1);                                                       \
-    syslog(priority, format, ##__VA_ARGS__);                                   \
-    closelog();                                                                \
-  } while (0);
+#  define ATT_LOG(priority, format, ...)                                       \
+    do {                                                                       \
+      openlog("VMware Attestation Service",                                    \
+              LOG_CONS | LOG_PID | LOG_NDELAY,                                 \
+              LOG_LOCAL1);                                                     \
+      syslog(priority, format, ##__VA_ARGS__);                                 \
+      closelog();                                                              \
+    } while (0);
 #endif
 
 #define ATTSERVICE_DATA_DIR          "/etc/attsvc/"
@@ -57,13 +57,13 @@ using namespace certifier::framework;
 #define ATTSERVICE_CONFIG_FILE       "config"
 
 #ifdef USE_SIMULATED_ENCLAVE
-#define ATTEST_KEY_FILE              "attest_key_file.bin"
-#define PLAT_ATTEST_ENDORSEMENT_FILE "platform_attest_endorsement.bin"
-#define MEASUREMENT_FILE             "example_app.measurement"
+#  define ATTEST_KEY_FILE              "attest_key_file.bin"
+#  define PLAT_ATTEST_ENDORSEMENT_FILE "platform_attest_endorsement.bin"
+#  define MEASUREMENT_FILE             "example_app.measurement"
 #else
-#define ARK_CERT_FILE  "ark_cert.der"
-#define ASK_CERT_FILE  "ask_cert.der"
-#define VCEK_CERT_FILE "vcek_cert.der"
+#  define ARK_CERT_FILE  "ark_cert.der"
+#  define ASK_CERT_FILE  "ask_cert.der"
+#  define VCEK_CERT_FILE "vcek_cert.der"
 #endif
 
 #include "policy_key.cc"

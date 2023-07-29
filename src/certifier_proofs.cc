@@ -21,10 +21,10 @@
 #include "simulated_enclave.h"
 #include "support.h"
 #ifdef SEV_SNP
-#include "attestation.h"
+#  include "attestation.h"
 #endif
 #ifdef GRAMINE_CERTIFIER
-#include "gramine_api.h"
+#  include "gramine_api.h"
 #endif
 
 using namespace certifier::framework;
@@ -1142,19 +1142,19 @@ init_proved_statements(key_message &      pk,
       byte user_data[user_data_size];
       int  measurement_out_size = max_measurement_size;
       byte measurement_out[measurement_out_size];
-#ifdef DEBUG
+#  ifdef DEBUG
       printf("init_proved_statements: trying asylo_Verify\n");
-#endif
+#  endif
 
       string pk_str = pk.SerializeAsString();
-#ifdef DEBUG
+#  ifdef DEBUG
       printf("init_proved_statements: print pk\n");
       print_bytes(pk_str.size(), (byte *)pk_str.c_str());
 
       printf("init_proved_statements: print evp\n");
       print_bytes(evp.fact_assertion(i).serialized_evidence().size(),
                   (byte *)evp.fact_assertion(i).serialized_evidence().data());
-#endif
+#  endif
 
       if (!asylo_Verify(
               evp.fact_assertion(i).serialized_evidence().size(),
@@ -1167,12 +1167,12 @@ init_proved_statements(key_message &      pk,
         printf("init_proved_statements: asylo_Verify failed\n");
       }
 
-#ifdef DEBUG
+#  ifdef DEBUG
       printf("\nasylo returned user data: size: %d\n", user_data_size);
       print_bytes(user_data_size, user_data);
       printf("\nasylo returned measurement: size: %d\n", measurement_out_size);
       print_bytes(measurement_out_size, measurement_out);
-#endif
+#  endif
 
       // user_data should be a attestation_user_data
       string ud_str;
@@ -1209,19 +1209,19 @@ init_proved_statements(key_message &      pk,
       byte user_data[user_data_size];
       int  measurement_out_size = 256;
       byte measurement_out[measurement_out_size];
-#ifdef DEBUG
+#  ifdef DEBUG
       printf("init_proved_statements: trying gramine_Verify\n");
-#endif
+#  endif
 
       string pk_str = pk.SerializeAsString();
-#ifdef DEBUG
+#  ifdef DEBUG
       printf("init_proved_statements: print pk\n");
       print_bytes(pk_str.size(), (byte *)pk_str.c_str());
 
       printf("init_proved_statements: print evp\n");
       print_bytes(evp.fact_assertion(i).serialized_evidence().size(),
                   (byte *)evp.fact_assertion(i).serialized_evidence().data());
-#endif
+#  endif
 
       if (!gramine_Verify(
               evp.fact_assertion(i).serialized_evidence().size(),
@@ -1234,13 +1234,13 @@ init_proved_statements(key_message &      pk,
         printf("init_proved_statements: gramine_Verify failed\n");
       }
 
-#ifdef DEBUG
+#  ifdef DEBUG
       printf("\ngramine returned user data: size: %d\n", user_data_size);
       print_bytes(user_data_size, user_data);
       printf("\ngramine returned measurement: size: %d\n",
              measurement_out_size);
       print_bytes(measurement_out_size, measurement_out);
-#endif
+#  endif
 
       // user_data should be a attestation_user_data
       string ud_str;
@@ -1365,20 +1365,20 @@ init_proved_statements(key_message &      pk,
       }
       const key_message &vcek_key = last_clause.clause().subject().key();
 
-#ifndef SEV_DUMMY_GUEST
+#  ifndef SEV_DUMMY_GUEST
       EVP_PKEY *verify_pkey = pkey_from_key(vcek_key);
       if (verify_pkey == nullptr) {
         printf("init_proved_statements: empty dummy verify key\n");
         return false;
       }
-#else
+#  else
       extern EVP_PKEY *get_simulated_vcek_key();
       EVP_PKEY *       verify_pkey = get_simulated_vcek_key();
       if (verify_pkey == nullptr) {
         printf("init_proved_statements: empty simulated verify key\n");
         return false;
       }
-#endif
+#  endif
 
       int         size_measurement = max_measurement_size;
       byte        measurement[size_measurement];
@@ -3294,8 +3294,8 @@ validate_evidence_from_policy(const string &         evidence_descriptor,
     return false;
   }
 
-#define PRINT_ALREADY_PROVED
-#ifdef PRINT_ALREADY_PROVED
+#  define PRINT_ALREADY_PROVED
+#  ifdef PRINT_ALREADY_PROVED
   printf("Evidence submitted:\n");
   for (int i = 0; i < evp.fact_assertion_size(); i++) {
     printf("\n  %2d: ", i);
@@ -3321,7 +3321,7 @@ validate_evidence_from_policy(const string &         evidence_descriptor,
     printf("\n");
   }
   printf("\n");
-#endif
+#  endif
 
   if (!verify_proof_from_array(policy_pk,
                                to_prove,
@@ -3333,7 +3333,7 @@ validate_evidence_from_policy(const string &         evidence_descriptor,
     printf("validate_evidence_from_policy: verify_proof failed\n");
     return false;
   }
-#ifdef PRINT_ALREADY_PROVED
+#  ifdef PRINT_ALREADY_PROVED
   printf("Proved:");
   print_vse_clause(to_prove);
   printf("\n");
@@ -3344,7 +3344,7 @@ validate_evidence_from_policy(const string &         evidence_descriptor,
     printf("\n");
   }
   printf("\n");
-#endif
+#  endif
 
   return true;
 }

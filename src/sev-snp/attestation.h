@@ -4,7 +4,7 @@
 #define ATTESTATION_H
 
 #ifndef MACOS
-#include <linux/types.h>
+#  include <linux/types.h>
 #endif
 
 #ifndef uint64_t
