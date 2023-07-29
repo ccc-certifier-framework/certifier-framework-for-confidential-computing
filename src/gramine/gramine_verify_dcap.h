@@ -4,11 +4,11 @@
 #include <iostream>
 
 #ifndef _GRAMINE_VERIFY_DCAP_H_
-#define _GRAMINE_VERIFY_DCAP_H_
+#  define _GRAMINE_VERIFY_DCAP_H_
 
 /* SGX defines and quote verification from Intel under LGPL license */
 /* QL stands for Quoting Library; QV stands for Quote Verification */
-#define SGX_QL_QV_MK_ERROR(x) (0x0000A000 | (x))
+#  define SGX_QL_QV_MK_ERROR(x) (0x0000A000 | (x))
 typedef enum _sgx_ql_qv_result_t {
   /* quote verification passed and is at the latest TCB level */
   SGX_QL_QV_RESULT_OK = 0x0000,

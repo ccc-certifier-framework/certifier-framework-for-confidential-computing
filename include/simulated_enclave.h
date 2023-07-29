@@ -43,7 +43,7 @@ typedef unsigned char byte;
 using std::string;
 
 #ifndef _SIMULATED_ENCLAVE_H__
-#define _SIMULATED_ENCLAVE_H__
+#  define _SIMULATED_ENCLAVE_H__
 
 bool
 simulated_Init(const string &policy_cert,

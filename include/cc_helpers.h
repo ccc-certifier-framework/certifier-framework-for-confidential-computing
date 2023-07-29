@@ -31,7 +31,7 @@
 #include "support.h"
 
 #ifndef _CC_HELPERS_CC_
-#define _CC_HELPERS_CC_
+#  define _CC_HELPERS_CC_
 
 bool
 open_client_socket(const string &host_name, int port, int *soc);
@@ -57,7 +57,7 @@ print_ssl_error(int code);
 
 // The functions below are used by BORING_SSL
 // Eventually they will be deprecated
-#if 1
+#  if 1
 bool
 load_server_certs_and_key(X509 *       x509_root_cert,
                           key_message &private_key,
@@ -72,6 +72,6 @@ init_client_ssl(X509 *        x509_root_cert,
                 SSL **        p_ssl);
 void
 close_client_ssl(int sd, SSL_CTX *ctx, SSL *ssl);
-#endif
+#  endif
 
 #endif

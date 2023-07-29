@@ -18,7 +18,7 @@
 #define __UAPI_LINUX_SEV_GUEST_H_
 
 #if 1
-#include <linux/types.h>
+#  include <linux/types.h>
 #else
 typedef unsigned char      uint8_t;
 typedef unsigned char      __u8;

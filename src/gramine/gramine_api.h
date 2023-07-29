@@ -38,16 +38,16 @@
 #include "sgx_attest.h"
 
 #ifndef _GRAMINE_API_H_
-#define _GRAMINE_API_H_
+#  define _GRAMINE_API_H_
 
-#define MAX_ATTESTATION_SIZE 5000
-#define TAG_SIZE             16
+#  define MAX_ATTESTATION_SIZE 5000
+#  define TAG_SIZE             16
 
 //#define DEBUG
 
 typedef unsigned char byte;
 
-#ifdef GRAMINE_CERTIFIER
+#  ifdef GRAMINE_CERTIFIER
 bool
 gramine_Init(const int cert_size, byte *cert);
 bool
@@ -66,7 +66,7 @@ bool
 gramine_Seal(int in_size, byte *in, int *size_out, byte *out);
 bool
 gramine_Unseal(int in_size, byte *in, int *size_out, byte *out);
-#endif
+#  endif
 
 inline void
 gramine_print_bytes(int n, byte *buf)

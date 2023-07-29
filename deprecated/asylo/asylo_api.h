@@ -16,7 +16,7 @@
 #include <iostream>
 
 #ifndef _ASYLO_API_H_
-#define _ASYLO_API_H_
+#  define _ASYLO_API_H_
 
 typedef struct AsyloCertifierFunctions {
   bool (*Attest)(int claims_size, byte *claims, int *size_out, byte *out);

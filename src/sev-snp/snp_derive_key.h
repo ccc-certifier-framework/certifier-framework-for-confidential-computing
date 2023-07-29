@@ -4,7 +4,7 @@
 #define SNP_KEY_REQ_H
 
 #if 1
-#include <linux/types.h>
+#  include <linux/types.h>
 #else
 typedef unsigned char      uint8_t;
 typedef unsigned short     uint16_t;

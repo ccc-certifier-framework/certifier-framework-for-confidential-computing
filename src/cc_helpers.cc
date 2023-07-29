@@ -32,16 +32,16 @@
 #include "simulated_enclave.h"
 #include "support.h"
 #ifdef GRAMINE_CERTIFIER
-#include "gramine_api.h"
+#  include "gramine_api.h"
 #endif
 #include "cc_useful.h"
 
 #ifdef KEYSTONE_CERTIFIER
-#include "keystone_api.h"
+#  include "keystone_api.h"
 #endif
 
 #ifdef ISLET_CERTIFIER
-#include "islet_api.h"
+#  include "islet_api.h"
 #endif  // ISLET_CERTIFIER
 
 using namespace certifier::framework;
@@ -1885,13 +1885,13 @@ load_server_certs_and_key(X509 *       root_cert,
       <= 0)
   {
     printf("load_server_certs_and_key: SSL_CTX_use_cert_and_key failed\n");
-#ifdef DEBUG
+#  ifdef DEBUG
     printf("cert:\n");
     X509_print_fp(stdout, x509_auth_key_cert);
     printf("key:\n");
     print_key(private_key);
     printf("\n");
-#endif
+#  endif
     return false;
   }
 #endif
@@ -1907,7 +1907,7 @@ load_server_certs_and_key(X509 *       root_cert,
 #else
   SSL_CTX_add1_to_CA_list(ctx, root_cert);
 
-#ifdef DEBUG
+#  ifdef DEBUG
   const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ctx);
   printf("CA names to offer\n");
   if (ca_list != nullptr) {
@@ -1916,7 +1916,7 @@ load_server_certs_and_key(X509 *       root_cert,
       print_cn_name(name);
     }
   }
-#endif
+#  endif
 #endif  // BORING_SSL
 
   return true;
@@ -2205,7 +2205,7 @@ certifier::framework::secure_authenticated_channel::load_client_certs_and_key()
 
   SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
 
-#ifdef DEBUG
+#  ifdef DEBUG
   const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ssl_ctx_);
   printf("CA names to offer\n");
   if (ca_list != nullptr) {
@@ -2214,8 +2214,8 @@ certifier::framework::secure_authenticated_channel::load_client_certs_and_key()
       print_cn_name(name);
     }
   }
-#endif  // DEBUG
-#endif  // BORING_SSL
+#  endif  // DEBUG
+#endif    // BORING_SSL
   return true;
 }
 

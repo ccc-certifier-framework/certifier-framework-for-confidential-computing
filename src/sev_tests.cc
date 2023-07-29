@@ -18,7 +18,7 @@
 
 #ifdef SEV_SNP
 
-#include "attestation.h"
+#  include "attestation.h"
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -132,10 +132,10 @@ test_sev(bool print_all)
     return false;
   }
 
-#ifdef SEV_DUMMY_GUEST
+#  ifdef SEV_DUMMY_GUEST
   extern EVP_PKEY *get_simulated_vcek_key();
   EVP_PKEY *       verify_pkey = get_simulated_vcek_key();
-#else
+#  else
   extern int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert);
   extern EVP_PKEY *sev_get_vcek_pubkey(X509 * x509_vcek);
   X509 *           x509_vcek;
@@ -145,7 +145,7 @@ test_sev(bool print_all)
     return false;
   }
   EVP_PKEY *verify_pkey = sev_get_vcek_pubkey(x509_vcek);
-#endif /* SEV_DUMMY_GUEST */
+#  endif /* SEV_DUMMY_GUEST */
 
   if (verify_pkey == nullptr)
     return false;
@@ -203,7 +203,7 @@ test_sev(bool print_all)
 // new platform test
 // ---------------------------------------------------------------------------------
 
-#if 0
+#  if 0
 // This was scaffolding for an earlier version and is no longer needed
 bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
       int ud_size, byte* ud_data, int* size_out, byte* out) {
@@ -271,7 +271,7 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
 
   return true;
 }
-#endif /* 0 dead-code scaffolding for an earlier version */
+#  endif /* 0 dead-code scaffolding for an earlier version */
 
 bool
 construct_sev_platform_evidence(const string &     purpose,
@@ -348,14 +348,14 @@ construct_sev_platform_evidence(const string &     purpose,
 
   int  size_out = 16000;
   byte out[size_out];
-#if 1
+#  if 1
   if (!Attest(enclave_type,
               serialized_ud.size(),
               (byte *)serialized_ud.data(),
               &size_out,
               out))
   {
-#else
+#  else
   if (!simulated_sev_Attest(vcek,
                             enclave_type,
                             serialized_ud.size(),
@@ -363,7 +363,7 @@ construct_sev_platform_evidence(const string &     purpose,
                             &size_out,
                             out))
   {
-#endif /* 1 */
+#  endif /* 1 */
 
     printf("construct_sev_platform_evidence: Attest failed\n");
     return false;
@@ -428,7 +428,7 @@ test_sev_platform_certify(const bool    debug_print,
     return false;
   }
 
-#if 1
+#  if 1
   //  For simulated SNP, we don't have real certs so we make some up.
 
   // Make ark, ask, vcek certs
@@ -558,7 +558,7 @@ test_sev_platform_certify(const bool    debug_print,
   if (!x509_to_asn1(x_vcek, &serialized_vcek_cert)) {
     return false;
   }
-#endif /* 1 */
+#  endif /* 1 */
 
   // construct evidence package
   string purpose("authentication");

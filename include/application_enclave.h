@@ -43,7 +43,7 @@ typedef unsigned char byte;
 using std::string;
 
 #ifndef _APPLICATION_ENCLAVE_H__
-#define _APPLICATION_ENCLAVE_H__
+#  define _APPLICATION_ENCLAVE_H__
 
 bool
 application_Init(const string &parent_enclave_type, int read_fd, int write_fd);

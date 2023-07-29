@@ -31,7 +31,7 @@ typedef unsigned char byte;
 #endif
 
 #ifndef __KEYSTONE_API__
-#define __KEYSTONE_API__
+#  define __KEYSTONE_API__
 bool
 keystone_Init(const int cert_size, byte *cert);
 bool
@@ -51,15 +51,15 @@ keystone_Seal(int in_size, byte *in, int *size_out, byte *out);
 bool
 keystone_Unseal(int in_size, byte *in, int *size_out, byte *out);
 
-#ifdef KEYSTONE_PRESENT
-#include "verifier/report.h"
-#else
+#  ifdef KEYSTONE_PRESENT
+#    include "verifier/report.h"
+#  else
 // BEGIN copied Keys.hpp
-#define ATTEST_DATA_MAXLEN 1024
-#define MDSIZE             64
-#define SIGNATURE_SIZE     144
+#    define ATTEST_DATA_MAXLEN 1024
+#    define MDSIZE             64
+#    define SIGNATURE_SIZE     144
 // it was #define SIGNATURE_SIZE 64
-#define PUBLIC_KEY_SIZE    64
+#    define PUBLIC_KEY_SIZE    64
 // END copied Keys.hpp
 
 // BEGIN copied Report.hpp
@@ -95,6 +95,6 @@ struct report_t {
   byte                    dev_public_key[PUBLIC_KEY_SIZE];
 };
 // END copied Report.hpp
-#endif
+#  endif
 
 #endif

@@ -16,7 +16,7 @@
 #include "certifier.h"
 #include "support.h"
 #ifdef SEV_SNP
-#include "sev-snp/attestation.h"
+#  include "sev-snp/attestation.h"
 #endif
 
 using namespace certifier::framework;
