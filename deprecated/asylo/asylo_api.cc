@@ -80,8 +80,12 @@ bool asylo_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   return true;
 }
 
-bool asylo_Verify(int claims_size, byte* claims, int* user_data_out_size,
-                  byte* user_data_out, int* size_out, byte* out) {
+bool asylo_Verify(int   claims_size,
+                  byte* claims,
+                  int*  user_data_out_size,
+                  byte* user_data_out,
+                  int*  size_out,
+                  byte* out) {
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
   int  assertion_size = 0;

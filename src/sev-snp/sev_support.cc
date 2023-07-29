@@ -68,9 +68,12 @@ static void reverse_bytes(uint8_t *buffer, size_t size) {
 
 // Extract r and s from an ecdsa signature.
 // Based on get_ecdsa_sig_rs_bytes() in test/acvp_test.c from OpenSSL.
-static int get_ecdsa_sig_rs_bytes(const unsigned char *sig, size_t sig_len,
-                                  unsigned char *r, unsigned char *s,
-                                  size_t *rlen, size_t *slen) {
+static int get_ecdsa_sig_rs_bytes(const unsigned char *sig,
+                                  size_t               sig_len,
+                                  unsigned char *      r,
+                                  unsigned char *      s,
+                                  size_t *             rlen,
+                                  size_t *             slen) {
   int            rc   = -EXIT_FAILURE;
   unsigned char *rbuf = NULL, *sbuf = NULL;
   size_t         r1_len, s1_len;
@@ -137,7 +140,9 @@ out:
   return rc;
 }
 
-int sev_ecdsa_sign(const void *msg, size_t msg_size, EVP_PKEY *key,
+int sev_ecdsa_sign(const void *         msg,
+                   size_t               msg_size,
+                   EVP_PKEY *           key,
                    union sev_ecdsa_sig *sig) {
   int           rc            = -EXIT_FAILURE;
   EVP_MD_CTX *  md_ctx        = NULL;
@@ -223,7 +228,9 @@ out:
   return rc;
 }
 
-int sev_ecdsa_verify(const void *digest, size_t digest_size, EVP_PKEY *key,
+int sev_ecdsa_verify(const void *         digest,
+                     size_t               digest_size,
+                     EVP_PKEY *           key,
                      union sev_ecdsa_sig *sig) {
   int        rc         = -EXIT_FAILURE;
   bool       is_valid   = false;
@@ -281,8 +288,9 @@ struct sev_key_options {
   bool              do_root_key;
 };
 
-int sev_request_key(struct sev_key_options *options, uint8_t *key,
-                    size_t size) {
+int sev_request_key(struct sev_key_options *options,
+                    uint8_t *               key,
+                    size_t                  size) {
   int                            rc = EXIT_FAILURE;
   int                            fd = -1;
   struct snp_derived_key_req     req;
@@ -451,7 +459,8 @@ bool sev_verify_report(EVP_PKEY *key, struct attestation_report *report) {
   return true;
 }
 
-int sev_get_report(const uint8_t *data, size_t data_size,
+int sev_get_report(const uint8_t *            data,
+                   size_t                     data_size,
                    struct attestation_report *report) {
   int                            rc = EXIT_FAILURE;
   int                            fd = -1;
@@ -602,7 +611,8 @@ bool      kdf(int key_len, byte *key, int iter, int out_size, byte *out) {
  *   FIELD_FAMILY_ID_MASK | FIELD_MEASUREMENT_MASK
  *   FIELD_GUEST_SVN_MASK | FIELD_TCB_VERSION_MASK
  */
-bool sev_get_final_keys(int final_key_size, byte *final_key,
+bool sev_get_final_keys(int      final_key_size,
+                        byte *   final_key,
                         bool     root_key = false,
                         uint64_t fields   = FIELD_MEASUREMENT_MASK |
                                           FIELD_POLICY_MASK) {
@@ -658,7 +668,9 @@ bool sev_Unseal(int in_size, byte *in, int *size_out, byte *out) {
   return true;
 }
 
-bool sev_Attest(int what_to_say_size, byte *what_to_say, int *size_out,
+bool sev_Attest(int   what_to_say_size,
+                byte *what_to_say,
+                int * size_out,
                 byte *out) {
   struct attestation_report report;
 
@@ -699,9 +711,11 @@ bool sev_Attest(int what_to_say_size, byte *what_to_say, int *size_out,
   return true;
 }
 
-bool verify_sev_Attest(EVP_PKEY *key, int size_sev_attestation,
-                       byte *the_attestation, int *size_measurement,
-                       byte *measurement) {
+bool verify_sev_Attest(EVP_PKEY *key,
+                       int       size_sev_attestation,
+                       byte *    the_attestation,
+                       int *     size_measurement,
+                       byte *    measurement) {
   string at_str;
   at_str.assign((char *)the_attestation, size_sev_attestation);
   sev_attestation_message sev_att;
@@ -900,7 +914,8 @@ int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
   return EXIT_SUCCESS;
 }
 
-static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert,
+static bool x509_validate_signature(X509 *child_cert,
+                                    X509 *intermediate_cert,
                                     X509 *parent_cert) {
   bool            ret       = false;
   X509_STORE *    store     = NULL;
@@ -967,7 +982,8 @@ static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert,
   return ret;
 }
 
-int sev_validate_vcek_cert_chain(X509 *x509_vcek, X509 *x509_ask,
+int sev_validate_vcek_cert_chain(X509 *x509_vcek,
+                                 X509 *x509_ask,
                                  X509 *x509_ark) {
   EVP_PKEY *vcek_pub_key = NULL;
   int       ret          = EXIT_FAILURE;

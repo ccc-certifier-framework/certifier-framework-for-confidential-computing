@@ -23,13 +23,15 @@
 #include "support.h"
 
 DEFINE_bool(print_all, false, "verbose");
-DEFINE_string(trusted_measurements_file, "binary_trusted_measurements_file.bin",
+DEFINE_string(trusted_measurements_file,
+              "binary_trusted_measurements_file.bin",
               "binary_trusted_measurements_file");
 DEFINE_bool(read_measurement_file, false, "read measurement file");
 
 DEFINE_string(policy_key_file_name, "policy_key_file.bin", "policy_key file");
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin",
+DEFINE_string(platform_attest_endorsement,
+              "platform_attest_endorsement.bin",
               "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "example_app.measurement", "measurement");
@@ -165,12 +167,15 @@ TEST(test_sev_request, test_sev_request) {
 
 TEST(test_sev, test_sev) { EXPECT_TRUE(test_sev(FLAGS_print_all)); }
 
-extern bool test_sev_platform_certify(
-    const bool debug_print, const string& policy_file_name,
-    const string& policy_key_file, const string& ark_key_file_name,
-    const string& ask_key_file_name, const string& vcek_key_file_name,
-    const string& ark_cert_file_name, const string& ask_cert_file_name,
-    const string& vcek_cert_file_name);
+extern bool test_sev_platform_certify(const bool    debug_print,
+                                      const string& policy_file_name,
+                                      const string& policy_key_file,
+                                      const string& ark_key_file_name,
+                                      const string& ask_key_file_name,
+                                      const string& vcek_key_file_name,
+                                      const string& ark_cert_file_name,
+                                      const string& ask_cert_file_name,
+                                      const string& vcek_cert_file_name);
 
 TEST(platform_certify, test_platform_certify) {
   if (FLAGS_policy_file_name == "") {

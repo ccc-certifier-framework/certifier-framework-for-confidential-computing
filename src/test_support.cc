@@ -108,7 +108,9 @@ bool read_trusted_binary_measurements_and_sign(string&      file_name,
   return true;
 }
 
-bool construct_keys(string key_name, string format, key_message* public_key,
+bool construct_keys(string       key_name,
+                    string       format,
+                    key_message* public_key,
                     key_message* private_key) {
   if (!make_certifier_rsa_key(2048, private_key))
     return false;
@@ -121,10 +123,15 @@ bool construct_keys(string key_name, string format, key_message* public_key,
 }
 
 bool construct_standard_evidence_package(
-    string& enclave_type, bool init_measurements, string& file_name,
-    string& evidence_descriptor, signed_claim_sequence* trusted_platforms,
-    signed_claim_sequence* trusted_measurements, key_message* policy_key,
-    key_message* policy_pk, evidence_package* evp) {
+    string&                enclave_type,
+    bool                   init_measurements,
+    string&                file_name,
+    string&                evidence_descriptor,
+    signed_claim_sequence* trusted_platforms,
+    signed_claim_sequence* trusted_measurements,
+    key_message*           policy_key,
+    key_message*           policy_pk,
+    evidence_package*      evp) {
   string policy_key_name("policy-key");
   string key_format("vse-key");
   if (!construct_keys(policy_key_name, key_format, policy_pk, policy_key))
@@ -532,8 +539,10 @@ bool construct_standard_evidence_package(
   return true;
 }
 
-bool test__local_certify(string& enclave_type, bool init_from_file,
-                         string& file_name, string& evidence_descriptor) {
+bool test__local_certify(string& enclave_type,
+                         bool    init_from_file,
+                         string& file_name,
+                         string& evidence_descriptor) {
   string enclave_id("test-enclave");
 
   evidence_package evp;
@@ -628,10 +637,15 @@ bool test_partial_local_certify(bool print_all) {
 // constrained delegation test
 
 bool construct_standard_constrained_evidence_package(
-    string& enclave_type, bool init_measurements, string& file_name,
-    string& evidence_descriptor, signed_claim_sequence* trusted_platforms,
-    signed_claim_sequence* trusted_measurements, key_message* policy_key,
-    key_message* policy_pk, evidence_package* evp) {
+    string&                enclave_type,
+    bool                   init_measurements,
+    string&                file_name,
+    string&                evidence_descriptor,
+    signed_claim_sequence* trusted_platforms,
+    signed_claim_sequence* trusted_measurements,
+    key_message*           policy_key,
+    key_message*           policy_pk,
+    evidence_package*      evp) {
   string policy_key_name("policy-key");
   string key_format("vse-key");
   if (!construct_keys(policy_key_name, key_format, policy_pk, policy_key))
@@ -1053,8 +1067,10 @@ bool construct_standard_constrained_evidence_package(
   return true;
 }
 
-bool test__new_local_certify(string& enclave_type, bool init_from_file,
-                             string& file_name, string& evidence_descriptor) {
+bool test__new_local_certify(string& enclave_type,
+                             bool    init_from_file,
+                             string& file_name,
+                             string& evidence_descriptor) {
   string enclave_id("test-enclave");
 
   evidence_package evp;

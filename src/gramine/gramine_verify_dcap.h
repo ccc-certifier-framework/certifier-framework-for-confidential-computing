@@ -63,7 +63,8 @@ static const char* sgx_ql_qv_result_to_str(
 }
 
 int (*sgx_qv_get_quote_supplemental_data_size)(uint32_t* p_data_size);
-int (*sgx_qv_verify_quote)(const uint8_t* p_quote, uint32_t quote_size,
+int (*sgx_qv_verify_quote)(const uint8_t*      p_quote,
+                           uint32_t            quote_size,
                            void*               p_quote_collateral,
                            const time_t        expiration_check_date,
                            uint32_t*           p_collateral_expiration_status,

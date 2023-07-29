@@ -61,8 +61,10 @@ static std::string enclave_type;
 cc_trust_data* app_trust_data = nullptr;
 
 static bool simulator_initialized = false;
-bool        test_local_certify(string& enclave_type, bool init_from_file,
-                               string& file_name, string& evidence_descriptor);
+bool        test_local_certify(string& enclave_type,
+                               bool    init_from_file,
+                               string& file_name,
+                               string& evidence_descriptor);
 
 bool        trust_data_initialized = false;
 key_message privatePolicyKey;
@@ -294,8 +296,10 @@ void server_application(secure_authenticated_channel& channel) {
   connected = true;
 }
 
-void asylo_server_dispatch(const string& host_name, int port,
-                           string& asn1_root_cert, key_message& private_key,
+void asylo_server_dispatch(const string& host_name,
+                           int           port,
+                           string&       asn1_root_cert,
+                           key_message&  private_key,
                            const string& private_key_cert,
                            void (*func)(secure_authenticated_channel&)) {
   SSL_load_error_strings();

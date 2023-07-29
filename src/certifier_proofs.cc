@@ -134,8 +134,9 @@ void predicate_dominance::print_descendants(int indent) {
   }
 }
 
-bool dominates(predicate_dominance& root, const string& parent,
-               const string& descendant) {
+bool dominates(predicate_dominance& root,
+               const string&        parent,
+               const string&        descendant) {
   if (parent == descendant)
     return true;
   predicate_dominance* pn = root.find_node(parent);
@@ -254,8 +255,9 @@ bool get_vse_clause_from_signed_claim(const signed_claim_message& scm,
 }
 
 bool get_signed_measurement_claim_from_trusted_list(
-    string& expected_measurement, signed_claim_sequence& trusted_measurements,
-    signed_claim_message* claim) {
+    string&                expected_measurement,
+    signed_claim_sequence& trusted_measurements,
+    signed_claim_message*  claim) {
   for (int i = 0; i < trusted_measurements.claims_size(); i++) {
     vse_clause c;
     if (!get_vse_clause_from_signed_claim(trusted_measurements.claims(i), &c)) {
@@ -299,8 +301,9 @@ bool get_signed_measurement_claim_from_trusted_list(
 }
 
 bool get_signed_platform_claim_from_trusted_list(
-    const key_message& expected_key, signed_claim_sequence& trusted_platforms,
-    signed_claim_message* claim) {
+    const key_message&     expected_key,
+    signed_claim_sequence& trusted_platforms,
+    signed_claim_message*  claim) {
   for (int i = 0; i < trusted_platforms.claims_size(); i++) {
     vse_clause c;
     if (!get_vse_clause_from_signed_claim(trusted_platforms.claims(i), &c)) {
@@ -387,8 +390,9 @@ bool make_attestation_user_data(const string&          enclave_type,
   return true;
 }
 
-bool construct_what_to_say(string& enclave_type, key_message& enclave_pk,
-                           string* what_to_say) {
+bool construct_what_to_say(string&      enclave_type,
+                           key_message& enclave_pk,
+                           string*      what_to_say) {
   if (enclave_type != "simulated-enclave" &&
       enclave_type != "application-enclave" && enclave_type != "sev-enclave" &&
       enclave_type != "oe-enclave" && enclave_type != "asylo-enclave" &&
@@ -409,9 +413,11 @@ bool construct_what_to_say(string& enclave_type, key_message& enclave_pk,
 }
 
 // type is usually "vse-attestation-report"
-bool sign_report(const string& type, const string& to_be_signed,
-                 const string& signing_alg, const key_message& signing_key,
-                 string* serialized_signed_report) {
+bool sign_report(const string&      type,
+                 const string&      to_be_signed,
+                 const string&      signing_alg,
+                 const key_message& signing_key,
+                 string*            serialized_signed_report) {
   signed_report report;
   key_message   public_signing_alg;
   if (!private_key_to_public_key(signing_key, &public_signing_alg)) {
@@ -529,7 +535,8 @@ bool sign_report(const string& type, const string& to_be_signed,
 }
 
 // type is usually "signed-vse-attestation-report"
-bool verify_report(string& type, string& serialized_signed_report,
+bool verify_report(string&            type,
+                   string&            serialized_signed_report,
                    const key_message& signer_key) {
   signed_report sr;
   if (!sr.ParseFromString(serialized_signed_report)) {
@@ -858,8 +865,9 @@ bool get_platform_from_sev_attest(const sev_attestation_message& sev_att,
 }
 
 bool add_vse_proved_statements_from_sev_attest(
-    const sev_attestation_message& sev_att, const key_message& vcek_key,
-    proved_statements* already_proved) {
+    const sev_attestation_message& sev_att,
+    const key_message&             vcek_key,
+    proved_statements*             already_proved) {
   properties props;
   if (!get_properties_from_sev_attest(sev_att, &props)) {
     printf("add_vse_proved_statements_from_sev_attest: Can't get properties\n");
@@ -975,7 +983,8 @@ const int max_key_depth        = 30;
 const int max_measurement_size = 512;
 const int max_user_data_size   = 4096;
 
-bool init_proved_statements(key_message& pk, evidence_package& evp,
+bool init_proved_statements(key_message&       pk,
+                            evidence_package&  evp,
                             proved_statements* already_proved) {
   cert_keys_seen_list seen_keys_list(max_key_depth);
   // verify already signed assertions, converting to vse_clause
@@ -1502,8 +1511,10 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
 // R1: If measurement or environment is-trusted and key1 speaks-for measurement
 // or environment then
 //    key1 is-trusted-for-authentication.
-bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
-                   const vse_clause& c2, const vse_clause& conclusion) {
+bool verify_rule_1(predicate_dominance& dom_tree,
+                   const vse_clause&    c1,
+                   const vse_clause&    c2,
+                   const vse_clause&    conclusion) {
   // Make sure clauses are in the right form.
   if (!c1.has_subject() || !c1.has_verb())
     return false;
@@ -1538,14 +1549,18 @@ bool verify_rule_1(predicate_dominance& dom_tree, const vse_clause& c1,
 
 // R2: If key2 speaks-for key1 and key3 speaks-for key2 then key3 speaks-for
 // key1
-bool verify_rule_2(predicate_dominance& dom_tree, const vse_clause& c1,
-                   const vse_clause& c2, const vse_clause& conclusion) {
+bool verify_rule_2(predicate_dominance& dom_tree,
+                   const vse_clause&    c1,
+                   const vse_clause&    c2,
+                   const vse_clause&    conclusion) {
   return false;
 }
 
 // R3: If entity is-trusted and entity says X, then X is true
-bool verify_rule_3(predicate_dominance& dom_tree, const vse_clause& c1,
-                   const vse_clause& c2, const vse_clause& conclusion) {
+bool verify_rule_3(predicate_dominance& dom_tree,
+                   const vse_clause&    c1,
+                   const vse_clause&    c2,
+                   const vse_clause&    conclusion) {
   if (!c1.has_subject() || !c1.has_verb())
     return false;
   if (c1.has_object() || c1.has_clause())
@@ -1565,16 +1580,20 @@ bool verify_rule_3(predicate_dominance& dom_tree, const vse_clause& c1,
 }
 
 // R4: If key2 speaks-for key1 and key1 is-trustedXXX then key2 is-trustedXXX
-bool verify_rule_4(predicate_dominance& dom_tree, const vse_clause& c1,
-                   const vse_clause& c2, const vse_clause& conclusion) {
+bool verify_rule_4(predicate_dominance& dom_tree,
+                   const vse_clause&    c1,
+                   const vse_clause&    c2,
+                   const vse_clause&    conclusion) {
   return false;
 }
 
 // R5: If key1 is-trustedXXX and key1 says key2 is-trustedYYY then then key2
 // is-trustedYYY
 //    provided is-trustedXXX dominates is-trustedYYY
-bool verify_rule_5(predicate_dominance& dom_tree, const vse_clause& c1,
-                   const vse_clause& c2, const vse_clause& conclusion) {
+bool verify_rule_5(predicate_dominance& dom_tree,
+                   const vse_clause&    c1,
+                   const vse_clause&    c2,
+                   const vse_clause&    conclusion) {
   if (!c1.has_subject() || !c1.has_verb())
     return false;
   if (c1.has_object() || c1.has_clause())
@@ -1602,8 +1621,10 @@ bool verify_rule_5(predicate_dominance& dom_tree, const vse_clause& c1,
 // R6: if key1 is-trustedXXX and key1 says Y then Y
 //    provided is-trustedXXX dominates is-trusted-for-attestation
 //    see possible limitation note below
-bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
-                   const vse_clause& c2, const vse_clause& conclusion) {
+bool verify_rule_6(predicate_dominance& dom_tree,
+                   const vse_clause&    c1,
+                   const vse_clause&    c2,
+                   const vse_clause&    conclusion) {
   if (!c1.has_subject() || !c1.has_verb())
     return false;
   if (c1.has_object() || c1.has_clause())
@@ -1646,8 +1667,10 @@ bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
 //  key2 speaks-for measurement or environment then
 //  key2 is-trusted-for-attestation
 //      provided is-trustedXXX dominates is-trusted-for-attestation
-bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
-                   const vse_clause& c2, const vse_clause& conclusion) {
+bool verify_rule_7(predicate_dominance& dom_tree,
+                   const vse_clause&    c1,
+                   const vse_clause&    c2,
+                   const vse_clause&    conclusion) {
   // Make sure clauses are in the right form.
   if (!c1.has_subject() || !c1.has_verb())
     return false;
@@ -1682,8 +1705,10 @@ bool verify_rule_7(predicate_dominance& dom_tree, const vse_clause& c1,
 //      has-trusted-platform-property then environment[platform, measurement]
 //        environment-platform-is-trusted
 //      provided platform properties satisfy platform template
-bool verify_rule_8(predicate_dominance& dom_tree, const vse_clause& c1,
-                   const vse_clause& c2, const vse_clause& conclusion) {
+bool verify_rule_8(predicate_dominance& dom_tree,
+                   const vse_clause&    c1,
+                   const vse_clause&    c2,
+                   const vse_clause&    conclusion) {
   if (!c1.has_subject() || !c1.has_verb())
     return false;
   if (!c2.has_subject() || !c2.has_verb())
@@ -1715,8 +1740,10 @@ bool verify_rule_8(predicate_dominance& dom_tree, const vse_clause& c1,
 // R9: If environment[platform, measurement] is-environment AND measurement
 // is-trusted then
 //        environment[platform, measurement] environment-measurement is-trusted
-bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
-                   const vse_clause& c2, const vse_clause& conclusion) {
+bool verify_rule_9(predicate_dominance& dom_tree,
+                   const vse_clause&    c1,
+                   const vse_clause&    c2,
+                   const vse_clause&    conclusion) {
   if (!c1.has_subject() || !c1.has_verb())
     return false;
   if (!c2.has_subject() || !c2.has_verb())
@@ -1746,8 +1773,10 @@ bool verify_rule_9(predicate_dominance& dom_tree, const vse_clause& c1,
 // AND
 //        environment[platform, measurement] environment-measurement-is-trusted
 //        then environment[platform, measurement] is-trusted
-bool verify_rule_10(predicate_dominance& dom_tree, const vse_clause& c1,
-                    const vse_clause& c2, const vse_clause& conclusion) {
+bool verify_rule_10(predicate_dominance& dom_tree,
+                    const vse_clause&    c1,
+                    const vse_clause&    c2,
+                    const vse_clause&    conclusion) {
   if (!c1.has_subject() || !c1.has_verb())
     return false;
   if (!c2.has_subject() || !c2.has_verb())
@@ -1801,9 +1830,11 @@ bool verify_external_proof_step(predicate_dominance& dom_tree,
   return false;
 }
 
-bool verify_internal_proof_step(predicate_dominance& dom_tree, vse_clause s1,
-                                vse_clause s2, vse_clause conclude,
-                                int rule_to_apply) {
+bool verify_internal_proof_step(predicate_dominance& dom_tree,
+                                vse_clause           s1,
+                                vse_clause           s2,
+                                vse_clause           conclude,
+                                int                  rule_to_apply) {
   if (rule_to_apply < 1 || rule_to_apply > 10)
     return false;
   switch (rule_to_apply) {
@@ -1833,9 +1864,11 @@ bool verify_internal_proof_step(predicate_dominance& dom_tree, vse_clause s1,
   return true;
 }
 
-bool verify_proof(key_message& policy_pk, vse_clause& to_prove,
-                  predicate_dominance& dom_tree, proof* the_proof,
-                  proved_statements* are_proved) {
+bool verify_proof(key_message&         policy_pk,
+                  vse_clause&          to_prove,
+                  predicate_dominance& dom_tree,
+                  proof*               the_proof,
+                  proved_statements*   are_proved) {
   // verify proof
   for (int i = 0; i < the_proof->steps_size(); i++) {
     bool success;
@@ -1873,8 +1906,10 @@ bool verify_proof(key_message& policy_pk, vse_clause& to_prove,
 // ---------------------------------------------------------------------------------------
 
 bool add_newfacts_for_sev_attestation(
-    key_message& policy_pk, string& serialized_ark_cert,
-    string& serialized_ask_cert, string& serialized_vcek_cert,
+    key_message&           policy_pk,
+    string&                serialized_ark_cert,
+    string&                serialized_ask_cert,
+    string&                serialized_vcek_cert,
     signed_claim_sequence& trusted_platforms,
     signed_claim_sequence& trusted_measurements,
     proved_statements*     already_proved) {
@@ -1936,7 +1971,8 @@ bool add_newfacts_for_sev_attestation(
 }
 
 bool add_newfacts_for_sdk_platform_attestation(
-    key_message& policy_pk, signed_claim_sequence& trusted_platforms,
+    key_message&           policy_pk,
+    signed_claim_sequence& trusted_platforms,
     signed_claim_sequence& trusted_measurements,
     proved_statements*     already_proved) {
   // At this point, the already_proved should be
@@ -1981,7 +2017,8 @@ bool add_newfacts_for_sdk_platform_attestation(
 }
 
 bool add_new_facts_for_abbreviatedplatformattestation(
-    key_message& policy_pk, signed_claim_sequence& trusted_platforms,
+    key_message&           policy_pk,
+    signed_claim_sequence& trusted_platforms,
     signed_claim_sequence& trusted_measurements,
     proved_statements*     already_proved) {
   // At this point, the already_proved should be
@@ -2034,7 +2071,8 @@ bool add_new_facts_for_abbreviatedplatformattestation(
 bool construct_proof_from_sev_evidence(key_message&       policy_pk,
                                        const string&      purpose,
                                        proved_statements* already_proved,
-                                       vse_clause* to_prove, proof* pf) {
+                                       vse_clause*        to_prove,
+                                       proof*             pf) {
   // At this point, the already_proved should be
   //    0: "policyKey is-trusted"
   //    1: "The ARK-key says the ARK-key is-trusted-for-attestation"
@@ -2199,7 +2237,8 @@ bool construct_proof_from_sev_evidence(key_message&       policy_pk,
 bool construct_proof_from_sdk_evidence(key_message&       policy_pk,
                                        const string&      purpose,
                                        proved_statements* already_proved,
-                                       vse_clause* to_prove, proof* pf) {
+                                       vse_clause*        to_prove,
+                                       proof*             pf) {
   // At this point, the already_proved should be
   //    "policyKey is-trusted"
   //    "platformKey says attestationKey is-trusted
@@ -2243,7 +2282,8 @@ bool construct_proof_from_sdk_evidence(key_message&       policy_pk,
 bool construct_proof_from_full_vse_evidence(key_message&       policy_pk,
                                             const string&      purpose,
                                             proved_statements* already_proved,
-                                            vse_clause* to_prove, proof* pf) {
+                                            vse_clause*        to_prove,
+                                            proof*             pf) {
   // At this point, the already_proved should be
   //      "policyKey is-trusted"
   //      "platformKey says attestKey is-trusted-for-attestation
@@ -2335,13 +2375,15 @@ bool construct_proof_from_full_vse_evidence(key_message&       policy_pk,
   return true;
 }
 
-bool construct_proof_from_request(const string& evidence_descriptor,
-                                  key_message& policy_pk, const string& purpose,
+bool construct_proof_from_request(const string&          evidence_descriptor,
+                                  key_message&           policy_pk,
+                                  const string&          purpose,
                                   signed_claim_sequence& trusted_platforms,
                                   signed_claim_sequence& trusted_measurements,
                                   evidence_package&      evp,
                                   proved_statements*     already_proved,
-                                  vse_clause* to_prove, proof* pf) {
+                                  vse_clause*            to_prove,
+                                  proof*                 pf) {
   if (!init_proved_statements(policy_pk, evp, already_proved)) {
     printf("init_proved_statements returned false\n");
     return false;
@@ -2434,8 +2476,9 @@ bool construct_proof_from_request(const string& evidence_descriptor,
 bool validate_evidence(const string&          evidence_descriptor,
                        signed_claim_sequence& trusted_platforms,
                        signed_claim_sequence& trusted_measurements,
-                       const string& purpose, evidence_package& evp,
-                       key_message& policy_pk) {
+                       const string&          purpose,
+                       evidence_package&      evp,
+                       key_message&           policy_pk) {
   proved_statements   already_proved;
   vse_clause          to_prove;
   proof               pf;
@@ -2507,10 +2550,12 @@ bool validate_evidence(const string&          evidence_descriptor,
 //  New style proofs with platform information
 // -------------------------------------------------------------------
 
-bool verify_proof_from_array(key_message& policy_pk, vse_clause& to_prove,
+bool verify_proof_from_array(key_message&         policy_pk,
+                             vse_clause&          to_prove,
                              predicate_dominance& dom_tree,
-                             proved_statements* are_proved, int num_steps,
-                             proof_step* steps) {
+                             proved_statements*   are_proved,
+                             int                  num_steps,
+                             proof_step*          steps) {
   // verify proof
   for (int i = 0; i < num_steps; i++) {
     bool success;
@@ -2555,9 +2600,13 @@ const int max_steps_in_sev_plat_proof = 20;
 // steps." Unfortunately, protobufs had a bug and won't add more than 9 elements
 // to the repeated field, so we use an array known to be large enough.
 bool construct_proof_from_sev_evidence_with_plat(
-    const string& evidence_descriptor, key_message& policy_pk,
-    const string& purpose, proved_statements* already_proved,
-    vse_clause* to_prove, proof_step* pss, int* num) {
+    const string&      evidence_descriptor,
+    key_message&       policy_pk,
+    const string&      purpose,
+    proved_statements* already_proved,
+    vse_clause*        to_prove,
+    proof_step*        pss,
+    int*               num) {
   proof_step* ps         = nullptr;
   int         step_count = 0;
 
@@ -2876,8 +2925,9 @@ bool construct_proof_from_sev_evidence_with_plat(
   return true;
 }
 
-bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
-                 proved_statements* already_proved) {
+bool init_policy(signed_claim_sequence& policy,
+                 key_message&           policy_pk,
+                 proved_statements*     already_proved) {
   for (int i = 0; i < policy.claims_size(); i++) {
 #if 1
     // This is a little wasteful since we parse it in
@@ -3022,8 +3072,9 @@ bool filter_sev_policy(const sev_attestation_message& sev_att,
 // Use policy statements for init
 bool validate_evidence_from_policy(const string&          evidence_descriptor,
                                    signed_claim_sequence& policy,
-                                   const string& purpose, evidence_package& evp,
-                                   key_message& policy_pk) {
+                                   const string&          purpose,
+                                   evidence_package&      evp,
+                                   key_message&           policy_pk) {
   proved_statements   already_proved;
   vse_clause          to_prove;
   predicate_dominance predicate_dominance_root;

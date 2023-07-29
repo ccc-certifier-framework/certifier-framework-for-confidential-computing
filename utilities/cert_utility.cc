@@ -25,26 +25,32 @@ DEFINE_string(operation, "", "generate policy key and self-signed cert");
 
 DEFINE_string(policy_key_name, "policyKey", "key name");
 DEFINE_string(policy_key_type, "rsa-2048-private", "policy key type");
-DEFINE_string(policy_authority_name, "policyAuthority",
+DEFINE_string(policy_authority_name,
+              "policyAuthority",
               "policy authority name");
 DEFINE_string(policy_key_output_file, "policy_key_file.bin", "policy key file");
-DEFINE_string(policy_cert_output_file, "policy_cert_file.bin",
+DEFINE_string(policy_cert_output_file,
+              "policy_cert_file.bin",
               "policy cert file");
 
 DEFINE_string(platform_key_name, "platformKey", "key name");
 DEFINE_string(platform_key_type, "rsa-2048-private", "platform key type");
-DEFINE_string(platform_authority_name, "platformAuthority",
+DEFINE_string(platform_authority_name,
+              "platformAuthority",
               "platform authority name");
-DEFINE_string(platform_key_output_file, "platform_key_file.bin",
+DEFINE_string(platform_key_output_file,
+              "platform_key_file.bin",
               "platform key file");
 
 DEFINE_string(attest_key_name, "attestKey", "key name");
 DEFINE_string(attest_key_type, "rsa-2048-private", "attest key type");
 DEFINE_string(attest_key_output_file, "attest_key_file.bin", "attest key file");
-DEFINE_string(attest_authority_name, "attestAuthority",
+DEFINE_string(attest_authority_name,
+              "attestAuthority",
               "attest authority name");
 
-DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin",
+DEFINE_string(platform_attest_endorsement,
+              "platform_attest_endorsement.bin",
               "platform attest_endorsement platform key file");
 
 DEFINE_string(key_output_file, "output.bin", "output key file");

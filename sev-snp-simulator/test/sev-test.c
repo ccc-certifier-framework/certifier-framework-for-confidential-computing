@@ -182,8 +182,10 @@ exit:
   return rc;
 }
 
-static bool digest_sha384(const void *msg, size_t msg_len, uint8_t *digest,
-                          size_t digest_len) {
+static bool digest_sha384(const void *msg,
+                          size_t      msg_len,
+                          uint8_t *   digest,
+                          size_t      digest_len) {
   bool ret = false;
 
   do {
@@ -241,7 +243,8 @@ exit:
 }
 #endif
 
-int get_report(const uint8_t *data, size_t data_size,
+int get_report(const uint8_t *            data,
+               size_t                     data_size,
                struct attestation_report *report) {
   int                            rc = EXIT_FAILURE;
   int                            fd = -1;

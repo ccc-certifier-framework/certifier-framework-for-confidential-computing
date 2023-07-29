@@ -51,8 +51,10 @@ cc_trust_data*     app_trust_data = nullptr;
 
 static bool simulator_initialized   = false;
 static bool openenclave_initialized = false;
-bool        test_local_certify(string& enclave_type, bool init_from_file,
-                               string& file_name, string& evidence_descriptor);
+bool        test_local_certify(string& enclave_type,
+                               bool    init_from_file,
+                               string& file_name,
+                               string& evidence_descriptor);
 
 bool        trust_data_initialized = false;
 key_message privatePolicyKey;

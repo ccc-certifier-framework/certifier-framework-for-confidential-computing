@@ -23,9 +23,11 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-extern bool      verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation,
-                                   byte* the_attestation, int* size_measurement,
-                                   byte* measurement);
+extern bool      verify_sev_Attest(EVP_PKEY* key,
+                                   int       size_sev_attestation,
+                                   byte*     the_attestation,
+                                   int*      size_measurement,
+                                   byte*     measurement);
 extern EVP_PKEY* get_simulated_vcek_key();
 extern bool sev_verify_report(EVP_PKEY* key, struct attestation_report* report);
 
@@ -372,12 +374,15 @@ bool construct_sev_platform_evidence(const string&      purpose,
   return true;
 }
 
-bool test_sev_platform_certify(
-    const bool debug_print, const string& policy_file_name,
-    const string& policy_key_file, const string& ark_key_file_name,
-    const string& ask_key_file_name, const string& vcek_key_file_name,
-    const string& ark_cert_file_name, const string& ask_cert_file_name,
-    const string& vcek_cert_file_name) {
+bool test_sev_platform_certify(const bool    debug_print,
+                               const string& policy_file_name,
+                               const string& policy_key_file,
+                               const string& ark_key_file_name,
+                               const string& ask_key_file_name,
+                               const string& vcek_key_file_name,
+                               const string& ark_cert_file_name,
+                               const string& ask_cert_file_name,
+                               const string& vcek_cert_file_name) {
   string           enclave_type("sev-enclave");
   string           evidence_descriptor("sev-full-platform");
   string           enclave_id("test-enclave");

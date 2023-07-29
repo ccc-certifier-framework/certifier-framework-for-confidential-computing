@@ -36,7 +36,8 @@ using std::string;
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_bool(test_measurement, false, "init test measurement");
 DEFINE_string(in_file, "test.exe", "Input binary");
-DEFINE_string(out_file, "binary_trusted_measurements_file.bin",
+DEFINE_string(out_file,
+              "binary_trusted_measurements_file.bin",
               "binary_trusted_measurements_file");
 DEFINE_string(mrenclave, "", "Measurement Hex String");
 
@@ -83,7 +84,9 @@ bool read_file(string file_name, int* size, byte* data) {
   return true;
 }
 
-bool digest_message(const byte* message, int message_len, byte* digest,
+bool digest_message(const byte*  message,
+                    int          message_len,
+                    byte*        digest,
                     unsigned int digest_len) {
   EVP_MD_CTX* mdctx;
 

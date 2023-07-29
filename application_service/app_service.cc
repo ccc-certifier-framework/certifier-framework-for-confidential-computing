@@ -57,30 +57,36 @@ DEFINE_string(policy_host, "localhost", "address for policy server");
 DEFINE_int32(policy_port, 8123, "port for policy server");
 
 DEFINE_string(service_dir, "./service/", "directory for service data");
-DEFINE_string(service_policy_store, "policy_store.bin",
+DEFINE_string(service_policy_store,
+              "policy_store.bin",
               "policy store for service");
 
 DEFINE_string(server_app_host, "localhost", "address for application requests");
 DEFINE_int32(server_app_port, 8127, "port for application requests");
 
-DEFINE_string(run_policy, "all",
+DEFINE_string(run_policy,
+              "all",
               "what programs to run");  // "signed" is other possibility
 DEFINE_string(host_enclave_type, "simulated-enclave", "Primary enclave");
 
 // For simulated enclave only
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin",
+DEFINE_string(platform_attest_endorsement,
+              "platform_attest_endorsement.bin",
               "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "app_service.measurement", "measurement");
 
 DEFINE_string(guest_login_name, "jlm", "guest name");
 
-DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der",
+DEFINE_string(ark_cert_file,
+              "./service/milan_ark_cert.der",
               "ark cert file name");
-DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der",
+DEFINE_string(ask_cert_file,
+              "./service/milan_ask_cert.der",
               "ask cert file name");
-DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der",
+DEFINE_string(vcek_cert_file,
+              "./service/milan_vcek_cert.der",
               "vcek cert file name");
 
 //#define DEBUG

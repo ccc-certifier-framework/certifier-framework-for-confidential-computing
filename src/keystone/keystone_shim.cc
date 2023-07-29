@@ -60,8 +60,12 @@ bool keystone_get_fake_measurement(int* size, byte* measurement) {
   return true;
 }
 
-bool keystone_ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg,
-                       int* size_out, byte* out) {
+bool keystone_ecc_sign(const char* alg,
+                       EC_KEY*     key,
+                       int         size,
+                       byte*       msg,
+                       int*        size_out,
+                       byte*       out) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte         digest[len];
 
@@ -91,8 +95,12 @@ bool keystone_ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg,
   return true;
 }
 
-bool keystone_ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg,
-                         int size_sig, byte* sig) {
+bool keystone_ecc_verify(const char* alg,
+                         EC_KEY*     key,
+                         int         size,
+                         byte*       msg,
+                         int         size_sig,
+                         byte*       sig) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte         digest[len];
 
@@ -220,9 +228,12 @@ bool keystone_Init(const int cert_size, byte* cert) {
   return true;
 }
 
-bool keystone_Verify(const int what_to_say_size, byte* what_to_say,
-                     const int attestation_size, byte* attestation,
-                     int* measurement_out_size, byte* measurement_out) {
+bool keystone_Verify(const int what_to_say_size,
+                     byte*     what_to_say,
+                     const int attestation_size,
+                     byte*     attestation,
+                     int*      measurement_out_size,
+                     byte*     measurement_out) {
   assert(attestation_size == sizeof(struct report_t));
   struct report_t& report = *reinterpret_cast<struct report_t*>(attestation);
 
@@ -266,8 +277,10 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say,
   return true;
 }
 
-bool keystone_Attest(const int what_to_say_size, byte* what_to_say,
-                     int* attestation_size_out, byte* attestation_out) {
+bool keystone_Attest(const int what_to_say_size,
+                     byte*     what_to_say,
+                     int*      attestation_size_out,
+                     byte*     attestation_out) {
   int sz = (int)(sizeof(struct enclave_report_t) + sizeof(struct sm_report_t) +
                  PUBLIC_KEY_SIZE);
   *attestation_size_out = sz;
