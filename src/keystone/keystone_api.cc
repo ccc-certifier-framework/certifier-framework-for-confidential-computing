@@ -7,12 +7,12 @@ extern "C" {
 #include "crypto/aes.h"
 #include "verifier/report.h"
 #include "verifier/test_dev_key.h"
-#define assert(x)                        \
-  do {                                   \
-    if (!(x)) {                          \
-      printf("Custom assert failed.\n"); \
-      exit(17);                          \
-    }                                    \
+#define assert(x)                                                              \
+  do {                                                                         \
+    if (!(x)) {                                                                \
+      printf("Custom assert failed.\n");                                       \
+      exit(17);                                                                \
+    }                                                                          \
   } while (false)  // TODO: replace
 
 bool keystone_Init(const int cert_size, byte* cert) { return true; }

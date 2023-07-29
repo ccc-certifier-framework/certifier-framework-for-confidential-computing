@@ -23,7 +23,7 @@
 #define SNP_KEY_REQ_LABEL "gmsg-keyreq"
 
 #define MSG_KEY_REQ_ROOT_KEY_SELECT_SHIFT (0)
-#define MSG_KEY_REQ_ROOT_KEY_SELECT_MASK \
+#define MSG_KEY_REQ_ROOT_KEY_SELECT_MASK                                       \
   (1ull << (MSG_KEY_REQ_ROOT_KEY_SELECT_SHIFT))
 
 #define MSG_KEY_RSP_RESERVED_SIZE    (0x1F - 0x04 + 1)

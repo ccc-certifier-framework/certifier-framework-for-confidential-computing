@@ -8,7 +8,7 @@
 #define BITS_PER_BYTE (8)
 
 #define SECG_EC_P384_POINT_SIZE_BITS (384)
-#define SECG_EC_P384_POINT_SIZE \
+#define SECG_EC_P384_POINT_SIZE                                                \
   ((SECG_EC_P384_POINT_SIZE_BITS) / (BITS_PER_BYTE))
 
 struct ec_point_384 {

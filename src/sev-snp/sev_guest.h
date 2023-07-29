@@ -85,15 +85,15 @@ struct snp_ext_report_req {
 #define SNP_GUEST_REQ_IOC_TYPE 'S'
 
 /* Get SNP attestation report */
-#define SNP_GET_REPORT \
+#define SNP_GET_REPORT                                                         \
   _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x0, struct snp_guest_request_ioctl)
 
 /* Get a derived key from the root */
-#define SNP_GET_DERIVED_KEY \
+#define SNP_GET_DERIVED_KEY                                                    \
   _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x1, struct snp_guest_request_ioctl)
 
 /* Get SNP extended report as defined in the GHCB specification version 2. */
-#define SNP_GET_EXT_REPORT \
+#define SNP_GET_EXT_REPORT                                                     \
   _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x2, struct snp_guest_request_ioctl)
 
 #endif /* __UAPI_LINUX_SEV_GUEST_H_ */

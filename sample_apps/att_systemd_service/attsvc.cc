@@ -42,12 +42,12 @@ using namespace certifier::framework;
 #ifdef ATT_DEBUG
 #define ATT_LOG(priority, format, ...) printf(format "\n", ##__VA_ARGS__)
 #else
-#define ATT_LOG(priority, format, ...)                                     \
-  do {                                                                     \
-    openlog("VMware Attestation Service", LOG_CONS | LOG_PID | LOG_NDELAY, \
-            LOG_LOCAL1);                                                   \
-    syslog(priority, format, ##__VA_ARGS__);                               \
-    closelog();                                                            \
+#define ATT_LOG(priority, format, ...)                                         \
+  do {                                                                         \
+    openlog("VMware Attestation Service", LOG_CONS | LOG_PID | LOG_NDELAY,     \
+            LOG_LOCAL1);                                                       \
+    syslog(priority, format, ##__VA_ARGS__);                                   \
+    closelog();                                                                \
   } while (0);
 #endif
 

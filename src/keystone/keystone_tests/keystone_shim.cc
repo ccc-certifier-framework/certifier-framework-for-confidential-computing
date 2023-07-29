@@ -1,12 +1,12 @@
 #include <string.h>
 
 #include "keystone_api.h"
-#define assert(x)                        \
-  do {                                   \
-    if (!(x)) {                          \
-      printf("Custom assert failed.\n"); \
-      exit(17);                          \
-    }                                    \
+#define assert(x)                                                              \
+  do {                                                                         \
+    if (!(x)) {                                                                \
+      printf("Custom assert failed.\n");                                       \
+      exit(17);                                                                \
+    }                                                                          \
   } while (false)  // TODO: replace
 
 #ifdef KEYSTONE_PRESENT
