@@ -1609,7 +1609,9 @@ static inline const char* ssl_strerror(int code) {
   return (msg ? msg : "Unknown ssl error, " CC_TO_STR(code));
 }
 
-void print_ssl_error(int code) { printf("%s\n", ssl_strerror(code)); }
+void print_ssl_error(int code) {
+  printf("%s\n", ssl_strerror(code));
+}
 
 // Socket and SSL support
 

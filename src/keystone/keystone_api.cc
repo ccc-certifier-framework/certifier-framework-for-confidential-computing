@@ -15,7 +15,9 @@ extern "C" {
     }                                                                          \
   } while (false)  // TODO: replace
 
-bool keystone_Init(const int cert_size, byte* cert) { return true; }
+bool keystone_Init(const int cert_size, byte* cert) {
+  return true;
+}
 
 bool keystone_Attest(const int what_to_say_size,
                      byte*     what_to_say,

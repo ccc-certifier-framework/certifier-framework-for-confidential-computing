@@ -28,7 +28,9 @@ using namespace certifier::utilities;
 static const char CLAIM_TITLE_USER_DATA[] = "User data";
 static const char CLAIM_TITLE_RIM[]       = "Realm initial measurement";
 
-bool islet_Init(const int cert_size, byte* cert) { return true; }
+bool islet_Init(const int cert_size, byte* cert) {
+  return true;
+}
 
 bool islet_Attest(const int what_to_say_size,
                   byte*     what_to_say,

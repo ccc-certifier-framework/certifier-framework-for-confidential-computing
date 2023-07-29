@@ -45,11 +45,17 @@ DEFINE_string(vcek_cert_file_name, "vcek_cert_file.bin", "vcek cert");
 
 // Encryption and support tests
 
-TEST(test_random, test_random) { EXPECT_TRUE(test_random(FLAGS_print_all)); }
+TEST(test_random, test_random) {
+  EXPECT_TRUE(test_random(FLAGS_print_all));
+}
 
-TEST(test_digest, test_digest) { EXPECT_TRUE(test_digest(FLAGS_print_all)); }
+TEST(test_digest, test_digest) {
+  EXPECT_TRUE(test_digest(FLAGS_print_all));
+}
 
-TEST(test_encrypt, test_encrypt) { EXPECT_TRUE(test_encrypt(FLAGS_print_all)); }
+TEST(test_encrypt, test_encrypt) {
+  EXPECT_TRUE(test_encrypt(FLAGS_print_all));
+}
 
 TEST(test_authenticated_encrypt, test_authenticated_encrypt) {
   EXPECT_TRUE(test_authenticated_encrypt(FLAGS_print_all));
@@ -67,19 +73,29 @@ TEST(key_translation, test_key_translation) {
   EXPECT_TRUE(test_key_translation(FLAGS_print_all));
 }
 
-TEST(time, test_time) { EXPECT_TRUE(test_time(FLAGS_print_all)); }
+TEST(time, test_time) {
+  EXPECT_TRUE(test_time(FLAGS_print_all));
+}
 
 // Basic Primitive tests
-TEST(seal, test_seal) { EXPECT_TRUE(test_seal(FLAGS_print_all)); }
+TEST(seal, test_seal) {
+  EXPECT_TRUE(test_seal(FLAGS_print_all));
+}
 
-TEST(attest, test_attest) { EXPECT_TRUE(test_attest(FLAGS_print_all)); }
+TEST(attest, test_attest) {
+  EXPECT_TRUE(test_attest(FLAGS_print_all));
+}
 
 // Admission Tests
 
-TEST(artifact, test_artifact) { EXPECT_TRUE(test_artifact(FLAGS_print_all)); }
+TEST(artifact, test_artifact) {
+  EXPECT_TRUE(test_artifact(FLAGS_print_all));
+}
 
 // File protection and store tests
-TEST(protect, test_protect) { EXPECT_TRUE(test_protect(FLAGS_print_all)); }
+TEST(protect, test_protect) {
+  EXPECT_TRUE(test_protect(FLAGS_print_all));
+}
 
 TEST(policy_store, test_policy_store) {
   EXPECT_TRUE(test_policy_store(FLAGS_print_all));
@@ -165,7 +181,9 @@ TEST(test_sev_request, test_sev_request) {
   EXPECT_TRUE(test_sev_request(FLAGS_print_all));
 }
 
-TEST(test_sev, test_sev) { EXPECT_TRUE(test_sev(FLAGS_print_all)); }
+TEST(test_sev, test_sev) {
+  EXPECT_TRUE(test_sev(FLAGS_print_all));
+}
 
 extern bool test_sev_platform_certify(const bool    debug_print,
                                       const string& policy_file_name,

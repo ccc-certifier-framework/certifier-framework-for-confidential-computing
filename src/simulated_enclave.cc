@@ -330,7 +330,9 @@ bool simulated_Verify(string& serialized_signed_report) {
   return check_date_range(info.not_before(), info.not_after());
 }
 
-bool simulated_GetParentEvidence(string* out) { return false; }
+bool simulated_GetParentEvidence(string* out) {
+  return false;
+}
 
 // Delete this eventually.  It is only used in certifier_tests.
 bool simulator_init() {

@@ -190,7 +190,9 @@ bool cold_init() {
   return app_trust_data->cold_init(public_key_alg, symmetric_key_alg);
 }
 
-bool warm_restart() { return app_trust_data->warm_restart(); }
+bool warm_restart() {
+  return app_trust_data->warm_restart();
+}
 
 // TODO: replace with new cc_trust_data interface
 bool certify_me() {

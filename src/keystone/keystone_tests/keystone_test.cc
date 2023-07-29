@@ -100,4 +100,6 @@ bool keystone_test(const int cert_size, byte* cert) {
   return true;
 }
 
-int main(int argc, char** argv) { return keystone_test(0, NULL); }
+int main(int argc, char** argv) {
+  return keystone_test(0, NULL);
+}
