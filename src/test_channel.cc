@@ -51,7 +51,8 @@ DEFINE_string(auth_key_file, "auth_key_file.bin", "auth key file");
 
 #define DEBUG
 
-void server_application(secure_authenticated_channel& channel) {
+void
+server_application(secure_authenticated_channel& channel) {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
@@ -64,11 +65,12 @@ void server_application(secure_authenticated_channel& channel) {
   channel.write(strlen(msg), (byte*)msg);
 }
 
-bool run_me_as_server(const string& host_name,
-                      int           port,
-                      string&       asn1_policy_cert,
-                      key_message&  private_key,
-                      string&       private_key_cert) {
+bool
+run_me_as_server(const string& host_name,
+                 int           port,
+                 string&       asn1_policy_cert,
+                 key_message&  private_key,
+                 string&       private_key_cert) {
   printf("running as server\n");
   server_dispatch(host_name,
                   port,
@@ -79,7 +81,8 @@ bool run_me_as_server(const string& host_name,
   return true;
 }
 
-void client_application(secure_authenticated_channel& channel) {
+void
+client_application(secure_authenticated_channel& channel) {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
   // client sends a message over authenticated, encrypted channel
@@ -92,11 +95,12 @@ void client_application(secure_authenticated_channel& channel) {
   printf("SSL client read: %s\n", out.data());
 }
 
-bool run_me_as_client(const string& host_name,
-                      int           port,
-                      string&       asn1_policy_cert,
-                      key_message&  private_key,
-                      string&       private_key_cert) {
+bool
+run_me_as_client(const string& host_name,
+                 int           port,
+                 string&       asn1_policy_cert,
+                 key_message&  private_key,
+                 string&       private_key_cert) {
   printf("running as client\n");
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
@@ -114,10 +118,11 @@ bool run_me_as_client(const string& host_name,
   return true;
 }
 
-bool make_admissions_cert(const string& role,
-                          key_message&  policy_key,
-                          key_message&  auth_key,
-                          string*       out) {
+bool
+make_admissions_cert(const string& role,
+                     key_message&  policy_key,
+                     key_message&  auth_key,
+                     string*       out) {
   string issuer_name("policyAuthority");
   string issuer_organization("root");
   string subject_name(role);
@@ -144,7 +149,8 @@ bool make_admissions_cert(const string& role,
 
 // ------------------------------------------------------------------------------------------
 
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);

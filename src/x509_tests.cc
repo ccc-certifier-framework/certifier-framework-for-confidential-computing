@@ -21,7 +21,8 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-bool test_x_509_chain(bool print_all) {
+bool
+test_x_509_chain(bool print_all) {
   cert_keys_seen_list list(20);
 
   // Make up three level cert chain
@@ -263,7 +264,8 @@ bool test_x_509_chain(bool print_all) {
   return success;
 }
 
-bool test_x_509_sign(bool print_all) {
+bool
+test_x_509_sign(bool print_all) {
   string      issuer_common_name("Tester-cert");
   string      issuer_desc("JLM");
   key_message k1;
@@ -310,7 +312,8 @@ bool test_x_509_sign(bool print_all) {
   return success;
 }
 
-bool test_sev_certs(bool print_all) {
+bool
+test_sev_certs(bool print_all) {
   string ark_file_str("./test_data/milan_ark_cert.der");
   string ask_file_str("./test_data/milan_ask_cert.der");
 
@@ -390,7 +393,8 @@ bool test_sev_certs(bool print_all) {
   return true;
 }
 
-bool test_real_sev_certs(bool print_all) {
+bool
+test_real_sev_certs(bool print_all) {
   string ark_file_str("./test_data/ark.der");
   string ask_file_str("./test_data/ask.der");
   string vcek_file_str("./test_data/vcek.der");
@@ -517,7 +521,8 @@ bool test_real_sev_certs(bool print_all) {
 }
 
 // Should only run is SEV_SNP is defined
-bool test_sev_request(bool print_all) {
+bool
+test_sev_request(bool print_all) {
   if (print_all) {
     printf("\n\ntest_sev_request\n\n");
   }

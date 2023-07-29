@@ -23,7 +23,8 @@
 using std::string;
 using namespace certifier::utilities;
 
-bool keystone_getSealingKey(byte* key) {
+bool
+keystone_getSealingKey(byte* key) {
   for (int i = 0; i < 64; i++)
     key[i] = i ^ 0x33;
   return true;
@@ -37,7 +38,8 @@ byte      g_measurement[g_m_size];
 // This simplifies the logic in driver run_example.sh script.
 string g_measurement_file_name("./provisioning/example_app.measurement");
 
-bool keystone_get_fake_measurement(int* size, byte* measurement) {
+bool
+keystone_get_fake_measurement(int* size, byte* measurement) {
   if (!g_m_initialized) {
     int    n = file_size(g_measurement_file_name);
     string str_measurement;
@@ -60,12 +62,13 @@ bool keystone_get_fake_measurement(int* size, byte* measurement) {
   return true;
 }
 
-bool keystone_ecc_sign(const char* alg,
-                       EC_KEY*     key,
-                       int         size,
-                       byte*       msg,
-                       int*        size_out,
-                       byte*       out) {
+bool
+keystone_ecc_sign(const char* alg,
+                  EC_KEY*     key,
+                  int         size,
+                  byte*       msg,
+                  int*        size_out,
+                  byte*       out) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte         digest[len];
 
@@ -95,12 +98,13 @@ bool keystone_ecc_sign(const char* alg,
   return true;
 }
 
-bool keystone_ecc_verify(const char* alg,
-                         EC_KEY*     key,
-                         int         size,
-                         byte*       msg,
-                         int         size_sig,
-                         byte*       sig) {
+bool
+keystone_ecc_verify(const char* alg,
+                    EC_KEY*     key,
+                    int         size,
+                    byte*       msg,
+                    int         size_sig,
+                    byte*       sig) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte         digest[len];
 
@@ -131,7 +135,8 @@ EC_KEY*     fake_attest_public_key  = nullptr;
 key_message attest_private_key;
 key_message attest_public_key;
 
-bool keystone_Init(const int cert_size, byte* cert) {
+bool
+keystone_Init(const int cert_size, byte* cert) {
   // later, we should read in the key and cert chain
   int size_key  = file_size(key_file);
   int size_cert = file_size(cert_file);
@@ -228,12 +233,13 @@ bool keystone_Init(const int cert_size, byte* cert) {
   return true;
 }
 
-bool keystone_Verify(const int what_to_say_size,
-                     byte*     what_to_say,
-                     const int attestation_size,
-                     byte*     attestation,
-                     int*      measurement_out_size,
-                     byte*     measurement_out) {
+bool
+keystone_Verify(const int what_to_say_size,
+                byte*     what_to_say,
+                const int attestation_size,
+                byte*     attestation,
+                int*      measurement_out_size,
+                byte*     measurement_out) {
   assert(attestation_size == sizeof(struct report_t));
   struct report_t& report = *reinterpret_cast<struct report_t*>(attestation);
 
@@ -280,10 +286,11 @@ bool keystone_Verify(const int what_to_say_size,
   return true;
 }
 
-bool keystone_Attest(const int what_to_say_size,
-                     byte*     what_to_say,
-                     int*      attestation_size_out,
-                     byte*     attestation_out) {
+bool
+keystone_Attest(const int what_to_say_size,
+                byte*     what_to_say,
+                int*      attestation_size_out,
+                byte*     attestation_out) {
   int sz = (int)(sizeof(struct enclave_report_t) + sizeof(struct sm_report_t) +
                  PUBLIC_KEY_SIZE);
   *attestation_size_out = sz;
@@ -356,7 +363,8 @@ bool keystone_Attest(const int what_to_say_size,
   return true;
 }
 
-bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
+bool
+keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
   byte iv[16];
   byte key[64];
 
@@ -380,7 +388,8 @@ bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
   return true;
 }
 
-bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out) {
+bool
+keystone_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   byte iv[16];
   byte key[64];
 

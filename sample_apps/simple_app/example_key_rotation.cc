@@ -58,7 +58,8 @@ cc_trust_data* app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);

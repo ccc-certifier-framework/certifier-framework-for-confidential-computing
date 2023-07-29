@@ -11,7 +11,8 @@
 // sdk tool oeedger8r against the helloworld.edl file.
 #include "attestation_u.h"
 
-bool check_simulate_opt(int* argc, const char* argv[]) {
+bool
+check_simulate_opt(int* argc, const char* argv[]) {
   for (int i = 0; i < *argc; i++) {
     if (strcmp(argv[i], "--simulate") == 0) {
       fprintf(stdout, "Running in simulation mode\n");
@@ -23,7 +24,8 @@ bool check_simulate_opt(int* argc, const char* argv[]) {
   return false;
 }
 
-int main(int argc, const char* argv[]) {
+int
+main(int argc, const char* argv[]) {
   oe_result_t   result;
   oe_enclave_t* enclave = NULL;
   std::string   data_dir;

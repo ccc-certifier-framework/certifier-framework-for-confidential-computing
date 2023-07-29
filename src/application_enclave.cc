@@ -36,9 +36,8 @@ bool initialized = false;
 int  reader      = 0;
 int  writer      = 0;
 
-bool application_Init(const string& parent_enclave_type,
-                      int           read_fd,
-                      int           write_fd) {
+bool
+application_Init(const string& parent_enclave_type, int read_fd, int write_fd) {
   reader                                    = read_fd;
   writer                                    = write_fd;
   certifier_parent_enclave_type             = parent_enclave_type;
@@ -47,7 +46,8 @@ bool application_Init(const string& parent_enclave_type,
   return true;
 }
 
-bool application_GetParentEvidence(string* out) {
+bool
+application_GetParentEvidence(string* out) {
   app_request  req;
   app_response rsp;
 
@@ -82,7 +82,8 @@ bool application_GetParentEvidence(string* out) {
 const int buffer_pad              = 2048;
 const int platform_statement_size = 4096;
 
-bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
+bool
+application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   app_request  req;
   app_response rsp;
 
@@ -134,7 +135,8 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   return true;
 }
 
-bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
+bool
+application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   app_request  req;
   app_response rsp;
 
@@ -187,7 +189,8 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
 
 // Attestation is a signed_claim_message
 // with a vse_claim_message claim
-bool application_Attest(int in_size, byte* in, int* size_out, byte* out) {
+bool
+application_Attest(int in_size, byte* in, int* size_out, byte* out) {
   app_request  req;
   app_response rsp;
 
@@ -239,7 +242,8 @@ bool application_Attest(int in_size, byte* in, int* size_out, byte* out) {
   return true;
 }
 
-bool application_GetPlatformStatement(int* size_out, byte* out) {
+bool
+application_GetPlatformStatement(int* size_out, byte* out) {
   app_request  req;
   app_response rsp;
 

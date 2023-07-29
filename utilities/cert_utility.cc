@@ -58,7 +58,8 @@ DEFINE_string(key_type, "rsa-2048", "key type");
 DEFINE_string(key_name, "anonymous", "key name");
 DEFINE_string(cert_output_file, "cert_file.bin", "cert file");
 
-bool generate_test_keys() {
+bool
+generate_test_keys() {
   key_message platform_key;
   key_message attest_key;
 
@@ -109,7 +110,8 @@ bool generate_test_keys() {
   return true;
 }
 
-bool generate_policy_key() {
+bool
+generate_policy_key() {
   key_message policy_key;
   key_message policy_pk;  // public policy key
 
@@ -139,7 +141,8 @@ bool generate_policy_key() {
   return true;
 }
 
-void test_sig() {
+void
+test_sig() {
   int  key_file_size = file_size(FLAGS_platform_key_output_file);
   byte serialized_key[key_file_size + 1];
   int  size = key_file_size;
@@ -211,7 +214,8 @@ void test_sig() {
   return;
 }
 
-bool generate_key(const string& type, const string& name, key_message* k) {
+bool
+generate_key(const string& type, const string& name, key_message* k) {
   if (type == "rsa-1024") {
     RSA* r = RSA_new();
     if (!generate_new_rsa_key(1024, r)) {
@@ -289,7 +293,8 @@ bool generate_key(const string& type, const string& name, key_message* k) {
   return true;
 }
 
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   string usage("Certifier utility to generate policy-keys and test-keys");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);

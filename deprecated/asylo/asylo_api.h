@@ -30,6 +30,7 @@ typedef struct AsyloCertifierFunctions {
   bool (*Unseal)(int in_size, byte* in, int* size_out, byte* out);
 } AsyloCertifierFunctions;
 
-void setFuncs(AsyloCertifierFunctions funcs);
+void
+setFuncs(AsyloCertifierFunctions funcs);
 
 #endif  // #ifdef _ASYLO_API_H_

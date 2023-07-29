@@ -15,7 +15,8 @@ DEFINE_string(args, "service_example_app.exe", "service example arguments");
 
 #define DEBUG
 
-bool parse_args(const string& in, int* num_an, string* av) {
+bool
+parse_args(const string& in, int* num_an, string* av) {
   // for now, just assume commas can only be delimiters
   const char* start = in.c_str();
   const char* end   = start;
@@ -37,7 +38,8 @@ bool parse_args(const string& in, int* num_an, string* av) {
   return true;
 }
 
-void print_run_request(run_request& r) {
+void
+print_run_request(run_request& r) {
   if (r.has_location()) {
     printf("Executable: %s\n", r.location().c_str());
   }
@@ -46,7 +48,8 @@ void print_run_request(run_request& r) {
   }
 }
 
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 

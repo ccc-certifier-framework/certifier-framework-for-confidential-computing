@@ -16,14 +16,19 @@
 #ifndef __CLAIMS_TESTS_H__
 #define __CLAIMS_TESTS_H__
 
-bool test_claims_1(bool print_all);
+bool
+test_claims_1(bool print_all);
 
-bool test_signed_claims(bool print_all);
+bool
+test_signed_claims(bool print_all);
 
-bool test_predicate_dominance(bool print_all);
+bool
+test_predicate_dominance(bool print_all);
 
-bool test_certify_steps(bool print_all);
+bool
+test_certify_steps(bool print_all);
 
-bool test_full_certification(bool print_all);
+bool
+test_full_certification(bool print_all);
 
 #endif  // __CLAIMS_TESTS_H__

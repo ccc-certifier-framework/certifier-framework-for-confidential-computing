@@ -32,7 +32,8 @@ DEFINE_string(ask_der, "sev_ask_cert.der", "ask cert file");
 DEFINE_string(vcek_der, "sev_vcek_cert.der", "vcek cert file");
 DEFINE_string(vcek_key_file, "ec-secp384r1-pub-key.pem", "vcek key file");
 
-int read_vcek_file(const char* filename, EVP_PKEY** key, bool priv) {
+int
+read_vcek_file(const char* filename, EVP_PKEY** key, bool priv) {
   int       rc = -EXIT_FAILURE;
   EVP_PKEY* pkey;
   FILE*     file = NULL;
@@ -66,7 +67,8 @@ out:
 }
 
 // This generates an sev attestation signed by the key in key_file
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   printf(

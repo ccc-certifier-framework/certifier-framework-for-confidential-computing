@@ -33,7 +33,8 @@ DEFINE_string(environment_subject, "", "environment subject file");
 DEFINE_string(verb, "verb", "verb to use");
 DEFINE_string(cert_subject, "", "cert file");
 
-bool get_clause_from_file(const string& in, vse_clause* cl) {
+bool
+get_clause_from_file(const string& in, vse_clause* cl) {
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_cl[in_size];
@@ -51,9 +52,10 @@ bool get_clause_from_file(const string& in, vse_clause* cl) {
   return true;
 }
 
-int make_unary_clause_file_utility(entity_message& subject,
-                                   const string&   verb,
-                                   const string&   output) {
+int
+make_unary_clause_file_utility(entity_message& subject,
+                               const string&   verb,
+                               const string&   output) {
   vse_clause out_cl;
   string     v = verb;
   if (!make_unary_vse_clause(subject, FLAGS_verb, &out_cl)) {
@@ -83,7 +85,8 @@ int make_unary_clause_file_utility(entity_message& subject,
   return 0;
 }
 
-bool get_key_from_cert_file(const string& in, key_message* k) {
+bool
+get_key_from_cert_file(const string& in, key_message* k) {
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte asn_cert[in_size];
@@ -101,7 +104,8 @@ bool get_key_from_cert_file(const string& in, key_message* k) {
   return true;
 }
 
-bool get_key_from_file(const string& in, key_message* k) {
+bool
+get_key_from_file(const string& in, key_message* k) {
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_key[in_size];
@@ -120,7 +124,8 @@ bool get_key_from_file(const string& in, key_message* k) {
   return private_key_to_public_key(kt, k);
 }
 
-bool get_measurement_entity_from_file(const string& in, entity_message* em) {
+bool
+get_measurement_entity_from_file(const string& in, entity_message* em) {
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte m[in_size];
@@ -138,7 +143,8 @@ bool get_measurement_entity_from_file(const string& in, entity_message* em) {
   return true;
 }
 
-bool get_platform_entity_from_file(const string& in, entity_message* em) {
+bool
+get_platform_entity_from_file(const string& in, entity_message* em) {
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte pfp[in_size];
@@ -161,7 +167,8 @@ bool get_platform_entity_from_file(const string& in, entity_message* em) {
   return true;
 }
 
-bool get_environment_entity_from_file(const string& in, entity_message* em) {
+bool
+get_environment_entity_from_file(const string& in, entity_message* em) {
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte env[in_size];
@@ -184,7 +191,8 @@ bool get_environment_entity_from_file(const string& in, entity_message* em) {
   return true;
 }
 
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 

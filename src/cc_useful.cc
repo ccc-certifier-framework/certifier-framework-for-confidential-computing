@@ -25,7 +25,8 @@
  * Find 'optid' in 'opt' lookup array, return option's name.
  * Returns NULL if optid is not found in lookup array.
  */
-const char *optbyid(optlookup *opt_array, int optid) {
+const char *
+optbyid(optlookup *opt_array, int optid) {
   if (!opt_array) {
     return CC_EMPTY_STRING;
   }

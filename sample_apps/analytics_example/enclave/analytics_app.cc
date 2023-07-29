@@ -20,7 +20,8 @@ using namespace hmdf;
 
 using ULDataFrame = StdDataFrame<long>;
 
-std::string proc_data(const char* sales_df_str) {
+std::string
+proc_data(const char* sales_df_str) {
   std::cout << "=========" << std::endl;
   std::cout << "Starting Analytics Applicaton: " << std::endl;
   std::cout << "=========" << std::endl;

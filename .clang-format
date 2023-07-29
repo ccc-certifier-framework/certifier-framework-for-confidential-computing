@@ -20,6 +20,8 @@ AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 AlignTrailingComments: true
 
+AlwaysBreakAfterReturnType: TopLevel
+
 BinPackArguments: false
 BinPackParameters: false
 

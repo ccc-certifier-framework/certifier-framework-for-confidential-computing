@@ -77,18 +77,20 @@ static struct _app_config {
   int    check_disk     = 0;
 } app_config;
 
-static bool file_exists(const std::string& name) {
+static bool
+file_exists(const std::string& name) {
   return (access(name.c_str(), F_OK) != -1);
 }
 
-static bool check_disk_encryption() {
+static bool
+check_disk_encryption() {
   // TODO: Check LUKS encryption first
   ATT_LOG(LOG_INFO, "Disk Encryption Check not implemented yet.");
   return false;
 }
 
-static bool certifier_notification(cc_trust_data* app_trust_data,
-                                   bool           disk_encrypted) {
+static bool
+certifier_notification(cc_trust_data* app_trust_data, bool disk_encrypted) {
   if (app_config.check_disk && !disk_encrypted) {
     ATT_LOG(LOG_INFO, "Disk is not encrypted!");
   }
@@ -132,7 +134,8 @@ static bool certifier_notification(cc_trust_data* app_trust_data,
   return true;
 }
 
-static char* trim_space(char* str, int size) {
+static char*
+trim_space(char* str, int size) {
   int end = strnlen(str, size) - 1;
   while (isspace(str[0]))
     str++;
@@ -143,7 +146,8 @@ static char* trim_space(char* str, int size) {
   return str;
 }
 
-static bool parse_config(const string& config_file) {
+static bool
+parse_config(const string& config_file) {
 #define BUFFER_SIZE 1024
   FILE* file = fopen(config_file.c_str(), "r");
   char  buffer[BUFFER_SIZE];
@@ -188,7 +192,8 @@ static bool parse_config(const string& config_file) {
 #undef BUFFER_SIZE
 }
 
-int main(int argc, char* argv[]) {
+int
+main(int argc, char* argv[]) {
   int  ret            = 0;
   bool disk_encrypted = false;
 

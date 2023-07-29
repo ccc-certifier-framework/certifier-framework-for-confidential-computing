@@ -27,7 +27,8 @@ DEFINE_string(platform_type, "", "platform type");
 DEFINE_string(properties_file, "", "properties files");
 DEFINE_string(output, "", "output file");
 
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   string usage(
       "Construct platform characteristics for platform verification policy");
   gflags::SetUsageMessage(usage);

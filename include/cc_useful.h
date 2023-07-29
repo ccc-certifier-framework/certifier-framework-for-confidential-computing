@@ -39,6 +39,7 @@ typedef struct optlookup {
 #define DCL_OPTLOOKUP_TERM()                                                   \
   { .id = -1, .name = NULL }
 
-const char *optbyid(optlookup *opt, int id);
+const char *
+optbyid(optlookup *opt, int id);
 
 #endif /* __CC_USEFUL_H__ */

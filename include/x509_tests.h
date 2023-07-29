@@ -18,19 +18,25 @@
 
 // RESOLVE: Need this? using namespace certifier::framework;
 // using namespace certifier::utilities;
-bool test_x_509_chain(bool print_all);
+bool
+test_x_509_chain(bool print_all);
 
-bool test_x_509_sign(bool print_all);
+bool
+test_x_509_sign(bool print_all);
 
 #ifdef RUN_SEV_TESTS
 
-bool test_sev_certs(bool print_all);
+bool
+test_sev_certs(bool print_all);
 
-bool test_real_sev_certs(bool print_all);
+bool
+test_real_sev_certs(bool print_all);
 
-bool test_sev_request(bool print_all);
+bool
+test_sev_request(bool print_all);
 
-bool test_sev(bool);
+bool
+test_sev(bool);
 
 #endif  // RUN_SEV_TESTS
 
