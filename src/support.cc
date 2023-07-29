@@ -3172,8 +3172,10 @@ bool certifier::utilities::produce_artifact(key_message& signing_key,
 =======
 >>>>>>> 03ee64c (Fixes from rebase v/s main.)
   if (!vcek) {
-    add_ext(x509, NID_key_usage, "critical,keyCertSign,digitalSignature,cRLSign");
-    add_ext(x509,  NID_ext_key_usage, "clientAuth,serverAuth");
+    add_ext(x509,
+            NID_key_usage,
+            "critical,keyCertSign,digitalSignature,cRLSign");
+    add_ext(x509, NID_ext_key_usage, "clientAuth,serverAuth");
     // add_ext(x509, NID_subject_key_identifier, "hash");
     if (is_root) {
       add_ext(x509, NID_basic_constraints, "critical,CA:TRUE");
@@ -3181,21 +3183,21 @@ bool certifier::utilities::produce_artifact(key_message& signing_key,
   } else {
     // Add custom extensions if we are generating VCEK for the SEV-SNP simulator
     X509_EXTENSION *ex;
-    int nid = -1;
-    unsigned char buf[64];
+    int             nid = -1;
+    unsigned char   buf[64];
 
     memset(buf, 0, 64);
     ASN1_OCTET_STRING *os = ASN1_OCTET_STRING_new();
 
     nid = OBJ_create(VCEK_EXT_HWID, "hwID", "hwID");
     ASN1_OCTET_STRING_set(os, (const unsigned char *)buf, 64);
-    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os );
+    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os);
     X509_add_ext(x509, ex, -1);
     free(ex);
 
     nid = OBJ_create(VCEK_EXT_PRODUCT_NAME, "productName", "productName");
     ASN1_OCTET_STRING_set(os, (const unsigned char *)"Milan-B0", 8);
-    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os );
+    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os);
     X509_add_ext(x509, ex, -1);
     free(ex);
 
@@ -3204,44 +3206,44 @@ bool certifier::utilities::produce_artifact(key_message& signing_key,
     buf[1] = 0x1;
     buf[2] = 0x0;
     ASN1_OCTET_STRING_set(os, (const unsigned char *)buf, 3);
-    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os );
+    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os);
     X509_add_ext(x509, ex, -1);
     free(ex);
 
-    nid = OBJ_create(VCEK_EXT_BLSPL, "blSPL", "blSPL");
+    nid    = OBJ_create(VCEK_EXT_BLSPL, "blSPL", "blSPL");
     buf[0] = 0x2;
     buf[1] = 0x1;
     buf[2] = 0x15;
     ASN1_OCTET_STRING_set(os, (const unsigned char *)buf, 3);
-    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os );
+    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os);
     X509_add_ext(x509, ex, -1);
     free(ex);
 
-    nid = OBJ_create(VCEK_EXT_TEESPL, "teeSPL", "teeSPL");
+    nid    = OBJ_create(VCEK_EXT_TEESPL, "teeSPL", "teeSPL");
     buf[0] = 0x2;
     buf[1] = 0x1;
     buf[2] = 0x81;
     ASN1_OCTET_STRING_set(os, (const unsigned char *)buf, 3);
-    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os );
+    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os);
     X509_add_ext(x509, ex, -1);
     free(ex);
 
-    nid = OBJ_create(VCEK_EXT_SNPSPL, "snpSPL", "snpSPL");
+    nid    = OBJ_create(VCEK_EXT_SNPSPL, "snpSPL", "snpSPL");
     buf[0] = 0x2;
     buf[1] = 0x1;
     buf[2] = 0x0;
     ASN1_OCTET_STRING_set(os, (const unsigned char *)buf, 3);
-    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os );
+    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os);
     X509_add_ext(x509, ex, -1);
     free(ex);
 
-    nid = OBJ_create(VCEK_EXT_UCODESPL, "ucodeSPL", "ucodeSPL");
+    nid    = OBJ_create(VCEK_EXT_UCODESPL, "ucodeSPL", "ucodeSPL");
     buf[0] = 0x2;
     buf[1] = 0x2;
     buf[2] = 0x0;
     buf[3] = 0x30;
     ASN1_OCTET_STRING_set(os, (const unsigned char *)buf, 4);
-    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os );
+    ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os);
     X509_add_ext(x509, ex, -1);
     free(ex);
 <<<<<<< HEAD
