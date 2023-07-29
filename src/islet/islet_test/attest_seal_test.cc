@@ -30,7 +30,8 @@ static const char CLAIM_TITLE_USER_DATA[]        = "User data";
 static const char CLAIM_TITLE_PLATFORM_PROFILE[] = "Profile";
 
 bool
-attestation_test() {
+attestation_test()
+{
   byte report[BUFFER_SIZE];
   byte claims[BUFFER_SIZE];
   byte value[BUFFER_SIZE];
@@ -76,7 +77,8 @@ attestation_test() {
 }
 
 bool
-sealing_test() {
+sealing_test()
+{
   byte sealed[BUFFER_SIZE];
   byte unsealed[BUFFER_SIZE];
 
@@ -104,7 +106,8 @@ sealing_test() {
 }
 
 int
-main() {
+main()
+{
   bool rv = attestation_test();
   printf("Attestation test %s.\n", (rv ? "succeeded" : "failed"));
   if (!rv)

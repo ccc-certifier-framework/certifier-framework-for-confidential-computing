@@ -15,7 +15,8 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   string usage("Application Service helper 'send' utility");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -53,7 +54,8 @@ main(int an, char** av) {
   if (sized_socket_write(sock,
                          serialized_request.size(),
                          (byte*)serialized_request.data()) <
-      (int)serialized_request.size()) {
+      (int)serialized_request.size())
+  {
     printf("send_request, socket write failed\n");
     return 1;
   }

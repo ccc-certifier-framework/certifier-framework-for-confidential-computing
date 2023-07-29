@@ -22,7 +22,8 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 bool
-test_seal(bool print_all) {
+test_seal(bool print_all)
+{
   string enclave_type("simulated-enclave");
   string enclave_id("local-machine");
 
@@ -74,7 +75,8 @@ test_seal(bool print_all) {
 }
 
 bool
-test_attest(bool print_all) {
+test_attest(bool print_all)
+{
   string enclave_type("simulated-enclave");
   string enclave_id("test-enclave");
   string descript("simulated-test");

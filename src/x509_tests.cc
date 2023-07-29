@@ -22,7 +22,8 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 bool
-test_x_509_chain(bool print_all) {
+test_x_509_chain(bool print_all)
+{
   cert_keys_seen_list list(20);
 
   // Make up three level cert chain
@@ -86,7 +87,8 @@ test_x_509_chain(bool print_all) {
                         1L,
                         150000.0,
                         cert1,
-                        true)) {
+                        true))
+  {
     return false;
   }
   if (print_all) {
@@ -105,7 +107,8 @@ test_x_509_chain(bool print_all) {
                         1L,
                         150000.0,
                         cert2,
-                        false)) {
+                        false))
+  {
     return false;
   }
   if (print_all) {
@@ -124,7 +127,8 @@ test_x_509_chain(bool print_all) {
                         1L,
                         150000.0,
                         cert3,
-                        false)) {
+                        false))
+  {
     return false;
   }
   if (print_all) {
@@ -265,7 +269,8 @@ test_x_509_chain(bool print_all) {
 }
 
 bool
-test_x_509_sign(bool print_all) {
+test_x_509_sign(bool print_all)
+{
   string      issuer_common_name("Tester-cert");
   string      issuer_desc("JLM");
   key_message k1;
@@ -289,7 +294,8 @@ test_x_509_sign(bool print_all) {
                         1L,
                         150000.0,
                         cert1,
-                        true)) {
+                        true))
+  {
     return false;
   }
   if (print_all) {
@@ -313,7 +319,8 @@ test_x_509_sign(bool print_all) {
 }
 
 bool
-test_sev_certs(bool print_all) {
+test_sev_certs(bool print_all)
+{
   string ark_file_str("./test_data/milan_ark_cert.der");
   string ask_file_str("./test_data/milan_ask_cert.der");
 
@@ -394,7 +401,8 @@ test_sev_certs(bool print_all) {
 }
 
 bool
-test_real_sev_certs(bool print_all) {
+test_real_sev_certs(bool print_all)
+{
   string ark_file_str("./test_data/ark.der");
   string ask_file_str("./test_data/ask.der");
   string vcek_file_str("./test_data/vcek.der");
@@ -522,7 +530,8 @@ test_real_sev_certs(bool print_all) {
 
 // Should only run is SEV_SNP is defined
 bool
-test_sev_request(bool print_all) {
+test_sev_request(bool print_all)
+{
   if (print_all) {
     printf("\n\ntest_sev_request\n\n");
   }
@@ -703,7 +712,8 @@ test_sev_request(bool print_all) {
               serialized_ud.size(),
               (byte*)serialized_ud.data(),
               &size_out,
-              out)) {
+              out))
+  {
     printf("Attest failed\n");
     return false;
   }
@@ -788,7 +798,8 @@ test_sev_request(bool print_all) {
                   descriptor,
                   s_nb,
                   s_na,
-                  &cm1)) {
+                  &cm1))
+  {
     printf("serialize claim failed (1)\n");
     return false;
   }
@@ -797,7 +808,8 @@ test_sev_request(bool print_all) {
   if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
                          cm1,
                          policy_private_key,
-                         scm1)) {
+                         scm1))
+  {
     printf("sign claim failed (3)\n");
     return false;
   }
@@ -833,7 +845,8 @@ test_sev_request(bool print_all) {
                   descriptor,
                   s_nb,
                   s_na,
-                  &cm2)) {
+                  &cm2))
+  {
     printf("serialize claim failed (3)\n");
     return false;
   }
@@ -842,7 +855,8 @@ test_sev_request(bool print_all) {
   if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
                          cm2,
                          policy_private_key,
-                         scm2)) {
+                         scm2))
+  {
     printf("sign claim failed (4)\n");
     return false;
   }
@@ -867,7 +881,8 @@ test_sev_request(bool print_all) {
                          trusted_measurements,
                          purpose,
                          evp,
-                         policy_public_key)) {
+                         policy_public_key))
+  {
     printf("validate_evidence\n");
     return false;
   }

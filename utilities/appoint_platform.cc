@@ -27,7 +27,8 @@ DEFINE_string(policy_key_file, "", "policy key file");
 DEFINE_string(cert_file, "", "cert file");
 
 bool
-get_key_from_file(const string& in, key_message* k) {
+get_key_from_file(const string& in, key_message* k)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_key[in_size];
@@ -47,7 +48,8 @@ get_key_from_file(const string& in, key_message* k) {
 }
 
 bool
-get_key_from_cert_file(const string& in, key_message* k) {
+get_key_from_cert_file(const string& in, key_message* k)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_cert[in_size];
@@ -72,7 +74,8 @@ get_key_from_cert_file(const string& in, key_message* k) {
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   gflags::SetUsageMessage("Sample key-mgmt utility: RESOLVE - Fix message");
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

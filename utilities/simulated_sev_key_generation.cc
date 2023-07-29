@@ -33,7 +33,8 @@ DEFINE_string(vcek_der, "sev_vcek_cert.der", "vcek cert file");
 DEFINE_string(vcek_key_file, "ec-secp384r1-pub-key.pem", "vcek key file");
 
 int
-read_vcek_file(const char* filename, EVP_PKEY** key, bool priv) {
+read_vcek_file(const char* filename, EVP_PKEY** key, bool priv)
+{
   int       rc = -EXIT_FAILURE;
   EVP_PKEY* pkey;
   FILE*     file = NULL;
@@ -68,7 +69,8 @@ out:
 
 // This generates an sev attestation signed by the key in key_file
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   printf("sample_sev_key_generation.exe --ark_der=sev_ark_cert.der "
@@ -113,7 +115,8 @@ main(int an, char** av) {
                         1ULL,
                         86400 * 365.25,
                         ark_509,
-                        true)) {
+                        true))
+  {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -158,7 +161,8 @@ main(int an, char** av) {
                         1ULL,
                         86400 * 365.25,
                         ask_509,
-                        false)) {
+                        false))
+  {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -207,7 +211,8 @@ main(int an, char** av) {
                         1ULL,
                         86400 * 365.25,
                         vcek_509,
-                        false)) {
+                        false))
+  {
     printf("Generate ark cert failed\n");
     return 1;
   }

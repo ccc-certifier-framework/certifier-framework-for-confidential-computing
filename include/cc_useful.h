@@ -31,13 +31,17 @@ typedef struct optlookup {
 } optlookup;
 
 #define DCL__OPTLOOKUP(token, descr)                                           \
-  { .id = token, .name = descr }
+  {                                                                            \
+    .id = token, .name = descr                                                 \
+  }
 
 #define DCL_OPTLOOKUP(token, descr) DCL__OPTLOOKUP(token, #token ": " descr)
 
 // Declare a terminating entry for optlookup table
 #define DCL_OPTLOOKUP_TERM()                                                   \
-  { .id = -1, .name = NULL }
+  {                                                                            \
+    .id = -1, .name = NULL                                                     \
+  }
 
 const char *
 optbyid(optlookup *opt, int id);

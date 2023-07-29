@@ -11,7 +11,8 @@
 static oe_uuid_t vse_format_uuid = {OE_FORMAT_UUID_SGX_ECDSA};
 
 bool
-oe_Attest(int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
+oe_Attest(int what_to_say_size, byte* what_to_say, int* size_out, byte* out)
+{
   bool        ret                       = false;
   oe_result_t result                    = OE_OK;
   oe_uuid_t*  format_id                 = &vse_format_uuid;
@@ -38,7 +39,8 @@ oe_Attest(int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
   if (oe_serialize_custom_claims(&custom_claims,
                                  1,
                                  &custom_claims_buffer,
-                                 &custom_claims_buffer_size) != OE_OK) {
+                                 &custom_claims_buffer_size) != OE_OK)
+  {
     printf("oe_serialize_custom_claims failed.\n");
     goto exit;
   }
@@ -48,7 +50,8 @@ oe_Attest(int what_to_say_size, byte* what_to_say, int* size_out, byte* out) {
   // Get the format settings from the Verifier. Should be null for VSE.
   if (oe_verifier_get_format_settings(format_id,
                                       &format_settings,
-                                      &format_settings_size) != OE_OK) {
+                                      &format_settings_size) != OE_OK)
+  {
     printf("oe_verifier_get_format_settings failed\n");
     goto exit;
   }
@@ -94,7 +97,8 @@ exit:
 }
 
 static const oe_claim_t*
-_find_claim(const oe_claim_t* claims, size_t claims_size, const char* name) {
+_find_claim(const oe_claim_t* claims, size_t claims_size, const char* name)
+{
   for (size_t i = 0; i < claims_size; i++) {
     if (strcmp(claims[i].name, name) == 0)
       return &(claims[i]);
@@ -104,7 +108,8 @@ _find_claim(const oe_claim_t* claims, size_t claims_size, const char* name) {
 
 #ifdef OE_DEBUG
 static void
-_print_hex(const uint8_t* data, size_t size) {
+_print_hex(const uint8_t* data, size_t size)
+{
   int i;
   for (i = 0; i < size; i++)
     printf("%02x", data[i]);
@@ -117,7 +122,8 @@ oe_Verify(const uint8_t* evidence,
           uint8_t*       custom_claim_out,
           size_t*        custom_claim_size,
           uint8_t*       measurement_out,
-          size_t*        measurement_size) {
+          size_t*        measurement_size)
+{
   bool              ret           = false;
   oe_result_t       result        = OE_OK;
   oe_uuid_t*        format_id     = &vse_format_uuid;
@@ -127,8 +133,8 @@ oe_Verify(const uint8_t* evidence,
   oe_claim_t*       custom_claims        = nullptr;
   size_t            custom_claims_length = 0;
 
-  if (!evidence || evidence_size == 0 || !custom_claim_out ||
-      !measurement_out) {
+  if (!evidence || evidence_size == 0 || !custom_claim_out || !measurement_out)
+  {
     return false;
   }
 
@@ -161,7 +167,8 @@ oe_Verify(const uint8_t* evidence,
 
   // Go over the claims
   if ((claim = _find_claim(claims, claims_length, OE_CLAIM_ID_VERSION)) ==
-      nullptr) {
+      nullptr)
+  {
     printf("Could not find claim.\n");
     goto exit;
   };
@@ -169,7 +176,8 @@ oe_Verify(const uint8_t* evidence,
   OE_DEBUG_PRINTF("%s: %u\n", OE_CLAIM_ID_VERSION, *((uint32_t*)claim->value));
 
   if ((claim = _find_claim(claims, claims_length, OE_CLAIM_SECURITY_VERSION)) ==
-      nullptr) {
+      nullptr)
+  {
     printf("Could not find claim.\n");
     goto exit;
   };
@@ -179,7 +187,8 @@ oe_Verify(const uint8_t* evidence,
                   *((uint32_t*)claim->value));
 
   if ((claim = _find_claim(claims, claims_length, OE_CLAIM_ATTRIBUTES)) ==
-      nullptr) {
+      nullptr)
+  {
     printf("Could not find claim.\n");
     goto exit;
   };
@@ -225,7 +234,8 @@ oe_Verify(const uint8_t* evidence,
 #endif
 
   if ((claim = _find_claim(claims, claims_length, OE_CLAIM_PRODUCT_ID)) ==
-      nullptr) {
+      nullptr)
+  {
     printf("Could not find claim.\n");
     goto exit;
   };
@@ -242,7 +252,8 @@ oe_Verify(const uint8_t* evidence,
 #endif
 
   if ((claim = _find_claim(claims, claims_length, OE_CLAIM_FORMAT_UUID)) ==
-      nullptr) {
+      nullptr)
+  {
     printf("Could not find claim.\n");
     goto exit;
   };
@@ -256,7 +267,8 @@ oe_Verify(const uint8_t* evidence,
   // Extract the custom claim buffer
   if ((claim =
            _find_claim(claims, claims_length, OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) ==
-      nullptr) {
+      nullptr)
+  {
     printf("Could not find claim.\n");
     goto exit;
   };
@@ -265,7 +277,8 @@ oe_Verify(const uint8_t* evidence,
   if (oe_deserialize_custom_claims(claim->value,
                                    claim->value_size,
                                    &custom_claims,
-                                   &custom_claims_length) != OE_OK) {
+                                   &custom_claims_length) != OE_OK)
+  {
     printf("oe_deserialize_custom_claims failed.\n");
     goto exit;
   }

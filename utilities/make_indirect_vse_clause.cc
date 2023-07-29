@@ -33,7 +33,8 @@ DEFINE_string(verb, "verb", "verb to use");
 DEFINE_string(clause, "", "clause file");
 
 bool
-get_clause_from_file(const string& in, vse_clause* cl) {
+get_clause_from_file(const string& in, vse_clause* cl)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_cl[in_size];
@@ -55,7 +56,8 @@ int
 make_indirect_clause_file_utility(entity_message& subject,
                                   const string&   verb,
                                   vse_clause&     in_cl,
-                                  const string&   output) {
+                                  const string&   output)
+{
   vse_clause out_cl;
   string     v = verb;
   if (!make_indirect_vse_clause(subject, v, in_cl, &out_cl)) {
@@ -84,7 +86,8 @@ make_indirect_clause_file_utility(entity_message& subject,
 }
 
 bool
-get_key_from_file(const string& in, key_message* k) {
+get_key_from_file(const string& in, key_message* k)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_key[in_size];
@@ -104,7 +107,8 @@ get_key_from_file(const string& in, key_message* k) {
 }
 
 bool
-get_measurement_entity_from_file(const string& in, entity_message* em) {
+get_measurement_entity_from_file(const string& in, entity_message* em)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte m[in_size];
@@ -123,7 +127,8 @@ get_measurement_entity_from_file(const string& in, entity_message* em) {
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   string usage("Generate certificate keys in different formats to output file");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);

@@ -35,7 +35,8 @@ certifier::framework::store_entry::store_entry() {}
 certifier::framework::store_entry::~store_entry() {}
 
 void
-certifier::framework::store_entry::print() {
+certifier::framework::store_entry::print()
+{
   printf("Tag: %s, type: %s, value: ", tag_.c_str(), type_.c_str());
   if (type_ == "string") {
     printf("%s\n", value_.c_str());
@@ -44,21 +45,24 @@ certifier::framework::store_entry::print() {
   }
 }
 
-certifier::framework::policy_store::policy_store(unsigned max_ents) {
+certifier::framework::policy_store::policy_store(unsigned max_ents)
+{
   max_num_ents_     = max_ents;
   num_ents_         = 0;
   entry_            = new store_entry*[max_ents];
   policy_key_valid_ = false;
 }
 
-certifier::framework::policy_store::policy_store() {
+certifier::framework::policy_store::policy_store()
+{
   max_num_ents_     = MAX_NUM_ENTRIES;
   num_ents_         = 0;
   entry_            = new store_entry*[MAX_NUM_ENTRIES];
   policy_key_valid_ = false;
 }
 
-certifier::framework::policy_store::~policy_store() {
+certifier::framework::policy_store::~policy_store()
+{
   for (unsigned i = 0; i < num_ents_; i++) {
     delete entry_[i];
     entry_[i] = nullptr;
@@ -68,33 +72,38 @@ certifier::framework::policy_store::~policy_store() {
 }
 
 const key_message*
-policy_store::get_policy_key() {
+policy_store::get_policy_key()
+{
   if (!policy_key_valid_)
     return nullptr;
   return &policy_key_;
 }
 
 bool
-policy_store::set_policy_key(const key_message key) {
+policy_store::set_policy_key(const key_message key)
+{
   policy_key_.CopyFrom(key);
   policy_key_valid_ = true;
   return true;
 }
 
 bool
-certifier::framework::policy_store::is_policy_key_valid() {
+certifier::framework::policy_store::is_policy_key_valid()
+{
   return policy_key_valid_;
 }
 
 unsigned
-certifier::framework::policy_store::get_num_entries() {
+certifier::framework::policy_store::get_num_entries()
+{
   return num_ents_;
 }
 
 bool
 certifier::framework::policy_store::add_entry(const string& tag,
                                               const string& type,
-                                              const string& value) {
+                                              const string& value)
+{
   if (num_ents_ >= max_num_ents_)
     return false;
   entry_[num_ents_]        = new store_entry;
@@ -107,7 +116,8 @@ certifier::framework::policy_store::add_entry(const string& tag,
 
 int
 certifier::framework::policy_store::find_entry(const string& tag,
-                                               const string& type) {
+                                               const string& type)
+{
   for (unsigned i = 0; i < num_ents_; i++) {
     if (entry_[i]->tag_ == tag && entry_[i]->type_ == type)
       return (int)i;
@@ -116,7 +126,8 @@ certifier::framework::policy_store::find_entry(const string& tag,
 }
 
 bool
-certifier::framework::policy_store::get(unsigned ent, string* v) {
+certifier::framework::policy_store::get(unsigned ent, string* v)
+{
   if (ent >= num_ents_)
     return false;
   *v = entry_[ent]->value_;
@@ -124,7 +135,8 @@ certifier::framework::policy_store::get(unsigned ent, string* v) {
 }
 
 bool
-certifier::framework::policy_store::put(unsigned ent, const string v) {
+certifier::framework::policy_store::put(unsigned ent, const string v)
+{
   if (ent < 0 || ent >= num_ents_)
     return false;
   entry_[ent]->value_ = v;
@@ -132,21 +144,24 @@ certifier::framework::policy_store::put(unsigned ent, const string v) {
 }
 
 const string*
-certifier::framework::policy_store::tag(unsigned ent) {
+certifier::framework::policy_store::tag(unsigned ent)
+{
   if (ent >= num_ents_)
     return nullptr;
   return &entry_[ent]->tag_;
 }
 
 const string*
-certifier::framework::policy_store::type(unsigned ent) {
+certifier::framework::policy_store::type(unsigned ent)
+{
   if (ent >= num_ents_)
     return nullptr;
   return &entry_[ent]->type_;
 }
 
 store_entry*
-certifier::framework::policy_store::get_entry(unsigned ent) {
+certifier::framework::policy_store::get_entry(unsigned ent)
+{
   if (ent >= num_ents_)
     return nullptr;
   return entry_[ent];
@@ -155,7 +170,8 @@ certifier::framework::policy_store::get_entry(unsigned ent) {
 bool
 certifier::framework::policy_store::update_or_insert(const string& tag,
                                                      const string& type,
-                                                     const string& value) {
+                                                     const string& value)
+{
   int ent = find_entry(tag, type);
   if (ent < 0) {
     return add_entry(tag, type, value);
@@ -166,7 +182,8 @@ certifier::framework::policy_store::update_or_insert(const string& tag,
 }
 
 bool
-certifier::framework::policy_store::delete_entry(unsigned ent) {
+certifier::framework::policy_store::delete_entry(unsigned ent)
+{
   if (ent >= num_ents_)
     return false;
 
@@ -180,7 +197,8 @@ certifier::framework::policy_store::delete_entry(unsigned ent) {
 }
 
 void
-certifier::framework::policy_store::print() {
+certifier::framework::policy_store::print()
+{
   printf("Number of entries: %d, max number of ents: %d\n",
          num_ents_,
          max_num_ents_);
@@ -198,7 +216,8 @@ certifier::framework::policy_store::print() {
 }
 
 bool
-certifier::framework::policy_store::Serialize(string* out) {
+certifier::framework::policy_store::Serialize(string* out)
+{
   policy_store_message psm;
 
   psm.set_max_ents(max_num_ents_);
@@ -221,7 +240,8 @@ certifier::framework::policy_store::Serialize(string* out) {
 }
 
 bool
-certifier::framework::policy_store::Deserialize(string& in) {
+certifier::framework::policy_store::Deserialize(string& in)
+{
   policy_store_message psm;
 
   if (!psm.ParseFromString(in))
@@ -259,14 +279,16 @@ certifier::framework::policy_store::Deserialize(string& in) {
 bool        certifier_public_policy_key_initialized = false;
 key_message certifier_public_policy_key;
 const key_message*
-GetPublicPolicyKey() {
+GetPublicPolicyKey()
+{
   if (!certifier_public_policy_key_initialized)
     return nullptr;
   return &certifier_public_policy_key;
 }
 
 bool
-GetX509FromCert(const string& cert, X509* x) {
+GetX509FromCert(const string& cert, X509* x)
+{
   return asn1_to_x509(cert, x);
 }
 
@@ -285,7 +307,8 @@ GetX509FromCert(const string& cert, X509* x) {
 #define EXT_HWID           "1.3.6.1.4.1.3704.1.4"
 
 static bool
-vcek_ext_byte_value(X509* vcek, const char* oid, unsigned char* value) {
+vcek_ext_byte_value(X509* vcek, const char* oid, unsigned char* value)
+{
   int                  nid = -1, idx = -1, extlen = -1;
   X509_EXTENSION*      ex       = NULL;
   ASN1_STRING*         extvalue = NULL;
@@ -322,14 +345,16 @@ vcek_ext_byte_value(X509* vcek, const char* oid, unsigned char* value) {
 }
 
 uint64_t
-get_tcb_version_from_vcek(X509* vcek) {
+get_tcb_version_from_vcek(X509* vcek)
+{
   unsigned char blSPL, teeSPL, snpSPL, ucodeSPL;
   uint64_t      tcb_version = (uint64_t)-1;
 
   if (vcek_ext_byte_value(vcek, EXT_BLSPL, &blSPL) &&
       vcek_ext_byte_value(vcek, EXT_TEESPL, &teeSPL) &&
       vcek_ext_byte_value(vcek, EXT_SNPSPL, &snpSPL) &&
-      vcek_ext_byte_value(vcek, EXT_UCODESPL, &ucodeSPL)) {
+      vcek_ext_byte_value(vcek, EXT_UCODESPL, &ucodeSPL))
+  {
     tcb_version = blSPL | ((uint64_t)teeSPL << 8) | ((uint64_t)snpSPL << 48) |
                   ((uint64_t)ucodeSPL << 56);
   }
@@ -338,7 +363,8 @@ get_tcb_version_from_vcek(X509* vcek) {
 }
 
 bool
-get_chipid_from_vcek(X509* vcek, unsigned char* chipid, int idlen) {
+get_chipid_from_vcek(X509* vcek, unsigned char* chipid, int idlen)
+{
   int                  nid = -1, idx = -1, extlen = -1;
   X509_EXTENSION*      ex       = NULL;
   ASN1_STRING*         extvalue = NULL;
@@ -369,7 +395,8 @@ get_chipid_from_vcek(X509* vcek, unsigned char* chipid, int idlen) {
 #endif
 
 bool
-PublicKeyFromCert(const string& cert, key_message* k) {
+PublicKeyFromCert(const string& cert, key_message* k)
+{
   X509*      x   = X509_new();
   EVP_PKEY*  epk = nullptr;
   X509_NAME* sn  = nullptr;
@@ -559,7 +586,8 @@ certifier::framework::Seal(const string& enclave_type,
                            int           in_size,
                            byte*         in,
                            int*          size_out,
-                           byte*         out) {
+                           byte*         out)
+{
   if (enclave_type == "simulated-enclave") {
     return simulated_Seal(enclave_type, enclave_id, in_size, in, size_out, out);
   }
@@ -608,7 +636,8 @@ certifier::framework::Unseal(const string& enclave_type,
                              int           in_size,
                              byte*         in,
                              int*          size_out,
-                             byte*         out) {
+                             byte*         out)
+{
   if (enclave_type == "simulated-enclave") {
     return simulated_Unseal(enclave_type,
                             enclave_id,
@@ -660,7 +689,8 @@ certifier::framework::Attest(const string& enclave_type,
                              int           what_to_say_size,
                              byte*         what_to_say,
                              int*          size_out,
-                             byte*         out) {
+                             byte*         out)
+{
   if (enclave_type == "simulated-enclave") {
     return simulated_Attest(enclave_type,
                             what_to_say_size,
@@ -784,7 +814,8 @@ certifier::framework::Attest(const string& enclave_type,
 bool
 GetParentEvidence(const string& enclave_type,
                   const string& parent_enclave_type,
-                  string*       out) {
+                  string*       out)
+{
 #ifdef OE_CERTIFIER
   if (enclave_type == "oe-enclave") {
     return false;
@@ -825,7 +856,8 @@ bool
 GetPlatformStatement(const string& enclave_type,
                      const string& enclave_id,
                      int*          size_out,
-                     byte*         out) {
+                     byte*         out)
+{
   if (enclave_type == "application-enclave") {
 #ifdef DEBUG
     printf("Calling application_GetPlatformStatement\n");
@@ -841,7 +873,8 @@ GetPlatformStatement(const string& enclave_type,
 bool   certifier_parent_enclave_type_intitalized = false;
 string certifier_parent_enclave_type;
 bool
-GetParentEnclaveType(string* type) {
+GetParentEnclaveType(string* type)
+{
   if (!certifier_parent_enclave_type_intitalized)
     return false;
   *type = certifier_parent_enclave_type;
@@ -863,7 +896,8 @@ certifier::framework::protect_blob(const string& enclave_type,
                                    int           size_unencrypted_data,
                                    byte*         unencrypted_data,
                                    int*          size_protected_blob,
-                                   byte*         blob) {
+                                   byte*         blob)
+{
   string serialized_key;
   if (!key.SerializeToString(&serialized_key)) {
     printf("protect_blob: can't serialize key\n");
@@ -880,7 +914,8 @@ certifier::framework::protect_blob(const string& enclave_type,
             serialized_key.size(),
             (byte*)serialized_key.data(),
             &size_sealed_key,
-            sealed_key)) {
+            sealed_key))
+  {
     printf("protect_blob: can't seal\n");
     return false;
   }
@@ -908,7 +943,8 @@ certifier::framework::protect_blob(const string& enclave_type,
                              key_buf,
                              iv,
                              encrypted_data,
-                             &size_encrypted)) {
+                             &size_encrypted))
+  {
     printf("protect_blob: authenticate encryption failed\n");
     return false;
   }
@@ -934,7 +970,8 @@ certifier::framework::unprotect_blob(const string& enclave_type,
                                      byte*         protected_blob,
                                      key_message*  key,
                                      int*          size_of_unencrypted_data,
-                                     byte*         unencrypted_data) {
+                                     byte*         unencrypted_data)
+{
   string protected_blob_string;
   protected_blob_string.assign((char*)protected_blob, size_protected_blob);
   protected_blob_message pb;
@@ -962,7 +999,8 @@ certifier::framework::unprotect_blob(const string& enclave_type,
               pb.encrypted_key().size(),
               (byte*)pb.encrypted_key().data(),
               &size_unsealed_key,
-              unsealed_key)) {
+              unsealed_key))
+  {
     printf("unprotect_blob: can't unseal\n");
     return false;
   }
@@ -994,7 +1032,8 @@ certifier::framework::unprotect_blob(const string& enclave_type,
                              pb.encrypted_data().size(),
                              key_buf,
                              unencrypted_data,
-                             size_of_unencrypted_data)) {
+                             size_of_unencrypted_data))
+  {
     printf("unprotect_blob: authenticated decrypt failed\n");
     return false;
   }
@@ -1007,7 +1046,8 @@ certifier::framework::reprotect_blob(const string& enclave_type,
                                      int           size_protected_blob,
                                      byte*         protected_blob,
                                      int*          size_new_encrypted_blob,
-                                     byte*         data) {
+                                     byte*         data)
+{
   key_message new_key;
   int         size_unencrypted_data = size_protected_blob;
   byte        unencrypted_data[size_unencrypted_data];
@@ -1017,7 +1057,8 @@ certifier::framework::reprotect_blob(const string& enclave_type,
                       protected_blob,
                       &new_key,
                       &size_unencrypted_data,
-                      unencrypted_data)) {
+                      unencrypted_data))
+  {
     printf("reprotect_blob: Can't unprotect\n");
     return false;
   }
@@ -1042,7 +1083,8 @@ certifier::framework::reprotect_blob(const string& enclave_type,
                     size_unencrypted_data,
                     unencrypted_data,
                     size_new_encrypted_blob,
-                    data)) {
+                    data))
+  {
     printf("reprotect_blob: Can't Protect\n");
     return false;
   }
@@ -1052,7 +1094,8 @@ certifier::framework::reprotect_blob(const string& enclave_type,
 // -------------------------------------------------------------------
 
 bool
-certifier::utilities::check_date_range(const string& nb, const string& na) {
+certifier::utilities::check_date_range(const string& nb, const string& na)
+{
   time_point t_now;
   time_point t_nb;
   time_point t_na;
@@ -1074,7 +1117,8 @@ certifier::utilities::check_date_range(const string& nb, const string& na) {
 // -------------------------------------------------------------------
 
 void
-print_evidence(const evidence& ev) {
+print_evidence(const evidence& ev)
+{
   if (ev.has_evidence_type()) {
     printf("Evidence type: %s\n", ev.evidence_type().c_str());
     if (ev.evidence_type() == "signed-claim") {
@@ -1132,7 +1176,8 @@ print_evidence(const evidence& ev) {
 }
 
 void
-print_evidence_package(const evidence_package& evp) {
+print_evidence_package(const evidence_package& evp)
+{
   printf("Evidence package.  Prover: %s\n", evp.prover_type().c_str());
   for (int i = 0; i < evp.fact_assertion_size(); i++) {
     printf("%02d: \n", i);
@@ -1142,7 +1187,8 @@ print_evidence_package(const evidence_package& evp) {
 }
 
 void
-print_trust_request_message(trust_request_message& m) {
+print_trust_request_message(trust_request_message& m)
+{
   if (m.has_requesting_enclave_tag()) {
     printf("Requesting enclave     :  %s\n",
            m.requesting_enclave_tag().c_str());
@@ -1163,7 +1209,8 @@ print_trust_request_message(trust_request_message& m) {
 }
 
 void
-print_trust_response_message(trust_response_message& m) {
+print_trust_response_message(trust_response_message& m)
+{
   if (m.has_status()) {
     printf("Status                 :  %s\n", m.status().c_str());
   }
@@ -1182,7 +1229,8 @@ print_trust_response_message(trust_response_message& m) {
 }
 
 void
-print_proof_step(const proof_step& ps) {
+print_proof_step(const proof_step& ps)
+{
   if (ps.has_s1()) {
     print_vse_clause(ps.s1());
     printf(" AND ");
@@ -1200,7 +1248,8 @@ print_proof_step(const proof_step& ps) {
 }
 
 void
-print_proof(proof& pf) {
+print_proof(proof& pf)
+{
   printf("\nproof steps:\n");
   for (int i = 0; i < pf.steps_size(); i++) {
     printf("\n%2d: ", i);
@@ -1210,7 +1259,8 @@ print_proof(proof& pf) {
 }
 
 void
-print_attestation_info(vse_attestation_report_info& r) {
+print_attestation_info(vse_attestation_report_info& r)
+{
   printf("\nvse attestation report\n");
   if (r.has_enclave_type()) {
     printf("Enclave type: %s\n", r.enclave_type().c_str());
@@ -1234,7 +1284,8 @@ print_attestation_info(vse_attestation_report_info& r) {
 }
 
 void
-print_user_data(attestation_user_data& ud) {
+print_user_data(attestation_user_data& ud)
+{
   printf("\nUser data\n");
   if (ud.has_enclave_type()) {
     printf("Enclave type: %s\n", ud.enclave_type().c_str());
@@ -1253,7 +1304,8 @@ print_user_data(attestation_user_data& ud) {
 }
 
 void
-print_signed_report(const signed_report& sr) {
+print_signed_report(const signed_report& sr)
+{
   printf("\nSigned report\n");
   if (sr.has_report_format()) {
     printf("Report format: %s\n", sr.report_format().c_str());
@@ -1280,7 +1332,8 @@ print_signed_report(const signed_report& sr) {
 }
 
 bool
-read_signed_vse_statements(const string& in, signed_claim_sequence* s) {
+read_signed_vse_statements(const string& in, signed_claim_sequence* s)
+{
   string str;
   if (!read_file_into_string(in, &str)) {
     printf("read_signed_vse_statements: Can't read %s\n", in.c_str());

@@ -56,11 +56,13 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 static void
-reverse_bytes(uint8_t *buffer, size_t size) {
+reverse_bytes(uint8_t *buffer, size_t size)
+{
   if (!buffer || size == 0)
     return;
   for (uint8_t *start = buffer, *end = buffer + size - 1; start < end;
-       start++, end--) {
+       start++, end--)
+  {
     uint8_t temp = *start;
     *start       = *end;
     *end         = temp;
@@ -75,7 +77,8 @@ get_ecdsa_sig_rs_bytes(const unsigned char *sig,
                        unsigned char *      r,
                        unsigned char *      s,
                        size_t *             rlen,
-                       size_t *             slen) {
+                       size_t *             slen)
+{
   int            rc   = -EXIT_FAILURE;
   unsigned char *rbuf = NULL, *sbuf = NULL;
   size_t         r1_len, s1_len;
@@ -146,7 +149,8 @@ int
 sev_ecdsa_sign(const void *         msg,
                size_t               msg_size,
                EVP_PKEY *           key,
-               union sev_ecdsa_sig *sig) {
+               union sev_ecdsa_sig *sig)
+{
   int           rc            = -EXIT_FAILURE;
   EVP_MD_CTX *  md_ctx        = NULL;
   EVP_PKEY_CTX *sign_ctx      = NULL;
@@ -239,7 +243,8 @@ int
 sev_ecdsa_verify(const void *         digest,
                  size_t               digest_size,
                  EVP_PKEY *           key,
-                 union sev_ecdsa_sig *sig) {
+                 union sev_ecdsa_sig *sig)
+{
   int        rc         = -EXIT_FAILURE;
   bool       is_valid   = false;
   EC_KEY *   pub_ec_key = NULL;
@@ -268,7 +273,8 @@ sev_ecdsa_verify(const void *         digest,
     if (ECDSA_do_verify((byte *)digest,
                         (uint32_t)digest_size,
                         ecdsa_sig,
-                        pub_ec_key) != 1) {
+                        pub_ec_key) != 1)
+    {
       printf("ECDSA_do_verify failed\n");
       ECDSA_SIG_free(ecdsa_sig);
       break;
@@ -298,7 +304,8 @@ struct sev_key_options {
 };
 
 int
-sev_request_key(struct sev_key_options *options, uint8_t *key, size_t size) {
+sev_request_key(struct sev_key_options *options, uint8_t *key, size_t size)
+{
   int                            rc = EXIT_FAILURE;
   int                            fd = -1;
   struct snp_derived_key_req     req;
@@ -374,7 +381,8 @@ out:
 
 #ifdef SEV_DUMMY_GUEST
 int
-read_key_file(const char *filename, EVP_PKEY **key, bool priv) {
+read_key_file(const char *filename, EVP_PKEY **key, bool priv)
+{
   printf("opening %s\n", filename);
   int       rc = -EXIT_FAILURE;
   EVP_PKEY *pkey;
@@ -409,7 +417,8 @@ out:
 }
 
 int
-sev_sign_report(struct attestation_report *report) {
+sev_sign_report(struct attestation_report *report)
+{
   int       rc  = -EXIT_FAILURE;
   EVP_PKEY *key = NULL;
   rc            = read_key_file(SEV_ECDSA_PRIV_KEY, &key, true);
@@ -438,7 +447,8 @@ exit:
 }
 
 EVP_PKEY *
-get_simulated_vcek_key() {
+get_simulated_vcek_key()
+{
   EVP_PKEY *key = NULL;
   int       rc  = read_key_file(SEV_ECDSA_PUB_KEY, &key, false);
   if (rc != EXIT_SUCCESS)
@@ -448,7 +458,8 @@ get_simulated_vcek_key() {
 #endif  // SEV_DUMMY_GUEST
 
 bool
-sev_verify_report(EVP_PKEY *key, struct attestation_report *report) {
+sev_verify_report(EVP_PKEY *key, struct attestation_report *report)
+{
   unsigned int size_digest = 48;
   byte         digest[size_digest];
 
@@ -457,7 +468,8 @@ sev_verify_report(EVP_PKEY *key, struct attestation_report *report) {
           (const byte *)report,
           sizeof(struct attestation_report) - sizeof(struct signature),
           digest,
-          size_digest)) {
+          size_digest))
+  {
     printf("sev_verify_report: digest_message failed\n");
     return false;
   }
@@ -476,7 +488,8 @@ sev_verify_report(EVP_PKEY *key, struct attestation_report *report) {
 int
 sev_get_report(const uint8_t *            data,
                size_t                     data_size,
-               struct attestation_report *report) {
+               struct attestation_report *report)
+{
   int                            rc = EXIT_FAILURE;
   int                            fd = -1;
   struct snp_report_req          req;
@@ -570,14 +583,16 @@ out:
 //      ...
 //      Uc = PRF(Password, Uc−1)
 void
-xor_in(int size, byte *result, byte *in) {
+xor_in(int size, byte *result, byte *in)
+{
   for (int i = 0; i < size; i++)
     result[i] ^= in[i];
 }
 
 const int hmac_size = 32;
 bool
-kdf(int key_len, byte *key, int iter, int out_size, byte *out) {
+kdf(int key_len, byte *key, int iter, int out_size, byte *out)
+{
   memset(out, 0, out_size);
   byte salt[hmac_size] = {0x07, 0x01, 0x08, 0x02, 0x08, 0x33, 0x11, 0x44,
                           0x07, 0x01, 0x08, 0x02, 0x08, 0x33, 0x11, 0x44,
@@ -633,8 +648,8 @@ bool
 sev_get_final_keys(int      final_key_size,
                    byte *   final_key,
                    bool     root_key = false,
-                   uint64_t fields   = FIELD_MEASUREMENT_MASK |
-                                     FIELD_POLICY_MASK) {
+                   uint64_t fields = FIELD_MEASUREMENT_MASK | FIELD_POLICY_MASK)
+{
   struct sev_key_options opt                               = {0};
   byte                   key[MSG_KEY_RSP_DERIVED_KEY_SIZE] = {0};
   int                    size = MSG_KEY_RSP_DERIVED_KEY_SIZE;
@@ -650,7 +665,8 @@ sev_get_final_keys(int      final_key_size,
 }
 
 bool
-sev_Seal(int in_size, byte *in, int *size_out, byte *out) {
+sev_Seal(int in_size, byte *in, int *size_out, byte *out)
+{
   int  final_key_size = 64;
   byte final_key[final_key_size];
   if (!sev_get_final_keys(final_key_size, final_key)) {
@@ -677,7 +693,8 @@ sev_Seal(int in_size, byte *in, int *size_out, byte *out) {
 }
 
 bool
-sev_Unseal(int in_size, byte *in, int *size_out, byte *out) {
+sev_Unseal(int in_size, byte *in, int *size_out, byte *out)
+{
   int  final_key_size = 64;
   byte final_key[final_key_size];
   if (!sev_get_final_keys(final_key_size, final_key)) {
@@ -699,7 +716,8 @@ sev_Unseal(int in_size, byte *in, int *size_out, byte *out) {
 }
 
 bool
-sev_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out) {
+sev_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out)
+{
   struct attestation_report report;
 
   // hash what to say
@@ -709,11 +727,8 @@ sev_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out) {
   sev_attestation_message the_attestation;
   the_attestation.set_what_was_said(what_to_say, what_to_say_size);
 
-  if (!digest_message("sha-384",
-                      what_to_say,
-                      what_to_say_size,
-                      hash,
-                      hash_len)) {
+  if (!digest_message("sha-384", what_to_say, what_to_say_size, hash, hash_len))
+  {
     printf("digest_message failed\n");
     return false;
   }
@@ -747,7 +762,8 @@ verify_sev_Attest(EVP_PKEY *key,
                   int       size_sev_attestation,
                   byte *    the_attestation,
                   int *     size_measurement,
-                  byte *    measurement) {
+                  byte *    measurement)
+{
   string at_str;
   at_str.assign((char *)the_attestation, size_sev_attestation);
   sev_attestation_message sev_att;
@@ -764,7 +780,8 @@ verify_sev_Attest(EVP_PKEY *key,
                       (byte *)sev_att.what_was_said().data(),
                       sev_att.what_was_said().size(),
                       digest,
-                      digest_size)) {
+                      digest_size))
+  {
     printf("verify_sev_Attest: digest_message fails\n");
     return false;
   }
@@ -811,7 +828,8 @@ string serialized_vcek_cert;
 bool
 sev_Init(const string &platform_ark_der_file,
          const string &platform_ask_der_file,
-         const string &platform_vcek_der_file) {
+         const string &platform_vcek_der_file)
+{
   if (!read_file_into_string(platform_ark_der_file, &serialized_ark_cert)) {
     printf("sev_Init: Can't read ark file\n");
     return false;
@@ -832,7 +850,8 @@ sev_Init(const string &platform_ark_der_file,
 }
 
 bool
-sev_GetParentEvidence(string *out) {
+sev_GetParentEvidence(string *out)
+{
   if (!plat_certs_initialized) {
     printf("sev_GetParentEvidence: platform cert not initialized\n");
     return false;
@@ -848,7 +867,8 @@ sev_GetParentEvidence(string *out) {
 
 // Todo: suggest renaming this to sev_verify_report
 int
-verify_report(struct attestation_report *report) {
+verify_report(struct attestation_report *report)
+{
   int           rc  = -EXIT_FAILURE;
   EVP_PKEY *    key = NULL;
   unsigned char sha_digest_384[SHA384_DIGEST_LENGTH];
@@ -908,7 +928,8 @@ verify_report(struct attestation_report *report) {
           (byte *)report,
           sizeof(struct attestation_report) - sizeof(struct signature),
           sha_digest_384,
-          sizeof(sha_digest_384))) {
+          sizeof(sha_digest_384)))
+  {
     rc = -EXIT_FAILURE;
     perror("sha_digest_384");
     goto exit;
@@ -933,7 +954,8 @@ exit:
 }
 
 int
-sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
+sev_read_pem_into_x509(const char *file_name, X509 **x509_cert)
+{
   FILE *pFile = NULL;
   pFile       = fopen(file_name, "re");
   if (!pFile)
@@ -953,7 +975,8 @@ sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
 static bool
 x509_validate_signature(X509 *child_cert,
                         X509 *intermediate_cert,
-                        X509 *parent_cert) {
+                        X509 *parent_cert)
+{
   bool            ret       = false;
   X509_STORE *    store     = NULL;
   X509_STORE_CTX *store_ctx = NULL;
@@ -1020,7 +1043,8 @@ x509_validate_signature(X509 *child_cert,
 }
 
 int
-sev_validate_vcek_cert_chain(X509 *x509_vcek, X509 *x509_ask, X509 *x509_ark) {
+sev_validate_vcek_cert_chain(X509 *x509_vcek, X509 *x509_ask, X509 *x509_ark)
+{
   EVP_PKEY *vcek_pub_key = NULL;
   int       ret          = EXIT_FAILURE;
 
@@ -1062,7 +1086,8 @@ err:
 }
 
 EVP_PKEY *
-sev_get_vcek_pubkey(X509 *x509_vcek) {
+sev_get_vcek_pubkey(X509 *x509_vcek)
+{
   EVP_PKEY *vcek_pub_key = NULL;
 
   if (!x509_vcek) {
@@ -1083,7 +1108,8 @@ sev_get_vcek_pubkey(X509 *x509_vcek) {
 
 // Todo: suggest renaming this to sev_write_report
 int
-write_report(const char *file_name, struct attestation_report *report) {
+write_report(const char *file_name, struct attestation_report *report)
+{
   int   rc          = EXIT_FAILURE;
   FILE *report_file = NULL;
   int   count;

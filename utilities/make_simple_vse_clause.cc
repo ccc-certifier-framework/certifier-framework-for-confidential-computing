@@ -42,7 +42,8 @@ int
 make_simple_clause_file_utility(entity_message& subject,
                                 const string&   verb,
                                 entity_message& object,
-                                const string&   output) {
+                                const string&   output)
+{
   vse_clause cl;
   string     v = verb;
   if (!make_simple_vse_clause(subject, v, object, &cl)) {
@@ -71,7 +72,8 @@ make_simple_clause_file_utility(entity_message& subject,
 }
 
 bool
-get_key_from_file(const string& in, key_message* k) {
+get_key_from_file(const string& in, key_message* k)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_key[in_size];
@@ -91,7 +93,8 @@ get_key_from_file(const string& in, key_message* k) {
 }
 
 bool
-get_measurement_entity_from_file(const string& in, entity_message* em) {
+get_measurement_entity_from_file(const string& in, entity_message* em)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte m[in_size];
@@ -110,7 +113,8 @@ get_measurement_entity_from_file(const string& in, entity_message* em) {
 }
 
 bool
-get_platform_entity_from_file(const string& in, entity_message* em) {
+get_platform_entity_from_file(const string& in, entity_message* em)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte pfp[in_size];
@@ -134,7 +138,8 @@ get_platform_entity_from_file(const string& in, entity_message* em) {
 }
 
 bool
-get_environment_entity_from_file(const string& in, entity_message* em) {
+get_environment_entity_from_file(const string& in, entity_message* em)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte env[in_size];
@@ -158,17 +163,20 @@ get_environment_entity_from_file(const string& in, entity_message* em) {
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
   if (FLAGS_key_subject == "" && FLAGS_measurement_subject == "" &&
-      FLAGS_platform_subject == "" && FLAGS_environment_subject == "") {
+      FLAGS_platform_subject == "" && FLAGS_environment_subject == "")
+  {
     printf("No subject\n");
     return 1;
   }
   if (FLAGS_key_object == "" && FLAGS_measurement_object == "" &&
-      FLAGS_platform_object == "" && FLAGS_environment_object == "") {
+      FLAGS_platform_object == "" && FLAGS_environment_object == "")
+  {
     printf("No object\n");
     return 1;
   }
@@ -187,8 +195,8 @@ main(int an, char** av) {
       return 1;
     }
   } else if (FLAGS_measurement_subject != "") {
-    if (!get_measurement_entity_from_file(FLAGS_measurement_subject,
-                                          &sub_ent)) {
+    if (!get_measurement_entity_from_file(FLAGS_measurement_subject, &sub_ent))
+    {
       printf("Can't make subject measurement\n");
       return 1;
     }
@@ -198,8 +206,8 @@ main(int an, char** av) {
       return 1;
     }
   } else if (FLAGS_environment_subject != "") {
-    if (!get_environment_entity_from_file(FLAGS_environment_subject,
-                                          &sub_ent)) {
+    if (!get_environment_entity_from_file(FLAGS_environment_subject, &sub_ent))
+    {
       printf("Can't make subject environment\n");
       return 1;
     }

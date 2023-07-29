@@ -16,7 +16,8 @@ extern "C" {
   } while (false)  // TODO: replace
 
 bool
-keystone_Init(const int cert_size, byte* cert) {
+keystone_Init(const int cert_size, byte* cert)
+{
   return true;
 }
 
@@ -24,7 +25,8 @@ bool
 keystone_Attest(const int what_to_say_size,
                 byte*     what_to_say,
                 int*      attestation_size_out,
-                byte*     attestation_out) {
+                byte*     attestation_out)
+{
   assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
   *attestation_size_out = sizeof(struct report_t);
   return attest_enclave((void*)attestation_out, what_to_say, what_to_say_size);
@@ -36,7 +38,8 @@ keystone_Verify(const int what_to_say_size,
                 const int attestation_size,
                 byte*     attestation,
                 int*      measurement_out_size,
-                byte*     measurement_out) {
+                byte*     measurement_out)
+{
   assert(attestation_size == sizeof(struct report_t));
   Report report;
   report.fromBytes(attestation);
@@ -66,7 +69,8 @@ keystone_Verify(const int what_to_say_size,
 
 // to share between seal and unseal
 bool
-keystone_getSealingKey(WORD key[]) {
+keystone_getSealingKey(WORD key[])
+{
   struct sealing_key key_buffer;  // {key, signature}
   char               key_identifier[] = "sealing-key";
   int                err              = get_sealing_key(&key_buffer,
@@ -81,7 +85,8 @@ keystone_getSealingKey(WORD key[]) {
 }
 
 bool
-keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
+keystone_Seal(int in_size, byte* in, int* size_out, byte* out)
+{
   WORD key[AES_SCHEDULE_LEN];
   if (keystone_getSealingKey(key)) {
     return false;
@@ -94,7 +99,8 @@ keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
 }
 
 bool
-keystone_Unseal(int in_size, byte* in, int* size_out, byte* out) {
+keystone_Unseal(int in_size, byte* in, int* size_out, byte* out)
+{
   WORD key[AES_SCHEDULE_LEN];
   if (keystone_getSealingKey(key)) {
     return false;

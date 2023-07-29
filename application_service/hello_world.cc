@@ -4,7 +4,8 @@
 #include <string.h>
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   printf("Hello world\n");
   return 0;
 }

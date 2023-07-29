@@ -65,7 +65,8 @@ string public_key_alg("rsa-2048");
 string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
 void
-print_trust_data() {
+print_trust_data()
+{
   if (!trust_data_initialized)
     return;
   printf("\nTrust data:\n");
@@ -102,7 +103,8 @@ run_me_as_server(void);
 }
 
 bool
-openenclave_init(void) {
+openenclave_init(void)
+{
   oe_result_t result = OE_OK;
   result             = oe_load_module_host_file_system();
   if (result != OE_OK) {
@@ -132,7 +134,8 @@ openenclave_init(void) {
 }
 
 bool
-certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
+certifier_init(char* usr_data_dir, size_t usr_data_dir_size)
+{
   oe_result_t       result = OE_OK;
   static const char rnd_seed[] =
       "string to make the random number generator think it has entropy";
@@ -193,29 +196,34 @@ certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
 }
 
 void
-clear_sensitive_data() {
+clear_sensitive_data()
+{
   // TODO: clear symmetric and private keys
   //    Not necessary on most platforms
 }
 
 bool
-cold_init() {
+cold_init()
+{
   return app_trust_data->cold_init(public_key_alg, symmetric_key_alg);
 }
 
 bool
-warm_restart() {
+warm_restart()
+{
   return app_trust_data->warm_restart();
 }
 
 // TODO: replace with new cc_trust_data interface
 bool
-certify_me() {
+certify_me()
+{
   return app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port);
 }
 
 void
-server_application(secure_authenticated_channel& channel) {
+server_application(secure_authenticated_channel& channel)
+{
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
     printf("Server peer cert is:\n");
@@ -235,7 +243,8 @@ server_application(secure_authenticated_channel& channel) {
 }
 
 bool
-run_me_as_server() {
+run_me_as_server()
+{
   if (!app_trust_data->warm_restart()) {
     printf("warm-restart failed\n");
     return false;
@@ -251,7 +260,8 @@ run_me_as_server() {
 }
 
 void
-client_application(secure_authenticated_channel& channel) {
+client_application(secure_authenticated_channel& channel)
+{
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
     printf("Client peer cert is:\n");
@@ -271,25 +281,27 @@ client_application(secure_authenticated_channel& channel) {
 }
 
 bool
-run_me_as_client() {
+run_me_as_client()
+{
   if (!app_trust_data->warm_restart()) {
     printf("warm-restart failed\n");
     return false;
   }
   printf("running as client\n");
   if (!app_trust_data->cc_auth_key_initialized_ ||
-      !app_trust_data->cc_policy_info_initialized_) {
+      !app_trust_data->cc_policy_info_initialized_)
+  {
     printf("trust data not initialized\n");
     return false;
   }
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
-  if (!channel.init_client_ssl(
-          FLAGS_server_app_host,
-          FLAGS_server_app_port,
-          app_trust_data->serialized_policy_cert_,
-          app_trust_data->private_auth_key_,
-          app_trust_data->private_auth_key_.certificate())) {
+  if (!channel.init_client_ssl(FLAGS_server_app_host,
+                               FLAGS_server_app_port,
+                               app_trust_data->serialized_policy_cert_,
+                               app_trust_data->private_auth_key_,
+                               app_trust_data->private_auth_key_.certificate()))
+  {
     printf("Can't init client app\n");
     return false;
   }

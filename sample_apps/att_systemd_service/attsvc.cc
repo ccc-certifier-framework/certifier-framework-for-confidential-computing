@@ -78,19 +78,22 @@ static struct _app_config {
 } app_config;
 
 static bool
-file_exists(const std::string& name) {
+file_exists(const std::string& name)
+{
   return (access(name.c_str(), F_OK) != -1);
 }
 
 static bool
-check_disk_encryption() {
+check_disk_encryption()
+{
   // TODO: Check LUKS encryption first
   ATT_LOG(LOG_INFO, "Disk Encryption Check not implemented yet.");
   return false;
 }
 
 static bool
-certifier_notification(cc_trust_data* app_trust_data, bool disk_encrypted) {
+certifier_notification(cc_trust_data* app_trust_data, bool disk_encrypted)
+{
   if (app_config.check_disk && !disk_encrypted) {
     ATT_LOG(LOG_INFO, "Disk is not encrypted!");
   }
@@ -101,19 +104,20 @@ certifier_notification(cc_trust_data* app_trust_data, bool disk_encrypted) {
   }
 
   if (!app_trust_data->cc_auth_key_initialized_ ||
-      !app_trust_data->cc_policy_info_initialized_) {
+      !app_trust_data->cc_policy_info_initialized_)
+  {
     ATT_LOG(LOG_INFO, "Trust data not initialized.");
     return false;
   }
 
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
-  if (!channel.init_client_ssl(
-          app_config.client,
-          app_config.client_port,
-          app_trust_data->serialized_policy_cert_,
-          app_trust_data->private_auth_key_,
-          app_trust_data->private_auth_key_.certificate())) {
+  if (!channel.init_client_ssl(app_config.client,
+                               app_config.client_port,
+                               app_trust_data->serialized_policy_cert_,
+                               app_trust_data->private_auth_key_,
+                               app_trust_data->private_auth_key_.certificate()))
+  {
     ATT_LOG(LOG_INFO,
             "Failed to initialize SSL channel to notification agent.");
     return false;
@@ -135,7 +139,8 @@ certifier_notification(cc_trust_data* app_trust_data, bool disk_encrypted) {
 }
 
 static char*
-trim_space(char* str, int size) {
+trim_space(char* str, int size)
+{
   int end = strnlen(str, size) - 1;
   while (isspace(str[0]))
     str++;
@@ -147,7 +152,8 @@ trim_space(char* str, int size) {
 }
 
 static bool
-parse_config(const string& config_file) {
+parse_config(const string& config_file)
+{
 #define BUFFER_SIZE 1024
   FILE* file = fopen(config_file.c_str(), "r");
   char  buffer[BUFFER_SIZE];
@@ -193,7 +199,8 @@ parse_config(const string& config_file) {
 }
 
 int
-main(int argc, char* argv[]) {
+main(int argc, char* argv[])
+{
   int  ret            = 0;
   bool disk_encrypted = false;
 
@@ -214,8 +221,8 @@ main(int argc, char* argv[]) {
     ATT_LOG(LOG_INFO,
             "Creating configuration directory: %s",
             ATTSERVICE_DATA_DIR);
-    if (mkdir(ATTSERVICE_DATA_DIR, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) !=
-        0) {
+    if (mkdir(ATTSERVICE_DATA_DIR, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0)
+    {
       ATT_LOG(LOG_INFO, "Failed to create configuration directory.");
       return 1;
     }
@@ -228,8 +235,8 @@ main(int argc, char* argv[]) {
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size,
-                                       initialized_cert)) {
+  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert))
+  {
     ATT_LOG(LOG_INFO, "Can't init policy key.");
     return 1;
   }
@@ -248,7 +255,8 @@ main(int argc, char* argv[]) {
   if (!app_trust_data->initialize_simulated_enclave_data(
           attest_key_file_name,
           measurement_file_name,
-          attest_endorsement_file_name)) {
+          attest_endorsement_file_name))
+  {
     printf("Can't init simulated enclave\n");
     return 1;
   }
@@ -262,7 +270,8 @@ main(int argc, char* argv[]) {
   vcek_cert_file_name.append(VCEK_CERT_FILE);
   if (!app_trust_data->initialize_sev_enclave_data(ark_cert_file_name,
                                                    ask_cert_file_name,
-                                                   vcek_cert_file_name)) {
+                                                   vcek_cert_file_name))
+  {
     printf("Can't init sev enclave\n");
     return 1;
   }
@@ -277,7 +286,8 @@ main(int argc, char* argv[]) {
     if (!app_trust_data->cold_init(public_key_alg,
                                    symmetric_key_alg,
                                    hash_alg,
-                                   hmac_alg)) {
+                                   hmac_alg))
+    {
       ATT_LOG(LOG_INFO, "cold-init failed");
       ret = 1;
       goto done;
@@ -323,7 +333,8 @@ main(int argc, char* argv[]) {
   } else {
     ATT_LOG(LOG_INFO, "Performing certification...");
     if (!app_trust_data->certify_me(app_config.certifier_host,
-                                    app_config.certifier_port)) {
+                                    app_config.certifier_port))
+    {
       ATT_LOG(LOG_INFO, "Certification failed.");
       ret = 1;
       goto done;

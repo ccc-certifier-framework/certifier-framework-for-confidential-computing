@@ -39,7 +39,8 @@ DEFINE_string(output, "policy.include.cc", "policy cert inclusion file");
 DEFINE_string(array_name, "initialized_cert", "Name of byte array");
 
 bool
-write_file(string file_name, int size, byte* data) {
+write_file(string file_name, int size, byte* data)
+{
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (out < 0)
     return false;
@@ -53,7 +54,8 @@ write_file(string file_name, int size, byte* data) {
 }
 
 int
-file_size(string file_name) {
+file_size(string file_name)
+{
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0)
@@ -64,7 +66,8 @@ file_size(string file_name) {
 }
 
 bool
-read_file(string file_name, int* size, byte* data) {
+read_file(string file_name, int* size, byte* data)
+{
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0)
@@ -85,7 +88,8 @@ read_file(string file_name, int* size, byte* data) {
 }
 
 bool
-generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) {
+generate_policy_cert_in_code(string& asn1_cert_file, string& include_file)
+{
   int cert_size = file_size(asn1_cert_file);
   if (cert_size <= 0) {
     printf("Invalid size=%d for input file '%s'.\n",
@@ -142,7 +146,8 @@ generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) {
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   string usage("Generate policy certificate to embed policy key in sample app");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);

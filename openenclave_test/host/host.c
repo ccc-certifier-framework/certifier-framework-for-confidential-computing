@@ -10,7 +10,8 @@
 #include "attestation_u.h"
 
 int
-main(int argc, const char* argv[]) {
+main(int argc, const char* argv[])
+{
   oe_result_t   result;
   int           ret     = 1;
   bool          res     = false;

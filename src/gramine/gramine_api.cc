@@ -26,7 +26,8 @@ bool             gramine_platform_cert_initialized = false;
 string           gramine_platform_cert;
 
 int
-gramine_file_size(const char* file_name) {
+gramine_file_size(const char* file_name)
+{
   struct stat file_info;
 
   if (stat(file_name, &file_info) != 0)
@@ -37,7 +38,8 @@ gramine_file_size(const char* file_name) {
 }
 
 bool
-gramine_Init(const int cert_size, byte* cert) {
+gramine_Init(const int cert_size, byte* cert)
+{
   char   attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
   size_t ret                                         = 0;
 
@@ -75,7 +77,8 @@ bool
 gramine_Attest(const int what_to_say_size,
                byte*     what_to_say,
                int*      attestation_size_out,
-               byte*     attestation_out) {
+               byte*     attestation_out)
+{
   bool result = false;
 
 #ifdef DEBUG
@@ -107,7 +110,8 @@ gramine_Verify(const int what_to_say_size,
                const int attestation_size,
                byte*     attestation,
                int*      measurement_out_size,
-               byte*     measurement_out) {
+               byte*     measurement_out)
+{
   bool result = false;
 
 #ifdef DEBUG
@@ -135,7 +139,8 @@ gramine_Verify(const int what_to_say_size,
 }
 
 bool
-gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
+gramine_Seal(int in_size, byte* in, int* size_out, byte* out)
+{
   bool result = false;
 
 #ifdef DEBUG
@@ -155,7 +160,8 @@ gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
 }
 
 bool
-gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
+gramine_Unseal(int in_size, byte* in, int* size_out, byte* out)
+{
   bool result = false;
 
 #ifdef DEBUG
@@ -176,6 +182,7 @@ gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
 }
 
 int
-gramine_Getkey(byte* user_report_data, sgx_key_128bit_t* key) {
+gramine_Getkey(byte* user_report_data, sgx_key_128bit_t* key)
+{
   return gramine_Sgx_Getkey(user_report_data, key);
 }

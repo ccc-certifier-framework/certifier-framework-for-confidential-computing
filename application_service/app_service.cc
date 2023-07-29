@@ -112,7 +112,8 @@ std::mutex        kid_mtx;
 spawned_children* my_kids = nullptr;
 
 spawned_children*
-new_kid() {
+new_kid()
+{
   spawned_children* nk = new (spawned_children);
   if (nk == nullptr)
     return nullptr;
@@ -126,7 +127,8 @@ new_kid() {
 }
 
 spawned_children*
-find_kid(int pid) {
+find_kid(int pid)
+{
   kid_mtx.lock();
   spawned_children* k = my_kids;
   while (k != nullptr) {
@@ -139,7 +141,8 @@ find_kid(int pid) {
 }
 
 void
-remove_kid(int pid) {
+remove_kid(int pid)
+{
   kid_mtx.lock();
   if (my_kids == nullptr) {
     kid_mtx.unlock();
@@ -165,7 +168,8 @@ remove_kid(int pid) {
 }
 
 bool
-measure_binary(const string& file, string* m) {
+measure_binary(const string& file, string* m)
+{
   int size = file_size(file.c_str());
   if (size <= 0) {
     printf("Can't get executable file\n");
@@ -191,7 +195,8 @@ measure_binary(const string& file, string* m) {
 }
 
 bool
-measure_in_mem_binary(byte* file_contents, int size, string* m) {
+measure_in_mem_binary(byte* file_contents, int size, string* m)
+{
   byte         digest[32];
   unsigned int len = 32;
   if (!digest_message("sha256", file_contents, (unsigned)size, digest, len)) {
@@ -203,7 +208,8 @@ measure_in_mem_binary(byte* file_contents, int size, string* m) {
 }
 
 void
-delete_child(int signum) {
+delete_child(int signum)
+{
   int               pid = wait(nullptr);
   spawned_children* c   = find_kid(pid);
   if (c->thread_obj_ != nullptr) {
@@ -222,7 +228,8 @@ const int max_pad_size = 128;
 cc_trust_data* app_trust_data = nullptr;
 
 bool
-soft_Seal(spawned_children* kid, string in, string* out) {
+soft_Seal(spawned_children* kid, string in, string* out)
+{
 #ifdef DEBUG
   printf("soft_Seal\n");
 #endif
@@ -244,7 +251,8 @@ soft_Seal(spawned_children* kid, string in, string* out) {
                              app_trust_data->service_symmetric_key_,
                              iv,
                              t_out,
-                             &t_size)) {
+                             &t_size))
+  {
     printf("soft_Seal: authenticated encrypt failed\n");
     return false;
   }
@@ -253,7 +261,8 @@ soft_Seal(spawned_children* kid, string in, string* out) {
 }
 
 bool
-soft_Unseal(spawned_children* kid, string in, string* out) {
+soft_Unseal(spawned_children* kid, string in, string* out)
+{
 #ifdef DEBUG
   printf("soft_Unseal\n");
 #endif
@@ -266,7 +275,8 @@ soft_Unseal(spawned_children* kid, string in, string* out) {
                              in.size(),
                              app_trust_data->service_symmetric_key_,
                              t_out,
-                             &t_size)) {
+                             &t_size))
+  {
     printf("soft_Unseal: authenticated decrypt failed\n");
     return false;
   }
@@ -280,7 +290,8 @@ soft_Unseal(spawned_children* kid, string in, string* out) {
 #endif
   if (memcmp(t_out,
              (byte*)kid->measurement_.data(),
-             kid->measurement_.size()) != 0) {
+             kid->measurement_.size()) != 0)
+  {
     printf("soft_Unseal: mis-matched measurements\n");
     return false;
   }
@@ -290,7 +301,8 @@ soft_Unseal(spawned_children* kid, string in, string* out) {
 }
 
 bool
-soft_Attest(spawned_children* kid, string in, string* out) {
+soft_Attest(spawned_children* kid, string in, string* out)
+{
 #ifdef DEBUG
   printf("soft_Attest\n");
 #endif
@@ -332,7 +344,8 @@ soft_Attest(spawned_children* kid, string in, string* out) {
   if (app_trust_data->private_service_key_.key_type() == "rsa-2048-private") {
     signing_alg.assign("rsa-2048-sha256-pkcs-sign");
   } else if (app_trust_data->private_service_key_.key_type() ==
-             "rsa-4096-private") {
+             "rsa-4096-private")
+  {
     signing_alg.assign("rsa-4096-sha384-pkcs-sign");
   } else if (app_trust_data->private_service_key_.key_type() ==
              "ecc-384-private") {
@@ -345,7 +358,8 @@ soft_Attest(spawned_children* kid, string in, string* out) {
                    serialized_report_info,
                    signing_alg,
                    app_trust_data->private_service_key_,
-                   out)) {
+                   out))
+  {
     printf("Can't sign report\n");
     return false;
   }
@@ -354,7 +368,8 @@ soft_Attest(spawned_children* kid, string in, string* out) {
 }
 
 bool
-soft_GetPlatformStatement(spawned_children* kid, string* out) {
+soft_GetPlatformStatement(spawned_children* kid, string* out)
+{
 #ifdef DEBUG
   printf("soft_GetPlatformStatement\n");
 #endif
@@ -367,7 +382,8 @@ soft_GetPlatformStatement(spawned_children* kid, string* out) {
 }
 
 bool
-soft_GetParentEvidence(spawned_children* kid, string* out) {
+soft_GetParentEvidence(spawned_children* kid, string* out)
+{
 #ifdef DEBUG
   printf("soft_GetPlatformStatement\n");
 #endif
@@ -381,7 +397,8 @@ soft_GetParentEvidence(spawned_children* kid, string* out) {
 
 // This Getmeasurement stays
 bool
-soft_Getmeasurement(spawned_children* kid, string* out) {
+soft_Getmeasurement(spawned_children* kid, string* out)
+{
 #ifdef DEBUG
   printf("soft_Getmeasurement\n");
 #endif
@@ -390,7 +407,8 @@ soft_Getmeasurement(spawned_children* kid, string* out) {
 }
 
 void
-app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
+app_service_loop(spawned_children* kid, int read_fd, int write_fd)
+{
   bool continue_loop = true;
 
 #ifdef DEBUG
@@ -453,7 +471,8 @@ app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
       printf("Can't serialize response\n");
     }
     if (write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size()) <
-        (int)str_app_rsp.size()) {
+        (int)str_app_rsp.size())
+    {
       printf("Response write failed\n");
     }
 
@@ -464,7 +483,8 @@ app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
 }
 
 bool
-start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
+start_app_service_loop(spawned_children* kid, int read_fd, int write_fd)
+{
 #ifdef DEBUG
   printf("\n[%d] %s\n", __LINE__, __func__);
 #endif
@@ -480,7 +500,8 @@ start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
 
 #define INMEMEXEC
 bool
-process_run_request(run_request& req) {
+process_run_request(run_request& req)
+{
   // measure binary
   string m;
 #ifndef INMEMEXEC
@@ -664,7 +685,8 @@ process_run_request(run_request& req) {
 }
 
 bool
-app_request_server() {
+app_request_server()
+{
   // This is the TCP server that requests to start
   // protected programs.
   const char*        hostname = FLAGS_server_app_host.c_str();
@@ -736,7 +758,8 @@ app_request_server() {
     string str_resp;
     if (resp.SerializeToString(&str_resp)) {
       if (sized_socket_write(client, str_resp.size(), (byte*)str_resp.data()) <
-          (int)str_resp.size()) {
+          (int)str_resp.size())
+      {
         printf("Write failed\n");
       }
     }
@@ -753,7 +776,8 @@ string public_key_alg("rsa-2048");
 string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   string usage("Application Service utility");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -799,10 +823,10 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
     string attest_endorsement_file_name(FLAGS_service_dir);
     attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
-    if (!helper.initialize_simulated_enclave_data(
-            attest_key_file_name,
-            measurement_file_name,
-            attest_endorsement_file_name)) {
+    if (!helper.initialize_simulated_enclave_data(attest_key_file_name,
+                                                  measurement_file_name,
+                                                  attest_endorsement_file_name))
+    {
       printf("Can't init simulated enclave\n");
       return 1;
     }
@@ -813,7 +837,8 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
     // Init sev enclave
     if (!helper.initialize_sev_enclave_data(FLAGS_ark_cert_file,
                                             FLAGS_ask_cert_file,
-                                            FLAGS_vcek_cert_file)) {
+                                            FLAGS_vcek_cert_file))
+    {
       printf("Can't init sev-enclave\n");
       return 1;
     }

@@ -96,7 +96,8 @@ static struct attestation_report default_report = {
 };
 
 int
-read_key_file(const string& filename, EVP_PKEY** key, bool priv) {
+read_key_file(const string& filename, EVP_PKEY** key, bool priv)
+{
   int       rc = -EXIT_FAILURE;
   EVP_PKEY* pkey;
   FILE*     file = NULL;
@@ -130,7 +131,8 @@ out:
 
 // This generates an sev attestation signed by the key in key_file
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   printf("simulated_sev_attest.exe.exe --key_file=ecc-384-private.pem "
@@ -155,13 +157,15 @@ main(int an, char** av) {
                 sizeof(attestation_report) - sizeof(signature),
                 (byte*)&default_report,
                 &size_out,
-                (byte*)&default_report.signature)) {
+                (byte*)&default_report.signature))
+  {
     printf("signature failure\n");
     return 1;
   }
   if (!write_file(FLAGS_output,
                   sizeof(attestation_report),
-                  (byte*)&default_report)) {
+                  (byte*)&default_report))
+  {
     printf("Can't write %s\n", FLAGS_output.c_str());
     return 1;
   }

@@ -29,7 +29,8 @@ DEFINE_string(measurement_file, "", "measurement file");
 DEFINE_string(output, "", "output file");
 
 bool
-calculate_measurement(const string& in, string* out) {
+calculate_measurement(const string& in, string* out)
+{
   size_t size = in.size();
   char   hex[size + 2];
   memset((byte*)hex, 0, size + 2);
@@ -47,7 +48,8 @@ calculate_measurement(const string& in, string* out) {
   size_t count = 0;
   for (size_t count = 0;
        count < strlen(hex) / 2 && count < (size_t)measurement_size;
-       count++) {
+       count++)
+  {
     sscanf(pos, "%2hhx", &m[count]);
     pos += 2;
   }
@@ -56,14 +58,16 @@ calculate_measurement(const string& in, string* out) {
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   string usage("Generate platform measurement to output file");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
   if (FLAGS_platform_file == "" && FLAGS_measurement_file == "" &&
-      FLAGS_output == "") {
+      FLAGS_output == "")
+  {
     printf("%s: %s\n", av[0], usage.c_str());
     printf(
         "%s --platform_file=<file> --measurement_file=<file> --output=<file>\n",

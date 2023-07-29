@@ -27,7 +27,8 @@ DEFINE_string(input, "input1,input2,...,inputk", "input file");
 DEFINE_string(output, "claims_sequence.bin", "output file");
 
 bool
-get_claim_from_block(const string& block, signed_claim_message* sc) {
+get_claim_from_block(const string& block, signed_claim_message* sc)
+{
   if (!sc->ParseFromString(block)) {
     printf("Can't parse clause\n");
     return false;
@@ -36,7 +37,8 @@ get_claim_from_block(const string& block, signed_claim_message* sc) {
 }
 
 const char*
-next_comma(const char* p) {
+next_comma(const char* p)
+{
   if (p == nullptr)
     return nullptr;
   while (*p != ',' && *p != '\0')
@@ -45,7 +47,8 @@ next_comma(const char* p) {
 }
 
 bool
-get_input_file_names(const string& name, int* num, string* names) {
+get_input_file_names(const string& name, int* num, string* names)
+{
   const char* start = name.c_str();
   const char* end   = nullptr;
   *num              = 0;
@@ -63,7 +66,8 @@ get_input_file_names(const string& name, int* num, string* names) {
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
