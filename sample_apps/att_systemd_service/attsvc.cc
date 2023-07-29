@@ -70,10 +70,10 @@ cc_trust_data* app_trust_data = nullptr;
 
 static struct _app_config {
   string certifier_host = string("localhost");
-  int certifier_port = 80;
-  string client = string("localhost");
-  int client_port = 80;
-  int check_disk = 0;
+  int certifier_port    = 80;
+  string client         = string("localhost");
+  int client_port       = 80;
+  int check_disk        = 0;
 } app_config;
 
 static bool file_exists(const std::string& name) {
@@ -187,7 +187,7 @@ static bool parse_config(const string& config_file) {
 }
 
 int main(int argc, char* argv[]) {
-  int ret = 0;
+  int ret             = 0;
   bool disk_encrypted = false;
 
   SSL_library_init();

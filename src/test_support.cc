@@ -59,8 +59,8 @@ bool read_trusted_binary_measurements_and_sign(string& file_name,
   string it_verb("is-trusted");
 
   const int measurement_size = 32;
-  int current = 0;
-  int left = size;
+  int current                = 0;
+  int left                   = size;
   while (left >= measurement_size) {
     string measurement;
     measurement.assign((char*)&file_contents[current], measurement_size);

@@ -37,7 +37,7 @@ int gramine_file_size(const char* file_name) {
 
 bool gramine_Init(const int cert_size, byte* cert) {
   char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
-  size_t ret = 0;
+  size_t ret                                       = 0;
 
   if (cert_size > 0) {
     gramine_platform_cert.assign((char*)cert, cert_size);

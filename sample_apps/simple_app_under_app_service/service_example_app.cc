@@ -115,10 +115,10 @@ int main(int an, char** av) {
     printf("argv[%d]: %s\n", i, av[i]);
   }
   printf("\n");
-  int in_fd = 5;
+  int in_fd  = 5;
   int out_fd = 8;
   if (an >= 2) {
-    in_fd = atoi(av[an - 2]);
+    in_fd  = atoi(av[an - 2]);
     out_fd = atoi(av[an - 1]);
   }
 

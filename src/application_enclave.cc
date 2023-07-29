@@ -33,16 +33,16 @@ using std::string;
 // #define DEBUG
 
 bool initialized = false;
-int reader = 0;
-int writer = 0;
+int reader       = 0;
+int writer       = 0;
 
 bool application_Init(const string& parent_enclave_type, int read_fd,
                       int write_fd) {
-  reader = read_fd;
-  writer = write_fd;
-  certifier_parent_enclave_type = parent_enclave_type;
+  reader                                    = read_fd;
+  writer                                    = write_fd;
+  certifier_parent_enclave_type             = parent_enclave_type;
   certifier_parent_enclave_type_intitalized = true;
-  initialized = true;
+  initialized                               = true;
   return true;
 }
 
@@ -78,7 +78,7 @@ bool application_GetParentEvidence(string* out) {
   return true;
 }
 
-const int buffer_pad = 2048;
+const int buffer_pad              = 2048;
 const int platform_statement_size = 4096;
 
 bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {

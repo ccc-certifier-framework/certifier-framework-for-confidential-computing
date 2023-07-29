@@ -36,11 +36,11 @@ bool test_random(bool print_all) {
 }
 
 bool test_encrypt(bool print_all) {
-  const int in_size = 2 * block_size;
-  const int out_size = in_size + 128;
+  const int in_size    = 2 * block_size;
+  const int out_size   = in_size + 128;
   const char* alg_name = "aes-256-cbc-hmac-sha256";
-  const int key_size = cipher_key_byte_size(alg_name);
-  int blk_size = cipher_block_byte_size(alg_name);
+  const int key_size   = cipher_key_byte_size(alg_name);
+  int blk_size         = cipher_block_byte_size(alg_name);
 
   byte key[key_size];
   const int iv_size = blk_size;
@@ -101,7 +101,7 @@ bool test_encrypt(bool print_all) {
 }
 
 bool test_authenticated_encrypt(bool print_all) {
-  const int in_size = 2 * block_size;
+  const int in_size  = 2 * block_size;
   const int out_size = in_size + 256;
   const int key_size = 64;
   byte key[key_size];
@@ -177,7 +177,7 @@ bool test_authenticated_encrypt(bool print_all) {
 
   size_encrypt_out = out_size;
   size_decrypt_out = out_size;
-  int size_in = 32;
+  int size_in      = 32;
   if (print_all) {
     printf("\nAuthenticated encryption\n");
     printf("input: ");
@@ -280,7 +280,7 @@ bool test_public_keys(bool print_all) {
   }
 
   const char* msg = "This is a message of length 32  ";
-  int size_data = 32;
+  int size_data   = 32;
   byte data[size_data];
   int size_out = 2048;
   byte out[size_out];
@@ -319,7 +319,7 @@ bool test_public_keys(bool print_all) {
   if (!generate_new_rsa_key(4096, r2))
     return false;
 
-  size_out = 2048;
+  size_out       = 2048;
   size_recovered = 2048;
   key_message km2;
   if (!RSA_to_key(r2, &km2)) {
@@ -360,8 +360,8 @@ bool test_public_keys(bool print_all) {
     return false;
 
   // ECC
-  size_out = 2048;
-  size_recovered = 2048;
+  size_out        = 2048;
+  size_recovered  = 2048;
   EC_KEY* ecc_key = generate_new_ecc_key(384);
   if (ecc_key == nullptr) {
     printf("Can't generate new ecc key\n");
@@ -430,7 +430,7 @@ bool test_public_keys(bool print_all) {
 
   EC_KEY_free(ecc_key);
 
-  size_out = 2048;
+  size_out       = 2048;
   size_recovered = 2048;
   memset(data, 0, size_data);
   memset(out, 0, size_out);
@@ -539,8 +539,8 @@ byte sha512_test[64] = {
     0xa3, 0xfe, 0xeb, 0xbd, 0x45, 0x4d, 0x44, 0x23, 0x64, 0x3c, 0xe8,
     0x0e, 0x2a, 0x9a, 0xc9, 0x4f, 0xa5, 0x4c, 0xa4, 0x9f};
 bool test_digest(bool print_all) {
-  const char* message = "1234";
-  int msg_len = strlen(message);
+  const char* message      = "1234";
+  int msg_len              = strlen(message);
   unsigned int size_digest = 64;
   byte digest[size_digest];
 
@@ -561,7 +561,7 @@ bool test_digest(bool print_all) {
 
   // Verifier outputs
   const char* message2 = "abc";
-  msg_len = 3;
+  msg_len              = 3;
 
   size_digest = (unsigned int)digest_output_byte_size("sha256");
   if (size_digest < 0) {

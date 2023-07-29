@@ -61,8 +61,8 @@ static void reverse_bytes(uint8_t *buffer, size_t size) {
   for (uint8_t *start = buffer, *end = buffer + size - 1; start < end;
        start++, end--) {
     uint8_t temp = *start;
-    *start = *end;
-    *end = temp;
+    *start       = *end;
+    *end         = temp;
   }
 }
 
@@ -71,7 +71,7 @@ static void reverse_bytes(uint8_t *buffer, size_t size) {
 static int get_ecdsa_sig_rs_bytes(const unsigned char *sig, size_t sig_len,
                                   unsigned char *r, unsigned char *s,
                                   size_t *rlen, size_t *slen) {
-  int rc = -EXIT_FAILURE;
+  int rc              = -EXIT_FAILURE;
   unsigned char *rbuf = NULL, *sbuf = NULL;
   size_t r1_len, s1_len;
   const BIGNUM *r1, *s1;
@@ -139,10 +139,10 @@ out:
 
 int sev_ecdsa_sign(const void *msg, size_t msg_size, EVP_PKEY *key,
                    union sev_ecdsa_sig *sig) {
-  int rc = -EXIT_FAILURE;
-  EVP_MD_CTX *md_ctx = NULL;
+  int rc                 = -EXIT_FAILURE;
+  EVP_MD_CTX *md_ctx     = NULL;
   EVP_PKEY_CTX *sign_ctx = NULL;
-  uint8_t *ossl_sig = NULL;
+  uint8_t *ossl_sig      = NULL;
   size_t expected_size = 0, sig_size = 0;
   size_t r_size = sizeof(sig->r);
   size_t s_size = sizeof(sig->s);
@@ -222,11 +222,11 @@ out:
 
 int sev_ecdsa_verify(const void *digest, size_t digest_size, EVP_PKEY *key,
                      union sev_ecdsa_sig *sig) {
-  int rc = -EXIT_FAILURE;
-  bool is_valid = false;
-  EC_KEY *pub_ec_key = NULL;
-  BIGNUM *r = NULL;
-  BIGNUM *s = NULL;
+  int rc               = -EXIT_FAILURE;
+  bool is_valid        = false;
+  EC_KEY *pub_ec_key   = NULL;
+  BIGNUM *r            = NULL;
+  BIGNUM *s            = NULL;
   ECDSA_SIG *ecdsa_sig = NULL;
 
   do {
@@ -295,18 +295,18 @@ int sev_request_key(struct sev_key_options *options, uint8_t *key,
   req.root_key_select =
       options->do_root_key ? MSG_KEY_REQ_ROOT_KEY_SELECT_MASK : 0;
   req.guest_field_select = options->fields;
-  req.guest_svn = options->svn;
+  req.guest_svn          = options->svn;
   memcpy(&req.tcb_version, &options->tcb, sizeof(req.tcb_version));
 
   memset(&resp, 0, sizeof(resp));
 
   memset(&guest_req, 0, sizeof(guest_req));
   guest_req.msg_version = 1;
-  guest_req.req_data = (__u64)&req;
-  guest_req.resp_data = (__u64)&resp;
+  guest_req.req_data    = (__u64)&req;
+  guest_req.resp_data   = (__u64)&resp;
 
   errno = 0;
-  fd = open(SEV_GUEST_DEVICE, O_RDWR);
+  fd    = open(SEV_GUEST_DEVICE, O_RDWR);
   if (fd == -1) {
     rc = errno;
     char error[64];
@@ -317,7 +317,7 @@ int sev_request_key(struct sev_key_options *options, uint8_t *key,
   }
 
   errno = 0;
-  rc = ioctl(fd, SNP_GET_DERIVED_KEY, &guest_req);
+  rc    = ioctl(fd, SNP_GET_DERIVED_KEY, &guest_req);
   if (rc == -1) {
     rc = errno;
     perror("ioctl");
@@ -380,9 +380,9 @@ out:
 }
 
 int sev_sign_report(struct attestation_report *report) {
-  int rc = -EXIT_FAILURE;
+  int rc        = -EXIT_FAILURE;
   EVP_PKEY *key = NULL;
-  rc = read_key_file(SEV_ECDSA_PRIV_KEY, &key, true);
+  rc            = read_key_file(SEV_ECDSA_PRIV_KEY, &key, true);
   if (rc != EXIT_SUCCESS) {
     errno = rc;
     perror("read_key_file");
@@ -407,7 +407,7 @@ exit:
 
 EVP_PKEY *get_simulated_vcek_key() {
   EVP_PKEY *key = NULL;
-  int rc = read_key_file(SEV_ECDSA_PUB_KEY, &key, false);
+  int rc        = read_key_file(SEV_ECDSA_PUB_KEY, &key, false);
   if (rc != EXIT_SUCCESS)
     return nullptr;
   return key;
@@ -460,11 +460,11 @@ int sev_get_report(const uint8_t *data, size_t data_size,
   memset(&resp, 0, sizeof(resp));
   memset(&guest_req, 0, sizeof(guest_req));
   guest_req.msg_version = 1;
-  guest_req.req_data = (__u64)&req;
-  guest_req.resp_data = (__u64)&resp;
+  guest_req.req_data    = (__u64)&req;
+  guest_req.resp_data   = (__u64)&resp;
 
   errno = 0;
-  fd = open(SEV_GUEST_DEVICE, O_RDWR);
+  fd    = open(SEV_GUEST_DEVICE, O_RDWR);
   if (fd == -1) {
     rc = errno;
     char error[64];
@@ -475,7 +475,7 @@ int sev_get_report(const uint8_t *data, size_t data_size,
   }
 
   errno = 0;
-  rc = ioctl(fd, SNP_GET_REPORT, &guest_req);
+  rc    = ioctl(fd, SNP_GET_REPORT, &guest_req);
   if (rc == -1) {
     rc = errno;
     perror("ioctl");
@@ -581,14 +581,14 @@ bool kdf(int key_len, byte *key, int iter, int out_size, byte *out) {
  *   FIELD_GUEST_SVN_MASK | FIELD_TCB_VERSION_MASK
  */
 bool sev_get_final_keys(int final_key_size, byte *final_key,
-                        bool root_key = false,
+                        bool root_key   = false,
                         uint64_t fields = FIELD_MEASUREMENT_MASK |
                                           FIELD_POLICY_MASK) {
-  struct sev_key_options opt = {0};
+  struct sev_key_options opt             = {0};
   byte key[MSG_KEY_RSP_DERIVED_KEY_SIZE] = {0};
-  int size = MSG_KEY_RSP_DERIVED_KEY_SIZE;
-  opt.do_root_key = root_key;
-  opt.fields = fields;
+  int size                               = MSG_KEY_RSP_DERIVED_KEY_SIZE;
+  opt.do_root_key                        = root_key;
+  opt.fields                             = fields;
 
   if (EXIT_SUCCESS != sev_request_key(&opt, key, size))
     return false;
@@ -752,9 +752,9 @@ bool sev_Init(const string &platform_ark_der_file,
     return false;
   }
 
-  certifier_parent_enclave_type = "hardware";
+  certifier_parent_enclave_type             = "hardware";
   certifier_parent_enclave_type_intitalized = true;
-  plat_certs_initialized = true;
+  plat_certs_initialized                    = true;
   return true;
 }
 
@@ -774,7 +774,7 @@ bool sev_GetParentEvidence(string *out) {
 
 // Todo: suggest renaming this to sev_verify_report
 int verify_report(struct attestation_report *report) {
-  int rc = -EXIT_FAILURE;
+  int rc        = -EXIT_FAILURE;
   EVP_PKEY *key = NULL;
   unsigned char sha_digest_384[SHA384_DIGEST_LENGTH];
 
@@ -787,8 +787,8 @@ int verify_report(struct attestation_report *report) {
   }
 #else
   X509 *x509_vcek = NULL;
-  X509 *x509_ask = NULL;
-  X509 *x509_ark = NULL;
+  X509 *x509_ask  = NULL;
+  X509 *x509_ark  = NULL;
 
 #define SEV_ARK_CERT "Ark.cer"
 #define SEV_ASK_CERT "Ask.cer"
@@ -855,7 +855,7 @@ exit:
 
 int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
   FILE *pFile = NULL;
-  pFile = fopen(file_name, "re");
+  pFile       = fopen(file_name, "re");
   if (!pFile)
     return EXIT_FAILURE;
 
@@ -872,8 +872,8 @@ int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
 
 static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert,
                                     X509 *parent_cert) {
-  bool ret = false;
-  X509_STORE *store = NULL;
+  bool ret                  = false;
+  X509_STORE *store         = NULL;
   X509_STORE_CTX *store_ctx = NULL;
 
   do {
@@ -940,7 +940,7 @@ static bool x509_validate_signature(X509 *child_cert, X509 *intermediate_cert,
 int sev_validate_vcek_cert_chain(X509 *x509_vcek, X509 *x509_ask,
                                  X509 *x509_ark) {
   EVP_PKEY *vcek_pub_key = NULL;
-  int ret = EXIT_FAILURE;
+  int ret                = EXIT_FAILURE;
 
   if (!x509_vcek || !x509_ask || !x509_ark) {
     printf("Invalid certificate\n");
@@ -1000,11 +1000,11 @@ EVP_PKEY *sev_get_vcek_pubkey(X509 *x509_vcek) {
 
 // Todo: suggest renaming this to sev_write_report
 int write_report(const char *file_name, struct attestation_report *report) {
-  int rc = EXIT_FAILURE;
+  int rc            = EXIT_FAILURE;
   FILE *report_file = NULL;
   int count;
 
-  errno = 0;
+  errno       = 0;
   report_file = fopen(file_name, "w+");
   if (!report_file) {
     rc = errno;

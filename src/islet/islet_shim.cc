@@ -26,7 +26,7 @@ using namespace certifier::utilities;
 #define BUFFER_SIZE 2048
 
 static const char CLAIM_TITLE_USER_DATA[] = "User data";
-static const char CLAIM_TITLE_RIM[] = "Realm initial measurement";
+static const char CLAIM_TITLE_RIM[]       = "Realm initial measurement";
 
 bool islet_Init(const int cert_size, byte* cert) { return true; }
 
@@ -78,7 +78,7 @@ bool islet_Verify(const int what_to_say_size, byte* what_to_say,
 
   byte islet_what_to_say_returned[2 * len];
   int user_data_len = len;
-  rv = islet_parse(CLAIM_TITLE_USER_DATA, claims, claims_len,
+  rv                = islet_parse(CLAIM_TITLE_USER_DATA, claims, claims_len,
                    islet_what_to_say_returned, &user_data_len);
   if (rv != ISLET_SUCCESS)
     return false;

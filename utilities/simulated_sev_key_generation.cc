@@ -164,7 +164,7 @@ int main(int an, char** av) {
   key_message pub_vcek_vse_key;
 
   EVP_PKEY* key = NULL;
-  int rc = read_vcek_file(FLAGS_vcek_key_file.c_str(), &key, false);
+  int rc        = read_vcek_file(FLAGS_vcek_key_file.c_str(), &key, false);
   if (rc != EXIT_SUCCESS) {
     printf("Can't read vcek public key\n");
     return 1;

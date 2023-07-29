@@ -36,8 +36,8 @@ const char* next_comma(const char* p) {
 
 bool get_input_file_names(const string& name, int* num, string* names) {
   const char* start = name.c_str();
-  const char* end = nullptr;
-  int count = 0;
+  const char* end   = nullptr;
+  int count         = 0;
 
   while ((end = next_comma(start)) != nullptr) {
     if (count >= (*num - 1)) {

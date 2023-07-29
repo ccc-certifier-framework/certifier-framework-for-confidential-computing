@@ -3,6 +3,8 @@
 # #############################################################################
 Language:      Cpp
 BasedOnStyle:  Google
+
+AlignConsecutiveAssignments: true
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false

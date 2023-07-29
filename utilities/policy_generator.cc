@@ -201,32 +201,32 @@ void from_json(const json& j, clause& cl) {
     j.at("platformObject").get_to(cl.obj);
   } else {
     cl.otype = NONE_OBJECT;
-    cl.obj = "";
+    cl.obj   = "";
   }
 
   if (j.find("unaryClause") != j.end()) {
-    cl.ctype = UNARY_CLAUSE;
-    tmp_cl = j["unaryClause"].get<clause>();
-    cl.ssub = tmp_cl.sub;
+    cl.ctype  = UNARY_CLAUSE;
+    tmp_cl    = j["unaryClause"].get<clause>();
+    cl.ssub   = tmp_cl.sub;
     cl.sstype = tmp_cl.stype;
-    cl.sverb = tmp_cl.verb;
+    cl.sverb  = tmp_cl.verb;
     cl.sotype = NONE_OBJECT;
-    cl.sobj = "";
+    cl.sobj   = "";
   } else if (j.find("simpleClause") != j.end()) {
-    cl.ctype = SIMPLE_CLAUSE;
-    tmp_cl = j["simpleClause"].get<clause>();
-    cl.ssub = tmp_cl.sub;
+    cl.ctype  = SIMPLE_CLAUSE;
+    tmp_cl    = j["simpleClause"].get<clause>();
+    cl.ssub   = tmp_cl.sub;
     cl.sstype = tmp_cl.stype;
-    cl.sverb = tmp_cl.verb;
+    cl.sverb  = tmp_cl.verb;
     cl.sotype = tmp_cl.otype;
-    cl.sobj = tmp_cl.obj;
+    cl.sobj   = tmp_cl.obj;
   } else {
-    cl.ctype = NONE_CLAUSE;
-    cl.ssub = "";
+    cl.ctype  = NONE_CLAUSE;
+    cl.ssub   = "";
     cl.sstype = NONE_SUBJECT;
-    cl.sverb = "";
+    cl.sverb  = "";
     cl.sotype = NONE_OBJECT;
-    cl.sobj = "";
+    cl.sobj   = "";
   }
 }
 
@@ -259,13 +259,13 @@ void from_json(const json& j, claim& c) {
   /* Parse Sub clauses */
   if (j.find("unaryClause") != j.end()) {
     c.ctype = UNARY_CLAUSE;
-    c.cl = j["unaryClause"].get<clause>();
+    c.cl    = j["unaryClause"].get<clause>();
   } else if (j.find("simpleClause") != j.end()) {
     c.ctype = SIMPLE_CLAUSE;
-    c.cl = j["simpleClause"].get<clause>();
+    c.cl    = j["simpleClause"].get<clause>();
   } else if (j.find("indirectClause") != j.end()) {
     c.ctype = INDIRECT_CLAUSE;
-    c.cl = j["indirectClause"].get<clause>();
+    c.cl    = j["indirectClause"].get<clause>();
   }
 }
 
@@ -374,7 +374,7 @@ static string make_signed_claim_cmd(string vseFile, string duration,
 static bool generate_platform_policy(string policyKey,
                                      vector<platform> platforms, bool script) {
   for (auto platform : platforms) {
-    int i = 1;
+    int i            = 1;
     string all_props = "", plat_file;
     string combine_cmd, claim_cmd;
     for (auto prop : platform.props) {
@@ -438,7 +438,7 @@ static bool generate_measurement_policy(string policyKey,
                                    "saysmeasurement.bin");
     RUN_CMD(cmd, script, false);
     claim_file = string_format("signed_measurement%d.bin", i++);
-    cmd = make_signed_claim_cmd("saysmeasurement.bin", "9000", policyKey,
+    cmd        = make_signed_claim_cmd("saysmeasurement.bin", "9000", policyKey,
                                 claim_file);
     RUN_CMD(cmd, script, false);
     signed_claims.push_back(claim_file);
@@ -458,7 +458,7 @@ static pair<string, string> subject_conversion(subject_type stype, string sub,
       break;
     case MEASUREMENT_SUBJECT:
       actual_sub = "tmp_meas.bin";
-      cmd = string_format("%s --mrenclave=%s --out_file=%s",
+      cmd        = string_format("%s --mrenclave=%s --out_file=%s",
                           (FLAGS_util_path + MEASUREMENT_INIT_CMD).c_str(),
                           sub.c_str(), actual_sub.c_str());
       RUN_CMD(cmd, script, make_pair("", ""));
@@ -490,8 +490,8 @@ static string generate_clause(string policyKey, clause cl, clause_type ct,
 
   string cmd, actual_sub, cleanup_cmd;
   pair<string, string> p = subject_conversion(cl.stype, cl.sub, script);
-  actual_sub = p.first;
-  cleanup_cmd = p.second;
+  actual_sub             = p.first;
+  cleanup_cmd            = p.second;
 
   if (ct == UNARY_CLAUSE) {
     cmd = make_unary_clause_cmd(sname[cl.stype], actual_sub, cl.verb,
@@ -504,8 +504,8 @@ static string generate_clause(string policyKey, clause cl, clause_type ct,
   } else if (ct == INDIRECT_CLAUSE) {
     string scleanup_cmd, actual_ssub;
     pair<string, string> s = subject_conversion(cl.sstype, cl.ssub, script);
-    actual_ssub = s.first;
-    scleanup_cmd = s.second;
+    actual_ssub            = s.first;
+    scleanup_cmd           = s.second;
     if (cl.ctype == UNARY_CLAUSE) {
       cmd = make_unary_clause_cmd(sname[cl.sstype], actual_ssub, cl.sverb,
                                   "subclause.bin");
@@ -552,14 +552,14 @@ static bool generate_claim_policy(string policyKey, vector<claim> claims,
     string cmd, clauseFile, claimFile, signedClaimFile;
     string actual_sub, cleanup_cmd = "";
     pair<string, string> p;
-    claimFile = string_format("claim%d.bin", i);
+    claimFile       = string_format("claim%d.bin", i);
     signedClaimFile = string_format("signed_claim%d.bin", i);
-    clauseFile = generate_clause(policyKey, claim.cl, claim.ctype, script);
+    clauseFile      = generate_clause(policyKey, claim.cl, claim.ctype, script);
     if (clauseFile == "") {
       return false;
     }
-    p = subject_conversion(claim.stype, claim.sub, script);
-    actual_sub = p.first;
+    p           = subject_conversion(claim.stype, claim.sub, script);
+    actual_sub  = p.first;
     cleanup_cmd = p.second;
     cmd = make_indirect_clause_cmd(sname[claim.stype], actual_sub, claim.verb,
                                    clauseFile, claimFile);
@@ -607,7 +607,7 @@ static bool generate_packaged_claims(vector<string> signed_claims,
 static bool generate_policy(string policyKey, vector<platform> platforms,
                             vector<string> measurements, vector<claim> claims,
                             bool script) {
-  bool res = false;
+  bool res     = false;
   string files = "", cmd;
 
   if (script) {
@@ -663,7 +663,7 @@ int main(int argc, char* argv[]) {
 
   /* Parse the schema and the policy JSON files */
   policy_schema = json::parse(policy_schema_file);
-  policy = json::parse(policy_file);
+  policy        = json::parse(policy_file);
 
   try {
     validator.set_root_schema(policy_schema);  // insert root-schema

@@ -34,7 +34,7 @@ enum { SUCCESS = 0, FAILURE = -1 };
 ssize_t gramine_rw_file(const char* path, uint8_t* buf, size_t len,
                         bool do_write) {
   ssize_t bytes = 0;
-  ssize_t ret = 0;
+  ssize_t ret   = 0;
 
   int fd = open(path, do_write ? O_WRONLY : O_RDONLY);
   if (fd < 0)
@@ -98,10 +98,10 @@ int gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key) {
   memset(&key_request, 0, sizeof(key_request));
   key_request.key_name = SGX_SEAL_KEY;
 
-  key_request.key_policy = SGX_KEYPOLICY_MRENCLAVE;
+  key_request.key_policy           = SGX_KEYPOLICY_MRENCLAVE;
   key_request.attribute_mask.flags = SGX_FLAGS_MASK_CONST;
-  key_request.attribute_mask.xfrm = SGX_XFRM_MASK_CONST;
-  key_request.misc_mask = SGX_MISCSELECT_MASK_CONST;
+  key_request.attribute_mask.xfrm  = SGX_XFRM_MASK_CONST;
+  key_request.misc_mask            = SGX_MISCSELECT_MASK_CONST;
 
   memcpy(&key_request.key_id, &(report.key_id), sizeof(key_request.key_id));
 
@@ -170,11 +170,11 @@ bool gramine_attest_impl(const int what_to_say_size, byte* what_to_say,
 
 int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size,
                         uint8_t* mr) {
-  int ret = -1;
-  void* sgx_verify_lib = NULL;
-  uint8_t* supplemental_data = NULL;
-  uint32_t supplemental_data_size = 0;
-  uint32_t collateral_expiration_status = 1;
+  int ret                                = -1;
+  void* sgx_verify_lib                   = NULL;
+  uint8_t* supplemental_data             = NULL;
+  uint32_t supplemental_data_size        = 0;
+  uint32_t collateral_expiration_status  = 1;
   sgx_ql_qv_result_t verification_result = SGX_QL_QV_RESULT_UNSPECIFIED;
 
   time_t current_time = time(NULL);
@@ -460,7 +460,7 @@ bool gramine_get_measurement(byte* measurement) {
 }
 
 bool gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out) {
-  int ret = 0;
+  int ret     = 0;
   bool status = true;
   __sgx_mem_aligned uint8_t key[KEY_SIZE];
   uint8_t tag[TAG_SIZE];
@@ -546,7 +546,7 @@ done:
 }
 
 bool gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out) {
-  int ret = 0;
+  int ret     = 0;
   bool status = true;
   __sgx_mem_aligned uint8_t key[KEY_SIZE];
   uint8_t tag[TAG_SIZE];
@@ -647,6 +647,6 @@ void gramine_setup_functions(GramineFunctions* gramineFuncs) {
 #else
   gramineFuncs->Verify = &gramine_remote_verify_impl;
 #endif
-  gramineFuncs->Seal = &gramine_seal_impl;
+  gramineFuncs->Seal   = &gramine_seal_impl;
   gramineFuncs->Unseal = &gramine_unseal_impl;
 }

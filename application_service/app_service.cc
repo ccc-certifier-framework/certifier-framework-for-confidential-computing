@@ -110,10 +110,10 @@ spawned_children* new_kid() {
   if (nk == nullptr)
     return nullptr;
   kid_mtx.lock();
-  nk->valid_ = false;
-  nk->next_ = my_kids;
+  nk->valid_      = false;
+  nk->next_       = my_kids;
   nk->thread_obj_ = nullptr;
-  my_kids = nk;
+  my_kids         = nk;
   kid_mtx.unlock();
   return nk;
 }
@@ -146,7 +146,7 @@ void remove_kid(int pid) {
       break;
     if (k->next_->pid_ == pid) {
       spawned_children* to_remove = k->next_;
-      k->next_ = to_remove->next_;
+      k->next_                    = to_remove->next_;
       delete to_remove;
       break;
     }
@@ -162,7 +162,7 @@ bool measure_binary(const string& file, string* m) {
     return false;
   }
   byte* file_contents = (byte*)malloc(size);
-  int bytes_read = size;
+  int bytes_read      = size;
   if (!read_file(file, &bytes_read, file_contents) || bytes_read < size) {
     printf("Executable read failed\n");
     free(file_contents);
@@ -192,7 +192,7 @@ bool measure_in_mem_binary(byte* file_contents, int size, string* m) {
 }
 
 void delete_child(int signum) {
-  int pid = wait(nullptr);
+  int pid             = wait(nullptr);
   spawned_children* c = find_kid(pid);
   if (c->thread_obj_ != nullptr) {
     delete c->thread_obj_;
@@ -385,13 +385,13 @@ void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
 
     printf("app_service_loop, service requested: %s\n", req.function().c_str());
     if (req.function() == "seal") {
-      in = req.args(0);
+      in        = req.args(0);
       succeeded = soft_Seal(kid, in, &out);
     } else if (req.function() == "unseal") {
-      in = req.args(0);
+      in        = req.args(0);
       succeeded = soft_Unseal(kid, in, &out);
     } else if (req.function() == "attest") {
-      in = req.args(0);
+      in        = req.args(0);
       succeeded = soft_Attest(kid, in, &out);
     } else if (req.function() == "getmeasurement") {
       succeeded = soft_Getmeasurement(kid, &out);
@@ -437,7 +437,7 @@ bool start_app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   printf("\n[%d] %s\n", __LINE__, __func__);
 #endif
 #ifndef NOTHREAD
-  std::thread* t = new std::thread(app_service_loop, kid, read_fd, write_fd);
+  std::thread* t   = new std::thread(app_service_loop, kid, read_fd, write_fd);
   kid->thread_obj_ = t;
   t->detach();
 #else
@@ -469,7 +469,7 @@ bool process_run_request(run_request& req) {
     return false;
   }
 
-  int fsz = file_size(req.location());
+  int fsz           = file_size(req.location());
   byte* file_buffer = (byte*)malloc(fsz);
 
   if (!read_file(req.location(), &fsz, file_buffer)) {
@@ -508,10 +508,10 @@ bool process_run_request(run_request& req) {
   }
 
   // Is this what I want?
-  int parent_read_fd = fd2[0];
+  int parent_read_fd  = fd2[0];
   int parent_write_fd = fd1[1];
-  int child_read_fd = fd1[0];
-  int child_write_fd = fd2[1];
+  int child_read_fd   = fd1[0];
+  int child_write_fd  = fd2[1];
 
 #ifdef DEBUG
   printf(
@@ -565,14 +565,14 @@ bool process_run_request(run_request& req) {
            req.location().c_str(), child_read_fd, child_write_fd);
 #endif
 
-    string n1 = std::to_string(child_read_fd);
-    string n2 = std::to_string(child_write_fd);
+    string n1    = std::to_string(child_read_fd);
+    string n2    = std::to_string(child_write_fd);
     int num_args = req.args_size();
-    char** argv = new char*[num_args + 3];
+    char** argv  = new char*[num_args + 3];
     for (int i = 0; i < num_args; i++) {
       argv[i] = (char*)req.args(i).c_str();
     }
-    argv[num_args] = (char*)n1.c_str();
+    argv[num_args]     = (char*)n1.c_str();
     argv[num_args + 1] = (char*)n2.c_str();
     argv[num_args + 2] = nullptr;
 
@@ -613,10 +613,10 @@ bool process_run_request(run_request& req) {
     nk->location_ = req.location();
     nk->measurement_.assign((char*)m.data(), m.size());
     ;
-    nk->pid_ = pid;
-    nk->parent_read_fd_ = parent_read_fd;
+    nk->pid_             = pid;
+    nk->parent_read_fd_  = parent_read_fd;
     nk->parent_write_fd_ = parent_write_fd;
-    nk->valid_ = true;
+    nk->valid_           = true;
     if (!start_app_service_loop(nk, parent_read_fd, parent_write_fd)) {
       printf("Couldn't start service loop\n");
       return false;
@@ -629,7 +629,7 @@ bool app_request_server() {
   // This is the TCP server that requests to start
   // protected programs.
   const char* hostname = FLAGS_server_app_host.c_str();
-  int port = FLAGS_server_app_port;
+  int port             = FLAGS_server_app_port;
   struct sockaddr_in addr;
 
   struct hostent* he = nullptr;
@@ -643,8 +643,8 @@ bool app_request_server() {
     return false;
   }
   memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
+  addr.sin_family      = AF_INET;
+  addr.sin_port        = htons(port);
   addr.sin_addr.s_addr = *(long*)(he->h_addr);
   if (bind(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
     printf("bind failed\n");

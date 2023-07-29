@@ -352,7 +352,7 @@ bool test_full_certification(bool print_all) { return true; }
 // authentication-key is-trusted-for-authentication
 
 const int num_is_trusted_kids = 2;
-const char* kids[2] = {
+const char* kids[2]           = {
     "is-trusted-for-attestation",
     "is-trusted-for-authentication",
 };

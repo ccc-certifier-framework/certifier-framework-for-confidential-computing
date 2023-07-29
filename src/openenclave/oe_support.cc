@@ -22,8 +22,8 @@ bool oe_Init(const string& pem_cert_chain_file) {
     pem_cert_chain = "";
   }
 
-  pem_cert_chain_initialized = true;
-  certifier_parent_enclave_type = "hardware";
+  pem_cert_chain_initialized                = true;
+  certifier_parent_enclave_type             = "hardware";
   certifier_parent_enclave_type_intitalized = true;
   return true;
 }

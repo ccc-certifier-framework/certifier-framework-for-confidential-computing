@@ -58,7 +58,7 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say,
 bool keystone_getSealingKey(WORD key[]) {
   struct sealing_key key_buffer;  // {key, signature}
   char key_identifier[] = "sealing-key";
-  int err = get_sealing_key(&key_buffer, sizeof(key_buffer),
+  int err               = get_sealing_key(&key_buffer, sizeof(key_buffer),
                             (void*)key_identifier, strlen(key_identifier));
   if (err) {
     return false;

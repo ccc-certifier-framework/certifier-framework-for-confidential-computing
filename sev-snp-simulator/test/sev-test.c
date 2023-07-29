@@ -72,19 +72,19 @@ int request_key(struct key_options *options, uint8_t *key, size_t size) {
   req.root_key_select =
       options->do_root_key ? MSG_KEY_REQ_ROOT_KEY_SELECT_MASK : 0;
   req.guest_field_select = options->fields;
-  req.guest_svn = options->svn;
+  req.guest_svn          = options->svn;
   memcpy(&req.tcb_version, &options->tcb, sizeof(req.tcb_version));
 
   memset(&resp, 0, sizeof(resp));
 
   memset(&guest_req, 0, sizeof(guest_req));
   guest_req.msg_version = 1;
-  guest_req.req_data = (__u64)&req;
-  guest_req.resp_data = (__u64)&resp;
+  guest_req.req_data    = (__u64)&req;
+  guest_req.resp_data   = (__u64)&resp;
 
   /* Open the sev-guest device */
   errno = 0;
-  fd = open(SEV_GUEST_DEVICE, O_RDWR);
+  fd    = open(SEV_GUEST_DEVICE, O_RDWR);
   if (fd == -1) {
     rc = errno;
     perror("open");
@@ -93,7 +93,7 @@ int request_key(struct key_options *options, uint8_t *key, size_t size) {
 
   /* Issue the guest request IOCTL */
   errno = 0;
-  rc = ioctl(fd, SNP_GET_DERIVED_KEY, &guest_req);
+  rc    = ioctl(fd, SNP_GET_DERIVED_KEY, &guest_req);
   if (rc == -1) {
     rc = errno;
     perror("ioctl");
@@ -155,9 +155,9 @@ out:
 }
 
 int sign_report(struct attestation_report *report) {
-  int rc = -EXIT_FAILURE;
+  int rc        = -EXIT_FAILURE;
   EVP_PKEY *key = NULL;
-  rc = read_key_file(SEV_ECDSA_PRIV_KEY, &key, true);
+  rc            = read_key_file(SEV_ECDSA_PRIV_KEY, &key, true);
   if (rc != EXIT_SUCCESS) {
     errno = rc;
     perror("read_key_file");
@@ -201,7 +201,7 @@ static bool digest_sha384(const void *msg, size_t msg_len, uint8_t *digest,
 }
 
 int verify_report(struct attestation_report *report) {
-  int rc = -EXIT_FAILURE;
+  int rc        = -EXIT_FAILURE;
   EVP_PKEY *key = NULL;
   unsigned char sha_digest_384[SHA384_DIGEST_LENGTH];
   rc = read_key_file(SEV_ECDSA_PUB_KEY, &key, false);
@@ -263,12 +263,12 @@ int get_report(const uint8_t *data, size_t data_size,
 
   memset(&guest_req, 0, sizeof(guest_req));
   guest_req.msg_version = 1;
-  guest_req.req_data = (__u64)&req;
-  guest_req.resp_data = (__u64)&resp;
+  guest_req.req_data    = (__u64)&req;
+  guest_req.resp_data   = (__u64)&resp;
 
   /* Open the sev-guest device */
   errno = 0;
-  fd = open(SEV_GUEST_DEVICE, O_RDWR);
+  fd    = open(SEV_GUEST_DEVICE, O_RDWR);
   if (fd == -1) {
     rc = errno;
     perror("open");
@@ -277,7 +277,7 @@ int get_report(const uint8_t *data, size_t data_size,
 
   /* Issue the guest request IOCTL */
   errno = 0;
-  rc = ioctl(fd, SNP_GET_REPORT, &guest_req);
+  rc    = ioctl(fd, SNP_GET_REPORT, &guest_req);
   if (rc == -1) {
     rc = errno;
     perror("ioctl");
@@ -318,11 +318,11 @@ out:
 }
 
 int write_report(const char *file_name, struct attestation_report *report) {
-  int rc = EXIT_FAILURE;
+  int rc            = EXIT_FAILURE;
   FILE *report_file = NULL;
 
   /* Open the output report file */
-  errno = 0;
+  errno       = 0;
   report_file = fopen(file_name, "w+");
   if (!report_file) {
     rc = errno;
@@ -353,10 +353,10 @@ out:
 int main(int argc, char *argv[]) {
   int rc = EXIT_FAILURE, i;
   struct attestation_report report;
-  uint8_t hash[EVP_MAX_MD_SIZE] = {0};
-  size_t hash_size = sizeof(hash);
-  uint8_t *certs = NULL;
-  struct key_options opt = {0};
+  uint8_t hash[EVP_MAX_MD_SIZE]             = {0};
+  size_t hash_size                          = sizeof(hash);
+  uint8_t *certs                            = NULL;
+  struct key_options opt                    = {0};
   uint8_t key[MSG_KEY_RSP_DERIVED_KEY_SIZE] = {0};
 
   memset(&report, 0, sizeof(report));
@@ -389,7 +389,7 @@ int main(int argc, char *argv[]) {
   }
 
   opt.do_root_key = true;
-  opt.svn = 1;
+  opt.svn         = 1;
   opt.fields = FIELD_POLICY_MASK | FIELD_IMAGE_ID_MASK | FIELD_FAMILY_ID_MASK |
                FIELD_MEASUREMENT_MASK | FIELD_GUEST_SVN_MASK |
                FIELD_TCB_VERSION_MASK;

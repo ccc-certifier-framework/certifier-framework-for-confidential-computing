@@ -184,7 +184,7 @@ bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
 
   RAND_seed(rnd_seed, sizeof rnd_seed);
   std::string usr_data = usr_data_dir;
-  data_dir = usr_data + "/";
+  data_dir             = usr_data + "/";
   printf("Using data_dir: %s\n", data_dir.c_str());
 
   if (simulator_initialized) {
@@ -305,7 +305,7 @@ void asylo_server_dispatch(const string& host_name, int port,
 
   // Set up TLS handshake data.
   SSL_METHOD* method = (SSL_METHOD*)TLS_server_method();
-  SSL_CTX* ctx = SSL_CTX_new(method);
+  SSL_CTX* ctx       = SSL_CTX_new(method);
   if (ctx == NULL) {
     printf("SSL_CTX_new failed (1)\n");
     return;
