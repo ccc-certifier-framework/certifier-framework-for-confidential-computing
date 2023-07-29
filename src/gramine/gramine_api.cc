@@ -46,7 +46,8 @@ bool gramine_Init(const int cert_size, byte* cert) {
 
   ret = gramine_rw_file("/dev/attestation/attestation_type",
                         (uint8_t*)attestation_type_str,
-                        sizeof(attestation_type_str) - 1, /*do_write=*/false);
+                        sizeof(attestation_type_str) - 1,
+                        /*do_write=*/false);
   if (ret < 0 && ret != -ENOENT) {
     printf(
         "User requested SGX attestation but cannot read SGX-specific file "

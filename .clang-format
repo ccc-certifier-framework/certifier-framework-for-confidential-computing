@@ -13,6 +13,9 @@ AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
+AlignTrailingComments: true
+
+BinPackArguments: true
 
 BraceWrapping:
   AfterCaseLabel:  true
