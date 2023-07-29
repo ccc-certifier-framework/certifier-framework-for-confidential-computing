@@ -45,6 +45,10 @@ SpaceBeforeAssignmentOperators: true
 SpacesBeforeTrailingComments: 2
 SpaceBeforeParens: ControlStatements
 SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
 
+Standard:        Cpp11
 TabWidth:        2
 UseTab:          Never
