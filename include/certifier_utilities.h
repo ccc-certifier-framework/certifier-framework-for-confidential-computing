@@ -132,7 +132,7 @@ produce_artifact(key_message &signing_key,
                  double       secs_duration,
                  X509 *       x509,
                  bool         is_root,
-                 bool vcek = false);
+                 bool         vcek = false);
 bool
 verify_artifact(X509 &       cert,
                 key_message &verify_key,

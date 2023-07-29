@@ -211,7 +211,8 @@ main(int an, char **av)
                         1ULL,
                         86400 * 365.25,
                         vcek_509,
-                        false, true))
+                        false,
+                        true))
   {
     printf("Generate ark cert failed\n");
     return 1;
