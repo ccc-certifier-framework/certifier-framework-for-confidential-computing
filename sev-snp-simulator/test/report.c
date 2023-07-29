@@ -1,10 +1,10 @@
 /* Copyright (C) 2021 Advanced Micro Devices, Inc. */
 // Licensed under Apache 2.0
 
-#include <attestation.h>
-#include <report.h>
 #include <stdint.h>
 #include <stdio.h>
+#include "attestation.h"
+#include "report.h"
 
 static void
 print_byte_array(const char *label, const uint8_t *array, size_t size)
