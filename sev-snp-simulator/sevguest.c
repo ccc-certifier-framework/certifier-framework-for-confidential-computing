@@ -34,8 +34,8 @@
 #define AAD_LEN 48
 #define MSG_HDR_VER 1
 
-static unsigned int sev_major = 0;
-static struct class *sev_class = NULL;
+static unsigned int sev_major        = 0;
+static struct class *sev_class       = NULL;
 static struct snp_guest_dev *snp_dev = NULL;
 ;
 
@@ -93,11 +93,11 @@ static struct snp_guest_dev *snp_dev = NULL;
  */
 // Note setting in get report too
 static struct attestation_report default_report = {
-    .version = 2,
-    .guest_svn = 1,
-    .policy = 0x00000ULL,  // no migrate, debug or SMT
+    .version        = 2,
+    .guest_svn      = 1,
+    .policy         = 0x00000ULL,  // no migrate, debug or SMT
     .signature_algo = SIG_ALGO_ECDSA_P384_SHA384,
-    .platform_info = 0,  // SMT disable --- should be 0x03?
+    .platform_info  = 0,  // SMT disable --- should be 0x03?
     // Hardcoded measurement
     .measurement =
         {
@@ -146,7 +146,7 @@ static int get_report(struct snp_guest_dev *snp_dev,
   int rc = 0;
   struct msg_report_resp *report_resp;
 
-  default_report.reported_tcb.raw = 0x03000000000008115ULL;
+  default_report.reported_tcb.raw     = 0x03000000000008115ULL;
   default_report.platform_version.raw = 0x03000000000008115ULL;
   lockdep_assert_held(&snp_cmd_mutex);
 
@@ -165,7 +165,7 @@ static int get_report(struct snp_guest_dev *snp_dev,
   report_resp->report.vmpl = req.vmpl;
   memcpy(report_resp->report.report_data, req.user_data, sizeof(req.user_data));
 
-  report_resp->status = 0;
+  report_resp->status      = 0;
   report_resp->report_size = sizeof(report_resp->report);
 
   if (copy_to_user((void __user *)arg->resp_data, report_resp,
@@ -183,7 +183,7 @@ static int get_derived_key(struct snp_guest_dev *snp_dev,
   struct snp_derived_key_resp resp;
   struct snp_derived_key_req req;
   struct msg_key_resp *key_resp = (struct msg_key_resp *)&resp.data;
-  int rc = 0;
+  int rc                        = 0;
   u8 buf[32] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
                 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c,
                 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
@@ -228,7 +228,7 @@ static int get_ext_report(struct snp_guest_dev *snp_dev,
 static long snp_guest_ioctl(struct file *file, unsigned int ioctl,
                             unsigned long arg) {
   struct snp_guest_dev *snp_dev = (struct snp_guest_dev *)file->private_data;
-  void __user *argp = (void __user *)arg;
+  void __user *argp             = (void __user *)arg;
   struct snp_guest_request_ioctl input;
   int ret = -ENOTTY;
 
@@ -273,7 +273,7 @@ static int snp_guest_open(struct inode *inode, struct file *file) {
     return -ENODEV;
   }
 
-  dev = snp_dev;
+  dev                = snp_dev;
   file->private_data = dev;
 
   if (inode->i_cdev != &dev->cdev) {
@@ -286,14 +286,14 @@ static int snp_guest_open(struct inode *inode, struct file *file) {
 }
 
 static const struct file_operations snp_guest_fops = {
-    .owner = THIS_MODULE,
-    .open = snp_guest_open,
+    .owner          = THIS_MODULE,
+    .open           = snp_guest_open,
     .unlocked_ioctl = snp_guest_ioctl,
 };
 
 static int construct_device(struct snp_guest_dev *dev, struct class *class) {
-  int err = 0;
-  dev_t devno = MKDEV(sev_major, 0);
+  int err               = 0;
+  dev_t devno           = MKDEV(sev_major, 0);
   struct device *device = NULL;
 
   BUG_ON(dev == NULL || class == NULL);
@@ -307,7 +307,7 @@ static int construct_device(struct snp_guest_dev *dev, struct class *class) {
     return err;
   }
 
-  device = device_create(class, NULL, /* no parent device */
+  device   = device_create(class, NULL, /* no parent device */
                          devno, NULL, /* no additional data */
                          DEVICE_NAME);
   dev->dev = device;
@@ -337,7 +337,7 @@ static void sev_guest_cleanup_module(void) {
 }
 
 static int __init sev_guest_init_module(void) {
-  int err = 0;
+  int err   = 0;
   dev_t dev = 0;
 
   err = alloc_chrdev_region(&dev, 0, 1, DEVICE_NAME);

@@ -268,7 +268,7 @@ bool test_policy_store(bool print_all) {
   string type1;
   string value1;
 
-  tag1 = "test-entry-1";
+  tag1  = "test-entry-1";
   type1 = "binary";
   value1.assign((const char*)bin, sizeof(bin));
   if (!ps.update_or_insert(tag1, type1, value1)) {
@@ -276,7 +276,7 @@ bool test_policy_store(bool print_all) {
     return false;
   }
 
-  tag1 = "test-entry-2";
+  tag1  = "test-entry-2";
   type1 = "binary";
   value1.assign((const char*)bin, sizeof(bin));
   if (!ps.update_or_insert(tag1, type1, value1)) {
@@ -284,7 +284,7 @@ bool test_policy_store(bool print_all) {
     return false;
   }
 
-  tag1 = "test-entry-3";
+  tag1  = "test-entry-3";
   type1 = "binary";
   value1.assign((const char*)bin, sizeof(bin));
   if (!ps.update_or_insert(tag1, type1, value1)) {
@@ -298,8 +298,8 @@ bool test_policy_store(bool print_all) {
     return false;
   }
 
-  tag1 = "test-entry-2";
-  type1 = "binary";
+  tag1    = "test-entry-2";
+  type1   = "binary";
   int ent = ps.find_entry(tag1, type1);
   if (ent < 0) {
     printf("Error: can't find entry 2 by tag\n");
@@ -342,7 +342,7 @@ bool test_policy_store(bool print_all) {
   }
 
   string alg("aes-256");
-  tag1 = "test-entry-4";
+  tag1  = "test-entry-4";
   type1 = "string";
   if (!ps.update_or_insert(tag1, type1, alg)) {
     printf("Error:Can't add entry\n");

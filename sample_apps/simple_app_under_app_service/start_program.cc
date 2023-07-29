@@ -18,7 +18,7 @@ DEFINE_string(args, "service_example_app.exe", "service example arguments");
 bool parse_args(const string& in, int* num_an, string* av) {
   // for now, just assume commas can only be delimiters
   const char* start = in.c_str();
-  const char* end = start;
+  const char* end   = start;
 
   *num_an = 0;
   while (end != nullptr) {
@@ -59,7 +59,7 @@ int main(int an, char** av) {
 
   // Set flags
   const int max_args = 15;
-  int num_args = max_args;
+  int num_args       = max_args;
   string s_args[max_args];
   if (!parse_args(FLAGS_args, &num_args, s_args)) {
     printf("Can't parse argument list\n");
@@ -91,7 +91,7 @@ int main(int an, char** av) {
   }
   memcpy(&(address.sin_addr.s_addr), he->h_addr, he->h_length);
   address.sin_family = AF_INET;
-  address.sin_port = htons(FLAGS_server_app_port);
+  address.sin_port   = htons(FLAGS_server_app_port);
   if (connect(sock, (struct sockaddr*)&address, sizeof(address)) != 0) {
     return 1;
   }

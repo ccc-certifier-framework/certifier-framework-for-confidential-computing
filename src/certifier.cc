@@ -47,16 +47,16 @@ void certifier::framework::store_entry::print() {
 }
 
 certifier::framework::policy_store::policy_store(unsigned max_ents) {
-  max_num_ents_ = max_ents;
-  num_ents_ = 0;
-  entry_ = new store_entry*[max_ents];
+  max_num_ents_     = max_ents;
+  num_ents_         = 0;
+  entry_            = new store_entry*[max_ents];
   policy_key_valid_ = false;
 }
 
 certifier::framework::policy_store::policy_store() {
-  max_num_ents_ = MAX_NUM_ENTRIES;
-  num_ents_ = 0;
-  entry_ = new store_entry*[MAX_NUM_ENTRIES];
+  max_num_ents_     = MAX_NUM_ENTRIES;
+  num_ents_         = 0;
+  entry_            = new store_entry*[MAX_NUM_ENTRIES];
   policy_key_valid_ = false;
 }
 
@@ -65,7 +65,7 @@ certifier::framework::policy_store::~policy_store() {
     delete entry_[i];
     entry_[i] = nullptr;
   }
-  num_ents_ = 0;
+  num_ents_         = 0;
   policy_key_valid_ = false;
 }
 
@@ -94,8 +94,8 @@ bool certifier::framework::policy_store::add_entry(const string& tag,
                                                    const string& value) {
   if (num_ents_ >= max_num_ents_)
     return false;
-  entry_[num_ents_] = new store_entry;
-  entry_[num_ents_]->tag_ = tag;
+  entry_[num_ents_]        = new store_entry;
+  entry_[num_ents_]->tag_  = tag;
   entry_[num_ents_]->type_ = type;
   entry_[num_ents_]->value_.assign(value.data(), value.size());
   num_ents_++;
@@ -197,7 +197,7 @@ bool certifier::framework::policy_store::Serialize(string* out) {
 
   for (unsigned i = 0; i < num_ents_; i++) {
     policy_store_entry* pe = psm.add_entries();
-    store_entry* se = entry_[i];
+    store_entry* se        = entry_[i];
     pe->set_tag(se->tag_);
     pe->set_type(se->type_);
     pe->set_value(se->value_);
@@ -225,11 +225,11 @@ bool certifier::framework::policy_store::Deserialize(string& in) {
   }
   for (int i = 0; i < psm.entries_size(); i++) {
     const policy_store_entry& pe = psm.entries(i);
-    store_entry* se = new store_entry();
-    entry_[i] = se;
-    se->tag_ = pe.tag();
-    se->type_ = pe.type();
-    se->value_ = pe.value();
+    store_entry* se              = new store_entry();
+    entry_[i]                    = se;
+    se->tag_                     = pe.tag();
+    se->type_                    = pe.type();
+    se->value_                   = pe.value();
   }
   num_ents_ = psm.entries_size();
 
@@ -257,8 +257,8 @@ bool GetX509FromCert(const string& cert, X509* x) {
 
 static bool vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *value) {
   int nid = -1, idx = -1, extlen = -1;
-  X509_EXTENSION* ex = NULL;
-  ASN1_STRING* extvalue = NULL;
+  X509_EXTENSION* ex        = NULL;
+  ASN1_STRING* extvalue     = NULL;
   const unsigned char* vals = NULL;
 
   // Use OID for both lname and sname so OBJ_create does not fail
@@ -272,10 +272,10 @@ static bool vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *valu
     return false;
   }
 
-  ex = X509_get_ext(vcek, idx);
+  ex       = X509_get_ext(vcek, idx);
   extvalue = X509_EXTENSION_get_data(ex);
-  extlen = ASN1_STRING_length(extvalue);
-  vals = ASN1_STRING_get0_data(extvalue);
+  extlen   = ASN1_STRING_length(extvalue);
+  vals     = ASN1_STRING_get0_data(extvalue);
 
   if (vals[0] != 0x2) {
     printf("Invalid extension type!\n");
@@ -308,8 +308,8 @@ uint64_t get_tcb_version_from_vcek(X509* vcek) {
 
 bool get_chipid_from_vcek(X509* vcek, unsigned char* chipid, int idlen) {
   int nid = -1, idx = -1, extlen = -1;
-  X509_EXTENSION* ex = NULL;
-  ASN1_STRING* extvalue = NULL;
+  X509_EXTENSION* ex        = NULL;
+  ASN1_STRING* extvalue     = NULL;
   const unsigned char* vals = NULL;
 
   nid = OBJ_create(VCEK_EXT_HWID, VCEK_EXT_HWID, VCEK_EXT_HWID);
@@ -322,10 +322,10 @@ bool get_chipid_from_vcek(X509* vcek, unsigned char* chipid, int idlen) {
     return false;
   }
 
-  ex = X509_get_ext(vcek, idx);
+  ex       = X509_get_ext(vcek, idx);
   extvalue = X509_EXTENSION_get_data(ex);
-  extlen = ASN1_STRING_length(extvalue);
-  vals = ASN1_STRING_get0_data(extvalue);
+  extlen   = ASN1_STRING_length(extvalue);
+  vals     = ASN1_STRING_get0_data(extvalue);
 
   if (idlen < extlen || chipid == nullptr) {
     return false;
@@ -337,12 +337,12 @@ bool get_chipid_from_vcek(X509* vcek, unsigned char* chipid, int idlen) {
 #endif
 
 bool PublicKeyFromCert(const string& cert, key_message* k) {
-  X509* x = X509_new();
+  X509* x       = X509_new();
   EVP_PKEY* epk = nullptr;
   X509_NAME* sn = nullptr;
-  int s = 0;
-  bool res = true;
-  int len = -1;
+  int s         = 0;
+  bool res      = true;
+  int len       = -1;
   string subject_name_str;
   string* cert_str = nullptr;
 #ifdef SEV_SNP
@@ -391,7 +391,7 @@ bool PublicKeyFromCert(const string& cert, key_message* k) {
 
   if (EVP_PKEY_base_id(epk) == EVP_PKEY_RSA) {
     const RSA* rk = nullptr;
-    rk = EVP_PKEY_get0_RSA(epk);
+    rk            = EVP_PKEY_get0_RSA(epk);
     if (rk == nullptr) {
       printf("PublicKeyFromCert: Can't get RSA key from evp\n");
       res = false;

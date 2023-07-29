@@ -35,18 +35,18 @@ using namespace certifier::utilities;
 
 predicate_dominance::predicate_dominance() {
   first_child_ = nullptr;
-  next_ = nullptr;
+  next_        = nullptr;
 }
 
 predicate_dominance::~predicate_dominance() {
   predicate_dominance* current = first_child_;
   while (current != nullptr) {
     predicate_dominance* temp = current;
-    current = current->next_;
+    current                   = current->next_;
     delete temp;
   }
   first_child_ = nullptr;
-  next_ = nullptr;
+  next_        = nullptr;
 }
 
 predicate_dominance* predicate_dominance::find_node(const string& pred) {
@@ -54,7 +54,7 @@ predicate_dominance* predicate_dominance::find_node(const string& pred) {
     return this;
 
   predicate_dominance* current = first_child_;
-  predicate_dominance* t = nullptr;
+  predicate_dominance* t       = nullptr;
 
   // breadth first search
   while (current != nullptr) {
@@ -88,7 +88,7 @@ bool predicate_dominance::insert(const string& parent,
   predicate_dominance* to_add = new (predicate_dominance);
   to_add->predicate_.assign(descendant);
 
-  to_add->next_ = t->first_child_;
+  to_add->next_   = t->first_child_;
   t->first_child_ = to_add;
   return true;
 }
@@ -531,7 +531,7 @@ bool verify_report(string& type, string& serialized_signed_report,
       return false;
     }
     int size = sr.signature().size();
-    success = rsa_verify("sha-256", rsa_key, sr.report().size(),
+    success  = rsa_verify("sha-256", rsa_key, sr.report().size(),
                          (byte*)sr.report().data(), size,
                          (byte*)sr.signature().data());
     RSA_free(rsa_key);
@@ -542,7 +542,7 @@ bool verify_report(string& type, string& serialized_signed_report,
       return false;
     }
     int size = sr.signature().size();
-    success = rsa_verify("sha-384", rsa_key, sr.report().size(),
+    success  = rsa_verify("sha-384", rsa_key, sr.report().size(),
                          (byte*)sr.report().data(), size,
                          (byte*)sr.signature().data());
     RSA_free(rsa_key);
@@ -553,7 +553,7 @@ bool verify_report(string& type, string& serialized_signed_report,
       return false;
     }
     int size = sr.signature().size();
-    success = rsa_verify("sha-384", rsa_key, sr.report().size(),
+    success  = rsa_verify("sha-384", rsa_key, sr.report().size(),
                          (byte*)sr.report().data(), size,
                          (byte*)sr.signature().data());
     RSA_free(rsa_key);
@@ -564,7 +564,7 @@ bool verify_report(string& type, string& serialized_signed_report,
       return false;
     }
     int size = sr.signature().size();
-    success = ecc_verify("sha-384", ecc_key, sr.report().size(),
+    success  = ecc_verify("sha-384", ecc_key, sr.report().size(),
                          (byte*)sr.report().data(), size,
                          (byte*)sr.signature().data());
     EC_KEY_free(ecc_key);
@@ -648,7 +648,7 @@ bool init_certifier_rules(certifier_rules& rules) {
 }
 
 static const int num_is_trusted_kids = 2;
-static const char* kids[2] = {
+static const char* kids[2]           = {
     "is-trusted-for-attestation",
     "is-trusted-for-authentication",
 };
@@ -940,9 +940,9 @@ bool init_axiom(key_message& pk, proved_statements* are_proved) {
   return true;
 }
 
-const int max_key_depth = 30;
+const int max_key_depth        = 30;
 const int max_measurement_size = 512;
-const int max_user_data_size = 4096;
+const int max_user_data_size   = 4096;
 
 bool init_proved_statements(key_message& pk, evidence_package& evp,
                             proved_statements* already_proved) {
@@ -2173,7 +2173,7 @@ bool construct_proof_from_sdk_evidence(key_message& policy_pk,
   //  "policyKey is-trusted" AND "policyKey says measurement is-trusted" -->
   //  "measurement is-trusted"
   const entity_message& m_ent = already_proved->proved(2).object();
-  ps = pf->add_steps();
+  ps                          = pf->add_steps();
   ps->mutable_s1()->CopyFrom(already_proved->proved(0));
   ps->mutable_s2()->CopyFrom(already_proved->proved(3));
   ps->mutable_conclusion()->CopyFrom(already_proved->proved(3).clause());
@@ -2513,7 +2513,7 @@ bool construct_proof_from_sev_evidence_with_plat(
         "malformed\n");
     return false;
   }
-  const vse_clause& policy_key_is_trusted = already_proved->proved(0);
+  const vse_clause& policy_key_is_trusted  = already_proved->proved(0);
   const vse_clause& measurement_is_trusted = already_proved->proved(2).clause();
 
   if (step_count >= (*num - 1)) {
@@ -2898,7 +2898,7 @@ bool filter_sev_policy(const sev_attestation_message& sev_att,
   }
 
   bool found_measurement = false;
-  bool found_platform = false;
+  bool found_platform    = false;
 
   for (int i = 0; i < policy.claims_size(); i++) {
     claim_message cm;

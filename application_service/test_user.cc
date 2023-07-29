@@ -33,10 +33,10 @@ int main(int an, char** av) {
     printf("argv[%d]: %s\n", i, av[i]);
   }
   printf("\n");
-  int in_fd = 5;
+  int in_fd  = 5;
   int out_fd = 8;
   if (an >= 2) {
-    in_fd = atoi(av[an - 2]);
+    in_fd  = atoi(av[an - 2]);
     out_fd = atoi(av[an - 1]);
   }
 
@@ -111,8 +111,8 @@ int main(int an, char** av) {
   }
 
   // Attest test
-  t_out = out_size;
-  const int what_to_say_size = 20;
+  t_out                              = out_size;
+  const int what_to_say_size         = 20;
   byte what_to_say[what_to_say_size] = {
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
   };

@@ -87,37 +87,37 @@ certifier::framework::cc_trust_data::cc_trust_data(
     const string& enclave_type, const string& purpose,
     const string& policy_store_name) {
   if (purpose == "authentication" || purpose == "attestation") {
-    purpose_ = purpose;
+    purpose_                   = purpose;
     cc_basic_data_initialized_ = true;
   } else {
     cc_basic_data_initialized_ = false;
-    purpose_ = "unknown";
+    purpose_                   = "unknown";
   }
-  enclave_type_ = enclave_type;
-  store_file_name_ = policy_store_name;
-  cc_policy_info_initialized_ = false;
-  cc_policy_store_initialized_ = false;
-  cc_service_key_initialized_ = false;
-  cc_service_cert_initialized_ = false;
+  enclave_type_                         = enclave_type;
+  store_file_name_                      = policy_store_name;
+  cc_policy_info_initialized_           = false;
+  cc_policy_store_initialized_          = false;
+  cc_service_key_initialized_           = false;
+  cc_service_cert_initialized_          = false;
   cc_service_platform_rule_initialized_ = false;
-  cc_sealing_key_initialized_ = false;
-  cc_provider_provisioned_ = false;
-  x509_policy_cert_ = nullptr;
-  cc_is_certified_ = false;
-  peer_data_initialized_ = false;
+  cc_sealing_key_initialized_           = false;
+  cc_provider_provisioned_              = false;
+  x509_policy_cert_                     = nullptr;
+  cc_is_certified_                      = false;
+  peer_data_initialized_                = false;
 }
 
 certifier::framework::cc_trust_data::cc_trust_data() {
-  cc_basic_data_initialized_ = false;
-  cc_policy_info_initialized_ = false;
-  cc_policy_store_initialized_ = false;
-  cc_service_key_initialized_ = false;
-  cc_service_cert_initialized_ = false;
+  cc_basic_data_initialized_            = false;
+  cc_policy_info_initialized_           = false;
+  cc_policy_store_initialized_          = false;
+  cc_service_key_initialized_           = false;
+  cc_service_cert_initialized_          = false;
   cc_service_platform_rule_initialized_ = false;
-  cc_sealing_key_initialized_ = false;
-  cc_provider_provisioned_ = false;
-  x509_policy_cert_ = nullptr;
-  cc_is_certified_ = false;
+  cc_sealing_key_initialized_           = false;
+  cc_provider_provisioned_              = false;
+  x509_policy_cert_                     = nullptr;
+  cc_is_certified_                      = false;
 }
 
 certifier::framework::cc_trust_data::~cc_trust_data() {}
@@ -795,7 +795,7 @@ bool certifier::framework::cc_trust_data::cold_init(
     return false;
   }
 
-  public_key_algorithm_ = public_key_alg;
+  public_key_algorithm_    = public_key_alg;
   symmetric_key_algorithm_ = symmetric_key_alg;
 
   // Make up symmetric keys (e.g.-for sealing)for app
@@ -861,7 +861,7 @@ bool certifier::framework::cc_trust_data::cold_init(
     }
 
     cc_symmetric_key_initialized_ = true;
-    cc_auth_key_initialized_ = true;
+    cc_auth_key_initialized_      = true;
 
   } else if (purpose_ == "attestation") {
     if (!get_random(num_key_bytes, symmetric_key_bytes_)) {
@@ -1383,7 +1383,7 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name,
     X509_free(art_cert);
 #endif
     cc_auth_key_initialized_ = true;
-    cc_is_certified_ = true;
+    cc_is_certified_         = true;
 
   } else if (purpose_ == "attestation") {
     public_service_key_.set_certificate(response.artifact());
@@ -1401,7 +1401,7 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name,
     }
 
     cc_service_platform_rule_initialized_ = true;
-    cc_is_certified_ = true;
+    cc_is_certified_                      = true;
 
   } else {
     printf(
@@ -1460,7 +1460,7 @@ bool construct_platform_evidence_package(string& attesting_enclave_type,
 #endif
   for (int i = 0; i < platform_assertions.assertion_size(); i++) {
     const evidence& ev_from = platform_assertions.assertion(i);
-    evidence* ev_to = ep->add_fact_assertion();
+    evidence* ev_to         = ep->add_fact_assertion();
     ev_to->CopyFrom(ev_from);
   }
 
@@ -1580,9 +1580,9 @@ bool open_client_socket(const string& host_name, int port, int* soc) {
 
   // Obtain address(es) matching host/port
   memset(&hints, 0, sizeof(struct addrinfo));
-  hints.ai_family = AF_INET;
+  hints.ai_family   = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = 0;
+  hints.ai_flags    = 0;
   hints.ai_protocol = 0;
 
   char port_str[16] = {};
@@ -1626,13 +1626,13 @@ bool open_server_socket(const string& host_name, int port, int* soc) {
   int sfd, s;
 
   memset(&hints, 0, sizeof(struct addrinfo));
-  hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
-  hints.ai_protocol = 0;
+  hints.ai_family    = AF_INET;
+  hints.ai_socktype  = SOCK_STREAM;
+  hints.ai_flags     = AI_PASSIVE;
+  hints.ai_protocol  = 0;
   hints.ai_canonname = NULL;
-  hints.ai_addr = NULL;
-  hints.ai_next = NULL;
+  hints.ai_addr      = NULL;
+  hints.ai_next      = NULL;
 
   char port_str[16] = {};
   sprintf(port_str, "%d", port);
@@ -1684,9 +1684,9 @@ int SSL_my_client_callback(SSL* s, int* al, void* arg) {
 // This is used to test the signature chain is verified properly
 int verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
   int depth = X509_STORE_CTX_get_error_depth(x509_ctx);
-  int err = X509_STORE_CTX_get_error(x509_ctx);
+  int err   = X509_STORE_CTX_get_error(x509_ctx);
 
-  X509* cert = X509_STORE_CTX_get_current_cert(x509_ctx);
+  X509* cert       = X509_STORE_CTX_get_current_cert(x509_ctx);
   X509_NAME* iname = cert ? X509_get_issuer_name(cert) : NULL;
   X509_NAME* sname = cert ? X509_get_subject_name(cert) : NULL;
 
@@ -1831,7 +1831,7 @@ bool certifier::framework::server_dispatch(
 
   // Set up TLS handshake data.
   SSL_METHOD* method = (SSL_METHOD*)TLS_server_method();
-  SSL_CTX* ctx = SSL_CTX_new(method);
+  SSL_CTX* ctx       = SSL_CTX_new(method);
   if (ctx == NULL) {
     printf("server_dispatch: SSL_CTX_new failed (1)\n");
     return false;
@@ -1872,7 +1872,7 @@ bool certifier::framework::server_dispatch(
 #endif
     struct sockaddr_in addr;
     unsigned int len = sizeof(sockaddr_in);
-    int client = accept(sock, (struct sockaddr*)&addr, &len);
+    int client       = accept(sock, (struct sockaddr*)&addr, &len);
     string my_role("server");
     secure_authenticated_channel nc(my_role);
     if (!nc.init_server_ssl(host_name, port, asn1_root_cert, private_key,
@@ -1889,14 +1889,14 @@ bool certifier::framework::server_dispatch(
 
 certifier::framework::secure_authenticated_channel::
     secure_authenticated_channel(string& role) {
-  role_ = role;
+  role_                = role;
   channel_initialized_ = false;
-  ssl_ctx_ = nullptr;
-  store_ctx_ = nullptr;
-  ssl_ = nullptr;
-  sock_ = -1;
-  my_cert_ = nullptr;
-  peer_cert_ = nullptr;
+  ssl_ctx_             = nullptr;
+  store_ctx_           = nullptr;
+  ssl_                 = nullptr;
+  sock_                = -1;
+  my_cert_             = nullptr;
+  peer_cert_           = nullptr;
   peer_id_.clear();
 }
 
