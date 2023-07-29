@@ -297,13 +297,6 @@ GetX509FromCert(const string &cert, X509 *x)
 
 #ifdef SEV_SNP
 
-<<<<<<< HEAD
-static bool vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *value) {
-  int nid = -1, idx = -1, extlen = -1;
-  X509_EXTENSION *ex = NULL;
-  ASN1_STRING *extvalue = NULL;
-  const unsigned char *vals = NULL;
-=======
 #  define EXT_STRUCT_VERSION "1.3.6.1.4.1.3704.1.1"
 #  define EXT_PRODUCT_NAME   "1.3.6.1.4.1.3704.1.2"
 #  define EXT_BLSPL          "1.3.6.1.4.1.3704.1.3.1"
@@ -323,7 +316,6 @@ vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *value)
   X509_EXTENSION *     ex       = NULL;
   ASN1_STRING *        extvalue = NULL;
   const unsigned char *vals     = NULL;
->>>>>>> a78001d (Consolidated set of clang-format fixes)
 
   // Use OID for both lname and sname so OBJ_create does not fail
   nid = OBJ_create(oid, oid, oid);
@@ -361,22 +353,12 @@ get_tcb_version_from_vcek(X509 *vcek)
   unsigned char blSPL, teeSPL, snpSPL, ucodeSPL;
   uint64_t      tcb_version = (uint64_t)-1;
 
-<<<<<<< HEAD
   if (vcek_ext_byte_value(vcek, VCEK_EXT_BLSPL, &blSPL) &&
       vcek_ext_byte_value(vcek, VCEK_EXT_TEESPL, &teeSPL) &&
       vcek_ext_byte_value(vcek, VCEK_EXT_SNPSPL, &snpSPL) &&
       vcek_ext_byte_value(vcek, VCEK_EXT_UCODESPL, &ucodeSPL)) {
     tcb_version = blSPL | ((uint64_t)teeSPL << 8) | ((uint64_t)snpSPL << 48) |
                   ((uint64_t)ucodeSPL << 56);
-=======
-  if (vcek_ext_byte_value(vcek, EXT_BLSPL, &blSPL)
-      && vcek_ext_byte_value(vcek, EXT_TEESPL, &teeSPL)
-      && vcek_ext_byte_value(vcek, EXT_SNPSPL, &snpSPL)
-      && vcek_ext_byte_value(vcek, EXT_UCODESPL, &ucodeSPL))
-  {
-    tcb_version = blSPL | ((uint64_t)teeSPL << 8) | ((uint64_t)snpSPL << 48)
-                  | ((uint64_t)ucodeSPL << 56);
->>>>>>> a78001d (Consolidated set of clang-format fixes)
   }
 
   return tcb_version;
