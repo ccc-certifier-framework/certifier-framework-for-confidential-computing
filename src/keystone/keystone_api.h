@@ -46,10 +46,10 @@ bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out);
 #else
 // BEGIN copied Keys.hpp
 #define ATTEST_DATA_MAXLEN 1024
-#define MDSIZE 64
-#define SIGNATURE_SIZE 144
+#define MDSIZE             64
+#define SIGNATURE_SIZE     144
 // it was #define SIGNATURE_SIZE 64
-#define PUBLIC_KEY_SIZE 64
+#define PUBLIC_KEY_SIZE    64
 // END copied Keys.hpp
 
 // BEGIN copied Report.hpp

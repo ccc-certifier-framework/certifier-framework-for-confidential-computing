@@ -35,15 +35,15 @@ DEFINE_string(schema_input, "policy_schema.json", "Policy schema input file");
 DEFINE_string(policy_input, "policy.json", "Policy input file");
 DEFINE_string(policy_output, "policy.bin", "Policy output file");
 
-#define MAKE_PROPERTY_CMD "make_property.exe"
-#define COMBINE_PROPERTY_CMD "combine_properties.exe"
-#define MAKE_PLATFORM_CMD "make_platform.exe"
-#define MAKE_UNARY_CLAUSE_CMD "make_unary_vse_clause.exe"
-#define MAKE_SIMPLE_CLAUSE_CMD "make_simple_vse_clause.exe"
+#define MAKE_PROPERTY_CMD        "make_property.exe"
+#define COMBINE_PROPERTY_CMD     "combine_properties.exe"
+#define MAKE_PLATFORM_CMD        "make_platform.exe"
+#define MAKE_UNARY_CLAUSE_CMD    "make_unary_vse_clause.exe"
+#define MAKE_SIMPLE_CLAUSE_CMD   "make_simple_vse_clause.exe"
 #define MAKE_INDIRECT_CLAUSE_CMD "make_indirect_vse_clause.exe"
-#define MEASUREMENT_INIT_CMD "measurement_init.exe"
-#define MAKE_SIGNED_CLAIM_CMD "make_signed_claim_from_vse_clause.exe"
-#define PACKAGE_CLAIM_CMD "package_claims.exe"
+#define MEASUREMENT_INIT_CMD     "measurement_init.exe"
+#define MAKE_SIGNED_CLAIM_CMD    "make_signed_claim_from_vse_clause.exe"
+#define PACKAGE_CLAIM_CMD        "package_claims.exe"
 
 typedef struct property {
   string comparator;

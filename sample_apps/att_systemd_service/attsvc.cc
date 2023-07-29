@@ -51,17 +51,17 @@ using namespace certifier::framework;
   } while (0);
 #endif
 
-#define ATTSERVICE_DATA_DIR "/etc/attsvc/"
+#define ATTSERVICE_DATA_DIR          "/etc/attsvc/"
 #define ATTSERVICE_POLICY_STORE_FILE "store.bin"
-#define ATTSERVICE_CONFIG_FILE "config"
+#define ATTSERVICE_CONFIG_FILE       "config"
 
 #ifdef USE_SIMULATED_ENCLAVE
-#define ATTEST_KEY_FILE "attest_key_file.bin"
+#define ATTEST_KEY_FILE              "attest_key_file.bin"
 #define PLAT_ATTEST_ENDORSEMENT_FILE "platform_attest_endorsement.bin"
-#define MEASUREMENT_FILE "example_app.measurement"
+#define MEASUREMENT_FILE             "example_app.measurement"
 #else
-#define ARK_CERT_FILE "ark_cert.der"
-#define ASK_CERT_FILE "ask_cert.der"
+#define ARK_CERT_FILE  "ark_cert.der"
+#define ASK_CERT_FILE  "ask_cert.der"
 #define VCEK_CERT_FILE "vcek_cert.der"
 #endif
 

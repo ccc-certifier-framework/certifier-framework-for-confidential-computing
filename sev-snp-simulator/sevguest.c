@@ -31,7 +31,7 @@
 #include "snp-derive-key.h"
 
 #define DEVICE_NAME "sev-guest"
-#define AAD_LEN 48
+#define AAD_LEN     48
 #define MSG_HDR_VER 1
 
 static unsigned int          sev_major = 0;

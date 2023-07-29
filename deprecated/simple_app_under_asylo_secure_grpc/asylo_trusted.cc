@@ -38,23 +38,23 @@
 #define FLAGS_print_all true
 static string measurement_file("/tmp/binary_trusted_measurements_file.bin");
 #define FLAGS_trusted_measurements_file measurement_file
-#define FLAGS_read_measurement_file true
-#define FLAGS_operation ""
-#define FLAGS_client_address "localhost"
-#define FLAGS_server_address "localhost"
-#define FLAGS_policy_host "localhost"
-#define FLAGS_policy_port 8123
-#define FLAGS_server_app_host "localhost"
+#define FLAGS_read_measurement_file     true
+#define FLAGS_operation                 ""
+#define FLAGS_client_address            "localhost"
+#define FLAGS_server_address            "localhost"
+#define FLAGS_policy_host               "localhost"
+#define FLAGS_policy_port               8123
+#define FLAGS_server_app_host           "localhost"
 //#define FLAGS_server_app_port 8124
 #define FLAGS_server_app_port 39431
 static string data_dir = "./app1_data/";
 
-#define FLAGS_policy_store_file "store.bin"
-#define FLAGS_platform_file_name "platform_file.bin"
+#define FLAGS_policy_store_file           "store.bin"
+#define FLAGS_platform_file_name          "platform_file.bin"
 #define FLAGS_platform_attest_endorsement "platform_attest_endorsement.bin"
-#define FLAGS_attest_key_file "attest_key_file.bin"
-#define FLAGS_policy_cert_file "policy_cert_file.bin"
-#define FLAGS_measurement_file "example_app.measurement"
+#define FLAGS_attest_key_file             "attest_key_file.bin"
+#define FLAGS_policy_cert_file            "policy_cert_file.bin"
+#define FLAGS_measurement_file            "example_app.measurement"
 
 static std::string enclave_type;
 

@@ -41,7 +41,7 @@
 #define _GRAMINE_API_H_
 
 #define MAX_ATTESTATION_SIZE 5000
-#define TAG_SIZE 16
+#define TAG_SIZE             16
 
 //#define DEBUG
 

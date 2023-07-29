@@ -8,8 +8,8 @@
 
 static void print_byte_array(const char *label, const uint8_t *array,
                              size_t size) {
-#define INDENT "    "
-#define MAX_LINE 80
+#define INDENT         "    "
+#define MAX_LINE       80
 #define CHARS_PER_BYTE 2
 
   size_t wrap = size;
