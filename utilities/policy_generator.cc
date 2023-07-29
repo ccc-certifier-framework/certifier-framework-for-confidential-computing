@@ -293,7 +293,7 @@ static int
 exec_cmd(const string &command, bool print = false)
 {
   int                     exitcode = -1;
-  array<char, 512 * 1024> buffer{};
+  array<char, 512 * 1024> buffer {};
   string                  result;
 
   FILE *pipe = popen(command.c_str(), "r");
