@@ -35,10 +35,9 @@ main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  string usage_str(
-      "--platform_type=amd-sev-snp "
-      "--properties_file=<properties.bin> "
-      "--output=<platform.bin>");
+  string usage_str("--platform_type=amd-sev-snp "
+                   "--properties_file=<properties.bin> "
+                   "--output=<platform.bin>");
   if (FLAGS_platform_type == "") {
     printf("No platform type\n");
     printf("%s %s\n", av[0], usage_str.c_str());

@@ -39,10 +39,9 @@ main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  string usage_str(
-      "--property_name=<name> --property_type=<type> "
-      "--comparator=<cmp> --int_value=3 "
-      "--string_value=<string> --output=<output_file>");
+  string usage_str("--property_name=<name> --property_type=<type> "
+                   "--comparator=<cmp> --int_value=3 "
+                   "--string_value=<string> --output=<output_file>");
   if (FLAGS_property_name == "") {
     printf("No property name\n");
     printf("%s %s\n", av[0], usage_str.c_str());

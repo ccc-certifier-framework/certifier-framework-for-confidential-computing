@@ -3822,9 +3822,8 @@ construct_vse_attestation_from_cert(const key_message& subj,
     return false;
   }
   if (!make_indirect_vse_clause(signer_ent, str_says, *c1, cl)) {
-    printf(
-        "construct_vse_attestation_from_cert: Can't construct indirect "
-        "clause\n");
+    printf("construct_vse_attestation_from_cert: Can't construct indirect "
+           "clause\n");
     return false;
   }
 

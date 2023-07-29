@@ -115,10 +115,9 @@ int
 main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
-  printf(
-      "sample_sev_key_generation.exe --ark_der=sev_ark_cert.der "
-      "--ask_cert=sev_ask_cert.der --vcek_der=sev_vcek_cert.der "
-      "--sev_attest=sev_attest.bin --policy_key-policy_key.bin\n");
+  printf("sample_sev_key_generation.exe --ark_der=sev_ark_cert.der "
+         "--ask_cert=sev_ask_cert.der --vcek_der=sev_vcek_cert.der "
+         "--sev_attest=sev_attest.bin --policy_key-policy_key.bin\n");
 
   // policy key
   string      policy_key_str;

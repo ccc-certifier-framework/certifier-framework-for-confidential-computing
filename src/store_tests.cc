@@ -360,9 +360,8 @@ test_policy_store(bool print_all) {
 
   ps.delete_entry(1);
   if (ps.get_num_entries() != 2) {
-    printf(
-        "Error: policy-key store number of entries should be 2 after "
-        "deletion\n");
+    printf("Error: policy-key store number of entries should be 2 after "
+           "deletion\n");
     return false;
   }
 

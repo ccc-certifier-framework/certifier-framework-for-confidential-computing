@@ -112,17 +112,14 @@ main(int an, char** av) {
     printf(
         "gramine_example_app.exe --print_all=true|false --operation=op "
         "--policy_host=policy-host-address --policy_port=policy-host-port\n");
-    printf(
-        "\t --data_dir=-directory-for-app-data "
-        "--server_app_host=my-server-host-address "
-        "--server_app_port=server-host-port\n");
-    printf(
-        "\t --policy_cert_file=self-signed-policy-cert-file-name "
-        "--policy_store_file=policy-store-file-name\n");
+    printf("\t --data_dir=-directory-for-app-data "
+           "--server_app_host=my-server-host-address "
+           "--server_app_port=server-host-port\n");
+    printf("\t --policy_cert_file=self-signed-policy-cert-file-name "
+           "--policy_store_file=policy-store-file-name\n");
     printf("\t --gramine_cert_file=sgx.cert.der\n");
-    printf(
-        "Operations are: cold-init, warm-restart, get-certifier, "
-        "run-app-as-client, run-app-as-server\n");
+    printf("Operations are: cold-init, warm-restart, get-certifier, "
+           "run-app-as-client, run-app-as-server\n");
     return 0;
   }
 

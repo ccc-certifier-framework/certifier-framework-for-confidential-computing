@@ -69,9 +69,8 @@ main(int an, char** av) {
         "example_key_rotation.exe --print_all=true|false --operation=op "
         "--policy_host=policy-host-address --policy_port=policy-host-port\n");
     printf("\t --data_dir=-directory-for-app-data\n");
-    printf(
-        "\t --policy_cert_file=self-signed-policy-cert-file-name "
-        "--policy_store_file=policy-store-file-name\n");
+    printf("\t --policy_cert_file=self-signed-policy-cert-file-name "
+           "--policy_store_file=policy-store-file-name\n");
     return 0;
   }
 

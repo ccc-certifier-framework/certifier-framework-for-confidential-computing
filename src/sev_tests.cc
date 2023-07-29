@@ -283,27 +283,24 @@ construct_sev_platform_evidence(const string&      purpose,
   // certs
   evidence* ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf(
-        "construct_sev_platform_evidence: Can't add to ark platform "
-        "evidence\n");
+    printf("construct_sev_platform_evidence: Can't add to ark platform "
+           "evidence\n");
     return false;
   }
   ev->set_evidence_type("cert");
   ev->set_serialized_evidence(serialized_ark_cert);
   ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf(
-        "construct_sev_platform_evidence: Can't add to ask platform "
-        "evidence\n");
+    printf("construct_sev_platform_evidence: Can't add to ask platform "
+           "evidence\n");
     return false;
   }
   ev->set_evidence_type("cert");
   ev->set_serialized_evidence(serialized_ask_cert);
   ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf(
-        "construct_sev_platform_evidence: Can't add to vcek platform "
-        "evidence\n");
+    printf("construct_sev_platform_evidence: Can't add to vcek platform "
+           "evidence\n");
     return false;
   }
   ev->set_evidence_type("cert");
@@ -335,9 +332,8 @@ construct_sev_platform_evidence(const string&      purpose,
       return false;
     }
   } else {
-    printf(
-        "construct_sev_platform_evidence: neither attestation or "
-        "authorization\n");
+    printf("construct_sev_platform_evidence: neither attestation or "
+           "authorization\n");
     return false;
   }
   string serialized_ud;
@@ -371,9 +367,8 @@ construct_sev_platform_evidence(const string&      purpose,
 
   ev = evp->add_fact_assertion();
   if (ev == nullptr) {
-    printf(
-        "construct_sev_platform_evidence: Can't add to attest platform "
-        "evidence\n");
+    printf("construct_sev_platform_evidence: Can't add to attest platform "
+           "evidence\n");
     return false;
   }
   ev->set_evidence_type("sev-attestation");
@@ -578,11 +573,10 @@ test_sev_platform_certify(const bool    debug_print,
   }
 
   if (debug_print) {
-    printf(
-        "test_platform_certify, evidence descriptor: %s, enclave type: %s, "
-        "evidence:\n",
-        evidence_descriptor.c_str(),
-        enclave_type.c_str());
+    printf("test_platform_certify, evidence descriptor: %s, enclave type: %s, "
+           "evidence:\n",
+           evidence_descriptor.c_str(),
+           enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
       print_evidence(evp.fact_assertion(i));
       printf("\n");

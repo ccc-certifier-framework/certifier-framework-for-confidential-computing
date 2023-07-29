@@ -54,11 +54,10 @@ keystone_test(const int cert_size, byte* cert) {
   }
   int memcmp_rc = 0;
   if (size_unsealed_secret != size_secret) {
-    printf(
-        "Sealed and unsealed secrets lengths do not match, "
-        "size_unsealed_secret=%d, size_secret=%d\n",
-        size_unsealed_secret,
-        size_secret);
+    printf("Sealed and unsealed secrets lengths do not match, "
+           "size_unsealed_secret=%d, size_secret=%d\n",
+           size_unsealed_secret,
+           size_secret);
     return false;
   } else if ((memcmp_rc =
                   memcmp(secret, unsealed_secret, size_unsealed_secret)) != 0) {

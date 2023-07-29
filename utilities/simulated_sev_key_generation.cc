@@ -71,10 +71,9 @@ int
 main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
-  printf(
-      "sample_sev_key_generation.exe --ark_der=sev_ark_cert.der "
-      "--ask_cert=sev_ask_cert.der --vcek_der=sev_vcek_cert.der "
-      "--vcek_key_file=ec-secp384r1-pub-key.pem\n");
+  printf("sample_sev_key_generation.exe --ark_der=sev_ark_cert.der "
+         "--ask_cert=sev_ask_cert.der --vcek_der=sev_vcek_cert.der "
+         "--vcek_key_file=ec-secp384r1-pub-key.pem\n");
 
   // Generate keys and certs
   string rsa_type("rsa-4096-private");

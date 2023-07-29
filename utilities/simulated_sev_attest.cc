@@ -133,9 +133,8 @@ int
 main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
-  printf(
-      "simulated_sev_attest.exe.exe --key_file=ecc-384-private.pem "
-      "--output=test_sev_attest.bin\n");
+  printf("simulated_sev_attest.exe.exe --key_file=ecc-384-private.pem "
+         "--output=test_sev_attest.bin\n");
 
   default_report.reported_tcb.raw     = 0x03000000000008115ULL;
   default_report.platform_version.raw = 0x03000000000008115ULL;
