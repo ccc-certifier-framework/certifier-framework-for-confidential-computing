@@ -15,7 +15,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <attestation.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -24,10 +23,6 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/sha.h>
-#include <report.h>
-#include <sev-ecdsa.h>
-#include <sev-guest.h>
-#include <snp-derive-key.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +31,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "attestation.h"
+#include "report.h"
+#include "sev-ecdsa.h"
+#include "sev-guest.h"
+#include "snp-derive-key.h"
 
 #define SEV_GUEST_DEVICE "/dev/sev-guest"
 #define SEV_DUMMY_GUEST
