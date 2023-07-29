@@ -70,15 +70,23 @@ IndentCaseLabels: true
 IndentCaseBlocks: false
 IndentGotoLabels: false
 IndentPPDirectives: AfterHash
-
+IndentWrappedFunctionNames: false
+InsertTrailingCommas: None
 IndentWidth:     2
+
+KeepEmptyLinesAtTheStartOfBlocks: true
 
 MaxEmptyLinesToKeep: 2
 
+NamespaceIndentation: None
+
 PointerAlignment: Right
 
-SortIncludes:    false
+ReflowComments: true
 
+SortIncludes:    false
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
 SpaceBeforeAssignmentOperators: true
 SpacesBeforeTrailingComments: 2
 SpaceBeforeParens: ControlStatements
