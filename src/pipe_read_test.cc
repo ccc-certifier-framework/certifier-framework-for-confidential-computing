@@ -22,7 +22,8 @@
 
 using namespace certifier::utilities;
 
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   int fd[2];
   if (pipe2(fd, O_DIRECT) < 0) {
     printf("Pipe failed\n");

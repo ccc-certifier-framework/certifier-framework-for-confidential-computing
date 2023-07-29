@@ -17,19 +17,25 @@ static string measurement_file("/tmp/binary_trusted_measurements_file.bin");
 #define FLAGS_trusted_measurements_file measurement_file
 #define FLAGS_read_measurement_file     true
 static bool simulator_initialized = false;
-bool        test_local_certify(string& enclave_type,
-                               bool    init_from_file,
-                               string& file_name,
-                               string& evidence_descriptor);
+bool
+test_local_certify(string& enclave_type,
+                   bool    init_from_file,
+                   string& file_name,
+                   string& evidence_descriptor);
 
 extern "C" {
-bool certifier_init(void);
-bool certifier_test_sim_certify(void);
-bool certifier_test_local_certify(void);
-bool certifier_test_seal(void);
+bool
+certifier_init(void);
+bool
+certifier_test_sim_certify(void);
+bool
+certifier_test_local_certify(void);
+bool
+certifier_test_seal(void);
 }
 
-bool certifier_init(void) {
+bool
+certifier_init(void) {
   oe_result_t       result = OE_OK;
   static const char rnd_seed[] =
       "string to make the random number generator think it has entropy";
@@ -70,7 +76,8 @@ bool certifier_init(void) {
   return true;
 }
 
-bool certifier_test_sim_certify(void) {
+bool
+certifier_test_sim_certify(void) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("full-vse-support");
   return test_local_certify(enclave_type,
@@ -79,7 +86,8 @@ bool certifier_test_sim_certify(void) {
                             evidence_descriptor);
 }
 
-bool certifier_test_local_certify(void) {
+bool
+certifier_test_local_certify(void) {
   string enclave_type("oe-enclave");
   string evidence_descriptor("oe-evidence");
   return test_local_certify(enclave_type,
@@ -88,7 +96,8 @@ bool certifier_test_local_certify(void) {
                             evidence_descriptor);
 }
 
-bool certifier_test_seal(void) {
+bool
+certifier_test_seal(void) {
   string enclave_type("oe-enclave");
   string enclave_id("local-machine");
 

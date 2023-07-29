@@ -99,47 +99,53 @@ class policy_store {
 // Trusted primitives
 // -------------------------------------------------------------------
 
-bool Seal(const string& enclave_type,
-          const string& enclave_id,
-          int           in_size,
-          byte*         in,
-          int*          size_out,
-          byte*         out);
+bool
+Seal(const string& enclave_type,
+     const string& enclave_id,
+     int           in_size,
+     byte*         in,
+     int*          size_out,
+     byte*         out);
 
-bool Unseal(const string& enclave_type,
-            const string& enclave_id,
-            int           in_size,
-            byte*         in,
-            int*          size_out,
-            byte*         out);
+bool
+Unseal(const string& enclave_type,
+       const string& enclave_id,
+       int           in_size,
+       byte*         in,
+       int*          size_out,
+       byte*         out);
 
-bool Attest(const string& enclave_type,
-            int           what_to_say_size,
-            byte*         what_to_say,
-            int*          size_out,
-            byte*         out);
+bool
+Attest(const string& enclave_type,
+       int           what_to_say_size,
+       byte*         what_to_say,
+       int*          size_out,
+       byte*         out);
 
 // Protect Support
 // -------------------------------------------------------------------
 
-bool protect_blob(const string& enclave_type,
-                  key_message&  key,
-                  int           size_unencrypted_data,
-                  byte*         unencrypted_data,
-                  int*          size_protected_blob,
-                  byte*         blob);
-bool unprotect_blob(const string& enclave_type,
-                    int           size_protected_blob,
-                    byte*         protected_blob,
-                    key_message*  key,
-                    int*          size_of_unencrypted_data,
-                    byte*         data);
-bool reprotect_blob(const string& enclave_type,
-                    key_message*  key,
-                    int           size_protected_blob,
-                    byte*         protected_blob,
-                    int*          size_new_encrypted_blob,
-                    byte*         data);
+bool
+protect_blob(const string& enclave_type,
+             key_message&  key,
+             int           size_unencrypted_data,
+             byte*         unencrypted_data,
+             int*          size_protected_blob,
+             byte*         blob);
+bool
+unprotect_blob(const string& enclave_type,
+               int           size_protected_blob,
+               byte*         protected_blob,
+               key_message*  key,
+               int*          size_of_unencrypted_data,
+               byte*         data);
+bool
+reprotect_blob(const string& enclave_type,
+               key_message*  key,
+               int           size_protected_blob,
+               byte*         protected_blob,
+               int*          size_new_encrypted_blob,
+               byte*         data);
 
 class cc_trust_data {
  public:
@@ -286,12 +292,13 @@ class secure_authenticated_channel {
   bool get_peer_id(string* out);
 };
 
-bool server_dispatch(const string& host_name,
-                     int           port,
-                     string&       asn1_root_cert,
-                     key_message&  private_key,
-                     const string& private_key_cert,
-                     void (*)(secure_authenticated_channel&));
+bool
+server_dispatch(const string& host_name,
+                int           port,
+                string&       asn1_root_cert,
+                key_message&  private_key,
+                const string& private_key_cert,
+                void (*)(secure_authenticated_channel&));
 }  // namespace framework
 }  // namespace certifier
 

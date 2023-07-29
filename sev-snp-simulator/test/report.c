@@ -6,9 +6,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-static void print_byte_array(const char *   label,
-                             const uint8_t *array,
-                             size_t         size) {
+static void
+print_byte_array(const char *label, const uint8_t *array, size_t size) {
 #define INDENT         "    "
 #define MAX_LINE       80
 #define CHARS_PER_BYTE 2
@@ -39,7 +38,8 @@ static void print_byte_array(const char *   label,
   putchar('\n');
 }
 
-static void print_tcb_version(const char *label, const union tcb_version *tcb) {
+static void
+print_tcb_version(const char *label, const union tcb_version *tcb) {
   if (tcb) {
     printf("%s: %02u%02u%02u%02u%02u%02u%02u%02u\n",
            label,
@@ -61,7 +61,8 @@ static void print_tcb_version(const char *label, const union tcb_version *tcb) {
 /*
  * Print the report version.
  */
-void print_version(struct attestation_report *report) {
+void
+print_version(struct attestation_report *report) {
   if (report) {
     printf("Version: %u\n", report->version);
   }
@@ -70,7 +71,8 @@ void print_version(struct attestation_report *report) {
 /*
  * Print the guest SVN.
  */
-void print_guest_svn(struct attestation_report *report) {
+void
+print_guest_svn(struct attestation_report *report) {
   if (report) {
     printf("Guest SVN: %u\n", report->guest_svn);
   }
@@ -79,7 +81,8 @@ void print_guest_svn(struct attestation_report *report) {
 /*
  * Print the guest policy.
  */
-void print_policy(struct attestation_report *report) {
+void
+print_policy(struct attestation_report *report) {
   if (report) {
     printf("Policy: %#0lx\n", report->policy);
     printf(" - Debugging Allowed:       %s\n",
@@ -98,7 +101,8 @@ void print_policy(struct attestation_report *report) {
 /*
  * Print the family ID (in hex) supplied by the guest.
  */
-void print_family_id(struct attestation_report *report) {
+void
+print_family_id(struct attestation_report *report) {
   if (report) {
     print_byte_array("Family ID", report->family_id, sizeof(report->family_id));
   }
@@ -107,7 +111,8 @@ void print_family_id(struct attestation_report *report) {
 /*
  * Print the image ID (in hex) supplied by the guest.
  */
-void print_image_id(struct attestation_report *report) {
+void
+print_image_id(struct attestation_report *report) {
   if (report) {
     print_byte_array("Image ID", report->image_id, sizeof(report->image_id));
   }
@@ -116,7 +121,8 @@ void print_image_id(struct attestation_report *report) {
 /*
  * Print the guest VMPL.
  */
-void print_vmpl(struct attestation_report *report) {
+void
+print_vmpl(struct attestation_report *report) {
   if (report) {
     printf("VMPL: %u\n", report->vmpl);
   }
@@ -125,7 +131,8 @@ void print_vmpl(struct attestation_report *report) {
 /*
  * Print the signature algorithm encoding.
  */
-void print_signature_algo(struct attestation_report *report) {
+void
+print_signature_algo(struct attestation_report *report) {
   if (report) {
     printf("Signature Algorithm: %u (%s)\n",
            report->signature_algo,
@@ -138,7 +145,8 @@ void print_signature_algo(struct attestation_report *report) {
 /*
  * Print the platform version.
  */
-void print_platform_version(struct attestation_report *report) {
+void
+print_platform_version(struct attestation_report *report) {
   if (report) {
     print_tcb_version("Platform Version", &report->platform_version);
   }
@@ -147,7 +155,8 @@ void print_platform_version(struct attestation_report *report) {
 /*
  * Print the platform info.
  */
-void print_platform_info(struct attestation_report *report) {
+void
+print_platform_info(struct attestation_report *report) {
   if (report) {
     printf("Platform Info: %#0lx\n", report->platform_info);
     printf(" - SMT Enabled: %s\n",
@@ -158,7 +167,8 @@ void print_platform_info(struct attestation_report *report) {
 /*
  * Print the Author key enable bit.
  */
-void print_author_key_en(struct attestation_report *report) {
+void
+print_author_key_en(struct attestation_report *report) {
   if (report) {
     printf("Author Key Enabled: %s\n",
            report->platform_info & AUTHOR_KEY_EN_MASK ? "Yes" : "No");
@@ -168,7 +178,8 @@ void print_author_key_en(struct attestation_report *report) {
 /*
  * Print the report data (in hex) supplied by the guest.
  */
-void print_report_data(struct attestation_report *report) {
+void
+print_report_data(struct attestation_report *report) {
   if (report) {
     print_byte_array("Report Data",
                      report->report_data,
@@ -179,7 +190,8 @@ void print_report_data(struct attestation_report *report) {
 /*
  * Print the launch measurement (in hex).
  */
-void print_measurement(struct attestation_report *report) {
+void
+print_measurement(struct attestation_report *report) {
   if (report) {
     print_byte_array("Measurement",
                      report->measurement,
@@ -190,7 +202,8 @@ void print_measurement(struct attestation_report *report) {
 /*
  * Print the host data (in hex).
  */
-void print_host_data(struct attestation_report *report) {
+void
+print_host_data(struct attestation_report *report) {
   if (report) {
     print_byte_array("Host Data", report->host_data, sizeof(report->host_data));
   }
@@ -199,7 +212,8 @@ void print_host_data(struct attestation_report *report) {
 /*
  * Print the digest of the ID key (in hex).
  */
-void print_id_key_digest(struct attestation_report *report) {
+void
+print_id_key_digest(struct attestation_report *report) {
   if (report) {
     print_byte_array("ID Key Digest",
                      report->id_key_digest,
@@ -210,7 +224,8 @@ void print_id_key_digest(struct attestation_report *report) {
 /*
  * Print the digest of the Author key (in hex).
  */
-void print_author_key_digest(struct attestation_report *report) {
+void
+print_author_key_digest(struct attestation_report *report) {
   if (report) {
     print_byte_array("Author Key Digest",
                      report->author_key_digest,
@@ -221,7 +236,8 @@ void print_author_key_digest(struct attestation_report *report) {
 /*
  * Print the report ID (in hex).
  */
-void print_report_id(struct attestation_report *report) {
+void
+print_report_id(struct attestation_report *report) {
   if (report) {
     print_byte_array("Report ID", report->report_id, sizeof(report->report_id));
   }
@@ -230,7 +246,8 @@ void print_report_id(struct attestation_report *report) {
 /*
  * Print the report ID (in hex) of the migration agent.
  */
-void print_migration_agent_report_id(struct attestation_report *report) {
+void
+print_migration_agent_report_id(struct attestation_report *report) {
   if (report) {
     print_byte_array("Migration Agent Report ID",
                      report->report_id_ma,
@@ -242,7 +259,8 @@ void print_migration_agent_report_id(struct attestation_report *report) {
  * Print the reported TCB version needed to retreive the VCEK
  * from the AMD KDS.
  */
-void print_reported_tcb(struct attestation_report *report) {
+void
+print_reported_tcb(struct attestation_report *report) {
   if (report) {
     print_tcb_version("Reported TCB", &report->platform_version);
   }
@@ -251,7 +269,8 @@ void print_reported_tcb(struct attestation_report *report) {
 /*
  * Print the chip ID (in hex).
  */
-void print_chip_id(struct attestation_report *report) {
+void
+print_chip_id(struct attestation_report *report) {
   if (report) {
     print_byte_array("Chip ID", report->chip_id, sizeof(report->chip_id));
   }
@@ -260,7 +279,8 @@ void print_chip_id(struct attestation_report *report) {
 /*
  * Print the signature (in hex).
  */
-void print_signature(struct attestation_report *report) {
+void
+print_signature(struct attestation_report *report) {
   if (report) {
     printf("Signature:\n");
     print_byte_array("  R", report->signature.r, sizeof(report->signature.r));
@@ -271,7 +291,8 @@ void print_signature(struct attestation_report *report) {
 /*
  * Print all fields of the guest report.
  */
-void print_report(struct attestation_report *report) {
+void
+print_report(struct attestation_report *report) {
   print_version(report);
   print_guest_svn(report);
   print_policy(report);

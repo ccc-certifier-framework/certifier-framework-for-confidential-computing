@@ -28,7 +28,8 @@ DEFINE_string(platform_file, "", "platform file");
 DEFINE_string(measurement_file, "", "measurement file");
 DEFINE_string(output, "", "output file");
 
-bool calculate_measurement(const string& in, string* out) {
+bool
+calculate_measurement(const string& in, string* out) {
   size_t size = in.size();
   char   hex[size + 2];
   memset((byte*)hex, 0, size + 2);
@@ -54,7 +55,8 @@ bool calculate_measurement(const string& in, string* out) {
   return true;
 }
 
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   string usage("Generate platform measurement to output file");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);

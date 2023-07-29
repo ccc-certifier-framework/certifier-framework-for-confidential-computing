@@ -17,12 +17,13 @@
 
 #include "islet_api.h"
 
-bool isletlib_Verify(const int what_to_say_size,
-                     byte*     what_to_say,
-                     const int attestation_size,
-                     byte*     attestation,
-                     int*      measurement_out_size,
-                     byte*     measurement_out) {
+bool
+isletlib_Verify(const int what_to_say_size,
+                byte*     what_to_say,
+                const int attestation_size,
+                byte*     attestation,
+                int*      measurement_out_size,
+                byte*     measurement_out) {
   bool result = false;
 
   result = islet_Verify(what_to_say_size,

@@ -25,7 +25,8 @@ using namespace certifier::utilities;
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(input, "simple_clause.bin", "input file");
 
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 

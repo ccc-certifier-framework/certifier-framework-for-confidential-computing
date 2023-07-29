@@ -52,14 +52,17 @@ union sev_ecdsa_sig {
   uint8_t bytes[2 * ECDSA_POINT_SIZE];
 };
 
-int sev_ecdsa_pubkey_init(struct sev_ecdsa_pubkey *pubkey, EVP_PKEY *evp_key);
-int sev_ecdsa_sign(const void *         msg,
-                   size_t               msg_size,
-                   EVP_PKEY *           key,
-                   union sev_ecdsa_sig *sig);
-int sev_ecdsa_verify(const void *         digest,
-                     size_t               digest_size,
-                     EVP_PKEY *           key,
-                     union sev_ecdsa_sig *sig);
+int
+sev_ecdsa_pubkey_init(struct sev_ecdsa_pubkey *pubkey, EVP_PKEY *evp_key);
+int
+sev_ecdsa_sign(const void *         msg,
+               size_t               msg_size,
+               EVP_PKEY *           key,
+               union sev_ecdsa_sig *sig);
+int
+sev_ecdsa_verify(const void *         digest,
+                 size_t               digest_size,
+                 EVP_PKEY *           key,
+                 union sev_ecdsa_sig *sig);
 
 #endif /* SEV_ECDSA_H */

@@ -24,7 +24,8 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-int main(int an, char** av) {
+int
+main(int an, char** av) {
   string enclave("application-enclave");
   string id("1");
 
