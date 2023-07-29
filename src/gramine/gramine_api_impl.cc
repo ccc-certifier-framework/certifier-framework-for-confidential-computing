@@ -25,8 +25,8 @@
 #include "mbedtls/ssl.h"
 #include "mbedtls/x509.h"
 
-#define KEY_SIZE 16
-#define SGX_MR_SIZE 32
+#define KEY_SIZE       16
+#define SGX_MR_SIZE    32
 #define USER_DATA_SIZE 256
 
 enum { SUCCESS = 0, FAILURE = -1 };

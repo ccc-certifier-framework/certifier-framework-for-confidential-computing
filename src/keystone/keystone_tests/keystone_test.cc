@@ -18,7 +18,7 @@
 
 #include "keystone_api.h"
 
-#define SIZE_SECRET 32             // any
+#define SIZE_SECRET      32        // any
 #define SIZE_WHAT_TO_SAY 256       // <= 1024
 #define SIZE_ATTESTATION 1352      // must
 #define SIZE_MEASUREMENT (64 * 2)  // must

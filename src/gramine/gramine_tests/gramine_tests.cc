@@ -19,13 +19,13 @@
 
 #include "gramine_api.h"
 
-#define cert_file "gramine_tests.crt"
-#define BUF_SIZE 128
+#define cert_file        "gramine_tests.crt"
+#define BUF_SIZE         128
 #define BUF_STORAGE_SIZE 4
-#define TAG_SIZE 16
-#define MAX_TAG_SIZE (BUF_STORAGE_SIZE + TAG_SIZE)
-#define USER_DATA_SIZE 256
-#define MAX_CERT_SIZE 2048
+#define TAG_SIZE         16
+#define MAX_TAG_SIZE     (BUF_STORAGE_SIZE + TAG_SIZE)
+#define USER_DATA_SIZE   256
+#define MAX_CERT_SIZE    2048
 
 byte cert[MAX_CERT_SIZE];
 

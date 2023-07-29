@@ -14,9 +14,9 @@
 #else
 // BEGIN copied Keys.hpp
 #define ATTEST_DATA_MAXLEN 1024
-#define MDSIZE 64
-#define SIGNATURE_SIZE 64
-#define PUBLIC_KEY_SIZE 32
+#define MDSIZE             64
+#define SIGNATURE_SIZE     64
+#define PUBLIC_KEY_SIZE    32
 // END copied Keys.hpp
 
 // BEGIN copied Report.hpp

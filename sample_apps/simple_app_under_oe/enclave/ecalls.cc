@@ -25,16 +25,16 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-#define FLAGS_print_all true
-#define FLAGS_operation ""
-#define FLAGS_policy_host "localhost"
-#define FLAGS_policy_port 8123
+#define FLAGS_print_all       true
+#define FLAGS_operation       ""
+#define FLAGS_policy_host     "localhost"
+#define FLAGS_policy_port     8123
 #define FLAGS_server_app_host "localhost"
 #define FLAGS_server_app_port 8124
 static string data_dir = "app1_data";
 
 #define FLAGS_policy_store_file "store.bin"
-#define FLAGS_certificate_file "vse.crt"
+#define FLAGS_certificate_file  "vse.crt"
 
 static std::string enclave_type;
 cc_trust_data*     app_trust_data = nullptr;
