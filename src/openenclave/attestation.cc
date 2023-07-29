@@ -149,16 +149,15 @@ oe_Verify(const uint8_t* evidence,
   }
 
   OE_DEBUG_PRINTF("oe_verify_evidence succeeded\n");
-  OE_DEBUG_PRINTF(
-      "oe_verify_evidence evaluate all supported claims:\n"
-      "   [OE_CLAIM_ID_VERSION]\n"
-      "   [OE_CLAIM_SECURITY_VERSION]\n"
-      "   [OE_CLAIM_ATTRIBUTES]\n"
-      "   [OE_CLAIM_UNIQUE_ID] (Measurement)\n"
-      "   [OE_CLAIM_SIGNER_ID] (Not used on VSE)\n"
-      "   [OE_CLAIM_PRODUCT_ID] (Fixed on VSE)\n"
-      "   [OE_CLAIM_FORMAT_UUID]\n"
-      "   [OE_CLAIM_CUSTOM_CLAIMS_BUFFER] (User data)\n");
+  OE_DEBUG_PRINTF("oe_verify_evidence evaluate all supported claims:\n"
+                  "   [OE_CLAIM_ID_VERSION]\n"
+                  "   [OE_CLAIM_SECURITY_VERSION]\n"
+                  "   [OE_CLAIM_ATTRIBUTES]\n"
+                  "   [OE_CLAIM_UNIQUE_ID] (Measurement)\n"
+                  "   [OE_CLAIM_SIGNER_ID] (Not used on VSE)\n"
+                  "   [OE_CLAIM_PRODUCT_ID] (Fixed on VSE)\n"
+                  "   [OE_CLAIM_FORMAT_UUID]\n"
+                  "   [OE_CLAIM_CUSTOM_CLAIMS_BUFFER] (User data)\n");
 
   // Go over the claims
   if ((claim = _find_claim(claims, claims_length, OE_CLAIM_ID_VERSION)) ==

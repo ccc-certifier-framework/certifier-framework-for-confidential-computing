@@ -74,15 +74,13 @@ main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   printf("%s: %s\n", av[0], usage.c_str());
-  printf(
-      "%s --key_type=<key-type> --key_output_file=<key_file.bin> "
-      "--generate_cert=false --cert_output_file=<cert_file.bin> "
-      "--duration=in-seconds --serial_number=123231 "
-      "--authority_name=authority\n",
-      av[0]);
-  printf(
-      "Key types : rsa-1024-private, rsa-2048-private"
-      ", rsa-4096-private, ecc-384-private\n");
+  printf("%s --key_type=<key-type> --key_output_file=<key_file.bin> "
+         "--generate_cert=false --cert_output_file=<cert_file.bin> "
+         "--duration=in-seconds --serial_number=123231 "
+         "--authority_name=authority\n",
+         av[0]);
+  printf("Key types : rsa-1024-private, rsa-2048-private"
+         ", rsa-4096-private, ecc-384-private\n");
 
   key_message priv;
   key_message pub;

@@ -158,9 +158,8 @@ certifier::framework::cc_trust_data::initialize_application_enclave_data(
     return false;
   }
   if (!application_Init(parent_enclave_type, in_fd, out_fd)) {
-    printf(
-        "initialize_application_enclave_data: Can't init "
-        "application-enclave\n");
+    printf("initialize_application_enclave_data: Can't init "
+           "application-enclave\n");
     return false;
   }
   cc_provider_provisioned_ = true;
@@ -173,9 +172,8 @@ certifier::framework::cc_trust_data::initialize_simulated_enclave_data(
     const string& measurement_file_name,
     const string& attest_endorsement_file_name) {
   if (!cc_policy_info_initialized_) {
-    printf(
-        "initialize_simulated_enclave_data: Policy key must be initialized "
-        "first\n");
+    printf("initialize_simulated_enclave_data: Policy key must be initialized "
+           "first\n");
     return false;
   }
 
@@ -268,9 +266,8 @@ certifier::framework::cc_trust_data::initialize_keystone_enclave_data(
     const string& attest_endorsement_file_name) {
 #ifdef KEYSTONE_CERTIFIER
   if (!cc_policy_info_initialized_) {
-    printf(
-        "initialize_keystone_enclave_data: Policy key must be initialized "
-        "first\n");
+    printf("initialize_keystone_enclave_data: Policy key must be initialized "
+           "first\n");
     return false;
   }
 
@@ -980,18 +977,16 @@ certifier::framework::cc_trust_data::warm_restart() {
   // fetch store
   if (!cc_policy_store_initialized_) {
     if (!fetch_store()) {
-      printf(
-          "certifier::framework::cc_trust_data::warm_restart: Can't fetch "
-          "store\n");
+      printf("certifier::framework::cc_trust_data::warm_restart: Can't fetch "
+             "store\n");
       return false;
     }
   }
   cc_policy_store_initialized_ = true;
 
   if (!get_trust_data_from_store()) {
-    printf(
-        "certifier::framework::cc_trust_data::warm_restart: Can't get trust "
-        "data from store\n");
+    printf("certifier::framework::cc_trust_data::warm_restart: Can't get trust "
+           "data from store\n");
     return false;
   }
   return true;
@@ -1007,17 +1002,15 @@ certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim(
     int  size_out = 8192;
     byte out[size_out];
     if (!application_GetPlatformStatement(&size_out, out)) {
-      printf(
-          "certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim: "
-          "Can't get PlatformStatement from parent\n");
+      printf("certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim: "
+             "Can't get PlatformStatement from parent\n");
       return false;
     }
     string sc_str;
     sc_str.assign((char*)out, size_out);
     if (!scm->ParseFromString(sc_str)) {
-      printf(
-          "certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim: "
-          "Can't parse platform claim\n");
+      printf("certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim: "
+             "Can't parse platform claim\n");
       return false;
     }
     return true;
@@ -1144,16 +1137,14 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
     }
     string str_s;
     if (!signed_platform_says_attest_key_is_trusted.SerializeToString(&str_s)) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: Can't serialize "
-          "signed attest claim\n");
+      printf("certifier::framework::cc_trust_data::certify_me: Can't serialize "
+             "signed attest claim\n");
       return false;
     }
     evidence* ev = platform_evidence.add_assertion();
     if (ev == nullptr) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: Can't add to "
-          "platform evidence\n");
+      printf("certifier::framework::cc_trust_data::certify_me: Can't add to "
+             "platform evidence\n");
       return false;
     }
     ev->set_evidence_type("signed-claim");
@@ -1168,9 +1159,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
     }
     evidence* ev = platform_evidence.add_assertion();
     if (ev == nullptr) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: Can't add to "
-          "gramine platform evidence\n");
+      printf("certifier::framework::cc_trust_data::certify_me: Can't add to "
+             "gramine platform evidence\n");
       return false;
     }
     ev->set_evidence_type("cert");
@@ -1191,34 +1181,30 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
 #ifdef SEV_SNP
   } else if (enclave_type_ == "sev-enclave") {
     if (!plat_certs_initialized) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: sev certs not "
-          "initialized\n");
+      printf("certifier::framework::cc_trust_data::certify_me: sev certs not "
+             "initialized\n");
       return false;
     }
     evidence* ev = platform_evidence.add_assertion();
     if (ev == nullptr) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: Can't add to "
-          "platform evidence\n");
+      printf("certifier::framework::cc_trust_data::certify_me: Can't add to "
+             "platform evidence\n");
       return false;
     }
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(serialized_ark_cert);
     ev = platform_evidence.add_assertion();
     if (ev == nullptr) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: Can't add to "
-          "platform evidence\n");
+      printf("certifier::framework::cc_trust_data::certify_me: Can't add to "
+             "platform evidence\n");
       return false;
     }
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(serialized_ask_cert);
     ev = platform_evidence.add_assertion();
     if (ev == nullptr) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: Can't add to "
-          "platform evidence\n");
+      printf("certifier::framework::cc_trust_data::certify_me: Can't add to "
+             "platform evidence\n");
       return false;
     }
     ev->set_evidence_type("cert");
@@ -1227,17 +1213,15 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
 #ifdef OE_CERTIFIER
   } else if (enclave_type_ == "oe-enclave") {
     if (!cc_provider_provisioned_) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: Can't get "
-          "pem-chain\n");
+      printf("certifier::framework::cc_trust_data::certify_me: Can't get "
+             "pem-chain\n");
       return false;
     }
     if (pem_cert_chain != "") {
       evidence* ev = platform_evidence.add_assertion();
       if (ev == nullptr) {
-        printf(
-            "certifier::framework::cc_trust_data::certify_me: Can't add to "
-            "platform evidence\n");
+        printf("certifier::framework::cc_trust_data::certify_me: Can't add to "
+               "platform evidence\n");
         return false;
       }
       ev->set_evidence_type("pem-cert-chain");
@@ -1245,9 +1229,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
     }
 #endif
   } else {
-    printf(
-        "certifier::framework::cc_trust_data::certify_me: Unknown enclave "
-        "type\n");
+    printf("certifier::framework::cc_trust_data::certify_me: Unknown enclave "
+           "type\n");
     return false;
   }
 
@@ -1261,9 +1244,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
 #endif
 
     if (!make_attestation_user_data(enclave_type_, public_auth_key_, &ud)) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: Can't make user "
-          "data (1)\n");
+      printf("certifier::framework::cc_trust_data::certify_me: Can't make user "
+             "data (1)\n");
       return false;
     }
 #ifdef DEBUG
@@ -1281,9 +1263,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
 #endif
   } else if (purpose_ == "attestation") {
     if (!make_attestation_user_data(enclave_type_, public_service_key_, &ud)) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: Can't make user "
-          "data (1)\n");
+      printf("certifier::framework::cc_trust_data::certify_me: Can't make user "
+             "data (1)\n");
       return false;
     }
 #ifdef DEBUG
@@ -1358,9 +1339,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
                                            platform_evidence,
                                            the_attestation_str,
                                            ep)) {
-    printf(
-        "certifier::framework::cc_trust_data::certify_me: "
-        "construct_platform_evidence_package failed\n");
+    printf("certifier::framework::cc_trust_data::certify_me: "
+           "construct_platform_evidence_package failed\n");
     return false;
   }
   request.set_allocated_support(ep);
@@ -1368,9 +1348,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
   // Serialize request
   string serialized_request;
   if (!request.SerializeToString(&serialized_request)) {
-    printf(
-        "certifier::framework::cc_trust_data::certify_me: Can't serialize "
-        "request\n");
+    printf("certifier::framework::cc_trust_data::certify_me: Can't serialize "
+           "request\n");
     return false;
   }
 
@@ -1399,15 +1378,13 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
   string serialized_response;
   int    resp_size = sized_socket_read(sock, &serialized_response);
   if (resp_size < 0) {
-    printf(
-        "certifier::framework::cc_trust_data::certify_me: Can't read "
-        "response\n");
+    printf("certifier::framework::cc_trust_data::certify_me: Can't read "
+           "response\n");
     return false;
   }
   if (!response.ParseFromString(serialized_response)) {
-    printf(
-        "certifier::framework::cc_trust_data::certify_me: Can't parse "
-        "response\n");
+    printf("certifier::framework::cc_trust_data::certify_me: Can't parse "
+           "response\n");
     return false;
   }
   close(sock);
@@ -1418,9 +1395,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
 #endif
 
   if (response.status() != "succeeded") {
-    printf(
-        "certifier::framework::cc_trust_data::certify_me: Certification "
-        "failed\n");
+    printf("certifier::framework::cc_trust_data::certify_me: Certification "
+           "failed\n");
     return false;
   }
 
@@ -1453,9 +1429,8 @@ certifier::framework::cc_trust_data::certify_me(const string& host_name,
     pr_str.assign((char*)response.artifact().data(),
                   response.artifact().size());
     if (!platform_rule_.ParseFromString(pr_str)) {
-      printf(
-          "certifier::framework::cc_trust_data::certify_me: Can't parse "
-          "platform rule\n");
+      printf("certifier::framework::cc_trust_data::certify_me: Can't parse "
+             "platform rule\n");
       return false;
     }
 
@@ -2192,10 +2167,9 @@ certifier::framework::secure_authenticated_channel::
   // accept and carry out auth
   int res = SSL_accept(ssl_);
   if (res != 1) {
-    printf(
-        "server_channel_accept_and_auth: Can't SSL_accept connection"
-        ", res=%d\n",
-        res);
+    printf("server_channel_accept_and_auth: Can't SSL_accept connection"
+           ", res=%d\n",
+           res);
     unsigned long code = ERR_get_error();
     printf("Accept error: %s\n", ERR_lib_error_string(code));
     print_ssl_error(SSL_get_error(ssl_, res));

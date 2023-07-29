@@ -259,11 +259,10 @@ test_authenticated_encrypt(bool print_all) {
     return false;
   }
   if (print_all) {
-    printf(
-        "authenticated encrypt for aes-256-gcm succeeded, in_size: %d, "
-        "out_size is %d\n",
-        in_size,
-        size_encrypt_out);
+    printf("authenticated encrypt for aes-256-gcm succeeded, in_size: %d, "
+           "out_size is %d\n",
+           in_size,
+           size_encrypt_out);
     printf("iv: ");
     print_bytes(block_size, iv);
     printf("\n");

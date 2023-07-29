@@ -196,16 +196,14 @@ verify_signed_assertion_and_extract_clause(const key_message&          key,
         (char*)asserted_claim.serialized_claim().data(),
         (int)asserted_claim.serialized_claim().size());
     if (!asserted_vse.ParseFromString(serialized_vse_string)) {
-      printf(
-          "verify_signed_assertion_and_extract_clause: can't deserialize "
-          "vse\n");
+      printf("verify_signed_assertion_and_extract_clause: can't deserialize "
+             "vse\n");
       return false;
     }
     cl->CopyFrom(asserted_vse);
   } else {
-    printf(
-        "verify_signed_assertion_and_extract_clause: only vse format "
-        "supported\n");
+    printf("verify_signed_assertion_and_extract_clause: only vse format "
+           "supported\n");
     return false;
   }
 
@@ -901,9 +899,8 @@ add_vse_proved_statements_from_sev_attest(
 
   attestation_user_data ud;
   if (!ud.ParseFromString(sev_att.what_was_said())) {
-    printf(
-        "add_vse_proved_statements_from_sev_attest: Can't parse attestation "
-        "user data\n");
+    printf("add_vse_proved_statements_from_sev_attest: Can't parse attestation "
+           "user data\n");
     return false;
   }
 
@@ -917,9 +914,8 @@ add_vse_proved_statements_from_sev_attest(
 
   entity_message auth_ent;
   if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
-    printf(
-        "add_vse_proved_statements_from_sev_attest: Can't make measurement "
-        "entity\n");
+    printf("add_vse_proved_statements_from_sev_attest: Can't make measurement "
+           "entity\n");
     return false;
   }
 
@@ -938,9 +934,8 @@ add_vse_proved_statements_from_sev_attest(
     return false;
   }
   if (!make_environment_entity(env, &env_ent)) {
-    printf(
-        "add_vse_proved_statements_from_sev_attest: Can't make environment "
-        "entity\n");
+    printf("add_vse_proved_statements_from_sev_attest: Can't make environment "
+           "entity\n");
     return false;
   }
 
@@ -957,33 +952,29 @@ add_vse_proved_statements_from_sev_attest(
 
   vse_clause c0;
   if (!make_unary_vse_clause(env_ent, is_env_verb, &c0)) {
-    printf(
-        "add_vse_proved_statements_from_sev_attest: Can't make environment "
-        "clause\n");
+    printf("add_vse_proved_statements_from_sev_attest: Can't make environment "
+           "clause\n");
     return false;
   }
 
   vse_clause* cl1 = already_proved->add_proved();
   if (!make_indirect_vse_clause(vcek_ent, says_verb, c0, cl1)) {
-    printf(
-        "add_vse_proved_statements_from_sev_attest: can't make says "
-        "environment clause\n");
+    printf("add_vse_proved_statements_from_sev_attest: can't make says "
+           "environment clause\n");
     return false;
   }
 
   vse_clause c1;
   if (!make_simple_vse_clause(auth_ent, speaks_verb, env_ent, &c1)) {
-    printf(
-        "add_vse_proved_statements_from_sev_attest: Can't make speaks-for "
-        "clause\n");
+    printf("add_vse_proved_statements_from_sev_attest: Can't make speaks-for "
+           "clause\n");
     return false;
   }
 
   vse_clause* cl2 = already_proved->add_proved();
   if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl2)) {
-    printf(
-        "add_vse_proved_statements_from_sev_attest: Can't make says "
-        "speaks-for\n");
+    printf("add_vse_proved_statements_from_sev_attest: Can't make says "
+           "speaks-for\n");
     return false;
   }
   return true;
@@ -1285,9 +1276,8 @@ init_proved_statements(key_message&       pk,
         if (!construct_vse_attestation_from_cert(*subject_key,
                                                  *signer_key,
                                                  cl)) {
-          printf(
-              "init_proved_statements: Can't construct vse attestation from "
-              "cert\n");
+          printf("init_proved_statements: Can't construct vse attestation from "
+                 "cert\n");
           return false;
         }
       }
@@ -1323,16 +1313,14 @@ init_proved_statements(key_message&       pk,
       const vse_clause& last_clause =
           already_proved->proved(already_proved->proved_size() - 1);
       if (!last_clause.has_clause()) {
-        printf(
-            "init_proved: last clause in sev-attestation has wrong format "
-            "(1)\n");
+        printf("init_proved: last clause in sev-attestation has wrong format "
+               "(1)\n");
         return false;
       }
       if (!last_clause.clause().has_subject() ||
           last_clause.clause().subject().entity_type() != "key") {
-        printf(
-            "init_proved: last clause in sev-attestation has wrong format "
-            "(2)\n");
+        printf("init_proved: last clause in sev-attestation has wrong format "
+               "(2)\n");
         return false;
       }
       const key_message& vcek_key = last_clause.clause().subject().key();
@@ -1377,9 +1365,8 @@ init_proved_statements(key_message&       pk,
       if (!add_vse_proved_statements_from_sev_attest(sev_att,
                                                      vcek_key,
                                                      already_proved)) {
-        printf(
-            "init_proved_statements: can't "
-            "add_vse_proved_statements_from_sev_attest\n");
+        printf("init_proved_statements: can't "
+               "add_vse_proved_statements_from_sev_attest\n");
         return false;
       }
     } else if (evp.fact_assertion(i).evidence_type() == "sev-attestation") {
@@ -1403,16 +1390,14 @@ init_proved_statements(key_message&       pk,
       const vse_clause& last_clause =
           already_proved->proved(already_proved->proved_size() - 1);
       if (!last_clause.has_clause()) {
-        printf(
-            "init_proved_statements: malformed vcek delegation statement "
-            "(1)\n");
+        printf("init_proved_statements: malformed vcek delegation statement "
+               "(1)\n");
         return false;
       }
       if (!last_clause.clause().has_subject() ||
           last_clause.clause().subject().entity_type() != "key") {
-        printf(
-            "init_proved_statements: malformed vcek delegation statement "
-            "(2)\n");
+        printf("init_proved_statements: malformed vcek delegation statement "
+               "(2)\n");
         return false;
       }
       const key_message& vcek_key = last_clause.clause().subject().key();
@@ -1526,9 +1511,8 @@ init_proved_statements(key_message&       pk,
                                                ud.enclave_key(),
                                                info.verified_measurement(),
                                                cl_to_insert)) {
-        printf(
-            "init_proved_statements: construct_vse_attestation_statement "
-            "failed\n");
+        printf("init_proved_statements: construct_vse_attestation_statement "
+               "failed\n");
         return false;
       }
     } else {
@@ -2052,15 +2036,13 @@ add_newfacts_for_sdk_platform_attestation(
   if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
                                                       trusted_measurements,
                                                       &sc)) {
-    printf(
-        "Add_newfacts_for_sdk_platform__attestation: Can't sign measurement "
-        "\n");
+    printf("Add_newfacts_for_sdk_platform__attestation: Can't sign measurement "
+           "\n");
     return false;
   }
   if (!add_fact_from_signed_claim(sc, already_proved)) {
-    printf(
-        "Add_newfacts_for_sdk_platform__attestation: Can't add fact from "
-        "signed claim\n");
+    printf("Add_newfacts_for_sdk_platform__attestation: Can't add fact from "
+           "signed claim\n");
     return false;
   }
 
@@ -2477,9 +2459,8 @@ construct_proof_from_request(const string&          evidence_descriptor,
                                                 already_proved,
                                                 to_prove,
                                                 pf)) {
-      printf(
-          "construct_proof_from_full_vse_evidence in "
-          "construct_proof_from_request failed\n");
+      printf("construct_proof_from_full_vse_evidence in "
+             "construct_proof_from_request failed\n");
       return false;
     }
   } else if (evidence_descriptor == "sev-evidence") {
@@ -2493,9 +2474,8 @@ construct_proof_from_request(const string&          evidence_descriptor,
                                           trusted_platforms,
                                           trusted_measurements,
                                           already_proved)) {
-      printf(
-          "construct_proof_from_sev_evidence failed in "
-          "add_newfacts_for_sev_attestation\n");
+      printf("construct_proof_from_sev_evidence failed in "
+             "add_newfacts_for_sev_attestation\n");
       return false;
     }
     if (!construct_proof_from_sev_evidence(policy_pk,
@@ -2520,9 +2500,8 @@ construct_proof_from_request(const string&          evidence_descriptor,
                                                    trusted_platforms,
                                                    trusted_measurements,
                                                    already_proved)) {
-      printf(
-          "construct_proof_from_full_vse_evidence in "
-          "add_newfacts_for_asyloplatform_evidence failed\n");
+      printf("construct_proof_from_full_vse_evidence in "
+             "add_newfacts_for_asyloplatform_evidence failed\n");
       return false;
     }
     return construct_proof_from_sdk_evidence(policy_pk,
@@ -2535,9 +2514,8 @@ construct_proof_from_request(const string&          evidence_descriptor,
                                                    trusted_platforms,
                                                    trusted_measurements,
                                                    already_proved)) {
-      printf(
-          "construct_proof_from_full_vse_evidence in "
-          "add_newfacts_for_gramineplatform_evidence failed\n");
+      printf("construct_proof_from_full_vse_evidence in "
+             "add_newfacts_for_gramineplatform_evidence failed\n");
       return false;
     }
     return construct_proof_from_sdk_evidence(policy_pk,
@@ -2714,9 +2692,8 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   const vse_clause& measurement_is_trusted = already_proved->proved(2).clause();
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];
@@ -2732,17 +2709,15 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
       !already_proved->proved(1).has_clause() ||
       !already_proved->proved(1).clause().has_subject() ||
       already_proved->proved(1).clause().subject().entity_type() != "key") {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: components of second "
-        "step malformed\n");
+    printf("construct_proof_from_sev_evidence_with_plat: components of second "
+           "step malformed\n");
     return false;
   }
   const vse_clause& ark_key_is_trusted = already_proved->proved(1).clause();
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];
@@ -2766,9 +2741,8 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   const vse_clause& ask_key_is_trusted = already_proved->proved(5).clause();
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];
@@ -2783,17 +2757,15 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   if (!already_proved->proved(6).has_subject() ||
       !already_proved->proved(6).has_clause() ||
       already_proved->proved(6).clause().subject().entity_type() != "key") {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: components of fourth "
-        "step malformed\n");
+    printf("construct_proof_from_sev_evidence_with_plat: components of fourth "
+           "step malformed\n");
     return false;
   }
   const vse_clause& vcek_key_is_trusted = already_proved->proved(6).clause();
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];
@@ -2817,9 +2789,8 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   const vse_clause& is_environment = already_proved->proved(7).clause();
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];
@@ -2844,9 +2815,8 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   const vse_clause& platform_has_property = already_proved->proved(3).clause();
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];
@@ -2872,9 +2842,8 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   }
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];
@@ -2899,9 +2868,8 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   }
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];
@@ -2926,9 +2894,8 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   }
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];
@@ -2955,9 +2922,8 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   const vse_clause& speaks_for = already_proved->proved(8).clause();
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];
@@ -2977,9 +2943,8 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   const entity_message& auth_ent = speaks_for.subject();
 
   if (step_count >= (*num - 1)) {
-    printf(
-        "construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
-        "step in array\n");
+    printf("construct_proof_from_sev_evidence_with_plat: Can't allocate proof "
+           "step in array\n");
     return false;
   }
   ps = &pss[step_count++];

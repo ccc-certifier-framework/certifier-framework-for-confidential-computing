@@ -129,9 +129,8 @@ main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  string usage_str(
-      "--key_subject=<file> --verb=\"says\" --clause=<file> "
-      "--output=<output-file-name>");
+  string usage_str("--key_subject=<file> --verb=\"says\" --clause=<file> "
+                   "--output=<output-file-name>");
   if (FLAGS_key_subject == "" && FLAGS_measurement_subject == "") {
     printf("No key or measurement subject\n");
     printf("%s: %s\n", av[0], usage_str.c_str());

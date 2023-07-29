@@ -426,11 +426,10 @@ gramine_remote_verify_impl(const int what_to_say_size,
   uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
 #ifdef DEBUG
-  printf(
-      "Gramine Remote Verify called what_to_say_size: %d attestation_size: "
-      "%d\n",
-      what_to_say_size,
-      attestation_size);
+  printf("Gramine Remote Verify called what_to_say_size: %d attestation_size: "
+         "%d\n",
+         what_to_say_size,
+         attestation_size);
 #endif
 
   sgx_quote_t* quote_expected = (sgx_quote_t*)attestation;

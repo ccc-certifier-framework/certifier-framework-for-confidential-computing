@@ -332,16 +332,15 @@ make_property_cmd(string name,
                   string comparator,
                   string value,
                   string output) {
-  return string_format(
-      "%s --property_name=%s --property_type=\'%s\' "
-      "comparator=\"%s\" --%s_value=%s --output=%s",
-      (FLAGS_util_path + MAKE_PROPERTY_CMD).c_str(),
-      name.c_str(),
-      type.c_str(),
-      comparator.c_str(),
-      type.c_str(),
-      value.c_str(),
-      output.c_str());
+  return string_format("%s --property_name=%s --property_type=\'%s\' "
+                       "comparator=\"%s\" --%s_value=%s --output=%s",
+                       (FLAGS_util_path + MAKE_PROPERTY_CMD).c_str(),
+                       name.c_str(),
+                       type.c_str(),
+                       comparator.c_str(),
+                       type.c_str(),
+                       value.c_str(),
+                       output.c_str());
 }
 
 static string
@@ -364,16 +363,15 @@ make_simple_clause_cmd(string subjectType,
                        string objectType,
                        string object,
                        string output) {
-  return string_format(
-      "%s --%s_subject=%s --verb=%s --%s_object=%s "
-      "--output=%s",
-      (FLAGS_util_path + MAKE_SIMPLE_CLAUSE_CMD).c_str(),
-      subjectType.c_str(),
-      subject.c_str(),
-      verb.c_str(),
-      objectType.c_str(),
-      object.c_str(),
-      output.c_str());
+  return string_format("%s --%s_subject=%s --verb=%s --%s_object=%s "
+                       "--output=%s",
+                       (FLAGS_util_path + MAKE_SIMPLE_CLAUSE_CMD).c_str(),
+                       subjectType.c_str(),
+                       subject.c_str(),
+                       verb.c_str(),
+                       objectType.c_str(),
+                       object.c_str(),
+                       output.c_str());
 }
 
 static string
@@ -382,15 +380,14 @@ make_indirect_clause_cmd(string subjectType,
                          string verb,
                          string clause,
                          string output) {
-  return string_format(
-      "%s --%s_subject=%s --verb=\"%s\" --clause=%s "
-      "--output=%s",
-      (FLAGS_util_path + MAKE_INDIRECT_CLAUSE_CMD).c_str(),
-      subjectType.c_str(),
-      subject.c_str(),
-      verb.c_str(),
-      clause.c_str(),
-      output.c_str());
+  return string_format("%s --%s_subject=%s --verb=\"%s\" --clause=%s "
+                       "--output=%s",
+                       (FLAGS_util_path + MAKE_INDIRECT_CLAUSE_CMD).c_str(),
+                       subjectType.c_str(),
+                       subject.c_str(),
+                       verb.c_str(),
+                       clause.c_str(),
+                       output.c_str());
 }
 
 static string
@@ -398,14 +395,13 @@ make_signed_claim_cmd(string vseFile,
                       string duration,
                       string pKey,
                       string output) {
-  return string_format(
-      "%s --vse_file=%s --duration=%s --private_key_file=%s "
-      "--output=%s",
-      (FLAGS_util_path + MAKE_SIGNED_CLAIM_CMD).c_str(),
-      vseFile.c_str(),
-      duration.c_str(),
-      pKey.c_str(),
-      output.c_str());
+  return string_format("%s --vse_file=%s --duration=%s --private_key_file=%s "
+                       "--output=%s",
+                       (FLAGS_util_path + MAKE_SIGNED_CLAIM_CMD).c_str(),
+                       vseFile.c_str(),
+                       duration.c_str(),
+                       pKey.c_str(),
+                       output.c_str());
 }
 
 #define RUN_CMD(cmd, script, ret)                                              \
@@ -448,13 +444,12 @@ generate_platform_policy(string           policyKey,
                       "properties.bin");
     RUN_CMD(combine_cmd, script, false);
     plat_file = string_format("%s-platform.bin", platform.type.c_str());
-    claim_cmd = string_format(
-        "%s --platform_type=%s --properties_file=%s "
-        "--output=%s",
-        (FLAGS_util_path + MAKE_PLATFORM_CMD).c_str(),
-        platform.type.c_str(),
-        "properties.bin",
-        plat_file.c_str());
+    claim_cmd = string_format("%s --platform_type=%s --properties_file=%s "
+                              "--output=%s",
+                              (FLAGS_util_path + MAKE_PLATFORM_CMD).c_str(),
+                              platform.type.c_str(),
+                              "properties.bin",
+                              plat_file.c_str());
     RUN_CMD(claim_cmd, script, false);
     intermediate_files.push_back(plat_file);
     claim_cmd = make_unary_clause_cmd("platform",
@@ -474,9 +469,8 @@ generate_platform_policy(string           policyKey,
                                       (platform.type + ".bin").c_str());
     signed_claims.push_back(platform.type + ".bin");
     RUN_CMD(claim_cmd, script, false);
-    claim_cmd =
-        "rm -rf property*.bin properties.bin "
-        "isplatform.bin saysisplatform.bin";
+    claim_cmd = "rm -rf property*.bin properties.bin "
+                "isplatform.bin saysisplatform.bin";
     RUN_CMD(claim_cmd, script, false);
   }
   return true;

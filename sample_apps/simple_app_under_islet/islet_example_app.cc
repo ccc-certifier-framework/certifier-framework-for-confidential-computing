@@ -114,8 +114,7 @@ main(int an, char** av) {
 
   if (FLAGS_operation == "") {
     printf("%s: %s\n\n", av[0], usage.c_str());
-    printf(
-        "\
+    printf("\
 %s --print_all=true|false \n\
                       --operation=op \n\
                       --policy_host=policy-host-address \n\
@@ -125,10 +124,9 @@ main(int an, char** av) {
                       --server_app_port=server-host-port\n\
                       --policy_cert_file=self-signed-policy-cert-file-name \n\
                       --policy_store_file=policy-store-file-name\n\n",
-        av[0]);
-    printf(
-        "Operations are: cold-init, warm-restart, get-certifier, "
-        "run-app-as-client, run-app-as-server\n");
+           av[0]);
+    printf("Operations are: cold-init, warm-restart, get-certifier, "
+           "run-app-as-client, run-app-as-server\n");
     return 0;
   }
 

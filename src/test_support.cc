@@ -314,9 +314,8 @@ construct_standard_evidence_package(string&                enclave_type,
   string d1("policy-key says enclave-measurement is-trusted");
   string d2("policy-key says intel-key is-trusted");
   string d3("intel-key says attestation-key is-trusted");
-  string d4(
-      "attestation-key says enclave-authentication-key speaks-for "
-      "enclave-measurement");
+  string d4("attestation-key says enclave-authentication-key speaks-for "
+            "enclave-measurement");
   string serialized_cl1;
   string serialized_cl2;
   string serialized_cl3;
@@ -575,11 +574,10 @@ test__local_certify(string& enclave_type,
                                            &evp))
     return false;
   if (debug_print) {
-    printf(
-        "test_local_certify, evidence descriptor: %s, enclave type: %s, "
-        "evidence:\n",
-        evidence_descriptor.c_str(),
-        enclave_type.c_str());
+    printf("test_local_certify, evidence descriptor: %s, enclave type: %s, "
+           "evidence:\n",
+           evidence_descriptor.c_str(),
+           enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
       print_evidence(evp.fact_assertion(i));
       printf("\n");
@@ -843,9 +841,8 @@ construct_standard_constrained_evidence_package(
   string d1("policy-key says enclave-measurement is-trusted");
   string d2("policy-key says intel-key is-trusted-for-attestation");
   string d3("intel-key says attestation-key is-trusted-for-attestation");
-  string d4(
-      "attestation-key says enclave-authentication-key speaks-for "
-      "enclave-measurement");
+  string d4("attestation-key says enclave-authentication-key speaks-for "
+            "enclave-measurement");
   string serialized_cl1;
   string serialized_cl2;
   string serialized_cl3;
@@ -1114,11 +1111,10 @@ test__new_local_certify(string& enclave_type,
     return false;
 
   if (debug_print) {
-    printf(
-        "test_local_certify, evidence descriptor: %s, enclave type: %s, "
-        "evidence:\n",
-        evidence_descriptor.c_str(),
-        enclave_type.c_str());
+    printf("test_local_certify, evidence descriptor: %s, enclave type: %s, "
+           "evidence:\n",
+           evidence_descriptor.c_str(),
+           enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
       print_evidence(evp.fact_assertion(i));
       printf("\n");

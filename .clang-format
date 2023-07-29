@@ -21,6 +21,7 @@ AllowShortLoopsOnASingleLine: false
 AlignTrailingComments: true
 
 AlwaysBreakAfterReturnType: TopLevel
+AlwaysBreakBeforeMultilineStrings: false
 
 BinPackArguments: false
 BinPackParameters: false

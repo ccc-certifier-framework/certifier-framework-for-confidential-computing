@@ -547,14 +547,13 @@ process_run_request(run_request& req) {
   int child_write_fd  = fd2[1];
 
 #ifdef DEBUG
-  printf(
-      "pipes made: fds[]:"
-      "  parent_read_fd = %d, parent_write_fd = %d,"
-      "  child_read_fd = %d,  child_write_fd = %d\n",
-      parent_read_fd,
-      parent_write_fd,
-      child_read_fd,
-      child_write_fd);
+  printf("pipes made: fds[]:"
+         "  parent_read_fd = %d, parent_write_fd = %d,"
+         "  child_read_fd = %d,  child_write_fd = %d\n",
+         parent_read_fd,
+         parent_write_fd,
+         child_read_fd,
+         child_write_fd);
 #endif
 
   // fork and get pid
@@ -762,8 +761,7 @@ main(int an, char** av) {
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_help_me) {
-    printf(
-        "\
+    printf("\
 app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
                 --policy_port=policy-host-port \n\
                 --service_dir=-directory-for-service-data \n\
