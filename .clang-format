@@ -28,13 +28,23 @@ BraceWrapping:
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 
+BreakStringLiterals: true
+
+ConstructorInitializerIndentWidth: 3
 ContinuationIndentWidth: 4
 
+FixNamespaceComments: true
+
+IndentCaseLabels: true
 IndentWidth:     2
 
 MaxEmptyLinesToKeep: 2
 
 PointerAlignment: Right
+SpaceBeforeAssignmentOperators: true
 SpacesBeforeTrailingComments: 2
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+
 TabWidth:        2
 UseTab:          Never
