@@ -119,8 +119,12 @@ bool certifier_test_seal(void) {
     printf("\n");
   }
 
-  if (!Seal(enclave_type, enclave_id, secret_to_seal_size, secret_to_seal,
-            &sealed_size_out, sealed))
+  if (!Seal(enclave_type,
+            enclave_id,
+            secret_to_seal_size,
+            secret_to_seal,
+            &sealed_size_out,
+            sealed))
     return false;
 
   if (FLAGS_print_all) {
@@ -129,8 +133,12 @@ bool certifier_test_seal(void) {
     printf("\n");
   }
 
-  if (!Unseal(enclave_type, enclave_id, sealed_size_out, sealed,
-              &recovered_size, recovered))
+  if (!Unseal(enclave_type,
+              enclave_id,
+              sealed_size_out,
+              sealed,
+              &recovered_size,
+              recovered))
     return false;
 
   if (FLAGS_print_all) {
@@ -153,7 +161,8 @@ bool asylo_local_certify() {
     simulator_initialized = true;
   }
 
-  if (!test_local_certify(enclave_type, FLAGS_read_measurement_file,
+  if (!test_local_certify(enclave_type,
+                          FLAGS_read_measurement_file,
                           FLAGS_trusted_measurements_file,
                           evidence_descriptor)) {
     printf("test_local_certify failed\n");
@@ -224,7 +233,8 @@ bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
   attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
   if (!app_trust_data->initialize_simulated_enclave_data(
-          attest_key_file_name, measurement_file_name,
+          attest_key_file_name,
+          measurement_file_name,
           attest_endorsement_file_name)) {
     printf("Can't init simulated enclave\n");
     return false;
@@ -243,8 +253,8 @@ bool cold_init() {
   string hash_alg("sha-256");
   string hmac_alg("sha-256-hmac");
 
-  if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg, hash_alg,
-                                 hmac_alg)) {
+  if (!app_trust_data->cold_init(
+          public_key_alg, symmetric_key_alg, hash_alg, hmac_alg)) {
     printf("cold-init failed\n");
     return false;
   }
@@ -322,8 +332,8 @@ void asylo_server_dispatch(const string& host_name, int port,
   SSL_CTX_set_options(ctx, flags);
 
   // Verify peer
-  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
-                     nullptr);
+  SSL_CTX_set_verify(
+      ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
   // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
 
   unsigned int len = 0;
@@ -338,8 +348,8 @@ void asylo_server_dispatch(const string& host_name, int port,
     int                client = accept(sock, (struct sockaddr*)&addr, &len);
     string             my_role("server");
     secure_authenticated_channel nc(my_role);
-    if (!nc.init_server_ssl(host_name, port, asn1_root_cert, private_key,
-                            private_key_cert)) {
+    if (!nc.init_server_ssl(
+            host_name, port, asn1_root_cert, private_key, private_key_cert)) {
       continue;
     }
     nc.ssl_ = SSL_new(ctx);
@@ -358,7 +368,8 @@ bool setup_server_ssl() {
   }
 
   printf("running as server\n");
-  asylo_server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+  asylo_server_dispatch(FLAGS_server_app_host,
+                        FLAGS_server_app_port,
                         app_trust_data->serialized_policy_cert_,
                         app_trust_data->private_auth_key_,
                         app_trust_data->private_auth_key_.certificate(),
@@ -403,7 +414,8 @@ bool setup_client_ssl() {
   }
 
   if (!channel.init_client_ssl(
-          FLAGS_server_app_host, FLAGS_server_app_port,
+          FLAGS_server_app_host,
+          FLAGS_server_app_port,
           app_trust_data->serialized_policy_cert_,
           app_trust_data->private_auth_key_,
           app_trust_data->private_auth_key_.certificate())) {

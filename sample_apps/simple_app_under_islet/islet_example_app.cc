@@ -156,7 +156,8 @@ int main(int an, char** av) {
   string endorsement_cert;
 
   if (!app_trust_data->initialize_islet_enclave_data(
-          attest_key_file_name, measurement_file_name,
+          attest_key_file_name,
+          measurement_file_name,
           platform_attest_file_name)) {
     printf("Can't init Islet enclave\n");
     return 1;
@@ -203,7 +204,8 @@ int main(int an, char** av) {
     }
 
     if (!channel.init_client_ssl(
-            FLAGS_server_app_host, FLAGS_server_app_port,
+            FLAGS_server_app_host,
+            FLAGS_server_app_port,
             app_trust_data->serialized_policy_cert_,
             app_trust_data->private_auth_key_,
             app_trust_data->private_auth_key_.certificate())) {
@@ -221,7 +223,8 @@ int main(int an, char** av) {
       goto done;
     }
     printf("Running App as server\n");
-    if (!server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+    if (!server_dispatch(FLAGS_server_app_host,
+                         FLAGS_server_app_port,
                          app_trust_data->serialized_policy_cert_,
                          app_trust_data->private_auth_key_,
                          app_trust_data->private_auth_key_.certificate(),

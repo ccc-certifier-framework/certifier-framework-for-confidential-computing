@@ -166,8 +166,15 @@ int main(int an, char** av) {
   }
 
   X509* ark_509 = X509_new();
-  if (!produce_artifact(ark_vse_key, ark_name, ark_desc_str, pub_ark_vse_key,
-                        ark_name, ark_desc_str, 1ULL, 86400 * 365.25, ark_509,
+  if (!produce_artifact(ark_vse_key,
+                        ark_name,
+                        ark_desc_str,
+                        pub_ark_vse_key,
+                        ark_name,
+                        ark_desc_str,
+                        1ULL,
+                        86400 * 365.25,
+                        ark_509,
                         true)) {
     printf("Generate ark cert failed\n");
     return 1;
@@ -204,8 +211,15 @@ int main(int an, char** av) {
   }
 
   X509* ask_509 = X509_new();
-  if (!produce_artifact(ark_vse_key, ark_name, ark_desc_str, pub_ask_vse_key,
-                        ask_name, ask_desc_str, 1ULL, 86400 * 365.25, ask_509,
+  if (!produce_artifact(ark_vse_key,
+                        ark_name,
+                        ark_desc_str,
+                        pub_ask_vse_key,
+                        ask_name,
+                        ask_desc_str,
+                        1ULL,
+                        86400 * 365.25,
+                        ask_509,
                         false)) {
     printf("Generate ark cert failed\n");
     return 1;
@@ -242,9 +256,16 @@ int main(int an, char** av) {
   }
 
   X509* vcek_509 = X509_new();
-  if (!produce_artifact(ask_vse_key, ask_name, ask_desc_str, pub_vcek_vse_key,
-                        vcek_name, vcek_desc_str, 1ULL, 86400 * 365.25,
-                        vcek_509, false)) {
+  if (!produce_artifact(ask_vse_key,
+                        ask_name,
+                        ask_desc_str,
+                        pub_vcek_vse_key,
+                        vcek_name,
+                        vcek_desc_str,
+                        1ULL,
+                        86400 * 365.25,
+                        vcek_509,
+                        false)) {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -280,8 +301,11 @@ int main(int an, char** av) {
   int  hash_len = 48;
   byte user_data_hash[hash_len];
 
-  if (!digest_message("sha-384", (byte*)said_str.data(), said_str.size(),
-                      user_data_hash, hash_len)) {
+  if (!digest_message("sha-384",
+                      (byte*)said_str.data(),
+                      said_str.size(),
+                      user_data_hash,
+                      hash_len)) {
     printf("digest_message failed\n");
     return 1;
   }
@@ -294,9 +318,11 @@ int main(int an, char** av) {
 
   int  sig_digest_len = 48;
   byte sig_digest[sig_digest_len];
-  if (!digest_message("sha-384", (byte*)&default_report,
+  if (!digest_message("sha-384",
+                      (byte*)&default_report,
                       sizeof(attestation_report) - sizeof(signature),
-                      sig_digest, sig_digest_len)) {
+                      sig_digest,
+                      sig_digest_len)) {
     printf("digest_message  for whole report failed\n");
     return 1;
   }
@@ -340,7 +366,8 @@ int main(int an, char** av) {
     printf("Can't serialize attestation message\n");
     return 1;
   }
-  if (!write_file(FLAGS_sev_attest, sev_attest_str.size(),
+  if (!write_file(FLAGS_sev_attest,
+                  sev_attest_str.size(),
                   (byte*)sev_attest_str.data())) {
     printf("Can't write %s\n", FLAGS_sev_attest.c_str());
     return 1;

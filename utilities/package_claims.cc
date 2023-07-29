@@ -92,8 +92,8 @@ int main(int an, char** av) {
     printf("Can't serialize final buffers\n");
     return 1;
   }
-  if (!write_file(FLAGS_output, final_buffer.size(),
-                  (byte*)final_buffer.data())) {
+  if (!write_file(
+          FLAGS_output, final_buffer.size(), (byte*)final_buffer.data())) {
     printf("Can't write %s\n", FLAGS_output.c_str());
     return 1;
   }

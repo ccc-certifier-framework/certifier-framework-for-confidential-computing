@@ -68,9 +68,16 @@ bool test_artifact(bool print_all) {
     return false;
   if (!make_certifier_rsa_key(2048, &subject_key))
     return false;
-  if (!produce_artifact(signing_key, issuer_name_str, issuer_description_str,
-                        subject_key, subject_name_str, subject_description_str,
-                        sn, secs_duration, cert, true))
+  if (!produce_artifact(signing_key,
+                        issuer_name_str,
+                        issuer_description_str,
+                        subject_key,
+                        subject_name_str,
+                        subject_description_str,
+                        sn,
+                        secs_duration,
+                        cert,
+                        true))
     return false;
 
   if (print_all)
@@ -82,10 +89,14 @@ bool test_artifact(bool print_all) {
   string      recovered_subject_description_str;
   string      recovered_issuer_description_str;
   key_message recovered_subject_key;
-  if (!verify_artifact(*cert, signing_key, &recovered_issuer_name_str,
+  if (!verify_artifact(*cert,
+                       signing_key,
+                       &recovered_issuer_name_str,
                        &recovered_issuer_description_str,
-                       &recovered_subject_key, &recovered_subject_name_str,
-                       &recovered_subject_description_str, &recovered_sn))
+                       &recovered_subject_key,
+                       &recovered_subject_name_str,
+                       &recovered_subject_description_str,
+                       &recovered_sn))
     return false;
   if (print_all)
     printf("Recovered subject name: %s\n", recovered_subject_name_str.c_str());

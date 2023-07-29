@@ -71,8 +71,8 @@ int main(int an, char** av) {
   print_bytes((int)secret.size(), (byte*)secret.data());
   printf("\n");
   int t_out = out_size;
-  if (!Seal(enclave, id, (int)secret.size(), (byte*)secret.data(), &t_out,
-            out)) {
+  if (!Seal(
+          enclave, id, (int)secret.size(), (byte*)secret.data(), &t_out, out)) {
     printf("Application seal failed\n");
     return 1;
   }
@@ -83,8 +83,8 @@ int main(int an, char** av) {
 
   // Unseal test
   t_out = out_size;
-  if (!Unseal(enclave, id, (int)sealed.size(), (byte*)sealed.data(), &t_out,
-              out)) {
+  if (!Unseal(
+          enclave, id, (int)sealed.size(), (byte*)sealed.data(), &t_out, out)) {
     printf("Application unseal failed\n");
     return 1;
   }

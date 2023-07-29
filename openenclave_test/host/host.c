@@ -23,17 +23,21 @@ int main(int argc, const char* argv[]) {
   }
 
   // Create the enclave
-  result = oe_create_attestation_enclave(argv[1], OE_ENCLAVE_TYPE_AUTO, flags,
-                                         NULL, 0, &enclave);
+  result = oe_create_attestation_enclave(
+      argv[1], OE_ENCLAVE_TYPE_AUTO, flags, NULL, 0, &enclave);
   if (result != OE_OK) {
-    fprintf(stderr, "oe_create_attestation_enclave(): result=%u (%s)\n", result,
+    fprintf(stderr,
+            "oe_create_attestation_enclave(): result=%u (%s)\n",
+            result,
             oe_result_str(result));
     goto exit;
   }
   printf("Initializing certifier\n");
   result = certifier_init(enclave, &res);
   if (result != OE_OK) {
-    fprintf(stderr, "certifier_init failed: result=%u (%s)\n", result,
+    fprintf(stderr,
+            "certifier_init failed: result=%u (%s)\n",
+            result,
             oe_result_str(result));
     goto exit;
   }
@@ -45,8 +49,10 @@ int main(int argc, const char* argv[]) {
   printf("\nCalling certifier_test_sim_certify\n");
   result = certifier_test_sim_certify(enclave, &res);
   if (result != OE_OK) {
-    fprintf(stderr, "certifier_test_sim_certify failed: result=%u (%s)\n",
-            result, oe_result_str(result));
+    fprintf(stderr,
+            "certifier_test_sim_certify failed: result=%u (%s)\n",
+            result,
+            oe_result_str(result));
     goto exit;
   }
 
@@ -59,8 +65,10 @@ int main(int argc, const char* argv[]) {
   printf("\nCalling certifier_test_local_certify\n");
   result = certifier_test_local_certify(enclave, &res);
   if (result != OE_OK) {
-    fprintf(stderr, "certifier_test_local_certify failed: result=%u (%s)\n",
-            result, oe_result_str(result));
+    fprintf(stderr,
+            "certifier_test_local_certify failed: result=%u (%s)\n",
+            result,
+            oe_result_str(result));
     goto exit;
   }
 
@@ -73,7 +81,9 @@ int main(int argc, const char* argv[]) {
   printf("\nCalling certifier_test_seal\n");
   result = certifier_test_seal(enclave, &res);
   if (result != OE_OK) {
-    fprintf(stderr, "certifier_test_seal failed: result=%u (%s)\n", result,
+    fprintf(stderr,
+            "certifier_test_seal failed: result=%u (%s)\n",
+            result,
             oe_result_str(result));
     goto exit;
   }

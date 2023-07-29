@@ -40,11 +40,16 @@ static void print_byte_array(const char *label, const uint8_t *array,
 
 static void print_tcb_version(const char *label, const union tcb_version *tcb) {
   if (tcb) {
-    printf("%s: %02u%02u%02u%02u%02u%02u%02u%02u\n", label,
-           (unsigned)tcb->boot_loader, (unsigned)tcb->tee,
-           (unsigned)tcb->reserved[0], (unsigned)tcb->reserved[1],
-           (unsigned)tcb->reserved[2], (unsigned)tcb->reserved[3],
-           (unsigned)tcb->snp, (unsigned)tcb->microcode);
+    printf("%s: %02u%02u%02u%02u%02u%02u%02u%02u\n",
+           label,
+           (unsigned)tcb->boot_loader,
+           (unsigned)tcb->tee,
+           (unsigned)tcb->reserved[0],
+           (unsigned)tcb->reserved[1],
+           (unsigned)tcb->reserved[2],
+           (unsigned)tcb->reserved[3],
+           (unsigned)tcb->snp,
+           (unsigned)tcb->microcode);
     printf(" - Boot Loader SVN:  %2u\n", tcb->boot_loader);
     printf(" - TEE SVN:          %2u\n", tcb->tee);
     printf(" - SNP firmware SVN: %2u\n", tcb->snp);
@@ -121,7 +126,8 @@ void print_vmpl(struct attestation_report *report) {
  */
 void print_signature_algo(struct attestation_report *report) {
   if (report) {
-    printf("Signature Algorithm: %u (%s)\n", report->signature_algo,
+    printf("Signature Algorithm: %u (%s)\n",
+           report->signature_algo,
            report->signature_algo == SIG_ALGO_ECDSA_P384_SHA384
                ? "ECDSA P-384 with SHA-384"
                : "Invalid");
@@ -163,8 +169,8 @@ void print_author_key_en(struct attestation_report *report) {
  */
 void print_report_data(struct attestation_report *report) {
   if (report) {
-    print_byte_array("Report Data", report->report_data,
-                     sizeof(report->report_data));
+    print_byte_array(
+        "Report Data", report->report_data, sizeof(report->report_data));
   }
 }
 
@@ -173,8 +179,8 @@ void print_report_data(struct attestation_report *report) {
  */
 void print_measurement(struct attestation_report *report) {
   if (report) {
-    print_byte_array("Measurement", report->measurement,
-                     sizeof(report->measurement));
+    print_byte_array(
+        "Measurement", report->measurement, sizeof(report->measurement));
   }
 }
 
@@ -192,8 +198,8 @@ void print_host_data(struct attestation_report *report) {
  */
 void print_id_key_digest(struct attestation_report *report) {
   if (report) {
-    print_byte_array("ID Key Digest", report->id_key_digest,
-                     sizeof(report->id_key_digest));
+    print_byte_array(
+        "ID Key Digest", report->id_key_digest, sizeof(report->id_key_digest));
   }
 }
 
@@ -202,7 +208,8 @@ void print_id_key_digest(struct attestation_report *report) {
  */
 void print_author_key_digest(struct attestation_report *report) {
   if (report) {
-    print_byte_array("Author Key Digest", report->author_key_digest,
+    print_byte_array("Author Key Digest",
+                     report->author_key_digest,
                      sizeof(report->author_key_digest));
   }
 }
@@ -221,7 +228,8 @@ void print_report_id(struct attestation_report *report) {
  */
 void print_migration_agent_report_id(struct attestation_report *report) {
   if (report) {
-    print_byte_array("Migration Agent Report ID", report->report_id_ma,
+    print_byte_array("Migration Agent Report ID",
+                     report->report_id_ma,
                      sizeof(report->report_id_ma));
   }
 }

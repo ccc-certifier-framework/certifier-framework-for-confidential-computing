@@ -35,7 +35,9 @@ bool oe_Attest(int what_to_say_size, byte* what_to_say, int* size_out,
   };
 
   // Serialize the custom claim
-  if (oe_serialize_custom_claims(&custom_claims, 1, &custom_claims_buffer,
+  if (oe_serialize_custom_claims(&custom_claims,
+                                 1,
+                                 &custom_claims_buffer,
                                  &custom_claims_buffer_size) != OE_OK) {
     printf("oe_serialize_custom_claims failed.\n");
     goto exit;
@@ -44,18 +46,24 @@ bool oe_Attest(int what_to_say_size, byte* what_to_say, int* size_out,
                   custom_claims_buffer_size);
 
   // Get the format settings from the Verifier. Should be null for VSE.
-  if (oe_verifier_get_format_settings(format_id, &format_settings,
-                                      &format_settings_size) != OE_OK) {
+  if (oe_verifier_get_format_settings(
+          format_id, &format_settings, &format_settings_size) != OE_OK) {
     printf("oe_verifier_get_format_settings failed\n");
     goto exit;
   }
   OE_DEBUG_PRINTF("format settings size: %lu\n", format_settings_size);
 
   // Generate evidence based on the format selected by the attester.
-  result = oe_get_evidence(format_id, 0, custom_claims_buffer,
-                           custom_claims_buffer_size, format_settings,
-                           format_settings_size, &evidence, &evidence_size,
-                           nullptr, 0);
+  result = oe_get_evidence(format_id,
+                           0,
+                           custom_claims_buffer,
+                           custom_claims_buffer_size,
+                           format_settings,
+                           format_settings_size,
+                           &evidence,
+                           &evidence_size,
+                           nullptr,
+                           0);
   if (result != OE_OK) {
     printf("oe_get_evidence failed.(%s)\n", oe_result_str(result));
     goto exit;
@@ -120,8 +128,15 @@ bool oe_Verify(const uint8_t* evidence, size_t evidence_size,
 
   // Validate the evidence's trustworthiness
   // Verify the evidence to ensure its authenticity.
-  result = oe_verify_evidence(format_id, evidence, evidence_size, nullptr, 0,
-                              nullptr, 0, &claims, &claims_length);
+  result = oe_verify_evidence(format_id,
+                              evidence,
+                              evidence_size,
+                              nullptr,
+                              0,
+                              nullptr,
+                              0,
+                              &claims,
+                              &claims_length);
   if (result != OE_OK) {
     printf("oe_verify_evidence failed (%s).\n", oe_result_str(result));
     goto exit;
@@ -154,8 +169,8 @@ bool oe_Verify(const uint8_t* evidence, size_t evidence_size,
     goto exit;
   };
 
-  OE_DEBUG_PRINTF("%s: %u\n", OE_CLAIM_SECURITY_VERSION,
-                  *((uint32_t*)claim->value));
+  OE_DEBUG_PRINTF(
+      "%s: %u\n", OE_CLAIM_SECURITY_VERSION, *((uint32_t*)claim->value));
 
   if ((claim = _find_claim(claims, claims_length, OE_CLAIM_ATTRIBUTES)) ==
       nullptr) {
@@ -233,14 +248,15 @@ bool oe_Verify(const uint8_t* evidence, size_t evidence_size,
 #endif
 
   // Extract the custom claim buffer
-  if ((claim = _find_claim(claims, claims_length,
-                           OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) == nullptr) {
+  if ((claim = _find_claim(
+           claims, claims_length, OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) == nullptr) {
     printf("Could not find claim.\n");
     goto exit;
   };
   OE_DEBUG_PRINTF("Custom claims buffer length: %lu\n", claim->value_size);
 
-  if (oe_deserialize_custom_claims(claim->value, claim->value_size,
+  if (oe_deserialize_custom_claims(claim->value,
+                                   claim->value_size,
                                    &custom_claims,
                                    &custom_claims_length) != OE_OK) {
     printf("oe_deserialize_custom_claims failed.\n");

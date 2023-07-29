@@ -113,8 +113,12 @@ bool asylo_Verify(int claims_size, byte* claims, int* user_data_out_size,
   print_bytes(*user_data_out_size, user_data_out);
 
   printf("Invoking Asylo Verify %d\n", claims_size);
-  result = (*asyloFuncs.Verify)(*user_data_out_size, user_data_out,
-                                assertion_size, assertion, size_out, out);
+  result = (*asyloFuncs.Verify)(*user_data_out_size,
+                                user_data_out,
+                                assertion_size,
+                                assertion,
+                                size_out,
+                                out);
   if (!result) {
     printf("Asylo verify failed\n");
     return false;

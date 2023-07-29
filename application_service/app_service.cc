@@ -225,10 +225,13 @@ bool soft_Seal(spawned_children* kid, string in, string* out) {
   if (!get_random(8 * block_size, iv)) {
     return false;
   }
-  if (!authenticated_encrypt(
-          app_trust_data->symmetric_key_algorithm_.c_str(),
-          (byte*)buffer_to_seal.data(), buffer_to_seal.size(),
-          app_trust_data->service_symmetric_key_, iv, t_out, &t_size)) {
+  if (!authenticated_encrypt(app_trust_data->symmetric_key_algorithm_.c_str(),
+                             (byte*)buffer_to_seal.data(),
+                             buffer_to_seal.size(),
+                             app_trust_data->service_symmetric_key_,
+                             iv,
+                             t_out,
+                             &t_size)) {
     printf("soft_Seal: authenticated encrypt failed\n");
     return false;
   }
@@ -244,9 +247,12 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
   int  t_size = in.size();
   byte t_out[t_size];
 
-  if (!authenticated_decrypt(
-          app_trust_data->symmetric_key_algorithm_.c_str(), (byte*)in.data(),
-          in.size(), app_trust_data->service_symmetric_key_, t_out, &t_size)) {
+  if (!authenticated_decrypt(app_trust_data->symmetric_key_algorithm_.c_str(),
+                             (byte*)in.data(),
+                             in.size(),
+                             app_trust_data->service_symmetric_key_,
+                             t_out,
+                             &t_size)) {
     printf("soft_Unseal: authenticated decrypt failed\n");
     return false;
   }
@@ -258,7 +264,8 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
   print_bytes(kid->measurement_.size(), (byte*)kid->measurement_.data());
   printf("\n");
 #endif
-  if (memcmp(t_out, (byte*)kid->measurement_.data(),
+  if (memcmp(t_out,
+             (byte*)kid->measurement_.data(),
              kid->measurement_.size()) != 0) {
     printf("soft_Unseal: mis-matched measurements\n");
     return false;
@@ -319,8 +326,11 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
     return false;
   }
 
-  if (!sign_report(type, serialized_report_info, signing_alg,
-                   app_trust_data->private_service_key_, out)) {
+  if (!sign_report(type,
+                   serialized_report_info,
+                   signing_alg,
+                   app_trust_data->private_service_key_,
+                   out)) {
     printf("Can't sign report\n");
     return false;
   }
@@ -365,8 +375,10 @@ void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
   bool continue_loop = true;
 
 #ifdef DEBUG
-  printf("[%d] Application Service loop: read_fd=%d write_fd=%d\n", __LINE__,
-         read_fd, write_fd);
+  printf("[%d] Application Service loop: read_fd=%d write_fd=%d\n",
+         __LINE__,
+         read_fd,
+         write_fd);
 #endif
   while (continue_loop) {
     bool   succeeded = false;
@@ -518,7 +530,10 @@ bool process_run_request(run_request& req) {
       "pipes made: fds[]:"
       "  parent_read_fd = %d, parent_write_fd = %d,"
       "  child_read_fd = %d,  child_write_fd = %d\n",
-      parent_read_fd, parent_write_fd, child_read_fd, child_write_fd);
+      parent_read_fd,
+      parent_write_fd,
+      child_read_fd,
+      child_write_fd);
 #endif
 
   // fork and get pid
@@ -562,7 +577,9 @@ bool process_run_request(run_request& req) {
 
 #ifdef DEBUG
     printf("Child about to exec %s, read: %d, write: %d\n",
-           req.location().c_str(), child_read_fd, child_write_fd);
+           req.location().c_str(),
+           child_read_fd,
+           child_write_fd);
 #endif
 
     string n1       = std::to_string(child_read_fd);
@@ -600,7 +617,8 @@ bool process_run_request(run_request& req) {
     //    close(child_write_fd);
 
 #ifdef DEBUG
-    printf("parent returned, readfd=%d, writefd=%d\n", parent_read_fd,
+    printf("parent returned, readfd=%d, writefd=%d\n",
+           parent_read_fd,
            parent_write_fd);
 #endif
 
@@ -682,8 +700,8 @@ bool app_request_server() {
     if (FLAGS_run_policy != "all") {
       // Todo: Fix - check certificate?
     }
-    printf("[%d] at process_run_request: %s\n", __LINE__,
-           req.location().c_str());
+    printf(
+        "[%d] at process_run_request: %s\n", __LINE__, req.location().c_str());
     ret = process_run_request(req);
 
   done:
@@ -760,7 +778,8 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
     attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
     if (!helper.initialize_simulated_enclave_data(
-            attest_key_file_name, measurement_file_name,
+            attest_key_file_name,
+            measurement_file_name,
             attest_endorsement_file_name)) {
       printf("Can't init simulated enclave\n");
       return 1;

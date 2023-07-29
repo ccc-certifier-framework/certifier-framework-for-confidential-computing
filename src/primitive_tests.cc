@@ -43,8 +43,12 @@ bool test_seal(bool print_all) {
   for (int i = 0; i < secret_to_seal_size; i++)
     secret_to_seal[i] = (7 * i) % 16;
 
-  if (!Seal(enclave_type, enclave_id, secret_to_seal_size, secret_to_seal,
-            &sealed_size_out, sealed))
+  if (!Seal(enclave_type,
+            enclave_id,
+            secret_to_seal_size,
+            secret_to_seal,
+            &sealed_size_out,
+            sealed))
     return false;
   if (print_all) {
     printf("sealed   (%d): ", sealed_size_out);
@@ -52,8 +56,12 @@ bool test_seal(bool print_all) {
     printf("\n");
   }
 
-  if (!Unseal(enclave_type, enclave_id, sealed_size_out, sealed,
-              &recovered_size, recovered))
+  if (!Unseal(enclave_type,
+              enclave_id,
+              sealed_size_out,
+              sealed,
+              &recovered_size,
+              recovered))
     return false;
 
   if (print_all) {
@@ -89,8 +97,11 @@ bool test_attest(bool print_all) {
   // Todo: fix size
   int  size_out = 8192;
   byte out[size_out];
-  if (!Attest(enclave_type, serialized_ud.size(), (byte*)serialized_ud.data(),
-              &size_out, out))
+  if (!Attest(enclave_type,
+              serialized_ud.size(),
+              (byte*)serialized_ud.data(),
+              &size_out,
+              out))
     return false;
   string serialized_signed_report;
   serialized_signed_report.assign((char*)out, size_out);

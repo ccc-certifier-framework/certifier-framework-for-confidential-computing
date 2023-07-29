@@ -162,8 +162,16 @@ bool keystone_Init(const int cert_size, byte* cert) {
     string name("KeystoneAuthority");
     string desc("Authority");
     X509*  crt = X509_new();
-    if (!produce_artifact(attest_private_key, name, desc, attest_public_key,
-                          name, desc, 94720, 86400 * 365.26, crt, true)) {
+    if (!produce_artifact(attest_private_key,
+                          name,
+                          desc,
+                          attest_public_key,
+                          name,
+                          desc,
+                          94720,
+                          86400 * 365.26,
+                          crt,
+                          true)) {
       X509_free(crt);
       return false;
     }
@@ -231,8 +239,8 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say,
   // report.enclave.data should be hash of what_to_say
   int  len = digest_output_byte_size("sha-256");
   byte expected_data[len];
-  if (!digest_message("sha-256", what_to_say, what_to_say_size, expected_data,
-                      len)) {
+  if (!digest_message(
+          "sha-256", what_to_say, what_to_say_size, expected_data, len)) {
     printf("keystone_Verify: Can't digest what_to_say\n");
     return false;
   }
@@ -242,9 +250,11 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say,
     return false;
   }
 
-  if (!keystone_ecc_verify("sha-256", fake_attest_public_key,
+  if (!keystone_ecc_verify("sha-256",
+                           fake_attest_public_key,
                            MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
-                           (byte*)report.enclave.hash, report.enclave.size_sig,
+                           (byte*)report.enclave.hash,
+                           report.enclave.size_sig,
                            report.enclave.signature)) {
     printf("keystone_Verify: Can't verify\n");
     return false;
@@ -268,8 +278,8 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say,
 
   // report.enclave.data gets the hash of what_to_say
   int len = digest_output_byte_size("sha-256");
-  if (!digest_message("sha-256", what_to_say, what_to_say_size,
-                      report.enclave.data, len)) {
+  if (!digest_message(
+          "sha-256", what_to_say, what_to_say_size, report.enclave.data, len)) {
     printf("keystone_Attest: Can't digest what_to_say\n");
     return false;
   }
@@ -291,9 +301,11 @@ bool keystone_Attest(const int what_to_say_size, byte* what_to_say,
   //
 
   int size_out = SIGNATURE_SIZE;
-  if (!keystone_ecc_sign("sha-256", fake_attest_private_key,
+  if (!keystone_ecc_sign("sha-256",
+                         fake_attest_private_key,
                          MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
-                         (byte*)report.enclave.hash, &size_out,
+                         (byte*)report.enclave.hash,
+                         &size_out,
                          report.enclave.signature)) {
     printf("keystone_Attest: Can't sign\n");
     return false;
@@ -337,8 +349,8 @@ bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
     return false;
   }
 
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256", in, in_size, key, iv,
-                             out, size_out)) {
+  if (!authenticated_encrypt(
+          "aes-256-cbc-hmac-sha256", in, in_size, key, iv, out, size_out)) {
     return false;
   }
   return true;
@@ -352,8 +364,8 @@ bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out) {
     return false;
   }
 
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", in, in_size, key, out,
-                             size_out)) {
+  if (!authenticated_decrypt(
+          "aes-256-cbc-hmac-sha256", in, in_size, key, out, size_out)) {
     return false;
   }
   return true;

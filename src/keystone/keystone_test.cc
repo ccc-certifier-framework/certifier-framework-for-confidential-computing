@@ -47,7 +47,9 @@ bool keystone_test(const int cert_size, byte* cert) {
     return false;
   }
   printf("Seal succeeded %d\n", size_sealed_secret);
-  if (!keystone_Unseal(size_sealed_secret, sealed_secret, &size_unsealed_secret,
+  if (!keystone_Unseal(size_sealed_secret,
+                       sealed_secret,
+                       &size_unsealed_secret,
                        unsealed_secret)) {
     printf("keystone_Unseal() fails\n");
     return false;
@@ -73,16 +75,20 @@ bool keystone_test(const int cert_size, byte* cert) {
     what_to_say[i] = (byte)i;
   }
 
-  if (!keystone_Attest(size_what_to_say, what_to_say, &size_attestation,
-                       attestation)) {
+  if (!keystone_Attest(
+          size_what_to_say, what_to_say, &size_attestation, attestation)) {
     printf("keystone_Attest() fails\n");
     return false;
   }
   printf("\nAttest succeeded %d\n", size_attestation);
   print_bytes(size_attestation, attestation);
   printf("\n\n");
-  if (!keystone_Verify(size_what_to_say, what_to_say, size_attestation,
-                       attestation, &size_measurement, measurement)) {
+  if (!keystone_Verify(size_what_to_say,
+                       what_to_say,
+                       size_attestation,
+                       attestation,
+                       &size_measurement,
+                       measurement)) {
     printf("keystone_Verify() fails\n");
     return false;
   }

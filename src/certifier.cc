@@ -166,7 +166,8 @@ bool certifier::framework::policy_store::delete_entry(unsigned ent) {
 }
 
 void certifier::framework::policy_store::print() {
-  printf("Number of entries: %d, max number of ents: %d\n", num_ents_,
+  printf("Number of entries: %d, max number of ents: %d\n",
+         num_ents_,
          max_num_ents_);
   if (policy_key_valid_) {
     printf("Policy key:\n");
@@ -549,8 +550,8 @@ bool certifier::framework::Unseal(const string& enclave_type,
                                   const string& enclave_id, int in_size,
                                   byte* in, int* size_out, byte* out) {
   if (enclave_type == "simulated-enclave") {
-    return simulated_Unseal(enclave_type, enclave_id, in_size, in, size_out,
-                            out);
+    return simulated_Unseal(
+        enclave_type, enclave_id, in_size, in, size_out, out);
   }
 #ifdef OE_CERTIFIER
   if (enclave_type == "oe-enclave") {
@@ -594,8 +595,8 @@ bool certifier::framework::Attest(const string& enclave_type,
                                   int what_to_say_size, byte* what_to_say,
                                   int* size_out, byte* out) {
   if (enclave_type == "simulated-enclave") {
-    return simulated_Attest(enclave_type, what_to_say_size, what_to_say,
-                            size_out, out);
+    return simulated_Attest(
+        enclave_type, what_to_say_size, what_to_say, size_out, out);
   }
 
 #ifdef OE_CERTIFIER
@@ -637,8 +638,8 @@ bool certifier::framework::Attest(const string& enclave_type,
       return false;
     }
     memset(out, 0, *size_out);
-    memcpy(out, (byte*)serialized_gramine_at.data(),
-           serialized_gramine_at.size());
+    memcpy(
+        out, (byte*)serialized_gramine_at.data(), serialized_gramine_at.size());
     *size_out = serialized_gramine_at.size();
     return true;
   }
@@ -665,7 +666,8 @@ bool certifier::framework::Attest(const string& enclave_type,
       return false;
     }
     memset(out, 0, *size_out);
-    memcpy(out, (byte*)serialized_keystone_at.data(),
+    memcpy(out,
+           (byte*)serialized_keystone_at.data(),
            serialized_keystone_at.size());
     *size_out = serialized_keystone_at.size();
     return true;
@@ -794,8 +796,12 @@ bool certifier::framework::protect_blob(const string& enclave_type,
   memset(sealed_key, 0, size_sealed_key);
   string enclave_id("enclave-id");
 
-  if (!Seal(enclave_type, enclave_id, serialized_key.size(),
-            (byte*)serialized_key.data(), &size_sealed_key, sealed_key)) {
+  if (!Seal(enclave_type,
+            enclave_id,
+            serialized_key.size(),
+            (byte*)serialized_key.data(),
+            &size_sealed_key,
+            sealed_key)) {
     printf("protect_blob: can't seal\n");
     return false;
   }
@@ -817,8 +823,12 @@ bool certifier::framework::protect_blob(const string& enclave_type,
 
   int  size_encrypted = size_unencrypted_data + max_key_seal_pad;
   byte encrypted_data[size_encrypted];
-  if (!authenticated_encrypt(key.key_type().c_str(), unencrypted_data,
-                             size_unencrypted_data, key_buf, iv, encrypted_data,
+  if (!authenticated_encrypt(key.key_type().c_str(),
+                             unencrypted_data,
+                             size_unencrypted_data,
+                             key_buf,
+                             iv,
+                             encrypted_data,
                              &size_encrypted)) {
     printf("protect_blob: authenticate encryption failed\n");
     return false;
@@ -864,8 +874,11 @@ bool certifier::framework::unprotect_blob(
   string enclave_id("enclave-id");
 
   // Unseal header
-  if (!Unseal(enclave_type, enclave_id, pb.encrypted_key().size(),
-              (byte*)pb.encrypted_key().data(), &size_unsealed_key,
+  if (!Unseal(enclave_type,
+              enclave_id,
+              pb.encrypted_key().size(),
+              (byte*)pb.encrypted_key().data(),
+              &size_unsealed_key,
               unsealed_key)) {
     printf("unprotect_blob: can't unseal\n");
     return false;
@@ -895,8 +908,10 @@ bool certifier::framework::unprotect_blob(
   // decrypt encrypted data
   if (!authenticated_decrypt(key->key_type().c_str(),
                              (byte*)pb.encrypted_data().data(),
-                             pb.encrypted_data().size(), key_buf,
-                             unencrypted_data, size_of_unencrypted_data)) {
+                             pb.encrypted_data().size(),
+                             key_buf,
+                             unencrypted_data,
+                             size_of_unencrypted_data)) {
     printf("unprotect_blob: authenticated decrypt failed\n");
     return false;
   }
@@ -910,8 +925,12 @@ bool certifier::framework::reprotect_blob(
   int         size_unencrypted_data = size_protected_blob;
   byte        unencrypted_data[size_unencrypted_data];
 
-  if (!unprotect_blob(enclave_type, size_protected_blob, protected_blob,
-                      &new_key, &size_unencrypted_data, unencrypted_data)) {
+  if (!unprotect_blob(enclave_type,
+                      size_protected_blob,
+                      protected_blob,
+                      &new_key,
+                      &size_unencrypted_data,
+                      unencrypted_data)) {
     printf("reprotect_blob: Can't unprotect\n");
     return false;
   }
@@ -931,8 +950,12 @@ bool certifier::framework::reprotect_blob(
     return false;
   }
 
-  if (!protect_blob(enclave_type, new_key, size_unencrypted_data,
-                    unencrypted_data, size_new_encrypted_blob, data)) {
+  if (!protect_blob(enclave_type,
+                    new_key,
+                    size_unencrypted_data,
+                    unencrypted_data,
+                    size_new_encrypted_blob,
+                    data)) {
     printf("reprotect_blob: Can't Protect\n");
     return false;
   }

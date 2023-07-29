@@ -99,8 +99,12 @@ bool run_me_as_server(const string& host_name, int port,
                       string& asn1_policy_cert, key_message& private_key,
                       string& private_key_cert) {
   printf("running as server\n");
-  server_dispatch(host_name, port, asn1_policy_cert, private_key,
-                  private_key_cert, server_application);
+  server_dispatch(host_name,
+                  port,
+                  asn1_policy_cert,
+                  private_key,
+                  private_key_cert,
+                  server_application);
   return true;
 }
 
@@ -166,8 +170,8 @@ int main(int an, char** av) {
   }
 
   // Init application enclave
-  if (!app_trust_data->initialize_application_enclave_data(parent_enclave_type,
-                                                           in_fd, out_fd)) {
+  if (!app_trust_data->initialize_application_enclave_data(
+          parent_enclave_type, in_fd, out_fd)) {
     printf("Can't init application-enclave\n");
     return 1;
   }
@@ -209,7 +213,8 @@ int main(int an, char** av) {
     }
 
     if (!channel.init_client_ssl(
-            FLAGS_server_app_host, FLAGS_server_app_port,
+            FLAGS_server_app_host,
+            FLAGS_server_app_port,
             app_trust_data->serialized_policy_cert_,
             app_trust_data->private_auth_key_,
             app_trust_data->private_auth_key_.certificate())) {
@@ -227,7 +232,8 @@ int main(int an, char** av) {
       goto done;
     }
     printf("running as server\n");
-    server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+    server_dispatch(FLAGS_server_app_host,
+                    FLAGS_server_app_port,
                     app_trust_data->serialized_policy_cert_,
                     app_trust_data->private_auth_key_,
                     app_trust_data->private_auth_key_.certificate(),
@@ -238,7 +244,8 @@ int main(int an, char** av) {
 
 done:
   printf("enclave: %s, parent enclave: %s, purpose: %s\n",
-         app_trust_data->enclave_type_.c_str(), parent_enclave_type.c_str(),
+         app_trust_data->enclave_type_.c_str(),
+         parent_enclave_type.c_str(),
          app_trust_data->purpose_.c_str());
   printf("\n");
   // app_trust_data->print_trust_data();

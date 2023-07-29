@@ -71,7 +71,8 @@ bool certifier_init(void) {
 bool certifier_test_sim_certify(void) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("full-vse-support");
-  return test_local_certify(enclave_type, false,
+  return test_local_certify(enclave_type,
+                            false,
                             FLAGS_trusted_measurements_file,
                             evidence_descriptor);
 }
@@ -79,7 +80,8 @@ bool certifier_test_sim_certify(void) {
 bool certifier_test_local_certify(void) {
   string enclave_type("oe-enclave");
   string evidence_descriptor("oe-evidence");
-  return test_local_certify(enclave_type, FLAGS_read_measurement_file,
+  return test_local_certify(enclave_type,
+                            FLAGS_read_measurement_file,
                             FLAGS_trusted_measurements_file,
                             evidence_descriptor);
 }
@@ -106,8 +108,12 @@ bool certifier_test_seal(void) {
     printf("\n");
   }
 
-  if (!Seal(enclave_type, enclave_id, secret_to_seal_size, secret_to_seal,
-            &sealed_size_out, sealed))
+  if (!Seal(enclave_type,
+            enclave_id,
+            secret_to_seal_size,
+            secret_to_seal,
+            &sealed_size_out,
+            sealed))
     return false;
   if (FLAGS_print_all) {
     printf("sealed   (%d): ", sealed_size_out);
@@ -115,8 +121,12 @@ bool certifier_test_seal(void) {
     printf("\n");
   }
 
-  if (!Unseal(enclave_type, enclave_id, sealed_size_out, sealed,
-              &recovered_size, recovered))
+  if (!Unseal(enclave_type,
+              enclave_id,
+              sealed_size_out,
+              sealed,
+              &recovered_size,
+              recovered))
     return false;
 
   if (FLAGS_print_all) {

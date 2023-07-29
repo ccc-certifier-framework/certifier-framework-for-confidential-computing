@@ -220,7 +220,8 @@ bool run_me_as_server() {
     return false;
   }
   printf("running as server\n");
-  server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+  server_dispatch(FLAGS_server_app_host,
+                  FLAGS_server_app_port,
                   app_trust_data->serialized_policy_cert_,
                   app_trust_data->private_auth_key_,
                   app_trust_data->private_auth_key_.certificate(),
@@ -261,7 +262,8 @@ bool run_me_as_client() {
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
   if (!channel.init_client_ssl(
-          FLAGS_server_app_host, FLAGS_server_app_port,
+          FLAGS_server_app_host,
+          FLAGS_server_app_port,
           app_trust_data->serialized_policy_cert_,
           app_trust_data->private_auth_key_,
           app_trust_data->private_auth_key_.certificate())) {

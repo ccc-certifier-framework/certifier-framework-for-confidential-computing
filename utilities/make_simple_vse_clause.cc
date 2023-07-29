@@ -225,6 +225,6 @@ int main(int an, char** av) {
     }
   }
 
-  return make_simple_clause_file_utility(sub_ent, FLAGS_verb, obj_ent,
-                                         FLAGS_output);
+  return make_simple_clause_file_utility(
+      sub_ent, FLAGS_verb, obj_ent, FLAGS_output);
 }

@@ -114,7 +114,8 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   }
   if (rsp.function() != "seal" || rsp.status() != "succeeded") {
     printf("application_Seal: function: %s, status: %s is wrong\n",
-           rsp.function().c_str(), rsp.status().c_str());
+           rsp.function().c_str(),
+           rsp.status().c_str());
     return false;
   }
 
@@ -165,7 +166,8 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   }
   if (rsp.function() != "unseal" || rsp.status() != "succeeded") {
     printf("application_Unseal: function: %s, status: %s is wrong\n",
-           rsp.function().c_str(), rsp.status().c_str());
+           rsp.function().c_str(),
+           rsp.status().c_str());
     return false;
   }
 
@@ -218,7 +220,8 @@ bool application_Attest(int in_size, byte* in, int* size_out, byte* out) {
 
   if (rsp.function() != "attest" || rsp.status() != "succeeded") {
     printf("application_Attest, function: %s, status: %s is wrong\n",
-           rsp.function().c_str(), rsp.status().c_str());
+           rsp.function().c_str(),
+           rsp.status().c_str());
     return false;
   }
 
@@ -270,7 +273,8 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
   if (rsp.function() != "getplatformstatement" || rsp.status() != "succeeded") {
     printf(
         "application_GetPlatformStatement: function: %s, status: %s is wrong\n",
-        rsp.function().c_str(), rsp.status().c_str());
+        rsp.function().c_str(),
+        rsp.status().c_str());
     return false;
   }
 

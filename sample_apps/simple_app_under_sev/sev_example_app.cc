@@ -90,8 +90,12 @@ bool run_me_as_server(const string& host_name, int port,
                       string& asn1_policy_cert, key_message& private_key,
                       string& private_key_cert) {
   printf("running as server\n");
-  server_dispatch(host_name, port, asn1_policy_cert, private_key,
-                  private_key_cert, server_application);
+  server_dispatch(host_name,
+                  port,
+                  asn1_policy_cert,
+                  private_key,
+                  private_key_cert,
+                  server_application);
   return true;
 }
 
@@ -185,7 +189,8 @@ int main(int an, char** av) {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);
     if (!channel.init_client_ssl(
-            FLAGS_server_app_host, FLAGS_server_app_port,
+            FLAGS_server_app_host,
+            FLAGS_server_app_port,
             app_trust_data->serialized_policy_cert_,
             app_trust_data->private_auth_key_,
             app_trust_data->private_auth_key_.certificate())) {
@@ -203,7 +208,8 @@ int main(int an, char** av) {
       goto done;
     }
     printf("running as server\n");
-    server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+    server_dispatch(FLAGS_server_app_host,
+                    FLAGS_server_app_port,
                     app_trust_data->serialized_policy_cert_,
                     app_trust_data->private_auth_key_,
                     app_trust_data->private_auth_key_.certificate(),

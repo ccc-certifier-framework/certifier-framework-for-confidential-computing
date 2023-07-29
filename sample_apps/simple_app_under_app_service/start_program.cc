@@ -101,7 +101,8 @@ int main(int an, char** av) {
   if (!req.SerializeToString(&serialized_request)) {
     return 1;
   }
-  if (sized_socket_write(sock, serialized_request.size(),
+  if (sized_socket_write(sock,
+                         serialized_request.size(),
                          (byte*)serialized_request.data()) < 0) {
     return 1;
   }

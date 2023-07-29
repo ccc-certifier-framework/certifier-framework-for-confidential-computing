@@ -39,12 +39,16 @@ bool attestation_test() {
 
   std::string what_to_say("User Custom data");
 
-  if (!islet_Attest(what_to_say.size(), (byte*)what_to_say.data(), &report_len,
-                    report))
+  if (!islet_Attest(
+          what_to_say.size(), (byte*)what_to_say.data(), &report_len, report))
     return false;
 
-  if (!islet_Verify(what_to_say.size(), (byte*)what_to_say.data(), report_len,
-                    report, &measurement_len, measurement))
+  if (!islet_Verify(what_to_say.size(),
+                    (byte*)what_to_say.data(),
+                    report_len,
+                    report,
+                    &measurement_len,
+                    measurement))
     return false;
 
   printf("report size: %d\n", report_len);
@@ -70,8 +74,8 @@ bool sealing_test() {
   memset(unsealed, 0, sizeof(unsealed));
 
   std::string plaintext("Plaintext");
-  if (!islet_Seal(plaintext.size(), (byte*)plaintext.c_str(), &sealed_len,
-                  sealed))
+  if (!islet_Seal(
+          plaintext.size(), (byte*)plaintext.c_str(), &sealed_len, sealed))
     return false;
 
   if (!islet_Unseal(sealed_len, sealed, &unsealed_len, unsealed))

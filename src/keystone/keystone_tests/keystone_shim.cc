@@ -77,7 +77,9 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say,
 
   int             gold_attestation_size = 0;
   struct report_t gold_report;
-  keystone_Attest(what_to_say_size, what_to_say, &gold_attestation_size,
+  keystone_Attest(what_to_say_size,
+                  what_to_say,
+                  &gold_attestation_size,
                   (byte*)&gold_report);
 
   if (nonhash_report_cmp(gold_report, report) != 0) {

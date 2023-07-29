@@ -86,8 +86,13 @@ bool read_trusted_binary_measurements_and_sign(string&      file_name,
     claim_message claim;
     string        n1("description");
     string        vse_clause_format("vse-clause");
-    if (!make_claim(serialized_vse.size(), (byte*)serialized_vse.data(),
-                    vse_clause_format, n1, nb, na, &claim))
+    if (!make_claim(serialized_vse.size(),
+                    (byte*)serialized_vse.data(),
+                    vse_clause_format,
+                    n1,
+                    nb,
+                    na,
+                    &claim))
       return false;
     signed_claim_message sc;
     if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", claim, policy_key, &sc))
@@ -136,8 +141,8 @@ bool construct_standard_evidence_package(
   // Construct measurement
   string meas;
   if (init_measurements) {
-    if (!read_trusted_binary_measurements_and_sign(file_name, *policy_key,
-                                                   trusted_measurements))
+    if (!read_trusted_binary_measurements_and_sign(
+            file_name, *policy_key, trusted_measurements))
       return false;
 
     if (debug_print) {
@@ -259,8 +264,8 @@ bool construct_standard_evidence_package(
 
   // c8: enclave-authentication-key speaks-for enclave-measurement
   vse_clause c8;
-  if (!make_simple_vse_clause(enclave_key_entity, speaks_for,
-                              measurement_entity, &c8))
+  if (!make_simple_vse_clause(
+          enclave_key_entity, speaks_for, measurement_entity, &c8))
     return false;
 
   // c9: attestation-key says enclave-authentication-key speaks-for
@@ -310,8 +315,13 @@ bool construct_standard_evidence_package(
   c9.SerializeToString(&serialized_cl4);
 
   claim_message cl1;
-  if (!make_claim(serialized_cl1.size(), (byte*)serialized_cl1.data(),
-                  vse_clause_format, d1, s_nb, s_na, &cl1))
+  if (!make_claim(serialized_cl1.size(),
+                  (byte*)serialized_cl1.data(),
+                  vse_clause_format,
+                  d1,
+                  s_nb,
+                  s_na,
+                  &cl1))
     return false;
 
   signed_claim_message sc1;
@@ -319,8 +329,13 @@ bool construct_standard_evidence_package(
     return false;
 
   claim_message cl2;
-  if (!make_claim(serialized_cl2.size(), (byte*)serialized_cl2.data(),
-                  vse_clause_format, d2, s_nb, s_na, &cl2))
+  if (!make_claim(serialized_cl2.size(),
+                  (byte*)serialized_cl2.data(),
+                  vse_clause_format,
+                  d2,
+                  s_nb,
+                  s_na,
+                  &cl2))
     return false;
 
   signed_claim_message sc2;
@@ -328,8 +343,13 @@ bool construct_standard_evidence_package(
     return false;
 
   claim_message cl3;
-  if (!make_claim(serialized_cl3.size(), (byte*)serialized_cl3.data(),
-                  vse_clause_format, d3, s_nb, s_na, &cl3))
+  if (!make_claim(serialized_cl3.size(),
+                  (byte*)serialized_cl3.data(),
+                  vse_clause_format,
+                  d3,
+                  s_nb,
+                  s_na,
+                  &cl3))
     return false;
 
   signed_claim_message sc3;
@@ -337,16 +357,19 @@ bool construct_standard_evidence_package(
     return false;
 
   string serialized_what_to_say;
-  if (!construct_what_to_say(enclave_type, enclave_pk,
-                             &serialized_what_to_say)) {
+  if (!construct_what_to_say(
+          enclave_type, enclave_pk, &serialized_what_to_say)) {
     return false;
   }
 
   int  size_out = 8192;
   byte attest_out[size_out];
 
-  if (!Attest(enclave_type, serialized_what_to_say.size(),
-              (byte*)serialized_what_to_say.data(), &size_out, attest_out))
+  if (!Attest(enclave_type,
+              serialized_what_to_say.size(),
+              (byte*)serialized_what_to_say.data(),
+              &size_out,
+              attest_out))
     return false;
   string final_serialized_attest;
   final_serialized_attest.assign((char*)attest_out, size_out);
@@ -525,16 +548,22 @@ bool test__local_certify(string& enclave_type, bool init_from_file,
 
   key_message policy_key;
   key_message policy_pk;
-  if (!construct_standard_evidence_package(
-          enclave_type, init_from_file, file_name, evidence_descriptor,
-          &trusted_platforms, &trusted_measurements, &policy_key, &policy_pk,
-          &evp))
+  if (!construct_standard_evidence_package(enclave_type,
+                                           init_from_file,
+                                           file_name,
+                                           evidence_descriptor,
+                                           &trusted_platforms,
+                                           &trusted_measurements,
+                                           &policy_key,
+                                           &policy_pk,
+                                           &evp))
     return false;
   if (debug_print) {
     printf(
         "test_local_certify, evidence descriptor: %s, enclave type: %s, "
         "evidence:\n",
-        evidence_descriptor.c_str(), enclave_type.c_str());
+        evidence_descriptor.c_str(),
+        enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
       print_evidence(evp.fact_assertion(i));
       printf("\n");
@@ -552,8 +581,12 @@ bool test__local_certify(string& enclave_type, bool init_from_file,
   }
 
   string purpose("authentication");
-  if (!validate_evidence(evidence_descriptor, trusted_platforms,
-                         trusted_measurements, purpose, evp, policy_pk)) {
+  if (!validate_evidence(evidence_descriptor,
+                         trusted_platforms,
+                         trusted_measurements,
+                         purpose,
+                         evp,
+                         policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }
@@ -570,8 +603,10 @@ bool test_local_certify(bool print_all) {
   string unused("Unused-file-name");
 
   if (print_all) {
-    printf("%s(): enclave_type='%s', evidence_descriptor='%s'\n", __func__,
-           enclave_type.c_str(), evidence_descriptor.c_str());
+    printf("%s(): enclave_type='%s', evidence_descriptor='%s'\n",
+           __func__,
+           enclave_type.c_str(),
+           evidence_descriptor.c_str());
   }
   return test__local_certify(enclave_type, false, unused, evidence_descriptor);
 }
@@ -582,8 +617,10 @@ bool test_partial_local_certify(bool print_all) {
   string unused("Unused-file-name");
 
   if (print_all) {
-    printf("%s(): enclave_type='%s', evidence_descriptor='%s'\n", __func__,
-           enclave_type.c_str(), evidence_descriptor.c_str());
+    printf("%s(): enclave_type='%s', evidence_descriptor='%s'\n",
+           __func__,
+           enclave_type.c_str(),
+           evidence_descriptor.c_str());
   }
   return test__local_certify(enclave_type, false, unused, evidence_descriptor);
 }
@@ -612,8 +649,8 @@ bool construct_standard_constrained_evidence_package(
   string meas;
 
   if (init_measurements) {
-    if (!read_trusted_binary_measurements_and_sign(file_name, *policy_key,
-                                                   trusted_measurements))
+    if (!read_trusted_binary_measurements_and_sign(
+            file_name, *policy_key, trusted_measurements))
       return false;
 
     if (debug_print) {
@@ -706,8 +743,8 @@ bool construct_standard_constrained_evidence_package(
   entity_message attest_key_entity;
   if (!make_key_entity(attest_pk, &attest_key_entity))
     return false;
-  if (!make_unary_vse_clause(attest_key_entity, is_trusted_for_attestation,
-                             &c3))
+  if (!make_unary_vse_clause(
+          attest_key_entity, is_trusted_for_attestation, &c3))
     return false;
 
   // c4: enclave-authentication-key is-trusted-for-authentication
@@ -715,8 +752,8 @@ bool construct_standard_constrained_evidence_package(
   entity_message enclave_key_entity;
   if (!make_key_entity(enclave_pk, &enclave_key_entity))
     return false;
-  if (!make_unary_vse_clause(enclave_key_entity, is_trusted_for_authentication,
-                             &c4))
+  if (!make_unary_vse_clause(
+          enclave_key_entity, is_trusted_for_authentication, &c4))
     return false;
 
   // c5: policy-key says measurement is-trusted
@@ -739,8 +776,8 @@ bool construct_standard_constrained_evidence_package(
 
   // c8: enclave-authentication-key speaks-for enclave-measurement
   vse_clause c8;
-  if (!make_simple_vse_clause(enclave_key_entity, speaks_for,
-                              measurement_entity, &c8))
+  if (!make_simple_vse_clause(
+          enclave_key_entity, speaks_for, measurement_entity, &c8))
     return false;
 
   // c9: attestation-key says enclave-authentication-key speaks-for
@@ -790,8 +827,13 @@ bool construct_standard_constrained_evidence_package(
   c9.SerializeToString(&serialized_cl4);
 
   claim_message cl1;
-  if (!make_claim(serialized_cl1.size(), (byte*)serialized_cl1.data(),
-                  vse_clause_format, d1, s_nb, s_na, &cl1))
+  if (!make_claim(serialized_cl1.size(),
+                  (byte*)serialized_cl1.data(),
+                  vse_clause_format,
+                  d1,
+                  s_nb,
+                  s_na,
+                  &cl1))
     return false;
 
   signed_claim_message sc1;
@@ -799,8 +841,13 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   claim_message cl2;
-  if (!make_claim(serialized_cl2.size(), (byte*)serialized_cl2.data(),
-                  vse_clause_format, d2, s_nb, s_na, &cl2))
+  if (!make_claim(serialized_cl2.size(),
+                  (byte*)serialized_cl2.data(),
+                  vse_clause_format,
+                  d2,
+                  s_nb,
+                  s_na,
+                  &cl2))
     return false;
 
   signed_claim_message sc2;
@@ -808,8 +855,13 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   claim_message cl3;
-  if (!make_claim(serialized_cl3.size(), (byte*)serialized_cl3.data(),
-                  vse_clause_format, d3, s_nb, s_na, &cl3))
+  if (!make_claim(serialized_cl3.size(),
+                  (byte*)serialized_cl3.data(),
+                  vse_clause_format,
+                  d3,
+                  s_nb,
+                  s_na,
+                  &cl3))
     return false;
 
   signed_claim_message sc3;
@@ -817,15 +869,18 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   string serialized_what_to_say;
-  if (!construct_what_to_say(enclave_type, enclave_pk,
-                             &serialized_what_to_say)) {
+  if (!construct_what_to_say(
+          enclave_type, enclave_pk, &serialized_what_to_say)) {
     return false;
   }
 
   int  size_out = 8192;
   byte attest_out[size_out];
-  if (!Attest(enclave_type, serialized_what_to_say.size(),
-              (byte*)serialized_what_to_say.data(), &size_out, attest_out))
+  if (!Attest(enclave_type,
+              serialized_what_to_say.size(),
+              (byte*)serialized_what_to_say.data(),
+              &size_out,
+              attest_out))
     return false;
   string final_serialized_attest;
   final_serialized_attest.assign((char*)attest_out, size_out);
@@ -1014,17 +1069,23 @@ bool test__new_local_certify(string& enclave_type, bool init_from_file,
 
   key_message policy_key;
   key_message policy_pk;
-  if (!construct_standard_constrained_evidence_package(
-          enclave_type, init_from_file, file_name, evidence_descriptor,
-          &trusted_platforms, &trusted_measurements, &policy_key, &policy_pk,
-          &evp))
+  if (!construct_standard_constrained_evidence_package(enclave_type,
+                                                       init_from_file,
+                                                       file_name,
+                                                       evidence_descriptor,
+                                                       &trusted_platforms,
+                                                       &trusted_measurements,
+                                                       &policy_key,
+                                                       &policy_pk,
+                                                       &evp))
     return false;
 
   if (debug_print) {
     printf(
         "test_local_certify, evidence descriptor: %s, enclave type: %s, "
         "evidence:\n",
-        evidence_descriptor.c_str(), enclave_type.c_str());
+        evidence_descriptor.c_str(),
+        enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
       print_evidence(evp.fact_assertion(i));
       printf("\n");
@@ -1043,8 +1104,12 @@ bool test__new_local_certify(string& enclave_type, bool init_from_file,
 
   // adding predicate hierarchy
   string purpose("authentication");
-  if (!validate_evidence(evidence_descriptor, trusted_platforms,
-                         trusted_measurements, purpose, evp, policy_pk)) {
+  if (!validate_evidence(evidence_descriptor,
+                         trusted_platforms,
+                         trusted_measurements,
+                         purpose,
+                         evp,
+                         policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }
@@ -1059,11 +1124,13 @@ bool test_new_local_certify(bool print_all) {
   string unused("Unused-file-name");
 
   if (print_all) {
-    printf("%s(): enclave_type='%s', evidence_descriptor='%s'\n", __func__,
-           enclave_type.c_str(), evidence_descriptor.c_str());
+    printf("%s(): enclave_type='%s', evidence_descriptor='%s'\n",
+           __func__,
+           enclave_type.c_str(),
+           evidence_descriptor.c_str());
   }
-  return test__new_local_certify(enclave_type, false, unused,
-                                 evidence_descriptor);
+  return test__new_local_certify(
+      enclave_type, false, unused, evidence_descriptor);
 }
 
 // -----------------------------------------------------------------------------

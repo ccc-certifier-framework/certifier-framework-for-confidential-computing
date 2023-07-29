@@ -164,7 +164,9 @@ int sign_report(struct attestation_report *report) {
     goto exit;
   }
   rc = sev_ecdsa_sign(
-      report, sizeof(struct attestation_report) - sizeof(struct signature), key,
+      report,
+      sizeof(struct attestation_report) - sizeof(struct signature),
+      key,
       (union sev_ecdsa_sig *)&report->signature);
   if (rc != EXIT_SUCCESS) {
     errno = rc;
@@ -211,13 +213,17 @@ int verify_report(struct attestation_report *report) {
     goto exit;
   }
   if (!digest_sha384(
-          report, sizeof(struct attestation_report) - sizeof(struct signature),
-          sha_digest_384, sizeof(sha_digest_384))) {
+          report,
+          sizeof(struct attestation_report) - sizeof(struct signature),
+          sha_digest_384,
+          sizeof(sha_digest_384))) {
     rc = -EXIT_FAILURE;
     perror("sha_digest_384");
     goto exit;
   }
-  rc = sev_ecdsa_verify(sha_digest_384, sizeof(sha_digest_384), key,
+  rc = sev_ecdsa_verify(sha_digest_384,
+                        sizeof(sha_digest_384),
+                        key,
                         (union sev_ecdsa_sig *)&report->signature);
   if (rc != EXIT_SUCCESS) {
     errno = rc;
@@ -291,8 +297,10 @@ int get_report(const uint8_t *data, size_t data_size,
     rc = report_resp->status;
     goto out_close;
   } else if (report_resp->report_size > sizeof(*report)) {
-    fprintf(stderr, "report size is %u bytes (expected %lu)!\n",
-            report_resp->report_size, sizeof(*report));
+    fprintf(stderr,
+            "report size is %u bytes (expected %lu)!\n",
+            report_resp->report_size,
+            sizeof(*report));
     rc = EFBIG;
     goto out_close;
   }

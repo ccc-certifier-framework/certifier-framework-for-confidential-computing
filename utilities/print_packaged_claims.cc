@@ -33,8 +33,8 @@ int main(int an, char** av) {
   int in_read = in_size;
 
   if (in_size <= 0) {
-    printf("Invalid size=%d for input file '%s'.\n", in_size,
-           FLAGS_input.c_str());
+    printf(
+        "Invalid size=%d for input file '%s'.\n", in_size, FLAGS_input.c_str());
     return 1;
   }
 

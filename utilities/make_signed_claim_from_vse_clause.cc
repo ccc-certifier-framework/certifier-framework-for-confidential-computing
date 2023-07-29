@@ -123,8 +123,12 @@ int main(int an, char** av) {
   string        descriptor = FLAGS_descipt;
   claim_message cm_out;
   if (!make_claim(serialized_vse_claim.size(),
-                  (byte*)serialized_vse_claim.data(), format, descriptor,
-                  not_before, not_after, &cm_out)) {
+                  (byte*)serialized_vse_claim.data(),
+                  format,
+                  descriptor,
+                  not_before,
+                  not_after,
+                  &cm_out)) {
     printf("Can't make claim\n");
     return 1;
   }
@@ -133,8 +137,8 @@ int main(int an, char** av) {
   printf("\n");
 
   signed_claim_message sc_out;
-  if (!make_signed_claim(FLAGS_signing_alg.c_str(), cm_out, signing_key,
-                         &sc_out)) {
+  if (!make_signed_claim(
+          FLAGS_signing_alg.c_str(), cm_out, signing_key, &sc_out)) {
     printf("Can't make claim\n");
     return 1;
   }

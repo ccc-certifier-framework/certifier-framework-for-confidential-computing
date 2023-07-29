@@ -66,8 +66,11 @@ bool test_protect(bool print_all) {
     print_key(key_start);
   }
 
-  if (!protect_blob(enclave_type, key_start, (int)strlen(secret_data),
-                    (byte*)secret_data, &serialized_blob_size,
+  if (!protect_blob(enclave_type,
+                    key_start,
+                    (int)strlen(secret_data),
+                    (byte*)secret_data,
+                    &serialized_blob_size,
                     serialized_blob)) {
     printf("Can't protect\n");
     return false;
@@ -87,8 +90,12 @@ bool test_protect(bool print_all) {
   memset(unencrypted_data, 0, size_unencrypted_data);
 
   // unprotect it
-  if (!unprotect_blob(enclave_type, serialized_blob_size, serialized_blob,
-                      &key_end, &size_unencrypted_data, unencrypted_data)) {
+  if (!unprotect_blob(enclave_type,
+                      serialized_blob_size,
+                      serialized_blob,
+                      &key_end,
+                      &size_unencrypted_data,
+                      unencrypted_data)) {
     printf("Unprotect(1) failed\n");
     return false;
   }
@@ -109,8 +116,11 @@ bool test_protect(bool print_all) {
   int         size_reprotected_data = serialized_blob_size + 5;
   byte        reprotected_data[size_reprotected_data];
   memset(reprotected_data, 0, size_reprotected_data);
-  if (!reprotect_blob(enclave_type, &new_key, serialized_blob_size,
-                      serialized_blob, &size_reprotected_data,
+  if (!reprotect_blob(enclave_type,
+                      &new_key,
+                      serialized_blob_size,
+                      serialized_blob,
+                      &size_reprotected_data,
                       reprotected_data)) {
     printf("reprotect failed\n");
     return false;
@@ -121,8 +131,12 @@ bool test_protect(bool print_all) {
   int         size_unencrypted_data2 = 512;
   byte        unencrypted_data2[size_unencrypted_data2];
   memset(unencrypted_data2, 0, size_unencrypted_data2);
-  if (!unprotect_blob(enclave_type, size_reprotected_data, reprotected_data,
-                      &newer_key, &size_unencrypted_data2, unencrypted_data2)) {
+  if (!unprotect_blob(enclave_type,
+                      size_reprotected_data,
+                      reprotected_data,
+                      &newer_key,
+                      &size_unencrypted_data2,
+                      unencrypted_data2)) {
     printf("unprotect(2) failed\n");
     return false;
   }
@@ -194,13 +208,21 @@ bool test_init_and_recover_containers(bool print_all) {
   int    size_encrypted = serialized_store.size() + 512;
   byte   encrypted[size_encrypted];
 
-  if (!protect_blob(enclave_type, storage_key, serialized_store.size(),
-                    (byte*)serialized_store.data(), &size_encrypted, encrypted))
+  if (!protect_blob(enclave_type,
+                    storage_key,
+                    serialized_store.size(),
+                    (byte*)serialized_store.data(),
+                    &size_encrypted,
+                    encrypted))
     return false;
   int  size_recovered = serialized_store.size() + 512;
   byte recovered[size_encrypted];
-  if (!unprotect_blob(enclave_type, size_encrypted, encrypted,
-                      &recovered_storage_key, &size_recovered, recovered))
+  if (!unprotect_blob(enclave_type,
+                      size_encrypted,
+                      encrypted,
+                      &recovered_storage_key,
+                      &size_recovered,
+                      recovered))
     return false;
 
   string recovered_serialized_store;
@@ -365,13 +387,15 @@ bool test_policy_store(bool print_all) {
     return false;
   }
   if (ps2.get_num_entries() != ps.get_num_entries()) {
-    printf("Error: Recovered stores don't match %d %d\n", ps.get_num_entries(),
+    printf("Error: Recovered stores don't match %d %d\n",
+           ps.get_num_entries(),
            ps2.get_num_entries());
     return false;
   }
   if (ps2.max_num_ents_ != ps.max_num_ents_) {
     printf("Error: Recovered stores don't match (max ents) %d %d\n",
-           ps.max_num_ents_, ps2.max_num_ents_);
+           ps.max_num_ents_,
+           ps2.max_num_ents_);
     return false;
   }
   if (print_all) {

@@ -84,8 +84,12 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  status = gramine_Verify(USER_DATA_SIZE, user_data, attestation_size,
-                          attestation, &mr_size, mr_recd);
+  status = gramine_Verify(USER_DATA_SIZE,
+                          user_data,
+                          attestation_size,
+                          attestation,
+                          &mr_size,
+                          mr_recd);
   if (status != true) {
     printf("gramine_Verify failed\n");
     return 1;
