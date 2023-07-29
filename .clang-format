@@ -82,8 +82,9 @@ NamespaceIndentation: None
 
 PointerAlignment: Right
 
-SortIncludes:    false
+ReflowComments: true
 
+SortIncludes:    false
 SpaceBeforeAssignmentOperators: true
 SpacesBeforeTrailingComments: 2
 SpaceBeforeParens: ControlStatements
