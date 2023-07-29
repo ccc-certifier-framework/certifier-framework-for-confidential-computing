@@ -26,8 +26,8 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(input, "measurement_utility.exe", "input file");
 
 bool get_clause_from_file(const string& in, vse_clause* cl) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_cl[in_size];
 
   if (!read_file(in, &in_read, serialized_cl)) {

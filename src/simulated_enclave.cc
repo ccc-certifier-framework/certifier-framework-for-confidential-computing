@@ -33,18 +33,18 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 // simulated enclave data
-bool my_data_initialized = false;
-string my_measurement;
-const int simulated_measurment_size = 32;
-const int sealing_key_size          = 64;  // for aes&hmac
-byte sealing_key[sealing_key_size];
-key_message my_attestation_key;
-key_message my_platform_key;
-string serialized_platform_claim;
+bool                 my_data_initialized = false;
+string               my_measurement;
+const int            simulated_measurment_size = 32;
+const int            sealing_key_size          = 64;  // for aes&hmac
+byte                 sealing_key[sealing_key_size];
+key_message          my_attestation_key;
+key_message          my_platform_key;
+string               serialized_platform_claim;
 signed_claim_message my_platform_claim;
-string serialized_attest_claim;
+string               serialized_attest_claim;
 signed_claim_message my_attest_claim;
-RSA* rsa_attestation_key = nullptr;
+RSA*                 rsa_attestation_key = nullptr;
 
 bool simulated_GetAttestClaim(signed_claim_message* out) {
   if (!my_data_initialized) {
@@ -146,9 +146,9 @@ const int max_seal_pad = 256;
 bool simulated_Seal(const string& enclave_type, const string& enclave_id,
                     int in_size, byte* in, int* size_out, byte* out) {
   const int iv_size = block_size;
-  byte iv[iv_size];
+  byte      iv[iv_size];
 
-  int input_size = in_size + my_measurement.size();
+  int  input_size = in_size + my_measurement.size();
   byte input[input_size];
 
   int output_size = in_size + my_measurement.size() + iv_size + max_seal_pad;
@@ -185,9 +185,9 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
 
 bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
                       int in_size, byte* in, int* size_out, byte* out) {
-  int iv_size = block_size;
+  int  iv_size = block_size;
   byte iv[iv_size];
-  int output_size = in_size + max_seal_pad;
+  int  output_size = in_size + max_seal_pad;
   byte output[output_size];
   if (out == nullptr) {
     *size_out = output_size;
@@ -220,12 +220,12 @@ bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
 bool simulated_Attest(const string& enclave_type, int what_to_say_size,
                       byte* what_to_say, int* size_out, byte* out) {
   vse_attestation_report_info report_info;
-  string serialized_report_info;
+  string                      serialized_report_info;
   report_info.set_enclave_type("simulated-enclave");
 
   // what_to_say is usually a serialized vse-attestation_report_info
   // simulated_Attest returns a serialized signed_report
-  string nb, na;
+  string     nb, na;
   time_point tn, tf;
   if (!time_now(&tn))
     return false;
@@ -246,8 +246,8 @@ bool simulated_Attest(const string& enclave_type, int what_to_say_size,
   }
 
   const string type("vse-attestation-report");
-  string signing_alg("rsa-2048-sha256-pkcs-sign");
-  string serialized_signed_report;
+  string       signing_alg("rsa-2048-sha256-pkcs-sign");
+  string       serialized_signed_report;
 
   if (!sign_report(type, serialized_report_info, signing_alg,
                    my_attestation_key, &serialized_signed_report)) {

@@ -20,7 +20,7 @@ int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  run_request req;
+  run_request  req;
   run_response rsp;
 
   // dial service
@@ -58,7 +58,7 @@ int main(int an, char** av) {
 
   // read response
   string serialized_response;
-  int n = sized_socket_read(sock, &serialized_response);
+  int    n = sized_socket_read(sock, &serialized_response);
   if (n < 0) {
     printf("Can't read response\n");
     return 1;

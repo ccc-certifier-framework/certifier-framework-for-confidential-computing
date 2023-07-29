@@ -31,8 +31,8 @@
 
 struct msg_key_resp {
   uint32_t status;
-  uint8_t reserved[MSG_KEY_RSP_RESERVED_SIZE];
-  uint8_t derived_key[MSG_KEY_RSP_DERIVED_KEY_SIZE];
+  uint8_t  reserved[MSG_KEY_RSP_RESERVED_SIZE];
+  uint8_t  derived_key[MSG_KEY_RSP_DERIVED_KEY_SIZE];
 };
 
 #endif /* SNP_KEY_REQ_H */

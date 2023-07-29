@@ -19,7 +19,7 @@
 using namespace certifier::utilities;
 
 bool test_random(bool print_all) {
-  int n = 128;
+  int  n = 128;
   byte out[n];
 
   memset(out, 0, n);
@@ -36,21 +36,21 @@ bool test_random(bool print_all) {
 }
 
 bool test_encrypt(bool print_all) {
-  const int in_size    = 2 * block_size;
-  const int out_size   = in_size + 128;
+  const int   in_size  = 2 * block_size;
+  const int   out_size = in_size + 128;
   const char* alg_name = "aes-256-cbc-hmac-sha256";
-  const int key_size   = cipher_key_byte_size(alg_name);
-  int blk_size         = cipher_block_byte_size(alg_name);
+  const int   key_size = cipher_key_byte_size(alg_name);
+  int         blk_size = cipher_block_byte_size(alg_name);
 
-  byte key[key_size];
+  byte      key[key_size];
   const int iv_size = blk_size;
-  byte iv[block_size];
-  byte plain[in_size];
-  byte cipher[out_size];
+  byte      iv[block_size];
+  byte      plain[in_size];
+  byte      cipher[out_size];
   const int decrypt_size = in_size + block_size;
-  byte decrypted[decrypt_size];
-  int size1 = in_size;
-  int size2 = decrypt_size;
+  byte      decrypted[decrypt_size];
+  int       size1 = in_size;
+  int       size2 = decrypt_size;
 
   memset(plain, 0, in_size);
   memset(cipher, 0, out_size);
@@ -104,16 +104,16 @@ bool test_authenticated_encrypt(bool print_all) {
   const int in_size  = 2 * block_size;
   const int out_size = in_size + 256;
   const int key_size = 64;
-  byte key[key_size];
+  byte      key[key_size];
   const int iv_size = block_size;
-  byte iv[block_size];
-  byte plain[in_size];
-  byte cipher[out_size];
-  int size_encrypt_out = out_size;
-  int size_decrypt_out = out_size;
+  byte      iv[block_size];
+  byte      plain[in_size];
+  byte      cipher[out_size];
+  int       size_encrypt_out = out_size;
+  int       size_decrypt_out = out_size;
 
   const int decrypt_size = in_size + block_size;
-  byte decrypted[decrypt_size];
+  byte      decrypted[decrypt_size];
 
   memset(plain, 0, in_size);
   memset(cipher, 0, out_size);
@@ -279,13 +279,13 @@ bool test_public_keys(bool print_all) {
     print_key((const key_message&)km1);
   }
 
-  const char* msg = "This is a message of length 32  ";
-  int size_data   = 32;
-  byte data[size_data];
-  int size_out = 2048;
-  byte out[size_out];
-  int size_recovered = 2048;
-  byte recovered[size_recovered];
+  const char* msg       = "This is a message of length 32  ";
+  int         size_data = 32;
+  byte        data[size_data];
+  int         size_out = 2048;
+  byte        out[size_out];
+  int         size_recovered = 2048;
+  byte        recovered[size_recovered];
 
   memset(data, 0, size_data);
   memset(out, 0, size_out);
@@ -539,10 +539,10 @@ byte sha512_test[64] = {
     0xa3, 0xfe, 0xeb, 0xbd, 0x45, 0x4d, 0x44, 0x23, 0x64, 0x3c, 0xe8,
     0x0e, 0x2a, 0x9a, 0xc9, 0x4f, 0xa5, 0x4c, 0xa4, 0x9f};
 bool test_digest(bool print_all) {
-  const char* message      = "1234";
-  int msg_len              = strlen(message);
+  const char*  message     = "1234";
+  int          msg_len     = strlen(message);
   unsigned int size_digest = 64;
-  byte digest[size_digest];
+  byte         digest[size_digest];
 
   memset(digest, 0, size_digest);
   if (!digest_message("sha-256", (const byte*)message, msg_len, digest,
@@ -655,9 +655,9 @@ bool test_sign_and_verify(bool print_all) {
 
   const char* test_message = "I am a test message, verify me";
 
-  int sig_size = RSA_size(r);
+  int  sig_size = RSA_size(r);
   byte sig[sig_size];
-  int recovered_size = sig_size;
+  int  recovered_size = sig_size;
   byte recovered[recovered_size];
   memset(sig, 0, sig_size);
   memset(recovered, 0, recovered_size);
@@ -708,9 +708,9 @@ bool test_time(bool print_all) {
   time_point t_now;
   time_point t_test;
   time_point t_later;
-  string s_now;
-  string s_later;
-  double hours_to_add = 365.0 * 24.0;
+  string     s_now;
+  string     s_later;
+  double     hours_to_add = 365.0 * 24.0;
 
   if (!time_now(&t_now))
     return false;
@@ -730,8 +730,8 @@ bool test_time(bool print_all) {
     print_time_point(t_later);
   }
 
-  time_t now;
-  struct tm tm_time;
+  time_t     now;
+  struct tm  tm_time;
   time_point tp;
 
   time(&now);

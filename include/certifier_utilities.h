@@ -37,7 +37,7 @@ const int block_size       = 16;
 const int num_bits_in_byte = 8;
 
 bool write_file(const string& file_name, int size, byte* data);
-int file_size(const string& file_name);
+int  file_size(const string& file_name);
 bool read_file(const string& file_name, int* size, byte* data);
 bool read_file_into_string(const string& file_name, string* out);
 
@@ -51,7 +51,7 @@ bool authenticated_decrypt(const char* alg, byte* in, int in_len, byte* key,
 
 EC_KEY* generate_new_ecc_key(int num_bits);
 EC_KEY* key_to_ECC(const key_message& kr);
-bool ECC_to_key(const EC_KEY* e, key_message* k);
+bool    ECC_to_key(const EC_KEY* e, key_message* k);
 
 bool private_key_to_public_key(const key_message& in, key_message* out);
 bool get_random(int num_bits, byte* out);
@@ -67,7 +67,7 @@ bool time_to_string(time_point& t, string* s);
 bool string_to_time(const string& s, time_point* t);
 bool add_interval_to_time_point(time_point& t_in, double hours,
                                 time_point* out);
-int compare_time(time_point& t1, time_point& t2);
+int  compare_time(time_point& t1, time_point& t2);
 void print_time_point(time_point& t);
 void print_entity(const entity_message& em);
 void print_key(const key_message& k);

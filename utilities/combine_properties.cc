@@ -37,7 +37,7 @@ const char* next_comma(const char* p) {
 bool get_input_file_names(const string& name, int* num, string* names) {
   const char* start = name.c_str();
   const char* end   = nullptr;
-  int count         = 0;
+  int         count = 0;
 
   while ((end = next_comma(start)) != nullptr) {
     if (count >= (*num - 1)) {
@@ -67,7 +67,7 @@ int main(int an, char** av) {
     return 1;
   }
 
-  int num = 20;
+  int    num = 20;
   string names[num];
   if (!get_input_file_names(FLAGS_in, &num, names)) {
     printf("Too few names allocated\n");
@@ -77,7 +77,7 @@ int main(int an, char** av) {
   properties my_props;
   for (int i = 0; i < num; i++) {
     property* np = my_props.add_props();
-    string p_str;
+    string    p_str;
     if (!read_file_into_string(names[i], &p_str)) {
       printf("Can't read property file %s\n", names[i].c_str());
       return 1;

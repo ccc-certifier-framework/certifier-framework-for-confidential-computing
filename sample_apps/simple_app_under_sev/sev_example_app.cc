@@ -69,7 +69,7 @@ void client_application(secure_authenticated_channel& channel) {
 
   // Get server response over authenticated, encrypted channel and print it
   string out;
-  int n = channel.read(&out);
+  int    n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
 }
 
@@ -78,7 +78,7 @@ void server_application(secure_authenticated_channel& channel) {
 
   // Read message from client over authenticated, encrypted channel
   string out;
-  int n = channel.read(&out);
+  int    n = channel.read(&out);
   printf("SSL server read: %s\n", (const char*)out.data());
 
   // Reply over authenticated, encrypted channel
@@ -182,7 +182,7 @@ int main(int an, char** av) {
       ret = 1;
       goto done;
     }
-    string my_role("client");
+    string                       my_role("client");
     secure_authenticated_channel channel(my_role);
     if (!channel.init_client_ssl(
             FLAGS_server_app_host, FLAGS_server_app_port,

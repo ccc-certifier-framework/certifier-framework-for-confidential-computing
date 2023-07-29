@@ -26,7 +26,7 @@
 
 /* Option {value -> name } lookup structure */
 typedef struct optlookup {
-  const int id;
+  const int   id;
   const char *name;
 } optlookup;
 

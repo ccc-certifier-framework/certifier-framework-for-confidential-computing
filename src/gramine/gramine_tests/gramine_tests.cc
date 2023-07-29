@@ -30,12 +30,12 @@
 byte cert[MAX_CERT_SIZE];
 
 int main(int argc, char** argv) {
-  int ret = 0;
+  int    ret = 0;
   size_t len;
-  int mr_size;
-  int attestation_size;
-  int sealed_size;
-  int unsealed_size;
+  int    mr_size;
+  int    attestation_size;
+  int    sealed_size;
+  int    unsealed_size;
 
   bool status = false;
   byte attestation[MAX_ATTESTATION_SIZE];

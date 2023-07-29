@@ -30,7 +30,7 @@ DEFINE_string(output, "", "output file");
 
 bool calculate_measurement(const string& in, string* out) {
   size_t size = in.size();
-  char hex[size + 2];
+  char   hex[size + 2];
   memset((byte*)hex, 0, size + 2);
   const char* pos = (const char*)hex;
   if (size % 2) {
@@ -41,8 +41,8 @@ bool calculate_measurement(const string& in, string* out) {
   }
 
   printf("Using measurement: %s\n", hex);
-  int measurement_size = strlen(hex) / 2;
-  byte m[measurement_size];
+  int    measurement_size = strlen(hex) / 2;
+  byte   m[measurement_size];
   size_t count = 0;
   for (size_t count = 0;
        count < strlen(hex) / 2 && count < (size_t)measurement_size; count++) {
@@ -70,8 +70,8 @@ int main(int an, char** av) {
   }
 
   platform plat;
-  string m_str;
-  string plat_str;
+  string   m_str;
+  string   plat_str;
 
   if (!read_file_into_string(FLAGS_platform_file, &plat_str)) {
     printf("Can't read platform file\n");

@@ -60,8 +60,8 @@ int main(int an, char** av) {
   printf("test_user.exe is running on (%d, %d)\n", in_fd, out_fd);
 
   string secret("abc");
-  int out_size = 16000;
-  byte out[out_size];
+  int    out_size = 16000;
+  byte   out[out_size];
   string sealed;
   string unsealed;
   string attest;
@@ -111,9 +111,9 @@ int main(int an, char** av) {
   }
 
   // Attest test
-  t_out                              = out_size;
-  const int what_to_say_size         = 20;
-  byte what_to_say[what_to_say_size] = {
+  t_out                                   = out_size;
+  const int what_to_say_size              = 20;
+  byte      what_to_say[what_to_say_size] = {
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
   };
   if (!Attest(enclave, what_to_say_size, what_to_say, &t_out, out)) {

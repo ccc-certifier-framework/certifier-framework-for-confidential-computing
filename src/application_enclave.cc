@@ -33,8 +33,8 @@ using std::string;
 // #define DEBUG
 
 bool initialized = false;
-int reader       = 0;
-int writer       = 0;
+int  reader      = 0;
+int  writer      = 0;
 
 bool application_Init(const string& parent_enclave_type, int read_fd,
                       int write_fd) {
@@ -47,7 +47,7 @@ bool application_Init(const string& parent_enclave_type, int read_fd,
 }
 
 bool application_GetParentEvidence(string* out) {
-  app_request req;
+  app_request  req;
   app_response rsp;
 
   // request
@@ -61,7 +61,7 @@ bool application_GetParentEvidence(string* out) {
 
   // response
   string rsp_str;
-  int n = sized_pipe_read(reader, &rsp_str);
+  int    n = sized_pipe_read(reader, &rsp_str);
   if (n < 0) {
     printf("application_Init: sized_pipe_read failed\n");
     return false;
@@ -82,7 +82,7 @@ const int buffer_pad              = 2048;
 const int platform_statement_size = 4096;
 
 bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
-  app_request req;
+  app_request  req;
   app_response rsp;
 
   req.set_function("seal");
@@ -99,9 +99,9 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
   }
 
   // response
-  int t_size = in_size + buffer_pad;
+  int  t_size = in_size + buffer_pad;
   byte t_out[t_size];
-  int n = read(reader, t_out, t_size);
+  int  n = read(reader, t_out, t_size);
   if (n < 0) {
     printf("application_Seal: read failed\n");
     return false;
@@ -133,7 +133,7 @@ bool application_Seal(int in_size, byte* in, int* size_out, byte* out) {
 }
 
 bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
-  app_request req;
+  app_request  req;
   app_response rsp;
 
   // request
@@ -149,9 +149,9 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   }
 
   // response
-  int t_size = in_size + buffer_pad;
+  int  t_size = in_size + buffer_pad;
   byte t_out[t_size];
-  int n = read(reader, t_out, t_size);
+  int  n = read(reader, t_out, t_size);
   if (n < 0) {
     printf("application_Unseal: read failed\n");
     return false;
@@ -185,7 +185,7 @@ bool application_Unseal(int in_size, byte* in, int* size_out, byte* out) {
 // Attestation is a signed_claim_message
 // with a vse_claim_message claim
 bool application_Attest(int in_size, byte* in, int* size_out, byte* out) {
-  app_request req;
+  app_request  req;
   app_response rsp;
 
   // request
@@ -201,9 +201,9 @@ bool application_Attest(int in_size, byte* in, int* size_out, byte* out) {
   }
 
   // response
-  int t_size = in_size + buffer_pad;
+  int  t_size = in_size + buffer_pad;
   byte t_out[t_size];
-  int n = read(reader, t_out, t_size);
+  int  n = read(reader, t_out, t_size);
   if (n < 0) {
     printf("application_Attest: read failed\n");
     return false;
@@ -236,7 +236,7 @@ bool application_Attest(int in_size, byte* in, int* size_out, byte* out) {
 }
 
 bool application_GetPlatformStatement(int* size_out, byte* out) {
-  app_request req;
+  app_request  req;
   app_response rsp;
 
 #ifdef DEBUG
@@ -252,9 +252,9 @@ bool application_GetPlatformStatement(int* size_out, byte* out) {
   }
 
   // response
-  int t_size = platform_statement_size;
+  int  t_size = platform_statement_size;
   byte t_out[t_size];
-  int n = read(reader, t_out, t_size);
+  int  n = read(reader, t_out, t_size);
   if (n < 0) {
     printf("application_GetPlatformStatement: bad read\n");
     return false;

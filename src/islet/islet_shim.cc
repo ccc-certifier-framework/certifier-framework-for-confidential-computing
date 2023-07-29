@@ -32,7 +32,7 @@ bool islet_Init(const int cert_size, byte* cert) { return true; }
 
 bool islet_Attest(const int what_to_say_size, byte* what_to_say,
                   int* attestation_size_out, byte* attestation_out) {
-  int len = digest_output_byte_size("sha-256");
+  int  len = digest_output_byte_size("sha-256");
   byte islet_what_to_say[len];
   if (!digest_message("sha-256", what_to_say, what_to_say_size,
                       islet_what_to_say, len)) {
@@ -68,7 +68,7 @@ bool islet_Verify(const int what_to_say_size, byte* what_to_say,
   if (rv != ISLET_SUCCESS)
     return false;
 
-  int len = digest_output_byte_size("sha-256");
+  int  len = digest_output_byte_size("sha-256");
   byte islet_what_to_say_expected[len];
   if (!digest_message("sha-256", what_to_say, what_to_say_size,
                       islet_what_to_say_expected, len)) {
@@ -77,8 +77,8 @@ bool islet_Verify(const int what_to_say_size, byte* what_to_say,
   }
 
   byte islet_what_to_say_returned[2 * len];
-  int user_data_len = len;
-  rv                = islet_parse(CLAIM_TITLE_USER_DATA, claims, claims_len,
+  int  user_data_len = len;
+  rv                 = islet_parse(CLAIM_TITLE_USER_DATA, claims, claims_len,
                    islet_what_to_say_returned, &user_data_len);
   if (rv != ISLET_SUCCESS)
     return false;

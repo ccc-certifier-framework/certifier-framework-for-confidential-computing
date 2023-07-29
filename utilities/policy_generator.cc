@@ -77,31 +77,31 @@ typedef enum clause_type {
 } clause_type;
 
 typedef struct clause {
-  string sub;
+  string       sub;
   subject_type stype;
-  string verb;
-  string obj;
-  object_type otype;
-  clause_type ctype;
+  string       verb;
+  string       obj;
+  object_type  otype;
+  clause_type  ctype;
   /* For indirect clause only */
-  string ssub;
+  string       ssub;
   subject_type sstype;
-  string sobj;
-  object_type sotype;
-  string sverb;
+  string       sobj;
+  object_type  sotype;
+  string       sverb;
 } clause;
 
 typedef struct claim {
-  string sub;
+  string       sub;
   subject_type stype;
-  string verb;
-  clause_type ctype;
-  clause cl;
-  string skey;
+  string       verb;
+  clause_type  ctype;
+  clause       cl;
+  string       skey;
 } claim;
 
 typedef struct platform {
-  string type;
+  string           type;
   vector<property> props;
 } platform;
 
@@ -270,17 +270,17 @@ void from_json(const json& j, claim& c) {
 }
 
 vector<platform> platforms;
-vector<string> measurements;
-vector<claim> claims;
-string policyKey;
+vector<string>   measurements;
+vector<claim>    claims;
+string           policyKey;
 
 vector<string> signed_claims;
 vector<string> intermediate_files;
 
 static int exec_cmd(const string& command, bool print = false) {
-  int exitcode = -1;
+  int                     exitcode = -1;
   array<char, 512 * 1024> buffer{};
-  string result;
+  string                  result;
 
   FILE* pipe = popen(command.c_str(), "r");
   if (pipe == nullptr) {
@@ -371,10 +371,10 @@ static string make_signed_claim_cmd(string vseFile, string duration,
     }                                                                      \
   }
 
-static bool generate_platform_policy(string policyKey,
+static bool generate_platform_policy(string           policyKey,
                                      vector<platform> platforms, bool script) {
   for (auto platform : platforms) {
-    int i            = 1;
+    int    i         = 1;
     string all_props = "", plat_file;
     string combine_cmd, claim_cmd;
     for (auto prop : platform.props) {
@@ -421,9 +421,9 @@ static bool generate_platform_policy(string policyKey,
   return true;
 }
 
-static bool generate_measurement_policy(string policyKey,
+static bool generate_measurement_policy(string         policyKey,
                                         vector<string> measurements,
-                                        bool script) {
+                                        bool           script) {
   int i = 1;
   for (auto mea : measurements) {
     string cmd, claim_file;
@@ -488,7 +488,7 @@ static string generate_clause(string policyKey, clause cl, clause_type ct,
       {ENVIRONMENT_OBJECT, "environment"},
   };
 
-  string cmd, actual_sub, cleanup_cmd;
+  string               cmd, actual_sub, cleanup_cmd;
   pair<string, string> p = subject_conversion(cl.stype, cl.sub, script);
   actual_sub             = p.first;
   cleanup_cmd            = p.second;
@@ -502,7 +502,7 @@ static string generate_clause(string policyKey, clause cl, clause_type ct,
                                  oname[cl.otype], cl.obj, "clause.bin");
     RUN_CMD(cmd, script, "");
   } else if (ct == INDIRECT_CLAUSE) {
-    string scleanup_cmd, actual_ssub;
+    string               scleanup_cmd, actual_ssub;
     pair<string, string> s = subject_conversion(cl.sstype, cl.ssub, script);
     actual_ssub            = s.first;
     scleanup_cmd           = s.second;
@@ -549,8 +549,8 @@ static bool generate_claim_policy(string policyKey, vector<claim> claims,
 
   int i = 1;
   for (auto claim : claims) {
-    string cmd, clauseFile, claimFile, signedClaimFile;
-    string actual_sub, cleanup_cmd = "";
+    string               cmd, clauseFile, claimFile, signedClaimFile;
+    string               actual_sub, cleanup_cmd = "";
     pair<string, string> p;
     claimFile       = string_format("claim%d.bin", i);
     signedClaimFile = string_format("signed_claim%d.bin", i);
@@ -607,7 +607,7 @@ static bool generate_packaged_claims(vector<string> signed_claims,
 static bool generate_policy(string policyKey, vector<platform> platforms,
                             vector<string> measurements, vector<claim> claims,
                             bool script) {
-  bool res     = false;
+  bool   res   = false;
   string files = "", cmd;
 
   if (script) {
@@ -644,7 +644,7 @@ done:
 
 int main(int argc, char* argv[]) {
   json_validator validator;  // create validator
-  json policy_schema, policy;
+  json           policy_schema, policy;
 
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 

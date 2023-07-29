@@ -12,16 +12,16 @@ static oe_uuid_t vse_format_uuid = {OE_FORMAT_UUID_SGX_ECDSA};
 
 bool oe_Attest(int what_to_say_size, byte* what_to_say, int* size_out,
                byte* out) {
-  bool ret                         = false;
-  oe_result_t result               = OE_OK;
-  oe_uuid_t* format_id             = &vse_format_uuid;
-  uint8_t* format_settings         = nullptr;
-  size_t format_settings_size      = 0;
-  uint8_t* custom_claims_buffer    = nullptr;
-  size_t custom_claims_buffer_size = 0;
-  uint8_t* evidence                = nullptr;
-  size_t evidence_size             = 0;
-  char custom_claim_name[]         = "Certifier Attestation";
+  bool        ret                       = false;
+  oe_result_t result                    = OE_OK;
+  oe_uuid_t*  format_id                 = &vse_format_uuid;
+  uint8_t*    format_settings           = nullptr;
+  size_t      format_settings_size      = 0;
+  uint8_t*    custom_claims_buffer      = nullptr;
+  size_t      custom_claims_buffer_size = 0;
+  uint8_t*    evidence                  = nullptr;
+  size_t      evidence_size             = 0;
+  char        custom_claim_name[]       = "Certifier Attestation";
 
   if (!size_out || !out) {
     return false;
@@ -104,14 +104,14 @@ static void _print_hex(const uint8_t* data, size_t size) {
 bool oe_Verify(const uint8_t* evidence, size_t evidence_size,
                uint8_t* custom_claim_out, size_t* custom_claim_size,
                uint8_t* measurement_out, size_t* measurement_size) {
-  bool ret             = false;
-  oe_result_t result   = OE_OK;
-  oe_uuid_t* format_id = &vse_format_uuid;
-  oe_claim_t* claims   = nullptr;
-  size_t claims_length = 0;
+  bool              ret           = false;
+  oe_result_t       result        = OE_OK;
+  oe_uuid_t*        format_id     = &vse_format_uuid;
+  oe_claim_t*       claims        = nullptr;
+  size_t            claims_length = 0;
   const oe_claim_t* claim;
-  oe_claim_t* custom_claims   = nullptr;
-  size_t custom_claims_length = 0;
+  oe_claim_t*       custom_claims        = nullptr;
+  size_t            custom_claims_length = 0;
 
   if (!evidence || evidence_size == 0 || !custom_claim_out ||
       !measurement_out) {

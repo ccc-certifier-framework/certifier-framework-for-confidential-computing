@@ -33,9 +33,9 @@ DEFINE_string(vcek_der, "sev_vcek_cert.der", "vcek cert file");
 DEFINE_string(vcek_key_file, "ec-secp384r1-pub-key.pem", "vcek key file");
 
 int read_vcek_file(const char* filename, EVP_PKEY** key, bool priv) {
-  int rc = -EXIT_FAILURE;
+  int       rc = -EXIT_FAILURE;
   EVP_PKEY* pkey;
-  FILE* file = NULL;
+  FILE*     file = NULL;
 
   pkey = EVP_PKEY_new();
   file = fopen(filename, "r");
@@ -87,7 +87,7 @@ int main(int an, char** av) {
   // ARK
   key_message ark_vse_key;
   key_message pub_ark_vse_key;
-  RSA* r1 = RSA_new();
+  RSA*        r1 = RSA_new();
   if (!generate_new_rsa_key(4096, r1)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -125,7 +125,7 @@ int main(int an, char** av) {
   // ASK
   key_message ask_vse_key;
   key_message pub_ask_vse_key;
-  RSA* r2 = RSA_new();
+  RSA*        r2 = RSA_new();
   if (!generate_new_rsa_key(4096, r2)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -164,7 +164,7 @@ int main(int an, char** av) {
   key_message pub_vcek_vse_key;
 
   EVP_PKEY* key = NULL;
-  int rc        = read_vcek_file(FLAGS_vcek_key_file.c_str(), &key, false);
+  int       rc  = read_vcek_file(FLAGS_vcek_key_file.c_str(), &key, false);
   if (rc != EXIT_SUCCESS) {
     printf("Can't read vcek public key\n");
     return 1;

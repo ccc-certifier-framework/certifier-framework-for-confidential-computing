@@ -63,7 +63,7 @@ ssize_t gramine_rw_file(const char* path, uint8_t* buf, size_t len,
 }
 
 static inline int64_t local_sgx_getkey(sgx_key_request_t* keyrequest,
-                                       sgx_key_128bit_t* key) {
+                                       sgx_key_128bit_t*  key) {
   int64_t rax = EGETKEY;
   __asm__ volatile("enclu" : "+a"(rax) : "b"(keyrequest), "c"(key) : "memory");
   return rax;
@@ -170,11 +170,11 @@ bool gramine_attest_impl(const int what_to_say_size, byte* what_to_say,
 
 int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size,
                         uint8_t* mr) {
-  int ret                                = -1;
-  void* sgx_verify_lib                   = NULL;
-  uint8_t* supplemental_data             = NULL;
-  uint32_t supplemental_data_size        = 0;
-  uint32_t collateral_expiration_status  = 1;
+  int                ret                          = -1;
+  void*              sgx_verify_lib               = NULL;
+  uint8_t*           supplemental_data            = NULL;
+  uint32_t           supplemental_data_size       = 0;
+  uint32_t           collateral_expiration_status = 1;
   sgx_ql_qv_result_t verification_result = SGX_QL_QV_RESULT_UNSPECIFIED;
 
   time_t current_time = time(NULL);
@@ -283,10 +283,10 @@ out:
 
 bool gramine_local_verify_impl(const int what_to_say_size, byte* what_to_say,
                                const int attestation_size, byte* attestation,
-                               int* measurement_out_size,
+                               int*  measurement_out_size,
                                byte* measurement_out) {
   ssize_t bytes;
-  int ret = -1;
+  int     ret = -1;
   uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
 #ifdef DEBUG
@@ -376,12 +376,12 @@ bool gramine_local_verify_impl(const int what_to_say_size, byte* what_to_say,
 
 bool gramine_remote_verify_impl(const int what_to_say_size, byte* what_to_say,
                                 const int attestation_size, byte* attestation,
-                                int* measurement_out_size,
+                                int*  measurement_out_size,
                                 byte* measurement_out) {
   ssize_t bytes;
-  int ret = -1;
+  int     ret = -1;
   uint8_t mr[SGX_MR_SIZE];
-  size_t mr_size;
+  size_t  mr_size;
   uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
 #ifdef DEBUG
@@ -440,7 +440,7 @@ bool gramine_get_measurement(byte* measurement) {
   bool status = true;
   byte attestation[MAX_ATTESTATION_SIZE];
   byte user_data[USER_DATA_SIZE];
-  int attestation_size;
+  int  attestation_size;
 
   for (int i = 0; i < USER_DATA_SIZE; i++) {
     user_data[i] = (byte)i;
@@ -460,15 +460,15 @@ bool gramine_get_measurement(byte* measurement) {
 }
 
 bool gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out) {
-  int ret     = 0;
-  bool status = true;
+  int                       ret    = 0;
+  bool                      status = true;
   __sgx_mem_aligned uint8_t key[KEY_SIZE];
-  uint8_t tag[TAG_SIZE];
-  unsigned char enc_buf[in_size];
-  mbedtls_gcm_context gcm;
-  int tag_size = TAG_SIZE;
-  int i, j = 0;
-  uint8_t measurement[SGX_MR_SIZE];
+  uint8_t                   tag[TAG_SIZE];
+  unsigned char             enc_buf[in_size];
+  mbedtls_gcm_context       gcm;
+  int                       tag_size = TAG_SIZE;
+  int                       i, j = 0;
+  uint8_t                   measurement[SGX_MR_SIZE];
 
 #ifdef DEBUG
   printf("Seal: Input size: %d \n", in_size);
@@ -546,15 +546,15 @@ done:
 }
 
 bool gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out) {
-  int ret     = 0;
-  bool status = true;
+  int                       ret    = 0;
+  bool                      status = true;
   __sgx_mem_aligned uint8_t key[KEY_SIZE];
-  uint8_t tag[TAG_SIZE];
-  mbedtls_gcm_context gcm;
-  int tag_size = TAG_SIZE;
-  int enc_size = 0;
-  int i, j = 0;
-  uint8_t measurement[SGX_MR_SIZE];
+  uint8_t                   tag[TAG_SIZE];
+  mbedtls_gcm_context       gcm;
+  int                       tag_size = TAG_SIZE;
+  int                       enc_size = 0;
+  int                       i, j = 0;
+  uint8_t                   measurement[SGX_MR_SIZE];
 
 #ifdef DEBUG
   printf("Preparing Unseal size: %d \n", in_size);

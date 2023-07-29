@@ -23,22 +23,22 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-extern bool verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation,
-                              byte* the_attestation, int* size_measurement,
-                              byte* measurement);
+extern bool      verify_sev_Attest(EVP_PKEY* key, int size_sev_attestation,
+                                   byte* the_attestation, int* size_measurement,
+                                   byte* measurement);
 extern EVP_PKEY* get_simulated_vcek_key();
 extern bool sev_verify_report(EVP_PKEY* key, struct attestation_report* report);
 
 bool test_sev(bool print_all) {
   const int data_size = 64;
-  string enclave_type("sev-enclave");
-  string enclave_id("test-enclave");
-  byte data[data_size];
+  string    enclave_type("sev-enclave");
+  string    enclave_id("test-enclave");
+  byte      data[data_size];
   for (int i = 0; i < data_size; i++)
     data[i] = i;
 
   byte sealed[512];
-  int sealed_size = 512;
+  int  sealed_size = 512;
   memset(sealed, 0, sealed_size);
 
   if (!Seal(enclave_type, enclave_id, data_size, data, &sealed_size, sealed)) {
@@ -57,7 +57,7 @@ bool test_sev(bool print_all) {
   }
 
   byte unsealed[512];
-  int unsealed_size = 512;
+  int  unsealed_size = 512;
   memset(unsealed, 0, unsealed_size);
 
   if (!Unseal(enclave_type, enclave_id, sealed_size, sealed, &unsealed_size,
@@ -78,7 +78,7 @@ bool test_sev(bool print_all) {
     return false;
   }
 
-  int size_measurement = 64;
+  int  size_measurement = 64;
   byte measurement[size_measurement];
   memset(measurement, 0, size_measurement);
 
@@ -104,8 +104,8 @@ bool test_sev(bool print_all) {
   ud.set_time(str_now);
   ud.mutable_enclave_key()->CopyFrom(public_auth_key);
 
-  int size_out = 2048;
-  byte out[size_out];
+  int    size_out = 2048;
+  byte   out[size_out];
   string serialized_user;
   if (!ud.SerializeToString(&serialized_user)) {
     return false;
@@ -118,11 +118,11 @@ bool test_sev(bool print_all) {
 
 #ifdef SEV_DUMMY_GUEST
   extern EVP_PKEY* get_simulated_vcek_key();
-  EVP_PKEY* verify_pkey = get_simulated_vcek_key();
+  EVP_PKEY*        verify_pkey = get_simulated_vcek_key();
 #else
   extern int sev_read_pem_into_x509(const char* file_name, X509** x509_cert);
   extern EVP_PKEY* sev_get_vcek_pubkey(X509 * x509_vcek);
-  X509* x509_vcek;
+  X509*            x509_vcek;
   if (sev_read_pem_into_x509("test_data/vcek.pem", &x509_vcek) !=
       EXIT_SUCCESS) {
     printf("Failed to load VCEK Cert!\n");
@@ -144,7 +144,7 @@ bool test_sev(bool print_all) {
   }
 
   sev_attestation_message sev_att;
-  string at_str;
+  string                  at_str;
   at_str.assign((char*)out, size_out);
   if (!sev_att.ParseFromString(at_str)) {
     printf("Can't parse attestation\n");
@@ -152,7 +152,7 @@ bool test_sev(bool print_all) {
   }
 
   attestation_user_data ud_new;
-  string ud_str;
+  string                ud_str;
   ud_str.assign((char*)sev_att.what_was_said().data(),
                 sev_att.what_was_said().size());
   if (!ud_new.ParseFromString(ud_str)) {
@@ -252,12 +252,12 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
 }
 #endif /* 0 dead-code scaffolding for an earlier version */
 
-bool construct_sev_platform_evidence(const string& purpose,
-                                     const string& serialized_ark_cert,
-                                     const string& serialized_ask_cert,
-                                     const string& serialized_vcek_cert,
+bool construct_sev_platform_evidence(const string&      purpose,
+                                     const string&      serialized_ark_cert,
+                                     const string&      serialized_ask_cert,
+                                     const string&      serialized_vcek_cert,
                                      const key_message& vcek,
-                                     evidence_package* evp) {
+                                     evidence_package*  evp) {
   evp->set_prover_type("vse-verifier");
   string enclave_type("sev-enclave");
 
@@ -291,7 +291,7 @@ bool construct_sev_platform_evidence(const string& purpose,
   ev->set_serialized_evidence(serialized_vcek_cert);
 
   key_message auth_key;
-  RSA* r = RSA_new();
+  RSA*        r = RSA_new();
   if (!generate_new_rsa_key(2048, r)) {
     printf("construct_sev_platform_evidence: Can't generate rsa key\n");
     return false;
@@ -327,7 +327,7 @@ bool construct_sev_platform_evidence(const string& purpose,
     return false;
   }
 
-  int size_out = 16000;
+  int  size_out = 16000;
   byte out[size_out];
 #if 1
   if (!Attest(enclave_type, serialized_ud.size(), (byte*)serialized_ud.data(),
@@ -362,9 +362,9 @@ bool test_sev_platform_certify(
     const string& ask_key_file_name, const string& vcek_key_file_name,
     const string& ark_cert_file_name, const string& ask_cert_file_name,
     const string& vcek_cert_file_name) {
-  string enclave_type("sev-enclave");
-  string evidence_descriptor("sev-full-platform");
-  string enclave_id("test-enclave");
+  string           enclave_type("sev-enclave");
+  string           evidence_descriptor("sev-full-platform");
+  string           enclave_id("test-enclave");
   evidence_package evp;
 
   // This has no effect for now
@@ -382,7 +382,7 @@ bool test_sev_platform_certify(
 
   key_message policy_key;
   key_message policy_pk;
-  string policy_key_str;
+  string      policy_key_str;
   if (!read_file_into_string(policy_key_file, &policy_key_str)) {
     printf("test_sev_platform_certify: Can't read policy key\n");
     return false;
@@ -402,7 +402,7 @@ bool test_sev_platform_certify(
   // Make ark, ask, vcek certs
   key_message ark_key;
   key_message ark_pk;
-  string ark_key_str;
+  string      ark_key_str;
   if (!read_file_into_string(ark_key_file_name, &ark_key_str)) {
     printf("test_sev_platform_certify: Can't read ark key\n");
     return false;
@@ -421,7 +421,7 @@ bool test_sev_platform_certify(
 
   key_message ask_key;
   key_message ask_pk;
-  string ask_key_str;
+  string      ask_key_str;
   if (!read_file_into_string(ask_key_file_name, &ask_key_str)) {
     printf("test_sev_platform_certify: Can't read ask  key\n");
     return false;
@@ -440,7 +440,7 @@ bool test_sev_platform_certify(
 
   key_message vcek_key;
   key_message vcek_pk;
-  string vcek_key_str;
+  string      vcek_key_str;
   if (!read_file_into_string(vcek_key_file_name, &vcek_key_str)) {
     printf("test_sev_platform_certify: Can't read vcek key\n");
     return false;
@@ -461,7 +461,7 @@ bool test_sev_platform_certify(
   string ark_issuer_name(ark_key.key_name());
   string ark_subject_desc("platform-provider");
   string ark_subject_name(ark_key.key_name());
-  X509* x_ark = X509_new();
+  X509*  x_ark = X509_new();
   if (!produce_artifact(ark_key, ark_issuer_name, ark_issuer_desc, ark_pk,
                         ark_subject_name, ark_subject_desc, 1ULL,
                         365.26 * 86400, x_ark, true)) {
@@ -475,7 +475,7 @@ bool test_sev_platform_certify(
 
   string ask_subject_desc("platform-provider");
   string ask_subject_name(ask_key.key_name());
-  X509* x_ask = X509_new();
+  X509*  x_ask = X509_new();
   if (!produce_artifact(ark_key, ark_issuer_name, ark_issuer_desc, ask_pk,
                         ask_subject_name, ask_subject_desc, 2ULL,
                         365.26 * 86400, x_ask, false)) {
@@ -491,7 +491,7 @@ bool test_sev_platform_certify(
   string vcek_issuer_name(ask_key.key_name());
   string vcek_subject_desc("platform-provider");
   string vcek_subject_name(vcek_key.key_name());
-  X509* x_vcek = X509_new();
+  X509*  x_vcek = X509_new();
   if (!produce_artifact(ask_key, vcek_issuer_name, vcek_issuer_desc, vcek_pk,
                         vcek_subject_name, vcek_subject_desc, 3ULL,
                         365.26 * 86400, x_vcek, false)) {

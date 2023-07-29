@@ -47,25 +47,25 @@ static string data_dir = "../app1_data/";
 #define FLAGS_measurement_file "example_app.measurement"
 
 static std::string enclave_type;
-cc_trust_data* app_trust_data = nullptr;
+cc_trust_data*     app_trust_data = nullptr;
 
 static bool simulator_initialized   = false;
 static bool openenclave_initialized = false;
-bool test_local_certify(string& enclave_type, bool init_from_file,
-                        string& file_name, string& evidence_descriptor);
+bool        test_local_certify(string& enclave_type, bool init_from_file,
+                               string& file_name, string& evidence_descriptor);
 
-bool trust_data_initialized = false;
+bool        trust_data_initialized = false;
 key_message privatePolicyKey;
 key_message publicPolicyKey;
-string serializedPolicyCert;
-X509* policy_cert = nullptr;
+string      serializedPolicyCert;
+X509*       policy_cert = nullptr;
 
 policy_store pStore;
-key_message privateAppKey;
-key_message publicAppKey;
-const int app_symmetric_key_size = 64;
-byte app_symmetric_key[app_symmetric_key_size];
-key_message symmertic_key_for_protect;
+key_message  privateAppKey;
+key_message  publicAppKey;
+const int    app_symmetric_key_size = 64;
+byte         app_symmetric_key[app_symmetric_key_size];
+key_message  symmertic_key_for_protect;
 
 // Standard algorithms for the enclave
 string public_key_alg("rsa-2048");
@@ -131,7 +131,7 @@ bool openenclave_init(void) {
 }
 
 bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
-  oe_result_t result = OE_OK;
+  oe_result_t       result = OE_OK;
   static const char rnd_seed[] =
       "string to make the random number generator think it has entropy";
 
@@ -233,7 +233,7 @@ void server_application(secure_authenticated_channel& channel) {
 
   // Read message from client over authenticated, encrypted channel
   string out;
-  int n = channel.read(&out);
+  int    n = channel.read(&out);
   printf("SSL server read: %s\n", (const char*)out.data());
 
   std::string ret = proc_data((const char*)out.c_str());
@@ -268,7 +268,7 @@ void client_application(secure_authenticated_channel& channel) {
   channel.write(msg.size(), (byte*)msg.c_str());
 
   string buf;
-  int n = channel.read(&buf);
+  int    n = channel.read(&buf);
   printf("SSL client read: %s\n", (const char*)buf.c_str());
 }
 
@@ -283,7 +283,7 @@ bool run_me_as_client() {
     printf("trust data not initialized\n");
     return false;
   }
-  string my_role("client");
+  string                       my_role("client");
   secure_authenticated_channel channel(my_role);
   if (!channel.init_client_ssl(
           FLAGS_server_app_host, FLAGS_server_app_port,
@@ -308,7 +308,7 @@ bool temp_test() {
   EVP_PKEY* auth_private_key = EVP_PKEY_new();
   EVP_PKEY_set1_RSA(auth_private_key, r);
 
-  X509* x509_auth_key_cert = X509_new();
+  X509*  x509_auth_key_cert = X509_new();
   string auth_cert_str;
   auth_cert_str.assign((char*)privateAppKey.certificate().data(),
                        privateAppKey.certificate().size());

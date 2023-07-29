@@ -82,7 +82,7 @@ int main(int an, char** av) {
 
   key_message priv;
   key_message pub;
-  string serialized_key;
+  string      serialized_key;
   if (strcmp(FLAGS_key_type.c_str(), "rsa-1024-private") == 0 ||
       strcmp(FLAGS_key_type.c_str(), "rsa-2048-private") == 0 ||
       strcmp(FLAGS_key_type.c_str(), "rsa-4096-private") == 0 ||
@@ -118,11 +118,11 @@ int main(int an, char** av) {
       printf("Can't convert to asn1\n");
       return 1;
     }
-    string issuer_name_str;
-    string issuer_description_str;
-    string subject_name_str;
-    string subject_organization_str;
-    uint64_t sn = 0;
+    string      issuer_name_str;
+    string      issuer_description_str;
+    string      subject_name_str;
+    string      subject_organization_str;
+    uint64_t    sn = 0;
     key_message s_key;
     if (verify_artifact(*cert, pub, &issuer_name_str, &issuer_description_str,
                         &s_key, &subject_name_str, &subject_organization_str,

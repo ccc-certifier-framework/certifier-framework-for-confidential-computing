@@ -119,7 +119,7 @@ int main(int an, char** av) {
       "--sev_attest=sev_attest.bin --policy_key-policy_key.bin\n");
 
   // policy key
-  string policy_key_str;
+  string      policy_key_str;
   key_message policy_key;
   if (!read_file_into_string(FLAGS_policy_key_file, &policy_key_str)) {
     printf("Can't read policy key\n");
@@ -150,7 +150,7 @@ int main(int an, char** av) {
   // ARK
   key_message ark_vse_key;
   key_message pub_ark_vse_key;
-  RSA* r1 = RSA_new();
+  RSA*        r1 = RSA_new();
   if (!generate_new_rsa_key(4096, r1)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -188,7 +188,7 @@ int main(int an, char** av) {
   // ASK
   key_message ask_vse_key;
   key_message pub_ask_vse_key;
-  RSA* r2 = RSA_new();
+  RSA*        r2 = RSA_new();
   if (!generate_new_rsa_key(4096, r2)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -226,7 +226,7 @@ int main(int an, char** av) {
   // VCEK
   key_message vcek_vse_key;
   key_message pub_vcek_vse_key;
-  EC_KEY* ec = generate_new_ecc_key(384);
+  EC_KEY*     ec = generate_new_ecc_key(384);
   if (ec == nullptr) {
     printf("Can't generate ecc key\n");
     return 1;
@@ -262,7 +262,7 @@ int main(int an, char** av) {
 
   // Attestation
   attestation_user_data ud;
-  string enclave_type("sev-enclave");
+  string                enclave_type("sev-enclave");
 
   // use policy key as enclave key
   if (!make_attestation_user_data(enclave_type, pub_policy_key, &ud)) {
@@ -277,7 +277,7 @@ int main(int an, char** av) {
     return 1;
   }
 
-  int hash_len = 48;
+  int  hash_len = 48;
   byte user_data_hash[hash_len];
 
   if (!digest_message("sha-384", (byte*)said_str.data(), said_str.size(),
@@ -288,11 +288,11 @@ int main(int an, char** av) {
   memcpy(default_report.report_data, user_data_hash, hash_len);
 
   // sign report, put in in the_attestation
-  int size_out = 256;
+  int  size_out = 256;
   byte out[256];
   memset(out, 0, size_out);
 
-  int sig_digest_len = 48;
+  int  sig_digest_len = 48;
   byte sig_digest[sig_digest_len];
   if (!digest_message("sha-384", (byte*)&default_report,
                       sizeof(attestation_report) - sizeof(signature),

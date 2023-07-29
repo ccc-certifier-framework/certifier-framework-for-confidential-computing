@@ -56,7 +56,7 @@ void server_application(secure_authenticated_channel& channel) {
 
   // Read message from client over authenticated, encrypted channel
   string out;
-  int n = channel.read(&out);
+  int    n = channel.read(&out);
   printf("SSL server read: %s\n", (const char*)out.data());
 
   // Reply over authenticated, encrypted channel
@@ -82,7 +82,7 @@ void client_application(secure_authenticated_channel& channel) {
 
   // Get server response over authenticated, encrypted channel and print it
   string out;
-  int n = channel.read(&out);
+  int    n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
 }
 
@@ -90,7 +90,7 @@ bool run_me_as_client(const string& host_name, int port,
                       string& asn1_policy_cert, key_message& private_key,
                       string& private_key_cert) {
   printf("running as client\n");
-  string my_role("client");
+  string                       my_role("client");
   secure_authenticated_channel channel(my_role);
   if (!channel.init_client_ssl(host_name, port, asn1_policy_cert, private_key,
                                private_key_cert)) {
@@ -145,7 +145,7 @@ int main(int an, char** av) {
   // read in policy key and my key
   key_message policy_key;
   key_message auth_key;
-  X509* policy_cert = nullptr;
+  X509*       policy_cert = nullptr;
 
   string policy_cert_file(FLAGS_data_dir);
   policy_cert_file.append(FLAGS_policy_cert_file);

@@ -30,13 +30,13 @@ int main(int an, char** av) {
   }
 
   const int buf_size = 100;
-  byte buf[buf_size];
+  byte      buf[buf_size];
   for (int i = 0; i < buf_size; i++)
     buf[i] = (byte)2 * i;
 
-  bool res            = true;
+  bool      res       = true;
   const int num_tests = 20;
-  int pid             = fork();
+  int       pid       = fork();
   if (pid < 0) {
   } else if (pid == 0) {  // child
     close(fd[0]);
@@ -49,7 +49,7 @@ int main(int an, char** av) {
     close(fd[1]);
     for (int i = 0; i < num_tests; i++) {
       string out;
-      int k = sized_pipe_read(fd[0], &out);
+      int    k = sized_pipe_read(fd[0], &out);
       if (k < 0) {
         res = false;
       } else {

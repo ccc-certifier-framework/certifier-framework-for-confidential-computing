@@ -114,7 +114,7 @@ int main(int an, char** av) {
     printf("Output file: %s\n", FLAGS_out_file.c_str());
   }
 
-  int measurement_size = 64;
+  int  measurement_size = 64;
   byte m[measurement_size];
 
   if (FLAGS_test_measurement == true) {
@@ -128,10 +128,10 @@ int main(int an, char** av) {
     return 0;
   } else if (FLAGS_mrenclave.size() != 0) {
     size_t size = FLAGS_mrenclave.size();
-    char hex[size + 2];
+    char   hex[size + 2];
     memset((byte*)hex, 0, size + 2);
     const char* pos = (const char*)hex;
-    byte m[measurement_size];
+    byte        m[measurement_size];
     if (size % 2) {
       hex[0] = '0';
       memcpy(hex + 1, FLAGS_mrenclave.c_str(), size + 1);

@@ -41,23 +41,23 @@ enum aead_algo {
 };
 
 struct snp_guest_msg_hdr {
-  u8 authtag[MAX_AUTHTAG_LEN];
+  u8  authtag[MAX_AUTHTAG_LEN];
   u64 msg_seqno;
-  u8 rsvd1[8];
-  u8 algo;
-  u8 hdr_version;
+  u8  rsvd1[8];
+  u8  algo;
+  u8  hdr_version;
   u16 hdr_sz;
-  u8 msg_type;
-  u8 msg_version;
+  u8  msg_type;
+  u8  msg_version;
   u16 msg_sz;
   u32 rsvd2;
-  u8 msg_vmpck;
-  u8 rsvd3[35];
+  u8  msg_vmpck;
+  u8  rsvd3[35];
 } __packed;
 
 struct snp_guest_msg {
   struct snp_guest_msg_hdr hdr;
-  u8 payload[4000];
+  u8                       payload[4000];
 } __packed;
 
 /*
@@ -73,25 +73,25 @@ struct secrets_os_area {
   u32 msg_seqno_2;
   u32 msg_seqno_3;
   u64 ap_jump_table_pa;
-  u8 rsvd[40];
-  u8 guest_usage[32];
+  u8  rsvd[40];
+  u8  guest_usage[32];
 } __packed;
 
 #define VMPCK_KEY_LEN 32
 
 /* See the SNP spec version 0.9 for secrets page format */
 struct snp_secrets_page_layout {
-  u32 version;
-  u32 imien : 1, rsvd1 : 31;
-  u32 fms;
-  u32 rsvd2;
-  u8 gosvw[16];
-  u8 vmpck0[VMPCK_KEY_LEN];
-  u8 vmpck1[VMPCK_KEY_LEN];
-  u8 vmpck2[VMPCK_KEY_LEN];
-  u8 vmpck3[VMPCK_KEY_LEN];
+  u32                    version;
+  u32                    imien : 1, rsvd1 : 31;
+  u32                    fms;
+  u32                    rsvd2;
+  u8                     gosvw[16];
+  u8                     vmpck0[VMPCK_KEY_LEN];
+  u8                     vmpck1[VMPCK_KEY_LEN];
+  u8                     vmpck2[VMPCK_KEY_LEN];
+  u8                     vmpck3[VMPCK_KEY_LEN];
   struct secrets_os_area os_area;
-  u8 rsvd3[3840];
+  u8                     rsvd3[3840];
 } __packed;
 
 #endif /* __VIRT_SEVGUEST_H__ */

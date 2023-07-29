@@ -39,10 +39,10 @@
 // Some Data and access functions
 // -------------------------------------------------------------------
 
-extern bool certifier_parent_enclave_type_intitalized;
+extern bool   certifier_parent_enclave_type_intitalized;
 extern string certifier_parent_enclave_type;
 
-extern bool certifier_public_policy_key_initialized;
+extern bool        certifier_public_policy_key_initialized;
 extern key_message certifier_public_policy_key;
 const key_message* GetPublicPolicyKey();
 
@@ -57,8 +57,8 @@ bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
 // Claims and proofs
 // -------------------------------------------------------------------
 
-bool make_attestation_user_data(const string& enclave_type,
-                                const key_message& enclave_key,
+bool make_attestation_user_data(const string&          enclave_type,
+                                const key_message&     enclave_key,
                                 attestation_user_data* out);
 bool sign_report(const string& type, const string& report,
                  const string& signing_alg, const key_message& signing_key,
@@ -80,19 +80,19 @@ bool read_signed_vse_statements(const string& in, signed_claim_sequence* s);
 
 class predicate_dominance {
  public:
-  string predicate_;
+  string               predicate_;
   predicate_dominance* first_child_;
   predicate_dominance* next_;
 
   predicate_dominance();
   ~predicate_dominance();
 
-  void print_tree(int indent);
-  void print_node(int indent);
-  void print_descendants(int indent);
+  void                 print_tree(int indent);
+  void                 print_node(int indent);
+  void                 print_descendants(int indent);
   predicate_dominance* find_node(const string& pred);
-  bool insert(const string& parent, const string& descendant);
-  bool is_child(const string& descendant);
+  bool                 insert(const string& parent, const string& descendant);
+  bool                 is_child(const string& descendant);
 };
 bool dominates(predicate_dominance& root, const string& parent,
                const string& descendant);
@@ -100,18 +100,18 @@ bool dominates(predicate_dominance& root, const string& parent,
 // Certifier proofs
 // -------------------------------------------------------------
 
-bool statement_already_proved(const vse_clause& cl,
+bool statement_already_proved(const vse_clause&  cl,
                               proved_statements* are_proved);
 
 bool construct_vse_attestation_statement(const key_message& attest_key,
                                          const key_message& auth_key,
-                                         const string& measurement,
-                                         vse_clause* vse_attest_clause);
+                                         const string&      measurement,
+                                         vse_clause*        vse_attest_clause);
 bool construct_what_to_say(string& enclave_type, key_message& enclave_pk,
                            string* what_to_say);
-bool verify_signed_assertion_and_extract_clause(const key_message& key,
+bool verify_signed_assertion_and_extract_clause(const key_message&          key,
                                                 const signed_claim_message& sc,
-                                                vse_clause* cl);
+                                                vse_clause*                 cl);
 
 bool init_certifier_rules(certifier_rules& rules);
 bool init_axiom(key_message& pk, proved_statements* _proved);
@@ -131,7 +131,7 @@ bool verify_rule_5(predicate_dominance& dom_tree, const vse_clause& c1,
 bool verify_rule_6(predicate_dominance& dom_tree, const vse_clause& c1,
                    const vse_clause& c2, const vse_clause& conclusion);
 bool verify_external_proof_step(predicate_dominance& dom_tree,
-                                proof_step& step);
+                                proof_step&          step);
 bool verify_internal_proof_step(predicate_dominance& dom_tree,
                                 const vse_clause s1, const vse_clause s2,
                                 const vse_clause conclude, int rule_to_apply);
@@ -140,48 +140,48 @@ bool verify_proof(key_message& policy_pk, vse_clause& to_prove,
                   predicate_dominance& dom_tree, proof* the_proof,
                   proved_statements* are_proved);
 bool add_fact_from_signed_claim(const signed_claim_message& signedClaim,
-                                proved_statements* already_proved);
+                                proved_statements*          already_proved);
 bool add_newfacts_for_sdk_platform_attestation(
     key_message& policy_pk, signed_claim_sequence& trusted_platforms,
     signed_claim_sequence& trusted_measurements,
-    proved_statements* already_proved);
+    proved_statements*     already_proved);
 bool add_new_facts_for_abbreviatedplatformattestation(
     key_message& policy_pk, signed_claim_sequence& trusted_platforms,
     signed_claim_sequence& trusted_measurements,
-    proved_statements* already_proved);
-bool construct_proof_from_sev_evidence(key_message& policy_pk,
-                                       const string& purpose,
+    proved_statements*     already_proved);
+bool construct_proof_from_sev_evidence(key_message&       policy_pk,
+                                       const string&      purpose,
                                        proved_statements* already_proved,
                                        vse_clause* to_prove, proof* pf);
-bool construct_proof_from_sdk_evidence(key_message& policy_pk,
-                                       const string& purpose,
+bool construct_proof_from_sdk_evidence(key_message&       policy_pk,
+                                       const string&      purpose,
                                        proved_statements* already_proved,
                                        vse_clause* to_prove, proof* pf);
-bool construct_proof_from_full_vse_evidence(key_message& policy_pk,
-                                            const string& purpose,
+bool construct_proof_from_full_vse_evidence(key_message&       policy_pk,
+                                            const string&      purpose,
                                             proved_statements* already_proved,
                                             vse_clause* to_prove, proof* pf);
 bool construct_proof_from_request(const string& evidence_descriptor,
                                   key_message& policy_pk, const string& purpose,
                                   signed_claim_sequence& trusted_platforms,
                                   signed_claim_sequence& trusted_measurements,
-                                  evidence_package& evp,
-                                  proved_statements* already_proved,
+                                  evidence_package&      evp,
+                                  proved_statements*     already_proved,
                                   vse_clause* to_prove, proof* pf);
-bool validate_evidence(const string& evidence_descriptor,
+bool validate_evidence(const string&          evidence_descriptor,
                        signed_claim_sequence& trusted_platforms,
                        signed_claim_sequence& trusted_measurements,
                        const string& purpose, evidence_package& evp,
                        key_message& policy_pk);
 
 bool get_platform_from_sev_attest(const sev_attestation_message& sev_att,
-                                  entity_message* ent);
+                                  entity_message*                ent);
 bool get_measurement_from_sev_attest(const sev_attestation_message& sev_att,
-                                     entity_message* ent);
+                                     entity_message*                ent);
 bool filter_sev_policy(const sev_attestation_message& sev_att,
-                       const key_message& policy_pk,
-                       const signed_claim_sequence& policy,
-                       signed_claim_sequence* filtered_policy);
+                       const key_message&             policy_pk,
+                       const signed_claim_sequence&   policy,
+                       signed_claim_sequence*         filtered_policy);
 bool init_policy(signed_claim_sequence& policy, key_message& policy_pk,
                  proved_statements* already_proved);
 bool construct_proof_from_sev_evidence_with_plat(
@@ -194,7 +194,7 @@ bool verify_proof_from_array(key_message& policy_pk, vse_clause& to_prove,
                              predicate_dominance& dom_tree,
                              proved_statements* are_proved, int num_steps,
                              proof_step* steps);
-bool validate_evidence_from_policy(const string& evidence_descriptor,
+bool validate_evidence_from_policy(const string&          evidence_descriptor,
                                    signed_claim_sequence& policy,
                                    const string& purpose, evidence_package& evp,
                                    key_message& policy_pk);

@@ -34,9 +34,9 @@
 #define AAD_LEN 48
 #define MSG_HDR_VER 1
 
-static unsigned int sev_major        = 0;
-static struct class *sev_class       = NULL;
-static struct snp_guest_dev *snp_dev = NULL;
+static unsigned int          sev_major = 0;
+static struct class *        sev_class = NULL;
+static struct snp_guest_dev *snp_dev   = NULL;
 ;
 
 /*
@@ -114,36 +114,36 @@ struct snp_req_data {
   unsigned long req_gpa;
   unsigned long resp_gpa;
   unsigned long data_gpa;
-  unsigned int data_npages;
+  unsigned int  data_npages;
 };
 
 struct snp_guest_crypto {
   struct crypto_aead *tfm;
-  u8 *iv, *authtag;
-  int iv_len, a_len;
+  u8 *                iv, *authtag;
+  int                 iv_len, a_len;
 };
 
 struct snp_guest_dev {
-  struct cdev cdev;
-  struct device *dev;
+  struct cdev       cdev;
+  struct device *   dev;
   struct miscdevice misc;
 
-  void *certs_data;
-  struct snp_guest_crypto *crypto;
-  struct snp_guest_msg *request, *response;
+  void *                          certs_data;
+  struct snp_guest_crypto *       crypto;
+  struct snp_guest_msg *          request, *response;
   struct snp_secrets_page_layout *layout;
-  struct snp_req_data input;
-  u32 *os_area_msg_seqno;
-  u8 *vmpck;
+  struct snp_req_data             input;
+  u32 *                           os_area_msg_seqno;
+  u8 *                            vmpck;
 };
 
 /* Mutex to serialize the shared buffer access and command handling. */
 static DEFINE_MUTEX(snp_cmd_mutex);
 
-static int get_report(struct snp_guest_dev *snp_dev,
+static int get_report(struct snp_guest_dev *          snp_dev,
                       struct snp_guest_request_ioctl *arg) {
-  struct snp_report_req req;
-  int rc = 0;
+  struct snp_report_req   req;
+  int                     rc = 0;
   struct msg_report_resp *report_resp;
 
   default_report.reported_tcb.raw     = 0x03000000000008115ULL;
@@ -178,12 +178,12 @@ static int get_report(struct snp_guest_dev *snp_dev,
   return rc;
 }
 
-static int get_derived_key(struct snp_guest_dev *snp_dev,
+static int get_derived_key(struct snp_guest_dev *          snp_dev,
                            struct snp_guest_request_ioctl *arg) {
   struct snp_derived_key_resp resp;
-  struct snp_derived_key_req req;
-  struct msg_key_resp *key_resp = (struct msg_key_resp *)&resp.data;
-  int rc                        = 0;
+  struct snp_derived_key_req  req;
+  struct msg_key_resp *       key_resp = (struct msg_key_resp *)&resp.data;
+  int                         rc       = 0;
   u8 buf[32] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
                 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c,
                 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
@@ -219,7 +219,7 @@ static int get_derived_key(struct snp_guest_dev *snp_dev,
   return rc;
 }
 
-static int get_ext_report(struct snp_guest_dev *snp_dev,
+static int get_ext_report(struct snp_guest_dev *          snp_dev,
                           struct snp_guest_request_ioctl *arg) {
   printk(KERN_WARNING "SEV Guest Null driver get_ext_report\n");
   return -1;
@@ -228,9 +228,9 @@ static int get_ext_report(struct snp_guest_dev *snp_dev,
 static long snp_guest_ioctl(struct file *file, unsigned int ioctl,
                             unsigned long arg) {
   struct snp_guest_dev *snp_dev = (struct snp_guest_dev *)file->private_data;
-  void __user *argp             = (void __user *)arg;
+  void __user *                  argp = (void __user *)arg;
   struct snp_guest_request_ioctl input;
-  int ret = -ENOTTY;
+  int                            ret = -ENOTTY;
 
   if (copy_from_user(&input, argp, sizeof(input)))
     return -EFAULT;
@@ -292,8 +292,8 @@ static const struct file_operations snp_guest_fops = {
 };
 
 static int construct_device(struct snp_guest_dev *dev, struct class *class) {
-  int err               = 0;
-  dev_t devno           = MKDEV(sev_major, 0);
+  int            err    = 0;
+  dev_t          devno  = MKDEV(sev_major, 0);
   struct device *device = NULL;
 
   BUG_ON(dev == NULL || class == NULL);
@@ -337,7 +337,7 @@ static void sev_guest_cleanup_module(void) {
 }
 
 static int __init sev_guest_init_module(void) {
-  int err   = 0;
+  int   err = 0;
   dev_t dev = 0;
 
   err = alloc_chrdev_region(&dev, 0, 1, DEVICE_NAME);

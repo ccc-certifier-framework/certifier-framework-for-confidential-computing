@@ -58,11 +58,11 @@ class policy_store {
  public:
   enum { MAX_NUM_ENTRIES = 500 };
 
-  unsigned max_num_ents_;
-  unsigned num_ents_;
+  unsigned      max_num_ents_;
+  unsigned      num_ents_;
   store_entry** entry_;
 
-  bool policy_key_valid_;
+  bool        policy_key_valid_;
   key_message policy_key_;
 
  public:
@@ -74,21 +74,21 @@ class policy_store {
   bool add_entry(const string& tag, const string& type, const string& value);
 
  public:
-  bool is_policy_key_valid();
-  unsigned get_num_entries();
-  int find_entry(const string& tag, const string& type);
+  bool          is_policy_key_valid();
+  unsigned      get_num_entries();
+  int           find_entry(const string& tag, const string& type);
   const string* tag(unsigned ent);
   const string* type(unsigned ent);
-  store_entry* get_entry(unsigned ent);
-  bool delete_entry(unsigned ent);
-  bool get(unsigned ent, string* v);
-  bool put(unsigned ent, const string v);
+  store_entry*  get_entry(unsigned ent);
+  bool          delete_entry(unsigned ent);
+  bool          get(unsigned ent, string* v);
+  bool          put(unsigned ent, const string v);
 
   bool update_or_insert(const string& tag, const string& type,
                         const string& value);
 
   const key_message* get_policy_key();
-  bool set_policy_key(const key_message key);
+  bool               set_policy_key(const key_message key);
 
   void print();
   bool Serialize(string* out);
@@ -125,53 +125,53 @@ class cc_trust_data {
   // Python swig bindings need this to be public, to size other array decls
   static const int max_symmetric_key_size_ = 128;
 
-  bool cc_basic_data_initialized_;
+  bool   cc_basic_data_initialized_;
   string purpose_;
   string enclave_type_;
   string store_file_name_;
   string public_key_algorithm_;
   string symmetric_key_algorithm_;
 
-  bool cc_policy_info_initialized_;
-  string serialized_policy_cert_;
-  X509* x509_policy_cert_;
+  bool        cc_policy_info_initialized_;
+  string      serialized_policy_cert_;
+  X509*       x509_policy_cert_;
   key_message public_policy_key_;
 
-  bool cc_policy_store_initialized_;
+  bool         cc_policy_store_initialized_;
   policy_store store_;
 
   bool cc_provider_provisioned_;
   bool cc_is_certified_;
 
   // For auth
-  bool cc_auth_key_initialized_;
+  bool        cc_auth_key_initialized_;
   key_message private_auth_key_;
   key_message public_auth_key_;
 
-  bool cc_symmetric_key_initialized_;
-  byte symmetric_key_bytes_[max_symmetric_key_size_];
+  bool        cc_symmetric_key_initialized_;
+  byte        symmetric_key_bytes_[max_symmetric_key_size_];
   key_message symmetric_key_;
 
   // For attest
-  bool cc_service_key_initialized_;
+  bool        cc_service_key_initialized_;
   key_message private_service_key_;
   key_message public_service_key_;
 
-  bool cc_service_cert_initialized_;
+  bool   cc_service_cert_initialized_;
   string serialized_service_cert_;
 
-  bool cc_service_platform_rule_initialized_;
+  bool                 cc_service_platform_rule_initialized_;
   signed_claim_message platform_rule_;
 
   // This is the sealing key
-  bool cc_sealing_key_initialized_;
-  byte service_symmetric_key_[max_symmetric_key_size_];
+  bool        cc_sealing_key_initialized_;
+  byte        service_symmetric_key_[max_symmetric_key_size_];
   key_message service_sealing_key_;
 
   // For peer-to-peer certification
-  bool peer_data_initialized_;
+  bool        peer_data_initialized_;
   key_message local_policy_key_;
-  string local_policy_cert_;
+  string      local_policy_cert_;
 
   cc_trust_data();
   cc_trust_data(const string& enclave_type, const string& purpose,
@@ -220,19 +220,19 @@ class cc_trust_data {
 
 class secure_authenticated_channel {
  public:
-  string role_;
-  bool channel_initialized_;
-  key_message private_key_;
-  SSL_CTX* ssl_ctx_;
+  string          role_;
+  bool            channel_initialized_;
+  key_message     private_key_;
+  SSL_CTX*        ssl_ctx_;
   X509_STORE_CTX* store_ctx_;
-  SSL* ssl_;
-  int sock_;
-  string asn1_root_cert_;
-  X509* root_cert_;
-  X509* my_cert_;
-  string asn1_my_cert_;
-  X509* peer_cert_;
-  string peer_id_;
+  SSL*            ssl_;
+  int             sock_;
+  string          asn1_root_cert_;
+  X509*           root_cert_;
+  X509*           my_cert_;
+  string          asn1_my_cert_;
+  X509*           peer_cert_;
+  string          peer_id_;
 
   secure_authenticated_channel(string& role);  // role is client or server
   ~secure_authenticated_channel();
@@ -249,9 +249,9 @@ class secure_authenticated_channel {
   void server_channel_accept_and_auth(
       void (*func)(secure_authenticated_channel&));
 
-  int read(string* out);
-  int read(int size, byte* b);
-  int write(int size, byte* b);
+  int  read(string* out);
+  int  read(int size, byte* b);
+  int  write(int size, byte* b);
   void close();
   bool get_peer_id(string* out);
 };

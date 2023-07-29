@@ -111,7 +111,7 @@ bool make_claim(int size, byte* serialized_claim, string& format,
                 string& descriptor, string& not_before, string& not_after,
                 claim_message* out);
 bool get_vse_clause_from_signed_claim(const signed_claim_message& scm,
-                                      vse_clause* c);
+                                      vse_clause*                 c);
 void print_key_descriptor(const key_message& k);
 void print_entity_descriptor(const entity_message& e);
 void print_property_descriptor(const property& p);
@@ -127,9 +127,9 @@ void print_protected_blob(protected_blob_message& pb);
 bool make_signed_claim(const char* alg, const claim_message& claim,
                        const key_message& key, signed_claim_message* out);
 bool verify_signed_claim(const signed_claim_message& claim,
-                         const key_message& key);
+                         const key_message&          key);
 bool get_vse_clause_from_signed_claim(const signed_claim_message& scm,
-                                      vse_clause* c);
+                                      vse_clause*                 c);
 
 int sized_pipe_read(int fd, string* out);
 int sized_pipe_write(int fd, int size, byte* buf);
@@ -138,7 +138,7 @@ int sized_ssl_write(SSL* ssl, int size, byte* buf);
 
 class cert_keys_seen {
  public:
-  string issuer_name_;
+  string       issuer_name_;
   key_message* k_;
 };
 
@@ -146,18 +146,18 @@ class cert_keys_seen_list {
  public:
   cert_keys_seen_list(int max_size);
   ~cert_keys_seen_list();
-  int max_size_;
-  int size_;
+  int              max_size_;
+  int              size_;
   cert_keys_seen** entries_;
 
   key_message* find_key_seen(const string& name);
-  bool add_key_seen(key_message* k);
+  bool         add_key_seen(key_message* k);
 };
 
 key_message* get_issuer_key(X509* x, cert_keys_seen_list& list);
-EVP_PKEY* pkey_from_key(const key_message& k);
-bool x509_to_public_key(X509* x, key_message* k);
-bool construct_vse_attestation_from_cert(const key_message& subj,
-                                         const key_message& signer,
-                                         vse_clause* cl);
+EVP_PKEY*    pkey_from_key(const key_message& k);
+bool         x509_to_public_key(X509* x, key_message* k);
+bool         construct_vse_attestation_from_cert(const key_message& subj,
+                                                 const key_message& signer,
+                                                 vse_clause*        cl);
 #endif

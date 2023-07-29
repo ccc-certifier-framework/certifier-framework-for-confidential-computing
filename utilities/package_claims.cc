@@ -76,7 +76,7 @@ int main(int an, char** av) {
 
   buffer_sequence bufs;
   for (int i = 0; i < num; i++) {
-    int sz = file_size(file_names[i]);
+    int  sz = file_size(file_names[i]);
     byte buf[sz];
 
     if (!read_file(file_names[i], &sz, buf)) {

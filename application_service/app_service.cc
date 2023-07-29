@@ -91,18 +91,18 @@ DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der",
 
 class spawned_children {
  public:
-  bool valid_;
-  string app_name_;
-  string location_;
-  string measurement_;
-  int pid_;
-  int parent_read_fd_;
-  int parent_write_fd_;
-  std::thread* thread_obj_;
+  bool              valid_;
+  string            app_name_;
+  string            location_;
+  string            measurement_;
+  int               pid_;
+  int               parent_read_fd_;
+  int               parent_write_fd_;
+  std::thread*      thread_obj_;
   spawned_children* next_;
 };
 
-std::mutex kid_mtx;
+std::mutex        kid_mtx;
 spawned_children* my_kids = nullptr;
 
 spawned_children* new_kid() {
@@ -162,13 +162,13 @@ bool measure_binary(const string& file, string* m) {
     return false;
   }
   byte* file_contents = (byte*)malloc(size);
-  int bytes_read      = size;
+  int   bytes_read    = size;
   if (!read_file(file, &bytes_read, file_contents) || bytes_read < size) {
     printf("Executable read failed\n");
     free(file_contents);
     return false;
   }
-  byte digest[32];
+  byte         digest[32];
   unsigned int len = 32;
   if (!digest_message("sha256", file_contents, bytes_read, digest, len)) {
     printf("Digest failed\n");
@@ -181,7 +181,7 @@ bool measure_binary(const string& file, string* m) {
 }
 
 bool measure_in_mem_binary(byte* file_contents, int size, string* m) {
-  byte digest[32];
+  byte         digest[32];
   unsigned int len = 32;
   if (!digest_message("sha256", file_contents, (unsigned)size, digest, len)) {
     printf("Digest failed\n");
@@ -192,8 +192,8 @@ bool measure_in_mem_binary(byte* file_contents, int size, string* m) {
 }
 
 void delete_child(int signum) {
-  int pid             = wait(nullptr);
-  spawned_children* c = find_kid(pid);
+  int               pid = wait(nullptr);
+  spawned_children* c   = find_kid(pid);
   if (c->thread_obj_ != nullptr) {
     delete c->thread_obj_;
   }
@@ -218,7 +218,7 @@ bool soft_Seal(spawned_children* kid, string in, string* out) {
   buffer_to_seal.assign(kid->measurement_.data(), kid->measurement_.size());
   buffer_to_seal.append(in.data(), in.size());
 
-  int t_size = buffer_to_seal.size() + max_pad_size;
+  int  t_size = buffer_to_seal.size() + max_pad_size;
   byte t_out[t_size];
 
   byte iv[block_size];
@@ -241,7 +241,7 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
   printf("soft_Unseal\n");
 #endif
 
-  int t_size = in.size();
+  int  t_size = in.size();
   byte t_out[t_size];
 
   if (!authenticated_decrypt(
@@ -280,10 +280,10 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
   }
 
   vse_attestation_report_info report_info;
-  string serialized_report_info;
+  string                      serialized_report_info;
   report_info.set_enclave_type("application-enclave");
 
-  string nb, na;
+  string     nb, na;
   time_point tn, tf;
   if (!time_now(&tn))
     return false;
@@ -305,7 +305,7 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
   }
 
   const string type("vse-attestation-report");
-  string signing_alg;
+  string       signing_alg;
 
   if (app_trust_data->private_service_key_.key_type() == "rsa-2048-private") {
     signing_alg.assign("rsa-2048-sha256-pkcs-sign");
@@ -369,11 +369,11 @@ void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
          read_fd, write_fd);
 #endif
   while (continue_loop) {
-    bool succeeded = false;
+    bool   succeeded = false;
     string in;
     string out;
     string str_app_req;
-    int n = sized_pipe_read(read_fd, &str_app_req);
+    int    n = sized_pipe_read(read_fd, &str_app_req);
     if (n <= 0) {
       continue;
     }
@@ -409,7 +409,7 @@ void app_service_loop(spawned_children* kid, int read_fd, int write_fd) {
       printf("Service response: failed\n");
 #endif
     app_response rsp;
-    string str_app_rsp;
+    string       str_app_rsp;
     rsp.set_function(req.function());
 
     if (succeeded) {
@@ -469,7 +469,7 @@ bool process_run_request(run_request& req) {
     return false;
   }
 
-  int fsz           = file_size(req.location());
+  int   fsz         = file_size(req.location());
   byte* file_buffer = (byte*)malloc(fsz);
 
   if (!read_file(req.location(), &fsz, file_buffer)) {
@@ -565,10 +565,10 @@ bool process_run_request(run_request& req) {
            req.location().c_str(), child_read_fd, child_write_fd);
 #endif
 
-    string n1    = std::to_string(child_read_fd);
-    string n2    = std::to_string(child_write_fd);
-    int num_args = req.args_size();
-    char** argv  = new char*[num_args + 3];
+    string n1       = std::to_string(child_read_fd);
+    string n2       = std::to_string(child_write_fd);
+    int    num_args = req.args_size();
+    char** argv     = new char*[num_args + 3];
     for (int i = 0; i < num_args; i++) {
       argv[i] = (char*)req.args(i).c_str();
     }
@@ -628,8 +628,8 @@ bool process_run_request(run_request& req) {
 bool app_request_server() {
   // This is the TCP server that requests to start
   // protected programs.
-  const char* hostname = FLAGS_server_app_host.c_str();
-  int port             = FLAGS_server_app_port;
+  const char*        hostname = FLAGS_server_app_host.c_str();
+  int                port     = FLAGS_server_app_port;
   struct sockaddr_in addr;
 
   struct hostent* he = nullptr;
@@ -659,14 +659,14 @@ bool app_request_server() {
   while (1) {
     printf("[%d] application_service server at accept\n", __LINE__);
     struct sockaddr_in addr;
-    int client = accept(sd, (struct sockaddr*)&addr, &len);
+    int                client = accept(sd, (struct sockaddr*)&addr, &len);
 #ifdef DEBUG
     printf("\nclient: %d\n", client);
 #endif
 
     // read run request
     string str_req;
-    int n = sized_socket_read(client, &str_req);
+    int    n = sized_socket_read(client, &str_req);
     if (n < 0) {
       printf("Read failed in application server\n");
       continue;
@@ -674,7 +674,7 @@ bool app_request_server() {
 
     // This should be a serialized run_request
     run_request req;
-    bool ret = false;
+    bool        ret = false;
     if (!req.ParseFromString(str_req)) {
       goto done;
     }
