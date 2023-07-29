@@ -103,4 +103,6 @@ bool keystone_test(const int cert_size, byte* cert) {
 }
 
 // Return 0 if test succeeds; 1 otherwise to indicate failure.
-int main(int argc, char** argv) { return (keystone_test(0, NULL) == false); }
+int main(int argc, char** argv) {
+  return (keystone_test(0, NULL) == false);
+}

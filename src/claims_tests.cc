@@ -394,9 +394,13 @@ bool test_signed_claims(bool print_all) {
 //    without gtest
 #include "test_support.cc"
 
-bool test_certify_steps(bool print_all) { return true; }
+bool test_certify_steps(bool print_all) {
+  return true;
+}
 
-bool test_full_certification(bool print_all) { return true; }
+bool test_full_certification(bool print_all) {
+  return true;
+}
 
 // policy-key says intel-key is-trusted-for-attestation
 // intel-key says attestation-key is-trusted-for-attestation
