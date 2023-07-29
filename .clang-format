@@ -50,6 +50,12 @@ BraceWrapping:
 BreakStringLiterals: true
 
 BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: true
+BreakStringLiterals: true
+
+ColumnLimit:     80
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 3
 ContinuationIndentWidth: 4
 
