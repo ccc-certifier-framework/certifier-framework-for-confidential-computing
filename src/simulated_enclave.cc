@@ -143,8 +143,12 @@ bool simulated_Getmeasurement(int* size_out, byte* out) {
 
 const int max_seal_pad = 256;
 
-bool simulated_Seal(const string& enclave_type, const string& enclave_id,
-                    int in_size, byte* in, int* size_out, byte* out) {
+bool simulated_Seal(const string& enclave_type,
+                    const string& enclave_id,
+                    int           in_size,
+                    byte*         in,
+                    int*          size_out,
+                    byte*         out) {
   const int iv_size = block_size;
   byte      iv[iv_size];
 
@@ -188,8 +192,12 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
   return true;
 }
 
-bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
-                      int in_size, byte* in, int* size_out, byte* out) {
+bool simulated_Unseal(const string& enclave_type,
+                      const string& enclave_id,
+                      int           in_size,
+                      byte*         in,
+                      int*          size_out,
+                      byte*         out) {
   int  iv_size = block_size;
   byte iv[iv_size];
   int  output_size = in_size + max_seal_pad;
@@ -227,8 +235,11 @@ bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
 
 // Attestation is a signed_claim_message
 // with a vse_claim_message claim
-bool simulated_Attest(const string& enclave_type, int what_to_say_size,
-                      byte* what_to_say, int* size_out, byte* out) {
+bool simulated_Attest(const string& enclave_type,
+                      int           what_to_say_size,
+                      byte*         what_to_say,
+                      int*          size_out,
+                      byte*         out) {
   vse_attestation_report_info report_info;
   string                      serialized_report_info;
   report_info.set_enclave_type("simulated-enclave");

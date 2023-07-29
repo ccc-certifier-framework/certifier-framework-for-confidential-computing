@@ -45,7 +45,8 @@ DEFINE_int32(server_app_port, 8124, "port for server app server");
 
 DEFINE_string(policy_store_file, "store.bin", "policy store file name");
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement, "platform_attest_endorsement.bin",
+DEFINE_string(platform_attest_endorsement,
+              "platform_attest_endorsement.bin",
               "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "example_app.measurement", "measurement");

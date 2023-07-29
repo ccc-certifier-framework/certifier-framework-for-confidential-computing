@@ -51,8 +51,9 @@ bool get_clause_from_file(const string& in, vse_clause* cl) {
   return true;
 }
 
-int make_unary_clause_file_utility(entity_message& subject, const string& verb,
-                                   const string& output) {
+int make_unary_clause_file_utility(entity_message& subject,
+                                   const string&   verb,
+                                   const string&   output) {
   vse_clause out_cl;
   string     v = verb;
   if (!make_unary_vse_clause(subject, FLAGS_verb, &out_cl)) {

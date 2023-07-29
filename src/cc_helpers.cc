@@ -84,7 +84,8 @@ extern string gramine_platform_cert;
 //#define DEBUG
 
 certifier::framework::cc_trust_data::cc_trust_data(
-    const string& enclave_type, const string& purpose,
+    const string& enclave_type,
+    const string& purpose,
     const string& policy_store_name) {
   if (purpose == "authentication" || purpose == "attestation") {
     purpose_                   = purpose;
@@ -161,7 +162,8 @@ bool certifier::framework::cc_trust_data::initialize_application_enclave_data(
 }
 
 bool certifier::framework::cc_trust_data::initialize_simulated_enclave_data(
-    const string& attest_key_file_name, const string& measurement_file_name,
+    const string& attest_key_file_name,
+    const string& measurement_file_name,
     const string& attest_endorsement_file_name) {
   if (!cc_policy_info_initialized_) {
     printf(
@@ -194,7 +196,8 @@ bool certifier::framework::cc_trust_data::initialize_gramine_enclave_data(
 }
 
 bool certifier::framework::cc_trust_data::initialize_sev_enclave_data(
-    const string& platform_ark_der_file, const string& platform_ask_der_file,
+    const string& platform_ark_der_file,
+    const string& platform_ask_der_file,
     const string& platform_vcek_der_file) {
 #ifdef SEV_SNP
   if (!sev_Init(platform_ark_der_file,
@@ -247,7 +250,8 @@ bool certifier::framework::cc_trust_data::init_policy_key(int   asn1_cert_size,
 }
 
 bool certifier::framework::cc_trust_data::initialize_keystone_enclave_data(
-    const string& attest_key_file_name, const string& measurement_file_name,
+    const string& attest_key_file_name,
+    const string& measurement_file_name,
     const string& attest_endorsement_file_name) {
 #ifdef KEYSTONE_CERTIFIER
   if (!cc_policy_info_initialized_) {
@@ -286,7 +290,8 @@ bool certifier::framework::cc_trust_data::initialize_keystone_enclave_data(
 }
 
 bool certifier::framework::cc_trust_data::initialize_islet_enclave_data(
-    const string& attest_key_file_name, const string& measurement_file_name,
+    const string& attest_key_file_name,
+    const string& measurement_file_name,
     const string& attest_endorsement_file_name) {
 #ifdef ISLET_CERTIFIER
   if (!cc_policy_info_initialized_) {
@@ -1754,8 +1759,9 @@ bool extract_id_from_cert(X509* in, string* out) {
 }
 
 // Loads server side certs and keys.
-bool load_server_certs_and_key(X509* root_cert, key_message& private_key,
-                               SSL_CTX* ctx) {
+bool load_server_certs_and_key(X509*        root_cert,
+                               key_message& private_key,
+                               SSL_CTX*     ctx) {
   // load auth key, policy_cert and certificate chain
   // Todo: Add other key types
   RSA* r = RSA_new();
@@ -1837,8 +1843,11 @@ bool load_server_certs_and_key(X509* root_cert, key_message& private_key,
 }
 
 bool certifier::framework::server_dispatch(
-    const string& host_name, int port, string& asn1_root_cert,
-    key_message& private_key, const string& private_key_cert,
+    const string& host_name,
+    int           port,
+    string&       asn1_root_cert,
+    key_message&  private_key,
+    const string& private_key_cert,
     void (*func)(secure_authenticated_channel&)) {
   OPENSSL_init_ssl(0, NULL);
   SSL_load_error_strings();
@@ -1956,8 +1965,11 @@ certifier::framework::secure_authenticated_channel::
 }
 
 bool certifier::framework::secure_authenticated_channel::init_client_ssl(
-    const string& host_name, int port, string& asn1_root_cert,
-    key_message& private_key, const string& auth_cert) {
+    const string& host_name,
+    int           port,
+    string&       asn1_root_cert,
+    key_message&  private_key,
+    const string& auth_cert) {
   OPENSSL_init_ssl(0, NULL);
   SSL_load_error_strings();
 
@@ -2157,8 +2169,11 @@ void certifier::framework::secure_authenticated_channel::
 }
 
 bool certifier::framework::secure_authenticated_channel::init_server_ssl(
-    const string& host_name, int port, string& asn1_root_cert,
-    key_message& private_key, const string& auth_cert) {
+    const string& host_name,
+    int           port,
+    string&       asn1_root_cert,
+    key_message&  private_key,
+    const string& auth_cert) {
   SSL_load_error_strings();
 
   // set keys and cert

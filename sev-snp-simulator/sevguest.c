@@ -225,7 +225,8 @@ static int get_ext_report(struct snp_guest_dev *          snp_dev,
   return -1;
 }
 
-static long snp_guest_ioctl(struct file *file, unsigned int ioctl,
+static long snp_guest_ioctl(struct file * file,
+                            unsigned int  ioctl,
                             unsigned long arg) {
   struct snp_guest_dev *snp_dev = (struct snp_guest_dev *)file->private_data;
   void __user *                  argp = (void __user *)arg;

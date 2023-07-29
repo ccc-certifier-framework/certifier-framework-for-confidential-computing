@@ -32,9 +32,11 @@ DEFINE_bool(generate_cert, false, "generate cert?");
 DEFINE_string(key_output_file, "test_key_file.bin", "test key file");
 DEFINE_string(cert_output_file, "test_cert_file.bin", "test cert file");
 
-bool generate_key(const string& name, const string& type,
-                  const string& authority, key_message* priv,
-                  key_message* pub) {
+bool generate_key(const string& name,
+                  const string& type,
+                  const string& authority,
+                  key_message*  priv,
+                  key_message*  pub) {
   int n = 0;
   if (type == "rsa-4096-private") {
     if (!make_certifier_rsa_key(4096, priv)) {

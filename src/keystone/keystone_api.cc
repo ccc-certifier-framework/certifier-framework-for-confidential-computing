@@ -17,16 +17,21 @@ extern "C" {
 
 bool keystone_Init(const int cert_size, byte* cert) { return true; }
 
-bool keystone_Attest(const int what_to_say_size, byte* what_to_say,
-                     int* attestation_size_out, byte* attestation_out) {
+bool keystone_Attest(const int what_to_say_size,
+                     byte*     what_to_say,
+                     int*      attestation_size_out,
+                     byte*     attestation_out) {
   assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
   *attestation_size_out = sizeof(struct report_t);
   return attest_enclave((void*)attestation_out, what_to_say, what_to_say_size);
 }
 
-bool keystone_Verify(const int what_to_say_size, byte* what_to_say,
-                     const int attestation_size, byte* attestation,
-                     int* measurement_out_size, byte* measurement_out) {
+bool keystone_Verify(const int what_to_say_size,
+                     byte*     what_to_say,
+                     const int attestation_size,
+                     byte*     attestation,
+                     int*      measurement_out_size,
+                     byte*     measurement_out) {
   assert(attestation_size == sizeof(struct report_t));
   Report report;
   report.fromBytes(attestation);

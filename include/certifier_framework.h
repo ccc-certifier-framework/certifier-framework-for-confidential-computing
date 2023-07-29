@@ -84,7 +84,8 @@ class policy_store {
   bool          get(unsigned ent, string* v);
   bool          put(unsigned ent, const string v);
 
-  bool update_or_insert(const string& tag, const string& type,
+  bool update_or_insert(const string& tag,
+                        const string& type,
                         const string& value);
 
   const key_message* get_policy_key();
@@ -98,27 +99,47 @@ class policy_store {
 // Trusted primitives
 // -------------------------------------------------------------------
 
-bool Seal(const string& enclave_type, const string& enclave_id, int in_size,
-          byte* in, int* size_out, byte* out);
+bool Seal(const string& enclave_type,
+          const string& enclave_id,
+          int           in_size,
+          byte*         in,
+          int*          size_out,
+          byte*         out);
 
-bool Unseal(const string& enclave_type, const string& enclave_id, int in_size,
-            byte* in, int* size_out, byte* out);
+bool Unseal(const string& enclave_type,
+            const string& enclave_id,
+            int           in_size,
+            byte*         in,
+            int*          size_out,
+            byte*         out);
 
-bool Attest(const string& enclave_type, int what_to_say_size, byte* what_to_say,
-            int* size_out, byte* out);
+bool Attest(const string& enclave_type,
+            int           what_to_say_size,
+            byte*         what_to_say,
+            int*          size_out,
+            byte*         out);
 
 // Protect Support
 // -------------------------------------------------------------------
 
-bool protect_blob(const string& enclave_type, key_message& key,
-                  int size_unencrypted_data, byte* unencrypted_data,
-                  int* size_protected_blob, byte* blob);
-bool unprotect_blob(const string& enclave_type, int size_protected_blob,
-                    byte* protected_blob, key_message* key,
-                    int* size_of_unencrypted_data, byte* data);
-bool reprotect_blob(const string& enclave_type, key_message* key,
-                    int size_protected_blob, byte* protected_blob,
-                    int* size_new_encrypted_blob, byte* data);
+bool protect_blob(const string& enclave_type,
+                  key_message&  key,
+                  int           size_unencrypted_data,
+                  byte*         unencrypted_data,
+                  int*          size_protected_blob,
+                  byte*         blob);
+bool unprotect_blob(const string& enclave_type,
+                    int           size_protected_blob,
+                    byte*         protected_blob,
+                    key_message*  key,
+                    int*          size_of_unencrypted_data,
+                    byte*         data);
+bool reprotect_blob(const string& enclave_type,
+                    key_message*  key,
+                    int           size_protected_blob,
+                    byte*         protected_blob,
+                    int*          size_new_encrypted_blob,
+                    byte*         data);
 
 class cc_trust_data {
  public:
@@ -174,13 +195,15 @@ class cc_trust_data {
   string      local_policy_cert_;
 
   cc_trust_data();
-  cc_trust_data(const string& enclave_type, const string& purpose,
+  cc_trust_data(const string& enclave_type,
+                const string& purpose,
                 const string& policy_store_name);
   ~cc_trust_data();
 
   // Each of the enclave types have bespoke initialization
   bool initialize_simulated_enclave_data(
-      const string& attest_key_file_name, const string& measurement_file_name,
+      const string& attest_key_file_name,
+      const string& measurement_file_name,
       const string& attest_endorsement_file_name);
   bool initialize_sev_enclave_data(const string& platform_ark_der_file,
                                    const string& platform_ask_der_file,
@@ -188,13 +211,16 @@ class cc_trust_data {
   bool initialize_gramine_enclave_data(const int size, byte* cert);
   bool initialize_oe_enclave_data(const string& file);
   bool initialize_application_enclave_data(const string& parent_enclave_type,
-                                           int in_fd, int out_fd);
+                                           int           in_fd,
+                                           int           out_fd);
   bool initialize_keystone_enclave_data(
-      const string& attest_key_file_name, const string& measurement_file_name,
+      const string& attest_key_file_name,
+      const string& measurement_file_name,
       const string& attest_endorsement_file_name);
 
   bool initialize_islet_enclave_data(
-      const string& attest_key_file_name, const string& measurement_file_name,
+      const string& attest_key_file_name,
+      const string& measurement_file_name,
       const string& attest_endorsement_file_name);
 
   bool cc_all_initialized();
@@ -239,11 +265,15 @@ class secure_authenticated_channel {
 
   bool load_client_certs_and_key();
 
-  bool init_client_ssl(const string& host_name, int port,
-                       string& asn1_root_cert, key_message& private_key,
+  bool init_client_ssl(const string& host_name,
+                       int           port,
+                       string&       asn1_root_cert,
+                       key_message&  private_key,
                        const string& private_key_cert);
-  bool init_server_ssl(const string& host_name, int port,
-                       string& asn1_root_cert, key_message& private_key,
+  bool init_server_ssl(const string& host_name,
+                       int           port,
+                       string&       asn1_root_cert,
+                       key_message&  private_key,
                        const string& private_key_cert);
 
   void server_channel_accept_and_auth(
@@ -256,8 +286,11 @@ class secure_authenticated_channel {
   bool get_peer_id(string* out);
 };
 
-bool server_dispatch(const string& host_name, int port, string& asn1_root_cert,
-                     key_message& private_key, const string& private_key_cert,
+bool server_dispatch(const string& host_name,
+                     int           port,
+                     string&       asn1_root_cert,
+                     key_message&  private_key,
+                     const string& private_key_cert,
                      void (*)(secure_authenticated_channel&));
 }  // namespace framework
 }  // namespace certifier

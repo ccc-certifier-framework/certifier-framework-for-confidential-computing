@@ -36,8 +36,9 @@ bool initialized = false;
 int  reader      = 0;
 int  writer      = 0;
 
-bool application_Init(const string& parent_enclave_type, int read_fd,
-                      int write_fd) {
+bool application_Init(const string& parent_enclave_type,
+                      int           read_fd,
+                      int           write_fd) {
   reader                                    = read_fd;
   writer                                    = write_fd;
   certifier_parent_enclave_type             = parent_enclave_type;
