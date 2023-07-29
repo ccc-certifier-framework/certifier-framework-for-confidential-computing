@@ -91,9 +91,14 @@ SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
 SpacesBeforeTrailingComments: 2
 SpaceBeforeCpp11BracedList : true
+SpaceBeforeCtorInitializerColon: true
 SpaceBeforeParens: ControlStatements
 SpaceInEmptyParentheses: false
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
 SpacesBeforeTrailingComments: 2
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 
