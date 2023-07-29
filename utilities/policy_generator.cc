@@ -361,14 +361,14 @@ static string make_signed_claim_cmd(string vseFile, string duration,
       duration.c_str(), pKey.c_str(), output.c_str());
 }
 
-#define RUN_CMD(cmd, script, ret)                                          \
-  if (script) {                                                            \
-    cout << cmd << endl;                                                   \
-  } else {                                                                 \
-    if (exec_cmd(cmd, FLAGS_debug)) {                                      \
-      cerr << "Command execution failed! Failed command: " << cmd << endl; \
-      return ret;                                                          \
-    }                                                                      \
+#define RUN_CMD(cmd, script, ret)                                              \
+  if (script) {                                                                \
+    cout << cmd << endl;                                                       \
+  } else {                                                                     \
+    if (exec_cmd(cmd, FLAGS_debug)) {                                          \
+      cerr << "Command execution failed! Failed command: " << cmd << endl;     \
+      return ret;                                                              \
+    }                                                                          \
   }
 
 static bool generate_platform_policy(string           policyKey,
