@@ -203,8 +203,12 @@ int sev_ecdsa_sign(const void *         msg,
   }
 
   /* Store the R & S components of the ID block signature */
-  rc = get_ecdsa_sig_rs_bytes(
-      ossl_sig, sig_size, sig->r, sig->s, &r_size, &s_size);
+  rc = get_ecdsa_sig_rs_bytes(ossl_sig,
+                              sig_size,
+                              sig->r,
+                              sig->s,
+                              &r_size,
+                              &s_size);
   if (rc != EXIT_SUCCESS)
     goto out_sig;
 
@@ -257,9 +261,10 @@ int sev_ecdsa_verify(const void *         digest,
     ECDSA_SIG_set0(ecdsa_sig, r, s);
 
     // Validation will also be done by the FW
-    if (ECDSA_do_verify(
-            (byte *)digest, (uint32_t)digest_size, ecdsa_sig, pub_ec_key) !=
-        1) {
+    if (ECDSA_do_verify((byte *)digest,
+                        (uint32_t)digest_size,
+                        ecdsa_sig,
+                        pub_ec_key) != 1) {
       printf("ECDSA_do_verify failed\n");
       ECDSA_SIG_free(ecdsa_sig);
       break;
@@ -450,8 +455,10 @@ bool sev_verify_report(EVP_PKEY *key, struct attestation_report *report) {
     return false;
   }
 
-  int rc = sev_ecdsa_verify(
-      digest, 48, key, (union sev_ecdsa_sig *)&report->signature);
+  int rc = sev_ecdsa_verify(digest,
+                            48,
+                            key,
+                            (union sev_ecdsa_sig *)&report->signature);
   if (rc != EXIT_SUCCESS) {
     printf("sev_verify_report: sev_ecdsa_verify failed\n");
     return false;
@@ -587,8 +594,9 @@ bool      kdf(int key_len, byte *key, int iter, int out_size, byte *out) {
       xor_in(hmac_size, t, u);
     }
     if (j == num_blks) {
-      memcpy(
-          &out[hmac_size * (j - 1)], t, out_size - (num_blks - 1) * hmac_size);
+      memcpy(&out[hmac_size * (j - 1)],
+             t,
+             out_size - (num_blks - 1) * hmac_size);
     } else {
       memcpy(&out[hmac_size * (j - 1)], t, hmac_size);
     }
@@ -645,8 +653,13 @@ bool sev_Seal(int in_size, byte *in, int *size_out, byte *out) {
     return false;
 
   // Encrypt and integrity protect
-  if (!authenticated_encrypt(
-          "aes-256-cbc-hmac-sha256", in, in_size, final_key, iv, out, size_out))
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256",
+                             in,
+                             in_size,
+                             final_key,
+                             iv,
+                             out,
+                             size_out))
     return false;
   return true;
 }
@@ -662,8 +675,12 @@ bool sev_Unseal(int in_size, byte *in, int *size_out, byte *out) {
 #endif
 
   // decrypt and integity check
-  if (!authenticated_decrypt(
-          "aes-256-cbc-hmac-sha256", in, in_size, final_key, out, size_out))
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256",
+                             in,
+                             in_size,
+                             final_key,
+                             out,
+                             size_out))
     return false;
   return true;
 }
@@ -681,8 +698,11 @@ bool sev_Attest(int   what_to_say_size,
   sev_attestation_message the_attestation;
   the_attestation.set_what_was_said(what_to_say, what_to_say_size);
 
-  if (!digest_message(
-          "sha-384", what_to_say, what_to_say_size, hash, hash_len)) {
+  if (!digest_message("sha-384",
+                      what_to_say,
+                      what_to_say_size,
+                      hash,
+                      hash_len)) {
     printf("digest_message failed\n");
     return false;
   }

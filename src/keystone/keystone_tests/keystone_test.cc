@@ -77,8 +77,10 @@ bool keystone_test(const int cert_size, byte* cert) {
     what_to_say[i] = (byte)i;
   }
 
-  if (!keystone_Attest(
-          size_what_to_say, what_to_say, &size_attestation, attestation)) {
+  if (!keystone_Attest(size_what_to_say,
+                       what_to_say,
+                       &size_attestation,
+                       attestation)) {
     printf("keystone_Attest() fails\n");
     return false;
   }

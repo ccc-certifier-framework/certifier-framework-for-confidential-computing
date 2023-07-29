@@ -62,8 +62,11 @@ bool attestation_test() {
   printf("Claim[User data]: %s\n", (char*)value);
 
   memset(value, 0, sizeof(value));
-  if (islet_parse(
-          CLAIM_TITLE_PLATFORM_PROFILE, claims, claims_len, value, &value_len))
+  if (islet_parse(CLAIM_TITLE_PLATFORM_PROFILE,
+                  claims,
+                  claims_len,
+                  value,
+                  &value_len))
     return false;
 
   printf("Claim[Platform  profile]: %s\n", (char*)value);

@@ -136,15 +136,17 @@ void print_author_key_en(struct attestation_report *report) {
 
 void print_report_data(struct attestation_report *report) {
   if (report) {
-    print_byte_array(
-        "Report Data", report->report_data, sizeof(report->report_data));
+    print_byte_array("Report Data",
+                     report->report_data,
+                     sizeof(report->report_data));
   }
 }
 
 void print_measurement(struct attestation_report *report) {
   if (report) {
-    print_byte_array(
-        "Measurement", report->measurement, sizeof(report->measurement));
+    print_byte_array("Measurement",
+                     report->measurement,
+                     sizeof(report->measurement));
   }
 }
 
@@ -156,8 +158,9 @@ void print_host_data(struct attestation_report *report) {
 
 void print_id_key_digest(struct attestation_report *report) {
   if (report) {
-    print_byte_array(
-        "ID Key Digest", report->id_key_digest, sizeof(report->id_key_digest));
+    print_byte_array("ID Key Digest",
+                     report->id_key_digest,
+                     sizeof(report->id_key_digest));
   }
 }
 

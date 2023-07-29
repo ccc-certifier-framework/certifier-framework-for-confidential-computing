@@ -48,8 +48,9 @@ bool oe_Attest(int   what_to_say_size,
                   custom_claims_buffer_size);
 
   // Get the format settings from the Verifier. Should be null for VSE.
-  if (oe_verifier_get_format_settings(
-          format_id, &format_settings, &format_settings_size) != OE_OK) {
+  if (oe_verifier_get_format_settings(format_id,
+                                      &format_settings,
+                                      &format_settings_size) != OE_OK) {
     printf("oe_verifier_get_format_settings failed\n");
     goto exit;
   }
@@ -175,8 +176,9 @@ bool oe_Verify(const uint8_t* evidence,
     goto exit;
   };
 
-  OE_DEBUG_PRINTF(
-      "%s: %u\n", OE_CLAIM_SECURITY_VERSION, *((uint32_t*)claim->value));
+  OE_DEBUG_PRINTF("%s: %u\n",
+                  OE_CLAIM_SECURITY_VERSION,
+                  *((uint32_t*)claim->value));
 
   if ((claim = _find_claim(claims, claims_length, OE_CLAIM_ATTRIBUTES)) ==
       nullptr) {
@@ -254,8 +256,9 @@ bool oe_Verify(const uint8_t* evidence,
 #endif
 
   // Extract the custom claim buffer
-  if ((claim = _find_claim(
-           claims, claims_length, OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) == nullptr) {
+  if ((claim =
+           _find_claim(claims, claims_length, OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) ==
+      nullptr) {
     printf("Could not find claim.\n");
     goto exit;
   };

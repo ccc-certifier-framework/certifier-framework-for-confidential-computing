@@ -4,6 +4,8 @@
 Language:      Cpp
 BasedOnStyle:  Google
 
+AllowAllArgumentsOnNextLine: false
+
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignConsecutiveMacros: true

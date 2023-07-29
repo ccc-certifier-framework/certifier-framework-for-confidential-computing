@@ -84,8 +84,9 @@ bool oe_host_verify_evidence(uint8_t* evidence,
     *measurement_size = claim->value_size;
 
     // Extract the custom claim buffer
-    if ((claim = _find_claim(
-             claims, claims_length, OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) == NULL) {
+    if ((claim = _find_claim(claims,
+                             claims_length,
+                             OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) == NULL) {
       fprintf(stderr, "Could not find claim.\n");
       result = false;
       goto err;
@@ -107,8 +108,9 @@ bool oe_host_verify_evidence(uint8_t* evidence,
       result = false;
       goto err;
     }
-    memcpy(
-        custom_claim_out, custom_claims[0].value, custom_claims[0].value_size);
+    memcpy(custom_claim_out,
+           custom_claims[0].value,
+           custom_claims[0].value_size);
     *custom_claim_size = custom_claims[0].value_size;
   }
 

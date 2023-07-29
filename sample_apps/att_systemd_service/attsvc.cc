@@ -206,8 +206,9 @@ int main(int argc, char* argv[]) {
   config_file.append(ATTSERVICE_CONFIG_FILE);
 
   if (!file_exists(ATTSERVICE_DATA_DIR)) {
-    ATT_LOG(
-        LOG_INFO, "Creating configuration directory: %s", ATTSERVICE_DATA_DIR);
+    ATT_LOG(LOG_INFO,
+            "Creating configuration directory: %s",
+            ATTSERVICE_DATA_DIR);
     if (mkdir(ATTSERVICE_DATA_DIR, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) !=
         0) {
       ATT_LOG(LOG_INFO, "Failed to create configuration directory.");
@@ -254,8 +255,9 @@ int main(int argc, char* argv[]) {
   ask_cert_file_name.append(ASK_CERT_FILE);
   string vcek_cert_file_name(ATTSERVICE_DATA_DIR);
   vcek_cert_file_name.append(VCEK_CERT_FILE);
-  if (!app_trust_data->initialize_sev_enclave_data(
-          ark_cert_file_name, ask_cert_file_name, vcek_cert_file_name)) {
+  if (!app_trust_data->initialize_sev_enclave_data(ark_cert_file_name,
+                                                   ask_cert_file_name,
+                                                   vcek_cert_file_name)) {
     printf("Can't init sev enclave\n");
     return 1;
   }
@@ -267,8 +269,10 @@ int main(int argc, char* argv[]) {
 
   if (!file_exists(store_file)) {
     ATT_LOG(LOG_INFO, "Performing cold initialization...");
-    if (!app_trust_data->cold_init(
-            public_key_alg, symmetric_key_alg, hash_alg, hmac_alg)) {
+    if (!app_trust_data->cold_init(public_key_alg,
+                                   symmetric_key_alg,
+                                   hash_alg,
+                                   hmac_alg)) {
       ATT_LOG(LOG_INFO, "cold-init failed");
       ret = 1;
       goto done;

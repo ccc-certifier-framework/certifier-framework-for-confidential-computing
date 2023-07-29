@@ -158,8 +158,9 @@ int main(int an, char** av) {
     printf("signature failure\n");
     return 1;
   }
-  if (!write_file(
-          FLAGS_output, sizeof(attestation_report), (byte*)&default_report)) {
+  if (!write_file(FLAGS_output,
+                  sizeof(attestation_report),
+                  (byte*)&default_report)) {
     printf("Can't write %s\n", FLAGS_output.c_str());
     return 1;
   }

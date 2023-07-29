@@ -158,8 +158,9 @@ void test_sig() {
   int  signed_endorsement_size = file_size(FLAGS_platform_attest_endorsement);
   byte serialized_endorsement[signed_endorsement_size + 1];
   size = signed_endorsement_size;
-  if (!read_file(
-          FLAGS_platform_attest_endorsement, &size, serialized_endorsement)) {
+  if (!read_file(FLAGS_platform_attest_endorsement,
+                 &size,
+                 serialized_endorsement)) {
     printf("Can't read endorsement file %s\n",
            FLAGS_platform_attest_endorsement.c_str());
     return;

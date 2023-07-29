@@ -168,8 +168,9 @@ static int get_report(struct snp_guest_dev *          snp_dev,
   report_resp->status      = 0;
   report_resp->report_size = sizeof(report_resp->report);
 
-  if (copy_to_user(
-          (void __user *)arg->resp_data, report_resp, sizeof(*report_resp)))
+  if (copy_to_user((void __user *)arg->resp_data,
+                   report_resp,
+                   sizeof(*report_resp)))
     rc = -EFAULT;
 
   arg->fw_err = 0;
