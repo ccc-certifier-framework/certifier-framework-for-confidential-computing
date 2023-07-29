@@ -449,7 +449,7 @@ app_service_loop(spawned_children *kid, int read_fd, int write_fd)
       succeeded = soft_GetParentEvidence(kid, &out);
     }
 
-  finishreq:
+finishreq:
 #ifdef DEBUG
     if (succeeded)
       printf("Service response: succeeded\n");
@@ -747,7 +747,7 @@ app_request_server()
            req.location().c_str());
     ret = process_run_request(req);
 
-  done:
+done:
     run_response resp;
     if (ret) {
       resp.set_status("succeeded");

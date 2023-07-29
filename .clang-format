@@ -68,6 +68,7 @@ FixNamespaceComments: true
 
 IndentCaseLabels: true
 IndentCaseBlocks: false
+IndentGotoLabels: false
 
 IndentWidth:     2
 
