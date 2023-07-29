@@ -320,8 +320,11 @@ string string_format(const string& format, Args... args) {
   return string(buf.get(), (size_t)(size - 1));
 }
 
-static string make_property_cmd(
-    string name, string type, string comparator, string value, string output) {
+static string make_property_cmd(string name,
+                                string type,
+                                string comparator,
+                                string value,
+                                string output) {
   return string_format(
       "%s --property_name=%s --property_type=\'%s\' "
       "comparator=\"%s\" --%s_value=%s --output=%s",

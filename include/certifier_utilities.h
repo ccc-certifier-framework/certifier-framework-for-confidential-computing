@@ -54,8 +54,12 @@ bool authenticated_encrypt(const char* alg,
                            byte*       iv,
                            byte*       out,
                            int*        out_size);
-bool authenticated_decrypt(
-    const char* alg, byte* in, int in_len, byte* key, byte* out, int* out_size);
+bool authenticated_decrypt(const char* alg,
+                           byte*       in,
+                           int         in_len,
+                           byte*       key,
+                           byte*       out,
+                           int*        out_size);
 
 EC_KEY* generate_new_ecc_key(int num_bits);
 EC_KEY* key_to_ECC(const key_message& kr);

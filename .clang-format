@@ -5,6 +5,9 @@ Language:      Cpp
 BasedOnStyle:  Google
 
 AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+
+AlignTrailingComments: true
 
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
