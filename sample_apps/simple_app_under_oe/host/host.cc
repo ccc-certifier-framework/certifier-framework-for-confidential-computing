@@ -64,10 +64,12 @@ int main(int argc, const char* argv[]) {
   sigaction(SIGINT, &sigIntHandler, NULL);
 
   // Create the enclave
-  result = oe_create_attestation_enclave(argv[1], OE_ENCLAVE_TYPE_AUTO, flags,
-                                         NULL, 0, &enclave);
+  result = oe_create_attestation_enclave(
+      argv[1], OE_ENCLAVE_TYPE_AUTO, flags, NULL, 0, &enclave);
   if (result != OE_OK) {
-    fprintf(stderr, "oe_create_attestation_enclave(): result=%u (%s)\n", result,
+    fprintf(stderr,
+            "oe_create_attestation_enclave(): result=%u (%s)\n",
+            result,
             oe_result_str(result));
     goto exit;
   }
@@ -79,7 +81,9 @@ int main(int argc, const char* argv[]) {
 
   result = certifier_init(enclave, &ret, data_dir.c_str(), data_dir.size());
   if (result != OE_OK) {
-    fprintf(stderr, "certifier_init failed: result=%u (%s)\n", result,
+    fprintf(stderr,
+            "certifier_init failed: result=%u (%s)\n",
+            result,
             oe_result_str(result));
     goto exit;
   }
@@ -91,42 +95,56 @@ int main(int argc, const char* argv[]) {
   if (strcmp(argv[2], "cold-init") == 0) {
     result = cold_init(enclave, &ret);
     if (result != OE_OK) {
-      fprintf(stderr, "certifier_init failed: result=%u (%s)\n", result,
+      fprintf(stderr,
+              "certifier_init failed: result=%u (%s)\n",
+              result,
               oe_result_str(result));
     }
   } else if (strcmp(argv[2], "warm-restart") == 0) {
     result = warm_restart(enclave, &ret);
     if (result != OE_OK) {
-      fprintf(stderr, "warm_restart failed: result=%u (%s)\n", result,
+      fprintf(stderr,
+              "warm_restart failed: result=%u (%s)\n",
+              result,
               oe_result_str(result));
     }
   } else if (strcmp(argv[2], "get-certifier") == 0) {
     result = certify_me(enclave, &ret);
     printf("certify_me(): result=%d, ret=%d\n", result, ret);
     if (result != OE_OK) {
-      fprintf(stderr, "certifier_init failed: result=%u (%s)\n", result,
+      fprintf(stderr,
+              "certifier_init failed: result=%u (%s)\n",
+              result,
               oe_result_str(result));
     }
   } else if (strcmp(argv[2], "run-app-as-client") == 0) {
     result = warm_restart(enclave, &ret);
     if (result != OE_OK) {
-      fprintf(stderr, "certifier_init failed: result=%u (%s)\n", result,
+      fprintf(stderr,
+              "certifier_init failed: result=%u (%s)\n",
+              result,
               oe_result_str(result));
     }
     result = run_me_as_client(enclave, &ret);
     if (result != OE_OK) {
-      fprintf(stderr, "certifier_init failed: result=%u (%s)\n", result,
+      fprintf(stderr,
+              "certifier_init failed: result=%u (%s)\n",
+              result,
               oe_result_str(result));
     }
   } else if (strcmp(argv[2], "run-app-as-server") == 0) {
     result = warm_restart(enclave, &ret);
     if (result != OE_OK) {
-      fprintf(stderr, "certifier_init failed: result=%u (%s)\n", result,
+      fprintf(stderr,
+              "certifier_init failed: result=%u (%s)\n",
+              result,
               oe_result_str(result));
     }
     result = run_me_as_server(enclave, &ret);
     if (result != OE_OK) {
-      fprintf(stderr, "certifier_init failed: result=%u (%s)\n", result,
+      fprintf(stderr,
+              "certifier_init failed: result=%u (%s)\n",
+              result,
               oe_result_str(result));
     }
   } else {

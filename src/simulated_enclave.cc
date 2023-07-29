@@ -172,8 +172,13 @@ bool simulated_Seal(const string& enclave_type, const string& enclave_id,
 
   // output is iv, encrypted bytes
   int real_output_size = output_size;
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256", input, input_size,
-                             sealing_key, iv, output, &real_output_size)) {
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256",
+                             input,
+                             input_size,
+                             sealing_key,
+                             iv,
+                             output,
+                             &real_output_size)) {
     printf("simulated_Seal: authenticated encrypt failed\n");
     return false;
   }
@@ -198,13 +203,18 @@ bool simulated_Unseal(const string& enclave_type, const string& enclave_id,
   memcpy(iv, in, iv_size);
 
   int real_output_size = output_size;
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", in, in_size,
-                             (byte*)sealing_key, output, &real_output_size)) {
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256",
+                             in,
+                             in_size,
+                             (byte*)sealing_key,
+                             output,
+                             &real_output_size)) {
     printf("simulated_Unseal: authenticated decrypt failed\n");
     return false;
   }
 
-  if (memcmp((void*)output, (byte*)my_measurement.data(),
+  if (memcmp((void*)output,
+             (byte*)my_measurement.data(),
              (int)my_measurement.size()) != 0) {
     printf("simulated_Unseal: measurement mismatch\n");
     return false;
@@ -249,8 +259,11 @@ bool simulated_Attest(const string& enclave_type, int what_to_say_size,
   string       signing_alg("rsa-2048-sha256-pkcs-sign");
   string       serialized_signed_report;
 
-  if (!sign_report(type, serialized_report_info, signing_alg,
-                   my_attestation_key, &serialized_signed_report)) {
+  if (!sign_report(type,
+                   serialized_report_info,
+                   signing_alg,
+                   my_attestation_key,
+                   &serialized_signed_report)) {
     printf("simulated_Attest: Can't sign report\n");
     return false;
   }

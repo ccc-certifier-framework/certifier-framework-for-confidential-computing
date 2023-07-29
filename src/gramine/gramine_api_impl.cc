@@ -77,7 +77,8 @@ int gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key) {
 #endif
 
   bytes = gramine_rw_file("/dev/attestation/user_report_data",
-                          (uint8_t*)&user_report_data, sizeof(user_report_data),
+                          (uint8_t*)&user_report_data,
+                          sizeof(user_report_data),
                           /*do_write=*/true);
   if (bytes != sizeof(user_report_data)) {
     printf("Test prep user_data failed %d\n", errno);
@@ -86,8 +87,8 @@ int gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key) {
 
   /* read `report` file */
   sgx_report_t report;
-  bytes = gramine_rw_file("/dev/attestation/report", (uint8_t*)&report,
-                          sizeof(report), false);
+  bytes = gramine_rw_file(
+      "/dev/attestation/report", (uint8_t*)&report, sizeof(report), false);
   if (bytes != sizeof(report)) {
     /* error is already printed by file_read_f() */
     return FAILURE;
@@ -140,7 +141,8 @@ bool gramine_attest_impl(const int what_to_say_size, byte* what_to_say,
 #endif
 
   bytes = gramine_rw_file("/dev/attestation/user_report_data",
-                          (uint8_t*)&user_report_data, sizeof(user_report_data),
+                          (uint8_t*)&user_report_data,
+                          sizeof(user_report_data),
                           /*do_write=*/true);
 
   if (bytes != sizeof(user_report_data)) {
@@ -149,9 +151,10 @@ bool gramine_attest_impl(const int what_to_say_size, byte* what_to_say,
   }
 
   /* 2. read `quote` file */
-  bytes =
-      gramine_rw_file("/dev/attestation/quote", (uint8_t*)&quote, sizeof(quote),
-                      /*do_write=*/false);
+  bytes = gramine_rw_file("/dev/attestation/quote",
+                          (uint8_t*)&quote,
+                          sizeof(quote),
+                          /*do_write=*/false);
   if (bytes < 0) {
     printf("Attest quote interface for user_data failed %d\n", errno);
     return false;
@@ -212,23 +215,36 @@ int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size,
 #ifdef DEBUG
   printf("%s: Quote Size: %ld Quote:\n", __FUNCTION__, quote_size);
   gramine_print_bytes(quote_size, (uint8_t*)quote);
-  printf("%s: Quote Version: %d\n", __FUNCTION__,
+  printf("%s: Quote Version: %d\n",
+         __FUNCTION__,
          ((sgx_quote_t*)quote)->body.version);
 #endif
 
   sgx_qv_verify_quote =
-      (int (*)(const uint8_t*, uint32_t, void*, const time_t, uint32_t*,
-               sgx_ql_qv_result_t*, void*, uint32_t,
+      (int (*)(const uint8_t*,
+               uint32_t,
+               void*,
+               const time_t,
+               uint32_t*,
+               sgx_ql_qv_result_t*,
+               void*,
+               uint32_t,
                uint8_t*))dlsym(sgx_verify_lib, "sgx_qv_verify_quote");
 #ifdef DEBUG
   printf("Verify function address to be called: %p with size: %ld\n",
-         sgx_qv_verify_quote, quote_size);
+         sgx_qv_verify_quote,
+         quote_size);
 #endif
 
   /* call into libsgx_dcap_quoteverify to verify ECDSA-based SGX quote */
-  ret = sgx_qv_verify_quote((uint8_t*)quote, (uint32_t)quote_size, NULL,
-                            current_time, &collateral_expiration_status,
-                            &verification_result, NULL, supplemental_data_size,
+  ret = sgx_qv_verify_quote((uint8_t*)quote,
+                            (uint32_t)quote_size,
+                            NULL,
+                            current_time,
+                            &collateral_expiration_status,
+                            &verification_result,
+                            NULL,
+                            supplemental_data_size,
                             supplemental_data);
   if (ret) {
     printf("%s: Quote Failed: %d\n", __FUNCTION__, ret);
@@ -237,11 +253,14 @@ int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size,
   }
 
 #ifdef DEBUG
-  printf("%s: Supplemental size: %d data:\n", __FUNCTION__,
+  printf("%s: Supplemental size: %d data:\n",
+         __FUNCTION__,
          supplemental_data_size);
   gramine_print_bytes(supplemental_data_size, (uint8_t*)supplemental_data);
-  printf("%s: Quote verification done with result %d %s\n", __FUNCTION__,
-         verification_result, sgx_ql_qv_result_to_str(verification_result));
+  printf("%s: Quote verification done with result %d %s\n",
+         __FUNCTION__,
+         verification_result,
+         sgx_ql_qv_result_to_str(verification_result));
 #endif
 
   if (ret != 0) {
@@ -257,7 +276,8 @@ int remote_verify_quote(size_t quote_size, uint8_t* quote, size_t* mr_size,
       verification_result != SGX_QL_QV_RESULT_OUT_OF_DATE_CONFIG_NEEDED &&
       verification_result != SGX_QL_QV_RESULT_CONFIG_AND_SW_HARDENING_NEEDED) {
     printf("\nGramine acceptable verification failed: %d %s\n",
-           verification_result, sgx_ql_qv_result_to_str(verification_result));
+           verification_result,
+           sgx_ql_qv_result_to_str(verification_result));
     ret = -1;
     goto out;
   }
@@ -292,7 +312,8 @@ bool gramine_local_verify_impl(const int what_to_say_size, byte* what_to_say,
 #ifdef DEBUG
   printf(
       "Gramine Local Verify called what_to_say_size: %d attestation_size: %d\n",
-      what_to_say_size, attestation_size);
+      what_to_say_size,
+      attestation_size);
 #endif
 
   /* 1. write some custom data to `user_report_data` file */
@@ -302,7 +323,8 @@ bool gramine_local_verify_impl(const int what_to_say_size, byte* what_to_say,
   mbedtls_sha256(what_to_say, what_to_say_size, user_report_data.d, 0);
 
   bytes = gramine_rw_file("/dev/attestation/user_report_data",
-                          (uint8_t*)&user_report_data, sizeof(user_report_data),
+                          (uint8_t*)&user_report_data,
+                          sizeof(user_report_data),
                           /*do_write=*/true);
   if (bytes != sizeof(user_report_data)) {
     printf("Verify prep user_report_data failed %d\n", errno);
@@ -310,9 +332,10 @@ bool gramine_local_verify_impl(const int what_to_say_size, byte* what_to_say,
   }
 
   /* 2. read `quote` file */
-  bytes =
-      gramine_rw_file("/dev/attestation/quote", (uint8_t*)&quote, sizeof(quote),
-                      /*do_write=*/false);
+  bytes = gramine_rw_file("/dev/attestation/quote",
+                          (uint8_t*)&quote,
+                          sizeof(quote),
+                          /*do_write=*/false);
   if (bytes < 0) {
     printf("Verify quote interface for user_report_data failed %d\n", errno);
     return false;
@@ -334,7 +357,8 @@ bool gramine_local_verify_impl(const int what_to_say_size, byte* what_to_say,
 #endif
 
   ret = memcmp(quote_received->body.report_body.report_data.d,
-               user_report_data.d, sizeof(user_report_data));
+               user_report_data.d,
+               sizeof(user_report_data));
   if (ret) {
     printf("comparison of user report data in SGX quote failed\n");
     return false;
@@ -361,7 +385,8 @@ bool gramine_local_verify_impl(const int what_to_say_size, byte* what_to_say,
 #endif
 
   /* Copy out quote info */
-  memcpy(measurement_out, quote_expected->body.report_body.mr_enclave.m,
+  memcpy(measurement_out,
+         quote_expected->body.report_body.mr_enclave.m,
          SGX_MR_SIZE);
   *measurement_out_size = SGX_MR_SIZE;
 
@@ -388,7 +413,8 @@ bool gramine_remote_verify_impl(const int what_to_say_size, byte* what_to_say,
   printf(
       "Gramine Remote Verify called what_to_say_size: %d attestation_size: "
       "%d\n",
-      what_to_say_size, attestation_size);
+      what_to_say_size,
+      attestation_size);
 #endif
 
   sgx_quote_t* quote_expected = (sgx_quote_t*)attestation;
@@ -398,8 +424,8 @@ bool gramine_remote_verify_impl(const int what_to_say_size, byte* what_to_say,
   printf("\nGramine begin remote verify quote with DCAP\n");
 #endif
 
-  if (remote_verify_quote(attestation_size, (uint8_t*)quote_expected, &mr_size,
-                          mr) != 0) {
+  if (remote_verify_quote(
+          attestation_size, (uint8_t*)quote_expected, &mr_size, mr) != 0) {
     printf("\nGramine begin verify quote with DCAP failed\n");
     return false;
   }
@@ -416,14 +442,16 @@ bool gramine_remote_verify_impl(const int what_to_say_size, byte* what_to_say,
   mbedtls_sha256(what_to_say, what_to_say_size, user_report_data.d, 0);
 
   ret = memcmp(quote_expected->body.report_body.report_data.d,
-               user_report_data.d, sizeof(user_report_data));
+               user_report_data.d,
+               sizeof(user_report_data));
   if (ret) {
     printf("comparison of user report data in SGX quote failed\n");
     return false;
   }
 
   /* Copy out quote info */
-  memcpy(measurement_out, quote_expected->body.report_body.mr_enclave.m,
+  memcpy(measurement_out,
+         quote_expected->body.report_body.mr_enclave.m,
          SGX_MR_SIZE);
   *measurement_out_size = SGX_MR_SIZE;
 
@@ -446,8 +474,8 @@ bool gramine_get_measurement(byte* measurement) {
     user_data[i] = (byte)i;
   }
 
-  status = gramine_attest_impl(USER_DATA_SIZE, user_data, &attestation_size,
-                               attestation);
+  status = gramine_attest_impl(
+      USER_DATA_SIZE, user_data, &attestation_size, attestation);
   if (status != true) {
     printf("gramine Attest failed\n");
     return status;
@@ -499,9 +527,17 @@ bool gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out) {
     goto done;
   }
 
-  ret =
-      mbedtls_gcm_crypt_and_tag(&gcm, MBEDTLS_GCM_ENCRYPT, in_size, key,
-                                KEY_SIZE, NULL, 0, in, enc_buf, TAG_SIZE, tag);
+  ret = mbedtls_gcm_crypt_and_tag(&gcm,
+                                  MBEDTLS_GCM_ENCRYPT,
+                                  in_size,
+                                  key,
+                                  KEY_SIZE,
+                                  NULL,
+                                  0,
+                                  in,
+                                  enc_buf,
+                                  TAG_SIZE,
+                                  tag);
 
   if (ret != 0) {
     printf("mbedtls_gcm_crypt_and_tag failed: %d\n", ret);
@@ -611,8 +647,8 @@ bool gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out) {
   }
 
   /* Invoke unseal */
-  ret = mbedtls_gcm_auth_decrypt(&gcm, enc_size, key, KEY_SIZE, NULL, 0, tag,
-                                 TAG_SIZE, enc_buf, dec_buf);
+  ret = mbedtls_gcm_auth_decrypt(
+      &gcm, enc_size, key, KEY_SIZE, NULL, 0, tag, TAG_SIZE, enc_buf, dec_buf);
   if (ret != 0) {
     printf("mbedtls_gcm_auth_decrypt failed: %d\n", ret);
     status = false;

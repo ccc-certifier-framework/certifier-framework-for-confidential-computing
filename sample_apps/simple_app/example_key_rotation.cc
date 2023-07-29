@@ -104,7 +104,8 @@ int main(int an, char** av) {
   attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
   if (!app_trust_data->initialize_simulated_enclave_data(
-          attest_key_file_name, measurement_file_name,
+          attest_key_file_name,
+          measurement_file_name,
           attest_endorsement_file_name)) {
     printf("Can't init simulated enclave\n");
     return 1;
@@ -170,8 +171,8 @@ int main(int an, char** av) {
     return 0;
   }
 
-  if (!app_trust_data->recertify_me(FLAGS_policy_host, FLAGS_policy_port,
-                                    true)) {
+  if (!app_trust_data->recertify_me(
+          FLAGS_policy_host, FLAGS_policy_port, true)) {
     printf("recertify me failed\n");
     return 0;
   }

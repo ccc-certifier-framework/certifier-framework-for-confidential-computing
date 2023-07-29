@@ -76,8 +76,16 @@ bool test_x_509_chain(bool print_all) {
   string vcek_desc_str("AMD-vcek-key");
 
   X509* cert1 = X509_new();
-  if (!produce_artifact(k1, ark_str, ark_desc_str, pub_k1, ark_str,
-                        ark_desc_str, 1L, 150000.0, cert1, true)) {
+  if (!produce_artifact(k1,
+                        ark_str,
+                        ark_desc_str,
+                        pub_k1,
+                        ark_str,
+                        ark_desc_str,
+                        1L,
+                        150000.0,
+                        cert1,
+                        true)) {
     return false;
   }
   if (print_all) {
@@ -87,8 +95,16 @@ bool test_x_509_chain(bool print_all) {
   }
 
   X509* cert2 = X509_new();
-  if (!produce_artifact(k1, ark_str, ark_desc_str, pub_k2, ask_str,
-                        ask_desc_str, 1L, 150000.0, cert2, false)) {
+  if (!produce_artifact(k1,
+                        ark_str,
+                        ark_desc_str,
+                        pub_k2,
+                        ask_str,
+                        ask_desc_str,
+                        1L,
+                        150000.0,
+                        cert2,
+                        false)) {
     return false;
   }
   if (print_all) {
@@ -98,8 +114,16 @@ bool test_x_509_chain(bool print_all) {
   }
 
   X509* cert3 = X509_new();
-  if (!produce_artifact(k2, ask_str, ask_desc_str, pub_k3, vcek_str,
-                        vcek_desc_str, 1L, 150000.0, cert3, false)) {
+  if (!produce_artifact(k2,
+                        ask_str,
+                        ask_desc_str,
+                        pub_k3,
+                        vcek_str,
+                        vcek_desc_str,
+                        1L,
+                        150000.0,
+                        cert3,
+                        false)) {
     return false;
   }
   if (print_all) {
@@ -220,8 +244,8 @@ bool test_x_509_chain(bool print_all) {
   }
 
   vse_clause cl;
-  if (!construct_vse_attestation_from_cert(*pub_subject_key3, *issuer3_key,
-                                           &cl)) {
+  if (!construct_vse_attestation_from_cert(
+          *pub_subject_key3, *issuer3_key, &cl)) {
     printf("Can't construct vse attestation from cert\n");
     return false;
   }
@@ -253,8 +277,15 @@ bool test_x_509_sign(bool print_all) {
   }
 
   X509* cert1 = X509_new();
-  if (!produce_artifact(k1, issuer_common_name, issuer_desc, pub_k1,
-                        issuer_common_name, issuer_desc, 1L, 150000.0, cert1,
+  if (!produce_artifact(k1,
+                        issuer_common_name,
+                        issuer_desc,
+                        pub_k1,
+                        issuer_common_name,
+                        issuer_desc,
+                        1L,
+                        150000.0,
+                        cert1,
                         true)) {
     return false;
   }
@@ -662,8 +693,11 @@ bool test_sev_request(bool print_all) {
 
   int  size_out = 8192;
   byte out[size_out];
-  if (!Attest(enclave_type, serialized_ud.size(), (byte*)serialized_ud.data(),
-              &size_out, out)) {
+  if (!Attest(enclave_type,
+              serialized_ud.size(),
+              (byte*)serialized_ud.data(),
+              &size_out,
+              out)) {
     printf("Attest failed\n");
     return false;
   }
@@ -742,15 +776,20 @@ bool test_sev_request(bool print_all) {
   string        format("vse-clause");
   string        descriptor;
   claim_message cm1;
-  if (!make_claim(tm1_ser_vse.size(), (byte*)tm1_ser_vse.data(), format,
-                  descriptor, s_nb, s_na, &cm1)) {
+  if (!make_claim(tm1_ser_vse.size(),
+                  (byte*)tm1_ser_vse.data(),
+                  format,
+                  descriptor,
+                  s_nb,
+                  s_na,
+                  &cm1)) {
     printf("serialize claim failed (1)\n");
     return false;
   }
 
   signed_claim_message* scm1 = trusted_measurements.add_claims();
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm1, policy_private_key,
-                         scm1)) {
+  if (!make_signed_claim(
+          "rsa-2048-sha256-pkcs-sign", cm1, policy_private_key, scm1)) {
     printf("sign claim failed (3)\n");
     return false;
   }
@@ -780,15 +819,20 @@ bool test_sev_request(bool print_all) {
     return false;
   }
   claim_message cm2;
-  if (!make_claim(tm2_ser_vse.size(), (byte*)tm2_ser_vse.data(), format,
-                  descriptor, s_nb, s_na, &cm2)) {
+  if (!make_claim(tm2_ser_vse.size(),
+                  (byte*)tm2_ser_vse.data(),
+                  format,
+                  descriptor,
+                  s_nb,
+                  s_na,
+                  &cm2)) {
     printf("serialize claim failed (3)\n");
     return false;
   }
 
   signed_claim_message* scm2 = trusted_platforms.add_claims();
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cm2, policy_private_key,
-                         scm2)) {
+  if (!make_signed_claim(
+          "rsa-2048-sha256-pkcs-sign", cm2, policy_private_key, scm2)) {
     printf("sign claim failed (4)\n");
     return false;
   }
@@ -808,8 +852,11 @@ bool test_sev_request(bool print_all) {
   return true;
 
   string purpose("authentication");
-  if (!validate_evidence(evidence_descriptor, trusted_platforms,
-                         trusted_measurements, purpose, evp,
+  if (!validate_evidence(evidence_descriptor,
+                         trusted_platforms,
+                         trusted_measurements,
+                         purpose,
+                         evp,
                          policy_public_key)) {
     printf("validate_evidence\n");
     return false;

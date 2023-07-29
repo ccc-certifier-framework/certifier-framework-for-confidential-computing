@@ -49,8 +49,12 @@ int main(int an, char** av) {
   }
 
   property prop;
-  if (!make_property(FLAGS_property_name, FLAGS_property_type, FLAGS_comparator,
-                     FLAGS_int_value, FLAGS_string_value, &prop)) {
+  if (!make_property(FLAGS_property_name,
+                     FLAGS_property_type,
+                     FLAGS_comparator,
+                     FLAGS_int_value,
+                     FLAGS_string_value,
+                     &prop)) {
     printf("Can't make property\n");
     return 1;
   }

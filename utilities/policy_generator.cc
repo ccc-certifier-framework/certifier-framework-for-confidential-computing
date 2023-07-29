@@ -153,7 +153,11 @@ void print_claim(claim& c, const string prefix = "") {
 
 void from_json(const json& j, property& p) {
   map<string, string> cmap = {
-      {"eq", "="}, {"ge", ">="}, {"gt", ">"}, {"le", "<="}, {"lt", "<"},
+      {"eq", "="},
+      {"ge", ">="},
+      {"gt", ">"},
+      {"le", "<="},
+      {"lt", "<"},
   };
   if (cmap.find(j["comparator"]) == cmap.end()) {
     cerr << "Illegal comparator: " << j["comparator"] << endl;
@@ -288,8 +292,9 @@ static int exec_cmd(const string& command, bool print = false) {
   }
   try {
     size_t bytesread;
-    while ((bytesread = fread(buffer.data(), sizeof(buffer.at(0)),
-                              sizeof(buffer), pipe)) != 0) {
+    while ((bytesread = fread(
+                buffer.data(), sizeof(buffer.at(0)), sizeof(buffer), pipe)) !=
+           0) {
       result += string(buffer.data(), bytesread);
     }
   } catch (...) {
@@ -319,15 +324,22 @@ static string make_property_cmd(string name, string type, string comparator,
   return string_format(
       "%s --property_name=%s --property_type=\'%s\' "
       "comparator=\"%s\" --%s_value=%s --output=%s",
-      (FLAGS_util_path + MAKE_PROPERTY_CMD).c_str(), name.c_str(), type.c_str(),
-      comparator.c_str(), type.c_str(), value.c_str(), output.c_str());
+      (FLAGS_util_path + MAKE_PROPERTY_CMD).c_str(),
+      name.c_str(),
+      type.c_str(),
+      comparator.c_str(),
+      type.c_str(),
+      value.c_str(),
+      output.c_str());
 }
 
 static string make_unary_clause_cmd(string subjectType, string subject,
                                     string verb, string output) {
   return string_format("%s --%s_subject=%s --verb=\"%s\" --output=%s",
                        (FLAGS_util_path + MAKE_UNARY_CLAUSE_CMD).c_str(),
-                       subjectType.c_str(), subject.c_str(), verb.c_str(),
+                       subjectType.c_str(),
+                       subject.c_str(),
+                       verb.c_str(),
                        output.c_str());
 }
 
@@ -337,8 +349,12 @@ static string make_simple_clause_cmd(string subjectType, string subject,
   return string_format(
       "%s --%s_subject=%s --verb=%s --%s_object=%s "
       "--output=%s",
-      (FLAGS_util_path + MAKE_SIMPLE_CLAUSE_CMD).c_str(), subjectType.c_str(),
-      subject.c_str(), verb.c_str(), objectType.c_str(), object.c_str(),
+      (FLAGS_util_path + MAKE_SIMPLE_CLAUSE_CMD).c_str(),
+      subjectType.c_str(),
+      subject.c_str(),
+      verb.c_str(),
+      objectType.c_str(),
+      object.c_str(),
       output.c_str());
 }
 
@@ -348,8 +364,12 @@ static string make_indirect_clause_cmd(string subjectType, string subject,
   return string_format(
       "%s --%s_subject=%s --verb=\"%s\" --clause=%s "
       "--output=%s",
-      (FLAGS_util_path + MAKE_INDIRECT_CLAUSE_CMD).c_str(), subjectType.c_str(),
-      subject.c_str(), verb.c_str(), clause.c_str(), output.c_str());
+      (FLAGS_util_path + MAKE_INDIRECT_CLAUSE_CMD).c_str(),
+      subjectType.c_str(),
+      subject.c_str(),
+      verb.c_str(),
+      clause.c_str(),
+      output.c_str());
 }
 
 static string make_signed_claim_cmd(string vseFile, string duration,
@@ -357,8 +377,11 @@ static string make_signed_claim_cmd(string vseFile, string duration,
   return string_format(
       "%s --vse_file=%s --duration=%s --private_key_file=%s "
       "--output=%s",
-      (FLAGS_util_path + MAKE_SIGNED_CLAIM_CMD).c_str(), vseFile.c_str(),
-      duration.c_str(), pKey.c_str(), output.c_str());
+      (FLAGS_util_path + MAKE_SIGNED_CLAIM_CMD).c_str(),
+      vseFile.c_str(),
+      duration.c_str(),
+      pKey.c_str(),
+      output.c_str());
 }
 
 #define RUN_CMD(cmd, script, ret)                                              \
@@ -385,31 +408,37 @@ static bool generate_platform_policy(string           policyKey,
       } else {
         all_props.append(",").append(prop_path);
       }
-      cmd = make_property_cmd(prop.name, prop.type, prop.comparator, prop.value,
-                              prop_path);
+      cmd = make_property_cmd(
+          prop.name, prop.type, prop.comparator, prop.value, prop_path);
       RUN_CMD(cmd, script, false);
     }
     combine_cmd =
         string_format("%s --in=%s --output=%s",
                       (FLAGS_util_path + COMBINE_PROPERTY_CMD).c_str(),
-                      all_props.c_str(), "properties.bin");
+                      all_props.c_str(),
+                      "properties.bin");
     RUN_CMD(combine_cmd, script, false);
     plat_file = string_format("%s-platform.bin", platform.type.c_str());
     claim_cmd = string_format(
         "%s --platform_type=%s --properties_file=%s "
         "--output=%s",
-        (FLAGS_util_path + MAKE_PLATFORM_CMD).c_str(), platform.type.c_str(),
-        "properties.bin", plat_file.c_str());
+        (FLAGS_util_path + MAKE_PLATFORM_CMD).c_str(),
+        platform.type.c_str(),
+        "properties.bin",
+        plat_file.c_str());
     RUN_CMD(claim_cmd, script, false);
     intermediate_files.push_back(plat_file);
-    claim_cmd = make_unary_clause_cmd("platform", plat_file,
+    claim_cmd = make_unary_clause_cmd("platform",
+                                      plat_file,
                                       "has-trusted-platform-property",
                                       "isplatform.bin");
     RUN_CMD(claim_cmd, script, false);
     claim_cmd = make_indirect_clause_cmd(
         "key", policyKey, "says", "isplatform.bin", "saysisplatform.bin");
     RUN_CMD(claim_cmd, script, false);
-    claim_cmd = make_signed_claim_cmd("saysisplatform.bin", "9000", policyKey,
+    claim_cmd = make_signed_claim_cmd("saysisplatform.bin",
+                                      "9000",
+                                      policyKey,
                                       (platform.type + ".bin").c_str());
     signed_claims.push_back(platform.type + ".bin");
     RUN_CMD(claim_cmd, script, false);
@@ -429,17 +458,18 @@ static bool generate_measurement_policy(string         policyKey,
     string cmd, claim_file;
     cmd = string_format("%s --mrenclave=%s --out_file=%s",
                         (FLAGS_util_path + MEASUREMENT_INIT_CMD).c_str(),
-                        mea.c_str(), "meas.bin");
+                        mea.c_str(),
+                        "meas.bin");
     RUN_CMD(cmd, script, false);
-    cmd = make_unary_clause_cmd("measurement", "meas.bin", "is-trusted",
-                                "measurement.bin");
+    cmd = make_unary_clause_cmd(
+        "measurement", "meas.bin", "is-trusted", "measurement.bin");
     RUN_CMD(cmd, script, false);
-    cmd = make_indirect_clause_cmd("key", policyKey, "says", "measurement.bin",
-                                   "saysmeasurement.bin");
+    cmd = make_indirect_clause_cmd(
+        "key", policyKey, "says", "measurement.bin", "saysmeasurement.bin");
     RUN_CMD(cmd, script, false);
     claim_file = string_format("signed_measurement%d.bin", i++);
-    cmd        = make_signed_claim_cmd("saysmeasurement.bin", "9000", policyKey,
-                                claim_file);
+    cmd        = make_signed_claim_cmd(
+        "saysmeasurement.bin", "9000", policyKey, claim_file);
     RUN_CMD(cmd, script, false);
     signed_claims.push_back(claim_file);
     cmd = "rm -rf meas.bin measurement.bin saysmeasurement.bin";
@@ -460,7 +490,8 @@ static pair<string, string> subject_conversion(subject_type stype, string sub,
       actual_sub = "tmp_meas.bin";
       cmd        = string_format("%s --mrenclave=%s --out_file=%s",
                           (FLAGS_util_path + MEASUREMENT_INIT_CMD).c_str(),
-                          sub.c_str(), actual_sub.c_str());
+                          sub.c_str(),
+                          actual_sub.c_str());
       RUN_CMD(cmd, script, make_pair("", ""));
       cleanup_cmd = string_format("rm -rf %s", actual_sub.c_str());
       break;
@@ -494,12 +525,16 @@ static string generate_clause(string policyKey, clause cl, clause_type ct,
   cleanup_cmd            = p.second;
 
   if (ct == UNARY_CLAUSE) {
-    cmd = make_unary_clause_cmd(sname[cl.stype], actual_sub, cl.verb,
-                                "clause.bin");
+    cmd = make_unary_clause_cmd(
+        sname[cl.stype], actual_sub, cl.verb, "clause.bin");
     RUN_CMD(cmd, script, "");
   } else if (ct == SIMPLE_CLAUSE) {
-    cmd = make_simple_clause_cmd(sname[cl.stype], actual_sub, cl.verb,
-                                 oname[cl.otype], cl.obj, "clause.bin");
+    cmd = make_simple_clause_cmd(sname[cl.stype],
+                                 actual_sub,
+                                 cl.verb,
+                                 oname[cl.otype],
+                                 cl.obj,
+                                 "clause.bin");
     RUN_CMD(cmd, script, "");
   } else if (ct == INDIRECT_CLAUSE) {
     string               scleanup_cmd, actual_ssub;
@@ -507,19 +542,23 @@ static string generate_clause(string policyKey, clause cl, clause_type ct,
     actual_ssub            = s.first;
     scleanup_cmd           = s.second;
     if (cl.ctype == UNARY_CLAUSE) {
-      cmd = make_unary_clause_cmd(sname[cl.sstype], actual_ssub, cl.sverb,
-                                  "subclause.bin");
+      cmd = make_unary_clause_cmd(
+          sname[cl.sstype], actual_ssub, cl.sverb, "subclause.bin");
       RUN_CMD(cmd, script, "");
     } else if (cl.ctype == SIMPLE_CLAUSE) {
       // TODO: Handle special objects
-      cmd = make_simple_clause_cmd(sname[cl.sstype], actual_ssub, cl.sverb,
-                                   oname[cl.sotype], cl.sobj, "subclause.bin");
+      cmd = make_simple_clause_cmd(sname[cl.sstype],
+                                   actual_ssub,
+                                   cl.sverb,
+                                   oname[cl.sotype],
+                                   cl.sobj,
+                                   "subclause.bin");
       RUN_CMD(cmd, script, "");
     } else {
       return "";
     }
-    cmd = make_indirect_clause_cmd(sname[cl.stype], actual_sub, cl.verb,
-                                   "subclause.bin", "clause.bin");
+    cmd = make_indirect_clause_cmd(
+        sname[cl.stype], actual_sub, cl.verb, "subclause.bin", "clause.bin");
     RUN_CMD(cmd, script, "");
     cmd = "rm -rf subclause.bin";
     RUN_CMD(cmd, script, "");
@@ -561,10 +600,11 @@ static bool generate_claim_policy(string policyKey, vector<claim> claims,
     p           = subject_conversion(claim.stype, claim.sub, script);
     actual_sub  = p.first;
     cleanup_cmd = p.second;
-    cmd = make_indirect_clause_cmd(sname[claim.stype], actual_sub, claim.verb,
-                                   clauseFile, claimFile);
+    cmd         = make_indirect_clause_cmd(
+        sname[claim.stype], actual_sub, claim.verb, clauseFile, claimFile);
     RUN_CMD(cmd, script, false);
-    cmd = make_signed_claim_cmd(claimFile, "9000",
+    cmd = make_signed_claim_cmd(claimFile,
+                                "9000",
                                 claim.skey == "" ? policyKey : claim.skey,
                                 signedClaimFile);
     RUN_CMD(cmd, script, false);
@@ -594,7 +634,8 @@ static bool generate_packaged_claims(vector<string> signed_claims,
   }
   cmd = string_format("%s --input=%s --output=%s",
                       (FLAGS_util_path + PACKAGE_CLAIM_CMD).c_str(),
-                      cList.c_str(), output.c_str());
+                      cList.c_str(),
+                      output.c_str());
   RUN_CMD(cmd, script, false);
   return true;
 }
@@ -745,8 +786,8 @@ int main(int argc, char* argv[]) {
   }
 
   /* Policy generation */
-  if (!generate_policy(policyKey, platforms, measurements, claims,
-                       FLAGS_script)) {
+  if (!generate_policy(
+          policyKey, platforms, measurements, claims, FLAGS_script)) {
     cerr << "Policy generation failed!" << endl;
     return EXIT_FAILURE;
   }

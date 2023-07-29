@@ -103,8 +103,15 @@ int main(int an, char** av) {
   }
 
   X509* ark_509 = X509_new();
-  if (!produce_artifact(ark_vse_key, ark_name, ark_desc_str, pub_ark_vse_key,
-                        ark_name, ark_desc_str, 1ULL, 86400 * 365.25, ark_509,
+  if (!produce_artifact(ark_vse_key,
+                        ark_name,
+                        ark_desc_str,
+                        pub_ark_vse_key,
+                        ark_name,
+                        ark_desc_str,
+                        1ULL,
+                        86400 * 365.25,
+                        ark_509,
                         true)) {
     printf("Generate ark cert failed\n");
     return 1;
@@ -141,8 +148,15 @@ int main(int an, char** av) {
   }
 
   X509* ask_509 = X509_new();
-  if (!produce_artifact(ark_vse_key, ark_name, ark_desc_str, pub_ask_vse_key,
-                        ask_name, ask_desc_str, 1ULL, 86400 * 365.25, ask_509,
+  if (!produce_artifact(ark_vse_key,
+                        ark_name,
+                        ark_desc_str,
+                        pub_ask_vse_key,
+                        ask_name,
+                        ask_desc_str,
+                        1ULL,
+                        86400 * 365.25,
+                        ask_509,
                         false)) {
     printf("Generate ark cert failed\n");
     return 1;
@@ -183,9 +197,16 @@ int main(int an, char** av) {
   pub_vcek_vse_key.set_key_name(vcek_name);
 
   X509* vcek_509 = X509_new();
-  if (!produce_artifact(ask_vse_key, ask_name, ask_desc_str, pub_vcek_vse_key,
-                        vcek_name, vcek_desc_str, 1ULL, 86400 * 365.25,
-                        vcek_509, false, true)) {
+  if (!produce_artifact(ask_vse_key,
+                        ask_name,
+                        ask_desc_str,
+                        pub_vcek_vse_key,
+                        vcek_name,
+                        vcek_desc_str,
+                        1ULL,
+                        86400 * 365.25,
+                        vcek_509,
+                        false, true)) {
     printf("Generate ark cert failed\n");
     return 1;
   }

@@ -149,14 +149,17 @@ int main(int an, char** av) {
     return 1;
   }
   int size_out = sizeof(signature);
-  if (!ecc_sign("sha-384", eck, sizeof(attestation_report) - sizeof(signature),
-                (byte*)&default_report, &size_out,
+  if (!ecc_sign("sha-384",
+                eck,
+                sizeof(attestation_report) - sizeof(signature),
+                (byte*)&default_report,
+                &size_out,
                 (byte*)&default_report.signature)) {
     printf("signature failure\n");
     return 1;
   }
-  if (!write_file(FLAGS_output, sizeof(attestation_report),
-                  (byte*)&default_report)) {
+  if (!write_file(
+          FLAGS_output, sizeof(attestation_report), (byte*)&default_report)) {
     printf("Can't write %s\n", FLAGS_output.c_str());
     return 1;
   }

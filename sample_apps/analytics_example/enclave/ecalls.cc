@@ -200,7 +200,8 @@ bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
     attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
     if (!app_trust_data->initialize_simulated_enclave_data(
-            attest_key_file_name, measurement_file_name,
+            attest_key_file_name,
+            measurement_file_name,
             attest_endorsement_file_name)) {
       printf("Can't init simulated enclave\n");
       return false;
@@ -248,7 +249,8 @@ bool run_me_as_server() {
     return false;
   }
   printf("running as server\n");
-  server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+  server_dispatch(FLAGS_server_app_host,
+                  FLAGS_server_app_port,
                   app_trust_data->serialized_policy_cert_,
                   app_trust_data->private_auth_key_,
                   app_trust_data->private_auth_key_.certificate(),
@@ -286,7 +288,8 @@ bool run_me_as_client() {
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
   if (!channel.init_client_ssl(
-          FLAGS_server_app_host, FLAGS_server_app_port,
+          FLAGS_server_app_host,
+          FLAGS_server_app_port,
           app_trust_data->serialized_policy_cert_,
           app_trust_data->private_auth_key_,
           app_trust_data->private_auth_key_.certificate())) {

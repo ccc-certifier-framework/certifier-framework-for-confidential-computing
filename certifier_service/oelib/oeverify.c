@@ -47,9 +47,15 @@ bool oe_host_verify_evidence(uint8_t* evidence, size_t evidence_size,
     }
   }
 
-  oe_res = oe_verify_evidence(&_uuid, evidence, evidence_size, endorsements,
-                              endorsements_size, policies, policies_size,
-                              &claims, &claims_length);
+  oe_res = oe_verify_evidence(&_uuid,
+                              evidence,
+                              evidence_size,
+                              endorsements,
+                              endorsements_size,
+                              policies,
+                              policies_size,
+                              &claims,
+                              &claims_length);
 
   result = (check_tcb ? oe_res == OE_OK
                       : (oe_res == OE_OK || oe_res == OE_TCB_LEVEL_INVALID));
@@ -63,7 +69,8 @@ bool oe_host_verify_evidence(uint8_t* evidence, size_t evidence_size,
       goto err;
     };
     if (claim->value_size > *measurement_size) {
-      fprintf(stderr, "Measurement buffer too small. Need %lu bytes.\n",
+      fprintf(stderr,
+              "Measurement buffer too small. Need %lu bytes.\n",
               claim->value_size);
       result = false;
       goto err;
@@ -73,14 +80,15 @@ bool oe_host_verify_evidence(uint8_t* evidence, size_t evidence_size,
     *measurement_size = claim->value_size;
 
     // Extract the custom claim buffer
-    if ((claim = _find_claim(claims, claims_length,
-                             OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) == NULL) {
+    if ((claim = _find_claim(
+             claims, claims_length, OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) == NULL) {
       fprintf(stderr, "Could not find claim.\n");
       result = false;
       goto err;
     };
 
-    if (oe_deserialize_custom_claims(claim->value, claim->value_size,
+    if (oe_deserialize_custom_claims(claim->value,
+                                     claim->value_size,
                                      &custom_claims,
                                      &custom_claims_length) != OE_OK) {
       fprintf(stderr, "oe_deserialize_custom_claims failed.\n");
@@ -89,13 +97,14 @@ bool oe_host_verify_evidence(uint8_t* evidence, size_t evidence_size,
     }
 
     if (custom_claims[0].value_size > *custom_claim_size) {
-      fprintf(stderr, "Custom claim buffer too small. Need %lu bytes.\n",
+      fprintf(stderr,
+              "Custom claim buffer too small. Need %lu bytes.\n",
               custom_claims[0].value_size);
       result = false;
       goto err;
     }
-    memcpy(custom_claim_out, custom_claims[0].value,
-           custom_claims[0].value_size);
+    memcpy(
+        custom_claim_out, custom_claims[0].value, custom_claims[0].value_size);
     *custom_claim_size = custom_claims[0].value_size;
   }
 

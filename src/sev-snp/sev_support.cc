@@ -188,15 +188,18 @@ int sev_ecdsa_sign(const void *msg, size_t msg_size, EVP_PKEY *key,
   }
 
   if (sig_size > expected_size) {
-    fprintf(stderr, "%s: signature requires %lu bytes! (%lu allocated)\n",
-            __func__, sig_size, expected_size);
+    fprintf(stderr,
+            "%s: signature requires %lu bytes! (%lu allocated)\n",
+            __func__,
+            sig_size,
+            expected_size);
     rc = ENOBUFS;
     goto out_sig;
   }
 
   /* Store the R & S components of the ID block signature */
-  rc = get_ecdsa_sig_rs_bytes(ossl_sig, sig_size, sig->r, sig->s, &r_size,
-                              &s_size);
+  rc = get_ecdsa_sig_rs_bytes(
+      ossl_sig, sig_size, sig->r, sig->s, &r_size, &s_size);
   if (rc != EXIT_SUCCESS)
     goto out_sig;
 
@@ -247,8 +250,9 @@ int sev_ecdsa_verify(const void *digest, size_t digest_size, EVP_PKEY *key,
     ECDSA_SIG_set0(ecdsa_sig, r, s);
 
     // Validation will also be done by the FW
-    if (ECDSA_do_verify((byte *)digest, (uint32_t)digest_size, ecdsa_sig,
-                        pub_ec_key) != 1) {
+    if (ECDSA_do_verify(
+            (byte *)digest, (uint32_t)digest_size, ecdsa_sig, pub_ec_key) !=
+        1) {
       printf("ECDSA_do_verify failed\n");
       ECDSA_SIG_free(ecdsa_sig);
       break;
@@ -310,8 +314,12 @@ int sev_request_key(struct sev_key_options *options, uint8_t *key,
   if (fd == -1) {
     rc = errno;
     char error[64];
-    snprintf(error, sizeof(error), "[%d] open %s, errno=%d", __LINE__,
-             SEV_GUEST_DEVICE, rc);
+    snprintf(error,
+             sizeof(error),
+             "[%d] open %s, errno=%d",
+             __LINE__,
+             SEV_GUEST_DEVICE,
+             rc);
     perror(error);
     goto out;
   }
@@ -321,8 +329,12 @@ int sev_request_key(struct sev_key_options *options, uint8_t *key,
   if (rc == -1) {
     rc = errno;
     perror("ioctl");
-    fprintf(stderr, "[%s:%d] ioctl key=%lu, firmware error %llu\n", __func__,
-            __LINE__, SNP_GET_DERIVED_KEY, guest_req.fw_err);
+    fprintf(stderr,
+            "[%s:%d] ioctl key=%lu, firmware error %llu\n",
+            __func__,
+            __LINE__,
+            SNP_GET_DERIVED_KEY,
+            guest_req.fw_err);
     goto out_close;
   }
 
@@ -389,7 +401,9 @@ int sev_sign_report(struct attestation_report *report) {
     goto exit;
   }
   rc = sev_ecdsa_sign(
-      report, sizeof(struct attestation_report) - sizeof(struct signature), key,
+      report,
+      sizeof(struct attestation_report) - sizeof(struct signature),
+      key,
       (union sev_ecdsa_sig *)&report->signature);
   if (rc != EXIT_SUCCESS) {
     errno = rc;
@@ -419,15 +433,17 @@ bool sev_verify_report(EVP_PKEY *key, struct attestation_report *report) {
   byte         digest[size_digest];
 
   if (!digest_message(
-          "sha-384", (const byte *)report,
-          sizeof(struct attestation_report) - sizeof(struct signature), digest,
+          "sha-384",
+          (const byte *)report,
+          sizeof(struct attestation_report) - sizeof(struct signature),
+          digest,
           size_digest)) {
     printf("sev_verify_report: digest_message failed\n");
     return false;
   }
 
-  int rc = sev_ecdsa_verify(digest, 48, key,
-                            (union sev_ecdsa_sig *)&report->signature);
+  int rc = sev_ecdsa_verify(
+      digest, 48, key, (union sev_ecdsa_sig *)&report->signature);
   if (rc != EXIT_SUCCESS) {
     printf("sev_verify_report: sev_ecdsa_verify failed\n");
     return false;
@@ -468,8 +484,12 @@ int sev_get_report(const uint8_t *data, size_t data_size,
   if (fd == -1) {
     rc = errno;
     char error[64];
-    snprintf(error, sizeof(error), "[%d] open %s, errno=%d", __LINE__,
-             SEV_GUEST_DEVICE, rc);
+    snprintf(error,
+             sizeof(error),
+             "[%d] open %s, errno=%d",
+             __LINE__,
+             SEV_GUEST_DEVICE,
+             rc);
     perror(error);
     goto out;
   }
@@ -488,8 +508,10 @@ int sev_get_report(const uint8_t *data, size_t data_size,
     rc = report_resp->status;
     goto out_close;
   } else if (report_resp->report_size > sizeof(*report)) {
-    fprintf(stderr, "report size is %u bytes (expected %lu)!\n",
-            report_resp->report_size, sizeof(*report));
+    fprintf(stderr,
+            "report size is %u bytes (expected %lu)!\n",
+            report_resp->report_size,
+            sizeof(*report));
     rc = EFBIG;
     goto out_close;
   }
@@ -556,8 +578,8 @@ bool      kdf(int key_len, byte *key, int iter, int out_size, byte *out) {
       xor_in(hmac_size, t, u);
     }
     if (j == num_blks) {
-      memcpy(&out[hmac_size * (j - 1)], t,
-             out_size - (num_blks - 1) * hmac_size);
+      memcpy(
+          &out[hmac_size * (j - 1)], t, out_size - (num_blks - 1) * hmac_size);
     } else {
       memcpy(&out[hmac_size * (j - 1)], t, hmac_size);
     }
@@ -613,8 +635,8 @@ bool sev_Seal(int in_size, byte *in, int *size_out, byte *out) {
     return false;
 
   // Encrypt and integrity protect
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256", in, in_size, final_key,
-                             iv, out, size_out))
+  if (!authenticated_encrypt(
+          "aes-256-cbc-hmac-sha256", in, in_size, final_key, iv, out, size_out))
     return false;
   return true;
 }
@@ -630,8 +652,8 @@ bool sev_Unseal(int in_size, byte *in, int *size_out, byte *out) {
 #endif
 
   // decrypt and integity check
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", in, in_size, final_key,
-                             out, size_out))
+  if (!authenticated_decrypt(
+          "aes-256-cbc-hmac-sha256", in, in_size, final_key, out, size_out))
     return false;
   return true;
 }
@@ -647,8 +669,8 @@ bool sev_Attest(int what_to_say_size, byte *what_to_say, int *size_out,
   sev_attestation_message the_attestation;
   the_attestation.set_what_was_said(what_to_say, what_to_say_size);
 
-  if (!digest_message("sha-384", what_to_say, what_to_say_size, hash,
-                      hash_len)) {
+  if (!digest_message(
+          "sha-384", what_to_say, what_to_say_size, hash, hash_len)) {
     printf("digest_message failed\n");
     return false;
   }
@@ -692,8 +714,11 @@ bool verify_sev_Attest(EVP_PKEY *key, int size_sev_attestation,
   unsigned int digest_size = 64;
   byte         digest[digest_size];
   memset(digest, 0, digest_size);
-  if (!digest_message("sha-384", (byte *)sev_att.what_was_said().data(),
-                      sev_att.what_was_said().size(), digest, digest_size)) {
+  if (!digest_message("sha-384",
+                      (byte *)sev_att.what_was_said().data(),
+                      sev_att.what_was_said().size(),
+                      digest,
+                      digest_size)) {
     printf("verify_sev_Attest: digest_message fails\n");
     return false;
   }
@@ -702,7 +727,8 @@ bool verify_sev_Attest(EVP_PKEY *key, int size_sev_attestation,
       (struct attestation_report *)sev_att.reported_attestation().data();
   if (report->signature_algo != SIG_ALGO_ECDSA_P384_SHA384) {
     printf("verify_sev_Attest: Not SIG_ALGO_ECDSA_P384_SHA384 %08x %08x\n",
-           report->signature_algo, SIG_ALGO_ECDSA_P384_SHA384);
+           report->signature_algo,
+           SIG_ALGO_ECDSA_P384_SHA384);
     return false;
   }
 
@@ -829,15 +855,19 @@ int verify_report(struct attestation_report *report) {
 #endif
 
   if (!digest_message(
-          "sha-384", (byte *)report,
+          "sha-384",
+          (byte *)report,
           sizeof(struct attestation_report) - sizeof(struct signature),
-          sha_digest_384, sizeof(sha_digest_384))) {
+          sha_digest_384,
+          sizeof(sha_digest_384))) {
     rc = -EXIT_FAILURE;
     perror("sha_digest_384");
     goto exit;
   }
 
-  rc = sev_ecdsa_verify(sha_digest_384, sizeof(sha_digest_384), key,
+  rc = sev_ecdsa_verify(sha_digest_384,
+                        sizeof(sha_digest_384),
+                        key,
                         (union sev_ecdsa_sig *)&report->signature);
   if (rc != EXIT_SUCCESS) {
     errno = rc;

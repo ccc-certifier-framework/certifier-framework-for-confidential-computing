@@ -68,8 +68,12 @@ bool run_me_as_server(const string& host_name, int port,
                       string& asn1_policy_cert, key_message& private_key,
                       string& private_key_cert) {
   printf("running as server\n");
-  server_dispatch(host_name, port, asn1_policy_cert, private_key,
-                  private_key_cert, server_application);
+  server_dispatch(host_name,
+                  port,
+                  asn1_policy_cert,
+                  private_key,
+                  private_key_cert,
+                  server_application);
   return true;
 }
 
@@ -92,8 +96,8 @@ bool run_me_as_client(const string& host_name, int port,
   printf("running as client\n");
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
-  if (!channel.init_client_ssl(host_name, port, asn1_policy_cert, private_key,
-                               private_key_cert)) {
+  if (!channel.init_client_ssl(
+          host_name, port, asn1_policy_cert, private_key, private_key_cert)) {
     printf("Can't init client app\n");
     return false;
   }
@@ -111,9 +115,16 @@ bool make_admissions_cert(const string& role, key_message& policy_key,
   string subject_organization("1234567890");
 
   X509* x509_cert = X509_new();
-  if (!produce_artifact(policy_key, issuer_name, issuer_organization, auth_key,
-                        subject_name, subject_organization, 23,
-                        365.26 * 86400.0, x509_cert, false)) {
+  if (!produce_artifact(policy_key,
+                        issuer_name,
+                        issuer_organization,
+                        auth_key,
+                        subject_name,
+                        subject_organization,
+                        23,
+                        365.26 * 86400.0,
+                        x509_cert,
+                        false)) {
     return false;
   }
   if (!x509_to_asn1(x509_cert, out)) {
@@ -212,8 +223,8 @@ int main(int an, char** av) {
 
   // make admissions cert
   string auth_cert;
-  if (!make_admissions_cert(FLAGS_operation, policy_key, auth_key,
-                            &auth_cert)) {
+  if (!make_admissions_cert(
+          FLAGS_operation, policy_key, auth_key, &auth_cert)) {
     printf("Can't make admissions cert\n");
     return 1;
   }
@@ -231,14 +242,20 @@ int main(int an, char** av) {
 #endif
 
   if (FLAGS_operation == "client") {
-    if (!run_me_as_client(FLAGS_app_host.c_str(), FLAGS_app_port,
-                          str_policy_cert, auth_key, auth_cert)) {
+    if (!run_me_as_client(FLAGS_app_host.c_str(),
+                          FLAGS_app_port,
+                          str_policy_cert,
+                          auth_key,
+                          auth_cert)) {
       printf("run-me-as-client failed\n");
       return 1;
     }
   } else if (FLAGS_operation == "server") {
-    if (!run_me_as_server(FLAGS_app_host.c_str(), FLAGS_app_port,
-                          str_policy_cert, auth_key, auth_cert)) {
+    if (!run_me_as_server(FLAGS_app_host.c_str(),
+                          FLAGS_app_port,
+                          str_policy_cert,
+                          auth_key,
+                          auth_cert)) {
       printf("server failed\n");
       return 1;
     }

@@ -87,7 +87,8 @@ bool generate_test_keys() {
   string serialized_attest_key;
   if (!attest_key.SerializeToString(&serialized_attest_key))
     return false;
-  if (!write_file(FLAGS_attest_key_output_file, serialized_attest_key.size(),
+  if (!write_file(FLAGS_attest_key_output_file,
+                  serialized_attest_key.size(),
                   (byte*)serialized_attest_key.data()))
     return false;
 
@@ -106,8 +107,10 @@ bool generate_policy_key() {
   key_message policy_key;
   key_message policy_pk;  // public policy key
 
-  if (!make_root_key_with_cert(FLAGS_policy_key_type, FLAGS_policy_key_name,
-                               FLAGS_policy_authority_name, &policy_key))
+  if (!make_root_key_with_cert(FLAGS_policy_key_type,
+                               FLAGS_policy_key_name,
+                               FLAGS_policy_authority_name,
+                               &policy_key))
     return false;
   if (!private_key_to_public_key(policy_key, &policy_pk))
     return false;
@@ -115,7 +118,8 @@ bool generate_policy_key() {
   string serialized_key;
   if (!policy_key.SerializeToString(&serialized_key))
     return false;
-  if (!write_file(FLAGS_policy_key_output_file, serialized_key.size(),
+  if (!write_file(FLAGS_policy_key_output_file,
+                  serialized_key.size(),
                   (byte*)serialized_key.data()))
     return false;
   if (!write_file(FLAGS_policy_cert_output_file,
@@ -148,8 +152,8 @@ void test_sig() {
   int  signed_endorsement_size = file_size(FLAGS_platform_attest_endorsement);
   byte serialized_endorsement[signed_endorsement_size + 1];
   size = signed_endorsement_size;
-  if (!read_file(FLAGS_platform_attest_endorsement, &size,
-                 serialized_endorsement)) {
+  if (!read_file(
+          FLAGS_platform_attest_endorsement, &size, serialized_endorsement)) {
     printf("Can't read endorsement file %s\n",
            FLAGS_platform_attest_endorsement.c_str());
     return;
@@ -183,9 +187,11 @@ void test_sig() {
     return;
   }
 
-  int n =
-      RSA_public_encrypt(scm.signature().size(), (byte*)scm.signature().data(),
-                         dec_buf, r, RSA_NO_PADDING);
+  int n = RSA_public_encrypt(scm.signature().size(),
+                             (byte*)scm.signature().data(),
+                             dec_buf,
+                             r,
+                             RSA_NO_PADDING);
   if (n < 0) {
     printf("public encrypt failed\n");
     return;

@@ -60,7 +60,11 @@ bool test_sev(bool print_all) {
   int  unsealed_size = 512;
   memset(unsealed, 0, unsealed_size);
 
-  if (!Unseal(enclave_type, enclave_id, sealed_size, sealed, &unsealed_size,
+  if (!Unseal(enclave_type,
+              enclave_id,
+              sealed_size,
+              sealed,
+              &unsealed_size,
               unsealed)) {
     printf("test_sev, unseal error\n");
     return false;
@@ -110,8 +114,11 @@ bool test_sev(bool print_all) {
   if (!ud.SerializeToString(&serialized_user)) {
     return false;
   }
-  if (!Attest(ud.enclave_type(), serialized_user.size(),
-              (byte*)serialized_user.data(), &size_out, out)) {
+  if (!Attest(ud.enclave_type(),
+              serialized_user.size(),
+              (byte*)serialized_user.data(),
+              &size_out,
+              out)) {
     printf("Attest failed\n");
     return false;
   }
@@ -133,8 +140,8 @@ bool test_sev(bool print_all) {
 
   if (verify_pkey == nullptr)
     return false;
-  bool success = verify_sev_Attest(verify_pkey, size_out, out,
-                                   &size_measurement, measurement);
+  bool success = verify_sev_Attest(
+      verify_pkey, size_out, out, &size_measurement, measurement);
   EVP_PKEY_free(verify_pkey);
   verify_pkey = nullptr;
 
@@ -168,9 +175,11 @@ bool test_sev(bool print_all) {
   if (print_all) {
     attestation_report r;
     printf("attestation struct size is %lx, reported attestation size is %lx\n",
-           sizeof(attestation_report), sev_att.reported_attestation().size());
+           sizeof(attestation_report),
+           sev_att.reported_attestation().size());
     printf("report starts at: %lx, signature starts at %lx\n",
-           (long unsigned int)&r, (long unsigned int)&r.signature);
+           (long unsigned int)&r,
+           (long unsigned int)&r.signature);
     printf("\nMeasurement size: %d, measurement: ", size_measurement);
     print_bytes(size_measurement, measurement);
     printf("\n");
@@ -330,11 +339,18 @@ bool construct_sev_platform_evidence(const string&      purpose,
   int  size_out = 16000;
   byte out[size_out];
 #if 1
-  if (!Attest(enclave_type, serialized_ud.size(), (byte*)serialized_ud.data(),
-              &size_out, out)) {
+  if (!Attest(enclave_type,
+              serialized_ud.size(),
+              (byte*)serialized_ud.data(),
+              &size_out,
+              out)) {
 #else
-  if (!simulated_sev_Attest(vcek, enclave_type, serialized_ud.size(),
-                            (byte*)serialized_ud.data(), &size_out, out)) {
+  if (!simulated_sev_Attest(vcek,
+                            enclave_type,
+                            serialized_ud.size(),
+                            (byte*)serialized_ud.data(),
+                            &size_out,
+                            out)) {
 #endif /* 1 */
 
     printf("construct_sev_platform_evidence: Attest failed\n");
@@ -462,9 +478,16 @@ bool test_sev_platform_certify(
   string ark_subject_desc("platform-provider");
   string ark_subject_name(ark_key.key_name());
   X509*  x_ark = X509_new();
-  if (!produce_artifact(ark_key, ark_issuer_name, ark_issuer_desc, ark_pk,
-                        ark_subject_name, ark_subject_desc, 1ULL,
-                        365.26 * 86400, x_ark, true)) {
+  if (!produce_artifact(ark_key,
+                        ark_issuer_name,
+                        ark_issuer_desc,
+                        ark_pk,
+                        ark_subject_name,
+                        ark_subject_desc,
+                        1ULL,
+                        365.26 * 86400,
+                        x_ark,
+                        true)) {
     printf("test_sev_platform_certify: Can't produce ark artifact\n");
     return false;
   }
@@ -476,9 +499,16 @@ bool test_sev_platform_certify(
   string ask_subject_desc("platform-provider");
   string ask_subject_name(ask_key.key_name());
   X509*  x_ask = X509_new();
-  if (!produce_artifact(ark_key, ark_issuer_name, ark_issuer_desc, ask_pk,
-                        ask_subject_name, ask_subject_desc, 2ULL,
-                        365.26 * 86400, x_ask, false)) {
+  if (!produce_artifact(ark_key,
+                        ark_issuer_name,
+                        ark_issuer_desc,
+                        ask_pk,
+                        ask_subject_name,
+                        ask_subject_desc,
+                        2ULL,
+                        365.26 * 86400,
+                        x_ask,
+                        false)) {
     printf("test_sev_platform_certify: Can't produce ask artifact\n");
     return false;
   }
@@ -492,9 +522,16 @@ bool test_sev_platform_certify(
   string vcek_subject_desc("platform-provider");
   string vcek_subject_name(vcek_key.key_name());
   X509*  x_vcek = X509_new();
-  if (!produce_artifact(ask_key, vcek_issuer_name, vcek_issuer_desc, vcek_pk,
-                        vcek_subject_name, vcek_subject_desc, 3ULL,
-                        365.26 * 86400, x_vcek, false)) {
+  if (!produce_artifact(ask_key,
+                        vcek_issuer_name,
+                        vcek_issuer_desc,
+                        vcek_pk,
+                        vcek_subject_name,
+                        vcek_subject_desc,
+                        3ULL,
+                        365.26 * 86400,
+                        x_vcek,
+                        false)) {
     printf("test_sev_platform_certify: Can't produce vcek artifact\n");
     return false;
   }
@@ -506,9 +543,12 @@ bool test_sev_platform_certify(
 
   // construct evidence package
   string purpose("authentication");
-  if (!construct_sev_platform_evidence(purpose, serialized_ark_cert,
+  if (!construct_sev_platform_evidence(purpose,
+                                       serialized_ark_cert,
                                        serialized_ask_cert,
-                                       serialized_vcek_cert, vcek_key, &evp)) {
+                                       serialized_vcek_cert,
+                                       vcek_key,
+                                       &evp)) {
     printf("construct_sev_platform_evidence failed\n");
     return false;
   }
@@ -527,15 +567,16 @@ bool test_sev_platform_certify(
     printf(
         "test_platform_certify, evidence descriptor: %s, enclave type: %s, "
         "evidence:\n",
-        evidence_descriptor.c_str(), enclave_type.c_str());
+        evidence_descriptor.c_str(),
+        enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
       print_evidence(evp.fact_assertion(i));
       printf("\n");
     }
   }
 
-  if (!validate_evidence_from_policy(evidence_descriptor, signed_statements,
-                                     purpose, evp, policy_pk)) {
+  if (!validate_evidence_from_policy(
+          evidence_descriptor, signed_statements, purpose, evp, policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }

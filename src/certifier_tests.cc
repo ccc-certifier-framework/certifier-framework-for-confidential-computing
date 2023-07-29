@@ -100,7 +100,8 @@ extern bool test__local_certify(string&, bool, string&, string&);
 TEST(local_certify, test_local_certify) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("full-vse-support");
-  EXPECT_TRUE(test__local_certify(enclave_type, FLAGS_read_measurement_file,
+  EXPECT_TRUE(test__local_certify(enclave_type,
+                                  FLAGS_read_measurement_file,
                                   FLAGS_trusted_measurements_file,
                                   evidence_descriptor));
 }
@@ -108,7 +109,8 @@ TEST(local_certify, test_local_certify) {
 TEST(local_certify, test_partial_local_certify) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("platform-attestation-only");
-  EXPECT_TRUE(test__local_certify(enclave_type, FLAGS_read_measurement_file,
+  EXPECT_TRUE(test__local_certify(enclave_type,
+                                  FLAGS_read_measurement_file,
                                   FLAGS_trusted_measurements_file,
                                   evidence_descriptor));
 }
@@ -117,7 +119,8 @@ extern bool test__new_local_certify(string&, bool, string&, string&);
 TEST(local_certify, test_new_local_certify) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("full-vse-support");
-  EXPECT_TRUE(test__new_local_certify(enclave_type, FLAGS_read_measurement_file,
+  EXPECT_TRUE(test__new_local_certify(enclave_type,
+                                      FLAGS_read_measurement_file,
                                       FLAGS_trusted_measurements_file,
                                       evidence_descriptor));
 }
@@ -174,11 +177,15 @@ TEST(platform_certify, test_platform_certify) {
     printf("sev-policy test skipped\n");
     EXPECT_TRUE(true);
   } else {
-    EXPECT_TRUE(test_sev_platform_certify(
-        FLAGS_print_all, FLAGS_policy_file_name, FLAGS_policy_key_file_name,
-        FLAGS_ark_key_file_name, FLAGS_ask_key_file_name,
-        FLAGS_vcek_key_file_name, FLAGS_ark_cert_file_name,
-        FLAGS_ask_cert_file_name, FLAGS_vcek_cert_file_name));
+    EXPECT_TRUE(test_sev_platform_certify(FLAGS_print_all,
+                                          FLAGS_policy_file_name,
+                                          FLAGS_policy_key_file_name,
+                                          FLAGS_ark_key_file_name,
+                                          FLAGS_ask_key_file_name,
+                                          FLAGS_vcek_key_file_name,
+                                          FLAGS_ark_cert_file_name,
+                                          FLAGS_ask_cert_file_name,
+                                          FLAGS_vcek_cert_file_name));
   }
 }
 #endif  // RUN_SEV_TESTS
@@ -196,8 +203,10 @@ int main(int an, char** av) {
     return 1;
   }
 #else
-  if (!simulated_Init(serialized_policy_cert_, attest_key_file_name,
-                      measurement_file_name, attest_endorsement_file_name)) {
+  if (!simulated_Init(serialized_policy_cert_,
+                      attest_key_file_name,
+                      measurement_file_name,
+                      attest_endorsement_file_name)) {
     printf("simulated_init failed\n");
     return false;
   }

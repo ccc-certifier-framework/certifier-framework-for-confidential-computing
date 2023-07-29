@@ -141,7 +141,8 @@ int main(int an, char** av) {
     printf("Using measurement: %s\n", hex);
     measurement_size = strlen(hex) / 2;
     for (size_t count = 0;
-         count < strlen(hex) / 2 && count < (size_t)measurement_size; count++) {
+         count < strlen(hex) / 2 && count < (size_t)measurement_size;
+         count++) {
       sscanf(pos, "%2hhx", &m[count]);
       pos += 2;
     }

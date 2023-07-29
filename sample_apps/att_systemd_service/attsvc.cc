@@ -44,7 +44,8 @@ using namespace certifier::framework;
 #else
 #define ATT_LOG(priority, format, ...)                                         \
   do {                                                                         \
-    openlog("VMware Attestation Service", LOG_CONS | LOG_PID | LOG_NDELAY,     \
+    openlog("VMware Attestation Service",                                      \
+            LOG_CONS | LOG_PID | LOG_NDELAY,                                   \
             LOG_LOCAL1);                                                       \
     syslog(priority, format, ##__VA_ARGS__);                                   \
     closelog();                                                                \
@@ -106,7 +107,8 @@ static bool certifier_notification(cc_trust_data* app_trust_data,
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
   if (!channel.init_client_ssl(
-          app_config.client, app_config.client_port,
+          app_config.client,
+          app_config.client_port,
           app_trust_data->serialized_policy_cert_,
           app_trust_data->private_auth_key_,
           app_trust_data->private_auth_key_.certificate())) {
@@ -204,8 +206,8 @@ int main(int argc, char* argv[]) {
   config_file.append(ATTSERVICE_CONFIG_FILE);
 
   if (!file_exists(ATTSERVICE_DATA_DIR)) {
-    ATT_LOG(LOG_INFO, "Creating configuration directory: %s",
-            ATTSERVICE_DATA_DIR);
+    ATT_LOG(
+        LOG_INFO, "Creating configuration directory: %s", ATTSERVICE_DATA_DIR);
     if (mkdir(ATTSERVICE_DATA_DIR, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) !=
         0) {
       ATT_LOG(LOG_INFO, "Failed to create configuration directory.");
@@ -238,7 +240,8 @@ int main(int argc, char* argv[]) {
   attest_endorsement_file_name.append(PLAT_ATTEST_ENDORSEMENT_FILE);
 
   if (!app_trust_data->initialize_simulated_enclave_data(
-          attest_key_file_name, measurement_file_name,
+          attest_key_file_name,
+          measurement_file_name,
           attest_endorsement_file_name)) {
     printf("Can't init simulated enclave\n");
     return 1;
@@ -264,8 +267,8 @@ int main(int argc, char* argv[]) {
 
   if (!file_exists(store_file)) {
     ATT_LOG(LOG_INFO, "Performing cold initialization...");
-    if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg, hash_alg,
-                                   hmac_alg)) {
+    if (!app_trust_data->cold_init(
+            public_key_alg, symmetric_key_alg, hash_alg, hmac_alg)) {
       ATT_LOG(LOG_INFO, "cold-init failed");
       ret = 1;
       goto done;
@@ -291,11 +294,16 @@ int main(int argc, char* argv[]) {
     }
   }
   ATT_LOG(LOG_INFO, "Attestation Service Configuration:");
-  ATT_LOG(LOG_INFO, "  Certifier host: %s:%d",
-          app_config.certifier_host.c_str(), app_config.certifier_port);
-  ATT_LOG(LOG_INFO, "  Notification client: %s:%d", app_config.client.c_str(),
+  ATT_LOG(LOG_INFO,
+          "  Certifier host: %s:%d",
+          app_config.certifier_host.c_str(),
+          app_config.certifier_port);
+  ATT_LOG(LOG_INFO,
+          "  Notification client: %s:%d",
+          app_config.client.c_str(),
           app_config.client_port);
-  ATT_LOG(LOG_INFO, "  Require Disk Encryption? : %s",
+  ATT_LOG(LOG_INFO,
+          "  Require Disk Encryption? : %s",
           app_config.check_disk ? "Yes" : "No");
 
   /*

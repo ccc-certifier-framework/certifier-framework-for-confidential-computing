@@ -136,8 +136,13 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("\n");
   }
 
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256", plain, in_size, key, iv,
-                             cipher, &size_encrypt_out)) {
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256",
+                             plain,
+                             in_size,
+                             key,
+                             iv,
+                             cipher,
+                             &size_encrypt_out)) {
     printf("authenticated encrypt failed\n");
     return false;
   }
@@ -145,7 +150,8 @@ bool test_authenticated_encrypt(bool print_all) {
     printf(
         "authenticated encrypt for aes-256-cbc-hmac-sha256 succeeded, in_size: "
         "%d, out_size is %d\n",
-        in_size, size_encrypt_out);
+        in_size,
+        size_encrypt_out);
     printf("iv: ");
     print_bytes(block_size, iv);
     printf("\n");
@@ -153,8 +159,11 @@ bool test_authenticated_encrypt(bool print_all) {
     print_bytes(size_encrypt_out, cipher);
     printf("\n");
   }
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", cipher,
-                             size_encrypt_out, key, decrypted,
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256",
+                             cipher,
+                             size_encrypt_out,
+                             key,
+                             decrypted,
                              &size_decrypt_out)) {
     printf("authenticated decrypt failed\n");
     return false;
@@ -185,8 +194,13 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("\n");
   }
 
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha384", plain, in_size, key, iv,
-                             cipher, &size_encrypt_out)) {
+  if (!authenticated_encrypt("aes-256-cbc-hmac-sha384",
+                             plain,
+                             in_size,
+                             key,
+                             iv,
+                             cipher,
+                             &size_encrypt_out)) {
     printf("authenticated encrypt failed\n");
     return false;
   }
@@ -194,7 +208,8 @@ bool test_authenticated_encrypt(bool print_all) {
     printf(
         "authenticated encrypt for aes-256-cbc-hmac-sha384 succeeded, in_size: "
         "%d, out_size is %d\n",
-        in_size, size_encrypt_out);
+        in_size,
+        size_encrypt_out);
     printf("iv: ");
     print_bytes(block_size, iv);
     printf("\n");
@@ -202,8 +217,11 @@ bool test_authenticated_encrypt(bool print_all) {
     print_bytes(size_encrypt_out, cipher);
     printf("\n");
   }
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha384", cipher,
-                             size_encrypt_out, key, decrypted,
+  if (!authenticated_decrypt("aes-256-cbc-hmac-sha384",
+                             cipher,
+                             size_encrypt_out,
+                             key,
+                             decrypted,
                              &size_decrypt_out)) {
     printf("authenticated decrypt failed\n");
     return false;
@@ -227,8 +245,8 @@ bool test_authenticated_encrypt(bool print_all) {
   size_encrypt_out = out_size;
   size_decrypt_out = out_size;
 
-  if (!authenticated_encrypt("aes-256-gcm", plain, in_size, key, iv, cipher,
-                             &size_encrypt_out)) {
+  if (!authenticated_encrypt(
+          "aes-256-gcm", plain, in_size, key, iv, cipher, &size_encrypt_out)) {
     printf("authenticated encrypt for aes-256-gcm failed\n");
     return false;
   }
@@ -236,7 +254,8 @@ bool test_authenticated_encrypt(bool print_all) {
     printf(
         "authenticated encrypt for aes-256-gcm succeeded, in_size: %d, "
         "out_size is %d\n",
-        in_size, size_encrypt_out);
+        in_size,
+        size_encrypt_out);
     printf("iv: ");
     print_bytes(block_size, iv);
     printf("\n");
@@ -244,8 +263,12 @@ bool test_authenticated_encrypt(bool print_all) {
     print_bytes(size_encrypt_out, cipher);
     printf("\n");
   }
-  if (!authenticated_decrypt("aes-256-gcm", cipher, size_encrypt_out, key,
-                             decrypted, &size_decrypt_out)) {
+  if (!authenticated_decrypt("aes-256-gcm",
+                             cipher,
+                             size_encrypt_out,
+                             key,
+                             decrypted,
+                             &size_decrypt_out)) {
     printf("authenticated decrypt for aes-256-gcm failed\n");
     return false;
   }
@@ -545,8 +568,8 @@ bool test_digest(bool print_all) {
   byte         digest[size_digest];
 
   memset(digest, 0, size_digest);
-  if (!digest_message("sha-256", (const byte*)message, msg_len, digest,
-                      size_digest)) {
+  if (!digest_message(
+          "sha-256", (const byte*)message, msg_len, digest, size_digest)) {
     printf("failed 0 (%d)\n", size_digest);
     return false;
   }
@@ -569,8 +592,8 @@ bool test_digest(bool print_all) {
     return false;
   }
   memset(digest, 0, size_digest);
-  if (!digest_message("sha-256", (const byte*)message2, msg_len, digest,
-                      size_digest)) {
+  if (!digest_message(
+          "sha-256", (const byte*)message2, msg_len, digest, size_digest)) {
     printf("failed 2 (%d)\n", size_digest);
     return false;
   }
@@ -593,8 +616,8 @@ bool test_digest(bool print_all) {
     return false;
   }
   memset(digest, 0, size_digest);
-  if (!digest_message("sha-384", (const byte*)message2, msg_len, digest,
-                      size_digest)) {
+  if (!digest_message(
+          "sha-384", (const byte*)message2, msg_len, digest, size_digest)) {
     printf("failed 5 (%d)\n", size_digest);
     return false;
   }
@@ -616,8 +639,8 @@ bool test_digest(bool print_all) {
     return false;
   }
   memset(digest, 0, size_digest);
-  if (!digest_message("sha-512", (const byte*)message2, msg_len, digest,
-                      size_digest)) {
+  if (!digest_message(
+          "sha-512", (const byte*)message2, msg_len, digest, size_digest)) {
     printf("failed 7 (%d)\n", size_digest);
     return false;
   }
@@ -662,13 +685,13 @@ bool test_sign_and_verify(bool print_all) {
   memset(sig, 0, sig_size);
   memset(recovered, 0, recovered_size);
 
-  if (!rsa_sha256_sign(r, strlen(test_message), (byte*)test_message, &sig_size,
-                       sig)) {
+  if (!rsa_sha256_sign(
+          r, strlen(test_message), (byte*)test_message, &sig_size, sig)) {
     printf("rsa_sha256_sign failed\n");
     return false;
   }
-  if (!rsa_sha256_verify(r, strlen(test_message), (byte*)test_message, sig_size,
-                         sig)) {
+  if (!rsa_sha256_verify(
+          r, strlen(test_message), (byte*)test_message, sig_size, sig)) {
     printf("rsa_sha256_verify failed\n");
     return false;
   }

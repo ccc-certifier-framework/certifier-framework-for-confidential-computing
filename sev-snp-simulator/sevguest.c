@@ -168,8 +168,8 @@ static int get_report(struct snp_guest_dev *          snp_dev,
   report_resp->status      = 0;
   report_resp->report_size = sizeof(report_resp->report);
 
-  if (copy_to_user((void __user *)arg->resp_data, report_resp,
-                   sizeof(*report_resp)))
+  if (copy_to_user(
+          (void __user *)arg->resp_data, report_resp, sizeof(*report_resp)))
     rc = -EFAULT;
 
   arg->fw_err = 0;
@@ -268,7 +268,8 @@ static int snp_guest_open(struct inode *inode, struct file *file) {
   struct snp_guest_dev *dev = NULL;
 
   if (smajor != sev_major || sminor != 0) {
-    printk(KERN_WARNING "No device found with minor=%d and major=%d\n", smajor,
+    printk(KERN_WARNING "No device found with minor=%d and major=%d\n",
+           smajor,
            sminor);
     return -ENODEV;
   }
@@ -307,8 +308,10 @@ static int construct_device(struct snp_guest_dev *dev, struct class *class) {
     return err;
   }
 
-  device   = device_create(class, NULL, /* no parent device */
-                         devno, NULL, /* no additional data */
+  device   = device_create(class,
+                         NULL, /* no parent device */
+                         devno,
+                         NULL, /* no additional data */
                          DEVICE_NAME);
   dev->dev = device;
 

@@ -80,8 +80,8 @@ bool gramine_Attest(const int what_to_say_size, byte* what_to_say,
   printf("\n");
 #endif
 
-  result = (*gramineFuncs.Attest)(what_to_say_size, what_to_say,
-                                  attestation_size_out, attestation_out);
+  result = (*gramineFuncs.Attest)(
+      what_to_say_size, what_to_say, attestation_size_out, attestation_out);
   if (!result) {
     printf("Gramine attest failed\n");
     return false;
@@ -107,9 +107,12 @@ bool gramine_Verify(const int what_to_say_size, byte* what_to_say,
   gramine_print_bytes(attestation_size, attestation);
 #endif
 
-  result = (*gramineFuncs.Verify)(what_to_say_size, what_to_say,
-                                  attestation_size, attestation,
-                                  measurement_out_size, measurement_out);
+  result = (*gramineFuncs.Verify)(what_to_say_size,
+                                  what_to_say,
+                                  attestation_size,
+                                  attestation,
+                                  measurement_out_size,
+                                  measurement_out);
   if (!result) {
     printf("Gramine verify failed\n");
     return false;

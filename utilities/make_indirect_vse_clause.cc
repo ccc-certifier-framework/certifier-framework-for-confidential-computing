@@ -165,6 +165,6 @@ int main(int an, char** av) {
     }
   }
 
-  return make_indirect_clause_file_utility(sub_ent, FLAGS_verb, in_cl,
-                                           FLAGS_output);
+  return make_indirect_clause_file_utility(
+      sub_ent, FLAGS_verb, in_cl, FLAGS_output);
 }
