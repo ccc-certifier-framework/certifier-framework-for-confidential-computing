@@ -45,8 +45,8 @@ keystone_get_fake_measurement(int* size, byte* measurement)
   if (!g_m_initialized) {
     int    n = file_size(g_measurement_file_name);
     string str_measurement;
-    if (n > 0 &&
-        read_file_into_string(g_measurement_file_name, &str_measurement)) {
+    if (n > 0
+        && read_file_into_string(g_measurement_file_name, &str_measurement)) {
       byte* p = (byte*)str_measurement.data();
       for (int i = 0; i < g_m_size; i++)
         g_measurement[i] = p[i];
@@ -272,8 +272,8 @@ keystone_Verify(const int what_to_say_size,
     printf("keystone_Verify: Can't digest what_to_say\n");
     return false;
   }
-  if ((int)report.enclave.data_len != len ||
-      memcmp(expected_data, report.enclave.data, len) != 0)
+  if ((int)report.enclave.data_len != len
+      || memcmp(expected_data, report.enclave.data, len) != 0)
   {
     printf("keystone_Verify: reported data is not hash of what_to_say\n");
     return false;
@@ -302,8 +302,8 @@ keystone_Attest(const int what_to_say_size,
                 int*      attestation_size_out,
                 byte*     attestation_out)
 {
-  int sz = (int)(sizeof(struct enclave_report_t) + sizeof(struct sm_report_t) +
-                 PUBLIC_KEY_SIZE);
+  int sz = (int)(sizeof(struct enclave_report_t) + sizeof(struct sm_report_t)
+                 + PUBLIC_KEY_SIZE);
   *attestation_size_out = sz;
 
   memset(attestation_out, 0, sizeof(report_t));

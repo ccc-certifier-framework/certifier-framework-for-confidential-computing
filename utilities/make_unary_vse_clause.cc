@@ -204,9 +204,9 @@ main(int an, char** av)
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_key_subject == "" && FLAGS_cert_subject == "" &&
-      FLAGS_measurement_subject == "" && FLAGS_platform_subject == "" &&
-      FLAGS_environment_subject == "")
+  if (FLAGS_key_subject == "" && FLAGS_cert_subject == ""
+      && FLAGS_measurement_subject == "" && FLAGS_platform_subject == ""
+      && FLAGS_environment_subject == "")
   {
     printf("No subject\n");
     return 1;

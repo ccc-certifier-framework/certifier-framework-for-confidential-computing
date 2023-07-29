@@ -68,8 +68,8 @@ oe_host_verify_evidence(uint8_t* evidence,
 
   if (result) {
     // Extract the measurement
-    if ((claim = _find_claim(claims, claims_length, OE_CLAIM_UNIQUE_ID)) ==
-        NULL) {
+    if ((claim = _find_claim(claims, claims_length, OE_CLAIM_UNIQUE_ID))
+        == NULL) {
       fprintf(stderr, "Could not find claim.\n");
       result = false;
       goto err;
@@ -86,9 +86,9 @@ oe_host_verify_evidence(uint8_t* evidence,
     *measurement_size = claim->value_size;
 
     // Extract the custom claim buffer
-    if ((claim = _find_claim(claims,
-                             claims_length,
-                             OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) == NULL)
+    if ((claim =
+             _find_claim(claims, claims_length, OE_CLAIM_CUSTOM_CLAIMS_BUFFER))
+        == NULL)
     {
       fprintf(stderr, "Could not find claim.\n");
       result = false;
@@ -98,7 +98,8 @@ oe_host_verify_evidence(uint8_t* evidence,
     if (oe_deserialize_custom_claims(claim->value,
                                      claim->value_size,
                                      &custom_claims,
-                                     &custom_claims_length) != OE_OK)
+                                     &custom_claims_length)
+        != OE_OK)
     {
       fprintf(stderr, "oe_deserialize_custom_claims failed.\n");
       result = false;

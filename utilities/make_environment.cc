@@ -65,8 +65,8 @@ main(int an, char** av)
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_platform_file == "" && FLAGS_measurement_file == "" &&
-      FLAGS_output == "")
+  if (FLAGS_platform_file == "" && FLAGS_measurement_file == ""
+      && FLAGS_output == "")
   {
     printf("%s: %s\n", av[0], usage.c_str());
     printf(

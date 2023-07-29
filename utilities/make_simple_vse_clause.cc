@@ -168,14 +168,14 @@ main(int an, char** av)
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_key_subject == "" && FLAGS_measurement_subject == "" &&
-      FLAGS_platform_subject == "" && FLAGS_environment_subject == "")
+  if (FLAGS_key_subject == "" && FLAGS_measurement_subject == ""
+      && FLAGS_platform_subject == "" && FLAGS_environment_subject == "")
   {
     printf("No subject\n");
     return 1;
   }
-  if (FLAGS_key_object == "" && FLAGS_measurement_object == "" &&
-      FLAGS_platform_object == "" && FLAGS_environment_object == "")
+  if (FLAGS_key_object == "" && FLAGS_measurement_object == ""
+      && FLAGS_platform_object == "" && FLAGS_environment_object == "")
   {
     printf("No object\n");
     return 1;

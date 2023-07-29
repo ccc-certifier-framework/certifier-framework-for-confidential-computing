@@ -326,8 +326,8 @@ main(int an, char** av)
     return 0;
   } else if (FLAGS_operation == "test-sig") {
     test_sig();
-  } else if (FLAGS_operation == "generate-policy-key" ||
-             FLAGS_operation == "generate-policy-key-and-test-keys")
+  } else if (FLAGS_operation == "generate-policy-key"
+             || FLAGS_operation == "generate-policy-key-and-test-keys")
   {
     printf("Generating policy key and cert\n");
     if (!generate_policy_key()) {

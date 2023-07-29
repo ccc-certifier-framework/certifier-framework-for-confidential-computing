@@ -49,6 +49,7 @@ BraceWrapping:
 
 BreakStringLiterals: true
 
+BreakBeforeBinaryOperators: NonAssignment
 ConstructorInitializerIndentWidth: 3
 ContinuationIndentWidth: 4
 

@@ -246,8 +246,8 @@ sev_ecdsa_verify(const void *         digest,
     ECDSA_SIG_set0(ecdsa_sig, r, s);
 
     // Validation will also be done by the FW
-    if (ECDSA_do_verify(digest, (uint32_t)digest_size, ecdsa_sig, pub_ec_key) !=
-        1) {
+    if (ECDSA_do_verify(digest, (uint32_t)digest_size, ecdsa_sig, pub_ec_key)
+        != 1) {
       printf("ECDSA_do_verify failed\n");
       ECDSA_SIG_free(ecdsa_sig);
       break;

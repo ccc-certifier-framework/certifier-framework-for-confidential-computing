@@ -288,9 +288,8 @@ soft_Unseal(spawned_children* kid, string in, string* out)
   print_bytes(kid->measurement_.size(), (byte*)kid->measurement_.data());
   printf("\n");
 #endif
-  if (memcmp(t_out,
-             (byte*)kid->measurement_.data(),
-             kid->measurement_.size()) != 0)
+  if (memcmp(t_out, (byte*)kid->measurement_.data(), kid->measurement_.size())
+      != 0)
   {
     printf("soft_Unseal: mis-matched measurements\n");
     return false;
@@ -343,12 +342,12 @@ soft_Attest(spawned_children* kid, string in, string* out)
 
   if (app_trust_data->private_service_key_.key_type() == "rsa-2048-private") {
     signing_alg.assign("rsa-2048-sha256-pkcs-sign");
-  } else if (app_trust_data->private_service_key_.key_type() ==
-             "rsa-4096-private")
+  } else if (app_trust_data->private_service_key_.key_type()
+             == "rsa-4096-private")
   {
     signing_alg.assign("rsa-4096-sha384-pkcs-sign");
-  } else if (app_trust_data->private_service_key_.key_type() ==
-             "ecc-384-private") {
+  } else if (app_trust_data->private_service_key_.key_type()
+             == "ecc-384-private") {
     signing_alg.assign("ecc-384-sha384-pkcs-sign");
   } else {
     return false;
@@ -470,8 +469,8 @@ app_service_loop(spawned_children* kid, int read_fd, int write_fd)
     if (!rsp.SerializeToString(&str_app_rsp)) {
       printf("Can't serialize response\n");
     }
-    if (write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size()) <
-        (int)str_app_rsp.size())
+    if (write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size())
+        < (int)str_app_rsp.size())
     {
       printf("Response write failed\n");
     }
@@ -757,8 +756,8 @@ app_request_server()
     }
     string str_resp;
     if (resp.SerializeToString(&str_resp)) {
-      if (sized_socket_write(client, str_resp.size(), (byte*)str_resp.data()) <
-          (int)str_resp.size())
+      if (sized_socket_write(client, str_resp.size(), (byte*)str_resp.data())
+          < (int)str_resp.size())
       {
         printf("Write failed\n");
       }

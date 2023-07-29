@@ -181,8 +181,8 @@ verify_signed_assertion_and_extract_clause(const key_message&          key,
                                            const signed_claim_message& sc,
                                            vse_clause*                 cl)
 {
-  if (!sc.has_serialized_claim_message() || !sc.has_signing_key() ||
-      !sc.has_signing_algorithm() || !sc.has_signature())
+  if (!sc.has_serialized_claim_message() || !sc.has_signing_key()
+      || !sc.has_signing_algorithm() || !sc.has_signature())
   {
     return false;
   }
@@ -316,7 +316,8 @@ get_signed_measurement_claim_from_trusted_list(
 
     if (memcmp(c.clause().subject().measurement().data(),
                (byte*)expected_measurement.data(),
-               expected_measurement.size()) == 0)
+               expected_measurement.size())
+        == 0)
     {
       claim->CopyFrom(trusted_measurements.claims(i));
       return true;
@@ -344,8 +345,8 @@ get_signed_platform_claim_from_trusted_list(
       continue;
     if (!c.has_clause() || !c.clause().has_verb())
       continue;
-    if ((c.clause().verb() != it1_verb && c.clause().verb() != it2_verb) ||
-        !c.clause().has_subject())
+    if ((c.clause().verb() != it1_verb && c.clause().verb() != it2_verb)
+        || !c.clause().has_subject())
       continue;
     if (c.clause().subject().entity_type() != "key")
       continue;
@@ -428,10 +429,10 @@ construct_what_to_say(string&      enclave_type,
                       key_message& enclave_pk,
                       string*      what_to_say)
 {
-  if (enclave_type != "simulated-enclave" &&
-      enclave_type != "application-enclave" && enclave_type != "sev-enclave" &&
-      enclave_type != "oe-enclave" && enclave_type != "asylo-enclave" &&
-      enclave_type != "gramine-enclave")
+  if (enclave_type != "simulated-enclave"
+      && enclave_type != "application-enclave" && enclave_type != "sev-enclave"
+      && enclave_type != "oe-enclave" && enclave_type != "asylo-enclave"
+      && enclave_type != "gramine-enclave")
     return false;
 
   attestation_user_data ud;
@@ -1069,8 +1070,8 @@ init_proved_statements(key_message&       pk,
       }
       // We can only add Key says statements and we must make
       // sure the subject of says is the signing key
-      if (!to_add.has_subject() || !to_add.has_verb() ||
-          to_add.verb() != "says") {
+      if (!to_add.has_subject() || !to_add.has_verb()
+          || to_add.verb() != "says") {
         printf(
             "init_proved_statements: added clause has wrong structure (1)\n");
         return false;
@@ -1355,8 +1356,8 @@ init_proved_statements(key_message&       pk,
                "(1)\n");
         return false;
       }
-      if (!last_clause.clause().has_subject() ||
-          last_clause.clause().subject().entity_type() != "key")
+      if (!last_clause.clause().has_subject()
+          || last_clause.clause().subject().entity_type() != "key")
       {
         printf("init_proved: last clause in sev-attestation has wrong format "
                "(2)\n");
@@ -1434,8 +1435,8 @@ init_proved_statements(key_message&       pk,
                "(1)\n");
         return false;
       }
-      if (!last_clause.clause().has_subject() ||
-          last_clause.clause().subject().entity_type() != "key")
+      if (!last_clause.clause().has_subject()
+          || last_clause.clause().subject().entity_type() != "key")
       {
         printf("init_proved_statements: malformed vcek delegation statement "
                "(2)\n");
@@ -1509,8 +1510,8 @@ init_proved_statements(key_message&       pk,
         return false;
       }
 #endif
-    } else if (evp.fact_assertion(i).evidence_type() ==
-               "signed-vse-attestation-report")
+    } else if (evp.fact_assertion(i).evidence_type()
+               == "signed-vse-attestation-report")
     {
       string t_str;
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
@@ -1586,8 +1587,8 @@ verify_rule_1(predicate_dominance& dom_tree,
     return false;
   if (c1.verb() != "is-trusted")
     return false;
-  if (c1.subject().entity_type() != "measurement" &&
-      c1.subject().entity_type() != "environment")
+  if (c1.subject().entity_type() != "measurement"
+      && c1.subject().entity_type() != "environment")
     return false;
 
   if (!c2.has_subject() || !c2.has_verb())
@@ -1601,11 +1602,11 @@ verify_rule_1(predicate_dominance& dom_tree,
     return false;
 
   // Make sure subject of conclusion is subject of c2 and verb "is-trusted"
-  if (!conclusion.has_subject() || !conclusion.has_verb() ||
-      conclusion.has_object() || conclusion.has_clause())
+  if (!conclusion.has_subject() || !conclusion.has_verb()
+      || conclusion.has_object() || conclusion.has_clause())
     return false;
-  if (conclusion.verb() != "is-trusted" &&
-      conclusion.verb() != "is-trusted-for-authentication")
+  if (conclusion.verb() != "is-trusted"
+      && conclusion.verb() != "is-trusted-for-authentication")
     return false;
 
   return same_entity(conclusion.subject(), c2.subject());
@@ -1754,8 +1755,8 @@ verify_rule_7(predicate_dominance& dom_tree,
     return false;
   if (c1.verb() != "is-trusted")
     return false;
-  if (c1.subject().entity_type() != "measurement" &&
-      c1.subject().entity_type() != "environment")
+  if (c1.subject().entity_type() != "measurement"
+      && c1.subject().entity_type() != "environment")
     return false;
 
   if (!c2.has_subject() || !c2.has_verb())
@@ -1768,8 +1769,8 @@ verify_rule_7(predicate_dominance& dom_tree,
   if (!same_entity(c1.subject(), c2.object()))
     return false;
   // Make sure subject of conclusion is subject of c2 and verb "is-trusted"
-  if (!conclusion.has_subject() || !conclusion.has_verb() ||
-      conclusion.has_object() || conclusion.has_clause())
+  if (!conclusion.has_subject() || !conclusion.has_verb()
+      || conclusion.has_object() || conclusion.has_clause())
     return false;
   if (conclusion.verb() != "is-trusted-for-attestation")
     return false;
@@ -2234,8 +2235,8 @@ construct_proof_from_sev_evidence(key_message&       policy_pk,
     printf("construct_proof_from_sev_evidence: bad size\n");
     return false;
   }
-  if (!already_proved->proved(2).has_clause() ||
-      !already_proved->proved(2).clause().has_subject())
+  if (!already_proved->proved(2).has_clause()
+      || !already_proved->proved(2).clause().has_subject())
   {
     printf("construct_proof_from_sev_evidence: ill formed statement 2\n");
     return false;
@@ -2404,8 +2405,8 @@ construct_proof_from_full_vse_evidence(key_message&       policy_pk,
     return false;
   }
 
-  if (!already_proved->proved(2).has_clause() ||
-      !already_proved->proved(2).clause().has_subject())
+  if (!already_proved->proved(2).has_clause()
+      || !already_proved->proved(2).clause().has_subject())
   {
     printf("Error 1, construct_proof_from_full_vse_evidence\n");
     return false;
@@ -2758,11 +2759,11 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
 
   // "policyKey is-trusted" AND policyKey says measurement is-trusted" -->
   //        "measurement is-trusted" (R3)  [0, 2]
-  if (!already_proved->proved(0).has_subject() ||
-      !already_proved->proved(2).has_subject() ||
-      !already_proved->proved(2).has_clause() ||
-      already_proved->proved(2).clause().subject().entity_type() !=
-          "measurement")
+  if (!already_proved->proved(0).has_subject()
+      || !already_proved->proved(2).has_subject()
+      || !already_proved->proved(2).has_clause()
+      || already_proved->proved(2).clause().subject().entity_type()
+             != "measurement")
   {
     printf(
         "construct_proof_from_sev_evidence_with_plat: components of first step "
@@ -2786,10 +2787,10 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   //    "policyKey is-trusted" AND
   //        "policy-key says the ARK-key is-trusted-for-attestation" -->
   //        "the ARK-key is-trusted-for-attestation" (R3)  [0, 1]
-  if (!already_proved->proved(1).has_subject() ||
-      !already_proved->proved(1).has_clause() ||
-      !already_proved->proved(1).clause().has_subject() ||
-      already_proved->proved(1).clause().subject().entity_type() != "key")
+  if (!already_proved->proved(1).has_subject()
+      || !already_proved->proved(1).has_clause()
+      || !already_proved->proved(1).clause().has_subject()
+      || already_proved->proved(1).clause().subject().entity_type() != "key")
   {
     printf("construct_proof_from_sev_evidence_with_plat: components of second "
            "step malformed\n");
@@ -2811,10 +2812,10 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   //    "the ARK-key is-trusted-for-attestation" AND
   //        "The ARK-key says the ASK-key is-trusted-for-attestation" -->
   //        "the ASK-key is-trusted-for-attestation" (R5)  [10, 5]
-  if (!already_proved->proved(5).has_subject() ||
-      !already_proved->proved(5).has_clause() ||
-      !already_proved->proved(5).clause().has_subject() ||
-      already_proved->proved(5).clause().subject().entity_type() != "key")
+  if (!already_proved->proved(5).has_subject()
+      || !already_proved->proved(5).has_clause()
+      || !already_proved->proved(5).clause().has_subject()
+      || already_proved->proved(5).clause().subject().entity_type() != "key")
   {
     printf(
         "construct_proof_from_sev_evidence_with_plat: components of third step "
@@ -2837,9 +2838,9 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   //    "the ASK-key is-trusted-for-attestation" AND
   //        "the ASK-key says the VCEK-key is-trusted-for-attestation" -->
   //        "the VCEK-key is-trusted-for-attestation" (R5) [11, 6]
-  if (!already_proved->proved(6).has_subject() ||
-      !already_proved->proved(6).has_clause() ||
-      already_proved->proved(6).clause().subject().entity_type() != "key")
+  if (!already_proved->proved(6).has_subject()
+      || !already_proved->proved(6).has_clause()
+      || already_proved->proved(6).clause().subject().entity_type() != "key")
   {
     printf("construct_proof_from_sev_evidence_with_plat: components of fourth "
            "step malformed\n");
@@ -2861,10 +2862,10 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   //    "VCEK-key is-trusted-for-attestation" AND
   //        "the VCEK says environment(platform, measurement) is-environment -->
   //        "environment(platform, measurement) is-environment" [7]
-  if (!already_proved->proved(7).has_subject() ||
-      !already_proved->proved(7).has_clause() ||
-      already_proved->proved(7).clause().subject().entity_type() !=
-          "environment")
+  if (!already_proved->proved(7).has_subject()
+      || !already_proved->proved(7).has_clause()
+      || already_proved->proved(7).clause().subject().entity_type()
+             != "environment")
   {
     printf(
         "construct_proof_from_sev_evidence_with_plat: components of fifth step "
@@ -2887,10 +2888,11 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   // policy-key is-trusted AND policy-key says platform
   // has-trusted-platform-property -->
   //    platform has-trusted-platform-property
-  if (!already_proved->proved(3).has_subject() ||
-      !already_proved->proved(3).has_clause() ||
-      !already_proved->proved(3).clause().has_subject() ||
-      already_proved->proved(3).clause().subject().entity_type() != "platform")
+  if (!already_proved->proved(3).has_subject()
+      || !already_proved->proved(3).has_clause()
+      || !already_proved->proved(3).clause().has_subject()
+      || already_proved->proved(3).clause().subject().entity_type()
+             != "platform")
   {
     printf(
         "construct_proof_from_sev_evidence_with_plat: components of sixth step "
@@ -2998,8 +3000,8 @@ construct_proof_from_sev_evidence_with_plat(const string& evidence_descriptor,
   //    "VCEK-key is-trusted-for-attestation" AND
   //      "VCEK-key says the enclave-key speaks-for the environment()" -->
   //        "enclave-key speaks-for the environment()" [, 8]
-  if (!already_proved->proved(8).has_subject() ||
-      !already_proved->proved(8).has_clause())
+  if (!already_proved->proved(8).has_subject()
+      || !already_proved->proved(8).has_clause())
   {
     printf(
         "construct_proof_from_sev_evidence_with_plat: components of ninth step "

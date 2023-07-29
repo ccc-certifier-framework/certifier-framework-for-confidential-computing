@@ -103,8 +103,8 @@ certifier_notification(cc_trust_data* app_trust_data, bool disk_encrypted)
     ATT_LOG(LOG_INFO, "Virtual appliance is certified!");
   }
 
-  if (!app_trust_data->cc_auth_key_initialized_ ||
-      !app_trust_data->cc_policy_info_initialized_)
+  if (!app_trust_data->cc_auth_key_initialized_
+      || !app_trust_data->cc_policy_info_initialized_)
   {
     ATT_LOG(LOG_INFO, "Trust data not initialized.");
     return false;
@@ -181,8 +181,8 @@ parse_config(const string& config_file)
       app_config.client = string(addr);
       continue;
     }
-    if (sscanf(conf_str, "certifier_port = %d", &app_config.certifier_port) ==
-        1) {
+    if (sscanf(conf_str, "certifier_port = %d", &app_config.certifier_port)
+        == 1) {
       continue;
     }
     if (sscanf(conf_str, "client_port = %d", &app_config.client_port) == 1) {

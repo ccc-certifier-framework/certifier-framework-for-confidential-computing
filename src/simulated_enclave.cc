@@ -237,7 +237,8 @@ simulated_Unseal(const string& enclave_type,
 
   if (memcmp((void*)output,
              (byte*)my_measurement.data(),
-             (int)my_measurement.size()) != 0)
+             (int)my_measurement.size())
+      != 0)
   {
     printf("simulated_Unseal: measurement mismatch\n");
     return false;
