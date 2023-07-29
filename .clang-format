@@ -67,11 +67,16 @@ DerivePointerAlignment: false
 FixNamespaceComments: true
 
 IndentCaseLabels: true
+IndentCaseBlocks: false
+
 IndentWidth:     2
 
 MaxEmptyLinesToKeep: 2
 
 PointerAlignment: Right
+
+SortIncludes:    false
+
 SpaceBeforeAssignmentOperators: true
 SpacesBeforeTrailingComments: 2
 SpaceBeforeParens: ControlStatements
