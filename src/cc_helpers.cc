@@ -139,7 +139,9 @@ bool certifier::framework::cc_trust_data::cc_all_initialized() {
 }
 
 bool certifier::framework::cc_trust_data::initialize_application_enclave_data(
-    const string& parent_enclave_type, int in_fd, int out_fd) {
+    const string& parent_enclave_type,
+    int           in_fd,
+    int           out_fd) {
   if (!cc_policy_info_initialized_) {
     printf(
         "initialize_application_enclave_data: Policy key must be initialized "
@@ -188,7 +190,8 @@ bool certifier::framework::cc_trust_data::initialize_simulated_enclave_data(
 }
 
 bool certifier::framework::cc_trust_data::initialize_gramine_enclave_data(
-    const int size, byte* cert) {
+    const int size,
+    byte*     cert) {
 #ifdef GRAMINE_CERTIFIER
   return gramine_Init(size, cert);
 #endif
@@ -813,7 +816,8 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
 //  hash_alg can be sha-256 (soon: sha-384, sha-512)
 //  hmac-alg can be sha-256-hmac (soon: sha-384-hmac, sha-512-hmac)
 bool certifier::framework::cc_trust_data::cold_init(
-    const string& public_key_alg, const string& symmetric_key_alg) {
+    const string& public_key_alg,
+    const string& symmetric_key_alg) {
   if (!cc_policy_info_initialized_) {
     printf("cold_init: policy key should have been initialized\n");
     return false;
@@ -1462,12 +1466,14 @@ bool certifier::framework::cc_trust_data::recover_peer_certification_data() {
 }
 
 bool certifier::framework::cc_trust_data::get_peer_certification(
-    const string& host_name, int port) {
+    const string& host_name,
+    int           port) {
   return false;
 }
 
 bool certifier::framework::cc_trust_data::run_peer_certification_service(
-    const string& host_name, int port) {
+    const string& host_name,
+    int           port) {
   return false;
 }
 
@@ -1532,7 +1538,8 @@ bool construct_platform_evidence_package(string&        attesting_enclave_type,
 
 // Todo: This isn't used
 bool add_policy_key_says_platform_key_is_trusted(
-    signed_claim_message& platform_key_is_trusted, evidence_package* ep) {
+    signed_claim_message& platform_key_is_trusted,
+    evidence_package*     ep) {
   string et("signed-claim");
 
   evidence* ev = ep->add_fact_assertion();

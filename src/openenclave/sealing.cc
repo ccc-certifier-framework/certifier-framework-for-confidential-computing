@@ -58,8 +58,12 @@ exit:
   return result;
 }
 
-bool oe_Unseal(
-    int in_size, byte* in, int opt_size, byte* opt, int* size_out, byte* out) {
+bool oe_Unseal(int   in_size,
+               byte* in,
+               int   opt_size,
+               byte* opt,
+               int*  size_out,
+               byte* out) {
   bool     result = false;
   uint8_t* temp_data;
   int      ret = (int)oe_unseal((const uint8_t*)in,

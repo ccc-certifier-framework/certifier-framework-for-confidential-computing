@@ -507,8 +507,12 @@ void certifier::utilities::print_environment(const environment& env) {
 //      which uses the AES algorithm with a 256-bit key in
 //      CBC mode.
 
-bool encrypt(
-    byte* in, int in_len, byte* key, byte* iv, byte* out, int* out_size) {
+bool encrypt(byte* in,
+             int   in_len,
+             byte* key,
+             byte* iv,
+             byte* out,
+             int*  out_size) {
   EVP_CIPHER_CTX* ctx     = nullptr;
   int             len     = 0;
   int             out_len = 0;
@@ -540,8 +544,12 @@ done:
   return ret;
 }
 
-bool decrypt(
-    byte* in, int in_len, byte* key, byte* iv, byte* out, int* size_out) {
+bool decrypt(byte* in,
+             int   in_len,
+             byte* key,
+             byte* iv,
+             byte* out,
+             int*  size_out) {
   EVP_CIPHER_CTX* ctx     = nullptr;
   int             len     = 0;
   int             out_len = 0;
@@ -614,8 +622,12 @@ bool certifier::utilities::digest_message(const char*  alg,
   return true;
 }
 
-bool aes_256_cbc_sha256_encrypt(
-    byte* in, int in_len, byte* key, byte* iv, byte* out, int* out_size) {
+bool aes_256_cbc_sha256_encrypt(byte* in,
+                                int   in_len,
+                                byte* key,
+                                byte* iv,
+                                byte* out,
+                                int*  out_size) {
   int blk_size    = cipher_block_byte_size("aes-256-cbc-hmac-sha256");
   int key_size    = cipher_key_byte_size("aes-256-cbc-hmac-sha256");
   int mac_size    = mac_output_byte_size("aes-256-cbc-hmac-sha256");
@@ -642,8 +654,11 @@ bool aes_256_cbc_sha256_encrypt(
   return true;
 }
 
-bool aes_256_cbc_sha256_decrypt(
-    byte* in, int in_len, byte* key, byte* out, int* out_size) {
+bool aes_256_cbc_sha256_decrypt(byte* in,
+                                int   in_len,
+                                byte* key,
+                                byte* out,
+                                int*  out_size) {
   int blk_size    = cipher_block_byte_size("aes-256-cbc-hmac-sha256");
   int key_size    = cipher_key_byte_size("aes-256-cbc-hmac-sha256");
   int mac_size    = mac_output_byte_size("aes-256-cbc-hmac-sha256");
@@ -679,8 +694,12 @@ bool aes_256_cbc_sha256_decrypt(
   return (memcmp(hmac_out, in + msg_with_iv_size, mac_size) == 0);
 }
 
-bool aes_256_cbc_sha384_encrypt(
-    byte* in, int in_len, byte* key, byte* iv, byte* out, int* out_size) {
+bool aes_256_cbc_sha384_encrypt(byte* in,
+                                int   in_len,
+                                byte* key,
+                                byte* iv,
+                                byte* out,
+                                int*  out_size) {
   int blk_size    = cipher_block_byte_size("aes-256-cbc-hmac-sha384");
   int key_size    = cipher_key_byte_size("aes-256-cbc-hmac-sha384");
   int mac_size    = mac_output_byte_size("aes-256-cbc-hmac-sha384");
@@ -707,8 +726,11 @@ bool aes_256_cbc_sha384_encrypt(
   return true;
 }
 
-bool aes_256_cbc_sha384_decrypt(
-    byte* in, int in_len, byte* key, byte* out, int* out_size) {
+bool aes_256_cbc_sha384_decrypt(byte* in,
+                                int   in_len,
+                                byte* key,
+                                byte* out,
+                                int*  out_size) {
   int blk_size    = cipher_block_byte_size("aes-256-cbc-hmac-sha384");
   int key_size    = cipher_key_byte_size("aes-256-cbc-hmac-sha384");
   int mac_size    = mac_output_byte_size("aes-256-cbc-hmac-sha384");
@@ -745,8 +767,12 @@ bool aes_256_cbc_sha384_decrypt(
 }
 
 // We use 128 bit tag
-bool aes_256_gcm_encrypt(
-    byte* in, int in_len, byte* key, byte* iv, byte* out, int* out_size) {
+bool aes_256_gcm_encrypt(byte* in,
+                         int   in_len,
+                         byte* key,
+                         byte* iv,
+                         byte* out,
+                         int*  out_size) {
   EVP_CIPHER_CTX* ctx = nullptr;
   int             len;
   int             ciphertext_len;
@@ -817,8 +843,11 @@ done:
 }
 
 // We use 128 bit tag
-bool aes_256_gcm_decrypt(
-    byte* in, int in_len, byte* key, byte* out, int* out_size) {
+bool aes_256_gcm_decrypt(byte* in,
+                         int   in_len,
+                         byte* key,
+                         byte* out,
+                         int*  out_size) {
   EVP_CIPHER_CTX* ctx      = nullptr;
   int             blk_size = cipher_block_byte_size("aes-256");
   int             key_size = cipher_key_byte_size("aes-256");
@@ -1008,8 +1037,11 @@ bool make_certifier_rsa_key(int n, key_message* k) {
   return true;
 }
 
-bool rsa_public_encrypt(
-    RSA* key, byte* data, int data_len, byte* encrypted, int* size_out) {
+bool rsa_public_encrypt(RSA*  key,
+                        byte* data,
+                        int   data_len,
+                        byte* encrypted,
+                        int*  size_out) {
   int n = RSA_public_encrypt(data_len, data, encrypted, key, RSA_PKCS1_PADDING);
   if (n <= 0) {
     printf("rsa_public_encrypt: RSA_public_encrypt failed %d, %d\n",
@@ -1021,8 +1053,11 @@ bool rsa_public_encrypt(
   return true;
 }
 
-bool rsa_private_decrypt(
-    RSA* key, byte* enc_data, int data_len, byte* decrypted, int* size_out) {
+bool rsa_private_decrypt(RSA*  key,
+                         byte* enc_data,
+                         int   data_len,
+                         byte* decrypted,
+                         int*  size_out) {
   int n = RSA_private_decrypt(data_len,
                               enc_data,
                               decrypted,
@@ -1039,8 +1074,11 @@ bool rsa_private_decrypt(
 }
 
 //  PKCS compliant signer
-bool rsa_sha256_sign(
-    RSA* key, int to_sign_size, byte* to_sign, int* sig_size, byte* sig) {
+bool rsa_sha256_sign(RSA*  key,
+                     int   to_sign_size,
+                     byte* to_sign,
+                     int*  sig_size,
+                     byte* sig) {
   return rsa_sign("sha-256", key, to_sign_size, to_sign, sig_size, sig);
 }
 
@@ -1048,8 +1086,12 @@ bool rsa_sha256_verify(RSA* key, int size, byte* msg, int sig_size, byte* sig) {
   return rsa_verify("sha-256", key, size, msg, sig_size, sig);
 }
 
-bool rsa_sign(
-    const char* alg, RSA* key, int size, byte* msg, int* sig_size, byte* sig) {
+bool rsa_sign(const char* alg,
+              RSA*        key,
+              int         size,
+              byte*       msg,
+              int*        sig_size,
+              byte*       sig) {
   EVP_MD_CTX* sign_ctx    = EVP_MD_CTX_create();
   EVP_PKEY*   private_key = EVP_PKEY_new();
   EVP_PKEY_assign_RSA(private_key, key);
@@ -1102,8 +1144,12 @@ bool rsa_sign(
   return true;
 }
 
-bool rsa_verify(
-    const char* alg, RSA* key, int size, byte* msg, int sig_size, byte* sig) {
+bool rsa_verify(const char* alg,
+                RSA*        key,
+                int         size,
+                byte*       msg,
+                int         sig_size,
+                byte*       sig) {
   if (strcmp("sha-256", alg) == 0) {
     unsigned int size_digest = digest_output_byte_size("sha-256");
     byte         digest[size_digest];

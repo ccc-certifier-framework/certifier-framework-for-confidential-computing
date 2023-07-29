@@ -50,24 +50,46 @@ using std::string;
 #ifndef _SUPPORT_H__
 #define _SUPPORT_H__
 
-bool encrypt(
-    byte* in, int in_len, byte* key, byte* iv, byte* out, int* out_size);
-bool decrypt(
-    byte* in, int in_len, byte* key, byte* iv, byte* out, int* size_out);
+bool encrypt(byte* in,
+             int   in_len,
+             byte* key,
+             byte* iv,
+             byte* out,
+             int*  out_size);
+bool decrypt(byte* in,
+             int   in_len,
+             byte* key,
+             byte* iv,
+             byte* out,
+             int*  size_out);
 
 bool make_certifier_rsa_key(int n, key_message* k);
-bool rsa_public_encrypt(
-    RSA* key, byte* data, int data_len, byte* encrypted, int* size_out);
-bool rsa_private_decrypt(
-    RSA* key, byte* enc_data, int data_len, byte* decrypted, int* size_out);
+bool rsa_public_encrypt(RSA*  key,
+                        byte* data,
+                        int   data_len,
+                        byte* encrypted,
+                        int*  size_out);
+bool rsa_private_decrypt(RSA*  key,
+                         byte* enc_data,
+                         int   data_len,
+                         byte* decrypted,
+                         int*  size_out);
 
 // replace these two
 bool rsa_sha256_sign(RSA* key, int size, byte* msg, int* size_out, byte* out);
 bool rsa_sha256_verify(RSA* key, int size, byte* msg, int size_sig, byte* sig);
-bool rsa_sign(
-    const char* alg, RSA* key, int size, byte* msg, int* size_out, byte* out);
-bool rsa_verify(
-    const char* alg, RSA* key, int size, byte* msg, int size_sig, byte* sig);
+bool rsa_sign(const char* alg,
+              RSA*        key,
+              int         size,
+              byte*       msg,
+              int*        size_out,
+              byte*       out);
+bool rsa_verify(const char* alg,
+                RSA*        key,
+                int         size,
+                byte*       msg,
+                int         size_sig,
+                byte*       sig);
 
 bool make_certifier_ecc_key(int n, key_message* k);
 bool ecc_sign(const char* alg,
@@ -76,8 +98,12 @@ bool ecc_sign(const char* alg,
               byte*       msg,
               int*        size_out,
               byte*       out);
-bool ecc_verify(
-    const char* alg, EC_KEY* key, int size, byte* msg, int size_sig, byte* sig);
+bool ecc_verify(const char* alg,
+                EC_KEY*     key,
+                int         size,
+                byte*       msg,
+                int         size_sig,
+                byte*       sig);
 
 bool same_key(const key_message& k1, const key_message& k2);
 bool same_measurement(const string& m1, const string& m2);
