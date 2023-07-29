@@ -38,13 +38,13 @@ void sigint_handler(int s) {
  * Returns: 0 - if operation succeeds, non-zero otherwise.
  */
 int main(int argc, const char* argv[]) {
-  oe_result_t result;
-  std::string data_dir;
+  oe_result_t      result;
+  std::string      data_dir;
   struct sigaction sigIntHandler;
 
   uint32_t flags = OE_ENCLAVE_FLAG_DEBUG;
-  bool ret       = 0;
-  int rv         = 1;  // Assume failure, until we know otherwise
+  bool     ret   = 0;
+  int      rv    = 1;  // Assume failure, until we know otherwise
 
   if (argc < 3) {
     fprintf(stderr,

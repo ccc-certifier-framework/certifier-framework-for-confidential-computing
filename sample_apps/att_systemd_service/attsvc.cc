@@ -70,10 +70,10 @@ cc_trust_data* app_trust_data = nullptr;
 
 static struct _app_config {
   string certifier_host = string("localhost");
-  int certifier_port    = 80;
+  int    certifier_port = 80;
   string client         = string("localhost");
-  int client_port       = 80;
-  int check_disk        = 0;
+  int    client_port    = 80;
+  int    check_disk     = 0;
 } app_config;
 
 static bool file_exists(const std::string& name) {
@@ -87,7 +87,7 @@ static bool check_disk_encryption() {
 }
 
 static bool certifier_notification(cc_trust_data* app_trust_data,
-                                   bool disk_encrypted) {
+                                   bool           disk_encrypted) {
   if (app_config.check_disk && !disk_encrypted) {
     ATT_LOG(LOG_INFO, "Disk is not encrypted!");
   }
@@ -103,7 +103,7 @@ static bool certifier_notification(cc_trust_data* app_trust_data,
     return false;
   }
 
-  string my_role("client");
+  string                       my_role("client");
   secure_authenticated_channel channel(my_role);
   if (!channel.init_client_ssl(
           app_config.client, app_config.client_port,
@@ -124,7 +124,7 @@ static bool certifier_notification(cc_trust_data* app_trust_data,
   }
   channel.write(strlen(msg), (byte*)msg);
   string out;
-  int n = channel.read(&out);
+  int    n = channel.read(&out);
   ATT_LOG(LOG_INFO, "Agent says: %s\n", out.data());
 
   return true;
@@ -144,9 +144,9 @@ static char* trim_space(char* str, int size) {
 static bool parse_config(const string& config_file) {
 #define BUFFER_SIZE 1024
   FILE* file = fopen(config_file.c_str(), "r");
-  char buffer[BUFFER_SIZE];
+  char  buffer[BUFFER_SIZE];
   char* conf_str = NULL;
-  char addr[BUFFER_SIZE];
+  char  addr[BUFFER_SIZE];
 
   if (!file) {
     return false;
@@ -187,7 +187,7 @@ static bool parse_config(const string& config_file) {
 }
 
 int main(int argc, char* argv[]) {
-  int ret             = 0;
+  int  ret            = 0;
   bool disk_encrypted = false;
 
   SSL_library_init();

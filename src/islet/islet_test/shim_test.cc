@@ -30,8 +30,8 @@ bool attestation_test() {
   byte report[BUFFER_SIZE];
   byte measurement[BUFFER_SIZE];
   byte what_was_said[BUFFER_SIZE];
-  int report_len      = 0;
-  int measurement_len = 0;
+  int  report_len      = 0;
+  int  measurement_len = 0;
 
   memset(report, 0, sizeof(report));
   memset(measurement, 0, sizeof(measurement));

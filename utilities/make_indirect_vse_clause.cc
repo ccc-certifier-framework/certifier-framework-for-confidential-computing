@@ -33,8 +33,8 @@ DEFINE_string(verb, "verb", "verb to use");
 DEFINE_string(clause, "", "clause file");
 
 bool get_clause_from_file(const string& in, vse_clause* cl) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_cl[in_size];
 
   if (!read_file(in, &in_read, serialized_cl)) {
@@ -54,7 +54,7 @@ int make_indirect_clause_file_utility(entity_message& subject,
                                       const string& verb, vse_clause& in_cl,
                                       const string& output) {
   vse_clause out_cl;
-  string v = verb;
+  string     v = verb;
   if (!make_indirect_vse_clause(subject, v, in_cl, &out_cl)) {
     printf("Can't make clause\n");
     return 1;
@@ -81,8 +81,8 @@ int make_indirect_clause_file_utility(entity_message& subject,
 }
 
 bool get_key_from_file(const string& in, key_message* k) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_key[in_size];
 
   if (!read_file(in, &in_read, serialized_key)) {
@@ -90,7 +90,7 @@ bool get_key_from_file(const string& in, key_message* k) {
     return false;
   }
   key_message kt;
-  string k_str;
+  string      k_str;
   k_str.assign((char*)serialized_key, in_size);
   if (!kt.ParseFromString(k_str)) {
     printf("Can't parse key\n");
@@ -100,8 +100,8 @@ bool get_key_from_file(const string& in, key_message* k) {
 }
 
 bool get_measurement_entity_from_file(const string& in, entity_message* em) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte m[in_size];
 
   if (!read_file(in, &in_read, m)) {

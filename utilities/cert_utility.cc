@@ -130,9 +130,9 @@ bool generate_policy_key() {
 }
 
 void test_sig() {
-  int key_file_size = file_size(FLAGS_platform_key_output_file);
+  int  key_file_size = file_size(FLAGS_platform_key_output_file);
   byte serialized_key[key_file_size + 1];
-  int size = key_file_size;
+  int  size = key_file_size;
   if (!read_file(FLAGS_platform_key_output_file, &size, serialized_key)) {
     printf("Can't read key file: %s\n", FLAGS_platform_key_output_file.c_str());
     return;
@@ -145,7 +145,7 @@ void test_sig() {
     return;
   }
 
-  int signed_endorsement_size = file_size(FLAGS_platform_attest_endorsement);
+  int  signed_endorsement_size = file_size(FLAGS_platform_attest_endorsement);
   byte serialized_endorsement[signed_endorsement_size + 1];
   size = signed_endorsement_size;
   if (!read_file(FLAGS_platform_attest_endorsement, &size,
@@ -162,7 +162,7 @@ void test_sig() {
     return;
   }
   claim_message cl;
-  string serialized_claim_str;
+  string        serialized_claim_str;
   serialized_claim_str.assign((char*)scm.serialized_claim_message().data(),
                               scm.serialized_claim_message().size());
   if (!cl.ParseFromString(serialized_claim_str)) {

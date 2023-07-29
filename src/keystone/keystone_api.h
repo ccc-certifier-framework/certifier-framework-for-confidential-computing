@@ -60,11 +60,11 @@ bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out);
 // The hash, datalen and data (which is the "what was said")
 // is hashed and signed  --- that's the signature below.
 struct enclave_report_t {
-  byte hash[MDSIZE];
+  byte     hash[MDSIZE];
   uint64_t data_len;
-  byte data[32];  // this was ATTEST_DATA_MAXLEN
-  byte signature[SIGNATURE_SIZE];
-  int size_sig;  // Remove?
+  byte     data[32];  // this was ATTEST_DATA_MAXLEN
+  byte     signature[SIGNATURE_SIZE];
+  int      size_sig;  // Remove?
 };
 
 // The hash in sm_report_t is the hash of the cpu embedded
@@ -81,8 +81,8 @@ struct sm_report_t {
 // come with a cert chain in Init.
 struct report_t {
   struct enclave_report_t enclave;
-  struct sm_report_t sm;
-  byte dev_public_key[PUBLIC_KEY_SIZE];
+  struct sm_report_t      sm;
+  byte                    dev_public_key[PUBLIC_KEY_SIZE];
 };
 // END copied Report.hpp
 #endif

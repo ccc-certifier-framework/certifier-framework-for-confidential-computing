@@ -40,9 +40,9 @@ DEFINE_string(environment_object, "", "environment object file");
 
 int make_simple_clause_file_utility(entity_message& subject, const string& verb,
                                     entity_message& object,
-                                    const string& output) {
+                                    const string&   output) {
   vse_clause cl;
-  string v = verb;
+  string     v = verb;
   if (!make_simple_vse_clause(subject, v, object, &cl)) {
     printf("Can't make clause\n");
     return 1;
@@ -69,8 +69,8 @@ int make_simple_clause_file_utility(entity_message& subject, const string& verb,
 }
 
 bool get_key_from_file(const string& in, key_message* k) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_key[in_size];
 
   if (!read_file(in, &in_read, serialized_key)) {
@@ -78,7 +78,7 @@ bool get_key_from_file(const string& in, key_message* k) {
     return false;
   }
   key_message kt;
-  string k_str;
+  string      k_str;
   k_str.assign((char*)serialized_key, in_size);
   if (!kt.ParseFromString(k_str)) {
     printf("Can't parse key\n");
@@ -88,8 +88,8 @@ bool get_key_from_file(const string& in, key_message* k) {
 }
 
 bool get_measurement_entity_from_file(const string& in, entity_message* em) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte m[in_size];
 
   if (!read_file(in, &in_read, m)) {
@@ -106,8 +106,8 @@ bool get_measurement_entity_from_file(const string& in, entity_message* em) {
 }
 
 bool get_platform_entity_from_file(const string& in, entity_message* em) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte pfp[in_size];
 
   if (!read_file(in, &in_read, pfp)) {
@@ -129,8 +129,8 @@ bool get_platform_entity_from_file(const string& in, entity_message* em) {
 }
 
 bool get_environment_entity_from_file(const string& in, entity_message* em) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte env[in_size];
 
   if (!read_file(in, &in_read, env)) {

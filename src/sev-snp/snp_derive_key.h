@@ -6,9 +6,9 @@
 #if 1
 #include <linux/types.h>
 #else
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned uint32_t;
+typedef unsigned char      uint8_t;
+typedef unsigned short     uint16_t;
+typedef unsigned           uint32_t;
 typedef long long unsigned uint64_t;
 #endif
 
@@ -37,8 +37,8 @@ typedef long long unsigned uint64_t;
 
 struct msg_key_resp {
   uint32_t status;
-  uint8_t reserved[MSG_KEY_RSP_RESERVED_SIZE];
-  uint8_t derived_key[MSG_KEY_RSP_DERIVED_KEY_SIZE];
+  uint8_t  reserved[MSG_KEY_RSP_RESERVED_SIZE];
+  uint8_t  derived_key[MSG_KEY_RSP_DERIVED_KEY_SIZE];
 };
 
 #endif /* SNP_KEY_REQ_H */

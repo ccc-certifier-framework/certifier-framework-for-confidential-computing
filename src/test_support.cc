@@ -24,7 +24,7 @@ using namespace certifier::utilities;
 
 bool debug_print = false;
 
-bool read_trusted_binary_measurements_and_sign(string& file_name,
+bool read_trusted_binary_measurements_and_sign(string&      file_name,
                                                key_message& policy_key,
                                                signed_claim_sequence* list) {
   int size = file_size(file_name);
@@ -59,8 +59,8 @@ bool read_trusted_binary_measurements_and_sign(string& file_name,
   string it_verb("is-trusted");
 
   const int measurement_size = 32;
-  int current                = 0;
-  int left                   = size;
+  int       current          = 0;
+  int       left             = size;
   while (left >= measurement_size) {
     string measurement;
     measurement.assign((char*)&file_contents[current], measurement_size);
@@ -84,8 +84,8 @@ bool read_trusted_binary_measurements_and_sign(string& file_name,
 
     // policy_key says measurement is-trusted
     claim_message claim;
-    string n1("description");
-    string vse_clause_format("vse-clause");
+    string        n1("description");
+    string        vse_clause_format("vse-clause");
     if (!make_claim(serialized_vse.size(), (byte*)serialized_vse.data(),
                     vse_clause_format, n1, nb, na, &claim))
       return false;
@@ -163,7 +163,7 @@ bool construct_standard_evidence_package(
   // Construct intel-key
   key_message intel_key;
   key_message intel_pk;
-  string intel_key_name("intel-key");
+  string      intel_key_name("intel-key");
   if (!construct_keys(intel_key_name, key_format, &intel_pk, &intel_key))
     return false;
   if (debug_print) {
@@ -173,7 +173,7 @@ bool construct_standard_evidence_package(
   }
 
   // attest key
-  key_message attest_pk;
+  key_message        attest_pk;
   extern key_message my_attestation_key;
   if (!private_key_to_public_key(my_attestation_key, &attest_pk))
     return false;
@@ -184,7 +184,7 @@ bool construct_standard_evidence_package(
   }
 
   // Construct enclave-authentication-key
-  string enclave_key_name("enclave-key");
+  string      enclave_key_name("enclave-key");
   key_message enclave_key;
   key_message enclave_pk;
   if (!construct_keys(enclave_key_name, key_format, &enclave_pk, &enclave_key))
@@ -216,7 +216,7 @@ bool construct_standard_evidence_package(
     return false;
 
   // c2: intel-key is-trusted
-  vse_clause c2;
+  vse_clause     c2;
   entity_message intel_key_entity;
   if (!make_key_entity(intel_pk, &intel_key_entity))
     return false;
@@ -224,7 +224,7 @@ bool construct_standard_evidence_package(
     return false;
 
   // c3: attestation-key is-trusted
-  vse_clause c3;
+  vse_clause     c3;
   entity_message attest_key_entity;
   if (!make_key_entity(attest_pk, &attest_key_entity))
     return false;
@@ -232,7 +232,7 @@ bool construct_standard_evidence_package(
     return false;
 
   // c4: enclave-authentication-key is-trusted
-  vse_clause c4;
+  vse_clause     c4;
   entity_message enclave_key_entity;
   if (!make_key_entity(enclave_pk, &enclave_key_entity))
     return false;
@@ -240,7 +240,7 @@ bool construct_standard_evidence_package(
     return false;
 
   // c5: policy-key says measurement is-trusted
-  vse_clause c5;
+  vse_clause     c5;
   entity_message policy_key_entity;
   if (!make_key_entity(*policy_pk, &policy_key_entity))
     return false;
@@ -277,9 +277,9 @@ bool construct_standard_evidence_package(
   //    enclave-measurement (signed c9)
   time_point t_nb;
   time_point t_na;
-  string s_nb;
-  string s_na;
-  double hours_to_add = 365.0 * 24.0;
+  string     s_nb;
+  string     s_na;
+  double     hours_to_add = 365.0 * 24.0;
 
   if (!time_now(&t_nb))
     return false;
@@ -342,7 +342,7 @@ bool construct_standard_evidence_package(
     return false;
   }
 
-  int size_out = 8192;
+  int  size_out = 8192;
   byte attest_out[size_out];
 
   if (!Attest(enclave_type, serialized_what_to_say.size(),
@@ -639,7 +639,7 @@ bool construct_standard_constrained_evidence_package(
   // Construct intel-key
   key_message intel_key;
   key_message intel_pk;
-  string intel_key_name("intel-key");
+  string      intel_key_name("intel-key");
   if (!construct_keys(intel_key_name, key_format, &intel_pk, &intel_key))
     return false;
   if (debug_print) {
@@ -649,7 +649,7 @@ bool construct_standard_constrained_evidence_package(
   }
 
   // attest key
-  key_message attest_pk;
+  key_message        attest_pk;
   extern key_message my_attestation_key;
   if (!private_key_to_public_key(my_attestation_key, &attest_pk))
     return false;
@@ -660,7 +660,7 @@ bool construct_standard_constrained_evidence_package(
   }
 
   // Construct enclave-authentication-key
-  string enclave_key_name("enclave-key");
+  string      enclave_key_name("enclave-key");
   key_message enclave_key;
   key_message enclave_pk;
   if (!construct_keys(enclave_key_name, key_format, &enclave_pk, &enclave_key))
@@ -694,7 +694,7 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   // c2: intel-key is-trusted-for-attestation
-  vse_clause c2;
+  vse_clause     c2;
   entity_message intel_key_entity;
   if (!make_key_entity(intel_pk, &intel_key_entity))
     return false;
@@ -702,7 +702,7 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   // c3: attestation-key is-trusted-for-attestation
-  vse_clause c3;
+  vse_clause     c3;
   entity_message attest_key_entity;
   if (!make_key_entity(attest_pk, &attest_key_entity))
     return false;
@@ -711,7 +711,7 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   // c4: enclave-authentication-key is-trusted-for-authentication
-  vse_clause c4;
+  vse_clause     c4;
   entity_message enclave_key_entity;
   if (!make_key_entity(enclave_pk, &enclave_key_entity))
     return false;
@@ -720,7 +720,7 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   // c5: policy-key says measurement is-trusted
-  vse_clause c5;
+  vse_clause     c5;
   entity_message policy_key_entity;
   if (!make_key_entity(*policy_pk, &policy_key_entity))
     return false;
@@ -757,9 +757,9 @@ bool construct_standard_constrained_evidence_package(
   //    enclave-measurement (signed c9)
   time_point t_nb;
   time_point t_na;
-  string s_nb;
-  string s_na;
-  double hours_to_add = 365.0 * 24.0;
+  string     s_nb;
+  string     s_na;
+  double     hours_to_add = 365.0 * 24.0;
 
   if (!time_now(&t_nb))
     return false;
@@ -822,7 +822,7 @@ bool construct_standard_constrained_evidence_package(
     return false;
   }
 
-  int size_out = 8192;
+  int  size_out = 8192;
   byte attest_out[size_out];
   if (!Attest(enclave_type, serialized_what_to_say.size(),
               (byte*)serialized_what_to_say.data(), &size_out, attest_out))

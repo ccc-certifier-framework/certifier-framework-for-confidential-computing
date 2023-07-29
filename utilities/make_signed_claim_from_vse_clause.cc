@@ -32,8 +32,8 @@ DEFINE_string(descipt, "", "descriptor");
 DEFINE_string(signing_alg, "rsa-2048-sha256-pkcs-sign", "signing algorithm");
 
 bool get_clause_from_file(const string& in, vse_clause* cl) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_cl[in_size];
 
   if (!read_file(in, &in_read, serialized_cl)) {
@@ -50,8 +50,8 @@ bool get_clause_from_file(const string& in, vse_clause* cl) {
 }
 
 bool get_key_from_file(const string& in, key_message* k) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_key[in_size];
 
   if (!read_file(in, &in_read, serialized_key)) {
@@ -94,7 +94,7 @@ int main(int an, char** av) {
   }
 
   time_point t_not_before;
-  string not_before;
+  string     not_before;
   if (!time_now(&t_not_before)) {
     printf("Can't get current time\n");
     return 1;
@@ -104,7 +104,7 @@ int main(int an, char** av) {
     return 1;
   }
   time_point t_not_after;
-  string not_after;
+  string     not_after;
   if (!add_interval_to_time_point(t_not_before, FLAGS_duration, &t_not_after)) {
     printf("Can't get end time\n");
     return 1;
@@ -119,8 +119,8 @@ int main(int an, char** av) {
     printf("Can't serialize vse claim\n");
     return 1;
   }
-  string format("vse-clause");
-  string descriptor = FLAGS_descipt;
+  string        format("vse-clause");
+  string        descriptor = FLAGS_descipt;
   claim_message cm_out;
   if (!make_claim(serialized_vse_claim.size(),
                   (byte*)serialized_vse_claim.data(), format, descriptor,

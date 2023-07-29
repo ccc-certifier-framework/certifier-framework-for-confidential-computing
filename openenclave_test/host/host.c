@@ -10,9 +10,9 @@
 #include "attestation_u.h"
 
 int main(int argc, const char* argv[]) {
-  oe_result_t result;
-  int ret               = 1;
-  bool res              = false;
+  oe_result_t   result;
+  int           ret     = 1;
+  bool          res     = false;
   oe_enclave_t* enclave = NULL;
 
   uint32_t flags = OE_ENCLAVE_FLAG_DEBUG;

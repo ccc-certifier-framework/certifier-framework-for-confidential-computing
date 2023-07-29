@@ -209,7 +209,7 @@ bool test_x_509_chain(bool print_all) {
     printf("signing_pkey3 is NULL\n");
     return false;
   }
-  int ret      = X509_verify(cert3, signing_pkey3);
+  int  ret     = X509_verify(cert3, signing_pkey3);
   bool success = (ret == 1);
   if (print_all) {
     if (success) {
@@ -239,8 +239,8 @@ bool test_x_509_chain(bool print_all) {
 }
 
 bool test_x_509_sign(bool print_all) {
-  string issuer_common_name("Tester-cert");
-  string issuer_desc("JLM");
+  string      issuer_common_name("Tester-cert");
+  string      issuer_desc("JLM");
   key_message k1;
   if (!make_certifier_rsa_key(4096, &k1)) {
     return false;
@@ -264,9 +264,9 @@ bool test_x_509_sign(bool print_all) {
     printf("\n");
   }
 
-  EVP_PKEY* pkey = pkey_from_key(pub_k1);
-  int ret        = X509_verify(cert1, pkey);
-  bool success   = (ret == 1);
+  EVP_PKEY* pkey    = pkey_from_key(pub_k1);
+  int       ret     = X509_verify(cert1, pkey);
+  bool      success = (ret == 1);
   if (print_all) {
     if (success) {
       printf("X509 (2) verifies\n");
@@ -299,8 +299,8 @@ bool test_sev_certs(bool print_all) {
   }
 
   EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
-  int ret            = X509_verify(cert1, ark_pkey);
-  bool success       = (ret == 1);
+  int       ret      = X509_verify(cert1, ark_pkey);
+  bool      success  = (ret == 1);
   if (print_all) {
     if (success) {
       printf("ark cert verifies\n");
@@ -390,8 +390,8 @@ bool test_real_sev_certs(bool print_all) {
   }
 
   EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
-  int ret            = X509_verify(cert1, ark_pkey);
-  bool success       = (ret == 1);
+  int       ret      = X509_verify(cert1, ark_pkey);
+  bool      success  = (ret == 1);
   if (print_all) {
     if (success) {
       printf("ark cert verifies\n");
@@ -515,8 +515,8 @@ bool test_sev_request(bool print_all) {
   }
 
   EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
-  int ret            = X509_verify(cert1, ark_pkey);
-  bool success       = (ret == 1);
+  int       ret      = X509_verify(cert1, ark_pkey);
+  bool      success  = (ret == 1);
   if (print_all) {
     if (success) {
       printf("ark cert verifies\n");
@@ -596,8 +596,8 @@ bool test_sev_request(bool print_all) {
   X509_free(cert2);
   X509_free(cert3);
 
-  string policy_key_file_str("./test_data/policy_key_file.bin");
-  string serialized_policy_key;
+  string      policy_key_file_str("./test_data/policy_key_file.bin");
+  string      serialized_policy_key;
   key_message policy_private_key;
   key_message policy_public_key;
   if (!read_file_into_string(policy_key_file_str, &serialized_policy_key)) {
@@ -633,11 +633,11 @@ bool test_sev_request(bool print_all) {
   //	serialized vcek cert
   //	"vcek says authKey speaks-for measurement
 
-  evidence_package evp;
+  evidence_package      evp;
   signed_claim_sequence trusted_measurements;
   signed_claim_sequence trusted_platforms;
   attestation_user_data ud;
-  string serialized_ud;
+  string                serialized_ud;
 
   evp.set_prover_type("vse-verifier");
 
@@ -660,7 +660,7 @@ bool test_sev_request(bool print_all) {
     return false;
   }
 
-  int size_out = 8192;
+  int  size_out = 8192;
   byte out[size_out];
   if (!Attest(enclave_type, serialized_ud.size(), (byte*)serialized_ud.data(),
               &size_out, out)) {
@@ -715,11 +715,11 @@ bool test_sev_request(bool print_all) {
     return false;
   }
 
-  string s_nb;
-  string s_na;
+  string     s_nb;
+  string     s_na;
   time_point t_nb;
   time_point t_na;
-  double hours_to_add = 365.0 * 24.0;
+  double     hours_to_add = 365.0 * 24.0;
 
   if (!time_now(&t_nb))
     return false;
@@ -739,8 +739,8 @@ bool test_sev_request(bool print_all) {
     return false;
   }
 
-  string format("vse-clause");
-  string descriptor;
+  string        format("vse-clause");
+  string        descriptor;
   claim_message cm1;
   if (!make_claim(tm1_ser_vse.size(), (byte*)tm1_ser_vse.data(), format,
                   descriptor, s_nb, s_na, &cm1)) {
@@ -757,7 +757,7 @@ bool test_sev_request(bool print_all) {
 
   // init trusted_platforms
   //  arkKey is-trusted-for-attestation
-  vse_clause c3;
+  vse_clause     c3;
   entity_message ark_ent;
   if (!make_key_entity(ark_key, &ark_ent)) {
     printf("make_key_entity failed (2)\n");

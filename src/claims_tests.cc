@@ -34,9 +34,9 @@ bool test_claims_1(bool print_all) {
   if (!make_measurement_entity(my_measurement, &e2))
     return false;
   vse_clause clause1;
-  string s1("is-trusted");
-  string s2("says");
-  string s3("speaks-for");
+  string     s1("is-trusted");
+  string     s2("says");
+  string     s3("speaks-for");
   if (!make_unary_vse_clause((const entity_message)e1, s1, &clause1))
     return false;
   vse_clause clause2;
@@ -58,7 +58,7 @@ bool test_claims_1(bool print_all) {
   }
 
   claim_message full_claim;
-  string serialized_claim;
+  string        serialized_claim;
   clause3.SerializeToString(&serialized_claim);
   string f1("vse-clause");
   string d1("basic speaks-for-claim");
@@ -91,7 +91,7 @@ bool test_claims_1(bool print_all) {
 bool test_signed_claims(bool print_all) {
   // make up rsa private keys and measurement
   string my_measurement;
-  byte m[32];
+  byte   m[32];
   for (int i = 0; i < 32; i++)
     m[i] = i;
   my_measurement.assign((char*)m, 32);
@@ -117,9 +117,9 @@ bool test_signed_claims(bool print_all) {
 
   if (!make_measurement_entity(my_measurement, &e2))
     return false;
-  string s1("says");
-  string s2("speaks-for");
-  string vse_clause_format("vse-clause");
+  string     s1("says");
+  string     s2("speaks-for");
+  string     vse_clause_format("vse-clause");
   vse_clause clause1;
   vse_clause clause2;
   if (!make_simple_vse_clause((const entity_message)e1, s2,
@@ -133,8 +133,8 @@ bool test_signed_claims(bool print_all) {
   clause2.SerializeToString(&serialized_vse1);
 
   claim_message claim1;
-  time_point t_nb;
-  time_point t_na;
+  time_point    t_nb;
+  time_point    t_na;
   time_now(&t_nb);
   add_interval_to_time_point(t_nb, 24.0 * 365.0, &t_na);
   string nb;
@@ -198,9 +198,9 @@ bool test_signed_claims(bool print_all) {
     return false;
   }
 
-  claim_message claim12;
+  claim_message        claim12;
   signed_claim_message signed_claim12;
-  string serialized_vse12;
+  string               serialized_vse12;
   clause14.SerializeToString(&serialized_vse12);
   if (!make_claim(serialized_vse12.size(), (byte*)serialized_vse12.data(),
                   vse_clause_format, n1, nb, na, &claim12)) {
@@ -255,9 +255,9 @@ bool test_signed_claims(bool print_all) {
                                 &clause4))
     return false;
 
-  claim_message claim2;
+  claim_message        claim2;
   signed_claim_message signed_claim2;
-  string serialized_vse2;
+  string               serialized_vse2;
   clause4.SerializeToString(&serialized_vse2);
   if (!make_claim(serialized_vse2.size(), (byte*)serialized_vse2.data(),
                   vse_clause_format, n1, nb, na, &claim2))
@@ -310,7 +310,7 @@ bool test_signed_claims(bool print_all) {
     return false;
 
   claim_message claim3;
-  string serialized_vse3;
+  string        serialized_vse3;
   clause6.SerializeToString(&serialized_vse3);
   if (!make_claim(serialized_vse3.size(), (byte*)serialized_vse3.data(),
                   vse_clause_format, n1, nb, na, &claim3))
@@ -351,8 +351,8 @@ bool test_full_certification(bool print_all) { return true; }
 // policy-key says measurement is-trusted-for-authentication
 // authentication-key is-trusted-for-authentication
 
-const int num_is_trusted_kids = 2;
-const char* kids[2]           = {
+const int   num_is_trusted_kids = 2;
+const char* kids[2]             = {
     "is-trusted-for-attestation",
     "is-trusted-for-authentication",
 };

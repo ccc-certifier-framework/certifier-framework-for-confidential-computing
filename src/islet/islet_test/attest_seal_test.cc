@@ -33,9 +33,9 @@ bool attestation_test() {
   byte report[BUFFER_SIZE];
   byte claims[BUFFER_SIZE];
   byte value[BUFFER_SIZE];
-  int report_len = 0;
-  int claims_len = 0;
-  int value_len  = 0;
+  int  report_len = 0;
+  int  claims_len = 0;
+  int  value_len  = 0;
 
   memset(report, 0, sizeof(report));
   memset(claims, 0, sizeof(claims));

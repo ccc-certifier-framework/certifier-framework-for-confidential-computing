@@ -48,10 +48,10 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 #ifdef SEV_SNP
-extern bool sev_Init(const string& platform_ark_der_file,
-                     const string& platform_ask_der_file,
-                     const string& platform_vcek_der_file);
-extern bool plat_certs_initialized;
+extern bool   sev_Init(const string& platform_ark_der_file,
+                       const string& platform_ask_der_file,
+                       const string& platform_vcek_der_file);
+extern bool   plat_certs_initialized;
 extern string platform_certs;
 extern string serialized_ark_cert;
 extern string serialized_ask_cert;
@@ -59,12 +59,12 @@ extern string serialized_vcek_cert;
 #endif
 
 #if OE_CERTIFIER
-extern bool oe_Init(const string& pem_cert_chain_file);
+extern bool   oe_Init(const string& pem_cert_chain_file);
 extern string pem_cert_chain;
 #endif
 
 #ifdef GRAMINE_CERTIFIER
-extern bool gramine_platform_cert_initialized;
+extern bool   gramine_platform_cert_initialized;
 extern string gramine_platform_cert;
 #endif
 
@@ -224,7 +224,7 @@ bool certifier::framework::cc_trust_data::initialize_oe_enclave_data(
 #endif
 }
 
-bool certifier::framework::cc_trust_data::init_policy_key(int asn1_cert_size,
+bool certifier::framework::cc_trust_data::init_policy_key(int   asn1_cert_size,
                                                           byte* asn1_cert) {
   serialized_policy_cert_.assign((char*)asn1_cert, asn1_cert_size);
 
@@ -433,7 +433,7 @@ bool certifier::framework::cc_trust_data::save_store() {
     return false;
   }
 
-  int size_protected_blob = serialized_store.size() + max_pad_size_for_store;
+  int  size_protected_blob = serialized_store.size() + max_pad_size_for_store;
   byte protected_blob[size_protected_blob];
 
   byte pkb[max_symmetric_key_size_];
@@ -476,7 +476,7 @@ bool certifier::framework::cc_trust_data::fetch_store() {
     return false;
   }
   byte protected_blob[size_protected_blob];
-  int size_unprotected_blob = size_protected_blob;
+  int  size_unprotected_blob = size_protected_blob;
   byte unprotected_blob[size_unprotected_blob];
 
   memset(protected_blob, 0, size_protected_blob);
@@ -637,7 +637,7 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
   const string service_key_tag("service-attest-key");
   const string sealing_key_tag("sealing-key");
 
-  int ent;
+  int    ent;
   string value;
 
   // Debug
@@ -956,7 +956,7 @@ bool certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim(
     return simulated_GetAttestClaim(scm);
   }
   if (enclave_type_ == "application-enclave") {
-    int size_out = 8192;
+    int  size_out = 8192;
     byte out[size_out];
     if (!application_GetPlatformStatement(&size_out, out)) {
       printf(
@@ -978,7 +978,7 @@ bool certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim(
 }
 
 bool certifier::framework::cc_trust_data::recertify_me(const string& host_name,
-                                                       int port,
+                                                       int           port,
                                                        bool generate_new_key) {
   if (generate_new_key) {
     if (purpose_ == "authentication") {
@@ -1067,7 +1067,7 @@ bool certifier::framework::cc_trust_data::recertify_me(const string& host_name,
 }
 
 bool certifier::framework::cc_trust_data::certify_me(const string& host_name,
-                                                     int port) {
+                                                     int           port) {
   if (!cc_all_initialized()) {
     if (!warm_restart()) {
       printf("warm restart failed\n");
@@ -1255,7 +1255,7 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name,
     return false;
   }
 
-  int size_out = 16000;
+  int  size_out = 16000;
   byte out[size_out];
   if (!Attest(enclave_type_, serialized_ud.size(), (byte*)serialized_ud.data(),
               &size_out, out)) {
@@ -1268,7 +1268,7 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name,
   the_attestation_str.assign((char*)out, size_out);
 
   // Get certified
-  trust_request_message request;
+  trust_request_message  request;
   trust_response_message response;
 
   // Should trust_request_message should be signed by auth key
@@ -1338,7 +1338,7 @@ bool certifier::framework::cc_trust_data::certify_me(const string& host_name,
 
   // Read response from Certifier Service.
   string serialized_response;
-  int resp_size = sized_socket_read(sock, &serialized_response);
+  int    resp_size = sized_socket_read(sock, &serialized_response);
   if (resp_size < 0) {
     printf(
         "certifier::framework::cc_trust_data::certify_me: Can't read "
@@ -1441,10 +1441,10 @@ bool certifier::framework::cc_trust_data::run_peer_certification_service(
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
-bool construct_platform_evidence_package(string& attesting_enclave_type,
-                                         const string& purpose,
+bool construct_platform_evidence_package(string&        attesting_enclave_type,
+                                         const string&  purpose,
                                          evidence_list& platform_assertions,
-                                         string& serialized_attestation,
+                                         string&        serialized_attestation,
                                          evidence_package* ep) {
   string pt("vse-verifier");
   string et("signed-claim");
@@ -1460,7 +1460,7 @@ bool construct_platform_evidence_package(string& attesting_enclave_type,
 #endif
   for (int i = 0; i < platform_assertions.assertion_size(); i++) {
     const evidence& ev_from = platform_assertions.assertion(i);
-    evidence* ev_to         = ep->add_fact_assertion();
+    evidence*       ev_to   = ep->add_fact_assertion();
     ev_to->CopyFrom(ev_from);
   }
 
@@ -1574,9 +1574,9 @@ void print_ssl_error(int code) { printf("%s\n", ssl_strerror(code)); }
 // Socket and SSL support
 
 bool open_client_socket(const string& host_name, int port, int* soc) {
-  struct addrinfo hints;
+  struct addrinfo  hints;
   struct addrinfo *result, *rp;
-  int sfd, s;
+  int              sfd, s;
 
   // Obtain address(es) matching host/port
   memset(&hints, 0, sizeof(struct addrinfo));
@@ -1621,9 +1621,9 @@ bool open_client_socket(const string& host_name, int port, int* soc) {
 }
 
 bool open_server_socket(const string& host_name, int port, int* soc) {
-  struct addrinfo hints;
+  struct addrinfo  hints;
   struct addrinfo *result, *rp;
-  int sfd, s;
+  int              sfd, s;
 
   memset(&hints, 0, sizeof(struct addrinfo));
   hints.ai_family    = AF_INET;
@@ -1686,7 +1686,7 @@ int verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
   int depth = X509_STORE_CTX_get_error_depth(x509_ctx);
   int err   = X509_STORE_CTX_get_error(x509_ctx);
 
-  X509* cert       = X509_STORE_CTX_get_current_cert(x509_ctx);
+  X509*      cert  = X509_STORE_CTX_get_current_cert(x509_ctx);
   X509_NAME* iname = cert ? X509_get_issuer_name(cert) : NULL;
   X509_NAME* sname = cert ? X509_get_subject_name(cert) : NULL;
 
@@ -1738,7 +1738,7 @@ bool load_server_certs_and_key(X509* root_cert, key_message& private_key,
   EVP_PKEY* auth_private_key = EVP_PKEY_new();
   EVP_PKEY_set1_RSA(auth_private_key, r);
 
-  X509* x509_auth_key_cert = X509_new();
+  X509*  x509_auth_key_cert = X509_new();
   string auth_cert_str;
   auth_cert_str.assign((char*)private_key.certificate().data(),
                        private_key.certificate().size());
@@ -1831,7 +1831,7 @@ bool certifier::framework::server_dispatch(
 
   // Set up TLS handshake data.
   SSL_METHOD* method = (SSL_METHOD*)TLS_server_method();
-  SSL_CTX* ctx       = SSL_CTX_new(method);
+  SSL_CTX*    ctx    = SSL_CTX_new(method);
   if (ctx == NULL) {
     printf("server_dispatch: SSL_CTX_new failed (1)\n");
     return false;
@@ -1871,9 +1871,9 @@ bool certifier::framework::server_dispatch(
     printf("at accept\n");
 #endif
     struct sockaddr_in addr;
-    unsigned int len = sizeof(sockaddr_in);
-    int client       = accept(sock, (struct sockaddr*)&addr, &len);
-    string my_role("server");
+    unsigned int       len    = sizeof(sockaddr_in);
+    int                client = accept(sock, (struct sockaddr*)&addr, &len);
+    string             my_role("server");
     secure_authenticated_channel nc(my_role);
     if (!nc.init_server_ssl(host_name, port, asn1_root_cert, private_key,
                             private_key_cert)) {
@@ -2022,7 +2022,7 @@ bool certifier::framework::secure_authenticated_channel::
   EVP_PKEY* auth_private_key = EVP_PKEY_new();
   EVP_PKEY_set1_RSA(auth_private_key, r);
 
-  X509* x509_auth_key_cert = X509_new();
+  X509*  x509_auth_key_cert = X509_new();
   string auth_cert_str;
   auth_cert_str.assign((char*)private_key_.certificate().data(),
                        private_key_.certificate().size());
@@ -2140,7 +2140,7 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
   return true;
 }
 
-int certifier::framework::secure_authenticated_channel::read(int size,
+int certifier::framework::secure_authenticated_channel::read(int   size,
                                                              byte* b) {
   return SSL_read(ssl_, b, size);
 }
@@ -2149,7 +2149,7 @@ int certifier::framework::secure_authenticated_channel::read(string* out) {
   return sized_ssl_read(ssl_, out);
 }
 
-int certifier::framework::secure_authenticated_channel::write(int size,
+int certifier::framework::secure_authenticated_channel::write(int   size,
                                                               byte* b) {
   return sized_ssl_write(ssl_, size, b);
 }

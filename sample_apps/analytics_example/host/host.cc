@@ -24,12 +24,12 @@ bool check_simulate_opt(int* argc, const char* argv[]) {
 }
 
 int main(int argc, const char* argv[]) {
-  oe_result_t result;
+  oe_result_t   result;
   oe_enclave_t* enclave = NULL;
-  std::string data_dir;
+  std::string   data_dir;
 
   uint32_t flags = OE_ENCLAVE_FLAG_DEBUG;
-  bool ret       = 0;
+  bool     ret   = 0;
 
   if (argc < 3) {
     fprintf(stderr,

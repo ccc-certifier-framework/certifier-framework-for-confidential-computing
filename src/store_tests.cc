@@ -21,17 +21,17 @@ using namespace certifier::utilities;
 
 bool test_protect(bool print_all) {
   protected_blob_message pb;
-  key_message key_start;
-  key_message key_end;
+  key_message            key_start;
+  key_message            key_end;
 
   string enclave_type("simulated-enclave");
   string enclave_id("test-enclave");
 
   time_point t_nb;
   time_point t_na;
-  string s_nb;
-  string s_na;
-  double hours_to_add = 365.0 * 24.0;
+  string     s_nb;
+  string     s_na;
+  double     hours_to_add = 365.0 * 24.0;
 
   if (!time_now(&t_nb))
     return false;
@@ -57,7 +57,7 @@ bool test_protect(bool print_all) {
   key_start.set_secret_key_bits((void*)key_str, 64);
 
   // protect it
-  int serialized_blob_size = 1024;
+  int  serialized_blob_size = 1024;
   byte serialized_blob[serialized_blob_size];
   memset(serialized_blob, 0, serialized_blob_size);
 
@@ -82,7 +82,7 @@ bool test_protect(bool print_all) {
     print_protected_blob(pb);
   }
 
-  int size_unencrypted_data = 512;
+  int  size_unencrypted_data = 512;
   byte unencrypted_data[size_unencrypted_data];
   memset(unencrypted_data, 0, size_unencrypted_data);
 
@@ -106,8 +106,8 @@ bool test_protect(bool print_all) {
     return false;
 
   key_message new_key;
-  int size_reprotected_data = serialized_blob_size + 5;
-  byte reprotected_data[size_reprotected_data];
+  int         size_reprotected_data = serialized_blob_size + 5;
+  byte        reprotected_data[size_reprotected_data];
   memset(reprotected_data, 0, size_reprotected_data);
   if (!reprotect_blob(enclave_type, &new_key, serialized_blob_size,
                       serialized_blob, &size_reprotected_data,
@@ -118,8 +118,8 @@ bool test_protect(bool print_all) {
 
   // unprotect it
   key_message newer_key;
-  int size_unencrypted_data2 = 512;
-  byte unencrypted_data2[size_unencrypted_data2];
+  int         size_unencrypted_data2 = 512;
+  byte        unencrypted_data2[size_unencrypted_data2];
   memset(unencrypted_data2, 0, size_unencrypted_data2);
   if (!unprotect_blob(enclave_type, size_reprotected_data, reprotected_data,
                       &newer_key, &size_unencrypted_data2, unencrypted_data2)) {
@@ -159,16 +159,16 @@ bool test_init_and_recover_containers(bool print_all) {
     return false;
 
   key_message storage_key;
-  int size_storage_key = 64;
-  byte sk[size_storage_key];
+  int         size_storage_key = 64;
+  byte        sk[size_storage_key];
   for (int i = 0; i < 64; i++)
     sk[i] = i % 16;
   storage_key.set_secret_key_bits((void*)sk, size_storage_key);
   time_point t_nb;
   time_point t_na;
-  string s_nb;
-  string s_na;
-  double hours_to_add = 365.0 * 24.0;
+  string     s_nb;
+  string     s_na;
+  double     hours_to_add = 365.0 * 24.0;
 
   if (!time_now(&t_nb))
     return false;
@@ -191,13 +191,13 @@ bool test_init_and_recover_containers(bool print_all) {
   key_message recovered_storage_key;
 
   string enclave_type("simulated-enclave");
-  int size_encrypted = serialized_store.size() + 512;
-  byte encrypted[size_encrypted];
+  int    size_encrypted = serialized_store.size() + 512;
+  byte   encrypted[size_encrypted];
 
   if (!protect_blob(enclave_type, storage_key, serialized_store.size(),
                     (byte*)serialized_store.data(), &size_encrypted, encrypted))
     return false;
-  int size_recovered = serialized_store.size() + 512;
+  int  size_recovered = serialized_store.size() + 512;
   byte recovered[size_encrypted];
   if (!unprotect_blob(enclave_type, size_encrypted, encrypted,
                       &recovered_storage_key, &size_recovered, recovered))
@@ -234,7 +234,7 @@ bool test_policy_store(bool print_all) {
   if (!time_to_string(t_nb, &s_nb))
     return false;
 
-  double hours_to_add = 365.0 * 24.0;
+  double     hours_to_add = 365.0 * 24.0;
   time_point t_na;
   if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
     return false;
@@ -263,7 +263,7 @@ bool test_policy_store(bool print_all) {
     return false;
   }
 
-  byte bin[5] = {0, 1, 2, 3, 4};
+  byte   bin[5] = {0, 1, 2, 3, 4};
   string tag1;
   string type1;
   string value1;

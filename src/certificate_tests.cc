@@ -27,8 +27,8 @@ char hex_digit(byte v) {
 }
 
 bool make_enclave_name(string enclave_type, string* enclave_name) {
-  int measurement_size = 32;
-  byte m[measurement_size];
+  int    measurement_size = 32;
+  byte   m[measurement_size];
   string enclave_id;
 
   if (enclave_type != "simulated-enclave")
@@ -36,8 +36,8 @@ bool make_enclave_name(string enclave_type, string* enclave_name) {
   for (int i = 0; i < measurement_size; i++)
     m[i] = i;
   char hex[65];
-  int pos = 0;
-  hex[64] = 0;
+  int  pos = 0;
+  hex[64]  = 0;
   for (int i = 0; i < measurement_size; i++) {
     hex[2 * i]     = hex_digit(m[i] >> 4);
     hex[2 * i + 1] = hex_digit(m[i] & 0xff);
@@ -47,12 +47,12 @@ bool make_enclave_name(string enclave_type, string* enclave_name) {
 }
 
 bool test_artifact(bool print_all) {
-  X509* cert = X509_new();
+  X509*       cert = X509_new();
   key_message signing_key;
   key_message subject_key;
-  string issuer_name_str("Policy-key");  // eventually serialized key
-  string issuer_description_str("Policy-key");
-  string enclave_type("simulated-enclave");
+  string      issuer_name_str("Policy-key");  // eventually serialized key
+  string      issuer_description_str("Policy-key");
+  string      enclave_type("simulated-enclave");
 
   string subject_name_str;
   if (!make_enclave_name(enclave_type, &subject_name_str))
@@ -61,8 +61,8 @@ bool test_artifact(bool print_all) {
     printf("Subject (Enclave) name: %s\n", subject_name_str.c_str());
   string subject_description_str("writer");
 
-  double secs_duration = 60.0 * 60.0 * 24.0 * 365.0;
-  uint64_t sn          = 1;
+  double   secs_duration = 60.0 * 60.0 * 24.0 * 365.0;
+  uint64_t sn            = 1;
 
   if (!make_certifier_rsa_key(2048, &signing_key))
     return false;
@@ -76,11 +76,11 @@ bool test_artifact(bool print_all) {
   if (print_all)
     X509_print_fp(stdout, cert);
 
-  uint64_t recovered_sn;
-  string recovered_subject_name_str;
-  string recovered_issuer_name_str;
-  string recovered_subject_description_str;
-  string recovered_issuer_description_str;
+  uint64_t    recovered_sn;
+  string      recovered_subject_name_str;
+  string      recovered_issuer_name_str;
+  string      recovered_subject_description_str;
+  string      recovered_issuer_description_str;
   key_message recovered_subject_key;
   if (!verify_artifact(*cert, signing_key, &recovered_issuer_name_str,
                        &recovered_issuer_description_str,

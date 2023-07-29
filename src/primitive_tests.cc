@@ -25,11 +25,11 @@ bool test_seal(bool print_all) {
   string enclave_type("simulated-enclave");
   string enclave_id("local-machine");
 
-  int secret_to_seal_size = 32;
+  int  secret_to_seal_size = 32;
   byte secret_to_seal[secret_to_seal_size];
-  int sealed_size_out = 256;
+  int  sealed_size_out = 256;
   byte sealed[sealed_size_out];
-  int recovered_size = 128;
+  int  recovered_size = 128;
   byte recovered[recovered_size];
 
   if (print_all) {
@@ -70,11 +70,11 @@ bool test_attest(bool print_all) {
   string descript("simulated-test");
 
   extern key_message my_attestation_key;
-  key_message public_attestation_key;
+  key_message        public_attestation_key;
   if (!private_key_to_public_key(my_attestation_key, &public_attestation_key))
     return false;
 
-  extern string my_measurement;
+  extern string         my_measurement;
   attestation_user_data ud;
   if (!make_attestation_user_data(enclave_type, public_attestation_key, &ud)) {
     printf("Can't make user data (1)\n");
@@ -87,7 +87,7 @@ bool test_attest(bool print_all) {
   }
 
   // Todo: fix size
-  int size_out = 8192;
+  int  size_out = 8192;
   byte out[size_out];
   if (!Attest(enclave_type, serialized_ud.size(), (byte*)serialized_ud.data(),
               &size_out, out))

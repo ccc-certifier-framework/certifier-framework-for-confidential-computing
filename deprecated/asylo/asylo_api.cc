@@ -39,8 +39,8 @@ void setFuncs(AsyloCertifierFunctions funcs) {
 bool asylo_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
-  int assertion_size = 0;
-  bool result        = false;
+  int  assertion_size = 0;
+  bool result         = false;
 
   printf("Invoking Asylo Attest %d\n", claims_size);
   print_bytes(claims_size, claims);
@@ -84,8 +84,8 @@ bool asylo_Verify(int claims_size, byte* claims, int* user_data_out_size,
                   byte* user_data_out, int* size_out, byte* out) {
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
-  int assertion_size = 0;
-  bool result        = false;
+  int  assertion_size = 0;
+  bool result         = false;
 
   printf("\nInput claims sent to asylo_Verify:\n");
   print_bytes(claims_size, claims);

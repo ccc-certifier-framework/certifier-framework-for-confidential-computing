@@ -29,11 +29,11 @@ bool keystone_test(const int cert_size, byte* cert) {
     return false;
   }
 
-  int size_secret = SIZE_SECRET;
+  int  size_secret = SIZE_SECRET;
   byte secret[size_secret];
-  int size_sealed_secret = SIZE_SECRET;
+  int  size_sealed_secret = SIZE_SECRET;
   byte sealed_secret[size_sealed_secret];
-  int size_unsealed_secret = SIZE_SECRET;
+  int  size_unsealed_secret = SIZE_SECRET;
   byte unsealed_secret[size_unsealed_secret];
 
   for (int i = 0; i < size_secret; i++) {
@@ -63,11 +63,11 @@ bool keystone_test(const int cert_size, byte* cert) {
     return false;
   }
 
-  int size_what_to_say = SIZE_WHAT_TO_SAY;
+  int  size_what_to_say = SIZE_WHAT_TO_SAY;
   byte what_to_say[size_secret];
-  int size_attestation = SIZE_ATTESTATION;
+  int  size_attestation = SIZE_ATTESTATION;
   byte attestation[size_attestation];
-  int size_measurement = SIZE_MEASUREMENT;
+  int  size_measurement = SIZE_MEASUREMENT;
   byte measurement[size_measurement];
 
   for (int i = 0; i < size_what_to_say; i++) {

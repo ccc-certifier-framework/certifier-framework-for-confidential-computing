@@ -26,8 +26,8 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(input, "", "input file");
 
 bool get_signed_from_file(const string& in, signed_claim_message* sc) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_cm[in_size];
 
   if (!read_file(in, &in_read, serialized_cm)) {

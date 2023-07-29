@@ -21,10 +21,10 @@
 
 // BEGIN copied Report.hpp
 struct enclave_report_t {
-  byte hash[MDSIZE];
+  byte     hash[MDSIZE];
   uint64_t data_len;
-  byte data[ATTEST_DATA_MAXLEN];
-  byte signature[SIGNATURE_SIZE];
+  byte     data[ATTEST_DATA_MAXLEN];
+  byte     signature[SIGNATURE_SIZE];
 };
 
 struct sm_report_t {
@@ -35,8 +35,8 @@ struct sm_report_t {
 
 struct report_t {
   struct enclave_report_t enclave;
-  struct sm_report_t sm;
-  byte dev_public_key[PUBLIC_KEY_SIZE];
+  struct sm_report_t      sm;
+  byte                    dev_public_key[PUBLIC_KEY_SIZE];
 };
 // END copied Report.hpp
 #endif
@@ -75,7 +75,7 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say,
   assert(attestation_size == sizeof(struct report_t));
   struct report_t& report = *reinterpret_cast<struct report_t*>(attestation);
 
-  int gold_attestation_size = 0;
+  int             gold_attestation_size = 0;
   struct report_t gold_report;
   keystone_Attest(what_to_say_size, what_to_say, &gold_attestation_size,
                   (byte*)&gold_report);

@@ -19,7 +19,7 @@ struct ec_point_384 {
 
 union secg_ec_point_384 {
   struct ec_point_384 point;
-  uint8_t bytes[sizeof(struct ec_point_384)];
+  uint8_t             bytes[sizeof(struct ec_point_384)];
 };
 
 #endif /* SECG_SEC1_H */

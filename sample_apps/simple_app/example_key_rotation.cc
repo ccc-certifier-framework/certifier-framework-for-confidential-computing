@@ -120,7 +120,7 @@ int main(int an, char** av) {
 
   // Get certificate
   string der_cert;
-  X509* x509_cert = X509_new();
+  X509*  x509_cert = X509_new();
   if (purpose == "authentication") {
     if (!app_trust_data->cc_auth_key_initialized_) {
       printf("Auth key uninitialized");

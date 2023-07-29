@@ -29,9 +29,9 @@ bool keystone_getSealingKey(byte* key) {
   return true;
 }
 
-bool g_m_initialized = false;
-const int g_m_size   = 32;
-byte g_measurement[g_m_size];
+bool      g_m_initialized = false;
+const int g_m_size        = 32;
+byte      g_measurement[g_m_size];
 
 // Keep name consistent with what is being used by other apps.
 // This simplifies the logic in driver run_example.sh script.
@@ -39,7 +39,7 @@ string g_measurement_file_name("./provisioning/example_app.measurement");
 
 bool keystone_get_fake_measurement(int* size, byte* measurement) {
   if (!g_m_initialized) {
-    int n = file_size(g_measurement_file_name);
+    int    n = file_size(g_measurement_file_name);
     string str_measurement;
     if (n > 0 &&
         read_file_into_string(g_measurement_file_name, &str_measurement)) {
@@ -63,7 +63,7 @@ bool keystone_get_fake_measurement(int* size, byte* measurement) {
 bool keystone_ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg,
                        int* size_out, byte* out) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
-  byte digest[len];
+  byte         digest[len];
 
   int blk_len = ECDSA_size(key);
   if (*size_out < 2 * blk_len) {
@@ -94,7 +94,7 @@ bool keystone_ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg,
 bool keystone_ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg,
                          int size_sig, byte* sig) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
-  byte digest[len];
+  byte         digest[len];
 
   if (!digest_message(alg, msg, size, digest, len)) {
     printf("ecc_verify: %s digest failed %d\n", alg, len);
@@ -116,10 +116,10 @@ bool keystone_ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg,
   return true;
 }
 
-string key_file("emulated_keystone_key.bin");
-string cert_file("emulated_keystone_key_cert.bin");
-EC_KEY* fake_attest_private_key = nullptr;
-EC_KEY* fake_attest_public_key  = nullptr;
+string      key_file("emulated_keystone_key.bin");
+string      cert_file("emulated_keystone_key_cert.bin");
+EC_KEY*     fake_attest_private_key = nullptr;
+EC_KEY*     fake_attest_public_key  = nullptr;
 key_message attest_private_key;
 key_message attest_public_key;
 
@@ -161,7 +161,7 @@ bool keystone_Init(const int cert_size, byte* cert) {
     // generate self signed cert
     string name("KeystoneAuthority");
     string desc("Authority");
-    X509* crt = X509_new();
+    X509*  crt = X509_new();
     if (!produce_artifact(attest_private_key, name, desc, attest_public_key,
                           name, desc, 94720, 86400 * 365.26, crt, true)) {
       X509_free(crt);
@@ -229,7 +229,7 @@ bool keystone_Verify(const int what_to_say_size, byte* what_to_say,
 #endif
 
   // report.enclave.data should be hash of what_to_say
-  int len = digest_output_byte_size("sha-256");
+  int  len = digest_output_byte_size("sha-256");
   byte expected_data[len];
   if (!digest_message("sha-256", what_to_say, what_to_say_size, expected_data,
                       len)) {

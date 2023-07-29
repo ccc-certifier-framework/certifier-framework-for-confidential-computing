@@ -61,22 +61,22 @@ static std::string enclave_type;
 cc_trust_data* app_trust_data = nullptr;
 
 static bool simulator_initialized = false;
-bool test_local_certify(string& enclave_type, bool init_from_file,
-                        string& file_name, string& evidence_descriptor);
+bool        test_local_certify(string& enclave_type, bool init_from_file,
+                               string& file_name, string& evidence_descriptor);
 
-bool trust_data_initialized = false;
+bool        trust_data_initialized = false;
 key_message privatePolicyKey;
 key_message publicPolicyKey;
-string serializedPolicyCert;
-X509* policy_cert = nullptr;
+string      serializedPolicyCert;
+X509*       policy_cert = nullptr;
 
 policy_store pStore;
-key_message privateAppKey;
-key_message publicAppKey;
-const int app_symmetric_key_size = 64;
-byte app_symmetric_key[app_symmetric_key_size];
-key_message symmertic_key_for_protect;
-bool connected = false;
+key_message  privateAppKey;
+key_message  publicAppKey;
+const int    app_symmetric_key_size = 64;
+byte         app_symmetric_key[app_symmetric_key_size];
+key_message  symmertic_key_for_protect;
+bool         connected = false;
 
 void print_trust_data() {
   if (!trust_data_initialized)
@@ -100,11 +100,11 @@ bool certifier_test_seal(void) {
   string enclave_type("asylo-enclave");
   string enclave_id("local-machine");
 
-  int secret_to_seal_size = 32;
+  int  secret_to_seal_size = 32;
   byte secret_to_seal[secret_to_seal_size];
-  int sealed_size_out = 1024;
+  int  sealed_size_out = 1024;
   byte sealed[sealed_size_out];
-  int recovered_size = 32;
+  int  recovered_size = 32;
   byte recovered[recovered_size];
 
   memset(sealed, 0, sealed_size_out);
@@ -143,8 +143,8 @@ bool certifier_test_seal(void) {
 }
 
 bool asylo_local_certify() {
-  string enclave_type("asylo-enclave");
-  string evidence_descriptor("asylo-evidence");
+  string      enclave_type("asylo-enclave");
+  string      evidence_descriptor("asylo-evidence");
   extern bool simulator_init(void);
   if (!simulator_initialized) {
     if (!simulator_init()) {
@@ -275,7 +275,7 @@ void server_application(secure_authenticated_channel& channel) {
 
   // Read message from client over authenticated, encrypted channel
   string out;
-  int n = channel.read(&out);
+  int    n = channel.read(&out);
   printf("SSL server read: %s\n", (const char*)out.data());
 
   // Reply over authenticated, encrypted channel
@@ -305,7 +305,7 @@ void asylo_server_dispatch(const string& host_name, int port,
 
   // Set up TLS handshake data.
   SSL_METHOD* method = (SSL_METHOD*)TLS_server_method();
-  SSL_CTX* ctx       = SSL_CTX_new(method);
+  SSL_CTX*    ctx    = SSL_CTX_new(method);
   if (ctx == NULL) {
     printf("SSL_CTX_new failed (1)\n");
     return;
@@ -335,8 +335,8 @@ void asylo_server_dispatch(const string& host_name, int port,
     printf("at accept\n");
 #endif
     struct sockaddr_in addr;
-    int client = accept(sock, (struct sockaddr*)&addr, &len);
-    string my_role("server");
+    int                client = accept(sock, (struct sockaddr*)&addr, &len);
+    string             my_role("server");
     secure_authenticated_channel nc(my_role);
     if (!nc.init_server_ssl(host_name, port, asn1_root_cert, private_key,
                             private_key_cert)) {
@@ -379,13 +379,13 @@ void client_application(secure_authenticated_channel& channel) {
 
   // Get server response over authenticated, encrypted channel and print it
   string out;
-  int n = channel.read(&out);
+  int    n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
 }
 
 bool setup_client_ssl() {
-  bool ret = true;
-  string my_role("client");
+  bool                         ret = true;
+  string                       my_role("client");
   secure_authenticated_channel channel(my_role);
 
   if (!app_trust_data->warm_restart()) {

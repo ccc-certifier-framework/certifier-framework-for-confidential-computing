@@ -197,7 +197,7 @@ bool certifier::framework::policy_store::Serialize(string* out) {
 
   for (unsigned i = 0; i < num_ents_; i++) {
     policy_store_entry* pe = psm.add_entries();
-    store_entry* se        = entry_[i];
+    store_entry*        se = entry_[i];
     pe->set_tag(se->tag_);
     pe->set_type(se->type_);
     pe->set_value(se->value_);
@@ -225,7 +225,7 @@ bool certifier::framework::policy_store::Deserialize(string& in) {
   }
   for (int i = 0; i < psm.entries_size(); i++) {
     const policy_store_entry& pe = psm.entries(i);
-    store_entry* se              = new store_entry();
+    store_entry*              se = new store_entry();
     entry_[i]                    = se;
     se->tag_                     = pe.tag();
     se->type_                    = pe.type();
@@ -241,8 +241,8 @@ bool certifier::framework::policy_store::Deserialize(string& in) {
 // Trusted primitives
 // -------------------------------------------------------------------
 
-bool certifier_public_policy_key_initialized = false;
-key_message certifier_public_policy_key;
+bool               certifier_public_policy_key_initialized = false;
+key_message        certifier_public_policy_key;
 const key_message* GetPublicPolicyKey() {
   if (!certifier_public_policy_key_initialized)
     return nullptr;
@@ -255,11 +255,24 @@ bool GetX509FromCert(const string& cert, X509* x) {
 
 #ifdef SEV_SNP
 
-static bool vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *value) {
-  int nid = -1, idx = -1, extlen = -1;
-  X509_EXTENSION* ex        = NULL;
-  ASN1_STRING* extvalue     = NULL;
-  const unsigned char* vals = NULL;
+#define EXT_STRUCT_VERSION "1.3.6.1.4.1.3704.1.1"
+#define EXT_PRODUCT_NAME "1.3.6.1.4.1.3704.1.2"
+#define EXT_BLSPL "1.3.6.1.4.1.3704.1.3.1"
+#define EXT_TEESPL "1.3.6.1.4.1.3704.1.3.2"
+#define EXT_SNPSPL "1.3.6.1.4.1.3704.1.3.3"
+#define EXT_SPL4 "1.3.6.1.4.1.3704.1.3.4"
+#define EXT_SPL5 "1.3.6.1.4.1.3704.1.3.5"
+#define EXT_SPL6 "1.3.6.1.4.1.3704.1.3.6"
+#define EXT_SPL7 "1.3.6.1.4.1.3704.1.3.7"
+#define EXT_UCODESPL "1.3.6.1.4.1.3704.1.3.8"
+#define EXT_HWID "1.3.6.1.4.1.3704.1.4"
+
+static bool vcek_ext_byte_value(X509* vcek, const char* oid,
+                                unsigned char* value) {
+  int                  nid = -1, idx = -1, extlen = -1;
+  X509_EXTENSION*      ex       = NULL;
+  ASN1_STRING*         extvalue = NULL;
+  const unsigned char* vals     = NULL;
 
   // Use OID for both lname and sname so OBJ_create does not fail
   nid = OBJ_create(oid, oid, oid);
@@ -293,7 +306,7 @@ static bool vcek_ext_byte_value(X509 *vcek, const char *oid, unsigned char *valu
 
 uint64_t get_tcb_version_from_vcek(X509* vcek) {
   unsigned char blSPL, teeSPL, snpSPL, ucodeSPL;
-  uint64_t tcb_version = (uint64_t)-1;
+  uint64_t      tcb_version = (uint64_t)-1;
 
   if (vcek_ext_byte_value(vcek, VCEK_EXT_BLSPL, &blSPL) &&
       vcek_ext_byte_value(vcek, VCEK_EXT_TEESPL, &teeSPL) &&
@@ -307,10 +320,10 @@ uint64_t get_tcb_version_from_vcek(X509* vcek) {
 }
 
 bool get_chipid_from_vcek(X509* vcek, unsigned char* chipid, int idlen) {
-  int nid = -1, idx = -1, extlen = -1;
-  X509_EXTENSION* ex        = NULL;
-  ASN1_STRING* extvalue     = NULL;
-  const unsigned char* vals = NULL;
+  int                  nid = -1, idx = -1, extlen = -1;
+  X509_EXTENSION*      ex       = NULL;
+  ASN1_STRING*         extvalue = NULL;
+  const unsigned char* vals     = NULL;
 
   nid = OBJ_create(VCEK_EXT_HWID, VCEK_EXT_HWID, VCEK_EXT_HWID);
   if (nid == NID_undef) {
@@ -337,14 +350,14 @@ bool get_chipid_from_vcek(X509* vcek, unsigned char* chipid, int idlen) {
 #endif
 
 bool PublicKeyFromCert(const string& cert, key_message* k) {
-  X509* x       = X509_new();
-  EVP_PKEY* epk = nullptr;
-  X509_NAME* sn = nullptr;
-  int s         = 0;
-  bool res      = true;
-  int len       = -1;
-  string subject_name_str;
-  string* cert_str = nullptr;
+  X509*      x   = X509_new();
+  EVP_PKEY*  epk = nullptr;
+  X509_NAME* sn  = nullptr;
+  int        s   = 0;
+  bool       res = true;
+  int        len = -1;
+  string     subject_name_str;
+  string*    cert_str = nullptr;
 #ifdef SEV_SNP
   enum { CHIP_ID_SIZE = 64 };
   unsigned char chipid[CHIP_ID_SIZE];
@@ -750,9 +763,9 @@ bool GetPlatformStatement(const string& enclave_type, const string& enclave_id,
   return false;
 }
 
-bool certifier_parent_enclave_type_intitalized = false;
+bool   certifier_parent_enclave_type_intitalized = false;
 string certifier_parent_enclave_type;
-bool GetParentEnclaveType(string* type) {
+bool   GetParentEnclaveType(string* type) {
   if (!certifier_parent_enclave_type_intitalized)
     return false;
   *type = certifier_parent_enclave_type;
@@ -769,9 +782,9 @@ const int max_key_seal_pad = 1024;
 const int protect_key_size = 64;
 
 bool certifier::framework::protect_blob(const string& enclave_type,
-                                        key_message& key,
-                                        int size_unencrypted_data,
-                                        byte* unencrypted_data,
+                                        key_message&  key,
+                                        int           size_unencrypted_data,
+                                        byte*         unencrypted_data,
                                         int* size_protected_blob, byte* blob) {
   string serialized_key;
   if (!key.SerializeToString(&serialized_key)) {
@@ -779,7 +792,7 @@ bool certifier::framework::protect_blob(const string& enclave_type,
     return false;
   }
 
-  int size_sealed_key = serialized_key.size() + max_key_seal_pad;
+  int  size_sealed_key = serialized_key.size() + max_key_seal_pad;
   byte sealed_key[size_sealed_key];
   memset(sealed_key, 0, size_sealed_key);
   string enclave_id("enclave-id");
@@ -805,7 +818,7 @@ bool certifier::framework::protect_blob(const string& enclave_type,
     return false;
   }
 
-  int size_encrypted = size_unencrypted_data + max_key_seal_pad;
+  int  size_encrypted = size_unencrypted_data + max_key_seal_pad;
   byte encrypted_data[size_encrypted];
   if (!authenticated_encrypt(key.key_type().c_str(), unencrypted_data,
                              size_unencrypted_data, key_buf, iv, encrypted_data,
@@ -848,7 +861,7 @@ bool certifier::framework::unprotect_blob(
     return false;
   }
 
-  int size_unsealed_key = pb.encrypted_key().size();
+  int  size_unsealed_key = pb.encrypted_key().size();
   byte unsealed_key[size_unsealed_key];
   memset(unsealed_key, 0, size_unsealed_key);
   string enclave_id("enclave-id");
@@ -897,8 +910,8 @@ bool certifier::framework::reprotect_blob(
     const string& enclave_type, key_message* key, int size_protected_blob,
     byte* protected_blob, int* size_new_encrypted_blob, byte* data) {
   key_message new_key;
-  int size_unencrypted_data = size_protected_blob;
-  byte unencrypted_data[size_unencrypted_data];
+  int         size_unencrypted_data = size_protected_blob;
+  byte        unencrypted_data[size_unencrypted_data];
 
   if (!unprotect_blob(enclave_type, size_protected_blob, protected_blob,
                       &new_key, &size_unencrypted_data, unencrypted_data)) {
