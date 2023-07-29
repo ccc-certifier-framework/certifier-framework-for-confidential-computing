@@ -25,7 +25,7 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   string enclave("application-enclave");
   string id("1");
@@ -70,17 +70,21 @@ main(int an, char** av)
 
   // Seal test
   printf("secret  : ");
-  print_bytes((int)secret.size(), (byte*)secret.data());
+  print_bytes((int)secret.size(), (byte *)secret.data());
   printf("\n");
   int t_out = out_size;
-  if (!Seal(enclave, id, (int)secret.size(), (byte*)secret.data(), &t_out, out))
-  {
+  if (!Seal(enclave,
+            id,
+            (int)secret.size(),
+            (byte *)secret.data(),
+            &t_out,
+            out)) {
     printf("Application seal failed\n");
     return 1;
   }
-  sealed.assign((char*)out, t_out);
+  sealed.assign((char *)out, t_out);
   printf("sealed  : ");
-  print_bytes((int)sealed.size(), (byte*)sealed.data());
+  print_bytes((int)sealed.size(), (byte *)sealed.data());
   printf("\n");
 
   // Unseal test
@@ -88,15 +92,16 @@ main(int an, char** av)
   if (!Unseal(enclave,
               id,
               (int)sealed.size(),
-              (byte*)sealed.data(),
+              (byte *)sealed.data(),
               &t_out,
-              out)) {
+              out))
+  {
     printf("Application unseal failed\n");
     return 1;
   }
-  unsealed.assign((char*)out, t_out);
+  unsealed.assign((char *)out, t_out);
   printf("unsealed: ");
-  print_bytes((int)unsealed.size(), (byte*)unsealed.data());
+  print_bytes((int)unsealed.size(), (byte *)unsealed.data());
   printf("\n");
 
   // GetPlatformStatement test
@@ -109,7 +114,7 @@ main(int an, char** av)
   signed_claim_message sc;
   if (t_out > 0) {
     string ser_sc;
-    ser_sc.assign((char*)out, t_out);
+    ser_sc.assign((char *)out, t_out);
     sc.ParseFromString(ser_sc);
     printf("Platform claim:\n");
     print_signed_claim(sc);
@@ -126,9 +131,9 @@ main(int an, char** av)
     printf("Application attest failed\n");
     return 1;
   }
-  attest.assign((char*)out, t_out);
+  attest.assign((char *)out, t_out);
   printf("attest  : ");
-  print_bytes((int)attest.size(), (byte*)attest.data());
+  print_bytes((int)attest.size(), (byte *)attest.data());
   printf("\n");
 
   printf("\ntest_user.exe succeeded\n");

@@ -67,7 +67,7 @@ using namespace certifier::framework;
 #endif
 
 #include "policy_key.cc"
-cc_trust_data* app_trust_data = nullptr;
+cc_trust_data *app_trust_data = nullptr;
 
 static struct _app_config {
   string certifier_host = string("localhost");
@@ -78,7 +78,7 @@ static struct _app_config {
 } app_config;
 
 static bool
-file_exists(const std::string& name)
+file_exists(const std::string &name)
 {
   return (access(name.c_str(), F_OK) != -1);
 }
@@ -92,7 +92,7 @@ check_disk_encryption()
 }
 
 static bool
-certifier_notification(cc_trust_data* app_trust_data, bool disk_encrypted)
+certifier_notification(cc_trust_data *app_trust_data, bool disk_encrypted)
 {
   if (app_config.check_disk && !disk_encrypted) {
     ATT_LOG(LOG_INFO, "Disk is not encrypted!");
@@ -124,13 +124,13 @@ certifier_notification(cc_trust_data* app_trust_data, bool disk_encrypted)
   }
 
   // TODO: Dummy agent protocol. Just send SUCCESS/FAILURE.
-  const char* msg = "\n";
+  const char *msg = "\n";
   if (app_trust_data->cc_is_certified_) {
     msg = "SUCCESS\n";
   } else {
     msg = "FAILURE\n";
   }
-  channel.write(strlen(msg), (byte*)msg);
+  channel.write(strlen(msg), (byte *)msg);
   string out;
   int    n = channel.read(&out);
   ATT_LOG(LOG_INFO, "Agent says: %s\n", out.data());
@@ -138,8 +138,8 @@ certifier_notification(cc_trust_data* app_trust_data, bool disk_encrypted)
   return true;
 }
 
-static char*
-trim_space(char* str, int size)
+static char *
+trim_space(char *str, int size)
 {
   int end = strnlen(str, size) - 1;
   while (isspace(str[0]))
@@ -152,12 +152,12 @@ trim_space(char* str, int size)
 }
 
 static bool
-parse_config(const string& config_file)
+parse_config(const string &config_file)
 {
 #define BUFFER_SIZE 1024
-  FILE* file = fopen(config_file.c_str(), "r");
+  FILE *file = fopen(config_file.c_str(), "r");
   char  buffer[BUFFER_SIZE];
-  char* conf_str = NULL;
+  char *conf_str = NULL;
   char  addr[BUFFER_SIZE];
 
   if (!file) {
@@ -199,7 +199,7 @@ parse_config(const string& config_file)
 }
 
 int
-main(int argc, char* argv[])
+main(int argc, char *argv[])
 {
   int  ret            = 0;
   bool disk_encrypted = false;

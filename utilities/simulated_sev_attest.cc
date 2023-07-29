@@ -96,11 +96,11 @@ static struct attestation_report default_report = {
 };
 
 int
-read_key_file(const string& filename, EVP_PKEY** key, bool priv)
+read_key_file(const string &filename, EVP_PKEY **key, bool priv)
 {
   int       rc = -EXIT_FAILURE;
-  EVP_PKEY* pkey;
-  FILE*     file = NULL;
+  EVP_PKEY *pkey;
+  FILE *    file = NULL;
 
   pkey = EVP_PKEY_new();
   file = fopen(filename.c_str(), "r");
@@ -131,7 +131,7 @@ out:
 
 // This generates an sev attestation signed by the key in key_file
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
@@ -141,12 +141,12 @@ main(int an, char** av)
   default_report.reported_tcb.raw     = 0x03000000000008115ULL;
   default_report.platform_version.raw = 0x03000000000008115ULL;
 
-  EVP_PKEY* pkey = nullptr;
+  EVP_PKEY *pkey = nullptr;
   if (read_key_file(FLAGS_key_file, &pkey, true) < 0) {
     printf("Can't read key from %s\n", FLAGS_key_file.c_str());
     return 1;
   }
-  EC_KEY* eck = EVP_PKEY_get1_EC_KEY(pkey);
+  EC_KEY *eck = EVP_PKEY_get1_EC_KEY(pkey);
   if (eck == nullptr) {
     printf("Can't get ec key\n");
     return 1;
@@ -155,16 +155,16 @@ main(int an, char** av)
   if (!ecc_sign("sha-384",
                 eck,
                 sizeof(attestation_report) - sizeof(signature),
-                (byte*)&default_report,
+                (byte *)&default_report,
                 &size_out,
-                (byte*)&default_report.signature))
+                (byte *)&default_report.signature))
   {
     printf("signature failure\n");
     return 1;
   }
   if (!write_file(FLAGS_output,
                   sizeof(attestation_report),
-                  (byte*)&default_report))
+                  (byte *)&default_report))
   {
     printf("Can't write %s\n", FLAGS_output.c_str());
     return 1;

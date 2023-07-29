@@ -34,24 +34,24 @@
 #define _CC_HELPERS_CC_
 
 bool
-open_client_socket(const string& host_name, int port, int* soc);
+open_client_socket(const string &host_name, int port, int *soc);
 bool
-open_server_socket(const string& host_name, int port, int* soc);
+open_server_socket(const string &host_name, int port, int *soc);
 
 bool
-construct_platform_evidence_package(string&           enclave_type,
-                                    const string&     purpose,
-                                    evidence_list&    list,
-                                    string&           the_attestation,
-                                    evidence_package* ep);
+construct_platform_evidence_package(string &          enclave_type,
+                                    const string &    purpose,
+                                    evidence_list &   list,
+                                    string &          the_attestation,
+                                    evidence_package *ep);
 bool
 add_policy_key_says_platform_key_is_trusted(
-    signed_claim_message& platform_key_is_trusted,
-    evidence_package*     ep);
+    signed_claim_message &platform_key_is_trusted,
+    evidence_package *    ep);
 void
-print_cn_name(X509_NAME* name);
+print_cn_name(X509_NAME *name);
 void
-print_org_name(X509_NAME* name);
+print_org_name(X509_NAME *name);
 void
 print_ssl_error(int code);
 
@@ -59,19 +59,19 @@ print_ssl_error(int code);
 // Eventually they will be deprecated
 #if 1
 bool
-load_server_certs_and_key(X509*        x509_root_cert,
-                          key_message& private_key,
-                          SSL_CTX*     ctx);
+load_server_certs_and_key(X509 *       x509_root_cert,
+                          key_message &private_key,
+                          SSL_CTX *    ctx);
 bool
-init_client_ssl(X509*         x509_root_cert,
-                key_message&  private_key,
-                const string& host_name,
+init_client_ssl(X509 *        x509_root_cert,
+                key_message & private_key,
+                const string &host_name,
                 int           port,
-                int*          p_sd,
-                SSL_CTX**     p_ctx,
-                SSL**         p_ssl);
+                int *         p_sd,
+                SSL_CTX **    p_ctx,
+                SSL **        p_ssl);
 void
-close_client_ssl(int sd, SSL_CTX* ctx, SSL* ssl);
+close_client_ssl(int sd, SSL_CTX *ctx, SSL *ssl);
 #endif
 
 #endif

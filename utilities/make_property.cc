@@ -33,7 +33,7 @@ DEFINE_string(string_value, "", "string value");
 DEFINE_string(output, "prop.bin", "output file");
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   string usage("Specify a platform policy property used in policy.");
   gflags::SetUsageMessage(usage);
@@ -67,7 +67,7 @@ main(int an, char** av)
     return 1;
   }
 
-  if (!write_file(FLAGS_output, p_out.size(), (byte*)p_out.data())) {
+  if (!write_file(FLAGS_output, p_out.size(), (byte *)p_out.data())) {
     printf("Can't write cert file\n");
     return 1;
   }

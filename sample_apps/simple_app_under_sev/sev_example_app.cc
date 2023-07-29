@@ -56,18 +56,18 @@ DEFINE_string(vcek_cert_file, "./service/vcek_cert.der", "vcek cert file name");
 //    run-app-as-server: This runs the app as a client
 
 #include "policy_key.cc"
-cc_trust_data* app_trust_data = nullptr;
+cc_trust_data *app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
 void
-client_application(secure_authenticated_channel& channel)
+client_application(secure_authenticated_channel &channel)
 {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
   // client sends a message over authenticated, encrypted channel
-  const char* msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
 
   // Get server response over authenticated, encrypted channel and print it
   string out;
@@ -76,26 +76,26 @@ client_application(secure_authenticated_channel& channel)
 }
 
 void
-server_application(secure_authenticated_channel& channel)
+server_application(secure_authenticated_channel &channel)
 {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
   string out;
   int    n = channel.read(&out);
-  printf("SSL server read: %s\n", (const char*)out.data());
+  printf("SSL server read: %s\n", (const char *)out.data());
 
   // Reply over authenticated, encrypted channel
-  const char* msg = "Hi from your secret server\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret server\n";
+  channel.write(strlen(msg), (byte *)msg);
 }
 
 bool
-run_me_as_server(const string& host_name,
+run_me_as_server(const string &host_name,
                  int           port,
-                 string&       asn1_policy_cert,
-                 key_message&  private_key,
-                 string&       private_key_cert)
+                 string &      asn1_policy_cert,
+                 key_message & private_key,
+                 string &      private_key_cert)
 {
   printf("running as server\n");
   server_dispatch(host_name,
@@ -108,7 +108,7 @@ run_me_as_server(const string& host_name,
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

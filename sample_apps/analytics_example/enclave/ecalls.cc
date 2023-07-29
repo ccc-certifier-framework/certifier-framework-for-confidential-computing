@@ -47,21 +47,21 @@ static string data_dir = "../app1_data/";
 #define FLAGS_measurement_file            "example_app.measurement"
 
 static std::string enclave_type;
-cc_trust_data*     app_trust_data = nullptr;
+cc_trust_data *    app_trust_data = nullptr;
 
 static bool simulator_initialized   = false;
 static bool openenclave_initialized = false;
 bool
-test_local_certify(string& enclave_type,
+test_local_certify(string &enclave_type,
                    bool    init_from_file,
-                   string& file_name,
-                   string& evidence_descriptor);
+                   string &file_name,
+                   string &evidence_descriptor);
 
 bool        trust_data_initialized = false;
 key_message privatePolicyKey;
 key_message publicPolicyKey;
 string      serializedPolicyCert;
-X509*       policy_cert = nullptr;
+X509 *      policy_cert = nullptr;
 
 policy_store pStore;
 key_message  privateAppKey;
@@ -83,7 +83,7 @@ print_trust_data()
   printf("\nPolicy key\n");
   print_key(publicPolicyKey);
   printf("\nPolicy cert\n");
-  print_bytes(serializedPolicyCert.size(), (byte*)serializedPolicyCert.data());
+  print_bytes(serializedPolicyCert.size(), (byte *)serializedPolicyCert.data());
   printf("\n");
   printf("\nPrivate app auth key\n");
   print_key(privateAppKey);
@@ -98,7 +98,7 @@ extern "C" {
 bool
 openenclave_init(void);
 bool
-certifier_init(char*, size_t);
+certifier_init(char *, size_t);
 
 bool
 cold_init(void);
@@ -146,7 +146,7 @@ openenclave_init(void)
 }
 
 bool
-certifier_init(char* usr_data_dir, size_t usr_data_dir_size)
+certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
 {
   oe_result_t       result = OE_OK;
   static const char rnd_seed[] =
@@ -258,19 +258,19 @@ certify_me()
 }
 
 void
-server_application(secure_authenticated_channel& channel)
+server_application(secure_authenticated_channel &channel)
 {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
   string out;
   int    n = channel.read(&out);
-  printf("SSL server read: %s\n", (const char*)out.data());
+  printf("SSL server read: %s\n", (const char *)out.data());
 
-  std::string ret = proc_data((const char*)out.c_str());
+  std::string ret = proc_data((const char *)out.c_str());
 
   // Reply over authenticated, encrypted channel
-  channel.write(ret.size(), (byte*)ret.c_str());
+  channel.write(ret.size(), (byte *)ret.c_str());
 }
 
 bool
@@ -291,7 +291,7 @@ run_me_as_server()
 }
 
 void
-client_application(secure_authenticated_channel& channel)
+client_application(secure_authenticated_channel &channel)
 {
   // client starts, in a real application we would likely send a serialized
   // protobuf
@@ -301,11 +301,11 @@ client_application(secure_authenticated_channel& channel)
 
   std::string msg = sales_df.to_string<double, long>();
   printf("size of the dataframe is %lu\n", msg.size());
-  channel.write(msg.size(), (byte*)msg.c_str());
+  channel.write(msg.size(), (byte *)msg.c_str());
 
   string buf;
   int    n = channel.read(&buf);
-  printf("SSL client read: %s\n", (const char*)buf.c_str());
+  printf("SSL client read: %s\n", (const char *)buf.c_str());
 }
 
 bool
@@ -343,31 +343,31 @@ run_me_as_client()
 bool
 temp_test()
 {
-  RSA* r = RSA_new();
+  RSA *r = RSA_new();
   if (!key_to_RSA(privateAppKey, r)) {
     return false;
   }
-  EVP_PKEY* auth_private_key = EVP_PKEY_new();
+  EVP_PKEY *auth_private_key = EVP_PKEY_new();
   EVP_PKEY_set1_RSA(auth_private_key, r);
 
-  X509*  x509_auth_key_cert = X509_new();
+  X509 * x509_auth_key_cert = X509_new();
   string auth_cert_str;
-  auth_cert_str.assign((char*)privateAppKey.certificate().data(),
+  auth_cert_str.assign((char *)privateAppKey.certificate().data(),
                        privateAppKey.certificate().size());
   if (!asn1_to_x509(auth_cert_str, x509_auth_key_cert)) {
     return false;
   }
 
-  STACK_OF(X509)* stack = sk_X509_new_null();
+  STACK_OF(X509) *stack = sk_X509_new_null();
   if (sk_X509_push(stack, policy_cert) == 0) {
     return false;
   }
   if (sk_X509_push(stack, x509_auth_key_cert) == 0) {
     return false;
   }
-  X509_STORE* cs = X509_STORE_new();
+  X509_STORE *cs = X509_STORE_new();
   X509_STORE_add_cert(cs, policy_cert);
-  X509_STORE_CTX* ctx = X509_STORE_CTX_new();
+  X509_STORE_CTX *ctx = X509_STORE_CTX_new();
 
   int res = X509_STORE_CTX_init(ctx, cs, x509_auth_key_cert, stack);
   X509_STORE_CTX_set_cert(ctx, x509_auth_key_cert);

@@ -42,7 +42,7 @@ test_encrypt(bool print_all)
 {
   const int   in_size  = 2 * block_size;
   const int   out_size = in_size + 128;
-  const char* alg_name = "aes-256-cbc-hmac-sha256";
+  const char *alg_name = "aes-256-cbc-hmac-sha256";
   const int   key_size = cipher_key_byte_size(alg_name);
   int         blk_size = cipher_block_byte_size(alg_name);
 
@@ -66,8 +66,8 @@ test_encrypt(bool print_all)
     key[i] = (byte)(i % 16);
   for (int i = 0; i < blk_size; i++)
     iv[i] = (byte)(i % 16);
-  const char* msg = "this is a message of length 32.";
-  memcpy(plain, (byte*)msg, 32);
+  const char *msg = "this is a message of length 32.";
+  memcpy(plain, (byte *)msg, 32);
 
   if (print_all) {
     printf("input: ");
@@ -132,8 +132,8 @@ test_authenticated_encrypt(bool print_all)
 
   for (int i = 0; i < block_size; i++)
     iv[i] = (byte)(i % 16);
-  const char* msg = "this is a message of length 32.";
-  memcpy(plain, (byte*)msg, 32);
+  const char *msg = "this is a message of length 32.";
+  memcpy(plain, (byte *)msg, 32);
 
   if (print_all) {
     printf("\nAuthenticated encryption\n");
@@ -308,7 +308,7 @@ test_authenticated_encrypt(bool print_all)
 bool
 test_public_keys(bool print_all)
 {
-  RSA* r1 = RSA_new();
+  RSA *r1 = RSA_new();
 
   if (!generate_new_rsa_key(2048, r1))
     return false;
@@ -317,10 +317,10 @@ test_public_keys(bool print_all)
   if (!RSA_to_key(r1, &km1))
     return false;
   if (print_all) {
-    print_key((const key_message&)km1);
+    print_key((const key_message &)km1);
   }
 
-  const char* msg       = "This is a message of length 32  ";
+  const char *msg       = "This is a message of length 32  ";
   int         size_data = 32;
   byte        data[size_data];
   int         size_out = 2048;
@@ -331,7 +331,7 @@ test_public_keys(bool print_all)
   memset(data, 0, size_data);
   memset(out, 0, size_out);
   memset(recovered, 0, size_recovered);
-  memcpy(data, (byte*)msg, size_data);
+  memcpy(data, (byte *)msg, size_data);
 
   if (print_all) {
     printf("public to encrypt: ");
@@ -356,7 +356,7 @@ test_public_keys(bool print_all)
   if (memcmp(data, recovered, size_recovered) != 0)
     return false;
 
-  RSA* r2 = RSA_new();
+  RSA *r2 = RSA_new();
   if (!generate_new_rsa_key(4096, r2))
     return false;
 
@@ -369,13 +369,13 @@ test_public_keys(bool print_all)
   }
   if (print_all) {
     printf("\n");
-    print_key((const key_message&)km2);
+    print_key((const key_message &)km2);
   }
 
   memset(data, 0, size_data);
   memset(out, 0, size_out);
   memset(recovered, 0, size_recovered);
-  memcpy(data, (byte*)msg, size_data);
+  memcpy(data, (byte *)msg, size_data);
 
   if (print_all) {
     printf("public to encrypt: ");
@@ -403,7 +403,7 @@ test_public_keys(bool print_all)
   // ECC
   size_out        = 2048;
   size_recovered  = 2048;
-  EC_KEY* ecc_key = generate_new_ecc_key(384);
+  EC_KEY *ecc_key = generate_new_ecc_key(384);
   if (ecc_key == nullptr) {
     printf("Can't generate new ecc key\n");
     return false;
@@ -417,7 +417,7 @@ test_public_keys(bool print_all)
   }
   if (print_all) {
     printf("\n");
-    print_key((const key_message&)km3);
+    print_key((const key_message &)km3);
   }
   if (print_all) {
     printf("public to encrypt: ");
@@ -476,9 +476,9 @@ test_public_keys(bool print_all)
   memset(data, 0, size_data);
   memset(out, 0, size_out);
   memset(recovered, 0, size_recovered);
-  memcpy(data, (byte*)msg, size_data);
+  memcpy(data, (byte *)msg, size_data);
 
-  EC_KEY* ecc_key2 = generate_new_ecc_key(256);
+  EC_KEY *ecc_key2 = generate_new_ecc_key(256);
   if (ecc_key == nullptr) {
     printf("Can't generate new ecc key\n");
     return false;
@@ -492,7 +492,7 @@ test_public_keys(bool print_all)
   }
   if (print_all) {
     printf("\n");
-    print_key((const key_message&)km4);
+    print_key((const key_message &)km4);
   }
 
   if (print_all) {
@@ -582,14 +582,14 @@ byte sha512_test[64] = {
 bool
 test_digest(bool print_all)
 {
-  const char*  message     = "1234";
+  const char * message     = "1234";
   int          msg_len     = strlen(message);
   unsigned int size_digest = 64;
   byte         digest[size_digest];
 
   memset(digest, 0, size_digest);
   if (!digest_message("sha-256",
-                      (const byte*)message,
+                      (const byte *)message,
                       msg_len,
                       digest,
                       size_digest))
@@ -599,7 +599,7 @@ test_digest(bool print_all)
   }
   if (print_all) {
     printf("SHA-256 message: ");
-    print_bytes(msg_len, (byte*)message);
+    print_bytes(msg_len, (byte *)message);
     printf("\n");
     printf("SHA-256 digest : ");
     print_bytes(32, digest);
@@ -607,7 +607,7 @@ test_digest(bool print_all)
   }
 
   // Verifier outputs
-  const char* message2 = "abc";
+  const char *message2 = "abc";
   msg_len              = 3;
 
   size_digest = (unsigned int)digest_output_byte_size("sha256");
@@ -617,7 +617,7 @@ test_digest(bool print_all)
   }
   memset(digest, 0, size_digest);
   if (!digest_message("sha-256",
-                      (const byte*)message2,
+                      (const byte *)message2,
                       msg_len,
                       digest,
                       size_digest))
@@ -627,7 +627,7 @@ test_digest(bool print_all)
   }
   if (print_all) {
     printf("\nSHA-256 message: ");
-    print_bytes(msg_len, (byte*)message2);
+    print_bytes(msg_len, (byte *)message2);
     printf("\n");
     printf("SHA-256 digest : ");
     print_bytes((int)size_digest, digest);
@@ -645,7 +645,7 @@ test_digest(bool print_all)
   }
   memset(digest, 0, size_digest);
   if (!digest_message("sha-384",
-                      (const byte*)message2,
+                      (const byte *)message2,
                       msg_len,
                       digest,
                       size_digest))
@@ -655,7 +655,7 @@ test_digest(bool print_all)
   }
   if (print_all) {
     printf("SHA-384 message: ");
-    print_bytes(msg_len, (byte*)message2);
+    print_bytes(msg_len, (byte *)message2);
     printf("\n");
     printf("SHA-384 digest : ");
     print_bytes((int)size_digest, digest);
@@ -672,7 +672,7 @@ test_digest(bool print_all)
   }
   memset(digest, 0, size_digest);
   if (!digest_message("sha-512",
-                      (const byte*)message2,
+                      (const byte *)message2,
                       msg_len,
                       digest,
                       size_digest))
@@ -682,7 +682,7 @@ test_digest(bool print_all)
   }
   if (print_all) {
     printf("SHA-512 message: ");
-    print_bytes(msg_len, (byte*)message2);
+    print_bytes(msg_len, (byte *)message2);
     printf("\n");
     printf("SHA-512 digest : ");
     print_bytes((int)size_digest, digest);
@@ -698,7 +698,7 @@ test_digest(bool print_all)
 bool
 test_sign_and_verify(bool print_all)
 {
-  RSA* r = RSA_new();
+  RSA *r = RSA_new();
 
   if (!generate_new_rsa_key(2048, r)) {
     printf("generate_new_rsa_key failed\n");
@@ -711,10 +711,10 @@ test_sign_and_verify(bool print_all)
     return false;
   }
   if (print_all) {
-    print_key((const key_message&)km);
+    print_key((const key_message &)km);
   }
 
-  const char* test_message = "I am a test message, verify me";
+  const char *test_message = "I am a test message, verify me";
 
   int  sig_size = RSA_size(r);
   byte sig[sig_size];
@@ -725,7 +725,7 @@ test_sign_and_verify(bool print_all)
 
   if (!rsa_sha256_sign(r,
                        strlen(test_message),
-                       (byte*)test_message,
+                       (byte *)test_message,
                        &sig_size,
                        sig))
   {
@@ -734,7 +734,7 @@ test_sign_and_verify(bool print_all)
   }
   if (!rsa_sha256_verify(r,
                          strlen(test_message),
-                         (byte*)test_message,
+                         (byte *)test_message,
                          sig_size,
                          sig))
   {
@@ -754,7 +754,7 @@ test_key_translation(bool print_all)
   if (!make_certifier_rsa_key(2048, &k1))
     return false;
 
-  RSA* r2 = RSA_new();
+  RSA *r2 = RSA_new();
   if (!key_to_RSA(k1, r2))
     return false;
   if (print_all) {

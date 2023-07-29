@@ -42,7 +42,7 @@ DEFINE_string(out_file,
 DEFINE_string(mrenclave, "", "Measurement Hex String");
 
 bool
-write_file(string file_name, int size, byte* data)
+write_file(string file_name, int size, byte *data)
 {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (out < 0)
@@ -69,7 +69,7 @@ file_size(string file_name)
 }
 
 bool
-read_file(string file_name, int* size, byte* data)
+read_file(string file_name, int *size, byte *data)
 {
   struct stat file_info;
 
@@ -91,12 +91,12 @@ read_file(string file_name, int* size, byte* data)
 }
 
 bool
-digest_message(const byte*  message,
+digest_message(const byte * message,
                int          message_len,
-               byte*        digest,
+               byte *       digest,
                unsigned int digest_len)
 {
-  EVP_MD_CTX* mdctx;
+  EVP_MD_CTX *mdctx;
 
   if ((mdctx = EVP_MD_CTX_new()) == NULL)
     return false;
@@ -112,7 +112,7 @@ digest_message(const byte*  message,
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
@@ -142,8 +142,8 @@ main(int an, char** av)
   } else if (FLAGS_mrenclave.size() != 0) {
     size_t size = FLAGS_mrenclave.size();
     char   hex[size + 2];
-    memset((byte*)hex, 0, size + 2);
-    const char* pos = (const char*)hex;
+    memset((byte *)hex, 0, size + 2);
+    const char *pos = (const char *)hex;
     byte        m[measurement_size];
     if (size % 2) {
       hex[0] = '0';
@@ -175,7 +175,7 @@ main(int an, char** av)
     printf("File size: %d\n", size);
   }
 
-  byte* file_contents = (byte*)malloc(size);
+  byte *file_contents = (byte *)malloc(size);
   if (file_contents == nullptr) {
     printf("Can't alloc\n");
     return 1;

@@ -26,7 +26,7 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(input, "measurement_utility.exe", "input file");
 
 bool
-get_clause_from_file(const string& in, vse_clause* cl)
+get_clause_from_file(const string &in, vse_clause *cl)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -37,7 +37,7 @@ get_clause_from_file(const string& in, vse_clause* cl)
     return false;
   }
   string cl_str;
-  cl_str.assign((char*)serialized_cl, in_size);
+  cl_str.assign((char *)serialized_cl, in_size);
   if (!cl->ParseFromString(cl_str)) {
     printf("Can't parse clause\n");
     return false;
@@ -46,7 +46,7 @@ get_clause_from_file(const string& in, vse_clause* cl)
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

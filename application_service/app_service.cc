@@ -104,17 +104,17 @@ class spawned_children {
   int               pid_;
   int               parent_read_fd_;
   int               parent_write_fd_;
-  std::thread*      thread_obj_;
-  spawned_children* next_;
+  std::thread *     thread_obj_;
+  spawned_children *next_;
 };
 
 std::mutex        kid_mtx;
-spawned_children* my_kids = nullptr;
+spawned_children *my_kids = nullptr;
 
-spawned_children*
+spawned_children *
 new_kid()
 {
-  spawned_children* nk = new (spawned_children);
+  spawned_children *nk = new (spawned_children);
   if (nk == nullptr)
     return nullptr;
   kid_mtx.lock();
@@ -126,11 +126,11 @@ new_kid()
   return nk;
 }
 
-spawned_children*
+spawned_children *
 find_kid(int pid)
 {
   kid_mtx.lock();
-  spawned_children* k = my_kids;
+  spawned_children *k = my_kids;
   while (k != nullptr) {
     if (k->pid_ == pid)
       break;
@@ -152,12 +152,12 @@ remove_kid(int pid)
     delete my_kids;
     my_kids = nullptr;
   }
-  spawned_children* k = my_kids;
+  spawned_children *k = my_kids;
   while (k != nullptr) {
     if (k->next_ == nullptr)
       break;
     if (k->next_->pid_ == pid) {
-      spawned_children* to_remove = k->next_;
+      spawned_children *to_remove = k->next_;
       k->next_                    = to_remove->next_;
       delete to_remove;
       break;
@@ -168,14 +168,14 @@ remove_kid(int pid)
 }
 
 bool
-measure_binary(const string& file, string* m)
+measure_binary(const string &file, string *m)
 {
   int size = file_size(file.c_str());
   if (size <= 0) {
     printf("Can't get executable file\n");
     return false;
   }
-  byte* file_contents = (byte*)malloc(size);
+  byte *file_contents = (byte *)malloc(size);
   int   bytes_read    = size;
   if (!read_file(file, &bytes_read, file_contents) || bytes_read < size) {
     printf("Executable read failed\n");
@@ -189,13 +189,13 @@ measure_binary(const string& file, string* m)
     free(file_contents);
     return false;
   }
-  m->assign((char*)digest, (int)len);
+  m->assign((char *)digest, (int)len);
   free(file_contents);
   return true;
 }
 
 bool
-measure_in_mem_binary(byte* file_contents, int size, string* m)
+measure_in_mem_binary(byte *file_contents, int size, string *m)
 {
   byte         digest[32];
   unsigned int len = 32;
@@ -203,7 +203,7 @@ measure_in_mem_binary(byte* file_contents, int size, string* m)
     printf("Digest failed\n");
     return false;
   }
-  m->assign((char*)digest, (int)len);
+  m->assign((char *)digest, (int)len);
   return true;
 }
 
@@ -211,7 +211,7 @@ void
 delete_child(int signum)
 {
   int               pid = wait(nullptr);
-  spawned_children* c   = find_kid(pid);
+  spawned_children *c   = find_kid(pid);
   if (c->thread_obj_ != nullptr) {
     delete c->thread_obj_;
   }
@@ -225,10 +225,10 @@ const int max_pad_size = 128;
 
 // The support functions use the helper object
 //    This is just a reference, object is local to main
-cc_trust_data* app_trust_data = nullptr;
+cc_trust_data *app_trust_data = nullptr;
 
 bool
-soft_Seal(spawned_children* kid, string in, string* out)
+soft_Seal(spawned_children *kid, string in, string *out)
 {
 #ifdef DEBUG
   printf("soft_Seal\n");
@@ -246,7 +246,7 @@ soft_Seal(spawned_children* kid, string in, string* out)
     return false;
   }
   if (!authenticated_encrypt(app_trust_data->symmetric_key_algorithm_.c_str(),
-                             (byte*)buffer_to_seal.data(),
+                             (byte *)buffer_to_seal.data(),
                              buffer_to_seal.size(),
                              app_trust_data->service_symmetric_key_,
                              iv,
@@ -256,12 +256,12 @@ soft_Seal(spawned_children* kid, string in, string* out)
     printf("soft_Seal: authenticated encrypt failed\n");
     return false;
   }
-  out->assign((char*)t_out, t_size);
+  out->assign((char *)t_out, t_size);
   return true;
 }
 
 bool
-soft_Unseal(spawned_children* kid, string in, string* out)
+soft_Unseal(spawned_children *kid, string in, string *out)
 {
 #ifdef DEBUG
   printf("soft_Unseal\n");
@@ -271,7 +271,7 @@ soft_Unseal(spawned_children* kid, string in, string* out)
   byte t_out[t_size];
 
   if (!authenticated_decrypt(app_trust_data->symmetric_key_algorithm_.c_str(),
-                             (byte*)in.data(),
+                             (byte *)in.data(),
                              in.size(),
                              app_trust_data->service_symmetric_key_,
                              t_out,
@@ -285,22 +285,22 @@ soft_Unseal(spawned_children* kid, string in, string* out)
   print_bytes(t_size, t_out);
   printf("\n");
   printf("Measurment: ");
-  print_bytes(kid->measurement_.size(), (byte*)kid->measurement_.data());
+  print_bytes(kid->measurement_.size(), (byte *)kid->measurement_.data());
   printf("\n");
 #endif
-  if (memcmp(t_out, (byte*)kid->measurement_.data(), kid->measurement_.size())
+  if (memcmp(t_out, (byte *)kid->measurement_.data(), kid->measurement_.size())
       != 0)
   {
     printf("soft_Unseal: mis-matched measurements\n");
     return false;
   }
-  out->assign((char*)&t_out[kid->measurement_.size()],
+  out->assign((char *)&t_out[kid->measurement_.size()],
               t_size - kid->measurement_.size());
   return true;
 }
 
 bool
-soft_Attest(spawned_children* kid, string in, string* out)
+soft_Attest(spawned_children *kid, string in, string *out)
 {
 #ifdef DEBUG
   printf("soft_Attest\n");
@@ -330,8 +330,8 @@ soft_Attest(spawned_children* kid, string in, string* out)
   report_info.set_not_before(nb);
   report_info.set_not_after(na);
   // in should be a serialized attestation_user_data
-  report_info.set_user_data((byte*)in.data(), in.size());
-  report_info.set_verified_measurement((byte*)kid->measurement_.data(),
+  report_info.set_user_data((byte *)in.data(), in.size());
+  report_info.set_verified_measurement((byte *)kid->measurement_.data(),
                                        kid->measurement_.size());
   if (!report_info.SerializeToString(&serialized_report_info)) {
     return false;
@@ -367,7 +367,7 @@ soft_Attest(spawned_children* kid, string in, string* out)
 }
 
 bool
-soft_GetPlatformStatement(spawned_children* kid, string* out)
+soft_GetPlatformStatement(spawned_children *kid, string *out)
 {
 #ifdef DEBUG
   printf("soft_GetPlatformStatement\n");
@@ -381,7 +381,7 @@ soft_GetPlatformStatement(spawned_children* kid, string* out)
 }
 
 bool
-soft_GetParentEvidence(spawned_children* kid, string* out)
+soft_GetParentEvidence(spawned_children *kid, string *out)
 {
 #ifdef DEBUG
   printf("soft_GetPlatformStatement\n");
@@ -396,7 +396,7 @@ soft_GetParentEvidence(spawned_children* kid, string* out)
 
 // This Getmeasurement stays
 bool
-soft_Getmeasurement(spawned_children* kid, string* out)
+soft_Getmeasurement(spawned_children *kid, string *out)
 {
 #ifdef DEBUG
   printf("soft_Getmeasurement\n");
@@ -406,7 +406,7 @@ soft_Getmeasurement(spawned_children* kid, string* out)
 }
 
 void
-app_service_loop(spawned_children* kid, int read_fd, int write_fd)
+app_service_loop(spawned_children *kid, int read_fd, int write_fd)
 {
   bool continue_loop = true;
 
@@ -469,7 +469,7 @@ app_service_loop(spawned_children* kid, int read_fd, int write_fd)
     if (!rsp.SerializeToString(&str_app_rsp)) {
       printf("Can't serialize response\n");
     }
-    if (write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size())
+    if (write(write_fd, (byte *)str_app_rsp.data(), str_app_rsp.size())
         < (int)str_app_rsp.size())
     {
       printf("Response write failed\n");
@@ -482,13 +482,13 @@ app_service_loop(spawned_children* kid, int read_fd, int write_fd)
 }
 
 bool
-start_app_service_loop(spawned_children* kid, int read_fd, int write_fd)
+start_app_service_loop(spawned_children *kid, int read_fd, int write_fd)
 {
 #ifdef DEBUG
   printf("\n[%d] %s\n", __LINE__, __func__);
 #endif
 #ifndef NOTHREAD
-  std::thread* t   = new std::thread(app_service_loop, kid, read_fd, write_fd);
+  std::thread *t   = new std::thread(app_service_loop, kid, read_fd, write_fd);
   kid->thread_obj_ = t;
   t->detach();
 #else
@@ -499,7 +499,7 @@ start_app_service_loop(spawned_children* kid, int read_fd, int write_fd)
 
 #define INMEMEXEC
 bool
-process_run_request(run_request& req)
+process_run_request(run_request &req)
 {
   // measure binary
   string m;
@@ -523,7 +523,7 @@ process_run_request(run_request& req)
   }
 
   int   fsz         = file_size(req.location());
-  byte* file_buffer = (byte*)malloc(fsz);
+  byte *file_buffer = (byte *)malloc(fsz);
 
   if (!read_file(req.location(), &fsz, file_buffer)) {
     printf("Can't read executable\n");
@@ -590,7 +590,7 @@ process_run_request(run_request& req)
     close(parent_write_fd);
 
     // Change process owner
-    struct passwd* ent = getpwnam(FLAGS_guest_login_name.c_str());
+    struct passwd *ent = getpwnam(FLAGS_guest_login_name.c_str());
     if (ent == nullptr) {
       printf("Login '%s' is not a user\n", FLAGS_guest_login_name.c_str());
 #ifdef INMEMEXEC
@@ -625,15 +625,15 @@ process_run_request(run_request& req)
     string n1       = std::to_string(child_read_fd);
     string n2       = std::to_string(child_write_fd);
     int    num_args = req.args_size();
-    char** argv     = new char*[num_args + 3];
+    char **argv     = new char *[num_args + 3];
     for (int i = 0; i < num_args; i++) {
-      argv[i] = (char*)req.args(i).c_str();
+      argv[i] = (char *)req.args(i).c_str();
     }
-    argv[num_args]     = (char*)n1.c_str();
-    argv[num_args + 1] = (char*)n2.c_str();
+    argv[num_args]     = (char *)n1.c_str();
+    argv[num_args + 1] = (char *)n2.c_str();
     argv[num_args + 2] = nullptr;
 
-    char* envp[1] = {nullptr};
+    char *envp[1] = {nullptr};
 
 #ifndef INMEMEXEC
     if (execve(req.location().c_str(), argv, envp) < 0) {
@@ -663,13 +663,13 @@ process_run_request(run_request& req)
 #endif
 
     // add it to lists
-    spawned_children* nk = new_kid();
+    spawned_children *nk = new_kid();
     if (nk == nullptr) {
       printf("Can't add kid\n");
       return false;
     }
     nk->location_ = req.location();
-    nk->measurement_.assign((char*)m.data(), m.size());
+    nk->measurement_.assign((char *)m.data(), m.size());
     ;
     nk->pid_             = pid;
     nk->parent_read_fd_  = parent_read_fd;
@@ -688,11 +688,11 @@ app_request_server()
 {
   // This is the TCP server that requests to start
   // protected programs.
-  const char*        hostname = FLAGS_server_app_host.c_str();
+  const char *       hostname = FLAGS_server_app_host.c_str();
   int                port     = FLAGS_server_app_port;
   struct sockaddr_in addr;
 
-  struct hostent* he = nullptr;
+  struct hostent *he = nullptr;
   if ((he = gethostbyname(hostname)) == NULL) {
     printf("gethostbyname failed\n");
     return false;
@@ -705,8 +705,8 @@ app_request_server()
   memset(&addr, 0, sizeof(addr));
   addr.sin_family      = AF_INET;
   addr.sin_port        = htons(port);
-  addr.sin_addr.s_addr = *(long*)(he->h_addr);
-  if (bind(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
+  addr.sin_addr.s_addr = *(long *)(he->h_addr);
+  if (bind(sd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
     printf("bind failed\n");
     return false;
   }
@@ -719,7 +719,7 @@ app_request_server()
   while (1) {
     printf("[%d] application_service server at accept\n", __LINE__);
     struct sockaddr_in addr;
-    int                client = accept(sd, (struct sockaddr*)&addr, &len);
+    int                client = accept(sd, (struct sockaddr *)&addr, &len);
 #ifdef DEBUG
     printf("\nclient: %d\n", client);
 #endif
@@ -756,7 +756,7 @@ app_request_server()
     }
     string str_resp;
     if (resp.SerializeToString(&str_resp)) {
-      if (sized_socket_write(client, str_resp.size(), (byte*)str_resp.data())
+      if (sized_socket_write(client, str_resp.size(), (byte *)str_resp.data())
           < (int)str_resp.size())
       {
         printf("Write failed\n");
@@ -775,7 +775,7 @@ string public_key_alg("rsa-2048");
 string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   string usage("Application Service utility");
   gflags::SetUsageMessage(usage);

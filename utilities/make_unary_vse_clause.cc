@@ -34,7 +34,7 @@ DEFINE_string(verb, "verb", "verb to use");
 DEFINE_string(cert_subject, "", "cert file");
 
 bool
-get_clause_from_file(const string& in, vse_clause* cl)
+get_clause_from_file(const string &in, vse_clause *cl)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -45,7 +45,7 @@ get_clause_from_file(const string& in, vse_clause* cl)
     return false;
   }
   string cl_str;
-  cl_str.assign((char*)serialized_cl, in_size);
+  cl_str.assign((char *)serialized_cl, in_size);
   if (!cl->ParseFromString(cl_str)) {
     printf("Can't parse clause\n");
     return false;
@@ -54,9 +54,9 @@ get_clause_from_file(const string& in, vse_clause* cl)
 }
 
 int
-make_unary_clause_file_utility(entity_message& subject,
-                               const string&   verb,
-                               const string&   output)
+make_unary_clause_file_utility(entity_message &subject,
+                               const string &  verb,
+                               const string &  output)
 {
   vse_clause out_cl;
   string     v = verb;
@@ -71,7 +71,7 @@ make_unary_clause_file_utility(entity_message& subject,
     return 1;
   }
 
-  if (!write_file(output, out_string.size(), (byte*)out_string.data())) {
+  if (!write_file(output, out_string.size(), (byte *)out_string.data())) {
     printf("Can't write %s\n", output.c_str());
     return 1;
   }
@@ -88,7 +88,7 @@ make_unary_clause_file_utility(entity_message& subject,
 }
 
 bool
-get_key_from_cert_file(const string& in, key_message* k)
+get_key_from_cert_file(const string &in, key_message *k)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -99,7 +99,7 @@ get_key_from_cert_file(const string& in, key_message* k)
     return false;
   }
   string cert;
-  cert.assign((char*)asn_cert, in_size);
+  cert.assign((char *)asn_cert, in_size);
   if (!PublicKeyFromCert(cert, k)) {
     printf("Can't get key from cert\n");
     return false;
@@ -108,7 +108,7 @@ get_key_from_cert_file(const string& in, key_message* k)
 }
 
 bool
-get_key_from_file(const string& in, key_message* k)
+get_key_from_file(const string &in, key_message *k)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -120,7 +120,7 @@ get_key_from_file(const string& in, key_message* k)
   }
   key_message kt;
   string      k_str;
-  k_str.assign((char*)serialized_key, in_size);
+  k_str.assign((char *)serialized_key, in_size);
   if (!kt.ParseFromString(k_str)) {
     printf("Can't parse key\n");
     return false;
@@ -129,7 +129,7 @@ get_key_from_file(const string& in, key_message* k)
 }
 
 bool
-get_measurement_entity_from_file(const string& in, entity_message* em)
+get_measurement_entity_from_file(const string &in, entity_message *em)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -140,7 +140,7 @@ get_measurement_entity_from_file(const string& in, entity_message* em)
     return false;
   }
   string m_str;
-  m_str.assign((char*)m, in_size);
+  m_str.assign((char *)m, in_size);
   if (!make_measurement_entity(m_str, em)) {
     printf("Can't make measurement entity\n");
     return false;
@@ -149,7 +149,7 @@ get_measurement_entity_from_file(const string& in, entity_message* em)
 }
 
 bool
-get_platform_entity_from_file(const string& in, entity_message* em)
+get_platform_entity_from_file(const string &in, entity_message *em)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -160,7 +160,7 @@ get_platform_entity_from_file(const string& in, entity_message* em)
     return false;
   }
   string pfp_str;
-  pfp_str.assign((char*)pfp, in_size);
+  pfp_str.assign((char *)pfp, in_size);
   platform pl;
   if (!pl.ParseFromString(pfp_str)) {
     printf("Can't parse platform\n");
@@ -174,7 +174,7 @@ get_platform_entity_from_file(const string& in, entity_message* em)
 }
 
 bool
-get_environment_entity_from_file(const string& in, entity_message* em)
+get_environment_entity_from_file(const string &in, entity_message *em)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -185,7 +185,7 @@ get_environment_entity_from_file(const string& in, entity_message* em)
     return false;
   }
   string env_str;
-  env_str.assign((char*)env, in_size);
+  env_str.assign((char *)env, in_size);
   environment en;
   if (!en.ParseFromString(env_str)) {
     printf("Can't parse environment\n");
@@ -199,7 +199,7 @@ get_environment_entity_from_file(const string& in, entity_message* em)
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

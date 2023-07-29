@@ -52,26 +52,26 @@ DEFINE_string(auth_key_file, "auth_key_file.bin", "auth key file");
 #define DEBUG
 
 void
-server_application(secure_authenticated_channel& channel)
+server_application(secure_authenticated_channel &channel)
 {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
   string out;
   int    n = channel.read(&out);
-  printf("SSL server read: %s\n", (const char*)out.data());
+  printf("SSL server read: %s\n", (const char *)out.data());
 
   // Reply over authenticated, encrypted channel
-  const char* msg = "Hi from your secret server\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret server\n";
+  channel.write(strlen(msg), (byte *)msg);
 }
 
 bool
-run_me_as_server(const string& host_name,
+run_me_as_server(const string &host_name,
                  int           port,
-                 string&       asn1_policy_cert,
-                 key_message&  private_key,
-                 string&       private_key_cert)
+                 string &      asn1_policy_cert,
+                 key_message & private_key,
+                 string &      private_key_cert)
 {
   printf("running as server\n");
   server_dispatch(host_name,
@@ -84,13 +84,13 @@ run_me_as_server(const string& host_name,
 }
 
 void
-client_application(secure_authenticated_channel& channel)
+client_application(secure_authenticated_channel &channel)
 {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
   // client sends a message over authenticated, encrypted channel
-  const char* msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
 
   // Get server response over authenticated, encrypted channel and print it
   string out;
@@ -99,11 +99,11 @@ client_application(secure_authenticated_channel& channel)
 }
 
 bool
-run_me_as_client(const string& host_name,
+run_me_as_client(const string &host_name,
                  int           port,
-                 string&       asn1_policy_cert,
-                 key_message&  private_key,
-                 string&       private_key_cert)
+                 string &      asn1_policy_cert,
+                 key_message & private_key,
+                 string &      private_key_cert)
 {
   printf("running as client\n");
   string                       my_role("client");
@@ -124,17 +124,17 @@ run_me_as_client(const string& host_name,
 }
 
 bool
-make_admissions_cert(const string& role,
-                     key_message&  policy_key,
-                     key_message&  auth_key,
-                     string*       out)
+make_admissions_cert(const string &role,
+                     key_message & policy_key,
+                     key_message & auth_key,
+                     string *      out)
 {
   string issuer_name("policyAuthority");
   string issuer_organization("root");
   string subject_name(role);
   string subject_organization("1234567890");
 
-  X509* x509_cert = X509_new();
+  X509 *x509_cert = X509_new();
   if (!produce_artifact(policy_key,
                         issuer_name,
                         issuer_organization,
@@ -157,7 +157,7 @@ make_admissions_cert(const string& role,
 // ------------------------------------------------------------------------------------------
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -177,7 +177,7 @@ main(int an, char** av)
   // read in policy key and my key
   key_message policy_key;
   key_message auth_key;
-  X509*       policy_cert = nullptr;
+  X509 *      policy_cert = nullptr;
 
   string policy_cert_file(FLAGS_data_dir);
   policy_cert_file.append(FLAGS_policy_cert_file);
@@ -192,7 +192,7 @@ main(int an, char** av)
     return 1;
   }
   string str_policy_cert;
-  str_policy_cert.assign((char*)policy_cert_buf, sz);
+  str_policy_cert.assign((char *)policy_cert_buf, sz);
 
   // policy_key_file
   string policy_key_file(FLAGS_data_dir);
@@ -208,7 +208,7 @@ main(int an, char** av)
     return 1;
   }
   string str_policy_key;
-  str_policy_key.assign((char*)policy_key_buf, sz);
+  str_policy_key.assign((char *)policy_key_buf, sz);
 
   // auth_key_file
   string auth_key_file(FLAGS_data_dir);
@@ -224,7 +224,7 @@ main(int an, char** av)
     return 1;
   }
   string str_auth_key;
-  str_auth_key.assign((char*)auth_key_buf, sz);
+  str_auth_key.assign((char *)auth_key_buf, sz);
 
   policy_cert = X509_new();
   if (!asn1_to_x509(str_policy_cert, policy_cert)) {
@@ -235,7 +235,7 @@ main(int an, char** av)
     printf("Can't parse policy key\n");
     return 1;
   }
-  policy_key.set_certificate((byte*)str_policy_cert.data(),
+  policy_key.set_certificate((byte *)str_policy_cert.data(),
                              str_policy_cert.size());
   if (!auth_key.ParseFromString(str_auth_key)) {
     printf("Can't parse auth key\n");
@@ -252,7 +252,7 @@ main(int an, char** av)
   auth_key.set_certificate(auth_cert);
 
 #ifdef DEBUG
-  X509* x509_auth_cert = X509_new();
+  X509 *x509_auth_cert = X509_new();
   asn1_to_x509(auth_cert, x509_auth_cert);
   printf("\npolicy cert:\n");
   X509_print_fp(stdout, policy_cert);

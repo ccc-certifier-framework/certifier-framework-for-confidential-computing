@@ -18,10 +18,10 @@ static string measurement_file("/tmp/binary_trusted_measurements_file.bin");
 #define FLAGS_read_measurement_file     true
 static bool simulator_initialized = false;
 bool
-test_local_certify(string& enclave_type,
+test_local_certify(string &enclave_type,
                    bool    init_from_file,
-                   string& file_name,
-                   string& evidence_descriptor);
+                   string &file_name,
+                   string &evidence_descriptor);
 
 extern "C" {
 bool

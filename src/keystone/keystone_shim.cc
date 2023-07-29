@@ -24,7 +24,7 @@ using std::string;
 using namespace certifier::utilities;
 
 bool
-keystone_getSealingKey(byte* key)
+keystone_getSealingKey(byte *key)
 {
   for (int i = 0; i < 64; i++)
     key[i] = i ^ 0x33;
@@ -40,14 +40,14 @@ byte      g_measurement[g_m_size];
 string g_measurement_file_name("./provisioning/example_app.measurement");
 
 bool
-keystone_get_fake_measurement(int* size, byte* measurement)
+keystone_get_fake_measurement(int *size, byte *measurement)
 {
   if (!g_m_initialized) {
     int    n = file_size(g_measurement_file_name);
     string str_measurement;
     if (n > 0
         && read_file_into_string(g_measurement_file_name, &str_measurement)) {
-      byte* p = (byte*)str_measurement.data();
+      byte *p = (byte *)str_measurement.data();
       for (int i = 0; i < g_m_size; i++)
         g_measurement[i] = p[i];
     } else {
@@ -65,12 +65,12 @@ keystone_get_fake_measurement(int* size, byte* measurement)
 }
 
 bool
-keystone_ecc_sign(const char* alg,
-                  EC_KEY*     key,
+keystone_ecc_sign(const char *alg,
+                  EC_KEY *    key,
                   int         size,
-                  byte*       msg,
-                  int*        size_out,
-                  byte*       out)
+                  byte *      msg,
+                  int *       size_out,
+                  byte *      out)
 {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte         digest[len];
@@ -102,12 +102,12 @@ keystone_ecc_sign(const char* alg,
 }
 
 bool
-keystone_ecc_verify(const char* alg,
-                    EC_KEY*     key,
+keystone_ecc_verify(const char *alg,
+                    EC_KEY *    key,
                     int         size,
-                    byte*       msg,
+                    byte *      msg,
                     int         size_sig,
-                    byte*       sig)
+                    byte *      sig)
 {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte         digest[len];
@@ -134,13 +134,13 @@ keystone_ecc_verify(const char* alg,
 
 string      key_file("emulated_keystone_key.bin");
 string      cert_file("emulated_keystone_key_cert.bin");
-EC_KEY*     fake_attest_private_key = nullptr;
-EC_KEY*     fake_attest_public_key  = nullptr;
+EC_KEY *    fake_attest_private_key = nullptr;
+EC_KEY *    fake_attest_public_key  = nullptr;
 key_message attest_private_key;
 key_message attest_public_key;
 
 bool
-keystone_Init(const int cert_size, byte* cert)
+keystone_Init(const int cert_size, byte *cert)
 {
   // later, we should read in the key and cert chain
   int size_key  = file_size(key_file);
@@ -172,14 +172,14 @@ keystone_Init(const int cert_size, byte* cert)
     if (!attest_private_key.SerializeToString(&key_str)) {
       return false;
     }
-    if (!write_file(key_file, key_str.size(), (byte*)key_str.data())) {
+    if (!write_file(key_file, key_str.size(), (byte *)key_str.data())) {
       return false;
     }
 
     // generate self signed cert
     string name("KeystoneAuthority");
     string desc("Authority");
-    X509*  crt = X509_new();
+    X509 * crt = X509_new();
     if (!produce_artifact(attest_private_key,
                           name,
                           desc,
@@ -202,7 +202,7 @@ keystone_Init(const int cert_size, byte* cert)
       return false;
     }
     X509_free(crt);
-    if (!write_file(cert_file, cert_str.size(), (byte*)cert_str.data())) {
+    if (!write_file(cert_file, cert_str.size(), (byte *)cert_str.data())) {
       printf("keystone_Init: Cant save cert\n");
       return false;
     }
@@ -241,19 +241,19 @@ keystone_Init(const int cert_size, byte* cert)
 
 bool
 keystone_Verify(const int what_to_say_size,
-                byte*     what_to_say,
+                byte *    what_to_say,
                 const int attestation_size,
-                byte*     attestation,
-                int*      measurement_out_size,
-                byte*     measurement_out)
+                byte *    attestation,
+                int *     measurement_out_size,
+                byte *    measurement_out)
 {
   assert(attestation_size == sizeof(struct report_t));
-  struct report_t& report = *reinterpret_cast<struct report_t*>(attestation);
+  struct report_t &report = *reinterpret_cast<struct report_t *>(attestation);
 
 #if 1
   printf("verifying: ");
   print_bytes(MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
-              (byte*)report.enclave.hash);
+              (byte *)report.enclave.hash);
   printf("\n");
   printf("signature: ");
   print_bytes(report.enclave.size_sig, report.enclave.signature);
@@ -282,7 +282,7 @@ keystone_Verify(const int what_to_say_size,
   if (!keystone_ecc_verify("sha-256",
                            fake_attest_public_key,
                            MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
-                           (byte*)report.enclave.hash,
+                           (byte *)report.enclave.hash,
                            report.enclave.size_sig,
                            report.enclave.signature))
   {
@@ -298,17 +298,17 @@ keystone_Verify(const int what_to_say_size,
 
 bool
 keystone_Attest(const int what_to_say_size,
-                byte*     what_to_say,
-                int*      attestation_size_out,
-                byte*     attestation_out)
+                byte *    what_to_say,
+                int *     attestation_size_out,
+                byte *    attestation_out)
 {
   int sz = (int)(sizeof(struct enclave_report_t) + sizeof(struct sm_report_t)
                  + PUBLIC_KEY_SIZE);
   *attestation_size_out = sz;
 
   memset(attestation_out, 0, sizeof(report_t));
-  struct report_t& report =
-      *reinterpret_cast<struct report_t*>(attestation_out);
+  struct report_t &report =
+      *reinterpret_cast<struct report_t *>(attestation_out);
 
   // report.enclave.data gets the hash of what_to_say
   int len = digest_output_byte_size("sha-256");
@@ -342,7 +342,7 @@ keystone_Attest(const int what_to_say_size,
   if (!keystone_ecc_sign("sha-256",
                          fake_attest_private_key,
                          MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
-                         (byte*)report.enclave.hash,
+                         (byte *)report.enclave.hash,
                          &size_out,
                          report.enclave.signature))
   {
@@ -354,7 +354,7 @@ keystone_Attest(const int what_to_say_size,
 #if 1
   printf("signing: ");
   print_bytes(MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
-              (byte*)report.enclave.hash);
+              (byte *)report.enclave.hash);
   printf("\n");
   printf("signature: ");
   print_bytes(report.enclave.size_sig, report.enclave.signature);
@@ -377,7 +377,7 @@ keystone_Attest(const int what_to_say_size,
 }
 
 bool
-keystone_Seal(int in_size, byte* in, int* size_out, byte* out)
+keystone_Seal(int in_size, byte *in, int *size_out, byte *out)
 {
   byte iv[16];
   byte key[64];
@@ -404,7 +404,7 @@ keystone_Seal(int in_size, byte* in, int* size_out, byte* out)
 }
 
 bool
-keystone_Unseal(int in_size, byte* in, int* size_out, byte* out)
+keystone_Unseal(int in_size, byte *in, int *size_out, byte *out)
 {
   byte iv[16];
   byte key[64];

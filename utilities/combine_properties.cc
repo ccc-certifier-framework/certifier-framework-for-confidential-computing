@@ -26,8 +26,8 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(in, "", "input files");
 DEFINE_string(output, "", "output file");
 
-const char*
-next_comma(const char* p)
+const char *
+next_comma(const char *p)
 {
   if (p == nullptr)
     return nullptr;
@@ -37,10 +37,10 @@ next_comma(const char* p)
 }
 
 bool
-get_input_file_names(const string& name, int* num, string* names)
+get_input_file_names(const string &name, int *num, string *names)
 {
-  const char* start = name.c_str();
-  const char* end   = nullptr;
+  const char *start = name.c_str();
+  const char *end   = nullptr;
   int         count = 0;
 
   while ((end = next_comma(start)) != nullptr) {
@@ -60,7 +60,7 @@ get_input_file_names(const string& name, int* num, string* names)
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   string usage("Combine properties from multiple files into one output file");
   gflags::SetUsageMessage(usage);
@@ -82,7 +82,7 @@ main(int an, char** av)
 
   properties my_props;
   for (int i = 0; i < num; i++) {
-    property* np = my_props.add_props();
+    property *np = my_props.add_props();
     string    p_str;
     if (!read_file_into_string(names[i], &p_str)) {
       printf("Can't read property file %s\n", names[i].c_str());
@@ -100,7 +100,7 @@ main(int an, char** av)
     return 1;
   }
 
-  if (!write_file(FLAGS_output, set_props.size(), (byte*)set_props.data())) {
+  if (!write_file(FLAGS_output, set_props.size(), (byte *)set_props.data())) {
     printf("Can't write output file\n");
     return 1;
   }

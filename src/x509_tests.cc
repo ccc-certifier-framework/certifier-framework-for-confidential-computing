@@ -77,7 +77,7 @@ test_x_509_chain(bool print_all)
   string vcek_str("vcek-key");
   string vcek_desc_str("AMD-vcek-key");
 
-  X509* cert1 = X509_new();
+  X509 *cert1 = X509_new();
   if (!produce_artifact(k1,
                         ark_str,
                         ark_desc_str,
@@ -97,7 +97,7 @@ test_x_509_chain(bool print_all)
     printf("\n");
   }
 
-  X509* cert2 = X509_new();
+  X509 *cert2 = X509_new();
   if (!produce_artifact(k1,
                         ark_str,
                         ark_desc_str,
@@ -117,7 +117,7 @@ test_x_509_chain(bool print_all)
     printf("\n");
   }
 
-  X509* cert3 = X509_new();
+  X509 *cert3 = X509_new();
   if (!produce_artifact(k2,
                         ask_str,
                         ask_desc_str,
@@ -138,7 +138,7 @@ test_x_509_chain(bool print_all)
   }
 
   // pub key from first cert
-  key_message* pub_subject_key1 = new key_message;
+  key_message *pub_subject_key1 = new key_message;
   if (!x509_to_public_key(cert1, pub_subject_key1)) {
     printf("Can't get public key from cert 1\n");
     return false;
@@ -149,7 +149,7 @@ test_x_509_chain(bool print_all)
   if (!list.add_key_seen(pub_subject_key1)) {
     return false;
   }
-  const key_message* issuer1_key = get_issuer_key(cert1, list);
+  const key_message *issuer1_key = get_issuer_key(cert1, list);
   if (issuer1_key == nullptr) {
     printf("Can't get issuer_key 1\n");
     return false;
@@ -157,7 +157,7 @@ test_x_509_chain(bool print_all)
   if (print_all) {
     printf("Cert 1 issuer name: %s\n", issuer1_key->key_name().c_str());
   }
-  EVP_PKEY* signing_pkey1 = pkey_from_key(*issuer1_key);
+  EVP_PKEY *signing_pkey1 = pkey_from_key(*issuer1_key);
   if (signing_pkey1 == nullptr) {
     printf("\nsigning_pkey1 is NULL\n");
     return false;
@@ -184,7 +184,7 @@ test_x_509_chain(bool print_all)
   }
 
   // pub key from second cert
-  key_message* pub_subject_key2 = new key_message;
+  key_message *pub_subject_key2 = new key_message;
   if (!x509_to_public_key(cert2, pub_subject_key2)) {
     printf("Can't get public key from cert 2\n");
     return false;
@@ -194,7 +194,7 @@ test_x_509_chain(bool print_all)
   if (!list.add_key_seen(pub_subject_key2)) {
     return false;
   }
-  const key_message* issuer2_key = get_issuer_key(cert2, list);
+  const key_message *issuer2_key = get_issuer_key(cert2, list);
   if (issuer2_key == nullptr) {
     printf("Can't get issuer_key 2\n");
     return false;
@@ -202,14 +202,14 @@ test_x_509_chain(bool print_all)
   if (print_all) {
     printf("Cert 2 issuer name: %s\n", issuer2_key->key_name().c_str());
   }
-  EVP_PKEY* signing_pkey2 = pkey_from_key(*issuer2_key);
+  EVP_PKEY *signing_pkey2 = pkey_from_key(*issuer2_key);
   if (signing_pkey2 == nullptr) {
     printf("\nsigning_pkey2 is NULL\n");
     return false;
   }
 
   // pub key from third cert
-  key_message* pub_subject_key3 = new key_message;
+  key_message *pub_subject_key3 = new key_message;
   if (!x509_to_public_key(cert3, pub_subject_key3)) {
     printf("Can't get public key from cert 3\n");
     return false;
@@ -219,7 +219,7 @@ test_x_509_chain(bool print_all)
   if (!list.add_key_seen(pub_subject_key3)) {
     return false;
   }
-  const key_message* issuer3_key = get_issuer_key(cert3, list);
+  const key_message *issuer3_key = get_issuer_key(cert3, list);
   if (issuer3_key == nullptr) {
     printf("Can't get issuer_key 3\n");
     return false;
@@ -233,7 +233,7 @@ test_x_509_chain(bool print_all)
     printf("\n");
   }
 
-  EVP_PKEY* signing_pkey3 = pkey_from_key(*issuer3_key);
+  EVP_PKEY *signing_pkey3 = pkey_from_key(*issuer3_key);
   if (signing_pkey3 == nullptr) {
     printf("signing_pkey3 is NULL\n");
     return false;
@@ -284,7 +284,7 @@ test_x_509_sign(bool print_all)
     return false;
   }
 
-  X509* cert1 = X509_new();
+  X509 *cert1 = X509_new();
   if (!produce_artifact(k1,
                         issuer_common_name,
                         issuer_desc,
@@ -304,7 +304,7 @@ test_x_509_sign(bool print_all)
     printf("\n");
   }
 
-  EVP_PKEY* pkey    = pkey_from_key(pub_k1);
+  EVP_PKEY *pkey    = pkey_from_key(pub_k1);
   int       ret     = X509_verify(cert1, pkey);
   bool      success = (ret == 1);
   if (print_all) {
@@ -335,12 +335,12 @@ test_sev_certs(bool print_all)
     return false;
   }
 
-  X509* cert1 = X509_new();
+  X509 *cert1 = X509_new();
   if (!asn1_to_x509(ark_der_str, cert1)) {
     return false;
   }
 
-  EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
+  EVP_PKEY *ark_pkey = X509_get_pubkey(cert1);
   int       ret      = X509_verify(cert1, ark_pkey);
   bool      success  = (ret == 1);
   if (print_all) {
@@ -353,7 +353,7 @@ test_sev_certs(bool print_all)
   if (!success)
     return false;
 
-  X509* cert2 = X509_new();
+  X509 *cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
     return false;
   }
@@ -423,7 +423,7 @@ test_real_sev_certs(bool print_all)
     return false;
   }
 
-  X509* cert1 = X509_new();
+  X509 *cert1 = X509_new();
   if (!asn1_to_x509(ark_der_str, cert1)) {
     return false;
   }
@@ -433,7 +433,7 @@ test_real_sev_certs(bool print_all)
     printf("\n");
   }
 
-  EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
+  EVP_PKEY *ark_pkey = X509_get_pubkey(cert1);
   int       ret      = X509_verify(cert1, ark_pkey);
   bool      success  = (ret == 1);
   if (print_all) {
@@ -446,7 +446,7 @@ test_real_sev_certs(bool print_all)
   if (!success)
     return false;
 
-  X509* cert2 = X509_new();
+  X509 *cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
     return false;
   }
@@ -456,7 +456,7 @@ test_real_sev_certs(bool print_all)
     printf("\n");
   }
 
-  EVP_PKEY* ask_pkey = X509_get_pubkey(cert2);
+  EVP_PKEY *ask_pkey = X509_get_pubkey(cert2);
   ret                = X509_verify(cert2, ark_pkey);
   success            = (ret == 1);
   if (print_all) {
@@ -469,7 +469,7 @@ test_real_sev_certs(bool print_all)
   if (!success)
     return false;
 
-  X509* cert3 = X509_new();
+  X509 *cert3 = X509_new();
   if (!asn1_to_x509(vcek_der_str, cert3)) {
     return false;
   }
@@ -555,12 +555,12 @@ test_sev_request(bool print_all)
     return false;
   }
 
-  X509* cert1 = X509_new();
+  X509 *cert1 = X509_new();
   if (!asn1_to_x509(ark_der_str, cert1)) {
     return false;
   }
 
-  EVP_PKEY* ark_pkey = X509_get_pubkey(cert1);
+  EVP_PKEY *ark_pkey = X509_get_pubkey(cert1);
   int       ret      = X509_verify(cert1, ark_pkey);
   bool      success  = (ret == 1);
   if (print_all) {
@@ -573,12 +573,12 @@ test_sev_request(bool print_all)
   if (!success)
     return false;
 
-  X509* cert2 = X509_new();
+  X509 *cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
     return false;
   }
 
-  EVP_PKEY* ask_pkey = X509_get_pubkey(cert2);
+  EVP_PKEY *ask_pkey = X509_get_pubkey(cert2);
   ret                = X509_verify(cert2, ark_pkey);
   success            = (ret == 1);
   if (print_all) {
@@ -591,7 +591,7 @@ test_sev_request(bool print_all)
   if (!success)
     return false;
 
-  X509* cert3 = X509_new();
+  X509 *cert3 = X509_new();
   if (!asn1_to_x509(vcek_der_str, cert3)) {
     return false;
   }
@@ -687,7 +687,7 @@ test_sev_request(bool print_all)
 
   evp.set_prover_type("vse-verifier");
 
-  evidence* ev = evp.add_fact_assertion();
+  evidence *ev = evp.add_fact_assertion();
   ev->set_evidence_type("cert");
   ev->set_serialized_evidence(ark_der_str);
   ev = evp.add_fact_assertion();
@@ -710,7 +710,7 @@ test_sev_request(bool print_all)
   byte out[size_out];
   if (!Attest(enclave_type,
               serialized_ud.size(),
-              (byte*)serialized_ud.data(),
+              (byte *)serialized_ud.data(),
               &size_out,
               out))
   {
@@ -718,7 +718,7 @@ test_sev_request(bool print_all)
     return false;
   }
   string at_str;
-  at_str.assign((char*)out, size_out);
+  at_str.assign((char *)out, size_out);
   ev = evp.add_fact_assertion();
   ev->set_evidence_type("sev-attestation");
   ev->set_serialized_evidence(at_str);
@@ -727,7 +727,7 @@ test_sev_request(bool print_all)
   for (int i = 0; i < 48; i++)
     m[i] = (i % 8) + 1;
   string measurement_str;
-  measurement_str.assign((char*)m, 48);
+  measurement_str.assign((char *)m, 48);
 
   // init trusted_measurements
   //	policyKey says measurement is-trusted
@@ -793,7 +793,7 @@ test_sev_request(bool print_all)
   string        descriptor;
   claim_message cm1;
   if (!make_claim(tm1_ser_vse.size(),
-                  (byte*)tm1_ser_vse.data(),
+                  (byte *)tm1_ser_vse.data(),
                   format,
                   descriptor,
                   s_nb,
@@ -804,7 +804,7 @@ test_sev_request(bool print_all)
     return false;
   }
 
-  signed_claim_message* scm1 = trusted_measurements.add_claims();
+  signed_claim_message *scm1 = trusted_measurements.add_claims();
   if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
                          cm1,
                          policy_private_key,
@@ -840,7 +840,7 @@ test_sev_request(bool print_all)
   }
   claim_message cm2;
   if (!make_claim(tm2_ser_vse.size(),
-                  (byte*)tm2_ser_vse.data(),
+                  (byte *)tm2_ser_vse.data(),
                   format,
                   descriptor,
                   s_nb,
@@ -851,7 +851,7 @@ test_sev_request(bool print_all)
     return false;
   }
 
-  signed_claim_message* scm2 = trusted_platforms.add_claims();
+  signed_claim_message *scm2 = trusted_platforms.add_claims();
   if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
                          cm2,
                          policy_private_key,

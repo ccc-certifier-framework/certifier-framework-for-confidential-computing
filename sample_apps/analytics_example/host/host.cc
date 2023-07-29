@@ -12,12 +12,12 @@
 #include "attestation_u.h"
 
 bool
-check_simulate_opt(int* argc, const char* argv[])
+check_simulate_opt(int *argc, const char *argv[])
 {
   for (int i = 0; i < *argc; i++) {
     if (strcmp(argv[i], "--simulate") == 0) {
       fprintf(stdout, "Running in simulation mode\n");
-      memmove(&argv[i], &argv[i + 1], (*argc - i) * sizeof(char*));
+      memmove(&argv[i], &argv[i + 1], (*argc - i) * sizeof(char *));
       (*argc)--;
       return true;
     }
@@ -26,10 +26,10 @@ check_simulate_opt(int* argc, const char* argv[])
 }
 
 int
-main(int argc, const char* argv[])
+main(int argc, const char *argv[])
 {
   oe_result_t   result;
-  oe_enclave_t* enclave = NULL;
+  oe_enclave_t *enclave = NULL;
   std::string   data_dir;
 
   uint32_t flags = OE_ENCLAVE_FLAG_DEBUG;

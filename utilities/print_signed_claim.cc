@@ -26,7 +26,7 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(input, "", "input file");
 
 bool
-get_signed_from_file(const string& in, signed_claim_message* sc)
+get_signed_from_file(const string &in, signed_claim_message *sc)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -37,7 +37,7 @@ get_signed_from_file(const string& in, signed_claim_message* sc)
     return false;
   }
   string cm_str;
-  cm_str.assign((char*)serialized_cm, in_size);
+  cm_str.assign((char *)serialized_cm, in_size);
   if (!sc->ParseFromString(cm_str)) {
     printf("Can't parse signed claim\n");
     return false;
@@ -46,7 +46,7 @@ get_signed_from_file(const string& in, signed_claim_message* sc)
 }
 
 int
-main(int an, char** av)
+main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

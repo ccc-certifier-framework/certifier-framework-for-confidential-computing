@@ -37,7 +37,7 @@ typedef enum _sgx_ql_qv_result_t {
   SGX_QL_QV_RESULT_CONFIG_AND_SW_HARDENING_NEEDED = SGX_QL_QV_MK_ERROR(0x0008),
 } sgx_ql_qv_result_t;
 
-static const char*
+static const char *
 sgx_ql_qv_result_to_str(sgx_ql_qv_result_t verification_result)
 {
   switch (verification_result) {
@@ -63,15 +63,15 @@ sgx_ql_qv_result_to_str(sgx_ql_qv_result_t verification_result)
   return "<unrecognized error>";
 }
 
-int (*sgx_qv_get_quote_supplemental_data_size)(uint32_t* p_data_size);
-int (*sgx_qv_verify_quote)(const uint8_t*      p_quote,
+int (*sgx_qv_get_quote_supplemental_data_size)(uint32_t *p_data_size);
+int (*sgx_qv_verify_quote)(const uint8_t *     p_quote,
                            uint32_t            quote_size,
-                           void*               p_quote_collateral,
+                           void *              p_quote_collateral,
                            const time_t        expiration_check_date,
-                           uint32_t*           p_collateral_expiration_status,
-                           sgx_ql_qv_result_t* p_quote_verification_result,
-                           void*               p_qve_report_info,
+                           uint32_t *          p_collateral_expiration_status,
+                           sgx_ql_qv_result_t *p_quote_verification_result,
+                           void *              p_qve_report_info,
                            uint32_t            supplemental_data_size,
-                           uint8_t*            p_supplemental_data);
+                           uint8_t *           p_supplemental_data);
 
 #endif  // #ifdef _GRAMINE_VERIFY_DCAP_H_

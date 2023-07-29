@@ -15,7 +15,7 @@ string pem_cert_chain;
 bool   pem_cert_chain_initialized = false;
 
 bool
-oe_Init(const string& pem_cert_chain_file)
+oe_Init(const string &pem_cert_chain_file)
 {
   extern bool   certifier_parent_enclave_type_intitalized;
   extern string certifier_parent_enclave_type;

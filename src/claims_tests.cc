@@ -71,7 +71,7 @@ test_claims_1(bool print_all)
   string nb("2021-08-01T05:09:50.000000Z");
   string na("2026-08-01T05:09:50.000000Z");
   if (!make_claim(serialized_claim.size(),
-                  (byte*)serialized_claim.data(),
+                  (byte *)serialized_claim.data(),
                   f1,
                   d1,
                   nb,
@@ -89,9 +89,9 @@ test_claims_1(bool print_all)
   if (print_all) {
     printf("Num claims: %d\n", seq.claims_size());
   }
-  claim_message* cm = seq.mutable_claims(0);
+  claim_message *cm = seq.mutable_claims(0);
   cm->CopyFrom(full_claim);
-  const claim_message& dm = seq.claims(0);
+  const claim_message &dm = seq.claims(0);
   if (print_all) {
     printf("\nsequence:\n");
     print_claim(dm);
@@ -107,7 +107,7 @@ test_signed_claims(bool print_all)
   byte   m[32];
   for (int i = 0; i < 32; i++)
     m[i] = i;
-  my_measurement.assign((char*)m, 32);
+  my_measurement.assign((char *)m, 32);
 
   key_message my_rsa_key;
   if (!make_certifier_rsa_key(2048, &my_rsa_key)) {
@@ -160,7 +160,7 @@ test_signed_claims(bool print_all)
   time_to_string(t_na, &na);
   string n1("description");
   if (!make_claim(serialized_vse1.size(),
-                  (byte*)serialized_vse1.data(),
+                  (byte *)serialized_vse1.data(),
                   vse_clause_format,
                   n1,
                   nb,
@@ -233,7 +233,7 @@ test_signed_claims(bool print_all)
   string               serialized_vse12;
   clause14.SerializeToString(&serialized_vse12);
   if (!make_claim(serialized_vse12.size(),
-                  (byte*)serialized_vse12.data(),
+                  (byte *)serialized_vse12.data(),
                   vse_clause_format,
                   n1,
                   nb,
@@ -303,7 +303,7 @@ test_signed_claims(bool print_all)
   string               serialized_vse2;
   clause4.SerializeToString(&serialized_vse2);
   if (!make_claim(serialized_vse2.size(),
-                  (byte*)serialized_vse2.data(),
+                  (byte *)serialized_vse2.data(),
                   vse_clause_format,
                   n1,
                   nb,
@@ -368,7 +368,7 @@ test_signed_claims(bool print_all)
   string        serialized_vse3;
   clause6.SerializeToString(&serialized_vse3);
   if (!make_claim(serialized_vse3.size(),
-                  (byte*)serialized_vse3.data(),
+                  (byte *)serialized_vse3.data(),
                   vse_clause_format,
                   n1,
                   nb,
@@ -423,13 +423,13 @@ test_full_certification(bool print_all)
 // authentication-key is-trusted-for-authentication
 
 const int   num_is_trusted_kids = 2;
-const char* kids[2]             = {
+const char *kids[2]             = {
     "is-trusted-for-attestation",
     "is-trusted-for-authentication",
 };
 
 bool
-init_top_level_is_trusted(predicate_dominance& root)
+init_top_level_is_trusted(predicate_dominance &root)
 {
   root.predicate_.assign("is-trusted");
 

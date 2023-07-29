@@ -29,16 +29,16 @@ static const char CLAIM_TITLE_USER_DATA[] = "User data";
 static const char CLAIM_TITLE_RIM[]       = "Realm initial measurement";
 
 bool
-islet_Init(const int cert_size, byte* cert)
+islet_Init(const int cert_size, byte *cert)
 {
   return true;
 }
 
 bool
 islet_Attest(const int what_to_say_size,
-             byte*     what_to_say,
-             int*      attestation_size_out,
-             byte*     attestation_out)
+             byte *    what_to_say,
+             int *     attestation_size_out,
+             byte *    attestation_out)
 {
   int  len = digest_output_byte_size("sha-256");
   byte islet_what_to_say[len];
@@ -70,11 +70,11 @@ static void print_buf(int sz, byte* buf) {
 
 bool
 islet_Verify(const int what_to_say_size,
-             byte*     what_to_say,
+             byte *    what_to_say,
              const int attestation_size,
-             byte*     attestation,
-             int*      measurement_out_size,
-             byte*     measurement_out)
+             byte *    attestation,
+             int *     measurement_out_size,
+             byte *    measurement_out)
 {
   byte claims[BUFFER_SIZE];
 
@@ -121,14 +121,14 @@ islet_Verify(const int what_to_say_size,
 }
 
 bool
-islet_Seal(int in_size, byte* in, int* size_out, byte* out)
+islet_Seal(int in_size, byte *in, int *size_out, byte *out)
 {
   islet_status_t rv = islet_seal(in, in_size, out, size_out);
   return rv == ISLET_SUCCESS;
 }
 
 bool
-islet_Unseal(int in_size, byte* in, int* size_out, byte* out)
+islet_Unseal(int in_size, byte *in, int *size_out, byte *out)
 {
   islet_status_t rv = islet_unseal(in, in_size, out, size_out);
   return rv == ISLET_SUCCESS;
