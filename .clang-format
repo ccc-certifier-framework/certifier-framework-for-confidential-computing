@@ -7,14 +7,13 @@ BasedOnStyle:  Google
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 
-AlignTrailingComments: true
-
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignConsecutiveMacros: true
 AlignEscapedNewlines: Right
 
 AllowShortBlocksOnASingleLine: false
+AllowShortEnumsOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
