@@ -96,9 +96,9 @@ SpaceBeforeParens: ControlStatements
 SpaceInEmptyParentheses: false
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
-SpacesBeforeTrailingComments: 2
 SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
+SpacesInAngles: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 
