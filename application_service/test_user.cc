@@ -25,7 +25,8 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   string enclave("application-enclave");
   string id("1");
 
@@ -72,12 +73,8 @@ main(int an, char** av) {
   print_bytes((int)secret.size(), (byte*)secret.data());
   printf("\n");
   int t_out = out_size;
-  if (!Seal(enclave,
-            id,
-            (int)secret.size(),
-            (byte*)secret.data(),
-            &t_out,
-            out)) {
+  if (!Seal(enclave, id, (int)secret.size(), (byte*)secret.data(), &t_out, out))
+  {
     printf("Application seal failed\n");
     return 1;
   }

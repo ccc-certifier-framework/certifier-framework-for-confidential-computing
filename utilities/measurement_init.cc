@@ -42,7 +42,8 @@ DEFINE_string(out_file,
 DEFINE_string(mrenclave, "", "Measurement Hex String");
 
 bool
-write_file(string file_name, int size, byte* data) {
+write_file(string file_name, int size, byte* data)
+{
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (out < 0)
     return false;
@@ -56,7 +57,8 @@ write_file(string file_name, int size, byte* data) {
 }
 
 int
-file_size(string file_name) {
+file_size(string file_name)
+{
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0)
@@ -67,7 +69,8 @@ file_size(string file_name) {
 }
 
 bool
-read_file(string file_name, int* size, byte* data) {
+read_file(string file_name, int* size, byte* data)
+{
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0)
@@ -91,7 +94,8 @@ bool
 digest_message(const byte*  message,
                int          message_len,
                byte*        digest,
-               unsigned int digest_len) {
+               unsigned int digest_len)
+{
   EVP_MD_CTX* mdctx;
 
   if ((mdctx = EVP_MD_CTX_new()) == NULL)
@@ -108,7 +112,8 @@ digest_message(const byte*  message,
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   if (FLAGS_print_all) {
@@ -150,7 +155,8 @@ main(int an, char** av) {
     measurement_size = strlen(hex) / 2;
     for (size_t count = 0;
          count < strlen(hex) / 2 && count < (size_t)measurement_size;
-         count++) {
+         count++)
+    {
       sscanf(pos, "%2hhx", &m[count]);
       pos += 2;
     }

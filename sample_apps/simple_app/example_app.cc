@@ -64,7 +64,8 @@ cc_trust_data* app_trust_data = nullptr;
 // -----------------------------------------------------------------------------------------
 
 void
-client_application(secure_authenticated_channel& channel) {
+client_application(secure_authenticated_channel& channel)
+{
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
     printf("Client peer cert is:\n");
@@ -84,7 +85,8 @@ client_application(secure_authenticated_channel& channel) {
 }
 
 void
-server_application(secure_authenticated_channel& channel) {
+server_application(secure_authenticated_channel& channel)
+{
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
     printf("Server peer cert is:\n");
@@ -104,7 +106,8 @@ server_application(secure_authenticated_channel& channel) {
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
@@ -136,8 +139,8 @@ main(int an, char** av) {
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size,
-                                       initialized_cert)) {
+  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert))
+  {
     printf("Can't init policy key\n");
     return 1;
   }
@@ -155,7 +158,8 @@ main(int an, char** av) {
   if (!app_trust_data->initialize_simulated_enclave_data(
           attest_key_file_name,
           measurement_file_name,
-          attest_endorsement_file_name)) {
+          attest_endorsement_file_name))
+  {
     printf("Can't init simulated enclave\n");
     return 1;
   }
@@ -194,7 +198,8 @@ main(int an, char** av) {
 
     printf("Running App as client\n");
     if (!app_trust_data->cc_auth_key_initialized_ ||
-        !app_trust_data->cc_policy_info_initialized_) {
+        !app_trust_data->cc_policy_info_initialized_)
+    {
       printf("trust data not initialized\n");
       ret = 1;
       goto done;
@@ -205,7 +210,8 @@ main(int an, char** av) {
             FLAGS_server_app_port,
             app_trust_data->serialized_policy_cert_,
             app_trust_data->private_auth_key_,
-            app_trust_data->private_auth_key_.certificate())) {
+            app_trust_data->private_auth_key_.certificate()))
+    {
       printf("Can't init client app\n");
       ret = 1;
       goto done;
@@ -225,7 +231,8 @@ main(int an, char** av) {
                          app_trust_data->serialized_policy_cert_,
                          app_trust_data->private_auth_key_,
                          app_trust_data->private_auth_key_.certificate(),
-                         server_application)) {
+                         server_application))
+    {
       ret = 1;
       goto done;
     }

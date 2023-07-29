@@ -14,7 +14,8 @@ oe_Seal(int   seal_policy,
         int   opt_size,
         byte* opt,
         int*  size_out,
-        byte* out) {
+        byte* out)
+{
   oe_result_t ret;
   bool        result = false;
   uint8_t*    blob;
@@ -65,7 +66,8 @@ oe_Unseal(int   in_size,
           int   opt_size,
           byte* opt,
           int*  size_out,
-          byte* out) {
+          byte* out)
+{
   bool     result = false;
   uint8_t* temp_data;
   int      ret = (int)oe_unseal((const uint8_t*)in,

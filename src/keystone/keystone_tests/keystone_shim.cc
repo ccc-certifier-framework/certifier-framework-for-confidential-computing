@@ -42,7 +42,8 @@ struct report_t {
 #endif
 
 bool
-keystone_Init(const int cert_size, byte* cert) {
+keystone_Init(const int cert_size, byte* cert)
+{
   return true;
 }
 
@@ -50,7 +51,8 @@ bool
 keystone_Attest(const int what_to_say_size,
                 byte*     what_to_say,
                 int*      attestation_size_out,
-                byte*     attestation_out) {
+                byte*     attestation_out)
+{
   assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
   *attestation_size_out = sizeof(struct report_t);
   // unique-ify un-faked fields to avoid accidentally passing tests
@@ -67,7 +69,8 @@ keystone_Attest(const int what_to_say_size,
 
 // true = different
 bool
-nonhash_report_cmp(struct report_t& a, struct report_t& b) {
+nonhash_report_cmp(struct report_t& a, struct report_t& b)
+{
   return (a.enclave.data_len != b.enclave.data_len) ||
          memcmp(a.enclave.data, b.enclave.data, ATTEST_DATA_MAXLEN) ||
          memcmp(a.enclave.signature, b.enclave.signature, SIGNATURE_SIZE) ||
@@ -82,7 +85,8 @@ keystone_Verify(const int what_to_say_size,
                 const int attestation_size,
                 byte*     attestation,
                 int*      measurement_out_size,
-                byte*     measurement_out) {
+                byte*     measurement_out)
+{
   assert(attestation_size == sizeof(struct report_t));
   struct report_t& report = *reinterpret_cast<struct report_t*>(attestation);
 
@@ -105,14 +109,16 @@ keystone_Verify(const int what_to_say_size,
 }
 
 bool
-keystone_Seal(int in_size, byte* in, int* size_out, byte* out) {
+keystone_Seal(int in_size, byte* in, int* size_out, byte* out)
+{
   memcpy(out, in, in_size);
   *size_out = in_size;
   return true;
 }
 
 bool
-keystone_Unseal(int in_size, byte* in, int* size_out, byte* out) {
+keystone_Unseal(int in_size, byte* in, int* size_out, byte* out)
+{
   memcpy(out, in, in_size);
   *size_out = in_size;
   return true;

@@ -59,7 +59,8 @@ DEFINE_string(key_name, "anonymous", "key name");
 DEFINE_string(cert_output_file, "cert_file.bin", "cert file");
 
 bool
-generate_test_keys() {
+generate_test_keys()
+{
   key_message platform_key;
   key_message attest_key;
 
@@ -111,7 +112,8 @@ generate_test_keys() {
 }
 
 bool
-generate_policy_key() {
+generate_policy_key()
+{
   key_message policy_key;
   key_message policy_pk;  // public policy key
 
@@ -142,7 +144,8 @@ generate_policy_key() {
 }
 
 void
-test_sig() {
+test_sig()
+{
   int  key_file_size = file_size(FLAGS_platform_key_output_file);
   byte serialized_key[key_file_size + 1];
   int  size = key_file_size;
@@ -163,7 +166,8 @@ test_sig() {
   size = signed_endorsement_size;
   if (!read_file(FLAGS_platform_attest_endorsement,
                  &size,
-                 serialized_endorsement)) {
+                 serialized_endorsement))
+  {
     printf("Can't read endorsement file %s\n",
            FLAGS_platform_attest_endorsement.c_str());
     return;
@@ -215,7 +219,8 @@ test_sig() {
 }
 
 bool
-generate_key(const string& type, const string& name, key_message* k) {
+generate_key(const string& type, const string& name, key_message* k)
+{
   if (type == "rsa-1024") {
     RSA* r = RSA_new();
     if (!generate_new_rsa_key(1024, r)) {
@@ -294,7 +299,8 @@ generate_key(const string& type, const string& name, key_message* k) {
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   string usage("Certifier utility to generate policy-keys and test-keys");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -321,7 +327,8 @@ main(int an, char** av) {
   } else if (FLAGS_operation == "test-sig") {
     test_sig();
   } else if (FLAGS_operation == "generate-policy-key" ||
-             FLAGS_operation == "generate-policy-key-and-test-keys") {
+             FLAGS_operation == "generate-policy-key-and-test-keys")
+  {
     printf("Generating policy key and cert\n");
     if (!generate_policy_key()) {
       printf("Generate keys failed\n");

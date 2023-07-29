@@ -7,7 +7,8 @@
 static bool oe_verifier_initialized = false;
 
 static const oe_claim_t*
-_find_claim(const oe_claim_t* claims, size_t claims_size, const char* name) {
+_find_claim(const oe_claim_t* claims, size_t claims_size, const char* name)
+{
   for (size_t i = 0; i < claims_size; i++) {
     if (strcmp(claims[i].name, name) == 0)
       return &(claims[i]);
@@ -24,7 +25,8 @@ oe_host_verify_evidence(uint8_t* evidence,
                         size_t*  custom_claim_size,
                         uint8_t* measurement_out,
                         size_t*  measurement_size,
-                        bool     check_tcb) {
+                        bool     check_tcb)
+{
   bool                   result = false;
   oe_result_t            oe_res;
   static const oe_uuid_t _uuid         = {OE_FORMAT_UUID_SGX_ECDSA};
@@ -86,7 +88,8 @@ oe_host_verify_evidence(uint8_t* evidence,
     // Extract the custom claim buffer
     if ((claim = _find_claim(claims,
                              claims_length,
-                             OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) == NULL) {
+                             OE_CLAIM_CUSTOM_CLAIMS_BUFFER)) == NULL)
+    {
       fprintf(stderr, "Could not find claim.\n");
       result = false;
       goto err;
@@ -95,7 +98,8 @@ oe_host_verify_evidence(uint8_t* evidence,
     if (oe_deserialize_custom_claims(claim->value,
                                      claim->value_size,
                                      &custom_claims,
-                                     &custom_claims_length) != OE_OK) {
+                                     &custom_claims_length) != OE_OK)
+    {
       fprintf(stderr, "oe_deserialize_custom_claims failed.\n");
       result = false;
       goto err;

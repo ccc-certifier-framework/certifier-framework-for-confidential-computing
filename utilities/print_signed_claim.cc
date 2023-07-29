@@ -26,7 +26,8 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(input, "", "input file");
 
 bool
-get_signed_from_file(const string& in, signed_claim_message* sc) {
+get_signed_from_file(const string& in, signed_claim_message* sc)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_cm[in_size];
@@ -45,7 +46,8 @@ get_signed_from_file(const string& in, signed_claim_message* sc) {
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 

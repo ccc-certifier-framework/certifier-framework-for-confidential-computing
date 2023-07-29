@@ -20,7 +20,8 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 bool
-test_claims_1(bool print_all) {
+test_claims_1(bool print_all)
+{
   key_message k;
   if (!make_certifier_rsa_key(1024, &k))
     return false;
@@ -99,7 +100,8 @@ test_claims_1(bool print_all) {
 }
 
 bool
-test_signed_claims(bool print_all) {
+test_signed_claims(bool print_all)
+{
   // make up rsa private keys and measurement
   string my_measurement;
   byte   m[32];
@@ -198,8 +200,8 @@ test_signed_claims(bool print_all) {
   }
 
   key_message my_medium_public_rsa_key;
-  if (!private_key_to_public_key(my_medium_rsa_key,
-                                 &my_medium_public_rsa_key)) {
+  if (!private_key_to_public_key(my_medium_rsa_key, &my_medium_public_rsa_key))
+  {
     printf("test_signed_claims: private_key_to_public_key failed (2)\n");
     return false;
   }
@@ -213,13 +215,15 @@ test_signed_claims(bool print_all) {
   if (!make_simple_vse_clause((const entity_message)e13,
                               s2,
                               (const entity_message)e2,
-                              &clause13)) {
+                              &clause13))
+  {
     return false;
   }
   if (!make_indirect_vse_clause((const entity_message)e13,
                                 s1,
                                 clause13,
-                                &clause14)) {
+                                &clause14))
+  {
     printf("test_signed_claims: make clause 13 failed\n");
     return false;
   }
@@ -234,7 +238,8 @@ test_signed_claims(bool print_all) {
                   n1,
                   nb,
                   na,
-                  &claim12)) {
+                  &claim12))
+  {
     printf("test_signed_claims: make clause 12 failed\n");
     return false;
   }
@@ -246,7 +251,8 @@ test_signed_claims(bool print_all) {
   if (!make_signed_claim("rsa-3072-sha384-pkcs-sign",
                          claim12,
                          my_medium_rsa_key,
-                         &signed_claim12)) {
+                         &signed_claim12))
+  {
     printf("test_signed_claims: make_signed_claim failed (3072)\n");
     return false;
   }
@@ -312,7 +318,8 @@ test_signed_claims(bool print_all) {
   if (!make_signed_claim("rsa-4096-sha384-pkcs-sign",
                          claim2,
                          my_big_rsa_key,
-                         &signed_claim2)) {
+                         &signed_claim2))
+  {
     printf("test_signed_claims: make_signed_claim failed (2)\n");
     return false;
   }
@@ -378,7 +385,8 @@ test_signed_claims(bool print_all) {
   if (!make_signed_claim("ecc-384-sha384-pkcs-sign",
                          claim3,
                          my_ecc_key,
-                         &signed_claim3)) {
+                         &signed_claim3))
+  {
     printf("test_signed_claims: make_signed_claim failed (3)\n");
     return false;
   }
@@ -397,12 +405,14 @@ test_signed_claims(bool print_all) {
 #include "test_support.cc"
 
 bool
-test_certify_steps(bool print_all) {
+test_certify_steps(bool print_all)
+{
   return true;
 }
 
 bool
-test_full_certification(bool print_all) {
+test_full_certification(bool print_all)
+{
   return true;
 }
 
@@ -419,7 +429,8 @@ const char* kids[2]             = {
 };
 
 bool
-init_top_level_is_trusted(predicate_dominance& root) {
+init_top_level_is_trusted(predicate_dominance& root)
+{
   root.predicate_.assign("is-trusted");
 
   string descendant;
@@ -432,7 +443,8 @@ init_top_level_is_trusted(predicate_dominance& root) {
 }
 
 bool
-test_predicate_dominance(bool print_all) {
+test_predicate_dominance(bool print_all)
+{
   predicate_dominance root;
 
   if (!init_top_level_is_trusted(root)) {

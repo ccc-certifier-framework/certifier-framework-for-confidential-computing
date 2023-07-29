@@ -52,7 +52,8 @@ DEFINE_string(auth_key_file, "auth_key_file.bin", "auth key file");
 #define DEBUG
 
 void
-server_application(secure_authenticated_channel& channel) {
+server_application(secure_authenticated_channel& channel)
+{
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
@@ -70,7 +71,8 @@ run_me_as_server(const string& host_name,
                  int           port,
                  string&       asn1_policy_cert,
                  key_message&  private_key,
-                 string&       private_key_cert) {
+                 string&       private_key_cert)
+{
   printf("running as server\n");
   server_dispatch(host_name,
                   port,
@@ -82,7 +84,8 @@ run_me_as_server(const string& host_name,
 }
 
 void
-client_application(secure_authenticated_channel& channel) {
+client_application(secure_authenticated_channel& channel)
+{
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
   // client sends a message over authenticated, encrypted channel
@@ -100,7 +103,8 @@ run_me_as_client(const string& host_name,
                  int           port,
                  string&       asn1_policy_cert,
                  key_message&  private_key,
-                 string&       private_key_cert) {
+                 string&       private_key_cert)
+{
   printf("running as client\n");
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
@@ -108,7 +112,8 @@ run_me_as_client(const string& host_name,
                                port,
                                asn1_policy_cert,
                                private_key,
-                               private_key_cert)) {
+                               private_key_cert))
+  {
     printf("Can't init client app\n");
     return false;
   }
@@ -122,7 +127,8 @@ bool
 make_admissions_cert(const string& role,
                      key_message&  policy_key,
                      key_message&  auth_key,
-                     string*       out) {
+                     string*       out)
+{
   string issuer_name("policyAuthority");
   string issuer_organization("root");
   string subject_name(role);
@@ -138,7 +144,8 @@ make_admissions_cert(const string& role,
                         23,
                         365.26 * 86400.0,
                         x509_cert,
-                        false)) {
+                        false))
+  {
     return false;
   }
   if (!x509_to_asn1(x509_cert, out)) {
@@ -150,7 +157,8 @@ make_admissions_cert(const string& role,
 // ------------------------------------------------------------------------------------------
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
@@ -236,10 +244,8 @@ main(int an, char** av) {
 
   // make admissions cert
   string auth_cert;
-  if (!make_admissions_cert(FLAGS_operation,
-                            policy_key,
-                            auth_key,
-                            &auth_cert)) {
+  if (!make_admissions_cert(FLAGS_operation, policy_key, auth_key, &auth_cert))
+  {
     printf("Can't make admissions cert\n");
     return 1;
   }
@@ -261,7 +267,8 @@ main(int an, char** av) {
                           FLAGS_app_port,
                           str_policy_cert,
                           auth_key,
-                          auth_cert)) {
+                          auth_cert))
+    {
       printf("run-me-as-client failed\n");
       return 1;
     }
@@ -270,7 +277,8 @@ main(int an, char** av) {
                           FLAGS_app_port,
                           str_policy_cert,
                           auth_key,
-                          auth_cert)) {
+                          auth_cert))
+    {
       printf("server failed\n");
       return 1;
     }

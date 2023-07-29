@@ -26,7 +26,8 @@
  * Returns NULL if optid is not found in lookup array.
  */
 const char *
-optbyid(optlookup *opt_array, int optid) {
+optbyid(optlookup *opt_array, int optid)
+{
   if (!opt_array) {
     return CC_EMPTY_STRING;
   }

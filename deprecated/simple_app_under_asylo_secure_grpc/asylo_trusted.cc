@@ -82,7 +82,8 @@ key_message  symmertic_key_for_protect;
 bool         connected = false;
 
 void
-print_trust_data() {
+print_trust_data()
+{
   if (!trust_data_initialized)
     return;
   printf("\nTrust data:\n");
@@ -101,7 +102,8 @@ print_trust_data() {
 }
 
 bool
-certifier_test_seal(void) {
+certifier_test_seal(void)
+{
   string enclave_type("asylo-enclave");
   string enclave_id("local-machine");
 
@@ -156,7 +158,8 @@ certifier_test_seal(void) {
 }
 
 bool
-asylo_local_certify() {
+asylo_local_certify()
+{
   string      enclave_type("asylo-enclave");
   string      evidence_descriptor("asylo-evidence");
   extern bool simulator_init(void);
@@ -170,7 +173,8 @@ asylo_local_certify() {
   if (!test_local_certify(enclave_type,
                           FLAGS_read_measurement_file,
                           FLAGS_trusted_measurements_file,
-                          evidence_descriptor)) {
+                          evidence_descriptor))
+  {
     printf("test_local_certify failed\n");
     return false;
   }
@@ -180,7 +184,8 @@ asylo_local_certify() {
 }
 
 bool
-asylo_seal() {
+asylo_seal()
+{
   if (!certifier_test_seal()) {
     printf("Sealing test failed\n");
     return false;
@@ -190,13 +195,15 @@ asylo_seal() {
 }
 
 bool
-asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs) {
+asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs)
+{
   setFuncs(asyloFuncs);
   return true;
 }
 
 bool
-certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
+certifier_init(char* usr_data_dir, size_t usr_data_dir_size)
+{
   static const char rnd_seed[] =
       "string to make the random number generator think it has entropy";
 
@@ -225,8 +232,8 @@ certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size,
-                                       initialized_cert)) {
+  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert))
+  {
     printf("Can't init policy key\n");
     return false;
   }
@@ -244,7 +251,8 @@ certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
   if (!app_trust_data->initialize_simulated_enclave_data(
           attest_key_file_name,
           measurement_file_name,
-          attest_endorsement_file_name)) {
+          attest_endorsement_file_name))
+  {
     printf("Can't init simulated enclave\n");
     return false;
   }
@@ -255,7 +263,8 @@ certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
 }
 
 bool
-cold_init() {
+cold_init()
+{
   // Standard algorithms for the enclave
   string public_key_alg("rsa-2048");
   string symmetric_key_alg("aes-256");
@@ -266,7 +275,8 @@ cold_init() {
   if (!app_trust_data->cold_init(public_key_alg,
                                  symmetric_key_alg,
                                  hash_alg,
-                                 hmac_alg)) {
+                                 hmac_alg))
+  {
     printf("cold-init failed\n");
     return false;
   }
@@ -275,7 +285,8 @@ cold_init() {
 }
 
 bool
-warm_restart() {
+warm_restart()
+{
   if (!app_trust_data->warm_restart()) {
     printf("warm_restart failed\n");
     return false;
@@ -285,7 +296,8 @@ warm_restart() {
 }
 
 bool
-certify_me() {
+certify_me()
+{
   printf("Begin certify_me\n");
   if (!app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
     printf("certify_me failed\n");
@@ -295,7 +307,8 @@ certify_me() {
 }
 
 void
-server_application(secure_authenticated_channel& channel) {
+server_application(secure_authenticated_channel& channel)
+{
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
@@ -315,7 +328,8 @@ asylo_server_dispatch(const string& host_name,
                       string&       asn1_root_cert,
                       key_message&  private_key,
                       const string& private_key_cert,
-                      void (*func)(secure_authenticated_channel&)) {
+                      void (*func)(secure_authenticated_channel&))
+{
   SSL_load_error_strings();
 
   X509* root_cert = X509_new();
@@ -371,7 +385,8 @@ asylo_server_dispatch(const string& host_name,
                             port,
                             asn1_root_cert,
                             private_key,
-                            private_key_cert)) {
+                            private_key_cert))
+    {
       continue;
     }
     nc.ssl_ = SSL_new(ctx);
@@ -382,7 +397,8 @@ asylo_server_dispatch(const string& host_name,
 }
 
 bool
-setup_server_ssl() {
+setup_server_ssl()
+{
   bool ret = true;
   if (!app_trust_data->warm_restart()) {
     printf("warm-restart failed\n");
@@ -405,7 +421,8 @@ done:
 }
 
 void
-client_application(secure_authenticated_channel& channel) {
+client_application(secure_authenticated_channel& channel)
+{
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
   // client sends a message over authenticated, encrypted channel
@@ -419,7 +436,8 @@ client_application(secure_authenticated_channel& channel) {
 }
 
 bool
-setup_client_ssl() {
+setup_client_ssl()
+{
   bool                         ret = true;
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
@@ -432,18 +450,19 @@ setup_client_ssl() {
 
   printf("running as client\n");
   if (!app_trust_data->cc_auth_key_initialized_ ||
-      !app_trust_data->cc_policy_info_initialized_) {
+      !app_trust_data->cc_policy_info_initialized_)
+  {
     printf("trust data not initialized\n");
     ret = 1;
     goto done;
   }
 
-  if (!channel.init_client_ssl(
-          FLAGS_server_app_host,
-          FLAGS_server_app_port,
-          app_trust_data->serialized_policy_cert_,
-          app_trust_data->private_auth_key_,
-          app_trust_data->private_auth_key_.certificate())) {
+  if (!channel.init_client_ssl(FLAGS_server_app_host,
+                               FLAGS_server_app_port,
+                               app_trust_data->serialized_policy_cert_,
+                               app_trust_data->private_auth_key_,
+                               app_trust_data->private_auth_key_.certificate()))
+  {
     printf("Can't init client app\n");
     ret = 1;
     goto done;

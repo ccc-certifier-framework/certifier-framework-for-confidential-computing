@@ -32,7 +32,8 @@ DEFINE_string(descipt, "", "descriptor");
 DEFINE_string(signing_alg, "rsa-2048-sha256-pkcs-sign", "signing algorithm");
 
 bool
-get_clause_from_file(const string& in, vse_clause* cl) {
+get_clause_from_file(const string& in, vse_clause* cl)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_cl[in_size];
@@ -51,7 +52,8 @@ get_clause_from_file(const string& in, vse_clause* cl) {
 }
 
 bool
-get_key_from_file(const string& in, key_message* k) {
+get_key_from_file(const string& in, key_message* k)
+{
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_key[in_size];
@@ -70,7 +72,8 @@ get_key_from_file(const string& in, key_message* k) {
 }
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
@@ -131,7 +134,8 @@ main(int an, char** av) {
                   descriptor,
                   not_before,
                   not_after,
-                  &cm_out)) {
+                  &cm_out))
+  {
     printf("Can't make claim\n");
     return 1;
   }

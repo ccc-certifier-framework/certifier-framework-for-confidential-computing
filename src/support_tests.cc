@@ -19,7 +19,8 @@
 using namespace certifier::utilities;
 
 bool
-test_random(bool print_all) {
+test_random(bool print_all)
+{
   int  n = 128;
   byte out[n];
 
@@ -37,7 +38,8 @@ test_random(bool print_all) {
 }
 
 bool
-test_encrypt(bool print_all) {
+test_encrypt(bool print_all)
+{
   const int   in_size  = 2 * block_size;
   const int   out_size = in_size + 128;
   const char* alg_name = "aes-256-cbc-hmac-sha256";
@@ -103,7 +105,8 @@ test_encrypt(bool print_all) {
 }
 
 bool
-test_authenticated_encrypt(bool print_all) {
+test_authenticated_encrypt(bool print_all)
+{
   const int in_size  = 2 * block_size;
   const int out_size = in_size + 256;
   const int key_size = 64;
@@ -145,7 +148,8 @@ test_authenticated_encrypt(bool print_all) {
                              key,
                              iv,
                              cipher,
-                             &size_encrypt_out)) {
+                             &size_encrypt_out))
+  {
     printf("authenticated encrypt failed\n");
     return false;
   }
@@ -167,7 +171,8 @@ test_authenticated_encrypt(bool print_all) {
                              size_encrypt_out,
                              key,
                              decrypted,
-                             &size_decrypt_out)) {
+                             &size_decrypt_out))
+  {
     printf("authenticated decrypt failed\n");
     return false;
   }
@@ -203,7 +208,8 @@ test_authenticated_encrypt(bool print_all) {
                              key,
                              iv,
                              cipher,
-                             &size_encrypt_out)) {
+                             &size_encrypt_out))
+  {
     printf("authenticated encrypt failed\n");
     return false;
   }
@@ -225,7 +231,8 @@ test_authenticated_encrypt(bool print_all) {
                              size_encrypt_out,
                              key,
                              decrypted,
-                             &size_decrypt_out)) {
+                             &size_decrypt_out))
+  {
     printf("authenticated decrypt failed\n");
     return false;
   }
@@ -254,7 +261,8 @@ test_authenticated_encrypt(bool print_all) {
                              key,
                              iv,
                              cipher,
-                             &size_encrypt_out)) {
+                             &size_encrypt_out))
+  {
     printf("authenticated encrypt for aes-256-gcm failed\n");
     return false;
   }
@@ -275,7 +283,8 @@ test_authenticated_encrypt(bool print_all) {
                              size_encrypt_out,
                              key,
                              decrypted,
-                             &size_decrypt_out)) {
+                             &size_decrypt_out))
+  {
     printf("authenticated decrypt for aes-256-gcm failed\n");
     return false;
   }
@@ -297,7 +306,8 @@ test_authenticated_encrypt(bool print_all) {
 }
 
 bool
-test_public_keys(bool print_all) {
+test_public_keys(bool print_all)
+{
   RSA* r1 = RSA_new();
 
   if (!generate_new_rsa_key(2048, r1))
@@ -570,7 +580,8 @@ byte sha512_test[64] = {
     0xa3, 0xfe, 0xeb, 0xbd, 0x45, 0x4d, 0x44, 0x23, 0x64, 0x3c, 0xe8,
     0x0e, 0x2a, 0x9a, 0xc9, 0x4f, 0xa5, 0x4c, 0xa4, 0x9f};
 bool
-test_digest(bool print_all) {
+test_digest(bool print_all)
+{
   const char*  message     = "1234";
   int          msg_len     = strlen(message);
   unsigned int size_digest = 64;
@@ -581,7 +592,8 @@ test_digest(bool print_all) {
                       (const byte*)message,
                       msg_len,
                       digest,
-                      size_digest)) {
+                      size_digest))
+  {
     printf("failed 0 (%d)\n", size_digest);
     return false;
   }
@@ -608,7 +620,8 @@ test_digest(bool print_all) {
                       (const byte*)message2,
                       msg_len,
                       digest,
-                      size_digest)) {
+                      size_digest))
+  {
     printf("failed 2 (%d)\n", size_digest);
     return false;
   }
@@ -635,7 +648,8 @@ test_digest(bool print_all) {
                       (const byte*)message2,
                       msg_len,
                       digest,
-                      size_digest)) {
+                      size_digest))
+  {
     printf("failed 5 (%d)\n", size_digest);
     return false;
   }
@@ -661,7 +675,8 @@ test_digest(bool print_all) {
                       (const byte*)message2,
                       msg_len,
                       digest,
-                      size_digest)) {
+                      size_digest))
+  {
     printf("failed 7 (%d)\n", size_digest);
     return false;
   }
@@ -681,7 +696,8 @@ test_digest(bool print_all) {
 }
 
 bool
-test_sign_and_verify(bool print_all) {
+test_sign_and_verify(bool print_all)
+{
   RSA* r = RSA_new();
 
   if (!generate_new_rsa_key(2048, r)) {
@@ -711,7 +727,8 @@ test_sign_and_verify(bool print_all) {
                        strlen(test_message),
                        (byte*)test_message,
                        &sig_size,
-                       sig)) {
+                       sig))
+  {
     printf("rsa_sha256_sign failed\n");
     return false;
   }
@@ -719,7 +736,8 @@ test_sign_and_verify(bool print_all) {
                          strlen(test_message),
                          (byte*)test_message,
                          sig_size,
-                         sig)) {
+                         sig))
+  {
     printf("rsa_sha256_verify failed\n");
     return false;
   }
@@ -729,7 +747,8 @@ test_sign_and_verify(bool print_all) {
 }
 
 bool
-test_key_translation(bool print_all) {
+test_key_translation(bool print_all)
+{
   key_message k1;
 
   if (!make_certifier_rsa_key(2048, &k1))
@@ -757,7 +776,8 @@ test_key_translation(bool print_all) {
 }
 
 bool
-test_time(bool print_all) {
+test_time(bool print_all)
+{
   time_point t_now;
   time_point t_test;
   time_point t_later;

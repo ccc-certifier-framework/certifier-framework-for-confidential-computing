@@ -33,7 +33,8 @@ DEFINE_string(string_value, "", "string value");
 DEFINE_string(output, "prop.bin", "output file");
 
 int
-main(int an, char** av) {
+main(int an, char** av)
+{
   string usage("Specify a platform policy property used in policy.");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -54,7 +55,8 @@ main(int an, char** av) {
                      FLAGS_comparator,
                      FLAGS_int_value,
                      FLAGS_string_value,
-                     &prop)) {
+                     &prop))
+  {
     printf("Can't make property\n");
     return 1;
   }

@@ -32,7 +32,8 @@
 enum { SUCCESS = 0, FAILURE = -1 };
 
 ssize_t
-gramine_rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
+gramine_rw_file(const char* path, uint8_t* buf, size_t len, bool do_write)
+{
   ssize_t bytes = 0;
   ssize_t ret   = 0;
 
@@ -63,14 +64,16 @@ gramine_rw_file(const char* path, uint8_t* buf, size_t len, bool do_write) {
 }
 
 static inline int64_t
-local_sgx_getkey(sgx_key_request_t* keyrequest, sgx_key_128bit_t* key) {
+local_sgx_getkey(sgx_key_request_t* keyrequest, sgx_key_128bit_t* key)
+{
   int64_t rax = EGETKEY;
   __asm__ volatile("enclu" : "+a"(rax) : "b"(keyrequest), "c"(key) : "memory");
   return rax;
 }
 
 int
-gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key) {
+gramine_Sgx_Getkey(byte* user_report_data, sgx_key_128bit_t* key)
+{
   ssize_t bytes;
 
 #ifdef DEBUG
@@ -126,7 +129,8 @@ bool
 gramine_attest_impl(const int what_to_say_size,
                     byte*     what_to_say,
                     int*      attestation_size_out,
-                    byte*     attestation_out) {
+                    byte*     attestation_out)
+{
   ssize_t bytes;
   uint8_t quote[SGX_QUOTE_MAX_SIZE];
 
@@ -181,7 +185,8 @@ int
 remote_verify_quote(size_t   quote_size,
                     uint8_t* quote,
                     size_t*  mr_size,
-                    uint8_t* mr) {
+                    uint8_t* mr)
+{
   int                ret                          = -1;
   void*              sgx_verify_lib               = NULL;
   uint8_t*           supplemental_data            = NULL;
@@ -284,7 +289,8 @@ remote_verify_quote(size_t   quote_size,
    */
   if (verification_result != SGX_QL_QV_RESULT_OK &&
       verification_result != SGX_QL_QV_RESULT_OUT_OF_DATE_CONFIG_NEEDED &&
-      verification_result != SGX_QL_QV_RESULT_CONFIG_AND_SW_HARDENING_NEEDED) {
+      verification_result != SGX_QL_QV_RESULT_CONFIG_AND_SW_HARDENING_NEEDED)
+  {
     printf("\nGramine acceptable verification failed: %d %s\n",
            verification_result,
            sgx_ql_qv_result_to_str(verification_result));
@@ -317,7 +323,8 @@ gramine_local_verify_impl(const int what_to_say_size,
                           const int attestation_size,
                           byte*     attestation,
                           int*      measurement_out_size,
-                          byte*     measurement_out) {
+                          byte*     measurement_out)
+{
   ssize_t bytes;
   int     ret = -1;
   uint8_t quote[SGX_QUOTE_MAX_SIZE];
@@ -358,7 +365,8 @@ gramine_local_verify_impl(const int what_to_say_size,
   sgx_quote_t* quote_received = (sgx_quote_t*)quote;
 
   if (quote_expected->body.version != /*EPID*/ 2 &&
-      quote_received->body.version != /*DCAP*/ 3) {
+      quote_received->body.version != /*DCAP*/ 3)
+  {
     printf("Version of SGX quote is not EPID (2) and not ECDSA/DCAP (3)\n");
     return false;
   }
@@ -418,7 +426,8 @@ gramine_remote_verify_impl(const int what_to_say_size,
                            const int attestation_size,
                            byte*     attestation,
                            int*      measurement_out_size,
-                           byte*     measurement_out) {
+                           byte*     measurement_out)
+{
   ssize_t bytes;
   int     ret = -1;
   uint8_t mr[SGX_MR_SIZE];
@@ -442,7 +451,8 @@ gramine_remote_verify_impl(const int what_to_say_size,
   if (remote_verify_quote(attestation_size,
                           (uint8_t*)quote_expected,
                           &mr_size,
-                          mr) != 0) {
+                          mr) != 0)
+  {
     printf("\nGramine begin verify quote with DCAP failed\n");
     return false;
   }
@@ -482,7 +492,8 @@ gramine_remote_verify_impl(const int what_to_say_size,
 }
 
 bool
-gramine_get_measurement(byte* measurement) {
+gramine_get_measurement(byte* measurement)
+{
   bool status = true;
   byte attestation[MAX_ATTESTATION_SIZE];
   byte user_data[USER_DATA_SIZE];
@@ -508,7 +519,8 @@ gramine_get_measurement(byte* measurement) {
 }
 
 bool
-gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out) {
+gramine_seal_impl(int in_size, byte* in, int* size_out, byte* out)
+{
   int                       ret    = 0;
   bool                      status = true;
   __sgx_mem_aligned uint8_t key[KEY_SIZE];
@@ -603,7 +615,8 @@ done:
 }
 
 bool
-gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out) {
+gramine_unseal_impl(int in_size, byte* in, int* size_out, byte* out)
+{
   int                       ret    = 0;
   bool                      status = true;
   __sgx_mem_aligned uint8_t key[KEY_SIZE];
@@ -707,7 +720,8 @@ done:
 }
 
 void
-gramine_setup_functions(GramineFunctions* gramineFuncs) {
+gramine_setup_functions(GramineFunctions* gramineFuncs)
+{
   gramineFuncs->Attest = &gramine_attest_impl;
 #ifdef GRAMINE_LOCAL_VERIFY
   gramineFuncs->Verify = &gramine_local_verify_impl;
