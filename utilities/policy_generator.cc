@@ -320,7 +320,7 @@ exec_cmd(const string &command, bool print = false)
   return exitcode;
 }
 
-template <class... Args>
+template<class... Args>
 string
 string_format(const string &format, Args... args)
 {
