@@ -8,7 +8,7 @@
 
 set -eu -o pipefail
 
-CLANG_FMT_TOOL=$(which clang-format-13)
+CLANG_FMT_TOOL=$(which clang-format-11)
 
 # Establish root-dir for Certifier library.
 pushd "$(dirname "$0")" > /dev/null 2>&1
