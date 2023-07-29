@@ -3168,6 +3168,9 @@ bool certifier::utilities::produce_artifact(key_message& signing_key,
   X509_set1_notAfter(x509, tm_end);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 03ee64c (Fixes from rebase v/s main.)
   if (!vcek) {
     add_ext(x509, NID_key_usage, "critical,keyCertSign,digitalSignature,cRLSign");
     add_ext(x509,  NID_ext_key_usage, "clientAuth,serverAuth");
@@ -3241,6 +3244,7 @@ bool certifier::utilities::produce_artifact(key_message& signing_key,
     ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os );
     X509_add_ext(x509, ex, -1);
     free(ex);
+<<<<<<< HEAD
 =======
   add_ext(x509, NID_key_usage, "critical,keyCertSign,digitalSignature,cRLSign");
   add_ext(x509, NID_ext_key_usage, "clientAuth,serverAuth");
@@ -3248,6 +3252,8 @@ bool certifier::utilities::produce_artifact(key_message& signing_key,
   if (is_root) {
     add_ext(x509, NID_basic_constraints, "critical,CA:TRUE");
 >>>>>>> 0dc8467 (1st cut of clang-format fixes w/o any extra rules.)
+=======
+>>>>>>> 03ee64c (Fixes from rebase v/s main.)
   }
 
   EVP_PKEY *signing_pkey = EVP_PKEY_new();
