@@ -3108,18 +3108,20 @@ add_ext(X509 *cert, int nid, const char *value)
 
 // Caller should have allocated X509
 // name is some printable version of the measurement
-bool certifier::utilities::produce_artifact(key_message& signing_key,
-                                            string&      issuer_name_str,
-                                            string& issuer_organization_str,
-                                            key_message& subject_key,
-                                            string&      subject_name_str,
-                                            string&  subject_organization_str,
-                                            uint64_t sn,
-                                            double   secs_duration,
-                                            X509*    x509,
-                                            bool     is_root,
-                                            bool vcek /* default =false */) {
-  ASN1_INTEGER* a = ASN1_INTEGER_new();
+bool
+certifier::utilities::produce_artifact(key_message &signing_key,
+                                       string &     issuer_name_str,
+                                       string &     issuer_organization_str,
+                                       key_message &subject_key,
+                                       string &     subject_name_str,
+                                       string &     subject_organization_str,
+                                       uint64_t     sn,
+                                       double       secs_duration,
+                                       X509 *       x509,
+                                       bool         is_root,
+                                       bool         vcek /* default =false */)
+{
+  ASN1_INTEGER *a = ASN1_INTEGER_new();
   ASN1_INTEGER_set_uint64(a, sn);
   X509_set_serialNumber(x509, a);
   X509_set_version(x509, 2L);
@@ -3167,10 +3169,6 @@ bool certifier::utilities::produce_artifact(key_message& signing_key,
   X509_set1_notBefore(x509, tm_start);
   X509_set1_notAfter(x509, tm_end);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 03ee64c (Fixes from rebase v/s main.)
   if (!vcek) {
     add_ext(x509,
             NID_key_usage,
@@ -3246,16 +3244,6 @@ bool certifier::utilities::produce_artifact(key_message& signing_key,
     ex = X509_EXTENSION_create_by_NID(NULL, nid, 0, os);
     X509_add_ext(x509, ex, -1);
     free(ex);
-<<<<<<< HEAD
-=======
-  add_ext(x509, NID_key_usage, "critical,keyCertSign,digitalSignature,cRLSign");
-  add_ext(x509, NID_ext_key_usage, "clientAuth,serverAuth");
-  // add_ext(x509, NID_subject_key_identifier, "hash");
-  if (is_root) {
-    add_ext(x509, NID_basic_constraints, "critical,CA:TRUE");
->>>>>>> 0dc8467 (1st cut of clang-format fixes w/o any extra rules.)
-=======
->>>>>>> 03ee64c (Fixes from rebase v/s main.)
   }
 
   EVP_PKEY *signing_pkey = EVP_PKEY_new();
@@ -3980,5 +3968,3 @@ construct_vse_attestation_from_cert(const key_message &subj,
 
   return true;
 }
-
-// -----------------------------------------------------------------------
