@@ -121,25 +121,27 @@ void
 print_bytes(int n, byte *buf);
 
 // X509 artifact
-bool produce_artifact(key_message& signing_key,
-                      string&      issuer_name_str,
-                      string&      issuer_description_str,
-                      key_message& subject_key,
-                      string&      subject_name_str,
-                      string&      subject_description_str,
-                      uint64_t     sn,
-                      double       secs_duration,
-                      X509*        x509,
-                      bool         is_root,
-                      bool vcek = false);
-bool verify_artifact(X509&        cert,
-                     key_message& verify_key,
-                     string*      issuer_name_str,
-                     string*      issuer_description_str,
-                     key_message* subject_key,
-                     string*      subject_name_str,
-                     string*      subject_description_str,
-                     uint64_t*    sn);
+bool
+produce_artifact(key_message &signing_key,
+                 string &     issuer_name_str,
+                 string &     issuer_description_str,
+                 key_message &subject_key,
+                 string &     subject_name_str,
+                 string &     subject_description_str,
+                 uint64_t     sn,
+                 double       secs_duration,
+                 X509 *       x509,
+                 bool         is_root,
+                 bool         vcek = false);
+bool
+verify_artifact(X509 &       cert,
+                key_message &verify_key,
+                string *     issuer_name_str,
+                string *     issuer_description_str,
+                key_message *subject_key,
+                string *     subject_name_str,
+                string *     subject_description_str,
+                uint64_t *   sn);
 
 int
 cipher_block_byte_size(const char *alg_name);
