@@ -85,10 +85,6 @@ $(O)/multidomain_client_app.o: $(US)/multidomain_client_app.cc $(I)/certifier.h 
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/multidomain_example_app.o: $(US)/multidomain_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
-	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
-
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
