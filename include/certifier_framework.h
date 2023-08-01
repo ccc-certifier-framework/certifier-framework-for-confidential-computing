@@ -249,8 +249,11 @@ public:
       bool run_peer_certification_service(const string& host_name, int port);
 
       // multi-domain support
-      bool add_new_domain(const string& domain_name, const string& cert, const string& host, int port,
-          const string& service_host, int service_port);
+      bool add_or_update_new_domain(const string& domain_name,
+                                    const string& cert,
+                                    const string& host, int port,
+                                    const string& service_host,
+                                    int service_port);
       bool certify_secondary_domain(const string& domain_name);
       bool get_certifiers_from_store();
       bool put_certifiers_in_store();

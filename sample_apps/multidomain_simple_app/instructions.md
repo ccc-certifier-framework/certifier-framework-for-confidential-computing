@@ -10,7 +10,7 @@ but they also certify to another certifier service.  The initialization up to an
 including the initial certification (performed by certify_me()) is identical
 to simple_example but then the client an the server certify to another domain by first
 recording it's data using
-  add_new_domain(home_domain_name, domain_cert, home_host, home_port, service_host, service_port)
+  add_or_update_new_domain(home_domain_name, domain_cert, home_host, home_port, service_host, service_port)
 where
   domain_name is the secondary domain name
   domain_cert is the policy_cert of the secondary domain (der encoded)

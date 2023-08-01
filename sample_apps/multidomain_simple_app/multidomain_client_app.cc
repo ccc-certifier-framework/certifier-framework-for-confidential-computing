@@ -207,10 +207,13 @@ int main(int an, char** av) {
     string server_service_host = FLAGS_server_app_host;
     int server_service_port = FLAGS_server_app_port;
 
-    if (!app_trust_data->add_new_domain(server_domain_name, server_domain_cert,
-            server_host, server_port,
-	    server_service_host, server_service_port))	{
-      printf("%s() error, line %d, Can't add_new_domain\n",
+    if (!app_trust_data->add_or_update_new_domain(server_domain_name,
+                                                  server_domain_cert,
+                                                  server_host,
+                                                  server_port,
+	                                          server_service_host,
+                                                  server_service_port))	{
+      printf("%s() error, line %d, Can't add_or_update_new_domain\n",
         __func__, __LINE__);
       ret = 1;
       goto done;

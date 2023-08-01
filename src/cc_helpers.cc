@@ -1060,8 +1060,12 @@ bool certifier::framework::cc_trust_data::cold_init(const string& public_key_alg
          __func__, __LINE__);
       return false;
   }
-  if (!add_new_domain(home_domain_name, domain_cert, home_host, home_port,
-        service_host, service_port)) {
+  if (!add_or_update_new_domain(home_domain_name,
+                                domain_cert,
+                                home_host,
+                                home_port,
+                                service_host,
+                                service_port)) {
       printf("%s() error, line %d, certifiers should be empty for cold init\n",
          __func__, __LINE__);
       return false;
@@ -1169,9 +1173,12 @@ bool certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim(signed_clai
   return false;
 }
 
-bool certifier::framework::cc_trust_data::add_new_domain(const string& domain_name,
-      const string& cert, const string& host, int port,
-      const string& service_host, int service_port) {
+bool certifier::framework::cc_trust_data::add_or_update_new_domain(const string& domain_name,
+                                                                   const string& cert,
+                                                                   const string& host,
+                                                                   int port,
+                                                                   const string& service_host,
+                                                                   int service_port) {
 
   // don't duplicate
   certifiers* found = nullptr;
