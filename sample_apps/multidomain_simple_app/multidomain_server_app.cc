@@ -126,7 +126,8 @@ int main(int an, char** av) {
   attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
   if (!app_trust_data->initialize_simulated_enclave_data(attest_key_file_name,
-      measurement_file_name, attest_endorsement_file_name)) {
+                                                         measurement_file_name,
+                                                         attest_endorsement_file_name)) {
     printf("%s() error, line %d, Can't init simulated enclave\n",
         __func__, __LINE__);
     return 1;
@@ -139,10 +140,15 @@ int main(int an, char** av) {
   // Carry out operation
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
-          initialized_cert_size, initialized_cert, "simple-app-server-home-domain",
-          FLAGS_policy_host, FLAGS_policy_port,
-          FLAGS_server_app_host, FLAGS_server_app_port)) {
+    if (!app_trust_data->cold_init(public_key_alg,
+                                   symmetric_key_alg,
+                                   initialized_cert_size,
+                                   initialized_cert,
+                                   "simple-app-server-home-domain",
+                                   FLAGS_policy_host,
+                                   FLAGS_policy_port,
+                                   FLAGS_server_app_host,
+                                   FLAGS_server_app_port)) {
       printf("%s() error, line %d, cold-init failed\n",
         __func__, __LINE__);
       ret = 1;
@@ -183,7 +189,8 @@ int main(int an, char** av) {
       goto done;
     }
     printf("Running App as server\n");
-    if (!server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
+    if (!server_dispatch(FLAGS_server_app_host,
+                         FLAGS_server_app_port,
                          app_trust_data->serialized_policy_cert_,
                          app_trust_data->private_auth_key_,
                          app_trust_data->serialized_primary_admissions_cert_,

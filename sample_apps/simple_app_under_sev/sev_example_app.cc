@@ -89,13 +89,19 @@ void server_application(secure_authenticated_channel& channel) {
   channel.write(strlen(msg), (byte*)msg);
 }
 
-bool run_me_as_server(const string& host_name, int port,
-      string& asn1_policy_cert, key_message& private_key,
-      string& private_key_cert) {
+bool run_me_as_server(const string& host_name,
+                      int port,
+                      string& asn1_policy_cert,
+                      key_message& private_key,
+                      string& private_key_cert) {
 
   printf("running as server\n");
-  server_dispatch(host_name, port, asn1_policy_cert, private_key,
-      private_key_cert, server_application);
+  server_dispatch(host_name,
+                  port,
+                  asn1_policy_cert,
+                  private_key,
+                  private_key_cert,
+                  server_application);
   return true;
 }
 
@@ -135,7 +141,8 @@ int main(int an, char** av) {
 
   // Init sev enclave
   if (!app_trust_data->initialize_sev_enclave_data(FLAGS_ark_cert_file,
-        FLAGS_ask_cert_file, FLAGS_vcek_cert_file)) {
+                                                   FLAGS_ask_cert_file,
+                                                   FLAGS_vcek_cert_file)) {
     printf("%s() error, line %d, Can't init sev enclave\n",
          __func__, __LINE__);
     return 1;
@@ -148,10 +155,15 @@ int main(int an, char** av) {
   // Carry out operation
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
-            initialized_cert_size, initialized_cert, "simple-app-home_domain",
-            FLAGS_policy_host, FLAGS_policy_port,
-            FLAGS_server_app_host, FLAGS_server_app_port)) {
+    if (!app_trust_data->cold_init(public_key_alg,
+                                   symmetric_key_alg,
+                                   initialized_cert_size,
+                                   initialized_cert,
+                                   "simple-app-home_domain",
+                                   FLAGS_policy_host,
+                                   FLAGS_policy_port,
+                                   FLAGS_server_app_host,
+                                   FLAGS_server_app_port)) {
       printf("%s() error, line %d, cold-init failed\n",
          __func__, __LINE__);
       ret = 1;
@@ -202,10 +214,11 @@ int main(int an, char** av) {
 
     string my_role("client");
     secure_authenticated_channel channel(my_role);
-    if (!channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
-          app_trust_data->serialized_policy_cert_,
-          app_trust_data->private_auth_key_,
-          app_trust_data->serialized_primary_admissions_cert_)) {
+    if (!channel.init_client_ssl(FLAGS_server_app_host,
+                                 FLAGS_server_app_port,
+                                 app_trust_data->serialized_policy_cert_,
+                                 app_trust_data->private_auth_key_,
+                                 app_trust_data->serialized_primary_admissions_cert_)) {
       printf("%s() error, line %d, Can't init client app\n",
          __func__, __LINE__);
       ret = 1;
@@ -229,11 +242,12 @@ int main(int an, char** av) {
     }
 
     printf("running as server\n");
-    server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
-        app_trust_data->serialized_policy_cert_,
-        app_trust_data->private_auth_key_,
-        app_trust_data->serialized_primary_admissions_cert_,
-        server_application);
+    server_dispatch(FLAGS_server_app_host,
+                    FLAGS_server_app_port,
+                    app_trust_data->serialized_policy_cert_,
+                    app_trust_data->private_auth_key_,
+                    app_trust_data->serialized_primary_admissions_cert_,
+                    server_application);
   } else {
     printf("%s() error, line %d, Unknown operation\n",
          __func__, __LINE__);
