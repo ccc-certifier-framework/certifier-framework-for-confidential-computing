@@ -675,10 +675,11 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
         return false;
     }
 
+#if 0
     // Debug
-    // printf("put_trust_data_from_store: outgoing store\n");
-    // store_.print();
-
+    printf("put_trust_data_from_store: outgoing store\n");
+    store_.print();
+#endif
     return true;
   }
 
@@ -699,9 +700,11 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
   int ent;
   string value;
 
-  // Debug
-  // printf("get_trust_data_from_store: incoming store\n");
-  // store_.print();
+#if 0
+  Debug
+  printf("get_trust_data_from_store: incoming store\n");
+  store_.print();
+#endif
 
   ent = store_.find_entry(public_key_alg_tag, string_type);
   if (ent < 0) {
@@ -902,10 +905,10 @@ bool certifier::framework::cc_trust_data::generate_symmetric_key(bool regen) {
          __func__, __LINE__);
       return false;
     }
-    symmetric_key_.set_key_name("app-symmetric-key");
-    symmetric_key_.set_key_type(symmetric_key_algorithm_);
-    symmetric_key_.set_key_format("vse-key");
-    symmetric_key_.set_secret_key_bits(symmetric_key_bytes_, 8 * num_key_bytes);
+  symmetric_key_.set_key_name("app-symmetric-key");
+  symmetric_key_.set_key_type(symmetric_key_algorithm_);
+  symmetric_key_.set_key_format("vse-key");
+  symmetric_key_.set_secret_key_bits(symmetric_key_bytes_, 8 * num_key_bytes);
 
   return true;
 }
@@ -932,15 +935,15 @@ bool certifier::framework::cc_trust_data::generate_sealing_key(bool regen) {
     return false;
   }
   memset(sealing_key_bytes_, 0, max_symmetric_key_size_);
-      if (!get_random(num_key_bytes, sealing_key_bytes_)) {
-      printf("%s() error, line %d, Can't get random bytes for app key\n",
+  if (!get_random(num_key_bytes, sealing_key_bytes_)) {
+    printf("%s() error, line %d, Can't get random bytes for app key\n",
          __func__, __LINE__);
-      return false;
-    }
-    service_sealing_key_.set_key_name("sealing-key");
-    service_sealing_key_.set_key_type(symmetric_key_algorithm_);
-    service_sealing_key_.set_key_format("vse-key");
-    service_sealing_key_.set_secret_key_bits(sealing_key_bytes_, 8 * num_key_bytes);
+    return false;
+  }
+  service_sealing_key_.set_key_name("sealing-key");
+  service_sealing_key_.set_key_type(symmetric_key_algorithm_);
+  service_sealing_key_.set_key_format("vse-key");
+  service_sealing_key_.set_secret_key_bits(sealing_key_bytes_, 8 * num_key_bytes);
 
   return true;
 }
@@ -1219,8 +1222,10 @@ bool certifier::framework::cc_trust_data::certify_primary_domain() {
       return false;
   }
 
+#if 0
   // Debug: print primary certifier data
   certified_domains_[0]->print_certifiers_entry();
+#endif
   
 
   if (!certified_domains_[0]->certify_domain()) {
@@ -2136,8 +2141,10 @@ bool certifier::framework::server_dispatch(const string& host_name, int port,
 
   // Verify peer
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
-  // For debug: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
+#if 0
+  // Debug
   //SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+#endif
 
   while (1) {
 #ifdef DEBUG
