@@ -11,12 +11,13 @@
  9. Check enclave to enclave certification (without certifier service)
 10. Write/read/open/close_encrypted (DoD request)
 11. DCAP independent platform attestation for SGX (and TDX?)
-12. Nitro support
+12. Nitro
 13. TDX
 14. C++ --> Rust --> C++ (Microsoft suggestion)
-15. Add service API bindings instructions for secure channels. Like https://krpc.github.io/krpc/communication-protocols/tcpip.html.
-16. Sample ACL implementation for access over API's using program measurment as principle name.
-17. Investigate fragile mutual auth TLS connections (mostly done)
-18. Simple broad trust key example.
+15. Token issuing serevice example
+16. Add service API bindings instructions for secure channels. Like https://krpc.github.io/krpc/communication-protocols/tcpip.html.
+17. Sample ACL implementation for access over API's using program measurment as principle name.
+18. Investigate fragile mutual auth TLS connections (mostly done)
+19. Simple broad trust key example.
 
 As available:  Islet simulator and final verify, Keystone simulator and final verify
