@@ -190,7 +190,11 @@ void clear_sensitive_data() {
 }
 
 bool cold_init() {
-  return app_trust_data->cold_init(public_key_alg, symmetric_key_alg);
+  return app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
+                                   initialized_cert_size, initialized_cert,
+                                   "simple-app-home_domain", FLAGS_policy_host,
+                                   FLAGS_policy_port, FLAGS_server_app_host,
+                                   FLAGS_server_app_port);
 }
 
 bool warm_restart() {
@@ -199,7 +203,7 @@ bool warm_restart() {
 
 // TODO: replace with new cc_trust_data interface
 bool certify_me() {
-  return app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port);
+  return app_trust_data->certify_me();
 }
 
 void server_application(secure_authenticated_channel& channel) {
@@ -231,7 +235,7 @@ bool run_me_as_server() {
   server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
       app_trust_data->serialized_policy_cert_,
         app_trust_data->private_auth_key_,
-        app_trust_data->private_auth_key_.certificate(),
+        app_trust_data->serialized_primary_admissions_cert_,
         server_application);
   return true;
 }
@@ -272,7 +276,7 @@ bool run_me_as_client() {
   if (!channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
         app_trust_data->serialized_policy_cert_,
         app_trust_data->private_auth_key_,
-        app_trust_data->private_auth_key_.certificate())) {
+        app_trust_data->serialized_primary_admissions_cert_)) {
     printf("Can't init client app\n");
     return false;
   }
