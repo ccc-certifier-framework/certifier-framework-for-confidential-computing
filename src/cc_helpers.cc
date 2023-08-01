@@ -1446,13 +1446,13 @@ bool certifier::framework::certifiers::certify_domain() {
 #ifdef GRAMINE_CERTIFIER
   } else if (owner_->enclave_type_ == "gramine-enclave") {
     if (!gramine_platform_cert_initialized) {
-      printf("%s() error, line %d, gramine certs not initialized\n"
+      printf("%s() error, line %d, gramine certs not initialized\n",
          __func__, __LINE__);
       return false;
     }
     evidence* ev = platform_evidence.add_assertion();
     if (ev ==nullptr) {
-      printf("%s() error, line %d, Can't add to gramine platform evidence\n",)
+      printf("%s() error, line %d, Can't add to gramine platform evidence\n",
          __func__, __LINE__);
       return false;
     }
