@@ -1150,7 +1150,7 @@ bool certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim(signed_clai
     int size_out = 8192;
     byte out[size_out];
     if (!application_GetPlatformStatement(&size_out, out)) {
-      printf("%s() error, line %d, Can't get PlatformStatement from parent\n",
+      printf("%s() error, line %d, Can't get Platform Statement from parent\n",
          __func__, __LINE__);
       return false;
     }
@@ -1189,7 +1189,9 @@ bool certifier::framework::cc_trust_data::add_new_domain(const string& domain_na
     certified_domains_[num_certified_domains_++] = found;
   }
 
-printf("num_certified_domains_: %d\n", num_certified_domains_);
+#ifdef DEBUG
+  printf("num_certified_domains_: %d\n", num_certified_domains_);
+#endif
 
   return found->init_certifiers_data(domain_name,
       cert, host, port, service_host, service_port);
@@ -1517,7 +1519,7 @@ bool certifier::framework::certifiers::certify_domain() {
   attestation_user_data ud;
   if (owner_->purpose_ == "authentication") {
 #ifdef DEBUG
-    printf("\n---In certify_domainme\n");
+    printf("\n---In certify_domain\n");
     printf("Filling ud with public auth key:\n");
     print_key(owner_->public_auth_key_);
     printf("\n");
@@ -1669,7 +1671,6 @@ bool certifier::framework::certifiers::certify_domain() {
   } else if (owner_->purpose_ == "attestation") {
 
     // These should be set in cc_trust_data and ONLY for the primary domain
-    // Todo
     owner_->public_service_key_.set_certificate(response.artifact());
     owner_->private_service_key_.set_certificate(response.artifact());
 

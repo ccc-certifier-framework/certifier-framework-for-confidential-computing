@@ -153,8 +153,8 @@ void remove_kid(int pid) {
 bool measure_binary(const string& file, string* m) {
   int size = file_size(file.c_str());
   if (size <= 0) {
-    printf("%s() error, line %d, Can't get executable file\n",
-         __func__, __LINE__);
+    printf("%s() error, line %d, Can't get executable file %s\n",
+         __func__, __LINE__, file.c_str());
     return false;
   }
   byte* file_contents = (byte*)malloc(size);

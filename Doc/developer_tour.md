@@ -57,13 +57,13 @@ Here is an example of such a program and its interactions with the Certifier API
   string enclave_type("sev-enclave");
   string purpose("authentication");
 
-  // FLAGS_policy_host is ip address of certifier service
-  // FLAGS_policy_port is port for certifier service
-  // FLAGS_policy_store_file is the name of the store file
-  // FLAGS_data_dir is the directory for application files
-  // FLAGS_server_app_host is the ip address the app uses to provide services
-  // FLAGS_server_app_port is the port the app uses to provide services
-  // home_domain_name is the name of the security domain
+  // FLAGS_policy_host is IP address of Certifier Service.
+  // FLAGS_policy_port is port number for Certifier Service.
+  // FLAGS_policy_store_file is the name of the store file.
+  // FLAGS_data_dir is the directory for application files.
+  // FLAGS_server_app_host is the IP address the app uses to provide services.
+  // FLAGS_server_app_port is the port the app uses to provide services.
+  // home_domain_name is the name of the security domain.
 
   app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
 
@@ -84,7 +84,7 @@ Here is an example of such a program and its interactions with the Certifier API
           home_domain_name, FLAGS_policy_host, FLAGS_policy_port,
           FLAGS_server_app_host, FLAGS_server_app_port);
 
-  // Get certified (Getting "Admissions certificate" namiong your public key and measurement)
+  // Get certified (Getting "Admissions certificate" naming your public key and measurement)
   app_trust_data->certify_me();
 
 
