@@ -57,6 +57,9 @@ ColumnLimit:     80
 CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 3
+
+# This applies to, e.g., function arg declarations which may not fit on
+# 80-char line, so one has to indent the functions' parameter list.
 ContinuationIndentWidth: 4
 Cpp11BracedListStyle: true
 
