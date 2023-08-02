@@ -28,16 +28,24 @@
 #include <openssl/err.h>
 
 #include "certifier_framework.h"
+#include "certifier_utilities.h"
 
 using namespace certifier::framework;
+using namespace certifier::utilities;
 
 // operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(operation, "", "operation");
 
-DEFINE_string(policy_host, "localhost", "address for policy server");
-DEFINE_int32(policy_port, 8123, "port for policy server");
+DEFINE_string(primary_policy_host, "localhost", "address for policy server");
+DEFINE_int32(primary_policy_port, 8123, "port for policy server");
+
+DEFINE_string(secondary_policy_host, "localhost", "address for policy server");
+DEFINE_int32(secondary_policy_port, 8123, "port for policy server");
+
 DEFINE_string(data_dir, "./app1_data/", "directory for application data");
+
+DEFINE_string(secondary_cert_file, "server_policy_cert_file.bin", "directory for application data");
 
 DEFINE_string(server_app_host, "localhost", "address for app server");
 DEFINE_int32(server_app_port, 8124, "port for server app server");
@@ -53,10 +61,9 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 //    cold-init: This creates application keys and initializes the policy store.
 //    warm-restart:  This retrieves the policy store data.
 //    get-certifier: This obtains the app admission cert naming the public app key from the service.
-//    run-app-as-client: This runs the app as a client.
-//    run-app-as-server: This runs the app as server.
+//    run-app-as-client: This runs the app as a client
 
-#include "policy_key.cc"
+#include "client_policy_key.cc"
 cc_trust_data* app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
@@ -81,37 +88,19 @@ void client_application(secure_authenticated_channel& channel) {
   printf("SSL client read: %s\n", out.data());
 }
 
-
-void server_application(secure_authenticated_channel& channel) {
-
-  printf("Server peer id is %s\n", channel.peer_id_.c_str());
-  if (channel.peer_cert_ != nullptr) {
-    printf("Server peer cert is:\n");
-#ifdef DEBUG
-    X509_print_fp(stdout, channel.peer_cert_);
-#endif
-  }
-
-  // Read message from client over authenticated, encrypted channel
-  string out;
-  int n = channel.read(&out);
-  printf("SSL server read: %s\n", (const char*) out.data());
-
-  // Reply over authenticated, encrypted channel
-  const char* msg = "Hi from your secret server\n";
-  channel.write(strlen(msg), (byte*)msg);
-}
-
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf("example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
-    printf("\t --data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
-    printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
-    printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server\n");
+    printf("multidomain_client_app.exe --print_all=true|false --operation=op\n");
+    printf("\t--primary_policy_host=policy-host-address --primary_policy_port=policy-host-port\n");
+    printf("\t--secondary_policy_host=policy-host-address --secondary_policy_port=policy-host-port\n");
+    printf("\t--data_dir=-directory-for-app-data\n");
+    printf("\t--server_app_host=my-server-host-address --server_app_port=server-host-port\n");
+    printf("\t--policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
+    printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client\n");
     return 0;
   }
 
@@ -163,9 +152,9 @@ int main(int an, char** av) {
                                    symmetric_key_alg,
                                    initialized_cert_size,
                                    initialized_cert,
-                                   "simple-app-home_domain",
-                                   FLAGS_policy_host,
-                                   FLAGS_policy_port,
+                                   "simple-app-client-home-domain",
+                                   FLAGS_primary_policy_host,
+                                   FLAGS_primary_policy_port,
                                    FLAGS_server_app_host,
                                    FLAGS_server_app_port)) {
       printf("%s() error, line %d, cold-init failed\n",
@@ -184,12 +173,20 @@ int main(int an, char** av) {
     }
 
   } else if (FLAGS_operation == "get-certifier") {
+
+    // Certifier in home domain and server domain
+
     if (!app_trust_data->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n",
         __func__, __LINE__);
       ret = 1;
       goto done;
     }
+
+    printf("Certifying primary domain\n");
+    certifiers* cd = app_trust_data->certified_domains_[0];
+    cd->print_certifiers_entry();
+
     if (!app_trust_data->certify_me()) {
       printf("%s() error, line %d, certification failed\n",
         __func__, __LINE__);
@@ -197,9 +194,51 @@ int main(int an, char** av) {
       goto done;
     }
     // Debug
-    app_trust_data->print_trust_data();
+    //app_trust_data->print_trust_data();
 
+    // now server domain
+    string server_domain_name = "simple-app-server-home-domain";
+    string server_cert_file_name(FLAGS_data_dir);
+    server_cert_file_name.append(FLAGS_secondary_cert_file);
+    string server_domain_cert;
+    if (!read_file_into_string(server_cert_file_name, &server_domain_cert) ) {
+      printf("%s() error, line %d, Can't read secondary cert file %s\n",
+        __func__, __LINE__, FLAGS_secondary_cert_file.c_str());
+      ret = 1;
+      goto done;
+    }
+    int server_port= FLAGS_secondary_policy_port;
+    string server_host = FLAGS_secondary_policy_host;
+    string server_service_host = FLAGS_server_app_host;
+    int server_service_port = FLAGS_server_app_port;
+
+    if (!app_trust_data->add_or_update_new_domain(server_domain_name,
+                                                  server_domain_cert,
+                                                  server_host,
+                                                  server_port,
+	                                          server_service_host,
+                                                  server_service_port))	{
+      printf("%s() error, line %d, Can't add_or_update_new_domain\n",
+        __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+
+    printf("Certifying secondary domain\n");
+    cd = app_trust_data->certified_domains_[1];
+    cd->print_certifiers_entry();
+
+
+    if (!app_trust_data->certify_secondary_domain(server_domain_name)) {
+      printf("%s() error, line %d, secondary certification failed\n",
+        __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
   } else if (FLAGS_operation == "run-app-as-client") {
+
+    printf("Running App as client\n");
+
     string my_role("client");
     secure_authenticated_channel channel(my_role);
 
@@ -210,7 +249,6 @@ int main(int an, char** av) {
       goto done;
     }
 
-    printf("Running App as client\n");
     if (!app_trust_data->cc_auth_key_initialized_ ||
         !app_trust_data->cc_policy_info_initialized_) {
       printf("%s() error, line %d, trust data not initialized\n",
@@ -218,18 +256,26 @@ int main(int an, char** av) {
       ret = 1;
       goto done;
     }
+    printf("warm restart completed\n");
 
-    if (!app_trust_data->primary_admissions_cert_valid_) {
-      printf("%s() error, line %d, primary admissions cert not valid\n",
+    // Use certified_domain[1] here
+    certifiers* cd = app_trust_data->certified_domains_[1];
+    if (!cd->is_certified_) {
+      printf("%s() error, line %d, secondary admissions cert not valid\n",
         __func__, __LINE__);
       ret = 1;
       goto done;
     }
-    if (!channel.init_client_ssl(FLAGS_server_app_host,
-                                 FLAGS_server_app_port,
-                                 app_trust_data->serialized_policy_cert_,
+
+    printf("Certifiers data for secondary domain:\n");
+    cd->print_certifiers_entry();
+    printf("\n");
+
+    if (!channel.init_client_ssl(cd->service_host_,
+                                 cd->service_port_,
+                                 cd->domain_policy_cert_,
                                  app_trust_data->private_auth_key_,
-                                 app_trust_data->serialized_primary_admissions_cert_)) {
+                                 cd->admissions_cert_)) {
       printf("%s() error, line %d, Can't init client app\n",
         __func__, __LINE__);
       ret = 1;
@@ -239,22 +285,10 @@ int main(int an, char** av) {
   // This is the actual application code.
   client_application(channel);
   } else if (FLAGS_operation == "run-app-as-server") {
-    if (!app_trust_data->warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n",
-        __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-    printf("Running App as server\n");
-    if (!server_dispatch(FLAGS_server_app_host,
-                         FLAGS_server_app_port,
-                         app_trust_data->serialized_policy_cert_,
-                         app_trust_data->private_auth_key_,
-                         app_trust_data->serialized_primary_admissions_cert_,
-                         server_application)) {
-      ret = 1;
-      goto done;
-    }
+    printf("%s() error, line %d, client only app\n",
+      __func__, __LINE__);
+    ret = 1;
+    goto done;
   } else {
     printf("%s() error, line %d, Unknown operation\n",
         __func__, __LINE__);

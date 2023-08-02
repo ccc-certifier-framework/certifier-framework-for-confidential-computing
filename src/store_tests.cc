@@ -149,8 +149,6 @@ bool test_init_and_recover_containers(bool print_all) {
   policy_key.set_key_format("vse-key");
   if (!private_key_to_public_key(policy_key, &policy_pk))
     return false;
-  ps.policy_key_.CopyFrom(policy_key);
-  ps.policy_key_valid_ = true;
   string serialized_store;
   if (!ps.Serialize(&serialized_store))
     return false;
@@ -206,14 +204,6 @@ bool test_init_and_recover_containers(bool print_all) {
   if (!recovered_ps.Deserialize(recovered_serialized_store))
     return false;
 
-  const key_message* recovered_policy_key= recovered_ps.get_policy_key();
-  if (recovered_policy_key == nullptr)
-    return false;
-  if (!same_key(policy_key, *recovered_policy_key))
-    return false;
-  if (print_all) {
-    printf("test_init_and_recover_containers succeeded\n");
-  }
   return true;
 }
 
@@ -241,18 +231,6 @@ bool test_policy_store(bool print_all) {
 
   pk.set_not_before(s_nb);
   pk.set_not_after(s_na);
-
-  if (!ps.set_policy_key(pk))
-    return false;
-
-  const key_message* pkt = ps.get_policy_key();
-  if (pkt == nullptr)
-    return false;
-  if (!same_key(pk, *pkt))
-    return false;
-  if (print_all) {
-    printf("policy-key store/retrieve works\n");
-  }
 
   if (ps.get_num_entries() != 0) {
     printf("Error: policy-key store number of entries should be 0, but is %d\n",

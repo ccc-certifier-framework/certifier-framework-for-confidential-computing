@@ -57,34 +57,45 @@ Here is an example of such a program and its interactions with the Certifier API
   string enclave_type("sev-enclave");
   string purpose("authentication");
 
-  string store_file(FLAGS_data_dir);
-  store_file.append(FLAGS_policy_store_file);
+  // FLAGS_policy_host is IP address of Certifier Service.
+  // FLAGS_policy_port is port number for Certifier Service.
+  // FLAGS_policy_store_file is the name of the store file.
+  // FLAGS_data_dir is the directory for application files.
+  // FLAGS_server_app_host is the IP address the app uses to provide services.
+  // FLAGS_server_app_port is the port the app uses to provide services.
+  // home_domain_name is the name of the security domain.
+
   app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
 
   // Initialize sev data
   app_trust_data->initialize_sev_enclave_data(FLAGS_ark_cert_file,
         FLAGS_ask_cert_file, FLAGS_vcek_cert_file);
 
+  // init policy key from standard location
+  app_trust_data->init_policy_key(initialized_cert_size, initialized_cert);
+
   // Standard algorithms for the enclave
   string public_key_alg("rsa-2048");
   string symmetric_key_alg("aes-256-cbc-hmac-sha256");
-  string hash_alg("sha-256");
-  string hmac_alg("sha-256-hmac");
 
   // Initialize keys
-  app_trust_data->cold_init(public_key_alg,
-        symmetric_key_alg, hash_alg, hmac_alg);
+  app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
+          initialized_cert_size, initialized_cert,
+          home_domain_name, FLAGS_policy_host, FLAGS_policy_port,
+          FLAGS_server_app_host, FLAGS_server_app_port);
 
-  // Get certified (Getting "Admissions certificate" namiong your public key and measurement)
-  app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port);
+  // Get certified (Getting "Admissions certificate" naming your public key and measurement)
+  app_trust_data->certify_me();
 
 
   // Open secure channel
-  string my_role("client");
+  string my_role("client");  // or "server"
   secure_authenticated_channel channel(my_role);
   channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
           app_trust_data->serialized_policy_cert_, app_trust_data->private_auth_key_,
-          app_trust_data->private_auth_key_.certificate());
+          app_trust_data->serialized_primary_admissions_cert_);
+
+  Now just read or write over channel.
 ```
 
 The Certifier Service evaluates the evidence (including the attestation) against the

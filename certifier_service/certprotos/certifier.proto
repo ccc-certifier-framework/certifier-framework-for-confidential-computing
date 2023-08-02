@@ -258,34 +258,6 @@ message trust_response_message {
   optional bytes artifact                   = 4;
 };
 
-message storage_info_message {
-  optional string storage_type              = 1;
-  optional string storage_descriptor        = 2;
-  optional string address                   = 3;
-  optional key_message storage_key          = 4;
-  optional string tag                       = 5;
-};
-
-message channel_key_message {
-  optional string tag                       = 1;
-  optional key_message auth_key             = 2;
-};
-
-message trusted_service_message {
-  optional string trusted_service_address   = 1;
-  optional key_message trusted_service_key  = 2;
-  optional string tag                       = 3;
-};
-
-message tagged_claim {
-  optional string tag                       = 1;
-  optional claim_message claim              = 2;
-};
-
-message tagged_claims_sequence {
-  repeated tagged_claim claims              = 1;
-};
-
 message policy_store_entry {
   optional string tag                                       = 1;
   optional string type                                      = 2;
@@ -293,9 +265,8 @@ message policy_store_entry {
 };
 
 message policy_store_message {
-  optional key_message policy_key                           = 1;
-  optional int32 max_ents                                   = 2;
-  repeated policy_store_entry entries                       = 3;
+  optional int32 max_ents                                   = 1;
+  repeated policy_store_entry entries                       = 2;
 };
 
 message claims_sequence {
@@ -336,7 +307,17 @@ message app_response {
   repeated bytes args                       = 3;
 };
 
-message tagged_blob_message {
-  optional string tag                       = 1;
-  optional bytes b                          = 2;
+message certifier_entry {
+  optional string domain_name               = 1;
+  optional bytes domain_cert                = 2;
+  optional string domain_host               = 3;
+  optional int32 domain_port                = 4;
+  optional bool is_certified                = 6;
+  optional bytes admissions_cert            = 7;
+  optional string service_host              = 8;
+  optional int32 service_port               = 9;
+};
+
+message certifiers_message {
+  repeated certifier_entry my_certifiers    = 1;
 };

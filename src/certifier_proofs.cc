@@ -168,12 +168,14 @@ bool verify_signed_assertion_and_extract_clause(const key_message& key,
   serialized_claim_string.assign((char*)sc.serialized_claim_message().data(),
         (int)sc.serialized_claim_message().size());
   if (!asserted_claim.ParseFromString(serialized_claim_string)) {
-    printf("verify_signed_assertion_and_extract_clause: can't deserialize\n");
+    printf("%s() error, line %d, verify_signed_assertion_and_extract_clause: can't deserialize\n",
+      __func__, __LINE__);
     return false;
   }
 
   if (!asserted_claim.has_claim_format()) {
-    printf("verify_signed_assertion_and_extract_clause: no claim format\n");
+    printf("%s() error, line %d, verify_signed_assertion_and_extract_clause: no claim format\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -184,12 +186,14 @@ bool verify_signed_assertion_and_extract_clause(const key_message& key,
     serialized_vse_string.assign((char*)asserted_claim.serialized_claim().data(),
         (int)asserted_claim.serialized_claim().size());
     if (!asserted_vse.ParseFromString(serialized_vse_string)) {
-      printf("verify_signed_assertion_and_extract_clause: can't deserialize vse\n");
+      printf("%s() error, line %d, verify_signed_assertion_and_extract_clause: can't deserialize vse\n",
+        __func__, __LINE__);
       return false;
     }
     cl->CopyFrom(asserted_vse);
   } else {
-    printf("verify_signed_assertion_and_extract_clause: only vse format supported\n");
+    printf("%s() error, line %d, verify_signed_assertion_and_extract_clause: only vse format supported\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -204,13 +208,15 @@ bool add_fact_from_signed_claim(const signed_claim_message& signed_claim,
   vse_clause tcl;
   if (verify_signed_assertion_and_extract_clause(k, signed_claim, &tcl)) {
     if (tcl.verb() != "says" || tcl.subject().entity_type() != "key") {
-      printf("Add_fact_from_signed_claim: bad subject or verb\n");
+      printf("%s() error, line %d, Add_fact_from_signed_claim: bad subject or verb\n",
+        __func__, __LINE__);
       print_vse_clause(tcl);
       printf("\n");
       return false;
     }
     if (!same_key(k, tcl.subject().key())) {
-      printf("Add_fact_from_signed_claim: Different key\n");
+      printf("%s() error, line %d, Add_fact_from_signed_claim: Different key\n",
+        __func__, __LINE__);
       return false;
     }
     vse_clause* c = already_proved->add_proved();
@@ -226,11 +232,13 @@ bool get_vse_clause_from_signed_claim(const signed_claim_message& scm, vse_claus
         scm.serialized_claim_message().size());
   claim_message cm;
   if (!cm.ParseFromString(serialized_cl)) {
-    printf("get_vse_clause_from_signed_claim: can't parse claim\n");
+    printf("%s() error, line %d, get_vse_clause_from_signed_claim: can't parse claim\n",
+      __func__, __LINE__);
     return false;
   }
   if (cm.claim_format() != "vse-clause") {
-    printf("get_vse_clause_from_signed_claim: claim is not vse-format claim\n");
+    printf("%s() error, line %d, get_vse_clause_from_signed_claim: claim is not vse-format claim\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -238,7 +246,8 @@ bool get_vse_clause_from_signed_claim(const signed_claim_message& scm, vse_claus
   vse_cl_str.assign((char*)cm.serialized_claim().data(), cm.serialized_claim().size());
   vse_clause vse;
   if (!c->ParseFromString(vse_cl_str)) {
-    printf("get_vse_clause_from_signed_claim: can't parse vse clause\n");
+    printf("%s() error, line %d, get_vse_clause_from_signed_claim: can't parse vse clause\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -332,27 +341,32 @@ bool construct_vse_attestation_statement(const key_message& attest_key,
   entity_message attest_key_entity;
   entity_message enclave_key_entity;
   if (!make_key_entity(attest_key, &attest_key_entity)) {
-    printf("construct_vse_attestation_statement: Can't make key entity 1\n");
+    printf("%s() error, line %d, construct_vse_attestation_statement: Can't make key entity 1\n",
+      __func__, __LINE__);
     return false;
   }
   if (!make_key_entity(enclave_key, &enclave_key_entity)) {
-    printf("construct_vse_attestation_statement: Can't make key entity 2\n");
+    printf("%s() error, line %d, construct_vse_attestation_statement: Can't make key entity 2\n",
+      __func__, __LINE__);
     return false;
   }
   if (!make_measurement_entity(measurement, &measurement_entity)) {
-    printf("construct_vse_attestation_statement: Can't make measurement entity\n");
+    printf("%s() error, line %d, construct_vse_attestation_statement: Can't make measurement entity\n",
+      __func__, __LINE__);
     return false;
   }
 
   vse_clause auth_key_speaks_for_measurement;
   if (!make_simple_vse_clause(enclave_key_entity, s2, measurement_entity,
           &auth_key_speaks_for_measurement)) {
-    printf("construct_vse_attestation_statement: Can't make simple clause\n");
+    printf("%s() error, line %d, construct_vse_attestation_statement: Can't make simple clause\n",
+      __func__, __LINE__);
     return false;
   }
   if (!make_indirect_vse_clause(attest_key_entity, s1, auth_key_speaks_for_measurement,
         vse_attest_clause)) {
-    printf("construct_vse_attestation_statement: Can't make indirect clause\n");
+    printf("%s() error, line %d, construct_vse_attestation_statement: Can't make indirect clause\n",
+      __func__, __LINE__);
     return false;
   }
   return true;
@@ -383,11 +397,13 @@ bool construct_what_to_say(string& enclave_type,
 
   attestation_user_data ud;
   if (!make_attestation_user_data(enclave_type, enclave_pk, &ud)) {
-    printf("construct_what_to_say: make_attestation_user_data failed\n");
+    printf("%s() error, line %d, construct_what_to_say: make_attestation_user_data failed\n",
+      __func__, __LINE__);
     return false;
   }
   if (!ud.SerializeToString(what_to_say)) {
-    printf("construct_what_to_say: ud.SerializeToString failed\n");
+    printf("%s() error, line %d, construct_what_to_say: ud.SerializeToString failed\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -401,7 +417,8 @@ bool sign_report(const string& type, const string& to_be_signed, const string& s
   signed_report report;
   key_message public_signing_alg;
   if (!private_key_to_public_key(signing_key, &public_signing_alg)) {
-    printf("sign_report: private_key_to_public_key failed\n");
+    printf("%s() error, line %d, sign_report: private_key_to_public_key failed\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -412,87 +429,102 @@ bool sign_report(const string& type, const string& to_be_signed, const string& s
 
   int size = cipher_block_byte_size(signing_alg.c_str());
   if (size < 0) {
-    printf("sign_report: Bad cipher\n");
+    printf("%s() error, line %d, sign_report: Bad cipher\n",
+      __func__, __LINE__);
     return false;
   }
 
   byte signature[size];
   if (signing_alg == "rsa-2048-sha256-pkcs-sign") {
     if (signing_key.key_type() != "rsa-2048-private") {
-      printf("sign_report: Wrong key\n");
+      printf("%s() error, line %d, sign_report: Wrong key\n",
+        __func__, __LINE__);
       return false;
     }
     RSA* rsa_key = RSA_new();
     if (!key_to_RSA(signing_key, rsa_key)) {
-      printf("sign_report: key_to_RSA failed\n");
+      printf("%s() error, line %d, sign_report: key_to_RSA failed\n",
+        __func__, __LINE__);
       return false;
     }
     if (!rsa_sign("sha-256", rsa_key, to_be_signed.size(), (byte*)to_be_signed.data(),
             &size, signature)) {
-      printf("sign_report: rsa_sign failed\n");
+      printf("%s() error, line %d, sign_report: rsa_sign failed\n",
+        __func__, __LINE__);
       RSA_free(rsa_key);
       return false;
     }
     RSA_free(rsa_key);
   } else if (signing_alg == "rsa-4096-sha384-pkcs-sign") {
     if (signing_key.key_type() != "rsa-4096-private") {
-      printf("sign_report: Wrong key\n");
+      printf("%s() error, line %d, sign_report: Wrong key\n",
+        __func__, __LINE__);
       return false;
     }
     RSA* rsa_key = RSA_new();
     if (!key_to_RSA(signing_key, rsa_key)) {
-      printf("sign_report: key_to_RSA failed\n");
+      printf("%s() error, line %d, sign_report: key_to_RSA failed\n",
+        __func__, __LINE__);
       return false;
     }
     if (!rsa_sign("sha-384", rsa_key, to_be_signed.size(), (byte*)to_be_signed.data(),
             &size, signature)) {
-      printf("sign_report: rsa_sign failed\n");
+      printf("%s() error, line %d, sign_report: rsa_sign failed\n",
+        __func__, __LINE__);
       RSA_free(rsa_key);
       return false;
     }
     RSA_free(rsa_key);
   } else if (signing_alg == "rsa-3072-sha384-pkcs-sign") {
     if (signing_key.key_type() != "rsa-3072-private") {
-      printf("sign_report: Wrong key\n");
+      printf("%s() error, line %d, sign_report: Wrong key\n",
+        __func__, __LINE__);
       return false;
     }
     RSA* rsa_key = RSA_new();
     if (!key_to_RSA(signing_key, rsa_key)) {
-      printf("sign_report: key_to_RSA failed\n");
+      printf("%s() error, line %d, sign_report: key_to_RSA failed\n",
+        __func__, __LINE__);
       return false;
     }
     if (!rsa_sign("sha-384", rsa_key, to_be_signed.size(), (byte*)to_be_signed.data(),
             &size, signature)) {
-      printf("sign_report: rsa_sign failed\n");
+      printf("%s() error, line %d, sign_report: rsa_sign failed\n",
+        __func__, __LINE__);
       RSA_free(rsa_key);
       return false;
     }
     RSA_free(rsa_key);
   } else if (signing_alg == "ecc-384-sha384-pkcs-sign") {
     if (signing_key.key_type() != "ecc-384-private") {
-      printf("sign_report: Wrong key\n");
+      printf("%s() error, line %d, sign_report: Wrong key\n",
+        __func__, __LINE__);
       return false;
     }
     EC_KEY* ecc_key = key_to_ECC(signing_key);
     if (ecc_key == nullptr) {
-      printf("sign_report: key_to_ECC failed\n");
+      printf("%s() error, line %d, sign_report: key_to_ECC failed\n",
+        __func__, __LINE__);
       return false;
     }
     if (!ecc_sign("sha-384", ecc_key, to_be_signed.size(), (byte*)to_be_signed.data(),
             &size, signature)) {
-      printf("sign_report: ecc_sign failed\n");
+      printf("%s() error, line %d, sign_report: ecc_sign failed\n",
+        __func__, __LINE__);
       EC_KEY_free(ecc_key);
       return false;
     }
     EC_KEY_free(ecc_key);
   } else {
-    printf("sign_report: unknown signing alg\n");
+    printf("%s() error, line %d, sign_report: unknown signing alg\n",
+      __func__, __LINE__);
     return false;
   }
 
   report.set_signature((byte*)signature, size);
   if (!report.SerializeToString(serialized_signed_report)) {
-    printf("sign_report: Can't serialize report\n");
+    printf("%s() error, line %d, sign_report: Can't serialize report\n",
+      __func__, __LINE__);
     return false;
   }
   return true;
@@ -504,12 +536,14 @@ bool verify_report(string& type, string& serialized_signed_report,
 
   signed_report sr;
   if (!sr.ParseFromString(serialized_signed_report)) {
-    printf("verify_report: Can't parse serialized_signed_report\n");
+    printf("%s() error, line %d, verify_report: Can't parse serialized_signed_report\n",
+      __func__, __LINE__);
     return false;
   }
 
   if (sr.report_format() != "vse-attestation-report") {
-    printf("verify_report: Format should be vse-attestation-report\n");
+    printf("%s() error, line %d, verify_report: Format should be vse-attestation-report\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -517,7 +551,8 @@ bool verify_report(string& type, string& serialized_signed_report,
   if (sr.signing_algorithm() == "rsa-2048-sha256-pkcs-sign") {
     RSA* rsa_key = RSA_new();
     if (!key_to_RSA(signer_key, rsa_key)) {
-      printf("verify_report: key_to_RSA failed\n");
+      printf("%s() error, line %d, verify_report: key_to_RSA failed\n",
+        __func__, __LINE__);
       return false;
     }
     int size = sr.signature().size();
@@ -528,7 +563,8 @@ bool verify_report(string& type, string& serialized_signed_report,
   } else if (sr.signing_algorithm() == "rsa-4096-sha384-pkcs-sign") {
     RSA* rsa_key = RSA_new();
     if (!key_to_RSA(signer_key, rsa_key)) {
-      printf("verify_report: key_to_RSA failed\n");
+      printf("%s() error, line %d, verify_report: key_to_RSA failed\n",
+        __func__, __LINE__);
       return false;
     }
     int size = sr.signature().size();
@@ -539,7 +575,8 @@ bool verify_report(string& type, string& serialized_signed_report,
   } else if (sr.signing_algorithm() == "rsa-3072-sha384-pkcs-sign") {
     RSA* rsa_key = RSA_new();
     if (!key_to_RSA(signer_key, rsa_key)) {
-      printf("verify_report: key_to_RSA failed\n");
+      printf("%s() error, line %d, verify_report: key_to_RSA failed\n",
+        __func__, __LINE__);
       return false;
     }
     int size = sr.signature().size();
@@ -550,7 +587,8 @@ bool verify_report(string& type, string& serialized_signed_report,
   } else if (sr.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
     EC_KEY* ecc_key = key_to_ECC(signer_key);
     if (ecc_key == nullptr) {
-      printf("verify_report: key_to_RSA failed\n");
+      printf("%s() error, line %d, verify_report: key_to_RSA failed\n",
+        __func__, __LINE__);
       return false;
     }
     int size = sr.signature().size();
@@ -559,7 +597,8 @@ bool verify_report(string& type, string& serialized_signed_report,
             size, (byte*)sr.signature().data());
     EC_KEY_free(ecc_key);
   } else {
-    printf("verify_report: Unsupported algorithm\n");
+    printf("%s() error, line %d, verify_report: Unsupported algorithm\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -782,7 +821,8 @@ bool get_platform_from_sev_attest(const sev_attestation_message& sev_att,
   ent->mutable_platform_ent()->set_has_key(false);
   if (!get_properties_from_sev_attest(sev_att,
       ent->mutable_platform_ent()->mutable_props())) {
-    printf("get_platform_from_sev_attest: Can't get properties\n");
+    printf("%s() error, line %d, get_platform_from_sev_attest: Can't get properties\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -795,43 +835,50 @@ bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& se
 
   properties props;
   if (!get_properties_from_sev_attest(sev_att, &props)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't get properties\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't get properties\n",
+      __func__, __LINE__);
     return false;
   }
 
   attestation_user_data ud;
   if (!ud.ParseFromString(sev_att.what_was_said())) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't parse attestation user data\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't parse attestation user data\n",
+      __func__, __LINE__);
     return false;
   }
 
   entity_message m_ent;
   if (!get_measurement_from_sev_attest(sev_att, &m_ent)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't get measurement from sev attest\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't get measurement from sev attest\n",
+      __func__, __LINE__);
     return false;
   }
 
   entity_message auth_ent;
   if (!make_key_entity(ud.enclave_key(), &auth_ent)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't make measurement entity\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't make measurement entity\n",
+      __func__, __LINE__);
     return false;
   }
 
   platform current_platform;
   string type("amd-sev-snp");
   if (!make_platform(type, props, &vcek_key, &current_platform)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't make platform\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't make platform\n",
+      __func__, __LINE__);
     return false;
   }
 
   environment env;
   entity_message env_ent;
   if (!make_environment(current_platform, m_ent.measurement().data(), &env)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't make environment\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't make environment\n",
+      __func__, __LINE__);
     return false;
   }
   if (!make_environment_entity(env, &env_ent)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't make environment entity\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't make environment entity\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -841,31 +888,36 @@ bool add_vse_proved_statements_from_sev_attest(const sev_attestation_message& se
 
   entity_message vcek_ent;
   if (!make_key_entity(vcek_key, &vcek_ent)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't make vcek entity\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't make vcek entity\n",
+      __func__, __LINE__);
     return false;
   }
 
   vse_clause c0;
   if (!make_unary_vse_clause(env_ent, is_env_verb, &c0)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't make environment clause\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't make environment clause\n",
+      __func__, __LINE__);
     return false;
   }
 
   vse_clause* cl1 = already_proved->add_proved();
   if (!make_indirect_vse_clause(vcek_ent, says_verb, c0, cl1)) {
-    printf("add_vse_proved_statements_from_sev_attest: can't make says environment clause\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: can't make says environment clause\n",
+      __func__, __LINE__);
     return false;
   }
 
   vse_clause c1;
   if (!make_simple_vse_clause(auth_ent, speaks_verb, env_ent, &c1)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't make speaks-for clause\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't make speaks-for clause\n",
+      __func__, __LINE__);
     return false;
   }
 
   vse_clause* cl2 = already_proved->add_proved();
   if (!make_indirect_vse_clause(vcek_ent, says_verb, c1, cl2)) {
-    printf("add_vse_proved_statements_from_sev_attest: Can't make says speaks-for\n");
+    printf("%s() error, line %d, add_vse_proved_statements_from_sev_attest: Can't make says speaks-for\n",
+      __func__, __LINE__);
     return false;
   }
   return true;
@@ -903,7 +955,8 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       t_str.assign((char*)evp.fact_assertion(i).serialized_evidence().data(),
           evp.fact_assertion(i).serialized_evidence().size());
       if (!sc.ParseFromString(t_str)) {
-        printf("init_proved_statements: Can't parse serialized evidence\n");
+        printf("%s() error, line %d, init_proved_statements: Can't parse serialized evidence\n",
+        __func__, __LINE__);
         return false;
       }
 
@@ -911,22 +964,26 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       const key_message& km= sc.signing_key();
 
       if (!verify_signed_assertion_and_extract_clause(km, sc, &to_add)) {
-        printf("init_proved_statements: signed claim %d failed\n", i);
+        printf("%s() error, line %d, init_proved_statements: signed claim %d failed\n",
+          __func__, __LINE__, i);
         return false;
       }
       // We can only add Key says statements and we must make
       // sure the subject of says is the signing key
       if (!to_add.has_subject() || !to_add.has_verb() || to_add.verb() != "says") {
-        printf("init_proved_statements: added clause has wrong structure (1)\n");
+        printf("%s() error, line %d, init_proved_statements: added clause has wrong structure (1)\n",
+          __func__, __LINE__);
         return false;
       }
       if (to_add.subject().entity_type() != "key") {
-        printf("init_proved_statements: added clause has wrong structure (2)\n");
+        printf("%s() error, line %d, init_proved_statements: added clause has wrong structure (2)\n",
+          __func__, __LINE__);
         return false;
       }
       const key_message& ks = to_add.subject().key();
       if (!same_key(km, ks)) {
-        printf("init_proved_statements: Wrong key signed message\n");
+        printf("%s() error, line %d, init_proved_statements: Wrong key signed message\n",
+          __func__, __LINE__);
         return false;
       }
       vse_clause* cl_to_insert = already_proved->add_proved();
@@ -941,7 +998,8 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       if (!oe_Verify((byte *)evp.fact_assertion(i).serialized_evidence().data(),
                      evp.fact_assertion(i).serialized_evidence().size(),
                      user_data, &user_data_size, measurement_out, &measurement_out_size)) {
-        printf("init_proved_statements: oe_Verify failed\n");
+        printf("%s() error, line %d, init_proved_statements: oe_Verify failed\n",
+          __func__, __LINE__);
         return false;
       }
 
@@ -950,26 +1008,30 @@ bool init_proved_statements(key_message& pk, evidence_package& evp,
       ud_str.assign((char*)user_data, user_data_size);
       attestation_user_data ud;
       if (!ud.ParseFromString(ud_str))
-        printf("init_proved_statements: Can't parse user data\n");
+        printf("%s() error, line %d, init_proved_statements: Can't parse user data\n",
+          __func__, __LINE__);
         return false;
 
       // construct vse-clause (key speaks-for measurement)
       entity_message* key_ent = new(entity_message);
       if (!make_key_entity(ud.enclave_key(), key_ent)) {
-        printf("init_proved_statements: make_key_entity failed\n");
+        printf("%s() error, line %d, init_proved_statements: make_key_entity failed\n",
+          __func__, __LINE__);
         return false;
       }
       entity_message* measurement_ent = new(entity_message);
       string m;
       m.assign((char*)measurement_out, measurement_out_size);
       if (!make_measurement_entity(m, measurement_ent)) {
-        printf("init_proved_statements: make_measurement_entity failed\n");
+        printf("%s() error, line %d, init_proved_statements: make_measurement_entity failed\n",
+          __func__, __LINE__);
         return false;
       }
       vse_clause* cl_to_insert = already_proved->add_proved();
       string sf("speaks-for");
       if (!make_simple_vse_clause(*key_ent, sf, *measurement_ent, cl_to_insert)) {
-        printf("init_proved_statements: make_simple_vse_clause failed\n");
+        printf("%s() error, line %d, init_proved_statements: make_simple_vse_clause failed\n",
+          __func__, __LINE__);
         return false;
       }
 #endif
@@ -1927,11 +1989,13 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& pur
 #endif
 
   if (already_proved->proved_size() != 7) {
-    printf("construct_proof_from_sev_evidence: bad size\n");
+    printf("%s() error, line %d, construct_proof_from_sev_evidence: bad size\n",
+      __func__, __LINE__);
     return false;
   }
   if (!already_proved->proved(2).has_clause() || !already_proved->proved(2).clause().has_subject()) {
-    printf("construct_proof_from_sev_evidence: ill formed statement 2\n");
+    printf("%s() error, line %d, construct_proof_from_sev_evidence: ill formed statement 2\n",
+      __func__, __LINE__);
     return false;
   }
   const entity_message& enclave_key = already_proved->proved(4).clause().subject();
@@ -1962,7 +2026,8 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& pur
 
   // "policyKey is-trusted" AND "policyKey says measurement is-trusted" --> "measurement is-trusted"
   if (!already_proved->proved(3).has_clause()) {
-    printf("construct_proof_from_sev_evidence: Error 3\n");
+    printf("%s() error, line %d, construct_proof_from_sev_evidenc error\n",
+      __func__, __LINE__);
     return false;
   }
   ps = pf->add_steps();
@@ -1975,7 +2040,8 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& pur
   // "ark-key is-trusted-for-attestation" AND "ark-key says ask-key is-trusted-for-attestation"
   //      --> "ask-key is-trusted-for-attestation"
   if (!already_proved->proved(3).has_clause()) {
-    printf("construct_proof_from_sev_evidence: Error 4\n");
+    printf("%s() error, line %d, construct_proof_from_sev_evidenc error\n",
+      __func__, __LINE__);
     return false;
   }
   ps = pf->add_steps();
@@ -1988,7 +2054,8 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& pur
   // "ask-key is-trusted-for-attestation" AND "ask-key says vcek-key is-trusted-for-attestation"
   //      --> "vcek-key is-trusted-for-attestation"
   if (!already_proved->proved(3).has_clause()) {
-    printf("construct_proof_from_sev_evidence: Error 4\n");
+    printf("%s() error, line %d, construct_proof_from_sev_evidenc error\n",
+      __func__, __LINE__);
     return false;
   }
   ps = pf->add_steps();
@@ -2001,7 +2068,8 @@ bool construct_proof_from_sev_evidence(key_message& policy_pk, const string& pur
   // "vcek-Key is-trusted-for-attestation" AND  "vcek-Key says enclaveKey speaks-for measurement"
   //      --> "enclaveKey speaks-for measurement"
   if (!already_proved->proved(5).has_clause()) {
-    printf("construct_proof_from_sev_evidence: Error 5\n");
+    printf("%s() error, line %d, construct_proof_from_sev_evidenc error\n",
+      __func__, __LINE__);
     return false;
   }
   ps = pf->add_steps();
@@ -2037,12 +2105,14 @@ bool construct_proof_from_sdk_evidence(key_message& policy_pk, const string& pur
   //    "policyKey says measurement is-trusted"
 
   if (!already_proved->proved(2).has_subject()) {
-    printf("Error 1, construct_proof_from_sdk_evidence\n");
+    printf("%s() error, line %d, construct_proof_from_sdk_evidence error\n",
+      __func__, __LINE__);
     return false;
   }
   string it("is-trusted");
   if (!make_unary_vse_clause(already_proved->proved(2).subject(), it, to_prove)) {
-      printf("Error 2, construct_proof_from_sdk_evidence\n");
+      printf("%s() error, line %d, construct_proof_from_sdk_evidence error\n",
+        __func__, __LINE__);
       return false;
   }
 
@@ -2078,25 +2148,31 @@ bool construct_proof_from_full_vse_evidence(key_message& policy_pk, const string
   //      "policyKey says platformKey is-trusted-for-attestation"
 
   if (already_proved->proved_size() != 5) {
-    printf("Error 0, construct_proof_from_full_vse_evidence\n");
+    printf("%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+      __func__, __LINE__);
     return false;
   }
 
   if (!already_proved->proved(2).has_clause() || !already_proved->proved(2).clause().has_subject()) {
-    printf("Error 1, construct_proof_from_full_vse_evidence\n");
+    printf("%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+      __func__, __LINE__);
     return false;
   }
   const entity_message& enclave_key = already_proved->proved(2).clause().subject();
   string it("is-trusted-for-authentication");
-  if (!make_unary_vse_clause(enclave_key, it, to_prove))
+  if (!make_unary_vse_clause(enclave_key, it, to_prove)) {
+      printf("%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+        __func__, __LINE__);
       return false;
+  }
 
   proof_step* ps = nullptr;
 
   // "policyKey is-trusted" AND "policyKey says platformKey is-trusted-for-attestation"
   //     --> "platformKey is-trusted-for-attestation"
   if (!already_proved->proved(4).has_clause()) {
-    printf("Error 2, construct_proof_from_full_vse_evidence\n");
+    printf("%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+      __func__, __LINE__);
     return false;
   }
   ps = pf->add_steps();
@@ -2108,7 +2184,8 @@ bool construct_proof_from_full_vse_evidence(key_message& policy_pk, const string
 
   // "policyKey is-trusted" AND "policyKey says measurement is-trusted" --> "measurement is-trusted"
   if (!already_proved->proved(3).has_clause()) {
-    printf("Error 3, construct_proof_from_full_vse_evidence\n");
+    printf("%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+      __func__, __LINE__);
     return false;
   }
   ps = pf->add_steps();
@@ -2121,7 +2198,8 @@ bool construct_proof_from_full_vse_evidence(key_message& policy_pk, const string
   // "platformKey is-trusted-for-attestation" AND "platformKey says attestKey is-trusted-for-attestation"
   //      --> "attestKey is-trusted"
   if (!already_proved->proved(1).has_clause()) {
-    printf("Error 4, construct_proof_from_full_vse_evidence\n");
+    printf("%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+      __func__, __LINE__);
     return false;
   }
   ps = pf->add_steps();
@@ -2134,7 +2212,8 @@ bool construct_proof_from_full_vse_evidence(key_message& policy_pk, const string
   // "attestKey is-trusted-for-attestation" AND  "attestKey says enclaveKey speaks-for measurement"
   //      --> "enclaveKey speaks-for measurement"
   if (!already_proved->proved(2).has_clause()) {
-    printf("Error 5, construct_proof_from_full_vse_evidence\n");
+    printf("%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
+      __func__, __LINE__);
     return false;
   }
   ps = pf->add_steps();
@@ -2161,7 +2240,8 @@ bool construct_proof_from_request(const string& evidence_descriptor, key_message
       proved_statements* already_proved, vse_clause* to_prove, proof* pf) {
 
   if (!init_proved_statements(policy_pk, evp, already_proved)) {
-    printf("init_proved_statements returned false\n");
+    printf("%s() error, line %d, init_proved_statements returned false\n",
+      __func__, __LINE__);
     return false;
   }
 
@@ -2175,8 +2255,9 @@ bool construct_proof_from_request(const string& evidence_descriptor, key_message
 #endif
 
   if (evidence_descriptor == "full-vse-support") {
-    if (!construct_proof_from_full_vse_evidence(policy_pk, purpose, already_proved, to_prove, pf))
+    if (!construct_proof_from_full_vse_evidence(policy_pk, purpose, already_proved, to_prove, pf)) {
       return false;
+    }
   } else if (evidence_descriptor == "platform-attestation-only") {
     if (!add_new_facts_for_abbreviatedplatformattestation(policy_pk, 
               trusted_platforms, trusted_measurements, already_proved)) {
@@ -2184,7 +2265,8 @@ bool construct_proof_from_request(const string& evidence_descriptor, key_message
       return false;
     }
     if (!construct_proof_from_full_vse_evidence(policy_pk, purpose, already_proved, to_prove, pf)) {
-      printf("construct_proof_from_full_vse_evidence in construct_proof_from_request failed\n");
+      printf("%s() error, line %d, construct_proof_from_full_vse_evidence in construct_proof_from_request failed\n",
+        __func__, __LINE__);
       return false;
     }
   } else if (evidence_descriptor == "sev-evidence") {
@@ -2235,19 +2317,22 @@ bool validate_evidence(const string& evidence_descriptor, signed_claim_sequence&
   predicate_dominance predicate_dominance_root;
 
   if (!init_dominance_tree(predicate_dominance_root)) {
-    printf("validate_evidence: can't init predicate dominance tree\n");
+    printf("%s() error, line %d, validate_evidence: can't init predicate dominance tree\n",
+      __func__, __LINE__);
     return false;
   }
 
   if (!init_axiom(policy_pk, &already_proved)) {
-    printf("validate_evidence: can't init axiom\n");
+    printf("%s() error, line %d, validate_evidence: can't init axiom\n",
+      __func__, __LINE__);
     return false;
   }
 
   if (!construct_proof_from_request(evidence_descriptor, policy_pk, purpose,
             trusted_platforms, trusted_measurements,
             evp, &already_proved, &to_prove, &pf)) {
-    printf("validate_evidence: can't construct proof\n");
+    printf("%s() error, line %d, validate_evidence: can't construct proof\n",
+      __func__, __LINE__);
     return false;
   }
 

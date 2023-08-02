@@ -53,34 +53,13 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 //    cold-init: This creates application keys and initializes the policy store.
 //    warm-restart:  This retrieves the policy store data.
 //    get-certifier: This obtains the app admission cert naming the public app key from the service.
-//    run-app-as-client: This runs the app as a client.
-//    run-app-as-server: This runs the app as server.
+//    run-app-as-client: This runs the app as a server.
+//    run-app-as-server: This runs the app as a client
 
-#include "policy_key.cc"
+#include "server_policy_key.cc"
 cc_trust_data* app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
-
-void client_application(secure_authenticated_channel& channel) {
-
-  printf("Client peer id is %s\n", channel.peer_id_.c_str());
-  if (channel.peer_cert_ != nullptr) {
-    printf("Client peer cert is:\n");
-#ifdef DEBUG
-    X509_print_fp(stdout, channel.peer_cert_);
-#endif
-  }
-
-  // client sends a message over authenticated, encrypted channel
-  const char* msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte*)msg);
-
-  // Get server response over authenticated, encrypted channel and print it
-  string out;
-  int n = channel.read(&out);
-  printf("SSL client read: %s\n", out.data());
-}
-
 
 void server_application(secure_authenticated_channel& channel) {
 
@@ -108,10 +87,11 @@ int main(int an, char** av) {
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf("example_app.exe --print_all=true|false --operation=op --policy_host=policy-host-address --policy_port=policy-host-port\n");
-    printf("\t --data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
+    printf("multidomain_server_app.exe --print_all=true|false --operation=op\n");
+    printf("\t--policy_host=policy-host-address --policy_port=policy-host-port\n");
+    printf("\t--data_dir=-directory-for-app-data --server_app_host=my-server-host-address --server_app_port=server-host-port\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name --policy_store_file=policy-store-file-name\n");
-    printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-client, run-app-as-server\n");
+    printf("Operations are: cold-init, warm-restart, get-certifier, run-app-as-server\n");
     return 0;
   }
 
@@ -146,7 +126,8 @@ int main(int an, char** av) {
   attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
   if (!app_trust_data->initialize_simulated_enclave_data(attest_key_file_name,
-                                                         measurement_file_name,                                                                                             attest_endorsement_file_name)) {
+                                                         measurement_file_name,
+                                                         attest_endorsement_file_name)) {
     printf("%s() error, line %d, Can't init simulated enclave\n",
         __func__, __LINE__);
     return 1;
@@ -163,7 +144,7 @@ int main(int an, char** av) {
                                    symmetric_key_alg,
                                    initialized_cert_size,
                                    initialized_cert,
-                                   "simple-app-home_domain",
+                                   "simple-app-server-home-domain",
                                    FLAGS_policy_host,
                                    FLAGS_policy_port,
                                    FLAGS_server_app_host,
@@ -171,7 +152,6 @@ int main(int an, char** av) {
       printf("%s() error, line %d, cold-init failed\n",
         __func__, __LINE__);
       ret = 1;
-      goto done;
     }
     // Debug
     app_trust_data->print_trust_data();
@@ -180,7 +160,6 @@ int main(int an, char** av) {
       printf("%s() error, line %d, warm-restart failed\n",
         __func__, __LINE__);
       ret = 1;
-      goto done;
     }
 
   } else if (FLAGS_operation == "get-certifier") {
@@ -188,56 +167,20 @@ int main(int an, char** av) {
       printf("%s() error, line %d, warm-restart failed\n",
         __func__, __LINE__);
       ret = 1;
-      goto done;
     }
     if (!app_trust_data->certify_me()) {
       printf("%s() error, line %d, certification failed\n",
         __func__, __LINE__);
       ret = 1;
-      goto done;
     }
     // Debug
     app_trust_data->print_trust_data();
 
   } else if (FLAGS_operation == "run-app-as-client") {
-    string my_role("client");
-    secure_authenticated_channel channel(my_role);
-
-    if (!app_trust_data->warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n",
+    printf("%s() error, line %d, Server only app\n",
         __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-
-    printf("Running App as client\n");
-    if (!app_trust_data->cc_auth_key_initialized_ ||
-        !app_trust_data->cc_policy_info_initialized_) {
-      printf("%s() error, line %d, trust data not initialized\n",
-        __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-
-    if (!app_trust_data->primary_admissions_cert_valid_) {
-      printf("%s() error, line %d, primary admissions cert not valid\n",
-        __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-    if (!channel.init_client_ssl(FLAGS_server_app_host,
-                                 FLAGS_server_app_port,
-                                 app_trust_data->serialized_policy_cert_,
-                                 app_trust_data->private_auth_key_,
-                                 app_trust_data->serialized_primary_admissions_cert_)) {
-      printf("%s() error, line %d, Can't init client app\n",
-        __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-
-  // This is the actual application code.
-  client_application(channel);
+    ret = 1;
+    goto done;
   } else if (FLAGS_operation == "run-app-as-server") {
     if (!app_trust_data->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n",

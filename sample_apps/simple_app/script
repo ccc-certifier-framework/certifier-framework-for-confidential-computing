@@ -81,6 +81,12 @@ cp ./* $EXAMPLE_DIR/app1_data
 cp ./* $EXAMPLE_DIR/app2_data
 
 #compile the server
+cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
+make dummy
+cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
+make dummy
+cd $CERTIFIER_PROTOTYPE/certifier_service/isletlib
+make dummy
 cd $CERTIFIER_PROTOTYPE/certifier_service
 go build simpleserver.go
 

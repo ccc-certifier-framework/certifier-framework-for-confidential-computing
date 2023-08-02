@@ -59,9 +59,6 @@ namespace certifier {
       unsigned num_ents_;
       store_entry** entry_;
 
-      bool policy_key_valid_;
-      key_message policy_key_;
-
     public:
       policy_store(unsigned max_ents);
       policy_store();
@@ -70,7 +67,6 @@ namespace certifier {
 private:
       bool add_entry(const string& tag, const string& type, const string& value);
 public:
-      bool is_policy_key_valid();
       unsigned get_num_entries();
       int find_entry(const string& tag, const string& type);
       const string* tag(unsigned ent);
@@ -82,9 +78,6 @@ public:
 
       bool update_or_insert(const string& tag,
               const string& type, const string& value);
-
-      const key_message* get_policy_key();
-      bool set_policy_key(const key_message key);
 
       void print();
       bool Serialize(string* out);
@@ -118,20 +111,33 @@ public:
       int* size_new_encrypted_blob, byte* data);
 
 
-    class cc_trust_data {
+    class domain_info {
+    public:
+      string domain_name_;
+      string domain_policy_cert_;
+      string host_;
+      int port_;
+      string service_host_;
+      int service_port_;
+    };
 
+    class certifiers;
+
+    class cc_trust_data {
 
     public:
       // Python swig bindings need this to be public, to size other array decls
       static const int max_symmetric_key_size_ = 128;
 
       bool cc_basic_data_initialized_;
+
       string purpose_;
       string enclave_type_;
       string store_file_name_;
       string public_key_algorithm_;
       string symmetric_key_algorithm_;
 
+      // For primary security domain only
       bool cc_policy_info_initialized_;
       string serialized_policy_cert_;
       X509* x509_policy_cert_;
@@ -140,17 +146,21 @@ public:
       bool cc_policy_store_initialized_;
       policy_store store_;
 
+      // platform initialized?
       bool cc_provider_provisioned_;
+
+      // primary domain certified?
       bool cc_is_certified_;
 
-      // For auth
+      bool primary_admissions_cert_valid_;
+      string serialized_primary_admissions_cert_;
+      // Note: if purpose is attestation, serialized_home_admissions_cert_
+      // is the same as the serialized_service_cert_, so remove it later
+
+      // auth key is the same in all domains
       bool cc_auth_key_initialized_;
       key_message private_auth_key_;
       key_message public_auth_key_;
-
-      bool cc_symmetric_key_initialized_;
-      byte symmetric_key_bytes_[max_symmetric_key_size_];
-      key_message symmetric_key_;
 
       // For attest
       bool cc_service_key_initialized_;
@@ -163,16 +173,29 @@ public:
       bool cc_service_platform_rule_initialized_;
       signed_claim_message platform_rule_;
 
+      //  symmetric key is the same in any domain
+      bool cc_symmetric_key_initialized_;
+      byte symmetric_key_bytes_[max_symmetric_key_size_];
+      key_message symmetric_key_;
+
       // This is the sealing key
       bool cc_sealing_key_initialized_;
-      byte service_symmetric_key_[max_symmetric_key_size_];
+      byte sealing_key_bytes_[max_symmetric_key_size_];
       key_message service_sealing_key_;
 
-      // For peer-to-peer certification
+      // The domains I get certified in.
+      // If purpose is attestation, there can only be one.
+      int max_num_certified_domains_;
+      int num_certified_domains_;
+      certifiers** certified_domains_;
+
+      // For peer-to-peer certification (not used now)
       bool peer_data_initialized_;
       key_message local_policy_key_;
       string local_policy_cert_;
 
+
+      enum {MAX_NUM_CERTIFIERS = 32};
       cc_trust_data();
       cc_trust_data(const string& enclave_type, const string& purpose,
           const string& policy_store_name);
@@ -202,18 +225,67 @@ public:
       bool save_store();
       bool fetch_store();
       void clear_sensitive_data();
-      bool cold_init(const string& public_key_alg, const string& symmetric_key_alg);
+
+      bool generate_symmetric_key(bool regen);
+      bool generate_sealing_key(bool regen);
+      bool generate_auth_key(bool regen);
+      bool generate_service_key(bool regen);
+
+      bool cold_init(const string& public_key_alg, const string& symmetric_key_alg,
+                     int asn1_cert_size, byte* asn1_cert,
+                     const string& home_domain_name, const string& home_host,
+                     int home_port, const string& service_host, int service_port);
       bool warm_restart();
-      bool certify_me(const string& host_name, int port);
-      bool recertify_me(const string& host_name, int port, bool generate_new_key);
       bool GetPlatformSaysAttestClaim(signed_claim_message* scm);
       void print_trust_data();
+
+      bool certify_primary_domain();
+      bool certify_me() {return certify_primary_domain();};
 
       // For peer-to-peer certification (not used yet)
       bool init_peer_certification_data(const string& public_key_alg);
       bool recover_peer_certification_data();
       bool get_peer_certification(const string& host_name, int port);
       bool run_peer_certification_service(const string& host_name, int port);
+
+      // multi-domain support
+      bool add_or_update_new_domain(const string& domain_name,
+                                    const string& cert,
+                                    const string& host, int port,
+                                    const string& service_host,
+                                    int service_port);
+      bool certify_secondary_domain(const string& domain_name);
+      bool get_certifiers_from_store();
+      bool put_certifiers_in_store();
+    };
+
+    // Certification Anchors
+
+    class certifiers {
+    private:
+      // should be const, don't delete it
+      cc_trust_data* owner_;
+
+    public:
+      string domain_name_;
+      string domain_policy_cert_;
+      string host_;
+      int port_;
+      bool is_certified_;
+      string admissions_cert_;
+      string service_host_;
+      int service_port_;
+
+      certifiers(cc_trust_data* owner);
+      ~certifiers();
+
+      bool init_certifiers_data(const string& domain_name,
+        const string& cert, const string& host, int port,
+        const string& service_host, int service_port);
+
+      bool get_certified_status();
+      bool certify_domain();
+      void print_certifiers_entry();
     };
 
     class secure_authenticated_channel {

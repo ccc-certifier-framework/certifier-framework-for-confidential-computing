@@ -101,6 +101,7 @@ all:	$(EXE_DIR)/measurement_utility.exe \
 	    $(EXE_DIR)/make_property.exe \
 	    $(EXE_DIR)/make_environment.exe \
 	    $(EXE_DIR)/package_claims.exe \
+	    $(EXE_DIR)/print_packaged_claims.exe \
 	    $(EXE_DIR)/embed_policy_key.exe \
 	    $(EXE_DIR)/combine_properties.exe \
 	    $(EXE_DIR)/sample_sev_key_generation.exe \

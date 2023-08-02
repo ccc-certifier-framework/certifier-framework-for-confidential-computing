@@ -153,13 +153,15 @@ void remove_kid(int pid) {
 bool measure_binary(const string& file, string* m) {
   int size = file_size(file.c_str());
   if (size <= 0) {
-    printf("Can't get executable file\n");
+    printf("%s() error, line %d, Can't get executable file %s\n",
+         __func__, __LINE__, file.c_str());
     return false;
   }
   byte* file_contents = (byte*)malloc(size);
   int bytes_read = size;
   if (!read_file(file, &bytes_read, file_contents) || bytes_read < size) {
-    printf("Executable read failed\n");
+    printf("%s() error, line %d, Executable read failed\n",
+         __func__, __LINE__);
     free(file_contents);
     return false;
   }
@@ -167,7 +169,8 @@ bool measure_binary(const string& file, string* m) {
   unsigned int len = 32;
   if (!digest_message("sha256", file_contents, bytes_read,
           digest, len)) {
-    printf("Digest failed\n");
+    printf("%s() error, line %d, Digest failed\n",
+         __func__, __LINE__);
     free(file_contents);
     return false;
   }
@@ -181,7 +184,8 @@ bool measure_in_mem_binary(byte* file_contents, int size, string* m) {
   unsigned int len = 32;
   if (!digest_message("sha256", file_contents, (unsigned) size,
           digest, len)) {
-    printf("Digest failed\n");
+    printf("%s() error, line %d, Digest failed\n",
+         __func__, __LINE__);
     return false;
   }
   m->assign((char*)digest, (int)len);
@@ -224,8 +228,9 @@ bool soft_Seal(spawned_children* kid, string in, string* out) {
     return false;
   }
   if (!authenticated_encrypt(app_trust_data->symmetric_key_algorithm_.c_str(), (byte*)buffer_to_seal.data(),
-        buffer_to_seal.size(), app_trust_data->service_symmetric_key_, iv, t_out, &t_size)) {
-    printf("soft_Seal: authenticated encrypt failed\n");
+        buffer_to_seal.size(), app_trust_data->sealing_key_bytes_, iv, t_out, &t_size)) {
+    printf("%s() error, line %d, soft_Seal: authenticated encrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
   out->assign((char*)t_out, t_size);
@@ -240,9 +245,11 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
   int t_size = in.size();
   byte t_out[t_size];
 
-  if (!authenticated_decrypt(app_trust_data->symmetric_key_algorithm_.c_str(), (byte*)in.data(), in.size(),
-          app_trust_data->service_symmetric_key_, t_out, &t_size)) {
-    printf("soft_Unseal: authenticated decrypt failed\n");
+  if (!authenticated_decrypt(app_trust_data->symmetric_key_algorithm_.c_str(),
+          (byte*)in.data(), in.size(),
+          app_trust_data->sealing_key_bytes_, t_out, &t_size)) {
+    printf("%s() error, line %d, soft_Unseal: authenticated decrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
 #ifdef DEBUG
@@ -255,7 +262,8 @@ bool soft_Unseal(spawned_children* kid, string in, string* out) {
 #endif
   if (memcmp(t_out, (byte*)kid->measurement_.data(),
       kid->measurement_.size()) != 0) {
-    printf("soft_Unseal: mis-matched measurements\n");
+    printf("%s() error, line %d, soft_Unseal: mis-matched measurements\n",
+         __func__, __LINE__);
     return false;
   }
   out->assign((char*)&t_out[kid->measurement_.size()],
@@ -270,7 +278,8 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
 
   // in  is a serialized vse-attestation
   if (!app_trust_data->cc_service_key_initialized_) {
-    printf("soft_Attest: service key not initialized\n");
+    printf("%s() error, line %d, soft_Attest: service key not initialized\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -314,7 +323,8 @@ bool soft_Attest(spawned_children* kid, string in, string* out) {
 
   if (!sign_report(type, serialized_report_info,
       signing_alg, app_trust_data->private_service_key_, out)) {
-    printf("Can't sign report\n");
+    printf("%s() error, line %d, Can't sign report\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -326,7 +336,8 @@ bool soft_GetPlatformStatement(spawned_children* kid, string* out) {
   printf("soft_GetPlatformStatement\n");
 #endif
   if (!app_trust_data->cc_service_platform_rule_initialized_) {
-    printf("soft_GetPlatformStatement: not initialized\n");
+    printf("%s() error, line %d, soft_GetPlatformStatement: not initialized\n",
+         __func__, __LINE__);
     return false;
   }
   app_trust_data->platform_rule_.SerializeToString(out);
@@ -338,7 +349,8 @@ bool soft_GetParentEvidence(spawned_children* kid, string* out) {
   printf("soft_GetPlatformStatement\n");
 #endif
   if (!app_trust_data->cc_service_platform_rule_initialized_) {
-    printf("soft_GetPlatformStatement: not initialized\n");
+    printf("%s() error, line %d, soft_GetPlatformStatement: not initialized\n",
+         __func__, __LINE__);
     return false;
   }
   app_trust_data->platform_rule_.SerializeToString(out);
@@ -412,7 +424,8 @@ finishreq:
       rsp.set_status("failed");
     }
     if (!rsp.SerializeToString(&str_app_rsp)) {
-      printf("Can't serialize response\n");
+      printf("%s() error, line %d, Can't serialize response\n",
+         __func__, __LINE__);
     }
     if (write(write_fd, (byte*)str_app_rsp.data(), str_app_rsp.size()) <
             (int)str_app_rsp.size()) {
@@ -446,12 +459,14 @@ bool process_run_request(run_request& req) {
   string m;
 #ifndef INMEMEXEC
   if (!req.has_location() || !measure_binary(req.location(), &m)) {
-    printf("Can't measure binary\n");
+    printf("%s() error, line %d, Can't measure binary\n",
+         __func__, __LINE__);
     return false;
   }
 #else
   if (!req.has_location()) {
-    printf("Program location unspecified\n");
+    printf("%s() error, line %d, Program location unspecified\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -459,7 +474,8 @@ bool process_run_request(run_request& req) {
   mem_app_name.append("_in_mem_app");
   int mem_fd = memfd_create(mem_app_name.c_str(), MFD_CLOEXEC);
   if (mem_fd < 0) {
-    printf("Can't create in mem file\n");
+    printf("%s() error, line %d, Can't create in mem file\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -467,7 +483,8 @@ bool process_run_request(run_request& req) {
   byte* file_buffer = (byte*)malloc(fsz);
 
   if (!read_file(req.location(), &fsz, file_buffer)) {
-    printf("Can't read executable\n");
+    printf("%s() error, line %d, Can't read executable\n",
+         __func__, __LINE__);
     free(file_buffer);
     close(mem_fd);
     return false;
@@ -475,14 +492,16 @@ bool process_run_request(run_request& req) {
 
   // Make sure you read the binary to exec into “buffer”
   if (write(mem_fd, file_buffer, fsz) != fsz) {
-    printf("Failed to copy app binary.\n");
+    printf("%s() error, line %d, Failed to copy app binary.\n",
+         __func__, __LINE__);
     close(mem_fd);
     free(file_buffer);
     return false;
   }
 
   if (!measure_in_mem_binary(file_buffer, fsz, &m)) {
-    printf("Can't measure in_mem binary\n");
+    printf("%s() error, line %d, Can't measure in_mem binary\n",
+         __func__, __LINE__);
     close(mem_fd);
     free(file_buffer);
     return false;
@@ -491,13 +510,15 @@ bool process_run_request(run_request& req) {
 
   int fd1[2];
   if (pipe2(fd1, O_DIRECT) < 0) {
-    printf("Pipe 1 failed\n");
+    printf("%s() error, line %d, Pipe 1 failed\n",
+         __func__, __LINE__);
     return false;
   }
 
   int fd2[2];
   if (pipe2(fd2, O_DIRECT) < 0) {
-    printf("Pipe 2 failed\n");
+    printf("%s() error, line %d, Pipe 2 failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -545,7 +566,8 @@ bool process_run_request(run_request& req) {
 #endif
     ent = nullptr;
     if (setgid(gid) != 0 || setuid (uid) != 0) {
-      printf("Can't seettuid\n");
+      printf("%s() error, line %d, Can't seettuid\n",
+         __func__, __LINE__);
 #ifdef INMEMEXEC
       free(file_buffer);
       close(mem_fd);
@@ -580,7 +602,8 @@ bool process_run_request(run_request& req) {
     }
 #else
     if (fexecve(mem_fd, argv, envp) < 0) {
-      printf("Exec failed\n");
+      printf("%s() error, line %d, Exec failed\n",
+         __func__, __LINE__);
       free(file_buffer);
       close(mem_fd);
       return false;
@@ -601,7 +624,8 @@ bool process_run_request(run_request& req) {
     // add it to lists
     spawned_children* nk = new_kid();
     if (nk == nullptr) {
-      printf("Can't add kid\n");
+      printf("%s() error, line %d, Can't add kid\n",
+         __func__, __LINE__);
       return false;
     }
     nk->location_ = req.location();
@@ -611,7 +635,8 @@ bool process_run_request(run_request& req) {
     nk->parent_write_fd_ = parent_write_fd;
     nk->valid_ = true;
     if (!start_app_service_loop(nk, parent_read_fd, parent_write_fd)) {
-      printf("Couldn't start service loop\n");
+      printf("%s() error, line %d, Couldn't start service loop\n",
+         __func__, __LINE__);
       return false;
     }
   }
@@ -627,12 +652,14 @@ bool app_request_server() {
 
   struct hostent *he = nullptr;
   if ((he = gethostbyname(hostname)) == NULL) {
-    printf("gethostbyname failed\n");
+    printf("%s() error, line %d, gethostbyname failed\n",
+         __func__, __LINE__);
     return false;
   }
   int sd = socket(AF_INET, SOCK_STREAM, 0);
   if (sd < 0) {
-    printf("socket call failed\n");
+    printf("%s() error, line %d, socket call failed\n",
+         __func__, __LINE__);
     return false;
   }
   memset(&addr, 0, sizeof(addr));
@@ -640,7 +667,8 @@ bool app_request_server() {
   addr.sin_port = htons(port);
   addr.sin_addr.s_addr = *(long*)(he->h_addr);
   if (bind(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
-    printf("bind failed\n");
+    printf("%s() error, line %d, bind failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (listen(sd, 10) != 0) {
@@ -661,7 +689,8 @@ bool app_request_server() {
     string str_req;
     int n = sized_socket_read(client, &str_req);
     if (n < 0) {
-      printf("Read failed in application server\n");
+      printf("%s() error, line %d, Read failed in application server\n",
+         __func__, __LINE__);
       continue;
     }
 
@@ -688,7 +717,8 @@ done:
     string str_resp;
     if (resp.SerializeToString(&str_resp)) {
       if (sized_socket_write(client, str_resp.size(), (byte*)str_resp.data()) < (int)str_resp.size()) {
-        printf("Write failed\n");
+        printf("%s() error, line %d, Write failed\n",
+          __func__, __LINE__);
       }
     }
     close(client);
@@ -753,43 +783,55 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
 
     if (!helper.initialize_simulated_enclave_data(attest_key_file_name,
       measurement_file_name, attest_endorsement_file_name)) {
-      printf("Can't init simulated enclave\n");
+      printf("%s() error, line %d, Can't init simulated enclave\n",
+         __func__, __LINE__);
       return 1;
     }
   } else if (FLAGS_host_enclave_type == "oe-enclave") {
-    printf("Unsupported host enclave\n");
+    printf("%s() error, line %d, Unsupported host enclave\n",
+         __func__, __LINE__);
     return 1;
   } else if (FLAGS_host_enclave_type == "sev-enclave") {
     // Init sev enclave
     if (!helper.initialize_sev_enclave_data(FLAGS_ark_cert_file,
         FLAGS_ask_cert_file, FLAGS_vcek_cert_file)) {
-    printf("Can't init sev-enclave\n");
+    printf("%s() error, line %d, Can't init sev-enclave\n",
+         __func__, __LINE__);
     return 1;
   }
   } else {
-    printf("Unsupported host enclave\n");
+    printf("%s() error, line %d, Unsupported host enclave\n",
+         __func__, __LINE__);
     return 1;
   }
 
   // initialize and certify service data
   if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
-    if (!helper.cold_init(public_key_alg, symmetric_key_alg)) {
-      printf("cold-init failed\n");
+    if (!helper.cold_init(public_key_alg, symmetric_key_alg,
+          initialized_cert_size, initialized_cert, "application_enclave_domain",
+          FLAGS_policy_host, FLAGS_policy_port,
+          FLAGS_server_app_host, FLAGS_server_app_port)) {
+
+      printf("%s() error, line %d, cold-init failed\n",
+         __func__, __LINE__);
       return 1;
     }
 
-    if (!helper.certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
-        printf("certification failed\n");
+    if (!helper.certify_me()) {
+        printf("%s() error, line %d, certification failed\n",
+         __func__, __LINE__);
         return 1;
       }
   } else  if (!helper.warm_restart()) {
-    printf("warm-restart failed\n");
+    printf("%s() error, line %d, warm-restart failed\n",
+         __func__, __LINE__);
     return 1;
   }
 
   // run service response
   if (!app_request_server()) {
-    printf("Can't run request server\n");
+    printf("%s() error, line %d, Can't run request server\n",
+         __func__, __LINE__);
     return 1;
   }
 

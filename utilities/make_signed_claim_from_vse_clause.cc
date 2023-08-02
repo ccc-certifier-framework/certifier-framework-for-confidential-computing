@@ -102,7 +102,8 @@ int main(int an, char** av) {
   }
   time_point t_not_after;
   string not_after;
-  if (!add_interval_to_time_point(t_not_before, FLAGS_duration, &t_not_after)) {
+  if (!add_interval_to_time_point(t_not_before, FLAGS_duration, 
+         &t_not_after)) {
     printf("Can't get end time\n");
     return 1;
   }

@@ -112,8 +112,6 @@ void print_environment_descriptor(const environment& env);
 void print_vse_clause(const vse_clause c);
 void print_claim(const claim_message& claim);
 void print_signed_claim(const signed_claim_message& signed_claim);
-void print_storage_info(const storage_info_message& smi);
-void print_trusted_service_message(const trusted_service_message& tsm);
 void print_protected_blob(protected_blob_message& pb);
 
 bool make_signed_claim(const char* alg, const claim_message& claim, const key_message& key,

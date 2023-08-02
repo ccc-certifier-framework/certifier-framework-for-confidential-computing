@@ -95,13 +95,19 @@ void server_application(secure_authenticated_channel& channel) {
   channel.write(strlen(msg), (byte*)msg);
 }
 
-bool run_me_as_server(const string& host_name, int port,
-      string& asn1_policy_cert, key_message& private_key,
-      string& private_key_cert) {
+bool run_me_as_server(const string& host_name,
+                      int port,
+                      string& asn1_policy_cert,
+                      key_message& private_key,
+                      string& private_key_cert) {
 
   printf("running as server\n");
-  server_dispatch(host_name, port, asn1_policy_cert, private_key,
-      private_key_cert, server_application);
+  server_dispatch(host_name,
+                  port,
+                  asn1_policy_cert,
+                  private_key,
+                  private_key_cert,
+                  server_application);
   return true;
 }
 
@@ -147,39 +153,61 @@ int main(int an, char** av) {
   store_file.append(FLAGS_policy_store_file);
   app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
   if (app_trust_data == nullptr) {
-    printf("couldn't initialize trust object\n");
+    printf("%s() error, line %d, couldn't initialize trust object\n",
+         __func__, __LINE__);
     return 1;
   }
 
   // Init policy key info
   if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert)) {
-    printf("Can't init policy key\n");
+    printf("%s() error, line %d, Can't init policy key\n",
+         __func__, __LINE__);
     return false;
   }
 
   // Init application enclave
   if (!app_trust_data->initialize_application_enclave_data(parent_enclave_type,
         in_fd, out_fd)) {
-    printf("Can't init application-enclave\n");
+    printf("%s() error, line %d, Can't init application-enclave\n",
+         __func__, __LINE__);
     return 1;
   }
 
   // Carry out operations as before
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init(public_key_alg, symmetric_key_alg)) {
-      printf("cold-init failed\n");
+    if (!app_trust_data->cold_init(public_key_alg,
+                                   symmetric_key_alg,
+                                   initialized_cert_size,
+                                   initialized_cert,
+                                   "simple-app-home_domain",
+                                   FLAGS_policy_host,
+                                   FLAGS_policy_port,
+                                   FLAGS_server_app_host,
+                                   FLAGS_server_app_port)) {
+      printf("%s() error, line %d, cold-init failed\n",
+         __func__, __LINE__);
       ret = 1;
+      goto done;
     }
   } else if (FLAGS_operation == "warm-restart") {
     if (!app_trust_data->warm_restart()) {
-      printf("warm-restart failed\n");
+      printf("%s() error, line %d, warm-restart failed\n",
+         __func__, __LINE__);
       ret = 1;
+      goto done;
     }
 
   } else if (FLAGS_operation == "get-certifier") {
-    if (!app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
-      printf("certification failed\n");
+    if (!app_trust_data->warm_restart()) {
+      printf("%s() error, line %d, warm-restart failed\n",
+        __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!app_trust_data->certify_me()) {
+      printf("%s() error, line %d, certification failed\n",
+         __func__, __LINE__);
       ret = 1;
     }
   } else if (FLAGS_operation == "run-app-as-client") {
@@ -187,7 +215,14 @@ int main(int an, char** av) {
     secure_authenticated_channel channel(my_role);
 
     if (!app_trust_data->warm_restart()) {
-      printf("warm-restart failed\n");
+      printf("%s() error, line %d, warm-restart failed\n",
+         __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!app_trust_data->primary_admissions_cert_valid_) {
+      printf("%s() error, line %d, primary admissions cert not valid\n",
+        __func__, __LINE__);
       ret = 1;
       goto done;
     }
@@ -195,16 +230,19 @@ int main(int an, char** av) {
     printf("running as client\n");
     if (!app_trust_data->cc_auth_key_initialized_ ||
         !app_trust_data->cc_policy_info_initialized_) {
-      printf("trust data not initialized\n");
+      printf("%s() error, line %d, trust data not initialized\n",
+         __func__, __LINE__);
       ret = 1;
       goto done;
     }
 
-    if (!channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
-          app_trust_data->serialized_policy_cert_,
-          app_trust_data->private_auth_key_,
-          app_trust_data->private_auth_key_.certificate())) {
-      printf("Can't init client app\n");
+    if (!channel.init_client_ssl(FLAGS_server_app_host,
+                                 FLAGS_server_app_port,
+                                 app_trust_data->serialized_policy_cert_,
+                                 app_trust_data->private_auth_key_,
+                                 app_trust_data->serialized_primary_admissions_cert_)) {
+      printf("%s() error, line %d, Can't init client app\n",
+         __func__, __LINE__);
       ret = 1;
       goto done;
     }
@@ -213,18 +251,29 @@ int main(int an, char** av) {
   client_application(channel);
   } else if (FLAGS_operation == "run-app-as-server") {
     if (!app_trust_data->warm_restart()) {
-      printf("warm-restart failed\n");
+      printf("%s() error, line %d, warm-restart failed\n",
+         __func__, __LINE__);
       ret = 1;
       goto done;
     }
+    if (!app_trust_data->primary_admissions_cert_valid_) {
+      printf("%s() error, line %d, primary admissions cert not valid\n",
+        __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+
+
     printf("running as server\n");
-    server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
-        app_trust_data->serialized_policy_cert_,
-          app_trust_data->private_auth_key_,
-          app_trust_data->private_auth_key_.certificate(),
-          server_application);
+    server_dispatch(FLAGS_server_app_host,
+                    FLAGS_server_app_port,
+                    app_trust_data->serialized_policy_cert_,
+                    app_trust_data->private_auth_key_,
+                    app_trust_data->serialized_primary_admissions_cert_,
+                    server_application);
   } else {
-    printf("Unknown operation\n");
+    printf("%s() error, line %d, Unknown operation\n",
+         __func__, __LINE__);
   }
 
 done:

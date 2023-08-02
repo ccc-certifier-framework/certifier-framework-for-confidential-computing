@@ -54,6 +54,7 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 #include "policy_key.cc"
 cc_trust_data* app_trust_data = nullptr;
 
+
 // -----------------------------------------------------------------------------------------
 
 int main(int an, char** av) {
@@ -77,13 +78,15 @@ int main(int an, char** av) {
 
   app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
   if (app_trust_data == nullptr) {
-    printf("couldn't initialize trust object\n");
+    printf("%s() error, line %d, couldn't initialize trust object\n",
+      __func__, __LINE__);
     return 1;
   }
 
   // Init policy key info
   if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert)) {
-    printf("Can't init policy key\n");
+    printf("%s() error, line %d, Can't init policy key\n",
+         __func__, __LINE__);
     return 1;
   }
 
@@ -99,14 +102,16 @@ int main(int an, char** av) {
 
   if (!app_trust_data->initialize_simulated_enclave_data(attest_key_file_name,
       measurement_file_name, attest_endorsement_file_name)) {
-    printf("Can't init simulated enclave\n");
+    printf("%s() error, line %d, Can't init simulated enclave\n",
+         __func__, __LINE__);
     return 1;
   }
 
   int ret = 0;
   if (FLAGS_operation == "warm-restart") {
     if (!app_trust_data->warm_restart()) {
-      printf("warm-restart failed\n");
+      printf("%s() error, line %d, warm-restart failed\n",
+         __func__, __LINE__);
       ret = 1;
     }
   }
@@ -116,26 +121,31 @@ int main(int an, char** av) {
   X509* x509_cert = X509_new();
   if (purpose == "authentication") {
     if (!app_trust_data->cc_auth_key_initialized_) {
-      printf("Auth key uninitialized");
+      printf("%s() error, line %d, Auth key uninitialized",
+         __func__, __LINE__);
       return 1;
     }
     der_cert = app_trust_data->public_auth_key_.certificate();
     if (!asn1_to_x509(der_cert, x509_cert)) {
-      printf("Can't convert der to x509");
+      printf("%s() error, line %d, Can't convert der to x509",
+         __func__, __LINE__);
       return 1;
     }
   } else if (purpose == "attestation") {
     if (!app_trust_data->cc_service_key_initialized_) {
-      printf("Service key uninitialized");
+      printf("%s() error, line %d, Service key uninitialized",
+         __func__, __LINE__);
       return 1;
     }
     der_cert = app_trust_data->public_service_key_.certificate();
     if (!asn1_to_x509(der_cert, x509_cert)) {
-      printf("Can't convert der to x509");
+      printf("%s() error, line %d, Can't convert der to x509",
+         __func__, __LINE__);
       return 1;
     }
   } else {
-    printf("Unknown purpose\n");
+    printf("%s() error, line %d, Unknown purpose\n",
+         __func__, __LINE__);
     return 1;
   }
 
@@ -145,38 +155,70 @@ int main(int an, char** av) {
   time_point two_days_from_now;
 
   if (!get_not_after_from_cert(x509_cert, &expires)) {
-      printf("Can't get expitation time");
+      printf("%s() error, line %d, Can't get expitation time",
+         __func__, __LINE__);
       return 1;
   }
 
   if (!time_now(&now)) {
-    printf("Can't get time now\n");
+    printf("%s() error, line %d, Can't get time now\n",
+         __func__, __LINE__);
     return 1;
   }
   if (!add_interval_to_time_point(now, 48.0, &two_days_from_now)) {
-    printf("Can't add time interval\n");
+    printf("%s() error, line %d, Can't add time interval\n",
+         __func__, __LINE__);
     return 1;
   }
 
   if (compare_time(two_days_from_now, expires) <= 0) {
-    printf("More than two days left\n");
-    return 0;
+    printf("%s() error, line %d, More than two days left\n",
+         __func__, __LINE__);
+    return 1;
   }
 
-  if (!app_trust_data->recertify_me(FLAGS_policy_host, FLAGS_policy_port, true)) {
-    printf("recertify me failed\n");
-    return 0;
+  if (!app_trust_data->generate_symmetric_key(true)) {
+    printf("%s() error, line %d, can't generate key\n",
+         __func__, __LINE__);
+    return 1;
+  }
+  if (!app_trust_data->generate_sealing_key(true)) {
+    printf("%s() error, line %d, can't generate key\n",
+         __func__, __LINE__);
+    return 1;
+  }
+  if (!app_trust_data->generate_auth_key(true)) {
+    printf("%s() error, line %d, can't generate key\n",
+         __func__, __LINE__);
+    return 1;
+  }
+  if (!app_trust_data->generate_service_key(true)) {
+    printf("%s() error, line %d, can't generate key\n",
+         __func__, __LINE__);
+    return 1;
+  }
+
+  app_trust_data->cc_is_certified_ = false;
+
+  // Now recertify
+  if (!app_trust_data->certify_me()) {
+    printf("%s() error, line %d, can't recertify\n",
+         __func__, __LINE__);
+    return 1;
   }
 
   if (!app_trust_data->put_trust_data_in_store()) {
-    printf("Can't put_trust_in_store\n");
-    return 0;
+    printf("%s() error, line %d, Can't put_trust_in_store\n",
+         __func__, __LINE__);
+    return 1;
   }
   if (!app_trust_data->save_store()) {
-    printf("Can't save store\n");
-    return 0;
+    printf("%s() error, line %d, Can't save store\n",
+         __func__, __LINE__);
+    return 1;
   }
   printf("Key rotation succeeded\n");
+
   if (x509_cert != nullptr) {
     X509_free(x509_cert);
     x509_cert = nullptr;

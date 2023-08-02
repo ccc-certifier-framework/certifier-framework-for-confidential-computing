@@ -171,20 +171,25 @@ bool certifier::utilities::read_file(const string& file_name, int* size, byte* d
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0) {
-    printf("read_file: Can't stat\n");
+    printf("%s() error, line: %d, read_file, Can't stat\n",
+      __func__, __LINE__);
     return false;
   }
   if (!S_ISREG(file_info.st_mode)) {
+    printf("%s() error, line: %d, read_file, not a regular file\n",
+      __func__, __LINE__);
     return false;
   }
   int bytes_in_file = (int)file_info.st_size;
   if (bytes_in_file > *size) {
-    printf("read_file: Buffer too small\n");
+    printf("%s() error, line: %d, read_file, Buffer too small\n",
+         __func__, __LINE__);
     return false;
   }
   int fd = ::open(file_name.c_str(), O_RDONLY);
   if (fd < 0) {
-    printf("read_file: open failed\n");
+    printf("%s() error, line: %d, read_file, open failed\n",
+         __func__, __LINE__);
     return false;
   }
   int n = (int)read(fd, data, bytes_in_file);
@@ -196,12 +201,14 @@ bool certifier::utilities::read_file(const string& file_name, int* size, byte* d
 bool certifier::utilities::read_file_into_string(const string& file_name, string* out) {
   int size = file_size(file_name);
   if (size < 0) {
-    printf("read_file_into_string: Can't size input file\n");
+    printf("%s() error, line: %d, read_file_into_string: Can't size input file %s\n",
+         __func__, __LINE__, file_name.c_str());
     return false;
   }
   byte buf[size];
   if (!read_file(file_name, &size, buf)) {
-    printf("read_file_into_string: Can't read file\n");
+    printf("%s() error, line: %d, read_file_into_string: Can't read file %s\n",
+         __func__, __LINE__, file_name.c_str());
     return false;
   }
 
@@ -595,7 +602,8 @@ bool aes_256_cbc_sha256_encrypt(byte* in, int in_len, byte *key,
   memset(out, 0, *out_size);
 
   if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size)) {
-    printf("aes_256_cbc_sha256_encrypt: encrypt failed\n");
+    printf("%s() error, line: %d, aes_256_cbc_sha256_encrypt: encrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
   memcpy(out, iv, block_size);
@@ -621,12 +629,14 @@ bool aes_256_cbc_sha256_decrypt(byte* in, int in_len, byte *key,
   byte hmac_out[hmac_size];
   HMAC(EVP_sha256(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
   if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
-    printf("aes_256_cbc_sha256_decrypt: HMAC failed\n");
+    printf("%s() error, line: %d, aes_256_cbc_sha256_decrypt: HMAC failed\n",
+         __func__, __LINE__);
     return false;
   }
 
   if (!decrypt(in + block_size, msg_with_iv_size - block_size, key, in, out, &plain_size)) {
-    printf("aes_256_cbc_sha256_decrypt: decrypt failed\n");
+    printf("%s() error, line: %d, aes_256_cbc_sha256_decrypt: decrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
   *out_size = plain_size;
@@ -643,7 +653,8 @@ bool aes_256_cbc_sha384_encrypt(byte* in, int in_len, byte *key,
   memset(out, 0, *out_size);
 
   if (!encrypt(in, in_len, key, iv, out + block_size, &cipher_size)) {
-    printf("aes_256_cbc_sha384_encrypt: encrypt failed\n");
+    printf("%s() error, line: %d, aes_256_cbc_sha384_encrypt: encrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
   memcpy(out, iv, block_size);
@@ -669,12 +680,14 @@ bool aes_256_cbc_sha384_decrypt(byte* in, int in_len, byte *key,
   byte hmac_out[hmac_size];
   HMAC(EVP_sha384(), &key[key_size / 2], mac_size, in, msg_with_iv_size, (byte*)hmac_out, &hmac_size);
   if (memcmp(hmac_out, in + msg_with_iv_size, mac_size) != 0) {
-    printf("aes_256_cbc_sha384_decrypt: HMAC failed\n");
+    printf("%s() error, line: %d, aes_256_cbc_sha384_decrypt: HMAC failed\n",
+         __func__, __LINE__);
     return false;
   }
 
   if (!decrypt(in + block_size, msg_with_iv_size - block_size, key, in, out, &plain_size)) {
-    printf("aes_256_cbc_sha384_decrypt: decrypt failed\n");
+    printf("%s() error, line: %d, aes_256_cbc_sha384_decrypt: decrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
   *out_size = plain_size;
@@ -823,7 +836,8 @@ bool certifier::utilities::authenticated_encrypt(const char* alg_name, byte* in,
   } else if (strcmp(alg_name, "aes-256-gcm") == 0) {
     return aes_256_gcm_encrypt(in, in_len, key, iv, out, out_size);
   } else {
-    printf("authenticated_decrypt: unsupported algorithm %s\n", alg_name);
+    printf("%s() error, line: %d, authenticated_decrypt: unsupported algorithm %s\n",
+         __func__, __LINE__, alg_name);
     return false;
   }
 }
@@ -838,7 +852,8 @@ bool certifier::utilities::authenticated_decrypt(const char* alg_name, byte* in,
   } else if (strcmp(alg_name, "aes-256-gcm") == 0) {
     return aes_256_gcm_decrypt(in, in_len, key, out, out_size);
   } else {
-    printf("authenticated_decrypt: unsupported algorithm %s\n", alg_name);
+    printf("%s() error, line: %d, authenticated_decrypt: unsupported algorithm %s\n",
+         __func__, __LINE__, alg_name);
     return false;
   }
 }
@@ -875,8 +890,9 @@ bool certifier::utilities::private_key_to_public_key(const key_message& in,
     out->set_key_type("ecc-256-public");
     n_bytes = cipher_block_byte_size("ecc-256-public");
   } else {
-    // Shut compiler warning about n_bytes set-but-not-used
-    printf("private_key_to_public_key: bad key type (n_bytes=%d)\n", n_bytes);
+      printf("%s() error, line %d, private_key_to_public_key: bad key type (n_bytes=%d)\n",
+        __func__, __LINE__, n_bytes);
+
     return false;
   }
 
@@ -901,7 +917,8 @@ bool certifier::utilities::private_key_to_public_key(const key_message& in,
     out->set_allocated_ecc_key(ek);
     return true;
   } else {
-    printf("private_key_to_public_key: bad key type\n");
+    printf("%s() error, line: %d, private_key_to_public_key: bad key type\n",
+         __func__, __LINE__);
     return false;
   }
 }
@@ -912,7 +929,8 @@ bool make_certifier_rsa_key(int n,  key_message* k) {
 
   RSA* r = RSA_new();
   if (!generate_new_rsa_key(n, r)) {
-    printf("make_certifier_rsa_key: Can't generate RSA key\n");
+    printf("%s() error, line: %d, make_certifier_rsa_key: Can't generate RSA key\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -940,7 +958,8 @@ bool make_certifier_rsa_key(int n,  key_message* k) {
 bool rsa_public_encrypt(RSA* key, byte* data, int data_len, byte *encrypted, int* size_out) {
   int n = RSA_public_encrypt(data_len, data, encrypted, key, RSA_PKCS1_PADDING);
   if (n <= 0) {
-    printf("rsa_public_encrypt: RSA_public_encrypt failed %d, %d\n", data_len, *size_out);
+    printf("%s() error, line: %d, rsa_public_encrypt: RSA_public_encrypt failed %d, %d\n",
+         __func__, __LINE__, data_len, *size_out);
     return false;
   }
   *size_out = n; 
@@ -950,7 +969,8 @@ bool rsa_public_encrypt(RSA* key, byte* data, int data_len, byte *encrypted, int
 bool rsa_private_decrypt(RSA* key, byte* enc_data, int data_len,  byte* decrypted, int* size_out) {
   int  n = RSA_private_decrypt(data_len, enc_data, decrypted, key, RSA_PKCS1_PADDING);
   if (n <= 0) {
-    printf("rsa_private_decrypt: RSA_private_decrypt failed %d, %d\n", data_len, *size_out);
+    printf("%s() error, line: %d, rsa_private_decrypt: RSA_private_decrypt failed %d, %d\n",
+         __func__, __LINE__, data_len, *size_out);
     return false;
   }
   *size_out = n; 
@@ -975,36 +995,43 @@ bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* sig_size, byt
   unsigned int size_digest = 0;
   if (strcmp("sha-256", alg) == 0) {
     if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha256(), nullptr, private_key) <= 0) {
-        printf("rsa_sign: EVP_DigestSignInit failed\n");
+        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignInit failed\n",
+         __func__, __LINE__);
         return false;
     }
     if (EVP_DigestSignUpdate(sign_ctx, msg, size) <= 0) {
-        printf("rsa_sign: EVP_DigestSignUpdate failed\n");
+        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignUpdate failed\n",
+         __func__, __LINE__);
       return false;
     }
     size_t t = *sig_size;
     if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
-        printf("rsa_sign: EVP_DigestSignFinal failed\n");
+        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignFinal failed\n",
+         __func__, __LINE__);
         return false;
     }
     *sig_size = t;
   } else if(strcmp("sha-384", alg) == 0) {
     if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha384(), nullptr, private_key) <= 0) {
-        printf("rsa_sign: EVP_DigestSignInit failed\n");
+        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignInit failed\n",
+         __func__, __LINE__);
         return false;
     }
     if (EVP_DigestSignUpdate(sign_ctx, msg, size) <= 0) {
-        printf("rsa_sign: EVP_DigestSignUpdate failed\n");
+      printf("%s() error, line: %d, rsa_sign: EVP_DigestSignUpdate failed\n",
+         __func__, __LINE__);
       return false;
     }
     size_t t = *sig_size;
     if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
-        printf("rsa_sign: EVP_DigestSignFinal failed\n");
+        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignFinal failed\n",
+         __func__, __LINE__);
         return false;
     }
     *sig_size = t;
   } else {
-    printf("rsa_sign: unsuported digest\n");
+    printf("%s() error, line: %d, rsa_sign: unsuported digest\n",
+         __func__, __LINE__);
     return false;
   }
   EVP_MD_CTX_destroy(sign_ctx);
@@ -1020,7 +1047,8 @@ bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, by
     memset(digest, 0, size_digest);
 
     if (!digest_message("sha-256", (const byte*) msg, size, digest, size_digest)) {
-      printf("rsa_verify: digest_message failed\n");
+      printf("%s() error, line: %d, rsa_verify: digest_message failed\n",
+         __func__, __LINE__);
       return false;
     }
     int size_decrypted = RSA_size(key);
@@ -1028,11 +1056,13 @@ bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, by
     memset(decrypted, 0, size_decrypted);
     int n = RSA_public_encrypt(sig_size, sig, decrypted, key, RSA_NO_PADDING);
     if (n < 0) {
-      printf("rsa_verify: RSA_public_encrypt failed\n");
+      printf("%s() error, line: %d, rsa_verify: RSA_public_encrypt failed\n",
+         __func__, __LINE__);
       return false;
     }
     if (memcmp(digest, &decrypted[n - size_digest], size_digest) != 0) {
-      printf("rsa_verify: digests don't match\n");
+      printf("%s() error, line: %d, rsa_verify: digests don't match\n",
+         __func__, __LINE__);
       return false;
     }
 
@@ -1042,7 +1072,8 @@ bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, by
       0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     };
     if (memcmp(check_buf, decrypted, check_size) != 0) {
-      printf("rsa_verify: Bad header\n");
+      printf("%s() error, line: %d, rsa_verify: Bad header\n",
+         __func__, __LINE__);
       return false;
     }
     return memcmp(digest, &decrypted[n - size_digest], size_digest) == 0;
@@ -1051,7 +1082,8 @@ bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, by
     byte digest[size_digest];
     memset(digest, 0, size_digest);
     if (!digest_message("sha-384", (const byte*) msg, size, digest, size_digest)) {
-      printf("digest_message failed\n");
+      printf("%s() error, line: %d, digest_message failed\n",
+         __func__, __LINE__);
       return false;
     }
     int size_decrypted = RSA_size(key);
@@ -1059,7 +1091,8 @@ bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, by
     memset(decrypted, 0, size_decrypted);
     int n = RSA_public_encrypt(sig_size, sig, decrypted, key, RSA_NO_PADDING);
     if (n < 0) {
-      printf("rsa_verify: RSA_public_encrypt failed\n");
+      printf("%s() error, line: %d, rsa_verify: RSA_public_encrypt failed\n",
+         __func__, __LINE__);
       return false;
     }
     const int check_size = 16;
@@ -1068,12 +1101,14 @@ bool rsa_verify(const char* alg, RSA *key, int size, byte* msg, int sig_size, by
       0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     };
     if (memcmp(check_buf, decrypted, check_size) != 0) {
-      printf("rsa_verify: Bad header\n");
+      printf("%s() error, line: %d, rsa_verify: Bad header\n",
+         __func__, __LINE__);
       return false;
     }
     return memcmp(digest, &decrypted[n - size_digest], size_digest) == 0;
   } else {
-    printf("rsa_verify: unsupported digest\n");
+    printf("%s() error, line: %d, rsa_verify: unsupported digest\n",
+         __func__, __LINE__);
     return false;
   }
 }
@@ -1385,17 +1420,20 @@ bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, 
 
   int blk_len = ECDSA_size(key);
   if (*size_out < 2 * blk_len) {
-    printf("ecc_sign: size_out too small %d %d\n", *size_out, blk_len);
+    printf("%s() error, line: %d, ecc_sign: size_out too small %d %d\n",
+         __func__, __LINE__, *size_out, blk_len);
     return false;
   }
 
   if (!digest_message(alg, msg, size, digest, len)) {
-    printf("ecc_sign: digest fails\n");
+    printf("%s() error, line: %d, ecc_sign: digest fails\n",
+         __func__, __LINE__);
     return false;
   }
   unsigned int sz = (unsigned int) *size_out;
   if (ECDSA_sign(0, digest, len, out, &sz, key) != 1) {
-    printf("ecc_sign: ECDSA_sign fails\n");
+    printf("%s() error, line: %d, ecc_sign: ECDSA_sign fails\n",
+         __func__, __LINE__);
     return false;
   }
   *size_out = (int) sz;
@@ -1407,12 +1445,14 @@ bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig,
   byte digest[len];
 
   if (!digest_message(alg, msg, size, digest, len)) {
-    printf("ecc_verify: %s digest failed %d\n", alg, len);
+    printf("%s() error, line: %d, ecc_verify: %s digest failed %d\n",
+         __func__, __LINE__, alg, len);
     return false;
   }
   int res = ECDSA_verify(0, digest, len, sig, size_sig, key);
   if (res != 1) {
-    printf("ecc_verify: ECDSA_failed %d %d\n", len, size_sig);
+    printf("%s() error, line: %d, ecc_verify: ECDSA_failed %d %d\n",
+         __func__, __LINE__, len, size_sig);
     return false;
   }
   return true;
@@ -1426,23 +1466,27 @@ EC_KEY* certifier::utilities::generate_new_ecc_key(int num_bits) {
   } else if (num_bits == 256) {
     ecc_key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
   } else {
-    printf("generate_new_ecc_key: Only P-256 and P-384 supported\n");
+    printf("%s() error, line: %d, generate_new_ecc_key: Only P-256 and P-384 supported\n",
+         __func__, __LINE__);
     return nullptr;
   }
   if (ecc_key == nullptr) {
-    printf("generate_new_ecc_key: Can't get curve by name\n");
+    printf("%s() error, line: %d,  generate_new_ecc_key: Can't get curve by name\n",
+         __func__, __LINE__);
     return nullptr;
   }
 
   if (1 != EC_KEY_generate_key(ecc_key)) {
-    printf("generate_new_ecc_key: Can't generate key\n");
+    printf("%s() error, line: %d, generate_new_ecc_key: Can't generate key\n",
+         __func__, __LINE__);
     return nullptr;
   }
 
   BN_CTX* ctx = BN_CTX_new();
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
-    printf("generate_new_ecc_key: Can't get group (1)\n");
+    printf("%s() error, line: %d, generate_new_ecc_key: Can't get group (1)\n",
+         __func__, __LINE__);
     return nullptr;
   }
   BIGNUM* pt_x = BN_new();
@@ -1463,11 +1507,13 @@ EC_KEY* certifier::utilities::key_to_ECC(const key_message& k) {
   } else if (k.key_type() == "ecc-256-private" || k.key_type() == "ecc-256-public") {
     ecc_key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
   } else {
-    printf("key_to_ECC: wrong type %s\n", k.key_type().c_str());
+    printf("%s() error, line: %d, key_to_ECC: wrong type %s\n",
+         __func__, __LINE__, k.key_type().c_str());
     return nullptr;
   }
   if (ecc_key == nullptr) {
-    printf("key_to_ECC: Can't get curve by name\n");
+    printf("%s() error, line: %d, key_to_ECC: Can't get curve by name\n",
+         __func__, __LINE__);
     return nullptr;
   }
 
@@ -1475,18 +1521,21 @@ EC_KEY* certifier::utilities::key_to_ECC(const key_message& k) {
   const BIGNUM* priv_mult =  BN_bin2bn((byte*)(k.ecc_key().private_multiplier().data()),
                 (int)(k.ecc_key().private_multiplier().size()), NULL);
   if (priv_mult == nullptr) {
-    printf("key_to_ECC: not private mult\n");
+    printf("%s() error, line: %d, key_to_ECC: no private mult\n",
+         __func__, __LINE__);
     return nullptr;
   }
   if (EC_KEY_set_private_key(ecc_key, priv_mult) != 1) {
-    printf("key_to_ECC: not can't set\n");
+    printf("%s() error, line: %d, key_to_ECC: not can't set\n",
+         __func__, __LINE__);
     return nullptr;
   }
 
   // set public point
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
-    printf("key_to_ECC: Can't get group (1)\n");
+    printf("%s() error, line: %d, key_to_ECC: Can't get group (1)\n",
+         __func__, __LINE__);
     return nullptr;
   }
   const BIGNUM* p_pt_x =  BN_bin2bn((byte*)(k.ecc_key().public_point().x().data()),
@@ -1494,13 +1543,15 @@ EC_KEY* certifier::utilities::key_to_ECC(const key_message& k) {
   const BIGNUM* p_pt_y =  BN_bin2bn((byte*)(k.ecc_key().public_point().y().data()),
                 (int)(k.ecc_key().public_point().y().size()), NULL);
   if (p_pt_x == nullptr || p_pt_y == nullptr) {
-    printf("key_to_ECC: pts are null\n");
+    printf("%s() error, line: %d, key_to_ECC: pts are null\n",
+         __func__, __LINE__);
     return nullptr;
   }
 
   EC_POINT* pt = EC_POINT_new(group);
   if (pt == nullptr) {
-    printf("key_to_ECC: no pt in group\n");
+    printf("%s() error, line: %d, key_to_ECC: no pt in group\n",
+         __func__, __LINE__);
     return nullptr;
   }
   BN_CTX* ctx = BN_CTX_new();
@@ -1508,11 +1559,13 @@ EC_KEY* certifier::utilities::key_to_ECC(const key_message& k) {
     return nullptr;
   }
   if (EC_POINT_set_affine_coordinates_GFp(group, pt, p_pt_x, p_pt_y, ctx) != 1) {
-    printf("key_to_ECC: can't set affine\n");
+    printf("%s() error, line: %d, key_to_ECC: can't set affine\n",
+         __func__, __LINE__);
     return nullptr;
   }
   if (EC_KEY_set_public_key(ecc_key, pt) != 1) {
-    printf("key_to_ECC: can't set public\n");
+    printf("%s() error, line: %d, key_to_ECC: can't set public\n",
+         __func__, __LINE__);
     return nullptr;
   }
   BN_CTX_free(ctx);
@@ -1537,7 +1590,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
 
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
-    printf("ECC_to_key: Can't get group (2)\n");
+    printf("%s() error, line: %d, ECC_to_key: Can't get group (2)\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -1558,7 +1612,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
     k->set_key_type("ecc-256-public");
     ek->set_curve_name("P-256");
   } else {
-    printf("ECC_to_key: Modulus size not supported: %d\n", modulus_size);
+    printf("%s() error, line: %d, ECC_to_key: Modulus size not supported: %d\n",
+         __func__, __LINE__, modulus_size);
     return false;
   }
 
@@ -1585,7 +1640,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   // set base_point
   const EC_POINT* generator = EC_GROUP_get0_generator(group);
   if (generator == nullptr) {
-    printf("ECC_to_key: Can't get base point\n");
+    printf("%s() error, line: %d, ECC_to_key: Can't get base point\n",
+         __func__, __LINE__);
     BN_CTX_free(ctx);
     return false;
   }
@@ -1593,7 +1649,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   BIGNUM* y = BN_new();
   if (EC_POINT_get_affine_coordinates_GFp(group,
         generator, x, y, ctx) != 1) {
-    printf("ECC_to_key: Can't get affine coordinates\n");
+    printf("%s() error, line: %d, ECC_to_key: Can't get affine coordinates\n",
+         __func__, __LINE__);
     BN_CTX_free(ctx);
     return false;
   }
@@ -1615,7 +1672,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   // set public_point
   const EC_POINT* pub_pt= EC_KEY_get0_public_key(ecc_key);
   if (pub_pt == nullptr) {
-    printf("ECC_to_key: Can't get public point\n");
+    printf("%s() error, line: %d, ECC_to_key: Can't get public point\n",
+         __func__, __LINE__);
     BN_CTX_free(ctx);
     return false;
   }
@@ -1624,7 +1682,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   BIGNUM* yy = BN_new();
   if (EC_POINT_get_affine_coordinates_GFp(group,
         pub_pt, xx, yy, ctx) != 1) {
-    printf("ECC_to_key: Can't get affine coordinates\n");
+    printf("%s() error, line: %d, ECC_to_key: Can't get affine coordinates\n",
+         __func__, __LINE__);
     BN_CTX_free(ctx);
     return false;
   }
@@ -1644,7 +1703,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   // set order_of_base_point
   BIGNUM* order = BN_new();
   if (EC_GROUP_get_order(group, order, ctx) != 1) {
-    printf("ECC_to_key: Can't get order\n");
+    printf("%s() error, line: %d, ECC_to_key: Can't get order\n",
+         __func__, __LINE__);
     BN_free(order);
     BN_CTX_free(ctx);
     return false;
@@ -1684,7 +1744,8 @@ bool make_certifier_ecc_key(int n,  key_message* k) {
   } else if (n == 256) {
     k->set_key_type("ecc-256-private");
   } else {
-    printf("make_certifier_ecc_key: unsupported key size\n");
+    printf("%s() error, line: %d, make_certifier_ecc_key: unsupported key size\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -1840,7 +1901,8 @@ bool satisfying_properties(const properties& p1, const properties& p2) {
   for (int i = 0; i < p1.props_size(); i++) {
     const property* pp2 = find_property(p1.props(i).property_name(), p2);
     if (pp2 == nullptr) {
-      printf("Can't find %s\n", p1.props(i).property_name().c_str());
+      printf("%s() error, line: %d, Can't find %s\n",
+         __func__, __LINE__, p1.props(i).property_name().c_str());
       return false;
     }
     if (!satisfying_property(p1.props(i), *pp2)) {
@@ -1883,9 +1945,6 @@ bool same_platform(const platform& p1, const platform& p2) {
   }
   if (p1.has_key() && p2.has_key()) {
     if (!same_key(p1.attest_key(), p2.attest_key())) {
-      printf("same_platform fails: keys dont match\n");
-      print_key(p1.attest_key()); printf("\n");
-      print_key(p2.attest_key()); printf("\n");
       return false;
     }
   }
@@ -1997,7 +2056,8 @@ bool make_property(string& name, string& type, string& cmp, uint64_t int_value,
     prop->set_value_type("string");
     prop->set_string_value(string_value);
   } else {
-    printf("make_property: unrecognized type: %s\n", type.c_str());
+    printf("%s() error, line: %d, make_property: unrecognized type: %s\n",
+         __func__, __LINE__, type.c_str());
     return false;
   }
   printf("\n");
@@ -2166,7 +2226,8 @@ void print_key_descriptor(const key_message& k) {
       printf("]");
     }
   } else {
-    printf(" unsupported type %s ", k.key_type().c_str());
+    printf("%s() error, line: %d, unsupported type %s ",
+         __func__, __LINE__, k.key_type().c_str());
   }
 }
 
@@ -2318,7 +2379,8 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
 
   string serialized_claim;
   if(!claim.SerializeToString(&serialized_claim)) {
-    printf("make_signed_claim: serialize claim failed\n");
+    printf("%s() error, line: %d, make_signed_claim: serialize claim failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -2330,7 +2392,8 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
   if (strcmp(alg, "rsa-2048-sha256-pkcs-sign") == 0) {
     RSA* r = RSA_new();
     if (!key_to_RSA(key, r)) {
-      printf("make_signed_claim: key_to_RSA failed\n");
+      printf("%s() error, line: %d, make_signed_claim: key_to_RSA failed\n",
+         __func__, __LINE__);
       return false;
     }
 
@@ -2343,7 +2406,8 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
     // sign serialized claim
     key_message* psk = new key_message;
     if (!private_key_to_public_key(key, psk)) {
-      printf("make_signed_claim: private_key_to_public_key failed\n");
+      printf("%s() error, line: %d, make_signed_claim: private_key_to_public_key failed\n",
+         __func__, __LINE__);
       return false;
     }
     out->set_allocated_signing_key(psk);
@@ -2352,7 +2416,8 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
   } else if (strcmp(alg, "rsa-3072-sha384-pkcs-sign") == 0) {
     RSA* r = RSA_new();
     if (!key_to_RSA(key, r)) {
-      printf("make_signed_claim: key_to_RSA failed\n");
+      printf("%s() error, line: %d, make_signed_claim: key_to_RSA failed\n",
+         __func__, __LINE__);
       return false;
     }
 
@@ -2361,7 +2426,8 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
     success = rsa_sign("sha-384", r, serialized_claim.size(), (byte*)serialized_claim.data(),
       &sig_size, sig);
     if (!success) {
-      printf("make_signed_claim: rsa_sign failed\n");
+      printf("%s() error, line: %d, make_signed_claim: rsa_sign failed\n",
+         __func__, __LINE__);
       return false;
     }
     RSA_free(r);
@@ -2378,7 +2444,8 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
   } else if (strcmp(alg, "rsa-4096-sha384-pkcs-sign") == 0) {
     RSA* r = RSA_new();
     if (!key_to_RSA(key, r)) {
-      printf("make_signed_claim: key_to_RSA failed\n");
+      printf("%s() error, line: %d, make_signed_claim: key_to_RSA failed\n",
+         __func__, __LINE__);
       return false;
     }
 
@@ -2387,14 +2454,16 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
     success = rsa_sign("sha-384", r, serialized_claim.size(), (byte*)serialized_claim.data(),
       &sig_size, sig);
     if (!success) {
-      printf("make_signed_claim: rsa_sign failed\n");
+      printf("%s() error, line: %d, make_signed_claim: rsa_sign failed\n",
+         __func__, __LINE__);
     }
     RSA_free(r);
 
     // sign serialized claim
     key_message* psk = new key_message;
     if (!private_key_to_public_key(key, psk)) {
-      printf("make_signed_claim: private_key_to_public_key failed\n");
+      printf("%s() error, line: %d, make_signed_claim: private_key_to_public_key failed\n",
+         __func__, __LINE__);
       return false;
     }
     out->set_allocated_signing_key(psk);
@@ -2403,7 +2472,8 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
   } else if (strcmp(alg, "ecc-384-sha384-pkcs-sign") == 0) {
     EC_KEY* k = key_to_ECC(key);
     if (k == nullptr) {
-      printf("make_signed_claim: to_ECC failed\n");
+      printf("%s() error, line: %d, make_signed_claim: to_ECC failed\n",
+         __func__, __LINE__);
       return false;
     }
     sig_size = 2 * ECDSA_size(k);
@@ -2416,7 +2486,8 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
     // sign serialized claim
     key_message* psk = new key_message;
     if (!private_key_to_public_key(key, psk)) {
-      printf("make_signed_claim: private_key_to_public_key failed\n");
+      printf("%s() error, line: %d, make_signed_claim: private_key_to_public_key failed\n",
+         __func__, __LINE__);
       return false;
     }
     out->set_allocated_signing_key(psk);
@@ -2424,7 +2495,8 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
   } else if (strcmp(alg, "ecc-256-sha256-pkcs-sign") == 0) {
     EC_KEY* k = key_to_ECC(key);
     if (k == nullptr) {
-      printf("make_signed_claim: to_ECC failed\n");
+      printf("%s() error, line: %d, make_signed_claim: to_ECC failed\n",
+         __func__, __LINE__);
       return false;
     }
     sig_size = 2 * ECDSA_size(k);
@@ -2449,19 +2521,23 @@ bool make_signed_claim( const char* alg, const claim_message& claim, const key_m
 bool verify_signed_claim(const signed_claim_message& signed_claim, const key_message& key) {
 
   if (!signed_claim.has_serialized_claim_message()) {
-    printf("verify_signed_claim: no serialized claim\n");
+    printf("%s() error, line: %d, verify_signed_claim: no serialized claim\n",
+         __func__, __LINE__);
     return false;
   }
   if (!signed_claim.has_signing_key()) {
-    printf("verify_signed_claim: no signing key\n");
+    printf("%s() error, line: %d, verify_signed_claim: no signing key\n",
+         __func__, __LINE__);
     return false;
   }
   if (!signed_claim.has_signing_algorithm()) {
-    printf("verify_signed_claim: no signing alg\n");
+    printf("%s() error, line: %d, verify_signed_claim: no signing alg\n",
+         __func__, __LINE__);
     return false;
   }
   if (!signed_claim.has_signature()) {
-    printf("verify_signed_claim: no signature\n");
+    printf("%s() error, line: %d, verify_signed_claim: no signature\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -2470,17 +2546,19 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
     signed_claim.serialized_claim_message().size());
   claim_message c;
   if (!c.ParseFromString(serialized_claim)) {
-    printf("verify_signed_claim: can't deserialize signed claim\n");
+    printf("%s() error, line: %d, verify_signed_claim: can't deserialize signed claim\n",
+         __func__, __LINE__);
     return false;
   }
 
   if (!c.has_claim_format()) {
-    printf("verify_signed_claim: not claim format\n");
+    printf("%s() error, line: %d, verify_signed_claim: not claim format\n",
+         __func__, __LINE__);
     return false;
   }
   if (c.claim_format() != "vse-clause" && c.claim_format() != "vse-attestation") {
-    printf("verify_signed_claim: %s should be vse-clause or vse-attestation\n",
-        c.claim_format().c_str());
+    printf("%s() error, line: %d, verify_signed_claim: %s should be vse-clause or vse-attestation\n",
+         __func__, __LINE__, c.claim_format().c_str());
     return false;
   }
 
@@ -2489,32 +2567,38 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   time_point t_na;
 
   if (!time_now(&t_now)) {
-    printf("verify_signed_claim: time_now failed\n");
+    printf("%s() error, line: %d, verify_signed_claim: time_now failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (!string_to_time(c.not_before(), &t_nb)) {
-    printf("verify_signed_claim: string_to_time failed\n");
+    printf("%s() error, line: %d, verify_signed_claim: string_to_time failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (!string_to_time(c.not_after(), &t_na)) {
-    printf("verify_signed_claim: string_to_time failed\n");
+    printf("%s() error, line: %d, verify_signed_claim: string_to_time failed\n",
+         __func__, __LINE__);
     return false;
   }
 
   if (compare_time(t_now, t_nb) <  0) {
-    printf("verify_signed_claim: Bad time compare 1\n");
+    printf("%s() error, line: %d, verify_signed_claim: Bad time compare 1\n",
+         __func__, __LINE__);
     return false;
   }
   if (compare_time(t_na, t_now) < 0) {
-    printf("verify_signed_claim: Bad time compare 2\n");
-     return false;
+    printf("%s() error, line: %d, verify_signed_claim: Bad time compare 2\n",
+         __func__, __LINE__);
+    return false;
   }
 
   bool success = false;
   if (signed_claim.signing_algorithm() == "rsa-2048-sha256-pkcs-sign") {
     RSA* r = RSA_new();
     if (!key_to_RSA(key, r)) {
-      printf("verify_signed_claim: key_to_RSA failed\n");
+      printf("%s() error, line: %d, verify_signed_claim: key_to_RSA failed\n",
+         __func__, __LINE__);
       return false;
     }
     success = rsa_sha256_verify(r, (int)signed_claim.serialized_claim_message().size(),
@@ -2524,7 +2608,8 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   } else if (signed_claim.signing_algorithm() == "rsa-3072-sha384-pkcs-sign") {
     RSA* r = RSA_new();
     if (!key_to_RSA(key, r)) {
-      printf("verify_signed_claim: key_to_RSA failed\n");
+      printf("%s() error, line: %d, verify_signed_claim: key_to_RSA failed\n",
+         __func__, __LINE__);
       return false;
     }
     success = rsa_verify("sha-384", r, (int)signed_claim.serialized_claim_message().size(),
@@ -2534,7 +2619,8 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   } else if (signed_claim.signing_algorithm() == "rsa-4096-sha384-pkcs-sign") {
     RSA* r = RSA_new();
     if (!key_to_RSA(key, r)) {
-      printf("verify_signed_claim: key_to_RSA failed\n");
+      printf("%s() error, line: %d, verify_signed_claim: key_to_RSA failed\n",
+         __func__, __LINE__);
       return false;
     }
     success = rsa_verify("sha-384", r, (int)signed_claim.serialized_claim_message().size(),
@@ -2544,7 +2630,8 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
   } else if (signed_claim.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
     EC_KEY* k = key_to_ECC(key);
     if (k == nullptr) {
-      printf("verify_signed_claim: key_to_ECC failed\n");
+      printf("%s() error, line: %d, verify_signed_claim: key_to_ECC failed\n",
+         __func__, __LINE__);
       return false;
     }
     success = ecc_verify("sha-384", k, (int)signed_claim.serialized_claim_message().size(),
@@ -2561,7 +2648,8 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
         (byte*)signed_claim.signature().data());
     EC_KEY_free(k);
   } else {
-    printf("verify_signed_claim: unsupported signing algorithm\n");
+    printf("%s() error, line: %d, verify_signed_claim: unsupported signing algorithm\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -2569,26 +2657,6 @@ bool verify_signed_claim(const signed_claim_message& signed_claim, const key_mes
 }
 
 // -----------------------------------------------------------------------
-
-void print_storage_info(const storage_info_message& smi) {
-  printf("\nStorage info:\n");
-  if (smi.has_storage_type())
-    printf("Storage type: %s\n", smi.storage_type().c_str());
-  if (smi.has_storage_descriptor())
-    printf("Storage descriptor: %s\n", smi.storage_descriptor().c_str());
-  if (smi.has_address())
-    printf("address: %s\n", smi.address().c_str());
-  if (smi.has_storage_key())
-    print_key(smi.storage_key());
-}
-
-void print_trusted_service_message(const trusted_service_message& tsm) {
-  printf("\nTrusted service\n");
-  if (tsm.has_trusted_service_address())
-    printf("Service address: %s\n", tsm.trusted_service_address().c_str());
-  if (tsm.has_trusted_service_key())
-    print_key(tsm.trusted_service_key());
-}
 
 void print_protected_blob(protected_blob_message& pb) {
   if (pb.has_encrypted_key()) {
@@ -2758,7 +2826,8 @@ bool certifier::utilities::produce_artifact(
         subject_key.key_type() == "rsa-4096-private") {
       RSA* subject_rsa_key = RSA_new();
       if (!key_to_RSA(subject_key, subject_rsa_key)) {
-        printf("produce_artifact: can't get rsa subject key\n");
+        printf("%s() error, line: %d, produce_artifact: can't get rsa subject key\n",
+          __func__, __LINE__);
         return false;
       }
       EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
@@ -2770,15 +2839,16 @@ bool certifier::utilities::produce_artifact(
                subject_key.key_type() == "ecc-256-private") {
       EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
       if (subject_ecc_key == nullptr) {
-        printf("produce_artifact: can't get subject key\n");
+        printf("%s() error, line: %d, produce_artifact: can't get subject key\n",
+          __func__, __LINE__);
         return false;
       }
       EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
       X509_set_pubkey(x509, subject_pkey);
       EC_KEY_free(subject_ecc_key);
     } else {
-        printf("produce_artifact: unknown public key type %s\n",
-          subject_key.key_type().c_str());
+        printf("%s() error, line: %d, produce_artifact: unknown public key type %s\n",
+         __func__, __LINE__, subject_key.key_type().c_str());
         return false;
     }
     if (signing_key.key_type() == "rsa-4096-private" ||
@@ -2794,7 +2864,8 @@ bool certifier::utilities::produce_artifact(
             signing_key.key_type() == "ecc-256-private") {
     EC_KEY* signing_ecc_key = key_to_ECC(signing_key);
     if (signing_ecc_key == nullptr) {
-      printf("produce_artifact: can't get signing key\n");
+      printf("%s() error, line: %d, produce_artifact: can't get signing key\n",
+         __func__, __LINE__);
       return false;
     }
     EVP_PKEY* signing_pkey = EVP_PKEY_new();
@@ -2812,7 +2883,8 @@ bool certifier::utilities::produce_artifact(
         subject_key.key_type() == "rsa-4096-private") {
       RSA* subject_rsa_key = RSA_new();
       if (!key_to_RSA(subject_key, subject_rsa_key)) {
-        printf("produce_artifact: can't get rsa subject key\n");
+        printf("%s() error, line: %d, produce_artifact: can't get rsa subject key\n",
+         __func__, __LINE__);
         return false;
       }
       EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
@@ -2824,22 +2896,24 @@ bool certifier::utilities::produce_artifact(
                subject_key.key_type() == "ecc-256-private") {
       EC_KEY* subject_ecc_key = key_to_ECC(subject_key);
       if (subject_ecc_key == nullptr) {
-        printf("produce_artifact: can't get subject key\n");
+        printf("%s() error, line: %d, produce_artifact: can't get subject key\n",
+          __func__, __LINE__);
         return false;
       }
       EVP_PKEY_set1_EC_KEY(subject_pkey, subject_ecc_key);
       X509_set_pubkey(x509, subject_pkey);
       EC_KEY_free(subject_ecc_key);
     } else {
-        printf("produce_artifact: unknown public key type %s\n",
-          subject_key.key_type().c_str());
+        printf("%s() error, line: %d, produce_artifact: unknown public key type %s\n",
+          __func__, __LINE__, subject_key.key_type().c_str());
         return false;
     }
     X509_sign(x509, signing_pkey, EVP_sha384());
     EVP_PKEY_free(signing_pkey);
     EVP_PKEY_free(subject_pkey);
   } else {
-    printf("produce_artifact: Unsupported algorithm\n");
+    printf("%s() error, line: %d, produce_artifact: Unsupported algorithm\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -2873,8 +2947,9 @@ bool certifier::utilities::verify_artifact(X509& cert, key_message& verify_key,
 
     EVP_PKEY* subject_pkey = X509_get_pubkey(&cert);
     RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
-    if (!RSA_to_key(subject_rsa_key, subject_key))
+    if (!RSA_to_key(subject_rsa_key, subject_key)) {
       return false;
+    }
     success = (X509_verify(&cert, verify_pkey) == 1);
     RSA_free(verify_rsa_key);
     RSA_free(subject_rsa_key);
@@ -2887,21 +2962,24 @@ bool certifier::utilities::verify_artifact(X509& cert, key_message& verify_key,
              verify_key.key_type() == "ecc-256-private") {
     EVP_PKEY* verify_pkey = EVP_PKEY_new();
     EC_KEY* verify_ecc_key = key_to_ECC(verify_key);
-    if (verify_ecc_key == nullptr) 
+    if (verify_ecc_key == nullptr)  {
       return false;
+    }
     EVP_PKEY_set1_EC_KEY(verify_pkey, verify_ecc_key);
 
     EVP_PKEY* subject_pkey = X509_get_pubkey(&cert);
     EC_KEY* subject_ecc_key= EVP_PKEY_get1_EC_KEY(subject_pkey);
-    if (!ECC_to_key(subject_ecc_key, subject_key))
+    if (!ECC_to_key(subject_ecc_key, subject_key)) {
       return false;
+    }
     success = (X509_verify(&cert, verify_pkey) == 1);
     EC_KEY_free(verify_ecc_key);
     EC_KEY_free(subject_ecc_key);
     EVP_PKEY_free(verify_pkey);
     EVP_PKEY_free(subject_pkey);
   } else {
-    printf("Unsupported key type\n");
+    printf("%s() error, line: %d, Unsupported key type\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -2966,7 +3044,8 @@ int sized_pipe_read(int fd, string* out) {
     return -1;
   }
   if (size > max_pipe_size) {
-    printf("sized_pipe_read: larger than pipe buffer\n");
+    printf("%s() error, line: %d, sized_pipe_read: larger than pipe buffer\n",
+         __func__, __LINE__);
     return -1;
   }
 
@@ -2976,7 +3055,8 @@ int sized_pipe_read(int fd, string* out) {
   while (cur_size < size) {
     n = read(fd, &buf[cur_size], size - cur_size);
     if (n < 0) {
-      printf("sized_pipe_read: read failed\n");
+      printf("%s() error, line: %d, sized_pipe_read: read failed\n",
+         __func__, __LINE__);
       return -1;
     }
     cur_size += n;
@@ -3069,7 +3149,8 @@ bool key_from_pkey(EVP_PKEY* pkey, const string& name, key_message* k) {
     int size = EVP_PKEY_bits(pkey);
     RSA* rsa_key= EVP_PKEY_get1_RSA(pkey);
     if (!RSA_to_key(rsa_key, k)) {
-      printf("key_from_pkey: RSA_to_key failed\n");
+      printf("%s() error, line: %d, key_from_pkey: RSA_to_key failed\n",
+         __func__, __LINE__);
       return false;
     }
     switch(size) {
@@ -3093,7 +3174,8 @@ bool key_from_pkey(EVP_PKEY* pkey, const string& name, key_message* k) {
     int size = EVP_PKEY_bits(pkey);
     EC_KEY* ecc_key= EVP_PKEY_get1_EC_KEY(pkey);
     if (!ECC_to_key(ecc_key, k)) {
-      printf("key_from_pkey: ECC_to_key failed\n");
+      printf("%s() error, line: %d, key_from_pkey: ECC_to_key failed\n",
+         __func__, __LINE__);
       return false;
     }
     if (size == 384) {
@@ -3105,7 +3187,8 @@ bool key_from_pkey(EVP_PKEY* pkey, const string& name, key_message* k) {
     }
     // EC_KEY_free(ecc_key);
   } else {
-    printf("key_from_pkey: unsupported key type\n");
+    printf("%s() error, line: %d, key_from_pkey: unsupported key type\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -3152,7 +3235,8 @@ key_message* get_issuer_key(X509* x, cert_keys_seen_list& list) {
   char name_buf[max_buf];
   X509_NAME* issuer_name = X509_get_issuer_name(x);
   if (X509_NAME_get_text_by_NID(issuer_name, NID_commonName, name_buf, max_buf) < 0) {
-    printf("get_issuer_key: Can't get name from NID\n");
+    printf("%s() error, line: %d, get_issuer_key: Can't get name from NID\n",
+         __func__, __LINE__);
     return nullptr;
   }
   str_issuer_name.assign((const char*) name_buf);
@@ -3169,12 +3253,14 @@ EVP_PKEY* pkey_from_key(const key_message& k) {
       k.key_type() == "rsa-4096-public" || k.key_type() == "rsa-4096-private") {
     RSA* rsa_key = RSA_new();
     if (!key_to_RSA(k, rsa_key)) {
-      printf("pkey_from_key: Can't translate key to RSA key\n");
+      printf("%s() error, line: %d, pkey_from_key: Can't translate key to RSA key\n",
+         __func__, __LINE__);
       EVP_PKEY_free(pkey);
       return nullptr;
     }
     if (1 != EVP_PKEY_assign_RSA(pkey, rsa_key)) {
-      printf("pkey_from_key: Can't set RSA key\n");
+      printf("%s() error, line: %d, pkey_from_key: Can't set RSA key\n",
+         __func__, __LINE__);
       EVP_PKEY_free(pkey);
       return nullptr;
     }
@@ -3191,7 +3277,8 @@ EVP_PKEY* pkey_from_key(const key_message& k) {
     EVP_PKEY_assign_EC_KEY(pkey, ecc_key);
     return pkey;
   } else {
-    printf("pkey_from_key: Unsupported key type\n");
+    printf("%s() error, line: %d, pkey_from_key: Unsupported key type\n",
+         __func__, __LINE__);
     EVP_PKEY_free(pkey);
     return nullptr;
   }
@@ -3209,7 +3296,8 @@ bool x509_to_public_key(X509* x, key_message* k) {
     int size = EVP_PKEY_bits(subject_pkey); 
     RSA* subject_rsa_key= EVP_PKEY_get1_RSA(subject_pkey);
     if (!RSA_to_key(subject_rsa_key, k)) {
-      printf("x509_to_public_key: RSA_to_key failed\n");
+      printf("%s() error, line: %d, x509_to_public_key: RSA_to_key failed\n",
+         __func__, __LINE__);
       return false;
     }
     switch(size) {
@@ -3226,7 +3314,8 @@ bool x509_to_public_key(X509* x, key_message* k) {
       k->set_key_type("rsa-4096-public");
       break;
     default:
-      printf("x509_to_public_key: bad key type\n");
+      printf("%s() error, line: %d, x509_to_public_key: bad key type\n",
+         __func__, __LINE__);
       return false;
     }
     // free subject_rsa_key?
@@ -3245,7 +3334,8 @@ bool x509_to_public_key(X509* x, key_message* k) {
     }
     // Todo: free subject_ecc_key?
   } else {
-    printf("x509_to_public_key: bad pkey type\n");
+    printf("%s() error, line: %d, x509_to_public_key: bad pkey type\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -3254,7 +3344,8 @@ bool x509_to_public_key(X509* x, key_message* k) {
   char name_buf[max_buf];
   memset(name_buf, 0, max_buf);
   if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, max_buf) < 0) {
-    printf("x509_to_public_key: can't get subject_name\n");
+    printf("%s() error, line: %d, x509_to_public_key: can't get subject_name\n",
+         __func__, __LINE__);
     return false;
   }
   k->set_key_name((const char*) name_buf);
@@ -3347,21 +3438,25 @@ bool construct_vse_attestation_from_cert(const key_message& subj,
 
   entity_message subj_ent;
   if (!make_key_entity(subj, &subj_ent)) {
-    printf("construct_vse_attestation_from_cert: Can't make subject entity\n");
+    printf("%s() error, line: %d, construct_vse_attestation_from_cert: Can't make subject entity\n",
+         __func__, __LINE__);
     return false;
   }
   vse_clause* c1 = new vse_clause;
   if (!make_unary_vse_clause(subj_ent, str_prop, c1)) {
-    printf("construct_vse_attestation_from_cert: Can't construct unary clause\n");
+    printf("%s() error, line: %d, construct_vse_attestation_from_cert: Can't construct unary clause\n",
+         __func__, __LINE__);
     return false;
   }
   entity_message signer_ent;
   if (!make_key_entity(signer, &signer_ent)) {
-    printf("construct_vse_attestation_from_cert: Can't make signer entity\n");
+    printf("%s() error, line: %d, construct_vse_attestation_from_cert: Can't make signer entity\n",
+         __func__, __LINE__);
     return false;
   }
   if (!make_indirect_vse_clause(signer_ent, str_says, *c1, cl)) {
-    printf("construct_vse_attestation_from_cert: Can't construct indirect clause\n");
+    printf("%s() error, line: %d, construct_vse_attestation_from_cert: Can't construct indirect clause\n",
+         __func__, __LINE__);
     return false;
   }
 

@@ -23,6 +23,27 @@ using namespace certifier::utilities;
 DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(input, "simple_clause.bin",  "input file");
 
+void print_signed_claim_clauses(const signed_claim_message& sc) {
+  string cm_str;
+  cm_str.assign((char*)sc.serialized_claim_message().data(),
+      sc.serialized_claim_message().size());
+  claim_message cm;
+  if (!cm.ParseFromString(cm_str)) {
+    printf("Can't parse serialized claim\n");
+    return;
+  }
+  string vse_str;
+  vse_str.assign((char*)cm.serialized_claim().data(),
+    cm.serialized_claim().size());
+  vse_clause v;
+  if (!v.ParseFromString(vse_str)) {
+    printf("Can't parse serialized vse clasue\n");
+    return;
+  }
+  print_vse_clause(v);
+  printf("\n");
+}
+
 int main(int an, char** av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -61,7 +82,10 @@ int main(int an, char** av) {
       return 1;
     }
     printf("%d: ", i + 1);
-    print_signed_claim(sc);
+    if (FLAGS_print_all)
+      print_signed_claim(sc);
+    else
+      print_signed_claim_clauses(sc);
     printf("\n");
   }
 
