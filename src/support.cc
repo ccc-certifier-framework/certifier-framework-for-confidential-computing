@@ -2355,22 +2355,22 @@ void certifier::utilities::print_rsa_key(const rsa_message& rsa) {
   }
   if (rsa.has_private_p()) {
     printf("P              : ");
-    print_bytes(rsa.public_exponent().size(), (byte*)rsa.public_exponent().data());
+    print_bytes(rsa.private_p().size(), (byte*)rsa.private_p().data());
     printf("\n");
   }
   if (rsa.has_private_q()) {
     printf("Q              : ");
-    print_bytes(rsa.public_exponent().size(), (byte*)rsa.public_exponent().data());
+    print_bytes(rsa.private_q().size(), (byte*)rsa.private_q().data());
     printf("\n");
   }
   if (rsa.has_private_dp()) {
     printf("DP             : ");
-    print_bytes(rsa.public_exponent().size(), (byte*)rsa.public_exponent().data());
+    print_bytes(rsa.private_dp().size(), (byte*)rsa.private_dp().data());
     printf("\n");
   }
   if (rsa.has_private_dq()) {
     printf("DQ             : ");
-    print_bytes(rsa.public_exponent().size(), (byte*)rsa.public_exponent().data());
+    print_bytes(rsa.private_dq().size(), (byte*)rsa.private_dq().data());
     printf("\n");
   }
 }
