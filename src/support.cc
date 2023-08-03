@@ -234,32 +234,53 @@ bool certifier::utilities::tm_time_to_time_point(struct tm* tm_time, time_point*
 }
 
 bool certifier::utilities::asn1_time_to_tm_time(const ASN1_TIME* s, struct tm *tm_time) {
-  if (1 != ASN1_TIME_to_tm(s, tm_time))
+  if (1 != ASN1_TIME_to_tm(s, tm_time)) {
+    printf("%s() error, line: %d, asn1_time_to_tm_time failed\n",
+         __func__, __LINE__);
     return false;
+  }
   return true;
 }
 
 bool certifier::utilities::get_not_before_from_cert(X509* c, time_point* tp) {
   const ASN1_TIME* asc_time = X509_getm_notBefore(c);
-  if (asc_time == nullptr)
+  if (asc_time == nullptr) {
+    printf("%s() error, line: %d, get_not_before_from_cert failed\n",
+         __func__, __LINE__);
     return false;
+  }
   struct tm tm_time;
-  if (!asn1_time_to_tm_time(asc_time, &tm_time))
+  if (!asn1_time_to_tm_time(asc_time, &tm_time)) {
+    printf("%s() error, line: %d, asn1_time_to_tm_time failed\n",
+         __func__, __LINE__);
     return false;
-  if (!tm_time_to_time_point(&tm_time, tp))
+  }
+  if (!tm_time_to_time_point(&tm_time, tp)) {
+    printf("%s() error, line: %d, tm_time_to_time_point failed\n",
+         __func__, __LINE__);
     return false;
+  }
   return true;
 }
 
 bool certifier::utilities::get_not_after_from_cert(X509* c, time_point* tp) {
   const ASN1_TIME* asc_time = X509_getm_notAfter(c);
-  if (asc_time == nullptr)
+  if (asc_time == nullptr) {
+    printf("%s() error, line: %d, X509_getm_notAfter failed\n",
+         __func__, __LINE__);
     return false;
+  }
   struct tm tm_time;
-  if (!asn1_time_to_tm_time(asc_time, &tm_time))
+  if (!asn1_time_to_tm_time(asc_time, &tm_time)) {
+    printf("%s() error, line: %d, asn1_time_to_tm_time failed\n",
+         __func__, __LINE__);
     return false;
-  if (!tm_time_to_time_point(&tm_time, tp))
+  }
+  if (!tm_time_to_time_point(&tm_time, tp)) {
+    printf("%s() error, line: %d, tm_time_to_time_point failed\n",
+         __func__, __LINE__);
     return false;
+  }
   return true;
 }
 
@@ -528,19 +549,27 @@ bool decrypt(byte *in, int in_len, byte *key,
     bool ret = true;
 
     if(!(ctx = EVP_CIPHER_CTX_new())) {
+      printf("%s() error, line: %d, decrypt failed\n",
+         __func__, __LINE__);
       ret = false;
       goto done;
     }
     if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
+      printf("%s() error, line: %d, EVP_DecryptInit failed\n",
+         __func__, __LINE__);
       ret = false;
       goto done;
     }
     if(1 != EVP_DecryptUpdate(ctx, out, &len, in, in_len)) {
+      printf("%s() error, line: %d, EVP_DecryptUpdate failed\n",
+         __func__, __LINE__);
       ret = false;
       goto done;
     }
     out_len = len;
     if(1 != EVP_DecryptFinal_ex(ctx, out + len, &len)) {
+      printf("%s() error, line: %d, EVP_DecryptFinal failed\n",
+         __func__, __LINE__);
       ret = false;
       goto done;
     }
@@ -557,36 +586,68 @@ bool certifier::utilities::digest_message(const char* alg, const byte* message,
     int message_len, byte* digest, unsigned int digest_len) {
 
   int n = digest_output_byte_size(alg);
-  if (n < 0)
+  if (n < 0) {
+    printf("%s() error, line: %d, digest_output_byte_size failed\n",
+         __func__, __LINE__);
     return false;
-  if (n > (int)digest_len)
+  }
+  if (n > (int)digest_len) {
+    printf("%s() error, line: %d, digest_len wrong\n",
+         __func__, __LINE__);
     return false;
+  }
 
   EVP_MD_CTX *mdctx;
 
   if (strcmp(alg, "sha-256") == 0 || strcmp(alg, "sha256") == 0) {
-    if((mdctx = EVP_MD_CTX_new()) == NULL)
+    if((mdctx = EVP_MD_CTX_new()) == NULL) {
+      printf("%s() error, line: %d, EVP_MD_CTX_new failed\n",
+         __func__, __LINE__);
       return false;
-    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
+    }
+    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL)) {
+      printf("%s() error, line: %d, EVP_DigestInit failed\n",
+         __func__, __LINE__);
       return false;
+    }
   } else if (strcmp(alg, "sha-384") == 0) {
-    if((mdctx = EVP_MD_CTX_new()) == NULL)
+    if((mdctx = EVP_MD_CTX_new()) == NULL) {
+      printf("%s() error, line: %d, EVP_MD_CTX_new failed\n",
+         __func__, __LINE__);
       return false;
-    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha384(), NULL))
+    }
+    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha384(), NULL)) {
+      printf("%s() error, line: %d, EVP_DigestInit failed\n",
+         __func__, __LINE__);
       return false;
+    }
   } else if (strcmp(alg, "sha-512")  == 0) {
-    if((mdctx = EVP_MD_CTX_new()) == NULL)
+    if((mdctx = EVP_MD_CTX_new()) == NULL) {
+      printf("%s() error, line: %d, EVP_MD_CTX_new failed\n",
+         __func__, __LINE__);
       return false;
-    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha512(), NULL))
+    }
+    if(1 != EVP_DigestInit_ex(mdctx, EVP_sha512(), NULL)) {
+      printf("%s() error, line: %d, EVP_DigestInit failed\n",
+         __func__, __LINE__);
       return false;
+    }
   } else {
+      printf("%s() error, line: %d, unknown hash \n",
+         __func__, __LINE__);
     return false;
   }
 
-  if(1 != EVP_DigestUpdate(mdctx, message, message_len))
+  if(1 != EVP_DigestUpdate(mdctx, message, message_len)) {
+    printf("%s() error, line: %d, EVP_DigestUpdate failed\n",
+         __func__, __LINE__);
     return false;
-  if(1 != EVP_DigestFinal_ex(mdctx, digest, &digest_len))
+  }
+  if(1 != EVP_DigestFinal_ex(mdctx, digest, &digest_len)) {
+    printf("%s() error, line: %d, EVP_DigestFinal_ex failed\n",
+         __func__, __LINE__);
     return false;
+  }
   EVP_MD_CTX_free(mdctx);
 
   return true;
@@ -709,20 +770,28 @@ bool aes_256_gcm_encrypt(byte* in, int in_len, byte *key,
   bool ret = true;
 
   if(!(ctx = EVP_CIPHER_CTX_new())) {
+    printf("%s() error, line: %d, EVP_CIPHER_CTX_new failed\n",
+         __func__, __LINE__);
     return false;
   }
 
   if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr)) {
+    printf("%s() error, line: %d, EVP_EncryptInit_ex failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
 
   // set IV length
   if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, blk_size, nullptr)) {
+    printf("%s() error, line: %d, EVP_CIPHER_CTX_ctrl failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
   if(1 != EVP_EncryptInit_ex(ctx, nullptr, nullptr, key, iv)) {
+    printf("%s() error, line: %d, EVP_EncryptInit_ex failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
@@ -730,10 +799,14 @@ bool aes_256_gcm_encrypt(byte* in, int in_len, byte *key,
   memcpy(out, iv, blk_size);
 
   if(1 != EVP_EncryptUpdate(ctx, nullptr, &len, aad, aad_len)) {
+    printf("%s() error, line: %d, EVP_EncryptUpdate failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
   if(1 != EVP_EncryptUpdate(ctx, out + blk_size, &len, in, in_len)) {
+    printf("%s() error, line: %d, EVP_EncryptUpdate failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
@@ -741,6 +814,8 @@ bool aes_256_gcm_encrypt(byte* in, int in_len, byte *key,
 
   // Finalize
   if(1 != EVP_EncryptFinal_ex(ctx, out + len, &len)) {
+    printf("%s() error, line: %d, EVP_EncryptFinal_ex failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
@@ -748,6 +823,8 @@ bool aes_256_gcm_encrypt(byte* in, int in_len, byte *key,
 
   tag_len = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, blk_size, tag);
   if(tag_len <= 0) {
+    printf("%s() error, line: %d, EVP_CIPHER_CTX_ctrl failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
@@ -781,32 +858,46 @@ bool aes_256_gcm_decrypt(byte* in, int in_len, byte *key,
   int err = 0;
 
   if(!(ctx = EVP_CIPHER_CTX_new())) {
+    printf("%s() error, line: %d, EVP_CIPHER_CTX_new failed\n",
+         __func__, __LINE__);
     return false;
   }
   if(!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr)) {
+    printf("%s() error, line: %d, EVP_DecryptInit_ex failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
   if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, blk_size, nullptr)) {
+    printf("%s() error, line: %d, EVP_CIPHER_CTX_ctrl failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
   if(!EVP_DecryptInit_ex(ctx, nullptr, nullptr, key, iv)) {
+    printf("%s() error, line: %d, EVP_DecryptInit_ex failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
 
   if(!EVP_DecryptUpdate(ctx, nullptr, &len, aad, aad_len)) {
+    printf("%s() error, line: %d, EVP_DecryptUpdate failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
   if(!EVP_DecryptUpdate(ctx, out, &len, in + blk_size, stream_len)) {
+    printf("%s() error, line: %d, EVP_DecryptUpdate failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
   plaintext_len = len;
 
   if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, blk_size, tag)) {
+    printf("%s() error, line: %d, EVP_CIPHER_CTX_ctrl failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
@@ -814,6 +905,8 @@ bool aes_256_gcm_decrypt(byte* in, int in_len, byte *key,
   // Finalize
   err = EVP_DecryptFinal_ex(ctx, in + in_len - blk_size, &len);
   if (err <= 0) {
+    printf("%s() error, line: %d, EVP_DecryptFinal failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
@@ -943,12 +1036,16 @@ bool make_certifier_rsa_key(int n,  key_message* k) {
   } else if (n == 3072) {
     k->set_key_type("rsa-3072-private");
   } else {
+    printf("%s() error, line: %d, bad modulus size failed\n",
+         __func__, __LINE__);
     RSA_free(r);
     return false;
   }
   k->set_key_name("test-key-2");
   k->set_key_format("vse-key");
   if (!RSA_to_key(r, k)) {
+    printf("%s() error, line: %d, RSA_to_key failed\n",
+         __func__, __LINE__);
     return false;
   }
   RSA_free(r);
@@ -1119,11 +1216,20 @@ bool generate_new_rsa_key(int num_bits, RSA* r) {
   uint32_t e = RSA_F4;
 
   bne = BN_new();
+  if (bne == nullptr) {
+    printf("%s() error, line: %d, BN_new failed\n",
+         __func__, __LINE__);
+    return false;
+  }
   if (1 != BN_set_word(bne, e)) {
+    printf("%s() error, line: %d, BN_set_word  failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
   if (1 != RSA_generate_key_ex(r, num_bits, bne, NULL)) {
+    printf("%s() error, line: %d, RSA_generate_key_ex failed\n",
+         __func__, __LINE__);
     ret = false;
     goto done;
   }
@@ -1135,6 +1241,8 @@ done:
 
 bool key_to_RSA(const key_message& k, RSA* r) {
   if (k.key_format() != "vse-key") {
+      printf("%s() error, line: %d, no key format\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -1170,55 +1278,105 @@ bool key_to_RSA(const key_message& k, RSA* r) {
   }
 
   if (!k.has_rsa_key()) {
+    printf("%s() error, line: %d, no rsa key\n",
+         __func__, __LINE__);
     return false;
   }
   const rsa_message& rsa_key_data = k.rsa_key();
   if (!rsa_key_data.has_public_modulus() || !rsa_key_data.has_public_exponent()) {
+    printf("%s() error, line: %d, modulus or exponent missing\n",
+         __func__, __LINE__);
     print_key(k);
     return false;
   }
   BIGNUM* n =  BN_bin2bn((byte*)(rsa_key_data.public_modulus().data()),
                 (int)(rsa_key_data.public_modulus().size()), NULL);
+  if (n == nullptr) {
+    printf("%s() error, line: %d, Can't get bignum\n",
+         __func__, __LINE__);
+    return false;
+  }
   BIGNUM* e =  BN_bin2bn((const byte*) rsa_key_data.public_exponent().data(),
                 (int)rsa_key_data.public_exponent().size(), NULL);
+  if (e == nullptr) {
+    printf("%s() error, line: %d, Can't get bignum\n",
+         __func__, __LINE__);
+    return false;
+  }
   BIGNUM* d = nullptr;
   if (private_key && rsa_key_data.has_private_exponent()) {
     d =  BN_bin2bn((const byte*) rsa_key_data.private_exponent().data(),
                 (int)rsa_key_data.private_exponent().size(), NULL);
+    if (d == nullptr) {
+      printf("%s() error, line: %d, Can't get bignum\n",
+         __func__, __LINE__);
+      return false;
+    }
   }
   if (1 != RSA_set0_key(r, n, e, d)) {
+    printf("%s() error, line: %d, RSA_set0_key failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (private_key) {
-    BIGNUM *p = nullptr;
-    BIGNUM *q = nullptr;
-    BIGNUM *dmp1 = nullptr;
-    BIGNUM *dmq1 = nullptr;
-    BIGNUM *iqmp = nullptr;
+    BIGNUM* p = nullptr;
+    BIGNUM* q = nullptr;
+    BIGNUM* dmp1 = nullptr;
+    BIGNUM* dmq1 = nullptr;
+    BIGNUM* iqmp = nullptr;
     if (rsa_key_data.has_private_p()) {
       p = BN_bin2bn((const byte*) rsa_key_data.private_p().data(),
                 (int)rsa_key_data.private_p().size(), NULL);
+      if (p == nullptr) {
+        printf("%s() error, line: %d, Can't get bignum\n",
+          __func__, __LINE__);
+        return false;
+      }
     }
     if (rsa_key_data.has_private_q()) {
       q = BN_bin2bn((const byte*) rsa_key_data.private_q().data(),
                 (int)rsa_key_data.private_q().size(), NULL);
+      if (q == nullptr) {
+        printf("%s() error, line: %d, Can't get bignum\n",
+          __func__, __LINE__);
+        return false;
+      }
     }
     if (rsa_key_data.has_private_dp()) {
       dmp1 = BN_bin2bn((const byte*) rsa_key_data.private_dp().data(),
                 (int)rsa_key_data.private_dp().size(), NULL);
+      if (dmp1  == nullptr) {
+        printf("%s() error, line: %d, Can't get bignum\n",
+          __func__, __LINE__);
+        return false;
+      }
     }
     if (rsa_key_data.has_private_dq()) {
       dmq1 = BN_bin2bn((const byte*) rsa_key_data.private_dq().data(),
                 (int)rsa_key_data.private_dq().size(), NULL);
+      if (dmq1  == nullptr) {
+        printf("%s() error, line: %d, Can't get bignum\n",
+          __func__, __LINE__);
+        return false;
+      }
     }
     if (rsa_key_data.has_private_iqmp()) {
       iqmp = BN_bin2bn((const byte*) rsa_key_data.private_iqmp().data(),
                 (int)rsa_key_data.private_iqmp().size(), NULL);
+      if (iqmp  == nullptr) {
+        printf("%s() error, line: %d, Can't get bignum\n",
+          __func__, __LINE__);
+        return false;
+      }
     }
     if (1 != RSA_set0_factors(r, p, q)) {
+        printf("%s() error, line: %d, RSA_set0_factors failed\n",
+          __func__, __LINE__);
       return false;
     }
     if (1 != RSA_set0_crt_params(r, dmp1, dmq1, iqmp)) {
+        printf("%s() error, line: %d, RSA_set0_crt_params failed\n",
+          __func__, __LINE__);
       return false;
     }
   }
@@ -1576,21 +1734,29 @@ EC_KEY* certifier::utilities::key_to_ECC(const key_message& k) {
 bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   k->set_key_format("vse_key");
 
-  ecc_message* ek = new ecc_message;
-  if (ek == nullptr)
-    return false;
-
   if (ecc_key == nullptr) {
+    printf("%s() error, line: %d, ECC_to_key\n",
+         __func__, __LINE__);
+    return false;
+  }
+  ecc_message* ek = new ecc_message;
+  if (ek == nullptr) {
+    printf("%s() error, line: %d, Can't allocate ecc_message\n",
+         __func__, __LINE__);
     return false;
   }
 
+
   BN_CTX* ctx = BN_CTX_new();
-  if (ctx == nullptr)
+  if (ctx == nullptr) {
+    printf("%s() error, line: %d, BN_CTX_new failed\n",
+         __func__, __LINE__);
     return false;
+  }
 
   const EC_GROUP* group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
-    printf("%s() error, line: %d, ECC_to_key: Can't get group (2)\n",
+    printf("%s() error, line: %d, ECC_to_key: Can't get group\n",
          __func__, __LINE__);
     return false;
   }
@@ -1599,6 +1765,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   BIGNUM* a = BN_new();
   BIGNUM* b = BN_new();
   if (EC_GROUP_get_curve_GFp(group, p, a, b, ctx) <= 0) {
+    printf("%s() error, line: %d, EC_GROUP_get_curve_GFp failed\n",
+         __func__, __LINE__);
     BN_CTX_free(ctx);
     return false;
   }
@@ -1723,6 +1891,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
     } else if (modulus_size == 32) {
       k->set_key_type("ecc-256-private");
     } else {
+      printf("%s() error, line: %d, EC_KEY_get0_private_key failed\n",
+         __func__, __LINE__);
       return false;
     }
     sz  = BN_num_bytes(pk);
@@ -1732,7 +1902,8 @@ bool certifier::utilities::ECC_to_key(const EC_KEY* ecc_key, key_message* k) {
   }
 
   k->set_allocated_ecc_key(ek);
-  BN_CTX_free(ctx);
+  if (ctx != nullptr)
+    BN_CTX_free(ctx);
   return true;
 }
 
@@ -1750,12 +1921,17 @@ bool make_certifier_ecc_key(int n,  key_message* k) {
   }
 
   EC_KEY* ek = generate_new_ecc_key(n);
-  if (ek == nullptr)
+  if (ek == nullptr) {
+    printf("%s() error, line: %d, generate_new_ecc_key failed\n",
+         __func__, __LINE__);
     return false;
+  }
 
   k->set_key_name("test-key-2");
   k->set_key_format("vse-key");
   if (!ECC_to_key(ek, k)) {
+    printf("%s() error, line: %d, ECC_to_key failed\n",
+         __func__, __LINE__);
     return false;
   }
   EC_KEY_free(ek);
@@ -1784,74 +1960,101 @@ bool certifier::utilities::get_random(int num_bits, byte* out) {
 
 // may want to check leading 0's
 bool same_point(const point_message& pt1, const point_message& pt2) {
-  if (pt1.x().size() != pt2.x().size())
+  if (pt1.x().size() != pt2.x().size()) {
     return false;
-  if (pt1.y().size() != pt2.y().size())
+  }
+  if (pt1.y().size() != pt2.y().size()) {
     return false;
-  if (memcmp(pt1.x().data(),pt1.x().data(), pt1.x().size()) != 0)
+  }
+  if (memcmp(pt1.x().data(),pt1.x().data(), pt1.x().size()) != 0) {
     return false;
-  if (memcmp(pt1.y().data(),pt1.y().data(), pt1.y().size()) != 0)
+  }
+  if (memcmp(pt1.y().data(),pt1.y().data(), pt1.y().size()) != 0) {
     return false;
+  }
   return true;
 }
 
 bool same_key(const key_message& k1, const key_message& k2) {
-  if (k1.key_type() != k2.key_type())
+  if (k1.key_type() != k2.key_type()) {
     return false;
+  }
+
   if (k1.key_type() == "rsa-2048-private" || k1.key_type() == "rsa-2048-public" ||
       k1.key_type() == "rsa-1024-private" || k1.key_type() == "rsa-1024-public" ||
       k1.key_type() == "rsa-3072-private" || k1.key_type() == "rsa-3072-public" ||
       k1.key_type() == "rsa-4096-private" || k1.key_type() == "rsa-4096-public") {
     string b1, b2;
-    if (!k1.has_rsa_key() || !k2.has_rsa_key())
+    if (!k1.has_rsa_key() || !k2.has_rsa_key()) {
       return false;
-    if (k1.rsa_key().public_modulus() != k2.rsa_key().public_modulus())
+    }
+    if (k1.rsa_key().public_modulus() != k2.rsa_key().public_modulus()) {
       return false;
-    if (k1.rsa_key().public_exponent() != k2.rsa_key().public_exponent())
+    }
+    if (k1.rsa_key().public_exponent() != k2.rsa_key().public_exponent()) {
       return false;
+    }
     return true;
   } else if (k1.key_type() == "aes-256-cbc-hmac-sha256" ||
             k1.key_type() == "aes-256-cbc" || k1.key_type() == "aes-256") {
-    if (!k1.has_secret_key_bits())
+    if (!k1.has_secret_key_bits()) {
+      printf("%s() error, line: %d, no secret key bits\n",
+         __func__, __LINE__);
       return false;
-    if (k1.secret_key_bits().size() != k2.secret_key_bits().size())
+    }
+    if (k1.secret_key_bits().size() != k2.secret_key_bits().size()) {
+      printf("%s() error, line: %d, number of key bits don't match\n",
+         __func__, __LINE__);
       return false;
+    }
     return (memcmp(k1.secret_key_bits().data(), k2.secret_key_bits().data(), k1.secret_key_bits().size()) == 0);
   } else if (k1.key_type() == "ecc-384-public" || k1.key_type() == "ecc-384-private") {
     const ecc_message& em1 = k1.ecc_key();
     const ecc_message& em2 = k2.ecc_key();
     if (em1.curve_p().size() != em2.curve_p().size() ||
-        memcmp(em1.curve_p().data(),em2.curve_p().data(), em1.curve_p().size()) != 0)
+        memcmp(em1.curve_p().data(),em2.curve_p().data(), em1.curve_p().size()) != 0) {
       return false;
+    }
     if (em1.curve_a().size() != em2.curve_a().size() ||
-          memcmp(em1.curve_a().data(),em1.curve_a().data(), em2.curve_a().size()) != 0)
+          memcmp(em1.curve_a().data(),em1.curve_a().data(), em2.curve_a().size()) != 0) {
       return false;
+    }
     if (em1.curve_b().size() != em2.curve_b().size() ||
-           memcmp(em1.curve_b().data(),em1.curve_b().data(), em2.curve_b().size()) != 0)
+           memcmp(em1.curve_b().data(),em1.curve_b().data(), em2.curve_b().size()) != 0) {
       return false;
-    if (!same_point(em1.base_point(), em2.base_point()))
+    }
+    if (!same_point(em1.base_point(), em2.base_point())) {
       return false;
-    if (!same_point(em1.public_point(), em2.public_point()))
+    }
+    if (!same_point(em1.public_point(), em2.public_point())) {
       return false;
+    }
     return true;
   } else if (k1.key_type() == "ecc-256-public" || k1.key_type() == "ecc-256-private") {
     const ecc_message& em1 = k1.ecc_key();
     const ecc_message& em2 = k2.ecc_key();
     if (em1.curve_p().size() != em2.curve_p().size() ||
-        memcmp(em1.curve_p().data(),em2.curve_p().data(), em1.curve_p().size()) != 0)
+        memcmp(em1.curve_p().data(),em2.curve_p().data(), em1.curve_p().size()) != 0) {
       return false;
+    }
     if (em1.curve_a().size() != em2.curve_a().size() ||
-          memcmp(em1.curve_a().data(),em1.curve_a().data(), em2.curve_a().size()) != 0)
+          memcmp(em1.curve_a().data(),em1.curve_a().data(), em2.curve_a().size()) != 0) {
       return false;
+    }
     if (em1.curve_b().size() != em2.curve_b().size() ||
-           memcmp(em1.curve_b().data(),em1.curve_b().data(), em2.curve_b().size()) != 0)
+           memcmp(em1.curve_b().data(),em1.curve_b().data(), em2.curve_b().size()) != 0) {
       return false;
-    if (!same_point(em1.base_point(), em2.base_point()))
+    }
+    if (!same_point(em1.base_point(), em2.base_point())) {
       return false;
-    if (!same_point(em1.public_point(), em2.public_point()))
+    }
+    if (!same_point(em1.public_point(), em2.public_point())) {
       return false;
+    }
     return true;
   } else {
+    printf("%s() error, line: %d, baad ecc type\n",
+         __func__, __LINE__);
     return false;
   }
   return true;
@@ -2145,12 +2348,24 @@ void certifier::utilities::print_rsa_key(const rsa_message& rsa) {
     printf("\n");
   }
   if (rsa.has_private_p()) {
+    printf("P              : ");
+    print_bytes(rsa.public_exponent().size(), (byte*)rsa.public_exponent().data());
+    printf("\n");
   }
   if (rsa.has_private_q()) {
+    printf("Q              : ");
+    print_bytes(rsa.public_exponent().size(), (byte*)rsa.public_exponent().data());
+    printf("\n");
   }
   if (rsa.has_private_dp()) {
+    printf("DP             : ");
+    print_bytes(rsa.public_exponent().size(), (byte*)rsa.public_exponent().data());
+    printf("\n");
   }
   if (rsa.has_private_dq()) {
+    printf("DQ             : ");
+    print_bytes(rsa.public_exponent().size(), (byte*)rsa.public_exponent().data());
+    printf("\n");
   }
 }
 
@@ -3004,8 +3219,11 @@ bool certifier::utilities::asn1_to_x509(const string& in, X509 *x) {
 
   byte* p = (byte*) in.data();
   d2i_X509(&x, (const byte**)&p, len);
-  if (x == nullptr)
+  if (x == nullptr) {
+    printf("%s() error, line: %d, no x509 pointer\n",
+         __func__, __LINE__);
     return false;
+  }
   return true;
 }
 
