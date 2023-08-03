@@ -1599,7 +1599,13 @@ bool ecc_sign(const char* alg, EC_KEY* key, int size, byte* msg, int* size_out, 
 }
 
 bool ecc_verify(const char* alg, EC_KEY* key, int size, byte* msg, int size_sig, byte* sig) {
-  unsigned int len = (unsigned int)digest_output_byte_size(alg);
+  int ilen = (unsigned int)digest_output_byte_size(alg);
+  if (ilen <= 0) {
+    printf("%s() error, line: %d, Bad digest size\n",
+         __func__, __LINE__);
+    return false;
+  }
+  unsigned int len = (unsigned int)ilen;
   byte digest[len];
 
   if (!digest_message(alg, msg, size, digest, len)) {
