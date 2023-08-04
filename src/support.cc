@@ -516,19 +516,27 @@ bool encrypt(byte* in, int in_len, byte *key,
   bool ret = true;
 
   if(!(ctx = EVP_CIPHER_CTX_new())) {
+      printf("%s() error, line: %d, EVP_CIPHER_CTX_new failed\n",
+         __func__, __LINE__);
       ret = false;
       goto done;
     }
   if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
+      printf("%s() error, line: %d, EVP_EncryptInit_ex failed\n",
+         __func__, __LINE__);
       ret = false;
       goto done;
     }
   if(1 != EVP_EncryptUpdate(ctx, out, &len, in, in_len)) {
+      printf("%s() error, line: %d, EVP_EncryptUpdate failed\n",
+         __func__, __LINE__);
       ret = false;
       goto done;
     }
   out_len = len;
   if(1 != EVP_EncryptFinal_ex(ctx, out + len, &len)) {
+      printf("%s() error, line: %d, EVP_EncryptFinal_ex failed\n",
+         __func__, __LINE__);
       ret = false;
       goto done;
     }
@@ -1017,8 +1025,9 @@ bool certifier::utilities::private_key_to_public_key(const key_message& in,
 }
 
 bool make_certifier_rsa_key(int n,  key_message* k) {
-  if (k == nullptr)
+  if (k == nullptr) {
     return false;
+  }
 
   RSA* r = RSA_new();
   if (!generate_new_rsa_key(n, r)) {
@@ -1085,9 +1094,20 @@ bool rsa_sha256_verify(RSA*key, int size, byte* msg, int sig_size, byte* sig) {
 
 bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* sig_size, byte* sig) {
 
-  EVP_MD_CTX* sign_ctx = EVP_MD_CTX_create();
   EVP_PKEY* private_key  = EVP_PKEY_new();
+  if (private_key == nullptr) {
+    printf("%s() error, line: %d, rsa_sign: EVP_PKEY_new failed\n",
+     __func__, __LINE__);
+    return false;
+  }
   EVP_PKEY_assign_RSA(private_key, key);
+
+  EVP_MD_CTX* sign_ctx = EVP_MD_CTX_create();
+  if (sign_ctx == nullptr) {
+    printf("%s() error, line: %d, rsa_sign: EVP_MD_CTX_create failed\n",
+     __func__, __LINE__);
+    return false;
+  }
 
   unsigned int size_digest = 0;
   if (strcmp("sha-256", alg) == 0) {
@@ -1720,6 +1740,8 @@ EC_KEY* certifier::utilities::key_to_ECC(const key_message& k) {
   }
   BN_CTX* ctx = BN_CTX_new();
   if (ctx == nullptr) {
+    printf("%s() error, line: %d, BN_CTX_new failed\n",
+         __func__, __LINE__);
     return nullptr;
   }
   if (EC_POINT_set_affine_coordinates_GFp(group, pt, p_pt_x, p_pt_y, ctx) != 1) {
