@@ -23,6 +23,8 @@ bool test_random(bool print_all) {
 
   memset(out, 0, n);
   if (!get_random(n * 8, out)) {
+    printf("%s() error, line: %d, get_random failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -68,7 +70,8 @@ bool test_encrypt(bool print_all) {
     printf("input: "); print_bytes(in_size, plain); printf("\n");
   }
   if (!encrypt(plain, in_size, key, iv, cipher, &size1)) {
-    printf("encrypt failed\n");
+    printf("%s() error, line: %d, encrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -77,7 +80,8 @@ bool test_encrypt(bool print_all) {
     printf("cipher: "); print_bytes(size2, cipher); printf("\n");
   }
   if (!decrypt(cipher, size1, key, iv, decrypted, &size2)) {
-    printf("decrypt failed\n");
+    printf("%s() error, line: %d, decrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -86,6 +90,8 @@ bool test_encrypt(bool print_all) {
   }
   if (size2 != in_size || memcmp(plain, decrypted, in_size) != 0) {
     printf("comparison failed\n");
+    printf("%s() error, line: %d, comparison failed\n",
+         __func__, __LINE__);
     return false;
   }
   return true;
@@ -126,7 +132,8 @@ bool test_authenticated_encrypt(bool print_all) {
   }
 
   if (!authenticated_encrypt("aes-256-cbc-hmac-sha256", plain, in_size, key, iv, cipher, &size_encrypt_out)) {
-    printf("authenticated encrypt failed\n");
+    printf("%s() error, line: %d, authenticated encrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -136,7 +143,8 @@ bool test_authenticated_encrypt(bool print_all) {
   }
   if (!authenticated_decrypt("aes-256-cbc-hmac-sha256", cipher, size_encrypt_out, key,
             decrypted, &size_decrypt_out)) {
-    printf("authenticated decrypt failed\n");
+    printf("%s() error, line: %d, authenticated decrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -146,7 +154,8 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("\n");
   }
   if (size_decrypt_out != in_size || memcmp(plain, decrypted, in_size) != 0) {
-    printf("comparison failed\n");
+    printf("%s() error, line: %d, comparisonfailed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -159,7 +168,8 @@ bool test_authenticated_encrypt(bool print_all) {
   }
 
   if (!authenticated_encrypt("aes-256-cbc-hmac-sha384", plain, in_size, key, iv, cipher, &size_encrypt_out)) {
-    printf("authenticated encrypt failed\n");
+    printf("%s() error, line: %d, authenticated encrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -169,7 +179,8 @@ bool test_authenticated_encrypt(bool print_all) {
   }
   if (!authenticated_decrypt("aes-256-cbc-hmac-sha384", cipher, size_encrypt_out, key,
             decrypted, &size_decrypt_out)) {
-    printf("authenticated decrypt failed\n");
+    printf("%s() error, line: %d, authenticated decrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -179,7 +190,8 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("\n");
   }
   if (size_decrypt_out != size_in || memcmp(plain, decrypted, size_in) != 0) {
-    printf("comparison failed\n");
+    printf("%s() error, line: %d, comparison failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -187,7 +199,8 @@ bool test_authenticated_encrypt(bool print_all) {
   size_decrypt_out = out_size;
 
   if (!authenticated_encrypt("aes-256-gcm", plain, in_size, key, iv, cipher, &size_encrypt_out)) {
-    printf("authenticated encrypt for aes-256-gcm failed\n");
+    printf("%s() error, line: %d, authenticated for aes-256-gcm encrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -197,7 +210,8 @@ bool test_authenticated_encrypt(bool print_all) {
   }
   if (!authenticated_decrypt("aes-256-gcm", cipher, size_encrypt_out, key,
             decrypted, &size_decrypt_out)) {
-    printf("authenticated decrypt for aes-256-gcm failed\n");
+    printf("%s() error, line: %d, authenticated for aes-256-gcm decrypt failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -207,7 +221,8 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("\n");
   }
   if (size_decrypt_out != size_in || memcmp(plain, decrypted, size_in) != 0) {
-    printf("comparison failed\n");
+    printf("%s() error, line: %d, comparison failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -218,12 +233,18 @@ bool test_public_keys(bool print_all) {
 
   RSA* r1 = RSA_new();
 
-  if (!generate_new_rsa_key(2048, r1))
+  if (!generate_new_rsa_key(2048, r1)) {
+    printf("%s() error, line: %d, generate_new_rsa_key failed\n",
+         __func__, __LINE__);
     return false;
+  }
 
   key_message km1;
-  if (!RSA_to_key(r1, &km1))
+  if (!RSA_to_key(r1, &km1)) {
+    printf("%s() error, line: %d, RSA_to_key failed\n",
+         __func__, __LINE__);
     return false;
+  }
   if (print_all) {
     print_key((const key_message&)km1);
   }
@@ -244,23 +265,35 @@ bool test_public_keys(bool print_all) {
   if (print_all) {
     printf("public to encrypt: "); print_bytes(size_data, data); printf("\n");
   }
-  if (!rsa_public_encrypt(r1, data, size_data, out, &size_out))
+  if (!rsa_public_encrypt(r1, data, size_data, out, &size_out)) {
+    printf("%s() error, line: %d, rsa_public_encrypt failed\n",
+         __func__, __LINE__);
     return false;
+  }
   if (print_all) {
     printf("public encrypted: "); print_bytes(size_out, out); printf("\n");
   }
-  if (!rsa_private_decrypt(r1, out, size_out, recovered, &size_recovered))
+  if (!rsa_private_decrypt(r1, out, size_out, recovered, &size_recovered)) {
+    printf("%s() error, line: %d, rsa_private_decrypt failed\n",
+         __func__, __LINE__);
     return false;
+  }
   if (print_all) {
     printf("public recovered: "); print_bytes(size_recovered, recovered); printf("\n");
   }
   RSA_free(r1);
-  if (memcmp(data, recovered, size_recovered) != 0)
+  if (memcmp(data, recovered, size_recovered) != 0) {
+    printf("%s() error, line: %d, memcmpfailed\n",
+         __func__, __LINE__);
     return false;
+  }
 
   RSA* r2 = RSA_new();
-  if (!generate_new_rsa_key(4096, r2))
+  if (!generate_new_rsa_key(4096, r2)) {
+    printf("%s() error, line: %d, generate_new_rsa_key failed\n",
+         __func__, __LINE__);
     return false;
+  }
 
   size_out = 2048;
   size_recovered = 2048;
@@ -282,33 +315,42 @@ bool test_public_keys(bool print_all) {
   if (print_all) {
     printf("public to encrypt: "); print_bytes(size_data, data); printf("\n");
   }
-  if (!rsa_public_encrypt(r2, data, size_data, out, &size_out))
+  if (!rsa_public_encrypt(r2, data, size_data, out, &size_out)) {
+    printf("%s() error, line: %d, rsa_public_encrypt failed\n",
+         __func__, __LINE__);
     return false;
+  }
   if (print_all) {
     printf("public encrypted: "); print_bytes(size_out, out); printf("\n");
   }
-  if (!rsa_private_decrypt(r2, out, size_out, recovered, &size_recovered))
+  if (!rsa_private_decrypt(r2, out, size_out, recovered, &size_recovered)) {
+    printf("%s() error, line: %d, rsa_private_decrypt failed\n",
+         __func__, __LINE__);
     return false;
+  }
   if (print_all) {
     printf("public recovered: "); print_bytes(size_recovered, recovered); printf("\n");
   }
   RSA_free(r2);
-  if (memcmp(data, recovered, size_recovered) != 0)
+  if (memcmp(data, recovered, size_recovered) != 0) {
+    printf("%s() error, line: %d, memcmp failed\n",
+         __func__, __LINE__);
     return false;
+  }
   
   // ECC
   size_out = 2048;
   size_recovered = 2048;
   EC_KEY* ecc_key = generate_new_ecc_key(384);
   if (ecc_key == nullptr) {
-    printf("Can't generate new ecc key\n");
+    printf("%s() error, line: %d, Can't generate new ecc key failed\n",
+         __func__, __LINE__);
     return false;
   }
-  if (ecc_key == nullptr)
-    return false;
   key_message km3;
   if (!ECC_to_key(ecc_key, &km3)) {
-    printf("Can't ECC to key\n");
+    printf("%s() error, line: %d, ECC_to_key failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -327,14 +369,16 @@ bool test_public_keys(bool print_all) {
     printf("ecc sign out    : "); print_bytes(size_out, out); printf("\n");
   }
   if (!ecc_verify("sha-384", ecc_key, size_data, data, size_out, out)) {
-    printf("ecc_verify failed\n");
+    printf("%s() error, line: %d, ecc verify failed\n",
+         __func__, __LINE__);
     return false;
   }
 
   key_message priv_km;
   key_message pub_km;
   if (!ECC_to_key(ecc_key, &priv_km)) {
-    printf("ECC_to_key failed\n");
+    printf("%s() error, line: %d, ECC_to_key failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -347,7 +391,8 @@ bool test_public_keys(bool print_all) {
   }
 
   if (!private_key_to_public_key(priv_km, &pub_km)) {
-    printf("ECC private_key_to_public_key failed\n");
+    printf("%s() error, line: %d, ECC private_key_to_public_key failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -371,12 +416,11 @@ bool test_public_keys(bool print_all) {
   memcpy(data, (byte*)msg, size_data);
 
   EC_KEY* ecc_key2 = generate_new_ecc_key(256);
-  if (ecc_key == nullptr) {
-    printf("Can't generate new ecc key\n");
+  if (ecc_key2 == nullptr) {
+    printf("%s() error, line: %d, Can't generate new ecc key\n",
+         __func__, __LINE__);
     return false;
   }
-  if (ecc_key == nullptr)
-    return false;
   key_message km4;
   if (!ECC_to_key(ecc_key2, &km4)) {
     printf("Can't ECC to key\n");
@@ -391,8 +435,8 @@ bool test_public_keys(bool print_all) {
     printf("public to encrypt: "); print_bytes(size_data, data); printf("\n");
   }
   if (!ecc_sign("sha-256", ecc_key2, size_data, data, &size_out, out)) {
-    printf("ecc_sign failed\n");
-    printf("Sig size: %d\n", size_out);
+    printf("%s() error, line: %d, ecc_sign failed, size: %d\n",
+         __func__, __LINE__, size_out);
     return false;
   }
   if (print_all) {
@@ -401,7 +445,8 @@ bool test_public_keys(bool print_all) {
 #if 1
   // TODO: sometimes this faults
   if (!ecc_verify("sha-256", ecc_key, size_data, data, size_out, out)) {
-    printf("ecc_verify failed\n");
+    printf("%s() error, line: %d, ecc_verify failed\n",
+         __func__, __LINE__);
     return false;
   }
 #endif
@@ -409,7 +454,8 @@ bool test_public_keys(bool print_all) {
   key_message priv_km2;
   key_message pub_km2;
   if (!ECC_to_key(ecc_key2, &priv_km2)) {
-    printf("ECC_to_key failed\n");
+    printf("%s() error, line: %d, ECC_to_key failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -422,7 +468,8 @@ bool test_public_keys(bool print_all) {
   }
 
   if (!private_key_to_public_key(priv_km2, &pub_km2)) {
-    printf("ECC private_key_to_public_key failed\n");
+    printf("%s() error, line: %d, ECC private_key_to_public_key failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -480,7 +527,8 @@ bool test_digest(bool print_all) {
 
   memset(digest, 0, size_digest);
   if (!digest_message("sha-256", (const byte*) message, msg_len, digest, size_digest)) {
-    printf("failed 0 (%d)\n", size_digest);
+    printf("%s() error, line: %d, digest failed, %d\n",
+         __func__, __LINE__, size_digest);
     return false;
   }
   if (print_all) {
@@ -494,12 +542,14 @@ bool test_digest(bool print_all) {
 
   size_digest = (unsigned int) digest_output_byte_size("sha256");
   if (size_digest < 0) {
-    printf("failed 1 (%d)\n", size_digest);
+    printf("%s() error, line: %d, digest failed, %d\n",
+         __func__, __LINE__, size_digest);
     return false;
   }
   memset(digest, 0, size_digest);
   if (!digest_message("sha-256", (const byte*) message2, msg_len, digest, size_digest)) {
-    printf("failed 2 (%d)\n", size_digest);
+    printf("%s() error, line: %d, digest_message failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -507,18 +557,21 @@ bool test_digest(bool print_all) {
     printf("SHA-256 digest : "); print_bytes((int)size_digest, digest); printf("\n");
   }
   if (memcmp(digest, sha256_test, size_digest) != 0) {
-    printf("failed 3 (%d)\n", size_digest);
+    printf("%s() error, line: %d, memcmp failed\n",
+         __func__, __LINE__);
     return false;
   }
 
   size_digest = (unsigned int) digest_output_byte_size("sha-384");
   if (size_digest < 0) {
-    printf("failed 4 (%d)\n", size_digest);
+    printf("%s() error, line: %d, digest_message failed\n",
+         __func__, __LINE__);
     return false;
   }
   memset(digest, 0, size_digest);
   if (!digest_message("sha-384", (const byte*) message2, msg_len, digest, size_digest)) {
-    printf("failed 5 (%d)\n", size_digest);
+    printf("%s() error, line: %d, digest_message failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -526,17 +579,21 @@ bool test_digest(bool print_all) {
     printf("SHA-384 digest : "); print_bytes((int)size_digest, digest); printf("\n");
   }
   if (memcmp(digest, sha384_test, size_digest) != 0) {
+    printf("%s() error, line: %d, memcmp failed\n",
+         __func__, __LINE__);
     return false;
   }
 
   size_digest = (unsigned int) digest_output_byte_size("sha-512");
   if (size_digest < 0) {
-    printf("failed 6 (%d)\n", size_digest);
+    printf("%s() error, line: %d, digest_message failed\n",
+         __func__, __LINE__);
     return false;
   }
   memset(digest, 0, size_digest);
   if (!digest_message("sha-512", (const byte*) message2, msg_len, digest, size_digest)) {
-    printf("failed 7 (%d)\n", size_digest);
+    printf("%s() error, line: %d, digest_message failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -544,6 +601,8 @@ bool test_digest(bool print_all) {
     printf("SHA-512 digest : "); print_bytes((int)size_digest, digest); printf("\n");
   }
   if (memcmp(digest, sha512_test, size_digest) != 0) {
+    printf("%s() error, line: %d, memcmp failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -554,13 +613,15 @@ bool test_sign_and_verify(bool print_all) {
   RSA* r = RSA_new();
 
   if (!generate_new_rsa_key(2048, r)) {
-    printf("generate_new_rsa_key failed\n");
+    printf("%s() error, line: %d, generate_new_rsa_key failed\n",
+         __func__, __LINE__);
     return false;
   }
 
   key_message km;
   if (!RSA_to_key(r, &km)) {
-    printf("RSA_to_key failed\n");
+    printf("%s() error, line: %d, RSA_to_key failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -577,11 +638,13 @@ bool test_sign_and_verify(bool print_all) {
   memset(recovered, 0, recovered_size);
 
   if (!rsa_sha256_sign(r, strlen(test_message), (byte*)test_message, &sig_size, sig)) {
-    printf("rsa_sha256_sign failed\n");
+    printf("%s() error, line: %d, rsa_sha256_sign failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (!rsa_sha256_verify(r, strlen(test_message), (byte*)test_message, sig_size, sig)) {
-    printf("rsa_sha256_verify failed\n");
+    printf("%s() error, line: %d, rsa_sha256_verify failed\n",
+         __func__, __LINE__);
     return false;
   }
 
@@ -592,12 +655,18 @@ bool test_sign_and_verify(bool print_all) {
 bool test_key_translation(bool print_all) {
   key_message k1;
 
-  if(!make_certifier_rsa_key(2048, &k1))
+  if(!make_certifier_rsa_key(2048, &k1)) {
+    printf("%s() error, line: %d, make_certifier_rsa_key failed\n",
+         __func__, __LINE__);
     return false;
+  }
 
   RSA* r2 = RSA_new();
-  if(!key_to_RSA(k1, r2))
+  if(!key_to_RSA(k1, r2)) {
+    printf("%s() error, line: %d, key_to_RSA failed\n",
+         __func__, __LINE__);
     return false;
+  }
   if (print_all) {
     int nb = RSA_bits(r2);
     printf("BITS: %d\n", nb);
@@ -605,14 +674,23 @@ bool test_key_translation(bool print_all) {
   key_message k2;
   RSA_to_key(r2, &k2);
   RSA_free(r2);
-  if (!same_key(k1, k2))
+  if (!same_key(k1, k2)) {
+    printf("%s() error, line: %d, same_key failed\n",
+         __func__, __LINE__);
     return false;
+  }
 
   key_message k3;
-  if(!make_certifier_rsa_key(2048, &k3))
+  if(!make_certifier_rsa_key(2048, &k3)) {
+    printf("%s() error, line: %d, make_certifier_rsa_key failed\n",
+         __func__, __LINE__);
     return false;
-  if (same_key(k1, k3))
+  }
+  if (same_key(k1, k3)) {
+    printf("%s() error, line: %d, same_key failed\n",
+         __func__, __LINE__);
     return false;
+  }
   return true;
 }
 
@@ -624,14 +702,26 @@ bool test_time(bool print_all) {
   string s_later;
   double hours_to_add = 365.0 * 24.0;
 
-  if (!time_now(&t_now))
+  if (!time_now(&t_now)) {
+    printf("%s() error, line: %d, time_now failed\n",
+         __func__, __LINE__);
     return false;
-  if (!time_to_string(t_now, &s_now))
+  }
+  if (!time_to_string(t_now, &s_now)) {
+    printf("%s() error, line: %d, time_to_string failed\n",
+         __func__, __LINE__);
     return false;
-  if (!string_to_time(s_now, &t_test))
+  }
+  if (!string_to_time(s_now, &t_test)) {
+    printf("%s() error, line: %d, string_to_time failed\n",
+         __func__, __LINE__);
     return false;
-  if (!add_interval_to_time_point(t_now, hours_to_add, &t_later))
+  }
+  if (!add_interval_to_time_point(t_now, hours_to_add, &t_later)) {
+    printf("%s() error, line: %d, add_interval_to_time_point failed\n",
+         __func__, __LINE__);
     return false;
+  }
   if (print_all) {
     printf("now: ");
     print_time_point(t_now);
@@ -648,9 +738,13 @@ bool test_time(bool print_all) {
 
   time(&now);
   if (!time_t_to_tm_time(&now, &tm_time)) {
+    printf("%s() error, line: %d, time_t_to_tm_time failed\n",
+         __func__, __LINE__);
     return false;
   }
   if (!tm_time_to_time_point(&tm_time, &tp)) {
+    printf("%s() error, line: %d, tm_time_to_time_point failed\n",
+         __func__, __LINE__);
     return false;
   }
 
