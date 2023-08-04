@@ -235,7 +235,7 @@ bool certifier::utilities::tm_time_to_time_point(struct tm* tm_time, time_point*
 
 bool certifier::utilities::asn1_time_to_tm_time(const ASN1_TIME* s, struct tm *tm_time) {
   if (1 != ASN1_TIME_to_tm(s, tm_time)) {
-    printf("%s() error, line: %d, asn1_time_to_tm_time failed\n",
+    printf("%s() error, line: %d, ASN1_TIME_to_tm_time() failed\n",
          __func__, __LINE__);
     return false;
   }
@@ -245,13 +245,13 @@ bool certifier::utilities::asn1_time_to_tm_time(const ASN1_TIME* s, struct tm *t
 bool certifier::utilities::get_not_before_from_cert(X509* c, time_point* tp) {
   const ASN1_TIME* asc_time = X509_getm_notBefore(c);
   if (asc_time == nullptr) {
-    printf("%s() error, line: %d, get_not_before_from_cert failed\n",
+    printf("%s() error, line: %d, get_not_before_from_cert() failed\n",
          __func__, __LINE__);
     return false;
   }
   struct tm tm_time;
   if (!asn1_time_to_tm_time(asc_time, &tm_time)) {
-    printf("%s() error, line: %d, asn1_time_to_tm_time failed\n",
+    printf("%s() error, line: %d, asn1_time_to_tm_time() failed\n",
          __func__, __LINE__);
     return false;
   }
@@ -516,26 +516,26 @@ bool encrypt(byte* in, int in_len, byte *key,
   bool ret = true;
 
   if(!(ctx = EVP_CIPHER_CTX_new())) {
-      printf("%s() error, line: %d, EVP_CIPHER_CTX_new failed\n",
+      printf("%s() error, line: %d, EVP_CIPHER_CTX_new() failed\n",
          __func__, __LINE__);
       ret = false;
       goto done;
     }
   if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
-      printf("%s() error, line: %d, EVP_EncryptInit_ex failed\n",
+      printf("%s() error, line: %d, EVP_EncryptInit_ex() failed\n",
          __func__, __LINE__);
       ret = false;
       goto done;
     }
   if(1 != EVP_EncryptUpdate(ctx, out, &len, in, in_len)) {
-      printf("%s() error, line: %d, EVP_EncryptUpdate failed\n",
+      printf("%s() error, line: %d, EVP_EncryptUpdate() failed\n",
          __func__, __LINE__);
       ret = false;
       goto done;
     }
   out_len = len;
   if(1 != EVP_EncryptFinal_ex(ctx, out + len, &len)) {
-      printf("%s() error, line: %d, EVP_EncryptFinal_ex failed\n",
+      printf("%s() error, line: %d, EVP_EncryptFinal_ex() failed\n",
          __func__, __LINE__);
       ret = false;
       goto done;
@@ -557,7 +557,7 @@ bool decrypt(byte *in, int in_len, byte *key,
     bool ret = true;
 
     if(!(ctx = EVP_CIPHER_CTX_new())) {
-      printf("%s() error, line: %d, decrypt failed\n",
+      printf("%s() error, line: %d, EVP_CIPHER_CTX_new() failed\n",
          __func__, __LINE__);
       ret = false;
       goto done;
@@ -1104,7 +1104,7 @@ bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* sig_size, byt
 
   EVP_MD_CTX* sign_ctx = EVP_MD_CTX_create();
   if (sign_ctx == nullptr) {
-    printf("%s() error, line: %d, rsa_sign: EVP_MD_CTX_create failed\n",
+    printf("%s() error, line: %d, rsa_sign: EVP_MD_CTX_create() failed\n",
      __func__, __LINE__);
     return false;
   }
@@ -1112,36 +1112,36 @@ bool rsa_sign(const char* alg, RSA* key, int size, byte* msg, int* sig_size, byt
   unsigned int size_digest = 0;
   if (strcmp("sha-256", alg) == 0) {
     if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha256(), nullptr, private_key) <= 0) {
-        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignInit failed\n",
+        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignInit() failed\n",
          __func__, __LINE__);
         return false;
     }
     if (EVP_DigestSignUpdate(sign_ctx, msg, size) <= 0) {
-        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignUpdate failed\n",
+        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignUpdate() failed\n",
          __func__, __LINE__);
       return false;
     }
     size_t t = *sig_size;
     if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
-        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignFinal failed\n",
+        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignFinal() failed\n",
          __func__, __LINE__);
         return false;
     }
     *sig_size = t;
   } else if(strcmp("sha-384", alg) == 0) {
     if (EVP_DigestSignInit(sign_ctx, nullptr, EVP_sha384(), nullptr, private_key) <= 0) {
-        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignInit failed\n",
+        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignInit() failed\n",
          __func__, __LINE__);
         return false;
     }
     if (EVP_DigestSignUpdate(sign_ctx, msg, size) <= 0) {
-      printf("%s() error, line: %d, rsa_sign: EVP_DigestSignUpdate failed\n",
+      printf("%s() error, line: %d, rsa_sign: EVP_DigestSignUpdate() failed\n",
          __func__, __LINE__);
       return false;
     }
     size_t t = *sig_size;
     if (EVP_DigestSignFinal(sign_ctx, sig, &t) <= 0) {
-        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignFinal failed\n",
+        printf("%s() error, line: %d, rsa_sign: EVP_DigestSignFinal() failed\n",
          __func__, __LINE__);
         return false;
     }

@@ -190,7 +190,7 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("\n");
   }
   if (size_decrypt_out != size_in || memcmp(plain, decrypted, size_in) != 0) {
-    printf("%s() error, line: %d, comparison failed\n",
+    printf("%s() error, line: %d, plaintext and decrypted text are different\n",
          __func__, __LINE__);
     return false;
   }
@@ -199,7 +199,7 @@ bool test_authenticated_encrypt(bool print_all) {
   size_decrypt_out = out_size;
 
   if (!authenticated_encrypt("aes-256-gcm", plain, in_size, key, iv, cipher, &size_encrypt_out)) {
-    printf("%s() error, line: %d, authenticated for aes-256-gcm encrypt failed\n",
+    printf("%s() error, line: %d, authenticated_encrypt() for aes-256-gcm encrypt failed\n",
          __func__, __LINE__);
     return false;
   }
@@ -542,13 +542,13 @@ bool test_digest(bool print_all) {
 
   size_digest = (unsigned int) digest_output_byte_size("sha256");
   if (size_digest < 0) {
-    printf("%s() error, line: %d, digest failed, %d\n",
+    printf("%s() error, line: %d, digest size failed, %d\n",
          __func__, __LINE__, size_digest);
     return false;
   }
   memset(digest, 0, size_digest);
   if (!digest_message("sha-256", (const byte*) message2, msg_len, digest, size_digest)) {
-    printf("%s() error, line: %d, digest_message failed\n",
+    printf("%s() error, line: %d, digest_message() failed\n",
          __func__, __LINE__);
     return false;
   }
@@ -557,7 +557,7 @@ bool test_digest(bool print_all) {
     printf("SHA-256 digest : "); print_bytes((int)size_digest, digest); printf("\n");
   }
   if (memcmp(digest, sha256_test, size_digest) != 0) {
-    printf("%s() error, line: %d, memcmp failed\n",
+    printf("%s() error, line: %d, test digest doesn't match\n",
          __func__, __LINE__);
     return false;
   }
