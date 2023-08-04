@@ -54,6 +54,29 @@ def test_getmembers_of_cc_framework():
         print(' -', item[0], item[1])
 
 # ##############################################################################
+def test_cf_cc_trust_data_default_ctor():
+    """
+    Basic exerciser for an empty cc_trust_data() object.
+    """
+    cctd = libcf.new_cc_trust_data()
+    result = libcf.cc_trust_data_cc_all_initialized(cctd)
+    assert result is False
+
+    libcf.delete_cc_trust_data(cctd)
+
+# ##############################################################################
+def test_cf_cc_trust_data():
+    """
+    Instantiate a cc_trust_data() object with some arguments.
+    """
+    cctd = libcf.new_cc_trust_data('simulated-enclave', 'authentication', 'policy_store')
+
+    result = libcf.cc_trust_data_cc_all_initialized(cctd)
+    assert result is False
+
+    libcf.delete_cc_trust_data(cctd)
+
+# ##############################################################################
 def test_cf_policy_store_basic():
     """
     This test case shows ways to exercise basic interfaces in Py-bindings.

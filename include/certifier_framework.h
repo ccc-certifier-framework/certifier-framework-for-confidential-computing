@@ -125,6 +125,9 @@ public:
 
     class cc_trust_data {
 
+    private:
+      void cc_trust_data_default_init();
+
     public:
       // Python swig bindings need this to be public, to size other array decls
       static const int max_symmetric_key_size_ = 128;
