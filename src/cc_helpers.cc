@@ -117,6 +117,15 @@ void certifier::framework::cc_trust_data::cc_trust_data_default_init() {
 }
 
 certifier::framework::cc_trust_data::~cc_trust_data() {
+  for (int i = 0; i < num_certified_domains_; i++) {
+      if (certified_domains_[i] != nullptr) {
+        delete certified_domains_[i];
+        certified_domains_[i] = nullptr;
+      }
+  }
+  delete certified_domains_;
+  certified_domains_ = nullptr;
+  num_certified_domains_ = 0;
 }
 
 bool certifier::framework::cc_trust_data::cc_all_initialized() {
@@ -1247,7 +1256,7 @@ bool certifier::framework::cc_trust_data::certify_secondary_domain(const string&
     }
   }
 
-  return found->certify_domain();
+  return (found ? found->certify_domain() : false);
 }
 
 bool certifier::framework::cc_trust_data::init_peer_certification_data(const string& public_key_alg) {
