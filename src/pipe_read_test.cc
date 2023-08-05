@@ -36,9 +36,9 @@ main(int an, char **av)
   for (int i = 0; i < buf_size; i++)
     buf[i] = (byte)2 * i;
 
-  bool      res       = true;
+  bool      res = true;
   const int num_tests = 20;
-  int       pid       = fork();
+  int       pid = fork();
   if (pid < 0) {
   } else if (pid == 0) {  // child
     close(fd[0]);

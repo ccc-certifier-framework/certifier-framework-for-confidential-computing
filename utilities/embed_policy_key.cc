@@ -109,8 +109,8 @@ generate_policy_cert_in_code(string &asn1_cert_file, string &include_file)
 
   // array_name
   string    array_name = FLAGS_array_name;
-  string    size_name  = array_name + "_size";
-  const int buf_size   = 128;
+  string    size_name = array_name + "_size";
+  const int buf_size = 128;
 
   char t_buf[buf_size];
   memset(t_buf, 0, buf_size);

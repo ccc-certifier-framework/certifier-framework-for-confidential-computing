@@ -36,7 +36,7 @@ using namespace certifier::utilities;
 bool                 my_data_initialized = false;
 string               my_measurement;
 const int            simulated_measurment_size = 32;
-const int            sealing_key_size          = 64;  // for aes&hmac
+const int            sealing_key_size = 64;  // for aes&hmac
 byte                 sealing_key[sealing_key_size];
 key_message          my_attestation_key;
 key_message          my_platform_key;
@@ -133,9 +133,9 @@ simulated_Init(const string &asn1_policy_cert,
     return false;
   }
 
-  certifier_parent_enclave_type             = "software";
+  certifier_parent_enclave_type = "software";
   certifier_parent_enclave_type_intitalized = true;
-  my_data_initialized                       = true;
+  my_data_initialized = true;
   return true;
 }
 

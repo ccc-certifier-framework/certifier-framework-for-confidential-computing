@@ -33,7 +33,7 @@ using std::string;
 
 namespace certifier {
 namespace utilities {
-const int block_size       = 16;
+const int block_size = 16;
 const int num_bits_in_byte = 8;
 
 bool

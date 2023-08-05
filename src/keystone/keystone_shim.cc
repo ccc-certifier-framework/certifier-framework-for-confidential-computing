@@ -32,7 +32,7 @@ keystone_getSealingKey(byte *key)
 }
 
 bool      g_m_initialized = false;
-const int g_m_size        = 32;
+const int g_m_size = 32;
 byte      g_measurement[g_m_size];
 
 // Keep name consistent with what is being used by other apps.
@@ -135,7 +135,7 @@ keystone_ecc_verify(const char *alg,
 string      key_file("emulated_keystone_key.bin");
 string      cert_file("emulated_keystone_key_cert.bin");
 EC_KEY *    fake_attest_private_key = nullptr;
-EC_KEY *    fake_attest_public_key  = nullptr;
+EC_KEY *    fake_attest_public_key = nullptr;
 key_message attest_private_key;
 key_message attest_public_key;
 
@@ -143,7 +143,7 @@ bool
 keystone_Init(const int cert_size, byte *cert)
 {
   // later, we should read in the key and cert chain
-  int size_key  = file_size(key_file);
+  int size_key = file_size(key_file);
   int size_cert = file_size(cert_file);
 
   if (size_key <= 0 || size_cert <= 0) {
@@ -228,7 +228,7 @@ keystone_Init(const int cert_size, byte *cert)
       return false;
     }
     fake_attest_private_key = key_to_ECC(attest_private_key);
-    fake_attest_public_key  = key_to_ECC(attest_public_key);
+    fake_attest_public_key = key_to_ECC(attest_public_key);
     if (fake_attest_private_key == nullptr || fake_attest_public_key == nullptr)
     {
       printf("keystone_Init: Cant convert attest key\n");

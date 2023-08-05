@@ -27,7 +27,7 @@ oe_Seal(int   seal_policy,
   }
 
   const oe_seal_setting_t settings[] = {OE_SEAL_SET_POLICY(seal_policy)};
-  ret                                = oe_seal(NULL,
+  ret = oe_seal(NULL,
                 settings,
                 sizeof(settings) / sizeof(*settings),
                 (const uint8_t *)in,

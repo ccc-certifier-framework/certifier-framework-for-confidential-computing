@@ -238,7 +238,7 @@ test_x_509_chain(bool print_all)
     printf("signing_pkey3 is NULL\n");
     return false;
   }
-  int  ret     = X509_verify(cert3, signing_pkey3);
+  int  ret = X509_verify(cert3, signing_pkey3);
   bool success = (ret == 1);
   if (print_all) {
     if (success) {
@@ -304,8 +304,8 @@ test_x_509_sign(bool print_all)
     printf("\n");
   }
 
-  EVP_PKEY *pkey    = pkey_from_key(pub_k1);
-  int       ret     = X509_verify(cert1, pkey);
+  EVP_PKEY *pkey = pkey_from_key(pub_k1);
+  int       ret = X509_verify(cert1, pkey);
   bool      success = (ret == 1);
   if (print_all) {
     if (success) {
@@ -341,8 +341,8 @@ test_sev_certs(bool print_all)
   }
 
   EVP_PKEY *ark_pkey = X509_get_pubkey(cert1);
-  int       ret      = X509_verify(cert1, ark_pkey);
-  bool      success  = (ret == 1);
+  int       ret = X509_verify(cert1, ark_pkey);
+  bool      success = (ret == 1);
   if (print_all) {
     if (success) {
       printf("ark cert verifies\n");
@@ -358,7 +358,7 @@ test_sev_certs(bool print_all)
     return false;
   }
 
-  ret     = X509_verify(cert2, ark_pkey);
+  ret = X509_verify(cert2, ark_pkey);
   success = (ret == 1);
   if (print_all) {
     if (success) {
@@ -434,8 +434,8 @@ test_real_sev_certs(bool print_all)
   }
 
   EVP_PKEY *ark_pkey = X509_get_pubkey(cert1);
-  int       ret      = X509_verify(cert1, ark_pkey);
-  bool      success  = (ret == 1);
+  int       ret = X509_verify(cert1, ark_pkey);
+  bool      success = (ret == 1);
   if (print_all) {
     if (success) {
       printf("ark cert verifies\n");
@@ -457,8 +457,8 @@ test_real_sev_certs(bool print_all)
   }
 
   EVP_PKEY *ask_pkey = X509_get_pubkey(cert2);
-  ret                = X509_verify(cert2, ark_pkey);
-  success            = (ret == 1);
+  ret = X509_verify(cert2, ark_pkey);
+  success = (ret == 1);
   if (print_all) {
     if (success) {
       printf("ask cert verifies\n");
@@ -479,7 +479,7 @@ test_real_sev_certs(bool print_all)
     printf("\n");
   }
 
-  ret     = X509_verify(cert3, ask_pkey);
+  ret = X509_verify(cert3, ask_pkey);
   success = (ret == 1);
   if (print_all) {
     if (success) {
@@ -561,8 +561,8 @@ test_sev_request(bool print_all)
   }
 
   EVP_PKEY *ark_pkey = X509_get_pubkey(cert1);
-  int       ret      = X509_verify(cert1, ark_pkey);
-  bool      success  = (ret == 1);
+  int       ret = X509_verify(cert1, ark_pkey);
+  bool      success = (ret == 1);
   if (print_all) {
     if (success) {
       printf("ark cert verifies\n");
@@ -579,8 +579,8 @@ test_sev_request(bool print_all)
   }
 
   EVP_PKEY *ask_pkey = X509_get_pubkey(cert2);
-  ret                = X509_verify(cert2, ark_pkey);
-  success            = (ret == 1);
+  ret = X509_verify(cert2, ark_pkey);
+  success = (ret == 1);
   if (print_all) {
     if (success) {
       printf("ask cert verifies\n");
@@ -596,7 +596,7 @@ test_sev_request(bool print_all)
     return false;
   }
 
-  ret     = X509_verify(cert3, ask_pkey);
+  ret = X509_verify(cert3, ask_pkey);
   success = (ret == 1);
   if (print_all) {
     if (success) {

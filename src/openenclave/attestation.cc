@@ -13,16 +13,16 @@ static oe_uuid_t vse_format_uuid = {OE_FORMAT_UUID_SGX_ECDSA};
 bool
 oe_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out)
 {
-  bool        ret                       = false;
-  oe_result_t result                    = OE_OK;
-  oe_uuid_t * format_id                 = &vse_format_uuid;
-  uint8_t *   format_settings           = nullptr;
-  size_t      format_settings_size      = 0;
-  uint8_t *   custom_claims_buffer      = nullptr;
+  bool        ret = false;
+  oe_result_t result = OE_OK;
+  oe_uuid_t * format_id = &vse_format_uuid;
+  uint8_t *   format_settings = nullptr;
+  size_t      format_settings_size = 0;
+  uint8_t *   custom_claims_buffer = nullptr;
   size_t      custom_claims_buffer_size = 0;
-  uint8_t *   evidence                  = nullptr;
-  size_t      evidence_size             = 0;
-  char        custom_claim_name[]       = "Certifier Attestation";
+  uint8_t *   evidence = nullptr;
+  size_t      evidence_size = 0;
+  char        custom_claim_name[] = "Certifier Attestation";
 
   if (!size_out || !out) {
     return false;
@@ -30,8 +30,8 @@ oe_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out)
 
   // Wrap the whole certifier attestation report into one custom claim.
   oe_claim_t custom_claims = {
-      .name       = custom_claim_name,
-      .value      = (uint8_t *)what_to_say,
+      .name = custom_claim_name,
+      .value = (uint8_t *)what_to_say,
       .value_size = (size_t)what_to_say_size,
   };
 
@@ -77,7 +77,7 @@ oe_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out)
   OE_DEBUG_PRINTF("evidence size: %lu\n", evidence_size);
   if (out == nullptr) {
     *size_out = (int)evidence_size;
-    ret       = true;
+    ret = true;
     goto exit;
   }
   if (*size_out < evidence_size) {
@@ -86,7 +86,7 @@ oe_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out)
   }
   memcpy(out, evidence, evidence_size);
   *size_out = evidence_size;
-  ret       = true;
+  ret = true;
 
 exit:
   if (format_settings != nullptr)
@@ -126,13 +126,13 @@ oe_Verify(const uint8_t *evidence,
           uint8_t *      measurement_out,
           size_t *       measurement_size)
 {
-  bool              ret           = false;
-  oe_result_t       result        = OE_OK;
-  oe_uuid_t *       format_id     = &vse_format_uuid;
-  oe_claim_t *      claims        = nullptr;
+  bool              ret = false;
+  oe_result_t       result = OE_OK;
+  oe_uuid_t *       format_id = &vse_format_uuid;
+  oe_claim_t *      claims = nullptr;
   size_t            claims_length = 0;
   const oe_claim_t *claim;
-  oe_claim_t *      custom_claims        = nullptr;
+  oe_claim_t *      custom_claims = nullptr;
   size_t            custom_claims_length = 0;
 
   if (!evidence || evidence_size == 0 || !custom_claim_out || !measurement_out)

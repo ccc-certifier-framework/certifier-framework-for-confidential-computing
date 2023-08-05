@@ -41,9 +41,9 @@ make_enclave_name(string enclave_type, string *enclave_name)
     m[i] = i;
   char hex[65];
   int  pos = 0;
-  hex[64]  = 0;
+  hex[64] = 0;
   for (int i = 0; i < measurement_size; i++) {
-    hex[2 * i]     = hex_digit(m[i] >> 4);
+    hex[2 * i] = hex_digit(m[i] >> 4);
     hex[2 * i + 1] = hex_digit(m[i] & 0xff);
   }
   enclave_name->append((const char *)hex);
@@ -68,7 +68,7 @@ test_artifact(bool print_all)
   string subject_description_str("writer");
 
   double   secs_duration = 60.0 * 60.0 * 24.0 * 365.0;
-  uint64_t sn            = 1;
+  uint64_t sn = 1;
 
   if (!make_certifier_rsa_key(2048, &signing_key))
     return false;

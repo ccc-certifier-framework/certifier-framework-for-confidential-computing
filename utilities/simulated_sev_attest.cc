@@ -82,11 +82,11 @@ DEFINE_string(output, "signed_sev_attest.bin", "simulated attest file");
     132d9d15d6537f3704de10afe7e8d989c7959654c38be1905cf9506ea737976f
  */
 static struct attestation_report default_report = {
-    .version        = 1,     // should be 2
-    .guest_svn      = 1,     // Set to 1 for now
-    .policy         = 0x03,  // 0x30000
+    .version = 1,    // should be 2
+    .guest_svn = 1,  // Set to 1 for now
+    .policy = 0x03,  // 0x30000
     .signature_algo = SIG_ALGO_ECDSA_P384_SHA384,
-    .platform_info  = 0,  // SMT disable --- should be 0x03?
+    .platform_info = 0,  // SMT disable --- should be 0x03?
     // Hardcoded mockup measurement
     .measurement = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x02,
                     0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x02, 0x03, 0x04,
@@ -121,7 +121,7 @@ read_key_file(const string &filename, EVP_PKEY **key, bool priv)
     }
   }
   *key = pkey;
-  rc   = EXIT_SUCCESS;
+  rc = EXIT_SUCCESS;
 
 out_close:
   fclose(file);
@@ -138,7 +138,7 @@ main(int an, char **av)
   printf("simulated_sev_attest.exe.exe --key_file=ecc-384-private.pem "
          "--output=test_sev_attest.bin\n");
 
-  default_report.reported_tcb.raw     = 0x03000000000008115ULL;
+  default_report.reported_tcb.raw = 0x03000000000008115ULL;
   default_report.platform_version.raw = 0x03000000000008115ULL;
 
   EVP_PKEY *pkey = nullptr;

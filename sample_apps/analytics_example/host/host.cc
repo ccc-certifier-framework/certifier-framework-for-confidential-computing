@@ -33,7 +33,7 @@ main(int argc, const char *argv[])
   std::string   data_dir;
 
   uint32_t flags = OE_ENCLAVE_FLAG_DEBUG;
-  bool     ret   = 0;
+  bool     ret = 0;
 
   if (argc < 3) {
     fprintf(stderr,

@@ -29,13 +29,13 @@ oe_host_verify_evidence(uint8_t *evidence,
 {
   bool                   result = false;
   oe_result_t            oe_res;
-  static const oe_uuid_t _uuid         = {OE_FORMAT_UUID_SGX_ECDSA};
-  const oe_policy_t *    policies      = NULL;
+  static const oe_uuid_t _uuid = {OE_FORMAT_UUID_SGX_ECDSA};
+  const oe_policy_t *    policies = NULL;
   size_t                 policies_size = 0;
-  oe_claim_t *           claims        = NULL;
+  oe_claim_t *           claims = NULL;
   size_t                 claims_length = 0;
   const oe_claim_t *     claim;
-  oe_claim_t *           custom_claims        = NULL;
+  oe_claim_t *           custom_claims = NULL;
   size_t                 custom_claims_length = 0;
 
   if (!custom_claim_out || !measurement_out || !evidence) {

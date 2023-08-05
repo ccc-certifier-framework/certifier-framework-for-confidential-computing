@@ -49,7 +49,7 @@ static string data_dir = "../app1_data/";
 static std::string enclave_type;
 cc_trust_data *    app_trust_data = nullptr;
 
-static bool simulator_initialized   = false;
+static bool simulator_initialized = false;
 static bool openenclave_initialized = false;
 bool
 test_local_certify(string &enclave_type,
@@ -118,7 +118,7 @@ bool
 openenclave_init(void)
 {
   oe_result_t result = OE_OK;
-  result             = oe_load_module_host_file_system();
+  result = oe_load_module_host_file_system();
   if (result != OE_OK) {
     printf("Failed to load host file system module: %s\n",
            oe_result_str(result));
@@ -154,7 +154,7 @@ certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
 
   RAND_seed(rnd_seed, sizeof rnd_seed);
   std::string usr_data = usr_data_dir;
-  data_dir             = usr_data + "/";
+  data_dir = usr_data + "/";
   printf("Using data_dir: %s\n", data_dir.c_str());
 
   if (!openenclave_initialized) {

@@ -34,7 +34,7 @@ attestation_test()
   byte report[BUFFER_SIZE];
   byte measurement[BUFFER_SIZE];
   byte what_was_said[BUFFER_SIZE];
-  int  report_len      = 0;
+  int  report_len = 0;
   int  measurement_len = 0;
 
   memset(report, 0, sizeof(report));
@@ -75,7 +75,7 @@ sealing_test()
   byte sealed[BUFFER_SIZE];
   byte unsealed[BUFFER_SIZE];
 
-  int sealed_len   = 0;
+  int sealed_len = 0;
   int unsealed_len = 0;
 
   memset(sealed, 0, sizeof(sealed));

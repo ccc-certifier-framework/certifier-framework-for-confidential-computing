@@ -40,7 +40,7 @@ bool
 get_input_file_names(const string &name, int *num, string *names)
 {
   const char *start = name.c_str();
-  const char *end   = nullptr;
+  const char *end = nullptr;
   int         count = 0;
 
   while ((end = next_comma(start)) != nullptr) {

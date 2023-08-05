@@ -49,8 +49,8 @@ main(int argc, const char *argv[])
   struct sigaction sigIntHandler;
 
   uint32_t flags = OE_ENCLAVE_FLAG_DEBUG;
-  bool     ret   = 0;
-  int      rv    = 1;  // Assume failure, until we know otherwise
+  bool     ret = 0;
+  int      rv = 1;  // Assume failure, until we know otherwise
 
   if (argc < 3) {
     fprintf(stderr,

@@ -26,7 +26,7 @@
 
 using byte = unsigned char;
 
-static const char CLAIM_TITLE_USER_DATA[]        = "User data";
+static const char CLAIM_TITLE_USER_DATA[] = "User data";
 static const char CLAIM_TITLE_PLATFORM_PROFILE[] = "Profile";
 
 bool
@@ -37,7 +37,7 @@ attestation_test()
   byte value[BUFFER_SIZE];
   int  report_len = 0;
   int  claims_len = 0;
-  int  value_len  = 0;
+  int  value_len = 0;
 
   memset(report, 0, sizeof(report));
   memset(claims, 0, sizeof(claims));
@@ -82,7 +82,7 @@ sealing_test()
   byte sealed[BUFFER_SIZE];
   byte unsealed[BUFFER_SIZE];
 
-  int sealed_len   = 0;
+  int sealed_len = 0;
   int unsealed_len = 0;
 
   memset(sealed, 0, sizeof(sealed));

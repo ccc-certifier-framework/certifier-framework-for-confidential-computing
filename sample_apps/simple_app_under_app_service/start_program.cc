@@ -20,7 +20,7 @@ parse_args(const string &in, int *num_an, string *av)
 {
   // for now, just assume commas can only be delimiters
   const char *start = in.c_str();
-  const char *end   = start;
+  const char *end = start;
 
   *num_an = 0;
   while (end != nullptr) {
@@ -97,7 +97,7 @@ main(int an, char **av)
   }
   memcpy(&(address.sin_addr.s_addr), he->h_addr, he->h_length);
   address.sin_family = AF_INET;
-  address.sin_port   = htons(FLAGS_server_app_port);
+  address.sin_port = htons(FLAGS_server_app_port);
   if (connect(sock, (struct sockaddr *)&address, sizeof(address)) != 0) {
     return 1;
   }

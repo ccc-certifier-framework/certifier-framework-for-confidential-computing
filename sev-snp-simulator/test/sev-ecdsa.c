@@ -36,8 +36,8 @@ reverse_bytes(uint8_t *buffer, size_t size)
        start++, end--)
   {
     uint8_t temp = *start;
-    *start       = *end;
-    *end         = temp;
+    *start = *end;
+    *end = temp;
   }
 }
 
@@ -54,7 +54,7 @@ get_ecdsa_sig_rs_bytes(const unsigned char *sig,
                        size_t *             rlen,
                        size_t *             slen)
 {
-  int            rc   = -EXIT_FAILURE;
+  int            rc = -EXIT_FAILURE;
   unsigned char *rbuf = NULL, *sbuf = NULL;
   size_t         r1_len, s1_len;
   const BIGNUM * r1, *s1;
@@ -126,10 +126,10 @@ sev_ecdsa_sign(const void *         msg,
                EVP_PKEY *           key,
                union sev_ecdsa_sig *sig)
 {
-  int           rc            = -EXIT_FAILURE;
-  EVP_MD_CTX *  md_ctx        = NULL;
-  EVP_PKEY_CTX *sign_ctx      = NULL;
-  uint8_t *     ossl_sig      = NULL;
+  int           rc = -EXIT_FAILURE;
+  EVP_MD_CTX *  md_ctx = NULL;
+  EVP_PKEY_CTX *sign_ctx = NULL;
+  uint8_t *     ossl_sig = NULL;
   size_t        expected_size = 0, sig_size = 0;
   size_t        r_size = sizeof(sig->r);
   size_t        s_size = sizeof(sig->s);
@@ -221,12 +221,12 @@ sev_ecdsa_verify(const void *         digest,
                  EVP_PKEY *           key,
                  union sev_ecdsa_sig *sig)
 {
-  int        rc         = -EXIT_FAILURE;
-  bool       is_valid   = false;
+  int        rc = -EXIT_FAILURE;
+  bool       is_valid = false;
   EC_KEY *   pub_ec_key = NULL;
-  BIGNUM *   r          = NULL;
-  BIGNUM *   s          = NULL;
-  ECDSA_SIG *ecdsa_sig  = NULL;
+  BIGNUM *   r = NULL;
+  BIGNUM *   s = NULL;
+  ECDSA_SIG *ecdsa_sig = NULL;
 
   do {
     pub_ec_key = EVP_PKEY_get1_EC_KEY(key);

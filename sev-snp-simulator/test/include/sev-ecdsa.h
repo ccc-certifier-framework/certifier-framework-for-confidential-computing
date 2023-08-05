@@ -18,7 +18,7 @@
 #define ECDSA_SIG_SIZE         (0x200)
 
 enum sev_algo {
-  SEV_ALGO_INVALID           = 0,
+  SEV_ALGO_INVALID = 0,
   SEV_ALGO_ECDSA_P384_SHA384 = 1,
 
   SEV_ALGO_LIMIT,
@@ -26,7 +26,7 @@ enum sev_algo {
 
 enum ecdsa_curve {
   ECDSA_CURVE_INVALID = 0,
-  ECDSA_CURVE_P384    = 2,
+  ECDSA_CURVE_P384 = 2,
 
   ECDSA_CURVE_LIMIT,
 };
