@@ -31,8 +31,7 @@ DEFINE_double(duration, 24, "validity in hours");
 DEFINE_string(descipt, "", "descriptor");
 DEFINE_string(signing_alg, "rsa-2048-sha256-pkcs-sign", "signing algorithm");
 
-bool
-get_clause_from_file(const string &in, vse_clause *cl)
+bool get_clause_from_file(const string &in, vse_clause *cl)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -51,8 +50,7 @@ get_clause_from_file(const string &in, vse_clause *cl)
   return true;
 }
 
-bool
-get_key_from_file(const string &in, key_message *k)
+bool get_key_from_file(const string &in, key_message *k)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -71,8 +69,7 @@ get_key_from_file(const string &in, key_message *k)
   return true;
 }
 
-int
-main(int an, char **av)
+int main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

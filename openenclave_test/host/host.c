@@ -9,8 +9,7 @@
 // sdk tool oeedger8r against the helloworld.edl file.
 #include "attestation_u.h"
 
-int
-main(int argc, const char *argv[])
+int main(int argc, const char *argv[])
 {
   oe_result_t   result;
   int           ret = 1;

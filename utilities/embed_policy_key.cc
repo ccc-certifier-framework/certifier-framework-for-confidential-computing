@@ -38,8 +38,7 @@ DEFINE_string(input, "policy_cert.bin", "X509 policy certificate");
 DEFINE_string(output, "policy.include.cc", "policy cert inclusion file");
 DEFINE_string(array_name, "initialized_cert", "Name of byte array");
 
-bool
-write_file(string file_name, int size, byte *data)
+bool write_file(string file_name, int size, byte *data)
 {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (out < 0)
@@ -53,8 +52,7 @@ write_file(string file_name, int size, byte *data)
   return true;
 }
 
-int
-file_size(string file_name)
+int file_size(string file_name)
 {
   struct stat file_info;
 
@@ -65,8 +63,7 @@ file_size(string file_name)
   return (int)file_info.st_size;
 }
 
-bool
-read_file(string file_name, int *size, byte *data)
+bool read_file(string file_name, int *size, byte *data)
 {
   struct stat file_info;
 
@@ -87,8 +84,7 @@ read_file(string file_name, int *size, byte *data)
   return true;
 }
 
-bool
-generate_policy_cert_in_code(string &asn1_cert_file, string &include_file)
+bool generate_policy_cert_in_code(string &asn1_cert_file, string &include_file)
 {
   int cert_size = file_size(asn1_cert_file);
   if (cert_size <= 0) {
@@ -145,8 +141,7 @@ generate_policy_cert_in_code(string &asn1_cert_file, string &include_file)
   return true;
 }
 
-int
-main(int an, char **av)
+int main(int an, char **av)
 {
   string usage("Generate policy certificate to embed policy key in sample app");
   gflags::SetUsageMessage(usage);

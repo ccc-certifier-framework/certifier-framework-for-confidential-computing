@@ -41,11 +41,10 @@ cc_trust_data *    app_trust_data = nullptr;
 
 static bool oe_initialized = false;
 static bool openenclave_initialized = false;
-bool
-test_local_certify(string &enclave_type,
-                   bool    init_from_file,
-                   string &file_name,
-                   string &evidence_descriptor);
+bool        test_local_certify(string &enclave_type,
+                               bool    init_from_file,
+                               string &file_name,
+                               string &evidence_descriptor);
 
 bool        trust_data_initialized = false;
 key_message privatePolicyKey;
@@ -64,8 +63,7 @@ key_message  symmertic_key_for_protect;
 string public_key_alg("rsa-2048");
 string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
-void
-print_trust_data()
+void print_trust_data()
 {
   if (!trust_data_initialized)
     return;
@@ -85,25 +83,17 @@ print_trust_data()
 }
 
 extern "C" {
-bool
-openenclave_init(void);
-bool
-certifier_init(char *, size_t);
+bool openenclave_init(void);
+bool certifier_init(char *, size_t);
 
-bool
-cold_init(void);
-bool
-certify_me(void);
-bool
-warm_restart(void);
-bool
-run_me_as_client(void);
-bool
-run_me_as_server(void);
+bool cold_init(void);
+bool certify_me(void);
+bool warm_restart(void);
+bool run_me_as_client(void);
+bool run_me_as_server(void);
 }
 
-bool
-openenclave_init(void)
+bool openenclave_init(void)
 {
   oe_result_t result = OE_OK;
   result = oe_load_module_host_file_system();
@@ -133,8 +123,7 @@ openenclave_init(void)
   return true;
 }
 
-bool
-certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
+bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
 {
   oe_result_t       result = OE_OK;
   static const char rnd_seed[] =
@@ -195,34 +184,29 @@ certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
   return true;
 }
 
-void
-clear_sensitive_data()
+void clear_sensitive_data()
 {
   // TODO: clear symmetric and private keys
   //    Not necessary on most platforms
 }
 
-bool
-cold_init()
+bool cold_init()
 {
   return app_trust_data->cold_init(public_key_alg, symmetric_key_alg);
 }
 
-bool
-warm_restart()
+bool warm_restart()
 {
   return app_trust_data->warm_restart();
 }
 
 // TODO: replace with new cc_trust_data interface
-bool
-certify_me()
+bool certify_me()
 {
   return app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port);
 }
 
-void
-server_application(secure_authenticated_channel &channel)
+void server_application(secure_authenticated_channel &channel)
 {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -242,8 +226,7 @@ server_application(secure_authenticated_channel &channel)
   channel.write(strlen(msg), (byte *)msg);
 }
 
-bool
-run_me_as_server()
+bool run_me_as_server()
 {
   if (!app_trust_data->warm_restart()) {
     printf("warm-restart failed\n");
@@ -259,8 +242,7 @@ run_me_as_server()
   return true;
 }
 
-void
-client_application(secure_authenticated_channel &channel)
+void client_application(secure_authenticated_channel &channel)
 {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -280,8 +262,7 @@ client_application(secure_authenticated_channel &channel)
   printf("SSL client read: %s\n", out.data());
 }
 
-bool
-run_me_as_client()
+bool run_me_as_client()
 {
   if (!app_trust_data->warm_restart()) {
     printf("warm-restart failed\n");

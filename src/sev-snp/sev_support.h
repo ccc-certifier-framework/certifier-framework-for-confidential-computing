@@ -51,23 +51,19 @@ union sev_ecdsa_sig {
   uint8_t bytes[2 * ECDSA_POINT_SIZE];
 };
 
-int
-sev_ecdsa_pubkey_init(struct sev_ecdsa_pubkey *pubkey, EVP_PKEY *evp_key);
-int
-sev_ecdsa_sign(const void *         msg,
-               size_t               msg_size,
-               EVP_PKEY *           key,
-               union sev_ecdsa_sig *sig);
-int
-sev_ecdsa_verify(const void *         digest,
-                 size_t               digest_size,
-                 EVP_PKEY *           key,
-                 union sev_ecdsa_sig *sig);
-int
-sev_read_pem_into_x509(const char *file_name, X509 **x509_cert);
-int
-sev_validate_vcek_cert_chain(X509 *x509_vcek, X509 *x509_ask, X509 *x509_ark);
-EVP_PKEY *
-sev_get_vcek_pubkey(X509 *x509_vcek);
+int sev_ecdsa_pubkey_init(struct sev_ecdsa_pubkey *pubkey, EVP_PKEY *evp_key);
+int sev_ecdsa_sign(const void *         msg,
+                   size_t               msg_size,
+                   EVP_PKEY *           key,
+                   union sev_ecdsa_sig *sig);
+int sev_ecdsa_verify(const void *         digest,
+                     size_t               digest_size,
+                     EVP_PKEY *           key,
+                     union sev_ecdsa_sig *sig);
+int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert);
+int sev_validate_vcek_cert_chain(X509 *x509_vcek,
+                                 X509 *x509_ask,
+                                 X509 *x509_ark);
+EVP_PKEY *sev_get_vcek_pubkey(X509 *x509_vcek);
 
 #endif /* SEV_ECDSA_H */

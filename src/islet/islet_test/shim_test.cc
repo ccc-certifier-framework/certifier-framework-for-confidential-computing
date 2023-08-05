@@ -16,8 +16,7 @@
 
 #include "../islet_api.h"
 
-static void
-print_buf(int sz, byte *buf)
+static void print_buf(int sz, byte *buf)
 {
   for (int i = 0; i < sz; i++)
     printf("%02x", buf[i]);
@@ -28,8 +27,7 @@ print_buf(int sz, byte *buf)
 // Typical attestation report size is over 1K.
 #define BUFFER_SIZE 2048
 
-bool
-attestation_test()
+bool attestation_test()
 {
   byte report[BUFFER_SIZE];
   byte measurement[BUFFER_SIZE];
@@ -69,8 +67,7 @@ attestation_test()
   return true;
 }
 
-bool
-sealing_test()
+bool sealing_test()
 {
   byte sealed[BUFFER_SIZE];
   byte unsealed[BUFFER_SIZE];
@@ -96,8 +93,7 @@ sealing_test()
   return true;
 }
 
-int
-main()
+int main()
 {
   bool rv = attestation_test();
   printf("Attestation test %s.\n", (rv ? "succeeded" : "failed"));

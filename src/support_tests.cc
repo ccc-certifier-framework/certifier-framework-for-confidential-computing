@@ -18,8 +18,7 @@
 
 using namespace certifier::utilities;
 
-bool
-test_random(bool print_all)
+bool test_random(bool print_all)
 {
   int  n = 128;
   byte out[n];
@@ -37,8 +36,7 @@ test_random(bool print_all)
   return true;
 }
 
-bool
-test_encrypt(bool print_all)
+bool test_encrypt(bool print_all)
 {
   const int   in_size = 2 * block_size;
   const int   out_size = in_size + 128;
@@ -104,8 +102,7 @@ test_encrypt(bool print_all)
   return true;
 }
 
-bool
-test_authenticated_encrypt(bool print_all)
+bool test_authenticated_encrypt(bool print_all)
 {
   const int in_size = 2 * block_size;
   const int out_size = in_size + 256;
@@ -299,8 +296,7 @@ test_authenticated_encrypt(bool print_all)
   return true;
 }
 
-bool
-test_public_keys(bool print_all)
+bool test_public_keys(bool print_all)
 {
   RSA *r1 = RSA_new();
 
@@ -573,8 +569,7 @@ byte sha512_test[64] = {
     0x92, 0x99, 0x2a, 0x27, 0x4f, 0xc1, 0xa8, 0x36, 0xba, 0x3c, 0x23,
     0xa3, 0xfe, 0xeb, 0xbd, 0x45, 0x4d, 0x44, 0x23, 0x64, 0x3c, 0xe8,
     0x0e, 0x2a, 0x9a, 0xc9, 0x4f, 0xa5, 0x4c, 0xa4, 0x9f};
-bool
-test_digest(bool print_all)
+bool test_digest(bool print_all)
 {
   const char * message = "1234";
   int          msg_len = strlen(message);
@@ -685,8 +680,7 @@ test_digest(bool print_all)
   return true;
 }
 
-bool
-test_sign_and_verify(bool print_all)
+bool test_sign_and_verify(bool print_all)
 {
   RSA *r = RSA_new();
 
@@ -734,8 +728,7 @@ test_sign_and_verify(bool print_all)
   return true;
 }
 
-bool
-test_key_translation(bool print_all)
+bool test_key_translation(bool print_all)
 {
   key_message k1;
 
@@ -763,8 +756,7 @@ test_key_translation(bool print_all)
   return true;
 }
 
-bool
-test_time(bool print_all)
+bool test_time(bool print_all)
 {
   time_point t_now;
   time_point t_test;

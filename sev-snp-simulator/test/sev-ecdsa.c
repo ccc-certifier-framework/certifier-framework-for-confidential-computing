@@ -26,8 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void
-reverse_bytes(uint8_t *buffer, size_t size)
+static void reverse_bytes(uint8_t *buffer, size_t size)
 {
   if (!buffer || size == 0)
     return;
@@ -45,13 +44,12 @@ reverse_bytes(uint8_t *buffer, size_t size)
  *
  * Based on get_ecdsa_sig_rs_bytes() in test/acvp_test.c from OpenSSL.
  */
-static int
-get_ecdsa_sig_rs_bytes(const unsigned char *sig,
-                       size_t               sig_len,
-                       unsigned char *      r,
-                       unsigned char *      s,
-                       size_t *             rlen,
-                       size_t *             slen)
+static int get_ecdsa_sig_rs_bytes(const unsigned char *sig,
+                                  size_t               sig_len,
+                                  unsigned char *      r,
+                                  unsigned char *      s,
+                                  size_t *             rlen,
+                                  size_t *             slen)
 {
   int            rc = -EXIT_FAILURE;
   unsigned char *rbuf = NULL, *sbuf = NULL;
@@ -119,11 +117,10 @@ out:
   return rc;
 }
 
-int
-sev_ecdsa_sign(const void *         msg,
-               size_t               msg_size,
-               EVP_PKEY *           key,
-               union sev_ecdsa_sig *sig)
+int sev_ecdsa_sign(const void *         msg,
+                   size_t               msg_size,
+                   EVP_PKEY *           key,
+                   union sev_ecdsa_sig *sig)
 {
   int           rc = -EXIT_FAILURE;
   EVP_MD_CTX *  md_ctx = NULL;
@@ -214,11 +211,10 @@ out:
   return rc;
 }
 
-int
-sev_ecdsa_verify(const void *         digest,
-                 size_t               digest_size,
-                 EVP_PKEY *           key,
-                 union sev_ecdsa_sig *sig)
+int sev_ecdsa_verify(const void *         digest,
+                     size_t               digest_size,
+                     EVP_PKEY *           key,
+                     union sev_ecdsa_sig *sig)
 {
   int        rc = -EXIT_FAILURE;
   bool       is_valid = false;

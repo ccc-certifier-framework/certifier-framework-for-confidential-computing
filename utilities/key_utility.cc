@@ -32,12 +32,11 @@ DEFINE_bool(generate_cert, false, "generate cert?");
 DEFINE_string(key_output_file, "test_key_file.bin", "test key file");
 DEFINE_string(cert_output_file, "test_cert_file.bin", "test cert file");
 
-bool
-generate_key(const string &name,
-             const string &type,
-             const string &authority,
-             key_message * priv,
-             key_message * pub)
+bool generate_key(const string &name,
+                  const string &type,
+                  const string &authority,
+                  key_message * priv,
+                  key_message * pub)
 {
   int n = 0;
   if (type == "rsa-4096-private") {
@@ -68,8 +67,7 @@ generate_key(const string &name,
   return true;
 }
 
-int
-main(int an, char **av)
+int main(int an, char **av)
 {
   string usage("Generate certificate keys in different formats to output file");
   gflags::SetUsageMessage(usage);

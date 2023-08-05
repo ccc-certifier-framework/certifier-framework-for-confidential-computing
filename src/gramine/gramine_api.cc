@@ -25,8 +25,7 @@ GramineFunctions gramineFuncs;
 bool             gramine_platform_cert_initialized = false;
 string           gramine_platform_cert;
 
-int
-gramine_file_size(const char *file_name)
+int gramine_file_size(const char *file_name)
 {
   struct stat file_info;
 
@@ -37,8 +36,7 @@ gramine_file_size(const char *file_name)
   return (int)file_info.st_size;
 }
 
-bool
-gramine_Init(const int cert_size, byte *cert)
+bool gramine_Init(const int cert_size, byte *cert)
 {
   char   attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
   size_t ret = 0;
@@ -73,11 +71,10 @@ gramine_Init(const int cert_size, byte *cert)
   return true;
 }
 
-bool
-gramine_Attest(const int what_to_say_size,
-               byte *    what_to_say,
-               int *     attestation_size_out,
-               byte *    attestation_out)
+bool gramine_Attest(const int what_to_say_size,
+                    byte *    what_to_say,
+                    int *     attestation_size_out,
+                    byte *    attestation_out)
 {
   bool result = false;
 
@@ -104,13 +101,12 @@ gramine_Attest(const int what_to_say_size,
   return true;
 }
 
-bool
-gramine_Verify(const int what_to_say_size,
-               byte *    what_to_say,
-               const int attestation_size,
-               byte *    attestation,
-               int *     measurement_out_size,
-               byte *    measurement_out)
+bool gramine_Verify(const int what_to_say_size,
+                    byte *    what_to_say,
+                    const int attestation_size,
+                    byte *    attestation,
+                    int *     measurement_out_size,
+                    byte *    measurement_out)
 {
   bool result = false;
 
@@ -138,8 +134,7 @@ gramine_Verify(const int what_to_say_size,
   return true;
 }
 
-bool
-gramine_Seal(int in_size, byte *in, int *size_out, byte *out)
+bool gramine_Seal(int in_size, byte *in, int *size_out, byte *out)
 {
   bool result = false;
 
@@ -159,8 +154,7 @@ gramine_Seal(int in_size, byte *in, int *size_out, byte *out)
   return true;
 }
 
-bool
-gramine_Unseal(int in_size, byte *in, int *size_out, byte *out)
+bool gramine_Unseal(int in_size, byte *in, int *size_out, byte *out)
 {
   bool result = false;
 
@@ -181,8 +175,7 @@ gramine_Unseal(int in_size, byte *in, int *size_out, byte *out)
   return true;
 }
 
-int
-gramine_Getkey(byte *user_report_data, sgx_key_128bit_t *key)
+int gramine_Getkey(byte *user_report_data, sgx_key_128bit_t *key)
 {
   return gramine_Sgx_Getkey(user_report_data, key);
 }

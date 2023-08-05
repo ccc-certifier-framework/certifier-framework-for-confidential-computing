@@ -19,8 +19,7 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-bool
-test_protect(bool print_all)
+bool test_protect(bool print_all)
 {
   protected_blob_message pb;
   key_message            key_start;
@@ -156,8 +155,7 @@ test_protect(bool print_all)
   return true;
 }
 
-bool
-test_init_and_recover_containers(bool print_all)
+bool test_init_and_recover_containers(bool print_all)
 {
   policy_store ps;
 
@@ -246,8 +244,7 @@ test_init_and_recover_containers(bool print_all)
   return true;
 }
 
-bool
-test_policy_store(bool print_all)
+bool test_policy_store(bool print_all)
 {
   policy_store ps(policy_store::MAX_NUM_ENTRIES);
 

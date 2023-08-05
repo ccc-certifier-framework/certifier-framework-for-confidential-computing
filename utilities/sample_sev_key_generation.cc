@@ -98,8 +98,7 @@ static struct attestation_report default_report = {
         },
 };
 
-static void
-reverse_bytes(byte *buffer, size_t size)
+static void reverse_bytes(byte *buffer, size_t size)
 {
   if (!buffer || size == 0)
     return;
@@ -112,8 +111,7 @@ reverse_bytes(byte *buffer, size_t size)
 }
 
 // This generates an sev attestation signed by the key in key_file
-int
-main(int an, char **av)
+int main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
 

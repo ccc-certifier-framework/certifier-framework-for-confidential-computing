@@ -32,8 +32,7 @@ DEFINE_string(environment_subject, "", "environment subject file");
 DEFINE_string(verb, "verb", "verb to use");
 DEFINE_string(clause, "", "clause file");
 
-bool
-get_clause_from_file(const string &in, vse_clause *cl)
+bool get_clause_from_file(const string &in, vse_clause *cl)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -52,11 +51,10 @@ get_clause_from_file(const string &in, vse_clause *cl)
   return true;
 }
 
-int
-make_indirect_clause_file_utility(entity_message &subject,
-                                  const string &  verb,
-                                  vse_clause &    in_cl,
-                                  const string &  output)
+int make_indirect_clause_file_utility(entity_message &subject,
+                                      const string &  verb,
+                                      vse_clause &    in_cl,
+                                      const string &  output)
 {
   vse_clause out_cl;
   string     v = verb;
@@ -85,8 +83,7 @@ make_indirect_clause_file_utility(entity_message &subject,
   return 0;
 }
 
-bool
-get_key_from_file(const string &in, key_message *k)
+bool get_key_from_file(const string &in, key_message *k)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -106,8 +103,7 @@ get_key_from_file(const string &in, key_message *k)
   return private_key_to_public_key(kt, k);
 }
 
-bool
-get_measurement_entity_from_file(const string &in, entity_message *em)
+bool get_measurement_entity_from_file(const string &in, entity_message *em)
 {
   int  in_size = file_size(in);
   int  in_read = in_size;
@@ -126,8 +122,7 @@ get_measurement_entity_from_file(const string &in, entity_message *em)
   return true;
 }
 
-int
-main(int an, char **av)
+int main(int an, char **av)
 {
   string usage("Generate certificate keys in different formats to output file");
   gflags::SetUsageMessage(usage);

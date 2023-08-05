@@ -14,8 +14,7 @@ DEFINE_string(executable, "hello_world.exe", "executable to run");
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-int
-main(int an, char **av)
+int main(int an, char **av)
 {
   string usage("Application Service helper 'send' utility");
   gflags::SetUsageMessage(usage);

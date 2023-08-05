@@ -16,40 +16,28 @@
 #ifndef __SUPPORT_TESTS_H__
 #define __SUPPORT_TESTS_H__
 
-bool
-test_random(bool print_all);
+bool test_random(bool print_all);
 
-bool
-test_encrypt(bool print_all);
+bool test_encrypt(bool print_all);
 
-bool
-test_authenticated_encrypt(bool print_all);
+bool test_authenticated_encrypt(bool print_all);
 
-bool
-test_public_keys(bool print_all);
+bool test_public_keys(bool print_all);
 
-bool
-test_digest(bool print_all);
+bool test_digest(bool print_all);
 
-bool
-test_sign_and_verify(bool print_all);
+bool test_sign_and_verify(bool print_all);
 
-bool
-test_time(bool print_all);
+bool test_time(bool print_all);
 
-bool
-test_key_translation(bool print_all);
+bool test_key_translation(bool print_all);
 
-bool
-test_artifact(bool print_all);
+bool test_artifact(bool print_all);
 
-bool
-test_local_certify(bool print_all);
+bool test_local_certify(bool print_all);
 
-bool
-test_new_local_certify(bool print_all);
+bool test_new_local_certify(bool print_all);
 
-bool
-test_partial_local_certify(bool print_all);
+bool test_partial_local_certify(bool print_all);
 
 #endif  // __SUPPORT_TESTS_H__

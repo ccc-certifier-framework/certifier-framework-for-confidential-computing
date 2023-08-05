@@ -54,8 +54,7 @@ struct key_options {
   bool do_root_key;
 };
 
-int
-request_key(struct key_options *options, uint8_t *key, size_t size)
+int request_key(struct key_options *options, uint8_t *key, size_t size)
 {
   int                            rc = EXIT_FAILURE;
   int                            fd = -1;
@@ -123,8 +122,7 @@ out:
 }
 
 #ifdef SEV_DUMMY_GUEST
-int
-read_key_file(const char *filename, EVP_PKEY **key, bool priv)
+int read_key_file(const char *filename, EVP_PKEY **key, bool priv)
 {
   int       rc = -EXIT_FAILURE;
   EVP_PKEY *pkey;
@@ -158,8 +156,7 @@ out:
   return rc;
 }
 
-int
-sign_report(struct attestation_report *report)
+int sign_report(struct attestation_report *report)
 {
   int       rc = -EXIT_FAILURE;
   EVP_PKEY *key = NULL;
@@ -188,11 +185,10 @@ exit:
   return rc;
 }
 
-static bool
-digest_sha384(const void *msg,
-              size_t      msg_len,
-              uint8_t *   digest,
-              size_t      digest_len)
+static bool digest_sha384(const void *msg,
+                          size_t      msg_len,
+                          uint8_t *   digest,
+                          size_t      digest_len)
 {
   bool ret = false;
 
@@ -212,8 +208,7 @@ digest_sha384(const void *msg,
   return ret;
 }
 
-int
-verify_report(struct attestation_report *report)
+int verify_report(struct attestation_report *report)
 {
   int           rc = -EXIT_FAILURE;
   EVP_PKEY *    key = NULL;
@@ -253,10 +248,9 @@ exit:
 }
 #endif
 
-int
-get_report(const uint8_t *            data,
-           size_t                     data_size,
-           struct attestation_report *report)
+int get_report(const uint8_t *            data,
+               size_t                     data_size,
+               struct attestation_report *report)
 {
   int                            rc = EXIT_FAILURE;
   int                            fd = -1;
@@ -340,8 +334,7 @@ out:
   return rc;
 }
 
-int
-write_report(const char *file_name, struct attestation_report *report)
+int write_report(const char *file_name, struct attestation_report *report)
 {
   int   rc = EXIT_FAILURE;
   FILE *report_file = NULL;
@@ -375,8 +368,7 @@ out:
   return rc;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   int                       rc = EXIT_FAILURE, i;
   struct attestation_report report;

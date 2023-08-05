@@ -16,10 +16,8 @@
 #ifndef __PRIMITIVE_TESTS_H__
 #define __PRIMITIVE_TESTS_H__
 
-bool
-test_seal(bool print_all);
+bool test_seal(bool print_all);
 
-bool
-test_attest(bool print_all);
+bool test_attest(bool print_all);
 
 #endif  // __PRIMITIVE_TESTS_H__

@@ -18,8 +18,7 @@
 
 using namespace certifier::utilities;
 
-char
-hex_digit(byte v)
+char hex_digit(byte v)
 {
   if (v >= 0 && v <= 9)
     return '0' + v;
@@ -28,8 +27,7 @@ hex_digit(byte v)
   return ' ';
 }
 
-bool
-make_enclave_name(string enclave_type, string *enclave_name)
+bool make_enclave_name(string enclave_type, string *enclave_name)
 {
   int    measurement_size = 32;
   byte   m[measurement_size];
@@ -50,8 +48,7 @@ make_enclave_name(string enclave_type, string *enclave_name)
   return true;
 }
 
-bool
-test_artifact(bool print_all)
+bool test_artifact(bool print_all)
 {
   X509 *      cert = X509_new();
   key_message signing_key;

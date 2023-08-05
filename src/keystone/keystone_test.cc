@@ -25,8 +25,7 @@ using namespace certifier::utilities;
 #define SIZE_ATTESTATION 1352      // must
 #define SIZE_MEASUREMENT (64 * 2)  // must
 
-bool
-keystone_test(const int cert_size, byte *cert)
+bool keystone_test(const int cert_size, byte *cert)
 {
   if (!keystone_Init(cert_size, cert)) {
     printf("keystone_Init fails\n");
@@ -105,8 +104,7 @@ keystone_test(const int cert_size, byte *cert)
 }
 
 // Return 0 if test succeeds; 1 otherwise to indicate failure.
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   return (keystone_test(0, NULL) == false);
 }

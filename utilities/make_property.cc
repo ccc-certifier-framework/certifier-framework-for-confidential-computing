@@ -32,8 +32,7 @@ DEFINE_uint64(int_value, 0, "int value");
 DEFINE_string(string_value, "", "string value");
 DEFINE_string(output, "prop.bin", "output file");
 
-int
-main(int an, char **av)
+int main(int an, char **av)
 {
   string usage("Specify a platform policy property used in policy.");
   gflags::SetUsageMessage(usage);

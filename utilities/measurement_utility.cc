@@ -28,8 +28,7 @@ DEFINE_string(input, "measurement_utility.exe", "input file");
 DEFINE_string(output, "measurement_utility.exe.measurement", "output file");
 
 const int sha256_size = 32;
-int
-hash_utility(string &input, string &output)
+int       hash_utility(string &input, string &output)
 {
   int          in_size = file_size(input);
   int          in_read = in_size;
@@ -67,8 +66,7 @@ hash_utility(string &input, string &output)
   return 0;
 }
 
-int
-main(int an, char **av)
+int main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

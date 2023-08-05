@@ -61,11 +61,10 @@ static std::string enclave_type;
 cc_trust_data *app_trust_data = nullptr;
 
 static bool simulator_initialized = false;
-bool
-test_local_certify(string &enclave_type,
-                   bool    init_from_file,
-                   string &file_name,
-                   string &evidence_descriptor);
+bool        test_local_certify(string &enclave_type,
+                               bool    init_from_file,
+                               string &file_name,
+                               string &evidence_descriptor);
 
 bool        trust_data_initialized = false;
 key_message privatePolicyKey;
@@ -81,8 +80,7 @@ byte         app_symmetric_key[app_symmetric_key_size];
 key_message  symmertic_key_for_protect;
 bool         connected = false;
 
-void
-print_trust_data()
+void print_trust_data()
 {
   if (!trust_data_initialized)
     return;
@@ -101,8 +99,7 @@ print_trust_data()
   printf("\n\n");
 }
 
-bool
-certifier_test_seal(void)
+bool certifier_test_seal(void)
 {
   string enclave_type("asylo-enclave");
   string enclave_id("local-machine");
@@ -157,8 +154,7 @@ certifier_test_seal(void)
   return true;
 }
 
-bool
-asylo_local_certify()
+bool asylo_local_certify()
 {
   string      enclave_type("asylo-enclave");
   string      evidence_descriptor("asylo-evidence");
@@ -182,8 +178,7 @@ asylo_local_certify()
   return true;
 }
 
-bool
-asylo_seal()
+bool asylo_seal()
 {
   if (!certifier_test_seal()) {
     printf("Sealing test failed\n");
@@ -193,15 +188,13 @@ asylo_seal()
   return true;
 }
 
-bool
-asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs)
+bool asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs)
 {
   setFuncs(asyloFuncs);
   return true;
 }
 
-bool
-certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
+bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
 {
   static const char rnd_seed[] =
       "string to make the random number generator think it has entropy";
@@ -260,8 +253,7 @@ certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
   return true;
 }
 
-bool
-cold_init()
+bool cold_init()
 {
   // Standard algorithms for the enclave
   string public_key_alg("rsa-2048");
@@ -281,8 +273,7 @@ cold_init()
   return true;
 }
 
-bool
-warm_restart()
+bool warm_restart()
 {
   if (!app_trust_data->warm_restart()) {
     printf("warm_restart failed\n");
@@ -292,8 +283,7 @@ warm_restart()
   return true;
 }
 
-bool
-certify_me()
+bool certify_me()
 {
   printf("Begin certify_me\n");
   if (!app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
@@ -303,8 +293,7 @@ certify_me()
   return true;
 }
 
-void
-server_application(secure_authenticated_channel &channel)
+void server_application(secure_authenticated_channel &channel)
 {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
@@ -319,13 +308,12 @@ server_application(secure_authenticated_channel &channel)
   connected = true;
 }
 
-void
-asylo_server_dispatch(const string &host_name,
-                      int           port,
-                      string &      asn1_root_cert,
-                      key_message & private_key,
-                      const string &private_key_cert,
-                      void (*func)(secure_authenticated_channel &))
+void asylo_server_dispatch(const string &host_name,
+                           int           port,
+                           string &      asn1_root_cert,
+                           key_message & private_key,
+                           const string &private_key_cert,
+                           void (*func)(secure_authenticated_channel &))
 {
   SSL_load_error_strings();
 
@@ -392,8 +380,7 @@ asylo_server_dispatch(const string &host_name,
   }
 }
 
-bool
-setup_server_ssl()
+bool setup_server_ssl()
 {
   bool ret = true;
   if (!app_trust_data->warm_restart()) {
@@ -416,8 +403,7 @@ done:
   return ret;
 }
 
-void
-client_application(secure_authenticated_channel &channel)
+void client_application(secure_authenticated_channel &channel)
 {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
@@ -431,8 +417,7 @@ client_application(secure_authenticated_channel &channel)
   printf("SSL client read: %s\n", out.data());
 }
 
-bool
-setup_client_ssl()
+bool setup_client_ssl()
 {
   bool                         ret = true;
   string                       my_role("client");

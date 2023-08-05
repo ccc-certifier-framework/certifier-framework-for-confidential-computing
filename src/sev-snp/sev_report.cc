@@ -7,8 +7,9 @@
 #include <stdio.h>
 //#include <sev_report.h>
 
-static void
-print_byte_array(const char *label, const uint8_t *array, size_t size)
+static void print_byte_array(const char *   label,
+                             const uint8_t *array,
+                             size_t         size)
 {
 #define INDENT         "    "
 #define MAX_LINE       80
@@ -38,8 +39,7 @@ print_byte_array(const char *label, const uint8_t *array, size_t size)
   putchar('\n');
 }
 
-static void
-print_tcb_version(const char *label, const union tcb_version *tcb)
+static void print_tcb_version(const char *label, const union tcb_version *tcb)
 {
   if (tcb) {
     printf("%s: %02u%02u%02u%02u%02u%02u%02u%02u\n",
@@ -59,24 +59,21 @@ print_tcb_version(const char *label, const union tcb_version *tcb)
   }
 }
 
-void
-print_version(struct attestation_report *report)
+void print_version(struct attestation_report *report)
 {
   if (report) {
     printf("Version: %u\n", report->version);
   }
 }
 
-void
-print_guest_svn(struct attestation_report *report)
+void print_guest_svn(struct attestation_report *report)
 {
   if (report) {
     printf("Guest SVN: %u\n", report->guest_svn);
   }
 }
 
-void
-print_policy(struct attestation_report *report)
+void print_policy(struct attestation_report *report)
 {
   if (report) {
     printf("Policy: %#0lx\n", report->policy);
@@ -93,32 +90,28 @@ print_policy(struct attestation_report *report)
   }
 }
 
-void
-print_family_id(struct attestation_report *report)
+void print_family_id(struct attestation_report *report)
 {
   if (report) {
     print_byte_array("Family ID", report->family_id, sizeof(report->family_id));
   }
 }
 
-void
-print_image_id(struct attestation_report *report)
+void print_image_id(struct attestation_report *report)
 {
   if (report) {
     print_byte_array("Image ID", report->image_id, sizeof(report->image_id));
   }
 }
 
-void
-print_vmpl(struct attestation_report *report)
+void print_vmpl(struct attestation_report *report)
 {
   if (report) {
     printf("VMPL: %u\n", report->vmpl);
   }
 }
 
-void
-print_signature_algo(struct attestation_report *report)
+void print_signature_algo(struct attestation_report *report)
 {
   if (report) {
     printf("Signature Algorithm: %u (%s)\n",
@@ -129,16 +122,14 @@ print_signature_algo(struct attestation_report *report)
   }
 }
 
-void
-print_platform_version(struct attestation_report *report)
+void print_platform_version(struct attestation_report *report)
 {
   if (report) {
     print_tcb_version("Platform Version", &report->platform_version);
   }
 }
 
-void
-print_platform_info(struct attestation_report *report)
+void print_platform_info(struct attestation_report *report)
 {
   if (report) {
     printf("Platform Info: %#0lx\n", report->platform_info);
@@ -147,8 +138,7 @@ print_platform_info(struct attestation_report *report)
   }
 }
 
-void
-print_author_key_en(struct attestation_report *report)
+void print_author_key_en(struct attestation_report *report)
 {
   if (report) {
     printf("Author Key Enabled: %s\n",
@@ -156,8 +146,7 @@ print_author_key_en(struct attestation_report *report)
   }
 }
 
-void
-print_report_data(struct attestation_report *report)
+void print_report_data(struct attestation_report *report)
 {
   if (report) {
     print_byte_array("Report Data",
@@ -166,8 +155,7 @@ print_report_data(struct attestation_report *report)
   }
 }
 
-void
-print_measurement(struct attestation_report *report)
+void print_measurement(struct attestation_report *report)
 {
   if (report) {
     print_byte_array("Measurement",
@@ -176,16 +164,14 @@ print_measurement(struct attestation_report *report)
   }
 }
 
-void
-print_host_data(struct attestation_report *report)
+void print_host_data(struct attestation_report *report)
 {
   if (report) {
     print_byte_array("Host Data", report->host_data, sizeof(report->host_data));
   }
 }
 
-void
-print_id_key_digest(struct attestation_report *report)
+void print_id_key_digest(struct attestation_report *report)
 {
   if (report) {
     print_byte_array("ID Key Digest",
@@ -194,8 +180,7 @@ print_id_key_digest(struct attestation_report *report)
   }
 }
 
-void
-print_author_key_digest(struct attestation_report *report)
+void print_author_key_digest(struct attestation_report *report)
 {
   if (report) {
     print_byte_array("Author Key Digest",
@@ -204,16 +189,14 @@ print_author_key_digest(struct attestation_report *report)
   }
 }
 
-void
-print_report_id(struct attestation_report *report)
+void print_report_id(struct attestation_report *report)
 {
   if (report) {
     print_byte_array("Report ID", report->report_id, sizeof(report->report_id));
   }
 }
 
-void
-print_migration_agent_report_id(struct attestation_report *report)
+void print_migration_agent_report_id(struct attestation_report *report)
 {
   if (report) {
     print_byte_array("Migration Agent Report ID",
@@ -222,24 +205,21 @@ print_migration_agent_report_id(struct attestation_report *report)
   }
 }
 
-void
-print_reported_tcb(struct attestation_report *report)
+void print_reported_tcb(struct attestation_report *report)
 {
   if (report) {
     print_tcb_version("Reported TCB", &report->reported_tcb);
   }
 }
 
-void
-print_chip_id(struct attestation_report *report)
+void print_chip_id(struct attestation_report *report)
 {
   if (report) {
     print_byte_array("Chip ID", report->chip_id, sizeof(report->chip_id));
   }
 }
 
-void
-print_signature(struct attestation_report *report)
+void print_signature(struct attestation_report *report)
 {
   if (report) {
     printf("Signature:\n");
@@ -248,8 +228,7 @@ print_signature(struct attestation_report *report)
   }
 }
 
-void
-print_report(struct attestation_report *report)
+void print_report(struct attestation_report *report)
 {
   print_version(report);
   print_guest_svn(report);

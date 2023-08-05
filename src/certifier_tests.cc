@@ -130,8 +130,7 @@ TEST(signed_claims, test_signed_claims)
   EXPECT_TRUE(test_signed_claims(FLAGS_print_all));
 }
 
-extern bool
-test__local_certify(string &, bool, string &, string &);
+extern bool test__local_certify(string &, bool, string &, string &);
 TEST(local_certify, test_local_certify)
 {
   string enclave_type("simulated-enclave");
@@ -152,8 +151,7 @@ TEST(local_certify, test_partial_local_certify)
                                   evidence_descriptor));
 }
 
-extern bool
-test__new_local_certify(string &, bool, string &, string &);
+extern bool test__new_local_certify(string &, bool, string &, string &);
 TEST(local_certify, test_new_local_certify)
 {
   string enclave_type("simulated-enclave");
@@ -215,16 +213,15 @@ TEST(test_sev, test_sev)
   EXPECT_TRUE(test_sev(FLAGS_print_all));
 }
 
-extern bool
-test_sev_platform_certify(const bool    debug_print,
-                          const string &policy_file_name,
-                          const string &policy_key_file,
-                          const string &ark_key_file_name,
-                          const string &ask_key_file_name,
-                          const string &vcek_key_file_name,
-                          const string &ark_cert_file_name,
-                          const string &ask_cert_file_name,
-                          const string &vcek_cert_file_name);
+extern bool test_sev_platform_certify(const bool    debug_print,
+                                      const string &policy_file_name,
+                                      const string &policy_key_file,
+                                      const string &ark_key_file_name,
+                                      const string &ask_key_file_name,
+                                      const string &vcek_key_file_name,
+                                      const string &ark_cert_file_name,
+                                      const string &ask_cert_file_name,
+                                      const string &vcek_cert_file_name);
 
 TEST(platform_certify, test_platform_certify)
 {
@@ -247,8 +244,7 @@ TEST(platform_certify, test_platform_certify)
 
 // -----------------------Run Tests-----------------------------
 
-int
-main(int an, char **av)
+int main(int an, char **av)
 {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

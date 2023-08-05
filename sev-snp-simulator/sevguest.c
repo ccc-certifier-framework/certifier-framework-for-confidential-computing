@@ -140,8 +140,8 @@ struct snp_guest_dev {
 /* Mutex to serialize the shared buffer access and command handling. */
 static DEFINE_MUTEX(snp_cmd_mutex);
 
-static int
-get_report(struct snp_guest_dev *snp_dev, struct snp_guest_request_ioctl *arg)
+static int get_report(struct snp_guest_dev *          snp_dev,
+                      struct snp_guest_request_ioctl *arg)
 {
   struct snp_report_req   req;
   int                     rc = 0;
@@ -180,9 +180,8 @@ get_report(struct snp_guest_dev *snp_dev, struct snp_guest_request_ioctl *arg)
   return rc;
 }
 
-static int
-get_derived_key(struct snp_guest_dev *          snp_dev,
-                struct snp_guest_request_ioctl *arg)
+static int get_derived_key(struct snp_guest_dev *          snp_dev,
+                           struct snp_guest_request_ioctl *arg)
 {
   struct snp_derived_key_resp resp;
   struct snp_derived_key_req  req;
@@ -223,16 +222,16 @@ get_derived_key(struct snp_guest_dev *          snp_dev,
   return rc;
 }
 
-static int
-get_ext_report(struct snp_guest_dev *          snp_dev,
-               struct snp_guest_request_ioctl *arg)
+static int get_ext_report(struct snp_guest_dev *          snp_dev,
+                          struct snp_guest_request_ioctl *arg)
 {
   printk(KERN_WARNING "SEV Guest Null driver get_ext_report\n");
   return -1;
 }
 
-static long
-snp_guest_ioctl(struct file *file, unsigned int ioctl, unsigned long arg)
+static long snp_guest_ioctl(struct file * file,
+                            unsigned int  ioctl,
+                            unsigned long arg)
 {
   struct snp_guest_dev *snp_dev = (struct snp_guest_dev *)file->private_data;
   void __user *                  argp = (void __user *)arg;
@@ -268,8 +267,7 @@ snp_guest_ioctl(struct file *file, unsigned int ioctl, unsigned long arg)
   return ret;
 }
 
-static int
-snp_guest_open(struct inode *inode, struct file *file)
+static int snp_guest_open(struct inode *inode, struct file *file)
 {
   unsigned int smajor = imajor(inode);
   unsigned int sminor = iminor(inode);
@@ -301,8 +299,7 @@ static const struct file_operations snp_guest_fops = {
     .unlocked_ioctl = snp_guest_ioctl,
 };
 
-static int
-construct_device(struct snp_guest_dev *dev, struct class *class)
+static int construct_device(struct snp_guest_dev *dev, struct class *class)
 {
   int            err = 0;
   dev_t          devno = MKDEV(sev_major, 0);
@@ -335,8 +332,7 @@ construct_device(struct snp_guest_dev *dev, struct class *class)
   return 0;
 }
 
-static void
-sev_guest_cleanup_module(void)
+static void sev_guest_cleanup_module(void)
 {
   /* Get rid of character devices (if any exist) */
   if (snp_dev) {
@@ -352,8 +348,7 @@ sev_guest_cleanup_module(void)
   return;
 }
 
-static int __init
-sev_guest_init_module(void)
+static int __init sev_guest_init_module(void)
 {
   int   err = 0;
   dev_t dev = 0;
@@ -391,8 +386,7 @@ fail:
   return err;
 }
 
-static void __exit
-sev_guest_exit_module(void)
+static void __exit sev_guest_exit_module(void)
 {
   sev_guest_cleanup_module();
   printk(KERN_WARNING "SEV Guest Null Driver Removed");

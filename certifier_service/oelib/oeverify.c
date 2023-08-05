@@ -6,8 +6,9 @@
 
 static bool oe_verifier_initialized = false;
 
-static const oe_claim_t *
-_find_claim(const oe_claim_t *claims, size_t claims_size, const char *name)
+static const oe_claim_t *_find_claim(const oe_claim_t *claims,
+                                     size_t            claims_size,
+                                     const char *      name)
 {
   for (size_t i = 0; i < claims_size; i++) {
     if (strcmp(claims[i].name, name) == 0)
@@ -16,16 +17,15 @@ _find_claim(const oe_claim_t *claims, size_t claims_size, const char *name)
   return NULL;
 }
 
-bool
-oe_host_verify_evidence(uint8_t *evidence,
-                        size_t   evidence_size,
-                        uint8_t *endorsements,
-                        size_t   endorsements_size,
-                        uint8_t *custom_claim_out,
-                        size_t * custom_claim_size,
-                        uint8_t *measurement_out,
-                        size_t * measurement_size,
-                        bool     check_tcb)
+bool oe_host_verify_evidence(uint8_t *evidence,
+                             size_t   evidence_size,
+                             uint8_t *endorsements,
+                             size_t   endorsements_size,
+                             uint8_t *custom_claim_out,
+                             size_t * custom_claim_size,
+                             uint8_t *measurement_out,
+                             size_t * measurement_size,
+                             bool     check_tcb)
 {
   bool                   result = false;
   oe_result_t            oe_res;

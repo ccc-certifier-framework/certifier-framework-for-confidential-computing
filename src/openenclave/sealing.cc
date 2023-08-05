@@ -7,14 +7,13 @@
 
 #include <string>
 
-bool
-oe_Seal(int   seal_policy,
-        int   in_size,
-        byte *in,
-        int   opt_size,
-        byte *opt,
-        int * size_out,
-        byte *out)
+bool oe_Seal(int   seal_policy,
+             int   in_size,
+             byte *in,
+             int   opt_size,
+             byte *opt,
+             int * size_out,
+             byte *out)
 {
   oe_result_t ret;
   bool        result = false;
@@ -60,13 +59,12 @@ exit:
   return result;
 }
 
-bool
-oe_Unseal(int   in_size,
-          byte *in,
-          int   opt_size,
-          byte *opt,
-          int * size_out,
-          byte *out)
+bool oe_Unseal(int   in_size,
+               byte *in,
+               int   opt_size,
+               byte *opt,
+               int * size_out,
+               byte *out)
 {
   bool     result = false;
   uint8_t *temp_data;

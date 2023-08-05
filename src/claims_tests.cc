@@ -19,8 +19,7 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-bool
-test_claims_1(bool print_all)
+bool test_claims_1(bool print_all)
 {
   key_message k;
   if (!make_certifier_rsa_key(1024, &k))
@@ -99,8 +98,7 @@ test_claims_1(bool print_all)
   return true;
 }
 
-bool
-test_signed_claims(bool print_all)
+bool test_signed_claims(bool print_all)
 {
   // make up rsa private keys and measurement
   string my_measurement;
@@ -398,14 +396,12 @@ test_signed_claims(bool print_all)
 //    without gtest
 #include "test_support.cc"
 
-bool
-test_certify_steps(bool print_all)
+bool test_certify_steps(bool print_all)
 {
   return true;
 }
 
-bool
-test_full_certification(bool print_all)
+bool test_full_certification(bool print_all)
 {
   return true;
 }
@@ -422,8 +418,7 @@ const char *kids[2] = {
     "is-trusted-for-authentication",
 };
 
-bool
-init_top_level_is_trusted(predicate_dominance &root)
+bool init_top_level_is_trusted(predicate_dominance &root)
 {
   root.predicate_.assign("is-trusted");
 
@@ -436,8 +431,7 @@ init_top_level_is_trusted(predicate_dominance &root)
   return true;
 }
 
-bool
-test_predicate_dominance(bool print_all)
+bool test_predicate_dominance(bool print_all)
 {
   predicate_dominance root;
 

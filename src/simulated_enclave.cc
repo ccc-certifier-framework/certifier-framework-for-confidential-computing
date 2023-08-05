@@ -46,8 +46,7 @@ string               serialized_attest_claim;
 signed_claim_message my_attest_claim;
 RSA *                rsa_attestation_key = nullptr;
 
-bool
-simulated_GetAttestClaim(signed_claim_message *out)
+bool simulated_GetAttestClaim(signed_claim_message *out)
 {
   if (!my_data_initialized) {
     printf("simulated_GetAttestClaim: data not initialized\n");
@@ -57,8 +56,7 @@ simulated_GetAttestClaim(signed_claim_message *out)
   return true;
 }
 
-bool
-simulated_GetPlatformClaim(signed_claim_message *out)
+bool simulated_GetPlatformClaim(signed_claim_message *out)
 {
   if (!my_data_initialized) {
     printf("simulated_GetPlatformClaim: data not initialized\n");
@@ -68,11 +66,10 @@ simulated_GetPlatformClaim(signed_claim_message *out)
   return true;
 }
 
-bool
-simulated_Init(const string &asn1_policy_cert,
-               const string &attest_key_file,
-               const string &measurement_file,
-               const string &attest_key_signed_claim_file)
+bool simulated_Init(const string &asn1_policy_cert,
+                    const string &attest_key_file,
+                    const string &measurement_file,
+                    const string &attest_key_signed_claim_file)
 {
   int m_size = file_size(measurement_file);
   if (m_size < 0) {
@@ -139,8 +136,7 @@ simulated_Init(const string &asn1_policy_cert,
   return true;
 }
 
-bool
-simulated_Getmeasurement(int *size_out, byte *out)
+bool simulated_Getmeasurement(int *size_out, byte *out)
 {
   if (*size_out < simulated_measurment_size)
     return false;
@@ -151,13 +147,12 @@ simulated_Getmeasurement(int *size_out, byte *out)
 
 const int max_seal_pad = 256;
 
-bool
-simulated_Seal(const string &enclave_type,
-               const string &enclave_id,
-               int           in_size,
-               byte *        in,
-               int *         size_out,
-               byte *        out)
+bool simulated_Seal(const string &enclave_type,
+                    const string &enclave_id,
+                    int           in_size,
+                    byte *        in,
+                    int *         size_out,
+                    byte *        out)
 {
   const int iv_size = block_size;
   byte      iv[iv_size];
@@ -202,13 +197,12 @@ simulated_Seal(const string &enclave_type,
   return true;
 }
 
-bool
-simulated_Unseal(const string &enclave_type,
-                 const string &enclave_id,
-                 int           in_size,
-                 byte *        in,
-                 int *         size_out,
-                 byte *        out)
+bool simulated_Unseal(const string &enclave_type,
+                      const string &enclave_id,
+                      int           in_size,
+                      byte *        in,
+                      int *         size_out,
+                      byte *        out)
 {
   int  iv_size = block_size;
   byte iv[iv_size];
@@ -248,12 +242,11 @@ simulated_Unseal(const string &enclave_type,
 
 // Attestation is a signed_claim_message
 // with a vse_claim_message claim
-bool
-simulated_Attest(const string &enclave_type,
-                 int           what_to_say_size,
-                 byte *        what_to_say,
-                 int *         size_out,
-                 byte *        out)
+bool simulated_Attest(const string &enclave_type,
+                      int           what_to_say_size,
+                      byte *        what_to_say,
+                      int *         size_out,
+                      byte *        out)
 {
   vse_attestation_report_info report_info;
   string                      serialized_report_info;
@@ -308,8 +301,7 @@ simulated_Attest(const string &enclave_type,
   return true;
 }
 
-bool
-simulated_Verify(string &serialized_signed_report)
+bool simulated_Verify(string &serialized_signed_report)
 {
   string type("vse-attestation-report");
 
@@ -347,15 +339,13 @@ simulated_Verify(string &serialized_signed_report)
   return check_date_range(info.not_before(), info.not_after());
 }
 
-bool
-simulated_GetParentEvidence(string *out)
+bool simulated_GetParentEvidence(string *out)
 {
   return false;
 }
 
 // Delete this eventually.  It is only used in certifier_tests.
-bool
-simulator_init()
+bool simulator_init()
 {
   // makeup attestation key and measurement and sealing key
   byte m[simulated_measurment_size];

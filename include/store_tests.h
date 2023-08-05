@@ -16,13 +16,10 @@
 #ifndef __STORE_TESTS_H__
 #define __STORE_TESTS_H__
 
-bool
-test_protect(bool print_all);
+bool test_protect(bool print_all);
 
-bool
-test_policy_store(bool print_all);
+bool test_policy_store(bool print_all);
 
-bool
-test_init_and_recover_containers(bool print_all);
+bool test_init_and_recover_containers(bool print_all);
 
 #endif  // __STORE_TESTS_H__

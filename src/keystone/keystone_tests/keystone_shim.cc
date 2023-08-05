@@ -41,17 +41,15 @@ struct report_t {
 // END copied Report.hpp
 #endif
 
-bool
-keystone_Init(const int cert_size, byte *cert)
+bool keystone_Init(const int cert_size, byte *cert)
 {
   return true;
 }
 
-bool
-keystone_Attest(const int what_to_say_size,
-                byte *    what_to_say,
-                int *     attestation_size_out,
-                byte *    attestation_out)
+bool keystone_Attest(const int what_to_say_size,
+                     byte *    what_to_say,
+                     int *     attestation_size_out,
+                     byte *    attestation_out)
 {
   assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
   *attestation_size_out = sizeof(struct report_t);
@@ -68,8 +66,7 @@ keystone_Attest(const int what_to_say_size,
 }
 
 // true = different
-bool
-nonhash_report_cmp(struct report_t &a, struct report_t &b)
+bool nonhash_report_cmp(struct report_t &a, struct report_t &b)
 {
   return (a.enclave.data_len != b.enclave.data_len)
          || memcmp(a.enclave.data, b.enclave.data, ATTEST_DATA_MAXLEN)
@@ -79,13 +76,12 @@ nonhash_report_cmp(struct report_t &a, struct report_t &b)
          || memcmp(a.dev_public_key, b.dev_public_key, PUBLIC_KEY_SIZE);
 }
 
-bool
-keystone_Verify(const int what_to_say_size,
-                byte *    what_to_say,
-                const int attestation_size,
-                byte *    attestation,
-                int *     measurement_out_size,
-                byte *    measurement_out)
+bool keystone_Verify(const int what_to_say_size,
+                     byte *    what_to_say,
+                     const int attestation_size,
+                     byte *    attestation,
+                     int *     measurement_out_size,
+                     byte *    measurement_out)
 {
   assert(attestation_size == sizeof(struct report_t));
   struct report_t &report = *reinterpret_cast<struct report_t *>(attestation);
@@ -108,16 +104,14 @@ keystone_Verify(const int what_to_say_size,
   return true;
 }
 
-bool
-keystone_Seal(int in_size, byte *in, int *size_out, byte *out)
+bool keystone_Seal(int in_size, byte *in, int *size_out, byte *out)
 {
   memcpy(out, in, in_size);
   *size_out = in_size;
   return true;
 }
 
-bool
-keystone_Unseal(int in_size, byte *in, int *size_out, byte *out)
+bool keystone_Unseal(int in_size, byte *in, int *size_out, byte *out)
 {
   memcpy(out, in, in_size);
   *size_out = in_size;

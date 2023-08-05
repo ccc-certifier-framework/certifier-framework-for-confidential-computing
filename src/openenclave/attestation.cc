@@ -10,8 +10,10 @@
 // SGX Attestation Format UUID.
 static oe_uuid_t vse_format_uuid = {OE_FORMAT_UUID_SGX_ECDSA};
 
-bool
-oe_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out)
+bool oe_Attest(int   what_to_say_size,
+               byte *what_to_say,
+               int * size_out,
+               byte *out)
 {
   bool        ret = false;
   oe_result_t result = OE_OK;
@@ -96,8 +98,9 @@ exit:
   return ret;
 }
 
-static const oe_claim_t *
-_find_claim(const oe_claim_t *claims, size_t claims_size, const char *name)
+static const oe_claim_t *_find_claim(const oe_claim_t *claims,
+                                     size_t            claims_size,
+                                     const char *      name)
 {
   for (size_t i = 0; i < claims_size; i++) {
     if (strcmp(claims[i].name, name) == 0)
@@ -107,8 +110,7 @@ _find_claim(const oe_claim_t *claims, size_t claims_size, const char *name)
 }
 
 #ifdef OE_DEBUG
-static void
-_print_hex(const uint8_t *data, size_t size)
+static void _print_hex(const uint8_t *data, size_t size)
 {
   int i;
   for (i = 0; i < size; i++)
@@ -116,13 +118,12 @@ _print_hex(const uint8_t *data, size_t size)
 }
 #endif
 
-bool
-oe_Verify(const uint8_t *evidence,
-          size_t         evidence_size,
-          uint8_t *      custom_claim_out,
-          size_t *       custom_claim_size,
-          uint8_t *      measurement_out,
-          size_t *       measurement_size)
+bool oe_Verify(const uint8_t *evidence,
+               size_t         evidence_size,
+               uint8_t *      custom_claim_out,
+               size_t *       custom_claim_size,
+               uint8_t *      measurement_out,
+               size_t *       measurement_size)
 {
   bool              ret = false;
   oe_result_t       result = OE_OK;

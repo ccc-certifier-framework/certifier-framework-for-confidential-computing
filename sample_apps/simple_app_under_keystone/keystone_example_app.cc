@@ -63,8 +63,7 @@ cc_trust_data *app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
-void
-client_application(secure_authenticated_channel &channel)
+void client_application(secure_authenticated_channel &channel)
 {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -84,8 +83,7 @@ client_application(secure_authenticated_channel &channel)
   printf("SSL client read: %s\n", out.data());
 }
 
-void
-server_application(secure_authenticated_channel &channel)
+void server_application(secure_authenticated_channel &channel)
 {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -105,8 +103,7 @@ server_application(secure_authenticated_channel &channel)
   channel.write(strlen(msg), (byte *)msg);
 }
 
-int
-main(int an, char **av)
+int main(int an, char **av)
 {
   string usage("Keystone-based simple app");
   gflags::ParseCommandLineFlags(&an, &av, true);

@@ -23,8 +23,7 @@
 #define SIZE_ATTESTATION 1352      // must
 #define SIZE_MEASUREMENT (64 * 2)  // must
 
-bool
-keystone_test(const int cert_size, byte *cert)
+bool keystone_test(const int cert_size, byte *cert)
 {
   if (!keystone_Init(cert_size, cert)) {
     printf("keystone_Init fails\n");
@@ -101,8 +100,7 @@ keystone_test(const int cert_size, byte *cert)
   return true;
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   return keystone_test(0, NULL);
 }

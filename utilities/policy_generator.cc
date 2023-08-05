@@ -105,8 +105,7 @@ typedef struct platform {
   vector<property> props;
 } platform;
 
-void
-print_claim(claim &c, const string prefix = "")
+void print_claim(claim &c, const string prefix = "")
 {
   map<clause_type, string> cname = {
       {SIMPLE_CLAUSE, "simpleClause"},
@@ -153,8 +152,7 @@ print_claim(claim &c, const string prefix = "")
   }
 }
 
-void
-from_json(const json &j, property &p)
+void from_json(const json &j, property &p)
 {
   map<string, string> cmap = {
       {"eq", "="},
@@ -173,8 +171,7 @@ from_json(const json &j, property &p)
   j.at("value").get_to(p.value);
 }
 
-void
-from_json(const json &j, clause &cl)
+void from_json(const json &j, clause &cl)
 {
   clause tmp_cl;
 
@@ -240,8 +237,7 @@ from_json(const json &j, clause &cl)
   }
 }
 
-void
-from_json(const json &j, claim &c)
+void from_json(const json &j, claim &c)
 {
   j.at("verb").get_to(c.verb);
 
@@ -289,8 +285,7 @@ string           policyKey;
 vector<string> signed_claims;
 vector<string> intermediate_files;
 
-static int
-exec_cmd(const string &command, bool print = false)
+static int exec_cmd(const string &command, bool print = false)
 {
   int                     exitcode = -1;
   array<char, 512 * 1024> buffer {};
@@ -320,8 +315,7 @@ exec_cmd(const string &command, bool print = false)
 }
 
 template<class... Args>
-string
-string_format(const string &format, Args... args)
+string string_format(const string &format, Args... args)
 {
   int size = snprintf(nullptr, 0, format.c_str(), args...) + 1;
   if (size <= 0) {
@@ -332,12 +326,11 @@ string_format(const string &format, Args... args)
   return string(buf.get(), (size_t)(size - 1));
 }
 
-static string
-make_property_cmd(string name,
-                  string type,
-                  string comparator,
-                  string value,
-                  string output)
+static string make_property_cmd(string name,
+                                string type,
+                                string comparator,
+                                string value,
+                                string output)
 {
   return string_format("%s --property_name=%s --property_type=\'%s\' "
                        "comparator=\"%s\" --%s_value=%s --output=%s",
@@ -350,11 +343,10 @@ make_property_cmd(string name,
                        output.c_str());
 }
 
-static string
-make_unary_clause_cmd(string subjectType,
-                      string subject,
-                      string verb,
-                      string output)
+static string make_unary_clause_cmd(string subjectType,
+                                    string subject,
+                                    string verb,
+                                    string output)
 {
   return string_format("%s --%s_subject=%s --verb=\"%s\" --output=%s",
                        (FLAGS_util_path + MAKE_UNARY_CLAUSE_CMD).c_str(),
@@ -364,13 +356,12 @@ make_unary_clause_cmd(string subjectType,
                        output.c_str());
 }
 
-static string
-make_simple_clause_cmd(string subjectType,
-                       string subject,
-                       string verb,
-                       string objectType,
-                       string object,
-                       string output)
+static string make_simple_clause_cmd(string subjectType,
+                                     string subject,
+                                     string verb,
+                                     string objectType,
+                                     string object,
+                                     string output)
 {
   return string_format("%s --%s_subject=%s --verb=%s --%s_object=%s "
                        "--output=%s",
@@ -383,12 +374,11 @@ make_simple_clause_cmd(string subjectType,
                        output.c_str());
 }
 
-static string
-make_indirect_clause_cmd(string subjectType,
-                         string subject,
-                         string verb,
-                         string clause,
-                         string output)
+static string make_indirect_clause_cmd(string subjectType,
+                                       string subject,
+                                       string verb,
+                                       string clause,
+                                       string output)
 {
   return string_format("%s --%s_subject=%s --verb=\"%s\" --clause=%s "
                        "--output=%s",
@@ -400,11 +390,10 @@ make_indirect_clause_cmd(string subjectType,
                        output.c_str());
 }
 
-static string
-make_signed_claim_cmd(string vseFile,
-                      string duration,
-                      string pKey,
-                      string output)
+static string make_signed_claim_cmd(string vseFile,
+                                    string duration,
+                                    string pKey,
+                                    string output)
 {
   return string_format("%s --vse_file=%s --duration=%s --private_key_file=%s "
                        "--output=%s",
@@ -425,10 +414,9 @@ make_signed_claim_cmd(string vseFile,
     }                                                                          \
   }
 
-static bool
-generate_platform_policy(string           policyKey,
-                         vector<platform> platforms,
-                         bool             script)
+static bool generate_platform_policy(string           policyKey,
+                                     vector<platform> platforms,
+                                     bool             script)
 {
   for (auto platform : platforms) {
     int    i = 1;
@@ -488,10 +476,9 @@ generate_platform_policy(string           policyKey,
   return true;
 }
 
-static bool
-generate_measurement_policy(string         policyKey,
-                            vector<string> measurements,
-                            bool           script)
+static bool generate_measurement_policy(string         policyKey,
+                                        vector<string> measurements,
+                                        bool           script)
 {
   int i = 1;
   for (auto mea : measurements) {
@@ -525,8 +512,9 @@ generate_measurement_policy(string         policyKey,
   return true;
 }
 
-static pair<string, string>
-subject_conversion(subject_type stype, string sub, bool script)
+static pair<string, string> subject_conversion(subject_type stype,
+                                               string       sub,
+                                               bool         script)
 {
   string actual_sub, cleanup_cmd = "", cmd;
 
@@ -551,8 +539,10 @@ subject_conversion(subject_type stype, string sub, bool script)
   return make_pair(actual_sub, cleanup_cmd);
 }
 
-static string
-generate_clause(string policyKey, clause cl, clause_type ct, bool script)
+static string generate_clause(string      policyKey,
+                              clause      cl,
+                              clause_type ct,
+                              bool        script)
 {
   map<subject_type, string> sname = {
       {KEY_SUBJECT, "key"},
@@ -632,8 +622,9 @@ generate_clause(string policyKey, clause cl, clause_type ct, bool script)
   return "clause.bin";
 }
 
-static bool
-generate_claim_policy(string policyKey, vector<claim> claims, bool script)
+static bool generate_claim_policy(string        policyKey,
+                                  vector<claim> claims,
+                                  bool          script)
 {
   map<subject_type, string> sname = {
       {KEY_SUBJECT, "key"},
@@ -679,10 +670,9 @@ generate_claim_policy(string policyKey, vector<claim> claims, bool script)
   return true;
 }
 
-static bool
-generate_packaged_claims(vector<string> signed_claims,
-                         string         output,
-                         bool           script)
+static bool generate_packaged_claims(vector<string> signed_claims,
+                                     string         output,
+                                     bool           script)
 {
   string cList = "", cmd;
   for (auto sc : signed_claims) {
@@ -708,12 +698,11 @@ generate_packaged_claims(vector<string> signed_claims,
  * be redirected to create a shell script which can be used later to generate
  * the policy bundle.
  */
-static bool
-generate_policy(string           policyKey,
-                vector<platform> platforms,
-                vector<string>   measurements,
-                vector<claim>    claims,
-                bool             script)
+static bool generate_policy(string           policyKey,
+                            vector<platform> platforms,
+                            vector<string>   measurements,
+                            vector<claim>    claims,
+                            bool             script)
 {
   bool   res = false;
   string files = "", cmd;
@@ -750,8 +739,7 @@ done:
   return res;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   json_validator validator;  // create validator
   json           policy_schema, policy;
