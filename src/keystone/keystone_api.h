@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,22 +31,30 @@ typedef unsigned char byte;
 #endif
 
 #ifndef __KEYSTONE_API__
-#define __KEYSTONE_API__
+#  define __KEYSTONE_API__
 bool keystone_Init(const int cert_size, byte *cert);
-bool keystone_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out);
-bool keystone_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out);
-bool keystone_Seal(int in_size, byte* in, int* size_out, byte* out);
-bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out);
+bool keystone_Attest(const int what_to_say_size,
+                     byte *    what_to_say,
+                     int *     attestation_size_out,
+                     byte *    attestation_out);
+bool keystone_Verify(const int what_to_say_size,
+                     byte *    what_to_say,
+                     const int attestation_size,
+                     byte *    attestation,
+                     int *     measurement_out_size,
+                     byte *    measurement_out);
+bool keystone_Seal(int in_size, byte *in, int *size_out, byte *out);
+bool keystone_Unseal(int in_size, byte *in, int *size_out, byte *out);
 
-#ifdef KEYSTONE_PRESENT
-#include "verifier/report.h"
-#else
+#  ifdef KEYSTONE_PRESENT
+#    include "verifier/report.h"
+#  else
 // BEGIN copied Keys.hpp
-#define ATTEST_DATA_MAXLEN 1024
-#define MDSIZE 64
-#define SIGNATURE_SIZE 144
+#    define ATTEST_DATA_MAXLEN 1024
+#    define MDSIZE             64
+#    define SIGNATURE_SIZE     144
 // it was #define SIGNATURE_SIZE 64
-#define PUBLIC_KEY_SIZE 64
+#    define PUBLIC_KEY_SIZE    64
 // END copied Keys.hpp
 
 // BEGIN copied Report.hpp
@@ -56,11 +65,11 @@ bool keystone_Unseal(int in_size, byte* in, int* size_out, byte* out);
 // The hash, datalen and data (which is the "what was said")
 // is hashed and signed  --- that's the signature below.
 struct enclave_report_t {
-  byte hash[MDSIZE];
+  byte     hash[MDSIZE];
   uint64_t data_len;
-  byte data[32];  // this was ATTEST_DATA_MAXLEN
-  byte signature[SIGNATURE_SIZE];
-  int size_sig;  // Remove?
+  byte     data[32];  // this was ATTEST_DATA_MAXLEN
+  byte     signature[SIGNATURE_SIZE];
+  int      size_sig;  // Remove?
 };
 
 // The hash in sm_report_t is the hash of the cpu embedded
@@ -77,10 +86,10 @@ struct sm_report_t {
 // come with a cert chain in Init.
 struct report_t {
   struct enclave_report_t enclave;
-  struct sm_report_t sm;
-  byte dev_public_key[PUBLIC_KEY_SIZE];
+  struct sm_report_t      sm;
+  byte                    dev_public_key[PUBLIC_KEY_SIZE];
 };
 // END copied Report.hpp
-#endif
+#  endif
 
 #endif

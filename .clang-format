@@ -1,0 +1,111 @@
+# #############################################################################
+# clang-format file for Certifier Framework code base
+# #############################################################################
+Language:      Cpp
+BasedOnStyle:  Google
+
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: true
+AlignEscapedNewlines: Right
+
+AllowShortBlocksOnASingleLine: false
+AllowShortEnumsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlignTrailingComments: true
+
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+
+BinPackArguments: false
+BinPackParameters: false
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel:  true
+  AfterClass:      false
+
+  AfterControlStatement: Never
+  AfterEnum:       false
+  AfterFunction:   false
+  AfterObjCDeclaration: false
+  AfterStruct:     false
+  AfterUnion:      false
+  AfterExternBlock: false
+  BeforeCatch:     false
+  BeforeElse:      false
+  IndentBraces:    false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+BreakStringLiterals: true
+
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: true
+BreakStringLiterals: true
+
+ColumnLimit:     80
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 3
+
+# This applies to, e.g., function arg declarations which may not fit on
+# 80-char line, so one has to indent the functions' parameter list.
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+
+# Do not allow file-specific variations in pointer alignment.
+# Apply PointerAlignment consistently.
+DerivePointerAlignment: false
+
+FixNamespaceComments: true
+
+IndentCaseLabels: true
+IndentCaseBlocks: false
+IndentGotoLabels: false
+IndentPPDirectives: AfterHash
+IndentWrappedFunctionNames: false
+InsertTrailingCommas: None
+IndentWidth:     2
+
+KeepEmptyLinesAtTheStartOfBlocks: true
+
+MaxEmptyLinesToKeep: 2
+
+NamespaceIndentation: None
+
+PointerAlignment: Right
+
+ReflowComments: true
+
+SortIncludes:    false
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpacesBeforeTrailingComments: 2
+SpaceBeforeCpp11BracedList : true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+Standard:        Cpp11
+TabWidth:        2
+UseTab:          Never

@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,10 +19,10 @@
 /*
  * A collection of useful macros and things ...
  */
-#define CC_TO_STR(x)       #x
+#define CC_TO_STR(x) #x
 
 // Return this for 'unknown thing', to avoid seg-faults when printing.
-#define CC_EMPTY_STRING (const char *) ""
+#define CC_EMPTY_STRING (const char *)""
 
 
 /* Option {value -> name } lookup structure */
@@ -30,14 +31,15 @@ typedef struct optlookup {
   const char *name;
 } optlookup;
 
-#define DCL__OPTLOOKUP(token, descr) { .id = token, .name =  descr }
+#define DCL__OPTLOOKUP(token, descr)                                           \
+  { .id = token, .name = descr }
 
-#define DCL_OPTLOOKUP(token, descr)                                  \
-        DCL__OPTLOOKUP(token, #token ": " descr )
+#define DCL_OPTLOOKUP(token, descr) DCL__OPTLOOKUP(token, #token ": " descr)
 
 // Declare a terminating entry for optlookup table
-#define DCL_OPTLOOKUP_TERM() { .id = -1, .name = NULL }
+#define DCL_OPTLOOKUP_TERM()                                                   \
+  { .id = -1, .name = NULL }
 
-const char * optbyid(optlookup * opt, int id);
+const char *optbyid(optlookup *opt, int id);
 
-#endif   /* __CC_USEFUL_H__ */
+#endif /* __CC_USEFUL_H__ */

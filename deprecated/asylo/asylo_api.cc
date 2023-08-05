@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,18 +34,18 @@ void setFuncs(AsyloCertifierFunctions funcs) {
   asyloFuncs.Unseal = funcs.Unseal;
 }
 
-bool asylo_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
+bool asylo_Attest(int claims_size, byte *claims, int *size_out, byte *out) {
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
-  int assertion_size = 0;
+  int  assertion_size = 0;
   bool result = false;
 
   printf("Invoking Asylo Attest %d\n", claims_size);
   print_bytes(claims_size, claims);
   printf("\n");
 
-  result = (*asyloFuncs.Attest)
-           (claims_size, claims, &assertion_size, assertion);
+  result =
+      (*asyloFuncs.Attest)(claims_size, claims, &assertion_size, assertion);
   if (!result) {
     printf("Asylo attest failed\n");
     return false;
@@ -54,7 +55,7 @@ bool asylo_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
 
   int i, j = 0;
   for (i = 0; i < sizeof(int); i++, j++) {
-    out[j] = ((byte*)&assertion_size)[i];
+    out[j] = ((byte *)&assertion_size)[i];
   }
 
   for (i = 0; i < assertion_size; i++, j++) {
@@ -62,7 +63,7 @@ bool asylo_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   }
 
   for (i = 0; i < sizeof(int); i++, j++) {
-    out[j] = ((byte*)&claims_size)[i];
+    out[j] = ((byte *)&claims_size)[i];
   }
 
   for (i = 0; i < claims_size; i++, j++) {
@@ -77,11 +78,15 @@ bool asylo_Attest(int claims_size, byte* claims, int* size_out, byte* out) {
   return true;
 }
 
-bool asylo_Verify(int claims_size, byte* claims, int *user_data_out_size,
-                  byte *user_data_out, int* size_out, byte* out) {
+bool asylo_Verify(int   claims_size,
+                  byte *claims,
+                  int * user_data_out_size,
+                  byte *user_data_out,
+                  int * size_out,
+                  byte *out) {
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
-  int assertion_size = 0;
+  int  assertion_size = 0;
   bool result = false;
 
   printf("\nInput claims sent to asylo_Verify:\n");
@@ -89,7 +94,7 @@ bool asylo_Verify(int claims_size, byte* claims, int *user_data_out_size,
 
   int i, j = 0;
   for (i = 0; i < sizeof(int); i++, j++) {
-    ((byte*)&assertion_size)[i] = claims[j];
+    ((byte *)&assertion_size)[i] = claims[j];
   }
 
   for (i = 0; i < assertion_size; i++, j++) {
@@ -99,7 +104,7 @@ bool asylo_Verify(int claims_size, byte* claims, int *user_data_out_size,
   print_bytes(assertion_size, assertion);
 
   for (i = 0; i < sizeof(int); i++, j++) {
-    ((byte*)user_data_out_size)[i] = claims[j];
+    ((byte *)user_data_out_size)[i] = claims[j];
   }
 
   for (i = 0; i < *user_data_out_size; i++, j++) {
@@ -110,9 +115,12 @@ bool asylo_Verify(int claims_size, byte* claims, int *user_data_out_size,
   print_bytes(*user_data_out_size, user_data_out);
 
   printf("Invoking Asylo Verify %d\n", claims_size);
-  result = (*asyloFuncs.Verify)
-           (*user_data_out_size, user_data_out, assertion_size,
-             assertion, size_out, out);
+  result = (*asyloFuncs.Verify)(*user_data_out_size,
+                                user_data_out,
+                                assertion_size,
+                                assertion,
+                                size_out,
+                                out);
   if (!result) {
     printf("Asylo verify failed\n");
     return false;
@@ -123,7 +131,7 @@ bool asylo_Verify(int claims_size, byte* claims, int *user_data_out_size,
   return true;
 }
 
-bool asylo_Seal(int in_size, byte* in, int* size_out, byte* out) {
+bool asylo_Seal(int in_size, byte *in, int *size_out, byte *out) {
   bool result = false;
   printf("Invoking Asylo Seal %d\n", in_size);
 
@@ -137,7 +145,7 @@ bool asylo_Seal(int in_size, byte* in, int* size_out, byte* out) {
   return true;
 }
 
-bool asylo_Unseal(int in_size, byte* in, int* size_out, byte* out) {
+bool asylo_Unseal(int in_size, byte *in, int *size_out, byte *out) {
   bool result = false;
   printf("Invoking Asylo Unseal %d\n", in_size);
 

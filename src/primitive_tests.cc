@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,33 +25,49 @@ bool test_seal(bool print_all) {
   string enclave_type("simulated-enclave");
   string enclave_id("local-machine");
 
-  int secret_to_seal_size = 32;
+  int  secret_to_seal_size = 32;
   byte secret_to_seal[secret_to_seal_size];
-  int sealed_size_out = 256;
+  int  sealed_size_out = 256;
   byte sealed[sealed_size_out];
-  int recovered_size = 128;
+  int  recovered_size = 128;
   byte recovered[recovered_size];
 
   if (print_all) {
     printf("\nSeal\n");
-    printf("to seal  (%d): ", secret_to_seal_size); print_bytes(secret_to_seal_size, secret_to_seal); printf("\n");
+    printf("to seal  (%d): ", secret_to_seal_size);
+    print_bytes(secret_to_seal_size, secret_to_seal);
+    printf("\n");
   }
   memset(sealed, 0, sealed_size_out);
   memset(recovered, 0, recovered_size);
   for (int i = 0; i < secret_to_seal_size; i++)
-    secret_to_seal[i]= (7 * i)%16;
+    secret_to_seal[i] = (7 * i) % 16;
 
-  if (!Seal(enclave_type, enclave_id, secret_to_seal_size, secret_to_seal, &sealed_size_out, sealed))
+  if (!Seal(enclave_type,
+            enclave_id,
+            secret_to_seal_size,
+            secret_to_seal,
+            &sealed_size_out,
+            sealed))
     return false;
   if (print_all) {
-    printf("sealed   (%d): ", sealed_size_out); print_bytes(sealed_size_out, sealed); printf("\n");
+    printf("sealed   (%d): ", sealed_size_out);
+    print_bytes(sealed_size_out, sealed);
+    printf("\n");
   }
 
-  if (!Unseal(enclave_type, enclave_id, sealed_size_out, sealed, &recovered_size, recovered))
+  if (!Unseal(enclave_type,
+              enclave_id,
+              sealed_size_out,
+              sealed,
+              &recovered_size,
+              recovered))
     return false;
 
   if (print_all) {
-    printf("recovered: (%d)", recovered_size); print_bytes(recovered_size, recovered); printf("\n");
+    printf("recovered: (%d)", recovered_size);
+    print_bytes(recovered_size, recovered);
+    printf("\n");
   }
   return true;
 }
@@ -61,31 +78,32 @@ bool test_attest(bool print_all) {
   string descript("simulated-test");
 
   extern key_message my_attestation_key;
-  key_message public_attestation_key;
+  key_message        public_attestation_key;
   if (!private_key_to_public_key(my_attestation_key, &public_attestation_key))
     return false;
 
-  extern string my_measurement;
+  extern string         my_measurement;
   attestation_user_data ud;
-  if (!make_attestation_user_data(enclave_type,
-          public_attestation_key, &ud)) {
-      printf("Can't make user data (1)\n");
-      return false;
-    }
+  if (!make_attestation_user_data(enclave_type, public_attestation_key, &ud)) {
+    printf("Can't make user data (1)\n");
+    return false;
+  }
   string serialized_ud;
   if (!ud.SerializeToString(&serialized_ud)) {
-      printf("Can't serialize data (1)\n");
-      return false;
-    }
+    printf("Can't serialize data (1)\n");
+    return false;
+  }
 
   // Todo: fix size
-  int size_out = 8192; 
-  byte out[size_out]; 
-  if (!Attest(enclave_type, serialized_ud.size(),
-        (byte*) serialized_ud.data(), &size_out, out))
+  int  size_out = 8192;
+  byte out[size_out];
+  if (!Attest(enclave_type,
+              serialized_ud.size(),
+              (byte *)serialized_ud.data(),
+              &size_out,
+              out))
     return false;
   string serialized_signed_report;
-  serialized_signed_report.assign((char*)out, size_out);
+  serialized_signed_report.assign((char *)out, size_out);
   return simulated_Verify(serialized_signed_report);
 }
-

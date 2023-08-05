@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,12 +21,12 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(input, "measurement_utility.exe",  "input file");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(input, "measurement_utility.exe", "input file");
 
-bool get_clause_from_file(const string& in, vse_clause* cl) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+bool get_clause_from_file(const string &in, vse_clause *cl) {
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_cl[in_size];
 
   if (!read_file(in, &in_read, serialized_cl)) {
@@ -33,7 +34,7 @@ bool get_clause_from_file(const string& in, vse_clause* cl) {
     return false;
   }
   string cl_str;
-  cl_str.assign((char*)serialized_cl, in_size);
+  cl_str.assign((char *)serialized_cl, in_size);
   if (!cl->ParseFromString(cl_str)) {
     printf("Can't parse clause\n");
     return false;
@@ -41,7 +42,7 @@ bool get_clause_from_file(const string& in, vse_clause* cl) {
   return true;
 }
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 

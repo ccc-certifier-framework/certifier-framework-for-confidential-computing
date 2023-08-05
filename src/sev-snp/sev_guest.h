@@ -18,14 +18,14 @@
 #define __UAPI_LINUX_SEV_GUEST_H_
 
 #if 1
-#include <linux/types.h>
+#  include <linux/types.h>
 #else
-typedef unsigned char uint8_t;
-typedef unsigned char __u8;
-typedef unsigned short uint16_t;
-typedef unsigned short __u16;
-typedef unsigned uint32_t;
-typedef unsigned __u32;
+typedef unsigned char      uint8_t;
+typedef unsigned char      __u8;
+typedef unsigned short     uint16_t;
+typedef unsigned short     __u16;
+typedef unsigned           uint32_t;
+typedef unsigned           __u32;
 typedef long long unsigned uint64_t;
 typedef long long unsigned __u64;
 #endif
@@ -82,15 +82,18 @@ struct snp_ext_report_req {
   __u32 certs_len;
 };
 
-#define SNP_GUEST_REQ_IOC_TYPE  'S'
+#define SNP_GUEST_REQ_IOC_TYPE 'S'
 
 /* Get SNP attestation report */
-#define SNP_GET_REPORT _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x0, struct snp_guest_request_ioctl)
+#define SNP_GET_REPORT                                                         \
+  _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x0, struct snp_guest_request_ioctl)
 
 /* Get a derived key from the root */
-#define SNP_GET_DERIVED_KEY _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x1, struct snp_guest_request_ioctl)
+#define SNP_GET_DERIVED_KEY                                                    \
+  _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x1, struct snp_guest_request_ioctl)
 
 /* Get SNP extended report as defined in the GHCB specification version 2. */
-#define SNP_GET_EXT_REPORT _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x2, struct snp_guest_request_ioctl)
+#define SNP_GET_EXT_REPORT                                                     \
+  _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x2, struct snp_guest_request_ioctl)
 
 #endif /* __UAPI_LINUX_SEV_GUEST_H_ */

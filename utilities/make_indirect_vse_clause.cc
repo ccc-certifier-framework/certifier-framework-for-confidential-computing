@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// make_indirect_vse_clause.exe --key_subject=file --verb="says" --clause=file --output=output-file-name
+// make_indirect_vse_clause.exe --key_subject=file --verb="says" --clause=file
+// --output=output-file-name
 
 #include <gflags/gflags.h>
 #include "certifier.h"
@@ -20,18 +22,18 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(output, "simple_clause.bin",  "output file");
-DEFINE_string(key_subject, "",  "subject file");
-DEFINE_string(measurement_subject, "",  "subject file");
-DEFINE_string(platform_subject, "",  "platform subject file");
-DEFINE_string(environment_subject, "",  "environment subject file");
-DEFINE_string(verb, "verb",  "verb to use");
-DEFINE_string(clause, "",  "clause file");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(output, "simple_clause.bin", "output file");
+DEFINE_string(key_subject, "", "subject file");
+DEFINE_string(measurement_subject, "", "subject file");
+DEFINE_string(platform_subject, "", "platform subject file");
+DEFINE_string(environment_subject, "", "environment subject file");
+DEFINE_string(verb, "verb", "verb to use");
+DEFINE_string(clause, "", "clause file");
 
-bool get_clause_from_file(const string& in, vse_clause* cl) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+bool get_clause_from_file(const string &in, vse_clause *cl) {
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_cl[in_size];
 
   if (!read_file(in, &in_read, serialized_cl)) {
@@ -39,7 +41,7 @@ bool get_clause_from_file(const string& in, vse_clause* cl) {
     return false;
   }
   string cl_str;
-  cl_str.assign((char*)serialized_cl, in_size);
+  cl_str.assign((char *)serialized_cl, in_size);
   if (!cl->ParseFromString(cl_str)) {
     printf("Can't parse clause\n");
     return false;
@@ -47,11 +49,13 @@ bool get_clause_from_file(const string& in, vse_clause* cl) {
   return true;
 }
 
-int make_indirect_clause_file_utility(entity_message& subject, const string& verb,
-      vse_clause& in_cl, const string& output) {
+int make_indirect_clause_file_utility(entity_message &subject,
+                                      const string &  verb,
+                                      vse_clause &    in_cl,
+                                      const string &  output) {
 
   vse_clause out_cl;
-  string v = verb;
+  string     v = verb;
   if (!make_indirect_vse_clause(subject, v, in_cl, &out_cl)) {
     printf("Can't make clause\n");
     return 1;
@@ -63,7 +67,7 @@ int make_indirect_clause_file_utility(entity_message& subject, const string& ver
     return 1;
   }
 
-  if (!write_file(output, out_string.size(), (byte*)out_string.data())) {
+  if (!write_file(output, out_string.size(), (byte *)out_string.data())) {
     printf("Can't write %s\n", output.c_str());
     return 1;
   }
@@ -77,18 +81,18 @@ int make_indirect_clause_file_utility(entity_message& subject, const string& ver
   return 0;
 }
 
-bool get_key_from_file(const string& in, key_message* k) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+bool get_key_from_file(const string &in, key_message *k) {
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_key[in_size];
-  
+
   if (!read_file(in, &in_read, serialized_key)) {
     printf("Can't read %s\n", in.c_str());
     return false;
   }
   key_message kt;
-  string k_str;
-  k_str.assign((char*)serialized_key, in_size);
+  string      k_str;
+  k_str.assign((char *)serialized_key, in_size);
   if (!kt.ParseFromString(k_str)) {
     printf("Can't parse key\n");
     return false;
@@ -96,9 +100,9 @@ bool get_key_from_file(const string& in, key_message* k) {
   return private_key_to_public_key(kt, k);
 }
 
-bool get_measurement_entity_from_file(const string& in, entity_message* em) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+bool get_measurement_entity_from_file(const string &in, entity_message *em) {
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte m[in_size];
 
   if (!read_file(in, &in_read, m)) {
@@ -106,7 +110,7 @@ bool get_measurement_entity_from_file(const string& in, entity_message* em) {
     return false;
   }
   string m_str;
-  m_str.assign((char*)m, in_size);
+  m_str.assign((char *)m, in_size);
   if (!make_measurement_entity(m_str, em)) {
     printf("Can't make measurement entity\n");
     return false;
@@ -114,7 +118,7 @@ bool get_measurement_entity_from_file(const string& in, entity_message* em) {
   return true;
 }
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   string usage("Generate certificate keys in different formats to output file");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -161,6 +165,8 @@ int main(int an, char** av) {
     }
   }
 
-  return make_indirect_clause_file_utility(sub_ent, FLAGS_verb,
-      in_cl, FLAGS_output);
+  return make_indirect_clause_file_utility(sub_ent,
+                                           FLAGS_verb,
+                                           in_cl,
+                                           FLAGS_output);
 }

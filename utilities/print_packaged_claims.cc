@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,21 +21,21 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(input, "simple_clause.bin",  "input file");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(input, "simple_clause.bin", "input file");
 
-void print_signed_claim_clauses(const signed_claim_message& sc) {
+void print_signed_claim_clauses(const signed_claim_message &sc) {
   string cm_str;
-  cm_str.assign((char*)sc.serialized_claim_message().data(),
-      sc.serialized_claim_message().size());
+  cm_str.assign((char *)sc.serialized_claim_message().data(),
+                sc.serialized_claim_message().size());
   claim_message cm;
   if (!cm.ParseFromString(cm_str)) {
     printf("Can't parse serialized claim\n");
     return;
   }
   string vse_str;
-  vse_str.assign((char*)cm.serialized_claim().data(),
-    cm.serialized_claim().size());
+  vse_str.assign((char *)cm.serialized_claim().data(),
+                 cm.serialized_claim().size());
   vse_clause v;
   if (!v.ParseFromString(vse_str)) {
     printf("Can't parse serialized vse clasue\n");
@@ -44,7 +45,7 @@ void print_signed_claim_clauses(const signed_claim_message& sc) {
   printf("\n");
 }
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
@@ -53,11 +54,12 @@ int main(int an, char** av) {
 
   if (in_size <= 0) {
     printf("Invalid size=%d for input file '%s'.\n",
-            in_size,  FLAGS_input.c_str());
+           in_size,
+           FLAGS_input.c_str());
     return 1;
   }
 
-  byte buf[in_size];
+  byte   buf[in_size];
   string all_bufs;
 
   if (!read_file(FLAGS_input, &in_read, buf)) {
@@ -65,7 +67,7 @@ int main(int an, char** av) {
     return 1;
   }
 
-  all_bufs.assign((char*)buf, in_size);
+  all_bufs.assign((char *)buf, in_size);
   buffer_sequence seq;
   if (!seq.ParseFromString(all_bufs)) {
     printf("Can't deserialize %s\n", FLAGS_input.c_str());
@@ -74,7 +76,7 @@ int main(int an, char** av) {
 
   printf("\n %d blocks\n", seq.block_size());
   for (int i = 0; i < seq.block_size(); i++) {
-    const string& s = seq.block(i);
+    const string &       s = seq.block(i);
     signed_claim_message sc;
 
     if (!sc.ParseFromString(s)) {

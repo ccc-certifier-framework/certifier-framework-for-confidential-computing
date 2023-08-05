@@ -1,4 +1,5 @@
-//  Copyright (c) 2022-23, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2022-23, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +15,11 @@
 
 #include "islet_verify.h"
 
-bool isletlib_Verify(const int what_to_say_size, byte* what_to_say,
-                     const int attestation_size, byte* attestation,
-                     int* measurement_out_size, byte* measurement_out) {
-    return false;
+bool isletlib_Verify(const int what_to_say_size,
+                     byte *    what_to_say,
+                     const int attestation_size,
+                     byte *    attestation,
+                     int *     measurement_out_size,
+                     byte *    measurement_out) {
+  return false;
 }

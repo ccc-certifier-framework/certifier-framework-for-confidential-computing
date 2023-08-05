@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,12 +20,12 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(ark_der, "sev_ark_cert.der",  "ark cert file");
-DEFINE_string(ask_der, "sev_ask_cert.der",  "ask cert file");
-DEFINE_string(vcek_der, "sev_vcek_cert.der",  "vcek cert file");
-DEFINE_string(policy_key_file, "policy_key.bin",  "policy key file");
-DEFINE_string(sev_attest, "sev_attest.bin",  "simulated attestation file");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(ark_der, "sev_ark_cert.der", "ark cert file");
+DEFINE_string(ask_der, "sev_ask_cert.der", "ask cert file");
+DEFINE_string(vcek_der, "sev_vcek_cert.der", "vcek cert file");
+DEFINE_string(policy_key_file, "policy_key.bin", "policy key file");
+DEFINE_string(sev_attest, "sev_attest.bin", "simulated attestation file");
 
 /*
   From a real Sev machine
@@ -81,26 +82,27 @@ DEFINE_string(sev_attest, "sev_attest.bin",  "simulated attestation file");
 
 
 static struct attestation_report default_report = {
-  .version = 2,
-  .guest_svn = 1,
-  .policy = 0x00000ULL,  // no migrate, debug or SMT
-  .signature_algo = SIG_ALGO_ECDSA_P384_SHA384,
-  .platform_info = 0, // SMT disable --- should be 0x03?
-  // Hardcoded measurement
-  .measurement = {
-     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-  },
+    .version = 2,
+    .guest_svn = 1,
+    .policy = 0x00000ULL,  // no migrate, debug or SMT
+    .signature_algo = SIG_ALGO_ECDSA_P384_SHA384,
+    .platform_info = 0,  // SMT disable --- should be 0x03?
+    // Hardcoded measurement
+    .measurement =
+        {
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x02,
+            0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x02, 0x03, 0x04,
+            0x05, 0x06, 0x07, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+            0x07, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+        },
 };
 
-static void reverse_bytes(byte* buffer, size_t size) {
+static void reverse_bytes(byte *buffer, size_t size) {
   if (!buffer || size == 0)
     return;
-  for (byte *start = buffer, *end = buffer + size - 1; start < end; start++, end--) {
+  for (byte *start = buffer, *end = buffer + size - 1; start < end;
+       start++, end--) {
     byte temp = *start;
     *start = *end;
     *end = temp;
@@ -108,13 +110,15 @@ static void reverse_bytes(byte* buffer, size_t size) {
 }
 
 // This generates an sev attestation signed by the key in key_file
-int main(int an, char** av) {
+int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
-  printf("sample_sev_key_generation.exe --ark_der=sev_ark_cert.der --ask_cert=sev_ask_cert.der --vcek_der=sev_vcek_cert.der --sev_attest=sev_attest.bin --policy_key-policy_key.bin\n");
+  printf("sample_sev_key_generation.exe --ark_der=sev_ark_cert.der "
+         "--ask_cert=sev_ask_cert.der --vcek_der=sev_vcek_cert.der "
+         "--sev_attest=sev_attest.bin --policy_key-policy_key.bin\n");
 
   // policy key
-  string policy_key_str;
+  string      policy_key_str;
   key_message policy_key;
   if (!read_file_into_string(FLAGS_policy_key_file, &policy_key_str)) {
     printf("Can't read policy key\n");
@@ -145,7 +149,7 @@ int main(int an, char** av) {
   // ARK
   key_message ark_vse_key;
   key_message pub_ark_vse_key;
-  RSA* r1 = RSA_new();
+  RSA *       r1 = RSA_new();
   if (!generate_new_rsa_key(4096, r1)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -160,9 +164,17 @@ int main(int an, char** av) {
     return 1;
   }
 
-  X509* ark_509 = X509_new();
-  if (!produce_artifact(ark_vse_key, ark_name, ark_desc_str, pub_ark_vse_key,
-          ark_name, ark_desc_str, 1ULL, 86400 * 365.25, ark_509, true)) {
+  X509 *ark_509 = X509_new();
+  if (!produce_artifact(ark_vse_key,
+                        ark_name,
+                        ark_desc_str,
+                        pub_ark_vse_key,
+                        ark_name,
+                        ark_desc_str,
+                        1ULL,
+                        86400 * 365.25,
+                        ark_509,
+                        true)) {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -173,7 +185,7 @@ int main(int an, char** av) {
     printf("Can't convert ARK to der\n");
     return 1;
   }
-  if (!write_file(FLAGS_ark_der, ark_der.size(), (byte*) ark_der.data())) {
+  if (!write_file(FLAGS_ark_der, ark_der.size(), (byte *)ark_der.data())) {
     printf("Can't write %s\n", FLAGS_ark_der.c_str());
     return 1;
   }
@@ -182,7 +194,7 @@ int main(int an, char** av) {
   // ASK
   key_message ask_vse_key;
   key_message pub_ask_vse_key;
-  RSA* r2 = RSA_new();
+  RSA *       r2 = RSA_new();
   if (!generate_new_rsa_key(4096, r2)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -197,9 +209,17 @@ int main(int an, char** av) {
     return 1;
   }
 
-  X509* ask_509 = X509_new();
-  if (!produce_artifact(ark_vse_key, ark_name, ark_desc_str, pub_ask_vse_key,
-          ask_name, ask_desc_str, 1ULL, 86400 * 365.25, ask_509, false)) {
+  X509 *ask_509 = X509_new();
+  if (!produce_artifact(ark_vse_key,
+                        ark_name,
+                        ark_desc_str,
+                        pub_ask_vse_key,
+                        ask_name,
+                        ask_desc_str,
+                        1ULL,
+                        86400 * 365.25,
+                        ask_509,
+                        false)) {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -210,7 +230,7 @@ int main(int an, char** av) {
     printf("Can't convert ASK to der\n");
     return 1;
   }
-  if (!write_file(FLAGS_ask_der, ask_der.size(), (byte*) ask_der.data())) {
+  if (!write_file(FLAGS_ask_der, ask_der.size(), (byte *)ask_der.data())) {
     printf("Can't write %s\n", FLAGS_ask_der.c_str());
     return 1;
   }
@@ -219,7 +239,7 @@ int main(int an, char** av) {
   // VCEK
   key_message vcek_vse_key;
   key_message pub_vcek_vse_key;
-  EC_KEY* ec = generate_new_ecc_key(384);
+  EC_KEY *    ec = generate_new_ecc_key(384);
   if (ec == nullptr) {
     printf("Can't generate ecc key\n");
     return 1;
@@ -234,9 +254,17 @@ int main(int an, char** av) {
     return 1;
   }
 
-  X509* vcek_509 = X509_new();
-  if (!produce_artifact(ask_vse_key, ask_name, ask_desc_str, pub_vcek_vse_key,
-          vcek_name, vcek_desc_str, 1ULL, 86400 * 365.25, vcek_509, false)) {
+  X509 *vcek_509 = X509_new();
+  if (!produce_artifact(ask_vse_key,
+                        ask_name,
+                        ask_desc_str,
+                        pub_vcek_vse_key,
+                        vcek_name,
+                        vcek_desc_str,
+                        1ULL,
+                        86400 * 365.25,
+                        vcek_509,
+                        false)) {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -247,14 +275,14 @@ int main(int an, char** av) {
     printf("Can't convert ASK to der\n");
     return 1;
   }
-  if (!write_file(FLAGS_vcek_der, vcek_der.size(), (byte*) vcek_der.data())) {
+  if (!write_file(FLAGS_vcek_der, vcek_der.size(), (byte *)vcek_der.data())) {
     printf("Can't write %s\n", FLAGS_vcek_der.c_str());
     return 1;
   }
 
   // Attestation
   attestation_user_data ud;
-  string enclave_type("sev-enclave");
+  string                enclave_type("sev-enclave");
 
   // use policy key as enclave key
   if (!make_attestation_user_data(enclave_type, pub_policy_key, &ud)) {
@@ -269,35 +297,43 @@ int main(int an, char** av) {
     return 1;
   }
 
-  int hash_len= 48;
+  int  hash_len = 48;
   byte user_data_hash[hash_len];
 
-  if (!digest_message("sha-384", (byte*)said_str.data(), said_str.size(), user_data_hash, hash_len)) {
+  if (!digest_message("sha-384",
+                      (byte *)said_str.data(),
+                      said_str.size(),
+                      user_data_hash,
+                      hash_len)) {
     printf("digest_message failed\n");
     return 1;
   }
   memcpy(default_report.report_data, user_data_hash, hash_len);
 
   // sign report, put in in the_attestation
-  int size_out = 256;
+  int  size_out = 256;
   byte out[256];
   memset(out, 0, size_out);
 
-  int sig_digest_len = 48;
+  int  sig_digest_len = 48;
   byte sig_digest[sig_digest_len];
-  if (!digest_message("sha-384", (byte*)&default_report, sizeof(attestation_report) - sizeof(signature), sig_digest, sig_digest_len)) {
+  if (!digest_message("sha-384",
+                      (byte *)&default_report,
+                      sizeof(attestation_report) - sizeof(signature),
+                      sig_digest,
+                      sig_digest_len)) {
     printf("digest_message  for whole report failed\n");
     return 1;
   }
-  ECDSA_SIG* sig = ECDSA_do_sign((const byte*)sig_digest, sig_digest_len, ec);
+  ECDSA_SIG *sig = ECDSA_do_sign((const byte *)sig_digest, sig_digest_len, ec);
 
   if (sig == nullptr) {
     printf("Can't sign digest\n");
     return 1;
   }
 
-  const BIGNUM* nr = ECDSA_SIG_get0_r(sig);
-  const BIGNUM* ns = ECDSA_SIG_get0_s(sig);
+  const BIGNUM *nr = ECDSA_SIG_get0_r(sig);
+  const BIGNUM *ns = ECDSA_SIG_get0_s(sig);
 
   printf("r: ");
   BN_print_fp(stdout, nr);
@@ -321,7 +357,7 @@ int main(int an, char** av) {
   sev_attestation_message the_attestation;
   the_attestation.set_what_was_said(said_str);
   string att_rep;
-  att_rep.assign((char*)&default_report, sizeof(attestation_report));
+  att_rep.assign((char *)&default_report, sizeof(attestation_report));
   the_attestation.set_reported_attestation(att_rep);
 
   string sev_attest_str;
@@ -329,7 +365,9 @@ int main(int an, char** av) {
     printf("Can't serialize attestation message\n");
     return 1;
   }
-  if (!write_file(FLAGS_sev_attest, sev_attest_str.size(), (byte*) sev_attest_str.data())) {
+  if (!write_file(FLAGS_sev_attest,
+                  sev_attest_str.size(),
+                  (byte *)sev_attest_str.data())) {
     printf("Can't write %s\n", FLAGS_sev_attest.c_str());
     return 1;
   }

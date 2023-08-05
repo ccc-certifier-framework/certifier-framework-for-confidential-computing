@@ -112,4 +112,4 @@ void print_signature(struct attestation_report *report);
  */
 void print_report(struct attestation_report *report);
 
-#endif	/* REPORT_H */
+#endif /* REPORT_H */
