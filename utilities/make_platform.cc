@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// make_platform.exe 
+// make_platform.exe
 
 #include <gflags/gflags.h>
 #include "certifier.h"
@@ -20,13 +21,14 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(platform_type, "",  "platform type");
-DEFINE_string(properties_file, "",  "properties files");
-DEFINE_string(output, "",  "output file");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(platform_type, "", "platform type");
+DEFINE_string(properties_file, "", "properties files");
+DEFINE_string(output, "", "output file");
 
-int main(int an, char** av) {
-  string usage("Construct platform characteristics for platform verification policy");
+int main(int an, char **av) {
+  string usage(
+      "Construct platform characteristics for platform verification policy");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -44,7 +46,7 @@ int main(int an, char** av) {
   plat.set_has_key(false);
   plat.set_platform_type(FLAGS_platform_type);
 
-  if (FLAGS_properties_file!= "") {
+  if (FLAGS_properties_file != "") {
     string pp_str;
     if (!read_file_into_string(FLAGS_properties_file, &pp_str)) {
       printf("Can't read properties file\n");
@@ -62,10 +64,10 @@ int main(int an, char** av) {
     return 1;
   }
 
-  if (!write_file(FLAGS_output, p_out.size(), (byte*) p_out.data())) {
-      printf("Can't write output file\n");
-      return 1;
-    }
+  if (!write_file(FLAGS_output, p_out.size(), (byte *)p_out.data())) {
+    printf("Can't write output file\n");
+    return 1;
+  }
 
   print_platform(plat);
   return 0;

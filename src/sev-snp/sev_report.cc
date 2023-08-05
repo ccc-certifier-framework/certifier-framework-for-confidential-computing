@@ -7,15 +7,16 @@
 #include <attestation.h>
 //#include <sev_report.h>
 
-static void print_byte_array(const char *label, const uint8_t *array,
-    size_t size) {
-#define INDENT  "    "
-#define MAX_LINE 80
+static void print_byte_array(const char *   label,
+                             const uint8_t *array,
+                             size_t         size) {
+#define INDENT         "    "
+#define MAX_LINE       80
 #define CHARS_PER_BYTE 2
 
   size_t wrap = size;
-  if (size > MAX_LINE/CHARS_PER_BYTE - sizeof(INDENT))
-    wrap = size/2;
+  if (size > MAX_LINE / CHARS_PER_BYTE - sizeof(INDENT))
+    wrap = size / 2;
 
   if (label)
     printf("%s:\n", label);
@@ -39,15 +40,16 @@ static void print_byte_array(const char *label, const uint8_t *array,
 
 static void print_tcb_version(const char *label, const union tcb_version *tcb) {
   if (tcb) {
-    printf("%s: %02u%02u%02u%02u%02u%02u%02u%02u\n", label,
-           (unsigned) tcb->boot_loader,
-           (unsigned) tcb->tee,
-           (unsigned) tcb->reserved[0],
-           (unsigned) tcb->reserved[1],
-           (unsigned) tcb->reserved[2],
-           (unsigned) tcb->reserved[3],
-           (unsigned) tcb->snp,
-           (unsigned) tcb->microcode);
+    printf("%s: %02u%02u%02u%02u%02u%02u%02u%02u\n",
+           label,
+           (unsigned)tcb->boot_loader,
+           (unsigned)tcb->tee,
+           (unsigned)tcb->reserved[0],
+           (unsigned)tcb->reserved[1],
+           (unsigned)tcb->reserved[2],
+           (unsigned)tcb->reserved[3],
+           (unsigned)tcb->snp,
+           (unsigned)tcb->microcode);
     printf(" - Boot Loader SVN:  %2u\n", tcb->boot_loader);
     printf(" - TEE SVN:          %2u\n", tcb->tee);
     printf(" - SNP firmware SVN: %2u\n", tcb->snp);
@@ -70,9 +72,12 @@ void print_guest_svn(struct attestation_report *report) {
 void print_policy(struct attestation_report *report) {
   if (report) {
     printf("Policy: %#0lx\n", report->policy);
-    printf(" - Debugging Allowed:       %s\n", report->policy & POLICY_DEBUG_MASK ? "Yes" : "No");
-    printf(" - Migration Agent Allowed: %s\n", report->policy & POLICY_MIGRATE_MA_MASK ? "Yes" : "No");
-    printf(" - SMT Allowed:             %s\n", report->policy & POLICY_SMT_MASK ? "Yes" : "No");
+    printf(" - Debugging Allowed:       %s\n",
+           report->policy & POLICY_DEBUG_MASK ? "Yes" : "No");
+    printf(" - Migration Agent Allowed: %s\n",
+           report->policy & POLICY_MIGRATE_MA_MASK ? "Yes" : "No");
+    printf(" - SMT Allowed:             %s\n",
+           report->policy & POLICY_SMT_MASK ? "Yes" : "No");
     printf(" - Min. ABI Major:          %#lx\n",
            (report->policy & POLICY_ABI_MAJOR_MASK) >> POLICY_ABI_MAJOR_SHIFT);
     printf(" - Min. ABI Minor:          %#lx\n",
@@ -100,9 +105,11 @@ void print_vmpl(struct attestation_report *report) {
 
 void print_signature_algo(struct attestation_report *report) {
   if (report) {
-    printf("Signature Algorithm: %u (%s)\n", report->signature_algo,
-           report->signature_algo == SIG_ALGO_ECDSA_P384_SHA384 ? "ECDSA P-384 with SHA-384"
-                      : "Invalid");
+    printf("Signature Algorithm: %u (%s)\n",
+           report->signature_algo,
+           report->signature_algo == SIG_ALGO_ECDSA_P384_SHA384
+               ? "ECDSA P-384 with SHA-384"
+               : "Invalid");
   }
 }
 
@@ -115,25 +122,31 @@ void print_platform_version(struct attestation_report *report) {
 void print_platform_info(struct attestation_report *report) {
   if (report) {
     printf("Platform Info: %#0lx\n", report->platform_info);
-    printf(" - SMT Enabled: %s\n", report->platform_info & PLATFORM_INFO_SMT_EN_MASK ? "Yes" : "No");
+    printf(" - SMT Enabled: %s\n",
+           report->platform_info & PLATFORM_INFO_SMT_EN_MASK ? "Yes" : "No");
   }
 }
 
 void print_author_key_en(struct attestation_report *report) {
   if (report) {
-    printf("Author Key Enabled: %s\n", report->platform_info & AUTHOR_KEY_EN_MASK ? "Yes" : "No");
+    printf("Author Key Enabled: %s\n",
+           report->platform_info & AUTHOR_KEY_EN_MASK ? "Yes" : "No");
   }
 }
 
 void print_report_data(struct attestation_report *report) {
   if (report) {
-    print_byte_array("Report Data", report->report_data, sizeof(report->report_data));
+    print_byte_array("Report Data",
+                     report->report_data,
+                     sizeof(report->report_data));
   }
 }
 
 void print_measurement(struct attestation_report *report) {
   if (report) {
-    print_byte_array("Measurement", report->measurement, sizeof(report->measurement));
+    print_byte_array("Measurement",
+                     report->measurement,
+                     sizeof(report->measurement));
   }
 }
 
@@ -145,13 +158,17 @@ void print_host_data(struct attestation_report *report) {
 
 void print_id_key_digest(struct attestation_report *report) {
   if (report) {
-    print_byte_array("ID Key Digest", report->id_key_digest, sizeof(report->id_key_digest));
+    print_byte_array("ID Key Digest",
+                     report->id_key_digest,
+                     sizeof(report->id_key_digest));
   }
 }
 
 void print_author_key_digest(struct attestation_report *report) {
   if (report) {
-    print_byte_array("Author Key Digest", report->author_key_digest, sizeof(report->author_key_digest));
+    print_byte_array("Author Key Digest",
+                     report->author_key_digest,
+                     sizeof(report->author_key_digest));
   }
 }
 
@@ -163,7 +180,9 @@ void print_report_id(struct attestation_report *report) {
 
 void print_migration_agent_report_id(struct attestation_report *report) {
   if (report) {
-    print_byte_array("Migration Agent Report ID", report->report_id_ma, sizeof(report->report_id_ma));
+    print_byte_array("Migration Agent Report ID",
+                     report->report_id_ma,
+                     sizeof(report->report_id_ma));
   }
 }
 
@@ -209,4 +228,3 @@ void print_report(struct attestation_report *report) {
   print_chip_id(report);
   print_signature(report);
 }
-

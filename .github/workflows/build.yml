@@ -17,12 +17,18 @@ jobs:
     - name: dependencies
       run: |
         sudo apt update -y
-        sudo apt install -y libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake
+        sudo apt install -y clang-format-11 libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake
         sudo apt install -y python3 pylint
         pip install pytest
 
         # Needed for Python bindings support
         sudo apt install -y swig
+
+    #! -------------------------------------------------------------------------
+    #! Check core source code formatting, using clang-format tool.
+    - name: test-src-code-formatting
+      run: |
+        ./CI/scripts/check-srcfmt.sh
 
     #! -------------------------------------------------------------------------
     - name: test-core-certifier-programs

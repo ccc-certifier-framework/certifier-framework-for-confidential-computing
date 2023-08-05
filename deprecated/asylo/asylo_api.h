@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,15 +16,20 @@
 #include <iostream>
 
 #ifndef _ASYLO_API_H_
-#define _ASYLO_API_H_
+#  define _ASYLO_API_H_
 
 typedef struct AsyloCertifierFunctions {
-  bool (*Attest)(int claims_size, byte* claims, int* size_out, byte* out);
-  bool (*Verify)(int user_data_size, byte* user_data, int assertion_size, byte *assertion, int* size_out, byte* out);
-  bool (*Seal)(int in_size, byte* in, int* size_out, byte* out);
-  bool (*Unseal)(int in_size, byte* in, int* size_out, byte* out);
+  bool (*Attest)(int claims_size, byte *claims, int *size_out, byte *out);
+  bool (*Verify)(int   user_data_size,
+                 byte *user_data,
+                 int   assertion_size,
+                 byte *assertion,
+                 int * size_out,
+                 byte *out);
+  bool (*Seal)(int in_size, byte *in, int *size_out, byte *out);
+  bool (*Unseal)(int in_size, byte *in, int *size_out, byte *out);
 } AsyloCertifierFunctions;
 
 void setFuncs(AsyloCertifierFunctions funcs);
 
-#endif // #ifdef _ASYLO_API_H_
+#endif  // #ifdef _ASYLO_API_H_

@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,8 +21,8 @@ using std::string;
 #define ATTESTATION_TYPE_SIZE 32
 
 GramineFunctions gramineFuncs;
-bool gramine_platform_cert_initialized = false;
-string gramine_platform_cert;
+bool             gramine_platform_cert_initialized = false;
+string           gramine_platform_cert;
 
 int gramine_file_size(const char *file_name) {
   struct stat file_info;
@@ -34,16 +35,18 @@ int gramine_file_size(const char *file_name) {
 }
 
 bool gramine_Init(const int cert_size, byte *cert) {
-  char attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
+  char   attestation_type_str[ATTESTATION_TYPE_SIZE] = {0};
   size_t ret = 0;
 
   if (cert_size > 0) {
-    gramine_platform_cert.assign((char*)cert, cert_size);
+    gramine_platform_cert.assign((char *)cert, cert_size);
     gramine_platform_cert_initialized = true;
   }
 
-  ret = gramine_rw_file("/dev/attestation/attestation_type", (uint8_t*)attestation_type_str,
-                sizeof(attestation_type_str) - 1, /*do_write=*/false);
+  ret = gramine_rw_file("/dev/attestation/attestation_type",
+                        (uint8_t *)attestation_type_str,
+                        sizeof(attestation_type_str) - 1,
+                        /*do_write=*/false);
   if (ret < 0 && ret != -ENOENT) {
     printf("User requested SGX attestation but cannot read SGX-specific file "
            "/dev/attestation/attestation_type\n");
@@ -65,7 +68,10 @@ bool gramine_Init(const int cert_size, byte *cert) {
   return true;
 }
 
-bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out) {
+bool gramine_Attest(const int what_to_say_size,
+                    byte *    what_to_say,
+                    int *     attestation_size_out,
+                    byte *    attestation_out) {
   bool result = false;
 
 #ifdef DEBUG
@@ -74,7 +80,10 @@ bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* attestat
   printf("\n");
 #endif
 
-  result = (*gramineFuncs.Attest) (what_to_say_size, what_to_say, attestation_size_out, attestation_out);
+  result = (*gramineFuncs.Attest)(what_to_say_size,
+                                  what_to_say,
+                                  attestation_size_out,
+                                  attestation_out);
   if (!result) {
     printf("Gramine attest failed\n");
     return false;
@@ -88,7 +97,12 @@ bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* attestat
   return true;
 }
 
-bool gramine_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out) {
+bool gramine_Verify(const int what_to_say_size,
+                    byte *    what_to_say,
+                    const int attestation_size,
+                    byte *    attestation,
+                    int *     measurement_out_size,
+                    byte *    measurement_out) {
   bool result = false;
 
 #ifdef DEBUG
@@ -98,9 +112,12 @@ bool gramine_Verify(const int what_to_say_size, byte* what_to_say, const int att
   gramine_print_bytes(attestation_size, attestation);
 #endif
 
-  result = (*gramineFuncs.Verify)
-           (what_to_say_size, what_to_say, attestation_size,
-            attestation, measurement_out_size, measurement_out);
+  result = (*gramineFuncs.Verify)(what_to_say_size,
+                                  what_to_say,
+                                  attestation_size,
+                                  attestation,
+                                  measurement_out_size,
+                                  measurement_out);
   if (!result) {
     printf("Gramine verify failed\n");
     return false;
@@ -112,7 +129,7 @@ bool gramine_Verify(const int what_to_say_size, byte* what_to_say, const int att
   return true;
 }
 
-bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
+bool gramine_Seal(int in_size, byte *in, int *size_out, byte *out) {
   bool result = false;
 
 #ifdef DEBUG
@@ -131,7 +148,7 @@ bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out) {
   return true;
 }
 
-bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
+bool gramine_Unseal(int in_size, byte *in, int *size_out, byte *out) {
   bool result = false;
 
 #ifdef DEBUG
@@ -151,6 +168,6 @@ bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out) {
   return true;
 }
 
-int gramine_Getkey(byte *user_report_data, sgx_key_128bit_t* key) {
+int gramine_Getkey(byte *user_report_data, sgx_key_128bit_t *key) {
   return gramine_Sgx_Getkey(user_report_data, key);
 }

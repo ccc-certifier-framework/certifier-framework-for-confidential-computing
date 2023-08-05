@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +22,7 @@
 
 using namespace certifier::utilities;
 
-int main(int an, char** av) {
+int main(int an, char **av) {
 
   int fd[2];
   if (pipe2(fd, O_DIRECT) < 0) {
@@ -30,16 +31,16 @@ int main(int an, char** av) {
   }
 
   const int buf_size = 100;
-  byte buf[buf_size];
+  byte      buf[buf_size];
   for (int i = 0; i < buf_size; i++)
-      buf[i] = (byte) 2 * i;
+    buf[i] = (byte)2 * i;
 
 
-  bool res = true;
+  bool      res = true;
   const int num_tests = 20;
-  int pid = fork();
+  int       pid = fork();
   if (pid < 0) {
-  } else if (pid == 0) {    // child
+  } else if (pid == 0) {  // child
     close(fd[0]);
     for (int i = 0; i < num_tests; i++) {
       int k = 4 * i + 1;
@@ -50,12 +51,12 @@ int main(int an, char** av) {
     close(fd[1]);
     for (int i = 0; i < num_tests; i++) {
       string out;
-      int k = sized_pipe_read(fd[0], &out);
+      int    k = sized_pipe_read(fd[0], &out);
       if (k < 0) {
         res = false;
       } else {
         printf("Bytes out: %d, ", k);
-        print_bytes(out.size(), (byte*)out.data());
+        print_bytes(out.size(), (byte *)out.data());
         printf("\n");
       }
     }

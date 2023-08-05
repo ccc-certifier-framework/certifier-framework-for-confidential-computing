@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,19 +21,19 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(type, "hash",  "measurement type");
-DEFINE_string(input, "measurement_utility.exe",  "input file");
-DEFINE_string(output, "measurement_utility.exe.measurement",  "output file");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(type, "hash", "measurement type");
+DEFINE_string(input, "measurement_utility.exe", "input file");
+DEFINE_string(output, "measurement_utility.exe.measurement", "output file");
 
 
 const int sha256_size = 32;
-int hash_utility(string& input, string& output) {
+int       hash_utility(string &input, string &output) {
 
-  int in_size = file_size(input);
-  int in_read = in_size;
-  byte* to_hash = (byte*)malloc(in_size * sizeof(byte) + 1);
-  byte out[sha256_size];
+  int          in_size = file_size(input);
+  int          in_read = in_size;
+  byte *       to_hash = (byte *)malloc(in_size * sizeof(byte) + 1);
+  byte         out[sha256_size];
   unsigned int out_len = sha256_size;
 
   if (to_hash == nullptr) {
@@ -49,7 +50,7 @@ int hash_utility(string& input, string& output) {
     free(to_hash);
     return 1;
   }
-  if (!write_file(output, (int) out_len, out)) {
+  if (!write_file(output, (int)out_len, out)) {
     free(to_hash);
     printf("Can't write %s\n", output.c_str());
     return 1;
@@ -57,7 +58,7 @@ int hash_utility(string& input, string& output) {
 
   if (FLAGS_print_all) {
     printf("Measurement: ");
-    print_bytes((int) out_len, out);
+    print_bytes((int)out_len, out);
     printf("\n");
   }
 
@@ -65,11 +66,11 @@ int hash_utility(string& input, string& output) {
   return 0;
 }
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 
-  if (FLAGS_type=="hash")
+  if (FLAGS_type == "hash")
     return hash_utility(FLAGS_input, FLAGS_output);
 
   return 1;

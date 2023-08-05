@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,29 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// appoint_platform.exe --policy_key=file --cert_file=ark_cert.bin --output=output-file-name
+// appoint_platform.exe --policy_key=file --cert_file=ark_cert.bin
+// --output=output-file-name
 
 #include <gflags/gflags.h>
 #include "certifier.h"
 #include "support.h"
 
-DEFINE_bool(print_all, false,  "verbose");
-DEFINE_string(output, "simple_clause.bin",  "output file");
-DEFINE_string(policy_key_file, "",  "policy key file");
-DEFINE_string(cert_file, "",  "cert file");
+DEFINE_bool(print_all, false, "verbose");
+DEFINE_string(output, "simple_clause.bin", "output file");
+DEFINE_string(policy_key_file, "", "policy key file");
+DEFINE_string(cert_file, "", "cert file");
 
-bool get_key_from_file(const string& in, key_message* k) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+bool get_key_from_file(const string &in, key_message *k) {
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_key[in_size];
-  
+
   if (!read_file(in, &in_read, serialized_key)) {
     printf("Can't read %s\n", in.c_str());
     return false;
   }
- 
+
   string k_str;
-  k_str.assign((char*)serialized_key, in_size);
+  k_str.assign((char *)serialized_key, in_size);
   if (!k->ParseFromString(k_str)) {
     printf("Can't parse key\n");
     return false;
@@ -42,19 +44,19 @@ bool get_key_from_file(const string& in, key_message* k) {
   return true;
 }
 
-bool get_key_from_cert_file(const string& in, key_message* k) {
-  int in_size = file_size(in);
-  int in_read = in_size;
+bool get_key_from_cert_file(const string &in, key_message *k) {
+  int  in_size = file_size(in);
+  int  in_read = in_size;
   byte serialized_cert[in_size];
-  
+
   if (!read_file(in, &in_read, serialized_cert)) {
     printf("Can't read %s\n", in.c_str());
     return false;
   }
   string str_cert;
-  str_cert.assign((char*)serialized_cert, in_read);
+  str_cert.assign((char *)serialized_cert, in_read);
 
-  X509* x = X509_new();
+  X509 *x = X509_new();
   if (!asn1_to_x509(str_cert, x)) {
     printf("Can't asn1 convert\n");
     return false;
@@ -66,7 +68,7 @@ bool get_key_from_cert_file(const string& in, key_message* k) {
   return true;
 }
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   gflags::SetUsageMessage("Sample key-mgmt utility: RESOLVE - Fix message");
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;

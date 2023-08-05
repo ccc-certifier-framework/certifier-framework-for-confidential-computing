@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include  <netdb.h>
+#include <netdb.h>
 #include <openssl/ssl.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
@@ -27,39 +27,40 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-#define FLAGS_print_all true
-#define FLAGS_operation ""
-#define FLAGS_policy_host "localhost"
-#define FLAGS_policy_port 8123
+#define FLAGS_print_all       true
+#define FLAGS_operation       ""
+#define FLAGS_policy_host     "localhost"
+#define FLAGS_policy_port     8123
 #define FLAGS_server_app_host "localhost"
 #define FLAGS_server_app_port 8124
 static string data_dir = "app1_data";
 
 #define FLAGS_policy_store_file "store.bin"
-#define FLAGS_certificate_file "vse.crt"
+#define FLAGS_certificate_file  "vse.crt"
 
-static std::string enclave_type; 
-cc_trust_data* app_trust_data = nullptr;
+static std::string enclave_type;
+cc_trust_data *    app_trust_data = nullptr;
 
 static bool oe_initialized = false;
 static bool openenclave_initialized = false;
-bool test_local_certify(string& enclave_type,
-       bool init_from_file, string& file_name,
-       string& evidence_descriptor);
+bool        test_local_certify(string &enclave_type,
+                               bool    init_from_file,
+                               string &file_name,
+                               string &evidence_descriptor);
 
 
-bool trust_data_initialized = false;
+bool        trust_data_initialized = false;
 key_message privatePolicyKey;
 key_message publicPolicyKey;
-string serializedPolicyCert;
-X509* policy_cert= nullptr;
+string      serializedPolicyCert;
+X509 *      policy_cert = nullptr;
 
 policy_store pStore;
-key_message privateAppKey;
-key_message publicAppKey;
-const int app_symmetric_key_size = 64;
-byte app_symmetric_key[app_symmetric_key_size];
-key_message symmertic_key_for_protect;
+key_message  privateAppKey;
+key_message  publicAppKey;
+const int    app_symmetric_key_size = 64;
+byte         app_symmetric_key[app_symmetric_key_size];
+key_message  symmertic_key_for_protect;
 
 // Standard algorithms for the enclave
 string public_key_alg("rsa-2048");
@@ -72,7 +73,7 @@ void print_trust_data() {
   printf("\nPolicy key\n");
   print_key(publicPolicyKey);
   printf("\nPolicy cert\n");
-  print_bytes(serializedPolicyCert.size(), (byte*)serializedPolicyCert.data());
+  print_bytes(serializedPolicyCert.size(), (byte *)serializedPolicyCert.data());
   printf("\n");
   printf("\nPrivate app auth key\n");
   print_key(privateAppKey);
@@ -83,73 +84,71 @@ void print_trust_data() {
   printf("\n\n");
 }
 
-extern "C"
-{
-  bool openenclave_init(void);
-  bool certifier_init(char*, size_t);
+extern "C" {
+bool openenclave_init(void);
+bool certifier_init(char *, size_t);
 
-  bool cold_init(void);
-  bool certify_me(void);
-  bool warm_restart(void);
-  bool run_me_as_client(void);
-  bool run_me_as_server(void);
+bool cold_init(void);
+bool certify_me(void);
+bool warm_restart(void);
+bool run_me_as_client(void);
+bool run_me_as_server(void);
 }
 
-bool openenclave_init(void){
+bool openenclave_init(void) {
   oe_result_t result = OE_OK;
   result = oe_load_module_host_file_system();
   if (result != OE_OK) {
-      printf("Failed to load host file system module: %s\n", oe_result_str(result));
-      return false;
+    printf("Failed to load host file system module: %s\n",
+           oe_result_str(result));
+    return false;
   }
   if (mount("/", "/", OE_HOST_FILE_SYSTEM, 0, NULL) != 0) {
-      printf("Failed to mount host file system\n");
-      return false;
+    printf("Failed to mount host file system\n");
+    return false;
   }
 
   result = oe_load_module_host_socket_interface();
-    if (result != OE_OK) {
-      printf("Failed to load socket module: %s\n", oe_result_str(result));
-      return false;
+  if (result != OE_OK) {
+    printf("Failed to load socket module: %s\n", oe_result_str(result));
+    return false;
   }
 
   result = oe_load_module_host_resolver();
-    if (result != OE_OK) {
-      printf("Failed to load resolver module: %s\n", oe_result_str(result));
-      return false;
+  if (result != OE_OK) {
+    printf("Failed to load resolver module: %s\n", oe_result_str(result));
+    return false;
   }
   openenclave_initialized = true;
 
   return true;
 }
 
-bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
-  oe_result_t result = OE_OK;
+bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size) {
+  oe_result_t       result = OE_OK;
   static const char rnd_seed[] =
-    "string to make the random number generator think it has entropy";
+      "string to make the random number generator think it has entropy";
 
   RAND_seed(rnd_seed, sizeof rnd_seed);
   std::string usr_data = usr_data_dir;
-  data_dir =  usr_data + "/";
+  data_dir = usr_data + "/";
   printf("Using data_dir: %s\n", data_dir.c_str());
 
-  if(!openenclave_initialized){
+  if (!openenclave_initialized) {
     openenclave_init();
   }
 
   // Initialize attester and use the plugin.
   result = oe_attester_initialize();
-  if (result != OE_OK)
-  {
-      printf("oe_attester_initialize failed.\n");
-      return false;
+  if (result != OE_OK) {
+    printf("oe_attester_initialize failed.\n");
+    return false;
   }
   // Initialize verifier and use the plugin.
   result = oe_verifier_initialize();
-  if (result != OE_OK)
-  {
-      printf("oe_verifier_initialize failed.\n");
-      return false;
+  if (result != OE_OK) {
+    printf("oe_verifier_initialize failed.\n");
+    return false;
   }
 
   if (!oe_initialized) {
@@ -166,7 +165,8 @@ bool certifier_init(char* usr_data_dir, size_t usr_data_dir_size) {
     }
 
     // Init policy key info
-    if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert)) {
+    if (!app_trust_data->init_policy_key(initialized_cert_size,
+                                         initialized_cert)) {
       printf("Can't init policy key\n");
       return false;
     }
@@ -190,10 +190,14 @@ void clear_sensitive_data() {
 }
 
 bool cold_init() {
-  return app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
-                                   initialized_cert_size, initialized_cert,
-                                   "simple-app-home_domain", FLAGS_policy_host,
-                                   FLAGS_policy_port, FLAGS_server_app_host,
+  return app_trust_data->cold_init(public_key_alg,
+                                   symmetric_key_alg,
+                                   initialized_cert_size,
+                                   initialized_cert,
+                                   "simple-app-home_domain",
+                                   FLAGS_policy_host,
+                                   FLAGS_policy_port,
+                                   FLAGS_server_app_host,
                                    FLAGS_server_app_port);
 }
 
@@ -206,7 +210,7 @@ bool certify_me() {
   return app_trust_data->certify_me();
 }
 
-void server_application(secure_authenticated_channel& channel) {
+void server_application(secure_authenticated_channel &channel) {
 
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -218,12 +222,12 @@ void server_application(secure_authenticated_channel& channel) {
 
   // Read message from client over authenticated, encrypted channel
   string out;
-  int n = channel.read(&out);
-  printf("SSL server read: %s\n", (const char*) out.data());
+  int    n = channel.read(&out);
+  printf("SSL server read: %s\n", (const char *)out.data());
 
   // Reply over authenticated, encrypted channel
-  const char* msg = "Hi from your secret server\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret server\n";
+  channel.write(strlen(msg), (byte *)msg);
 }
 
 bool run_me_as_server() {
@@ -232,15 +236,16 @@ bool run_me_as_server() {
     return false;
   }
   printf("running as server\n");
-  server_dispatch(FLAGS_server_app_host, FLAGS_server_app_port,
-      app_trust_data->serialized_policy_cert_,
-        app_trust_data->private_auth_key_,
-        app_trust_data->serialized_primary_admissions_cert_,
-        server_application);
+  server_dispatch(FLAGS_server_app_host,
+                  FLAGS_server_app_port,
+                  app_trust_data->serialized_policy_cert_,
+                  app_trust_data->private_auth_key_,
+                  app_trust_data->serialized_primary_admissions_cert_,
+                  server_application);
   return true;
 }
 
-void client_application(secure_authenticated_channel& channel) {
+void client_application(secure_authenticated_channel &channel) {
 
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -251,12 +256,12 @@ void client_application(secure_authenticated_channel& channel) {
   }
 
   // client sends a message over authenticated, encrypted channel
-  const char* msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte*)msg);
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
 
   // Get server response over authenticated, encrypted channel and print it
   string out;
-  int n = channel.read(&out);
+  int    n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
 }
 
@@ -266,17 +271,19 @@ bool run_me_as_client() {
     return false;
   }
   printf("running as client\n");
-  if (!app_trust_data->cc_auth_key_initialized_ ||
-      !app_trust_data->cc_policy_info_initialized_) {
+  if (!app_trust_data->cc_auth_key_initialized_
+      || !app_trust_data->cc_policy_info_initialized_) {
     printf("trust data not initialized\n");
     return false;
   }
-  string my_role("client");
+  string                       my_role("client");
   secure_authenticated_channel channel(my_role);
-  if (!channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
-        app_trust_data->serialized_policy_cert_,
-        app_trust_data->private_auth_key_,
-        app_trust_data->serialized_primary_admissions_cert_)) {
+  if (!channel.init_client_ssl(
+          FLAGS_server_app_host,
+          FLAGS_server_app_port,
+          app_trust_data->serialized_policy_cert_,
+          app_trust_data->private_auth_key_,
+          app_trust_data->serialized_primary_admissions_cert_)) {
     printf("Can't init client app\n");
     return false;
   }

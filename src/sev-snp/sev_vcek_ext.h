@@ -1,4 +1,5 @@
-//  Copyright (c) 2023, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2023, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,16 +22,16 @@
  * Key (VCEK) Certificate and KDS Interface Specification, revision 0.51,
  * Jan 2023, for details.
  */
-#define VCEK_EXT_STRUCT_VERSION  "1.3.6.1.4.1.3704.1.1"
-#define VCEK_EXT_PRODUCT_NAME    "1.3.6.1.4.1.3704.1.2"
-#define VCEK_EXT_BLSPL           "1.3.6.1.4.1.3704.1.3.1"
-#define VCEK_EXT_TEESPL          "1.3.6.1.4.1.3704.1.3.2"
-#define VCEK_EXT_SNPSPL          "1.3.6.1.4.1.3704.1.3.3"
-#define VCEK_EXT_SPL4            "1.3.6.1.4.1.3704.1.3.4"
-#define VCEK_EXT_SPL5            "1.3.6.1.4.1.3704.1.3.5"
-#define VCEK_EXT_SPL6            "1.3.6.1.4.1.3704.1.3.6"
-#define VCEK_EXT_SPL7            "1.3.6.1.4.1.3704.1.3.7"
-#define VCEK_EXT_UCODESPL        "1.3.6.1.4.1.3704.1.3.8"
-#define VCEK_EXT_HWID            "1.3.6.1.4.1.3704.1.4"
+#define VCEK_EXT_STRUCT_VERSION "1.3.6.1.4.1.3704.1.1"
+#define VCEK_EXT_PRODUCT_NAME   "1.3.6.1.4.1.3704.1.2"
+#define VCEK_EXT_BLSPL          "1.3.6.1.4.1.3704.1.3.1"
+#define VCEK_EXT_TEESPL         "1.3.6.1.4.1.3704.1.3.2"
+#define VCEK_EXT_SNPSPL         "1.3.6.1.4.1.3704.1.3.3"
+#define VCEK_EXT_SPL4           "1.3.6.1.4.1.3704.1.3.4"
+#define VCEK_EXT_SPL5           "1.3.6.1.4.1.3704.1.3.5"
+#define VCEK_EXT_SPL6           "1.3.6.1.4.1.3704.1.3.6"
+#define VCEK_EXT_SPL7           "1.3.6.1.4.1.3704.1.3.7"
+#define VCEK_EXT_UCODESPL       "1.3.6.1.4.1.3704.1.3.8"
+#define VCEK_EXT_HWID           "1.3.6.1.4.1.3704.1.4"
 
-#endif  /* _SEV_VCEK_EXT_H_ */
+#endif /* _SEV_VCEK_EXT_H_ */

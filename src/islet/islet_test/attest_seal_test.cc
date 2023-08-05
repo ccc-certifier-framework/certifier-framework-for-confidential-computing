@@ -33,9 +33,9 @@ bool attestation_test() {
   byte report[BUFFER_SIZE];
   byte claims[BUFFER_SIZE];
   byte value[BUFFER_SIZE];
-  int report_len = 0;
-  int claims_len = 0;
-  int value_len = 0;
+  int  report_len = 0;
+  int  claims_len = 0;
+  int  value_len = 0;
 
   memset(report, 0, sizeof(report));
   memset(claims, 0, sizeof(claims));
@@ -43,7 +43,10 @@ bool attestation_test() {
 
   // -- Attest -- //
   std::string user_data("User Custom data");
-  if (islet_attest((const byte*)user_data.c_str(), user_data.size(), report, &report_len))
+  if (islet_attest((const byte *)user_data.c_str(),
+                   user_data.size(),
+                   report,
+                   &report_len))
     return false;
 
   // -- Verify -- //
@@ -56,13 +59,17 @@ bool attestation_test() {
   if (islet_parse(CLAIM_TITLE_USER_DATA, claims, claims_len, value, &value_len))
     return false;
 
-  printf("Claim[User data]: %s\n", (char*) value);
+  printf("Claim[User data]: %s\n", (char *)value);
 
   memset(value, 0, sizeof(value));
-  if (islet_parse(CLAIM_TITLE_PLATFORM_PROFILE, claims, claims_len, value, &value_len))
+  if (islet_parse(CLAIM_TITLE_PLATFORM_PROFILE,
+                  claims,
+                  claims_len,
+                  value,
+                  &value_len))
     return false;
 
-  printf("Claim[Platform  profile]: %s\n", (char*) value);
+  printf("Claim[Platform  profile]: %s\n", (char *)value);
 
   return true;
 }
@@ -79,7 +86,10 @@ bool sealing_test() {
 
   // -- Seal -- //
   std::string plaintext("Plaintext");
-  if (islet_seal((const byte*)plaintext.c_str(), plaintext.size(), sealed, &sealed_len))
+  if (islet_seal((const byte *)plaintext.c_str(),
+                 plaintext.size(),
+                 sealed,
+                 &sealed_len))
     return false;
 
   // -- Unseal -- //

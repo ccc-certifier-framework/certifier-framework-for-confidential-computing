@@ -1,4 +1,5 @@
-//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights reserved.
+//  Copyright (c) 2021-22, VMware Inc, and the Certifier Authors.  All rights
+//  reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,41 +38,60 @@
 #include "enclave_api.h"
 
 #ifndef _GRAMINE_API_H_
-#define _GRAMINE_API_H_
+#  define _GRAMINE_API_H_
 
-#define MAX_ATTESTATION_SIZE 5000
-#define TAG_SIZE 16
+#  define MAX_ATTESTATION_SIZE 5000
+#  define TAG_SIZE             16
 
 //#define DEBUG
 
 typedef unsigned char byte;
 
-#ifdef GRAMINE_CERTIFIER
+#  ifdef GRAMINE_CERTIFIER
 bool gramine_Init(const int cert_size, byte *cert);
-bool gramine_Attest(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out);
-bool gramine_Verify(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out);
-bool gramine_Seal(int in_size, byte* in, int* size_out, byte* out);
-bool gramine_Unseal(int in_size, byte* in, int* size_out, byte* out);
-#endif
+bool gramine_Attest(const int what_to_say_size,
+                    byte *    what_to_say,
+                    int *     attestation_size_out,
+                    byte *    attestation_out);
+bool gramine_Verify(const int what_to_say_size,
+                    byte *    what_to_say,
+                    const int attestation_size,
+                    byte *    attestation,
+                    int *     measurement_out_size,
+                    byte *    measurement_out);
+bool gramine_Seal(int in_size, byte *in, int *size_out, byte *out);
+bool gramine_Unseal(int in_size, byte *in, int *size_out, byte *out);
+#  endif
 
-inline void gramine_print_bytes(int n, byte* buf) {
-  for(int i = 0; i < n; i++)
+inline void gramine_print_bytes(int n, byte *buf) {
+  for (int i = 0; i < n; i++)
     printf("%02x", buf[i]);
 }
 
 typedef struct GramineFunctions {
-  bool (*Attest)(const int what_to_say_size, byte* what_to_say, int* attestation_size_out, byte* attestation_out);
-  bool (*Verify)(const int what_to_say_size, byte* what_to_say, const int attestation_size, byte* attestation, int* measurement_out_size, byte* measurement_out);
-  bool (*Seal)(int in_size, byte* in, int* size_out, byte* out);
-  bool (*Unseal)(int in_size, byte* in, int* size_out, byte* out);
+  bool (*Attest)(const int what_to_say_size,
+                 byte *    what_to_say,
+                 int *     attestation_size_out,
+                 byte *    attestation_out);
+  bool (*Verify)(const int what_to_say_size,
+                 byte *    what_to_say,
+                 const int attestation_size,
+                 byte *    attestation,
+                 int *     measurement_out_size,
+                 byte *    measurement_out);
+  bool (*Seal)(int in_size, byte *in, int *size_out, byte *out);
+  bool (*Unseal)(int in_size, byte *in, int *size_out, byte *out);
 } GramineFunctions;
 
 bool gramine_Init(const int cert_size, byte *cert);
-int gramine_Getkey(byte *user_report_data, sgx_key_128bit_t* key);
-int gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t* key);
+int  gramine_Getkey(byte *user_report_data, sgx_key_128bit_t *key);
+int  gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t *key);
 
-int gramine_file_size(const char *file_name);
-ssize_t gramine_rw_file(const char* path, uint8_t* buf, size_t len, bool do_write);
-void gramine_setup_functions(GramineFunctions *gramineFuncs);
+int     gramine_file_size(const char *file_name);
+ssize_t gramine_rw_file(const char *path,
+                        uint8_t *   buf,
+                        size_t      len,
+                        bool        do_write);
+void    gramine_setup_functions(GramineFunctions *gramineFuncs);
 
-#endif // #ifdef _GRAMINE_API_H_
+#endif  // #ifdef _GRAMINE_API_H_
