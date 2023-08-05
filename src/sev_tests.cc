@@ -31,8 +31,7 @@ extern bool      verify_sev_Attest(EVP_PKEY *key,
 extern EVP_PKEY *get_simulated_vcek_key();
 extern bool sev_verify_report(EVP_PKEY *key, struct attestation_report *report);
 
-bool test_sev(bool print_all)
-{
+bool test_sev(bool print_all) {
   const int data_size = 64;
   string    enclave_type("sev-enclave");
   string    enclave_id("test-enclave");
@@ -272,8 +271,7 @@ bool construct_sev_platform_evidence(const string &     purpose,
                                      const string &     serialized_ask_cert,
                                      const string &     serialized_vcek_cert,
                                      const key_message &vcek,
-                                     evidence_package * evp)
-{
+                                     evidence_package * evp) {
   evp->set_prover_type("vse-verifier");
   string enclave_type("sev-enclave");
 
@@ -382,8 +380,7 @@ bool test_sev_platform_certify(const bool    debug_print,
                                const string &vcek_key_file_name,
                                const string &ark_cert_file_name,
                                const string &ask_cert_file_name,
-                               const string &vcek_cert_file_name)
-{
+                               const string &vcek_cert_file_name) {
   string           enclave_type("sev-enclave");
   string           evidence_descriptor("sev-full-platform");
   string           enclave_id("test-enclave");

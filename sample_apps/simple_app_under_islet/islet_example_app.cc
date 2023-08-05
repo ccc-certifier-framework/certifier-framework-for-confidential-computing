@@ -64,8 +64,7 @@ cc_trust_data *app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
-void client_application(secure_authenticated_channel &channel)
-{
+void client_application(secure_authenticated_channel &channel) {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
     printf("Client peer cert is:\n");
@@ -84,8 +83,7 @@ void client_application(secure_authenticated_channel &channel)
   printf("SSL client read: %s\n", out.data());
 }
 
-void server_application(secure_authenticated_channel &channel)
-{
+void server_application(secure_authenticated_channel &channel) {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
     printf("Server peer cert is:\n");
@@ -104,8 +102,7 @@ void server_application(secure_authenticated_channel &channel)
   channel.write(strlen(msg), (byte *)msg);
 }
 
-int main(int an, char **av)
-{
+int main(int an, char **av) {
   string usage("ARM CCA-based simple app");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);

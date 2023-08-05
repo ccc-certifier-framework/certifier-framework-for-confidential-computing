@@ -25,8 +25,7 @@ using namespace certifier::utilities;
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(input, "measurement_utility.exe", "input file");
 
-bool get_clause_from_file(const string &in, vse_clause *cl)
-{
+bool get_clause_from_file(const string &in, vse_clause *cl) {
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_cl[in_size];
@@ -44,8 +43,7 @@ bool get_clause_from_file(const string &in, vse_clause *cl)
   return true;
 }
 
-int main(int an, char **av)
-{
+int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
 

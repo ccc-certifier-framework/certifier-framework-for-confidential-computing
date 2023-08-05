@@ -18,8 +18,7 @@
 
 using namespace certifier::utilities;
 
-bool test_random(bool print_all)
-{
+bool test_random(bool print_all) {
   int  n = 128;
   byte out[n];
 
@@ -36,8 +35,7 @@ bool test_random(bool print_all)
   return true;
 }
 
-bool test_encrypt(bool print_all)
-{
+bool test_encrypt(bool print_all) {
   const int   in_size = 2 * block_size;
   const int   out_size = in_size + 128;
   const char *alg_name = "aes-256-cbc-hmac-sha256";
@@ -102,8 +100,7 @@ bool test_encrypt(bool print_all)
   return true;
 }
 
-bool test_authenticated_encrypt(bool print_all)
-{
+bool test_authenticated_encrypt(bool print_all) {
   const int in_size = 2 * block_size;
   const int out_size = in_size + 256;
   const int key_size = 64;
@@ -296,8 +293,7 @@ bool test_authenticated_encrypt(bool print_all)
   return true;
 }
 
-bool test_public_keys(bool print_all)
-{
+bool test_public_keys(bool print_all) {
   RSA *r1 = RSA_new();
 
   if (!generate_new_rsa_key(2048, r1))
@@ -569,8 +565,7 @@ byte sha512_test[64] = {
     0x92, 0x99, 0x2a, 0x27, 0x4f, 0xc1, 0xa8, 0x36, 0xba, 0x3c, 0x23,
     0xa3, 0xfe, 0xeb, 0xbd, 0x45, 0x4d, 0x44, 0x23, 0x64, 0x3c, 0xe8,
     0x0e, 0x2a, 0x9a, 0xc9, 0x4f, 0xa5, 0x4c, 0xa4, 0x9f};
-bool test_digest(bool print_all)
-{
+bool test_digest(bool print_all) {
   const char * message = "1234";
   int          msg_len = strlen(message);
   unsigned int size_digest = 64;
@@ -680,8 +675,7 @@ bool test_digest(bool print_all)
   return true;
 }
 
-bool test_sign_and_verify(bool print_all)
-{
+bool test_sign_and_verify(bool print_all) {
   RSA *r = RSA_new();
 
   if (!generate_new_rsa_key(2048, r)) {
@@ -728,8 +722,7 @@ bool test_sign_and_verify(bool print_all)
   return true;
 }
 
-bool test_key_translation(bool print_all)
-{
+bool test_key_translation(bool print_all) {
   key_message k1;
 
   if (!make_certifier_rsa_key(2048, &k1))
@@ -756,8 +749,7 @@ bool test_key_translation(bool print_all)
   return true;
 }
 
-bool test_time(bool print_all)
-{
+bool test_time(bool print_all) {
   time_point t_now;
   time_point t_test;
   time_point t_later;

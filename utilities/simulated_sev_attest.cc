@@ -95,8 +95,7 @@ static struct attestation_report default_report = {
                     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
 };
 
-int read_key_file(const string &filename, EVP_PKEY **key, bool priv)
-{
+int read_key_file(const string &filename, EVP_PKEY **key, bool priv) {
   int       rc = -EXIT_FAILURE;
   EVP_PKEY *pkey;
   FILE *    file = NULL;
@@ -129,8 +128,7 @@ out:
 }
 
 // This generates an sev attestation signed by the key in key_file
-int main(int an, char **av)
-{
+int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   printf("simulated_sev_attest.exe.exe --key_file=ecc-384-private.pem "

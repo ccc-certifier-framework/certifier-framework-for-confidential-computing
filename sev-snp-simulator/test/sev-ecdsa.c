@@ -26,8 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void reverse_bytes(uint8_t *buffer, size_t size)
-{
+static void reverse_bytes(uint8_t *buffer, size_t size) {
   if (!buffer || size == 0)
     return;
 
@@ -49,8 +48,7 @@ static int get_ecdsa_sig_rs_bytes(const unsigned char *sig,
                                   unsigned char *      r,
                                   unsigned char *      s,
                                   size_t *             rlen,
-                                  size_t *             slen)
-{
+                                  size_t *             slen) {
   int            rc = -EXIT_FAILURE;
   unsigned char *rbuf = NULL, *sbuf = NULL;
   size_t         r1_len, s1_len;
@@ -120,8 +118,7 @@ out:
 int sev_ecdsa_sign(const void *         msg,
                    size_t               msg_size,
                    EVP_PKEY *           key,
-                   union sev_ecdsa_sig *sig)
-{
+                   union sev_ecdsa_sig *sig) {
   int           rc = -EXIT_FAILURE;
   EVP_MD_CTX *  md_ctx = NULL;
   EVP_PKEY_CTX *sign_ctx = NULL;
@@ -214,8 +211,7 @@ out:
 int sev_ecdsa_verify(const void *         digest,
                      size_t               digest_size,
                      EVP_PKEY *           key,
-                     union sev_ecdsa_sig *sig)
-{
+                     union sev_ecdsa_sig *sig) {
   int        rc = -EXIT_FAILURE;
   bool       is_valid = false;
   EC_KEY *   pub_ec_key = NULL;

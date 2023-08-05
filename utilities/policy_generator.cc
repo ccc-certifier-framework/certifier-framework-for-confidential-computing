@@ -105,8 +105,7 @@ typedef struct platform {
   vector<property> props;
 } platform;
 
-void print_claim(claim &c, const string prefix = "")
-{
+void print_claim(claim &c, const string prefix = "") {
   map<clause_type, string> cname = {
       {SIMPLE_CLAUSE, "simpleClause"},
       {UNARY_CLAUSE, "unaryClause"},
@@ -152,8 +151,7 @@ void print_claim(claim &c, const string prefix = "")
   }
 }
 
-void from_json(const json &j, property &p)
-{
+void from_json(const json &j, property &p) {
   map<string, string> cmap = {
       {"eq", "="},
       {"ge", ">="},
@@ -171,8 +169,7 @@ void from_json(const json &j, property &p)
   j.at("value").get_to(p.value);
 }
 
-void from_json(const json &j, clause &cl)
-{
+void from_json(const json &j, clause &cl) {
   clause tmp_cl;
 
   j.at("verb").get_to(cl.verb);
@@ -237,8 +234,7 @@ void from_json(const json &j, clause &cl)
   }
 }
 
-void from_json(const json &j, claim &c)
-{
+void from_json(const json &j, claim &c) {
   j.at("verb").get_to(c.verb);
 
   if (j.find("certSubject") != j.end()) {
@@ -285,8 +281,7 @@ string           policyKey;
 vector<string> signed_claims;
 vector<string> intermediate_files;
 
-static int exec_cmd(const string &command, bool print = false)
-{
+static int exec_cmd(const string &command, bool print = false) {
   int                     exitcode = -1;
   array<char, 512 * 1024> buffer {};
   string                  result;
@@ -315,8 +310,7 @@ static int exec_cmd(const string &command, bool print = false)
 }
 
 template<class... Args>
-string string_format(const string &format, Args... args)
-{
+string string_format(const string &format, Args... args) {
   int size = snprintf(nullptr, 0, format.c_str(), args...) + 1;
   if (size <= 0) {
     return "";
@@ -330,8 +324,7 @@ static string make_property_cmd(string name,
                                 string type,
                                 string comparator,
                                 string value,
-                                string output)
-{
+                                string output) {
   return string_format("%s --property_name=%s --property_type=\'%s\' "
                        "comparator=\"%s\" --%s_value=%s --output=%s",
                        (FLAGS_util_path + MAKE_PROPERTY_CMD).c_str(),
@@ -346,8 +339,7 @@ static string make_property_cmd(string name,
 static string make_unary_clause_cmd(string subjectType,
                                     string subject,
                                     string verb,
-                                    string output)
-{
+                                    string output) {
   return string_format("%s --%s_subject=%s --verb=\"%s\" --output=%s",
                        (FLAGS_util_path + MAKE_UNARY_CLAUSE_CMD).c_str(),
                        subjectType.c_str(),
@@ -361,8 +353,7 @@ static string make_simple_clause_cmd(string subjectType,
                                      string verb,
                                      string objectType,
                                      string object,
-                                     string output)
-{
+                                     string output) {
   return string_format("%s --%s_subject=%s --verb=%s --%s_object=%s "
                        "--output=%s",
                        (FLAGS_util_path + MAKE_SIMPLE_CLAUSE_CMD).c_str(),
@@ -378,8 +369,7 @@ static string make_indirect_clause_cmd(string subjectType,
                                        string subject,
                                        string verb,
                                        string clause,
-                                       string output)
-{
+                                       string output) {
   return string_format("%s --%s_subject=%s --verb=\"%s\" --clause=%s "
                        "--output=%s",
                        (FLAGS_util_path + MAKE_INDIRECT_CLAUSE_CMD).c_str(),
@@ -393,8 +383,7 @@ static string make_indirect_clause_cmd(string subjectType,
 static string make_signed_claim_cmd(string vseFile,
                                     string duration,
                                     string pKey,
-                                    string output)
-{
+                                    string output) {
   return string_format("%s --vse_file=%s --duration=%s --private_key_file=%s "
                        "--output=%s",
                        (FLAGS_util_path + MAKE_SIGNED_CLAIM_CMD).c_str(),
@@ -416,8 +405,7 @@ static string make_signed_claim_cmd(string vseFile,
 
 static bool generate_platform_policy(string           policyKey,
                                      vector<platform> platforms,
-                                     bool             script)
-{
+                                     bool             script) {
   for (auto platform : platforms) {
     int    i = 1;
     string all_props = "", plat_file;
@@ -478,8 +466,7 @@ static bool generate_platform_policy(string           policyKey,
 
 static bool generate_measurement_policy(string         policyKey,
                                         vector<string> measurements,
-                                        bool           script)
-{
+                                        bool           script) {
   int i = 1;
   for (auto mea : measurements) {
     string cmd, claim_file;
@@ -514,8 +501,7 @@ static bool generate_measurement_policy(string         policyKey,
 
 static pair<string, string> subject_conversion(subject_type stype,
                                                string       sub,
-                                               bool         script)
-{
+                                               bool         script) {
   string actual_sub, cleanup_cmd = "", cmd;
 
   switch (stype) {
@@ -542,8 +528,7 @@ static pair<string, string> subject_conversion(subject_type stype,
 static string generate_clause(string      policyKey,
                               clause      cl,
                               clause_type ct,
-                              bool        script)
-{
+                              bool        script) {
   map<subject_type, string> sname = {
       {KEY_SUBJECT, "key"},
       {CERT_SUBJECT, "cert"},
@@ -624,8 +609,7 @@ static string generate_clause(string      policyKey,
 
 static bool generate_claim_policy(string        policyKey,
                                   vector<claim> claims,
-                                  bool          script)
-{
+                                  bool          script) {
   map<subject_type, string> sname = {
       {KEY_SUBJECT, "key"},
       {CERT_SUBJECT, "cert"},
@@ -672,8 +656,7 @@ static bool generate_claim_policy(string        policyKey,
 
 static bool generate_packaged_claims(vector<string> signed_claims,
                                      string         output,
-                                     bool           script)
-{
+                                     bool           script) {
   string cList = "", cmd;
   for (auto sc : signed_claims) {
     if (cList == "") {
@@ -702,8 +685,7 @@ static bool generate_policy(string           policyKey,
                             vector<platform> platforms,
                             vector<string>   measurements,
                             vector<claim>    claims,
-                            bool             script)
-{
+                            bool             script) {
   bool   res = false;
   string files = "", cmd;
 
@@ -739,8 +721,7 @@ done:
   return res;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   json_validator validator;  // create validator
   json           policy_schema, policy;
 

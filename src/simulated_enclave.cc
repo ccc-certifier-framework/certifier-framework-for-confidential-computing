@@ -46,8 +46,7 @@ string               serialized_attest_claim;
 signed_claim_message my_attest_claim;
 RSA *                rsa_attestation_key = nullptr;
 
-bool simulated_GetAttestClaim(signed_claim_message *out)
-{
+bool simulated_GetAttestClaim(signed_claim_message *out) {
   if (!my_data_initialized) {
     printf("simulated_GetAttestClaim: data not initialized\n");
     return false;
@@ -56,8 +55,7 @@ bool simulated_GetAttestClaim(signed_claim_message *out)
   return true;
 }
 
-bool simulated_GetPlatformClaim(signed_claim_message *out)
-{
+bool simulated_GetPlatformClaim(signed_claim_message *out) {
   if (!my_data_initialized) {
     printf("simulated_GetPlatformClaim: data not initialized\n");
     return false;
@@ -69,8 +67,7 @@ bool simulated_GetPlatformClaim(signed_claim_message *out)
 bool simulated_Init(const string &asn1_policy_cert,
                     const string &attest_key_file,
                     const string &measurement_file,
-                    const string &attest_key_signed_claim_file)
-{
+                    const string &attest_key_signed_claim_file) {
   int m_size = file_size(measurement_file);
   if (m_size < 0) {
     printf("simulated_Init: Can't get measurement file size %s\n",
@@ -136,8 +133,7 @@ bool simulated_Init(const string &asn1_policy_cert,
   return true;
 }
 
-bool simulated_Getmeasurement(int *size_out, byte *out)
-{
+bool simulated_Getmeasurement(int *size_out, byte *out) {
   if (*size_out < simulated_measurment_size)
     return false;
   *size_out = simulated_measurment_size;
@@ -152,8 +148,7 @@ bool simulated_Seal(const string &enclave_type,
                     int           in_size,
                     byte *        in,
                     int *         size_out,
-                    byte *        out)
-{
+                    byte *        out) {
   const int iv_size = block_size;
   byte      iv[iv_size];
 
@@ -202,8 +197,7 @@ bool simulated_Unseal(const string &enclave_type,
                       int           in_size,
                       byte *        in,
                       int *         size_out,
-                      byte *        out)
-{
+                      byte *        out) {
   int  iv_size = block_size;
   byte iv[iv_size];
   int  output_size = in_size + max_seal_pad;
@@ -246,8 +240,7 @@ bool simulated_Attest(const string &enclave_type,
                       int           what_to_say_size,
                       byte *        what_to_say,
                       int *         size_out,
-                      byte *        out)
-{
+                      byte *        out) {
   vse_attestation_report_info report_info;
   string                      serialized_report_info;
   report_info.set_enclave_type("simulated-enclave");
@@ -301,8 +294,7 @@ bool simulated_Attest(const string &enclave_type,
   return true;
 }
 
-bool simulated_Verify(string &serialized_signed_report)
-{
+bool simulated_Verify(string &serialized_signed_report) {
   string type("vse-attestation-report");
 
   if (!verify_report(type, serialized_signed_report, my_attestation_key)) {
@@ -339,14 +331,12 @@ bool simulated_Verify(string &serialized_signed_report)
   return check_date_range(info.not_before(), info.not_after());
 }
 
-bool simulated_GetParentEvidence(string *out)
-{
+bool simulated_GetParentEvidence(string *out) {
   return false;
 }
 
 // Delete this eventually.  It is only used in certifier_tests.
-bool simulator_init()
-{
+bool simulator_init() {
   // makeup attestation key and measurement and sealing key
   byte m[simulated_measurment_size];
   for (int i = 0; i < simulated_measurment_size; i++)

@@ -60,8 +60,7 @@ cc_trust_data *app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
-void client_application(secure_authenticated_channel &channel)
-{
+void client_application(secure_authenticated_channel &channel) {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
   // client sends a message over authenticated, encrypted channel
@@ -74,8 +73,7 @@ void client_application(secure_authenticated_channel &channel)
   printf("SSL client read: %s\n", out.data());
 }
 
-void server_application(secure_authenticated_channel &channel)
-{
+void server_application(secure_authenticated_channel &channel) {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
@@ -92,8 +90,7 @@ bool run_me_as_server(const string &host_name,
                       int           port,
                       string &      asn1_policy_cert,
                       key_message & private_key,
-                      string &      private_key_cert)
-{
+                      string &      private_key_cert) {
   printf("running as server\n");
   server_dispatch(host_name,
                   port,
@@ -104,8 +101,7 @@ bool run_me_as_server(const string &host_name,
   return true;
 }
 
-int main(int an, char **av)
-{
+int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);

@@ -80,8 +80,7 @@ byte         app_symmetric_key[app_symmetric_key_size];
 key_message  symmertic_key_for_protect;
 bool         connected = false;
 
-void print_trust_data()
-{
+void print_trust_data() {
   if (!trust_data_initialized)
     return;
   printf("\nTrust data:\n");
@@ -99,8 +98,7 @@ void print_trust_data()
   printf("\n\n");
 }
 
-bool certifier_test_seal(void)
-{
+bool certifier_test_seal(void) {
   string enclave_type("asylo-enclave");
   string enclave_id("local-machine");
 
@@ -154,8 +152,7 @@ bool certifier_test_seal(void)
   return true;
 }
 
-bool asylo_local_certify()
-{
+bool asylo_local_certify() {
   string      enclave_type("asylo-enclave");
   string      evidence_descriptor("asylo-evidence");
   extern bool simulator_init(void);
@@ -178,8 +175,7 @@ bool asylo_local_certify()
   return true;
 }
 
-bool asylo_seal()
-{
+bool asylo_seal() {
   if (!certifier_test_seal()) {
     printf("Sealing test failed\n");
     return false;
@@ -188,14 +184,12 @@ bool asylo_seal()
   return true;
 }
 
-bool asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs)
-{
+bool asylo_setup_certifier_functions(AsyloCertifierFunctions asyloFuncs) {
   setFuncs(asyloFuncs);
   return true;
 }
 
-bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
-{
+bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size) {
   static const char rnd_seed[] =
       "string to make the random number generator think it has entropy";
 
@@ -253,8 +247,7 @@ bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
   return true;
 }
 
-bool cold_init()
-{
+bool cold_init() {
   // Standard algorithms for the enclave
   string public_key_alg("rsa-2048");
   string symmetric_key_alg("aes-256");
@@ -273,8 +266,7 @@ bool cold_init()
   return true;
 }
 
-bool warm_restart()
-{
+bool warm_restart() {
   if (!app_trust_data->warm_restart()) {
     printf("warm_restart failed\n");
     return false;
@@ -283,8 +275,7 @@ bool warm_restart()
   return true;
 }
 
-bool certify_me()
-{
+bool certify_me() {
   printf("Begin certify_me\n");
   if (!app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port)) {
     printf("certify_me failed\n");
@@ -293,8 +284,7 @@ bool certify_me()
   return true;
 }
 
-void server_application(secure_authenticated_channel &channel)
-{
+void server_application(secure_authenticated_channel &channel) {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
@@ -313,8 +303,7 @@ void asylo_server_dispatch(const string &host_name,
                            string &      asn1_root_cert,
                            key_message & private_key,
                            const string &private_key_cert,
-                           void (*func)(secure_authenticated_channel &))
-{
+                           void (*func)(secure_authenticated_channel &)) {
   SSL_load_error_strings();
 
   X509 *root_cert = X509_new();
@@ -380,8 +369,7 @@ void asylo_server_dispatch(const string &host_name,
   }
 }
 
-bool setup_server_ssl()
-{
+bool setup_server_ssl() {
   bool ret = true;
   if (!app_trust_data->warm_restart()) {
     printf("warm-restart failed\n");
@@ -403,8 +391,7 @@ done:
   return ret;
 }
 
-void client_application(secure_authenticated_channel &channel)
-{
+void client_application(secure_authenticated_channel &channel) {
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
   // client sends a message over authenticated, encrypted channel
@@ -417,8 +404,7 @@ void client_application(secure_authenticated_channel &channel)
   printf("SSL client read: %s\n", out.data());
 }
 
-bool setup_client_ssl()
-{
+bool setup_client_ssl() {
   bool                         ret = true;
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);

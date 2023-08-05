@@ -38,8 +38,7 @@ typedef enum _sgx_ql_qv_result_t {
 } sgx_ql_qv_result_t;
 
 static const char *sgx_ql_qv_result_to_str(
-    sgx_ql_qv_result_t verification_result)
-{
+    sgx_ql_qv_result_t verification_result) {
   switch (verification_result) {
     case SGX_QL_QV_RESULT_OK:
       return "OK";

@@ -14,8 +14,7 @@
 
 static oe_enclave_t *enclave = NULL;
 
-bool check_simulate_opt(int *argc, const char *argv[])
-{
+bool check_simulate_opt(int *argc, const char *argv[]) {
   for (int i = 0; i < *argc; i++) {
     if (strcmp(argv[i], "--simulate") == 0) {
       fprintf(stdout, "Running in simulation mode\n");
@@ -27,8 +26,7 @@ bool check_simulate_opt(int *argc, const char *argv[])
   return false;
 }
 
-void sigint_handler(int s)
-{
+void sigint_handler(int s) {
   if (enclave) {
     fprintf(stdout, "Terminating enclave...\n");
     oe_terminate_enclave(enclave);
@@ -39,8 +37,7 @@ void sigint_handler(int s)
 /*
  * Returns: 0 - if operation succeeds, non-zero otherwise.
  */
-int main(int argc, const char *argv[])
-{
+int main(int argc, const char *argv[]) {
   oe_result_t      result;
   std::string      data_dir;
   struct sigaction sigIntHandler;

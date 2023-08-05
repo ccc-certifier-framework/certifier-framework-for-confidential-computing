@@ -26,8 +26,7 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(in, "", "input files");
 DEFINE_string(output, "", "output file");
 
-const char *next_comma(const char *p)
-{
+const char *next_comma(const char *p) {
   if (p == nullptr)
     return nullptr;
   while (*p != ',' && *p != '\0')
@@ -35,8 +34,7 @@ const char *next_comma(const char *p)
   return p;
 }
 
-bool get_input_file_names(const string &name, int *num, string *names)
-{
+bool get_input_file_names(const string &name, int *num, string *names) {
   const char *start = name.c_str();
   const char *end = nullptr;
   int         count = 0;
@@ -57,8 +55,7 @@ bool get_input_file_names(const string &name, int *num, string *names)
   return true;
 }
 
-int main(int an, char **av)
-{
+int main(int an, char **av) {
   string usage("Combine properties from multiple files into one output file");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);

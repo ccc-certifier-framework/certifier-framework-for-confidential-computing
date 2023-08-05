@@ -111,8 +111,7 @@ class spawned_children {
 std::mutex        kid_mtx;
 spawned_children *my_kids = nullptr;
 
-spawned_children *new_kid()
-{
+spawned_children *new_kid() {
   spawned_children *nk = new (spawned_children);
   if (nk == nullptr)
     return nullptr;
@@ -125,8 +124,7 @@ spawned_children *new_kid()
   return nk;
 }
 
-spawned_children *find_kid(int pid)
-{
+spawned_children *find_kid(int pid) {
   kid_mtx.lock();
   spawned_children *k = my_kids;
   while (k != nullptr) {
@@ -138,8 +136,7 @@ spawned_children *find_kid(int pid)
   return k;
 }
 
-void remove_kid(int pid)
-{
+void remove_kid(int pid) {
   kid_mtx.lock();
   if (my_kids == nullptr) {
     kid_mtx.unlock();
@@ -164,8 +161,7 @@ void remove_kid(int pid)
   kid_mtx.unlock();
 }
 
-bool measure_binary(const string &file, string *m)
-{
+bool measure_binary(const string &file, string *m) {
   int size = file_size(file.c_str());
   if (size <= 0) {
     printf("Can't get executable file\n");
@@ -190,8 +186,7 @@ bool measure_binary(const string &file, string *m)
   return true;
 }
 
-bool measure_in_mem_binary(byte *file_contents, int size, string *m)
-{
+bool measure_in_mem_binary(byte *file_contents, int size, string *m) {
   byte         digest[32];
   unsigned int len = 32;
   if (!digest_message("sha256", file_contents, (unsigned)size, digest, len)) {
@@ -202,8 +197,7 @@ bool measure_in_mem_binary(byte *file_contents, int size, string *m)
   return true;
 }
 
-void delete_child(int signum)
-{
+void delete_child(int signum) {
   int               pid = wait(nullptr);
   spawned_children *c = find_kid(pid);
   if (c->thread_obj_ != nullptr) {
@@ -221,8 +215,7 @@ const int max_pad_size = 128;
 //    This is just a reference, object is local to main
 cc_trust_data *app_trust_data = nullptr;
 
-bool soft_Seal(spawned_children *kid, string in, string *out)
-{
+bool soft_Seal(spawned_children *kid, string in, string *out) {
 #ifdef DEBUG
   printf("soft_Seal\n");
 #endif
@@ -252,8 +245,7 @@ bool soft_Seal(spawned_children *kid, string in, string *out)
   return true;
 }
 
-bool soft_Unseal(spawned_children *kid, string in, string *out)
-{
+bool soft_Unseal(spawned_children *kid, string in, string *out) {
 #ifdef DEBUG
   printf("soft_Unseal\n");
 #endif
@@ -288,8 +280,7 @@ bool soft_Unseal(spawned_children *kid, string in, string *out)
   return true;
 }
 
-bool soft_Attest(spawned_children *kid, string in, string *out)
-{
+bool soft_Attest(spawned_children *kid, string in, string *out) {
 #ifdef DEBUG
   printf("soft_Attest\n");
 #endif
@@ -352,8 +343,7 @@ bool soft_Attest(spawned_children *kid, string in, string *out)
   return true;
 }
 
-bool soft_GetPlatformStatement(spawned_children *kid, string *out)
-{
+bool soft_GetPlatformStatement(spawned_children *kid, string *out) {
 #ifdef DEBUG
   printf("soft_GetPlatformStatement\n");
 #endif
@@ -365,8 +355,7 @@ bool soft_GetPlatformStatement(spawned_children *kid, string *out)
   return true;
 }
 
-bool soft_GetParentEvidence(spawned_children *kid, string *out)
-{
+bool soft_GetParentEvidence(spawned_children *kid, string *out) {
 #ifdef DEBUG
   printf("soft_GetPlatformStatement\n");
 #endif
@@ -379,8 +368,7 @@ bool soft_GetParentEvidence(spawned_children *kid, string *out)
 }
 
 // This Getmeasurement stays
-bool soft_Getmeasurement(spawned_children *kid, string *out)
-{
+bool soft_Getmeasurement(spawned_children *kid, string *out) {
 #ifdef DEBUG
   printf("soft_Getmeasurement\n");
 #endif
@@ -388,8 +376,7 @@ bool soft_Getmeasurement(spawned_children *kid, string *out)
   return true;
 }
 
-void app_service_loop(spawned_children *kid, int read_fd, int write_fd)
-{
+void app_service_loop(spawned_children *kid, int read_fd, int write_fd) {
   bool continue_loop = true;
 
 #ifdef DEBUG
@@ -462,8 +449,7 @@ finishreq:
   }
 }
 
-bool start_app_service_loop(spawned_children *kid, int read_fd, int write_fd)
-{
+bool start_app_service_loop(spawned_children *kid, int read_fd, int write_fd) {
 #ifdef DEBUG
   printf("\n[%d] %s\n", __LINE__, __func__);
 #endif
@@ -478,8 +464,7 @@ bool start_app_service_loop(spawned_children *kid, int read_fd, int write_fd)
 }
 
 #define INMEMEXEC
-bool process_run_request(run_request &req)
-{
+bool process_run_request(run_request &req) {
   // measure binary
   string m;
 #ifndef INMEMEXEC
@@ -662,8 +647,7 @@ bool process_run_request(run_request &req)
   return true;
 }
 
-bool app_request_server()
-{
+bool app_request_server() {
   // This is the TCP server that requests to start
   // protected programs.
   const char *       hostname = FLAGS_server_app_host.c_str();
@@ -751,8 +735,7 @@ done:
 string public_key_alg("rsa-2048");
 string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
-int main(int an, char **av)
-{
+int main(int an, char **av) {
   string usage("Application Service utility");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);

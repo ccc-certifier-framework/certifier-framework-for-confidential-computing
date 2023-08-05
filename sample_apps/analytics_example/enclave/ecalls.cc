@@ -73,8 +73,7 @@ key_message  symmertic_key_for_protect;
 string public_key_alg("rsa-2048");
 string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
-void print_trust_data()
-{
+void print_trust_data() {
   if (!trust_data_initialized)
     return;
   printf("\nTrust data:\n");
@@ -104,8 +103,7 @@ bool run_me_as_server(void);
 bool temp_test(void);
 }
 
-bool openenclave_init(void)
-{
+bool openenclave_init(void) {
   oe_result_t result = OE_OK;
   result = oe_load_module_host_file_system();
   if (result != OE_OK) {
@@ -134,8 +132,7 @@ bool openenclave_init(void)
   return true;
 }
 
-bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
-{
+bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size) {
   oe_result_t       result = OE_OK;
   static const char rnd_seed[] =
       "string to make the random number generator think it has entropy";
@@ -218,30 +215,25 @@ bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
   return true;
 }
 
-void clear_sensitive_data()
-{
+void clear_sensitive_data() {
   // Todo: clear symmetric and private keys
   //    Not necessary on most platforms
 }
 
-bool cold_init()
-{
+bool cold_init() {
   return app_trust_data->cold_init(public_key_alg, symmetric_key_alg);
 }
 
-bool warm_restart()
-{
+bool warm_restart() {
   return app_trust_data->warm_restart();
 }
 
 // Todo: replace with new cc_trust_data interface
-bool certify_me()
-{
+bool certify_me() {
   return app_trust_data->certify_me(FLAGS_policy_host, FLAGS_policy_port);
 }
 
-void server_application(secure_authenticated_channel &channel)
-{
+void server_application(secure_authenticated_channel &channel) {
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
@@ -255,8 +247,7 @@ void server_application(secure_authenticated_channel &channel)
   channel.write(ret.size(), (byte *)ret.c_str());
 }
 
-bool run_me_as_server()
-{
+bool run_me_as_server() {
   if (!app_trust_data->warm_restart()) {
     printf("warm-restart failed\n");
     return false;
@@ -271,8 +262,7 @@ bool run_me_as_server()
   return true;
 }
 
-void client_application(secure_authenticated_channel &channel)
-{
+void client_application(secure_authenticated_channel &channel) {
   // client starts, in a real application we would likely send a serialized
   // protobuf
   ULDataFrame sales_df;
@@ -288,8 +278,7 @@ void client_application(secure_authenticated_channel &channel)
   printf("SSL client read: %s\n", (const char *)buf.c_str());
 }
 
-bool run_me_as_client()
-{
+bool run_me_as_client() {
   if (!app_trust_data->warm_restart()) {
     printf("warm-restart failed\n");
     return false;
@@ -318,8 +307,7 @@ bool run_me_as_client()
 }
 
 // not used
-bool temp_test()
-{
+bool temp_test() {
   RSA *r = RSA_new();
   if (!key_to_RSA(privateAppKey, r)) {
     return false;

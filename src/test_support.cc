@@ -26,8 +26,7 @@ bool debug_print = false;
 
 bool read_trusted_binary_measurements_and_sign(string &     file_name,
                                                key_message &policy_key,
-                                               signed_claim_sequence *list)
-{
+                                               signed_claim_sequence *list) {
   int size = file_size(file_name);
   if (size < 0) {
     return false;
@@ -112,8 +111,7 @@ bool read_trusted_binary_measurements_and_sign(string &     file_name,
 bool construct_keys(string       key_name,
                     string       format,
                     key_message *public_key,
-                    key_message *private_key)
-{
+                    key_message *private_key) {
   if (!make_certifier_rsa_key(2048, private_key))
     return false;
   private_key->set_key_name(key_name);
@@ -133,8 +131,7 @@ bool construct_standard_evidence_package(
     signed_claim_sequence *trusted_measurements,
     key_message *          policy_key,
     key_message *          policy_pk,
-    evidence_package *     evp)
-{
+    evidence_package *     evp) {
   string policy_key_name("policy-key");
   string key_format("vse-key");
   if (!construct_keys(policy_key_name, key_format, policy_pk, policy_key))
@@ -548,8 +545,7 @@ bool construct_standard_evidence_package(
 bool test__local_certify(string &enclave_type,
                          bool    init_from_file,
                          string &file_name,
-                         string &evidence_descriptor)
-{
+                         string &evidence_descriptor) {
   string enclave_id("test-enclave");
 
   evidence_package evp;
@@ -612,8 +608,7 @@ bool test__local_certify(string &enclave_type,
 // test_local_certify(), test_partial_local_certify()
 // Exist so that we can exercise these tests from the Python bindings to
 // certifier_tests.so, for the default behaviour of these test cases.
-bool test_local_certify(bool print_all)
-{
+bool test_local_certify(bool print_all) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("full-vse-support");
   string unused("Unused-file-name");
@@ -627,8 +622,7 @@ bool test_local_certify(bool print_all)
   return test__local_certify(enclave_type, false, unused, evidence_descriptor);
 }
 
-bool test_partial_local_certify(bool print_all)
-{
+bool test_partial_local_certify(bool print_all) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("platform-attestation-only");
   string unused("Unused-file-name");
@@ -653,8 +647,7 @@ bool construct_standard_constrained_evidence_package(
     signed_claim_sequence *trusted_measurements,
     key_message *          policy_key,
     key_message *          policy_pk,
-    evidence_package *     evp)
-{
+    evidence_package *     evp) {
   string policy_key_name("policy-key");
   string key_format("vse-key");
   if (!construct_keys(policy_key_name, key_format, policy_pk, policy_key))
@@ -1084,8 +1077,7 @@ bool construct_standard_constrained_evidence_package(
 bool test__new_local_certify(string &enclave_type,
                              bool    init_from_file,
                              string &file_name,
-                             string &evidence_descriptor)
-{
+                             string &evidence_descriptor) {
   string enclave_id("test-enclave");
 
   evidence_package evp;
@@ -1148,8 +1140,7 @@ bool test__new_local_certify(string &enclave_type,
 
 // Exists so that we can exercise this test from the Python bindings to
 // certifier_tests.so, for the default behaviour of this test cases.
-bool test_new_local_certify(bool print_all)
-{
+bool test_new_local_certify(bool print_all) {
   string enclave_type("simulated-enclave");
   string evidence_descriptor("full-vse-support");
   string unused("Unused-file-name");

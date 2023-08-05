@@ -36,8 +36,7 @@ bool generate_key(const string &name,
                   const string &type,
                   const string &authority,
                   key_message * priv,
-                  key_message * pub)
-{
+                  key_message * pub) {
   int n = 0;
   if (type == "rsa-4096-private") {
     if (!make_certifier_rsa_key(4096, priv)) {
@@ -67,8 +66,7 @@ bool generate_key(const string &name,
   return true;
 }
 
-int main(int an, char **av)
-{
+int main(int an, char **av) {
   string usage("Generate certificate keys in different formats to output file");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);

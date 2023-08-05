@@ -98,8 +98,7 @@ static struct attestation_report default_report = {
         },
 };
 
-static void reverse_bytes(byte *buffer, size_t size)
-{
+static void reverse_bytes(byte *buffer, size_t size) {
   if (!buffer || size == 0)
     return;
   for (byte *start = buffer, *end = buffer + size - 1; start < end;
@@ -111,8 +110,7 @@ static void reverse_bytes(byte *buffer, size_t size)
 }
 
 // This generates an sev attestation signed by the key in key_file
-int main(int an, char **av)
-{
+int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
   printf("sample_sev_key_generation.exe --ark_der=sev_ark_cert.der "

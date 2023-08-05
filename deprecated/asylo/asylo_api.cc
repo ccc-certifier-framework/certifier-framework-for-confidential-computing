@@ -29,16 +29,14 @@
 
 AsyloCertifierFunctions asyloFuncs;
 
-void setFuncs(AsyloCertifierFunctions funcs)
-{
+void setFuncs(AsyloCertifierFunctions funcs) {
   asyloFuncs.Attest = funcs.Attest;
   asyloFuncs.Verify = funcs.Verify;
   asyloFuncs.Seal = funcs.Seal;
   asyloFuncs.Unseal = funcs.Unseal;
 }
 
-bool asylo_Attest(int claims_size, byte *claims, int *size_out, byte *out)
-{
+bool asylo_Attest(int claims_size, byte *claims, int *size_out, byte *out) {
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
   int  assertion_size = 0;
@@ -87,8 +85,7 @@ bool asylo_Verify(int   claims_size,
                   int * user_data_out_size,
                   byte *user_data_out,
                   int * size_out,
-                  byte *out)
-{
+                  byte *out) {
   byte assertion[MAX_ASSERTION_SIZE];
   memset(assertion, 0, MAX_ASSERTION_SIZE);
   int  assertion_size = 0;
@@ -136,8 +133,7 @@ bool asylo_Verify(int   claims_size,
   return true;
 }
 
-bool asylo_Seal(int in_size, byte *in, int *size_out, byte *out)
-{
+bool asylo_Seal(int in_size, byte *in, int *size_out, byte *out) {
   bool result = false;
   printf("Invoking Asylo Seal %d\n", in_size);
 
@@ -151,8 +147,7 @@ bool asylo_Seal(int in_size, byte *in, int *size_out, byte *out)
   return true;
 }
 
-bool asylo_Unseal(int in_size, byte *in, int *size_out, byte *out)
-{
+bool asylo_Unseal(int in_size, byte *in, int *size_out, byte *out) {
   bool result = false;
   printf("Invoking Asylo Unseal %d\n", in_size);
 
