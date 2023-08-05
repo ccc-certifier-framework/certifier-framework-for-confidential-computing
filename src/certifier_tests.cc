@@ -263,8 +263,7 @@ main(int an, char **av)
   if (!simulated_Init(serialized_policy_cert_,
                       attest_key_file_name,
                       measurement_file_name,
-                      attest_endorsement_file_name))
-  {
+                      attest_endorsement_file_name)) {
     printf("simulated_init failed\n");
     return false;
   }

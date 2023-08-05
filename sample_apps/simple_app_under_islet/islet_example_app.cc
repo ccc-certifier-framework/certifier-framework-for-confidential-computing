@@ -146,8 +146,8 @@ main(int an, char **av)
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert))
-  {
+  if (!app_trust_data->init_policy_key(initialized_cert_size,
+                                       initialized_cert)) {
     printf("Can't init policy key\n");
     return 1;
   }
@@ -160,10 +160,10 @@ main(int an, char **av)
 
   string endorsement_cert;
 
-  if (!app_trust_data->initialize_islet_enclave_data(attest_key_file_name,
-                                                     measurement_file_name,
-                                                     platform_attest_file_name))
-  {
+  if (!app_trust_data->initialize_islet_enclave_data(
+          attest_key_file_name,
+          measurement_file_name,
+          platform_attest_file_name)) {
     printf("Can't init Islet enclave\n");
     return 1;
   }
@@ -202,8 +202,7 @@ main(int an, char **av)
 
     printf("Running App as client\n");
     if (!app_trust_data->cc_auth_key_initialized_
-        || !app_trust_data->cc_policy_info_initialized_)
-    {
+        || !app_trust_data->cc_policy_info_initialized_) {
       printf("trust data not initialized\n");
       ret = 1;
       goto done;
@@ -214,8 +213,7 @@ main(int an, char **av)
             FLAGS_server_app_port,
             app_trust_data->serialized_policy_cert_,
             app_trust_data->private_auth_key_,
-            app_trust_data->private_auth_key_.certificate()))
-    {
+            app_trust_data->private_auth_key_.certificate())) {
       printf("Can't init client app\n");
       ret = 1;
       goto done;
@@ -235,8 +233,7 @@ main(int an, char **av)
                          app_trust_data->serialized_policy_cert_,
                          app_trust_data->private_auth_key_,
                          app_trust_data->private_auth_key_.certificate(),
-                         server_application))
-    {
+                         server_application)) {
       ret = 1;
       goto done;
     }

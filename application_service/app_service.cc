@@ -251,8 +251,7 @@ soft_Seal(spawned_children *kid, string in, string *out)
                              app_trust_data->service_symmetric_key_,
                              iv,
                              t_out,
-                             &t_size))
-  {
+                             &t_size)) {
     printf("soft_Seal: authenticated encrypt failed\n");
     return false;
   }
@@ -275,8 +274,7 @@ soft_Unseal(spawned_children *kid, string in, string *out)
                              in.size(),
                              app_trust_data->service_symmetric_key_,
                              t_out,
-                             &t_size))
-  {
+                             &t_size)) {
     printf("soft_Unseal: authenticated decrypt failed\n");
     return false;
   }
@@ -289,8 +287,7 @@ soft_Unseal(spawned_children *kid, string in, string *out)
   printf("\n");
 #endif
   if (memcmp(t_out, (byte *)kid->measurement_.data(), kid->measurement_.size())
-      != 0)
-  {
+      != 0) {
     printf("soft_Unseal: mis-matched measurements\n");
     return false;
   }
@@ -343,8 +340,7 @@ soft_Attest(spawned_children *kid, string in, string *out)
   if (app_trust_data->private_service_key_.key_type() == "rsa-2048-private") {
     signing_alg.assign("rsa-2048-sha256-pkcs-sign");
   } else if (app_trust_data->private_service_key_.key_type()
-             == "rsa-4096-private")
-  {
+             == "rsa-4096-private") {
     signing_alg.assign("rsa-4096-sha384-pkcs-sign");
   } else if (app_trust_data->private_service_key_.key_type()
              == "ecc-384-private") {
@@ -357,8 +353,7 @@ soft_Attest(spawned_children *kid, string in, string *out)
                    serialized_report_info,
                    signing_alg,
                    app_trust_data->private_service_key_,
-                   out))
-  {
+                   out)) {
     printf("Can't sign report\n");
     return false;
   }
@@ -470,8 +465,7 @@ finishreq:
       printf("Can't serialize response\n");
     }
     if (write(write_fd, (byte *)str_app_rsp.data(), str_app_rsp.size())
-        < (int)str_app_rsp.size())
-    {
+        < (int)str_app_rsp.size()) {
       printf("Response write failed\n");
     }
 
@@ -757,8 +751,7 @@ done:
     string str_resp;
     if (resp.SerializeToString(&str_resp)) {
       if (sized_socket_write(client, str_resp.size(), (byte *)str_resp.data())
-          < (int)str_resp.size())
-      {
+          < (int)str_resp.size()) {
         printf("Write failed\n");
       }
     }
@@ -822,10 +815,10 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
     string attest_endorsement_file_name(FLAGS_service_dir);
     attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
 
-    if (!helper.initialize_simulated_enclave_data(attest_key_file_name,
-                                                  measurement_file_name,
-                                                  attest_endorsement_file_name))
-    {
+    if (!helper.initialize_simulated_enclave_data(
+            attest_key_file_name,
+            measurement_file_name,
+            attest_endorsement_file_name)) {
       printf("Can't init simulated enclave\n");
       return 1;
     }
@@ -836,8 +829,7 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
     // Init sev enclave
     if (!helper.initialize_sev_enclave_data(FLAGS_ark_cert_file,
                                             FLAGS_ask_cert_file,
-                                            FLAGS_vcek_cert_file))
-    {
+                                            FLAGS_vcek_cert_file)) {
       printf("Can't init sev-enclave\n");
       return 1;
     }

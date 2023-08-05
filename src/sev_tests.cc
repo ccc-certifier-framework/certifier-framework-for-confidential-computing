@@ -72,8 +72,7 @@ test_sev(bool print_all)
               sealed_size,
               sealed,
               &unsealed_size,
-              unsealed))
-  {
+              unsealed)) {
     printf("test_sev, unseal error\n");
     return false;
   }
@@ -126,8 +125,7 @@ test_sev(bool print_all)
               serialized_user.size(),
               (byte *)serialized_user.data(),
               &size_out,
-              out))
-  {
+              out)) {
     printf("Attest failed\n");
     return false;
   }
@@ -139,8 +137,8 @@ test_sev(bool print_all)
   extern int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert);
   extern EVP_PKEY *sev_get_vcek_pubkey(X509 * x509_vcek);
   X509 *           x509_vcek;
-  if (sev_read_pem_into_x509("test_data/vcek.pem", &x509_vcek) != EXIT_SUCCESS)
-  {
+  if (sev_read_pem_into_x509("test_data/vcek.pem", &x509_vcek)
+      != EXIT_SUCCESS) {
     printf("Failed to load VCEK Cert!\n");
     return false;
   }
@@ -353,16 +351,14 @@ construct_sev_platform_evidence(const string &     purpose,
               serialized_ud.size(),
               (byte *)serialized_ud.data(),
               &size_out,
-              out))
-  {
+              out)) {
 #  else
   if (!simulated_sev_Attest(vcek,
                             enclave_type,
                             serialized_ud.size(),
                             (byte *)serialized_ud.data(),
                             &size_out,
-                            out))
-  {
+                            out)) {
 #  endif /* 1 */
 
     printf("construct_sev_platform_evidence: Attest failed\n");
@@ -503,8 +499,7 @@ test_sev_platform_certify(const bool    debug_print,
                         1ULL,
                         365.26 * 86400,
                         x_ark,
-                        true))
-  {
+                        true)) {
     printf("test_sev_platform_certify: Can't produce ark artifact\n");
     return false;
   }
@@ -525,8 +520,7 @@ test_sev_platform_certify(const bool    debug_print,
                         2ULL,
                         365.26 * 86400,
                         x_ask,
-                        false))
-  {
+                        false)) {
     printf("test_sev_platform_certify: Can't produce ask artifact\n");
     return false;
   }
@@ -549,8 +543,7 @@ test_sev_platform_certify(const bool    debug_print,
                         3ULL,
                         365.26 * 86400,
                         x_vcek,
-                        false))
-  {
+                        false)) {
     printf("test_sev_platform_certify: Can't produce vcek artifact\n");
     return false;
   }
@@ -567,8 +560,7 @@ test_sev_platform_certify(const bool    debug_print,
                                        serialized_ask_cert,
                                        serialized_vcek_cert,
                                        vcek_key,
-                                       &evp))
-  {
+                                       &evp)) {
     printf("construct_sev_platform_evidence failed\n");
     return false;
   }
@@ -598,8 +590,7 @@ test_sev_platform_certify(const bool    debug_print,
                                      signed_statements,
                                      purpose,
                                      evp,
-                                     policy_pk))
-  {
+                                     policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }

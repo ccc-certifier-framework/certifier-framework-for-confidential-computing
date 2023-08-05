@@ -73,8 +73,7 @@ test_protect(bool print_all)
                     (int)strlen(secret_data),
                     (byte *)secret_data,
                     &serialized_blob_size,
-                    serialized_blob))
-  {
+                    serialized_blob)) {
     printf("Can't protect\n");
     return false;
   }
@@ -98,8 +97,7 @@ test_protect(bool print_all)
                       serialized_blob,
                       &key_end,
                       &size_unencrypted_data,
-                      unencrypted_data))
-  {
+                      unencrypted_data)) {
     printf("Unprotect(1) failed\n");
     return false;
   }
@@ -125,8 +123,7 @@ test_protect(bool print_all)
                       serialized_blob_size,
                       serialized_blob,
                       &size_reprotected_data,
-                      reprotected_data))
-  {
+                      reprotected_data)) {
     printf("reprotect failed\n");
     return false;
   }
@@ -141,8 +138,7 @@ test_protect(bool print_all)
                       reprotected_data,
                       &newer_key,
                       &size_unencrypted_data2,
-                      unencrypted_data2))
-  {
+                      unencrypted_data2)) {
     printf("unprotect(2) failed\n");
     return false;
   }
@@ -360,8 +356,7 @@ test_policy_store(bool print_all)
   }
 
   if (p_ent->value_.size() != sizeof(bin)
-      || memcmp(bin, p_ent->value_.data(), sizeof(bin)) != 0)
-  {
+      || memcmp(bin, p_ent->value_.data(), sizeof(bin)) != 0) {
     printf("Error: Retrieved value failure\n");
     return false;
   }

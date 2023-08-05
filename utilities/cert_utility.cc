@@ -166,8 +166,7 @@ test_sig()
   size = signed_endorsement_size;
   if (!read_file(FLAGS_platform_attest_endorsement,
                  &size,
-                 serialized_endorsement))
-  {
+                 serialized_endorsement)) {
     printf("Can't read endorsement file %s\n",
            FLAGS_platform_attest_endorsement.c_str());
     return;
@@ -327,8 +326,7 @@ main(int an, char **av)
   } else if (FLAGS_operation == "test-sig") {
     test_sig();
   } else if (FLAGS_operation == "generate-policy-key"
-             || FLAGS_operation == "generate-policy-key-and-test-keys")
-  {
+             || FLAGS_operation == "generate-policy-key-and-test-keys") {
     printf("Generating policy key and cert\n");
     if (!generate_policy_key()) {
       printf("Generate keys failed\n");

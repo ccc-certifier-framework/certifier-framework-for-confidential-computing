@@ -48,8 +48,7 @@ calculate_measurement(const string &in, string *out)
   size_t count = 0;
   for (size_t count = 0;
        count < strlen(hex) / 2 && count < (size_t)measurement_size;
-       count++)
-  {
+       count++) {
     sscanf(pos, "%2hhx", &m[count]);
     pos += 2;
   }
@@ -66,8 +65,7 @@ main(int an, char **av)
   an = 1;
 
   if (FLAGS_platform_file == "" && FLAGS_measurement_file == ""
-      && FLAGS_output == "")
-  {
+      && FLAGS_output == "") {
     printf("%s: %s\n", av[0], usage.c_str());
     printf(
         "%s --platform_file=<file> --measurement_file=<file> --output=<file>\n",

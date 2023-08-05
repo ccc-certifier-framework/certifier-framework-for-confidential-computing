@@ -94,8 +94,7 @@ main(int an, char **av)
               (int)sealed.size(),
               (byte *)sealed.data(),
               &t_out,
-              out))
-  {
+              out)) {
     printf("Application unseal failed\n");
     return 1;
   }

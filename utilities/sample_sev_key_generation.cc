@@ -104,8 +104,7 @@ reverse_bytes(byte *buffer, size_t size)
   if (!buffer || size == 0)
     return;
   for (byte *start = buffer, *end = buffer + size - 1; start < end;
-       start++, end--)
-  {
+       start++, end--) {
     byte temp = *start;
     *start = *end;
     *end = temp;
@@ -179,8 +178,7 @@ main(int an, char **av)
                         1ULL,
                         86400 * 365.25,
                         ark_509,
-                        true))
-  {
+                        true)) {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -225,8 +223,7 @@ main(int an, char **av)
                         1ULL,
                         86400 * 365.25,
                         ask_509,
-                        false))
-  {
+                        false)) {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -271,8 +268,7 @@ main(int an, char **av)
                         1ULL,
                         86400 * 365.25,
                         vcek_509,
-                        false))
-  {
+                        false)) {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -312,8 +308,7 @@ main(int an, char **av)
                       (byte *)said_str.data(),
                       said_str.size(),
                       user_data_hash,
-                      hash_len))
-  {
+                      hash_len)) {
     printf("digest_message failed\n");
     return 1;
   }
@@ -330,8 +325,7 @@ main(int an, char **av)
                       (byte *)&default_report,
                       sizeof(attestation_report) - sizeof(signature),
                       sig_digest,
-                      sig_digest_len))
-  {
+                      sig_digest_len)) {
     printf("digest_message  for whole report failed\n");
     return 1;
   }
@@ -377,8 +371,7 @@ main(int an, char **av)
   }
   if (!write_file(FLAGS_sev_attest,
                   sev_attest_str.size(),
-                  (byte *)sev_attest_str.data()))
-  {
+                  (byte *)sev_attest_str.data())) {
     printf("Can't write %s\n", FLAGS_sev_attest.c_str());
     return 1;
   }

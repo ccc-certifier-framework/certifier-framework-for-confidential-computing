@@ -33,8 +33,7 @@ reverse_bytes(uint8_t *buffer, size_t size)
     return;
 
   for (uint8_t *start = buffer, *end = buffer + size - 1; start < end;
-       start++, end--)
-  {
+       start++, end--) {
     uint8_t temp = *start;
     *start = *end;
     *end = temp;

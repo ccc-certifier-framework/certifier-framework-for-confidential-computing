@@ -206,8 +206,7 @@ main(int an, char **av)
 
   if (FLAGS_key_subject == "" && FLAGS_cert_subject == ""
       && FLAGS_measurement_subject == "" && FLAGS_platform_subject == ""
-      && FLAGS_environment_subject == "")
-  {
+      && FLAGS_environment_subject == "") {
     printf("No subject\n");
     return 1;
   }
@@ -235,8 +234,8 @@ main(int an, char **av)
       return 1;
     }
   } else if (FLAGS_measurement_subject != "") {
-    if (!get_measurement_entity_from_file(FLAGS_measurement_subject, &sub_ent))
-    {
+    if (!get_measurement_entity_from_file(FLAGS_measurement_subject,
+                                          &sub_ent)) {
       printf("Can't make subject measurement\n");
       return 1;
     }
@@ -246,8 +245,8 @@ main(int an, char **av)
       return 1;
     }
   } else if (FLAGS_environment_subject != "") {
-    if (!get_environment_entity_from_file(FLAGS_environment_subject, &sub_ent))
-    {
+    if (!get_environment_entity_from_file(FLAGS_environment_subject,
+                                          &sub_ent)) {
       printf("Can't make subject measurement\n");
       return 1;
     }

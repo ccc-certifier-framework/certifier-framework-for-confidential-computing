@@ -90,14 +90,12 @@ main(int an, char **av)
   if (strcmp(FLAGS_key_type.c_str(), "rsa-1024-private") == 0
       || strcmp(FLAGS_key_type.c_str(), "rsa-2048-private") == 0
       || strcmp(FLAGS_key_type.c_str(), "rsa-4096-private") == 0
-      || strcmp(FLAGS_key_type.c_str(), "ecc-384-private") == 0)
-  {
+      || strcmp(FLAGS_key_type.c_str(), "ecc-384-private") == 0) {
     if (!generate_key(FLAGS_key_name,
                       FLAGS_key_type,
                       FLAGS_authority_name,
                       &priv,
-                      &pub))
-    {
+                      &pub)) {
       printf("Couldn't generate key\n");
       return 0;
     }
@@ -111,8 +109,7 @@ main(int an, char **av)
   }
   if (!write_file(FLAGS_key_output_file,
                   serialized_key.size(),
-                  (byte *)serialized_key.data()))
-  {
+                  (byte *)serialized_key.data())) {
     printf("Can't write key file\n");
     return 1;
   }
@@ -128,8 +125,7 @@ main(int an, char **av)
                           FLAGS_serial_number,
                           FLAGS_duration,
                           cert,
-                          FLAGS_is_root))
-    {
+                          FLAGS_is_root)) {
       printf("Can't generate cert, produce_artifact failed\n");
       return 1;
     }
@@ -150,16 +146,14 @@ main(int an, char **av)
                         &s_key,
                         &subject_name_str,
                         &subject_organization_str,
-                        &sn))
-    {
+                        &sn)) {
       printf("Certificate verifies\n");
     } else {
       printf("Certificate does not verify\n");
     }
     if (!write_file(FLAGS_cert_output_file,
                     asn_cert.size(),
-                    (byte *)asn_cert.data()))
-    {
+                    (byte *)asn_cert.data())) {
       printf("Can't write cert file\n");
       return 1;
     }

@@ -189,8 +189,7 @@ keystone_Init(const int cert_size, byte *cert)
                           94720,
                           86400 * 365.26,
                           crt,
-                          true))
-    {
+                          true)) {
       X509_free(crt);
       return false;
     }
@@ -229,8 +228,8 @@ keystone_Init(const int cert_size, byte *cert)
     }
     fake_attest_private_key = key_to_ECC(attest_private_key);
     fake_attest_public_key = key_to_ECC(attest_public_key);
-    if (fake_attest_private_key == nullptr || fake_attest_public_key == nullptr)
-    {
+    if (fake_attest_private_key == nullptr
+        || fake_attest_public_key == nullptr) {
       printf("keystone_Init: Cant convert attest key\n");
       return false;
     }
@@ -267,14 +266,12 @@ keystone_Verify(const int what_to_say_size,
                       what_to_say,
                       what_to_say_size,
                       expected_data,
-                      len))
-  {
+                      len)) {
     printf("keystone_Verify: Can't digest what_to_say\n");
     return false;
   }
   if ((int)report.enclave.data_len != len
-      || memcmp(expected_data, report.enclave.data, len) != 0)
-  {
+      || memcmp(expected_data, report.enclave.data, len) != 0) {
     printf("keystone_Verify: reported data is not hash of what_to_say\n");
     return false;
   }
@@ -284,8 +281,7 @@ keystone_Verify(const int what_to_say_size,
                            MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
                            (byte *)report.enclave.hash,
                            report.enclave.size_sig,
-                           report.enclave.signature))
-  {
+                           report.enclave.signature)) {
     printf("keystone_Verify: Can't verify\n");
     return false;
   }
@@ -316,8 +312,7 @@ keystone_Attest(const int what_to_say_size,
                       what_to_say,
                       what_to_say_size,
                       report.enclave.data,
-                      len))
-  {
+                      len)) {
     printf("keystone_Attest: Can't digest what_to_say\n");
     return false;
   }
@@ -344,8 +339,7 @@ keystone_Attest(const int what_to_say_size,
                          MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
                          (byte *)report.enclave.hash,
                          &size_out,
-                         report.enclave.signature))
-  {
+                         report.enclave.signature)) {
     printf("keystone_Attest: Can't sign\n");
     return false;
   }
@@ -396,8 +390,7 @@ keystone_Seal(int in_size, byte *in, int *size_out, byte *out)
                              key,
                              iv,
                              out,
-                             size_out))
-  {
+                             size_out)) {
     return false;
   }
   return true;
@@ -418,8 +411,7 @@ keystone_Unseal(int in_size, byte *in, int *size_out, byte *out)
                              in_size,
                              key,
                              out,
-                             size_out))
-  {
+                             size_out)) {
     return false;
   }
   return true;

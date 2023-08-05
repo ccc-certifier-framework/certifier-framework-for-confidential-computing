@@ -115,8 +115,7 @@ main(int an, char **av)
                         1ULL,
                         86400 * 365.25,
                         ark_509,
-                        true))
-  {
+                        true)) {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -161,8 +160,7 @@ main(int an, char **av)
                         1ULL,
                         86400 * 365.25,
                         ask_509,
-                        false))
-  {
+                        false)) {
     printf("Generate ark cert failed\n");
     return 1;
   }
@@ -212,8 +210,7 @@ main(int an, char **av)
                         86400 * 365.25,
                         vcek_509,
                         false,
-                        true))
-  {
+                        true)) {
     printf("Generate ark cert failed\n");
     return 1;
   }

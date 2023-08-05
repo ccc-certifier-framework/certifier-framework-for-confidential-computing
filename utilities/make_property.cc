@@ -55,8 +55,7 @@ main(int an, char **av)
                      FLAGS_comparator,
                      FLAGS_int_value,
                      FLAGS_string_value,
-                     &prop))
-  {
+                     &prop)) {
     printf("Can't make property\n");
     return 1;
   }

@@ -371,8 +371,9 @@ construct_standard_evidence_package(string &               enclave_type,
     return false;
 
   string serialized_what_to_say;
-  if (!construct_what_to_say(enclave_type, enclave_pk, &serialized_what_to_say))
-  {
+  if (!construct_what_to_say(enclave_type,
+                             enclave_pk,
+                             &serialized_what_to_say)) {
     return false;
   }
 
@@ -603,8 +604,7 @@ test__local_certify(string &enclave_type,
                          trusted_measurements,
                          purpose,
                          evp,
-                         policy_pk))
-  {
+                         policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }
@@ -902,8 +902,9 @@ construct_standard_constrained_evidence_package(
     return false;
 
   string serialized_what_to_say;
-  if (!construct_what_to_say(enclave_type, enclave_pk, &serialized_what_to_say))
-  {
+  if (!construct_what_to_say(enclave_type,
+                             enclave_pk,
+                             &serialized_what_to_say)) {
     return false;
   }
 
@@ -1145,8 +1146,7 @@ test__new_local_certify(string &enclave_type,
                          trusted_measurements,
                          purpose,
                          evp,
-                         policy_pk))
-  {
+                         policy_pk)) {
     printf("validate_evidence failed\n");
     return false;
   }

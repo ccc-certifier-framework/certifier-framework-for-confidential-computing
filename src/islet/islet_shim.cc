@@ -46,8 +46,7 @@ islet_Attest(const int what_to_say_size,
                       what_to_say,
                       what_to_say_size,
                       islet_what_to_say,
-                      len))
-  {
+                      len)) {
     printf("islet_Attest: Can't digest what_to_say\n");
     return false;
   }
@@ -93,8 +92,7 @@ islet_Verify(const int what_to_say_size,
                       what_to_say,
                       what_to_say_size,
                       islet_what_to_say_expected,
-                      len))
-  {
+                      len)) {
     printf("islet_Verify: Can't digest what_to_say\n");
     return false;
   }

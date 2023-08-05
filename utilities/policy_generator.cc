@@ -305,8 +305,7 @@ exec_cmd(const string &command, bool print = false)
     while (
         (bytesread =
              fread(buffer.data(), sizeof(buffer.at(0)), sizeof(buffer), pipe))
-        != 0)
-    {
+        != 0) {
       result += string(buffer.data(), bytesread);
     }
   } catch (...) {

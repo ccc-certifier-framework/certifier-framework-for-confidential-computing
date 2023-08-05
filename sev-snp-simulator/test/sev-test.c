@@ -228,8 +228,7 @@ verify_report(struct attestation_report *report)
           report,
           sizeof(struct attestation_report) - sizeof(struct signature),
           sha_digest_384,
-          sizeof(sha_digest_384)))
-  {
+          sizeof(sha_digest_384))) {
     rc = -EXIT_FAILURE;
     perror("sha_digest_384");
     goto exit;

@@ -157,15 +157,13 @@ main(int an, char **av)
                 sizeof(attestation_report) - sizeof(signature),
                 (byte *)&default_report,
                 &size_out,
-                (byte *)&default_report.signature))
-  {
+                (byte *)&default_report.signature)) {
     printf("signature failure\n");
     return 1;
   }
   if (!write_file(FLAGS_output,
                   sizeof(attestation_report),
-                  (byte *)&default_report))
-  {
+                  (byte *)&default_report)) {
     printf("Can't write %s\n", FLAGS_output.c_str());
     return 1;
   }

@@ -356,8 +356,7 @@ get_tcb_version_from_vcek(X509 *vcek)
   if (vcek_ext_byte_value(vcek, VCEK_EXT_BLSPL, &blSPL)
       && vcek_ext_byte_value(vcek, VCEK_EXT_TEESPL, &teeSPL)
       && vcek_ext_byte_value(vcek, VCEK_EXT_SNPSPL, &snpSPL)
-      && vcek_ext_byte_value(vcek, VCEK_EXT_UCODESPL, &ucodeSPL))
-  {
+      && vcek_ext_byte_value(vcek, VCEK_EXT_UCODESPL, &ucodeSPL)) {
     tcb_version = blSPL | ((uint64_t)teeSPL << 8) | ((uint64_t)snpSPL << 48)
                   | ((uint64_t)ucodeSPL << 56);
   }
@@ -917,8 +916,7 @@ certifier::framework::protect_blob(const string &enclave_type,
             serialized_key.size(),
             (byte *)serialized_key.data(),
             &size_sealed_key,
-            sealed_key))
-  {
+            sealed_key)) {
     printf("protect_blob: can't seal\n");
     return false;
   }
@@ -946,8 +944,7 @@ certifier::framework::protect_blob(const string &enclave_type,
                              key_buf,
                              iv,
                              encrypted_data,
-                             &size_encrypted))
-  {
+                             &size_encrypted)) {
     printf("protect_blob: authenticate encryption failed\n");
     return false;
   }
@@ -1002,8 +999,7 @@ certifier::framework::unprotect_blob(const string &enclave_type,
               pb.encrypted_key().size(),
               (byte *)pb.encrypted_key().data(),
               &size_unsealed_key,
-              unsealed_key))
-  {
+              unsealed_key)) {
     printf("unprotect_blob: can't unseal\n");
     return false;
   }
@@ -1035,8 +1031,7 @@ certifier::framework::unprotect_blob(const string &enclave_type,
                              pb.encrypted_data().size(),
                              key_buf,
                              unencrypted_data,
-                             size_of_unencrypted_data))
-  {
+                             size_of_unencrypted_data)) {
     printf("unprotect_blob: authenticated decrypt failed\n");
     return false;
   }
@@ -1060,8 +1055,7 @@ certifier::framework::reprotect_blob(const string &enclave_type,
                       protected_blob,
                       &new_key,
                       &size_unencrypted_data,
-                      unencrypted_data))
-  {
+                      unencrypted_data)) {
     printf("reprotect_blob: Can't unprotect\n");
     return false;
   }
@@ -1076,8 +1070,8 @@ certifier::framework::reprotect_blob(const string &enclave_type,
     printf("reprotect_blob: key buffer too small\n");
     return false;
   }
-  if (!get_random(8 * size_byte_key, (byte *)new_key.secret_key_bits().data()))
-  {
+  if (!get_random(8 * size_byte_key,
+                  (byte *)new_key.secret_key_bits().data())) {
     printf("reprotect_blob: Can't generate key\n");
     return false;
   }
@@ -1087,8 +1081,7 @@ certifier::framework::reprotect_blob(const string &enclave_type,
                     size_unencrypted_data,
                     unencrypted_data,
                     size_new_encrypted_blob,
-                    data))
-  {
+                    data)) {
     printf("reprotect_blob: Can't Protect\n");
     return false;
   }

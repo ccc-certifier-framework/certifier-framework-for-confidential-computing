@@ -289,19 +289,18 @@ run_me_as_client()
   }
   printf("running as client\n");
   if (!app_trust_data->cc_auth_key_initialized_
-      || !app_trust_data->cc_policy_info_initialized_)
-  {
+      || !app_trust_data->cc_policy_info_initialized_) {
     printf("trust data not initialized\n");
     return false;
   }
   string                       my_role("client");
   secure_authenticated_channel channel(my_role);
-  if (!channel.init_client_ssl(FLAGS_server_app_host,
-                               FLAGS_server_app_port,
-                               app_trust_data->serialized_policy_cert_,
-                               app_trust_data->private_auth_key_,
-                               app_trust_data->private_auth_key_.certificate()))
-  {
+  if (!channel.init_client_ssl(
+          FLAGS_server_app_host,
+          FLAGS_server_app_port,
+          app_trust_data->serialized_policy_cert_,
+          app_trust_data->private_auth_key_,
+          app_trust_data->private_auth_key_.certificate())) {
     printf("Can't init client app\n");
     return false;
   }

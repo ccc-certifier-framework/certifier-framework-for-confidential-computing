@@ -61,8 +61,7 @@ reverse_bytes(uint8_t *buffer, size_t size)
   if (!buffer || size == 0)
     return;
   for (uint8_t *start = buffer, *end = buffer + size - 1; start < end;
-       start++, end--)
-  {
+       start++, end--) {
     uint8_t temp = *start;
     *start = *end;
     *end = temp;
@@ -274,8 +273,7 @@ sev_ecdsa_verify(const void *         digest,
                         (uint32_t)digest_size,
                         ecdsa_sig,
                         pub_ec_key)
-        != 1)
-    {
+        != 1) {
       printf("ECDSA_do_verify failed\n");
       ECDSA_SIG_free(ecdsa_sig);
       break;
@@ -469,8 +467,7 @@ sev_verify_report(EVP_PKEY *key, struct attestation_report *report)
           (const byte *)report,
           sizeof(struct attestation_report) - sizeof(struct signature),
           digest,
-          size_digest))
-  {
+          size_digest)) {
     printf("sev_verify_report: digest_message failed\n");
     return false;
   }
@@ -728,8 +725,11 @@ sev_Attest(int what_to_say_size, byte *what_to_say, int *size_out, byte *out)
   sev_attestation_message the_attestation;
   the_attestation.set_what_was_said(what_to_say, what_to_say_size);
 
-  if (!digest_message("sha-384", what_to_say, what_to_say_size, hash, hash_len))
-  {
+  if (!digest_message("sha-384",
+                      what_to_say,
+                      what_to_say_size,
+                      hash,
+                      hash_len)) {
     printf("digest_message failed\n");
     return false;
   }
@@ -781,8 +781,7 @@ verify_sev_Attest(EVP_PKEY *key,
                       (byte *)sev_att.what_was_said().data(),
                       sev_att.what_was_said().size(),
                       digest,
-                      digest_size))
-  {
+                      digest_size)) {
     printf("verify_sev_Attest: digest_message fails\n");
     return false;
   }
@@ -929,8 +928,7 @@ verify_report(struct attestation_report *report)
           (byte *)report,
           sizeof(struct attestation_report) - sizeof(struct signature),
           sha_digest_384,
-          sizeof(sha_digest_384)))
-  {
+          sizeof(sha_digest_384))) {
     rc = -EXIT_FAILURE;
     perror("sha_digest_384");
     goto exit;

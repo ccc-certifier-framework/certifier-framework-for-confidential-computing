@@ -182,8 +182,7 @@ verify_signed_assertion_and_extract_clause(const key_message &         key,
                                            vse_clause *                cl)
 {
   if (!sc.has_serialized_claim_message() || !sc.has_signing_key()
-      || !sc.has_signing_algorithm() || !sc.has_signature())
-  {
+      || !sc.has_signing_algorithm() || !sc.has_signature()) {
     return false;
   }
 
@@ -317,8 +316,7 @@ get_signed_measurement_claim_from_trusted_list(
     if (memcmp(c.clause().subject().measurement().data(),
                (byte *)expected_measurement.data(),
                expected_measurement.size())
-        == 0)
-    {
+        == 0) {
       claim->CopyFrom(trusted_measurements.claims(i));
       return true;
     }
@@ -391,16 +389,14 @@ construct_vse_attestation_statement(const key_message &attest_key,
   if (!make_simple_vse_clause(enclave_key_entity,
                               s2,
                               measurement_entity,
-                              &auth_key_speaks_for_measurement))
-  {
+                              &auth_key_speaks_for_measurement)) {
     printf("construct_vse_attestation_statement: Can't make simple clause\n");
     return false;
   }
   if (!make_indirect_vse_clause(attest_key_entity,
                                 s1,
                                 auth_key_speaks_for_measurement,
-                                vse_attest_clause))
-  {
+                                vse_attest_clause)) {
     printf("construct_vse_attestation_statement: Can't make indirect clause\n");
     return false;
   }
@@ -490,8 +486,7 @@ sign_report(const string &     type,
                   to_be_signed.size(),
                   (byte *)to_be_signed.data(),
                   &size,
-                  signature))
-    {
+                  signature)) {
       printf("sign_report: rsa_sign failed\n");
       RSA_free(rsa_key);
       return false;
@@ -512,8 +507,7 @@ sign_report(const string &     type,
                   to_be_signed.size(),
                   (byte *)to_be_signed.data(),
                   &size,
-                  signature))
-    {
+                  signature)) {
       printf("sign_report: rsa_sign failed\n");
       RSA_free(rsa_key);
       return false;
@@ -534,8 +528,7 @@ sign_report(const string &     type,
                   to_be_signed.size(),
                   (byte *)to_be_signed.data(),
                   &size,
-                  signature))
-    {
+                  signature)) {
       printf("sign_report: rsa_sign failed\n");
       RSA_free(rsa_key);
       return false;
@@ -556,8 +549,7 @@ sign_report(const string &     type,
                   to_be_signed.size(),
                   (byte *)to_be_signed.data(),
                   &size,
-                  signature))
-    {
+                  signature)) {
       printf("sign_report: ecc_sign failed\n");
       EC_KEY_free(ecc_key);
       return false;
@@ -917,8 +909,7 @@ get_platform_from_sev_attest(const sev_attestation_message &sev_att,
   ent->mutable_platform_ent()->set_has_key(false);
   if (!get_properties_from_sev_attest(
           sev_att,
-          ent->mutable_platform_ent()->mutable_props()))
-  {
+          ent->mutable_platform_ent()->mutable_props())) {
     printf("get_platform_from_sev_attest: Can't get properties\n");
     return false;
   }
@@ -1089,8 +1080,8 @@ init_proved_statements(key_message &      pk,
       vse_clause *cl_to_insert = already_proved->add_proved();
       cl_to_insert->CopyFrom(to_add);
 #ifdef OE_CERTIFIER
-    } else if (evp.fact_assertion(i).evidence_type() == "oe-attestation-report")
-    {
+    } else if (evp.fact_assertion(i).evidence_type()
+               == "oe-attestation-report") {
       size_t user_data_size = max_user_data_size;
       byte   user_data[user_data_size];
       size_t measurement_out_size = max_measurement_size;
@@ -1101,8 +1092,7 @@ init_proved_statements(key_message &      pk,
                      user_data,
                      &user_data_size,
                      measurement_out,
-                     &measurement_out_size))
-      {
+                     &measurement_out_size)) {
         printf("init_proved_statements: oe_Verify failed\n");
         return false;
       }
@@ -1130,8 +1120,10 @@ init_proved_statements(key_message &      pk,
       }
       vse_clause *cl_to_insert = already_proved->add_proved();
       string      sf("speaks-for");
-      if (!make_simple_vse_clause(*key_ent, sf, *measurement_ent, cl_to_insert))
-      {
+      if (!make_simple_vse_clause(*key_ent,
+                                  sf,
+                                  *measurement_ent,
+                                  cl_to_insert)) {
         printf("init_proved_statements: make_simple_vse_clause failed\n");
         return false;
       }
@@ -1162,8 +1154,7 @@ init_proved_statements(key_message &      pk,
               &user_data_size,
               user_data,
               &measurement_out_size,
-              measurement_out))
-      {
+              measurement_out)) {
         printf("init_proved_statements: asylo_Verify failed\n");
       }
 
@@ -1197,8 +1188,10 @@ init_proved_statements(key_message &      pk,
       }
       vse_clause *cl_to_insert = already_proved->add_proved();
       string      sf("speaks-for");
-      if (!make_simple_vse_clause(*key_ent, sf, *measurement_ent, cl_to_insert))
-      {
+      if (!make_simple_vse_clause(*key_ent,
+                                  sf,
+                                  *measurement_ent,
+                                  cl_to_insert)) {
         printf("init_proved_statements: make_simple_vse_clause failed\n");
         return false;
       }
@@ -1229,8 +1222,7 @@ init_proved_statements(key_message &      pk,
               user_data_size,
               user_data,
               &measurement_out_size,
-              measurement_out))
-      {
+              measurement_out)) {
         printf("init_proved_statements: gramine_Verify failed\n");
       }
 
@@ -1265,8 +1257,10 @@ init_proved_statements(key_message &      pk,
       }
       vse_clause *cl_to_insert = already_proved->add_proved();
       string      sf("speaks-for");
-      if (!make_simple_vse_clause(*key_ent, sf, *measurement_ent, cl_to_insert))
-      {
+      if (!make_simple_vse_clause(*key_ent,
+                                  sf,
+                                  *measurement_ent,
+                                  cl_to_insert)) {
         printf("init_proved_statements: make_simple_vse_clause failed\n");
         return false;
       }
@@ -1313,8 +1307,9 @@ init_proved_statements(key_message &      pk,
         // add to proved: signing-key says subject-key
         // is-trusted-for-attestation
         vse_clause *cl = already_proved->add_proved();
-        if (!construct_vse_attestation_from_cert(*subject_key, *signer_key, cl))
-        {
+        if (!construct_vse_attestation_from_cert(*subject_key,
+                                                 *signer_key,
+                                                 cl)) {
           printf("init_proved_statements: Can't construct vse attestation from "
                  "cert\n");
           return false;
@@ -1336,8 +1331,8 @@ init_proved_statements(key_message &      pk,
       t_str.assign((char *)evp.fact_assertion(i).serialized_evidence().data(),
                    evp.fact_assertion(i).serialized_evidence().size());
       sev_attestation_message sev_att;
-      if (!sev_att.ParseFromString(evp.fact_assertion(i).serialized_evidence()))
-      {
+      if (!sev_att.ParseFromString(
+              evp.fact_assertion(i).serialized_evidence())) {
         printf("init_proved: cannot parse sev-attestation evidence\n");
         return false;
       }
@@ -1357,8 +1352,7 @@ init_proved_statements(key_message &      pk,
         return false;
       }
       if (!last_clause.clause().has_subject()
-          || last_clause.clause().subject().entity_type() != "key")
-      {
+          || last_clause.clause().subject().entity_type() != "key") {
         printf("init_proved: last clause in sev-attestation has wrong format "
                "(2)\n");
         return false;
@@ -1404,8 +1398,7 @@ init_proved_statements(key_message &      pk,
 
       if (!add_vse_proved_statements_from_sev_attest(sev_att,
                                                      vcek_key,
-                                                     already_proved))
-      {
+                                                     already_proved)) {
         printf("init_proved_statements: can't "
                "add_vse_proved_statements_from_sev_attest\n");
         return false;
@@ -1415,8 +1408,8 @@ init_proved_statements(key_message &      pk,
       t_str.assign((char *)evp.fact_assertion(i).serialized_evidence().data(),
                    evp.fact_assertion(i).serialized_evidence().size());
       sev_attestation_message sev_att;
-      if (!sev_att.ParseFromString(evp.fact_assertion(i).serialized_evidence()))
-      {
+      if (!sev_att.ParseFromString(
+              evp.fact_assertion(i).serialized_evidence())) {
         printf("init_proved_statements: can't parse sev_att\n");
         return false;
       }
@@ -1436,8 +1429,7 @@ init_proved_statements(key_message &      pk,
         return false;
       }
       if (!last_clause.clause().has_subject()
-          || last_clause.clause().subject().entity_type() != "key")
-      {
+          || last_clause.clause().subject().entity_type() != "key") {
         printf("init_proved_statements: malformed vcek delegation statement "
                "(2)\n");
         return false;
@@ -1511,8 +1503,7 @@ init_proved_statements(key_message &      pk,
       }
 #endif
     } else if (evp.fact_assertion(i).evidence_type()
-               == "signed-vse-attestation-report")
-    {
+               == "signed-vse-attestation-report") {
       string t_str;
       t_str.assign((char *)evp.fact_assertion(i).serialized_evidence().data(),
                    evp.fact_assertion(i).serialized_evidence().size());
@@ -1553,8 +1544,7 @@ init_proved_statements(key_message &      pk,
       if (!construct_vse_attestation_statement(sr.signing_key(),
                                                ud.enclave_key(),
                                                info.verified_measurement(),
-                                               cl_to_insert))
-      {
+                                               cl_to_insert)) {
         printf("init_proved_statements: construct_vse_attestation_statement "
                "failed\n");
         return false;
@@ -1809,8 +1799,7 @@ verify_rule_8(predicate_dominance &dom_tree,
 
   // check satisfaction
   if (!satisfying_platform(c2.subject().platform_ent(),
-                           c1.subject().environment_ent().the_platform()))
-  {
+                           c1.subject().environment_ent().the_platform())) {
     printf("satisfying platform failed\n");
     return false;
   }
@@ -2025,8 +2014,7 @@ add_newfacts_for_sev_attestation(key_message &          policy_pk,
   const key_message &expected_key = already_proved->proved(1).subject().key();
   if (!get_signed_platform_claim_from_trusted_list(expected_key,
                                                    trusted_platforms,
-                                                   &sc1))
-  {
+                                                   &sc1)) {
     printf("add_newfacts_for_sev_attestation: error 3\n");
     return false;
   }
@@ -2051,8 +2039,7 @@ add_newfacts_for_sev_attestation(key_message &          policy_pk,
   signed_claim_message sc2;
   if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
                                                       trusted_measurements,
-                                                      &sc2))
-  {
+                                                      &sc2)) {
     printf("add_newfacts_for_sev_attestation: error 7\n");
     return false;
   }
@@ -2097,8 +2084,7 @@ add_newfacts_for_sdk_platform_attestation(
   signed_claim_message sc;
   if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
                                                       trusted_measurements,
-                                                      &sc))
-  {
+                                                      &sc)) {
     printf("Add_newfacts_for_sdk_platform__attestation: Can't sign measurement "
            "\n");
     return false;
@@ -2141,8 +2127,7 @@ add_new_facts_for_abbreviatedplatformattestation(
   signed_claim_message sc;
   if (!get_signed_measurement_claim_from_trusted_list(expected_measurement,
                                                       trusted_measurements,
-                                                      &sc))
-  {
+                                                      &sc)) {
     return false;
   }
   if (!add_fact_from_signed_claim(sc, already_proved)) {
@@ -2159,8 +2144,7 @@ add_new_facts_for_abbreviatedplatformattestation(
   const key_message &expected_key = already_proved->proved(1).subject().key();
   if (!get_signed_platform_claim_from_trusted_list(expected_key,
                                                    trusted_platforms,
-                                                   &sc))
-  {
+                                                   &sc)) {
     return false;
   }
   if (!add_fact_from_signed_claim(sc, already_proved)) {
@@ -2236,8 +2220,7 @@ construct_proof_from_sev_evidence(key_message &      policy_pk,
     return false;
   }
   if (!already_proved->proved(2).has_clause()
-      || !already_proved->proved(2).clause().has_subject())
-  {
+      || !already_proved->proved(2).clause().has_subject()) {
     printf("construct_proof_from_sev_evidence: ill formed statement 2\n");
     return false;
   }
@@ -2357,8 +2340,9 @@ construct_proof_from_sdk_evidence(key_message &      policy_pk,
     return false;
   }
   string it("is-trusted");
-  if (!make_unary_vse_clause(already_proved->proved(2).subject(), it, to_prove))
-  {
+  if (!make_unary_vse_clause(already_proved->proved(2).subject(),
+                             it,
+                             to_prove)) {
     printf("Error 2, construct_proof_from_sdk_evidence\n");
     return false;
   }
@@ -2406,8 +2390,7 @@ construct_proof_from_full_vse_evidence(key_message &      policy_pk,
   }
 
   if (!already_proved->proved(2).has_clause()
-      || !already_proved->proved(2).clause().has_subject())
-  {
+      || !already_proved->proved(2).clause().has_subject()) {
     printf("Error 1, construct_proof_from_full_vse_evidence\n");
     return false;
   }
@@ -2521,8 +2504,7 @@ construct_proof_from_request(const string &         evidence_descriptor,
     if (!add_new_facts_for_abbreviatedplatformattestation(policy_pk,
                                                           trusted_platforms,
                                                           trusted_measurements,
-                                                          already_proved))
-    {
+                                                          already_proved)) {
       printf("add_new_facts_for_abbreviatedplatformattestation failed\n");
       return false;
     }
@@ -2530,8 +2512,7 @@ construct_proof_from_request(const string &         evidence_descriptor,
                                                 purpose,
                                                 already_proved,
                                                 to_prove,
-                                                pf))
-    {
+                                                pf)) {
       printf("construct_proof_from_full_vse_evidence in "
              "construct_proof_from_request failed\n");
       return false;
@@ -2546,8 +2527,7 @@ construct_proof_from_request(const string &         evidence_descriptor,
                                           serialized_vcek_cert,
                                           trusted_platforms,
                                           trusted_measurements,
-                                          already_proved))
-    {
+                                          already_proved)) {
       printf("construct_proof_from_sev_evidence failed in "
              "add_newfacts_for_sev_attestation\n");
       return false;
@@ -2573,8 +2553,7 @@ construct_proof_from_request(const string &         evidence_descriptor,
     if (!add_newfacts_for_sdk_platform_attestation(policy_pk,
                                                    trusted_platforms,
                                                    trusted_measurements,
-                                                   already_proved))
-    {
+                                                   already_proved)) {
       printf("construct_proof_from_full_vse_evidence in "
              "add_newfacts_for_asyloplatform_evidence failed\n");
       return false;
@@ -2588,8 +2567,7 @@ construct_proof_from_request(const string &         evidence_descriptor,
     if (!add_newfacts_for_sdk_platform_attestation(policy_pk,
                                                    trusted_platforms,
                                                    trusted_measurements,
-                                                   already_proved))
-    {
+                                                   already_proved)) {
       printf("construct_proof_from_full_vse_evidence in "
              "add_newfacts_for_gramineplatform_evidence failed\n");
       return false;
@@ -2637,8 +2615,7 @@ validate_evidence(const string &         evidence_descriptor,
                                     evp,
                                     &already_proved,
                                     &to_prove,
-                                    &pf))
-  {
+                                    &pf)) {
     printf("validate_evidence: can't construct proof\n");
     return false;
   }
@@ -2663,8 +2640,7 @@ validate_evidence(const string &         evidence_descriptor,
                     to_prove,
                     predicate_dominance_root,
                     &pf,
-                    &already_proved))
-  {
+                    &already_proved)) {
     printf("verify_proof failed\n");
     return false;
   }
@@ -2763,8 +2739,7 @@ construct_proof_from_sev_evidence_with_plat(const string &evidence_descriptor,
       || !already_proved->proved(2).has_subject()
       || !already_proved->proved(2).has_clause()
       || already_proved->proved(2).clause().subject().entity_type()
-             != "measurement")
-  {
+             != "measurement") {
     printf(
         "construct_proof_from_sev_evidence_with_plat: components of first step "
         "malformed\n");
@@ -2790,8 +2765,7 @@ construct_proof_from_sev_evidence_with_plat(const string &evidence_descriptor,
   if (!already_proved->proved(1).has_subject()
       || !already_proved->proved(1).has_clause()
       || !already_proved->proved(1).clause().has_subject()
-      || already_proved->proved(1).clause().subject().entity_type() != "key")
-  {
+      || already_proved->proved(1).clause().subject().entity_type() != "key") {
     printf("construct_proof_from_sev_evidence_with_plat: components of second "
            "step malformed\n");
     return false;
@@ -2815,8 +2789,7 @@ construct_proof_from_sev_evidence_with_plat(const string &evidence_descriptor,
   if (!already_proved->proved(5).has_subject()
       || !already_proved->proved(5).has_clause()
       || !already_proved->proved(5).clause().has_subject()
-      || already_proved->proved(5).clause().subject().entity_type() != "key")
-  {
+      || already_proved->proved(5).clause().subject().entity_type() != "key") {
     printf(
         "construct_proof_from_sev_evidence_with_plat: components of third step "
         "malformed\n");
@@ -2840,8 +2813,7 @@ construct_proof_from_sev_evidence_with_plat(const string &evidence_descriptor,
   //        "the VCEK-key is-trusted-for-attestation" (R5) [11, 6]
   if (!already_proved->proved(6).has_subject()
       || !already_proved->proved(6).has_clause()
-      || already_proved->proved(6).clause().subject().entity_type() != "key")
-  {
+      || already_proved->proved(6).clause().subject().entity_type() != "key") {
     printf("construct_proof_from_sev_evidence_with_plat: components of fourth "
            "step malformed\n");
     return false;
@@ -2865,8 +2837,7 @@ construct_proof_from_sev_evidence_with_plat(const string &evidence_descriptor,
   if (!already_proved->proved(7).has_subject()
       || !already_proved->proved(7).has_clause()
       || already_proved->proved(7).clause().subject().entity_type()
-             != "environment")
-  {
+             != "environment") {
     printf(
         "construct_proof_from_sev_evidence_with_plat: components of fifth step "
         "malformed\n");
@@ -2892,8 +2863,7 @@ construct_proof_from_sev_evidence_with_plat(const string &evidence_descriptor,
       || !already_proved->proved(3).has_clause()
       || !already_proved->proved(3).clause().has_subject()
       || already_proved->proved(3).clause().subject().entity_type()
-             != "platform")
-  {
+             != "platform") {
     printf(
         "construct_proof_from_sev_evidence_with_plat: components of sixth step "
         "malformed\n");
@@ -2921,8 +2891,7 @@ construct_proof_from_sev_evidence_with_plat(const string &evidence_descriptor,
   vse_clause            environment_platform_is_trusted;
   if (!make_unary_vse_clause(env_ent,
                              env_plat_str,
-                             &environment_platform_is_trusted))
-  {
+                             &environment_platform_is_trusted)) {
     printf(
         "construct_proof_from_sev_evidence_with_plat: Can't make environment "
         "platform is trusted\n");
@@ -2948,8 +2917,7 @@ construct_proof_from_sev_evidence_with_plat(const string &evidence_descriptor,
   vse_clause environment_measurement_is_trusted;
   if (!make_unary_vse_clause(env_ent,
                              env_measurement_str,
-                             &environment_measurement_is_trusted))
-  {
+                             &environment_measurement_is_trusted)) {
     printf(
         "construct_proof_from_sev_evidence_with_plat: Can't make environment "
         "measurement is trusted\n");
@@ -2973,8 +2941,9 @@ construct_proof_from_sev_evidence_with_plat(const string &evidence_descriptor,
   //        measurement) is-trusted
   string     is_trusted_str("is-trusted");
   vse_clause environment_is_trusted;
-  if (!make_unary_vse_clause(env_ent, is_trusted_str, &environment_is_trusted))
-  {
+  if (!make_unary_vse_clause(env_ent,
+                             is_trusted_str,
+                             &environment_is_trusted)) {
     printf(
         "construct_proof_from_sev_evidence_with_plat: Can't make environment "
         "measurement is trusted\n");
@@ -3001,8 +2970,7 @@ construct_proof_from_sev_evidence_with_plat(const string &evidence_descriptor,
   //      "VCEK-key says the enclave-key speaks-for the environment()" -->
   //        "enclave-key speaks-for the environment()" [, 8]
   if (!already_proved->proved(8).has_subject()
-      || !already_proved->proved(8).has_clause())
-  {
+      || !already_proved->proved(8).has_clause()) {
     printf(
         "construct_proof_from_sev_evidence_with_plat: components of ninth step "
         "malformed\n");
@@ -3288,8 +3256,7 @@ validate_evidence_from_policy(const string &         evidence_descriptor,
                                                    &already_proved,
                                                    &to_prove,
                                                    steps,
-                                                   &num_steps))
-  {
+                                                   &num_steps)) {
     printf("validate_evidence: can't construct proof\n");
     return false;
   }
@@ -3328,8 +3295,7 @@ validate_evidence_from_policy(const string &         evidence_descriptor,
                                predicate_dominance_root,
                                &already_proved,
                                num_steps,
-                               steps))
-  {
+                               steps)) {
     printf("validate_evidence_from_policy: verify_proof failed\n");
     return false;
   }

@@ -89,8 +89,8 @@ main(int an, char **av)
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert))
-  {
+  if (!app_trust_data->init_policy_key(initialized_cert_size,
+                                       initialized_cert)) {
     printf("Can't init policy key\n");
     return 1;
   }
@@ -108,8 +108,7 @@ main(int an, char **av)
   if (!app_trust_data->initialize_simulated_enclave_data(
           attest_key_file_name,
           measurement_file_name,
-          attest_endorsement_file_name))
-  {
+          attest_endorsement_file_name)) {
     printf("Can't init simulated enclave\n");
     return 1;
   }
@@ -174,8 +173,9 @@ main(int an, char **av)
     return 0;
   }
 
-  if (!app_trust_data->recertify_me(FLAGS_policy_host, FLAGS_policy_port, true))
-  {
+  if (!app_trust_data->recertify_me(FLAGS_policy_host,
+                                    FLAGS_policy_port,
+                                    true)) {
     printf("recertify me failed\n");
     return 0;
   }

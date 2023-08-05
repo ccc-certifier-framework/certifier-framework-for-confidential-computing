@@ -192,8 +192,7 @@ simulated_Seal(const string &enclave_type,
                              sealing_key,
                              iv,
                              output,
-                             &real_output_size))
-  {
+                             &real_output_size)) {
     printf("simulated_Seal: authenticated encrypt failed\n");
     return false;
   }
@@ -229,8 +228,7 @@ simulated_Unseal(const string &enclave_type,
                              in_size,
                              (byte *)sealing_key,
                              output,
-                             &real_output_size))
-  {
+                             &real_output_size)) {
     printf("simulated_Unseal: authenticated decrypt failed\n");
     return false;
   }
@@ -238,8 +236,7 @@ simulated_Unseal(const string &enclave_type,
   if (memcmp((void *)output,
              (byte *)my_measurement.data(),
              (int)my_measurement.size())
-      != 0)
-  {
+      != 0) {
     printf("simulated_Unseal: measurement mismatch\n");
     return false;
   }
@@ -292,8 +289,7 @@ simulated_Attest(const string &enclave_type,
                    serialized_report_info,
                    signing_alg,
                    my_attestation_key,
-                   &serialized_signed_report))
-  {
+                   &serialized_signed_report)) {
     printf("simulated_Attest: Can't sign report\n");
     return false;
   }
@@ -327,8 +323,8 @@ simulated_Verify(string &serialized_signed_report)
     printf("simulated_Verify: Can't parse serialized_signed_report\n");
     return false;
   }
-  if (!sr.has_report_format() || sr.report_format() != "vse-attestation-report")
-  {
+  if (!sr.has_report_format()
+      || sr.report_format() != "vse-attestation-report") {
     printf("simulated_Verify: signed report malformed\n");
     return false;
   }

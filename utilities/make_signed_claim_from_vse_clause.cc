@@ -134,8 +134,7 @@ main(int an, char **av)
                   descriptor,
                   not_before,
                   not_after,
-                  &cm_out))
-  {
+                  &cm_out)) {
     printf("Can't make claim\n");
     return 1;
   }

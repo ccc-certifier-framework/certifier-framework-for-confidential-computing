@@ -289,8 +289,8 @@ remote_verify_quote(size_t   quote_size,
    */
   if (verification_result != SGX_QL_QV_RESULT_OK
       && verification_result != SGX_QL_QV_RESULT_OUT_OF_DATE_CONFIG_NEEDED
-      && verification_result != SGX_QL_QV_RESULT_CONFIG_AND_SW_HARDENING_NEEDED)
-  {
+      && verification_result
+             != SGX_QL_QV_RESULT_CONFIG_AND_SW_HARDENING_NEEDED) {
     printf("\nGramine acceptable verification failed: %d %s\n",
            verification_result,
            sgx_ql_qv_result_to_str(verification_result));
@@ -367,8 +367,7 @@ gramine_local_verify_impl(const int what_to_say_size,
   sgx_quote_t *quote_received = (sgx_quote_t *)quote;
 
   if (quote_expected->body.version != /*EPID*/ 2
-      && quote_received->body.version != /*DCAP*/ 3)
-  {
+      && quote_received->body.version != /*DCAP*/ 3) {
     printf("Version of SGX quote is not EPID (2) and not ECDSA/DCAP (3)\n");
     return false;
   }
@@ -454,8 +453,7 @@ gramine_remote_verify_impl(const int what_to_say_size,
                           (uint8_t *)quote_expected,
                           &mr_size,
                           mr)
-      != 0)
-  {
+      != 0) {
     printf("\nGramine begin verify quote with DCAP failed\n");
     return false;
   }

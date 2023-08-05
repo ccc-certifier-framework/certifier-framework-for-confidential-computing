@@ -148,8 +148,7 @@ test_authenticated_encrypt(bool print_all)
                              key,
                              iv,
                              cipher,
-                             &size_encrypt_out))
-  {
+                             &size_encrypt_out)) {
     printf("authenticated encrypt failed\n");
     return false;
   }
@@ -171,8 +170,7 @@ test_authenticated_encrypt(bool print_all)
                              size_encrypt_out,
                              key,
                              decrypted,
-                             &size_decrypt_out))
-  {
+                             &size_decrypt_out)) {
     printf("authenticated decrypt failed\n");
     return false;
   }
@@ -208,8 +206,7 @@ test_authenticated_encrypt(bool print_all)
                              key,
                              iv,
                              cipher,
-                             &size_encrypt_out))
-  {
+                             &size_encrypt_out)) {
     printf("authenticated encrypt failed\n");
     return false;
   }
@@ -231,8 +228,7 @@ test_authenticated_encrypt(bool print_all)
                              size_encrypt_out,
                              key,
                              decrypted,
-                             &size_decrypt_out))
-  {
+                             &size_decrypt_out)) {
     printf("authenticated decrypt failed\n");
     return false;
   }
@@ -261,8 +257,7 @@ test_authenticated_encrypt(bool print_all)
                              key,
                              iv,
                              cipher,
-                             &size_encrypt_out))
-  {
+                             &size_encrypt_out)) {
     printf("authenticated encrypt for aes-256-gcm failed\n");
     return false;
   }
@@ -283,8 +278,7 @@ test_authenticated_encrypt(bool print_all)
                              size_encrypt_out,
                              key,
                              decrypted,
-                             &size_decrypt_out))
-  {
+                             &size_decrypt_out)) {
     printf("authenticated decrypt for aes-256-gcm failed\n");
     return false;
   }
@@ -592,8 +586,7 @@ test_digest(bool print_all)
                       (const byte *)message,
                       msg_len,
                       digest,
-                      size_digest))
-  {
+                      size_digest)) {
     printf("failed 0 (%d)\n", size_digest);
     return false;
   }
@@ -620,8 +613,7 @@ test_digest(bool print_all)
                       (const byte *)message2,
                       msg_len,
                       digest,
-                      size_digest))
-  {
+                      size_digest)) {
     printf("failed 2 (%d)\n", size_digest);
     return false;
   }
@@ -648,8 +640,7 @@ test_digest(bool print_all)
                       (const byte *)message2,
                       msg_len,
                       digest,
-                      size_digest))
-  {
+                      size_digest)) {
     printf("failed 5 (%d)\n", size_digest);
     return false;
   }
@@ -675,8 +666,7 @@ test_digest(bool print_all)
                       (const byte *)message2,
                       msg_len,
                       digest,
-                      size_digest))
-  {
+                      size_digest)) {
     printf("failed 7 (%d)\n", size_digest);
     return false;
   }
@@ -727,8 +717,7 @@ test_sign_and_verify(bool print_all)
                        strlen(test_message),
                        (byte *)test_message,
                        &sig_size,
-                       sig))
-  {
+                       sig)) {
     printf("rsa_sha256_sign failed\n");
     return false;
   }
@@ -736,8 +725,7 @@ test_sign_and_verify(bool print_all)
                          strlen(test_message),
                          (byte *)test_message,
                          sig_size,
-                         sig))
-  {
+                         sig)) {
     printf("rsa_sha256_verify failed\n");
     return false;
   }

@@ -49,8 +49,7 @@ keystone_test(const int cert_size, byte *cert)
   if (!keystone_Unseal(size_sealed_secret,
                        sealed_secret,
                        &size_unsealed_secret,
-                       unsealed_secret))
-  {
+                       unsealed_secret)) {
     printf("keystone_Unseal() fails\n");
     return false;
   }
@@ -62,8 +61,7 @@ keystone_test(const int cert_size, byte *cert)
            size_secret);
     return false;
   } else if ((memcmp_rc = memcmp(secret, unsealed_secret, size_unsealed_secret))
-             != 0)
-  {
+             != 0) {
     printf("Sealed and unsealed secrets do not match, memcmp_rc=%d\n",
            memcmp_rc);
     return false;
@@ -83,8 +81,7 @@ keystone_test(const int cert_size, byte *cert)
   if (!keystone_Attest(size_what_to_say,
                        what_to_say,
                        &size_attestation,
-                       attestation))
-  {
+                       attestation)) {
     printf("keystone_Attest() fails\n");
     return false;
   }
@@ -93,8 +90,7 @@ keystone_test(const int cert_size, byte *cert)
                        size_attestation,
                        attestation,
                        &size_measurement,
-                       measurement))
-  {
+                       measurement)) {
     printf("keystone_Verify() fails\n");
     return false;
   }

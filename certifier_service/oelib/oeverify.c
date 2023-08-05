@@ -88,8 +88,7 @@ oe_host_verify_evidence(uint8_t *evidence,
     // Extract the custom claim buffer
     if ((claim =
              _find_claim(claims, claims_length, OE_CLAIM_CUSTOM_CLAIMS_BUFFER))
-        == NULL)
-    {
+        == NULL) {
       fprintf(stderr, "Could not find claim.\n");
       result = false;
       goto err;
@@ -99,8 +98,7 @@ oe_host_verify_evidence(uint8_t *evidence,
                                      claim->value_size,
                                      &custom_claims,
                                      &custom_claims_length)
-        != OE_OK)
-    {
+        != OE_OK) {
       fprintf(stderr, "oe_deserialize_custom_claims failed.\n");
       result = false;
       goto err;

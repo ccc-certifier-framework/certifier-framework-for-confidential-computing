@@ -87,8 +87,7 @@ test_x_509_chain(bool print_all)
                         1L,
                         150000.0,
                         cert1,
-                        true))
-  {
+                        true)) {
     return false;
   }
   if (print_all) {
@@ -107,8 +106,7 @@ test_x_509_chain(bool print_all)
                         1L,
                         150000.0,
                         cert2,
-                        false))
-  {
+                        false)) {
     return false;
   }
   if (print_all) {
@@ -127,8 +125,7 @@ test_x_509_chain(bool print_all)
                         1L,
                         150000.0,
                         cert3,
-                        false))
-  {
+                        false)) {
     return false;
   }
   if (print_all) {
@@ -294,8 +291,7 @@ test_x_509_sign(bool print_all)
                         1L,
                         150000.0,
                         cert1,
-                        true))
-  {
+                        true)) {
     return false;
   }
   if (print_all) {
@@ -712,8 +708,7 @@ test_sev_request(bool print_all)
               serialized_ud.size(),
               (byte *)serialized_ud.data(),
               &size_out,
-              out))
-  {
+              out)) {
     printf("Attest failed\n");
     return false;
   }
@@ -798,8 +793,7 @@ test_sev_request(bool print_all)
                   descriptor,
                   s_nb,
                   s_na,
-                  &cm1))
-  {
+                  &cm1)) {
     printf("serialize claim failed (1)\n");
     return false;
   }
@@ -808,8 +802,7 @@ test_sev_request(bool print_all)
   if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
                          cm1,
                          policy_private_key,
-                         scm1))
-  {
+                         scm1)) {
     printf("sign claim failed (3)\n");
     return false;
   }
@@ -845,8 +838,7 @@ test_sev_request(bool print_all)
                   descriptor,
                   s_nb,
                   s_na,
-                  &cm2))
-  {
+                  &cm2)) {
     printf("serialize claim failed (3)\n");
     return false;
   }
@@ -855,8 +847,7 @@ test_sev_request(bool print_all)
   if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
                          cm2,
                          policy_private_key,
-                         scm2))
-  {
+                         scm2)) {
     printf("sign claim failed (4)\n");
     return false;
   }
@@ -881,8 +872,7 @@ test_sev_request(bool print_all)
                          trusted_measurements,
                          purpose,
                          evp,
-                         policy_public_key))
-  {
+                         policy_public_key)) {
     printf("validate_evidence\n");
     return false;
   }

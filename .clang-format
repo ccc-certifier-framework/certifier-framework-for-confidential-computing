@@ -31,9 +31,7 @@ BraceWrapping:
   AfterCaseLabel:  true
   AfterClass:      false
 
-  # Multi-line if() and for() control statements will have their
-  # opening { come on a new line, for readability.
-  AfterControlStatement: MultiLine
+  AfterControlStatement: Never
   AfterEnum:       false
   AfterFunction:   true
   AfterObjCDeclaration: false

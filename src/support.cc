@@ -727,8 +727,7 @@ aes_256_cbc_sha256_decrypt(byte *in,
                key,
                in,
                out,
-               &plain_size))
-  {
+               &plain_size)) {
     printf("aes_256_cbc_sha256_decrypt: decrypt failed\n");
     return false;
   }
@@ -804,8 +803,7 @@ aes_256_cbc_sha384_decrypt(byte *in,
                key,
                in,
                out,
-               &plain_size))
-  {
+               &plain_size)) {
     printf("aes_256_cbc_sha384_decrypt: decrypt failed\n");
     return false;
   }
@@ -838,15 +836,18 @@ aes_256_gcm_encrypt(byte *in,
   }
 
   if (1
-      != EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr))
-  {
+      != EVP_EncryptInit_ex(ctx,
+                            EVP_aes_256_gcm(),
+                            nullptr,
+                            nullptr,
+                            nullptr)) {
     ret = false;
     goto done;
   }
 
   // set IV length
-  if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, blk_size, nullptr))
-  {
+  if (1
+      != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, blk_size, nullptr)) {
     ret = false;
     goto done;
   }
@@ -1169,8 +1170,7 @@ rsa_sign(const char *alg,
                            EVP_sha256(),
                            nullptr,
                            private_key)
-        <= 0)
-    {
+        <= 0) {
       printf("rsa_sign: EVP_DigestSignInit failed\n");
       return false;
     }
@@ -1190,8 +1190,7 @@ rsa_sign(const char *alg,
                            EVP_sha384(),
                            nullptr,
                            private_key)
-        <= 0)
-    {
+        <= 0) {
       printf("rsa_sign: EVP_DigestSignInit failed\n");
       return false;
     }
@@ -1386,8 +1385,8 @@ key_to_RSA(const key_message &k, RSA *r)
     return false;
   }
   const rsa_message &rsa_key_data = k.rsa_key();
-  if (!rsa_key_data.has_public_modulus() || !rsa_key_data.has_public_exponent())
-  {
+  if (!rsa_key_data.has_public_modulus()
+      || !rsa_key_data.has_public_exponent()) {
     print_key(k);
     return false;
   }
@@ -1744,8 +1743,7 @@ certifier::utilities::key_to_ECC(const key_message &k)
   if (k.key_type() == "ecc-384-private" || k.key_type() == "ecc-384-public") {
     ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
   } else if (k.key_type() == "ecc-256-private"
-             || k.key_type() == "ecc-256-public")
-  {
+             || k.key_type() == "ecc-256-public") {
     ecc_key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
   } else {
     printf("key_to_ECC: wrong type %s\n", k.key_type().c_str());
@@ -1798,8 +1796,8 @@ certifier::utilities::key_to_ECC(const key_message &k)
   if (ctx == nullptr) {
     return nullptr;
   }
-  if (EC_POINT_set_affine_coordinates_GFp(group, pt, p_pt_x, p_pt_y, ctx) != 1)
-  {
+  if (EC_POINT_set_affine_coordinates_GFp(group, pt, p_pt_x, p_pt_y, ctx)
+      != 1) {
     printf("key_to_ECC: can't set affine\n");
     return nullptr;
   }
@@ -2043,8 +2041,7 @@ same_key(const key_message &k1, const key_message &k2)
       || k1.key_type() == "rsa-3072-private"
       || k1.key_type() == "rsa-3072-public"
       || k1.key_type() == "rsa-4096-private"
-      || k1.key_type() == "rsa-4096-public")
-  {
+      || k1.key_type() == "rsa-4096-public") {
     string b1, b2;
     if (!k1.has_rsa_key() || !k2.has_rsa_key())
       return false;
@@ -2054,8 +2051,7 @@ same_key(const key_message &k1, const key_message &k2)
       return false;
     return true;
   } else if (k1.key_type() == "aes-256-cbc-hmac-sha256"
-             || k1.key_type() == "aes-256-cbc" || k1.key_type() == "aes-256")
-  {
+             || k1.key_type() == "aes-256-cbc" || k1.key_type() == "aes-256") {
     if (!k1.has_secret_key_bits())
       return false;
     if (k1.secret_key_bits().size() != k2.secret_key_bits().size())
@@ -2065,8 +2061,7 @@ same_key(const key_message &k1, const key_message &k2)
                    k1.secret_key_bits().size())
             == 0);
   } else if (k1.key_type() == "ecc-384-public"
-             || k1.key_type() == "ecc-384-private")
-  {
+             || k1.key_type() == "ecc-384-private") {
     const ecc_message &em1 = k1.ecc_key();
     const ecc_message &em2 = k2.ecc_key();
     if (em1.curve_p().size() != em2.curve_p().size()
@@ -2093,8 +2088,7 @@ same_key(const key_message &k1, const key_message &k2)
       return false;
     return true;
   } else if (k1.key_type() == "ecc-256-public"
-             || k1.key_type() == "ecc-256-private")
-  {
+             || k1.key_type() == "ecc-256-private") {
     const ecc_message &em1 = k1.ecc_key();
     const ecc_message &em2 = k2.ecc_key();
     if (em1.curve_p().size() != em2.curve_p().size()
@@ -2168,8 +2162,7 @@ satisfying_property(const property &p1, const property &p2)
   if (p1.comparator() == "=")
     return same_property(p1, p2);
   if (p1.comparator() != ">=" || p1.property_name() != p2.property_name()
-      || p1.value_type() != p2.value_type() || p1.value_type() != "int")
-  {
+      || p1.value_type() != p2.value_type() || p1.value_type() != "int") {
     return false;
   }
   return p2.int_value() >= p1.int_value();
@@ -2543,8 +2536,7 @@ print_key_descriptor(const key_message &k)
       || k.key_type() == "rsa-3072-private" || k.key_type() == "rsa-3072-public"
       || k.key_type() == "rsa-1024-private" || k.key_type() == "rsa-1024-public"
       || k.key_type() == "rsa-4096-private"
-      || k.key_type() == "rsa-4096-public")
-  {
+      || k.key_type() == "rsa-4096-public") {
     printf("Key[rsa, ");
     if (k.has_key_name()) {
       printf("%s, ", k.key_name().c_str());
@@ -2561,8 +2553,7 @@ print_key_descriptor(const key_message &k)
   } else if (k.key_type() == "ecc-384-private"
              || k.key_type() == "ecc-384-public"
              || k.key_type() == "ecc-256-private"
-             || k.key_type() == "ecc-256-public")
-  {
+             || k.key_type() == "ecc-256-public") {
     printf("Key[ecc, ");
     if (k.has_key_name()) {
       printf("%s, ", k.key_name().c_str());
@@ -2936,8 +2927,8 @@ verify_signed_claim(const signed_claim_message &signed_claim,
     printf("verify_signed_claim: not claim format\n");
     return false;
   }
-  if (c.claim_format() != "vse-clause" && c.claim_format() != "vse-attestation")
-  {
+  if (c.claim_format() != "vse-clause"
+      && c.claim_format() != "vse-attestation") {
     printf("verify_signed_claim: %s should be vse-clause or vse-attestation\n",
            c.claim_format().c_str());
     return false;
@@ -3250,8 +3241,7 @@ certifier::utilities::produce_artifact(key_message &signing_key,
   if (signing_key.key_type() == "rsa-1024-private"
       || signing_key.key_type() == "rsa-2048-private"
       || signing_key.key_type() == "rsa-3072-private"
-      || signing_key.key_type() == "rsa-4096-private")
-  {
+      || signing_key.key_type() == "rsa-4096-private") {
     RSA *signing_rsa_key = RSA_new();
     if (!key_to_RSA(signing_key, signing_rsa_key)) {
       printf("produce_artifact: can't get rsa signing key\n");
@@ -3268,8 +3258,7 @@ certifier::utilities::produce_artifact(key_message &signing_key,
         || subject_key.key_type() == "rsa-1024-private"
         || subject_key.key_type() == "rsa-2048-private"
         || subject_key.key_type() == "rsa-3072-private"
-        || subject_key.key_type() == "rsa-4096-private")
-    {
+        || subject_key.key_type() == "rsa-4096-private") {
       RSA *subject_rsa_key = RSA_new();
       if (!key_to_RSA(subject_key, subject_rsa_key)) {
         printf("produce_artifact: can't get rsa subject key\n");
@@ -3281,8 +3270,7 @@ certifier::utilities::produce_artifact(key_message &signing_key,
     } else if (subject_key.key_type() == "ecc-384-public"
                || subject_key.key_type() == "ecc-384-private"
                || subject_key.key_type() == "ecc-256-public"
-               || subject_key.key_type() == "ecc-256-private")
-    {
+               || subject_key.key_type() == "ecc-256-private") {
       EC_KEY *subject_ecc_key = key_to_ECC(subject_key);
       if (subject_ecc_key == nullptr) {
         printf("produce_artifact: can't get subject key\n");
@@ -3297,8 +3285,7 @@ certifier::utilities::produce_artifact(key_message &signing_key,
       return false;
     }
     if (signing_key.key_type() == "rsa-4096-private"
-        || signing_key.key_type() == "ecc-384-private")
-    {
+        || signing_key.key_type() == "ecc-384-private") {
       X509_sign(x509, signing_pkey, EVP_sha384());
     } else {
       X509_sign(x509, signing_pkey, EVP_sha256());
@@ -3307,8 +3294,7 @@ certifier::utilities::produce_artifact(key_message &signing_key,
     EVP_PKEY_free(subject_pkey);
     RSA_free(signing_rsa_key);
   } else if (signing_key.key_type() == "ecc-384-private"
-             || signing_key.key_type() == "ecc-256-private")
-  {
+             || signing_key.key_type() == "ecc-256-private") {
     EC_KEY *signing_ecc_key = key_to_ECC(signing_key);
     if (signing_ecc_key == nullptr) {
       printf("produce_artifact: can't get signing key\n");
@@ -3326,8 +3312,7 @@ certifier::utilities::produce_artifact(key_message &signing_key,
         || subject_key.key_type() == "rsa-1024-private"
         || subject_key.key_type() == "rsa-2048-private"
         || subject_key.key_type() == "rsa-3072-private"
-        || subject_key.key_type() == "rsa-4096-private")
-    {
+        || subject_key.key_type() == "rsa-4096-private") {
       RSA *subject_rsa_key = RSA_new();
       if (!key_to_RSA(subject_key, subject_rsa_key)) {
         printf("produce_artifact: can't get rsa subject key\n");
@@ -3339,8 +3324,7 @@ certifier::utilities::produce_artifact(key_message &signing_key,
     } else if (subject_key.key_type() == "ecc-384-public"
                || subject_key.key_type() == "ecc-384-private"
                || subject_key.key_type() == "ecc-256-public"
-               || subject_key.key_type() == "ecc-256-private")
-    {
+               || subject_key.key_type() == "ecc-256-private") {
       EC_KEY *subject_ecc_key = key_to_ECC(subject_key);
       if (subject_ecc_key == nullptr) {
         printf("produce_artifact: can't get subject key\n");
@@ -3388,8 +3372,7 @@ certifier::utilities::verify_artifact(X509 &       cert,
       || verify_key.key_type() == "rsa-3072-public"
       || verify_key.key_type() == "rsa-3072-private"
       || verify_key.key_type() == "rsa-4096-public"
-      || verify_key.key_type() == "rsa-4096-private")
-  {
+      || verify_key.key_type() == "rsa-4096-private") {
     EVP_PKEY *verify_pkey = EVP_PKEY_new();
     RSA *     verify_rsa_key = RSA_new();
     if (!key_to_RSA(verify_key, verify_rsa_key))
@@ -3409,8 +3392,7 @@ certifier::utilities::verify_artifact(X509 &       cert,
   } else if (verify_key.key_type() == "ecc-384-public"
              || verify_key.key_type() == "ecc-384-private"
              || verify_key.key_type() == "ecc-256-public"
-             || verify_key.key_type() == "ecc-256-private")
-  {
+             || verify_key.key_type() == "ecc-256-private") {
     EVP_PKEY *verify_pkey = EVP_PKEY_new();
     EC_KEY *  verify_ecc_key = key_to_ECC(verify_key);
     if (verify_ecc_key == nullptr)
@@ -3704,8 +3686,7 @@ get_issuer_key(X509 *x, cert_keys_seen_list &list)
   char       name_buf[max_buf];
   X509_NAME *issuer_name = X509_get_issuer_name(x);
   if (X509_NAME_get_text_by_NID(issuer_name, NID_commonName, name_buf, max_buf)
-      < 0)
-  {
+      < 0) {
     printf("get_issuer_key: Can't get name from NID\n");
     return nullptr;
   }
@@ -3723,8 +3704,7 @@ pkey_from_key(const key_message &k)
       || k.key_type() == "rsa-3072-public" || k.key_type() == "rsa-3072-private"
       || k.key_type() == "rsa-2048-public" || k.key_type() == "rsa-2048-private"
       || k.key_type() == "rsa-4096-public"
-      || k.key_type() == "rsa-4096-private")
-  {
+      || k.key_type() == "rsa-4096-private") {
     RSA *rsa_key = RSA_new();
     if (!key_to_RSA(k, rsa_key)) {
       printf("pkey_from_key: Can't translate key to RSA key\n");
@@ -3740,8 +3720,7 @@ pkey_from_key(const key_message &k)
   } else if (k.key_type() == "ecc-384-public"
              || k.key_type() == "ecc-384-private"
              || k.key_type() == "ecc-256-public"
-             || k.key_type() == "ecc-256-private")
-  {
+             || k.key_type() == "ecc-256-private") {
     EC_KEY *ecc_key = key_to_ECC(k);
     if (ecc_key == nullptr) {
       EVP_PKEY_free(pkey);
@@ -3815,8 +3794,7 @@ x509_to_public_key(X509 *x, key_message *k)
   char       name_buf[max_buf];
   memset(name_buf, 0, max_buf);
   if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, name_buf, max_buf)
-      < 0)
-  {
+      < 0) {
     printf("x509_to_public_key: can't get subject_name\n");
     return false;
   }
@@ -3835,8 +3813,7 @@ certifier::utilities::make_root_key_with_cert(string &     type,
   string root_name("root");
 
   if (type == "rsa-4096-private" || type == "rsa-2048-private"
-      || type == "rsa-3072-private" || type == "rsa-1024-private")
-  {
+      || type == "rsa-3072-private" || type == "rsa-1024-private") {
     int n = 2048;
     if (type == "rsa-2048-private")
       n = 2048;
@@ -3865,8 +3842,7 @@ certifier::utilities::make_root_key_with_cert(string &     type,
                           01L,
                           duration,
                           cert,
-                          true))
-    {
+                          true)) {
       return false;
     }
     string cert_asn;
@@ -3893,8 +3869,7 @@ certifier::utilities::make_root_key_with_cert(string &     type,
                           01L,
                           duration,
                           cert,
-                          true))
-    {
+                          true)) {
       return false;
     }
     string cert_asn;
@@ -3921,8 +3896,7 @@ certifier::utilities::make_root_key_with_cert(string &     type,
                           01L,
                           duration,
                           cert,
-                          true))
-    {
+                          true)) {
       return false;
     }
     string cert_asn;

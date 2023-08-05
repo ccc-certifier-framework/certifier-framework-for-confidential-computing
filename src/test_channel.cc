@@ -112,8 +112,7 @@ run_me_as_client(const string &host_name,
                                port,
                                asn1_policy_cert,
                                private_key,
-                               private_key_cert))
-  {
+                               private_key_cert)) {
     printf("Can't init client app\n");
     return false;
   }
@@ -144,8 +143,7 @@ make_admissions_cert(const string &role,
                         23,
                         365.26 * 86400.0,
                         x509_cert,
-                        false))
-  {
+                        false)) {
     return false;
   }
   if (!x509_to_asn1(x509_cert, out)) {
@@ -244,8 +242,10 @@ main(int an, char **av)
 
   // make admissions cert
   string auth_cert;
-  if (!make_admissions_cert(FLAGS_operation, policy_key, auth_key, &auth_cert))
-  {
+  if (!make_admissions_cert(FLAGS_operation,
+                            policy_key,
+                            auth_key,
+                            &auth_cert)) {
     printf("Can't make admissions cert\n");
     return 1;
   }
@@ -267,8 +267,7 @@ main(int an, char **av)
                           FLAGS_app_port,
                           str_policy_cert,
                           auth_key,
-                          auth_cert))
-    {
+                          auth_cert)) {
       printf("run-me-as-client failed\n");
       return 1;
     }
@@ -277,8 +276,7 @@ main(int an, char **av)
                           FLAGS_app_port,
                           str_policy_cert,
                           auth_key,
-                          auth_cert))
-    {
+                          auth_cert)) {
       printf("server failed\n");
       return 1;
     }

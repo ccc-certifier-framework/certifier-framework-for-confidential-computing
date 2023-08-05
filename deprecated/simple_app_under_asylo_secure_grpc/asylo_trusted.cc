@@ -173,8 +173,7 @@ asylo_local_certify()
   if (!test_local_certify(enclave_type,
                           FLAGS_read_measurement_file,
                           FLAGS_trusted_measurements_file,
-                          evidence_descriptor))
-  {
+                          evidence_descriptor)) {
     printf("test_local_certify failed\n");
     return false;
   }
@@ -232,8 +231,8 @@ certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert_size, initialized_cert))
-  {
+  if (!app_trust_data->init_policy_key(initialized_cert_size,
+                                       initialized_cert)) {
     printf("Can't init policy key\n");
     return false;
   }
@@ -251,8 +250,7 @@ certifier_init(char *usr_data_dir, size_t usr_data_dir_size)
   if (!app_trust_data->initialize_simulated_enclave_data(
           attest_key_file_name,
           measurement_file_name,
-          attest_endorsement_file_name))
-  {
+          attest_endorsement_file_name)) {
     printf("Can't init simulated enclave\n");
     return false;
   }
@@ -275,8 +273,7 @@ cold_init()
   if (!app_trust_data->cold_init(public_key_alg,
                                  symmetric_key_alg,
                                  hash_alg,
-                                 hmac_alg))
-  {
+                                 hmac_alg)) {
     printf("cold-init failed\n");
     return false;
   }
@@ -385,8 +382,7 @@ asylo_server_dispatch(const string &host_name,
                             port,
                             asn1_root_cert,
                             private_key,
-                            private_key_cert))
-    {
+                            private_key_cert)) {
       continue;
     }
     nc.ssl_ = SSL_new(ctx);
@@ -450,19 +446,18 @@ setup_client_ssl()
 
   printf("running as client\n");
   if (!app_trust_data->cc_auth_key_initialized_
-      || !app_trust_data->cc_policy_info_initialized_)
-  {
+      || !app_trust_data->cc_policy_info_initialized_) {
     printf("trust data not initialized\n");
     ret = 1;
     goto done;
   }
 
-  if (!channel.init_client_ssl(FLAGS_server_app_host,
-                               FLAGS_server_app_port,
-                               app_trust_data->serialized_policy_cert_,
-                               app_trust_data->private_auth_key_,
-                               app_trust_data->private_auth_key_.certificate()))
-  {
+  if (!channel.init_client_ssl(
+          FLAGS_server_app_host,
+          FLAGS_server_app_port,
+          app_trust_data->serialized_policy_cert_,
+          app_trust_data->private_auth_key_,
+          app_trust_data->private_auth_key_.certificate())) {
     printf("Can't init client app\n");
     ret = 1;
     goto done;
