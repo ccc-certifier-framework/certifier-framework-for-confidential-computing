@@ -54,6 +54,68 @@ def test_getmembers_of_cc_framework():
         print(' -', item[0], item[1])
 
 # ##############################################################################
+def test_cf_cc_trust_data_default_ctor():
+    """
+    Basic exerciser for an empty cc_trust_data() object.
+    """
+    cctd = libcf.new_cc_trust_data()
+    result = libcf.cc_trust_data_cc_all_initialized(cctd)
+    assert result is False
+
+    libcf.delete_cc_trust_data(cctd)
+
+# ##############################################################################
+def test_cf_cc_trust_data():
+    """
+    Instantiate a cc_trust_data() object with some arguments.
+    """
+    cctd = libcf.new_cc_trust_data('simulated-enclave', 'authentication', 'policy_store')
+
+    result = libcf.cc_trust_data_cc_all_initialized(cctd)
+    assert result is False
+
+    libcf.delete_cc_trust_data(cctd)
+
+# ##############################################################################
+def test_cf_cc_trust_data_add_or_update_new_domain():
+    """
+    Exercise add_or_update_new_domain(), which will create a new certified_domain()
+    object. Dismantiling this cc_trust_data() will test the destructor of that
+    object which should correctly release memory for new certified-domains.
+    """
+    cctd = libcf.new_cc_trust_data()
+
+    result = libcf.cc_trust_data_add_or_update_new_domain(cctd,
+                                                          'test-security-domain',
+                                                          'test-dummy-certificate',
+                                                          'localhost', 8121,
+                                                          'localhost', 8123)
+    assert result is True
+
+    libcf.delete_cc_trust_data(cctd)
+
+# ##############################################################################
+def test_cf_cc_trust_data_certify_secondary_domain_not_found():
+    """
+    Exercise certify_secondary_domain(). (Verifies fix to handle a secondary
+    domain that is not found; leading to null domain ptr.)
+    """
+    cctd = libcf.new_cc_trust_data()
+
+    result = libcf.cc_trust_data_add_or_update_new_domain(cctd,
+                                                          'test-security-domain',
+                                                          'test-dummy-certificate',
+                                                          'localhost', 8121,
+                                                          'localhost', 8123)
+    assert result is True
+
+    result = libcf.cc_trust_data_certify_secondary_domain(cctd,
+                                                          'non-existent-secondary-domain')
+    assert result is False
+
+    libcf.delete_cc_trust_data(cctd)
+
+# ##############################################################################
 def test_cf_policy_store_basic():
     """
     This test case shows ways to exercise basic interfaces in Py-bindings.

@@ -82,16 +82,22 @@ extern string gramine_platform_cert;
 
 certifier::framework::cc_trust_data::cc_trust_data(const string& enclave_type, const string& purpose,
     const string& policy_store_name) {
-
+  cc_trust_data_default_init();
   if (purpose == "authentication" || purpose == "attestation") {
     purpose_= purpose;
     cc_basic_data_initialized_ = true;
-  } else {
-    cc_basic_data_initialized_ = false;
-    purpose_ = "unknown";
   }
   enclave_type_ = enclave_type;
   store_file_name_ = policy_store_name;
+}
+
+certifier::framework::cc_trust_data::cc_trust_data() {
+  cc_trust_data_default_init();
+}
+
+void certifier::framework::cc_trust_data::cc_trust_data_default_init() {
+  cc_basic_data_initialized_ = false;
+  purpose_ = "unknown";
   cc_policy_info_initialized_= false;
   cc_policy_store_initialized_ = false;
   cc_service_key_initialized_ = false;
@@ -110,18 +116,7 @@ certifier::framework::cc_trust_data::cc_trust_data(const string& enclave_type, c
   }
 }
 
-certifier::framework::cc_trust_data::cc_trust_data() {
-  cc_basic_data_initialized_ = false;
-  cc_policy_info_initialized_= false;
-  cc_policy_store_initialized_ = false;
-  cc_service_key_initialized_ = false;
-  cc_service_cert_initialized_ = false;
-  cc_service_platform_rule_initialized_ = false;
-  cc_sealing_key_initialized_ = false;
-  cc_provider_provisioned_ = false;
-  x509_policy_cert_ = nullptr;
-  cc_is_certified_ = false;
-
+certifier::framework::cc_trust_data::~cc_trust_data() {
   for (int i = 0; i < num_certified_domains_; i++) {
       if (certified_domains_[i] != nullptr) {
         delete certified_domains_[i];
@@ -131,9 +126,6 @@ certifier::framework::cc_trust_data::cc_trust_data() {
   delete certified_domains_;
   certified_domains_ = nullptr;
   num_certified_domains_ = 0;
-}
-
-certifier::framework::cc_trust_data::~cc_trust_data() {
 }
 
 bool certifier::framework::cc_trust_data::cc_all_initialized() {
@@ -1264,7 +1256,7 @@ bool certifier::framework::cc_trust_data::certify_secondary_domain(const string&
     }
   }
 
-  return found->certify_domain();
+  return (found ? found->certify_domain() : false);
 }
 
 bool certifier::framework::cc_trust_data::init_peer_certification_data(const string& public_key_alg) {
