@@ -123,7 +123,9 @@ bool simulated_Init(const string &asn1_policy_cert,
   }
   serialized_attest_claim.assign((char *)a_buf, a_size);
   if (!my_attest_claim.ParseFromString(serialized_attest_claim)) {
-    printf("simulated_Init: Can't parse attest claim\n");
+    printf("simulated_Init: Can't parse attest claim from "
+           "attest_key_signed_claim_file: '%s'\n",
+           attest_key_signed_claim_file.c_str());
     return false;
   }
 
