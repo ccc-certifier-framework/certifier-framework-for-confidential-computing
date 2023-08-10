@@ -56,6 +56,7 @@ LINK=g++
 # Point this to the right place, if you have to, based on your machine's install:
 # PROTO=/usr/local/bin/protoc
 PROTO=protoc
+# PROTO=/home/agurajada/install/bin/protoc
 AR=ar
 LL = ls -aFlrt
 
@@ -72,6 +73,7 @@ PY_INCLUDE = -I /usr/include/python3.10/
 
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+# LDFLAGS= -L /home/agurajada/install/lib -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
 # ----------------------------------------------------------------------
 # Define list of objects for common case which will be extended for
@@ -126,7 +128,8 @@ $(S)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --cpp_out=$(@D) --proto_path $(<D) $<
 	mv $(S)/certifier.pb.h $(I)
 	@echo "\nGenerate python interface bindings from proto file $<"
-	$(PROTO) --python_out=$(CERTIFIER_ROOT) --pyi_out=$(CERTIFIER_ROOT) --proto_path $(<D) $<
+	# $(PROTO) --python_out=$(CERTIFIER_ROOT) --pyi_out=$(CERTIFIER_ROOT) --proto_path $(<D) $<
+	$(PROTO) --python_out=$(CERTIFIER_ROOT) --proto_path $(<D) $<
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifier.h $(S)/test_support.cc

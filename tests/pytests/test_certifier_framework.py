@@ -33,7 +33,11 @@ generated Python module.
 import os
 import certifier_framework as cfm
 
-CertPyTestsDir    = os.path.dirname(os.path.realpath(__file__))
+CertPyTestsDir       = os.path.dirname(os.path.realpath(__file__))
+CERT_CLIENT_HOST     = 'localhost'
+CERT_CLIENT_APP_PORT = 8123
+CERT_SERVER_HOST     = 'localhost'
+CERT_SERVER_APP_PORT = 8124
 
 # faulthandler.enable()
 
@@ -296,7 +300,7 @@ def test_cc_trust_data():
     assert cctd.cold_init(public_key_alg, symmetric_key_alg,
                           b'fake-asn1_certificate', # passed as byte-stream
                           "Home-domain-name", "home-host-name",
-                          8121, "service-host", 8123) is False
+                          8121, "service-host", CERT_CLIENT_APP_PORT) is False
 
     asn1_cert = 'some-asn1-certificate-junk-test-string'.encode()
     assert cctd.init_policy_key(asn1_cert) is False
@@ -322,9 +326,65 @@ def test_cc_trust_data_simulated_enclave():
     # initialized
     public_key_alg = "rsa-2048"
     symmetric_key_alg = "aes-256-cbc-hmac-sha256"
-    assert cctd.cold_init(public_key_alg, symmetric_key_alg, cert_bin,
-                          "test-app-home_domain",
-                          'localhost', 8123, 'localhost', 8124) is True
+    result = cctd.cold_init(public_key_alg, symmetric_key_alg, cert_bin,
+                            'test-app-home_domain',
+                            CERT_CLIENT_HOST, CERT_CLIENT_APP_PORT,
+                            CERT_SERVER_HOST, CERT_SERVER_APP_PORT)
+
+    assert result is True
+
+# ##############################################################################
+def test_cc_trust_data_get_certifier():
+    """
+    Exercise the steps up through "get-certifier" for a simulated enclave:
+      - Initialize a new trust data object
+      - Initialize policy key, using hard-coded certificates (for testing)
+      - initialize_simulated_enclave_data()
+      - cold_init()
+      - get-certifier(): warm_restart(), certify_me()
+    """
+    cctd = cfm.cc_trust_data('simulated-enclave', 'authentication',
+                             CertPyTestsDir + '/data/policy_store')
+    assert cctd.cc_all_initialized() is False
+
+    # Open the Certificate binary file for reading
+    cert_file_bin = '/data/policy_cert_file.bin'
+    with open(CertPyTestsDir + cert_file_bin, 'rb') as cert_file:
+        cert_bin = cert_file.read()
+
+    result = cctd.init_policy_key(cert_bin)
+    assert result is True
+    print(' ... cctd.init_policy_key() succeeded.')
+
+    # Open hard-coded key / platform endorsement & app-measurement files
+    attest_key_file_bin             = CertPyTestsDir + '/data/attest_key_file.bin'
+    platform_attest_endorsement_bin = CertPyTestsDir + '/data/platform_attest_endorsement.bin'
+    example_app_measurement         = CertPyTestsDir + '/data/example_app.measurement'
+
+    result = cctd.initialize_simulated_enclave_data(attest_key_file_bin,
+                                                    example_app_measurement,
+                                                    platform_attest_endorsement_bin)
+    assert result is True
+    print(' ... cctd.initialize_simulated_enclave_data() succeeded.')
+
+    # Should succeed with valid key algorithm names, after policy key has been
+    # initialized
+    public_key_alg    = "rsa-2048"
+    symmetric_key_alg = "aes-256-cbc-hmac-sha256"
+    result = cctd.cold_init(public_key_alg, symmetric_key_alg, cert_bin,
+                            'test-app-home_domain',
+                            CERT_CLIENT_HOST, CERT_CLIENT_APP_PORT,
+                            CERT_SERVER_HOST, CERT_SERVER_APP_PORT)
+    assert result is True
+    print(' ... cctd.cold_init() succeeded.')
+
+    result = cctd.warm_restart()
+    assert result is True
+    print(' ... cctd.warm_restart() succeeded.')
+
+    result = cctd.certify_me()
+    assert result is True
+    print(' ... cctd.certify_me() succeeded.')
 
 # ##############################################################################
 def test_cc_trust_data_add_or_update_new_domain():
@@ -336,8 +396,8 @@ def test_cc_trust_data_add_or_update_new_domain():
 
     result = cctd.add_or_update_new_domain('test-app-home_domain',
                                            'sample-certificate-but-works',
-                                           'localhost', 8123,
-                                           'localhost', 8124)
+                                           CERT_CLIENT_HOST, CERT_CLIENT_APP_PORT,
+                                           CERT_SERVER_HOST, CERT_SERVER_APP_PORT)
     assert result is True
 
 # ##############################################################################
@@ -355,8 +415,8 @@ def test_cc_trust_data_certify_secondary_domain():
     new_domain = 'test-app-home_domain'
     result = cctd.add_or_update_new_domain(new_domain,
                                            'sample-certificate-but-works',
-                                           'localhost', 8123,
-                                           'localhost', 8124)
+                                           CERT_CLIENT_HOST, CERT_CLIENT_APP_PORT,
+                                           CERT_SERVER_HOST, CERT_SERVER_APP_PORT)
     assert result is True
 
     # Now, domain is newly added; but certification should fail.
@@ -373,8 +433,8 @@ def test_certifiers_init_certifiers_data():
 
     result = cc_cert.init_certifiers_data('test-app-home_domain',
                                      'sample-certificate-but-works',
-                                     'localhost', 8123,
-                                     'localhost', 8124)
+                                     CERT_CLIENT_HOST, CERT_CLIENT_APP_PORT,
+                                     CERT_SERVER_HOST, CERT_SERVER_APP_PORT)
     assert result is True
 
     result = cc_cert.get_certified_status()
