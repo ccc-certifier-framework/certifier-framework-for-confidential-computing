@@ -23,7 +23,7 @@ from inspect import getmembers, isclass, isfunction, ismethod, ismodule
 
 # To resolve references to module and protobuf-python interface issues, run as:
 # PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python PYTHONPATH=../.. pytest <filename>.py
-import certifier_pb2.pyi as cert_pbi
+import certifier_pb2 as cert_pbi
 
 # ##############################################################################
 # To see output, run: pytest --capture=tee-sys -v
@@ -81,6 +81,24 @@ def test_certifier_pb2_describe_key_message():
     print('\nMethods in protobuf-generated class, key_message:')
     for func in get_functions(cert_pbi.key_message):
         print(' -', func)
+
+    # key_name: str
+    # key_type: str
+    # key_format: str
+    # rsa_key: rsa_message
+    # ecc_key: ecc_message
+    # secret_key_bits: bytes
+    # certificate: bytes
+    # other_key_formats: bytes
+    # not_before: str
+    # not_after: str
+    # snp_tcb_version: int
+    # snp_chipid: bytes
+
+    key_msg.key_name = 'test-key-name'
+    key_msg.key_type = 'test-key-type'
+    print( )
+    print(key_msg)
 
 # ##############################################################################
 def test_certifier_pb2_describe_vse_clause():

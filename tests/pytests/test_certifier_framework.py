@@ -347,6 +347,14 @@ def test_cc_trust_data_get_certifier():
                              CertPyTestsDir + '/data/policy_store')
     assert cctd.cc_all_initialized() is False
 
+    result = cc_trust_data_get_certifier(cctd)
+    assert result is True
+
+# ##############################################################################
+# Work-horse function: Implements the steps taken with cc_trust_data() object.
+# ##############################################################################
+def cc_trust_data_get_certifier(cctd):
+
     # Open the Certificate binary file for reading
     cert_file_bin = '/data/policy_cert_file.bin'
     with open(CertPyTestsDir + cert_file_bin, 'rb') as cert_file:
@@ -385,6 +393,61 @@ def test_cc_trust_data_get_certifier():
     result = cctd.certify_me()
     assert result is True
     print(' ... cctd.certify_me() succeeded.')
+    return result
+
+# ##############################################################################
+def test_run_app_as_a_client_init_client_ssl():
+    """
+    Exercise the steps up through "run-app-as-client". This subsumes the setup
+    stuff done in test_cc_trust_data_get_certifier(), followed by:
+      - Setting up secure_authenticated_channel channel
+      - channel.init_client_ssl()
+    """
+    cctd = cfm.cc_trust_data('simulated-enclave', 'authentication',
+                             CertPyTestsDir + '/data/policy_store')
+    assert cctd.cc_all_initialized() is False
+
+    result = cc_trust_data_get_certifier(cctd)
+    assert result is True
+
+    my_role = 'client'
+    channel = cfm.secure_authenticated_channel(my_role);
+    print(' ... Secure channel instantiated.')
+    assert channel.role_ == my_role
+
+    result = cctd.warm_restart()
+    assert result is True
+    print(' ... cctd.warm_restart() succeeded.')
+
+    result = cctd.cc_auth_key_initialized_ and cctd.cc_policy_info_initialized_
+    assert result is True
+    print(' ... cctd.trust data is initialized.')
+
+    result = cctd.primary_admissions_cert_valid_
+    assert result is True
+    print(' ... cctd.primary admissions cert is valid.')
+
+    # if (!channel.init_client_ssl(
+    #         FLAGS_server_app_host,
+    #         FLAGS_server_app_port,
+    #         app_trust_data->serialized_policy_cert_,
+    #         app_trust_data->private_auth_key_,
+    #         app_trust_data->serialized_primary_admissions_cert_)) {
+
+    serialized_policy_cert = cctd.serialized_policy_cert_
+    # result = channel.init_client_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
+    #                                  # Tried variations: serialized_policy_cert,
+    #                                  cctd.serialized_policy_cert_,
+    #                                  cctd.private_auth_key_,
+    #                                  cctd.serialized_primary_admissions_cert_)
+    # cctd.serialized_policy_cert_, 
+    result = channel.init_client_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
+                                     # Tried variations: serialized_policy_cert,
+                                     # cctd.serialized_policy_cert_,
+                                     cctd.serialized_policy_cert_,
+                                     cctd.private_auth_key_,
+                                     cctd.serialized_primary_admissions_cert_)
+    assert result is False
 
 # ##############################################################################
 def test_cc_trust_data_add_or_update_new_domain():
