@@ -39,7 +39,7 @@ CL=..
 
 INCLUDE = -I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I $(S)/gramine
 
-CFLAGS_COMMON = $(INCLUDE) -g -std=c++11 -D X64 -Wall -Wno-unused-variable -Wno-deprecated-declarations
+CFLAGS_COMMON = $(INCLUDE) -g -std=c++17 -D X64 -Wall -Wno-unused-variable -Wno-deprecated-declarations
 
 CFLAGS  = $(CFLAGS_COMMON) -O3
 
