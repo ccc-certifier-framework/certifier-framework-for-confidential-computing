@@ -39,7 +39,7 @@ CL=..
 INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
 
 # Need to use C++17; otherwise runs into: string_view.h:52:21: note: 'std::string_view' is only available from C++17 onwards
-CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 
 CFLAGS  = $(CFLAGS_COMMON) -O3
 CFLAGS_PIC =
@@ -69,10 +69,15 @@ SWIG_FLAGS = -Wallkw
 # Base of Certifier Framework's interface file for use by SWIG
 SWIG_CERT_INTERFACE = certifier_framework
 
+# Base of SWIG-Pytest's interface file for use by SWIG
+SWIG_PYTEST_INTERFACE = swigpytest
+
 PY_INCLUDE = -I /usr/include/python3.10/
 
 #export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB)
+
 # LDFLAGS= -L /home/agurajada/install/lib -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
 # ----------------------------------------------------------------------
@@ -90,11 +95,17 @@ endif
 # Objs needed to build Certifer Framework shared lib for use by Python module
 cfsl_dobj := $(dobj) $(O)/$(SWIG_CERT_INTERFACE)_wrap.o
 
+# Objs needed to build SWIG Pytest shared lib for use by Python pytest module
+swig_pytest_dobjs := $(O)/$(SWIG_PYTEST_INTERFACE).o $(O)/$(SWIG_PYTEST_INTERFACE)_wrap.o
+
 CERTIFIER_LIB = certifier.a
 
 LIBCERTIFIER         = lib$(SWIG_CERT_INTERFACE)
 LIBCERTIFIER_PB      = lib$(SWIG_CERT_PB_INTERFACE)
 CERTIFIER_SHARED_LIB = $(LIBCERTIFIER).so
+
+LIBSWIGPYTEST        = lib$(SWIG_PYTEST_INTERFACE)
+SWIGPYTEST_SHARED_LIB = lib$(SWIG_PYTEST_INTERFACE).so
 
 all:	$(CL)/$(CERTIFIER_LIB)
 
@@ -102,6 +113,7 @@ all:	$(CL)/$(CERTIFIER_LIB)
 # Separate target provided to build the shared library which requires
 # rebuilding all objects with CFLAGS_PIC = -fpic flag.
 sharedlib:	$(CL)/$(CERTIFIER_SHARED_LIB)
+swigpytestsharedlib: $(CL)/$(SWIGPYTEST_SHARED_LIB)
 
 clean:
 	@echo "removing generated files"
@@ -121,6 +133,11 @@ sharedlib: CFLAGS_PIC = -fpic
 $(CL)/$(CERTIFIER_SHARED_LIB): $(cfsl_dobj)
 	@echo "\nLinking certifier shared library $@"
 	$(LINK) -shared $(cfsl_dobj) -o $@ $(LDFLAGS)
+
+swigpytestsharedlib: CFLAGS_PIC = -fpic
+$(CL)/$(SWIGPYTEST_SHARED_LIB): $(swig_pytest_dobjs)
+	@echo "\nLinking SWIG-Pytest shared library $@"
+	$(LINK) -shared $(swig_pytest_dobjs) -o $@ $(LDFLAGS_SWIGPYTEST)
 
 $(I)/certifier.pb.h: $(S)/certifier.pb.cc
 $(S)/certifier.pb.cc: $(CP)/certifier.proto
@@ -147,6 +164,7 @@ $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 # Ref: https://stackoverflow.com/questions/12369131/swig-and-python3-surplus-underscore
 # Use -interface arg to overcome double __ issue in generated SWIG_init #define
 #     -outdir specifies output-dir for generated *.py file.
+# Debugging flags: -debug-tmsearch -debug-tmused
 $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc: $(I)/$(SWIG_CERT_INTERFACE).i $(S)/certifier.cc
 	@echo "\nGenerating $@"
 	$(SWIG) $(SWIG_FLAGS) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
@@ -199,3 +217,17 @@ $(O)/sev_report.o: $(SEV_S)/sev_report.cc \
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 endif
+
+# Rules to build SWIG-Pytest related code / wrappers
+$(O)/swigpytest.o: $(S)/swigpytest.cc $(I)/swigpytest.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(S)/$(SWIG_PYTEST_INTERFACE)_wrap.cc: $(I)/$(SWIG_PYTEST_INTERFACE).i $(S)/$(SWIG_PYTEST_INTERFACE).cc
+	@echo "\nGenerating $@"
+	$(SWIG) $(SWIG_FLAGS) -v -python -c++ -Wall -interface $(LIBSWIGPYTEST) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	$(LL) $(CERTIFIER_ROOT)/*.py*
+
+$(O)/$(SWIG_PYTEST_INTERFACE)_wrap.o: $(S)/$(SWIG_PYTEST_INTERFACE)_wrap.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) $(PY_INCLUDE) -fpermissive -o $(@D)/$@ -c $<
