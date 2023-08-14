@@ -34,8 +34,7 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-// operations are: cold-init, warm-restart, get-certifier, run-app-as-client,
-// run-app-as-server
+// Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(operation, "", "operation");
 
@@ -119,12 +118,6 @@ int main(int an, char **av) {
   }
 
   int ret = 0;
-  if (FLAGS_operation == "warm-restart") {
-    if (!app_trust_data->warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
-      ret = 1;
-    }
-  }
 
   // Get certificate
   string der_cert;

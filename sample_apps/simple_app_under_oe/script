@@ -70,12 +70,12 @@ $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
 cd $EXAMPLE_DIR
 ./host/host enclave/enclave.signed cold-init $EXAMPLE_DIR/app1_data
 # get client app certified
-./host/host enclave/enclave.signed get-certifier $EXAMPLE_DIR/app1_data
+./host/host enclave/enclave.signed get-certified $EXAMPLE_DIR/app1_data
 
 # initialize server app
 ./host/host enclave/enclave.signed cold-init $EXAMPLE_DIR/app2_data
 # get server app certified
-./host/host enclave/enclave.signed get-certifier $EXAMPLE_DIR/app2_data
+./host/host enclave/enclave.signed get-certified $EXAMPLE_DIR/app2_data
 
 #run the app
 cd $EXAMPLE_DIR

@@ -127,14 +127,14 @@ $SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true \
       --operation=cold-init --data_dir=./app1_data/ --policy_store_file=policy_store
 # get client app certified
 $SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true \
-      --operation=get-certifier --data_dir=./app1_data/ --policy_store_file=policy_store
+      --operation=get-certified --data_dir=./app1_data/ --policy_store_file=policy_store
 
 # initialize server app
 $SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true \
       --operation=cold-init --data_dir=./app2_data/ --policy_store_file=policy_store
 # get server app certified
 $SEV_EXAMPLE_DIR/sev_example_app.exe --print_all=true \
-      --operation=get-certifier --data_dir=./app2_data/ --policy_store_file=policy_store
+      --operation=get-certified --data_dir=./app2_data/ --policy_store_file=policy_store
 
 #run the app
 cd $SEV_EXAMPLE_DIR

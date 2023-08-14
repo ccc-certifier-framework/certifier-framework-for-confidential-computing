@@ -156,14 +156,14 @@ On the client's terminal, run
 ```bash
 cd $EXAMPLE_DIR
 ./host/host ./enclave/enclave.signed cold-init $EXAMPLE_DIR/app1_data --simulate
-./host/host ./enclave/enclave.signed get-certifier $EXAMPLE_DIR/app1_data --simulate
+./host/host ./enclave/enclave.signed get-certified $EXAMPLE_DIR/app1_data --simulate
 ```
 
 On the server's terminal, run 
 ```bash
 cd $EXAMPLE_DIR
 ./host/host ./enclave/enclave.signed cold-init $EXAMPLE_DIR/app2_data --simulate
-./host/host ./enclave/enclave.signed get-certifier $EXAMPLE_DIR/app2_data/ --simulate
+./host/host ./enclave/enclave.signed get-certified $EXAMPLE_DIR/app2_data/ --simulate
 ```
 
 Step 11:  Run the apps to test trusted services

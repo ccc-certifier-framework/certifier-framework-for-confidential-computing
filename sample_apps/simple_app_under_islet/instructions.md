@@ -276,7 +276,7 @@ $EXAMPLE_DIR/islet_example_app.exe                       \
 
 $EXAMPLE_DIR/islet_example_app.exe                       \
       --data_dir=./app2_data/                      \
-      --operation=get-certifier                    \
+      --operation=get-certified                    \
       --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store             \
       --print_all=true
@@ -296,7 +296,7 @@ $EXAMPLE_DIR/islet_example_app.exe                       \
 
 $EXAMPLE_DIR/islet_example_app.exe                       \
       --data_dir=./app1_data/                      \
-      --operation=get-certifier                    \
+      --operation=get-certified                    \
       --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store             \
       --print_all=true

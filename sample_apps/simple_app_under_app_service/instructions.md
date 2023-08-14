@@ -444,7 +444,7 @@ $SERVICE_EXAMPLE_DIR/start_program.exe                              \
 
 $SERVICE_EXAMPLE_DIR/start_program.exe                              \
         --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe   \
-        --args="--print_all=true,--operation=get-certifier,--data_dir=./app1_data/,--measurement_file=example_app.measurement,--policy_store_file=policy_store"
+        --args="--print_all=true,--operation=get-certified,--data_dir=./app1_data/,--measurement_file=example_app.measurement,--policy_store_file=policy_store"
 
 $SERVICE_EXAMPLE_DIR/start_program.exe                              \
         --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe   \
@@ -452,7 +452,7 @@ $SERVICE_EXAMPLE_DIR/start_program.exe                              \
 
 $SERVICE_EXAMPLE_DIR/start_program.exe                              \
         --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe   \
-        --args="--print_all=true,--operation=get-certifier,--data_dir=./app2_data/,--measurement_file=example_app.measurement,--policy_store_file=policy_store"
+        --args="--print_all=true,--operation=get-certified,--data_dir=./app2_data/,--measurement_file=example_app.measurement,--policy_store_file=policy_store"
 ```
 
 

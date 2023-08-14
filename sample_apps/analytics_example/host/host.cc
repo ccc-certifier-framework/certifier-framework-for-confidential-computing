@@ -93,7 +93,7 @@ int main(int argc, const char *argv[]) {
               result,
               oe_result_str(result));
     }
-  } else if (strcmp(argv[2], "get-certifier") == 0) {
+  } else if (strcmp(argv[2], "get-certified") == 0) {
     result = certify_me(enclave, &ret);
     if (result != OE_OK) {
       fprintf(stderr,

@@ -32,8 +32,7 @@
 
 using namespace certifier::framework;
 
-// operations are: cold-init, warm-restart, get-certifier, run-app-as-client,
-// run-app-as-server
+// Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(operation, "", "operation");
 
@@ -55,10 +54,11 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 
 // The test app performs five possible roles
 //    cold-init: This creates application keys and initializes the policy store.
-//    warm-restart:  This retrieves the policy store data.
-//    get-certifier: This obtains the app admission cert naming the public app
+//    get-certified: This obtains the app admission cert naming the public app
 //    key from the service. run-app-as-client: This runs the app as a server.
 //    run-app-as-server: This runs the app as a client
+//    warm-restart:  This retrieves the policy store data. Operation is subsumed
+//      under other ops.
 
 #include "server_policy_key.cc"
 cc_trust_data *app_trust_data = nullptr;
@@ -100,8 +100,7 @@ int main(int an, char **av) {
            "--server_app_port=server-host-port\n");
     printf("\t --policy_cert_file=self-signed-policy-cert-file-name "
            "--policy_store_file=policy-store-file-name\n");
-    printf("Operations are: cold-init, warm-restart, get-certifier, "
-           "run-app-as-server\n");
+    printf("Operations are: cold-init, get-certified, run-app-as-server\n");
     return 0;
   }
 
@@ -167,13 +166,7 @@ int main(int an, char **av) {
     }
     // Debug
     app_trust_data->print_trust_data();
-  } else if (FLAGS_operation == "warm-restart") {
-    if (!app_trust_data->warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
-      ret = 1;
-    }
-
-  } else if (FLAGS_operation == "get-certifier") {
+  } else if (FLAGS_operation == "get-certified") {
     if (!app_trust_data->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
