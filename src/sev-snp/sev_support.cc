@@ -897,7 +897,7 @@ bool sev_get_final_keys(int      final_key_size,
                         bool     root_key = false,
                         uint64_t fields = FIELD_MEASUREMENT_MASK
                                           | FIELD_POLICY_MASK) {
-  struct sev_key_options opt = {0};
+  struct sev_key_options opt = {{{0}}};
   byte                   key[MSG_KEY_RSP_DERIVED_KEY_SIZE] = {0};
   int                    size = MSG_KEY_RSP_DERIVED_KEY_SIZE;
   opt.do_root_key = root_key;

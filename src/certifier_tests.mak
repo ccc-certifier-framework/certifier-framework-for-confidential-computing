@@ -39,11 +39,27 @@ O= $(OBJ_DIR)
 I= $(INC_DIR)
 CL=..
 
-INCLUDE = -I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I $(S)/gramine
+INCLUDE = -I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I $(S)/gramine -I /usr/local/opt/protobuf@3/include -I /usr/local/include
 
-CFLAGS_COMMON = $(INCLUDE) -g -std=c++17 -D X64 -Wall -Wno-unused-variable -Wno-deprecated-declarations
+UNAME_S := $(shell uname -s)
+
+CFLAGS_COMMON = $(INCLUDE) -g -std=c++17 -D X64 -Werror -Wall -Wno-unused-variable -Wno-deprecated-declarations
+
+ifeq ($(UNAME_S),Darwin)
+    CFLAGS_COMMON += -DMACOS=1
+endif
 
 CFLAGS  = $(CFLAGS_COMMON) -O3
+
+# Workaround for error at link time that shows up only on Mac/OSX:
+# Undefined symbols . "google::protobuf::internal::InternalMetadata::~InternalMetadata()", referenced from: time_point::time_point(time_point const&) in certifier.pb.o ...
+# See: https://github.com/facebookincubator/velox/issues/2029
+#      https://github.com/protocolbuffers/protobuf/issues/9947
+# Allegedly fixed in latest protobuf under:
+#   https://github.com/facebookincubator/velox/pull/2042
+ifeq ($(UNAME_S),Darwin)
+    CFLAGS_PB := -DNDEBUG
+endif
 
 ifdef ENABLE_SEV
 
@@ -78,8 +94,13 @@ SWIG_CERT_TESTS_INTERFACE = certifier_tests
 
 PY_INCLUDE = $(shell pkg-config python3 --cflags)
 
-#export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
+
+# RESOLVE: Old forms used in Mac/OSX port ... Delete when done.
+# PY_INCLUDE = -I /usr/include/python3.10/ -I /usr/local/Cellar/python@3.11/3.11.4_1/Frameworks/Python.framework/Versions/3.11/include/python3.11
+
+# LDFLAGS = -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread
+# LDFLAGS = -L/usr/local/opt/openssl@1.1/lib/ -L /usr/local/opt/protobuf@3/lib -L $(LOCAL_LIB) -lcrypto -lssl -lprotobuf -lgtest -lgflags -lpthread
 
 # ----------------------------------------------------------------------
 # Define list of objects for common case which will be extended for
@@ -198,7 +219,7 @@ $(O)/$(SWIG_CERT_TESTS_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_TESTS_INTERFACE)_wrap
 
 $(O)/certifier.pb.o: $(S)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+	$(CC) $(CFLAGS) $(CFLAGS_PB) -o $(@D)/$@ -c $<
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "\ncompiling $<"

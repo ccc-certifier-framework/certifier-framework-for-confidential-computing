@@ -4,8 +4,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <attestation.h>
-//#include <sev_report.h>
+#include <inttypes.h>
+#include "attestation.h"
 
 static void print_byte_array(const char *   label,
                              const uint8_t *array,
@@ -71,16 +71,16 @@ void print_guest_svn(struct attestation_report *report) {
 
 void print_policy(struct attestation_report *report) {
   if (report) {
-    printf("Policy: %#0lx\n", report->policy);
+    printf("Policy: %#0" PRIx64 "\n", report->policy);
     printf(" - Debugging Allowed:       %s\n",
            report->policy & POLICY_DEBUG_MASK ? "Yes" : "No");
     printf(" - Migration Agent Allowed: %s\n",
            report->policy & POLICY_MIGRATE_MA_MASK ? "Yes" : "No");
     printf(" - SMT Allowed:             %s\n",
            report->policy & POLICY_SMT_MASK ? "Yes" : "No");
-    printf(" - Min. ABI Major:          %#lx\n",
+    printf(" - Min. ABI Major:          %#" PRIx64 "\n",
            (report->policy & POLICY_ABI_MAJOR_MASK) >> POLICY_ABI_MAJOR_SHIFT);
-    printf(" - Min. ABI Minor:          %#lx\n",
+    printf(" - Min. ABI Minor:          %#" PRIx64 "\n",
            (report->policy & POLICY_ABI_MINOR_MASK) >> POLICY_ABI_MINOR_SHIFT);
   }
 }
@@ -121,7 +121,7 @@ void print_platform_version(struct attestation_report *report) {
 
 void print_platform_info(struct attestation_report *report) {
   if (report) {
-    printf("Platform Info: %#0lx\n", report->platform_info);
+    printf("Platform Info: %#0" PRIx64 "\n", report->platform_info);
     printf(" - SMT Enabled: %s\n",
            report->platform_info & PLATFORM_INFO_SMT_EN_MASK ? "Yes" : "No");
   }

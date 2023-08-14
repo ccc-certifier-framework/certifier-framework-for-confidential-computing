@@ -10,8 +10,18 @@ set -Eeuo pipefail
 # Setup script globals, to establish curdir and root path to Certifier code base
 Me=$(basename "$0")
 
-numCPUs=$(grep -c "^processor" /proc/cpuinfo)
+OSName=$(uname -s)
+if [ "${OSName}" = "Linux" ]; then
+    numCPUs=$(grep -c "^processor" /proc/cpuinfo)
+else
+    numCPUs=$(sysctl -n hw.ncpu)
+fi
+
 if [ "${numCPUs}" -eq "0" ]; then numCPUs=1; fi
+
+# Cap # of -j threads for make to 8
+numMakeThreads=${numCPUs}
+if [ "${numMakeThreads}" -gt 8 ]; then numMakeThreads=8; fi
 
 # Establish root-dir for Certifier library.
 pushd "$(dirname "$0")" > /dev/null 2>&1
@@ -19,11 +29,11 @@ pushd "$(dirname "$0")" > /dev/null 2>&1
 cd ../../
 
 # shellcheck disable=SC2046
-CERT_PROTO="$(pwd)"; export CERT_PROTO
+CERT_ROOT="$(pwd)"; export CERT_ROOT
 
 popd > /dev/null 2>&1
 
-echo "${Me}: CERT_PROTO=${CERT_PROTO}"
+echo "${Me}: CERT_ROOT=${CERT_ROOT}"
 
 echo " "
 echo "******************************************************************"
@@ -52,7 +62,7 @@ if [ ! -d ./build ]; then mkdir build; fi
 pushd build
 
 cmake ..
-make -j${numCPUs}
+make -j${numMakeThreads}
 
 sudo make install
 
@@ -75,7 +85,7 @@ if [ ! -d ./build ]; then mkdir build; fi
 pushd build
 
 cmake .. -DBUILD_SHARED_LIBS=ON ..
-make -j${numCPUs}
+make -j${numMakeThreads}
 sudo make install
 
 set +x

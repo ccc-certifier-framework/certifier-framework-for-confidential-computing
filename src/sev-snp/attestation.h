@@ -5,13 +5,14 @@
 
 #ifndef MACOS
 #  include <linux/types.h>
-#endif
 
-#ifndef uint64_t
+#  ifndef uint64_t
 typedef unsigned char  uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned       uint32_t;
-typedef long unsigned  uint64_t;
+typedef unsigned long  uint64_t;
+#  endif
+
 #endif
 
 #define POLICY_DEBUG_SHIFT      19

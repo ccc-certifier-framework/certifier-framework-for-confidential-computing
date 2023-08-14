@@ -31,11 +31,23 @@ I= $(CERTIFIER_ROOT)/include
 INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 
+UNAME_S := $(shell uname -s)
+
 # Compilation of protobuf files could run into some errors, so avoid using
 # # -Werror for those targets
-CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++14 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 CFLAGS = $(CFLAGS_NOERROR) -Werror -DSIMPLE_APP
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+
+# Workaround for error at link time that shows up only on Mac/OSX:
+# Undefined symbols . "google::protobuf::internal::InternalMetadata::~InternalMetadata()", referenced from: time_point::time_point(time_point const&) in certifier.pb.o ...
+# See: https://github.com/facebookincubator/velox/issues/2029
+#      https://github.com/protocolbuffers/protobuf/issues/9947
+# Allegedly fixed in latest protobuf under:
+#   https://github.com/facebookincubator/velox/pull/2042
+ifeq ($(UNAME_S),Darwin)
+    CFLAGS_PB := -DNDEBUG
+endif
+
 CC=g++
 LINK=g++
 PROTO=protoc
@@ -77,7 +89,7 @@ $(US)/certifier.pb.cc: $(CP)/certifier.proto
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
+	$(CC) $(CFLAGS) $(CFLAGS_PB) -o $(@D)/$@ -c $<
 
 $(O)/example_app.o: $(COMMON_SRC)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"

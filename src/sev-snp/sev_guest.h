@@ -17,7 +17,7 @@
 #ifndef __UAPI_LINUX_SEV_GUEST_H_
 #define __UAPI_LINUX_SEV_GUEST_H_
 
-#if 1
+#ifndef MACOS
 #  include <linux/types.h>
 #else
 typedef unsigned char      uint8_t;
@@ -26,8 +26,8 @@ typedef unsigned short     uint16_t;
 typedef unsigned short     __u16;
 typedef unsigned           uint32_t;
 typedef unsigned           __u32;
-typedef long long unsigned uint64_t;
-typedef long long unsigned __u64;
+typedef unsigned long long uint64_t;
+typedef unsigned long long __u64;
 #endif
 
 struct snp_report_req {

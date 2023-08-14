@@ -16,7 +16,7 @@ package gramineverify
 
 /*
 #cgo CFLAGS: -g -Wall -I../graminelib
-#cgo LDFLAGS: -L../graminelib -lgramineverify -Wl,-rpath=graminelib:../../certifier_service/graminelib/:../../../certifier_service/graminelib
+#cgo LDFLAGS: -L../graminelib -lgramineverify
 #include "gramine_verify.h"
 */
 import "C"

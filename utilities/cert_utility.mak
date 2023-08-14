@@ -36,15 +36,22 @@ S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
 US= .
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
+INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I /usr/local/include
 
-# Compilation of protobuf files could run into some errors, so avoid using
-# -Werror for those targets
-CFLAGS_NOERROR = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
-CFLAGS = $(CFLAGS_NOERROR) -Werror
+UNAME_S := $(shell uname -s)
 
-#For MAC, -D MACOS should be included
-CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+CFLAGS = $(INCLUDE) -O3 -g -Wall -Werror -std=c++14 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+
+# Workaround for error at link time that shows up only on Mac/OSX:
+# Undefined symbols . "google::protobuf::internal::InternalMetadata::~InternalMetadata()", referenced from: time_point::time_point(time_point const&) in certifier.pb.o ...
+# See: https://github.com/facebookincubator/velox/issues/2029
+#      https://github.com/protocolbuffers/protobuf/issues/9947
+# Allegedly fixed in latest protobuf under:
+#   https://github.com/facebookincubator/velox/pull/2042
+ifeq ($(UNAME_S),Darwin)
+    CFLAGS_PB := -DNDEBUG
+endif
+
 CC=g++
 LINK=g++
 # PROTO=/usr/local/bin/protoc
@@ -52,7 +59,7 @@ LINK=g++
 PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS = -L /usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread
 
 common_objs = $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
               $(O)/certifier_proofs.o $(O)/simulated_enclave.o \
@@ -102,7 +109,7 @@ $(US)/certifier.pb.cc: $(CP)/certifier.proto
 
 $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS_NOERROR) -Wno-array-bounds -o $(@D)/$@ -c $<
+	$(CC) $(CFLAGS) $(CFLAGS_PB) -Wno-array-bounds -o $(@D)/$@ -c $<
 
 $(O)/support.o: $(S)/support.cc $(I)/support.h $(I)/certifier.pb.h
 	@echo "\ncompiling $<"

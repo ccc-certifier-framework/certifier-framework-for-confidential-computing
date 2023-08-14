@@ -304,7 +304,9 @@ static int exec_cmd(const string &command, bool print = false) {
   if (print) {
     cout << result << endl;
   }
-  exitcode = WEXITSTATUS(pclose(pipe));
+  // Break up into 2 stmts, to avoid g++ error on Mac/OSX.
+  int pclose_rv = pclose(pipe);
+  exitcode = WEXITSTATUS(pclose_rv);
   return exitcode;
 }
 

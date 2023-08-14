@@ -64,9 +64,12 @@ Local_lib_path=${LOCAL_LIB:-/usr/local/lib}
 # Sub-tools used in this script
 Jq=jq    # Needed for OE app; will be established later on.
 
-NumCPUs=1
-if [ "$(uname -s)" = "Linux" ]; then
+NumCPUs=2
+OSName=$(uname -s)
+if [ "${OSName}" = "Linux" ]; then
     NumCPUs=$(grep -c "^processor" /proc/cpuinfo)
+elif [ "${OSName}" = "Darwin" ]; then
+    NumCPUs=$(sysctl -n hw.ncpu)
 fi
 # Cap # of -j threads for make to 8
 NumMakeThreads=${NumCPUs}
@@ -2365,7 +2368,7 @@ function show_env() {
     echo " "
     uname -a
     # Likely, will fail on macOSX, so don't run in dry-run mode
-    if [ $DryRun -eq 0 ]; then
+    if [ $DryRun -eq 0 ] && [ "${OSName}" = "Linux" ]; then
         local numCPUs=0
         local cpuModel=0
         local cpuVendor=0

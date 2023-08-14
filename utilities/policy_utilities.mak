@@ -39,9 +39,24 @@ I= $(INC_DIR)
 
 INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/
 
-CFLAGS_NOERROR = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
-CFLAGS = $(CFLAGS_NOERROR) -Werror
+UNAME_S := $(shell uname -s)
+
+CFLAGS = $(INCLUDE) -O3 -g -Wall -Werror -std=c++14 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+
 # For Mac: -D MACOS should be defined
+ifeq ($(UNAME_S),Darwin)
+    CFLAGS_MAC += -DMACOS=1
+endif
+
+# Workaround for error at link time that shows up only on Mac/OSX:
+# Undefined symbols . "google::protobuf::internal::InternalMetadata::~InternalMetadata()", referenced from: time_point::time_point(time_point const&) in certifier.pb.o ...
+# See: https://github.com/facebookincubator/velox/issues/2029
+#      https://github.com/protocolbuffers/protobuf/issues/9947
+# Allegedly fixed in latest protobuf under:
+#   https://github.com/facebookincubator/velox/pull/2042
+ifeq ($(UNAME_S),Darwin)
+    CFLAGS_PB := -DNDEBUG
+endif
 
 CC=g++
 LINK=g++
@@ -135,7 +150,7 @@ $(CERT_SRC)/certifier.pb.cc: $(CP)/certifier.proto
 
 $(O)/certifier.pb.o: $(CERT_SRC)/certifier.pb.cc $(INC_DIR)/certifier.pb.h
 	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS_NOERROR) -Warray-bounds -o $(@D)/$@ -c $<
+	$(CC) $(CFLAGS) $(CFLAGS_PB) -Warray-bounds -o $(@D)/$@ -c $<
 
 $(O)/support.o: $(CERT_SRC)/support.cc $(INC_DIR)/support.h $(INC_DIR)/certifier.pb.h
 	@echo "\ncompiling $<"
@@ -267,7 +282,7 @@ $(EXE_DIR)/make_environment.exe: $(make_environment_obj)
 
 $(O)/simulated_sev_attest.o: $(S)/simulated_sev_attest.cc
 	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+	$(CC) $(CFLAGS) $(CFLAGS_MAC) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/simulated_sev_attest.exe: $(simulated_sev.obj)
 	@echo "\nlinking executable $@"
@@ -275,7 +290,7 @@ $(EXE_DIR)/simulated_sev_attest.exe: $(simulated_sev.obj)
 
 $(O)/sample_sev_key_generation.o: $(S)/sample_sev_key_generation.cc
 	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+	$(CC) $(CFLAGS) $(CFLAGS_MAC) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/sample_sev_key_generation.exe: $(sample_sev_key_generation.obj)
 	@echo "\nlinking executable $@"
@@ -283,7 +298,7 @@ $(EXE_DIR)/sample_sev_key_generation.exe: $(sample_sev_key_generation.obj)
 
 $(O)/simulated_sev_key_generation.o: $(S)/simulated_sev_key_generation.cc
 	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+	$(CC) $(CFLAGS) $(CFLAGS_MAC) -o $(@D)/$@ -c $<
 
 $(EXE_DIR)/simulated_sev_key_generation.exe: $(simulated_sev_key_generation.obj)
 	@echo "\nlinking executable $@"

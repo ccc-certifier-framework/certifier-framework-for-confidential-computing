@@ -26,7 +26,7 @@ LOCAL_LIB=$(JSON_VALIDATOR)/lib
 INCLUDE= -I$(JSON_VALIDATOR)/include
 
 CC=g++
-CFLAGS= $(INCLUDE) -O3 -g -Wall -Werror -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+CFLAGS= $(INCLUDE) -O3 -g -Wall -Werror -Wno-unused-variable -std=c++14 -D X64 -Wno-deprecated -Wno-deprecated-declarations
 LD=g++
 LDFLAGS= -L$(LOCAL_LIB) -lnlohmann_json_schema_validator -lgflags
 

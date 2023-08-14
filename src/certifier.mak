@@ -40,9 +40,15 @@ O= $(OBJ_DIR)
 I= $(INC_DIR)
 CL=..
 
-INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
+INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I /usr/local/include
 
-CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+UNAME_S := $(shell uname -s)
+
+CFLAGS_COMMON = $(INCLUDE) -g -Wall -Werror -std=c++14 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+
+ifeq ($(UNAME_S),Darwin)
+    CFLAGS_COMMON += -DMACOS=1
+endif
 
 CFLAGS  = $(CFLAGS_COMMON) -O3
 CFLAGS_PIC =
@@ -89,10 +95,15 @@ SWIG_PYTEST_INTERFACE = swigpytests
 
 FIX_SWIG_SCRIPT = $(CERTIFIER_ROOT)/CI/scripts/fix_swig_wrap.sh
 
+# PY_INCLUDE = -I /usr/include/python3.10/ -I /usr/local/include/python3/ -I /usr/local/Cellar/python@3.11/3.11.4_1/Frameworks/Python.framework/Versions/3.11/include/python3.11
+
 PY_INCLUDE = $(shell pkg-config python3 --cflags)
 
-#export LD_LIBRARY_PATH=/usr/local/lib
+# RESOLVE: Version used in Mac/OSX port ... delete when done.
+# LDFLAGS = -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread
+
 LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
+
 LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB) -l protobuf
 
 # ----------------------------------------------------------------------
