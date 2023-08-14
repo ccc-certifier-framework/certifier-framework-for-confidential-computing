@@ -12,14 +12,6 @@
 
 %module certifier_framework
 %include "std_string.i"
-// %inline %{
-// using namespace std;
-// %}
-// using std::string;
-
-// %begin %{
-// #define SWIG_PYTHON_2_UNICODE
-// %}
 
 // Needed to invoke init_policy_key() using Python bytestream arg.
 %include <pybuffer.i>
@@ -27,52 +19,17 @@
 
 // Xform interfaces returning a string output param to return string * <function>
 %apply string * OUTPUT { string *v }             // policy_store()->get()
-%apply string * OUTPUT { string *psout }         // policy_store()->Serialize()
+init_policy_key%apply string * OUTPUT { string *psout }         // policy_store()->Serialize()
 
 %apply string * INPUT  { string& role};          // secure_authenticated_channel() constructor
 
-// %apply string * INOUT  { string & asn1_root_cert};// secure_authenticated_channel()->init_client_ssl()
-// %apply const std::string& {std::string* foo};
-
-// %apply const std::string& { string& asn1_root_cert};// secure_authenticated_channel()->init_client_ssl()
-
-// %apply string * INOUT { string& asn1_root_cert };// secure_authenticated_channel()->init_client_ssl()
-
-// %apply string * INPUT  { string * out_peer_id};  // secure_authenticated_channel()->get_peer_id()
-
-// %typemap(in, numinputs=0) std::string& (std::string temp) {
-//      $1 = &temp;
-// }
-
-// %typemap(argout) std::string& {
-//      $result = PyUnicode_FromString($1->c_str());
-// }
-%apply string& { string & asn1_root_cert };
-%apply string& INPUT { const string &private_key_cert };
-
-// Following example from ChatGPT
-// Define a typemap for handling string& parameter
-// %typemap(in, numinputs=0) std::string& (std::string temp) %{
-//     $1 = &temp;
+// %begin %{
+// #define SWIG_PYTHON_2_UNICODE 1
 // %}
 
-// Define a typemap for returning strings by reference
-// %typemap(out) std::string& {
-//     $result = SWIG_From_std_string(*$1);
-// }
-// End - Following example from ChatGPT
-
-// %apply const std::string& {std::string* asn1_root_cert};
-
-// %apply std::string *INOUT { string & asn1_root_cert};
-// %apply std::string *INPUT { const string &private_key_cert };
-
-// use default pointer handling instead of strings
-// %apply SWIGTYPE * { string & asn1_root_cert };
-
-// %apply string* OUTPUT { string & asn1_root_cert };
-
-%include "typemaps.i"
+// %apply string * INOUT  { string &asn1_root_cert };  // secure_authenticated_channel().init_client_ssl()
+// %apply string * INOUT  { string &asn1_root_cert };  // secure_authenticated_channel().init_client_ssl()
+// %apply string& INPUT { const string &private_key_cert };
 
 %{
 #include "certifier_framework.h"

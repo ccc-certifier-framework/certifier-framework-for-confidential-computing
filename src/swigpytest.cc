@@ -17,6 +17,7 @@
 // swigpytest.cc : To test swigpytest.i SWIG interfaces.
 // ****************************************************************************
 
+#include <string.h>
 #include "swigpytest.h"
 
 using namespace swigpytests;
@@ -62,6 +63,21 @@ bool swigpytests::secure_authenticated_channel::init_client_ssl(
   host_name_ = host_name;
   port_ = port;
   asn1_root_cert.assign("New root Certificate");
+  asn1_pvt_key_cert_ = auth_cert;
+  return true;
+}
+
+bool swigpytests::secure_authenticated_channel::init_client_ssl(
+    const string &host_name,
+    int           port,
+    byte *        asn1_root_cert,
+    int           asn1_root_cert_size,
+    const string &auth_cert) {
+  host_name_ = host_name;
+  port_ = port;
+  // asn1_root_cert.assign("New root Certificate");
+  string root_cert("New root Certificate");
+  memmove(asn1_root_cert, root_cert.c_str(), root_cert.size());
   asn1_pvt_key_cert_ = auth_cert;
   return true;
 }

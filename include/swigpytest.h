@@ -27,6 +27,8 @@
 
 using std::string;
 
+typedef unsigned char byte;
+
 namespace swigpytests {
 
 class cc_trust_data {
@@ -57,6 +59,12 @@ class secure_authenticated_channel {
   bool init_client_ssl(const string &host_name,
                        int           port,
                        string &      asn1_root_cert,
+                       const string &private_key_cert);
+
+  bool init_client_ssl(const string &host_name,
+                       int           port,
+                       byte *        asn1_root_cert,
+                       int           asn1_root_cert_size,
                        const string &private_key_cert);
 };
 
