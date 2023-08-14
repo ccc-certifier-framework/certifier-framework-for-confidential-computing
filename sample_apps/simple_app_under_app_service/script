@@ -164,7 +164,7 @@ arg1_str="--print_all=true,--operation=cold-init,--data_dir="$SERVICE_EXAMPLE_DI
 $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
     --args=\"$arg1_str\"
 
-arg2_str="--print_all=true,--operation=get-certifier,--data_dir="$SERVICE_EXAMPLE_DIR"/app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
+arg2_str="--print_all=true,--operation=get-certified,--data_dir="$SERVICE_EXAMPLE_DIR"/app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
 
 $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
     --args=\"$arg2_str\"
@@ -174,7 +174,7 @@ arg3_str="--print_all=true,--operation=cold-init,--data_dir="$SERVICE_EXAMPLE_DI
 $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
     --args=\"$arg3_str\"
 
-arg4_str="--print_all=true,--operation=get-certifier,--data_dir="$SERVICE_EXAMPLE_DIR"/app2_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
+arg4_str="--print_all=true,--operation=get-certified,--data_dir="$SERVICE_EXAMPLE_DIR"/app2_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
 
 $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
     --args=\"$arg4_str\"
@@ -190,10 +190,4 @@ arg6_str="--print_all=true,--operation=run-app-as-client,--data_dir="$SERVICE_EX
 
 $SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
     --args=\"$arg6_str\"
-
-
-arg7_str="--print_all=true,--operation=warm-restart,--data_dir="$SERVICE_EXAMPLE_DIR"/app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
-
-$SERVICE_EXAMPLE_DIR/start_program.exe --executable=$SERVICE_EXAMPLE_DIR/service_example_app.exe \
-    --args=\"$arg7_str\"
 
