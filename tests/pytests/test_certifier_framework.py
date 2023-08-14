@@ -334,26 +334,26 @@ def test_cc_trust_data_simulated_enclave():
     assert result is True
 
 # ##############################################################################
-def test_cc_trust_data_get_certifier():
+def test_cc_trust_data_get_certified():
     """
-    Exercise the steps up through "get-certifier" for a simulated enclave:
+    Exercise the steps up through "get-certified" for a simulated enclave:
       - Initialize a new trust data object
       - Initialize policy key, using hard-coded certificates (for testing)
       - initialize_simulated_enclave_data()
       - cold_init()
-      - get-certifier(): warm_restart(), certify_me()
+      - get_certified(): warm_restart(), certify_me()
     """
     cctd = cfm.cc_trust_data('simulated-enclave', 'authentication',
                              CertPyTestsDir + '/data/policy_store')
     assert cctd.cc_all_initialized() is False
 
-    result = cc_trust_data_get_certifier(cctd)
+    result = cc_trust_data_get_certified(cctd)
     assert result is True
 
 # ##############################################################################
 # Work-horse function: Implements the steps taken with cc_trust_data() object.
 # ##############################################################################
-def cc_trust_data_get_certifier(cctd):
+def cc_trust_data_get_certified(cctd):
 
     # Open the Certificate binary file for reading
     cert_file_bin = '/data/policy_cert_file.bin'
@@ -399,7 +399,7 @@ def cc_trust_data_get_certifier(cctd):
 def test_run_app_as_a_client_init_client_ssl():
     """
     Exercise the steps up through "run-app-as-client". This subsumes the setup
-    stuff done in test_cc_trust_data_get_certifier(), followed by:
+    stuff done in test_cc_trust_data_get_certified(), followed by:
       - Setting up secure_authenticated_channel channel
       - channel.init_client_ssl()
     """
@@ -407,7 +407,7 @@ def test_run_app_as_a_client_init_client_ssl():
                              CertPyTestsDir + '/data/policy_store')
     assert cctd.cc_all_initialized() is False
 
-    result = cc_trust_data_get_certifier(cctd)
+    result = cc_trust_data_get_certified(cctd)
     assert result is True
 
     my_role = 'client'
