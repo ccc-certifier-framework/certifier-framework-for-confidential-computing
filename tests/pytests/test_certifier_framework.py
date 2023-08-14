@@ -441,7 +441,7 @@ def test_run_app_as_a_client_init_client_ssl():
     #                                  cctd.private_auth_key_,
     #                                  cctd.serialized_primary_admissions_cert_)
     # cctd.serialized_policy_cert_, 
-    result = channel.init_client_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
+    result, cctd.serialized_policy_cert_ = channel.init_client_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
                                      # Tried variations: serialized_policy_cert,
                                      # cctd.serialized_policy_cert_,
                                      cctd.serialized_policy_cert_,
