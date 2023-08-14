@@ -19,7 +19,7 @@
 
 // Xform interfaces returning a string output param to return string * <function>
 %apply string * OUTPUT { string *v }             // policy_store()->get()
-init_policy_key%apply string * OUTPUT { string *psout }         // policy_store()->Serialize()
+%apply string * OUTPUT { string *psout }         // policy_store()->Serialize()
 
 %apply string * INPUT  { string& role};          // secure_authenticated_channel() constructor
 

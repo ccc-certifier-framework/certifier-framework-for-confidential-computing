@@ -427,13 +427,6 @@ def test_run_app_as_a_client_init_client_ssl():
     assert result is True
     print(' ... cctd.primary admissions cert is valid.')
 
-    # if (!channel.init_client_ssl(
-    #         FLAGS_server_app_host,
-    #         FLAGS_server_app_port,
-    #         app_trust_data->serialized_policy_cert_,
-    #         app_trust_data->private_auth_key_,
-    #         app_trust_data->serialized_primary_admissions_cert_)) {
-
     serialized_policy_cert = cctd.serialized_policy_cert_
     # result = channel.init_client_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
     #                                  # Tried variations: serialized_policy_cert,
