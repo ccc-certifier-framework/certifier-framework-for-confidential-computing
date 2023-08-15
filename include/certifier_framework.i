@@ -27,9 +27,9 @@
 // #define SWIG_PYTHON_2_UNICODE 1
 
 // This does not work. Causes other failure in cc_trust_data()'s ctor
-// #define SWIG_PYTHON_STRICT_BYTE_CHAR 1
+// #define SWIG_PYTHON_STRICT_BYTE_CHAR
 
-// #define SWIG_PYTHON_STRICT_UNICODE_WCHAR 1
+#define SWIG_PYTHON_STRICT_UNICODE_WCHAR 1
 %}
 
 // %apply string * INOUT  { string &asn1_root_cert };  // secure_authenticated_channel().init_client_ssl()

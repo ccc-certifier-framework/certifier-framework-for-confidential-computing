@@ -2383,7 +2383,9 @@ certifier::framework::secure_authenticated_channel::
 bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     const string &host_name,
     int           port,
-    const string &asn1_root_cert,
+    // const string &asn1_root_cert,
+    const byte *  asn1_root_cert,
+    const int     asn1_root_cert_size,
     key_message & private_key,
     const string &auth_cert) {
 
@@ -2391,16 +2393,20 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   SSL_load_error_strings();
 
   private_key_.CopyFrom(private_key);
-  asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
+
+  // asn1_root_cert_.assign((char *)asn1_root_cert.data(),
+  // asn1_root_cert.size());
+  asn1_root_cert_.assign((char *)asn1_root_cert, asn1_root_cert_size);
+
   root_cert_ = X509_new();
-  if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
+  if (!asn1_to_x509(asn1_root_cert_, root_cert_)) {
     printf("%s() error, line %d, init_client_ssl: root cert invalid\n",
            __func__,
            __LINE__);
-    if (asn1_root_cert.size() == 0) {
+    if (asn1_root_cert_.size() == 0) {
       printf("root cert empty\n");
     } else {
-      print_bytes(asn1_root_cert.size(), (byte *)asn1_root_cert.data());
+      print_bytes(asn1_root_cert_.size(), (byte *)asn1_root_cert_.data());
       printf("\n");
     }
     return false;

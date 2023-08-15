@@ -437,7 +437,11 @@ def test_run_app_as_a_client_init_client_ssl():
     result, cctd.serialized_policy_cert_ = channel.init_client_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
                                      # Tried variations: serialized_policy_cert,
                                      # cctd.serialized_policy_cert_,
-                                     cctd.serialized_policy_cert_,
+                                     # cctd.serialized_policy_cert_.encode("raw_unicode_escape"),
+                                     # cctd.serialized_policy_cert_.encode('utf-8', errors='ignore'),
+                                     # cctd.serialized_policy_cert_.encode('utf-8', errors='surrogateescape'),
+            cctd.serialized_policy_cert_.encode("utf-8", errors="surrogateescape").decode("latin-1"),
+                                     len(cctd.serialized_policy_cert_),
                                      cctd.private_auth_key_,
                                      cctd.serialized_primary_admissions_cert_)
     assert result is False
