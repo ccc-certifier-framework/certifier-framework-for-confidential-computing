@@ -53,9 +53,13 @@ $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,sig
 cd $CERTIFIER_PROTOTYPE
 cd certifier_service/certprotos
 protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
-cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
-make dummy
 cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib/
+make
+cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
+make dummy
+cd $CERTIFIER_PROTOTYPE/certifier_service/isletlib
+make dummy
+cd $CERTIFIER_PROTOTYPE/certifier_service/teelib
 make
 
 # Build simpleserver

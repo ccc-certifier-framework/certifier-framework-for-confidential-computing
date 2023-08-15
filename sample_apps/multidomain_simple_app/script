@@ -175,6 +175,8 @@ cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
 make dummy
 cd $CERTIFIER_PROTOTYPE/certifier_service/isletlib
 make dummy
+cd $CERTIFIER_PROTOTYPE/certifier_service/teelib
+make
 cd $CERTIFIER_PROTOTYPE/certifier_service
 go build simpleserver.go
 

@@ -347,10 +347,14 @@ certifier.pb.go in certprotos.
 
 ```shell
 cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
-make dummy  # RESOLVE
+make
+cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
+make dummy
+cd $CERTIFIER_PROTOTYPE/certifier_service/isletlib
+make dummy
+cd $CERTIFIER_PROTOTYPE/certifier_service/teelib
 make
 ```
-
 ### b. Now build simpleserver:
 ```shell
 cd $CERTIFIER_PROTOTYPE/certifier_service

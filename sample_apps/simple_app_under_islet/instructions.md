@@ -217,6 +217,9 @@ make dummy
 
 cd $CERTIFIER_PROTOTYPE/certifier_service/isletlib
 make
+
+cd $CERTIFIER_PROTOTYPE/certifier_service/teelib
+make
 ```
 
 ### b. Now build simpleserver:
