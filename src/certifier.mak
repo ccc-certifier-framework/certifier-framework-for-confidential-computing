@@ -104,7 +104,7 @@ LIBCERTIFIER         = lib$(SWIG_CERT_INTERFACE)
 LIBCERTIFIER_PB      = lib$(SWIG_CERT_PB_INTERFACE)
 CERTIFIER_SHARED_LIB = $(LIBCERTIFIER).so
 
-LIBSWIGPYTEST        = lib$(SWIG_PYTEST_INTERFACE)
+LIBSWIGPYTEST         = lib$(SWIG_PYTEST_INTERFACE)
 SWIGPYTEST_SHARED_LIB = lib$(SWIG_PYTEST_INTERFACE).so
 
 all:	$(CL)/$(CERTIFIER_LIB)
@@ -119,11 +119,11 @@ clean:
 	@echo "removing generated files"
 	rm -rf $(S)/certifier.pb.h $(I)/certifier.pb.h $(S)/certifier.pb.cc $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc
 	@echo "removing generated Python files"
-	rm -rf $(CERTIFIER_ROOT)/$(SWIG_CERT_INTERFACE).py $(CERTIFIER_ROOT)/certifier_pb2.py
+	rm -rf $(CERTIFIER_ROOT)/$(SWIG_CERT_INTERFACE).py $(CERTIFIER_ROOT)/$(SWIG_PYTEST_INTERFACE).py $(CERTIFIER_ROOT)/certifier_pb2.py
 	@echo "removing object files"
 	rm -rf $(O)/*.o
-	@echo "removing executable files"
-	rm -rf $(CL)/$(CERTIFIER_LIB) $(CL)/$(CERTIFIER_SHARED_LIB)
+	@echo "removing shared libraries"
+	rm -rf $(CL)/$(CERTIFIER_LIB) $(CL)/$(CERTIFIER_SHARED_LIB)  $(CL)/$(SWIGPYTEST_SHARED_LIB)
 
 $(CL)/$(CERTIFIER_LIB): $(dobj)
 	@echo "\nLinking certifier library $@"

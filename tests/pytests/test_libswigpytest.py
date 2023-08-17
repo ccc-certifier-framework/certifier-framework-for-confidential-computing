@@ -76,6 +76,7 @@ def test_secure_authenticated_channel_init_client_ssl_default():
 
     # User's root-cert should not have been changed by the method.
     assert sac.asn1_pvt_key_cert_ == pvt_key_cert
+
 # ##############################################################################
 def test_cc_trust_data_lib_default():
     """
