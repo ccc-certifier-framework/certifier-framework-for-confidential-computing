@@ -2391,8 +2391,6 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     const string &host_name,
     int           port,
     const string &asn1_root_cert,
-    // const byte *  asn1_root_cert,
-    const int     asn1_root_cert_size,
     key_message & private_key,
     const string &auth_cert) {
 

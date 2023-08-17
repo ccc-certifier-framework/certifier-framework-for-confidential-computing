@@ -109,7 +109,6 @@ bool run_me_as_client(const string &host_name,
   if (!channel.init_client_ssl(host_name,
                                port,
                                asn1_policy_cert,
-                               asn1_policy_cert.size(),
                                private_key,
                                private_key_cert)) {
     printf("Can't init client app\n");

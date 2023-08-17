@@ -353,8 +353,6 @@ class secure_authenticated_channel {
   bool init_client_ssl(const string &host_name,
                        int           port,
                        const string &asn1_root_cert,
-                       // const byte *  asn1_root_cert,
-                       const int     asn1_root_cert_size,
                        key_message & private_key,
                        const string &private_key_cert);
 

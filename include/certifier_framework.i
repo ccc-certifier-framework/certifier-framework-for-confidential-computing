@@ -22,6 +22,7 @@
 %apply string * OUTPUT { string *psout }         // policy_store()->Serialize()
 
 %apply string * INPUT  { string& role }          // secure_authenticated_channel() constructor
+%apply string * INPUT  { string * out_peer_id }  // secure_authenticated_channel()->get_peer_id()
 
 %{
 #include "certifier_framework.h"
