@@ -21,20 +21,7 @@
 %apply string * OUTPUT { string *v }             // policy_store()->get()
 %apply string * OUTPUT { string *psout }         // policy_store()->Serialize()
 
-%apply string * INPUT  { string& role};          // secure_authenticated_channel() constructor
-
-%begin %{
-// #define SWIG_PYTHON_2_UNICODE 1
-
-// This does not work. Causes other failure in cc_trust_data()'s ctor
-// #define SWIG_PYTHON_STRICT_BYTE_CHAR
-
-// #define SWIG_PYTHON_STRICT_UNICODE_WCHAR 1
-%}
-
-// %apply string * INOUT  { string &asn1_root_cert };  // secure_authenticated_channel().init_client_ssl()
-// %apply string * INOUT  { string &asn1_root_cert };  // secure_authenticated_channel().init_client_ssl()
-// %apply string& INPUT { const string &private_key_cert };
+%apply string * INPUT  { string& role }          // secure_authenticated_channel() constructor
 
 %{
 #include "certifier_framework.h"

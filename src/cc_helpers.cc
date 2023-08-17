@@ -2318,7 +2318,7 @@ bool certifier::framework::server_dispatch(
   //SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 #endif
 
-  // Testing hook: All pytests to invoke with NULL 'func' hdlr.
+  // Testing hook: Allow pytests to invoke with NULL 'func' hdlr.
   if (!func)
     return true;
 
@@ -2363,7 +2363,10 @@ certifier::framework::secure_authenticated_channel::
     ~secure_authenticated_channel() {
   role_.clear();
   channel_initialized_ = false;
-  // delete?
+
+  // ? FIXME - Seems to cause a memory leak detected in pytests
+  // delete private_key_
+
   if (ssl_ctx_ != nullptr)
     SSL_CTX_free(ssl_ctx_);
   ssl_ctx_ = nullptr;

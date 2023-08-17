@@ -32,6 +32,7 @@ generated Python module.
 
 import os
 from inspect import getmembers, isclass, ismodule
+import pytest
 import certifier_framework as cfm
 
 CertPyTestsDir       = os.path.dirname(os.path.realpath(__file__))
@@ -374,74 +375,7 @@ def test_cc_trust_data_get_certified():
     assert result is True
 
 # ##############################################################################
-def test_run_app_as_a_server():
-    """
-    Exercise the "run-app-as-server" step, to start up a server process.
-    Execute the steps that would be taken in a real workflow, to verify that
-    the interfaces basically work.
-    """
-    cctd = cfm.cc_trust_data('simulated-enclave', 'authentication',
-                             CertPyTestsDir + '/data/policy_store')
-    assert cctd.cc_all_initialized() is False
-
-    # Performs cold_init() and also does warm_restart()
-    result = cc_trust_data_get_certified(cctd)
-    assert result is True
-    print(' cc_trust_data_get_certified() succeeded.')
-
-    result = cctd.warm_restart()
-    assert result is True
-    print(' warm_restart() succeeded.')
-
-    my_role = 'server'
-    channel = cfm.secure_authenticated_channel(my_role);
-    print(' ... Secure channel', my_role, 'instantiated.')
-    assert channel.role_ == my_role
-
-    result = cctd.cc_auth_key_initialized_ and cctd.cc_policy_info_initialized_
-    assert result is True
-    print(' ... cctd.trust data is initialized.')
-
-    result = cctd.primary_admissions_cert_valid_
-    assert result is True
-    print(' ... cctd.primary admissions cert is valid.')
-
-    # if (!nc.init_server_ssl(host_name,
-    #                         port,
-    #                         asn1_root_cert,
-    #                         private_key,
-    #                         private_key_cert)) {
-
-# bool certifier::framework::server_dispatch(
-#     const string &host_name,
-#     int           port,
-#     const string &asn1_root_cert,
-#     key_message & private_key,
-#     const string &private_key_cert,
-#     void (*func)(secure_authenticated_channel &)) {
-
-#     if (!server_dispatch(FLAGS_server_app_host,
-#                          FLAGS_server_app_port,
-#                          app_trust_data->serialized_policy_cert_,
-#                          app_trust_data->private_auth_key_,
-#                          app_trust_data->serialized_primary_admissions_cert_,
-
-    result = channel.init_server_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
-                                     cctd.serialized_policy_cert_,
-                                     cctd.private_auth_key_,
-                                     cctd.serialized_primary_admissions_cert_)
-    assert result is True
-    print(' ... channel.init_server_ssl() succeeded.')
-
-    result = cfm.server_dispatch(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
-                                 cctd.serialized_policy_cert_,
-                                 cctd.private_auth_key_,
-                                 cctd.serialized_primary_admissions_cert_,
-                                 None)
-    assert result is True
-    print(' ... cfm.server_dispatch() succeeded.')
-
-# ##############################################################################
+# @pytest.mark.skip(reason='Ends up waiting for client/server input')
 def test_run_app_as_a_client_init_client_ssl():
     """
     Exercise the steps up through "run-app-as-client". This subsumes the setup
@@ -458,7 +392,7 @@ def test_run_app_as_a_client_init_client_ssl():
     assert result is True
 
     my_role = 'client'
-    channel = cfm.secure_authenticated_channel(my_role);
+    channel = cfm.secure_authenticated_channel(my_role)
     print(' ... Secure channel', my_role, 'instantiated.')
     assert channel.role_ == my_role
 
@@ -470,25 +404,12 @@ def test_run_app_as_a_client_init_client_ssl():
     assert result is True
     print(' ... cctd.primary admissions cert is valid.')
 
-    serialized_policy_cert = cctd.serialized_policy_cert_
-    # result = channel.init_client_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
-    #                                  # Tried variations: serialized_policy_cert,
-    #                                  cctd.serialized_policy_cert_,
-    #                                  cctd.private_auth_key_,
-    #                                  cctd.serialized_primary_admissions_cert_)
-    # cctd.serialized_policy_cert_, 
     # *************************************************************************
     # SEE SWIG ISSUE: https://github.com/swig/swig/issues/1916
     # Change generated code in SWIG_AsCharPtrAndSize() to:
     # obj = PyUnicode_AsEncodedString(obj, "utf-8", "surrogateescape");
     # *************************************************************************
     result = channel.init_client_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
-                                     # Tried variations: serialized_policy_cert,
-                                     # cctd.serialized_policy_cert_,
-                                     # cctd.serialized_policy_cert_.encode("raw_unicode_escape"),
-                                     # cctd.serialized_policy_cert_.encode('utf-8', errors='ignore'),
-                                     # cctd.serialized_policy_cert_.encode('utf-8', errors='surrogateescape'),
-            # cctd.serialized_policy_cert_.encode("utf-8", errors="surrogateescape").decode("latin-1"),
                                      cctd.serialized_policy_cert_,
                                      len(cctd.serialized_policy_cert_),
                                      cctd.private_auth_key_,
@@ -498,10 +419,68 @@ def test_run_app_as_a_client_init_client_ssl():
     assert result is False
 
 # ##############################################################################
+@pytest.mark.check_leaks()
+def test_run_app_as_a_server():
+    """
+    Exercise the "run-app-as-server" step, to start up a server process.
+    Execute the steps that would be taken in a real workflow, to verify that
+    the interfaces basically work, without actually getting into an SSL-connect
+    # accept server-loop.
+    """
+    cctd = cfm.cc_trust_data('simulated-enclave', 'authentication',
+                             CertPyTestsDir + '/data/policy_store')
+    assert cctd.cc_all_initialized() is False
+
+    # Performs cold_init() and also does warm_restart()
+    result = cc_trust_data_get_certified(cctd)
+    assert result is True
+    print(' cc_trust_data_get_certified() succeeded. cc_all_initialized() is True.')
+
+    result = cctd.warm_restart()
+    assert result is True
+    print(' warm_restart() succeeded.')
+
+    my_role = 'server'
+    channel = cfm.secure_authenticated_channel(my_role)
+    print(' ... Secure channel', my_role, 'instantiated.')
+    assert channel.role_ == my_role
+
+    result = cctd.cc_auth_key_initialized_ and cctd.cc_policy_info_initialized_
+    assert result is True
+    print(' ... cctd.trust data is initialized.')
+
+    result = cctd.primary_admissions_cert_valid_
+    assert result is True
+    print(' ... cctd.primary admissions cert is valid.')
+
+    result = channel.init_server_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
+                                     cctd.serialized_policy_cert_,
+                                     cctd.private_auth_key_,
+                                     cctd.serialized_primary_admissions_cert_)
+    assert result is True
+    print(' ... channel.init_server_ssl() succeeded.')
+
+    # Method provides a testing hook to dispatch method with NULL func-hdlr arg
+    # so that we basically exercise the rest of the code-flow of this interface.
+    result = cfm.server_dispatch(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
+                                 cctd.serialized_policy_cert_,
+                                 cctd.private_auth_key_,
+                                 cctd.serialized_primary_admissions_cert_,
+                                 None)
+    assert result is True
+    print(' ... cfm.server_dispatch() succeeded.')
+
+# ##############################################################################
 # Work-horse function: Implements the steps taken with cc_trust_data() object.
 # ##############################################################################
 def cc_trust_data_get_certified(cctd):
 
+    """
+    Do-it-all method to go through the steps that the 'get-certified' action in
+    sample apps performs.
+
+    Returns boolean, cc_trust_data()->cc_all_initialized(); Expected to be true.
+    """
     # Open the Certificate binary file for reading
     cert_file_bin = '/data/policy_cert_file.bin'
     with open(CertPyTestsDir + cert_file_bin, 'rb') as cert_file:
@@ -540,6 +519,9 @@ def cc_trust_data_get_certified(cctd):
     result = cctd.certify_me()
     assert result is True
     print(' ... cctd.certify_me() succeeded.')
+
+    result =  cctd.cc_all_initialized()
+    print(' ... cctd.cc_all_initialized() succeeded.')
     return result
 
 # ##############################################################################
