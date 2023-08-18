@@ -56,6 +56,20 @@ def test_getmembers_of_libswigpytest():
         print(' - ', item[0]) # item[1])
 
 # ##############################################################################
+def test_cc_trust_data_lib_default():
+    """
+    Basic exerciser of methods for an empty cc_trust_data() object.
+    No SWIG interface rules are required for this test case to pass as we are
+    invoking a default constructor w/ no arguments.
+    """
+
+    cctd = libswigpy.new_cc_trust_data()
+    root_cert = libswigpy.cc_trust_data_serialized_policy_cert__get(cctd)
+    assert root_cert == 'Unknown-root-cert'
+
+    libswigpy.delete_cc_trust_data(cctd)
+
+# ##############################################################################
 def test_secure_authenticated_channel_init_client_ssl_default():
     """
     Exerciser of init_client_ssl() method for a secure_authenticated_channel()
@@ -76,20 +90,6 @@ def test_secure_authenticated_channel_init_client_ssl_default():
 
     # User's root-cert should not have been changed by the method.
     assert sac.asn1_root_cert_ == pvt_key_cert
-
-# ##############################################################################
-def test_cc_trust_data_lib_default():
-    """
-    Basic exerciser of methods for an empty cc_trust_data() object.
-    No SWIG interface rules are required for this test case to pass as we are
-    invoking a default constructor w/ no arguments.
-    """
-
-    cctd = libswigpy.new_cc_trust_data()
-    root_cert = libswigpy.cc_trust_data_serialized_policy_cert__get(cctd)
-    assert root_cert == 'Unknown-root-cert'
-
-    libswigpy.delete_cc_trust_data(cctd)
 
 # ##############################################################################
 def test_secure_authenticated_channel_lib():
