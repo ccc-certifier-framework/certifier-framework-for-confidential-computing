@@ -15,6 +15,8 @@
 
 // ****************************************************************************
 // swigpytest.cc : To test swigpytest.i SWIG interfaces.
+// These are just dummy class definitions, based on the stuff defined in
+// certifier_framework.h . See swigpytest.h for details.
 // ****************************************************************************
 
 #include <string.h>
@@ -22,12 +24,14 @@
 
 using namespace swigpytests;
 
+// ****************************************************************************
 swigpytests::cc_trust_data::cc_trust_data() {
   serialized_policy_cert_ = "Unknown-root-cert";
 }
 
 swigpytests::cc_trust_data::~cc_trust_data() {}
 
+// ****************************************************************************
 swigpytests::secure_authenticated_channel::secure_authenticated_channel() {
   role_ = "Undefined-role";
 }
@@ -40,8 +44,16 @@ swigpytests::secure_authenticated_channel::secure_authenticated_channel(
 swigpytests::secure_authenticated_channel::~secure_authenticated_channel() {}
 
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
-    const string &private_key_cert) {  // In
-  asn1_pvt_key_cert_ = private_key_cert;
+    const string &host_name,
+    int           port) {
+  host_name_ = host_name;
+  port_ = port;
+  return true;
+}
+
+bool swigpytests::secure_authenticated_channel::init_client_ssl(
+    const string &asn1_root_cert) {  // In
+  asn1_root_cert_ = asn1_root_cert;
   return true;
 }
 
@@ -59,14 +71,22 @@ bool swigpytests::secure_authenticated_channel::init_client_ssl(
     const string &host_name,
     int           port,
     string &      asn1_root_cert,
-    const string &auth_cert) {
+    const string &asn1_my_cert_pvtkey) {
   host_name_ = host_name;
   port_ = port;
+
+  // Update root-certificate with user-supplied certificate (in/out)
+  asn1_root_cert_ = asn1_root_cert;
+
+  // Update private-certificate with user-supplied private certificate (in/out)
+  asn1_my_cert_ = asn1_my_cert_pvtkey;
+
+  // Return some new certificate string via user-supplied certificate arg.
   asn1_root_cert.assign("New root Certificate");
-  asn1_pvt_key_cert_ = auth_cert;
   return true;
 }
 
+/*
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
     const string &host_name,
     int           port,
@@ -81,3 +101,4 @@ bool swigpytests::secure_authenticated_channel::init_client_ssl(
   asn1_pvt_key_cert_ = auth_cert;
   return true;
 }
+*/
