@@ -40,15 +40,15 @@ swigpytests::secure_authenticated_channel::secure_authenticated_channel(
 swigpytests::secure_authenticated_channel::~secure_authenticated_channel() {}
 
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
-    const string &private_key_cert) {
+    const string &private_key_cert) {  // In
   asn1_pvt_key_cert_ = private_key_cert;
   return true;
 }
 
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
-    const string &host_name,
-    int           port,
-    string &      asn1_root_cert) {
+    const string &host_name,   // In
+    int           port,        // In
+    string &      asn1_root_cert) {  // Out
   host_name_ = host_name;
   port_ = port;
   asn1_root_cert.assign("New root Certificate");

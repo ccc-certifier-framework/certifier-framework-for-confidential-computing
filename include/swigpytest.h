@@ -50,6 +50,7 @@ class secure_authenticated_channel {
   secure_authenticated_channel(string &role);  // role is client or server
   ~secure_authenticated_channel();
 
+  // To test invoking this with a certificate holding Unicode surrogate chars
   bool init_client_ssl(const string &private_key_cert);
 
   bool init_client_ssl(const string &host_name,
