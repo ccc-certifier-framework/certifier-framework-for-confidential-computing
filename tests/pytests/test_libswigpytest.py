@@ -70,12 +70,12 @@ def test_secure_authenticated_channel_init_client_ssl_default():
     assert sac.role_ == 'Undefined-role'
 
     pvt_key_cert = 'Private key certificate'
-    # Arg is const string &private_key_cert
+    # Arg is const string &asn1_root_cert
     result = sac.init_client_ssl(pvt_key_cert)
     assert result is True
 
     # User's root-cert should not have been changed by the method.
-    assert sac.asn1_pvt_key_cert_ == pvt_key_cert
+    assert sac.asn1_root_cert_ == pvt_key_cert
 
 # ##############################################################################
 def test_cc_trust_data_lib_default():

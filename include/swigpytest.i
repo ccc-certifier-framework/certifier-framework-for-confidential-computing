@@ -13,9 +13,9 @@
 //       test_secure_authenticated_channel_default()
 %apply string * INPUT  { string& role };            // secure_authenticated_channel() constructor
 
-// Test: test_secure_authenticated_channel_init_client_ssl()
+// Test: test_secure_authenticated_channel_init_client_ssl_default()
 //       test_secure_authenticated_channel_init_client_ssl_simple_app()
-%apply string * INOUT  { string &asn1_root_cert };  // secure_authenticated_channel().init_client_ssl()
+%apply string * INPUT  { const string &asn1_root_cert };  // secure_authenticated_channel().init_client_ssl()
 
 %{
 #include "swigpytest.h"
