@@ -93,18 +93,10 @@ class secure_authenticated_channel {
                        int           port,
                        string &      asn1_root_cert_io);
 
-  /*
   bool init_client_ssl(const string &host_name,
                        int           port,
-                       string &      asn1_root_cert,
+                       string &      asn1_root_cert_io,
                        const string &asn1_my_cert_pvtkey);
-
-  bool init_client_ssl(const string &host_name,
-                       int           port,
-                       byte *        asn1_root_cert,
-                       int           asn1_root_cert_size,
-                       const string &private_key_cert);
-  */
 };
 
 }  // namespace swigpytests

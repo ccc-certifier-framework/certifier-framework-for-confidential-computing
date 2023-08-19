@@ -215,21 +215,26 @@ def test_secure_authenticated_channel_init_client_ssl_simple_app():
     as it's done in simple_app/example_app.cc .
     Here, we invoke the method to initialize the
     cc_trust_data()->serialized_policy_cert_ member.
-     - We need an INOUT typemap rule for 'string &asn1_root_cert'
+     - We need an INOUT typemap rule for 'string &asn1_root_cert_io'
     """
     sac_role = 'client'
     sac = swigpyt.secure_authenticated_channel(sac_role)
 
     user_root_cert = 'fake root certificate'
 
-    # 3rd arg is string & asn1_root_cert, SWIG'ed as string * INOUT
-    result, user_root_cert = sac.init_client_ssl('localhost', 8123,
-                                                  user_root_cert,
-                                                  'private-key-cert')
+    # 3rd arg is string & asn1_root_cert_io, SWIG'ed as string * INOUT
+    result, user_root_cert = sac.init_client_ssl(CERT_CLIENT_HOST,
+                                                 CERT_CLIENT_APP_PORT,
+                                                 user_root_cert,
+                                                 'private-key-cert')
     assert result is True
     # User's root-cert should have been changed by the method.
     assert user_root_cert == 'New root Certificate'
-    assert sac.asn1_pvt_key_cert_ == 'private-key-cert'
+    assert sac.asn1_my_cert_ == 'private-key-cert'
+
+    # Verify that the right C++ method was invoked thru Swig gyrations
+    exp_swig_fn_name = 'init_client_ssl-host_name-port-string-asn1_root_cert_io-const-string-asn1_my_cert_pvtkey'
+    assert sac.swig_wrap_fn_name_ == exp_swig_fn_name
 
     # Now, try the call as it's done in simple-app, using the field from
     # cc_trust_data(). That should be uninitialized.
@@ -243,9 +248,10 @@ def test_secure_authenticated_channel_init_client_ssl_simple_app():
                                                       cctd.serialized_policy_cert_,
                                                       'private-key-cert')
     assert result is True
-    assert sac.asn1_pvt_key_cert_ == 'private-key-cert'
+    assert sac.asn1_my_cert_ == 'private-key-cert'
     assert tmp_asn1_root_cert == 'New root Certificate'
     assert cctd.serialized_policy_cert_ == 'Unknown-root-cert'
+    assert sac.swig_wrap_fn_name_ == exp_swig_fn_name
 
     sac.asn1_pvt_key_cert_ = 'Uninitialized'
     # This is the way to call to use cctd.serialized_policy_cert_ as input/output field.
@@ -253,5 +259,6 @@ def test_secure_authenticated_channel_init_client_ssl_simple_app():
                                                                cctd.serialized_policy_cert_,
                                                                'private-key-cert')
     assert result is True
-    assert sac.asn1_pvt_key_cert_ == 'private-key-cert'
+    assert sac.asn1_my_cert_ == 'private-key-cert'
     assert cctd.serialized_policy_cert_ == 'New root Certificate'
+    assert sac.swig_wrap_fn_name_ == exp_swig_fn_name
