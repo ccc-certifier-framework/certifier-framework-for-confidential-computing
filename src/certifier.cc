@@ -230,7 +230,6 @@ static bool vcek_ext_byte_value(X509 *         vcek,
   // Use OID for both lname and sname so OBJ_create does not fail
   nid = OBJ_create(oid, oid, oid);
   if (nid == NID_undef) {
-    printf("%s() error, line %d, Failed to create NID\n", __func__, __LINE__);
     return false;
   }
   idx = X509_get_ext_by_NID(vcek, nid, -1);
@@ -276,7 +275,7 @@ uint64_t get_tcb_version_from_vcek(X509 *vcek) {
   return tcb_version;
 }
 
-bool get_chipid_from_vcek(X509 *vcek, unsigned char *chipid, int idlen) {
+static bool get_chipid_from_vcek(X509 *vcek, unsigned char *chipid, int idlen) {
   int                  nid = -1, idx = -1, extlen = -1;
   X509_EXTENSION *     ex = NULL;
   ASN1_STRING *        extvalue = NULL;
@@ -284,7 +283,7 @@ bool get_chipid_from_vcek(X509 *vcek, unsigned char *chipid, int idlen) {
 
   nid = OBJ_create(VCEK_EXT_HWID, VCEK_EXT_HWID, VCEK_EXT_HWID);
   if (nid == NID_undef) {
-    printf("%s() error, line %d, Failed to create NID\n", __func__, __LINE__);
+    printf("%s() Warning, line %d, Failed to create NID\n", __func__, __LINE__);
     return false;
   }
   idx = X509_get_ext_by_NID(vcek, nid, -1);
@@ -318,7 +317,7 @@ bool PublicKeyFromCert(const string &cert, key_message *k) {
 #ifdef SEV_SNP
   enum { CHIP_ID_SIZE = 64 };
   unsigned char chipid[CHIP_ID_SIZE];
-#endif
+#endif  // SEV_SNP
 
   if (!GetX509FromCert(cert, x)) {
     printf("%s() error, line %d, PublicKeyFromCert: Can't get X509 from cert\n",
@@ -426,13 +425,13 @@ bool PublicKeyFromCert(const string &cert, key_message *k) {
   k->set_snp_tcb_version(get_tcb_version_from_vcek(x));
   memset(chipid, 0, CHIP_ID_SIZE);
   if (!get_chipid_from_vcek(x, chipid, CHIP_ID_SIZE)) {
-    printf(
-        "%s() error, line %d, Failed to retrieve HWID from VCEK extensions\n",
-        __func__,
-        __LINE__);
+    printf("%s() Info, line %d, Failed to retrieve HWID from VCEK extensions."
+           " Setting chip ID to 0.\n",
+           __func__,
+           __LINE__);
   }
   k->set_snp_chipid(chipid, CHIP_ID_SIZE);
-#endif
+#endif  // SEV_SNP
 
 done:
   if (epk != nullptr)
@@ -451,7 +450,7 @@ extern bool sev_Attest(int   what_to_say_size,
                        byte *what_to_say,
                        int * size_out,
                        byte *out);
-#endif
+#endif  // SEV_SNP
 
 #ifdef ASYLO_CERTIFIER
 extern bool asylo_Attest(int   claims_size,
