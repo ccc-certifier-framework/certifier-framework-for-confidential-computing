@@ -163,7 +163,7 @@ def test_secure_authenticated_channel_default():
     assert sac.role_ == sac_role
 
 # ##############################################################################
-def test_secure_authenticated_channel_init_client_ssl():
+def test_secure_authenticated_channel_init_client_ssl_basic():
     """
     Exerciser of init_client_ssl() method for a secure_authenticated_channel()
     object using interfaces from the Python module. init_client_ssl()
@@ -174,12 +174,15 @@ def test_secure_authenticated_channel_init_client_ssl():
     sac_role = 'client'
     sac = swigpyt.secure_authenticated_channel(sac_role)
 
-    user_root_cert = 'fake root certificate'
+    user_root_cert_inp = 'user-input root certificate'
+    user_root_cert = user_root_cert_inp
 
     # Last arg is string & asn1_root_cert, SWIG'ed as string * INOUT
     result, user_root_cert = sac.init_client_ssl('localhost', 8123,
                                                   user_root_cert)
     assert result is True
+    assert sac.asn1_root_cert_ == user_root_cert_inp
+
     # User's root-cert should have been changed by the method.
     assert user_root_cert == 'New root Certificate'
 

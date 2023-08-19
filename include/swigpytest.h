@@ -86,16 +86,11 @@ class secure_authenticated_channel {
   bool init_client_ssl(string &asn1_root_cert_io, int port);    // In/Out
   bool init_client_ssl(int port, const string &asn1_root_cert);
 
-  // bool init_client_ssl(string &asn1_root_cert, int port);
-
-  // Simplest interface with basic data types.
-  // bool init_client_ssl(const string &host_name, int port);
-
-  /*
   bool init_client_ssl(const string &host_name,
                        int           port,
-                       string &      asn1_root_cert);
+                       string &      asn1_root_cert_io);
 
+  /*
   bool init_client_ssl(const string &host_name,
                        int           port,
                        string &      asn1_root_cert,
