@@ -22,6 +22,13 @@ exercised in this test case.
 This Python test invokes those interfaces to test that the SWIG interface
 rules correctly allow the Python bindings to work.
 
+Some of these test cases cross-check a method-name, left as a bread crumb by
+the method invoked thru SWIG/C++ mapping gyrations. To debug failing tests,
+check for the string asserted == sac.swig_wrap_fn_name_ in the swigpytest.cc
+file. That will give you the 'expected' C++ method name that should have been
+executed. Then, debug why the swigpytest.i mapping rules ended up picing a
+different wrapper C++ method to execute.
+
 """
 from inspect import getmembers, isbuiltin, ismodule
 
@@ -94,6 +101,9 @@ def test_secure_authenticated_channel_init_client_ssl_default():
     # User's root-cert should not have been changed by the method.
     assert sac.asn1_root_cert_ == pvt_key_cert
 
+    # Verify that the right C++ method was invoked thru Swig gyrations
+    assert sac.swig_wrap_fn_name_ == 'init_client_ssl-const-string-asn1_root_cert'
+
 # ##############################################################################
 def test_secure_authenticated_channel_init_client_ssl_input_output():
     """
@@ -112,10 +122,16 @@ def test_secure_authenticated_channel_init_client_ssl_input_output():
     result = sac.init_client_ssl(pvt_key_cert)
     assert result is True
 
+    # Verify that the right C++ method was invoked thru Swig gyrations
+    assert sac.swig_wrap_fn_name_ == 'init_client_ssl-const-string-asn1_root_cert'
+
     # Arg is now interpreted as: 'string &asn1_root_cert_io'
     # Input private-key-cert should have been changed by the method.
     result, pvt_key_cert = sac.init_client_ssl(pvt_key_cert, CERT_CLIENT_APP_PORT)
     assert pvt_key_cert == 'New root Certificate'
+
+    # Verify that the right C++ method was invoked thru Swig gyrations
+    assert sac.swig_wrap_fn_name_ == 'init_client_ssl-const-string-asn1_root_cert_io-port'
 
 # ##############################################################################
 def test_secure_authenticated_channel_init_client_ssl_default_2args():
@@ -138,6 +154,9 @@ def test_secure_authenticated_channel_init_client_ssl_default_2args():
 
     # User's root-cert should not have been changed by the method.
     assert sac.asn1_root_cert_ == pvt_key_cert
+
+    # Verify that the right C++ method was invoked thru Swig gyrations
+    assert sac.swig_wrap_fn_name_ == 'init_client_ssl-port-const-string-asn1_root_cert'
 
 # ##############################################################################
 def test_secure_authenticated_channel_lib():
@@ -185,6 +204,9 @@ def test_secure_authenticated_channel_init_client_ssl_basic():
 
     # User's root-cert should have been changed by the method.
     assert user_root_cert == 'New root Certificate'
+
+    # Verify that the right C++ method was invoked thru Swig gyrations
+    assert sac.swig_wrap_fn_name_ == 'init_client_ssl-host_name-port-string-asn1_root_cert_io'
 
 # ##############################################################################
 def test_secure_authenticated_channel_init_client_ssl_simple_app():

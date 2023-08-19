@@ -52,6 +52,9 @@ class cc_trust_data {
  */
 class secure_authenticated_channel {
  public:
+  // Debugging: Method invoked will poke a bread crumb in this field
+  string swig_wrap_fn_name_;
+
   int port_;
 
   // Normal string data ... Simple ascii strings
