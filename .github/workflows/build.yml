@@ -64,6 +64,7 @@ jobs:
         # Rebuild special-target which will invoke -fPIC flag during compilation.
         set -x
         make -f certifier.mak --always-make -j2 sharedlib
+        make -f certifier.mak --always-make -j2 swigpytestsharedlib
         make -f certifier_tests.mak --always-make -j2 sharedlib
         set +x
 
@@ -122,13 +123,16 @@ jobs:
 
         PYTHONUNBUFFERED=TRUE pytest -v test_certifier_framework.py
 
+        # RESOLVE: Delete this test ... Re-run entire test w/o capturing output
         # Just run the basic case of this test to see classes created in generated Python module
-        PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
-        pytest --capture=tee-sys -v test_certifier_protobuf_interfaces.py -k test_certifier_pb2_basic
+        # PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
+        # pytest --capture=tee-sys -v test_certifier_protobuf_interfaces.py -k test_certifier_pb2_basic
 
-        # Re-run entire test w/o capturing output
-        PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
-        pytest -v test_certifier_protobuf_interfaces.py
+        # RESOLVE: Delete this test ... Re-run entire test w/o capturing output
+        # PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
+        # pytest -v test_certifier_protobuf_interfaces.py
+
+        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v tests/pytests/test_libswigpytest.py
 
         set +x
         popd

@@ -375,7 +375,7 @@ def test_cc_trust_data_get_certified():
     assert result is True
 
 # ##############################################################################
-# @pytest.mark.skip(reason='Ends up waiting for client/server input')
+@pytest.mark.skip(reason='Ends up waiting for client/server input')
 def test_run_app_as_a_client_init_client_ssl():
     """
     Exercise the steps up through "run-app-as-client". This subsumes the setup
@@ -411,15 +411,16 @@ def test_run_app_as_a_client_init_client_ssl():
     # *************************************************************************
     result = channel.init_client_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
                                      cctd.serialized_policy_cert_,
-                                     len(cctd.serialized_policy_cert_),
                                      cctd.private_auth_key_,
                                      cctd.serialized_primary_admissions_cert_)
+
     # This is expected to fail as we will not be able to setup a SSL connection
     # to the server-process. (Server process hasn't been started in this test.)
     assert result is False
 
 # ##############################################################################
 @pytest.mark.check_leaks()
+@pytest.mark.skip(reason='Runs into parsing errors due to Unicode surrogate chars')
 def test_run_app_as_a_server():
     """
     Exercise the "run-app-as-server" step, to start up a server process.

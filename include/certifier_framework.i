@@ -24,25 +24,6 @@
 %apply string * INPUT  { string& role };         // secure_authenticated_channel() constructor
 %apply string * INPUT  { string * out_peer_id }; // secure_authenticated_channel()->get_peer_id()
 
-/* Convert from Python --> C */
-%typemap(in) const string {
-
-    // $1 =  PyUnicode_AsEncodedString($input, "utf-8", "surrogateescape");
-
-    std::string *ptr = (std::string *)0;
-
-    $result = PyUnicode_AsEncodedString($input, "utf-8", "surrogateescape");
-
-    if (!SWIG_IsOK($result)) {
-      SWIG_exception_fail(SWIG_ArgError($result), "in method '" "server_dispatch" "', argument " "3"" of type '" "string const &""'"); 
-    }
-    if (!ptr) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "server_dispatch" "', argument " "3"" of type '" "string const &""'"); 
-    }
-    $result = ptr;
-}
-%apply const string { const string &asn1_root_cert };
-
 %{
 #include "certifier_framework.h"
 %}
