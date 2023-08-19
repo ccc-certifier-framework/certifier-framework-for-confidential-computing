@@ -329,6 +329,15 @@ jobs:
             set +x
         done
 
+        # Rebuild shared library that pytest needs
+        pushd ../src
+        make -f certifier.mak --always-make -j2 sharedlib
+        popd
+
+        # Re-start Certifier Service as script, above, would have shut it down
+        ./cleanup.sh
+        ./run_example.sh simple_app start_certifier_service
+
         # Run Python test, in which some test cases need Certifier Service to be up.
         pushd ../
 
