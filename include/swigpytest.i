@@ -20,7 +20,7 @@
 
 // You don't really need this rule as 'const string &arg' is passed-in by default as input string.
 // Test: test_secure_authenticated_channel_init_client_ssl_default()
-//       test_secure_authenticated_channel_init_client_ssl_simple_app()
+//       test_secure_authenticated_channel_init_client_ssl_default_2args()
 // %apply string * INPUT  { const string &asn1_root_cert };  // secure_authenticated_channel().init_client_ssl()
 
 // Test: test_secure_authenticated_channel_init_client_ssl_input_output()

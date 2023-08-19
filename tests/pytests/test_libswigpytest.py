@@ -87,7 +87,7 @@ def test_secure_authenticated_channel_init_client_ssl_default():
     assert sac.role_ == 'Undefined-role'
 
     pvt_key_cert = 'Private key certificate'
-    # Arg is const string &asn1_root_cert
+    # Arg is interpreted as: const string &asn1_root_cert
     result = sac.init_client_ssl(pvt_key_cert)
     assert result is True
 
@@ -112,10 +112,32 @@ def test_secure_authenticated_channel_init_client_ssl_input_output():
     result = sac.init_client_ssl(pvt_key_cert)
     assert result is True
 
-    # Arg is now 'string &asn1_root_cert_io'
+    # Arg is now interpreted as: 'string &asn1_root_cert_io'
     # Input private-key-cert should have been changed by the method.
     result, pvt_key_cert = sac.init_client_ssl(pvt_key_cert, CERT_CLIENT_APP_PORT)
     assert pvt_key_cert == 'New root Certificate'
+
+# ##############################################################################
+def test_secure_authenticated_channel_init_client_ssl_default_2args():
+    """
+    Exerciser of init_client_ssl() method for a secure_authenticated_channel()
+    object to verify interface for const string &asn1_root_cert.
+
+    No SWIG interface rules are required for this test case to pass, as:
+     - we are invoking a default construtor w/ no arguments
+     - init_client_ssl() is defined to take 'const string&'. So typemap
+       rules are not needed.
+    """
+    sac = swigpyt.secure_authenticated_channel()
+    assert sac.role_ == 'Undefined-role'
+
+    pvt_key_cert = 'Private key certificate'
+    # Arg is interpreted as: const string &asn1_root_cert
+    result = sac.init_client_ssl(CERT_CLIENT_APP_PORT, pvt_key_cert)
+    assert result is True
+
+    # User's root-cert should not have been changed by the method.
+    assert sac.asn1_root_cert_ == pvt_key_cert
 
 # ##############################################################################
 def test_secure_authenticated_channel_lib():

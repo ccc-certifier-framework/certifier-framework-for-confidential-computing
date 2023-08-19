@@ -71,7 +71,7 @@ class secure_authenticated_channel {
   ~secure_authenticated_channel();
 
   // Different combinations of interfaces with mulitple arguments, where some
-  // of the args are in, in/out, and some certificates could contain
+  // of the args are in, in/out, and some 'certificate' args could contain
   // non-standard Unicode surrogate char data.
 
   /*
@@ -84,8 +84,8 @@ class secure_authenticated_channel {
    */
   bool init_client_ssl(const string &asn1_root_cert);           // In
   bool init_client_ssl(string &asn1_root_cert_io, int port);    // In/Out
+  bool init_client_ssl(int port, const string &asn1_root_cert);
 
-  // bool init_client_ssl(const string &asn1_root_cert, int port);
   // bool init_client_ssl(string &asn1_root_cert, int port);
 
   // Simplest interface with basic data types.

@@ -64,14 +64,16 @@ bool swigpytests::secure_authenticated_channel::init_client_ssl(
   return true;
 }
 
-/*
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
-    const string &asn1_root_cert, int port) {  // In
+    int           port,
+    const string &asn1_root_cert) {  // In
+  printf(" Executing %s():%d ...\n", __func__, __LINE__);
   asn1_root_cert_ = asn1_root_cert;
   port_ = port;
   return true;
 }
 
+/*
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
     string &asn1_root_cert, int port) {  // In
 
