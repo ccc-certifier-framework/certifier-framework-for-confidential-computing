@@ -358,6 +358,7 @@ def test_cc_trust_data_simulated_enclave():
     assert result is True
 
 # ##############################################################################
+@pytest.mark.needs_cert_service()
 def test_cc_trust_data_get_certified():
     """
     Exercise the steps up through "get-certified" for a simulated enclave:
@@ -375,6 +376,7 @@ def test_cc_trust_data_get_certified():
     assert result is True
 
 # ##############################################################################
+@pytest.mark.needs_cert_service()
 @pytest.mark.skip(reason='Ends up waiting for client/server input')
 def test_run_app_as_a_client_init_client_ssl():
     """
@@ -419,6 +421,7 @@ def test_run_app_as_a_client_init_client_ssl():
     assert result is False
 
 # ##############################################################################
+@pytest.mark.needs_cert_service()
 @pytest.mark.check_leaks()
 @pytest.mark.skip(reason='Runs into parsing errors due to Unicode surrogate chars')
 def test_run_app_as_a_server():
