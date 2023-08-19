@@ -32,6 +32,7 @@ typedef unsigned char byte;
 
 namespace swigpytests {
 
+// clang-format off
 // ****************************************************************************
 class cc_trust_data {
 
@@ -44,10 +45,10 @@ class cc_trust_data {
 };
 
 /*
-// ****************************************************************************
+ * ****************************************************************************
  * Class to exercise Python interfaces to pass-in string data of
  * different types, for input / ouput etc.
-// ****************************************************************************
+ * ****************************************************************************
  */
 class secure_authenticated_channel {
  public:
@@ -65,18 +66,32 @@ class secure_authenticated_channel {
 
   // string &role should really be 'const'. Define as non-const to verify via
   // tests how to pass-in data.
-  secure_authenticated_channel(string &role);  // role is client or server
+  secure_authenticated_channel(string &  role);  // role is client or server
 
   ~secure_authenticated_channel();
-
-  // Simplest interface with basic data types.
-  bool init_client_ssl(const string &host_name, int port);
 
   // Different combinations of interfaces with mulitple arguments, where some
   // of the args are in, in/out, and some certificates could contain
   // non-standard Unicode surrogate char data.
-  bool init_client_ssl(const string &asn1_root_cert);
 
+  /*
+   * NOTE: There seems to be no way to define two interfaces taking the same
+   *        single argument, with one of them being an in/out arg.
+   *        The invocation from Python ends up with the 1st one.
+   *        In order to verify that the INOUT typemap rules for
+   *        'string &asn1_root_cert_io' are correctly applied, we need an
+   *        interface that Python invocation can tell-apart.
+   */
+  bool init_client_ssl(const string &asn1_root_cert);           // In
+  bool init_client_ssl(string &asn1_root_cert_io, int port);    // In/Out
+
+  // bool init_client_ssl(const string &asn1_root_cert, int port);
+  // bool init_client_ssl(string &asn1_root_cert, int port);
+
+  // Simplest interface with basic data types.
+  // bool init_client_ssl(const string &host_name, int port);
+
+  /*
   bool init_client_ssl(const string &host_name,
                        int           port,
                        string &      asn1_root_cert);
@@ -86,7 +101,6 @@ class secure_authenticated_channel {
                        string &      asn1_root_cert,
                        const string &asn1_my_cert_pvtkey);
 
-  /*
   bool init_client_ssl(const string &host_name,
                        int           port,
                        byte *        asn1_root_cert,
@@ -97,4 +111,5 @@ class secure_authenticated_channel {
 
 }  // namespace swigpytests
 
+// clang-format on
 #endif  // __SWIGPYTEST_H__

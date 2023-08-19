@@ -44,16 +44,52 @@ swigpytests::secure_authenticated_channel::secure_authenticated_channel(
 swigpytests::secure_authenticated_channel::~secure_authenticated_channel() {}
 
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
-    const string &host_name,
-    int           port) {
-  host_name_ = host_name;
+    const string &asn1_root_cert) {  // In
+  printf(" Executing %s():%d ...\n", __func__, __LINE__);
+  asn1_root_cert_ = asn1_root_cert;
+  return true;
+}
+
+bool swigpytests::secure_authenticated_channel::init_client_ssl(
+    string &asn1_root_cert_io,  // In/Out
+    int     port) {                 // In
+  printf(" Executing %s():%d ...\n", __func__, __LINE__);
+  // Update root-certificate with user-supplied certificate (in)
+  asn1_root_cert_ = asn1_root_cert_io;
+
+  port_ = port;
+
+  // Return some new certificate string via user-supplied certificate arg. (out)
+  asn1_root_cert_io.assign("New root Certificate");
+  return true;
+}
+
+/*
+bool swigpytests::secure_authenticated_channel::init_client_ssl(
+    const string &asn1_root_cert, int port) {  // In
+  asn1_root_cert_ = asn1_root_cert;
   port_ = port;
   return true;
 }
 
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
-    const string &asn1_root_cert) {  // In
+    string &asn1_root_cert, int port) {  // In
+
+  // Update root-certificate with user-supplied certificate (in/out)
   asn1_root_cert_ = asn1_root_cert;
+
+  port_ = port;
+
+  // Return some new certificate string via user-supplied certificate arg.
+  asn1_root_cert.assign("New root Certificate");
+  return true;
+}
+
+bool swigpytests::secure_authenticated_channel::init_client_ssl(
+    const string &host_name,
+    int           port) {
+  host_name_ = host_name;
+  port_ = port;
   return true;
 }
 
@@ -86,7 +122,6 @@ bool swigpytests::secure_authenticated_channel::init_client_ssl(
   return true;
 }
 
-/*
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
     const string &host_name,
     int           port,

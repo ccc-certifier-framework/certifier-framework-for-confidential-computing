@@ -31,6 +31,9 @@ import swigpytest as swigpyt        # The Python module
 
 # pylint: disable=c-extension-no-member
 
+CERT_CLIENT_HOST     = 'localhost'
+CERT_CLIENT_APP_PORT = 8123
+
 # ##############################################################################
 # To see output, run: pytest --capture=tee-sys -v
 def test_getmembers_of_libswigpytest():
@@ -73,12 +76,12 @@ def test_cc_trust_data_lib_default():
 def test_secure_authenticated_channel_init_client_ssl_default():
     """
     Exerciser of init_client_ssl() method for a secure_authenticated_channel()
-    object to verify interface for const string &private_key_cert.
+    object to verify interface for const string &asn1_root_cert.
 
     No SWIG interface rules are required for this test case to pass, as:
      - we are invoking a default construtor w/ no arguments
      - init_client_ssl() is defined to take 'const string&'. So typemap
-       rules are needed.
+       rules are not needed.
     """
     sac = swigpyt.secure_authenticated_channel()
     assert sac.role_ == 'Undefined-role'
@@ -90,6 +93,29 @@ def test_secure_authenticated_channel_init_client_ssl_default():
 
     # User's root-cert should not have been changed by the method.
     assert sac.asn1_root_cert_ == pvt_key_cert
+
+# ##############################################################################
+def test_secure_authenticated_channel_init_client_ssl_input_output():
+    """
+    Exerciser of init_client_ssl() method for a secure_authenticated_channel()
+    object to verify interface for string &asn1_root_cert_io.
+
+    SWIG interface rules are required for this test case to pass, as we need a
+    way to specify that 'string &asn1_root_cert_io' is also used to return a
+    certificate (output string).
+    """
+    sac = swigpyt.secure_authenticated_channel()
+    assert sac.role_ == 'Undefined-role'
+
+    pvt_key_cert = 'Private key certificate'
+    # Arg is const string &asn1_root_cert; Same as _default case, above.
+    result = sac.init_client_ssl(pvt_key_cert)
+    assert result is True
+
+    # Arg is now 'string &asn1_root_cert_io'
+    # Input private-key-cert should have been changed by the method.
+    result, pvt_key_cert = sac.init_client_ssl(pvt_key_cert, CERT_CLIENT_APP_PORT)
+    assert pvt_key_cert == 'New root Certificate'
 
 # ##############################################################################
 def test_secure_authenticated_channel_lib():

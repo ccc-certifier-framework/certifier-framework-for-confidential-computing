@@ -60,8 +60,19 @@ PROTO=protoc
 AR=ar
 LL = ls -aFlrt
 
+# -----------------------------------------------------------------------------
 # Definitions needed for generating Python bindings using SWIG tool
 SWIG=swig
+
+# SWIG Debugging flags: Invoke as: $ SWIG_DEBUG=1 make ...
+#   -debug-tmsearch : Show typemap rules searched while processing interface
+#   -debug-tmused   : Show typemap rules finally applied
+#   -E              : Add this to display preprocessed output
+SWIG_DEBUG_FLAGS =
+ifdef SWIG_DEBUG
+SWIG_DEBUG_FLAGS = -debug-tmsearch -debug-tmused -E
+endif
+
 
 # -Wallkw: Enable keyword warnings for all the supported languages
 SWIG_FLAGS = -Wallkw
@@ -164,10 +175,9 @@ $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 # Ref: https://stackoverflow.com/questions/12369131/swig-and-python3-surplus-underscore
 # Use -interface arg to overcome double __ issue in generated SWIG_init #define
 #     -outdir specifies output-dir for generated *.py file.
-# Debugging flags: -debug-tmsearch -debug-tmused
 $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc: $(I)/$(SWIG_CERT_INTERFACE).i $(S)/certifier.cc
 	@echo "\nGenerating $@"
-	$(SWIG) $(SWIG_FLAGS) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	$(SWIG) $(SWIG_FLAGS) $(SWIG_DEBUG_FLAGS) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/$(SWIG_CERT_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
@@ -225,7 +235,7 @@ $(O)/swigpytest.o: $(S)/swigpytest.cc $(I)/swigpytest.h
 
 $(S)/$(SWIG_PYTEST_INTERFACE)_wrap.cc: $(I)/$(SWIG_PYTEST_INTERFACE).i $(S)/$(SWIG_PYTEST_INTERFACE).cc
 	@echo "\nGenerating $@"
-	$(SWIG) $(SWIG_FLAGS) -v -python -c++ -Wall -interface $(LIBSWIGPYTEST) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	$(SWIG) $(SWIG_FLAGS) $(SWIG_DEBUG_FLAGS) -v -python -c++ -Wall -interface $(LIBSWIGPYTEST) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/$(SWIG_PYTEST_INTERFACE)_wrap.o: $(S)/$(SWIG_PYTEST_INTERFACE)_wrap.cc
