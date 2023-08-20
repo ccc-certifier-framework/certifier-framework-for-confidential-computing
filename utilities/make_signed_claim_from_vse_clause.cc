@@ -28,7 +28,9 @@ DEFINE_string(output, "signed_claim.bin", "output file");
 DEFINE_string(private_key_file, "", "signing key");
 DEFINE_double(duration, 24, "validity in hours");
 DEFINE_string(descipt, "", "descriptor");
-DEFINE_string(signing_alg, "rsa-2048-sha256-pkcs-sign", "signing algorithm");
+DEFINE_string(signing_alg,
+              Enc_method_rsa_2048_sha256_pkcs_sign,
+              "signing algorithm");
 
 bool get_clause_from_file(const string &in, vse_clause *cl) {
   int  in_size = file_size(in);

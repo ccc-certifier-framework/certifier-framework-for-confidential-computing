@@ -22,7 +22,7 @@ DEFINE_bool(print_all, false, "verbose");
 
 DEFINE_bool(is_root, false, "verbose");
 DEFINE_string(key_name, "testKey", "key name");
-DEFINE_string(key_type, "rsa-2048-private", "test key type");
+DEFINE_string(key_type, Enc_method_rsa_2048_private, "test key type");
 DEFINE_string(authority_name, "testAuthority", "authority name");
 DEFINE_double(duration, 5.0 * 86400.0 * 365.0, "duration");
 DEFINE_uint64(serial_number, 1, "serial number");
@@ -39,19 +39,19 @@ bool generate_key(const string &name,
                   key_message * pub) {
 
   int n = 0;
-  if (type == "rsa-4096-private") {
+  if (type == Enc_method_rsa_4096_private) {
     if (!make_certifier_rsa_key(4096, priv)) {
       return false;
     }
-  } else if (type == "rsa-2048-private") {
+  } else if (type == Enc_method_rsa_2048_private) {
     if (!make_certifier_rsa_key(2048, priv)) {
       return false;
     }
-  } else if (type == "rsa-1024-private") {
+  } else if (type == Enc_method_rsa_1024_private) {
     if (!make_certifier_rsa_key(1024, priv)) {
       return false;
     }
-  } else if (type == "ecc-384-private") {
+  } else if (type == Enc_method_ecc_384_private) {
     if (!make_certifier_ecc_key(384, priv)) {
       return false;
     }
@@ -84,10 +84,10 @@ int main(int an, char **av) {
   key_message priv;
   key_message pub;
   string      serialized_key;
-  if (strcmp(FLAGS_key_type.c_str(), "rsa-1024-private") == 0
-      || strcmp(FLAGS_key_type.c_str(), "rsa-2048-private") == 0
-      || strcmp(FLAGS_key_type.c_str(), "rsa-4096-private") == 0
-      || strcmp(FLAGS_key_type.c_str(), "ecc-384-private") == 0) {
+  if (strcmp(FLAGS_key_type.c_str(), Enc_method_rsa_1024_private) == 0
+      || strcmp(FLAGS_key_type.c_str(), Enc_method_rsa_2048_private) == 0
+      || strcmp(FLAGS_key_type.c_str(), Enc_method_rsa_4096_private) == 0
+      || strcmp(FLAGS_key_type.c_str(), Enc_method_ecc_384_private) == 0) {
     if (!generate_key(FLAGS_key_name,
                       FLAGS_key_type,
                       FLAGS_authority_name,

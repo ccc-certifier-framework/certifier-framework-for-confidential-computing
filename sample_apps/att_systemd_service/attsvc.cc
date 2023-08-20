@@ -264,8 +264,8 @@ int main(int argc, char *argv[]) {
 #endif
 
   // Standard algorithms for the enclave
-  string public_key_alg("rsa-2048");
-  string symmetric_key_alg("aes-256-cbc-hmac-sha256");
+  string public_key_alg(Enc_method_rsa_2048);
+  string symmetric_key_alg(Enc_method_aes_256_cbc_hmac_sha256);
 
   if (!file_exists(store_file)) {
     ATT_LOG(LOG_INFO, "Performing cold initialization...");

@@ -51,7 +51,7 @@ bool test_protect(bool print_all) {
   const char *secret_data = "I am a secret data.  Protect me.";
 
   key_start.set_key_name("Test key");
-  key_start.set_key_type("aes-256-cbc-hmac-sha256");
+  key_start.set_key_type(Enc_method_aes_256_cbc_hmac_sha256);
   key_start.set_key_format("vse-key");
   key_start.set_not_before(s_nb);
   key_start.set_not_after(s_na);
@@ -195,7 +195,7 @@ bool test_init_and_recover_containers(bool print_all) {
   if (!time_to_string(t_na, &s_na))
     return false;
   storage_key.set_key_name("storage-key");
-  storage_key.set_key_type("aes-256-cbc-hmac-sha256");
+  storage_key.set_key_type(Enc_method_aes_256_cbc_hmac_sha256);
   storage_key.set_key_format("vse-key");
   storage_key.set_not_before(s_nb);
   storage_key.set_not_after(s_na);
@@ -341,7 +341,7 @@ bool test_policy_store(bool print_all) {
     return false;
   }
 
-  string alg("aes-256");
+  string alg(Enc_method_aes_256);
   tag1 = "test-entry-4";
   type1 = "string";
   if (!ps.update_or_insert(tag1, type1, alg)) {

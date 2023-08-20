@@ -494,8 +494,8 @@ bool sign_report(const string &     type,
   }
 
   byte signature[size];
-  if (signing_alg == "rsa-2048-sha256-pkcs-sign") {
-    if (signing_key.key_type() != "rsa-2048-private") {
+  if (signing_alg == Enc_method_rsa_2048_sha256_pkcs_sign) {
+    if (signing_key.key_type() != Enc_method_rsa_2048_private) {
       printf("%s() error, line %d, sign_report: Wrong key\n",
              __func__,
              __LINE__);
@@ -508,7 +508,7 @@ bool sign_report(const string &     type,
              __LINE__);
       return false;
     }
-    if (!rsa_sign("sha-256",
+    if (!rsa_sign(Digest_method_sha_256,
                   rsa_key,
                   to_be_signed.size(),
                   (byte *)to_be_signed.data(),
@@ -521,8 +521,8 @@ bool sign_report(const string &     type,
       return false;
     }
     RSA_free(rsa_key);
-  } else if (signing_alg == "rsa-4096-sha384-pkcs-sign") {
-    if (signing_key.key_type() != "rsa-4096-private") {
+  } else if (signing_alg == Enc_method_rsa_4096_sha384_pkcs_sign) {
+    if (signing_key.key_type() != Enc_method_rsa_4096_private) {
       printf("%s() error, line %d, sign_report: Wrong key\n",
              __func__,
              __LINE__);
@@ -535,7 +535,7 @@ bool sign_report(const string &     type,
              __LINE__);
       return false;
     }
-    if (!rsa_sign("sha-384",
+    if (!rsa_sign(Digest_method_sha_384,
                   rsa_key,
                   to_be_signed.size(),
                   (byte *)to_be_signed.data(),
@@ -548,8 +548,8 @@ bool sign_report(const string &     type,
       return false;
     }
     RSA_free(rsa_key);
-  } else if (signing_alg == "rsa-3072-sha384-pkcs-sign") {
-    if (signing_key.key_type() != "rsa-3072-private") {
+  } else if (signing_alg == Enc_method_rsa_3072_sha384_pkcs_sign) {
+    if (signing_key.key_type() != Enc_method_rsa_3072_private) {
       printf("%s() error, line %d, sign_report: Wrong key\n",
              __func__,
              __LINE__);
@@ -562,7 +562,7 @@ bool sign_report(const string &     type,
              __LINE__);
       return false;
     }
-    if (!rsa_sign("sha-384",
+    if (!rsa_sign(Digest_method_sha_384,
                   rsa_key,
                   to_be_signed.size(),
                   (byte *)to_be_signed.data(),
@@ -575,8 +575,8 @@ bool sign_report(const string &     type,
       return false;
     }
     RSA_free(rsa_key);
-  } else if (signing_alg == "ecc-384-sha384-pkcs-sign") {
-    if (signing_key.key_type() != "ecc-384-private") {
+  } else if (signing_alg == Enc_method_ecc_384_sha384_pkcs_sign) {
+    if (signing_key.key_type() != Enc_method_ecc_384_private) {
       printf("%s() error, line %d, sign_report: Wrong key\n",
              __func__,
              __LINE__);
@@ -589,7 +589,7 @@ bool sign_report(const string &     type,
              __LINE__);
       return false;
     }
-    if (!ecc_sign("sha-384",
+    if (!ecc_sign(Digest_method_sha_384,
                   ecc_key,
                   to_be_signed.size(),
                   (byte *)to_be_signed.data(),
@@ -642,7 +642,7 @@ bool verify_report(string &           type,
   }
 
   bool success = false;
-  if (sr.signing_algorithm() == "rsa-2048-sha256-pkcs-sign") {
+  if (sr.signing_algorithm() == Enc_method_rsa_2048_sha256_pkcs_sign) {
     RSA *rsa_key = RSA_new();
     if (!key_to_RSA(signer_key, rsa_key)) {
       printf("%s() error, line %d, verify_report: key_to_RSA failed\n",
@@ -651,14 +651,14 @@ bool verify_report(string &           type,
       return false;
     }
     int size = sr.signature().size();
-    success = rsa_verify("sha-256",
+    success = rsa_verify(Digest_method_sha_256,
                          rsa_key,
                          sr.report().size(),
                          (byte *)sr.report().data(),
                          size,
                          (byte *)sr.signature().data());
     RSA_free(rsa_key);
-  } else if (sr.signing_algorithm() == "rsa-4096-sha384-pkcs-sign") {
+  } else if (sr.signing_algorithm() == Enc_method_rsa_4096_sha384_pkcs_sign) {
     RSA *rsa_key = RSA_new();
     if (!key_to_RSA(signer_key, rsa_key)) {
       printf("%s() error, line %d, verify_report: key_to_RSA failed\n",
@@ -667,14 +667,14 @@ bool verify_report(string &           type,
       return false;
     }
     int size = sr.signature().size();
-    success = rsa_verify("sha-384",
+    success = rsa_verify(Digest_method_sha_384,
                          rsa_key,
                          sr.report().size(),
                          (byte *)sr.report().data(),
                          size,
                          (byte *)sr.signature().data());
     RSA_free(rsa_key);
-  } else if (sr.signing_algorithm() == "rsa-3072-sha384-pkcs-sign") {
+  } else if (sr.signing_algorithm() == Enc_method_rsa_3072_sha384_pkcs_sign) {
     RSA *rsa_key = RSA_new();
     if (!key_to_RSA(signer_key, rsa_key)) {
       printf("%s() error, line %d, verify_report: key_to_RSA failed\n",
@@ -683,14 +683,14 @@ bool verify_report(string &           type,
       return false;
     }
     int size = sr.signature().size();
-    success = rsa_verify("sha-384",
+    success = rsa_verify(Digest_method_sha_384,
                          rsa_key,
                          sr.report().size(),
                          (byte *)sr.report().data(),
                          size,
                          (byte *)sr.signature().data());
     RSA_free(rsa_key);
-  } else if (sr.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
+  } else if (sr.signing_algorithm() == Enc_method_ecc_384_sha384_pkcs_sign) {
     EC_KEY *ecc_key = key_to_ECC(signer_key);
     if (ecc_key == nullptr) {
       printf("%s() error, line %d, verify_report: key_to_RSA failed\n",
@@ -699,7 +699,7 @@ bool verify_report(string &           type,
       return false;
     }
     int size = sr.signature().size();
-    success = ecc_verify("sha-384",
+    success = ecc_verify(Digest_method_sha_384,
                          ecc_key,
                          sr.report().size(),
                          (byte *)sr.report().data(),

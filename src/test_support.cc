@@ -96,7 +96,10 @@ bool read_trusted_binary_measurements_and_sign(string &     file_name,
                     &claim))
       return false;
     signed_claim_message sc;
-    if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", claim, policy_key, &sc))
+    if (!make_signed_claim(Enc_method_rsa_2048_sha256_pkcs_sign,
+                           claim,
+                           policy_key,
+                           &sc))
       return false;
 
     signed_claim_message *scm = list->add_claims();
@@ -337,7 +340,10 @@ bool construct_standard_evidence_package(
     return false;
 
   signed_claim_message sc1;
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cl1, *policy_key, &sc1))
+  if (!make_signed_claim(Enc_method_rsa_2048_sha256_pkcs_sign,
+                         cl1,
+                         *policy_key,
+                         &sc1))
     return false;
 
   claim_message cl2;
@@ -351,7 +357,10 @@ bool construct_standard_evidence_package(
     return false;
 
   signed_claim_message sc2;
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cl2, *policy_key, &sc2))
+  if (!make_signed_claim(Enc_method_rsa_2048_sha256_pkcs_sign,
+                         cl2,
+                         *policy_key,
+                         &sc2))
     return false;
 
   claim_message cl3;
@@ -365,7 +374,10 @@ bool construct_standard_evidence_package(
     return false;
 
   signed_claim_message sc3;
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cl3, intel_key, &sc3))
+  if (!make_signed_claim(Enc_method_rsa_2048_sha256_pkcs_sign,
+                         cl3,
+                         intel_key,
+                         &sc3))
     return false;
 
   string serialized_what_to_say;
@@ -861,7 +873,10 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   signed_claim_message sc1;
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cl1, *policy_key, &sc1))
+  if (!make_signed_claim(Enc_method_rsa_2048_sha256_pkcs_sign,
+                         cl1,
+                         *policy_key,
+                         &sc1))
     return false;
 
   claim_message cl2;
@@ -875,7 +890,10 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   signed_claim_message sc2;
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cl2, *policy_key, &sc2))
+  if (!make_signed_claim(Enc_method_rsa_2048_sha256_pkcs_sign,
+                         cl2,
+                         *policy_key,
+                         &sc2))
     return false;
 
   claim_message cl3;
@@ -889,7 +907,10 @@ bool construct_standard_constrained_evidence_package(
     return false;
 
   signed_claim_message sc3;
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign", cl3, intel_key, &sc3))
+  if (!make_signed_claim(Enc_method_rsa_2048_sha256_pkcs_sign,
+                         cl3,
+                         intel_key,
+                         &sc3))
     return false;
 
   string serialized_what_to_say;

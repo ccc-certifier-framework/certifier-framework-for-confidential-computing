@@ -205,7 +205,7 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
   attestation_report ar;
   memset(&ar, 0, sizeof(ar));
 
-  if (!digest_message("sha-384", ud_data, ud_size, ar.report_data, 48)) {
+  if (!digest_message(Digest_method_sha_384, ud_data, ud_size, ar.report_data, 48)) {
     printf("simulated_sev_Attest: can't digest ud\n");
     return false;
   }
@@ -237,7 +237,7 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
   int blk_len = ECDSA_size(eck);
   int sig_size_out = 2 * blk_len;
   byte sig_out[sig_size_out];
-  if (!ecc_sign("sha-384", eck, sizeof(ar) - sizeof(ar.signature), (byte*)&ar,
+  if (!ecc_sign(Digest_method_sha_384, eck, sizeof(ar) - sizeof(ar.signature), (byte*)&ar,
           &sig_size_out, sig_out)) {
     printf("simulated_sev_Attest: can't ec_sign\n");
     return false;
@@ -435,7 +435,7 @@ bool test_sev_platform_certify(const bool    debug_print,
     return false;
   }
   ark_key.set_key_name("ARKKey");
-  ark_key.set_key_type("rsa-2048-private");
+  ark_key.set_key_type(Enc_method_rsa_2048_private);
   ark_key.set_key_format("vse-key");
   if (!private_key_to_public_key(ark_key, &ark_pk)) {
     printf("test_sev_platform_certify: Can't convert ark key\n");
@@ -454,7 +454,7 @@ bool test_sev_platform_certify(const bool    debug_print,
     return false;
   }
   ask_key.set_key_name("ASKKey");
-  ask_key.set_key_type("rsa-2048-private");
+  ask_key.set_key_type(Enc_method_rsa_2048_private);
   ask_key.set_key_format("vse-key");
   if (!private_key_to_public_key(ask_key, &ask_pk)) {
     printf("test_sev_platform_certify: Can't convert ask key\n");
@@ -473,7 +473,7 @@ bool test_sev_platform_certify(const bool    debug_print,
     return false;
   }
   vcek_key.set_key_name("VCEKKey");
-  vcek_key.set_key_type("ecc-384-private");
+  vcek_key.set_key_type(Enc_method_ecc_384_private);
   vcek_key.set_key_format("vse-key");
   if (!private_key_to_public_key(vcek_key, &vcek_pk)) {
     printf("test_sev_platform_certify: Can't convert vcek key\n");

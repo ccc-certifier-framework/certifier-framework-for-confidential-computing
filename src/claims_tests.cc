@@ -111,7 +111,7 @@ bool test_signed_claims(bool print_all) {
     return false;
   }
   my_rsa_key.set_key_name("my-rsa-key");
-  my_rsa_key.set_key_type("rsa-2048-private");
+  my_rsa_key.set_key_type(Enc_method_rsa_2048_private);
   my_rsa_key.set_key_format("vse-key");
 
   key_message my_public_rsa_key;
@@ -169,7 +169,7 @@ bool test_signed_claims(bool print_all) {
     printf("\n");
   }
   signed_claim_message signed_claim1;
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
+  if (!make_signed_claim(Enc_method_rsa_2048_sha256_pkcs_sign,
                          claim1,
                          my_rsa_key,
                          &signed_claim1))
@@ -186,7 +186,7 @@ bool test_signed_claims(bool print_all) {
     return false;
   }
   my_medium_rsa_key.set_key_name("my-medium-rsa-key");
-  my_medium_rsa_key.set_key_type("rsa-3072-private");
+  my_medium_rsa_key.set_key_type(Enc_method_rsa_3072_private);
   my_medium_rsa_key.set_key_format("vse-key");
 
   if (print_all) {
@@ -241,7 +241,7 @@ bool test_signed_claims(bool print_all) {
     print_claim(claim12);
     printf("\n");
   }
-  if (!make_signed_claim("rsa-3072-sha384-pkcs-sign",
+  if (!make_signed_claim(Enc_method_rsa_3072_sha384_pkcs_sign,
                          claim12,
                          my_medium_rsa_key,
                          &signed_claim12)) {
@@ -260,7 +260,7 @@ bool test_signed_claims(bool print_all) {
     return false;
   }
   my_big_rsa_key.set_key_name("my-big-rsa-key");
-  my_big_rsa_key.set_key_type("rsa-4096-private");
+  my_big_rsa_key.set_key_type(Enc_method_rsa_4096_private);
   my_big_rsa_key.set_key_format("vse-key");
 
   if (print_all) {
@@ -307,7 +307,7 @@ bool test_signed_claims(bool print_all) {
     print_claim(claim2);
     printf("\n");
   }
-  if (!make_signed_claim("rsa-4096-sha384-pkcs-sign",
+  if (!make_signed_claim(Enc_method_rsa_4096_sha384_pkcs_sign,
                          claim2,
                          my_big_rsa_key,
                          &signed_claim2)) {
@@ -327,7 +327,7 @@ bool test_signed_claims(bool print_all) {
     return false;
   }
   my_ecc_key.set_key_name("my-ecc-key");
-  my_ecc_key.set_key_type("ecc-384-private");
+  my_ecc_key.set_key_type(Enc_method_ecc_384_private);
   my_ecc_key.set_key_format("vse-key");
 
   if (print_all) {
@@ -373,7 +373,7 @@ bool test_signed_claims(bool print_all) {
   }
 
   signed_claim_message signed_claim3;
-  if (!make_signed_claim("ecc-384-sha384-pkcs-sign",
+  if (!make_signed_claim(Enc_method_ecc_384_sha384_pkcs_sign,
                          claim3,
                          my_ecc_key,
                          &signed_claim3)) {

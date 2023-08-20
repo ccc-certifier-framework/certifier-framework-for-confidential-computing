@@ -253,10 +253,10 @@ bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size) {
 
 bool cold_init() {
   // Standard algorithms for the enclave
-  string public_key_alg("rsa-2048");
-  string symmetric_key_alg("aes-256");
+  string public_key_alg(Enc_method_rsa_2048);
+  string symmetric_key_alg(Enc_method_aes_256);
   ;
-  string hash_alg("sha-256");
+  string hash_alg(Digest_method_sha_256);
   string hmac_alg("sha-256-hmac");
 
   if (!app_trust_data->cold_init(public_key_alg,

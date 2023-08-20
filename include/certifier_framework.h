@@ -22,6 +22,7 @@
 #include <openssl/x509.h>
 #include <openssl/evp.h>
 
+#include "certifier_algorithms.h"
 #include "certifier.pb.h"
 
 #ifndef byte

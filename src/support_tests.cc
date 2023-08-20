@@ -39,7 +39,7 @@ bool test_random(bool print_all) {
 bool test_encrypt(bool print_all) {
   const int   in_size = 2 * block_size;
   const int   out_size = in_size + 128;
-  const char *alg_name = "aes-256-cbc-hmac-sha256";
+  const char *alg_name = Enc_method_aes_256_cbc_hmac_sha256;
   const int   key_size = cipher_key_byte_size(alg_name);
   int         blk_size = cipher_block_byte_size(alg_name);
 
@@ -138,7 +138,7 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("\n");
   }
 
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256",
+  if (!authenticated_encrypt(Enc_method_aes_256_cbc_hmac_sha256,
                              plain,
                              in_size,
                              key,
@@ -162,7 +162,7 @@ bool test_authenticated_encrypt(bool print_all) {
     print_bytes(size_encrypt_out, cipher);
     printf("\n");
   }
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256",
+  if (!authenticated_decrypt(Enc_method_aes_256_cbc_hmac_sha256,
                              cipher,
                              size_encrypt_out,
                              key,
@@ -198,7 +198,7 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("\n");
   }
 
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha384",
+  if (!authenticated_encrypt(Enc_method_aes_256_cbc_hmac_sha384,
                              plain,
                              in_size,
                              key,
@@ -222,7 +222,7 @@ bool test_authenticated_encrypt(bool print_all) {
     print_bytes(size_encrypt_out, cipher);
     printf("\n");
   }
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha384",
+  if (!authenticated_decrypt(Enc_method_aes_256_cbc_hmac_sha384,
                              cipher,
                              size_encrypt_out,
                              key,
@@ -253,7 +253,7 @@ bool test_authenticated_encrypt(bool print_all) {
   size_encrypt_out = out_size;
   size_decrypt_out = out_size;
 
-  if (!authenticated_encrypt("aes-256-gcm",
+  if (!authenticated_encrypt(Enc_method_aes_256_gcm,
                              plain,
                              in_size,
                              key,
@@ -278,7 +278,7 @@ bool test_authenticated_encrypt(bool print_all) {
     print_bytes(size_encrypt_out, cipher);
     printf("\n");
   }
-  if (!authenticated_decrypt("aes-256-gcm",
+  if (!authenticated_decrypt(Enc_method_aes_256_gcm,
                              cipher,
                              size_encrypt_out,
                              key,
@@ -455,7 +455,12 @@ bool test_public_keys(bool print_all) {
     print_bytes(size_data, data);
     printf("\n");
   }
-  if (!ecc_sign("sha-384", ecc_key, size_data, data, &size_out, out)) {
+  if (!ecc_sign(Digest_method_sha_384,
+                ecc_key,
+                size_data,
+                data,
+                &size_out,
+                out)) {
     printf("ecc_sign failed\n");
     printf("Sig size: %d\n", size_out);
     return false;
@@ -465,7 +470,12 @@ bool test_public_keys(bool print_all) {
     print_bytes(size_out, out);
     printf("\n");
   }
-  if (!ecc_verify("sha-384", ecc_key, size_data, data, size_out, out)) {
+  if (!ecc_verify(Digest_method_sha_384,
+                  ecc_key,
+                  size_data,
+                  data,
+                  size_out,
+                  out)) {
     printf("%s() error, line: %d, ecc verify failed\n", __func__, __LINE__);
     return false;
   }
@@ -478,7 +488,7 @@ bool test_public_keys(bool print_all) {
   }
 
   priv_km.set_key_name("test-key");
-  priv_km.set_key_type("ecc-384-private");
+  priv_km.set_key_type(Enc_method_ecc_384_private);
   if (print_all) {
     printf("Key:\n");
     print_key(priv_km);
@@ -533,7 +543,12 @@ bool test_public_keys(bool print_all) {
     print_bytes(size_data, data);
     printf("\n");
   }
-  if (!ecc_sign("sha-256", ecc_key2, size_data, data, &size_out, out)) {
+  if (!ecc_sign(Digest_method_sha_256,
+                ecc_key2,
+                size_data,
+                data,
+                &size_out,
+                out)) {
     printf("%s() error, line: %d, ecc_sign failed, size: %d\n",
            __func__,
            __LINE__,
@@ -547,7 +562,12 @@ bool test_public_keys(bool print_all) {
   }
 #if 1
   // TODO: sometimes this faults
-  if (!ecc_verify("sha-256", ecc_key, size_data, data, size_out, out)) {
+  if (!ecc_verify(Digest_method_sha_256,
+                  ecc_key,
+                  size_data,
+                  data,
+                  size_out,
+                  out)) {
     printf("%s() error, line: %d, ecc_verify failed\n", __func__, __LINE__);
     return false;
   }
@@ -561,7 +581,7 @@ bool test_public_keys(bool print_all) {
   }
 
   priv_km2.set_key_name("test-key");
-  priv_km2.set_key_type("ecc-256-private");
+  priv_km2.set_key_type(Enc_method_ecc_256_private);
   if (print_all) {
     printf("Key:\n");
     print_key(priv_km2);
@@ -623,7 +643,7 @@ bool test_digest(bool print_all) {
   byte         digest[size_digest];
 
   memset(digest, 0, size_digest);
-  if (!digest_message("sha-256",
+  if (!digest_message(Digest_method_sha_256,
                       (const byte *)message,
                       msg_len,
                       digest,
@@ -647,7 +667,7 @@ bool test_digest(bool print_all) {
   const char *message2 = "abc";
   msg_len = 3;
 
-  size_digest = (unsigned int)digest_output_byte_size("sha256");
+  size_digest = (unsigned int)digest_output_byte_size(Digest_method_sha256);
   if (size_digest < 0) {
     printf("%s() error, line: %d, digest size failed, %d\n",
            __func__,
@@ -656,7 +676,7 @@ bool test_digest(bool print_all) {
     return false;
   }
   memset(digest, 0, size_digest);
-  if (!digest_message("sha-256",
+  if (!digest_message(Digest_method_sha_256,
                       (const byte *)message2,
                       msg_len,
                       digest,
@@ -681,13 +701,13 @@ bool test_digest(bool print_all) {
     return false;
   }
 
-  size_digest = (unsigned int)digest_output_byte_size("sha-384");
+  size_digest = (unsigned int)digest_output_byte_size(Digest_method_sha_384);
   if (size_digest < 0) {
     printf("%s() error, line: %d, digest_message failed\n", __func__, __LINE__);
     return false;
   }
   memset(digest, 0, size_digest);
-  if (!digest_message("sha-384",
+  if (!digest_message(Digest_method_sha_384,
                       (const byte *)message2,
                       msg_len,
                       digest,
@@ -708,13 +728,13 @@ bool test_digest(bool print_all) {
     return false;
   }
 
-  size_digest = (unsigned int)digest_output_byte_size("sha-512");
+  size_digest = (unsigned int)digest_output_byte_size(Digest_method_sha_512);
   if (size_digest < 0) {
     printf("%s() error, line: %d, digest_message failed\n", __func__, __LINE__);
     return false;
   }
   memset(digest, 0, size_digest);
-  if (!digest_message("sha-512",
+  if (!digest_message(Digest_method_sha_512,
                       (const byte *)message2,
                       msg_len,
                       digest,

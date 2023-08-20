@@ -34,6 +34,8 @@
 #include <sys/socket.h>
 #include <string>
 
+#include "certifier_algorithms.cc"
+
 using std::string;
 using namespace certifier::framework;
 using namespace certifier::utilities;
@@ -46,64 +48,68 @@ class name_size {
   int         size_;
 };
 
+// clang-format off
+
 name_size cipher_block_byte_name_size[] = {
-    {"aes-256", 16},
-    {"aes-256-cbc-hmac-sha256", 16},
-    {"aes-256-cbc-hmac-sha384", 16},
-    {"aes-256-gcm", 16},
-    {"aes-128", 16},
-    {"aes-128-cbc-hmac-sha256", 16},
-    {"rsa-2048-sha256-pkcs-sign", 256},
-    {"rsa-2048", 256},
-    {"rsa-1024-sha256-pkcs-sign", 128},
-    {"rsa-1024", 128},
-    {"rsa-1024-private", 128},
-    {"rsa-1024-public", 128},
-    {"rsa-2048-private", 256},
-    {"rsa-2048-public", 256},
-    {"rsa-4096-sha384-pkcs-sign", 512},
-    {"rsa-4096-private", 512},
-    {"rsa-4096-public", 512},
-    {"ecc-384-public", 48},
-    {"ecc-384-private", 48},
-    {"ecc-256-public", 32},
-    {"ecc-256-private", 32},
+    { Enc_method_aes_256                    , 16 },
+    { Enc_method_aes_256_cbc_hmac_sha256    , 16 },
+    { Enc_method_aes_256_cbc_hmac_sha384    , 16 },
+    { Enc_method_aes_256_gcm                , 16 },
+    { Enc_method_aes_128                    , 16 },
+    { Enc_method_aes_128_cbc_hmac_sha256    , 16 },
+    { Enc_method_rsa_2048_sha256_pkcs_sign  , 256 },
+    { Enc_method_rsa_2048                   , 256 },
+    { Enc_method_rsa_1024_sha256_pkcs_sign  , 128 },
+    { Enc_method_rsa_1024                   , 128 },
+    { Enc_method_rsa_1024_private           , 128 },
+    { Enc_method_rsa_1024_public            , 128 },
+    { Enc_method_rsa_2048_private           , 256 },
+    { Enc_method_rsa_2048_public            , 256 },
+    { Enc_method_rsa_4096_sha384_pkcs_sign  , 512 },
+    { Enc_method_rsa_4096_private           , 512 },
+    { Enc_method_rsa_4096_public            , 512 },
+    { Enc_method_ecc_384_public             , 48 },
+    { Enc_method_ecc_384_private            , 48 },
+    { Enc_method_ecc_256_public             , 32 },
+    { Enc_method_ecc_256_private            , 32 },
 };
 
 name_size cipher_key_byte_name_size[] = {
-    {"aes-256", 32},
-    {"aes-256-cbc-hmac-sha256", 64},
-    {"aes-256-cbc-hmac-sha384", 96},
-    {"aes-256-gcm", 32},
-    {"rsa-2048-sha256-pkcs-sign", 256},
-    {"rsa-2048", 256},
-    {"rsa-1024-sha256-pkcs-sign", 128},
-    {"rsa-1024", 128},
-    {"rsa-2048-private", 256},
-    {"rsa-2048-public", 256},
-    {"rsa-1024-private", 128},
-    {"rsa-1024-public", 128},
-    {"rsa-3072-sha384-pkcs-sign", 384},
-    {"rsa-3072-private", 384},
-    {"rsa-3072-public", 384},
-    {"rsa-4096-sha384-pkcs-sign", 512},
-    {"rsa-4096-private", 512},
-    {"rsa-4096-public", 512},
+    { Enc_method_aes_256                    , 32 },
+    { Enc_method_aes_256_cbc_hmac_sha256    , 64 },
+    { Enc_method_aes_256_cbc_hmac_sha384    , 96 },
+    { Enc_method_aes_256_gcm                , 32 },
+    { Enc_method_rsa_2048_sha256_pkcs_sign  , 256 },
+    { Enc_method_rsa_2048                   , 256 },
+    { Enc_method_rsa_1024_sha256_pkcs_sign  , 128 },
+    { Enc_method_rsa_1024                   , 128 },
+    { Enc_method_rsa_2048_private           , 256 },
+    { Enc_method_rsa_2048_public            , 256 },
+    { Enc_method_rsa_1024_private           , 128 },
+    { Enc_method_rsa_1024_public            , 128 },
+    { Enc_method_rsa_3072_sha384_pkcs_sign  , 384 },
+    { Enc_method_rsa_3072_private           , 384 },
+    { Enc_method_rsa_3072_public            , 384 },
+    { Enc_method_rsa_4096_sha384_pkcs_sign  , 512 },
+    { Enc_method_rsa_4096_private           , 512 },
+    { Enc_method_rsa_4096_public            , 512 },
 };
 
 name_size digest_byte_name_size[] = {
-    {"sha256", 32},
-    {"sha-256", 32},
-    {"sha-384", 48},
-    {"sha-512", 64},
+    { Digest_method_sha256   , 32 },
+    { Digest_method_sha_256  , 32 },
+    { Digest_method_sha_384  , 48 },
+    { Digest_method_sha_512  , 64 },
 };
 
 name_size mac_byte_name_size[] = {
-    {"hmac-sha256", 32},
-    {"aes-256-cbc-hmac-sha256", 32},
-    {"aes-256-cbc-hmac-sha384", 48},
-    {"aes-256-gcm", 16},
+    { Integrity_method_hmac_sha256       , 32 },
+    { Enc_method_aes_256_cbc_hmac_sha256 , 32 },
+    { Enc_method_aes_256_cbc_hmac_sha384 , 48 },
+    { Enc_method_aes_256_gcm             , 16 },
 };
+
+// clang-format on
 
 int certifier::utilities::cipher_block_byte_size(const char *alg_name) {
   int size = sizeof(cipher_block_byte_name_size)
@@ -668,7 +674,8 @@ bool certifier::utilities::digest_message(const char * alg,
 
   EVP_MD_CTX *mdctx;
 
-  if (strcmp(alg, "sha-256") == 0 || strcmp(alg, "sha256") == 0) {
+  if (strcmp(alg, Digest_method_sha_256) == 0
+      || strcmp(alg, Digest_method_sha256) == 0) {
     if ((mdctx = EVP_MD_CTX_new()) == NULL) {
       printf("%s() error, line: %d, EVP_MD_CTX_new failed\n",
              __func__,
@@ -681,7 +688,7 @@ bool certifier::utilities::digest_message(const char * alg,
              __LINE__);
       return false;
     }
-  } else if (strcmp(alg, "sha-384") == 0) {
+  } else if (strcmp(alg, Digest_method_sha_384) == 0) {
     if ((mdctx = EVP_MD_CTX_new()) == NULL) {
       printf("%s() error, line: %d, EVP_MD_CTX_new failed\n",
              __func__,
@@ -694,7 +701,7 @@ bool certifier::utilities::digest_message(const char * alg,
              __LINE__);
       return false;
     }
-  } else if (strcmp(alg, "sha-512") == 0) {
+  } else if (strcmp(alg, Digest_method_sha_512) == 0) {
     if ((mdctx = EVP_MD_CTX_new()) == NULL) {
       printf("%s() error, line: %d, EVP_MD_CTX_new failed\n",
              __func__,
@@ -735,9 +742,9 @@ bool aes_256_cbc_sha256_encrypt(byte *in,
                                 byte *iv,
                                 byte *out,
                                 int * out_size) {
-  int blk_size = cipher_block_byte_size("aes-256-cbc-hmac-sha256");
-  int key_size = cipher_key_byte_size("aes-256-cbc-hmac-sha256");
-  int mac_size = mac_output_byte_size("aes-256-cbc-hmac-sha256");
+  int blk_size = cipher_block_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
+  int key_size = cipher_key_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
+  int mac_size = mac_output_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
   int cipher_size = *out_size - blk_size;
 
   memset(out, 0, *out_size);
@@ -768,9 +775,9 @@ bool aes_256_cbc_sha256_decrypt(byte *in,
                                 byte *key,
                                 byte *out,
                                 int * out_size) {
-  int blk_size = cipher_block_byte_size("aes-256-cbc-hmac-sha256");
-  int key_size = cipher_key_byte_size("aes-256-cbc-hmac-sha256");
-  int mac_size = mac_output_byte_size("aes-256-cbc-hmac-sha256");
+  int blk_size = cipher_block_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
+  int key_size = cipher_key_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
+  int mac_size = mac_output_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
   int cipher_size = *out_size - blk_size;
 
   int          plain_size = *out_size - blk_size - mac_size;
@@ -813,9 +820,9 @@ bool aes_256_cbc_sha384_encrypt(byte *in,
                                 byte *iv,
                                 byte *out,
                                 int * out_size) {
-  int blk_size = cipher_block_byte_size("aes-256-cbc-hmac-sha384");
-  int key_size = cipher_key_byte_size("aes-256-cbc-hmac-sha384");
-  int mac_size = mac_output_byte_size("aes-256-cbc-hmac-sha384");
+  int blk_size = cipher_block_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
+  int key_size = cipher_key_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
+  int mac_size = mac_output_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
   int cipher_size = *out_size - blk_size;
 
   memset(out, 0, *out_size);
@@ -846,9 +853,9 @@ bool aes_256_cbc_sha384_decrypt(byte *in,
                                 byte *key,
                                 byte *out,
                                 int * out_size) {
-  int blk_size = cipher_block_byte_size("aes-256-cbc-hmac-sha384");
-  int key_size = cipher_key_byte_size("aes-256-cbc-hmac-sha384");
-  int mac_size = mac_output_byte_size("aes-256-cbc-hmac-sha384");
+  int blk_size = cipher_block_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
+  int key_size = cipher_key_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
+  int mac_size = mac_output_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
   int cipher_size = *out_size - blk_size;
 
   int          plain_size = *out_size - blk_size - mac_size;
@@ -895,8 +902,8 @@ bool aes_256_gcm_encrypt(byte *in,
   EVP_CIPHER_CTX *ctx = nullptr;
   int             len;
   int             ciphertext_len;
-  int             blk_size = cipher_block_byte_size("aes-256");
-  int             key_size = cipher_key_byte_size("aes-256");
+  int             blk_size = cipher_block_byte_size(Enc_method_aes_256);
+  int             key_size = cipher_key_byte_size(Enc_method_aes_256);
   int             tag_len = 0;
   byte            tag[16];
   int             aad_len = 0;
@@ -996,8 +1003,8 @@ bool aes_256_gcm_decrypt(byte *in,
                          byte *out,
                          int * out_size) {
   EVP_CIPHER_CTX *ctx = nullptr;
-  int             blk_size = cipher_block_byte_size("aes-256");
-  int             key_size = cipher_key_byte_size("aes-256");
+  int             blk_size = cipher_block_byte_size(Enc_method_aes_256);
+  int             key_size = cipher_key_byte_size(Enc_method_aes_256);
   byte *          iv = in;
   bool            ret = true;
   byte *          tag = in + in_len - blk_size;
@@ -1086,11 +1093,11 @@ bool certifier::utilities::authenticated_encrypt(const char *alg_name,
                                                  byte *      out,
                                                  int *       out_size) {
 
-  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
+  if (strcmp(alg_name, Enc_method_aes_256_cbc_hmac_sha256) == 0) {
     return aes_256_cbc_sha256_encrypt(in, in_len, key, iv, out, out_size);
-  } else if (strcmp(alg_name, "aes-256-cbc-hmac-sha384") == 0) {
+  } else if (strcmp(alg_name, Enc_method_aes_256_cbc_hmac_sha384) == 0) {
     return aes_256_cbc_sha384_encrypt(in, in_len, key, iv, out, out_size);
-  } else if (strcmp(alg_name, "aes-256-gcm") == 0) {
+  } else if (strcmp(alg_name, Enc_method_aes_256_gcm) == 0) {
     return aes_256_gcm_encrypt(in, in_len, key, iv, out, out_size);
   } else {
     printf("%s() error, line: %d, authenticated_decrypt: unsupported algorithm "
@@ -1109,11 +1116,11 @@ bool certifier::utilities::authenticated_decrypt(const char *alg_name,
                                                  byte *      out,
                                                  int *       out_size) {
 
-  if (strcmp(alg_name, "aes-256-cbc-hmac-sha256") == 0) {
+  if (strcmp(alg_name, Enc_method_aes_256_cbc_hmac_sha256) == 0) {
     return aes_256_cbc_sha256_decrypt(in, in_len, key, out, out_size);
-  } else if (strcmp(alg_name, "aes-256-cbc-hmac-sha384") == 0) {
+  } else if (strcmp(alg_name, Enc_method_aes_256_cbc_hmac_sha384) == 0) {
     return aes_256_cbc_sha384_decrypt(in, in_len, key, out, out_size);
-  } else if (strcmp(alg_name, "aes-256-gcm") == 0) {
+  } else if (strcmp(alg_name, Enc_method_aes_256_gcm) == 0) {
     return aes_256_gcm_decrypt(in, in_len, key, out, out_size);
   } else {
     printf("%s() error, line: %d, authenticated_decrypt: unsupported algorithm "
@@ -1132,30 +1139,30 @@ bool      certifier::utilities::private_key_to_public_key(const key_message &in,
 
   int n_bytes = 0;
   int alg_type = 0;
-  if (in.key_type() == "rsa-2048-private") {
+  if (in.key_type() == Enc_method_rsa_2048_private) {
     alg_type = rsa_alg_type;
-    out->set_key_type("rsa-2048-public");
-    n_bytes = cipher_block_byte_size("rsa-2048-public");
-  } else if (in.key_type() == "rsa-1024-private") {
+    out->set_key_type(Enc_method_rsa_2048_public);
+    n_bytes = cipher_block_byte_size(Enc_method_rsa_2048_public);
+  } else if (in.key_type() == Enc_method_rsa_1024_private) {
     alg_type = rsa_alg_type;
-    out->set_key_type("rsa-1024-public");
-    n_bytes = cipher_block_byte_size("rsa-1024-public");
-  } else if (in.key_type() == "rsa-3072-private") {
+    out->set_key_type(Enc_method_rsa_1024_public);
+    n_bytes = cipher_block_byte_size(Enc_method_rsa_1024_public);
+  } else if (in.key_type() == Enc_method_rsa_3072_private) {
     alg_type = rsa_alg_type;
-    out->set_key_type("rsa-3072-public");
-    n_bytes = cipher_block_byte_size("rsa-3072-public");
-  } else if (in.key_type() == "rsa-4096-private") {
+    out->set_key_type(Enc_method_rsa_3072_public);
+    n_bytes = cipher_block_byte_size(Enc_method_rsa_3072_public);
+  } else if (in.key_type() == Enc_method_rsa_4096_private) {
     alg_type = rsa_alg_type;
-    out->set_key_type("rsa-4096-public");
-    n_bytes = cipher_block_byte_size("rsa-4096-public");
-  } else if (in.key_type() == "ecc-384-private") {
+    out->set_key_type(Enc_method_rsa_4096_public);
+    n_bytes = cipher_block_byte_size(Enc_method_rsa_4096_public);
+  } else if (in.key_type() == Enc_method_ecc_384_private) {
     alg_type = ecc_alg_type;
-    out->set_key_type("ecc-384-public");
-    n_bytes = cipher_block_byte_size("ecc-384-public");
-  } else if (in.key_type() == "ecc-256-private") {
+    out->set_key_type(Enc_method_ecc_384_public);
+    n_bytes = cipher_block_byte_size(Enc_method_ecc_384_public);
+  } else if (in.key_type() == Enc_method_ecc_256_private) {
     alg_type = ecc_alg_type;
-    out->set_key_type("ecc-256-public");
-    n_bytes = cipher_block_byte_size("ecc-256-public");
+    out->set_key_type(Enc_method_ecc_256_public);
+    n_bytes = cipher_block_byte_size(Enc_method_ecc_256_public);
   } else {
     printf("%s() error, line %d, private_key_to_public_key: bad key type "
            "(n_bytes=%d)\n",
@@ -1209,13 +1216,13 @@ bool make_certifier_rsa_key(int n, key_message *k) {
   }
 
   if (n == 2048) {
-    k->set_key_type("rsa-2048-private");
+    k->set_key_type(Enc_method_rsa_2048_private);
   } else if (n == 1024) {
-    k->set_key_type("rsa-1024-private");
+    k->set_key_type(Enc_method_rsa_1024_private);
   } else if (n == 4096) {
-    k->set_key_type("rsa-4096-private");
+    k->set_key_type(Enc_method_rsa_4096_private);
   } else if (n == 3072) {
-    k->set_key_type("rsa-3072-private");
+    k->set_key_type(Enc_method_rsa_3072_private);
   } else {
     printf("%s() error, line: %d, bad modulus size failed\n",
            __func__,
@@ -1281,11 +1288,16 @@ bool rsa_sha256_sign(RSA * key,
                      byte *to_sign,
                      int * sig_size,
                      byte *sig) {
-  return rsa_sign("sha-256", key, to_sign_size, to_sign, sig_size, sig);
+  return rsa_sign(Digest_method_sha_256,
+                  key,
+                  to_sign_size,
+                  to_sign,
+                  sig_size,
+                  sig);
 }
 
 bool rsa_sha256_verify(RSA *key, int size, byte *msg, int sig_size, byte *sig) {
-  return rsa_verify("sha-256", key, size, msg, sig_size, sig);
+  return rsa_verify(Digest_method_sha_256, key, size, msg, sig_size, sig);
 }
 
 bool rsa_sign(const char *alg,
@@ -1313,7 +1325,7 @@ bool rsa_sign(const char *alg,
   }
 
   unsigned int size_digest = 0;
-  if (strcmp("sha-256", alg) == 0) {
+  if (strcmp(Digest_method_sha_256, alg) == 0) {
     if (EVP_DigestSignInit(sign_ctx,
                            nullptr,
                            EVP_sha256(),
@@ -1339,7 +1351,7 @@ bool rsa_sign(const char *alg,
       return false;
     }
     *sig_size = t;
-  } else if (strcmp("sha-384", alg) == 0) {
+  } else if (strcmp(Digest_method_sha_384, alg) == 0) {
     if (EVP_DigestSignInit(sign_ctx,
                            nullptr,
                            EVP_sha384(),
@@ -1383,12 +1395,12 @@ bool rsa_verify(const char *alg,
                 int         sig_size,
                 byte *      sig) {
 
-  if (strcmp("sha-256", alg) == 0) {
-    unsigned int size_digest = digest_output_byte_size("sha-256");
+  if (strcmp(Digest_method_sha_256, alg) == 0) {
+    unsigned int size_digest = digest_output_byte_size(Digest_method_sha_256);
     byte         digest[size_digest];
     memset(digest, 0, size_digest);
 
-    if (!digest_message("sha-256",
+    if (!digest_message(Digest_method_sha_256,
                         (const byte *)msg,
                         size,
                         digest,
@@ -1441,11 +1453,11 @@ bool rsa_verify(const char *alg,
       return false;
     }
     return memcmp(digest, &decrypted[n - size_digest], size_digest) == 0;
-  } else if (strcmp("sha-384", alg) == 0) {
-    unsigned int size_digest = digest_output_byte_size("sha-384");
+  } else if (strcmp(Digest_method_sha_384, alg) == 0) {
+    unsigned int size_digest = digest_output_byte_size(Digest_method_sha_384);
     byte         digest[size_digest];
     memset(digest, 0, size_digest);
-    if (!digest_message("sha-384",
+    if (!digest_message(Digest_method_sha_384,
                         (const byte *)msg,
                         size,
                         digest,
@@ -1535,28 +1547,28 @@ bool key_to_RSA(const key_message &k, RSA *r) {
 
   bool private_key = true;
   int  key_size_bits = 0;
-  if (k.key_type() == "rsa-1024-public") {
+  if (k.key_type() == Enc_method_rsa_1024_public) {
     key_size_bits = 1024;
     private_key = false;
-  } else if (k.key_type() == "rsa-1024-private") {
+  } else if (k.key_type() == Enc_method_rsa_1024_private) {
     key_size_bits = 1024;
     private_key = true;
-  } else if (k.key_type() == "rsa-2048-public") {
+  } else if (k.key_type() == Enc_method_rsa_2048_public) {
     key_size_bits = 2048;
     private_key = false;
-  } else if (k.key_type() == "rsa-2048-private") {
+  } else if (k.key_type() == Enc_method_rsa_2048_private) {
     key_size_bits = 2048;
     private_key = true;
-  } else if (k.key_type() == "rsa-4096-private") {
+  } else if (k.key_type() == Enc_method_rsa_4096_private) {
     key_size_bits = 4096;
     private_key = true;
-  } else if (k.key_type() == "rsa-4096-public") {
+  } else if (k.key_type() == Enc_method_rsa_4096_public) {
     key_size_bits = 4096;
     private_key = false;
-  } else if (k.key_type() == "rsa-3072-private") {
+  } else if (k.key_type() == Enc_method_rsa_3072_private) {
     key_size_bits = 3072;
     private_key = true;
-  } else if (k.key_type() == "rsa-3072-public") {
+  } else if (k.key_type() == Enc_method_rsa_3072_public) {
     key_size_bits = 3072;
     private_key = false;
   } else {
@@ -1690,24 +1702,24 @@ bool RSA_to_key(const RSA *r, key_message *k) {
   int rsa_size = RSA_bits(r);
   if (rsa_size == 1024) {
     if (d == nullptr)
-      k->set_key_type("rsa-1024-public");
+      k->set_key_type(Enc_method_rsa_1024_public);
     else
-      k->set_key_type("rsa-1024-private");
+      k->set_key_type(Enc_method_rsa_1024_private);
   } else if (rsa_size == 2048) {
     if (d == nullptr)
-      k->set_key_type("rsa-2048-public");
+      k->set_key_type(Enc_method_rsa_2048_public);
     else
-      k->set_key_type("rsa-2048-private");
+      k->set_key_type(Enc_method_rsa_2048_private);
   } else if (rsa_size == 4096) {
     if (d == nullptr)
-      k->set_key_type("rsa-4096-public");
+      k->set_key_type(Enc_method_rsa_4096_public);
     else
-      k->set_key_type("rsa-4096-private");
+      k->set_key_type(Enc_method_rsa_4096_private);
   } else if (rsa_size == 3072) {
     if (d == nullptr)
-      k->set_key_type("rsa-3072-public");
+      k->set_key_type(Enc_method_rsa_3072_public);
     else
-      k->set_key_type("rsa-3072-private");
+      k->set_key_type(Enc_method_rsa_3072_private);
   } else {
     return false;
   }
@@ -1986,10 +1998,11 @@ EC_KEY *certifier::utilities::generate_new_ecc_key(int num_bits) {
 EC_KEY *certifier::utilities::key_to_ECC(const key_message &k) {
 
   EC_KEY *ecc_key = nullptr;
-  if (k.key_type() == "ecc-384-private" || k.key_type() == "ecc-384-public") {
+  if (k.key_type() == Enc_method_ecc_384_private
+      || k.key_type() == Enc_method_ecc_384_public) {
     ecc_key = EC_KEY_new_by_curve_name(NID_secp384r1);
-  } else if (k.key_type() == "ecc-256-private"
-             || k.key_type() == "ecc-256-public") {
+  } else if (k.key_type() == Enc_method_ecc_256_private
+             || k.key_type() == Enc_method_ecc_256_public) {
     ecc_key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
   } else {
     printf("%s() error, line: %d, key_to_ECC: wrong type %s\n",
@@ -2120,10 +2133,10 @@ bool certifier::utilities::ECC_to_key(const EC_KEY *ecc_key, key_message *k) {
   int modulus_size = BN_num_bytes(p);
 
   if (modulus_size == 48) {
-    k->set_key_type("ecc-384-public");
+    k->set_key_type(Enc_method_ecc_384_public);
     ek->set_curve_name("P-384");
   } else if (modulus_size == 32) {
-    k->set_key_type("ecc-256-public");
+    k->set_key_type(Enc_method_ecc_256_public);
     ek->set_curve_name("P-256");
   } else {
     printf("%s() error, line: %d, ECC_to_key: Modulus size not supported: %d\n",
@@ -2238,9 +2251,9 @@ bool certifier::utilities::ECC_to_key(const EC_KEY *ecc_key, key_message *k) {
   const BIGNUM *pk = EC_KEY_get0_private_key(ecc_key);
   if (pk != nullptr) {
     if (modulus_size == 48) {
-      k->set_key_type("ecc-384-private");
+      k->set_key_type(Enc_method_ecc_384_private);
     } else if (modulus_size == 32) {
-      k->set_key_type("ecc-256-private");
+      k->set_key_type(Enc_method_ecc_256_private);
     } else {
       printf("%s() error, line: %d, EC_KEY_get0_private_key failed\n",
              __func__,
@@ -2263,9 +2276,9 @@ bool make_certifier_ecc_key(int n, key_message *k) {
   if (k == nullptr)
     return false;
   if (n == 384) {
-    k->set_key_type("ecc-384-private");
+    k->set_key_type(Enc_method_ecc_384_private);
   } else if (n == 256) {
-    k->set_key_type("ecc-256-private");
+    k->set_key_type(Enc_method_ecc_256_private);
   } else {
     printf(
         "%s() error, line: %d, make_certifier_ecc_key: unsupported key size\n",
@@ -2334,13 +2347,14 @@ bool same_key(const key_message &k1, const key_message &k2) {
     return false;
   }
 
-  if (k1.key_type() == "rsa-2048-private" || k1.key_type() == "rsa-2048-public"
-      || k1.key_type() == "rsa-1024-private"
-      || k1.key_type() == "rsa-1024-public"
-      || k1.key_type() == "rsa-3072-private"
-      || k1.key_type() == "rsa-3072-public"
-      || k1.key_type() == "rsa-4096-private"
-      || k1.key_type() == "rsa-4096-public") {
+  if (k1.key_type() == Enc_method_rsa_2048_private
+      || k1.key_type() == Enc_method_rsa_2048_public
+      || k1.key_type() == Enc_method_rsa_1024_private
+      || k1.key_type() == Enc_method_rsa_1024_public
+      || k1.key_type() == Enc_method_rsa_3072_private
+      || k1.key_type() == Enc_method_rsa_3072_public
+      || k1.key_type() == Enc_method_rsa_4096_private
+      || k1.key_type() == Enc_method_rsa_4096_public) {
     string b1, b2;
     if (!k1.has_rsa_key() || !k2.has_rsa_key()) {
       return false;
@@ -2352,8 +2366,9 @@ bool same_key(const key_message &k1, const key_message &k2) {
       return false;
     }
     return true;
-  } else if (k1.key_type() == "aes-256-cbc-hmac-sha256"
-             || k1.key_type() == "aes-256-cbc" || k1.key_type() == "aes-256") {
+  } else if (k1.key_type() == Enc_method_aes_256_cbc_hmac_sha256
+             || k1.key_type() == Enc_method_aes_256_cbc
+             || k1.key_type() == Enc_method_aes_256) {
     if (!k1.has_secret_key_bits()) {
       printf("%s() error, line: %d, no secret key bits\n", __func__, __LINE__);
       return false;
@@ -2368,8 +2383,8 @@ bool same_key(const key_message &k1, const key_message &k2) {
                    k2.secret_key_bits().data(),
                    k1.secret_key_bits().size())
             == 0);
-  } else if (k1.key_type() == "ecc-384-public"
-             || k1.key_type() == "ecc-384-private") {
+  } else if (k1.key_type() == Enc_method_ecc_384_public
+             || k1.key_type() == Enc_method_ecc_384_private) {
     const ecc_message &em1 = k1.ecc_key();
     const ecc_message &em2 = k2.ecc_key();
     if (em1.curve_p().size() != em2.curve_p().size()
@@ -2400,8 +2415,8 @@ bool same_key(const key_message &k1, const key_message &k2) {
       return false;
     }
     return true;
-  } else if (k1.key_type() == "ecc-256-public"
-             || k1.key_type() == "ecc-256-private") {
+  } else if (k1.key_type() == Enc_method_ecc_256_public
+             || k1.key_type() == Enc_method_ecc_256_private) {
     const ecc_message &em1 = k1.ecc_key();
     const ecc_message &em2 = k2.ecc_key();
     if (em1.curve_p().size() != em2.curve_p().size()
@@ -2815,11 +2830,14 @@ void print_key_descriptor(const key_message &k) {
   if (!k.has_key_type())
     return;
 
-  if (k.key_type() == "rsa-2048-private" || k.key_type() == "rsa-2048-public"
-      || k.key_type() == "rsa-3072-private" || k.key_type() == "rsa-3072-public"
-      || k.key_type() == "rsa-1024-private" || k.key_type() == "rsa-1024-public"
-      || k.key_type() == "rsa-4096-private"
-      || k.key_type() == "rsa-4096-public") {
+  if (k.key_type() == Enc_method_rsa_2048_private
+      || k.key_type() == Enc_method_rsa_2048_public
+      || k.key_type() == Enc_method_rsa_3072_private
+      || k.key_type() == Enc_method_rsa_3072_public
+      || k.key_type() == Enc_method_rsa_1024_private
+      || k.key_type() == Enc_method_rsa_1024_public
+      || k.key_type() == Enc_method_rsa_4096_private
+      || k.key_type() == Enc_method_rsa_4096_public) {
     printf("Key[rsa, ");
     if (k.has_key_name()) {
       printf("%s, ", k.key_name().c_str());
@@ -2833,10 +2851,10 @@ void print_key_descriptor(const key_message &k) {
       }
       printf("]");
     }
-  } else if (k.key_type() == "ecc-384-private"
-             || k.key_type() == "ecc-384-public"
-             || k.key_type() == "ecc-256-private"
-             || k.key_type() == "ecc-256-public") {
+  } else if (k.key_type() == Enc_method_ecc_384_private
+             || k.key_type() == Enc_method_ecc_384_public
+             || k.key_type() == Enc_method_ecc_256_private
+             || k.key_type() == Enc_method_ecc_256_public) {
     printf("Key[ecc, ");
     if (k.has_key_name()) {
       printf("%s, ", k.key_name().c_str());
@@ -3025,7 +3043,7 @@ bool make_signed_claim(const char *          alg,
 
   int  sig_size = 0;
   bool success = false;
-  if (strcmp(alg, "rsa-2048-sha256-pkcs-sign") == 0) {
+  if (strcmp(alg, Enc_method_rsa_2048_sha256_pkcs_sign) == 0) {
     RSA *r = RSA_new();
     if (!key_to_RSA(key, r)) {
       printf("%s() error, line: %d, make_signed_claim: key_to_RSA failed\n",
@@ -3055,7 +3073,7 @@ bool make_signed_claim(const char *          alg,
     out->set_allocated_signing_key(psk);
     out->set_signing_algorithm(alg);
     out->set_signature((void *)sig, sig_size);
-  } else if (strcmp(alg, "rsa-3072-sha384-pkcs-sign") == 0) {
+  } else if (strcmp(alg, Enc_method_rsa_3072_sha384_pkcs_sign) == 0) {
     RSA *r = RSA_new();
     if (!key_to_RSA(key, r)) {
       printf("%s() error, line: %d, make_signed_claim: key_to_RSA failed\n",
@@ -3066,7 +3084,7 @@ bool make_signed_claim(const char *          alg,
 
     sig_size = RSA_size(r);
     byte sig[sig_size];
-    success = rsa_sign("sha-384",
+    success = rsa_sign(Digest_method_sha_384,
                        r,
                        serialized_claim.size(),
                        (byte *)serialized_claim.data(),
@@ -3089,7 +3107,7 @@ bool make_signed_claim(const char *          alg,
     out->set_allocated_signing_key(psk);
     out->set_signing_algorithm(alg);
     out->set_signature((void *)sig, sig_size);
-  } else if (strcmp(alg, "rsa-4096-sha384-pkcs-sign") == 0) {
+  } else if (strcmp(alg, Enc_method_rsa_4096_sha384_pkcs_sign) == 0) {
     RSA *r = RSA_new();
     if (!key_to_RSA(key, r)) {
       printf("%s() error, line: %d, make_signed_claim: key_to_RSA failed\n",
@@ -3100,7 +3118,7 @@ bool make_signed_claim(const char *          alg,
 
     sig_size = RSA_size(r);
     byte sig[sig_size];
-    success = rsa_sign("sha-384",
+    success = rsa_sign(Digest_method_sha_384,
                        r,
                        serialized_claim.size(),
                        (byte *)serialized_claim.data(),
@@ -3125,7 +3143,7 @@ bool make_signed_claim(const char *          alg,
     out->set_allocated_signing_key(psk);
     out->set_signing_algorithm(alg);
     out->set_signature((void *)sig, sig_size);
-  } else if (strcmp(alg, "ecc-384-sha384-pkcs-sign") == 0) {
+  } else if (strcmp(alg, Enc_method_ecc_384_sha384_pkcs_sign) == 0) {
     EC_KEY *k = key_to_ECC(key);
     if (k == nullptr) {
       printf("%s() error, line: %d, make_signed_claim: to_ECC failed\n",
@@ -3136,7 +3154,7 @@ bool make_signed_claim(const char *          alg,
     sig_size = 2 * ECDSA_size(k);
     byte sig[sig_size];
 
-    success = ecc_sign("sha-384",
+    success = ecc_sign(Digest_method_sha_384,
                        k,
                        serialized_claim.size(),
                        (byte *)serialized_claim.data(),
@@ -3155,7 +3173,7 @@ bool make_signed_claim(const char *          alg,
     }
     out->set_allocated_signing_key(psk);
     out->set_signature((void *)sig, sig_size);
-  } else if (strcmp(alg, "ecc-256-sha256-pkcs-sign") == 0) {
+  } else if (strcmp(alg, Enc_method_ecc_256_sha256_pkcs_sign) == 0) {
     EC_KEY *k = key_to_ECC(key);
     if (k == nullptr) {
       printf("%s() error, line: %d, make_signed_claim: to_ECC failed\n",
@@ -3166,7 +3184,7 @@ bool make_signed_claim(const char *          alg,
     sig_size = 2 * ECDSA_size(k);
     byte sig[sig_size];
 
-    success = ecc_sign("sha-256",
+    success = ecc_sign(Digest_method_sha_256,
                        k,
                        serialized_claim.size(),
                        (byte *)serialized_claim.data(),
@@ -3280,7 +3298,8 @@ bool verify_signed_claim(const signed_claim_message &signed_claim,
   }
 
   bool success = false;
-  if (signed_claim.signing_algorithm() == "rsa-2048-sha256-pkcs-sign") {
+  if (signed_claim.signing_algorithm()
+      == Enc_method_rsa_2048_sha256_pkcs_sign) {
     RSA *r = RSA_new();
     if (!key_to_RSA(key, r)) {
       printf("%s() error, line: %d, verify_signed_claim: key_to_RSA failed\n",
@@ -3295,7 +3314,8 @@ bool verify_signed_claim(const signed_claim_message &signed_claim,
         (int)signed_claim.signature().size(),
         (byte *)signed_claim.signature().data());
     RSA_free(r);
-  } else if (signed_claim.signing_algorithm() == "rsa-3072-sha384-pkcs-sign") {
+  } else if (signed_claim.signing_algorithm()
+             == Enc_method_rsa_3072_sha384_pkcs_sign) {
     RSA *r = RSA_new();
     if (!key_to_RSA(key, r)) {
       printf("%s() error, line: %d, verify_signed_claim: key_to_RSA failed\n",
@@ -3303,14 +3323,15 @@ bool verify_signed_claim(const signed_claim_message &signed_claim,
              __LINE__);
       return false;
     }
-    success = rsa_verify("sha-384",
+    success = rsa_verify(Digest_method_sha_384,
                          r,
                          (int)signed_claim.serialized_claim_message().size(),
                          (byte *)signed_claim.serialized_claim_message().data(),
                          (int)signed_claim.signature().size(),
                          (byte *)signed_claim.signature().data());
     RSA_free(r);
-  } else if (signed_claim.signing_algorithm() == "rsa-4096-sha384-pkcs-sign") {
+  } else if (signed_claim.signing_algorithm()
+             == Enc_method_rsa_4096_sha384_pkcs_sign) {
     RSA *r = RSA_new();
     if (!key_to_RSA(key, r)) {
       printf("%s() error, line: %d, verify_signed_claim: key_to_RSA failed\n",
@@ -3318,14 +3339,15 @@ bool verify_signed_claim(const signed_claim_message &signed_claim,
              __LINE__);
       return false;
     }
-    success = rsa_verify("sha-384",
+    success = rsa_verify(Digest_method_sha_384,
                          r,
                          (int)signed_claim.serialized_claim_message().size(),
                          (byte *)signed_claim.serialized_claim_message().data(),
                          (int)signed_claim.signature().size(),
                          (byte *)signed_claim.signature().data());
     RSA_free(r);
-  } else if (signed_claim.signing_algorithm() == "ecc-384-sha384-pkcs-sign") {
+  } else if (signed_claim.signing_algorithm()
+             == Enc_method_ecc_384_sha384_pkcs_sign) {
     EC_KEY *k = key_to_ECC(key);
     if (k == nullptr) {
       printf("%s() error, line: %d, verify_signed_claim: key_to_ECC failed\n",
@@ -3333,19 +3355,20 @@ bool verify_signed_claim(const signed_claim_message &signed_claim,
              __LINE__);
       return false;
     }
-    success = ecc_verify("sha-384",
+    success = ecc_verify(Digest_method_sha_384,
                          k,
                          (int)signed_claim.serialized_claim_message().size(),
                          (byte *)signed_claim.serialized_claim_message().data(),
                          (int)signed_claim.signature().size(),
                          (byte *)signed_claim.signature().data());
     EC_KEY_free(k);
-  } else if (signed_claim.signing_algorithm() == "ecc-256-sha256-pkcs-sign") {
+  } else if (signed_claim.signing_algorithm()
+             == Enc_method_ecc_256_sha256_pkcs_sign) {
     EC_KEY *k = key_to_ECC(key);
     if (k == nullptr) {
       return false;
     }
-    success = ecc_verify("sha-256",
+    success = ecc_verify(Digest_method_sha_256,
                          k,
                          (int)signed_claim.serialized_claim_message().size(),
                          (byte *)signed_claim.serialized_claim_message().data(),
@@ -3539,10 +3562,10 @@ bool certifier::utilities::produce_artifact(key_message &signing_key,
   }
 
   EVP_PKEY *signing_pkey = EVP_PKEY_new();
-  if (signing_key.key_type() == "rsa-1024-private"
-      || signing_key.key_type() == "rsa-2048-private"
-      || signing_key.key_type() == "rsa-3072-private"
-      || signing_key.key_type() == "rsa-4096-private") {
+  if (signing_key.key_type() == Enc_method_rsa_1024_private
+      || signing_key.key_type() == Enc_method_rsa_2048_private
+      || signing_key.key_type() == Enc_method_rsa_3072_private
+      || signing_key.key_type() == Enc_method_rsa_4096_private) {
     RSA *signing_rsa_key = RSA_new();
     if (!key_to_RSA(signing_key, signing_rsa_key)) {
       printf("produce_artifact: can't get rsa signing key\n");
@@ -3552,14 +3575,14 @@ bool certifier::utilities::produce_artifact(key_message &signing_key,
     X509_set_pubkey(x509, signing_pkey);
 
     EVP_PKEY *subject_pkey = EVP_PKEY_new();
-    if (subject_key.key_type() == "rsa-1024-public"
-        || subject_key.key_type() == "rsa-2048-public"
-        || subject_key.key_type() == "rsa-4096-public"
-        || subject_key.key_type() == "rsa-3072-public"
-        || subject_key.key_type() == "rsa-1024-private"
-        || subject_key.key_type() == "rsa-2048-private"
-        || subject_key.key_type() == "rsa-3072-private"
-        || subject_key.key_type() == "rsa-4096-private") {
+    if (subject_key.key_type() == Enc_method_rsa_1024_public
+        || subject_key.key_type() == Enc_method_rsa_2048_public
+        || subject_key.key_type() == Enc_method_rsa_4096_public
+        || subject_key.key_type() == Enc_method_rsa_3072_public
+        || subject_key.key_type() == Enc_method_rsa_1024_private
+        || subject_key.key_type() == Enc_method_rsa_2048_private
+        || subject_key.key_type() == Enc_method_rsa_3072_private
+        || subject_key.key_type() == Enc_method_rsa_4096_private) {
       RSA *subject_rsa_key = RSA_new();
       if (!key_to_RSA(subject_key, subject_rsa_key)) {
         printf("%s() error, line: %d, produce_artifact: can't get rsa subject "
@@ -3571,10 +3594,10 @@ bool certifier::utilities::produce_artifact(key_message &signing_key,
       EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
       X509_set_pubkey(x509, subject_pkey);
       RSA_free(subject_rsa_key);
-    } else if (subject_key.key_type() == "ecc-384-public"
-               || subject_key.key_type() == "ecc-384-private"
-               || subject_key.key_type() == "ecc-256-public"
-               || subject_key.key_type() == "ecc-256-private") {
+    } else if (subject_key.key_type() == Enc_method_ecc_384_public
+               || subject_key.key_type() == Enc_method_ecc_384_private
+               || subject_key.key_type() == Enc_method_ecc_256_public
+               || subject_key.key_type() == Enc_method_ecc_256_private) {
       EC_KEY *subject_ecc_key = key_to_ECC(subject_key);
       if (subject_ecc_key == nullptr) {
         printf(
@@ -3594,8 +3617,8 @@ bool certifier::utilities::produce_artifact(key_message &signing_key,
              subject_key.key_type().c_str());
       return false;
     }
-    if (signing_key.key_type() == "rsa-4096-private"
-        || signing_key.key_type() == "ecc-384-private") {
+    if (signing_key.key_type() == Enc_method_rsa_4096_private
+        || signing_key.key_type() == Enc_method_ecc_384_private) {
       X509_sign(x509, signing_pkey, EVP_sha384());
     } else {
       X509_sign(x509, signing_pkey, EVP_sha256());
@@ -3603,8 +3626,8 @@ bool certifier::utilities::produce_artifact(key_message &signing_key,
     EVP_PKEY_free(signing_pkey);
     EVP_PKEY_free(subject_pkey);
     RSA_free(signing_rsa_key);
-  } else if (signing_key.key_type() == "ecc-384-private"
-             || signing_key.key_type() == "ecc-256-private") {
+  } else if (signing_key.key_type() == Enc_method_ecc_384_private
+             || signing_key.key_type() == Enc_method_ecc_256_private) {
     EC_KEY *signing_ecc_key = key_to_ECC(signing_key);
     if (signing_ecc_key == nullptr) {
       printf("%s() error, line: %d, produce_artifact: can't get signing key\n",
@@ -3617,14 +3640,14 @@ bool certifier::utilities::produce_artifact(key_message &signing_key,
     X509_set_pubkey(x509, signing_pkey);
 
     EVP_PKEY *subject_pkey = EVP_PKEY_new();
-    if (subject_key.key_type() == "rsa-1024-public"
-        || subject_key.key_type() == "rsa-2048-public"
-        || subject_key.key_type() == "rsa-3072-public"
-        || subject_key.key_type() == "rsa-4096-public"
-        || subject_key.key_type() == "rsa-1024-private"
-        || subject_key.key_type() == "rsa-2048-private"
-        || subject_key.key_type() == "rsa-3072-private"
-        || subject_key.key_type() == "rsa-4096-private") {
+    if (subject_key.key_type() == Enc_method_rsa_1024_public
+        || subject_key.key_type() == Enc_method_rsa_2048_public
+        || subject_key.key_type() == Enc_method_rsa_3072_public
+        || subject_key.key_type() == Enc_method_rsa_4096_public
+        || subject_key.key_type() == Enc_method_rsa_1024_private
+        || subject_key.key_type() == Enc_method_rsa_2048_private
+        || subject_key.key_type() == Enc_method_rsa_3072_private
+        || subject_key.key_type() == Enc_method_rsa_4096_private) {
       RSA *subject_rsa_key = RSA_new();
       if (!key_to_RSA(subject_key, subject_rsa_key)) {
         printf("%s() error, line: %d, produce_artifact: can't get rsa subject "
@@ -3636,10 +3659,10 @@ bool certifier::utilities::produce_artifact(key_message &signing_key,
       EVP_PKEY_set1_RSA(subject_pkey, subject_rsa_key);
       X509_set_pubkey(x509, subject_pkey);
       RSA_free(subject_rsa_key);
-    } else if (subject_key.key_type() == "ecc-384-public"
-               || subject_key.key_type() == "ecc-384-private"
-               || subject_key.key_type() == "ecc-256-public"
-               || subject_key.key_type() == "ecc-256-private") {
+    } else if (subject_key.key_type() == Enc_method_ecc_384_public
+               || subject_key.key_type() == Enc_method_ecc_384_private
+               || subject_key.key_type() == Enc_method_ecc_256_public
+               || subject_key.key_type() == Enc_method_ecc_256_private) {
       EC_KEY *subject_ecc_key = key_to_ECC(subject_key);
       if (subject_ecc_key == nullptr) {
         printf(
@@ -3687,14 +3710,14 @@ bool certifier::utilities::verify_artifact(X509 &       cert,
                                            uint64_t *sn) {
 
   bool success = false;
-  if (verify_key.key_type() == "rsa-1024-public"
-      || verify_key.key_type() == "rsa-1024-private"
-      || verify_key.key_type() == "rsa-2048-public"
-      || verify_key.key_type() == "rsa-2048-private"
-      || verify_key.key_type() == "rsa-3072-public"
-      || verify_key.key_type() == "rsa-3072-private"
-      || verify_key.key_type() == "rsa-4096-public"
-      || verify_key.key_type() == "rsa-4096-private") {
+  if (verify_key.key_type() == Enc_method_rsa_1024_public
+      || verify_key.key_type() == Enc_method_rsa_1024_private
+      || verify_key.key_type() == Enc_method_rsa_2048_public
+      || verify_key.key_type() == Enc_method_rsa_2048_private
+      || verify_key.key_type() == Enc_method_rsa_3072_public
+      || verify_key.key_type() == Enc_method_rsa_3072_private
+      || verify_key.key_type() == Enc_method_rsa_4096_public
+      || verify_key.key_type() == Enc_method_rsa_4096_private) {
     EVP_PKEY *verify_pkey = EVP_PKEY_new();
     RSA *     verify_rsa_key = RSA_new();
     if (!key_to_RSA(verify_key, verify_rsa_key))
@@ -3712,10 +3735,10 @@ bool certifier::utilities::verify_artifact(X509 &       cert,
     EVP_PKEY_free(verify_pkey);
     EVP_PKEY_free(subject_pkey);
     // Todo: Make this work
-  } else if (verify_key.key_type() == "ecc-384-public"
-             || verify_key.key_type() == "ecc-384-private"
-             || verify_key.key_type() == "ecc-256-public"
-             || verify_key.key_type() == "ecc-256-private") {
+  } else if (verify_key.key_type() == Enc_method_ecc_384_public
+             || verify_key.key_type() == Enc_method_ecc_384_private
+             || verify_key.key_type() == Enc_method_ecc_256_public
+             || verify_key.key_type() == Enc_method_ecc_256_private) {
     EVP_PKEY *verify_pkey = EVP_PKEY_new();
     EC_KEY *  verify_ecc_key = key_to_ECC(verify_key);
     if (verify_ecc_key == nullptr) {
@@ -3916,16 +3939,16 @@ bool key_from_pkey(EVP_PKEY *pkey, const string &name, key_message *k) {
     }
     switch (size) {
       case 1024:
-        k->set_key_type("rsa-1024-public");
+        k->set_key_type(Enc_method_rsa_1024_public);
         break;
       case 2048:
-        k->set_key_type("rsa-2048-public");
+        k->set_key_type(Enc_method_rsa_2048_public);
         break;
       case 3072:
-        k->set_key_type("rsa-3072-public");
+        k->set_key_type(Enc_method_rsa_3072_public);
         break;
       case 4096:
-        k->set_key_type("rsa-4096-public");
+        k->set_key_type(Enc_method_rsa_4096_public);
         break;
       default:
         return false;
@@ -3941,9 +3964,9 @@ bool key_from_pkey(EVP_PKEY *pkey, const string &name, key_message *k) {
       return false;
     }
     if (size == 384) {
-      k->set_key_type("ecc-384-public");
+      k->set_key_type(Enc_method_ecc_384_public);
     } else if (size == 256) {
-      k->set_key_type("ecc-256-public");
+      k->set_key_type(Enc_method_ecc_256_public);
     } else {
       return false;
     }
@@ -4012,11 +4035,14 @@ key_message *get_issuer_key(X509 *x, cert_keys_seen_list &list) {
 EVP_PKEY *pkey_from_key(const key_message &k) {
   EVP_PKEY *pkey = EVP_PKEY_new();
 
-  if (k.key_type() == "rsa-1024-public" || k.key_type() == "rsa-1024-private"
-      || k.key_type() == "rsa-3072-public" || k.key_type() == "rsa-3072-private"
-      || k.key_type() == "rsa-2048-public" || k.key_type() == "rsa-2048-private"
-      || k.key_type() == "rsa-4096-public"
-      || k.key_type() == "rsa-4096-private") {
+  if (k.key_type() == Enc_method_rsa_1024_public
+      || k.key_type() == Enc_method_rsa_1024_private
+      || k.key_type() == Enc_method_rsa_3072_public
+      || k.key_type() == Enc_method_rsa_3072_private
+      || k.key_type() == Enc_method_rsa_2048_public
+      || k.key_type() == Enc_method_rsa_2048_private
+      || k.key_type() == Enc_method_rsa_4096_public
+      || k.key_type() == Enc_method_rsa_4096_private) {
     RSA *rsa_key = RSA_new();
     if (!key_to_RSA(k, rsa_key)) {
       printf("%s() error, line: %d, pkey_from_key: Can't translate key to RSA "
@@ -4034,10 +4060,10 @@ EVP_PKEY *pkey_from_key(const key_message &k) {
       return nullptr;
     }
     return pkey;
-  } else if (k.key_type() == "ecc-384-public"
-             || k.key_type() == "ecc-384-private"
-             || k.key_type() == "ecc-256-public"
-             || k.key_type() == "ecc-256-private") {
+  } else if (k.key_type() == Enc_method_ecc_384_public
+             || k.key_type() == Enc_method_ecc_384_private
+             || k.key_type() == Enc_method_ecc_256_public
+             || k.key_type() == Enc_method_ecc_256_private) {
     EC_KEY *ecc_key = key_to_ECC(k);
     if (ecc_key == nullptr) {
       EVP_PKEY_free(pkey);
@@ -4073,16 +4099,16 @@ bool x509_to_public_key(X509 *x, key_message *k) {
     }
     switch (size) {
       case 1024:
-        k->set_key_type("rsa-1024-public");
+        k->set_key_type(Enc_method_rsa_1024_public);
         break;
       case 2048:
-        k->set_key_type("rsa-2048-public");
+        k->set_key_type(Enc_method_rsa_2048_public);
         break;
       case 3072:
-        k->set_key_type("rsa-3072-public");
+        k->set_key_type(Enc_method_rsa_3072_public);
         break;
       case 4096:
-        k->set_key_type("rsa-4096-public");
+        k->set_key_type(Enc_method_rsa_4096_public);
         break;
       default:
         printf("%s() error, line: %d, x509_to_public_key: bad key type\n",
@@ -4098,9 +4124,9 @@ bool x509_to_public_key(X509 *x, key_message *k) {
       return false;
     }
     if (size == 384) {
-      k->set_key_type("ecc-384-public");
+      k->set_key_type(Enc_method_ecc_384_public);
     } else if (size == 256) {
-      k->set_key_type("ecc-256-public");
+      k->set_key_type(Enc_method_ecc_256_public);
     } else {
       return false;
     }
@@ -4135,16 +4161,17 @@ bool certifier::utilities::make_root_key_with_cert(string &     type,
                                                    key_message *k) {
   string root_name("root");
 
-  if (type == "rsa-4096-private" || type == "rsa-2048-private"
-      || type == "rsa-3072-private" || type == "rsa-1024-private") {
+  if (type == Enc_method_rsa_4096_private || type == Enc_method_rsa_2048_private
+      || type == Enc_method_rsa_3072_private
+      || type == Enc_method_rsa_1024_private) {
     int n = 2048;
-    if (type == "rsa-2048-private")
+    if (type == Enc_method_rsa_2048_private)
       n = 2048;
-    else if (type == "rsa-1024-private")
+    else if (type == Enc_method_rsa_1024_private)
       n = 1024;
-    else if (type == "rsa-3072-private")
+    else if (type == Enc_method_rsa_3072_private)
       n = 3072;
-    else if (type == "rsa-4096-private")
+    else if (type == Enc_method_rsa_4096_private)
       n = 4096;
 
     if (!make_certifier_rsa_key(n, k))
@@ -4173,7 +4200,7 @@ bool certifier::utilities::make_root_key_with_cert(string &     type,
       return false;
     k->set_certificate((byte *)cert_asn.data(), cert_asn.size());
     X509_free(cert);
-  } else if (type == "ecc-384-private") {
+  } else if (type == Enc_method_ecc_384_private) {
     if (!make_certifier_ecc_key(384, k))
       return false;
     k->set_key_format("vse-key");
@@ -4200,7 +4227,7 @@ bool certifier::utilities::make_root_key_with_cert(string &     type,
       return false;
     k->set_certificate((byte *)cert_asn.data(), cert_asn.size());
     X509_free(cert);
-  } else if (type == "ecc-256-private") {
+  } else if (type == Enc_method_ecc_256_private) {
     if (!make_certifier_ecc_key(256, k))
       return false;
     k->set_key_format("vse-key");

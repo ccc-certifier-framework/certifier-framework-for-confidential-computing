@@ -178,7 +178,7 @@ bool simulated_Seal(const string &enclave_type,
 
   // output is iv, encrypted bytes
   int real_output_size = output_size;
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256",
+  if (!authenticated_encrypt(Enc_method_aes_256_cbc_hmac_sha256,
                              input,
                              input_size,
                              sealing_key,
@@ -214,7 +214,7 @@ bool simulated_Unseal(const string &enclave_type,
   memcpy(iv, in, iv_size);
 
   int real_output_size = output_size;
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256",
+  if (!authenticated_decrypt(Enc_method_aes_256_cbc_hmac_sha256,
                              in,
                              in_size,
                              (byte *)sealing_key,
@@ -272,7 +272,7 @@ bool simulated_Attest(const string &enclave_type,
   }
 
   const string type("vse-attestation-report");
-  string       signing_alg("rsa-2048-sha256-pkcs-sign");
+  string       signing_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
   string       serialized_signed_report;
 
   if (!sign_report(type,
@@ -358,7 +358,7 @@ bool simulator_init() {
     printf("simulator_init: Can't convert RSA key to internal\n");
     return false;
   }
-  my_attestation_key.set_key_type("rsa-2048-private");
+  my_attestation_key.set_key_type(Enc_method_rsa_2048_private);
   my_attestation_key.set_key_name("attestKey");
 
   return true;

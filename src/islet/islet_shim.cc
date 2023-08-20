@@ -36,9 +36,9 @@ bool islet_Attest(const int what_to_say_size,
                   int *     attestation_size_out,
                   byte *    attestation_out) {
 
-  int  len = digest_output_byte_size("sha-256");
+  int  len = digest_output_byte_size(Digest_method_sha_256);
   byte islet_what_to_say[len];
-  if (!digest_message("sha-256",
+  if (!digest_message(Digest_method_sha_256,
                       what_to_say,
                       what_to_say_size,
                       islet_what_to_say,
@@ -80,9 +80,9 @@ bool islet_Verify(const int what_to_say_size,
   if (rv != ISLET_SUCCESS)
     return false;
 
-  int  len = digest_output_byte_size("sha-256");
+  int  len = digest_output_byte_size(Digest_method_sha_256);
   byte islet_what_to_say_expected[len];
-  if (!digest_message("sha-256",
+  if (!digest_message(Digest_method_sha_256,
                       what_to_say,
                       what_to_say_size,
                       islet_what_to_say_expected,

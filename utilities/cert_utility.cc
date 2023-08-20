@@ -23,7 +23,7 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(operation, "", "generate policy key and self-signed cert");
 
 DEFINE_string(policy_key_name, "policyKey", "key name");
-DEFINE_string(policy_key_type, "rsa-2048-private", "policy key type");
+DEFINE_string(policy_key_type, Enc_method_rsa_2048_private, "policy key type");
 DEFINE_string(policy_authority_name,
               "policyAuthority",
               "policy authority name");
@@ -33,7 +33,9 @@ DEFINE_string(policy_cert_output_file,
               "policy cert file");
 
 DEFINE_string(platform_key_name, "platformKey", "key name");
-DEFINE_string(platform_key_type, "rsa-2048-private", "platform key type");
+DEFINE_string(platform_key_type,
+              Enc_method_rsa_2048_private,
+              "platform key type");
 DEFINE_string(platform_authority_name,
               "platformAuthority",
               "platform authority name");
@@ -42,7 +44,7 @@ DEFINE_string(platform_key_output_file,
               "platform key file");
 
 DEFINE_string(attest_key_name, "attestKey", "key name");
-DEFINE_string(attest_key_type, "rsa-2048-private", "attest key type");
+DEFINE_string(attest_key_type, Enc_method_rsa_2048_private, "attest key type");
 DEFINE_string(attest_key_output_file, "attest_key_file.bin", "attest key file");
 DEFINE_string(attest_authority_name,
               "attestAuthority",
@@ -53,7 +55,7 @@ DEFINE_string(platform_attest_endorsement,
               "platform attest_endorsement platform key file");
 
 DEFINE_string(key_output_file, "output.bin", "output key file");
-DEFINE_string(key_type, "rsa-2048", "key type");
+DEFINE_string(key_type, Enc_method_rsa_2048, "key type");
 DEFINE_string(key_name, "anonymous", "key name");
 DEFINE_string(cert_output_file, "cert_file.bin", "cert file");
 
@@ -63,9 +65,9 @@ bool generate_test_keys() {
   key_message attest_key;
 
   int n = 2048;
-  if (FLAGS_platform_key_type == "rsa-2048-private")
+  if (FLAGS_platform_key_type == Enc_method_rsa_2048_private)
     n = 2048;
-  else if (FLAGS_platform_key_type == "rsa-1024-private")
+  else if (FLAGS_platform_key_type == Enc_method_rsa_1024_private)
     n = 1024;
   if (!make_certifier_rsa_key(n, &platform_key)) {
     return false;
@@ -81,9 +83,9 @@ bool generate_test_keys() {
     return false;
 
   n = 2048;
-  if (FLAGS_attest_key_type == "rsa-2048-private")
+  if (FLAGS_attest_key_type == Enc_method_rsa_2048_private)
     n = 2048;
-  else if (FLAGS_attest_key_type == "rsa-1024-private")
+  else if (FLAGS_attest_key_type == Enc_method_rsa_1024_private)
     n = 1024;
   if (!make_certifier_rsa_key(n, &attest_key)) {
     return false;
@@ -213,7 +215,7 @@ void test_sig() {
 
 bool generate_key(const string &type, const string &name, key_message *k) {
 
-  if (type == "rsa-1024") {
+  if (type == Enc_method_rsa_1024) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(1024, r)) {
       printf("Can't generate rsa key\n");
@@ -223,8 +225,8 @@ bool generate_key(const string &type, const string &name, key_message *k) {
       printf("Can't convert rsa key to key\n");
       return false;
     }
-    k->set_key_type("rsa-1024-private");
-  } else if (type == "rsa-2048") {
+    k->set_key_type(Enc_method_rsa_1024_private);
+  } else if (type == Enc_method_rsa_2048) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(2048, r)) {
       printf("Can't generate rsa key\n");
@@ -234,8 +236,8 @@ bool generate_key(const string &type, const string &name, key_message *k) {
       printf("Can't convert rsa key to key\n");
       return false;
     }
-    k->set_key_type("rsa-2048-private");
-  } else if (type == "rsa-3072") {
+    k->set_key_type(Enc_method_rsa_2048_private);
+  } else if (type == Enc_method_rsa_3072) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(3072, r)) {
       printf("Can't generate rsa key\n");
@@ -245,8 +247,8 @@ bool generate_key(const string &type, const string &name, key_message *k) {
       printf("Can't convert rsa key to key\n");
       return false;
     }
-    k->set_key_type("rsa-3072-private");
-  } else if (type == "rsa-4096") {
+    k->set_key_type(Enc_method_rsa_3072_private);
+  } else if (type == Enc_method_rsa_4096) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(4096, r)) {
       printf("Can't generate rsa key\n");
@@ -256,8 +258,8 @@ bool generate_key(const string &type, const string &name, key_message *k) {
       printf("Can't convert rsa key to key\n");
       return false;
     }
-    k->set_key_type("rsa-4096-private");
-  } else if (type == "ecc-384") {
+    k->set_key_type(Enc_method_rsa_4096_private);
+  } else if (type == Enc_method_ecc_384) {
     EC_KEY *ec = generate_new_ecc_key(384);
     if (ec == nullptr) {
       printf("Can't generate ecc key\n");
@@ -267,7 +269,7 @@ bool generate_key(const string &type, const string &name, key_message *k) {
       printf("Can't convert ecc key to key\n");
       return false;
     }
-    k->set_key_type("ecc-384-private");
+    k->set_key_type(Enc_method_ecc_384_private);
   } else {
     printf("Unknown key type\n");
     return false;
