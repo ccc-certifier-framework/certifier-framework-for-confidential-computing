@@ -449,7 +449,7 @@ bool sev_verify_report(EVP_PKEY *key, struct attestation_report *report) {
   byte         digest[size_digest];
 
   if (!digest_message(
-          "sha-384",
+          Digest_method_sha_384,
           (const byte *)report,
           sizeof(struct attestation_report) - sizeof(struct signature),
           digest,
@@ -658,7 +658,7 @@ bool sev_Seal(int in_size, byte *in, int *size_out, byte *out) {
     return false;
 
   // Encrypt and integrity protect
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256",
+  if (!authenticated_encrypt(Enc_method_aes_256_cbc_hmac_sha256,
                              in,
                              in_size,
                              final_key,
@@ -680,7 +680,7 @@ bool sev_Unseal(int in_size, byte *in, int *size_out, byte *out) {
 #endif
 
   // decrypt and integity check
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256",
+  if (!authenticated_decrypt(Enc_method_aes_256_cbc_hmac_sha256,
                              in,
                              in_size,
                              final_key,
@@ -703,7 +703,7 @@ bool sev_Attest(int   what_to_say_size,
   sev_attestation_message the_attestation;
   the_attestation.set_what_was_said(what_to_say, what_to_say_size);
 
-  if (!digest_message("sha-384",
+  if (!digest_message(Digest_method_sha_384,
                       what_to_say,
                       what_to_say_size,
                       hash,
@@ -754,7 +754,7 @@ bool verify_sev_Attest(EVP_PKEY *key,
   unsigned int digest_size = 64;
   byte         digest[digest_size];
   memset(digest, 0, digest_size);
-  if (!digest_message("sha-384",
+  if (!digest_message(Digest_method_sha_384,
                       (byte *)sev_att.what_was_said().data(),
                       sev_att.what_was_said().size(),
                       digest,
@@ -896,7 +896,7 @@ int verify_report(struct attestation_report *report) {
 #endif
 
   if (!digest_message(
-          "sha-384",
+          Digest_method_sha_384,
           (byte *)report,
           sizeof(struct attestation_report) - sizeof(struct signature),
           sha_digest_384,

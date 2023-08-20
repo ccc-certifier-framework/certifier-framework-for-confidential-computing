@@ -63,8 +63,8 @@ byte         app_symmetric_key[app_symmetric_key_size];
 key_message  symmertic_key_for_protect;
 
 // Standard algorithms for the enclave
-string public_key_alg("rsa-2048");
-string symmetric_key_alg("aes-256-cbc-hmac-sha256");
+string public_key_alg(Enc_method_rsa_2048);
+string symmetric_key_alg(Enc_method_aes_256_cbc_hmac_sha256);
 
 void print_trust_data() {
   if (!trust_data_initialized)

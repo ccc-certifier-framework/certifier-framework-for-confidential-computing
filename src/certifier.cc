@@ -957,7 +957,7 @@ bool certifier::framework::unprotect_blob(const string &enclave_type,
     return false;
   }
 
-  if (key->key_type() != "aes-256-cbc-hmac-sha256") {
+  if (key->key_type() != Enc_method_aes_256_cbc_hmac_sha256) {
     printf(
         "%s() error, line %d, unprotect_blob, unsupported encryption scheme\n",
         __func__,

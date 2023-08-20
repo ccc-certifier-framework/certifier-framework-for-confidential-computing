@@ -248,9 +248,9 @@ bool keystone_Verify(const int what_to_say_size,
 #endif
 
   // report.enclave.data should be hash of what_to_say
-  int  len = digest_output_byte_size("sha-256");
+  int  len = digest_output_byte_size(Digest_method_sha_256);
   byte expected_data[len];
-  if (!digest_message("sha-256",
+  if (!digest_message(Digest_method_sha_256,
                       what_to_say,
                       what_to_say_size,
                       expected_data,
@@ -264,7 +264,7 @@ bool keystone_Verify(const int what_to_say_size,
     return false;
   }
 
-  if (!keystone_ecc_verify("sha-256",
+  if (!keystone_ecc_verify(Digest_method_sha_256,
                            fake_attest_public_key,
                            MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
                            (byte *)report.enclave.hash,
@@ -294,8 +294,8 @@ bool keystone_Attest(const int what_to_say_size,
       *reinterpret_cast<struct report_t *>(attestation_out);
 
   // report.enclave.data gets the hash of what_to_say
-  int len = digest_output_byte_size("sha-256");
-  if (!digest_message("sha-256",
+  int len = digest_output_byte_size(Digest_method_sha_256);
+  if (!digest_message(Digest_method_sha_256,
                       what_to_say,
                       what_to_say_size,
                       report.enclave.data,
@@ -321,7 +321,7 @@ bool keystone_Attest(const int what_to_say_size,
   //
 
   int size_out = SIGNATURE_SIZE;
-  if (!keystone_ecc_sign("sha-256",
+  if (!keystone_ecc_sign(Digest_method_sha_256,
                          fake_attest_private_key,
                          MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
                          (byte *)report.enclave.hash,
@@ -369,7 +369,7 @@ bool keystone_Seal(int in_size, byte *in, int *size_out, byte *out) {
     return false;
   }
 
-  if (!authenticated_encrypt("aes-256-cbc-hmac-sha256",
+  if (!authenticated_encrypt(Enc_method_aes_256_cbc_hmac_sha256,
                              in,
                              in_size,
                              key,
@@ -389,7 +389,7 @@ bool keystone_Unseal(int in_size, byte *in, int *size_out, byte *out) {
     return false;
   }
 
-  if (!authenticated_decrypt("aes-256-cbc-hmac-sha256",
+  if (!authenticated_decrypt(Enc_method_aes_256_cbc_hmac_sha256,
                              in,
                              in_size,
                              key,

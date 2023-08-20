@@ -74,8 +74,8 @@ int main(int an, char **av) {
          "--vcek_key_file=ec-secp384r1-pub-key.pem\n");
 
   // Generate keys and certs
-  string rsa_type("rsa-4096-private");
-  string ecc_type("ecc-384-private");
+  string rsa_type(Enc_method_rsa_4096_private);
+  string ecc_type(Enc_method_ecc_384_private);
   string ark_name("ARKKey");
   string ask_name("ASKKey");
   string vcek_name("VCEKKey");

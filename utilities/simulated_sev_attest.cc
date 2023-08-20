@@ -149,7 +149,7 @@ int main(int an, char **av) {
     return 1;
   }
   int size_out = sizeof(signature);
-  if (!ecc_sign("sha-384",
+  if (!ecc_sign(Digest_method_sha_384,
                 eck,
                 sizeof(attestation_report) - sizeof(signature),
                 (byte *)&default_report,

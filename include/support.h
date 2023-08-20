@@ -45,6 +45,7 @@ typedef unsigned char byte;
 #endif
 
 #include "certifier_utilities.h"
+#include "certifier_algorithms.h"
 
 using std::string;
 

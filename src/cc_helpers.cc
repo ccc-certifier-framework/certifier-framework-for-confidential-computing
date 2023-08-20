@@ -548,7 +548,7 @@ bool certifier::framework::cc_trust_data::fetch_store() {
 
   key_message pk;
   pk.set_key_name("protect-key");
-  pk.set_key_type("aes-256-cbc-hmac-sha256");
+  pk.set_key_type(Enc_method_aes_256_cbc_hmac_sha256);
   pk.set_key_format("vse-key");
 
   if (!unprotect_blob(enclave_type_,
@@ -950,9 +950,9 @@ bool certifier::framework::cc_trust_data::generate_symmetric_key(bool regen) {
 
   // Make up symmetric keys (e.g.-for sealing)for app
   int num_key_bytes;
-  if (symmetric_key_algorithm_ == "aes-256-cbc-hmac-sha256"
-      || symmetric_key_algorithm_ == "aes-256-cbc-hmac-sha384"
-      || symmetric_key_algorithm_ == "aes-256-gcm") {
+  if (symmetric_key_algorithm_ == Enc_method_aes_256_cbc_hmac_sha256
+      || symmetric_key_algorithm_ == Enc_method_aes_256_cbc_hmac_sha384
+      || symmetric_key_algorithm_ == Enc_method_aes_256_gcm) {
     num_key_bytes = cipher_key_byte_size(symmetric_key_algorithm_.c_str());
     if (num_key_bytes <= 0) {
       printf("%s() error, line %d, Can't recover symmetric alg key size\n",
@@ -989,9 +989,9 @@ bool certifier::framework::cc_trust_data::generate_sealing_key(bool regen) {
 
   // Make up symmetric keys (e.g.-for sealing)for app
   int num_key_bytes;
-  if (symmetric_key_algorithm_ == "aes-256-cbc-hmac-sha256"
-      || symmetric_key_algorithm_ == "aes-256-cbc-hmac-sha384"
-      || symmetric_key_algorithm_ == "aes-256-gcm") {
+  if (symmetric_key_algorithm_ == Enc_method_aes_256_cbc_hmac_sha256
+      || symmetric_key_algorithm_ == Enc_method_aes_256_cbc_hmac_sha384
+      || symmetric_key_algorithm_ == Enc_method_aes_256_gcm) {
     num_key_bytes = cipher_key_byte_size(symmetric_key_algorithm_.c_str());
     if (num_key_bytes <= 0) {
       printf("%s() error, line %d, Can't get symmetric alg key size\n",
@@ -1028,28 +1028,28 @@ bool certifier::framework::cc_trust_data::generate_auth_key(bool regen) {
     return true;
 
   // make app auth private and public key
-  if (public_key_algorithm_ == "rsa-2048") {
+  if (public_key_algorithm_ == Enc_method_rsa_2048) {
     if (!make_certifier_rsa_key(2048, &private_auth_key_)) {
       printf("%s() error, line %d, Can't generate App private key\n",
              __func__,
              __LINE__);
       return false;
     }
-  } else if (public_key_algorithm_ == "rsa-3072") {
+  } else if (public_key_algorithm_ == Enc_method_rsa_3072) {
     if (!make_certifier_rsa_key(3072, &private_auth_key_)) {
       printf("%s() error, line %d, Can't generate App private key\n",
              __func__,
              __LINE__);
       return false;
     }
-  } else if (public_key_algorithm_ == "rsa-4096") {
+  } else if (public_key_algorithm_ == Enc_method_rsa_4096) {
     if (!make_certifier_rsa_key(4096, &private_auth_key_)) {
       printf("%s() error, line %d, Can't generate App private key\n",
              __func__,
              __LINE__);
       return false;
     }
-  } else if (public_key_algorithm_ == "ecc-384") {
+  } else if (public_key_algorithm_ == Enc_method_ecc_384) {
     if (!make_certifier_ecc_key(384, &private_auth_key_)) {
       printf("%s() error, line %d, Can't generate App private key\n",
              __func__,
@@ -1080,28 +1080,28 @@ bool certifier::framework::cc_trust_data::generate_service_key(bool regen) {
     return true;
 
   // make app service private and public key
-  if (public_key_algorithm_ == "rsa-2048") {
+  if (public_key_algorithm_ == Enc_method_rsa_2048) {
     if (!make_certifier_rsa_key(2048, &private_service_key_)) {
       printf("%s() error, line %d, Can't generate App private key\n",
              __func__,
              __LINE__);
       return false;
     }
-  } else if (public_key_algorithm_ == "rsa-3072") {
+  } else if (public_key_algorithm_ == Enc_method_rsa_3072) {
     if (!make_certifier_rsa_key(3072, &private_service_key_)) {
       printf("%s() error, line %d, Can't generate App private key\n",
              __func__,
              __LINE__);
       return false;
     }
-  } else if (public_key_algorithm_ == "rsa-4096") {
+  } else if (public_key_algorithm_ == Enc_method_rsa_4096) {
     if (!make_certifier_rsa_key(4096, &private_service_key_)) {
       printf("%s() error, line %d, Can't generate App private key\n",
              __func__,
              __LINE__);
       return false;
     }
-  } else if (public_key_algorithm_ == "ecc-384") {
+  } else if (public_key_algorithm_ == Enc_method_ecc_384) {
     if (!make_certifier_ecc_key(384, &private_service_key_)) {
       printf("%s() error, line %d, Can't generate App private key\n",
              __func__,

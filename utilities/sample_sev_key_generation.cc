@@ -137,8 +137,8 @@ int main(int an, char **av) {
   default_report.platform_version.raw = 0x03000000000008115ULL;
 
   // Generate keys and certs
-  string rsa_type("rsa-4096-private");
-  string ecc_type("ecc-384-private");
+  string rsa_type(Enc_method_rsa_4096_private);
+  string ecc_type(Enc_method_ecc_384_private);
   string ark_name("ARKKey");
   string ask_name("ASKKey");
   string vcek_name("VCEKKey");
@@ -300,7 +300,7 @@ int main(int an, char **av) {
   int  hash_len = 48;
   byte user_data_hash[hash_len];
 
-  if (!digest_message("sha-384",
+  if (!digest_message(Digest_method_sha_384,
                       (byte *)said_str.data(),
                       said_str.size(),
                       user_data_hash,
@@ -317,7 +317,7 @@ int main(int an, char **av) {
 
   int  sig_digest_len = 48;
   byte sig_digest[sig_digest_len];
-  if (!digest_message("sha-384",
+  if (!digest_message(Digest_method_sha_384,
                       (byte *)&default_report,
                       sizeof(attestation_report) - sizeof(signature),
                       sig_digest,

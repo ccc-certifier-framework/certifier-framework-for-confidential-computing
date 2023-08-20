@@ -793,7 +793,7 @@ bool test_sev_request(bool print_all) {
   }
 
   signed_claim_message *scm1 = trusted_measurements.add_claims();
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
+  if (!make_signed_claim(Enc_method_rsa_2048_sha256_pkcs_sign,
                          cm1,
                          policy_private_key,
                          scm1)) {
@@ -838,7 +838,7 @@ bool test_sev_request(bool print_all) {
   }
 
   signed_claim_message *scm2 = trusted_platforms.add_claims();
-  if (!make_signed_claim("rsa-2048-sha256-pkcs-sign",
+  if (!make_signed_claim(Enc_method_rsa_2048_sha256_pkcs_sign,
                          cm2,
                          policy_private_key,
                          scm2)) {
