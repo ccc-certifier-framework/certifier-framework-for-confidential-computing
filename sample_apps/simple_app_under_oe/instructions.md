@@ -217,6 +217,13 @@ If you do not have OpenEnclave SDK installed or do not want to enable OpenEnclav
 make dummy
 ```
 
+Compile the teelib for running the certifier service inside a TEE
+```shell
+cd $CERTIFIER_PROTOTYPE/certifier_service/teelib
+
+make
+```
+
 This should produce a go file for the certifier protobufs called certifier.pb.go in certprotos.
 Now build simpeserver:
 

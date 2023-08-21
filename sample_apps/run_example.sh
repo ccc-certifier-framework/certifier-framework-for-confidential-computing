@@ -1661,6 +1661,10 @@ function build_simple_server() {
     # shellcheck disable=SC2086
     run_cmd make -j "${NumMakeThreads}" ${make_arg}
 
+    run_cmd cd "${CERT_PROTO}"/certifier_service/teelib
+    # shellcheck disable=SC2086
+    run_cmd make -j "${NumMakeThreads}"
+
     # Now, build the simpleserver:
     run_cmd cd "${CERT_PROTO}"/certifier_service
     run_cmd rm -rf simpleserver

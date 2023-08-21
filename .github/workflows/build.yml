@@ -181,6 +181,9 @@ jobs:
         cd ../isletlib/
         make dummy
 
+        cd ../teelib
+        make
+
         cd ../certprotos
         protoc --go_opt=paths=source_relative --go_out=. --go_opt=Mcertifier.proto= ./certifier.proto
 

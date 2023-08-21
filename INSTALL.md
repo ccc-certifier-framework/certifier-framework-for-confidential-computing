@@ -113,7 +113,7 @@ $CERTIFIER/utilities/cert_utility.exe                 \
    --attest_key_output_file=attest_key_file.bin
 ```
 
-Setup dummy libraries for Certifier Service to link with:
+Setup libraries for Certifier Service to link with:
 
 ```shell
 cd $CERTIFIER/certifier_service/graminelib
@@ -124,6 +124,9 @@ make dummy
 
 cd ../isletlib/
 make dummy
+
+cd ../teelib/
+make
 ```
 
 To compile the Certlib tests:

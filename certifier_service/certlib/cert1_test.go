@@ -38,6 +38,51 @@ import (
 	certprotos "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 )
 
+/*
+func TestTEEAttest(t *testing.T) {
+	fmt.Print("\nTestTEEAttest\n")
+
+	var what_to_say []byte
+	what_to_say = make([]byte, 256)
+	for i := 0; i < 256; i++ {
+		what_to_say[i] = byte(i)
+	}
+	evidence, err := TEEAttest("sev-enclave", what_to_say)
+	if err != nil {
+		fmt.Printf("TEEAttest failed: %s\n", err.Error())
+		t.Errorf("TestTEEAttest failed")
+	}
+	fmt.Printf("evidence length: %d\n", len(evidence))
+}
+
+func TestTEESeal(t *testing.T) {
+	fmt.Print("\nTestTEESeal\n")
+
+	var in []byte
+	in = make([]byte, 32)
+	for i := 0; i < 32; i++ {
+		in[i] = byte((7 * i) % 16)
+	}
+	cipher, err := TEESeal("sev-enclave", "test-enclave", in, 256)
+	if err != nil {
+		fmt.Printf("TEESeal failed: %s\n", err.Error())
+		t.Errorf("TestTEESeal failed")
+	}
+	fmt.Printf("Cipher text length: %d\n", len(cipher))
+
+	clear, err := TEEUnSeal("sev-enclave", "test-enclave", cipher, 128)
+	if err != nil {
+		fmt.Printf("TEEUnseal failed: %s\n", err.Error())
+		t.Errorf("TestTEESeal failed")
+	}
+	fmt.Printf("Clear text length: %d\n", len(clear))
+	if !bytes.Equal(in, clear) {
+		fmt.Printf("Clear text mismatch\n")
+		t.Errorf("TestTEESeal failed")
+	}
+}
+*/
+
 func TestEntity(t *testing.T) {
 	fmt.Print("\nTestEntity\n")
 	m := make([]byte, 32)
