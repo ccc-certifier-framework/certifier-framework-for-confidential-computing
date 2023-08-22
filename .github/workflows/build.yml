@@ -37,42 +37,7 @@ jobs:
     #! -------------------------------------------------------------------------
     - name: test-core-certifier-programs
       run: |
-        echo " "
-        echo "******************************************************************"
-        echo "* Check that core certifier programs still compile and clear tests"
-        echo "* (Also builds shared libraries for use by Python bindings.)"
-        echo "******************************************************************"
-        echo " "
-        pushd src
-
-        #! ---------------------------------------------------------------------
-        #! Check that core certifier programs still compile and clear tests
-        #! ---------------------------------------------------------------------
-        make -f certifier.mak clean
-        make -f certifier_tests.mak clean
-
-        make -j2 -f certifier.mak
-
-        # We need to clean here, otherwise make certifier_tests.mak will run
-        # into some protobuf-related errors.
-        make -f certifier.mak clean
-
-        make -j2 -f certifier_tests.mak
-        ./certifier_tests.exe
-
-        # Rebuild both shared libraries as 'all' target does not build these.
-        # Rebuild special-target which will invoke -fPIC flag during compilation.
-        set -x
-        make -f certifier.mak --always-make -j2 sharedlib
-        make -f certifier.mak --always-make -j2 swigpytestssharedlib
-        make -f certifier_tests.mak --always-make -j2 sharedlib
-        set +x
-
-        popd
-
-        #! Sanity check that the shared library was built correctly and can be loaded
-        #! python3 -c "import libcertifier_framework; help(libcertifier_framework)"
-        #! python3 -c "import libcertifier_tests; help(libcertifier_tests)"
+        ./CI/scripts/test.sh test-core-certifier-programs
 
     #! -------------------------------------------------------------------------
     #! Code formatting runs pylint, so this step can only come after
@@ -101,545 +66,76 @@ jobs:
     #! -------------------------------------------------------------------------
     - name: test-cert_framework-pytests
       run: |
-        echo " "
-        echo "**************************************************************"
-        echo " Test Python bindings' to Certifier Framework shared library "
-        echo "**************************************************************"
-        echo " "
-
-        export PYTHONPATH=$(pwd)
-
-        pushd tests/pytests
-
-        # Run one case showing verbose outputs of each library's contents.
-        # Run each py file separately as 'pytest -v' (on all files) craps out.
-        set -x
-        pytest --capture=tee-sys test_libcertifier_framework.py -k test_cfslib_getmembers_of_libcertifier_framework
-
-        # Capture output from individual Certifier tests that are run
-        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_libcertifier_tests.py
-
-        PYTHONUNBUFFERED=TRUE pytest -v test_libcertifier_framework.py
-
-        # NOTE: Some test cases in test_certifier_framework.py need the Certifier Service
-        # to be up-and-running. That needs several build-and-setup steps which are part
-        # of a simple_app execution test. Execution of those cases is hence moved downstream.
-        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v -m "not needs_cert_service" \
-             test_certifier_framework.py
-
-        # Just run the basic case of this test to see classes created in generated Python module
-        PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
-             pytest --capture=tee-sys -v test_certifier_protobuf_interfaces.py \
-                 -k test_certifier_pb2_basic
-
-        # Re-run entire test w/o capturing output
-        PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
-             pytest -v test_certifier_protobuf_interfaces.py
-
-        # Exercise SWIG-Python bindings standalone unit-tests
-        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_libswigpytests.py
-
-        # Just run the basic case of this test to see classes created in generated Python module
-        PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
-        pytest --capture=tee-sys -v test_certifier_protobuf_interfaces.py -k test_certifier_pb2_basic
-
-        # Re-run entire test w/o capturing output
-        PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
-        pytest -v test_certifier_protobuf_interfaces.py
-
-        set +x
-        popd
+        ./CI/scripts/test.sh test-cert_framework-pytests
 
     #! -------------------------------------------------------------------------
     - name: test-mtls-ssl-client-server-comm-pytest
       run: |
-        echo " "
-        echo "**************************************************************"
-        echo " Test Python Client-Server Secure channel communication"
-        echo "**************************************************************"
-        echo " "
-
-        pushd tests
-
-        # Generates required PEM-cert and private-key files for client & server
-        ./gen_client_server_certs_key_files.sh
-
-        cd pytests
-
-        # Exercise client-server communication with self-signed certificates
-        pytest --capture=tee-sys -v test_client_server_mtls.py -k test_server_process_with_mtls_self_signed_cert &
-
-        sleep 5
-
-        pytest --capture=tee-sys -v test_client_server_mtls.py -k test_client_app_with_mtls_self_signed_cert
-
-        # Basic test to exercise core certificate verification v/s root-CA-cert
-        pytest --capture=tee-sys -v test_client_server_mtls.py -k test_verify_certs_versus_root_cert
-
-        # Exercise client-server communication with root-CA-signed certificates
-        pytest --capture=tee-sys -v test_client_server_mtls.py -k test_server_process_with_mtls_root_signed_cert &
-
-        sleep 5
-
-        pytest --capture=tee-sys -v test_client_server_mtls.py -k test_client_app_with_mtls_root_signed_cert
-
-        popd
+        ./CI/scripts/test.sh test-mtls-ssl-client-server-comm-pytest
 
     #! -------------------------------------------------------------------------
     - name: unit-test-certlib-utility-programs
       run: |
-        echo " "
-        echo "******************************************************************"
-        echo "* Check core Certlib interfaces for utility programs"
-        echo "******************************************************************"
-        echo " "
-        pushd utilities
-
-        # Build utilities
-        make -j2 -f cert_utility.mak
-        make -j2 -f policy_utilities.mak
-
-        popd
-
-        pushd ./certifier_service/certlib/test_data
-
-        echo " "
-        echo "---- Running utilities/cert_utility.exe ... ----"
-        echo " "
-        set -x
-        ../../../utilities/cert_utility.exe                    \
-            --operation=generate-policy-key-and-test-keys      \
-            --policy_key_output_file=policy_key_file.bin       \
-            --policy_cert_output_file=policy_cert_file.bin     \
-            --platform_key_output_file=platform_key_file.bin   \
-            --attest_key_output_file=attest_key_file.bin
-        set +x
-
-        set -x
-        ./generate_policy.sh
-        set +x
-
-        popd
-
-        #! Setup dummy libraries for Certifier Service to link with
-        pushd ./certifier_service/
-
-        cd ./graminelib/
-        make dummy
-
-        cd ../oelib
-        make dummy
-
-        cd ../isletlib/
-        make dummy
-
-        cd ../teelib
-        make
-
-        cd ../certprotos
-        protoc --go_opt=paths=source_relative --go_out=. --go_opt=Mcertifier.proto= ./certifier.proto
-
-        echo " "
-        echo "---- Running certlib/go test ... ----"
-        echo " "
-        #! Run certlib/ Go unit-tests, which use policy_key_file.bin policy_cert_file.bin
-        #! from test_data/ dir.
-        cd ../certlib
-        go test
-
-        popd
-
-        echo " "
-        echo "---- Running measurement_utility_test.sh ... ----"
-        echo " "
-        # Basic verification of measurement_utility.
-        #
-        ./tests/measurement_utility_test.sh
-
-        # Above script will execute a utility which will generate policy_key.py
-        git restore sample_apps/simple_app_python/policy_key.py
-
+        ./CI/scripts/test.sh unit-test-certlib-utility-programs
 
     #! -------------------------------------------------------------------------
     - name: test-run_example-help-list-args
       run: |
-        echo " "
-        echo "******************************************************************"
-        echo "* Exercise run_example with --help, --list arguments ..."
-        echo "******************************************************************"
-        echo " "
-        pushd ./sample_apps
-
-        #! Exercise help / usage / list options, for default simple_app
-        ./run_example.sh -h
-        ./run_example.sh --help
-        ./run_example.sh --list
-        ./run_example.sh --list simple_app
-
-        #! Re-run help / usage / list options, for simple_app_under_oe
-        ./run_example.sh --help simple_app_under_oe
-        ./run_example.sh --list simple_app_under_oe
-
-        ./run_example.sh simple_app show_env
-        ./run_example.sh simple_app_under_oe show_env
-
-        #! Re-run help / usage / list options, for simple_app_under_gramine
-        ./run_example.sh --help simple_app_under_gramine
-        ./run_example.sh --list simple_app_under_gramine
-
-        #! Re-run help / usage / list options, for simple_app_under_sev
-        ./run_example.sh --help simple_app_under_sev
-        ./run_example.sh --list simple_app_under_sev
-
-        #! Re-run help / usage / list options, for application_service
-        ./run_example.sh --help application_service
-        ./run_example.sh --list application_service
-
-        #! Re-run help / usage / list options, for simple_app_under_app_service
-        ./run_example.sh --help simple_app_under_app_service
-        ./run_example.sh --list simple_app_under_app_service
-
-        ./run_example.sh --help simple_app_under_keystone
-        ./run_example.sh --list simple_app_under_keystone
-
-        ./run_example.sh --list simple_app_python
-
-        popd
+        ./CI/scripts/test.sh test-run_example-help-list-args
 
     #! -------------------------------------------------------------------------
     - name: test-run_example-dry-run
       run: |
-        #! ---------------------------------------------------------------------
-        #! Exercise various interfaces in --dry-run mode. This will ensure that
-        #! script's execution logic will likely work for different sample apps,
-        #! when tested on the appropriate platform and environment.
-        #! ---------------------------------------------------------------------
-        echo " "
-        echo "******************************************************************"
-        echo "* Exercise run_example with --dry-run argument ..."
-        echo "******************************************************************"
-        echo " "
-        pushd ./sample_apps
-
-        ./run_example.sh --dry-run simple_app
-        ./run_example.sh --dry-run simple_app setup
-        ./run_example.sh --dry-run simple_app run_test
-
-        ./run_example.sh --dry-run simple_app_under_oe
-        ./run_example.sh --dry-run simple_app_under_oe setup
-        ./run_example.sh --dry-run simple_app_under_oe run_test
-        ./run_example.sh --dry-run simple_app_under_oe setup_with_auto_policy_generation_for_OE
-
-        ./run_example.sh --dry-run simple_app_under_gramine
-        ./run_example.sh --dry-run simple_app_under_gramine setup
-        ./run_example.sh --dry-run simple_app_under_gramine run_test
-
-        ./run_example.sh --dry-run simple_app_under_sev
-        ./run_example.sh --dry-run simple_app_under_sev setup
-        ./run_example.sh --dry-run simple_app_under_sev run_test
-        ./run_example.sh --dry-run simple_app_under_sev setup_with_auto_policy_generation_for_SEV
-
-        ./run_example.sh --dry-run application_service
-        ./run_example.sh --dry-run application_service setup
-
-        #! Should do nothing but just emit usage messages
-        ./run_example.sh --dry-run application_service run_test
-
-        ./run_example.sh --dry-run simple_app_under_keystone
-
-        ./run_example.sh --dry-run simple_app_under_islet
-        ./run_example.sh --dry-run simple_app_under_islet setup
-        ./run_example.sh --dry-run simple_app_under_islet run_test
-
-        ./run_example.sh --dry-run simple_app_python
-
-        popd
+        ./CI/scripts/test.sh test-run_example-dry-run
 
     #! -------------------------------------------------------------------------
     - name: test-run_example-simple_app
       run: |
         #! ---------------------------------------------------------------------
         #! This will also check that utilities programs still compile
-        echo " "
-        echo "******************************************************************"
-        echo "* Test: Execute script to compile, build and run simple_app."
-        echo "******************************************************************"
-        echo " "
-        pushd ./sample_apps
-
-        ./cleanup.sh
-
-        set -x
-        ps -ef | grep -E 'simpleserver|example_app.exe|run_example.sh|app_service.exe'
-        set +x
-
-        ./run_example.sh simple_app
-
-        # cp'over some certificate / policy / measurement bin files that were provisioned
-        # for running the simple_app. The test cases in below test need these files to
-        # invoke (& verify) the steps under 'get-certified' target.
-        pytest_data_dir="../tests/pytests/data/"
-
-        for binfile in attest_key_file.bin \
-                       policy_cert_file.bin \
-                       platform_attest_endorsement.bin \
-                       example_app.measurement
-        do
-            set -x
-            cp -p simple_app/provisioning/${binfile} ${pytest_data_dir}
-            set +x
-        done
-
-        # Rebuild shared library that pytest needs
-        pushd ../src
-        make -f certifier.mak --always-make -j2 sharedlib
-        popd
-
-        # Re-start Certifier Service as script, above, would have shut it down
-        ./cleanup.sh
-
-        ./run_example.sh simple_app start_certifier_service
-
-        ps -ef | grep simple
-
-        # Run Python test, in which some test cases need Certifier Service to be up.
-        pushd ../
-
-        set -x
-        PYTHONUNBUFFERED=TRUE PYTHONPATH=./ \
-            pytest --capture=tee-sys -v -m needs_cert_service tests/pytests/test_certifier_framework.py
-        set +x
-
-        popd
-
-        ./cleanup.sh
-
-        popd
+        ./CI/scripts/test.sh test-run_example-simple_app
 
     #! -------------------------------------------------------------------------
     - name: test-run_example-simple_app_python
       run: |
-        echo " "
-        echo "*******************************************************************"
-        echo "* Test: Execute script to compile, build and run simple_app_python."
-        echo "*******************************************************************"
-        echo " "
-        pushd ./sample_apps
-
-        ./cleanup.sh
-
-        set -x
-        ps -ef | grep -E 'simpleserver|example_app.exe|run_example.sh|app_service.exe'
-        set +x
-
-        # Need to run this using setup / run_test; otherwise the script will
-        # delete non-Git files. That will rm the certifier_framework Py module and
-        # shared libraries.
-        ./run_example.sh simple_app_python setup
-        ./run_example.sh simple_app_python run_test
-
-        ./cleanup.sh
-
-        popd
+        ./CI/scripts/test.sh test-run_example-simple_app_python
 
     #! -------------------------------------------------------------------------
     - name: test-build-and-setup-App-Service-and-simple_app_under_app_service
       run: |
-        echo " "
-        echo "***************************************"
-        echo "* Build-and-setup Application Service "
-        echo "***************************************"
-        echo " "
-        pushd ./sample_apps
-
-        ./run_example.sh application_service setup
-
-        echo " "
-        echo "*************************************************************"
-        echo "* Build-and-setup simple_app_under_app_service/ and run_test"
-        echo "*************************************************************"
-        echo " "
-
-        echo " "
-        echo "---- simple_app_under_app_service/ setup ----"
-        echo " "
-        ./run_example.sh --no-make-clean simple_app_under_app_service setup
-
-        #! Start Certifier Service & Application Service together first.
-        ./run_example.sh --no-cleanup application_service start
-
-        #! Allow some time for App Service to get Certified ...
-        sleep 10
-
-        #! Once Application Service has been certified, we no longer need
-        #! this Certifier Service. Kill it, so app itself can start its
-        #! own Certifier Service.
-        ps -ef | grep simpleserver
-
-        set -x
-        kill -9 $(pgrep simpleserver)
-        set +x
-
-        echo " "
-        echo "---- simple_app_under_app_service/ run_test ----"
-        echo " "
-
-        #! Now, run the test for simple_app_under_app_service
-        ./run_example.sh simple_app_under_app_service run_test
-
-        sleep 2
-
-        #! Check for 'Hi" messages from Application Service
-        tail -30 ../application_service/provisioning/appln.service.out
-
-        sudo ./cleanup.sh
-        popd
-
-        echo " "
-        echo "**** Check for any stale left-over processes ****"
-        ps -ef | grep -v -E 'root|^sys'
-        echo " "
+        ./CI/scripts/test.sh test-build-and-setup-App-Service-and-simple_app_under_app_service
 
     #! -------------------------------------------------------------------------
     - name: test-build-and-install-sev-snp-simulator
       run: |
-        echo " "
-        echo "*************************************************************************************"
-        echo "* Build and install SEV-SNP simulator, to run Cert tests with simulated SEV-enabled."
-        echo "*************************************************************************************"
-        echo " "
-        pushd ./sev-snp-simulator
-
-        make clean
-        make
-        make keys
-
-        #! You may need this in your dev-box, but on CI this will not be needed
-        #! as we have not run 'insmod', yet.
-        #! make rmmod
-
-        make insmod
-
-        popd
+        ./CI/scripts/test.sh test-build-and-install-sev-snp-simulator
 
     #! -------------------------------------------------------------------------
     - name: test-sev-snp-simulator-sev-test
       run: |
-        echo " "
-        echo "******************************************************************"
-        echo "* Run sev-snp-simulator sev-test ... "
-        echo "******************************************************************"
-        echo " "
-        pushd ./sev-snp-simulator/test
-
-        make sev-test
-        sudo ./sev-test
-
-        popd
+        ./CI/scripts/test.sh test-sev-snp-simulator-sev-test
 
     #! -------------------------------------------------------------------------
     - name: test-certifier-build-and-test-simulated-SEV-mode
       run: |
-        echo " "
-        echo "******************************************************************"
-        echo "* Check that Certifier tests run clean with simulated SEV-enabled."
-        echo "******************************************************************"
-        echo " "
-        pushd src
-
-        make -f certifier_tests.mak clean
-        ENABLE_SEV=1 make -j2 -f certifier_tests.mak
-        sudo ./certifier_tests.exe --print_all=true
-
-        echo " "
-        echo "******************************************************************"
-        echo "* Check that Certifier builds with simulated SEV-enabled."
-        echo "******************************************************************"
-        echo " "
-        make -f certifier.mak clean
-        make -f certifier_tests.mak clean
-        ENABLE_SEV=1 make -j2 -f certifier.mak
-
-        popd
-
-        #! Run script that will setup s/w required to build Policy Generator for SEV-app
-        ./CI/scripts/setup-JSON-schema-validator-for-SEV-apps.sh
+        ./CI/scripts/test.sh test-certifier-build-and-test-simulated-SEV-mode
 
     #! -------------------------------------------------------------------------
     - name: test-simple_app_under_sev-simulated-SEV-mode
       run: |
-        echo " "
-        echo "******************************************************************"
-        echo "* Run simple_app_under_sev in simulated-SEV environment."
-        echo "******************************************************************"
-        echo " "
-        pushd ./sample_apps
-
-        ./run_example.sh rm_non_git_files
-        ./run_example.sh simple_app_under_sev setup
-        sudo ./run_example.sh simple_app_under_sev run_test
-
-        sudo ./cleanup.sh
-        popd
+        ./CI/scripts/test.sh test-simple_app_under_sev-simulated-SEV-mode
 
     #! -------------------------------------------------------------------------
     - name: test-simple_app_under_keystone-using-shim
       run: |
-        echo " "
-        echo "********************************************"
-        echo "* Run simple_app_under_keystone using shim"
-        echo "********************************************"
-        echo " "
-        pushd ./sample_apps
-
-        ./run_example.sh rm_non_git_files
-        ./run_example.sh simple_app_under_keystone setup
-        ./run_example.sh simple_app_under_keystone run_test
-
-        ./cleanup.sh
-        popd
+        ./CI/scripts/test.sh test-simple_app_under_keystone-using-shim
 
     #! -------------------------------------------------------------------------
     - name: test-ISLET-SDK-shim_test
       run: |
-        echo "**********************************************************"
-        echo "* Download ISLET SDK, build the library and run shim_test"
-        echo "**********************************************************"
-        echo " "
-        pushd src/islet
-
-        ../../third_party/islet/setup.sh
-
-        echo " "
-        set -x
-        cd islet_test/
-        make clean
-        make shim_test
-
-        echo " "
-        make attest_seal_test
-        set +x
-        echo " "
+        ./CI/scripts/test.sh test-ISLET-SDK-shim_test
 
     #! -------------------------------------------------------------------------
     - name: test-run_example-simple_app_under_islet-using-shim
       run: |
-        echo " "
-        echo "***********************************************************************************"
-        echo "* Test: Execute script to compile, build and run simple_app_under_islet using shim"
-        echo "***********************************************************************************"
-        echo " "
-        pushd ./sample_apps
-
-        ./cleanup.sh
-
-        ./run_example.sh rm_non_git_files
-
-        #! Break it up into setup / run_test, to verify that the run_test phase
-        #! also correctly establishes LD_LIBRARY_PATH internally.
-        ./run_example.sh simple_app_under_islet setup
-        ./run_example.sh simple_app_under_islet run_test
-
-        ./cleanup.sh
-
-        popd
+        ./CI/scripts/test.sh test-run_example-simple_app_under_islet-using-shim
