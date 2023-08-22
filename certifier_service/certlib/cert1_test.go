@@ -1826,3 +1826,24 @@ func TestGramineVerify(t *testing.T) {
 	fmt.Printf("\n")
 }
 */
+
+func TestPolicyStore(t *testing.T) {
+
+	// policy_store ps(policy_store::MAX_NUM_ENTRIES);
+	// make_certifier_rsa_key(2048, &pk)
+	// time_now(&t_nb)
+	// add_interval_to_time_point(t_nb, hours_to_add, &t_na)
+	// ps.get_num_entries()
+	//	byte   bin[5] = {0, 1, 2, 3, 4};
+	//	tag1 = "test-entry-1";
+	//	type1 = "binary";
+	//	value1.assign((const char *)bin, sizeof(bin));
+	// ps.update_or_insert(tag1, type1, value1))
+	//	 tag1 = "test-entry-2";
+	//	 tag1 = "test-entry-3";
+	// ent = ps.find_entry(tag1, type1);
+	// store_entry *p_ent = ps.get_entry(ent);
+	// ps.Serialize(&saved)
+	// ps2.Deserialize(saved)
+	//	ps2.get_num_entries() != ps.get_num_entries()
+}
