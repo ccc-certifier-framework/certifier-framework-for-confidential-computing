@@ -155,7 +155,7 @@ func ProtectBlob(enclaveType string, k *certprotos.KeyMessage, buffer []byte) []
 	}
 	pb.EncryptedKey = serializedKey
 
-	encryptedData := AuthenticatedEncrypt(buffer, k.SecretKeyBits, iv)
+	encryptedData := GeneralAuthenticatedEncrypt(k.GetKeyType(), buffer, k.SecretKeyBits, iv)
 	if encryptedData == nil {
 		fmt.Printf("ProtectBlob: Can't AuthenticatedEncrypt Data\n")
 		return nil
@@ -191,7 +191,7 @@ func UnprotectBlob(enclaveType string, k *certprotos.KeyMessage, blob []byte) []
 		fmt.Printf("UnprotectBlob: Wrong key type for authenticated encrypt\n")
 		return nil
 	}
-	buffer := AuthenticatedDecrypt(pb.EncryptedData, k.SecretKeyBits)
+	buffer := GeneralAuthenticatedDecrypt(k.GetKeyType(), pb.EncryptedData, k.SecretKeyBits)
 	return buffer
 }
 

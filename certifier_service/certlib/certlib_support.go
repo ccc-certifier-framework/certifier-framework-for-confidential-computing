@@ -689,6 +689,21 @@ func AuthenticatedDecrypt(in []byte, key []byte) []byte {
 	return dec
 }
 
+// Todo: implement the others
+func GeneralAuthenticatedEncrypt(alg string, in []byte, key []byte, iv []byte) []byte {
+	if alg == "aes-256-cbc-hmac-sha256" {
+		return AuthenticatedEncrypt(in, key, iv)
+	}
+	return nil
+}
+
+func GeneralAuthenticatedDecrypt(alg string, in []byte, key []byte) []byte {
+	if alg =="aes-256-cbc-hmac-sha256" {
+		return AuthenticatedDecrypt(in, key)
+	}
+	return nil
+}
+
 func SameMeasurement(m1 []byte, m2 []byte) bool {
 	return bytes.Equal(m1, m2)
 }
