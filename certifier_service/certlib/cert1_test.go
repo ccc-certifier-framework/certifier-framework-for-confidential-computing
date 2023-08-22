@@ -1829,7 +1829,50 @@ func TestGramineVerify(t *testing.T) {
 
 func TestPolicyStore(t *testing.T) {
 
-	// policy_store ps(policy_store::MAX_NUM_ENTRIES);
+	fmt.Printf("\nPolicy Store Test\n")
+
+	ps := NewPolicyStore(100)
+	if ps == nil {
+		t.Errorf("Can't create policy store")
+		return
+	}
+	v1 := []byte { 1,2,3,4}
+	e1 := NewPolicyStoreEntry("v1", "bytes", v1)
+	if e1 == nil {
+		t.Errorf("Can't create e1")
+		return
+	}
+	PrintPolicyStoreEntry(e1)
+	v2 := []byte {1,2,3,4,5}
+	e2 := NewPolicyStoreEntry("v2", "bytes", v2)
+	if e2 == nil {
+		t.Errorf("Can't create e2")
+		return
+	}
+	v3 := []byte {1,2,3,4,5,6}
+	e3 := NewPolicyStoreEntry("v3", "bytes", v3)
+	if e3 == nil {
+		t.Errorf("Can't create e3")
+		return
+	}
+
+	if !InsertOrUpdatePolicyStoreEntry(ps, "v1", "bytes", v1) {
+		t.Errorf("Can't add v1 to store")
+		return
+	}
+	if !InsertOrUpdatePolicyStoreEntry(ps, "v2", "bytes", v2) {
+		t.Errorf("Can't add v1 to store")
+		return
+	}
+	if !InsertOrUpdatePolicyStoreEntry(ps, "v3", "bytes", v3) {
+		t.Errorf("Can't add v1 to store")
+		return
+	}
+
+	fmt.Printf("\nPolicy Store:\n")
+	PrintPolicyStore(ps)
+
+
 	// make_certifier_rsa_key(2048, &pk)
 	// time_now(&t_nb)
 	// add_interval_to_time_point(t_nb, hours_to_add, &t_na)
