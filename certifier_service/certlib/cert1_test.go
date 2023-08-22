@@ -365,7 +365,31 @@ func TestCrypt(t *testing.T) {
 		t.Errorf("encrypt/decrypt fails")
 	}
 
-	// Todo: GCM authenticated encrypt
+	// GCM authenticated encrypt
+	authenticatedPlainText2 := plainText
+	authenticatedCipherText2 := GeneralAuthenticatedEncrypt("aes-256-gcm", authenticatedPlainText2, k, iv)
+	authenticatedRecoveredText2 := GeneralAuthenticatedDecrypt("aes-256-gcm", authenticatedCipherText2, k)
+	fmt.Printf("Authenticated Plaintext size : %d\n", len(authenticatedPlainText2))
+	fmt.Printf("Authenticated Cipher size out: %d\n", len(authenticatedCipherText2))
+	fmt.Printf("Authenticated Recovered size out: %d\n", len(authenticatedRecoveredText2))
+	fmt.Print("Key           : ")
+	PrintBytes(k)
+	fmt.Println("")
+	fmt.Print("iv            : ")
+	PrintBytes(iv)
+	fmt.Println("")
+	fmt.Print("Authenticated Plain text    : ")
+	PrintBytes(authenticatedPlainText2)
+	fmt.Println("")
+	fmt.Print("Authenticated Cipher text   : ")
+	PrintBytes(authenticatedCipherText2)
+	fmt.Print("Authenticated Recovered text: ")
+	PrintBytes(authenticatedRecoveredText2)
+	fmt.Println("")
+	if !bytes.Equal(authenticatedPlainText2, authenticatedRecoveredText2) {
+		t.Errorf("encrypt/decrypt fails")
+	}
+
 }
 
 func TestProofsAuth(t *testing.T) {

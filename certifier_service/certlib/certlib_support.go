@@ -694,12 +694,50 @@ func GeneralAuthenticatedEncrypt(alg string, in []byte, key []byte, iv []byte) [
 	if alg == "aes-256-cbc-hmac-sha256" {
 		return AuthenticatedEncrypt(in, key, iv)
 	}
+	if alg == "aes-256-gcm" {
+		tagLen := 12
+
+		k, err := aes.NewCipher(key)
+		if err != nil {
+			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewCipher\n")
+			return nil
+		}
+		gcm, err := cipher.NewGCM(k)
+		if err != nil {
+			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewGCM\n")
+			return nil
+		}
+		out := gcm.Seal(nil, iv[0:tagLen], in, nil)
+		return append(iv, out ...)
+	}
 	return nil
 }
 
 func GeneralAuthenticatedDecrypt(alg string, in []byte, key []byte) []byte {
 	if alg =="aes-256-cbc-hmac-sha256" {
 		return AuthenticatedDecrypt(in, key)
+	}
+	if alg == "aes-256-gcm" {
+		tagLen := 12
+
+		k, err := aes.NewCipher(key)
+		if err != nil {
+			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewCipher\n")
+			return nil
+		}
+		gcm, err := cipher.NewGCM(k)
+		if err != nil {
+			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewGCM\n")
+			return nil
+		}
+
+		iv := in[0:tagLen]
+		out, err := gcm.Open(nil, iv, in[aes.BlockSize:], nil)
+		if err != nil {
+			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewGCM\n")
+			return nil
+		}
+		return out
 	}
 	return nil
 }
