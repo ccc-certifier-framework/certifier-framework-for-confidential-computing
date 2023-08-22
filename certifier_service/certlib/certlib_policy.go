@@ -16,11 +16,14 @@ package certlib
 
 import (
 	// "bytes"
-	// "google.golang.org/protobuf/proto"
 	// "errors"
 	// "strings"
 	// "time"
 	"fmt"
+	"google.golang.org/protobuf/proto"
+	"io/ioutil"
+	"os"
+
 	certprotos "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 )
 
@@ -81,6 +84,32 @@ func InsertOrUpdatePolicyStoreEntry(ps *certprotos.PolicyStoreMessage, tag strin
 }
 
 func PolicyStoreDeleteEntry(ent int) {
+}
+
+func SavePolicyStore(ps *certprotos.PolicyStoreMessage, fileName string) bool {
+	serializedStore, err := proto.Marshal(ps)
+	if err != nil {
+		return false
+	}
+	// Todo: Encrypt the store
+	if ioutil.WriteFile(fileName, serializedStore, 0666) != nil {
+		return false
+	}
+	return true
+}
+
+func RecoverPolicyStore(fileName string, ps *certprotos.PolicyStoreMessage) bool {
+	// Todo: Decrypt the store
+	serializedStore, err := os.ReadFile(fileName)
+	if err != nil {
+		return false
+	}
+	err = proto.Unmarshal(serializedStore, ps)
+	if err != nil {
+		return false
+	}
+	
+	return true
 }
 
 //  --------------------------------------------------------------------

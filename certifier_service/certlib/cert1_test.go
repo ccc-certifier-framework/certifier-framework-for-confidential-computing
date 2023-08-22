@@ -1869,24 +1869,55 @@ func TestPolicyStore(t *testing.T) {
 		return
 	}
 
+	pk := MakeVseRsaKey(2048)
+	serializedpk, err := proto.Marshal(pk)
+	if err != nil {
+		t.Errorf("Can't serialize key")
+		return
+	}
+	if !InsertOrUpdatePolicyStoreEntry(ps, "policy-key", "key", serializedpk) {
+		t.Errorf("Can't add policy key to store")
+		return
+	}
+
 	fmt.Printf("\nPolicy Store:\n")
 	PrintPolicyStore(ps)
 
 
-	// make_certifier_rsa_key(2048, &pk)
-	// time_now(&t_nb)
-	// add_interval_to_time_point(t_nb, hours_to_add, &t_na)
-	// ps.get_num_entries()
-	//	byte   bin[5] = {0, 1, 2, 3, 4};
-	//	tag1 = "test-entry-1";
-	//	type1 = "binary";
-	//	value1.assign((const char *)bin, sizeof(bin));
-	// ps.update_or_insert(tag1, type1, value1))
-	//	 tag1 = "test-entry-2";
-	//	 tag1 = "test-entry-3";
-	// ent = ps.find_entry(tag1, type1);
-	// store_entry *p_ent = ps.get_entry(ent);
-	// ps.Serialize(&saved)
-	// ps2.Deserialize(saved)
-	//	ps2.get_num_entries() != ps.get_num_entries()
+	if !SavePolicyStore(ps, "test_data/policy_store") {
+		t.Errorf("Can't save policy store")
+		return
+	}
+
+	psNew := new(certprotos.PolicyStoreMessage)
+	if !RecoverPolicyStore("test_data/policy_store", psNew) {
+		t.Errorf("Can't recover policy store")
+		return
+	}
+
+	if PolicyStoreNumEntries(ps) != PolicyStoreNumEntries(psNew) {
+		t.Errorf("Recovered policy store has wrong number of messages")
+		return
+	}
+
+	if ps.Entries[0].GetTag() != psNew.Entries[0].GetTag() ||
+			ps.Entries[0].GetType() != psNew.Entries[0].GetType() ||
+			!bytes.Equal(ps.Entries[0].Value, psNew.Entries[0].Value) {
+		t.Errorf("Recovered policy store entry mismatch")
+		return
+	}
+
+	newKey := new(certprotos.KeyMessage)
+	err = proto.Unmarshal(psNew.Entries[3].Value, newKey)
+	if err != nil {
+		t.Errorf("Can't unmarshal key")
+		return
+	}
+	if !SameKey(pk, newKey) {
+		t.Errorf("Stored key doesn't match")
+		return
+	}
+
+	fmt.Printf("\nRecovered key:\n")
+	PrintKey(newKey)
 }
