@@ -21,6 +21,9 @@ are:
         private policy key and stores it in its policy store (which is encrypted) and
         saves it.
 
+    4. --operation=certifier-service-init:  In this case, the certifier-service contact
+        a key-service to retrieve its policy key.
+
 While this example shows all the steps in provisioning the private policy key and running
 simpleserver in a tee, there are many variations for how the initial policy key might be
 first generated and provisioned. Among these are:
@@ -31,7 +34,7 @@ first generated and provisioned. Among these are:
         with several trusted participants.  The using a standalone simpleserver operating in
         key-service mode to immediately provision the first certifier service and another tee
         protected key-service.  Then the standalone machine can remain locked in a vault as
-        a emergency reprovisioning sservice.
+        a emergency reprovisioning service.
 
 This also requires some new arguments to simpleserver:
 

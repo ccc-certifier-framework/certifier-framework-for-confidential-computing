@@ -35,8 +35,16 @@ import (
 	// gramineverify "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
 
+var operation = flag.String("operation", "certifier-service",
+	"operation name: certifier-service, key-service, convert-key or certifier_service_init")
+var retrievePolicyKeyFromStore= flag.Bool("retrieve_policy_key", false, "get policy private key from store")
+var keyServerHost = flag.String("key_service_host", "localhost", "address for client/server")
+var keyServerPort = flag.String("key_service_port", "8123", "port for client/server")
+
 var serverHost = flag.String("host", "localhost", "address for client/server")
-var serverPort = flag.String("port", "8123", "port for client/server")
+var serverPort = flag.String("port", "8127", "port for client/server")
+var policyStoreFile= flag.String("policy_store", "store", "policy store")
+var useSecurePolicyKey= flag.Bool("get_key_from_secure_store", false, "use policy store for policy key")
 
 var policyKeyFile = flag.String("policy_key_file", "policy_key_file.bin", "key file name")
 var policyCertFile = flag.String("policy_cert_file", "policy_cert_file.bin", "cert file name")
