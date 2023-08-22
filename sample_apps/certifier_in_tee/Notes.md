@@ -38,6 +38,8 @@ first generated and provisioned. Among these are:
 
 This also requires some new arguments to simpleserver:
 
+    --enclave_type="sev-enclave": This is the type of enclae protecting the certifier-service
+
     --retrieve_policy_key=true:  This instructs simpleserver to contact a key-service to retrieve
       its private policy key.
 

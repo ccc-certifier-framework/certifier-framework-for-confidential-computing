@@ -37,6 +37,9 @@ import (
 
 var operation = flag.String("operation", "certifier-service",
 	"operation name: certifier-service, key-service, convert-key or certifier_service_init")
+
+var enclaveType= flag.String("enclave_type", "simulated-enclave", "enclave type")
+
 var retrievePolicyKeyFromStore= flag.Bool("retrieve_policy_key", false, "get policy private key from store")
 var keyServerHost = flag.String("key_service_host", "localhost", "address for client/server")
 var keyServerPort = flag.String("key_service_port", "8123", "port for client/server")

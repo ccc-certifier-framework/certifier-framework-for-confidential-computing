@@ -926,6 +926,10 @@ func PrintKey(k *certprotos.KeyMessage) {
 		if k.EccKey != nil {
 			PrintEccKey(k.EccKey)
 		}
+	} else if k.GetKeyType() == "aes-256-cbc-hmac-sha256" {
+		fmt.Printf("Bits: ");
+		PrintBytes(k.SecretKeyBits)
+		fmt.Printf("\n");
 	} else {
 		fmt.Printf("Unknown key type\n")
 	}

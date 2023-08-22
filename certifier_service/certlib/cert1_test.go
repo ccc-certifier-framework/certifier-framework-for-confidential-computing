@@ -1883,14 +1883,15 @@ func TestPolicyStore(t *testing.T) {
 	fmt.Printf("\nPolicy Store:\n")
 	PrintPolicyStore(ps)
 
+	enclaveType := "simulated-enclave"
 
-	if !SavePolicyStore(ps, "test_data/policy_store") {
+	if !SavePolicyStore(enclaveType, ps, "test_data/policy_store") {
 		t.Errorf("Can't save policy store")
 		return
 	}
 
 	psNew := new(certprotos.PolicyStoreMessage)
-	if !RecoverPolicyStore("test_data/policy_store", psNew) {
+	if !RecoverPolicyStore(enclaveType, "test_data/policy_store", psNew) {
 		t.Errorf("Can't recover policy store")
 		return
 	}
