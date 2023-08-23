@@ -82,6 +82,12 @@ make
 cd $CERTIFIER_PROTOTYPE/certifier_service
 go build simpleserver.go
 
+#test convert
+cd $EXAMPLE_DIR/certifier_service
+cp ../provisioning/policy_key_file.bin .
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+      --operation=convert-key --policyFile=policy.bin --readPolicy=true
+
 #run server as key service
 cd $EXAMPLE_DIR/certifier_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \

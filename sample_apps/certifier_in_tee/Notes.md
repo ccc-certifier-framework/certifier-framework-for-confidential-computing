@@ -7,7 +7,10 @@ are:
         traditional role of receiving certification requests, verifying security domain rules
         and issuing "admission certificates."
 
-    2. --operation=key-service:  In this case, simpleserver receives requests, including 
+    2. --operation=provision-keys: In this case, the certifier service contacts the key
+        service to get the private policy key.
+
+    3. --operation=key-service:  In this case, simpleserver receives requests, including
         attestations from simpleservers running in certifier-service roles, who have not
         yet gotten the private policy key.  In this role, simpleserver receives evidence
         very similar to that offered by a program requesting certifiation.  It evaluates
@@ -17,12 +20,9 @@ are:
         reauesting simpleserver then stores the policy private key in its policy store
         rather than an unencrypted key file.
 
-    3. --operation=convert-key: In this case, simpleserver simply reads the unencrypted
+    4. --operation=convert-key: In this case, simpleserver simply reads the unencrypted
         private policy key and stores it in its policy store (which is encrypted) and
         saves it.
-
-    4. --operation=certifier-service-init:  In this case, the certifier-service contact
-        a key-service to retrieve its policy key.
 
 While this example shows all the steps in provisioning the private policy key and running
 simpleserver in a tee, there are many variations for how the initial policy key might be

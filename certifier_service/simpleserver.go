@@ -434,6 +434,10 @@ func keyServiceThread(conn net.Conn, client string) {
 
 //	------------------------------------------------------------------------------------
 
+func ProvisionKeys(serverAddr string) bool {
+	return false
+}
+
 func SaveKeys() bool {
 	// *policyKeyFile, *policyStoreFile
 	serializedKey, err := os.ReadFile(*policyKeyFile)
@@ -583,6 +587,14 @@ func main() {
 		serverAddr = *serverHost + ":" + *serverPort
 		certifierServer(serverAddr)
 		fmt.Printf("Certifier server done\n")
+		os.Exit(0)
+	} else if *operation == "provision-keys" {
+		serverAddr = *keyServerHost + ":" + *keyServerPort
+		if !ProvisionKeys(serverAddr) {
+			fmt.Printf("main: failed to provision keys\n")
+			os.Exit(1)
+		}
+		fmt.Printf("Keys provisioned\n")
 		os.Exit(0)
 	} else if *operation == "key-service" {
 		if !initCertifierService(*useSecurePolicyKey) {
