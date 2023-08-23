@@ -4,7 +4,7 @@ Important concepts in real deployments
 The "simple_app" family of examples is intended to carefully take you through every
 step of building and deploying applications, in sufficient detail to allow a thorough
 understanding of the every design feature of the Certifier Framework.  Thorough enough
-to make a detail security assessment and develop a clear understanding of the security
+to make a detailed security assessment and develop a clear understanding of the security
 implications of each and every component.
 
 However, for real use there will be several important differences.  First, the detailed
@@ -12,10 +12,12 @@ instructions in "instructions.md," while intended for "copy and paste" learning 
 almost certainly be replaced by a very few shell scripts.  For example, run_example.sh,
 in the sample_apps directory, performs this "one step" provisioning for all the applications.
 If you're not a shell programming guru, you can simply turn the instructions.md (or script
-file) into a shell script to build everything automatically.
+file) into a shell script to build everything automatically.  Second, the subdirectories
+provisioning, service, app1_data and app2_data are not generally distributed and must
+be stored, with care.
 
 Deploying an application (or VM) consists merely of distributing the compiled application
-or service in the VM.  One common way to do this for a VM is to put the apps and/or service
+or service in the VM.  One common way to do this, for a VM is to put the apps and/or service
 in initramfs, then all the applications and shared libraries are measured as part of "Direct Boot."
 
 The subdirectories created when you build the applications and certifier_service, in the examples,
@@ -46,11 +48,10 @@ are used as follows in deployment:
     however, support varies from platform to platform and may rely on features of the VMM so this is
     not illustrated currently in the "simple_apps."
 
-As first aid, remember that, unlike the exhaustively explained simple_app run on a development machine
+As first aid, remember that, unlike the exhaustively explained simple_app run on a development machine,
 to help speed development, actual deployment requires deploying very few files: only the app (e.g.-
 example_app.exe) on the application machines, none of the provisioning directory files and only two
-of the files in the service directory.  Consult the documentation for more detail.
+of the files in the service directory.
 
+Consult the documentation for more detail.
 
-
-  
