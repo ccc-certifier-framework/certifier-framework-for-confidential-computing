@@ -89,7 +89,7 @@ var signedPolicy *certprotos.SignedClaimSequence = &certprotos.SignedClaimSequen
 var policyPool certlib.PolicyPool
 
 // At init, we retrieve the policy key and the rules to evaluate
-func initCertifierService() bool {
+func initCertifierService(useStore bool) bool {
 	// Debug
 	fmt.Printf("Initializing CertifierService, Policy key file: %s, Policy cert file: %s, Policy file: %s\n",
 		*policyKeyFile, *policyCertFile, *policyFile)
@@ -356,7 +356,7 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 //      if it fails
 //            save net infor for forensics
 //      if logging is enabled, log event, request and response
-func serviceThread(conn net.Conn, client string) {
+func certifierServiceThread(conn net.Conn, client string) {
 
 	b := certlib.SizedSocketRead(conn)
 	if b == nil {
@@ -367,13 +367,13 @@ func serviceThread(conn net.Conn, client string) {
 	request := &certprotos.TrustRequestMessage{}
 	err := proto.Unmarshal(b, request)
 	if err != nil {
-		fmt.Println("serviceThread: Failed to decode request", err)
+		fmt.Println("certifierServiceThread: Failed to decode request", err)
 		logEvent("Can't unmarshal request", nil, nil)
 		return
 	}
 
 	// Debug
-	fmt.Printf("serviceThread: Trust request received:\n")
+	fmt.Printf("certifierServiceThread: Trust request received:\n")
 	certlib.PrintTrustRequest(request)
 
 	// Prepare response
@@ -422,14 +422,52 @@ func serviceThread(conn net.Conn, client string) {
 	return
 }
 
+func keyServiceThread(conn net.Conn, client string) {
+
+	b := certlib.SizedSocketRead(conn)
+	if b == nil {
+		logEvent("Can't read request", nil, nil)
+		return
+	}
+
+}
+
 //	------------------------------------------------------------------------------------
 
-func server(serverAddr string, arg string) {
+func SaveKeys(unencryptedFileName string, storeFileName string) bool {
+	return false
+}
 
-	if !initCertifierService() {
-		fmt.Printf("server: failed to initialize server\n")
-		os.Exit(1)
+func keyServer(serverAddr string) {
+
+	var sock net.Listener
+	var err error
+	var conn net.Conn
+
+	// Listen for clients.
+	fmt.Printf("Key server: listening\n")
+	sock, err = net.Listen("tcp", serverAddr)
+	if err != nil {
+		fmt.Printf("Key server, listen error: ", err, "\n")
+		return
 	}
+
+	// Service client connections.
+	for {
+		fmt.Printf("Key server: at accept\n")
+		conn, err = sock.Accept()
+		if err != nil {
+			fmt.Printf("Key server: can't accept connection: %s\n", err.Error())
+			continue
+		}
+		// Todo: maybe get client name and client IP for logging.
+		var clientName string = "blah"
+		go keyServiceThread(conn, clientName)
+	}
+}
+
+
+func certifierServer(serverAddr string) {
 
 	var sock net.Listener
 	var err error
@@ -439,21 +477,21 @@ func server(serverAddr string, arg string) {
 	fmt.Printf("server: listening\n")
 	sock, err = net.Listen("tcp", serverAddr)
 	if err != nil {
-		fmt.Printf("server, listen error: ", err, "\n")
+		fmt.Printf("Certifier server, listen error: ", err, "\n")
 		return
 	}
 
 	// Service client connections.
 	for {
-		fmt.Printf("server: at accept\n")
+		fmt.Printf("Certifier server: at accept\n")
 		conn, err = sock.Accept()
 		if err != nil {
-			fmt.Printf("server: can't accept connection: %s\n", err.Error())
+			fmt.Printf("Certifier server: can't accept connection: %s\n", err.Error())
 			continue
 		}
 		// Todo: maybe get client name and client IP for logging.
 		var clientName string = "blah"
-		go serviceThread(conn, clientName)
+		go certifierServiceThread(conn, clientName)
 	}
 }
 
@@ -462,10 +500,9 @@ func main() {
 	flag.Parse()
 
 	var serverAddr string
-	serverAddr = *serverHost + ":" + *serverPort
-	var arg string = "something"
 
-	/*
+	if *operation == "certifier-service" {
+		/*
 	   	REMOVE: This is a test
 	           attestation, err := os.ReadFile("attestation.bin")
 	           if err != nil {
@@ -482,9 +519,34 @@ func main() {
 	                   fmt.Printf("GramineVerify failed: %s\n", err.Error())
 	           }
 	           fmt.Printf("Measurement length: %d\n", len(outMeasurement));
-	*/
+		*/
 
-	// later this may turn into a TLS connection, we'll see
-	server(serverAddr, arg)
-	fmt.Printf("server: done\n")
+		// later this may turn into a TLS connection, we'll see
+
+		if !initCertifierService(*useSecurePolicyKey) {
+			fmt.Printf("main: failed to initialize server\n")
+			os.Exit(1)
+		}
+		serverAddr = *serverHost + ":" + *serverPort
+		certifierServer(serverAddr)
+		fmt.Printf("Certifier server done\n")
+		os.Exit(0)
+	} else if *operation == "key-service" {
+		if !initCertifierService(*useSecurePolicyKey) {
+			fmt.Printf("main: failed to initialize server\n")
+			os.Exit(1)
+		}
+		serverAddr = *keyServerHost + ":" + *keyServerPort
+		keyServer(serverAddr)
+		fmt.Printf("Key server done\n")
+		os.Exit(0)
+	} else if *operation == "convert-key" {
+		if !SaveKeys(*policyKeyFile, *policyStoreFile) {
+			fmt.Printf("main: SaveKeys failed\n")
+		}
+		return
+	} else {
+		fmt.Printf("main: unsupported operation %s\n", *operation)
+		return
+	}
 }
