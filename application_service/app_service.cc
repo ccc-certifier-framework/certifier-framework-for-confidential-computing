@@ -249,7 +249,9 @@ bool soft_Seal(spawned_children *kid, string in, string *out) {
                              (byte *)buffer_to_seal.data(),
                              buffer_to_seal.size(),
                              app_trust_data->sealing_key_bytes_,
+                             app_trust_data->max_symmetric_key_size_,
                              iv,
+                             block_size,
                              t_out,
                              &t_size)) {
     printf("%s() error, line %d, soft_Seal: authenticated encrypt failed\n",
@@ -273,6 +275,7 @@ bool soft_Unseal(spawned_children *kid, string in, string *out) {
                              (byte *)in.data(),
                              in.size(),
                              app_trust_data->sealing_key_bytes_,
+                             app_trust_data->max_symmetric_key_size_,
                              t_out,
                              &t_size)) {
     printf("%s() error, line %d, soft_Unseal: authenticated decrypt failed\n",

@@ -182,7 +182,9 @@ bool simulated_Seal(const string &enclave_type,
                              input,
                              input_size,
                              sealing_key,
+                             sealing_key_size,
                              iv,
+                             16,
                              output,
                              &real_output_size)) {
     printf("simulated_Seal: authenticated encrypt failed\n");
@@ -218,6 +220,7 @@ bool simulated_Unseal(const string &enclave_type,
                              in,
                              in_size,
                              (byte *)sealing_key,
+                             sealing_key_size,
                              output,
                              &real_output_size)) {
     printf("simulated_Unseal: authenticated decrypt failed\n");

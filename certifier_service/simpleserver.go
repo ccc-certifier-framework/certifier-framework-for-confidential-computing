@@ -41,11 +41,13 @@ var operation = flag.String("operation", "certifier-service",
 var enclaveType= flag.String("enclave_type", "simulated-enclave", "enclave type")
 
 var retrievePolicyKeyFromStore= flag.Bool("retrieve_policy_key", false, "get policy private key from store")
-var keyServerHost = flag.String("key_service_host", "localhost", "address for client/server")
-var keyServerPort = flag.String("key_service_port", "8123", "port for client/server")
 
 var serverHost = flag.String("host", "localhost", "address for client/server")
-var serverPort = flag.String("port", "8127", "port for client/server")
+var serverPort = flag.String("port", "8123", "port for client/server")
+
+var keyServerHost = flag.String("key_service_host", "localhost", "address for client/server")
+var keyServerPort = flag.String("key_service_port", "8127", "port for client/server")
+
 var policyStoreFile= flag.String("policy_store", "store", "policy store")
 var useSecurePolicyKey= flag.Bool("get_key_from_secure_store", false, "use policy store for policy key")
 

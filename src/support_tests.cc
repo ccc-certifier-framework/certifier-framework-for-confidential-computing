@@ -105,7 +105,7 @@ bool test_encrypt(bool print_all) {
 bool test_authenticated_encrypt(bool print_all) {
   const int in_size = 2 * block_size;
   const int out_size = in_size + 256;
-  const int key_size = 64;
+  const int key_size = 96;
   byte      key[key_size];
   const int iv_size = block_size;
   byte      iv[block_size];
@@ -142,7 +142,9 @@ bool test_authenticated_encrypt(bool print_all) {
                              plain,
                              in_size,
                              key,
+                             key_size,
                              iv,
+                             iv_size,
                              cipher,
                              &size_encrypt_out)) {
     printf("%s() error, line: %d, authenticated encrypt failed\n",
@@ -166,6 +168,7 @@ bool test_authenticated_encrypt(bool print_all) {
                              cipher,
                              size_encrypt_out,
                              key,
+                             key_size,
                              decrypted,
                              &size_decrypt_out)) {
     printf("%s() error, line: %d, authenticated decrypt failed\n",
@@ -202,7 +205,9 @@ bool test_authenticated_encrypt(bool print_all) {
                              plain,
                              in_size,
                              key,
+                             key_size,
                              iv,
+                             iv_size,
                              cipher,
                              &size_encrypt_out)) {
     printf("%s() error, line: %d, authenticated encrypt failed\n",
@@ -226,6 +231,7 @@ bool test_authenticated_encrypt(bool print_all) {
                              cipher,
                              size_encrypt_out,
                              key,
+                             key_size,
                              decrypted,
                              &size_decrypt_out)) {
     printf("%s() error, line: %d, authenticated decrypt failed\n",
@@ -257,7 +263,9 @@ bool test_authenticated_encrypt(bool print_all) {
                              plain,
                              in_size,
                              key,
+                             key_size,
                              iv,
+                             iv_size,
                              cipher,
                              &size_encrypt_out)) {
     printf("%s() error, line: %d, authenticated_encrypt() for aes-256-gcm "
@@ -282,6 +290,7 @@ bool test_authenticated_encrypt(bool print_all) {
                              cipher,
                              size_encrypt_out,
                              key,
+                             key_size,
                              decrypted,
                              &size_decrypt_out)) {
     printf(

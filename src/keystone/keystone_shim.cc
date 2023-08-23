@@ -373,7 +373,9 @@ bool keystone_Seal(int in_size, byte *in, int *size_out, byte *out) {
                              in,
                              in_size,
                              key,
+                             64,
                              iv,
+                             16,
                              out,
                              size_out)) {
     return false;
@@ -393,6 +395,7 @@ bool keystone_Unseal(int in_size, byte *in, int *size_out, byte *out) {
                              in,
                              in_size,
                              key,
+                             64,
                              out,
                              size_out)) {
     return false;

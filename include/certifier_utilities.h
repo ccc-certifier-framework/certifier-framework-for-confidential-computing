@@ -50,13 +50,16 @@ bool authenticated_encrypt(const char *alg,
                            byte *      in,
                            int         in_len,
                            byte *      key,
+                           int         key_len,
                            byte *      iv,
+                           int         iv_len,
                            byte *      out,
                            int *       out_size);
 bool authenticated_decrypt(const char *alg,
                            byte *      in,
                            int         in_len,
                            byte *      key,
+                           int         key_len,
                            byte *      out,
                            int *       out_size);
 
