@@ -434,8 +434,61 @@ func keyServiceThread(conn net.Conn, client string) {
 
 //	------------------------------------------------------------------------------------
 
-func SaveKeys(unencryptedFileName string, storeFileName string) bool {
-	return false
+func SaveKeys() bool {
+	// *policyKeyFile, *policyStoreFile
+	serializedKey, err := os.ReadFile(*policyKeyFile)
+        if err != nil {
+                fmt.Println("SaveKeys: can't read key file, ", err)
+                return false
+        }
+
+	ps := certlib.NewPolicyStore(100)
+	if ps == nil {
+                fmt.Printf("SaveKeys: can't create policy store")
+                return false
+	}
+
+	// Debug
+	privatePolicyKey = &certprotos.KeyMessage{}
+	err = proto.Unmarshal(serializedKey, privatePolicyKey)
+	if err != nil {
+		fmt.Printf("SaveKeys: Can't unmarshal serialized policy key\n")
+		return false
+	}
+
+	if !certlib.InsertOrUpdatePolicyStoreEntry(ps, "policy-key", "key", serializedKey) {
+		fmt.Printf("SaveKeys: Can't insert policy key\n")
+		return false
+	}
+
+	if !certlib.SavePolicyStore(*enclaveType, ps, *policyStoreFile) {
+		fmt.Printf("SaveKeys: Can't save store\n")
+		return false
+	}
+
+	// Debug
+	psNew := new(certprotos.PolicyStoreMessage)
+	if !certlib.RecoverPolicyStore(*enclaveType, *policyStoreFile, psNew) {
+		fmt.Printf("SaveKeys: Can't recover store\n")
+		return false
+	}
+	ent := certlib.FindPolicyStoreEntry(psNew, "policy-key", "key")
+	if ent < 0 {
+		fmt.Printf("SaveKeys: Can't find policy key in store\n")
+		return false
+	}
+	recoveredSerializedKey := psNew.Entries[ent].Value
+	privatePolicyKey2 := &certprotos.KeyMessage{}
+	err = proto.Unmarshal(recoveredSerializedKey, privatePolicyKey2)
+	if err != nil {
+		fmt.Printf("SaveKeys: Can't unmarshal serialized policy key\n")
+		return false
+	}
+	if !certlib.SameKey(privatePolicyKey, privatePolicyKey2) {
+		fmt.Printf("SaveKeys: policy keys don't match\n")
+		return false
+	}
+	return true
 }
 
 func keyServer(serverAddr string) {
@@ -541,7 +594,7 @@ func main() {
 		fmt.Printf("Key server done\n")
 		os.Exit(0)
 	} else if *operation == "convert-key" {
-		if !SaveKeys(*policyKeyFile, *policyStoreFile) {
+		if !SaveKeys() {
 			fmt.Printf("main: SaveKeys failed\n")
 		}
 		return
