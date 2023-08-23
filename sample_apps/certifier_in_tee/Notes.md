@@ -1,14 +1,16 @@
 This example shows how to provision and run a certifier service in a tee.  The main problem is
 to securely provision the policy private key to the Tee.  There are many ways to do this.  Here,
-we modify "simpleserver" so it can run in three roles, determined by the --operation flag.  They
+we modify "simpleserver" so it can run in different roles, determined by the --operation flag.  They
 are:
 
     1. --operation=certifier-service (the default):  In this case, the certifier runs in its
         traditional role of receiving certification requests, verifying security domain rules
-        and issuing "admission certificates."
+        and issuing "admission certificates." It can retireve its private policy key as it
+        does now from and unencrypted file or from an encrypted store depending on the
+        flag get_key_from_secure_store.
 
     2. --operation=provision-keys: In this case, the certifier service contacts the key
-        service to get the private policy key.
+        service to get the private policy key and put it in a secure store.
 
     3. --operation=key-service:  In this case, simpleserver receives requests, including
         attestations from simpleservers running in certifier-service roles, who have not
@@ -20,9 +22,8 @@ are:
         reauesting simpleserver then stores the policy private key in its policy store
         rather than an unencrypted key file.
 
-    4. --operation=convert-key: In this case, simpleserver simply reads the unencrypted
-        private policy key and stores it in its policy store (which is encrypted) and
-        saves it.
+    4. --operation=convert-key: In this case, simpleserver reads the unencrypted
+        private policy key and stores it in its policy store (which is encrypted).
 
 While this example shows all the steps in provisioning the private policy key and running
 simpleserver in a tee, there are many variations for how the initial policy key might be
@@ -39,9 +40,6 @@ first generated and provisioned. Among these are:
 This also requires some new arguments to simpleserver:
 
     --enclave_type="sev-enclave": This is the type of enclae protecting the certifier-service
-
-    --retrieve_policy_key=true:  This instructs simpleserver to contact a key-service to retrieve
-      its private policy key.
 
     --key_service_host: IP address of key service.
 

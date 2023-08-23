@@ -88,10 +88,15 @@ cp ../provisioning/policy_key_file.bin .
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
       --operation=convert-key --policyFile=policy.bin --readPolicy=true
 
+# Now see if the certifier_service can provision from the store
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+      --operation=convert-key --policyFile=policy.bin --readPolicy=true
+
 #run server as key service
 cd $EXAMPLE_DIR/certifier_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-      --operation=convert-key --policyFile=policy.bin --readPolicy=true
+	--operation=certifier-service --get_key_from_secure_store=true \
+	--policyFile=policy.bin --readPolicy=true
 
 #run server as certifier service
 cd $EXAMPLE_DIR/service

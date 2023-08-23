@@ -40,7 +40,7 @@ var operation = flag.String("operation", "certifier-service",
 
 var enclaveType= flag.String("enclave_type", "simulated-enclave", "enclave type")
 
-var retrievePolicyKeyFromStore= flag.Bool("retrieve_policy_key", false, "get policy private key from store")
+var getPolicyKeyFromSecureStore= flag.Bool("get_key_from_secure_store", false, "get policy private key from store")
 
 var serverHost = flag.String("host", "localhost", "address for client/server")
 var serverPort = flag.String("port", "8123", "port for client/server")
@@ -49,7 +49,6 @@ var keyServerHost = flag.String("key_service_host", "localhost", "address for cl
 var keyServerPort = flag.String("key_service_port", "8127", "port for client/server")
 
 var policyStoreFile= flag.String("policy_store", "store", "policy store")
-var useSecurePolicyKey= flag.Bool("get_key_from_secure_store", false, "use policy store for policy key")
 
 var policyKeyFile = flag.String("policy_key_file", "policy_key_file.bin", "key file name")
 var policyCertFile = flag.String("policy_cert_file", "policy_cert_file.bin", "cert file name")
@@ -90,87 +89,120 @@ var policyPool certlib.PolicyPool
 
 // At init, we retrieve the policy key and the rules to evaluate
 func initCertifierService(useStore bool) bool {
-	// Debug
-	fmt.Printf("Initializing CertifierService, Policy key file: %s, Policy cert file: %s, Policy file: %s\n",
-		*policyKeyFile, *policyCertFile, *policyFile)
 
 	if *enableLog {
 		logging = initLog()
 	}
 
-	serializedKey, err := os.ReadFile(*policyKeyFile)
-	if err != nil {
-		fmt.Println("Simple_server: can't read key file, ", err)
-		return false
+
+	if useStore {
+		// Debug
+		fmt.Printf("Initializing CertifierService from store: %s, cert file: %s\n",
+			*policyKeyFile, *policyStoreFile)
+	
+		ps := certlib.NewPolicyStore(100)
+		if ps == nil {
+			fmt.Printf("initCertifier: can't init policy store\n")
+			return false
+		}
+		if !certlib.RecoverPolicyStore(*enclaveType, *policyStoreFile, ps) {
+			fmt.Printf("initCertifier: can't recover policy store\n")
+			return false
+		}
+		ent := certlib.FindPolicyStoreEntry(ps, "policy-key", "key")
+		if ent < 0 {
+			fmt.Printf("initCertifier: can't find policy key in store\n")
+			return false
+		}
+		privatePolicyKey = &certprotos.KeyMessage{}
+		err := proto.Unmarshal(ps.Entries[ent].Value, privatePolicyKey)
+		if err != nil {
+			fmt.Printf("initCertifier: Can't unmarshal policy keyfrom store\n")
+			return false
+		}
+		fmt.Printf("Recovered policy key from store\n")
+	} else {
+
+		// Debug
+		fmt.Printf("Initializing CertifierService from file: %s, cert file: %s\n",
+			*policyKeyFile, *policyCertFile)
+		serializedKey, err := os.ReadFile(*policyKeyFile)
+		if err != nil {
+			fmt.Println("initCertifier: can't read key file, ", err)
+			return false
+		}
+		privatePolicyKey = &certprotos.KeyMessage{}
+		err = proto.Unmarshal(serializedKey, privatePolicyKey)
+		if err != nil {
+			fmt.Printf("initCertifier: Can't unmarshal serialized policy key\n")
+			return false
+		}
+		fmt.Printf("Read policy key file\n")
 	}
-	fmt.Printf("Read policy key file\n")
 
 	serializedPolicyCert, err := os.ReadFile(*policyCertFile)
 	if err != nil {
-		fmt.Println("Simpleserver: can't read policy cert file, ", err)
+		fmt.Println("initCertifier: can't read policy cert file, ", err)
 		return false
 	}
 	policyCert, err = x509.ParseCertificate(serializedPolicyCert)
 	if err != nil {
-		fmt.Println("Simpleserver: Can't Parse policy cert, ", err)
+		fmt.Println("initCertifier: Can't Parse policy cert, ", err)
 		return false
 	}
 	fmt.Printf("Parsed certificate\n")
 
-	privatePolicyKey = &certprotos.KeyMessage{}
-	err = proto.Unmarshal(serializedKey, privatePolicyKey)
-	if err != nil {
-		fmt.Printf("SimpleServer: Can't unmarshal serialized policy key\n")
-		return false
-	}
-
 	publicPolicyKey = certlib.InternalPublicFromPrivateKey(privatePolicyKey)
 	if publicPolicyKey == nil {
-		fmt.Printf("SimpleServer: Can't get public policy key\n")
+		fmt.Printf("initCertifier: Can't get public policy key\n")
 		return false
 	}
 
 	if policyFile == nil {
-		fmt.Printf("SimpleServer: No policy file\n")
+		fmt.Printf("initCertifier: No policy file\n")
 		return false
 	}
 
 	// Read policy
+
+	// Debug
+	fmt.Printf("Getting Policy file: %s\n", *policyFile)
+
 	serializedPolicy, err := os.ReadFile(*policyFile)
 	if err != nil {
-		fmt.Printf("SimpleServer: Can't read policy\n")
+		fmt.Printf("initCertifier: Can't read policy\n")
 		return false
 	}
 	fmt.Printf("Read Policy\n")
 
 	err = proto.Unmarshal(serializedPolicy, signedPolicy)
 	if err != nil {
-		fmt.Printf("SimpleServer: Can't unmarshal signed policy\n")
+		fmt.Printf("initCertifier: Can't unmarshal signed policy\n")
 		return false
 	}
 	fmt.Printf("Deserialized Policy\n")
 
 	var originalPolicy *certprotos.ProvedStatements = &certprotos.ProvedStatements{}
 	if !certlib.InitAxiom(*publicPolicyKey, originalPolicy) {
-		fmt.Printf("SimpleServer: Can't InitAxiom\n")
+		fmt.Printf("initCertifier: Can't InitAxiom\n")
 		return false
 	}
 	fmt.Printf("InitAxiom succeeded\n")
 
 	if !certlib.InitPolicy(publicPolicyKey, signedPolicy, originalPolicy) {
-		fmt.Printf("SimpleServer: Couldn't initialize policy\n")
+		fmt.Printf("initCertifier: Couldn't initialize policy\n")
 		return false
 	}
 	fmt.Printf("InitPolicy succeeded\n")
 
 	if !certlib.InitPolicyPool(&policyPool, originalPolicy) {
-		fmt.Printf("SimpleServer: Can't init policy pool\n")
+		fmt.Printf("initCertifier: Can't init policy pool\n")
 		return false
 	}
 	fmt.Printf("InitPolicyPool succeeded\n")
 
 	if !certlib.InitSimulatedEnclave() {
-		fmt.Printf("SimpleServer: Can't init simulated enclave\n")
+		fmt.Printf("initCertifier: Can't init simulated enclave\n")
 		return false
 	}
 	fmt.Printf("InitSimulatedEnclave succeeded, all initialized\n")
@@ -580,7 +612,7 @@ func main() {
 
 		// later this may turn into a TLS connection, we'll see
 
-		if !initCertifierService(*useSecurePolicyKey) {
+		if !initCertifierService(*getPolicyKeyFromSecureStore) {
 			fmt.Printf("main: failed to initialize server\n")
 			os.Exit(1)
 		}
@@ -597,7 +629,7 @@ func main() {
 		fmt.Printf("Keys provisioned\n")
 		os.Exit(0)
 	} else if *operation == "key-service" {
-		if !initCertifierService(*useSecurePolicyKey) {
+		if !initCertifierService(*getPolicyKeyFromSecureStore) {
 			fmt.Printf("main: failed to initialize server\n")
 			os.Exit(1)
 		}
