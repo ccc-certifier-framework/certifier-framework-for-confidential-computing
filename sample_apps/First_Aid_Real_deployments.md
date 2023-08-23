@@ -33,13 +33,13 @@ are used as follows in deployment:
     example), the policy key file.
 
     The app storage directories (app1_data and app2_data) are similarly never distributed.  A
-    cardinal rule of the design is than NO file except the apps are security critical so none
+    cardinal rule of the design is that NO file except the apps are security critical so none
     of those files should be distributed, nor should they require a secure storage capability.
     Those files can (and should) be stored in a network accessible location which is NOT part of any
     measurement; they should definitely not be in intiramfs if you do direct boot.  Simulated_enclave
-    is an exception since its attestation and platform keys are kept there.  Indeed, because the app
+    is an exception, since its attestation and platform keys are kept there.  Indeed, because the app
     directories contain files that differ between platforms on the very same hardware type, measuring
-    these would mean that the "app measurement" varied from one, SEV platform to another which
+    these would mean that the "app measurement" varied from one SEV platform to another which
     is a disaster for scalability and app management.  ONLY the app need be distributed.  As a
     convenience, platform certs are stored in these directories and they should NOT be distributed
     as they will vary among hardware of the same type.  Again, platform certificates should
