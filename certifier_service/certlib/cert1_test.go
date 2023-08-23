@@ -1906,6 +1906,17 @@ func TestPolicyStore(t *testing.T) {
 		return
 	}
 
+	ent := FindPolicyStoreEntry(ps, "v1", "binary")
+	if ent < 0 {
+		t.Errorf("Can't find v1 in store")
+		return
+	}
+	if !bytes.Equal(ps.Entries[ent].Value, v1) {
+		t.Errorf("v1 values don't match")
+		return
+	}
+
+
 	fmt.Printf("\nPolicy Store:\n")
 	PrintPolicyStore(ps)
 

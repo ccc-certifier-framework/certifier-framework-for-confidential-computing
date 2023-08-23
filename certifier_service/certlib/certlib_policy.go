@@ -240,8 +240,9 @@ func RecoverPolicyStore(enclaveType string, fileName string, ps *certprotos.Poli
 		return false
 	}
 
-	fmt.Printf("RecoverPolicyStore, intermediate key:\n")
-	PrintKey(k)
+        // Debug
+	// fmt.Printf("RecoverPolicyStore, intermediate key:\n")
+	// PrintKey(k)
 
 	err = proto.Unmarshal(serializedStore, ps)
 	if err != nil {
