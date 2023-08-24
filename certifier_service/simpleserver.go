@@ -55,6 +55,10 @@ var policyCertFile = flag.String("policy_cert_file", "policy_cert_file.bin", "ce
 var readPolicy = flag.Bool("readPolicy", true, "read policy")
 var policyFile = flag.String("policyFile", "./certlib/policy.bin", "policy file name")
 
+var attestKeyFile = flag.String("attest_key_file", "attest_key_file.bin", "attest key file name")
+var measurementFile = flag.String("measurement_file", "certifier_measurement_file.bin", "measurement key file name")
+var attestEndorsementFile = flag.String("endorsement_file", "platform_attest_endorsement.bin", "endorsement file name")
+
 var loggingSequenceNumber = *flag.Int("loggingSequenceNumber", 1, "sequence number for logging")
 var enableLog = flag.Bool("enableLog", false, "enable logging")
 var logDir = flag.String("logDir", ".", "log directory")
@@ -99,6 +103,15 @@ func initCertifierService(useStore bool) bool {
 		// Debug
 		fmt.Printf("Initializing CertifierService from store: %s, cert file: %s\n",
 			*policyKeyFile, *policyStoreFile)
+
+		if *enclaveType == "simulated-enclave" {
+			blank := ""
+			err:= certlib.TEESimulatedInit(blank, *attestKeyFile, *measurementFile, *attestEndorsementFile)
+			if err != nil {
+				fmt.Printf("main: failed to initialize simulated enclave\n")
+				os.Exit(1)
+			}
+		}
 	
 		ps := certlib.NewPolicyStore(100)
 		if ps == nil {
@@ -622,6 +635,14 @@ func main() {
 		os.Exit(0)
 	} else if *operation == "provision-keys" {
 		serverAddr = *keyServerHost + ":" + *keyServerPort
+		if *enclaveType == "simulated-enclave" {
+			blank := ""
+			err:= certlib.TEESimulatedInit(blank, *attestKeyFile, *measurementFile, *attestEndorsementFile)
+			if err != nil {
+				fmt.Printf("main: failed to initialize simulated enclave\n")
+				os.Exit(1)
+			}
+		}
 		if !ProvisionKeys(serverAddr) {
 			fmt.Printf("main: failed to provision keys\n")
 			os.Exit(1)
@@ -638,6 +659,15 @@ func main() {
 		fmt.Printf("Key server done\n")
 		os.Exit(0)
 	} else if *operation == "convert-key" {
+
+		if *enclaveType == "simulated-enclave" {
+			blank := ""
+			err:= certlib.TEESimulatedInit(blank, *attestKeyFile, *measurementFile, *attestEndorsementFile)
+			if err != nil {
+				fmt.Printf("main: failed to initialize simulated enclave\n")
+				os.Exit(1)
+			}
+		}
 		if !SaveKeys() {
 			fmt.Printf("main: SaveKeys failed\n")
 		}

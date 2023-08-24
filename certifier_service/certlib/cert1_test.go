@@ -1968,6 +1968,13 @@ func TestTEESeal2(t *testing.T) {
 	for i := 0; i < 32; i++ {
 		in[i] = byte((7 * i) % 16)
 	}
+
+	blank := ""
+	err:= TEESimulatedInit(blank, "test_data/attest_key_file.bin", "test_data/meas.bin", "test_data/platform_attest_endorsement.bin")
+	if err != nil {
+		t.Errorf("failed to initialize simulated enclave")
+	}
+
 	cipher, err := TEESeal("simulated-enclave", "test-enclave", in, 256)
 	if err != nil {
 		fmt.Printf("TEESeal failed: %s\n", err.Error())
