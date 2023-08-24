@@ -1959,3 +1959,30 @@ func TestPolicyStore(t *testing.T) {
 	fmt.Printf("\nRecovered key:\n")
 	PrintKey(newKey)
 }
+
+func TestTEESeal2(t *testing.T) {
+	fmt.Print("\nTestTEESeal\n")
+
+	var in []byte
+	in = make([]byte, 32)
+	for i := 0; i < 32; i++ {
+		in[i] = byte((7 * i) % 16)
+	}
+	cipher, err := TEESeal("simulated-enclave", "test-enclave", in, 256)
+	if err != nil {
+		fmt.Printf("TEESeal failed: %s\n", err.Error())
+		t.Errorf("TestTEESeal failed")
+	}
+	fmt.Printf("Cipher text length: %d\n", len(cipher))
+
+	clear, err := TEEUnSeal("simulated-enclave", "test-enclave", cipher, 128)
+	if err != nil {
+		fmt.Printf("TEEUnseal failed: %s\n", err.Error())
+		t.Errorf("TestTEESeal failed")
+	}
+	fmt.Printf("Clear text length: %d\n", len(clear))
+	if !bytes.Equal(in, clear) {
+		fmt.Printf("Clear text mismatch\n")
+		t.Errorf("TestTEESeal failed")
+	}
+}

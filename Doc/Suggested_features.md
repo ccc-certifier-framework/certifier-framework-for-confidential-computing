@@ -3,7 +3,7 @@
  1. Apply to Confidential Computing Consortium
  2. Language bindings for python (Possibly also for Rust? Go? Java? C#?)  --- partly done by Aditya
  3. Switch to smphost tools (https://virtee.io/) --- Ye
- 4. Example of multi-domain certification (and API connection over secure channel)  -- done with this checkin
+ 4. Example of multi-domain certification (and API connection over secure channel)  --  DONE
  5. Example showing how to run Certifier in TEE with key provisioning --- jlm
  6. Integration with Confidential Containers from IBM et al
  7. GPU support for Nvidia

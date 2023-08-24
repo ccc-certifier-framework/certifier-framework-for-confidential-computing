@@ -145,15 +145,20 @@ func ProtectBlob(enclaveType string, k *certprotos.KeyMessage, buffer []byte) []
 		fmt.Printf("ProtectBlob: Can't generate iv\n")
 		return nil
 	}
-
-	// Todo: EncryptedKey comes from a sealed operation, for now
-	// store it unprotected
+      
 	serializedKey, err := proto.Marshal(k)
 	if err != nil {
 		fmt.Printf("ProtectBlob: Can't serialize key\n")
 		return nil
 	}
-	pb.EncryptedKey = serializedKey
+
+	sealedKey, err := TEESeal(enclaveType, "test-enclave", serializedKey, len(serializedKey) + 64)
+	if err != nil {
+		fmt.Printf("ProtectBlob: TEESeal failed\n")
+		return nil
+	}
+
+	pb.EncryptedKey = sealedKey
 
 	encryptedData := GeneralAuthenticatedEncrypt(k.GetKeyType(), buffer, k.SecretKeyBits, iv)
 	if encryptedData == nil {
@@ -180,8 +185,14 @@ func UnprotectBlob(enclaveType string, k *certprotos.KeyMessage, blob []byte) []
 		fmt.Printf("UnprotectBlob: Can't unmarshal ProtectedBlobMessage\n")
 		return nil
 	}
+
+	serializedKey, err := TEEUnSeal(enclaveType, "test-enclave", pb.EncryptedKey, len(pb.EncryptedKey))
+	if err != nil {
+		fmt.Printf("UnprotectBlob: Can't Unseal encrypted key\n")
+		return nil
+	}
 	
-	err = proto.Unmarshal(pb.EncryptedKey, k)
+	err = proto.Unmarshal(serializedKey, k)
 	if err != nil {
 		fmt.Printf("UnprotectBlob: Can't unmarshal key\n")
 		return nil
