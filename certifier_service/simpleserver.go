@@ -480,7 +480,98 @@ func keyServiceThread(conn net.Conn, client string) {
 //	------------------------------------------------------------------------------------
 
 func ProvisionKeys(serverAddr string) bool {
+
+	rsaKey := certlib.MakeRsaKey(4096)
+	if rsaKey != nil {
+		fmt.Printf("ProvisionKeys: Can't generate transport key\n")
+		return false
+	}
+
+	privateTransportKey := certprotos.KeyMessage{}
+	if !certlib.GetInternalKeyFromRsaPrivateKey("transport-key", rsaKey, &privateTransportKey) {
+		fmt.Printf("ProvisionKeys: Can't construct internal private transport key\n")
+		return false
+	}
+
+	publicTransportKey := certlib.InternalPublicFromPrivateKey(&privateTransportKey)
+	if publicTransportKey == nil {
+		fmt.Printf("ProvisionKeys: Can't construct internal public transport key\n")
+		return false
+	}
+
+	tn := certlib.TimePointNow()
+	if tn == nil {
+		fmt.Printf("ProvisionKeys: Can't get time now\n")
+		return false
+	}
+	stn := certlib.TimePointToString(tn)
+
+	ud := certprotos.AttestationUserData{}
+	ud.EnclaveType = enclaveType
+	ud.Time = &stn
+	ud.EnclaveKey = publicTransportKey
+
+	whatToSay, err := proto.Marshal(&ud)
+	if err != nil {
+		fmt.Printf("ProvisionKeys: Can't serialize user data\n")
+		return false
+	}
+
+	at, err := certlib.TEEAttest(*enclaveType, whatToSay)
+	if err != nil {
+		fmt.Printf("ProvisionKeys: Attestation fails\n")
+		return false
+	}
+
+	fmt.Printf("at size: %d\n", len(at))
+
+	// el := *certprotos.EvidenceList{}
+
+	//ConstructPlatformEvidencePackage(*enclaveType, "key-provision", el, at)
+
+	strRequestingEnclave := "requesting-enclave"
+	strProvidingEnclave := "providing-enclave"
+
+	// Send request
+	krm := certprotos.KeyRequestMessage{}
+	krm.RequestingEnclaveTag = &strRequestingEnclave
+	krm.ProvidingEnclaveTag = &strProvidingEnclave
+
 	return false
+
+	// Get response
+	response := make([]byte, 100)
+
+	krr := certprotos.KeyResponseMessage{}
+	err = proto.Unmarshal(response, &krr)
+	if err != nil {
+		fmt.Printf("ProvisionKeys: Can't unmarshal response\n")
+		return false
+	}
+	if *krr.Status != "success" {
+		fmt.Printf("ProvisionKeys: Key request failed\n")
+		return false
+	}
+	serializedPolicyKey := krr.Artifact
+
+	// Make store, put policy key in it, and save it
+	ps := certlib.NewPolicyStore(100)
+	if ps == nil {
+                fmt.Printf("ProvisionKeys: can't create policy store")
+                return false
+	}
+
+	if !certlib.InsertOrUpdatePolicyStoreEntry(ps, "policy-key", "key", serializedPolicyKey) {
+		fmt.Printf("ProvisionKeys: Can't insert policy key\n")
+		return false
+	}
+
+	if !certlib.SavePolicyStore(*enclaveType, ps, *policyStoreFile) {
+		fmt.Printf("ProvisionKeys: Can't save store\n")
+		return false
+	}
+
+	return true
 }
 
 func SaveKeys() bool {

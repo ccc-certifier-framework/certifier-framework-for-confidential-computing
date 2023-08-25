@@ -258,6 +258,20 @@ message trust_response_message {
   optional bytes artifact                   = 4;
 };
 
+message key_request_message {
+  optional string requesting_enclave_tag    = 1;
+  optional string providing_enclave_tag     = 2;
+  optional string submitted_evidence_type   = 3;
+  optional evidence_package support         = 4;
+};
+
+message key_response_message {
+  optional string status                    = 1; // "succeeded" or "failed"
+  optional string requesting_enclave_tag    = 2;
+  optional string providing_enclave_tag     = 3;
+  optional bytes artifact                   = 4;
+};
+
 message policy_store_entry {
   optional string tag                                       = 1;
   optional string type                                      = 2;

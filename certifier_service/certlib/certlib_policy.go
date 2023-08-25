@@ -271,5 +271,9 @@ func RecoverPolicyStore(enclaveType string, fileName string, ps *certprotos.Poli
 	return true
 }
 
+func ConstructPlatformEvidencePackage(attestingEnclaveType string, purpose string, evList *certprotos.EvidenceList, serializedAttestation []byte) *certprotos.EvidencePackage {
+	return nil
+}
+
 //  --------------------------------------------------------------------
 
