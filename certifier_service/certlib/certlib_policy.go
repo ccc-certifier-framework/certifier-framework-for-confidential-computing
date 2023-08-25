@@ -16,6 +16,8 @@ package certlib
 
 import (
 	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
 	"fmt"
 	"google.golang.org/protobuf/proto"
 	"io/ioutil"
@@ -272,14 +274,15 @@ func RecoverPolicyStore(enclaveType string, fileName string, ps *certprotos.Poli
 }
 
 func EncapsulateData(ek *certprotos.KeyMessage, alg string, data []byte, edm *certprotos.EncapsulatedDataMessage) bool {
-	if ek.KeyType == nil || *edm.EncapsulatingKeyType != "rsa-4096-public" {
+	if ek.KeyType == nil || ek.GetKeyType() != "rsa-4096-public" {
 		fmt.Printf("EncapsulateData: unsupported encryption algorithm\n")
 		return false
 	}
-	if edm.EncryptionAlgorithm == nil || *edm.EncryptionAlgorithm != "aes-256-gcm" {
+	if alg != "aes-256-gcm" {
 		fmt.Printf("EncapsulateData: unsupported encryption algorithm\n")
 		return false
 	}
+
 	edm.EncapsulatingKeyType = ek.KeyType
 	edm.EncryptionAlgorithm = &alg
 
@@ -290,14 +293,28 @@ func EncapsulateData(ek *certprotos.KeyMessage, alg string, data []byte, edm *ce
 		return false
 	}
 
+	pK := rsa.PrivateKey{}
+	PK := rsa.PublicKey{}
+	if !GetRsaKeysFromInternal(ek, &pK, &PK) {
+		fmt.Printf("Can't recover keys\n")
+		return false
+	}
+
+	label := "huh"
+	rng := rand.Reader
+	ct, err := rsa.EncryptOAEP(sha256.New(), rng, &PK, encryptKey, []byte(label))
+	if err != nil {
+		fmt.Printf("Error from encryption: %s\n", err)
+		return false
+	}
+	edm.EncapsulatedKey = ct
+
 	iv := make([]byte, 16)
 	_, err = rand.Read(iv)
 	if err != nil {
 		fmt.Printf("EncapsulateData: Can't generate iv")
 		return false
 	}
-
-	// edm.EncapsulatedKey =
 
 	out := GeneralAuthenticatedEncrypt(alg, data, encryptKey, iv)
 	if out == nil {
@@ -309,17 +326,45 @@ func EncapsulateData(ek *certprotos.KeyMessage, alg string, data []byte, edm *ce
 }
 
 func DecapsulateData(ek *certprotos.KeyMessage, edm *certprotos.EncapsulatedDataMessage) []byte {
-	if edm.EncapsulatingKeyType == nil || *edm.EncapsulatingKeyType != "rsa-4096-private" {
-		fmt.Printf("DecapsulateData: unsupported decryption algorithm\n")
+	if edm.EncapsulatingKeyType == nil {
+		fmt.Printf("DecapsulateData: empty encapsulating key\n")
 		return nil
 	}
-	if edm.EncryptionAlgorithm == nil || *edm.EncryptionAlgorithm != "aes-256-gcm" {
-		fmt.Printf("DecapsulateData: unsupported decryption algorithm\n")
+	if *edm.EncapsulatingKeyType != "rsa-4096-private" && *edm.EncapsulatingKeyType != "rsa-4096-public" {
+		fmt.Printf("DecapsulateData: unsupported decryption algorithm %s\n", *edm.EncapsulatingKeyType)
+		return nil
+	}
+	if edm.EncryptionAlgorithm == nil {
+		fmt.Printf("DecapsulateData: no decryption algorithm\n")
 		return nil
 	}
 
-	decryptedKey := make([]byte, 32)
-	return GeneralAuthenticatedDecrypt(*edm.EncryptionAlgorithm, edm.EncryptedData, decryptedKey)
+	alg := *edm.EncryptionAlgorithm
+	if alg != "aes-256-gcm" {
+		fmt.Printf("DecapsulateData: unsupported decryption algorithm %s\n", alg)
+		return nil
+	}
+
+	pK := rsa.PrivateKey{}
+	PK := rsa.PublicKey{}
+	if !GetRsaKeysFromInternal(ek, &pK, &PK) {
+		fmt.Printf("Can't recover keys\n")
+		return nil
+	}
+
+	if edm.EncapsulatedKey == nil {
+		fmt.Printf("DecapsulateData: No encapsulated key\n")
+		return nil
+	}
+
+
+	label := "huh"
+	decryptKey, err := rsa.DecryptOAEP(sha256.New(), nil, &pK, edm.EncapsulatedKey, []byte(label))
+	if err != nil {
+		fmt.Printf("DecapsulateData: Error from decryption: %s\n", err)
+		return nil
+	}
+	return GeneralAuthenticatedDecrypt(*edm.EncryptionAlgorithm, edm.EncryptedData, decryptKey)
 }
 
 func ConstructPlatformEvidencePackage(attestingEnclaveType string, purpose string, evList *certprotos.EvidenceList, serializedAttestation []byte) *certprotos.EvidencePackage {

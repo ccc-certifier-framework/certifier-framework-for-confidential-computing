@@ -2007,24 +2007,21 @@ func TestEncapsulatedData(t *testing.T) {
 	}
 	PrintKey(&privK)
 	fmt.Printf("\n")
-return
 	pubK := InternalPublicFromPrivateKey(&privK)
 	if pubK == nil {
 		t.Errorf("Cant Convert private to public internal key")
 	}
 	alg := "aes-256-gcm"
-
-	data := []byte("Fourscoe and seven years ago ... and now look")
+	data := []byte("Fourscore and seven years ago ... and now look")
 
 	edm := certprotos.EncapsulatedDataMessage{}
-
 	if !EncapsulateData(pubK, alg, data, &edm) {
-		t.Errorf("Cant encapsulaate data")
+		t.Errorf("Cant encapsulate data")
 	}
 
 	out := DecapsulateData(&privK, &edm)
 	if out == nil {
-		t.Errorf("Cant decapsulaate data")
+		t.Errorf("Cant decapsulate data")
 	}
 	fmt.Printf("Out: %s\n", string(out))
 }
