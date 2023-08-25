@@ -367,8 +367,32 @@ func DecapsulateData(ek *certprotos.KeyMessage, edm *certprotos.EncapsulatedData
 	return GeneralAuthenticatedDecrypt(*edm.EncryptionAlgorithm, edm.EncryptedData, decryptKey)
 }
 
-func ConstructPlatformEvidencePackage(attestingEnclaveType string, purpose string, evList *certprotos.EvidenceList, serializedAttestation []byte) *certprotos.EvidencePackage {
-	return nil
+func ConstructPlatformEvidencePackage(attestingEnclaveType string, evList *certprotos.EvidenceList, serializedAttestation []byte) *certprotos.EvidencePackage {
+
+	ep := certprotos.EvidencePackage{}
+
+	// Concatinate evList and attestation
+	for i := 0; i < len(evList.Assertion); i++ {
+		ep.FactAssertion = append(ep.FactAssertion, evList.Assertion[i])
+	}
+
+	if attestingEnclaveType == "simulated-enclave" {
+		ev := certprotos.Evidence{}
+		ev.SerializedEvidence = serializedAttestation
+		et := "signed-vse-attestation-report"
+		ev.EvidenceType = &et
+		ep.FactAssertion = append(ep.FactAssertion, &ev)
+	} else if attestingEnclaveType == "sev-enclave" {
+		ev := certprotos.Evidence{}
+		ev.SerializedEvidence = serializedAttestation
+		et := "sev-attestation"
+		ev.EvidenceType = &et
+		ep.FactAssertion = append(ep.FactAssertion, &ev)
+	} else {
+		return nil
+	}
+
+	return &ep
 }
 
 //  --------------------------------------------------------------------

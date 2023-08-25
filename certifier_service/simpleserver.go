@@ -59,6 +59,10 @@ var attestKeyFile = flag.String("attest_key_file", "attest_key_file.bin", "attes
 var measurementFile = flag.String("measurement_file", "certifier_measurement_file.bin", "measurement key file name")
 var attestEndorsementFile = flag.String("endorsement_file", "platform_attest_endorsement.bin", "endorsement file name")
 
+var arkFile = flag.String("ark_file", "ark_cert.der", "ARK cert file name")
+var askFile = flag.String("ask_file", "ask_cert.der", "ASK cert file name")
+var vcekFile = flag.String("vcek_file", "vcek_cert.der", "VCEK cert file name")
+
 var loggingSequenceNumber = *flag.Int("loggingSequenceNumber", 1, "sequence number for logging")
 var enableLog = flag.Bool("enableLog", false, "enable logging")
 var logDir = flag.String("logDir", ".", "log directory")
@@ -490,6 +494,35 @@ func NegotiateProvisionRequest(serverAddr string, krm *certprotos.KeyRequestMess
  */
 }
 
+func FillEvidenceList(enType string, el *certprotos.EvidenceList) bool {
+        // Only simulated-enclave and sev-enclave supported now
+        //
+        // For:simulated-enclave:
+        //      attestEndorsementFile
+        //      signed_platform_says_attest_key_is_trusted, type: signed-claim
+        // For sev:
+        //      ark, ask and vcek certs, type: cert
+
+        if enType == "simulated-enclave" {
+                serializedPlatformEndorsement, err := os.ReadFile(*attestEndorsementFile)
+                if err != nil {
+                        return false
+                }
+                ssc := "signed-claim"
+                ev := certprotos.Evidence{}
+                ev.EvidenceType = &ssc
+                ev.SerializedEvidence = serializedPlatformEndorsement
+                el.Assertion = append(el.Assertion, &ev)
+        } else if enType == "sev-enclave" {
+                fmt.Printf("FillEvidenceList: unsupported enclave type\n")
+                return false
+        } else {
+                fmt.Printf("FillEvidenceList: unsupported enclave type\n")
+                return false
+        }
+        return true
+}
+
 func ProvisionKeys(serverAddr string) bool {
 
 	rsaKey := certlib.MakeRsaKey(4096)
@@ -534,12 +567,16 @@ func ProvisionKeys(serverAddr string) bool {
 		return false
 	}
 
-	fmt.Printf("at size: %d\n", len(at))
+        // Debug
+	fmt.Printf("attestation size: %d\n", len(at))
 
 	el := certprotos.EvidenceList{}
-	// Todo: Fill evidence list
+        if !FillEvidenceList(*enclaveType, &el) {
+		fmt.Printf("ProvisionKeys: FillEvidenceList fails\n")
+		return false
+        }
 
-	ep := certlib.ConstructPlatformEvidencePackage(*enclaveType, "key-provision", &el, at)
+	ep := certlib.ConstructPlatformEvidencePackage(*enclaveType, &el, at)
 	if ep == nil {
 		fmt.Printf("ProvisionKeys: Bad evidence package\n")
 		return false
