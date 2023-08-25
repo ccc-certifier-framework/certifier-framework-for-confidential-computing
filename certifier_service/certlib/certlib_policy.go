@@ -152,7 +152,8 @@ func ProtectBlob(enclaveType string, k *certprotos.KeyMessage, buffer []byte) []
 		return nil
 	}
 
-	sealedKey, err := TEESeal(enclaveType, "test-enclave", serializedKey, len(serializedKey) + 64)
+	sealedKey := make([]byte, len(serializedKey) + 128)
+	sealedKey, err = TEESeal(enclaveType, "test-enclave", serializedKey, len(serializedKey) + 128)
 	if err != nil {
 		fmt.Printf("ProtectBlob: TEESeal failed\n")
 		return nil
@@ -186,7 +187,12 @@ func UnprotectBlob(enclaveType string, k *certprotos.KeyMessage, blob []byte) []
 		return nil
 	}
 
-	serializedKey, err := TEEUnSeal(enclaveType, "test-enclave", pb.EncryptedKey, len(pb.EncryptedKey))
+	if pb.EncryptedKey == nil {
+		fmt.Printf("UnprotectBlob: Encrypted key blob is nil\n")
+		return nil
+	}
+	serializedKey := make([]byte, len(pb.EncryptedKey) + 128)
+	serializedKey, err = TEEUnSeal(enclaveType, "test-enclave", pb.EncryptedKey, len(pb.EncryptedKey) + 128)
 	if err != nil {
 		fmt.Printf("UnprotectBlob: Can't Unseal encrypted key\n")
 		return nil
@@ -203,6 +209,7 @@ func UnprotectBlob(enclaveType string, k *certprotos.KeyMessage, blob []byte) []
 		return nil
 	}
 	buffer := GeneralAuthenticatedDecrypt(k.GetKeyType(), pb.EncryptedData, k.SecretKeyBits)
+
 	return buffer
 }
 

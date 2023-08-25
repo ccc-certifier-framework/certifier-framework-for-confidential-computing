@@ -484,7 +484,6 @@ func ProvisionKeys(serverAddr string) bool {
 }
 
 func SaveKeys() bool {
-	// *policyKeyFile, *policyStoreFile
 	serializedKey, err := os.ReadFile(*policyKeyFile)
         if err != nil {
                 fmt.Println("SaveKeys: can't read key file, ", err)
@@ -497,7 +496,6 @@ func SaveKeys() bool {
                 return false
 	}
 
-	// Debug
 	privatePolicyKey = &certprotos.KeyMessage{}
 	err = proto.Unmarshal(serializedKey, privatePolicyKey)
 	if err != nil {
@@ -516,6 +514,7 @@ func SaveKeys() bool {
 	}
 
 	// Debug
+	/*
 	psNew := new(certprotos.PolicyStoreMessage)
 	if !certlib.RecoverPolicyStore(*enclaveType, *policyStoreFile, psNew) {
 		fmt.Printf("SaveKeys: Can't recover store\n")
@@ -537,6 +536,8 @@ func SaveKeys() bool {
 		fmt.Printf("SaveKeys: policy keys don't match\n")
 		return false
 	}
+	*/
+
 	return true
 }
 
