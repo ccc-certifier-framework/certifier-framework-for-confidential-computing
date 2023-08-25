@@ -485,6 +485,23 @@ func GetInternalKeyFromRsaPublicKey(name string, PK *rsa.PublicKey, km *certprot
 
 func GetInternalKeyFromRsaPrivateKey(name string, pK *rsa.PrivateKey, km *certprotos.KeyMessage) bool {
 	km.RsaKey = &certprotos.RsaMessage{}
+
+	km.KeyName = &name
+	modLen := len(pK.PublicKey.N.Bytes())
+	var kt string
+	if modLen == 128 {
+		kt = "rsa-1024-private"
+	} else if modLen == 256 {
+		kt = "rsa-2048-private"
+	} else if modLen == 384 {
+		kt = "rsa-3072-private"
+	} else if modLen == 512 {
+		kt = "rsa-4096-private"
+	} else {
+		return false
+	}
+	km.KeyType = &kt
+
 	km.GetRsaKey().PublicModulus = pK.PublicKey.N.Bytes()
 	e := big.Int{}
 	e.SetUint64(uint64(pK.PublicKey.E))

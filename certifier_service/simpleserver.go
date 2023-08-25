@@ -559,11 +559,23 @@ func ProvisionKeys(serverAddr string) bool {
 		return false
 	}
 
-	if *krr.Status != "success" {
+	if *krr.Status != "success" || krr.Artifact == nil {
 		fmt.Printf("ProvisionKeys: Key request failed\n")
 		return false
 	}
-	serializedPolicyKey := krr.Artifact
+
+	// Artifact is an EncapsulatedDataMessage
+	edm := certprotos.EncapsulatedDataMessage{}
+	err = proto.Unmarshal(krr.Artifact, &edm)
+	if err != nil {
+		fmt.Printf("ProvisionKeys: Can't unmarshal encapsulated data message\n")
+		return false
+	}
+	serializedPolicyKey := certlib.DecapsulateData(&privateTransportKey, &edm)
+	if serializedPolicyKey == nil {
+		fmt.Printf("ProvisionKeys: DecapsulateData failed\n")
+		return false
+	}
 
 	// Make store, put policy key in it, and save it
 	ps := certlib.NewPolicyStore(100)

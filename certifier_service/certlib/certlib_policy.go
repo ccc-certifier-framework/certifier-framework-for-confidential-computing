@@ -271,6 +271,57 @@ func RecoverPolicyStore(enclaveType string, fileName string, ps *certprotos.Poli
 	return true
 }
 
+func EncapsulateData(ek *certprotos.KeyMessage, alg string, data []byte, edm *certprotos.EncapsulatedDataMessage) bool {
+	if ek.KeyType == nil || *edm.EncapsulatingKeyType != "rsa-4096-public" {
+		fmt.Printf("EncapsulateData: unsupported encryption algorithm\n")
+		return false
+	}
+	if edm.EncryptionAlgorithm == nil || *edm.EncryptionAlgorithm != "aes-256-gcm" {
+		fmt.Printf("EncapsulateData: unsupported encryption algorithm\n")
+		return false
+	}
+	edm.EncapsulatingKeyType = ek.KeyType
+	edm.EncryptionAlgorithm = &alg
+
+	encryptKey := make([]byte, 32)
+	_, err := rand.Read(encryptKey)
+	if err != nil {
+		fmt.Printf("EncapsulateData: Can't generate key")
+		return false
+	}
+
+	iv := make([]byte, 16)
+	_, err = rand.Read(iv)
+	if err != nil {
+		fmt.Printf("EncapsulateData: Can't generate iv")
+		return false
+	}
+
+	// edm.EncapsulatedKey =
+
+	out := GeneralAuthenticatedEncrypt(alg, data, encryptKey, iv)
+	if out == nil {
+		fmt.Printf("EncapsulateData: decryption failed\n")
+		return false
+	}
+	edm.EncryptedData = out
+	return true
+}
+
+func DecapsulateData(ek *certprotos.KeyMessage, edm *certprotos.EncapsulatedDataMessage) []byte {
+	if edm.EncapsulatingKeyType == nil || *edm.EncapsulatingKeyType != "rsa-4096-private" {
+		fmt.Printf("DecapsulateData: unsupported decryption algorithm\n")
+		return nil
+	}
+	if edm.EncryptionAlgorithm == nil || *edm.EncryptionAlgorithm != "aes-256-gcm" {
+		fmt.Printf("DecapsulateData: unsupported decryption algorithm\n")
+		return nil
+	}
+
+	decryptedKey := make([]byte, 32)
+	return GeneralAuthenticatedDecrypt(*edm.EncryptionAlgorithm, edm.EncryptedData, decryptedKey)
+}
+
 func ConstructPlatformEvidencePackage(attestingEnclaveType string, purpose string, evList *certprotos.EvidenceList, serializedAttestation []byte) *certprotos.EvidencePackage {
 	return nil
 }

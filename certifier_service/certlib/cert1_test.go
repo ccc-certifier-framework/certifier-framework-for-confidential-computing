@@ -289,12 +289,12 @@ func TestClaims(t *testing.T) {
 	   fmt.Printf("\nAttest\n")
 	   vat := VseAttestation("testAttestation", "simulated-enclave", "", vcl3)
 	   if  vat == nil {
-	           t.Errorf("attestation fails")
+		   t.Errorf("attestation fails")
 	   }
 	   uvat :=  certprotos.Attestation{}
 	   err = proto.Unmarshal(vat, &uvat)
 	   if err != nil {
-	           t.Errorf("attestation unmarshal fails")
+		   t.Errorf("attestation unmarshal fails")
 	   }
 	   PrintAttestation(&uvat)
 	*/
@@ -1703,8 +1703,8 @@ func TestGramineVerify(t *testing.T) {
 
 
 	// Write policy
-	// 	1. policyKey says intelKey is-trusted-for-attestation
-	// 	2. policyKey says measurement is-trusted
+	//	1. policyKey says intelKey is-trusted-for-attestation
+	//	2. policyKey says measurement is-trusted
 	publicPolicyKey := InternalPublicFromPrivateKey(&policyKey)
         if publicPolicyKey == nil {
                 t.Errorf("Can't make public policy key\n")
@@ -1992,4 +1992,39 @@ func TestTEESeal2(t *testing.T) {
 		fmt.Printf("Clear text mismatch\n")
 		t.Errorf("TestTEESeal failed")
 	}
+}
+
+func TestEncapsulatedData(t *testing.T) {
+	fmt.Print("\nTestEncapsulatedData\n")
+
+	rsaKey := MakeRsaKey(4096)
+	if rsaKey == nil {
+		t.Errorf("Cant generate Rsa key")
+	}
+	privK := certprotos.KeyMessage{}
+	if !GetInternalKeyFromRsaPrivateKey("encapsulating-key", rsaKey, &privK) {
+		t.Errorf("Cant Convert to private internal key")
+	}
+	PrintKey(&privK)
+	fmt.Printf("\n")
+return
+	pubK := InternalPublicFromPrivateKey(&privK)
+	if pubK == nil {
+		t.Errorf("Cant Convert private to public internal key")
+	}
+	alg := "aes-256-gcm"
+
+	data := []byte("Fourscoe and seven years ago ... and now look")
+
+	edm := certprotos.EncapsulatedDataMessage{}
+
+	if !EncapsulateData(pubK, alg, data, &edm) {
+		t.Errorf("Cant encapsulaate data")
+	}
+
+	out := DecapsulateData(&privK, &edm)
+	if out == nil {
+		t.Errorf("Cant decapsulaate data")
+	}
+	fmt.Printf("Out: %s\n", string(out))
 }
