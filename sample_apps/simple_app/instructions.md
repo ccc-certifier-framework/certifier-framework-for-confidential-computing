@@ -5,7 +5,7 @@ application and generating the policy for the Certifier Service using the policy
 utilities.
 
 This simple_app sample program provides an example of initializing
-and provisioning the Certifier Service with utility generated keys,
+and provisioning the Certifier Service with utility-generated keys,
 measurements and policy.
 
 The sample program will still need to construct the statement "The attestation-key says the
@@ -31,6 +31,194 @@ is useful.
 
 ```shell
 export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app
+```
+
+## Workflow
+
+Here is a pictorial depiction of the overall workflow you need to follow to build
+and execute this simple app.
+
+###  Build Workflow
+```mermaid
+%%{init: {'theme':'forest'}}%%
+flowchart TB
+
+  subgraph 1.3 Build Policy Generator
+  direction TB
+    id3(make -f policy_generator.mak) --> id31([policy_generator.exe])
+  end
+
+  subgraph 1.2 Build Policy Utilities
+  direction LR
+    id2(make -f policy_utilities.mak) --> id21([combine_properties.exe])
+    id2(make -f policy_utilities.mak) --> id22([embed_policy_key.exe])
+    id2(make -f policy_utilities.mak) --> id23([make_environment.exe])
+    id2(make -f policy_utilities.mak) --> id24([make_indirect_vse_clause.exe.exe])
+    id2(make -f policy_utilities.mak) --> id25([make_platform.exe.exe])
+    id2(make -f policy_utilities.mak) --> id26([make_property.exe.exe])
+    id2(make -f policy_utilities.mak) --> id27([make_signed_claim_from_vse_clause.exe.exe])
+    id2(make -f policy_utilities.mak) --> id28([make_simple_vse_clause.exe.exe])
+    id2(make -f policy_utilities.mak) --> id29([make_unary_vse_clause.exe.exe])
+    id2(make -f policy_utilities.mak) --> id210([measurement_utility.exe.exe])
+    id2(make -f policy_utilities.mak) --> id211([package_claims.exe])
+    id2(make -f policy_utilities.mak) --> id212([print_packaged_claims.exe])
+    id2(make -f policy_utilities.mak) --> id213([print_signed_claim.exe])
+    id2(make -f policy_utilities.mak) --> id214([print_vse_clause.exe])
+    id2(make -f policy_utilities.mak) --> id215([sample_sev_key_generation.exe])
+    id2(make -f policy_utilities.mak) --> id216([simulated_sev_attest.exe])
+    id2(make -f policy_utilities.mak) --> id217([simulated_sev_key_generation.exe])
+  end
+
+  subgraph 1.1 Build Certificate-related Utilities
+  direction TB
+    id1(make -f cert_utility.mak) --> id11([cert_utility.exe])
+    id1(make -f cert_utility.mak) --> id12([measurement_init.exe])
+    id1(make -f cert_utility.mak) --> id13([key_utility.exe])
+  end
+
+```
+
+----
+
+###  Policy & Certificate Generation Workflow
+```mermaid
+ flowchart TB
+    subgraph sg3 [3. Generate the policy key and self-signed certificate]
+      direction TB
+      id12(cert_utility.exe) --> id31{{"--operation=generate-policy-key-and-test-keys"}}
+      id31 -- "--policy_key_output_file"   --> id32(policy_key_file.bin)
+      id31 -- "--policy_cert_output_file"  --> id33(policy_cert_file.bin)
+      id31 -- "--platform_key_output_file" --> id34(platform_key_file.bin)
+      id31 -- "--attest_key_output_file"   --> id35(attest_key_file.bin)
+    end
+
+    subgraph sg4 [4. Embed policy key]
+      direction LR
+      id33(policy_cert_file.bin) -- "--input" --> embed_policy_key.exe
+      embed_policy_key.exe -- "--output" --> id41([../policy_key.cc, linked with example_app.cc])
+    end
+
+    subgraph sg5 [5. Compile example_app]
+      direction LR
+      id41([../policy_key.cc]) -- "#include" --> example_app.cc
+      example_app.cc -- "make -f example.mak" --> example_app.exe
+    end
+
+    subgraph shg6 [6. Measure trusted application]
+      direction LR
+      example_app.exe -- "--input" --> id6.1[measurement_utility.exe --type=hash]
+      id6.1 -- "--output" --> id6o(example_app.measurement)
+    end
+
+    subgraph shg7a1 [7a.1. Construct Policy Key]
+      direction LR
+      id34 --> id7a1_1(make_unary_vse_clause.exe)
+      id7a1_1 -- "--key_subject=platform_key_file.bin\n-verb='is-trusted-for-attestation'\n--output=" --> 7a1_o(ts1.bin)
+    end
+
+    subgraph shg7a2 [7a.2. Construct Policy Key\n]
+      direction LR
+      id32 --> id7a2_exe(make_indirect_vse_clause.exe)
+      7a1_o -- "--clause=ts1.bin" --> id7a2_exe
+      id7a2_exe -- "--key_subject=policy_key_file.bin\n--clause=ts1.bin\n--verb='says'\n--output=" --> id7a2_o(vse_policy1.bin)
+    end
+
+    subgraph shg7b1 [7b.1. Construct Policy Key\n]
+      direction LR
+      id6o --> id7b1_exe(make_indirect_vse_clause.exe)
+      id7b1_exe -- "--measurement_subject=example_app.measurement\n--verb='is_trusted'\n--output=" --> id7b1_o(ts2.bin)
+    end
+
+    subgraph shg7b2 [7b.2. Construct Policy Key\n]
+      direction LR
+      id7b1_o --> id7b2_exe(make_indirect_vse_clause.exe)
+      id32 --> id7b2_exe
+      id7b2_exe -- "--key_subject=policy_key_file.bin\n--verb='says'\n--clause='ts2.bin'\n--output=" --> id7b2_o(vse_policy2.bin)
+
+    end
+
+  subgraph sg7c1 [7c.1 Produce signed claims: For each VSE policy statement]
+    direction LR
+    id7a2_o --> id7c1_exe(make_signed_claim_from_vse_clause.exe)
+    id32    --> id7c1_exe
+    id7c1_exe -- "--duration=9000\n--vse_file=vse_policy1.bin\n--private_key_file=policy_key_file.bin\n--output=" --> id7c1_o1(signed_claim_1.bin)
+
+    id7b2_o --> id7c1_exe
+    id7c1_exe -- "--duration=9000\n--vse_file=vse_policy2.bin\n--private_key_file=policy_key_file.bin\n--output=" --> id7c1_o2(signed_claim_2.bin)
+  end
+
+  subgraph sg7d [7d. Combine signed claims]
+    direction LR
+    id7c1_o1 --> id7d_exe(package_claims.exe)
+    id7c1_o2 --> id7d_exe
+    id7d_exe -- "--input=signed_claim(s)\n--output=" --> id7d_o(policy.bin)
+  end
+
+  subgraph sg7e [7e. Print the policy]
+    id7d_o --> id7d_exe2(print_packaged_claims.exe)
+    id7d_exe2 -- "--input=policy.bin" --> id7e_op>Policy print output]
+  end
+
+  subgraph sg7f1 [7f.1 Construct statement and sign it]
+    direction LR
+    id35      --> id7f1_exe(make_unary_vse_clause.exe)
+    id7f1_exe -- "--key_subject=attest_key_file.bin\n--verb='is-trusted-for-attestation'\n--output=" --> id7f1_o(tsc1.bin)
+  end
+
+  subgraph sg7f2 [7f.2 Construct statement and sign it]
+    direction LR
+    id34 --> id7f2_exe(make_indirect_vse_clause.exe)
+    id7f1_o --> id7f2_exe
+    id7f2_exe -- "--key_subject=platform_key_file.bin\n--verb='says'\n--clause=tsc1.bin\n--output=" --> id7f2_o(vse_policy3.bin)
+  end
+
+  subgraph sg7f3 [7f.3 Construct statement and sign it]
+    direction LR
+    id7f2_o --> id7f3_exe(make_signed_claim_from_vse_clause.exe)
+    id34 --> id7f3_exe
+    id7f3_exe -- "--duration=9000\n--vse_file=vse_policy3.bin\n--private_key_file=platform_key_file.bin\n--output=" --> id7f3_o(platform_attest_endorsement.bin)
+  end
+
+  subgraph sg7g [7g. Print platform endorsement]
+    direction LR
+    id7f3_o --> id7g_exe(print_signed_claim.exe)
+    id7g_exe -- "--input=platform_attest_endorsement.bin" --> id7g_op>Platform attestation output]
+  end
+
+```
+
+----
+
+### Run the apps and get admission certificates from Certifier Service
+``` mermaid
+  %%{init: { 'sequence': {'mirrorActors':false} } }%%
+sequenceDiagram
+  autonumber
+  actor client as example_app-as-a-client
+  actor CS as Certifier Service
+  actor server as example_app-as-a-server
+
+  client -->> CS : cold_init<br/>--measurement_file="example_app.measurement"
+  client -->> CS : get_certified<br/>--measurement_file="example_app.measurement"
+
+  server -->> CS : cold_init<br/>--measurement_file="example_app.measurement"
+  server -->> CS : get_certified<br/>--measurement_file="example_app.measurement"
+
+```
+
+----
+
+###  Connect the client/server apps (without Certifier Service)
+``` mermaid
+sequenceDiagram
+  autonumber
+  actor client as example_app-as-a-client
+  actor server as example_app-as-a-server
+
+  client -->> server : open-secure-channel
+  client -->> server : "Hi from your secret client"
+  server -->> client : "Hi from your secret server"
+
 ```
 
 ----
