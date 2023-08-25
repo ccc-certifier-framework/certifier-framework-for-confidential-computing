@@ -479,6 +479,17 @@ func keyServiceThread(conn net.Conn, client string) {
 
 //	------------------------------------------------------------------------------------
 
+func NegotiateProvisionRequest(serverAddr string, krm *certprotos.KeyRequestMessage, krr *certprotos.KeyResponseMessage) bool {
+	return false
+/*
+	err := proto.Unmarshal(response, krr)
+	if err != nil {
+		fmt.Printf("ProvisionKeys: Can't unmarshal response\n")
+		return false
+	}
+ */
+}
+
 func ProvisionKeys(serverAddr string) bool {
 
 	rsaKey := certlib.MakeRsaKey(4096)
@@ -525,29 +536,29 @@ func ProvisionKeys(serverAddr string) bool {
 
 	fmt.Printf("at size: %d\n", len(at))
 
-	// el := *certprotos.EvidenceList{}
+	el := certprotos.EvidenceList{}
+	// Todo: Fill evidence list
 
-	//ConstructPlatformEvidencePackage(*enclaveType, "key-provision", el, at)
+	ep := certlib.ConstructPlatformEvidencePackage(*enclaveType, "key-provision", &el, at)
+	if ep == nil {
+		fmt.Printf("ProvisionKeys: Bad evidence package\n")
+		return false
+	}
 
 	strRequestingEnclave := "requesting-enclave"
 	strProvidingEnclave := "providing-enclave"
 
-	// Send request
+	// Send request and get response
 	krm := certprotos.KeyRequestMessage{}
 	krm.RequestingEnclaveTag = &strRequestingEnclave
 	krm.ProvidingEnclaveTag = &strProvidingEnclave
-
-	return false
-
-	// Get response
-	response := make([]byte, 100)
-
+	krm.Support = ep
 	krr := certprotos.KeyResponseMessage{}
-	err = proto.Unmarshal(response, &krr)
-	if err != nil {
-		fmt.Printf("ProvisionKeys: Can't unmarshal response\n")
+	if !NegotiateProvisionRequest(serverAddr, &krm, &krr) {
+		fmt.Printf("ProvisionKeys: Request negotiation failed\n")
 		return false
 	}
+
 	if *krr.Status != "success" {
 		fmt.Printf("ProvisionKeys: Key request failed\n")
 		return false
