@@ -483,15 +483,42 @@ func keyServiceThread(conn net.Conn, client string) {
 
 //	------------------------------------------------------------------------------------
 
-func NegotiateProvisionRequest(serverAddr string, krm *certprotos.KeyRequestMessage, krr *certprotos.KeyResponseMessage) bool {
-	return false
-/*
-	err := proto.Unmarshal(response, krr)
+func ProcessRequest(serverAddr string, req[] byte) []byte {
+
+	// Open socket, send request, get response.
+	conn, err := net.Dial("tcp", serverAddr)
 	if err != nil {
-		fmt.Printf("ProvisionKeys: Can't unmarshal response\n")
+		fmt.Printf("ProcessRequest: open connection to key server\n")
+		return nil
+	}
+	if !certlib.SizedSocketWrite(conn, req) {
+		fmt.Printf("ProcessRequest: Can't send request\n")
+		return nil
+	}
+	resp := certlib.SizedSocketRead(conn)
+	conn.Close()
+	return resp
+}
+
+func NegotiateProvisionRequest(serverAddr string, krm *certprotos.KeyRequestMessage, krr *certprotos.KeyResponseMessage) bool {
+
+	serializedRequest, err := proto.Marshal(krm)
+	if err != nil {
+		fmt.Printf("NegotiateProvisionRequest: Can't marshal request\n")
 		return false
 	}
- */
+
+	resp := ProcessRequest(serverAddr, serializedRequest)
+	if resp == nil {
+		fmt.Printf("NegotiateProvisionRequest: ProcessRequest failed\n")
+		return false
+	}
+	err = proto.Unmarshal(resp, krr)
+	if err != nil {
+		fmt.Printf("NegotiateProvisionRequest: Can't unmarshal response\n")
+		return false
+	}
+	return true
 }
 
 func FillEvidenceList(enType string, el *certprotos.EvidenceList) bool {
@@ -582,14 +609,33 @@ func ProvisionKeys(serverAddr string) bool {
 		return false
 	}
 
+	proverType := "vse-verifier"
+	ep.ProverType = &proverType
+
 	strRequestingEnclave := "requesting-enclave"
 	strProvidingEnclave := "providing-enclave"
 
 	// Send request and get response
 	krm := certprotos.KeyRequestMessage{}
+
 	krm.RequestingEnclaveTag = &strRequestingEnclave
 	krm.ProvidingEnclaveTag = &strProvidingEnclave
+	if *enclaveType == "simulated-enclave" {
+		submittedEvType := "vse-attestation-package"
+		krm.SubmittedEvidenceType = &submittedEvType
+	} else if *enclaveType == "sev-enclave" {
+		submittedEvType := "sev-platform-package"
+		krm.SubmittedEvidenceType = &submittedEvType
+	} else {
+		fmt.Printf("ProvisionKeys: Unsupported enclave type\n")
+		return false
+	}
 	krm.Support = ep
+
+	// Debug
+	certlib.PrintKeyRequestMessage(&krm)
+	fmt.Printf("\n")
+
 	krr := certprotos.KeyResponseMessage{}
 	if !NegotiateProvisionRequest(serverAddr, &krm, &krr) {
 		fmt.Printf("ProvisionKeys: Request negotiation failed\n")

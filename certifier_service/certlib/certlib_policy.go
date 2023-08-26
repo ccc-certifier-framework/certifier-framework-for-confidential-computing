@@ -395,5 +395,48 @@ func ConstructPlatformEvidencePackage(attestingEnclaveType string, evList *certp
 	return &ep
 }
 
+func PrintKeyRequestMessage(kr *certprotos.KeyRequestMessage) {
+  if kr.RequestingEnclaveTag == nil {
+    return
+  }
+  fmt.Printf("Key request message:\n")
+  fmt.Printf("    Requesting Enclave: %s\n", kr.GetRequestingEnclaveTag())
+  if kr.ProvidingEnclaveTag != nil {
+    fmt.Printf("    Providing Enclave: %s\n", kr.GetProvidingEnclaveTag())
+  }
+  if kr.SubmittedEvidenceType != nil {
+    fmt.Printf("    Submitted Evidence Type: %s\n", kr.GetSubmittedEvidenceType())
+  }
+  if kr.Support == nil {
+    return
+  }
+  if kr.Support.ProverType != nil {
+    fmt.Printf("    Prover type: %s\n", kr.Support.GetProverType())
+  }
+  for i := 0; i < len(kr.Support.FactAssertion); i++ {
+    ev := kr.Support.FactAssertion[i]
+    fmt.Printf("        type: %s\n", ev.GetEvidenceType())
+  }
+}
+
+func PrintKeyResponseMessage(kr *certprotos.KeyResponseMessage) {
+  if kr.RequestingEnclaveTag == nil {
+    return
+  }
+  fmt.Printf("Key response message:\n")
+  fmt.Printf("    Requesting Enclave: %s\n", kr.GetRequestingEnclaveTag())
+  if kr.ProvidingEnclaveTag != nil {
+    fmt.Printf("    Providing Enclave: %s\n", kr.GetProvidingEnclaveTag())
+  }
+  if kr.Status!= nil {
+    fmt.Printf("    Status: %s\n", kr.GetStatus())
+  }
+  if kr.Artifact!= nil {
+    fmt.Printf("    Artifact: ")
+    PrintBytes(kr.Artifact);
+    fmt.Printf("\n")
+  }
+}
+
 //  --------------------------------------------------------------------
 
