@@ -2173,7 +2173,6 @@ func VerifyRule10(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpr
 	return SameEntity(c.Subject, c1.Subject) && SameEntity(c.Subject, c2.Subject)
 }
 
-
 // R11:if key1 is-trustedXXX
 //	 and
 //		key1 says key2 speaks-for measurement then

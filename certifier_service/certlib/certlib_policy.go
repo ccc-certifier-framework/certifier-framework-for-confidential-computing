@@ -107,7 +107,7 @@ func ConstructKeyForProtect(keyName string, keyType string) *certprotos.KeyMessa
 		fmt.Printf("ConstructKeyForProtect: Can't get TimeNow\n")
 		return nil
 	}
-	
+
 	tf := TimePointPlus(tn, 365*86400)
 	if tf == nil {
 		fmt.Printf("ConstructKeyForProtect: Can't get TimeAfter\n")
@@ -140,22 +140,22 @@ func ProtectBlob(enclaveType string, k *certprotos.KeyMessage, buffer []byte) []
 		return nil
 	}
 
-	// iv for data	
+	// iv for dat
 	iv := make([]byte, 16)
 	_, err := rand.Read(iv)
 	if err != nil {
 		fmt.Printf("ProtectBlob: Can't generate iv\n")
 		return nil
 	}
-      
+
 	serializedKey, err := proto.Marshal(k)
 	if err != nil {
 		fmt.Printf("ProtectBlob: Can't serialize key\n")
 		return nil
 	}
 
-	sealedKey := make([]byte, len(serializedKey) + 128)
-	sealedKey, err = TEESeal(enclaveType, "test-enclave", serializedKey, len(serializedKey) + 128)
+	sealedKey := make([]byte, len(serializedKey)+128)
+	sealedKey, err = TEESeal(enclaveType, "test-enclave", serializedKey, len(serializedKey)+128)
 	if err != nil {
 		fmt.Printf("ProtectBlob: TEESeal failed\n")
 		return nil
@@ -193,13 +193,13 @@ func UnprotectBlob(enclaveType string, k *certprotos.KeyMessage, blob []byte) []
 		fmt.Printf("UnprotectBlob: Encrypted key blob is nil\n")
 		return nil
 	}
-	serializedKey := make([]byte, len(pb.EncryptedKey) + 128)
-	serializedKey, err = TEEUnSeal(enclaveType, "test-enclave", pb.EncryptedKey, len(pb.EncryptedKey) + 128)
+	serializedKey := make([]byte, len(pb.EncryptedKey)+128)
+	serializedKey, err = TEEUnSeal(enclaveType, "test-enclave", pb.EncryptedKey, len(pb.EncryptedKey)+128)
 	if err != nil {
 		fmt.Printf("UnprotectBlob: Can't Unseal encrypted key\n")
 		return nil
 	}
-	
+
 	err = proto.Unmarshal(serializedKey, k)
 	if err != nil {
 		fmt.Printf("UnprotectBlob: Can't unmarshal key\n")
@@ -260,7 +260,7 @@ func RecoverPolicyStore(enclaveType string, fileName string, ps *certprotos.Poli
 		return false
 	}
 
-        // Debug
+	// Debug
 	// fmt.Printf("RecoverPolicyStore, intermediate key:\n")
 	// PrintKey(k)
 
@@ -269,7 +269,7 @@ func RecoverPolicyStore(enclaveType string, fileName string, ps *certprotos.Poli
 		fmt.Printf("RecoverPolicyStore: Can't unmarshal store\n")
 		return false
 	}
-	
+
 	return true
 }
 
@@ -357,7 +357,6 @@ func DecapsulateData(ek *certprotos.KeyMessage, edm *certprotos.EncapsulatedData
 		return nil
 	}
 
-
 	label := "huh"
 	decryptKey, err := rsa.DecryptOAEP(sha256.New(), nil, &pK, edm.EncapsulatedKey, []byte(label))
 	if err != nil {
@@ -396,47 +395,46 @@ func ConstructPlatformEvidencePackage(attestingEnclaveType string, evList *certp
 }
 
 func PrintKeyRequestMessage(kr *certprotos.KeyRequestMessage) {
-  if kr.RequestingEnclaveTag == nil {
-    return
-  }
-  fmt.Printf("Key request message:\n")
-  fmt.Printf("    Requesting Enclave: %s\n", kr.GetRequestingEnclaveTag())
-  if kr.ProvidingEnclaveTag != nil {
-    fmt.Printf("    Providing Enclave: %s\n", kr.GetProvidingEnclaveTag())
-  }
-  if kr.SubmittedEvidenceType != nil {
-    fmt.Printf("    Submitted Evidence Type: %s\n", kr.GetSubmittedEvidenceType())
-  }
-  if kr.Support == nil {
-    return
-  }
-  if kr.Support.ProverType != nil {
-    fmt.Printf("    Prover type: %s\n", kr.Support.GetProverType())
-  }
-  for i := 0; i < len(kr.Support.FactAssertion); i++ {
-    ev := kr.Support.FactAssertion[i]
-    fmt.Printf("        type: %s\n", ev.GetEvidenceType())
-  }
+	if kr.RequestingEnclaveTag == nil {
+		return
+	}
+	fmt.Printf("Key request message:\n")
+	fmt.Printf("    Requesting Enclave: %s\n", kr.GetRequestingEnclaveTag())
+	if kr.ProvidingEnclaveTag != nil {
+		fmt.Printf("    Providing Enclave: %s\n", kr.GetProvidingEnclaveTag())
+	}
+	if kr.SubmittedEvidenceType != nil {
+		fmt.Printf("    Submitted Evidence Type: %s\n", kr.GetSubmittedEvidenceType())
+	}
+	if kr.Support == nil {
+		return
+	}
+	if kr.Support.ProverType != nil {
+		fmt.Printf("    Prover type: %s\n", kr.Support.GetProverType())
+	}
+	for i := 0; i < len(kr.Support.FactAssertion); i++ {
+		ev := kr.Support.FactAssertion[i]
+		fmt.Printf("        type: %s\n", ev.GetEvidenceType())
+	}
 }
 
 func PrintKeyResponseMessage(kr *certprotos.KeyResponseMessage) {
-  if kr.RequestingEnclaveTag == nil {
-    return
-  }
-  fmt.Printf("Key response message:\n")
-  fmt.Printf("    Requesting Enclave: %s\n", kr.GetRequestingEnclaveTag())
-  if kr.ProvidingEnclaveTag != nil {
-    fmt.Printf("    Providing Enclave: %s\n", kr.GetProvidingEnclaveTag())
-  }
-  if kr.Status!= nil {
-    fmt.Printf("    Status: %s\n", kr.GetStatus())
-  }
-  if kr.Artifact!= nil {
-    fmt.Printf("    Artifact: ")
-    PrintBytes(kr.Artifact);
-    fmt.Printf("\n")
-  }
+	if kr.RequestingEnclaveTag == nil {
+		return
+	}
+	fmt.Printf("Key response message:\n")
+	fmt.Printf("    Requesting Enclave: %s\n", kr.GetRequestingEnclaveTag())
+	if kr.ProvidingEnclaveTag != nil {
+		fmt.Printf("    Providing Enclave: %s\n", kr.GetProvidingEnclaveTag())
+	}
+	if kr.Status != nil {
+		fmt.Printf("    Status: %s\n", kr.GetStatus())
+	}
+	if kr.Artifact != nil {
+		fmt.Printf("    Artifact: ")
+		PrintBytes(kr.Artifact)
+		fmt.Printf("\n")
+	}
 }
 
 //  --------------------------------------------------------------------
-

@@ -286,17 +286,17 @@ func TestClaims(t *testing.T) {
 	}
 
 	/*
-	   fmt.Printf("\nAttest\n")
-	   vat := VseAttestation("testAttestation", "simulated-enclave", "", vcl3)
-	   if  vat == nil {
-		   t.Errorf("attestation fails")
-	   }
-	   uvat :=  certprotos.Attestation{}
-	   err = proto.Unmarshal(vat, &uvat)
-	   if err != nil {
-		   t.Errorf("attestation unmarshal fails")
-	   }
-	   PrintAttestation(&uvat)
+		   fmt.Printf("\nAttest\n")
+		   vat := VseAttestation("testAttestation", "simulated-enclave", "", vcl3)
+		   if  vat == nil {
+			   t.Errorf("attestation fails")
+		   }
+		   uvat :=  certprotos.Attestation{}
+		   err = proto.Unmarshal(vat, &uvat)
+		   if err != nil {
+			   t.Errorf("attestation unmarshal fails")
+		   }
+		   PrintAttestation(&uvat)
 	*/
 }
 
@@ -1862,20 +1862,20 @@ func TestPolicyStore(t *testing.T) {
 		t.Errorf("Can't create policy store")
 		return
 	}
-	v1 := []byte { 1,2,3,4}
+	v1 := []byte{1, 2, 3, 4}
 	e1 := NewPolicyStoreEntry("v1", "binary", v1)
 	if e1 == nil {
 		t.Errorf("Can't create e1")
 		return
 	}
 	PrintPolicyStoreEntry(e1)
-	v2 := []byte {1,2,3,4,5}
+	v2 := []byte{1, 2, 3, 4, 5}
 	e2 := NewPolicyStoreEntry("v2", "binary", v2)
 	if e2 == nil {
 		t.Errorf("Can't create e2")
 		return
 	}
-	v3 := []byte {1,2,3,4,5,6}
+	v3 := []byte{1, 2, 3, 4, 5, 6}
 	e3 := NewPolicyStoreEntry("v3", "binary", v3)
 	if e3 == nil {
 		t.Errorf("Can't create e3")
@@ -1916,7 +1916,6 @@ func TestPolicyStore(t *testing.T) {
 		return
 	}
 
-
 	fmt.Printf("\nPolicy Store:\n")
 	PrintPolicyStore(ps)
 
@@ -1939,8 +1938,8 @@ func TestPolicyStore(t *testing.T) {
 	}
 
 	if ps.Entries[0].GetTag() != psNew.Entries[0].GetTag() ||
-			ps.Entries[0].GetType() != psNew.Entries[0].GetType() ||
-			!bytes.Equal(ps.Entries[0].Value, psNew.Entries[0].Value) {
+		ps.Entries[0].GetType() != psNew.Entries[0].GetType() ||
+		!bytes.Equal(ps.Entries[0].Value, psNew.Entries[0].Value) {
 		t.Errorf("Recovered policy store entry mismatch")
 		return
 	}
@@ -1970,7 +1969,7 @@ func TestTEESeal2(t *testing.T) {
 	}
 
 	blank := ""
-	err:= TEESimulatedInit(blank, "test_data/attest_key_file.bin", "test_data/meas.bin", "test_data/platform_attest_endorsement.bin")
+	err := TEESimulatedInit(blank, "test_data/attest_key_file.bin", "test_data/meas.bin", "test_data/platform_attest_endorsement.bin")
 	if err != nil {
 		t.Errorf("failed to initialize simulated enclave")
 	}
