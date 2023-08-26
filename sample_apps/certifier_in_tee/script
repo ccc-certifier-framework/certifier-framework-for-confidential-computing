@@ -61,7 +61,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=
   --output=platform_attest_endorsement.bin
 $CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
 
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --input= $CERTIFIER_PROTOTYPE/certifier_service/simpleserver --output=certifier_measurement_file.bin`
+$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --input=$CERTIFIER_PROTOTYPE/certifier_service/simpleserver --output=certifier_measurement_file.bin
 
 # provision service and apps
 cd $EXAMPLE_DIR

@@ -657,7 +657,7 @@ func FillEvidenceList(enType string, el *certprotos.EvidenceList) bool {
 func ProvisionKeys(serverAddr string) bool {
 
 	rsaKey := certlib.MakeRsaKey(4096)
-	if rsaKey != nil {
+	if rsaKey == nil {
 		fmt.Printf("ProvisionKeys: Can't generate transport key\n")
 		return false
 	}
