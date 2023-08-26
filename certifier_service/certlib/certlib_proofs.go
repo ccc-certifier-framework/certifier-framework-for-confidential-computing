@@ -1133,6 +1133,8 @@ func InitCerifierRules(cr *certprotos.CertifierRules) bool {
 		rule 10 (R10): If environment[platform, measurement] environment-platform-is-trusted AND
 			environment[platform, measurement] environment-measurement-is-trusted then
 			environment[platform, measurement] is-trusted
+		rule 11 (R11): if key1 is-trustedXXX and key1 says key2 speaks-for measurement then
+			key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-key-provision-
 	*/
 
 	return true
@@ -2171,6 +2173,64 @@ func VerifyRule10(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpr
 	return SameEntity(c.Subject, c1.Subject) && SameEntity(c.Subject, c2.Subject)
 }
 
+
+// R11:if key1 is-trustedXXX
+//	 and
+//		key1 says key2 speaks-for measurement then
+//		key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation
+//	 OR
+//		key1 says key2 speaks-for environment then key2 speaks-for environment provided is-trustedXXX dominates is-trusted-for-key-provision
+//	 OR
+//		key1 says env is-environment then is-trustedXXX dominates is-trusted-for-attestation
+func VerifyRule11(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
+	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
+		return false
+	}
+	if !Dominates(tree, "is-trusted", *c1.Verb) {
+		return false
+	}
+	if c1.Subject.GetEntityType() != "key" {
+		return false
+	}
+
+	if c2.Subject == nil || c2.Verb == nil || c2.Object != nil || c2.Clause == nil {
+		return false
+	}
+
+	if c2.Subject.GetEntityType() != "key" {
+		return false
+	}
+	if c2.GetVerb() != "says" {
+		return false
+	}
+	if !SameEntity(c1.Subject, c2.Subject) {
+		return false
+	}
+
+	c3 := c2.Clause
+	if c3.Subject == nil || c3.Verb == nil {
+		return false
+	}
+	if !Dominates(tree, *c1.Verb, "is-trusted-for-key-provision") {
+		return false
+	}
+	if *c3.Verb == "speaks-for" {
+		if c3.Object.GetEntityType() != "measurement" && c3.Object.GetEntityType() != "environment" {
+			return false
+		}
+		if c3.Subject.GetEntityType() != "key" {
+			return false
+		}
+		return SameVseClause(c3, c)
+	} else if *c3.Verb == "is-environment" {
+		if c3.Subject.GetEntityType() != "environment" {
+			return false
+		}
+		return SameVseClause(c3, c)
+	}
+	return false
+}
+
 func StatementAlreadyProved(c1 *certprotos.VseClause, ps *certprotos.ProvedStatements) bool {
 	for i := 0; i < len(ps.Proved); i++ {
 		if SameVseClause(c1, ps.Proved[i]) {
@@ -2205,6 +2265,8 @@ func VerifyInternalProofStep(tree *PredicateDominance, c1 *certprotos.VseClause,
 		return VerifyRule9(tree, c1, c2, c)
 	case 10:
 		return VerifyRule10(tree, c1, c2, c)
+	case 11:
+		return VerifyRule11(tree, c1, c2, c)
 	}
 	return false
 }
@@ -2491,6 +2553,7 @@ func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyM
 	r5 := int32(5)
 	r6 := int32(6)
 	r7 := int32(7)
+	r11 := int32(11)
 
 	policyKeyIsTrusted := alreadyProved.Proved[0]
 
@@ -2537,6 +2600,7 @@ func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyM
 	var toProve *certprotos.VseClause = nil
 	isTrustedForAuth := "is-trusted-for-authentication"
 	isTrustedForAttest := "is-trusted-for-attestation"
+	isTrustedForKeyProvision := "is-trusted-for-key-provision"
 	if purpose == "attestation" {
 		toProve = MakeUnaryVseClause(enclaveKeySpeaksForMeasurement.Subject,
 			&isTrustedForAttest)
@@ -2545,6 +2609,16 @@ func ConstructProofFromInternalPlatformEvidence(publicPolicyKey *certprotos.KeyM
 			S2:          enclaveKeySpeaksForMeasurement,
 			Conclusion:  toProve,
 			RuleApplied: &r7,
+		}
+		proof.Steps = append(proof.Steps, &ps5)
+	} else if purpose == "key-provision" {
+		toProve = MakeUnaryVseClause(enclaveKeySpeaksForMeasurement.Subject,
+			&isTrustedForKeyProvision)
+		ps5 := certprotos.ProofStep{
+			S1:          measurementIsTrusted,
+			S2:          enclaveKeySpeaksForMeasurement,
+			Conclusion:  toProve,
+			RuleApplied: &r11,
 		}
 		proof.Steps = append(proof.Steps, &ps5)
 	} else {
@@ -2770,6 +2844,22 @@ func ConstructProofFromSevPlatformEvidence(publicPolicyKey *certprotos.KeyMessag
 
 	if purpose == "attestation" {
 		itfaVerb := "is-trusted-for-attestation"
+		enclaveKeyIsTrusted := &certprotos.VseClause{
+			Subject: enclaveKeySpeaksForEnvironment.Subject,
+			Verb:    &itfaVerb,
+		}
+		ps12 := certprotos.ProofStep{
+			S1:          environmentIsTrusted,
+			S2:          enclaveKeySpeaksForEnvironment,
+			Conclusion:  enclaveKeyIsTrusted,
+			RuleApplied: &r6,
+		}
+		proof.Steps = append(proof.Steps, &ps12)
+
+		toProve := enclaveKeyIsTrusted
+		return toProve, proof
+	} else if purpose == "key-provision" {
+		itfaVerb := "is-trusted-for-key-provision"
 		enclaveKeyIsTrusted := &certprotos.VseClause{
 			Subject: enclaveKeySpeaksForEnvironment.Subject,
 			Verb:    &itfaVerb,

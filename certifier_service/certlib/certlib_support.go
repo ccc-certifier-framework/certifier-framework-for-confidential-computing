@@ -141,6 +141,9 @@ func InitDominance(root *PredicateDominance) bool {
 	if !Insert(root, "is-trusted", "is-trusted-for-authentication") {
 		return false
 	}
+	if !Insert(root, "is-trusted", "is-trusted-for-key-provision") {
+		return false
+	}
 
 	return true
 }
