@@ -111,7 +111,6 @@ $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
 cd $EXAMPLE_DIR/certifier_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
       --operation=provision-keys
-#      --policyFile=key_policy.bin --readPolicy=true
 
 #run certifier service, see if it starts right
 cd $EXAMPLE_DIR/certifier_service

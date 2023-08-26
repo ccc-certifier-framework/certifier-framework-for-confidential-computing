@@ -2173,61 +2173,58 @@ func VerifyRule10(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpr
 	return SameEntity(c.Subject, c1.Subject) && SameEntity(c.Subject, c2.Subject)
 }
 
-// R11:if key1 is-trustedXXX
+// R11:  if     measurement is-trusted
 //	 and
-//		key1 says key2 speaks-for measurement then
-//		key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation
-//	 OR
-//		key1 says key2 speaks-for environment then key2 speaks-for environment provided is-trustedXXX dominates is-trusted-for-key-provision
-//	 OR
-//		key1 says env is-environment then is-trustedXXX dominates is-trusted-for-attestation
+//		key speaks-for measurement then
+//	 key is-trusted-for-key-provision
 func VerifyRule11(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
-return true
+
+	// Debug
+	/*
+	fmt.Printf("c1:\n")
+	PrintVseClause(c1)
+	fmt.Printf("\n")
+	fmt.Printf("c2:\n")
+	PrintVseClause(c2)
+	fmt.Printf("\n")
+	fmt.Printf("c:\n")
+	PrintVseClause(c)
+	fmt.Printf("\n")
+	*/
+
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
 		return false
 	}
 	if !Dominates(tree, "is-trusted", *c1.Verb) {
 		return false
 	}
-	if c1.Subject.GetEntityType() != "key" {
+	if c1.Subject.GetEntityType() != "measurement" {
 		return false
 	}
 
-	if c2.Subject == nil || c2.Verb == nil || c2.Object != nil || c2.Clause == nil {
+	if c2.Subject == nil || c2.Verb == nil || c2.Object == nil {
 		return false
 	}
 
 	if c2.Subject.GetEntityType() != "key" {
 		return false
 	}
-	if c2.GetVerb() != "says" {
+	if c2.GetVerb() != "speaks-for" {
 		return false
 	}
-	if !SameEntity(c1.Subject, c2.Subject) {
+	if c2.Object.GetEntityType() != "measurement" {
 		return false
 	}
-
-	c3 := c2.Clause
-	if c3.Subject == nil || c3.Verb == nil {
+	if !SameEntity(c1.Subject, c2.Object) {
 		return false
 	}
-	if !Dominates(tree, *c1.Verb, "is-trusted-for-key-provision") {
+	if c.Subject == nil || c.Verb == nil {
 		return false
 	}
-	if *c3.Verb == "speaks-for" {
-		if c3.Object.GetEntityType() != "measurement" && c3.Object.GetEntityType() != "environment" {
-			return false
-		}
-		if c3.Subject.GetEntityType() != "key" {
-			return false
-		}
-		return SameVseClause(c3, c)
-	} else if *c3.Verb == "is-environment" {
-		if c3.Subject.GetEntityType() != "environment" {
-			return false
-		}
-		return SameVseClause(c3, c)
+	if c.GetVerb() == "is-trusted-for-key-provision" && SameEntity(c2.Subject, c.Subject) {
+		return true
 	}
+ 
 	return false
 }
 
