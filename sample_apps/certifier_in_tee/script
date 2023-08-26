@@ -22,33 +22,33 @@ $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-
     --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin \
     --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
 
-# build policy
+# build policy for key service
 cd $EXAMPLE_DIR/provisioning
 
 #policyKey says platformKey is-trused-for-attestation
-#$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
-  #--verb="is-trusted-for-attestation" --output=ts1.bin
-#$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-  #--verb="says" --clause=ts1.bin --output=vse_policy1.bin
-#$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1.bin \
-  #--duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
-#
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
+  --verb="is-trusted-for-attestation" --output=ts1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+  --verb="says" --clause=ts1.bin --output=vse_policy1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1.bin \
+  --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+
 # policy key says measurement is-trusted
-#$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../example_app.exe \
-      #--output=example_app.measurement
-#$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
-  #--measurement_subject=example_app.measurement --verb="is-trusted" \
-  #--output=ts2.bin
-#$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
-  #--verb="says" --clause=ts2.bin --output=vse_policy2.bin
-#$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
-  #--vse_file=vse_policy2.bin --duration=9000 \
-  #--private_key_file=policy_key_file.bin --output=signed_claim_2.bin
-#
-#$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
-  #--output=policy.bin
-#
-#$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../example_app.exe \
+      --output=example_app.measurement
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+  --measurement_subject=certifier_measurement_file.bin --verb="is-trusted" \
+  --output=ts2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+  --verb="says" --clause=ts2.bin --output=vse_policy2.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
+  --vse_file=vse_policy2.bin --duration=9000 \
+  --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
+
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
+  --output=policy.bin
+
+$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 
 # This gets included from the app
 cd $EXAMPLE_DIR/provisioning
@@ -92,20 +92,26 @@ $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
 
 # Now see if the certifier_service can provision from the store
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-      --operation=convert-key --policyFile=policy.bin --readPolicy=true
+      --operation=certifier-service --get_key_from_secure_store=true \
+      --policyFile=policy.bin --readPolicy=true
 
 #run server as key service
-cd $EXAMPLE_DIR/certifier_service
+cd $EXAMPLE_DIR/key_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
-	--operation=certifier-service --get_key_from_secure_store=true \
+	--operation=key-service \
 	--policyFile=policy.bin --readPolicy=true
 
 #run server as certifier service and provision
 cd $EXAMPLE_DIR/certifier_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+      --operation=provision-keys \
       --policyFile=policy.bin --readPolicy=true
 
-#run certifier service
+# hack
+cd $EXAMPLE_DIR/certifier_service
+cp $CERTIFIER_PROTOTYPE/sample_apps/simple_app/provisioning/policy.bin .
+
+#run certifier service, see if it starts right
 cd $EXAMPLE_DIR/certifier_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
 	--operation=certifier-service --get_key_from_secure_store=true \

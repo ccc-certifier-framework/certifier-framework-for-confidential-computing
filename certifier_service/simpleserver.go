@@ -36,7 +36,7 @@ import (
 )
 
 var operation = flag.String("operation", "certifier-service",
-	"operation name: certifier-service, key-service, convert-key or certifier_service_init")
+	"operation name: certifier-service, key-service, convert-key or provision-keys")
 
 var enclaveType = flag.String("enclave_type", "simulated-enclave", "enclave type")
 
