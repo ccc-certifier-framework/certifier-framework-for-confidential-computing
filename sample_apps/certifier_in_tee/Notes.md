@@ -16,11 +16,9 @@ are:
         attestations from simpleservers running in certifier-service roles, who have not
         yet gotten the private policy key.  In this role, simpleserver receives evidence
         very similar to that offered by a program requesting certifiation.  It evaluates
-        the request based on policy and, if compliant, returns a very short duration
-        certificate.  The requesting simpleserver then opens a secure channel to the
-        simpleserver running in the key-service mode to retrieve the policy key.  The
-        reauesting simpleserver then stores the policy private key in its policy store
-        rather than an unencrypted key file.
+        the request based on policy and, if compliant, returns the policy key "encapsulated"
+        to the prooferd enclave key.  Once received, the requestore "decapsulates" the
+        policy key and stores the policy private key in its policy store.
 
     4. --operation=convert-key: In this case, simpleserver reads the unencrypted
         private policy key and stores it in its policy store (which is encrypted).

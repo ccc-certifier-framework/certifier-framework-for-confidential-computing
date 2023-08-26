@@ -395,6 +395,59 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 	return true, artifact
 }
 
+func ValidateRequestAndObtainSealedKey(pubKey *certprotos.KeyMessage, privKey *certprotos.KeyMessage,
+        policyPool *certlib.PolicyPool, evType string, purpose string, ep *certprotos.EvidencePackage) (bool, []byte) {
+
+	// evidenceType should be "vse-attestation-package", "sev-platform-package"
+	var toProve *certprotos.VseClause = nil
+	var success bool
+
+	if purpose != "key-provision" {
+		fmt.Printf("ValidateRequestAndObtainSealedKey: purpose must be key-provision\n")
+		return false, nil
+	}
+
+	if evType == "vse-attestation-package" {
+		success, toProve, _= certlib.ValidateInternalEvidence(pubKey, ep, policyPool, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainSealedKey: ValidateInternalEvidence failed\n")
+			return false, nil
+		}
+	} else if evType == "sev-platform-package" {
+		success, toProve, _ = certlib.ValidateSevEvidence(pubKey, ep, policyPool, purpose)
+		if !success {
+			fmt.Printf("ValidateRequestAndObtainSealedKey: ValidateSevEvidence failed\n")
+			return false, nil
+		}
+	} else {
+		fmt.Printf("ValidateRequestAndObtainSealedKey: Invalid Evidence type: %s\n", evType)
+		return false, nil
+	}
+
+	// Package policy key
+	encapsulatingKey := toProve.Subject.Key
+
+	edm := certprotos.EncapsulatedDataMessage{}
+	alg := "aes-256-gcm"
+
+	serializedPolicyKey, err := proto.Marshal(privKey)
+	if err != nil {
+		fmt.Printf("ValidateRequestAndObtainSealedKey: Can't serialize policy key\n")
+		return false, nil
+	}
+	if !certlib.EncapsulateData(encapsulatingKey, alg, serializedPolicyKey, &edm) {
+		fmt.Printf("ValidateRequestAndObtainSealedKey: Can't EncapsulateData\n")
+		return false, nil
+	}
+
+	serializedEncapsulatedDataMessage, err := proto.Marshal(&edm)
+	if err != nil {
+		fmt.Printf("ValidateRequestAndObtainSealedKey: Can't marshal EncapsulateData\n")
+		return false, nil
+	}
+	return true, serializedEncapsulatedDataMessage 
+}
+
 // Procedure is:
 //      read a message
 //      evaluate the trust assertion
@@ -479,6 +532,58 @@ func keyServiceThread(conn net.Conn, client string) {
 		return
 	}
 
+	request := &certprotos.KeyRequestMessage{}
+	err := proto.Unmarshal(b, request)
+	if err != nil {
+		fmt.Println("keyServiceThread: Failed to decode request", err)
+		logEvent("Can't unmarshal request", nil, nil)
+		return
+	}
+
+	// Debug
+	fmt.Printf("keyServiceThread: Key request received:\n")
+	certlib.PrintKeyRequestMessage(request)
+
+	// Prepare response
+	succeeded := "succeeded"
+	failed := "failed"
+
+	response := certprotos.KeyResponseMessage{}
+	response.RequestingEnclaveTag = request.RequestingEnclaveTag
+	response.ProvidingEnclaveTag = request.ProvidingEnclaveTag
+
+	outcome, artifact := ValidateRequestAndObtainSealedKey(publicPolicyKey, privatePolicyKey,
+		&policyPool, request.GetSubmittedEvidenceType(), "key-provision",
+		request.Support)
+
+	if outcome {
+		response.Status = &succeeded
+		response.Artifact = artifact
+	} else {
+		response.Status = &failed
+	}
+
+	// Debug
+	fmt.Printf("Sending response\n")
+	certlib.PrintKeyResponseMessage(&response)
+	fmt.Printf("\n")
+
+	// send response
+	rb, err := proto.Marshal(&response)
+	if err != nil {
+		logEvent("Couldn't marshall request", b, nil)
+		return
+	}
+	if !certlib.SizedSocketWrite(conn, rb) {
+		fmt.Printf("SizedSocketWrite failed (2)\n")
+		return
+	}
+	if response.Status != nil && *response.Status == "succeeded" {
+		logEvent("Successful request", b, rb)
+	} else {
+		logEvent("Failed request", b, rb)
+	}
+	return
 }
 
 //	------------------------------------------------------------------------------------
