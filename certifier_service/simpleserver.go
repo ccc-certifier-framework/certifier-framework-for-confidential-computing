@@ -746,7 +746,11 @@ func ProvisionKeys(serverAddr string) bool {
 		return false
 	}
 
-	if *krr.Status != "success" || krr.Artifact == nil {
+	// Debug
+	certlib.PrintKeyResponseMessage(&krr)
+	fmt.Printf("\n")
+
+	if *krr.Status != "succeeded" || krr.Artifact == nil {
 		fmt.Printf("ProvisionKeys: Key request failed\n")
 		return false
 	}
