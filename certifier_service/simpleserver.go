@@ -637,6 +637,7 @@ func FillEvidenceList(enType string, el *certprotos.EvidenceList) bool {
 	if enType == "simulated-enclave" {
 		serializedPlatformEndorsement, err := os.ReadFile(*attestEndorsementFile)
 		if err != nil {
+			fmt.Printf("FillEvidenceList: Can't read endorsement\n")
 			return false
 		}
 		ssc := "signed-claim"
@@ -645,8 +646,34 @@ func FillEvidenceList(enType string, el *certprotos.EvidenceList) bool {
 		ev.SerializedEvidence = serializedPlatformEndorsement
 		el.Assertion = append(el.Assertion, &ev)
 	} else if enType == "sev-enclave" {
-		fmt.Printf("FillEvidenceList: unsupported enclave type\n")
-		return false
+		arkCert, err := os.ReadFile(*arkFile)
+		if err != nil {
+			fmt.Printf("FillEvidenceList: Can't read ark cert\n")
+			return false
+		}
+		ssc := "cert"
+		ev := certprotos.Evidence{}
+		ev.EvidenceType = &ssc
+		ev.SerializedEvidence = arkCert
+		el.Assertion = append(el.Assertion, &ev)
+		askCert, err := os.ReadFile(*askFile)
+		if err != nil {
+			fmt.Printf("FillEvidenceList: Can't read ask cert\n")
+			return false
+		}
+		ev = certprotos.Evidence{}
+		ev.EvidenceType = &ssc
+		ev.SerializedEvidence = askCert
+		el.Assertion = append(el.Assertion, &ev)
+		vcekCert, err := os.ReadFile(*vcekFile)
+		if err != nil {
+			fmt.Printf("FillEvidenceList: Can't read vcek cert\n")
+			return false
+		}
+		ev = certprotos.Evidence{}
+		ev.EvidenceType = &ssc
+		ev.SerializedEvidence = vcekCert
+		el.Assertion = append(el.Assertion, &ev)
 	} else {
 		fmt.Printf("FillEvidenceList: unsupported enclave type\n")
 		return false
