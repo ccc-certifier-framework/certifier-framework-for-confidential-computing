@@ -80,6 +80,29 @@ def test_cc_trust_data_lib_default():
     libswigpy.delete_cc_trust_data(cctd)
 
 # ##############################################################################
+def test_secure_authenticated_channel_lib():
+    """
+    Basic exerciser of methods for a secure_authenticated_channel() object.
+    """
+    sac_role = 'client'
+    sac = libswigpy.new_secure_authenticated_channel(sac_role)
+
+    assert libswigpy.secure_authenticated_channel_role__get(sac) == sac_role
+
+    libswigpy.delete_secure_authenticated_channel(sac)
+
+# ##############################################################################
+def test_secure_authenticated_channel_default():
+    """
+    Basic exerciser of methods for a secure_authenticated_channel() object
+    using interfaces from the Python module
+    """
+    sac_role = 'client'
+    sac = swigpyt.secure_authenticated_channel(sac_role)
+
+    assert sac.role_ == sac_role
+
+# ##############################################################################
 def test_secure_authenticated_channel_init_client_ssl_default():
     """
     Exerciser of init_client_ssl() method for a secure_authenticated_channel()
@@ -157,29 +180,6 @@ def test_secure_authenticated_channel_init_client_ssl_default_2args():
 
     # Verify that the right C++ method was invoked thru Swig gyrations
     assert sac.swig_wrap_fn_name_ == 'init_client_ssl-port-const-string-asn1_root_cert'
-
-# ##############################################################################
-def test_secure_authenticated_channel_lib():
-    """
-    Basic exerciser of methods for a secure_authenticated_channel() object.
-    """
-    sac_role = 'client'
-    sac = libswigpy.new_secure_authenticated_channel(sac_role)
-
-    assert libswigpy.secure_authenticated_channel_role__get(sac) == sac_role
-
-    libswigpy.delete_secure_authenticated_channel(sac)
-
-# ##############################################################################
-def test_secure_authenticated_channel_default():
-    """
-    Basic exerciser of methods for a secure_authenticated_channel() object
-    using interfaces from the Python module
-    """
-    sac_role = 'client'
-    sac = swigpyt.secure_authenticated_channel(sac_role)
-
-    assert sac.role_ == sac_role
 
 # ##############################################################################
 def test_secure_authenticated_channel_init_client_ssl_basic():
