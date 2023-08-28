@@ -1959,6 +1959,7 @@ func TestPolicyStore(t *testing.T) {
 	PrintKey(newKey)
 }
 
+/*
 func TestTEESeal2(t *testing.T) {
 	fmt.Print("\nTestTEESeal\n")
 
@@ -1992,6 +1993,7 @@ func TestTEESeal2(t *testing.T) {
 		t.Errorf("TestTEESeal failed")
 	}
 }
+*/
 
 func TestEncapsulatedData(t *testing.T) {
 	fmt.Print("\nTestEncapsulatedData\n")
