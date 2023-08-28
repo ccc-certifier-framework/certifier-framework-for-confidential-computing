@@ -2181,15 +2181,15 @@ func VerifyRule11(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpr
 
 	// Debug
 	/*
-	fmt.Printf("c1:\n")
-	PrintVseClause(c1)
-	fmt.Printf("\n")
-	fmt.Printf("c2:\n")
-	PrintVseClause(c2)
-	fmt.Printf("\n")
-	fmt.Printf("c:\n")
-	PrintVseClause(c)
-	fmt.Printf("\n")
+		fmt.Printf("c1:\n")
+		PrintVseClause(c1)
+		fmt.Printf("\n")
+		fmt.Printf("c2:\n")
+		PrintVseClause(c2)
+		fmt.Printf("\n")
+		fmt.Printf("c:\n")
+		PrintVseClause(c)
+		fmt.Printf("\n")
 	*/
 
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
@@ -2224,7 +2224,7 @@ func VerifyRule11(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpr
 	if c.GetVerb() == "is-trusted-for-key-provision" && SameEntity(c2.Subject, c.Subject) {
 		return true
 	}
- 
+
 	return false
 }
 

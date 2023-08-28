@@ -728,13 +728,13 @@ func GeneralAuthenticatedEncrypt(alg string, in []byte, key []byte, iv []byte) [
 			return nil
 		}
 		out := gcm.Seal(nil, iv[0:tagLen], in, nil)
-		return append(iv, out ...)
+		return append(iv, out...)
 	}
 	return nil
 }
 
 func GeneralAuthenticatedDecrypt(alg string, in []byte, key []byte) []byte {
-	if alg =="aes-256-cbc-hmac-sha256" {
+	if alg == "aes-256-cbc-hmac-sha256" {
 		return AuthenticatedDecrypt(in, key)
 	}
 	if alg == "aes-256-gcm" {
@@ -1000,9 +1000,9 @@ func PrintKey(k *certprotos.KeyMessage) {
 			PrintEccKey(k.EccKey)
 		}
 	} else if k.GetKeyType() == "aes-256-cbc-hmac-sha256" {
-		fmt.Printf("Bits: ");
+		fmt.Printf("Bits: ")
 		PrintBytes(k.SecretKeyBits)
-		fmt.Printf("\n");
+		fmt.Printf("\n")
 	} else {
 		fmt.Printf("Unknown key type\n")
 	}
