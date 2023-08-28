@@ -3,7 +3,7 @@
 
 The "simple_app" family of examples is intended to carefully take
 you through every step of building and deploying applications, in
-sufficient detail to allow a thorough understanding of the every
+sufficient detail to allow a thorough understanding of every
 design feature of the Certifier Framework.  Thorough enough to make
 a detailed security assessment and develop a clear understanding
 of the security implications of each and every component.

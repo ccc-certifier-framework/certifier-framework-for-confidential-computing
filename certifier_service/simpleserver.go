@@ -937,26 +937,25 @@ func main() {
 
 	if *operation == "certifier-service" {
 		/*
-		   	REMOVE: This is a test
-		           attestation, err := os.ReadFile("attestation.bin")
-		           if err != nil {
-		                   fmt.Printf("Failed to read attestation file: %s\n", err.Error())
-		           }
+		   	REMOVE: This is a test Ye used
+			attestation, err := os.ReadFile("attestation.bin")
+		        if err != nil {
+				fmt.Printf("Failed to read attestation file: %s\n", err.Error())
+		        }
 
-		           var what_to_say []byte
-		           what_to_say = make([]byte, 256)
-		           for i := 0; i < 256; i++ {
-		                   what_to_say[i] = byte(i)
-		           }
-		           outMeasurement, err := gramineverify.GramineVerify(what_to_say, attestation)
-		           if err != nil {
-		                   fmt.Printf("GramineVerify failed: %s\n", err.Error())
-		           }
-		           fmt.Printf("Measurement length: %d\n", len(outMeasurement));
+		        var what_to_say []byte
+		        what_to_say = make([]byte, 256)
+		        for i := 0; i < 256; i++ {
+				what_to_say[i] = byte(i)
+		        }
+		        outMeasurement, err := gramineverify.GramineVerify(what_to_say, attestation)
+		        if err != nil {
+				fmt.Printf("GramineVerify failed: %s\n", err.Error())
+		        }
+		        fmt.Printf("Measurement length: %d\n", len(outMeasurement));
 		*/
 
 		// later this may turn into a TLS connection, we'll see
-
 		if !initCertifierService(*getPolicyKeyFromSecureStore) {
 			fmt.Printf("main: failed to initialize server\n")
 			os.Exit(1)

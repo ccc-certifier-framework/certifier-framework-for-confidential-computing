@@ -286,17 +286,18 @@ func TestClaims(t *testing.T) {
 	}
 
 	/*
-		   fmt.Printf("\nAttest\n")
-		   vat := VseAttestation("testAttestation", "simulated-enclave", "", vcl3)
-		   if  vat == nil {
-			   t.Errorf("attestation fails")
-		   }
-		   uvat :=  certprotos.Attestation{}
-		   err = proto.Unmarshal(vat, &uvat)
-		   if err != nil {
-			   t.Errorf("attestation unmarshal fails")
-		   }
-		   PrintAttestation(&uvat)
+	// Just prints attestation, not really needed in test
+	fmt.Printf("\nAttest\n")
+	vat := VseAttestation("testAttestation", "simulated-enclave", "", vcl3)
+	if  vat == nil {
+		t.Errorf("attestation fails")
+	}
+	uvat :=  certprotos.Attestation{}
+	err = proto.Unmarshal(vat, &uvat)
+	if err != nil {
+		t.Errorf("attestation unmarshal fails")
+	}
+	PrintAttestation(&uvat)
 	*/
 }
 

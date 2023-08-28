@@ -129,7 +129,7 @@ func ConstructKeyForProtect(keyName string, keyType string) *certprotos.KeyMessa
 
 func ProtectBlob(enclaveType string, k *certprotos.KeyMessage, buffer []byte) []byte {
 
-	if k.GetKeyType() != "aes-256-cbc-hmac-sha256" {
+	if k.GetKeyType() != "aes-256-cbc-hmac-sha256" && k.GetKeyType() != "aes-256-gcm" {
 		fmt.Printf("ProtectBlob: Wrong key type for authenticated encrypt\n")
 		return nil
 	}
@@ -206,7 +206,7 @@ func UnprotectBlob(enclaveType string, k *certprotos.KeyMessage, blob []byte) []
 		return nil
 	}
 
-	if k.GetKeyType() != "aes-256-cbc-hmac-sha256" {
+	if k.GetKeyType() != "aes-256-cbc-hmac-sha256" && k.GetKeyType() != "aes-256-gcm" {
 		fmt.Printf("UnprotectBlob: Wrong key type for authenticated encrypt\n")
 		return nil
 	}

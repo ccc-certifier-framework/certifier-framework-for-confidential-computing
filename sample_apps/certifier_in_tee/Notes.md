@@ -18,15 +18,15 @@ by the `--operation` flag.  They are:
     it in a secure store.
 
 3. `--operation=key-service`:  In this case, simpleserver receives
-   requests, including attestations from simpleservers running in Certifier Service
+        requests, including attestations from simpleservers running in Certifier Service
 	roles, who have not yet gotten the private policy key.  In
 	this role, the simpleserver receives evidence very similar to
 	that offered by a program requesting certifiation.  It
 	evaluates the request based on policy and, if compliant,
 	returns the policy key "encapsulated" to the prooferd enclave
-	key.  Once received, the requestore "decapsulates" the
-	policy key and stores the policy private key in its policy
-	store.
+	key.  Once received, the requestor "decapsulates" the
+	policy key and stores the policy private key in the
+        requesting certifier service's policy store.
 
 4. `--operation=convert-key`: In this case, simpleserver reads the
    unencrypted private policy key and stores the policy key in the
