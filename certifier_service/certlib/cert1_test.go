@@ -2001,29 +2001,29 @@ func TestEncapsulatedData(t *testing.T) {
 
 	rsaKey := MakeRsaKey(4096)
 	if rsaKey == nil {
-		t.Errorf("Cant generate Rsa key")
+		t.Errorf("Can't generate Rsa key")
 	}
 	privK := certprotos.KeyMessage{}
 	if !GetInternalKeyFromRsaPrivateKey("encapsulating-key", rsaKey, &privK) {
-		t.Errorf("Cant Convert to private internal key")
+		t.Errorf("Can't Convert to private internal key")
 	}
 	PrintKey(&privK)
 	fmt.Printf("\n")
 	pubK := InternalPublicFromPrivateKey(&privK)
 	if pubK == nil {
-		t.Errorf("Cant Convert private to public internal key")
+		t.Errorf("Can't Convert private to public internal key")
 	}
 	alg := "aes-256-gcm"
 	data := []byte("Fourscore and seven years ago ... and now look")
 
 	edm := certprotos.EncapsulatedDataMessage{}
 	if !EncapsulateData(pubK, alg, data, &edm) {
-		t.Errorf("Cant encapsulate data")
+		t.Errorf("Can't encapsulate data")
 	}
 
 	out := DecapsulateData(&privK, &edm)
 	if out == nil {
-		t.Errorf("Cant decapsulate data")
+		t.Errorf("Can't decapsulate data")
 	}
 	fmt.Printf("Out: %s\n", string(out))
 }
