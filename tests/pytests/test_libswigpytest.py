@@ -30,6 +30,7 @@ executed. Then, debug why the swigpytest.i mapping rules ended up picing a
 different wrapper C++ method to execute.
 
 """
+import os
 from inspect import getmembers, isbuiltin, ismodule
 
 # To resolve library references, run as: PYTHONPATH=../.. pytest <filename>.py
@@ -38,6 +39,7 @@ import swigpytest as swigpyt        # The Python module
 
 # pylint: disable=c-extension-no-member
 
+CertPyTestsDir       = os.path.dirname(os.path.realpath(__file__))
 CERT_CLIENT_HOST     = 'localhost'
 CERT_CLIENT_APP_PORT = 8123
 
@@ -262,3 +264,23 @@ def test_secure_authenticated_channel_init_client_ssl_simple_app():
     assert sac.asn1_my_cert_ == 'private-key-cert'
     assert cctd.serialized_policy_cert_ == 'New root Certificate'
     assert sac.swig_wrap_fn_name_ == exp_swig_fn_name
+
+# ##############################################################################
+def test_secure_authenticated_channel_init_client_ssl_cert_w_unicode_surrogate_chars():
+    """
+    Exerciser of init_client_ssl() method for a secure_authenticated_channel()
+    as it's done in simple_app/example_app.cc . But, here, we use a real
+    certificate (stashed in pytests/data dir). This certificate contains
+    Unicode surrogate chars. The SWIG-python interfaces run into an error
+    which prevents this case from succeeding.
+    """
+    sac_role = 'client'
+    sac = swigpyt.secure_authenticated_channel(sac_role)
+
+    # Open the Certificate binary file for reading
+    with open(CertPyTestsDir + '/data/policy_cert_file.bin', 'r') as cert_file:
+        cert_bin = cert_file.read()
+
+    # Arg is const string &asn1_root_cert; Same as _default case, above.
+    result = sac.init_client_ssl(cert_bin)
+    assert result is True
