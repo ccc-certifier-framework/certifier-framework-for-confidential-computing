@@ -85,3 +85,20 @@ func TEEUnSeal(enclave_type string, enclave_id string, in []byte, outMax int) ([
 		C.int(outSize))
 	return clear, nil
 }
+
+func TEESimulatedInit(asn1_policy_cert string, attest_key_file string, measurement_file string, attest_key_signed_claim_file string) error {
+	asn1 := C.CString(asn1_policy_cert)
+	defer C.free(unsafe.Pointer(asn1))
+	attkey := C.CString(attest_key_file)
+	defer C.free(unsafe.Pointer(attkey))
+	meas := C.CString(measurement_file)
+	defer C.free(unsafe.Pointer(meas))
+	attkeyclaim := C.CString(attest_key_signed_claim_file)
+	defer C.free(unsafe.Pointer(attkeyclaim))
+
+	ret := C.tee_Simulated_Init(asn1, attkey, meas, attkeyclaim)
+	if !ret {
+		return fmt.Errorf("tee_Simulated_Init failed")
+	}
+	return nil
+}

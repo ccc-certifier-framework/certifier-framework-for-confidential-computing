@@ -662,7 +662,9 @@ bool sev_Seal(int in_size, byte *in, int *size_out, byte *out) {
                              in,
                              in_size,
                              final_key,
+                             final_key_size,
                              iv,
+                             32,
                              out,
                              size_out))
     return false;
@@ -684,6 +686,7 @@ bool sev_Unseal(int in_size, byte *in, int *size_out, byte *out) {
                              in,
                              in_size,
                              final_key,
+                             final_key_size,
                              out,
                              size_out))
     return false;

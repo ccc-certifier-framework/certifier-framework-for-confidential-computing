@@ -83,6 +83,13 @@ message protected_blob_message {
   optional bytes encrypted_data             = 2;
 };
 
+message encapsulated_data_message {
+  optional string encapsulating_key_type    = 1;
+  optional bytes encapsulated_key           = 2;
+  optional string encryption_algorithm      = 3;
+  optional bytes encrypted_data             = 4;
+};
+
 message property {
   optional string property_name             = 1;
   optional string value_type                = 2;
@@ -252,6 +259,20 @@ message trust_request_message {
 };
 
 message trust_response_message {
+  optional string status                    = 1; // "succeeded" or "failed"
+  optional string requesting_enclave_tag    = 2;
+  optional string providing_enclave_tag     = 3;
+  optional bytes artifact                   = 4;
+};
+
+message key_request_message {
+  optional string requesting_enclave_tag    = 1;
+  optional string providing_enclave_tag     = 2;
+  optional string submitted_evidence_type   = 3;
+  optional evidence_package support         = 4;
+};
+
+message key_response_message {
   optional string status                    = 1; // "succeeded" or "failed"
   optional string requesting_enclave_tag    = 2;
   optional string providing_enclave_tag     = 3;

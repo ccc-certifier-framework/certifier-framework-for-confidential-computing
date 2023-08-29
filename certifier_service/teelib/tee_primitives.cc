@@ -15,6 +15,7 @@
 
 #include "tee_primitives.h"
 #include "certifier_framework.h"
+#include "simulated_enclave.h"
 
 using namespace certifier::framework;
 using namespace std;
@@ -48,4 +49,18 @@ bool tee_Unseal(const char *enclave_type,
   string enc_type(enclave_type);
   string enc_id(enclave_id);
   return Unseal(enc_type, enc_id, in_size, in, size_out, out);
+}
+
+bool tee_Simulated_Init(const char *asn1_policy_cert,
+                        const char *attest_key_file,
+                        const char *measurement_file,
+                        const char *attest_key_signed_claim_file) {
+  const string asn1_policy_cert_str(asn1_policy_cert);
+  const string attest_key_file_str(attest_key_file);
+  const string measurement_file_str(measurement_file);
+  const string attest_key_signed_claim_file_str(attest_key_signed_claim_file);
+  return simulated_Init(asn1_policy_cert_str,
+                        attest_key_file_str,
+                        measurement_file_str,
+                        attest_key_signed_claim_file_str);
 }

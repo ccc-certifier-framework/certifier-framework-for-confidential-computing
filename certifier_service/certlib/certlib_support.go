@@ -141,6 +141,9 @@ func InitDominance(root *PredicateDominance) bool {
 	if !Insert(root, "is-trusted", "is-trusted-for-authentication") {
 		return false
 	}
+	if !Insert(root, "is-trusted", "is-trusted-for-key-provision") {
+		return false
+	}
 
 	return true
 }
@@ -485,6 +488,23 @@ func GetInternalKeyFromRsaPublicKey(name string, PK *rsa.PublicKey, km *certprot
 
 func GetInternalKeyFromRsaPrivateKey(name string, pK *rsa.PrivateKey, km *certprotos.KeyMessage) bool {
 	km.RsaKey = &certprotos.RsaMessage{}
+
+	km.KeyName = &name
+	modLen := len(pK.PublicKey.N.Bytes())
+	var kt string
+	if modLen == 128 {
+		kt = "rsa-1024-private"
+	} else if modLen == 256 {
+		kt = "rsa-2048-private"
+	} else if modLen == 384 {
+		kt = "rsa-3072-private"
+	} else if modLen == 512 {
+		kt = "rsa-4096-private"
+	} else {
+		return false
+	}
+	km.KeyType = &kt
+
 	km.GetRsaKey().PublicModulus = pK.PublicKey.N.Bytes()
 	e := big.Int{}
 	e.SetUint64(uint64(pK.PublicKey.E))
@@ -687,6 +707,59 @@ func AuthenticatedDecrypt(in []byte, key []byte) []byte {
 	}
 	dec := Decrypt(in[0:n], key[0:32])
 	return dec
+}
+
+// Todo: implement the others
+func GeneralAuthenticatedEncrypt(alg string, in []byte, key []byte, iv []byte) []byte {
+	if alg == "aes-256-cbc-hmac-sha256" {
+		return AuthenticatedEncrypt(in, key, iv)
+	}
+	if alg == "aes-256-gcm" {
+		tagLen := 12
+
+		k, err := aes.NewCipher(key)
+		if err != nil {
+			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewCipher\n")
+			return nil
+		}
+		gcm, err := cipher.NewGCM(k)
+		if err != nil {
+			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewGCM\n")
+			return nil
+		}
+		out := gcm.Seal(nil, iv[0:tagLen], in, nil)
+		return append(iv, out...)
+	}
+	return nil
+}
+
+func GeneralAuthenticatedDecrypt(alg string, in []byte, key []byte) []byte {
+	if alg == "aes-256-cbc-hmac-sha256" {
+		return AuthenticatedDecrypt(in, key)
+	}
+	if alg == "aes-256-gcm" {
+		tagLen := 12
+
+		k, err := aes.NewCipher(key)
+		if err != nil {
+			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewCipher\n")
+			return nil
+		}
+		gcm, err := cipher.NewGCM(k)
+		if err != nil {
+			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewGCM\n")
+			return nil
+		}
+
+		iv := in[0:tagLen]
+		out, err := gcm.Open(nil, iv, in[aes.BlockSize:], nil)
+		if err != nil {
+			fmt.Printf("GeneralAuthenticatedEncrypt: can't aes NewGCM\n")
+			return nil
+		}
+		return out
+	}
+	return nil
 }
 
 func SameMeasurement(m1 []byte, m2 []byte) bool {
@@ -926,6 +999,10 @@ func PrintKey(k *certprotos.KeyMessage) {
 		if k.EccKey != nil {
 			PrintEccKey(k.EccKey)
 		}
+	} else if k.GetKeyType() == "aes-256-cbc-hmac-sha256" {
+		fmt.Printf("Bits: ")
+		PrintBytes(k.SecretKeyBits)
+		fmt.Printf("\n")
 	} else {
 		fmt.Printf("Unknown key type\n")
 	}

@@ -46,6 +46,11 @@ bool tee_Unseal(const char *enclave_type,
                 int *       size_out,
                 byte *      out);
 
+bool tee_Simulated_Init(const char *asn1_policy_cert,
+                        const char *attest_key_file,
+                        const char *measurement_file,
+                        const char *attest_key_signed_claim_file);
+
 #ifdef __cplusplus
 }
 #endif

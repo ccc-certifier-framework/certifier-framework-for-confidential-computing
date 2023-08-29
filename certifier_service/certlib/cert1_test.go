@@ -286,17 +286,18 @@ func TestClaims(t *testing.T) {
 	}
 
 	/*
-	   fmt.Printf("\nAttest\n")
-	   vat := VseAttestation("testAttestation", "simulated-enclave", "", vcl3)
-	   if  vat == nil {
-	           t.Errorf("attestation fails")
-	   }
-	   uvat :=  certprotos.Attestation{}
-	   err = proto.Unmarshal(vat, &uvat)
-	   if err != nil {
-	           t.Errorf("attestation unmarshal fails")
-	   }
-	   PrintAttestation(&uvat)
+		// Just prints attestation, not really needed in test
+		fmt.Printf("\nAttest\n")
+		vat := VseAttestation("testAttestation", "simulated-enclave", "", vcl3)
+		if  vat == nil {
+			t.Errorf("attestation fails")
+		}
+		uvat :=  certprotos.Attestation{}
+		err = proto.Unmarshal(vat, &uvat)
+		if err != nil {
+			t.Errorf("attestation unmarshal fails")
+		}
+		PrintAttestation(&uvat)
 	*/
 }
 
@@ -342,8 +343,8 @@ func TestCrypt(t *testing.T) {
 	fmt.Println()
 
 	authenticatedPlainText := plainText
-	authenticatedCipherText := AuthenticatedEncrypt(authenticatedPlainText, k, iv)
-	authenticatedRecoveredText := AuthenticatedDecrypt(authenticatedCipherText, k)
+	authenticatedCipherText := GeneralAuthenticatedEncrypt("aes-256-cbc-hmac-sha256", authenticatedPlainText, k, iv)
+	authenticatedRecoveredText := GeneralAuthenticatedDecrypt("aes-256-cbc-hmac-sha256", authenticatedCipherText, k)
 	fmt.Printf("Authenticated Plaintext size : %d\n", len(authenticatedPlainText))
 	fmt.Printf("Authenticated Cipher size out: %d\n", len(authenticatedCipherText))
 	fmt.Printf("Authenticated Recovered size out: %d\n", len(authenticatedRecoveredText))
@@ -364,6 +365,32 @@ func TestCrypt(t *testing.T) {
 	if !bytes.Equal(authenticatedPlainText, authenticatedRecoveredText) {
 		t.Errorf("encrypt/decrypt fails")
 	}
+
+	// GCM authenticated encrypt
+	authenticatedPlainText2 := plainText
+	authenticatedCipherText2 := GeneralAuthenticatedEncrypt("aes-256-gcm", authenticatedPlainText2, k, iv)
+	authenticatedRecoveredText2 := GeneralAuthenticatedDecrypt("aes-256-gcm", authenticatedCipherText2, k)
+	fmt.Printf("Authenticated Plaintext size : %d\n", len(authenticatedPlainText2))
+	fmt.Printf("Authenticated Cipher size out: %d\n", len(authenticatedCipherText2))
+	fmt.Printf("Authenticated Recovered size out: %d\n", len(authenticatedRecoveredText2))
+	fmt.Print("Key           : ")
+	PrintBytes(k)
+	fmt.Println("")
+	fmt.Print("iv            : ")
+	PrintBytes(iv)
+	fmt.Println("")
+	fmt.Print("Authenticated Plain text    : ")
+	PrintBytes(authenticatedPlainText2)
+	fmt.Println("")
+	fmt.Print("Authenticated Cipher text   : ")
+	PrintBytes(authenticatedCipherText2)
+	fmt.Print("Authenticated Recovered text: ")
+	PrintBytes(authenticatedRecoveredText2)
+	fmt.Println("")
+	if !bytes.Equal(authenticatedPlainText2, authenticatedRecoveredText2) {
+		t.Errorf("encrypt/decrypt fails")
+	}
+
 }
 
 func TestProofsAuth(t *testing.T) {
@@ -1677,8 +1704,8 @@ func TestGramineVerify(t *testing.T) {
 
 
 	// Write policy
-	// 	1. policyKey says intelKey is-trusted-for-attestation
-	// 	2. policyKey says measurement is-trusted
+	//	1. policyKey says intelKey is-trusted-for-attestation
+	//	2. policyKey says measurement is-trusted
 	publicPolicyKey := InternalPublicFromPrivateKey(&policyKey)
         if publicPolicyKey == nil {
                 t.Errorf("Can't make public policy key\n")
@@ -1826,3 +1853,177 @@ func TestGramineVerify(t *testing.T) {
 	fmt.Printf("\n")
 }
 */
+
+func TestPolicyStore(t *testing.T) {
+
+	fmt.Printf("\nPolicy Store Test\n")
+
+	ps := NewPolicyStore(100)
+	if ps == nil {
+		t.Errorf("Can't create policy store")
+		return
+	}
+	v1 := []byte{1, 2, 3, 4}
+	e1 := NewPolicyStoreEntry("v1", "binary", v1)
+	if e1 == nil {
+		t.Errorf("Can't create e1")
+		return
+	}
+	PrintPolicyStoreEntry(e1)
+	v2 := []byte{1, 2, 3, 4, 5}
+	e2 := NewPolicyStoreEntry("v2", "binary", v2)
+	if e2 == nil {
+		t.Errorf("Can't create e2")
+		return
+	}
+	v3 := []byte{1, 2, 3, 4, 5, 6}
+	e3 := NewPolicyStoreEntry("v3", "binary", v3)
+	if e3 == nil {
+		t.Errorf("Can't create e3")
+		return
+	}
+
+	if !InsertOrUpdatePolicyStoreEntry(ps, "v1", "binary", v1) {
+		t.Errorf("Can't add v1 to store")
+		return
+	}
+	if !InsertOrUpdatePolicyStoreEntry(ps, "v2", "binary", v2) {
+		t.Errorf("Can't add v1 to store")
+		return
+	}
+	if !InsertOrUpdatePolicyStoreEntry(ps, "v3", "binary", v3) {
+		t.Errorf("Can't add v1 to store")
+		return
+	}
+
+	pk := MakeVseRsaKey(2048)
+	serializedpk, err := proto.Marshal(pk)
+	if err != nil {
+		t.Errorf("Can't serialize key")
+		return
+	}
+	if !InsertOrUpdatePolicyStoreEntry(ps, "policy-key", "key", serializedpk) {
+		t.Errorf("Can't add policy key to store")
+		return
+	}
+
+	ent := FindPolicyStoreEntry(ps, "v1", "binary")
+	if ent < 0 {
+		t.Errorf("Can't find v1 in store")
+		return
+	}
+	if !bytes.Equal(ps.Entries[ent].Value, v1) {
+		t.Errorf("v1 values don't match")
+		return
+	}
+
+	fmt.Printf("\nPolicy Store:\n")
+	PrintPolicyStore(ps)
+
+	enclaveType := "simulated-enclave"
+
+	if !SavePolicyStore(enclaveType, ps, "test_data/policy_store") {
+		t.Errorf("Can't save policy store")
+		return
+	}
+
+	psNew := new(certprotos.PolicyStoreMessage)
+	if !RecoverPolicyStore(enclaveType, "test_data/policy_store", psNew) {
+		t.Errorf("Can't recover policy store")
+		return
+	}
+
+	if PolicyStoreNumEntries(ps) != PolicyStoreNumEntries(psNew) {
+		t.Errorf("Recovered policy store has wrong number of messages")
+		return
+	}
+
+	if ps.Entries[0].GetTag() != psNew.Entries[0].GetTag() ||
+		ps.Entries[0].GetType() != psNew.Entries[0].GetType() ||
+		!bytes.Equal(ps.Entries[0].Value, psNew.Entries[0].Value) {
+		t.Errorf("Recovered policy store entry mismatch")
+		return
+	}
+
+	newKey := new(certprotos.KeyMessage)
+	err = proto.Unmarshal(psNew.Entries[3].Value, newKey)
+	if err != nil {
+		t.Errorf("Can't unmarshal key")
+		return
+	}
+	if !SameKey(pk, newKey) {
+		t.Errorf("Stored key doesn't match")
+		return
+	}
+
+	fmt.Printf("\nRecovered key:\n")
+	PrintKey(newKey)
+}
+
+/*
+func TestTEESeal2(t *testing.T) {
+	fmt.Print("\nTestTEESeal\n")
+
+	var in []byte
+	in = make([]byte, 32)
+	for i := 0; i < 32; i++ {
+		in[i] = byte((7 * i) % 16)
+	}
+
+	blank := ""
+	err := TEESimulatedInit(blank, "test_data/attest_key_file.bin", "test_data/meas.bin", "test_data/platform_attest_endorsement.bin")
+	if err != nil {
+		t.Errorf("failed to initialize simulated enclave")
+	}
+
+	cipher, err := TEESeal("simulated-enclave", "test-enclave", in, 256)
+	if err != nil {
+		fmt.Printf("TEESeal failed: %s\n", err.Error())
+		t.Errorf("TestTEESeal failed")
+	}
+	fmt.Printf("Cipher text length: %d\n", len(cipher))
+
+	clear, err := TEEUnSeal("simulated-enclave", "test-enclave", cipher, 128)
+	if err != nil {
+		fmt.Printf("TEEUnseal failed: %s\n", err.Error())
+		t.Errorf("TestTEESeal failed")
+	}
+	fmt.Printf("Clear text length: %d\n", len(clear))
+	if !bytes.Equal(in, clear) {
+		fmt.Printf("Clear text mismatch\n")
+		t.Errorf("TestTEESeal failed")
+	}
+}
+*/
+
+func TestEncapsulatedData(t *testing.T) {
+	fmt.Print("\nTestEncapsulatedData\n")
+
+	rsaKey := MakeRsaKey(4096)
+	if rsaKey == nil {
+		t.Errorf("Can't generate Rsa key")
+	}
+	privK := certprotos.KeyMessage{}
+	if !GetInternalKeyFromRsaPrivateKey("encapsulating-key", rsaKey, &privK) {
+		t.Errorf("Can't Convert to private internal key")
+	}
+	PrintKey(&privK)
+	fmt.Printf("\n")
+	pubK := InternalPublicFromPrivateKey(&privK)
+	if pubK == nil {
+		t.Errorf("Can't Convert private to public internal key")
+	}
+	alg := "aes-256-gcm"
+	data := []byte("Fourscore and seven years ago ... and now look")
+
+	edm := certprotos.EncapsulatedDataMessage{}
+	if !EncapsulateData(pubK, alg, data, &edm) {
+		t.Errorf("Can't encapsulate data")
+	}
+
+	out := DecapsulateData(&privK, &edm)
+	if out == nil {
+		t.Errorf("Can't decapsulate data")
+	}
+	fmt.Printf("Out: %s\n", string(out))
+}

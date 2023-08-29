@@ -12,6 +12,16 @@ $CERTIFIER_PROTOTYPE/utilities/cert_utility.exe          \
       --policy_cert_output_file=policy_cert_file.bin     \
       --platform_key_output_file=platform_key_file.bin   \
       --attest_key_output_file=attest_key_file.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=attest_key_file.bin \
+  --verb="is-trusted-for-attestation" --output=tsc1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=platform_key_file.bin \
+  --verb="says" --clause=tsc1.bin --output=vse_policy3.bin
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
+  --duration=9000 --private_key_file=platform_key_file.bin \
+  --output=platform_attest_endorsement.bin
+$CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
+
 ```
 
 Next, run `$ ./generate_policy.sh`

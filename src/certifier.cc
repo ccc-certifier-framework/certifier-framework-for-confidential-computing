@@ -873,7 +873,9 @@ bool certifier::framework::protect_blob(const string &enclave_type,
                              unencrypted_data,
                              size_unencrypted_data,
                              key_buf,
+                             key.secret_key_bits().size(),
                              iv,
+                             16,
                              encrypted_data,
                              &size_encrypted)) {
     printf(
@@ -977,12 +979,14 @@ bool certifier::framework::unprotect_blob(const string &enclave_type,
            __LINE__);
     return false;
   }
+  int key_len = key->secret_key_bits().size();
 
   // decrypt encrypted data
   if (!authenticated_decrypt(key->key_type().c_str(),
                              (byte *)pb.encrypted_data().data(),
                              pb.encrypted_data().size(),
                              key_buf,
+                             key_len,
                              unencrypted_data,
                              size_of_unencrypted_data)) {
     printf(
