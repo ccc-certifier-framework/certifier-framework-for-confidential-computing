@@ -143,6 +143,8 @@ class domain_info {
   int    service_port_;
 };
 
+typedef bool (*initializing_prototype)(string**, int*);
+
 class certifiers;
 
 class cc_trust_manager {
@@ -227,6 +229,8 @@ class cc_trust_manager {
                 const string &policy_store_name);
   ~cc_trust_manager();
 
+  bool initialize_enclave(initializing_prototype fp);
+
   // Each of the enclave types have bespoke initialization
   bool initialize_simulated_enclave_data(
       const string &attest_key_file_name,
@@ -265,8 +269,6 @@ class cc_trust_manager {
 
   bool cold_init(const string &public_key_alg,
                  const string &symmetric_key_alg,
-                 byte *        asn1_cert,
-                 int           asn1_cert_size,
                  const string &home_domain_name,
                  const string &home_host,
                  int           home_port,

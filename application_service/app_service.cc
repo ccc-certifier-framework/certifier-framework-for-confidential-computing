@@ -863,8 +863,6 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
   if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
     if (!helper.cold_init(public_key_alg,
                           symmetric_key_alg,
-                          initialized_cert,
-                          initialized_cert_size,
                           "application_enclave_domain",
                           FLAGS_policy_host,
                           FLAGS_policy_port,

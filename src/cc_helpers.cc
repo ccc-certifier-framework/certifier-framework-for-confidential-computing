@@ -132,6 +132,10 @@ certifier::framework::cc_trust_manager::~cc_trust_manager() {
   num_certified_domains_ = 0;
 }
 
+bool certifier::framework::cc_trust_manager::initialize_enclave(initializing_prototype fp) {
+  return false;
+}
+
 bool certifier::framework::cc_trust_manager::cc_all_initialized() {
   if (purpose_ == "authentication") {
     return cc_basic_data_initialized_ & cc_auth_key_initialized_
@@ -1132,8 +1136,6 @@ bool certifier::framework::cc_trust_manager::generate_service_key(bool regen) {
 bool certifier::framework::cc_trust_manager::cold_init(
     const string &public_key_alg,
     const string &symmetric_key_alg,
-    byte *        asn1_cert,
-    int           asn1_cert_size,
     const string &home_domain_name,
     const string &home_host,
     int           home_port,
@@ -1148,7 +1150,7 @@ bool certifier::framework::cc_trust_manager::cold_init(
   }
 
   string domain_cert;
-  domain_cert.assign((char *)asn1_cert, asn1_cert_size);
+  domain_cert.assign(serialized_policy_cert_.data(), serialized_policy_cert_.size());
   if (num_certified_domains_ != 0) {
     printf("%s() error, line %d, there should be no certified domains yet\n",
            __func__,

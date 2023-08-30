@@ -167,8 +167,6 @@ int main(int an, char **av) {
   if (FLAGS_operation == "cold-init") {
     if (!app_trust_data->cold_init(public_key_alg,
                                    symmetric_key_alg,
-                                   initialized_cert,
-                                   initialized_cert_size,
                                    "simple-app-home_domain",
                                    FLAGS_policy_host,
                                    FLAGS_policy_port,
