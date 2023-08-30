@@ -51,7 +51,7 @@ Here is an example of such a program and its interactions with the Certifier API
 
 ```
   #include "policy_key.cc"
-  cc_trust_data* app_trust_data = nullptr;
+  cc_trust_manager* app_trust_data = nullptr;
 
   // Declare hardware and policy store locationn
   string enclave_type("sev-enclave");
@@ -65,7 +65,7 @@ Here is an example of such a program and its interactions with the Certifier API
   // FLAGS_server_app_port is the port the app uses to provide services.
   // home_domain_name is the name of the security domain.
 
-  app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
+  app_trust_data = new cc_trust_manager(enclave_type, purpose, store_file);
 
   // Initialize sev data
   app_trust_data->initialize_sev_enclave_data(FLAGS_ark_cert_file,

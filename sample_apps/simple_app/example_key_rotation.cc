@@ -55,7 +55,7 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 // For an example of rotating keys for protect_blob, see the certifier_tests.
 
 #include "policy_key.cc"
-cc_trust_data *app_trust_data = nullptr;
+cc_trust_manager *app_trust_data = nullptr;
 
 
 // -----------------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ int main(int an, char **av) {
   store_file.append(FLAGS_policy_store_file);
   string purpose("authentication");
 
-  app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
+  app_trust_data = new cc_trust_manager(enclave_type, purpose, store_file);
   if (app_trust_data == nullptr) {
     printf("%s() error, line %d, couldn't initialize trust object\n",
            __func__,

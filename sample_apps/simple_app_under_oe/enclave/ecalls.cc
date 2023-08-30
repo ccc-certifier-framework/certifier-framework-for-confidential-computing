@@ -39,7 +39,7 @@ static string data_dir = "app1_data";
 #define FLAGS_certificate_file  "vse.crt"
 
 static std::string enclave_type;
-cc_trust_data *    app_trust_data = nullptr;
+cc_trust_manager *    app_trust_data = nullptr;
 
 static bool oe_initialized = false;
 static bool openenclave_initialized = false;
@@ -158,7 +158,7 @@ bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size) {
 
     string store_file(data_dir);
     store_file.append(FLAGS_policy_store_file);
-    app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
+    app_trust_data = new cc_trust_manager(enclave_type, purpose, store_file);
     if (app_trust_data == nullptr) {
       printf("couldn't initialize trust object\n");
       return false;
@@ -205,7 +205,7 @@ bool warm_restart() {
   return app_trust_data->warm_restart();
 }
 
-// TODO: replace with new cc_trust_data interface
+// TODO: replace with new cc_trust_manager interface
 bool certify_me() {
   return app_trust_data->certify_me();
 }

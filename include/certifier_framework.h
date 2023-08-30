@@ -145,10 +145,10 @@ class domain_info {
 
 class certifiers;
 
-class cc_trust_data {
+class cc_trust_manager {
 
  private:
-  void cc_trust_data_default_init();
+  void cc_trust_manager_default_init();
 
  public:
   // Python swig bindings need this to be public, to size other array decls
@@ -221,11 +221,11 @@ class cc_trust_data {
 
 
   enum { MAX_NUM_CERTIFIERS = 32 };
-  cc_trust_data();
-  cc_trust_data(const string &enclave_type,
+  cc_trust_manager();
+  cc_trust_manager(const string &enclave_type,
                 const string &purpose,
                 const string &policy_store_name);
-  ~cc_trust_data();
+  ~cc_trust_manager();
 
   // Each of the enclave types have bespoke initialization
   bool initialize_simulated_enclave_data(
@@ -302,7 +302,7 @@ class cc_trust_data {
 class certifiers {
  private:
   // should be const, don't delete it
-  cc_trust_data *owner_;
+  cc_trust_manager *owner_;
 
  public:
   string domain_name_;
@@ -314,7 +314,7 @@ class certifiers {
   string service_host_;
   int    service_port_;
 
-  certifiers(cc_trust_data *owner);
+  certifiers(cc_trust_manager *owner);
   ~certifiers();
 
   bool init_certifiers_data(const string &domain_name,

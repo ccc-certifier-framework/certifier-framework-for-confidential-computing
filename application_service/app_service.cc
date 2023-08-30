@@ -226,7 +226,7 @@ const int max_pad_size = 128;
 
 // The support functions use the helper object
 //    This is just a reference, object is local to main
-cc_trust_data *app_trust_data = nullptr;
+cc_trust_manager *app_trust_data = nullptr;
 
 
 bool soft_Seal(spawned_children *kid, string in, string *out) {
@@ -807,7 +807,7 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
 
   string store_file(FLAGS_service_dir);
   store_file.append(FLAGS_service_policy_store);
-  cc_trust_data helper(enclave_type, purpose, store_file);
+  cc_trust_manager helper(enclave_type, purpose, store_file);
   app_trust_data = &helper;
 
   // Init policy key info

@@ -82,11 +82,11 @@ extern string gramine_platform_cert;
 
 //#define DEBUG
 
-certifier::framework::cc_trust_data::cc_trust_data(
+certifier::framework::cc_trust_manager::cc_trust_manager(
     const string &enclave_type,
     const string &purpose,
     const string &policy_store_name) {
-  cc_trust_data_default_init();
+  cc_trust_manager_default_init();
   if (purpose == "authentication" || purpose == "attestation") {
     purpose_ = purpose;
     cc_basic_data_initialized_ = true;
@@ -95,11 +95,11 @@ certifier::framework::cc_trust_data::cc_trust_data(
   store_file_name_ = policy_store_name;
 }
 
-certifier::framework::cc_trust_data::cc_trust_data() {
-  cc_trust_data_default_init();
+certifier::framework::cc_trust_manager::cc_trust_manager() {
+  cc_trust_manager_default_init();
 }
 
-void certifier::framework::cc_trust_data::cc_trust_data_default_init() {
+void certifier::framework::cc_trust_manager::cc_trust_manager_default_init() {
   cc_basic_data_initialized_ = false;
   purpose_ = "unknown";
   cc_policy_info_initialized_ = false;
@@ -120,7 +120,7 @@ void certifier::framework::cc_trust_data::cc_trust_data_default_init() {
   }
 }
 
-certifier::framework::cc_trust_data::~cc_trust_data() {
+certifier::framework::cc_trust_manager::~cc_trust_manager() {
   for (int i = 0; i < num_certified_domains_; i++) {
     if (certified_domains_[i] != nullptr) {
       delete certified_domains_[i];
@@ -132,7 +132,7 @@ certifier::framework::cc_trust_data::~cc_trust_data() {
   num_certified_domains_ = 0;
 }
 
-bool certifier::framework::cc_trust_data::cc_all_initialized() {
+bool certifier::framework::cc_trust_manager::cc_all_initialized() {
   if (purpose_ == "authentication") {
     return cc_basic_data_initialized_ & cc_auth_key_initialized_
            & cc_symmetric_key_initialized_ & cc_policy_info_initialized_
@@ -147,7 +147,7 @@ bool certifier::framework::cc_trust_data::cc_all_initialized() {
   }
 }
 
-bool certifier::framework::cc_trust_data::initialize_application_enclave_data(
+bool certifier::framework::cc_trust_manager::initialize_application_enclave_data(
     const string &parent_enclave_type,
     int           in_fd,
     int           out_fd) {
@@ -175,7 +175,7 @@ bool certifier::framework::cc_trust_data::initialize_application_enclave_data(
   return true;
 }
 
-bool certifier::framework::cc_trust_data::initialize_simulated_enclave_data(
+bool certifier::framework::cc_trust_manager::initialize_simulated_enclave_data(
     const string &attest_key_file_name,
     const string &measurement_file_name,
     const string &attest_endorsement_file_name) {
@@ -204,7 +204,7 @@ bool certifier::framework::cc_trust_data::initialize_simulated_enclave_data(
   return true;
 }
 
-bool certifier::framework::cc_trust_data::initialize_gramine_enclave_data(
+bool certifier::framework::cc_trust_manager::initialize_gramine_enclave_data(
     const int size,
     byte *    cert) {
 #ifdef GRAMINE_CERTIFIER
@@ -213,7 +213,7 @@ bool certifier::framework::cc_trust_data::initialize_gramine_enclave_data(
   return true;
 }
 
-bool certifier::framework::cc_trust_data::initialize_sev_enclave_data(
+bool certifier::framework::cc_trust_manager::initialize_sev_enclave_data(
     const string &platform_ark_der_file,
     const string &platform_ask_der_file,
     const string &platform_vcek_der_file) {
@@ -233,7 +233,7 @@ bool certifier::framework::cc_trust_data::initialize_sev_enclave_data(
 #endif
 }
 
-bool certifier::framework::cc_trust_data::initialize_oe_enclave_data(
+bool certifier::framework::cc_trust_manager::initialize_oe_enclave_data(
     const string &pem_cert_chain_file) {
 #if OE_CERTIFIER
   cc_provider_provisioned_ = true;
@@ -249,7 +249,7 @@ bool certifier::framework::cc_trust_data::initialize_oe_enclave_data(
 #endif
 }
 
-bool certifier::framework::cc_trust_data::init_policy_key(byte *asn1_cert,
+bool certifier::framework::cc_trust_manager::init_policy_key(byte *asn1_cert,
                                                           int asn1_cert_size) {
   serialized_policy_cert_.assign((char *)asn1_cert, asn1_cert_size);
 
@@ -270,7 +270,7 @@ bool certifier::framework::cc_trust_data::init_policy_key(byte *asn1_cert,
   return true;
 }
 
-bool certifier::framework::cc_trust_data::initialize_keystone_enclave_data(
+bool certifier::framework::cc_trust_manager::initialize_keystone_enclave_data(
     const string &attest_key_file_name,
     const string &measurement_file_name,
     const string &attest_endorsement_file_name) {
@@ -313,7 +313,7 @@ bool certifier::framework::cc_trust_data::initialize_keystone_enclave_data(
 #endif
 }
 
-bool certifier::framework::cc_trust_data::initialize_islet_enclave_data(
+bool certifier::framework::cc_trust_manager::initialize_islet_enclave_data(
     const string &attest_key_file_name,
     const string &measurement_file_name,
     const string &attest_endorsement_file_name) {
@@ -345,7 +345,7 @@ bool certifier::framework::cc_trust_data::initialize_islet_enclave_data(
 }
 
 
-void certifier::framework::cc_trust_data::print_trust_data() {
+void certifier::framework::cc_trust_manager::print_trust_data() {
   if (!cc_basic_data_initialized_) {
     printf("%s() error, line %d, No trust info initialized\n",
            __func__,
@@ -473,7 +473,7 @@ void certifier::framework::cc_trust_data::print_trust_data() {
 
 const int max_pad_size_for_store = 1024;
 
-bool certifier::framework::cc_trust_data::save_store() {
+bool certifier::framework::cc_trust_manager::save_store() {
 
   string serialized_store;
   if (!store_.Serialize(&serialized_store)) {
@@ -524,7 +524,7 @@ bool certifier::framework::cc_trust_data::save_store() {
   return true;
 }
 
-bool certifier::framework::cc_trust_data::fetch_store() {
+bool certifier::framework::cc_trust_manager::fetch_store() {
 
   int size_protected_blob = file_size(store_file_name_);
   if (size_protected_blob < 0) {
@@ -572,12 +572,12 @@ bool certifier::framework::cc_trust_data::fetch_store() {
   return true;
 }
 
-void certifier::framework::cc_trust_data::clear_sensitive_data() {
+void certifier::framework::cc_trust_manager::clear_sensitive_data() {
   // Clear symmetric and private keys.
   // Not necessary on most platforms.
 }
 
-//  cc_trust_data relies on the following data in the store
+//  cc_trust_manager relies on the following data in the store
 //    public_policy_key
 //    public_key_algorithm
 //    symmetric_key_algorithm
@@ -591,7 +591,7 @@ void certifier::framework::cc_trust_data::clear_sensitive_data() {
 //    will also be stored.
 //  initialized cert is in the array initialized_cert with size
 //  initialized_cert_size These are set in embed+policy_key.cc.
-bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
+bool certifier::framework::cc_trust_manager::put_trust_data_in_store() {
 
 #if 0
   store_.policy_key_.CopyFrom(public_policy_key_);
@@ -735,7 +735,7 @@ bool certifier::framework::cc_trust_data::put_trust_data_in_store() {
   return false;
 }
 
-bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
+bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
 
   const string string_type("string");
   const string key_type("key");
@@ -943,7 +943,7 @@ bool certifier::framework::cc_trust_data::get_trust_data_from_store() {
 }
 
 // If regen is true, replace them even if they are valid
-bool certifier::framework::cc_trust_data::generate_symmetric_key(bool regen) {
+bool certifier::framework::cc_trust_manager::generate_symmetric_key(bool regen) {
 
   if (cc_symmetric_key_initialized_ && !regen)
     return true;
@@ -982,7 +982,7 @@ bool certifier::framework::cc_trust_data::generate_symmetric_key(bool regen) {
   return true;
 }
 
-bool certifier::framework::cc_trust_data::generate_sealing_key(bool regen) {
+bool certifier::framework::cc_trust_manager::generate_sealing_key(bool regen) {
 
   if (cc_sealing_key_initialized_ && !regen)
     return true;
@@ -1022,7 +1022,7 @@ bool certifier::framework::cc_trust_data::generate_sealing_key(bool regen) {
   return true;
 }
 
-bool certifier::framework::cc_trust_data::generate_auth_key(bool regen) {
+bool certifier::framework::cc_trust_manager::generate_auth_key(bool regen) {
 
   if (cc_auth_key_initialized_ && !regen)
     return true;
@@ -1074,7 +1074,7 @@ bool certifier::framework::cc_trust_data::generate_auth_key(bool regen) {
   return true;
 }
 
-bool certifier::framework::cc_trust_data::generate_service_key(bool regen) {
+bool certifier::framework::cc_trust_manager::generate_service_key(bool regen) {
 
   if (cc_service_key_initialized_ && !regen)
     return true;
@@ -1129,7 +1129,7 @@ bool certifier::framework::cc_trust_data::generate_service_key(bool regen) {
 //  public_key_alg can be rsa-2048, rsa-1024, rsa-3072, rsa-4096, ecc-384
 //  symmetric_key_alg can be aes-256-cbc-hmac-sha256, aes-256-cbc-hmac-sha384 or
 //  aes-256-gcm
-bool certifier::framework::cc_trust_data::cold_init(
+bool certifier::framework::cc_trust_manager::cold_init(
     const string &public_key_alg,
     const string &symmetric_key_alg,
     byte *        asn1_cert,
@@ -1230,7 +1230,7 @@ bool certifier::framework::cc_trust_data::cold_init(
   return true;
 }
 
-bool certifier::framework::cc_trust_data::warm_restart() {
+bool certifier::framework::cc_trust_manager::warm_restart() {
 
   // fetch store
   if (!cc_policy_store_initialized_) {
@@ -1250,7 +1250,7 @@ bool certifier::framework::cc_trust_data::warm_restart() {
   return true;
 }
 
-bool certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim(
+bool certifier::framework::cc_trust_manager::GetPlatformSaysAttestClaim(
     signed_claim_message *scm) {
   if (enclave_type_ == "simulated-enclave") {
     return simulated_GetAttestClaim(scm);
@@ -1277,7 +1277,7 @@ bool certifier::framework::cc_trust_data::GetPlatformSaysAttestClaim(
   return false;
 }
 
-bool certifier::framework::cc_trust_data::add_or_update_new_domain(
+bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
     const string &domain_name,
     const string &cert,
     const string &host,
@@ -1316,7 +1316,7 @@ bool certifier::framework::cc_trust_data::add_or_update_new_domain(
                                      service_port);
 }
 
-bool certifier::framework::cc_trust_data::certify_primary_domain() {
+bool certifier::framework::cc_trust_manager::certify_primary_domain() {
 
   if (!cc_all_initialized()) {
     if (!warm_restart()) {
@@ -1359,7 +1359,7 @@ bool certifier::framework::cc_trust_data::certify_primary_domain() {
   return true;
 }
 
-bool certifier::framework::cc_trust_data::certify_secondary_domain(
+bool certifier::framework::cc_trust_manager::certify_secondary_domain(
     const string &domain_name) {
 
   // find it
@@ -1374,7 +1374,7 @@ bool certifier::framework::cc_trust_data::certify_secondary_domain(
   return (found ? found->certify_domain() : false);
 }
 
-bool certifier::framework::cc_trust_data::init_peer_certification_data(
+bool certifier::framework::cc_trust_manager::init_peer_certification_data(
     const string &public_key_alg) {
   // bool peer_data_initialized_;
   // key_message local_policy_key_;
@@ -1382,23 +1382,23 @@ bool certifier::framework::cc_trust_data::init_peer_certification_data(
   return false;
 }
 
-bool certifier::framework::cc_trust_data::recover_peer_certification_data() {
+bool certifier::framework::cc_trust_manager::recover_peer_certification_data() {
   return false;
 }
 
-bool certifier::framework::cc_trust_data::get_peer_certification(
+bool certifier::framework::cc_trust_manager::get_peer_certification(
     const string &host_name,
     int           port) {
   return false;
 }
 
-bool certifier::framework::cc_trust_data::run_peer_certification_service(
+bool certifier::framework::cc_trust_manager::run_peer_certification_service(
     const string &host_name,
     int           port) {
   return false;
 }
 
-bool certifier::framework::cc_trust_data::get_certifiers_from_store() {
+bool certifier::framework::cc_trust_manager::get_certifiers_from_store() {
 
   int ent = store_.find_entry("all-certifiers", "certifiers_message");
   if (ent < 0) {
@@ -1444,7 +1444,7 @@ bool certifier::framework::cc_trust_data::get_certifiers_from_store() {
   return true;
 }
 
-bool certifier::framework::cc_trust_data::put_certifiers_in_store() {
+bool certifier::framework::cc_trust_manager::put_certifiers_in_store() {
   certifiers_message cert_messages;
   string             serialized_cert_messages;
 
@@ -1473,7 +1473,7 @@ bool certifier::framework::cc_trust_data::put_certifiers_in_store() {
                                  serialized_cert_messages);
 }
 
-certifier::framework::certifiers::certifiers(cc_trust_data *owner) {
+certifier::framework::certifiers::certifiers(cc_trust_manager *owner) {
   owner_ = owner;
 }
 
@@ -1826,7 +1826,7 @@ bool certifier::framework::certifiers::certify_domain() {
 
   } else if (owner_->purpose_ == "attestation") {
 
-    // These should be set in cc_trust_data and ONLY for the primary domain
+    // These should be set in cc_trust_manager and ONLY for the primary domain
     owner_->public_service_key_.set_certificate(response.artifact());
     owner_->private_service_key_.set_certificate(response.artifact());
 
@@ -1841,7 +1841,7 @@ bool certifier::framework::certifiers::certify_domain() {
       return false;
     }
 
-    // These should be set in cc_trust_data and ONLY for the primary domain
+    // These should be set in cc_trust_manager and ONLY for the primary domain
     owner_->cc_service_platform_rule_initialized_ = true;
 
   } else {

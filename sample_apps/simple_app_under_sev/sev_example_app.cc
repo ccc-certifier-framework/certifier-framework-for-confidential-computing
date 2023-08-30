@@ -58,7 +58,7 @@ DEFINE_string(vcek_cert_file, "./service/vcek_cert.der", "vcek cert file name");
 //      under other ops.
 
 #include "policy_key.cc"
-cc_trust_data *app_trust_data = nullptr;
+cc_trust_manager *app_trust_data = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
@@ -135,7 +135,7 @@ int main(int an, char **av) {
 
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_file);
-  app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
+  app_trust_data = new cc_trust_manager(enclave_type, purpose, store_file);
   if (app_trust_data == nullptr) {
     printf("%s() error, line %d, couldn't initialize trust object\n",
            __func__,
