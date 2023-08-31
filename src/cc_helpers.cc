@@ -132,8 +132,60 @@ certifier::framework::cc_trust_manager::~cc_trust_manager() {
   num_certified_domains_ = 0;
 }
 
-bool certifier::framework::cc_trust_manager::initialize_enclave(initializing_prototype fp) {
-  return false;
+bool certifier::framework::cc_trust_manager::initialize_enclave(initializing_prototype fp,
+                                                                string** s,
+                                                                int* n) {
+
+  if (enclave_type_ == "simulated-enclave") {
+    if (fp == nullptr) {
+      printf("%s() error, line %d, no initialized for\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+    string* s = nullptr;
+    int n = 0;
+    if (!fp(&s, &n)) {
+      printf("%s() error, line %d, initializer fails\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+    if (n != 3 || s == nullptr) {
+      printf("%s() error, line %d, initializer bad returns\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+    return initialize_simulated_enclave_data(s[0], s[1], s[2]);
+  } else if (enclave_type_ == "sev-enclave") {
+    // initialize_sev_enclave_data( const string &platform_ark_der_file,
+    // const string &platform_ask_der_file, const string &platform_vcek_der_file)
+    return false;
+  } else if (enclave_type_ == "oe-enclave") {
+    // initialize_oe_enclave_data(const string &pem_cert_chain_file)
+    return false;
+  } else if (enclave_type_ == "gramine-enclave") {
+    // initialize_gramine_enclave_data(const int size, byte * cert)
+    return false;
+  } else if (enclave_type_ == "application-enclave") {
+    // initialize_application_enclave_data( const string &parent_enclave_type,
+    // int           in_fd, int           out_fd)
+    return false;
+  } else if (enclave_type_ == "keystone-enclave") {
+    // initialize_keystone_enclave_data( const string &attest_key_file_name,
+    // const string &measurement_file_name, const string &attest_endorsement_file_name)
+    return false;
+  } else if (enclave_type_ == "islet-enclave") {
+    // initialize_islet_enclave_data( const string &attest_key_file_name,
+    // const string &measurement_file_name, const string &attest_endorsement_file_name)
+    return false;
+  } else {
+    printf("%s() error, line %d, unsupported enclave type\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 }
 
 bool certifier::framework::cc_trust_manager::cc_all_initialized() {
