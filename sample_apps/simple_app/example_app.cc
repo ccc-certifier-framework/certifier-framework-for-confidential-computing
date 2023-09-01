@@ -106,6 +106,22 @@ void server_application(secure_authenticated_channel &channel) {
   channel.write(strlen(msg), (byte *)msg);
 }
 
+// General initialization for simulated enclave
+bool simultated_enclave_init(string** s, int* n) {
+
+  // attest key, measurement, endorsement, in that order
+  *s = new string[3];
+  if (*s == nullptr) {
+    return false;
+  }
+
+  (*s)[0] = FLAGS_data_dir + FLAGS_attest_key_file;
+  (*s)[1] = FLAGS_data_dir + FLAGS_measurement_file;
+  (*s)[2] = FLAGS_data_dir + FLAGS_platform_attest_endorsement;
+  *n = 3;
+  return true;
+}
+
 int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -147,6 +163,7 @@ int main(int an, char **av) {
   }
 
   // Init simulated enclave
+#if 1
   string attest_key_file_name(FLAGS_data_dir);
   attest_key_file_name.append(FLAGS_attest_key_file);
   string platform_attest_file_name(FLAGS_data_dir);
@@ -165,6 +182,16 @@ int main(int an, char **av) {
            __LINE__);
     return 1;
   }
+#else
+  string* s;
+  int n;
+  if (!initialize_enclave(simultated_enclave_init, &s, &n)) {
+    printf("%s() error, line %d, Can't init simulated enclave\n",
+         __func__,
+         __LINE__);
+    return 1;
+  }
+#endif
 
   // Standard algorithms for the enclave
   string public_key_alg(Enc_method_rsa_2048);
