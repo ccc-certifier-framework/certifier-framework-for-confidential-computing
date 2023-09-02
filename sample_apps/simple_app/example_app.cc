@@ -109,29 +109,30 @@ void server_application(secure_authenticated_channel &channel) {
 }
 
 // General initialization for simulated enclave
-bool simultated_enclave_init(string** s, int* n) {
+bool simulated_enclave_init(string** s, int* n) {
 
   // serialized attest key, measurement, serialized endorsement, in that order
-  *s = new string[3];
-  if (*s == nullptr) {
+  string *args = new string[3];
+  if (args == nullptr) {
     return false;
   }
+  *s = args;
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file, &((*s)[0]))) {
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file, &args[0])) {
         printf("%s() error, line %d, Can't read attest file\n",
            __func__,
            __LINE__);
     return false;
   }
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file, &((*s)[1]))) {
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file, &args[1])) {
         printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     return false;
   }
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement, &((*s)[3]))) {
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement, &args[2])) {
         printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
@@ -183,35 +184,12 @@ int main(int an, char **av) {
   }
 
   // Init simulated enclave
-#if 1
-  string attest_key_file_name(FLAGS_data_dir);
-  attest_key_file_name.append(FLAGS_attest_key_file);
-  string platform_attest_file_name(FLAGS_data_dir);
-  platform_attest_file_name.append(FLAGS_platform_attest_endorsement);
-  string measurement_file_name(FLAGS_data_dir);
-  measurement_file_name.append(FLAGS_measurement_file);
-  string attest_endorsement_file_name(FLAGS_data_dir);
-  attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
-
-  if (!app_trust_data->initialize_simulated_enclave_data(
-          attest_key_file_name,
-          measurement_file_name,
-          attest_endorsement_file_name)) {
-    printf("%s() error, line %d, Can't init simulated enclave\n",
-           __func__,
-           __LINE__);
-    return 1;
-  }
-#else
-  string* s;
-  int n;
-  if (!initialize_enclave(simultated_enclave_init, &s, &n)) {
+  if (!app_trust_data->initialize_enclave(simulated_enclave_init)) {
     printf("%s() error, line %d, Can't init simulated enclave\n",
          __func__,
          __LINE__);
     return 1;
   }
-#endif
 
   // Standard algorithms for the enclave
   string public_key_alg(Enc_method_rsa_2048);

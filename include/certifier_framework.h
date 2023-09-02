@@ -229,15 +229,10 @@ class cc_trust_manager {
                 const string &policy_store_name);
   ~cc_trust_manager();
 
-  bool initialize_enclave(initializing_prototype fp, string** s, int* n);
+  bool initialize_enclave(initializing_prototype fp);
 
   // Each of the enclave types have bespoke initialization
 
-  // initialize_simulated_enclave_data to be deprecated
-  bool initialize_simulated_enclave_data(
-      const string &attest_key_file_name,
-      const string &measurement_file_name,
-      const string &attest_endorsement_file_name);
   bool initialize_simulated_enclave(
       const string &serialized_attest_key,
       const string &measurement,

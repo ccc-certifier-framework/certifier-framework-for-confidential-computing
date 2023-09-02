@@ -132,9 +132,7 @@ certifier::framework::cc_trust_manager::~cc_trust_manager() {
   num_certified_domains_ = 0;
 }
 
-bool certifier::framework::cc_trust_manager::initialize_enclave(initializing_prototype fp,
-                                                                string** s,
-                                                                int* n) {
+bool certifier::framework::cc_trust_manager::initialize_enclave(initializing_prototype fp) {
 
   if (enclave_type_ == "simulated-enclave") {
     if (fp == nullptr) {
@@ -252,36 +250,6 @@ bool certifier::framework::cc_trust_manager::initialize_simulated_enclave(
   if (!simulated_Init(serialized_attest_key,
                       measurement,
                       serialized_attest_endorsement)) {
-    printf("%s() error, line %d, simulated_init failed\n", __func__, __LINE__);
-    return false;
-  }
-  cc_provider_provisioned_ = true;
-  return true;
-}
-
-
-bool certifier::framework::cc_trust_manager::initialize_simulated_enclave_data(
-    const string &attest_key_file_name,
-    const string &measurement_file_name,
-    const string &attest_endorsement_file_name) {
-
-  if (!cc_policy_info_initialized_) {
-    printf("%s() error, line %d, Policy key must be initialized first\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  if (enclave_type_ != "simulated-enclave") {
-    printf("%s() error, line %d, Not a simulated enclave\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  if (!simulated_Init(serialized_policy_cert_,
-                      attest_key_file_name,
-                      measurement_file_name,
-                      attest_endorsement_file_name)) {
     printf("%s() error, line %d, simulated_init failed\n", __func__, __LINE__);
     return false;
   }
