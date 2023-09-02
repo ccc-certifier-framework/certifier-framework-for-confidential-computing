@@ -178,7 +178,7 @@ int main(int an, char **av) {
   }
 
   // Init application enclave
-  if (!app_trust_data->initialize_application_enclave_data(parent_enclave_type,
+  if (!app_trust_data->initialize_application_enclave(parent_enclave_type,
                                                            in_fd,
                                                            out_fd)) {
     printf("%s() error, line %d, Can't init application-enclave\n",

@@ -29,8 +29,10 @@
 #include <openssl/err.h>
 
 #include "certifier_framework.h"
+#include "certifier_utilities.h"
 
 using namespace certifier::framework;
+using namespace certifier::utilities;
 
 // Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false, "verbose");
@@ -106,6 +108,9 @@ void server_application(secure_authenticated_channel &channel) {
   channel.write(strlen(msg), (byte *)msg);
 }
 
+// ----------------------------------------------------------------------------
+
+
 int main(int an, char **av) {
   string usage("Keystone-based simple app");
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -115,7 +120,7 @@ int main(int an, char **av) {
   if (FLAGS_operation == "") {
     printf("%s: %s\n\n", av[0], usage.c_str());
     printf(
-        "example_app.exe --print_all=true|false --operation=op "
+        "keystone_example_app.exe --print_all=true|false --operation=op "
         "--policy_host=policy-host-address --policy_port=policy-host-port\n");
     printf("\t --data_dir=-directory-for-app-data "
            "--server_app_host=my-server-host-address "
@@ -148,18 +153,9 @@ int main(int an, char **av) {
     return 1;
   }
 
-  string platform_attest_file_name(FLAGS_data_dir);
-  string measurement_file_name(FLAGS_data_dir);
-  measurement_file_name.append(FLAGS_measurement_file);
-  string attest_key_file_name(FLAGS_data_dir);
-  attest_key_file_name.append(FLAGS_attest_key_file);
-
   string endorsement_cert;
 
-  if (!app_trust_data->initialize_keystone_enclave_data(
-          attest_key_file_name,
-          measurement_file_name,
-          platform_attest_file_name)) {
+  if (!app_trust_data->initialize_enclave(nullptr)) {
     printf("%s() error, line %d, Can't init keystone enclave\n",
            __func__,
            __LINE__);

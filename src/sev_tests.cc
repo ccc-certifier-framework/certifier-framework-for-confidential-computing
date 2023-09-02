@@ -392,7 +392,24 @@ bool test_sev_platform_certify(const bool    debug_print,
 
   // This has no effect for now
   extern bool sev_Init(const string &, const string &, const string &);
-  if (!sev_Init(ark_cert_file_name, ask_cert_file_name, vcek_cert_file_name)) {
+  string ark_cert;
+  string ask_cert;
+  string vcek_cert;
+  if (!read_file_into_string(ark_cert_file_name, &ark_cert)) {
+    printf("test_sev_platform_certify: Can't read ark cert\n");
+    return false;
+  }
+  if (!read_file_into_string(ask_cert_file_name, &ask_cert)) {
+    printf("test_sev_platform_certify: Can't read ask cert\n");
+    return false;
+  }
+  if (!read_file_into_string(vcek_cert_file_name, &vcek_cert)) {
+    printf("test_sev_platform_certify: Can't read vcek cert\n");
+    return false;
+  }
+
+  if (!sev_Init(ark_cert, ask_cert, vcek_cert)) {
+    printf("test_sev_platform_certify: Can't sev_Init\n");
     return false;
   }
 

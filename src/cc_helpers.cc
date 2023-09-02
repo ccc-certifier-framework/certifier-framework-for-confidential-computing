@@ -47,9 +47,9 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 #ifdef SEV_SNP
-extern bool   sev_Init(const string &platform_ark_der_file,
-                       const string &platform_ask_der_file,
-                       const string &platform_vcek_der_file);
+extern bool   sev_Init(const string &ark_der,
+                       const string &ask_der,
+                       const string &vcek_der);
 extern bool   plat_certs_initialized;
 extern string platform_certs;
 extern string serialized_ark_cert;
@@ -135,12 +135,14 @@ certifier::framework::cc_trust_manager::~cc_trust_manager() {
 bool certifier::framework::cc_trust_manager::initialize_enclave(initializing_prototype fp) {
 
   if (enclave_type_ == "simulated-enclave") {
+
     if (fp == nullptr) {
       printf("%s() error, line %d, no initialized for\n",
            __func__,
            __LINE__);
       return false;
     }
+
     string* s = nullptr;
     int n = 0;
     if (!fp(&s, &n)) {
@@ -155,25 +157,72 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(initializing_pro
            __LINE__);
       return false;
     }
-    return initialize_simulated_enclave(s[0], s[1], s[2]);
+
+    bool res = initialize_simulated_enclave(s[0], s[1], s[2]);
+    delete []s;
+    return res;
   } else if (enclave_type_ == "sev-enclave") {
-    // initialize_sev_enclave_data( const string &platform_ark_der_file,
-    // const string &platform_ask_der_file, const string &platform_vcek_der_file)
-    return false;
+
+    if (fp == nullptr) {
+      printf("%s() error, line %d, no initialized for\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+
+    string* s = nullptr;
+    int n = 0;
+    if (!fp(&s, &n)) {
+      printf("%s() error, line %d, initializer fails\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+    if (n != 3 || s == nullptr) {
+      printf("%s() error, line %d, initializer bad returns\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+ 
+    bool res = initialize_sev_enclave(s[0], s[1], s[2]);
+    delete []s;
+    return res;
   } else if (enclave_type_ == "oe-enclave") {
     // initialize_oe_enclave_data(const string &pem_cert_chain_file)
     return false;
   } else if (enclave_type_ == "gramine-enclave") {
-    // initialize_gramine_enclave_data(const int size, byte * cert)
-    return false;
+    if (fp == nullptr) {
+      printf("%s() error, line %d, no initialized for\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+
+    string* s = nullptr;
+    int n = 0;
+    if (!fp(&s, &n)) {
+      printf("%s() error, line %d, initializer fails\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+    if (n != 1 || s == nullptr) {
+      printf("%s() error, line %d, initializer bad returns\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+
+    bool res = initialize_gramine_enclave(s[0].size(), (byte*)s[0].data());
+    delete []s;
+    return res;
   } else if (enclave_type_ == "application-enclave") {
     // initialize_application_enclave( const string &parent_enclave_type,
     // int           in_fd, int           out_fd)
     return false;
   } else if (enclave_type_ == "keystone-enclave") {
-    // initialize_keystone_enclave_data( const string &attest_key_file_name,
-    // const string &measurement_file_name, const string &attest_endorsement_file_name)
-    return false;
+    return initialize_keystone_enclave();;
   } else if (enclave_type_ == "islet-enclave") {
     // initialize_islet_enclave_data( const string &attest_key_file_name,
     // const string &measurement_file_name, const string &attest_endorsement_file_name)
@@ -257,7 +306,7 @@ bool certifier::framework::cc_trust_manager::initialize_simulated_enclave(
   return true;
 }
 
-bool certifier::framework::cc_trust_manager::initialize_gramine_enclave_data(
+bool certifier::framework::cc_trust_manager::initialize_gramine_enclave(
     const int size,
     byte *    cert) {
 #ifdef GRAMINE_CERTIFIER
@@ -266,15 +315,13 @@ bool certifier::framework::cc_trust_manager::initialize_gramine_enclave_data(
   return true;
 }
 
-bool certifier::framework::cc_trust_manager::initialize_sev_enclave_data(
-    const string &platform_ark_der_file,
-    const string &platform_ask_der_file,
-    const string &platform_vcek_der_file) {
+bool certifier::framework::cc_trust_manager::initialize_sev_enclave(
+    const string &ark_der,
+    const string &ask_der,
+    const string &vcek_der) {
 
 #ifdef SEV_SNP
-  if (!sev_Init(platform_ark_der_file,
-                platform_ask_der_file,
-                platform_vcek_der_file)) {
+  if (!sev_Init(ark_der, ask_der, vcek_der)) {
     printf("%s() error, line %d, sev_Init failed\n", __func__, __LINE__);
     return false;
   }
@@ -323,10 +370,7 @@ bool certifier::framework::cc_trust_manager::init_policy_key(byte *asn1_cert,
   return true;
 }
 
-bool certifier::framework::cc_trust_manager::initialize_keystone_enclave_data(
-    const string &attest_key_file_name,
-    const string &measurement_file_name,
-    const string &attest_endorsement_file_name) {
+bool certifier::framework::cc_trust_manager::initialize_keystone_enclave() {
 
 #ifdef KEYSTONE_CERTIFIER
   if (!cc_policy_info_initialized_) {
@@ -340,15 +384,6 @@ bool certifier::framework::cc_trust_manager::initialize_keystone_enclave_data(
     printf("%s() error, line %d, Not a simulated enclave\n",
            __func__,
            __LINE__);
-    return false;
-  }
-
-  int m_size = file_size(measurement_file_name);
-  if (m_size < 0) {
-    printf("%s(): Invalid size=%d of measurement file '%s'.\n",
-           __func__,
-           m_size,
-           measurement_file_name.c_str());
     return false;
   }
 

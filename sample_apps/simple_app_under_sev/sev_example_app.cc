@@ -29,8 +29,10 @@
 #include <openssl/err.h>
 
 #include "certifier_framework.h"
+#include "certifier_utilities.h"
 
 using namespace certifier::framework;
+using namespace certifier::utilities;
 
 // Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false, "verbose");
@@ -107,6 +109,44 @@ bool run_me_as_server(const string &host_name,
   return true;
 }
 
+// -----------------------------------------------------------------------------------------
+
+// General initialization for sev enclave
+bool sev_enclave_init(string** s, int* n) {
+
+  // ark cert file, ask cert file, vcek cert file
+  string *args = new string[3];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ark_cert_file, &args[0])) {
+        printf("%s() error, line %d, Can't read attest file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
+        printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
+        printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  *n = 3;
+  return true;
+}
+
+
 int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -151,9 +191,7 @@ int main(int an, char **av) {
   }
 
   // Init sev enclave
-  if (!app_trust_data->initialize_sev_enclave_data(FLAGS_ark_cert_file,
-                                                   FLAGS_ask_cert_file,
-                                                   FLAGS_vcek_cert_file)) {
+  if (!app_trust_data->initialize_enclave(sev_enclave_init)) {
     printf("%s() error, line %d, Can't init sev enclave\n", __func__, __LINE__);
     return 1;
   }

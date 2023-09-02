@@ -805,22 +805,13 @@ string serialized_ark_cert;
 string serialized_ask_cert;
 string serialized_vcek_cert;
 
-bool sev_Init(const string &platform_ark_der_file,
-              const string &platform_ask_der_file,
-              const string &platform_vcek_der_file) {
+bool sev_Init(const string &ark_der,
+              const string &ask_der,
+              const string &vcek_der) {
 
-  if (!read_file_into_string(platform_ark_der_file, &serialized_ark_cert)) {
-    printf("sev_Init: Can't read ark file\n");
-    return false;
-  }
-  if (!read_file_into_string(platform_ask_der_file, &serialized_ask_cert)) {
-    printf("sev_Init: Can't read ask file\n");
-    return false;
-  }
-  if (!read_file_into_string(platform_vcek_der_file, &serialized_vcek_cert)) {
-    printf("sev_Init: Can't read vcek file\n");
-    return false;
-  }
+  serialized_ark_cert = ark_der;
+  serialized_ask_cert = ask_der;
+  serialized_vcek_cert = vcek_der;
 
   certifier_parent_enclave_type = "hardware";
   certifier_parent_enclave_type_intitalized = true;

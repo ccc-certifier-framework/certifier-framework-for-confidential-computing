@@ -238,15 +238,17 @@ class cc_trust_manager {
       const string &measurement,
       const string &serialized_attest_endorsement);
 
+#if 0
   // initialize_sev_enclave_data to be deprecated
   bool initialize_sev_enclave_data(const string &platform_ark_der_file,
                                    const string &platform_ask_der_file,
                                    const string &platform_vcek_der_file);
+#endif
   bool initialize_sev_enclave(const string &ark_der_cert,
                               const string &ask_der_cert,
                               const string &vcek_der_cert);
 
-  bool initialize_gramine_enclave_data(const int size, byte *cert);
+  bool initialize_gramine_enclave(const int size, byte *cert);
 
   // initialize_oe_enclave_data to be deprecated
   bool initialize_oe_enclave_data(const string &file);
@@ -257,14 +259,7 @@ class cc_trust_manager {
                                       int           out_fd);
 
   // initialize_keystone_enclave_data to be deprecated
-  bool initialize_keystone_enclave_data(
-      const string &attest_key_file_name,
-      const string &measurement_file_name,
-      const string &attest_endorsement_file_name);
-  bool initialize_keystone_enclave(
-      const string &serialized_attest_key,
-      const string &measurement_file_name,
-      const string &serialized_attest_endorsement);
+  bool initialize_keystone_enclave();
 
   // initialize_keystone_enclave_data to be deprecated
   bool initialize_islet_enclave_data(
