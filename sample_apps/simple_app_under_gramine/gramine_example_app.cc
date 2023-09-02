@@ -104,6 +104,30 @@ bool run_me_as_server(const string &host_name,
   return true;
 }
 
+// -----------------------------------------------------------------------------------------
+
+// Parameters for simulated enclave
+bool get_gramine_enclave_parameters(string** s, int* n) {
+
+  // serialized attest key, measurement, serialized endorsement, in that order
+  string *args = new string[1];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_gramine_cert_file, &args[0])) {
+        printf("%s() error, line %d, Can't read attest file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  *n = 1;
+  return true;
+}
+
+
 int main(int an, char **av) {
   int ret = 0;
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -146,35 +170,24 @@ int main(int an, char **av) {
     return 1;
   }
 
+  // Get parameters if needed
+  string * params = nullptr;
+  int n = 0;
+  if (!get_gramine_enclave_parameters(&params, &n) || params == nullptr) {
+    printf("%s() error, line %d, Can't get gramine parameters\n", __func__, __LINE__);
+    return 1;
+  }
+
   // Init gramine enclave
-  int cert_size = file_size(FLAGS_gramine_cert_file);
-
-  if (cert_size < 0) {
-    printf("%s() error, line %d, Error reading file size for certificate\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  if (cert_size > MAX_CERT_SIZE) {
-    printf("%s() error, line %d, Certificate file too large\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  ret =
-      gramine_rw_file(FLAGS_gramine_cert_file.c_str(), cert, cert_size, false);
-  if (ret < 0 && ret != -ENOENT) {
-    printf("%s() error, line %d, Can't read cert file\n", __func__, __LINE__);
-    return false;
-  }
-
-  if (!app_trust_data->initialize_gramine_enclave_data(cert_size, cert)) {
+  if (!app_trust_data->initialize_gramine_enclave(n, params)) {
     printf("%s() error, line %d, Can't init gramine enclave\n",
            __func__,
            __LINE__);
     return 1;
+  }
+  if (params != nullptr) {
+    delete []params;
+    params = nullptr;
   }
 
   // Standard algorithms for the enclave

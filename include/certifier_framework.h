@@ -143,8 +143,6 @@ class domain_info {
   int    service_port_;
 };
 
-typedef bool (*initializing_prototype)(string**, int*);
-
 class certifiers;
 
 class cc_trust_manager {
@@ -229,7 +227,9 @@ class cc_trust_manager {
                 const string &policy_store_name);
   ~cc_trust_manager();
 
-  bool initialize_enclave(initializing_prototype fp);
+  // If n == 0, systems should be able to find parameters
+  // by default, for example, sev and sgx.
+  bool initialize_enclave(int n, string* params);
 
   // Each of the enclave types have bespoke initialization
 

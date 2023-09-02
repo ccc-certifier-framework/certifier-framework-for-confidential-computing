@@ -112,7 +112,7 @@ bool run_me_as_server(const string &host_name,
 // -----------------------------------------------------------------------------------------
 
 // General initialization for sev enclave
-bool sev_enclave_init(string** s, int* n) {
+bool get_sev_enclave_parameters(string** s, int* n) {
 
   // ark cert file, ask cert file, vcek cert file
   string *args = new string[3];
@@ -190,10 +190,23 @@ int main(int an, char **av) {
     return 1;
   }
 
+  // Get parameters (if needed)
+  string * params = nullptr;
+  int n = 0;
+  if (!get_sev_enclave_parameters(&params, &n) || params == nullptr) {
+    printf("%s() error, line %d, Can't initialize sev parameters\n",
+      __func__, __LINE__);
+    return 1;
+  }
+
   // Init sev enclave
-  if (!app_trust_data->initialize_enclave(sev_enclave_init)) {
+  if (!app_trust_data->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init sev enclave\n", __func__, __LINE__);
     return 1;
+  }
+  if (params != nullptr) {
+    delete []params;
+    params = nullptr;
   }
 
   // Standard algorithms for the enclave

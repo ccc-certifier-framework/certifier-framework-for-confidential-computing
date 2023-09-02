@@ -120,23 +120,28 @@ bool run_me_as_server(const string &host_name,
 string public_key_alg(Enc_method_rsa_2048);
 string symmetric_key_alg(Enc_method_aes_256_cbc_hmac_sha256);
 
+// -------------------------------------------------------------
+
 int main(int an, char **av) {
 
   // remove pipe descriptors before processing other arguments
+  if (an < 2) {
+    printf("%s() error, line %d, Too few input arguments\n", __func__, __LINE__);
+    return 1;
+  }
+
+  // Debug
   printf("num args: %d\n", an);
   for (int i = 0; i < an; i++) {
     printf("argv[%d]: %s\n", i, av[i]);
   }
   printf("\n");
-  int in_fd = 5;
-  int out_fd = 8;
-  if (an >= 2) {
-    in_fd = atoi(av[an - 2]);
-    out_fd = atoi(av[an - 1]);
-  }
+
+  string input_fd = av[an - 2];
+  string output_fd = av[an - 1];
+  an -= 2;
 
   gflags::ParseCommandLineFlags(&an, &av, true);
-  an = 1;
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
@@ -177,10 +182,15 @@ int main(int an, char **av) {
     return false;
   }
 
+  // Application enclave parameters
+  int n = 3;
+  string params[3];
+  params[0] = parent_enclave_type;
+  params[1] = input_fd;
+  params[2] = output_fd;
+
   // Init application enclave
-  if (!app_trust_data->initialize_application_enclave(parent_enclave_type,
-                                                           in_fd,
-                                                           out_fd)) {
+  if (!app_trust_data->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init application-enclave\n",
            __func__,
            __LINE__);

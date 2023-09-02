@@ -132,101 +132,68 @@ certifier::framework::cc_trust_manager::~cc_trust_manager() {
   num_certified_domains_ = 0;
 }
 
-bool certifier::framework::cc_trust_manager::initialize_enclave(initializing_prototype fp) {
+bool certifier::framework::cc_trust_manager::initialize_enclave(int n, string* params) {
 
   if (enclave_type_ == "simulated-enclave") {
 
-    if (fp == nullptr) {
-      printf("%s() error, line %d, no initialized for\n",
-           __func__,
-           __LINE__);
-      return false;
-    }
-
-    string* s = nullptr;
-    int n = 0;
-    if (!fp(&s, &n)) {
-      printf("%s() error, line %d, initializer fails\n",
-           __func__,
-           __LINE__);
-      return false;
-    }
-    if (n != 3 || s == nullptr) {
-      printf("%s() error, line %d, initializer bad returns\n",
-           __func__,
-           __LINE__);
-      return false;
-    }
-
-    bool res = initialize_simulated_enclave(s[0], s[1], s[2]);
-    delete []s;
-    return res;
+    return initialize_simulated_enclave(params[0], params[1], params[2]);
   } else if (enclave_type_ == "sev-enclave") {
 
-    if (fp == nullptr) {
-      printf("%s() error, line %d, no initialized for\n",
+    if (n == 0) {
+      // Fetch params
+      printf("%s() error, line %d, Can't fetch sev parameters automatically yet\n",
            __func__,
            __LINE__);
       return false;
     }
 
-    string* s = nullptr;
-    int n = 0;
-    if (!fp(&s, &n)) {
-      printf("%s() error, line %d, initializer fails\n",
+    if (n < 3) {
+      printf("%s() error, line %d, Wrong number of sev parameters\n",
            __func__,
            __LINE__);
       return false;
     }
-    if (n != 3 || s == nullptr) {
-      printf("%s() error, line %d, initializer bad returns\n",
-           __func__,
-           __LINE__);
-      return false;
-    }
- 
-    bool res = initialize_sev_enclave(s[0], s[1], s[2]);
-    delete []s;
-    return res;
+    return initialize_sev_enclave(params[0], params[1], params[2]);
   } else if (enclave_type_ == "oe-enclave") {
     // initialize_oe_enclave_data(const string &pem_cert_chain_file)
     return false;
   } else if (enclave_type_ == "gramine-enclave") {
-    if (fp == nullptr) {
-      printf("%s() error, line %d, no initialized for\n",
+
+    if (n == 0) {
+      // Fetch params
+      printf("%s() error, line %d, Can't fetch sev parameters automatically yet\n",
            __func__,
            __LINE__);
       return false;
     }
 
-    string* s = nullptr;
-    int n = 0;
-    if (!fp(&s, &n)) {
-      printf("%s() error, line %d, initializer fails\n",
+    if (n < 1) {
+      printf("%s() error, line %d, Wrong number of gramine parameters\n",
            __func__,
            __LINE__);
       return false;
     }
-    if (n != 1 || s == nullptr) {
-      printf("%s() error, line %d, initializer bad returns\n",
-           __func__,
-           __LINE__);
-      return false;
-    }
-
-    bool res = initialize_gramine_enclave(s[0].size(), (byte*)s[0].data());
-    delete []s;
-    return res;
+    return initialize_gramine_enclave(params[0].size(), (byte*)params[0].data());
   } else if (enclave_type_ == "application-enclave") {
-    // initialize_application_enclave( const string &parent_enclave_type,
-    // int           in_fd, int           out_fd)
-    return false;
+    if (n < 3) {
+      printf("%s() error, line %d, Wrong number of application enclave parameters\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+    int in_fd = atoi(params[1].c_str());
+    int out_fd = atoi(params[2].c_str());
+    return initialize_application_enclave(params[0], in_fd, out_fd);
   } else if (enclave_type_ == "keystone-enclave") {
-    return initialize_keystone_enclave();;
+    return initialize_keystone_enclave();
   } else if (enclave_type_ == "islet-enclave") {
-    // initialize_islet_enclave_data( const string &attest_key_file_name,
-    // const string &measurement_file_name, const string &attest_endorsement_file_name)
-    return false;
+    if (n < 3) {
+      printf("%s() error, line %d, Wrong number of islet enclave parameters\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+    return initialize_islet_enclave(params[0], params[1], params[2]);
   } else {
     printf("%s() error, line %d, unsupported enclave type\n",
            __func__,
@@ -401,10 +368,10 @@ bool certifier::framework::cc_trust_manager::initialize_keystone_enclave() {
 #endif
 }
 
-bool certifier::framework::cc_trust_manager::initialize_islet_enclave_data(
-    const string &attest_key_file_name,
-    const string &measurement_file_name,
-    const string &attest_endorsement_file_name) {
+bool certifier::framework::cc_trust_manager::initialize_islet_enclave(
+    const string &serialized_attest_key,
+    const string &measurement,
+    const string &serialized_endorsement) {
 
 #ifdef ISLET_CERTIFIER
   if (!cc_policy_info_initialized_) {

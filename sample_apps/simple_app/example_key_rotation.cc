@@ -59,8 +59,9 @@ cc_trust_manager *app_trust_data = nullptr;
 
 
 // -----------------------------------------------------------------------------------------
-// General initialization for simulated enclave
-bool simulated_enclave_init(string** s, int* n) {
+
+// Parameters for simulated enclave
+bool get_simulated_enclave_parameters(string** s, int* n) {
 
   // serialized attest key, measurement, serialized endorsement, in that order
   string *args = new string[3];
@@ -131,12 +132,25 @@ int main(int an, char **av) {
     return 1;
   }
 
+  // Get parameters
+  string * params = nullptr;
+  int n = 0;
+  if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
+    printf("%s() error, line %d, get simulated enclave parameters\n",
+      __func__, __LINE__);
+    return 1;
+  }
+
   // Init simulated enclave
-  if (!app_trust_data->initialize_enclave(simulated_enclave_init)) {
+  if (!app_trust_data->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init simulated enclave\n",
            __func__,
            __LINE__);
     return 1;
+  }
+  if (params != nullptr) {
+    delete []params;
+    params = nullptr;
   }
 
   int ret = 0;
