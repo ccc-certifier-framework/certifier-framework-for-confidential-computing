@@ -782,7 +782,7 @@ string symmetric_key_alg(Enc_method_aes_256_cbc_hmac_sha256);
 
 
 // Parameters for simulated enclave
-bool get_simulated_enclave_parameters(string** s, int* n) {
+bool get_simulated_enclave_parameters(string **s, int *n) {
 
   // serialized attest key, measurement, serialized endorsement, in that order
   string *args = new string[3];
@@ -791,22 +791,24 @@ bool get_simulated_enclave_parameters(string** s, int* n) {
   }
   *s = args;
 
-  if (!read_file_into_string(FLAGS_service_dir + FLAGS_attest_key_file, &args[0])) {
-        printf("%s() error, line %d, Can't read attest file\n",
+  if (!read_file_into_string(FLAGS_service_dir + FLAGS_attest_key_file,
+                             &args[0])) {
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_service_dir + FLAGS_measurement_file,
+                             &args[1])) {
+    printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     return false;
   }
 
-  if (!read_file_into_string(FLAGS_service_dir + FLAGS_measurement_file, &args[1])) {
-        printf("%s() error, line %d, Can't read measurement file\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  if (!read_file_into_string(FLAGS_service_dir + FLAGS_platform_attest_endorsement, &args[2])) {
-        printf("%s() error, line %d, Can't read endorsement file\n",
+  if (!read_file_into_string(
+          FLAGS_service_dir + FLAGS_platform_attest_endorsement,
+          &args[2])) {
+    printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
     return false;
@@ -817,7 +819,7 @@ bool get_simulated_enclave_parameters(string** s, int* n) {
 }
 
 // General initialization for sev enclave
-bool get_sev_enclave_parameters(string** s, int* n) {
+bool get_sev_enclave_parameters(string **s, int *n) {
 
   // ark cert file, ask cert file, vcek cert file
   string *args = new string[3];
@@ -826,22 +828,23 @@ bool get_sev_enclave_parameters(string** s, int* n) {
   }
   *s = args;
 
-  if (!read_file_into_string(FLAGS_service_dir + FLAGS_ark_cert_file, &args[0])) {
-        printf("%s() error, line %d, Can't read attest file\n",
+  if (!read_file_into_string(FLAGS_service_dir + FLAGS_ark_cert_file,
+                             &args[0])) {
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_service_dir + FLAGS_ask_cert_file,
+                             &args[1])) {
+    printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     return false;
   }
 
-  if (!read_file_into_string(FLAGS_service_dir + FLAGS_ask_cert_file, &args[1])) {
-        printf("%s() error, line %d, Can't read measurement file\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  if (!read_file_into_string(FLAGS_service_dir + FLAGS_vcek_cert_file, &args[2])) {
-        printf("%s() error, line %d, Can't read endorsement file\n",
+  if (!read_file_into_string(FLAGS_service_dir + FLAGS_vcek_cert_file,
+                             &args[2])) {
+    printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
     return false;
@@ -884,36 +887,31 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
 
   // Init policy key info
   if (!helper.init_policy_key(initialized_cert, initialized_cert_size)) {
-      printf("%s() error, line %d, Can't init policy key\n",
-             __func__,
-             __LINE__);
+    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
     return false;
   }
 
   if (FLAGS_host_enclave_type == "simulated-enclave") {
 
     // get parameters
-    int n = 0;
-    string * params = nullptr;
+    int     n = 0;
+    string *params = nullptr;
     if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
       printf("%s() error, line %d, Can't get simulated enclave parameters\n",
              __func__,
              __LINE__);
-    return false;
+      return false;
     }
 
     // Init simulated enclave
-    if (!helper.initialize_simulated_enclave(
-            params[0],
-            params[1],
-            params[2])) {
+    if (!helper.initialize_simulated_enclave(params[0], params[1], params[2])) {
       printf("%s() error, line %d, Can't init simulated enclave\n",
              __func__,
              __LINE__);
       return 1;
     }
     if (params != nullptr) {
-      delete []params;
+      delete[] params;
       params = nullptr;
     }
   } else if (FLAGS_host_enclave_type == "oe-enclave") {
@@ -924,26 +922,24 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
   } else if (FLAGS_host_enclave_type == "sev-enclave") {
 
     // get parameters
-    int n = 0;
-    string * params = nullptr;
+    int     n = 0;
+    string *params = nullptr;
     if (!get_sev_enclave_parameters(&params, &n) || params == nullptr) {
       printf("%s() error, line %d, Can't get simulated enclave parameters\n",
              __func__,
              __LINE__);
-    return false;
+      return false;
     }
 
     // Init sev enclave
-    if (!helper.initialize_sev_enclave(params[0],
-                                       params[1],
-                                       params[2])) {
+    if (!helper.initialize_sev_enclave(params[0], params[1], params[2])) {
       printf("%s() error, line %d, Can't init sev-enclave\n",
              __func__,
              __LINE__);
       return 1;
     }
     if (params != nullptr) {
-      delete []params;
+      delete[] params;
       params = nullptr;
     }
   } else {

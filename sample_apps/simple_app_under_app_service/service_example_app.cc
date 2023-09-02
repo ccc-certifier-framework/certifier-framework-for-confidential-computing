@@ -126,7 +126,9 @@ int main(int an, char **av) {
 
   // remove pipe descriptors before processing other arguments
   if (an < 2) {
-    printf("%s() error, line %d, Too few input arguments\n", __func__, __LINE__);
+    printf("%s() error, line %d, Too few input arguments\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -183,7 +185,7 @@ int main(int an, char **av) {
   }
 
   // Application enclave parameters
-  int n = 3;
+  int    n = 3;
   string params[3];
   params[0] = parent_enclave_type;
   params[1] = input_fd;

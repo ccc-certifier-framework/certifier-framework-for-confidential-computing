@@ -223,13 +223,13 @@ class cc_trust_manager {
   enum { MAX_NUM_CERTIFIERS = 32 };
   cc_trust_manager();
   cc_trust_manager(const string &enclave_type,
-                const string &purpose,
-                const string &policy_store_name);
+                   const string &purpose,
+                   const string &policy_store_name);
   ~cc_trust_manager();
 
   // If n == 0, systems should be able to find parameters
   // by default, for example, sev and sgx.
-  bool initialize_enclave(int n, string* params);
+  bool initialize_enclave(int n, string *params);
 
   // Each of the enclave types have bespoke initialization
 
@@ -266,10 +266,9 @@ class cc_trust_manager {
       const string &attest_key_file_name,
       const string &measurement_file_name,
       const string &attest_endorsement_file_name);
-  bool initialize_islet_enclave(
-      const string &serialized_attest_key,
-      const string &measurement_file_name,
-      const string &serialized_attest_endorsement);
+  bool initialize_islet_enclave(const string &serialized_attest_key,
+                                const string &measurement_file_name,
+                                const string &serialized_attest_endorsement);
 
   bool cc_all_initialized();
   bool init_policy_key(byte *asn1_cert, int asn1_cert_size);
@@ -381,11 +380,11 @@ class secure_authenticated_channel {
                        key_message & private_key,
                        const string &private_key_cert);
 
-  bool init_client_ssl(const string           &host_name,
-                       int                    port,
+  bool init_client_ssl(const string &          host_name,
+                       int                     port,
                        const cc_trust_manager &mgr);
-  bool init_server_ssl(const string           &host_name,
-                       int                    port,
+  bool init_server_ssl(const string &          host_name,
+                       int                     port,
                        const cc_trust_manager &mgr);
 
   void server_channel_accept_and_auth(
@@ -405,9 +404,9 @@ bool server_dispatch(const string &host_name,
                      const string &private_key_cert,
                      void (*)(secure_authenticated_channel &));
 
-bool server_dispatch(const string &host_name,
-                     int           port,
-                     const cc_trust_manager& mgr,
+bool server_dispatch(const string &          host_name,
+                     int                     port,
+                     const cc_trust_manager &mgr,
                      void (*)(secure_authenticated_channel &));
 
 }  // namespace framework

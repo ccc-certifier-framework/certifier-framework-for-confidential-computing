@@ -107,7 +107,7 @@ bool run_me_as_server(const string &host_name,
 // -----------------------------------------------------------------------------------------
 
 // Parameters for simulated enclave
-bool get_gramine_enclave_parameters(string** s, int* n) {
+bool get_gramine_enclave_parameters(string **s, int *n) {
 
   // serialized attest key, measurement, serialized endorsement, in that order
   string *args = new string[1];
@@ -116,10 +116,9 @@ bool get_gramine_enclave_parameters(string** s, int* n) {
   }
   *s = args;
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_gramine_cert_file, &args[0])) {
-        printf("%s() error, line %d, Can't read attest file\n",
-           __func__,
-           __LINE__);
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_gramine_cert_file,
+                             &args[0])) {
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
     return false;
   }
 
@@ -171,10 +170,12 @@ int main(int an, char **av) {
   }
 
   // Get parameters if needed
-  string * params = nullptr;
-  int n = 0;
+  string *params = nullptr;
+  int     n = 0;
   if (!get_gramine_enclave_parameters(&params, &n) || params == nullptr) {
-    printf("%s() error, line %d, Can't get gramine parameters\n", __func__, __LINE__);
+    printf("%s() error, line %d, Can't get gramine parameters\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -186,7 +187,7 @@ int main(int an, char **av) {
     return 1;
   }
   if (params != nullptr) {
-    delete []params;
+    delete[] params;
     params = nullptr;
   }
 

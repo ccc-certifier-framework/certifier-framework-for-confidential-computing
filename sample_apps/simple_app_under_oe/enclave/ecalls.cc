@@ -39,7 +39,7 @@ static string data_dir = "app1_data";
 #define FLAGS_certificate_file  "vse.crt"
 
 static std::string enclave_type;
-cc_trust_manager *    app_trust_data = nullptr;
+cc_trust_manager * app_trust_data = nullptr;
 
 static bool oe_initialized = false;
 static bool openenclave_initialized = false;

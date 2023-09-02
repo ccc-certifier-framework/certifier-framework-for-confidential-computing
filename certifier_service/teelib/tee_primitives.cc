@@ -64,23 +64,22 @@ bool tee_Simulated_Init(const char *asn1_policy_cert,
 
   string serialized_attest_key;
   if (!read_file_into_string(attest_key_file_str, &serialized_attest_key)) {
-        printf("%s() error, line %d, Can't read attest file\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
     return false;
   }
 
   string measurement;
   if (!read_file_into_string(measurement_file_str, &measurement)) {
-        printf("%s() error, line %d, Can't read measurement file\n",
+    printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     return false;
   }
 
   string serialized_endorsement;
-  if (!read_file_into_string(attest_key_signed_claim_file_str, &serialized_endorsement)) {
-        printf("%s() error, line %d, Can't read endorsement file\n",
+  if (!read_file_into_string(attest_key_signed_claim_file_str,
+                             &serialized_endorsement)) {
+    printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
     return false;

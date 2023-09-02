@@ -90,7 +90,7 @@ void server_application(secure_authenticated_channel &channel) {
 // ----------------------------------------------------------------------------
 
 // Parameters for simulated enclave
-bool get_simulated_enclave_parameters(string** s, int* n) {
+bool get_simulated_enclave_parameters(string **s, int *n) {
 
   // serialized attest key, measurement, serialized endorsement, in that order
   string *args = new string[3];
@@ -99,22 +99,23 @@ bool get_simulated_enclave_parameters(string** s, int* n) {
   }
   *s = args;
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file, &args[0])) {
-        printf("%s() error, line %d, Can't read attest file\n",
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file,
+                             &args[0])) {
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file,
+                             &args[1])) {
+    printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     return false;
   }
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file, &args[1])) {
-        printf("%s() error, line %d, Can't read measurement file\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement, &args[2])) {
-        printf("%s() error, line %d, Can't read endorsement file\n",
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement,
+                             &args[2])) {
+    printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
     return false;
@@ -203,11 +204,12 @@ int main(int an, char **av) {
   }
 
   // Get parameters
-  int n = 0;
-  string * params = nullptr;
-    if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
+  int     n = 0;
+  string *params = nullptr;
+  if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
     printf("%s() error, line %d, get simulated enclave parameters\n",
-      __func__, __LINE__);
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -219,7 +221,7 @@ int main(int an, char **av) {
     return 1;
   }
   if (params != nullptr) {
-    delete []params;
+    delete[] params;
     params = nullptr;
   }
 

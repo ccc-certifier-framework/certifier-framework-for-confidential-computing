@@ -392,9 +392,9 @@ bool test_sev_platform_certify(const bool    debug_print,
 
   // This has no effect for now
   extern bool sev_Init(const string &, const string &, const string &);
-  string ark_cert;
-  string ask_cert;
-  string vcek_cert;
+  string      ark_cert;
+  string      ask_cert;
+  string      vcek_cert;
   if (!read_file_into_string(ark_cert_file_name, &ark_cert)) {
     printf("test_sev_platform_certify: Can't read ark cert\n");
     return false;

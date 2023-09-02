@@ -132,7 +132,9 @@ certifier::framework::cc_trust_manager::~cc_trust_manager() {
   num_certified_domains_ = 0;
 }
 
-bool certifier::framework::cc_trust_manager::initialize_enclave(int n, string* params) {
+bool certifier::framework::cc_trust_manager::initialize_enclave(
+    int     n,
+    string *params) {
 
   if (enclave_type_ == "simulated-enclave") {
 
@@ -141,16 +143,17 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(int n, string* p
 
     if (n == 0) {
       // Fetch params
-      printf("%s() error, line %d, Can't fetch sev parameters automatically yet\n",
-           __func__,
-           __LINE__);
+      printf(
+          "%s() error, line %d, Can't fetch sev parameters automatically yet\n",
+          __func__,
+          __LINE__);
       return false;
     }
 
     if (n < 3) {
       printf("%s() error, line %d, Wrong number of sev parameters\n",
-           __func__,
-           __LINE__);
+             __func__,
+             __LINE__);
       return false;
     }
     return initialize_sev_enclave(params[0], params[1], params[2]);
@@ -161,24 +164,27 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(int n, string* p
 
     if (n == 0) {
       // Fetch params
-      printf("%s() error, line %d, Can't fetch sev parameters automatically yet\n",
-           __func__,
-           __LINE__);
+      printf(
+          "%s() error, line %d, Can't fetch sev parameters automatically yet\n",
+          __func__,
+          __LINE__);
       return false;
     }
 
     if (n < 1) {
       printf("%s() error, line %d, Wrong number of gramine parameters\n",
-           __func__,
-           __LINE__);
+             __func__,
+             __LINE__);
       return false;
     }
-    return initialize_gramine_enclave(params[0].size(), (byte*)params[0].data());
+    return initialize_gramine_enclave(params[0].size(),
+                                      (byte *)params[0].data());
   } else if (enclave_type_ == "application-enclave") {
     if (n < 3) {
-      printf("%s() error, line %d, Wrong number of application enclave parameters\n",
-           __func__,
-           __LINE__);
+      printf("%s() error, line %d, Wrong number of application enclave "
+             "parameters\n",
+             __func__,
+             __LINE__);
       return false;
     }
     int in_fd = atoi(params[1].c_str());
@@ -189,8 +195,8 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(int n, string* p
   } else if (enclave_type_ == "islet-enclave") {
     if (n < 3) {
       printf("%s() error, line %d, Wrong number of islet enclave parameters\n",
-           __func__,
-           __LINE__);
+             __func__,
+             __LINE__);
       return false;
     }
     return initialize_islet_enclave(params[0], params[1], params[2]);
@@ -246,9 +252,9 @@ bool certifier::framework::cc_trust_manager::initialize_application_enclave(
 }
 
 bool certifier::framework::cc_trust_manager::initialize_simulated_enclave(
-      const string &serialized_attest_key,
-      const string &measurement,
-      const string &serialized_attest_endorsement) {
+    const string &serialized_attest_key,
+    const string &measurement,
+    const string &serialized_attest_endorsement) {
 
   if (!cc_policy_info_initialized_) {
     printf("%s() error, line %d, Policy key must be initialized first\n",
@@ -316,8 +322,9 @@ bool certifier::framework::cc_trust_manager::initialize_oe_enclave_data(
 #endif
 }
 
-bool certifier::framework::cc_trust_manager::init_policy_key(byte *asn1_cert,
-                                                          int asn1_cert_size) {
+bool certifier::framework::cc_trust_manager::init_policy_key(
+    byte *asn1_cert,
+    int   asn1_cert_size) {
   serialized_policy_cert_.assign((char *)asn1_cert, asn1_cert_size);
 
   x509_policy_cert_ = X509_new();
@@ -998,7 +1005,8 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
 }
 
 // If regen is true, replace them even if they are valid
-bool certifier::framework::cc_trust_manager::generate_symmetric_key(bool regen) {
+bool certifier::framework::cc_trust_manager::generate_symmetric_key(
+    bool regen) {
 
   if (cc_symmetric_key_initialized_ && !regen)
     return true;
@@ -1201,7 +1209,8 @@ bool certifier::framework::cc_trust_manager::cold_init(
   }
 
   string domain_cert;
-  domain_cert.assign(serialized_policy_cert_.data(), serialized_policy_cert_.size());
+  domain_cert.assign(serialized_policy_cert_.data(),
+                     serialized_policy_cert_.size());
   if (num_certified_domains_ != 0) {
     printf("%s() error, line %d, there should be no certified domains yet\n",
            __func__,
@@ -2402,16 +2411,17 @@ bool certifier::framework::server_dispatch(
 bool certifier::framework::server_dispatch(
     const string &          host_name,
     int                     port,
-    const cc_trust_manager& mgr,
+    const cc_trust_manager &mgr,
     void (*func)(secure_authenticated_channel &)) {
 
-  return server_dispatch(host_name,
-                         port,
-                         (string&)mgr.serialized_policy_cert_,
-                         (key_message&) mgr.private_auth_key_,
-                         (const string&)mgr.serialized_primary_admissions_cert_,
-                         func);
-  }
+  return server_dispatch(
+      host_name,
+      port,
+      (string &)mgr.serialized_policy_cert_,
+      (key_message &)mgr.private_auth_key_,
+      (const string &)mgr.serialized_primary_admissions_cert_,
+      func);
+}
 
 certifier::framework::secure_authenticated_channel::
     secure_authenticated_channel(string &role) {
@@ -2565,16 +2575,16 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
 }
 
 bool certifier::framework::secure_authenticated_channel::init_client_ssl(
-        const string           &host_name,
-        int                    port,
-        const cc_trust_manager &mgr) {
+    const string &          host_name,
+    int                     port,
+    const cc_trust_manager &mgr) {
 
   return secure_authenticated_channel::init_client_ssl(
-              host_name,
-              port,
-              (string &)mgr.serialized_policy_cert_,
-              (key_message &)mgr.private_auth_key_,
-              (const string &)mgr.serialized_primary_admissions_cert_);
+      host_name,
+      port,
+      (string &)mgr.serialized_policy_cert_,
+      (key_message &)mgr.private_auth_key_,
+      (const string &)mgr.serialized_primary_admissions_cert_);
 }
 
 // Loads client side certs and keys.  Note: key for private_key is in
@@ -2727,15 +2737,15 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
 }
 
 bool certifier::framework::secure_authenticated_channel::init_server_ssl(
-        const string           &host_name,
-        int                    port,
-        const cc_trust_manager &mgr) {
+    const string &          host_name,
+    int                     port,
+    const cc_trust_manager &mgr) {
   return secure_authenticated_channel::init_server_ssl(
-              host_name,
-              port,
-              (string &)mgr.serialized_policy_cert_,
-              (key_message &)mgr.private_auth_key_,
-              mgr.serialized_primary_admissions_cert_);
+      host_name,
+      port,
+      (string &)mgr.serialized_policy_cert_,
+      (key_message &)mgr.private_auth_key_,
+      mgr.serialized_primary_admissions_cert_);
 }
 
 int certifier::framework::secure_authenticated_channel::read(int   size,

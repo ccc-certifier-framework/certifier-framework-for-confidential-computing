@@ -112,7 +112,7 @@ bool run_me_as_server(const string &host_name,
 // -----------------------------------------------------------------------------------------
 
 // General initialization for sev enclave
-bool get_sev_enclave_parameters(string** s, int* n) {
+bool get_sev_enclave_parameters(string **s, int *n) {
 
   // ark cert file, ask cert file, vcek cert file
   string *args = new string[3];
@@ -122,21 +122,19 @@ bool get_sev_enclave_parameters(string** s, int* n) {
   *s = args;
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_ark_cert_file, &args[0])) {
-        printf("%s() error, line %d, Can't read attest file\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
     return false;
   }
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
-        printf("%s() error, line %d, Can't read measurement file\n",
+    printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     return false;
   }
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
-        printf("%s() error, line %d, Can't read endorsement file\n",
+    printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
     return false;
@@ -191,11 +189,12 @@ int main(int an, char **av) {
   }
 
   // Get parameters (if needed)
-  string * params = nullptr;
-  int n = 0;
+  string *params = nullptr;
+  int     n = 0;
   if (!get_sev_enclave_parameters(&params, &n) || params == nullptr) {
     printf("%s() error, line %d, Can't initialize sev parameters\n",
-      __func__, __LINE__);
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -205,7 +204,7 @@ int main(int an, char **av) {
     return 1;
   }
   if (params != nullptr) {
-    delete []params;
+    delete[] params;
     params = nullptr;
   }
 
