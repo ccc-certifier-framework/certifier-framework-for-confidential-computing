@@ -157,7 +157,7 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(initializing_pro
            __LINE__);
       return false;
     }
-    return initialize_simulated_enclave_data(s[0], s[1], s[2]);
+    return initialize_simulated_enclave(s[0], s[1], s[2]);
   } else if (enclave_type_ == "sev-enclave") {
     // initialize_sev_enclave_data( const string &platform_ark_der_file,
     // const string &platform_ask_der_file, const string &platform_vcek_der_file)
@@ -169,7 +169,7 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(initializing_pro
     // initialize_gramine_enclave_data(const int size, byte * cert)
     return false;
   } else if (enclave_type_ == "application-enclave") {
-    // initialize_application_enclave_data( const string &parent_enclave_type,
+    // initialize_application_enclave( const string &parent_enclave_type,
     // int           in_fd, int           out_fd)
     return false;
   } else if (enclave_type_ == "keystone-enclave") {
@@ -203,7 +203,7 @@ bool certifier::framework::cc_trust_manager::cc_all_initialized() {
   }
 }
 
-bool certifier::framework::cc_trust_manager::initialize_application_enclave_data(
+bool certifier::framework::cc_trust_manager::initialize_application_enclave(
     const string &parent_enclave_type,
     int           in_fd,
     int           out_fd) {
@@ -230,6 +230,35 @@ bool certifier::framework::cc_trust_manager::initialize_application_enclave_data
   cc_provider_provisioned_ = true;
   return true;
 }
+
+bool certifier::framework::cc_trust_manager::initialize_simulated_enclave(
+      const string &serialized_attest_key,
+      const string &measurement,
+      const string &serialized_attest_endorsement) {
+
+  if (!cc_policy_info_initialized_) {
+    printf("%s() error, line %d, Policy key must be initialized first\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (enclave_type_ != "simulated-enclave") {
+    printf("%s() error, line %d, Not a simulated enclave\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!simulated_Init(serialized_attest_key,
+                      measurement,
+                      serialized_attest_endorsement)) {
+    printf("%s() error, line %d, simulated_init failed\n", __func__, __LINE__);
+    return false;
+  }
+  cc_provider_provisioned_ = true;
+  return true;
+}
+
 
 bool certifier::framework::cc_trust_manager::initialize_simulated_enclave_data(
     const string &attest_key_file_name,

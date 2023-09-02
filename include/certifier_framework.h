@@ -232,27 +232,54 @@ class cc_trust_manager {
   bool initialize_enclave(initializing_prototype fp, string** s, int* n);
 
   // Each of the enclave types have bespoke initialization
+
+  // initialize_simulated_enclave_data to be deprecated
   bool initialize_simulated_enclave_data(
       const string &attest_key_file_name,
       const string &measurement_file_name,
       const string &attest_endorsement_file_name);
+  bool initialize_simulated_enclave(
+      const string &serialized_attest_key,
+      const string &measurement,
+      const string &serialized_attest_endorsement);
+
+  // initialize_sev_enclave_data to be deprecated
   bool initialize_sev_enclave_data(const string &platform_ark_der_file,
                                    const string &platform_ask_der_file,
                                    const string &platform_vcek_der_file);
+  bool initialize_sev_enclave(const string &ark_der_cert,
+                              const string &ask_der_cert,
+                              const string &vcek_der_cert);
+
   bool initialize_gramine_enclave_data(const int size, byte *cert);
+
+  // initialize_oe_enclave_data to be deprecated
   bool initialize_oe_enclave_data(const string &file);
-  bool initialize_application_enclave_data(const string &parent_enclave_type,
-                                           int           in_fd,
-                                           int           out_fd);
+  bool initialize_oe_enclave(const string &cert);
+
+  bool initialize_application_enclave(const string &parent_enclave_type,
+                                      int           in_fd,
+                                      int           out_fd);
+
+  // initialize_keystone_enclave_data to be deprecated
   bool initialize_keystone_enclave_data(
       const string &attest_key_file_name,
       const string &measurement_file_name,
       const string &attest_endorsement_file_name);
+  bool initialize_keystone_enclave(
+      const string &serialized_attest_key,
+      const string &measurement_file_name,
+      const string &serialized_attest_endorsement);
 
+  // initialize_keystone_enclave_data to be deprecated
   bool initialize_islet_enclave_data(
       const string &attest_key_file_name,
       const string &measurement_file_name,
       const string &attest_endorsement_file_name);
+  bool initialize_islet_enclave(
+      const string &serialized_attest_key,
+      const string &measurement_file_name,
+      const string &serialized_attest_endorsement);
 
   bool cc_all_initialized();
   bool init_policy_key(byte *asn1_cert, int asn1_cert_size);

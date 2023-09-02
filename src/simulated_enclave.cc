@@ -63,6 +63,42 @@ bool simulated_GetPlatformClaim(signed_claim_message *out) {
   return true;
 }
 
+bool simulated_Init(const string &serialized_attest_key,
+                    const string &measurement,
+                    const string &serialized_attest_key_signed_claim) {
+
+  my_measurement.assign((char *)measurement.data(), measurement.size());
+
+  // For reproducability, make this a fixed key
+  for (int i = 0; i < sealing_key_size; i++)
+    sealing_key[i] = (5 * i) % 16;
+
+  // attest key
+  if (!my_attestation_key.ParseFromString(serialized_attest_key)) {
+    printf("simulated_Init: Can't parse attest key\n");
+    return false;
+  }
+
+  my_attestation_key.set_key_name("attestKey");
+  rsa_attestation_key = RSA_new();
+  if (!key_to_RSA(my_attestation_key, rsa_attestation_key)) {
+    printf("simulated_Init: Can't recover attestation key\n");
+    return false;
+  }
+
+  // Claim
+  if (!my_attest_claim.ParseFromString(serialized_attest_key_signed_claim)) {
+    printf("simulated_Init: Can't parse attest claim\n");
+    return false;
+  }
+
+  certifier_parent_enclave_type = "software";
+  certifier_parent_enclave_type_intitalized = true;
+  my_data_initialized = true;
+  return true;
+}
+
+// The following will be deprecated
 bool simulated_Init(const string &asn1_policy_cert,
                     const string &attest_key_file,
                     const string &measurement_file,

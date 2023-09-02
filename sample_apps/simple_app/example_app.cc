@@ -29,8 +29,10 @@
 #include <openssl/err.h>
 
 #include "certifier_framework.h"
+#include "certifier_utilities.h"
 
 using namespace certifier::framework;
+using namespace certifier::utilities;
 
 // Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false, "verbose");
@@ -109,15 +111,33 @@ void server_application(secure_authenticated_channel &channel) {
 // General initialization for simulated enclave
 bool simultated_enclave_init(string** s, int* n) {
 
-  // attest key, measurement, endorsement, in that order
+  // serialized attest key, measurement, serialized endorsement, in that order
   *s = new string[3];
   if (*s == nullptr) {
     return false;
   }
 
-  (*s)[0] = FLAGS_data_dir + FLAGS_attest_key_file;
-  (*s)[1] = FLAGS_data_dir + FLAGS_measurement_file;
-  (*s)[2] = FLAGS_data_dir + FLAGS_platform_attest_endorsement;
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file, &((*s)[0]))) {
+        printf("%s() error, line %d, Can't read attest file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file, &((*s)[1]))) {
+        printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement, &((*s)[3]))) {
+        printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
   *n = 3;
   return true;
 }
