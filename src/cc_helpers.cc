@@ -2399,6 +2399,20 @@ bool certifier::framework::server_dispatch(
   return true;
 }
 
+bool certifier::framework::server_dispatch(
+    const string &          host_name,
+    int                     port,
+    const cc_trust_manager& mgr,
+    void (*func)(secure_authenticated_channel &)) {
+
+  return server_dispatch(host_name,
+                         port,
+                         (string&)mgr.serialized_policy_cert_,
+                         (key_message&) mgr.private_auth_key_,
+                         (const string&)mgr.serialized_primary_admissions_cert_,
+                         func);
+  }
+
 certifier::framework::secure_authenticated_channel::
     secure_authenticated_channel(string &role) {
   role_ = role;
@@ -2550,6 +2564,19 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   return true;
 }
 
+bool certifier::framework::secure_authenticated_channel::init_client_ssl(
+        const string           &host_name,
+        int                    port,
+        const cc_trust_manager &mgr) {
+
+  return secure_authenticated_channel::init_client_ssl(
+              host_name,
+              port,
+              (string &)mgr.serialized_policy_cert_,
+              (key_message &)mgr.private_auth_key_,
+              (const string &)mgr.serialized_primary_admissions_cert_);
+}
+
 // Loads client side certs and keys.  Note: key for private_key is in
 //    the key.
 bool certifier::framework::secure_authenticated_channel::
@@ -2683,6 +2710,7 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
     const string &asn1_root_cert,
     key_message & private_key,
     const string &auth_cert) {
+
   SSL_load_error_strings();
 
   // set keys and cert
@@ -2696,6 +2724,18 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
     return false;
   }
   return true;
+}
+
+bool certifier::framework::secure_authenticated_channel::init_server_ssl(
+        const string           &host_name,
+        int                    port,
+        const cc_trust_manager &mgr) {
+  return secure_authenticated_channel::init_server_ssl(
+              host_name,
+              port,
+              (string &)mgr.serialized_policy_cert_,
+              (key_message &)mgr.private_auth_key_,
+              mgr.serialized_primary_admissions_cert_);
 }
 
 int certifier::framework::secure_authenticated_channel::read(int   size,

@@ -94,6 +94,80 @@ void client_application(secure_authenticated_channel &channel) {
   printf("SSL client read: %s\n", out.data());
 }
 
+// --------------------------------------------------------------------------
+
+// Parameters for simulated enclave
+bool get_simulated_enclave_parameters(string** s, int* n) {
+
+  // serialized attest key, measurement, serialized endorsement, in that order
+  string *args = new string[3];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file, &args[0])) {
+        printf("%s() error, line %d, Can't read attest file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file, &args[1])) {
+        printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement, &args[2])) {
+        printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  *n = 3;
+  return true;
+}
+
+#if 0
+// General initialization for sev enclave
+bool get_sev_enclave_parameters(string** s, int* n) {
+
+  // ark cert file, ask cert file, vcek cert file
+  string *args = new string[3];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ark_cert_file, &args[0])) {
+        printf("%s() error, line %d, Can't read attest file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
+        printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
+        printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  *n = 3;
+  return true;
+}
+#endif
+
 int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -136,24 +210,25 @@ int main(int an, char **av) {
     return 1;
   }
 
-  // Init simulated enclave
-  string attest_key_file_name(FLAGS_data_dir);
-  attest_key_file_name.append(FLAGS_attest_key_file);
-  string platform_attest_file_name(FLAGS_data_dir);
-  platform_attest_file_name.append(FLAGS_platform_attest_endorsement);
-  string measurement_file_name(FLAGS_data_dir);
-  measurement_file_name.append(FLAGS_measurement_file);
-  string attest_endorsement_file_name(FLAGS_data_dir);
-  attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
+  // Get parameters
+  int n = 0;
+  string * params = nullptr;
+    if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
+    printf("%s() error, line %d, get simulated enclave parameters\n",
+      __func__, __LINE__);
+    return 1;
+  }
 
-  if (!app_trust_data->initialize_simulated_enclave_data(
-          attest_key_file_name,
-          measurement_file_name,
-          attest_endorsement_file_name)) {
+  // Init simulated enclave
+  if (!app_trust_data->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init simulated enclave\n",
            __func__,
            __LINE__);
     return 1;
+  }
+  if (params != nullptr) {
+    delete []params;
+    params = nullptr;
   }
 
   // Standard algorithms for the enclave
@@ -165,8 +240,6 @@ int main(int an, char **av) {
   if (FLAGS_operation == "cold-init") {
     if (!app_trust_data->cold_init(public_key_alg,
                                    symmetric_key_alg,
-                                   initialized_cert,
-                                   initialized_cert_size,
                                    "simple-app-client-home-domain",
                                    FLAGS_primary_policy_host,
                                    FLAGS_primary_policy_port,

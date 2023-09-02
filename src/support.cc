@@ -168,6 +168,10 @@ bool certifier::utilities::write_file(const string &file_name,
   return true;
 }
 
+bool certifier::utilities::write_file_from_string(const string &file_name, const string& in) {
+  return write_file(file_name, in.size(), (byte*)in.data());
+}
+
 int certifier::utilities::file_size(const string &file_name) {
   struct stat file_info;
 

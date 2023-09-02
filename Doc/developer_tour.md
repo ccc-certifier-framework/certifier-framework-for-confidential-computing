@@ -67,12 +67,16 @@ Here is an example of such a program and its interactions with the Certifier API
 
   app_trust_data = new cc_trust_manager(enclave_type, purpose, store_file);
 
-  // Initialize sev data
-  app_trust_data->initialize_sev_enclave_data(FLAGS_ark_cert_file,
-        FLAGS_ask_cert_file, FLAGS_vcek_cert_file);
-
   // init policy key from standard location
   app_trust_data->init_policy_key(initialized_cert_size, initialized_cert);
+
+  int n = 0;
+  string * s = nullptr;
+  get_sev_parameters(&s, &n)
+
+  // Initialize enclave
+  //  If n ==0, initialize_enclave gets the parameters automatically.
+  app_trust_data->initialize_enclave(n, s)
 
   // Standard algorithms for the enclave
   string public_key_alg("rsa-2048");
@@ -80,7 +84,6 @@ Here is an example of such a program and its interactions with the Certifier API
 
   // Initialize keys
   app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
-          initialized_cert_size, initialized_cert,
           home_domain_name, FLAGS_policy_host, FLAGS_policy_port,
           FLAGS_server_app_host, FLAGS_server_app_port);
 

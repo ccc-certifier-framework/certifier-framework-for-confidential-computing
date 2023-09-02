@@ -381,6 +381,13 @@ class secure_authenticated_channel {
                        key_message & private_key,
                        const string &private_key_cert);
 
+  bool init_client_ssl(const string           &host_name,
+                       int                    port,
+                       const cc_trust_manager &mgr);
+  bool init_server_ssl(const string           &host_name,
+                       int                    port,
+                       const cc_trust_manager &mgr);
+
   void server_channel_accept_and_auth(
       void (*func)(secure_authenticated_channel &));
 
@@ -397,6 +404,12 @@ bool server_dispatch(const string &host_name,
                      key_message & private_key,
                      const string &private_key_cert,
                      void (*)(secure_authenticated_channel &));
+
+bool server_dispatch(const string &host_name,
+                     int           port,
+                     const cc_trust_manager& mgr,
+                     void (*)(secure_authenticated_channel &));
+
 }  // namespace framework
 }  // namespace certifier
 
