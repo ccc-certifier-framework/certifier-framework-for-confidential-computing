@@ -904,7 +904,7 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
     }
 
     // Init simulated enclave
-    if (!helper.initialize_simulated_enclave(params[0], params[1], params[2])) {
+    if (!helper.initialize_enclave(n, params)) {
       printf("%s() error, line %d, Can't init simulated enclave\n",
              __func__,
              __LINE__);
@@ -932,7 +932,7 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
     }
 
     // Init sev enclave
-    if (!helper.initialize_sev_enclave(params[0], params[1], params[2])) {
+    if (!helper.initialize_enclave(n, params)) {
       printf("%s() error, line %d, Can't init sev-enclave\n",
              __func__,
              __LINE__);
