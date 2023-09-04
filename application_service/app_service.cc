@@ -226,7 +226,7 @@ const int max_pad_size = 128;
 
 // The support functions use the helper object
 //    This is just a reference, object is local to main
-cc_trust_manager *app_trust_data = nullptr;
+cc_trust_manager *trust_mgr = nullptr;
 
 
 bool soft_Seal(spawned_children *kid, string in, string *out) {
@@ -245,11 +245,11 @@ bool soft_Seal(spawned_children *kid, string in, string *out) {
   if (!get_random(8 * block_size, iv)) {
     return false;
   }
-  if (!authenticated_encrypt(app_trust_data->symmetric_key_algorithm_.c_str(),
+  if (!authenticated_encrypt(trust_mgr->symmetric_key_algorithm_.c_str(),
                              (byte *)buffer_to_seal.data(),
                              buffer_to_seal.size(),
-                             app_trust_data->sealing_key_bytes_,
-                             app_trust_data->max_symmetric_key_size_,
+                             trust_mgr->sealing_key_bytes_,
+                             trust_mgr->max_symmetric_key_size_,
                              iv,
                              block_size,
                              t_out,
@@ -271,11 +271,11 @@ bool soft_Unseal(spawned_children *kid, string in, string *out) {
   int  t_size = in.size();
   byte t_out[t_size];
 
-  if (!authenticated_decrypt(app_trust_data->symmetric_key_algorithm_.c_str(),
+  if (!authenticated_decrypt(trust_mgr->symmetric_key_algorithm_.c_str(),
                              (byte *)in.data(),
                              in.size(),
-                             app_trust_data->sealing_key_bytes_,
-                             app_trust_data->max_symmetric_key_size_,
+                             trust_mgr->sealing_key_bytes_,
+                             trust_mgr->max_symmetric_key_size_,
                              t_out,
                              &t_size)) {
     printf("%s() error, line %d, soft_Unseal: authenticated decrypt failed\n",
@@ -309,7 +309,7 @@ bool soft_Attest(spawned_children *kid, string in, string *out) {
 #endif
 
   // in  is a serialized vse-attestation
-  if (!app_trust_data->cc_service_key_initialized_) {
+  if (!trust_mgr->cc_service_key_initialized_) {
     printf("%s() error, line %d, soft_Attest: service key not initialized\n",
            __func__,
            __LINE__);
@@ -344,13 +344,13 @@ bool soft_Attest(spawned_children *kid, string in, string *out) {
   const string type("vse-attestation-report");
   string       signing_alg;
 
-  if (app_trust_data->private_service_key_.key_type()
+  if (trust_mgr->private_service_key_.key_type()
       == Enc_method_rsa_2048_private) {
     signing_alg.assign(Enc_method_rsa_2048_sha256_pkcs_sign);
-  } else if (app_trust_data->private_service_key_.key_type()
+  } else if (trust_mgr->private_service_key_.key_type()
              == Enc_method_rsa_4096_private) {
     signing_alg.assign(Enc_method_rsa_4096_sha384_pkcs_sign);
-  } else if (app_trust_data->private_service_key_.key_type()
+  } else if (trust_mgr->private_service_key_.key_type()
              == Enc_method_ecc_384_private) {
     signing_alg.assign(Enc_method_ecc_384_sha384_pkcs_sign);
   } else {
@@ -360,7 +360,7 @@ bool soft_Attest(spawned_children *kid, string in, string *out) {
   if (!sign_report(type,
                    serialized_report_info,
                    signing_alg,
-                   app_trust_data->private_service_key_,
+                   trust_mgr->private_service_key_,
                    out)) {
     printf("%s() error, line %d, Can't sign report\n", __func__, __LINE__);
     return false;
@@ -373,13 +373,13 @@ bool soft_GetPlatformStatement(spawned_children *kid, string *out) {
 #ifdef DEBUG
   printf("soft_GetPlatformStatement\n");
 #endif
-  if (!app_trust_data->cc_service_platform_rule_initialized_) {
+  if (!trust_mgr->cc_service_platform_rule_initialized_) {
     printf("%s() error, line %d, soft_GetPlatformStatement: not initialized\n",
            __func__,
            __LINE__);
     return false;
   }
-  app_trust_data->platform_rule_.SerializeToString(out);
+  trust_mgr->platform_rule_.SerializeToString(out);
   return true;
 }
 
@@ -387,13 +387,13 @@ bool soft_GetParentEvidence(spawned_children *kid, string *out) {
 #ifdef DEBUG
   printf("soft_GetPlatformStatement\n");
 #endif
-  if (!app_trust_data->cc_service_platform_rule_initialized_) {
+  if (!trust_mgr->cc_service_platform_rule_initialized_) {
     printf("%s() error, line %d, soft_GetPlatformStatement: not initialized\n",
            __func__,
            __LINE__);
     return false;
   }
-  app_trust_data->platform_rule_.SerializeToString(out);
+  trust_mgr->platform_rule_.SerializeToString(out);
   return true;
 }
 
@@ -883,7 +883,7 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
   string store_file(FLAGS_service_dir);
   store_file.append(FLAGS_service_policy_store);
   cc_trust_manager helper(enclave_type, purpose, store_file);
-  app_trust_data = &helper;
+  trust_mgr = &helper;
 
   // Init policy key info
   if (!helper.init_policy_key(initialized_cert, initialized_cert_size)) {

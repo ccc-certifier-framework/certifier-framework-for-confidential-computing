@@ -51,7 +51,7 @@ DEFINE_string(gramine_cert_file, "sgx.cert.der", "certificate file name");
 //      under other ops.
 
 #include "policy_key.cc"
-cc_trust_manager *app_trust_data = nullptr;
+cc_trust_manager *trust_mgr = nullptr;
 
 #define MAX_CERT_SIZE 2048
 byte cert[MAX_CERT_SIZE];
@@ -154,8 +154,8 @@ int main(int an, char **av) {
 
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_file);
-  app_trust_data = new cc_trust_manager(enclave_type, purpose, store_file);
-  if (app_trust_data == nullptr) {
+  trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
+  if (trust_mgr == nullptr) {
     printf("%s() error, line %d, couldn't initialize trust object\n",
            __func__,
            __LINE__);
@@ -163,7 +163,7 @@ int main(int an, char **av) {
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert,
+  if (!trust_mgr->init_policy_key(initialized_cert,
                                        initialized_cert_size)) {
     printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
     return 1;
@@ -180,7 +180,7 @@ int main(int an, char **av) {
   }
 
   // Init gramine enclave
-  if (!app_trust_data->initialize_gramine_enclave(n, params)) {
+  if (!trust_mgr->initialize_gramine_enclave(n, params)) {
     printf("%s() error, line %d, Can't init gramine enclave\n",
            __func__,
            __LINE__);
@@ -197,7 +197,7 @@ int main(int an, char **av) {
 
   // Carry out operation
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init(public_key_alg,
+    if (!trust_mgr->cold_init(public_key_alg,
                                    symmetric_key_alg,
                                    "simple-app-home_domain",
                                    FLAGS_policy_host,
@@ -209,23 +209,23 @@ int main(int an, char **av) {
       ret = 1;
     }
   } else if (FLAGS_operation == "get-certified") {
-    if (!app_trust_data->warm_restart()) {
+    if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
     }
-    if (!app_trust_data->certify_me()) {
+    if (!trust_mgr->certify_me()) {
       printf("certification failed\n");
       ret = 1;
     }
   } else if (FLAGS_operation == "run-app-as-client") {
-    if (!app_trust_data->warm_restart()) {
+    if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
     printf("running as client\n");
-    if (!app_trust_data->cc_auth_key_initialized_
-        || !app_trust_data->cc_policy_info_initialized_) {
+    if (!trust_mgr->cc_auth_key_initialized_
+        || !trust_mgr->cc_policy_info_initialized_) {
       printf("%s() error, line %d, trust data not initialized\n",
              __func__,
              __LINE__);
@@ -237,9 +237,9 @@ int main(int an, char **av) {
     if (!channel.init_client_ssl(
             FLAGS_server_app_host,
             FLAGS_server_app_port,
-            app_trust_data->serialized_policy_cert_,
-            app_trust_data->private_auth_key_,
-            app_trust_data->serialized_primary_admissions_cert_)) {
+            trust_mgr->serialized_policy_cert_,
+            trust_mgr->private_auth_key_,
+            trust_mgr->serialized_primary_admissions_cert_)) {
       printf("%s() error, line %d, Can't init client app\n",
              __func__,
              __LINE__);
@@ -250,7 +250,7 @@ int main(int an, char **av) {
     // This is the actual application code.
     client_application(channel);
   } else if (FLAGS_operation == "run-app-as-server") {
-    if (!app_trust_data->warm_restart()) {
+    if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
@@ -258,19 +258,19 @@ int main(int an, char **av) {
     printf("running as server\n");
     server_dispatch(FLAGS_server_app_host,
                     FLAGS_server_app_port,
-                    app_trust_data->serialized_policy_cert_,
-                    app_trust_data->private_auth_key_,
-                    app_trust_data->serialized_primary_admissions_cert_,
+                    trust_mgr->serialized_policy_cert_,
+                    trust_mgr->private_auth_key_,
+                    trust_mgr->serialized_primary_admissions_cert_,
                     server_application);
   } else {
     printf("%s() error, line %d, Unknown operation\n", __func__, __LINE__);
   }
 
 done:
-  // app_trust_data->print_trust_data();
-  app_trust_data->clear_sensitive_data();
-  if (app_trust_data != nullptr) {
-    delete app_trust_data;
+  // trust_mgr->print_trust_data();
+  trust_mgr->clear_sensitive_data();
+  if (trust_mgr != nullptr) {
+    delete trust_mgr;
   }
   return ret;
 }
