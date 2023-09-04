@@ -178,8 +178,7 @@ int main(int an, char **av) {
   }
 
   // Init policy key info
-  if (!trust_mgr->init_policy_key(initialized_cert,
-                                       initialized_cert_size)) {
+  if (!trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)) {
     printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
     return false;
   }
@@ -203,12 +202,12 @@ int main(int an, char **av) {
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
     if (!trust_mgr->cold_init(public_key_alg,
-                                   symmetric_key_alg,
-                                   "simple-app-home_domain",
-                                   FLAGS_policy_host,
-                                   FLAGS_policy_port,
-                                   FLAGS_server_app_host,
-                                   FLAGS_server_app_port)) {
+                              symmetric_key_alg,
+                              "simple-app-home_domain",
+                              FLAGS_policy_host,
+                              FLAGS_policy_port,
+                              FLAGS_server_app_host,
+                              FLAGS_server_app_port)) {
       printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
