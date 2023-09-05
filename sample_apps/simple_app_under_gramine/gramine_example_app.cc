@@ -180,7 +180,7 @@ int main(int an, char **av) {
   }
 
   // Init gramine enclave
-  if (!trust_mgr->initialize_gramine_enclave(n, params)) {
+  if (!trust_mgr->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init gramine enclave\n",
            __func__,
            __LINE__);
