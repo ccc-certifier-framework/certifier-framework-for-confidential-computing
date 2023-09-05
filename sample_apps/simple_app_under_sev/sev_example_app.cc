@@ -46,9 +46,9 @@ DEFINE_string(server_app_host, "localhost", "address for app server");
 DEFINE_int32(server_app_port, 8124, "port for server app server");
 
 DEFINE_string(policy_store_file, "store.bin", "policy store file name");
-DEFINE_string(ark_cert_file, "./service/ark_cert.der", "ark cert file name");
-DEFINE_string(ask_cert_file, "./service/ask_cert.der", "ask cert file name");
-DEFINE_string(vcek_cert_file, "./service/vcek_cert.der", "vcek cert file name");
+DEFINE_string(ark_cert_file, "ark_cert.der", "ark cert file name");
+DEFINE_string(ask_cert_file, "ask_cert.der", "ask cert file name");
+DEFINE_string(vcek_cert_file, "vcek_cert.der", "vcek cert file name");
 
 
 // The test app performs five possible roles

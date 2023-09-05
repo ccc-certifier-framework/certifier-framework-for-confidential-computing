@@ -181,6 +181,7 @@ bool get_vse_clause_from_signed_claim(const signed_claim_message &scm,
 
 int sized_pipe_read(int fd, string *out);
 int sized_pipe_write(int fd, int size, byte *buf);
+
 int sized_ssl_read(SSL *ssl, string *out);
 int sized_ssl_write(SSL *ssl, int size, byte *buf);
 

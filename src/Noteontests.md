@@ -15,7 +15,7 @@ To run the full tests including the sev platform policy tests, use the command:
   --vcek_key_file_name=./test_data/policy_vcek_file.bin \
   --ark_cert_file_name=./test_data/ark.der \
   --ask_cert_file_name=./test_data/ask.der \
-  --vcek_cert_file_name=./test_data/vcek.der
+  --vcek_cert_file_name=./test_data/vcek.der --print_all=true
 If these variables are not set, it will skip some sev tests.  The sev tests only
 work on Linux.
 
