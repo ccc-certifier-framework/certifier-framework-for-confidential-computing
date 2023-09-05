@@ -111,42 +111,6 @@ void server_application(secure_authenticated_channel &channel) {
 
 // ---------------------------------------------------------------------------
 
-bool get_islet_enclave_parameters(string **s, int *n) {
-
-  // serialized attest key, measurement, serialized endorsement, in that order
-  string *args = new string[3];
-  if (args == nullptr) {
-    return false;
-  }
-  *s = args;
-
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file,
-                             &args[0])) {
-    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
-    return false;
-  }
-
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file,
-                             &args[1])) {
-    printf("%s() error, line %d, Can't read measurement file\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement,
-                             &args[2])) {
-    printf("%s() error, line %d, Can't read endorsement file\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  *n = 3;
-  return true;
-}
-
-
 int main(int an, char **av) {
   string usage("ARM CCA-based simple app");
   gflags::SetUsageMessage(usage);
@@ -193,10 +157,6 @@ int main(int an, char **av) {
   // Get islet parameters (if needed)
   int     n = 0;
   string *params = nullptr;
-  if (!get_islet_enclave_parameters(&params, &n) || params == nullptr) {
-    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
-    return 1;
-  }
 
   // Init enclave
   if (!trust_mgr->initialize_enclave(n, params)) {

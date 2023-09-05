@@ -192,13 +192,7 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
   } else if (enclave_type_ == "keystone-enclave") {
     return initialize_keystone_enclave();
   } else if (enclave_type_ == "islet-enclave") {
-    if (n < 3) {
-      printf("%s() error, line %d, Wrong number of islet enclave parameters\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
-    return initialize_islet_enclave(params[0], params[1], params[2]);
+    return initialize_islet_enclave();
   } else {
     printf("%s() error, line %d, unsupported enclave type\n",
            __func__,
@@ -374,10 +368,7 @@ bool certifier::framework::cc_trust_manager::initialize_keystone_enclave() {
 #endif
 }
 
-bool certifier::framework::cc_trust_manager::initialize_islet_enclave(
-    const string &serialized_attest_key,
-    const string &measurement,
-    const string &serialized_endorsement) {
+bool certifier::framework::cc_trust_manager::initialize_islet_enclave() {
 
 #ifdef ISLET_CERTIFIER
   if (!cc_policy_info_initialized_) {
