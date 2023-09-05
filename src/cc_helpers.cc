@@ -158,8 +158,7 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
     }
     return initialize_sev_enclave(params[0], params[1], params[2]);
   } else if (enclave_type_ == "oe-enclave") {
-    // initialize_oe_enclave_data(const string &pem_cert_chain_file)
-    return false;
+    return initialize_oe_enclave(params[0]);
   } else if (enclave_type_ == "gramine-enclave") {
 
     if (n == 0) {
@@ -306,7 +305,7 @@ bool certifier::framework::cc_trust_manager::initialize_sev_enclave(
 #endif
 }
 
-bool certifier::framework::cc_trust_manager::initialize_oe_enclave_data(
+bool certifier::framework::cc_trust_manager::initialize_oe_enclave(
     const string &pem_cert_chain_file) {
 #if OE_CERTIFIER
   cc_provider_provisioned_ = true;

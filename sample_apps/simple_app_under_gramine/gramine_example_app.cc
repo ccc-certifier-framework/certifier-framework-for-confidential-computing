@@ -106,10 +106,9 @@ bool run_me_as_server(const string &host_name,
 
 // -----------------------------------------------------------------------------------------
 
-// Parameters for simulated enclave
+// Parameters for gramine enclave
 bool get_gramine_enclave_parameters(string **s, int *n) {
 
-  // serialized attest key, measurement, serialized endorsement, in that order
   string *args = new string[1];
   if (args == nullptr) {
     return false;
@@ -118,7 +117,9 @@ bool get_gramine_enclave_parameters(string **s, int *n) {
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_gramine_cert_file,
                              &args[0])) {
-    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
+    printf("%s() error, line %d, Can't read cert cert file\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
