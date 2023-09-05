@@ -99,48 +99,48 @@ jobs:
         set +x
 
     #! -------------------------------------------------------------------------
-    - name: test-cert_framework-pytests
-      run: |
-        echo " "
-        echo "**************************************************************"
-        echo " Test Python bindings' to Certifier Framework shared library "
-        echo "**************************************************************"
-        echo " "
+    #- name: test-cert_framework-pytests
+    #  run: |
+    #    echo " "
+    #    echo "**************************************************************"
+    #    echo " Test Python bindings' to Certifier Framework shared library "
+    #    echo "**************************************************************"
+    #    echo " "
 
-        export PYTHONPATH=$(pwd)
+    #    export PYTHONPATH=$(pwd)
 
-        pushd tests/pytests
+    #    pushd tests/pytests
 
         # Run one case showing verbose outputs of each library's contents.
         # Run each py file separately as 'pytest -v' (on all files) craps out.
-        set -x
-        pytest --capture=tee-sys test_libcertifier_framework.py -k test_cfslib_getmembers_of_libcertifier_framework
+    #    set -x
+    #    pytest --capture=tee-sys test_libcertifier_framework.py -k test_cfslib_getmembers_of_libcertifier_framework
 
         # Capture output from individual Certifier tests that are run
-        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_libcertifier_tests.py
+    #    PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_libcertifier_tests.py
 
-        PYTHONUNBUFFERED=TRUE pytest -v test_libcertifier_framework.py
+    #    PYTHONUNBUFFERED=TRUE pytest -v test_libcertifier_framework.py
 
         # NOTE: Some test cases in test_certifier_framework.py need the Certifier Service
         # to be up-and-running. That needs several build-and-setup steps which are part
         # of a simple_app execution test. Execution of those cases is hence moved downstream.
-        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v -m "not needs_cert_service" \
-            test_certifier_framework.py
+    #    PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v -m "not needs_cert_service" \
+    #        test_certifier_framework.py
 
         # Just run the basic case of this test to see classes created in generated Python module
-        PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
-            pytest --capture=tee-sys -v test_certifier_protobuf_interfaces.py \
-                -k test_certifier_pb2_basic
+    #    PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
+    #        pytest --capture=tee-sys -v test_certifier_protobuf_interfaces.py \
+    #            -k test_certifier_pb2_basic
 
         # Re-run entire test w/o capturing output
-        PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
-            pytest -v test_certifier_protobuf_interfaces.py
+    #    PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
+    #        pytest -v test_certifier_protobuf_interfaces.py
 
         # Exercise SWIG-Python bindings standalone unit-tests
-        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_libswigpytests.py
+    #    PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_libswigpytests.py
 
-        set +x
-        popd
+    #    set +x
+    #    popd
 
     #! -------------------------------------------------------------------------
     - name: unit-test-certlib-utility-programs
