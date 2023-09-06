@@ -1571,12 +1571,13 @@ void certifier::framework::certifiers::print_certifiers_entry() {
   printf("Domain policy cert: ");
   print_bytes((int)domain_policy_cert_.size(),
               (byte *)domain_policy_cert_.data());
-  if (purpose_.c_str() != nullptr) {
+  printf("\n");
+  if (purpose_.size() > 0) {
     printf("Purpose: %s\n", purpose_.c_str());
   } else {
     printf("Purpose: not declared\n");
   }
-  printf("\nHost: %s, port: %d\n", host_.c_str(), port_);
+  printf("Host: %s, port: %d\n", host_.c_str(), port_);
 
   if (is_certified_) {
     printf("Certified\n");
@@ -1606,6 +1607,8 @@ bool certifier::framework::certifiers::get_certified_status() {
 
 // add auth-key and symmetric key
 bool certifier::framework::certifiers::certify_domain(const string &purpose) {
+
+  purpose_ = purpose;
 
   // owner has enclave_type, keys, and store.
   if (owner_ == nullptr) {
