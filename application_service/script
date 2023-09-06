@@ -62,7 +62,7 @@ $CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,sig
 
 $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
 
-// just and example
+// just an example
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=attest_key_file.bin \
     --verb="is-trusted-for-attestation" --output=tsc1.bin
 
@@ -95,7 +95,7 @@ $APP_SERVICE_DIR/app_service.exe \
   --attest_key_file="attest_key_file.bin" \
   --measurement_file="app_service.measurement" \
   --cold_init_service=true
-  --cold_init_service=false
+#  --cold_init_service=false
 
 # send request to start app
 $APP_SERVICE_DIR/send_request.exe

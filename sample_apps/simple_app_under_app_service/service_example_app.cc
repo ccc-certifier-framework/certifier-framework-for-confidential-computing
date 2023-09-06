@@ -37,7 +37,7 @@ using namespace certifier::utilities;
 // Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(operation, "", "operation");
-DEFINE_string(parent_enclave, "simulatd-enclave", "parent enclave");
+DEFINE_string(parent_enclave, "simulated-enclave", "parent enclave");
 
 DEFINE_string(policy_host, "localhost", "address for policy server");
 DEFINE_int32(policy_port, 8123, "port for policy server");

@@ -195,7 +195,7 @@ class cc_trust_manager {
   bool   cc_service_cert_initialized_;
   string serialized_service_cert_;
 
-  bool                 cc_service_platform_rule_initialized_;
+  bool   cc_service_platform_rule_initialized_;
   signed_claim_message platform_rule_;
 
   //  symmetric key is the same in any domain
@@ -315,8 +315,10 @@ class certifiers {
   string domain_policy_cert_;
   string host_;
   int    port_;
-  bool   is_certified_;
+  string purpose_;
   string admissions_cert_;
+  string signed_rule_;
+  bool   is_certified_;
   string service_host_;
   int    service_port_;
 
@@ -331,7 +333,7 @@ class certifiers {
                             int           service_port);
 
   bool get_certified_status();
-  bool certify_domain();
+  bool certify_domain(const string& purpose);
   void print_certifiers_entry();
 };
 

@@ -445,7 +445,7 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
   }
 
   if (cc_service_cert_initialized_) {
-    printf("Serialised service cert:\n");
+    printf("Serialized service cert:\n");
     print_bytes(serialized_service_cert_.size(),
                 (byte *)serialized_service_cert_.data());
     printf("\n\n");
@@ -526,6 +526,13 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
 const int max_pad_size_for_store = 1024;
 
 bool certifier::framework::cc_trust_manager::save_store() {
+
+#if 0
+  printf("Saved trust data:\n");
+  print_trust_data();
+  printf("\n");
+  printf("End saved trust data\n");
+#endif
 
   string serialized_store;
   if (!store_.Serialize(&serialized_store)) {
@@ -726,6 +733,7 @@ bool certifier::framework::cc_trust_manager::put_trust_data_in_store() {
                __LINE__);
         return false;
       }
+printf("Serialized platform rule\n");
     }
 
     if (!put_certifiers_in_store()) {
@@ -800,12 +808,6 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
 
   int    ent;
   string value;
-
-#if 0
-  Debug
-  printf("get_trust_data_from_store: incoming store\n");
-  store_.print();
-#endif
 
   ent = store_.find_entry(public_key_alg_tag, string_type);
   if (ent < 0) {
@@ -908,13 +910,17 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
     if (ent >= 0) {
       value.clear();
       if (!store_.get(ent, &value)) {
-        printf("%s() error, line %d, Can't get signed claim\n",
+        printf("%s() error, line %d, Can't find platform_rule from store\n",
                __func__,
                __LINE__);
         return false;
       }
-      if (!platform_rule_.ParseFromString(value))
+      if (!platform_rule_.ParseFromString(value)) {
+        printf("%s() error, line %d, Can't parse platform rule\n",
+               __func__,
+               __LINE__);
         return false;
+      }
       cc_service_platform_rule_initialized_ = true;
     }
     cc_is_certified_ = true;
@@ -1299,6 +1305,13 @@ bool certifier::framework::cc_trust_manager::warm_restart() {
            __LINE__);
     return false;
   }
+
+#if 0
+  printf("\nRecovered trust data\n");
+  print_trust_data();
+  printf("\n");
+  printf("End Recovered trust data\n");
+#endif
   return true;
 }
 
@@ -1370,12 +1383,14 @@ bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
 
 bool certifier::framework::cc_trust_manager::certify_primary_domain() {
 
+/*
   if (!cc_all_initialized()) {
     if (!warm_restart()) {
       printf("%s() error, line %d, warm restart failed\n", __func__, __LINE__);
       return false;
     }
   }
+ */
 
   // already certified
   if (cc_is_certified_)
@@ -1388,25 +1403,34 @@ bool certifier::framework::cc_trust_manager::certify_primary_domain() {
     return false;
   }
 
-#if 0
+#if 1
   // Debug: print primary certifier data
+  printf("Certifying primary domain\n");
   certified_domains_[0]->print_certifiers_entry();
 #endif
-  if (!certified_domains_[0]->certify_domain()) {
+
+  if (!certified_domains_[0]->certify_domain(purpose_)) {
     printf("%s() error, line %d, can't certify primary domain\n",
            __func__,
            __LINE__);
     return false;
   }
-  if (purpose_ == "authentication")
+
+  if (purpose_ == "authentication") {
     cc_auth_key_initialized_ = true;
-  else if (purpose_ == "attestation") {
+    primary_admissions_cert_valid_ = true;
+    serialized_primary_admissions_cert_ = certified_domains_[0]->admissions_cert_;
+    cc_is_certified_ = true;
+  } else if (purpose_ == "attestation") {
+printf("**Certify domain for attestation\n");
+    cc_service_platform_rule_initialized_ = true;
+    if (!platform_rule_.ParseFromString(certified_domains_[0]->signed_rule_)) {
+      printf("%s():%d error, Can't parse platform rule\n", __func__, __LINE__);
+    }
     cc_is_certified_ = true;
   } else {
     printf("%s():%d error, unknown purpose\n", __func__, __LINE__);
   }
-  primary_admissions_cert_valid_ = true;
-  serialized_primary_admissions_cert_ = certified_domains_[0]->admissions_cert_;
 
   return true;
 }
@@ -1423,7 +1447,7 @@ bool certifier::framework::cc_trust_manager::certify_secondary_domain(
       break;
     }
   }
-  return (found ? found->certify_domain() : false);
+  return (found ? found->certify_domain(purpose_) : false);
 }
 
 bool certifier::framework::cc_trust_manager::init_peer_certification_data(
@@ -1484,12 +1508,13 @@ bool certifier::framework::cc_trust_manager::get_certifiers_from_store() {
     certifiers *           ce = new certifiers(this);
     certified_domains_[num_certified_domains_++] = ce;
     ce->domain_name_ = cm.domain_name();
+    ce->purpose_ = cm.purpose();
     ce->domain_policy_cert_ = cm.domain_cert();
     ce->host_ = cm.domain_host();
     ce->port_ = cm.domain_port();
     ce->is_certified_ = cm.is_certified();
-    ;
     ce->admissions_cert_ = cm.admissions_cert();
+    ce->signed_rule_ = cm.platform_rule();
     ce->service_host_ = cm.service_host();
     ce->service_port_ = cm.service_port();
   }
@@ -1555,19 +1580,33 @@ void certifier::framework::certifiers::print_certifiers_entry() {
   printf("Domain policy cert: ");
   print_bytes((int)domain_policy_cert_.size(),
               (byte *)domain_policy_cert_.data());
+  if (purpose_.c_str() != nullptr) {
+    printf("Purpose: %s\n", purpose_.c_str());
+  } else {
+    printf("Purpose: not declared\n");
+  }
   printf("\nHost: %s, port: %d\n", host_.c_str(), port_);
-  ;
+
   if (is_certified_) {
-    printf("Certified with Admissions cert: ");
-    print_bytes((int)admissions_cert_.size(), (byte *)admissions_cert_.data());
-    printf("\n");
+    printf("Certified\n");
   } else {
     printf("Not certified\n");
   }
+
+  if (admissions_cert_.size() > 0) {
+    printf("Admissions cert: ");
+    print_bytes((int)admissions_cert_.size(), (byte *)admissions_cert_.data());
+    printf("\n");
+  }
+  if (signed_rule_.size() > 0) {
+    printf("Signed_rule : ");
+    print_bytes((int)signed_rule_.size(), (byte *)signed_rule_.data());
+    printf("\n");
+  }
+
   printf("Service host: %s, service port: %d\n",
          service_host_.c_str(),
          service_port_);
-  ;
 }
 
 bool certifier::framework::certifiers::get_certified_status() {
@@ -1575,7 +1614,7 @@ bool certifier::framework::certifiers::get_certified_status() {
 }
 
 // add auth-key and symmetric key
-bool certifier::framework::certifiers::certify_domain() {
+bool certifier::framework::certifiers::certify_domain(const string& purpose) {
 
   // owner has enclave_type, keys, and store.
   if (owner_ == nullptr) {
@@ -1710,7 +1749,7 @@ bool certifier::framework::certifiers::certify_domain() {
   }
 
   attestation_user_data ud;
-  if (owner_->purpose_ == "authentication") {
+  if (purpose == "authentication") {
 #ifdef DEBUG
     printf("\n---In certify_domain\n");
     printf("Filling ud with public auth key:\n");
@@ -1739,7 +1778,7 @@ bool certifier::framework::certifiers::certify_domain() {
     print_user_data(ud);
     printf("\n");
 #endif
-  } else if (owner_->purpose_ == "attestation") {
+  } else if (purpose == "attestation") {
     if (!make_attestation_user_data(owner_->enclave_type_,
                                     owner_->public_service_key_,
                                     &ud)) {
@@ -1754,6 +1793,7 @@ bool certifier::framework::certifiers::certify_domain() {
            __LINE__);
     return false;
   }
+
   string serialized_ud;
   if (!ud.SerializeToString(&serialized_ud)) {
     printf("%s() error, line: %d, Can't serialize user data\n",
@@ -1799,7 +1839,7 @@ bool certifier::framework::certifiers::certify_domain() {
   } else {
     request.set_submitted_evidence_type("vse-attestation-package");
   }
-  request.set_purpose(owner_->purpose_);
+  request.set_purpose(purpose);
 
   // Construct the evidence package
   // Put initialized platform evidence and attestation in the following order:
@@ -1871,29 +1911,25 @@ bool certifier::framework::certifiers::certify_domain() {
   }
 
   is_certified_ = true;
+
   // Store the admissions certificate cert or platform rule
   if (owner_->purpose_ == "authentication") {
+
     admissions_cert_.assign((char *)response.artifact().data(),
                             response.artifact().size());
+    owner_->primary_admissions_cert_valid_ = true;
+    owner_->serialized_primary_admissions_cert_ = admissions_cert_;
 
   } else if (owner_->purpose_ == "attestation") {
 
-    // These should be set in cc_trust_manager and ONLY for the primary domain
-    owner_->public_service_key_.set_certificate(response.artifact());
-    owner_->private_service_key_.set_certificate(response.artifact());
-
-    // Set platform_rule
-    string pr_str;
-    pr_str.assign((char *)response.artifact().data(),
-                  response.artifact().size());
-    if (!owner_->platform_rule_.ParseFromString(pr_str)) {
+    signed_rule_.assign((char *)response.artifact().data(),
+                            response.artifact().size());
+    if (!owner_->platform_rule_.ParseFromString(signed_rule_)) {
       printf("%s() error, line: %d, Can't parse platform rule\n",
              __func__,
              __LINE__);
       return false;
     }
-
-    // These should be set in cc_trust_manager and ONLY for the primary domain
     owner_->cc_service_platform_rule_initialized_ = true;
 
   } else {
