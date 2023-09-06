@@ -967,10 +967,10 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
       return 1;
     }
   } else {
-     if (!helper.warm_restart()) {
-        printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
-        return 1;
-      }
+    if (!helper.warm_restart()) {
+      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+      return 1;
+    }
   }
 
   // run service response

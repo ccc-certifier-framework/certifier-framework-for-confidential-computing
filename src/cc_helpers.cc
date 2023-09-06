@@ -733,7 +733,7 @@ bool certifier::framework::cc_trust_manager::put_trust_data_in_store() {
                __LINE__);
         return false;
       }
-printf("Serialized platform rule\n");
+      printf("Serialized platform rule\n");
     }
 
     if (!put_certifiers_in_store()) {
@@ -1383,14 +1383,14 @@ bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
 
 bool certifier::framework::cc_trust_manager::certify_primary_domain() {
 
-/*
-  if (!cc_all_initialized()) {
-    if (!warm_restart()) {
-      printf("%s() error, line %d, warm restart failed\n", __func__, __LINE__);
-      return false;
+  /*
+    if (!cc_all_initialized()) {
+      if (!warm_restart()) {
+        printf("%s() error, line %d, warm restart failed\n", __func__,
+    __LINE__); return false;
+      }
     }
-  }
- */
+   */
 
   // already certified
   if (cc_is_certified_)
@@ -1419,10 +1419,11 @@ bool certifier::framework::cc_trust_manager::certify_primary_domain() {
   if (purpose_ == "authentication") {
     cc_auth_key_initialized_ = true;
     primary_admissions_cert_valid_ = true;
-    serialized_primary_admissions_cert_ = certified_domains_[0]->admissions_cert_;
+    serialized_primary_admissions_cert_ =
+        certified_domains_[0]->admissions_cert_;
     cc_is_certified_ = true;
   } else if (purpose_ == "attestation") {
-printf("**Certify domain for attestation\n");
+    printf("**Certify domain for attestation\n");
     cc_service_platform_rule_initialized_ = true;
     if (!platform_rule_.ParseFromString(certified_domains_[0]->signed_rule_)) {
       printf("%s():%d error, Can't parse platform rule\n", __func__, __LINE__);
@@ -1614,7 +1615,7 @@ bool certifier::framework::certifiers::get_certified_status() {
 }
 
 // add auth-key and symmetric key
-bool certifier::framework::certifiers::certify_domain(const string& purpose) {
+bool certifier::framework::certifiers::certify_domain(const string &purpose) {
 
   // owner has enclave_type, keys, and store.
   if (owner_ == nullptr) {
@@ -1923,7 +1924,7 @@ bool certifier::framework::certifiers::certify_domain(const string& purpose) {
   } else if (owner_->purpose_ == "attestation") {
 
     signed_rule_.assign((char *)response.artifact().data(),
-                            response.artifact().size());
+                        response.artifact().size());
     if (!owner_->platform_rule_.ParseFromString(signed_rule_)) {
       printf("%s() error, line: %d, Can't parse platform rule\n",
              __func__,
