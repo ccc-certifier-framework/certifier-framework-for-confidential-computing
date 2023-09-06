@@ -332,7 +332,7 @@ bool application_GetPlatformStatement(int *size_out, byte *out) {
   }
 
   if (out == nullptr) {
-    *size_out = (int)rsp.args(0).size();
+    *size_out = 0;
     return true;
   }
   if (*size_out < (int)rsp.args(0).size()) {

@@ -249,6 +249,23 @@ int main(int an, char **av) {
       goto done;
     }
 
+#ifdef DEBUG
+    printf("client_init\n");
+    printf("App host: %s\n", FLAGS_server_app_host.c_str());
+    printf("App port: %d\n", FLAGS_server_app_port);
+    printf("Policy cert: ");
+    print_bytes(trust_mgr->serialized_policy_cert_.size(),
+                (byte *)trust_mgr->serialized_policy_cert_.data());
+    printf("\n");
+    printf("Auth key: ");
+    print_key(trust_mgr->private_auth_key_);
+    printf("\n");
+    printf("Admissions cert: ");
+    print_bytes(trust_mgr->serialized_primary_admissions_cert_.size(),
+                (byte *)trust_mgr->serialized_primary_admissions_cert_.data());
+    printf("\n");
+#endif
+
     if (!channel.init_client_ssl(
             FLAGS_server_app_host,
             FLAGS_server_app_port,

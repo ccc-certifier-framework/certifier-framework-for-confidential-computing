@@ -422,7 +422,7 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
     printf("\nPrivate auth key\n");
     print_key(private_auth_key_);
     printf("\nPublic auth key\n");
-    print_key(private_auth_key_);
+    print_key(public_auth_key_);
     printf("\n\n");
   }
   if (cc_service_key_initialized_) {
@@ -733,7 +733,6 @@ bool certifier::framework::cc_trust_manager::put_trust_data_in_store() {
                __LINE__);
         return false;
       }
-      printf("Serialized platform rule\n");
     }
 
     if (!put_certifiers_in_store()) {
@@ -896,12 +895,18 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
              __LINE__);
       return false;
     }
+
     if (!service_sealing_key_.ParseFromString(value)) {
       printf("%s() error, line %d, Can't parse sealing-key\n",
              __func__,
              __LINE__);
       return false;
     }
+    memset(sealing_key_bytes_, 0, max_symmetric_key_size_);
+    memcpy(sealing_key_bytes_,
+           (byte *)service_sealing_key_.secret_key_bits().data(),
+           service_sealing_key_.secret_key_bits().size());
+
     cc_symmetric_key_initialized_ = true;
 
     // platform rule?
@@ -1394,7 +1399,7 @@ bool certifier::framework::cc_trust_manager::certify_primary_domain() {
     return false;
   }
 
-#if 1
+#ifdef DEBUG
   // Debug: print primary certifier data
   printf("Certifying primary domain\n");
   certified_domains_[0]->print_certifiers_entry();
@@ -2336,6 +2341,19 @@ bool certifier::framework::server_dispatch(
     key_message & private_key,
     const string &private_key_cert,
     void (*func)(secure_authenticated_channel &)) {
+
+#ifdef DEBUG
+  printf("\nserver_dispatch\n");
+  printf("ans1_root_cert: ");
+  print_bytes(asn1_root_cert.size(), (byte *)asn1_root_cert.data());
+  printf("\n");
+  printf("private_key_cert: ");
+  print_bytes(private_key_cert.size(), (byte *)private_key_cert.data());
+  printf("\n");
+  printf("private_key: ");
+  print_key(private_key);
+  printf("\n");
+#endif
 
   OPENSSL_init_ssl(0, NULL);
   SSL_load_error_strings();
