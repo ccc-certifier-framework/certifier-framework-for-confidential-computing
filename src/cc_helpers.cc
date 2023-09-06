@@ -1027,7 +1027,7 @@ bool certifier::framework::cc_trust_manager::generate_symmetric_key(
     return false;
   }
   memset(symmetric_key_bytes_, 0, max_symmetric_key_size_);
-  if (!get_random(num_key_bytes, symmetric_key_bytes_)) {
+  if (!get_random(8 * num_key_bytes, symmetric_key_bytes_)) {
     printf("%s() error, line %d, Can't get random bytes for app key\n",
            __func__,
            __LINE__);
@@ -1066,7 +1066,7 @@ bool certifier::framework::cc_trust_manager::generate_sealing_key(bool regen) {
     return false;
   }
   memset(sealing_key_bytes_, 0, max_symmetric_key_size_);
-  if (!get_random(num_key_bytes, sealing_key_bytes_)) {
+  if (!get_random(8 * num_key_bytes, sealing_key_bytes_)) {
     printf("%s() error, line %d, Can't get random bytes for app key\n",
            __func__,
            __LINE__);
@@ -1383,15 +1383,6 @@ bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
 
 bool certifier::framework::cc_trust_manager::certify_primary_domain() {
 
-  /*
-    if (!cc_all_initialized()) {
-      if (!warm_restart()) {
-        printf("%s() error, line %d, warm restart failed\n", __func__,
-    __LINE__); return false;
-      }
-    }
-   */
-
   // already certified
   if (cc_is_certified_)
     return true;
@@ -1423,7 +1414,6 @@ bool certifier::framework::cc_trust_manager::certify_primary_domain() {
         certified_domains_[0]->admissions_cert_;
     cc_is_certified_ = true;
   } else if (purpose_ == "attestation") {
-    printf("**Certify domain for attestation\n");
     cc_service_platform_rule_initialized_ = true;
     if (!platform_rule_.ParseFromString(certified_domains_[0]->signed_rule_)) {
       printf("%s():%d error, Can't parse platform rule\n", __func__, __LINE__);

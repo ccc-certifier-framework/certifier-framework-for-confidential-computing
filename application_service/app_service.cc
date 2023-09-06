@@ -230,8 +230,14 @@ cc_trust_manager *trust_mgr = nullptr;
 
 
 bool soft_Seal(spawned_children *kid, string in, string *out) {
-#ifdef DEBUG
+#if 1
   printf("soft_Seal\n");
+  const char *alg = trust_mgr->symmetric_key_algorithm_.c_str();
+  printf("alg: %s\n", trust_mgr->symmetric_key_algorithm_.c_str());
+  int ks = cipher_key_byte_size(alg);
+  printf("key (%d): ", ks);
+  print_bytes(ks, trust_mgr->sealing_key_bytes_);
+  printf("\n");
 #endif
 
   string buffer_to_seal;
@@ -264,8 +270,14 @@ bool soft_Seal(spawned_children *kid, string in, string *out) {
 }
 
 bool soft_Unseal(spawned_children *kid, string in, string *out) {
-#ifdef DEBUG
+#if 1
   printf("soft_Unseal\n");
+  const char *alg = trust_mgr->symmetric_key_algorithm_.c_str();
+  printf("alg: %s\n", trust_mgr->symmetric_key_algorithm_.c_str());
+  int ks = cipher_key_byte_size(alg);
+  printf("key (%d): ", ks);
+  print_bytes(ks, trust_mgr->sealing_key_bytes_);
+  printf("\n");
 #endif
 
   int  t_size = in.size();
