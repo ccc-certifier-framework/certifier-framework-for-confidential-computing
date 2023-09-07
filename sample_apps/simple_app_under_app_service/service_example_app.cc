@@ -304,6 +304,7 @@ int main(int an, char **av) {
                     server_application);
   } else {
     printf("%s() error, line %d, Unknown operation\n", __func__, __LINE__);
+    ret = 1;
   }
 
 done:
