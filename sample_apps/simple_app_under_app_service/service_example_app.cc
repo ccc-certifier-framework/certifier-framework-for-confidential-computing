@@ -72,6 +72,8 @@ cc_trust_manager *trust_mgr = nullptr;
 // server.
 //    Most of the work of setting up SSL is done with the helpers.
 
+// Consider changing return value to bool and returning false if
+// we don't get the expected response.
 void client_application(secure_authenticated_channel &channel) {
 
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
