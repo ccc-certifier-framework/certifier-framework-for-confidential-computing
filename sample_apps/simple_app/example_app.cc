@@ -86,6 +86,8 @@ bool client_application(secure_authenticated_channel &channel) {
   string out;
   int    n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
+  channel.close();
+
   if (n < 0 || strcmp(out.c_str(), "Hi from your secret server\n") != 0) {
     printf("%s() error, line %d, did not receive expected server response\n",
            __func__,
@@ -114,6 +116,7 @@ void server_application(secure_authenticated_channel &channel) {
   // Reply over authenticated, encrypted channel
   const char *msg = "Hi from your secret server\n";
   channel.write(strlen(msg), (byte *)msg);
+  channel.close();
 }
 
 // Parameters for simulated enclave
