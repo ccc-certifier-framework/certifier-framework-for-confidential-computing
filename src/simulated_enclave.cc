@@ -76,6 +76,7 @@ bool simulated_Init(const string &serialized_attest_key,
   // attest key
   if (!my_attestation_key.ParseFromString(serialized_attest_key)) {
     printf("simulated_Init: Can't parse attest key\n");
+    printf("Key: %s\n", serialized_attest_key.c_str());
     return false;
   }
 

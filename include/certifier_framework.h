@@ -119,19 +119,20 @@ bool protect_blob(const string &enclave_type,
                   byte *        unencrypted_data,
                   int *         size_protected_blob,
                   byte *        blob);
+
 bool unprotect_blob(const string &enclave_type,
                     int           size_protected_blob,
                     byte *        protected_blob,
                     key_message * key,
                     int *         size_of_unencrypted_data,
                     byte *        data);
+
 bool reprotect_blob(const string &enclave_type,
                     key_message * key,
                     int           size_protected_blob,
                     byte *        protected_blob,
                     int *         size_new_encrypted_blob,
                     byte *        data);
-
 
 class domain_info {
  public:
@@ -244,8 +245,6 @@ class cc_trust_manager {
 
   bool initialize_gramine_enclave(const int size, byte *cert);
 
-  // initialize_oe_enclave_data to be deprecated
-  bool initialize_oe_enclave_data(const string &file);
   bool initialize_oe_enclave(const string &cert);
 
   bool initialize_application_enclave(const string &parent_enclave_type,
@@ -275,6 +274,7 @@ class cc_trust_manager {
                  int           home_port,
                  const string &service_host,
                  int           service_port);
+
   bool warm_restart();
   bool GetPlatformSaysAttestClaim(signed_claim_message *scm);
   void print_trust_data();
@@ -295,6 +295,7 @@ class cc_trust_manager {
                                 int           port,
                                 const string &service_host,
                                 int           service_port);
+
   bool certify_secondary_domain(const string &domain_name);
   bool get_certifiers_from_store();
   bool put_certifiers_in_store();
@@ -370,6 +371,7 @@ class secure_authenticated_channel {
   bool init_client_ssl(const string &          host_name,
                        int                     port,
                        const cc_trust_manager &mgr);
+
   bool init_server_ssl(const string &          host_name,
                        int                     port,
                        const cc_trust_manager &mgr);
@@ -399,4 +401,4 @@ bool server_dispatch(const string &          host_name,
 }  // namespace framework
 }  // namespace certifier
 
-#endif
+#endif  // _CERTIFIER_FRAMEWORK_H__
