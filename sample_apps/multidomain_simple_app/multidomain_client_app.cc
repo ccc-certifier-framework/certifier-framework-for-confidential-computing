@@ -122,7 +122,7 @@ bool get_simulated_enclave_parameters(string **s, int *n) {
     printf("%s() error, line %d, Can't read measurement file %s\n",
            __func__,
            __LINE__,
-           err.c_str().);
+           err.c_str());
     return false;
   }
 
