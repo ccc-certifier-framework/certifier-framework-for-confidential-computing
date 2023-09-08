@@ -48,8 +48,8 @@ def test_cfslib_getmembers_of_libcertifier_framework():
                  , 'reprotect_blob'
                  , 'Seal'
                  , 'Unseal'
-                 , 'cc_trust_data_certify_me'
-                 , 'cc_trust_data_init_policy_key'
+                 , 'cc_trust_manager_certify_me'
+                 , 'cc_trust_manager_init_policy_key'
                  , 'policy_store_get_num_entries'
                  , 'policy_store_Deserialize'
                  , 'policy_store_Serialize'
@@ -63,66 +63,66 @@ def test_cfslib_getmembers_of_libcertifier_framework():
         print(' -', item[0], item[1])
 
 # ##############################################################################
-def test_cfslib_cc_trust_data_default_ctor():
+def test_cfslib_cc_trust_manager_default_ctor():
     """
-    Basic exerciser for an empty cc_trust_data() object.
+    Basic exerciser for an empty cc_trust_manager() object.
     """
-    cctd = libcf.new_cc_trust_data()
-    result = libcf.cc_trust_data_cc_all_initialized(cctd)
+    cctd = libcf.new_cc_trust_manager()
+    result = libcf.cc_trust_manager_cc_all_initialized(cctd)
     assert result is False
 
-    libcf.delete_cc_trust_data(cctd)
+    libcf.delete_cc_trust_manager(cctd)
 
 # ##############################################################################
-def test_cfslib_cc_trust_data():
+def test_cfslib_cc_trust_manager():
     """
-    Instantiate a cc_trust_data() object with some arguments.
+    Instantiate a cc_trust_manager() object with some arguments.
     """
-    cctd = libcf.new_cc_trust_data('simulated-enclave', 'authentication', 'policy_store')
+    cctd = libcf.new_cc_trust_manager('simulated-enclave', 'authentication', 'policy_store')
 
-    result = libcf.cc_trust_data_cc_all_initialized(cctd)
+    result = libcf.cc_trust_manager_cc_all_initialized(cctd)
     assert result is False
 
-    libcf.delete_cc_trust_data(cctd)
+    libcf.delete_cc_trust_manager(cctd)
 
 # ##############################################################################
-def test_cfslib_cc_trust_data_add_or_update_new_domain():
+def test_cfslib_cc_trust_manager_add_or_update_new_domain():
     """
     Exercise add_or_update_new_domain(), which will create a new certified_domain()
-    object. Dismantiling this cc_trust_data() will test the destructor of that
+    object. Dismantiling this cc_trust_manager() will test the destructor of that
     object which should correctly release memory for new certified-domains.
     """
-    cctd = libcf.new_cc_trust_data()
+    cctd = libcf.new_cc_trust_manager()
 
-    result = libcf.cc_trust_data_add_or_update_new_domain(cctd,
-                                                          'test-security-domain',
-                                                          'test-dummy-certificate',
-                                                          'localhost', 8121,
-                                                          'localhost', 8123)
+    result = libcf.cc_trust_manager_add_or_update_new_domain(cctd,
+                                                             'test-security-domain',
+                                                             'test-dummy-certificate',
+                                                             'localhost', 8121,
+                                                             'localhost', 8123)
     assert result is True
 
-    libcf.delete_cc_trust_data(cctd)
+    libcf.delete_cc_trust_manager(cctd)
 
 # ##############################################################################
-def test_cfslib_cc_trust_data_certify_secondary_domain_not_found():
+def test_cfslib_cc_trust_manager_certify_secondary_domain_not_found():
     """
     Exercise certify_secondary_domain(). (Verifies fix to handle a secondary
     domain that is not found; leading to null domain ptr.)
     """
-    cctd = libcf.new_cc_trust_data()
+    cctd = libcf.new_cc_trust_manager()
 
-    result = libcf.cc_trust_data_add_or_update_new_domain(cctd,
-                                                          'test-security-domain',
-                                                          'test-dummy-certificate',
-                                                          'localhost', 8121,
-                                                          'localhost', 8123)
+    result = libcf.cc_trust_manager_add_or_update_new_domain(cctd,
+                                                             'test-security-domain',
+                                                             'test-dummy-certificate',
+                                                             'localhost', 8121,
+                                                             'localhost', 8123)
     assert result is True
 
-    result = libcf.cc_trust_data_certify_secondary_domain(cctd,
-                                                          'non-existent-secondary-domain')
+    result = libcf.cc_trust_manager_certify_secondary_domain(cctd,
+                                                             'non-existent-secondary-domain')
     assert result is False
 
-    libcf.delete_cc_trust_data(cctd)
+    libcf.delete_cc_trust_manager(cctd)
 
 # ##############################################################################
 def test_cfslib_store_entry_basic():
@@ -250,19 +250,19 @@ def test_cfslib_policy_store_delete_entry():
     libcf.delete_policy_store(policy_store)
 
 # ##############################################################################
-def test_cfslib_cc_trust_data_authentication():
+def test_cfslib_cc_trust_manager_authentication():
     """
-    Exercise few interfaces of class cc_trust_data()
+    Exercise few interfaces of class cc_trust_manager()
     """
-    trust_data = libcf.new_cc_trust_data("simulated_enclave", 'attestation', 'fake_policy_store')
-    assert libcf.cc_trust_data_cc_all_initialized(trust_data) is False
+    trust_data = libcf.new_cc_trust_manager("simulated_enclave", 'attestation', 'fake_policy_store')
+    assert libcf.cc_trust_manager_cc_all_initialized(trust_data) is False
 
-    result = libcf.cc_trust_data_initialize_simulated_enclave_data(trust_data,
-                                                                   'attest_key_file_name',
-                                                                   'measurement_file_name',
-                                                                   'attest_endorsement_file_name')
+    result = libcf.cc_trust_manager_initialize_simulated_enclave(trust_data,
+                                                                 'attest_key_file_name',
+                                                                 'measurement_file_name',
+                                                                 'attest_endorsement_file_name')
     assert result is False
-    libcf.delete_cc_trust_data(trust_data)
+    libcf.delete_cc_trust_manager(trust_data)
 
 # ##############################################################################
 def test_cfslib_secure_authenticated_channel():
