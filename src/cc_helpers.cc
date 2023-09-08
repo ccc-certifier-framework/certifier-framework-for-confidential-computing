@@ -138,6 +138,12 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
 
   if (enclave_type_ == "simulated-enclave") {
 
+    if (n < 3) {
+      printf("%s() error, line %d, Wrong number of arguments\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
     return initialize_simulated_enclave(params[0], params[1], params[2]);
   } else if (enclave_type_ == "sev-enclave") {
 

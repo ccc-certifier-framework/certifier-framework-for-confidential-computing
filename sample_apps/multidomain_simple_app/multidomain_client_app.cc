@@ -108,23 +108,31 @@ bool get_simulated_enclave_parameters(string **s, int *n) {
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file,
                              &args[0])) {
-    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
+    string err = FLAGS_data_dir + FLAGS_attest_key_file;
+    printf("%s() error, line %d, Can't read attest file %s\n",
+           __func__,
+           __LINE__,
+           err.c_str());
     return false;
   }
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file,
                              &args[1])) {
-    printf("%s() error, line %d, Can't read measurement file\n",
+    string err = FLAGS_data_dir + FLAGS_measurement_file;
+    printf("%s() error, line %d, Can't read measurement file %s\n",
            __func__,
-           __LINE__);
+           __LINE__,
+           err.c_str().);
     return false;
   }
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement,
                              &args[2])) {
-    printf("%s() error, line %d, Can't read endorsement file\n",
+    string err = FLAGS_data_dir + FLAGS_platform_attest_endorsement;
+    printf("%s() error, line %d, Can't read endorsement file %s\n",
            __func__,
-           __LINE__);
+           __LINE__,
+           err.c_str());
     return false;
   }
 

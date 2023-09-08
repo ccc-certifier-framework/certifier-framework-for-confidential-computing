@@ -252,10 +252,7 @@ class cc_trust_manager {
                                       int           in_fd,
                                       int           out_fd);
 
-  // initialize_keystone_enclave_data to be deprecated
   bool initialize_keystone_enclave();
-
-  // initialize_keystone_enclave_data to be deprecated
   bool initialize_islet_enclave();
 
   bool cc_all_initialized();
