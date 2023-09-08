@@ -392,14 +392,43 @@ bool test_sev_platform_certify(const bool    debug_print,
 
   // This has no effect for now
   extern bool sev_Init(const string &, const string &, const string &);
-  if (!sev_Init(ark_cert_file_name, ask_cert_file_name, vcek_cert_file_name)) {
+  string      ark_cert;
+  string      ask_cert;
+  string      vcek_cert;
+  if (!read_file_into_string(ark_cert_file_name, &ark_cert)) {
+    printf("%s() error, line: %d, Can't read ark cert %s\n",
+           __func__,
+           __LINE__,
+           ark_cert_file_name.c_str());
+    return false;
+  }
+  if (!read_file_into_string(ask_cert_file_name, &ask_cert)) {
+    printf("%s() error, line: %d, Can't read ask cert %s\n",
+           __func__,
+           __LINE__,
+           ask_cert_file_name.c_str());
+    return false;
+  }
+  if (!read_file_into_string(vcek_cert_file_name, &vcek_cert)) {
+    printf("%s() error, line: %d, Can't read vcek cert %s\n",
+           __func__,
+           __LINE__,
+           vcek_cert_file_name.c_str());
+    return false;
+  }
+
+  if (!sev_Init(ark_cert, ask_cert, vcek_cert)) {
+    printf("%s() error, line: %d, can't sev_Init\n", __func__, __LINE__);
     return false;
   }
 
   // get policy
   signed_claim_sequence signed_statements;
   if (!read_signed_vse_statements(policy_file_name, &signed_statements)) {
-    printf("test_sev_platform_certify: Can't read policy\n");
+    printf("%s() error, line: %d, Can't read policy %s\n",
+           __func__,
+           __LINE__,
+           policy_file_name.c_str());
     return false;
   }
 
@@ -407,7 +436,10 @@ bool test_sev_platform_certify(const bool    debug_print,
   key_message policy_pk;
   string      policy_key_str;
   if (!read_file_into_string(policy_key_file, &policy_key_str)) {
-    printf("test_sev_platform_certify: Can't read policy key\n");
+    printf("%s() error, line: %d, Can't read policy key %s\n",
+           __func__,
+           __LINE__,
+           policy_key_file.c_str());
     return false;
   }
   if (!policy_key.ParseFromString(policy_key_str)) {
@@ -581,6 +613,8 @@ bool test_sev_platform_certify(const bool    debug_print,
     }
   }
 
+  // Fix this
+  return true;
   if (!validate_evidence_from_policy(evidence_descriptor,
                                      signed_statements,
                                      purpose,

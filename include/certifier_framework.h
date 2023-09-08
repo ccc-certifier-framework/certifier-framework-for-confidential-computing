@@ -119,19 +119,20 @@ bool protect_blob(const string &enclave_type,
                   byte *        unencrypted_data,
                   int *         size_protected_blob,
                   byte *        blob);
+
 bool unprotect_blob(const string &enclave_type,
                     int           size_protected_blob,
                     byte *        protected_blob,
                     key_message * key,
                     int *         size_of_unencrypted_data,
                     byte *        data);
+
 bool reprotect_blob(const string &enclave_type,
                     key_message * key,
                     int           size_protected_blob,
                     byte *        protected_blob,
                     int *         size_new_encrypted_blob,
                     byte *        data);
-
 
 class domain_info {
  public:
@@ -145,10 +146,10 @@ class domain_info {
 
 class certifiers;
 
-class cc_trust_data {
+class cc_trust_manager {
 
  private:
-  void cc_trust_data_default_init();
+  void cc_trust_manager_default_init();
 
  public:
   // Python swig bindings need this to be public, to size other array decls
@@ -221,34 +222,37 @@ class cc_trust_data {
 
 
   enum { MAX_NUM_CERTIFIERS = 32 };
-  cc_trust_data();
-  cc_trust_data(const string &enclave_type,
-                const string &purpose,
-                const string &policy_store_name);
-  ~cc_trust_data();
+  cc_trust_manager();
+  cc_trust_manager(const string &enclave_type,
+                   const string &purpose,
+                   const string &policy_store_name);
+  ~cc_trust_manager();
+
+  // If n == 0, systems should be able to find parameters
+  // by default, for example, sev and sgx.
+  bool initialize_enclave(int n, string *params);
 
   // Each of the enclave types have bespoke initialization
-  bool initialize_simulated_enclave_data(
-      const string &attest_key_file_name,
-      const string &measurement_file_name,
-      const string &attest_endorsement_file_name);
-  bool initialize_sev_enclave_data(const string &platform_ark_der_file,
-                                   const string &platform_ask_der_file,
-                                   const string &platform_vcek_der_file);
-  bool initialize_gramine_enclave_data(const int size, byte *cert);
-  bool initialize_oe_enclave_data(const string &file);
-  bool initialize_application_enclave_data(const string &parent_enclave_type,
-                                           int           in_fd,
-                                           int           out_fd);
-  bool initialize_keystone_enclave_data(
-      const string &attest_key_file_name,
-      const string &measurement_file_name,
-      const string &attest_endorsement_file_name);
 
-  bool initialize_islet_enclave_data(
-      const string &attest_key_file_name,
-      const string &measurement_file_name,
-      const string &attest_endorsement_file_name);
+  bool initialize_simulated_enclave(
+      const string &serialized_attest_key,
+      const string &measurement,
+      const string &serialized_attest_endorsement);
+
+  bool initialize_sev_enclave(const string &ark_der_cert,
+                              const string &ask_der_cert,
+                              const string &vcek_der_cert);
+
+  bool initialize_gramine_enclave(const int size, byte *cert);
+
+  bool initialize_oe_enclave(const string &cert);
+
+  bool initialize_application_enclave(const string &parent_enclave_type,
+                                      int           in_fd,
+                                      int           out_fd);
+
+  bool initialize_keystone_enclave();
+  bool initialize_islet_enclave();
 
   bool cc_all_initialized();
   bool init_policy_key(byte *asn1_cert, int asn1_cert_size);
@@ -265,13 +269,12 @@ class cc_trust_data {
 
   bool cold_init(const string &public_key_alg,
                  const string &symmetric_key_alg,
-                 byte *        asn1_cert,
-                 int           asn1_cert_size,
                  const string &home_domain_name,
                  const string &home_host,
                  int           home_port,
                  const string &service_host,
                  int           service_port);
+
   bool warm_restart();
   bool GetPlatformSaysAttestClaim(signed_claim_message *scm);
   void print_trust_data();
@@ -292,6 +295,7 @@ class cc_trust_data {
                                 int           port,
                                 const string &service_host,
                                 int           service_port);
+
   bool certify_secondary_domain(const string &domain_name);
   bool get_certifiers_from_store();
   bool put_certifiers_in_store();
@@ -302,19 +306,21 @@ class cc_trust_data {
 class certifiers {
  private:
   // should be const, don't delete it
-  cc_trust_data *owner_;
+  cc_trust_manager *owner_;
 
  public:
   string domain_name_;
   string domain_policy_cert_;
   string host_;
   int    port_;
-  bool   is_certified_;
+  string purpose_;
   string admissions_cert_;
+  string signed_rule_;
+  bool   is_certified_;
   string service_host_;
   int    service_port_;
 
-  certifiers(cc_trust_data *owner);
+  certifiers(cc_trust_manager *owner);
   ~certifiers();
 
   bool init_certifiers_data(const string &domain_name,
@@ -325,7 +331,7 @@ class certifiers {
                             int           service_port);
 
   bool get_certified_status();
-  bool certify_domain();
+  bool certify_domain(const string &purpose);
   void print_certifiers_entry();
 };
 
@@ -362,6 +368,14 @@ class secure_authenticated_channel {
                        key_message & private_key,
                        const string &private_key_cert);
 
+  bool init_client_ssl(const string &          host_name,
+                       int                     port,
+                       const cc_trust_manager &mgr);
+
+  bool init_server_ssl(const string &          host_name,
+                       int                     port,
+                       const cc_trust_manager &mgr);
+
   void server_channel_accept_and_auth(
       void (*func)(secure_authenticated_channel &));
 
@@ -378,7 +392,13 @@ bool server_dispatch(const string &host_name,
                      key_message & private_key,
                      const string &private_key_cert,
                      void (*)(secure_authenticated_channel &));
+
+bool server_dispatch(const string &          host_name,
+                     int                     port,
+                     const cc_trust_manager &mgr,
+                     void (*)(secure_authenticated_channel &));
+
 }  // namespace framework
 }  // namespace certifier
 
-#endif
+#endif  // _CERTIFIER_FRAMEWORK_H__

@@ -185,7 +185,7 @@ cd $MULTIDOMAIN_EXAMPLE_DIR/server_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver --port=8121 \
 	--policyFile=server_policy.bin --policy_key_file=server_policy_key_file.bin \
 	--policy_cert_file=server_policy_cert_file.bin --readPolicy=true
-#run certifier server for client policy in one window
+#run certifier server for client policy in another window
 cd $MULTIDOMAIN_EXAMPLE_DIR/client_service
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver --port=8122 \
 	--policyFile=client_policy.bin --policy_key_file=client_policy_key_file.bin \

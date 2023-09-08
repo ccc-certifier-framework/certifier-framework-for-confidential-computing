@@ -25,6 +25,16 @@ make -f sev_example_app.mak
 
 # or if you're running with the SEV simulator
 CFLAGS="-DSEV_DUMMY_GUEST" make -f sev_example_app.mak
+# If you're running with the simulator and you have not initialized
+# the sev keys or installed the device driver
+cd $CERTIFIER_PROTOTYPE/sev-snp-simulator
+make clean
+make
+make keys
+make insmod
+cd test
+make
+sudo ./sev-test
 
 # copy the der files
 

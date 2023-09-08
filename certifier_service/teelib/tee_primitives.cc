@@ -15,9 +15,11 @@
 
 #include "tee_primitives.h"
 #include "certifier_framework.h"
+#include "certifier_utilities.h"
 #include "simulated_enclave.h"
 
 using namespace certifier::framework;
+using namespace certifier::utilities;
 using namespace std;
 
 bool tee_Attest(const char *enclave_type,
@@ -55,12 +57,35 @@ bool tee_Simulated_Init(const char *asn1_policy_cert,
                         const char *attest_key_file,
                         const char *measurement_file,
                         const char *attest_key_signed_claim_file) {
-  const string asn1_policy_cert_str(asn1_policy_cert);
+
   const string attest_key_file_str(attest_key_file);
   const string measurement_file_str(measurement_file);
   const string attest_key_signed_claim_file_str(attest_key_signed_claim_file);
-  return simulated_Init(asn1_policy_cert_str,
-                        attest_key_file_str,
-                        measurement_file_str,
-                        attest_key_signed_claim_file_str);
+
+  string serialized_attest_key;
+  if (!read_file_into_string(attest_key_file_str, &serialized_attest_key)) {
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
+    return false;
+  }
+
+  string measurement;
+  if (!read_file_into_string(measurement_file_str, &measurement)) {
+    printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  string serialized_endorsement;
+  if (!read_file_into_string(attest_key_signed_claim_file_str,
+                             &serialized_endorsement)) {
+    printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  return simulated_Init(serialized_attest_key,
+                        measurement,
+                        serialized_endorsement);
 }

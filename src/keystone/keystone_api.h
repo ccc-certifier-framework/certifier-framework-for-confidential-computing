@@ -32,7 +32,7 @@ typedef unsigned char byte;
 
 #ifndef __KEYSTONE_API__
 #  define __KEYSTONE_API__
-bool keystone_Init(const int cert_size, byte *cert);
+bool keystone_Init(int size, byte *cert);
 bool keystone_Attest(const int what_to_say_size,
                      byte *    what_to_say,
                      int *     attestation_size_out,

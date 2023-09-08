@@ -39,7 +39,7 @@ static string data_dir = "app1_data";
 #define FLAGS_certificate_file  "vse.crt"
 
 static std::string enclave_type;
-cc_trust_data *    app_trust_data = nullptr;
+cc_trust_manager * trust_mgr = nullptr;
 
 static bool oe_initialized = false;
 static bool openenclave_initialized = false;
@@ -158,22 +158,26 @@ bool certifier_init(char *usr_data_dir, size_t usr_data_dir_size) {
 
     string store_file(data_dir);
     store_file.append(FLAGS_policy_store_file);
-    app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
-    if (app_trust_data == nullptr) {
+
+    trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
+    if (trust_mgr == nullptr) {
       printf("couldn't initialize trust object\n");
       return false;
     }
 
     // Init policy key info
-    if (!app_trust_data->init_policy_key(initialized_cert,
-                                         initialized_cert_size)) {
+    if (!trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)) {
       printf("Can't init policy key\n");
       return false;
     }
 
     string cert(data_dir);
     cert.append(FLAGS_certificate_file);
-    if (!app_trust_data->initialize_oe_enclave_data(cert)) {
+    int     n = 1;
+    string *params = new string[1];
+    params[0] = cert;
+    // this is an unusual init
+    if (!trust_mgr->initialize_enclave(n, params)) {
       printf("Can't init OE enclave\n");
       return false;
     }
@@ -190,24 +194,22 @@ void clear_sensitive_data() {
 }
 
 bool cold_init() {
-  return app_trust_data->cold_init(public_key_alg,
-                                   symmetric_key_alg,
-                                   initialized_cert,
-                                   initialized_cert_size,
-                                   "simple-app-home_domain",
-                                   FLAGS_policy_host,
-                                   FLAGS_policy_port,
-                                   FLAGS_server_app_host,
-                                   FLAGS_server_app_port);
+  return trust_mgr->cold_init(public_key_alg,
+                              symmetric_key_alg,
+                              "simple-app-home_domain",
+                              FLAGS_policy_host,
+                              FLAGS_policy_port,
+                              FLAGS_server_app_host,
+                              FLAGS_server_app_port);
 }
 
 bool warm_restart() {
-  return app_trust_data->warm_restart();
+  return trust_mgr->warm_restart();
 }
 
-// TODO: replace with new cc_trust_data interface
+// TODO: replace with new cc_trust_manager interface
 bool certify_me() {
-  return app_trust_data->certify_me();
+  return trust_mgr->certify_me();
 }
 
 void server_application(secure_authenticated_channel &channel) {
@@ -231,16 +233,16 @@ void server_application(secure_authenticated_channel &channel) {
 }
 
 bool run_me_as_server() {
-  if (!app_trust_data->warm_restart()) {
+  if (!trust_mgr->warm_restart()) {
     printf("warm-restart failed\n");
     return false;
   }
   printf("running as server\n");
   server_dispatch(FLAGS_server_app_host,
                   FLAGS_server_app_port,
-                  app_trust_data->serialized_policy_cert_,
-                  app_trust_data->private_auth_key_,
-                  app_trust_data->serialized_primary_admissions_cert_,
+                  trust_mgr->serialized_policy_cert_,
+                  trust_mgr->private_auth_key_,
+                  trust_mgr->serialized_primary_admissions_cert_,
                   server_application);
   return true;
 }
@@ -266,13 +268,13 @@ void client_application(secure_authenticated_channel &channel) {
 }
 
 bool run_me_as_client() {
-  if (!app_trust_data->warm_restart()) {
+  if (!trust_mgr->warm_restart()) {
     printf("warm-restart failed\n");
     return false;
   }
   printf("running as client\n");
-  if (!app_trust_data->cc_auth_key_initialized_
-      || !app_trust_data->cc_policy_info_initialized_) {
+  if (!trust_mgr->cc_auth_key_initialized_
+      || !trust_mgr->cc_policy_info_initialized_) {
     printf("trust data not initialized\n");
     return false;
   }
@@ -281,9 +283,9 @@ bool run_me_as_client() {
   if (!channel.init_client_ssl(
           FLAGS_server_app_host,
           FLAGS_server_app_port,
-          app_trust_data->serialized_policy_cert_,
-          app_trust_data->private_auth_key_,
-          app_trust_data->serialized_primary_admissions_cert_)) {
+          trust_mgr->serialized_policy_cert_,
+          trust_mgr->private_auth_key_,
+          trust_mgr->serialized_primary_admissions_cert_)) {
     printf("Can't init client app\n");
     return false;
   }

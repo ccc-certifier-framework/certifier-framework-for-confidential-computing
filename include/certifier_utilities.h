@@ -34,10 +34,13 @@ namespace utilities {
 const int block_size = 16;
 const int num_bits_in_byte = 8;
 
-bool write_file(const string &file_name, int size, byte *data);
-int  file_size(const string &file_name);
+int file_size(const string &file_name);
+
 bool read_file(const string &file_name, int *size, byte *data);
+bool write_file(const string &file_name, int size, byte *data);
+
 bool read_file_into_string(const string &file_name, string *out);
+bool write_file_from_string(const string &file_name, const string &in);
 
 bool digest_message(const char * alg,
                     const byte * message,

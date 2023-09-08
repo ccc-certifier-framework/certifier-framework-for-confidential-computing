@@ -63,44 +63,20 @@ bool simulated_GetPlatformClaim(signed_claim_message *out) {
   return true;
 }
 
-bool simulated_Init(const string &asn1_policy_cert,
-                    const string &attest_key_file,
-                    const string &measurement_file,
-                    const string &attest_key_signed_claim_file) {
+bool simulated_Init(const string &serialized_attest_key,
+                    const string &measurement,
+                    const string &serialized_attest_key_signed_claim) {
 
-  int m_size = file_size(measurement_file);
-  if (m_size < 0) {
-    printf("simulated_Init: Can't get measurement file size %s\n",
-           measurement_file.c_str());
-    return false;
-  }
-  byte m[m_size];
-  if (!read_file(measurement_file, &m_size, m)) {
-    printf("simulated_Init: Can't read measurement file %s\n",
-           measurement_file.c_str());
-    return false;
-  }
-  my_measurement.assign((char *)m, m_size);
+  my_measurement.assign((char *)measurement.data(), measurement.size());
 
   // For reproducability, make this a fixed key
   for (int i = 0; i < sealing_key_size; i++)
     sealing_key[i] = (5 * i) % 16;
 
-  // get attest key
-  int at_size = file_size(attest_key_file);
-  if (at_size < 0) {
-    printf("simulated_Init: attest key size is wrong\n");
-    return false;
-  }
-  byte at[at_size];
-  if (!read_file(attest_key_file, &at_size, at)) {
-    printf("simulated_Init: Can't read attest key\n");
-    return false;
-  }
-  string serialized_attest_key;
-  serialized_attest_key.assign((char *)at, at_size);
+  // attest key
   if (!my_attestation_key.ParseFromString(serialized_attest_key)) {
     printf("simulated_Init: Can't parse attest key\n");
+    printf("Key: %s\n", serialized_attest_key.c_str());
     return false;
   }
 
@@ -111,21 +87,9 @@ bool simulated_Init(const string &asn1_policy_cert,
     return false;
   }
 
-  int a_size = file_size(attest_key_signed_claim_file);
-  if (a_size < 0) {
-    printf("simulated_Init: attest signed claim size is wrong\n");
-    return false;
-  }
-  byte a_buf[a_size];
-  if (!read_file(attest_key_signed_claim_file, &a_size, a_buf)) {
-    printf("simulated_Init: Can't read attest claim\n");
-    return false;
-  }
-  serialized_attest_claim.assign((char *)a_buf, a_size);
-  if (!my_attest_claim.ParseFromString(serialized_attest_claim)) {
-    printf("simulated_Init: Can't parse attest claim from "
-           "attest_key_signed_claim_file: '%s'\n",
-           attest_key_signed_claim_file.c_str());
+  // Claim
+  if (!my_attest_claim.ParseFromString(serialized_attest_key_signed_claim)) {
+    printf("simulated_Init: Can't parse attest claim\n");
     return false;
   }
 

@@ -46,10 +46,9 @@ using std::string;
 #ifndef _SIMULATED_ENCLAVE_H__
 #  define _SIMULATED_ENCLAVE_H__
 
-bool simulated_Init(const string &policy_cert,
-                    const string &attest_key_file,
-                    const string &measurement_file,
-                    const string &attest_key_signed_claim_file);
+bool simulated_Init(const string &serialized_attest_key,
+                    const string &measurement,
+                    const string &serialized_attest_key_signed_claim);
 bool simulated_Getmeasurement(int *size_out, byte *out);
 bool simulated_Seal(const string &enclave_type,
                     const string &enclave_id,

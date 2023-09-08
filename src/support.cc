@@ -77,7 +77,7 @@ name_size cipher_block_byte_name_size[] = {
 name_size cipher_key_byte_name_size[] = {
     { Enc_method_aes_256                    , 32 },
     { Enc_method_aes_256_cbc_hmac_sha256    , 64 },
-    { Enc_method_aes_256_cbc_hmac_sha384    , 96 },
+    { Enc_method_aes_256_cbc_hmac_sha384    , 80 },
     { Enc_method_aes_256_gcm                , 32 },
     { Enc_method_rsa_2048_sha256_pkcs_sign  , 256 },
     { Enc_method_rsa_2048                   , 256 },
@@ -166,6 +166,11 @@ bool certifier::utilities::write_file(const string &file_name,
   }
   close(out);
   return true;
+}
+
+bool certifier::utilities::write_file_from_string(const string &file_name,
+                                                  const string &in) {
+  return write_file(file_name, in.size(), (byte *)in.data());
 }
 
 int certifier::utilities::file_size(const string &file_name) {

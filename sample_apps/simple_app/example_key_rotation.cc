@@ -55,10 +55,46 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 // For an example of rotating keys for protect_blob, see the certifier_tests.
 
 #include "policy_key.cc"
-cc_trust_data *app_trust_data = nullptr;
+cc_trust_manager *trust_mgr = nullptr;
 
 
 // -----------------------------------------------------------------------------------------
+
+// Parameters for simulated enclave
+bool get_simulated_enclave_parameters(string **s, int *n) {
+
+  // serialized attest key, measurement, serialized endorsement, in that order
+  string *args = new string[3];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file,
+                             &args[0])) {
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file,
+                             &args[1])) {
+    printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement,
+                             &args[2])) {
+    printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  *n = 3;
+  return true;
+}
 
 int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -82,8 +118,8 @@ int main(int an, char **av) {
   store_file.append(FLAGS_policy_store_file);
   string purpose("authentication");
 
-  app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
-  if (app_trust_data == nullptr) {
+  trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
+  if (trust_mgr == nullptr) {
     printf("%s() error, line %d, couldn't initialize trust object\n",
            __func__,
            __LINE__);
@@ -91,30 +127,31 @@ int main(int an, char **av) {
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert,
-                                       initialized_cert_size)) {
+  if (!trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)) {
     printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
     return 1;
   }
 
-  // Init simulated enclave
-  string attest_key_file_name(FLAGS_data_dir);
-  attest_key_file_name.append(FLAGS_attest_key_file);
-  string platform_attest_file_name(FLAGS_data_dir);
-  platform_attest_file_name.append(FLAGS_platform_attest_endorsement);
-  string measurement_file_name(FLAGS_data_dir);
-  measurement_file_name.append(FLAGS_measurement_file);
-  string attest_endorsement_file_name(FLAGS_data_dir);
-  attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
+  // Get parameters
+  string *params = nullptr;
+  int     n = 0;
+  if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
+    printf("%s() error, line %d, get simulated enclave parameters\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
 
-  if (!app_trust_data->initialize_simulated_enclave_data(
-          attest_key_file_name,
-          measurement_file_name,
-          attest_endorsement_file_name)) {
+  // Init simulated enclave
+  if (!trust_mgr->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init simulated enclave\n",
            __func__,
            __LINE__);
     return 1;
+  }
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
   }
 
   int ret = 0;
@@ -123,11 +160,11 @@ int main(int an, char **av) {
   string der_cert;
   X509 * x509_cert = X509_new();
   if (purpose == "authentication") {
-    if (!app_trust_data->cc_auth_key_initialized_) {
+    if (!trust_mgr->cc_auth_key_initialized_) {
       printf("%s() error, line %d, Auth key uninitialized", __func__, __LINE__);
       return 1;
     }
-    der_cert = app_trust_data->public_auth_key_.certificate();
+    der_cert = trust_mgr->public_auth_key_.certificate();
     if (!asn1_to_x509(der_cert, x509_cert)) {
       printf("%s() error, line %d, Can't convert der to x509",
              __func__,
@@ -135,13 +172,13 @@ int main(int an, char **av) {
       return 1;
     }
   } else if (purpose == "attestation") {
-    if (!app_trust_data->cc_service_key_initialized_) {
+    if (!trust_mgr->cc_service_key_initialized_) {
       printf("%s() error, line %d, Service key uninitialized",
              __func__,
              __LINE__);
       return 1;
     }
-    der_cert = app_trust_data->public_service_key_.certificate();
+    der_cert = trust_mgr->public_service_key_.certificate();
     if (!asn1_to_x509(der_cert, x509_cert)) {
       printf("%s() error, line %d, Can't convert der to x509",
              __func__,
@@ -183,38 +220,38 @@ int main(int an, char **av) {
     return 1;
   }
 
-  if (!app_trust_data->generate_symmetric_key(true)) {
+  if (!trust_mgr->generate_symmetric_key(true)) {
     printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
     return 1;
   }
-  if (!app_trust_data->generate_sealing_key(true)) {
+  if (!trust_mgr->generate_sealing_key(true)) {
     printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
     return 1;
   }
-  if (!app_trust_data->generate_auth_key(true)) {
+  if (!trust_mgr->generate_auth_key(true)) {
     printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
     return 1;
   }
-  if (!app_trust_data->generate_service_key(true)) {
+  if (!trust_mgr->generate_service_key(true)) {
     printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
     return 1;
   }
 
-  app_trust_data->cc_is_certified_ = false;
+  trust_mgr->cc_is_certified_ = false;
 
   // Now recertify
-  if (!app_trust_data->certify_me()) {
+  if (!trust_mgr->certify_me()) {
     printf("%s() error, line %d, can't recertify\n", __func__, __LINE__);
     return 1;
   }
 
-  if (!app_trust_data->put_trust_data_in_store()) {
+  if (!trust_mgr->put_trust_data_in_store()) {
     printf("%s() error, line %d, Can't put_trust_in_store\n",
            __func__,
            __LINE__);
     return 1;
   }
-  if (!app_trust_data->save_store()) {
+  if (!trust_mgr->save_store()) {
     printf("%s() error, line %d, Can't save store\n", __func__, __LINE__);
     return 1;
   }
@@ -225,9 +262,9 @@ int main(int an, char **av) {
     x509_cert = nullptr;
   }
 
-  app_trust_data->clear_sensitive_data();
-  if (app_trust_data != nullptr) {
-    delete app_trust_data;
+  trust_mgr->clear_sensitive_data();
+  if (trust_mgr != nullptr) {
+    delete trust_mgr;
   }
   return ret;
 }

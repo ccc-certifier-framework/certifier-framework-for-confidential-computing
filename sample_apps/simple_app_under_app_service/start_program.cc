@@ -25,8 +25,16 @@ bool parse_args(const string &in, int *num_an, string *av) {
 
   *num_an = 0;
   while (end != nullptr) {
+    if (*start == '\"') {
+      start++;
+      end++;
+    }
     if (*end == ',' || *end == '\0') {
-      av[*num_an].assign(start, end - start);
+      if (*(end - 1) == '\"') {
+        av[*num_an].assign(start, end - start - 1);
+      } else {
+        av[*num_an].assign(start, end - start);
+      }
       av[*num_an].append('\0', 1);
       (*num_an)++;
       if (*end == '\0')

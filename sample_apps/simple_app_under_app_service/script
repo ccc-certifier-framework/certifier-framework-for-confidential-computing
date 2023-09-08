@@ -27,7 +27,7 @@ $CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin
 
 # make the app
 cd $SERVICE_EXAMPLE_DIR
-make -f service_example_app.mak
+make -f example_app.mak
 
 # make app data directories (do this once)
 cd $SERVICE_EXAMPLE_DIR
@@ -137,12 +137,10 @@ $CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_en
 
 cp -p policy_key_file.bin policy_cert_file.bin policy.bin attest_key_file.bin platform_attest_endorsement.bin platform_key_file.bin app_service.measurement $APP_SERVICE_DIR/service
 
-cd service
+cd $APP_SERVICE_DIR
 
 $CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
   --policyFile=policy.bin --readPolicy=true
-
-cd $APP_SERVICE_DIR
 
 $APP_SERVICE_DIR/app_service.exe \
   --policy_cert_file="policy_cert_file.bin" \
@@ -153,10 +151,16 @@ $APP_SERVICE_DIR/app_service.exe \
   --platform_attest_endorsement="platform_attest_endorsement.bin" \
   --attest_key_file="attest_key_file.bin" \
   --measurement_file="app_service.measurement" \
-  --cold_init_service=false
-#  --cold_init_service=true
+  --cold_init_service=true
+  #--cold_init_service=false
+
 
 # Run the apps
+cd $SERVICE_EXAMPLE_DIR/service
+
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+  --policyFile=policy.bin --readPolicy=true
+
 cd $SERVICE_EXAMPLE_DIR
 
 arg1_str="--print_all=true,--operation=cold-init,--data_dir="$SERVICE_EXAMPLE_DIR"/app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"

@@ -51,7 +51,7 @@ Here is an example of such a program and its interactions with the Certifier API
 
 ```
   #include "policy_key.cc"
-  cc_trust_data* app_trust_data = nullptr;
+  cc_trust_manager* trust_mgr = nullptr;
 
   // Declare hardware and policy store locationn
   string enclave_type("sev-enclave");
@@ -65,35 +65,39 @@ Here is an example of such a program and its interactions with the Certifier API
   // FLAGS_server_app_port is the port the app uses to provide services.
   // home_domain_name is the name of the security domain.
 
-  app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
-
-  // Initialize sev data
-  app_trust_data->initialize_sev_enclave_data(FLAGS_ark_cert_file,
-        FLAGS_ask_cert_file, FLAGS_vcek_cert_file);
+  trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
 
   // init policy key from standard location
-  app_trust_data->init_policy_key(initialized_cert_size, initialized_cert);
+  trust_mgr->init_policy_key(initialized_cert_size, initialized_cert);
+
+  int n = 0;
+  // The following two lines are only needed if sev cannot retrieve standard parameters
+  string * s = nullptr;
+  get_sev_parameters(&s, &n).
+
+  // Initialize enclave
+  //  If n ==0, initialize_enclave gets the parameters automatically.
+  trust_mgr->initialize_enclave(n, s)
 
   // Standard algorithms for the enclave
   string public_key_alg("rsa-2048");
   string symmetric_key_alg("aes-256-cbc-hmac-sha256");
 
   // Initialize keys
-  app_trust_data->cold_init(public_key_alg, symmetric_key_alg,
-          initialized_cert_size, initialized_cert,
+  trust_mgr->cold_init(public_key_alg, symmetric_key_alg,
           home_domain_name, FLAGS_policy_host, FLAGS_policy_port,
           FLAGS_server_app_host, FLAGS_server_app_port);
 
   // Get certified (Getting "Admissions certificate" naming your public key and measurement)
-  app_trust_data->certify_me();
+  trust_mgr->certify_me();
 
 
   // Open secure channel
   string my_role("client");  // or "server"
   secure_authenticated_channel channel(my_role);
   channel.init_client_ssl(FLAGS_server_app_host, FLAGS_server_app_port,
-          app_trust_data->serialized_policy_cert_, app_trust_data->private_auth_key_,
-          app_trust_data->serialized_primary_admissions_cert_);
+          trust_mgr->serialized_policy_cert_, trust_mgr->private_auth_key_,
+          trust_mgr->serialized_primary_admissions_cert_);
 
   Now just read or write over channel.
 ```

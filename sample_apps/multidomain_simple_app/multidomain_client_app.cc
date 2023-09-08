@@ -70,7 +70,7 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 //      under other ops.
 
 #include "client_policy_key.cc"
-cc_trust_data *app_trust_data = nullptr;
+cc_trust_manager *trust_mgr = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
@@ -93,6 +93,89 @@ void client_application(secure_authenticated_channel &channel) {
   int    n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
 }
+
+// --------------------------------------------------------------------------
+
+// Parameters for simulated enclave
+bool get_simulated_enclave_parameters(string **s, int *n) {
+
+  // serialized attest key, measurement, serialized endorsement, in that order
+  string *args = new string[3];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file,
+                             &args[0])) {
+    string err = FLAGS_data_dir + FLAGS_attest_key_file;
+    printf("%s() error, line %d, Can't read attest file %s\n",
+           __func__,
+           __LINE__,
+           err.c_str());
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file,
+                             &args[1])) {
+    string err = FLAGS_data_dir + FLAGS_measurement_file;
+    printf("%s() error, line %d, Can't read measurement file %s\n",
+           __func__,
+           __LINE__,
+           err.c_str());
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement,
+                             &args[2])) {
+    string err = FLAGS_data_dir + FLAGS_platform_attest_endorsement;
+    printf("%s() error, line %d, Can't read endorsement file %s\n",
+           __func__,
+           __LINE__,
+           err.c_str());
+    return false;
+  }
+
+  *n = 3;
+  return true;
+}
+
+#if 0
+// General initialization for sev enclave
+bool get_sev_enclave_parameters(string** s, int* n) {
+
+  // ark cert file, ask cert file, vcek cert file
+  string *args = new string[3];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ark_cert_file, &args[0])) {
+        printf("%s() error, line %d, Can't read attest file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
+        printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
+        printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  *n = 3;
+  return true;
+}
+#endif
 
 int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -121,8 +204,8 @@ int main(int an, char **av) {
 
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_file);
-  app_trust_data = new cc_trust_data(enclave_type, purpose, store_file);
-  if (app_trust_data == nullptr) {
+  trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
+  if (trust_mgr == nullptr) {
     printf("%s() error, line %d, couldn't initialize trust object\n",
            __func__,
            __LINE__);
@@ -130,30 +213,31 @@ int main(int an, char **av) {
   }
 
   // Init policy key info
-  if (!app_trust_data->init_policy_key(initialized_cert,
-                                       initialized_cert_size)) {
+  if (!trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)) {
     printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
     return 1;
   }
 
-  // Init simulated enclave
-  string attest_key_file_name(FLAGS_data_dir);
-  attest_key_file_name.append(FLAGS_attest_key_file);
-  string platform_attest_file_name(FLAGS_data_dir);
-  platform_attest_file_name.append(FLAGS_platform_attest_endorsement);
-  string measurement_file_name(FLAGS_data_dir);
-  measurement_file_name.append(FLAGS_measurement_file);
-  string attest_endorsement_file_name(FLAGS_data_dir);
-  attest_endorsement_file_name.append(FLAGS_platform_attest_endorsement);
+  // Get parameters
+  int     n = 0;
+  string *params = nullptr;
+  if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
+    printf("%s() error, line %d, get simulated enclave parameters\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
 
-  if (!app_trust_data->initialize_simulated_enclave_data(
-          attest_key_file_name,
-          measurement_file_name,
-          attest_endorsement_file_name)) {
+  // Init simulated enclave
+  if (!trust_mgr->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init simulated enclave\n",
            __func__,
            __LINE__);
     return 1;
+  }
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
   }
 
   // Standard algorithms for the enclave
@@ -163,42 +247,40 @@ int main(int an, char **av) {
   // Carry out operation
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
-    if (!app_trust_data->cold_init(public_key_alg,
-                                   symmetric_key_alg,
-                                   initialized_cert,
-                                   initialized_cert_size,
-                                   "simple-app-client-home-domain",
-                                   FLAGS_primary_policy_host,
-                                   FLAGS_primary_policy_port,
-                                   FLAGS_server_app_host,
-                                   FLAGS_server_app_port)) {
+    if (!trust_mgr->cold_init(public_key_alg,
+                              symmetric_key_alg,
+                              "simple-app-client-home-domain",
+                              FLAGS_primary_policy_host,
+                              FLAGS_primary_policy_port,
+                              FLAGS_server_app_host,
+                              FLAGS_server_app_port)) {
       printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
     // Debug
-    app_trust_data->print_trust_data();
+    trust_mgr->print_trust_data();
   } else if (FLAGS_operation == "get-certified") {
 
     // Certifier in home domain and server domain
 
-    if (!app_trust_data->warm_restart()) {
+    if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
 
     printf("Certifying primary domain\n");
-    certifiers *cd = app_trust_data->certified_domains_[0];
+    certifiers *cd = trust_mgr->certified_domains_[0];
     cd->print_certifiers_entry();
 
-    if (!app_trust_data->certify_me()) {
+    if (!trust_mgr->certify_me()) {
       printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
     // Debug
-    // app_trust_data->print_trust_data();
+    // trust_mgr->print_trust_data();
 
     // now server domain
     string server_domain_name = "simple-app-server-home-domain";
@@ -218,12 +300,12 @@ int main(int an, char **av) {
     string server_service_host = FLAGS_server_app_host;
     int    server_service_port = FLAGS_server_app_port;
 
-    if (!app_trust_data->add_or_update_new_domain(server_domain_name,
-                                                  server_domain_cert,
-                                                  server_host,
-                                                  server_port,
-                                                  server_service_host,
-                                                  server_service_port)) {
+    if (!trust_mgr->add_or_update_new_domain(server_domain_name,
+                                             server_domain_cert,
+                                             server_host,
+                                             server_port,
+                                             server_service_host,
+                                             server_service_port)) {
       printf("%s() error, line %d, Can't add_or_update_new_domain\n",
              __func__,
              __LINE__);
@@ -232,11 +314,11 @@ int main(int an, char **av) {
     }
 
     printf("Certifying secondary domain\n");
-    cd = app_trust_data->certified_domains_[1];
+    cd = trust_mgr->certified_domains_[1];
     cd->print_certifiers_entry();
 
 
-    if (!app_trust_data->certify_secondary_domain(server_domain_name)) {
+    if (!trust_mgr->certify_secondary_domain(server_domain_name)) {
       printf("%s() error, line %d, secondary certification failed\n",
              __func__,
              __LINE__);
@@ -250,14 +332,14 @@ int main(int an, char **av) {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);
 
-    if (!app_trust_data->warm_restart()) {
+    if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
 
-    if (!app_trust_data->cc_auth_key_initialized_
-        || !app_trust_data->cc_policy_info_initialized_) {
+    if (!trust_mgr->cc_auth_key_initialized_
+        || !trust_mgr->cc_policy_info_initialized_) {
       printf("%s() error, line %d, trust data not initialized\n",
              __func__,
              __LINE__);
@@ -267,7 +349,7 @@ int main(int an, char **av) {
     printf("warm restart completed\n");
 
     // Use certified_domain[1] here
-    certifiers *cd = app_trust_data->certified_domains_[1];
+    certifiers *cd = trust_mgr->certified_domains_[1];
     if (!cd->is_certified_) {
       printf("%s() error, line %d, secondary admissions cert not valid\n",
              __func__,
@@ -283,7 +365,7 @@ int main(int an, char **av) {
     if (!channel.init_client_ssl(cd->service_host_,
                                  cd->service_port_,
                                  cd->domain_policy_cert_,
-                                 app_trust_data->private_auth_key_,
+                                 trust_mgr->private_auth_key_,
                                  cd->admissions_cert_)) {
       printf("%s() error, line %d, Can't init client app\n",
              __func__,
@@ -303,10 +385,10 @@ int main(int an, char **av) {
   }
 
 done:
-  // app_trust_data->print_trust_data();
-  app_trust_data->clear_sensitive_data();
-  if (app_trust_data != nullptr) {
-    delete app_trust_data;
+  // trust_mgr->print_trust_data();
+  trust_mgr->clear_sensitive_data();
+  if (trust_mgr != nullptr) {
+    delete trust_mgr;
   }
   return ret;
 }
