@@ -305,8 +305,7 @@ bool run_me_as_client() {
     printf("%s() error, line %d, client_application failed\n",
            __func__,
            __LINE__);
-    ret = 1;
-    goto done;
+    return false;
   }
 
   return true;
