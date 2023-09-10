@@ -59,4 +59,6 @@ sgx.allowed_files = [
   "file:/etc/sgx_default_qcnl.conf",
   "file:app1_data/policy_store",
   "file:app2_data/policy_store",
+  "file:app1_data/sgx.cert.der",
+  "file:app2_data/sgx.cert.der",
 ]

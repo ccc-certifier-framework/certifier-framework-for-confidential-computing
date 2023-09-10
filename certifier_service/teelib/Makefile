@@ -2,7 +2,9 @@
 # certifier_service/teelib/Makefile
 #
 
+ifndef LOCAL_LIB
 LOCAL_LIB=/usr/local/lib
+endif
 PROTO=protoc
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir

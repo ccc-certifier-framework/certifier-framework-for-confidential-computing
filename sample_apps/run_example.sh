@@ -1663,7 +1663,7 @@ function build_simple_server() {
 
     run_cmd cd "${CERT_PROTO}"/certifier_service/teelib
     # shellcheck disable=SC2086
-    run_cmd make -j "${NumMakeThreads}"
+    LOCAL_LIB=${Local_lib_path} run_cmd make -j "${NumMakeThreads}"
 
     # Now, build the simpleserver:
     run_cmd cd "${CERT_PROTO}"/certifier_service
