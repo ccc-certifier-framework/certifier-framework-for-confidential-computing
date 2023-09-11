@@ -38,6 +38,7 @@ SGX_LDFLAGS = -Wl,--enable-new-dtags
 
 ######################### CERTIFIER ###########################
 CERTIFIER_SRC_PATH = ../../src
+COMMON_SRC = ../common
 
 .SECONDARY: certifier
 CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc        \
@@ -65,10 +66,10 @@ certifier:
 
 ######################### TEST APP EXECUTABLES ################################
 
-CFLAGS += $(CERTIFIER_CFLAGS)
+CFLAGS += $(CERTIFIER_CFLAGS) -DGRAMINE_SIMPLE_APP
 LDFLAGS += -Wl,--enable-new-dtags $(shell pkg-config --libs mbedtls_gramine) -L$(LOCAL_LIB) -L./ -lcertifier -ldl -lgtest -lgflags -lpthread $(CERTIFIER_LDFLAGS) $(SGX_LDFLAGS)
 
-gramine_example_app: gramine_example_app.cc certifier
+gramine_example_app: $(COMMON_SRC)/example_app.cc certifier
 	$(GPP) $< $(CFLAGS) $(LDFLAGS) -o $@
 
 ########################### TEST APP MANIFEST #################################
