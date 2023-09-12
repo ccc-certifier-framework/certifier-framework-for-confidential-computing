@@ -257,10 +257,14 @@ def test_cfslib_cc_trust_manager_authentication():
     trust_data = libcf.new_cc_trust_manager("simulated_enclave", 'attestation', 'fake_policy_store')
     assert libcf.cc_trust_manager_cc_all_initialized(trust_data) is False
 
-    result = libcf.cc_trust_manager_initialize_simulated_enclave(trust_data,
-                                                                 'attest_key_file_name',
-                                                                 'measurement_file_name',
-                                                                 'attest_endorsement_file_name')
+    # The interface using (const string , ..) args is ignored thru SWIG
+    # interfaces (due to issues with handling Unicode data w/surrogate chars.)
+    # Instead, execute the interface that receives byte-streams as arguments.
+    # pylint: disable-next=line-too-long
+    result = libcf.cc_trust_manager_python_initialize_simulated_enclave(trust_data,
+                                                b'attest_key_bin_byte_stream',
+                                                b'measurement_bin_byte_stream',
+                                                b'attest_endorsement_bin_byte_stream')
     assert result is False
     libcf.delete_cc_trust_manager(trust_data)
 

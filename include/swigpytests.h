@@ -38,10 +38,22 @@ class cc_trust_data {
 
  public:
   string serialized_policy_cert_;
+  string serialized_attest_key_;
 
   // To test invocation of constructor w/o any arguments.
   cc_trust_data();
   ~cc_trust_data();
+
+  // The order of parameters is intentionally scrambled v/s the public
+  // interface in certifier_framework.h . This is done to ensure that
+  // we test that the SWIG-type mapping for multiple arguments still works
+  // correctly irrespective of the order of the parameters.
+  bool initialize_simulated_enclave(const byte *serialized_attest_endorsement_claim,
+                                    int         attest_endorsement_claim_size,
+                                    const byte *serialized_attest_key,
+                                    int         attest_key_size,
+                                    const byte *measurement,
+                                    int         measurement_size);
 };
 
 /*
@@ -85,7 +97,8 @@ class secure_authenticated_channel {
    *        'string &asn1_root_cert_io' are correctly applied, we need an
    *        interface that Python invocation can tell-apart.
    */
-  bool init_client_ssl(const string &asn1_root_cert);           // In
+  bool init_client_ssl(const string &asn1_root_cert);  // In
+
   bool init_client_ssl(string &asn1_root_cert_io, int port);    // In/Out
   bool init_client_ssl(int port, const string &asn1_root_cert);
 
@@ -97,6 +110,10 @@ class secure_authenticated_channel {
                        int           port,
                        string &      asn1_root_cert_io,
                        const string &asn1_my_cert_pvtkey);
+
+  bool python_init_client_ssl(const byte *asn1_root_cert,
+                              int asn1_root_cert_size); // In
+
 };
 
 }  // namespace swigpytests

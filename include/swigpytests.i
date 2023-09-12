@@ -14,6 +14,16 @@
 %module swigpytests
 %include "std_string.i"
 
+// Needed to invoke initialize_simulated_enclave() and other interfaces that take
+// (byte *, int) supplied by Python bytestream arg.
+%include <pybuffer.i>
+%pybuffer_binary(const byte *measurement, int measurement_size);
+%pybuffer_binary(const byte* serialized_attest_endorsement_claim, int attest_endorsement_claim_size);
+%pybuffer_binary(const byte * serialized_attest_key, int attest_key_size);
+
+// For python_init_client_ssl() that supports byte-stream interface
+%pybuffer_binary(const byte * asn1_root_cert, int asn1_root_cert_size);
+
 // Test: test_secure_authenticated_channel_lib()
 //       test_secure_authenticated_channel_default()
 %apply string * INPUT  { string &role };            // secure_authenticated_channel() constructor

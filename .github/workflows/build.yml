@@ -124,21 +124,20 @@ jobs:
         # NOTE: Some test cases in test_certifier_framework.py need the Certifier Service
         # to be up-and-running. That needs several build-and-setup steps which are part
         # of a simple_app execution test. Execution of those cases is hence moved downstream.
-         PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v -m "not needs_cert_service" \
+        PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v -m "not needs_cert_service" \
              test_certifier_framework.py
 
         # Just run the basic case of this test to see classes created in generated Python module
-         PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
+        PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
              pytest --capture=tee-sys -v test_certifier_protobuf_interfaces.py \
                  -k test_certifier_pb2_basic
 
         # Re-run entire test w/o capturing output
-         PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
+        PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
              pytest -v test_certifier_protobuf_interfaces.py
 
         # Exercise SWIG-Python bindings standalone unit-tests
         PYTHONUNBUFFERED=TRUE pytest --capture=tee-sys -v test_libswigpytests.py
-        PYTHONUNBUFFERED=TRUE pytest -v test_certifier_framework.py
 
         # Just run the basic case of this test to see classes created in generated Python module
         PYTHONUNBUFFERED=TRUE PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
@@ -348,7 +347,10 @@ jobs:
 
         # Re-start Certifier Service as script, above, would have shut it down
         ./cleanup.sh
+
         ./run_example.sh simple_app start_certifier_service
+
+        ps -ef | grep simple
 
         # Run Python test, in which some test cases need Certifier Service to be up.
         pushd ../

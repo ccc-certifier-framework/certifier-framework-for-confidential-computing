@@ -278,6 +278,23 @@ bool certifier::framework::cc_trust_manager::initialize_simulated_enclave(
   return true;
 }
 
+// Wrapper interface used for Python bindings.
+bool certifier::framework::cc_trust_manager::
+    python_initialize_simulated_enclave(
+        const byte *serialized_attest_key,
+        int         attest_key_size,
+        const byte *measurement,
+        int         measurement_size,
+        const byte *serialized_attest_endorsement,
+        int         attest_endorsement_size) {
+
+  return initialize_simulated_enclave(
+      string((const char *)serialized_attest_key, attest_key_size),
+      string((const char *)measurement, measurement_size),
+      string((const char *)serialized_attest_endorsement,
+             attest_endorsement_size));
+}
+
 bool certifier::framework::cc_trust_manager::initialize_gramine_enclave(
     const int size,
     byte *    cert) {
@@ -1911,7 +1928,10 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
 #endif
 
   if (response.status() != "succeeded") {
-    printf("%s() error, line: %d, Certification failed\n", __func__, __LINE__);
+    printf("%s() error, line: %d, Certification failed, status='%s'\n",
+           __func__,
+           __LINE__,
+           response.status().c_str());
     return false;
   }
 
@@ -2425,8 +2445,12 @@ bool certifier::framework::server_dispatch(
 #endif
 
   // Testing hook: Allow pytests to invoke with NULL 'func' hdlr.
-  if (!func)
+  // Close socket before exiting, so we don't have unpredictable
+  // behaviour when tests are run on CI machines.
+  if (!func) {
+    close(sock);
     return true;
+  }
 
   while (1) {
 #ifdef DEBUG

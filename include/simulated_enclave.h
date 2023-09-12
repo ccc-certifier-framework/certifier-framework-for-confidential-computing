@@ -49,6 +49,7 @@ using std::string;
 bool simulated_Init(const string &serialized_attest_key,
                     const string &measurement,
                     const string &serialized_attest_key_signed_claim);
+
 bool simulated_Getmeasurement(int *size_out, byte *out);
 bool simulated_Seal(const string &enclave_type,
                     const string &enclave_id,
