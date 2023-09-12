@@ -75,12 +75,78 @@ def test_cc_trust_data_lib_default():
     No SWIG interface rules are required for this test case to pass as we are
     invoking a default constructor w/ no arguments.
     """
-
     cctd = libswigpy.new_cc_trust_data()
     root_cert = libswigpy.cc_trust_data_serialized_policy_cert__get(cctd)
     assert root_cert == 'Unknown-root-cert'
 
     libswigpy.delete_cc_trust_data(cctd)
+
+# ##############################################################################
+# pylint: disable-next=line-too-long
+def test_cc_trust_data_initialize_simulated_enclave_w_unicode_surrogate_chars():
+    """
+    Exerciser of initialize_simulated_enclave() method for a
+    cc_trust_data() class. We use a real attestation key binary file
+    to verify if the Python bindings to pass-in a string arg with
+    Unicode surrogate chars will work.
+    The SWIG-python interfaces run into an error which prevents this
+    case from succeeding.
+
+    Ref: https://docs.python.org/3/howto/unicode.html
+    """
+    cctd = swigpyt.cc_trust_data()
+
+    # Open the hard-coded attest key file for reading
+    attest_key_file_name = CertPyTestsDir + '/data/attest_key_file.bin'
+
+    # Different variations to open file and read its contents:
+    # - This will fail even with the fix for Python Unicode chars handling
+    # with open(attest_key_file_name, 'rb') as key_file:
+
+    # - The read itself will fail, with below exception. So we do not get
+    #   far enough to exercise the Python Unicode fix.
+    with pytest.raises(UnicodeDecodeError):
+        with open(attest_key_file_name, encoding='utf-16') as key_file:
+            attest_key_bin = key_file.read()
+
+    # Another attempted fix was to read using this interface, which will read-in
+    # data as string, with special-case handling of Unicode surrogate chars.
+    # This did not work in all cases. Some tests still failed; in some cases
+    # we ended up reading incomplete data.
+    # with open(attest_key_file_name, encoding="utf-8", errors="surrogateescape") as key_file:
+
+    with open(attest_key_file_name, 'rb') as key_file:
+        attest_key_bin = key_file.read()
+
+    attest_endorsement_file_name      = CertPyTestsDir + '/data/platform_attest_endorsement.bin'
+    with open(attest_endorsement_file_name, 'rb') as attest_endorsement_file:
+        platform_attest_endorsement_bin = attest_endorsement_file.read()
+
+    example_app_measurement_file_name = CertPyTestsDir + '/data/example_app.measurement'
+    with open(example_app_measurement_file_name, 'rb') as example_app_measurement_file:
+        example_app_measurement = example_app_measurement_file.read()
+
+    # Arg is const string &serialized_attest_key, but this will fail
+    # with:
+    # pylint: disable-next=line-too-long
+    # TypeError: in method 'cc_trust_data_initialize_simulated_enclave', argument 2 of type 'string const &'
+    # without the manual fix to the generated SWIG wrapper code.
+
+    # All these variations will all also fail one way or the other w/
+    # above patch fix.
+    # decoded_attest_key_bin_utf8 = attest_key_bin.decode("utf-8", errors="surrogateescape")
+    # print(decoded_attest_key_bin_utf8)
+
+    # result = cctd.initialize_simulated_enclave(attest_key_bin.decode("utf-8", errors="surrogateescape"))
+    # result = cctd.initialize_simulated_enclave(decoded_attest_key_bin_utf8)
+
+    # result = cctd.initialize_simulated_enclave(str(attest_key_bin));
+
+    # This seems to work!
+    result = cctd.initialize_simulated_enclave(platform_attest_endorsement_bin,
+                                               attest_key_bin,
+                                               example_app_measurement)
+    assert result is True
 
 # ##############################################################################
 def test_secure_authenticated_channel_lib():
@@ -269,22 +335,63 @@ def test_secure_authenticated_channel_init_client_ssl_simple_app():
 
 # ##############################################################################
 # pylint: disable-next=line-too-long
-@pytest.mark.skip(reason="Unicode chars in cert; UnicodeDecodeError: utf-8 codec can't decode byte error")
 def test_secure_authenticated_channel_init_client_ssl_cert_w_unicode_surrogate_chars():
     """
     Exerciser of init_client_ssl() method for a secure_authenticated_channel()
     as it's done in simple_app/example_app.cc . But, here, we use a real
     certificate (stashed in pytests/data dir). This certificate contains
-    Unicode surrogate chars. The SWIG-python interfaces run into an error
-    which prevents this case from succeeding.
+    Unicode surrogate chars.
     """
     sac_role = 'client'
     sac = swigpyt.secure_authenticated_channel(sac_role)
 
     # Open the Certificate binary file for reading
-    with open(CertPyTestsDir + '/data/policy_cert_file.bin', 'rb') as cert_file:
+    policy_cert_file_name = CertPyTestsDir + '/data/policy_cert_file.bin'
+
+    # This by itself or with str() fix below will not work. We get Python
+    # run-time error reporting:
+    # pylint: disable-next=line-too-long
+    # TypeError: Wrong number or type of arguments for overloaded function 'secure_authenticated_channel_init_client_ssl'.
+    # with open(policy_cert_file_name, encoding="utf-8", errors="surrogateescape") as cert_file:
+
+    # This, along with str() conversion below, seems to work ok.
+    with open(policy_cert_file_name, 'rb') as cert_file:
         cert_bin = cert_file.read()
 
+    exp_swig_fn_name = 'init_client_ssl-const-string-asn1_root_cert'
     # Arg is const string &asn1_root_cert; Same as _default case, above.
-    result = sac.init_client_ssl(cert_bin)
+    result = sac.init_client_ssl(str(cert_bin))
     assert result is True
+    assert sac.swig_wrap_fn_name_ == exp_swig_fn_name
+
+# ##############################################################################
+# pylint: disable-next=line-too-long
+def test_secure_authenticated_channel_init_client_ssl_cert_bytestream_w_unicode_surrogate_chars():
+    """
+    Exerciser of init_client_ssl() method for a secure_authenticated_channel()
+    as it's done in simple_app/example_app.cc . But, here, we use a real
+    certificate (stashed in pytests/data dir). This certificate contains
+    Unicode surrogate chars.
+    """
+    sac_role = 'client'
+    sac = swigpyt.secure_authenticated_channel(sac_role)
+
+    # Open the Certificate binary file for reading
+    policy_cert_file_name = CertPyTestsDir + '/data/policy_cert_file.bin'
+
+    # This by itself or with str() fix below will not work. We get Python
+    # run-time error reporting:
+    # pylint: disable-next=line-too-long
+    # TypeError: Wrong number or type of arguments for overloaded function 'secure_authenticated_channel_init_client_ssl'.
+    # with open(policy_cert_file_name, encoding="utf-8", errors="surrogateescape") as cert_file:
+
+    # This, along with str() conversion below, seems to work ok.
+    with open(policy_cert_file_name, 'rb') as cert_file:
+        cert_bin = cert_file.read()
+
+    # pylint: disable-next=line-too-long
+    exp_swig_fn_name = 'init_client_ssl-byte_start-asn1_root_cert-int-asn1_root_cert_size'
+    # Arg is const string &asn1_root_cert; Same as _default case, above.
+    result = sac.python_init_client_ssl(cert_bin)
+    assert result is True
+    assert sac.swig_wrap_fn_name_ == exp_swig_fn_name

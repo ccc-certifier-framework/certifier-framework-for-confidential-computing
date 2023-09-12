@@ -20,6 +20,7 @@
 // ****************************************************************************
 
 #include <string.h>
+#include "certifier.pb.h"
 #include "swigpytests.h"
 
 using namespace swigpytests;
@@ -30,6 +31,47 @@ swigpytests::cc_trust_data::cc_trust_data() {
 }
 
 swigpytests::cc_trust_data::~cc_trust_data() {}
+
+bool swigpytests::cc_trust_data::initialize_simulated_enclave(
+    const byte *serialized_attest_key_signed_claim,
+    int         attest_key_signed_claim_size,
+    const byte *serialized_attest_key,
+    int         attest_key_size,
+    const byte *measurement,
+    int         measurement_size) {
+
+  serialized_attest_key_.assign((char *)serialized_attest_key, attest_key_size);
+
+  // code pulled from simulated_Init()
+
+  // attest key
+  string serialized_attest_key_str((const char *)serialized_attest_key,
+                                   attest_key_size);
+
+  key_message my_attestation_key;
+  if (!my_attestation_key.ParseFromString(serialized_attest_key_str)) {
+    printf("%s():%d: Can't parse attest key\n", __func__, __LINE__);
+    printf("Key: %.*s\n", attest_key_size, serialized_attest_key);
+    return false;
+  }
+
+  // Claim
+  string serialized_attest_key_signed_claim_str(
+      (const char *)serialized_attest_key_signed_claim,
+      attest_key_signed_claim_size);
+
+  signed_claim_message my_attest_claim;
+  if (!my_attest_claim.ParseFromString(
+          serialized_attest_key_signed_claim_str)) {
+    printf("%s():%d: Can't parse attest claim\n", __func__, __LINE__);
+    printf("Key: %.*s\n",
+           attest_key_signed_claim_size,
+           serialized_attest_key_signed_claim);
+    return false;
+  }
+  string my_measurement((const char *)measurement, measurement_size);
+  return true;
+}
 
 // ****************************************************************************
 swigpytests::secure_authenticated_channel::secure_authenticated_channel() {
@@ -48,6 +90,23 @@ bool swigpytests::secure_authenticated_channel::init_client_ssl(
 
   asn1_root_cert_ = asn1_root_cert;
   swig_wrap_fn_name_.assign("init_client_ssl-const-string-asn1_root_cert");
+  printf(" Executed %s():%d ... %s\n",
+         __func__,
+         __LINE__,
+         swig_wrap_fn_name_.c_str());
+  return true;
+}
+
+// Variation of above to exercise interface using Python bytestream input
+bool swigpytests::secure_authenticated_channel::python_init_client_ssl(
+    const byte *asn1_root_cert,
+    int         asn1_root_cert_size) {  // In
+
+  // string((const char *)serialized_attest_key, attest_key_size)
+  asn1_root_cert_.assign(
+      string((const char *)asn1_root_cert, asn1_root_cert_size));
+  swig_wrap_fn_name_.assign(
+      "init_client_ssl-byte_start-asn1_root_cert-int-asn1_root_cert_size");
   printf(" Executed %s():%d ... %s\n",
          __func__,
          __LINE__,

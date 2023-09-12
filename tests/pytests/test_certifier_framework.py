@@ -32,6 +32,7 @@ generated Python module.
 
 import os
 from inspect import getmembers, isclass, ismodule
+import time
 import pytest
 import certifier_framework as cfm
 
@@ -341,10 +342,14 @@ def test_cc_trust_manager_simulated_enclave():
     assert cctd.cc_all_initialized() is False
 
     # Open the Certificate binary file for reading
+    # It is sufficient to just read this file as a binary byte stream.
+    # Python's byte-stream's (byte *, length) pair is consistent with
+    # the interface's signature.
     with open(CertPyTestsDir + '/data/policy_cert_file.bin', 'rb') as cert_file:
         cert_bin = cert_file.read()
 
-    assert cctd.init_policy_key(cert_bin) is True
+    result = cctd.init_policy_key(cert_bin)
+    assert result is True
 
     # Should succeed with valid key algorithm names, after policy key has been
     # initialized
@@ -359,13 +364,12 @@ def test_cc_trust_manager_simulated_enclave():
 
 # ##############################################################################
 @pytest.mark.needs_cert_service()
-@pytest.mark.skip(reason='Unicode chars in cert')
 def test_cc_trust_manager_get_certified():
     """
     Exercise the steps up through "get-certified" for a simulated enclave:
       - Initialize a new trust data object
       - Initialize policy key, using hard-coded certificates (for testing)
-      - initialize_simulated_enclave_data()
+      - python_initialize_simulated_enclave()
       - cold_init()
       - get_certified(): warm_restart(), certify_me()
     """
@@ -378,13 +382,16 @@ def test_cc_trust_manager_get_certified():
 
 # ##############################################################################
 @pytest.mark.needs_cert_service()
-@pytest.mark.skip(reason='Unicode chars in cert; Ends up waiting for client/server input')
 def test_run_app_as_a_client_init_client_ssl():
     """
     Exercise the steps up through "run-app-as-client". This subsumes the setup
     stuff done in test_cc_trust_manager_get_certified(), followed by:
       - Setting up secure_authenticated_channel channel
       - channel.init_client_ssl()
+
+    Needs following items to succeed:
+      - Patch-fix applied by fix_swig_wrap.sh, to manage handling of Unicode
+        surrogate chars
     """
     cctd = cfm.cc_trust_manager('simulated-enclave', 'authentication',
                              CertPyTestsDir + '/data/policy_store')
@@ -420,17 +427,65 @@ def test_run_app_as_a_client_init_client_ssl():
     # This is expected to fail as we will not be able to setup a SSL connection
     # to the server-process. (Server process hasn't been started in this test.)
     assert result is False
+    print(' ... channel.init_client_ssl() failed, as expected.')
+
+# ##############################################################################
+@pytest.mark.needs_cert_service()
+def test_run_app_as_a_client_init_client_ssl_with_trust_manager():
+    """
+    Exercise the steps up through "run-app-as-client". This subsumes the setup
+    stuff done in test_cc_trust_manager_get_certified(), followed by:
+      - Setting up secure_authenticated_channel channel
+      - channel.init_client_ssl()
+      - Uses const cc_trust_manager &mgr interface.
+    """
+    cctd = cfm.cc_trust_manager('simulated-enclave', 'authentication',
+                                CertPyTestsDir + '/data/policy_store')
+    assert cctd.cc_all_initialized() is False
+
+    # Performs cold_init() and also does warm_restart()
+    result = cc_trust_manager_get_certified(cctd)
+    assert result is True
+
+    my_role = 'client'
+    channel = cfm.secure_authenticated_channel(my_role)
+    print(' ... Secure channel', my_role, 'instantiated.')
+    assert channel.role_ == my_role
+
+    result = cctd.cc_auth_key_initialized_ and cctd.cc_policy_info_initialized_
+    assert result is True
+    print(' ... cctd.trust data is initialized.')
+
+    result = cctd.primary_admissions_cert_valid_
+    assert result is True
+    print(' ... cctd.primary admissions cert is valid.')
+
+    # *************************************************************************
+    # NOTE: This interface does not seem to run into the SWIG ISSUE:
+    #   https://github.com/swig/swig/issues/1916
+    # *************************************************************************
+    result = channel.init_client_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
+                                     cctd)
+
+    # This is expected to fail as we will not be able to setup a SSL connection
+    # to the server-process. (Server process hasn't been started in this test.)
+    assert result is False
+    print(' ... channel.init_client_ssl() with cc_trust_manager &mgr interface '
+          + 'failed, as expected.')
 
 # ##############################################################################
 @pytest.mark.needs_cert_service()
 @pytest.mark.check_leaks()
-@pytest.mark.skip(reason='Runs into parsing errors due to Unicode surrogate chars')
 def test_run_app_as_a_server():
     """
     Exercise the "run-app-as-server" step, to start up a server process.
     Execute the steps that would be taken in a real workflow, to verify that
     the interfaces basically work, without actually getting into an SSL-connect
-    # accept server-loop.
+    accept server-loop.
+
+    Needs following items to succeed:
+      - Patch-fix applied by fix_swig_wrap.sh, to manage handling of Unicode
+        surrogate chars
     """
     cctd = cfm.cc_trust_manager('simulated-enclave', 'authentication',
                              CertPyTestsDir + '/data/policy_store')
@@ -458,12 +513,20 @@ def test_run_app_as_a_server():
     assert result is True
     print(' ... cctd.primary admissions cert is valid.')
 
+    # Needs patch-fix to workaround SWIG ISSUE:
+    # https://github.com/swig/swig/issues/1916
     result = channel.init_server_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
                                      cctd.serialized_policy_cert_,
                                      cctd.private_auth_key_,
                                      cctd.serialized_primary_admissions_cert_)
     assert result is True
-    print(' ... channel.init_server_ssl() succeeded.')
+
+    # Extended sleep needed to ensure that socket is released cleanly
+    # when tests are run on CI machines.
+    sleep_for_secs = 120
+    print(' ... channel.init_server_ssl() succeeded. Now sleep for',
+          sleep_for_secs, 'seconds ...')
+    time.sleep(sleep_for_secs)
 
     # Method provides a testing hook to dispatch method with NULL func-hdlr arg
     # so that we basically exercise the rest of the code-flow of this interface.
@@ -476,8 +539,75 @@ def test_run_app_as_a_server():
     print(' ... cfm.server_dispatch() succeeded.')
 
 # ##############################################################################
+@pytest.mark.needs_cert_service()
+@pytest.mark.check_leaks()
+def test_run_app_as_a_server_with_trust_manager():
+    """
+    Exercise the "run-app-as-server" step, to start up a server process.
+    Execute the steps that would be taken in a real workflow, to verify that
+    the interfaces basically work, without actually getting into an SSL-connect
+    accept server-loop.
+      - Uses const cc_trust_manager &mgr interface.
+
+    Needs following items to succeed:
+      - Patch-fix applied by fix_swig_wrap.sh, to manage handling of Unicode
+        surrogate chars
+    """
+    cctd = cfm.cc_trust_manager('simulated-enclave', 'authentication',
+                                CertPyTestsDir + '/data/policy_store')
+    assert cctd.cc_all_initialized() is False
+
+    # Performs cold_init() and also does warm_restart()
+    result = cc_trust_manager_get_certified(cctd)
+    assert result is True
+    print(' cc_trust_manager_get_certified() succeeded. cc_all_initialized() is True.')
+
+    result = cctd.warm_restart()
+    assert result is True
+    print(' warm_restart() succeeded.')
+
+    my_role = 'server'
+    channel = cfm.secure_authenticated_channel(my_role)
+    print(' ... Secure channel', my_role, 'instantiated.')
+    assert channel.role_ == my_role
+
+    result = cctd.cc_auth_key_initialized_ and cctd.cc_policy_info_initialized_
+    assert result is True
+    print(' ... cctd.trust data is initialized.')
+
+    result = cctd.primary_admissions_cert_valid_
+    assert result is True
+    print(' ... cctd.primary admissions cert is valid.')
+
+    # Does not need patch-fix to workaround SWIG ISSUE. (Overload resolution
+    # seems to be happening w/o need for fix_swig_wrap.sh .)
+    result = channel.init_server_ssl(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
+                                     cctd)
+    assert result is True
+
+    # Extended sleep needed to ensure that socket is released cleanly
+    # when tests are run on CI machines.
+    sleep_for_secs = 120
+    print(' ... channel.init_server_ssl() succeeded. Now sleep for',
+          sleep_for_secs, 'seconds ...')
+    time.sleep(sleep_for_secs)
+
+    # Method provides a testing hook to dispatch method with NULL func-hdlr arg
+    # so that we basically exercise the rest of the code-flow of this interface.
+    # Needs patch-fix to workaround SWIG ISSUE:
+    #   https://github.com/swig/swig/issues/1916
+    result = cfm.server_dispatch(CERT_SERVER_HOST, CERT_SERVER_APP_PORT,
+                                 cctd.serialized_policy_cert_,
+                                 cctd.private_auth_key_,
+                                 cctd.serialized_primary_admissions_cert_,
+                                 None)
+    assert result is True
+    print(' ... cfm.server_dispatch() with cc_trust_manager &mgr interface succeeded.')
+
+# ##############################################################################
 # Work-horse function: Implements the steps taken with cc_trust_manager() object.
 # ##############################################################################
+# pylint: disable=too-many-locals
 def cc_trust_manager_get_certified(cctd):
 
     """
@@ -497,33 +627,40 @@ def cc_trust_manager_get_certified(cctd):
 
     result = cctd.init_policy_key(cert_bin)
     assert result is True
-    print(' ... cctd.init_policy_key() succeeded.')
+    print(' ... cctd.init_policy_key() succeeded. Initialized serialized_policy_cert_ ')
+
+    # Another attempted fix was to read using this interface, which will read-in
+    # data as string, with special-case handling of Unicode surrogate chars.
+    # This did not work in all cases. Some tests still failed; in some cases
+    # we ended up reading incomplete data.
+    # pylint: disable-next=line-too-long
+    # with open(attest_key_file_name, encoding="utf-8", errors="surrogateescape") as attest_key_file:
 
     # Open hard-coded key / platform endorsement & app-measurement files
-    attest_key_file_name             = CertPyTestsDir + '/data/attest_key_file.bin'
-    attest_endorsement_file_name = CertPyTestsDir + '/data/platform_attest_endorsement.bin'
-    example_app_measurement_file_name         = CertPyTestsDir + '/data/example_app.measurement'
-
+    # and read-in data as a bytestream.
+    attest_key_file_name = CertPyTestsDir + '/data/attest_key_file.bin'
     with open(attest_key_file_name, 'rb') as attest_key_file:
         attest_key_bin = attest_key_file.read()
 
+    example_app_measurement_file_name = CertPyTestsDir + '/data/example_app.measurement'
     with open(example_app_measurement_file_name, 'rb') as example_app_measurement_file:
         example_app_measurement = example_app_measurement_file.read()
 
+    attest_endorsement_file_name = CertPyTestsDir + '/data/platform_attest_endorsement.bin'
     with open(attest_endorsement_file_name, 'rb') as attest_endorsement_file:
         platform_attest_endorsement_bin = attest_endorsement_file.read()
 
-    result = cctd.initialize_simulated_enclave(str(attest_key_bin),
-                                               str(example_app_measurement),
-                                               str(platform_attest_endorsement_bin))
+    result = cctd.python_initialize_simulated_enclave(attest_key_bin,
+                                                      example_app_measurement,
+                                                      platform_attest_endorsement_bin)
     assert result is True
-    print(' ... cctd.initialize_simulated_enclave_data() succeeded.')
+    print(' ... cctd.python_initialize_simulated_enclave() succeeded.')
 
     # Should succeed with valid key algorithm names, after policy key has been
     # initialized
     public_key_alg    = "rsa-2048"
     symmetric_key_alg = "aes-256-cbc-hmac-sha256"
-    result = cctd.cold_init(public_key_alg, symmetric_key_alg, cert_bin,
+    result = cctd.cold_init(public_key_alg, symmetric_key_alg,
                             'test-app-home_domain',
                             CERT_CLIENT_HOST, CERT_CLIENT_APP_PORT,
                             CERT_SERVER_HOST, CERT_SERVER_APP_PORT)

@@ -234,10 +234,20 @@ class cc_trust_manager {
 
   // Each of the enclave types have bespoke initialization
 
+  // C++ Interface ignored through SWIG bindings
   bool initialize_simulated_enclave(
       const string &serialized_attest_key,
       const string &measurement,
       const string &serialized_attest_endorsement);
+
+  // Interface invoked through Python apps
+  bool python_initialize_simulated_enclave(
+      const byte *serialized_attest_key,
+      int         attest_key_size,
+      const byte *measurement,
+      int         measurement_size,
+      const byte *serialized_attest_endorsement,
+      int         attest_key_signed_claim_size);
 
   bool initialize_sev_enclave(const string &ark_der_cert,
                               const string &ask_der_cert,
@@ -356,13 +366,9 @@ class secure_authenticated_channel {
 
   bool load_client_certs_and_key();
 
+  // Interface invoked through Python apps. (We don't use the python_ prefix
+  // as other tests / programs also exercise this through C++ code.)
   bool init_client_ssl(const string &host_name,
-                       int           port,
-                       const string &asn1_root_cert,
-                       key_message & private_key,
-                       const string &private_key_cert);
-
-  bool init_server_ssl(const string &host_name,
                        int           port,
                        const string &asn1_root_cert,
                        key_message & private_key,
@@ -371,6 +377,14 @@ class secure_authenticated_channel {
   bool init_client_ssl(const string &          host_name,
                        int                     port,
                        const cc_trust_manager &mgr);
+
+  // Interface invoked through Python apps. (We don't use the python_ prefix
+  // as other tests / programs also exercise this through C++ code.)
+  bool init_server_ssl(const string &host_name,
+                       int           port,
+                       const string &asn1_root_cert,
+                       key_message & private_key,
+                       const string &private_key_cert);
 
   bool init_server_ssl(const string &          host_name,
                        int                     port,

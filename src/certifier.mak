@@ -74,7 +74,6 @@ ifdef SWIG_DEBUG
 SWIG_DEBUG_FLAGS = -debug-tmsearch -debug-tmused -E
 endif
 
-
 # -Wallkw: Enable keyword warnings for all the supported languages
 SWIG_FLAGS = -Wallkw
 
@@ -84,11 +83,13 @@ SWIG_CERT_INTERFACE = certifier_framework
 # Base of SWIG-Pytest's interface file for use by SWIG
 SWIG_PYTEST_INTERFACE = swigpytests
 
+FIX_SWIG_SCRIPT = $(CERTIFIER_ROOT)/CI/scripts/fix_swig_wrap.sh
+
 PY_INCLUDE = -I /usr/include/python3.10/
 
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
-LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB)
+LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB) -l protobuf
 
 # ----------------------------------------------------------------------
 # Define list of objects for common case which will be extended for
@@ -106,7 +107,8 @@ endif
 cfsl_dobj := $(dobj) $(O)/$(SWIG_CERT_INTERFACE)_wrap.o
 
 # Objs needed to build SWIG Pytest shared lib for use by Python pytest module
-swig_pytest_dobjs := $(O)/$(SWIG_PYTEST_INTERFACE).o $(O)/$(SWIG_PYTEST_INTERFACE)_wrap.o
+swig_pytest_dobjs := $(O)/$(SWIG_PYTEST_INTERFACE).o $(O)/$(SWIG_PYTEST_INTERFACE)_wrap.o \
+                     $(O)/certifier.pb.o
 
 CERTIFIER_LIB = certifier.a
 
@@ -176,6 +178,8 @@ $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc: $(I)/$(SWIG_CERT_INTERFACE).i $(S)/certifier.cc
 	@echo "\nGenerating $@"
 	$(SWIG) $(SWIG_FLAGS) $(SWIG_DEBUG_FLAGS) -v -python -c++ -Wall -interface $(LIBCERTIFIER) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	cp -p $(@D)/$@ $(@D)/$@.orig
+	$(FIX_SWIG_SCRIPT) $(@D)/$@
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/$(SWIG_CERT_INTERFACE)_wrap.o: $(S)/$(SWIG_CERT_INTERFACE)_wrap.cc $(I)/certifier.pb.h $(I)/certifier.h
@@ -234,6 +238,8 @@ $(O)/swigpytests.o: $(S)/swigpytests.cc $(I)/swigpytests.h
 $(S)/$(SWIG_PYTEST_INTERFACE)_wrap.cc: $(I)/$(SWIG_PYTEST_INTERFACE).i $(S)/$(SWIG_PYTEST_INTERFACE).cc
 	@echo "\nGenerating $@"
 	$(SWIG) $(SWIG_FLAGS) $(SWIG_DEBUG_FLAGS) -v -python -c++ -Wall -interface $(LIBSWIGPYTEST) -outdir $(CERTIFIER_ROOT) -o $(@D)/$@ $<
+	cp -p $(@D)/$@ $(@D)/$@.orig
+	$(FIX_SWIG_SCRIPT) $(@D)/$@
 	$(LL) $(CERTIFIER_ROOT)/*.py*
 
 $(O)/$(SWIG_PYTEST_INTERFACE)_wrap.o: $(S)/$(SWIG_PYTEST_INTERFACE)_wrap.cc
