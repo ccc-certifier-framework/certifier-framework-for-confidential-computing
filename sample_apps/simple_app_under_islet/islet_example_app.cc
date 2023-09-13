@@ -68,7 +68,7 @@ cc_trust_manager *trust_mgr = nullptr;
 
 // -----------------------------------------------------------------------------------------
 
-void client_application(secure_authenticated_channel &channel) {
+bool client_application(secure_authenticated_channel &channel) {
 
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
@@ -86,6 +86,15 @@ void client_application(secure_authenticated_channel &channel) {
   string out;
   int    n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
+  channel.close();
+
+  if (n < 0 || strcmp(out.c_str(), "Hi from your secret server\n") != 0) {
+    printf("%s() error, line %d, did not receive expected server response\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  return true;
 }
 
 
@@ -107,6 +116,7 @@ void server_application(secure_authenticated_channel &channel) {
   // Reply over authenticated, encrypted channel
   const char *msg = "Hi from your secret server\n";
   channel.write(strlen(msg), (byte *)msg);
+  channel.close();
 }
 
 // ---------------------------------------------------------------------------
@@ -241,7 +251,14 @@ int main(int an, char **av) {
     }
 
     // This is the actual application code.
-    client_application(channel);
+    if (!client_application(channel)) {
+      printf("%s() error, line %d, client_application failed\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+
   } else if (FLAGS_operation == "run-app-as-server") {
     if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);

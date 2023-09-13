@@ -85,6 +85,7 @@ void server_application(secure_authenticated_channel &channel) {
   // Reply over authenticated, encrypted channel
   const char *msg = "Hi from your secret server\n";
   channel.write(strlen(msg), (byte *)msg);
+  channel.close();
 }
 
 // ----------------------------------------------------------------------------

@@ -113,6 +113,13 @@ int main(int argc, const char *argv[]) {
               oe_result_str(result));
     }
   } else if (strcmp(argv[2], "get-certified") == 0) {
+    result = warm_restart(enclave, &ret);
+    if (result != OE_OK) {
+      fprintf(stderr,
+              "warm_restart failed: result=%u (%s)\n",
+              result,
+              oe_result_str(result));
+    }
     result = certify_me(enclave, &ret);
     printf("certify_me(): result=%d, ret=%d\n", result, ret);
     if (result != OE_OK) {
