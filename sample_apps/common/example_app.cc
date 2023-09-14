@@ -70,7 +70,7 @@ bool get_enclave_parameters(string **s, int *n) {
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file,
                              &args[0])) {
     printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
-    return false;
+    goto err;
   }
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file,
@@ -78,7 +78,7 @@ bool get_enclave_parameters(string **s, int *n) {
     printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
-    return false;
+    goto err;
   }
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement,
@@ -86,11 +86,16 @@ bool get_enclave_parameters(string **s, int *n) {
     printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
-    return false;
+    goto err;
   }
 
   *n = 3;
   return true;
+
+err:
+  delete[] args;
+  *s = nullptr;
+  return false;
 }
 #endif
 
@@ -113,6 +118,8 @@ bool get_enclave_parameters(string **s, int *n) {
     printf("%s() error, line %d, Can't read cert cert file\n",
            __func__,
            __LINE__);
+    delete[] args;
+    *s = nullptr;
     return false;
   }
 
@@ -141,25 +148,30 @@ bool get_enclave_parameters(string **s, int *n) {
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_ark_cert_file, &args[0])) {
     printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
-    return false;
+    goto err;
   }
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
     printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
-    return false;
+    goto err;
   }
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
     printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
-    return false;
+    goto err;
   }
 
   *n = 3;
   return true;
+
+err:
+  delete[] args;
+  *s = nullptr;
+  return false;
 }
 #endif
 
@@ -321,9 +333,7 @@ int main(int an, char **av) {
 
   // Init simulated enclave
   if (!trust_mgr->initialize_enclave(n, params)) {
-    printf("%s() error, line %d, Can't init simulated enclave\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
   if (params != nullptr) {
