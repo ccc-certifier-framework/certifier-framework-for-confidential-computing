@@ -103,6 +103,8 @@ channel_dobj = $(O)/test_channel.o $(common_objs) \
 
 pipe_read_dobj = $(O)/pipe_read_test.o $(common_objs)
 
+nvidia_tests_dobj = $(O)/nvidia_tests.o $(O)/nvidia_impl.o $(O)/nvidia_mock.o $(common_objs)
+
 ifdef ENABLE_SEV
 sev_common_objs = $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
 
@@ -111,9 +113,11 @@ dobj +=	$(O)/sev_tests.o $(sev_common_objs)
 channel_dobj += $(sev_common_objs)
 
 pipe_read_dobj += $(sev_common_objs)
+
+nvidia_tests_dobj += $(sev_common_objs)
 endif
 
-all:	certifier_tests.exe test_channel.exe pipe_read_test.exe
+all:	certifier_tests.exe test_channel.exe pipe_read_test.exe nvidia_tests.exe
 
 # NOTE: Default target 'all' does -not- include this target
 # Separate target provided to build the shared library which requires
@@ -242,6 +246,22 @@ $(SEV_S)/snp_derive_key.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 endif
+
+nvidia_tests.exe: $(nvidia_tests_dobj) 
+	@echo "\nlinking executable $@"
+	$(LINK) -o $(EXE_DIR)/nvidia_tests.exe $(nvidia_tests_dobj) $(LDFLAGS) -ldl
+
+$(O)/nvidia_tests.o: $(S)/nvidia_tests.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/nvidia_mock.o: $(S)/nvidia/nvidia_mock.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/nvidia_impl.o: $(S)/nvidia/nvidia_impl.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 pipe_read_test.exe: $(pipe_read_dobj) 
 	@echo "\nlinking executable $@"
