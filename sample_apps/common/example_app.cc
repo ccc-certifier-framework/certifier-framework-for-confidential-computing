@@ -97,7 +97,7 @@ err:
   *s = nullptr;
   return false;
 }
-#endif
+#endif  // SIMPLE_APP
 
 #ifdef GRAMINE_SIMPLE_APP
 DEFINE_string(gramine_cert_file, "sgx.cert.der", "certificate file name");
@@ -126,7 +126,7 @@ bool get_enclave_parameters(string **s, int *n) {
   *n = 1;
   return true;
 }
-#endif
+#endif  // GRAMINE_SIMPLE_APP
 
 #ifdef SEV_SIMPLE_APP
 DEFINE_string(ark_cert_file, "ark_cert.der", "ark cert file name");
@@ -173,7 +173,7 @@ err:
   *s = nullptr;
   return false;
 }
-#endif
+#endif  // SEV_SIMPLE_APP
 
 #ifdef ISLET_SIMPLE_APP
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
@@ -191,7 +191,7 @@ bool get_enclave_parameters(string **s, int *n) {
   *n = 0;
   return true;
 }
-#endif
+#endif  // ISLET_SIMPLE_APP
 
 #ifdef KEYSTONE_SIMPLE_APP
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
@@ -209,7 +209,7 @@ bool get_enclave_parameters(string **s, int *n) {
   *n = 0;
   return true;
 }
-#endif
+#endif  // KEYSTONE_SIMPLE_APP
 
 // The test app performs five possible roles
 //    cold-init: This creates application keys and initializes the policy store.
@@ -233,7 +233,7 @@ bool client_application(secure_authenticated_channel &channel) {
     printf("Client peer cert is:\n");
     X509_print_fp(stdout, channel.peer_cert_);
   }
-#endif
+#endif  // DEBUG
 
   // client sends a message over authenticated, encrypted channel
   const char *msg = "Hi from your secret client\n";
@@ -263,7 +263,7 @@ void server_application(secure_authenticated_channel &channel) {
     printf("Server peer cert is:\n");
     X509_print_fp(stdout, channel.peer_cert_);
   }
-#endif
+#endif  // DEBUG
 
   // Read message from client over authenticated, encrypted channel
   string out;
@@ -295,10 +295,10 @@ int main(int an, char **av) {
     printf("\t --ark_cert_file=./service/milan_ark_cert.der "
            "--ask_cert_file=./service/milan_ask_cert.der "
            "--vcek_cert_file=./service/milan_vcek_cert.der\n");
-#endif
+#endif  // SEV_SIMPLE_APP
 #ifdef GRAMINE_SIMPLE_APP
     printf("\t --gramine_cert_file=sgx.cert.der\n");
-#endif
+#endif  // GRAMINE_SIMPLE_APP
     printf("Operations are: cold-init, get-certified, "
            "run-app-as-client, run-app-as-server\n");
     return 0;
@@ -362,7 +362,7 @@ int main(int an, char **av) {
     // Debug
 #ifdef DEBUG
     trust_mgr->print_trust_data();
-#endif
+#endif  // DEBUG
   } else if (FLAGS_operation == "get-certified") {
     if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
@@ -377,7 +377,7 @@ int main(int an, char **av) {
     // Debug
 #ifdef DEBUG
     trust_mgr->print_trust_data();
-#endif
+#endif  // DEBUG
   } else if (FLAGS_operation == "run-app-as-client") {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);

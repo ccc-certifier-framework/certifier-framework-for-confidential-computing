@@ -42,8 +42,8 @@ O= $(OBJ_DIR)
 ISLET_S=$(S)/islet
 US=.
 I= $(SRC_DIR)/include
-INCLUDE= $(ISLET_INCLUDE) -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(ISLET_S) -I.
-COMMON_SRC = ../common
+INCLUDE= -I. $(ISLET_INCLUDE) -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(ISLET_S)
+COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 
 # Compilation of protobuf files could run into some errors, so avoid using
 # # -Werror for those targets

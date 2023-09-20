@@ -28,8 +28,8 @@ S= $(CERTIFIER_ROOT)/src
 O= $(OBJ_DIR)
 US=.
 I= $(CERTIFIER_ROOT)/include
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I.
-COMMON_SRC = ../common
+INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
+COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 
 # Compilation of protobuf files could run into some errors, so avoid using
 # # -Werror for those targets

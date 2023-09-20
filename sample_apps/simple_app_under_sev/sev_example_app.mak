@@ -29,8 +29,8 @@ S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
 US=.
 I= $(SRC_DIR)/include
-INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I.
-COMMON_SRC = ../common
+INCLUDE=-I. -I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
+COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 
 # Inherit -D<flags> provided externally
 CFLAGS := $(CFLAGS)

@@ -37,8 +37,9 @@ SGX_INCLUDE = -I$(GRAMINE_SRC_PATH)/pal/src/host/linux-sgx
 SGX_LDFLAGS = -Wl,--enable-new-dtags
 
 ######################### CERTIFIER ###########################
-CERTIFIER_SRC_PATH = ../../src
-COMMON_SRC = ../common
+CERTIFIER_ROOT = ../..
+CERTIFIER_SRC_PATH = $(CERTIFIER_ROOT)/src
+COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 
 .SECONDARY: certifier
 CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc        \
