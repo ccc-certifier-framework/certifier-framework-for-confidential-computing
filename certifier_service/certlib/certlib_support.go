@@ -1147,6 +1147,7 @@ func PrintSignedReport(sr *certprotos.SignedReport) {
 	if sr.Report != nil {
 		fmt.Printf("Report       : ")
 		PrintBytes(sr.Report)
+		fmt.Printf("\n")
 	}
 	if sr.SigningAlgorithm != nil {
 		fmt.Printf("Report format: %s\n", *sr.SigningAlgorithm)
