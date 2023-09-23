@@ -214,6 +214,17 @@ jobs:
 
         popd
 
+        echo " "
+        echo "---- Running measurement_utility_test.sh ... ----"
+        echo " "
+        # Basic verification of measurement_utility.
+        #
+        ./tests/measurement_utility_test.sh
+
+        # Above script will execute a utility which will generate policy_key.py
+        git restore sample_apps/simple_app_python/policy_key.py
+
+
     #! -------------------------------------------------------------------------
     - name: test-run_example-help-list-args
       run: |
@@ -255,6 +266,8 @@ jobs:
 
         ./run_example.sh --help simple_app_under_keystone
         ./run_example.sh --list simple_app_under_keystone
+
+        ./run_example.sh --list simple_app_python
 
         popd
 
@@ -302,6 +315,8 @@ jobs:
         ./run_example.sh --dry-run simple_app_under_islet
         ./run_example.sh --dry-run simple_app_under_islet setup
         ./run_example.sh --dry-run simple_app_under_islet run_test
+
+        ./run_example.sh --dry-run simple_app_python
 
         popd
 
@@ -361,6 +376,32 @@ jobs:
         set +x
 
         popd
+
+        ./cleanup.sh
+
+        popd
+
+    #! -------------------------------------------------------------------------
+    - name: test-run_example-simple_app_python
+      run: |
+        echo " "
+        echo "*******************************************************************"
+        echo "* Test: Execute script to compile, build and run simple_app_python."
+        echo "*******************************************************************"
+        echo " "
+        pushd ./sample_apps
+
+        ./cleanup.sh
+
+        set -x
+        ps -ef | grep -E 'simpleserver|example_app.exe|run_example.sh|app_service.exe'
+        set +x
+
+        # Need to run this using setup / run_test; otherwise the script will
+        # delete non-Git files. That will rm the certifier_framework Py module and
+        # shared libraries.
+        ./run_example.sh simple_app_python setup
+        ./run_example.sh simple_app_python run_test
 
         ./cleanup.sh
 

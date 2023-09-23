@@ -135,6 +135,7 @@ SampleApps=( "simple_app"
              "simple_app_under_app_service"
              "simple_app_under_keystone"
              "simple_app_under_islet"
+             "simple_app_python"
            )
 
 # ###########################################################################
@@ -287,7 +288,7 @@ Steps=( "rm_non_git_files"
         # "do_cleanup"
         "build_utilities"
         "gen_policy_and_self_signed_cert"
-        "embed_policy_in_example_app"
+        "gen_policy_key_for_example_app"
         "compile_app"
         "get_measurement_of_trusted_app"
 
@@ -328,7 +329,7 @@ Steps_OE=( "rm_non_git_files"
            "do_cleanup"
            "build_utilities"
            "gen_policy_and_self_signed_cert"
-           "embed_policy_in_example_app"
+           "gen_policy_key_for_example_ap"
            "compile_app"
            "get_measurement_of_trusted_app"
 
@@ -419,7 +420,7 @@ Steps_APP_SERVICE=( "rm_non_git_files"
                     "show_env"
                     "build_utilities"
                     "gen_policy_and_self_signed_cert"
-                    "embed_policy_in_example_app"
+                    "gen_policy_key_for_example_app"
                     "compile_app"
                     "get_measurement_of_trusted_app"
 
@@ -455,6 +456,7 @@ function list_steps() {
     echo " "
     case "${app_name}" in
           "simple_app" \
+        | "simple_app_python" \
         | "simple_app_under_keystone" \
         | "simple_app_under_app_service" \
         | "simple_app_under_islet")
@@ -513,6 +515,7 @@ function is_valid_step() {
 
     case "${SampleAppName}" in
           "simple_app" \
+        | "simple_app_python" \
         | "simple_app_under_app_service" \
         | "simple_app_under_islet")
             check_steps_for_app "${Steps[@]}"
@@ -809,13 +812,27 @@ function setup_cca_emulated_islet_shim_bins() {
 }
 
 # ###########################################################################
-function embed_policy_in_example_app() {
+function gen_policy_key_for_example_app() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
+    python_flag=""
+    init_cert_flag=""
+    outfile="policy_key.cc"
+
+    # Invoke utility with python-specific arguments.
+    # Use upper-case names to avoid pylint errors.
+    if [ "${SampleAppName}" = "simple_app_python" ]; then
+        python_flag="--python"
+        init_cert_flag="--array_name=INITIALIZED_CERT"
+        outfile="policy_key.py"
+    fi
+
     run_cmd "$CERT_UTILS"/embed_policy_key.exe   \
+                ${init_cert_flag}                \
                 --input=policy_cert_file.bin     \
-                --output=../policy_key.cc
+                --output=../${outfile}           \
+                ${python_flag}
 
     run_popd
 }
@@ -833,6 +850,11 @@ function compile_app() {
 function compile_simple_app() {
     run_cmd
     compile_app_common
+}
+
+function compile_simple_app_python() {
+    run_cmd
+    echo "${Me}: No compilation is needed for Python simple_app"
 }
 
 # ###########################################################################
@@ -967,6 +989,10 @@ function get_measurement_of_trusted_simple_app() {
     get_measurement_of_app_by_name "example_app.exe"
 }
 
+function get_measurement_of_trusted_simple_app_python() {
+    get_measurement_of_app_by_name "example_app.py"
+}
+
 # ###########################################################################
 function get_measurement_of_trusted_application_service() {
     get_measurement_of_app_by_name "app_service.exe"
@@ -1013,12 +1039,17 @@ function get_measurement_of_app_by_name() {
     run_pushd "${PROV_DIR}"
 
     local measurement_file="example_app.measurement"
+    local policy_key_arg=""
     if [ "${SampleAppName}" = "application_service" ]; then
         measurement_file="app_service.measurement"
+    elif [ "${SampleAppName}" = "simple_app_python" ]; then
+        policy_key_arg="--policy_key=../policy_key.py"
     fi
+
     run_cmd "$CERT_UTILS"/measurement_utility.exe   \
                 --type=hash                         \
                 --input="../${app_name_exe}"        \
+                ${policy_key_arg}                   \
                 --output="${measurement_file}"
 
     run_popd
@@ -1140,6 +1171,7 @@ function author_policy() {
 
     case "${SampleAppName}" in
           "simple_app"  \
+        | "simple_app_python"  \
         | "application_service")
         construct_platform_key_attestation_stmt_sign_it
         print_signed_claim
@@ -1193,6 +1225,10 @@ function construct_policyKey_platform_is_trusted() {
 
 # ###########################################################################
 function construct_policyKey_platform_is_trusted_simple_app() {
+    construct_policyKey_platform_is_trusted_app
+}
+
+function construct_policyKey_platform_is_trusted_simple_app_python() {
     construct_policyKey_platform_is_trusted_app
 }
 
@@ -1367,10 +1403,11 @@ function combine_policy_stmts() {
     signed_claims="signed_claim_1.bin"
     case "${SampleAppName}" in
           "simple_app"                  \
+        | "simple_app_python"           \
         | "simple_app_under_gramine"    \
         | "simple_app_under_keystone"   \
         | "application_service"         \
-        | "simple_app_under_islet"        \
+        | "simple_app_under_islet"      \
         | "simple_app_under_app_service" )
             signed_claims="${signed_claims},signed_claim_2.bin"
             ;;
@@ -1822,6 +1859,11 @@ function run_simple_app_as_server_talk_to_Cert_Service() {
     run_app_by_name_as_server_talk_to_Cert_Service "example_app.exe"
 }
 
+function run_simple_app_python_as_server_talk_to_Cert_Service() {
+    run_cmd
+    run_app_by_name_as_server_talk_to_Cert_Service "example_app.py"
+}
+
 # ###########################################################################
 function run_simple_app_under_keystone_as_server_talk_to_Cert_Service() {
     run_cmd
@@ -1841,21 +1883,28 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
 
     run_pushd "${EXAMPLE_DIR}"
 
-    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
+    print_all_arg="--print_all=true"
+    if [ "${app_name_exe}" = "example_app.py" ]; then
+        print_all_arg="--print_all"
+
+        # In order to get access to SWIG-generated *.py modules
+        PYTHONPATH=../..; export PYTHONPATH
+    fi
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"  \
                 --data_dir="./${Srvr_app_data}/"                \
                 --operation=cold-init                           \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
-                --print_all=true
+                ${print_all_arg}
 
     run_cmd sleep 1
 
-    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"  \
                 --data_dir="./${Srvr_app_data}/"                \
                 --operation=get-certified                       \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
-                --print_all=true
+                ${print_all_arg}
 
     run_popd
 }
@@ -1943,6 +1992,11 @@ function run_simple_app_as_client_talk_to_Cert_Service() {
     run_app_by_name_as_client_talk_to_Cert_Service "example_app.exe"
 }
 
+function run_simple_app_python_as_client_talk_to_Cert_Service() {
+    run_cmd
+    run_app_by_name_as_client_talk_to_Cert_Service "example_app.py"
+}
+
 # ###########################################################################
 function run_simple_app_under_keystone_as_client_talk_to_Cert_Service() {
     run_cmd
@@ -1962,12 +2016,20 @@ function run_app_by_name_as_client_talk_to_Cert_Service() {
 
     run_pushd "${EXAMPLE_DIR}"
 
+    print_all_arg="--print_all=true"
+    if [ "${app_name_exe}" = "example_app.py" ]; then
+        print_all_arg="--print_all"
+
+        # In order to get access to SWIG-generated *.py modules
+        PYTHONPATH=../..; export PYTHONPATH
+    fi
+
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
                 --data_dir="./${Client_app_data}/"              \
                 --operation=cold-init                           \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
-                --print_all=true
+                ${print_all_arg}
 
     run_cmd sleep 1
 
@@ -1976,7 +2038,7 @@ function run_app_by_name_as_client_talk_to_Cert_Service() {
                 --operation=get-certified                       \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
-                --print_all=true
+                ${print_all_arg}
 
     run_popd
 }
@@ -2059,6 +2121,10 @@ function run_simple_app_as_server_offers_trusted_service() {
     run_app_by_name_as_server_offers_trusted_service "example_app.exe"
 }
 
+function run_simple_app_python_as_server_offers_trusted_service() {
+    run_app_by_name_as_server_offers_trusted_service "example_app.py"
+}
+
 # ###########################################################################
 function run_simple_app_under_keystone_as_server_offers_trusted_service() {
     run_app_by_name_as_server_offers_trusted_service "keystone_example_app.exe"
@@ -2078,12 +2144,19 @@ function run_app_by_name_as_server_offers_trusted_service() {
 
     run_pushd "${EXAMPLE_DIR}"
 
+    print_all_arg="--print_all=true"
+    if [ "${app_name_exe}" = "example_app.py" ]; then
+        print_all_arg="--print_all"
+
+        # In order to get access to SWIG-generated *.py modules
+        PYTHONPATH=../..; export PYTHONPATH
+    fi
     # Run app as a server: In app as a server terminal run the following:
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"        \
                 --data_dir="./${Srvr_app_data}/"    \
                 --operation=run-app-as-server       \
                 --policy_store_file=policy_store    \
-                --print_all=true &
+                ${print_all_arg} &
 
     run_cmd sleep 5
 
@@ -2150,6 +2223,10 @@ function run_simple_app_as_client_make_trusted_request() {
     run_app_by_name_as_client_make_trusted_request "example_app.exe"
 }
 
+function run_simple_app_python_as_client_make_trusted_request() {
+    run_app_by_name_as_client_make_trusted_request "example_app.py"
+}
+
 # ###########################################################################
 function run_simple_app_under_sev_as_client_make_trusted_request() {
     run_app_by_name_as_client_make_trusted_request "sev_example_app.exe"
@@ -2173,12 +2250,19 @@ function run_app_by_name_as_client_make_trusted_request() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
 
+    print_all_arg="--print_all=true"
+    if [ "${app_name_exe}" = "example_app.py" ]; then
+        print_all_arg="--print_all"
+
+        # In order to get access to SWIG-generated *.py modules
+        PYTHONPATH=../..; export PYTHONPATH
+    fi
     # Run app as a client: In app as a client terminal run the following:
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"        \
                 --data_dir="./${Client_app_data}/"  \
                 --operation=run-app-as-client       \
                 --policy_store_file=policy_store    \
-                --print_all=true
+                ${print_all_arg}
 
     run_popd
     # Report this, for debugging on CI-machines
@@ -2337,6 +2421,11 @@ function setup() {
 # to avoid re-running sub-fns nested under author_policy()
 # ###########################################################################
 function setup_simple_app() {
+    run_cmd
+    setup_app_by_name
+}
+
+function setup_simple_app_python() {
     run_cmd
     setup_app_by_name
 }

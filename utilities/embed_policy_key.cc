@@ -38,6 +38,8 @@ DEFINE_bool(print_all, false,  "verbose");
 DEFINE_string(input, "policy_cert.bin",  "X509 policy certificate");
 DEFINE_string(output, "policy.include.cc",  "policy cert inclusion file");
 DEFINE_string(array_name, "initialized_cert",  "Name of byte array");
+DEFINE_bool(python, false,  "Python app");
+DEFINE_bool(debug, false,  "Print debugging info");
 
 bool write_file(string file_name, int size, byte* data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
@@ -96,31 +98,57 @@ bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) 
   if(!read_file(asn1_cert_file, &t_size, bin_cert))
     return false;
 
+  if (FLAGS_debug) {
+    printf("include_file=%s\n", include_file.c_str());
+  }
+
   int out = open(include_file.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (out < 0)
     return false;
 
-  // array_name
-  string array_name = FLAGS_array_name;
-  string size_name = array_name + "_size";
+  char terminator_ch = ';';
+  char array_start = '{';
+  char array_end = '}';
   const int buf_size = 128;
-
   char t_buf[buf_size];
   memset(t_buf, 0, buf_size);
-  sprintf(t_buf, "int %s = %d;\n", size_name.c_str(), t_size);
+  if (FLAGS_python) {
+    terminator_ch = '\n';
+    array_start = '[';
+    array_end = ']';
+    snprintf(t_buf, buf_size, "#!/usr/bin/env python3\n\n"
+                              "\"\"\"Policy certificate generated for Python simple_app"
+                              "\"\"\"\n\n");
+    if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
+      printf("Bad write\n");
+    }
+  }
+  // array_name
+  string array_name = FLAGS_array_name;
+  string size_name = array_name + (FLAGS_python ? "_SIZE" : "_size");
+
+  memset(t_buf, 0, buf_size);
+  sprintf(t_buf, "%s%s = %d%c\n",
+          (FLAGS_python ? "" : "int "),
+          size_name.c_str(),
+          t_size,
+          terminator_ch);
   if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
     printf("Bad write\n");
   }
   memset(t_buf, 0, buf_size);
-  sprintf(t_buf, "byte %s[%d] = {\n    ", array_name.c_str(), t_size);
-  const char* s2 = "\n};\n\n";
+  if (FLAGS_python) {
+    sprintf(t_buf, "%s = %c\n    ", array_name.c_str(), array_start);
+  } else {
+    sprintf(t_buf, "byte %s[%d] = {\n    ", array_name.c_str(), t_size);
+  }
 
   if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
     printf("Bad write\n");
   }
   for (int i = 0; i < t_size; i++) {
     memset(t_buf, 0, buf_size);
-    sprintf(t_buf, "0x%02x, ", bin_cert[i]);
+    sprintf(t_buf, " 0x%02x,", bin_cert[i]);
     if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
       printf("Bad write\n");
     }
@@ -130,7 +158,11 @@ bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) 
       }
     }
   }
-  if (write(out, (byte*)s2, strlen(s2)) < 0) {
+  snprintf(t_buf, sizeof(t_buf), "\n%c%c%s",
+           array_end,
+           terminator_ch,
+           (FLAGS_python ? "" : "\n\n"));
+  if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
     printf("Bad write\n");
   }
   close(out);
