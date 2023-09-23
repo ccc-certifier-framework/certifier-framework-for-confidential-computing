@@ -30,12 +30,13 @@ O= $(OBJ_DIR)
 KS=$(S)/keystone
 US=.
 I= $(SRC_DIR)/include
-INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(KS)
+INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(KS)
+COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 
 # Compilation of protobuf files could run into some errors, so avoid using
 # # -Werror for those targets
 CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -D KEYSTONE_CERTIFIER
-CFLAGS = $(CFLAGS_NOERROR) -Werror
+CFLAGS = $(CFLAGS_NOERROR) -Werror -DKEYSTONE_SIMPLE_APP
 CC=g++
 LINK=g++
 #PROTO=/usr/local/bin/protoc
@@ -73,7 +74,7 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
 
-$(O)/keystone_example_app.o: $(US)/keystone_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/keystone_example_app.o: $(COMMON_SRC)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

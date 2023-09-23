@@ -29,11 +29,13 @@ S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
 US=.
 I= $(SRC_DIR)/include
-INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
+INCLUDE=-I. -I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
+COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 
 # Inherit -D<flags> provided externally
 CFLAGS := $(CFLAGS)
 CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D SEV_SNP -Wno-deprecated-declarations
+CFLAGS += -DSEV_SIMPLE_APP
 
 CC=g++
 LINK=g++
@@ -72,7 +74,7 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -Wno-array-bounds -o $(@D)/$@ -c $<
 
-$(O)/sev_example_app.o: $(US)/sev_example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/sev_example_app.o: $(COMMON_SRC)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

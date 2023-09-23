@@ -46,6 +46,8 @@ DEFINE_string(server_app_host, "localhost", "address for app server");
 DEFINE_int32(server_app_port, 8124, "port for server app server");
 
 DEFINE_string(policy_store_file, "store.bin", "policy store file name");
+
+#ifdef SIMPLE_APP
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
 DEFINE_string(platform_attest_endorsement,
               "platform_attest_endorsement.bin",
@@ -53,16 +55,171 @@ DEFINE_string(platform_attest_endorsement,
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 
+static string enclave_type("simulated-enclave");
+
+// Parameters for simulated enclave
+bool get_enclave_parameters(string **s, int *n) {
+
+  // serialized attest key, measurement, serialized endorsement, in that order
+  string *args = new string[3];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file,
+                             &args[0])) {
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
+    goto err;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file,
+                             &args[1])) {
+    printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
+           __LINE__);
+    goto err;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement,
+                             &args[2])) {
+    printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
+           __LINE__);
+    goto err;
+  }
+
+  *n = 3;
+  return true;
+
+err:
+  delete[] args;
+  *s = nullptr;
+  return false;
+}
+#endif  // SIMPLE_APP
+
+#ifdef GRAMINE_SIMPLE_APP
+DEFINE_string(gramine_cert_file, "sgx.cert.der", "certificate file name");
+
+static string enclave_type("gramine-enclave");
+
+// Parameters for gramine enclave
+bool get_enclave_parameters(string **s, int *n) {
+
+  string *args = new string[1];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_gramine_cert_file,
+                             &args[0])) {
+    printf("%s() error, line %d, Can't read cert cert file\n",
+           __func__,
+           __LINE__);
+    delete[] args;
+    *s = nullptr;
+    return false;
+  }
+
+  *n = 1;
+  return true;
+}
+#endif  // GRAMINE_SIMPLE_APP
+
+#ifdef SEV_SIMPLE_APP
+DEFINE_string(ark_cert_file, "ark_cert.der", "ark cert file name");
+DEFINE_string(ask_cert_file, "ask_cert.der", "ask cert file name");
+DEFINE_string(vcek_cert_file, "vcek_cert.der", "vcek cert file name");
+
+static string enclave_type("sev-enclave");
+
+// Parameters for sev enclave for now.
+// We will switch to using extended guest requests in the future.
+bool get_enclave_parameters(string **s, int *n) {
+
+  // ark cert file, ask cert file, vcek cert file
+  string *args = new string[3];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ark_cert_file, &args[0])) {
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
+    goto err;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
+    printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
+           __LINE__);
+    goto err;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
+    printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
+           __LINE__);
+    goto err;
+  }
+
+  *n = 3;
+  return true;
+
+err:
+  delete[] args;
+  *s = nullptr;
+  return false;
+}
+#endif  // SEV_SIMPLE_APP
+
+#ifdef ISLET_SIMPLE_APP
+DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
+DEFINE_string(platform_attest_endorsement,
+              "platform_attest_endorsement.bin",
+              "platform endorsement of attest key");
+DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
+DEFINE_string(measurement_file, "example_app.measurement", "measurement");
+
+static string enclave_type("islet-enclave");
+
+// Parameters not needed for ISLET enclave
+bool get_enclave_parameters(string **s, int *n) {
+  *s = nullptr;
+  *n = 0;
+  return true;
+}
+#endif  // ISLET_SIMPLE_APP
+
+#ifdef KEYSTONE_SIMPLE_APP
+DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
+DEFINE_string(platform_attest_endorsement,
+              "platform_attest_endorsement.bin",
+              "platform endorsement of attest key");
+DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
+DEFINE_string(measurement_file, "example_app.measurement", "measurement");
+
+static string enclave_type("keystone-enclave");
+
+// Parameters not needed for Keystone enclave
+bool get_enclave_parameters(string **s, int *n) {
+  *s = nullptr;
+  *n = 0;
+  return true;
+}
+#endif  // KEYSTONE_SIMPLE_APP
 
 // The test app performs five possible roles
 //    cold-init: This creates application keys and initializes the policy store.
-//    get-certified: This obtains the app admission cert from the service,
-//    naming the public app key. run-app-as-client: This runs the app as a
-//    server. run-app-as-server: This runs the app as a client
+//    get-certified: This obtains the app admission cert naming the public app
+//    key from the service. run-app-as-client: This runs the app as a client.
+//    run-app-as-server: This runs the app as server.
 //    warm-restart:  This retrieves the policy store data. Operation is subsumed
 //      under other ops.
 
-#include "policy_key.cc"  // generated file
+#include "policy_key.cc"
 
 cc_trust_manager *trust_mgr = nullptr;
 
@@ -71,12 +228,12 @@ cc_trust_manager *trust_mgr = nullptr;
 bool client_application(secure_authenticated_channel &channel) {
 
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
+#ifdef DEBUG
   if (channel.peer_cert_ != nullptr) {
     printf("Client peer cert is:\n");
-#ifdef DEBUG
     X509_print_fp(stdout, channel.peer_cert_);
-#endif
   }
+#endif  // DEBUG
 
   // client sends a message over authenticated, encrypted channel
   const char *msg = "Hi from your secret client\n";
@@ -101,12 +258,12 @@ bool client_application(secure_authenticated_channel &channel) {
 void server_application(secure_authenticated_channel &channel) {
 
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
+#ifdef DEBUG
   if (channel.peer_cert_ != nullptr) {
     printf("Server peer cert is:\n");
-#ifdef DEBUG
     X509_print_fp(stdout, channel.peer_cert_);
-#endif
   }
+#endif  // DEBUG
 
   // Read message from client over authenticated, encrypted channel
   string out;
@@ -119,42 +276,44 @@ void server_application(secure_authenticated_channel &channel) {
   channel.close();
 }
 
-// ---------------------------------------------------------------------------
-
 int main(int an, char **av) {
-  string usage("ARM CCA-based simple app");
-  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf("%s: %s\n\n", av[0], usage.c_str());
-    printf("\
-%s --print_all=true|false \n\
-                      --operation=op \n\
-                      --policy_host=policy-host-address \n\
-                      --policy_port=policy-host-port\n\
-                      --data_dir=-directory-for-app-data \n\
-                      --server_app_host=my-server-host-address \n\
-                      --server_app_port=server-host-port\n\
-                      --policy_cert_file=self-signed-policy-cert-file-name \n\
-                      --policy_store_file=policy-store-file-name\n\n",
+    printf("%s --print_all=true|false --operation=op "
+           "--policy_host=policy-host-address "
+           "--policy_port=policy-host-port\n",
            av[0]);
+    printf("\t --data_dir=-directory-for-app-data "
+           "--server_app_host=my-server-host-address "
+           "--server_app_port=server-host-port\n");
+    printf("\t --policy_cert_file=self-signed-policy-cert-file-name "
+           "--policy_store_file=policy-store-file-name\n");
+#ifdef SEV_SIMPLE_APP
+    printf("\t --ark_cert_file=./service/milan_ark_cert.der "
+           "--ask_cert_file=./service/milan_ask_cert.der "
+           "--vcek_cert_file=./service/milan_vcek_cert.der\n");
+#endif  // SEV_SIMPLE_APP
+#ifdef GRAMINE_SIMPLE_APP
+    printf("\t --gramine_cert_file=sgx.cert.der\n");
+#endif  // GRAMINE_SIMPLE_APP
     printf("Operations are: cold-init, get-certified, "
            "run-app-as-client, run-app-as-server\n");
     return 0;
   }
 
   SSL_library_init();
-  string enclave_type("islet-enclave");
   string purpose("authentication");
 
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_file);
   trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
   if (trust_mgr == nullptr) {
-    printf("couldn't initialize trust object\n");
+    printf("%s() error, line %d, couldn't initialize trust object\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -164,15 +323,17 @@ int main(int an, char **av) {
     return 1;
   }
 
-  // Get islet parameters (if needed)
-  int     n = 0;
+  // Get parameters
   string *params = nullptr;
+  int     n = 0;
+  if (!get_enclave_parameters(&params, &n)) {
+    printf("%s() error, line %d, get enclave parameters\n", __func__, __LINE__);
+    return 1;
+  }
 
-  // Init enclave
+  // Init simulated enclave
   if (!trust_mgr->initialize_enclave(n, params)) {
-    printf("%s() error, line %d, Can't init Islet enclave\n",
-           __func__,
-           __LINE__);
+    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
   if (params != nullptr) {
@@ -198,18 +359,25 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
+    // Debug
+#ifdef DEBUG
+    trust_mgr->print_trust_data();
+#endif  // DEBUG
   } else if (FLAGS_operation == "get-certified") {
     if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
-
     if (!trust_mgr->certify_me()) {
       printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
+    // Debug
+#ifdef DEBUG
+    trust_mgr->print_trust_data();
+#endif  // DEBUG
   } else if (FLAGS_operation == "run-app-as-client") {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);
@@ -229,6 +397,7 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
+
     if (!trust_mgr->primary_admissions_cert_valid_) {
       printf("%s() error, line %d, primary admissions cert not valid\n",
              __func__,
@@ -236,13 +405,9 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-
-    if (!channel.init_client_ssl(
-            FLAGS_server_app_host,
-            FLAGS_server_app_port,
-            trust_mgr->serialized_policy_cert_,
-            trust_mgr->private_auth_key_,
-            trust_mgr->serialized_primary_admissions_cert_)) {
+    if (!channel.init_client_ssl(FLAGS_server_app_host,
+                                 FLAGS_server_app_port,
+                                 *trust_mgr)) {
       printf("%s() error, line %d, Can't init client app\n",
              __func__,
              __LINE__);
@@ -258,26 +423,16 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-
   } else if (FLAGS_operation == "run-app-as-server") {
     if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
-    if (!trust_mgr->primary_admissions_cert_valid_) {
-      printf("%s() error, line %d, primary admissions cert not valid\n",
-             __func__,
-             __LINE__);
-      ret = 1;
-      goto done;
-    }
     printf("Running App as server\n");
     if (!server_dispatch(FLAGS_server_app_host,
                          FLAGS_server_app_port,
-                         trust_mgr->serialized_policy_cert_,
-                         trust_mgr->private_auth_key_,
-                         trust_mgr->serialized_primary_admissions_cert_,
+                         *trust_mgr,
                          server_application)) {
       ret = 1;
       goto done;
