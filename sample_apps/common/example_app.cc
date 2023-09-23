@@ -277,6 +277,8 @@ void server_application(secure_authenticated_channel &channel) {
 }
 
 int main(int an, char **av) {
+  string usage("Simple App");
+  gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);

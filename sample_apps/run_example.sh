@@ -135,6 +135,7 @@ SampleApps=( "simple_app"
              "simple_app_under_app_service"
              "simple_app_under_keystone"
              "simple_app_under_islet"
+             "simple_app_python"
            )
 
 # ###########################################################################
@@ -455,6 +456,7 @@ function list_steps() {
     echo " "
     case "${app_name}" in
           "simple_app" \
+        | "simple_app_python" \
         | "simple_app_under_keystone" \
         | "simple_app_under_app_service" \
         | "simple_app_under_islet")
@@ -513,6 +515,7 @@ function is_valid_step() {
 
     case "${SampleAppName}" in
           "simple_app" \
+        | "simple_app_python" \
         | "simple_app_under_app_service" \
         | "simple_app_under_islet")
             check_steps_for_app "${Steps[@]}"
@@ -813,9 +816,23 @@ function embed_policy_in_example_app() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
+    python_flag=""
+    init_cert_flag=""
+    outfile="policy_key.cc"
+
+    # Invoke utility with python-specific arguments.
+    # Use upper-case names to avoid pylint errors.
+    if [ "${SampleAppName}" = "simple_app_python" ]; then
+        python_flag="--python"
+        init_cert_flag="--array_name=INITIALIZED_CERT"
+        outfile="policy_key.py"
+    fi
+
     run_cmd "$CERT_UTILS"/embed_policy_key.exe   \
+                ${init_cert_flag}                \
                 --input=policy_cert_file.bin     \
-                --output=../policy_key.cc
+                --output=../${outfile}           \
+                ${python_flag}
 
     run_popd
 }
@@ -833,6 +850,11 @@ function compile_app() {
 function compile_simple_app() {
     run_cmd
     compile_app_common
+}
+
+function compile_simple_app_python() {
+    run_cmd
+    echo "${Me}: No compilation is needed for Python simple_app"
 }
 
 # ###########################################################################
@@ -965,6 +987,10 @@ function get_measurement_of_trusted_app() {
 # ###########################################################################
 function get_measurement_of_trusted_simple_app() {
     get_measurement_of_app_by_name "example_app.exe"
+}
+
+function get_measurement_of_trusted_simple_app_python() {
+    get_measurement_of_app_by_name "example_app.py"
 }
 
 # ###########################################################################
@@ -1193,6 +1219,10 @@ function construct_policyKey_platform_is_trusted() {
 
 # ###########################################################################
 function construct_policyKey_platform_is_trusted_simple_app() {
+    construct_policyKey_platform_is_trusted_app
+}
+
+function construct_policyKey_platform_is_trusted_simple_app_python() {
     construct_policyKey_platform_is_trusted_app
 }
 
@@ -1822,6 +1852,11 @@ function run_simple_app_as_server_talk_to_Cert_Service() {
     run_app_by_name_as_server_talk_to_Cert_Service "example_app.exe"
 }
 
+function run_simple_app_python_as_server_talk_to_Cert_Service() {
+    run_cmd
+    run_app_by_name_as_server_talk_to_Cert_Service "example_app.py"
+}
+
 # ###########################################################################
 function run_simple_app_under_keystone_as_server_talk_to_Cert_Service() {
     run_cmd
@@ -1943,6 +1978,11 @@ function run_simple_app_as_client_talk_to_Cert_Service() {
     run_app_by_name_as_client_talk_to_Cert_Service "example_app.exe"
 }
 
+function run_simple_app_python_as_client_talk_to_Cert_Service() {
+    run_cmd
+    run_app_by_name_as_client_talk_to_Cert_Service "example_app.py"
+}
+
 # ###########################################################################
 function run_simple_app_under_keystone_as_client_talk_to_Cert_Service() {
     run_cmd
@@ -2059,6 +2099,10 @@ function run_simple_app_as_server_offers_trusted_service() {
     run_app_by_name_as_server_offers_trusted_service "example_app.exe"
 }
 
+function run_simple_app_python_as_server_offers_trusted_service() {
+    run_app_by_name_as_server_offers_trusted_service "example_app.py"
+}
+
 # ###########################################################################
 function run_simple_app_under_keystone_as_server_offers_trusted_service() {
     run_app_by_name_as_server_offers_trusted_service "keystone_example_app.exe"
@@ -2148,6 +2192,10 @@ function run_app_as_client_make_trusted_request() {
 # ###########################################################################
 function run_simple_app_as_client_make_trusted_request() {
     run_app_by_name_as_client_make_trusted_request "example_app.exe"
+}
+
+function run_simple_app_python_as_client_make_trusted_request() {
+    run_app_by_name_as_client_make_trusted_request "example_app.py"
 }
 
 # ###########################################################################
@@ -2337,6 +2385,11 @@ function setup() {
 # to avoid re-running sub-fns nested under author_policy()
 # ###########################################################################
 function setup_simple_app() {
+    run_cmd
+    setup_app_by_name
+}
+
+function setup_simple_app_python() {
     run_cmd
     setup_app_by_name
 }
