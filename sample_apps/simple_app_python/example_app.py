@@ -46,10 +46,25 @@ def do_main(args) -> bool:
     Main driver for parsing arguments and run the simple-app client / server
     components.
     """
-    print('INITIALIZED_CERT_SIZE = ', policy_key.INITIALIZED_CERT_SIZE)
-    print('INITIALIZED_CERT[] size = ', len(policy_key.INITIALIZED_CERT))
-
     parsed_args = parseargs(args)
+
+    attest_key_file         = parsed_args.attest_key_file
+    app1_data_dir           = parsed_args.app1_data_dir
+    measurement             = parsed_args.measurement
+    operation               = parsed_args.operation
+    pf_attest_endorsement   = parsed_args.pf_attest_endorsement
+    pf_file_name            = parsed_args.pf_file_name
+    policy_host             = parsed_args.policy_host
+    policy_port             = parsed_args.policy_port
+    policy_store_file       = parsed_args.policy_store_file
+    server_app_host         = parsed_args.server_app_host
+    server_app_port         = parsed_args.server_app_port
+    print_all               = parsed_args.print_all
+
+    if print_all:
+        print('INITIALIZED_CERT_SIZE = ', policy_key.INITIALIZED_CERT_SIZE)
+        print('INITIALIZED_CERT[] size = ', len(policy_key.INITIALIZED_CERT))
+
     return True
 
 ###############################################################################

@@ -288,7 +288,7 @@ Steps=( "rm_non_git_files"
         # "do_cleanup"
         "build_utilities"
         "gen_policy_and_self_signed_cert"
-        "embed_policy_in_example_app"
+        "gen_policy_key_for_example_app"
         "compile_app"
         "get_measurement_of_trusted_app"
 
@@ -329,7 +329,7 @@ Steps_OE=( "rm_non_git_files"
            "do_cleanup"
            "build_utilities"
            "gen_policy_and_self_signed_cert"
-           "embed_policy_in_example_app"
+           "gen_policy_key_for_example_ap""
            "compile_app"
            "get_measurement_of_trusted_app"
 
@@ -420,7 +420,7 @@ Steps_APP_SERVICE=( "rm_non_git_files"
                     "show_env"
                     "build_utilities"
                     "gen_policy_and_self_signed_cert"
-                    "embed_policy_in_example_app"
+                    "gen_policy_key_for_example_app"
                     "compile_app"
                     "get_measurement_of_trusted_app"
 
@@ -812,7 +812,7 @@ function setup_cca_emulated_islet_shim_bins() {
 }
 
 # ###########################################################################
-function embed_policy_in_example_app() {
+function gen_policy_key_for_example_app() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
@@ -1039,12 +1039,17 @@ function get_measurement_of_app_by_name() {
     run_pushd "${PROV_DIR}"
 
     local measurement_file="example_app.measurement"
+    local policy_key_arg=""
     if [ "${SampleAppName}" = "application_service" ]; then
         measurement_file="app_service.measurement"
+    elif [ "${SampleAppName}" = "simple_app_python" ]; then
+        policy_key_arg="--policy_key=../policy_key.py"
     fi
+
     run_cmd "$CERT_UTILS"/measurement_utility.exe   \
                 --type=hash                         \
                 --input="../${app_name_exe}"        \
+                ${policy_key_arg}                   \
                 --output="${measurement_file}"
 
     run_popd
@@ -1876,12 +1881,16 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
 
     run_pushd "${EXAMPLE_DIR}"
 
+    print_all_arg="--print_all=true"
+    if [ "${app_name_exe}" = "example_app.py" ]; then
+        print_all_arg="--print-all"
+    fi
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
                 --data_dir="./${Srvr_app_data}/"                \
                 --operation=cold-init                           \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
-                --print_all=true
+                ${print_all_arg}
 
     run_cmd sleep 1
 
@@ -1890,7 +1899,7 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
                 --operation=get-certified                       \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
-                --print_all=true
+                ${print_all_arg}
 
     run_popd
 }
