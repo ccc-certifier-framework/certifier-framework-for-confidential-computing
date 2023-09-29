@@ -99,9 +99,11 @@ if [ "${measurement_stub_policy_key}" = "${measurement_with_policy_key}" ]; then
 fi
 
 if [ ${rv} -ne 0 ]; then
-    echo "${Me}: Generated measurements should all be different:"
+    echo "${Me}: Error: Generated measurements should all be different:"
     echo "measurement_no_policy_key  : ${measurement_no_policy_key}"
     echo "measurement_stub_policy_key: ${measurement_stub_policy_key}"
     echo "measurement_with_policy_key: ${measurement_with_policy_key}"
+else
+    echo "${Me}: Basic unit-testing of measurement_utility.exe, with --policy_key support, succeeded."
 fi
 exit ${rv}

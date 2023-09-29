@@ -215,7 +215,7 @@ jobs:
         popd
 
         echo " "
-        echo "---- Running measurement_utility_test.sh ... ... ----"
+        echo "---- Running measurement_utility_test.sh ... ----"
         echo " "
         # Basic verification of measurement_utility.
         #
