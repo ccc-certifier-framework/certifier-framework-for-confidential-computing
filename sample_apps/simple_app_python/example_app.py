@@ -9,6 +9,8 @@ import sys
 import os
 import argparse
 
+import policy_key
+
 ###############################################################################
 # Global Variables: Used in multiple places. List here for documentation
 ###############################################################################
@@ -44,6 +46,9 @@ def do_main(args) -> bool:
     Main driver for parsing arguments and run the simple-app client / server
     components.
     """
+    print('INITIALIZED_CERT_SIZE = ', policy_key.INITIALIZED_CERT_SIZE)
+    print('INITIALIZED_CERT[] size = ', len(policy_key.INITIALIZED_CERT))
+
     parsed_args = parseargs(args)
     return True
 

@@ -39,6 +39,7 @@ DEFINE_string(input, "policy_cert.bin",  "X509 policy certificate");
 DEFINE_string(output, "policy.include.cc",  "policy cert inclusion file");
 DEFINE_string(array_name, "initialized_cert",  "Name of byte array");
 DEFINE_bool(python, false,  "Python app");
+DEFINE_bool(debug, false,  "Print debugging info");
 
 bool write_file(string file_name, int size, byte* data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
@@ -97,7 +98,7 @@ bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) 
   if(!read_file(asn1_cert_file, &t_size, bin_cert))
     return false;
 
-  if (FLAGS_python) {
+  if (FLAGS_debug) {
     printf("include_file=%s\n", include_file.c_str());
   }
 
@@ -115,7 +116,7 @@ bool generate_policy_cert_in_code(string& asn1_cert_file, string& include_file) 
     terminator_ch = '\n';
     array_start = '[';
     array_end = ']';
-    snprintf(t_buf, buf_size, "#!/usr/bin/env python\n\n"
+    snprintf(t_buf, buf_size, "#!/usr/bin/env python3\n\n"
                               "\"\"\"Policy certificate generated for Python simple_app"
                               "\"\"\"\n\n");
     if (write(out, (byte*)t_buf, strlen(t_buf)) < 0) {
