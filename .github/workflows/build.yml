@@ -214,6 +214,17 @@ jobs:
 
         popd
 
+        echo " "
+        echo "---- Running measurement_utility_test.sh ... ... ----"
+        echo " "
+        # Basic verification of measurement_utility.
+        #
+        ./tests/measurement_utility_test.sh
+
+        # Above script will execute a utility which will generate policy_key.py
+        git restore sample_apps/simple_app_python/policy_key.py
+
+
     #! -------------------------------------------------------------------------
     - name: test-run_example-help-list-args
       run: |
