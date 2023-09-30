@@ -10,6 +10,7 @@ import os
 import argparse
 
 import policy_key
+import certifier_framework as cfm
 
 ###############################################################################
 # Global Variables: Used in multiple places. List here for documentation
@@ -65,7 +66,61 @@ def do_main(args) -> bool:
         print('INITIALIZED_CERT_SIZE = ', policy_key.INITIALIZED_CERT_SIZE)
         print('INITIALIZED_CERT[] size = ', len(policy_key.INITIALIZED_CERT))
 
-    return True
+    purpose = 'authentication'
+    enclave_type = 'simulated-enclave'
+    store_file = app1_data_dir + '/' + policy_store_file
+
+    cctm = cfm.cc_trust_manager(enclave_type, purpose, store_file)
+
+    # -------------------------------------------------------------------------
+    # Open the Certificate binary file for reading
+    with open(app1_data_dir + '/policy_cert_file.bin', 'rb') as cert_file:
+        cert_bin = cert_file.read()
+
+    result = cctm.init_policy_key(cert_bin)
+    assert result is True
+
+    # -------------------------------------------------------------------------
+    # Open hard-coded key / platform endorsement & app-measurement files
+    # and read-in data as a bytestream.
+    attest_key_file_name = app1_data_dir + '/' + attest_key_file
+    with open(attest_key_file_name, 'rb') as attest_key_file_fh:
+        attest_key_bin = attest_key_file_fh.read()
+
+    measurement_file_name = app1_data_dir + '/' + measurement
+    with open(measurement_file_name, 'rb') as measurement_fh:
+        example_app_measurement = measurement_fh.read()
+
+    attest_endorsement_file_name = app1_data_dir + '/' + pf_attest_endorsement
+    with open(attest_endorsement_file_name, 'rb') as attest_endorsement_fh:
+        platform_attest_endorsement_bin = attest_endorsement_fh.read()
+
+    result = cctm.python_initialize_simulated_enclave(attest_key_bin,
+                                                      example_app_measurement,
+                                                      platform_attest_endorsement_bin)
+    assert result is True
+
+    public_key_alg = "rsa-2048"
+    symmetric_key_alg = "aes-256-cbc-hmac-sha256"
+
+    # -------------------------------------------------------------------------
+    # Should succeed with valid key algorithm names, after policy key has been
+    # initialized
+    if operation == 'cold-init':
+        result = cctm.cold_init(public_key_alg, symmetric_key_alg,
+                                'simple-app-home_domain',
+                                policy_host, policy_port,
+                                server_app_host, server_app_port)
+        assert result is True
+
+    elif operation == 'get-certified':
+        result = cctm.warm_restart()
+        assert result is True
+
+        result = cctm.certify_me()
+        assert result is True
+
+    return result
 
 ###############################################################################
 # Argument Parsing routine
@@ -107,35 +162,42 @@ def parseargs(args):
 
     parser.add_argument('--platform_attest_endorsement', dest='pf_attest_endorsement'
                         , metavar='<attest-endorsement-bin-file>'
+                        , default=PLATFORM_ATTEST_ENDORSEMENT
                         , help='Platform endorsement of attest key, default: '
                                 + PLATFORM_ATTEST_ENDORSEMENT)
 
     parser.add_argument('--platform_file_name', dest='pf_file_name'
                         , metavar='<platform-certificate-file>'
+                        , default=PLATFORM_CERT_FILE
                         , help='Platform certificate file name, default: '
                                 + PLATFORM_CERT_FILE)
 
     parser.add_argument('--policy_host', dest='policy_host'
                         , metavar='<policy-host-address>'
+                        , default=POLICY_HOST
                         , help='Address for policy server, default: '
                                 + POLICY_HOST)
 
     parser.add_argument('--policy_port', dest='policy_port'
                         , metavar='<port-number>'
+                        , default=POLICY_HOST_PORT
                         , help='Port number for policy server, default: '
                                 + str(POLICY_HOST_PORT))
 
     parser.add_argument('--policy_store_file', dest='policy_store_file'
                         , metavar='<policy-store>'
+                        , default=POLICY_STORE
                         , help='Policy store file, default: ' + POLICY_STORE)
 
     parser.add_argument('--server_app_host', dest='server_app_host'
                         , metavar='<server-app-host>'
+                        , default=SERVER_APP_HOST
                         , help='Address for app server, default: '
                                 + SERVER_APP_HOST)
 
     parser.add_argument('--server_app_port', dest='server_app_port'
                         , metavar='<port-number>'
+                        , default=SERVER_APP_PORT
                         , help='Port number for server app server, default: '
                                 + str(SERVER_APP_PORT))
 

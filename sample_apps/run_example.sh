@@ -1171,6 +1171,7 @@ function author_policy() {
 
     case "${SampleAppName}" in
           "simple_app"  \
+        | "simple_app_python"  \
         | "application_service")
         construct_platform_key_attestation_stmt_sign_it
         print_signed_claim
