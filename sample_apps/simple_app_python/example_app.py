@@ -26,9 +26,9 @@ EXAMPLE_MEASUREMENT             = 'example_app.measurement'
 APP_OP_TYPES                    = 'cold-init, get-certified, run-app-as-client, run-app-as-server'
 PLATFORM_ATTEST_ENDORSEMENT     = 'platform_attest_endorsement.bin'
 PLATFORM_CERT_FILE              = 'platform_file.bin'
+POLICY_STORE                    = 'store.bin'
 POLICY_HOST                     = 'localhost'
 POLICY_HOST_PORT                = 8123
-POLICY_STORE                    = 'store.bin'
 SERVER_APP_HOST                 = 'localhost'
 SERVER_APP_PORT                 = 8124
 
@@ -50,7 +50,7 @@ def do_main(args) -> bool:
     parsed_args = parseargs(args)
 
     attest_key_file         = parsed_args.attest_key_file
-    app1_data_dir           = parsed_args.app1_data_dir
+    app1_data_dir           = parsed_args.app1_data_dir.rstrip('/')
     measurement             = parsed_args.measurement
     operation               = parsed_args.operation
     pf_attest_endorsement   = parsed_args.pf_attest_endorsement
@@ -77,7 +77,11 @@ def do_main(args) -> bool:
     with open(app1_data_dir + '/policy_cert_file.bin', 'rb') as cert_file:
         cert_bin = cert_file.read()
 
-    result = cctm.init_policy_key(cert_bin)
+    if print_all:
+        print('Size of bytes() array =', len(bytes(policy_key.INITIALIZED_CERT)))
+
+    # result = cctm.init_policy_key(cert_bin)
+    result = cctm.init_policy_key(bytes(policy_key.INITIALIZED_CERT))
     assert result is True
 
     # -------------------------------------------------------------------------
@@ -94,6 +98,17 @@ def do_main(args) -> bool:
     attest_endorsement_file_name = app1_data_dir + '/' + pf_attest_endorsement
     with open(attest_endorsement_file_name, 'rb') as attest_endorsement_fh:
         platform_attest_endorsement_bin = attest_endorsement_fh.read()
+
+    if print_all:
+        print('attest_key_file_name         =', attest_key_file_name,
+              ', attest_key_bin len =', len(attest_key_bin))
+
+        print('measurement_file_name        =', measurement_file_name,
+              ', measurement len = ', len(example_app_measurement))
+
+        print('attest_endorsement_file_name =', attest_endorsement_file_name,
+              ', pf_attest_endorsement_bin =', len(platform_attest_endorsement_bin))
+        print(' ');
 
     result = cctm.python_initialize_simulated_enclave(attest_key_bin,
                                                       example_app_measurement,

@@ -1883,10 +1883,14 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
     run_pushd "${EXAMPLE_DIR}"
 
     print_all_arg="--print_all=true"
+    pythonpath_arg=""
     if [ "${app_name_exe}" = "example_app.py" ]; then
         print_all_arg="--print-all"
+
+        # In order to get access to SWIG-generated *.py modules
+        pythonpath_arg="PYTHONPATH=../.."
     fi
-    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
+    run_cmd "${pythonpath_arg} ${EXAMPLE_DIR}/${app_name_exe}"  \
                 --data_dir="./${Srvr_app_data}/"                \
                 --operation=cold-init                           \
                 --measurement_file="example_app.measurement"    \
@@ -1895,7 +1899,7 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
 
     run_cmd sleep 1
 
-    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
+    run_cmd "${pythonpath_arg} ${EXAMPLE_DIR}/${app_name_exe}"  \
                 --data_dir="./${Srvr_app_data}/"                \
                 --operation=get-certified                       \
                 --measurement_file="example_app.measurement"    \

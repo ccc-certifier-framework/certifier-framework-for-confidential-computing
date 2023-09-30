@@ -1902,10 +1902,16 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     return false;
   }
 
-  if (sized_socket_write(sock,
-                         serialized_request.size(),
-                         (byte *)serialized_request.data())
-      < (int)serialized_request.size()) {
+  int sized_write_len = sized_socket_write(sock,
+                                           serialized_request.size(),
+                                           (byte *)serialized_request.data());
+  if (sized_write_len < (int)serialized_request.size()) {
+    printf("%s() error, line: %d sized_socket_write() len=%d is "
+           "< requested size, %d\n",
+           __func__,
+           __LINE__,
+           sized_write_len,
+           (int)serialized_request.size());
     return false;
   }
 
@@ -1932,6 +1938,8 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
            __func__,
            __LINE__,
            response.status().c_str());
+    printf("\nResponse:\n");
+    print_trust_response_message(response);
     return false;
   }
 
