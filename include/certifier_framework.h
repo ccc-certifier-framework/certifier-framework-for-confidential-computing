@@ -147,6 +147,8 @@ class domain_info {
 const int max_accerlerators = 4;
 class accelerator {
 public:
+  accelerator();
+  ~accelerator();
   string accelerator_type_;
   string measurement_;
   bool verified_;
@@ -171,8 +173,9 @@ class cc_trust_manager {
   string public_key_algorithm_;
   string symmetric_key_algorithm_;
 
-  int num_accerators_;
-  accelerator  accelerators[max_accerlerators];
+  int num_accelerators_;
+  accelerator  accelerators_[max_accerlerators];
+  bool accelerator_verified(const string& acc_type);
 
   // For primary security domain only
   bool        cc_policy_info_initialized_;

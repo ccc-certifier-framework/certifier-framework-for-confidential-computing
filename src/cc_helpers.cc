@@ -82,11 +82,11 @@ extern string gramine_platform_cert;
 
 //#define DEBUG
 
-certifier::framework::acelerator::accelerator() {
+certifier::framework::accelerator::accelerator() {
   verified_ = false;
 }
 
-certifier::framework::acelerator::~accelerator() {
+certifier::framework::accelerator::~accelerator() {
   verified_ = false;
 }
 
@@ -120,7 +120,7 @@ void certifier::framework::cc_trust_manager::cc_trust_manager_default_init() {
   x509_policy_cert_ = nullptr;
   cc_is_certified_ = false;
   peer_data_initialized_ = false;
-  num_accerators_ = 0;
+  num_accelerators_ = 0;
   max_num_certified_domains_ = MAX_NUM_CERTIFIERS;
   num_certified_domains_ = 0;
   certified_domains_ = new certifiers *[max_num_certified_domains_];
@@ -345,6 +345,14 @@ bool certifier::framework::cc_trust_manager::initialize_oe_enclave(
 #else
   return false;
 #endif
+}
+
+bool certifier::framework::cc_trust_manager::accelerator_verified(const string& acc_type) {
+  for (int i = 0; i < num_accelerators_; i++) {
+    if (acc_type == accelerators_[i].accelerator_type_)
+      return accelerators_[i].verified_;
+  }
+  return false;
 }
 
 bool certifier::framework::cc_trust_manager::init_policy_key(
