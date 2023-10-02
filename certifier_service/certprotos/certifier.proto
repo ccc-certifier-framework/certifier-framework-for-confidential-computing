@@ -183,10 +183,15 @@ message signed_claim_message {
   optional bytes signature                  = 4;
 };
 
+// cert chains start with root and end with terminal cert
+message cert_chain {
+  repeated bytes cert_certs                 = 1;
+};
+
 // Current evidence types: "signed-claim",
 //   "signed-vse-attestation"
 //   "oe-attestation-report", "asylo-evidence",
-//   "sev-attestation", "cert"
+//   "sev-attestation", "cert", cert-chain
 message evidence {
   optional string evidence_type             = 1;
   optional bytes serialized_evidence        = 2;
