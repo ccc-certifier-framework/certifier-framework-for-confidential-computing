@@ -1864,6 +1864,8 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
   string the_attestation_str;
   the_attestation_str.assign((char *)out, size_out);
 
+  // Now, if there are accelerators, verify them.
+
   // Get certified
   trust_request_message  request;
   trust_response_message response;
