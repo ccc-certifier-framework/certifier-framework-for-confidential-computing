@@ -144,6 +144,14 @@ class domain_info {
   int    service_port_;
 };
 
+const int max_accerlerators = 4;
+class accelerator {
+public:
+  string accelerator_type_;
+  string measurement_;
+  bool verified_;
+};
+
 class certifiers;
 
 class cc_trust_manager {
@@ -162,6 +170,9 @@ class cc_trust_manager {
   string store_file_name_;
   string public_key_algorithm_;
   string symmetric_key_algorithm_;
+
+  int num_accerators_;
+  accelerator  accelerators[max_accerlerators];
 
   // For primary security domain only
   bool        cc_policy_info_initialized_;
@@ -226,6 +237,11 @@ class cc_trust_manager {
   cc_trust_manager(const string &enclave_type,
                    const string &purpose,
                    const string &policy_store_name);
+  /*
+  cc_trust_manager(const string &enclave_type,
+                   const string &purpose,
+                   const string &policy_store_name);
+  */
   ~cc_trust_manager();
 
   // If n == 0, systems should be able to find parameters
