@@ -2219,6 +2219,21 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
     if (sfd == -1)
       continue;
 
+    // Reuse addresses and ports
+#define REUSE_SOCKETS_AND_PORTS
+#ifdef REUSE_SOCKETS_AND_PORTS
+    int reuse = 1;
+    if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse)) < 0) {
+      fprintf(stderr, "Can't reuse socket %s\n", __func__);
+      return false;
+    }
+
+    if (setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&reuse, sizeof(reuse)) < 0) {
+      fprintf(stderr, "Can't reuse port %s\n", __func__);
+      return false;
+    }
+#endif
+
     if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
       break;
 
