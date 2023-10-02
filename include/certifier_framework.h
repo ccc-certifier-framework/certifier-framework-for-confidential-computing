@@ -150,8 +150,10 @@ public:
   accelerator();
   ~accelerator();
   string accelerator_type_;
-  string measurement_;
   bool verified_;
+  int num_certs_;
+  string* certs_;
+  string measurement_;
 };
 
 class certifiers;
@@ -175,6 +177,7 @@ class cc_trust_manager {
 
   int num_accelerators_;
   accelerator  accelerators_[max_accerlerators];
+  bool add_accelerator(const string& acc_type, int num_certs, string* certs);
   bool accelerator_verified(const string& acc_type);
 
   // For primary security domain only

@@ -83,10 +83,16 @@ extern string gramine_platform_cert;
 //#define DEBUG
 
 certifier::framework::accelerator::accelerator() {
+  num_certs_ = 0;
+  certs_ = nullptr;
   verified_ = false;
 }
 
 certifier::framework::accelerator::~accelerator() {
+  if (num_certs_ > 0) {
+    delete []certs_;
+    certs_ = nullptr;
+  }
   verified_ = false;
 }
 
@@ -352,6 +358,10 @@ bool certifier::framework::cc_trust_manager::accelerator_verified(const string& 
     if (acc_type == accelerators_[i].accelerator_type_)
       return accelerators_[i].verified_;
   }
+  return false;
+}
+
+bool certifier::framework::cc_trust_manager::add_accelerator(const string& acc_type, int num_certs, string* certs) {
   return false;
 }
 
