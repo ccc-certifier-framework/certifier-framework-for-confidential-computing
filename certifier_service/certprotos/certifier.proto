@@ -227,7 +227,8 @@ message gramine_attestation_message {
 // maybe support "opa-verifier" later
 message evidence_package {
   optional string prover_type               = 1;
-  repeated evidence fact_assertion          = 2;
+  optional string enclave_type              = 2;
+  repeated evidence fact_assertion          = 3;
 };
 
 message certifier_rules {

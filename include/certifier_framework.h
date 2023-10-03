@@ -151,6 +151,11 @@ public:
   ~accelerator();
   string accelerator_type_;
   bool verified_;
+  string location_type_;  // in-memory, network, file
+  string file_name;
+  string network_address_;
+  byte* address_;
+  long  size_;
   int num_certs_;
   string* certs_;
   string measurement_;

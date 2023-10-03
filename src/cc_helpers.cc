@@ -2012,6 +2012,7 @@ bool construct_platform_evidence_package(string &       attesting_enclave_type,
   string pt("vse-verifier");
   string et("signed-claim");
   ep->set_prover_type(pt);
+  ep->set_enclave_type(attesting_enclave_type);
 
 #ifdef DEBUG
   printf("construct_platform_evidence_package %d existing assertions\n",
