@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <openssl/evp.h>
 #include <secg_sec1.h>
+#include <string>
 
 #define BITS_PER_BYTE (8)
 
@@ -15,6 +16,8 @@
 #define ECDSA_SIG_RSVD_SIZE    (0x1ff - 0x90 + 1)
 #define ECDSA_PUBKEY_SIZE      (0x404)
 #define ECDSA_SIG_SIZE         (0x200)
+
+using std::string;
 
 enum sev_algo {
   SEV_ALGO_INVALID = 0,
@@ -65,5 +68,6 @@ int sev_validate_vcek_cert_chain(X509 *x509_vcek,
                                  X509 *x509_ask,
                                  X509 *x509_ark);
 EVP_PKEY *sev_get_vcek_pubkey(X509 *x509_vcek);
+int       sev_get_platform_certs(string *vcek, string *ask, string *ark);
 
 #endif /* SEV_ECDSA_H */

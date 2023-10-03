@@ -41,12 +41,12 @@ LINK=g++
 PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 
 dobj = $(O)/app_service.o $(O)/certifier.pb.o $(O)/certifier.o \
        $(O)/certifier_proofs.o $(O)/support.o $(O)/simulated_enclave.o \
        $(O)/application_enclave.o $(O)/cc_helpers.o $(O)/cc_useful.o \
-       $(O)/sev_support.o $(O)/sev_report.o
+       $(O)/sev_support.o $(O)/sev_cert_table.o $(O)/sev_report.o
 
 user_dobj = $(O)/test_user.o $(O)/certifier.pb.o $(O)/certifier.o \
             $(O)/certifier_proofs.o $(O)/support.o $(O)/simulated_enclave.o \
@@ -136,7 +136,13 @@ SEV_S=$(LIBSRC)/sev-snp
 $(O)/sev_support.o: $(SEV_S)/sev_support.cc \
                     $(I)/certifier.h $(I)/support.h \
                     $(SEV_S)/attestation.h  $(SEV_S)/sev_guest.h \
-                    $(SEV_S)/snp_derive_key.h
+                    $(SEV_S)/snp_derive_key.h \
+                    $(SEV_S)/sev_cert_table.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/sev_cert_table.o: $(SEV_S)/sev_cert_table.cc \
+                    $(SEV_S)/sev_cert_table.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

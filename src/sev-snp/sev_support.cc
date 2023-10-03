@@ -40,6 +40,7 @@
 #include <attestation.h>
 #include <sev_guest.h>
 #include <snp_derive_key.h>
+#include <sev_cert_table.h>
 
 #include "certifier.h"
 #include "support.h"
@@ -554,6 +555,274 @@ out_close:
 out:
   return rc;
 }
+
+int sev_get_extended_report(const uint8_t *            data,
+                            size_t                     data_size,
+                            struct attestation_report *report,
+                            uint8_t **                 certs,
+                            size_t *                   certs_size) {
+  int                            rc = EXIT_FAILURE;
+  int                            fd = -1;
+  struct snp_ext_report_req      req;
+  struct snp_report_resp         resp;
+  struct snp_guest_request_ioctl guest_req;
+  struct msg_report_resp *report_resp = (struct msg_report_resp *)&resp.data;
+  struct cert_table       certs_data;
+  size_t                  page_size = 0, nr_pages = 0;
+
+  if (!report || !certs || !certs_size) {
+    rc = EINVAL;
+    goto out;
+  }
+
+  if (data && (data_size > sizeof(req.data.user_data) || data_size == 0)) {
+    rc = EINVAL;
+    goto out;
+  }
+
+  /* Initialize data structures */
+  memset(&req, 0, sizeof(req));
+#if 1
+  req.certs_address = (__u64)-1; /* Invalid, non-zero address */
+#endif
+  if (data)
+    memcpy(&req.data.user_data, data, data_size);
+
+  memset(&resp, 0, sizeof(resp));
+
+  memset(&guest_req, 0, sizeof(guest_req));
+  guest_req.msg_version = 1;
+  guest_req.req_data = (__u64)&req;
+  guest_req.resp_data = (__u64)&resp;
+
+  memset(&certs_data, 0, sizeof(certs_data));
+
+  /* Open the sev-guest device */
+  errno = 0;
+  fd = open(SEV_GUEST_DEVICE, O_RDWR);
+  if (fd == -1) {
+    rc = errno;
+    perror("open");
+    goto out;
+  }
+
+  /* Query the size of the stored certificates */
+  errno = 0;
+  rc = ioctl(fd, SNP_GET_EXT_REPORT, &guest_req);
+  if (rc == -1 && guest_req.fw_err != 0x100000000) {
+    rc = errno;
+    perror("ioctl");
+    fprintf(stderr, "firmware error %#llx\n", guest_req.fw_err);
+    fprintf(stderr, "report error %#x\n", report_resp->status);
+    fprintf(stderr, "certs_len %#x\n", req.certs_len);
+    goto out_close;
+  }
+
+  if (req.certs_len == 0) {
+    fprintf(stderr, "The cert chain storage is empty.\n");
+    rc = ENODATA;
+    goto out_close;
+  }
+
+  /* The certificate storage is always page-aligned */
+  page_size = sysconf(_SC_PAGESIZE);
+  nr_pages = req.certs_len / page_size;
+  if (req.certs_len % page_size != 0)
+    nr_pages++; /* Just to be safe */
+
+  certs_data.entry = (struct cert_table_entry *)calloc(page_size, nr_pages);
+  if (!certs_data.entry) {
+    rc = ENOMEM;
+    errno = rc;
+    perror("calloc");
+    goto out_close;
+  }
+
+  /* Retrieve the cert chain */
+  req.certs_address = (__u64)certs_data.entry;
+  errno = 0;
+  rc = ioctl(fd, SNP_GET_EXT_REPORT, &guest_req);
+  if (rc == -1) {
+    rc = errno;
+    perror("ioctl");
+    fprintf(stderr, "errno is %u\n", errno);
+    fprintf(stderr, "firmware error %#llx\n", guest_req.fw_err);
+    fprintf(stderr, "report error %x\n", report_resp->status);
+    goto out_free;
+  }
+
+  /* Check that the report was successfully generated */
+  if (report_resp->status != 0) {
+    fprintf(stderr, "firmware error %x\n", report_resp->status);
+    rc = report_resp->status;
+    goto out_free;
+  } else if (report_resp->report_size > sizeof(*report)) {
+    fprintf(stderr,
+            "report size is %u bytes (expected %lu)!\n",
+            report_resp->report_size,
+            sizeof(*report));
+    rc = EFBIG;
+    goto out_free;
+  }
+
+#ifdef SEV_DUMMY_GUEST
+  rc = sev_sign_report(&report_resp->report);
+  if (rc != EXIT_SUCCESS) {
+    fprintf(stderr, "Report signing failed!\n");
+    goto out_free;
+  }
+#endif
+
+  memcpy(report, &report_resp->report, report_resp->report_size);
+  *certs = (uint8_t *)certs_data.entry;
+  *certs_size = req.certs_len;
+  rc = EXIT_SUCCESS;
+
+out_free:
+  if (rc != EXIT_SUCCESS && certs_data.entry) {
+    free(certs_data.entry);
+    certs_data.entry = NULL;
+  }
+
+out_close:
+  if (fd > 0) {
+    close(fd);
+    fd = -1;
+  }
+out:
+  return rc;
+}
+
+static int sev_export_cert(const struct cert_table_entry *entry,
+                           const uint8_t *                buffer,
+                           size_t                         size,
+                           string *                       cstr) {
+  int   rc = EXIT_FAILURE, len;
+  X509 *cert = NULL;
+  BIO * cbio =
+      BIO_new_mem_buf((void *)(buffer + entry->offset), (int)entry->length);
+  unsigned char *buf = NULL;
+  cert = PEM_read_bio_X509(cbio, NULL, 0, NULL);
+  if (!cert) {
+    // We don't assume platform provides PEM
+    const unsigned char *in = buffer + entry->offset;
+    cert = d2i_X509(NULL, &in, entry->length);
+    if (!cert) {
+      rc = EXIT_FAILURE;
+      errno = rc;
+      perror("d2i_X509_bio");
+      goto err;
+    }
+  }
+
+  // Convert cert to DER
+  len = i2d_X509(cert, &buf);
+  if (len < 0) {
+    rc = EXIT_FAILURE;
+    errno = rc;
+    perror("i2d_X509");
+    goto err;
+  }
+
+  cstr->assign((char *)buf, len);
+  rc = EXIT_SUCCESS;
+
+err:
+  if (buf) {
+    OPENSSL_free(buf);
+  }
+  BIO_free(cbio);
+  return rc;
+}
+
+static int sev_parse_certs(const uint8_t *certs,
+                           size_t         size,
+                           string *       vcek,
+                           string *       ask,
+                           string *       ark) {
+  int                     rc = EXIT_FAILURE;
+  const struct cert_table table = {
+      .entry = (struct cert_table_entry *)certs,
+  };
+  size_t table_size = 0, certs_size = 0, total_size = 0;
+
+  if (!certs || size == 0) {
+    rc = EINVAL;
+    goto out;
+  }
+
+  /* Determine the size of the certificate chain including the cert table */
+  table_size = cert_table_get_size(&table);
+  if (table_size == 0) {
+    rc = ENODATA;
+    errno = rc;
+    perror("cert_table_get_size");
+    goto out;
+  }
+
+  rc = cert_table_get_certs_size(&table, &certs_size);
+  if (rc != EXIT_SUCCESS) {
+    errno = rc;
+    perror("cert_table_get_certs");
+    goto out;
+  }
+
+  total_size = certs_size + table_size;
+  if (total_size < table_size || total_size < certs_size) {
+    rc = EOVERFLOW;
+    goto out;
+  }
+
+  if (total_size > size) {
+    rc = ENOBUFS;
+    goto out;
+  }
+
+  for (size_t i = 0; table.entry[i].length > 0; i++) {
+    struct cert_table_entry *entry = table.entry + i;
+    char                     uuid_str[UUID_STR_LEN] = {0};
+
+    /* Get the GUID as a character string */
+    uuid_unparse(entry->guid, uuid_str);
+
+    rc = ENODATA;
+    if (memcmp(uuid_str, vcek_guid, sizeof(uuid_str)) == 0) {
+      rc = sev_export_cert(entry, certs, size, vcek);
+    } else if (memcmp(uuid_str, ask_guid, sizeof(uuid_str)) == 0) {
+      rc = sev_export_cert(entry, certs, size, ask);
+    } else if (memcmp(uuid_str, ark_guid, sizeof(uuid_str)) == 0) {
+      rc = sev_export_cert(entry, certs, size, ark);
+    }
+    if (rc != EXIT_SUCCESS) {
+      printf("Failed to parse entry %ld\n", i);
+    }
+  }
+
+  rc = EXIT_SUCCESS;
+out:
+  return rc;
+}
+
+int sev_get_platform_certs(string *vcek, string *ask, string *ark) {
+  int                       rc = EXIT_FAILURE;
+  struct attestation_report report;
+  uint8_t                   hash[EVP_MAX_MD_SIZE] = {0};
+  size_t                    hash_size = sizeof(hash), certs_size = 0;
+  uint8_t *                 certs = NULL;
+
+  rc = sev_get_extended_report(hash, hash_size, &report, &certs, &certs_size);
+  if (rc != EXIT_SUCCESS) {
+    errno = rc;
+    perror("get_extended_report");
+    goto exit;
+  }
+
+  rc = sev_parse_certs(certs, certs_size, vcek, ask, ark);
+
+exit:
+  return rc;
+}
+
 
 // DK = T1 + T2 + ⋯ + Tdklen/hlen
 //  PRF(Password, Salt + INT_32_BE(i))

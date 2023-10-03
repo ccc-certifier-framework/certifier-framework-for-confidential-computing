@@ -43,14 +43,14 @@ LINK=g++
 PROTO=protoc
 AR=ar
 #export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
 dobj = $(O)/sev_example_app.o $(O)/certifier.pb.o $(O)/certifier.o \
        $(O)/certifier_proofs.o $(O)/support.o $(O)/application_enclave.o \
-       $(O)/simulated_enclave.o  $(O)/sev_support.o $(O)/sev_report.o \
-       $(O)/cc_helpers.o $(O)/cc_useful.o
+       $(O)/simulated_enclave.o  $(O)/sev_support.o $(O)/sev_cert_table.o \
+       $(O)/sev_report.o $(O)/cc_helpers.o $(O)/cc_useful.o
 
 all:	sev_example_app.exe
 clean:
@@ -111,6 +111,11 @@ SEV_S=$(S)/sev-snp
 $(O)/sev_support.o: $(SEV_S)/sev_support.cc \
                     $(I)/certifier.h $(I)/support.h $(SEV_S)/attestation.h \
                     $(SEV_S)/sev_guest.h $(SEV_S)/snp_derive_key.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/sev_cert_table.o: $(SEV_S)/sev_cert_table.cc \
+                    $(SEV_S)/sev_cert_table.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

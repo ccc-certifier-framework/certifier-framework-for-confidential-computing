@@ -77,7 +77,7 @@ SWIG_CERT_TESTS_INTERFACE = certifier_tests
 PY_INCLUDE = -I /usr/include/python3.10/
 
 #export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 
 # ----------------------------------------------------------------------
 # Define list of objects for common case which will be extended for
@@ -104,7 +104,7 @@ channel_dobj = $(O)/test_channel.o $(common_objs) \
 pipe_read_dobj = $(O)/pipe_read_test.o $(common_objs)
 
 ifdef ENABLE_SEV
-sev_common_objs = $(O)/sev_support.o $(O)/sev_report.o
+sev_common_objs = $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
 
 dobj +=	$(O)/sev_tests.o $(sev_common_objs)
 
@@ -228,6 +228,11 @@ SEV_S=$(S)/sev-snp
 $(O)/sev_support.o: $(SEV_S)/sev_support.cc \
 $(I)/certifier.h $(I)/support.h $(SEV_S)/attestation.h  $(SEV_S)/sev_guest.h  \
 $(SEV_S)/snp_derive_key.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/sev_cert_table.o: $(SEV_S)/sev_cert_table.cc \
+$(SEV_S)/sev_cert_table.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
