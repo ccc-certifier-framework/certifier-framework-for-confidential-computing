@@ -2502,6 +2502,11 @@ certifier::framework::secure_authenticated_channel::
   my_cert_ = nullptr;
   peer_cert_ = nullptr;
   peer_id_.clear();
+
+  num_peer_certs_ = 0;
+  num_my_certs_ = 0;
+  peer_certs_ = nullptr;
+  my_certs_ = nullptr;
 }
 
 certifier::framework::secure_authenticated_channel::
@@ -2531,6 +2536,28 @@ certifier::framework::secure_authenticated_channel::
   peer_cert_ = nullptr;
   peer_id_.clear();
 }
+
+// Interface invoked for user supplied keys and cert chain.
+// This is used, for example, when either endpoint is not a certifier approved
+// key.
+bool certifier::framework::secure_authenticated_channel::init_client_ssl(
+    const string &host_name,
+    int           port,
+    int           cert_chain_length,
+    string *      der_certs,  // starts at root, ends in private key cert
+    key_message & private_key) {
+  return false;
+}
+
+bool certifier::framework::secure_authenticated_channel::init_server_ssl(
+    const string &host_name,
+    int           port,
+    int           cert_chain_length,
+    string *      der_certs,  // starts at root, ends in private key cert
+    key_message & private_key) {
+  return false;
+}
+
 
 bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     const string &host_name,

@@ -354,12 +354,19 @@ class secure_authenticated_channel {
   X509_STORE_CTX *store_ctx_;
   SSL *           ssl_;
   int             sock_;
-  string          asn1_root_cert_;
-  X509 *          root_cert_;
-  X509 *          my_cert_;
-  string          asn1_my_cert_;
-  X509 *          peer_cert_;
-  string          peer_id_;
+
+  int     num_peer_certs_;
+  string *peer_certs_;
+  string  asn1_root_cert_;
+  X509 *  root_cert_;
+
+  int     num_my_certs_;
+  string *my_certs_;
+  string  asn1_my_cert_;
+  X509 *  my_cert_;
+
+  X509 * peer_cert_;
+  string peer_id_;
 
   secure_authenticated_channel(string &role);  // role is client or server
   ~secure_authenticated_channel();
@@ -389,6 +396,23 @@ class secure_authenticated_channel {
   bool init_server_ssl(const string &          host_name,
                        int                     port,
                        const cc_trust_manager &mgr);
+
+  // Interface invoked for user supplied keys and cert chain.
+  // This is used, for example, when either endpoint is not a certifier approved
+  // key.
+  bool init_client_ssl(
+      const string &host_name,
+      int           port,
+      int           cert_chain_length,
+      string *      der_certs,  // starts at root, ends in private key cert
+      key_message & private_key);
+  bool init_server_ssl(
+      const string &host_name,
+      int           port,
+      int           cert_chain_length,
+      string *      der_certs,  // starts at root, ends in private key cert
+      key_message & private_key);
+
 
   void server_channel_accept_and_auth(
       void (*func)(secure_authenticated_channel &));
