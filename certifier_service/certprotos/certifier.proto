@@ -247,15 +247,53 @@ message proof {
   repeated proof_step steps                 = 3;
 };
 
-// submitted_evidence_type is "full-vse-support"
-//  "platform-attestation-only" or "oe-evidence"
-//  or "asylo-evidence"
+message vse_package {
+  optional bytes claim                      = 1;
+  optional bytes attestation                = 2;
+};
+
+message gramine_package {
+  optional bytes platform_cert              = 1;
+  optional bytes attestation                = 2;
+}
+
+message keystone_package {
+  optional bytes attestation                = 1;
+};
+
+message islet_package {
+  optional bytes attestation                = 1;
+};
+
+message sev_package {
+  optional bytes ark                        = 1;
+  optional bytes ask                        = 2;
+  optional bytes vcek                       = 3;
+  optional bytes attestation                = 4;
+};
+
+message oe_package {
+  optional bytes cert_chain                 = 1;
+  optional bytes attestation                = 2;
+};
+
+enum msg_purpose {
+  authentication                            = 0;
+  attestation                               = 1;
+};
+
 message trust_request_message {
   optional string requesting_enclave_tag    = 1;
   optional string providing_enclave_tag     = 2;
-  optional string submitted_evidence_type   = 3;
-  optional string purpose                   = 4;  // "authentication" or "attestation"
-  optional evidence_package support         = 5;
+  optional msg_purpose purpose              = 3;
+  oneof evidence_package {
+    vse_package vse_pkg                     = 4;
+    gramine_package gramine_pkg             = 5;
+    keystone_package keystone_pkg           = 6;
+    islet_package islet_pkg                 = 7;
+    sev_package sev_pkg                     = 8;
+    oe_package oe_pkg                       = 9;
+  }
 };
 
 message trust_response_message {
