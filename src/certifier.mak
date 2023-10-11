@@ -85,7 +85,7 @@ SWIG_PYTEST_INTERFACE = swigpytests
 
 FIX_SWIG_SCRIPT = $(CERTIFIER_ROOT)/CI/scripts/fix_swig_wrap.sh
 
-PY_INCLUDE = -I /usr/include/python3.10/
+PY_INCLUDE = $(shell pkg-config python3 --cflags)
 
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
