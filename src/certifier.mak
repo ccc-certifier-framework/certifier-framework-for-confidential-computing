@@ -88,7 +88,7 @@ FIX_SWIG_SCRIPT = $(CERTIFIER_ROOT)/CI/scripts/fix_swig_wrap.sh
 PY_INCLUDE = $(shell pkg-config python3 --cflags)
 
 #export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB) -l protobuf
 
 # ----------------------------------------------------------------------
@@ -100,7 +100,7 @@ dobj = $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o        \
        $(O)/cc_helpers.o $(O)/cc_useful.o $(O)/keystone_shim.o
 
 ifdef ENABLE_SEV
-dobj += $(O)/sev_support.o $(O)/sev_report.o
+dobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
 endif
 
 # Objs needed to build Certifer Framework shared lib for use by Python module
@@ -220,6 +220,11 @@ SEV_S=$(S)/sev-snp
 $(O)/sev_support.o: $(SEV_S)/sev_support.cc \
                     $(I)/certifier.h $(I)/support.h $(SEV_S)/attestation.h  \
                     $(SEV_S)/sev_guest.h  $(SEV_S)/snp_derive_key.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/sev_cert_table.o: $(SEV_S)/sev_cert_table.cc \
+                    $(SEV_S)/sev_cert_table.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

@@ -13,7 +13,7 @@ CERTIFIER_ROOT = ../..
 CERTIFIER_INCLUDE = -I . -I $(CERTIFIER_ROOT)/include -I $(CERTIFIER_ROOT)/src/sev-snp
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE)
 CERTIFIER_LDFLAGS =
-CERTIFIER_LDFLAGS += -lcrypto -lssl
+CERTIFIER_LDFLAGS += -lcrypto -lssl -luuid
 
 CFLAGS += $(CERTIFIER_CFLAGS)
 CFLAGS += -O3 -g -Wall -std=c++11 -Wno-unused-variable -Werror -Wno-missing-braces -DSEV_SNP
@@ -32,8 +32,8 @@ O = $(OBJ_DIR)
 I = $(CERTIFIER_ROOT)/include
 
 dobj = $(O)/certifier.pb.o $(O)/tee_primitives.o $(O)/certifier.o $(O)/support.o \
-	$(O)/sev_support.o $(O)/sev_report.o $(O)/simulated_enclave.o \
-	$(O)/application_enclave.o $(O)/certifier_proofs.o
+	$(O)/sev_support.o $(O)/sev_cert_table.o $(O)/sev_report.o \
+	$(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/certifier_proofs.o
 
 .PHONY: all build dummy clean
 
@@ -68,6 +68,10 @@ $(O)/support.o: $(CS)/support.cc
 	$(CXX) -fPIC $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
 
 $(O)/sev_support.o: $(CS)/sev-snp/sev_support.cc
+	@ echo " \nCompiling $<"
+	$(CXX) -fPIC $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
+
+$(O)/sev_cert_table.o: $(CS)/sev-snp/sev_cert_table.cc
 	@ echo " \nCompiling $<"
 	$(CXX) -fPIC $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
 

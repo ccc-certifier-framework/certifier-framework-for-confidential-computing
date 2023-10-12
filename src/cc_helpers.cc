@@ -43,6 +43,10 @@
 #  include "islet_api.h"
 #endif  // ISLET_CERTIFIER
 
+#ifdef SEV_SNP
+#  include "sev_support.h"
+#endif  // SEV_SNP
+
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
@@ -163,15 +167,22 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
   } else if (enclave_type_ == "sev-enclave") {
 
     if (n == 0) {
-      // Fetch params
-      printf(
-          "%s() error, line %d, Can't fetch sev parameters automatically yet\n",
-          __func__,
-          __LINE__);
+#ifdef SEV_SNP
+      // Fetch platform certificates using extended guest request
+      string ark, ask, vcek;
+      if (sev_get_platform_certs(&vcek, &ask, &ark) != EXIT_SUCCESS) {
+        printf("%s() error, line %d, Failed to fetch platform certs\n",
+               __func__,
+               __LINE__);
+      }
+      return initialize_sev_enclave(ark, ask, vcek);
+#else
+      printf("%s() error, line %d, Wrong number of sev parameters\n",
+             __func__,
+             __LINE__);
       return false;
-    }
-
-    if (n < 3) {
+#endif  // SEV_SNP
+    } else if (n < 3) {
       printf("%s() error, line %d, Wrong number of sev parameters\n",
              __func__,
              __LINE__);

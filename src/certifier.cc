@@ -424,12 +424,7 @@ bool PublicKeyFromCert(const string &cert, key_message *k) {
   // extensions.
   k->set_snp_tcb_version(get_tcb_version_from_vcek(x));
   memset(chipid, 0, CHIP_ID_SIZE);
-  if (!get_chipid_from_vcek(x, chipid, CHIP_ID_SIZE)) {
-    printf("%s() Info, line %d, Failed to retrieve HWID from VCEK extensions."
-           " Setting chip ID to 0.\n",
-           __func__,
-           __LINE__);
-  }
+  get_chipid_from_vcek(x, chipid, CHIP_ID_SIZE);
   k->set_snp_chipid(chipid, CHIP_ID_SIZE);
 #endif  // SEV_SNP
 
