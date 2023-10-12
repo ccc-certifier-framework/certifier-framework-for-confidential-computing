@@ -90,7 +90,7 @@ certifier::framework::accelerator::accelerator() {
 
 certifier::framework::accelerator::~accelerator() {
   if (num_certs_ > 0) {
-    delete []certs_;
+    delete[] certs_;
     certs_ = nullptr;
   }
   verified_ = false;
@@ -353,7 +353,8 @@ bool certifier::framework::cc_trust_manager::initialize_oe_enclave(
 #endif
 }
 
-bool certifier::framework::cc_trust_manager::accelerator_verified(const string& acc_type) {
+bool certifier::framework::cc_trust_manager::accelerator_verified(
+    const string &acc_type) {
   for (int i = 0; i < num_accelerators_; i++) {
     if (acc_type == accelerators_[i].accelerator_type_)
       return accelerators_[i].verified_;
@@ -361,7 +362,10 @@ bool certifier::framework::cc_trust_manager::accelerator_verified(const string& 
   return false;
 }
 
-bool certifier::framework::cc_trust_manager::add_accelerator(const string& acc_type, int num_certs, string* certs) {
+bool certifier::framework::cc_trust_manager::add_accelerator(
+    const string &acc_type,
+    int           num_certs,
+    string *      certs) {
   return false;
 }
 
@@ -2220,16 +2224,26 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
     if (sfd == -1)
       continue;
 
-    // Reuse addresses and ports
+      // Reuse addresses and ports
 #define REUSE_SOCKETS_AND_PORTS
 #ifdef REUSE_SOCKETS_AND_PORTS
     int reuse = 1;
-    if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse)) < 0) {
+    if (setsockopt(sfd,
+                   SOL_SOCKET,
+                   SO_REUSEADDR,
+                   (const char *)&reuse,
+                   sizeof(reuse))
+        < 0) {
       fprintf(stderr, "Can't reuse socket %s\n", __func__);
       return false;
     }
 
-    if (setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&reuse, sizeof(reuse)) < 0) {
+    if (setsockopt(sfd,
+                   SOL_SOCKET,
+                   SO_REUSEPORT,
+                   (const char *)&reuse,
+                   sizeof(reuse))
+        < 0) {
       fprintf(stderr, "Can't reuse port %s\n", __func__);
       return false;
     }
