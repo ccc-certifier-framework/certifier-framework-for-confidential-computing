@@ -171,6 +171,20 @@ bool gramine_attest_impl(const int what_to_say_size,
   memcpy(attestation_out, quote, bytes);
   *attestation_size_out = bytes;
 
+  GramineSgxAttributes attributes;
+  if (!gramine_get_attributes_from_quote(attestation_out, &attributes)) {
+    printf("Failed to parse SGX attributes\n");
+  } else {
+    printf("GramineSgxAttributes:\n");
+    printf("\tqe_svn = 0x%x\n", attributes.qe_svn);
+    printf("\tpce_svn = 0x%x\n", attributes.pce_svn);
+    printf("\tcpu_svn = 0x");
+    gramine_print_bytes(SGX_CPUSVN_SIZE, attributes.cpu_svn);
+    printf("\n");
+    printf("\tdebug = %s\n", attributes.debug ? "Yes" : "No");
+    printf("\tmode64bit = %s\n", attributes.mode64bit ? "Yes" : "No");
+  }
+
 #ifdef DEBUG
   printf("Gramine Attest done\n");
 #endif
@@ -479,6 +493,32 @@ bool gramine_remote_verify_impl(const int what_to_say_size,
   gramine_print_bytes(*measurement_out_size, measurement_out);
   printf("\n");
 #endif
+
+  return true;
+}
+
+bool gramine_get_attributes_from_quote(byte *                attestation,
+                                       GramineSgxAttributes *atts) {
+  sgx_quote_t *quote = (sgx_quote_t *)attestation;
+  uint64_t     flags;
+
+  if (!attestation || !atts) {
+    return false;
+  }
+
+  /* Quoting Enclave SVN */
+  atts->qe_svn = quote->body.qe_svn;
+  /* Provisioning Certification Enclave SVN */
+  atts->pce_svn = quote->body.pce_svn;
+  /* CPU SVN */
+  memcpy(atts->cpu_svn, quote->body.report_body.cpu_svn.svn, SGX_CPUSVN_SIZE);
+
+  /* Parse attributes */
+  flags = quote->body.report_body.attributes.flags;
+  /* Debug enclave */
+  atts->debug = flags & SGX_FLAGS_DEBUG;
+  /* 64-bit enclave */
+  atts->mode64bit = flags & SGX_FLAGS_MODE64BIT;
 
   return true;
 }

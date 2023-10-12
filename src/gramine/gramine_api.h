@@ -47,6 +47,19 @@
 
 typedef unsigned char byte;
 
+typedef struct GramineSgxAttributes {
+  /* Quoting Enclave SVN */
+  uint16_t qe_svn;
+  /* Provisioning Certification Enclave SVN */
+  uint16_t pce_svn;
+  /* CPU SVN (16 bytes) */
+  uint8_t cpu_svn[SGX_CPUSVN_SIZE];
+  /* Debug enclave */
+  bool debug;
+  /* 64-bit enclave */
+  bool mode64bit;
+} GramineSgxAttributes;
+
 #  ifdef GRAMINE_CERTIFIER
 bool gramine_Init(const int cert_size, byte *cert);
 bool gramine_Attest(const int what_to_say_size,
@@ -83,15 +96,17 @@ typedef struct GramineFunctions {
   bool (*Unseal)(int in_size, byte *in, int *size_out, byte *out);
 } GramineFunctions;
 
-bool gramine_Init(const int cert_size, byte *cert);
-int  gramine_Getkey(byte *user_report_data, sgx_key_128bit_t *key);
-int  gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t *key);
-
+bool    gramine_Init(const int cert_size, byte *cert);
+int     gramine_Getkey(byte *user_report_data, sgx_key_128bit_t *key);
+int     gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t *key);
 int     gramine_file_size(const char *file_name);
 ssize_t gramine_rw_file(const char *path,
                         uint8_t *   buf,
                         size_t      len,
                         bool        do_write);
 void    gramine_setup_functions(GramineFunctions *gramineFuncs);
+bool    gramine_get_attributes_from_quote(byte *                attestation,
+                                          GramineSgxAttributes *atts);
+
 
 #endif  // #ifdef _GRAMINE_API_H_
