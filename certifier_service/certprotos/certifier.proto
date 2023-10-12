@@ -183,10 +183,15 @@ message signed_claim_message {
   optional bytes signature                  = 4;
 };
 
+// cert chains start with root and end with terminal cert
+message cert_chain {
+  repeated bytes cert_certs                 = 1;
+};
+
 // Current evidence types: "signed-claim",
 //   "signed-vse-attestation"
-//   "oe-attestation-report", "asylo-evidence",
-//   "sev-attestation", "cert"
+//   "oe-attestation-report", 
+//   "sev-attestation", "cert", cert-chain
 message evidence {
   optional string evidence_type             = 1;
   optional bytes serialized_evidence        = 2;
@@ -222,7 +227,8 @@ message gramine_attestation_message {
 // maybe support "opa-verifier" later
 message evidence_package {
   optional string prover_type               = 1;
-  repeated evidence fact_assertion          = 2;
+  optional string enclave_type              = 2;
+  repeated evidence fact_assertion          = 3;
 };
 
 message certifier_rules {
@@ -247,15 +253,20 @@ message proof {
   repeated proof_step steps                 = 3;
 };
 
+message accelerator_group {
+  optional string type                      = 1;
+  optional evidence_package support         = 2;
+};
+
 // submitted_evidence_type is "full-vse-support"
 //  "platform-attestation-only" or "oe-evidence"
-//  or "asylo-evidence"
 message trust_request_message {
   optional string requesting_enclave_tag    = 1;
   optional string providing_enclave_tag     = 2;
   optional string submitted_evidence_type   = 3;
   optional string purpose                   = 4;  // "authentication" or "attestation"
   optional evidence_package support         = 5;
+  repeated accelerator_group accels         = 6;
 };
 
 message trust_response_message {

@@ -82,6 +82,20 @@ extern string gramine_platform_cert;
 
 //#define DEBUG
 
+certifier::framework::accelerator::accelerator() {
+  num_certs_ = 0;
+  certs_ = nullptr;
+  verified_ = false;
+}
+
+certifier::framework::accelerator::~accelerator() {
+  if (num_certs_ > 0) {
+    delete[] certs_;
+    certs_ = nullptr;
+  }
+  verified_ = false;
+}
+
 certifier::framework::cc_trust_manager::cc_trust_manager(
     const string &enclave_type,
     const string &purpose,
@@ -112,6 +126,7 @@ void certifier::framework::cc_trust_manager::cc_trust_manager_default_init() {
   x509_policy_cert_ = nullptr;
   cc_is_certified_ = false;
   peer_data_initialized_ = false;
+  num_accelerators_ = 0;
   max_num_certified_domains_ = MAX_NUM_CERTIFIERS;
   num_certified_domains_ = 0;
   certified_domains_ = new certifiers *[max_num_certified_domains_];
@@ -336,6 +351,22 @@ bool certifier::framework::cc_trust_manager::initialize_oe_enclave(
 #else
   return false;
 #endif
+}
+
+bool certifier::framework::cc_trust_manager::accelerator_verified(
+    const string &acc_type) {
+  for (int i = 0; i < num_accelerators_; i++) {
+    if (acc_type == accelerators_[i].accelerator_type_)
+      return accelerators_[i].verified_;
+  }
+  return false;
+}
+
+bool certifier::framework::cc_trust_manager::add_accelerator(
+    const string &acc_type,
+    int           num_certs,
+    string *      certs) {
+  return false;
 }
 
 bool certifier::framework::cc_trust_manager::init_policy_key(
@@ -1837,6 +1868,8 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
   string the_attestation_str;
   the_attestation_str.assign((char *)out, size_out);
 
+  // Now, if there are accelerators, verify them.
+
   // Get certified
   trust_request_message  request;
   trust_response_message response;
@@ -1991,6 +2024,7 @@ bool construct_platform_evidence_package(string &       attesting_enclave_type,
   string pt("vse-verifier");
   string et("signed-claim");
   ep->set_prover_type(pt);
+  ep->set_enclave_type(attesting_enclave_type);
 
 #ifdef DEBUG
   printf("construct_platform_evidence_package %d existing assertions\n",
@@ -2197,6 +2231,31 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
     sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
     if (sfd == -1)
       continue;
+
+      // Reuse addresses and ports
+#define REUSE_SOCKETS_AND_PORTS
+#ifdef REUSE_SOCKETS_AND_PORTS
+    int reuse = 1;
+    if (setsockopt(sfd,
+                   SOL_SOCKET,
+                   SO_REUSEADDR,
+                   (const char *)&reuse,
+                   sizeof(reuse))
+        < 0) {
+      fprintf(stderr, "Can't reuse socket %s\n", __func__);
+      return false;
+    }
+
+    if (setsockopt(sfd,
+                   SOL_SOCKET,
+                   SO_REUSEPORT,
+                   (const char *)&reuse,
+                   sizeof(reuse))
+        < 0) {
+      fprintf(stderr, "Can't reuse port %s\n", __func__);
+      return false;
+    }
+#endif
 
     if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
       break;
