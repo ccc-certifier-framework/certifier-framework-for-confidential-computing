@@ -1,0 +1,69 @@
+{
+  "policyKey" : "policy_key_file.bin",
+
+  "platforms": [{
+      "type": "amd-sev-snp",
+      "props": [{
+          "comparator": "eq",
+          "type": "string",
+          "name": "debug",
+          "value": "no"
+        },
+        {
+          "comparator": "eq",
+          "type": "string",
+          "name": "migrate",
+          "value": "no"
+        },
+        {
+          "comparator": "eq",
+          "type": "string",
+          "name": "smt",
+          "value": "no"
+        },
+        {
+          "comparator": "ge",
+          "type": "int",
+          "name": "api-major",
+          "value": "0"
+        },
+        {
+          "comparator": "ge",
+          "type": "int",
+          "name": "api-minor",
+          "value": "0"
+        },
+        {
+          "comparator": "eq",
+          "type": "int",
+          "name": "tcb-version",
+          "value": "0x03000000000008115"
+        }
+      ]
+    }
+  ],
+
+  "measurements" : [
+    "<YOUR_SEV_VM_MEASUREMENT>",
+    "<YOUR_GRAMINE_APP_MEASUREMENT>"
+  ],
+
+  "claims" : [{
+      "unaryClause" : {
+        "certSubject" : "ark_cert.der",
+        "verb" : "is-trusted-for-attestation"
+      },
+      "verb" : "says",
+      "keySubject" : "policy_key_file.bin"
+    },
+
+    {
+      "unaryClause" : {
+        "certSubject" : "sgx.cert.der",
+        "verb" : "is-trusted-for-attestation"
+      },
+      "verb" : "says",
+      "keySubject" : "policy_key_file.bin"
+    }
+  ]
+}
