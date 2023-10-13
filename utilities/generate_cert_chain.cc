@@ -19,99 +19,22 @@
 using namespace certifier::utilities;
 
 DEFINE_bool(print_all, false, "verbose");
-// "generate-policy-key-and-test-keys" is the other option
-DEFINE_string(operation, "", "generate policy key and self-signed cert");
 
-DEFINE_string(policy_key_name, "policyKey", "key name");
-DEFINE_string(policy_key_type, Enc_method_rsa_2048_private, "policy key type");
-DEFINE_string(policy_authority_name,
-              "policyAuthority",
-              "policy authority name");
-DEFINE_string(policy_key_output_file, "policy_key_file.bin", "policy key file");
-DEFINE_string(policy_cert_output_file,
-              "policy_cert_file.bin",
-              "policy cert file");
+// "generate" or "print" are the other option
+DEFINE_string(operation, "", "generate or print cert chain ");
 
-bool generate_test_keys() {
-  key_message platform_key;
-  key_message attest_key;
-
-  int n = 2048;
-  if (FLAGS_platform_key_type == Enc_method_rsa_2048_private)
-    n = 2048;
-  else if (FLAGS_platform_key_type == Enc_method_rsa_1024_private)
-    n = 1024;
-  if (!make_certifier_rsa_key(n, &platform_key)) {
-    return false;
-  }
-  platform_key.set_key_name(FLAGS_platform_key_name);
-  platform_key.set_key_type(FLAGS_platform_key_type);
-  string serialized_platform_key;
-  if (!platform_key.SerializeToString(&serialized_platform_key))
-    return false;
-  if (!write_file(FLAGS_platform_key_output_file,
-                  serialized_platform_key.size(),
-                  (byte *)serialized_platform_key.data()))
-    return false;
-
-  n = 2048;
-  if (FLAGS_attest_key_type == Enc_method_rsa_2048_private)
-    n = 2048;
-  else if (FLAGS_attest_key_type == Enc_method_rsa_1024_private)
-    n = 1024;
-  if (!make_certifier_rsa_key(n, &attest_key)) {
-    return false;
-  }
-  attest_key.set_key_name(FLAGS_attest_key_name);
-  attest_key.set_key_type(FLAGS_attest_key_type);
-  string serialized_attest_key;
-  if (!attest_key.SerializeToString(&serialized_attest_key))
-    return false;
-  if (!write_file(FLAGS_attest_key_output_file,
-                  serialized_attest_key.size(),
-                  (byte *)serialized_attest_key.data()))
-    return false;
-
-  printf("\nGenerated platform key:\n");
-  print_key(platform_key);
-  printf("\n");
-
-  printf("\nGenerated attest key:\n");
-  print_key(attest_key);
-  printf("\n");
-
-  return true;
-}
-
-bool generate_policy_key() {
-  key_message policy_key;
-  key_message policy_pk;  // public policy key
-
-  if (!make_root_key_with_cert(FLAGS_policy_key_type,
-                               FLAGS_policy_key_name,
-                               FLAGS_policy_authority_name,
-                               &policy_key))
-    return false;
-  if (!private_key_to_public_key(policy_key, &policy_pk))
-    return false;
-
-  string serialized_key;
-  if (!policy_key.SerializeToString(&serialized_key))
-    return false;
-  if (!write_file(FLAGS_policy_key_output_file,
-                  serialized_key.size(),
-                  (byte *)serialized_key.data()))
-    return false;
-  if (!write_file(FLAGS_policy_cert_output_file,
-                  policy_key.certificate().size(),
-                  (byte *)policy_key.certificate().data()))
-    return false;
-
-  printf("\nGenerated policy key:\n");
-  print_key(policy_key);
-  printf("\n");
-  return true;
-}
+DEFINE_string(root_key_name, "policyKey", "key name");
+DEFINE_string(key_type, Enc_method_rsa_2048_private, "key type");
+DEFINE_string(authority_name,
+              "rootAuthority",
+              "root authority name");
+DEFINE_string(output_file,
+              "output.bin",
+              "output file");
+DEFINE_int32(num_intermediate, 0, "number of intermediate certs");
+DEFINE_string(input_file,
+              "input.bin",
+              "input file");
 
 bool generate_key(const string &type, const string &name, key_message *k) {
 
@@ -177,19 +100,22 @@ bool generate_key(const string &type, const string &name, key_message *k) {
 
   k->set_key_name(name);
   k->set_key_format("vse-key");
-  string str;
-  if (!k->SerializeToString(&str)) {
-    printf("Can't serialize key\n");
-    return false;
-  }
-  if (!write_file(FLAGS_key_output_file, str.size(), (byte *)str.data())) {
-    printf("Can't write file\n");
-    return false;
-  }
-  print_key(*k);
-  printf("\n");
 
   return true;
+}
+
+bool generate_chain(const string& root_key_name,
+                    const string& key_type,
+                    const string& authority_name,
+                    int num_intermediate,
+                    full_cert_chain* chain) {
+/*
+  key_message subject_key
+  key_message signer_key
+  bytes der_cert
+
+ */
+  return false;
 }
 
 
@@ -202,34 +128,28 @@ int main(int an, char **av) {
     printf("%s: %s\n", av[0], usage.c_str());
     printf("\n%s --operation=<generate print> "
            "--num_intermediate=nn "
+           "--input_file=<file.bin> "
            "--output_file=<file.bin> "
            "--key_type=<rsa-4096 rsa-2048 ecc-256 ecc-384\n",
            av[0]);
 
     return 0;
-  } else if (FLAGS_operation == "test-sig") {
-    test_sig();
-  } else if (FLAGS_operation == "generate-policy-key"
-             || FLAGS_operation == "generate-policy-key-and-test-keys") {
-    printf("Generating policy key and cert\n");
-    if (!generate_policy_key()) {
-      printf("Generate keys failed\n");
+  } else if (FLAGS_operation == "print") {
+    // FLAGS_input
+    full_cert_chain chain; // list
+    return 0;
+  } else if (FLAGS_operation == "generate") {
+    full_cert_chain chain; // list
+    if (!generate_chain(FLAGS_root_key_name,
+                        FLAGS_key_type,
+                        FLAGS_authority_name,
+                        FLAGS_num_intermediate,
+                        &chain)) {
+      printf("%s:%d: %s() failed\n", __FILE__, __LINE__, __func__);
       return 1;
     }
-
-    if (FLAGS_operation == "generate-policy-key-and-test-keys") {
-      printf("Generating test keys\n");
-      if (!generate_test_keys()) {
-        printf("Generate test keys failed\n");
-        return 1;
-      }
-    }
-  } else if ("generate-key") {
-    key_message k;
-    if (!generate_key(FLAGS_key_type, FLAGS_key_name, &k)) {
-      printf("generate key failed\n");
-      return 1;
-    }
+    // serialize and save
+    return 0;
   } else {
     printf("Unknown operation\n");
     return 1;
