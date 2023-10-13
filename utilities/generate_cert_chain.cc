@@ -114,8 +114,19 @@ bool generate_chain(const string& root_key_name,
   key_message signer_key
   bytes der_cert
 
+  bool generate_key(const string &type, const string &name, key_message *k)
+  // produce_artifact
+
  */
-  return false;
+
+  // generate root
+
+  // generate intermediates
+
+  // generate final
+
+  
+  return true;
 }
 
 
@@ -135,8 +146,37 @@ int main(int an, char **av) {
 
     return 0;
   } else if (FLAGS_operation == "print") {
-    // FLAGS_input
+
+    string str;
     full_cert_chain chain; // list
+
+    // read file
+    if (!read_file_into_string(FLAGS_input_file, &str)) {
+      printf("%s:%d: %s() read_file_into_string failed\n", __FILE__, __LINE__, __func__);
+      return 1;
+    }
+
+    // deserialize
+    if (!chain.ParseFromString(str)) {
+      printf("%s:%d: %s() chain.ParseFromString failed\n", __FILE__, __LINE__, __func__);
+      return 1;
+    }
+
+    // print them
+    for (int i = 0; i < chain.list_size(); i++) {
+      printf("\n Cert %d:\n", i);
+      const full_cert_chain_entry ent = chain.list(i);
+      const string & ser_cert = ent.der_cert();
+      X509* cert = X509_new();
+      if (!asn1_to_x509(ser_cert, cert)) {
+        printf("%s:%d: %s() asn1_to_x509 failed\n", __FILE__, __LINE__, __func__);
+        continue;
+      }
+      X509_print_fp(stdout, cert);
+      X509_free(cert);
+      printf("\n");
+    }
+
     return 0;
   } else if (FLAGS_operation == "generate") {
     full_cert_chain chain; // list
