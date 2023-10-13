@@ -109,23 +109,63 @@ bool generate_chain(const string& root_key_name,
                     const string& authority_name,
                     int num_intermediate,
                     full_cert_chain* chain) {
-/*
-  key_message subject_key
-  key_message signer_key
-  bytes der_cert
-
-  bool generate_key(const string &type, const string &name, key_message *k)
-  // produce_artifact
-
- */
 
   // generate root
+  key_message private_root_key;
+  if (!generate_key(key_type, root_key_name, &private_root_key)) {
+    printf("%s:%d: %s() generate root key failed\n", __FILE__, __LINE__, __func__);
+    return false;
+  }
+  key_message public_root_key;
+  if (!private_key_to_public_key(private_root_key, &public_root_key)) {
+    printf("%s:%d: %s() private root key to public failed\n", __FILE__, __LINE__, __func__);
+    return false;
+  }
+
+  X509* x509_root_cert = X509_new();
+  uint64_t sn = 1;
+  if (!produce_artifact(private_root_key,
+                        (string&)root_key_name,
+                        (string&)authority_name,
+                        public_root_key,
+                        (string&)root_key_name,
+                        (string&)authority_name,
+                        sn,
+                        365.0 * 86400,
+                        x509_root_cert,
+                        true,
+                        false)) {
+    printf("%s:%d: %s() Can't produce root cert\n", __FILE__, __LINE__, __func__);
+    return false;
+  }
+  printf("\nRoot cert:\n");
+  X509_print_fp(stdout, x509_root_cert);
+  printf("\n");
+  full_cert_chain_entry* ent = chain->add_list();
+
+  // add root to first entry
+  string root_der;
+  if (!x509_to_asn1(x509_root_cert, &root_der)) {
+    printf("%s:%d: %s() Can't convert root cert to der\n", __FILE__, __LINE__, __func__);
+    return false;
+  }
+  ent->mutable_subject_key()->CopyFrom(public_root_key);
+  ent->mutable_signer_key()->CopyFrom(private_root_key);
+  ent->set_der_cert(root_der);
 
   // generate intermediates
+  key_message private_intermediates[num_intermediate + 1];
+  key_message public_intermediates[num_intermediate + 1];
+
+  private_intermediates[0].CopyFrom(private_root_key);
+  public_intermediates[0].CopyFrom(public_root_key);
+  for (int i = 1; i <= num_intermediate; i++) {
+  }
 
   // generate final
+  key_message final_private_key;
+  key_message final_public_key;
 
-  
   return true;
 }
 
