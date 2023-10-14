@@ -145,6 +145,8 @@ bool generate_chain(const string& root_key_name,
   printf("\n");
 
   full_cert_chain_entry* ent = chain->add_list();
+  string key_name;
+  string org_name;
 
   // add root to first entry
   string root_der;
@@ -163,18 +165,67 @@ bool generate_chain(const string& root_key_name,
 
   private_intermediates[0].CopyFrom(private_root_key);
   public_intermediates[0].CopyFrom(public_root_key);
+
   for (int i = 1; i <= num_intermediate; i++) {
-  sn++;
+    char kn[100];
+    char on[100];
+    sprintf(kn, "IntermediateKey%d", i);
+    sprintf(on, "IntermediateOrg%d", i);
+    org_name = on;
+    key_name = kn;
+
+    if (!generate_key(key_type, key_name, &private_intermediates[i])) {
+      printf("%s:%d: %s() generate intermediate key %d failed\n", __FILE__, __LINE__, __func__, i);
+      return false;
+    }
+    if (!private_key_to_public_key(private_intermediates[i], &public_intermediates[i])) {
+      printf("%s:%d: %s() private final key to public intermediate key %d failed\n", __FILE__, __LINE__, __func__, i);
+      return false;
+    }
+
+    X509* x509_int_cert = X509_new();
+    if (!produce_artifact(private_intermediates[i-1],
+			  (string&)private_intermediates[i-1].key_name(),
+			  (string&)authority_name,
+			  public_intermediates[i],
+			  (string&)key_name,
+			  (string&)org_name,
+			  sn,
+			  365.0 * 86400,
+			  x509_int_cert,
+			  false,
+			  false)) {
+      printf("%s:%d: %s() Can't produce final cert\n", __FILE__, __LINE__, __func__);
+      return false;
+    }
+
+    // Debug
+    printf("\nIntermediate cert %d:\n", i);
+    X509_print_fp(stdout, x509_int_cert);
+    printf("\n");
+    ent = chain->add_list();
+  
+    // add root to first entry
+    string int_der;
+    if (!x509_to_asn1(x509_int_cert, &int_der)) {
+      printf("%s:%d: %s() Can't convert int cert to der\n", __FILE__, __LINE__, __func__);
+      return false;
+    }
+    ent->mutable_subject_key()->CopyFrom(public_intermediates[i]);
+    ent->mutable_signer_key()->CopyFrom(public_intermediates[i - 1]);
+    ent->set_der_cert(int_der);
+
+    sn++;
   }
 
   // generate final
   key_message private_final_key;
   key_message public_final_key;
 
-  string final_key_name("terminalName");
-  string final_org_name("terminalOrg");
+  key_name = "terminalName";
+  org_name = "terminalOrg";
 
-  if (!generate_key(key_type, final_key_name, &private_final_key)) {
+  if (!generate_key(key_type, key_name, &private_final_key)) {
     printf("%s:%d: %s() generate final key failed\n", __FILE__, __LINE__, __func__);
     return false;
   }
@@ -184,16 +235,16 @@ bool generate_chain(const string& root_key_name,
   }
 
   X509* x509_final_cert = X509_new();
-  if (!produce_artifact(private_root_key,
-                        (string&)root_key_name,
+  if (!produce_artifact(private_intermediates[num_intermediate],
+                        (string&)private_intermediates[num_intermediate].key_name(),
                         (string&)authority_name,
                         public_final_key,
-                        (string&)final_key_name,
-                        (string&)final_org_name,
+                        (string&)key_name,
+                        (string&)org_name,
                         sn,
                         365.0 * 86400,
                         x509_final_cert,
-                        true,
+                        false,
                         false)) {
     printf("%s:%d: %s() Can't produce final cert\n", __FILE__, __LINE__, __func__);
     return false;
@@ -212,7 +263,7 @@ bool generate_chain(const string& root_key_name,
     return false;
   }
   ent->mutable_subject_key()->CopyFrom(public_final_key);
-  ent->mutable_signer_key()->CopyFrom(private_root_key);
+  ent->mutable_signer_key()->CopyFrom(private_intermediates[num_intermediate]);
   ent->set_der_cert(final_der);
 
   return true;
