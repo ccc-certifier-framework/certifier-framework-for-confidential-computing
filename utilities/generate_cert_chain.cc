@@ -23,22 +23,22 @@ DEFINE_bool(print_all, false, "verbose");
 // "generate" or "print" are the other option
 DEFINE_string(operation, "", "generate or print cert chain ");
 
-DEFINE_string(root_key_name, "policyKey", "key name");
-DEFINE_string(key_type, Enc_method_rsa_2048_private, "key type");
+DEFINE_string(root_key_name, "rootKey", "key name");
+DEFINE_string(key_type, "rsa-2048-private", "key type");
 DEFINE_string(authority_name,
               "rootAuthority",
               "root authority name");
 DEFINE_string(output_file,
-              "output.bin",
+              "cert_chain_output.bin",
               "output file");
 DEFINE_int32(num_intermediate, 0, "number of intermediate certs");
 DEFINE_string(input_file,
-              "input.bin",
+              "cert_chain_output.bin",
               "input file");
 
 bool generate_key(const string &type, const string &name, key_message *k) {
 
-  if (type == Enc_method_rsa_1024) {
+  if (type == Enc_method_rsa_1024_private) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(1024, r)) {
       printf("Can't generate rsa key\n");
@@ -49,7 +49,7 @@ bool generate_key(const string &type, const string &name, key_message *k) {
       return false;
     }
     k->set_key_type(Enc_method_rsa_1024_private);
-  } else if (type == Enc_method_rsa_2048) {
+  } else if (type == Enc_method_rsa_2048_private) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(2048, r)) {
       printf("Can't generate rsa key\n");
@@ -60,7 +60,7 @@ bool generate_key(const string &type, const string &name, key_message *k) {
       return false;
     }
     k->set_key_type(Enc_method_rsa_2048_private);
-  } else if (type == Enc_method_rsa_3072) {
+  } else if (type == Enc_method_rsa_3072_private) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(3072, r)) {
       printf("Can't generate rsa key\n");
@@ -82,7 +82,7 @@ bool generate_key(const string &type, const string &name, key_message *k) {
       return false;
     }
     k->set_key_type(Enc_method_rsa_4096_private);
-  } else if (type == Enc_method_ecc_384) {
+  } else if (type == Enc_method_ecc_384_private) {
     EC_KEY *ec = generate_new_ecc_key(384);
     if (ec == nullptr) {
       printf("Can't generate ecc key\n");
@@ -225,13 +225,23 @@ int main(int an, char **av) {
                         FLAGS_authority_name,
                         FLAGS_num_intermediate,
                         &chain)) {
-      printf("%s:%d: %s() failed\n", __FILE__, __LINE__, __func__);
+      printf("%s:%d: %s() generate chain failed\n", __FILE__, __LINE__, __func__);
       return 1;
     }
+
     // serialize and save
+    string serialized_chain;
+    if (!chain.SerializeToString(&serialized_chain)) {
+      printf("%s:%d: %s() chain.SerializeToString failed\n", __FILE__, __LINE__, __func__);
+      return 1;
+    }
+    if (!write_file_from_string(FLAGS_output_file, serialized_chain)) {
+      printf("%s:%d: %s() write_file_from_string failed\n", __FILE__, __LINE__, __func__);
+      return 1;
+    }
     return 0;
   } else {
-    printf("Unknown operation\n");
+    printf("%s:%d: %s() Unknown operation\n", __FILE__, __LINE__, __func__);
     return 1;
   }
 
