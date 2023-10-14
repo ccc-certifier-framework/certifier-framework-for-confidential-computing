@@ -145,8 +145,11 @@ bool generate_chain(const string& root_key_name,
   printf("\n");
 
   full_cert_chain_entry* ent = chain->add_list();
+
   string key_name;
   string org_name;
+  string prev_key_name = root_key_name;;
+  string prev_org_name = authority_name;
 
   // add root to first entry
   string root_der;
@@ -185,8 +188,8 @@ bool generate_chain(const string& root_key_name,
 
     X509* x509_int_cert = X509_new();
     if (!produce_artifact(private_intermediates[i-1],
-			  (string&)private_intermediates[i-1].key_name(),
-			  (string&)authority_name,
+			  prev_key_name,
+			  prev_org_name,
 			  public_intermediates[i],
 			  (string&)key_name,
 			  (string&)org_name,
@@ -216,6 +219,8 @@ bool generate_chain(const string& root_key_name,
     ent->set_der_cert(int_der);
 
     sn++;
+    prev_key_name = key_name;
+    prev_org_name = org_name;
   }
 
   // generate final
@@ -236,8 +241,8 @@ bool generate_chain(const string& root_key_name,
 
   X509* x509_final_cert = X509_new();
   if (!produce_artifact(private_intermediates[num_intermediate],
-                        (string&)private_intermediates[num_intermediate].key_name(),
-                        (string&)authority_name,
+                        prev_key_name,
+                        prev_org_name,
                         public_final_key,
                         (string&)key_name,
                         (string&)org_name,
