@@ -232,7 +232,7 @@ int main(int an, char **av) {
       return 1;
     }
     policy_key.set_certificate((byte *)str_policy_cert.data(),
-                             str_policy_cert.size());
+                               str_policy_cert.size());
     if (!auth_key.ParseFromString(str_auth_key)) {
       printf("Can't parse auth key\n");
       return 1;
@@ -278,6 +278,9 @@ int main(int an, char **av) {
         printf("server failed\n");
         return 1;
       }
+    } else if (FLAGS_test_case == "test2") {
+      printf("test2 not implemented\n");
+      return 1;
     } else {
       printf("Unknown operation\n");
     }
