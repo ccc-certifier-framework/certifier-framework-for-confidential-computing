@@ -2799,7 +2799,7 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     }
     return false;
   }
-#if 1
+
   // Root cert is also peer root cert
   asn1_peer_root_cert_.assign((char *)asn1_root_cert.data(),
                               asn1_root_cert.size());
@@ -2818,7 +2818,6 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     }
     return false;
   }
-#endif
 
   const SSL_METHOD *method = TLS_client_method();
   if (method == nullptr) {
@@ -2834,11 +2833,8 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
 
   X509_STORE *cs = SSL_CTX_get_cert_store(ssl_ctx_);
   asn1_my_cert_ = auth_cert;
-#if 1
-  X509_STORE_add_cert(cs, root_cert_);
-#else
+
   X509_STORE_add_cert(cs, peer_root_cert_);
-#endif
 
   X509 *x509_auth_cert = X509_new();
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
@@ -2968,7 +2964,7 @@ bool certifier::framework::secure_authenticated_channel::
   }
 
 #ifdef BORING_SSL
-  SSL_CTX_add1_chain_cert(ssl_ctx_, root_cert_);
+  SSL_CTX_add1_chain_cert(ssl_ctx_, peer_root_cert_);
 #else
   if (SSL_CTX_use_cert_and_key(ssl_ctx_,
                                x509_auth_key_cert,
@@ -2982,11 +2978,7 @@ bool certifier::framework::secure_authenticated_channel::
     return false;
   }
 
-#  if 1
-  SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
-#  else
   SSL_CTX_add1_to_CA_list(ssl_ctx_, peer_root_cert_);
-#  endif
 
 #  ifdef DEBUG
   const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ssl_ctx_);
@@ -3061,9 +3053,19 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
 
   // set keys and cert
   private_key_.CopyFrom(private_key);
+
   asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
+  asn1_peer_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
+
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
+    printf("%s() error, line %d, Can't translate der to X509\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  peer_root_cert_ = X509_new();
+  if (!asn1_to_x509(asn1_peer_root_cert_, peer_root_cert_)) {
     printf("%s() error, line %d, Can't translate der to X509\n",
            __func__,
            __LINE__);
