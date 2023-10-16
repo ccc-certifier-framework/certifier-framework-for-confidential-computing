@@ -1,3 +1,8 @@
 
 This dir is used to cp'-over files from simple_app/provisioning which are
 needed, later, to run test_certifier_framework.py test cases.
+
+Also, the test cases in test_client_server_mtls.py require setup of
+certificates, keys and so on. All that is done by the setup script,
+../gen_client_server_certs_key_files.sh, which will populate output
+files in this directory.

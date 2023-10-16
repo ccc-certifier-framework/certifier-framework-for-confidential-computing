@@ -151,6 +151,41 @@ jobs:
         popd
 
     #! -------------------------------------------------------------------------
+    - name: test-mtls-ssl-client-server-comm-pytest
+      run: |
+        echo " "
+        echo "**************************************************************"
+        echo " Test Python Client-Server Secure channel communication"
+        echo "**************************************************************"
+        echo " "
+
+        pushd tests
+
+        # Generates required PEM-cert and private-key files for client & server
+        ./gen_client_server_certs_key_files.sh
+
+        cd pytests
+
+        # Exercise client-server communication with self-signed certificates
+        pytest --capture=tee-sys -v test_client_server_mtls.py -k test_server_process_with_mtls_self_signed_cert &
+
+        sleep 5
+
+        pytest --capture=tee-sys -v test_client_server_mtls.py -k test_client_app_with_mtls_self_signed_cert
+
+        # Basic test to exercise core certificate verification v/s root-CA-cert
+        pytest --capture=tee-sys -v test_client_server_mtls.py -k test_verify_certs_versus_root_cert
+
+        # Exercise client-server communication with root-CA-signed certificates
+        pytest --capture=tee-sys -v test_client_server_mtls.py -k test_server_process_with_mtls_root_signed_cert &
+
+        sleep 5
+
+        pytest --capture=tee-sys -v test_client_server_mtls.py -k test_client_app_with_mtls_root_signed_cert
+
+        popd
+
+    #! -------------------------------------------------------------------------
     - name: unit-test-certlib-utility-programs
       run: |
         echo " "

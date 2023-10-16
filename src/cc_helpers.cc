@@ -2844,8 +2844,11 @@ bool certifier::framework::server_dispatch(
   return server_dispatch(
       host_name,
       port,
-      (string &)mgr.serialized_policy_cert_,
-      (key_message &)mgr.private_auth_key_,
+      (string &)mgr.serialized_policy_cert_,  // Policy-certificate / Root cert
+      (key_message &)mgr.private_auth_key_,  // Private key (whose public key is
+                                             // named in the admission cert)
+
+      // Admission cert
       (const string &)mgr.serialized_primary_admissions_cert_,
       func);
 }
