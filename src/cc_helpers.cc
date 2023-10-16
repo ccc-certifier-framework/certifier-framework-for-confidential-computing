@@ -2578,6 +2578,8 @@ certifier::framework::secure_authenticated_channel::
   ssl_ = nullptr;
   sock_ = -1;
   my_cert_ = nullptr;
+  root_cert_ = nullptr;
+  peer_root_cert_ = nullptr;
   peer_cert_ = nullptr;
   num_cert_chain_ = 0;
   cert_chain_ = nullptr;
@@ -2590,25 +2592,36 @@ certifier::framework::secure_authenticated_channel::
   channel_initialized_ = false;
 
   // ? FIXME - Seems to cause a memory leak detected in pytests
-  // delete private_key_
+  // private_key_
 
   if (ssl_ctx_ != nullptr)
     SSL_CTX_free(ssl_ctx_);
   ssl_ctx_ = nullptr;
+
   if (store_ctx_ != nullptr)
     X509_STORE_CTX_free(store_ctx_);
   store_ctx_ = nullptr;
-  // delete?
+
   ssl_ = nullptr;
   if (sock_ > 0)
     ::close(sock_);
   sock_ = -1;
-  // delete?
+
+  if (my_cert_ != nullptr)
+    X509_free(my_cert_);
   my_cert_ = nullptr;
-  // delete?
+
   if (peer_cert_ != nullptr)
     X509_free(peer_cert_);
   peer_cert_ = nullptr;
+
+  if (root_cert_ != nullptr)
+    X509_free(root_cert_);
+  root_cert_ = nullptr;
+  if (peer_root_cert_ != nullptr)
+    X509_free(peer_root_cert_);
+  peer_root_cert_ = nullptr;
+
   peer_id_.clear();
   if (cert_chain_ != nullptr) {
     delete[] cert_chain_;
@@ -2771,6 +2784,7 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   private_key_.CopyFrom(private_key);
 
   asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
+  // asn1_peer_root_cert_
 
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert_, root_cert_)) {
@@ -2785,6 +2799,26 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     }
     return false;
   }
+#if 1
+  // Root cert is also peer root cert
+  asn1_peer_root_cert_.assign((char *)asn1_root_cert.data(),
+                              asn1_root_cert.size());
+
+  peer_root_cert_ = X509_new();
+  if (!asn1_to_x509(asn1_peer_root_cert_, peer_root_cert_)) {
+    printf("%s() error, line %d, init_client_ssl: peer root cert invalid\n",
+           __func__,
+           __LINE__);
+    if (asn1_peer_root_cert_.size() == 0) {
+      printf("root cert empty\n");
+    } else {
+      print_bytes(asn1_peer_root_cert_.size(),
+                  (byte *)asn1_peer_root_cert_.data());
+      printf("\n");
+    }
+    return false;
+  }
+#endif
 
   const SSL_METHOD *method = TLS_client_method();
   if (method == nullptr) {
@@ -2798,9 +2832,13 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     return false;
   }
 
-  asn1_my_cert_ = auth_cert;
   X509_STORE *cs = SSL_CTX_get_cert_store(ssl_ctx_);
+  asn1_my_cert_ = auth_cert;
+#if 1
   X509_STORE_add_cert(cs, root_cert_);
+#else
+  X509_STORE_add_cert(cs, peer_root_cert_);
+#endif
 
   X509 *x509_auth_cert = X509_new();
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
@@ -2907,7 +2945,7 @@ bool certifier::framework::secure_authenticated_channel::
 
   STACK_OF(X509) *stack = sk_X509_new_null();
 #if 0
-  if (sk_X509_push(stack, root_cert_) == 0) {
+  if (sk_X509_push(stack, peer_root_cert_) == 0) {
     printf("load_client_certs_and_key, error 3\n");
     return false;
   }
@@ -2944,7 +2982,11 @@ bool certifier::framework::secure_authenticated_channel::
     return false;
   }
 
+#  if 1
   SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
+#  else
+  SSL_CTX_add1_to_CA_list(ssl_ctx_, peer_root_cert_);
+#  endif
 
 #  ifdef DEBUG
   const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ssl_ctx_);

@@ -381,15 +381,21 @@ class secure_authenticated_channel {
   X509_STORE_CTX *store_ctx_;
   SSL *           ssl_;
   int             sock_;
-  string          asn1_root_cert_;       // root cert for my certificate
-  string          asn1_peer_root_cert_;  // root cert for peer certificate
-  int             num_cert_chain_;
-  string *        cert_chain_;
-  X509 *          root_cert_;
-  X509 *          my_cert_;
-  string          asn1_my_cert_;
-  X509 *          peer_cert_;
-  string          peer_id_;
+
+  string asn1_root_cert_;  // root cert for my certificate
+  X509 * root_cert_;
+
+  string asn1_peer_root_cert_;  // root cert for peer
+  X509 * peer_root_cert_;
+
+  int     num_cert_chain_;
+  string *cert_chain_;
+
+  string asn1_my_cert_;
+  X509 * my_cert_;
+
+  X509 * peer_cert_;
+  string peer_id_;
 
   secure_authenticated_channel(string &role);  // role is client or server
   ~secure_authenticated_channel();
