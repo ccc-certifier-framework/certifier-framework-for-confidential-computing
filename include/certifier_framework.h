@@ -460,6 +460,16 @@ class secure_authenticated_channel {
 bool server_dispatch(const string &host_name,
                      int           port,
                      const string &asn1_root_cert,
+                     const string &asn1_peer_root_cert,
+                     int           num_certs,
+                     string *      cert_chain,
+                     key_message & private_key,
+                     const string &private_key_cert,
+                     void (*func)(secure_authenticated_channel &));
+
+bool server_dispatch(const string &host_name,
+                     int           port,
+                     const string &asn1_root_cert,
                      key_message & private_key,
                      const string &private_key_cert,
                      void (*)(secure_authenticated_channel &));

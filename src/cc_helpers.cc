@@ -2438,6 +2438,221 @@ bool load_server_certs_and_key(X509 *        root_cert,
   return true;
 }
 
+// Loads server side certs and keys.
+bool load_server_certs_and_key(X509 *        peer_root_cert,
+                               X509 *        root_cert,
+                               int           cert_chain_length,
+                               string *      cert_chain,
+                               key_message & private_key,
+                               const string &private_key_cert,
+                               SSL_CTX *     ctx) {
+
+  // load auth key, policy_cert and certificate chain
+  // Todo: Add other key types
+  RSA *r = RSA_new();
+  if (!key_to_RSA(private_key, r)) {
+    printf("%s() error, line %d, key_to_RSA failed\n", __func__, __LINE__);
+    return false;
+  }
+  EVP_PKEY *auth_private_key = EVP_PKEY_new();
+  EVP_PKEY_set1_RSA(auth_private_key, r);
+
+  X509 *x509_auth_key_cert = X509_new();
+  if (!asn1_to_x509(private_key_cert, x509_auth_key_cert)) {
+    printf("%s() error, line %d, asn1_to_x509 failed %d\n",
+           __func__,
+           __LINE__,
+           (int)private_key_cert.size());
+    return false;
+  }
+
+  STACK_OF(X509) *stack = sk_X509_new_null();
+  if (sk_X509_push(stack, root_cert) == 0) {
+    printf("%s() error, line %d, sk_X509_push failed\n", __func__, __LINE__);
+    return false;
+  }
+
+#ifdef BORING_SSL
+  if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
+    printf("%s() error, line %d, use cert failed\n", __func__, __LINE__);
+    return false;
+  }
+  if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
+    printf("%s() error, line %d, use priv key failed\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!SSL_CTX_set1_chain(ctx, stack)) {
+    printf("%s() error, line %d, set1 chain error\n", __func__, __LINE__);
+    return false;
+  }
+#else
+  if (SSL_CTX_use_cert_and_key(ctx,
+                               x509_auth_key_cert,
+                               auth_private_key,
+                               stack,
+                               1)
+      <= 0) {
+    printf("%s() error, line %d, SSL_CTX_use_cert_and_key failed\n",
+           __func__,
+           __LINE__);
+#  ifdef DEBUG
+    printf("cert:\n");
+    X509_print_fp(stdout, x509_auth_key_cert);
+    printf("key:\n");
+    print_key(private_key);
+    printf("\n");
+#  endif
+    return false;
+  }
+#endif
+
+  if (!SSL_CTX_check_private_key(ctx)) {
+    printf("%s() error, line %d, SSL_CTX_check_private_key failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  SSL_CTX_add_client_CA(ctx, root_cert);
+
+#ifdef BORING_SSL
+  SSL_CTX_add1_chain_cert(ctx, root_cert);
+#else
+  SSL_CTX_add1_to_CA_list(ctx, root_cert);
+
+#  ifdef DEBUG
+  const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ctx);
+  printf("CA names to offer\n");
+  if (ca_list != nullptr) {
+    for (int i = 0; i < sk_X509_NAME_num(ca_list); i++) {
+      X509_NAME *name = sk_X509_NAME_value(ca_list, i);
+      print_cn_name(name);
+    }
+  }
+#  endif
+#endif  // BORING_SSL
+
+  return true;
+}
+
+bool certifier::framework::server_dispatch(
+    const string &host_name,
+    int           port,
+    const string &asn1_root_cert,
+    const string &asn1_peer_root_cert,
+    int           num_certs,
+    string *      cert_chain,
+    key_message & private_key,
+    const string &private_key_cert,
+    void (*func)(secure_authenticated_channel &)) {
+
+#ifdef DEBUG
+  printf("\nserver_dispatch\n");
+  printf("ans1_root_cert: ");
+  print_bytes(asn1_root_cert.size(), (byte *)asn1_root_cert.data());
+  printf("\n");
+  printf("private_key_cert: ");
+  print_bytes(private_key_cert.size(), (byte *)private_key_cert.data());
+  printf("\n");
+  printf("private_key: ");
+  print_key(private_key);
+  printf("\n");
+#endif
+
+  OPENSSL_init_ssl(0, NULL);
+  SSL_load_error_strings();
+
+  X509 *root_cert = X509_new();
+  if (!asn1_to_x509(asn1_root_cert, root_cert)) {
+    printf("%s() error, line %d, Can't convert cert\n", __func__, __LINE__);
+    return false;
+  }
+
+  // Get a socket.
+  int sock = -1;
+  if (!open_server_socket(host_name, port, &sock)) {
+    printf("%s() error, line %d, Can't open server socket to %s:%d\n",
+           __func__,
+           __LINE__,
+           host_name.c_str(),
+           port);
+    return false;
+  }
+
+  // Set up TLS handshake data.
+  SSL_METHOD *method = (SSL_METHOD *)TLS_server_method();
+  SSL_CTX *   ctx = SSL_CTX_new(method);
+  if (ctx == NULL) {
+    printf("%s() error, line %d, SSL_CTX_new failed (1)\n", __func__, __LINE__);
+    return false;
+  }
+  X509_STORE *cs = SSL_CTX_get_cert_store(ctx);
+  X509_STORE_add_cert(cs, root_cert);
+
+  X509 *x509_auth_cert = X509_new();
+  if (asn1_to_x509(private_key_cert, x509_auth_cert)) {
+    X509_STORE_add_cert(cs, x509_auth_cert);
+  }
+
+  if (!load_server_certs_and_key(root_cert,
+                                 private_key,
+                                 private_key_cert,
+                                 ctx)) {
+    printf("%s() error, line %d, SSL_CTX_new failed (2)\n", __func__, __LINE__);
+    return false;
+  }
+
+  const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
+  SSL_CTX_set_options(ctx, flags);
+
+#if 0
+  // This is unnecessary usually.
+  if(!isRoot()) {
+    printf("server_dispatch: This program must be run as root/sudo user!!");
+    return false;
+  }
+#endif
+
+  // Verify peer
+  SSL_CTX_set_verify(ctx,
+                     SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+                     nullptr);
+#ifdef DEBUG
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+#endif
+
+  // Testing hook: Allow pytests to invoke with NULL 'func' hdlr.
+  // Close socket before exiting, so we don't have unpredictable
+  // behaviour when tests are run on CI machines.
+  if (!func) {
+    close(sock);
+    return true;
+  }
+
+  while (1) {
+#ifdef DEBUG
+    printf("at accept\n");
+#endif
+    struct sockaddr_in addr;
+    unsigned int       len = sizeof(sockaddr_in);
+    int                client = accept(sock, (struct sockaddr *)&addr, &len);
+    string             my_role("server");
+    secure_authenticated_channel nc(my_role);
+    if (!nc.init_server_ssl(host_name,
+                            port,
+                            asn1_root_cert,
+                            private_key,
+                            private_key_cert)) {
+      continue;
+    }
+    nc.ssl_ = SSL_new(ctx);
+    SSL_set_fd(nc.ssl_, client);
+    nc.sock_ = client;
+    nc.server_channel_accept_and_auth(func);
+  }
+  return true;
+}
+
 bool certifier::framework::server_dispatch(
     const string &host_name,
     int           port,
@@ -2517,9 +2732,8 @@ bool certifier::framework::server_dispatch(
   SSL_CTX_set_verify(ctx,
                      SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
                      nullptr);
-#if 0
-  // Debug
-  //SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+#ifdef DEBUG
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 #endif
 
   // Testing hook: Allow pytests to invoke with NULL 'func' hdlr.
@@ -3055,7 +3269,8 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
   private_key_.CopyFrom(private_key);
 
   asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
-  asn1_peer_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
+  asn1_peer_root_cert_.assign((char *)asn1_root_cert.data(),
+                              asn1_root_cert.size());
 
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert_)) {

@@ -48,13 +48,21 @@ void print_cn_name(X509_NAME *name);
 void print_org_name(X509_NAME *name);
 void print_ssl_error(int code);
 
-// The functions below are used by BORING_SSL
-// Eventually they will be deprecated
-#  if 1
 bool load_server_certs_and_key(X509 *        x509_root_cert,
                                key_message & private_key,
                                const string &private_key_cert,
                                SSL_CTX *     ctx);
+bool load_server_certs_and_key(X509 *        peer_root_cert,
+                               X509 *        root_cert,
+                               int           cert_chain_length,
+                               string *      cert_chain,
+                               key_message & private_key,
+                               const string &private_key_cert,
+                               SSL_CTX *     ctx);
+
+// The functions below are used by BORING_SSL
+// Eventually they will be deprecated
+#  if 1
 bool init_client_ssl(X509 *        x509_root_cert,
                      key_message & private_key,
                      const string &private_key_cert,
