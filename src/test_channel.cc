@@ -49,6 +49,8 @@ DEFINE_string(policy_key_file, "policy_key_file.bin", "policy key file");
 DEFINE_string(auth_key_file, "auth_key_file.bin", "auth key file");
 
 DEFINE_string(test_case, "test1", "test1");
+DEFINE_string(cert_chain1, "cert_chain1.bin", "First certificate chain");
+DEFINE_string(cert_chain2, "cert_chain2.bin", "Second certificate chain");
 
 
 // ----------------------------------------------------------------------------------
@@ -279,6 +281,8 @@ int main(int an, char **av) {
         return 1;
       }
     } else if (FLAGS_test_case == "test2") {
+      // FLAGS_cert_chain1
+      // FLAGS_cert_chain2
       printf("test2 not implemented\n");
       return 1;
     } else {

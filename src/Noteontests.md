@@ -30,15 +30,31 @@ Either change the calls below or rename:
 In one window, type
 
   ./test_channel.exe --data_dir=./test_data/ --operation=server --policy_cert_file=policy_cert_file.bin \
-    --policy_key_file=policy_key_file.bin --auth_key_file=auth_key_file.bin
+    --policy_key_file=policy_key_file.bin --auth_key_file=auth_key_file.bin --test_case=test1
 
 in another
 
   ./test_channel.exe --data_dir=./test_data/ --operation=client --policy_cert_file=policy_cert_file.bin \
-    --policy_key_file=policy_key_file.bin --auth_key_file=auth_key_file.bin
+    --policy_key_file=policy_key_file.bin --auth_key_file=auth_key_file.bin --test_case=test1
 
 You should see the familiar "Hi from your secret client" and "Hi from your secret server."
 Using the support tested, you no longer need to understand TLS and talking to a "trusted"
 enclave involves only a couple of initialization calls.
 
+For independent cert chains, after generating the chains with the generate_cert_chain utility
+
+
+In one window, type
+
+  ./test_channel.exe --data_dir=./test_data/ --operation=server --test_case=test2 \\
+    --cert_chain1=cert_chain1.bin --cert_chain2=cert_chain2.bin
+
+in another
+
+  ./test_channel.exe --data_dir=./test_data/ --operation=client --test_case=test2 \\
+    --cert_chain1=cert_chain1.bin --cert_chain2=cert_chain2.bin
+
+Again, you should see the familiar "Hi from your secret client" and "Hi from your secret server."
+Using the support tested, you no longer need to understand TLS and talking to a "trusted"
+enclave involves only a couple of initialization calls.
 
