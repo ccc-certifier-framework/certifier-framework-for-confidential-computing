@@ -43,16 +43,19 @@ enclave involves only a couple of initialization calls.
 
 For independent cert chains, after generating the chains with the generate_cert_chain utility
 
+  ../utilities/generate_cert_chain.exe --operation=generate --output_file="test_data/cert_chain1.bin"
+  ../utilities/generate_cert_chain.exe --operation=generate --output_file="test_data/cert_chain2.bin"
+
 
 In one window, type
 
-  ./test_channel.exe --data_dir=./test_data/ --operation=server --test_case=test2 \\
-    --cert_chain1=cert_chain1.bin --cert_chain2=cert_chain2.bin
+  ./test_channel.exe --data_dir=./test_data/ --operation=server --test_case=test2 \
+    --cert_chain1=test_data/cert_chain1.bin --cert_chain2=test_data/cert_chain2.bin
 
 in another
 
-  ./test_channel.exe --data_dir=./test_data/ --operation=client --test_case=test2 \\
-    --cert_chain1=cert_chain1.bin --cert_chain2=cert_chain2.bin
+  ./test_channel.exe --data_dir=./test_data/ --operation=client --test_case=test2 \
+    --cert_chain1=test_data/cert_chain1.bin --cert_chain2=test_data/cert_chain2.bin
 
 Again, you should see the familiar "Hi from your secret client" and "Hi from your secret server."
 Using the support tested, you no longer need to understand TLS and talking to a "trusted"

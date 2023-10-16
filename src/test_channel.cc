@@ -125,8 +125,8 @@ bool run_me_as_client(const string &host_name,
 }
 
 bool make_admissions_cert(const string &role,
-                          key_message & policy_key,
-                          key_message & auth_key,
+                          const key_message & policy_key,
+                          const key_message & auth_key,
                           string *      out) {
   string issuer_name("policyAuthority");
   string issuer_organization("root");
@@ -134,10 +134,10 @@ bool make_admissions_cert(const string &role,
   string subject_organization("1234567890");
 
   X509 *x509_cert = X509_new();
-  if (!produce_artifact(policy_key,
+  if (!produce_artifact((key_message&)policy_key,
                         issuer_name,
                         issuer_organization,
-                        auth_key,
+                        (key_message&)auth_key,
                         subject_name,
                         subject_organization,
                         23,
@@ -169,7 +169,6 @@ int main(int an, char **av) {
   }
 
   SSL_library_init();
-
 
   if (FLAGS_test_case == "test1") {
     // read in policy key and my key
@@ -280,14 +279,91 @@ int main(int an, char **av) {
         printf("server failed\n");
         return 1;
       }
-    } else if (FLAGS_test_case == "test2") {
-      // FLAGS_cert_chain1
-      // FLAGS_cert_chain2
+    } else {
+      printf("unknown operation\n");
+      return 1;
+    }
+  } else if (FLAGS_test_case == "test2") {
+      full_cert_chain chain1;
+      full_cert_chain chain2;
+
+      string str_chain1;
+      string str_chain2;
+
+      if (!read_file_into_string(FLAGS_cert_chain1, &str_chain1)) {
+        printf("Can't read %s\n", FLAGS_cert_chain1.c_str());
+        return 1;
+      }
+
+      if (!read_file_into_string(FLAGS_cert_chain2, &str_chain2)) {
+        printf("Can't read %s\n", FLAGS_cert_chain2.c_str());
+        return 1;
+      }
+
+      if (!chain1.ParseFromString(str_chain1)) {
+        printf("Can't parse chain 1\n");
+        return 1;
+      }
+      if (!chain2.ParseFromString(str_chain2)) {
+        printf("Can't parse chain 2\n");
+        return 1;
+      }
+
+      // subject_key, signer_key, der_cert
+      const key_message& client_root_key = chain1.list(0).signer_key();
+      const key_message& server_root_key = chain2.list(0).signer_key();
+      const key_message& client_auth_key = chain1.list(1).subject_key();
+      const key_message& server_auth_key = chain2.list(1).subject_key();
+
+      // make admissions certs
+      string cl_str("client");
+      string client_auth_cert;
+      if (!make_admissions_cert(cl_str,
+                                client_root_key,
+                                client_auth_key,
+                                &client_auth_cert)) {
+        printf("Can't make admissions cert\n");
+        return 1;
+      }
+      ((key_message&)client_auth_key).set_certificate(client_auth_cert);
+      string s_str("server");
+      string server_auth_cert;
+      if (!make_admissions_cert(s_str,
+                                server_root_key,
+                                server_auth_key,
+                                &server_auth_cert)) {
+        printf("Can't make admissions cert\n");
+        return 1;
+      }
+      ((key_message&)server_auth_key).set_certificate(server_auth_cert);
+
       printf("test2 not implemented\n");
       return 1;
-    } else {
-      printf("Unknown operation\n");
-    }
+
+#if 0
+
+      if (FLAGS_operation == "client") {
+        if (!run_me_as_client(FLAGS_app_host.c_str(),
+                              FLAGS_app_port,
+                              str_policy_cert,
+                              auth_key,
+                              auth_cert)) {
+          printf("run-me-as-client failed\n");
+          return 1;
+        }
+      } else if (FLAGS_operation == "server") {
+        if (!run_me_as_server(FLAGS_app_host.c_str(),
+                              FLAGS_app_port,
+                              str_policy_cert,
+                              auth_key,
+                              auth_cert)) {
+          printf("server failed\n");
+          return 1;
+        }
+      } else {
+        printf("Unknown operation\n");
+      }
+#endif
   } else {
     printf("Unknown test case\n");
   }
