@@ -48,6 +48,8 @@ DEFINE_string(policy_cert_file, "policy_cert_file.bin", "policy cert file");
 DEFINE_string(policy_key_file, "policy_key_file.bin", "policy key file");
 DEFINE_string(auth_key_file, "auth_key_file.bin", "auth key file");
 
+DEFINE_string(test_case, "test1", "test1");
+
 
 // ----------------------------------------------------------------------------------
 
@@ -166,116 +168,121 @@ int main(int an, char **av) {
 
   SSL_library_init();
 
-  // read in policy key and my key
-  key_message policy_key;
-  key_message auth_key;
-  X509 *      policy_cert = nullptr;
 
-  string policy_cert_file(FLAGS_data_dir);
-  policy_cert_file.append(FLAGS_policy_cert_file);
-  int sz = file_size(policy_cert_file);
-  if (sz < 0) {
-    printf("Can't find policy cert\n");
-    return 1;
-  }
-  byte policy_cert_buf[sz];
-  if (!read_file(policy_cert_file, &sz, policy_cert_buf)) {
-    printf("Can't read policy cert\n");
-    return 1;
-  }
-  string str_policy_cert;
-  str_policy_cert.assign((char *)policy_cert_buf, sz);
+  if (FLAGS_test_case == "test1") {
+    // read in policy key and my key
+    key_message policy_key;
+    key_message auth_key;
+    X509 *      policy_cert = nullptr;
 
-  // policy_key_file
-  string policy_key_file(FLAGS_data_dir);
-  policy_key_file.append(FLAGS_policy_key_file);
-  sz = file_size(policy_key_file);
-  if (sz < 0) {
-    printf("Can't find policy key %s\n", policy_key_file.c_str());
-    return 1;
-  }
-  byte policy_key_buf[sz];
-  if (!read_file(policy_key_file, &sz, policy_key_buf)) {
-    printf("Can't read policy key %s\n", policy_key_file.c_str());
-    return 1;
-  }
-  string str_policy_key;
-  str_policy_key.assign((char *)policy_key_buf, sz);
+    string policy_cert_file(FLAGS_data_dir);
+    policy_cert_file.append(FLAGS_policy_cert_file);
+    int sz = file_size(policy_cert_file);
+    if (sz < 0) {
+      printf("Can't find policy cert\n");
+      return 1;
+    }
+    byte policy_cert_buf[sz];
+    if (!read_file(policy_cert_file, &sz, policy_cert_buf)) {
+      printf("Can't read policy cert\n");
+      return 1;
+    }
+    string str_policy_cert;
+    str_policy_cert.assign((char *)policy_cert_buf, sz);
 
-  // auth_key_file
-  string auth_key_file(FLAGS_data_dir);
-  auth_key_file.append(FLAGS_auth_key_file);
-  sz = file_size(auth_key_file);
-  if (sz < 0) {
-    printf("Can't find auth key\n");
-    return 1;
-  }
-  byte auth_key_buf[sz];
-  if (!read_file(auth_key_file, &sz, auth_key_buf)) {
-    printf("Can't read auth key\n");
-    return 1;
-  }
-  string str_auth_key;
-  str_auth_key.assign((char *)auth_key_buf, sz);
+    // policy_key_file
+    string policy_key_file(FLAGS_data_dir);
+    policy_key_file.append(FLAGS_policy_key_file);
+    sz = file_size(policy_key_file);
+    if (sz < 0) {
+      printf("Can't find policy key %s\n", policy_key_file.c_str());
+      return 1;
+    }
+    byte policy_key_buf[sz];
+    if (!read_file(policy_key_file, &sz, policy_key_buf)) {
+      printf("Can't read policy key %s\n", policy_key_file.c_str());
+      return 1;
+    }
+    string str_policy_key;
+    str_policy_key.assign((char *)policy_key_buf, sz);
 
-  policy_cert = X509_new();
-  if (!asn1_to_x509(str_policy_cert, policy_cert)) {
-    printf("Can't translate cert\n");
-    return 1;
-  }
-  if (!policy_key.ParseFromString(str_policy_key)) {
-    printf("Can't parse policy key\n");
-    return 1;
-  }
-  policy_key.set_certificate((byte *)str_policy_cert.data(),
+    // auth_key_file
+    string auth_key_file(FLAGS_data_dir);
+    auth_key_file.append(FLAGS_auth_key_file);
+    sz = file_size(auth_key_file);
+    if (sz < 0) {
+      printf("Can't find auth key\n");
+      return 1;
+    }
+    byte auth_key_buf[sz];
+    if (!read_file(auth_key_file, &sz, auth_key_buf)) {
+      printf("Can't read auth key\n");
+      return 1;
+    }
+    string str_auth_key;
+    str_auth_key.assign((char *)auth_key_buf, sz);
+
+    policy_cert = X509_new();
+    if (!asn1_to_x509(str_policy_cert, policy_cert)) {
+      printf("Can't translate cert\n");
+      return 1;
+    }
+    if (!policy_key.ParseFromString(str_policy_key)) {
+      printf("Can't parse policy key\n");
+      return 1;
+    }
+    policy_key.set_certificate((byte *)str_policy_cert.data(),
                              str_policy_cert.size());
-  if (!auth_key.ParseFromString(str_auth_key)) {
-    printf("Can't parse auth key\n");
-    return 1;
-  }
+    if (!auth_key.ParseFromString(str_auth_key)) {
+      printf("Can't parse auth key\n");
+      return 1;
+    }
 
-  // make admissions cert
-  string auth_cert;
-  if (!make_admissions_cert(FLAGS_operation,
-                            policy_key,
-                            auth_key,
-                            &auth_cert)) {
-    printf("Can't make admissions cert\n");
-    return 1;
-  }
-  auth_key.set_certificate(auth_cert);
+    // make admissions cert
+    string auth_cert;
+    if (!make_admissions_cert(FLAGS_operation,
+                              policy_key,
+                              auth_key,
+                              &auth_cert)) {
+      printf("Can't make admissions cert\n");
+      return 1;
+    }
+    auth_key.set_certificate(auth_cert);
 
 #ifdef DEBUG
-  X509 *x509_auth_cert = X509_new();
-  asn1_to_x509(auth_cert, x509_auth_cert);
-  printf("\npolicy cert:\n");
-  X509_print_fp(stdout, policy_cert);
-  printf("\nAdmissions cert:\n");
-  X509_print_fp(stdout, x509_auth_cert);
-  printf("\nPolicy key::\n");
-  print_key(policy_key);
+    X509 *x509_auth_cert = X509_new();
+    asn1_to_x509(auth_cert, x509_auth_cert);
+    printf("\npolicy cert:\n");
+    X509_print_fp(stdout, policy_cert);
+    printf("\nAdmissions cert:\n");
+    X509_print_fp(stdout, x509_auth_cert);
+    printf("\nPolicy key::\n");
+    print_key(policy_key);
 #endif
 
-  if (FLAGS_operation == "client") {
-    if (!run_me_as_client(FLAGS_app_host.c_str(),
-                          FLAGS_app_port,
-                          str_policy_cert,
-                          auth_key,
-                          auth_cert)) {
-      printf("run-me-as-client failed\n");
-      return 1;
-    }
-  } else if (FLAGS_operation == "server") {
-    if (!run_me_as_server(FLAGS_app_host.c_str(),
-                          FLAGS_app_port,
-                          str_policy_cert,
-                          auth_key,
-                          auth_cert)) {
-      printf("server failed\n");
-      return 1;
+    if (FLAGS_operation == "client") {
+      if (!run_me_as_client(FLAGS_app_host.c_str(),
+                            FLAGS_app_port,
+                            str_policy_cert,
+                            auth_key,
+                            auth_cert)) {
+        printf("run-me-as-client failed\n");
+        return 1;
+      }
+    } else if (FLAGS_operation == "server") {
+      if (!run_me_as_server(FLAGS_app_host.c_str(),
+                            FLAGS_app_port,
+                            str_policy_cert,
+                            auth_key,
+                            auth_cert)) {
+        printf("server failed\n");
+        return 1;
+      }
+    } else {
+      printf("Unknown operation\n");
     }
   } else {
-    printf("Unknown operation\n");
+    printf("Unknown test case\n");
   }
 
   return 0;

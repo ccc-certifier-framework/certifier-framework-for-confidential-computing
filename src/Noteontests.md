@@ -29,12 +29,12 @@ Either change the calls below or rename:
 
 In one window, type
 
-  ./test_channel.exe --data_dir=./test_dir/ --operation=server --policy_cert_file=policy_cert_file.bin \
+  ./test_channel.exe --data_dir=./test_data/ --operation=server --policy_cert_file=policy_cert_file.bin \
     --policy_key_file=policy_key_file.bin --auth_key_file=auth_key_file.bin
 
 in another
 
-  ./test_channel.exe --data_dir=./test_dir/ --operation=client --policy_cert_file=policy_cert_file.bin \
+  ./test_channel.exe --data_dir=./test_data/ --operation=client --policy_cert_file=policy_cert_file.bin \
     --policy_key_file=policy_key_file.bin --auth_key_file=auth_key_file.bin
 
 You should see the familiar "Hi from your secret client" and "Hi from your secret server."
