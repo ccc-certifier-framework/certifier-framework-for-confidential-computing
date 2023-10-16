@@ -2567,6 +2567,11 @@ bool certifier::framework::server_dispatch(
     printf("%s() error, line %d, Can't convert cert\n", __func__, __LINE__);
     return false;
   }
+  X509 *peer_root_cert = X509_new();
+  if (!asn1_to_x509(asn1_peer_root_cert, peer_root_cert)) {
+    printf("%s() error, line %d, Can't convert cert\n", __func__, __LINE__);
+    return false;
+  }
 
   // Get a socket.
   int sock = -1;
@@ -2587,7 +2592,7 @@ bool certifier::framework::server_dispatch(
     return false;
   }
   X509_STORE *cs = SSL_CTX_get_cert_store(ctx);
-  X509_STORE_add_cert(cs, root_cert);
+  X509_STORE_add_cert(cs, peer_root_cert);
 
   X509 *x509_auth_cert = X509_new();
   if (asn1_to_x509(private_key_cert, x509_auth_cert)) {
@@ -2595,6 +2600,9 @@ bool certifier::framework::server_dispatch(
   }
 
   if (!load_server_certs_and_key(root_cert,
+                                 peer_root_cert,
+                                 num_certs,
+                                 cert_chain,
                                  private_key,
                                  private_key_cert,
                                  ctx)) {
@@ -2641,6 +2649,9 @@ bool certifier::framework::server_dispatch(
     if (!nc.init_server_ssl(host_name,
                             port,
                             asn1_root_cert,
+                            asn1_peer_root_cert,
+                            num_certs,
+                            cert_chain,
                             private_key,
                             private_key_cert)) {
       continue;
