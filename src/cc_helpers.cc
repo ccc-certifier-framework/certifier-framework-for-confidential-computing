@@ -2447,6 +2447,8 @@ bool load_server_certs_and_key(X509 *        root_cert,
                                const string &private_key_cert,
                                SSL_CTX *     ctx) {
 
+  private_key.set_certificate(private_key_cert);  // new
+
   // load auth key, policy_cert and certificate chain
   // Todo: Add other key types
   RSA *r = RSA_new();
@@ -2474,6 +2476,14 @@ bool load_server_certs_and_key(X509 *        root_cert,
 
   SSL_CTX_add_client_CA(ctx, peer_root_cert);
   SSL_CTX_add1_chain_cert(ctx, peer_root_cert);
+
+#if 1
+  printf("load_server_certs_and_key, peer_root_cert:\n");
+  X509_print_fp(stdout, peer_root_cert);
+  printf("\nload_server_certs_and_key, auth cert:\n");
+  X509_print_fp(stdout, x509_auth_key_cert);
+  printf("\n");
+#endif
 
 #ifdef BORING_SSL
   if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
@@ -2527,7 +2537,6 @@ bool load_server_certs_and_key(X509 *        root_cert,
     }
   }
 #endif
-#endif  // BORING_SSL
 
   return true;
 }
@@ -2547,6 +2556,9 @@ bool certifier::framework::server_dispatch(
   printf("\nserver_dispatch\n");
   printf("ans1_root_cert: ");
   print_bytes(asn1_root_cert.size(), (byte *)asn1_root_cert.data());
+  printf("\n");
+  printf("ans1_peer_root_cert: ");
+  print_bytes(asn1_peer_root_cert.size(), (byte *)asn1_peer_root_cert.data());
   printf("\n");
   printf("private_key_cert: ");
   print_bytes(private_key_cert.size(), (byte *)private_key_cert.data());
@@ -2871,9 +2883,11 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   asn1_peer_root_cert_.assign((char *)peer_asn1_root_cert.data(),
                               peer_asn1_root_cert.size());
 
+  private_key_.set_certificate(auth_cert);  // NEW
+
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert_, root_cert_)) {
-    printf("%s() error, line %d, init_client_ssl: root cert invalid\n",
+    printf("%s() error, line %d, init_client_ssl: root invalid\n",
            __func__,
            __LINE__);
     if (asn1_root_cert_.size() == 0) {
@@ -2887,17 +2901,23 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
 
   peer_root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_peer_root_cert_, peer_root_cert_)) {
-    printf("%s() error, line %d, init_client_ssl: root cert invalid\n",
+    printf("%s() error, line %d, init_client_ssl: peer root cert invalid\n",
            __func__,
            __LINE__);
     if (asn1_peer_root_cert_.size() == 0) {
-      printf("root cert empty\n");
+      printf("peer root cert empty\n");
     } else {
       print_bytes(asn1_peer_root_cert_.size(),
                   (byte *)asn1_peer_root_cert_.data());
       printf("\n");
     }
     return false;
+  }
+
+  num_cert_chain_ = cert_chain_length;
+  cert_chain_ = new string[cert_chain_length];
+  for (int i = 0; i < cert_chain_length; i++) {
+    cert_chain_[i] = der_certs[i];
   }
 
   const SSL_METHOD *method = TLS_client_method();
@@ -2920,6 +2940,14 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
     X509_STORE_add_cert(cs, x509_auth_cert);
   }
+
+#if 1
+  printf("init_client_ssl, peer root cert:\n");
+  X509_print_fp(stdout, peer_root_cert_);
+  printf("init_client_ssl, auth cert:\n");
+  X509_print_fp(stdout, x509_auth_cert);
+  printf("\n");
+#endif
 
   // For debugging: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
   SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER, nullptr);
@@ -3008,6 +3036,12 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
            __func__,
            __LINE__);
     return false;
+  }
+
+  num_cert_chain_ = cert_chain_length;
+  cert_chain_ = new string[cert_chain_length];
+  for (int i = 0; i < cert_chain_length; i++) {
+    cert_chain_[i] = der_certs[i];
   }
   return true;
 }
@@ -3248,7 +3282,10 @@ void certifier::framework::secure_authenticated_channel::
            __LINE__,
            res);
     unsigned long code = ERR_get_error();
-    printf("Accept error: %s\n", ERR_lib_error_string(code));
+    printf("Accept error(%x, %d): %s\n",
+           code,
+           code & 0xffffff,
+           ERR_lib_error_string(code));
     print_ssl_error(SSL_get_error(ssl_, res));
     if (ssl_ != nullptr) {
       SSL_free(ssl_);

@@ -153,7 +153,6 @@ bool generate_chain(const string &   root_key_name,
   string key_name;
   string org_name;
   string prev_key_name = root_key_name;
-  ;
   string prev_org_name = authority_name;
 
   // add root to first entry
@@ -165,6 +164,7 @@ bool generate_chain(const string &   root_key_name,
            __func__);
     return false;
   }
+  private_root_key.set_certificate(root_der);  // NEW
   ent->mutable_subject_key()->CopyFrom(public_root_key);
   ent->mutable_signer_key()->CopyFrom(private_root_key);
   ent->set_der_cert(root_der);
@@ -240,6 +240,7 @@ bool generate_chain(const string &   root_key_name,
     }
     ent->mutable_subject_key()->CopyFrom(public_intermediates[i]);
     ent->mutable_signer_key()->CopyFrom(public_intermediates[i - 1]);
+    ent->mutable_subject_key()->set_certificate(int_der);
     ent->set_der_cert(int_der);
 
     sn++;
@@ -306,6 +307,7 @@ bool generate_chain(const string &   root_key_name,
   ent->mutable_subject_key()->CopyFrom(public_final_key);
   ent->mutable_signer_key()->CopyFrom(private_intermediates[num_intermediate]);
   ent->set_der_cert(final_der);
+  ent->mutable_subject_key()->set_certificate(final_der);
 
   return true;
 }
