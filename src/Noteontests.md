@@ -41,10 +41,10 @@ You should see the familiar "Hi from your secret client" and "Hi from your secre
 Using the support tested, you no longer need to understand TLS and talking to a "trusted"
 enclave involves only a couple of initialization calls.
 
-For independent cert chains, after generating the chains with the generate_cert_chain utility
+oor independent cert chains, after generating the chains with the generate_cert_chain utility
 
-  ../utilities/generate_cert_chain.exe --operation=generate --output_file="test_data/cert_chain1.bin"
-  ../utilities/generate_cert_chain.exe --operation=generate --output_file="test_data/cert_chain2.bin"
+  ../utilities/generate_cert_chain.exe --operation=generate --root_key_name=clientRootKey --authority_name=clientRootAuthority --output_file="test_data/cert_chain1.bin"
+  ../utilities/generate_cert_chain.exe --operation=generate --root_key_name=serverRootKey --authority_name=serverRootAuthority --output_file="test_data/cert_chain2.bin"
 
 
 In one window, type

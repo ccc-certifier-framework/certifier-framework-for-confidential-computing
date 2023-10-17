@@ -29,6 +29,7 @@ DEFINE_string(authority_name, "rootAuthority", "root authority name");
 DEFINE_string(output_file, "cert_chain_output.bin", "output file");
 DEFINE_int32(num_intermediate, 0, "number of intermediate certs");
 DEFINE_string(input_file, "cert_chain_output.bin", "input file");
+DEFINE_string(role, "client", "client/server");
 
 bool generate_key(const string &type, const string &name, key_message *k) {
 
