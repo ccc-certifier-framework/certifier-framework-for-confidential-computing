@@ -171,20 +171,6 @@ bool gramine_attest_impl(const int what_to_say_size,
   memcpy(attestation_out, quote, bytes);
   *attestation_size_out = bytes;
 
-  GramineSgxAttributes attributes;
-  if (!gramine_get_attributes_from_quote(attestation_out, &attributes)) {
-    printf("Failed to parse SGX attributes\n");
-  } else {
-    printf("GramineSgxAttributes:\n");
-    printf("\tqe_svn = 0x%x\n", attributes.qe_svn);
-    printf("\tpce_svn = 0x%x\n", attributes.pce_svn);
-    printf("\tcpu_svn = 0x");
-    gramine_print_bytes(SGX_CPUSVN_SIZE, attributes.cpu_svn);
-    printf("\n");
-    printf("\tdebug = %s\n", attributes.debug ? "Yes" : "No");
-    printf("\tmode64bit = %s\n", attributes.mode64bit ? "Yes" : "No");
-  }
-
 #ifdef DEBUG
   printf("Gramine Attest done\n");
 #endif
