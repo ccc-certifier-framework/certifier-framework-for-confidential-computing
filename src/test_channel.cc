@@ -364,7 +364,13 @@ int main(int an, char **av) {
     }
 
     // There should only be two
-    if (chain1.list_size()) {
+    if (chain1.list_size() != 2) {
+      printf("Invalid client chain size\n");
+      return 1;
+    }
+    if (chain2.list_size() != 2) {
+      printf("Invalid server chain size\n");
+      return 1;
     }
 
     // subject_key, signer_key, der_cert
@@ -378,42 +384,17 @@ int main(int an, char **av) {
     string             server_root_cert;
     string             server_auth_cert;
 
-#if 0
-    // make admissions certs: not needed
-    string cl_str("client");
-    string client_auth_cert;
-    if (!make_admissions_cert(cl_str,
-                              client_root_key,
-                              client_auth_key,
-                              &client_auth_cert)) {
-      printf("Can't make admissions cert\n");
-      return 1;
-    }
-    string s_str("server");
-    string server_auth_cert;
-    if (!make_admissions_cert(s_str,
-                              server_root_key,
-                              server_auth_key,
-                              &server_auth_cert)) {
-      printf("Can't make admissions cert\n");
-      return 1;
-    }
-#endif
-
     client_root_cert.assign((char *)chain1.list(0).der_cert().data(),
                             chain1.list(0).der_cert().size());
-    server_root_cert.assign((char *)chain2.list(0).der_cert().data(),
-                            chain2.list(0).der_cert().size());
     client_auth_cert.assign((char *)chain1.list(1).der_cert().data(),
                             chain1.list(1).der_cert().size());
+    server_root_cert.assign((char *)chain2.list(0).der_cert().data(),
+                            chain2.list(0).der_cert().size());
     server_auth_cert.assign((char *)chain2.list(1).der_cert().data(),
                             chain2.list(1).der_cert().size());
     ((key_message &)client_auth_key).set_certificate(client_auth_cert);
     ((key_message &)server_auth_key).set_certificate(server_auth_cert);
 
-#if 1
-    string asn1_root_cert;
-    string asn1_peer_root_cert;
     int    cert_chain_length = 0;
     string der_certs[4];
 
@@ -445,10 +426,6 @@ int main(int an, char **av) {
       printf("Unknown operation\n");
       return 1;
     }
-#else
-    printf("test2 case not implemented yet\n");
-    return 1;
-#endif
   } else {
     printf("Unknown test case\n");
   }

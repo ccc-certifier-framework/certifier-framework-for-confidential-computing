@@ -2472,6 +2472,9 @@ bool load_server_certs_and_key(X509 *        root_cert,
     return false;
   }
 
+  SSL_CTX_add_client_CA(ctx, peer_root_cert);
+  SSL_CTX_add1_chain_cert(ctx, peer_root_cert);
+
 #ifdef BORING_SSL
   if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
     printf("%s() error, line %d, use cert failed\n", __func__, __LINE__);
@@ -2513,14 +2516,8 @@ bool load_server_certs_and_key(X509 *        root_cert,
            __LINE__);
     return false;
   }
-  SSL_CTX_add_client_CA(ctx, peer_root_cert);
 
-#ifdef BORING_SSL
-  SSL_CTX_add1_chain_cert(ctx, peer_root_cert);
-#else
-  SSL_CTX_add1_to_CA_list(ctx, peer_root_cert);
-
-#  ifdef DEBUG
+#ifdef DEBUG
   const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ctx);
   printf("CA names to offer\n");
   if (ca_list != nullptr) {
@@ -2529,7 +2526,7 @@ bool load_server_certs_and_key(X509 *        root_cert,
       print_cn_name(name);
     }
   }
-#  endif
+#endif
 #endif  // BORING_SSL
 
   return true;
