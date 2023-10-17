@@ -71,6 +71,74 @@ void server_application(secure_authenticated_channel &channel) {
   channel.write(strlen(msg), (byte *)msg);
 }
 
+void client_application(secure_authenticated_channel &channel) {
+
+  printf("Client peer id is %s\n", channel.peer_id_.c_str());
+
+  // client sends a message over authenticated, encrypted channel
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
+
+  // Get server response over authenticated, encrypted channel and print it
+  string out;
+  int    n = channel.read(&out);
+  printf("SSL client read: %s\n", out.data());
+}
+
+bool run_me_as_server(const string &host_name,
+                      int           port,
+                      const string &asn1_root_cert,
+                      const string &asn1_peer_root_cert,
+                      int           num_certs,
+                      string *      cert_chain,
+                      key_message & private_key,
+                      string &      private_key_cert) {
+
+  printf("running as server\n");
+
+  server_dispatch(host_name,
+                  port,
+                  asn1_root_cert,
+                  asn1_peer_root_cert,
+                  num_certs,
+                  cert_chain,
+                  private_key,
+                  private_key_cert,
+                  server_application);
+
+  return true;
+}
+
+bool run_me_as_client(const string &host_name,
+                      int           port,
+                      const string &asn1_root_cert,
+                      const string &peer_asn1_root_cert,
+                      int           cert_chain_length,
+                      string *      der_certs,
+                      key_message & private_key,
+                      const string &auth_cert) {
+
+  printf("running as client\n");
+  string                       my_role("client");
+  secure_authenticated_channel channel(my_role);
+  if (!channel.init_client_ssl(host_name,
+                               port,
+                               asn1_root_cert,
+                               peer_asn1_root_cert,
+                               cert_chain_length,
+                               der_certs,
+                               private_key,
+                               auth_cert)) {
+    printf("Can't init client app\n");
+    return false;
+  }
+
+  // This is the actual application code.
+  client_application(channel);
+  return true;
+}
+
+
 bool run_me_as_server(const string &host_name,
                       int           port,
                       string &      asn1_policy_cert,
@@ -85,20 +153,6 @@ bool run_me_as_server(const string &host_name,
                   private_key_cert,
                   server_application);
   return true;
-}
-
-void client_application(secure_authenticated_channel &channel) {
-
-  printf("Client peer id is %s\n", channel.peer_id_.c_str());
-
-  // client sends a message over authenticated, encrypted channel
-  const char *msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte *)msg);
-
-  // Get server response over authenticated, encrypted channel and print it
-  string out;
-  int    n = channel.read(&out);
-  printf("SSL client read: %s\n", out.data());
 }
 
 bool run_me_as_client(const string &host_name,
@@ -124,20 +178,20 @@ bool run_me_as_client(const string &host_name,
   return true;
 }
 
-bool make_admissions_cert(const string &role,
-                          const key_message & policy_key,
-                          const key_message & auth_key,
-                          string *      out) {
+bool make_admissions_cert(const string &     role,
+                          const key_message &policy_key,
+                          const key_message &auth_key,
+                          string *           out) {
   string issuer_name("policyAuthority");
   string issuer_organization("root");
   string subject_name(role);
   string subject_organization("1234567890");
 
   X509 *x509_cert = X509_new();
-  if (!produce_artifact((key_message&)policy_key,
+  if (!produce_artifact((key_message &)policy_key,
                         issuer_name,
                         issuer_organization,
-                        (key_message&)auth_key,
+                        (key_message &)auth_key,
                         subject_name,
                         subject_organization,
                         23,
@@ -284,85 +338,96 @@ int main(int an, char **av) {
       return 1;
     }
   } else if (FLAGS_test_case == "test2") {
-      full_cert_chain chain1;
-      full_cert_chain chain2;
+    full_cert_chain chain1;
+    full_cert_chain chain2;
 
-      string str_chain1;
-      string str_chain2;
+    string str_chain1;
+    string str_chain2;
 
-      if (!read_file_into_string(FLAGS_cert_chain1, &str_chain1)) {
-        printf("Can't read %s\n", FLAGS_cert_chain1.c_str());
-        return 1;
-      }
-
-      if (!read_file_into_string(FLAGS_cert_chain2, &str_chain2)) {
-        printf("Can't read %s\n", FLAGS_cert_chain2.c_str());
-        return 1;
-      }
-
-      if (!chain1.ParseFromString(str_chain1)) {
-        printf("Can't parse chain 1\n");
-        return 1;
-      }
-      if (!chain2.ParseFromString(str_chain2)) {
-        printf("Can't parse chain 2\n");
-        return 1;
-      }
-
-      // subject_key, signer_key, der_cert
-      const key_message& client_root_key = chain1.list(0).signer_key();
-      const key_message& server_root_key = chain2.list(0).signer_key();
-      const key_message& client_auth_key = chain1.list(1).subject_key();
-      const key_message& server_auth_key = chain2.list(1).subject_key();
-
-      // make admissions certs
-      string cl_str("client");
-      string client_auth_cert;
-      if (!make_admissions_cert(cl_str,
-                                client_root_key,
-                                client_auth_key,
-                                &client_auth_cert)) {
-        printf("Can't make admissions cert\n");
-        return 1;
-      }
-      ((key_message&)client_auth_key).set_certificate(client_auth_cert);
-      string s_str("server");
-      string server_auth_cert;
-      if (!make_admissions_cert(s_str,
-                                server_root_key,
-                                server_auth_key,
-                                &server_auth_cert)) {
-        printf("Can't make admissions cert\n");
-        return 1;
-      }
-      ((key_message&)server_auth_key).set_certificate(server_auth_cert);
-
-      printf("test2 not implemented\n");
+    if (!read_file_into_string(FLAGS_cert_chain1, &str_chain1)) {
+      printf("Can't read %s\n", FLAGS_cert_chain1.c_str());
       return 1;
+    }
 
-#if 0
+    if (!read_file_into_string(FLAGS_cert_chain2, &str_chain2)) {
+      printf("Can't read %s\n", FLAGS_cert_chain2.c_str());
+      return 1;
+    }
+
+    if (!chain1.ParseFromString(str_chain1)) {
+      printf("Can't parse chain 1\n");
+      return 1;
+    }
+    if (!chain2.ParseFromString(str_chain2)) {
+      printf("Can't parse chain 2\n");
+      return 1;
+    }
+
+    // subject_key, signer_key, der_cert
+    const key_message &client_root_key = chain1.list(0).signer_key();
+    const key_message &server_root_key = chain2.list(0).signer_key();
+    const key_message &client_auth_key = chain1.list(1).subject_key();
+    const key_message &server_auth_key = chain2.list(1).subject_key();
+
+    // make admissions certs
+    string cl_str("client");
+    string client_auth_cert;
+    if (!make_admissions_cert(cl_str,
+                              client_root_key,
+                              client_auth_key,
+                              &client_auth_cert)) {
+      printf("Can't make admissions cert\n");
+      return 1;
+    }
+    ((key_message &)client_auth_key).set_certificate(client_auth_cert);
+    string s_str("server");
+    string server_auth_cert;
+    if (!make_admissions_cert(s_str,
+                              server_root_key,
+                              server_auth_key,
+                              &server_auth_cert)) {
+      printf("Can't make admissions cert\n");
+      return 1;
+    }
+    ((key_message &)server_auth_key).set_certificate(server_auth_cert);
+
+#if 1
+      string asn1_root_cert;
+      string asn1_peer_root_cert;
+      int cert_chain_length = 0;
+      string der_certs[4];
 
       if (FLAGS_operation == "client") {
         if (!run_me_as_client(FLAGS_app_host.c_str(),
                               FLAGS_app_port,
-                              str_policy_cert,
-                              auth_key,
-                              auth_cert)) {
+                              asn1_root_cert,
+                              asn1_peer_root_cert,
+                              cert_chain_length,
+                              der_certs,
+                              (key_message&)client_auth_key,
+                              client_auth_cert)) {
           printf("run-me-as-client failed\n");
           return 1;
         }
       } else if (FLAGS_operation == "server") {
         if (!run_me_as_server(FLAGS_app_host.c_str(),
                               FLAGS_app_port,
-                              str_policy_cert,
-                              auth_key,
-                              auth_cert)) {
+                              asn1_root_cert,
+                              asn1_peer_root_cert,
+                              cert_chain_length,
+                              der_certs,
+                              (key_message&)server_root_key,
+                              server_auth_cert)) {
           printf("server failed\n");
           return 1;
         }
       } else {
         printf("Unknown operation\n");
+        return 1;
       }
+#else
+    printf("test2 case not implemented yet\n");
+    return 1;
 #endif
   } else {
     printf("Unknown test case\n");
