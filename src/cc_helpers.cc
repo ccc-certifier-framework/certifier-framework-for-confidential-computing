@@ -2467,7 +2467,7 @@ bool load_server_certs_and_key(X509 *        peer_root_cert,
   }
 
   STACK_OF(X509) *stack = sk_X509_new_null();
-  if (sk_X509_push(stack, root_cert) == 0) {
+  if (sk_X509_push(stack, peer_root_cert) == 0) {
     printf("%s() error, line %d, sk_X509_push failed\n", __func__, __LINE__);
     return false;
   }
@@ -2496,13 +2496,14 @@ bool load_server_certs_and_key(X509 *        peer_root_cert,
     printf("%s() error, line %d, SSL_CTX_use_cert_and_key failed\n",
            __func__,
            __LINE__);
-#  ifdef DEBUG
-    printf("cert:\n");
+//#ifdef DEBUG
+#if 1
+    printf("auth cert:\n");
     X509_print_fp(stdout, x509_auth_key_cert);
     printf("key:\n");
     print_key(private_key);
     printf("\n");
-#  endif
+#endif
     return false;
   }
 #endif
@@ -2513,12 +2514,12 @@ bool load_server_certs_and_key(X509 *        peer_root_cert,
            __LINE__);
     return false;
   }
-  SSL_CTX_add_client_CA(ctx, root_cert);
+  SSL_CTX_add_client_CA(ctx, peer_root_cert);
 
 #ifdef BORING_SSL
-  SSL_CTX_add1_chain_cert(ctx, root_cert);
+  SSL_CTX_add1_chain_cert(ctx, peer_root_cert);
 #else
-  SSL_CTX_add1_to_CA_list(ctx, root_cert);
+  SSL_CTX_add1_to_CA_list(ctx, peer_root_cert);
 
 #  ifdef DEBUG
   const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ctx);
@@ -2870,6 +2871,8 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
 
   private_key_.CopyFrom(private_key);
 
+  asn1_root_cert_.assign((char *)asn1_root_cert.data(),
+                              asn1_root_cert.size());
   asn1_peer_root_cert_.assign((char *)peer_asn1_root_cert.data(),
                               peer_asn1_root_cert.size());
 
@@ -2882,6 +2885,20 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
       printf("root cert empty\n");
     } else {
       print_bytes(asn1_root_cert_.size(), (byte *)asn1_root_cert_.data());
+      printf("\n");
+    }
+    return false;
+  }
+
+  peer_root_cert_ = X509_new();
+  if (!asn1_to_x509(asn1_peer_root_cert_, peer_root_cert_)) {
+    printf("%s() error, line %d, init_client_ssl: root cert invalid\n",
+           __func__,
+           __LINE__);
+    if (asn1_peer_root_cert_.size() == 0) {
+      printf("root cert empty\n");
+    } else {
+      print_bytes(asn1_peer_root_cert_.size(), (byte *)asn1_peer_root_cert_.data());
       printf("\n");
     }
     return false;
@@ -2901,7 +2918,7 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
 
   asn1_my_cert_ = auth_cert;
   X509_STORE *cs = SSL_CTX_get_cert_store(ssl_ctx_);
-  X509_STORE_add_cert(cs, root_cert_);
+  X509_STORE_add_cert(cs, peer_root_cert_);
 
   X509 *x509_auth_cert = X509_new();
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
