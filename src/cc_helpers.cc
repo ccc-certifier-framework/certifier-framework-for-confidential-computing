@@ -2439,8 +2439,8 @@ bool load_server_certs_and_key(X509 *        root_cert,
 }
 
 // Loads server side certs and keys.
-bool load_server_certs_and_key(X509 *        peer_root_cert,
-                               X509 *        root_cert,
+bool load_server_certs_and_key(X509 *        root_cert,
+                               X509 *        peer_root_cert,
                                int           cert_chain_length,
                                string *      cert_chain,
                                key_message & private_key,
@@ -2496,8 +2496,7 @@ bool load_server_certs_and_key(X509 *        peer_root_cert,
     printf("%s() error, line %d, SSL_CTX_use_cert_and_key failed\n",
            __func__,
            __LINE__);
-//#ifdef DEBUG
-#  if 1
+#  ifdef DEBUG
     printf("auth cert:\n");
     X509_print_fp(stdout, x509_auth_key_cert);
     printf("key:\n");
@@ -3001,8 +3000,11 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
 
   // set keys and cert
   private_key_.CopyFrom(private_key);
+
+  asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
   asn1_peer_root_cert_.assign((char *)peer_asn1_root_cert.data(),
                               peer_asn1_root_cert.size());
+
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
     printf("%s() error, line %d, Can't translate der to X509\n",
