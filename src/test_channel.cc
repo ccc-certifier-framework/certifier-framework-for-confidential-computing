@@ -370,13 +370,13 @@ int main(int an, char **av) {
     // subject_key, signer_key, der_cert
     const key_message &client_root_key = chain1.list(0).signer_key();
     const key_message &client_auth_key = chain1.list(1).subject_key();
-    string client_root_cert;
-    string client_auth_cert;
+    string             client_root_cert;
+    string             client_auth_cert;
 
     const key_message &server_root_key = chain2.list(0).signer_key();
     const key_message &server_auth_key = chain2.list(1).subject_key();
-    string server_root_cert;
-    string server_auth_cert;
+    string             server_root_cert;
+    string             server_auth_cert;
 
 #if 0
     // make admissions certs: not needed
@@ -400,47 +400,51 @@ int main(int an, char **av) {
     }
 #endif
 
-    client_root_cert.assign((char*)chain1.list(0).der_cert().data(), chain1.list(0).der_cert().size());
-    server_root_cert.assign((char*)chain2.list(0).der_cert().data(), chain2.list(0).der_cert().size());
-    client_auth_cert.assign((char*)chain1.list(1).der_cert().data(), chain1.list(1).der_cert().size());
-    server_auth_cert.assign((char*)chain2.list(1).der_cert().data(), chain2.list(1).der_cert().size());
+    client_root_cert.assign((char *)chain1.list(0).der_cert().data(),
+                            chain1.list(0).der_cert().size());
+    server_root_cert.assign((char *)chain2.list(0).der_cert().data(),
+                            chain2.list(0).der_cert().size());
+    client_auth_cert.assign((char *)chain1.list(1).der_cert().data(),
+                            chain1.list(1).der_cert().size());
+    server_auth_cert.assign((char *)chain2.list(1).der_cert().data(),
+                            chain2.list(1).der_cert().size());
     ((key_message &)client_auth_key).set_certificate(client_auth_cert);
     ((key_message &)server_auth_key).set_certificate(server_auth_cert);
 
 #if 1
-      string asn1_root_cert;
-      string asn1_peer_root_cert;
-      int cert_chain_length = 0;
-      string der_certs[4];
+    string asn1_root_cert;
+    string asn1_peer_root_cert;
+    int    cert_chain_length = 0;
+    string der_certs[4];
 
-      if (FLAGS_operation == "client") {
-        if (!run_me_as_client(FLAGS_app_host.c_str(),
-                              FLAGS_app_port,
-                              client_root_cert,
-                              server_root_cert,
-                              cert_chain_length,
-                              der_certs,
-                              (key_message&)client_auth_key,
-                              client_auth_cert)) {
-          printf("run-me-as-client failed\n");
-          return 1;
-        }
-      } else if (FLAGS_operation == "server") {
-        if (!run_me_as_server(FLAGS_app_host.c_str(),
-                              FLAGS_app_port,
-                              server_root_cert,
-                              client_root_cert,
-                              cert_chain_length,
-                              der_certs,
-                              (key_message&)server_auth_key,
-                              server_auth_cert)) {
-          printf("server failed\n");
-          return 1;
-        }
-      } else {
-        printf("Unknown operation\n");
+    if (FLAGS_operation == "client") {
+      if (!run_me_as_client(FLAGS_app_host.c_str(),
+                            FLAGS_app_port,
+                            client_root_cert,
+                            server_root_cert,
+                            cert_chain_length,
+                            der_certs,
+                            (key_message &)client_auth_key,
+                            client_auth_cert)) {
+        printf("run-me-as-client failed\n");
         return 1;
       }
+    } else if (FLAGS_operation == "server") {
+      if (!run_me_as_server(FLAGS_app_host.c_str(),
+                            FLAGS_app_port,
+                            server_root_cert,
+                            client_root_cert,
+                            cert_chain_length,
+                            der_certs,
+                            (key_message &)server_auth_key,
+                            server_auth_cert)) {
+        printf("server failed\n");
+        return 1;
+      }
+    } else {
+      printf("Unknown operation\n");
+      return 1;
+    }
 #else
     printf("test2 case not implemented yet\n");
     return 1;

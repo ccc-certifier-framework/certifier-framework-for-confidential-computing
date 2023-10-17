@@ -2497,13 +2497,13 @@ bool load_server_certs_and_key(X509 *        peer_root_cert,
            __func__,
            __LINE__);
 //#ifdef DEBUG
-#if 1
+#  if 1
     printf("auth cert:\n");
     X509_print_fp(stdout, x509_auth_key_cert);
     printf("key:\n");
     print_key(private_key);
     printf("\n");
-#endif
+#  endif
     return false;
   }
 #endif
@@ -2871,8 +2871,7 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
 
   private_key_.CopyFrom(private_key);
 
-  asn1_root_cert_.assign((char *)asn1_root_cert.data(),
-                              asn1_root_cert.size());
+  asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
   asn1_peer_root_cert_.assign((char *)peer_asn1_root_cert.data(),
                               peer_asn1_root_cert.size());
 
@@ -2898,7 +2897,8 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     if (asn1_peer_root_cert_.size() == 0) {
       printf("root cert empty\n");
     } else {
-      print_bytes(asn1_peer_root_cert_.size(), (byte *)asn1_peer_root_cert_.data());
+      print_bytes(asn1_peer_root_cert_.size(),
+                  (byte *)asn1_peer_root_cert_.data());
       printf("\n");
     }
     return false;
