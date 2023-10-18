@@ -2477,7 +2477,20 @@ bool load_server_certs_and_key(X509 *        root_cert,
   SSL_CTX_add_client_CA(ctx, peer_root_cert);
   SSL_CTX_add1_chain_cert(ctx, peer_root_cert);
 
-#if 1
+// When intermediate certs exist
+#if 0
+  X509* X509_chain_certs[cert_chain_length];
+  for (int i = 0; i < cert_chain_length; i++) {
+    X509_chain_certs[i] = X509_new();
+    if (!asn1_to_x509(cert_chain[i], X509_chain_certs[i])) {
+      printf("%s() error, line %d, cert chain\n", __func__, __LINE__);
+      return false;
+    }
+    X509_STORE_add_cert(cs, X509_cert_chains[i]);
+  }
+#endif
+
+#ifdef DEBUG
   printf("load_server_certs_and_key, peer_root_cert:\n");
   X509_print_fp(stdout, peer_root_cert);
   printf("load_server_certs_and_key, root_cert:\n");
@@ -2939,6 +2952,19 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   X509_STORE *cs = SSL_CTX_get_cert_store(ssl_ctx_);
   X509_STORE_add_cert(cs, peer_root_cert_);
 
+// When intermediate certs exist
+#if 0
+  X509* X509_chain_certs[cert_chain_length];
+  for (int i = 0; i < cert_chain_length; i++) {
+    X509_chain_certs[i] = X509_new();
+    if (!asn1_to_x509(cert_chain_[i], X509_cert_chains[i])) {
+      printf("%s() error, line %d, cert chain\n", __func__, __LINE__);
+      return false;
+    }
+    X509_STORE_add_cert(cs, X509_cert_chains[i]);
+  }
+#endif
+
   X509 *x509_auth_cert = X509_new();
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
     X509_STORE_add_cert(cs, x509_auth_cert);
@@ -2946,7 +2972,7 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     printf("COULDNT ADD\n");
   }
 
-#if 1
+#ifdef DEBUG
   printf("init_client_ssl, peer root cert:\n");
   X509_print_fp(stdout, peer_root_cert_);
   printf("init_client_ssl, auth cert:\n");
