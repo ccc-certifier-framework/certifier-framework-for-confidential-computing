@@ -35,6 +35,7 @@ sgx.trusted_files = [
   "file:{{ arch_libdir }}/",
   "file:/usr{{ arch_libdir }}/",
   "file:gramine_tests.crt",
+  "file:gramine-attestation.bin",
 ]
 
 sgx.allowed_files = [
@@ -47,4 +48,5 @@ sgx.allowed_files = [
   "file:/etc/gai.conf",
   "file:/etc/ssl/certs/ca-certificates.crt",
   "file:/etc/sgx_default_qcnl.conf",
+  "file:gramine-attestation.bin",
 ]

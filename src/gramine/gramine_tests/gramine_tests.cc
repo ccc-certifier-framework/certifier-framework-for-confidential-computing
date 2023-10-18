@@ -20,6 +20,7 @@
 #include "gramine_api.h"
 
 #define cert_file        "gramine_tests.crt"
+#define attestation_file "gramine-attestation.bin"
 #define BUF_SIZE         128
 #define BUF_STORAGE_SIZE 4
 #define TAG_SIZE         16
@@ -39,11 +40,14 @@ int main(int argc, char **argv) {
 
   bool status = false;
   byte attestation[MAX_ATTESTATION_SIZE];
+  byte attestation_bin[MAX_ATTESTATION_SIZE];
   byte mr_recd[SGX_HASH_SIZE];
 
   byte buf[BUF_SIZE];
   byte enc_buf[BUF_SIZE + MAX_TAG_SIZE];
   byte dec_buf[BUF_SIZE];
+
+  GramineSgxAttributes attributes;
 
   int cert_size = gramine_file_size(cert_file);
 
@@ -82,6 +86,34 @@ int main(int argc, char **argv) {
   if (status != true) {
     printf("gramine_Attest failed\n");
     return 1;
+  }
+
+  ret = gramine_rw_file(attestation_file, attestation, attestation_size, true);
+  if (ret < 0 && ret != -ENOENT) {
+    printf("Can't write attestation file\n");
+    return false;
+  }
+
+  ret = gramine_rw_file(attestation_file,
+                        attestation_bin,
+                        gramine_file_size(attestation_file),
+                        false);
+  if (ret < 0 && ret != -ENOENT) {
+    printf("Can't read attestation file\n");
+    return false;
+  }
+
+  if (!gramine_get_attributes_from_quote(attestation_bin, &attributes)) {
+    printf("Failed to parse SGX attributes\n");
+  } else {
+    printf("GramineSgxAttributes:\n");
+    printf("\tqe_svn = 0x%x\n", attributes.qe_svn);
+    printf("\tpce_svn = 0x%x\n", attributes.pce_svn);
+    printf("\tcpu_svn = 0x");
+    gramine_print_bytes(SGX_CPUSVN_SIZE, attributes.cpu_svn);
+    printf("\n");
+    printf("\tdebug = %s\n", attributes.debug ? "Yes" : "No");
+    printf("\tmode64bit = %s\n", attributes.mode64bit ? "Yes" : "No");
   }
 
   status = gramine_Verify(USER_DATA_SIZE,
