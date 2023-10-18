@@ -2480,6 +2480,8 @@ bool load_server_certs_and_key(X509 *        root_cert,
 #if 1
   printf("load_server_certs_and_key, peer_root_cert:\n");
   X509_print_fp(stdout, peer_root_cert);
+  printf("load_server_certs_and_key, root_cert:\n");
+  X509_print_fp(stdout, root_cert);
   printf("\nload_server_certs_and_key, auth cert:\n");
   X509_print_fp(stdout, x509_auth_key_cert);
   printf("\n");
@@ -2552,7 +2554,7 @@ bool certifier::framework::server_dispatch(
     const string &private_key_cert,
     void (*func)(secure_authenticated_channel &)) {
 
-#ifdef DEBUG
+#if 1
   printf("\nserver_dispatch\n");
   printf("ans1_root_cert: ");
   print_bytes(asn1_root_cert.size(), (byte *)asn1_root_cert.data());
@@ -2606,6 +2608,8 @@ bool certifier::framework::server_dispatch(
   X509 *x509_auth_cert = X509_new();
   if (asn1_to_x509(private_key_cert, x509_auth_cert)) {
     X509_STORE_add_cert(cs, x509_auth_cert);
+  } else {
+    printf("DIDNT ADD AUTH CERT\n");
   }
 
   if (!load_server_certs_and_key(root_cert,
@@ -3032,6 +3036,14 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
 
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
+    printf("%s() error, line %d, Can't translate der to X509\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  peer_root_cert_ = X509_new();
+  if (!asn1_to_x509(peer_asn1_root_cert, peer_root_cert_)) {
     printf("%s() error, line %d, Can't translate der to X509\n",
            __func__,
            __LINE__);
