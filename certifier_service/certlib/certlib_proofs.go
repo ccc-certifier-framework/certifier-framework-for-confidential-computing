@@ -1445,6 +1445,46 @@ func ConstructKeystoneSpeaksForMeasurementStatement(attestKey *certprotos.KeyMes
 	return vseSays
 }
 
+/*
+struct sgx_quote_t
+{
+	uint16_t              version;                                     // 0x000
+	uint16_t              sign_type;                                   // 0x002
+	sgx_epid_group_id_t   epid_group_id;                               // 0x004
+	sgx_isv_svn_t         qe_svn;                                      // 0x008
+	sgx_isv_svn_t         pce_svn;                                     // 0x00A
+	uint32_t              xeid;                                        // 0x00C
+	sgx_basename_t        basename;                                    // 0x010
+	sgx_cpu_svn_t         cpu_svn;                                     // 0x030
+	sgx_misc_select_t     misc_select;                                 // 0x040
+	uint8_t               reserved1[SGX_REPORT_BODY_RESERVED1_BYTES];  // 0x044
+	sgx_isvext_prod_id_t  isv_ext_prod_id;                             // 0x050
+	sgx_attributes_t      attributes;                                  // 0x060
+	sgx_measurement_t     mr_enclave;                                  // 0x070
+	uint8_t               reserved2[SGX_REPORT_BODY_RESERVED2_BYTES];  // 0x090
+	sgx_measurement_t     mr_signer;                                   // 0x0B0
+	uint8_t               reserved3[SGX_REPORT_BODY_RESERVED3_BYTES];  // 0x0D0
+	sgx_config_id_t       config_id;                                   // 0x0F0
+	sgx_prod_id_t         isv_prod_id;                                 // 0x130
+	sgx_isv_svn_t         isv_svn;                                     // 0x132
+	sgx_config_svn_t      config_svn;                                  // 0x134
+	uint8_t               reserved4[SGX_REPORT_BODY_RESERVED4_BYTES];  // 0x136
+	sgx_isvfamily_id_t    isv_family_id;                               // 0x160
+	sgx_report_data_t     report_data;                                 // 0x170
+	uint32_t              signature_len;                               // 0x1B0
+	uint8_t               signature[];                                 // 0x1B4
+};
+*/
+func GetPlatformAttributesFromGramineAttest(binGramineAttest []byte) (uint16, uint16, []byte, bool, bool) {
+	qeSvn := uint16(binGramineAttest[0x8])
+	pceSvn := uint16(binGramineAttest[0xA])
+	cpuSvn := []byte(binGramineAttest[0x30:0x40])
+	flags := uint64(binGramineAttest[0x60])
+	debug := ((flags & 0x2) != 0)
+	mode64bit := ((flags & 0x4) != 0)
+	return qeSvn, pceSvn, cpuSvn, debug, mode64bit
+}
+
 // Caution:  This can change if attestation.h below changes
 /*
 	struct attestation_report {
