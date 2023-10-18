@@ -67,7 +67,7 @@ clean:
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/generate_cert_chain.exe
 
-generate_cert_chain.exe: $(dobj) 
+generate_cert_chain.exe: $(dobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(dobj) $(LDFLAGS) -o $(EXE_DIR)/$@
 
