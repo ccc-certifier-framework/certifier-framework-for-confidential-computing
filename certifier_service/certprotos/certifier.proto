@@ -364,5 +364,6 @@ message full_cert_chain_entry {
 };
 message full_cert_chain {
   repeated full_cert_chain_entry list        = 1;
+  optional key_message final_private_key     = 2;
 };
 

@@ -69,6 +69,7 @@ void server_application(secure_authenticated_channel &channel) {
   // Reply over authenticated, encrypted channel
   const char *msg = "Hi from your secret server\n";
   channel.write(strlen(msg), (byte *)msg);
+  channel.close();
 }
 
 void client_application(secure_authenticated_channel &channel) {
@@ -83,6 +84,7 @@ void client_application(secure_authenticated_channel &channel) {
   string out;
   int    n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
+  channel.close();
 }
 
 bool run_me_as_server(const string &host_name,
@@ -96,17 +98,15 @@ bool run_me_as_server(const string &host_name,
 
   printf("running as server\n");
 
-  server_dispatch(host_name,
-                  port,
-                  asn1_root_cert,
-                  asn1_peer_root_cert,
-                  num_certs,
-                  cert_chain,
-                  private_key,
-                  private_key_cert,
-                  server_application);
-
-  return true;
+  return server_dispatch(host_name,
+                         port,
+                         asn1_root_cert,
+                         asn1_peer_root_cert,
+                         num_certs,
+                         cert_chain,
+                         private_key,
+                         private_key_cert,
+                         server_application);
 }
 
 bool run_me_as_client(const string &host_name,
@@ -375,14 +375,18 @@ int main(int an, char **av) {
 
     // subject_key, signer_key, der_cert
     const key_message &client_root_key = chain1.list(0).signer_key();
-    const key_message &client_auth_key = chain1.list(1).subject_key();
-    string             client_root_cert;
-    string             client_auth_cert;
+    const key_message &client_public_key = chain1.list(1).subject_key();
+    key_message        client_private_key;
+    client_private_key.CopyFrom(chain1.final_private_key());
+    string client_root_cert;
+    string client_auth_cert;
 
     const key_message &server_root_key = chain2.list(0).signer_key();
-    const key_message &server_auth_key = chain2.list(1).subject_key();
-    string             server_root_cert;
-    string             server_auth_cert;
+    const key_message &server_public_key = chain2.list(1).subject_key();
+    key_message        server_private_key;
+    server_private_key.CopyFrom(chain2.final_private_key());
+    string server_root_cert;
+    string server_auth_cert;
 
     client_root_cert.assign((char *)chain1.list(0).der_cert().data(),
                             chain1.list(0).der_cert().size());
@@ -392,11 +396,34 @@ int main(int an, char **av) {
                             chain2.list(0).der_cert().size());
     server_auth_cert.assign((char *)chain2.list(1).der_cert().data(),
                             chain2.list(1).der_cert().size());
-    ((key_message &)client_auth_key).set_certificate(client_auth_cert);
-    ((key_message &)server_auth_key).set_certificate(server_auth_cert);
+    client_private_key.set_certificate(client_auth_cert);
+    server_private_key.set_certificate(server_auth_cert);
 
     int    cert_chain_length = 0;
     string der_certs[4];
+
+#ifdef DEBUG
+    printf("\nclient root cert:\n");
+    X509 *x509_client_root_cert = X509_new();
+    asn1_to_x509(client_root_cert, x509_client_root_cert);
+    X509_print_fp(stdout, x509_client_root_cert);
+    X509 *x509_server_root_cert = X509_new();
+    asn1_to_x509(server_root_cert, x509_server_root_cert);
+    printf("\nserver root cert:\n");
+    X509_print_fp(stdout, x509_server_root_cert);
+    X509 *x509_client_auth_cert = X509_new();
+    asn1_to_x509(client_auth_cert, x509_client_auth_cert);
+    printf("\nClient auth cert:\n");
+    X509_print_fp(stdout, x509_client_auth_cert);
+    X509 *x509_server_auth_cert = X509_new();
+    asn1_to_x509(server_auth_cert, x509_server_auth_cert);
+    printf("\nServer auth cert:\n");
+    X509_print_fp(stdout, x509_server_auth_cert);
+    printf("\nClient auth key::\n");
+    print_key(client_private_key);
+    printf("\nServer auth key::\n");
+    print_key(server_private_key);
+#endif
 
     if (FLAGS_operation == "client") {
       if (!run_me_as_client(FLAGS_app_host.c_str(),
@@ -405,7 +432,7 @@ int main(int an, char **av) {
                             server_root_cert,
                             cert_chain_length,
                             der_certs,
-                            (key_message &)client_auth_key,
+                            (key_message &)client_private_key,
                             client_auth_cert)) {
         printf("run-me-as-client failed\n");
         return 1;
@@ -417,7 +444,7 @@ int main(int an, char **av) {
                             client_root_cert,
                             cert_chain_length,
                             der_certs,
-                            (key_message &)server_auth_key,
+                            (key_message &)server_private_key,
                             server_auth_cert)) {
         printf("server failed\n");
         return 1;

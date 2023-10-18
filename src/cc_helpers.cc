@@ -2554,7 +2554,7 @@ bool certifier::framework::server_dispatch(
     const string &private_key_cert,
     void (*func)(secure_authenticated_channel &)) {
 
-#if 1
+#ifdef DEBUG
   printf("\nserver_dispatch\n");
   printf("ans1_root_cert: ");
   print_bytes(asn1_root_cert.size(), (byte *)asn1_root_cert.data());
@@ -2882,12 +2882,11 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   SSL_load_error_strings();
 
   private_key_.CopyFrom(private_key);
+  private_key_.set_certificate(auth_cert);  // NEW
 
   asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
   asn1_peer_root_cert_.assign((char *)peer_asn1_root_cert.data(),
                               peer_asn1_root_cert.size());
-
-  private_key_.set_certificate(auth_cert);  // NEW
 
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert_, root_cert_)) {
@@ -2936,13 +2935,15 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     return false;
   }
 
-  asn1_my_cert_ = auth_cert;
+  asn1_my_cert_.assign(auth_cert.data(), auth_cert.size());
   X509_STORE *cs = SSL_CTX_get_cert_store(ssl_ctx_);
   X509_STORE_add_cert(cs, peer_root_cert_);
 
   X509 *x509_auth_cert = X509_new();
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
     X509_STORE_add_cert(cs, x509_auth_cert);
+  } else {
+    printf("COULDNT ADD\n");
   }
 
 #if 1
@@ -3029,6 +3030,7 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
 
   // set keys and cert
   private_key_.CopyFrom(private_key);
+  private_key_.set_certificate(auth_cert);  // NEW
 
   asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
   asn1_peer_root_cert_.assign((char *)peer_asn1_root_cert.data(),
@@ -3071,7 +3073,6 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   private_key_.CopyFrom(private_key);
 
   asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
-  // asn1_peer_root_cert_
 
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert_, root_cert_)) {

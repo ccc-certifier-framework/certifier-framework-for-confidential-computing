@@ -240,7 +240,6 @@ bool generate_chain(const string &   root_key_name,
     }
     ent->mutable_subject_key()->CopyFrom(public_intermediates[i]);
     ent->mutable_signer_key()->CopyFrom(public_intermediates[i - 1]);
-    ent->mutable_subject_key()->set_certificate(int_der);
     ent->set_der_cert(int_der);
 
     sn++;
@@ -270,6 +269,7 @@ bool generate_chain(const string &   root_key_name,
     return false;
   }
 
+  chain->mutable_final_private_key()->CopyFrom(private_final_key);
   X509 *x509_final_cert = X509_new();
   if (!produce_artifact(private_intermediates[num_intermediate],
                         prev_key_name,
@@ -372,7 +372,12 @@ int main(int an, char **av) {
       printf("Signer Key:\n");
       print_key(ent.signer_key());
       printf("\n");
+      print_key(ent.signer_key());
+      printf("\n");
     }
+    printf("Final signer:\n");
+    print_key(chain.final_private_key());
+    printf("\n");
 
     return 0;
   } else if (FLAGS_operation == "generate") {
