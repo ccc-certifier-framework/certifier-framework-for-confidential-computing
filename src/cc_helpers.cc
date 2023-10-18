@@ -3321,7 +3321,7 @@ void certifier::framework::secure_authenticated_channel::
            __LINE__,
            res);
     unsigned long code = ERR_get_error();
-    printf("Accept error(%x, %d): %s\n",
+    printf("Accept error(%lx, %ld): %s\n",
            code,
            code & 0xffffff,
            ERR_lib_error_string(code));
