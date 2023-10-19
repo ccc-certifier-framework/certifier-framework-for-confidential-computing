@@ -355,3 +355,15 @@ message certifier_entry {
 message certifiers_message {
   repeated certifier_entry my_certifiers    = 1;
 };
+
+// Support for cert chain testing
+message full_cert_chain_entry {
+  optional key_message subject_key           = 1;
+  optional key_message signer_key            = 2;
+  optional bytes der_cert                    = 3;
+};
+message full_cert_chain {
+  repeated full_cert_chain_entry list        = 1;
+  optional key_message final_private_key     = 2;
+};
+

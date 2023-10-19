@@ -2438,6 +2438,288 @@ bool load_server_certs_and_key(X509 *        root_cert,
   return true;
 }
 
+// Loads server side certs and keys.
+bool load_server_certs_and_key(X509 *        root_cert,
+                               X509 *        peer_root_cert,
+                               int           cert_chain_length,
+                               string *      cert_chain,
+                               key_message & private_key,
+                               const string &private_key_cert,
+                               SSL_CTX *     ctx) {
+
+  private_key.set_certificate(private_key_cert);  // new
+
+  // load auth key, policy_cert and certificate chain
+  // Todo: Add other key types
+  RSA *r = RSA_new();
+  if (r == nullptr) {
+    printf("%s() error, line %d, Can't allocate RSA key\n", __func__, __LINE__);
+    return false;
+  }
+
+  bool      ret = true;
+  EVP_PKEY *auth_private_key = nullptr;
+  X509 *    x509_auth_key_cert = nullptr;
+  STACK_OF(X509) *stack = nullptr;
+
+
+  if (!key_to_RSA(private_key, r)) {
+    printf("%s() error, line %d, key_to_RSA failed\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  auth_private_key = EVP_PKEY_new();
+  EVP_PKEY_set1_RSA(auth_private_key, r);
+
+  x509_auth_key_cert = X509_new();
+  if (!asn1_to_x509(private_key_cert, x509_auth_key_cert)) {
+    printf("%s() error, line %d, asn1_to_x509 failed %d\n",
+           __func__,
+           __LINE__,
+           (int)private_key_cert.size());
+    ret = false;
+    goto done;
+  }
+
+  stack = sk_X509_new_null();
+  if (sk_X509_push(stack, peer_root_cert) == 0) {
+    printf("%s() error, line %d, sk_X509_push failed\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  SSL_CTX_add_client_CA(ctx, peer_root_cert);
+  SSL_CTX_add1_chain_cert(ctx, peer_root_cert);
+
+// When intermediate certs exist
+#if 0
+  X509* X509_chain_certs[cert_chain_length];
+  for (int i = 0; i < cert_chain_length; i++) {
+    X509_chain_certs[i] = X509_new();
+    if (!asn1_to_x509(cert_chain[i], X509_chain_certs[i])) {
+      printf("%s() error, line %d, cert chain\n", __func__, __LINE__);
+      return false;
+    }
+    X509_STORE_add_cert(cs, X509_cert_chains[i]);
+  }
+#endif
+
+#ifdef DEBUG
+  printf("load_server_certs_and_key, peer_root_cert:\n");
+  X509_print_fp(stdout, peer_root_cert);
+  printf("load_server_certs_and_key, root_cert:\n");
+  X509_print_fp(stdout, root_cert);
+  printf("\nload_server_certs_and_key, auth cert:\n");
+  X509_print_fp(stdout, x509_auth_key_cert);
+  printf("\n");
+#endif
+
+#ifdef BORING_SSL
+  if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
+    printf("%s() error, line %d, use cert failed\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
+    printf("%s() error, line %d, use priv key failed\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  if (!SSL_CTX_set1_chain(ctx, stack)) {
+    printf("%s() error, line %d, set1 chain error\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+#else
+  if (SSL_CTX_use_cert_and_key(ctx,
+                               x509_auth_key_cert,
+                               auth_private_key,
+                               stack,
+                               1)
+      <= 0) {
+    printf("%s() error, line %d, SSL_CTX_use_cert_and_key failed\n",
+           __func__,
+           __LINE__);
+#  ifdef DEBUG
+    printf("auth cert:\n");
+    X509_print_fp(stdout, x509_auth_key_cert);
+    printf("key:\n");
+    print_key(private_key);
+    printf("\n");
+#  endif
+    ret = false;
+    goto done;
+  }
+#endif
+
+  if (!SSL_CTX_check_private_key(ctx)) {
+    printf("%s() error, line %d, SSL_CTX_check_private_key failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+#ifdef DEBUG
+  {
+    const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ctx);
+    printf("CA names to offer\n");
+    if (ca_list != nullptr) {
+      for (int i = 0; i < sk_X509_NAME_num(ca_list); i++) {
+        X509_NAME *name = sk_X509_NAME_value(ca_list, i);
+        print_cn_name(name);
+      }
+    }
+  }
+#endif
+
+done:
+  if (r != nullptr) {
+    RSA_free(r);
+    r = nullptr;
+  }
+  if (auth_private_key != nullptr) {
+    EVP_PKEY_free(auth_private_key);
+    auth_private_key = nullptr;
+  }
+  return ret;
+}
+
+bool certifier::framework::server_dispatch(
+    const string &host_name,
+    int           port,
+    const string &asn1_root_cert,
+    const string &asn1_peer_root_cert,
+    int           num_certs,
+    string *      cert_chain,
+    key_message & private_key,
+    const string &private_key_cert,
+    void (*func)(secure_authenticated_channel &)) {
+
+#ifdef DEBUG
+  printf("\nserver_dispatch\n");
+  printf("ans1_root_cert: ");
+  print_bytes(asn1_root_cert.size(), (byte *)asn1_root_cert.data());
+  printf("\n");
+  printf("ans1_peer_root_cert: ");
+  print_bytes(asn1_peer_root_cert.size(), (byte *)asn1_peer_root_cert.data());
+  printf("\n");
+  printf("private_key_cert: ");
+  print_bytes(private_key_cert.size(), (byte *)private_key_cert.data());
+  printf("\n");
+  printf("private_key: ");
+  print_key(private_key);
+  printf("\n");
+#endif
+
+  OPENSSL_init_ssl(0, NULL);
+  SSL_load_error_strings();
+
+  X509 *root_cert = X509_new();
+  if (!asn1_to_x509(asn1_root_cert, root_cert)) {
+    printf("%s() error, line %d, Can't convert cert\n", __func__, __LINE__);
+    return false;
+  }
+  X509 *peer_root_cert = X509_new();
+  if (!asn1_to_x509(asn1_peer_root_cert, peer_root_cert)) {
+    printf("%s() error, line %d, Can't convert cert\n", __func__, __LINE__);
+    return false;
+  }
+
+  // Get a socket.
+  int sock = -1;
+  if (!open_server_socket(host_name, port, &sock)) {
+    printf("%s() error, line %d, Can't open server socket to %s:%d\n",
+           __func__,
+           __LINE__,
+           host_name.c_str(),
+           port);
+    return false;
+  }
+
+  // Set up TLS handshake data.
+  SSL_METHOD *method = (SSL_METHOD *)TLS_server_method();
+  SSL_CTX *   ctx = SSL_CTX_new(method);
+  if (ctx == NULL) {
+    printf("%s() error, line %d, SSL_CTX_new failed (1)\n", __func__, __LINE__);
+    return false;
+  }
+  X509_STORE *cs = SSL_CTX_get_cert_store(ctx);
+  X509_STORE_add_cert(cs, peer_root_cert);
+
+  X509 *x509_auth_cert = X509_new();
+  if (asn1_to_x509(private_key_cert, x509_auth_cert)) {
+    X509_STORE_add_cert(cs, x509_auth_cert);
+  } else {
+    printf("DIDNT ADD AUTH CERT\n");
+  }
+
+  if (!load_server_certs_and_key(root_cert,
+                                 peer_root_cert,
+                                 num_certs,
+                                 cert_chain,
+                                 private_key,
+                                 private_key_cert,
+                                 ctx)) {
+    printf("%s() error, line %d, SSL_CTX_new failed (2)\n", __func__, __LINE__);
+    return false;
+  }
+
+  const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
+  SSL_CTX_set_options(ctx, flags);
+
+#if 0
+  // This is unnecessary usually.
+  if(!isRoot()) {
+    printf("server_dispatch: This program must be run as root/sudo user!!");
+    return false;
+  }
+#endif
+
+  // Verify peer
+  SSL_CTX_set_verify(ctx,
+                     SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+                     nullptr);
+#ifdef DEBUG
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+#endif
+
+  // Testing hook: Allow pytests to invoke with NULL 'func' hdlr.
+  // Close socket before exiting, so we don't have unpredictable
+  // behaviour when tests are run on CI machines.
+  if (!func) {
+    close(sock);
+    return true;
+  }
+
+  while (1) {
+#ifdef DEBUG
+    printf("at accept\n");
+#endif
+    struct sockaddr_in addr;
+    unsigned int       len = sizeof(sockaddr_in);
+    int                client = accept(sock, (struct sockaddr *)&addr, &len);
+    string             my_role("server");
+    secure_authenticated_channel nc(my_role);
+    if (!nc.init_server_ssl(host_name,
+                            port,
+                            asn1_root_cert,
+                            asn1_peer_root_cert,
+                            num_certs,
+                            cert_chain,
+                            private_key,
+                            private_key_cert)) {
+      continue;
+    }
+    nc.ssl_ = SSL_new(ctx);
+    SSL_set_fd(nc.ssl_, client);
+    nc.sock_ = client;
+    nc.server_channel_accept_and_auth(func);
+  }
+  return true;
+}
+
 bool certifier::framework::server_dispatch(
     const string &host_name,
     int           port,
@@ -2517,9 +2799,8 @@ bool certifier::framework::server_dispatch(
   SSL_CTX_set_verify(ctx,
                      SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
                      nullptr);
-#if 0
-  // Debug
-  //SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+#ifdef DEBUG
+  SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
 #endif
 
   // Testing hook: Allow pytests to invoke with NULL 'func' hdlr.
@@ -2578,7 +2859,11 @@ certifier::framework::secure_authenticated_channel::
   ssl_ = nullptr;
   sock_ = -1;
   my_cert_ = nullptr;
+  root_cert_ = nullptr;
+  peer_root_cert_ = nullptr;
   peer_cert_ = nullptr;
+  num_cert_chain_ = 0;
+  cert_chain_ = nullptr;
   peer_id_.clear();
 }
 
@@ -2588,26 +2873,247 @@ certifier::framework::secure_authenticated_channel::
   channel_initialized_ = false;
 
   // ? FIXME - Seems to cause a memory leak detected in pytests
-  // delete private_key_
+  // private_key_
 
   if (ssl_ctx_ != nullptr)
     SSL_CTX_free(ssl_ctx_);
   ssl_ctx_ = nullptr;
+
   if (store_ctx_ != nullptr)
     X509_STORE_CTX_free(store_ctx_);
   store_ctx_ = nullptr;
-  // delete?
+
   ssl_ = nullptr;
   if (sock_ > 0)
     ::close(sock_);
   sock_ = -1;
-  // delete?
+
+  if (my_cert_ != nullptr)
+    X509_free(my_cert_);
   my_cert_ = nullptr;
-  // delete?
+
   if (peer_cert_ != nullptr)
     X509_free(peer_cert_);
   peer_cert_ = nullptr;
+
+  if (root_cert_ != nullptr)
+    X509_free(root_cert_);
+  root_cert_ = nullptr;
+  if (peer_root_cert_ != nullptr)
+    X509_free(peer_root_cert_);
+  peer_root_cert_ = nullptr;
+
   peer_id_.clear();
+  if (cert_chain_ != nullptr) {
+    delete[] cert_chain_;
+    cert_chain_ = nullptr;
+  }
+  num_cert_chain_ = 0;
+}
+
+bool certifier::framework::secure_authenticated_channel::init_client_ssl(
+    const string &host_name,
+    int           port,
+    const string &asn1_root_cert,
+    const string &peer_asn1_root_cert,
+    int           cert_chain_length,
+    string *      der_certs,
+    key_message & private_key,
+    const string &auth_cert) {
+
+  OPENSSL_init_ssl(0, NULL);
+  SSL_load_error_strings();
+
+  private_key_.CopyFrom(private_key);
+  private_key_.set_certificate(auth_cert);  // NEW
+
+  asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
+  asn1_peer_root_cert_.assign((char *)peer_asn1_root_cert.data(),
+                              peer_asn1_root_cert.size());
+
+  root_cert_ = X509_new();
+  if (!asn1_to_x509(asn1_root_cert_, root_cert_)) {
+    printf("%s() error, line %d, init_client_ssl: root invalid\n",
+           __func__,
+           __LINE__);
+    if (asn1_root_cert_.size() == 0) {
+      printf("root cert empty\n");
+    } else {
+      print_bytes(asn1_root_cert_.size(), (byte *)asn1_root_cert_.data());
+      printf("\n");
+    }
+    return false;
+  }
+
+  peer_root_cert_ = X509_new();
+  if (!asn1_to_x509(asn1_peer_root_cert_, peer_root_cert_)) {
+    printf("%s() error, line %d, init_client_ssl: peer root cert invalid\n",
+           __func__,
+           __LINE__);
+    if (asn1_peer_root_cert_.size() == 0) {
+      printf("peer root cert empty\n");
+    } else {
+      print_bytes(asn1_peer_root_cert_.size(),
+                  (byte *)asn1_peer_root_cert_.data());
+      printf("\n");
+    }
+    return false;
+  }
+
+  num_cert_chain_ = cert_chain_length;
+  cert_chain_ = new string[cert_chain_length];
+  for (int i = 0; i < cert_chain_length; i++) {
+    cert_chain_[i] = der_certs[i];
+  }
+
+  const SSL_METHOD *method = TLS_client_method();
+  if (method == nullptr) {
+    printf("%s() error, line %d, Can't get method\n", __func__, __LINE__);
+    return false;
+  }
+
+  ssl_ctx_ = SSL_CTX_new(method);
+  if (ssl_ctx_ == nullptr) {
+    printf("%s() error, line %d, Can't get SSL_CTX\n", __func__, __LINE__);
+    return false;
+  }
+
+  asn1_my_cert_.assign(auth_cert.data(), auth_cert.size());
+  X509_STORE *cs = SSL_CTX_get_cert_store(ssl_ctx_);
+  X509_STORE_add_cert(cs, peer_root_cert_);
+
+// When intermediate certs exist
+#if 0
+  X509* X509_chain_certs[cert_chain_length];
+  for (int i = 0; i < cert_chain_length; i++) {
+    X509_chain_certs[i] = X509_new();
+    if (!asn1_to_x509(cert_chain_[i], X509_cert_chains[i])) {
+      printf("%s() error, line %d, cert chain\n", __func__, __LINE__);
+      return false;
+    }
+    X509_STORE_add_cert(cs, X509_cert_chains[i]);
+  }
+#endif
+
+  X509 *x509_auth_cert = X509_new();
+  if (asn1_to_x509(auth_cert, x509_auth_cert)) {
+    X509_STORE_add_cert(cs, x509_auth_cert);
+  } else {
+    printf("COULDNT ADD\n");
+  }
+
+#ifdef DEBUG
+  printf("init_client_ssl, peer root cert:\n");
+  X509_print_fp(stdout, peer_root_cert_);
+  printf("init_client_ssl, auth cert:\n");
+  X509_print_fp(stdout, x509_auth_cert);
+  printf("\n");
+#endif
+
+  // For debugging: SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
+  SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER, nullptr);
+
+  SSL_CTX_set_verify_depth(ssl_ctx_, 4);
+  const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
+  SSL_CTX_set_options(ssl_ctx_, flags);
+
+  if (!load_client_certs_and_key()) {
+    printf("%s() error, line %d, load_client_certs_and_key failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!open_client_socket(host_name, port, &sock_)) {
+    printf(
+        "%s() error, line %d, Can't open client socket: host='%s', port=%d\n",
+        __func__,
+        __LINE__,
+        host_name.c_str(),
+        port);
+    return false;
+  }
+
+  ssl_ = SSL_new(ssl_ctx_);
+  SSL_set_fd(ssl_, sock_);
+  int res = SSL_set_cipher_list(ssl_, "TLS_AES_256_GCM_SHA384");  // Change?
+
+  // SSL_connect - initiate the TLS/SSL handshake with an TLS/SSL server
+  int ret = SSL_connect(ssl_);
+  if (ret <= 0) {
+    int err = SSL_get_error(ssl_, ret);
+    printf("%s() error, line %d, ssl_connect failed, ret=%d, err=%d: %s\n",
+           __func__,
+           __LINE__,
+           ret,
+           err,
+           ssl_strerror(err));
+    return false;
+  }
+
+  // Verify a server certificate was presented during the negotiation
+  peer_cert_ = SSL_get_peer_certificate(ssl_);
+  if (peer_cert_ != nullptr) {
+    peer_id_.clear();
+    if (!extract_id_from_cert(peer_cert_, &peer_id_)) {
+      printf("%s() error, line %d, Can't extract id\n", __func__, __LINE__);
+    }
+  }
+
+#ifdef DEBUG
+  if (peer_cert_) {
+    printf("Client: Peer cert presented in nego\n");
+  } else {
+    printf("Client: No peer cert presented in nego\n");
+  }
+#endif
+  channel_initialized_ = true;
+  return true;
+}
+
+bool certifier::framework::secure_authenticated_channel::init_server_ssl(
+    const string &host_name,
+    int           port,
+    const string &asn1_root_cert,
+    const string &peer_asn1_root_cert,
+    int           cert_chain_length,
+    string *      der_certs,
+    key_message & private_key,
+    const string &auth_cert) {
+
+  OPENSSL_init_ssl(0, NULL);
+  SSL_load_error_strings();
+
+  // set keys and cert
+  private_key_.CopyFrom(private_key);
+  private_key_.set_certificate(auth_cert);  // NEW
+
+  asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
+  asn1_peer_root_cert_.assign((char *)peer_asn1_root_cert.data(),
+                              peer_asn1_root_cert.size());
+
+  root_cert_ = X509_new();
+  if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
+    printf("%s() error, line %d, Can't translate der to X509\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  peer_root_cert_ = X509_new();
+  if (!asn1_to_x509(peer_asn1_root_cert, peer_root_cert_)) {
+    printf("%s() error, line %d, Can't translate der to X509\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  num_cert_chain_ = cert_chain_length;
+  cert_chain_ = new string[cert_chain_length];
+  for (int i = 0; i < cert_chain_length; i++) {
+    cert_chain_[i] = der_certs[i];
+  }
+  return true;
 }
 
 bool certifier::framework::secure_authenticated_channel::init_client_ssl(
@@ -2638,6 +3144,25 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     return false;
   }
 
+  // Root cert is also peer root cert
+  asn1_peer_root_cert_.assign((char *)asn1_root_cert.data(),
+                              asn1_root_cert.size());
+
+  peer_root_cert_ = X509_new();
+  if (!asn1_to_x509(asn1_peer_root_cert_, peer_root_cert_)) {
+    printf("%s() error, line %d, init_client_ssl: peer root cert invalid\n",
+           __func__,
+           __LINE__);
+    if (asn1_peer_root_cert_.size() == 0) {
+      printf("root cert empty\n");
+    } else {
+      print_bytes(asn1_peer_root_cert_.size(),
+                  (byte *)asn1_peer_root_cert_.data());
+      printf("\n");
+    }
+    return false;
+  }
+
   const SSL_METHOD *method = TLS_client_method();
   if (method == nullptr) {
     printf("%s() error, line %d, Can't get method\n", __func__, __LINE__);
@@ -2650,9 +3175,10 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     return false;
   }
 
-  asn1_my_cert_ = auth_cert;
   X509_STORE *cs = SSL_CTX_get_cert_store(ssl_ctx_);
-  X509_STORE_add_cert(cs, root_cert_);
+  asn1_my_cert_ = auth_cert;
+
+  X509_STORE_add_cert(cs, peer_root_cert_);
 
   X509 *x509_auth_cert = X509_new();
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
@@ -2759,7 +3285,7 @@ bool certifier::framework::secure_authenticated_channel::
 
   STACK_OF(X509) *stack = sk_X509_new_null();
 #if 0
-  if (sk_X509_push(stack, root_cert_) == 0) {
+  if (sk_X509_push(stack, peer_root_cert_) == 0) {
     printf("load_client_certs_and_key, error 3\n");
     return false;
   }
@@ -2782,7 +3308,7 @@ bool certifier::framework::secure_authenticated_channel::
   }
 
 #ifdef BORING_SSL
-  SSL_CTX_add1_chain_cert(ssl_ctx_, root_cert_);
+  SSL_CTX_add1_chain_cert(ssl_ctx_, peer_root_cert_);
 #else
   if (SSL_CTX_use_cert_and_key(ssl_ctx_,
                                x509_auth_key_cert,
@@ -2796,7 +3322,7 @@ bool certifier::framework::secure_authenticated_channel::
     return false;
   }
 
-  SSL_CTX_add1_to_CA_list(ssl_ctx_, root_cert_);
+  SSL_CTX_add1_to_CA_list(ssl_ctx_, peer_root_cert_);
 
 #  ifdef DEBUG
   const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ssl_ctx_);
@@ -2825,7 +3351,10 @@ void certifier::framework::secure_authenticated_channel::
            __LINE__,
            res);
     unsigned long code = ERR_get_error();
-    printf("Accept error: %s\n", ERR_lib_error_string(code));
+    printf("Accept error(%lx, %ld): %s\n",
+           code,
+           code & 0xffffff,
+           ERR_lib_error_string(code));
     print_ssl_error(SSL_get_error(ssl_, res));
     if (ssl_ != nullptr) {
       SSL_free(ssl_);
@@ -2871,9 +3400,20 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
 
   // set keys and cert
   private_key_.CopyFrom(private_key);
+
   asn1_root_cert_.assign((char *)asn1_root_cert.data(), asn1_root_cert.size());
+  asn1_peer_root_cert_.assign((char *)asn1_root_cert.data(),
+                              asn1_root_cert.size());
+
   root_cert_ = X509_new();
   if (!asn1_to_x509(asn1_root_cert, root_cert_)) {
+    printf("%s() error, line %d, Can't translate der to X509\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  peer_root_cert_ = X509_new();
+  if (!asn1_to_x509(asn1_peer_root_cert_, peer_root_cert_)) {
     printf("%s() error, line %d, Can't translate der to X509\n",
            __func__,
            __LINE__);
