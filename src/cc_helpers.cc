@@ -2562,12 +2562,14 @@ bool load_server_certs_and_key(X509 *        root_cert,
   }
 
 #ifdef DEBUG
-  const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ctx);
-  printf("CA names to offer\n");
-  if (ca_list != nullptr) {
-    for (int i = 0; i < sk_X509_NAME_num(ca_list); i++) {
-      X509_NAME *name = sk_X509_NAME_value(ca_list, i);
-      print_cn_name(name);
+  {
+    const STACK_OF(X509_NAME) *ca_list = SSL_CTX_get0_CA_list(ctx);
+    printf("CA names to offer\n");
+    if (ca_list != nullptr) {
+      for (int i = 0; i < sk_X509_NAME_num(ca_list); i++) {
+        X509_NAME *name = sk_X509_NAME_value(ca_list, i);
+        print_cn_name(name);
+      }
     }
   }
 #endif
