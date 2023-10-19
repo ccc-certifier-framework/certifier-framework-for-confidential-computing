@@ -2457,9 +2457,9 @@ bool load_server_certs_and_key(X509 *        root_cert,
     return false;
   }
 
-  bool ret = true;
+  bool      ret = true;
   EVP_PKEY *auth_private_key = nullptr;
-  X509 *x509_auth_key_cert = nullptr;
+  X509 *    x509_auth_key_cert = nullptr;
   STACK_OF(X509) *stack = nullptr;
 
 
