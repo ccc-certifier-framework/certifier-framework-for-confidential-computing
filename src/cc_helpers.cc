@@ -2452,26 +2452,40 @@ bool load_server_certs_and_key(X509 *        root_cert,
   // load auth key, policy_cert and certificate chain
   // Todo: Add other key types
   RSA *r = RSA_new();
-  if (!key_to_RSA(private_key, r)) {
-    printf("%s() error, line %d, key_to_RSA failed\n", __func__, __LINE__);
+  if (r == nullptr) {
+    printf("%s() error, line %d, Can't allocate RSA key\n", __func__, __LINE__);
     return false;
   }
-  EVP_PKEY *auth_private_key = EVP_PKEY_new();
+
+  bool ret = true;
+  EVP_PKEY *auth_private_key = nullptr;
+  X509 *x509_auth_key_cert = nullptr;
+  STACK_OF(X509) *stack = nullptr;
+
+
+  if (!key_to_RSA(private_key, r)) {
+    printf("%s() error, line %d, key_to_RSA failed\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  auth_private_key = EVP_PKEY_new();
   EVP_PKEY_set1_RSA(auth_private_key, r);
 
-  X509 *x509_auth_key_cert = X509_new();
+  x509_auth_key_cert = X509_new();
   if (!asn1_to_x509(private_key_cert, x509_auth_key_cert)) {
     printf("%s() error, line %d, asn1_to_x509 failed %d\n",
            __func__,
            __LINE__,
            (int)private_key_cert.size());
-    return false;
+    ret = false;
+    goto done;
   }
 
-  STACK_OF(X509) *stack = sk_X509_new_null();
+  stack = sk_X509_new_null();
   if (sk_X509_push(stack, peer_root_cert) == 0) {
     printf("%s() error, line %d, sk_X509_push failed\n", __func__, __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
 
   SSL_CTX_add_client_CA(ctx, peer_root_cert);
@@ -2503,16 +2517,19 @@ bool load_server_certs_and_key(X509 *        root_cert,
 #ifdef BORING_SSL
   if (!SSL_CTX_use_certificate(ctx, x509_auth_key_cert)) {
     printf("%s() error, line %d, use cert failed\n", __func__, __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
   if (!SSL_CTX_use_PrivateKey(ctx, auth_private_key)) {
     printf("%s() error, line %d, use priv key failed\n", __func__, __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
 
   if (!SSL_CTX_set1_chain(ctx, stack)) {
     printf("%s() error, line %d, set1 chain error\n", __func__, __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
 #else
   if (SSL_CTX_use_cert_and_key(ctx,
@@ -2531,7 +2548,8 @@ bool load_server_certs_and_key(X509 *        root_cert,
     print_key(private_key);
     printf("\n");
 #  endif
-    return false;
+    ret = false;
+    goto done;
   }
 #endif
 
@@ -2539,7 +2557,8 @@ bool load_server_certs_and_key(X509 *        root_cert,
     printf("%s() error, line %d, SSL_CTX_check_private_key failed\n",
            __func__,
            __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
 
 #ifdef DEBUG
@@ -2553,7 +2572,16 @@ bool load_server_certs_and_key(X509 *        root_cert,
   }
 #endif
 
-  return true;
+done:
+  if (r != nullptr) {
+    RSA_free(r);
+    r = nullptr;
+  }
+  if (auth_private_key != nullptr) {
+    EVP_PKEY_free(auth_private_key);
+    auth_private_key = nullptr;
+  }
+  return ret;
 }
 
 bool certifier::framework::server_dispatch(
