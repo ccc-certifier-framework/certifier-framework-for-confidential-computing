@@ -605,6 +605,37 @@ def test_run_app_as_a_server_with_trust_manager():
     print(' ... cfm.server_dispatch() with cc_trust_manager &mgr interface succeeded.')
 
 # ##############################################################################
+@pytest.mark.needs_cert_service()
+@pytest.mark.check_leaks()
+def test_trust_manager_write_private_key_to_file():
+    """
+    Exercise the utility method to write out the private key to a file.
+    """
+    cctd = cfm.cc_trust_manager('simulated-enclave', 'authentication',
+                                CertPyTestsDir + '/data/policy_store')
+    assert cctd.cc_all_initialized() is False
+
+    # Performs cold_init() and also does warm_restart()
+    result = cc_trust_manager_get_certified(cctd)
+    assert result is True
+    print(' cc_trust_manager_get_certified() succeeded. cc_all_initialized() is True.')
+
+    result = cctd.cc_auth_key_initialized_ and cctd.cc_policy_info_initialized_
+    assert result is True
+    print(' ... cctd.trust data is initialized.')
+
+    # Negative test: Writing to a non-existent file should fail cleanly
+    pvt_key_filename = CertPyTestsDir + '/Junk-XXX-data/test_write_private_key_to_file.key'
+    result = cctd.write_private_key_to_file(pvt_key_filename)
+    assert result is False
+
+    pvt_key_filename = CertPyTestsDir + '/data/test_write_private_key_to_file.key'
+    result = cctd.write_private_key_to_file(pvt_key_filename)
+    assert result is True
+
+    print(' ... cctd.write_private_key_to_file succeeded:', pvt_key_filename)
+
+# ##############################################################################
 # Work-horse function: Implements the steps taken with cc_trust_manager() object.
 # ##############################################################################
 # pylint: disable=too-many-locals

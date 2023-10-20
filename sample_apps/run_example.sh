@@ -38,7 +38,7 @@ MeMsg="Build and run example program"
 
 # Script global symbols to app-data dirs
 Client_app_data="app1_data"
-Srvr_app_data="app2_data"
+Server_app_data="app2_data"
 
 SimpleServer_PID=0
 # ApplicationServer_PID=0
@@ -1724,10 +1724,10 @@ function mkdirs_for_test() {
     # to create the other client-/server-test data dirs.
     set -x
 
-    rm -rf ${Client_app_data} ${Srvr_app_data} service
+    rm -rf ${Client_app_data} ${Server_app_data} service
     mkdir service
     if [ "${SampleAppName}" != "application_service" ]; then
-        mkdir  ${Client_app_data} ${Srvr_app_data}
+        mkdir  ${Client_app_data} ${Server_app_data}
     fi
 
     set +x
@@ -1761,7 +1761,7 @@ function provision_app_service_files() {
 
     else
         run_cmd cp -p ./* "${EXAMPLE_DIR}"/${Client_app_data}
-        run_cmd cp -p ./* "${EXAMPLE_DIR}"/${Srvr_app_data}
+        run_cmd cp -p ./* "${EXAMPLE_DIR}"/${Server_app_data}
     fi
 
     if [ "${SampleAppName}" = "simple_app_under_sev" ]; then
@@ -1889,9 +1889,10 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
 
         # In order to get access to SWIG-generated *.py modules
         PYTHONPATH=../..; export PYTHONPATH
+        PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
     fi
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"  \
-                --data_dir="./${Srvr_app_data}/"                \
+                --data_dir="./${Server_app_data}/"                \
                 --operation=cold-init                           \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
@@ -1900,7 +1901,7 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
     run_cmd sleep 1
 
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"  \
-                --data_dir="./${Srvr_app_data}/"                \
+                --data_dir="./${Server_app_data}/"                \
                 --operation=get-certified                       \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
@@ -1917,14 +1918,14 @@ function run_simple_app_under_oe_as_server_talk_to_Cert_Service() {
     run_cmd ./host/host                             \
                 enclave/enclave.signed              \
                 cold-init                           \
-                "${EXAMPLE_DIR}"/${Srvr_app_data}
+                "${EXAMPLE_DIR}"/${Server_app_data}
 
     run_cmd sleep 1
 
     run_cmd ./host/host                             \
                 enclave/enclave.signed              \
                 get-certified                       \
-                "${EXAMPLE_DIR}"/${Srvr_app_data}
+                "${EXAMPLE_DIR}"/${Server_app_data}
 
     run_popd
 }
@@ -1940,7 +1941,7 @@ function run_simple_app_under_gramine_as_server_talk_to_Cert_Service() {
     run_pushd "${EXAMPLE_DIR}"
 
     run_cmd gramine-sgx gramine_example_app         \
-                --data_dir="./${Srvr_app_data}/"    \
+                --data_dir="./${Server_app_data}/"    \
                 --operation=cold-init               \
                 --policy_store_file=policy_store    \
                 --print_all=true || 0
@@ -1948,7 +1949,7 @@ function run_simple_app_under_gramine_as_server_talk_to_Cert_Service() {
     run_cmd sleep 1
 
     run_cmd gramine-sgx gramine_example_app         \
-                --data_dir="./${Srvr_app_data}/"    \
+                --data_dir="./${Server_app_data}/"    \
                 --operation=get-certified           \
                 --policy_store_file=policy_store    \
                 --print_all=true || 0
@@ -1962,13 +1963,13 @@ function run_simple_app_under_sev_as_server_talk_to_Cert_Service() {
     run_pushd "${EXAMPLE_DIR}"
 
     run_cmd "${EXAMPLE_DIR}"/sev_example_app.exe    \
-                --data_dir="./${Srvr_app_data}/"    \
+                --data_dir="./${Server_app_data}/"    \
                 --operation=cold-init               \
                 --policy_store_file=policy_store    \
                 --print_all=true
 
     run_cmd "${EXAMPLE_DIR}"/sev_example_app.exe    \
-                --data_dir="./${Srvr_app_data}/"    \
+                --data_dir="./${Server_app_data}/"    \
                 --operation=get-certified           \
                 --policy_store_file=policy_store    \
                 --print_all=true
@@ -2022,6 +2023,7 @@ function run_app_by_name_as_client_talk_to_Cert_Service() {
 
         # In order to get access to SWIG-generated *.py modules
         PYTHONPATH=../..; export PYTHONPATH
+        PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
     fi
 
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
@@ -2150,10 +2152,11 @@ function run_app_by_name_as_server_offers_trusted_service() {
 
         # In order to get access to SWIG-generated *.py modules
         PYTHONPATH=../..; export PYTHONPATH
+        PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
     fi
     # Run app as a server: In app as a server terminal run the following:
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"        \
-                --data_dir="./${Srvr_app_data}/"    \
+                --data_dir="./${Server_app_data}/"    \
                 --operation=run-app-as-server       \
                 --policy_store_file=policy_store    \
                 ${print_all_arg} &
@@ -2176,7 +2179,7 @@ function run_simple_app_under_oe_as_server_offers_trusted_service() {
     run_cmd ./host/host                         \
                 enclave/enclave.signed          \
                 run-app-as-server               \
-                "${EXAMPLE_DIR}/${Srvr_app_data}" &
+                "${EXAMPLE_DIR}/${Server_app_data}" &
 
     run_cmd sleep 5
 
@@ -2193,7 +2196,7 @@ function run_simple_app_under_gramine_as_server_offers_trusted_service() {
 
     # Run app as a server: In app as a server terminal run the following:
     run_cmd gramine-sgx gramine_example_app         \
-                --data_dir=./"${Srvr_app_data}"/    \
+                --data_dir=./"${Server_app_data}"/    \
                 --operation=run-app-as-server       \
                 --policy_store_file=policy_store    \
                 --print_all=true || 0 &
@@ -2256,6 +2259,7 @@ function run_app_by_name_as_client_make_trusted_request() {
 
         # In order to get access to SWIG-generated *.py modules
         PYTHONPATH=../..; export PYTHONPATH
+        PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
     fi
     # Run app as a client: In app as a client terminal run the following:
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"        \
@@ -2684,13 +2688,13 @@ function run_simple_app_under_app_service_as_server_talk_to_Cert_Service() {
 
     run_cmd "${EXAMPLE_DIR}"/start_program.exe                              \
             --executable="${EXAMPLE_DIR}"/service_example_app.exe   \
-            --args="--print_all=true,--operation=cold-init,--data_dir=${EXAMPLE_DIR}/${Srvr_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
+            --args="--print_all=true,--operation=cold-init,--data_dir=${EXAMPLE_DIR}/${Server_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
 
     run_cmd sleep 5
 
     run_cmd "${EXAMPLE_DIR}"/start_program.exe                              \
             --executable="${EXAMPLE_DIR}"/service_example_app.exe   \
-            --args="--print_all=true,--operation=get-certified,--data_dir=${EXAMPLE_DIR}/${Srvr_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
+            --args="--print_all=true,--operation=get-certified,--data_dir=${EXAMPLE_DIR}/${Server_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
 
     run_popd
 }
@@ -2728,7 +2732,7 @@ function run_simple_app_under_app_service_as_server_offers_trusted_service() {
 
     run_cmd "${EXAMPLE_DIR}"/start_program.exe                              \
             --executable="${EXAMPLE_DIR}"/service_example_app.exe   \
-            --args="--print_all=true,--operation=run-app-as-server,--data_dir=${EXAMPLE_DIR}/${Srvr_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
+            --args="--print_all=true,--operation=run-app-as-server,--data_dir=${EXAMPLE_DIR}/${Server_app_data}/,--measurement_file=example_app.measurement,--policy_store_file=policy_store,--parent_enclave=simulated-enclave"
 
     run_popd
 }

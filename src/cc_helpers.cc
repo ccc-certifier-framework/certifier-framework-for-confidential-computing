@@ -1611,6 +1611,43 @@ bool certifier::framework::cc_trust_manager::put_certifiers_in_store() {
                                  serialized_cert_messages);
 }
 
+bool certifier::framework::cc_trust_manager::write_private_key_to_file(
+    const string &filename) {
+  RSA *tmp_rsa = RSA_new();
+  if (!key_to_RSA(private_auth_key_, tmp_rsa)) {
+    printf("%s() error, line %d, Failed to convert private key to "
+           "RSA format.\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  FILE *outfh = fopen(filename.c_str(), "wb");
+  if (!outfh) {
+    printf("%s() error, line %d, Failed to open output file: '%s'\n",
+           __func__,
+           __LINE__,
+           filename.c_str());
+    RSA_free(tmp_rsa);
+    return false;
+  }
+  PEM_write_RSAPrivateKey(outfh,
+                          tmp_rsa,
+                          nullptr,
+                          nullptr,
+                          0,
+                          nullptr,
+                          nullptr);
+  fclose(outfh);
+  RSA_free(tmp_rsa);
+
+#ifdef DEBUG
+  printf("%s(): Wrote private key in PEM-format to file '%s'\n",
+         __func__,
+         filename.c_str());
+#endif  // DEBUG
+  return true;
+}
+
 certifier::framework::certifiers::certifiers(cc_trust_manager *owner) {
   owner_ = owner;
 }
