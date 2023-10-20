@@ -336,6 +336,7 @@ class cc_trust_manager {
   bool certify_secondary_domain(const string &domain_name);
   bool get_certifiers_from_store();
   bool put_certifiers_in_store();
+  bool write_private_key_to_file(const string &filename);
 };
 
 // Certification Anchors

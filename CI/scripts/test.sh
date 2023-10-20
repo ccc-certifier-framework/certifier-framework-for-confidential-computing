@@ -12,8 +12,6 @@ pushd "$(dirname "$0")" > /dev/null 2>&1
 cd ../..
 CERT_ROOT="$(pwd)"
 
-popd > /dev/null 2>&1
-
 # Establish # of CPUs, so make -j<num threads> can be maximised
 NumCPUs=1
 if [ "$(uname -s)" = "Linux" ]; then
@@ -31,11 +29,21 @@ This_fn=""
 # traps (see below) get inherited by functions, command substitutions, and
 # subshell environments
 # Ref: https://citizen428.net/blog/bash-error-handling-with-trap/
-#
+# ###########################################################################
 function cleanup() {
     set +x
     echo " "
     echo "${Me}: **** Error **** Failed command, ${BASH_COMMAND}, at line $(caller) while executing function ${This_fn}"
+
+    failed_test="test-build-and-install-sev-snp-simulator"
+    if [ "${This_fn}" = "${failed_test}" ]; then
+        echo " "
+        echo "${Me}: To fix 'make insmod' failures, do the following:"
+        echo "  pushd ./sev-snp-simulator"
+        echo "  make rmmod"
+        echo " "
+        echo "Resume test execution using: ${Me} --from-test ${failed_test}"
+    fi
 }
 
 trap cleanup ERR
@@ -95,7 +103,7 @@ function test-core-certifier-programs() {
     echo "* (Also builds shared libraries for use by Python bindings.)"
     echo "******************************************************************"
     echo " "
-    pushd "${CERT_ROOT}"/src
+    pushd "${CERT_ROOT}"/src > /dev/null 2>&1
 
     # ---------------------------------------------------------------------
     # Check that core certifier programs still compile and clear tests
@@ -138,7 +146,7 @@ function test-cert_framework-pytests() {
 
     PYTHONPATH=$(pwd); export PYTHONPATH
 
-    pushd tests/pytests
+    pushd tests/pytests > /dev/null 2>&1
 
     # Run one case showing verbose outputs of each library's contents.
     # Run each py file separately as 'pytest -v' (on all files) craps out.
@@ -187,7 +195,7 @@ function test-mtls-ssl-client-server-comm-pytest() {
     echo "**************************************************************"
     echo " "
 
-    pushd tests
+    pushd tests > /dev/null 2>&1
 
     # Generates required PEM-cert and private-key files for client & server
     ./gen_client_server_certs_key_files.sh
@@ -220,7 +228,7 @@ function unit-test-certlib-utility-programs() {
     echo "* Check core Certlib interfaces for utility programs"
     echo "******************************************************************"
     echo " "
-    pushd utilities
+    pushd utilities > /dev/null 2>&1
 
     # Build utilities
     make -j2 -f cert_utility.mak
@@ -228,7 +236,7 @@ function unit-test-certlib-utility-programs() {
 
     popd > /dev/null 2>&1
 
-    pushd ./certifier_service/certlib/test_data
+    pushd ./certifier_service/certlib/test_data > /dev/null 2>&1
 
     echo " "
     echo "---- Running utilities/cert_utility.exe ... ----"
@@ -249,7 +257,7 @@ function unit-test-certlib-utility-programs() {
     popd > /dev/null 2>&1
 
     # Setup dummy libraries for Certifier Service to link with
-    pushd ./certifier_service/
+    pushd ./certifier_service/ > /dev/null 2>&1
 
     cd ./graminelib/
     make dummy
@@ -294,7 +302,7 @@ function test-run_example-help-list-args() {
     echo "* Exercise run_example with --help, --list arguments ..."
     echo "******************************************************************"
     echo " "
-    pushd ./sample_apps
+    pushd ./sample_apps > /dev/null 2>&1
 
     # Exercise help / usage / list options, for default simple_app
     ./run_example.sh -h
@@ -345,7 +353,7 @@ function test-run_example-dry-run() {
     echo "* Exercise run_example with --dry-run argument ..."
     echo "******************************************************************"
     echo " "
-    pushd ./sample_apps
+    pushd ./sample_apps > /dev/null 2>&1
 
     ./run_example.sh --dry-run simple_app
     ./run_example.sh --dry-run simple_app setup
@@ -388,7 +396,7 @@ function test-run_example-simple_app() {
     echo "* Test: Execute script to compile, build and run simple_app."
     echo "******************************************************************"
     echo " "
-    pushd ./sample_apps
+    pushd ./sample_apps > /dev/null 2>&1
 
     ./cleanup.sh
 
@@ -415,7 +423,7 @@ function test-run_example-simple_app() {
     done
 
     # Rebuild shared library that pytest needs
-    pushd ../src
+    pushd ../src > /dev/null 2>&1
     make -f certifier.mak --always-make -j2 sharedlib
     popd > /dev/null 2>&1
 
@@ -427,7 +435,7 @@ function test-run_example-simple_app() {
     pgrep simple
 
     # Run Python test, in which some test cases need Certifier Service to be up.
-    pushd ../
+    pushd ../ > /dev/null 2>&1
 
     set -x
     PYTHONUNBUFFERED=TRUE PYTHONPATH=./ \
@@ -449,7 +457,7 @@ function test-run_example-simple_app_python() {
     echo "* Test: Execute script to compile, build and run simple_app_python."
     echo "*******************************************************************"
     echo " "
-    pushd ./sample_apps
+    pushd ./sample_apps > /dev/null 2>&1
 
     ./cleanup.sh
 
@@ -458,9 +466,17 @@ function test-run_example-simple_app_python() {
     ps -ef | grep -E 'simpleserver|example_app.exe|run_example.sh|app_service.exe'
     set +x
 
+    pushd "${CERT_ROOT}"/src > /dev/null 2>&1
+
+    # Do this, so this test target can be run standalone w/o prior dependencies
+    # -B to re-gen protobuf files and remake shared libs w/o errors
+    make -f certifier.mak -j${NumMakeThreads} -B sharedlib
+
+    popd > /dev/null 2>&1
+
     # Need to run this using setup / run_test; otherwise the script will
     # delete non-Git files. That will rm the certifier_framework Py module and
-    # shared libraries.
+    # shared libraries that was just recently built, above.
     ./run_example.sh simple_app_python setup
     ./run_example.sh simple_app_python run_test
 
@@ -475,7 +491,7 @@ function test-build-and-setup-App-Service-and-simple_app_under_app_service() {
     echo "* Build-and-setup Application Service "
     echo "***************************************"
     echo " "
-    pushd ./sample_apps
+    pushd ./sample_apps > /dev/null 2>&1
 
     ./run_example.sh application_service setup
 
@@ -537,15 +553,11 @@ function test-build-and-install-sev-snp-simulator() {
     echo "* Build and install SEV-SNP simulator, to run Cert tests with simulated SEV-enabled."
     echo "*************************************************************************************"
     echo " "
-    pushd ./sev-snp-simulator
+    pushd ./sev-snp-simulator > /dev/null 2>&1
 
     make clean
     make
     make keys
-
-    # You may need this in your dev-box, but on CI this will not be needed
-    # as we have not run 'insmod', yet.
-    # make rmmod
 
     make insmod
 
@@ -558,7 +570,7 @@ function test-sev-snp-simulator-sev-test() {
     echo "* Run sev-snp-simulator sev-test ... "
     echo "******************************************************************"
     echo " "
-    pushd ./sev-snp-simulator/test
+    pushd ./sev-snp-simulator/test > /dev/null 2>&1
 
     make sev-test
     sudo ./sev-test
@@ -572,7 +584,7 @@ function test-certifier-build-and-test-simulated-SEV-mode() {
     echo "* Check that Certifier tests run clean with simulated SEV-enabled."
     echo "******************************************************************"
     echo " "
-    pushd src
+    pushd src > /dev/null 2>&1
 
     make -f certifier_tests.mak clean
     ENABLE_SEV=1 make -j2 -f certifier_tests.mak
@@ -599,14 +611,23 @@ function test-simple_app_under_sev-simulated-SEV-mode() {
     echo "* Run simple_app_under_sev in simulated-SEV environment."
     echo "******************************************************************"
     echo " "
-    pushd ./sample_apps
+    pushd ./sample_apps > /dev/null 2>&1
 
     ./run_example.sh rm_non_git_files
     ./run_example.sh simple_app_under_sev setup
     sudo ./run_example.sh simple_app_under_sev run_test
 
     sudo ./cleanup.sh
+
     popd > /dev/null 2>&1
+
+    cd "${CERT_ROOT}"/sev-snp-simulator
+
+    # On CI this is not needed, but you may need this in your dev-box
+    # so that you can re-run tests and not run into failures from 'insmod'
+    make rmmod
+
+    cd "${CERT_ROOT}"
 }
 
 # #############################################################################
@@ -615,7 +636,7 @@ function test-simple_app_under_keystone-using-shim() {
     echo "* Run simple_app_under_keystone using shim"
     echo "********************************************"
     echo " "
-    pushd ./sample_apps
+    pushd ./sample_apps > /dev/null 2>&1
 
     ./run_example.sh rm_non_git_files
     ./run_example.sh simple_app_under_keystone setup
@@ -631,7 +652,7 @@ function test-ISLET-SDK-shim_test() {
     echo "* Download ISLET SDK, build the library and run shim_test"
     echo "**********************************************************"
     echo " "
-    pushd src/islet
+    pushd src/islet > /dev/null 2>&1
 
     ../../third_party/islet/setup.sh
 
@@ -655,7 +676,7 @@ function test-run_example-simple_app_under_islet-using-shim() {
     echo "* Test: Execute script to compile, build and run simple_app_under_islet using shim"
     echo "***********************************************************************************"
     echo " "
-    pushd ./sample_apps
+    pushd ./sample_apps > /dev/null 2>&1
 
     ./cleanup.sh
 
