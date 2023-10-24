@@ -17,7 +17,7 @@
 #ifndef __UAPI_LINUX_SEV_GUEST_H_
 #define __UAPI_LINUX_SEV_GUEST_H_
 
-#ifndef MACOS
+#ifndef MACOSX
 #  include <linux/types.h>
 #else
 typedef unsigned char      uint8_t;

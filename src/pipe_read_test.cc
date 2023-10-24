@@ -25,7 +25,7 @@ using namespace certifier::utilities;
 int main(int an, char **av) {
 
   int fd[2];
-#ifndef MACOS
+#ifndef MACOSX
   if (pipe2(fd, O_DIRECT) < 0) {
     printf("Pipe failed\n");
     return 0;
@@ -33,7 +33,7 @@ int main(int an, char **av) {
 #else
   printf("%s: This program is not supported on Mac/OSX.\n", av[0]);
   return 0;
-#endif  // MACOS
+#endif  // MACOSX
 
   const int buf_size = 100;
   byte      buf[buf_size];

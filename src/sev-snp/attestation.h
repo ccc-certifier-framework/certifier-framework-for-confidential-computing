@@ -3,7 +3,7 @@
 #ifndef ATTESTATION_H
 #define ATTESTATION_H
 
-#ifndef MACOS
+#ifndef MACOSX
 #  include <linux/types.h>
 
 #  ifndef uint64_t

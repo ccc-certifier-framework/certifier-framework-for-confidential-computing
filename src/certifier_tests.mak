@@ -46,7 +46,7 @@ UNAME_S := $(shell uname -s)
 CFLAGS_COMMON = $(INCLUDE) -g -std=c++17 -D X64 -Werror -Wall -Wno-unused-variable -Wno-deprecated-declarations
 
 ifeq ($(UNAME_S),Darwin)
-    CFLAGS_COMMON += -DMACOS=1
+    CFLAGS_COMMON += -DMACOSX=1
 endif
 
 CFLAGS  = $(CFLAGS_COMMON) -O3
@@ -94,13 +94,29 @@ SWIG_CERT_TESTS_INTERFACE = certifier_tests
 
 PY_INCLUDE = $(shell pkg-config python3 --cflags)
 
-LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
+UNAME_S := $(shell uname -s)
 
 # RESOLVE: Old forms used in Mac/OSX port ... Delete when done.
 # PY_INCLUDE = -I /usr/include/python3.10/ -I /usr/local/Cellar/python@3.11/3.11.4_1/Frameworks/Python.framework/Versions/3.11/include/python3.11
 
 # LDFLAGS = -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread
 # LDFLAGS = -L/usr/local/opt/openssl@1.1/lib/ -L /usr/local/opt/protobuf@3/lib -L $(LOCAL_LIB) -lcrypto -lssl -lprotobuf -lgtest -lgflags -lpthread
+
+ifeq ($(UNAME_S),Darwin)
+    LDFLAGS_MACOSX = -L /usr/local/opt/protobuf@3/lib
+endif
+
+# This convoluted version isn't working ...
+# LDFLAGS = $(LDFLAGS_MACOSX) -L $(LOCAL_LIB) -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -lprotobuf -lgtest -lgflags -lpthread
+
+# This is the working-version from certifier.mak ...
+LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+
+ifeq ($(UNAME_S),Linux)
+    LDFLAGS += -luuid
+else
+    LDFLAGS += -ld_classic
+endif
 
 # ----------------------------------------------------------------------
 # Define list of objects for common case which will be extended for

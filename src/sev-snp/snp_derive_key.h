@@ -3,7 +3,7 @@
 #ifndef SNP_KEY_REQ_H
 #define SNP_KEY_REQ_H
 
-#ifndef MACOS
+#ifndef MACOSX
 #  include <linux/types.h>
 #else
 typedef unsigned char      uint8_t;

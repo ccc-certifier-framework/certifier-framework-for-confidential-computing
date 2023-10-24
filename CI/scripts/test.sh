@@ -14,9 +14,13 @@ CERT_ROOT="$(pwd)"
 
 # Establish # of CPUs, so make -j<num threads> can be maximised
 NumCPUs=1
-if [ "$(uname -s)" = "Linux" ]; then
+OSName="$(uname -s)"
+if [ "${OSName}" = "Linux" ]; then
     NumCPUs=$(grep -c "^processor" /proc/cpuinfo)
+elif [ "${OSName}" = "Darwin" ]; then
+    NumCPUs=$(sysctl -n hw.ncpu)
 fi
+
 # Cap # of -j threads for make to 8
 NumMakeThreads=${NumCPUs}
 if [ "${NumMakeThreads}" -gt 8 ]; then NumMakeThreads=8; fi

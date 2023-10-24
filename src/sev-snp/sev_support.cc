@@ -735,6 +735,19 @@ err:
   return rc;
 }
 
+#if MACOSX
+static int sev_parse_certs(const uint8_t *certs,
+                           size_t         size,
+                           string *       vcek,
+                           string *       ask,
+                           string *       ark) {
+  printf("%s: This function is not supported on Mac/OSX.\n", __func__);
+  // Dummy call to avoid compiler warnings on Mac/OSX
+  int rc = sev_export_cert(NULL, certs, size, vcek);
+  rc = EXIT_FAILURE;
+  return rc;
+}
+#else   // MACOSX
 static int sev_parse_certs(const uint8_t *certs,
                            size_t         size,
                            string *       vcek,
@@ -802,6 +815,7 @@ static int sev_parse_certs(const uint8_t *certs,
 out:
   return rc;
 }
+#endif   // MACOSX
 
 int sev_get_platform_certs(string *vcek, string *ask, string *ark) {
   int                       rc = EXIT_FAILURE;
