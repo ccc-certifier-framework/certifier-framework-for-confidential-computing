@@ -99,10 +99,18 @@ FIX_SWIG_SCRIPT = $(CERTIFIER_ROOT)/CI/scripts/fix_swig_wrap.sh
 
 PY_INCLUDE = $(shell pkg-config python3 --cflags)
 
+UNAME_S := $(shell uname -s)
+
 # RESOLVE: Version used in Mac/OSX port ... delete when done.
 # LDFLAGS = -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread
 
-LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
+LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+
+ifeq ($(UNAME_S),Linux)
+    LDFLAGS += -luuid
+else
+    LDFLAGS += -ld_classic
+endif
 
 LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB) -l protobuf
 

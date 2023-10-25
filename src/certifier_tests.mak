@@ -94,8 +94,6 @@ SWIG_CERT_TESTS_INTERFACE = certifier_tests
 
 PY_INCLUDE = $(shell pkg-config python3 --cflags)
 
-UNAME_S := $(shell uname -s)
-
 # RESOLVE: Old forms used in Mac/OSX port ... Delete when done.
 # PY_INCLUDE = -I /usr/include/python3.10/ -I /usr/local/Cellar/python@3.11/3.11.4_1/Frameworks/Python.framework/Versions/3.11/include/python3.11
 
