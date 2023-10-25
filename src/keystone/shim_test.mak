@@ -22,7 +22,9 @@ endif
 #GOOGLE_INCLUDE=/usr/local/include/google
 #endif
 
-LOCAL_LIB=/usr/local/lib
+ifndef LOCAL_LIB
+    LOCAL_LIB=/usr/local/lib
+endif
 
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64

@@ -34,6 +34,12 @@ pushd "${TEST_DATA}" > /dev/null 2>&1
 # In more current OpenSSL v3.0 and later, use -noenc.
 # If your OpenSSL installation is older, change this to -nodes
 pvt_key_encr_arg="-noenc"
+set +e
+open_ssl_ver_is_1x=$(openssl version | grep -c "OpenSSL 1\.")
+set -e
+if [ "${open_ssl_ver_is_1x}" -eq 1 ]; then
+    pvt_key_encr_arg="-nodes"
+fi
 
 echo "${Me}: Generating self-signed server public certificate and private-key ..."
 openssl req -batch -new -x509 -days 365 ${pvt_key_encr_arg} \
