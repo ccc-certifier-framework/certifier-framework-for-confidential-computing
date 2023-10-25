@@ -1,7 +1,9 @@
 #    
 #    File: certifier.mak
 
-ENABLE_SEV=1
+ifndef NO_ENABLE_SEV
+    ENABLE_SEV=1
+endif
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 CERTIFIER_ROOT = ..
@@ -23,7 +25,9 @@ endif
 #GOOGLE_INCLUDE=/usr/local/include/google
 #endif
 
-LOCAL_LIB=/usr/local/lib
+ifndef LOCAL_LIB
+    LOCAL_LIB=/usr/local/lib
+endif
 
 ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64

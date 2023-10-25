@@ -231,8 +231,8 @@ function unit-test-certlib-utility-programs() {
     pushd utilities > /dev/null 2>&1
 
     # Build utilities
-    make -j2 -f cert_utility.mak
-    make -j2 -f policy_utilities.mak
+    make -j${NumMakeThreads} -f cert_utility.mak
+    make -j${NumMakeThreads} -f policy_utilities.mak
 
     popd > /dev/null 2>&1
 
@@ -424,7 +424,7 @@ function test-run_example-simple_app() {
 
     # Rebuild shared library that pytest needs
     pushd ../src > /dev/null 2>&1
-    make -f certifier.mak --always-make -j2 sharedlib
+    NO_ENABLE_SEV=1 make -f certifier.mak --always-make -j${NumMakeThreads} sharedlib
     popd > /dev/null 2>&1
 
     # Re-start Certifier Service as script, above, would have shut it down
@@ -587,7 +587,7 @@ function test-certifier-build-and-test-simulated-SEV-mode() {
     pushd src > /dev/null 2>&1
 
     make -f certifier_tests.mak clean
-    ENABLE_SEV=1 make -j2 -f certifier_tests.mak
+    ENABLE_SEV=1 make -j${NumMakeThreads} -f certifier_tests.mak
     sudo ./certifier_tests.exe --print_all=true
 
     echo " "
@@ -597,7 +597,7 @@ function test-certifier-build-and-test-simulated-SEV-mode() {
     echo " "
     make -f certifier.mak clean
     make -f certifier_tests.mak clean
-    ENABLE_SEV=1 make -j2 -f certifier.mak
+    ENABLE_SEV=1 make -j${NumMakeThreads} -f certifier.mak
 
     popd > /dev/null 2>&1
 
