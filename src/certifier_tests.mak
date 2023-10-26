@@ -74,7 +74,7 @@ SWIG_FLAGS = -Wallkw
 # Base of Certifier tests's interface file for use by SWIG
 SWIG_CERT_TESTS_INTERFACE = certifier_tests
 
-PY_INCLUDE = -I /usr/include/python3.10/
+PY_INCLUDE = $(shell pkg-config python3 --cflags)
 
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
