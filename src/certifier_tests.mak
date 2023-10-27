@@ -39,7 +39,11 @@ O= $(OBJ_DIR)
 I= $(INC_DIR)
 CL=..
 
-INCLUDE = -I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I $(S)/gramine -I /usr/local/opt/protobuf@3/include -I /usr/local/include
+# INCLUDE = -I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I $(S)/gramine -I /usr/local/opt/protobuf@3/include -I /usr/local/include
+
+# INCLUDE = -I $(I) -I /usr/local/opt/openssl/include/ -I $(S)/sev-snp -I $(S)/gramine -I /usr/local/opt/protobuf@3/include -I /usr/local/include
+
+INCLUDE = -I $(I) -I /usr/local/opt/openssl/include/ -I $(S)/sev-snp -I $(S)/gramine -I /usr/local/opt/protobuf@24/include -I /usr/local/include
 
 UNAME_S := $(shell uname -s)
 
@@ -101,14 +105,19 @@ PY_INCLUDE = $(shell pkg-config python3 --cflags)
 # LDFLAGS = -L/usr/local/opt/openssl@1.1/lib/ -L /usr/local/opt/protobuf@3/lib -L $(LOCAL_LIB) -lcrypto -lssl -lprotobuf -lgtest -lgflags -lpthread
 
 ifeq ($(UNAME_S),Darwin)
-    LDFLAGS_MACOSX = -L /usr/local/opt/protobuf@3/lib
+    LDFLAGS_PROTOBUF = -L /usr/local/opt/protobuf@24/lib -lprotobuf
+else
+    LDFLAGS_PROTOBUF = -L $(LOCAL_LIB) -lprotobuf
 endif
 
 # This convoluted version isn't working ...
 # LDFLAGS = $(LDFLAGS_MACOSX) -L $(LOCAL_LIB) -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -lprotobuf -lgtest -lgflags -lpthread
 
 # This is the working-version from certifier.mak ...
-LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+# LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L /usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+
+# Attempt to use just the openssl -> sym-link version.
+LDFLAGS = -L $(LOCAL_LIB) -lgtest -lgflags -lpthread $(LDFLAGS_PROTOBUF) -L /usr/local/opt/openssl/lib/ -lcrypto -lssl
 
 ifeq ($(UNAME_S),Linux)
     LDFLAGS += -luuid
