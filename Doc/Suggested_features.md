@@ -4,7 +4,7 @@
  2. Finish Python interface providing way to get keys and certs from store and using them in secure_channel
  3. thread safety for policy store (easy)
  4. Clean up leaks in channel
- 5. Switch to smphost tools (https://virtee.io/) --- Ye
+ 5. Implement platform features using Ye's interface for Gramine apps
  6. Integration with Confidential Containers from IBM et al
  7. Update Docs
  8. Perf tests, Fuzz testing, valgrind for memory leaks
@@ -19,4 +19,5 @@
 14. Add service API bindings instructions for secure channels. Like https://krpc.github.io/krpc/communication-protocols/tcpip.html.
 15. Sample ACL implementation for access over API's using program measurment as principle name.
 16. Encrypted code loading
+ 5. Switch to smphost tools (https://virtee.io/) --- Ye
 As available:  Islet simulator and final verify, Keystone simulator and final verify
