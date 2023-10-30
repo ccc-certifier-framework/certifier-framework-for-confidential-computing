@@ -202,6 +202,7 @@ function test-mtls-ssl-client-server-comm-pytest() {
 
     cd pytests
 
+    # ----
     # Exercise client-server communication with self-signed certificates
     pytest --capture=tee-sys -v test_client_server_mtls.py -k test_server_process_with_mtls_self_signed_cert &
 
@@ -209,15 +210,31 @@ function test-mtls-ssl-client-server-comm-pytest() {
 
     pytest --capture=tee-sys -v test_client_server_mtls.py -k test_client_app_with_mtls_self_signed_cert
 
+    # ----
     # Basic test to exercise core certificate verification v/s root-CA-cert
     pytest --capture=tee-sys -v test_client_server_mtls.py -k test_verify_certs_versus_root_cert
 
+    # ----
     # Exercise client-server communication with root-CA-signed certificates
-    pytest --capture=tee-sys -v test_client_server_mtls.py -k test_server_process_with_mtls_root_signed_cert &
+    pytest --capture=tee-sys -v test_client_server_mtls.py \
+            -k test_server_process_with_mtls_root_signed_cert_and_pvt_key_file &
 
     sleep 5
 
-    pytest --capture=tee-sys -v test_client_server_mtls.py -k test_client_app_with_mtls_root_signed_cert
+    pytest --capture=tee-sys -v test_client_server_mtls.py \
+            -k test_client_app_with_mtls_root_signed_cert_and_pvt_key_file
+
+    # ----
+    # Exercise client-server communication with root-CA-signed certificates
+    # using private-key written-to and read-from a temp-file, for certificate
+    # verification.
+    pytest --capture=tee-sys -v test_client_server_mtls.py \
+            -k test_server_process_with_mtls_root_signed_cert_using_temp_pvt_key_file &
+
+    sleep 5
+
+    pytest --capture=tee-sys -v test_client_server_mtls.py \
+            -k test_client_app_with_mtls_root_signed_cert_using_temp_pvt_key_file
 
     popd > /dev/null 2>&1
 }
@@ -480,7 +497,35 @@ function test-run_example-simple_app_python() {
     ./run_example.sh simple_app_python setup
     ./run_example.sh simple_app_python run_test
 
+    # ---- Variation -----------------------------------------------------------
+    # Test the scenario that once certified, the server-process and client-app
+    # can be re-started multiple times, without need for the Certifier Service.
+    # Re-starting the server-process will re-load the trust data from the
+    # policy-store. It will no longer need to contact the Certifier Service
+    # to get re-certified.
+    # Then, you can re-start the client-app, to talk to this now-certified
+    # server-process directly through secure SSL channel.
+    # The following sequence of steps validate this workflow and verify that
+    # the client and server can communicate through this secure channel.
+    # --------------------------------------------------------------------------
+    echo " "
+    echo "*******************************************************************"
+    echo "* Test Variation: Re-start server-process and client-app after shutting down the Certifier Service ..."
+    echo "*******************************************************************"
+    echo " "
+
     ./cleanup.sh
+
+    # This invokes the 'run-app-as-server' operation in example_app.py
+    # which does a warm_restart() to re-load trust data from the policy-store.
+    ./run_example.sh simple_app_python run_app_as_server_offers_trusted_service
+
+    # This invokes the 'run-app-as-client' operation in example_app.py
+    # which does a warm_restart() to re-load trust data from the policy-store.
+    # There is assert code way-deep-down in example_app.py that verifies that
+    # the client gets an expected 'Hello' message from the server, through this
+    # exchange.
+    ./run_example.sh simple_app_python run_app_as_client_make_trusted_request
 
     popd > /dev/null 2>&1
 }
