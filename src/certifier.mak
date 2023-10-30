@@ -40,7 +40,11 @@ O= $(OBJ_DIR)
 I= $(INC_DIR)
 CL=..
 
-INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I /usr/local/include
+# On my Mac, /usr/local/include has /usr/local/include/google@ -> /usr/local/Cellar/protobuf@3/3.20.3/include/google
+# INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I /usr/local/include
+# On my Mac: this points to /usr/local/opt/openssl@ -> ../Cellar/openssl@3/3.1.2 (OpenSSL v3.1.2)
+#   Use this to overcome unresolve symbols link-time error
+INCLUDE=-I $(I) -I /usr/local/opt/openssl/include/ -I $(S)/sev-snp -I /usr/local/include
 
 UNAME_S := $(shell uname -s)
 
@@ -95,8 +99,6 @@ SWIG_PYTEST_INTERFACE = swigpytests
 
 FIX_SWIG_SCRIPT = $(CERTIFIER_ROOT)/CI/scripts/fix_swig_wrap.sh
 
-# PY_INCLUDE = -I /usr/include/python3.10/ -I /usr/local/include/python3/ -I /usr/local/Cellar/python@3.11/3.11.4_1/Frameworks/Python.framework/Versions/3.11/include/python3.11
-
 PY_INCLUDE = $(shell pkg-config python3 --cflags)
 
 UNAME_S := $(shell uname -s)
@@ -104,7 +106,13 @@ UNAME_S := $(shell uname -s)
 # RESOLVE: Version used in Mac/OSX port ... delete when done.
 # LDFLAGS = -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread
 
-LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+ifeq ($(UNAME_S),Darwin)
+    LDFLAGS_PROTOBUF = -lpython -L /usr/local/opt/protobuf@3.20/lib -lprotobuf
+else
+    LDFLAGS_PROTOBUF = -L $(LOCAL_LIB) -lprotobuf
+endif
+
+LDFLAGS = $(LDFLAGS_PROTOBUF) -L $(LOCAL_LIB) -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 
 ifeq ($(UNAME_S),Linux)
     LDFLAGS += -luuid
