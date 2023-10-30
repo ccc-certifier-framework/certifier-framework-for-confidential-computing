@@ -17,42 +17,16 @@
 Basic pytests to exercise stripped-down Client-Server SSL Socket
 communication using mTLS.
 
-# pylint: disable=line-too-long
-
-Sample test program built based on these references:
-
-https://stackoverflow.com/questions/44343230/mutual-ssl-authentication-in-simple-echo-client-server-python-sockets-ssl-m
-https://discuss.python.org/t/ssl-certificate-verify-failed-certificate-verify-failed-ip-address-mismatch-certificate-is-not-valid-for-xxx-xxx-x-xx-ssl-c-997/28403/4
-
-leads to: https://stackoverflow.com/questions/52855924/problems-using-paho-mqtt-client-with-python-3-7
-  where the suggestion to use --addext 'subjectAltName=IP:127.0.0.1' has been provided.
-
-Ref: https://gist.github.com/fntlnz/cf14feb5a46b2eda428e000157447309
-  for a good discussion of how-to generate root-certificate and server key/certificates
-
-Ref: https://stackoverflow.com/questions/30700348/how-to-validate-verify-an-x509-certificate-chain-of-trust-in-python
-  After generating server-and client's public certificate using a common CA root key,
-  both sides have to "validate" the certificate chain. Check if this is done by SSL
-  Python interfaces, automatically.
-
-So, finally, generate client / server certificates and private-keys using these commands:
-$ openssl req -new -x509 -days 365 -noenc -out client.pem -keyout client.key --addext 'subjectAltName=IP:127.0.0.1'
-$ openssl req -new -x509 -days 365 -nodes -out server.pem -keyout server.key --addext 'subjectAltName=IP:127.0.0.1'
-
-Other useful references to understand Certificate chains and domain knowledge:
- - https://shagihan.medium.com/what-is-certificate-chain-and-how-to-verify-them-be429a030887
- - https://stackoverflow.com/questions/30700348/how-to-validate-verify-an-x509-certificate-chain-of-trust-in-python
- - https://pythontic.com/ssl/sslcontext/load_verify_locations - Good simple SSL connection example
- - https://rob-blackbourn.medium.com/secure-communication-with-python-ssl-certificate-and-asyncio-939ae53ccd35
- - https://gist.github.com/fntlnz/cf14feb5a46b2eda428e000157447309#create-root-key
-
 """
 import os
 import socket
 import ssl
 import pprint
+from tempfile import TemporaryDirectory, NamedTemporaryFile
+
 # pylint: disable-next=line-too-long
 from OpenSSL.crypto import X509Store, X509StoreContext, load_certificate, FILETYPE_PEM, X509StoreContextError
+
 
 # pylint: enable=line-too-long
 
@@ -197,17 +171,134 @@ def test_verify_certs_versus_root_cert():
 
 # ##############################################################################
 # To see output, run: pytest --capture=tee-sys -v
-def test_server_process_with_mtls_root_signed_cert():
+def test_server_process_with_mtls_root_signed_cert_and_pvt_key_file():
     """
     Run server-process that listens on an end-point on a secure SSL channel.
     This exercises server process using a cert signed by a root CA.
     """
+    context = setup_server_ssl_context()
+    setup_server_socket_comm_with_client(context)
+
+# ##############################################################################
+# To see output, run: pytest --capture=tee-sys -v
+def test_client_app_with_mtls_root_signed_cert_and_pvt_key_file():
+    """
+    Run client-application that sends message via secure SSL channel.
+    This exercises a client process talking to a server whose cert
+    was generated and signed by a root CA.
+    """
+    ssl_ctxt = setup_client_ssl_context()
+    setup_client_socket_comm_with_server(ssl_ctxt)
+
+
+# ##############################################################################
+# To see output, run: pytest --capture=tee-sys -v
+def test_server_process_with_mtls_root_signed_cert_using_temp_pvt_key_file():
+    """
+    Run server-process that listens on an end-point on a secure SSL channel.
+    This exercises server process using a certificate signed by a root CA.
+
+    Identical to test_server_process_with_mtls_root_signed_cert(), but the
+    private-key file is written to a process-private temp file, to verify
+    that these methods work correctly using such temp-files as input.
+
+    Ref: https://github.com/python/cpython/pull/2449#issuecomment-626305094
+         gh-60691: allow certificates to be specified from memory #2449
+    """
+    with open(SERVER_ROOT_SIGNED_KEYF, 'rt', encoding='utf-8') as keyf:
+        private_key = keyf.read()
+
+    with TemporaryDirectory() as tempdir:
+        with NamedTemporaryFile('wt', dir=tempdir) as temp_keyf:
+            temp_keyf.write(private_key)
+            temp_keyf.flush()
+
+            print(f"\nServer process' private-key file: {temp_keyf.name}")
+            ssl_ctxt = setup_server_ssl_context(temp_keyf.name)
+
+    setup_server_socket_comm_with_client(ssl_ctxt)
+
+# ##############################################################################
+# To see output, run: pytest --capture=tee-sys -v
+def test_client_app_with_mtls_root_signed_cert_using_temp_pvt_key_file():
+    """
+    Run client-application that sends message via secure SSL channel.
+    This exercises a client process talking to a server whose certificate
+    was generated and signed by a root CA.
+
+    Identical to test_client_app_with_mtls_root_signed_cert(), but the
+    private-key file is written to a process-private temp file, to verify
+    that these methods work correctly using such temp-files as input.
+    """
+    with open(CLIENT_ROOT_SIGNED_KEYF, 'rt', encoding='utf-8') as keyf:
+        private_key = keyf.read()
+
+    with TemporaryDirectory() as tempdir:
+        with NamedTemporaryFile('wt', dir=tempdir) as temp_keyf:
+            temp_keyf.write(private_key)
+            temp_keyf.flush()
+
+            print(f"\nClient App's private-key file: {temp_keyf.name}")
+            ssl_ctxt = setup_client_ssl_context(temp_keyf.name)
+
+    setup_client_socket_comm_with_server(ssl_ctxt)
+
+
+# ##############################################################################
+# Helper methods:
+# ##############################################################################
+
+# ##############################################################################
+def setup_server_ssl_context(server_pvt_key_file:str = None):
+    """
+    Helper-method: Setup an SSL context for server to use.
+    Load certificate and private-key to install SSL certificate chains and
+    verify v/s root-policy certificate.
+
+    server_pvt_key_file: Some test-case passes-in a private-key written to
+    a temp file.
+    """
     # Server needs to authenticate the client; hence 'Purpose.CLIENT_AUTH'
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.verify_mode = ssl.CERT_REQUIRED
-    context.load_cert_chain(certfile=SERVER_ROOT_SIGNED_CERT, keyfile=SERVER_ROOT_SIGNED_KEYF)
-    context.load_verify_locations(cafile=ROOT_POLICY_CERT)
 
+    if server_pvt_key_file is None:
+        server_pvt_key_file = SERVER_ROOT_SIGNED_KEYF
+
+    context.load_cert_chain(certfile=SERVER_ROOT_SIGNED_CERT, keyfile=server_pvt_key_file)
+    context.load_verify_locations(cafile=ROOT_POLICY_CERT)
+    return context
+
+# ##############################################################################
+def setup_client_ssl_context(client_pvt_key_file:str = None):
+    """
+    Helper-method: Setup an SSL context for client to use.
+    Load certificate and private-key to install SSL certificate chains and
+    verify v/s root-policy certificate.
+
+    client_pvt_key_file: Some test-case passes-in a private-key written to
+    a temp file.
+    """
+    # Client needs to authenticate the server; hence 'Purpose.SERVER_AUTH'
+    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    context.verify_mode = ssl.CERT_REQUIRED
+
+    if client_pvt_key_file is None:
+        client_pvt_key_file = CLIENT_ROOT_SIGNED_KEYF
+
+    context.load_cert_chain(certfile=CLIENT_ROOT_SIGNED_CERT, keyfile=client_pvt_key_file)
+    context.load_verify_locations(cafile=ROOT_POLICY_CERT)
+    return context
+
+# ##############################################################################
+def setup_server_socket_comm_with_client(ssl_ctxt):
+
+    """
+    Work-horse method to setup secure communication channel with client.
+     - Listen for client on a new socket, using SSLContext 'ssl_ctxt'
+     - Verify client's certificate v/s root-policy certificate
+     - Exchange simple "Hello" message with client.
+    """
     bindsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     bindsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     bindsocket.bind((SERVER_HOST, SERVER_PORT))
@@ -217,7 +308,7 @@ def test_server_process_with_mtls_root_signed_cert():
     new_socket, fromaddr = bindsocket.accept()
     print('\nClient connected: ', fromaddr[0], ":", fromaddr[1])
 
-    secure_sock = context.wrap_socket(new_socket, server_side=True)
+    secure_sock = ssl_ctxt.wrap_socket(new_socket, server_side=True)
 
     print('\ngetpeername:', repr(secure_sock.getpeername()))
     print('\nsecure socket cipher(): ', secure_sock.cipher())
@@ -241,36 +332,34 @@ def test_server_process_with_mtls_root_signed_cert():
         ret_hdr = 'Return back to client: '
         print('\nReturn message back to client:', ret_hdr + str(data, 'UTF-8'))
         secure_sock.write(bytes(ret_hdr, 'UTF-8') +  data)
+
     finally:
         secure_sock.close()
         bindsocket.close()
 
 # ##############################################################################
-# To see output, run: pytest --capture=tee-sys -v
-def test_client_app_with_mtls_root_signed_cert():
-    """
-    Run client-application that sends message via secure SSL channel.
-    This exercises a client process talking to a server whose cert
-    was generated and signed by a root CA.
-    """
-    # Client needs to authenticate the server; hence 'Purpose.SERVER_AUTH'
-    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-    context.verify_mode = ssl.CERT_REQUIRED
-    context.load_cert_chain(certfile=CLIENT_ROOT_SIGNED_CERT, keyfile=CLIENT_ROOT_SIGNED_KEYF)
-    context.load_verify_locations(cafile=ROOT_POLICY_CERT)
+def setup_client_socket_comm_with_server(ssl_ctxt):
 
+    """
+    Work-horse method to setup secure communication channel with server.
+     - Open a socket on server's host/port, using SSLContext 'ssl_ctxt'
+     - Verify server's certificate v/s root-policy certificate
+     - Exchange simple "Hello" message with server.
+     - Verify that server returns expected message.
+    """
     bindsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     bindsocket.setblocking(1)
     bindsocket.connect((SERVER_HOST, SERVER_PORT))
 
     if ssl.HAS_SNI:
-        secure_sock = context.wrap_socket(bindsocket, server_side=False,
-                                          server_hostname=SERVER_HOST)
+        secure_sock = ssl_ctxt.wrap_socket(bindsocket, server_side=False,
+                                           server_hostname=SERVER_HOST)
     else:
-        secure_sock = context.wrap_socket(bindsocket, server_side=False)
+        secure_sock = ssl_ctxt.wrap_socket(bindsocket, server_side=False)
 
     peer_cert = secure_sock.getpeercert()
     print('\n\nPretty-print server peer Certificate:\n', pprint.pformat(peer_cert))
+
     peer_pem_cert = ssl.DER_cert_to_PEM_cert(secure_sock.getpeercert(True))
     peer_x509_cert = load_certificate(FILETYPE_PEM, peer_pem_cert.encode())
     with open(ROOT_POLICY_CERT, encoding='utf-8') as root_cert_file:
@@ -292,17 +381,16 @@ def test_client_app_with_mtls_root_signed_cert():
 
         # Server should have prepended this to our message and returned it
         assert recv_data_str == 'Return back to client: ' + send_msg
+
     finally:
         secure_sock.close()
         bindsocket.close()
 
-# ##############################################################################
-# Helper methods:
-# ##############################################################################
 
 # pylint: disable-next=line-too-long
 # Ref: https://stackoverflow.com/questions/30700348/how-to-validate-verify-an-x509-certificate-chain-of-trust-in-python
-def verify_cert_file_vs_root_cert_file(ca_root_cert_location, cert_location):
+# ##############################################################################
+def verify_cert_file_vs_root_cert_file(ca_root_cert_location:str, cert_location:str):
     """
     Helper method to validate that a certificate being examined is valid
     w.r.t. the root CA certificate provided. (The certificate read from
@@ -362,3 +450,38 @@ def verify_certificate_vs_root_cert2(ca_root_cert_location, cert_location, key_l
     # else:
     #     return None
     return ssl_context
+
+# pylint: disable=pointless-string-statement
+"""
+References:
+
+# pylint: disable=line-too-long
+
+Sample test program built based on these references:
+
+https://stackoverflow.com/questions/44343230/mutual-ssl-authentication-in-simple-echo-client-server-python-sockets-ssl-m
+https://discuss.python.org/t/ssl-certificate-verify-failed-certificate-verify-failed-ip-address-mismatch-certificate-is-not-valid-for-xxx-xxx-x-xx-ssl-c-997/28403/4
+
+leads to: https://stackoverflow.com/questions/52855924/problems-using-paho-mqtt-client-with-python-3-7
+  where the suggestion to use --addext 'subjectAltName=IP:127.0.0.1' has been provided.
+
+Ref: https://gist.github.com/fntlnz/cf14feb5a46b2eda428e000157447309
+  for a good discussion of how-to generate root-certificate and server key/certificates
+
+Ref: https://stackoverflow.com/questions/30700348/how-to-validate-verify-an-x509-certificate-chain-of-trust-in-python
+  After generating server-and client's public certificate using a common CA root key,
+  both sides have to "validate" the certificate chain. Check if this is done by SSL
+  Python interfaces, automatically.
+
+So, finally, generate client / server certificates and private-keys using these commands:
+$ openssl req -new -x509 -days 365 -noenc -out client.pem -keyout client.key --addext 'subjectAltName=IP:127.0.0.1'
+$ openssl req -new -x509 -days 365 -nodes -out server.pem -keyout server.key --addext 'subjectAltName=IP:127.0.0.1'
+
+Other useful references to understand Certificate chains and domain knowledge:
+ - https://shagihan.medium.com/what-is-certificate-chain-and-how-to-verify-them-be429a030887
+ - https://stackoverflow.com/questions/30700348/how-to-validate-verify-an-x509-certificate-chain-of-trust-in-python
+ - https://pythontic.com/ssl/sslcontext/load_verify_locations - Good simple SSL connection example
+ - https://rob-blackbourn.medium.com/secure-communication-with-python-ssl-certificate-and-asyncio-939ae53ccd35
+ - https://gist.github.com/fntlnz/cf14feb5a46b2eda428e000157447309#create-root-key
+
+"""

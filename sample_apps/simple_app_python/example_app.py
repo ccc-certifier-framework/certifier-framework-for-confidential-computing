@@ -10,6 +10,7 @@ import os
 import ssl
 import socket
 import argparse
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from inspect import currentframe
 
 import policy_key
@@ -38,6 +39,7 @@ SERVER_APP_PORT                 = 8124
 
 # ------------------------------------------------------------------------------
 # Script global symbols to app-data dirs.
+CLIENT_APP_DATA='app1_data'
 SERVER_APP_DATA='app2_data'
 PROVISIONING_DIR='./provisioning'
 
@@ -138,7 +140,6 @@ def do_main(args) -> bool:
 
     public_key_alg = "rsa-2048"
     symmetric_key_alg = "aes-256-cbc-hmac-sha256"
-    whoami = 'unknown'
 
     # -------------------------------------------------------------------------
     # Should succeed with valid key algorithm names, after policy key has been
@@ -163,12 +164,6 @@ def do_main(args) -> bool:
             print(fnl(), 'certify_me() failed\n')
             sys.exit(1)
 
-        # Server will persist required files upon certification.
-        if appln_data_dir.endswith(SERVER_APP_DATA):
-            whoami = 'server'
-            # Persist cert-and-key files in the provisioning dir.
-            write_cert_pvt_key_to_files(cctm, whoami, PROVISIONING_DIR, print_all)
-
     # -------------------------------------------------------------------------
     elif operation == 'run-app-as-server':
         print(operation)
@@ -178,8 +173,9 @@ def do_main(args) -> bool:
             print(fnl(), 'warm_restart() failed\n')
             sys.exit(1)
 
-        result = server_dispatch(PROVISIONING_DIR,
-                                 server_app_host, server_app_port)
+        write_certficates_to_file(cctm, 'server', PROVISIONING_DIR, print_all)
+        result = server_dispatch(cctm, PROVISIONING_DIR,
+                                 server_app_host, server_app_port, print_all)
         if result is False:
             print(fnl(), 'server_dispatch() failed\n')
             sys.exit(1)
@@ -202,8 +198,9 @@ def do_main(args) -> bool:
             print(fnl(), 'Primary admisison cert is not valid\n')
             sys.exit(1)
 
-        result = client_dispatch(PROVISIONING_DIR,
-                                 server_app_host, server_app_port)
+        write_certficates_to_file(cctm, 'client', PROVISIONING_DIR, print_all)
+        result = client_dispatch(cctm, PROVISIONING_DIR,
+                                 server_app_host, server_app_port, print_all)
         if result is False:
             print(fnl(), 'client_dispatch() failed\n')
             sys.exit(1)
@@ -211,46 +208,42 @@ def do_main(args) -> bool:
     return result
 
 ###############################################################################
-def write_cert_pvt_key_to_files(cctm, whoami, data_dir, print_all):
+def write_certficates_to_file(cctm, whoami, data_dir, print_all):
     """
-    Persist certificate(s) and private-keys that have been established as
+    Persist app's and root-certificate(s) that have been established as
     part of certification. Data from cc_trust_manager{} is written to disk,
     so that, later, Python interfaces requiring certificates can use this
     data from file(s).
     """
-    assert whoami == 'server'
+    assert whoami in ('client', 'server')
 
     print('cc_auth_key_initialized_ = ', cctm.cc_auth_key_initialized_)
     print('primary_admissions_cert_valid_ = ', cctm.primary_admissions_cert_valid_)
 
     cert_outfile = os.path.join(data_dir, APPLN_CERT_SIGNED_BY_ROOT_CA)
-    pkey_outfile = os.path.join(data_dir, APPLN_KEYF_SIGNED_BY_ROOT_CA)
+    dump_cert_to_file(cctm.serialized_primary_admissions_cert_,
+                      cert_outfile, whoami, print_all)
 
     ca_root_outfile = os.path.join(data_dir, ROOT_CA_POLICY_CERT)
-    dump_cert_to_file(cctm.serialized_primary_admissions_cert_,
-                      cert_outfile, print_all)
-
-    dump_private_key_to_file(cctm, pkey_outfile, print_all)
-
-    dump_cert_to_file(cctm.serialized_policy_cert_, ca_root_outfile, print_all)
+    dump_cert_to_file(cctm.serialized_policy_cert_, ca_root_outfile, whoami, print_all)
 
 ###############################################################################
-def server_dispatch(data_dir, server_app_host, server_app_port):
+def server_dispatch(cctm, data_dir:str, server_app_host:str, server_app_port:int,
+                    print_all: bool):
     """
     Start a server process listening on a SSL socket waiting for client input.
+
+    Parameters:
+      cctm      - Certifier Trust manager object
+      data_dir  - Path of provisioning data directory, where certificate
+                  file(s) has been persisted earlier
+      server_app_host
+      server_app_port
+                - Server app's hostname and port number
     """
-    print(fnl(), 'Start server process ...\n')
+    print('\n**** ', fnl(), 'Start server process ...\n')
 
-    # Server needs to authenticate the client; hence 'Purpose.CLIENT_AUTH'
-    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    context.verify_mode = ssl.CERT_REQUIRED
-
-    cert_outfilename = os.path.join(data_dir, APPLN_CERT_SIGNED_BY_ROOT_CA)
-    key_outfilename  = os.path.join(data_dir, APPLN_KEYF_SIGNED_BY_ROOT_CA)
-    context.load_cert_chain(certfile = cert_outfilename, keyfile = key_outfilename)
-
-    ca_root_outfilename = os.path.join(data_dir, ROOT_CA_POLICY_CERT)
-    context.load_verify_locations(cafile = ca_root_outfilename)
+    ssl_ctxt = setup_server_ssl_context(cctm, data_dir, print_all)
 
     bindsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     bindsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -261,7 +254,7 @@ def server_dispatch(data_dir, server_app_host, server_app_port):
     new_socket, fromaddr = bindsocket.accept()
     print('\n', fnl(), 'Client connected: ', fromaddr[0], ":", fromaddr[1])
 
-    secure_sock = context.wrap_socket(new_socket, server_side=True)
+    secure_sock = ssl_ctxt.wrap_socket(new_socket, server_side=True)
 
     try:
         data = secure_sock.recv(1024)
@@ -277,28 +270,71 @@ def server_dispatch(data_dir, server_app_host, server_app_port):
     return True
 
 ###############################################################################
-def client_dispatch(data_dir, server_app_host, server_app_port):
+def setup_server_ssl_context(cctm, data_dir:str, print_all:bool):
     """
-    Start a client app that sends a message via secure SSL connection.
-    """
-    print(fnl(), 'Start client application process ...\n')
+    Setup a SSL context for server-process, verifying certificates v/s
+    root certificate issued by CA.
 
-    # Client needs to authenticate the server; hence 'Purpose.SERVER_AUTH'
-    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    **** NOTE: **** SSL interfaces need to read the private key from a file.
+
+    So, this method invokes a Certifier trust manager's method to persist
+    the private-key data to a named temporary file. This is recognized as
+    a potential security lapse, where private-key info is available,
+    albeit very briefly, in a temp-file.
+
+    However, the window of abuse is somewhat mitigated as:
+
+      - Name of the tmp-dir and tmp-file is randomly generated
+      - The window-of-exposure is small; between dump_private_key_to_file()
+        and context.load_cert_chain(), below.
+      - The tmp-dir/tmp-file is wiped out immediately after SSL certification,
+        by context.load_cert_chain(), succeeds
+
+    This is the best we can do right now with existing Python SSL interfaces.
+    """
+    # Server needs to authenticate the client; hence 'Purpose.CLIENT_AUTH'
+    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.verify_mode = ssl.CERT_REQUIRED
 
     cert_outfilename = os.path.join(data_dir, APPLN_CERT_SIGNED_BY_ROOT_CA)
-    key_outfilename  = os.path.join(data_dir, APPLN_KEYF_SIGNED_BY_ROOT_CA)
-    context.load_cert_chain(certfile = cert_outfilename, keyfile = key_outfilename)
+
+    with TemporaryDirectory() as tempdir:
+        with NamedTemporaryFile('wt', dir=tempdir, delete=False) as temp_keyf:
+            temp_keyf.close()
+
+            dump_private_key_to_file(cctm, temp_keyf.name, 'server', print_all)
+
+            context.load_cert_chain(certfile = cert_outfilename,
+                                    keyfile = temp_keyf.name)
 
     ca_root_outfilename = os.path.join(data_dir, ROOT_CA_POLICY_CERT)
     context.load_verify_locations(cafile = ca_root_outfilename)
+
+    return context  # SSL Context returned to caller
+
+###############################################################################
+def client_dispatch(cctm, data_dir:str, server_app_host:str, server_app_port:int,
+                    print_all: bool):
+    """
+    Start a client app that sends a message via secure SSL connection.
+
+    Parameters:
+      cctm      - Certifier Trust manager object
+      data_dir  - Path of provisioning data directory, where certificate
+                  file(s) has been persisted earlier
+      server_app_host
+      server_app_port
+                - Server app's hostname and port number
+    """
+    print('\n**** ', fnl(), 'Start client application process ...\n')
+
+    ssl_ctxt = setup_client_ssl_context(cctm, data_dir, print_all)
 
     bindsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     bindsocket.setblocking(1)
     bindsocket.connect((server_app_host, server_app_port))
 
-    secure_sock = context.wrap_socket(bindsocket, server_side=False,
+    secure_sock = ssl_ctxt.wrap_socket(bindsocket, server_side=False,
                                       server_hostname=server_app_host)
 
     send_msg = 'hello'
@@ -318,7 +354,52 @@ def client_dispatch(data_dir, server_app_host, server_app_port):
     return True
 
 ###############################################################################
-def dump_cert_to_file(der_cert, outfile, print_all):
+def setup_client_ssl_context(cctm, data_dir:str, print_all:bool):
+    """
+    Setup a SSL context for client-app, verifying certificates v/s
+    root certificate issued by CA. SSL interfaces need to read the private
+    key from a file. So, this method invokes a Certifier trust manager's
+    method to persist the private-key data to a named temporary file.
+
+    **** NOTE: **** SSL interfaces need to read the private key from a file.
+
+    So, this method invokes a Certifier trust manager's method to persist
+    the private-key data to a named temporary file. This is recognized as
+    a potential security lapse, where private-key info is available,
+    albeit very briefly, in a temp-file.
+
+    However, the window of abuse is somewhat mitigated as:
+
+      - Name of the tmp-dir and tmp-file is randomly generated
+      - The window-of-exposure is small; between dump_private_key_to_file()
+        and context.load_cert_chain(), below.
+      - The tmp-dir/tmp-file is wiped out immediately after SSL certification,
+        by context.load_cert_chain(), succeeds
+
+    This is the best we can do right now with existing Python SSL interfaces.
+    """
+    # Client needs to authenticate the server; hence 'Purpose.SERVER_AUTH'
+    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    context.verify_mode = ssl.CERT_REQUIRED
+
+    cert_outfilename = os.path.join(data_dir, APPLN_CERT_SIGNED_BY_ROOT_CA)
+
+    with TemporaryDirectory() as tempdir:
+        with NamedTemporaryFile('wt', dir=tempdir, delete=False) as temp_keyf:
+            temp_keyf.close()
+
+            dump_private_key_to_file(cctm, temp_keyf.name, 'client', print_all)
+
+            context.load_cert_chain(certfile = cert_outfilename,
+                                    keyfile = temp_keyf.name)
+
+    ca_root_outfilename = os.path.join(data_dir, ROOT_CA_POLICY_CERT)
+    context.load_verify_locations(cafile = ca_root_outfilename)
+
+    return context  # SSL Context returned to caller
+
+###############################################################################
+def dump_cert_to_file(der_cert, outfile:str, whoami:str, print_all:bool):
     """
     Dump an input certificate 'der_cert' in DER-format to an output file in a
     known hard-coded provisioning dir. This helper routine exists to exchange
@@ -332,10 +413,10 @@ def dump_cert_to_file(der_cert, outfile, print_all):
         outf.write(pem_cert)
 
     if print_all:
-        print('\n**** Dumped certificate in PEM-format to:', outfile)
+        print(f'\n**** Dumped {whoami} certificate in PEM-format to: {outfile}')
 
 ###############################################################################
-def dump_private_key_to_file(cctm, outfile, print_all):
+def dump_private_key_to_file(cctm, outfile:str, whoami:str, print_all:bool):
     """
     Dump in PEM-format the private key for the certificate.
     We invoke a trust-manager's method to externalize the private key
@@ -348,11 +429,11 @@ def dump_private_key_to_file(cctm, outfile, print_all):
     """
     result = cctm.write_private_key_to_file(outfile)
     if result is False:
-        print(fnl(), 'Error writing out private-key to file', outfile)
+        print(fnl(), f'Error writing out {whoami} private-key to file', outfile)
         sys.exit(1)
 
     if print_all:
-        print('\n**** Dumped private key in PEM-format to:', outfile)
+        print(f'\n**** Dumped {whoami} private key in PEM-format to:', outfile)
 
 ###############################################################################
 # Argument Parsing routine
@@ -366,10 +447,50 @@ def parseargs(args):
     # ======================================================
     parser  = argparse.ArgumentParser(description='Certifier Framework: Simple App',
                                       formatter_class=argparse.RawDescriptionHelpFormatter,
-                                      epilog=r'''Examples:
-- Basic usage:
+                                      epilog=f'''Examples:
 
-  simple_app_python/example_app.py
+- Run App-as-Server talk to Certifier Service:
+
+  simple_app_python/example_app.py --data-dir=./{SERVER_APP_DATA} \\
+                                   --operation=cold-init \\
+                                   --measurement_file=example_app.measurement \\
+                                   --policy_store_file=policy_store \\
+                                   [ --print_all ]
+
+  simple_app_python/example_app.py --data-dir=./{SERVER_APP_DATA} \\
+                                   --operation=get-certified \\
+                                   --measurement_file=example_app.measurement \\
+                                   --policy_store_file=policy_store \\
+                                   [ --print_all ]
+
+- Run App-as-Client talk to Certifier Service:
+
+  simple_app_python/example_app.py --data-dir=./{CLIENT_APP_DATA} \\
+                                   --operation=cold-init \\
+                                   --measurement_file=example_app.measurement \\
+                                   --policy_store_file=policy_store \\
+                                   [ --print_all ]
+
+  simple_app_python/example_app.py --data-dir=./{CLIENT_APP_DATA} \\
+                                   --operation=get-certified \\
+                                   --measurement_file=example_app.measurement \\
+                                   --policy_store_file=policy_store \\
+                                   [ --print_all ]
+
+- Run App-as-Server offers Trusted Service:
+
+  simple_app_python/example_app.py --data-dir=./{SERVER_APP_DATA} \\
+                                   --operation=run-app-as-server \\
+                                   --policy_store_file=policy_store \\
+                                   [ --print_all ]
+
+- Run App-as-Client makes Trusted Request:
+
+  simple_app_python/example_app.py --data-dir=./{CLIENT_APP_DATA} \\
+                                   --operation=run-app-as-client \\
+                                   --policy_store_file=policy_store \\
+                                   [ --print_all ]
+
 ''')
 
     # Define arguments supported by this script
