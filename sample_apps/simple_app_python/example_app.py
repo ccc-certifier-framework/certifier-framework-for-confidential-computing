@@ -299,9 +299,8 @@ def setup_server_ssl_context(cctm, data_dir:str, print_all:bool):
     cert_outfilename = os.path.join(data_dir, APPLN_CERT_SIGNED_BY_ROOT_CA)
 
     with TemporaryDirectory() as tempdir:
-        with NamedTemporaryFile('wt', dir=tempdir, delete=False) as temp_keyf:
-            temp_keyf.close()
-
+        # With Python v3.10, can also add: delete_on_close=True (default)
+        with NamedTemporaryFile('wt', dir=tempdir, delete=True) as temp_keyf:
             dump_private_key_to_file(cctm, temp_keyf.name, 'server', print_all)
 
             context.load_cert_chain(certfile = cert_outfilename,
@@ -385,9 +384,8 @@ def setup_client_ssl_context(cctm, data_dir:str, print_all:bool):
     cert_outfilename = os.path.join(data_dir, APPLN_CERT_SIGNED_BY_ROOT_CA)
 
     with TemporaryDirectory() as tempdir:
-        with NamedTemporaryFile('wt', dir=tempdir, delete=False) as temp_keyf:
-            temp_keyf.close()
-
+        # With Python v3.10, can also add: delete_on_close=True (default)
+        with NamedTemporaryFile('wt', dir=tempdir, delete=True) as temp_keyf:
             dump_private_key_to_file(cctm, temp_keyf.name, 'client', print_all)
 
             context.load_cert_chain(certfile = cert_outfilename,
