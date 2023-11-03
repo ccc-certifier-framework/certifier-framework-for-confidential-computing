@@ -194,7 +194,7 @@ function usage() {
     echo "  To run an individual step of the ${SampleAppName}         : ./${Me} ${SampleAppName} <step name>"
     echo " "
     # Indentation to align with previous output lines.
-    echo "  Cleanup stale artifacts from build area             : ./${Me} rm_non_git_files"
+    echo "  Cleanup artifacts and stale outputs from build area : ./${Me} rm_non_git_files"
     echo "  Show the environment used to build-and-run a program: ./${Me} ${SampleAppName} show_env"
 
     local test_app="simple_app_under_oe"
@@ -203,7 +203,7 @@ function usage() {
     echo "  Setup and run the simple_app_under_oe program : ./${Me} --dry-run ${test_app}"
     echo "  Setup simple_app_under_oe program             : ./${Me} --dry-run ${test_app} setup"
     echo "  Run and test the simple_app_under_oe program  : ./${Me} --dry-run ${test_app} run_test"
-    echo "  Cleanup stale artifacts from build area       : ./${Me} --dry-run rm_non_git_files"
+    echo "  Cleanup artifacts and outputs from build area : ./${Me} --dry-run rm_non_git_files"
     echo " "
     echo "Options meant for developer usage:"
     echo "  --no-cleanup    : When errors occur, suppress executing cleanup.sh, which will kill active processes."
@@ -641,10 +641,16 @@ function run_popd() {
 # Deep-clean the build-env to remove artifacts (e.g. generated files, binaries
 # etc.) that may have been produced by other steps. We run this to ensure
 # that this script will run successfully w/o any dependencies on executing
-# some prior steps.
+# some prior steps. This function will rm files that are listed in the
+# .gitignore file for this project. This way we won't delete any user's
+# config-/env-files saved for this project.
 # ###########################################################################
 function rm_non_git_files() {
     run_cmd
+    echo "${Me}: Delete all files not tracked by git that are also ignored."
+    if [ $DryRun -eq 1 ]; then
+        return
+    fi
     run_pushd "${CERT_PROTO}"
 
     local MbedTLS_dir_exists=0
@@ -674,12 +680,6 @@ function rm_non_git_files() {
         Islet_lib_exists=1
     fi
 
-    echo "${Me}: Delete all files not tracked by git"
-
-    # shellcheck disable=SC2046
-    run_cmd rm -rf $(git ls-files . --exclude-standard --others)
-
-    echo "${Me}: Delete all files not tracked by git that are also ignored"
     # shellcheck disable=SC2046
     run_cmd rm -rf $(git ls-files . --exclude-standard --others --ignored)
 
