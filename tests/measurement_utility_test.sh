@@ -48,7 +48,7 @@ measurement_no_policy_key=$(cat ${mode}.out | cut -f2 -d' ')
 mode=stub_policy_key
 "${CERT_UTILS}"/measurement_utility.exe --type=hash \
         --input=../example_app.py \
-        --policy_key=../policy_key.py \
+        --other_files=../policy_key.py \
         --output=example_app.measurement.${mode} \
         --print-all \
         > ${mode}.out
@@ -77,7 +77,7 @@ fi
 mode=with_policy_key
 "${CERT_UTILS}"/measurement_utility.exe --type=hash \
         --input=../example_app.py \
-        --policy_key=../policy_key.py \
+        --other_files=../policy_key.py \
         --output=example_app.measurement.${mode} \
         --print-all \
         > ${mode}.out

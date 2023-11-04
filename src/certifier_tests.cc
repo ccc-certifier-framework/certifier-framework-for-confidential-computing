@@ -53,6 +53,10 @@ TEST(test_digest, test_digest) {
   EXPECT_TRUE(test_digest(FLAGS_print_all));
 }
 
+TEST(test_digest_multiple, test_digest_multiple) {
+  EXPECT_FALSE(test_digest_multiple(FLAGS_print_all));
+}
+
 TEST(test_encrypt, test_encrypt) {
   EXPECT_TRUE(test_encrypt(FLAGS_print_all));
 }

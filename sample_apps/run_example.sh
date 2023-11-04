@@ -1093,7 +1093,9 @@ function get_measurement_of_app_by_name() {
     if [ "${SampleAppName}" = "application_service" ]; then
         measurement_file="app_service.measurement"
     elif [ "${SampleAppName}" = "simple_app_python" ]; then
-        policy_key_arg="--policy_key=../policy_key.py"
+        # For Python simple-app, we need to measure additional files, which
+        # are needed for the app to drive off of Certifier interfaces
+        policy_key_arg="--other_files=../policy_key.py,${CERT_PROTO}/certifier_framework.py,${CERT_PROTO}/libcertifier_framework.so"
     elif [ "${SampleAppName}" = "multidomain_simple_app" ]; then
         measurement_file="multidomain_client_app.measurement"
     fi
@@ -1102,6 +1104,7 @@ function get_measurement_of_app_by_name() {
                 --type=hash                         \
                 --input="../${app_name_exe}"        \
                 ${policy_key_arg}                   \
+                --print_debug                       \
                 --output="${measurement_file}"
 
     # Need to generate measurement for server-app as well, in this case ...
