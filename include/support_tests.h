@@ -26,6 +26,8 @@ bool test_public_keys(bool print_all);
 
 bool test_digest(bool print_all);
 
+bool test_digest_multiple(bool print_all);
+
 bool test_sign_and_verify(bool print_all);
 
 bool test_time(bool print_all);

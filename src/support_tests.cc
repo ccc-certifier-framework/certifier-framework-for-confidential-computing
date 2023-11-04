@@ -633,11 +633,13 @@ byte sha256_test[32] = {0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea,
                         0x41, 0x41, 0x40, 0xde, 0x5d, 0xae, 0x22, 0x23,
                         0xb0, 0x03, 0x61, 0xa3, 0x96, 0x17, 0x7a, 0x9c,
                         0xb4, 0x10, 0xff, 0x61, 0xf2, 0x00, 0x15, 0xad};
+
 byte sha384_test[48] = {
     0xcb, 0x00, 0x75, 0x3f, 0x45, 0xa3, 0x5e, 0x8b, 0xb5, 0xa0, 0x3d, 0x69,
     0x9a, 0xc6, 0x50, 0x07, 0x27, 0x2c, 0x32, 0xab, 0x0e, 0xde, 0xd1, 0x63,
     0x1a, 0x8b, 0x60, 0x5a, 0x43, 0xff, 0x5b, 0xed, 0x80, 0x86, 0x07, 0x2b,
     0xa1, 0xe7, 0xcc, 0x23, 0x58, 0xba, 0xec, 0xa1, 0x34, 0xc8, 0x25, 0xa7};
+
 byte sha512_test[64] = {
     0xdd, 0xaf, 0x35, 0xa1, 0x93, 0x61, 0x7a, 0xba, 0xcc, 0x41, 0x73,
     0x49, 0xae, 0x20, 0x41, 0x31, 0x12, 0xe6, 0xfa, 0x4e, 0x89, 0xa9,
@@ -645,6 +647,7 @@ byte sha512_test[64] = {
     0x92, 0x99, 0x2a, 0x27, 0x4f, 0xc1, 0xa8, 0x36, 0xba, 0x3c, 0x23,
     0xa3, 0xfe, 0xeb, 0xbd, 0x45, 0x4d, 0x44, 0x23, 0x64, 0x3c, 0xe8,
     0x0e, 0x2a, 0x9a, 0xc9, 0x4f, 0xa5, 0x4c, 0xa4, 0x9f};
+
 bool test_digest(bool print_all) {
   const char * message = "1234";
   int          msg_len = strlen(message);
@@ -765,6 +768,135 @@ bool test_digest(bool print_all) {
   }
 
   return true;
+}
+
+#define NUM_TEST_FILES_TO_DIGEST 4
+
+/*
+ * test_digest_multiple() - Similar to test_digest()
+ *
+ * Here we do a simple verification whether the hash-digest produced by
+ * digest_message() is the same if you read-in all input files once
+ * v/s if you read-on each file one-at-a-time and make multiple calls
+ * to digest_message(). Using digest_message(), which is a wrapper around
+ * underlying EVP_Digest*() interfaces, is not additive. This test checks
+ * that the resultant digest is different between the two schemes.
+ */
+bool test_digest_multiple(bool print_all) {
+  // This test-case will be invoked by ./certifier_tests.exe from the src/
+  // dir. Create a list of files to build the hash digest for verification.
+  const char *files_list[] = {"./certifier_tests.exe",
+                              "./support_tests.cc",
+                              "../libcertifier_framework.so",
+                              "../certifier_framework.py"};
+  int         files_size[NUM_TEST_FILES_TO_DIGEST] = {0};
+
+  // Read-in other files to capture each file's size
+  int         max_file_size = 0;
+  int         all_files_total_size = 0;
+  const char *filename = nullptr;
+  for (int i = 0; i < NUM_TEST_FILES_TO_DIGEST; i++) {
+    filename = files_list[i];
+    int this_files_size = file_size(filename);
+    if (this_files_size < 0) {
+      printf("Error: Input file '%s' not found.\n", filename);
+      return false;
+    }
+    files_size[i] = this_files_size;
+    if (max_file_size < this_files_size) {
+      max_file_size = this_files_size;
+    }
+    all_files_total_size += this_files_size;
+  }
+
+  byte *to_hash_single = (byte *)malloc(max_file_size);
+  if (to_hash_single == nullptr) {
+    printf("Error: Cannot malloc %d bytes for to_hash_single[]\n",
+           max_file_size);
+    return false;
+  }
+
+  const int sha256_size = 32;
+
+  byte digest_updated[sha256_size];
+  memset(digest_updated, 0, sizeof(digest_updated));
+
+  // Compute the aggregated hash digest, one file-at-a-time.
+  for (int i = 0; i < NUM_TEST_FILES_TO_DIGEST; i++) {
+    filename = files_list[i];
+    if (!read_file(filename, &files_size[i], to_hash_single)) {
+      free(to_hash_single);
+      printf("Error: Cannot read file '%s'\n", filename);
+      return false;
+    }
+    if (print_all) {
+      printf("Read file: '%s', size=%d\n", filename, files_size[i]);
+    }
+    // Update digest-hash across each file
+    if (!digest_message(Digest_method_sha256,
+                        to_hash_single,
+                        files_size[i],
+                        digest_updated,
+                        sizeof(digest_updated))) {
+      free(to_hash_single);
+      printf("Error: digest_message() failed on file '%s'\n", filename);
+      return false;
+    }
+    printf("Digest after file %d    : ", i);
+    print_bytes(sizeof(digest_updated), digest_updated);
+    printf("\n");
+  }
+  free(to_hash_single);
+
+  byte *to_hash_multiple = (byte *)malloc(all_files_total_size);
+  if (to_hash_multiple == nullptr) {
+    printf("Error: Cannot malloc %d bytes for to_hash_multiple[]\n",
+           all_files_total_size);
+    return false;
+  }
+  byte *to_hash_mult_start = to_hash_multiple;
+  if (print_all) {
+    printf("Allocated to_hash_mult_start[] of size=%d bytes.\n",
+           all_files_total_size);
+  }
+
+  // Read-in all files, adjacent to each other, into to_hash_multiple[]
+  for (int i = 0; i < NUM_TEST_FILES_TO_DIGEST; i++) {
+    filename = files_list[i];
+    if (!read_file(filename, &files_size[i], to_hash_multiple)) {
+      free(to_hash_mult_start);
+      printf("Error: Cannot read file '%s'\n", filename);
+      return false;
+    }
+    if (print_all) {
+      printf("Read file: '%s', size=%d to_hash_multiple=%p\n",
+             filename,
+             files_size[i],
+             to_hash_multiple);
+    }
+    to_hash_multiple += files_size[i];
+  }
+
+  // Compute hash of all files read-in and hashed at once
+  byte digest_multiple[sha256_size];
+  memset(digest_multiple, 0, sizeof(digest_multiple));
+
+  // Update digest-hash across all the files, combined ...
+  if (!digest_message(Digest_method_sha256,
+                      to_hash_mult_start,
+                      all_files_total_size,
+                      digest_multiple,
+                      sizeof(digest_multiple))) {
+    free(to_hash_mult_start);
+    printf("Error: digest_message() failed on all files\n");
+    return false;
+  }
+  free(to_hash_mult_start);
+  printf("Digest after all files : ");
+  print_bytes(sizeof(digest_multiple), digest_multiple);
+  printf("\n");
+
+  return memcmp(digest_multiple, digest_updated, sizeof(digest_updated)) == 0;
 }
 
 bool test_sign_and_verify(bool print_all) {
