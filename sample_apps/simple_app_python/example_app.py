@@ -13,8 +13,8 @@ import argparse
 from tempfile import TemporaryDirectory, NamedTemporaryFile
 from inspect import currentframe
 
-import policy_key
 import certifier_framework as cfm
+import policy_key
 
 ###############################################################################
 # Global Variables: Used in multiple places. List here for documentation
@@ -26,7 +26,6 @@ THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 # Script defaults
 ATTEST_KEY_FILE                 = 'attest_key_file.bin'
 APP_DATA_DIR                    = './app1_data/'
-PROVISIONING_DIR                = './provisioning'
 EXAMPLE_MEASUREMENT             = 'example_app.measurement'
 APP_OP_TYPES                    = 'cold-init, get-certified, run-app-as-client, run-app-as-server'
 PLATFORM_ATTEST_ENDORSEMENT     = 'platform_attest_endorsement.bin'
@@ -36,12 +35,6 @@ POLICY_HOST                     = 'localhost'
 POLICY_HOST_PORT                = 8123
 SERVER_APP_HOST                 = '127.0.0.1'
 SERVER_APP_PORT                 = 8124
-
-# ------------------------------------------------------------------------------
-# Script global symbols to app-data dirs.
-CLIENT_APP_DATA='app1_data'
-SERVER_APP_DATA='app2_data'
-PROVISIONING_DIR='./provisioning'
 
 # Basenames for output files created to persist certificates and keys
 APPLN_CERT_SIGNED_BY_ROOT_CA = 'appln.PEM.cert'
@@ -173,8 +166,8 @@ def do_main(args) -> bool:
             print(fnl(), 'warm_restart() failed\n')
             sys.exit(1)
 
-        write_certficates_to_file(cctm, 'server', PROVISIONING_DIR, print_all)
-        result = server_dispatch(cctm, PROVISIONING_DIR,
+        write_certificates_to_file(cctm, 'server', appln_data_dir, print_all)
+        result = server_dispatch(cctm, appln_data_dir,
                                  server_app_host, server_app_port, print_all)
         if result is False:
             print(fnl(), 'server_dispatch() failed\n')
@@ -198,8 +191,8 @@ def do_main(args) -> bool:
             print(fnl(), 'Primary admisison cert is not valid\n')
             sys.exit(1)
 
-        write_certficates_to_file(cctm, 'client', PROVISIONING_DIR, print_all)
-        result = client_dispatch(cctm, PROVISIONING_DIR,
+        write_certificates_to_file(cctm, 'client', appln_data_dir, print_all)
+        result = client_dispatch(cctm, appln_data_dir,
                                  server_app_host, server_app_port, print_all)
         if result is False:
             print(fnl(), 'client_dispatch() failed\n')
@@ -208,7 +201,7 @@ def do_main(args) -> bool:
     return result
 
 ###############################################################################
-def write_certficates_to_file(cctm, whoami, data_dir, print_all):
+def write_certificates_to_file(cctm, whoami, data_dir, print_all):
     """
     Persist app's and root-certificate(s) that have been established as
     part of certification. Data from cc_trust_manager{} is written to disk,
@@ -439,6 +432,10 @@ def parseargs(args):
     """
     Command-line argument parser. Use './example_app.py --help' to get usage info.
     """
+    # Symbols used in --help info messages
+    client_app_data='app1_data'
+    server_app_data='app2_data'
+
     # ======================================================
     # Start of argument parser, with inline examples text
     # Create 'parser' as object of type ArgumentParser
@@ -449,13 +446,13 @@ def parseargs(args):
 
 - Run App-as-Server talk to Certifier Service:
 
-  simple_app_python/example_app.py --data-dir=./{SERVER_APP_DATA} \\
+  simple_app_python/example_app.py --data-dir=./{server_app_data} \\
                                    --operation=cold-init \\
                                    --measurement_file=example_app.measurement \\
                                    --policy_store_file=policy_store \\
                                    [ --print_all ]
 
-  simple_app_python/example_app.py --data-dir=./{SERVER_APP_DATA} \\
+  simple_app_python/example_app.py --data-dir=./{server_app_data} \\
                                    --operation=get-certified \\
                                    --measurement_file=example_app.measurement \\
                                    --policy_store_file=policy_store \\
@@ -463,13 +460,13 @@ def parseargs(args):
 
 - Run App-as-Client talk to Certifier Service:
 
-  simple_app_python/example_app.py --data-dir=./{CLIENT_APP_DATA} \\
+  simple_app_python/example_app.py --data-dir=./{client_app_data} \\
                                    --operation=cold-init \\
                                    --measurement_file=example_app.measurement \\
                                    --policy_store_file=policy_store \\
                                    [ --print_all ]
 
-  simple_app_python/example_app.py --data-dir=./{CLIENT_APP_DATA} \\
+  simple_app_python/example_app.py --data-dir=./{client_app_data} \\
                                    --operation=get-certified \\
                                    --measurement_file=example_app.measurement \\
                                    --policy_store_file=policy_store \\
@@ -477,14 +474,14 @@ def parseargs(args):
 
 - Run App-as-Server offers Trusted Service:
 
-  simple_app_python/example_app.py --data-dir=./{SERVER_APP_DATA} \\
+  simple_app_python/example_app.py --data-dir=./{server_app_data} \\
                                    --operation=run-app-as-server \\
                                    --policy_store_file=policy_store \\
                                    [ --print_all ]
 
 - Run App-as-Client makes Trusted Request:
 
-  simple_app_python/example_app.py --data-dir=./{CLIENT_APP_DATA} \\
+  simple_app_python/example_app.py --data-dir=./{client_app_data} \\
                                    --operation=run-app-as-client \\
                                    --policy_store_file=policy_store \\
                                    [ --print_all ]
