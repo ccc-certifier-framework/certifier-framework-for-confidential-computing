@@ -136,6 +136,7 @@ SampleApps=( "simple_app"
              "simple_app_under_keystone"
              "simple_app_under_islet"
              "simple_app_python"
+             "multidomain_simple_app"
            )
 
 # ###########################################################################
@@ -459,6 +460,7 @@ function list_steps() {
         | "simple_app_python" \
         | "simple_app_under_keystone" \
         | "simple_app_under_app_service" \
+        | "multidomain_simple_app" \
         | "simple_app_under_islet")
             list_steps_for_app "${Steps[@]}"
             ;;
@@ -632,7 +634,7 @@ function run_popd() {
     if [ ${DryRun} -eq 0 ]; then
         popd > /dev/null 2>&1
     else
-        echo        # Blank-line for readability of commands in dry-run mode
+        echo " "        # Blank-line for readability of commands in dry-run mode
         echo "popd"
     fi
 }
@@ -744,6 +746,24 @@ function gen_policy_and_self_signed_cert() {
                    --operation=generate-policy-key                  \
                    --policy_key_output_file=policy_key_file.bin     \
                    --policy_cert_output_file=policy_cert_file.bin
+
+    elif [ "${SampleAppName}" = "multidomain_simple_app" ]; then
+        run_cmd "$CERT_UTILS"/cert_utility.exe                              \
+                    --operation=generate-policy-key-and-test-keys           \
+                    --policy_key_name=client-policy-key                     \
+                    --policy_key_output_file=client_policy_key_file.bin     \
+                    --policy_cert_output_file=client_policy_cert_file.bin   \
+                    --platform_key_output_file=platform_key_file.bin        \
+                    --attest_key_output_file=attest_key_file.bin
+
+        run_cmd "$CERT_UTILS"/cert_utility.exe                              \
+                    --operation=generate-policy-key-and-test-keys           \
+                    --policy_key_name=server-policy-key                     \
+                    --policy_key_output_file=server_policy_key_file.bin     \
+                    --policy_cert_output_file=server_policy_cert_file.bin   \
+                    --platform_key_output_file=platform_key_file.bin        \
+                    --attest_key_output_file=attest_key_file.bin
+
     else
        run_cmd "$CERT_UTILS"/cert_utility.exe                       \
                    --operation=generate-policy-key-and-test-keys    \
@@ -816,23 +836,36 @@ function gen_policy_key_for_example_app() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
-    python_flag=""
-    init_cert_flag=""
-    outfile="policy_key.cc"
+    if [ "${SampleAppName}" = "multidomain_simple_app" ]; then
 
-    # Invoke utility with python-specific arguments.
-    # Use upper-case names to avoid pylint errors.
-    if [ "${SampleAppName}" = "simple_app_python" ]; then
-        python_flag="--python"
-        init_cert_flag="--array_name=INITIALIZED_CERT"
-        outfile="policy_key.py"
+        outfile="client_policy_key.cc"
+        run_cmd "$CERT_UTILS"/embed_policy_key.exe          \
+                    --input=client_policy_cert_file.bin     \
+                    --output=../${outfile}
+
+        outfile="server_policy_key.cc"
+        run_cmd "$CERT_UTILS"/embed_policy_key.exe          \
+                    --input=server_policy_cert_file.bin     \
+                    --output=../${outfile}
+    else
+        python_flag=""
+        init_cert_flag=""
+        outfile="policy_key.cc"
+
+        # Invoke utility with python-specific arguments.
+        # Use upper-case names to avoid pylint errors.
+        if [ "${SampleAppName}" = "simple_app_python" ]; then
+            python_flag="--python"
+            init_cert_flag="--array_name=INITIALIZED_CERT"
+            outfile="policy_key.py"
+        fi
+
+        run_cmd "$CERT_UTILS"/embed_policy_key.exe   \
+                    ${init_cert_flag}                \
+                    --input=policy_cert_file.bin     \
+                    --output=../${outfile}           \
+                    ${python_flag}
     fi
-
-    run_cmd "$CERT_UTILS"/embed_policy_key.exe   \
-                ${init_cert_flag}                \
-                --input=policy_cert_file.bin     \
-                --output=../${outfile}           \
-                ${python_flag}
 
     run_popd
 }
@@ -869,9 +902,10 @@ function compile_simple_app_under_keystone() {
     run_pushd "${EXAMPLE_DIR}"
     run_cmd rm -rf example_app.mak
     run_cmd ln -s keystone_example_app.mak example_app.mak
-    run_popd
 
     compile_app_common
+    run_cmd rm -rf example_app.mak
+    run_popd
 }
 
 # ###########################################################################
@@ -881,6 +915,18 @@ function compile_simple_app_under_islet() {
     if [ ! -f ./example_app.mak ]; then
         run_cmd ln -s islet_example_app.mak example_app.mak
     fi
+
+    compile_app_common
+    run_cmd rm -rf example_app.mak
+    run_popd
+}
+
+# ###########################################################################
+function compile_multidomain_simple_app() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+    run_cmd rm -rf example_app.mak
+    run_cmd ln -s multidomain_app.mak example_app.mak
 
     compile_app_common
     run_cmd rm -rf example_app.mak
@@ -993,6 +1039,10 @@ function get_measurement_of_trusted_simple_app_python() {
     get_measurement_of_app_by_name "example_app.py"
 }
 
+function get_measurement_of_trusted_multidomain_simple_app() {
+    get_measurement_of_app_by_name "multidomain_client_app.exe"
+}
+
 # ###########################################################################
 function get_measurement_of_trusted_application_service() {
     get_measurement_of_app_by_name "app_service.exe"
@@ -1044,6 +1094,8 @@ function get_measurement_of_app_by_name() {
         measurement_file="app_service.measurement"
     elif [ "${SampleAppName}" = "simple_app_python" ]; then
         policy_key_arg="--policy_key=../policy_key.py"
+    elif [ "${SampleAppName}" = "multidomain_simple_app" ]; then
+        measurement_file="multidomain_client_app.measurement"
     fi
 
     run_cmd "$CERT_UTILS"/measurement_utility.exe   \
@@ -1051,6 +1103,17 @@ function get_measurement_of_app_by_name() {
                 --input="../${app_name_exe}"        \
                 ${policy_key_arg}                   \
                 --output="${measurement_file}"
+
+    # Need to generate measurement for server-app as well, in this case ...
+    if [ "${SampleAppName}" = "multidomain_simple_app" ]; then
+        app_name_exe="multidomain_server_app.exe"
+        measurement_file="multidomain_server_app.measurement"
+
+        run_cmd "$CERT_UTILS"/measurement_utility.exe   \
+                    --type=hash                         \
+                    --input="../${app_name_exe}"        \
+                    --output="${measurement_file}"
+    fi
 
     run_popd
 }
@@ -1161,17 +1224,26 @@ function author_policy() {
 
     construct_policyKey_platform_is_trusted
 
-    construct_policyKey_measurement_is_trusted
+    if [ "${SampleAppName}" = "multidomain_simple_app" ]; then
+        construct_policyKey_measurement_is_trusted_multidomain_simple_app
+    else
+        construct_policyKey_measurement_is_trusted
+    fi
 
     produce_signed_claims_for_vse_policy_statement
 
-    combine_policy_stmts
+    if [ "${SampleAppName}" = "multidomain_simple_app" ]; then
+        combine_policy_stmts_multidomain_simple_app
+    else
+        combine_policy_stmts
+    fi
 
     print_policy
 
     case "${SampleAppName}" in
           "simple_app"  \
         | "simple_app_python"  \
+        | "multidomain_simple_app"  \
         | "application_service")
         construct_platform_key_attestation_stmt_sign_it
         print_signed_claim
@@ -1290,6 +1362,36 @@ function construct_policyKey_platform_is_trusted_app() {
 }
 
 # ###########################################################################
+function construct_policyKey_platform_is_trusted_multidomain_simple_app() {
+    run_cmd
+    run_pushd "${PROV_DIR}"
+
+    local subject_arg="--key_subject"
+    local key_subject_file="platform_key_file.bin"
+
+    # The client and server apps share the same platform_key binary file
+    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe    \
+                "${subject_arg}"="${key_subject_file}"   \
+                --verb="is-trusted-for-attestation"      \
+                --output=ts1.bin
+
+    # server_vse_policy1a.bin is server-policy-key says platform-key is-trusted-for-attestation
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe \
+                --key_subject=server_policy_key_file.bin \
+                --verb="says"                            \
+                --clause=ts1.bin                         \
+                --output=server_vse_policy1a.bin
+
+    # client_vse_policy1b.bin is client-policy-key says platform-key is-trusted-for-attestation
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe \
+                --key_subject=client_policy_key_file.bin \
+                --verb="says"                            \
+                --clause=ts1.bin                         \
+                --output=client_vse_policy1b.bin
+    run_popd
+}
+
+# ###########################################################################
 function construct_policyKey_platform_is_trusted_simple_app_under_oe() {
     run_cmd
     run_pushd "${PROV_DIR}"
@@ -1374,8 +1476,65 @@ function construct_policyKey_measurement_is_trusted() {
 }
 
 # ###########################################################################
+function construct_policyKey_measurement_is_trusted_multidomain_simple_app() {
+    run_cmd
+    run_pushd "${PROV_DIR}"
+
+    measurement_file="multidomain_server_app.measurement"
+    # ts2a is server-measurement is-trusted
+    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe            \
+                --key_subject=""                                 \
+                --measurement_subject="${measurement_file}"      \
+                --verb="is-trusted"                              \
+                --output=ts2a-md-server.bin
+
+    # vse_policy2a is server-policy-key says server_measurement is-trusted
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
+                --key_subject=server_policy_key_file.bin     \
+                --verb="says"                                \
+                --clause=ts2a-md-server.bin                  \
+                --output=server_vse_policy2a.bin
+
+    measurement_file="multidomain_client_app.measurement"
+    # ts2b is client-measurement is-trusted
+    run_cmd "${CERT_UTILS}"/make_unary_vse_clause.exe            \
+                --key_subject=""                                 \
+                --measurement_subject="${measurement_file}"      \
+                --verb="is-trusted"                              \
+                --output=ts2b-md-client.bin
+
+    # vse_policy2b is server-policy-key says client_measurement is-trusted
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe     \
+                --key_subject=server_policy_key_file.bin     \
+                --verb="says"                                \
+                --clause=ts2b-md-client.bin                  \
+                --output=server_vse_policy2b.bin
+
+    # vse_policy2c is client-policy-key says server_measurement is-trusted
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe \
+                --key_subject=client_policy_key_file.bin \
+                --verb="says" \
+                --clause=ts2a-md-server.bin \
+                --output=client_vse_policy2c.bin
+
+    # vse_policy2d is client-policy-key says client_measurement is-trusted
+    run_cmd "${CERT_UTILS}"/make_indirect_vse_clause.exe \
+                --key_subject=client_policy_key_file.bin \
+                --verb="says" \
+                --clause=ts2b-md-client.bin \
+                --output=client_vse_policy2d.bin
+
+    run_popd
+}
+
+# ###########################################################################
 function produce_signed_claims_for_vse_policy_statement() {
     run_cmd
+    if [ "${SampleAppName}" = "multidomain_simple_app" ]; then
+        produce_signed_claims_for_vse_policy_statement_multidomain_simple_app
+        return
+    fi
+
     run_pushd "${PROV_DIR}"
 
     run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
@@ -1389,6 +1548,54 @@ function produce_signed_claims_for_vse_policy_statement() {
                 --duration=9000                                      \
                 --private_key_file=policy_key_file.bin               \
                 --output=signed_claim_2.bin
+
+    run_popd
+}
+
+# ###########################################################################
+function produce_signed_claims_for_vse_policy_statement_multidomain_simple_app() {
+    run_cmd
+    run_pushd "${PROV_DIR}"
+
+    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
+                --vse_file=server_vse_policy1a.bin                   \
+                --duration=9000                                      \
+                --private_key_file=server_policy_key_file.bin        \
+                --output=server_signed_claim_1a.bin
+
+    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe    \
+                --vse_file=client_vse_policy1b.bin                   \
+                --duration=9000                                      \
+                --private_key_file=client_policy_key_file.bin        \
+                --output=client_signed_claim_1b.bin
+
+    # Both measurements are trusted in both domains
+
+    # server-policy-key signs vse_policy2a and policy2b
+    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe   \
+                --vse_file=server_vse_policy2a.bin                  \
+                --duration=9000                                     \
+                --private_key_file=server_policy_key_file.bin       \
+                --output=server_signed_claim_2a.bin
+
+    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe   \
+                --vse_file=server_vse_policy2b.bin                  \
+                --duration=9000                                     \
+                --private_key_file=server_policy_key_file.bin       \
+                --output=server_signed_claim_2b.bin
+
+    # client-policy-key signs vse_policy2c and policy2d
+    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe   \
+                --vse_file=client_vse_policy2c.bin                  \
+                --duration=9000                                     \
+                --private_key_file=client_policy_key_file.bin       \
+                --output=client_signed_claim_2c.bin
+
+    run_cmd "${CERT_UTILS}"/make_signed_claim_from_vse_clause.exe   \
+                --vse_file=client_vse_policy2d.bin                  \
+                --duration=9000                                     \
+                --private_key_file=client_policy_key_file.bin       \
+                --output=client_signed_claim_2d.bin
 
     run_popd
 }
@@ -1420,13 +1627,34 @@ function combine_policy_stmts() {
 }
 
 # ###########################################################################
+function combine_policy_stmts_multidomain_simple_app() {
+    run_cmd
+    run_pushd "${PROV_DIR}"
+
+    run_cmd "${CERT_UTILS}"/package_claims.exe       \
+                --input=server_signed_claim_1a.bin,server_signed_claim_2a.bin,server_signed_claim_2b.bin \
+                --output=server_policy.bin
+
+    run_cmd "${CERT_UTILS}"/package_claims.exe       \
+                --input=client_signed_claim_1b.bin,client_signed_claim_2c.bin,client_signed_claim_2d.bin \
+                --output=client_policy.bin
+
+    run_popd
+}
+
+# ###########################################################################
 # Print the policy (Optional)
 # ###########################################################################
 function print_policy() {
     run_cmd
     run_pushd "${PROV_DIR}"
 
-    run_cmd "${CERT_UTILS}"/print_packaged_claims.exe --input=policy.bin
+    if [ "${SampleAppName}" = "multidomain_simple_app" ]; then
+        run_cmd "${CERT_UTILS}"/print_packaged_claims.exe --input=server_policy.bin
+        run_cmd "${CERT_UTILS}"/print_packaged_claims.exe --input=client_policy.bin
+    else
+        run_cmd "${CERT_UTILS}"/print_packaged_claims.exe --input=policy.bin
+    fi
 
     run_popd
 }
@@ -1728,6 +1956,11 @@ function mkdirs_for_test() {
     mkdir service
     if [ "${SampleAppName}" != "application_service" ]; then
         mkdir  ${Client_app_data} ${Server_app_data}
+
+        if [ "${SampleAppName}" = "multidomain_simple_app" ]; then
+            rm -rf client_service server_service
+            mkdir client_service server_service
+        fi
     fi
 
     set +x
@@ -1752,16 +1985,23 @@ function provision_app_service_files() {
         bin_files_list="${bin_files_list} emulated_keystone_*"
     fi
 
-    # shellcheck disable=SC2086
-    run_cmd cp -p ${bin_files_list} "${EXAMPLE_DIR}"/service
-
-    if [ "${SampleAppName}" = "application_service" ]; then
-        run_cmd cp -p attest*.bin platform*.bin "${EXAMPLE_DIR}"/service
-        run_cmd cp -p app_service.measurement   "${EXAMPLE_DIR}"/service
-
-    else
+    if [ "${SampleAppName}" = "multidomain_simple_app" ]; then
+        run_cmd cp -p ./* "${EXAMPLE_DIR}"/client_service
+        run_cmd cp -p ./* "${EXAMPLE_DIR}"/server_service
         run_cmd cp -p ./* "${EXAMPLE_DIR}"/${Client_app_data}
         run_cmd cp -p ./* "${EXAMPLE_DIR}"/${Server_app_data}
+    else
+        # shellcheck disable=SC2086
+        run_cmd cp -p ${bin_files_list} "${EXAMPLE_DIR}"/service
+
+        if [ "${SampleAppName}" = "application_service" ]; then
+            run_cmd cp -p attest*.bin platform*.bin "${EXAMPLE_DIR}"/service
+            run_cmd cp -p app_service.measurement   "${EXAMPLE_DIR}"/service
+
+        else
+            run_cmd cp -p ./* "${EXAMPLE_DIR}"/${Client_app_data}
+            run_cmd cp -p ./* "${EXAMPLE_DIR}"/${Server_app_data}
+        fi
     fi
 
     if [ "${SampleAppName}" = "simple_app_under_sev" ]; then
@@ -1813,6 +2053,10 @@ function cp_over_app_service_policy_cert_files() {
 # ###########################################################################
 function start_certifier_service() {
     run_cmd
+    if [ "${SampleAppName}" = "multidomain_simple_app" ]; then
+        start_certifier_service_multidomain_simple_app
+        return
+    fi
     run_pushd "${EXAMPLE_DIR}"/service
 
     echo " "
@@ -1843,6 +2087,77 @@ function start_certifier_service() {
 
         SimpleServer_PID=$(pgrep simpleserver)
     fi
+}
+
+# ###########################################################################
+# For multi-domain simple-app, we need to start a Certifier Service, one
+# each for client- and server-apps, each of which is in a diff policy domain.
+# ###########################################################################
+function start_certifier_service_multidomain_simple_app() {
+    run_cmd
+
+    # Run Certifier server for server policy in one window
+    run_pushd "${EXAMPLE_DIR}"/server_service
+
+    echo " "
+    outfile="${PROV_DIR}/server-cert.service.out"
+    echo "$Me: Starting server's Certifier Service ..."
+    echo "$Me: To see messages from server's Certifier Server: tail -f ${outfile}"
+
+    if [ $DryRun -eq 1 ]; then
+        run_cmd "${CERT_PROTO}"/certifier_service/simpleserver      \
+                    --port=8121                                     \
+                    --policyFile=server_policy.bin                  \
+                    --policy_key_file=server_policy_key_file.bin    \
+                    --policy_cert_file=server_policy_cert_file.bin  \
+                    --readPolicy=true
+    else
+
+        echo "${CERT_PROTO}/certifier_service/simpleserver --policyFile=server_policy.bin ... server_policy_key_file.bin ... server_policy_cert_file.bin --readPolicy=true"
+
+        run_cmd "${CERT_PROTO}"/certifier_service/simpleserver      \
+                    --port=8121                                     \
+                    --policyFile=server_policy.bin                  \
+                    --policy_key_file=server_policy_key_file.bin    \
+                    --policy_cert_file=server_policy_cert_file.bin  \
+                    --readPolicy=true                               \
+                     > "${outfile}" 2>&1 &
+
+        sleep 5
+    fi
+
+    run_popd
+
+    # Run Certifier server for client policy in one window
+    run_pushd "${EXAMPLE_DIR}"/client_service
+    echo " "
+    outfile="${PROV_DIR}/client-cert.service.out"
+    echo "$Me: Starting client's Certifier Service ..."
+    echo "$Me: To see messages from client's Certifier Server: tail -f ${outfile}"
+
+    if [ $DryRun -eq 1 ]; then
+        run_cmd "${CERT_PROTO}"/certifier_service/simpleserver      \
+                    --port=8122                                     \
+                    --policyFile=client_policy.bin                  \
+                    --policy_key_file=client_policy_key_file.bin    \
+                    --policy_cert_file=client_policy_cert_file.bin  \
+                    --readPolicy=true
+    else
+
+        echo "${CERT_PROTO}/certifier_service/simpleserver --policyFile=client_policy.bin ... client_policy_key_file.bin ... client_policy_cert_file.bin --readPolicy=true"
+
+        run_cmd "${CERT_PROTO}"/certifier_service/simpleserver      \
+                    --port=8122                                     \
+                    --policyFile=client_policy.bin                  \
+                    --policy_key_file=client_policy_key_file.bin    \
+                    --policy_cert_file=client_policy_cert_file.bin  \
+                    --readPolicy=true                               \
+                     > "${outfile}" 2>&1 &
+
+        sleep 5
+    fi
+
+    run_popd
 }
 
 # ###########################################################################
@@ -1891,8 +2206,8 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
         PYTHONPATH=../..; export PYTHONPATH
         PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
     fi
-    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"  \
-                --data_dir="./${Server_app_data}/"                \
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
+                --data_dir="./${Server_app_data}/"              \
                 --operation=cold-init                           \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
@@ -1900,12 +2215,40 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
 
     run_cmd sleep 1
 
-    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"  \
-                --data_dir="./${Server_app_data}/"                \
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
+                --data_dir="./${Server_app_data}/"              \
                 --operation=get-certified                       \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
                 ${print_all_arg}
+
+    run_popd
+}
+
+# ###########################################################################
+# Run the server-app talking to its Certifier Service to get-certified.
+# ###########################################################################
+function run_multidomain_simple_app_as_server_talk_to_Cert_Service() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    server_app="multidomain_server_app.exe"
+
+    run_cmd "${EXAMPLE_DIR}/${server_app}"                              \
+                --operation=cold-init                                   \
+                --data_dir="./${Server_app_data}/"                      \
+                --measurement_file="multidomain_server_app.measurement" \
+                --policy_store_file=policy_store                        \
+                --policy_port=8121                                      \
+                --print_all=true
+
+    run_cmd "${EXAMPLE_DIR}/${server_app}"                              \
+                --operation=get-certified                               \
+                --data_dir="./${Server_app_data}/"                      \
+                --measurement_file="multidomain_server_app.measurement" \
+                --policy_store_file=policy_store                        \
+                --policy_port=8121                                      \
+                --print_all=true
 
     run_popd
 }
@@ -2046,6 +2389,36 @@ function run_app_by_name_as_client_talk_to_Cert_Service() {
 }
 
 # ###########################################################################
+# Run the client-app, talking to its Certifier Service to get-certified.
+# ###########################################################################
+function run_multidomain_simple_app_as_client_talk_to_Cert_Service() {
+    run_cmd
+    run_pushd "${EXAMPLE_DIR}"
+
+    client_app="multidomain_client_app.exe"
+
+    run_cmd "${EXAMPLE_DIR}/${client_app}"                              \
+                --operation=cold-init                                   \
+                --data_dir="./${Client_app_data}/"                      \
+                --measurement_file="multidomain_client_app.measurement" \
+                --policy_store_file=policy_store                        \
+                --primary_policy_port=8122                              \
+                --secondary_policy_port=8121                            \
+                --print_all=true
+
+    run_cmd "${EXAMPLE_DIR}/${client_app}"                              \
+                --operation=get-certified                               \
+                --data_dir="./${Client_app_data}/"                      \
+                --measurement_file="multidomain_client_app.measurement" \
+                --policy_store_file=policy_store                        \
+                --primary_policy_port=8122                              \
+                --secondary_policy_port=8121                            \
+                --print_all=true
+
+    run_popd
+}
+
+# ###########################################################################
 function run_simple_app_under_oe_as_client_talk_to_Cert_Service() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
@@ -2138,6 +2511,11 @@ function run_simple_app_under_islet_as_server_offers_trusted_service() {
 }
 
 # ###########################################################################
+function run_multidomain_simple_app_as_server_offers_trusted_service() {
+    run_app_by_name_as_server_offers_trusted_service "multidomain_server_app.exe"
+}
+
+# ###########################################################################
 # Shared method, takes app-name as a parameter
 # ###########################################################################
 function run_app_by_name_as_server_offers_trusted_service() {
@@ -2146,19 +2524,25 @@ function run_app_by_name_as_server_offers_trusted_service() {
 
     run_pushd "${EXAMPLE_DIR}"
 
+    measurement_file_arg=""
     print_all_arg="--print_all=true"
+
     if [ "${app_name_exe}" = "example_app.py" ]; then
         print_all_arg="--print_all"
 
         # In order to get access to SWIG-generated *.py modules
         PYTHONPATH=../..; export PYTHONPATH
         PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
+
+    elif [ "${app_name_exe}" = "multidomain_server_app.exe" ]; then
+        measurement_file_arg="--measurement_file=multidomain_server_app.measurement"
     fi
     # Run app as a server: In app as a server terminal run the following:
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"        \
-                --data_dir="./${Server_app_data}/"    \
+                --data_dir="./${Server_app_data}/"  \
                 --operation=run-app-as-server       \
                 --policy_store_file=policy_store    \
+                ${measurement_file_arg}             \
                 ${print_all_arg} &
 
     run_cmd sleep 5
@@ -2246,6 +2630,11 @@ function run_simple_app_under_islet_as_client_make_trusted_request() {
 }
 
 # ###########################################################################
+function run_multidomain_simple_app_as_client_make_trusted_request() {
+    run_app_by_name_as_client_make_trusted_request "multidomain_client_app.exe"
+}
+
+# ###########################################################################
 # Shared method, takes app-name as a parameter
 # ###########################################################################
 function run_app_by_name_as_client_make_trusted_request() {
@@ -2253,19 +2642,25 @@ function run_app_by_name_as_client_make_trusted_request() {
     run_cmd
     run_pushd "${EXAMPLE_DIR}"
 
+    measurement_file_arg=""
     print_all_arg="--print_all=true"
+
     if [ "${app_name_exe}" = "example_app.py" ]; then
         print_all_arg="--print_all"
 
         # In order to get access to SWIG-generated *.py modules
         PYTHONPATH=../..; export PYTHONPATH
         PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
+
+    elif [ "${app_name_exe}" = "multidomain_client_app.exe" ]; then
+        measurement_file_arg="--measurement_file=multidomain_client_app.measurement"
     fi
     # Run app as a client: In app as a client terminal run the following:
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"        \
                 --data_dir="./${Client_app_data}/"  \
                 --operation=run-app-as-client       \
                 --policy_store_file=policy_store    \
+                ${measurement_file_arg}             \
                 ${print_all_arg}
 
     run_popd
@@ -2430,6 +2825,11 @@ function setup_simple_app() {
 }
 
 function setup_simple_app_python() {
+    run_cmd
+    setup_app_by_name
+}
+
+function setup_multidomain_simple_app() {
     run_cmd
     setup_app_by_name
 }

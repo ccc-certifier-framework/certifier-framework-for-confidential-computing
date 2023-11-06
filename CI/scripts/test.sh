@@ -61,6 +61,7 @@ TestList=( "test-core-certifier-programs"
            "test-run_example-simple_app"
            "test-run_example-simple_app_python"
            "test-build-and-setup-App-Service-and-simple_app_under_app_service"
+           "test-run_example-multidomain_simple_app"
            "test-build-and-install-sev-snp-simulator"
            "test-sev-snp-simulator-sev-test"
            "test-certifier-build-and-test-simulated-SEV-mode"
@@ -355,6 +356,8 @@ function test-run_example-help-list-args() {
 
     ./run_example.sh --list simple_app_python
 
+    ./run_example.sh --list multidomain_simple_app
+
     popd > /dev/null 2>&1
 }
 
@@ -403,6 +406,10 @@ function test-run_example-dry-run() {
     ./run_example.sh --dry-run simple_app_under_islet run_test
 
     ./run_example.sh --dry-run simple_app_python
+
+    ./run_example.sh --dry-run multidomain_simple_app
+    ./run_example.sh --dry-run multidomain_simple_app setup
+    ./run_example.sh --dry-run multidomain_simple_app run_test
 
     popd > /dev/null 2>&1
 }
@@ -590,6 +597,28 @@ function test-build-and-setup-App-Service-and-simple_app_under_app_service() {
     # shellcheck disable=SC2009
     ps -ef | grep -v -E 'root|^sys'
     echo " "
+}
+
+# #############################################################################
+function test-run_example-multidomain_simple_app() {
+    echo "************************************************************************"
+    echo "* Test: Execute script to compile, build and run multidomain_simple_app."
+    echo "************************************************************************"
+    echo " "
+    pushd ./sample_apps > /dev/null 2>&1
+
+    ./cleanup.sh
+
+    set -x
+    # shellcheck disable=SC2009
+    ps -ef | grep -E 'simpleserver|example_app.exe|run_example.sh|app_service.exe'
+    set +x
+
+    ./run_example.sh multidomain_simple_app
+
+    ./cleanup.sh
+
+    popd > /dev/null 2>&1
 }
 
 # #############################################################################

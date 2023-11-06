@@ -36,19 +36,24 @@ cd $EXAMPLE_DIR/provisioning
 #policyKey says platformKey is-trused-for-attestation
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
   --verb="is-trusted-for-attestation" --output=ts1.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts1.bin --output=vse_policy1.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1.bin \
   --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
 
 # policy key says measurement is-trusted
 $CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../example_app.exe \
       --output=example_app.measurement
+
 $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
   --measurement_subject=example_app.measurement --verb="is-trusted" \
   --output=ts2.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
   --verb="says" --clause=ts2.bin --output=vse_policy2.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
   --vse_file=vse_policy2.bin --duration=9000 \
   --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
@@ -63,9 +68,11 @@ $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=attest_ke
   --verb="is-trusted-for-attestation" --output=tsc1.bin
 $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=platform_key_file.bin \
   --verb="says" --clause=tsc1.bin --output=vse_policy3.bin
+
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
   --duration=9000 --private_key_file=platform_key_file.bin \
   --output=platform_attest_endorsement.bin
+
 $CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
 
 # provision service and apps
@@ -83,12 +90,16 @@ cp ./* $EXAMPLE_DIR/app2_data
 #compile the server
 cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
 make dummy
+
 cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
 make dummy
+
 cd $CERTIFIER_PROTOTYPE/certifier_service/isletlib
 make dummy
+
 cd $CERTIFIER_PROTOTYPE/certifier_service/teelib
 make
+
 cd $CERTIFIER_PROTOTYPE/certifier_service
 go build simpleserver.go
 
@@ -102,6 +113,7 @@ cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe --print_all=true \
       --operation=cold-init --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
+
 # get client app certified
 $EXAMPLE_DIR/example_app.exe --print_all=true \
       --operation=get-certified --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
@@ -111,6 +123,7 @@ $EXAMPLE_DIR/example_app.exe --print_all=true \
 $EXAMPLE_DIR/example_app.exe --print_all=true \
       --operation=cold-init --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
+
 # get server app certified
 $EXAMPLE_DIR/example_app.exe --print_all=true \
       --operation=get-certified --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
@@ -120,7 +133,7 @@ $EXAMPLE_DIR/example_app.exe --print_all=true \
 cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
       --policy_store_file=policy_store --measurement_file="example_app.measurement"
+
 cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
       --policy_store_file=policy_store --measurement_file="example_app.measurement"
-
