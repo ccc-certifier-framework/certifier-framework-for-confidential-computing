@@ -16,8 +16,9 @@ Except for the ancillary files `attest_key_file.bin`, `example_app.measurement` 
 this example closely models the steps needed for a real (but simple) deployment. In addition,
 this example embeds the policy key in the application using `embed_policy_key.exe`.
 
-Read the [policy_key_notes.txt](policy_key_notes.txt) in the `simple_app` directory and
-[policy_utilities_info.txt](../../utilities/policy_utilities_info.txt) as  a background.
+Read the [policy_key_notes](policy_key_notes.md) in the `simple_app` directory and
+the [policy_utilities_info](../../utilities/policy_utilities_info.md) in the
+`utilities/` directory, as a background.
 
 $CERTIFIER_PROTOTYPE is the top level directory for the Certifier repository.
 It is helpful to have a shell variable for it, e.g., :

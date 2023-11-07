@@ -31,7 +31,7 @@ licenses.
 
 The repository contains the complete Certifier Framework source and a number of
 examples as well as complete instructions.  In particular, the sample program
-in sample_apps/simple_app [example_app.cc](sample_apps/simple_app/example_app.cc)
+in [sample_apps/common/example_app.cc](./sample_apps/common/example_app.cc)
 is a complete guide for building and developing an application, and
 policy, as well as deploying a service.
 
