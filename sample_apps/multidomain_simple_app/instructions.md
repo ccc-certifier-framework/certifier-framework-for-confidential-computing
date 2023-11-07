@@ -1,38 +1,46 @@
-# Simple App - Instructions
+# Multi-Domain Simple App - Instructions
 
 This document gives detailed instructions for building and running the sample
 application and generating the policy for the Certifier Service using the policy
 utilities.
 
-This version of simple_app is like simple_app except that the client and the server
-are in two different policy domains.  Each certifies to their home domain's certifier
-but they also certify to another certifier service.  The initialization up to and
-including the initial certification (performed by certify_me()) is identical
-to simple_example but then the client an the server certify to another domain by first
-recording it's data using
-  add_or_update_new_domain(home_domain_name, domain_cert, home_host, home_port, service_host, service_port)
-where
-  domain_name is the secondary domain name
-  domain_cert is the policy_cert of the secondary domain (der encoded)
-  home_host is the ip address of the secondary domain's certifier_service
-  home_port is the port number of the secondary domain's certifier_service
-  service_host is the ip address of the program's server ip address (when the app runs as a server)
-  service_port is the port number of the program's service port
-Programs first call certify_me() to certify to their home domain and
-certify_secondary_domain(const string& domain_name) on any secondary certifier they need to
-talk to.  When calling secure authenticated channel, the client provides the admissions certificate
-from the target server's home_domain and everythig works as usual after that.
+This version is like the simple_app except that the client and the server
+are in two different policy domains. Each certifies to their home domain's certifier
+but they also certify to another Certifier Service. The initialization up to and
+including the initial certification (performed by `certify_me()`) is identical
+to the simple_app example but then the client and the server certify to another
+domain by first recording its data using
+
+```
+add_or_update_new_domain(domain_name, domain_cert, home_host, home_port, service_host, service_port)
+```
+
+where:
+- `domain_name` is the secondary domain name
+- `domain_cert` is the policy_cert of the secondary domain (DER-encoded)
+- `home_host` is the IP address of the secondary domain's Certifier Service
+- `home_port` is the port number of the secondary domain's Certifier Service
+- `service_host` is the IP address of the program's server IP address (when the app runs as a server)
+- `service_port` is the port number of the program's service port
+
+Programs first call `certify_me()` to certify to their home domain and
+`certify_secondary_domain(const string& domain_name)` on any secondary Certifier
+Service they need to talk to.  When calling secure authenticated channel, the client
+provides the admissions certificate from the target server's home_domain and
+everything works as usual after that.
 
 The sample program will still need to construct the statement "The attestation-key says the
 enclave-key speaks-for the program".  This is the attestation.
 
-Except for the ancillary files `attest_key_file.bin`, `example_app.measurement` and
-`platform_attest_endorsement.bin` which are needed because of the simulated-enclave,
-this example closely models the steps needed for a real (but simple) deployment. In addition,
-this example embeds the policy key in the application using `embed_policy_key.exe`.
+Except for the ancillary files `attest_key_file.bin`, `example_app.measurement`
+and `platform_attest_endorsement.bin`, which are needed because of the use of
+simulated-enclave, this example closely models the steps needed for a real
+(but simple) deployment. In addition, this example embeds the policy key in the
+application using the `embed_policy_key.exe` utility.
 
-Read the [policy_key_notes.txt](policy_key_notes.txt) in the `simple_app` directory and
-[policy_utilities_info.txt](../../utilities/policy_utilities_info.txt) as  a background.
+Read the [policy_key_notes](../simple_app/policy_key_notes.md) in the `simple_app`
+directory and the [policy_utilities_info](../../utilities/policy_utilities_info.md)
+in the `utilities/` directory, as a background.
 
 $CERTIFIER_PROTOTYPE is the top level directory for the Certifier repository.
 It is helpful to have a shell variable for it, e.g., :
@@ -61,8 +69,6 @@ make -f policy_utilities.mak
 ```shell
 mkdir $EXAMPLE_DIR/provisioning
 ```
-
-
 ## Step 3: Generate the policy key and self-signed certificate
 
 ```shell
@@ -378,7 +384,7 @@ If so, **Congratulations! Your first Confidential Computing program worked!**
 simpleserver is complete enough to serve as a server for a security domain.  In practice,
 unlike this example, there will be multiple trusted measurements and possibly multiple
 approved platform keys.  To accomodate these, you will have to repeat steps 7(a) and 7(b)
-for these, putting them in unique files and including them in the 7(c).
+for these, putting them in unique files and including them in the step 7(c).
 
 ### There is also **support for logging**.
 
@@ -406,7 +412,6 @@ be used in step 7(a), above.
 
 * For the Intel tool, see
 https://github.com/intel/linux-sgx/blob/master/sdk/sign_tool/SignTool/sign_tool.cpp
-
 
 -----
 ## Below are commands for general testing:

@@ -7,6 +7,12 @@ that demonstrate how to implement the Certifier APIs on different platforms.
   provisioning and using the Certifier Service with simulated enclaves.
   This simple_app can be run on any Linux machine without need for specialized hardware.
 
+- **simple_app_python/** - This is a version of the stand-alone simple_app sample
+  program written in Python. The [example_app.py](simple_app_python/example_app.py)
+  demonstrates how to use Python bindings to the Certiifer Framework APIs to
+  establish a secure SSL channel between a client and server and exchange messages.
+  This Python simple_app can be run on any Linux machine without need for specialized hardware, using simulated enclaves.
+
 - **simple_app_under_oe/** - This is a sample program that can be run on Intel SGX
   enclaves on Linux platform using the
   [Open Enclave SDK](https://openenclave.io/sdk/), referred briefly as 'OE'.
@@ -55,6 +61,12 @@ that demonstrate how to implement the Certifier APIs on different platforms.
 - **analytics_example/** - This is an example of Privacy Preserving data analytics with
   the Certifier framework. This sample application demonstrates how to conduct
   privacy preserving data analytics with the Certifier Framework on Open Enclave (OE).
+
+- **multidomain_simple_app/** - This is a version of the stand-alone sample
+  simple_app program and shows how to use the Certifier APIs where the client
+  and server apps belong to two different security domains. Each certifies to
+  their home domain's certifier but they also certify to another Certifier
+  Service. 
 
 ----
 # run_example.sh - Setup and run test for sample application programs
