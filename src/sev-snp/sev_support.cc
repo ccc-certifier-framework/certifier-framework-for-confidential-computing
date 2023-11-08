@@ -48,7 +48,9 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-#define SEV_GUEST_DEVICE "/dev/sev-guest"
+#define SEV_GUEST_DEVICE      "/dev/sev-guest"
+#define SEV_IOCTL_MAX_RETRY   10
+#define SEV_IOCTL_RETRY_SLEEP 1
 
 #ifdef SEV_DUMMY_GUEST
 #  define SEV_ECDSA_PRIV_KEY "/etc/certifier-snp-sim/ec-secp384r1-priv-key.pem"
@@ -68,6 +70,23 @@ static void reverse_bytes(uint8_t *buffer, size_t size) {
     *end = temp;
   }
 }
+
+#define ioctl_with_retry(fd, request, ret, ...)                                \
+  do {                                                                         \
+    __label__ retry;                                                           \
+    int tries = 0;                                                             \
+retry:                                                                         \
+    rc = ioctl(fd, request, __VA_ARGS__);                                      \
+    if (rc == -1) {                                                            \
+      if (guest_req.fw_err == SEV_HV_STATUS_GUEST_MSG_RATE_LIMITED             \
+          && tries < SEV_IOCTL_MAX_RETRY) {                                    \
+        sleep(SEV_IOCTL_RETRY_SLEEP);                                          \
+        tries++;                                                               \
+        goto retry;                                                            \
+      }                                                                        \
+    }                                                                          \
+    *(ret) = rc;                                                               \
+  } while (0);
 
 // Extract r and s from an ecdsa signature.
 // Based on get_ecdsa_sig_rs_bytes() in test/acvp_test.c from OpenSSL.
@@ -342,7 +361,7 @@ int sev_request_key(struct sev_key_options *options,
   }
 
   errno = 0;
-  rc = ioctl(fd, SNP_GET_DERIVED_KEY, &guest_req);
+  ioctl_with_retry(fd, SNP_GET_DERIVED_KEY, &rc, &guest_req);
   if (rc == -1) {
     rc = errno;
     perror("ioctl");
@@ -515,7 +534,7 @@ int sev_get_report(const uint8_t *            data,
   }
 
   errno = 0;
-  rc = ioctl(fd, SNP_GET_REPORT, &guest_req);
+  ioctl_with_retry(fd, SNP_GET_REPORT, &rc, &guest_req);
   if (rc == -1) {
     rc = errno;
     perror("ioctl");
@@ -608,7 +627,7 @@ int sev_get_extended_report(const uint8_t *            data,
 
   /* Query the size of the stored certificates */
   errno = 0;
-  rc = ioctl(fd, SNP_GET_EXT_REPORT, &guest_req);
+  ioctl_with_retry(fd, SNP_GET_EXT_REPORT, &rc, &guest_req);
   if (rc == -1 && guest_req.fw_err != 0x100000000) {
     rc = errno;
     perror("ioctl");
@@ -641,7 +660,7 @@ int sev_get_extended_report(const uint8_t *            data,
   /* Retrieve the cert chain */
   req.certs_address = (__u64)certs_data.entry;
   errno = 0;
-  rc = ioctl(fd, SNP_GET_EXT_REPORT, &guest_req);
+  ioctl_with_retry(fd, SNP_GET_EXT_REPORT, &rc, &guest_req);
   if (rc == -1) {
     rc = errno;
     perror("ioctl");

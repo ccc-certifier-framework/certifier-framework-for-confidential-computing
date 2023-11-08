@@ -96,4 +96,7 @@ struct snp_ext_report_req {
 #define SNP_GET_EXT_REPORT                                                     \
   _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x2, struct snp_guest_request_ioctl)
 
+#define SEV_HV_STATUS_INVALID_LEN            ((uint64_t)1 << 32)
+#define SEV_HV_STATUS_GUEST_MSG_RATE_LIMITED ((uint64_t)2 << 32)
+
 #endif /* __UAPI_LINUX_SEV_GUEST_H_ */
