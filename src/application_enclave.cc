@@ -101,7 +101,12 @@ bool application_Seal(int in_size, byte *in, int *size_out, byte *out) {
   req_arg_str.assign((char *)in, in_size);
   req.add_args(req_arg_str);
   string req_str;
-  req.SerializeToString(&req_str);
+  if (!req.SerializeToString(&req_str)) {
+    printf("%s() error, line %d, application_Seal: Can't serialize request\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   if (sized_pipe_write(writer, req_str.size(), (byte *)req_str.data()) < 0) {
     printf("%s() error, line %d, application_Seal: sized_pipe_write failed\n",
            __func__,

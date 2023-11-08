@@ -31,12 +31,13 @@ import (
 	b64 "encoding/base64"
 	"errors"
 	"fmt"
-	certprotos "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
-	"google.golang.org/protobuf/proto"
 	"math/big"
 	"net"
 	"strings"
 	"time"
+
+	certprotos "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	"google.golang.org/protobuf/proto"
 	// oeverify   "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 )
 
@@ -387,6 +388,10 @@ func GetEccKeysFromInternal(k *certprotos.KeyMessage) (*ecdsa.PrivateKey, *ecdsa
 }
 
 func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certprotos.KeyMessage) bool {
+	if PK.Curve == nil {
+		fmt.Printf("No curve\n")
+		return false
+	}
 	km.KeyName = &name
 	format := "vse-key"
 	km.KeyFormat = &format
@@ -394,10 +399,6 @@ func GetInternalKeyFromEccPublicKey(name string, PK *ecdsa.PublicKey, km *certpr
 	fmt.Printf("Bitsize: %d\n", p.BitSize)
 	var ktype string
 	var nm string
-	if PK.Curve == nil {
-		fmt.Printf("No curve\n")
-		return false
-	}
 
 	byteSize := 1 + p.BitSize/8
 	if p.BitSize == 256 {

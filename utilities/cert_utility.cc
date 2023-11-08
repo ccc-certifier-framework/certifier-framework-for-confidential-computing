@@ -334,7 +334,7 @@ int main(int an, char **av) {
         return 1;
       }
     }
-  } else if ("generate-key") {
+  } else if (FLAGS_operation == "generate-key") {
     key_message k;
     if (!generate_key(FLAGS_key_type, FLAGS_key_name, &k)) {
       printf("generate key failed\n");

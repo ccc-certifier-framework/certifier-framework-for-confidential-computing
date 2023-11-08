@@ -60,6 +60,7 @@ certifier::framework::policy_store::~policy_store() {
     delete entry_[i];
     entry_[i] = nullptr;
   }
+  delete[] entry_;
   num_ents_ = 0;
 }
 
@@ -97,7 +98,7 @@ bool certifier::framework::policy_store::get(unsigned ent, string *v) {
 }
 
 bool certifier::framework::policy_store::put(unsigned ent, const string v) {
-  if (ent < 0 || ent >= num_ents_)
+  if (ent >= num_ents_)
     return false;
   entry_[ent]->value_ = v;
   return true;

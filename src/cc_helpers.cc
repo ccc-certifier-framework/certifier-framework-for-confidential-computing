@@ -1545,7 +1545,10 @@ bool certifier::framework::cc_trust_manager::get_certifiers_from_store() {
 
   certifiers_message cert_messages;
   string             serialized_cert_messages;
-  store_.get(ent, &serialized_cert_messages);
+  if (!store_.get(ent, &serialized_cert_messages)) {
+    printf("%s() error, line %d, can't get certifiers\n", __func__, __LINE__);
+    return false;
+  }
   if (!cert_messages.ParseFromString(serialized_cert_messages)) {
     printf("%s() error, line %d, can't parse certifiers\n", __func__, __LINE__);
     return false;
