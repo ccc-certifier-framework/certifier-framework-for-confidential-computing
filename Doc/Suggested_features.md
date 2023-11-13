@@ -16,7 +16,7 @@
     Retrieve them and send (over encrypted channel) in response to a proper attestation.  You
     Can use the key provisioning in Certifier in a Tee code as a guide.
 13. Token issuing serevice example
-14. Add service API bindings instructions for secure channels. Like https://krpc.github.io/krpc/communication-protocols/tcpip.html.
+14. Add service API bindings instructions for secure channels. See https://krpc.github.io/krpc/communication-protocols/tcpip.html.
 15. Sample ACL implementation for access over API's using program measurment as principle name.
 16. Encrypted code loading
  5. Switch to smphost tools (https://virtee.io/) --- Ye
