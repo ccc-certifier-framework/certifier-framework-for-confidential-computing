@@ -1476,6 +1476,16 @@ struct sgx_quote_t
 	uint8_t               signature[];                                 // 0x1B4
 };
 */
+
+// The returned quantities are sort of described in the Intel Architecure manual
+// in chapter 38 but not in detail.  They are:
+//	qesvm: The quoting enclave security version number (16 bits).
+//	pceSvn: The provisioning enclave security version number (16 bits).
+//	cpuSvn: The cpu security version number (128 bits) which consists of
+//		"small integers describing the version numbers of compnents".
+//	debug: Whether the enclave is debugable.
+//	mode64bit: Running as x64 (rather than i32).
+// The last two come from the attributes field.
 func GetPlatformAttributesFromGramineAttest(binGramineAttest []byte) (uint16, uint16, []byte, bool, bool) {
 	qeSvn := uint16(binGramineAttest[0x8])
 	pceSvn := uint16(binGramineAttest[0xA])
