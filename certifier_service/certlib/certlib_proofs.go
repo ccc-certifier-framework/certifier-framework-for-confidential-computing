@@ -24,13 +24,14 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"math/big"
+	"os"
+
 	certprotos "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	gramineverify "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 	isletverify "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/isletverify"
 	oeverify "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 	"google.golang.org/protobuf/proto"
-	"math/big"
-	"os"
 )
 
 func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
@@ -1546,7 +1547,7 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 
 	pn0 := "single-socket"
 	vp0 := "no"
-	if pol_byte&0x08 == 1 {
+	if pol_byte&0x08 != 0 {
 		vp0 = "yes"
 	}
 	p0 := MakeProperty(pn0, svt, &vp0, &ce, nil)
@@ -1554,7 +1555,7 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 
 	pn1 := "debug"
 	vp1 := "no"
-	if pol_byte&0x04 == 1 {
+	if pol_byte&0x04 != 0 {
 		vp1 = "yes"
 	}
 	p1 := MakeProperty(pn1, svt, &vp1, &ce, nil)
@@ -1570,7 +1571,7 @@ func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 
 	pn3 := "migrate"
 	vp3 := "no"
-	if pol_byte&0x02 == 1 {
+	if pol_byte&0x02 != 0 {
 		vp3 = "yes"
 	}
 	p3 := MakeProperty(pn3, svt, &vp3, &ce, nil)

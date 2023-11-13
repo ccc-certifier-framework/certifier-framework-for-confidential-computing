@@ -334,8 +334,7 @@ bool keystone_Attest(const int what_to_say_size,
 
 #if 1
   printf("signing: ");
-  print_bytes(MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
-              (byte *)report.enclave.hash);
+  print_bytes(MDSIZE, (byte *)report.enclave.hash);
   printf("\n");
   printf("signature: ");
   print_bytes(report.enclave.size_sig, report.enclave.signature);

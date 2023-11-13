@@ -4019,7 +4019,7 @@ cert_keys_seen_list::~cert_keys_seen_list() {
   for (int i = 0; i < size_; i++) {
     delete entries_[i];
   }
-  delete entries_;
+  delete[] entries_;
 }
 
 key_message *cert_keys_seen_list::find_key_seen(const string &name) {

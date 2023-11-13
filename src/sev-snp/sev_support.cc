@@ -1195,7 +1195,7 @@ int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert) {
 
   // printf("Reading from file: %s\n", file_name.c_str());
   *x509_cert = PEM_read_X509(pFile, NULL, NULL, NULL);
-  if (!x509_cert) {
+  if (!*x509_cert) {
     printf("Error reading x509 from file: %s\n", file_name);
     fclose(pFile);
     return EXIT_FAILURE;
