@@ -3173,8 +3173,8 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 }
 
 func ConstructExtendedGramineClaim(enclaveKey *certprotos.KeyMessage,
-        measurement []byte, attestation []byte) *certprotos.VseClause {
-	
+	measurement []byte, attestation []byte) *certprotos.VseClause {
+
 	qeSvn, pceSvn, cpuSvn, debug, mode64bit := GetPlatformAttributesFromGramineAttest(attestation)
 
 	platName := "sgx"
@@ -3190,7 +3190,7 @@ func ConstructExtendedGramineClaim(enclaveKey *certprotos.KeyMessage,
 	}
 
 	x64Val := "no"
-	if  mode64bit {
+	if mode64bit {
 		x64Val = "yes"
 	}
 
@@ -3198,30 +3198,30 @@ func ConstructExtendedGramineClaim(enclaveKey *certprotos.KeyMessage,
 
 	// Debug property
 	p0 := MakeProperty(deName, "string", &deVal, nil, nil)
-        props.Props = append(props.Props, p0)
+	props.Props = append(props.Props, p0)
 
 	// 64 bit property
 	p1 := MakeProperty(x64Name, "string", &x64Val, nil, nil)
-        props.Props = append(props.Props, p1)
+	props.Props = append(props.Props, p1)
 
 	ce := "="
 
 	// qe property
 	qeVal := uint64(qeSvn)
 	p2 := MakeProperty(qeName, "int", nil, &ce, &qeVal)
-        props.Props = append(props.Props, p2)
+	props.Props = append(props.Props, p2)
 
 	// pe property
 	peVal := uint64(pceSvn)
 	p3 := MakeProperty(peName, "int", nil, &ce, &peVal)
-        props.Props = append(props.Props, p3)
+	props.Props = append(props.Props, p3)
 
 	// svn property
 	svnVal := BytesToUint64(cpuSvn)
 	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
-        props.Props = append(props.Props, p4)
+	props.Props = append(props.Props, p4)
 
-	pl := MakePlatform(platName, enclaveKey , props)
+	pl := MakePlatform(platName, enclaveKey, props)
 	if pl == nil {
 		fmt.Printf("ConstructExtendedGramineClaim: Can't make platform\n")
 		return nil
