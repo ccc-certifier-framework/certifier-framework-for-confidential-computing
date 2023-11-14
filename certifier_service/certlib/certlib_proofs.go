@@ -3367,7 +3367,7 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
 	//		Measurement[0001020304050607...] is-trusted
 	//	Key[rsa, PlatformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] says
 	//		Key[rsa, attestKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
-	//	Key[rsa, attestKey, b223d5da6674c6bde7feac29801e3b69bb286320] speaks-for Measurement[00010203...]
+	//	Key[rsa, enclaveKey, b223d5da6674c6bde7feac29801e3b69bb286320] speaks-for Measurement[00010203...]
 
 	// Debug
 	fmt.Printf("ConstructProofFromGramineEvidence, %d statements\n", len(alreadyProved.Proved))
@@ -3575,15 +3575,17 @@ func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprot
 
 func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string,
 	alreadyProved *certprotos.ProvedStatements) (*certprotos.VseClause, *certprotos.Proof) {
+
 	// At this point, the evidence should be
-	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
-	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-	//		Key[rsa, PlatformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
-	//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-	//		Measurement[0001020304050607...] is-trusted
-	//	Key[rsa, PlatformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] says
-	//		Key[rsa, attestKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
-	//	Key[rsa, attestKey, b223d5da6674c6bde7feac29801e3b69bb286320] speaks-for Measurement[00010203...]
+	//    Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
+  	// Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+     	// Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+  	// Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+        //       Measurement[0001020304050607...] is-trusted
+  	// Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+      	//       platform has-trusted-platform-property
+  	// environment(platform, measurement) is-environment
+  	// enclaveKey speaks-for Measurement[00010203...]
 
 	// Debug
 	fmt.Printf("ConstructProofFromExtendedGramineEvidence, %d statements\n", len(alreadyProved.Proved))
@@ -3621,7 +3623,7 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 
 	enclaveKey := enclaveKeySpeaksForMeasurement.Subject
 	if enclaveKey == nil || enclaveKey.GetEntityType() != "key" {
-		fmt.Printf("ConstructProofFromGramineEvidence: Bad enclave key\n")
+		fmt.Printf("ConstructProofFromExtendedGramineEvidence: Bad enclave key\n")
 		return nil, nil
 	}
 	var toProve *certprotos.VseClause = nil
@@ -3635,7 +3637,7 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 
 	measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
 	if measurementIsTrusted == nil {
-		fmt.Printf("ConstructProofFromGramineEvidence: Can't get measurement\n")
+		fmt.Printf("ConstructProofFromExtendedGramineEvidence: Can't get measurement\n")
 		return nil, nil
 	}
 	ps1 := certprotos.ProofStep{
@@ -3676,12 +3678,12 @@ func ValidateExtendedGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *c
 	*certprotos.VseClause, []byte) {
 
 	// Debug
-	fmt.Printf("\nValidateGramineEvidence, Original policy:\n")
+	fmt.Printf("\nValidateExtendedGramineEvidence, Original policy:\n")
 	PrintProvedStatements(policyPool.AllPolicy)
 
 	alreadyProved := FilterGraminePolicy(pubPolicyKey, evp, policyPool)
 	if alreadyProved == nil {
-		fmt.Printf("ValidateGramineEvidence: Can't filterpolicy\n")
+		fmt.Printf("ValidateExtendedGramineEvidence: Can't filterpolicy\n")
 		return false, nil, nil
 	}
 
@@ -3691,36 +3693,36 @@ func ValidateExtendedGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *c
 	fmt.Printf("\n")
 
 	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, alreadyProved) {
-		fmt.Printf("ValidateGramineEvidence: Can't InitProvedStatements\n")
+		fmt.Printf("ValidateExtendedGramineEvidence: Can't InitProvedStatements\n")
 		return false, nil, nil
 	}
 
 	// Debug
-	fmt.Printf("\nValidateGramineEvidence, after InitProved:\n")
+	fmt.Printf("\nValidateExtendedGramineEvidence, after InitProved:\n")
 	PrintProvedStatements(alreadyProved)
 
 	// ConstructProofFromSevPlatformEvidence()
-	toProve, proof := ConstructProofFromGramineEvidence(pubPolicyKey, purpose, alreadyProved)
+	toProve, proof := ConstructProofFromExtendedGramineEvidence(pubPolicyKey, purpose, alreadyProved)
 	if toProve == nil || proof == nil {
-		fmt.Printf("ValidateGramineEvidence: Can't construct proof\n")
+		fmt.Printf("ValidateExtendedGramineEvidence: Can't construct proof\n")
 		return false, nil, nil
 	}
 
 	// Debug
 	fmt.Printf("\n")
-	fmt.Printf("ValidateGramineEvidence, toProve: ")
+	fmt.Printf("ValidateExtendedGramineEvidence, toProve: ")
 	PrintVseClause(toProve)
 	fmt.Printf("\n")
 	PrintProof(proof)
 	fmt.Printf("\n")
 
 	if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
-		fmt.Printf("ValidateGramineEvidence: Proof does not verify\n")
+		fmt.Printf("ValidateExtendedGramineEvidence: Proof does not verify\n")
 		return false, nil, nil
 	}
 
 	// Debug
-	fmt.Printf("ValidateGramineEvidence: Proof verifies\n")
+	fmt.Printf("ValidateExtendedGramineEvidence: Proof verifies\n")
 	fmt.Printf("\nProved statements\n")
 	PrintProvedStatements(alreadyProved)
 
