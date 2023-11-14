@@ -21,6 +21,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=
   --duration=9000 --private_key_file=platform_key_file.bin \
   --output=platform_attest_endorsement.bin
 $CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
+cp $CERTIFIER_PROTOTYPE/src/gramine/gramine_tests/gramine-attestation.bin .
 
 ```
 

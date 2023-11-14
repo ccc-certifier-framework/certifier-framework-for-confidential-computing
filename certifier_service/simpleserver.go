@@ -936,41 +936,6 @@ func main() {
 	var serverAddr string
 
 	if *operation == "certifier-service" {
-		/*
-			   	REMOVE: This is a test Ye used
-				attestation, err := os.ReadFile("attestation.bin")
-			        if err != nil {
-					fmt.Printf("Failed to read attestation file: %s\n", err.Error())
-			        }
-
-			        var what_to_say []byte
-			        what_to_say = make([]byte, 256)
-			        for i := 0; i < 256; i++ {
-					what_to_say[i] = byte(i)
-			        }
-			        outMeasurement, err := gramineverify.GramineVerify(what_to_say, attestation)
-			        if err != nil {
-					fmt.Printf("GramineVerify failed: %s\n", err.Error())
-			        }
-			        fmt.Printf("Measurement length: %d\n", len(outMeasurement));
-
-			attestation, err := os.ReadFile("gramine-attestation.bin")
-			if err != nil {
-				fmt.Printf("Failed to read attestation file: %s\n", err.Error())
-			}
-			qeSvn, pceSvn, cpuSvn, debug, mode64bit := certlib.GetPlatformAttributesFromGramineAttest(attestation)
-			fmt.Printf("qeSvn: 0x%x, pceSvn: 0x%x\n", qeSvn, pceSvn)
-			fmt.Printf("cpuSvn: ")
-			certlib.PrintBytes(cpuSvn)
-			fmt.Printf("\n")
-			if (debug) {
-				fmt.Printf("Debug enclave\n");
-			}
-			if (mode64bit) {
-				fmt.Printf("64 bit enclave\n");
-			}
-		*/
-
 		// later this may turn into a TLS connection, we'll see
 		if !initCertifierService(*getPolicyKeyFromSecureStore) {
 			fmt.Printf("main: failed to initialize server\n")

@@ -1447,8 +1447,7 @@ func ConstructKeystoneSpeaksForMeasurementStatement(attestKey *certprotos.KeyMes
 }
 
 /*
-struct sgx_quote_t
-{
+struct sgx_quote_t {
 	uint16_t              version;                                     // 0x000
 	uint16_t              sign_type;                                   // 0x002
 	sgx_epid_group_id_t   epid_group_id;                               // 0x004

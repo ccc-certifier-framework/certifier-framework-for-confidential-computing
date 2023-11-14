@@ -2027,3 +2027,22 @@ func TestEncapsulatedData(t *testing.T) {
 	}
 	fmt.Printf("Out: %s\n", string(out))
 }
+
+func TestSgxProperties(t *testing.T) {
+
+	attestation, err := os.ReadFile("test_data/gramine-attestation.bin")
+	if err != nil {
+		fmt.Printf("Failed to read attestation file: %s\n", err.Error())
+	}
+	qeSvn, pceSvn, cpuSvn, debug, mode64bit := GetPlatformAttributesFromGramineAttest(attestation)
+	fmt.Printf("qeSvn: 0x%x, pceSvn: 0x%x\n", qeSvn, pceSvn)
+	fmt.Printf("cpuSvn: ")
+	PrintBytes(cpuSvn)
+	fmt.Printf("\n")
+	if (debug) {
+		fmt.Printf("Debug enclave\n");
+	}
+	if (mode64bit) {
+		fmt.Printf("64 bit enclave\n");
+	}
+}
