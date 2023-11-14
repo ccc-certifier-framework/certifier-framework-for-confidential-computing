@@ -324,43 +324,43 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 	return nil
 }
 
-func getVseMeasurementFromAttestation(evBuf []byte) []byte {
+func GetVseMeasurementFromAttestation(evBuf []byte) []byte {
 	sr := certprotos.SignedReport{}
 	err := proto.Unmarshal(evBuf, &sr)
 	if err != nil {
-		fmt.Printf("getVseMeasurementFromAttestation: Can't unmarshal signed report\n")
+		fmt.Printf("GetVseMeasurementFromAttestation: Can't unmarshal signed report\n")
 		return nil
 	}
 	info := certprotos.VseAttestationReportInfo{}
 	err = proto.Unmarshal(sr.GetReport(), &info)
 	if err != nil {
-		fmt.Printf("getVseMeasurementFromAttestation: Can't unmarshal info\n")
+		fmt.Printf("GetVseMeasurementFromAttestation: Can't unmarshal info\n")
 		return nil
 	}
 
 	return info.VerifiedMeasurement
 }
 
-func getSevMeasurementFromAttestation(evBuf []byte) []byte {
+func GetSevMeasurementFromAttestation(evBuf []byte) []byte {
 	var am certprotos.SevAttestationMessage
 	err := proto.Unmarshal(evBuf, &am)
 	if err != nil {
-		fmt.Printf("getSevMeasurementFromAttestation: Can't unmarshal SevAttestationMessage\n")
+		fmt.Printf("GetSevMeasurementFromAttestation: Can't unmarshal SevAttestationMessage\n")
 		return nil
 	}
 	return GetMeasurementFromSevAttest(am.ReportedAttestation)
 }
 
-func getGramineMeasurementFromAttestation(evBuf []byte) []byte {
+func GetGramineMeasurementFromAttestation(evBuf []byte) []byte {
 	succeeded, _, m, err := VerifyGramineAttestation(evBuf)
 	if !succeeded || err != nil {
-		fmt.Printf("getGramineMeasurementFromAttestation: Can't verify gramine evidence\n")
+		fmt.Printf("GetGramineMeasurementFromAttestation: Can't verify gramine evidence\n")
 		return nil
 	}
 	return m
 }
 
-func getOeMeasurementFromAttestation(prevEvidence *certprotos.Evidence,
+func GetOeMeasurementFromAttestation(prevEvidence *certprotos.Evidence,
 	curEvidence *certprotos.Evidence) []byte {
 	var serializedUD, m []byte
 	var err error
@@ -376,27 +376,27 @@ func getOeMeasurementFromAttestation(prevEvidence *certprotos.Evidence,
 	return m
 }
 
-func getKeystoneMeasurementFromAttestation(evBuf []byte) []byte {
+func GetKeystoneMeasurementFromAttestation(evBuf []byte) []byte {
 	var am certprotos.KeystoneAttestationMessage
 	err := proto.Unmarshal(evBuf, &am)
 	if err != nil {
-		fmt.Printf("getKeystoneMeasurementFromAttestation: Can't unmarshal KeystoneAttestationMessage\n")
+		fmt.Printf("GetKeystoneMeasurementFromAttestation: Can't unmarshal KeystoneAttestationMessage\n")
 		return nil
 	}
 	ptr := am.ReportedAttestation
 	return ptr[0:32]
 }
 
-func getIsletMeasurementFromAttestation(evBuf []byte) []byte {
+func GetIsletMeasurementFromAttestation(evBuf []byte) []byte {
 	var am certprotos.IsletAttestationMessage
 	err := proto.Unmarshal(evBuf, &am)
 	if err != nil {
-		fmt.Printf("getIsletMeasurementFromAttestation: Can't unmarshal IsletAttestationMessage\n")
+		fmt.Printf("GetIsletMeasurementFromAttestation: Can't unmarshal IsletAttestationMessage\n")
 		return nil
 	}
 	m, err := isletverify.IsletVerify(am.WhatWasSaid, am.ReportedAttestation)
 	if err != nil {
-		fmt.Printf("getIsletMeasurementFromAttestation: IsletVerify() failed\n")
+		fmt.Printf("GetIsletMeasurementFromAttestation: IsletVerify() failed\n")
 		return nil
 	}
 	return m
@@ -427,25 +427,25 @@ func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string,
 		} else if ev.GetEvidenceType() == "cert" {
 			continue
 		} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
-			measurement = getVseMeasurementFromAttestation(ev.SerializedEvidence)
+			measurement = GetVseMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "sev-attestation" {
-			measurement = getSevMeasurementFromAttestation(ev.SerializedEvidence)
+			measurement = GetSevMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "islet-attestation" {
-			measurement = getIsletMeasurementFromAttestation(ev.SerializedEvidence)
+			measurement = GetIsletMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "keystone-attestation" {
-			measurement = getKeystoneMeasurementFromAttestation(ev.SerializedEvidence)
+			measurement = GetKeystoneMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "gramine-attestation" {
-			measurement = getGramineMeasurementFromAttestation(ev.SerializedEvidence)
+			measurement = GetGramineMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "oe-attestation-report" {
 			if i < 1 || ev_list[i-1].GetEvidenceType() != "pem-cert-chain" {
-				measurement = getOeMeasurementFromAttestation(nil, ev_list[i])
+				measurement = GetOeMeasurementFromAttestation(nil, ev_list[i])
 			} else {
-				measurement = getOeMeasurementFromAttestation(ev_list[i-1], ev_list[i])
+				measurement = GetOeMeasurementFromAttestation(ev_list[i-1], ev_list[i])
 			}
 			break
 		} else {

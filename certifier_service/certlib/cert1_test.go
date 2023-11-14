@@ -2035,6 +2035,11 @@ func TestSgxProperties(t *testing.T) {
 	if err != nil {
 		fmt.Printf("Failed to read attestation file: %s\n", err.Error())
 	}
+
+	fmt.Printf("\nAttestation:\n")
+	PrintBytes(attestation)
+	fmt.Printf("\n\n")
+
 	qeSvn, pceSvn, cpuSvn, debug, mode64bit := GetPlatformAttributesFromGramineAttest(attestation)
 	fmt.Printf("cpuSvn: ")
 	PrintBytes(cpuSvn)
@@ -2088,6 +2093,58 @@ func TestSgxProperties(t *testing.T) {
 
 	fmt.Printf("\n")
 	fmt.Printf("svnVal: %x\n\n", svnVal)
-	plat := MakePlatform(platName, k , props)
-	PrintPlatform(plat)
+	pl := MakePlatform(platName, k , props)
+	PrintPlatform(pl)
+
+	fmt.Printf("\nAttestation (%d): ", len(attestation))
+	PrintBytes(attestation)
+	fmt.Printf("\n")
+
+	measurement := attestation[112:144]
+	if measurement == nil {
+		t.Errorf("Empty measurement\n")
+	}
+	fmt.Printf("\nMeasurement (%d):\n", len(measurement))
+	PrintBytes(measurement)
+	fmt.Printf("\n")
+
+	reportData := attestation[368:432]
+	fmt.Printf("\nReport data (%d):\n", len(reportData))
+	PrintBytes(reportData)
+	fmt.Printf("\n")
+
+	e := MakeEnvironment(pl, measurement)
+	if e == nil {
+		fmt.Printf("Can't make environment\n")
+	} else {
+		PrintEnvironment(e)
+	}
+	fmt.Printf("\n")
+
+	pe := MakePlatformEntity(pl)
+	ee := MakeEnvironmentEntity(e)
+	fmt.Printf("\n")
+	PrintEntity(pe)
+	PrintEntity(ee)
+	fmt.Printf("\n")
+	if !SameProperty(p1, p1) {
+		t.Errorf("Properties should match\n")
+	}
+	if SameProperty(p1, p2) {
+		t.Errorf("Properties shouldn't match\n")
+	}
+	if !SameEnvironment(e, e) {
+		t.Errorf("Environments should match\n")
+	}
+
+	verbie := "is-environment"
+	cl := MakeUnaryVseClause(ee, &verbie)
+	fmt.Printf("\n")
+	PrintVseClause(cl)
+	fmt.Printf("\n")
+
+	/*
+	uint8_t     report_data[64];          // 0x050
+	uint8_t     measurement[48];          // 0x090
+	*/
 }
