@@ -2045,4 +2045,53 @@ func TestSgxProperties(t *testing.T) {
 	if (mode64bit) {
 		fmt.Printf("64 bit enclave\n");
 	}
-}
+
+	platName := "sgx"
+	cpuSvnName := "cpusvn"
+	qeName := "quoting-enclave-sv"
+	peName := "provisioning-enclave-sv"
+	deName := "debug"
+	x64Name := "X64"
+
+	deVal := "no"
+	if debug {
+		deVal = "yes"
+	}
+
+	x64Val := "no"
+	if  mode64bit {
+		x64Val = "yes"
+	}
+
+	props := &certprotos.Properties{}
+
+	// Debug property
+	p0 := MakeProperty(deName, "string", &deVal, nil, nil)
+        props.Props = append(props.Props, p0)
+
+	// 64 bit property
+	p1 := MakeProperty(x64Name, "string", &x64Val, nil, nil)
+        props.Props = append(props.Props, p1)
+
+	ce := "="
+
+	// qe property
+	qeVal := uint64(qeSvn)
+	p2 := MakeProperty(qeName, "int", nil, &ce, &qeVal)
+        props.Props = append(props.Props, p2)
+
+	// pe property
+	peVal := uint64(pceSvn)
+	p3 := MakeProperty(peName, "int", nil, &ce, &peVal)
+        props.Props = append(props.Props, p3)
+
+	// svn property
+	svnVal := uint64(10)
+	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
+        props.Props = append(props.Props, p4)
+
+	var k *certprotos.KeyMessage = nil
+
+	plat := MakePlatform(platName, k , props )
+	PrintPlatform(plat)
+
