@@ -2143,8 +2143,24 @@ func TestSgxProperties(t *testing.T) {
 	PrintVseClause(cl)
 	fmt.Printf("\n")
 
-	/*
-	uint8_t     report_data[64];          // 0x050
-	uint8_t     measurement[48];          // 0x090
-	*/
+	// evidence will include:
+	//	attest-key says environment(platform, measurement) is-environment
+	serializedKey, err := os.ReadFile("test_data/attest_key_file.bin")
+	if err != nil {
+		t.Errorf("Failed to read attest key file\n")
+	}
+	enclaveKey := certprotos.KeyMessage{}
+	err = proto.Unmarshal(serializedKey, &enclaveKey)
+	if err != nil {
+		t.Errorf("Failed to deserialize attest key file\n")
+	}
+	
+	finalClaim := ConstructExtendedGramineClaim(&enclaveKey, measurement, attestation)
+	if finalClaim == nil {
+		t.Errorf("Can't construct final claim\n")
+	}
+
+	fmt.Printf("\nFinal claim: ")
+	PrintVseClause(finalClaim)
+	fmt.Printf("\n")
 }

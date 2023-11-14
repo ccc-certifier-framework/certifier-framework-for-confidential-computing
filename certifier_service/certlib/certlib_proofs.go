@@ -3039,7 +3039,7 @@ func ValidateOeEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Evi
 	fmt.Printf("\nValidateOeEvidence, after InitProved:\n")
 	PrintProvedStatements(alreadyProved)
 
-	// ConstructProofFromSevPlatformEvidence()
+	// ConstructProofFromOePlatformEvidence()
 	toProve, proof := ConstructProofFromOeEvidence(pubPolicyKey, purpose, alreadyProved)
 	if toProve == nil || proof == nil {
 		fmt.Printf("ValidateOeEvidence: Can't construct proof\n")
@@ -3170,6 +3170,89 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	}
 
 	return true, toProve, me.Clause.Subject.Measurement
+}
+
+func ConstructExtendedGramineClaim(enclaveKey *certprotos.KeyMessage,
+        measurement []byte, attestation []byte) *certprotos.VseClause {
+	
+	qeSvn, pceSvn, cpuSvn, debug, mode64bit := GetPlatformAttributesFromGramineAttest(attestation)
+
+	platName := "sgx"
+	cpuSvnName := "cpusvn"
+	qeName := "quoting-enclave-sv"
+	peName := "provisioning-enclave-sv"
+	deName := "debug"
+	x64Name := "X64"
+
+	deVal := "no"
+	if debug {
+		deVal = "yes"
+	}
+
+	x64Val := "no"
+	if  mode64bit {
+		x64Val = "yes"
+	}
+
+	props := &certprotos.Properties{}
+
+	// Debug property
+	p0 := MakeProperty(deName, "string", &deVal, nil, nil)
+        props.Props = append(props.Props, p0)
+
+	// 64 bit property
+	p1 := MakeProperty(x64Name, "string", &x64Val, nil, nil)
+        props.Props = append(props.Props, p1)
+
+	ce := "="
+
+	// qe property
+	qeVal := uint64(qeSvn)
+	p2 := MakeProperty(qeName, "int", nil, &ce, &qeVal)
+        props.Props = append(props.Props, p2)
+
+	// pe property
+	peVal := uint64(pceSvn)
+	p3 := MakeProperty(peName, "int", nil, &ce, &peVal)
+        props.Props = append(props.Props, p3)
+
+	// svn property
+	svnVal := BytesToUint64(cpuSvn)
+	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
+        props.Props = append(props.Props, p4)
+
+	pl := MakePlatform(platName, enclaveKey , props)
+	if pl == nil {
+		fmt.Printf("ConstructExtendedGramineClaim: Can't make platform\n")
+		return nil
+	}
+
+	e := MakeEnvironment(pl, measurement)
+	if e == nil {
+		fmt.Printf("ConstructExtendedGramineClaim: Can't make environment\n")
+		return nil
+	}
+
+	ee := MakeEnvironmentEntity(e)
+	if ee == nil {
+		fmt.Printf("ConstructExtendedGramineClaim: Can't make environment entity\n")
+		return nil
+	}
+
+	verbie := "is-environment"
+	cl1 := MakeUnaryVseClause(ee, &verbie)
+	if cl1 == nil {
+		fmt.Printf("ConstructExtendedGramineClaim: Can't make simple environment clause\n")
+		return nil
+	}
+
+	saysVerb := "says"
+	ke := MakeKeyEntity(enclaveKey)
+	if ke == nil {
+		fmt.Printf("ConstructExtendedGramineClaim: Can't make key entity\n")
+		return nil
+	}
+	return MakeIndirectVseClause(ke, &saysVerb, cl1)
 }
 
 func ConstructGramineClaim(enclaveKey *certprotos.KeyMessage,
