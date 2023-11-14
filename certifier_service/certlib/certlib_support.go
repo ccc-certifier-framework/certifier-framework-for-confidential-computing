@@ -2194,3 +2194,15 @@ func Attest(eType string, toSay []byte) []byte {
 	}
 	return nil
 }
+
+func BytesToUint64(b []byte) uint64 {
+	t := uint64(b[0]);
+	t = (t << 8) | uint64(b[1])
+	t = (t << 8) | uint64(b[2])
+	t = (t << 8) | uint64(b[3])
+	t = (t << 8) | uint64(b[4])
+	t = (t << 8) | uint64(b[5])
+	t = (t << 8) | uint64(b[6])
+	t = (t << 8) | uint64(b[7])
+	return t
+}

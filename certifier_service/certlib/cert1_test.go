@@ -2030,21 +2030,15 @@ func TestEncapsulatedData(t *testing.T) {
 
 func TestSgxProperties(t *testing.T) {
 
+	fmt.Printf("\n")
 	attestation, err := os.ReadFile("test_data/gramine-attestation.bin")
 	if err != nil {
 		fmt.Printf("Failed to read attestation file: %s\n", err.Error())
 	}
 	qeSvn, pceSvn, cpuSvn, debug, mode64bit := GetPlatformAttributesFromGramineAttest(attestation)
-	fmt.Printf("qeSvn: 0x%x, pceSvn: 0x%x\n", qeSvn, pceSvn)
 	fmt.Printf("cpuSvn: ")
 	PrintBytes(cpuSvn)
 	fmt.Printf("\n")
-	if (debug) {
-		fmt.Printf("Debug enclave\n");
-	}
-	if (mode64bit) {
-		fmt.Printf("64 bit enclave\n");
-	}
 
 	platName := "sgx"
 	cpuSvnName := "cpusvn"
@@ -2086,12 +2080,14 @@ func TestSgxProperties(t *testing.T) {
         props.Props = append(props.Props, p3)
 
 	// svn property
-	svnVal := uint64(10)
+	svnVal := BytesToUint64(cpuSvn)
 	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
         props.Props = append(props.Props, p4)
 
 	var k *certprotos.KeyMessage = nil
 
-	plat := MakePlatform(platName, k , props )
+	fmt.Printf("\n")
+	fmt.Printf("svnVal: %x\n\n", svnVal)
+	plat := MakePlatform(platName, k , props)
 	PrintPlatform(plat)
-
+}
