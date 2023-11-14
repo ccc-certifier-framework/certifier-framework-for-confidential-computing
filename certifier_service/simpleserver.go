@@ -80,6 +80,8 @@ var logging bool = false
 var logger *log.Logger
 var dataPacketFileNum int = loggingSequenceNumber
 
+var extendedGramine bool = false
+
 func initLog() bool {
 	name := *logDir + "/" + *logFile
 	logFiled, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
@@ -304,10 +306,18 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 			return false, nil
 		}
 	} else if evType == "gramine-evidence" {
-		success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, policyPool, purpose)
-		if !success {
-			fmt.Printf("ValidateRequestAndObtainToken: ValidateGramineEvidence failed\n")
-			return false, nil
+		if extendedGramine {
+			success, toProve, measurement = certlib.ValidateExtendedGramineEvidence(pubKey, ep, policyPool, purpose)
+			if !success {
+				fmt.Printf("ValidateRequestAndObtainToken: ValidateExtendedGramineEvidence failed\n")
+				return false, nil
+			}
+		} else {
+			success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, policyPool, purpose)
+			if !success {
+				fmt.Printf("ValidateRequestAndObtainToken: ValidateGramineEvidence failed\n")
+				return false, nil
+			}
 		}
 	} else if evType == "keystone-evidence" {
 		success, toProve, measurement = certlib.ValidateKeystoneEvidence(pubKey, ep, policyPool, purpose)
