@@ -771,12 +771,18 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 			}
 
 			if extendedGramine {
-				cl := ConstructExtendedGramineClaim(ud.EnclaveKey, m, ev.SerializedEvidence)
-				if cl == nil {
-					fmt.Printf("InitProvedStatements: ConstructExtendedGramineClaim failed\n")
+				ec := ConstructGramineIsEnvironmentClaim(m, ev.SerializedEvidence)
+				if ec == nil {
+					fmt.Printf("InitProvedStatements: ConstructGramineIsEnvironmentClaim failed\n")
 					return false
 				}
-				ps.Proved = append(ps.Proved, cl)
+				ps.Proved = append(ps.Proved, ec)
+				sfc := ConstructGramineSpeaksForClaim(ud.EnclaveKey, ec.Subject)
+				if sfc == nil {
+					fmt.Printf("InitProvedStatements: ConstructGramineSpeaksForClaim failed\n")
+					return false
+				}
+				ps.Proved = append(ps.Proved, sfc)
 			} else {
 				cl := ConstructGramineClaim(ud.EnclaveKey, m)
 				if cl == nil {
@@ -3184,8 +3190,7 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	return true, toProve, me.Clause.Subject.Measurement
 }
 
-func ConstructExtendedGramineClaim(enclaveKey *certprotos.KeyMessage,
-	measurement []byte, attestation []byte) *certprotos.VseClause {
+func ConstructGramineIsEnvironmentClaim(measurement []byte, attestation []byte) *certprotos.VseClause {
 
 	qeSvn, pceSvn, cpuSvn, debug, mode64bit := GetPlatformAttributesFromGramineAttest(attestation)
 
@@ -3233,7 +3238,7 @@ func ConstructExtendedGramineClaim(enclaveKey *certprotos.KeyMessage,
 	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
 	props.Props = append(props.Props, p4)
 
-	pl := MakePlatform(platName, enclaveKey, props)
+	pl := MakePlatform(platName, nil, props)
 	if pl == nil {
 		fmt.Printf("ConstructExtendedGramineClaim: Can't make platform\n")
 		return nil
@@ -3252,19 +3257,19 @@ func ConstructExtendedGramineClaim(enclaveKey *certprotos.KeyMessage,
 	}
 
 	verbie := "is-environment"
-	cl1 := MakeUnaryVseClause(ee, &verbie)
-	if cl1 == nil {
-		fmt.Printf("ConstructExtendedGramineClaim: Can't make simple environment clause\n")
-		return nil
-	}
+	return MakeUnaryVseClause(ee, &verbie)
+}
 
-	saysVerb := "says"
-	ke := MakeKeyEntity(enclaveKey)
-	if ke == nil {
-		fmt.Printf("ConstructExtendedGramineClaim: Can't make key entity\n")
+func ConstructGramineSpeaksForClaim(enclaveKey *certprotos.KeyMessage,
+	env *certprotos.EntityMessage) *certprotos.VseClause {
+
+	em := MakeKeyEntity(enclaveKey)
+	if em == nil {
+		fmt.Printf("ConstructGramineClaim: Can't make enclave entity\n")
 		return nil
 	}
-	return MakeIndirectVseClause(ke, &saysVerb, cl1)
+	speaks_for := "speaks-for"
+	return MakeSimpleVseClause(em, &speaks_for, env)
 }
 
 func ConstructGramineClaim(enclaveKey *certprotos.KeyMessage,
@@ -3577,7 +3582,6 @@ func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprot
 
 	// platform has trusted policy
 
-
 	return filtered
 }
 
@@ -3610,7 +3614,7 @@ Produced proof should be:
                     environment(platform, measurement) is-trusted
 	  5. environment is-trusted and enclaveKey speaks-for environment -->
 	         enclaveKey is-trusted-for-authentication
- */
+*/
 func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string,
 	alreadyProved *certprotos.ProvedStatements) (*certprotos.VseClause, *certprotos.Proof) {
 
@@ -3632,9 +3636,8 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 	environmentIsEnvironment := alreadyProved.Proved[4]
 	enclaveKeySpeaksForEnvironment := alreadyProved.Proved[5]
 
-
 	if policyKeyIsTrusted == nil || enclaveKeySpeaksForEnvironment == nil ||
-		policyKeySaysMeasurementIsTrusted == nil || policyKeySaysPlatformHasTrustedProperty  == nil ||
+		policyKeySaysMeasurementIsTrusted == nil || policyKeySaysPlatformHasTrustedProperty == nil ||
 		environmentIsEnvironment == nil {
 		fmt.Printf("ConstructProofFromGramineEvidence: evidence missing\n")
 		return nil, nil
@@ -3660,7 +3663,7 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 	proof.Steps = append(proof.Steps, &ps1)
 
 	// policy-key is-trusted AND policy-key says platform has-trusted-platform-property -->
-        //     platform has-trusted-platform-property (r3)
+	//     platform has-trusted-platform-property (r3)
 	platformHasTrustedProperty := policyKeySaysPlatformHasTrustedProperty.Clause
 	if platformHasTrustedProperty == nil {
 		fmt.Printf("ConstructProofFromExtendedGramineEvidence: no platform trusted properties rule \n")
@@ -3675,8 +3678,8 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 	proof.Steps = append(proof.Steps, &ps2)
 
 	// environment(platform, measurement) is-environment AND
-        //       platform[amd-sev-snp, no-debug,...] has-trusted-platform-property -->
-        //       environment(platform, measurement) environment-platform-is-trusted
+	//       platform[amd-sev-snp, no-debug,...] has-trusted-platform-property -->
+	//       environment(platform, measurement) environment-platform-is-trusted
 
 	v0 := "environment-platform-is-trusted"
 	environmentPlatformIsTrusted := MakeUnaryVseClause(environmentIsEnvironment.Subject, &v0)
@@ -3709,8 +3712,8 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 	proof.Steps = append(proof.Steps, &ps4)
 
 	// environment(platform, measurement) environment-platform-is-trusted" AND
-        //     environment(platform, measurement) environment-measurement-is-trusted"  -->
-        //       environment(platform, measurement) is-trusted
+	//     environment(platform, measurement) environment-measurement-is-trusted"  -->
+	//       environment(platform, measurement) is-trusted
 	v2 := "is-trusted"
 	environmentIsTrusted := MakeUnaryVseClause(environmentIsEnvironment.Subject, &v2)
 	if environmentIsTrusted == nil {

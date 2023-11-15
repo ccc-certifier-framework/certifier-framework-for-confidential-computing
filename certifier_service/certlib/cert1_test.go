@@ -2155,12 +2155,20 @@ func TestSgxProperties(t *testing.T) {
 		t.Errorf("Failed to deserialize attest key file\n")
 	}
 
-	finalClaim := ConstructExtendedGramineClaim(&enclaveKey, measurement, attestation)
-	if finalClaim == nil {
-		t.Errorf("Can't construct final claim\n")
+	sfc := ConstructGramineSpeaksForClaim(&enclaveKey, ee)
+	if sfc == nil {
+		t.Errorf("Can't construct speaks-for claim\n")
+	}
+	ec := ConstructGramineIsEnvironmentClaim(measurement, attestation)
+	if ec == nil {
+		t.Errorf("Can't construct is environment claim\n")
 	}
 
-	fmt.Printf("\nFinal claim: ")
-	PrintVseClause(finalClaim)
+	fmt.Printf("\n")
+	fmt.Printf("\nEnvironment claim: ")
+	PrintVseClause(ec)
+	fmt.Printf("\n")
+	fmt.Printf("\nSpeaks for claim: ")
+	PrintVseClause(sfc)
 	fmt.Printf("\n")
 }
