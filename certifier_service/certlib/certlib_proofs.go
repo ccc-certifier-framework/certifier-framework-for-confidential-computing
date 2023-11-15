@@ -3582,12 +3582,12 @@ func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprot
 
 	// platform has trusted policy
 	from = GetRelevantPlatformFeaturePolicy(policyPool, evType, evp)
-        if from == nil {
-                fmt.Printf("FilterSevPolicy: Can't get relavent platform features\n")
-                return nil
-        }
-        to = proto.Clone(from).(*certprotos.VseClause)
-        filtered.Proved = append(filtered.Proved, to)
+	if from == nil {
+		fmt.Printf("FilterSevPolicy: Can't get relavent platform features\n")
+		return nil
+	}
+	to = proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
 
 	return filtered
 }
@@ -3653,10 +3653,10 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 	proof := &certprotos.Proof{}
 	r1 := int32(1)
 	r3 := int32(3)
-	r8 :=  int32(8)
-	r9 :=  int32(9)
-	r10 :=  int32(10)
-	r6 :=  int32(6)
+	r8 := int32(8)
+	r9 := int32(9)
+	r10 := int32(10)
+	r6 := int32(6)
 
 	measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
 	if measurementIsTrusted == nil {
