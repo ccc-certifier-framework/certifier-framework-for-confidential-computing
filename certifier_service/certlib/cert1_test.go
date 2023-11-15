@@ -2327,4 +2327,10 @@ func TestSgxProofs(t *testing.T) {
 
 	fmt.Printf("\n")
 	PrintProof(proof)
+
+	if !VerifyProof(policyKey, toProve, proof, &alreadyProved) {
+		fmt.Printf("Proof succeeded\n")
+	} else {
+		fmt.Printf("Proof failed\n")
+	}
 }

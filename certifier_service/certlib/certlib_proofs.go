@@ -3646,8 +3646,10 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 	proof := &certprotos.Proof{}
 	r1 := int32(1)
 	r3 := int32(3)
-	r4 := int32(4)
-	r7 := int32(7)
+	r8 :=  int32(8)
+	r9 :=  int32(9)
+	r10 :=  int32(10)
+	r6 :=  int32(6)
 
 	measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
 	if measurementIsTrusted == nil {
@@ -3691,7 +3693,7 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 		S1:          environmentIsEnvironment,
 		S2:          platformHasTrustedProperty,
 		Conclusion:  environmentPlatformIsTrusted,
-		RuleApplied: &r3,
+		RuleApplied: &r8,
 	}
 	proof.Steps = append(proof.Steps, &ps3)
 
@@ -3707,7 +3709,7 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 		S1:          environmentIsEnvironment,
 		S2:          measurementIsTrusted,
 		Conclusion:  environmentMeasurementIsTrusted,
-		RuleApplied: &r4,
+		RuleApplied: &r9,
 	}
 	proof.Steps = append(proof.Steps, &ps4)
 
@@ -3724,7 +3726,7 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 		S1:          environmentPlatformIsTrusted,
 		S2:          environmentPlatformIsTrusted,
 		Conclusion:  environmentIsTrusted,
-		RuleApplied: &r4,
+		RuleApplied: &r10,
 	}
 	proof.Steps = append(proof.Steps, &ps5)
 
@@ -3752,7 +3754,7 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 
 	// environment is-trusted and enclaveKey speaks-for measurement -->
 	//	enclaveKey is-trusted-for-authentication (r1) or
-	//	enclaveKey is-trusted-for-attestation (r7)
+	//	enclaveKey is-trusted-for-attestation (r6)
 	if purpose == "authentication" {
 		ps6 := certprotos.ProofStep{
 			S1:          environmentIsTrusted,
@@ -3766,7 +3768,7 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 			S1:          environmentIsTrusted,
 			S2:          enclaveKeySpeaksForEnvironment,
 			Conclusion:  toProve,
-			RuleApplied: &r7,
+			RuleApplied: &r6,
 		}
 		proof.Steps = append(proof.Steps, &ps6)
 	}
