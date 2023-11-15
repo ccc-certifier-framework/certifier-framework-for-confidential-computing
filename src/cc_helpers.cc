@@ -47,6 +47,10 @@
 #  include "sev_support.h"
 #endif  // SEV_SNP
 
+#ifdef NVIDIA_CC
+#  include "nvidia_impl.h"
+#endif  // NVIDIA_CC
+
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
@@ -59,6 +63,10 @@ extern string platform_certs;
 extern string serialized_ark_cert;
 extern string serialized_ask_cert;
 extern string serialized_vcek_cert;
+#endif
+
+#ifdef NVIDIA_CC
+NvidiaPlatformImpl *nv_platform = nullptr;
 #endif
 
 #if OE_CERTIFIER
@@ -188,6 +196,11 @@ bool certifier::framework::cc_trust_manager::initialize_enclave(
              __LINE__);
       return false;
     }
+#ifdef NVIDIA_CC
+    // TODO: the library path should be passed as a parameter
+    nv_platform =
+        NvidiaPlatformImpl::create("/usr/lib/x86_64-linux-gnu/libnvidia-ml.so");
+#endif  // NVIDIA_CC
     return initialize_sev_enclave(params[0], params[1], params[2]);
   } else if (enclave_type_ == "oe-enclave") {
     return initialize_oe_enclave(params[0]);
@@ -1715,6 +1728,67 @@ bool certifier::framework::certifiers::get_certified_status() {
   return is_certified_;
 }
 
+#ifdef NVIDIA_CC
+static bool add_nvidia_evidence(evidence_list &platform_evidence) {
+  if (nv_platform == nullptr) {
+    return true;
+  }
+  int gpus = nv_platform->get_num_gpus();
+  for (int i = 0; i < gpus; i++) {
+    NvidiaGPU *gpu = nv_platform->get_gpu(i);
+    if (gpu == nullptr) {
+      printf("%s() error, line %d, Can't get gpu %d\n", __func__, __LINE__, i);
+      return false;
+    }
+    evidence *ev = platform_evidence.add_assertion();
+    if (ev == nullptr) {
+      printf("%s() error, line %d, Can't add to platform evidence\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    ev->set_evidence_type("cert-chain");
+    auto   cert_chain = gpu->get_attestation_cert_chain();
+    string cert_chain_str(cert_chain.begin(), cert_chain.end());
+    ev->set_serialized_evidence(cert_chain_str);
+  }
+  return true;
+}
+#endif
+
+static bool attest_gpus(const string &userdata, std::vector<string> &reports) {
+#ifdef NVIDIA_CC
+  if (nv_platform == nullptr) {
+    return true;
+  }
+  int gpus = nv_platform->get_num_gpus();
+  for (int i = 0; i < gpus; i++) {
+    NvidiaGPU *gpu = nv_platform->get_gpu(i);
+    if (gpu == nullptr) {
+      printf("%s() error, line %d, Can't get gpu %d\n", __func__, __LINE__, i);
+      return false;
+    }
+    int  hash_len = 32;
+    byte hash[hash_len];
+    if (!digest_message(Digest_method_sha_256,
+                        (const byte *)userdata.data(),
+                        userdata.size(),
+                        hash,
+                        hash_len)) {
+      printf("digest_message failed\n");
+      return false;
+    }
+    std::vector<uint8_t> nonce(hash, hash + hash_len);
+    auto                 report = gpu->get_attestation_report(nonce);
+    string               report_str(report.begin(), report.end());
+    reports.push_back(report_str);
+  }
+  return true;
+#else
+  return true;
+#endif
+}
+
 // add auth-key and symmetric key
 bool certifier::framework::certifiers::certify_domain(const string &purpose) {
 
@@ -1828,6 +1902,9 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     }
     ev->set_evidence_type("cert");
     ev->set_serialized_evidence(serialized_vcek_cert);
+#  ifdef NVIDIA_CC
+    add_nvidia_evidence(platform_evidence);
+#  endif
 #endif
 #ifdef OE_CERTIFIER
   } else if (owner_->enclave_type_ == "oe-enclave") {
@@ -1920,6 +1997,11 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
   the_attestation_str.assign((char *)out, size_out);
 
   // Now, if there are accelerators, verify them.
+  std::vector<string> gpu_attestations;
+  if (!attest_gpus(serialized_ud, gpu_attestations)) {
+    printf("%s() error, line: %d,  GPU attest failed\n", __func__, __LINE__);
+    return false;
+  }
 
   // Get certified
   trust_request_message  request;
@@ -1955,6 +2037,7 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
                                            owner_->purpose_,
                                            platform_evidence,
                                            the_attestation_str,
+                                           gpu_attestations,
                                            ep)) {
     printf("%s() error, line: %d, construct_platform_evidence_package failed\n",
            __func__,
@@ -2066,11 +2149,13 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
-bool construct_platform_evidence_package(string &       attesting_enclave_type,
-                                         const string & purpose,
-                                         evidence_list &platform_assertions,
-                                         string &       serialized_attestation,
-                                         evidence_package *ep) {
+bool construct_platform_evidence_package(
+    string &                   attesting_enclave_type,
+    const string &             purpose,
+    evidence_list &            platform_assertions,
+    string &                   serialized_attestation,
+    const std::vector<string> &gpu_attestations,
+    evidence_package *         ep) {
 
   string pt("vse-verifier");
   string et("signed-claim");
@@ -2121,6 +2206,22 @@ bool construct_platform_evidence_package(string &       attesting_enclave_type,
   }
 
   ev2->set_serialized_evidence(serialized_attestation);
+
+  // add GPU attestations
+  for (int i = 0; i < (int)gpu_attestations.size(); i++) {
+    evidence *ev = ep->add_fact_assertion();
+    if ("sev-enclave" == attesting_enclave_type) {
+      string et2("gpu-attestation");
+      ev->set_evidence_type(et2);
+    } else {
+      printf("%s:%d:%s: - can't add gpu attestation\n",
+             __FILE__,
+             __LINE__,
+             __func__);
+      return false;
+    }
+    ev->set_serialized_evidence(gpu_attestations[i]);
+  }
   return true;
 }
 
