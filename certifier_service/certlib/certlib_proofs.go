@@ -3581,6 +3581,13 @@ func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprot
 	filtered.Proved = append(filtered.Proved, to)
 
 	// platform has trusted policy
+	from = GetRelevantPlatformFeaturePolicy(policyPool, evType, evp)
+        if from == nil {
+                fmt.Printf("FilterSevPolicy: Can't get relavent platform features\n")
+                return nil
+        }
+        to = proto.Clone(from).(*certprotos.VseClause)
+        filtered.Proved = append(filtered.Proved, to)
 
 	return filtered
 }
