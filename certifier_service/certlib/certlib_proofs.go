@@ -3731,7 +3731,7 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 	}
 	ps5 := certprotos.ProofStep{
 		S1:          environmentPlatformIsTrusted,
-		S2:          environmentPlatformIsTrusted,
+		S2:          environmentMeasurementIsTrusted,
 		Conclusion:  environmentIsTrusted,
 		RuleApplied: &r10,
 	}

@@ -1468,9 +1468,9 @@ func PrintEnvironmentDescriptor(e *certprotos.Environment) {
 	if e == nil {
 		return
 	}
-	fmt.Printf("environment[")
+	fmt.Printf("Environment[")
 	PrintPlatformDescriptor(e.ThePlatform)
-	fmt.Printf(", measurement: ")
+	fmt.Printf(", Measurement: ")
 	PrintBytes(e.TheMeasurement)
 	fmt.Printf("]")
 }
@@ -1479,7 +1479,7 @@ func PrintPlatformDescriptor(p *certprotos.Platform) {
 	if p == nil || p.PlatformType == nil {
 		return
 	}
-	fmt.Printf("platform[%s, ", *p.PlatformType)
+	fmt.Printf("Platform[%s, ", *p.PlatformType)
 	if p.HasKey != nil && *p.HasKey && p.AttestKey != nil {
 		PrintKeyDescriptor(p.AttestKey)
 		fmt.Printf(", ")
