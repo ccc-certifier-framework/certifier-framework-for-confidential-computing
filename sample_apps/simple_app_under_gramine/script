@@ -45,9 +45,46 @@ $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy
 $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy2.bin \
         --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
 
+# For extended gramine construct platform policy
+$UTILITIES/make_property.exe --property_name=debug --property_type='string' comparator="=" \
+--string_value=yes --output=$TEST_DATA/property1.bin
+
+$UTILITIES/make_property.exe --property_name=X64 --property_type='string' comparator="=" \
+--string_value=no --output=$TEST_DATA/property2.bin
+
+$UTILITIES/make_property.exe --property_name='cpusvn' --property_type=int --comparator="=" \
+--int_value=1374454427414364160 --output=$TEST_DATA/property3.bin
+
+$UTILITIES/make_property.exe --property_name='quoting-enclave-sv' --property_type=int --comparator="=" \
+--int_value=0x03 --output=$TEST_DATA/property4.bin
+
+$UTILITIES/make_property.exe --property_name='provisioning-enclave-sv' --property_type=int --comparator="=" \
+--int_value=0x13 --output=$TEST_DATA/property5.bin
+
+$UTILITIES/combine_properties.exe \
+--in=$TEST_DATA/property1.bin,$TEST_DATA/property2.bin,$TEST_DATA/property3.bin,$TEST_DATA/property4.bin,$TEST_DATA/property5.bin \
+--output=$TEST_DATA/properties.bin
+
+$UTILITIES/make_platform.exe --platform_type=sgx \
+--properties_file=$TEST_DATA/properties.bin --output=$TEST_DATA/gramine_platform.bin
+
+$UTILITIES/make_unary_vse_clause.exe --platform_subject=$TEST_DATA/gramine_platform.bin \
+--verb="has-trusted-platform-property" --output=$TEST_DATA/gramine_isplatform.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+        --verb="says" --clause=gramine_isplatform.bin --output=vse_policy3.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
+        --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_3.bin
+
 # Package the policy for the certifier
-$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin \
   --output=policy.bin
+
+# For extended gramine, include platform rule
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe \
+  --input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin \
+  --output=extended_policy.bin
 
 # Compile the protobuf
 cd $CERTIFIER_PROTOTYPE
