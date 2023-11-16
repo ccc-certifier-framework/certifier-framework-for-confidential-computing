@@ -2178,9 +2178,14 @@ func TestSgxProofs(t *testing.T) {
 	fmt.Printf("TestSgxProofs\n")
 	fmt.Printf("\n")
 
+	attestation, err := os.ReadFile("test_data/gramine-attestation.bin")
+	if err != nil {
+		t.Errorf("Failed to read attestation file\n")
+	}
+
 	serializedPolicyKey, err := os.ReadFile("test_data/policy_key_file.bin")
 	if err != nil {
-		t.Errorf("Failed to read ppolicy key file\n")
+		t.Errorf("Failed to read policy key file\n")
 	}
 	policyPrivateKey := certprotos.KeyMessage{}
 	err = proto.Unmarshal(serializedPolicyKey, &policyPrivateKey)
@@ -2232,57 +2237,7 @@ func TestSgxProofs(t *testing.T) {
 		t.Errorf("Failed to make measurement entity\n")
 	}
 
-	props := certprotos.Properties{}
-
-	qeSvn := 3
-	pceSvn := 19
-	cpuSvn := []byte{1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 0}
-	debug := false
-	mode64bit := true
-
-	platName := "sgx"
-	cpuSvnName := "cpusvn"
-	qeName := "quoting-enclave-sv"
-	peName := "provisioning-enclave-sv"
-	deName := "debug"
-	x64Name := "X64"
-
-	deVal := "no"
-	if debug {
-		deVal = "yes"
-	}
-
-	x64Val := "no"
-	if mode64bit {
-		x64Val = "yes"
-	}
-
-	// Debug property
-	p0 := MakeProperty(deName, "string", &deVal, nil, nil)
-	props.Props = append(props.Props, p0)
-
-	// 64 bit property
-	p1 := MakeProperty(x64Name, "string", &x64Val, nil, nil)
-	props.Props = append(props.Props, p1)
-
-	ce := "="
-
-	// qe property
-	qeVal := uint64(qeSvn)
-	p2 := MakeProperty(qeName, "int", nil, &ce, &qeVal)
-	props.Props = append(props.Props, p2)
-
-	// pe property
-	peVal := uint64(pceSvn)
-	p3 := MakeProperty(peName, "int", nil, &ce, &peVal)
-	props.Props = append(props.Props, p3)
-
-	// svn property
-	svnVal := BytesToUint64(cpuSvn)
-	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
-	props.Props = append(props.Props, p4)
-
-	p := MakePlatform(platName, nil, &props)
+	p := GetPlatformFromGramineAttest(attestation)
 	pe := MakePlatformEntity(p)
 	env := MakeEnvironment(p, m)
 	enve := MakeEnvironmentEntity(env)
@@ -2332,159 +2287,5 @@ func TestSgxProofs(t *testing.T) {
 		fmt.Printf("Proof succeeded\n")
 	} else {
 		fmt.Printf("Proof failed\n")
-	}
-}
-
-func TestSgxFilter(t *testing.T) {
-	fmt.Printf("\n")
-	fmt.Printf("\n")
-	fmt.Printf("TestSgxFilter\n")
-	fmt.Printf("\n")
-
-	serializedPolicyKey, err := os.ReadFile("test_data/policy_key_file.bin")
-	if err != nil {
-		t.Errorf("Failed to read ppolicy key file\n")
-	}
-	policyPrivateKey := certprotos.KeyMessage{}
-	err = proto.Unmarshal(serializedPolicyKey, &policyPrivateKey)
-	if err != nil {
-		t.Errorf("Failed to deserialize policy key file\n")
-	}
-
-	serializedEnclaveKey, err := os.ReadFile("test_data/attest_key_file.bin")
-	if err != nil {
-		t.Errorf("Failed to read enclave key file\n")
-	}
-	enclavePrivateKey := certprotos.KeyMessage{}
-	err = proto.Unmarshal(serializedEnclaveKey, &enclavePrivateKey)
-	if err != nil {
-		t.Errorf("Failed to deserialize enclave key file\n")
-	}
-
-	policyKey := InternalPublicFromPrivateKey(&policyPrivateKey)
-	if policyKey == nil {
-		t.Errorf("Failed to convert policy key\n")
-	}
-	enclaveKey := InternalPublicFromPrivateKey(&enclavePrivateKey)
-	if enclaveKey == nil {
-		t.Errorf("Failed to convert enclave key\n")
-	}
-
-	// Evidence for filterpolicy should be
-	//    0. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
-	//    1. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-	//        Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
-	//    2. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-	//        Measurement[0001020304050607...] is-trusted
-	//    3. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-	//        platform has-trusted-platform-property
-
-	pke := MakeKeyEntity(policyKey)
-	if pke == nil {
-		t.Errorf("Failed to make policy key entity\n")
-	}
-	eke := MakeKeyEntity(enclaveKey)
-	if eke == nil {
-		t.Errorf("Failed to make enclave key entity\n")
-	}
-	m := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}
-	me := MakeMeasurementEntity(m)
-	if me == nil {
-		t.Errorf("Failed to make measurement entity\n")
-	}
-
-	props := certprotos.Properties{}
-
-	qeSvn := 3
-	pceSvn := 19
-	cpuSvn := []byte{1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 0}
-	debug := false
-	mode64bit := true
-
-	platName := "sgx"
-	cpuSvnName := "cpusvn"
-	qeName := "quoting-enclave-sv"
-	peName := "provisioning-enclave-sv"
-	deName := "debug"
-	x64Name := "X64"
-
-	deVal := "no"
-	if debug {
-		deVal = "yes"
-	}
-
-	x64Val := "no"
-	if mode64bit {
-		x64Val = "yes"
-	}
-
-	// Debug property
-	p0 := MakeProperty(deName, "string", &deVal, nil, nil)
-	props.Props = append(props.Props, p0)
-
-	// 64 bit property
-	p1 := MakeProperty(x64Name, "string", &x64Val, nil, nil)
-	props.Props = append(props.Props, p1)
-
-	ce := "="
-
-	// qe property
-	qeVal := uint64(qeSvn)
-	p2 := MakeProperty(qeName, "int", nil, &ce, &qeVal)
-	props.Props = append(props.Props, p2)
-
-	// pe property
-	peVal := uint64(pceSvn)
-	p3 := MakeProperty(peName, "int", nil, &ce, &peVal)
-	props.Props = append(props.Props, p3)
-
-	// svn property
-	svnVal := BytesToUint64(cpuSvn)
-	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
-	props.Props = append(props.Props, p4)
-
-	p := MakePlatform(platName, nil, &props)
-	pe := MakePlatformEntity(p)
-	env := MakeEnvironment(p, m)
-	enve := MakeEnvironmentEntity(env)
-
-	verbIsTrusted := "is-trusted"
-	verbIsTrustedForAttestation := "is-trusted-for-attestation"
-	verbSays := "says"
-	verbSpeaksFor := "speaks-for"
-	verbIsEnvironment := "is-environment"
-	verbTrustedProperty := "has-trusted-platform-property"
-
-	policyKeyIsTrusted := MakeUnaryVseClause(pke, &verbIsTrusted)
-	keyIsTrustedForAttestation := MakeUnaryVseClause(eke, &verbIsTrustedForAttestation)
-	policyKeySaysPlatformKeyIsTrustedForAttestation := MakeIndirectVseClause(pke, &verbSays, keyIsTrustedForAttestation)
-	measurementIsTrusted := MakeUnaryVseClause(me, &verbIsTrusted)
-	policyKeySaysMeasurementIsTrusted := MakeIndirectVseClause(pke, &verbSays, measurementIsTrusted)
-	platformIsTrusted := MakeUnaryVseClause(pe, &verbTrustedProperty)
-	policyKeySaysPlatformIsTrusted := MakeIndirectVseClause(pke, &verbSays, platformIsTrusted)
-	environmentIsEnvironment := MakeUnaryVseClause(enve, &verbIsEnvironment)
-	enclaveKeySpeaksForEnvironment := MakeSimpleVseClause(eke, &verbSpeaksFor, enve)
-
-	alreadyProved := certprotos.ProvedStatements{}
-
-	alreadyProved.Proved = append(alreadyProved.Proved, policyKeyIsTrusted)
-	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysPlatformKeyIsTrustedForAttestation)
-	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysMeasurementIsTrusted)
-	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysPlatformIsTrusted)
-	alreadyProved.Proved = append(alreadyProved.Proved, environmentIsEnvironment)
-	alreadyProved.Proved = append(alreadyProved.Proved, enclaveKeySpeaksForEnvironment)
-
-	pool := PolicyPool{}
-	if !InitPolicyPool(&pool, &alreadyProved) {
-		t.Errorf("Failed to InitPolicyPool\n")
-	}
-
-	evp := certprotos.EvidencePackage{}
-	// Make an evidence package
-
-	return
-	filtered := FilterExtendedGraminePolicy(policyKey, &evp, &pool)
-	if filtered == nil {
-		t.Errorf("FilterExtendedGraminePolicy Failed\n")
 	}
 }

@@ -498,19 +498,31 @@ func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evType string,
 		if ev == nil {
 			continue
 		}
-		if ev.GetEvidenceType() != "sev-attestation" {
-			continue
+		if ev.GetEvidenceType() == "sev-attestation" {
+			var am certprotos.SevAttestationMessage
+			err := proto.Unmarshal(ev.SerializedEvidence, &am)
+			if err != nil {
+				fmt.Printf("GetRelevantPlatformFeaturePolicy: Can't unmarshal SevAttestationMessage\n")
+				return nil
+			}
+			plat := GetPlatformFromSevAttest(am.ReportedAttestation)
+			if plat != nil {
+				platform = MakePlatformEntity(plat)
+				break
+			}
 		}
-		var am certprotos.SevAttestationMessage
-		err := proto.Unmarshal(ev.SerializedEvidence, &am)
-		if err != nil {
-			fmt.Printf("GetRelevantPlatformFeaturePolicy: Can't unmarshal SevAttestationMessage\n")
-			return nil
-		}
-		plat := GetPlatformFromSevAttest(am.ReportedAttestation)
-		if plat != nil {
-			platform = MakePlatformEntity(plat)
-			break
+		if ev.GetEvidenceType() == "gramine-attestation" {
+			var am certprotos.GramineAttestationMessage
+			err := proto.Unmarshal(ev.SerializedEvidence, &am)
+			if err != nil {
+				fmt.Printf("GetRelevantPlatformFeaturePolicy: Can't unmarshal GramineAttestationMessage\n")
+				return nil
+			}
+			plat := GetPlatformFromGramineAttest(am.ReportedAttestation)
+			if plat != nil {
+				platform = MakePlatformEntity(plat)
+				break
+			}
 		}
 	}
 	if platform == nil {
@@ -1551,6 +1563,57 @@ func GetTcbVersionFromSevAttest(binSevAttest []byte) uint64 {
 		tcb |= uint64(binSevAttest[0x180+i]) << (8 * i)
 	}
 	return tcb
+}
+
+func GetPlatformFromGramineAttest(binAttest []byte) *certprotos.Platform {
+
+	qeSvn, pceSvn, cpuSvn, debug, mode64bit := GetPlatformAttributesFromGramineAttest(binAttest)
+
+	platName := "sgx"
+	cpuSvnName := "cpusvn"
+	qeName := "quoting-enclave-sv"
+	peName := "provisioning-enclave-sv"
+	deName := "debug"
+	x64Name := "X64"
+
+	deVal := "no"
+	if debug {
+		deVal = "yes"
+	}
+
+	x64Val := "no"
+	if mode64bit {
+		x64Val = "yes"
+	}
+
+	props := &certprotos.Properties{}
+
+	// Debug property
+	p0 := MakeProperty(deName, "string", &deVal, nil, nil)
+	props.Props = append(props.Props, p0)
+
+	// 64 bit property
+	p1 := MakeProperty(x64Name, "string", &x64Val, nil, nil)
+	props.Props = append(props.Props, p1)
+
+	ce := "="
+
+	// qe property
+	qeVal := uint64(qeSvn)
+	p2 := MakeProperty(qeName, "int", nil, &ce, &qeVal)
+	props.Props = append(props.Props, p2)
+
+	// pe property
+	peVal := uint64(pceSvn)
+	p3 := MakeProperty(peName, "int", nil, &ce, &peVal)
+	props.Props = append(props.Props, p3)
+
+	// svn property
+	svnVal := BytesToUint64(cpuSvn)
+	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
+	props.Props = append(props.Props, p4)
+
+	return MakePlatform(platName, nil, props)
 }
 
 /*
@@ -3193,53 +3256,7 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 
 func ConstructGramineIsEnvironmentClaim(measurement []byte, attestation []byte) *certprotos.VseClause {
 
-	qeSvn, pceSvn, cpuSvn, debug, mode64bit := GetPlatformAttributesFromGramineAttest(attestation)
-
-	platName := "sgx"
-	cpuSvnName := "cpusvn"
-	qeName := "quoting-enclave-sv"
-	peName := "provisioning-enclave-sv"
-	deName := "debug"
-	x64Name := "X64"
-
-	deVal := "no"
-	if debug {
-		deVal = "yes"
-	}
-
-	x64Val := "no"
-	if mode64bit {
-		x64Val = "yes"
-	}
-
-	props := &certprotos.Properties{}
-
-	// Debug property
-	p0 := MakeProperty(deName, "string", &deVal, nil, nil)
-	props.Props = append(props.Props, p0)
-
-	// 64 bit property
-	p1 := MakeProperty(x64Name, "string", &x64Val, nil, nil)
-	props.Props = append(props.Props, p1)
-
-	ce := "="
-
-	// qe property
-	qeVal := uint64(qeSvn)
-	p2 := MakeProperty(qeName, "int", nil, &ce, &qeVal)
-	props.Props = append(props.Props, p2)
-
-	// pe property
-	peVal := uint64(pceSvn)
-	p3 := MakeProperty(peName, "int", nil, &ce, &peVal)
-	props.Props = append(props.Props, p3)
-
-	// svn property
-	svnVal := BytesToUint64(cpuSvn)
-	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
-	props.Props = append(props.Props, p4)
-
-	pl := MakePlatform(platName, nil, props)
+	pl := GetPlatformFromGramineAttest(attestation)
 	if pl == nil {
 		fmt.Printf("ConstructExtendedGramineClaim: Can't make platform\n")
 		return nil
@@ -3536,8 +3553,7 @@ func ValidateGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certproto
 func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 	policyPool *PolicyPool) *certprotos.ProvedStatements {
 
-	/* Debug
-	fmt.Printf("Incoming evidence for Gramine\n")
+	fmt.Printf("\nFilterExtendedGraminePolicy: Incoming evidence for Gramine\n")
 	PrintEvidencePackage(evp, true)
 	fmt.Printf("\nOriginal Platform Policy:\n")
 	for i := 0; i < len(policyPool.PlatformKeyPolicy.Proved); i++ {
@@ -3552,8 +3568,13 @@ func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprot
 		PrintVseClause(cl)
 		fmt.Printf("\n")
 	}
+	fmt.Printf("\nOriginal Platform Policy:\n")
+	for i := 0; i < len(policyPool.PlatformFeaturePolicy.Proved); i++ {
+		cl := policyPool.PlatformFeaturePolicy.Proved[i]
+		PrintVseClause(cl)
+		fmt.Printf("\n")
+	}
 	fmt.Printf("\n\n")
-	*/
 
 	filtered := &certprotos.ProvedStatements{}
 
@@ -3565,6 +3586,7 @@ func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprot
 	// This should be passed in
 	evType := "gramine-evidence"
 
+	// PlatformKey
 	from = GetRelevantPlatformKeyPolicy(policyPool, evType, evp)
 	if from == nil {
 		return nil
@@ -3572,8 +3594,7 @@ func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprot
 	to = proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
 
-	// PlatformKey
-
+	// Measurement
 	from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
 	if from == nil {
 		return nil
@@ -3581,10 +3602,10 @@ func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprot
 	to = proto.Clone(from).(*certprotos.VseClause)
 	filtered.Proved = append(filtered.Proved, to)
 
-	// platform has trusted policy
+	// Platform
 	from = GetRelevantPlatformFeaturePolicy(policyPool, evType, evp)
 	if from == nil {
-		fmt.Printf("FilterSevPolicy: Can't get relavent platform features\n")
+		fmt.Printf("FilterExtendedGraminePolicy: Can't get relavent platform features\n")
 		return nil
 	}
 	to = proto.Clone(from).(*certprotos.VseClause)
