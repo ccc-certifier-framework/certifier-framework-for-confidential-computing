@@ -2238,6 +2238,7 @@ func VerifyRule10(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpr
 	if c.GetVerb() != "is-trusted" {
 		return false
 	}
+
 	return SameEntity(c.Subject, c1.Subject) && SameEntity(c.Subject, c2.Subject)
 }
 
@@ -3730,8 +3731,8 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 		return nil, nil
 	}
 	ps5 := certprotos.ProofStep{
-		S1:          environmentPlatformIsTrusted,
-		S2:          environmentMeasurementIsTrusted,
+		S1:          environmentMeasurementIsTrusted,
+		S2:          environmentPlatformIsTrusted,
 		Conclusion:  environmentIsTrusted,
 		RuleApplied: &r10,
 	}
