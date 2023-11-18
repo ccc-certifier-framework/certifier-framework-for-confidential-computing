@@ -2265,6 +2265,7 @@ func TestSgxProofs(t *testing.T) {
 	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysPlatformKeyIsTrustedForAttestation)
 	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysMeasurementIsTrusted)
 	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysPlatformIsTrusted)
+	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysPlatformKeyIsTrustedForAttestation)
 	alreadyProved.Proved = append(alreadyProved.Proved, environmentIsEnvironment)
 	alreadyProved.Proved = append(alreadyProved.Proved, enclaveKeySpeaksForEnvironment)
 

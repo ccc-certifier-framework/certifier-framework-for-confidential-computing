@@ -3623,8 +3623,10 @@ Incoming evidence:
                   Measurement[0001020304050607...] is-trusted
   	  3. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
       	          platform has-trusted-platform-property
-  	  4. environment(platform, measurement) is-environment
-  	  5. enclaveKey speaks-for Measurement[00010203...]
+  	  4. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+     	       Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+  	  5. environment(platform, measurement) is-environment
+  	  6. enclaveKey speaks-for Measurement[00010203...]
 
 Produced proof should be:
 	  0. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted AND
@@ -3654,7 +3656,7 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 		fmt.Printf("\n")
 	}
 
-	if len(alreadyProved.Proved) < 5 {
+	if len(alreadyProved.Proved) < 7 {
 		fmt.Printf("ConstructProofFromGramineEvidence: too few statements\n")
 		return nil, nil
 	}
@@ -3662,8 +3664,8 @@ func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMe
 	policyKeyIsTrusted := alreadyProved.Proved[0]
 	policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[2]
 	policyKeySaysPlatformHasTrustedProperty := alreadyProved.Proved[3]
-	environmentIsEnvironment := alreadyProved.Proved[4]
-	enclaveKeySpeaksForEnvironment := alreadyProved.Proved[5]
+	environmentIsEnvironment := alreadyProved.Proved[5]
+	enclaveKeySpeaksForEnvironment := alreadyProved.Proved[6]
 
 	if policyKeyIsTrusted == nil || enclaveKeySpeaksForEnvironment == nil ||
 		policyKeySaysMeasurementIsTrusted == nil || policyKeySaysPlatformHasTrustedProperty == nil ||

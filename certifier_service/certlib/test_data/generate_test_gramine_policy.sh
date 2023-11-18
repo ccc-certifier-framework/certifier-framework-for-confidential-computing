@@ -43,7 +43,7 @@ $UTILITIES/make_property.exe --property_name=X64 --property_type='string' compar
 --string_value=yes --output=$TEST_DATA/property2.bin
 
 $UTILITIES/make_property.exe --property_name='cpusvn' --property_type=int --comparator="=" \
---int_value=0x03000000000008115 --output=$TEST_DATA/property3.bin
+--int_value=1374454427414364160 --output=$TEST_DATA/property3.bin
 
 $UTILITIES/make_property.exe --property_name='quoting-enclave-sv' --property_type=int --comparator="=" \
 --int_value=0x03 --output=$TEST_DATA/property4.bin
