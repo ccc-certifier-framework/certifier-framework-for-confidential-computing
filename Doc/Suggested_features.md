@@ -1,10 +1,10 @@
 # Enhancements and Feature Requests
 
  1. Finish Nvidia support
- 2. Finish Python interface providing way to get keys and certs from store and using them in secure_channel
+ 2. Finish Python interface providing way to get keys and certs from store and using them in secure_channel  -- almost done
  3. thread safety for policy store (easy)
  4. Clean up leaks in channel
- 5. Implement platform features using Ye's interface for Gramine apps
+ 5. Implement platform features using Ye's interface for Gramine apps --- Done
  6. Integration with Confidential Containers from IBM et al
  7. Update Docs
  8. Perf tests, Fuzz testing, valgrind for memory leaks
