@@ -24,6 +24,16 @@ if [ "${NumMakeThreads}" -gt 8 ]; then NumMakeThreads=8; fi
 # 'Globals' to track which test function is / was executing ...
 This_fn=""
 
+# -------------------------------------------------------------------------
+# Symbol to track dependency of test-simple_app_python-with-warm-restart
+# test-case on 'setup' done for simple_app_python. In CI, these two tests
+# are run back-to-back, so this dependency is assured. If the user runs
+# this test-case manually, we track this dependency via this global symbol
+# -------------------------------------------------------------------------
+Simple_app_python_setup_done="${FROM_CI_BUILD_YML:-0}"
+Simple_app_setup_done="${FROM_CI_BUILD_YML:-0}"
+
+# Symbol to track dependency of test-simple_app_python-with-warm-restart
 # ###########################################################################
 # Set trap handlers for all errors. Needs -E (-o errtrace): Ensures that ERR
 # traps (see below) get inherited by functions, command substitutions, and
@@ -59,7 +69,9 @@ TestList=( "test-core-certifier-programs"
            "test-run_example-help-list-args"
            "test-run_example-dry-run"
            "test-run_example-simple_app"
+           "test-simple_app-with-crypto_algorithms"
            "test-run_example-simple_app_python"
+           "test-simple_app_python-with-warm-restart"
            "test-build-and-setup-App-Service-and-simple_app_under_app_service"
            "test-run_example-multidomain_simple_app"
            "test-build-and-install-sev-snp-simulator"
@@ -431,9 +443,12 @@ function test-run_example-simple_app() {
 
     ./run_example.sh simple_app
 
+    # Just exec app exe to produce usage info
+    ./simple_app/example_app.exe
+
     # cp'over some certificate / policy / measurement bin files that were provisioned
     # for running the simple_app. The test cases in below test need these files to
-    # invoke (& verify) the steps under 'get-certified' target.
+    # invoke (& verify) the steps under the 'get-certified' target.
     pytest_data_dir="../tests/pytests/data/"
 
     for binfile in attest_key_file.bin \
@@ -451,9 +466,9 @@ function test-run_example-simple_app() {
     NO_ENABLE_SEV=1 make -f certifier.mak --always-make -j${NumMakeThreads} sharedlib
     popd > /dev/null 2>&1
 
-    # Re-start Certifier Service as script, above, would have shut it down
     ./cleanup.sh
 
+    # Re-start Certifier Service as script, above, would have shut it down
     ./run_example.sh simple_app start_certifier_service
 
     pgrep simple
@@ -468,6 +483,25 @@ function test-run_example-simple_app() {
 
     popd > /dev/null 2>&1
 
+    ./cleanup.sh
+
+    popd > /dev/null 2>&1
+}
+
+# #############################################################################
+function test-simple_app-with-crypto_algorithms() {
+    echo "******************************************************************"
+    echo "* Test: Execute script to compile, build and run simple_app."
+    echo "******************************************************************"
+    echo " "
+    pushd ./sample_apps > /dev/null 2>&1
+
+    ./cleanup.sh
+
+    if [ "${Simple_app_setup_done}" = 0 ]; then
+        ./run_example.sh simple_app setup
+    fi
+    ./run_example.sh simple_app run_test-crypto_algorithms
     ./cleanup.sh
 
     popd > /dev/null 2>&1
@@ -504,24 +538,45 @@ function test-run_example-simple_app_python() {
     ./run_example.sh simple_app_python setup
     ./run_example.sh simple_app_python run_test
 
-    # ---- Variation -----------------------------------------------------------
-    # Test the scenario that once certified, the server-process and client-app
-    # can be re-started multiple times, without need for the Certifier Service.
-    # Re-starting the server-process will re-load the trust data from the
-    # policy-store. It will no longer need to contact the Certifier Service
-    # to get re-certified.
-    # Then, you can re-start the client-app, to talk to this now-certified
-    # server-process directly through secure SSL channel.
-    # The following sequence of steps validate this workflow and verify that
-    # the client and server can communicate through this secure channel.
-    # --------------------------------------------------------------------------
+    ./cleanup.sh
+    popd > /dev/null 2>&1
+}
+
+# #############################################################################
+# Test the scenario that once certified, the server-process and client-app
+# can be re-started multiple times, without need for the Certifier Service.
+# Re-starting the server-process will re-load the trust data from the
+# policy-store. It will no longer need to contact the Certifier Service
+# to get re-certified.
+#
+# Then, you can re-start the client-app, to talk to this now-certified
+# server-process directly through secure SSL channel.
+# The following sequence of steps validate this workflow and verify that
+# the client and server can communicate through this secure channel.
+# #############################################################################
+function test-simple_app_python-with-warm-restart() {
     echo " "
     echo "*******************************************************************"
     echo "* Test Variation: Re-start server-process and client-app after shutting down the Certifier Service ..."
     echo "*******************************************************************"
     echo " "
 
-    ./cleanup.sh
+    pushd ./sample_apps > /dev/null 2>&1
+
+    # If this test case is being run on its own (outside of CI), we have to
+    # first go through setup and then run the test. This will get the
+    # server/client-apps 'certified'. After that, the meat of this test-case;
+    # i.e., re-run with warm-restart can be run.
+    set -x
+    if [ "${Simple_app_python_setup_done}" = 0 ]; then
+        ./run_example.sh rm_non_git_files
+        ./run_example.sh simple_app_python setup
+        ./run_example.sh simple_app_python run_test
+
+        # This will stop the Certifier Service.
+        ./cleanup.sh
+    fi
+    set +x
 
     # This invokes the 'run-app-as-server' operation in example_app.py
     # which does a warm_restart() to re-load trust data from the policy-store.

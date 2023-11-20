@@ -40,6 +40,9 @@ typedef struct optlookup {
 #define DCL_OPTLOOKUP_TERM()                                                   \
   { .id = -1, .name = NULL }
 
+// Evaluate the size of an array of constants
+#define ARRAY_LEN(a) ((int)(sizeof(a) / sizeof((*a))))
+
 const char *optbyid(optlookup *opt, int id);
 
 #endif /* __CC_USEFUL_H__ */

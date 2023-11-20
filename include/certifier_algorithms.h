@@ -17,6 +17,8 @@
 #ifndef __CERTIFIER_ALGORITHMS_H__
 #define __CERTIFIER_ALGORITHMS_H__
 
+#include <vector>
+
 /*
  * Encryption algorithms supported.
  */
@@ -67,5 +69,11 @@ extern const char *Integrity_method_aes_256_cbc_hmac_sha256;
 extern const char *Integrity_method_aes_256_cbc_hmac_sha384;
 extern const char *Integrity_method_aes_256_gcm;
 extern const char *Integrity_method_hmac_sha256;
+
+extern std::vector<const char *> Enc_public_key_algorithms;
+extern std::vector<const char *> Enc_authenticated_symmetric_key_algorithms;
+
+extern const int Num_public_key_algorithms;
+extern const int Num_symmetric_key_algorithms;
 
 #endif  // __CERTIFIER_ALGORITHMS_H__

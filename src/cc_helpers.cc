@@ -1077,7 +1077,7 @@ bool certifier::framework::cc_trust_manager::generate_symmetric_key(
   if (cc_symmetric_key_initialized_ && !regen)
     return true;
 
-  // Make up symmetric keys (e.g.-for sealing)for app
+  // Make up symmetric keys (e.g.-for sealing) for app
   int num_key_bytes;
   if (symmetric_key_algorithm_ == Enc_method_aes_256_cbc_hmac_sha256
       || symmetric_key_algorithm_ == Enc_method_aes_256_cbc_hmac_sha384
@@ -1186,9 +1186,10 @@ bool certifier::framework::cc_trust_manager::generate_auth_key(bool regen) {
       return false;
     }
   } else {
-    printf("%s() error, line %d, Unsupported public key algorithm\n",
+    printf("%s() error, line %d, Unsupported public key algorithm: '%s'\n",
            __func__,
-           __LINE__);
+           __LINE__,
+           public_key_algorithm_.c_str());
     return false;
   }
 

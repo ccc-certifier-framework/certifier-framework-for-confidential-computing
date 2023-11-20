@@ -102,6 +102,15 @@ CC_SIMULATED_SEV="${CC_SIMULATED_SEV:- -1}"
 # setup hasn't been done. (We will fail simulated-sev execution.)
 CC_vcek_key_file_SIM_SEV="/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem"
 
+# ---------------------------------------------------------------------------
+# Global symbols to specify public-key and symmetric-key algorithms
+# while testing out different pairs with simple_app. By default, these
+# symbols are empty, which means we will select the defaults for these
+# arguments while running 'cold-init' for simple_app.
+# ---------------------------------------------------------------------------
+Simple_app_public_key_algo=""
+Simple_app_symmetric_key_algo=""    # Authenticated symmetric-key alg name
+
 # ###########################################################################
 # Set trap handlers for all errors. Needs -E (-o errtrace): Ensures that ERR
 # traps (see below) get inherited by functions, command substitutions, and
@@ -515,6 +524,13 @@ function is_valid_step() {
         return
     fi
 
+    # Special-hook to run simple_app to exercise diff crypto algorithms
+    if [ "${SampleAppName}" == "simple_app" ] \
+    && [ "${fn}" == "run_test-crypto_algorithms" ]; then
+        Found_step=1
+        return
+    fi
+
     case "${SampleAppName}" in
           "simple_app" \
         | "simple_app_python" \
@@ -705,6 +721,28 @@ function rm_non_git_files() {
 }
 
 # ###########################################################################
+# Python simple_app needs Certifier Framework shared lib, as the Python
+# bindings invoke methods found in this shared library. Build this library.
+# ###########################################################################
+function build_certifier_sharedlib() {
+    run_cmd
+    if [ "${SampleAppName}" != "simple_app_python" ]; then
+        echo "${Me}: Skipping ..."
+        return
+    fi
+
+    run_pushd "${CERT_PROTO}/src"
+
+    mkf="certifier.mak"
+    if [ ${DoMakeClean} -eq 1 ]; then
+        run_cmd make -f ${mkf} clean
+    fi
+    run_cmd make -j "${NumMakeThreads}" -f ${mkf} sharedlib
+
+    run_popd
+}
+
+# ###########################################################################
 function build_utilities() {
     run_cmd
     if [ "${SampleAppName}" = "simple_app_under_app_service" ]; then
@@ -854,7 +892,7 @@ function gen_policy_key_for_example_app() {
 
         # Invoke utility with python-specific arguments.
         # Use upper-case names to avoid pylint errors.
-        if [ "${SampleAppName}" = "simple_app_python" ]; then
+        if [ "${SampleAppName}" == "simple_app_python" ]; then
             python_flag="--python"
             init_cert_flag="--array_name=INITIALIZED_CERT"
             outfile="policy_key.py"
@@ -1092,7 +1130,7 @@ function get_measurement_of_app_by_name() {
     local policy_key_arg=""
     if [ "${SampleAppName}" = "application_service" ]; then
         measurement_file="app_service.measurement"
-    elif [ "${SampleAppName}" = "simple_app_python" ]; then
+    elif [ "${SampleAppName}" == "simple_app_python" ]; then
         # For Python simple-app, we need to measure additional files, which
         # are needed for the app to drive off of Certifier interfaces
         policy_key_arg="--other_files=../policy_key.py,${CERT_PROTO}/certifier_framework.py,${CERT_PROTO}/libcertifier_framework.so"
@@ -1103,7 +1141,7 @@ function get_measurement_of_app_by_name() {
     run_cmd "$CERT_UTILS"/measurement_utility.exe   \
                 --type=hash                         \
                 --input="../${app_name_exe}"        \
-                ${policy_key_arg}                   \
+                "${policy_key_arg}"                 \
                 --print_debug                       \
                 --output="${measurement_file}"
 
@@ -2177,11 +2215,6 @@ function run_simple_app_as_server_talk_to_Cert_Service() {
     run_app_by_name_as_server_talk_to_Cert_Service "example_app.exe"
 }
 
-function run_simple_app_python_as_server_talk_to_Cert_Service() {
-    run_cmd
-    run_app_by_name_as_server_talk_to_Cert_Service "example_app.py"
-}
-
 # ###########################################################################
 function run_simple_app_under_keystone_as_server_talk_to_Cert_Service() {
     run_cmd
@@ -2201,20 +2234,27 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
 
     run_pushd "${EXAMPLE_DIR}"
 
-    print_all_arg="--print_all=true"
-    if [ "${app_name_exe}" = "example_app.py" ]; then
-        print_all_arg="--print_all"
+    public_key_algo_arg=""
+    symmetric_key_algo_arg=""
 
-        # In order to get access to SWIG-generated *.py modules
-        PYTHONPATH=../..; export PYTHONPATH
-        PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
+    if [ "${SampleAppName}" == "simple_app" ]; then
+        if [ "${Simple_app_public_key_algo}" != "" ]; then
+            public_key_algo_arg="--public_key_alg=${Simple_app_public_key_algo}"
+        fi
+        if [ "${Simple_app_symmetric_key_algo}" != "" ]; then
+            symmetric_key_algo_arg="--auth_symmetric_key_alg=${Simple_app_symmetric_key_algo}"
+        fi
+        echo "${Me}: Public-key algorithm: '${public_key_algo_arg}', Authenticated Symmetric-key algorithm: '${symmetric_key_algo_arg}'"
     fi
+
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
                 --data_dir="./${Server_app_data}/"              \
                 --operation=cold-init                           \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
-                ${print_all_arg}
+                "${public_key_algo_arg}"                        \
+                "${symmetric_key_algo_arg}"                     \
+                --print_all=true
 
     run_cmd sleep 1
 
@@ -2223,7 +2263,44 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
                 --operation=get-certified                       \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
-                ${print_all_arg}
+                "${public_key_algo_arg}"                        \
+                "${symmetric_key_algo_arg}"                     \
+                --print_all=true
+
+    run_popd
+}
+
+# ###########################################################################
+# Python simple-app has a slightly different argument list. And does not
+# support args like --public_key_alg, --symmetric_key_alg that simple_app
+# supports (for testing purposes).
+# ###########################################################################
+function run_simple_app_python_as_server_talk_to_Cert_Service() {
+
+    local app_name_exe="example_app.py"
+    run_cmd
+
+    run_pushd "${EXAMPLE_DIR}"
+
+    # In order to get access to SWIG-generated *.py modules
+    PYTHONPATH=../..; export PYTHONPATH
+    PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
+
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
+                --data_dir="./${Server_app_data}/"              \
+                --operation=cold-init                           \
+                --measurement_file="example_app.measurement"    \
+                --policy_store_file=policy_store                \
+                --print_all
+
+    run_cmd sleep 1
+
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
+                --data_dir="./${Server_app_data}/"              \
+                --operation=get-certified                       \
+                --measurement_file="example_app.measurement"    \
+                --policy_store_file=policy_store                \
+                --print_all
 
     run_popd
 }
@@ -2339,11 +2416,6 @@ function run_simple_app_as_client_talk_to_Cert_Service() {
     run_app_by_name_as_client_talk_to_Cert_Service "example_app.exe"
 }
 
-function run_simple_app_python_as_client_talk_to_Cert_Service() {
-    run_cmd
-    run_app_by_name_as_client_talk_to_Cert_Service "example_app.py"
-}
-
 # ###########################################################################
 function run_simple_app_under_keystone_as_client_talk_to_Cert_Service() {
     run_cmd
@@ -2363,13 +2435,17 @@ function run_app_by_name_as_client_talk_to_Cert_Service() {
 
     run_pushd "${EXAMPLE_DIR}"
 
-    print_all_arg="--print_all=true"
-    if [ "${app_name_exe}" = "example_app.py" ]; then
-        print_all_arg="--print_all"
+    public_key_algo_arg=""
+    symmetric_key_algo_arg=""
 
-        # In order to get access to SWIG-generated *.py modules
-        PYTHONPATH=../..; export PYTHONPATH
-        PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
+    if [ "${SampleAppName}" == "simple_app" ]; then
+        if [ "${Simple_app_public_key_algo}" != "" ]; then
+            public_key_algo_arg="--public_key_alg=${Simple_app_public_key_algo}"
+        fi
+        if [ "${Simple_app_symmetric_key_algo}" != "" ]; then
+            symmetric_key_algo_arg="--auth_symmetric_key_alg=${Simple_app_symmetric_key_algo}"
+        fi
+        echo "${Me}: Public-key algorithm: '${public_key_algo_arg}', Authenticated Symmetric-key algorithm: '${symmetric_key_algo_arg}'"
     fi
 
     run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
@@ -2377,7 +2453,9 @@ function run_app_by_name_as_client_talk_to_Cert_Service() {
                 --operation=cold-init                           \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
-                ${print_all_arg}
+                "${public_key_algo_arg}"                        \
+                "${symmetric_key_algo_arg}"                     \
+                --print_all=true
 
     run_cmd sleep 1
 
@@ -2386,7 +2464,44 @@ function run_app_by_name_as_client_talk_to_Cert_Service() {
                 --operation=get-certified                       \
                 --measurement_file="example_app.measurement"    \
                 --policy_store_file=policy_store                \
-                ${print_all_arg}
+                "${public_key_algo_arg}"                        \
+                "${symmetric_key_algo_arg}"                     \
+                --print_all=true
+
+    run_popd
+}
+
+# ###########################################################################
+# Python simple-app has a slightly different argument list. And does not
+# support args like --public_key_alg, --symmetric_key_alg that simple_app
+# supports (for testing purposes).
+# ###########################################################################
+function run_simple_app_python_as_client_talk_to_Cert_Service() {
+
+    local app_name_exe="example_app.py"
+    run_cmd
+
+    run_pushd "${EXAMPLE_DIR}"
+
+    # In order to get access to SWIG-generated *.py modules
+    PYTHONPATH=../..; export PYTHONPATH
+    PYTHONUNBUFFERED=TRUE; export PYTHONUNBUFFERED
+
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
+                --data_dir="./${Client_app_data}/"              \
+                --operation=cold-init                           \
+                --measurement_file="example_app.measurement"    \
+                --policy_store_file=policy_store                \
+                --print_all
+
+    run_cmd sleep 1
+
+    run_cmd "${EXAMPLE_DIR}/${app_name_exe}"                    \
+                --data_dir="./${Client_app_data}/"              \
+                --operation=get-certified                       \
+                --measurement_file="example_app.measurement"    \
+                --policy_store_file=policy_store                \
+                --print_all
 
     run_popd
 }
@@ -2829,6 +2944,7 @@ function setup_simple_app() {
 
 function setup_simple_app_python() {
     run_cmd
+    build_certifier_sharedlib
     setup_app_by_name
 }
 
@@ -3076,6 +3192,58 @@ function run_test_simple_app_under_app_service() {
 
     run_simple_app_under_app_service_as_server_talk_to_Cert_Service
     run_simple_app_as_client_talk_to_Cert_Service
+}
+
+# ###########################################################################
+# Driver method to run simple_app steps with different pairs of public-key
+# and symmetric-key crypto algorithms. This interface is mainly a
+# testing interface to validate that different pairs of crypto algorithms
+# work correctly.
+# ###########################################################################
+function run_test-crypto_algorithms() {
+
+    run_cmd
+
+    start_certifier_service
+
+    subcase=0
+    # These valid-lists are found in certifier_algorithms.c
+    # public-key algo 'ecc-384' is failing ... Comment out for now ...
+    # for public_key_algo in rsa-3072 rsa-4096 ecc-384; do
+    for public_key_algo in rsa-3072 rsa-4096; do
+        # RESOLVE: Investigate & fix these limitations:
+        #  - generate_symmetric_key() does not support
+        #    Enc_method_aes_128_cbc_hmac_sha256; i.e., "aes-128-cbc-hmac-sha256";
+        # - unprotect_blob() only allows Enc_method_aes_256_cbc_hmac_sha256
+        # - These two should also be supported in loop below:
+        #   - aes-256-cbc-hmac-sha384, aes-256-gcm
+        for symmetric_key_algo in aes-256-cbc-hmac-sha256;
+        do
+            Simple_app_public_key_algo="${public_key_algo}"
+            Simple_app_symmetric_key_algo="${symmetric_key_algo}"
+
+            subcase=$((subcase + 1))
+            echo " "
+            echo "------------------------------------------------------------------------------"
+            echo " "
+            echo "${Me}: Test case ${subcase}: simple_app with public_key algorithm='${Simple_app_public_key_algo}' and symmetric-key algorithm='${Simple_app_symmetric_key_algo}'"
+            echo " "
+
+            run_app_as_server_talk_to_Cert_Service
+            run_app_as_client_talk_to_Cert_Service
+            run_app_as_server_offers_trusted_service
+            run_app_as_client_make_trusted_request
+        done
+    done
+
+    if [ "${DoCleanup}" = 1 ]; then
+        do_cleanup
+    fi
+
+    # Reset upon exit, so as not to perturb global state ...
+    Simple_app_public_key_algo=""
+    Simple_app_symmetric_key_algo=""
+    return
 }
 
 # ###########################################################################
