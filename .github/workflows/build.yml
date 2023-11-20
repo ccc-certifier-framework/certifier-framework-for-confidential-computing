@@ -96,9 +96,26 @@ jobs:
         ./CI/scripts/test.sh test-run_example-simple_app
 
     #! -------------------------------------------------------------------------
+    - name: test-simple_app-with-crypto_algorithms
+      run: |
+        #! ---------------------------------------------------------------------
+        # Set this env-var to indicate that we are running this test-case
+        # from CI, where previous test case has already run 'setup'.
+        # So, in this test case, we will not re-do 'setup'.
+        FROM_CI_BUILD_YML=1 ./CI/scripts/test.sh test-simple_app-with-crypto_algorithms
+
+    #! -------------------------------------------------------------------------
     - name: test-run_example-simple_app_python
       run: |
         ./CI/scripts/test.sh test-run_example-simple_app_python
+
+    #! -------------------------------------------------------------------------
+    - name: test-simple_app_python-with-warm-restart
+      run: |
+        # Set this env-var to indicate that we are running this test-case
+        # from CI, where previous test case has already run 'setup'.
+        # So, in this test case, we will not re-do 'setup'.
+        FROM_CI_BUILD_YML=1 ./CI/scripts/test.sh test-simple_app_python-with-warm-restart
 
     #! -------------------------------------------------------------------------
     - name: test-build-and-setup-App-Service-and-simple_app_under_app_service

@@ -114,3 +114,7 @@ $(O)/cc_helpers.o: $(S)/cc_helpers.cc $(I)/certifier.h $(US)/certifier.pb.cc
 $(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/certifier_algorithms.o: $(S)/certifier_algorithms.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
