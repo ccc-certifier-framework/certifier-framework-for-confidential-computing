@@ -1325,7 +1325,7 @@ func SatisfyingProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) 
 			return false
 		}
 		pp := FindProperty(*p1.Props[i].PropertyName, p2.Props)
-		// FIX:  This should return true since the property is not mentioned in the rule
+		// FIX:  This should continue since the property is not mentioned in the rule
 		if pp == nil {
 			fmt.Printf("Can't find property %s\n", *p1.Props[i].PropertyName)
 			return false
