@@ -1325,9 +1325,9 @@ func SatisfyingProperties(p1 *certprotos.Properties, p2 *certprotos.Properties) 
 			return false
 		}
 		pp := FindProperty(*p1.Props[i].PropertyName, p2.Props)
+		// If property is not on rule, ignore it.  NEW
 		if pp == nil {
-			fmt.Printf("Can't find property %s\n", *p1.Props[i].PropertyName)
-			return false
+			continue
 		}
 		if !SatisfyingProperty(p1.Props[i], pp) {
 			return false
@@ -1468,9 +1468,9 @@ func PrintEnvironmentDescriptor(e *certprotos.Environment) {
 	if e == nil {
 		return
 	}
-	fmt.Printf("environment[")
+	fmt.Printf("Environment[")
 	PrintPlatformDescriptor(e.ThePlatform)
-	fmt.Printf(", measurement: ")
+	fmt.Printf(", Measurement: ")
 	PrintBytes(e.TheMeasurement)
 	fmt.Printf("]")
 }
@@ -1479,7 +1479,7 @@ func PrintPlatformDescriptor(p *certprotos.Platform) {
 	if p == nil || p.PlatformType == nil {
 		return
 	}
-	fmt.Printf("platform[%s, ", *p.PlatformType)
+	fmt.Printf("Platform[%s, ", *p.PlatformType)
 	if p.HasKey != nil && *p.HasKey && p.AttestKey != nil {
 		PrintKeyDescriptor(p.AttestKey)
 		fmt.Printf(", ")
@@ -2193,4 +2193,16 @@ func Attest(eType string, toSay []byte) []byte {
 		return simultatedAttest(eType, toSay)
 	}
 	return nil
+}
+
+func BytesToUint64(b []byte) uint64 {
+	t := uint64(b[0])
+	t = (t << 8) | uint64(b[1])
+	t = (t << 8) | uint64(b[2])
+	t = (t << 8) | uint64(b[3])
+	t = (t << 8) | uint64(b[4])
+	t = (t << 8) | uint64(b[5])
+	t = (t << 8) | uint64(b[6])
+	t = (t << 8) | uint64(b[7])
+	return t
 }

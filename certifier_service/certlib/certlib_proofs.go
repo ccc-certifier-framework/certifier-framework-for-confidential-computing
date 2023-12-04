@@ -34,6 +34,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var extendedGramine bool = false
+
 func InitAxiom(pk certprotos.KeyMessage, ps *certprotos.ProvedStatements) bool {
 	// add pk is-trusted to proved statenments
 	ke := MakeKeyEntity(&pk)
@@ -324,43 +326,43 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 	return nil
 }
 
-func getVseMeasurementFromAttestation(evBuf []byte) []byte {
+func GetVseMeasurementFromAttestation(evBuf []byte) []byte {
 	sr := certprotos.SignedReport{}
 	err := proto.Unmarshal(evBuf, &sr)
 	if err != nil {
-		fmt.Printf("getVseMeasurementFromAttestation: Can't unmarshal signed report\n")
+		fmt.Printf("GetVseMeasurementFromAttestation: Can't unmarshal signed report\n")
 		return nil
 	}
 	info := certprotos.VseAttestationReportInfo{}
 	err = proto.Unmarshal(sr.GetReport(), &info)
 	if err != nil {
-		fmt.Printf("getVseMeasurementFromAttestation: Can't unmarshal info\n")
+		fmt.Printf("GetVseMeasurementFromAttestation: Can't unmarshal info\n")
 		return nil
 	}
 
 	return info.VerifiedMeasurement
 }
 
-func getSevMeasurementFromAttestation(evBuf []byte) []byte {
+func GetSevMeasurementFromAttestation(evBuf []byte) []byte {
 	var am certprotos.SevAttestationMessage
 	err := proto.Unmarshal(evBuf, &am)
 	if err != nil {
-		fmt.Printf("getSevMeasurementFromAttestation: Can't unmarshal SevAttestationMessage\n")
+		fmt.Printf("GetSevMeasurementFromAttestation: Can't unmarshal SevAttestationMessage\n")
 		return nil
 	}
 	return GetMeasurementFromSevAttest(am.ReportedAttestation)
 }
 
-func getGramineMeasurementFromAttestation(evBuf []byte) []byte {
+func GetGramineMeasurementFromAttestation(evBuf []byte) []byte {
 	succeeded, _, m, err := VerifyGramineAttestation(evBuf)
 	if !succeeded || err != nil {
-		fmt.Printf("getGramineMeasurementFromAttestation: Can't verify gramine evidence\n")
+		fmt.Printf("GetGramineMeasurementFromAttestation: Can't verify gramine evidence\n")
 		return nil
 	}
 	return m
 }
 
-func getOeMeasurementFromAttestation(prevEvidence *certprotos.Evidence,
+func GetOeMeasurementFromAttestation(prevEvidence *certprotos.Evidence,
 	curEvidence *certprotos.Evidence) []byte {
 	var serializedUD, m []byte
 	var err error
@@ -376,27 +378,27 @@ func getOeMeasurementFromAttestation(prevEvidence *certprotos.Evidence,
 	return m
 }
 
-func getKeystoneMeasurementFromAttestation(evBuf []byte) []byte {
+func GetKeystoneMeasurementFromAttestation(evBuf []byte) []byte {
 	var am certprotos.KeystoneAttestationMessage
 	err := proto.Unmarshal(evBuf, &am)
 	if err != nil {
-		fmt.Printf("getKeystoneMeasurementFromAttestation: Can't unmarshal KeystoneAttestationMessage\n")
+		fmt.Printf("GetKeystoneMeasurementFromAttestation: Can't unmarshal KeystoneAttestationMessage\n")
 		return nil
 	}
 	ptr := am.ReportedAttestation
 	return ptr[0:32]
 }
 
-func getIsletMeasurementFromAttestation(evBuf []byte) []byte {
+func GetIsletMeasurementFromAttestation(evBuf []byte) []byte {
 	var am certprotos.IsletAttestationMessage
 	err := proto.Unmarshal(evBuf, &am)
 	if err != nil {
-		fmt.Printf("getIsletMeasurementFromAttestation: Can't unmarshal IsletAttestationMessage\n")
+		fmt.Printf("GetIsletMeasurementFromAttestation: Can't unmarshal IsletAttestationMessage\n")
 		return nil
 	}
 	m, err := isletverify.IsletVerify(am.WhatWasSaid, am.ReportedAttestation)
 	if err != nil {
-		fmt.Printf("getIsletMeasurementFromAttestation: IsletVerify() failed\n")
+		fmt.Printf("GetIsletMeasurementFromAttestation: IsletVerify() failed\n")
 		return nil
 	}
 	return m
@@ -427,25 +429,25 @@ func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string,
 		} else if ev.GetEvidenceType() == "cert" {
 			continue
 		} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
-			measurement = getVseMeasurementFromAttestation(ev.SerializedEvidence)
+			measurement = GetVseMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "sev-attestation" {
-			measurement = getSevMeasurementFromAttestation(ev.SerializedEvidence)
+			measurement = GetSevMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "islet-attestation" {
-			measurement = getIsletMeasurementFromAttestation(ev.SerializedEvidence)
+			measurement = GetIsletMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "keystone-attestation" {
-			measurement = getKeystoneMeasurementFromAttestation(ev.SerializedEvidence)
+			measurement = GetKeystoneMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "gramine-attestation" {
-			measurement = getGramineMeasurementFromAttestation(ev.SerializedEvidence)
+			measurement = GetGramineMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "oe-attestation-report" {
 			if i < 1 || ev_list[i-1].GetEvidenceType() != "pem-cert-chain" {
-				measurement = getOeMeasurementFromAttestation(nil, ev_list[i])
+				measurement = GetOeMeasurementFromAttestation(nil, ev_list[i])
 			} else {
-				measurement = getOeMeasurementFromAttestation(ev_list[i-1], ev_list[i])
+				measurement = GetOeMeasurementFromAttestation(ev_list[i-1], ev_list[i])
 			}
 			break
 		} else {
@@ -496,19 +498,31 @@ func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evType string,
 		if ev == nil {
 			continue
 		}
-		if ev.GetEvidenceType() != "sev-attestation" {
-			continue
+		if ev.GetEvidenceType() == "sev-attestation" {
+			var am certprotos.SevAttestationMessage
+			err := proto.Unmarshal(ev.SerializedEvidence, &am)
+			if err != nil {
+				fmt.Printf("GetRelevantPlatformFeaturePolicy: Can't unmarshal SevAttestationMessage\n")
+				return nil
+			}
+			plat := GetPlatformFromSevAttest(am.ReportedAttestation)
+			if plat != nil {
+				platform = MakePlatformEntity(plat)
+				break
+			}
 		}
-		var am certprotos.SevAttestationMessage
-		err := proto.Unmarshal(ev.SerializedEvidence, &am)
-		if err != nil {
-			fmt.Printf("GetRelevantPlatformFeaturePolicy: Can't unmarshal SevAttestationMessage\n")
-			return nil
-		}
-		plat := GetPlatformFromSevAttest(am.ReportedAttestation)
-		if plat != nil {
-			platform = MakePlatformEntity(plat)
-			break
+		if ev.GetEvidenceType() == "gramine-attestation" {
+			var am certprotos.GramineAttestationMessage
+			err := proto.Unmarshal(ev.SerializedEvidence, &am)
+			if err != nil {
+				fmt.Printf("GetRelevantPlatformFeaturePolicy: Can't unmarshal GramineAttestationMessage\n")
+				return nil
+			}
+			plat := GetPlatformFromGramineAttest(am.ReportedAttestation)
+			if plat != nil {
+				platform = MakePlatformEntity(plat)
+				break
+			}
 		}
 	}
 	if platform == nil {
@@ -767,12 +781,28 @@ func InitProvedStatements(pk certprotos.KeyMessage, evidenceList []*certprotos.E
 				fmt.Printf("InitProvedStatements: Can't unmarshal user data\n")
 				return false
 			}
-			cl := ConstructGramineClaim(ud.EnclaveKey, m)
-			if cl == nil {
-				fmt.Printf("InitProvedStatements: ConstructGramineClaim failed\n")
-				return false
+
+			if extendedGramine {
+				ec := ConstructGramineIsEnvironmentClaim(m, ev.SerializedEvidence)
+				if ec == nil {
+					fmt.Printf("InitProvedStatements: ConstructGramineIsEnvironmentClaim failed\n")
+					return false
+				}
+				ps.Proved = append(ps.Proved, ec)
+				sfc := ConstructGramineSpeaksForClaim(ud.EnclaveKey, ec.Subject)
+				if sfc == nil {
+					fmt.Printf("InitProvedStatements: ConstructGramineSpeaksForClaim failed\n")
+					return false
+				}
+				ps.Proved = append(ps.Proved, sfc)
+			} else {
+				cl := ConstructGramineClaim(ud.EnclaveKey, m)
+				if cl == nil {
+					fmt.Printf("InitProvedStatements: ConstructGramineClaim failed\n")
+					return false
+				}
+				ps.Proved = append(ps.Proved, cl)
 			}
-			ps.Proved = append(ps.Proved, cl)
 		} else if ev.GetEvidenceType() == "oe-attestation-report" {
 			// call oeVerify here and construct the statement:
 			//      enclave-key speaks-for measurement
@@ -1447,8 +1477,7 @@ func ConstructKeystoneSpeaksForMeasurementStatement(attestKey *certprotos.KeyMes
 }
 
 /*
-struct sgx_quote_t
-{
+struct sgx_quote_t {
 	uint16_t              version;                                     // 0x000
 	uint16_t              sign_type;                                   // 0x002
 	sgx_epid_group_id_t   epid_group_id;                               // 0x004
@@ -1476,6 +1505,16 @@ struct sgx_quote_t
 	uint8_t               signature[];                                 // 0x1B4
 };
 */
+
+// The returned quantities are sort of described in the Intel Architecure manual
+// in chapter 38 but not in detail.  They are:
+//	qesvm: The quoting enclave security version number (16 bits).
+//	pceSvn: The provisioning enclave security version number (16 bits).
+//	cpuSvn: The cpu security version number (128 bits) which consists of
+//		"small integers describing the version numbers of compnents".
+//	debug: Whether the enclave is debugable.
+//	mode64bit: Running as x64 (rather than i32).
+// The last two come from the attributes field.
 func GetPlatformAttributesFromGramineAttest(binGramineAttest []byte) (uint16, uint16, []byte, bool, bool) {
 	qeSvn := uint16(binGramineAttest[0x8])
 	pceSvn := uint16(binGramineAttest[0xA])
@@ -1524,6 +1563,57 @@ func GetTcbVersionFromSevAttest(binSevAttest []byte) uint64 {
 		tcb |= uint64(binSevAttest[0x180+i]) << (8 * i)
 	}
 	return tcb
+}
+
+func GetPlatformFromGramineAttest(binAttest []byte) *certprotos.Platform {
+
+	qeSvn, pceSvn, cpuSvn, debug, mode64bit := GetPlatformAttributesFromGramineAttest(binAttest)
+
+	platName := "sgx"
+	cpuSvnName := "cpusvn"
+	qeName := "quoting-enclave-sv"
+	peName := "provisioning-enclave-sv"
+	deName := "debug"
+	x64Name := "X64"
+
+	deVal := "no"
+	if debug {
+		deVal = "yes"
+	}
+
+	x64Val := "no"
+	if mode64bit {
+		x64Val = "yes"
+	}
+
+	props := &certprotos.Properties{}
+
+	// Debug property
+	p0 := MakeProperty(deName, "string", &deVal, nil, nil)
+	props.Props = append(props.Props, p0)
+
+	// 64 bit property
+	p1 := MakeProperty(x64Name, "string", &x64Val, nil, nil)
+	props.Props = append(props.Props, p1)
+
+	ce := "="
+
+	// qe property
+	qeVal := uint64(qeSvn)
+	p2 := MakeProperty(qeName, "int", nil, &ce, &qeVal)
+	props.Props = append(props.Props, p2)
+
+	// pe property
+	peVal := uint64(pceSvn)
+	p3 := MakeProperty(peName, "int", nil, &ce, &peVal)
+	props.Props = append(props.Props, p3)
+
+	// svn property
+	svnVal := BytesToUint64(cpuSvn)
+	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
+	props.Props = append(props.Props, p4)
+
+	return MakePlatform(platName, nil, props)
 }
 
 /*
@@ -2211,6 +2301,7 @@ func VerifyRule10(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpr
 	if c.GetVerb() != "is-trusted" {
 		return false
 	}
+
 	return SameEntity(c.Subject, c1.Subject) && SameEntity(c.Subject, c2.Subject)
 }
 
@@ -3030,7 +3121,7 @@ func ValidateOeEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Evi
 	fmt.Printf("\nValidateOeEvidence, after InitProved:\n")
 	PrintProvedStatements(alreadyProved)
 
-	// ConstructProofFromSevPlatformEvidence()
+	// ConstructProofFromOePlatformEvidence()
 	toProve, proof := ConstructProofFromOeEvidence(pubPolicyKey, purpose, alreadyProved)
 	if toProve == nil || proof == nil {
 		fmt.Printf("ValidateOeEvidence: Can't construct proof\n")
@@ -3163,6 +3254,42 @@ func ValidateSevEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.Ev
 	return true, toProve, me.Clause.Subject.Measurement
 }
 
+func ConstructGramineIsEnvironmentClaim(measurement []byte, attestation []byte) *certprotos.VseClause {
+
+	pl := GetPlatformFromGramineAttest(attestation)
+	if pl == nil {
+		fmt.Printf("ConstructExtendedGramineClaim: Can't make platform\n")
+		return nil
+	}
+
+	e := MakeEnvironment(pl, measurement)
+	if e == nil {
+		fmt.Printf("ConstructExtendedGramineClaim: Can't make environment\n")
+		return nil
+	}
+
+	ee := MakeEnvironmentEntity(e)
+	if ee == nil {
+		fmt.Printf("ConstructExtendedGramineClaim: Can't make environment entity\n")
+		return nil
+	}
+
+	verbie := "is-environment"
+	return MakeUnaryVseClause(ee, &verbie)
+}
+
+func ConstructGramineSpeaksForClaim(enclaveKey *certprotos.KeyMessage,
+	env *certprotos.EntityMessage) *certprotos.VseClause {
+
+	em := MakeKeyEntity(enclaveKey)
+	if em == nil {
+		fmt.Printf("ConstructGramineClaim: Can't make enclave entity\n")
+		return nil
+	}
+	speaks_for := "speaks-for"
+	return MakeSimpleVseClause(em, &speaks_for, env)
+}
+
 func ConstructGramineClaim(enclaveKey *certprotos.KeyMessage,
 	measurement []byte) *certprotos.VseClause {
 
@@ -3263,7 +3390,7 @@ func ConstructProofFromGramineEvidence(publicPolicyKey *certprotos.KeyMessage, p
 	//		Measurement[0001020304050607...] is-trusted
 	//	Key[rsa, PlatformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] says
 	//		Key[rsa, attestKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
-	//	Key[rsa, attestKey, b223d5da6674c6bde7feac29801e3b69bb286320] speaks-for Measurement[00010203...]
+	//	Key[rsa, enclaveKey, b223d5da6674c6bde7feac29801e3b69bb286320] speaks-for Measurement[00010203...]
 
 	// Debug
 	fmt.Printf("ConstructProofFromGramineEvidence, %d statements\n", len(alreadyProved.Proved))
@@ -3401,6 +3528,336 @@ func ValidateGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certproto
 
 	// Debug
 	fmt.Printf("ValidateGramineEvidence: Proof verifies\n")
+	fmt.Printf("\nProved statements\n")
+	PrintProvedStatements(alreadyProved)
+
+	me := alreadyProved.Proved[2]
+	if me.Clause == nil || me.Clause.Subject == nil ||
+		me.Clause.Subject.GetEntityType() != "measurement" {
+		fmt.Printf("ValidateGramineEvidence: Proof does not verify\n")
+		return false, nil, nil
+	}
+
+	return true, toProve, me.Clause.Subject.Measurement
+}
+
+// Filtered policy should be
+//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
+//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+//              Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+//              Measurement[0001020304050607...] is-trusted
+//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+//          platform has-trusted-platform-property
+// Filter out irrelevant platforms and measurements
+func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+	policyPool *PolicyPool) *certprotos.ProvedStatements {
+
+	fmt.Printf("\nFilterExtendedGraminePolicy: Incoming evidence for Gramine\n")
+	PrintEvidencePackage(evp, true)
+	fmt.Printf("\nOriginal Platform Policy:\n")
+	for i := 0; i < len(policyPool.PlatformKeyPolicy.Proved); i++ {
+		cl := policyPool.PlatformKeyPolicy.Proved[i]
+		PrintVseClause(cl)
+		fmt.Printf("\n")
+	}
+	fmt.Printf("\n")
+	fmt.Printf("\nOriginal Measurement Policy:\n")
+	for i := 0; i < len(policyPool.MeasurementPolicy.Proved); i++ {
+		cl := policyPool.MeasurementPolicy.Proved[i]
+		PrintVseClause(cl)
+		fmt.Printf("\n")
+	}
+	fmt.Printf("\nOriginal Platform Policy:\n")
+	for i := 0; i < len(policyPool.PlatformFeaturePolicy.Proved); i++ {
+		cl := policyPool.PlatformFeaturePolicy.Proved[i]
+		PrintVseClause(cl)
+		fmt.Printf("\n")
+	}
+	fmt.Printf("\n\n")
+
+	filtered := &certprotos.ProvedStatements{}
+
+	// policyKey is-trusted
+	from := policyPool.AllPolicy.Proved[0]
+	to := proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	// This should be passed in
+	evType := "gramine-evidence"
+
+	// PlatformKey
+	from = GetRelevantPlatformKeyPolicy(policyPool, evType, evp)
+	if from == nil {
+		return nil
+	}
+	to = proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	// Measurement
+	from = GetRelevantMeasurementPolicy(policyPool, evType, evp)
+	if from == nil {
+		return nil
+	}
+	to = proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	// Platform
+	from = GetRelevantPlatformFeaturePolicy(policyPool, evType, evp)
+	if from == nil {
+		fmt.Printf("FilterExtendedGraminePolicy: Can't get relavent platform features\n")
+		return nil
+	}
+	to = proto.Clone(from).(*certprotos.VseClause)
+	filtered.Proved = append(filtered.Proved, to)
+
+	return filtered
+}
+
+/*
+Incoming evidence:
+	  0. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
+  	  1. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+     	       Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+  	  2. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+                  Measurement[0001020304050607...] is-trusted
+  	  3. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+      	          platform has-trusted-platform-property
+  	  4. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+     	       Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+  	  5. environment(platform, measurement) is-environment
+  	  6. enclaveKey speaks-for Measurement[00010203...]
+
+Produced proof should be:
+	  0. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted AND
+	        Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0]
+	  	says Measurement[0001020304050607...] is-trusted -->
+		    Measurement[0001020304050607...] is-trusted
+	  1. policy-key is-trusted AND policy-key says platform has-trusted-platform-property -->
+                    platform has-trusted-platform-property (r3)
+	  2. environment(platform, measurement) is-environment AND
+     	         platform[amd-sev-snp, no-debug,...] has-trusted-platform-property -->
+     	         environment(platform, measurement) environment-platform-is-trusted [3, ]
+	  3. environment(platform, measurement) is-environment AND measurement is-trusted -->
+                 environment(platform, measurement) environment-measurement-is-trusted
+	  4. environment(platform, measurement) environment-platform-is-trusted" AND
+       	         environment(platform, measurement) environment-measurement-is-trusted"  -->
+                    environment(platform, measurement) is-trusted
+	  5. environment is-trusted and enclaveKey speaks-for environment -->
+	         enclaveKey is-trusted-for-authentication
+*/
+func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string,
+	alreadyProved *certprotos.ProvedStatements) (*certprotos.VseClause, *certprotos.Proof) {
+
+	// Debug
+	fmt.Printf("ConstructProofFromExtendedGramineEvidence, %d statements\n", len(alreadyProved.Proved))
+	for i := 0; i < len(alreadyProved.Proved); i++ {
+		PrintVseClause(alreadyProved.Proved[i])
+		fmt.Printf("\n")
+	}
+
+	if len(alreadyProved.Proved) < 7 {
+		fmt.Printf("ConstructProofFromGramineEvidence: too few statements\n")
+		return nil, nil
+	}
+
+	policyKeyIsTrusted := alreadyProved.Proved[0]
+	policyKeySaysMeasurementIsTrusted := alreadyProved.Proved[2]
+	policyKeySaysPlatformHasTrustedProperty := alreadyProved.Proved[3]
+	environmentIsEnvironment := alreadyProved.Proved[5]
+	enclaveKeySpeaksForEnvironment := alreadyProved.Proved[6]
+
+	if policyKeyIsTrusted == nil || enclaveKeySpeaksForEnvironment == nil ||
+		policyKeySaysMeasurementIsTrusted == nil || policyKeySaysPlatformHasTrustedProperty == nil ||
+		environmentIsEnvironment == nil {
+		fmt.Printf("ConstructProofFromGramineEvidence: evidence missing\n")
+		return nil, nil
+	}
+
+	proof := &certprotos.Proof{}
+	r1 := int32(1)
+	r3 := int32(3)
+	r8 := int32(8)
+	r9 := int32(9)
+	r10 := int32(10)
+	r6 := int32(6)
+
+	measurementIsTrusted := policyKeySaysMeasurementIsTrusted.Clause
+	if measurementIsTrusted == nil {
+		fmt.Printf("ConstructProofFromExtendedGramineEvidence: Can't get measurement\n")
+		return nil, nil
+	}
+	ps1 := certprotos.ProofStep{
+		S1:          policyKeyIsTrusted,
+		S2:          policyKeySaysMeasurementIsTrusted,
+		Conclusion:  measurementIsTrusted,
+		RuleApplied: &r3,
+	}
+	proof.Steps = append(proof.Steps, &ps1)
+
+	// policy-key is-trusted AND policy-key says platform has-trusted-platform-property -->
+	//     platform has-trusted-platform-property (r3)
+	platformHasTrustedProperty := policyKeySaysPlatformHasTrustedProperty.Clause
+	if platformHasTrustedProperty == nil {
+		fmt.Printf("ConstructProofFromExtendedGramineEvidence: no platform trusted properties rule \n")
+		return nil, nil
+	}
+	ps2 := certprotos.ProofStep{
+		S1:          policyKeyIsTrusted,
+		S2:          policyKeySaysPlatformHasTrustedProperty,
+		Conclusion:  platformHasTrustedProperty,
+		RuleApplied: &r3,
+	}
+	proof.Steps = append(proof.Steps, &ps2)
+
+	// environment(platform, measurement) is-environment AND
+	//       platform[amd-sev-snp, no-debug,...] has-trusted-platform-property -->
+	//       environment(platform, measurement) environment-platform-is-trusted
+
+	v0 := "environment-platform-is-trusted"
+	environmentPlatformIsTrusted := MakeUnaryVseClause(environmentIsEnvironment.Subject, &v0)
+	if environmentPlatformIsTrusted == nil {
+		fmt.Printf("ConstructProofFromExtendedGramineEvidence: Can't get environment platform is trusted\n")
+		return nil, nil
+	}
+	ps3 := certprotos.ProofStep{
+		S1:          environmentIsEnvironment,
+		S2:          platformHasTrustedProperty,
+		Conclusion:  environmentPlatformIsTrusted,
+		RuleApplied: &r8,
+	}
+	proof.Steps = append(proof.Steps, &ps3)
+
+	// environment(platform, measurement) is-environment AND measurement is-trusted -->
+	//       environment(platform, measurement) environment-measurement-is-trusted
+	v1 := "environment-measurement-is-trusted"
+	environmentMeasurementIsTrusted := MakeUnaryVseClause(environmentIsEnvironment.Subject, &v1)
+	if environmentMeasurementIsTrusted == nil {
+		fmt.Printf("ConstructProofFromExtendedGramineEvidence: Can't get environment measurement is trusted\n")
+		return nil, nil
+	}
+	ps4 := certprotos.ProofStep{
+		S1:          environmentIsEnvironment,
+		S2:          measurementIsTrusted,
+		Conclusion:  environmentMeasurementIsTrusted,
+		RuleApplied: &r9,
+	}
+	proof.Steps = append(proof.Steps, &ps4)
+
+	// environment(platform, measurement) environment-platform-is-trusted" AND
+	//     environment(platform, measurement) environment-measurement-is-trusted"  -->
+	//       environment(platform, measurement) is-trusted
+	v2 := "is-trusted"
+	environmentIsTrusted := MakeUnaryVseClause(environmentIsEnvironment.Subject, &v2)
+	if environmentIsTrusted == nil {
+		fmt.Printf("ConstructProofFromExtendedGramineEvidence: Can't create environment is trusted\n")
+		return nil, nil
+	}
+	ps5 := certprotos.ProofStep{
+		S1:          environmentMeasurementIsTrusted,
+		S2:          environmentPlatformIsTrusted,
+		Conclusion:  environmentIsTrusted,
+		RuleApplied: &r10,
+	}
+	proof.Steps = append(proof.Steps, &ps5)
+
+	enclaveKey := enclaveKeySpeaksForEnvironment.Subject
+	if enclaveKey == nil || enclaveKey.GetEntityType() != "key" {
+		fmt.Printf("ConstructProofFromExtendedGramineEvidence: Bad enclave key\n")
+		return nil, nil
+	}
+	var toProve *certprotos.VseClause = nil
+	if purpose == "authentication" {
+		verb := "is-trusted-for-authentication"
+		toProve = MakeUnaryVseClause(enclaveKey, &verb)
+		if toProve == nil {
+			fmt.Printf("ConstructProofFromExtendedGramineEvidence: Can't create toProve\n")
+			return nil, nil
+		}
+	} else {
+		verb := "is-trusted-for-attestation"
+		toProve = MakeUnaryVseClause(enclaveKey, &verb)
+		if toProve == nil {
+			fmt.Printf("ConstructProofFromExtendedGramineEvidence: Can't create toProve\n")
+			return nil, nil
+		}
+	}
+
+	// environment is-trusted and enclaveKey speaks-for measurement -->
+	//	enclaveKey is-trusted-for-authentication (r1) or
+	//	enclaveKey is-trusted-for-attestation (r6)
+	if purpose == "authentication" {
+		ps6 := certprotos.ProofStep{
+			S1:          environmentIsTrusted,
+			S2:          enclaveKeySpeaksForEnvironment,
+			Conclusion:  toProve,
+			RuleApplied: &r1,
+		}
+		proof.Steps = append(proof.Steps, &ps6)
+	} else {
+		ps6 := certprotos.ProofStep{
+			S1:          environmentIsTrusted,
+			S2:          enclaveKeySpeaksForEnvironment,
+			Conclusion:  toProve,
+			RuleApplied: &r6,
+		}
+		proof.Steps = append(proof.Steps, &ps6)
+	}
+
+	return toProve, proof
+}
+
+// returns success, toProve, measurement
+func ValidateExtendedGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
+	policyPool *PolicyPool, purpose string) (bool,
+	*certprotos.VseClause, []byte) {
+
+	// Debug
+	fmt.Printf("\nValidateExtendedGramineEvidence, Original policy:\n")
+	PrintProvedStatements(policyPool.AllPolicy)
+
+	alreadyProved := FilterExtendedGraminePolicy(pubPolicyKey, evp, policyPool)
+	if alreadyProved == nil {
+		fmt.Printf("ValidateExtendedGramineEvidence: Can't filterpolicy\n")
+		return false, nil, nil
+	}
+
+	// Debug
+	fmt.Printf("\nfiltered policy:\n")
+	PrintProvedStatements(alreadyProved)
+	fmt.Printf("\n")
+
+	if !InitProvedStatements(*pubPolicyKey, evp.FactAssertion, alreadyProved) {
+		fmt.Printf("ValidateExtendedGramineEvidence: Can't InitProvedStatements\n")
+		return false, nil, nil
+	}
+
+	// Debug
+	fmt.Printf("\nValidateExtendedGramineEvidence, after InitProved:\n")
+	PrintProvedStatements(alreadyProved)
+
+	// ConstructProofFromSevPlatformEvidence()
+	toProve, proof := ConstructProofFromExtendedGramineEvidence(pubPolicyKey, purpose, alreadyProved)
+	if toProve == nil || proof == nil {
+		fmt.Printf("ValidateExtendedGramineEvidence: Can't construct proof\n")
+		return false, nil, nil
+	}
+
+	// Debug
+	fmt.Printf("\n")
+	fmt.Printf("ValidateExtendedGramineEvidence, toProve: ")
+	PrintVseClause(toProve)
+	fmt.Printf("\n")
+	PrintProof(proof)
+	fmt.Printf("\n")
+
+	if !VerifyProof(pubPolicyKey, toProve, proof, alreadyProved) {
+		fmt.Printf("ValidateExtendedGramineEvidence: Proof does not verify\n")
+		return false, nil, nil
+	}
+
+	// Debug
+	fmt.Printf("ValidateExtendedGramineEvidence: Proof verifies\n")
 	fmt.Printf("\nProved statements\n")
 	PrintProvedStatements(alreadyProved)
 

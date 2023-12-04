@@ -2027,3 +2027,270 @@ func TestEncapsulatedData(t *testing.T) {
 	}
 	fmt.Printf("Out: %s\n", string(out))
 }
+
+/*
+	Comment back in when CI scripts are updated
+
+func TestSgxProperties(t *testing.T) {
+
+	attestation, err := os.ReadFile("test_data/gramine-attestation.bin")
+	if err != nil {
+		fmt.Printf("Failed to read attestation file: %s\n", err.Error())
+	}
+
+	fmt.Printf("\nAttestation:\n")
+	PrintBytes(attestation)
+	fmt.Printf("\n\n")
+
+	qeSvn, pceSvn, cpuSvn, debug, mode64bit := GetPlatformAttributesFromGramineAttest(attestation)
+	fmt.Printf("cpuSvn: ")
+	PrintBytes(cpuSvn)
+	fmt.Printf("\n")
+
+	platName := "sgx"
+	cpuSvnName := "cpusvn"
+	qeName := "quoting-enclave-sv"
+	peName := "provisioning-enclave-sv"
+	deName := "debug"
+	x64Name := "X64"
+
+	deVal := "no"
+	if debug {
+		deVal = "yes"
+	}
+
+	x64Val := "no"
+	if mode64bit {
+		x64Val = "yes"
+	}
+
+	props := &certprotos.Properties{}
+
+	// Debug property
+	p0 := MakeProperty(deName, "string", &deVal, nil, nil)
+	props.Props = append(props.Props, p0)
+
+	// 64 bit property
+	p1 := MakeProperty(x64Name, "string", &x64Val, nil, nil)
+	props.Props = append(props.Props, p1)
+
+	ce := "="
+
+	// qe property
+	qeVal := uint64(qeSvn)
+	p2 := MakeProperty(qeName, "int", nil, &ce, &qeVal)
+	props.Props = append(props.Props, p2)
+
+	// pe property
+	peVal := uint64(pceSvn)
+	p3 := MakeProperty(peName, "int", nil, &ce, &peVal)
+	props.Props = append(props.Props, p3)
+
+	// svn property
+	svnVal := BytesToUint64(cpuSvn)
+	p4 := MakeProperty(cpuSvnName, "int", nil, &ce, &svnVal)
+	props.Props = append(props.Props, p4)
+
+	var k *certprotos.KeyMessage = nil
+
+	fmt.Printf("\n")
+	fmt.Printf("svnVal: %x\n\n", svnVal)
+	pl := MakePlatform(platName, k, props)
+	PrintPlatform(pl)
+
+	fmt.Printf("\nAttestation (%d): ", len(attestation))
+	PrintBytes(attestation)
+	fmt.Printf("\n")
+
+	measurement := attestation[112:144]
+	if measurement == nil {
+		t.Errorf("Empty measurement\n")
+	}
+	fmt.Printf("\nMeasurement (%d):\n", len(measurement))
+	PrintBytes(measurement)
+	fmt.Printf("\n")
+
+	reportData := attestation[368:432]
+	fmt.Printf("\nReport data (%d):\n", len(reportData))
+	PrintBytes(reportData)
+	fmt.Printf("\n")
+
+	e := MakeEnvironment(pl, measurement)
+	if e == nil {
+		fmt.Printf("Can't make environment\n")
+	} else {
+		PrintEnvironment(e)
+	}
+	fmt.Printf("\n")
+
+	pe := MakePlatformEntity(pl)
+	ee := MakeEnvironmentEntity(e)
+	fmt.Printf("\n")
+	PrintEntity(pe)
+	PrintEntity(ee)
+	fmt.Printf("\n")
+	if !SameProperty(p1, p1) {
+		t.Errorf("Properties should match\n")
+	}
+	if SameProperty(p1, p2) {
+		t.Errorf("Properties shouldn't match\n")
+	}
+	if !SameEnvironment(e, e) {
+		t.Errorf("Environments should match\n")
+	}
+
+	verbie := "is-environment"
+	cl := MakeUnaryVseClause(ee, &verbie)
+	fmt.Printf("\n")
+	PrintVseClause(cl)
+	fmt.Printf("\n")
+
+	// evidence will include:
+	//	attest-key says environment(platform, measurement) is-environment
+	serializedKey, err := os.ReadFile("test_data/attest_key_file.bin")
+	if err != nil {
+		t.Errorf("Failed to read attest key file\n")
+	}
+	enclaveKey := certprotos.KeyMessage{}
+	err = proto.Unmarshal(serializedKey, &enclaveKey)
+	if err != nil {
+		t.Errorf("Failed to deserialize attest key file\n")
+	}
+
+	sfc := ConstructGramineSpeaksForClaim(&enclaveKey, ee)
+	if sfc == nil {
+		t.Errorf("Can't construct speaks-for claim\n")
+	}
+	ec := ConstructGramineIsEnvironmentClaim(measurement, attestation)
+	if ec == nil {
+		t.Errorf("Can't construct is environment claim\n")
+	}
+
+	fmt.Printf("\n")
+	fmt.Printf("\nEnvironment claim: ")
+	PrintVseClause(ec)
+	fmt.Printf("\n")
+	fmt.Printf("\nSpeaks for claim: ")
+	PrintVseClause(sfc)
+	fmt.Printf("\n")
+}
+
+func TestSgxProofs(t *testing.T) {
+	fmt.Printf("\n")
+	fmt.Printf("\n")
+	fmt.Printf("TestSgxProofs\n")
+	fmt.Printf("\n")
+
+	attestation, err := os.ReadFile("test_data/gramine-attestation.bin")
+	if err != nil {
+		t.Errorf("Failed to read attestation file\n")
+	}
+
+	serializedPolicyKey, err := os.ReadFile("test_data/policy_key_file.bin")
+	if err != nil {
+		t.Errorf("Failed to read policy key file\n")
+	}
+	policyPrivateKey := certprotos.KeyMessage{}
+	err = proto.Unmarshal(serializedPolicyKey, &policyPrivateKey)
+	if err != nil {
+		t.Errorf("Failed to deserialize policy key file\n")
+	}
+
+	serializedEnclaveKey, err := os.ReadFile("test_data/attest_key_file.bin")
+	if err != nil {
+		t.Errorf("Failed to read enclave key file\n")
+	}
+	enclavePrivateKey := certprotos.KeyMessage{}
+	err = proto.Unmarshal(serializedEnclaveKey, &enclavePrivateKey)
+	if err != nil {
+		t.Errorf("Failed to deserialize enclave key file\n")
+	}
+
+	policyKey := InternalPublicFromPrivateKey(&policyPrivateKey)
+	if policyKey == nil {
+		t.Errorf("Failed to convert policy key\n")
+	}
+	enclaveKey := InternalPublicFromPrivateKey(&enclavePrivateKey)
+	if enclaveKey == nil {
+		t.Errorf("Failed to convert enclave key\n")
+	}
+
+	// Evidence should be
+	//    0. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
+	//    1. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+	//        Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+	//    2. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+	//        Measurement[0001020304050607...] is-trusted
+	//    3. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+	//        platform has-trusted-platform-property
+	//    4. environment(platform, measurement) is-environment
+	//    5. enclaveKey speaks-for Measurement[00010203...]
+
+	pke := MakeKeyEntity(policyKey)
+	if pke == nil {
+		t.Errorf("Failed to make policy key entity\n")
+	}
+	eke := MakeKeyEntity(enclaveKey)
+	if eke == nil {
+		t.Errorf("Failed to make enclave key entity\n")
+	}
+	m := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}
+	me := MakeMeasurementEntity(m)
+	if me == nil {
+		t.Errorf("Failed to make measurement entity\n")
+	}
+
+	p := GetPlatformFromGramineAttest(attestation)
+	pe := MakePlatformEntity(p)
+	env := MakeEnvironment(p, m)
+	enve := MakeEnvironmentEntity(env)
+
+	verbIsTrusted := "is-trusted"
+	verbIsTrustedForAttestation := "is-trusted-for-attestation"
+	verbSays := "says"
+	verbSpeaksFor := "speaks-for"
+	verbIsEnvironment := "is-environment"
+	verbTrustedProperty := "has-trusted-platform-property"
+
+	policyKeyIsTrusted := MakeUnaryVseClause(pke, &verbIsTrusted)
+	keyIsTrustedForAttestation := MakeUnaryVseClause(eke, &verbIsTrustedForAttestation)
+	policyKeySaysPlatformKeyIsTrustedForAttestation := MakeIndirectVseClause(pke, &verbSays, keyIsTrustedForAttestation)
+	measurementIsTrusted := MakeUnaryVseClause(me, &verbIsTrusted)
+	policyKeySaysMeasurementIsTrusted := MakeIndirectVseClause(pke, &verbSays, measurementIsTrusted)
+	platformIsTrusted := MakeUnaryVseClause(pe, &verbTrustedProperty)
+	policyKeySaysPlatformIsTrusted := MakeIndirectVseClause(pke, &verbSays, platformIsTrusted)
+	environmentIsEnvironment := MakeUnaryVseClause(enve, &verbIsEnvironment)
+	enclaveKeySpeaksForEnvironment := MakeSimpleVseClause(eke, &verbSpeaksFor, enve)
+
+	alreadyProved := certprotos.ProvedStatements{}
+
+	alreadyProved.Proved = append(alreadyProved.Proved, policyKeyIsTrusted)
+	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysPlatformKeyIsTrustedForAttestation)
+	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysMeasurementIsTrusted)
+	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysPlatformIsTrusted)
+	alreadyProved.Proved = append(alreadyProved.Proved, policyKeySaysPlatformKeyIsTrustedForAttestation)
+	alreadyProved.Proved = append(alreadyProved.Proved, environmentIsEnvironment)
+	alreadyProved.Proved = append(alreadyProved.Proved, enclaveKeySpeaksForEnvironment)
+
+	fmt.Printf("\n")
+	purpose := "authentication"
+	toProve, proof := ConstructProofFromExtendedGramineEvidence(policyKey, purpose, &alreadyProved)
+	if toProve == nil || proof == nil {
+		t.Errorf("Failed to ConstructProof\n")
+	}
+
+	fmt.Printf("\n")
+	fmt.Printf("toProve: ")
+	PrintVseClause(toProve)
+	fmt.Printf("\n")
+
+	fmt.Printf("\n")
+	PrintProof(proof)
+
+	if VerifyProof(policyKey, toProve, proof, &alreadyProved) {
+		fmt.Printf("Proof succeeded\n")
+	} else {
+		fmt.Printf("Proof failed\n")
+	}
+}
+*/

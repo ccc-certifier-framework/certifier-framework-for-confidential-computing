@@ -190,7 +190,7 @@ message cert_chain {
 
 // Current evidence types: "signed-claim",
 //   "signed-vse-attestation"
-//   "oe-attestation-report", 
+//   "oe-attestation-report", "gramine-attestation"
 //   "sev-attestation", "cert", cert-chain
 message evidence {
   optional string evidence_type             = 1;

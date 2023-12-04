@@ -80,6 +80,8 @@ var logging bool = false
 var logger *log.Logger
 var dataPacketFileNum int = loggingSequenceNumber
 
+var extendedGramine bool = false
+
 func initLog() bool {
 	name := *logDir + "/" + *logFile
 	logFiled, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
@@ -304,10 +306,18 @@ func ValidateRequestAndObtainToken(remoteIP string, pubKey *certprotos.KeyMessag
 			return false, nil
 		}
 	} else if evType == "gramine-evidence" {
-		success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, policyPool, purpose)
-		if !success {
-			fmt.Printf("ValidateRequestAndObtainToken: ValidateGramineEvidence failed\n")
-			return false, nil
+		if extendedGramine {
+			success, toProve, measurement = certlib.ValidateExtendedGramineEvidence(pubKey, ep, policyPool, purpose)
+			if !success {
+				fmt.Printf("ValidateRequestAndObtainToken: ValidateExtendedGramineEvidence failed\n")
+				return false, nil
+			}
+		} else {
+			success, toProve, measurement = certlib.ValidateGramineEvidence(pubKey, ep, policyPool, purpose)
+			if !success {
+				fmt.Printf("ValidateRequestAndObtainToken: ValidateGramineEvidence failed\n")
+				return false, nil
+			}
 		}
 	} else if evType == "keystone-evidence" {
 		success, toProve, measurement = certlib.ValidateKeystoneEvidence(pubKey, ep, policyPool, purpose)
@@ -936,41 +946,6 @@ func main() {
 	var serverAddr string
 
 	if *operation == "certifier-service" {
-		/*
-			   	REMOVE: This is a test Ye used
-				attestation, err := os.ReadFile("attestation.bin")
-			        if err != nil {
-					fmt.Printf("Failed to read attestation file: %s\n", err.Error())
-			        }
-
-			        var what_to_say []byte
-			        what_to_say = make([]byte, 256)
-			        for i := 0; i < 256; i++ {
-					what_to_say[i] = byte(i)
-			        }
-			        outMeasurement, err := gramineverify.GramineVerify(what_to_say, attestation)
-			        if err != nil {
-					fmt.Printf("GramineVerify failed: %s\n", err.Error())
-			        }
-			        fmt.Printf("Measurement length: %d\n", len(outMeasurement));
-
-			attestation, err := os.ReadFile("gramine-attestation.bin")
-			if err != nil {
-				fmt.Printf("Failed to read attestation file: %s\n", err.Error())
-			}
-			qeSvn, pceSvn, cpuSvn, debug, mode64bit := certlib.GetPlatformAttributesFromGramineAttest(attestation)
-			fmt.Printf("qeSvn: 0x%x, pceSvn: 0x%x\n", qeSvn, pceSvn)
-			fmt.Printf("cpuSvn: ")
-			certlib.PrintBytes(cpuSvn)
-			fmt.Printf("\n")
-			if (debug) {
-				fmt.Printf("Debug enclave\n");
-			}
-			if (mode64bit) {
-				fmt.Printf("64 bit enclave\n");
-			}
-		*/
-
 		// later this may turn into a TLS connection, we'll see
 		if !initCertifierService(*getPolicyKeyFromSecureStore) {
 			fmt.Printf("main: failed to initialize server\n")
