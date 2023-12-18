@@ -24,16 +24,17 @@ ifndef LOCAL_LIB
 LOCAL_LIB=/usr/local/lib
 endif
 
-ifndef TARGET_MACHINE_TYPE
-TARGET_MACHINE_TYPE= x64
-endif
+TARGET_MACHINE_TYPE ?= x64
 
 # ARM CCA-based sample program needs ISLET SDK
 #
 CERT_ROOT = ../..
 ISLET_PATH = $(CERT_ROOT)/third_party/islet
-ISLET_INCLUDE= -I$(ISLET_PATH)/include
-ISLET_LDFLAGS= -L$(ISLET_PATH)/lib -lislet_sdk
+ISLET_INCLUDE = -I$(ISLET_PATH)/include
+ISLET_LDFLAGS = -L$(ISLET_PATH)/lib -lislet_sdk
+OPENSSL_INCLUDE ?= /usr/local/opt/openssl@1.1/include
+OPENSSL_LIB ?= /usr/local/opt/openssl@1.1/lib/
+PROTO_INCLUDE ?= /usr/local/include
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
@@ -42,21 +43,21 @@ O= $(OBJ_DIR)
 ISLET_S=$(S)/islet
 US=.
 I= $(SRC_DIR)/include
-INCLUDE= -I. $(ISLET_INCLUDE) -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(ISLET_S)
+INCLUDE= -I. $(ISLET_INCLUDE) -I$(I) -I$(OPENSSL_INCLUDE) -I$(PROTO_INCLUDE) -I$(S)/sev-snp/ -I$(ISLET_S)
 COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 
 # Compilation of protobuf files could run into some errors, so avoid using
 # # -Werror for those targets
-CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -D ISLET_CERTIFIER
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D $(TARGET_MACHINE_TYPE) -Wno-deprecated-declarations -D ISLET_CERTIFIER
 CFLAGS = $(CFLAGS_NOERROR) -Werror -DISLET_SIMPLE_APP
 
-CC=g++
-LINK=g++
+CC ?= g++
+LINK ?= g++
 #PROTO=/usr/local/bin/protoc
 PROTO=protoc
-AR=ar
+AR ?= ar
 #export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= $(ISLET_LDFLAGS) -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS= $(ISLET_LDFLAGS) -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L$(OPENSSL_LIB) -lcrypto -lssl
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
