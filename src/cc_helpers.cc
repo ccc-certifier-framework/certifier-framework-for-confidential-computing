@@ -3395,10 +3395,12 @@ void certifier::framework::secure_authenticated_channel::
            __LINE__,
            res);
     unsigned long code = ERR_get_error();
-    printf("Accept error(%lx, %ld): %s\n",
+    printf("Accept error(%lx, %ld): %s %s %s\n",
            code,
            code & 0xffffff,
-           ERR_lib_error_string(code));
+           ERR_lib_error_string(code),
+           ERR_func_error_string(code),
+           ERR_reason_error_string(code));
     print_ssl_error(SSL_get_error(ssl_, res));
     if (ssl_ != nullptr) {
       SSL_free(ssl_);
