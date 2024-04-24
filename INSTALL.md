@@ -38,7 +38,7 @@ $ sudo apt-get install -y libgflags-dev/jammy
 $ sudo apt-get install -y protoc-gen-go
 $ sudo apt-get install -y golang-go
 $ sudo apt-get install -y libmbedtls-dev/jammy
-$ sudo apt-get install -y libssl-dev
+$ sudo apt-get install -y libssl-dev uuid-dev python3-pip
 ```
 
 ## To compile and run the Certifier API tests
