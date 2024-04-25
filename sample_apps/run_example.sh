@@ -681,7 +681,9 @@ function rm_non_git_files() {
     fi
 
     local tmp_islet_dir="/tmp/islet-save"
-    mkdir "${tmp_islet_dir}"
+    if [ ! -d "${tmp_islet_dir}" ]; then
+        mkdir "${tmp_islet_dir}"
+    fi
     local Islet_remote_exists=0
     if [ -d "${ISLET_ROOT}/remote" ]; then
         set -x
