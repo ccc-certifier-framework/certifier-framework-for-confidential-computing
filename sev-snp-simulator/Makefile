@@ -48,7 +48,7 @@ clean:
 	rm -f modules.order Module.symvers Module.markers *.o *.cmd sevnull.ko
 	rm -rf keys
 
-.PHNOY:
+.PHONY:
 	modules modules_install clean
 
 endif

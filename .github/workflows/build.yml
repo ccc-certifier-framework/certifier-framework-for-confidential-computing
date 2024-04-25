@@ -29,6 +29,10 @@ jobs:
         sudo apt install -y python3-protobuf
 
     #! -------------------------------------------------------------------------
+    - name: report-osinfo
+      run: ./CI/scripts/osinfo.sh
+
+    #! -------------------------------------------------------------------------
     #! Check core source code formatting, using clang-format tool.
     - name: test-src-code-formatting
       run: |

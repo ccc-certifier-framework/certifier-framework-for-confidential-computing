@@ -682,6 +682,10 @@ function test-build-and-install-sev-snp-simulator() {
     echo "* Build and install SEV-SNP simulator, to run Cert tests with simulated SEV-enabled."
     echo "*************************************************************************************"
     echo " "
+    echo "****** WARNING! Skipped due to open issue #242, Fails on Ubuntu 22.04.4"
+    echo " "
+    return
+
     pushd ./sev-snp-simulator > /dev/null 2>&1
 
     make clean
@@ -699,6 +703,9 @@ function test-sev-snp-simulator-sev-test() {
     echo "* Run sev-snp-simulator sev-test ... "
     echo "******************************************************************"
     echo " "
+    echo "****** WARNING! Skipped due to open issue #242, Fails on Ubuntu 22.04.4"
+    echo " "
+    return
     pushd ./sev-snp-simulator/test > /dev/null 2>&1
 
     make sev-test
@@ -740,6 +747,9 @@ function test-simple_app_under_sev-simulated-SEV-mode() {
     echo "* Run simple_app_under_sev in simulated-SEV environment."
     echo "******************************************************************"
     echo " "
+    echo "****** WARNING! Skipped due to open issue #242, Fails on Ubuntu 22.04.4"
+    echo " "
+    return
     pushd ./sample_apps > /dev/null 2>&1
 
     ./run_example.sh rm_non_git_files
@@ -781,6 +791,10 @@ function test-ISLET-SDK-shim_test() {
     echo "* Download ISLET SDK, build the library and run shim_test"
     echo "**********************************************************"
     echo " "
+    echo "****** WARNING! Skipped due to open issue #242, Fails on Ubuntu 22.04.4"
+    echo " "
+    return
+
     pushd src/islet > /dev/null 2>&1
 
     ../../third_party/islet/setup.sh
@@ -805,6 +819,10 @@ function test-run_example-simple_app_under_islet-using-shim() {
     echo "* Test: Execute script to compile, build and run simple_app_under_islet using shim"
     echo "***********************************************************************************"
     echo " "
+    echo "****** WARNING! Skipped due to open issue #242, Fails on Ubuntu 22.04.4"
+    echo " "
+    return
+
     pushd ./sample_apps > /dev/null 2>&1
 
     ./cleanup.sh
