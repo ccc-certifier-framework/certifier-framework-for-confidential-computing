@@ -29,14 +29,15 @@ ISLET_INC="$HERE/include"
 ISLET_LIB="$HERE/lib"
 
 TARGET_HDR="$ISLET_SDK/include/islet.h"
-TARGET_LIB="$ISLET/out/x86_64-unknown-linux-gnu/debug/libislet_sdk.so"
+TARGET_LIB="$ISLET/out/x86_64-unknown-linux-gnu/debug/libislet_sdk.a"
 
 # Sync islet
 cd "$HERE"
-wget https://github.com/Samsung/islet/archive/refs/tags/certifier-v1.0.1-beta.tar.gz
-tar xf certifier-v1.0.1-beta.tar.gz
 rm -rf "$ISLET"
-mv islet-certifier-v1.0.1-beta "$ISLET"
+git clone https://github.com/islet-project/islet.git "$ISLET"
+cd "$ISLET"
+git submodule update --init --depth 1 $ISLET/third-party/ciborium
+git submodule update --init --depth 1 $ISLET/third-party/coset
 
 # Install rust to build ISLET SDK
 "$ISLET/scripts/deps/rust.sh"
