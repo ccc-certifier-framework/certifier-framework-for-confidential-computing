@@ -36,6 +36,10 @@ cd "$HERE"
 rm -rf "$ISLET"
 git clone https://github.com/islet-project/islet.git "$ISLET"
 cd "$ISLET"
+
+# Tmp
+git checkout -b certifier-ci
+
 git submodule update --init --depth 1 $ISLET/assets
 git submodule update --init --depth 1 $ISLET/third-party/ciborium
 git submodule update --init --depth 1 $ISLET/third-party/coset
