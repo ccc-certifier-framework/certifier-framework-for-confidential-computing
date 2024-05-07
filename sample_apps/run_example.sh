@@ -1108,7 +1108,11 @@ function get_measurement_of_trusted_simple_app_under_islet() {
     # get_measurement_of_app_by_name "islet_example_app.exe"
 
     run_cmd
-    local mrenclave="6190EB90B293886C172EC644DAFB7E33EE2CEA6541ABE15300D96380DF525BF9"
+    # The following mrenclave value should hardly change as it is
+    # a simulated version targeting x86_64. (The actual version only works on aarch64.)
+    # If you want to manually obtain the mrenclave value, refer to the islet CLI at the link below.
+    # https://github.com/islet-project/islet/blob/main/examples/cross-platform-e2ee/README.md#2-configure-measurements-and-policies
+    local mrenclave="580bd77074f789f34841ea9920579ff29a59b9452b606f73811132b31c689da9"
     local measurement_file="example_app.measurement"
 
     run_pushd "${PROV_DIR}"

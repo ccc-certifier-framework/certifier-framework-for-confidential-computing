@@ -791,9 +791,6 @@ function test-ISLET-SDK-shim_test() {
     echo "* Download ISLET SDK, build the library and run shim_test"
     echo "**********************************************************"
     echo " "
-    echo "****** WARNING! Skipped due to open issue #242, Fails on Ubuntu 22.04.4"
-    echo " "
-    return
 
     pushd src/islet > /dev/null 2>&1
 
@@ -819,9 +816,6 @@ function test-run_example-simple_app_under_islet-using-shim() {
     echo "* Test: Execute script to compile, build and run simple_app_under_islet using shim"
     echo "***********************************************************************************"
     echo " "
-    echo "****** WARNING! Skipped due to open issue #242, Fails on Ubuntu 22.04.4"
-    echo " "
-    return
 
     pushd ./sample_apps > /dev/null 2>&1
 
