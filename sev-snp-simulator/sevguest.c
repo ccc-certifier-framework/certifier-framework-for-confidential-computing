@@ -21,6 +21,7 @@
 #include <linux/miscdevice.h>
 #include <linux/set_memory.h>
 #include <linux/fs.h>
+#include <linux/version.h>
 #include <crypto/aead.h>
 #include <linux/scatterlist.h>
 
@@ -352,7 +353,11 @@ static int __init sev_guest_init_module(void) {
   }
   sev_major = MAJOR(dev);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
   sev_class = class_create(THIS_MODULE, DEVICE_NAME);
+#else
+  sev_class = class_create(DEVICE_NAME);
+#endif
   if (IS_ERR(sev_class)) {
     err = PTR_ERR(sev_class);
     goto fail;
