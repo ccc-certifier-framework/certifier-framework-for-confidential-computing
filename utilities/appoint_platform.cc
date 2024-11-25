@@ -74,7 +74,7 @@ int main(int an, char **av) {
   an = 1;
 
   string usage_str("--policy_key=<file> --cert_file=<ark_cert.bin> "
-                   "--output=<output-file-name>";
+                   "--output=<output-file-name>");
   if (FLAGS_policy_key_file == "") {
     printf("No policy key\n");
     printf("%s %s\n", av[0], usage_str.c_str());
@@ -117,8 +117,8 @@ int main(int an, char **av) {
     return 1;
   }
 
-  string says_str("says");
-  string att_str("is-trusted-for-attestation");
+  string     says_str("says");
+  string     att_str("is-trusted-for-attestation");
   vse_clause cl1;
   if (!make_unary_vse_clause(plat_ent, att_str, &cl1)) {
     printf("Can't make clause 1\n");
@@ -137,7 +137,7 @@ int main(int an, char **av) {
     return 1;
   }
 
-  if (!write_file(FLAGS_output, out_str.size(), (byte*) out_str.data())) {
+  if (!write_file(FLAGS_output, out_str.size(), (byte *)out_str.data())) {
     printf("Can't write %s\n", FLAGS_output.c_str());
     return 1;
   }
