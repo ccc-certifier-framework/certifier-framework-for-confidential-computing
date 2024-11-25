@@ -19,23 +19,23 @@
 // END copied Keys.hpp
 
 // BEGIN copied Report.hpp
-struct enclave_report_t {
+struct _enclave_report_t {
   byte     hash[MDSIZE];
   uint64_t data_len;
   byte     data[ATTEST_DATA_MAXLEN];
   byte     signature[SIGNATURE_SIZE];
 };
 
-struct sm_report_t {
+struct _sm_report_t {
   byte hash[MDSIZE];
   byte public_key[PUBLIC_KEY_SIZE];
   byte signature[SIGNATURE_SIZE];
 };
 
-struct report_t {
-  struct enclave_report_t enclave;
-  struct sm_report_t      sm;
-  byte                    dev_public_key[PUBLIC_KEY_SIZE];
+struct _report_t {
+  struct _enclave_report_t enclave;
+  struct _sm_report_t      sm;
+  byte                     dev_public_key[PUBLIC_KEY_SIZE];
 };
 // END copied Report.hpp
 #endif
@@ -49,13 +49,13 @@ bool keystone_Attest(const int what_to_say_size,
                      int *     attestation_size_out,
                      byte *    attestation_out) {
   assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
-  *attestation_size_out = sizeof(struct report_t);
+  *attestation_size_out = sizeof(struct _report_t);
   // unique-ify un-faked fields to avoid accidentally passing tests
-  for (unsigned int i = 0; i < sizeof(struct report_t); i++) {
+  for (unsigned int i = 0; i < sizeof(struct _report_t); i++) {
     attestation_out[i] = i ^ 17;
   }
-  struct report_t &report =
-      *reinterpret_cast<struct report_t *>(attestation_out);
+  struct _report_t &report =
+      *reinterpret_cast<struct _report_t *>(attestation_out);
   report.enclave.data_len = what_to_say_size;
   memcpy(report.enclave.data, what_to_say, what_to_say_size);
   // TODO: input default measurement
@@ -63,7 +63,7 @@ bool keystone_Attest(const int what_to_say_size,
 }
 
 // true = different
-bool nonhash_report_cmp(struct report_t &a, struct report_t &b) {
+static bool nonhash_report_cmp(struct _report_t &a, struct _report_t &b) {
   return (a.enclave.data_len != b.enclave.data_len)
          || memcmp(a.enclave.data, b.enclave.data, ATTEST_DATA_MAXLEN)
          || memcmp(a.enclave.signature, b.enclave.signature, SIGNATURE_SIZE)
@@ -78,11 +78,11 @@ bool keystone_Verify(const int what_to_say_size,
                      byte *    attestation,
                      int *     measurement_out_size,
                      byte *    measurement_out) {
-  assert(attestation_size == sizeof(struct report_t));
-  struct report_t &report = *reinterpret_cast<struct report_t *>(attestation);
+  assert(attestation_size == sizeof(struct _report_t));
+  struct _report_t &report = *reinterpret_cast<struct _report_t *>(attestation);
 
-  int             gold_attestation_size = 0;
-  struct report_t gold_report;
+  int              gold_attestation_size = 0;
+  struct _report_t gold_report;
   keystone_Attest(what_to_say_size,
                   what_to_say,
                   &gold_attestation_size,

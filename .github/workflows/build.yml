@@ -28,6 +28,9 @@ jobs:
         # Need to resolve references to imports from 'google.protobuf'
         sudo apt install -y python3-protobuf
 
+        # cppchecker for static analysis
+        sudo apt install -y cppcheck
+
     #! -------------------------------------------------------------------------
     - name: report-osinfo
       run: ./CI/scripts/osinfo.sh
@@ -37,6 +40,12 @@ jobs:
     - name: test-src-code-formatting
       run: |
         ./CI/scripts/check-srcfmt.sh
+
+    #! -------------------------------------------------------------------------
+    #! Static analysis of source using cppcheck
+    - name: cppcheck-analysis
+      run: |
+        ./CI/scripts/cppcheck.sh
 
     #! -------------------------------------------------------------------------
     - name: test-core-certifier-programs
