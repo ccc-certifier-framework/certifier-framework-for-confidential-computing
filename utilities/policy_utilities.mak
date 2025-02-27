@@ -30,6 +30,8 @@ ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
 
+NEWPROTOBUF=1
+
 CERT_SRC=$(CERTIFIER_ROOT)/src
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 
@@ -39,9 +41,17 @@ I= $(INC_DIR)
 
 INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/
 
-CFLAGS_NOERROR = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+# Compilation of protobuf files could run into some errors, so avoid using
+# -Werror for those targets
+#For MAC, -D MACOS should be included
+ifndef NEWPROTOBUF
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+else
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+endif
 CFLAGS = $(CFLAGS_NOERROR) -Werror
-# For Mac: -D MACOS should be defined
 
 CC=g++
 LINK=g++
@@ -50,8 +60,13 @@ LINK=g++
 # I had to do the above on my machine.
 PROTO=protoc
 AR=ar
-#export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+ifdef NEWPROTOBUF
+export LD_LIBRARY_PATH=/usr/local/lib
+LDFLAGS= -L/usr/local/lib `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+else
+export LD_LIBRARY_PATH=/usr/local/lib
+LDFLAGS= -L/usr/local/lib -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+endif
 
 common_objs = $(O)/support.o $(O)/certifier.o $(O)/certifier_proofs.o \
               $(O)/certifier.pb.o $(O)/simulated_enclave.o \

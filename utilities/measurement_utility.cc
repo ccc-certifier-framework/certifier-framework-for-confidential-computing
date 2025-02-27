@@ -76,9 +76,9 @@ int hash_utility(string &input, string &other_files, string &output) {
   }
   to_hash_size += (other_files_total_size);
 
-  byte *       to_hash = (byte *)malloc(to_hash_size * sizeof(byte));
-  byte *       to_hash_start = to_hash;
-  byte         out[sha256_size];
+  ::byte *       to_hash = (::byte *)malloc(to_hash_size * sizeof(::byte));
+  ::byte *       to_hash_start = to_hash;
+  ::byte         out[sha256_size];
   unsigned int out_len = sha256_size;
 
   memset(out, 0, sizeof(out));
