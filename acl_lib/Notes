@@ -34,3 +34,6 @@ rpc_add_principal
 Check test_acl.cc for examples.  To run the test you should have a directory ./tmp with
 two files: file_1 and file_2.
 
+There are some duplicated certifier definitions in acl_lib.proto and there are duplicated
+support functions in acl_support.cc.
+
