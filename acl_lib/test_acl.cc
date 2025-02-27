@@ -334,11 +334,11 @@ bool test_access() {
   resource_list rl;
 
   if (!construct_sample_principals(&pl)) {
-    printf("Cant construct principals\n");
+    printf("%s() error, line: %d: Cant construct principals\n", __func__, __LINE__);
     return false;
   }
   if (!construct_sample_resources(&rl)) {
-    printf("Cant construct resources\n");
+    printf("%s() error, line: %d: Cant construct resources\n", __func__, __LINE__);
     return false;
   }
 
@@ -446,7 +446,8 @@ bool test_access() {
   nonce.assign((char*)buf, k);
 
   if (!guard.load_resources(rl)) {
-    printf("Cant load resource list\n");
+    printf("%s() error, line %d: Can't load resource list\n",
+                    __func__, __LINE__);
     ret= false;
     goto done;
   }
@@ -454,7 +455,6 @@ bool test_access() {
   if (!guard.authenticate_me(channel_prin, pl, &nonce)) {
     printf("%s() error, line %d: Cant authenticate_me %s\n",
                     __func__, __LINE__, channel_prin.c_str());
-    printf("Cant authenticate_me %s\n", channel_prin.c_str());
     ret= false;
     goto done;
   }
@@ -533,16 +533,6 @@ bool test_access() {
   }
 
 done:
-#if 0
-  if (r1 != nullptr) {
-    RSA_free(r1);
-    r1 = nullptr;
-  }
-  if (r2 != nullptr) {
-    RSA_free(r2);
-    r2 = nullptr;
-  }
-#endif
   if (root_cert != nullptr) {
     X509_free(root_cert);
     root_cert = nullptr;

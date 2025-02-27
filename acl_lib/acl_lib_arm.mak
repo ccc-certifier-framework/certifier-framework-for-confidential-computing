@@ -9,17 +9,20 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License
-#    File: crypto_support.mak
+#    File: acl_lib_mak.mak
+#
 
+# CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+CERTIFIER_ROOT = ..
 
 ifndef SRC_DIR
-SRC_DIR=$(HOME)/src/github.com/jlmucb/class_notes/datica_tmp/acl_lib
+SRC_DIR=$(CERTIFIER_ROOT)/acl_lib
 endif
 ifndef OBJ_DIR
-OBJ_DIR=$(HOME)/cryptoobj/acl_lib
+OBJ_DIR=.
 endif
 ifndef EXE_DIR
-EXE_DIR=$(HOME)/cryptobin
+EXE_DIR=.
 endif
 #ifndef GOOGLE_INCLUDE
 #GOOGLE_INCLUDE=/usr/local/include/g
@@ -33,7 +36,7 @@ endif
 
 S= $(SRC_DIR)/crypto_support
 O= $(OBJ_DIR)/crypto_support
-INCLUDE= -I$(SRC_DIR)/include -I$(S) -I/usr/local/include
+INCLUDE= -I. -I$(SRC_DIR)/include -I$(S) -I/usr/local/include
 
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D ARM64
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D ARM64

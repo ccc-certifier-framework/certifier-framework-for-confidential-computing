@@ -31,5 +31,6 @@ rpc_create_resource
 rpc_delete_resource
 rpc_add_principal
 
-Check test_acl.cc for examples.
+Check test_acl.cc for examples.  To run the test you should have a directory ./tmp with
+two files: file_1 and file_2.
 
