@@ -4,7 +4,6 @@ Request for Comments: 7519                                     Microsoft
 Category: Standards Track                                     J. Bradley
 ISSN: 2070-1721                                            Ping Identity
                                                              N. Sakimura
-                                                                     NRI
                                                                 May 2015
 
 
@@ -37,21 +36,6 @@ Status of This Memo
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-Jones, et al.                Standards Track                    [Page 1]
-
 RFC 7519                  JSON Web Token (JWT)                  May 2015
 
 
@@ -69,46 +53,6 @@ Copyright Notice
    include Simplified BSD License text as described in Section 4.e of
    the Trust Legal Provisions and are provided without warranty as
    described in the Simplified BSD License.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Jones, et al.                Standards Track                    [Page 2]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
 
 
 Table of Contents
@@ -159,14 +103,6 @@ Table of Contents
    13. References  . . . . . . . . . . . . . . . . . . . . . . . . .  22
      13.1.  Normative References . . . . . . . . . . . . . . . . . .  22
      13.2.  Informative References . . . . . . . . . . . . . . . . .  23
-
-
-
-Jones, et al.                Standards Track                    [Page 3]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    Appendix A.  JWT Examples . . . . . . . . . . . . . . . . . . . .  26
      A.1.  Example Encrypted JWT . . . . . . . . . . . . . . . . . .  26
      A.2.  Example Nested JWT  . . . . . . . . . . . . . . . . . . .  26
@@ -174,6 +110,8 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    Appendix C.  Relationship of JWTs to Simple Web Tokens (SWTs) . .  28
    Acknowledgements  . . . . . . . . . . . . . . . . . . . . . . . .  28
    Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  29
+
+
 
 1.  Introduction
 
@@ -214,13 +152,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    The terms "Ciphertext", "Digital Signature", "Message Authentication
    Code (MAC)", and "Plaintext" are defined by the "Internet Security
    Glossary, Version 2" [RFC4949].
-
-
-
-
-Jones, et al.                Standards Track                    [Page 4]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
 
 
    These terms are defined by this specification:
@@ -273,12 +204,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
       canonicalizations applied.
 
 
-
-Jones, et al.                Standards Track                    [Page 5]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    NumericDate
       A JSON numeric value representing the number of seconds from
       1970-01-01T00:00:00Z UTC until the specified UTC date/time,
@@ -319,20 +244,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    value.  The number of parts in the JWT is dependent upon the
    representation of the resulting JWS using the JWS Compact
    Serialization or JWE using the JWE Compact Serialization.
-
-
-
-
-
-
-
-
-
-
-
-Jones, et al.                Standards Track                    [Page 6]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
 
 
 3.1.  Example JWT
@@ -381,16 +292,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    109, 112, 108, 101, 46, 99, 111, 109, 47, 105, 115, 95, 114, 111,
    111, 116, 34, 58, 116, 114, 117, 101, 125]
 
-
-
-
-
-
-Jones, et al.                Standards Track                    [Page 7]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    Base64url encoding the JWS Payload yields this encoded JWS Payload
    (with line breaks for display purposes only):
 
@@ -435,16 +336,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
 
    There are three classes of JWT Claim Names: Registered Claim Names,
    Public Claim Names, and Private Claim Names.
-
-
-
-
-
-
-
-Jones, et al.                Standards Track                    [Page 8]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
 
 
 4.1.  Registered Claim Names
@@ -496,13 +387,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    processing of the "exp" claim requires that the current date/time
    MUST be before the expiration date/time listed in the "exp" claim.
 
-
-
-Jones, et al.                Standards Track                    [Page 9]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    Implementers MAY provide for some small leeway, usually no more than
    a few minutes, to account for clock skew.  Its value MUST be a number
    containing a NumericDate value.  Use of this claim is OPTIONAL.
@@ -552,13 +436,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    are Private Names: names that are not Registered Claim Names
    (Section 4.1) or Public Claim Names (Section 4.2).  Unlike Public
 
-
-
-Jones, et al.                Standards Track                   [Page 10]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    Claim Names, Private Claim Names are subject to collision and should
    be used with caution.
 
@@ -606,14 +483,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    RECOMMENDED that "JWT" always be spelled using uppercase characters
    for compatibility with legacy implementations.  See Appendix A.2 for
    an example of a Nested JWT.
-
-
-
-
-Jones, et al.                Standards Track                   [Page 11]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
 
 5.3.  Replicating Claims as Header Parameters
 
@@ -663,14 +532,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
      eyJhbGciOiJub25lIn0
 
 
-
-
-
-Jones, et al.                Standards Track                   [Page 12]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    The following is an example of a JWT Claims Set:
 
      {"iss":"joe",
@@ -716,16 +577,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
        specification.  Note that whitespace is explicitly allowed in the
        representation and no canonicalization need be performed before
        encoding.
-
-
-
-
-
-
-Jones, et al.                Standards Track                   [Page 13]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
 
    4.  Depending upon whether the JWT is a JWS or JWE, there are two
        cases:
@@ -774,14 +625,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
 
    6.   Determine whether the JWT is a JWS or a JWE using any of the
         methods described in Section 9 of [JWE].
-
-
-
-
-Jones, et al.                Standards Track                   [Page 14]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
 
    7.   Depending upon whether the JWT is a JWS or JWE, there are two
         cases:
@@ -832,13 +675,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    value.  In this specification, only the "typ" and "cty" member values
    do not use these comparison rules.
 
-
-
-Jones, et al.                Standards Track                   [Page 15]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    Some applications may include case-insensitive information in a case-
    sensitive value, such as including a DNS name as part of the "iss"
    (issuer) claim value.  In those cases, the application may need to
@@ -884,16 +720,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    sizes is OPTIONAL.
 
    Support for Nested JWTs is OPTIONAL.
-
-
-
-
-
-
-Jones, et al.                Standards Track                   [Page 16]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
 
 9.  URI for Declaring that Content is a JWT
 
@@ -943,14 +769,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    able to represent the perspectives of different applications using
    this specification, in order to enable broadly informed review of
    registration decisions.  In cases where a registration decision could
-
-
-
-Jones, et al.                Standards Track                   [Page 17]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    be perceived as creating a conflict of interest for a particular
    Expert, that Expert should defer to the judgment of the other
    Experts.
@@ -986,42 +804,26 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    o  Claim Description: Issuer
    o  Change Controller: IESG
    o  Specification Document(s): Section 4.1.1 of RFC 7519
-
    o  Claim Name: "sub"
    o  Claim Description: Subject
    o  Change Controller: IESG
    o  Specification Document(s): Section 4.1.2 of RFC 7519
-
    o  Claim Name: "aud"
    o  Claim Description: Audience
    o  Change Controller: IESG
    o  Specification Document(s): Section 4.1.3 of RFC 7519
-
-
-
-
-
-
-Jones, et al.                Standards Track                   [Page 18]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    o  Claim Name: "exp"
    o  Claim Description: Expiration Time
    o  Change Controller: IESG
    o  Specification Document(s): Section 4.1.4 of RFC 7519
-
    o  Claim Name: "nbf"
    o  Claim Description: Not Before
    o  Change Controller: IESG
    o  Specification Document(s): Section 4.1.5 of RFC 7519
-
    o  Claim Name: "iat"
    o  Claim Description: Issued At
    o  Change Controller: IESG
    o  Specification Document(s): Section 4.1.6 of RFC 7519
-
    o  Claim Name: "jti"
    o  Claim Description: JWT ID
    o  Change Controller: IESG
@@ -1040,27 +842,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    o  Common Name: JSON Web Token (JWT) Token Type
    o  Change Controller: IESG
    o  Specification Document(s): RFC 7519
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Jones, et al.                Standards Track                   [Page 19]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
 
 
 10.3.  Media Type Registration
@@ -1107,17 +888,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    the IANA "JSON Web Signature and Encryption Header Parameters"
    registry established by [JWS] for use by claims replicated as Header
    Parameters in JWEs, per Section 5.3.
-
-
-
-
-
-
-
-Jones, et al.                Standards Track                   [Page 20]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
 
 10.4.1.  Registry Contents
 
@@ -1167,14 +937,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    While syntactically the signing and encryption operations for Nested
    JWTs may be applied in any order, if both signing and encryption are
    necessary, normally producers should sign the message and then
-
-
-
-Jones, et al.                Standards Track                   [Page 21]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    encrypt the result (thus encrypting the signature).  This prevents
    attacks in which the signature is stripped, leaving just an encrypted
    message, as well as providing privacy for the signer.  Furthermore,
@@ -1223,14 +985,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
               RFC 7516,  DOI 10.17487/RFC7516, May 2015,
               <http://www.rfc-editor.org/info/rfc7516>.
 
-
-
-
-Jones, et al.                Standards Track                   [Page 22]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    [JWS]      Jones, M., Bradley, J., and N. Sakimura, "JSON Web
               Signature (JWS)", RFC 7515, DOI 10.17487/RFC, May 2015,
               <http://www.rfc-editor.org/info/rfc7515>.
@@ -1274,18 +1028,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
 
    [JSS]      Bradley, J. and N. Sakimura (editor), "JSON Simple Sign",
               September 2010, <http://jsonenc.info/jss/1.0/>.
-
-
-
-
-
-
-
-
-Jones, et al.                Standards Track                   [Page 23]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
 
    [MagicSignatures]
               Panzer, J., Ed., Laurie, B., and D. Balfanz, "Magic
@@ -1334,15 +1076,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
               RFC 6838, DOI 10.17487/RFC6838, January 2013,
               <http://www.rfc-editor.org/info/rfc6838>.
 
-
-
-
-
-Jones, et al.                Standards Track                   [Page 24]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    [SWT]      Hardt, D. and Y. Goland, "Simple Web Token (SWT)", Version
               0.9.5.1, November 2009, <http://msdn.microsoft.com/en-us/
               library/windowsazure/hh781551.aspx>.
@@ -1359,44 +1092,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
               2001, <http://www.w3.org/TR/2001/REC-xml-c14n-20010315>.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Jones, et al.                Standards Track                   [Page 25]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
 
 
 Appendix A.  JWT Examples
@@ -1445,16 +1140,6 @@ A.2.  Example Nested JWT
    JWS to create a Nested JWT.  In this case, the JWT Claims Set is
    first signed, and then encrypted.
 
-
-
-
-
-
-Jones, et al.                Standards Track                   [Page 26]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    The inner signed JWT is identical to the example in Appendix A.2 of
    [JWS].  Therefore, its computation is not repeated here.  This
    example then encrypts this inner JWT to the recipient using
@@ -1495,21 +1180,6 @@ RFC 7519                  JSON Web Token (JWT)                  May 2015
    base64url-encoded value below:
 
      GawgguFyGrWKav7AX4VKUg
-
-
-
-
-
-
-
-
-
-
-
-Jones, et al.                Standards Track                   [Page 27]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
 
    The final result for this Nested JWT (with line breaks for display
    purposes only) is:
@@ -1559,14 +1229,6 @@ Appendix B.  Relationship of JWTs to SAML Assertions
    rather as a token format to be used when ease of implementation or
    compactness are considerations.
 
-
-
-
-Jones, et al.                Standards Track                   [Page 28]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
    SAML Assertions are always statements made by an entity about a
    subject.  JWTs are often used in the same manner, with the entity
    making the statements being represented by the "iss" (issuer) claim,
@@ -1611,37 +1273,19 @@ Acknowledgements
    and Sean Turner, Stephen Farrell, and Kathleen Moriarty served as
    Security Area Directors during the creation of this specification.
 
-
-
-
-
-
-
-
-Jones, et al.                Standards Track                   [Page 29]
-
-RFC 7519                  JSON Web Token (JWT)                  May 2015
-
-
 Authors' Addresses
 
    Michael B. Jones
    Microsoft
-
    EMail: mbj@microsoft.com
-   URI:   http://self-issued.info/
 
 
    John Bradley
    Ping Identity
-
    EMail: ve7jtb@ve7jtb.com
    URI:   http://www.thread-safe.com/
 
-
    Nat Sakimura
    Nomura Research Institute
-
    EMail: n-sakimura@nri.co.jp
-   URI:   http://nat.sakimura.org/
 
