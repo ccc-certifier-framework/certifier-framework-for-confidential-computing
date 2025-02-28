@@ -2,7 +2,9 @@
 #    File: generate_cert_chain.mak
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT = ..
+endif
 
 ifndef SRC_DIR
 SRC_DIR=$(CERTIFIER_ROOT)/src
@@ -31,28 +33,46 @@ TARGET_MACHINE_TYPE= x64
 endif
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
-
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
 US= .
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 
+# Newer versions of protobuf require C++17 and dependancies on additional libraries.
+# When this happens, everything must be compiles with C++17 and the linking is a
+# little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
+# is done below.  Comment it out for older protobuf usage.
+NEWPROTOBUF=1
+
 # Compilation of protobuf files could run into some errors, so avoid using
 # -Werror for those targets
-CFLAGS_NOERROR = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
-CFLAGS = $(CFLAGS_NOERROR) -Werror
 
 #For MAC, -D MACOS should be included
+ifndef NEWPROTOBUF
+CFLAGS_NOERROR = $(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
 CFLAGS1= $(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated -Wno-deprecated-declarations
+else
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+endif
+
+CFLAGS = $(CFLAGS_NOERROR) -Werror
+
 CC=g++
 LINK=g++
 # PROTO=/usr/local/bin/protoc
 # Point this to the right place, if you have to. I had to do the above on my machine.
 PROTO=protoc
 AR=ar
+
+ifndef NEWPROTOBUF
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+else
+export LD_LIBRARY_PATH=/usr/local/lib
+LDFLAGS= -L/usr/local/lib `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+endif
 
 common_objs = $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
               $(O)/certifier_proofs.o $(O)/simulated_enclave.o \

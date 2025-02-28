@@ -2,7 +2,9 @@
 #    File: simple_app_under_app_service/example_app.mak (service_example_app.mak)
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+ifndef NEWPROTOBUF
 CERTIFIER_ROOT = ../..
+endif
 
 ifndef SRC_DIR
 SRC_DIR=../..
@@ -23,22 +25,38 @@ ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
 
-CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
+# Newer versions of protobuf require C++17 and dependancies on additional libraries.
+# When this happens, everything must be compiles with C++17 and the linking is a
+# little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
+# is done below.  Comment it out for older protobuf usage.
+NEWPROTOBUF=1
 
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 S= $(SRC_DIR)/src
 O= $(OBJ_DIR)
 US=.
 I= $(SRC_DIR)/include
 INCLUDE= -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 
+ifndef NEWPROTOBUF
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+else
+CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+endif
+
 CC=g++
 LINK=g++
 #PROTO=/usr/local/bin/protoc
 PROTO=protoc
 AR=ar
+
+ifndef NEWPROTOBUF
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+else
+export LD_LIBRARY_PATH=/usr/local/lib
+LDFLAGS= -L $(LOCAL_LIB) `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+endif
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.

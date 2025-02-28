@@ -30,15 +30,17 @@ ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
 
+# Newer versions of protobuf require C++17 and dependancies on additional libraries.
+# When this happens, everything must be compiles with C++17 and the linking is a
+# little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
+# is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
 
 CERT_SRC=$(CERTIFIER_ROOT)/src
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
-
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
-
 INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/
 
 # Compilation of protobuf files could run into some errors, so avoid using

@@ -1,7 +1,6 @@
 #    
 #    File: example_app.mak
 
-
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT = ../..
@@ -23,9 +22,7 @@ ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
 
-
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
-
 S= $(CERTIFIER_ROOT)/src
 O= $(OBJ_DIR)
 US=.
@@ -33,6 +30,10 @@ I= $(CERTIFIER_ROOT)/include
 INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 
+# Newer versions of protobuf require C++17 and dependancies on additional libraries.
+# When this happens, everything must be compiles with C++17 and the linking is a
+# little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
+# is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
 
 ifndef NEWPROTOBUF
