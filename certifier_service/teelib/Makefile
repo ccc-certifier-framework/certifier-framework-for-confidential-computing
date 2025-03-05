@@ -8,7 +8,11 @@ endif
 PROTO=protoc
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT = ../..
+endif
+
+NEWPROTOBUF=1
 
 CERTIFIER_INCLUDE = -I . -I $(CERTIFIER_ROOT)/include -I $(CERTIFIER_ROOT)/src/sev-snp
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE)
@@ -16,9 +20,19 @@ CERTIFIER_LDFLAGS =
 CERTIFIER_LDFLAGS += -lcrypto -lssl -luuid
 
 CFLAGS += $(CERTIFIER_CFLAGS)
+
+ifndef NEWPROTOBUF
 CFLAGS += -O3 -g -Wall -std=c++11 -Wno-unused-variable -Werror -Wno-missing-braces -DSEV_SNP
+else
+CFLAGS += -O3 -g -Wall -std=c++17 -Wno-unused-variable -Werror -Wno-missing-braces -DSEV_SNP
+endif
 LDFLAGS=
+
+ifndef NEWPROTOBUF
 LDFLAGS += -L $(LOCAL_LIB) -ldl -lprotobuf -lgtest -lgflags -pthread $(CERTIFIER_LDFLAGS)
+else
+LDFLAGS += -fPIC -L $(LOCAL_LIB) -ldl `pkg-config --cflags --libs protobuf` -lgtest -lgflags -pthread $(CERTIFIER_LDFLAGS)
+endif
 
 TEE_PRIMITIVE_LIB = libtee.so
 
