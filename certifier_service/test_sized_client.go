@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	certlib "github.com/certifier-framework-for-confidential-computing/certifier_service/certlib"
+	certlib "github.com/jlmucb/certifier-framework-for-confidential-computing/certifier_service/certlib"
 )
 
 func client(conn net.Conn) bool {
