@@ -32,7 +32,7 @@ import (
 	certlib "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certlib"
 	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	// NOTE: Enable this line when you enable the test-code in main().
-	// gramineverify "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
+	// gramineverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
 
 var operation = flag.String("operation", "certifier-service",

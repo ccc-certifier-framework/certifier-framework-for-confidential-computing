@@ -1,7 +1,7 @@
 # Installing The Certifier Framework for Confidential Computing
 
 In this description, the top level directory of this repository,
-which includes this `INSTALL.md` file, is denoted $CERTIFIER.
+which includes this `INSTALL.md` file, is denoted $CERTIFIER_ROOT.
 
 The Ubuntu 20.04 install guide can be found in
 [Ubuntu Install](./Doc/install-certifier-Ubuntu-20.04.md).
@@ -44,7 +44,7 @@ $ sudo apt-get install -y libssl-dev uuid-dev python3-pip swig
 ## To compile and run the Certifier API tests
 
 ```shell
-  $ cd $CERTIFIER/src
+  $ cd $CERTIFIER_ROOT/src
   $ make -f certifier_tests.mak clean
   $ make -f certifier_tests.mak
   $ ./certifier_tests.exe [--print_all=true]
@@ -73,7 +73,7 @@ $ sudo ./certifier_tests.exe --print_all=true
 Once you are sure the Certifier works, compile and make the Certifier library:
 
 ```shell
- $ cd $CERTIFIER/src
+ $ cd $CERTIFIER_ROOT/src
  $ make -f certifier.mak clean
  $ make -f certifier.mak
 ```
@@ -86,7 +86,7 @@ in the Certifier workflow use these programs.
 To compile them:
 
 ```shell
-$ cd $CERTIFIER/utilities
+$ cd $CERTIFIER_ROOT/utilities
 $ make -f cert_utility.mak clean
 $ make -f policy_utilities.mak clean
 
@@ -103,9 +103,9 @@ and contains two subdirectories: [certlib/](./certifier_service/certlib/) and
 Certlib unit-tests require some input data in test_data/ dir. Generate it as follows:
 
 ```shell
-cd $CERTIFIER/certifier_service/certlib/test_data
+cd $CERTIFIER_ROOT/certifier_service/certlib/test_data
 
-$CERTIFIER/utilities/cert_utility.exe                 \
+$CERTIFIER_ROOT/utilities/cert_utility.exe                 \
    --operation=generate-policy-key-and-test-keys      \
    --policy_key_output_file=policy_key_file.bin       \
    --policy_cert_output_file=policy_cert_file.bin     \
@@ -116,7 +116,7 @@ $CERTIFIER/utilities/cert_utility.exe                 \
 Setup libraries for Certifier Service to link with:
 
 ```shell
-cd $CERTIFIER/certifier_service/graminelib
+cd $CERTIFIER_ROOT/certifier_service/graminelib
 make dummy
 
 cd ../oelib

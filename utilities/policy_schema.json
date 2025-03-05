@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2019-09/schema",
-    "$id": "https://github.com/vmware-research/certifier-framework-for-confidential-computing",
+    "$id": "https://github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing",
     "type": "object",
     "title": "The Certifier Policy Schema",
     "required": [
