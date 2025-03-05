@@ -2,7 +2,9 @@
 #    File: cert_utility.mak
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT = ..
+endif
 
 ifndef SRC_DIR
 SRC_DIR=$(CERTIFIER_ROOT)/src

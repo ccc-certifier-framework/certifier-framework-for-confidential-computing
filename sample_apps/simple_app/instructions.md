@@ -20,25 +20,25 @@ Read the [policy_key_notes](policy_key_notes.md) in the `simple_app` directory a
 the [policy_utilities_info](../../utilities/policy_utilities_info.md) in the
 `utilities/` directory, as a background.
 
-$CERTIFIER_PROTOTYPE is the top level directory for the Certifier repository.
+$CERTIFIER_ROOT is the top level directory for the Certifier repository.
 It is helpful to have a shell variable for it, e.g., :
 
 ```shell
-export CERTIFIER_PROTOTYPE=~/Projects/certifier-framework-for-confidential-computing
+export CERTIFIER_ROOT=~/Projects/certifier-framework-for-confidential-computing
 ```
 
 $EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable
 is useful.
 
 ```shell
-export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app
+export EXAMPLE_DIR=$CERTIFIER_ROOT/sample_apps/simple_app
 ```
 
 ----
 ## Step 1: Build the utilities
 
 ```shell
-cd $CERTIFIER_PROTOTYPE/utilities
+cd $CERTIFIER_ROOT/utilities
 make -f cert_utility.mak
 make -f policy_utilities.mak
 ```
@@ -54,7 +54,7 @@ mkdir $EXAMPLE_DIR/provisioning
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe          \
+$CERTIFIER_ROOT/utilities/cert_utility.exe          \
       --operation=generate-policy-key-and-test-keys      \
       --policy_key_output_file=policy_key_file.bin       \
       --policy_cert_output_file=policy_cert_file.bin     \
@@ -68,7 +68,7 @@ This will also generate the attestation key and platform key for these tests.
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe      \
+$CERTIFIER_ROOT/utilities/embed_policy_key.exe      \
       --input=policy_cert_file.bin                       \
       --output=../policy_key.cc
 ```
@@ -85,7 +85,7 @@ make -f example_app.mak
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe      \
+$CERTIFIER_ROOT/utilities/measurement_utility.exe      \
         --type=hash                                         \
         --input=../example_app.exe                          \
         --output=example_app.measurement
@@ -100,12 +100,12 @@ cd $EXAMPLE_DIR/provisioning
 ### a. Construct policyKey says platformKey is-trusted-for-attestation
 
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe    \
+$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
       --key_subject=platform_key_file.bin                   \
       --verb="is-trusted-for-attestation"                   \
       --output=ts1.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe    \
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe    \
       --key_subject=policy_key_file.bin                        \
       --verb="says"                                            \
       --clause=ts1.bin                                         \
@@ -115,13 +115,13 @@ $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe    \
 ### b. Construct  policy key says measurement is-trusted
 
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe    \
+$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
       --key_subject=""                                      \
       --measurement_subject=example_app.measurement         \
       --verb="is-trusted"                                   \
       --output=ts2.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe    \
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe    \
       --key_subject=policy_key_file.bin                        \
       --verb="says"                                            \
       --clause=ts2.bin                                         \
@@ -130,13 +130,13 @@ $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe    \
 
 ### c. Produce the signed claims for each vse policy statement.
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe    \
+$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
       --vse_file=vse_policy1.bin                                        \
       --duration=9000                                                   \
       --private_key_file=policy_key_file.bin                            \
       --output=signed_claim_1.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe    \
+$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
       --vse_file=vse_policy2.bin                                        \
       --duration=9000                                                   \
       --private_key_file=policy_key_file.bin                            \
@@ -146,7 +146,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe    \
 ### d. Combine signed policy statements for Certifier Service use
 
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/package_claims.exe     \
+$CERTIFIER_ROOT/utilities/package_claims.exe     \
       --input=signed_claim_1.bin,signed_claim_2.bin   \
       --output=policy.bin
 ```
@@ -154,24 +154,24 @@ $CERTIFIER_PROTOTYPE/utilities/package_claims.exe     \
 ### e. [optional] Print the policy
 
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+$CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
 ```
 
 ### f. Construct statement "platform-key says attestation-key is-trusted-for-attestation" and sign it
 
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe    \
+$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
       --key_subject=attest_key_file.bin                     \
       --verb="is-trusted-for-attestation"                   \
       --output=tsc1.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe    \
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe    \
       --key_subject=platform_key_file.bin                      \
       --verb="says"                                            \
       --clause=tsc1.bin                                        \
       --output=vse_policy3.bin
 
-$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe    \
+$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
       --vse_file=vse_policy3.bin                                        \
       --duration=9000                                                   \
       --private_key_file=platform_key_file.bin                          \
@@ -181,7 +181,7 @@ $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe    \
 ### g. [optional] Print it
 
 ```shell
-$CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
+$CERTIFIER_ROOT/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
 ```
 
 
@@ -196,14 +196,14 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 Compile the protobuf
 
 ```shell
-cd $CERTIFIER_PROTOTYPE/certifier_service/certprotos
+cd $CERTIFIER_ROOT/certifier_service/certprotos
 
 protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
 ```
   Compile the oelib for OE host verification
 
 ```shell
-cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
+cd $CERTIFIER_ROOT/certifier_service/oelib
 
 make
 ```
@@ -215,7 +215,7 @@ make dummy
 
   Compile the teelib for running the certifier service inside a TEE
 ```shell
-cd $CERTIFIER_PROTOTYPE/certifier_service/teelib
+cd $CERTIFIER_ROOT/certifier_service/teelib
 
 make
 ```
@@ -224,7 +224,7 @@ This should produce a Go file for the certifier protobufs called certifier.pb.go
 Now build simpleserver:
 
 ```shell
-cd $CERTIFIER_PROTOTYPE/certifier_service
+cd $CERTIFIER_ROOT/certifier_service
 
 go build simpleserver.go
 ```
@@ -271,7 +271,7 @@ In a new terminal window:
 ```shell
 cd $EXAMPLE_DIR/service
 
-$CERTIFIER_PROTOTYPE/certifier_service/simpleserver   \
+$CERTIFIER_ROOT/certifier_service/simpleserver   \
       --policyFile=policy.bin                         \
       --readPolicy=true
 ```

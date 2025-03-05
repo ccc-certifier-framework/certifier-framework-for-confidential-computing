@@ -4,6 +4,7 @@
 ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT=..
 endif
+
 ifndef SRC_DIR
 SRC_DIR=.
 endif
