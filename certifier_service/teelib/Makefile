@@ -17,7 +17,7 @@ NEWPROTOBUF=1
 CERTIFIER_INCLUDE = -I . -I $(CERTIFIER_ROOT)/include -I $(CERTIFIER_ROOT)/src/sev-snp
 CERTIFIER_CFLAGS = $(CERTIFIER_INCLUDE)
 CERTIFIER_LDFLAGS =
-CERTIFIER_LDFLAGS += -lcrypto -lssl -luuid
+CERTIFIER_LDFLAGS += -lssl -lcrypto -luuid
 
 CFLAGS += $(CERTIFIER_CFLAGS)
 
@@ -29,15 +29,18 @@ endif
 LDFLAGS=
 
 ifndef NEWPROTOBUF
-LDFLAGS += -L $(LOCAL_LIB) -ldl -lprotobuf -lgtest -lgflags -pthread $(CERTIFIER_LDFLAGS)
+LDFLAGS += -L $(LOCAL_LIB) -ldl -lprotobuf -pthread $(CERTIFIER_LDFLAGS)
 else
-LDFLAGS += -fPIC -L $(LOCAL_LIB) -ldl `pkg-config --cflags --libs protobuf` -lgtest -lgflags -pthread $(CERTIFIER_LDFLAGS)
+LDFLAGS += -fPIC -L $(LOCAL_LIB) -ldl `pkg-config --cflags --libs protobuf` -pthread $(CERTIFIER_LDFLAGS)
 endif
 
+ifndef NEWPROTOBUF
 TEE_PRIMITIVE_LIB = libtee.so
+else
+TEE_PRIMITIVE_LIB = libtee.a
+endif
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
-
 CS = $(CERTIFIER_ROOT)/src
 S = $(CERTIFIER_ROOT)/certifier_service/teelib
 
@@ -53,9 +56,15 @@ dobj = $(O)/certifier.pb.o $(O)/tee_primitives.o $(O)/certifier.o $(O)/support.o
 
 all: build
 
+ifndef NEWPROTOBUF
 build: $(TEE_PRIMITIVE_LIB)
 	@echo " \nCompilers used: $(CC), $(CXX). Linking $<"
 	$(CXX) -shared -o $(TEE_PRIMITIVE_LIB) $(dobj) $(LDFLAGS)
+else
+build: $(TEE_PRIMITIVE_LIB)
+	@echo " \nCompilers used: $(CC), $(CXX). Linking $<"
+	ar rcs $(TEE_PRIMITIVE_LIB) $(dobj)
+endif
 
 $(TEE_PRIMITIVE_LIB): $(dobj)
 
