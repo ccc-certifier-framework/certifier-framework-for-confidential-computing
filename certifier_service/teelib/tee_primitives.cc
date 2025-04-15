@@ -24,9 +24,9 @@ using namespace std;
 
 bool tee_Attest(const char *enclave_type,
                 int         what_to_say_size,
-                ::byte *      what_to_say,
+                ::byte *    what_to_say,
                 int *       size_out,
-                ::byte *      out) {
+                ::byte *    out) {
   string enc_type(enclave_type);
   return Attest(enc_type, what_to_say_size, what_to_say, size_out, out);
 }

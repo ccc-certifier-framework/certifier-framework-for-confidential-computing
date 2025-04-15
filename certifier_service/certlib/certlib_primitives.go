@@ -15,7 +15,7 @@
 package certlib
 
 // #cgo CFLAGS: -g -Wall -I../teelib
-// #cgo LDFLAGS: -L../teelib -ltee -Wl,-rpath=teelib:../../certifier_service/teelib/:../../../certifier_service/teelib
+// #cgo LDFLAGS: -L../teelib -ltee -Wl,-rpath=teelib:../../certifier_service/teelib/:../../../certifier_service/teelib 
 // #include "tee_primitives.h"
 import "C"
 
