@@ -243,7 +243,21 @@ Google gtest which can be obtained at https://github.com/google/googletest,
   gtest is a test infrastructure used in our tests.
 
 Google protobuf which can be obtained at https://github.com/protocolbuffers/protobuf,
-  protobuf is a serialization framwork.
+  protobuf is a serialization framwork.  Different versions of protobuf can cause
+  compilation issues.  In particular, later versions of protobuf use a library called
+  abseil and must be compiled with C++17 or later.  If abseil is not compiled as position
+  independent code, it can cause errors.  When abseil is not present, the protobuf
+  compile will automatically compile it as position independent code but if you compile
+  abseil prior to protobuf istallation and simply follow the instructions, it will cause
+  problems.  You can build abseil yourself but you should use the cmake options 
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF.  If you install protobuf
+  from a package manager, it should have been compiled properly.  In the makefiles,
+  there is a variable, NEWPROTOBUF, that should be defined or not depending on whether
+  abseil symbols must be resolved or whether later versions of protobuf (which require
+  C++17 or later) are used.  If you use the later versions of protobuf, you should compile
+  your applications with C++17 or later as well.  The version of protoc you use (to
+  generate protobuf source files ("*.pb.cc") must be consistant with the version of
+  protobuf you use.
 
 Openssl which contains crypto libraries and TLS support.
 

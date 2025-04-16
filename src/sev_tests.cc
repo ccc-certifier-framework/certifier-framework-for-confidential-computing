@@ -45,7 +45,7 @@ bool test_sev(bool print_all) {
   memset(sealed, 0, sealed_size);
 
   if (!Seal(enclave_type, enclave_id, data_size, data, &sealed_size, sealed)) {
-    printf("test_sev, seal error\n");
+    printf("test_sev, %s, seal error, %d\n", __func__, __LINE__);
     return false;
   }
 
@@ -69,7 +69,7 @@ bool test_sev(bool print_all) {
               sealed,
               &unsealed_size,
               unsealed)) {
-    printf("test_sev, unseal error\n");
+    printf("test_sev, %s, unseal error, %d\n", __func__, __LINE__);
     return false;
   }
 
@@ -81,7 +81,7 @@ bool test_sev(bool print_all) {
   }
 
   if (unsealed_size != data_size || memcmp(data, unsealed, data_size) != 0) {
-    printf("test_sev, unsealed response wrong\n");
+    printf("test_sev, unsealed response wrong, %s, %d\n", __func__, __LINE__);
     return false;
   }
 
@@ -92,15 +92,19 @@ bool test_sev(bool print_all) {
   attestation_user_data ud;
   ud.set_enclave_type("sev-enclave");
   RSA *r = RSA_new();
-  if (!generate_new_rsa_key(2048, r))
+  if (!generate_new_rsa_key(2048, r)) {
+    printf("%s, %d, generate_new_rsa_key error\n", __func__, __LINE__);
     return false;
+  }
   key_message private_auth_key;
   key_message public_auth_key;
   if (!RSA_to_key(r, &private_auth_key)) {
+    printf("%s, %d, RSA_to_key error\n", __func__, __LINE__);
     return false;
   }
   private_auth_key.set_key_name("authKey");
   if (!private_key_to_public_key(private_auth_key, &public_auth_key)) {
+    printf("%s, %d, private_key_to_public_key error\n", __func__, __LINE__);
     return false;
   }
   // time
@@ -115,6 +119,7 @@ bool test_sev(bool print_all) {
   byte   out[size_out];
   string serialized_user;
   if (!ud.SerializeToString(&serialized_user)) {
+    printf("%s, %d, SerializeToString error\n", __func__, __LINE__);
     return false;
   }
   if (!Attest(ud.enclave_type(),
@@ -122,7 +127,7 @@ bool test_sev(bool print_all) {
               (byte *)serialized_user.data(),
               &size_out,
               out)) {
-    printf("Attest failed\n");
+    printf("%s, %d Attest failed\n", __func__, __LINE__);
     return false;
   }
 
@@ -135,7 +140,7 @@ bool test_sev(bool print_all) {
   X509 *           x509_vcek;
   if (sev_read_pem_into_x509("test_data/vcek.pem", &x509_vcek)
       != EXIT_SUCCESS) {
-    printf("Failed to load VCEK Cert!\n");
+    printf("%s, %d, Failed to load VCEK Cert!\n", __func__, __LINE__);
     return false;
   }
   EVP_PKEY *verify_pkey = sev_get_vcek_pubkey(x509_vcek);
@@ -152,7 +157,7 @@ bool test_sev(bool print_all) {
   verify_pkey = nullptr;
 
   if (!success) {
-    printf("verify_sev_Attest failed\n");
+    printf("%s, %d: verify_sev_Attest failed\n", __func__, __LINE__);
     return false;
   }
 
@@ -160,7 +165,7 @@ bool test_sev(bool print_all) {
   string                  at_str;
   at_str.assign((char *)out, size_out);
   if (!sev_att.ParseFromString(at_str)) {
-    printf("Can't parse attestation\n");
+    printf("%s, %d: Can't parse attestation\n", __func__, __LINE__);
     return false;
   }
 
