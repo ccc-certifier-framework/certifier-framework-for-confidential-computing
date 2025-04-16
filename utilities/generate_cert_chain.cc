@@ -99,9 +99,9 @@ bool generate_key(const string &type, const string &name, key_message *k) {
   return true;
 }
 
-bool generate_chain(const string &   root_key_name,
-                    const string &   key_type,
-                    const string &   authority_name,
+bool generate_chain(const string    &root_key_name,
+                    const string    &key_type,
+                    const string    &authority_name,
                     int              num_intermediate,
                     full_cert_chain *chain) {
 
@@ -123,7 +123,7 @@ bool generate_chain(const string &   root_key_name,
     return false;
   }
 
-  X509 *   x509_root_cert = X509_new();
+  X509    *x509_root_cert = X509_new();
   uint64_t sn = 1;
   if (!produce_artifact(private_root_key,
                         (string &)root_key_name,
@@ -355,8 +355,8 @@ int main(int an, char **av) {
     for (int i = 0; i < chain.list_size(); i++) {
       printf("\nCert %d:\n", i);
       const full_cert_chain_entry ent = chain.list(i);
-      const string &              ser_cert = ent.der_cert();
-      X509 *                      cert = X509_new();
+      const string               &ser_cert = ent.der_cert();
+      X509                       *cert = X509_new();
       if (!asn1_to_x509(ser_cert, cert)) {
         printf("%s:%d: %s() asn1_to_x509 failed\n",
                __FILE__,

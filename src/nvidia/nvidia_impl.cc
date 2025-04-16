@@ -56,10 +56,10 @@ typedef int (*fDeviceGetCount)(unsigned int *deviceCount);
 typedef int (*fDeviceGetHandleByIndex)(unsigned int  index,
                                        nvmlDevice_t *device);
 typedef int (*fDeviceGetVbiosVersion)(nvmlDevice_t device,
-                                      char *       version,
+                                      char        *version,
                                       unsigned int length);
 typedef int (*fDeviceGetUUID)(nvmlDevice_t device,
-                              char *       uuid,
+                              char        *uuid,
                               unsigned int length);
 typedef int (*fDeviceGetArchitecture)(nvmlDevice_t              device,
                                       nvmlDeviceArchitecture_t *arch);

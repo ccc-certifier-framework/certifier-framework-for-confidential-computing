@@ -166,7 +166,7 @@ bool certifier::framework::policy_store::Serialize(string *psout) {
 
   for (unsigned i = 0; i < num_ents_; i++) {
     policy_store_entry *pe = psm.add_entries();
-    store_entry *       se = entry_[i];
+    store_entry        *se = entry_[i];
     pe->set_tag(se->tag_);
     pe->set_type(se->type_);
     pe->set_value(se->value_);
@@ -190,7 +190,7 @@ bool certifier::framework::policy_store::Deserialize(string &in) {
 
   for (int i = 0; i < psm.entries_size(); i++) {
     const policy_store_entry &pe = psm.entries(i);
-    store_entry *             se = new store_entry();
+    store_entry              *se = new store_entry();
     entry_[i] = se;
     se->tag_ = pe.tag();
     se->type_ = pe.type();
@@ -220,12 +220,12 @@ bool GetX509FromCert(const string &cert, X509 *x) {
 
 #ifdef SEV_SNP
 
-static bool vcek_ext_byte_value(X509 *         vcek,
-                                const char *   oid,
+static bool vcek_ext_byte_value(X509          *vcek,
+                                const char    *oid,
                                 unsigned char *value) {
   int                  nid = -1, idx = -1, extlen = -1;
-  X509_EXTENSION *     ex = NULL;
-  ASN1_STRING *        extvalue = NULL;
+  X509_EXTENSION      *ex = NULL;
+  ASN1_STRING         *extvalue = NULL;
   const unsigned char *vals = NULL;
 
   // Use OID for both lname and sname so OBJ_create does not fail
@@ -278,8 +278,8 @@ uint64_t get_tcb_version_from_vcek(X509 *vcek) {
 
 static bool get_chipid_from_vcek(X509 *vcek, unsigned char *chipid, int idlen) {
   int                  nid = -1, idx = -1, extlen = -1;
-  X509_EXTENSION *     ex = NULL;
-  ASN1_STRING *        extvalue = NULL;
+  X509_EXTENSION      *ex = NULL;
+  ASN1_STRING         *extvalue = NULL;
   const unsigned char *vals = NULL;
 
   nid = OBJ_create(VCEK_EXT_HWID, VCEK_EXT_HWID, VCEK_EXT_HWID);
@@ -307,14 +307,14 @@ static bool get_chipid_from_vcek(X509 *vcek, unsigned char *chipid, int idlen) {
 #endif  // SEV_SNP
 
 bool PublicKeyFromCert(const string &cert, key_message *k) {
-  X509 *     x = X509_new();
-  EVP_PKEY * epk = nullptr;
+  X509      *x = X509_new();
+  EVP_PKEY  *epk = nullptr;
   X509_NAME *sn = nullptr;
   int        s = 0;
   bool       res = true;
   int        len = -1;
   string     subject_name_str;
-  string *   cert_str = nullptr;
+  string    *cert_str = nullptr;
 #ifdef SEV_SNP
   enum { CHIP_ID_SIZE = 64 };
   unsigned char chipid[CHIP_ID_SIZE];
@@ -444,20 +444,20 @@ extern bool sev_Seal(int in_size, byte *in, int *size_out, byte *out);
 extern bool sev_Unseal(int in_size, byte *in, int *size_out, byte *out);
 extern bool sev_Attest(int   what_to_say_size,
                        byte *what_to_say,
-                       int * size_out,
+                       int  *size_out,
                        byte *out);
 #endif  // SEV_SNP
 
 #ifdef ASYLO_CERTIFIER
 extern bool asylo_Attest(int   claims_size,
                          byte *claims,
-                         int * size_out,
+                         int  *size_out,
                          byte *out);
 extern bool asylo_Verify(int   claims_size,
                          byte *claims,
-                         int * user_data_out_size,
+                         int  *user_data_out_size,
                          byte *user_data_out,
-                         int * size_out,
+                         int  *size_out,
                          byte *out);
 extern bool asylo_Seal(int in_size, byte *in, int *size_out, byte *out);
 extern bool asylo_Unseal(int in_size, byte *in, int *size_out, byte *out);
@@ -465,15 +465,15 @@ extern bool asylo_Unseal(int in_size, byte *in, int *size_out, byte *out);
 
 #ifdef GRAMINE_CERTIFIER
 extern bool gramine_Attest(const int what_to_say_size,
-                           byte *    what_to_say,
-                           int *     size_out,
-                           byte *    out);
+                           byte     *what_to_say,
+                           int      *size_out,
+                           byte     *out);
 extern bool gramine_Verify(const int what_to_say_size,
-                           byte *    what_to_say,
+                           byte     *what_to_say,
                            const int attestation_size,
-                           byte *    attestation,
-                           int *     size_out,
-                           byte *    out);
+                           byte     *attestation,
+                           int      *size_out,
+                           byte     *out);
 extern bool gramine_Seal(int in_size, byte *in, int *size_out, byte *out);
 extern bool gramine_Unseal(int in_size, byte *in, int *size_out, byte *out);
 #endif
@@ -484,14 +484,14 @@ extern bool keystone_Seal(int in_size, byte *in, int *size_out, byte *out);
 extern bool keystone_Unseal(int in_size, byte *in, int *size_out, byte *out);
 extern bool keystone_Attest(int   what_to_say_size,
                             byte *what_to_say,
-                            int * size_out,
+                            int  *size_out,
                             byte *out);
 extern bool keystone_Verify(const int what_to_say_size,
-                            byte *    what_to_say,
+                            byte     *what_to_say,
                             const int attestation_size,
-                            byte *    attestation,
-                            int *     measurement_out_size,
-                            byte *    measurement_out);
+                            byte     *attestation,
+                            int      *measurement_out_size,
+                            byte     *measurement_out);
 #endif
 
 #ifdef ISLET_CERTIFIER
@@ -503,9 +503,9 @@ extern bool keystone_Verify(const int what_to_say_size,
 bool certifier::framework::Seal(const string &enclave_type,
                                 const string &enclave_id,
                                 int           in_size,
-                                byte *        in,
-                                int *         size_out,
-                                byte *        out) {
+                                byte         *in,
+                                int          *size_out,
+                                byte         *out) {
 
   if (enclave_type == "simulated-enclave") {
     return simulated_Seal(enclave_type, enclave_id, in_size, in, size_out, out);
@@ -552,9 +552,9 @@ bool certifier::framework::Seal(const string &enclave_type,
 bool certifier::framework::Unseal(const string &enclave_type,
                                   const string &enclave_id,
                                   int           in_size,
-                                  byte *        in,
-                                  int *         size_out,
-                                  byte *        out) {
+                                  byte         *in,
+                                  int          *size_out,
+                                  byte         *out) {
 
   if (enclave_type == "simulated-enclave") {
     return simulated_Unseal(enclave_type,
@@ -604,9 +604,9 @@ bool certifier::framework::Unseal(const string &enclave_type,
 //  Check on Gramine.
 bool certifier::framework::Attest(const string &enclave_type,
                                   int           what_to_say_size,
-                                  byte *        what_to_say,
-                                  int *         size_out,
-                                  byte *        out) {
+                                  byte         *what_to_say,
+                                  int          *size_out,
+                                  byte         *out) {
 
   if (enclave_type == "simulated-enclave") {
     return simulated_Attest(enclave_type,
@@ -739,7 +739,7 @@ bool certifier::framework::Attest(const string &enclave_type,
 
 bool GetParentEvidence(const string &enclave_type,
                        const string &parent_enclave_type,
-                       string *      out) {
+                       string       *out) {
 #ifdef OE_CERTIFIER
   if (enclave_type == "oe-enclave") {
     return false;
@@ -778,8 +778,8 @@ bool GetParentEvidence(const string &enclave_type,
 
 bool GetPlatformStatement(const string &enclave_type,
                           const string &enclave_id,
-                          int *         size_out,
-                          byte *        out) {
+                          int          *size_out,
+                          byte         *out) {
   if (enclave_type == "application-enclave") {
 #ifdef DEBUG
     printf("Calling application_GetPlatformStatement\n");
@@ -811,11 +811,11 @@ const int max_key_seal_pad = 1024;
 const int protect_key_size = 64;
 
 bool certifier::framework::protect_blob(const string &enclave_type,
-                                        key_message & key,
+                                        key_message  &key,
                                         int           size_unencrypted_data,
-                                        byte *        unencrypted_data,
-                                        int *         size_protected_blob,
-                                        byte *        blob) {
+                                        byte         *unencrypted_data,
+                                        int          *size_protected_blob,
+                                        byte         *blob) {
 
   string serialized_key;
   if (!key.SerializeToString(&serialized_key)) {
@@ -900,9 +900,9 @@ bool certifier::framework::protect_blob(const string &enclave_type,
 
 bool certifier::framework::unprotect_blob(const string &enclave_type,
                                           int           size_protected_blob,
-                                          byte *        protected_blob,
-                                          key_message * key,
-                                          int * size_of_unencrypted_data,
+                                          byte         *protected_blob,
+                                          key_message  *key,
+                                          int  *size_of_unencrypted_data,
                                           byte *unencrypted_data) {
 
   string protected_blob_string;
@@ -996,11 +996,11 @@ bool certifier::framework::unprotect_blob(const string &enclave_type,
 }
 
 bool certifier::framework::reprotect_blob(const string &enclave_type,
-                                          key_message * key,
+                                          key_message  *key,
                                           int           size_protected_blob,
-                                          byte *        protected_blob,
-                                          int *         size_new_encrypted_blob,
-                                          byte *        data) {
+                                          byte         *protected_blob,
+                                          int          *size_new_encrypted_blob,
+                                          byte         *data) {
 
   key_message new_key;
   int         size_unencrypted_data = size_protected_blob;

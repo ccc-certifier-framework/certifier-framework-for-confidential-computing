@@ -48,7 +48,7 @@ class NvidiaPlatform {
   virtual std::string get_driver_version() = 0;
   virtual bool        is_cc_enabled() = 0;
   virtual int         get_num_gpus() = 0;
-  virtual NvidiaGPU * get_gpu(int index) = 0;
+  virtual NvidiaGPU  *get_gpu(int index) = 0;
 
   virtual ~NvidiaPlatform() = default;
 };

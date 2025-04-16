@@ -12,7 +12,8 @@ Me=$(basename "$0")
 
 # Standardize on this version to avoid diffs-in-behaviour across
 # versions of clang-format tool.
-CLANG_FMT_TOOL="clang-format-11"
+#CLANG_FMT_TOOL="clang-format-11"
+CLANG_FMT_TOOL="clang-format"
 
 # Check if required tool exists
 if ! command -v "$CLANG_FMT_TOOL" &> /dev/null; then

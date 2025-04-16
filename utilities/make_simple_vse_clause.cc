@@ -38,9 +38,9 @@ DEFINE_string(platform_object, "", "platform object file");
 DEFINE_string(environment_object, "", "environment object file");
 
 int make_simple_clause_file_utility(entity_message &subject,
-                                    const string &  verb,
+                                    const string   &verb,
                                     entity_message &object,
-                                    const string &  output) {
+                                    const string   &output) {
 
   vse_clause cl;
   string     v = verb;

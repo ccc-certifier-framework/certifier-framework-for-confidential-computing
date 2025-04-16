@@ -149,7 +149,7 @@ bool swigpytests::secure_authenticated_channel::init_client_ssl(
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
     const string &host_name,      // In
     int           port,           // In
-    string &      asn1_root_cert_io) {  // In/Out
+    string       &asn1_root_cert_io) {  // In/Out
   host_name_ = host_name;
   port_ = port;
 
@@ -170,7 +170,7 @@ bool swigpytests::secure_authenticated_channel::init_client_ssl(
 bool swigpytests::secure_authenticated_channel::init_client_ssl(
     const string &host_name,
     int           port,
-    string &      asn1_root_cert_io,
+    string       &asn1_root_cert_io,
     const string &asn1_my_cert_pvtkey) {
   host_name_ = host_name;
   port_ = port;

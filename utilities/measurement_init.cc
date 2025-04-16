@@ -86,9 +86,9 @@ bool read_file(string file_name, int *size, byte *data) {
   return true;
 }
 
-bool digest_message(const byte * message,
+bool digest_message(const byte  *message,
                     int          message_len,
-                    byte *       digest,
+                    byte        *digest,
                     unsigned int digest_len) {
   EVP_MD_CTX *mdctx;
 

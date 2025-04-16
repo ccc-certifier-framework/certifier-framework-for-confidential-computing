@@ -91,7 +91,7 @@ DEFINE_string(vcek_cert_file,
               "vcek cert file name");
 
 
-//#define DEBUG
+// #define DEBUG
 
 // ---------------------------------------------------------------------------------
 
@@ -106,7 +106,7 @@ class spawned_children {
   int               pid_;
   int               parent_read_fd_;
   int               parent_write_fd_;
-  std::thread *     thread_obj_;
+  std::thread      *thread_obj_;
   spawned_children *next_;
 };
 
@@ -705,7 +705,7 @@ bool process_run_request(run_request &req) {
 bool app_request_server() {
   // This is the TCP server that requests to start
   // protected programs.
-  const char *       hostname = FLAGS_server_app_host.c_str();
+  const char        *hostname = FLAGS_server_app_host.c_str();
   int                port = FLAGS_server_app_port;
   struct sockaddr_in addr;
 

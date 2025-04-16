@@ -10,11 +10,11 @@ bool oe_Seal(int   seal_policy,
              byte *in,
              int   opt_size,
              byte *opt,
-             int * size_out,
+             int  *size_out,
              byte *out) {
   oe_result_t ret;
   bool        result = false;
-  uint8_t *   blob;
+  uint8_t    *blob;
   size_t      blob_size;
   uint64_t    host_addr = 0;
 
@@ -60,7 +60,7 @@ bool oe_Unseal(int   in_size,
                byte *in,
                int   opt_size,
                byte *opt,
-               int * size_out,
+               int  *size_out,
                byte *out) {
   bool     result = false;
   uint8_t *temp_data;

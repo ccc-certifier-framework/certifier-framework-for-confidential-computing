@@ -24,7 +24,7 @@ typedef struct AsyloCertifierFunctions {
                  byte *user_data,
                  int   assertion_size,
                  byte *assertion,
-                 int * size_out,
+                 int  *size_out,
                  byte *out);
   bool (*Seal)(int in_size, byte *in, int *size_out, byte *out);
   bool (*Unseal)(int in_size, byte *in, int *size_out, byte *out);

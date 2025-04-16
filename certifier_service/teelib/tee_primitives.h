@@ -28,23 +28,23 @@ extern "C" {
 
 bool tee_Attest(const char *enclave_type,
                 int         what_to_say_size,
-                byte *      what_to_say,
-                int *       size_out,
-                byte *      out);
+                byte       *what_to_say,
+                int        *size_out,
+                byte       *out);
 
 bool tee_Seal(const char *enclave_type,
               const char *enclave_id,
               int         in_size,
-              byte *      in,
-              int *       size_out,
-              byte *      out);
+              byte       *in,
+              int        *size_out,
+              byte       *out);
 
 bool tee_Unseal(const char *enclave_type,
                 const char *enclave_id,
                 int         in_size,
-                byte *      in,
-                int *       size_out,
-                byte *      out);
+                byte       *in,
+                int        *size_out,
+                byte       *out);
 
 bool tee_Simulated_Init(const char *asn1_policy_cert,
                         const char *attest_key_file,

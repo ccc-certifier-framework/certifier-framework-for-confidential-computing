@@ -48,7 +48,7 @@ static string measurement_file("/tmp/binary_trusted_measurements_file.bin");
 #define FLAGS_policy_host               "localhost"
 #define FLAGS_policy_port               8123
 #define FLAGS_server_app_host           "localhost"
-//#define FLAGS_server_app_port 8124
+// #define FLAGS_server_app_port 8124
 #define FLAGS_server_app_port 39431
 static string data_dir = "./app1_data/";
 
@@ -74,7 +74,7 @@ bool        trust_data_initialized = false;
 key_message privatePolicyKey;
 key_message publicPolicyKey;
 string      serializedPolicyCert;
-X509 *      policy_cert = nullptr;
+X509       *policy_cert = nullptr;
 
 policy_store pStore;
 key_message  privateAppKey;
@@ -305,8 +305,8 @@ void server_application(secure_authenticated_channel &channel) {
 
 void asylo_server_dispatch(const string &host_name,
                            int           port,
-                           string &      asn1_root_cert,
-                           key_message & private_key,
+                           string       &asn1_root_cert,
+                           key_message  &private_key,
                            const string &private_key_cert,
                            void (*func)(secure_authenticated_channel &)) {
 
@@ -327,7 +327,7 @@ void asylo_server_dispatch(const string &host_name,
 
   // Set up TLS handshake data.
   SSL_METHOD *method = (SSL_METHOD *)TLS_server_method();
-  SSL_CTX *   ctx = SSL_CTX_new(method);
+  SSL_CTX    *ctx = SSL_CTX_new(method);
   if (ctx == NULL) {
     printf("SSL_CTX_new failed (1)\n");
     return;

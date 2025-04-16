@@ -61,11 +61,11 @@ bool keystone_get_fake_measurement(int *size, byte *measurement) {
 }
 
 bool keystone_ecc_sign(const char *alg,
-                       EC_KEY *    key,
+                       EC_KEY     *key,
                        int         size,
-                       byte *      msg,
-                       int *       size_out,
-                       byte *      out) {
+                       byte       *msg,
+                       int        *size_out,
+                       byte       *out) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte         digest[len];
 
@@ -96,11 +96,11 @@ bool keystone_ecc_sign(const char *alg,
 }
 
 bool keystone_ecc_verify(const char *alg,
-                         EC_KEY *    key,
+                         EC_KEY     *key,
                          int         size,
-                         byte *      msg,
+                         byte       *msg,
                          int         size_sig,
-                         byte *      sig) {
+                         byte       *sig) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte         digest[len];
 
@@ -126,8 +126,8 @@ bool keystone_ecc_verify(const char *alg,
 
 string      key_file("emulated_keystone_key.bin");
 string      cert_file("emulated_keystone_key_cert.bin");
-EC_KEY *    fake_attest_private_key = nullptr;
-EC_KEY *    fake_attest_public_key = nullptr;
+EC_KEY     *fake_attest_private_key = nullptr;
+EC_KEY     *fake_attest_public_key = nullptr;
 key_message attest_private_key;
 key_message attest_public_key;
 
@@ -169,7 +169,7 @@ bool keystone_Init(const int cert_size, byte *cert) {
     // generate self signed cert
     string name("KeystoneAuthority");
     string desc("Authority");
-    X509 * crt = X509_new();
+    X509  *crt = X509_new();
     if (!produce_artifact(attest_private_key,
                           name,
                           desc,
@@ -229,11 +229,11 @@ bool keystone_Init(const int cert_size, byte *cert) {
 }
 
 bool keystone_Verify(const int what_to_say_size,
-                     byte *    what_to_say,
+                     byte     *what_to_say,
                      const int attestation_size,
-                     byte *    attestation,
-                     int *     measurement_out_size,
-                     byte *    measurement_out) {
+                     byte     *attestation,
+                     int      *measurement_out_size,
+                     byte     *measurement_out) {
   assert(attestation_size == sizeof(struct report_t));
   struct report_t &report = *reinterpret_cast<struct report_t *>(attestation);
 
@@ -281,9 +281,9 @@ bool keystone_Verify(const int what_to_say_size,
 }
 
 bool keystone_Attest(const int what_to_say_size,
-                     byte *    what_to_say,
-                     int *     attestation_size_out,
-                     byte *    attestation_out) {
+                     byte     *what_to_say,
+                     int      *attestation_size_out,
+                     byte     *attestation_out) {
 
   int sz = (int)(sizeof(struct enclave_report_t) + sizeof(struct sm_report_t)
                  + PUBLIC_KEY_SIZE);

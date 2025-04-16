@@ -76,7 +76,7 @@ int main(int an, char **av) {
 
   printf("\n %d blocks\n", seq.block_size());
   for (int i = 0; i < seq.block_size(); i++) {
-    const string &       s = seq.block(i);
+    const string        &s = seq.block(i);
     signed_claim_message sc;
 
     if (!sc.ParseFromString(s)) {

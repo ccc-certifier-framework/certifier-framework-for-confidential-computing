@@ -43,7 +43,7 @@
 #  define MAX_ATTESTATION_SIZE 5000
 #  define TAG_SIZE             16
 
-//#define DEBUG
+// #define DEBUG
 
 typedef unsigned char byte;
 
@@ -63,15 +63,15 @@ typedef struct GramineSgxAttributes {
 #  ifdef GRAMINE_CERTIFIER
 bool gramine_Init(const int cert_size, byte *cert);
 bool gramine_Attest(const int what_to_say_size,
-                    byte *    what_to_say,
-                    int *     attestation_size_out,
-                    byte *    attestation_out);
+                    byte     *what_to_say,
+                    int      *attestation_size_out,
+                    byte     *attestation_out);
 bool gramine_Verify(const int what_to_say_size,
-                    byte *    what_to_say,
+                    byte     *what_to_say,
                     const int attestation_size,
-                    byte *    attestation,
-                    int *     measurement_out_size,
-                    byte *    measurement_out);
+                    byte     *attestation,
+                    int      *measurement_out_size,
+                    byte     *measurement_out);
 bool gramine_Seal(int in_size, byte *in, int *size_out, byte *out);
 bool gramine_Unseal(int in_size, byte *in, int *size_out, byte *out);
 #  endif
@@ -83,15 +83,15 @@ inline void gramine_print_bytes(int n, byte *buf) {
 
 typedef struct GramineFunctions {
   bool (*Attest)(const int what_to_say_size,
-                 byte *    what_to_say,
-                 int *     attestation_size_out,
-                 byte *    attestation_out);
+                 byte     *what_to_say,
+                 int      *attestation_size_out,
+                 byte     *attestation_out);
   bool (*Verify)(const int what_to_say_size,
-                 byte *    what_to_say,
+                 byte     *what_to_say,
                  const int attestation_size,
-                 byte *    attestation,
-                 int *     measurement_out_size,
-                 byte *    measurement_out);
+                 byte     *attestation,
+                 int      *measurement_out_size,
+                 byte     *measurement_out);
   bool (*Seal)(int in_size, byte *in, int *size_out, byte *out);
   bool (*Unseal)(int in_size, byte *in, int *size_out, byte *out);
 } GramineFunctions;
@@ -101,11 +101,11 @@ int     gramine_Getkey(byte *user_report_data, sgx_key_128bit_t *key);
 int     gramine_Sgx_Getkey(byte *user_report_data, sgx_key_128bit_t *key);
 int     gramine_file_size(const char *file_name);
 ssize_t gramine_rw_file(const char *path,
-                        uint8_t *   buf,
+                        uint8_t    *buf,
                         size_t      len,
                         bool        do_write);
 void    gramine_setup_functions(GramineFunctions *gramineFuncs);
-bool    gramine_get_attributes_from_quote(byte *                attestation,
+bool    gramine_get_attributes_from_quote(byte                 *attestation,
                                           GramineSgxAttributes *atts);
 
 

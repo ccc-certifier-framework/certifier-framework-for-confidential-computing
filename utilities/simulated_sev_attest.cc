@@ -98,7 +98,7 @@ int read_key_file(const string &filename, EVP_PKEY **key, bool priv) {
 
   int       rc = -EXIT_FAILURE;
   EVP_PKEY *pkey;
-  FILE *    file = NULL;
+  FILE     *file = NULL;
 
   pkey = EVP_PKEY_new();
   file = fopen(filename.c_str(), "r");

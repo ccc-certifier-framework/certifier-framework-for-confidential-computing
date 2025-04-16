@@ -42,29 +42,29 @@ bool write_file(const string &file_name, int size, byte *data);
 bool read_file_into_string(const string &file_name, string *out);
 bool write_file_from_string(const string &file_name, const string &in);
 
-bool digest_message(const char * alg,
-                    const byte * message,
+bool digest_message(const char  *alg,
+                    const byte  *message,
                     int          message_len,
-                    byte *       digest,
+                    byte        *digest,
                     unsigned int digest_len);
 
 
 bool authenticated_encrypt(const char *alg,
-                           byte *      in,
+                           byte       *in,
                            int         in_len,
-                           byte *      key,
+                           byte       *key,
                            int         key_len,
-                           byte *      iv,
+                           byte       *iv,
                            int         iv_len,
-                           byte *      out,
-                           int *       out_size);
+                           byte       *out,
+                           int        *out_size);
 bool authenticated_decrypt(const char *alg,
-                           byte *      in,
+                           byte       *in,
                            int         in_len,
-                           byte *      key,
+                           byte       *key,
                            int         key_len,
-                           byte *      out,
-                           int *       out_size);
+                           byte       *out,
+                           int        *out_size);
 
 EC_KEY *generate_new_ecc_key(int num_bits);
 EC_KEY *key_to_ECC(const key_message &kr);
@@ -98,24 +98,24 @@ void print_bytes(int n, byte *buf);
 
 // X509 artifact
 bool produce_artifact(key_message &signing_key,
-                      string &     issuer_name_str,
-                      string &     issuer_description_str,
+                      string      &issuer_name_str,
+                      string      &issuer_description_str,
                       key_message &subject_key,
-                      string &     subject_name_str,
-                      string &     subject_description_str,
+                      string      &subject_name_str,
+                      string      &subject_description_str,
                       uint64_t     sn,
                       double       secs_duration,
-                      X509 *       x509,
+                      X509        *x509,
                       bool         is_root,
                       bool         vcek = false);
-bool verify_artifact(X509 &       cert,
+bool verify_artifact(X509        &cert,
                      key_message &verify_key,
-                     string *     issuer_name_str,
-                     string *     issuer_description_str,
+                     string      *issuer_name_str,
+                     string      *issuer_description_str,
                      key_message *subject_key,
-                     string *     subject_name_str,
-                     string *     subject_description_str,
-                     uint64_t *   sn);
+                     string      *subject_name_str,
+                     string      *subject_description_str,
+                     uint64_t    *sn);
 
 int cipher_block_byte_size(const char *alg_name);
 int cipher_key_byte_size(const char *alg_name);
@@ -124,9 +124,9 @@ int mac_output_byte_size(const char *alg_name);
 
 bool asn1_to_x509(const string &in, X509 *x);
 bool x509_to_asn1(X509 *x, string *out);
-bool make_root_key_with_cert(string &     type,
-                             string &     name,
-                             string &     issuer_name,
+bool make_root_key_with_cert(string      &type,
+                             string      &name,
+                             string      &issuer_name,
                              key_message *k);
 
 bool check_date_range(const string &nb, const string &na);

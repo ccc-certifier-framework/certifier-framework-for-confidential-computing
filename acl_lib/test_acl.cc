@@ -23,7 +23,7 @@
 
 DEFINE_bool(print_all, false, "Print intermediate test computations");
 
-bool construct_sample_principals(principal_list* pl) {
+bool construct_sample_principals(principal_list *pl) {
   string p1("john");
   string p2("paul");
   string alg("none");
@@ -37,15 +37,15 @@ bool construct_sample_principals(principal_list* pl) {
   return true;
 }
 
-bool construct_sample_resources(resource_list* rl) {
-  string p1("john");
-  string p2("paul");
-  string r1("file_1");
-  string r2("file_2");
-  string l1("./tmp/file_1");
-  string l2("./tmp/file_2");
-  string t;
-  string ty("file");
+bool construct_sample_resources(resource_list *rl) {
+  string     p1("john");
+  string     p2("paul");
+  string     r1("file_1");
+  string     r2("file_2");
+  string     l1("./tmp/file_1");
+  string     l2("./tmp/file_2");
+  string     t;
+  string     ty("file");
   time_point tp;
 
   if (!tp.time_now())
@@ -77,20 +77,23 @@ bool construct_sample_resources(resource_list* rl) {
   return true;
 }
 
-bool make_keys_and_certs(string& root_issuer_name, string& root_issuer_org,
-                         string& signing_subject_name, string& signing_subject_org,
-                         key_message* root_key, key_message* signer_key,
-                         buffer_list* list) {
+bool make_keys_and_certs(string      &root_issuer_name,
+                         string      &root_issuer_org,
+                         string      &signing_subject_name,
+                         string      &signing_subject_org,
+                         key_message *root_key,
+                         key_message *signer_key,
+                         buffer_list *list) {
   bool ret = true;
 
   key_message public_root_key;
   key_message public_signer_key;
-  const char* alg= Enc_method_rsa_2048_sha256_pkcs_sign;
+  const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
 
-  RSA* r1 = nullptr;
-  RSA* r2 = nullptr;
-  X509* root_cert = nullptr;
-  X509* signing_cert = nullptr;
+  RSA  *r1 = nullptr;
+  RSA  *r2 = nullptr;
+  X509 *root_cert = nullptr;
+  X509 *signing_cert = nullptr;
 
   string root_asn1_cert_str;
   string signing_asn1_cert_str;
@@ -98,24 +101,25 @@ bool make_keys_and_certs(string& root_issuer_name, string& root_issuer_org,
   uint64_t sn = 1;
   uint64_t duration = 86400 * 366;
 
-  int sig_size= 256;
-  byte sig[sig_size];
-  string* ptr_str= nullptr;
+  int     sig_size = 256;
+  byte    sig[sig_size];
+  string *ptr_str = nullptr;
 
   r1 = RSA_new();
   if (r1 == nullptr) {
     printf("%s() error, line: %d, cannt RSA_new \n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
   if (!generate_new_rsa_key(2048, r1)) {
     printf("%s() error, line: %d, generate_new_rsa_key failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   if (!RSA_to_key(r1, root_key)) {
     printf("%s() error, line: %d, RSA_to_key failed\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
   root_key->set_key_name("identity-root");
@@ -124,67 +128,94 @@ bool make_keys_and_certs(string& root_issuer_name, string& root_issuer_org,
     print_key_message((const key_message)*root_key);
   }
   if (!private_key_to_public_key(*root_key, &public_root_key)) {
-    printf("%s() error, line: %d, private_to_public failed\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line: %d, private_to_public failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
   r2 = RSA_new();
   if (r2 == nullptr) {
     printf("%s() error, line: %d, cannt RSA_new \n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
   if (!generate_new_rsa_key(2048, r2)) {
     printf("%s() error, line: %d, generate_new_rsa_key failed\n",
-           __func__, __LINE__);
-    ret= false;
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
   if (!RSA_to_key(r2, signer_key)) {
     printf("%s() error, line: %d, RSA_to_key failed\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
   signer_key->set_key_name("johns_signing-key");
   if (FLAGS_print_all) {
     printf("signing key:\n");
-    print_key_message((const key_message&)*signer_key);
+    print_key_message((const key_message &)*signer_key);
   }
   if (!private_key_to_public_key(*signer_key, &public_signer_key)) {
-    printf("%s() error, line: %d, private_to_public failed\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line: %d, private_to_public failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
   // root cert
   root_cert = X509_new();
-  if (!produce_artifact(*root_key, root_issuer_name, root_issuer_org,
-                        public_root_key, root_issuer_name, root_issuer_org,
-                        sn, duration, root_cert, true)) {
-    printf("%s() error, line %d: cant generate root cert\n", __func__, __LINE__);
-    ret= false;
+  if (!produce_artifact(*root_key,
+                        root_issuer_name,
+                        root_issuer_org,
+                        public_root_key,
+                        root_issuer_name,
+                        root_issuer_org,
+                        sn,
+                        duration,
+                        root_cert,
+                        true)) {
+    printf("%s() error, line %d: cant generate root cert\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
   sn++;
   if (!x509_to_asn1(root_cert, &root_asn1_cert_str)) {
-    printf("%s() error, line %d: cant asn1 translate root cert\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line %d: cant asn1 translate root cert\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
   // signing cert
   signing_cert = X509_new();
-  if (!produce_artifact(*root_key, root_issuer_name, root_issuer_org,
-                        public_signer_key, signing_subject_name, signing_subject_org,
-                        sn, duration, signing_cert, false)) {
-    printf("%s() error, line %d: cant generate signing cert\n", __func__, __LINE__);
-    ret= false;
+  if (!produce_artifact(*root_key,
+                        root_issuer_name,
+                        root_issuer_org,
+                        public_signer_key,
+                        signing_subject_name,
+                        signing_subject_org,
+                        sn,
+                        duration,
+                        signing_cert,
+                        false)) {
+    printf("%s() error, line %d: cant generate signing cert\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
   if (!x509_to_asn1(signing_cert, &signing_asn1_cert_str)) {
-    printf("%s() error, line %d: cant asn1 translate signing cert\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line %d: cant asn1 translate signing cert\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
@@ -200,14 +231,14 @@ bool make_keys_and_certs(string& root_issuer_name, string& root_issuer_org,
   ptr_str = list->add_blobs();
   if (ptr_str == nullptr) {
     printf("%s() error, line %d: cant allocate blobs\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
   *ptr_str = root_asn1_cert_str;
   ptr_str = list->add_blobs();
   if (ptr_str == nullptr) {
     printf("%s() error, line %d: cant allocate blobs\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
   *ptr_str = signing_asn1_cert_str;
@@ -234,7 +265,7 @@ done:
 
 bool test_basic() {
   principal_list pl;
-  resource_list rl;
+  resource_list  rl;
 
   if (!construct_sample_principals(&pl)) {
     printf("Cant construct principals\n");
@@ -275,17 +306,17 @@ bool test_basic() {
     printf("%s should be on resource list\n", r1.c_str());
     return false;
   }
-  if (on_principal_list(p3, pl) >0 ) {
+  if (on_principal_list(p3, pl) > 0) {
     printf("%s should NOT be on principal list\n", p3.c_str());
     return false;
   }
-  if (on_resource_list(r3, rl) >0 ) {
+  if (on_resource_list(r3, rl) > 0) {
     printf("%s should NOT be on resource list\n", r3.c_str());
     return false;
   }
 
   principal_list restored_pl;
-  resource_list restored_rl;
+  resource_list  restored_rl;
 
   string prin_file("saved_principals.bin");
   if (!save_principals_to_file(pl, prin_file)) {
@@ -316,8 +347,8 @@ bool test_basic() {
   }
 
   byte nonce[32];
-  int n =  crypto_get_random_bytes(32, nonce);
-  if(n < 32) {
+  int  n = crypto_get_random_bytes(32, nonce);
+  if (n < 32) {
     printf("Couldn't get nonce\n");
     return false;
   }
@@ -331,87 +362,102 @@ bool test_basic() {
 bool test_access() {
 
   principal_list pl;
-  resource_list rl;
+  resource_list  rl;
 
   if (!construct_sample_principals(&pl)) {
-    printf("%s() error, line: %d: Cant construct principals\n", __func__, __LINE__);
+    printf("%s() error, line: %d: Cant construct principals\n",
+           __func__,
+           __LINE__);
     return false;
   }
   if (!construct_sample_resources(&rl)) {
-    printf("%s() error, line: %d: Cant construct resources\n", __func__, __LINE__);
+    printf("%s() error, line: %d: Cant construct resources\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
   channel_guard guard;
 
-  string channel_prin("john");
-  string nonce;
-  string signed_nonce;
+  string      channel_prin("john");
+  string      nonce;
+  string      signed_nonce;
   buffer_list credentials;
   key_message root_key;
   key_message signing_key;
 
   key_message public_root_key;
   key_message public_signing_key;
-  const char* alg= Enc_method_rsa_2048_sha256_pkcs_sign;
+  const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
 
-  int size_nonce = 32;
-  byte buf[size_nonce];
-  int k = 0;
-  X509* root_cert = nullptr;
-  X509* signing_cert = nullptr;
+  int   size_nonce = 32;
+  byte  buf[size_nonce];
+  int   k = 0;
+  X509 *root_cert = nullptr;
+  X509 *signing_cert = nullptr;
 
   string root_issuer_name("johns-root");
   string root_issuer_org("datica");
   string root_asn1_cert_str;
   string signing_asn1_cert_str;
-  string signing_subject_name("johns-signing-key");;
-  string signing_subject_org("datica");
-  string serialized_cert_chain_str;
+  string signing_subject_name("johns-signing-key");
+  ;
+  string   signing_subject_org("datica");
+  string   serialized_cert_chain_str;
   uint64_t sn = 1;
 
-  EVP_PKEY* pkey = nullptr;
-  RSA* r2 = nullptr;
+  EVP_PKEY *pkey = nullptr;
+  RSA      *r2 = nullptr;
 
-  int sig_size= 256;
-  byte sig[sig_size];
-  bool ret = true;
-  string res1("file_1");
-  string acc1("read");
-  string res2("file_2");
-  string acc2("write");
-  string* b;
-  string prin_name("john");
-  int i = 0;
-  string dig_alg;
-  string auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
-  string bytes_read;
-  string bytes_written("Hello there");
+  int     sig_size = 256;
+  byte    sig[sig_size];
+  bool    ret = true;
+  string  res1("file_1");
+  string  acc1("read");
+  string  res2("file_2");
+  string  acc2("write");
+  string *b;
+  string  prin_name("john");
+  int     i = 0;
+  string  dig_alg;
+  string  auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
+  string  bytes_read;
+  string  bytes_written("Hello there");
 
-  if (!make_keys_and_certs(root_issuer_name, root_issuer_org,
-                         signing_subject_name, signing_subject_org,
-                         &root_key, &signing_key, &credentials)) {
-    printf("%s() error, line: %d: Can't make credentials\n", __func__, __LINE__);
-    ret= false;
+  if (!make_keys_and_certs(root_issuer_name,
+                           root_issuer_org,
+                           signing_subject_name,
+                           signing_subject_org,
+                           &root_key,
+                           &signing_key,
+                           &credentials)) {
+    printf("%s() error, line: %d: Can't make credentials\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
   if (credentials.blobs_size() < 1) {
-    printf("%s() error, line: %d: credentials wrong size\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line: %d: credentials wrong size\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
   root_asn1_cert_str = credentials.blobs(0);
 
   if (!guard.init_root_cert(root_asn1_cert_str)) {
     printf("%s() error, line %d: cant init_root_cert\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
 
   if (!credentials.SerializeToString(&serialized_cert_chain_str)) {
-    printf("%s() error, line %d: cant serialize credentials\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line %d: cant serialize credentials\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
@@ -425,8 +471,9 @@ bool test_access() {
   }
   if (i >= pl.principals_size()) {
     printf("%s() error, line %d: couldn't put credentials on principal list\n",
-                    __func__, __LINE__);
-    ret= false;
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
@@ -440,22 +487,25 @@ bool test_access() {
   k = crypto_get_random_bytes(size_nonce, buf);
   if (k < size_nonce) {
     printf("%s() error, line %d: cant generate nonce\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
-  nonce.assign((char*)buf, k);
+  nonce.assign((char *)buf, k);
 
   if (!guard.load_resources(rl)) {
     printf("%s() error, line %d: Can't load resource list\n",
-                    __func__, __LINE__);
-    ret= false;
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
   if (!guard.authenticate_me(channel_prin, pl, &nonce)) {
     printf("%s() error, line %d: Cant authenticate_me %s\n",
-                    __func__, __LINE__, channel_prin.c_str());
-    ret= false;
+           __func__,
+           __LINE__,
+           channel_prin.c_str());
+    ret = false;
     goto done;
   }
 
@@ -467,35 +517,46 @@ bool test_access() {
   } else if (strcmp(alg, Enc_method_rsa_3072_sha384_pkcs_sign) == 0) {
     dig_alg = Digest_method_sha_384;
   } else {
-    printf("%s() error, line %d: unsupported rsa signing alg %s\n", __func__, __LINE__, alg);
-    ret= false;
+    printf("%s() error, line %d: unsupported rsa signing alg %s\n",
+           __func__,
+           __LINE__,
+           alg);
+    ret = false;
     goto done;
   }
 
   pkey = pkey_from_key(signing_key);
   if (pkey == nullptr) {
     printf("%s() error, line %d: Can't get pkey\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
   r2 = EVP_PKEY_get1_RSA(pkey);
   if (r2 == nullptr) {
     printf("%s() error, line %d: Can't get rsa key\n", __func__, __LINE__);
-    ret= false;
-    goto done;
-  } 
-
-  // sign nonce
-  if (!rsa_sign(dig_alg.c_str(), r2, nonce.size(), (byte*)nonce.data(), &sig_size, sig)) {
-    printf("%s() error, line %d: sign failed\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
-  signed_nonce.assign((char*)sig, sig_size);
+
+  // sign nonce
+  if (!rsa_sign(dig_alg.c_str(),
+                r2,
+                nonce.size(),
+                (byte *)nonce.data(),
+                &sig_size,
+                sig)) {
+    printf("%s() error, line %d: sign failed\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  signed_nonce.assign((char *)sig, sig_size);
 
   if (!guard.verify_me(channel_prin, signed_nonce)) {
-    printf("%s() error, line %d: verify_me %s failed\n", __func__, __LINE__, channel_prin.c_str());
-    ret= false;
+    printf("%s() error, line %d: verify_me %s failed\n",
+           __func__,
+           __LINE__,
+           channel_prin.c_str());
+    ret = false;
     goto done;
   }
 
@@ -594,16 +655,21 @@ byte sha512_test[64] = {
     0x0e, 0x2a, 0x9a, 0xc9, 0x4f, 0xa5, 0x4c, 0xa4, 0x9f};
 
 bool test_digest(bool print_all) {
-  const char * message = "1234";
+  const char  *message = "1234";
   int          msg_len = strlen(message);
   unsigned int size_digest = 64;
   byte         digest[size_digest];
 
   memset(digest, 0, size_digest);
-  if (!digest_message(Digest_method_sha_256, (const byte *)message,
-                      msg_len, digest, size_digest)) {
+  if (!digest_message(Digest_method_sha_256,
+                      (const byte *)message,
+                      msg_len,
+                      digest,
+                      size_digest)) {
     printf("%s() error, line: %d, digest failed, %d\n",
-           __func__, __LINE__, size_digest);
+           __func__,
+           __LINE__,
+           size_digest);
     return false;
   }
   if (print_all) {
@@ -628,10 +694,14 @@ bool test_digest(bool print_all) {
     return false;
   }
   memset(digest, 0, size_digest);
-  if (!digest_message(Digest_method_sha_256, (const byte *)message2, msg_len,
-                      digest, size_digest)) {
+  if (!digest_message(Digest_method_sha_256,
+                      (const byte *)message2,
+                      msg_len,
+                      digest,
+                      size_digest)) {
     printf("%s() error, line: %d, digest_message() failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   if (print_all) {
@@ -644,7 +714,8 @@ bool test_digest(bool print_all) {
   }
   if (memcmp(digest, sha256_test, size_digest) != 0) {
     printf("%s() error, line: %d, test digest doesn't match\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -654,8 +725,11 @@ bool test_digest(bool print_all) {
     return false;
   }
   memset(digest, 0, size_digest);
-  if (!digest_message(Digest_method_sha_384, (const byte *)message2, msg_len,
-                      digest, size_digest)) {
+  if (!digest_message(Digest_method_sha_384,
+                      (const byte *)message2,
+                      msg_len,
+                      digest,
+                      size_digest)) {
     printf("%s() error, line: %d, digest_message failed\n", __func__, __LINE__);
     return false;
   }
@@ -677,8 +751,12 @@ bool test_digest(bool print_all) {
     printf("%s() error, line: %d, digest_message failed\n", __func__, __LINE__);
     return false;
   }
-  memset(digest, 0, size_digest); if (!digest_message(Digest_method_sha_512, (const byte *)message2,
-                      msg_len, digest, size_digest)) {
+  memset(digest, 0, size_digest);
+  if (!digest_message(Digest_method_sha_512,
+                      (const byte *)message2,
+                      msg_len,
+                      digest,
+                      size_digest)) {
     printf("%s() error, line: %d, digest_message failed\n", __func__, __LINE__);
     return false;
   }
@@ -701,20 +779,20 @@ bool test_digest(bool print_all) {
 
 bool test_encrypt(bool print_all) {
   const char *alg_name = Enc_method_aes_256_cbc_hmac_sha256;
-  int block_size = cipher_block_byte_size(alg_name);
-  int key_size = cipher_key_byte_size(alg_name);
-  int in_size = 2 * block_size;
-  int out_size = in_size + 128;
+  int         block_size = cipher_block_byte_size(alg_name);
+  int         key_size = cipher_key_byte_size(alg_name);
+  int         in_size = 2 * block_size;
+  int         out_size = in_size + 128;
 
-  byte key[key_size];
+  byte      key[key_size];
   const int iv_size = block_size;
-  byte iv[block_size];
-  byte plain[in_size];
-  byte cipher[out_size];
-  int decrypt_size = in_size + block_size;
-  byte decrypted[decrypt_size];
-  int  size1 = in_size;
-  int  size2 = decrypt_size;
+  byte      iv[block_size];
+  byte      plain[in_size];
+  byte      cipher[out_size];
+  int       decrypt_size = in_size + block_size;
+  byte      decrypted[decrypt_size];
+  int       size1 = in_size;
+  int       size2 = decrypt_size;
 
   memset(plain, 0, in_size);
   memset(cipher, 0, out_size);
@@ -767,20 +845,20 @@ bool test_encrypt(bool print_all) {
 
 bool test_authenticated_encrypt(bool print_all) {
   const char *alg_name = Enc_method_aes_256_cbc_hmac_sha256;
-  int block_size = cipher_block_byte_size(alg_name);
-  int in_size = 2 * block_size;
-  int out_size = in_size + 256;
-  int key_size = 96;
-  byte key[key_size];
-  int iv_size = block_size;
-  byte iv[block_size];
-  byte plain[in_size];
-  byte cipher[out_size];
-  int  size_encrypt_out = out_size;
-  int  size_decrypt_out = out_size;
+  int         block_size = cipher_block_byte_size(alg_name);
+  int         in_size = 2 * block_size;
+  int         out_size = in_size + 256;
+  int         key_size = 96;
+  byte        key[key_size];
+  int         iv_size = block_size;
+  byte        iv[block_size];
+  byte        plain[in_size];
+  byte        cipher[out_size];
+  int         size_encrypt_out = out_size;
+  int         size_decrypt_out = out_size;
 
   const int decrypt_size = in_size + block_size;
-  byte decrypted[decrypt_size];
+  byte      decrypted[decrypt_size];
 
   memset(plain, 0, in_size);
   memset(cipher, 0, out_size);
@@ -803,8 +881,15 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("\n");
   }
 
-  if (!authenticated_encrypt(alg_name, plain, in_size,
-                             key, key_size, iv, iv_size, cipher, &size_encrypt_out)) {
+  if (!authenticated_encrypt(alg_name,
+                             plain,
+                             in_size,
+                             key,
+                             key_size,
+                             iv,
+                             iv_size,
+                             cipher,
+                             &size_encrypt_out)) {
     printf("%s() error, line: %d, authenticated encrypt failed\n",
            __func__,
            __LINE__);
@@ -812,7 +897,9 @@ bool test_authenticated_encrypt(bool print_all) {
   }
   if (print_all) {
     printf("authenticated encrypt for aes-256-cbc-hmac-sha256 succeeded, "
-           "in_size: %d, out_size is %d\n", in_size, size_encrypt_out);
+           "in_size: %d, out_size is %d\n",
+           in_size,
+           size_encrypt_out);
     printf("iv: ");
     print_bytes(block_size, iv);
     printf("\n");
@@ -820,10 +907,16 @@ bool test_authenticated_encrypt(bool print_all) {
     print_bytes(size_encrypt_out, cipher);
     printf("\n");
   }
-  if (!authenticated_decrypt(Enc_method_aes_256_cbc_hmac_sha256, cipher, size_encrypt_out,
-                             key, key_size, decrypted, &size_decrypt_out)) {
+  if (!authenticated_decrypt(Enc_method_aes_256_cbc_hmac_sha256,
+                             cipher,
+                             size_encrypt_out,
+                             key,
+                             key_size,
+                             decrypted,
+                             &size_decrypt_out)) {
     printf("%s() error, line: %d, authenticated decrypt failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -851,15 +944,25 @@ bool test_authenticated_encrypt(bool print_all) {
     printf("\n");
   }
 
-  if (!authenticated_encrypt(Enc_method_aes_256_cbc_hmac_sha384, plain, in_size,
-                             key, key_size, iv, iv_size, cipher, &size_encrypt_out)) {
+  if (!authenticated_encrypt(Enc_method_aes_256_cbc_hmac_sha384,
+                             plain,
+                             in_size,
+                             key,
+                             key_size,
+                             iv,
+                             iv_size,
+                             cipher,
+                             &size_encrypt_out)) {
     printf("%s() error, line: %d, authenticated encrypt failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   if (print_all) {
     printf("authenticated encrypt for aes-256-cbc-hmac-sha384 succeeded, "
-           "in_size: %d, out_size is %d\n", in_size, size_encrypt_out);
+           "in_size: %d, out_size is %d\n",
+           in_size,
+           size_encrypt_out);
     printf("iv: ");
     print_bytes(block_size, iv);
     printf("\n");
@@ -867,10 +970,16 @@ bool test_authenticated_encrypt(bool print_all) {
     print_bytes(size_encrypt_out, cipher);
     printf("\n");
   }
-  if (!authenticated_decrypt(Enc_method_aes_256_cbc_hmac_sha384, cipher, size_encrypt_out,
-                             key, key_size, decrypted, &size_decrypt_out)) {
+  if (!authenticated_decrypt(Enc_method_aes_256_cbc_hmac_sha384,
+                             cipher,
+                             size_encrypt_out,
+                             key,
+                             key_size,
+                             decrypted,
+                             &size_decrypt_out)) {
     printf("%s() error, line: %d, authenticated decrypt failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -885,17 +994,27 @@ bool test_authenticated_encrypt(bool print_all) {
   }
   if (size_decrypt_out != size_in || memcmp(plain, decrypted, size_in) != 0) {
     printf("%s() error, line: %d, plaintext and decrypted text are different\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
   size_encrypt_out = out_size;
   size_decrypt_out = out_size;
 
-  if (!authenticated_encrypt(Enc_method_aes_256_gcm, plain, in_size, key,
-                             key_size, iv, iv_size, cipher, &size_encrypt_out)) {
+  if (!authenticated_encrypt(Enc_method_aes_256_gcm,
+                             plain,
+                             in_size,
+                             key,
+                             key_size,
+                             iv,
+                             iv_size,
+                             cipher,
+                             &size_encrypt_out)) {
     printf("%s() error, line: %d, authenticated_encrypt() for aes-256-gcm "
-           "encrypt failed\n", __func__, __LINE__);
+           "encrypt failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
   if (print_all) {
@@ -910,8 +1029,13 @@ bool test_authenticated_encrypt(bool print_all) {
     print_bytes(size_encrypt_out, cipher);
     printf("\n");
   }
-  if (!authenticated_decrypt(Enc_method_aes_256_gcm, cipher, size_encrypt_out, key,
-                             key_size, decrypted, &size_decrypt_out)) {
+  if (!authenticated_decrypt(Enc_method_aes_256_gcm,
+                             cipher,
+                             size_encrypt_out,
+                             key,
+                             key_size,
+                             decrypted,
+                             &size_decrypt_out)) {
     printf(
         "%s() error, line: %d, authenticated for aes-256-gcm decrypt failed\n",
         __func__,
@@ -941,7 +1065,8 @@ bool test_public_keys(bool print_all) {
 
   if (!generate_new_rsa_key(2048, r1)) {
     printf("%s() error, line: %d, generate_new_rsa_key failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -954,13 +1079,13 @@ bool test_public_keys(bool print_all) {
     print_key_message((const key_message &)km1);
   }
 
-  const char* msg = "This is a message of length 32  ";
-  int size_data = 32;
-  byte data[size_data];
-  int  size_out = 2048;
-  byte out[size_out];
-  int  size_recovered = 2048;
-  byte recovered[size_recovered];
+  const char *msg = "This is a message of length 32  ";
+  int         size_data = 32;
+  byte        data[size_data];
+  int         size_out = 2048;
+  byte        out[size_out];
+  int         size_recovered = 2048;
+  byte        recovered[size_recovered];
 
   memset(data, 0, size_data);
   memset(out, 0, size_out);
@@ -974,7 +1099,8 @@ bool test_public_keys(bool print_all) {
   }
   if (!rsa_public_encrypt(r1, data, size_data, out, &size_out)) {
     printf("%s() error, line: %d, rsa_public_encrypt failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   if (print_all) {
@@ -984,7 +1110,8 @@ bool test_public_keys(bool print_all) {
   }
   if (!rsa_private_decrypt(r1, out, size_out, recovered, &size_recovered)) {
     printf("%s() error, line: %d, rsa_private_decrypt failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   if (print_all) {
@@ -1001,7 +1128,8 @@ bool test_public_keys(bool print_all) {
   RSA *r2 = RSA_new();
   if (!generate_new_rsa_key(4096, r2)) {
     printf("%s() error, line: %d, generate_new_rsa_key failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -1029,7 +1157,8 @@ bool test_public_keys(bool print_all) {
   }
   if (!rsa_public_encrypt(r2, data, size_data, out, &size_out)) {
     printf("%s() error, line: %d, rsa_public_encrypt failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   if (print_all) {
@@ -1078,8 +1207,12 @@ bool test_public_keys(bool print_all) {
     print_bytes(size_data, data);
     printf("\n");
   }
-  if (!ecc_sign(Digest_method_sha_384, ecc_key, size_data, data,
-                &size_out, out)) {
+  if (!ecc_sign(Digest_method_sha_384,
+                ecc_key,
+                size_data,
+                data,
+                &size_out,
+                out)) {
     printf("ecc_sign failed\n");
     printf("Sig size: %d\n", size_out);
     return false;
@@ -1089,8 +1222,12 @@ bool test_public_keys(bool print_all) {
     print_bytes(size_out, out);
     printf("\n");
   }
-  if (!ecc_verify(Digest_method_sha_384, ecc_key, size_data,
-                  data, size_out, out)) {
+  if (!ecc_verify(Digest_method_sha_384,
+                  ecc_key,
+                  size_data,
+                  data,
+                  size_out,
+                  out)) {
     printf("%s() error, line: %d, ecc verify failed\n", __func__, __LINE__);
     return false;
   }
@@ -1139,7 +1276,8 @@ bool test_public_keys(bool print_all) {
   EC_KEY *ecc_key2 = generate_new_ecc_key(256);
   if (ecc_key2 == nullptr) {
     printf("%s() error, line: %d, Can't generate new ecc key\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   key_message km4;
@@ -1157,8 +1295,12 @@ bool test_public_keys(bool print_all) {
     print_bytes(size_data, data);
     printf("\n");
   }
-  if (!ecc_sign(Digest_method_sha_256, ecc_key2, size_data, data,
-                &size_out, out)) {
+  if (!ecc_sign(Digest_method_sha_256,
+                ecc_key2,
+                size_data,
+                data,
+                &size_out,
+                out)) {
     printf("%s() error, line: %d, ecc_sign failed, size: %d\n",
            __func__,
            __LINE__,
@@ -1172,8 +1314,12 @@ bool test_public_keys(bool print_all) {
   }
 #if 1
   // TODO: sometimes this faults
-  if (!ecc_verify(Digest_method_sha_256, ecc_key, size_data,
-                  data, size_out, out)) {
+  if (!ecc_verify(Digest_method_sha_256,
+                  ecc_key,
+                  size_data,
+                  data,
+                  size_out,
+                  out)) {
     printf("%s() error, line: %d, ecc_verify failed\n", __func__, __LINE__);
     return false;
   }
@@ -1220,7 +1366,8 @@ bool test_sign_and_verify(bool print_all) {
 
   if (!generate_new_rsa_key(2048, r)) {
     printf("%s() error, line: %d, generate_new_rsa_key failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -1242,16 +1389,24 @@ bool test_sign_and_verify(bool print_all) {
   memset(sig, 0, sig_size);
   memset(recovered, 0, recovered_size);
 
-  if (!rsa_sha256_sign(r, strlen(test_message), (byte *)test_message,
-                       &sig_size, sig)) {
+  if (!rsa_sha256_sign(r,
+                       strlen(test_message),
+                       (byte *)test_message,
+                       &sig_size,
+                       sig)) {
     printf("%s() error, line: %d, rsa_sha256_sign failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
-  if (!rsa_sha256_verify(r, strlen(test_message), (byte *)test_message,
-                         sig_size, sig)) {
+  if (!rsa_sha256_verify(r,
+                         strlen(test_message),
+                         (byte *)test_message,
+                         sig_size,
+                         sig)) {
     printf("%s() error, line: %d, rsa_sha256_verify failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -1301,12 +1456,12 @@ bool test_key_translation(bool print_all) {
 }
 
 bool test_artifact(bool print_all) {
-  X509* cert = X509_new();
+  X509       *cert = X509_new();
   key_message signing_key;
   key_message subject_key;
-  string issuer_name_str("Policy-key");  // eventually serialized key
-  string issuer_description_str("Policy-key");
-  string enclave_type("simulated-enclave");
+  string      issuer_name_str("Policy-key");  // eventually serialized key
+  string      issuer_description_str("Policy-key");
+  string      enclave_type("simulated-enclave");
 
   string subject_name_str("JLM");
   if (print_all)
@@ -1324,9 +1479,16 @@ bool test_artifact(bool print_all) {
     printf("Cant make subject key\n");
     return false;
   }
-  if (!produce_artifact(signing_key, issuer_name_str, issuer_description_str,
-                        subject_key, subject_name_str, subject_description_str, sn,
-                        secs_duration, cert, true)) {
+  if (!produce_artifact(signing_key,
+                        issuer_name_str,
+                        issuer_description_str,
+                        subject_key,
+                        subject_name_str,
+                        subject_description_str,
+                        sn,
+                        secs_duration,
+                        cert,
+                        true)) {
     printf("Cant produce artifact\n");
     return false;
   }
@@ -1334,14 +1496,19 @@ bool test_artifact(bool print_all) {
   if (print_all)
     X509_print_fp(stdout, cert);
 
-  uint64_t recovered_sn;
-  string recovered_subject_name_str;
-  string recovered_issuer_name_str;
-  string recovered_subject_description_str;
-  string recovered_issuer_description_str;
+  uint64_t    recovered_sn;
+  string      recovered_subject_name_str;
+  string      recovered_issuer_name_str;
+  string      recovered_subject_description_str;
+  string      recovered_issuer_description_str;
   key_message recovered_subject_key;
-  if (!verify_artifact(*cert, signing_key, &recovered_issuer_name_str, &recovered_issuer_description_str,
-                       &recovered_subject_key, &recovered_subject_name_str, &recovered_subject_description_str,
+  if (!verify_artifact(*cert,
+                       signing_key,
+                       &recovered_issuer_name_str,
+                       &recovered_issuer_description_str,
+                       &recovered_subject_key,
+                       &recovered_subject_name_str,
+                       &recovered_subject_description_str,
                        &recovered_sn)) {
     printf("Cant verify artifact\n");
     return false;
@@ -1360,40 +1527,45 @@ bool test_signed_nonce() {
   string signing_subject_org("datica");
 
   buffer_list list;
-  string nonce;
-  string signed_nonce;
+  string      nonce;
+  string      signed_nonce;
 
   // make up keys and certs
   key_message root_key;
-  key_message signing_key ;
-  const char* alg= Enc_method_rsa_2048_sha256_pkcs_sign;
-  EVP_PKEY* pkey = nullptr;
-  RSA* r2 = nullptr;
+  key_message signing_key;
+  const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
+  EVP_PKEY   *pkey = nullptr;
+  RSA        *r2 = nullptr;
 
-  int size_nonce = 32;
-  byte buf[size_nonce];
-  int size_sig = 512;
-  byte sig[size_sig];
-  int k = 0;
+  int    size_nonce = 32;
+  byte   buf[size_nonce];
+  int    size_sig = 512;
+  byte   sig[size_sig];
+  int    k = 0;
   string dig_alg;
 
-  if (!make_keys_and_certs(root_issuer_name, root_issuer_org,
-                         signing_subject_name, signing_subject_org,
-                         &root_key, &signing_key, &list)) {
-    printf("%s() error, line %d: cant make keys and certs\n", __func__, __LINE__);
-    ret= false;
+  if (!make_keys_and_certs(root_issuer_name,
+                           root_issuer_org,
+                           signing_subject_name,
+                           signing_subject_org,
+                           &root_key,
+                           &signing_key,
+                           &list)) {
+    printf("%s() error, line %d: cant make keys and certs\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
-
   }
 
   // construct nonce
   k = crypto_get_random_bytes(size_nonce, buf);
   if (k < size_nonce) {
     printf("%s() error, line %d: cant generate nonce\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
-  nonce.assign((char*)buf, k);
+  nonce.assign((char *)buf, k);
 
   if (strcmp(alg, Enc_method_rsa_2048_sha256_pkcs_sign) == 0) {
     dig_alg = Digest_method_sha_256;
@@ -1402,42 +1574,55 @@ bool test_signed_nonce() {
   } else if (strcmp(alg, Enc_method_rsa_3072_sha384_pkcs_sign) == 0) {
     dig_alg = Digest_method_sha_384;
   } else {
-    printf("%s() error, line %d: unsupported rsa signing alg %s\n", __func__, __LINE__, alg);
-    ret= false;
+    printf("%s() error, line %d: unsupported rsa signing alg %s\n",
+           __func__,
+           __LINE__,
+           alg);
+    ret = false;
     goto done;
   }
 
   pkey = pkey_from_key(signing_key);
   if (pkey == nullptr) {
     printf("%s() error, line %d: Can't get pkey\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
   r2 = EVP_PKEY_get1_RSA(pkey);
   if (r2 == nullptr) {
     printf("%s() error, line %d: Can't get rsa key\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
 
   // sign nonce
-  if (!rsa_sign(dig_alg.c_str(), r2, nonce.size(), (byte*)nonce.data(), &size_sig, sig)) {
+  if (!rsa_sign(dig_alg.c_str(),
+                r2,
+                nonce.size(),
+                (byte *)nonce.data(),
+                &size_sig,
+                sig)) {
     printf("%s() error, line %d: sign failed\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
 
   // verify it
-  if (!rsa_verify(dig_alg.c_str(), r2, nonce.size(), (byte*)nonce.data(), size_sig, sig)) {
+  if (!rsa_verify(dig_alg.c_str(),
+                  r2,
+                  nonce.size(),
+                  (byte *)nonce.data(),
+                  size_sig,
+                  sig)) {
     printf("%s() error, line %d: verify failed\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
 
 done:
   if (pkey != nullptr) {
     EVP_PKEY_free(pkey);
-    pkey= nullptr;
+    pkey = nullptr;
   }
   return ret;
 }
@@ -1488,24 +1673,24 @@ acl_server_dispatch g_server(nullptr);
 
 bool test_rpc() {
 
-  string signing_subject_name("johns-signing-key");
-  string signing_subject_org("datica");
-  string root_issuer_name("johns-root");
-  string root_issuer_org("datica");
+  string      signing_subject_name("johns-signing-key");
+  string      signing_subject_org("datica");
+  string      root_issuer_name("johns-root");
+  string      root_issuer_org("datica");
   buffer_list credentials;
   key_message root_key;
   key_message signing_key;
   key_message public_root_key;
   key_message public_signing_key;
-  const char* alg= Enc_method_rsa_2048_sha256_pkcs_sign;
-  EVP_PKEY* pkey = nullptr;
-  RSA* r2 = nullptr;
-  string serialized_cert_chain_str;
+  const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
+  EVP_PKEY   *pkey = nullptr;
+  RSA        *r2 = nullptr;
+  string      serialized_cert_chain_str;
 
   principal_list pl;
-  resource_list rl;
+  resource_list  rl;
 
-  SSL* ch = nullptr;
+  SSL                *ch = nullptr;
   acl_client_dispatch client(ch);
 
   string prin_name("john");
@@ -1519,13 +1704,13 @@ bool test_rpc() {
 
   string bytes_read_from_file;
   string bytes_written_to_file("Hello there");
-    
-  int size_nonce = 32;
-  byte buf[size_nonce];
-  int size_sig = 512;
-  byte sig[size_sig];
-  int k = 0;
-  int i = 0;
+
+  int    size_nonce = 32;
+  byte   buf[size_nonce];
+  int    size_sig = 512;
+  byte   sig[size_sig];
+  int    k = 0;
+  int    i = 0;
   string dig_alg;
   string asn1_cert_str;
   string auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
@@ -1539,43 +1724,54 @@ bool test_rpc() {
 
   if (!construct_sample_principals(&pl)) {
     printf("%s() error, line %d: Cant construct principals\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   if (!construct_sample_resources(&rl)) {
     printf("%s() error, line %d: Cant construct resources\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
   if (!g_server.guard_.load_resources(rl)) {
-    printf("%s() error, line %d: Cant load resources\n",
-           __func__, __LINE__);
+    printf("%s() error, line %d: Cant load resources\n", __func__, __LINE__);
     return false;
   }
 
   // make up keys and certs
-  if (!make_keys_and_certs(root_issuer_name, root_issuer_org,
-                         signing_subject_name, signing_subject_org,
-                         &root_key, &signing_key, &credentials)) {
-    printf("%s() error, line %d: cant make keys and certs\n", __func__, __LINE__);
-    return false;
-  } 
-
-  if (credentials.blobs_size() < 1) {
-    printf("%s() error, line %d: cant find root in credentials\n", __func__, __LINE__);
+  if (!make_keys_and_certs(root_issuer_name,
+                           root_issuer_org,
+                           signing_subject_name,
+                           signing_subject_org,
+                           &root_key,
+                           &signing_key,
+                           &credentials)) {
+    printf("%s() error, line %d: cant make keys and certs\n",
+           __func__,
+           __LINE__);
     return false;
   }
-  asn1_cert_str= credentials.blobs(0);
+
+  if (credentials.blobs_size() < 1) {
+    printf("%s() error, line %d: cant find root in credentials\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  asn1_cert_str = credentials.blobs(0);
 
   if (!g_server.guard_.init_root_cert(asn1_cert_str)) {
     printf("%s() error, line %d: Can't init_root\n", __func__, __LINE__);
     return false;
   }
 
-    if (!credentials.SerializeToString(&serialized_cert_chain_str)) {
-    printf("%s() error, line %d: cant serialize credentials\n", __func__, __LINE__);
-    ret= false;
+  if (!credentials.SerializeToString(&serialized_cert_chain_str)) {
+    printf("%s() error, line %d: cant serialize credentials\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
@@ -1589,8 +1785,9 @@ bool test_rpc() {
   }
   if (i >= pl.principals_size()) {
     printf("%s() error, line %d: couldn't put credentials on principal list\n",
-                    __func__, __LINE__);
-    ret= false;
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
@@ -1601,21 +1798,20 @@ bool test_rpc() {
   }
 
   if (!g_server.load_principals(pl)) {
-    printf("%s() error, line %d: Cant load principals\n",
-           __func__, __LINE__);
+    printf("%s() error, line %d: Cant load principals\n", __func__, __LINE__);
     return false;
   }
 
   if (!g_server.load_resources(rl)) {
-    printf("%s() error, line %d: Cant load resources\n",
-           __func__, __LINE__);
+    printf("%s() error, line %d: Cant load resources\n", __func__, __LINE__);
     return false;
   }
 
   ret = client.rpc_authenticate_me(prin_name, &nonce);
   if (!ret) {
     printf("%s() error, line %d: client.rpc_authenticate_me failed\n",
-           __func__, __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -1627,107 +1823,127 @@ bool test_rpc() {
   } else if (strcmp(alg, Enc_method_rsa_3072_sha384_pkcs_sign) == 0) {
     dig_alg = Digest_method_sha_384;
   } else {
-    printf("%s() error, line %d: unsupported rsa signing alg %s\n", __func__, __LINE__, alg);
-    ret= false;
+    printf("%s() error, line %d: unsupported rsa signing alg %s\n",
+           __func__,
+           __LINE__,
+           alg);
+    ret = false;
     goto done;
   }
 
   pkey = pkey_from_key(signing_key);
   if (pkey == nullptr) {
     printf("%s() error, line %d: Can't get pkey\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
   r2 = EVP_PKEY_get1_RSA(pkey);
   if (r2 == nullptr) {
     printf("%s() error, line %d: Can't get rsa key\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
 
   // sign nonce
-  if (!rsa_sign(dig_alg.c_str(), r2, nonce.size(), (byte*)nonce.data(), &size_sig, sig)) {
+  if (!rsa_sign(dig_alg.c_str(),
+                r2,
+                nonce.size(),
+                (byte *)nonce.data(),
+                &size_sig,
+                sig)) {
     printf("%s() error, line %d: sign failed\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
-  signed_nonce.assign((char*)sig, size_sig);
+  signed_nonce.assign((char *)sig, size_sig);
 
   ret = client.rpc_verify_me(prin_name, signed_nonce);
   if (!ret) {
     printf("%s() error, line %d: rpc_verify_me failed\n", __func__, __LINE__);
-    ret= false;
+    ret = false;
     goto done;
   }
 
   ret = client.rpc_open_resource(res1_name, acc1);
   if (!ret) {
-    printf("%s() error, line %d: rpc_open_resource failed\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line %d: rpc_open_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
   ret = client.rpc_read_resource(res1_name, 14, &bytes_read_from_file);
   if (!ret) {
-    printf("%s() error, line %d: rpc_read_resource failed\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line %d: rpc_read_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
   printf("Bytes: %s\n", bytes_read_from_file.c_str());
 
   ret = client.rpc_close_resource(res1_name);
   if (!ret) {
-    printf("%s() error, line %d: rpc_close_resource failed\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line %d: rpc_close_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
   ret = client.rpc_open_resource(res2_name, acc2);
   if (!ret) {
-    printf("%s() error, line %d: rpc_open_resource failed\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line %d: rpc_open_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
   ret = client.rpc_write_resource(res2_name, bytes_written_to_file);
   if (!ret) {
-    printf("%s() error, line %d: rpc_write_resource failed\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line %d: rpc_write_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
   ret = client.rpc_close_resource(res2_name);
   if (!ret) {
-    printf("%s() error, line %d: rpc_close_resource failed\n", __func__, __LINE__);
-    ret= false;
+    printf("%s() error, line %d: rpc_close_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
     goto done;
   }
 
 done:
   if (pkey != nullptr) {
     EVP_PKEY_free(pkey);
-    pkey = nullptr; 
+    pkey = nullptr;
   }
   return ret;
 }
 
-TEST (basic, test_basic) {
+TEST(basic, test_basic) {
   EXPECT_TRUE(test_basic());
 }
 
-TEST (crypto, test_crypto) {
+TEST(crypto, test_crypto) {
   EXPECT_TRUE(test_crypto());
 }
 
-TEST (access, test_access) {
+TEST(access, test_access) {
   EXPECT_TRUE(test_access());
 }
 
-TEST (rpc, test_rpc) {
+TEST(rpc, test_rpc) {
   EXPECT_TRUE(test_rpc());
 }
 
-int main(int an, char** av) {
+int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
@@ -1743,4 +1959,3 @@ int main(int an, char** av) {
 
   return result;
 }
-

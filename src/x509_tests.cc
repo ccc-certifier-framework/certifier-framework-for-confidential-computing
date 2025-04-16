@@ -340,7 +340,10 @@ bool test_sev_certs(bool print_all) {
     if (success) {
       printf("ark cert verifies\n");
     } else {
-      printf("%s, %d: ark cert does not verify (%d)\n", __func__, __LINE__, ret);
+      printf("%s, %d: ark cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success) {
@@ -360,7 +363,10 @@ bool test_sev_certs(bool print_all) {
     if (success) {
       printf("ask cert verifies\n");
     } else {
-      printf("%s, %d: ask cert does not verify (%d)\n", __func__, __LINE__, ret);
+      printf("%s, %d: ask cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success) {
@@ -382,7 +388,9 @@ bool test_sev_certs(bool print_all) {
 
   vse_clause cl;
   if (!construct_vse_attestation_from_cert(ask_key, ark_key, &cl)) {
-    printf("%s, %d: construct_vse_attestation_from_cert failed\n", __func__, __LINE__);
+    printf("%s, %d: construct_vse_attestation_from_cert failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -437,7 +445,10 @@ bool test_real_sev_certs(bool print_all) {
     if (success) {
       printf("ark cert verifies\n");
     } else {
-      printf("%s, %d: ark cert does not verify (%d)\n", __func__, __LINE__, ret);
+      printf("%s, %d: ark cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -461,7 +472,10 @@ bool test_real_sev_certs(bool print_all) {
     if (success) {
       printf("ask cert verifies\n");
     } else {
-      printf("%s, %d: ask cert does not verify (%d)\n", __func__, __LINE__, ret);
+      printf("%s, %d: ask cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -484,7 +498,10 @@ bool test_real_sev_certs(bool print_all) {
     if (success) {
       printf("vcek cert verifies\n");
     } else {
-      printf("%s, %d: vcek cert does not verify (%d)\n", __func__, __LINE__, ret);
+      printf("%s, %d: vcek cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -568,7 +585,10 @@ bool test_sev_request(bool print_all) {
     if (success) {
       printf("ark cert verifies\n");
     } else {
-      printf("%s, %d: ark cert does not verify (%d)\n", __func__, __LINE__, ret);
+      printf("%s, %d: ark cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -586,7 +606,10 @@ bool test_sev_request(bool print_all) {
     if (success) {
       printf("ask cert verifies\n");
     } else {
-      printf("%s, %d: ask cert does not verify (%d)\n", __func__, __LINE__, ret);
+      printf("%s, %d: ask cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -603,7 +626,10 @@ bool test_sev_request(bool print_all) {
     if (success) {
       printf("vcek cert verifies\n");
     } else {
-      printf("%s, %d: vcek cert does not verify (%d)\n", __func__, __LINE__, ret);
+      printf("%s, %d: vcek cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -629,7 +655,9 @@ bool test_sev_request(bool print_all) {
 
   vse_clause cl;
   if (!construct_vse_attestation_from_cert(vcek_key, ask_key, &cl)) {
-    printf("%s, %d: construct_vse_attestation_from_cert failed\n", __func__, __LINE__);
+    printf("%s, %d: construct_vse_attestation_from_cert failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
 

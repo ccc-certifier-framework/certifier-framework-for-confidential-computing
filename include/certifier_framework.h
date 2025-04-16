@@ -75,7 +75,7 @@ class policy_store {
   int           find_entry(const string &tag, const string &type);
   const string *tag(unsigned ent);
   const string *type(unsigned ent);
-  store_entry * get_entry(unsigned ent);
+  store_entry  *get_entry(unsigned ent);
   bool          delete_entry(unsigned ent);
   bool          get(unsigned ent, string *v);
   bool          put(unsigned ent, const string v);
@@ -93,46 +93,46 @@ class policy_store {
 bool Seal(const string &enclave_type,
           const string &enclave_id,
           int           in_size,
-          byte *        in,
-          int *         size_out,
-          byte *        out);
+          byte         *in,
+          int          *size_out,
+          byte         *out);
 
 bool Unseal(const string &enclave_type,
             const string &enclave_id,
             int           in_size,
-            byte *        in,
-            int *         size_out,
-            byte *        out);
+            byte         *in,
+            int          *size_out,
+            byte         *out);
 
 bool Attest(const string &enclave_type,
             int           what_to_say_size,
-            byte *        what_to_say,
-            int *         size_out,
-            byte *        out);
+            byte         *what_to_say,
+            int          *size_out,
+            byte         *out);
 
 // Protect Support
 // -------------------------------------------------------------------
 
 bool protect_blob(const string &enclave_type,
-                  key_message & key,
+                  key_message  &key,
                   int           size_unencrypted_data,
-                  byte *        unencrypted_data,
-                  int *         size_protected_blob,
-                  byte *        blob);
+                  byte         *unencrypted_data,
+                  int          *size_protected_blob,
+                  byte         *blob);
 
 bool unprotect_blob(const string &enclave_type,
                     int           size_protected_blob,
-                    byte *        protected_blob,
-                    key_message * key,
-                    int *         size_of_unencrypted_data,
-                    byte *        data);
+                    byte         *protected_blob,
+                    key_message  *key,
+                    int          *size_of_unencrypted_data,
+                    byte         *data);
 
 bool reprotect_blob(const string &enclave_type,
-                    key_message * key,
+                    key_message  *key,
                     int           size_protected_blob,
-                    byte *        protected_blob,
-                    int *         size_new_encrypted_blob,
-                    byte *        data);
+                    byte         *protected_blob,
+                    int          *size_new_encrypted_blob,
+                    byte         *data);
 
 class domain_info {
  public:
@@ -154,7 +154,7 @@ class accelerator {
   string  location_type_;  // in-memory, network, file
   string  file_name;
   string  network_address_;
-  byte *  address_;
+  byte   *address_;
   long    size_;
   int     num_certs_;
   string *certs_;
@@ -188,7 +188,7 @@ class cc_trust_manager {
   // For primary security domain only
   bool        cc_policy_info_initialized_;
   string      serialized_policy_cert_;
-  X509 *      x509_policy_cert_;
+  X509       *x509_policy_cert_;
   key_message public_policy_key_;
 
   bool         cc_policy_store_initialized_;
@@ -378,24 +378,24 @@ class secure_authenticated_channel {
   string          role_;
   bool            channel_initialized_;
   key_message     private_key_;
-  SSL_CTX *       ssl_ctx_;
+  SSL_CTX        *ssl_ctx_;
   X509_STORE_CTX *store_ctx_;
-  SSL *           ssl_;
+  SSL            *ssl_;
   int             sock_;
 
   string asn1_root_cert_;  // root cert for my certificate
-  X509 * root_cert_;
+  X509  *root_cert_;
 
   string asn1_peer_root_cert_;  // root cert for peer
-  X509 * peer_root_cert_;
+  X509  *peer_root_cert_;
 
   int     num_cert_chain_;
   string *cert_chain_;
 
   string asn1_my_cert_;
-  X509 * my_cert_;
+  X509  *my_cert_;
 
-  X509 * peer_cert_;
+  X509  *peer_cert_;
   string peer_id_;
 
   secure_authenticated_channel(string &role);  // role is client or server
@@ -408,10 +408,10 @@ class secure_authenticated_channel {
   bool init_client_ssl(const string &host_name,
                        int           port,
                        const string &asn1_root_cert,
-                       key_message & private_key,
+                       key_message  &private_key,
                        const string &private_key_cert);
 
-  bool init_client_ssl(const string &          host_name,
+  bool init_client_ssl(const string           &host_name,
                        int                     port,
                        const cc_trust_manager &mgr);
 
@@ -420,10 +420,10 @@ class secure_authenticated_channel {
   bool init_server_ssl(const string &host_name,
                        int           port,
                        const string &asn1_root_cert,
-                       key_message & private_key,
+                       key_message  &private_key,
                        const string &private_key_cert);
 
-  bool init_server_ssl(const string &          host_name,
+  bool init_server_ssl(const string           &host_name,
                        int                     port,
                        const cc_trust_manager &mgr);
 
@@ -436,16 +436,16 @@ class secure_authenticated_channel {
                        const string &asn1_root_cert,
                        const string &peer_asn1_root_cert,
                        int           cert_chain_length,
-                       string *      der_certs,
-                       key_message & private_key,
+                       string       *der_certs,
+                       key_message  &private_key,
                        const string &auth_cert);
   bool init_server_ssl(const string &host_name,
                        int           port,
                        const string &asn1_root_cert,
                        const string &peer_asn1_root_cert,
                        int           cert_chain_length,
-                       string *      der_certs,
-                       key_message & private_key,
+                       string       *der_certs,
+                       key_message  &private_key,
                        const string &auth_cert);
 
   void server_channel_accept_and_auth(
@@ -463,19 +463,19 @@ bool server_dispatch(const string &host_name,
                      const string &asn1_root_cert,
                      const string &asn1_peer_root_cert,
                      int           num_certs,
-                     string *      cert_chain,
-                     key_message & private_key,
+                     string       *cert_chain,
+                     key_message  &private_key,
                      const string &private_key_cert,
                      void (*func)(secure_authenticated_channel &));
 
 bool server_dispatch(const string &host_name,
                      int           port,
                      const string &asn1_root_cert,
-                     key_message & private_key,
+                     key_message  &private_key,
                      const string &private_key_cert,
                      void (*)(secure_authenticated_channel &));
 
-bool server_dispatch(const string &          host_name,
+bool server_dispatch(const string           &host_name,
                      int                     port,
                      const cc_trust_manager &mgr,
                      void (*)(secure_authenticated_channel &));

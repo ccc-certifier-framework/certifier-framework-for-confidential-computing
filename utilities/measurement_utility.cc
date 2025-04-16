@@ -23,9 +23,9 @@
 using namespace std;
 using namespace certifier::utilities;
 
-int parse_other_files_size(string &        other_files,
+int parse_other_files_size(string         &other_files,
                            vector<string> &other_files_list,
-                           vector<int> &   other_files_size);
+                           vector<int>    &other_files_size);
 
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_bool(print_debug, false, "print debugging info");
@@ -76,9 +76,9 @@ int hash_utility(string &input, string &other_files, string &output) {
   }
   to_hash_size += (other_files_total_size);
 
-  ::byte *       to_hash = (::byte *)malloc(to_hash_size * sizeof(::byte));
-  ::byte *       to_hash_start = to_hash;
-  ::byte         out[sha256_size];
+  ::byte      *to_hash = (::byte *)malloc(to_hash_size * sizeof(::byte));
+  ::byte      *to_hash_start = to_hash;
+  ::byte       out[sha256_size];
   unsigned int out_len = sha256_size;
 
   memset(out, 0, sizeof(out));
@@ -176,9 +176,9 @@ int hash_utility(string &input, string &other_files, string &output) {
  *
  * Returns: total size of all files listed in 'other_files'
  */
-int parse_other_files_size(string &        other_files,
+int parse_other_files_size(string         &other_files,
                            vector<string> &other_files_list,
-                           vector<int> &   other_files_size) {
+                           vector<int>    &other_files_size) {
   stringstream ss(other_files);
 
   int other_files_total_size = 0;

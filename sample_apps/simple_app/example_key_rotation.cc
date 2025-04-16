@@ -158,7 +158,7 @@ int main(int an, char **av) {
 
   // Get certificate
   string der_cert;
-  X509 * x509_cert = X509_new();
+  X509  *x509_cert = X509_new();
   if (purpose == "authentication") {
     if (!trust_mgr->cc_auth_key_initialized_) {
       printf("%s() error, line %d, Auth key uninitialized", __func__, __LINE__);

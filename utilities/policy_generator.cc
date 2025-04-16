@@ -133,15 +133,13 @@ void print_claim(claim &c, const string prefix = "") {
   cout << prefix << "verb: " << c.verb << endl;
   cout << prefix << sname[c.stype] << ": " << c.sub << endl;
   cout << prefix << cname[c.ctype] << ": " << endl;
-  cout << prefix << "\t"
-       << "verb: " << c.cl.verb << endl;
+  cout << prefix << "\t" << "verb: " << c.cl.verb << endl;
   cout << prefix << "\t" << sname[c.cl.stype] << ": " << c.cl.sub << endl;
   if (c.ctype == SIMPLE_CLAUSE) {
     cout << prefix << "\t" << oname[c.cl.otype] << ": " << c.cl.obj << endl;
   }
   if (c.cl.ctype != NONE_CLAUSE) {
-    cout << prefix << "\t\t"
-         << "verb: " << c.cl.sverb << endl;
+    cout << prefix << "\t\t" << "verb: " << c.cl.sverb << endl;
     cout << prefix << "\t\t" << sname[c.cl.sstype] << ": " << c.cl.ssub << endl;
     if (c.cl.ctype == SIMPLE_CLAUSE) {
       cout << prefix << "\t\t" << oname[c.cl.sotype] << ": " << c.cl.sobj
