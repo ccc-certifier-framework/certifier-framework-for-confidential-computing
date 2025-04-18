@@ -1,6 +1,19 @@
+Warning and instructions
+
+The code in this directory is EXPERIMENTAL.  It is included to illustrate
+how one might provide a web-like API that supports granular access control to files
+over the sort of secure channel employed by the certifier.  No other code relies
+on this and it is not compiled into any other code here.  We plan to modify
+the experimental code so that it can be compiled as a sub-library but we have
+not yet done so.
+
+If you try to link this code into the certifier right now, it will fail because
+of duplicated symbols.  However, the "stand alone" tests work if you follow the
+instructions below.
+
 This is an experimental library that implements an API over a protected
 channel implementing additional authentication of principals (say, an
-organization) implementing granular (file level for the prototype) access
+organization) and implementing granular (file level for the prototype) access
 control.  The main authentication mechanism is public key based.
 
 The current API is:
