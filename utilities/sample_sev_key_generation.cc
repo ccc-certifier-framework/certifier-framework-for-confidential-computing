@@ -149,7 +149,7 @@ int main(int an, char **av) {
   // ARK
   key_message ark_vse_key;
   key_message pub_ark_vse_key;
-  RSA *       r1 = RSA_new();
+  RSA        *r1 = RSA_new();
   if (!generate_new_rsa_key(4096, r1)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -194,7 +194,7 @@ int main(int an, char **av) {
   // ASK
   key_message ask_vse_key;
   key_message pub_ask_vse_key;
-  RSA *       r2 = RSA_new();
+  RSA        *r2 = RSA_new();
   if (!generate_new_rsa_key(4096, r2)) {
     printf("Generate RSA ark key failed\n");
     return 1;
@@ -239,7 +239,7 @@ int main(int an, char **av) {
   // VCEK
   key_message vcek_vse_key;
   key_message pub_vcek_vse_key;
-  EC_KEY *    ec = generate_new_ecc_key(384);
+  EC_KEY     *ec = generate_new_ecc_key(384);
   if (ec == nullptr) {
     printf("Can't generate ecc key\n");
     return 1;

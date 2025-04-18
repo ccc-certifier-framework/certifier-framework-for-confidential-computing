@@ -24,7 +24,7 @@ using namespace certifier::utilities;
 
 bool debug_print = false;
 
-bool read_trusted_binary_measurements_and_sign(string &     file_name,
+bool read_trusted_binary_measurements_and_sign(string      &file_name,
                                                key_message &policy_key,
                                                signed_claim_sequence *list) {
 
@@ -128,15 +128,15 @@ bool construct_keys(string       key_name,
 }
 
 bool construct_standard_evidence_package(
-    string &               enclave_type,
+    string                &enclave_type,
     bool                   init_measurements,
-    string &               file_name,
-    string &               evidence_descriptor,
+    string                &file_name,
+    string                &evidence_descriptor,
     signed_claim_sequence *trusted_platforms,
     signed_claim_sequence *trusted_measurements,
-    key_message *          policy_key,
-    key_message *          policy_pk,
-    evidence_package *     evp) {
+    key_message           *policy_key,
+    key_message           *policy_pk,
+    evidence_package      *evp) {
 
   string policy_key_name("policy-key");
   string key_format("vse-key");
@@ -654,15 +654,15 @@ bool test_partial_local_certify(bool print_all) {
 // constrained delegation test
 
 bool construct_standard_constrained_evidence_package(
-    string &               enclave_type,
+    string                &enclave_type,
     bool                   init_measurements,
-    string &               file_name,
-    string &               evidence_descriptor,
+    string                &file_name,
+    string                &evidence_descriptor,
     signed_claim_sequence *trusted_platforms,
     signed_claim_sequence *trusted_measurements,
-    key_message *          policy_key,
-    key_message *          policy_pk,
-    evidence_package *     evp) {
+    key_message           *policy_key,
+    key_message           *policy_pk,
+    evidence_package      *evp) {
 
   string policy_key_name("policy-key");
   string key_format("vse-key");

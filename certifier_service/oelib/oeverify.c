@@ -7,7 +7,7 @@ static bool oe_verifier_initialized = false;
 
 static const oe_claim_t *_find_claim(const oe_claim_t *claims,
                                      size_t            claims_size,
-                                     const char *      name) {
+                                     const char       *name) {
   for (size_t i = 0; i < claims_size; i++) {
     if (strcmp(claims[i].name, name) == 0)
       return &(claims[i]);
@@ -20,19 +20,19 @@ bool oe_host_verify_evidence(uint8_t *evidence,
                              uint8_t *endorsements,
                              size_t   endorsements_size,
                              uint8_t *custom_claim_out,
-                             size_t * custom_claim_size,
+                             size_t  *custom_claim_size,
                              uint8_t *measurement_out,
-                             size_t * measurement_size,
+                             size_t  *measurement_size,
                              bool     check_tcb) {
   bool                   result = false;
   oe_result_t            oe_res;
   static const oe_uuid_t _uuid = {OE_FORMAT_UUID_SGX_ECDSA};
-  const oe_policy_t *    policies = NULL;
+  const oe_policy_t     *policies = NULL;
   size_t                 policies_size = 0;
-  oe_claim_t *           claims = NULL;
+  oe_claim_t            *claims = NULL;
   size_t                 claims_length = 0;
-  const oe_claim_t *     claim;
-  oe_claim_t *           custom_claims = NULL;
+  const oe_claim_t      *claim;
+  oe_claim_t            *custom_claims = NULL;
   size_t                 custom_claims_length = 0;
 
   if (!custom_claim_out || !measurement_out || !evidence) {

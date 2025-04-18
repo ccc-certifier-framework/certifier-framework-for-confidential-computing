@@ -43,7 +43,7 @@ string               serialized_platform_claim;
 signed_claim_message my_platform_claim;
 string               serialized_attest_claim;
 signed_claim_message my_attest_claim;
-RSA *                rsa_attestation_key = nullptr;
+RSA                 *rsa_attestation_key = nullptr;
 
 bool simulated_GetAttestClaim(signed_claim_message *out) {
   if (!my_data_initialized) {
@@ -113,9 +113,9 @@ const int max_seal_pad = 256;
 bool simulated_Seal(const string &enclave_type,
                     const string &enclave_id,
                     int           in_size,
-                    byte *        in,
-                    int *         size_out,
-                    byte *        out) {
+                    byte         *in,
+                    int          *size_out,
+                    byte         *out) {
 
   const int iv_size = block_size;
   byte      iv[iv_size];
@@ -165,9 +165,9 @@ bool simulated_Seal(const string &enclave_type,
 bool simulated_Unseal(const string &enclave_type,
                       const string &enclave_id,
                       int           in_size,
-                      byte *        in,
-                      int *         size_out,
-                      byte *        out) {
+                      byte         *in,
+                      int          *size_out,
+                      byte         *out) {
 
   int  iv_size = block_size;
   byte iv[iv_size];
@@ -210,9 +210,9 @@ bool simulated_Unseal(const string &enclave_type,
 // with a vse_claim_message claim
 bool simulated_Attest(const string &enclave_type,
                       int           what_to_say_size,
-                      byte *        what_to_say,
-                      int *         size_out,
-                      byte *        out) {
+                      byte         *what_to_say,
+                      int          *size_out,
+                      byte         *out) {
 
   vse_attestation_report_info report_info;
   string                      serialized_report_info;

@@ -39,7 +39,7 @@ static string data_dir = "app1_data";
 #define FLAGS_certificate_file  "vse.crt"
 
 static std::string enclave_type;
-cc_trust_manager * trust_mgr = nullptr;
+cc_trust_manager  *trust_mgr = nullptr;
 
 static bool oe_initialized = false;
 static bool openenclave_initialized = false;
@@ -53,7 +53,7 @@ bool        trust_data_initialized = false;
 key_message privatePolicyKey;
 key_message publicPolicyKey;
 string      serializedPolicyCert;
-X509 *      policy_cert = nullptr;
+X509       *policy_cert = nullptr;
 
 policy_store pStore;
 key_message  privateAppKey;

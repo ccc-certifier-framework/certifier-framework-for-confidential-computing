@@ -1,7 +1,7 @@
 # Installing The Certifier Framework for Confidential Computing
 
 In this description, the top level directory of this repository,
-which includes this `INSTALL.md` file, is denoted $CERTIFIER.
+which includes this `INSTALL.md` file, is denoted $CERTIFIER_ROOT.
 
 The Ubuntu 20.04 install guide can be found in
 [Ubuntu Install](./Doc/install-certifier-Ubuntu-20.04.md).
@@ -44,7 +44,7 @@ $ sudo apt-get install -y libssl-dev uuid-dev python3-pip swig
 ## To compile and run the Certifier API tests
 
 ```shell
-  $ cd $CERTIFIER/src
+  $ cd $CERTIFIER_ROOT/src
   $ make -f certifier_tests.mak clean
   $ make -f certifier_tests.mak
   $ ./certifier_tests.exe [--print_all=true]
@@ -73,7 +73,7 @@ $ sudo ./certifier_tests.exe --print_all=true
 Once you are sure the Certifier works, compile and make the Certifier library:
 
 ```shell
- $ cd $CERTIFIER/src
+ $ cd $CERTIFIER_ROOT/src
  $ make -f certifier.mak clean
  $ make -f certifier.mak
 ```
@@ -86,7 +86,7 @@ in the Certifier workflow use these programs.
 To compile them:
 
 ```shell
-$ cd $CERTIFIER/utilities
+$ cd $CERTIFIER_ROOT/utilities
 $ make -f cert_utility.mak clean
 $ make -f policy_utilities.mak clean
 
@@ -103,9 +103,9 @@ and contains two subdirectories: [certlib/](./certifier_service/certlib/) and
 Certlib unit-tests require some input data in test_data/ dir. Generate it as follows:
 
 ```shell
-cd $CERTIFIER/certifier_service/certlib/test_data
+cd $CERTIFIER_ROOT/certifier_service/certlib/test_data
 
-$CERTIFIER/utilities/cert_utility.exe                 \
+$CERTIFIER_ROOT/utilities/cert_utility.exe                 \
    --operation=generate-policy-key-and-test-keys      \
    --policy_key_output_file=policy_key_file.bin       \
    --policy_cert_output_file=policy_cert_file.bin     \
@@ -116,7 +116,7 @@ $CERTIFIER/utilities/cert_utility.exe                 \
 Setup libraries for Certifier Service to link with:
 
 ```shell
-cd $CERTIFIER/certifier_service/graminelib
+cd $CERTIFIER_ROOT/certifier_service/graminelib
 make dummy
 
 cd ../oelib
@@ -243,7 +243,21 @@ Google gtest which can be obtained at https://github.com/google/googletest,
   gtest is a test infrastructure used in our tests.
 
 Google protobuf which can be obtained at https://github.com/protocolbuffers/protobuf,
-  protobuf is a serialization framwork.
+  protobuf is a serialization framwork.  Different versions of protobuf can cause
+  compilation issues.  In particular, later versions of protobuf use a library called
+  abseil and must be compiled with C++17 or later.  If abseil is not compiled as position
+  independent code, it can cause errors.  When abseil is not present, the protobuf
+  compile will automatically compile it as position independent code but if you compile
+  abseil prior to protobuf istallation and simply follow the instructions, it will cause
+  problems.  You can build abseil yourself but you should use the cmake options 
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF.  If you install protobuf
+  from a package manager, it should have been compiled properly.  In the makefiles,
+  there is a variable, NEWPROTOBUF, that should be defined or not depending on whether
+  abseil symbols must be resolved or whether later versions of protobuf (which require
+  C++17 or later) are used.  If you use the later versions of protobuf, you should compile
+  your applications with C++17 or later as well.  The version of protoc you use (to
+  generate protobuf source files ("*.pb.cc") must be consistant with the version of
+  protobuf you use.
 
 Openssl which contains crypto libraries and TLS support.
 

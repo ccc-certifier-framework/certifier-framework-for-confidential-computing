@@ -45,9 +45,9 @@ bool keystone_Init(const int cert_size, byte *cert) {
 }
 
 bool keystone_Attest(const int what_to_say_size,
-                     byte *    what_to_say,
-                     int *     attestation_size_out,
-                     byte *    attestation_out) {
+                     byte     *what_to_say,
+                     int      *attestation_size_out,
+                     byte     *attestation_out) {
   assert(what_to_say_size <= ATTEST_DATA_MAXLEN);
   *attestation_size_out = sizeof(struct _report_t);
   // unique-ify un-faked fields to avoid accidentally passing tests
@@ -73,11 +73,11 @@ static bool nonhash_report_cmp(struct _report_t &a, struct _report_t &b) {
 }
 
 bool keystone_Verify(const int what_to_say_size,
-                     byte *    what_to_say,
+                     byte     *what_to_say,
                      const int attestation_size,
-                     byte *    attestation,
-                     int *     measurement_out_size,
-                     byte *    measurement_out) {
+                     byte     *attestation,
+                     int      *measurement_out_size,
+                     byte     *measurement_out) {
   assert(attestation_size == sizeof(struct _report_t));
   struct _report_t &report = *reinterpret_cast<struct _report_t *>(attestation);
 

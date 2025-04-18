@@ -85,7 +85,7 @@ static bool entry_is_terminator(struct cert_table_entry *entry) {
 }
 
 int cert_table_add_entry(struct cert_table *table,
-                         const char *       guid,
+                         const char        *guid,
                          size_t             cert_size) {
   int    rc = -EXIT_FAILURE;
   size_t offset = 0;
@@ -159,7 +159,7 @@ out:
 }
 
 int cert_table_copy(const struct cert_table *table,
-                    uint8_t *                buffer,
+                    uint8_t                 *buffer,
                     size_t                   size) {
   int    rc = EXIT_FAILURE;
   size_t table_size = 0, offset = 0;
@@ -194,7 +194,7 @@ out:
 
 int cert_table_get_entry(const struct cert_table *table,
                          struct cert_table_entry *entry,
-                         const char *             guid) {
+                         const char              *guid) {
   int    rc = EXIT_FAILURE;
   uuid_t id = {0};
 
@@ -225,10 +225,10 @@ out:
 }
 
 int cert_table_append_cert(const struct cert_table *table,
-                           uint8_t *                buffer,
+                           uint8_t                 *buffer,
                            size_t                   buffer_size,
-                           const char *             guid,
-                           uint8_t *                cert,
+                           const char              *guid,
+                           uint8_t                 *cert,
                            size_t                   cert_size) {
   int    rc = EXIT_FAILURE;
   size_t table_size = 0, certs_size = 0, total_size = 0;

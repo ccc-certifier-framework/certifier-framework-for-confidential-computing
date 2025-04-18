@@ -84,7 +84,7 @@ extern string gramine_platform_cert;
 //  You may want to augment these or write replacements if your needs are
 //  fancier.
 
-//#define DEBUG
+// #define DEBUG
 
 certifier::framework::accelerator::accelerator() {
   num_certs_ = 0;
@@ -323,7 +323,7 @@ bool certifier::framework::cc_trust_manager::
 
 bool certifier::framework::cc_trust_manager::initialize_gramine_enclave(
     const int size,
-    byte *    cert) {
+    byte     *cert) {
 #ifdef GRAMINE_CERTIFIER
   return gramine_Init(size, cert);
 #endif
@@ -376,7 +376,7 @@ bool certifier::framework::cc_trust_manager::accelerator_verified(
 bool certifier::framework::cc_trust_manager::add_accelerator(
     const string &acc_type,
     int           num_certs,
-    string *      certs) {
+    string       *certs) {
   return false;
 }
 
@@ -1570,7 +1570,7 @@ bool certifier::framework::cc_trust_manager::get_certifiers_from_store() {
   }
   for (int i = 0; i < cert_messages.my_certifiers_size(); i++) {
     const certifier_entry &cm = cert_messages.my_certifiers(i);
-    certifiers *           ce = new certifiers(this);
+    certifiers            *ce = new certifiers(this);
     certified_domains_[num_certified_domains_++] = ce;
     ce->domain_name_ = cm.domain_name();
     ce->purpose_ = cm.purpose();
@@ -1592,7 +1592,7 @@ bool certifier::framework::cc_trust_manager::put_certifiers_in_store() {
 
   for (int i = 0; i < num_certified_domains_; i++) {
     certifier_entry *cm = cert_messages.add_my_certifiers();
-    certifiers *     ce = certified_domains_[i];
+    certifiers      *ce = certified_domains_[i];
 
     cm->set_domain_name(ce->domain_name_);
     cm->set_domain_cert(ce->domain_policy_cert_);
@@ -2067,10 +2067,10 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
 // --------------------------------------------------------------------------------------
 // helpers for proofs
 
-bool construct_platform_evidence_package(string &       attesting_enclave_type,
-                                         const string & purpose,
+bool construct_platform_evidence_package(string        &attesting_enclave_type,
+                                         const string  &purpose,
                                          evidence_list &platform_assertions,
-                                         string &       serialized_attestation,
+                                         string        &serialized_attestation,
                                          evidence_package *ep) {
 
   string pt("vse-verifier");
@@ -2088,7 +2088,7 @@ bool construct_platform_evidence_package(string &       attesting_enclave_type,
 #endif
   for (int i = 0; i < platform_assertions.assertion_size(); i++) {
     const evidence &ev_from = platform_assertions.assertion(i);
-    evidence *      ev_to = ep->add_fact_assertion();
+    evidence       *ev_to = ep->add_fact_assertion();
     ev_to->CopyFrom(ev_from);
   }
 
@@ -2128,7 +2128,7 @@ bool construct_platform_evidence_package(string &       attesting_enclave_type,
 // Todo: This isn't used
 bool add_policy_key_says_platform_key_is_trusted(
     signed_claim_message &platform_key_is_trusted,
-    evidence_package *    ep) {
+    evidence_package     *ep) {
 
   string et("signed-claim");
 
@@ -2346,7 +2346,7 @@ int verify_callback(int preverify, X509_STORE_CTX *x509_ctx) {
   int depth = X509_STORE_CTX_get_error_depth(x509_ctx);
   int err = X509_STORE_CTX_get_error(x509_ctx);
 
-  X509 *     cert = X509_STORE_CTX_get_current_cert(x509_ctx);
+  X509      *cert = X509_STORE_CTX_get_current_cert(x509_ctx);
   X509_NAME *iname = cert ? X509_get_issuer_name(cert) : NULL;
   X509_NAME *sname = cert ? X509_get_subject_name(cert) : NULL;
 
@@ -2386,10 +2386,10 @@ bool extract_id_from_cert(X509 *in, string *out) {
 }
 
 // Loads server side certs and keys.
-bool load_server_certs_and_key(X509 *        root_cert,
-                               key_message & private_key,
+bool load_server_certs_and_key(X509         *root_cert,
+                               key_message  &private_key,
                                const string &private_key_cert,
-                               SSL_CTX *     ctx) {
+                               SSL_CTX      *ctx) {
 
   // load auth key, policy_cert and certificate chain
   // Todo: Add other key types
@@ -2480,13 +2480,13 @@ bool load_server_certs_and_key(X509 *        root_cert,
 }
 
 // Loads server side certs and keys.
-bool load_server_certs_and_key(X509 *        root_cert,
-                               X509 *        peer_root_cert,
+bool load_server_certs_and_key(X509         *root_cert,
+                               X509         *peer_root_cert,
                                int           cert_chain_length,
-                               string *      cert_chain,
-                               key_message & private_key,
+                               string       *cert_chain,
+                               key_message  &private_key,
                                const string &private_key_cert,
-                               SSL_CTX *     ctx) {
+                               SSL_CTX      *ctx) {
 
   private_key.set_certificate(private_key_cert);  // new
 
@@ -2500,7 +2500,7 @@ bool load_server_certs_and_key(X509 *        root_cert,
 
   bool      ret = true;
   EVP_PKEY *auth_private_key = nullptr;
-  X509 *    x509_auth_key_cert = nullptr;
+  X509     *x509_auth_key_cert = nullptr;
   STACK_OF(X509) *stack = nullptr;
 
 
@@ -2633,8 +2633,8 @@ bool certifier::framework::server_dispatch(
     const string &asn1_root_cert,
     const string &asn1_peer_root_cert,
     int           num_certs,
-    string *      cert_chain,
-    key_message & private_key,
+    string       *cert_chain,
+    key_message  &private_key,
     const string &private_key_cert,
     void (*func)(secure_authenticated_channel &)) {
 
@@ -2681,7 +2681,7 @@ bool certifier::framework::server_dispatch(
 
   // Set up TLS handshake data.
   SSL_METHOD *method = (SSL_METHOD *)TLS_server_method();
-  SSL_CTX *   ctx = SSL_CTX_new(method);
+  SSL_CTX    *ctx = SSL_CTX_new(method);
   if (ctx == NULL) {
     printf("%s() error, line %d, SSL_CTX_new failed (1)\n", __func__, __LINE__);
     return false;
@@ -2765,7 +2765,7 @@ bool certifier::framework::server_dispatch(
     const string &host_name,
     int           port,
     const string &asn1_root_cert,
-    key_message & private_key,
+    key_message  &private_key,
     const string &private_key_cert,
     void (*func)(secure_authenticated_channel &)) {
 
@@ -2804,7 +2804,7 @@ bool certifier::framework::server_dispatch(
 
   // Set up TLS handshake data.
   SSL_METHOD *method = (SSL_METHOD *)TLS_server_method();
-  SSL_CTX *   ctx = SSL_CTX_new(method);
+  SSL_CTX    *ctx = SSL_CTX_new(method);
   if (ctx == NULL) {
     printf("%s() error, line %d, SSL_CTX_new failed (1)\n", __func__, __LINE__);
     return false;
@@ -2877,7 +2877,7 @@ bool certifier::framework::server_dispatch(
 }
 
 bool certifier::framework::server_dispatch(
-    const string &          host_name,
+    const string           &host_name,
     int                     port,
     const cc_trust_manager &mgr,
     void (*func)(secure_authenticated_channel &)) {
@@ -2961,8 +2961,8 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     const string &asn1_root_cert,
     const string &peer_asn1_root_cert,
     int           cert_chain_length,
-    string *      der_certs,
-    key_message & private_key,
+    string       *der_certs,
+    key_message  &private_key,
     const string &auth_cert) {
 
   OPENSSL_init_ssl(0, NULL);
@@ -3121,8 +3121,8 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
     const string &asn1_root_cert,
     const string &peer_asn1_root_cert,
     int           cert_chain_length,
-    string *      der_certs,
-    key_message & private_key,
+    string       *der_certs,
+    key_message  &private_key,
     const string &auth_cert) {
 
   OPENSSL_init_ssl(0, NULL);
@@ -3164,7 +3164,7 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     const string &host_name,
     int           port,
     const string &asn1_root_cert,
-    key_message & private_key,
+    key_message  &private_key,
     const string &auth_cert) {
 
   OPENSSL_init_ssl(0, NULL);
@@ -3291,7 +3291,7 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
 }
 
 bool certifier::framework::secure_authenticated_channel::init_client_ssl(
-    const string &          host_name,
+    const string           &host_name,
     int                     port,
     const cc_trust_manager &mgr) {
 
@@ -3437,7 +3437,7 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
     const string &host_name,
     int           port,
     const string &asn1_root_cert,
-    key_message & private_key,
+    key_message  &private_key,
     const string &auth_cert) {
 
   SSL_load_error_strings();
@@ -3467,7 +3467,7 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
 }
 
 bool certifier::framework::secure_authenticated_channel::init_server_ssl(
-    const string &          host_name,
+    const string           &host_name,
     int                     port,
     const cc_trust_manager &mgr) {
   return secure_authenticated_channel::init_server_ssl(

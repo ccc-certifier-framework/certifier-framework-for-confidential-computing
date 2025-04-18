@@ -33,7 +33,7 @@ class NvidiaGPUImpl : public NvidiaGPU {
  private:
   NvidiaGPUImpl(void *libHandle, nvmlDevice_t device)
      : libHandle(libHandle), device(device) {}
-  void *       libHandle;
+  void        *libHandle;
   nvmlDevice_t device;
   friend class NvidiaPlatformImpl;
 };
@@ -51,7 +51,7 @@ class NvidiaPlatformImpl : public NvidiaPlatform {
  private:
   NvidiaPlatformImpl() {}
   bool                       loadNvmlLibrary(const char *libPath);
-  void *                     libHandle;
+  void                      *libHandle;
   std::string                driver_version;
   std::vector<NvidiaGPUImpl> gpus;
 };

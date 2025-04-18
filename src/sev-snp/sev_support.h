@@ -55,13 +55,13 @@ union sev_ecdsa_sig {
 };
 
 int sev_ecdsa_pubkey_init(struct sev_ecdsa_pubkey *pubkey, EVP_PKEY *evp_key);
-int sev_ecdsa_sign(const void *         msg,
+int sev_ecdsa_sign(const void          *msg,
                    size_t               msg_size,
-                   EVP_PKEY *           key,
+                   EVP_PKEY            *key,
                    union sev_ecdsa_sig *sig);
-int sev_ecdsa_verify(const void *         digest,
+int sev_ecdsa_verify(const void          *digest,
                      size_t               digest_size,
-                     EVP_PKEY *           key,
+                     EVP_PKEY            *key,
                      union sev_ecdsa_sig *sig);
 int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert);
 int sev_validate_vcek_cert_chain(X509 *x509_vcek,

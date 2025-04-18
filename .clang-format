@@ -49,7 +49,7 @@ BreakStringLiterals: true
 
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeTernaryOperators: true
-BreakStringLiterals: true
+#BreakStringLiterals: true
 
 ColumnLimit:     80
 CompactNamespaces: false
@@ -98,7 +98,7 @@ SpaceInEmptyParentheses: false
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
 SpaceInEmptyBlock: false
-SpaceInEmptyParentheses: false
+  #SpaceInEmptyParentheses: false
 SpacesInAngles: false
 SpacesInCStyleCastParentheses: false
 SpacesInConditionalStatement: false

@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <attestation.h>
-//#include <sev_report.h>
+// #include <sev_report.h>
 
-static void print_byte_array(const char *   label,
+static void print_byte_array(const char    *label,
                              const uint8_t *array,
                              size_t         size) {
 #define INDENT         "    "

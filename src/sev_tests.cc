@@ -25,9 +25,9 @@ using namespace certifier::utilities;
 
 extern bool      verify_sev_Attest(EVP_PKEY *key,
                                    int       size_sev_attestation,
-                                   byte *    the_attestation,
-                                   int *     size_measurement,
-                                   byte *    measurement);
+                                   byte     *the_attestation,
+                                   int      *size_measurement,
+                                   byte     *measurement);
 extern EVP_PKEY *get_simulated_vcek_key();
 extern bool sev_verify_report(EVP_PKEY *key, struct attestation_report *report);
 
@@ -45,7 +45,7 @@ bool test_sev(bool print_all) {
   memset(sealed, 0, sealed_size);
 
   if (!Seal(enclave_type, enclave_id, data_size, data, &sealed_size, sealed)) {
-    printf("test_sev, seal error\n");
+    printf("test_sev, %s, seal error, %d\n", __func__, __LINE__);
     return false;
   }
 
@@ -69,7 +69,7 @@ bool test_sev(bool print_all) {
               sealed,
               &unsealed_size,
               unsealed)) {
-    printf("test_sev, unseal error\n");
+    printf("test_sev, %s, unseal error, %d\n", __func__, __LINE__);
     return false;
   }
 
@@ -81,7 +81,7 @@ bool test_sev(bool print_all) {
   }
 
   if (unsealed_size != data_size || memcmp(data, unsealed, data_size) != 0) {
-    printf("test_sev, unsealed response wrong\n");
+    printf("test_sev, unsealed response wrong, %s, %d\n", __func__, __LINE__);
     return false;
   }
 
@@ -92,15 +92,19 @@ bool test_sev(bool print_all) {
   attestation_user_data ud;
   ud.set_enclave_type("sev-enclave");
   RSA *r = RSA_new();
-  if (!generate_new_rsa_key(2048, r))
+  if (!generate_new_rsa_key(2048, r)) {
+    printf("%s, %d, generate_new_rsa_key error\n", __func__, __LINE__);
     return false;
+  }
   key_message private_auth_key;
   key_message public_auth_key;
   if (!RSA_to_key(r, &private_auth_key)) {
+    printf("%s, %d, RSA_to_key error\n", __func__, __LINE__);
     return false;
   }
   private_auth_key.set_key_name("authKey");
   if (!private_key_to_public_key(private_auth_key, &public_auth_key)) {
+    printf("%s, %d, private_key_to_public_key error\n", __func__, __LINE__);
     return false;
   }
   // time
@@ -115,6 +119,7 @@ bool test_sev(bool print_all) {
   byte   out[size_out];
   string serialized_user;
   if (!ud.SerializeToString(&serialized_user)) {
+    printf("%s, %d, SerializeToString error\n", __func__, __LINE__);
     return false;
   }
   if (!Attest(ud.enclave_type(),
@@ -122,20 +127,20 @@ bool test_sev(bool print_all) {
               (byte *)serialized_user.data(),
               &size_out,
               out)) {
-    printf("Attest failed\n");
+    printf("%s, %d Attest failed\n", __func__, __LINE__);
     return false;
   }
 
 #  ifdef SEV_DUMMY_GUEST
   extern EVP_PKEY *get_simulated_vcek_key();
-  EVP_PKEY *       verify_pkey = get_simulated_vcek_key();
+  EVP_PKEY        *verify_pkey = get_simulated_vcek_key();
 #  else
   extern int sev_read_pem_into_x509(const char *file_name, X509 **x509_cert);
   extern EVP_PKEY *sev_get_vcek_pubkey(X509 * x509_vcek);
-  X509 *           x509_vcek;
+  X509            *x509_vcek;
   if (sev_read_pem_into_x509("test_data/vcek.pem", &x509_vcek)
       != EXIT_SUCCESS) {
-    printf("Failed to load VCEK Cert!\n");
+    printf("%s, %d, Failed to load VCEK Cert!\n", __func__, __LINE__);
     return false;
   }
   EVP_PKEY *verify_pkey = sev_get_vcek_pubkey(x509_vcek);
@@ -152,7 +157,7 @@ bool test_sev(bool print_all) {
   verify_pkey = nullptr;
 
   if (!success) {
-    printf("verify_sev_Attest failed\n");
+    printf("%s, %d: verify_sev_Attest failed\n", __func__, __LINE__);
     return false;
   }
 
@@ -160,7 +165,7 @@ bool test_sev(bool print_all) {
   string                  at_str;
   at_str.assign((char *)out, size_out);
   if (!sev_att.ParseFromString(at_str)) {
-    printf("Can't parse attestation\n");
+    printf("%s, %d: Can't parse attestation\n", __func__, __LINE__);
     return false;
   }
 
@@ -267,12 +272,12 @@ bool simulated_sev_Attest(const key_message& vcek, const string& enclave_type,
 }
 #  endif /* 0 dead-code scaffolding for an earlier version */
 
-bool construct_sev_platform_evidence(const string &     purpose,
-                                     const string &     serialized_ark_cert,
-                                     const string &     serialized_ask_cert,
-                                     const string &     serialized_vcek_cert,
+bool construct_sev_platform_evidence(const string      &purpose,
+                                     const string      &serialized_ark_cert,
+                                     const string      &serialized_ask_cert,
+                                     const string      &serialized_vcek_cert,
                                      const key_message &vcek,
-                                     evidence_package * evp) {
+                                     evidence_package  *evp) {
 
   evp->set_prover_type("vse-verifier");
   string enclave_type("sev-enclave");
@@ -304,7 +309,7 @@ bool construct_sev_platform_evidence(const string &     purpose,
   ev->set_serialized_evidence(serialized_vcek_cert);
 
   key_message auth_key;
-  RSA *       r = RSA_new();
+  RSA        *r = RSA_new();
   if (!generate_new_rsa_key(2048, r)) {
     printf("construct_sev_platform_evidence: Can't generate rsa key\n");
     return false;
@@ -516,7 +521,7 @@ bool test_sev_platform_certify(const bool    debug_print,
   string ark_issuer_name(ark_key.key_name());
   string ark_subject_desc("platform-provider");
   string ark_subject_name(ark_key.key_name());
-  X509 * x_ark = X509_new();
+  X509  *x_ark = X509_new();
   if (!produce_artifact(ark_key,
                         ark_issuer_name,
                         ark_issuer_desc,
@@ -537,7 +542,7 @@ bool test_sev_platform_certify(const bool    debug_print,
 
   string ask_subject_desc("platform-provider");
   string ask_subject_name(ask_key.key_name());
-  X509 * x_ask = X509_new();
+  X509  *x_ask = X509_new();
   if (!produce_artifact(ark_key,
                         ark_issuer_name,
                         ark_issuer_desc,
@@ -560,7 +565,7 @@ bool test_sev_platform_certify(const bool    debug_print,
   string vcek_issuer_name(ask_key.key_name());
   string vcek_subject_desc("platform-provider");
   string vcek_subject_name(vcek_key.key_name());
-  X509 * x_vcek = X509_new();
+  X509  *x_vcek = X509_new();
   if (!produce_artifact(ask_key,
                         vcek_issuer_name,
                         vcek_issuer_desc,

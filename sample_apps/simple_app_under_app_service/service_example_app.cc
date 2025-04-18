@@ -122,9 +122,9 @@ void server_application(secure_authenticated_channel &channel) {
 
 bool run_me_as_server(const string &host_name,
                       int           port,
-                      string &      asn1_policy_cert,
-                      key_message & private_key,
-                      string &      private_key_cert) {
+                      string       &asn1_policy_cert,
+                      key_message  &private_key,
+                      string       &private_key_cert) {
 
   printf("running as server\n");
   server_dispatch(host_name,

@@ -50,7 +50,7 @@ static string data_dir = "../app1_data/";
 #define FLAGS_measurement_file            "example_app.measurement"
 
 static std::string enclave_type;
-cc_trust_data *    app_trust_data = nullptr;
+cc_trust_data     *app_trust_data = nullptr;
 
 static bool simulator_initialized = false;
 static bool openenclave_initialized = false;
@@ -64,7 +64,7 @@ bool        trust_data_initialized = false;
 key_message privatePolicyKey;
 key_message publicPolicyKey;
 string      serializedPolicyCert;
-X509 *      policy_cert = nullptr;
+X509       *policy_cert = nullptr;
 
 policy_store pStore;
 key_message  privateAppKey;
@@ -320,7 +320,7 @@ bool temp_test() {
   EVP_PKEY *auth_private_key = EVP_PKEY_new();
   EVP_PKEY_set1_RSA(auth_private_key, r);
 
-  X509 * x509_auth_key_cert = X509_new();
+  X509  *x509_auth_key_cert = X509_new();
   string auth_cert_str;
   auth_cert_str.assign((char *)privateAppKey.certificate().data(),
                        privateAppKey.certificate().size());

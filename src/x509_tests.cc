@@ -319,16 +319,17 @@ bool test_sev_certs(bool print_all) {
   string ark_der_str;
   string ask_der_str;
   if (!read_file_into_string(ark_file_str, &ark_der_str)) {
-    printf("Can't read ark file\n");
+    printf("%s, %d, Can't read ark file\n", __func__, __LINE__);
     return false;
   }
   if (!read_file_into_string(ask_file_str, &ask_der_str)) {
-    printf("Can't read ask file\n");
+    printf("%s, %d, Can't read ask file\n", __func__, __LINE__);
     return false;
   }
 
   X509 *cert1 = X509_new();
   if (!asn1_to_x509(ark_der_str, cert1)) {
+    printf("%s, %d, Can't translate asn1 to cert\n", __func__, __LINE__);
     return false;
   }
 
@@ -339,14 +340,20 @@ bool test_sev_certs(bool print_all) {
     if (success) {
       printf("ark cert verifies\n");
     } else {
-      printf("ark cert does not verify (%d)\n", ret);
+      printf("%s, %d: ark cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
-  if (!success)
+  if (!success) {
+    printf("%s, %d: ark cert does not verify (%d)\n", __func__, __LINE__, ret);
     return false;
+  }
 
   X509 *cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
+    printf("%s, %d, Can't translate asn1 to cert\n", __func__, __LINE__);
     return false;
   }
 
@@ -356,27 +363,34 @@ bool test_sev_certs(bool print_all) {
     if (success) {
       printf("ask cert verifies\n");
     } else {
-      printf("ask cert does not verify (%d)\n", ret);
+      printf("%s, %d: ask cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
-  if (!success)
+  if (!success) {
+    printf("%s, %d: ask cert does not verify (%d)\n", __func__, __LINE__, ret);
     return false;
+  }
 
   key_message ark_key;
   if (!x509_to_public_key(cert1, &ark_key)) {
-    printf("Can't convert ark to key\n");
+    printf("%s, %d: Can't convert ark to key\n", __func__, __LINE__);
     return false;
   }
 
   key_message ask_key;
   if (!x509_to_public_key(cert2, &ask_key)) {
-    printf("Can't convert ark to key\n");
+    printf("%s, %d: Can't convert ark to key\n", __func__, __LINE__);
     return false;
   }
 
   vse_clause cl;
   if (!construct_vse_attestation_from_cert(ask_key, ark_key, &cl)) {
-    printf("construct_vse_attestation_from_cert failed\n");
+    printf("%s, %d: construct_vse_attestation_from_cert failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -401,20 +415,21 @@ bool test_real_sev_certs(bool print_all) {
   string ask_der_str;
   string vcek_der_str;
   if (!read_file_into_string(ark_file_str, &ark_der_str)) {
-    printf("Can't read ark file\n");
+    printf("%s, %d: Can't read ark file\n", __func__, __LINE__);
     return false;
   }
   if (!read_file_into_string(ask_file_str, &ask_der_str)) {
-    printf("Can't read ask file\n");
+    printf("%s, %d: Can't read ask file\n", __func__, __LINE__);
     return false;
   }
   if (!read_file_into_string(vcek_file_str, &vcek_der_str)) {
-    printf("Can't read vcek file\n");
+    printf("%s, %d: Can't read vcek file\n", __func__, __LINE__);
     return false;
   }
 
   X509 *cert1 = X509_new();
   if (!asn1_to_x509(ark_der_str, cert1)) {
+    printf("%s, %d: Can't translate ark asn\n", __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -430,7 +445,10 @@ bool test_real_sev_certs(bool print_all) {
     if (success) {
       printf("ark cert verifies\n");
     } else {
-      printf("ark cert does not verify (%d)\n", ret);
+      printf("%s, %d: ark cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -438,6 +456,7 @@ bool test_real_sev_certs(bool print_all) {
 
   X509 *cert2 = X509_new();
   if (!asn1_to_x509(ask_der_str, cert2)) {
+    printf("%s, %d: Can't translate ask asn\n", __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -453,7 +472,10 @@ bool test_real_sev_certs(bool print_all) {
     if (success) {
       printf("ask cert verifies\n");
     } else {
-      printf("ask cert does not verify (%d)\n", ret);
+      printf("%s, %d: ask cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -461,6 +483,7 @@ bool test_real_sev_certs(bool print_all) {
 
   X509 *cert3 = X509_new();
   if (!asn1_to_x509(vcek_der_str, cert3)) {
+    printf("%s, %d: Can't translate vcek asn\n", __func__, __LINE__);
     return false;
   }
   if (print_all) {
@@ -475,7 +498,10 @@ bool test_real_sev_certs(bool print_all) {
     if (success) {
       printf("vcek cert verifies\n");
     } else {
-      printf("vcek cert does not verify (%d)\n", ret);
+      printf("%s, %d: vcek cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -532,21 +558,23 @@ bool test_sev_request(bool print_all) {
   string ark_der_str;
   string ask_der_str;
   string vcek_der_str;
+
   if (!read_file_into_string(ark_file_str, &ark_der_str)) {
-    printf("Can't read ark file\n");
+    printf("%s, %d: Can't read ark file\n", __func__, __LINE__);
     return false;
   }
   if (!read_file_into_string(ask_file_str, &ask_der_str)) {
-    printf("Can't read ask file\n");
+    printf("%s, %d: Can't read ask file\n", __func__, __LINE__);
     return false;
   }
   if (!read_file_into_string(vcek_file_str, &vcek_der_str)) {
-    printf("Can't read vcek file\n");
+    printf("%s, %d: Can't read vcek file\n", __func__, __LINE__);
     return false;
   }
 
   X509 *cert1 = X509_new();
   if (!asn1_to_x509(ark_der_str, cert1)) {
+    printf("%s, %d: Can't asn1 translate ark asn\n", __func__, __LINE__);
     return false;
   }
 
@@ -557,7 +585,10 @@ bool test_sev_request(bool print_all) {
     if (success) {
       printf("ark cert verifies\n");
     } else {
-      printf("ark cert does not verify (%d)\n", ret);
+      printf("%s, %d: ark cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -575,7 +606,10 @@ bool test_sev_request(bool print_all) {
     if (success) {
       printf("ask cert verifies\n");
     } else {
-      printf("ask cert does not verify (%d)\n", ret);
+      printf("%s, %d: ask cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -592,7 +626,10 @@ bool test_sev_request(bool print_all) {
     if (success) {
       printf("vcek cert verifies\n");
     } else {
-      printf("vcek cert does not verify (%d)\n", ret);
+      printf("%s, %d: vcek cert does not verify (%d)\n",
+             __func__,
+             __LINE__,
+             ret);
     }
   }
   if (!success)
@@ -600,25 +637,27 @@ bool test_sev_request(bool print_all) {
 
   key_message ark_key;
   if (!x509_to_public_key(cert1, &ark_key)) {
-    printf("Can't convert ark to key\n");
+    printf("%s, %d: Can't convert ark to key\n", __func__, __LINE__);
     return false;
   }
 
   key_message ask_key;
   if (!x509_to_public_key(cert2, &ask_key)) {
-    printf("Can't convert ark to key\n");
+    printf("%s, %d: Can't convert ark to key\n", __func__, __LINE__);
     return false;
   }
 
   key_message vcek_key;
   if (!x509_to_public_key(cert3, &vcek_key)) {
-    printf("Can't convert vcek to key\n");
+    printf("%s, %d: Can't convert vcek to key\n", __func__, __LINE__);
     return false;
   }
 
   vse_clause cl;
   if (!construct_vse_attestation_from_cert(vcek_key, ask_key, &cl)) {
-    printf("construct_vse_attestation_from_cert failed\n");
+    printf("%s, %d: construct_vse_attestation_from_cert failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -637,17 +676,17 @@ bool test_sev_request(bool print_all) {
   key_message policy_private_key;
   key_message policy_public_key;
   if (!read_file_into_string(policy_key_file_str, &serialized_policy_key)) {
-    printf("Can't read policy file\n");
+    printf("%s, %d: Can't read policy file\n", __func__, __LINE__);
     return false;
   }
 
   if (!policy_private_key.ParseFromString(serialized_policy_key)) {
-    printf("Can't parse policy key\n");
+    printf("%s, %d: Can't parse policy key\n", __func__, __LINE__);
     return false;
   }
 
   if (!private_key_to_public_key(policy_private_key, &policy_public_key)) {
-    printf("Can't get public policy key\n");
+    printf("%s, %d: Can't get public policy key\n", __func__, __LINE__);
     return false;
   }
 
@@ -688,11 +727,11 @@ bool test_sev_request(bool print_all) {
   ev->set_serialized_evidence(vcek_der_str);
 
   if (!make_attestation_user_data(enclave_type, auth_public_key, &ud)) {
-    printf("Can't make user data (1)\n");
+    printf("%s, %d: Can't make user data (1)\n", __func__, __LINE__);
     return false;
   }
   if (!ud.SerializeToString(&serialized_ud)) {
-    printf("Can't serialize user data\n");
+    printf("%s, %d: Can't serialize user data\n", __func__, __LINE__);
     return false;
   }
 
@@ -703,7 +742,7 @@ bool test_sev_request(bool print_all) {
               (byte *)serialized_ud.data(),
               &size_out,
               out)) {
-    printf("Attest failed\n");
+    printf("%s, %d: Attest failed\n", __func__, __LINE__);
     return false;
   }
   string at_str;
@@ -722,18 +761,18 @@ bool test_sev_request(bool print_all) {
   //	policyKey says measurement is-trusted
   entity_message meas_ent;
   if (!make_measurement_entity(measurement_str, &meas_ent)) {
-    printf("make_measurement_entity failed\n");
+    printf("%s, %d: make_measurement_entity failed\n", __func__, __LINE__);
     return false;
   }
   entity_message policy_ent;
   if (!make_key_entity(policy_public_key, &policy_ent)) {
-    printf("make_key_entity failed (1)\n");
+    printf("%s, %d: make_key_entity failed (1)\n", __func__, __LINE__);
     return false;
   }
 
   entity_message auth_ent;
   if (!make_key_entity(auth_public_key, &auth_ent)) {
-    printf("make_key_entity failed (2)\n");
+    printf("%s, %d: make_key_entity failed (2)\n", __func__, __LINE__);
     return false;
   }
 

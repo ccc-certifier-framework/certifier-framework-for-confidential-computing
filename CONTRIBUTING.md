@@ -24,7 +24,7 @@ This is a rough outline of what a contributor's workflow looks like:
 Example:
 
 ``` shell
-git remote add upstream https://github.com/vmware-research/certifier-framework-for-confidential-computing.git
+git remote add upstream https://github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing.git
 git checkout -b my-new-feature main
 git commit -a
 git push origin my-new-feature
@@ -32,7 +32,7 @@ git push origin my-new-feature
 
 ### Staying In Sync With Upstream
 
-When your branch gets out of sync with the vmware-research/main branch, use the following to update:
+When your branch gets out of sync with the ccc-certifier-framework/main branch, use the following to update:
 
 ``` shell
 git checkout my-new-feature

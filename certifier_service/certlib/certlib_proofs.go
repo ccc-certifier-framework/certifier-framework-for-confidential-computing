@@ -27,10 +27,10 @@ import (
 	"math/big"
 	"os"
 
-	certprotos "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
-	gramineverify "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
-	isletverify "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/isletverify"
-	oeverify "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/oeverify"
+	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	gramineverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
+	isletverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/isletverify"
+	oeverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 	"google.golang.org/protobuf/proto"
 )
 

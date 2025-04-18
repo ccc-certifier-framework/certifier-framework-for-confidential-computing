@@ -7,6 +7,10 @@ sev environment.  You must also run the tests as root.  Finally, you must also
 initialize platform policy that is cognizant of the attestation values initialized
 in sec-snp-simulator.  This is done in the shell script: sev_policy_script.sh.
 
+In the test directory, milan1.pem is the ask cert and milan2.pem is the ark cert.
+User openssl x509 to converth them to der cert and put them into milan_ask_cert.der
+and milan_ark_cert.der, respectively.
+
 To run the full tests including the sev platform policy tests, use the command:
   ./certifier_tests.exe --policy_file_name=./test_data/policy.bin \
   --policy_key_file_name=./test_data/policy_key_file.bin \
@@ -17,7 +21,8 @@ To run the full tests including the sev platform policy tests, use the command:
   --ask_cert_file_name=./test_data/ask.der \
   --vcek_cert_file_name=./test_data/vcek.der --print_all=true
 If these variables are not set, it will skip some sev tests.  The sev tests only
-work on Linux.
+work on Linux.  Please make sure you have a policy_key_file.bin and the ark.der
+and ask.der certs.
 
 We've added an additional test for secure channel called test_channel.exe.  To use it,
 you should init some keys in the test_data subdirectory just as in simple_apps.

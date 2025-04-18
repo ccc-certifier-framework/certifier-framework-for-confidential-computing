@@ -6,7 +6,9 @@ ifndef NO_ENABLE_SEV
 endif
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT = ..
+endif
 
 ifndef SRC_DIR
 SRC_DIR=.
@@ -33,16 +35,24 @@ ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
 
-CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
+# Newer versions of protobuf require C++17 and dependancies on additional libraries.
+# When this happens, everything must be compiles with C++17 and the linking is a
+# little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
+# is done below.  Comment it out for older protobuf usage.
+NEWPROTOBUF=1
 
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
 CL=..
-
 INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
 
+ifndef NEWPROTOBUF
 CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+else
+CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+endif
 
 CFLAGS  = $(CFLAGS_COMMON) -O3
 CFLAGS_PIC =
@@ -91,9 +101,14 @@ FIX_SWIG_SCRIPT = $(CERTIFIER_ROOT)/CI/scripts/fix_swig_wrap.sh
 
 PY_INCLUDE = $(shell pkg-config python3 --cflags)
 
+ifndef NEWPROTOBUF
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB) -l protobuf
+else
+LDFLAGS = -L $(LOCAL_LIB) `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
+LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB) `pkg-config --cflags --libs protobuf`
+endif
 
 # ----------------------------------------------------------------------
 # Define list of objects for common case which will be extended for

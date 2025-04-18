@@ -2,7 +2,9 @@
 #    File: app_service.mak
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT = ..
+endif
 
 ifndef SRC_DIR
 SRC_DIR=..
@@ -23,8 +25,13 @@ ifndef TARGET_MACHINE_TYPE
 TARGET_MACHINE_TYPE= x64
 endif
 
-CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
+# Newer versions of protobuf require C++17 and dependancies on additional libraries.
+# When this happens, everything must be compiles with C++17 and the linking is a
+# little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
+# is done below.  Comment it out for older protobuf usage.
+NEWPROTOBUF=1
 
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 LIBSRC= $(SRC_DIR)/src
 S= $(SRC_DIR)/application_service
 US= $(S)
@@ -32,16 +39,28 @@ O= $(OBJ_DIR)
 I= $(SRC_DIR)/include
 INCLUDE= -I$(I) -I$(LIBSRC)/sev-snp -I/usr/local/opt/openssl@1.1/include/
 
+ifndef NEWPROTOBUF
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D DEBUG -Wno-deprecated-declarations
+else
+CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -D DEBUG -Wno-deprecated-declarations
+endif
+
 CC=g++
 LINK=g++
+
 # PROTO=/usr/local/bin/protoc
 # Point this to the right place, if you have to.
 # I had to do the above on my machine.
 PROTO=protoc
 AR=ar
+
+ifndef NEWPROTOBUF
 #export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
+else
+export LD_LIBRARY_PATH=/usr/local/lib
+LDFLAGS= -L $(LOCAL_LIB) `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
+endif
 
 dobj = $(O)/app_service.o $(O)/certifier.pb.o $(O)/certifier.o \
        $(O)/certifier_proofs.o $(O)/support.o $(O)/simulated_enclave.o \

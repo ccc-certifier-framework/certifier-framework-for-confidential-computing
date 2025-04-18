@@ -36,9 +36,9 @@ import (
 	"strings"
 	"time"
 
-	certprotos "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 	"google.golang.org/protobuf/proto"
-	// oeverify   "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/oeverify"
+	// oeverify   "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/oeverify"
 )
 
 //  --------------------------------------------------------------------

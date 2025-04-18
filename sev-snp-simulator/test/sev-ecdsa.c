@@ -46,15 +46,15 @@ static void reverse_bytes(uint8_t *buffer, size_t size) {
  */
 static int get_ecdsa_sig_rs_bytes(const unsigned char *sig,
                                   size_t               sig_len,
-                                  unsigned char *      r,
-                                  unsigned char *      s,
-                                  size_t *             rlen,
-                                  size_t *             slen) {
+                                  unsigned char       *r,
+                                  unsigned char       *s,
+                                  size_t              *rlen,
+                                  size_t              *slen) {
   int            rc = -EXIT_FAILURE;
   unsigned char *rbuf = NULL, *sbuf = NULL;
   size_t         r1_len, s1_len;
-  const BIGNUM * r1, *s1;
-  ECDSA_SIG *    sign = d2i_ECDSA_SIG(NULL, &sig, sig_len);
+  const BIGNUM  *r1, *s1;
+  ECDSA_SIG     *sign = d2i_ECDSA_SIG(NULL, &sig, sig_len);
 
   if (sign == NULL || !r || !s || !rlen || !slen) {
     rc = EINVAL;
@@ -116,14 +116,14 @@ out:
   return rc;
 }
 
-int sev_ecdsa_sign(const void *         msg,
+int sev_ecdsa_sign(const void          *msg,
                    size_t               msg_size,
-                   EVP_PKEY *           key,
+                   EVP_PKEY            *key,
                    union sev_ecdsa_sig *sig) {
   int           rc = -EXIT_FAILURE;
-  EVP_MD_CTX *  md_ctx = NULL;
+  EVP_MD_CTX   *md_ctx = NULL;
   EVP_PKEY_CTX *sign_ctx = NULL;
-  uint8_t *     ossl_sig = NULL;
+  uint8_t      *ossl_sig = NULL;
   size_t        expected_size = 0, sig_size = 0;
   size_t        r_size = sizeof(sig->r);
   size_t        s_size = sizeof(sig->s);
@@ -209,15 +209,15 @@ out:
   return rc;
 }
 
-int sev_ecdsa_verify(const void *         digest,
+int sev_ecdsa_verify(const void          *digest,
                      size_t               digest_size,
-                     EVP_PKEY *           key,
+                     EVP_PKEY            *key,
                      union sev_ecdsa_sig *sig) {
   int        rc = -EXIT_FAILURE;
   bool       is_valid = false;
-  EC_KEY *   pub_ec_key = NULL;
-  BIGNUM *   r = NULL;
-  BIGNUM *   s = NULL;
+  EC_KEY    *pub_ec_key = NULL;
+  BIGNUM    *r = NULL;
+  BIGNUM    *s = NULL;
   ECDSA_SIG *ecdsa_sig = NULL;
 
   do {

@@ -36,41 +36,41 @@
 bool open_client_socket(const string &host_name, int port, int *soc);
 bool open_server_socket(const string &host_name, int port, int *soc);
 
-bool construct_platform_evidence_package(string &          enclave_type,
-                                         const string &    purpose,
-                                         evidence_list &   list,
-                                         string &          the_attestation,
+bool construct_platform_evidence_package(string           &enclave_type,
+                                         const string     &purpose,
+                                         evidence_list    &list,
+                                         string           &the_attestation,
                                          evidence_package *ep);
 bool add_policy_key_says_platform_key_is_trusted(
     signed_claim_message &platform_key_is_trusted,
-    evidence_package *    ep);
+    evidence_package     *ep);
 void print_cn_name(X509_NAME *name);
 void print_org_name(X509_NAME *name);
 void print_ssl_error(int code);
 
-bool load_server_certs_and_key(X509 *        x509_root_cert,
-                               key_message & private_key,
+bool load_server_certs_and_key(X509         *x509_root_cert,
+                               key_message  &private_key,
                                const string &private_key_cert,
-                               SSL_CTX *     ctx);
-bool load_server_certs_and_key(X509 *        peer_root_cert,
-                               X509 *        root_cert,
+                               SSL_CTX      *ctx);
+bool load_server_certs_and_key(X509         *peer_root_cert,
+                               X509         *root_cert,
                                int           cert_chain_length,
-                               string *      cert_chain,
-                               key_message & private_key,
+                               string       *cert_chain,
+                               key_message  &private_key,
                                const string &private_key_cert,
-                               SSL_CTX *     ctx);
+                               SSL_CTX      *ctx);
 
 // The functions below are used by BORING_SSL
 // Eventually they will be deprecated
 #  if 1
-bool init_client_ssl(X509 *        x509_root_cert,
-                     key_message & private_key,
+bool init_client_ssl(X509         *x509_root_cert,
+                     key_message  &private_key,
                      const string &private_key_cert,
                      const string &host_name,
                      int           port,
-                     int *         p_sd,
-                     SSL_CTX **    p_ctx,
-                     SSL **        p_ssl);
+                     int          *p_sd,
+                     SSL_CTX     **p_ctx,
+                     SSL         **p_ssl);
 void close_client_ssl(int sd, SSL_CTX *ctx, SSL *ssl);
 #  endif
 

@@ -61,7 +61,7 @@ Clone the Certifier library in, say, ~/Projects
 
 ```shell
 cd ~/Projects
-git clone https://github.com/vmware-research/certifier-framework-for-confidential-computing.git
+git clone https://github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing.git
 ```
 
 2. Clone Gramine

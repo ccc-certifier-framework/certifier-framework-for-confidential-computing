@@ -4,7 +4,7 @@
 ### Setup Environment variables 
 
 cd ~/Projects
-git clone https://github.com/vmware-research/certifier-framework-for-confidential-computing.git
+git clone https://github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing.git
 
 export CERTIFIER=~/Projects/certifier-framework-for-confidential-computing
 export EXAMPLE_DIR=$CERTIFIER/sample_app

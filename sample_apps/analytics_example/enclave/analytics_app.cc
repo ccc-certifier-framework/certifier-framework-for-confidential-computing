@@ -41,10 +41,10 @@ std::string proc_data(const char *sales_df_str) {
   // calculate correlation
   CorrVisitor<double, double> corr_v;
   std::string                 sel_column_names[] = {"order_id",
-                                    "product_id",
-                                    "price_per_unit",
-                                    "quantity",
-                                    "total_price"};
+                                                    "product_id",
+                                                    "price_per_unit",
+                                                    "quantity",
+                                                    "total_price"};
   for (auto col_1 : sel_column_names) {
     ret.append(col_1 + " ");
     for (auto col_2 : sel_column_names) {

@@ -35,7 +35,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	certprotos "github.com/vmware-research/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
 )
 
 /*

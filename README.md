@@ -65,3 +65,12 @@ are licensed under the Apache 2.0 license which is included in the LICENSE
 file.  There are a very few files, used for testing (and not included in
 the API or services) that have other license terms.
 
+## Experimental code
+
+We have added some experimental code in the subdirectory acl_lib to illustrate how
+one can provide a web-like API that supports granular access control to files
+over the sort of secure channel employed by the certifier.  No other code relies
+on this and it is not compiled into any other code here.  We plan to modify
+the experimental code so that it can be compiled as a sub-library but we have
+not yet done so.
+

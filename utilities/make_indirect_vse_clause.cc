@@ -50,9 +50,9 @@ bool get_clause_from_file(const string &in, vse_clause *cl) {
 }
 
 int make_indirect_clause_file_utility(entity_message &subject,
-                                      const string &  verb,
-                                      vse_clause &    in_cl,
-                                      const string &  output) {
+                                      const string   &verb,
+                                      vse_clause     &in_cl,
+                                      const string   &output) {
 
   vse_clause out_cl;
   string     v = verb;

@@ -56,7 +56,7 @@ Clone certifier in the same directory as the parent of the outer gramine dir abo
 ```
 
 ```shell
-git clone https://github.com/vmware-research/certifier-framework-for-confidential-computing.git certifier
+git clone https://github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing.git certifier
 ```
 
 # Steps to install Gramine:

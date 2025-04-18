@@ -48,7 +48,7 @@ bool make_enclave_name(string enclave_type, string *enclave_name) {
 
 
 bool test_artifact(bool print_all) {
-  X509 *      cert = X509_new();
+  X509       *cert = X509_new();
   key_message signing_key;
   key_message subject_key;
   string      issuer_name_str("Policy-key");  // eventually serialized key

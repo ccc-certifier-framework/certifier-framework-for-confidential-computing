@@ -60,7 +60,7 @@ int request_key(struct key_options *options, uint8_t *key, size_t size) {
   struct snp_derived_key_req     req;
   struct snp_derived_key_resp    resp;
   struct snp_guest_request_ioctl guest_req;
-  struct msg_key_resp *          key_resp = (struct msg_key_resp *)&resp.data;
+  struct msg_key_resp           *key_resp = (struct msg_key_resp *)&resp.data;
 
   if (!options || !key || size < sizeof(key_resp->derived_key)) {
     rc = EINVAL;
@@ -124,7 +124,7 @@ out:
 int read_key_file(const char *filename, EVP_PKEY **key, bool priv) {
   int       rc = -EXIT_FAILURE;
   EVP_PKEY *pkey;
-  FILE *    file = NULL;
+  FILE     *file = NULL;
 
   pkey = EVP_PKEY_new();
   file = fopen(filename, "r");
@@ -184,7 +184,7 @@ exit:
 
 static bool digest_sha384(const void *msg,
                           size_t      msg_len,
-                          uint8_t *   digest,
+                          uint8_t    *digest,
                           size_t      digest_len) {
   bool ret = false;
 
@@ -206,7 +206,7 @@ static bool digest_sha384(const void *msg,
 
 int verify_report(struct attestation_report *report) {
   int           rc = -EXIT_FAILURE;
-  EVP_PKEY *    key = NULL;
+  EVP_PKEY     *key = NULL;
   unsigned char sha_digest_384[SHA384_DIGEST_LENGTH];
   rc = read_key_file(SEV_ECDSA_PUB_KEY, &key, false);
   if (rc != EXIT_SUCCESS) {
@@ -243,7 +243,7 @@ exit:
 }
 #endif
 
-int get_report(const uint8_t *            data,
+int get_report(const uint8_t             *data,
                size_t                     data_size,
                struct attestation_report *report) {
   int                            rc = EXIT_FAILURE;
@@ -366,7 +366,7 @@ int main(int argc, char *argv[]) {
   struct attestation_report report;
   uint8_t                   hash[EVP_MAX_MD_SIZE] = {0};
   size_t                    hash_size = sizeof(hash);
-  uint8_t *                 certs = NULL;
+  uint8_t                  *certs = NULL;
   struct key_options        opt = {0};
   uint8_t                   key[MSG_KEY_RSP_DERIVED_KEY_SIZE] = {0};
 

@@ -92,9 +92,9 @@ bool run_me_as_server(const string &host_name,
                       const string &asn1_root_cert,
                       const string &asn1_peer_root_cert,
                       int           num_certs,
-                      string *      cert_chain,
-                      key_message & private_key,
-                      string &      private_key_cert) {
+                      string       *cert_chain,
+                      key_message  &private_key,
+                      string       &private_key_cert) {
 
   printf("running as server\n");
 
@@ -114,8 +114,8 @@ bool run_me_as_client(const string &host_name,
                       const string &asn1_root_cert,
                       const string &peer_asn1_root_cert,
                       int           cert_chain_length,
-                      string *      der_certs,
-                      key_message & private_key,
+                      string       *der_certs,
+                      key_message  &private_key,
                       const string &auth_cert) {
 
   printf("running as client\n");
@@ -141,9 +141,9 @@ bool run_me_as_client(const string &host_name,
 
 bool run_me_as_server(const string &host_name,
                       int           port,
-                      string &      asn1_policy_cert,
-                      key_message & private_key,
-                      string &      private_key_cert) {
+                      string       &asn1_policy_cert,
+                      key_message  &private_key,
+                      string       &private_key_cert) {
 
   printf("running as server\n");
   server_dispatch(host_name,
@@ -157,9 +157,9 @@ bool run_me_as_server(const string &host_name,
 
 bool run_me_as_client(const string &host_name,
                       int           port,
-                      string &      asn1_policy_cert,
-                      key_message & private_key,
-                      string &      private_key_cert) {
+                      string       &asn1_policy_cert,
+                      key_message  &private_key,
+                      string       &private_key_cert) {
 
   printf("running as client\n");
   string                       my_role("client");
@@ -178,10 +178,10 @@ bool run_me_as_client(const string &host_name,
   return true;
 }
 
-bool make_admissions_cert(const string &     role,
+bool make_admissions_cert(const string      &role,
                           const key_message &policy_key,
                           const key_message &auth_key,
-                          string *           out) {
+                          string            *out) {
   string issuer_name("policyAuthority");
   string issuer_organization("root");
   string subject_name(role);
@@ -228,7 +228,7 @@ int main(int an, char **av) {
     // read in policy key and my key
     key_message policy_key;
     key_message auth_key;
-    X509 *      policy_cert = nullptr;
+    X509       *policy_cert = nullptr;
 
     string policy_cert_file(FLAGS_data_dir);
     policy_cert_file.append(FLAGS_policy_cert_file);

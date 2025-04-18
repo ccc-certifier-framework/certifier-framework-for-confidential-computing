@@ -155,7 +155,7 @@ int certifier::utilities::mac_output_byte_size(const char *alg_name) {
 
 bool certifier::utilities::write_file(const string &file_name,
                                       int           size,
-                                      byte *        data) {
+                                      byte         *data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (out < 0)
     return false;
@@ -184,8 +184,8 @@ int certifier::utilities::file_size(const string &file_name) {
 }
 
 bool certifier::utilities::read_file(const string &file_name,
-                                     int *         size,
-                                     byte *        data) {
+                                     int          *size,
+                                     byte         *data) {
   struct stat file_info;
 
   if (stat(file_name.c_str(), &file_info) != 0) {
@@ -219,7 +219,7 @@ bool certifier::utilities::read_file(const string &file_name,
 }
 
 bool certifier::utilities::read_file_into_string(const string &file_name,
-                                                 string *      out) {
+                                                 string       *out) {
   int size = file_size(file_name);
   if (size < 0) {
     printf("%s() error, line: %d, read_file_into_string: Can't size input file "
@@ -249,7 +249,7 @@ bool certifier::utilities::time_t_to_tm_time(time_t *t, struct tm *tm_time) {
   return true;
 }
 
-bool certifier::utilities::tm_time_to_time_point(struct tm * tm_time,
+bool certifier::utilities::tm_time_to_time_point(struct tm  *tm_time,
                                                  time_point *tp) {
   tp->set_year(tm_time->tm_year + 1900);
   tp->set_month(tm_time->tm_mon + 1);
@@ -261,7 +261,7 @@ bool certifier::utilities::tm_time_to_time_point(struct tm * tm_time,
 }
 
 bool certifier::utilities::asn1_time_to_tm_time(const ASN1_TIME *s,
-                                                struct tm *      tm_time) {
+                                                struct tm       *tm_time) {
   if (1 != ASN1_TIME_to_tm(s, tm_time)) {
     printf("%s() error, line: %d, ASN1_TIME_to_tm_time() failed\n",
            __func__,
@@ -566,7 +566,7 @@ bool encrypt(byte *in,
              byte *key,
              byte *iv,
              byte *out,
-             int * out_size) {
+             int  *out_size) {
   EVP_CIPHER_CTX *ctx = nullptr;
   int             len = 0;
   int             out_len = 0;
@@ -615,7 +615,7 @@ bool decrypt(byte *in,
              byte *key,
              byte *iv,
              byte *out,
-             int * size_out) {
+             int  *size_out) {
   EVP_CIPHER_CTX *ctx = nullptr;
   int             len = 0;
   int             out_len = 0;
@@ -659,10 +659,10 @@ done:
   return ret;
 }
 
-bool certifier::utilities::digest_message(const char * alg,
-                                          const byte * message,
+bool certifier::utilities::digest_message(const char  *alg,
+                                          const byte  *message,
                                           int          message_len,
-                                          byte *       digest,
+                                          byte        *digest,
                                           unsigned int digest_len) {
 
   int n = digest_output_byte_size(alg);
@@ -746,7 +746,7 @@ bool aes_256_cbc_sha256_encrypt(byte *in,
                                 byte *key,
                                 byte *iv,
                                 byte *out,
-                                int * out_size) {
+                                int  *out_size) {
   int blk_size = cipher_block_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
   int key_size = cipher_key_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
   int mac_size = mac_output_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
@@ -779,7 +779,7 @@ bool aes_256_cbc_sha256_decrypt(byte *in,
                                 int   in_len,
                                 byte *key,
                                 byte *out,
-                                int * out_size) {
+                                int  *out_size) {
   int blk_size = cipher_block_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
   int key_size = cipher_key_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
   int mac_size = mac_output_byte_size(Enc_method_aes_256_cbc_hmac_sha256);
@@ -824,7 +824,7 @@ bool aes_256_cbc_sha384_encrypt(byte *in,
                                 byte *key,
                                 byte *iv,
                                 byte *out,
-                                int * out_size) {
+                                int  *out_size) {
   int blk_size = cipher_block_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
   int key_size = cipher_key_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
   int mac_size = mac_output_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
@@ -857,7 +857,7 @@ bool aes_256_cbc_sha384_decrypt(byte *in,
                                 int   in_len,
                                 byte *key,
                                 byte *out,
-                                int * out_size) {
+                                int  *out_size) {
   int blk_size = cipher_block_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
   int key_size = cipher_key_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
   int mac_size = mac_output_byte_size(Enc_method_aes_256_cbc_hmac_sha384);
@@ -903,7 +903,7 @@ bool aes_256_gcm_encrypt(byte *in,
                          byte *key,
                          byte *iv,
                          byte *out,
-                         int * out_size) {
+                         int  *out_size) {
   EVP_CIPHER_CTX *ctx = nullptr;
   int             len;
   int             ciphertext_len;
@@ -912,7 +912,7 @@ bool aes_256_gcm_encrypt(byte *in,
   int             tag_len = 0;
   byte            tag[16];
   int             aad_len = 0;
-  byte *          aad = nullptr;
+  byte           *aad = nullptr;
   bool            ret = true;
 
   if (!(ctx = EVP_CIPHER_CTX_new())) {
@@ -1006,15 +1006,15 @@ bool aes_256_gcm_decrypt(byte *in,
                          int   in_len,
                          byte *key,
                          byte *out,
-                         int * out_size) {
+                         int  *out_size) {
   EVP_CIPHER_CTX *ctx = nullptr;
   int             blk_size = cipher_block_byte_size(Enc_method_aes_256);
   int             key_size = cipher_key_byte_size(Enc_method_aes_256);
-  byte *          iv = in;
+  byte           *iv = in;
   bool            ret = true;
-  byte *          tag = in + in_len - blk_size;
+  byte           *tag = in + in_len - blk_size;
   int             aad_len = 0;
-  byte *          aad = nullptr;
+  byte           *aad = nullptr;
   int             len;
   int             plaintext_len;
   int             stream_len = in_len - 2 * blk_size;
@@ -1091,14 +1091,14 @@ done:
 }
 
 bool certifier::utilities::authenticated_encrypt(const char *alg_name,
-                                                 byte *      in,
+                                                 byte       *in,
                                                  int         in_len,
-                                                 byte *      key,
+                                                 byte       *key,
                                                  int         key_len,
-                                                 byte *      iv,
+                                                 byte       *iv,
                                                  int         iv_len,
-                                                 byte *      out,
-                                                 int *       out_size) {
+                                                 byte       *out,
+                                                 int        *out_size) {
 
   int key_size = cipher_key_byte_size(alg_name);
   if (key_size > key_len) {
@@ -1126,12 +1126,12 @@ bool certifier::utilities::authenticated_encrypt(const char *alg_name,
 }
 
 bool certifier::utilities::authenticated_decrypt(const char *alg_name,
-                                                 byte *      in,
+                                                 byte       *in,
                                                  int         in_len,
-                                                 byte *      key,
+                                                 byte       *key,
                                                  int         key_len,
-                                                 byte *      out,
-                                                 int *       out_size) {
+                                                 byte       *out,
+                                                 int        *out_size) {
   int key_size = cipher_key_byte_size(alg_name);
   if (key_size > key_len) {
     printf("%s() error, line: %d, authenticated_decrypt: key length too short\n"
@@ -1161,7 +1161,7 @@ bool certifier::utilities::authenticated_decrypt(const char *alg_name,
 const int rsa_alg_type = 1;
 const int ecc_alg_type = 2;
 bool      certifier::utilities::private_key_to_public_key(const key_message &in,
-                                                     key_message *      out) {
+                                                     key_message       *out) {
 
   int n_bytes = 0;
   int alg_type = 0;
@@ -1266,11 +1266,11 @@ bool make_certifier_rsa_key(int n, key_message *k) {
   return true;
 }
 
-bool rsa_public_encrypt(RSA * key,
+bool rsa_public_encrypt(RSA  *key,
                         byte *data,
                         int   data_len,
                         byte *encrypted,
-                        int * size_out) {
+                        int  *size_out) {
   int n = RSA_public_encrypt(data_len, data, encrypted, key, RSA_PKCS1_PADDING);
   if (n <= 0) {
     printf("%s() error, line: %d, rsa_public_encrypt: RSA_public_encrypt "
@@ -1285,11 +1285,11 @@ bool rsa_public_encrypt(RSA * key,
   return true;
 }
 
-bool rsa_private_decrypt(RSA * key,
+bool rsa_private_decrypt(RSA  *key,
                          byte *enc_data,
                          int   data_len,
                          byte *decrypted,
-                         int * size_out) {
+                         int  *size_out) {
   int n = RSA_private_decrypt(data_len,
                               enc_data,
                               decrypted,
@@ -1309,10 +1309,10 @@ bool rsa_private_decrypt(RSA * key,
 }
 
 //  PKCS compliant signer
-bool rsa_sha256_sign(RSA * key,
+bool rsa_sha256_sign(RSA  *key,
                      int   to_sign_size,
                      byte *to_sign,
-                     int * sig_size,
+                     int  *sig_size,
                      byte *sig) {
   return rsa_sign(Digest_method_sha_256,
                   key,
@@ -1327,11 +1327,11 @@ bool rsa_sha256_verify(RSA *key, int size, byte *msg, int sig_size, byte *sig) {
 }
 
 bool rsa_sign(const char *alg,
-              RSA *       key,
+              RSA        *key,
               int         size,
-              byte *      msg,
-              int *       sig_size,
-              byte *      sig) {
+              byte       *msg,
+              int        *sig_size,
+              byte       *sig) {
 
   EVP_PKEY *private_key = EVP_PKEY_new();
   if (private_key == nullptr) {
@@ -1415,11 +1415,11 @@ bool rsa_sign(const char *alg,
 }
 
 bool rsa_verify(const char *alg,
-                RSA *       key,
+                RSA        *key,
                 int         size,
-                byte *      msg,
+                byte       *msg,
                 int         sig_size,
-                byte *      sig) {
+                byte       *sig) {
 
   if (strcmp(Digest_method_sha_256, alg) == 0) {
     unsigned int size_digest = digest_output_byte_size(Digest_method_sha_256);
@@ -1539,7 +1539,7 @@ bool rsa_verify(const char *alg,
 
 bool generate_new_rsa_key(int num_bits, RSA *r) {
   bool     ret = true;
-  BIGNUM * bne = NULL;
+  BIGNUM  *bne = NULL;
   uint32_t e = RSA_F4;
 
   bne = BN_new();
@@ -1905,11 +1905,11 @@ void certifier::utilities::print_ecc_key(const ecc_message &em) {
 //      compute Q=xkG = kP.  Subtract Q from kP + P_m = P_m.  Extract message
 //      from P_m.
 bool ecc_sign(const char *alg,
-              EC_KEY *    key,
+              EC_KEY     *key,
               int         size,
-              byte *      msg,
-              int *       size_out,
-              byte *      out) {
+              byte       *msg,
+              int        *size_out,
+              byte       *out) {
   unsigned int len = (unsigned int)digest_output_byte_size(alg);
   byte         digest[len];
 
@@ -1941,11 +1941,11 @@ bool ecc_sign(const char *alg,
 }
 
 bool ecc_verify(const char *alg,
-                EC_KEY *    key,
+                EC_KEY     *key,
                 int         size,
-                byte *      msg,
+                byte       *msg,
                 int         size_sig,
-                byte *      sig) {
+                byte       *sig) {
   int ilen = (unsigned int)digest_output_byte_size(alg);
   if (ilen <= 0) {
     printf("%s() error, line: %d, Bad digest size\n", __func__, __LINE__);
@@ -2003,7 +2003,7 @@ EC_KEY *certifier::utilities::generate_new_ecc_key(int num_bits) {
     return nullptr;
   }
 
-  BN_CTX *        ctx = BN_CTX_new();
+  BN_CTX         *ctx = BN_CTX_new();
   const EC_GROUP *group = EC_KEY_get0_group(ecc_key);
   if (group == nullptr) {
     printf("%s() error, line: %d, generate_new_ecc_key: Can't get group (1)\n",
@@ -2011,8 +2011,8 @@ EC_KEY *certifier::utilities::generate_new_ecc_key(int num_bits) {
            __LINE__);
     return nullptr;
   }
-  BIGNUM *        pt_x = BN_new();
-  BIGNUM *        pt_y = BN_new();
+  BIGNUM         *pt_x = BN_new();
+  BIGNUM         *pt_y = BN_new();
   const EC_POINT *pt = EC_KEY_get0_public_key(ecc_key);
   EC_POINT_get_affine_coordinates_GFp(group, pt, pt_x, pt_y, ctx);
   BN_CTX_free(ctx);
@@ -2656,10 +2656,10 @@ bool make_platform_entity(platform &plat, entity_message *ent) {
   return true;
 }
 
-bool make_platform(const string &     type,
-                   const properties & p,
+bool make_platform(const string      &type,
+                   const properties  &p,
                    const key_message *at,
-                   platform *         plat) {
+                   platform          *plat) {
   plat->set_platform_type(type);
   if (at != nullptr) {
     plat->mutable_attest_key()->CopyFrom(*at);
@@ -2674,11 +2674,11 @@ bool make_platform(const string &     type,
   return true;
 }
 
-bool make_property(string &  name,
-                   string &  type,
-                   string &  cmp,
+bool make_property(string   &name,
+                   string   &type,
+                   string   &cmp,
                    uint64_t  int_value,
-                   string &  string_value,
+                   string   &string_value,
                    property *prop) {
   prop->set_property_name(name);
   prop->set_comparator(cmp);
@@ -2707,16 +2707,16 @@ bool make_environment_entity(environment &env, entity_message *ent) {
 }
 
 bool make_environment(const platform &plat,
-                      const string &  measurement,
-                      environment *   env) {
+                      const string   &measurement,
+                      environment    *env) {
   env->mutable_the_platform()->CopyFrom(plat);
   env->set_the_measurement(measurement);
   return true;
 }
 
 bool make_unary_vse_clause(const entity_message &subject,
-                           string &              verb,
-                           vse_clause *          out) {
+                           string               &verb,
+                           vse_clause           *out) {
   entity_message *s = new (entity_message);
   s->CopyFrom(subject);
   out->set_allocated_subject(s);
@@ -2725,9 +2725,9 @@ bool make_unary_vse_clause(const entity_message &subject,
 }
 
 bool make_simple_vse_clause(const entity_message &subject,
-                            string &              verb,
+                            string               &verb,
                             const entity_message &object,
-                            vse_clause *          out) {
+                            vse_clause           *out) {
   entity_message *s = new (entity_message);
   s->CopyFrom(subject);
   out->set_allocated_subject(s);
@@ -2739,9 +2739,9 @@ bool make_simple_vse_clause(const entity_message &subject,
 }
 
 bool make_indirect_vse_clause(const entity_message &subject,
-                              string &              verb,
-                              const vse_clause &    in,
-                              vse_clause *          out) {
+                              string               &verb,
+                              const vse_clause     &in,
+                              vse_clause           *out) {
   entity_message *s = new (entity_message);
   s->CopyFrom(subject);
   out->set_allocated_subject(s);
@@ -2753,11 +2753,11 @@ bool make_indirect_vse_clause(const entity_message &subject,
 }
 
 bool make_claim(int            size,
-                byte *         serialized_claim,
-                string &       format,
-                string &       descriptor,
-                string &       not_before,
-                string &       not_after,
+                byte          *serialized_claim,
+                string        &format,
+                string        &descriptor,
+                string        &not_before,
+                string        &not_after,
                 claim_message *out) {
   out->set_claim_format(format);
   out->set_claim_descriptor(descriptor);
@@ -3050,9 +3050,9 @@ void certifier::utilities::print_entity(const entity_message &em) {
   }
 }
 
-bool make_signed_claim(const char *          alg,
-                       const claim_message & claim,
-                       const key_message &   key,
+bool make_signed_claim(const char           *alg,
+                       const claim_message  &claim,
+                       const key_message    &key,
                        signed_claim_message *out) {
 
   string serialized_claim;
@@ -3231,7 +3231,7 @@ bool make_signed_claim(const char *          alg,
 }
 
 bool verify_signed_claim(const signed_claim_message &signed_claim,
-                         const key_message &         key) {
+                         const key_message          &key) {
 
   if (!signed_claim.has_serialized_claim_message()) {
     printf("%s() error, line: %d, verify_signed_claim: no serialized claim\n",
@@ -3451,14 +3451,14 @@ int add_ext(X509 *cert, int nid, const char *value) {
 // Caller should have allocated X509
 // name is some printable version of the measurement
 bool certifier::utilities::produce_artifact(key_message &signing_key,
-                                            string &     issuer_name_str,
+                                            string      &issuer_name_str,
                                             string &issuer_organization_str,
                                             key_message &subject_key,
-                                            string &     subject_name_str,
-                                            string & subject_organization_str,
+                                            string      &subject_name_str,
+                                            string  &subject_organization_str,
                                             uint64_t sn,
                                             double   secs_duration,
-                                            X509 *   x509,
+                                            X509    *x509,
                                             bool     is_root,
                                             bool vcek /* default =false */) {
 
@@ -3726,13 +3726,13 @@ bool certifier::utilities::produce_artifact(key_message &signing_key,
   return true;
 }
 
-bool certifier::utilities::verify_artifact(X509 &       cert,
+bool certifier::utilities::verify_artifact(X509        &cert,
                                            key_message &verify_key,
-                                           string *     issuer_name_str,
-                                           string *     issuer_description_str,
+                                           string      *issuer_name_str,
+                                           string      *issuer_description_str,
                                            key_message *subject_key,
-                                           string *     subject_name_str,
-                                           string *  subject_organization_str,
+                                           string      *subject_name_str,
+                                           string   *subject_organization_str,
                                            uint64_t *sn) {
 
   bool success = false;
@@ -3745,13 +3745,13 @@ bool certifier::utilities::verify_artifact(X509 &       cert,
       || verify_key.key_type() == Enc_method_rsa_4096_public
       || verify_key.key_type() == Enc_method_rsa_4096_private) {
     EVP_PKEY *verify_pkey = EVP_PKEY_new();
-    RSA *     verify_rsa_key = RSA_new();
+    RSA      *verify_rsa_key = RSA_new();
     if (!key_to_RSA(verify_key, verify_rsa_key))
       return false;
     EVP_PKEY_set1_RSA(verify_pkey, verify_rsa_key);
 
     EVP_PKEY *subject_pkey = X509_get_pubkey(&cert);
-    RSA *     subject_rsa_key = EVP_PKEY_get1_RSA(subject_pkey);
+    RSA      *subject_rsa_key = EVP_PKEY_get1_RSA(subject_pkey);
     if (!RSA_to_key(subject_rsa_key, subject_key)) {
       return false;
     }
@@ -3766,14 +3766,14 @@ bool certifier::utilities::verify_artifact(X509 &       cert,
              || verify_key.key_type() == Enc_method_ecc_256_public
              || verify_key.key_type() == Enc_method_ecc_256_private) {
     EVP_PKEY *verify_pkey = EVP_PKEY_new();
-    EC_KEY *  verify_ecc_key = key_to_ECC(verify_key);
+    EC_KEY   *verify_ecc_key = key_to_ECC(verify_key);
     if (verify_ecc_key == nullptr) {
       return false;
     }
     EVP_PKEY_set1_EC_KEY(verify_pkey, verify_ecc_key);
 
     EVP_PKEY *subject_pkey = X509_get_pubkey(&cert);
-    EC_KEY *  subject_ecc_key = EVP_PKEY_get1_EC_KEY(subject_pkey);
+    EC_KEY   *subject_ecc_key = EVP_PKEY_get1_EC_KEY(subject_pkey);
     if (!ECC_to_key(subject_ecc_key, subject_key)) {
       return false;
     }
@@ -4181,9 +4181,9 @@ bool x509_to_public_key(X509 *x, key_message *k) {
   return true;
 }
 
-bool certifier::utilities::make_root_key_with_cert(string &     type,
-                                                   string &     name,
-                                                   string &     issuer_name,
+bool certifier::utilities::make_root_key_with_cert(string      &type,
+                                                   string      &name,
+                                                   string      &issuer_name,
                                                    key_message *k) {
   string root_name("root");
 
@@ -4206,7 +4206,7 @@ bool certifier::utilities::make_root_key_with_cert(string &     type,
     k->set_key_type(type);
     k->set_key_name(name);
     double duration = 5.0 * 86400.0 * 365.0;
-    X509 * cert = X509_new();
+    X509  *cert = X509_new();
     if (cert == nullptr)
       return false;
     if (!produce_artifact(*k,
@@ -4233,7 +4233,7 @@ bool certifier::utilities::make_root_key_with_cert(string &     type,
     k->set_key_type(type);
     k->set_key_name(name);
     double duration = 5.0 * 86400.0 * 365.0;
-    X509 * cert = X509_new();
+    X509  *cert = X509_new();
     if (cert == nullptr)
       return false;
     if (!produce_artifact(*k,
@@ -4260,7 +4260,7 @@ bool certifier::utilities::make_root_key_with_cert(string &     type,
     k->set_key_type(type);
     k->set_key_name(name);
     double duration = 5.0 * 86400.0 * 365.0;
-    X509 * cert = X509_new();
+    X509  *cert = X509_new();
     if (cert == nullptr)
       return false;
     if (!produce_artifact(*k,
@@ -4288,7 +4288,7 @@ bool certifier::utilities::make_root_key_with_cert(string &     type,
 
 bool construct_vse_attestation_from_cert(const key_message &subj,
                                          const key_message &signer,
-                                         vse_clause *       cl) {
+                                         vse_clause        *cl) {
   string str_says("says");
   string str_prop("is-trusted-for-attestation");
 
