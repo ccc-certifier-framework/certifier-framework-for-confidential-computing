@@ -295,6 +295,7 @@ bool time_point::unix_tm_to_time_point(struct tm *the_time) {
   return true;
 }
 
+// TODO: This gets replaced by compare_time
 int compare_time_points(time_point &l, time_point &r) {
   if (l.year_ > r.year_)
     return 1;
