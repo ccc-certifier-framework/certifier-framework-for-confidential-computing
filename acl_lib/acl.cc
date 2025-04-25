@@ -22,6 +22,11 @@
 
 // -----------------------------------------------------------------------------
 
+
+namespace certifier {
+  namespace acl_lib {
+
+
 void print_principal_message(const principal_message &pi) {
   if (pi.has_principal_name())
     printf("Principal: %s\n", pi.principal_name().c_str());
@@ -796,6 +801,9 @@ int find_principal_in_principal_proto_list(const principal_list &pl,
       return i;
   }
   return -1;
+}
+
+}
 }
 
 // -----------------------------------------------------------------------

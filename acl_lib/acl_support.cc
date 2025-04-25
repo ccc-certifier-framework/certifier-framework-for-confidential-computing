@@ -61,6 +61,10 @@ const char *Integrity_method_aes_256_cbc_hmac_sha384 =
 const char *Integrity_method_aes_256_gcm = "aes-256-gcm";
 const char *Integrity_method_hmac_sha256 = "hmac-sha256";
 
+
+namespace certifier {
+  namespace acl_lib {
+
 name_size cipher_block_byte_name_size[] = {
     {Enc_method_aes_256, 16},
     {Enc_method_aes_256_cbc_hmac_sha256, 16},
@@ -264,7 +268,7 @@ bool decode_time(string &encoded_time, time_point* tp) {
   double sec;
   char   s[64];
 
-  memset((::byte*)s, 0, 64);
+  memset((certifier::acl_lib::byte*)s, 0, 64);
   sscanf(encoded_time.c_str(),
          "%d %s %d, %02d:%02d:%lfZ",
          &dm,
@@ -4078,6 +4082,9 @@ bool same_key(const key_message &k1, const key_message &k2) {
     return false;
   }
   return true;
+}
+
+}
 }
 
 // -----------------------------------------------------------------------

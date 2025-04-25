@@ -15,6 +15,10 @@
 #include "acl_rpc.h"
 #include "acl.pb.h"
 
+namespace certifier {
+  namespace acl_lib {
+
+
 // For testing only
 #ifdef TEST_SIMULATED_CHANNEL
 const int max_size_buf = 4096;
@@ -893,4 +897,7 @@ bool acl_server_dispatch::service_request() {
   }
 
   return true;
+}
+
+}
 }

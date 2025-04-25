@@ -18,6 +18,9 @@
 #include "acl_support.h"
 #include "acl.h"
 
+namespace certifier {
+  namespace acl_lib {
+
 class acl_client_dispatch {
  private:
   bool initialized_;
@@ -57,4 +60,6 @@ class acl_server_dispatch {
   bool load_resources(resource_list &pl);
   bool service_request();
 };
+  }
+}
 #endif
