@@ -16,7 +16,7 @@
 #include "acl.pb.h"
 
 namespace certifier {
-  namespace acl_lib {
+namespace acl_lib {
 
 
 // For testing only
@@ -899,5 +899,5 @@ bool acl_server_dispatch::service_request() {
   return true;
 }
 
-}
-}
+}  // namespace acl_lib
+}  // namespace certifier

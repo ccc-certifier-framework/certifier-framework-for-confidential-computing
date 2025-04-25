@@ -19,7 +19,7 @@
 #include "acl.h"
 
 namespace certifier {
-  namespace acl_lib {
+namespace acl_lib {
 
 class acl_client_dispatch {
  private:
@@ -60,6 +60,6 @@ class acl_server_dispatch {
   bool load_resources(resource_list &pl);
   bool service_request();
 };
-  }
-}
+}  // namespace acl_lib
+}  // namespace certifier
 #endif

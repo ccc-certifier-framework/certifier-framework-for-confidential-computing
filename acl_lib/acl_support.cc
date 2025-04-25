@@ -63,7 +63,7 @@ const char *Integrity_method_hmac_sha256 = "hmac-sha256";
 
 
 namespace certifier {
-  namespace acl_lib {
+namespace acl_lib {
 
 name_size cipher_block_byte_name_size[] = {
     {Enc_method_aes_256, 16},
@@ -126,7 +126,7 @@ name_size mac_byte_name_size[] = {
     {Enc_method_aes_256_gcm, 16},
 };
 
-void init_time_point(time_point* tp) {
+void init_time_point(time_point *tp) {
   tp->set_year(0);
   tp->set_month(0);
   tp->set_day(0);
@@ -135,7 +135,7 @@ void init_time_point(time_point* tp) {
   tp->set_seconds(0.0);
 }
 
-bool time_now(time_point* tp) {
+bool time_now(time_point *tp) {
   time_t    now;
   struct tm current_time;
 
@@ -146,8 +146,9 @@ bool time_now(time_point* tp) {
   return true;
 }
 
-bool add_interval_to_time(time_point &from, double seconds_later,
-          time_point* to) {
+bool add_interval_to_time(time_point &from,
+                          double      seconds_later,
+                          time_point *to) {
 
   // This doesn't do leap years, seconds, month or other stuff... correctly
   to->set_year(from.year());
@@ -210,7 +211,7 @@ const char *s_months[] = {"January",
                           "November",
                           "December"};
 
-void print_time(time_point& tp) {
+void print_time(time_point &tp) {
   int m = tp.month() - 1;
   if (m < 0 || m > 11)
     return;
@@ -223,7 +224,7 @@ void print_time(time_point& tp) {
          tp.seconds());
 }
 
-bool encode_time(time_point& tp, string *the_time) {
+bool encode_time(time_point &tp, string *the_time) {
   int m = tp.month() - 1;
   if (m < 0 || m > 11)
     return false;
@@ -255,7 +256,7 @@ const char *m_months[12] = {"January",
                             "October",
                             "November",
                             "December"};
-int month_from_name(char *mn) {
+int         month_from_name(char *mn) {
   for (int i = 0; i < 12; i++) {
     if (strcmp(mn, m_months[i]) == 0)
       return i;
@@ -263,12 +264,12 @@ int month_from_name(char *mn) {
   return -1;
 }
 
-bool decode_time(string &encoded_time, time_point* tp) {
+bool decode_time(string &encoded_time, time_point *tp) {
   int    dm, yr, hr, min;
   double sec;
   char   s[64];
 
-  memset((certifier::acl_lib::byte*)s, 0, 64);
+  memset((certifier::acl_lib::byte *)s, 0, 64);
   sscanf(encoded_time.c_str(),
          "%d %s %d, %02d:%02d:%lfZ",
          &dm,
@@ -292,11 +293,11 @@ bool decode_time(string &encoded_time, time_point* tp) {
   return true;
 }
 
-bool time_point_to_unix_tm(time_point* tp, struct tm *time_now) {
+bool time_point_to_unix_tm(time_point *tp, struct tm *time_now) {
   return false;
 }
 
-bool unix_tm_to_time_point(struct tm *the_time, time_point* tp) {
+bool unix_tm_to_time_point(struct tm *the_time, time_point *tp) {
   tp->set_year(the_time->tm_year + 1900);
   tp->set_month(the_time->tm_mon + 1);
   tp->set_day(the_time->tm_mday);
@@ -391,7 +392,7 @@ static char s_hex_chars[16] = {'0',
                                'd',
                                'e',
                                'f'};
-char hex_char(byte b) {
+char        hex_char(byte b) {
   if (b > 16)
     return '0';
   return s_hex_chars[b];
@@ -4084,7 +4085,7 @@ bool same_key(const key_message &k1, const key_message &k2) {
   return true;
 }
 
-}
-}
+}  // namespace acl_lib
+}  // namespace certifier
 
 // -----------------------------------------------------------------------

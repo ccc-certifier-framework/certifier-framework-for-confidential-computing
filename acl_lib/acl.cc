@@ -24,7 +24,7 @@
 
 
 namespace certifier {
-  namespace acl_lib {
+namespace acl_lib {
 
 
 void print_principal_message(const principal_message &pi) {
@@ -699,7 +699,9 @@ bool channel_guard::open_resource(const string &resource_name,
           open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
       return true;
     default:
-      printf("%s() error, line: %d: unknown requested right\n", __func__, __LINE__);
+      printf("%s() error, line: %d: unknown requested right\n",
+             __func__,
+             __LINE__);
       return false;
   }
 
@@ -721,20 +723,20 @@ bool channel_guard::read_resource(const string &resource_name,
     int  k = read(ar_[rn].desc_, buf, n);
     if (k < 0) {
       printf("%s() error, line: %d: Can't read, return is %d\n",
-           __func__,
-           __LINE__,
-	   k);
+             __func__,
+             __LINE__,
+             k);
       return false;
     }
     out->assign((char *)buf, k);
     return true;
   }
-      printf("%s() error, line: %d: bad descriptor %d, entry %d, name: %s\n",
-           __func__,
-           __LINE__,
-	   ar_[rn].desc_,
-	   rn,
-	   resource_name.c_str());
+  printf("%s() error, line: %d: bad descriptor %d, entry %d, name: %s\n",
+         __func__,
+         __LINE__,
+         ar_[rn].desc_,
+         rn,
+         resource_name.c_str());
   return false;
 }
 
@@ -759,7 +761,8 @@ bool channel_guard::write_resource(const string &resource_name,
 
 bool channel_guard::delete_resource(const string &resource_name) {
   printf("%s() error, line: %d, delete_resource not implemented\n",
-		  __func__, __LINE__);
+         __func__,
+         __LINE__);
   return false;
 }
 
@@ -781,7 +784,8 @@ bool channel_guard::close_resource(const string &resource_name) {
 bool channel_guard::save_active_resources(const string &file_name) {
   // should be database, eventually
   printf("%s() error, line: %d, save_active_resource not implemented\n",
-		  __func__, __LINE__);
+         __func__,
+         __LINE__);
   return false;
 }
 
@@ -803,7 +807,7 @@ int find_principal_in_principal_proto_list(const principal_list &pl,
   return -1;
 }
 
-}
-}
+}  // namespace acl_lib
+}  // namespace certifier
 
 // -----------------------------------------------------------------------
