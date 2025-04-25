@@ -50,7 +50,7 @@ void print_resource_message(const resource_message &rm) {
   if (rm.has_time_last_written())
     printf("Written: %s\n", rm.time_last_written().c_str());
   if (rm.has_resource_key()) {
-    print_key_message(rm.resource_key());
+    print_key(rm.resource_key());
   }
   if (rm.has_log()) {
     print_audit_info(rm.log());

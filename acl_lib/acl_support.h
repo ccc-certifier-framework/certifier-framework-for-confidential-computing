@@ -121,18 +121,17 @@ bool bytes_to_base64(string &b, string *b64);
 void print_encrypted_message(encrypted_message &m);
 void print_signature_message(signature_message &m);
 
-// TODO: remove the following duplicates
-void print_bytes(int n, byte *in);
-
-//TODO: trust_manager has one of these
 key_message *make_symmetric_key(string       &alg,
                                 string       &name,
                                 const string &not_before,
                                 const string &not_after,
                                 const string &key_bits);
 
-// TODO: replaces by print_key
-void print_key_message(const key_message &m);
+class name_size {
+ public:
+  const char *name_;
+  int         size_;
+};
 
 // TODO: replace by similar
 int  crypto_get_random_bytes(int num_bytes, byte *buf);
@@ -140,6 +139,9 @@ bool init_crypto();
 void close_crypto();
 
 // TODO:  remove duplicates
+// -------------------------------------------------------
+void print_bytes(int n, byte *in);
+void print_key(const key_message &m);
 int digest_output_byte_size(const char *alg_name);
 int mac_output_byte_size(const char *alg_name);
 int cipher_block_byte_size(const char *alg_name);
@@ -202,20 +204,11 @@ class cert_keys_seen_list {
   bool         add_key_seen(key_message *k);
 };
 
-// TODO: New
-class name_size {
- public:
-  const char *name_;
-  int         size_;
-};
-
-// TODO: remove duplicated
 bool time_t_to_tm_time(time_t *t, struct tm *tm_time);
 bool tm_time_to_time_point(struct tm *tm_time, time_point *tp);
 bool asn1_time_to_tm_time(const ASN1_TIME *s, struct tm *tm_time);
 bool get_not_before_from_cert(X509 *c, time_point *tp);
 bool get_not_after_from_cert(X509 *c, time_point *tp);
-// TODO: duplicated
 int  compare_time(time_point &t1, time_point &t2);
 
 bool digest_message(const char  *alg,
@@ -224,21 +217,6 @@ bool digest_message(const char  *alg,
                     byte        *digest,
                     unsigned int digest_len);
 
-// TODO: remove?
-bool encrypt(byte *in,
-             int   in_len,
-             byte *key,
-             byte *iv,
-             byte *out,
-             int  *out_size);
-bool decrypt(byte *in,
-             int   in_len,
-             byte *key,
-             byte *iv,
-             byte *out,
-             int  *size_out);
-
-// TODO: duplicated
 bool aes_256_cbc_sha256_encrypt(byte *in,
                                 int   in_len,
                                 byte *key,
@@ -393,4 +371,21 @@ bool write_file(const string &file_name, int size, byte *data);
 bool write_file_from_string(const string &file_name, const string &in);
 bool read_file(const string &file_name, int *size, byte *data);
 bool read_file_into_string(const string &file_name, string *out);
+
+// TODO:  end remove duplicates
+// -------------------------------------------------------
+
+// TODO: remove?
+bool encrypt(byte *in,
+             int   in_len,
+             byte *key,
+             byte *iv,
+             byte *out,
+             int  *out_size);
+bool decrypt(byte *in,
+             int   in_len,
+             byte *key,
+             byte *iv,
+             byte *out,
+             int  *size_out);
 #endif

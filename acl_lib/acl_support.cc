@@ -2030,7 +2030,7 @@ bool key_to_RSA(const key_message &k, RSA *r) {
     printf("%s() error, line: %d, modulus or exponent missing\n",
            __func__,
            __LINE__);
-    print_key_message(k);
+    print_key(k);
     return false;
   }
   BIGNUM *n = BN_bin2bn((byte *)(rsa_key_data.public_modulus().data()),
@@ -2787,7 +2787,7 @@ void print_rsa_key(const rsa_message &rsa) {
   }
 }
 
-void print_key_message(const key_message &k) {
+void print_key(const key_message &k) {
   if (k.has_key_name()) {
     printf("Key name: %s\n", k.key_name().c_str());
   }
