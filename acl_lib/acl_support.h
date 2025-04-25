@@ -85,28 +85,15 @@ const double seconds_in_common_year = 365.0 * 86400;
 const double seconds_in_leap_year = 366.0 * 86400;
 const double seconds_in_gaussian_year = 365.2568983 * 86400;
 
-// TODO: this should be replaced by the proto to next comment
-class time_point {
- public:
-  int    year_;
-  int    month_;  // 1= January
-  int    day_in_month_;
-  int    hour_;
-  int    minutes_;
-  double seconds_;
+// --------------------------------------------------
 
-  time_point();
-  bool time_now();
-  bool add_interval_to_time(time_point &from, double seconds_later);
-  void print_time();
-  bool encode_time(string *the_time);
-  bool decode_time(string &encoded_time);
-  bool time_point_to_unix_tm(struct tm *time_now);
-  bool unix_tm_to_time_point(struct tm *time_now);
-};
-int compare_time_points(time_point &l, time_point &r);
-
-// ------------------------
+bool time_now(time_point* tp);
+bool add_interval_to_time(time_point &from, double seconds_later,
+         time_point* to);
+void print_time(time_point& tp);
+bool encode_time(time_point& tp, string *the_time);
+bool decode_time(string &encoded_time, time_point* tp);
+bool unix_tm_to_time_point(struct tm *the_time, time_point* tp);
 
 class random_source {
  public:

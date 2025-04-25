@@ -694,6 +694,7 @@ bool channel_guard::open_resource(const string &resource_name,
           open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
       return true;
     default:
+      printf("%s() error, line: %d: unknown requested right\n", __func__, __LINE__);
       return false;
   }
 
@@ -705,16 +706,30 @@ bool channel_guard::read_resource(const string &resource_name,
                                   string       *out) {
   int rn = find_in_active_resource_table(resource_name);
   if (rn < 0) {
+    printf("%s() error, line: %d: Can't find_in_active_resource_table\n",
+           __func__,
+           __LINE__);
     return false;
   }
   if (ar_[rn].desc_ >= 0) {
     byte buf[n];
     int  k = read(ar_[rn].desc_, buf, n);
-    if (k < 0)
+    if (k < 0) {
+      printf("%s() error, line: %d: Can't read, return is %d\n",
+           __func__,
+           __LINE__,
+	   k);
       return false;
+    }
     out->assign((char *)buf, k);
     return true;
   }
+      printf("%s() error, line: %d: bad descriptor %d, entry %d, name: %s\n",
+           __func__,
+           __LINE__,
+	   ar_[rn].desc_,
+	   rn,
+	   resource_name.c_str());
   return false;
 }
 
@@ -727,20 +742,26 @@ bool channel_guard::write_resource(const string &resource_name,
   }
   if (ar_[rn].desc_ >= 0) {
     int k = write(ar_[rn].desc_, (byte *)in.data(), in.size());
-    if (k < 0)
+    if (k < 0) {
+      printf("%s() error, line: %d\n", __func__, __LINE__);
       return false;
+    }
     return true;
   }
+  printf("%s() error, line: %d\n", __func__, __LINE__);
   return false;
 }
 
 bool channel_guard::delete_resource(const string &resource_name) {
+  printf("%s() error, line: %d, delete_resource not implemented\n",
+		  __func__, __LINE__);
   return false;
 }
 
 bool channel_guard::close_resource(const string &resource_name) {
   int rn = find_in_active_resource_table(resource_name);
   if (rn < 0) {
+    printf("%s() error, line: %d\n", __func__, __LINE__);
     return false;
   }
   if (ar_[rn].desc_ >= 0) {
@@ -748,11 +769,14 @@ bool channel_guard::close_resource(const string &resource_name) {
     ar_[rn].desc_ = -1;
     return true;
   }
+  printf("%s() error, line: %d\n", __func__, __LINE__);
   return false;
 }
 
 bool channel_guard::save_active_resources(const string &file_name) {
   // should be database, eventually
+  printf("%s() error, line: %d, save_active_resource not implemented\n",
+		  __func__, __LINE__);
   return false;
 }
 

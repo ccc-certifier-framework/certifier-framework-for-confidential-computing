@@ -70,7 +70,6 @@ message key_message {
 // -----------------------------------------------==
 
 // Add this one
-/*
 // YYYY-MM-DDTHH:mm:ss.sssZ
 message time_point {
   // January = 1
@@ -81,7 +80,6 @@ message time_point {
   optional int32 minute                     = 5;
   optional double seconds                   = 6;
 };
-*/
 
 // These are the new acl specific protos
 

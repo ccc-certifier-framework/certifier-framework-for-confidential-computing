@@ -122,72 +122,73 @@ name_size mac_byte_name_size[] = {
     {Enc_method_aes_256_gcm, 16},
 };
 
-
-time_point::time_point() {
-  year_ = 0;
-  month_ = 0;
-  day_in_month_ = 0;
-  hour_ = 0;
-  minutes_ = 0;
-  seconds_ = 0.0;
+void init_time_point(time_point* tp) {
+  tp->set_year(0);
+  tp->set_month(0);
+  tp->set_day(0);
+  tp->set_hour(0);
+  tp->set_minute(0);
+  tp->set_seconds(0.0);
 }
 
-bool time_point::time_now() {
+bool time_now(time_point* tp) {
   time_t    now;
   struct tm current_time;
 
   time(&now);
   gmtime_r(&now, &current_time);
-  if (!unix_tm_to_time_point(&current_time))
+  if (!unix_tm_to_time_point(&current_time, tp))
     return false;
   return true;
 }
 
-bool time_point::add_interval_to_time(time_point &from, double seconds_later) {
+bool add_interval_to_time(time_point &from, double seconds_later,
+          time_point* to) {
+
   // This doesn't do leap years, seconds, month or other stuff... correctly
-  year_ = from.year_;
-  day_in_month_ = from.day_in_month_;
-  month_ = from.month_;
-  minutes_ = from.minutes_;
-  hour_ = from.hour_;
-  seconds_ = from.seconds_;
+  to->set_year(from.year());
+  to->set_month(from.month());
+  to->set_day(from.day());
+  to->set_hour(from.hour());
+  to->set_minute(from.minute());
+  to->set_seconds(from.seconds());
 
   int days = seconds_later / (double)seconds_in_day;
   seconds_later -= (double)(days * seconds_in_day);
   int yrs = days / 365;
   days -= yrs * 365;
-  year_ += yrs;
+  to->set_year(yrs + to->year());
   int months = days / 30;  // not right;
   days -= months * 30;
-  month_ += months;
-  day_in_month_ += days;
+  to->set_month(months + to->month());
+  to->set_day(days + to->day());
   int mins = (int)seconds_later / 60.0;
   seconds_later -= (double)(mins * 60);
   int hrs = (int)mins / 60.0;
   mins -= hrs * 60;
-  hour_ += hrs;
-  minutes_ += mins;
-  seconds_ += seconds_later;
+  to->set_hour(hrs + to->hour());
+  to->set_minute(mins + to->minute());
+  to->set_seconds(seconds_later + to->seconds());
   // now fix overflows
-  if (seconds_ >= 60.0) {
-    seconds_ -= 60.0;
-    minutes_ += 1;
+  if (to->seconds() >= 60.0) {
+    to->set_seconds(to->seconds() - 60.0);
+    to->set_minute(1 + to->minute());
   }
-  if (minutes_ >= 60) {
-    minutes_ -= 60;
-    hour_ += 1;
+  if (to->minute() >= 60) {
+    to->set_minute(to->minute() - 60);
+    to->set_hour(1 + to->hour());
   }
-  if (hour_ >= 24) {
-    day_in_month_ += 1;
-    hour_ -= 24;
+  if (to->hour() >= 24) {
+    to->set_day(1 + to->day());
+    to->set_hour(to->hour() - 24);
   }
-  if (day_in_month_ > 30) {
-    month_ += 1;
-    day_in_month_ -= 30;
+  if (to->day() > 30) {
+    to->set_month(1 + to->month());
+    to->set_day(to->day() - 30);
   }
-  if (month_ > 12) {
-    year_ += 1;
-    month_ -= 12;
+  if (to->month() > 12) {
+    to->set_year(1 + to->year());
+    to->set_month(to->month() - 12);
   }
   return true;
 }
@@ -204,21 +205,22 @@ const char *s_months[] = {"January",
                           "October",
                           "November",
                           "December"};
-void        time_point::print_time() {
-  int m = month_ - 1;
+
+void print_time(time_point& tp) {
+  int m = tp.month() - 1;
   if (m < 0 || m > 11)
     return;
   printf("%d %s %d, %02d:%02d:%lfZ",
-         day_in_month_,
+         tp.day(),
          s_months[m],
-         year_,
-         hour_,
-         minutes_,
-         seconds_);
+         tp.year(),
+         tp.hour(),
+         tp.minute(),
+         tp.seconds());
 }
 
-bool time_point::encode_time(string *the_time) {
-  int m = month_ - 1;
+bool encode_time(time_point& tp, string *the_time) {
+  int m = tp.month() - 1;
   if (m < 0 || m > 11)
     return false;
   char time_str[256];
@@ -226,12 +228,12 @@ bool time_point::encode_time(string *the_time) {
   snprintf(time_str,
            255,
            "%d %s %d, %02d:%02d:%lfZ",
-           day_in_month_,
+           tp.day(),
            s_months[m],
-           year_,
-           hour_,
-           minutes_,
-           seconds_);
+           tp.year(),
+           tp.hour(),
+           tp.minute(),
+           tp.seconds());
   m = strlen(time_str);
   *the_time = time_str;
   return true;
@@ -249,17 +251,20 @@ const char *m_months[12] = {"January",
                             "October",
                             "November",
                             "December"};
-int         month_from_name(char *mn) {
+int month_from_name(char *mn) {
   for (int i = 0; i < 12; i++) {
     if (strcmp(mn, m_months[i]) == 0)
       return i;
   }
   return -1;
 }
-bool time_point::decode_time(string &encoded_time) {
+
+bool decode_time(string &encoded_time, time_point* tp) {
   int    dm, yr, hr, min;
   double sec;
-  char   s[20];
+  char   s[64];
+
+  memset((::byte*)s, 0, 64);
   sscanf(encoded_time.c_str(),
          "%d %s %d, %02d:%02d:%lfZ",
          &dm,
@@ -269,59 +274,32 @@ bool time_point::decode_time(string &encoded_time) {
          &min,
          &sec);
   int mm = month_from_name(s);
-  if (mm < 0)
+  if (mm < 0) {
+    printf("decode time failure: %s, %s, %d\n", encoded_time.c_str(), s, mm);
     return false;
+  }
   mm++;
-  year_ = yr;
-  month_ = mm;
-  day_in_month_ = dm;
-  hour_ = hr;
-  minutes_ = min;
-  seconds_ = sec;
+  tp->set_year(yr);
+  tp->set_month(mm);
+  tp->set_day(dm);
+  tp->set_hour(hr);
+  tp->set_minute(min);
+  tp->set_seconds(sec);
   return true;
 }
 
-bool time_point::time_point_to_unix_tm(struct tm *time_now) {
+bool time_point_to_unix_tm(time_point* tp, struct tm *time_now) {
   return false;
 }
 
-bool time_point::unix_tm_to_time_point(struct tm *the_time) {
-  year_ = the_time->tm_year + 1900;
-  month_ = the_time->tm_mon + 1;
-  day_in_month_ = the_time->tm_mday;
-  hour_ = the_time->tm_hour;
-  minutes_ = the_time->tm_min;
-  seconds_ = the_time->tm_sec;
+bool unix_tm_to_time_point(struct tm *the_time, time_point* tp) {
+  tp->set_year(the_time->tm_year + 1900);
+  tp->set_month(the_time->tm_mon + 1);
+  tp->set_day(the_time->tm_mday);
+  tp->set_hour(the_time->tm_hour);
+  tp->set_minute(the_time->tm_min);
+  tp->set_seconds(the_time->tm_sec);
   return true;
-}
-
-// TODO: This gets replaced by compare_time
-int compare_time_points(time_point &l, time_point &r) {
-  if (l.year_ > r.year_)
-    return 1;
-  if (l.year_ < r.year_)
-    return -1;
-  if (l.month_ > r.month_)
-    return 1;
-  if (l.month_ < r.month_)
-    return -1;
-  if (l.day_in_month_ > r.day_in_month_)
-    return 1;
-  if (l.day_in_month_ < r.day_in_month_)
-    return -1;
-  if (l.hour_ > r.hour_)
-    return 1;
-  if (l.hour_ < r.hour_)
-    return -1;
-  if (l.minutes_ > r.minutes_)
-    return 1;
-  if (l.minutes_ < r.minutes_)
-    return -1;
-  if (l.seconds_ > r.seconds_)
-    return 1;
-  if (l.seconds_ < r.seconds_)
-    return -1;
-  return 0;
 }
 
 int bits_to_bytes(int n) {
@@ -409,7 +387,7 @@ static char s_hex_chars[16] = {'0',
                                'd',
                                'e',
                                'f'};
-char        hex_char(byte b) {
+char hex_char(byte b) {
   if (b > 16)
     return '0';
   return s_hex_chars[b];
@@ -458,11 +436,13 @@ byte base64_value(char a) {
   }
   return -1;
 }
+
 char base64_char(byte a) {
   if (a >= 0x3f)
     return ' ';
   return web_safe_base64_characters[(int)a];
 }
+
 bool base64_to_bytes(string &b64, string *b) {
   if (!valid_base64((char *)b64.c_str()))
     return false;
@@ -854,12 +834,12 @@ bool time_t_to_tm_time(time_t *t, struct tm *tm_time) {
 }
 
 bool tm_time_to_time_point(struct tm *tm_time, time_point *tp) {
-  tp->year_ = (tm_time->tm_year + 1900);
-  tp->month_ = tm_time->tm_mon + 1;
-  tp->day_in_month_ = (tm_time->tm_mday);
-  tp->hour_ = (tm_time->tm_hour);
-  tp->minutes_ = (tm_time->tm_min);
-  tp->seconds_ = (tm_time->tm_sec);
+  tp->set_year(tm_time->tm_year + 1900);
+  tp->set_month(tm_time->tm_mon + 1);
+  tp->set_day(tm_time->tm_mday);
+  tp->set_hour(tm_time->tm_hour);
+  tp->set_minute(tm_time->tm_min);
+  tp->set_seconds(tm_time->tm_sec);
   return true;
 }
 
@@ -925,29 +905,29 @@ bool get_not_after_from_cert(X509 *c, time_point *tp) {
 // 0 if t1 == t2
 // -1 if t1 < t2
 int compare_time(time_point &t1, time_point &t2) {
-  if (t1.year_ > t2.year_)
+  if (t1.year() > t2.year())
     return 1;
-  if (t1.year_ < t2.year_)
+  if (t1.year() < t2.year())
     return -1;
-  if (t1.month_ > t2.month_)
+  if (t1.month() > t2.month())
     return 1;
-  if (t1.month_ < t2.month_)
+  if (t1.month() < t2.month())
     return -1;
-  if (t1.day_in_month_ > t2.day_in_month_)
+  if (t1.day() > t2.day())
     return 1;
-  if (t1.day_in_month_ < t2.day_in_month_)
+  if (t1.day() < t2.day())
     return -1;
-  if (t1.hour_ > t2.hour_)
+  if (t1.hour() > t2.hour())
     return 1;
-  if (t1.hour_ < t2.hour_)
+  if (t1.hour() < t2.hour())
     return -1;
-  if (t1.minutes_ > t2.minutes_)
+  if (t1.minute() > t2.minute())
     return 1;
-  if (t1.minutes_ < t2.minutes_)
+  if (t1.minute() < t2.minute())
     return -1;
-  if (t1.seconds_ > t2.seconds_)
+  if (t1.seconds() > t2.seconds())
     return 1;
-  if (t1.seconds_ < t2.seconds_)
+  if (t1.seconds() < t2.seconds())
     return -1;
   return 0;
 }

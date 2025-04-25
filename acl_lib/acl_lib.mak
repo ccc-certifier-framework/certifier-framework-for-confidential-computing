@@ -80,7 +80,7 @@ $(SRC_DIR)/acl.pb.cc: $(SRC_DIR)/acl.proto
 
 $(O)/test_acl.o: $(SRC_DIR)/acl.h $(SRC_DIR)/test_acl.cc $(SRC_DIR)/acl.pb.cc
 	@echo "compiling test_acl.cc"
-	$(CC) $(CFLAGS) -c $(I) -o $(O)/test_acl.o $(SRC_DIR)/test_acl.cc
+	$(CC) $(CFLAGS) -c $(I) -DTEST_SIMULATED_CHANNEL -o $(O)/test_acl.o $(SRC_DIR)/test_acl.cc
 
 $(O)/acl.pb.o: $(SRC_DIR)/acl.pb.cc $(SRC_DIR)/acl.pb.h
 	@echo "compiling acl.pb.cc"

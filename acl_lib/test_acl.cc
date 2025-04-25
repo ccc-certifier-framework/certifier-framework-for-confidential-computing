@@ -48,9 +48,9 @@ bool construct_sample_resources(resource_list *rl) {
   string     ty("file");
   time_point tp;
 
-  if (!tp.time_now())
+  if (!time_now(&tp))
     return false;
-  if (!tp.encode_time(&t))
+  if (!encode_time(tp, &t))
     return false;
   if (!add_resource_to_proto_list(r1, ty, l1, t, t, rl)) {
     return false;
@@ -263,6 +263,53 @@ done:
   return ret;
 }
 
+bool test_support() {
+  time_point tp;
+  string the_time;
+  double seconds_later = 365.0 * 86400.0;
+  time_point added_tp;
+  time_point new_tp;
+  
+  if (!time_now(&tp)) {
+    printf("%s() error, line: %d, time_now failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  print_time(tp);
+  printf("\n");
+  if(!encode_time(tp, &the_time)) {
+    printf("%s() error, line: %d, encode_time failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  printf("encoded time: ");
+  print_time(tp);
+  printf("\n");
+  if(!decode_time(the_time, &new_tp)) {
+    printf("%s() error, line: %d, decode_time failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  printf("decoded time: ");
+  print_time(new_tp);
+  printf("\n");
+
+  if(!add_interval_to_time(tp, seconds_later, &added_tp)) {
+    printf("%s() error, line: %d, add_interval_to_time failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  printf("added time: ");
+  print_time(added_tp);
+  printf("\n");
+
+  return true;
+}
+
 bool test_basic() {
   principal_list pl;
   resource_list  rl;
@@ -401,7 +448,7 @@ bool test_access() {
   string root_asn1_cert_str;
   string signing_asn1_cert_str;
   string signing_subject_name("johns-signing-key");
-  ;
+  
   string   signing_subject_org("datica");
   string   serialized_cert_chain_str;
   uint64_t sn = 1;
@@ -568,7 +615,9 @@ bool test_access() {
     printf("open resource succeeded, %d bytes read\n", (int)bytes_read.size());
     printf("Received: %s\n", bytes_read.c_str());
   } else {
-    printf("open reading resource failed\n");
+    printf("%s() error, line %d: open reading resource failed\n",
+		    __func__,
+		    __LINE__);
     return false;
   }
   if (guard.close_resource(res1)) {
@@ -1925,6 +1974,10 @@ done:
     pkey = nullptr;
   }
   return ret;
+}
+
+TEST(support, test_support) {
+  EXPECT_TRUE(test_support());
 }
 
 TEST(basic, test_basic) {
