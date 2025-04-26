@@ -27,6 +27,11 @@ endif
 ifndef LIB_DIR
 LIB_DIR=$(SRC_DIR)
 endif
+
+CI=../include
+CS=../src
+CP=../certifier_service/certprotos
+
 #ifndef GOOGLE_INCLUDE
 #GOOGLE_INCLUDE=/usr/local/include/g
 #endif

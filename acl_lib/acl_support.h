@@ -36,12 +36,18 @@
 #include "sys/fcntl.h"
 #include "sys/stat.h"
 
-// These first definition are copied from certifier.  When linked
-// into a certifier applications, we should use those.
+/*
+#include "certifier_framework.h"
+#include "certifier_utilities.h"
+#include "certifier_algorithms.h"
+
+using namespace certifier::framework;
+using namespace certifier::utilities;
+*/
 
 // ----------------------------------------------------------------------
 
-
+// remove all of these
 extern const char *Enc_method_aes_128;
 extern const char *Enc_method_aes_256;
 extern const char *Enc_method_aes_256_cbc;
@@ -184,8 +190,8 @@ int  crypto_get_random_bytes(int num_bytes, byte *buf);
 bool init_crypto();
 void close_crypto();
 
-// TODO:  remove duplicates
 // -------------------------------------------------------
+// TODO:  remove duplicates
 void print_bytes(int n, byte *in);
 void print_key(const key_message &m);
 int  digest_output_byte_size(const char *alg_name);
@@ -230,17 +236,20 @@ bool aes_256_cbc_sha256_encrypt(byte *in,
                                 byte *iv,
                                 byte *out,
                                 int  *out_size);
+
 bool aes_256_cbc_sha256_decrypt(byte *in,
                                 int   in_len,
                                 byte *key,
                                 byte *out,
                                 int  *out_size);
+
 bool aes_256_cbc_sha384_encrypt(byte *in,
                                 int   in_len,
                                 byte *key,
                                 byte *iv,
                                 byte *out,
                                 int  *out_size);
+
 bool aes_256_cbc_sha384_decrypt(byte *in,
                                 int   in_len,
                                 byte *key,
