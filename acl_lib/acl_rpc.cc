@@ -12,8 +12,14 @@
 // limitations under the License
 // File: acl_rpc.cc
 
+#include "certifier.pb.h"
+#include "certifier.h"
+#include "support.h"
 #include "acl_rpc.h"
 #include "acl.pb.h"
+
+
+using namespace certifier::framework;
 
 namespace certifier {
 namespace acl_lib {

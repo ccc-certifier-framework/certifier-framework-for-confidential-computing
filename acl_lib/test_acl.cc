@@ -16,10 +16,16 @@
 #include <gflags/gflags.h>
 #include <stdio.h>
 
+#include "certifier.h"
+#include "support.h"
+#include "certifier.pb.h"
 #include "acl.pb.h"
 #include "acl_support.h"
 #include "acl.h"
 #include "acl_rpc.h"
+
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 namespace certifier {
 namespace acl_lib {

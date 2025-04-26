@@ -32,16 +32,6 @@
 #include "acl.pb.h"
 #include "acl_support.h"
 
-/*
-#include "certifier_framework.h"
-#include "certifier_utilities.h"
-#include "certifier_algorithms.h"
-
-using namespace certifier::framework;
-using namespace certifier::utilities;
-*/
-
-
 // ---------------------------------------------------------------------------
 //  These are acl specific
 

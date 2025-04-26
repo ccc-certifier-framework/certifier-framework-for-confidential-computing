@@ -17,11 +17,18 @@
 #include "sys/fcntl.h"
 #include "sys/stat.h"
 
+#include "certifier.pb.h"
+#include "support.h"
+#include "certifier.h"
+#include "support.h"
+#include "acl.pb.h"
 #include "acl_support.h"
 #include "acl.h"
 
 // -----------------------------------------------------------------------------
 
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 namespace certifier {
 namespace acl_lib {

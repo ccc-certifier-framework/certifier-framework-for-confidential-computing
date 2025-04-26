@@ -20,7 +20,9 @@ syntax="proto2";
 // certifier definitions.
 // ----------------------------------------------------------
 
+import "certifier.proto";
 
+/*
 message rsa_message {
   optional bytes public_modulus             = 1;
   optional bytes public_exponent            = 2;
@@ -66,9 +68,6 @@ message key_message {
   optional string not_after                 = 10;
 };
 
-// End of duplicated definitions
-// -----------------------------------------------==
-
 // Add this one
 // YYYY-MM-DDTHH:mm:ss.sssZ
 message time_point {
@@ -80,6 +79,10 @@ message time_point {
   optional int32 minute                     = 5;
   optional double seconds                   = 6;
 };
+*/
+
+// End of duplicated definitions
+// -----------------------------------------------
 
 // These are the new acl specific protos
 

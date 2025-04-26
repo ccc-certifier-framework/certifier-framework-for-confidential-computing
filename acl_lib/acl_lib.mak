@@ -44,7 +44,7 @@ endif
 NEWPROTOBUF=1
 
 O= $(OBJ_DIR)
-INCLUDE= -I$(SRC_DIR) -I/usr/local/include -I/usr/local/opt/openssl@1.1/include/
+INCLUDE= -I$(CI) -I$(SRC_DIR) -I/usr/local/include -I/usr/local/opt/openssl@1.1/include/
 
 ifndef NEWPROTOBUF
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
@@ -63,10 +63,10 @@ tobj=   $(O)/acl_rpc.o $(O)/acl_support.o $(O)/acl.o $(O)/acl.pb.o $(O)/test_acl
 
 ifdef NEWPROTOBUF
 export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L/usr/local/lib `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS= -L/usr/local/lib -L.. -l:certifier.a `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 else
-export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L/usr/local/lib -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+export LD_LIBRARY_PATH=/usr/local/lib ..
+LDFLAGS= -L/usr/local/lib -L.. -l:certifier.a -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 endif
 
 all:	test_acl.exe
