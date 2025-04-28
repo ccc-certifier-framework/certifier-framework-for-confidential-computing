@@ -63,10 +63,10 @@ tobj=   $(O)/standalone_app.o
 
 ifdef NEWPROTOBUF
 export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L/usr/local/lib -L.. -L. -l:acl_lib.a -l:certifier.a `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS= -L/usr/local/lib -L.. -L. -l:acl_lib.a -l:certifier.a `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 else
 export LD_LIBRARY_PATH=/usr/local/lib ..
-LDFLAGS= -L/usr/local/lib -L.. -L. -l:acl_lib.a -l:certifier.a -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS= -L/usr/local/lib -L.. -L. -l:acl_lib.a -l:certifier.a -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 endif
 
 all:	standalone_app.exe

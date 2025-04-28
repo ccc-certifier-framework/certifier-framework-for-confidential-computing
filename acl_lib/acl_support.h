@@ -99,11 +99,9 @@ const double seconds_in_gaussian_year = 365.2568983 * 86400;
 
 // --------------------------------------------------
 
-bool time_now(time_point *tp);
 bool add_interval_to_time(time_point &from,
                           double      seconds_later,
                           time_point *to);
-void print_time(time_point &tp);
 bool encode_time(time_point &tp, string *the_time);
 bool decode_time(string &encoded_time, time_point *tp);
 bool unix_tm_to_time_point(struct tm *the_time, time_point *tp);

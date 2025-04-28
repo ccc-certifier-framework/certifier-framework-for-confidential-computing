@@ -284,21 +284,21 @@ bool test_support() {
     printf("%s() error, line: %d, time_now failed\n", __func__, __LINE__);
     return false;
   }
-  print_time(tp);
+  print_time_point(tp);
   printf("\n");
   if (!encode_time(tp, &the_time)) {
     printf("%s() error, line: %d, encode_time failed\n", __func__, __LINE__);
     return false;
   }
   printf("encoded time: ");
-  print_time(tp);
+  print_time_point(tp);
   printf("\n");
   if (!decode_time(the_time, &new_tp)) {
     printf("%s() error, line: %d, decode_time failed\n", __func__, __LINE__);
     return false;
   }
   printf("decoded time: ");
-  print_time(new_tp);
+  print_time_point(new_tp);
   printf("\n");
 
   if (!add_interval_to_time(tp, seconds_later, &added_tp)) {
@@ -308,7 +308,7 @@ bool test_support() {
     return false;
   }
   printf("added time: ");
-  print_time(added_tp);
+  print_time_point(added_tp);
   printf("\n");
 
   return true;

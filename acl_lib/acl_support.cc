@@ -38,17 +38,6 @@ void init_time_point(time_point *tp) {
   tp->set_seconds(0.0);
 }
 
-bool time_now(time_point *tp) {
-  time_t    now;
-  struct tm current_time;
-
-  time(&now);
-  gmtime_r(&now, &current_time);
-  if (!unix_tm_to_time_point(&current_time, tp))
-    return false;
-  return true;
-}
-
 bool add_interval_to_time(time_point &from,
                           double      seconds_later,
                           time_point *to) {
@@ -113,19 +102,6 @@ const char *s_months[] = {"January",
                           "October",
                           "November",
                           "December"};
-
-void print_time(time_point &tp) {
-  int m = tp.month() - 1;
-  if (m < 0 || m > 11)
-    return;
-  printf("%d %s %d, %02d:%02d:%lfZ",
-         tp.day(),
-         s_months[m],
-         tp.year(),
-         tp.hour(),
-         tp.minute(),
-         tp.seconds());
-}
 
 bool encode_time(time_point &tp, string *the_time) {
   int m = tp.month() - 1;
