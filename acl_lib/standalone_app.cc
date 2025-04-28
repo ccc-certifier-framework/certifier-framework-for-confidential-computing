@@ -291,6 +291,18 @@ done:
   return ret;
 }
 
+bool make_access_keys_and_files() {
+  return true;
+}
+
+bool make_channel_keys() {
+  return true;
+}
+
+bool make_server_resources() {
+  return true;
+}
+
 bool init_access_keys_and_files() {
   return true;
 }
@@ -300,14 +312,6 @@ bool init_channel_keys() {
 }
 
 bool init_server_resources() {
-  return true;
-}
-
-bool run_as_client() {
-  return true;
-}
-
-bool run_as_server() {
   return true;
 }
 
@@ -326,7 +330,6 @@ void server_application(secure_authenticated_channel &channel) {
   channel.close();
 }
 
-
 void client_application(secure_authenticated_channel &channel) {
 
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
@@ -340,6 +343,14 @@ void client_application(secure_authenticated_channel &channel) {
   int    n = channel.read(&out);
   printf("SSL client read: %s\n", out.data());
   channel.close();
+}
+
+bool run_as_client() {
+  return true;
+}
+
+bool run_as_server() {
+  return true;
 }
 
 bool run_me_as_server(const string &host_name,
@@ -387,7 +398,7 @@ bool run_me_as_client(const string &host_name,
     printf("Can't init client app\n");
     return false;
   }
-    // This is the actual application code.
+  // This is the actual application code.
   client_application(channel);
   return true;
 }
@@ -679,27 +690,6 @@ int main(int an, char **av) {
   an = 1;
   ::testing::InitGoogleTest(&an, av);
 
-  key_message policy_key;
-  key_message auth_key;
-  X509       *policy_cert = nullptr;
-  string policy_cert_file(FLAGS_data_dir);
-  policy_cert_file.append(FLAGS_policy_cert_file);
-
-  key_message server_root_key;
-  key_message server_public_key;
-  key_message        server_private_key;
-  //server_private_key.CopyFrom(chain2.final_private_key());
-  string server_root_cert;
-  string server_auth_cert;
-
-  key_message client_root_key;
-  key_message client_public_key;
-  key_message        client_private_key;
-  // client_private_key.CopyFrom(chain1.final_private_key());
-  string client_root_cert;
-  string client_auth_cert;
-
-
   SSL_library_init();
 
   if (!certifier::acl_lib::init_crypto()) {
@@ -707,8 +697,33 @@ int main(int an, char **av) {
     return 1;
   }
 
-//    init_channel_keys, init_access_keys_and_files,
-//    run_as_client, run_as_server
+  // channel keys and certs
+  key_message policy_key;
+  key_message auth_key;
+  X509       *policy_cert = nullptr;
+  string      policy_cert_file(FLAGS_data_dir);
+  policy_cert_file.append(FLAGS_policy_cert_file);
+
+  key_message server_root_key;
+  key_message server_public_key;
+  key_message server_private_key;
+  // server_private_key.CopyFrom(chain2.final_private_key());
+  string server_root_cert;
+  string server_auth_cert;
+
+  key_message client_root_key;
+  key_message client_public_key;
+  key_message client_private_key;
+  // client_private_key.CopyFrom(chain1.final_private_key());
+  string client_root_cert;
+  string client_auth_cert;
+
+  // acl keys and certs
+  key_message public_root_key;
+  key_message public_signing_key;
+  const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
+  buffer_list credentials;
+
   if (FLAGS_operation == "init_channel_keys") {
     // read in policy key and my key
     key_message policy_key;
@@ -773,7 +788,7 @@ int main(int an, char **av) {
     }
     policy_key.set_certificate((byte *)str_policy_cert.data(),
                                str_policy_cert.size());
-// make admissions cert
+    // make admissions cert
     string auth_cert;
     if (!make_admissions_cert(FLAGS_operation,
                               policy_key,
@@ -861,7 +876,7 @@ int main(int an, char **av) {
     int    cert_chain_length = 0;
     string der_certs[4];
 
-#ifdef DEBUG
+#  ifdef DEBUG
     printf("\nclient root cert:\n");
     X509 *x509_client_root_cert = X509_new();
     asn1_to_x509(client_root_cert, x509_client_root_cert);
@@ -882,7 +897,7 @@ int main(int an, char **av) {
     print_key(client_private_key);
     printf("\nServer auth key::\n");
     print_key(server_private_key);
-#endif
+#  endif
 
 #endif
   } else if (FLAGS_operation == "run_as_client") {
@@ -899,7 +914,7 @@ int main(int an, char **av) {
         return 1;
       }
 #endif
-    } else if (FLAGS_operation == "run_as_server") {
+  } else if (FLAGS_operation == "run_as_server") {
 #if 0
       if (!run_me_as_server(FLAGS_app_host.c_str(),
                             FLAGS_app_port,
@@ -913,10 +928,10 @@ int main(int an, char **av) {
         return 1;
       }
 #endif
-    } else {
-      printf("Unknown operation\n");
-      return 1;
-    }
+  } else {
+    printf("Unknown operation\n");
+    return 1;
+  }
 
   certifier::acl_lib::close_crypto();
   return 0;
