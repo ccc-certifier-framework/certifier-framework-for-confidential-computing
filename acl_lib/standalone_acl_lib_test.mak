@@ -31,7 +31,6 @@ endif
 CI=../include
 CS=../src
 CP=../certifier_service/certprotos
-ACL_LIB = acl_lib.a
 
 #ifndef GOOGLE_INCLUDE
 #GOOGLE_INCLUDE=/usr/local/include/g
@@ -60,7 +59,7 @@ PROTO=protoc
 AR=ar
 
 # build the library later
-tobj=   $(O)/acl_rpc.o $(O)/acl_support.o $(O)/acl.o $(O)/acl.pb.o
+tobj=   $(O)/acl_rpc.o $(O)/acl_support.o $(O)/acl.o $(O)/acl.pb.o $(O)/test_acl.o
 
 ifdef NEWPROTOBUF
 export LD_LIBRARY_PATH=/usr/local/lib
@@ -70,19 +69,23 @@ export LD_LIBRARY_PATH=/usr/local/lib ..
 LDFLAGS= -L/usr/local/lib -L.. -l:certifier.a -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
 endif
 
-all:	acl_lib.a
+all:	test_acl.exe
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
 	@echo "removing executable file"
-	rm $(EXE_DIR)/acl_lib.a
+	rm $(EXE_DIR)/test_acl.exe
 
-acl_lib.a: $(tobj)
-	@echo "packaging acl_lib"
-	$(AR) rcs $(EXE_DIR)/$(ACL_LIB)  $(tobj)
+test_acl.exe: $(tobj)
+	@echo "linking executable files"
+	$(LINK) -o $(EXE_DIR)/test_acl.exe $(tobj) $(LDFLAGS)
 
 $(SRC_DIR)/acl.pb.cc: $(SRC_DIR)/acl.proto
 	$(PROTO) -I=$(SRC_DIR) --cpp_out=$(SRC_DIR) $(SRC_DIR)/acl.proto
+
+$(O)/test_acl.o: $(SRC_DIR)/acl.h $(SRC_DIR)/test_acl.cc $(SRC_DIR)/acl.pb.cc
+	@echo "compiling test_acl.cc"
+	$(CC) $(CFLAGS) -c $(I) -DTEST_SIMULATED_CHANNEL -o $(O)/test_acl.o $(SRC_DIR)/test_acl.cc
 
 $(O)/acl.pb.o: $(SRC_DIR)/acl.pb.cc $(SRC_DIR)/acl.pb.h
 	@echo "compiling acl.pb.cc"
@@ -98,4 +101,4 @@ $(O)/acl.o: $(SRC_DIR)/acl.h $(SRC_DIR)/acl.cc $(SRC_DIR)/acl.pb.cc $(SRC_DIR)/a
 
 $(O)/acl_rpc.o: $(SRC_DIR)/acl.h $(SRC_DIR)/acl_rpc.h $(SRC_DIR)/acl.pb.cc $(SRC_DIR)/acl_support.h $(SRC_DIR)/acl_rpc.cc
 	@echo "compiling acl_rpc.cc"
-	$(CC) $(CFLAGS) -c $(I) $(O)/acl_rpc.o $(SRC_DIR)/acl_rpc.cc
+	$(CC) $(CFLAGS) -c $(I) -DTEST_SIMULATED_CHANNEL -o $(O)/acl_rpc.o $(SRC_DIR)/acl_rpc.cc
