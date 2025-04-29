@@ -580,7 +580,7 @@ bool make_access_keys_and_files() {
   string      serialized_client1_key;
   string      serialized_client2_key;
   string      serialized_principals;
-  string      serialized_resource;
+  string      serialized_resources;
   buffer_list credentials;
 
   principal_list pl;
@@ -693,7 +693,7 @@ bool make_access_keys_and_files() {
     ret = false;
     goto done;
   }
-  if (!rl.SerializeToString(&serialized_resource)) {
+  if (!rl.SerializeToString(&serialized_resources)) {
     printf("%s() error, line %d: couldn't serialize resource list\n",
            __func__,
            __LINE__);
@@ -702,6 +702,21 @@ bool make_access_keys_and_files() {
   }
 
   // save all the keys and certs and lists
+  if (!write_file_from_string(resource_list_file_name, serialized_resources)) {
+    printf("%s() error, line %d: couldn't write serialized resources\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!write_file_from_string(principal_list_file_name,
+                              serialized_principals)) {
+    printf("%s() error, line %d: couldn't write serialized principals\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
   if (!write_file_from_string(identity_root_signing_key_file_name,
                               serialized_identity_root_key)) {
     printf("%s() error, line %d: couldn't write serialized root key\n",
@@ -858,6 +873,14 @@ bool init_channel_keys(key_message *policy_key,
     ret = false;
     goto done;
   }
+  if (!server_auth_key->ParseFromString(server_auth_key_str)) {
+    printf("%s, error, line %d can't parse client auth key in %s\n",
+           __func__,
+           __LINE__,
+           server_auth_key_file_name.c_str());
+    ret = false;
+    goto done;
+  }
 
   if (FLAGS_print_all) {
     x509_client_auth_cert = X509_new();
@@ -872,26 +895,27 @@ bool init_channel_keys(key_message *policy_key,
     print_key(*client_auth_key);
     printf("\n");
     if (!asn1_to_x509(*client_auth_cert_str, x509_client_auth_cert)) {
-    	printf("%s, error, line %d can't asn translate client cert\n",
-           __func__,
-           __LINE__);
-	ret = false;
-	goto done;
+      printf("%s, error, line %d can't asn translate client cert\n",
+             __func__,
+             __LINE__);
+      ret = false;
+      goto done;
     }
     printf("\nClient admissions cert:\n");
     X509_print_fp(stdout, x509_client_auth_cert);
     printf("Server cert:\n");
-    print_bytes(server_auth_cert_str->size(), (byte*)server_auth_cert_str->size());
+    print_bytes(server_auth_cert_str->size(),
+                (byte *)server_auth_cert_str->data());
     printf("\n");
     printf("\nServer auth key:\n");
     print_key(*server_auth_key);
     printf("\n");
     if (!asn1_to_x509(*server_auth_cert_str, x509_server_auth_cert)) {
-    	printf("%s, error, line %d can't asn translate server cert\n",
-           __func__,
-           __LINE__);
-	ret = false;
-	goto done;
+      printf("%s, error, line %d can't asn translate server cert\n",
+             __func__,
+             __LINE__);
+      ret = false;
+      goto done;
     }
     printf("\nServer admissions cert:\n");
     X509_print_fp(stdout, x509_server_auth_cert);
@@ -902,100 +926,157 @@ done:
   return ret;
 }
 
-bool init_access_keys_and_files(key_message *identity_root_key,
-                                key_message *client1_signing_key,
-                                key_message *client2_signing_key,
-                                buffer_list *credentials) {
-#if 0
-    full_cert_chain chain1;
-    full_cert_chain chain2;
+bool init_access_keys_and_files(key_message    *identity_root_key,
+                                key_message    *client1_signing_key,
+                                key_message    *client2_signing_key,
+                                buffer_list    *credentials,
+                                principal_list *pl,
+                                resource_list  *rl) {
+  bool   ret = true;
+  string serialized_cert_chain_str;
+  string identity_root_cert;
+  string client1_signing_cert;
+  string client2_signing_cert;
+  string serialized_identity_root_key;
+  string serialized_client1_key;
+  string serialized_client2_key;
+  string serialized_principals;
+  string serialized_resources;
+  string serialized_credentials;
 
-    string str_chain1;
-    string str_chain2;
+  string cert_chain1_file_name = FLAGS_data_dir + FLAGS_cert_chain1;
+  string cert_chain2_file_name = FLAGS_data_dir + FLAGS_cert_chain2;
+  string identity_root_signing_key_file_name =
+      FLAGS_data_dir + FLAGS_identity_root_signing_key;
+  string client1_signing_key_file_name =
+      FLAGS_data_dir + FLAGS_client1_signing_key;
+  string client2_signing_key_file_name =
+      FLAGS_data_dir + FLAGS_client2_signing_key;
+  string principal_list_file_name = FLAGS_data_dir + FLAGS_principal_list;
+  string resource_list_file_name = FLAGS_data_dir + FLAGS_resource_list;
 
-    if (!read_file_into_string(FLAGS_cert_chain1, &str_chain1)) {
-      printf("Can't read %s\n", FLAGS_cert_chain1.c_str());
-      return 1;
+  if (!read_file_into_string(cert_chain1_file_name, &serialized_credentials)) {
+    printf("%s, error, line %d can't read credentials\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!credentials->ParseFromString(serialized_credentials)) {
+    printf("%s, error, line %d can't parse credentials\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  // second chain?
+
+  if (credentials->blobs_size() < 2) {
+    printf("%s, error, line %d credentials list too small\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  identity_root_cert = credentials->blobs(0);
+  client1_signing_cert = credentials->blobs(1);
+
+  if (!read_file_into_string(identity_root_signing_key_file_name,
+                             &serialized_identity_root_key)) {
+    printf("%s, error, line %d can't read identity root signing key\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!identity_root_key->ParseFromString(serialized_identity_root_key)) {
+    printf("%s, error, line %d can't parse identity root signing key\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!read_file_into_string(client1_signing_key_file_name,
+                             &serialized_client1_key)) {
+    printf("%s, error, line %d can't read identity root signing key\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!client1_signing_key->ParseFromString(serialized_client1_key)) {
+    printf("%s, error, line %d can't parse identity root signing key\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  if (!read_file_into_string(principal_list_file_name,
+                             &serialized_principals)) {
+    printf("%s, error, line %d can't serialized principals\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!pl->ParseFromString(serialized_principals)) {
+    printf("%s, error, line %d can't parse credentials\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!read_file_into_string(resource_list_file_name, &serialized_resources)) {
+    printf("%s, error, line %d can't serialized resources\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!rl->ParseFromString(serialized_resources)) {
+    printf("%s, error, line %d can't parse credentials\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  if (FLAGS_print_all) {
+    X509 *x509_identity_root_cert = X509_new();
+    if (!asn1_to_x509(identity_root_cert, x509_identity_root_cert)) {
+      printf("%s, error, line %d can't parse identity root signing key\n",
+             __func__,
+             __LINE__);
+      ret = false;
+      goto done;
     }
-
-    if (!read_file_into_string(FLAGS_cert_chain2, &str_chain2)) {
-      printf("Can't read %s\n", FLAGS_cert_chain2.c_str());
-      return 1;
+    printf("\nIdentity root cert:\n");
+    X509_print_fp(stdout, x509_identity_root_cert);
+    printf("\n");
+    printf("Identity root key:\n");
+    print_key(*identity_root_key);
+    printf("\n");
+    X509_free(x509_identity_root_cert);
+    x509_identity_root_cert = nullptr;
+    X509 *x509_client1_cert = X509_new();
+    if (!asn1_to_x509(client1_signing_cert, x509_client1_cert)) {
+      printf("%s, error, line %d can't parse client1 signing key\n",
+             __func__,
+             __LINE__);
+      ret = false;
+      goto done;
     }
+    printf("\nClient 1 cert:\n");
+    X509_print_fp(stdout, x509_client1_cert);
+    printf("\n");
+    printf("Client 1 key:\n");
+    print_key(*client1_signing_key);
+    printf("\n");
 
-    if (!chain1.ParseFromString(str_chain1)) {
-      printf("Can't parse chain 1\n");
-      return 1;
-    }
-    if (!chain2.ParseFromString(str_chain2)) {
-      printf("Can't parse chain 2\n");
-      return 1;
-    }
+    printf("Principals:\n");
+    print_principal_list(*pl);
+    printf("\n");
+    printf("Resources:\n");
+    print_resource_list(*rl);
+    printf("\n");
+  }
 
-    // There should only be two
-    if (chain1.list_size() != 2) {
-      printf("Invalid client chain size\n");
-      return 1;
-    }
-    if (chain2.list_size() != 2) {
-      printf("Invalid server chain size\n");
-      return 1;
-    }
-
-    // subject_key, signer_key, der_cert
-    const key_message &client_root_key = chain1.list(0).signer_key();
-    const key_message &client_public_key = chain1.list(1).subject_key();
-    key_message        client_private_key;
-    client_private_key.CopyFrom(chain1.final_private_key());
-    string client_root_cert;
-    string client_auth_cert;
-
-    const key_message &server_root_key = chain2.list(0).signer_key();
-    const key_message &server_public_key = chain2.list(1).subject_key();
-    key_message        server_private_key;
-    server_private_key.CopyFrom(chain2.final_private_key());
-    string server_root_cert;
-    string server_auth_cert;
-
-    client_root_cert.assign((char *)chain1.list(0).der_cert().data(),
-                            chain1.list(0).der_cert().size());
-    client_auth_cert.assign((char *)chain1.list(1).der_cert().data(),
-                            chain1.list(1).der_cert().size());
-    server_root_cert.assign((char *)chain2.list(0).der_cert().data(),
-                            chain2.list(0).der_cert().size());
-    server_auth_cert.assign((char *)chain2.list(1).der_cert().data(),
-                            chain2.list(1).der_cert().size());
-    client_private_key.set_certificate(client_auth_cert);
-    server_private_key.set_certificate(server_auth_cert);
-
-    int    cert_chain_length = 0;
-    string der_certs[4];
-
-#  ifdef DEBUG
-    printf("\nclient root cert:\n");
-    X509 *x509_client_root_cert = X509_new();
-    asn1_to_x509(client_root_cert, x509_client_root_cert);
-    X509_print_fp(stdout, x509_client_root_cert);
-    X509 *x509_server_root_cert = X509_new();
-    asn1_to_x509(server_root_cert, x509_server_root_cert);
-    printf("\nserver root cert:\n");
-    X509_print_fp(stdout, x509_server_root_cert);
-    X509 *x509_client_auth_cert = X509_new();
-    asn1_to_x509(client_auth_cert, x509_client_auth_cert);
-    printf("\nClient auth cert:\n");
-    X509_print_fp(stdout, x509_client_auth_cert);
-    X509 *x509_server_auth_cert = X509_new();
-    asn1_to_x509(server_auth_cert, x509_server_auth_cert);
-    printf("\nServer auth cert:\n");
-    X509_print_fp(stdout, x509_server_auth_cert);
-    printf("\nClient auth key::\n");
-    print_key(client_private_key);
-    printf("\nServer auth key::\n");
-    print_key(server_private_key);
-#  endif
-
-#endif
-  return true;
+done:
+  return ret;
 }
 
 // ---------------------------------------------------------
@@ -1245,6 +1326,9 @@ bool test_constructed_keys_and_files() {
   key_message client1_signing_key;
   key_message client2_signing_key;
 
+  principal_list pl;
+  resource_list  rl;
+
   const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
   buffer_list credentials;
 
@@ -1303,23 +1387,40 @@ bool test_constructed_keys_and_files() {
   if (!init_access_keys_and_files(&identity_root_key,
                                   &client1_signing_key,
                                   &client2_signing_key,
-                                  &credentials)) {
-    printf("Can't init access keys\n");
+                                  &credentials,
+                                  &pl,
+                                  &rl)) {
+    printf("%s() error, line: %d: Can't init access keys and files\n",
+           __func__,
+           __LINE__);
     return false;
   }
+
   if (FLAGS_print_all) {
     printf("Identity root key:\n");
     print_key(identity_root_key);
     printf("\n");
-    printf("Client signing key:\n");
+    printf("Client 1 key:\n");
     print_key(client1_signing_key);
     printf("\n");
 
+    printf("Principals:\n");
+    print_principal_list(pl);
+    printf("\n");
+    printf("Resources:\n");
+    print_resource_list(rl);
+    printf("\n");
     printf("\nCredentials:\n");
     for (int i = 0; i < credentials.blobs_size(); i++) {
       X509 *cert = X509_new();
       if (cert == nullptr)
         break;
+      if (!asn1_to_x509(credentials.blobs(i), cert)) {
+        printf("%s() error, line: %d: Can't asn1 translate cert\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
       X509_print_fp(stdout, cert);
       printf("\n");
       X509_free(cert);
