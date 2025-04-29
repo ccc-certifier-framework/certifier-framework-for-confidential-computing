@@ -31,7 +31,7 @@ using namespace certifier::acl_lib;
 DEFINE_bool(print_all, false, "verbose");
 
 // operations:
-//    make_access_keys_and_files, test_constructed_files,
+//    make_access_keys_and_files, test_constructed_keys_and_files,
 //    make_additional_channel_keys
 //    run_as_client, run_as_server
 DEFINE_string(operation, "", "operation");
@@ -57,7 +57,7 @@ DEFINE_string(server_auth_cert_file,
 DEFINE_string(cert_chain1, "cert_chain1.bin", "First certificate chain");
 DEFINE_string(cert_chain2, "cert_chain2.bin", "Second certificate chain");
 DEFINE_string(identity_root_signing_key,
-              "identity)root_signing_key.bin",
+              "identity_root_signing_key.bin",
               "Identity root's signing key");
 DEFINE_string(client1_signing_key,
               "client1_signing_key.bin",
@@ -384,7 +384,7 @@ bool make_additional_channel_keys() {
   string server_auth_key_file_name =
       FLAGS_data_dir + FLAGS_server_auth_key_file;
   string server_auth_cert_file_name =
-      FLAGS_data_dir + FLAGS_server_auth_key_file;
+      FLAGS_data_dir + FLAGS_server_auth_cert_file;
 
   // first read the policy key and policy cert
   if (!read_file_into_string(policy_cert_file_name, &policy_cert)) {
@@ -741,8 +741,6 @@ bool init_channel_keys(key_message *policy_key,
                        string      *policy_cert_str,
                        string      *client_auth_cert_str,
                        string      *server_auth_cert_str) {
-  // read in policy key and my key
-  X509 *x509_policy_cert = nullptr;
 
   string policy_cert_file_name(FLAGS_data_dir);
   policy_cert_file_name.append(FLAGS_policy_cert_file);
@@ -753,6 +751,7 @@ bool init_channel_keys(key_message *policy_key,
   string client_auth_key_str;
   string server_auth_key_str;
 
+  X509 *x509_policy_cert = nullptr;
   X509 *x509_client_auth_cert = nullptr;
   X509 *x509_server_auth_cert = nullptr;
 
@@ -763,7 +762,7 @@ bool init_channel_keys(key_message *policy_key,
   string server_auth_key_file_name =
       FLAGS_data_dir + FLAGS_server_auth_key_file;
   string server_auth_cert_file_name =
-      FLAGS_data_dir + FLAGS_server_auth_key_file;
+      FLAGS_data_dir + FLAGS_server_auth_cert_file;
 
   bool ret = true;
 
@@ -852,20 +851,10 @@ bool init_channel_keys(key_message *policy_key,
     goto done;
   }
   if (!client_auth_key->ParseFromString(client_auth_key_str)) {
-    ;
     printf("%s, error, line %d can't parse client auth key in %s\n",
            __func__,
            __LINE__,
            client_auth_key_file_name.c_str());
-    ret = false;
-    goto done;
-  }
-  if (!server_auth_key->ParseFromString(server_auth_key_str)) {
-    ;
-    printf("%s, error, line %d can't parse server auth key in %s\n",
-           __func__,
-           __LINE__,
-           server_auth_key_file_name.c_str());
     ret = false;
     goto done;
   }
@@ -882,15 +871,31 @@ bool init_channel_keys(key_message *policy_key,
     printf("\nClient auth key:\n");
     print_key(*client_auth_key);
     printf("\n");
-    asn1_to_x509(*client_auth_cert_str, x509_client_auth_cert);
+    if (!asn1_to_x509(*client_auth_cert_str, x509_client_auth_cert)) {
+    	printf("%s, error, line %d can't asn translate client cert\n",
+           __func__,
+           __LINE__);
+	ret = false;
+	goto done;
+    }
     printf("\nClient admissions cert:\n");
     X509_print_fp(stdout, x509_client_auth_cert);
-    printf("\nServer auth key:\n");
-    print_key(*client_auth_key);
+    printf("Server cert:\n");
+    print_bytes(server_auth_cert_str->size(), (byte*)server_auth_cert_str->size());
     printf("\n");
-    asn1_to_x509(*server_auth_cert_str, x509_server_auth_cert);
+    printf("\nServer auth key:\n");
+    print_key(*server_auth_key);
+    printf("\n");
+    if (!asn1_to_x509(*server_auth_cert_str, x509_server_auth_cert)) {
+    	printf("%s, error, line %d can't asn translate server cert\n",
+           __func__,
+           __LINE__);
+	ret = false;
+	goto done;
+    }
     printf("\nServer admissions cert:\n");
     X509_print_fp(stdout, x509_server_auth_cert);
+    printf("\n");
   }
 
 done:
