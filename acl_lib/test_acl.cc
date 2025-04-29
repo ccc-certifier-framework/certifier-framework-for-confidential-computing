@@ -52,8 +52,8 @@ bool construct_sample_resources(resource_list *rl) {
   string     p2("paul");
   string     r1("file_1");
   string     r2("file_2");
-  string     l1("./tmp/file_1");
-  string     l2("./tmp/file_2");
+  string     l1("./acl_test_data/file_1");
+  string     l2("./acl_test_data/file_2");
   string     t;
   string     ty("file");
   time_point tp;
@@ -369,7 +369,7 @@ bool test_basic() {
   principal_list restored_pl;
   resource_list  restored_rl;
 
-  string prin_file("saved_principals.bin");
+  string prin_file("./acl_test_data/saved_principals.bin");
   if (!save_principals_to_file(pl, prin_file)) {
     printf("Can't save principals file\n");
     return false;
@@ -383,7 +383,7 @@ bool test_basic() {
     print_principal_list(restored_pl);
   }
 
-  string resource_file("saved_resource.bin");
+  string resource_file("./acl_test_data/saved_resources.bin");
   if (!save_resources_to_file(rl, resource_file)) {
     printf("Can't save resources file\n");
     return false;

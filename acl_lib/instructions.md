@@ -1,20 +1,13 @@
-Warning and instructions
+Instructions
 
-The code in this directory is EXPERIMENTAL.  It is included to illustrate
-how one might provide a web-like API that supports granular access control to files
-over the sort of secure channel employed by the certifier.  No other code relies
-on this and it is not compiled into any other code here.  We plan to modify
-the experimental code so that it can be compiled as a sub-library but we have
-not yet done so.
+The code in this directory provides a web-like API that supports granular access
+control to files over the sort of secure channel employed by the certifier.
 
-If you try to link this code into the certifier right now, it will fail because
-of duplicated symbols.  However, the "stand alone" tests work if you follow the
-instructions below.
-
-This is an experimental library that implements an API over a protected
-channel implementing additional authentication of principals (say, an
-organization) and implementing granular (file level for the prototype) access
-control.  The main authentication mechanism is public key based.
+It includes three seperate made artifacts: a google friendly test suite (compiled
+into test_acl.exe), a library (acl_lib) and a standalone test that shows how to
+use the API under certifier protection.  Access control (create, read, write)
+permissions uses public key authentication (under an identity key hierarchy that
+can be independent of the certifier trust heirearchy).
 
 The current API is:
 
@@ -44,32 +37,49 @@ rpc_create_resource
 rpc_delete_resource
 rpc_add_principal
 
-Check test_acl.cc for examples.  To run the test you should have a directory ./tmp with
-two files: file_1 and file_2.
+Check test_acl.cc for examples.  To run the test you should have two test directories
+./test_data and ./test_data with two files: file_1 and file_2.
 
-There are some duplicated certifier definitions in acl_lib.proto and there are duplicated
-support functions in acl_support.cc.
+To build the google test in .:
+  make clean -f standalone_acl_lib_test.mak
+  make -f standalone_acl_lib_test.mak
+  ./test_acl.exe [--print_all=true]
 
-You should make a directory for test data to run tests, in
-CERTIFIER_PROTOTYPE/acl_lib/test_data:
-  mkdir test_data
-which shoulkd contain the files file_1 and file_2
-To rest with the standalone_app, first generate certifier keys:
-export CERT_UTILS=../../utilities
-$CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
+To build the acl_lib library (after the certifier library has been build):
+  make clean -f acl_lib.mak
+  make -f acl_lib.mak
+You must also either copy certifier.proto (from $CERTIFIER_PROTOTYPE/certifier_service/certprotos)
+into acl_lib OR create a symbolic link to it.
+
+To build the standalone demonstration app:
+  make clean -f standalone_app.mak
+  make -f standalone_app.mak
+
+To run the standalone app, you must prepare needed test files in the
+test_data directory as follows:
+
+Step 1
+  First, create a policy key and cert (just as in the sample apps) by
+  running the following command in ./test_data:
+  export CERT_UTILS= CERTIFIER_PROTOTYPE/utilities
+  $CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
                    --policy_key_output_file=policy_key_file.bin \
                    --policy_cert_output_file=policy_cert_file.bin
-cd ..
 
-Make additional channel keys (auth keys and certs for channel):
-./standalone_app.exe --operation=make_additional_channel_keys
-Make the identity keys, files and access policy:
-./standalone_app.exe --operation=make_access_keys_and_files
-After all the required files are constucted, you can check all the input:
-./standalone_app.exe --operation=test_constructed_keys_and_files
-Now you can start the channel:
-In one window, start the server:
-./standalone_app.exe --operation=run_as_server
-In another window, start the client:
-./standalone_app.exe --operation=run_as_client
+cd ..
+The standalone app uses simulated certifier keys.  You could make
+minor modifications in it to run in a certifier supported enclave.
+Step 2:
+  Make additional channel keys (auth keys and certs for channel):
+    ./standalone_app.exe --operation=make_additional_channel_keys
+  Make the identity keys, files and access policy:
+    ./standalone_app.exe --operation=make_access_keys_and_files
+  After all the required files are constucted, you can check all the input:
+    ./standalone_app.exe --operation=test_constructed_keys_and_files
+Step 3:
+  Now you can start the channel:
+  In one window, start the server:
+    ./standalone_app.exe --operation=run_as_server
+  In another window, start the client:
+    ./standalone_app.exe --operation=run_as_client
 
