@@ -1465,6 +1465,9 @@ int main(int an, char **av) {
   string client1_asn_cert_str;
   string client2_asn_cert_str;
 
+  resource_list  rl;
+  principal_list pl;
+
   const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
 
   if (FLAGS_operation == "make_additional_channel_keys") {
@@ -1488,6 +1491,26 @@ int main(int an, char **av) {
       printf("Files and keys are invalid\n");
     }
   } else if (FLAGS_operation == "run_as_client") {
+    if (!init_channel_keys(&policy_key,
+                           &client_auth_key,
+                           &server_auth_key,
+                           &policy_key_cert_str,
+                           &client_auth_cert_str,
+                           &server_auth_cert_str)) {
+      printf("Can't init channel keys\n");
+      return false;
+    }
+    if (!init_access_keys_and_files(&identity_root_key,
+                                    &client1_signing_key,
+                                    &client2_signing_key,
+                                    &credentials,
+                                    &pl,
+                                    &rl)) {
+      printf("%s() error, line: %d: Can't init access keys and files\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
 #if 0
       if (!run_me_as_client(FLAGS_app_host.c_str(),
                             FLAGS_app_port,
@@ -1502,6 +1525,26 @@ int main(int an, char **av) {
       }
 #endif
   } else if (FLAGS_operation == "run_as_server") {
+    if (!init_channel_keys(&policy_key,
+                           &client_auth_key,
+                           &server_auth_key,
+                           &policy_key_cert_str,
+                           &client_auth_cert_str,
+                           &server_auth_cert_str)) {
+      printf("Can't init channel keys\n");
+      return false;
+    }
+    if (!init_access_keys_and_files(&identity_root_key,
+                                    &client1_signing_key,
+                                    &client2_signing_key,
+                                    &credentials,
+                                    &pl,
+                                    &rl)) {
+      printf("%s() error, line: %d: Can't init access keys and files\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
 #if 0
       if (!run_me_as_server(FLAGS_app_host.c_str(),
                             FLAGS_app_port,
