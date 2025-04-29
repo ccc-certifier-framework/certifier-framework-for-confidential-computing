@@ -29,6 +29,7 @@ using namespace certifier::utilities;
 using namespace certifier::acl_lib;
 
 DEFINE_bool(print_all, false, "verbose");
+
 // operations:
 //    make_access_keys_and_files, test_constructed_files,
 //    make_additional_channel_keys
@@ -64,8 +65,8 @@ DEFINE_string(client1_signing_key,
 DEFINE_string(client2_signing_key,
               "client2_signing_key.bin",
               "Second client's signing key");
-DEFINE_string(resource_list, "resource_list.bin", "resource list file");
-DEFINE_string(principal_list, "principal_list.bin", "principal list file");
+DEFINE_string(resource_list, "saved_resources.bin", "resource list file");
+DEFINE_string(principal_list, "saved_principals.bin", "principal list file");
 
 
 #define DEBUG
@@ -734,25 +735,23 @@ done:
   return ret;
 }
 
-bool init_channel_keys() {
+bool init_channel_keys(key_message *policy_key,
+                       key_message *client_auth_key,
+                       key_message *server_auth_key,
+                       string      *policy_cert_str,
+                       string      *client_auth_cert_str,
+                       string      *server_auth_cert_str) {
   // read in policy key and my key
-  string      policy_key_str;
-  key_message policy_key;
-  string      policy_cert_str;
-  X509       *x509_policy_cert = nullptr;
+  X509 *x509_policy_cert = nullptr;
 
   string policy_cert_file_name(FLAGS_data_dir);
   policy_cert_file_name.append(FLAGS_policy_cert_file);
   string policy_key_file_name(FLAGS_data_dir);
   policy_key_file_name.append(FLAGS_policy_key_file);
-  int sz;
-
-  string      client_auth_cert_str;
-  string      server_auth_cert_str;
-  string      client_auth_key_str;
-  string      server_auth_key_str;
-  key_message client_auth_key;
-  key_message server_auth_key;
+  int    sz;
+  string policy_key_str;
+  string client_auth_key_str;
+  string server_auth_key_str;
 
   X509 *x509_client_auth_cert = nullptr;
   X509 *x509_server_auth_cert = nullptr;
@@ -777,7 +776,7 @@ bool init_channel_keys() {
     ret = false;
     goto done;
   }
-  if (!read_file_into_string(policy_cert_file_name, &policy_cert_str)) {
+  if (!read_file_into_string(policy_cert_file_name, policy_cert_str)) {
     printf("%s, error, line %d can't read policy cert in %s\n",
            __func__,
            __LINE__,
@@ -804,22 +803,22 @@ bool init_channel_keys() {
   }
 
   x509_policy_cert = X509_new();
-  if (!asn1_to_x509(policy_cert_str, x509_policy_cert)) {
+  if (!asn1_to_x509(*policy_cert_str, x509_policy_cert)) {
     printf("%s, error, line %d can't translate cert\n", __func__, __LINE__);
     ret = false;
     goto done;
   }
-  if (!policy_key.ParseFromString(policy_key_str)) {
+  if (!policy_key->ParseFromString(policy_key_str)) {
     printf("%s, error, line %d can't parse policy key\n", __func__, __LINE__);
     ret = false;
     goto done;
   }
-  policy_key.set_certificate((byte *)policy_cert_str.data(),
-                             policy_cert_str.size());
+  policy_key->set_certificate((byte *)policy_cert_str->data(),
+                              policy_cert_str->size());
 
   // client and server auth key and certs
   if (!read_file_into_string(client_auth_cert_file_name,
-                             &client_auth_cert_str)) {
+                             client_auth_cert_str)) {
     printf("%s, error, line %d can't read client auth cert in %s\n",
            __func__,
            __LINE__,
@@ -828,7 +827,7 @@ bool init_channel_keys() {
     goto done;
   }
   if (!read_file_into_string(server_auth_cert_file_name,
-                             &server_auth_cert_str)) {
+                             server_auth_cert_str)) {
     printf("%s, error, line %d can't read server auth cert in %s\n",
            __func__,
            __LINE__,
@@ -852,7 +851,7 @@ bool init_channel_keys() {
     ret = false;
     goto done;
   }
-  if (!client_auth_key.ParseFromString(client_auth_key_str)) {
+  if (!client_auth_key->ParseFromString(client_auth_key_str)) {
     ;
     printf("%s, error, line %d can't parse client auth key in %s\n",
            __func__,
@@ -861,7 +860,7 @@ bool init_channel_keys() {
     ret = false;
     goto done;
   }
-  if (!server_auth_key.ParseFromString(server_auth_key_str)) {
+  if (!server_auth_key->ParseFromString(server_auth_key_str)) {
     ;
     printf("%s, error, line %d can't parse server auth key in %s\n",
            __func__,
@@ -877,19 +876,19 @@ bool init_channel_keys() {
     printf("\nPolicy cert:\n");
     X509_print_fp(stdout, x509_policy_cert);
     printf("\nPolicy key:\n");
-    print_key(policy_key);
+    print_key(*policy_key);
 
 
     printf("\nClient auth key:\n");
-    print_key(client_auth_key);
+    print_key(*client_auth_key);
     printf("\n");
-    asn1_to_x509(client_auth_cert_str, x509_client_auth_cert);
+    asn1_to_x509(*client_auth_cert_str, x509_client_auth_cert);
     printf("\nClient admissions cert:\n");
     X509_print_fp(stdout, x509_client_auth_cert);
     printf("\nServer auth key:\n");
-    print_key(client_auth_key);
+    print_key(*client_auth_key);
     printf("\n");
-    asn1_to_x509(server_auth_cert_str, x509_server_auth_cert);
+    asn1_to_x509(*server_auth_cert_str, x509_server_auth_cert);
     printf("\nServer admissions cert:\n");
     X509_print_fp(stdout, x509_server_auth_cert);
   }
@@ -898,7 +897,10 @@ done:
   return ret;
 }
 
-bool init_access_keys_and_files() {
+bool init_access_keys_and_files(key_message *identity_root_key,
+                                key_message *client1_signing_key,
+                                key_message *client2_signing_key,
+                                buffer_list *credentials) {
 #if 0
     full_cert_chain chain1;
     full_cert_chain chain2;
@@ -1226,40 +1228,101 @@ bool test_constructed_keys_and_files() {
 
   // channel keys and certs
   key_message policy_key;
-  key_message auth_key;
+  key_message client_auth_key;
+  key_message server_auth_key;
   X509       *policy_cert = nullptr;
-  string      policy_cert_file(FLAGS_data_dir);
-  policy_cert_file.append(FLAGS_policy_cert_file);
+  string      policy_key_cert_str;
+  string      client_auth_cert_str;
+  string      server_auth_cert_str;
 
-  key_message server_root_key;
-  key_message server_public_key;
-  key_message server_private_key;
-  // server_private_key.CopyFrom(chain2.final_private_key());
-  string server_root_cert;
-  string server_auth_cert;
+  // access keys
+  key_message identity_root_key;
+  key_message client1_signing_key;
+  key_message client2_signing_key;
 
-  key_message client_root_key;
-  key_message client_public_key;
-  key_message client_private_key;
-  // client_private_key.CopyFrom(chain1.final_private_key());
-  string client_root_cert;
-  string client_auth_cert;
-
-  // acl keys and certs
-  key_message public_root_key;
-  key_message public_signing_key;
   const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
   buffer_list credentials;
 
-  if (!init_channel_keys()) {
+  if (!init_channel_keys(&policy_key,
+                         &client_auth_key,
+                         &server_auth_key,
+                         &policy_key_cert_str,
+                         &client_auth_cert_str,
+                         &server_auth_cert_str)) {
+    printf("Can't init channel keys\n");
+    return false;
   }
   if (FLAGS_print_all) {
+    printf("Policy key:\n");
+    print_key(policy_key);
+    printf("\n");
+    printf("Client auth key:\n");
+    print_key(client_auth_key);
+    printf("\n");
+    printf("server auth  key:\n");
+    print_key(server_auth_key);
+    printf("\n");
+    X509 *x509_policy_cert = X509_new();
+    X509 *x509_client_auth_cert = X509_new();
+    X509 *x509_server_auth_cert = X509_new();
+
+    if (!asn1_to_x509(policy_key_cert_str, x509_policy_cert)) {
+      printf("%s() error, line: %d: can't asn translate policy cert\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    if (!asn1_to_x509(client_auth_cert_str, x509_client_auth_cert)) {
+      printf("%s() error, line: %d: can't asn translate client auth cert\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    if (!asn1_to_x509(server_auth_cert_str, x509_server_auth_cert)) {
+      printf("%s() error, line: %d: can't asn translate server auth cert\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    printf("\nPolicy cert:\n");
+    X509_print_fp(stdout, x509_policy_cert);
+    printf("\n");
+    printf("\nClient auth cert:\n");
+    X509_print_fp(stdout, x509_client_auth_cert);
+    printf("\n");
+    printf("\nServer auth cert:\n");
+    X509_print_fp(stdout, x509_server_auth_cert);
+    printf("\n");
   }
 
-  if (!init_access_keys_and_files()) {
+  if (!init_access_keys_and_files(&identity_root_key,
+                                  &client1_signing_key,
+                                  &client2_signing_key,
+                                  &credentials)) {
+    printf("Can't init access keys\n");
+    return false;
   }
   if (FLAGS_print_all) {
+    printf("Identity root key:\n");
+    print_key(identity_root_key);
+    printf("\n");
+    printf("Client signing key:\n");
+    print_key(client1_signing_key);
+    printf("\n");
+
+    printf("\nCredentials:\n");
+    for (int i = 0; i < credentials.blobs_size(); i++) {
+      X509 *cert = X509_new();
+      if (cert == nullptr)
+        break;
+      X509_print_fp(stdout, cert);
+      printf("\n");
+      X509_free(cert);
+      cert = nullptr;
+      printf("\n");
+    }
   }
+
   return true;
 }
 
@@ -1280,30 +1343,23 @@ int main(int an, char **av) {
 
   // channel keys and certs
   key_message policy_key;
-  key_message auth_key;
+  key_message client_auth_key;
+  key_message server_auth_key;
   X509       *policy_cert = nullptr;
-  string      policy_cert_file(FLAGS_data_dir);
-  policy_cert_file.append(FLAGS_policy_cert_file);
+  string      policy_key_cert_str;
+  string      client_auth_cert_str;
+  string      server_auth_cert_str;
 
-  key_message server_root_key;
-  key_message server_public_key;
-  key_message server_private_key;
-  // server_private_key.CopyFrom(chain2.final_private_key());
-  string server_root_cert;
-  string server_auth_cert;
-
-  key_message client_root_key;
-  key_message client_public_key;
-  key_message client_private_key;
-  // client_private_key.CopyFrom(chain1.final_private_key());
-  string client_root_cert;
-  string client_auth_cert;
-
-  // acl keys and certs
-  key_message public_root_key;
-  key_message public_signing_key;
-  const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
+  key_message identity_root_key;
+  key_message client1_signing_key;
+  key_message client2_signing_key;
   buffer_list credentials;
+
+  string identity_root_asn1_cert_str;
+  string client1_asn_cert_str;
+  string client2_asn_cert_str;
+
+  const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
 
   if (FLAGS_operation == "make_additional_channel_keys") {
     if (!make_additional_channel_keys()) {

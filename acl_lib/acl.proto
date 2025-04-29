@@ -22,68 +22,6 @@ syntax="proto2";
 
 import "certifier.proto";
 
-/*
-message rsa_message {
-  optional bytes public_modulus             = 1;
-  optional bytes public_exponent            = 2;
-  optional bytes private_exponent           = 3;
-  optional bytes private_p                  = 4;
-  optional bytes private_q                  = 5;
-  optional bytes private_dp                 = 6;
-  optional bytes private_dq                 = 7;
-  optional bytes private_iqmp               = 8;
-};
-
-message point_message {
- optional bytes x                           = 1;
- optional bytes y                           = 2;
-};
-
-message ecc_message {
-  optional string curve_name                = 1;
-  optional bytes curve_p                    = 2;
-  optional bytes curve_a                    = 3;
-  optional bytes curve_b                    = 4;
-  optional point_message base_point         = 5;
-  optional point_message public_point       = 6;
-  optional bytes order_of_base_point        = 7;
-  optional bytes private_multiplier         = 8;
-};
-
-// Key types: "rsa-2048-public" "ecc-384-public",
-//    "rsa-2048-private" "ecc-384-private",
-//    "aes-256", "aes-256-hmac-sha-256", etc.
-// Principal formats: "vse-entity"
-// Key formats: "vse-key", "x509-cert"
-message key_message {
-  optional string key_name                  = 1;
-  optional string key_type                  = 2;
-  optional string key_format                = 3;
-  optional rsa_message rsa_key              = 4;
-  optional ecc_message ecc_key              = 5;
-  optional bytes secret_key_bits            = 6;
-  optional bytes certificate                = 7;
-  optional bytes other_key_formats          = 8;
-  optional string not_before                = 9;
-  optional string not_after                 = 10;
-};
-
-// Add this one
-// YYYY-MM-DDTHH:mm:ss.sssZ
-message time_point {
-  // January = 1
-  optional int32 year                       = 1;
-  optional int32 month                      = 2;
-  optional int32 day                        = 3;
-  optional int32 hour                       = 4;
-  optional int32 minute                     = 5;
-  optional double seconds                   = 6;
-};
-*/
-
-// End of duplicated definitions
-// -----------------------------------------------
-
 // These are the new acl specific protos
 
 message binary_blob_message {
