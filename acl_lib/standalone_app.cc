@@ -71,10 +71,6 @@ DEFINE_string(principal_list, "saved_principals.bin", "principal list file");
 
 #define DEBUG
 
-#if 1
-acl_server_dispatch g_server(nullptr);
-#endif
-
 bool construct_sample_principals(principal_list *pl) {
   string p1("john");
   string p2("paul");
@@ -1087,41 +1083,64 @@ void server_application(secure_authenticated_channel &channel) {
 
   // Read message from client over authenticated, encrypted channel
   string out;
-  int    n = channel.read(&out);
-  printf("SSL server read: %s\n", (const char *)out.data());
+  bool   ret = true;
+  int    n;
 
-  // Reply over authenticated, encrypted channel
-  const char *msg = "Hi from your secret server\n";
-  channel.write(strlen(msg), (byte *)msg);
+  for (;;) {
+    n = channel.read(&out);
+    printf("SSL server read (%d): %s\n", n, (const char *)out.data());
+
+    // Reply over authenticated, encrypted channel
+    const char *msg = "Hi from your secret server\n";
+    channel.write(strlen(msg), (byte *)msg);
+  }
   channel.close();
 }
 
-void client_application(secure_authenticated_channel &channel) {
+void client_application(secure_authenticated_channel &channel,
+                        const key_message            &signing_key) {
 
+  bool ret = true;
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
+  string      prin_name("john");
+  const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
+  string      res1_name("file_1");
+  string      res2_name("file_2");
+  string      acc1("read");
+  string      acc2("write");
+  string      bytes_written_to_file("Hello there");
+  string      bytes_read_from_file;
+  const char *dig_alg = Digest_method_sha_256;
+  EVP_PKEY   *pkey = nullptr;
+  RSA        *r2 = nullptr;
 
-  // client sends a message over authenticated, encrypted channel
-  const char *msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte *)msg);
+  string nonce;
+  string signed_nonce;
+  int    size_nonce = 32;
+  byte   buf[size_nonce];
+  int    size_sig = 512;
+  byte   sig[size_sig];
 
-  // Get server response over authenticated, encrypted channel and print it
-  string out;
-  int    n = channel.read(&out);
-  printf("SSL client read: %s\n", out.data());
-  channel.close();
-}
 
-bool run_as_client() {
+  // The channel was negotiated with the client/server
+  // auth keys.
+  if (!channel.channel_initialized_) {
+    printf("%s() error, line %d: channel not initialized\n",
+           __func__,
+           __LINE__);
+    return;
+  }
 
-#if 0
+  acl_client_dispatch client_dispatch(channel.ssl_);
+
   // initialize keys and certs
 
-  ret = client.rpc_authenticate_me(prin_name, &nonce);
+  ret = client_dispatch.rpc_authenticate_me(prin_name, &nonce);
   if (!ret) {
     printf("%s() error, line %d: client.rpc_authenticate_me failed\n",
            __func__,
            __LINE__);
-    return false;
+    return;
   }
 
   // sign nonce
@@ -1154,7 +1173,7 @@ bool run_as_client() {
   }
 
   // sign nonce
-  if (!rsa_sign(dig_alg.c_str(),
+  if (!rsa_sign(dig_alg,
                 r2,
                 nonce.size(),
                 (byte *)nonce.data(),
@@ -1166,14 +1185,14 @@ bool run_as_client() {
   }
   signed_nonce.assign((char *)sig, size_sig);
 
-  ret = client.rpc_verify_me(prin_name, signed_nonce);
+  ret = client_dispatch.rpc_verify_me(prin_name, signed_nonce);
   if (!ret) {
     printf("%s() error, line %d: rpc_verify_me failed\n", __func__, __LINE__);
     ret = false;
     goto done;
   }
 
-  ret = client.rpc_open_resource(res1_name, acc1);
+  ret = client_dispatch.rpc_open_resource(res1_name, acc1);
   if (!ret) {
     printf("%s() error, line %d: rpc_open_resource failed\n",
            __func__,
@@ -1182,7 +1201,7 @@ bool run_as_client() {
     goto done;
   }
 
-  ret = client.rpc_read_resource(res1_name, 14, &bytes_read_from_file);
+  ret = client_dispatch.rpc_read_resource(res1_name, 14, &bytes_read_from_file);
   if (!ret) {
     printf("%s() error, line %d: rpc_read_resource failed\n",
            __func__,
@@ -1192,7 +1211,7 @@ bool run_as_client() {
   }
   printf("Bytes: %s\n", bytes_read_from_file.c_str());
 
-  ret = client.rpc_close_resource(res1_name);
+  ret = client_dispatch.rpc_close_resource(res1_name);
   if (!ret) {
     printf("%s() error, line %d: rpc_close_resource failed\n",
            __func__,
@@ -1201,7 +1220,7 @@ bool run_as_client() {
     goto done;
   }
 
-  ret = client.rpc_open_resource(res2_name, acc2);
+  ret = client_dispatch.rpc_open_resource(res2_name, acc2);
   if (!ret) {
     printf("%s() error, line %d: rpc_open_resource failed\n",
            __func__,
@@ -1210,7 +1229,7 @@ bool run_as_client() {
     goto done;
   }
 
-  ret = client.rpc_write_resource(res2_name, bytes_written_to_file);
+  ret = client_dispatch.rpc_write_resource(res2_name, bytes_written_to_file);
   if (!ret) {
     printf("%s() error, line %d: rpc_write_resource failed\n",
            __func__,
@@ -1219,7 +1238,7 @@ bool run_as_client() {
     goto done;
   }
 
-  ret = client.rpc_close_resource(res2_name);
+  ret = client_dispatch.rpc_close_resource(res2_name);
   if (!ret) {
     printf("%s() error, line %d: rpc_close_resource failed\n",
            __func__,
@@ -1229,35 +1248,26 @@ bool run_as_client() {
   }
 
 done:
+  if (ret) {
+    printf("client_application succeeded\n");
+  } else {
+    printf("client_application failed\n");
+  }
   if (pkey != nullptr) {
     EVP_PKEY_free(pkey);
     pkey = nullptr;
   }
-  return ret;
-#endif
-  return true;
-}
+  return;
 
-bool run_as_server() {
-#if 0 
-  // initialize server
+  // client sends a message over authenticated, encrypted channel
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
 
-  if (!g_server.guard_.init_root_cert(asn1_cert_str)) {
-    printf("%s() error, line %d: Can't init_root\n", __func__, __LINE__);
-    return false;
-  }
-
-  if (!g_server.load_principals(pl)) {
-    printf("%s() error, line %d: Cant load principals\n", __func__, __LINE__);
-    return false;
-  }
-
-  if (!g_server.load_resources(rl)) {
-    printf("%s() error, line %d: Cant load resources\n", __func__, __LINE__);
-    return false;
-  }
-#endif
-  return true;
+  // Get server response over authenticated, encrypted channel and print it
+  string out;
+  int    n = channel.read(&out);
+  printf("SSL client read: %s\n", out.data());
+  channel.close();
 }
 
 bool run_me_as_server(const string &host_name,
@@ -1282,14 +1292,16 @@ bool run_me_as_server(const string &host_name,
                          server_application);
 }
 
-bool run_me_as_client(const string &host_name,
-                      int           port,
-                      const string &asn1_root_cert,
-                      const string &peer_asn1_root_cert,
-                      int           cert_chain_length,
-                      string       *der_certs,
-                      key_message  &private_key,
-                      const string &auth_cert) {
+bool run_me_as_client(const string      &host_name,
+                      int                port,
+                      const string      &asn1_root_cert,
+                      const string      &peer_asn1_root_cert,
+                      int                cert_chain_length,
+                      string            *der_certs,
+                      key_message       &private_key,
+                      const string      &auth_cert,
+                      const key_message &client_signing_key,
+                      const buffer_list &credentials) {
 
   printf("running as client\n");
   string                       my_role("client");
@@ -1306,7 +1318,7 @@ bool run_me_as_client(const string &host_name,
     return false;
   }
   // This is the actual application code.
-  client_application(channel);
+  client_application(channel, client_signing_key);
   return true;
 }
 
@@ -1511,19 +1523,25 @@ int main(int an, char **av) {
              __LINE__);
       return false;
     }
-#if 0
-      if (!run_me_as_client(FLAGS_app_host.c_str(),
-                            FLAGS_app_port,
-                            client_root_cert,
-                            server_root_cert,
-                            cert_chain_length,
-                            der_certs,
-                            (key_message &)client_private_key,
-                            client_auth_cert)) {
-        printf("run-me-as-client failed\n");
-        return 1;
-      }
-#endif
+
+    // der certs are cert chain from policy key
+    int    cert_chain_length = 2;
+    string der_certs[2];
+    der_certs[0] = policy_key_cert_str;
+    der_certs[1] = client_auth_cert_str;
+    if (!run_me_as_client(FLAGS_app_host.c_str(),
+                          FLAGS_app_port,
+                          client_auth_cert_str,
+                          server_auth_cert_str,
+                          cert_chain_length,
+                          der_certs,
+                          (key_message &)client_auth_key,
+                          client_auth_cert_str,
+                          client1_signing_key,
+                          credentials)) {
+      printf("run-me-as-client failed\n");
+      return 1;
+    }
   } else if (FLAGS_operation == "run_as_server") {
     if (!init_channel_keys(&policy_key,
                            &client_auth_key,
