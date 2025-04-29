@@ -31,6 +31,7 @@ using namespace certifier::acl_lib;
 DEFINE_bool(print_all, false, "verbose");
 // operations:
 //    make_access_keys_and_files, test_constructed_files,
+//    make_additional_channel_keys
 //    run_as_client, run_as_server
 DEFINE_string(operation, "", "operation");
 
@@ -40,7 +41,14 @@ DEFINE_int32(app_port, 8124, "port for server");
 DEFINE_string(data_dir, "./test_data/", "directory for files");
 DEFINE_string(policy_cert_file, "policy_cert_file.bin", "policy cert file");
 DEFINE_string(policy_key_file, "policy_key_file.bin", "policy key file");
-DEFINE_string(auth_key_file, "auth_key_file.bin", "auth key file");
+DEFINE_string(client_auth_key_file, "client_auth_key_file.bin",
+                "client auth key file");
+DEFINE_string(client_auth_cert_file, "client_auth_cert_file.bin",
+                "client auth cert file");
+DEFINE_string(server_auth_key_file, "server_auth_key_file.bin",
+                "server auth key file");
+DEFINE_string(server_auth_cert_file, "server_auth_cert_file.bin",
+                "server auth cert file");
 DEFINE_string(cert_chain1, "cert_chain1.bin", "First certificate chain");
 DEFINE_string(cert_chain2, "cert_chain2.bin", "Second certificate chain");
 
@@ -321,6 +329,198 @@ bool make_admissions_cert(const string      &role,
   return true;
 }
 
+// the policy key and cert are created by cert_utility
+// we need to add admission certificate and keys for
+// the client and server
+bool make_additional_channel_keys() {
+  // make auth keys and admissions certs
+
+  key_message policy_key;
+  string policy_cert;
+
+  string policy_cert_file_name = FLAGS_data_dir + FLAGS_policy_cert_file;
+  string policy_key_file_name = FLAGS_data_dir + FLAGS_policy_key_file;
+  string serialized_policy_key;
+
+  bool ret = true;
+
+  uint64_t sn = 1;
+  uint64_t duration = 86400 * 366;
+  RSA  *r1 = nullptr;
+  RSA  *r2 = nullptr;
+
+  key_message client_auth_key;
+  key_message client_public_auth_key;
+  string client_auth_cert;
+  key_message server_auth_key;
+  key_message server_public_auth_key;
+  string server_auth_cert;
+  string role;
+
+  string client_auth_key_str;
+  string server_auth_key_str;
+
+  string client_auth_key_file_name = FLAGS_data_dir + FLAGS_client_auth_key_file;
+  string client_auth_cert_file_name = FLAGS_data_dir + FLAGS_client_auth_cert_file;
+  string server_auth_key_file_name = FLAGS_data_dir + FLAGS_server_auth_key_file;
+  string server_auth_cert_file_name = FLAGS_data_dir + FLAGS_server_auth_key_file;
+
+  // first read the policy key and policy cert
+  if (!read_file_into_string(policy_cert_file_name, &policy_cert)) {
+    printf("%s() error, line: %d, can't read policy cert\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!read_file_into_string(policy_key_file_name, &serialized_policy_key)) {
+    printf("%s() error, line: %d, can't read policy key\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  if (!policy_key.ParseFromString(serialized_policy_key)) {
+    printf("%s() error, line: %d, can't deserialize policy key\n",
+              __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  r1 = RSA_new();
+  if (r1 == nullptr) {
+    printf("%s() error, line: %d, can't RSA_new \n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!generate_new_rsa_key(2048, r1)) {
+    printf("%s() error, line: %d, generate_new_rsa_key failed\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!RSA_to_key(r1, &client_auth_key)) {
+    printf("%s() error, line: %d, RSA_to_key failed\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  client_auth_key.set_key_name("client-auth-key");
+  if (FLAGS_print_all) {
+    printf("client auth key:\n");
+    print_key((const key_message)client_auth_key);
+  }
+
+  if (!private_key_to_public_key(client_auth_key, &client_public_auth_key)) {
+    printf("%s() error, line: %d, private_to_public failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  r2 = RSA_new();
+  if (r2 == nullptr) {
+    printf("%s() error, line: %d, cannt RSA_new \n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!generate_new_rsa_key(2048, r2)) {
+    printf("%s() error, line: %d, generate_new_rsa_key failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!RSA_to_key(r2, &server_auth_key)) {
+    printf("%s() error, line: %d, RSA_to_key failed\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  server_auth_key.set_key_name("server-auth-key");
+  if (FLAGS_print_all) {
+    printf("server auth key:\n");
+    print_key((const key_message &)server_auth_key);
+  }
+  if (!private_key_to_public_key(server_auth_key, &server_public_auth_key)) {
+    printf("%s() error, line: %d, private_to_public failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  role= "client";
+  if (!make_admissions_cert(role,
+                            policy_key,
+                            client_auth_key,
+                            &client_auth_cert)) {
+    printf("%s, error, line %d can't make client admissions cert\n",
+           __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  client_auth_key.set_certificate(client_auth_cert);
+
+
+  role= "server";
+  if (!make_admissions_cert(role,
+                            policy_key,
+                            server_auth_key,
+                            &server_auth_cert)) {
+    printf("%s, error, line %d can't make server admissions cert\n",
+           __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  server_auth_key.set_certificate(server_auth_cert);
+
+  // Save all the keys and certs
+
+  if (!client_auth_key.SerializeToString(&client_auth_key_str)) {
+    printf("%s, error, line %d can't serialize client auth key\n",
+           __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!server_auth_key.SerializeToString(&server_auth_key_str)) {
+    printf("%s, error, line %d can't serialize server auth key\n",
+           __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  if (!write_file(client_auth_cert_file_name,
+                  client_auth_cert.size(), (byte *)client_auth_cert.data())) {
+    printf("%s, error, line %d can't write client auth cert\n",
+           __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!write_file(server_auth_cert_file_name,
+                  server_auth_cert.size(), (byte *)server_auth_cert.data())) {
+    printf("%s, error, line %d can't write server auth cert\n",
+           __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!write_file(client_auth_key_file_name,
+                  client_auth_key_str.size(),
+                  (byte *)client_auth_key_str.data())) {
+    printf("%s, error, line %d can't write client auth key\n",
+           __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!write_file(server_auth_key_file_name,
+                  server_auth_key_str.size(),
+                  (byte *)server_auth_key_str.data())) {
+    printf("%s, error, line %d can't write server auth key\n",
+           __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+done:
+  return ret;
+}
+
 // These are the keys and certs for the file access (acl_lib)
 // functionality.  We trust the root of the file access signing
 // regime but in a real application, you need to decide how to
@@ -427,102 +627,141 @@ done:
 }
 
 bool init_channel_keys() {
-    // read in policy key and my key
-    key_message policy_key;
-    key_message auth_key;
-    X509       *policy_cert = nullptr;
+  // read in policy key and my key
+  string policy_key_str;
+  key_message policy_key;
+  string      policy_cert_str;
+  X509       *x509_policy_cert = nullptr;
 
-    string policy_cert_file(FLAGS_data_dir);
-    policy_cert_file.append(FLAGS_policy_cert_file);
-    int sz = file_size(policy_cert_file);
-    if (sz < 0) {
-      printf("%s, error, line %d can't size policy cert in %s\n",
-                      __func__, __LINE__, policy_cert_file.c_str());
-      return 1;
-    }
-    byte policy_cert_buf[sz];
-    if (!read_file(policy_cert_file, &sz, policy_cert_buf)) {
-      printf("%s, error, line %d can't read policy cert in %s\n",
-                      __func__, __LINE__, policy_cert_file.c_str());
-      return 1;
-    }
-    string str_policy_cert;
-    str_policy_cert.assign((char *)policy_cert_buf, sz);
+  string policy_cert_file_name(FLAGS_data_dir);
+  policy_cert_file_name.append(FLAGS_policy_cert_file);
+  string policy_key_file_name(FLAGS_data_dir);
+  policy_key_file_name.append(FLAGS_policy_key_file);
+  int sz;
 
-    // policy_key_file
-    string policy_key_file(FLAGS_data_dir);
-    policy_key_file.append(FLAGS_policy_key_file);
-    sz = file_size(policy_key_file);
-    if (sz < 0) {
-      printf("%s, error, line %d can't size policy key %s\n", 
-             __func__, __LINE__, policy_key_file.c_str());
-      return 1;
-    }
-    byte policy_key_buf[sz];
-    if (!read_file(policy_key_file, &sz, policy_key_buf)) {
-      printf("%s, error, line %d can't read policy key %s\n", 
-             __func__, __LINE__, policy_key_file.c_str());
-      return 1;
-    }
-    string str_policy_key;
-    str_policy_key.assign((char *)policy_key_buf, sz);
+  string client_auth_cert_str;
+  string server_auth_cert_str;
+  string client_auth_key_str;
+  string server_auth_key_str;
+  key_message client_auth_key;
+  key_message server_auth_key;
 
-    // auth_key_file
-    string auth_key_file(FLAGS_data_dir);
-    auth_key_file.append(FLAGS_auth_key_file);
-    sz = file_size(auth_key_file);
-    if (sz < 0) {
-      printf("%s, error, line %d can't size auth key %s\n", 
-             __func__, __LINE__, auth_key_file.c_str());
-      return 1;
-    }
-    byte auth_key_buf[sz];
-    if (!read_file(auth_key_file, &sz, auth_key_buf)) {
-      printf("%s, error, line %d can't read auth key %s\n", 
-             __func__, __LINE__, auth_key_file.c_str());
-      return 1;
-    }
-    string str_auth_key;
-    str_auth_key.assign((char *)auth_key_buf, sz);
+  X509       *x509_client_auth_cert = nullptr;
+  X509       *x509_server_auth_cert = nullptr;
 
-    policy_cert = X509_new();
-    if (!asn1_to_x509(str_policy_cert, policy_cert)) {
-      printf("%s, error, line %d can't translate cert\n",
-             __func__, __LINE__);
-      return 1;
-    }
-    if (!policy_key.ParseFromString(str_policy_key)) {
-      printf("%s, error, line %d can't parse policy key\n",
-             __func__, __LINE__);
-      return 1;
-    }
-    policy_key.set_certificate((byte *)str_policy_cert.data(),
-                               str_policy_cert.size());
+  string client_auth_key_file_name = FLAGS_data_dir + FLAGS_client_auth_key_file;
+  string client_auth_cert_file_name = FLAGS_data_dir + FLAGS_client_auth_cert_file;
+  string server_auth_key_file_name = FLAGS_data_dir + FLAGS_server_auth_key_file;
+  string server_auth_cert_file_name = FLAGS_data_dir + FLAGS_server_auth_key_file;
 
-    // make admissions cert
-    string auth_cert;
-    string role;
-    if (!make_admissions_cert(role,
-                              policy_key,
-                              auth_key,
-                              &auth_cert)) {
-      printf("%s, error, line %d can't make admissions cert\n",
-             __func__, __LINE__);
-      return 1;
-    }
-    auth_key.set_certificate(auth_cert);
+  bool ret = true;
 
-#ifdef DEBUG
-    X509 *x509_auth_cert = X509_new();
-    asn1_to_x509(auth_cert, x509_auth_cert);
-    printf("\npolicy cert:\n");
-    X509_print_fp(stdout, policy_cert);
-    printf("\nAdmissions cert:\n");
-    X509_print_fp(stdout, x509_auth_cert);
-    printf("\nPolicy key::\n");
+  sz = file_size(policy_cert_file_name);
+  if (sz < 0) {
+    printf("%s, error, line %d can't size policy cert in %s\n",
+                    __func__, __LINE__, policy_cert_file_name.c_str());
+    ret = false;
+    goto done;
+  }
+  if (!read_file_into_string(policy_cert_file_name, &policy_cert_str)) {
+    printf("%s, error, line %d can't read policy cert in %s\n",
+                    __func__, __LINE__, policy_cert_file_name.c_str());
+    ret = false;
+    goto done;
+  }
+  sz = file_size(policy_key_file_name);
+  if (sz < 0) {
+    printf("%s, error, line %d can't read policy key in %s\n",
+                    __func__, __LINE__, policy_key_file_name.c_str());
+    ret = false;
+    goto done;
+  }
+  if (!read_file_into_string(policy_key_file_name, &policy_key_str)) {
+    printf("%s, error, line %d can't read policy key in %s\n",
+                    __func__, __LINE__, policy_key_file_name.c_str());
+    ret = false;
+    goto done;
+  }
+
+  x509_policy_cert = X509_new();
+  if (!asn1_to_x509(policy_cert_str, x509_policy_cert)) {
+    printf("%s, error, line %d can't translate cert\n",
+                    __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!policy_key.ParseFromString(policy_key_str)) {
+    printf("%s, error, line %d can't parse policy key\n",
+           __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  policy_key.set_certificate((byte *)policy_cert_str.data(),
+                             policy_cert_str.size());
+
+  // client and server auth key and certs
+  if (!read_file_into_string(client_auth_cert_file_name, &client_auth_cert_str)) {
+    printf("%s, error, line %d can't read client auth cert in %s\n",
+                    __func__, __LINE__, client_auth_cert_file_name.c_str());
+    ret = false;
+    goto done;
+  }
+  if (!read_file_into_string(server_auth_cert_file_name, &server_auth_cert_str)) {
+    printf("%s, error, line %d can't read server auth cert in %s\n",
+                    __func__, __LINE__, server_auth_cert_file_name.c_str());
+    ret = false;
+    goto done;
+  }
+  if (!read_file_into_string(client_auth_key_file_name, &client_auth_key_str)) {
+    printf("%s, error, line %d can't read client auth key in %s\n",
+                    __func__, __LINE__, client_auth_key_file_name.c_str());
+    ret = false;
+    goto done;
+  }
+  if (!read_file_into_string(server_auth_key_file_name, &server_auth_key_str)) {
+    printf("%s, error, line %d can't read server auth key in %s\n",
+                    __func__, __LINE__, server_auth_key_file_name.c_str());
+    ret = false;
+    goto done;
+  }
+  if (!client_auth_key.ParseFromString(client_auth_key_str)) {;
+    printf("%s, error, line %d can't parse client auth key in %s\n",
+                    __func__, __LINE__, client_auth_key_file_name.c_str());
+    ret = false;
+    goto done;
+  }
+  if (!server_auth_key.ParseFromString(server_auth_key_str)) {;
+    printf("%s, error, line %d can't parse server auth key in %s\n",
+                    __func__, __LINE__, server_auth_key_file_name.c_str());
+    ret = false;
+    goto done;
+  }
+
+  if (FLAGS_print_all) {
+    x509_client_auth_cert = X509_new();
+    x509_server_auth_cert = X509_new();
+    printf("\nPolicy cert:\n");
+    X509_print_fp(stdout, x509_policy_cert);
+    printf("\nPolicy key:\n");
     print_key(policy_key);
-#endif
-  return true;
+
+
+    printf("\nClient auth key:\n");
+    print_key(client_auth_key);
+    printf("\n");
+    asn1_to_x509(client_auth_cert_str, x509_client_auth_cert);
+    printf("\nClient admissions cert:\n");
+    X509_print_fp(stdout, x509_client_auth_cert);
+    printf("\nServer auth key:\n");
+    print_key(client_auth_key);
+    printf("\n");
+    asn1_to_x509(server_auth_cert_str, x509_server_auth_cert);
+    printf("\nServer admissions cert:\n");
+    X509_print_fp(stdout, x509_server_auth_cert);
+  }
+
+done:
+  return ret;
 }
 
 bool init_access_keys_and_files() {
@@ -932,7 +1171,13 @@ int main(int an, char **av) {
   const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
   buffer_list credentials;
 
-  if (FLAGS_operation == "make_access_keys_and_files") {
+  if (FLAGS_operation == "make_additional_channel_keys") {
+    if (!make_additional_channel_keys()) {
+        printf("%s() error, line: %d: unknown access mode\n", __func__, __LINE__);
+        return 1;
+    }
+    printf("make_additional_channel_keys succeeded\n");
+  } else if (FLAGS_operation == "make_access_keys_and_files") {
   } else if (FLAGS_operation == "test_constructed_keys_and_files") {
     if(test_constructed_keys_and_files()) {
         printf("Files and keys are valid\n");

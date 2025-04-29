@@ -50,3 +50,14 @@ two files: file_1 and file_2.
 There are some duplicated certifier definitions in acl_lib.proto and there are duplicated
 support functions in acl_support.cc.
 
+You should make a directory for test data to run tests, in
+CERTIFIER_PROTOTYPE/acl_lib/test_data:
+  mkdir test_data
+which shoulkd contain the files file_1 and file_2
+To rest with the standalone_app, first generate certifier keys:
+export CERT_UTILS=../../utilities
+$CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
+                   --policy_key_output_file=policy_key_file.bin \
+                   --policy_cert_output_file=policy_cert_file.bin
+
+
