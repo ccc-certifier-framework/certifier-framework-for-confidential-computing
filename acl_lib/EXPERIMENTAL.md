@@ -59,5 +59,17 @@ export CERT_UTILS=../../utilities
 $CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
                    --policy_key_output_file=policy_key_file.bin \
                    --policy_cert_output_file=policy_cert_file.bin
+cd ..
 
+Make additional channel keys (auth keys and certs for channel):
+./standalone_app.exe --operation=make_additional_channel_keys
+Make the identity keys, files and access policy:
+./standalone_app.exe --operation=make_access_keys_and_files
+After all the required files are constucted, you can check all the input:
+./standalone_app.exe --operation=test_constructed_files
+Now you can start the channel:
+In one window, start the server:
+./standalone_app.exe --operation=run_as_server
+In another window, start the client:
+./standalone_app.exe --operation=run_as_client
 
