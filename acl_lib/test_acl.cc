@@ -163,7 +163,7 @@ bool make_keys_and_certs(string      &root_issuer_name,
     ret = false;
     goto done;
   }
-  signer_key->set_key_name("johns_signing-key");
+  signer_key->set_key_name("john");
   if (FLAGS_print_all) {
     printf("signing key:\n");
     print_key((const key_message &)*signer_key);
@@ -447,11 +447,11 @@ bool test_access() {
   X509 *root_cert = nullptr;
   X509 *signing_cert = nullptr;
 
-  string root_issuer_name("johns-root");
+  string root_issuer_name("datica-identity-root");
   string root_issuer_org("datica");
   string root_asn1_cert_str;
   string signing_asn1_cert_str;
-  string signing_subject_name("johns-signing-key");
+  string signing_subject_name("john");
 
   string   signing_subject_org("datica");
   string   serialized_cert_chain_str;
@@ -1726,9 +1726,9 @@ acl_server_dispatch g_server(nullptr);
 
 bool test_rpc() {
 
-  string      signing_subject_name("johns-signing-key");
+  string      signing_subject_name("john");
   string      signing_subject_org("datica");
-  string      root_issuer_name("johns-root");
+  string      root_issuer_name("datica-identity-root");
   string      root_issuer_org("datica");
   buffer_list credentials;
   key_message root_key;

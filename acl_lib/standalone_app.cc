@@ -558,9 +558,9 @@ done:
 bool make_access_keys_and_files() {
 
   bool        ret = true;
-  string      signing_subject_name("johns-signing-key");
+  string      signing_subject_name("john");
   string      signing_subject_org("datica");
-  string      root_issuer_name("johns-root");
+  string      root_issuer_name("datica-identity-root");
   string      root_issuer_org("datica");
   const char *auth_alg = Enc_method_rsa_2048_sha256_pkcs_sign;
   EVP_PKEY   *pkey = nullptr;
@@ -1077,6 +1077,10 @@ done:
 
 // ---------------------------------------------------------
 
+
+resource_list g_rl;
+principal_list g_pl;
+
 void server_application(secure_authenticated_channel &channel) {
 
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
@@ -1107,6 +1111,7 @@ void server_application(secure_authenticated_channel &channel) {
 }
 
 void client_application(secure_authenticated_channel &channel,
+			const buffer_list            &creds,
                         const key_message            &signing_key) {
 
   bool ret = true;
@@ -1327,7 +1332,7 @@ bool run_me_as_client(const string      &host_name,
     return false;
   }
   // This is the actual application code.
-  client_application(channel, client_signing_key);
+  client_application(channel, credentials, client_signing_key);
   return true;
 }
 
@@ -1346,9 +1351,6 @@ bool test_constructed_keys_and_files() {
   key_message identity_root_key;
   key_message client1_signing_key;
   key_message client2_signing_key;
-
-  principal_list pl;
-  resource_list  rl;
 
   const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
   buffer_list credentials;
@@ -1409,8 +1411,8 @@ bool test_constructed_keys_and_files() {
                                   &client1_signing_key,
                                   &client2_signing_key,
                                   &credentials,
-                                  &pl,
-                                  &rl)) {
+                                  &g_pl,
+                                  &g_rl)) {
     printf("%s() error, line: %d: Can't init access keys and files\n",
            __func__,
            __LINE__);
@@ -1426,10 +1428,10 @@ bool test_constructed_keys_and_files() {
     printf("\n");
 
     printf("Principals:\n");
-    print_principal_list(pl);
+    print_principal_list(g_pl);
     printf("\n");
     printf("Resources:\n");
-    print_resource_list(rl);
+    print_resource_list(g_rl);
     printf("\n");
     printf("\nCredentials:\n");
     for (int i = 0; i < credentials.blobs_size(); i++) {
@@ -1525,8 +1527,8 @@ int main(int an, char **av) {
                                     &client1_signing_key,
                                     &client2_signing_key,
                                     &credentials,
-                                    &pl,
-                                    &rl)) {
+                                    &g_pl,
+                                    &g_rl)) {
       printf("%s() error, line: %d: Can't init access keys and files\n",
              __func__,
              __LINE__);
@@ -1565,8 +1567,8 @@ int main(int an, char **av) {
                                     &client1_signing_key,
                                     &client2_signing_key,
                                     &credentials,
-                                    &pl,
-                                    &rl)) {
+                                    &g_pl,
+                                    &g_rl)) {
       printf("%s() error, line: %d: Can't init access keys and files\n",
              __func__,
              __LINE__);
