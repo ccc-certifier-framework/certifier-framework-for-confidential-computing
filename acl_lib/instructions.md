@@ -11,8 +11,9 @@ can be independent of the certifier trust heirearchy).
 
 The current API is:
 
-bool rpc_authenticate_me(const string& principal_name, string* output)
+bool rpc_authenticate_me(const string& principal_name, const string& creds, string* output)
   input: name (string)  Note: verification algorithm determines crypt algorithm
+         creds: serialized credentials
   output: status (bool), nonce(bytes)
 bool rpc_verify_me(const string& principal_name, const string& signed_nonce)
   input: name-of-principal (string), signed_nonce (bytes)

@@ -30,7 +30,9 @@ class acl_client_dispatch {
  public:
   acl_client_dispatch(SSL *channel);
   ~acl_client_dispatch();
-  bool rpc_authenticate_me(const string &principal_name, string *output);
+  bool rpc_authenticate_me(const string &principal_name,
+                           const string &creds,
+                           string       *output);
   bool rpc_verify_me(const string &principal_name, const string &signed_nonce);
   bool rpc_open_resource(const string &resource_name,
                          const string &access_right);
@@ -47,18 +49,14 @@ class acl_client_dispatch {
 
 class acl_server_dispatch {
  private:
-  bool           initialized_;
-  SSL           *channel_descriptor_;
-  principal_list principal_list_;
-  resource_list  resource_list_;
+  bool initialized_;
+  SSL *channel_descriptor_;
 
  public:
   channel_guard guard_;
   acl_server_dispatch(SSL *channel);
   ~acl_server_dispatch();
 
-  bool load_principals(principal_list &pl);
-  bool load_resources(resource_list &pl);
   bool service_request();
 };
 }  // namespace acl_lib

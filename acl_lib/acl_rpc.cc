@@ -65,6 +65,7 @@ acl_client_dispatch::acl_client_dispatch(SSL *channel) {
 acl_client_dispatch::~acl_client_dispatch() {}
 
 bool acl_client_dispatch::rpc_authenticate_me(const string &principal_name,
+                                              const string &serialized_creds,
                                               string       *output) {
   string   decode_parameters_str;
   string   encode_parameters_str;
@@ -76,6 +77,7 @@ bool acl_client_dispatch::rpc_authenticate_me(const string &principal_name,
   input_call_struct.set_function_name(authenticate_me_tag);
   string *in = input_call_struct.add_str_inputs();
   *in = principal_name;
+  string *supplied_creds = input_call_struct.add_str_inputs();
 
   if (!input_call_struct.SerializeToString(&encode_parameters_str)) {
     printf("%s() error, line %d: Can't input\n", __func__, __LINE__);
@@ -573,23 +575,6 @@ acl_server_dispatch::acl_server_dispatch(SSL *channel) {
 
 acl_server_dispatch::~acl_server_dispatch() {}
 
-bool acl_server_dispatch::load_principals(principal_list &pl) {
-  for (int i = 0; i < pl.principals_size(); i++) {
-    principal_message *pm = principal_list_.add_principals();
-    pm->CopyFrom(pl.principals(i));
-  }
-
-  return true;
-}
-
-bool acl_server_dispatch::load_resources(resource_list &rl) {
-  for (int i = 0; i < rl.resources_size(); i++) {
-    resource_message *rm = resource_list_.add_resources();
-    rm->CopyFrom(rl.resources(i));
-  }
-  return true;
-}
-
 bool acl_server_dispatch::service_request() {
 
   string   decode_parameters_str;
@@ -638,7 +623,7 @@ bool acl_server_dispatch::service_request() {
 
     string nonce;
     if (guard_.authenticate_me(input_call_struct.str_inputs(0),
-                               principal_list_,
+                               input_call_struct.str_inputs(1),
                                &nonce)) {
       output_call_struct.set_status(true);
       string *nounce_out = output_call_struct.add_buf_outputs();

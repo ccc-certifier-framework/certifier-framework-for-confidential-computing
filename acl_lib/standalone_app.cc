@@ -71,6 +71,15 @@ DEFINE_string(principal_list, "saved_principals.bin", "principal list file");
 
 #define DEBUG
 
+// Now that these are global, updates must lock it.
+namespace certifier {
+namespace acl_lib {
+
+resource_list  g_rl;
+principal_list g_pl;
+}  // namespace acl_lib
+}  // namespace certifier
+
 bool construct_sample_principals(principal_list *pl) {
   string p1("john");
   string p2("paul");
@@ -1077,17 +1086,13 @@ done:
 
 // ---------------------------------------------------------
 
-
-resource_list g_rl;
-principal_list g_pl;
-
 void server_application(secure_authenticated_channel &channel) {
 
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
 
   // Read message from client over authenticated, encrypted channel
-  string out;
-  bool   ret = true;
+  string              out;
+  bool                ret = true;
   acl_server_dispatch server_dispatch(channel.ssl_);
 
   // not needed
@@ -1111,11 +1116,10 @@ void server_application(secure_authenticated_channel &channel) {
 }
 
 void client_application(secure_authenticated_channel &channel,
-			const buffer_list            &creds,
+                        const buffer_list            &creds,
                         const key_message            &signing_key) {
 
-  bool ret = true;
-  printf("Client peer id is %s\n", channel.peer_id_.c_str());
+  bool        ret = true;
   string      prin_name("john");
   const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
   string      res1_name("file_1");
@@ -1135,6 +1139,13 @@ void client_application(secure_authenticated_channel &channel,
   int    size_sig = 512;
   byte   sig[size_sig];
 
+  string serialized_creds;
+
+  printf("Client peer id is %s\n", channel.peer_id_.c_str());
+  if (!creds.SerializeToString(&serialized_creds)) {
+    printf("%s() error, line %d: cannot serialize creds\n", __func__, __LINE__);
+    return;
+  }
 
   // The channel was negotiated with the client/server
   // auth keys.
@@ -1147,9 +1158,8 @@ void client_application(secure_authenticated_channel &channel,
 
   acl_client_dispatch client_dispatch(channel.ssl_);
 
-  // initialize keys and certs
-
-  ret = client_dispatch.rpc_authenticate_me(prin_name, &nonce);
+  ret =
+      client_dispatch.rpc_authenticate_me(prin_name, serialized_creds, &nonce);
   if (!ret) {
     printf("%s() error, line %d: client.rpc_authenticate_me failed\n",
            __func__,

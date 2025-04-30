@@ -24,14 +24,19 @@
 #include "acl.h"
 #include "acl_rpc.h"
 
+DEFINE_bool(print_all, false, "Print intermediate test computations");
+
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
 namespace certifier {
 namespace acl_lib {
 
-
-DEFINE_bool(print_all, false, "Print intermediate test computations");
+#if 1
+resource_list       g_rl;
+principal_list      g_pl;
+acl_server_dispatch g_server(nullptr);
+#endif
 
 bool construct_sample_principals(principal_list *pl) {
   string p1("john");
@@ -412,16 +417,13 @@ bool test_basic() {
 
 bool test_access() {
 
-  principal_list pl;
-  resource_list  rl;
-
-  if (!construct_sample_principals(&pl)) {
+  if (!construct_sample_principals(&g_pl)) {
     printf("%s() error, line: %d: Cant construct principals\n",
            __func__,
            __LINE__);
     return false;
   }
-  if (!construct_sample_resources(&rl)) {
+  if (!construct_sample_resources(&g_rl)) {
     printf("%s() error, line: %d: Cant construct resources\n",
            __func__,
            __LINE__);
@@ -460,20 +462,22 @@ bool test_access() {
   EVP_PKEY *pkey = nullptr;
   RSA      *r2 = nullptr;
 
-  int     sig_size = 256;
-  byte    sig[sig_size];
-  bool    ret = true;
-  string  res1("file_1");
-  string  acc1("read");
-  string  res2("file_2");
-  string  acc2("write");
-  string *b;
-  string  prin_name("john");
-  int     i = 0;
-  string  dig_alg;
-  string  auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
-  string  bytes_read;
-  string  bytes_written("Hello there");
+  int                  sig_size = 256;
+  byte                 sig[sig_size];
+  bool                 ret = true;
+  string               res1("file_1");
+  string               acc1("read");
+  string               res2("file_2");
+  string               acc2("write");
+  string              *b;
+  string               prin_name("john");
+  int                  i = 0;
+  string               dig_alg;
+  string               auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
+  string               bytes_read;
+  string               bytes_written("Hello there");
+  string               serialized_creds;
+  extern resource_list g_rl;
 
   if (!make_keys_and_certs(root_issuer_name,
                            root_issuer_org,
@@ -498,6 +502,14 @@ bool test_access() {
   }
   root_asn1_cert_str = credentials.blobs(0);
 
+  if (!credentials.SerializeToString(&serialized_creds)) {
+    printf("%s() error, line: %d: can't serialize credentials\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
   if (!guard.init_root_cert(root_asn1_cert_str)) {
     printf("%s() error, line %d: cant init_root_cert\n", __func__, __LINE__);
     ret = false;
@@ -513,14 +525,14 @@ bool test_access() {
   }
 
   // put it on principal list
-  for (i = 0; i < pl.principals_size(); i++) {
-    if (pl.principals(i).principal_name() == prin_name) {
-      pl.mutable_principals(i)->set_credential(serialized_cert_chain_str);
-      pl.mutable_principals(i)->set_authentication_algorithm(auth_alg);
+  for (i = 0; i < g_pl.principals_size(); i++) {
+    if (g_pl.principals(i).principal_name() == prin_name) {
+      g_pl.mutable_principals(i)->set_credential(serialized_cert_chain_str);
+      g_pl.mutable_principals(i)->set_authentication_algorithm(auth_alg);
       break;
     }
   }
-  if (i >= pl.principals_size()) {
+  if (i >= g_pl.principals_size()) {
     printf("%s() error, line %d: couldn't put credentials on principal list\n",
            __func__,
            __LINE__);
@@ -530,7 +542,7 @@ bool test_access() {
 
   if (FLAGS_print_all) {
     printf("Prinicpals attached\n");
-    print_principal_list(pl);
+    print_principal_list(g_pl);
     printf("\n");
   }
 
@@ -543,7 +555,7 @@ bool test_access() {
   }
   nonce.assign((char *)buf, k);
 
-  if (!guard.load_resources(rl)) {
+  if (!guard.load_resources(g_rl)) {
     printf("%s() error, line %d: Can't load resource list\n",
            __func__,
            __LINE__);
@@ -551,7 +563,7 @@ bool test_access() {
     goto done;
   }
 
-  if (!guard.authenticate_me(channel_prin, pl, &nonce)) {
+  if (!guard.authenticate_me(channel_prin, serialized_creds, &nonce)) {
     printf("%s() error, line %d: Cant authenticate_me %s\n",
            __func__,
            __LINE__,
@@ -1720,12 +1732,7 @@ bool test_crypto() {
   return true;
 }
 
-#if 1
-acl_server_dispatch g_server(nullptr);
-#endif
-
 bool test_rpc() {
-
   string      signing_subject_name("john");
   string      signing_subject_org("datica");
   string      root_issuer_name("datica-identity-root");
@@ -1739,9 +1746,6 @@ bool test_rpc() {
   EVP_PKEY   *pkey = nullptr;
   RSA        *r2 = nullptr;
   string      serialized_cert_chain_str;
-
-  principal_list pl;
-  resource_list  rl;
 
   SSL                *ch = nullptr;
   acl_client_dispatch client(ch);
@@ -1767,6 +1771,7 @@ bool test_rpc() {
   string dig_alg;
   string asn1_cert_str;
   string auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
+  string serialized_creds;
 
   bool ret = true;
 
@@ -1775,20 +1780,22 @@ bool test_rpc() {
   return true;
 #endif
 
-  if (!construct_sample_principals(&pl)) {
-    printf("%s() error, line %d: Cant construct principals\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  if (!construct_sample_resources(&rl)) {
-    printf("%s() error, line %d: Cant construct resources\n",
-           __func__,
-           __LINE__);
-    return false;
+  if (g_rl.resources_size() == 0) {
+    if (!construct_sample_principals(&g_pl)) {
+      printf("%s() error, line %d: Cant construct principals\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    if (!construct_sample_resources(&g_rl)) {
+      printf("%s() error, line %d: Cant construct resources\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
   }
 
-  if (!g_server.guard_.load_resources(rl)) {
+  if (!g_server.guard_.load_resources(g_rl)) {
     printf("%s() error, line %d: Cant load resources\n", __func__, __LINE__);
     return false;
   }
@@ -1815,6 +1822,13 @@ bool test_rpc() {
   }
   asn1_cert_str = credentials.blobs(0);
 
+  if (!credentials.SerializeToString(&serialized_creds)) {
+    printf("%s() error, line %d: cant serialize credentials\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
   if (!g_server.guard_.init_root_cert(asn1_cert_str)) {
     printf("%s() error, line %d: Can't init_root\n", __func__, __LINE__);
     return false;
@@ -1829,14 +1843,14 @@ bool test_rpc() {
   }
 
   // put it on principal list
-  for (i = 0; i < pl.principals_size(); i++) {
-    if (pl.principals(i).principal_name() == prin_name) {
-      pl.mutable_principals(i)->set_credential(serialized_cert_chain_str);
-      pl.mutable_principals(i)->set_authentication_algorithm(auth_alg);
+  for (i = 0; i < g_pl.principals_size(); i++) {
+    if (g_pl.principals(i).principal_name() == prin_name) {
+      g_pl.mutable_principals(i)->set_credential(serialized_cert_chain_str);
+      g_pl.mutable_principals(i)->set_authentication_algorithm(auth_alg);
       break;
     }
   }
-  if (i >= pl.principals_size()) {
+  if (i >= g_pl.principals_size()) {
     printf("%s() error, line %d: couldn't put credentials on principal list\n",
            __func__,
            __LINE__);
@@ -1846,21 +1860,11 @@ bool test_rpc() {
 
   if (FLAGS_print_all) {
     printf("Prinicpals attached\n");
-    print_principal_list(pl);
+    print_principal_list(g_pl);
     printf("\n");
   }
 
-  if (!g_server.load_principals(pl)) {
-    printf("%s() error, line %d: Cant load principals\n", __func__, __LINE__);
-    return false;
-  }
-
-  if (!g_server.load_resources(rl)) {
-    printf("%s() error, line %d: Cant load resources\n", __func__, __LINE__);
-    return false;
-  }
-
-  ret = client.rpc_authenticate_me(prin_name, &nonce);
+  ret = client.rpc_authenticate_me(prin_name, serialized_creds, &nonce);
   if (!ret) {
     printf("%s() error, line %d: client.rpc_authenticate_me failed\n",
            __func__,

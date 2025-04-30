@@ -308,26 +308,35 @@ bool channel_guard::init_root_cert(const string &asn1_cert_str) {
   return true;
 }
 
-bool channel_guard::authenticate_me(const string   &name,
-                                    principal_list &pl,
-                                    string         *nonce) {
+bool channel_guard::authenticate_me(const string &name,
+                                    const string &creds,
+                                    string       *nonce) {
+#if 1
+  extern principal_list g_pl;
+  extern resource_list  g_rl;
+
+  printf("\nIn authenticate_me***\n");
+  print_principal_list(g_pl);
+  printf("\n");
+
   int i = 0;
-  for (i = 0; i < pl.principals_size(); i++) {
-    if (name == pl.principals(i).principal_name()) {
-      principal_name_ = pl.principals(i).principal_name();
+  for (i = 0; i < g_pl.principals_size(); i++) {
+    if (name == g_pl.principals(i).principal_name()) {
+      principal_name_ = g_pl.principals(i).principal_name();
       authentication_algorithm_name_ =
-          pl.principals(i).authentication_algorithm();
-      creds_.assign(pl.principals(i).credential());
+          g_pl.principals(i).authentication_algorithm();
+      creds_.assign(g_pl.principals(i).credential());
       break;
     }
   }
-  if (i >= pl.principals_size()) {
+  if (i >= g_pl.principals_size()) {
     printf("%s() error, line %d: Can't find principal %s\n",
            __func__,
            __LINE__,
            name.c_str());
     return false;
   }
+#endif
   const int size_nonce = 32;
   byte      buf[32];
   int       k = crypto_get_random_bytes(size_nonce, buf);
@@ -438,7 +447,6 @@ bool channel_guard::verify_me(const string &name, const string &signed_nonce) {
                     Enc_method_rsa_3072_sha384_pkcs_sign)
              == 0) {
     RSA *rsa_key = EVP_PKEY_get1_RSA(subject_pkey);
-    ;
     if (rsa_key == nullptr) {
       printf("%s() error, line %d: EVP_PKEY_get1_RSA failed\n",
              __func__,
@@ -494,7 +502,6 @@ bool channel_guard::load_resources(resource_list &rl) {
 
 active_resource::active_resource() {
   desc_ = -1;
-  ;
   rights_ = 0;
 }
 
@@ -592,9 +599,9 @@ bool channel_guard::access_check(int resource_entry, const string &action) {
 }
 
 bool channel_guard::accept_credentials(const string   &principal_name,
-                        const string   &alg,
-                        const string   &cred,
-                        principal_list *pl) {
+                                       const string   &alg,
+                                       const string   &cred,
+                                       principal_list *pl) {
   principal_message pm;
   pm.set_principal_name(principal_name);
   pm.set_authentication_algorithm(alg);
@@ -632,7 +639,9 @@ bool channel_guard::create_resource(string &name) {
 
 bool channel_guard::open_resource(const string &resource_name,
                                   const string &access_mode) {
-  string file_type("file");
+  string                file_type("file");
+  extern resource_list  g_rl;
+  extern principal_list g_pl;
 
   int resource_index = find_resource(resource_name);
   if (resource_index < 0) {

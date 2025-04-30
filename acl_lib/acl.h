@@ -131,7 +131,9 @@ class channel_guard {
   int find_in_active_resource_table(const string &name);
 
   bool init_root_cert(const string &asn1_cert_str);
-  bool authenticate_me(const string &name, principal_list &pl, string *nonce);
+  bool authenticate_me(const string &name,
+                       const string &serialized_credentials,
+                       string       *nonce);
   bool verify_me(const string &name, const string &signed_nonce);
   bool load_resources(resource_list &rl);
 
