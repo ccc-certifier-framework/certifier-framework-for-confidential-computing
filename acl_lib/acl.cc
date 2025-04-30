@@ -591,7 +591,7 @@ bool channel_guard::access_check(int resource_entry, const string &action) {
   return false;
 }
 
-bool accept_credentials(const string   &principal_name,
+bool channel_guard::accept_credentials(const string   &principal_name,
                         const string   &alg,
                         const string   &cred,
                         principal_list *pl) {

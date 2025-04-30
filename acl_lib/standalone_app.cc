@@ -1084,15 +1084,24 @@ void server_application(secure_authenticated_channel &channel) {
   // Read message from client over authenticated, encrypted channel
   string out;
   bool   ret = true;
-  int    n;
+  acl_server_dispatch server_dispatch(channel.ssl_);
+
+  // not needed
+#if 0
+  server_dispatch.guard_.load_principals(pl);
+  server_dispatch.guard_.load_resources(rl);
+
+  server_dispatch.guard_.init_root_cert(der_identity_root_cert);
+  server_dispatch.guard_.authentication_algorithm_name_ = auth_alg;
+  string principal_name;
+  server_dispatch.guard_.accept_credentials(principal_name,
+                          auth_alg, der_identity_root_cert, pl);
+  server_dispatch.guard_.load_resources(rl);
+  server_dispatch.guard_.load_principals(pl);
+#endif
 
   for (;;) {
-    n = channel.read(&out);
-    printf("SSL server read (%d): %s\n", n, (const char *)out.data());
-
-    // Reply over authenticated, encrypted channel
-    const char *msg = "Hi from your secret server\n";
-    channel.write(strlen(msg), (byte *)msg);
+    server_dispatch.service_request();
   }
   channel.close();
 }
@@ -1570,7 +1579,7 @@ int main(int an, char **av) {
                             client_root_cert,
                             cert_chain_length,
                             der_certs,
-                            (key_message &)server_private_key,
+                            (key_message &)server_auth_key,
                             server_auth_cert)) {
         printf("server failed\n");
         return 1;
