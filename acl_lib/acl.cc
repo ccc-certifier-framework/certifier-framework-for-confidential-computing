@@ -308,17 +308,83 @@ bool channel_guard::init_root_cert(const string &asn1_cert_str) {
   return true;
 }
 
+bool verify_name_in_credential(const string &name, const string &creds) {
+  buffer_list credentials;
+  int         max_buf = 512;
+  char        name_buf[max_buf];
+  string      subject_name_str;
+  X509_NAME  *subject_name_1 = nullptr;
+  X509_NAME  *subject_name_2 = nullptr;
+  int         n;
+
+  X509 *cert = X509_new();
+  if (cert == nullptr)
+    return false;
+
+  bool ret = true;
+
+  if (!credentials.ParseFromString(creds)) {
+    printf("%s() error, line %d: can't parse credential buf\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  n = credentials.blobs_size();
+  if (n < 2) {
+    printf("%s() error, line %d: too few credentials\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!asn1_to_x509(credentials.blobs(n - 1), cert)) {
+    X509_free(cert);
+    printf("%s() error, line %d: can't asn1 translate user credential\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  subject_name_1 = X509_get_subject_name(cert);
+  if (subject_name_1 == nullptr) {
+    ret = false;
+    goto done;
+  }
+  if (X509_NAME_get_text_by_NID(subject_name_1,
+                                NID_commonName,
+                                name_buf,
+                                max_buf)
+      < 0) {
+    ret = false;
+    goto done;
+  }
+
+  subject_name_str.assign(name_buf);
+  if (name != subject_name_str)
+    ret = false;
+
+done:
+  if (cert != nullptr)
+    X509_free(cert);
+  return ret;
+}
+
 bool channel_guard::authenticate_me(const string &name,
                                     const string &creds,
                                     string       *nonce) {
-#if 1
+
   extern principal_list g_pl;
   extern resource_list  g_rl;
 
-  printf("\nIn authenticate_me***\n");
-  print_principal_list(g_pl);
-  printf("\n");
+  // Check that name is the common name in the credential
+  if (!verify_name_in_credential(name, creds)) {
+    printf("%s() error, line %d: name doesn't match name in cert.\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 
+  // This puts the credentials on the guard.
   int i = 0;
   for (i = 0; i < g_pl.principals_size(); i++) {
     if (name == g_pl.principals(i).principal_name()) {
@@ -336,7 +402,7 @@ bool channel_guard::authenticate_me(const string &name,
            name.c_str());
     return false;
   }
-#endif
+
   const int size_nonce = 32;
   byte      buf[32];
   int       k = crypto_get_random_bytes(size_nonce, buf);

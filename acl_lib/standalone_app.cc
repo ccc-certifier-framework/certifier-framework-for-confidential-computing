@@ -949,6 +949,9 @@ bool init_access_keys_and_files(key_message    *identity_root_key,
   string serialized_resources;
   string serialized_credentials;
 
+  // Note: In a real application, we should check that identity_root_cert
+  // is trusted.
+
   string cert_chain1_file_name = FLAGS_data_dir + FLAGS_cert_chain1;
   string cert_chain2_file_name = FLAGS_data_dir + FLAGS_cert_chain2;
   string identity_root_signing_key_file_name =

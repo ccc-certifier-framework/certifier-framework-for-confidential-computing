@@ -59,6 +59,7 @@ class acl_server_dispatch {
 
   bool service_request();
 };
+
 }  // namespace acl_lib
 }  // namespace certifier
 #endif

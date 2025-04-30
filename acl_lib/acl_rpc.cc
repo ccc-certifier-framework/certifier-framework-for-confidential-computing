@@ -26,6 +26,7 @@ namespace acl_lib {
 
 
 // For testing only
+// The simulated channel makes the code ugly.
 #ifdef TEST_SIMULATED_CHANNEL
 const int max_size_buf = 4096;
 int       size_buf = 0;
@@ -77,12 +78,14 @@ bool acl_client_dispatch::rpc_authenticate_me(const string &principal_name,
   input_call_struct.set_function_name(authenticate_me_tag);
   string *in = input_call_struct.add_str_inputs();
   *in = principal_name;
-  string *supplied_creds = input_call_struct.add_str_inputs();
+  string *supplied_creds = input_call_struct.add_buf_inputs();
+  supplied_creds->assign(serialized_creds.data(), serialized_creds.size());
 
   if (!input_call_struct.SerializeToString(&encode_parameters_str)) {
     printf("%s() error, line %d: Can't input\n", __func__, __LINE__);
     return false;
   }
+
 #ifndef TEST_SIMULATED_CHANNEL
   if (sized_ssl_write(channel_descriptor_,
                       encode_parameters_str.size(),
@@ -613,7 +616,8 @@ bool acl_server_dispatch::service_request() {
   }
 
   if (input_call_struct.function_name() == authenticate_me_tag) {
-    if (input_call_struct.str_inputs_size() < 1) {
+    if (input_call_struct.str_inputs_size() < 1
+        || input_call_struct.buf_inputs_size() < 1) {
       printf("%s() error, line %d: too few input arguments %d\n",
              __func__,
              __LINE__,
@@ -623,7 +627,7 @@ bool acl_server_dispatch::service_request() {
 
     string nonce;
     if (guard_.authenticate_me(input_call_struct.str_inputs(0),
-                               input_call_struct.str_inputs(1),
+                               input_call_struct.buf_inputs(0),
                                &nonce)) {
       output_call_struct.set_status(true);
       string *nounce_out = output_call_struct.add_buf_outputs();
