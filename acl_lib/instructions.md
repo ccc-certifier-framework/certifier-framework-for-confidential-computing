@@ -63,31 +63,31 @@ something like:
   export CERTIFIER_PROTOTYPE = .../certifier-framework-for-confidential-computing/
 
 Do the following:
-  1.  ACL_LIB_DIR = $(CERTIFIER_PROTOTYPE/acl_lib/
+  1.  ACL_LIB_DIR = $(CERTIFIER_PROTOTYPE)/acl_lib/
   2.  Make sure $(ACL_LIB_DIR) has two subdirectories: acl_test_data and test_data with
       the test files file_1 and file_2.  Make sure that there is either a copy of
       certifier.proto (from $(CERTIFIER_PROTOTYPE)/certifier_service/certprotos)
       OR a symbolic link to it in the $(ACL_LIB_DIR) directory.
   3.  cd $(ACL_LIB_DIR)
   4.  Build the google test:
-        make clean -f standalone_acl_lib_test.mak
-        make -f standalone_acl_lib_test.mak
+         make clean -f standalone_acl_lib_test.mak
+         make -f standalone_acl_lib_test.mak
   5.  Run the test:
         ./test_acl.exe [--print_all=true]
   6.  Build acl_lib:
          make clean -f acl_lib.mak
       It is important you do a clean make because test_acl uses a special define
-      during comilation to allow the use of a fake "channel" that is incompatible
+      during compilation to allow the use of a fake "channel" that is incompatible
       with actual use.
-        make -f acl_lib.mak
+         make -f acl_lib.mak
       This will build acl_lib.a.
   7.  Build the standalone app:
-        make clean -f standalone_app.mak
-        make -f standalone_app.mak
+         make clean -f standalone_app.mak
+         make -f standalone_app.mak
   8.  Build test keys and files:
-        cd $(ACL_LIB_DIR)/test_data
-        export CERT_UTILS= $(CERTIFIER_PROTOTYPE)/utilities
-        $CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
+         cd $(ACL_LIB_DIR)/test_data
+         export CERT_UTILS= $(CERTIFIER_PROTOTYPE)/utilities
+         $CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
                             --policy_key_output_file=policy_key_file.bin \
                             --policy_cert_output_file=policy_cert_file.bin
       This creates the policy key and policy cert.
