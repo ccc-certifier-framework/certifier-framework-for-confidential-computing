@@ -52,7 +52,11 @@ in the image.  Each application developer will have to decide this themselves ba
 their needs.
 
 We assume the certifier library has already been built and that the tools and libraries
-installed in the course of that are present.
+installed in the course of that are present.  You will notice that the app does not
+require the certifier because it constructs the required keys itself.  If you use this
+in a secure application (and you should!), you start the app (both client and server)
+just as you would in "sample_apps/simple_app" and use the certified admission certs,
+secure channel and keys it produced.
 
 Here are complete build and test instructions. As with certifier builds,
 let CERTIFIER_PROTOTYPE hold the name of the top-level certifier repository directory,
@@ -71,17 +75,17 @@ Do the following:
         make -f standalone_acl_lib_test.mak
   5.  Run the test:
         ./test_acl.exe [--print_all=true]
-  6.  Build acl_lib 
+  6.  Build acl_lib:
          make clean -f acl_lib.mak
       It is important you do a clean make because test_acl uses a special define
       during comilation to allow the use of a fake "channel" that is incompatible
       with actual use.
         make -f acl_lib.mak
       This will build acl_lib.a.
-  7.  Build the standalone app.
+  7.  Build the standalone app:
         make clean -f standalone_app.mak
         make -f standalone_app.mak
-  8.  Build test keys and files.
+  8.  Build test keys and files:
         cd $(ACL_LIB_DIR)/test_data
         export CERT_UTILS= $(CERTIFIER_PROTOTYPE)/utilities
         $CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
