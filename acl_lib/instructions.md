@@ -6,9 +6,8 @@ control to files over the sort of secure channel employed by the certifier.
 It includes three seperate artifacts: a google friendly test suite (compiled
 into test_acl.exe), a library (acl_lib.a) that implements the acl_lib functionality,
 and a standalone test that shows how to use the API under certifier protection.
-Access control (create, read, write) permissions uses public key authentication
-(under an identity key hierarchy that can be independent of the certifier trust
-heirearchy).
+Access control (create, read, write) uses public key authentication (under an
+identity key hierarchy that can be independent of the certifier trust heirearchy).
 
 The current acl_lib API is:
 
