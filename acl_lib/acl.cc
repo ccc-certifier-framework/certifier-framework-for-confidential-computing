@@ -369,6 +369,10 @@ bool channel_guard::authenticate_me(const string &name,
 
   extern principal_list g_pl;
   extern resource_list  g_rl;
+  extern bool           g_identity_root_initialized;
+  extern string         g_identity_root;
+  extern string         g_signature_algorithm;
+  extern X509          *g_x509_identity_root;
   buffer_list           credentials;
 
   if (!credentials.ParseFromString(creds)) {
@@ -387,29 +391,30 @@ bool channel_guard::authenticate_me(const string &name,
       return false;
     }
 
-    X509 *root_cert = X509_new();
-    if (root_cert == nullptr) {
-      printf("%s() error, line %d: can't allocate root cert.\n",
-             __func__,
-             __LINE__);
-      X509_free(root_cert);
-      return false;
+    // This isn't quite right right
+    if (g_identity_root_initialized) {
+      if (!init_root_cert(g_identity_root)) {
+        printf("%s() error, line %d: can't initialize root cert.\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+      authentication_algorithm_name_ = g_signature_algorithm;
+    } else {
+      if (!init_root_cert(credentials.blobs(0))) {
+        printf("%s() error, line %d: can't initialize root cert.\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
     }
-    if (!asn1_to_x509(credentials.blobs(0), root_cert)) {
-      printf("%s() error, line %d: can't asn1 translate.\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
-    if (!verify_cert_chain(root_cert, credentials)) {
+
+    if (!verify_cert_chain(root_cert_, credentials)) {
       printf("%s() error, line %d: can't verify cert chain.\n",
              __func__,
              __LINE__);
-      X509_free(root_cert);
       return false;
     }
-    X509_free(root_cert);
-    root_cert = nullptr;
 
     // This puts the credentials on the guard.
     int i = 0;
@@ -429,9 +434,6 @@ bool channel_guard::authenticate_me(const string &name,
              name.c_str());
       return false;
     }
-
-    // This isn't quite right right
-    init_root_cert(credentials.blobs(0));
     initialized_ = true;
   }
 
@@ -834,7 +836,7 @@ bool channel_guard::read_resource(const string &resource_name,
   }
   if (ar_[rn].desc_ >= 0) {
     byte buf[n + 1];
-    int  k = (int)read(ar_[rn].desc_, buf, n);
+    int  k = (int)::read(ar_[rn].desc_, buf, n);
     if (k < 0) {
       printf("%s() error, line: %d: Can't read, return is %d\n",
              __func__,

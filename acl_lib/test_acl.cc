@@ -32,11 +32,13 @@ using namespace certifier::utilities;
 namespace certifier {
 namespace acl_lib {
 
-#if 1
 resource_list       g_rl;
 principal_list      g_pl;
 acl_server_dispatch g_server(nullptr);
-#endif
+bool                g_identity_root_initialized = false;
+string              g_identity_root;
+string              g_signature_algorithm;
+X509               *g_x509_identity_root = nullptr;
 
 bool construct_sample_principals(principal_list *pl) {
   string p1("john");

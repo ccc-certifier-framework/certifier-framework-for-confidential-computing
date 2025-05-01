@@ -71,8 +71,20 @@ DEFINE_string(principal_list, "saved_principals.bin", "principal list file");
 namespace certifier {
 namespace acl_lib {
 
+// Note:  Since these are global tables the access routing need to lock them.
+// This has not been done yet.
 resource_list  g_rl;
 principal_list g_pl;
+
+// As mentioned in the instructions, there are different ways validate trust in
+// the identity root (There can actually be many such roots).  Here we allow
+// the initialization routings to set the x509 encoded root certificat to
+// anchor the trust assumptions as well as specifying the prefererred signature
+// algorithm.
+bool   g_identity_root_initialized = false;
+string g_identity_root;
+string g_signature_algorithm;
+X509  *g_x509_identity_root = nullptr;
 }  // namespace acl_lib
 }  // namespace certifier
 
@@ -1079,12 +1091,6 @@ void server_application(secure_authenticated_channel &channel) {
 
   server_dispatch.guard_.load_resources(certifier::acl_lib::g_rl);
 
-#if 0
-  const char *auth_alg = Enc_method_rsa_2048_sha256_pkcs_sign;
-  server_dispatch.guard_.authentication_algorithm_name_ = auth_alg;
-  server_dispatch.guard_.init_root_cert(der_identity_root_cert);
-#endif
-
   for (;;) {
     server_dispatch.service_request();
   }
@@ -1514,6 +1520,26 @@ int main(int an, char **av) {
       return 1;
     }
 
+    // set trust anchor
+    g_identity_root.assign(credentials.blobs(0).data(),
+                           credentials.blobs(0).size());
+    g_identity_root_initialized = true;
+    g_signature_algorithm = alg;
+    g_x509_identity_root = X509_new();
+    if (g_x509_identity_root == nullptr) {
+      printf("%s() error, line: %d: Can't initialize global identity root\n",
+             __func__,
+             __LINE__);
+      return 1;
+    }
+    if (!asn1_to_x509(g_identity_root, g_x509_identity_root)) {
+      printf(
+          "%s() error, line: %d: Can't x509 translate global identity root\n",
+          __func__,
+          __LINE__);
+      return 1;
+    }
+
     // der certs are cert chain from policy key
     int    ccc_cert_chain_length = 2;
     string ccc_der_certs[2];
@@ -1551,6 +1577,27 @@ int main(int an, char **av) {
              __LINE__);
       return 1;
     }
+
+    // set trust anchor
+    g_identity_root.assign(credentials.blobs(0).data(),
+                           credentials.blobs(0).size());
+    g_identity_root_initialized = true;
+    g_signature_algorithm = alg;
+    g_x509_identity_root = X509_new();
+    if (g_x509_identity_root == nullptr) {
+      printf("%s() error, line: %d: Can't initialize global identity root\n",
+             __func__,
+             __LINE__);
+      return 1;
+    }
+    if (!asn1_to_x509(g_identity_root, g_x509_identity_root)) {
+      printf(
+          "%s() error, line: %d: Can't x509 translate global identity root\n",
+          __func__,
+          __LINE__);
+      return 1;
+    }
+
     int    ccc_cert_chain_length = 2;
     string ccc_der_certs[2];
     ccc_der_certs[0] = policy_key_cert_str;
