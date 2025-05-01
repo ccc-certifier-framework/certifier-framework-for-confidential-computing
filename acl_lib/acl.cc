@@ -273,6 +273,7 @@ channel_guard::channel_guard() {
   num_active_resources_ = 0;
   capacity_active_resources_ = max_active_resources;
   root_cert_ = nullptr;
+  initialized_ = false;
 }
 
 channel_guard::~channel_guard() {}
@@ -308,14 +309,14 @@ bool channel_guard::init_root_cert(const string &asn1_cert_str) {
   return true;
 }
 
-bool verify_name_in_credential(const string &name, const string &creds) {
-  buffer_list credentials;
-  int         max_buf = 512;
-  char        name_buf[max_buf];
-  string      subject_name_str;
-  X509_NAME  *subject_name_1 = nullptr;
-  X509_NAME  *subject_name_2 = nullptr;
-  int         n;
+bool verify_name_in_credential(const string      &name,
+                               const buffer_list &credentials) {
+  int        max_buf = 512;
+  char       name_buf[max_buf];
+  string     subject_name_str;
+  X509_NAME *subject_name_1 = nullptr;
+  X509_NAME *subject_name_2 = nullptr;
+  int        n;
 
   X509 *cert = X509_new();
   if (cert == nullptr)
@@ -323,13 +324,6 @@ bool verify_name_in_credential(const string &name, const string &creds) {
 
   bool ret = true;
 
-  if (!credentials.ParseFromString(creds)) {
-    printf("%s() error, line %d: can't parse credential buf\n",
-           __func__,
-           __LINE__);
-    ret = false;
-    goto done;
-  }
   n = credentials.blobs_size();
   if (n < 2) {
     printf("%s() error, line %d: too few credentials\n", __func__, __LINE__);
@@ -375,32 +369,70 @@ bool channel_guard::authenticate_me(const string &name,
 
   extern principal_list g_pl;
   extern resource_list  g_rl;
+  buffer_list           credentials;
 
-  // Check that name is the common name in the credential
-  if (!verify_name_in_credential(name, creds)) {
-    printf("%s() error, line %d: name doesn't match name in cert.\n",
+  if (!credentials.ParseFromString(creds)) {
+    printf("%s() error, line %d: can't parse credentials.\n",
            __func__,
            __LINE__);
     return false;
   }
 
-  // This puts the credentials on the guard.
-  int i = 0;
-  for (i = 0; i < g_pl.principals_size(); i++) {
-    if (name == g_pl.principals(i).principal_name()) {
-      principal_name_ = g_pl.principals(i).principal_name();
-      authentication_algorithm_name_ =
-          g_pl.principals(i).authentication_algorithm();
-      creds_.assign(g_pl.principals(i).credential());
-      break;
+  if (!initialized_) {
+    // Check that name is the common name in the credential
+    if (!verify_name_in_credential(name, credentials)) {
+      printf("%s() error, line %d: name doesn't match name in cert.\n",
+             __func__,
+             __LINE__);
+      return false;
     }
-  }
-  if (i >= g_pl.principals_size()) {
-    printf("%s() error, line %d: Can't find principal %s\n",
-           __func__,
-           __LINE__,
-           name.c_str());
-    return false;
+
+    X509 *root_cert = X509_new();
+    if (root_cert == nullptr) {
+      printf("%s() error, line %d: can't allocate root cert.\n",
+             __func__,
+             __LINE__);
+      X509_free(root_cert);
+      return false;
+    }
+    if (!asn1_to_x509(credentials.blobs(0), root_cert)) {
+      printf("%s() error, line %d: can't asn1 translate.\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    if (!verify_cert_chain(root_cert, credentials)) {
+      printf("%s() error, line %d: can't verify cert chain.\n",
+             __func__,
+             __LINE__);
+      X509_free(root_cert);
+      return false;
+    }
+    X509_free(root_cert);
+    root_cert = nullptr;
+
+    // This puts the credentials on the guard.
+    int i = 0;
+    for (i = 0; i < g_pl.principals_size(); i++) {
+      if (name == g_pl.principals(i).principal_name()) {
+        principal_name_ = g_pl.principals(i).principal_name();
+        authentication_algorithm_name_ =
+            g_pl.principals(i).authentication_algorithm();
+        creds_.assign(g_pl.principals(i).credential());
+        break;
+      }
+    }
+    if (i >= g_pl.principals_size()) {
+      printf("%s() error, line %d: Can't find principal %s\n",
+             __func__,
+             __LINE__,
+             name.c_str());
+      return false;
+    }
+
+    // This isn't quite right right
+    init_root_cert(credentials.blobs(0));
+    initialized_ = true;
   }
 
   const int size_nonce = 32;

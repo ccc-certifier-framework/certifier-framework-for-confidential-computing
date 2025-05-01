@@ -110,6 +110,7 @@ class channel_guard {
   channel_guard();
   ~channel_guard();
 
+  bool   initialized_;
   string principal_name_;
   string authentication_algorithm_name_;
   string creds_;
