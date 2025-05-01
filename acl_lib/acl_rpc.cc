@@ -887,7 +887,10 @@ bool acl_server_dispatch::service_request() {
     printf("%s() error, line %d: not implemented yet\n", __func__, __LINE__);
     return false;
   } else {
-    printf("%s() error, line %d: unknown function\n", __func__, __LINE__);
+    printf("%s() error, line %d: unknown function %s\n",
+		    __func__,
+		    __LINE__,
+		    input_call_struct.function_name().c_str());
     return false;
   }
 
