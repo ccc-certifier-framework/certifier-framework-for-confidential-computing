@@ -93,7 +93,7 @@ Do the following:
       This creates the policy key and policy cert.
          cd $(ACL_LIB_DIR)
          ./standalone_app.exe --operation=make_additional_channel_keys
-      This makes the channel keys (auth keys and certs for the secure channel.
+      This makes the channel keys (auth keys and certs for the secure channel).
          ./standalone_app.exe --operation=make_access_keys_and_files
       This makes the identity keys, files and access policy.
   9.  After all the required files are constucted, you can check all the input:
