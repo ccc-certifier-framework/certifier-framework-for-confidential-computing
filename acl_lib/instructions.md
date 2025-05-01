@@ -41,46 +41,54 @@ rpc_add_principal
 Check test_acl.cc for examples.  To run the test you should have two test directories
 ./test_data and ./test_data with two files: file_1 and file_2.
 
-To build the google test in .:
-  make clean -f standalone_acl_lib_test.mak
-  make -f standalone_acl_lib_test.mak
-  ./test_acl.exe [--print_all=true]
+One subtle issue is sidestepped by the standalone app.  An application must have a secure
+way to establish trust in the identity root key. There are many ways to do this.  The
+two simplest are: use the policy key as the identity root or embed the identity root
+in the image.  Each application developer will have to decide this themselves based on
+their needs..
 
-To build the acl_lib library (after the certifier library has been build):
-  make clean -f acl_lib.mak
-  make -f acl_lib.mak
-You must also either copy certifier.proto (from $CERTIFIER_PROTOTYPE/certifier_service/certprotos)
-into acl_lib OR create a symbolic link to it.
+Here are complete build instructions:
 
-To build the standalone demonstration app:
-  make clean -f standalone_app.mak
-  make -f standalone_app.mak
+  As with certifier builds, let CERTIFIER_PROTOTYPE hold the name of the topmost certifier
+  repository directory, something like:
+     export CERTIFIER_PROTOTYPE = .../certifier-framework-for-confidential-computing/
 
-To run the standalone app, you must prepare needed test files in the
-test_data directory as follows:
-
-Step 1
-  First, create a policy key and cert (just as in the sample apps) by
-  running the following command in ./test_data:
-  export CERT_UTILS= CERTIFIER_PROTOTYPE/utilities
-  $CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
-                   --policy_key_output_file=policy_key_file.bin \
-                   --policy_cert_output_file=policy_cert_file.bin
-
-cd ..
-The standalone app uses simulated certifier keys.  You could make
-minor modifications in it to run in a certifier supported enclave.
-Step 2:
-  Make additional channel keys (auth keys and certs for channel):
-    ./standalone_app.exe --operation=make_additional_channel_keys
-  Make the identity keys, files and access policy:
-    ./standalone_app.exe --operation=make_access_keys_and_files
-  After all the required files are constucted, you can check all the input:
-    ./standalone_app.exe --operation=test_constructed_keys_and_files
-Step 3:
-  Now you can start the channel:
-  In one window, start the server:
-    ./standalone_app.exe --operation=run_as_server
-  In another window, start the client:
-    ./standalone_app.exe --operation=run_as_client
+  1.  ACL_LIB_DIR = $(CERTIFIER_PROTOTYPE/acl_lib/
+  2.  Make sure $(ACL_LIB_DIR) has two sundirectories acl_test_data and test_data with the
+      test files file_1 and file_2 and that there is either a copy certifier.proto
+      (from $CERTIFIER_PROTOTYPE/certifier_service/certprotos) into acl_lib OR create
+      a symbolic link to it.
+  3.  cd $(ACL_LIB_DIR)
+  4.  make clean -f standalone_acl_lib_test.mak
+  5.  make -f standalone_acl_lib_test.mak
+  6.  Run the test: ./test_acl.exe [--print_all=true]
+  7.  Build acl_lib (We assume the certifier library has already been built). 
+  8.  make clean -f acl_lib.mak  [It is important you do a clean make because
+      test_acl uses a special define during comilation to allow the use of a 
+      fake" channel" that is incompatible with actual use.
+  8.  make -f acl_lib.mak  [This will build acl_lib.a.]
+  9.  Build the standalone app.
+  10. make clean -f standalone_app.mak
+  11. make -f standalone_app.mak
+  12. Build test keys and files.
+  13. cd $(ACL_LIB_DIR)/test_data
+  14. export CERT_UTILS= CERTIFIER_PROTOTYPE/utilities
+  15. $CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
+                    --policy_key_output_file=policy_key_file.bin \
+                     --policy_cert_output_file=policy_cert_file.bin
+      [This creates the policy key and policy cert.]
+  16. cd $(ACL_LIB_DIR)
+  17. Make additional channel keys (auth keys and certs for channel):
+      ./standalone_app.exe --operation=make_additional_channel_keys
+  18. Make the identity keys, files and access policy:
+      ./standalone_app.exe --operation=make_access_keys_and_files
+  19. After all the required files are constucted, you can check all the input:
+      ./standalone_app.exe --operation=test_constructed_keys_and_files [--print_all=true]
+      This displays the keys, certs and files the test uses.
+  20. You can now start the test.  You should have two windows available.
+  21. In one window, start the server:
+      ./standalone_app.exe --operation=run_as_server
+  22. In another window, start the client:
+      ./standalone_app.exe --operation=run_as_client
+You should see the message "client_application succeeded"
 
