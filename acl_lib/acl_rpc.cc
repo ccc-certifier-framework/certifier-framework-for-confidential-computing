@@ -797,6 +797,7 @@ bool acl_server_dispatch::service_request() {
              __LINE__);
       return false;
     }
+    output_call_struct.set_function_name(read_resource_tag);
     string out;
     if (guard_.read_resource(input_call_struct.str_inputs(0),
                              input_call_struct.int_inputs(0),
@@ -807,7 +808,6 @@ bool acl_server_dispatch::service_request() {
     } else {
       output_call_struct.set_status(false);
     }
-    output_call_struct.set_function_name(read_resource_tag);
     if (!output_call_struct.SerializeToString(&decode_parameters_str)) {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
@@ -817,8 +817,8 @@ bool acl_server_dispatch::service_request() {
 
 #ifndef TEST_SIMULATED_CHANNEL
     if (sized_ssl_write(channel_descriptor_,
-                        decode_parameters_str.size(),
-                        (byte *)encode_parameters_str.data())
+                        (int)decode_parameters_str.size(),
+                        (byte *)decode_parameters_str.data())
         < 0) {
       printf("%s() error, line %d: Can't write to channel\n",
              __func__,
@@ -888,9 +888,9 @@ bool acl_server_dispatch::service_request() {
     return false;
   } else {
     printf("%s() error, line %d: unknown function %s\n",
-		    __func__,
-		    __LINE__,
-		    input_call_struct.function_name().c_str());
+           __func__,
+           __LINE__,
+           input_call_struct.function_name().c_str());
     return false;
   }
 

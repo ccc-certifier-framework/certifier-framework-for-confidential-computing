@@ -833,8 +833,8 @@ bool channel_guard::read_resource(const string &resource_name,
     return false;
   }
   if (ar_[rn].desc_ >= 0) {
-    byte buf[n];
-    int  k = read(ar_[rn].desc_, buf, n);
+    byte buf[n + 1];
+    int  k = (int)read(ar_[rn].desc_, buf, n);
     if (k < 0) {
       printf("%s() error, line: %d: Can't read, return is %d\n",
              __func__,
@@ -862,7 +862,7 @@ bool channel_guard::write_resource(const string &resource_name,
     return false;
   }
   if (ar_[rn].desc_ >= 0) {
-    int k = write(ar_[rn].desc_, (byte *)in.data(), in.size());
+    int k = write(ar_[rn].desc_, (byte *)in.data(), (int)in.size());
     if (k < 0) {
       printf("%s() error, line: %d\n", __func__, __LINE__);
       return false;
