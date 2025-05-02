@@ -127,11 +127,16 @@ bool get_principals_from_file(string &file_name, principal_list *pl) {
 bool save_resources_to_file(resource_list &rl, string &file_name) {
   string serialized_rl;
   if (!rl.SerializeToString(&serialized_rl)) {
-    printf("Cant serialize resource list\n");
+    printf("%s() error, line: %d, Cant serialize resource list\n",
+           __func__,
+           __LINE__);
     return false;
   }
   if (!write_file_from_string(file_name, serialized_rl)) {
-    printf("Cant read resource file %s\n", file_name.c_str());
+    printf("%s() error, line: %d, Cant read resource file %s\n",
+           __func__,
+           __LINE__,
+           file_name.c_str());
     return false;
   }
   return true;
@@ -140,15 +145,321 @@ bool save_resources_to_file(resource_list &rl, string &file_name) {
 bool save_principals_to_file(principal_list &pl, string &file_name) {
   string serialized_pl;
   if (!pl.SerializeToString(&serialized_pl)) {
-    printf("Cant serialize principals list\n");
+    printf("%s() error, line: %d, Cant serialize principals list\n",
+           __func__,
+           __LINE__);
     return false;
   }
   // write file
   if (!write_file_from_string(file_name, serialized_pl)) {
-    printf("Cant write principals file %s\n", file_name.c_str());
+    printf("%s() error, line: %d, Cant write principals file %s\n",
+           __func__,
+           __LINE__,
+           file_name.c_str());
     return false;
   }
   return true;
+}
+
+acl_principal_table::acl_principal_table() {
+  capacity_ = max_principal_table_capacity;
+  num_ = 0;
+  for (int i = 0; i < max_principal_table_capacity; i++) {
+    principal_status_[i] = INVALID;
+  }
+}
+
+acl_principal_table::~acl_principal_table() {}
+
+void acl_principal_table::print_entry(int i) {
+  printf("principal entry %d\n", i);
+  if (principal_status_[i] != VALID) {
+    printf("invalid\n");
+    return;
+  }
+  print_principal_message(principals_[i]);
+}
+
+bool acl_principal_table::add_principal_to_table(const string &name,
+                                                 const string &alg,
+                                                 const string &cred,
+                                                 string       &creator) {
+  int n = find_principal_in_table(name);
+  if (n >= 0) {
+    printf("%s() error, line: %d: principal already exists\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  for (int i = 0; i < num_; i++) {
+    if (principal_status_[i] != VALID) {
+      principals_[i].set_principal_name(name);
+      principals_[i].set_authentication_algorithm(alg);
+      principals_[i].set_credential(cred);
+      principal_status_[i] = VALID;
+      return true;
+    }
+  }
+  if (num_ >= capacity_) {
+    printf("%s() error, line: %d: principal table is full\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  principals_[num_].set_principal_name(name);
+  principals_[num_].set_authentication_algorithm(alg);
+  principals_[num_].set_credential(cred);
+  principal_status_[num_] = VALID;
+  num_++;
+  return true;
+}
+
+bool acl_principal_table::delete_principal_from_table(const string &name,
+                                                      const string &deleter) {
+  int n = find_principal_in_table(name);
+  if (n < 0)
+    return true;
+  principal_status_[n] = INVALID;
+  return true;
+}
+
+int acl_principal_table::find_principal_in_table(const string &name) {
+  for (int i = 0; i < num_; i++) {
+    if (principal_status_[i] == INVALID)
+      continue;
+    if (name == principals_[i].principal_name())
+      return i;
+  }
+  return -1;
+}
+
+bool acl_principal_table::load_principal_table_from_list(
+    const principal_list &pl) {
+  num_ = 0;
+  for (int i = 0; i < pl.principals_size() && i < capacity_; i++) {
+    principal_status_[num_] = VALID;
+    principals_[num_].set_principal_name(pl.principals(i).principal_name());
+    principals_[num_].set_credential(pl.principals(i).credential());
+    num_++;
+  }
+  return true;
+}
+
+// int principal_status_[max_resource_table_capacity];
+bool acl_principal_table::save_principal_table_to_list(principal_list *pl) {
+  for (int i = 0; i < num_; i++) {
+    if (principal_status_[i] != VALID)
+      continue;
+    principal_message *pm = pl->add_principals();
+    pm->CopyFrom(principals_[i]);
+  }
+  return true;
+}
+
+bool acl_principal_table::load_principal_table_from_file(
+    const string &filename) {
+  string         serialized_pl;
+  principal_list pl;
+
+  if (!read_file_into_string(filename, &serialized_pl)) {
+    printf("%s() error, line: %d: Cant read file\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!pl.ParseFromString(serialized_pl)) {
+    printf("%s() error, line: %d: Cant parse principal list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  return load_principal_table_from_list(pl);
+}
+
+bool acl_principal_table::save_principal_table_to_file(const string &filename) {
+  string         serialized_pl;
+  principal_list pl;
+
+  if (!save_principal_table_to_list(&pl)) {
+    printf("%s() error, line: %d: can't save principals to principal list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!pl.SerializeToString(&serialized_pl)) {
+    printf("%s() error, line: %d: can't serialize principal list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  return write_file_from_string(filename, serialized_pl);
+}
+
+acl_resource_table::acl_resource_table() {
+  num_ = 0;
+}
+
+acl_resource_table::~acl_resource_table() {}
+
+void acl_resource_table::print_entry(int i) {
+  printf("resource entry %d\n", i);
+  if (resource_status_[i] != VALID) {
+    printf("invalid\n");
+    return;
+  }
+  print_resource_message(resources_[i]);
+}
+
+bool acl_resource_table::add_resource_to_table(const resource_message &rm) {
+  int n = find_resource_in_table(rm.resource_identifier());
+  if (n >= 0) {
+    printf("%s() error, line: %d: resource already exists\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  for (int i = 0; i < num_; i++) {
+    if (resource_status_[i] != VALID) {
+      resources_[i].CopyFrom(rm);
+      resource_status_[i] = VALID;
+      return true;
+    }
+  }
+  if (num_ >= capacity_) {
+    printf("%s() error, line: %d: principal table is full\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  resources_[num_].CopyFrom(rm);
+  num_++;
+  return true;
+}
+
+bool acl_resource_table::add_resource_to_table(const string &name,
+                                               const string &type,
+                                               const string &location,
+                                               const string &creator) {
+  int n = find_resource_in_table(name);
+  if (n >= 0) {
+    printf("%s() error, line: %d: resource already exists\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  // TODO: add more elements?
+  for (int i = 0; i < num_; i++) {
+    if (resource_status_[i] != VALID) {
+      resources_[i].set_resource_identifier(name);
+      resources_[i].set_resource_type(type);
+      resources_[i].set_resource_location(location);
+      resource_status_[i] = VALID;
+      return true;
+    }
+  }
+  if (num_ >= capacity_) {
+    printf("%s() error, line: %d: principal table is full\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  resources_[num_].set_resource_identifier(name);
+  resource_status_[num_] = VALID;
+  resources_[num_].set_resource_type(type);
+  resources_[num_].set_resource_location(location);
+  resource_status_[num_] = VALID;
+  num_++;
+  return true;
+}
+
+bool acl_resource_table::delete_resource_from_table(const string &name,
+                                                    const string &type,
+                                                    const string &location,
+                                                    const string &deleter) {
+  int n = find_resource_in_table(name);
+  if (n < 0)
+    return true;
+  resource_status_[n] = INVALID;
+  return true;
+}
+
+int acl_resource_table::find_resource_in_table(const string &name) {
+  for (int i = 0; i < num_; i++) {
+    if (resource_status_[i] == INVALID)
+      continue;
+    if (name == resources_[i].resource_identifier())
+      return i;
+  }
+  return -1;
+}
+
+bool acl_resource_table::load_resource_table_from_list(
+    const resource_list &rl) {
+  num_ = 0;
+  for (int i = 0; i < rl.resources_size() && i < capacity_; i++) {
+    resources_[num_].CopyFrom(rl.resources(i));
+    resource_status_[num_] = VALID;
+    num_++;
+  }
+  return true;
+}
+
+bool acl_resource_table::save_resource_table_to_list(resource_list *rl) {
+  for (int i = 0; i < num_; i++) {
+    if (resource_status_[i] != VALID)
+      continue;
+    resource_message *rm = rl->add_resources();
+    rm->CopyFrom(resources_[i]);
+  }
+  return true;
+}
+
+bool acl_resource_table::load_resource_table_from_file(const string &filename) {
+  string        serialized_rl;
+  resource_list rl;
+
+  if (!read_file_into_string(filename, &serialized_rl)) {
+    printf("%s() error, line: %d: Cant read file\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!rl.ParseFromString(serialized_rl)) {
+    printf("%s() error, line: %d: Cant parse resource list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  return load_resource_table_from_list(rl);
+}
+
+bool acl_resource_table::save_resource_table_to_file(const string &filename) {
+  string        serialized_rl;
+  resource_list rl;
+
+  if (!save_resource_table_to_list(&rl)) {
+    printf("%s() error, line: %d: can't save resources to resource list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!rl.SerializeToString(&serialized_rl)) {
+    printf("%s() error, line: %d: can't serialize resource list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  return write_file_from_string(filename, serialized_rl);
+}
+
+active_acl_resource_data_element::active_acl_resource_data_element() {
+  status_ = INACTIVE;
+}
+
+active_acl_resource_data_element::~active_acl_resource_data_element() {
+  status_ = INACTIVE;
 }
 
 int on_reader_list(const resource_message &r, const string &name) {

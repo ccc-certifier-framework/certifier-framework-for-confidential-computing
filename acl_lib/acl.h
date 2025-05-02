@@ -29,6 +29,8 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include <mutex>
+
 #include "acl.pb.h"
 #include "acl_support.h"
 
@@ -104,7 +106,76 @@ bool add_resource_to_proto_list(const string  &id,
                                 const string  &t_written,
                                 resource_list *rl);
 
-const int max_active_resources = 25;
+const int max_principal_table_capacity = 250;
+class acl_principal_table {
+ public:
+  acl_principal_table();
+  ~acl_principal_table();
+  enum { INVALID = 0, VALID = 1 };
+
+  int               capacity_;
+  int               num_;
+  int               principal_status_[max_principal_table_capacity];
+  principal_message principals_[max_principal_table_capacity];
+  std::mutex        principal_table_mutex_;  // use lock(), unlock()
+
+  bool add_principal_to_table(const string &name,
+                              const string &alg,
+                              const string &credential,
+                              string       &creator);
+  bool delete_principal_from_table(const string &name, const string &deleter);
+  int  find_principal_in_table(const string &name);
+  bool load_principal_table_from_list(const principal_list &pl);
+  bool save_principal_table_to_list(principal_list *pl);
+  bool load_principal_table_from_file(const string &filename);
+  bool save_principal_table_to_file(const string &filename);
+
+  void print_entry(int i);
+};
+
+const int max_resource_table_capacity = 250;
+class acl_resource_table {
+ public:
+  acl_resource_table();
+  ~acl_resource_table();
+  enum { INVALID = 0, VALID = 1 };
+
+  int              capacity_;
+  int              num_;
+  int              resource_status_[max_resource_table_capacity];
+  resource_message resources_[max_resource_table_capacity];
+  std::mutex       resource_table_mutex_;  // use lock(), unlock()
+
+  bool add_resource_to_table(const string &name,
+                             const string &type,
+                             const string &location,
+                             const string &creator);
+  bool add_resource_to_table(const resource_message &rm);
+  bool delete_resource_from_table(const string &name,
+                                  const string &type,
+                                  const string &location,
+                                  const string &deleter);
+  int  find_resource_in_table(const string &name);
+  bool load_resource_table_from_list(const resource_list &rl);
+  bool save_resource_table_to_list(resource_list *rl);
+  bool load_resource_table_from_file(const string &filename);
+  bool save_resource_table_to_file(const string &filename);
+
+  void print_entry(int i);
+};
+
+class active_acl_resource_data_element {
+ public:
+  enum { INACTIVE = 0, ACTIVE = 1 };
+  string resource_name_;
+  int    status_;
+  int    global_descriptor_;
+
+  active_acl_resource_data_element();
+  ~active_acl_resource_data_element();
+};
+
+const int max_active_resources = 50;
 class channel_guard {
  public:
   channel_guard();
@@ -116,13 +187,17 @@ class channel_guard {
   string creds_;
   bool   channel_principal_authenticated_;
 
+#if 1
   int               capacity_resources_;
   int               num_resources_;
   resource_message *resources_;
   int               num_active_resources_;
   int               capacity_active_resources_;
   active_resource   ar_[max_active_resources];
-  string            nonce_;
+#else
+  active_acl_resource_data_element active_resources[max_active_resources];
+#endif
+  string nonce_;
 
   X509 *root_cert_;
 
