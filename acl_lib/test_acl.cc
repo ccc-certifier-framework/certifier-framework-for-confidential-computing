@@ -414,6 +414,229 @@ bool test_basic() {
   print_bytes(n, nonce);
   printf("\n");
 
+  acl_principal_table principal_table;
+  acl_resource_table  resource_table;
+  acl_principal_table principal_table2;
+  acl_resource_table  resource_table2;
+
+  principal_list pl2;
+  resource_list  rl2;
+  principal_list restored_pl2;
+  resource_list  restored_rl2;
+
+  if (!principal_table.load_principal_table_from_list(pl)) {
+    printf("%s() error, line %d: cant load principal table from list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (FLAGS_print_all) {
+    printf("Principal table %d entries:\n", principal_table.num_);
+    for (int i = 0; i < principal_table.num_; i++) {
+      principal_table.print_entry(i);
+    }
+    printf("\n");
+  }
+
+  if (pl.principals_size() != principal_table.num_) {
+    printf("%s() error, line %d: wrong number of principals recovered\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  // Resources
+  if (!resource_table.load_resource_table_from_list(rl)) {
+    printf("%s() error, line %d: cant load resource table from list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (FLAGS_print_all) {
+    printf("Resource table %d entries:\n", resource_table.num_);
+    for (int i = 0; i < resource_table.num_; i++) {
+      resource_table.print_entry(i);
+    }
+    printf("\n");
+  }
+
+  if (rl.resources_size() != resource_table.num_) {
+    printf("%s() error, line %d: wrong number of resources recovered\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+
+  if (!principal_table.save_principal_table_to_list(&pl2)) {
+    printf("%s() error, line %d: can't save principals to list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (pl.principals_size() != pl2.principals_size()) {
+    printf("%s() error, line %d: recoverd principals sizes don't match\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  for (int i = 0; i < pl.principals_size(); i++) {
+    if (pl.principals(i).principal_name()
+        != pl2.principals(i).principal_name()) {
+      printf("%s() error, line %d: recovered names don't match\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  }
+
+  string p_filename("./acl_test_data/st1.bin");
+  if (!principal_table.save_principal_table_to_file(p_filename)) {
+    printf("%s() error, line %d: can't save principal table to file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!principal_table2.load_principal_table_from_file(p_filename)) {
+    printf("%s() error, line %d: can't load principal table from file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (principal_table.num_ != principal_table2.num_) {
+    printf("%s() error, line %d: recovered principal table has wrong number of "
+           "entries\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  for (int i = 0; i < principal_table.num_; i++) {
+    if (principal_table.principals_[i].principal_name()
+        != principal_table2.principals_[i].principal_name()) {
+      printf("%s() error, line %d: recovered principal table has different "
+             "principals\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  }
+
+  string pnf("freddo");
+  string pna("albert");
+  if (!principal_table2.add_principal_to_table(
+          pnf,
+          principal_table2.principals_[0].authentication_algorithm(),
+          principal_table2.principals_[0].credential(),
+          pna)) {
+    printf("%s() error, line %d: can't add principal\n", __func__, __LINE__);
+    return false;
+  }
+  n = principal_table2.find_principal_in_table(pnf);
+  if (n < 0) {
+    printf("%s() error, line %d: can't find added principal\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  printf("\nAfter adding principal\n");
+  for (int i = 0; i < principal_table2.num_; i++) {
+    principal_table2.print_entry(i);
+    printf("\n");
+  }
+  if (!principal_table2.delete_principal_from_table(pnf, pna)) {
+    printf("%s() error, line %d: can't delete principal\n", __func__, __LINE__);
+    return false;
+  }
+  printf("\nAfter deleting principal\n");
+  for (int i = 0; i < principal_table2.num_; i++) {
+    principal_table2.print_entry(i);
+    printf("\n");
+  }
+
+  if (!resource_table.save_resource_table_to_list(&rl2)) {
+    printf("%s() error, line %d: can't save resources to list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (rl.resources_size() != rl2.resources_size()) {
+    printf("%s() error, line %d: recoverd resources sizes don't match\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  for (int i = 0; i < rl.resources_size(); i++) {
+    if (rl.resources(i).resource_identifier()
+        != rl2.resources(i).resource_identifier()) {
+      printf("%s() error, line %d: recovered names don't match\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  }
+
+  string r_filename("./acl_test_data/rt1.bin");
+  if (!resource_table.save_resource_table_to_file(r_filename)) {
+    printf("%s() error, line %d: can't save resource table to file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!resource_table2.load_resource_table_from_file(r_filename)) {
+    printf("%s() error, line %d: can't load resource table from file\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (resource_table.num_ != resource_table2.num_) {
+    printf("%s() error, line %d: recovered resource table has wrong number of "
+           "entries\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  for (int i = 0; i < resource_table.num_; i++) {
+    if (resource_table.resources_[i].resource_identifier()
+        != resource_table2.resources_[i].resource_identifier()) {
+      printf("%s() error, line %d: recovered resource table has different "
+             "principals\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  }
+
+  string rnf("new_resource");
+  string ft("super-file");
+  string loc("outer-space");
+  if (!resource_table2.add_resource_to_table(rnf, ft, loc, pna)) {
+    printf("%s() error, line %d: can't add resource\n", __func__, __LINE__);
+    return false;
+  }
+  n = resource_table2.find_resource_in_table(rnf);
+  if (n < 0) {
+    printf("%s() error, line %d: can't find added resource\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  printf("\nAfter adding resource\n");
+  for (int i = 0; i < resource_table2.num_; i++) {
+    resource_table2.print_entry(i);
+    printf("\n");
+  }
+  if (!resource_table2.delete_resource_from_table(rnf, ft, pna)) {
+    printf("%s() error, line %d: can't delete resource\n", __func__, __LINE__);
+    return false;
+  }
+  printf("\nAfter deleting resource\n");
+  for (int i = 0; i < resource_table2.num_; i++) {
+    resource_table2.print_entry(i);
+    printf("\n");
+  }
+
   return true;
 }
 

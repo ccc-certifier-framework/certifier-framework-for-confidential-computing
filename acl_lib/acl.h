@@ -153,7 +153,6 @@ class acl_resource_table {
   bool add_resource_to_table(const resource_message &rm);
   bool delete_resource_from_table(const string &name,
                                   const string &type,
-                                  const string &location,
                                   const string &deleter);
   int  find_resource_in_table(const string &name);
   bool load_resource_table_from_list(const resource_list &rl);

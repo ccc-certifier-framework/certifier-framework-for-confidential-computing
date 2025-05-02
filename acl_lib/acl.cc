@@ -297,6 +297,7 @@ bool acl_principal_table::save_principal_table_to_file(const string &filename) {
 }
 
 acl_resource_table::acl_resource_table() {
+  capacity_ = max_resource_table_capacity;
   num_ = 0;
 }
 
@@ -375,11 +376,12 @@ bool acl_resource_table::add_resource_to_table(const string &name,
 
 bool acl_resource_table::delete_resource_from_table(const string &name,
                                                     const string &type,
-                                                    const string &location,
                                                     const string &deleter) {
   int n = find_resource_in_table(name);
-  if (n < 0)
+  if (n < 0) {
+    printf("find resource failed\n");
     return true;
+  }
   resource_status_[n] = INVALID;
   return true;
 }
