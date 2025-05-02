@@ -428,6 +428,11 @@ bool channel_guard::authenticate_me(const string &name,
       return false;
     }
     initialized_ = true;
+  } else {
+    printf("%s() error, line %d: identiity root not initialized\n",
+           __func__,
+           __LINE__);
+    return false;
   }
 
   const int size_nonce = 32;
