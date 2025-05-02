@@ -162,11 +162,13 @@ bool save_principals_to_file(principal_list &pl, string &file_name) {
 }
 
 acl_principal_table::acl_principal_table() {
+  principal_table_mutex_.lock();
   capacity_ = max_principal_table_capacity;
   num_ = 0;
   for (int i = 0; i < max_principal_table_capacity; i++) {
     principal_status_[i] = INVALID;
   }
+  principal_table_mutex_.unlock();
 }
 
 acl_principal_table::~acl_principal_table() {}
@@ -184,12 +186,15 @@ bool acl_principal_table::add_principal_to_table(const string &name,
                                                  const string &alg,
                                                  const string &cred,
                                                  string       &creator) {
+  bool ret = true;
+  principal_table_mutex_.lock();
   int n = find_principal_in_table(name);
   if (n >= 0) {
     printf("%s() error, line: %d: principal already exists\n",
            __func__,
            __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
   for (int i = 0; i < num_; i++) {
     if (principal_status_[i] != VALID) {
@@ -197,44 +202,58 @@ bool acl_principal_table::add_principal_to_table(const string &name,
       principals_[i].set_authentication_algorithm(alg);
       principals_[i].set_credential(cred);
       principal_status_[i] = VALID;
-      return true;
+      goto done;
     }
   }
   if (num_ >= capacity_) {
     printf("%s() error, line: %d: principal table is full\n",
            __func__,
            __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
   principals_[num_].set_principal_name(name);
   principals_[num_].set_authentication_algorithm(alg);
   principals_[num_].set_credential(cred);
   principal_status_[num_] = VALID;
   num_++;
-  return true;
+
+done:
+  principal_table_mutex_.unlock();
+  return ret;
 }
 
 bool acl_principal_table::delete_principal_from_table(const string &name,
                                                       const string &deleter) {
+  bool ret = true;
+  principal_table_mutex_.lock();
+
   int n = find_principal_in_table(name);
   if (n < 0)
-    return true;
+    goto done;
   principal_status_[n] = INVALID;
-  return true;
+
+done:
+  principal_table_mutex_.unlock();
+  return ret;
 }
 
 int acl_principal_table::find_principal_in_table(const string &name) {
+  // assume table is already locked
   for (int i = 0; i < num_; i++) {
     if (principal_status_[i] == INVALID)
       continue;
-    if (name == principals_[i].principal_name())
+    if (name == principals_[i].principal_name()) {
       return i;
+    }
   }
   return -1;
 }
 
 bool acl_principal_table::load_principal_table_from_list(
     const principal_list &pl) {
+
+  principal_table_mutex_.lock();
   num_ = 0;
   for (int i = 0; i < pl.principals_size() && i < capacity_; i++) {
     principal_status_[num_] = VALID;
@@ -242,37 +261,46 @@ bool acl_principal_table::load_principal_table_from_list(
     principals_[num_].set_credential(pl.principals(i).credential());
     num_++;
   }
+  principal_table_mutex_.unlock();
   return true;
 }
 
 // int principal_status_[max_resource_table_capacity];
 bool acl_principal_table::save_principal_table_to_list(principal_list *pl) {
+  principal_table_mutex_.lock();
   for (int i = 0; i < num_; i++) {
     if (principal_status_[i] != VALID)
       continue;
     principal_message *pm = pl->add_principals();
     pm->CopyFrom(principals_[i]);
   }
+  principal_table_mutex_.unlock();
   return true;
 }
 
 bool acl_principal_table::load_principal_table_from_file(
-    const string &filename) {
+  const string &filename) {
   string         serialized_pl;
   principal_list pl;
+  bool ret = true;
 
   if (!read_file_into_string(filename, &serialized_pl)) {
     printf("%s() error, line: %d: Cant read file\n", __func__, __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
 
   if (!pl.ParseFromString(serialized_pl)) {
     printf("%s() error, line: %d: Cant parse principal list\n",
            __func__,
            __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
-  return load_principal_table_from_list(pl);
+  ret = load_principal_table_from_list(pl);
+
+done:
+  return ret;
 }
 
 bool acl_principal_table::save_principal_table_to_file(const string &filename) {
@@ -342,28 +370,32 @@ bool acl_resource_table::add_resource_to_table(const string &name,
                                                const string &type,
                                                const string &location,
                                                const string &creator) {
+  bool ret = true;
+  resource_table_mutex_.lock();
+
   int n = find_resource_in_table(name);
   if (n >= 0) {
     printf("%s() error, line: %d: resource already exists\n",
            __func__,
            __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
-  // TODO: add more elements?
   for (int i = 0; i < num_; i++) {
     if (resource_status_[i] != VALID) {
       resources_[i].set_resource_identifier(name);
       resources_[i].set_resource_type(type);
       resources_[i].set_resource_location(location);
       resource_status_[i] = VALID;
-      return true;
+      goto done;
     }
   }
   if (num_ >= capacity_) {
     printf("%s() error, line: %d: principal table is full\n",
            __func__,
            __LINE__);
-    return false;
+    ret = false;
+    goto done;
   }
   resources_[num_].set_resource_identifier(name);
   resource_status_[num_] = VALID;
@@ -371,19 +403,27 @@ bool acl_resource_table::add_resource_to_table(const string &name,
   resources_[num_].set_resource_location(location);
   resource_status_[num_] = VALID;
   num_++;
-  return true;
+
+done:
+  resource_table_mutex_.unlock();
+  return ret;
 }
 
 bool acl_resource_table::delete_resource_from_table(const string &name,
                                                     const string &type,
                                                     const string &deleter) {
+  bool ret = true;
+  resource_table_mutex_.lock();
+
   int n = find_resource_in_table(name);
   if (n < 0) {
-    printf("find resource failed\n");
-    return true;
+    goto done;
   }
   resource_status_[n] = INVALID;
-  return true;
+
+done:
+  resource_table_mutex_.unlock();
+  return ret;
 }
 
 int acl_resource_table::find_resource_in_table(const string &name) {
@@ -398,22 +438,30 @@ int acl_resource_table::find_resource_in_table(const string &name) {
 
 bool acl_resource_table::load_resource_table_from_list(
     const resource_list &rl) {
+
+  resource_table_mutex_.lock();
+
   num_ = 0;
   for (int i = 0; i < rl.resources_size() && i < capacity_; i++) {
     resources_[num_].CopyFrom(rl.resources(i));
     resource_status_[num_] = VALID;
     num_++;
   }
+  resource_table_mutex_.unlock();
   return true;
 }
 
 bool acl_resource_table::save_resource_table_to_list(resource_list *rl) {
+  resource_table_mutex_.lock();
+
   for (int i = 0; i < num_; i++) {
     if (resource_status_[i] != VALID)
       continue;
     resource_message *rm = rl->add_resources();
     rm->CopyFrom(resources_[i]);
   }
+
+  resource_table_mutex_.unlock();
   return true;
 }
 
