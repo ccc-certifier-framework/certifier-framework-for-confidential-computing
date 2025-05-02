@@ -184,7 +184,7 @@ bool make_keys_and_certs(string      &root_issuer_name,
   }
 
   // root cert
-  root_cert = X509_new();
+  g_x509_identity_root = X509_new();
   if (!produce_artifact(*root_key,
                         root_issuer_name,
                         root_issuer_org,
@@ -193,7 +193,7 @@ bool make_keys_and_certs(string      &root_issuer_name,
                         root_issuer_org,
                         sn,
                         duration,
-                        root_cert,
+                        g_x509_identity_root,
                         true)) {
     printf("%s() error, line %d: cant generate root cert\n",
            __func__,
@@ -202,13 +202,17 @@ bool make_keys_and_certs(string      &root_issuer_name,
     goto done;
   }
   sn++;
-  if (!x509_to_asn1(root_cert, &root_asn1_cert_str)) {
+  if (!x509_to_asn1(g_x509_identity_root, &root_asn1_cert_str)) {
     printf("%s() error, line %d: cant asn1 translate root cert\n",
            __func__,
            __LINE__);
     ret = false;
     goto done;
   }
+
+  g_identity_root.assign(root_asn1_cert_str.data(), root_asn1_cert_str.size());
+  g_signature_algorithm = alg;
+  g_identity_root_initialized = true;
 
   // signing cert
   signing_cert = X509_new();
@@ -238,7 +242,7 @@ bool make_keys_and_certs(string      &root_issuer_name,
 
   if (FLAGS_print_all) {
     printf("root cert:\n");
-    X509_print_fp(stdout, root_cert);
+    X509_print_fp(stdout, g_x509_identity_root);
     printf("\n");
     printf("signing cert:\n");
     X509_print_fp(stdout, signing_cert);
@@ -268,10 +272,6 @@ done:
   if (r2 != nullptr) {
     RSA_free(r2);
     r2 = nullptr;
-  }
-  if (root_cert != nullptr) {
-    X509_free(root_cert);
-    root_cert = nullptr;
   }
   if (signing_cert != nullptr) {
     X509_free(signing_cert);
@@ -448,7 +448,6 @@ bool test_access() {
   int   size_nonce = 32;
   byte  buf[size_nonce];
   int   k = 0;
-  X509 *root_cert = nullptr;
   X509 *signing_cert = nullptr;
 
   string root_issuer_name("datica-identity-root");
@@ -661,10 +660,6 @@ bool test_access() {
   }
 
 done:
-  if (root_cert != nullptr) {
-    X509_free(root_cert);
-    root_cert = nullptr;
-  }
   if (signing_cert != nullptr) {
     X509_free(signing_cert);
     signing_cert = nullptr;

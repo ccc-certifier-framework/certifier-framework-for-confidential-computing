@@ -400,13 +400,6 @@ bool channel_guard::authenticate_me(const string &name,
         return false;
       }
       authentication_algorithm_name_ = g_signature_algorithm;
-    } else {
-      if (!init_root_cert(credentials.blobs(0))) {
-        printf("%s() error, line %d: can't initialize root cert.\n",
-               __func__,
-               __LINE__);
-        return false;
-      }
     }
 
     if (!verify_cert_chain(root_cert_, credentials)) {
