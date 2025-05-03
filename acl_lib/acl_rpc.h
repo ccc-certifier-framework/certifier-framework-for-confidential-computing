@@ -35,13 +35,16 @@ class acl_client_dispatch {
                            string       *output);
   bool rpc_verify_me(const string &principal_name, const string &signed_nonce);
   bool rpc_open_resource(const string &resource_name,
-                         const string &access_right);
+                         const string &access_right,
+                         int          *local_desciptor);
   bool rpc_read_resource(const string &resource_name,
+                         int           local_descriptor,
                          int           num_bytes,
                          string       *bytes_read);
   bool rpc_write_resource(const string &resource_name,
+                          int           local_descriptor,
                           const string &bytes_to_write);
-  bool rpc_close_resource(const string &resource_name);
+  bool rpc_close_resource(const string &resource_name, int local_descriptor);
   bool rpc_add_access_right(const string &resource_name,
                             const string &delegated_principal,
                             const string &right);

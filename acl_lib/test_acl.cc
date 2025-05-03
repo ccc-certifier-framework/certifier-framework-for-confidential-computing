@@ -33,13 +33,18 @@ using namespace certifier::acl_lib;
 namespace certifier {
 namespace acl_lib {
 
+// Globals
 resource_list       g_rl;
 principal_list      g_pl;
-acl_server_dispatch g_server(nullptr);
 bool                g_identity_root_initialized = false;
 string              g_identity_root;
 string              g_signature_algorithm;
 X509               *g_x509_identity_root = nullptr;
+acl_principal_table g_principal_table;
+acl_resource_table  g_resource_table;
+
+// this one is just for test_acl
+acl_server_dispatch g_server(nullptr);
 
 bool construct_sample_principals(principal_list *pl) {
   string p1("john");
@@ -824,7 +829,7 @@ bool test_access() {
   }
   nonce.assign((char *)buf, k);
 
-  if (!guard.load_resources(g_rl)) {
+  if (!g_resource_table.load_resource_table_from_list(g_rl)) {
     printf("%s() error, line %d: Can't load resource list\n",
            __func__,
            __LINE__);
@@ -892,11 +897,12 @@ bool test_access() {
     goto done;
   }
 
-  if (!guard.open_resource(res1, acc1)) {
+  int local_descriptor;
+  if (!guard.open_resource(res1, acc1, &local_descriptor)) {
     printf("%s() error, line %d: open_resource failed\n", __func__, __LINE__);
     return false;
   }
-  if (guard.read_resource(res1, 14, &bytes_read)) {
+  if (guard.read_resource(res1, local_descriptor, 14, &bytes_read)) {
     printf("open resource succeeded, %d bytes read\n", (int)bytes_read.size());
     printf("Received: %s\n", bytes_read.c_str());
   } else {
@@ -905,23 +911,23 @@ bool test_access() {
            __LINE__);
     return false;
   }
-  if (guard.close_resource(res1)) {
+  if (guard.close_resource(res1, local_descriptor)) {
     printf("close resource succeeded\n");
   } else {
     printf("close reading resource failed\n");
     return false;
   }
 
-  if (!guard.open_resource(res2, acc2)) {
+  if (!guard.open_resource(res2, acc2, &local_descriptor)) {
     printf("open_resource for writing failed\n");
     return false;
   }
-  if (guard.write_resource(res2, 12, bytes_written)) {
+  if (guard.write_resource(res2, local_descriptor, 12, bytes_written)) {
   } else {
     printf("write_resource failed\n");
     return false;
   }
-  if (guard.close_resource(res2)) {
+  if (guard.close_resource(res2, local_descriptor)) {
   } else {
     printf("close writing resource failed\n");
     return false;
@@ -2018,6 +2024,7 @@ bool test_rpc() {
   string prin_name("john");
   string res1_name("file_1");
   string res2_name("file_2");
+  string res3_name("file_3");
   string acc1("read");
   string acc2("write");
 
@@ -2026,6 +2033,7 @@ bool test_rpc() {
 
   string bytes_read_from_file;
   string bytes_written_to_file("Hello there");
+  string bytes_reread_from_file;
 
   int    size_nonce = 32;
   byte   buf[size_nonce];
@@ -2037,6 +2045,8 @@ bool test_rpc() {
   string asn1_cert_str;
   string auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
   string serialized_creds;
+
+  resource_message rm;
 
   bool ret = true;
 
@@ -2060,7 +2070,7 @@ bool test_rpc() {
     }
   }
 
-  if (!g_server.guard_.load_resources(g_rl)) {
+  if (!g_resource_table.load_resource_table_from_list(g_rl)) {
     printf("%s() error, line %d: Cant load resources\n", __func__, __LINE__);
     return false;
   }
@@ -2186,7 +2196,8 @@ bool test_rpc() {
     goto done;
   }
 
-  ret = client.rpc_open_resource(res1_name, acc1);
+  int local_descriptor;
+  ret = client.rpc_open_resource(res1_name, acc1, &local_descriptor);
   if (!ret) {
     printf("%s() error, line %d: rpc_open_resource failed\n",
            __func__,
@@ -2195,7 +2206,12 @@ bool test_rpc() {
     goto done;
   }
 
-  ret = client.rpc_read_resource(res1_name, 14, &bytes_read_from_file);
+  printf("local_descriptor on call to rpc_read_resource in test_acl: %d\n",
+         local_descriptor);
+  ret = client.rpc_read_resource(res1_name,
+                                 local_descriptor,
+                                 14,
+                                 &bytes_read_from_file);
   if (!ret) {
     printf("%s() error, line %d: rpc_read_resource failed\n",
            __func__,
@@ -2205,7 +2221,7 @@ bool test_rpc() {
   }
   printf("Bytes: %s\n", bytes_read_from_file.c_str());
 
-  ret = client.rpc_close_resource(res1_name);
+  ret = client.rpc_close_resource(res1_name, local_descriptor);
   if (!ret) {
     printf("%s() error, line %d: rpc_close_resource failed\n",
            __func__,
@@ -2214,7 +2230,37 @@ bool test_rpc() {
     goto done;
   }
 
-  ret = client.rpc_open_resource(res2_name, acc2);
+  rm.set_resource_identifier(res3_name);
+  rm.set_resource_type("file");
+  rm.set_resource_location("./acl_test_data/" + res3_name);
+  rm.mutable_resource_key()->CopyFrom(
+      g_resource_table.resources_[1].resource_key());
+  rm.mutable_readers()->CopyFrom(g_resource_table.resources_[0].readers());
+  rm.mutable_writers()->CopyFrom(g_resource_table.resources_[0].readers());
+  int t_k;
+
+  if (!g_resource_table.add_resource_to_table(rm)) {
+    printf("%s() error, line %d: can't add resource\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  t_k = g_resource_table.find_resource_in_table(res3_name);
+  if (t_k < 0) {
+    printf("%s() error, line %d: resource %s not there %d\n",
+           __func__,
+           __LINE__,
+           res3_name.c_str(),
+           g_resource_table.num_);
+    printf("name: %s\n",
+           g_resource_table.resources_[g_resource_table.num_ - 1]
+               .resource_identifier()
+               .c_str());
+    ret = false;
+    goto done;
+  }
+
+  ret = client.rpc_open_resource(res3_name, acc2, &local_descriptor);
   if (!ret) {
     printf("%s() error, line %d: rpc_open_resource failed\n",
            __func__,
@@ -2223,7 +2269,9 @@ bool test_rpc() {
     goto done;
   }
 
-  ret = client.rpc_write_resource(res2_name, bytes_written_to_file);
+  ret = client.rpc_write_resource(res3_name,
+                                  local_descriptor,
+                                  bytes_written_to_file);
   if (!ret) {
     printf("%s() error, line %d: rpc_write_resource failed\n",
            __func__,
@@ -2232,7 +2280,7 @@ bool test_rpc() {
     goto done;
   }
 
-  ret = client.rpc_close_resource(res2_name);
+  ret = client.rpc_close_resource(res3_name, local_descriptor);
   if (!ret) {
     printf("%s() error, line %d: rpc_close_resource failed\n",
            __func__,
@@ -2240,6 +2288,41 @@ bool test_rpc() {
     ret = false;
     goto done;
   }
+
+  ret = client.rpc_open_resource(res3_name, acc1, &local_descriptor);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_open_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  printf("local_descriptor on call to rpc_read_resource (2) in test_acl: %d\n",
+         local_descriptor);
+  ret = client.rpc_read_resource(res3_name,
+                                 local_descriptor,
+                                 bytes_written_to_file.size(),
+                                 &bytes_reread_from_file);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_read_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  ret = client.rpc_close_resource(res3_name, local_descriptor);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_close_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  printf("Bytes reread %d: %s\n",
+         bytes_reread_from_file.size(),
+         bytes_reread_from_file.c_str());
 
 done:
   if (pkey != nullptr) {

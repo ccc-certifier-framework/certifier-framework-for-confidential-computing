@@ -241,7 +241,8 @@ bool acl_client_dispatch::rpc_verify_me(const string &principal_name,
 }
 
 bool acl_client_dispatch::rpc_open_resource(const string &resource_name,
-                                            const string &access_right) {
+                                            const string &access_right,
+                                            int          *local_descriptor) {
   string   decode_parameters_str;
   string   encode_parameters_str;
   rpc_call input_call_struct;
@@ -311,14 +312,15 @@ bool acl_client_dispatch::rpc_open_resource(const string &resource_name,
            __LINE__);
     return false;
   }
-  bool ret = output_call_struct.status();
-  if (!ret) {
+  if (output_call_struct.status() != true) {
     return false;
   }
-  return true;
+  *local_descriptor = output_call_struct.int_outputs(0);
+  return output_call_struct.status();
 }
 
 bool acl_client_dispatch::rpc_read_resource(const string &resource_name,
+                                            int           local_descriptor,
                                             int           num_bytes,
                                             string       *bytes_output) {
   string   decode_parameters_str;
@@ -327,12 +329,13 @@ bool acl_client_dispatch::rpc_read_resource(const string &resource_name,
   rpc_call output_call_struct;
   int      bytes_read_ret = 0;
 
+  printf("read_resource in client_dispatch, desc: %d\n", local_descriptor);
   // format input buffer, serialize it
   input_call_struct.set_function_name(read_resource_tag);
+  input_call_struct.add_int_inputs((::int32_t)local_descriptor);
   input_call_struct.add_int_inputs((::int32_t)num_bytes);
   string *pr_str = input_call_struct.add_str_inputs();
   *pr_str = resource_name;
-
   if (!input_call_struct.SerializeToString(&encode_parameters_str)) {
     printf("%s() error, line %d: Can't input\n", __func__, __LINE__);
     return false;
@@ -376,7 +379,6 @@ bool acl_client_dispatch::rpc_read_resource(const string &resource_name,
     return false;
   }
 #endif
-
   if (!output_call_struct.ParseFromString(decode_parameters_str)) {
     printf("%s() error, line %d: Can't parse return buffer\n",
            __func__,
@@ -409,6 +411,7 @@ bool acl_client_dispatch::rpc_read_resource(const string &resource_name,
 }
 
 bool acl_client_dispatch::rpc_write_resource(const string &resource_name,
+                                             int           local_descriptor,
                                              const string &bytes_to_write) {
 
   string   decode_parameters_str;
@@ -423,7 +426,11 @@ bool acl_client_dispatch::rpc_write_resource(const string &resource_name,
   *p_res = resource_name;
   string *buf_to_write = input_call_struct.add_buf_inputs();
   *buf_to_write = bytes_to_write;
+  input_call_struct.add_int_inputs((::int32_t)local_descriptor);
   input_call_struct.add_int_inputs((::int32_t)bytes_to_write.size());
+  printf("In client write_resource, to write %d %s\n",
+         bytes_to_write.size(),
+         bytes_to_write.c_str());
 
   if (!input_call_struct.SerializeToString(&encode_parameters_str)) {
     printf("%s() error, line %d: Can't input\n", __func__, __LINE__);
@@ -488,7 +495,8 @@ bool acl_client_dispatch::rpc_write_resource(const string &resource_name,
   return true;
 }
 
-bool acl_client_dispatch::rpc_close_resource(const string &resource_name) {
+bool acl_client_dispatch::rpc_close_resource(const string &resource_name,
+                                             int           local_descriptor) {
   string   decode_parameters_str;
   string   encode_parameters_str;
   rpc_call input_call_struct;
@@ -499,6 +507,7 @@ bool acl_client_dispatch::rpc_close_resource(const string &resource_name) {
   input_call_struct.set_function_name(close_resource_tag);
   string *in = input_call_struct.add_str_inputs();
   *in = resource_name;
+  input_call_struct.add_int_inputs((::int32_t)local_descriptor);
 
   if (!input_call_struct.SerializeToString(&encode_parameters_str)) {
     printf("%s() error, line %d: Can't input\n", __func__, __LINE__);
@@ -713,13 +722,18 @@ bool acl_server_dispatch::service_request() {
     if (input_call_struct.str_inputs_size() < 2) {
       return false;
     }
+    output_call_struct.set_function_name(open_resource_tag);
+    int desc = -1;
     if (guard_.open_resource(input_call_struct.str_inputs(0),
-                             input_call_struct.str_inputs(1))) {
+                             input_call_struct.str_inputs(1),
+                             &desc)) {
       output_call_struct.set_status(true);
+      output_call_struct.add_int_outputs((google::protobuf::int32)desc);
+      printf("desc in server_dispatch: %d\n", desc);
     } else {
       output_call_struct.set_status(false);
     }
-    output_call_struct.set_function_name(open_resource_tag);
+    printf("desc in open_resource: %d\n", desc);
     if (!output_call_struct.SerializeToString(&encode_parameters_str)) {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
@@ -752,7 +766,8 @@ bool acl_server_dispatch::service_request() {
              __LINE__);
       return false;
     }
-    if (guard_.close_resource(input_call_struct.str_inputs(0))) {
+    if (guard_.close_resource(input_call_struct.str_inputs(0),
+                              input_call_struct.int_inputs(0))) {
       output_call_struct.set_status(true);
     } else {
       output_call_struct.set_status(false);
@@ -801,6 +816,7 @@ bool acl_server_dispatch::service_request() {
     string out;
     if (guard_.read_resource(input_call_struct.str_inputs(0),
                              input_call_struct.int_inputs(0),
+                             input_call_struct.int_inputs(1),
                              &out)) {
       output_call_struct.set_status(true);
       string *ret_out = output_call_struct.add_buf_outputs();
@@ -851,6 +867,7 @@ bool acl_server_dispatch::service_request() {
     }
     if (guard_.write_resource(input_call_struct.str_inputs(0),
                               input_call_struct.int_inputs(0),
+                              input_call_struct.int_inputs(1),
                               (string &)input_call_struct.buf_inputs(0))) {
       output_call_struct.set_status(true);
     } else {

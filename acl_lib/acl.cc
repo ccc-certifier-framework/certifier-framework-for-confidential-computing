@@ -25,14 +25,25 @@
 #include "acl_support.h"
 #include "acl.h"
 
-// -----------------------------------------------------------------------------
-
 using namespace certifier::framework;
 using namespace certifier::utilities;
+
 
 namespace certifier {
 namespace acl_lib {
 
+
+extern resource_list       g_rl;
+extern principal_list      g_pl;
+extern acl_principal_table g_principal_table;
+extern acl_resource_table  g_resource_table;
+extern bool                g_identity_root_initialized;
+extern string              g_identity_root;
+extern string              g_signature_algorithm;
+extern X509               *g_x509_identity_root;
+
+
+// -----------------------------------------------------------------------------
 
 void print_principal_message(const principal_message &pi) {
   if (pi.has_principal_name())
@@ -158,6 +169,40 @@ bool save_principals_to_file(principal_list &pl, string &file_name) {
            file_name.c_str());
     return false;
   }
+  return true;
+}
+
+// -----------------------------------------------------------------------------
+
+
+// This is the table that records the global descriptor
+// a client's local descriptor refers to.  These routines
+// do not have to be thread safe since channel guard is
+// single threaded.
+acl_local_descriptor_table::acl_local_descriptor_table() {
+  capacity_ = max_local_descriptors;
+  num_ = 0;
+}
+
+acl_local_descriptor_table::~acl_local_descriptor_table() {}
+
+int acl_local_descriptor_table::find_available_descriptor() {
+  for (int i = 0; i < num_; i++) {
+    if (descriptor_entry_[i].status_ != VALID) {
+      return i;
+    }
+  }
+  if (num_ >= capacity_)
+    return -1;
+  return num_++;
+}
+
+bool acl_local_descriptor_table::free_descriptor(int i, const string &name) {
+  if (i >= num_)
+    return false;
+  if (descriptor_entry_[i].resource_name_ != name)
+    return false;
+  descriptor_entry_[i].status_ = INVALID;
   return true;
 }
 
@@ -356,12 +401,14 @@ bool acl_resource_table::add_resource_to_table(const resource_message &rm) {
     }
   }
   if (num_ >= capacity_) {
-    printf("%s() error, line: %d: principal table is full\n",
+    printf("%s() error, line: %d: resource table is full\n",
            __func__,
            __LINE__);
     return false;
   }
+
   resources_[num_].CopyFrom(rm);
+  resource_status_[num_] = VALID;
   num_++;
   return true;
 }
@@ -398,7 +445,6 @@ bool acl_resource_table::add_resource_to_table(const string &name,
     goto done;
   }
   resources_[num_].set_resource_identifier(name);
-  resource_status_[num_] = VALID;
   resources_[num_].set_resource_type(type);
   resources_[num_].set_resource_location(location);
   resource_status_[num_] = VALID;
@@ -507,6 +553,8 @@ bool acl_resource_table::save_resource_table_to_file(const string &filename) {
 acl_resource_data_element::acl_resource_data_element() {
   status_ = INVALID;
 }
+
+// -----------------------------------------------------------------------------
 
 acl_resource_data_element::~acl_resource_data_element() {
   status_ = INVALID;
@@ -622,17 +670,15 @@ bool add_resource_to_proto_list(const string  &id,
   return true;
 }
 
+// -----------------------------------------------------------------------------
+
 bool sign_nonce(string &nonce, key_message &k, string *signature) {
   return false;
 }
 
+
 channel_guard::channel_guard() {
   channel_principal_authenticated_ = false;
-  capacity_resources_ = 0;
-  num_resources_ = 0;
-  resources_ = nullptr;
-  num_active_resources_ = 0;
-  capacity_active_resources_ = max_active_resources;
   root_cert_ = nullptr;
   initialized_ = false;
 }
@@ -643,17 +689,17 @@ void channel_guard::print() {
   printf("Principal name: %s\n", principal_name_.c_str());
   printf("Authentication algorithm: %s\n",
          authentication_algorithm_name_.c_str());
+
   // byte* creds_;
   if (channel_principal_authenticated_) {
     printf("Principal authenticated\n");
   } else {
     printf("Principal not authenticated\n");
   }
-  printf("Number of resources: %d\n", num_resources_);
-  if (resources_ == nullptr)
-    return;
-  for (int i = 0; i < num_resources_; i++) {
-    print_resource_message(resources_[i]);
+  printf("Number of resources: %d\n", g_resource_table.num_);
+  for (int i = 0; i < g_resource_table.num_; i++) {
+    g_resource_table.print_entry(i);
+    printf("\n");
   }
 }
 
@@ -728,13 +774,7 @@ bool channel_guard::authenticate_me(const string &name,
                                     const string &creds,
                                     string       *nonce) {
 
-  extern principal_list g_pl;
-  extern resource_list  g_rl;
-  extern bool           g_identity_root_initialized;
-  extern string         g_identity_root;
-  extern string         g_signature_algorithm;
-  extern X509          *g_x509_identity_root;
-  buffer_list           credentials;
+  buffer_list credentials;
 
   if (!credentials.ParseFromString(creds)) {
     printf("%s() error, line %d: can't parse credentials.\n",
@@ -945,57 +985,7 @@ done:
   return ret;
 }
 
-bool channel_guard::load_resources(resource_list &rl) {
-  num_resources_ = rl.resources_size();
-  capacity_resources_ = 2 * (num_resources_ + 10);
-  resources_ = new resource_message[capacity_resources_];
-  if (resources_ == nullptr) {
-    num_resources_ = 0;
-    resources_ = nullptr;
-  }
-  for (int i = 0; i < num_resources_; i++) {
-    resources_[i].CopyFrom(rl.resources(i));
-  }
-  return true;
-}
-
-active_resource::active_resource() {
-  desc_ = -1;
-  rights_ = 0;
-}
-
-active_resource::~active_resource() {}
-
-// This is the table that records the global descriptor
-// a client's local descriptor refers to.  These routines
-// do not have to be thread safe since channel guard is
-// single threaded.
-acl_local_descriptor_table::acl_local_descriptor_table() {
-  capacity_ = max_local_descriptors;
-  num_ = 0;
-}
-
-acl_local_descriptor_table::~acl_local_descriptor_table() {}
-
-int acl_local_descriptor_table::find_available_descriptor() {
-  for (int i = 0; i < num_; i++) {
-    if (descriptor_entry_[i].status_ != VALID) {
-      return i;
-    }
-  }
-  if (num_ >= capacity_)
-    return -1;
-  return num_++;
-}
-
-bool acl_local_descriptor_table::free_descriptor(int i, const string &name) {
-  if (i >= num_)
-    return false;
-  if (descriptor_entry_[i].resource_name_ != name)
-    return false;
-  descriptor_entry_[i].status_ = INVALID;
-  return true;
-}
+// -----------------------------------------------------------------------------
 
 // We have to be careful that resource names are unique and not
 // subject to spoofing by creators making up a resources with
@@ -1005,8 +995,11 @@ bool channel_guard::can_read(int resource_entry) {
     return false;
   }
   // see if principal_name_ is on reader list
-  for (int j = 0; j < resources_[resource_entry].readers_size(); j++) {
-    if (resources_[resource_entry].readers(j) == principal_name_) {
+  for (int j = 0;
+       j < g_resource_table.resources_[resource_entry].readers_size();
+       j++) {
+    if (g_resource_table.resources_[resource_entry].readers(j)
+        == principal_name_) {
       return true;
     }
   }
@@ -1017,8 +1010,11 @@ bool channel_guard::can_write(int resource_entry) {
   if (!channel_principal_authenticated_) {
     return false;
   }
-  for (int j = 0; j < resources_[resource_entry].writers_size(); j++) {
-    if (resources_[resource_entry].writers(j) == principal_name_) {
+  for (int j = 0;
+       j < g_resource_table.resources_[resource_entry].writers_size();
+       j++) {
+    if (g_resource_table.resources_[resource_entry].writers(j)
+        == principal_name_) {
       return true;
     }
   }
@@ -1030,8 +1026,11 @@ bool channel_guard::can_delete(int resource_entry) {
     return false;
   }
   // see if principal_name_ is on deleters list
-  for (int j = 0; j < resources_[resource_entry].deleters_size(); j++) {
-    if (resources_[resource_entry].deleters(j) == principal_name_) {
+  for (int j = 0;
+       j < g_resource_table.resources_[resource_entry].deleters_size();
+       j++) {
+    if (g_resource_table.resources_[resource_entry].deleters(j)
+        == principal_name_) {
       return true;
     }
   }
@@ -1042,8 +1041,11 @@ bool channel_guard::can_create(int resource_entry) {
   if (!channel_principal_authenticated_) {
     return false;
   }
-  for (int j = 0; j < resources_[resource_entry].creators_size(); j++) {
-    if (resources_[resource_entry].creators(j) == principal_name_) {
+  for (int j = 0;
+       j < g_resource_table.resources_[resource_entry].creators_size();
+       j++) {
+    if (g_resource_table.resources_[resource_entry].creators(j)
+        == principal_name_) {
       return true;
     }
   }
@@ -1051,12 +1053,7 @@ bool channel_guard::can_create(int resource_entry) {
 }
 
 int channel_guard::find_resource(const string &name) {
-  for (int i = 0; i < num_resources_; i++) {
-    if (name == resources_[i].resource_identifier()) {
-      return i;
-    }
-  }
-  return -1;
+  return g_resource_table.find_resource_in_table(name);
 }
 
 bool channel_guard::access_check(int resource_entry, const string &action) {
@@ -1111,15 +1108,6 @@ bool channel_guard::add_access_rights(string &resource_name,
   return false;
 }
 
-int channel_guard::find_in_active_resource_table(const string &name) {
-  for (int i = 0; i < num_active_resources_; i++) {
-    if (ar_[i].resource_name_ == name
-        && ar_[i].principal_name_ == principal_name_)
-      return i;
-  }
-  return -1;
-}
-
 bool channel_guard::create_resource(string &name) {
   // make up encryption key
   // automatically give creator read, write, delete rights
@@ -1127,64 +1115,15 @@ bool channel_guard::create_resource(string &name) {
 }
 
 bool channel_guard::open_resource(const string &resource_name,
-                                  const string &access_mode) {
-  string                file_type("file");
-  extern resource_list  g_rl;
-  extern principal_list g_pl;
+                                  const string &requested_right,
+                                  int          *local_descriptor) {
 
-  int resource_index = find_resource(resource_name);
-  if (resource_index < 0) {
-    printf("%s() error, line: %d: No such resource %s\n",
-           __func__,
-           __LINE__,
-           resource_name.c_str());
-    return false;
-  }
-  if (resources_[resource_index].resource_type() != file_type) {
-    printf("%s() error, line: %d: only file types supported\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  if (!access_check(resource_index, access_mode)) {
-    printf("%s() error, line: %d: access failure\n", __func__, __LINE__);
-    return false;
-  }
+  string file_type("file");
 
-  unsigned requested_right = 0;
-  if (access_mode == "read") {
-    requested_right |= active_resource::READ;
-  } else if (access_mode == "write") {
-    requested_right |= active_resource::WRITE;
-  } else {
-    printf("%s() error, line: %d: unknown access mode\n", __func__, __LINE__);
-    return false;
-  }
-
-  int resource_entry = -1;
-  for (int i = 0; i < num_active_resources_; i++) {
-    if (ar_[i].principal_name_ == principal_name_
-        && ar_[i].resource_name_ == resource_name) {
-      if (ar_[i].rights_ == requested_right)
-        resource_entry = i;
-    }
-  }
-  if (resource_entry < 0) {
-    if (num_active_resources_ >= capacity_active_resources_) {
-      printf("%s() error, line: %d: number of active resources exceeded\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
-    resource_entry = num_active_resources_++;
-    ar_[resource_entry].principal_name_ = principal_name_;
-    ar_[resource_entry].resource_name_ = resource_name;
-    ar_[resource_entry].rights_ |= requested_right;
-  }
-
-  // open, set descriptor
-  if (ar_[resource_entry].desc_ >= 0) {
-    printf("%s() error, line: %d: resource already open\n", __func__, __LINE__);
+  *local_descriptor = -1;
+  int table_entry = find_resource(resource_name);
+  if (table_entry < 0) {
+    printf("%s() error, line: %d: Can't find resource\n", __func__, __LINE__);
     return false;
   }
 
@@ -1192,76 +1131,135 @@ bool channel_guard::open_resource(const string &resource_name,
   // principal should have create right on parent directory but we don't
   // support directories yet.
   string file_name;
-  file_name = resources_[resource_index].resource_location();
-  switch (requested_right) {
-    case active_resource::READ:
-      // open for reading
-      ar_[resource_entry].desc_ = open(file_name.c_str(), O_RDONLY);
-      return true;
-    case active_resource::WRITE:
-      // open for writing
-      ar_[resource_entry].desc_ =
-          open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-      return true;
-    default:
-      printf("%s() error, line: %d: unknown requested right\n",
+  int    res = -1;
+
+  file_name = g_resource_table.resources_[table_entry].resource_location();
+  if (!access_check(table_entry, requested_right)) {
+    printf("%s() error, line: %d: access_check failed\n", __func__, __LINE__);
+    return false;
+  }
+  if (requested_right == "read") {
+    // open for reading
+    res = open(file_name.c_str(), O_RDONLY);
+    if (res < 0) {
+      printf("%s() error, line: %d: Can't open file\n", __func__, __LINE__);
+      return false;
+    }
+    *local_descriptor = descriptor_table_.find_available_descriptor();
+    if (*local_descriptor < 0) {
+      printf("%s() error, line: %d: Can't find available table descriptor\n",
              __func__,
              __LINE__);
       return false;
+    }
+    descriptor_table_.descriptor_entry_[*local_descriptor].global_descriptor_ =
+        res;
+    descriptor_table_.descriptor_entry_[*local_descriptor].status_ =
+        acl_local_descriptor_table::VALID;
+    descriptor_table_.descriptor_entry_[*local_descriptor].resource_name_ =
+        resource_name;
+    printf("local descriptor in guard.open_resourec: %d\n", *local_descriptor);
+    return true;
+  } else if (requested_right == "write") {
+    // open for writing
+    res = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
+    if (res < 0) {
+      printf("%s() error, line: %d: Can't open file %s\n",
+             __func__,
+             __LINE__,
+             file_name.c_str());
+      return false;
+    }
+    *local_descriptor = descriptor_table_.find_available_descriptor();
+    if (*local_descriptor < 0) {
+      printf("%s() error, line: %d: Can't find available descriptor\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    descriptor_table_.descriptor_entry_[*local_descriptor].global_descriptor_ =
+        res;
+    descriptor_table_.descriptor_entry_[*local_descriptor].status_ =
+        acl_local_descriptor_table::VALID;
+    descriptor_table_.descriptor_entry_[*local_descriptor].resource_name_ =
+        resource_name;
+    return true;
+  } else {
+    printf("%s() error, line: %d: unknown requested right\n",
+           __func__,
+           __LINE__);
+    return false;
   }
 
   return true;
 }
 
 bool channel_guard::read_resource(const string &resource_name,
+                                  int           local_descriptor,
                                   int           n,
                                   string       *out) {
-  int rn = find_in_active_resource_table(resource_name);
-  if (rn < 0) {
-    printf("%s() error, line: %d: Can't find_in_active_resource_table\n",
+
+  if (n <= 0) {
+    printf("%s() error, line: %d: buffer size\n", __func__, __LINE__);
+    return false;
+  }
+  byte buf[n + 1];
+  if (local_descriptor >= descriptor_table_.num_) {
+    printf("%s() error, line: %d: bad descriptor\n", __func__, __LINE__);
+    return false;
+  }
+  if (descriptor_table_.descriptor_entry_[local_descriptor].status_
+          != acl_resource_data_element::VALID
+      || descriptor_table_.descriptor_entry_[local_descriptor].resource_name_
+             != resource_name) {
+    printf("%s() error, line: %d: invalid desciptor element\n",
            __func__,
            __LINE__);
     return false;
   }
-  if (ar_[rn].desc_ >= 0) {
-    byte buf[n + 1];
-    int  k = (int)::read(ar_[rn].desc_, buf, n);
-    if (k < 0) {
-      printf("%s() error, line: %d: Can't read, return is %d\n",
-             __func__,
-             __LINE__,
-             k);
-      return false;
-    }
-    out->assign((char *)buf, k);
-    return true;
+  int k = (int)::read(
+      descriptor_table_.descriptor_entry_[local_descriptor].global_descriptor_,
+      buf,
+      n);
+  if (k < 0) {
+    printf("%s() error, line: %d: read failed\n", __func__, __LINE__);
+    return false;
   }
-  printf("%s() error, line: %d: bad descriptor %d, entry %d, name: %s\n",
-         __func__,
-         __LINE__,
-         ar_[rn].desc_,
-         rn,
-         resource_name.c_str());
-  return false;
+  out->assign((char *)buf, k);
+  return true;
 }
 
 bool channel_guard::write_resource(const string &resource_name,
+                                   int           local_descriptor,
                                    int           n,
                                    string       &in) {
-  int rn = find_in_active_resource_table(resource_name);
-  if (rn < 0) {
+  printf("guard write %d %s\n", n, in.c_str());
+  if (local_descriptor >= descriptor_table_.num_) {
+    printf("%s() error, line: %d: bad descriptor\n", __func__, __LINE__);
     return false;
   }
-  if (ar_[rn].desc_ >= 0) {
-    int k = write(ar_[rn].desc_, (byte *)in.data(), (int)in.size());
-    if (k < 0) {
-      printf("%s() error, line: %d\n", __func__, __LINE__);
-      return false;
-    }
-    return true;
+  if (descriptor_table_.descriptor_entry_[local_descriptor].status_
+          != acl_resource_data_element::VALID
+      || descriptor_table_.descriptor_entry_[local_descriptor].resource_name_
+             != resource_name) {
+    printf("%s() error, line: %d: bad  element descriptor\n",
+           __func__,
+           __LINE__);
+    return false;
   }
-  printf("%s() error, line: %d\n", __func__, __LINE__);
-  return false;
+  int k = write(
+      descriptor_table_.descriptor_entry_[local_descriptor].global_descriptor_,
+      (byte *)in.data(),
+      (int)in.size());
+  if (k < 0) {
+    printf("%s() error, line: %d\n", __func__, __LINE__);
+    return false;
+  }
+  printf(
+      "Wrote %d bytes into %d\n",
+      k,
+      descriptor_table_.descriptor_entry_[local_descriptor].global_descriptor_);
+  return true;
 }
 
 bool channel_guard::delete_resource(const string &resource_name) {
@@ -1271,27 +1269,23 @@ bool channel_guard::delete_resource(const string &resource_name) {
   return false;
 }
 
-bool channel_guard::close_resource(const string &resource_name) {
-  int rn = find_in_active_resource_table(resource_name);
-  if (rn < 0) {
-    printf("%s() error, line: %d\n", __func__, __LINE__);
+bool channel_guard::close_resource(const string &resource_name,
+                                   int           local_descriptor) {
+
+  if (local_descriptor >= descriptor_table_.num_) {
+    printf("%s() error, line: %d: bad descriptor\n", __func__, __LINE__);
     return false;
   }
-  if (ar_[rn].desc_ >= 0) {
-    close(ar_[rn].desc_);
-    ar_[rn].desc_ = -1;
-    return true;
+  if (descriptor_table_.descriptor_entry_[local_descriptor].status_
+          != acl_resource_data_element::VALID
+      || descriptor_table_.descriptor_entry_[local_descriptor].resource_name_
+             != resource_name) {
+    printf("%s() error, line: %d: invalid element\n", __func__, __LINE__);
+    return false;
   }
-  printf("%s() error, line: %d\n", __func__, __LINE__);
-  return false;
-}
-
-bool channel_guard::save_active_resources(const string &file_name) {
-  // should be database, eventually
-  printf("%s() error, line: %d, save_active_resource not implemented\n",
-         __func__,
-         __LINE__);
-  return false;
+  close(
+      descriptor_table_.descriptor_entry_[local_descriptor].global_descriptor_);
+  return true;
 }
 
 int find_resource_in_resource_proto_list(const resource_list &rl,

@@ -43,6 +43,7 @@ namespace acl_lib {
 bool sign_nonce(string &nonce, key_message &k, string *signature);
 bool rotate_resource_key(string &resource, key_message &km);
 
+#if 0
 const int max_active_resources = 50;
 class active_resource {
  public:
@@ -56,6 +57,7 @@ class active_resource {
   int      desc_;
   unsigned rights_;
 };
+#endif
 
 void print_principal_info(const principal_message &pi);
 void print_audit_info(const audit_info &inf);
@@ -84,6 +86,11 @@ bool get_resources_from_file(string &file_name, resource_list *rl);
 bool get_principals_from_file(string &file_name, principal_list *pl);
 bool save_resources_to_file(resource_list &rl, string &file_name);
 bool save_principals_to_file(principal_list &pl, string &file_name);
+
+int find_resource_in_resource_proto_list(const resource_list &rl,
+                                         const string        &name);
+int find_principal_in_principal_proto_list(const principal_list &pl,
+                                           const string         &name);
 
 int on_reader_list(const resource_message &r, const string &name);
 int on_writer_list(const resource_message &r, const string &name);
@@ -190,6 +197,10 @@ class acl_local_descriptor_table {
   bool free_descriptor(int i, const string &name);
 };
 
+
+extern acl_principal_table g_principal_table;
+extern acl_resource_table  g_resource_table;
+
 class channel_guard {
  public:
   channel_guard();
@@ -201,7 +212,7 @@ class channel_guard {
   string creds_;
   bool   channel_principal_authenticated_;
 
-#if 1
+#if 0
   int               capacity_resources_;
   int               num_resources_;
   resource_message *resources_;
@@ -209,16 +220,17 @@ class channel_guard {
   int               capacity_active_resources_;
   active_resource   ar_[max_active_resources];
 #else
-  active_acl_resource_data_element active_resources[max_active_resources];
+  acl_local_descriptor_table descriptor_table_;
 #endif
   string nonce_;
-
-  X509 *root_cert_;
+  X509  *root_cert_;
 
   void print();
 
   int find_resource(const string &name);
+#if 0
   int find_in_active_resource_table(const string &name);
+#endif
 
   bool init_root_cert(const string &asn1_cert_str);
   bool authenticate_me(const string &name,
@@ -234,8 +246,10 @@ class channel_guard {
 
   bool access_check(int resource_entry, const string &action);
 
+#if 0
   bool add_resource(resource_message &rm);
   bool save_active_resources(const string &file_name);
+#endif
 
   // Called from grpc
   bool accept_credentials(const string   &principal_name,
@@ -246,17 +260,20 @@ class channel_guard {
                          string &right,
                          string &new_prin);
   bool create_resource(string &name);
-  bool open_resource(const string &resource_name, const string &access_mode);
-  bool read_resource(const string &resource_name, int n, string *out);
-  bool write_resource(const string &resource_name, int n, string &in);
+  bool open_resource(const string &resource_name,
+                     const string &access_mode,
+                     int          *local_descriptor);
+  bool read_resource(const string &resource_name,
+                     int           local_desciptor,
+                     int           n,
+                     string       *out);
+  bool write_resource(const string &resource_name,
+                      int           local_desciptor,
+                      int           n,
+                      string       &in);
   bool delete_resource(const string &resource_name);
-  bool close_resource(const string &resource_name);
+  bool close_resource(const string &resource_name, int local_descriptor);
 };
-
-int find_resource_in_resource_proto_list(const resource_list &rl,
-                                         const string        &name);
-int find_principal_in_principal_proto_list(const principal_list &pl,
-                                           const string         &name);
 }  // namespace acl_lib
 }  // namespace certifier
 #endif
