@@ -428,9 +428,6 @@ bool acl_client_dispatch::rpc_write_resource(const string &resource_name,
   *buf_to_write = bytes_to_write;
   input_call_struct.add_int_inputs((::int32_t)local_descriptor);
   input_call_struct.add_int_inputs((::int32_t)bytes_to_write.size());
-  printf("In client write_resource, to write %d %s\n",
-         bytes_to_write.size(),
-         bytes_to_write.c_str());
 
   if (!input_call_struct.SerializeToString(&encode_parameters_str)) {
     printf("%s() error, line %d: Can't input\n", __func__, __LINE__);
@@ -729,11 +726,9 @@ bool acl_server_dispatch::service_request() {
                              &desc)) {
       output_call_struct.set_status(true);
       output_call_struct.add_int_outputs((google::protobuf::int32)desc);
-      printf("desc in server_dispatch: %d\n", desc);
     } else {
       output_call_struct.set_status(false);
     }
-    printf("desc in open_resource: %d\n", desc);
     if (!output_call_struct.SerializeToString(&encode_parameters_str)) {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,

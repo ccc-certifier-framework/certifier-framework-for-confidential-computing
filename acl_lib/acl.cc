@@ -1158,7 +1158,6 @@ bool channel_guard::open_resource(const string &resource_name,
         acl_local_descriptor_table::VALID;
     descriptor_table_.descriptor_entry_[*local_descriptor].resource_name_ =
         resource_name;
-    printf("local descriptor in guard.open_resourec: %d\n", *local_descriptor);
     return true;
   } else if (requested_right == "write") {
     // open for writing
@@ -1233,7 +1232,6 @@ bool channel_guard::write_resource(const string &resource_name,
                                    int           local_descriptor,
                                    int           n,
                                    string       &in) {
-  printf("guard write %d %s\n", n, in.c_str());
   if (local_descriptor >= descriptor_table_.num_) {
     printf("%s() error, line: %d: bad descriptor\n", __func__, __LINE__);
     return false;
@@ -1255,10 +1253,6 @@ bool channel_guard::write_resource(const string &resource_name,
     printf("%s() error, line: %d\n", __func__, __LINE__);
     return false;
   }
-  printf(
-      "Wrote %d bytes into %d\n",
-      k,
-      descriptor_table_.descriptor_entry_[local_descriptor].global_descriptor_);
   return true;
 }
 

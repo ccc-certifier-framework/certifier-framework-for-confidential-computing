@@ -73,8 +73,10 @@ namespace acl_lib {
 
 // Note:  Since these are global tables the access routing need to lock them.
 // This has not been done yet.
-resource_list  g_rl;
-principal_list g_pl;
+resource_list       g_rl;
+principal_list      g_pl;
+acl_principal_table g_principal_table;
+acl_resource_table  g_resource_table;
 
 // As mentioned in the instructions, there are different ways validate trust in
 // the identity root (There can actually be many such roots).  Here we allow
@@ -85,6 +87,7 @@ bool   g_identity_root_initialized = false;
 string g_identity_root;
 string g_signature_algorithm;
 X509  *g_x509_identity_root = nullptr;
+
 }  // namespace acl_lib
 }  // namespace certifier
 
@@ -1089,8 +1092,6 @@ void server_application(secure_authenticated_channel &channel) {
   bool                ret = true;
   acl_server_dispatch server_dispatch(channel.ssl_);
 
-  server_dispatch.guard_.load_resources(certifier::acl_lib::g_rl);
-
   for (;;) {
     server_dispatch.service_request();
   }
@@ -1122,6 +1123,7 @@ void client_application(secure_authenticated_channel &channel,
   byte   sig[size_sig];
 
   string serialized_creds;
+  int    local_descriptor = -1;
 
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
   if (!creds.SerializeToString(&serialized_creds)) {
@@ -1198,7 +1200,7 @@ void client_application(secure_authenticated_channel &channel,
     goto done;
   }
 
-  ret = client_dispatch.rpc_open_resource(res1_name, acc1);
+  ret = client_dispatch.rpc_open_resource(res1_name, acc1, &local_descriptor);
   if (!ret) {
     printf("%s() error, line %d: rpc_open_resource failed\n",
            __func__,
@@ -1207,7 +1209,10 @@ void client_application(secure_authenticated_channel &channel,
     goto done;
   }
 
-  ret = client_dispatch.rpc_read_resource(res1_name, 14, &bytes_read_from_file);
+  ret = client_dispatch.rpc_read_resource(res1_name,
+                                          local_descriptor,
+                                          14,
+                                          &bytes_read_from_file);
   if (!ret) {
     printf("%s() error, line %d: rpc_read_resource failed\n",
            __func__,
@@ -1217,7 +1222,7 @@ void client_application(secure_authenticated_channel &channel,
   }
   printf("Bytes: %s\n", bytes_read_from_file.c_str());
 
-  ret = client_dispatch.rpc_close_resource(res1_name);
+  ret = client_dispatch.rpc_close_resource(res1_name, local_descriptor);
   if (!ret) {
     printf("%s() error, line %d: rpc_close_resource failed\n",
            __func__,
@@ -1226,7 +1231,7 @@ void client_application(secure_authenticated_channel &channel,
     goto done;
   }
 
-  ret = client_dispatch.rpc_open_resource(res2_name, acc2);
+  ret = client_dispatch.rpc_open_resource(res2_name, acc2, &local_descriptor);
   if (!ret) {
     printf("%s() error, line %d: rpc_open_resource failed\n",
            __func__,
@@ -1235,7 +1240,9 @@ void client_application(secure_authenticated_channel &channel,
     goto done;
   }
 
-  ret = client_dispatch.rpc_write_resource(res2_name, bytes_written_to_file);
+  ret = client_dispatch.rpc_write_resource(res2_name,
+                                           local_descriptor,
+                                           bytes_written_to_file);
   if (!ret) {
     printf("%s() error, line %d: rpc_write_resource failed\n",
            __func__,
@@ -1244,7 +1251,7 @@ void client_application(secure_authenticated_channel &channel,
     goto done;
   }
 
-  ret = client_dispatch.rpc_close_resource(res2_name);
+  ret = client_dispatch.rpc_close_resource(res2_name, local_descriptor);
   if (!ret) {
     printf("%s() error, line %d: rpc_close_resource failed\n",
            __func__,
@@ -1286,6 +1293,21 @@ bool run_me_as_server(const string &host_name,
                       string       &server_auth_key_cert) {
 
   printf("running as server\n");
+
+  if (!g_principal_table.load_principal_table_from_list(
+          certifier::acl_lib::g_pl)) {
+    printf("%s() error, line %d: can't load principal table\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!g_resource_table.load_resource_table_from_list(
+          certifier::acl_lib::g_rl)) {
+    printf("%s() error, line %d: can't load resource table\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
 
   return server_dispatch(host_name,
                          port,

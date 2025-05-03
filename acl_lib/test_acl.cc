@@ -2323,6 +2323,15 @@ bool test_rpc() {
   printf("Bytes reread %d: %s\n",
          bytes_reread_from_file.size(),
          bytes_reread_from_file.c_str());
+  if (strcmp(bytes_reread_from_file.c_str(), bytes_written_to_file.c_str())
+      != 0) {
+    printf("%s() error, line %d: rered bytes don't match\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
 
 done:
   if (pkey != nullptr) {

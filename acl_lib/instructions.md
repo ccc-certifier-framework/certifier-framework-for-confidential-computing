@@ -18,16 +18,16 @@ bool rpc_authenticate_me(const string& principal_name, const string& creds, stri
 bool rpc_verify_me(const string& principal_name, const string& signed_nonce)
   input: name-of-principal (string), signed_nonce (bytes)
   output: status (bool)
-bool rpc_open_resource(const string& resource_name, const string& access_right)
+bool rpc_open_resource(const string& resource_name, const string& access_right, int& local_descriptor)
   input: resource-name (string), access-right (string)
-  output: status (bool)
-bool rpc_read_resource(const string& resource_name, int num_bytes, string* bytes_read)
+  output: status (bool), local_descriptor (used in read/write/close)
+bool rpc_read_resource(const string& resource_name, int local_descriptor, int num_bytes, string* bytes_read)
   input: resource-name (string), num-bytes (int32)
   output: status (bool), output (bytes)
-bool rpc_write_resource(const string& resource_name, const string& bytes_to_write)
+bool rpc_write_resource(const string& resource_name, int local_descriptor, const string& bytes_to_write)
   input: resource-name (string), num-bytes (int32), buffer (bytes)
   output: status (bool)
-bool rpc_close_resource(const string& resource_name)
+bool rpc_close_resource(const string& resource_name, int local_descriptor)
   input: resource-name (string)
   output: status
 bool rpc_add_access_right(const string& resource_name, const string& delegated_principal,
@@ -37,6 +37,7 @@ Later we should implement:
 rpc_create_resource
 rpc_delete_resource
 rpc_add_principal
+rpc_add_resource
 
 These are implemented in two cc classes: acl_server_dispatch (for the server functionality)
 and acl_client_dispatch (for client functionality).
