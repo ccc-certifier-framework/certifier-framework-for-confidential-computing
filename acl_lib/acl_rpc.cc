@@ -329,7 +329,6 @@ bool acl_client_dispatch::rpc_read_resource(const string &resource_name,
   rpc_call output_call_struct;
   int      bytes_read_ret = 0;
 
-  printf("read_resource in client_dispatch, desc: %d\n", local_descriptor);
   // format input buffer, serialize it
   input_call_struct.set_function_name(read_resource_tag);
   input_call_struct.add_int_inputs((::int32_t)local_descriptor);

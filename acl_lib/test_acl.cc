@@ -297,22 +297,30 @@ bool test_support() {
     printf("%s() error, line: %d, time_now failed\n", __func__, __LINE__);
     return false;
   }
-  print_time_point(tp);
-  printf("\n");
+
+  if (FLAGS_print_all) {
+    print_time_point(tp);
+    printf("\n");
+  }
   if (!encode_time(tp, &the_time)) {
     printf("%s() error, line: %d, encode_time failed\n", __func__, __LINE__);
     return false;
   }
-  printf("encoded time: ");
-  print_time_point(tp);
-  printf("\n");
+
+  if (FLAGS_print_all) {
+    printf("encoded time: ");
+    print_time_point(tp);
+    printf("\n");
+  }
   if (!decode_time(the_time, &new_tp)) {
     printf("%s() error, line: %d, decode_time failed\n", __func__, __LINE__);
     return false;
   }
-  printf("decoded time: ");
-  print_time_point(new_tp);
-  printf("\n");
+  if (FLAGS_print_all) {
+    printf("decoded time: ");
+    print_time_point(new_tp);
+    printf("\n");
+  }
 
   if (!add_interval_to_time(tp, seconds_later, &added_tp)) {
     printf("%s() error, line: %d, add_interval_to_time failed\n",
@@ -320,9 +328,11 @@ bool test_support() {
            __LINE__);
     return false;
   }
-  printf("added time: ");
-  print_time_point(added_tp);
-  printf("\n");
+  if (FLAGS_print_all) {
+    printf("added time: ");
+    print_time_point(added_tp);
+    printf("\n");
+  }
 
   return true;
 }
@@ -339,8 +349,11 @@ bool test_basic() {
     printf("Cant construct resources\n");
     return false;
   }
-  print_principal_list(pl);
-  print_resource_list(rl);
+
+  if (FLAGS_print_all) {
+    print_principal_list(pl);
+    print_resource_list(rl);
+  }
 
   string p1("john");
   string p2("paul");
@@ -416,9 +429,12 @@ bool test_basic() {
     printf("Couldn't get nonce\n");
     return false;
   }
-  printf("Nonce: ");
-  print_bytes(n, nonce);
-  printf("\n");
+
+  if (FLAGS_print_all) {
+    printf("Nonce: ");
+    print_bytes(n, nonce);
+    printf("\n");
+  }
 
   acl_principal_table principal_table;
   acl_resource_table  resource_table;
@@ -546,19 +562,24 @@ bool test_basic() {
            __LINE__);
     return false;
   }
-  printf("\nAfter adding principal\n");
-  for (int i = 0; i < principal_table2.num_; i++) {
-    principal_table2.print_entry(i);
-    printf("\n");
+  if (FLAGS_print_all) {
+    printf("\nAfter adding principal\n");
+    for (int i = 0; i < principal_table2.num_; i++) {
+      principal_table2.print_entry(i);
+      printf("\n");
+    }
   }
   if (!principal_table2.delete_principal_from_table(pnf, pna)) {
     printf("%s() error, line %d: can't delete principal\n", __func__, __LINE__);
     return false;
   }
-  printf("\nAfter deleting principal\n");
-  for (int i = 0; i < principal_table2.num_; i++) {
-    principal_table2.print_entry(i);
-    printf("\n");
+
+  if (FLAGS_print_all) {
+    printf("\nAfter deleting principal\n");
+    for (int i = 0; i < principal_table2.num_; i++) {
+      principal_table2.print_entry(i);
+      printf("\n");
+    }
   }
 
   if (!resource_table.save_resource_table_to_list(&rl2)) {
@@ -628,19 +649,23 @@ bool test_basic() {
            __LINE__);
     return false;
   }
-  printf("\nAfter adding resource\n");
-  for (int i = 0; i < resource_table2.num_; i++) {
-    resource_table2.print_entry(i);
-    printf("\n");
+  if (FLAGS_print_all) {
+    printf("\nAfter adding resource\n");
+    for (int i = 0; i < resource_table2.num_; i++) {
+      resource_table2.print_entry(i);
+      printf("\n");
+    }
   }
   if (!resource_table2.delete_resource_from_table(rnf, ft, pna)) {
     printf("%s() error, line %d: can't delete resource\n", __func__, __LINE__);
     return false;
   }
-  printf("\nAfter deleting resource\n");
-  for (int i = 0; i < resource_table2.num_; i++) {
-    resource_table2.print_entry(i);
-    printf("\n");
+  if (FLAGS_print_all) {
+    printf("\nAfter deleting resource\n");
+    for (int i = 0; i < resource_table2.num_; i++) {
+      resource_table2.print_entry(i);
+      printf("\n");
+    }
   }
 
   certifier::acl_lib::acl_local_descriptor_table descriptor_table;
@@ -2045,6 +2070,9 @@ bool test_rpc() {
   string asn1_cert_str;
   string auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
   string serialized_creds;
+  string new_prin("tho");
+  string new_creator("john");
+  int    np;
 
   resource_message rm;
 
@@ -2206,8 +2234,6 @@ bool test_rpc() {
     goto done;
   }
 
-  printf("local_descriptor on call to rpc_read_resource in test_acl: %d\n",
-         local_descriptor);
   ret = client.rpc_read_resource(res1_name,
                                  local_descriptor,
                                  14,
@@ -2298,8 +2324,6 @@ bool test_rpc() {
     goto done;
   }
 
-  printf("local_descriptor on call to rpc_read_resource (2) in test_acl: %d\n",
-         local_descriptor);
   ret = client.rpc_read_resource(res3_name,
                                  local_descriptor,
                                  bytes_written_to_file.size(),
@@ -2321,7 +2345,7 @@ bool test_rpc() {
     goto done;
   }
   printf("Bytes reread %d: %s\n",
-         bytes_reread_from_file.size(),
+         (int)bytes_reread_from_file.size(),
          bytes_reread_from_file.c_str());
   if (strcmp(bytes_reread_from_file.c_str(), bytes_written_to_file.c_str())
       != 0) {
@@ -2332,6 +2356,33 @@ bool test_rpc() {
     goto done;
   }
 
+  if (!g_principal_table.add_principal_to_table(
+          new_prin,
+          auth_alg,
+          serialized_creds,  // obviously not the right creds
+          new_creator)) {
+    printf("%s() error, line %d: can't add new principal\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  // bool delete_principal_from_table(const string &name, const string
+  // &deleter);
+  np = g_principal_table.find_principal_in_table(new_prin);
+  if (np < 0) {
+    printf("%s() error, line %d: can't recover new principal\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (FLAGS_print_all) {
+    printf("\nAdded:\n");
+    g_principal_table.print_entry(np);
+    printf("\n");
+  }
 
 done:
   if (pkey != nullptr) {
