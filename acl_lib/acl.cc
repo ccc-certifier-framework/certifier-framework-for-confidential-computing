@@ -279,10 +279,10 @@ bool acl_principal_table::save_principal_table_to_list(principal_list *pl) {
 }
 
 bool acl_principal_table::load_principal_table_from_file(
-  const string &filename) {
+    const string &filename) {
   string         serialized_pl;
   principal_list pl;
-  bool ret = true;
+  bool           ret = true;
 
   if (!read_file_into_string(filename, &serialized_pl)) {
     printf("%s() error, line: %d: Cant read file\n", __func__, __LINE__);
@@ -504,12 +504,12 @@ bool acl_resource_table::save_resource_table_to_file(const string &filename) {
   return write_file_from_string(filename, serialized_rl);
 }
 
-active_acl_resource_data_element::active_acl_resource_data_element() {
-  status_ = INACTIVE;
+acl_resource_data_element::acl_resource_data_element() {
+  status_ = INVALID;
 }
 
-active_acl_resource_data_element::~active_acl_resource_data_element() {
-  status_ = INACTIVE;
+acl_resource_data_element::~acl_resource_data_element() {
+  status_ = INVALID;
 }
 
 int on_reader_list(const resource_message &r, const string &name) {
@@ -966,6 +966,36 @@ active_resource::active_resource() {
 
 active_resource::~active_resource() {}
 
+// This is the table that records the global descriptor
+// a client's local descriptor refers to.  These routines
+// do not have to be thread safe since channel guard is
+// single threaded.
+acl_local_descriptor_table::acl_local_descriptor_table() {
+  capacity_ = max_local_descriptors;
+  num_ = 0;
+}
+
+acl_local_descriptor_table::~acl_local_descriptor_table() {}
+
+int acl_local_descriptor_table::find_available_descriptor() {
+  for (int i = 0; i < num_; i++) {
+    if (descriptor_entry_[i].status_ != VALID) {
+      return i;
+    }
+  }
+  if (num_ >= capacity_)
+    return -1;
+  return num_++;
+}
+
+bool acl_local_descriptor_table::free_descriptor(int i, const string &name) {
+  if (i >= num_)
+    return false;
+  if (descriptor_entry_[i].resource_name_ != name)
+    return false;
+  descriptor_entry_[i].status_ = INVALID;
+  return true;
+}
 
 // We have to be careful that resource names are unique and not
 // subject to spoofing by creators making up a resources with

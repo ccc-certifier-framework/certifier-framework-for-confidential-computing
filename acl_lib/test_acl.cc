@@ -28,6 +28,7 @@ DEFINE_bool(print_all, false, "Print intermediate test computations");
 
 using namespace certifier::framework;
 using namespace certifier::utilities;
+using namespace certifier::acl_lib;
 
 namespace certifier {
 namespace acl_lib {
@@ -635,6 +636,50 @@ bool test_basic() {
   for (int i = 0; i < resource_table2.num_; i++) {
     resource_table2.print_entry(i);
     printf("\n");
+  }
+
+  certifier::acl_lib::acl_local_descriptor_table descriptor_table;
+
+  int n1 = descriptor_table.find_available_descriptor();
+  if (n1 < 0) {
+    printf("%s() error, line: %d: get free descriptor(1)\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  string name1("res1");
+  descriptor_table.descriptor_entry_[n1].status_ =
+      acl_resource_data_element::VALID;
+  descriptor_table.descriptor_entry_[n1].resource_name_ = name1;
+  int n2 = descriptor_table.find_available_descriptor();
+  if (n2 < 0) {
+    printf("%s() error, line: %d: get free descriptor (1)\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  string name2("res2");
+  descriptor_table.descriptor_entry_[n2].status_ =
+      acl_resource_data_element::VALID;
+  descriptor_table.descriptor_entry_[n2].resource_name_ = name2;
+  if (n2 <= n1) {
+    printf("%s() error, line: %d: bad new descriptor n1: %d n2: %d\n",
+           __func__,
+           __LINE__,
+           n1,
+           n2);
+    return false;
+  }
+  if (!descriptor_table.free_descriptor(n1, name1)) {
+    printf("%s() error, line: %d: free desciptor failed\n", __func__, __LINE__);
+    return false;
+  }
+  int new_n1 = descriptor_table.find_available_descriptor();
+  if (new_n1 != n1) {
+    printf("%s() error, line: %d: reallocation of free desciptor failed\n",
+           __func__,
+           __LINE__);
+    return false;
   }
 
   return true;

@@ -43,6 +43,7 @@ namespace acl_lib {
 bool sign_nonce(string &nonce, key_message &k, string *signature);
 bool rotate_resource_key(string &resource, key_message &km);
 
+const int max_active_resources = 50;
 class active_resource {
  public:
   active_resource();
@@ -163,18 +164,32 @@ class acl_resource_table {
   void print_entry(int i);
 };
 
-class active_acl_resource_data_element {
+class acl_resource_data_element {
  public:
-  enum { INACTIVE = 0, ACTIVE = 1 };
+  enum { INVALID = 0, VALID = 1 };
   string resource_name_;
   int    status_;
   int    global_descriptor_;
 
-  active_acl_resource_data_element();
-  ~active_acl_resource_data_element();
+  acl_resource_data_element();
+  ~acl_resource_data_element();
 };
 
-const int max_active_resources = 50;
+const int max_local_descriptors = 50;
+class acl_local_descriptor_table {
+ public:
+  enum { INVALID = 0, VALID = 1 };
+  int                       num_;
+  int                       capacity_;
+  acl_resource_data_element descriptor_entry_[max_local_descriptors];
+
+  acl_local_descriptor_table();
+  ~acl_local_descriptor_table();
+
+  int  find_available_descriptor();
+  bool free_descriptor(int i, const string &name);
+};
+
 class channel_guard {
  public:
   channel_guard();
