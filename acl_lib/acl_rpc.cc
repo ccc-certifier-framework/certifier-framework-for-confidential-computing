@@ -760,6 +760,12 @@ bool acl_server_dispatch::service_request() {
              __LINE__);
       return false;
     }
+    if (input_call_struct.int_inputs_size() < 1) {
+      printf("%s() error, line %d: Too few int inputs\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
     if (guard_.close_resource(input_call_struct.str_inputs(0),
                               input_call_struct.int_inputs(0))) {
       output_call_struct.set_status(true);
@@ -800,7 +806,7 @@ bool acl_server_dispatch::service_request() {
              __LINE__);
       return false;
     }
-    if (input_call_struct.int_inputs_size() < 1) {
+    if (input_call_struct.int_inputs_size() < 2) {
       printf("%s() error, line %d: too few int resources\n",
              __func__,
              __LINE__);
@@ -851,7 +857,7 @@ bool acl_server_dispatch::service_request() {
              __LINE__);
       return false;
     }
-    if (input_call_struct.int_inputs_size() < 1) {
+    if (input_call_struct.int_inputs_size() < 2) {
       printf("%s() error, line %d: Too few int inputs\n", __func__, __LINE__);
       return false;
     }
