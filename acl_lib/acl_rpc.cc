@@ -60,6 +60,9 @@ int bytes_read;
   bytes_read = sized_ssl_read(channel, out);
 #else
   bytes_read = simulated_sized_buf_read(out);
+  if (bytes_read < 0) {
+    printf("BAD SIMULEATED READ\n");
+  }
 #endif
   return bytes_read;
 }
@@ -883,34 +886,14 @@ bool acl_server_dispatch::service_request() {
       return false;  // and the caller never knows
     }
 
-#if 1 // dont
-#ifndef TEST_SIMULATED_CHANNEL
-    if (sized_ssl_write(channel_descriptor_,
-                        (int)decode_parameters_str.size(),
-                        (byte *)decode_parameters_str.data())
-        < 0) {
-      printf("%s() error, line %d: Can't write to channel\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
-#else
-    if (simulated_buf_write(decode_parameters_str.size(),
-                            (byte *)decode_parameters_str.data())
-        < 0) {
-      printf("%s() error, line %d: Can't write\n", __func__, __LINE__);
-      return false;
-    }
-#endif
-#else
   if (channel_write(channel_descriptor_,
-                      encode_parameters_str.size(),
-                      (byte *)encode_parameters_str.data())
+                      decode_parameters_str.size(),
+                      (byte *)decode_parameters_str.data())
       < 0) {
     printf("%s() error, line %d: Can't write to channel\n", __func__, __LINE__);
     return false;
   }
-#endif
+
     return true;
   } else if (input_call_struct.function_name() == write_resource_tag) {
     if (input_call_struct.str_inputs_size() < 1) {
