@@ -1108,9 +1108,58 @@ bool channel_guard::add_access_rights(string &resource_name,
   return false;
 }
 
-bool channel_guard::create_resource(string &name) {
+bool channel_guard::create_resource(const resource_message &rm) {
+
+  int table_entry = find_resource(rm.resource_identifier());
+  if (table_entry >= 0) {
+    printf("%s() error, line: %d: Resource already exists\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+#if 0
+  // check to see all principals exist
+  string file_name =
+      g_resource_table.resources_[table_entry].resource_location();
+  // TODO: fix
+  // TODO: set location, etc
   // make up encryption key
   // automatically give creator read, write, delete rights
+#endif
+  return false;
+}
+
+bool channel_guard::add_principal(const principal_message &pm) {
+
+  int table_entry =
+      g_principal_table.find_principal_in_table(pm.principal_name());
+  if (table_entry >= 0) {
+    printf("%s() error, line: %d: Can't find resource\n", __func__, __LINE__);
+    return false;
+  }
+
+  return false;
+}
+
+bool channel_guard::delete_resource(const string &resource_name) {
+  printf("%s() error, line: %d, delete_resource not implemented\n",
+         __func__,
+         __LINE__);
+
+  string requested_right("write");
+  int    table_entry = find_resource(resource_name);
+  if (table_entry < 0) {
+    printf("%s() error, line: %d: Can't find resource\n", __func__, __LINE__);
+    return false;
+  }
+
+  string file_name =
+      g_resource_table.resources_[table_entry].resource_location();
+  if (!access_check(table_entry, requested_right)) {
+    printf("%s() error, line: %d: access_check failed\n", __func__, __LINE__);
+    return false;
+  }
   return false;
 }
 
@@ -1254,13 +1303,6 @@ bool channel_guard::write_resource(const string &resource_name,
     return false;
   }
   return true;
-}
-
-bool channel_guard::delete_resource(const string &resource_name) {
-  printf("%s() error, line: %d, delete_resource not implemented\n",
-         __func__,
-         __LINE__);
-  return false;
 }
 
 bool channel_guard::close_resource(const string &resource_name,

@@ -37,7 +37,6 @@ Later we should implement:
 rpc_create_resource
 rpc_delete_resource
 rpc_add_principal
-rpc_add_resource
 
 These are implemented in two cc classes: acl_server_dispatch (for the server functionality)
 and acl_client_dispatch (for client functionality).

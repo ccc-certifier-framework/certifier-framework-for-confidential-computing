@@ -259,7 +259,6 @@ class channel_guard {
   bool add_access_rights(string &resource_name,
                          string &right,
                          string &new_prin);
-  bool create_resource(string &name);
   bool open_resource(const string &resource_name,
                      const string &access_mode,
                      int          *local_descriptor);
@@ -271,8 +270,10 @@ class channel_guard {
                       int           local_desciptor,
                       int           n,
                       string       &in);
-  bool delete_resource(const string &resource_name);
   bool close_resource(const string &resource_name, int local_descriptor);
+  bool delete_resource(const string &resource_name);
+  bool create_resource(const resource_message &rm);
+  bool add_principal(const principal_message &pm);
 };
 }  // namespace acl_lib
 }  // namespace certifier
