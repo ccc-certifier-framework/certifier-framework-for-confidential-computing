@@ -43,22 +43,6 @@ namespace acl_lib {
 bool sign_nonce(string &nonce, key_message &k, string *signature);
 bool rotate_resource_key(string &resource, key_message &km);
 
-#if 0
-const int max_active_resources = 50;
-class active_resource {
- public:
-  active_resource();
-  ~active_resource();
-
-  enum { READ = 0x1, WRITE = 0x2, DELETE = 0x4, CREATE = 0x08 };
-
-  string   principal_name_;
-  string   resource_name_;
-  int      desc_;
-  unsigned rights_;
-};
-#endif
-
 void print_principal_info(const principal_message &pi);
 void print_audit_info(const audit_info &inf);
 void print_resource_message(const resource_message &rm);
@@ -129,9 +113,8 @@ class acl_principal_table {
 
   bool add_principal_to_table(const string &name,
                               const string &alg,
-                              const string &credential,
-                              string       &creator);
-  bool delete_principal_from_table(const string &name, const string &deleter);
+                              const string &credential);
+  bool delete_principal_from_table(const string &name);
   int  find_principal_in_table(const string &name);
   bool load_principal_table_from_list(const principal_list &pl);
   bool save_principal_table_to_list(principal_list *pl);
@@ -156,12 +139,9 @@ class acl_resource_table {
 
   bool add_resource_to_table(const string &name,
                              const string &type,
-                             const string &location,
-                             const string &creator);
+                             const string &location);
   bool add_resource_to_table(const resource_message &rm);
-  bool delete_resource_from_table(const string &name,
-                                  const string &type,
-                                  const string &deleter);
+  bool delete_resource_from_table(const string &name, const string &type);
   int  find_resource_in_table(const string &name);
   bool load_resource_table_from_list(const resource_list &rl);
   bool save_resource_table_to_list(resource_list *rl);
@@ -212,25 +192,13 @@ class channel_guard {
   string creds_;
   bool   channel_principal_authenticated_;
 
-#if 0
-  int               capacity_resources_;
-  int               num_resources_;
-  resource_message *resources_;
-  int               num_active_resources_;
-  int               capacity_active_resources_;
-  active_resource   ar_[max_active_resources];
-#else
   acl_local_descriptor_table descriptor_table_;
-#endif
-  string nonce_;
-  X509  *root_cert_;
+  string                     nonce_;
+  X509                      *root_cert_;
 
   void print();
 
   int find_resource(const string &name);
-#if 0
-  int find_in_active_resource_table(const string &name);
-#endif
 
   bool init_root_cert(const string &asn1_cert_str);
   bool authenticate_me(const string &name,
@@ -245,11 +213,6 @@ class channel_guard {
   bool can_create(int resource_entry);
 
   bool access_check(int resource_entry, const string &action);
-
-#if 0
-  bool add_resource(resource_message &rm);
-  bool save_active_resources(const string &file_name);
-#endif
 
   // Called from grpc
   bool accept_credentials(const string   &principal_name,
@@ -271,7 +234,7 @@ class channel_guard {
                       int           n,
                       string       &in);
   bool close_resource(const string &resource_name, int local_descriptor);
-  bool delete_resource(const string &resource_name);
+  bool delete_resource(const string &resource_name, const string &type);
   bool create_resource(const resource_message &rm);
   bool add_principal(const principal_message &pm);
 };

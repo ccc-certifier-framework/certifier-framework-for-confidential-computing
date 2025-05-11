@@ -24,6 +24,7 @@ bool rpc_open_resource(const string& resource_name, const string& access_right, 
 bool rpc_read_resource(const string& resource_name, int local_descriptor, int num_bytes, string* bytes_read)
   input: resource-name (string), num-bytes (int32)
   output: status (bool), output (bytes)
+  limitation: you can only read 4096 bytes at a time
 bool rpc_write_resource(const string& resource_name, int local_descriptor, const string& bytes_to_write)
   input: resource-name (string), num-bytes (int32), buffer (bytes)
   output: status (bool)
@@ -32,17 +33,21 @@ bool rpc_close_resource(const string& resource_name, int local_descriptor)
   output: status
 bool rpc_add_access_right(const string& resource_name, const string& delegated_principal,
                           const string& right)
-
-Later we should implement:
-rpc_create_resource
-rpc_delete_resource
-rpc_add_principal
+bool rpc_delete_resource(const string &resource_name, const string& type);
+  input: resource name and type to be deleted.
+bool rpc_create_resource(const resource_message &rm);
+  input: resource to be created.  Note, only authenticated principals can create.
+bool rpc_add_principal(const principal_message &pm);
+  input: principal to be added.  Note, only authenticated principals can create.
+bool rpc_delete_principal(const string& name);
+  input: name of principal to be deleted.
+  Note only table master can delete principals.
 
 These are implemented in two cc classes: acl_server_dispatch (for the server functionality)
 and acl_client_dispatch (for client functionality).
 
 Check test_acl.cc for examples.  To run the test you should have two test directories
-./test_data and ./test_data with two files: file_1 and file_2.
+./test_data and ./acl_test_data with two files: file_1 and file_2.
 
 One subtle issue is sidestepped by the standalone app.  An application must have a secure
 way to establish trust in the identity root key. There are many ways to do this.  The

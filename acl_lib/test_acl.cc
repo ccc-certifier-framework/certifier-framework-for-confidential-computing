@@ -42,6 +42,7 @@ string              g_signature_algorithm;
 X509               *g_x509_identity_root = nullptr;
 acl_principal_table g_principal_table;
 acl_resource_table  g_resource_table;
+string              g_file_directory;
 
 // this one is just for test_acl
 acl_server_dispatch g_server(nullptr);
@@ -550,8 +551,7 @@ bool test_basic() {
   if (!principal_table2.add_principal_to_table(
           pnf,
           principal_table2.principals_[0].authentication_algorithm(),
-          principal_table2.principals_[0].credential(),
-          pna)) {
+          principal_table2.principals_[0].credential())) {
     printf("%s() error, line %d: can't add principal\n", __func__, __LINE__);
     return false;
   }
@@ -569,7 +569,7 @@ bool test_basic() {
       printf("\n");
     }
   }
-  if (!principal_table2.delete_principal_from_table(pnf, pna)) {
+  if (!principal_table2.delete_principal_from_table(pnf)) {
     printf("%s() error, line %d: can't delete principal\n", __func__, __LINE__);
     return false;
   }
@@ -638,7 +638,7 @@ bool test_basic() {
   string rnf("new_resource");
   string ft("super-file");
   string loc("outer-space");
-  if (!resource_table2.add_resource_to_table(rnf, ft, loc, pna)) {
+  if (!resource_table2.add_resource_to_table(rnf, ft, loc)) {
     printf("%s() error, line %d: can't add resource\n", __func__, __LINE__);
     return false;
   }
@@ -656,7 +656,7 @@ bool test_basic() {
       printf("\n");
     }
   }
-  if (!resource_table2.delete_resource_from_table(rnf, ft, pna)) {
+  if (!resource_table2.delete_resource_from_table(rnf, ft)) {
     printf("%s() error, line %d: can't delete resource\n", __func__, __LINE__);
     return false;
   }
@@ -2041,7 +2041,6 @@ bool test_rpc() {
   const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
   EVP_PKEY   *pkey = nullptr;
   RSA        *r2 = nullptr;
-  string      serialized_cert_chain_str;
 
   SSL                *ch = nullptr;
   acl_client_dispatch client(ch);
@@ -2052,6 +2051,7 @@ bool test_rpc() {
   string res3_name("file_3");
   string acc1("read");
   string acc2("write");
+  string file_type("file");
 
   string nonce;
   string signed_nonce;
@@ -2060,21 +2060,25 @@ bool test_rpc() {
   string bytes_written_to_file("Hello there");
   string bytes_reread_from_file;
 
-  int    size_nonce = 32;
-  byte   buf[size_nonce];
-  int    size_sig = 512;
-  byte   sig[size_sig];
-  int    k = 0;
-  int    i = 0;
-  string dig_alg;
-  string asn1_cert_str;
-  string auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
-  string serialized_creds;
-  string new_prin("tho");
-  string new_creator("john");
-  int    np;
-
-  resource_message rm;
+  int               size_nonce = 32;
+  byte              buf[size_nonce];
+  int               size_sig = 512;
+  byte              sig[size_sig];
+  int               k = 0;
+  int               i = 0;
+  string            dig_alg;
+  string            asn1_cert_str;
+  string            auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
+  string            serialized_creds;
+  string            new_prin("tho");
+  string            new_creator("john");
+  int               np;
+  principal_message pm;
+  time_point        tp;
+  string            time_created_str;
+  resource_message  rm;
+  string            prin_john("john");
+  resource_message  new_rm;
 
   bool ret = true;
 
@@ -2098,6 +2102,11 @@ bool test_rpc() {
     }
   }
 
+  if (!g_principal_table.load_principal_table_from_list(g_pl)) {
+    printf("%s() error, line %d: Cant load principals\n", __func__, __LINE__);
+    return false;
+  }
+
   if (!g_resource_table.load_resource_table_from_list(g_rl)) {
     printf("%s() error, line %d: Cant load resources\n", __func__, __LINE__);
     return false;
@@ -2117,6 +2126,8 @@ bool test_rpc() {
     return false;
   }
 
+  // This is a hack for test only
+  // Normally it comes from g_identity_root
   if (credentials.blobs_size() < 1) {
     printf("%s() error, line %d: cant find root in credentials\n",
            __func__,
@@ -2137,18 +2148,10 @@ bool test_rpc() {
     return false;
   }
 
-  if (!credentials.SerializeToString(&serialized_cert_chain_str)) {
-    printf("%s() error, line %d: cant serialize credentials\n",
-           __func__,
-           __LINE__);
-    ret = false;
-    goto done;
-  }
-
   // put it on principal list
   for (i = 0; i < g_pl.principals_size(); i++) {
     if (g_pl.principals(i).principal_name() == prin_name) {
-      g_pl.mutable_principals(i)->set_credential(serialized_cert_chain_str);
+      g_pl.mutable_principals(i)->set_credential(serialized_creds);
       g_pl.mutable_principals(i)->set_authentication_algorithm(auth_alg);
       break;
     }
@@ -2256,6 +2259,7 @@ bool test_rpc() {
     goto done;
   }
 
+  // The tests through the next comment are not really rpc tests
   rm.set_resource_identifier(res3_name);
   rm.set_resource_type("file");
   rm.set_resource_location("./acl_test_data/" + res3_name);
@@ -2285,6 +2289,7 @@ bool test_rpc() {
     ret = false;
     goto done;
   }
+  // -------------------------------------------------------------------
 
   ret = client.rpc_open_resource(res3_name, acc2, &local_descriptor);
   if (!ret) {
@@ -2347,6 +2352,8 @@ bool test_rpc() {
   printf("Bytes reread %d: %s\n",
          (int)bytes_reread_from_file.size(),
          bytes_reread_from_file.c_str());
+
+  // do the read and write match?
   if (strcmp(bytes_reread_from_file.c_str(), bytes_written_to_file.c_str())
       != 0) {
     printf("%s() error, line %d: rered bytes don't match\n",
@@ -2356,11 +2363,11 @@ bool test_rpc() {
     goto done;
   }
 
+  // This test also does not belong in test_rpc
   if (!g_principal_table.add_principal_to_table(
           new_prin,
           auth_alg,
-          serialized_creds,  // obviously not the right creds
-          new_creator)) {
+          serialized_creds)) {  // obviously not the right creds
     printf("%s() error, line %d: can't add new principal\n",
            __func__,
            __LINE__);
@@ -2368,8 +2375,6 @@ bool test_rpc() {
     goto done;
   }
 
-  // bool delete_principal_from_table(const string &name, const string
-  // &deleter);
   np = g_principal_table.find_principal_in_table(new_prin);
   if (np < 0) {
     printf("%s() error, line %d: can't recover new principal\n",
@@ -2382,6 +2387,179 @@ bool test_rpc() {
     printf("\nAdded:\n");
     g_principal_table.print_entry(np);
     printf("\n");
+  }
+  // --------------------------------------------
+
+  pm.set_principal_name("david");
+  pm.set_authentication_algorithm(
+      g_principal_table.principals_[0].authentication_algorithm());
+  pm.set_credential(g_principal_table.principals_[0].credential());
+
+  ret = client.rpc_add_principal(pm);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_add_principal failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  np = g_principal_table.find_principal_in_table("david");
+  if (np < 0) {
+    printf("%s() error, line %d: principal not in table\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  if (FLAGS_print_all) {
+    printf("Principal added:\n");
+    print_principal_message(g_principal_table.principals_[np]);
+    printf("\n");
+  }
+
+  if (!time_now(&tp)) {
+    printf("%s() error, line %d: Can't Can't get time_now\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (!encode_time(tp, &time_created_str)) {
+    printf("%s() error, line %d: Can't encode_time\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  new_rm.set_resource_identifier("new_file_1");
+  new_rm.set_resource_type("file");
+  new_rm.set_resource_location(g_file_directory + new_rm.resource_identifier());
+  new_rm.set_time_created(time_created_str);
+  {
+    string *r = new_rm.add_readers();
+    *r = prin_john;
+    string *w = new_rm.add_writers();
+    *w = prin_john;
+    *r = prin_john;
+  }
+
+  ret = client.rpc_create_resource(new_rm);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_create_resource_failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  // is it there?
+  np = g_resource_table.find_resource_in_table(new_rm.resource_identifier());
+  if (np < 0) {
+    printf("%s() error, line %d: resource not in table\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (FLAGS_print_all) {
+    printf("Resource added:\n");
+    print_resource_message(g_resource_table.resources_[np]);
+  }
+
+  // write it and read it
+  ret = client.rpc_open_resource(new_rm.resource_identifier(),
+                                 acc2,
+                                 &local_descriptor);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_open_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  ret = client.rpc_write_resource(new_rm.resource_identifier(),
+                                  local_descriptor,
+                                  bytes_written_to_file);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_write_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  ret =
+      client.rpc_close_resource(new_rm.resource_identifier(), local_descriptor);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_close_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  ret = client.rpc_open_resource(new_rm.resource_identifier(),
+                                 acc1,
+                                 &local_descriptor);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_open_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  ret = client.rpc_read_resource(new_rm.resource_identifier(),
+                                 local_descriptor,
+                                 14,
+                                 &bytes_read_from_file);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_read_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  printf("Bytes in new file: %s\n", bytes_read_from_file.c_str());
+
+  ret =
+      client.rpc_close_resource(new_rm.resource_identifier(), local_descriptor);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_close_resource failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  // Do read bytes match written bytes
+  if (strcmp(bytes_read_from_file.c_str(), bytes_written_to_file.c_str())
+      != 0) {
+    printf("%s() error, line %d: written and read bytes differ\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  ret = client.rpc_delete_resource(new_rm.resource_identifier(), file_type);
+  if (!ret) {
+    printf("%s() error, line %d: rpc_create_resource_failed\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  // is it gone?
+  np = g_resource_table.find_resource_in_table(new_rm.resource_identifier());
+  if (np >= 0) {
+    printf("%s() error, line %d: resource was not deleted\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  if (FLAGS_print_all) {
+    printf("Resource properly deleted\n");
   }
 
 done:
@@ -2424,6 +2602,8 @@ int main(int an, char **av) {
     printf("Couldn't init crypto\n");
     return 1;
   }
+
+  g_file_directory = "./acl_test_data/";
 
   int result = RUN_ALL_TESTS();
 

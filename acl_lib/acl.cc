@@ -68,10 +68,13 @@ void print_resource_message(const resource_message &rm) {
     printf("Resource type: %s\n", rm.resource_type().c_str());
   if (rm.has_resource_location())
     printf("Resource location: %s\n", rm.resource_location().c_str());
-  if (rm.has_time_created())
+  time_point tp;
+  if (rm.has_time_created()) {
     printf("Created: %s\n", rm.time_created().c_str());
-  if (rm.has_time_last_written())
+  }
+  if (rm.has_time_last_written()) {
     printf("Written: %s\n", rm.time_last_written().c_str());
+  }
   if (rm.has_resource_key()) {
     print_key(rm.resource_key());
   }
@@ -229,10 +232,10 @@ void acl_principal_table::print_entry(int i) {
 
 bool acl_principal_table::add_principal_to_table(const string &name,
                                                  const string &alg,
-                                                 const string &cred,
-                                                 string       &creator) {
+                                                 const string &cred) {
   bool ret = true;
   principal_table_mutex_.lock();
+
   int n = find_principal_in_table(name);
   if (n >= 0) {
     printf("%s() error, line: %d: principal already exists\n",
@@ -241,6 +244,7 @@ bool acl_principal_table::add_principal_to_table(const string &name,
     ret = false;
     goto done;
   }
+
   for (int i = 0; i < num_; i++) {
     if (principal_status_[i] != VALID) {
       principals_[i].set_principal_name(name);
@@ -257,6 +261,7 @@ bool acl_principal_table::add_principal_to_table(const string &name,
     ret = false;
     goto done;
   }
+
   principals_[num_].set_principal_name(name);
   principals_[num_].set_authentication_algorithm(alg);
   principals_[num_].set_credential(cred);
@@ -268,14 +273,16 @@ done:
   return ret;
 }
 
-bool acl_principal_table::delete_principal_from_table(const string &name,
-                                                      const string &deleter) {
+bool acl_principal_table::delete_principal_from_table(const string &name) {
   bool ret = true;
   principal_table_mutex_.lock();
 
   int n = find_principal_in_table(name);
-  if (n < 0)
+  if (n < 0) {
+    printf("%s() error, line: %d: No such principal\n", __func__, __LINE__);
+    ret = false;
     goto done;
+  }
   principal_status_[n] = INVALID;
 
 done:
@@ -415,8 +422,7 @@ bool acl_resource_table::add_resource_to_table(const resource_message &rm) {
 
 bool acl_resource_table::add_resource_to_table(const string &name,
                                                const string &type,
-                                               const string &location,
-                                               const string &creator) {
+                                               const string &location) {
   bool ret = true;
   resource_table_mutex_.lock();
 
@@ -456,8 +462,7 @@ done:
 }
 
 bool acl_resource_table::delete_resource_from_table(const string &name,
-                                                    const string &type,
-                                                    const string &deleter) {
+                                                    const string &type) {
   bool ret = true;
   resource_table_mutex_.lock();
 
@@ -1110,6 +1115,13 @@ bool channel_guard::add_access_rights(string &resource_name,
 
 bool channel_guard::create_resource(const resource_message &rm) {
 
+  if (!channel_principal_authenticated_) {
+    printf("%s() error, line: %d: Unauthenticated principals cannot create "
+           "resource\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   int table_entry = find_resource(rm.resource_identifier());
   if (table_entry >= 0) {
     printf("%s() error, line: %d: Resource already exists\n",
@@ -1117,49 +1129,33 @@ bool channel_guard::create_resource(const resource_message &rm) {
            __LINE__);
     return false;
   }
-
-#if 0
-  // check to see all principals exist
-  string file_name =
-      g_resource_table.resources_[table_entry].resource_location();
-  // TODO: fix
-  // TODO: set location, etc
-  // make up encryption key
-  // automatically give creator read, write, delete rights
-#endif
-  return false;
+  return g_resource_table.add_resource_to_table(rm);
 }
 
 bool channel_guard::add_principal(const principal_message &pm) {
 
-  int table_entry =
-      g_principal_table.find_principal_in_table(pm.principal_name());
-  if (table_entry >= 0) {
-    printf("%s() error, line: %d: Can't find resource\n", __func__, __LINE__);
-    return false;
-  }
-
-  return false;
+  // note: acl_principal_table does the locking
+  return g_principal_table.add_principal_to_table(pm.principal_name(),
+                                                  pm.authentication_algorithm(),
+                                                  pm.credential());
 }
 
-bool channel_guard::delete_resource(const string &resource_name) {
-  printf("%s() error, line: %d, delete_resource not implemented\n",
-         __func__,
-         __LINE__);
+bool channel_guard::delete_resource(const string &resource_name,
+                                    const string &type) {
 
-  string requested_right("write");
+  string write_request("write");
+  string delete_request("delete");
   int    table_entry = find_resource(resource_name);
   if (table_entry < 0) {
     printf("%s() error, line: %d: Can't find resource\n", __func__, __LINE__);
     return false;
   }
 
-  string file_name =
-      g_resource_table.resources_[table_entry].resource_location();
-  if (!access_check(table_entry, requested_right)) {
-    printf("%s() error, line: %d: access_check failed\n", __func__, __LINE__);
-    return false;
+  if (access_check(table_entry, delete_request)
+      || access_check(table_entry, write_request)) {
+    return g_resource_table.delete_resource_from_table(resource_name, type);
   }
+  printf("%s() error, line: %d: access_check failed\n", __func__, __LINE__);
   return false;
 }
 
@@ -1176,9 +1172,6 @@ bool channel_guard::open_resource(const string &resource_name,
     return false;
   }
 
-  // note that if file doesn't exist, we create it which isn't right
-  // principal should have create right on parent directory but we don't
-  // support directories yet.
   string file_name;
   int    res = -1;
 
@@ -1252,7 +1245,7 @@ bool channel_guard::read_resource(const string &resource_name,
     return false;
   }
   byte buf[n + 1];
-  if (local_descriptor >= descriptor_table_.num_) {
+  if (local_descriptor < 0 || local_descriptor >= descriptor_table_.num_) {
     printf("%s() error, line: %d: bad descriptor\n", __func__, __LINE__);
     return false;
   }
@@ -1281,7 +1274,7 @@ bool channel_guard::write_resource(const string &resource_name,
                                    int           local_descriptor,
                                    int           n,
                                    string       &in) {
-  if (local_descriptor >= descriptor_table_.num_) {
+  if (local_descriptor < 0 || local_descriptor >= descriptor_table_.num_) {
     printf("%s() error, line: %d: bad descriptor\n", __func__, __LINE__);
     return false;
   }
@@ -1308,7 +1301,7 @@ bool channel_guard::write_resource(const string &resource_name,
 bool channel_guard::close_resource(const string &resource_name,
                                    int           local_descriptor) {
 
-  if (local_descriptor >= descriptor_table_.num_) {
+  if (local_descriptor < 0 || local_descriptor >= descriptor_table_.num_) {
     printf("%s() error, line: %d: bad descriptor\n", __func__, __LINE__);
     return false;
   }

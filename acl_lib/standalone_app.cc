@@ -1093,7 +1093,10 @@ void server_application(secure_authenticated_channel &channel) {
   acl_server_dispatch server_dispatch(channel.ssl_);
 
   for (;;) {
-    server_dispatch.service_request();
+    if (!server_dispatch.service_request()) {
+      printf("channel closed\n");
+      return;
+    }
   }
   channel.close();
 }

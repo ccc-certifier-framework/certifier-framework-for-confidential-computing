@@ -475,10 +475,14 @@ bool acl_client_dispatch::rpc_add_access_right(
     const string &resource_name,
     const string &delegated_principal,
     const string &right) {
+  printf("%s() error, line %d: rpc_add_access_right not implemented\n",
+         __func__,
+         __LINE__);
   return false;
 }
 
-bool acl_client_dispatch::rpc_delete_resource(const string &resource_name) {
+bool acl_client_dispatch::rpc_delete_resource(const string &resource_name,
+                                              const string &type) {
   string   decode_parameters_str;
   string   encode_parameters_str;
   rpc_call input_call_struct;
@@ -486,16 +490,16 @@ bool acl_client_dispatch::rpc_delete_resource(const string &resource_name) {
   int      bytes_read = 0;
 
   // format input buffer, serialize it
-  input_call_struct.set_function_name(close_resource_tag);
+  input_call_struct.set_function_name(delete_resource_tag);
   string *in = input_call_struct.add_str_inputs();
   *in = resource_name;
+  string *resource_type = input_call_struct.add_str_inputs();
+  *resource_type = type;
 
   if (!input_call_struct.SerializeToString(&encode_parameters_str)) {
     printf("%s() error, line %d: Can't input\n", __func__, __LINE__);
     return false;
   }
-
-  return false;
 
   if (channel_write(channel_descriptor_,
                     encode_parameters_str.size(),
@@ -547,7 +551,6 @@ bool acl_client_dispatch::rpc_create_resource(const resource_message &rm) {
     return false;
   }
 
-  return false;
   // format input buffer, serialize it
   input_call_struct.set_function_name(create_resource_tag);
   string *in = input_call_struct.add_buf_inputs();
@@ -595,6 +598,14 @@ bool acl_client_dispatch::rpc_create_resource(const resource_message &rm) {
   return true;
 }
 
+bool acl_client_dispatch::rpc_delete_principal(const string &name) {
+  printf("%s() error, line %d: delete principal not implemented\n",
+         __func__,
+         __LINE__);
+  return false;
+}
+
+
 bool acl_client_dispatch::rpc_add_principal(const principal_message &pm) {
   string   decode_parameters_str;
   string   encode_parameters_str;
@@ -609,8 +620,6 @@ bool acl_client_dispatch::rpc_add_principal(const principal_message &pm) {
            __LINE__);
     return false;
   }
-
-  return false;
 
   // format input buffer, serialize it
   input_call_struct.set_function_name(add_principal_tag);
@@ -779,6 +788,9 @@ bool acl_server_dispatch::service_request() {
     return true;
   } else if (input_call_struct.function_name() == open_resource_tag) {
     if (input_call_struct.str_inputs_size() < 2) {
+      printf("%s() error, line %d: too few string inputs\n",
+             __func__,
+             __LINE__);
       return false;
     }
     output_call_struct.set_function_name(open_resource_tag);
@@ -934,14 +946,106 @@ bool acl_server_dispatch::service_request() {
     printf("%s() error, line %d: not implemented yet\n", __func__, __LINE__);
     return false;
   } else if (input_call_struct.function_name() == delete_resource_tag) {
-    printf("%s() error, line %d: not implemented yet\n", __func__, __LINE__);
-    return false;
+    if (input_call_struct.str_inputs_size() < 2) {
+      printf("%s() error, line %d: Too few string inputs\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    if (guard_.delete_resource(input_call_struct.str_inputs(0),
+                               input_call_struct.str_inputs(1))) {
+      output_call_struct.set_status(true);
+    } else {
+      output_call_struct.set_status(false);
+    }
+    output_call_struct.set_function_name(delete_resource_tag);
+    if (!output_call_struct.SerializeToString(&encode_parameters_str)) {
+      printf("%s() error, line %d: can't encode parameters\n",
+             __func__,
+             __LINE__);
+      return false;  // and the caller never knows
+    }
+
+    if (channel_write(channel_descriptor_,
+                      encode_parameters_str.size(),
+                      (byte *)encode_parameters_str.data())
+        < 0) {
+      printf("%s() error, line %d: Can't write to channel\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    return true;
   } else if (input_call_struct.function_name() == create_resource_tag) {
-    printf("%s() error, line %d: not implemented yet\n", __func__, __LINE__);
-    return false;
+    if (input_call_struct.buf_inputs_size() < 1) {
+      printf("%s() error, line %d: Too few buf inputs\n", __func__, __LINE__);
+      return false;
+    }
+    resource_message rm;
+    bool             ret = true;
+
+    ret = rm.ParseFromString(input_call_struct.buf_inputs(0));
+    if (!ret) {
+      printf("%s() error, line %d: Can't parse resource message\n",
+             __func__,
+             __LINE__);
+    }
+    if (ret && guard_.create_resource(rm)) {
+      output_call_struct.set_status(true);
+    } else {
+      output_call_struct.set_status(false);
+    }
+    output_call_struct.set_function_name(create_resource_tag);
+    if (!output_call_struct.SerializeToString(&encode_parameters_str)) {
+      printf("%s() error, line %d: can't encode parameters\n",
+             __func__,
+             __LINE__);
+      return false;  // and the caller never knows
+    }
+
+    if (channel_write(channel_descriptor_,
+                      encode_parameters_str.size(),
+                      (byte *)encode_parameters_str.data())
+        < 0) {
+      printf("%s() error, line %d: Can't write to channel\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    return true;
   } else if (input_call_struct.function_name() == add_principal_tag) {
-    printf("%s() error, line %d: not implemented yet\n", __func__, __LINE__);
-    return false;
+    if (input_call_struct.buf_inputs_size() < 1) {
+      printf("%s() error, line %d: Too few string inputs\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+
+    output_call_struct.set_function_name(add_principal_tag);
+    principal_message pm;
+    bool              ret = pm.ParseFromString(input_call_struct.buf_inputs(0));
+    if (ret && guard_.add_principal(pm)) {
+      output_call_struct.set_status(true);
+    } else {
+      output_call_struct.set_status(false);
+    }
+    if (!output_call_struct.SerializeToString(&encode_parameters_str)) {
+      printf("%s() error, line %d: can't encode parameters\n",
+             __func__,
+             __LINE__);
+      return false;  // and the caller never knows
+    }
+
+    if (channel_write(channel_descriptor_,
+                      encode_parameters_str.size(),
+                      (byte *)encode_parameters_str.data())
+        < 0) {
+      printf("%s() error, line %d: Can't write to channel\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    return true;
   } else {
     printf("%s() error, line %d: unknown function %s\n",
            __func__,
