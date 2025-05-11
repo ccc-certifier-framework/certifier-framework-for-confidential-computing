@@ -675,6 +675,7 @@ acl_server_dispatch::acl_server_dispatch(SSL *channel) {
 
 acl_server_dispatch::~acl_server_dispatch() {}
 
+// returns false if channel is closed or not initialized
 bool acl_server_dispatch::service_request() {
 
   string   decode_parameters_str;
@@ -693,9 +694,10 @@ bool acl_server_dispatch::service_request() {
   // read the buffer
   bytes_read = channel_read(channel_descriptor_, &decode_parameters_str);
   if (bytes_read < 0) {
-    printf("%s() error, line %d: Can't read from channel\n",
-           __func__,
-           __LINE__);
+    // check for channel shutdows?
+    // int err = SSL_get_error(channel_descriptor_, SSL_ERROR_NONE);
+    SSL_shutdown(channel_descriptor_);
+    printf("server_dispatch: channel closed\n");
     return false;
   }
 
@@ -704,7 +706,7 @@ bool acl_server_dispatch::service_request() {
            __func__,
            __LINE__,
            (int)decode_parameters_str.size());
-    return false;
+    return true;
   }
 
   if (input_call_struct.function_name() == authenticate_me_tag) {
@@ -714,7 +716,7 @@ bool acl_server_dispatch::service_request() {
              __func__,
              __LINE__,
              (int)decode_parameters_str.size());
-      return false;
+      return true;
     }
 
     string nonce;
@@ -732,7 +734,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
              __LINE__);
-      return false;  // and the caller never knows
+      return true;  // and the caller never knows
     }
 
     if (channel_write(channel_descriptor_,
@@ -742,7 +744,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Can't write to channel\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
 
     return true;
@@ -751,13 +753,13 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Too few input strings\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
     if (input_call_struct.buf_inputs_size() < 1) {
       printf("%s() error, line %d: Too few input buffers\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
 
     if (guard_.verify_me(input_call_struct.str_inputs(0),
@@ -772,7 +774,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
              __LINE__);
-      return false;  // and the caller never knows
+      return true;  // and the caller never knows
     }
 
     if (channel_write(channel_descriptor_,
@@ -782,7 +784,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Can't write to channel\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
 
     return true;
@@ -791,7 +793,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: too few string inputs\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
     output_call_struct.set_function_name(open_resource_tag);
     int desc = -1;
@@ -807,7 +809,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
              __LINE__);
-      return false;  // and the caller never knows
+      return true;  // and the caller never knows
     }
 
     if (channel_write(channel_descriptor_,
@@ -817,7 +819,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Can't write to channel\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
 
     return true;
@@ -826,11 +828,11 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Too few string inputs\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
     if (input_call_struct.int_inputs_size() < 1) {
       printf("%s() error, line %d: Too few int inputs\n", __func__, __LINE__);
-      return false;
+      return true;
     }
     if (guard_.close_resource(input_call_struct.str_inputs(0),
                               input_call_struct.int_inputs(0))) {
@@ -843,7 +845,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
              __LINE__);
-      return false;  // and the caller never knows
+      return true;  // and the caller never knows
     }
 
     if (channel_write(channel_descriptor_,
@@ -853,7 +855,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Can't write to channel\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
 
     return true;
@@ -862,13 +864,13 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: too few string resources\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
     if (input_call_struct.int_inputs_size() < 2) {
       printf("%s() error, line %d: too few int resources\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
     output_call_struct.set_function_name(read_resource_tag);
     string out;
@@ -886,7 +888,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
              __LINE__);
-      return false;  // and the caller never knows
+      return true;  // and the caller never knows
     }
 
     if (channel_write(channel_descriptor_,
@@ -896,7 +898,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Can't write to channel\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
 
     return true;
@@ -905,15 +907,15 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Too few string inputs\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
     if (input_call_struct.int_inputs_size() < 2) {
       printf("%s() error, line %d: Too few int inputs\n", __func__, __LINE__);
-      return false;
+      return true;
     }
     if (input_call_struct.buf_inputs_size() < 1) {
       printf("%s() error, line %d: Too few buf inputs\n", __func__, __LINE__);
-      return false;
+      return true;
     }
     if (guard_.write_resource(input_call_struct.str_inputs(0),
                               input_call_struct.int_inputs(0),
@@ -928,7 +930,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
              __LINE__);
-      return false;  // and the caller never knows
+      return true;  // and the caller never knows
     }
 
     if (channel_write(channel_descriptor_,
@@ -938,7 +940,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Can't write to channel\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
 
     return true;
@@ -950,7 +952,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Too few string inputs\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
     if (guard_.delete_resource(input_call_struct.str_inputs(0),
                                input_call_struct.str_inputs(1))) {
@@ -963,7 +965,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
              __LINE__);
-      return false;  // and the caller never knows
+      return true;  // and the caller never knows
     }
 
     if (channel_write(channel_descriptor_,
@@ -973,13 +975,13 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Can't write to channel\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
     return true;
   } else if (input_call_struct.function_name() == create_resource_tag) {
     if (input_call_struct.buf_inputs_size() < 1) {
       printf("%s() error, line %d: Too few buf inputs\n", __func__, __LINE__);
-      return false;
+      return true;
     }
     resource_message rm;
     bool             ret = true;
@@ -1000,7 +1002,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
              __LINE__);
-      return false;  // and the caller never knows
+      return true;  // and the caller never knows
     }
 
     if (channel_write(channel_descriptor_,
@@ -1010,7 +1012,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Can't write to channel\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
     return true;
   } else if (input_call_struct.function_name() == add_principal_tag) {
@@ -1018,7 +1020,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Too few string inputs\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
 
     output_call_struct.set_function_name(add_principal_tag);
@@ -1033,7 +1035,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,
              __LINE__);
-      return false;  // and the caller never knows
+      return true;  // and the caller never knows
     }
 
     if (channel_write(channel_descriptor_,
@@ -1043,7 +1045,7 @@ bool acl_server_dispatch::service_request() {
       printf("%s() error, line %d: Can't write to channel\n",
              __func__,
              __LINE__);
-      return false;
+      return true;
     }
     return true;
   } else {
@@ -1051,7 +1053,7 @@ bool acl_server_dispatch::service_request() {
            __func__,
            __LINE__,
            input_call_struct.function_name().c_str());
-    return false;
+    return true;
   }
 
   return true;
