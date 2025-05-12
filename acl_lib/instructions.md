@@ -39,6 +39,7 @@ bool rpc_create_resource(const resource_message &rm);
   input: resource to be created.  Note, only authenticated principals can create.
 bool rpc_add_principal(const principal_message &pm);
   input: principal to be added.  Note, only authenticated principals can create.
+  Note only table master can add principals.
 bool rpc_delete_principal(const string& name);
   input: name of principal to be deleted.
   Note only table master can delete principals.

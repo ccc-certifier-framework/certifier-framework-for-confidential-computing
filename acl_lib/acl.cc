@@ -216,10 +216,17 @@ acl_principal_table::acl_principal_table() {
   for (int i = 0; i < max_principal_table_capacity; i++) {
     principal_status_[i] = INVALID;
   }
+  num_managers_ = 0;
   principal_table_mutex_.unlock();
 }
 
 acl_principal_table::~acl_principal_table() {}
+
+void acl_principal_table::print_manager(int i) {
+  if (i >= num_managers_)
+    return;
+  printf("%s", managers_[i].c_str());
+}
 
 void acl_principal_table::print_entry(int i) {
   printf("principal entry %d\n", i);
@@ -313,6 +320,10 @@ bool acl_principal_table::load_principal_table_from_list(
     principals_[num_].set_credential(pl.principals(i).credential());
     num_++;
   }
+  num_managers_ = 0;
+  for (int j = 0; j < pl.table_managers_size() && j < capacity_; j++) {
+    managers_[num_managers_++] = pl.table_managers(j);
+  }
   principal_table_mutex_.unlock();
   return true;
 }
@@ -326,6 +337,7 @@ bool acl_principal_table::save_principal_table_to_list(principal_list *pl) {
     principal_message *pm = pl->add_principals();
     pm->CopyFrom(principals_[i]);
   }
+  // Todo: add managers
   principal_table_mutex_.unlock();
   return true;
 }
@@ -1134,10 +1146,55 @@ bool channel_guard::create_resource(const resource_message &rm) {
 
 bool channel_guard::add_principal(const principal_message &pm) {
 
+  // check to see  current principal is on manager table
+  if (!channel_principal_authenticated_) {
+    printf("%s() error, line: %d: principal not authenticated\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  int mgr = -1;
+  for (int i = 0; i < g_principal_table.num_managers_; i++) {
+    if (g_principal_table.managers_[i] == principal_name_) {
+      mgr = i;
+      break;
+    }
+  }
+  if (mgr < 0) {
+    printf("%s() error, line: %d: deleter is not a table manage\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
   // note: acl_principal_table does the locking
   return g_principal_table.add_principal_to_table(pm.principal_name(),
                                                   pm.authentication_algorithm(),
                                                   pm.credential());
+}
+
+bool channel_guard::delete_principal(const string &principal_name) {
+
+  // check to see  current principal is on manager table
+  if (!channel_principal_authenticated_) {
+    printf("%s() error, line: %d: principal not authenticated\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  int mgr = -1;
+  for (int i = 0; i < g_principal_table.num_managers_; i++) {
+    if (g_principal_table.managers_[i] == principal_name_) {
+      mgr = i;
+      break;
+    }
+  }
+  if (mgr < 0) {
+    printf("%s() error, line: %d: deleter is not a table manage\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  return g_principal_table.delete_principal_from_table(principal_name);
 }
 
 bool channel_guard::delete_resource(const string &resource_name,

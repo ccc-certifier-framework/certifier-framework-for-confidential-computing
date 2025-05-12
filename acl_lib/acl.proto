@@ -83,6 +83,7 @@ message resource_list {
 
 message principal_list {
   repeated principal_message principals               = 1;
+  repeated string table_managers                      = 2;
 };
 
 message access_list {

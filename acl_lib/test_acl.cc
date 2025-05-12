@@ -52,6 +52,10 @@ bool construct_sample_principals(principal_list *pl) {
   string p2("paul");
   string alg("none");
   string cred;
+
+  string *mgr = pl->add_table_managers();
+  *mgr = p1;
+
   if (!add_principal_to_proto_list(p1, alg, cred, pl)) {
     return false;
   }

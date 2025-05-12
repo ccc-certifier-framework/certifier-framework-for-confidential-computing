@@ -83,6 +83,7 @@ string read_resource_tag("read_resource");
 string write_resource_tag("write_resource");
 string add_access_right_tag("add_access_right");
 string add_principal_tag("add_principal");
+string delete_principal_tag("delete_principal");
 string create_resource_tag("create_resource");
 string delete_resource_tag("delete_resource");
 
@@ -998,6 +999,37 @@ bool acl_server_dispatch::service_request() {
       output_call_struct.set_status(false);
     }
     output_call_struct.set_function_name(create_resource_tag);
+    if (!output_call_struct.SerializeToString(&encode_parameters_str)) {
+      printf("%s() error, line %d: can't encode parameters\n",
+             __func__,
+             __LINE__);
+      return true;  // and the caller never knows
+    }
+
+    if (channel_write(channel_descriptor_,
+                      encode_parameters_str.size(),
+                      (byte *)encode_parameters_str.data())
+        < 0) {
+      printf("%s() error, line %d: Can't write to channel\n",
+             __func__,
+             __LINE__);
+      return true;
+    }
+    return true;
+  } else if (input_call_struct.function_name() == delete_principal_tag) {
+    if (input_call_struct.str_inputs_size() < 1) {
+      printf("%s() error, line %d: Too few string inputs\n",
+             __func__,
+             __LINE__);
+      return true;
+    }
+
+    output_call_struct.set_function_name(delete_principal_tag);
+    if (guard_.delete_principal(input_call_struct.str_inputs(0))) {
+      output_call_struct.set_status(true);
+    } else {
+      output_call_struct.set_status(false);
+    }
     if (!output_call_struct.SerializeToString(&encode_parameters_str)) {
       printf("%s() error, line %d: can't encode parameters\n",
              __func__,

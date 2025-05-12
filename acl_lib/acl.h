@@ -109,6 +109,8 @@ class acl_principal_table {
   int               num_;
   int               principal_status_[max_principal_table_capacity];
   principal_message principals_[max_principal_table_capacity];
+  int               num_managers_;
+  string            managers_[max_principal_table_capacity];
   std::mutex        principal_table_mutex_;  // use lock(), unlock()
 
   bool add_principal_to_table(const string &name,
@@ -122,6 +124,7 @@ class acl_principal_table {
   bool save_principal_table_to_file(const string &filename);
 
   void print_entry(int i);
+  void print_manager(int i);
 };
 
 const int max_resource_table_capacity = 250;
@@ -237,6 +240,7 @@ class channel_guard {
   bool delete_resource(const string &resource_name, const string &type);
   bool create_resource(const resource_message &rm);
   bool add_principal(const principal_message &pm);
+  bool delete_principal(const string &name);
 };
 }  // namespace acl_lib
 }  // namespace certifier
