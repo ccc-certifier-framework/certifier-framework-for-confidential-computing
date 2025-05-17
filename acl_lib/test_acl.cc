@@ -44,6 +44,10 @@ acl_principal_table g_principal_table;
 acl_resource_table  g_resource_table;
 string              g_file_directory;
 
+// Encryption management
+bool g_file_encryption_enabled = false;
+int  g_num_key_generations = 0;
+
 // this one is just for test_acl
 acl_server_dispatch g_server(nullptr);
 
@@ -781,6 +785,9 @@ bool test_access() {
   string               bytes_written("Hello there");
   string               serialized_creds;
   extern resource_list g_rl;
+
+  g_file_encryption_enabled = false;
+  g_num_key_generations = 0;
 
   if (!make_keys_and_certs(root_issuer_name,
                            root_issuer_org,

@@ -112,3 +112,7 @@ Do the following:
          ./standalone_app.exe --operation=run_as_client
       You should see the message "client_application succeeded" in the client window.
 
+Coming soon
+
+The files on the server are currently unencrypted.  I'm adding global file encryption
+and key rotation.

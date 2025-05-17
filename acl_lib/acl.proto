@@ -62,6 +62,9 @@ message audit_info {
 // for now every resource is in its own file named by resource_location
 // file is encrypted with resource_key
 // if audit is required, logging info is in audit info
+// The resource_key is intended to support individual file
+// encryption which is probably too cumbersome and overkill,
+// so it is not used yet.
 message resource_message {
   optional string resource_identifier                 = 1;
   optional string resource_type                       = 2;

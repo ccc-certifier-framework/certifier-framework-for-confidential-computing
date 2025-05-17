@@ -88,6 +88,13 @@ string g_identity_root;
 string g_signature_algorithm;
 X509  *g_x509_identity_root = nullptr;
 
+// These are for file encryption
+const int   g_max_key_gens = 10;
+bool        g_file_encryption_enabled;
+int         g_num_key_generations;
+key_message g_keys[g_max_key_gens];
+
+
 }  // namespace acl_lib
 }  // namespace certifier
 
@@ -1503,6 +1510,10 @@ int main(int an, char **av) {
   principal_list pl;
 
   const char *alg = Enc_method_rsa_2048_sha256_pkcs_sign;
+
+  g_file_encryption_enabled = false;
+  ;
+  g_num_key_generations = 0;
 
   if (FLAGS_operation == "make_additional_channel_keys") {
     if (!make_additional_channel_keys()) {

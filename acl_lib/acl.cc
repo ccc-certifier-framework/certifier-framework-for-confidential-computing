@@ -41,6 +41,9 @@ extern bool                g_identity_root_initialized;
 extern string              g_identity_root;
 extern string              g_signature_algorithm;
 extern X509               *g_x509_identity_root;
+extern bool                g_file_encryption_enabled;
+extern int                 g_num_key_generations;
+extern key_message        *g_keys;
 
 
 // -----------------------------------------------------------------------------
