@@ -93,9 +93,9 @@ void print_resource_message(const resource_message &rm) {
   for (int i = 0; i < rm.deleters_size(); i++) {
     printf("  %s\n", rm.deleters(i).c_str());
   }
-  printf("Creators\n");
-  for (int i = 0; i < rm.creators_size(); i++) {
-    printf("  %s\n", rm.creators(i).c_str());
+  printf("Owners\n");
+  for (int i = 0; i < rm.owners_size(); i++) {
+    printf("  %s\n", rm.owners(i).c_str());
   }
   printf("\n");
 }
@@ -601,9 +601,9 @@ int on_deleter_list(const resource_message &r, const string &name) {
   return -1;
 }
 
-int on_creator_list(const resource_message &r, const string &name) {
-  for (int i = 0; i < r.creators_size(); i++) {
-    if (r.creators(i) == name)
+int on_owner_list(const resource_message &r, const string &name) {
+  for (int i = 0; i < r.owners_size(); i++) {
+    if (r.owners(i) == name)
       return i;
   }
   return -1;
@@ -625,8 +625,7 @@ int on_resource_list(const string &name, resource_list &rl) {
   return -1;
 }
 
-bool add_reader_to_resource_proto_list(const string     &prin_name,
-                                       resource_message *r) {
+bool add_reader_to_resource(const string &prin_name, resource_message *r) {
   if (on_reader_list(*r, prin_name) >= 0)
     return false;
   string *ns = r->add_readers();
@@ -634,8 +633,7 @@ bool add_reader_to_resource_proto_list(const string     &prin_name,
   return true;
 }
 
-bool add_writer_to_resource_proto_list(const string     &name,
-                                       resource_message *r) {
+bool add_writer_to_resource(const string &name, resource_message *r) {
   if (on_writer_list(*r, name) >= 0)
     return false;
   string *ns = r->add_writers();
@@ -643,8 +641,7 @@ bool add_writer_to_resource_proto_list(const string     &name,
   return true;
 }
 
-bool add_deleter_to_resource_proto_list(const string     &name,
-                                        resource_message *r) {
+bool add_deleter_to_resource(const string &name, resource_message *r) {
   if (on_deleter_list(*r, name) >= 0)
     return false;
   string *ns = r->add_deleters();
@@ -652,11 +649,10 @@ bool add_deleter_to_resource_proto_list(const string     &name,
   return true;
 }
 
-bool add_creator_to_resource_proto_list(const string     &name,
-                                        resource_message *r) {
-  if (on_creator_list(*r, name) >= 0)
+bool add_owner_to_resource(const string &name, resource_message *r) {
+  if (on_owner_list(*r, name) >= 0)
     return false;
-  string *ns = r->add_creators();
+  string *ns = r->add_owners();
   *ns = name;
   return true;
 }
@@ -1005,7 +1001,7 @@ done:
 // -----------------------------------------------------------------------------
 
 // We have to be careful that resource names are unique and not
-// subject to spoofing by creators making up a resources with
+// subject to spoofing by owners making up a resources with
 // an existing name to avoid authentication.
 bool channel_guard::can_read(int resource_entry) {
   if (!channel_principal_authenticated_) {
@@ -1054,14 +1050,13 @@ bool channel_guard::can_delete(int resource_entry) {
   return false;
 }
 
-bool channel_guard::can_create(int resource_entry) {
+bool channel_guard::is_owner(int resource_entry) {
   if (!channel_principal_authenticated_) {
     return false;
   }
-  for (int j = 0;
-       j < g_resource_table.resources_[resource_entry].creators_size();
+  for (int j = 0; j < g_resource_table.resources_[resource_entry].owners_size();
        j++) {
-    if (g_resource_table.resources_[resource_entry].creators(j)
+    if (g_resource_table.resources_[resource_entry].owners(j)
         == principal_name_) {
       return true;
     }
@@ -1093,8 +1088,8 @@ bool channel_guard::access_check(int resource_entry, const string &action) {
       return true;
     }
   }
-  if (action == "create" || action == "add_read" || action == "add_write") {
-    if (can_create(resource_entry)) {
+  if (action == "add_owner" || action == "add_read" || action == "add_write") {
+    if (is_owner(resource_entry)) {
       return true;
     }
   }
@@ -1139,22 +1134,22 @@ bool channel_guard::add_access_rights(const string &resource_name,
   if (right == "read") {
     action = "add_read";
     if (access_check(nr, action)) {
-      string* new_reader = g_resource_table.resources_[nr].add_readers();
+      string *new_reader = g_resource_table.resources_[nr].add_readers();
       *new_reader = new_prin;
       return true;
     }
   } else if (right == "write") {
     action = "add_write";
     if (access_check(nr, action)) {
-      string* new_writer = g_resource_table.resources_[nr].add_writers();
+      string *new_writer = g_resource_table.resources_[nr].add_writers();
       *new_writer = new_prin;
       return true;
     }
-  } else if (right == "create") {
-    action = "add_create";
+  } else if (right == "own") {
+    action = "add_owner";
     if (access_check(nr, action)) {
-      string* new_creator = g_resource_table.resources_[nr].add_creators();
-      *new_creator = new_prin;
+      string *new_owner = g_resource_table.resources_[nr].add_owners();
+      *new_owner = new_prin;
       return true;
     }
   } else {
@@ -1163,7 +1158,7 @@ bool channel_guard::add_access_rights(const string &resource_name,
   return false;
 }
 
-bool channel_guard::create_resource(const resource_message &rm) {
+bool channel_guard::create_resource(resource_message &rm) {
 
   if (!channel_principal_authenticated_) {
     printf("%s() error, line: %d: Unauthenticated principals cannot create "
@@ -1175,6 +1170,12 @@ bool channel_guard::create_resource(const resource_message &rm) {
   int table_entry = find_resource(rm.resource_identifier());
   if (table_entry >= 0) {
     printf("%s() error, line: %d: Resource already exists\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!add_owner_to_resource(principal_name_, &rm)) {
+    printf("%s() error, line: %d: principal can't be added\n",
            __func__,
            __LINE__);
     return false;

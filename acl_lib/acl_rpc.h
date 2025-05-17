@@ -48,7 +48,7 @@ class acl_client_dispatch {
   bool rpc_add_access_right(const string &resource_name,
                             const string &delegated_principal,
                             const string &right);
-  bool rpc_create_resource(const resource_message &rm);
+  bool rpc_create_resource(resource_message &rm);
   bool rpc_delete_resource(const string &resource_name, const string &type);
   bool rpc_add_principal(const principal_message &pm);
   bool rpc_delete_principal(const string &name);

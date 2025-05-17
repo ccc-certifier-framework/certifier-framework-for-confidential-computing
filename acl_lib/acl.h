@@ -50,12 +50,6 @@ void print_principal_message(const principal_message &pm);
 void print_resource_list(const resource_list &rl);
 void print_principal_list(const principal_list &pl);
 
-bool add_reader_to_resource_proto_list(const string &name, resource_message *r);
-bool add_writer_to_resource_proto_list(const string &name, resource_message *r);
-bool add_deleter_to_resource_proto_list(const string     &name,
-                                        resource_message *r);
-bool add_creator_to_resource_proto_list(const string     &name,
-                                        resource_message *r);
 bool add_principal_to_proto_list(const string   &name,
                                  const string   &alg,
                                  const string   &cred,
@@ -79,15 +73,15 @@ int find_principal_in_principal_proto_list(const principal_list &pl,
 int on_reader_list(const resource_message &r, const string &name);
 int on_writer_list(const resource_message &r, const string &name);
 int on_deleter_list(const resource_message &r, const string &name);
-int on_creator_list(const resource_message &r, const string &name);
+int on_owner_list(const resource_message &r, const string &name);
 
 int on_principal_list(const string &name, principal_list &pl);
 int on_resource_list(const string &name, resource_list &rl);
 
-bool add_reader_to_resource(string &name, resource_message *r);
-bool add_writer_to_resource(string &name, resource_message *r);
-bool add_deleter_to_resource(string &name, resource_message *r);
-bool add_creator_to_resource(string &name, resource_message *r);
+bool add_reader_to_resource(const string &name, resource_message *r);
+bool add_writer_to_resource(const string &name, resource_message *r);
+bool add_deleter_to_resource(const string &name, resource_message *r);
+bool add_owner_to_resource(const string &name, resource_message *r);
 bool add_principal_to_proto_list(const string   &name,
                                  const string   &alg,
                                  const string   &cred,
@@ -213,7 +207,7 @@ class channel_guard {
   bool can_read(int resource_entry);
   bool can_write(int resource_entry);
   bool can_delete(int resource_entry);
-  bool can_create(int resource_entry);
+  bool is_owner(int resource_entry);
 
   bool access_check(int resource_entry, const string &action);
 
@@ -238,7 +232,7 @@ class channel_guard {
                       string       &in);
   bool close_resource(const string &resource_name, int local_descriptor);
   bool delete_resource(const string &resource_name, const string &type);
-  bool create_resource(const resource_message &rm);
+  bool create_resource(resource_message &rm);
   bool add_principal(const principal_message &pm);
   bool delete_principal(const string &name);
 };

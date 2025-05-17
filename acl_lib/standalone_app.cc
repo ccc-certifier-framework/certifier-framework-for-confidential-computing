@@ -129,21 +129,21 @@ bool construct_sample_resources(resource_list *rl) {
   if (!add_resource_to_proto_list(r2, ty, l2, t, t, rl)) {
     return false;
   }
-  if (!add_reader_to_resource_proto_list(p1, rl->mutable_resources(0)))
+  if (!add_reader_to_resource(p1, rl->mutable_resources(0)))
     return false;
-  if (!add_reader_to_resource_proto_list(p2, rl->mutable_resources(1)))
+  if (!add_reader_to_resource(p2, rl->mutable_resources(1)))
     return false;
-  if (!add_reader_to_resource_proto_list(p1, rl->mutable_resources(1)))
+  if (!add_reader_to_resource(p1, rl->mutable_resources(1)))
     return false;
-  if (!add_writer_to_resource_proto_list(p1, rl->mutable_resources(0)))
+  if (!add_writer_to_resource(p1, rl->mutable_resources(0)))
     return false;
-  if (!add_writer_to_resource_proto_list(p2, rl->mutable_resources(1)))
+  if (!add_writer_to_resource(p2, rl->mutable_resources(1)))
     return false;
-  if (!add_writer_to_resource_proto_list(p1, rl->mutable_resources(1)))
+  if (!add_writer_to_resource(p1, rl->mutable_resources(1)))
     return false;
-  if (!add_creator_to_resource_proto_list(p1, rl->mutable_resources(0)))
+  if (!add_owner_to_resource(p1, rl->mutable_resources(0)))
     return false;
-  if (!add_creator_to_resource_proto_list(p2, rl->mutable_resources(1)))
+  if (!add_owner_to_resource(p2, rl->mutable_resources(1)))
     return false;
   return true;
 }

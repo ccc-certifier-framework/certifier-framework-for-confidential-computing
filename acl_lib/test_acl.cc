@@ -86,21 +86,21 @@ bool construct_sample_resources(resource_list *rl) {
   if (!add_resource_to_proto_list(r2, ty, l2, t, t, rl)) {
     return false;
   }
-  if (!add_reader_to_resource_proto_list(p1, rl->mutable_resources(0)))
+  if (!add_reader_to_resource(p1, rl->mutable_resources(0)))
     return false;
-  if (!add_reader_to_resource_proto_list(p2, rl->mutable_resources(1)))
+  if (!add_reader_to_resource(p2, rl->mutable_resources(1)))
     return false;
-  if (!add_reader_to_resource_proto_list(p1, rl->mutable_resources(1)))
+  if (!add_reader_to_resource(p1, rl->mutable_resources(1)))
     return false;
-  if (!add_writer_to_resource_proto_list(p1, rl->mutable_resources(0)))
+  if (!add_writer_to_resource(p1, rl->mutable_resources(0)))
     return false;
-  if (!add_writer_to_resource_proto_list(p2, rl->mutable_resources(1)))
+  if (!add_writer_to_resource(p2, rl->mutable_resources(1)))
     return false;
-  if (!add_writer_to_resource_proto_list(p1, rl->mutable_resources(1)))
+  if (!add_writer_to_resource(p1, rl->mutable_resources(1)))
     return false;
-  if (!add_creator_to_resource_proto_list(p1, rl->mutable_resources(0)))
+  if (!add_owner_to_resource(p1, rl->mutable_resources(0)))
     return false;
-  if (!add_creator_to_resource_proto_list(p2, rl->mutable_resources(1)))
+  if (!add_owner_to_resource(p2, rl->mutable_resources(1)))
     return false;
   return true;
 }
@@ -773,7 +773,7 @@ bool test_access() {
   string               res2("file_2");
   string               acc2("write");
   string              *b;
-  string               prin_name("john");
+  string               prin1_name("john");
   int                  i = 0;
   string               dig_alg;
   string               auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
@@ -829,7 +829,7 @@ bool test_access() {
 
   // put it on principal list
   for (i = 0; i < g_pl.principals_size(); i++) {
-    if (g_pl.principals(i).principal_name() == prin_name) {
+    if (g_pl.principals(i).principal_name() == prin1_name) {
       g_pl.mutable_principals(i)->set_credential(serialized_cert_chain_str);
       g_pl.mutable_principals(i)->set_authentication_algorithm(auth_alg);
       break;
@@ -2049,7 +2049,8 @@ bool test_rpc() {
   SSL                *ch = nullptr;
   acl_client_dispatch client(ch);
 
-  string prin_name("john");
+  string prin1_name("john");
+  string prin2_name("paul");
   string res1_name("file_1");
   string res2_name("file_2");
   string res3_name("file_3");
@@ -2077,7 +2078,7 @@ bool test_rpc() {
   string            auth_alg(Enc_method_rsa_2048_sha256_pkcs_sign);
   string            serialized_creds;
   string            new_prin("tho");
-  string            new_creator("john");
+  string            new_owner("john");
   int               np;
   principal_message pm;
   time_point        tp;
@@ -2156,7 +2157,7 @@ bool test_rpc() {
 
   // put it on principal list
   for (i = 0; i < g_pl.principals_size(); i++) {
-    if (g_pl.principals(i).principal_name() == prin_name) {
+    if (g_pl.principals(i).principal_name() == prin1_name) {
       g_pl.mutable_principals(i)->set_credential(serialized_creds);
       g_pl.mutable_principals(i)->set_authentication_algorithm(auth_alg);
       break;
@@ -2176,7 +2177,7 @@ bool test_rpc() {
     printf("\n");
   }
 
-  ret = client.rpc_authenticate_me(prin_name, serialized_creds, &nonce);
+  ret = client.rpc_authenticate_me(prin1_name, serialized_creds, &nonce);
   if (!ret) {
     printf("%s() error, line %d: client.rpc_authenticate_me failed\n",
            __func__,
@@ -2226,7 +2227,7 @@ bool test_rpc() {
   }
   signed_nonce.assign((char *)sig, size_sig);
 
-  ret = client.rpc_verify_me(prin_name, signed_nonce);
+  ret = client.rpc_verify_me(prin1_name, signed_nonce);
   if (!ret) {
     printf("%s() error, line %d: rpc_verify_me failed\n", __func__, __LINE__);
     ret = false;
@@ -2273,6 +2274,11 @@ bool test_rpc() {
       g_resource_table.resources_[1].resource_key());
   rm.mutable_readers()->CopyFrom(g_resource_table.resources_[0].readers());
   rm.mutable_writers()->CopyFrom(g_resource_table.resources_[0].readers());
+  if (!add_owner_to_resource(prin2_name, &rm)) {
+    printf("%s() error, line %d: can't add add owner\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
   int t_k;
 
   if (!g_resource_table.add_resource_to_table(rm)) {

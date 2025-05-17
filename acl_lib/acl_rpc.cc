@@ -593,7 +593,7 @@ bool acl_client_dispatch::rpc_delete_resource(const string &resource_name,
   return true;
 }
 
-bool acl_client_dispatch::rpc_create_resource(const resource_message &rm) {
+bool acl_client_dispatch::rpc_create_resource(resource_message &rm) {
   string   decode_parameters_str;
   string   encode_parameters_str;
   rpc_call input_call_struct;
@@ -1001,7 +1001,7 @@ bool acl_server_dispatch::service_request() {
     return true;
   } else if (input_call_struct.function_name() == add_access_right_tag) {
 
-    //resource_name, right, new_prin
+    // resource_name, right, new_prin
     if (input_call_struct.str_inputs_size() < 3) {
       printf("%s() error, line %d: Too few string inputs\n",
              __func__,
@@ -1009,8 +1009,8 @@ bool acl_server_dispatch::service_request() {
       return true;
     }
     if (guard_.add_access_rights(input_call_struct.str_inputs(0),
-                               input_call_struct.str_inputs(1),
-                               input_call_struct.str_inputs(2))) {
+                                 input_call_struct.str_inputs(1),
+                                 input_call_struct.str_inputs(2))) {
       output_call_struct.set_status(true);
     } else {
       output_call_struct.set_status(false);

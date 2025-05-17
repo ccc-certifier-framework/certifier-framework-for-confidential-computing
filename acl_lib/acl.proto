@@ -74,7 +74,7 @@ message resource_message {
   repeated string readers                             = 9;
   repeated string writers                             =10;
   repeated string deleters                            =11;
-  repeated string creators                            =12;
+  repeated string owners			      =12;
 };
 
 message resource_list {
