@@ -222,9 +222,9 @@ class channel_guard {
                           const string   &alg,
                           const string   &cred,
                           principal_list *pl);
-  bool add_access_rights(string &resource_name,
-                         string &right,
-                         string &new_prin);
+  bool add_access_rights(const string &resource_name,
+                         const string &right,
+                         const string &new_prin);
   bool open_resource(const string &resource_name,
                      const string &access_mode,
                      int          *local_descriptor);

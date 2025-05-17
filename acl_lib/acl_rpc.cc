@@ -476,11 +476,65 @@ bool acl_client_dispatch::rpc_add_access_right(
     const string &resource_name,
     const string &delegated_principal,
     const string &right) {
-  printf("%s() error, line %d: rpc_add_access_right not implemented\n",
-         __func__,
-         __LINE__);
-  return false;
+
+  string   decode_parameters_str;
+  string   encode_parameters_str;
+  rpc_call input_call_struct;
+  rpc_call output_call_struct;
+  int      bytes_read = 0;
+
+  // format input buffer, serialize it
+  // resource name, right, new_principal
+  input_call_struct.set_function_name(add_access_right_tag);
+  string *in = input_call_struct.add_str_inputs();
+  *in = resource_name;
+  string *r = input_call_struct.add_str_inputs();
+  *r = right;
+  string *new_prin = input_call_struct.add_str_inputs();
+  *new_prin = delegated_principal;
+
+  if (!input_call_struct.SerializeToString(&encode_parameters_str)) {
+    printf("%s() error, line %d: Can't input\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (channel_write(channel_descriptor_,
+                    encode_parameters_str.size(),
+                    (byte *)encode_parameters_str.data())
+      < 0) {
+    printf("%s() error, line %d: Can't write to channel\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef TEST_SIMULATED_CHANNEL
+  g_server.service_request();
+#endif
+  bytes_read = channel_read(channel_descriptor_, &decode_parameters_str);
+  if (bytes_read < 0) {
+    printf("%s() error, line %d: Can't read from channel\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!output_call_struct.ParseFromString(decode_parameters_str)) {
+    printf("%s() error, line %d: Can't parse return buffer\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (output_call_struct.function_name() != add_access_right_tag) {
+    printf("%s() error, line %d: wrong function name tag\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  bool ret = output_call_struct.status();
+  if (!ret) {
+    return false;
+  }
+  return true;
 }
+
 
 bool acl_client_dispatch::rpc_delete_resource(const string &resource_name,
                                               const string &type) {
@@ -946,8 +1000,39 @@ bool acl_server_dispatch::service_request() {
 
     return true;
   } else if (input_call_struct.function_name() == add_access_right_tag) {
-    printf("%s() error, line %d: not implemented yet\n", __func__, __LINE__);
-    return false;
+
+    //resource_name, right, new_prin
+    if (input_call_struct.str_inputs_size() < 3) {
+      printf("%s() error, line %d: Too few string inputs\n",
+             __func__,
+             __LINE__);
+      return true;
+    }
+    if (guard_.add_access_rights(input_call_struct.str_inputs(0),
+                               input_call_struct.str_inputs(1),
+                               input_call_struct.str_inputs(2))) {
+      output_call_struct.set_status(true);
+    } else {
+      output_call_struct.set_status(false);
+    }
+    output_call_struct.set_function_name(add_access_right_tag);
+    if (!output_call_struct.SerializeToString(&encode_parameters_str)) {
+      printf("%s() error, line %d: can't encode parameters\n",
+             __func__,
+             __LINE__);
+      return true;  // and the caller never knows
+    }
+
+    if (channel_write(channel_descriptor_,
+                      encode_parameters_str.size(),
+                      (byte *)encode_parameters_str.data())
+        < 0) {
+      printf("%s() error, line %d: Can't write to channel\n",
+             __func__,
+             __LINE__);
+      return true;
+    }
+    return true;
   } else if (input_call_struct.function_name() == delete_resource_tag) {
     if (input_call_struct.str_inputs_size() < 2) {
       printf("%s() error, line %d: Too few string inputs\n",

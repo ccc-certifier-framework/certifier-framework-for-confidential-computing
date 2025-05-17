@@ -2056,6 +2056,8 @@ bool test_rpc() {
   string acc1("read");
   string acc2("write");
   string file_type("file");
+  string rr("read");
+  string dn("david");
 
   string nonce;
   string signed_nonce;
@@ -2564,6 +2566,22 @@ bool test_rpc() {
   }
   if (FLAGS_print_all) {
     printf("Resource properly deleted\n");
+  }
+
+  // test add_access_rights
+  // add david to access_rights for resource 1
+  ret = client.rpc_add_access_right(res1_name, dn, rr);
+  if (!ret) {
+    printf("rpc_add_access_right failed\n");
+    return false;
+  }
+  if (FLAGS_print_all) {
+    printf("rpc_add_access_right succeeded\n");
+    for (int i = 0; i < g_resource_table.num_; i++) {
+      printf("\nEntry %d\n:", i);
+      g_resource_table.print_entry(i);
+      printf("\n");
+    }
   }
 
 done:

@@ -1075,7 +1075,7 @@ int channel_guard::find_resource(const string &name) {
 
 bool channel_guard::access_check(int resource_entry, const string &action) {
   if (!channel_principal_authenticated_) {
-    printf("access_check: nauthenticated\n");
+    printf("access_check: authenticated\n");
     return false;
   }
   if (action == "read") {
@@ -1093,7 +1093,7 @@ bool channel_guard::access_check(int resource_entry, const string &action) {
       return true;
     }
   }
-  if (action == "create") {
+  if (action == "create" || action == "add_read" || action == "add_write") {
     if (can_create(resource_entry)) {
       return true;
     }
@@ -1112,16 +1112,54 @@ bool channel_guard::accept_credentials(const string   &principal_name,
   return add_principal_to_proto_list(principal_name, alg, cred, pl);
 }
 
-bool channel_guard::add_access_rights(string &resource_name,
-                                      string &right,
-                                      string &new_prin) {
+bool channel_guard::add_access_rights(const string &resource_name,
+                                      const string &right,
+                                      const string &new_prin) {
   // can current channel principal add access rights to this resource?
   int n = find_resource(resource_name);
   if (n < 0) {
     printf("%s() error, line: %d: No such resource\n", __func__, __LINE__);
     return false;
   }
-  // already there?
+  int np = g_principal_table.find_principal_in_table(new_prin);
+  if (np < 0) {
+    printf("%s() error, line: %d: the delegated principal does not exist\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  int nr = g_resource_table.find_resource_in_table(resource_name);
+  if (nr < 0) {
+    printf("%s() error, line: %d: the resource does not exist\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  string action;
+  if (right == "read") {
+    action = "add_read";
+    if (access_check(nr, action)) {
+      string* new_reader = g_resource_table.resources_[nr].add_readers();
+      *new_reader = new_prin;
+      return true;
+    }
+  } else if (right == "write") {
+    action = "add_write";
+    if (access_check(nr, action)) {
+      string* new_writer = g_resource_table.resources_[nr].add_writers();
+      *new_writer = new_prin;
+      return true;
+    }
+  } else if (right == "create") {
+    action = "add_create";
+    if (access_check(nr, action)) {
+      string* new_creator = g_resource_table.resources_[nr].add_creators();
+      *new_creator = new_prin;
+      return true;
+    }
+  } else {
+    return false;
+  }
   return false;
 }
 
