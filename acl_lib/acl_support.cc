@@ -108,7 +108,7 @@ bool encode_time(time_point &tp, string *the_time) {
   if (m < 0 || m > 11)
     return false;
   char time_str[256];
-  *time_str = '\0';
+  memset(time_str, 0, 256);
   snprintf(time_str,
            255,
            "%d %s %d, %02d:%02d:%lfZ",
@@ -119,7 +119,7 @@ bool encode_time(time_point &tp, string *the_time) {
            tp.minute(),
            tp.seconds());
   m = strlen(time_str);
-  *the_time = time_str;
+  the_time->assign(time_str);
   return true;
 }
 
