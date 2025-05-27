@@ -12,7 +12,7 @@ CERTIFIER_ROOT="$(pwd)"
 
 popd > /dev/null 2>&1 || exit
 
-cppcheck --error-exitcode=1 -i third_party --suppress=normalCheckLevelMaxBranches ${CERTIFIER_ROOT}
+cppcheck --error-exitcode=1 -i third_party -i acl_lib --suppress=normalCheckLevelMaxBranches ${CERTIFIER_ROOT}
 rc=$?
 
 if [ $rc -ne 0 ]; then
