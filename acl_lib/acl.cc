@@ -17,8 +17,34 @@
 #include "sys/fcntl.h"
 #include "sys/stat.h"
 
+#include "certifier.pb.h"
+#include "support.h"
+#include "certifier.h"
+#include "support.h"
+#include "acl.pb.h"
 #include "acl_support.h"
 #include "acl.h"
+
+using namespace certifier::framework;
+using namespace certifier::utilities;
+
+
+namespace certifier {
+namespace acl_lib {
+
+
+extern resource_list       g_rl;
+extern principal_list      g_pl;
+extern acl_principal_table g_principal_table;
+extern acl_resource_table  g_resource_table;
+extern bool                g_identity_root_initialized;
+extern string              g_identity_root;
+extern string              g_signature_algorithm;
+extern X509               *g_x509_identity_root;
+extern bool                g_file_encryption_enabled;
+extern int                 g_num_key_generations;
+extern key_message        *g_keys;
+
 
 // -----------------------------------------------------------------------------
 
@@ -45,12 +71,15 @@ void print_resource_message(const resource_message &rm) {
     printf("Resource type: %s\n", rm.resource_type().c_str());
   if (rm.has_resource_location())
     printf("Resource location: %s\n", rm.resource_location().c_str());
-  if (rm.has_time_created())
+  time_point tp;
+  if (rm.has_time_created()) {
     printf("Created: %s\n", rm.time_created().c_str());
-  if (rm.has_time_last_written())
+  }
+  if (rm.has_time_last_written()) {
     printf("Written: %s\n", rm.time_last_written().c_str());
+  }
   if (rm.has_resource_key()) {
-    print_key_message(rm.resource_key());
+    print_key(rm.resource_key());
   }
   if (rm.has_log()) {
     print_audit_info(rm.log());
@@ -67,9 +96,9 @@ void print_resource_message(const resource_message &rm) {
   for (int i = 0; i < rm.deleters_size(); i++) {
     printf("  %s\n", rm.deleters(i).c_str());
   }
-  printf("Creators\n");
-  for (int i = 0; i < rm.creators_size(); i++) {
-    printf("  %s\n", rm.creators(i).c_str());
+  printf("Owners\n");
+  for (int i = 0; i < rm.owners_size(); i++) {
+    printf("  %s\n", rm.owners(i).c_str());
   }
   printf("\n");
 }
@@ -115,11 +144,16 @@ bool get_principals_from_file(string &file_name, principal_list *pl) {
 bool save_resources_to_file(resource_list &rl, string &file_name) {
   string serialized_rl;
   if (!rl.SerializeToString(&serialized_rl)) {
-    printf("Cant serialize resource list\n");
+    printf("%s() error, line: %d, Cant serialize resource list\n",
+           __func__,
+           __LINE__);
     return false;
   }
   if (!write_file_from_string(file_name, serialized_rl)) {
-    printf("Cant read resource file %s\n", file_name.c_str());
+    printf("%s() error, line: %d, Cant read resource file %s\n",
+           __func__,
+           __LINE__,
+           file_name.c_str());
     return false;
   }
   return true;
@@ -128,15 +162,422 @@ bool save_resources_to_file(resource_list &rl, string &file_name) {
 bool save_principals_to_file(principal_list &pl, string &file_name) {
   string serialized_pl;
   if (!pl.SerializeToString(&serialized_pl)) {
-    printf("Cant serialize principals list\n");
+    printf("%s() error, line: %d, Cant serialize principals list\n",
+           __func__,
+           __LINE__);
     return false;
   }
   // write file
   if (!write_file_from_string(file_name, serialized_pl)) {
-    printf("Cant write principals file %s\n", file_name.c_str());
+    printf("%s() error, line: %d, Cant write principals file %s\n",
+           __func__,
+           __LINE__,
+           file_name.c_str());
     return false;
   }
   return true;
+}
+
+// -----------------------------------------------------------------------------
+
+
+// This is the table that records the global descriptor
+// a client's local descriptor refers to.  These routines
+// do not have to be thread safe since channel guard is
+// single threaded.
+acl_local_descriptor_table::acl_local_descriptor_table() {
+  capacity_ = max_local_descriptors;
+  num_ = 0;
+}
+
+acl_local_descriptor_table::~acl_local_descriptor_table() {}
+
+int acl_local_descriptor_table::find_available_descriptor() {
+  for (int i = 0; i < num_; i++) {
+    if (descriptor_entry_[i].status_ != VALID) {
+      return i;
+    }
+  }
+  if (num_ >= capacity_)
+    return -1;
+  return num_++;
+}
+
+bool acl_local_descriptor_table::free_descriptor(int i, const string &name) {
+  if (i >= num_)
+    return false;
+  if (descriptor_entry_[i].resource_name_ != name)
+    return false;
+  descriptor_entry_[i].status_ = INVALID;
+  return true;
+}
+
+acl_principal_table::acl_principal_table() {
+  principal_table_mutex_.lock();
+  capacity_ = max_principal_table_capacity;
+  num_ = 0;
+  for (int i = 0; i < max_principal_table_capacity; i++) {
+    principal_status_[i] = INVALID;
+  }
+  num_managers_ = 0;
+  principal_table_mutex_.unlock();
+}
+
+acl_principal_table::~acl_principal_table() {}
+
+void acl_principal_table::print_manager(int i) {
+  if (i >= num_managers_)
+    return;
+  printf("%s", managers_[i].c_str());
+}
+
+void acl_principal_table::print_entry(int i) {
+  printf("principal entry %d\n", i);
+  if (principal_status_[i] != VALID) {
+    printf("invalid\n");
+    return;
+  }
+  print_principal_message(principals_[i]);
+}
+
+bool acl_principal_table::add_principal_to_table(const string &name,
+                                                 const string &alg,
+                                                 const string &cred) {
+  bool ret = true;
+  principal_table_mutex_.lock();
+
+  int n = find_principal_in_table(name);
+  if (n >= 0) {
+    printf("%s() error, line: %d: principal already exists\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  for (int i = 0; i < num_; i++) {
+    if (principal_status_[i] != VALID) {
+      principals_[i].set_principal_name(name);
+      principals_[i].set_authentication_algorithm(alg);
+      principals_[i].set_credential(cred);
+      principal_status_[i] = VALID;
+      goto done;
+    }
+  }
+  if (num_ >= capacity_) {
+    printf("%s() error, line: %d: principal table is full\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  principals_[num_].set_principal_name(name);
+  principals_[num_].set_authentication_algorithm(alg);
+  principals_[num_].set_credential(cred);
+  principal_status_[num_] = VALID;
+  num_++;
+
+done:
+  principal_table_mutex_.unlock();
+  return ret;
+}
+
+bool acl_principal_table::delete_principal_from_table(const string &name) {
+  bool ret = true;
+  principal_table_mutex_.lock();
+
+  int n = find_principal_in_table(name);
+  if (n < 0) {
+    printf("%s() error, line: %d: No such principal\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+  principal_status_[n] = INVALID;
+
+done:
+  principal_table_mutex_.unlock();
+  return ret;
+}
+
+int acl_principal_table::find_principal_in_table(const string &name) {
+  // assume table is already locked
+  for (int i = 0; i < num_; i++) {
+    if (principal_status_[i] == INVALID)
+      continue;
+    if (name == principals_[i].principal_name()) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+bool acl_principal_table::load_principal_table_from_list(
+    const principal_list &pl) {
+
+  principal_table_mutex_.lock();
+  num_ = 0;
+  for (int i = 0; i < pl.principals_size() && i < capacity_; i++) {
+    principal_status_[num_] = VALID;
+    principals_[num_].set_principal_name(pl.principals(i).principal_name());
+    principals_[num_].set_credential(pl.principals(i).credential());
+    num_++;
+  }
+  num_managers_ = 0;
+  for (int j = 0; j < pl.table_managers_size() && j < capacity_; j++) {
+    managers_[num_managers_++] = pl.table_managers(j);
+  }
+  principal_table_mutex_.unlock();
+  return true;
+}
+
+// int principal_status_[max_resource_table_capacity];
+bool acl_principal_table::save_principal_table_to_list(principal_list *pl) {
+  principal_table_mutex_.lock();
+  for (int i = 0; i < num_; i++) {
+    if (principal_status_[i] != VALID)
+      continue;
+    principal_message *pm = pl->add_principals();
+    pm->CopyFrom(principals_[i]);
+  }
+  // Todo: add managers
+  principal_table_mutex_.unlock();
+  return true;
+}
+
+bool acl_principal_table::load_principal_table_from_file(
+    const string &filename) {
+  string         serialized_pl;
+  principal_list pl;
+  bool           ret = true;
+
+  if (!read_file_into_string(filename, &serialized_pl)) {
+    printf("%s() error, line: %d: Cant read file\n", __func__, __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  if (!pl.ParseFromString(serialized_pl)) {
+    printf("%s() error, line: %d: Cant parse principal list\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  ret = load_principal_table_from_list(pl);
+
+done:
+  return ret;
+}
+
+bool acl_principal_table::save_principal_table_to_file(const string &filename) {
+  string         serialized_pl;
+  principal_list pl;
+
+  if (!save_principal_table_to_list(&pl)) {
+    printf("%s() error, line: %d: can't save principals to principal list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!pl.SerializeToString(&serialized_pl)) {
+    printf("%s() error, line: %d: can't serialize principal list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  return write_file_from_string(filename, serialized_pl);
+}
+
+acl_resource_table::acl_resource_table() {
+  capacity_ = max_resource_table_capacity;
+  num_ = 0;
+}
+
+acl_resource_table::~acl_resource_table() {}
+
+void acl_resource_table::print_entry(int i) {
+  printf("resource entry %d\n", i);
+  if (resource_status_[i] != VALID) {
+    printf("invalid\n");
+    return;
+  }
+  print_resource_message(resources_[i]);
+}
+
+bool acl_resource_table::add_resource_to_table(const resource_message &rm) {
+  int n = find_resource_in_table(rm.resource_identifier());
+  if (n >= 0) {
+    printf("%s() error, line: %d: resource already exists\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  for (int i = 0; i < num_; i++) {
+    if (resource_status_[i] != VALID) {
+      resources_[i].CopyFrom(rm);
+      resource_status_[i] = VALID;
+      return true;
+    }
+  }
+  if (num_ >= capacity_) {
+    printf("%s() error, line: %d: resource table is full\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  resources_[num_].CopyFrom(rm);
+  resource_status_[num_] = VALID;
+  num_++;
+  return true;
+}
+
+bool acl_resource_table::add_resource_to_table(const string &name,
+                                               const string &type,
+                                               const string &location) {
+  bool ret = true;
+  resource_table_mutex_.lock();
+
+  int n = find_resource_in_table(name);
+  if (n >= 0) {
+    printf("%s() error, line: %d: resource already exists\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  for (int i = 0; i < num_; i++) {
+    if (resource_status_[i] != VALID) {
+      resources_[i].set_resource_identifier(name);
+      resources_[i].set_resource_type(type);
+      resources_[i].set_resource_location(location);
+      resource_status_[i] = VALID;
+      goto done;
+    }
+  }
+  if (num_ >= capacity_) {
+    printf("%s() error, line: %d: principal table is full\n",
+           __func__,
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+  resources_[num_].set_resource_identifier(name);
+  resources_[num_].set_resource_type(type);
+  resources_[num_].set_resource_location(location);
+  resource_status_[num_] = VALID;
+  num_++;
+
+done:
+  resource_table_mutex_.unlock();
+  return ret;
+}
+
+bool acl_resource_table::delete_resource_from_table(const string &name,
+                                                    const string &type) {
+  bool ret = true;
+  resource_table_mutex_.lock();
+
+  int n = find_resource_in_table(name);
+  if (n < 0) {
+    goto done;
+  }
+  resource_status_[n] = INVALID;
+
+done:
+  resource_table_mutex_.unlock();
+  return ret;
+}
+
+int acl_resource_table::find_resource_in_table(const string &name) {
+  for (int i = 0; i < num_; i++) {
+    if (resource_status_[i] == INVALID)
+      continue;
+    if (name == resources_[i].resource_identifier())
+      return i;
+  }
+  return -1;
+}
+
+bool acl_resource_table::load_resource_table_from_list(
+    const resource_list &rl) {
+
+  resource_table_mutex_.lock();
+
+  num_ = 0;
+  for (int i = 0; i < rl.resources_size() && i < capacity_; i++) {
+    resources_[num_].CopyFrom(rl.resources(i));
+    resource_status_[num_] = VALID;
+    num_++;
+  }
+  resource_table_mutex_.unlock();
+  return true;
+}
+
+bool acl_resource_table::save_resource_table_to_list(resource_list *rl) {
+  resource_table_mutex_.lock();
+
+  for (int i = 0; i < num_; i++) {
+    if (resource_status_[i] != VALID)
+      continue;
+    resource_message *rm = rl->add_resources();
+    rm->CopyFrom(resources_[i]);
+  }
+
+  resource_table_mutex_.unlock();
+  return true;
+}
+
+bool acl_resource_table::load_resource_table_from_file(const string &filename) {
+  string        serialized_rl;
+  resource_list rl;
+
+  if (!read_file_into_string(filename, &serialized_rl)) {
+    printf("%s() error, line: %d: Cant read file\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!rl.ParseFromString(serialized_rl)) {
+    printf("%s() error, line: %d: Cant parse resource list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  return load_resource_table_from_list(rl);
+}
+
+bool acl_resource_table::save_resource_table_to_file(const string &filename) {
+  string        serialized_rl;
+  resource_list rl;
+
+  if (!save_resource_table_to_list(&rl)) {
+    printf("%s() error, line: %d: can't save resources to resource list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!rl.SerializeToString(&serialized_rl)) {
+    printf("%s() error, line: %d: can't serialize resource list\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  return write_file_from_string(filename, serialized_rl);
+}
+
+acl_resource_data_element::acl_resource_data_element() {
+  status_ = INVALID;
+}
+
+// -----------------------------------------------------------------------------
+
+acl_resource_data_element::~acl_resource_data_element() {
+  status_ = INVALID;
 }
 
 int on_reader_list(const resource_message &r, const string &name) {
@@ -163,9 +604,9 @@ int on_deleter_list(const resource_message &r, const string &name) {
   return -1;
 }
 
-int on_creator_list(const resource_message &r, const string &name) {
-  for (int i = 0; i < r.creators_size(); i++) {
-    if (r.creators(i) == name)
+int on_owner_list(const resource_message &r, const string &name) {
+  for (int i = 0; i < r.owners_size(); i++) {
+    if (r.owners(i) == name)
       return i;
   }
   return -1;
@@ -187,8 +628,7 @@ int on_resource_list(const string &name, resource_list &rl) {
   return -1;
 }
 
-bool add_reader_to_resource_proto_list(const string     &prin_name,
-                                       resource_message *r) {
+bool add_reader_to_resource(const string &prin_name, resource_message *r) {
   if (on_reader_list(*r, prin_name) >= 0)
     return false;
   string *ns = r->add_readers();
@@ -196,8 +636,7 @@ bool add_reader_to_resource_proto_list(const string     &prin_name,
   return true;
 }
 
-bool add_writer_to_resource_proto_list(const string     &name,
-                                       resource_message *r) {
+bool add_writer_to_resource(const string &name, resource_message *r) {
   if (on_writer_list(*r, name) >= 0)
     return false;
   string *ns = r->add_writers();
@@ -205,8 +644,7 @@ bool add_writer_to_resource_proto_list(const string     &name,
   return true;
 }
 
-bool add_deleter_to_resource_proto_list(const string     &name,
-                                        resource_message *r) {
+bool add_deleter_to_resource(const string &name, resource_message *r) {
   if (on_deleter_list(*r, name) >= 0)
     return false;
   string *ns = r->add_deleters();
@@ -214,11 +652,10 @@ bool add_deleter_to_resource_proto_list(const string     &name,
   return true;
 }
 
-bool add_creator_to_resource_proto_list(const string     &name,
-                                        resource_message *r) {
-  if (on_creator_list(*r, name) >= 0)
+bool add_owner_to_resource(const string &name, resource_message *r) {
+  if (on_owner_list(*r, name) >= 0)
     return false;
-  string *ns = r->add_creators();
+  string *ns = r->add_owners();
   *ns = name;
   return true;
 }
@@ -249,18 +686,17 @@ bool add_resource_to_proto_list(const string  &id,
   return true;
 }
 
+// -----------------------------------------------------------------------------
+
 bool sign_nonce(string &nonce, key_message &k, string *signature) {
   return false;
 }
 
+
 channel_guard::channel_guard() {
   channel_principal_authenticated_ = false;
-  capacity_resources_ = 0;
-  num_resources_ = 0;
-  resources_ = nullptr;
-  num_active_resources_ = 0;
-  capacity_active_resources_ = max_active_resources;
   root_cert_ = nullptr;
+  initialized_ = false;
 }
 
 channel_guard::~channel_guard() {}
@@ -269,17 +705,17 @@ void channel_guard::print() {
   printf("Principal name: %s\n", principal_name_.c_str());
   printf("Authentication algorithm: %s\n",
          authentication_algorithm_name_.c_str());
+
   // byte* creds_;
   if (channel_principal_authenticated_) {
     printf("Principal authenticated\n");
   } else {
     printf("Principal not authenticated\n");
   }
-  printf("Number of resources: %d\n", num_resources_);
-  if (resources_ == nullptr)
-    return;
-  for (int i = 0; i < num_resources_; i++) {
-    print_resource_message(resources_[i]);
+  printf("Number of resources: %d\n", g_resource_table.num_);
+  for (int i = 0; i < g_resource_table.num_; i++) {
+    g_resource_table.print_entry(i);
+    printf("\n");
   }
 }
 
@@ -296,26 +732,126 @@ bool channel_guard::init_root_cert(const string &asn1_cert_str) {
   return true;
 }
 
-bool channel_guard::authenticate_me(const string   &name,
-                                    principal_list &pl,
-                                    string         *nonce) {
-  int i = 0;
-  for (i = 0; i < pl.principals_size(); i++) {
-    if (name == pl.principals(i).principal_name()) {
-      principal_name_ = pl.principals(i).principal_name();
-      authentication_algorithm_name_ =
-          pl.principals(i).authentication_algorithm();
-      creds_.assign(pl.principals(i).credential());
-      break;
-    }
+bool verify_name_in_credential(const string      &name,
+                               const buffer_list &credentials) {
+  int        max_buf = 512;
+  char       name_buf[max_buf];
+  string     subject_name_str;
+  X509_NAME *subject_name_1 = nullptr;
+  X509_NAME *subject_name_2 = nullptr;
+  int        n;
+
+  X509 *cert = X509_new();
+  if (cert == nullptr)
+    return false;
+
+  bool ret = true;
+
+  n = credentials.blobs_size();
+  if (n < 2) {
+    printf("%s() error, line %d: too few credentials\n", __func__, __LINE__);
+    ret = false;
+    goto done;
   }
-  if (i >= pl.principals_size()) {
-    printf("%s() error, line %d: Can't find principal %s\n",
+  if (!asn1_to_x509(credentials.blobs(n - 1), cert)) {
+    X509_free(cert);
+    printf("%s() error, line %d: can't asn1 translate user credential\n",
            __func__,
-           __LINE__,
-           name.c_str());
+           __LINE__);
+    ret = false;
+    goto done;
+  }
+
+  subject_name_1 = X509_get_subject_name(cert);
+  if (subject_name_1 == nullptr) {
+    ret = false;
+    goto done;
+  }
+  if (X509_NAME_get_text_by_NID(subject_name_1,
+                                NID_commonName,
+                                name_buf,
+                                max_buf)
+      < 0) {
+    ret = false;
+    goto done;
+  }
+
+  subject_name_str.assign(name_buf);
+  if (name != subject_name_str)
+    ret = false;
+
+done:
+  if (cert != nullptr)
+    X509_free(cert);
+  return ret;
+}
+
+bool channel_guard::authenticate_me(const string &name,
+                                    const string &creds,
+                                    string       *nonce) {
+
+  buffer_list credentials;
+
+  if (!credentials.ParseFromString(creds)) {
+    printf("%s() error, line %d: can't parse credentials.\n",
+           __func__,
+           __LINE__);
     return false;
   }
+
+  if (!initialized_) {
+    // Check that name is the common name in the credential
+    if (!verify_name_in_credential(name, credentials)) {
+      printf("%s() error, line %d: name doesn't match name in cert.\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+
+    // This isn't quite right right
+    if (g_identity_root_initialized) {
+      if (!init_root_cert(g_identity_root)) {
+        printf("%s() error, line %d: can't initialize root cert.\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+      authentication_algorithm_name_ = g_signature_algorithm;
+    }
+
+    if (!verify_cert_chain(root_cert_, credentials)) {
+      printf("%s() error, line %d: can't verify cert chain.\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+
+    // This puts the credentials on the guard.
+    int i = 0;
+    for (i = 0; i < g_pl.principals_size(); i++) {
+      if (name == g_pl.principals(i).principal_name()) {
+        principal_name_ = g_pl.principals(i).principal_name();
+        authentication_algorithm_name_ =
+            g_pl.principals(i).authentication_algorithm();
+        creds_.assign(g_pl.principals(i).credential());
+        break;
+      }
+    }
+    if (i >= g_pl.principals_size()) {
+      printf("%s() error, line %d: Can't find principal %s\n",
+             __func__,
+             __LINE__,
+             name.c_str());
+      return false;
+    }
+    initialized_ = true;
+  } else {
+    printf("%s() error, line %d: identiity root not initialized\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
   const int size_nonce = 32;
   byte      buf[32];
   int       k = crypto_get_random_bytes(size_nonce, buf);
@@ -426,7 +962,6 @@ bool channel_guard::verify_me(const string &name, const string &signed_nonce) {
                     Enc_method_rsa_3072_sha384_pkcs_sign)
              == 0) {
     RSA *rsa_key = EVP_PKEY_get1_RSA(subject_pkey);
-    ;
     if (rsa_key == nullptr) {
       printf("%s() error, line %d: EVP_PKEY_get1_RSA failed\n",
              __func__,
@@ -466,39 +1001,21 @@ done:
   return ret;
 }
 
-bool channel_guard::load_resources(resource_list &rl) {
-  num_resources_ = rl.resources_size();
-  capacity_resources_ = 2 * (num_resources_ + 10);
-  resources_ = new resource_message[capacity_resources_];
-  if (resources_ == nullptr) {
-    num_resources_ = 0;
-    resources_ = nullptr;
-  }
-  for (int i = 0; i < num_resources_; i++) {
-    resources_[i].CopyFrom(rl.resources(i));
-  }
-  return true;
-}
-
-active_resource::active_resource() {
-  desc_ = -1;
-  ;
-  rights_ = 0;
-}
-
-active_resource::~active_resource() {}
-
+// -----------------------------------------------------------------------------
 
 // We have to be careful that resource names are unique and not
-// subject to spoofing by creators making up a resources with
+// subject to spoofing by owners making up a resources with
 // an existing name to avoid authentication.
 bool channel_guard::can_read(int resource_entry) {
   if (!channel_principal_authenticated_) {
     return false;
   }
   // see if principal_name_ is on reader list
-  for (int j = 0; j < resources_[resource_entry].readers_size(); j++) {
-    if (resources_[resource_entry].readers(j) == principal_name_) {
+  for (int j = 0;
+       j < g_resource_table.resources_[resource_entry].readers_size();
+       j++) {
+    if (g_resource_table.resources_[resource_entry].readers(j)
+        == principal_name_) {
       return true;
     }
   }
@@ -509,8 +1026,11 @@ bool channel_guard::can_write(int resource_entry) {
   if (!channel_principal_authenticated_) {
     return false;
   }
-  for (int j = 0; j < resources_[resource_entry].writers_size(); j++) {
-    if (resources_[resource_entry].writers(j) == principal_name_) {
+  for (int j = 0;
+       j < g_resource_table.resources_[resource_entry].writers_size();
+       j++) {
+    if (g_resource_table.resources_[resource_entry].writers(j)
+        == principal_name_) {
       return true;
     }
   }
@@ -522,20 +1042,25 @@ bool channel_guard::can_delete(int resource_entry) {
     return false;
   }
   // see if principal_name_ is on deleters list
-  for (int j = 0; j < resources_[resource_entry].deleters_size(); j++) {
-    if (resources_[resource_entry].deleters(j) == principal_name_) {
+  for (int j = 0;
+       j < g_resource_table.resources_[resource_entry].deleters_size();
+       j++) {
+    if (g_resource_table.resources_[resource_entry].deleters(j)
+        == principal_name_) {
       return true;
     }
   }
   return false;
 }
 
-bool channel_guard::can_create(int resource_entry) {
+bool channel_guard::is_owner(int resource_entry) {
   if (!channel_principal_authenticated_) {
     return false;
   }
-  for (int j = 0; j < resources_[resource_entry].creators_size(); j++) {
-    if (resources_[resource_entry].creators(j) == principal_name_) {
+  for (int j = 0; j < g_resource_table.resources_[resource_entry].owners_size();
+       j++) {
+    if (g_resource_table.resources_[resource_entry].owners(j)
+        == principal_name_) {
       return true;
     }
   }
@@ -543,17 +1068,12 @@ bool channel_guard::can_create(int resource_entry) {
 }
 
 int channel_guard::find_resource(const string &name) {
-  for (int i = 0; i < num_resources_; i++) {
-    if (name == resources_[i].resource_identifier()) {
-      return i;
-    }
-  }
-  return -1;
+  return g_resource_table.find_resource_in_table(name);
 }
 
 bool channel_guard::access_check(int resource_entry, const string &action) {
   if (!channel_principal_authenticated_) {
-    printf("access_check: nauthenticated\n");
+    printf("access_check: authenticated\n");
     return false;
   }
   if (action == "read") {
@@ -571,18 +1091,18 @@ bool channel_guard::access_check(int resource_entry, const string &action) {
       return true;
     }
   }
-  if (action == "create") {
-    if (can_create(resource_entry)) {
+  if (action == "add_owner" || action == "add_read" || action == "add_write") {
+    if (is_owner(resource_entry)) {
       return true;
     }
   }
   return false;
 }
 
-bool accept_credentials(const string   &principal_name,
-                        const string   &alg,
-                        const string   &cred,
-                        principal_list *pl) {
+bool channel_guard::accept_credentials(const string   &principal_name,
+                                       const string   &alg,
+                                       const string   &cred,
+                                       principal_list *pl) {
   principal_message pm;
   pm.set_principal_name(principal_name);
   pm.set_authentication_algorithm(alg);
@@ -590,170 +1110,310 @@ bool accept_credentials(const string   &principal_name,
   return add_principal_to_proto_list(principal_name, alg, cred, pl);
 }
 
-bool channel_guard::add_access_rights(string &resource_name,
-                                      string &right,
-                                      string &new_prin) {
+bool channel_guard::add_access_rights(const string &resource_name,
+                                      const string &right,
+                                      const string &new_prin) {
   // can current channel principal add access rights to this resource?
   int n = find_resource(resource_name);
   if (n < 0) {
     printf("%s() error, line: %d: No such resource\n", __func__, __LINE__);
     return false;
   }
-  // already there?
-  return false;
-}
-
-int channel_guard::find_in_active_resource_table(const string &name) {
-  for (int i = 0; i < num_active_resources_; i++) {
-    if (ar_[i].resource_name_ == name
-        && ar_[i].principal_name_ == principal_name_)
-      return i;
-  }
-  return -1;
-}
-
-bool channel_guard::create_resource(string &name) {
-  // make up encryption key
-  // automatically give creator read, write, delete rights
-  return false;
-}
-
-bool channel_guard::open_resource(const string &resource_name,
-                                  const string &access_mode) {
-  string file_type("file");
-
-  int resource_index = find_resource(resource_name);
-  if (resource_index < 0) {
-    printf("%s() error, line: %d: No such resource %s\n",
-           __func__,
-           __LINE__,
-           resource_name.c_str());
-    return false;
-  }
-  if (resources_[resource_index].resource_type() != file_type) {
-    printf("%s() error, line: %d: only file types supported\n",
+  int np = g_principal_table.find_principal_in_table(new_prin);
+  if (np < 0) {
+    printf("%s() error, line: %d: the delegated principal does not exist\n",
            __func__,
            __LINE__);
     return false;
   }
-  if (!access_check(resource_index, access_mode)) {
-    printf("%s() error, line: %d: access failure\n", __func__, __LINE__);
+  int nr = g_resource_table.find_resource_in_table(resource_name);
+  if (nr < 0) {
+    printf("%s() error, line: %d: the resource does not exist\n",
+           __func__,
+           __LINE__);
     return false;
   }
-
-  unsigned requested_right = 0;
-  if (access_mode == "read") {
-    requested_right |= active_resource::READ;
-  } else if (access_mode == "write") {
-    requested_right |= active_resource::WRITE;
+  string action;
+  if (right == "read") {
+    action = "add_read";
+    if (access_check(nr, action)) {
+      string *new_reader = g_resource_table.resources_[nr].add_readers();
+      *new_reader = new_prin;
+      return true;
+    }
+  } else if (right == "write") {
+    action = "add_write";
+    if (access_check(nr, action)) {
+      string *new_writer = g_resource_table.resources_[nr].add_writers();
+      *new_writer = new_prin;
+      return true;
+    }
+  } else if (right == "own") {
+    action = "add_owner";
+    if (access_check(nr, action)) {
+      string *new_owner = g_resource_table.resources_[nr].add_owners();
+      *new_owner = new_prin;
+      return true;
+    }
   } else {
-    printf("%s() error, line: %d: unknown access mode\n", __func__, __LINE__);
     return false;
   }
+  return false;
+}
 
-  int resource_entry = -1;
-  for (int i = 0; i < num_active_resources_; i++) {
-    if (ar_[i].principal_name_ == principal_name_
-        && ar_[i].resource_name_ == resource_name) {
-      if (ar_[i].rights_ == requested_right)
-        resource_entry = i;
+bool channel_guard::create_resource(resource_message &rm) {
+
+  if (!channel_principal_authenticated_) {
+    printf("%s() error, line: %d: Unauthenticated principals cannot create "
+           "resource\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  int table_entry = find_resource(rm.resource_identifier());
+  if (table_entry >= 0) {
+    printf("%s() error, line: %d: Resource already exists\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!add_owner_to_resource(principal_name_, &rm)) {
+    printf("%s() error, line: %d: principal can't be added\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  return g_resource_table.add_resource_to_table(rm);
+}
+
+bool channel_guard::add_principal(const principal_message &pm) {
+
+  // check to see  current principal is on manager table
+  if (!channel_principal_authenticated_) {
+    printf("%s() error, line: %d: principal not authenticated\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  int mgr = -1;
+  for (int i = 0; i < g_principal_table.num_managers_; i++) {
+    if (g_principal_table.managers_[i] == principal_name_) {
+      mgr = i;
+      break;
     }
   }
-  if (resource_entry < 0) {
-    if (num_active_resources_ >= capacity_active_resources_) {
-      printf("%s() error, line: %d: number of active resources exceeded\n",
+  if (mgr < 0) {
+    printf("%s() error, line: %d: deleter is not a table manage\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  // note: acl_principal_table does the locking
+  return g_principal_table.add_principal_to_table(pm.principal_name(),
+                                                  pm.authentication_algorithm(),
+                                                  pm.credential());
+}
+
+bool channel_guard::delete_principal(const string &principal_name) {
+
+  // check to see  current principal is on manager table
+  if (!channel_principal_authenticated_) {
+    printf("%s() error, line: %d: principal not authenticated\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  int mgr = -1;
+  for (int i = 0; i < g_principal_table.num_managers_; i++) {
+    if (g_principal_table.managers_[i] == principal_name_) {
+      mgr = i;
+      break;
+    }
+  }
+  if (mgr < 0) {
+    printf("%s() error, line: %d: deleter is not a table manage\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  return g_principal_table.delete_principal_from_table(principal_name);
+}
+
+bool channel_guard::delete_resource(const string &resource_name,
+                                    const string &type) {
+
+  string write_request("write");
+  string delete_request("delete");
+  int    table_entry = find_resource(resource_name);
+  if (table_entry < 0) {
+    printf("%s() error, line: %d: Can't find resource\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (access_check(table_entry, delete_request)
+      || access_check(table_entry, write_request)) {
+    return g_resource_table.delete_resource_from_table(resource_name, type);
+  }
+  printf("%s() error, line: %d: access_check failed\n", __func__, __LINE__);
+  return false;
+}
+
+bool channel_guard::open_resource(const string &resource_name,
+                                  const string &requested_right,
+                                  int          *local_descriptor) {
+
+  string file_type("file");
+
+  *local_descriptor = -1;
+  int table_entry = find_resource(resource_name);
+  if (table_entry < 0) {
+    printf("%s() error, line: %d: Can't find resource\n", __func__, __LINE__);
+    return false;
+  }
+
+  string file_name;
+  int    res = -1;
+
+  file_name = g_resource_table.resources_[table_entry].resource_location();
+  if (!access_check(table_entry, requested_right)) {
+    printf("%s() error, line: %d: access_check failed\n", __func__, __LINE__);
+    return false;
+  }
+  if (requested_right == "read") {
+    // open for reading
+    res = open(file_name.c_str(), O_RDONLY);
+    if (res < 0) {
+      printf("%s() error, line: %d: Can't open file\n", __func__, __LINE__);
+      return false;
+    }
+    *local_descriptor = descriptor_table_.find_available_descriptor();
+    if (*local_descriptor < 0) {
+      printf("%s() error, line: %d: Can't find available table descriptor\n",
              __func__,
              __LINE__);
       return false;
     }
-    resource_entry = num_active_resources_++;
-    ar_[resource_entry].principal_name_ = principal_name_;
-    ar_[resource_entry].resource_name_ = resource_name;
-    ar_[resource_entry].rights_ |= requested_right;
-  }
-
-  // open, set descriptor
-  if (ar_[resource_entry].desc_ >= 0) {
-    printf("%s() error, line: %d: resource already open\n", __func__, __LINE__);
-    return false;
-  }
-
-  // note that if file doesn't exist, we create it which isn't right
-  // principal should have create right on parent directory but we don't
-  // support directories yet.
-  string file_name;
-  file_name = resources_[resource_index].resource_location();
-  switch (requested_right) {
-    case active_resource::READ:
-      // open for reading
-      ar_[resource_entry].desc_ = open(file_name.c_str(), O_RDONLY);
-      return true;
-    case active_resource::WRITE:
-      // open for writing
-      ar_[resource_entry].desc_ =
-          open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-      return true;
-    default:
+    descriptor_table_.descriptor_entry_[*local_descriptor].global_descriptor_ =
+        res;
+    descriptor_table_.descriptor_entry_[*local_descriptor].status_ =
+        acl_local_descriptor_table::VALID;
+    descriptor_table_.descriptor_entry_[*local_descriptor].resource_name_ =
+        resource_name;
+    return true;
+  } else if (requested_right == "write") {
+    // open for writing
+    res = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
+    if (res < 0) {
+      printf("%s() error, line: %d: Can't open file %s\n",
+             __func__,
+             __LINE__,
+             file_name.c_str());
       return false;
+    }
+    *local_descriptor = descriptor_table_.find_available_descriptor();
+    if (*local_descriptor < 0) {
+      printf("%s() error, line: %d: Can't find available descriptor\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    descriptor_table_.descriptor_entry_[*local_descriptor].global_descriptor_ =
+        res;
+    descriptor_table_.descriptor_entry_[*local_descriptor].status_ =
+        acl_local_descriptor_table::VALID;
+    descriptor_table_.descriptor_entry_[*local_descriptor].resource_name_ =
+        resource_name;
+    return true;
+  } else {
+    printf("%s() error, line: %d: unknown requested right\n",
+           __func__,
+           __LINE__);
+    return false;
   }
 
   return true;
 }
 
 bool channel_guard::read_resource(const string &resource_name,
+                                  int           local_descriptor,
                                   int           n,
                                   string       *out) {
-  int rn = find_in_active_resource_table(resource_name);
-  if (rn < 0) {
+
+  if (n <= 0) {
+    printf("%s() error, line: %d: buffer size\n", __func__, __LINE__);
     return false;
   }
-  if (ar_[rn].desc_ >= 0) {
-    byte buf[n];
-    int  k = read(ar_[rn].desc_, buf, n);
-    if (k < 0)
-      return false;
-    out->assign((char *)buf, k);
-    return true;
+  byte buf[n + 1];
+  if (local_descriptor < 0 || local_descriptor >= descriptor_table_.num_) {
+    printf("%s() error, line: %d: bad descriptor\n", __func__, __LINE__);
+    return false;
   }
-  return false;
+  if (descriptor_table_.descriptor_entry_[local_descriptor].status_
+          != acl_resource_data_element::VALID
+      || descriptor_table_.descriptor_entry_[local_descriptor].resource_name_
+             != resource_name) {
+    printf("%s() error, line: %d: invalid desciptor element\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  int k = (int)::read(
+      descriptor_table_.descriptor_entry_[local_descriptor].global_descriptor_,
+      buf,
+      n);
+  if (k < 0) {
+    printf("%s() error, line: %d: read failed\n", __func__, __LINE__);
+    return false;
+  }
+  out->assign((char *)buf, k);
+  return true;
 }
 
 bool channel_guard::write_resource(const string &resource_name,
+                                   int           local_descriptor,
                                    int           n,
                                    string       &in) {
-  int rn = find_in_active_resource_table(resource_name);
-  if (rn < 0) {
+  if (local_descriptor < 0 || local_descriptor >= descriptor_table_.num_) {
+    printf("%s() error, line: %d: bad descriptor\n", __func__, __LINE__);
     return false;
   }
-  if (ar_[rn].desc_ >= 0) {
-    int k = write(ar_[rn].desc_, (byte *)in.data(), in.size());
-    if (k < 0)
-      return false;
-    return true;
-  }
-  return false;
-}
-
-bool channel_guard::delete_resource(const string &resource_name) {
-  return false;
-}
-
-bool channel_guard::close_resource(const string &resource_name) {
-  int rn = find_in_active_resource_table(resource_name);
-  if (rn < 0) {
+  if (descriptor_table_.descriptor_entry_[local_descriptor].status_
+          != acl_resource_data_element::VALID
+      || descriptor_table_.descriptor_entry_[local_descriptor].resource_name_
+             != resource_name) {
+    printf("%s() error, line: %d: bad  element descriptor\n",
+           __func__,
+           __LINE__);
     return false;
   }
-  if (ar_[rn].desc_ >= 0) {
-    close(ar_[rn].desc_);
-    ar_[rn].desc_ = -1;
-    return true;
+  int k = write(
+      descriptor_table_.descriptor_entry_[local_descriptor].global_descriptor_,
+      (byte *)in.data(),
+      (int)in.size());
+  if (k < 0) {
+    printf("%s() error, line: %d\n", __func__, __LINE__);
+    return false;
   }
-  return false;
+  return true;
 }
 
-bool channel_guard::save_active_resources(const string &file_name) {
-  // should be database, eventually
-  return false;
+bool channel_guard::close_resource(const string &resource_name,
+                                   int           local_descriptor) {
+
+  if (local_descriptor < 0 || local_descriptor >= descriptor_table_.num_) {
+    printf("%s() error, line: %d: bad descriptor\n", __func__, __LINE__);
+    return false;
+  }
+  if (descriptor_table_.descriptor_entry_[local_descriptor].status_
+          != acl_resource_data_element::VALID
+      || descriptor_table_.descriptor_entry_[local_descriptor].resource_name_
+             != resource_name) {
+    printf("%s() error, line: %d: invalid element\n", __func__, __LINE__);
+    return false;
+  }
+  close(
+      descriptor_table_.descriptor_entry_[local_descriptor].global_descriptor_);
+  return true;
 }
 
 int find_resource_in_resource_proto_list(const resource_list &rl,
@@ -773,5 +1433,8 @@ int find_principal_in_principal_proto_list(const principal_list &pl,
   }
   return -1;
 }
+
+}  // namespace acl_lib
+}  // namespace certifier
 
 // -----------------------------------------------------------------------

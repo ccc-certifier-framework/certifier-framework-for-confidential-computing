@@ -2640,10 +2640,10 @@ bool certifier::framework::server_dispatch(
 
 #ifdef DEBUG
   printf("\nserver_dispatch\n");
-  printf("ans1_root_cert: ");
+  printf("asn1_root_cert: ");
   print_bytes(asn1_root_cert.size(), (byte *)asn1_root_cert.data());
   printf("\n");
-  printf("ans1_peer_root_cert: ");
+  printf("asn1_peer_root_cert: ");
   print_bytes(asn1_peer_root_cert.size(), (byte *)asn1_peer_root_cert.data());
   printf("\n");
   printf("private_key_cert: ");

@@ -52,6 +52,42 @@ using std::string;
 #ifndef _SUPPORT_H__
 #  define _SUPPORT_H__
 
+bool aes_256_cbc_sha256_encrypt(byte *in,
+                                int   in_len,
+                                byte *key,
+                                byte *iv,
+                                byte *out,
+                                int  *out_size);
+
+bool aes_256_cbc_sha256_decrypt(byte *in,
+                                int   in_len,
+                                byte *key,
+                                byte *out,
+                                int  *out_size);
+
+bool aes_256_cbc_sha384_encrypt(byte *in,
+                                int   in_len,
+                                byte *key,
+                                byte *iv,
+                                byte *out,
+                                int  *out_size);
+bool aes_256_cbc_sha384_decrypt(byte *in,
+                                int   in_len,
+                                byte *key,
+                                byte *out,
+                                int  *out_size);
+bool aes_256_gcm_encrypt(byte *in,
+                         int   in_len,
+                         byte *key,
+                         byte *iv,
+                         byte *out,
+                         int  *out_size);
+bool aes_256_gcm_decrypt(byte *in,
+                         int   in_len,
+                         byte *key,
+                         byte *out,
+                         int  *out_size);
+
 bool encrypt(byte *in,
              int   in_len,
              byte *key,
@@ -92,6 +128,7 @@ bool rsa_verify(const char *alg,
                 byte       *msg,
                 int         size_sig,
                 byte       *sig);
+void print_point(const point_message &pt);
 
 bool make_certifier_ecc_key(int n, key_message *k);
 bool ecc_sign(const char *alg,

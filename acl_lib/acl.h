@@ -29,30 +29,19 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include <mutex>
+
 #include "acl.pb.h"
 #include "acl_support.h"
-
-// These first definition are copied from certifier.  When linked
-// into a certifier applications, we should use those.
 
 // ---------------------------------------------------------------------------
 //  These are acl specific
 
+namespace certifier {
+namespace acl_lib {
+
 bool sign_nonce(string &nonce, key_message &k, string *signature);
 bool rotate_resource_key(string &resource, key_message &km);
-
-class active_resource {
- public:
-  active_resource();
-  ~active_resource();
-
-  enum { READ = 0x1, WRITE = 0x2, DELETE = 0x4, CREATE = 0x08 };
-
-  string   principal_name_;
-  string   resource_name_;
-  int      desc_;
-  unsigned rights_;
-};
 
 void print_principal_info(const principal_message &pi);
 void print_audit_info(const audit_info &inf);
@@ -61,12 +50,6 @@ void print_principal_message(const principal_message &pm);
 void print_resource_list(const resource_list &rl);
 void print_principal_list(const principal_list &pl);
 
-bool add_reader_to_resource_proto_list(const string &name, resource_message *r);
-bool add_writer_to_resource_proto_list(const string &name, resource_message *r);
-bool add_deleter_to_resource_proto_list(const string     &name,
-                                        resource_message *r);
-bool add_creator_to_resource_proto_list(const string     &name,
-                                        resource_message *r);
 bool add_principal_to_proto_list(const string   &name,
                                  const string   &alg,
                                  const string   &cred,
@@ -82,18 +65,23 @@ bool get_principals_from_file(string &file_name, principal_list *pl);
 bool save_resources_to_file(resource_list &rl, string &file_name);
 bool save_principals_to_file(principal_list &pl, string &file_name);
 
+int find_resource_in_resource_proto_list(const resource_list &rl,
+                                         const string        &name);
+int find_principal_in_principal_proto_list(const principal_list &pl,
+                                           const string         &name);
+
 int on_reader_list(const resource_message &r, const string &name);
 int on_writer_list(const resource_message &r, const string &name);
 int on_deleter_list(const resource_message &r, const string &name);
-int on_creator_list(const resource_message &r, const string &name);
+int on_owner_list(const resource_message &r, const string &name);
 
 int on_principal_list(const string &name, principal_list &pl);
 int on_resource_list(const string &name, resource_list &rl);
 
-bool add_reader_to_resource(string &name, resource_message *r);
-bool add_writer_to_resource(string &name, resource_message *r);
-bool add_deleter_to_resource(string &name, resource_message *r);
-bool add_creator_to_resource(string &name, resource_message *r);
+bool add_reader_to_resource(const string &name, resource_message *r);
+bool add_writer_to_resource(const string &name, resource_message *r);
+bool add_deleter_to_resource(const string &name, resource_message *r);
+bool add_owner_to_resource(const string &name, resource_message *r);
 bool add_principal_to_proto_list(const string   &name,
                                  const string   &alg,
                                  const string   &cred,
@@ -104,66 +92,150 @@ bool add_resource_to_proto_list(const string  &id,
                                 const string  &t_written,
                                 resource_list *rl);
 
-const int max_active_resources = 25;
+const int max_principal_table_capacity = 250;
+class acl_principal_table {
+ public:
+  acl_principal_table();
+  ~acl_principal_table();
+  enum { INVALID = 0, VALID = 1 };
+
+  int               capacity_;
+  int               num_;
+  int               principal_status_[max_principal_table_capacity];
+  principal_message principals_[max_principal_table_capacity];
+  int               num_managers_;
+  string            managers_[max_principal_table_capacity];
+  std::mutex        principal_table_mutex_;  // use lock(), unlock()
+
+  bool add_principal_to_table(const string &name,
+                              const string &alg,
+                              const string &credential);
+  bool delete_principal_from_table(const string &name);
+  int  find_principal_in_table(const string &name);
+  bool load_principal_table_from_list(const principal_list &pl);
+  bool save_principal_table_to_list(principal_list *pl);
+  bool load_principal_table_from_file(const string &filename);
+  bool save_principal_table_to_file(const string &filename);
+
+  void print_entry(int i);
+  void print_manager(int i);
+};
+
+const int max_resource_table_capacity = 250;
+class acl_resource_table {
+ public:
+  acl_resource_table();
+  ~acl_resource_table();
+  enum { INVALID = 0, VALID = 1 };
+
+  int              capacity_;
+  int              num_;
+  int              resource_status_[max_resource_table_capacity];
+  resource_message resources_[max_resource_table_capacity];
+  std::mutex       resource_table_mutex_;  // use lock(), unlock()
+
+  bool add_resource_to_table(const string &name,
+                             const string &type,
+                             const string &location);
+  bool add_resource_to_table(const resource_message &rm);
+  bool delete_resource_from_table(const string &name, const string &type);
+  int  find_resource_in_table(const string &name);
+  bool load_resource_table_from_list(const resource_list &rl);
+  bool save_resource_table_to_list(resource_list *rl);
+  bool load_resource_table_from_file(const string &filename);
+  bool save_resource_table_to_file(const string &filename);
+
+  void print_entry(int i);
+};
+
+class acl_resource_data_element {
+ public:
+  enum { INVALID = 0, VALID = 1 };
+  string resource_name_;
+  int    status_;
+  int    global_descriptor_;
+
+  acl_resource_data_element();
+  ~acl_resource_data_element();
+};
+
+const int max_local_descriptors = 50;
+class acl_local_descriptor_table {
+ public:
+  enum { INVALID = 0, VALID = 1 };
+  int                       num_;
+  int                       capacity_;
+  acl_resource_data_element descriptor_entry_[max_local_descriptors];
+
+  acl_local_descriptor_table();
+  ~acl_local_descriptor_table();
+
+  int  find_available_descriptor();
+  bool free_descriptor(int i, const string &name);
+};
+
+
+extern acl_principal_table g_principal_table;
+extern acl_resource_table  g_resource_table;
+
 class channel_guard {
  public:
   channel_guard();
   ~channel_guard();
 
+  bool   initialized_;
   string principal_name_;
   string authentication_algorithm_name_;
   string creds_;
   bool   channel_principal_authenticated_;
 
-  int               capacity_resources_;
-  int               num_resources_;
-  resource_message *resources_;
-  int               num_active_resources_;
-  int               capacity_active_resources_;
-  active_resource   ar_[max_active_resources];
-  string            nonce_;
-
-  X509 *root_cert_;
+  acl_local_descriptor_table descriptor_table_;
+  string                     nonce_;
+  X509                      *root_cert_;
 
   void print();
 
   int find_resource(const string &name);
-  int find_in_active_resource_table(const string &name);
 
   bool init_root_cert(const string &asn1_cert_str);
-  bool authenticate_me(const string &name, principal_list &pl, string *nonce);
+  bool authenticate_me(const string &name,
+                       const string &serialized_credentials,
+                       string       *nonce);
   bool verify_me(const string &name, const string &signed_nonce);
   bool load_resources(resource_list &rl);
 
   bool can_read(int resource_entry);
   bool can_write(int resource_entry);
   bool can_delete(int resource_entry);
-  bool can_create(int resource_entry);
+  bool is_owner(int resource_entry);
 
   bool access_check(int resource_entry, const string &action);
-
-  bool add_resource(resource_message &rm);
-  bool save_active_resources(const string &file_name);
 
   // Called from grpc
   bool accept_credentials(const string   &principal_name,
                           const string   &alg,
                           const string   &cred,
                           principal_list *pl);
-  bool add_access_rights(string &resource_name,
-                         string &right,
-                         string &new_prin);
-  bool create_resource(string &name);
-  bool open_resource(const string &resource_name, const string &access_mode);
-  bool read_resource(const string &resource_name, int n, string *out);
-  bool write_resource(const string &resource_name, int n, string &in);
-  bool delete_resource(const string &resource_name);
-  bool close_resource(const string &resource_name);
+  bool add_access_rights(const string &resource_name,
+                         const string &right,
+                         const string &new_prin);
+  bool open_resource(const string &resource_name,
+                     const string &access_mode,
+                     int          *local_descriptor);
+  bool read_resource(const string &resource_name,
+                     int           local_desciptor,
+                     int           n,
+                     string       *out);
+  bool write_resource(const string &resource_name,
+                      int           local_desciptor,
+                      int           n,
+                      string       &in);
+  bool close_resource(const string &resource_name, int local_descriptor);
+  bool delete_resource(const string &resource_name, const string &type);
+  bool create_resource(resource_message &rm);
+  bool add_principal(const principal_message &pm);
+  bool delete_principal(const string &name);
 };
-
-int find_resource_in_resource_proto_list(const resource_list &rl,
-                                         const string        &name);
-int find_principal_in_principal_proto_list(const principal_list &pl,
-                                           const string         &name);
-
+}  // namespace acl_lib
+}  // namespace certifier
 #endif
