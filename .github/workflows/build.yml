@@ -17,7 +17,7 @@ jobs:
     - name: dependencies
       run: |
         sudo apt update -y
-        sudo apt install -y clang-format libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake
+      sudo apt install -y clang-format libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake uuid-dev
         sudo apt install -y python3 pylint
         pip install pytest
 
