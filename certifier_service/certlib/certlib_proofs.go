@@ -562,10 +562,11 @@ func GetRelevantPlatformFeaturePolicy(pool *PolicyPool, evType string,
 }
 
 // Filtered OePolicy should be
-//      00: "policyKey is-trusted"
-//      01: "Key[rsa, policyKey, f2663e9ca042fcd261ab051b3a4e3ac83d79afdd] says
-//		Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] is-trusted-for-attestation"
-//      02: "policyKey says measurement is-trusted"
+//
+//	     00: "policyKey is-trusted"
+//	     01: "Key[rsa, policyKey, f2663e9ca042fcd261ab051b3a4e3ac83d79afdd] says
+//			Key[rsa, VSE, cbfced04cfc0f1f55df8cbe437c3aba79af1657a] is-trusted-for-attestation"
+//	     02: "policyKey says measurement is-trusted"
 func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 	policyPool *PolicyPool) *certprotos.ProvedStatements {
 
@@ -617,9 +618,10 @@ func FilterOePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePa
 }
 
 // Filtered Policy should be
-//      0: "policyKey is-trusted"
-//      1: "policyKey says platformKey is-trusted-for-attestation"
-//      2: "policyKey says measurement is-trusted"
+//
+//	0: "policyKey is-trusted"
+//	1: "policyKey says platformKey is-trusted-for-attestation"
+//	2: "policyKey says measurement is-trusted"
 func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 	policyPool *PolicyPool) *certprotos.ProvedStatements {
 
@@ -653,14 +655,15 @@ func FilterInternalPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.Evid
 }
 
 // Filtered Policy should be
-//	00 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] is-trusted
-//	01 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
-//	Key[rsa, ARKKey, c36d3343d69d9d8000d32d0979adff876e98ec79] is-trusted-for-attestation
-//	02 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
-//      Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708] is-trusted
-//	03 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
-//	platform[amd-sev-snp, debug: no, migrate: no, api-major: >=0, api-minor: >=0, key-share: no,
-//		tcb-version: >=0] has-trusted-platform-property
+//
+//		00 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] is-trusted
+//		01 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
+//		Key[rsa, ARKKey, c36d3343d69d9d8000d32d0979adff876e98ec79] is-trusted-for-attestation
+//		02 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
+//	     Measurement[010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708] is-trusted
+//		03 Key[rsa, policyKey, f91d6331b1fd99b3fa8641fd16dcd4c272a92b8a] says
+//		platform[amd-sev-snp, debug: no, migrate: no, api-major: >=0, api-minor: >=0, key-share: no,
+//			tcb-version: >=0] has-trusted-platform-property
 func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 	policyPool *PolicyPool) *certprotos.ProvedStatements {
 
@@ -1508,12 +1511,14 @@ struct sgx_quote_t {
 
 // The returned quantities are sort of described in the Intel Architecure manual
 // in chapter 38 but not in detail.  They are:
+//
 //	qesvm: The quoting enclave security version number (16 bits).
 //	pceSvn: The provisioning enclave security version number (16 bits).
 //	cpuSvn: The cpu security version number (128 bits) which consists of
 //		"small integers describing the version numbers of compnents".
 //	debug: Whether the enclave is debugable.
 //	mode64bit: Running as x64 (rather than i32).
+//
 // The last two come from the attributes field.
 func GetPlatformAttributesFromGramineAttest(binGramineAttest []byte) (uint16, uint16, []byte, bool, bool) {
 	qeSvn := uint16(binGramineAttest[0x8])
@@ -1617,11 +1622,12 @@ func GetPlatformFromGramineAttest(binAttest []byte) *certprotos.Platform {
 }
 
 /*
-	Policy byte:
-		Bit 3: Guest can be activated on multiple sockets.
-		Bit 2: Debugging disallowed if 0
-		Bit 1: Migration disallowed if 0
-		Bit 0: SMT disallowed if 0
+Policy byte:
+
+	Bit 3: Guest can be activated on multiple sockets.
+	Bit 2: Debugging disallowed if 0
+	Bit 1: Migration disallowed if 0
+	Bit 0: SMT disallowed if 0
 */
 func GetPlatformFromSevAttest(binSevAttest []byte) *certprotos.Platform {
 
@@ -1729,8 +1735,8 @@ func VerifyReport(etype string, pk *certprotos.KeyMessage, serialized []byte) bo
 	return false
 }
 
-//	Returns measurement
-//	serialized is the serialized sev_attestation_message
+// Returns measurement
+// serialized is the serialized sev_attestation_message
 func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 
 	var am certprotos.SevAttestationMessage
@@ -1902,8 +1908,8 @@ func VerifySevAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
  *  - Dev VerifyIsletAttestation () which will call islet_verify()
  */
 
-//	Returns measurement
-//	serialized is the serialized islet_attestation_message
+// Returns measurement
+// serialized is the serialized islet_attestation_message
 func VerifyIsletAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 
 	var am certprotos.IsletAttestationMessage
@@ -1939,8 +1945,8 @@ func VerifyIsletAttestation(serialized []byte, k *certprotos.KeyMessage) []byte 
 	return m
 }
 
-//	Returns measurement
-//	serialized is the serialized keystone_attestation_message
+// Returns measurement
+// serialized is the serialized keystone_attestation_message
 func VerifyKeystoneAttestation(serialized []byte, k *certprotos.KeyMessage) []byte {
 
 	var am certprotos.KeystoneAttestationMessage
@@ -2128,6 +2134,7 @@ func VerifyRule5(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 }
 
 // R6: if key1 is-trustedXXX
+//
 //	 and
 //		key1 says key2 speaks-for measurement then
 //		key2 speaks-for measurement provided is-trustedXXX dominates is-trusted-for-attestation
@@ -2185,7 +2192,8 @@ func VerifyRule6(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 }
 
 // R7: If measurement is-trusted and key1 speaks-for measurement then key1 is-trusted-for-attestation OR
-//     If environment is-trusted and key1 speaks-for environment then key1 is-trusted-for-sttestation
+//
+//	If environment is-trusted and key1 speaks-for environment then key1 is-trusted-for-sttestation
 func VerifyRule7(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
 		return false
@@ -2217,6 +2225,7 @@ func VerifyRule7(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 }
 
 // R8: If environment[platform, measurement] is-environment AND platform-template
+//
 //	has-trusted-platform-property then environment[platform, measurement]
 func VerifyRule8(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil || c1.Clause != nil {
@@ -2253,7 +2262,8 @@ func VerifyRule8(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 }
 
 // R9:  If environment[platform, measurement] is-environment AND measurement is-trusted then
-//		environment[platform, measurement] environment-measurement is-trusted
+//
+//	environment[platform, measurement] environment-measurement is-trusted
 func VerifyRule9(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
 	if c1.Subject == nil || c1.Verb == nil || c1.Object != nil {
 		return false
@@ -2283,6 +2293,7 @@ func VerifyRule9(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpro
 }
 
 // R10: If environment[platform, measurement] environment-platform-is-trusted AND
+//
 //	environment[platform, measurement] environment-measurement-is-trusted then
 //	environment[platform, measurement] is-trusted
 func VerifyRule10(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certprotos.VseClause, c *certprotos.VseClause) bool {
@@ -2306,6 +2317,7 @@ func VerifyRule10(tree *PredicateDominance, c1 *certprotos.VseClause, c2 *certpr
 }
 
 // R11:  if     measurement is-trusted
+//
 //	 and
 //		key speaks-for measurement then
 //	 key is-trusted-for-key-provision
@@ -3326,11 +3338,12 @@ func VerifyGramineAttestation(serializedEvidence []byte) (bool, []byte, []byte, 
 }
 
 // Filtered policy should be
-//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
-//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-//              Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
-//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-//              Measurement[0001020304050607...] is-trusted
+//
+//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
+//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+//	        Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+//	        Measurement[0001020304050607...] is-trusted
 func FilterGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 	policyPool *PolicyPool) *certprotos.ProvedStatements {
 
@@ -3542,13 +3555,15 @@ func ValidateGramineEvidence(pubPolicyKey *certprotos.KeyMessage, evp *certproto
 }
 
 // Filtered policy should be
-//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
-//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-//              Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
-//      Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-//              Measurement[0001020304050607...] is-trusted
-//	Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-//          platform has-trusted-platform-property
+//
+//	     Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
+//	     Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+//	             Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+//	     Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+//	             Measurement[0001020304050607...] is-trusted
+//		Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+//	         platform has-trusted-platform-property
+//
 // Filter out irrelevant platforms and measurements
 func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidencePackage,
 	policyPool *PolicyPool) *certprotos.ProvedStatements {
@@ -3616,35 +3631,35 @@ func FilterExtendedGraminePolicy(policyKey *certprotos.KeyMessage, evp *certprot
 
 /*
 Incoming evidence:
-	  0. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
-  	  1. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-     	       Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
-  	  2. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-                  Measurement[0001020304050607...] is-trusted
-  	  3. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-      	          platform has-trusted-platform-property
-  	  4. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
-     	       Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
-  	  5. environment(platform, measurement) is-environment
-  	  6. enclaveKey speaks-for Measurement[00010203...]
+ 0. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted
+ 1. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+    Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+ 2. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+    Measurement[0001020304050607...] is-trusted
+ 3. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+    platform has-trusted-platform-property
+ 4. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] says
+    Key[rsa, platformKey, cdc8112d97fce6767143811f0ed5fb6c21aee424] is-trusted-for-attestation
+ 5. environment(platform, measurement) is-environment
+ 6. enclaveKey speaks-for Measurement[00010203...]
 
 Produced proof should be:
-	  0. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted AND
-	        Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0]
-	  	says Measurement[0001020304050607...] is-trusted -->
-		    Measurement[0001020304050607...] is-trusted
-	  1. policy-key is-trusted AND policy-key says platform has-trusted-platform-property -->
-                    platform has-trusted-platform-property (r3)
-	  2. environment(platform, measurement) is-environment AND
-     	         platform[amd-sev-snp, no-debug,...] has-trusted-platform-property -->
-     	         environment(platform, measurement) environment-platform-is-trusted [3, ]
-	  3. environment(platform, measurement) is-environment AND measurement is-trusted -->
-                 environment(platform, measurement) environment-measurement-is-trusted
-	  4. environment(platform, measurement) environment-platform-is-trusted" AND
-       	         environment(platform, measurement) environment-measurement-is-trusted"  -->
-                    environment(platform, measurement) is-trusted
-	  5. environment is-trusted and enclaveKey speaks-for environment -->
-	         enclaveKey is-trusted-for-authentication
+ 0. Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0] is-trusted AND
+    Key[rsa, policyKey, d240a7e9489e8adc4eb5261166a0b080f4f5f4d0]
+    says Measurement[0001020304050607...] is-trusted -->
+    Measurement[0001020304050607...] is-trusted
+ 1. policy-key is-trusted AND policy-key says platform has-trusted-platform-property -->
+    platform has-trusted-platform-property (r3)
+ 2. environment(platform, measurement) is-environment AND
+    platform[amd-sev-snp, no-debug,...] has-trusted-platform-property -->
+    environment(platform, measurement) environment-platform-is-trusted [3, ]
+ 3. environment(platform, measurement) is-environment AND measurement is-trusted -->
+    environment(platform, measurement) environment-measurement-is-trusted
+ 4. environment(platform, measurement) environment-platform-is-trusted" AND
+    environment(platform, measurement) environment-measurement-is-trusted"  -->
+    environment(platform, measurement) is-trusted
+ 5. environment is-trusted and enclaveKey speaks-for environment -->
+    enclaveKey is-trusted-for-authentication
 */
 func ConstructProofFromExtendedGramineEvidence(publicPolicyKey *certprotos.KeyMessage, purpose string,
 	alreadyProved *certprotos.ProvedStatements) (*certprotos.VseClause, *certprotos.Proof) {

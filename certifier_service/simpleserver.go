@@ -28,9 +28,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	certlib "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certlib"
 	certprotos "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/certprotos"
+	"github.com/golang/protobuf/proto"
 	// NOTE: Enable this line when you enable the test-code in main().
 	// gramineverify "github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/gramineverify"
 )
@@ -458,15 +458,16 @@ func ValidateRequestAndObtainSealedKey(pubKey *certprotos.KeyMessage, privKey *c
 }
 
 // Procedure is:
-//      read a message
-//      evaluate the trust assertion
-//      if it succeeds,
-//            sign a cert
-//            save the proof, action and cert info in the transaction files
-//            save net infor for forensics
-//      if it fails
-//            save net infor for forensics
-//      if logging is enabled, log event, request and response
+//
+//	read a message
+//	evaluate the trust assertion
+//	if it succeeds,
+//	      sign a cert
+//	      save the proof, action and cert info in the transaction files
+//	      save net infor for forensics
+//	if it fails
+//	      save net infor for forensics
+//	if logging is enabled, log event, request and response
 func certifierServiceThread(conn net.Conn, client string) {
 
 	b := certlib.SizedSocketRead(conn)
