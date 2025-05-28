@@ -37,7 +37,7 @@ S= $(SRC_DIR)/application_service
 US= $(S)
 O= $(OBJ_DIR)
 I= $(SRC_DIR)/include
-INCLUDE= -I$(I) -I$(LIBSRC)/sev-snp -I/usr/local/opt/openssl@1.1/include/
+INCLUDE= -I$(I) -I$(LIBSRC)/sev-snp -I/usr/local/opt/openssl@1.1/include/ -I/usr/include
 
 ifndef NEWPROTOBUF
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D DEBUG -Wno-deprecated-declarations
