@@ -46,7 +46,7 @@ S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
 CL=..
-INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp
+INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I/usr/include
 
 ifndef NEWPROTOBUF
 CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
