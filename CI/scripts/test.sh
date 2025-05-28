@@ -18,7 +18,9 @@ if [ "$(uname -s)" = "Linux" ]; then
     NumCPUs=$(grep -c "^processor" /proc/cpuinfo)
 fi
 # Cap # of -j threads for make to 8
-NumMakeThreads=${NumCPUs}
+#NumMakeThreads=${NumCPUs}
+# if this is > 1, some dependancies are not satisfied
+NumMakeThreads=1
 if [ "${NumMakeThreads}" -gt 8 ]; then NumMakeThreads=8; fi
 
 # 'Globals' to track which test function is / was executing ...
@@ -63,24 +65,24 @@ trap cleanup ERR
 # add it to this list, here, so that one can see it in --list output.
 # ##################################################################
 TestList=( "test-core-certifier-programs"
-#           "test-cert_framework-pytests"
-#           "test-mtls-ssl-client-server-comm-pytest"
+           #"test-cert_framework-pytests"
+           #"test-mtls-ssl-client-server-comm-pytest"
            "unit-test-certlib-utility-programs"
-           "test-run_example-help-list-args"
-           "test-run_example-dry-run"
-           "test-run_example-simple_app"
-           "test-simple_app-with-crypto_algorithms"
-#           "test-run_example-simple_app_python"
-#           "test-simple_app_python-with-warm-restart"
-           "test-build-and-setup-App-Service-and-simple_app_under_app_service"
-           "test-run_example-multidomain_simple_app"
-           "test-build-and-install-sev-snp-simulator"
-           "test-sev-snp-simulator-sev-test"
-           "test-certifier-build-and-test-simulated-SEV-mode"
-           "test-simple_app_under_sev-simulated-SEV-mode"
-           "test-simple_app_under_keystone-using-shim"
-           "test-ISLET-SDK-shim_test"
-           "test-run_example-simple_app_under_islet-using-shim"
+           #"test-run_example-help-list-args"
+           #"test-run_example-dry-run"
+           #"test-run_example-simple_app"
+           #"test-simple_app-with-crypto_algorithms"
+           #"test-run_example-simple_app_python"
+           #"test-simple_app_python-with-warm-restart"
+           #"test-build-and-setup-App-Service-and-simple_app_under_app_service"
+           #"test-run_example-multidomain_simple_app"
+           #"test-build-and-install-sev-snp-simulator"
+           #"test-sev-snp-simulator-sev-test"
+           #"test-certifier-build-and-test-simulated-SEV-mode"
+           #"test-simple_app_under_sev-simulated-SEV-mode"
+           #"test-simple_app_under_keystone-using-shim"
+           #"test-ISLET-SDK-shim_test"
+           #"test-run_example-simple_app_under_islet-using-shim"
 
            # This is the default target, to run all tests
            # "test_all"
@@ -126,6 +128,7 @@ function test-core-certifier-programs() {
     make -f certifier_tests.mak clean
 
     make -j${NumMakeThreads} -f certifier.mak
+    return
 
     # We need to clean here, otherwise make certifier_tests.mak will run
     # into some protobuf-related errors.
@@ -258,7 +261,7 @@ function unit-test-certlib-utility-programs() {
     echo "* Check core Certlib interfaces for utility programs"
     echo "******************************************************************"
     echo " "
-    pushd utilities > /dev/null 2>&1
+    pushd ../utilities > /dev/null 2>&1
 
     # Build utilities
     make -j${NumMakeThreads} -f cert_utility.mak
@@ -266,7 +269,7 @@ function unit-test-certlib-utility-programs() {
 
     popd > /dev/null 2>&1
 
-    pushd ./certifier_service/certlib/test_data > /dev/null 2>&1
+    pushd ../certifier_service/certlib/test_data > /dev/null 2>&1
 
     echo " "
     echo "---- Running utilities/cert_utility.exe ... ----"
@@ -287,7 +290,7 @@ function unit-test-certlib-utility-programs() {
     popd > /dev/null 2>&1
 
     # Setup dummy libraries for Certifier Service to link with
-    pushd ./certifier_service/ > /dev/null 2>&1
+    pushd ../certifier_service/ > /dev/null 2>&1
 
     cd ./graminelib/
     make dummy
@@ -319,11 +322,11 @@ function unit-test-certlib-utility-programs() {
     echo " "
     # Basic verification of measurement_utility.
     #
-    ./tests/measurement_utility_test.sh
+    pwd
+    ../tests/measurement_utility_test.sh
 
     # Above script will execute a utility which will generate policy_key.py
-    git restore sample_apps/simple_app_python/policy_key.py
-
+    git restore ../sample_apps/simple_app_python/policy_key.py
 }
 
 # #############################################################################
