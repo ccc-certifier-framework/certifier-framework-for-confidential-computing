@@ -17,7 +17,7 @@ files=$(gofmt -l "${CERTIFIER_ROOT}")
 rc=$?
 if [ $rc -ne 0 ]; then
     echo "Run 'gofmt -w' on these files to update them in-place with default gofmt formatting:"
-    for file in $files; do echo "  ${file}"; done
+#    for file in $files; do echo "  ${file}"; done
 fi
 
 exit $rc
