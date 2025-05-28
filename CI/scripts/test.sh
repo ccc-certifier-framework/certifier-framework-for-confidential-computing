@@ -10,6 +10,7 @@ Me=$(basename "$0")
 pushd "$(dirname "$0")" > /dev/null 2>&1
 
 cd ../..
+pwd
 CERT_ROOT="$(pwd)"
 
 # Establish # of CPUs, so make -j<num threads> can be maximised
@@ -64,20 +65,20 @@ trap cleanup ERR
 # Array of test function names. If you add a new test_<function>,
 # add it to this list, here, so that one can see it in --list output.
 # ##################################################################
-TestList=( "test-core-certifier-programs"
+TestList=( "test-core-certifier-programs"  		# works now
            #"test-cert_framework-pytests"
            #"test-mtls-ssl-client-server-comm-pytest"
-           "unit-test-certlib-utility-programs"
-           #"test-run_example-help-list-args"
-           #"test-run_example-dry-run"
+           "unit-test-certlib-utility-programs"  	# works now
+           "test-run_example-help-list-args"  		# works now
+           "test-run_example-dry-run"  			# works now
            #"test-run_example-simple_app"
            #"test-simple_app-with-crypto_algorithms"
            #"test-run_example-simple_app_python"
            #"test-simple_app_python-with-warm-restart"
            #"test-build-and-setup-App-Service-and-simple_app_under_app_service"
            #"test-run_example-multidomain_simple_app"
-           #"test-build-and-install-sev-snp-simulator"
-           #"test-sev-snp-simulator-sev-test"
+           "test-build-and-install-sev-snp-simulator"  # works now
+           "test-sev-snp-simulator-sev-test"  	       # works now
            #"test-certifier-build-and-test-simulated-SEV-mode"
            #"test-simple_app_under_sev-simulated-SEV-mode"
            #"test-simple_app_under_keystone-using-shim"
@@ -261,7 +262,8 @@ function unit-test-certlib-utility-programs() {
     echo "* Check core Certlib interfaces for utility programs"
     echo "******************************************************************"
     echo " "
-    pushd ../utilities > /dev/null 2>&1
+    echo $CERT_ROOT
+    pushd $CERT_ROOT/utilities > /dev/null 2>&1
 
     # Build utilities
     make -j${NumMakeThreads} -f cert_utility.mak
@@ -269,13 +271,13 @@ function unit-test-certlib-utility-programs() {
 
     popd > /dev/null 2>&1
 
-    pushd ../certifier_service/certlib/test_data > /dev/null 2>&1
+    pushd $CERT_ROOT/certifier_service/certlib/test_data > /dev/null 2>&1
 
     echo " "
     echo "---- Running utilities/cert_utility.exe ... ----"
     echo " "
     set -x
-    ../../../utilities/cert_utility.exe                    \
+    $CERT_ROOT/utilities/cert_utility.exe                \
         --operation=generate-policy-key-and-test-keys      \
         --policy_key_output_file=policy_key_file.bin       \
         --policy_cert_output_file=policy_cert_file.bin     \
@@ -290,7 +292,7 @@ function unit-test-certlib-utility-programs() {
     popd > /dev/null 2>&1
 
     # Setup dummy libraries for Certifier Service to link with
-    pushd ../certifier_service/ > /dev/null 2>&1
+    pushd $CERT_ROOT/certifier_service/ > /dev/null 2>&1
 
     cd ./graminelib/
     make dummy
@@ -323,10 +325,10 @@ function unit-test-certlib-utility-programs() {
     # Basic verification of measurement_utility.
     #
     pwd
-    ../tests/measurement_utility_test.sh
+    $CERT_ROOT/tests/measurement_utility_test.sh
 
     # Above script will execute a utility which will generate policy_key.py
-    git restore ../sample_apps/simple_app_python/policy_key.py
+    git restore $CERT_ROOT/sample_apps/simple_app_python/policy_key.py
 }
 
 # #############################################################################
@@ -335,7 +337,7 @@ function test-run_example-help-list-args() {
     echo "* Exercise run_example with --help, --list arguments ..."
     echo "******************************************************************"
     echo " "
-    pushd ./sample_apps > /dev/null 2>&1
+    pushd $CERT_ROOT/sample_apps > /dev/null 2>&1
 
     # Exercise help / usage / list options, for default simple_app
     ./run_example.sh -h
@@ -369,7 +371,7 @@ function test-run_example-help-list-args() {
     ./run_example.sh --help simple_app_under_keystone
     ./run_example.sh --list simple_app_under_keystone
 
-#    ./run_example.sh --list simple_app_python
+#    ./run_example.sh --list simple_app_python   #Fix
 
     ./run_example.sh --list multidomain_simple_app
 
@@ -388,7 +390,7 @@ function test-run_example-dry-run() {
     echo "* Exercise run_example with --dry-run argument ..."
     echo "******************************************************************"
     echo " "
-    pushd ./sample_apps > /dev/null 2>&1
+    pushd $CERT_ROOT/sample_apps > /dev/null 2>&1
 
     ./run_example.sh --dry-run simple_app
     ./run_example.sh --dry-run simple_app setup
