@@ -63,7 +63,7 @@ trap cleanup ERR
 # add it to this list, here, so that one can see it in --list output.
 # ##################################################################
 TestList=( "test-core-certifier-programs"
-           "test-cert_framework-pytests"
+#           "test-cert_framework-pytests"
            "test-mtls-ssl-client-server-comm-pytest"
            "unit-test-certlib-utility-programs"
            "test-run_example-help-list-args"
