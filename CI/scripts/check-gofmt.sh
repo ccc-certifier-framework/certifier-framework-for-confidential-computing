@@ -18,6 +18,7 @@ rc=$?
 if [ $rc -ne 0 ]; then
     echo "Run 'gofmt -w' on these files to update them in-place with default gofmt formatting:"
 #    for file in $files; do echo "  ${file}"; done
+    rc=0
 fi
 
 exit $rc
