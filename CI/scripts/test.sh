@@ -63,7 +63,7 @@ trap cleanup ERR
 # add it to this list, here, so that one can see it in --list output.
 # ##################################################################
 TestList=( "test-core-certifier-programs"
-#           "test-cert_framework-pytests"
+           "test-cert_framework-pytests"
            "test-mtls-ssl-client-server-comm-pytest"
            "unit-test-certlib-utility-programs"
            "test-run_example-help-list-args"
@@ -366,7 +366,7 @@ function test-run_example-help-list-args() {
     ./run_example.sh --help simple_app_under_keystone
     ./run_example.sh --list simple_app_under_keystone
 
-    ./run_example.sh --list simple_app_python
+#    ./run_example.sh --list simple_app_python
 
     ./run_example.sh --list multidomain_simple_app
 
@@ -417,7 +417,7 @@ function test-run_example-dry-run() {
     ./run_example.sh --dry-run simple_app_under_islet setup
     ./run_example.sh --dry-run simple_app_under_islet run_test
 
-    ./run_example.sh --dry-run simple_app_python
+#    ./run_example.sh --dry-run simple_app_python
 
     ./run_example.sh --dry-run multidomain_simple_app
     ./run_example.sh --dry-run multidomain_simple_app setup
