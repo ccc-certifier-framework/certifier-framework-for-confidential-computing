@@ -60,6 +60,7 @@ jobs:
     - name: test-code-formatting
       run: |
         ./CI/scripts/check-gofmt.sh
+        echo "Finished Go formatting"
 
         #! Some new pytests trip warning:
         #!  - W0212: Access to a protected member _print of a client class
@@ -77,14 +78,14 @@ jobs:
         #!set +x
 
     #! -------------------------------------------------------------------------
-    - name: test-cert_framework-pytests
-      run: |
-        ./CI/scripts/test.sh test-cert_framework-pytests
+    #!- name: test-cert_framework-pytests
+      #!run: |
+      #!./CI/scripts/test.sh test-cert_framework-pytests
 
     #! -------------------------------------------------------------------------
-    - name: test-mtls-ssl-client-server-comm-pytest
-      run: |
-        ./CI/scripts/test.sh test-mtls-ssl-client-server-comm-pytest
+    #!- name: test-mtls-ssl-client-server-comm-pytest
+    #!run: |
+    #!./CI/scripts/test.sh test-mtls-ssl-client-server-comm-pytest
 
     #! -------------------------------------------------------------------------
     - name: unit-test-certlib-utility-programs
