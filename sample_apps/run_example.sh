@@ -635,7 +635,7 @@ function run_cmd() {
         echo "${echo_sudo}$@"
     fi
 }
-trap run_cmd ERR
+#trap run_cmd ERR
 
 # ###########################################################################
 # Wrappers around pushd / popd to also honor --dry-run mode, so user can
@@ -649,6 +649,7 @@ function run_pushd() {
         echo "pushd ${todir}"
     fi
 }
+trap run_pushd ERR
 
 function run_popd() {
     if [ ${DryRun} -eq 0 ]; then
@@ -658,6 +659,7 @@ function run_popd() {
         echo "popd"
     fi
 }
+trap run_popd ERR
 
 # ###########################################################################
 # Deep-clean the build-env to remove artifacts (e.g. generated files, binaries
