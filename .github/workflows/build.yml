@@ -60,6 +60,7 @@ jobs:
     - name: test-code-formatting
       run: |
         ./CI/scripts/check-gofmt.sh
+      run: |
         echo "Finished Go formatting"
 
         #! Some new pytests trip warning:
