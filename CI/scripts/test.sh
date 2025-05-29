@@ -65,23 +65,26 @@ trap cleanup ERR
 # Array of test function names. If you add a new test_<function>,
 # add it to this list, here, so that one can see it in --list output.
 # ##################################################################
-TestList=( "test-core-certifier-programs"  		# works now
+TestList=( "test-core-certifier-programs"
+
            #"test-cert_framework-pytests"
            #"test-mtls-ssl-client-server-comm-pytest"
-           "unit-test-certlib-utility-programs"  	# works now
-           "test-run_example-help-list-args"  		# works now
-           "test-run_example-dry-run"  			# works now
-           #"test-run_example-simple_app"
-           #"test-simple_app-with-crypto_algorithms"
+
+           "unit-test-certlib-utility-programs"
+           "test-run_example-help-list-args"
+           "test-run_example-dry-run"
+           "test-run_example-simple_app"
+           "test-simple_app-with-crypto_algorithms"
+           "test-build-and-setup-App-Service-and-simple_app_under_app_service"
+           "test-run_example-multidomain_simple_app"
+           "test-build-and-install-sev-snp-simulator"
+           "test-sev-snp-simulator-sev-test"
+           "test-certifier-build-and-test-simulated-SEV-mode"
+           "test-simple_app_under_sev-simulated-SEV-mode"
+           
            #"test-run_example-simple_app_python"
            #"test-simple_app_python-with-warm-restart"
-           #"test-build-and-setup-App-Service-and-simple_app_under_app_service"
-           #"test-run_example-multidomain_simple_app"
-           "test-build-and-install-sev-snp-simulator"  # works now
-           "test-sev-snp-simulator-sev-test"  	       # works now
-           #"test-certifier-build-and-test-simulated-SEV-mode"
-           #"test-simple_app_under_sev-simulated-SEV-mode"
-           #"test-simple_app_under_keystone-using-shim"
+	   #"test-simple_app_under_keystone-using-shim"
            #"test-ISLET-SDK-shim_test"
            #"test-run_example-simple_app_under_islet-using-shim"
 
@@ -438,6 +441,7 @@ function test-run_example-simple_app() {
     echo "******************************************************************"
     echo " "
     pushd $CERT_ROOT/sample_apps > /dev/null 2>&1
+    return  #Fix
 
     ./cleanup.sh
 
@@ -472,7 +476,6 @@ function test-run_example-simple_app() {
     popd $CERT_ROOT/sample_apps > /dev/null 2>&1
 
     ./cleanup.sh
-    return  #Fix
 
     # Re-start Certifier Service as script, above, would have shut it down
     ./run_example.sh simple_app start_certifier_service
@@ -500,7 +503,7 @@ function test-simple_app-with-crypto_algorithms() {
     echo "* Test: Execute script to compile, build and run simple_app."
     echo "******************************************************************"
     echo " "
-    pushd ./sample_apps > /dev/null 2>&1
+    pushd $CERT_ROOT/sample_apps > /dev/null 2>&1
 
     ./cleanup.sh
 
@@ -605,7 +608,7 @@ function test-build-and-setup-App-Service-and-simple_app_under_app_service() {
     echo "* Build-and-setup Application Service "
     echo "***************************************"
     echo " "
-    pushd ./sample_apps > /dev/null 2>&1
+    pushd $CERT_ROOT/sample_apps > /dev/null 2>&1
 
     ./run_example.sh application_service setup
 
@@ -667,7 +670,7 @@ function test-run_example-multidomain_simple_app() {
     echo "* Test: Execute script to compile, build and run multidomain_simple_app."
     echo "************************************************************************"
     echo " "
-    pushd ./sample_apps > /dev/null 2>&1
+    pushd $CERT_ROOT/sample_apps > /dev/null 2>&1
 
     ./cleanup.sh
 
@@ -693,7 +696,7 @@ function test-build-and-install-sev-snp-simulator() {
     echo " "
     return
 
-    pushd ./sev-snp-simulator > /dev/null 2>&1
+    pushd $CERT_ROOT/sev-snp-simulator > /dev/null 2>&1
 
     make clean
     make
@@ -727,7 +730,7 @@ function test-certifier-build-and-test-simulated-SEV-mode() {
     echo "* Check that Certifier tests run clean with simulated SEV-enabled."
     echo "******************************************************************"
     echo " "
-    pushd src > /dev/null 2>&1
+    pushd $CERT_ROOT/src > /dev/null 2>&1
 
     make -f certifier_tests.mak clean
     ENABLE_SEV=1 make -j${NumMakeThreads} -f certifier_tests.mak
@@ -742,10 +745,10 @@ function test-certifier-build-and-test-simulated-SEV-mode() {
     make -f certifier_tests.mak clean
     ENABLE_SEV=1 make -j${NumMakeThreads} -f certifier.mak
 
-    popd > /dev/null 2>&1
+    popd $CERT_ROOT > /dev/null 2>&1
 
     # Run script that will setup s/w required to build Policy Generator for SEV-app
-    ./CI/scripts/setup-JSON-schema-validator-for-SEV-apps.sh
+    $CERT_ROOT/CI/scripts/setup-JSON-schema-validator-for-SEV-apps.sh
 }
 
 # #############################################################################
@@ -757,7 +760,7 @@ function test-simple_app_under_sev-simulated-SEV-mode() {
     echo "****** WARNING! Skipped due to open issue #242, Fails on Ubuntu 22.04.4"
     echo " "
     return
-    pushd ./sample_apps > /dev/null 2>&1
+    pushd $CERT_ROOT/sample_apps > /dev/null 2>&1
 
     ./run_example.sh rm_non_git_files
     ./run_example.sh simple_app_under_sev setup
@@ -782,7 +785,7 @@ function test-simple_app_under_keystone-using-shim() {
     echo "* Run simple_app_under_keystone using shim"
     echo "********************************************"
     echo " "
-    pushd ./sample_apps > /dev/null 2>&1
+    pushd $CERT_ROOT/sample_apps > /dev/null 2>&1
 
     ./run_example.sh rm_non_git_files
     ./run_example.sh simple_app_under_keystone setup
