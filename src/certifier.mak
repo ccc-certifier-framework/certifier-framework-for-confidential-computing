@@ -14,7 +14,7 @@ ifndef SRC_DIR
 SRC_DIR=.
 endif
 ifndef INC_DIR
-INC_DIR=../include
+INC_DIR=$(CERTIFIER_ROOT)/include
 endif
 ifndef OBJ_DIR
 OBJ_DIR=.
@@ -46,7 +46,7 @@ S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
 CL=..
-INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I $(S)/sev-snp -I/usr/include
+INCLUDE=-I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp -I/usr/include
 
 ifndef NEWPROTOBUF
 CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations

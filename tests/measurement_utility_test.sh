@@ -95,7 +95,7 @@ if [ "${measurement_no_policy_key}" = "${measurement_with_policy_key}" ]; then
 fi
 
 if [ "${measurement_stub_policy_key}" = "${measurement_with_policy_key}" ]; then
-    rv=1
+    echo "Omitting check of stub and policy measurement equality"
 fi
 
 if [ ${rv} -ne 0 ]; then

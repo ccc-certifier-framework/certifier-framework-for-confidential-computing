@@ -70,6 +70,7 @@ if [ "$(uname -s)" = "Linux" ]; then
 fi
 # Cap # of -j threads for make to 8
 NumMakeThreads=${NumCPUs}
+NumMakeThreads=1	#Fix
 if [ "${NumMakeThreads}" -gt 8 ]; then NumMakeThreads=8; fi
 
 # --------------------------------------------------------------------------------
