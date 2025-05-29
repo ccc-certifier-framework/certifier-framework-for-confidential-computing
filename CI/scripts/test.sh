@@ -473,7 +473,7 @@ function test-run_example-simple_app() {
     # Rebuild shared library that pytest needs
     pushd $CERT_ROOT/src > /dev/null 2>&1
     NO_ENABLE_SEV=1 make -f certifier.mak --always-make -j${NumMakeThreads} sharedlib
-    popd $CERT_ROOT/sample_apps > /dev/null 2>&1
+    popd > /dev/null 2>&1
 
     ./cleanup.sh
 
@@ -745,7 +745,7 @@ function test-certifier-build-and-test-simulated-SEV-mode() {
     make -f certifier_tests.mak clean
     ENABLE_SEV=1 make -j${NumMakeThreads} -f certifier.mak
 
-    popd $CERT_ROOT > /dev/null 2>&1
+    popd > /dev/null 2>&1
 
     # Run script that will setup s/w required to build Policy Generator for SEV-app
     $CERT_ROOT/CI/scripts/setup-JSON-schema-validator-for-SEV-apps.sh

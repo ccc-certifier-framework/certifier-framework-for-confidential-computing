@@ -17,6 +17,8 @@ if [ "${numCPUs}" -eq "0" ]; then numCPUs=1; fi
 pushd "$(dirname "$0")" > /dev/null 2>&1
 
 cd ../../
+echo "JSON dir: "
+pwd
 
 # shellcheck disable=SC2046
 CERT_PROTO="$(pwd)"; export CERT_PROTO
@@ -33,7 +35,7 @@ echo "* This step (make -f policy_generator.mak) needs some prerequisite"
 echo "* s/w components. See INSTALL.md"
 echo "******************************************************************"
 echo " "
-pushd utilities
+pushd $CERT_PROTO/utilities
 
 echo " "
 echo "* ---------------------------------------------------------------"
