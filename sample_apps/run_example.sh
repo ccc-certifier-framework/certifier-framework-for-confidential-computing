@@ -624,7 +624,9 @@ function run_cmd() {
             set +x
         else
             set -x
+	    #echo "\nProposing: $@"
             "$@"
+	    #echo "Succeeded: $@\n"
             set +x
         fi
     else
@@ -633,6 +635,7 @@ function run_cmd() {
         echo "${echo_sudo}$@"
     fi
 }
+trap run_cmd ERR
 
 # ###########################################################################
 # Wrappers around pushd / popd to also honor --dry-run mode, so user can
