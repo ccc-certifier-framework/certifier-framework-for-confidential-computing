@@ -63,18 +63,18 @@ jobs:
 
         #! Some new pytests trip warning:
         #!  - W0212: Access to a protected member _print of a client class
-        #which pylint
-        #pylint --version
+        #!which pylint
+        #!pylint --version
 
-        #pwd
-        #ls -aFlrt *.py* *.so
+        #!pwd
+        #!ls -aFlrt *.py* *.so
 
-        #set -x
+        #!set -x
 
-        # RESOLVE: tests/pytests/test_certifier_protobuf_interfaces.py:128:16: E1101: Instance of 'time_point' has no 'FromString' member (no-member)
-        # CI fails due to above error, suppressed by use of --exit-zero
-        #PYTHONPATH=. pylint --disable W0212 --exit-zero tests/pytests/*.py
-        #set +x
+        #! RESOLVE: tests/pytests/test_certifier_protobuf_interfaces.py:128:16: E1101: Instance of 'time_point' has no 'FromString' member (no-member)
+        #! CI fails due to above error, suppressed by use of --exit-zero
+        #!PYTHONPATH=. pylint --disable W0212 --exit-zero tests/pytests/*.py
+        #!set +x
 
     #! -------------------------------------------------------------------------
     - name: test-cert_framework-pytests
