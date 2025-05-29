@@ -60,9 +60,6 @@ jobs:
     - name: test-code-formatting
       run: |
         ./CI/scripts/check-gofmt.sh
-    - name: done-test-code-formatting
-      run: |
-        echo "Finished Go formatting"
 
         #! Some new pytests trip warning:
         #!  - W0212: Access to a protected member _print of a client class
