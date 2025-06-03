@@ -868,6 +868,10 @@ function test-acl_lib-programs() {
     # into some protobuf-related errors.
     make -i -f standalone_acl_lib_test.mak clean
 
+    # Prepare test_data
+    mkdir acl_test_data
+    cp file_1 file_2 acl_test_data
+
     make -j${NumMakeThreads} -f standalone_acl_lib_test.mak
     ./test_acl.exe
 
@@ -885,8 +889,12 @@ function test-acl_lib-programs() {
 
     popd > /dev/null 2>&1
 
-    # This creates the policy key and policy cert.
+    # Prepare test_data
+    mkdir test_data
+    cp file_1 file_2 test_data
     cd test_data
+
+    # This creates the policy key and policy cert.
     ${CERT_ROOT}/utilities/cert_utility.exe --operation=generate-policy-key  \
                             --policy_key_output_file=policy_key_file.bin \
                             --policy_cert_output_file=policy_cert_file.bin
