@@ -65,11 +65,10 @@ trap cleanup ERR
 # Array of test function names. If you add a new test_<function>,
 # add it to this list, here, so that one can see it in --list output.
 # ##################################################################
-TestList=( "test-core-certifier-programs"
-
-           #"test-cert_framework-pytests"
-           #"test-mtls-ssl-client-server-comm-pytest"
-
+TestList=( 
+	   "test-core-certifier-programs"
+           "test-cert_framework-pytests"   #Needs work.
+           "test-mtls-ssl-client-server-comm-pytest"  #needs work
            "unit-test-certlib-utility-programs"
            "test-run_example-help-list-args"
            "test-run_example-dry-run"
@@ -81,10 +80,11 @@ TestList=( "test-core-certifier-programs"
            "test-sev-snp-simulator-sev-test"
            "test-certifier-build-and-test-simulated-SEV-mode"
            "test-simple_app_under_sev-simulated-SEV-mode"
+	   "test-simple_app_under_keystone-using-shim"
+	   "test-acl_lib-programs"
            
            #"test-run_example-simple_app_python"
            #"test-simple_app_python-with-warm-restart"
-	   #"test-simple_app_under_keystone-using-shim"
            #"test-ISLET-SDK-shim_test"
            #"test-run_example-simple_app_under_islet-using-shim"
 
@@ -163,11 +163,11 @@ function test-cert_framework-pytests() {
     echo " Test Python bindings' to Certifier Framework shared library "
     echo "**************************************************************"
     echo " "
-    return  #Fix
 
     PYTHONPATH=$(pwd); export PYTHONPATH
 
-    pushd tests/pytests > /dev/null 2>&1
+    return  #Fix
+    pushd ../tests/pytests > /dev/null 2>&1
 
     # Run one case showing verbose outputs of each library's contents.
     # Run each py file separately as 'pytest -v' (on all files) craps out.
@@ -215,14 +215,14 @@ function test-mtls-ssl-client-server-comm-pytest() {
     echo " Test Python Client-Server Secure channel communication"
     echo "**************************************************************"
     echo " "
-    return  #Fix
 
-    pushd tests > /dev/null 2>&1
+    pushd ../tests > /dev/null 2>&1
 
     # Generates required PEM-cert and private-key files for client & server
     ./gen_client_server_certs_key_files.sh
 
     cd pytests
+    return  #Fix
 
     # ----
     # Exercise client-server communication with self-signed certificates
@@ -788,7 +788,7 @@ function test-simple_app_under_keystone-using-shim() {
     echo "* Run simple_app_under_keystone using shim"
     echo "********************************************"
     echo " "
-    return #Fix
+    #return #Fix
     pushd $CERT_ROOT/sample_apps > /dev/null 2>&1
 
     ./run_example.sh rm_non_git_files
@@ -848,6 +848,38 @@ function test-run_example-simple_app_under_islet-using-shim() {
 
     popd > /dev/null 2>&1
 }
+
+# #############################################################################
+function test-acl_lib-programs() {
+    echo "******************************************************************"
+    echo "* Check that core certifier programs still compile and clear tests"
+    echo "* (Also builds shared libraries for use by Python bindings.)"
+    echo "******************************************************************"
+    echo " "
+
+    pushd "${CERT_ROOT}"/src > /dev/null 2>&1
+    make -j${NumMakeThreads} -f certifier.mak
+    popd > /dev/null 2>&1
+
+    pushd "${CERT_ROOT}"/acl_lib> /dev/null 2>&1
+    cp ${CERT_ROOT}/certifier_service/certprotos/certifier.proto .
+
+    # We need to clean here, otherwise make certifier_tests.mak will run
+    # into some protobuf-related errors.
+    make -i -f standalone_acl_lib_test.mak clean
+
+    make -j${NumMakeThreads} -f standalone_acl_lib_test.mak
+    ./test_acl.exe
+
+    # make acl_lib and test
+    make -i -j${NumMakeThreads} -f acl_lib.mak clean
+    make -j${NumMakeThreads} -f acl_lib.mak
+    make -i -j${NumMakeThreads} -f standalone_app.mak clean
+    make -j${NumMakeThreads} -f standalone_app.mak
+
+    popd > /dev/null 2>&1
+}
+
 
 # #############################################################################
 function test_case_template() {
