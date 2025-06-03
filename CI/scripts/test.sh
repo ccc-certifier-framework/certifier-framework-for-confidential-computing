@@ -861,7 +861,7 @@ function test-acl_lib-programs() {
     make -j${NumMakeThreads} -f certifier.mak
     popd > /dev/null 2>&1
 
-    pushd "${CERT_ROOT}"/acl_lib> /dev/null 2>&1
+    pushd "${CERT_ROOT}"/acl_lib > /dev/null 2>&1
     cp ${CERT_ROOT}/certifier_service/certprotos/certifier.proto .
 
     # We need to clean here, otherwise make certifier_tests.mak will run
@@ -877,6 +877,35 @@ function test-acl_lib-programs() {
     make -i -j${NumMakeThreads} -f standalone_app.mak clean
     make -j${NumMakeThreads} -f standalone_app.mak
 
+    # Build utilities
+    pushd  $(CERT_ROOT)/utilities > /dev/null 2>&1
+
+    make -j${NumMakeThreads} -f cert_utility.mak
+    make -j${NumMakeThreads} -f policy_utilities.mak
+
+    popd > /dev/null 2>&1
+
+    # This creates the policy key and policy cert.
+    CERT_UTILS = $(CERT_ROOT)/utilities
+    cd test_data
+    $CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
+                            --policy_key_output_file=policy_key_file.bin \
+                            --policy_cert_output_file=policy_cert_file.bin
+    cd ..
+    # This makes the channel keys (auth keys and certs for the secure channel).
+    sleep 1
+    ./standalone_app.exe --operation=make_additional_channel_keys
+    # This makes the identity keys, files and access policy.
+    sleep 1
+    ./standalone_app.exe --operation=make_access_keys_and_files
+    #run server
+    sleep 1
+    ./standalone_app.exe --operation=run_as_server &
+    #run client
+    sleep 2
+    ./standalone_app.exe --operation=run_as_client
+
+    ./cleanup.sh
     popd > /dev/null 2>&1
 }
 

@@ -45,7 +45,8 @@ function cleanup_stale_procs() {
                     sev_example_app.exe \
                     run-app-as-server \
                     run-app-as-client \
-                    app_service.exe
+                    app_service.exe \
+		    standalone_app.exe
     do
         # shellcheck disable=SC2046,SC2009
         if [ $(ps -ef | grep -E "${procname}" \
