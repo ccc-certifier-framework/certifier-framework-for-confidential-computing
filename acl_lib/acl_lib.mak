@@ -81,6 +81,7 @@ acl_lib.a: $(tobj)
 	@echo "packaging acl_lib"
 	$(AR) rcs $(EXE_DIR)/$(ACL_LIB)  $(tobj)
 
+#Use --proto_path ../certifier_service/certprotos
 $(SRC_DIR)/acl.pb.cc: $(SRC_DIR)/acl.proto
 	$(PROTO) -I=$(SRC_DIR) --cpp_out=$(SRC_DIR) $(SRC_DIR)/acl.proto
 

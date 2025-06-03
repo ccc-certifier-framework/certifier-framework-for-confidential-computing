@@ -2605,6 +2605,7 @@ done:
   return ret;
 }
 
+// Use cppcheck --suppress=syntaxError *.cc, here
 TEST(support, test_support) {
   EXPECT_TRUE(test_support());
 }

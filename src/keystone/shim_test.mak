@@ -3,13 +3,15 @@
 # #############################################################################
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
+#ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT = ../..
+#endif
 
 ifndef SRC_DIR
 SRC_DIR=..
 endif
 ifndef INC_DIR
-INC_DIR=../../include
+INC_DIR=$(CERTIFIER_ROOT)/include
 endif
 ifndef OBJ_DIR
 OBJ_DIR=.
@@ -37,9 +39,14 @@ O= $(OBJ_DIR)
 I= $(INC_DIR)
 CL=..
 
-INCLUDE=-I $(I) -I/usr/local/opt/openssl@1.1/include/ -I .
+INCLUDE = -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I.
 
-CFLAGS = $(INCLUDE) -O3 -g -D X64 -std=c++11 -Wall -Wno-unused-variable -Wno-deprecated-declarations
+NEWPROTOBUF=1
+ifndef NEWPROTOBUF
+CFLAGS = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+else
+CFLAGS = $(INCLUDE) -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+endif
 
 ifdef ENABLE_SEV
 CFLAGS += -D SEV_SNP
@@ -52,8 +59,15 @@ LINK=g++
 # PROTO=/usr/local/bin/protoc
 PROTO=protoc
 AR=ar
+
+ifndef NEWPROTOBUF
 #export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
+LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB) -l protobuf
+else
+LDFLAGS = -L $(LOCAL_LIB) `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
+LDFLAGS_SWIGPYTEST = -L $(LOCAL_LIB) `pkg-config --cflags --libs protobuf`
+endif
 
 dobj = $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o        \
        $(O)/support.o $(O)/application_enclave.o $(O)/simulated_enclave.o  \

@@ -175,3 +175,7 @@ jobs:
     - name: test-run_example-simple_app_under_islet-using-shim
       run: |
         ./CI/scripts/test.sh test-run_example-simple_app_under_islet-using-shim
+    #! -------------------------------------------------------------------------
+    - name: test-acl_lib-programs
+      run: |
+        ./CI/scripts/test.sh test-acl_lib-programs
