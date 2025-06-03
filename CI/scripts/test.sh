@@ -890,7 +890,6 @@ function test-acl_lib-programs() {
     popd > /dev/null 2>&1
 
     # Prepare test_data
-    mkdir test_data
     cp file_1 file_2 test_data
     cd test_data
 
