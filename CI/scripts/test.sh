@@ -81,6 +81,7 @@ TestList=(
            "test-certifier-build-and-test-simulated-SEV-mode"
            "test-simple_app_under_sev-simulated-SEV-mode"
 	   "test-simple_app_under_keystone-using-shim"
+
 	   "test-acl_lib-programs"
            
            #"test-run_example-simple_app_python"
@@ -852,8 +853,7 @@ function test-run_example-simple_app_under_islet-using-shim() {
 # #############################################################################
 function test-acl_lib-programs() {
     echo "******************************************************************"
-    echo "* Check that core certifier programs still compile and clear tests"
-    echo "* (Also builds shared libraries for use by Python bindings.)"
+    echo "* Test the acl_lib programs"
     echo "******************************************************************"
     echo " "
 
@@ -878,7 +878,7 @@ function test-acl_lib-programs() {
     make -j${NumMakeThreads} -f standalone_app.mak
 
     # Build utilities
-    pushd  $(CERT_ROOT)/utilities > /dev/null 2>&1
+    pushd  ${CERT_ROOT}/utilities > /dev/null 2>&1
 
     make -j${NumMakeThreads} -f cert_utility.mak
     make -j${NumMakeThreads} -f policy_utilities.mak
@@ -886,9 +886,8 @@ function test-acl_lib-programs() {
     popd > /dev/null 2>&1
 
     # This creates the policy key and policy cert.
-    CERT_UTILS = $(CERT_ROOT)/utilities
     cd test_data
-    $CERT_UTILS/cert_utility.exe --operation=generate-policy-key  \
+    ${CERT_ROOT}/utilities/cert_utility.exe --operation=generate-policy-key  \
                             --policy_key_output_file=policy_key_file.bin \
                             --policy_cert_output_file=policy_cert_file.bin
     cd ..
@@ -905,7 +904,7 @@ function test-acl_lib-programs() {
     sleep 2
     ./standalone_app.exe --operation=run_as_client
 
-    ./cleanup.sh
+    ../sample_apps/cleanup.sh
     popd > /dev/null 2>&1
 }
 
