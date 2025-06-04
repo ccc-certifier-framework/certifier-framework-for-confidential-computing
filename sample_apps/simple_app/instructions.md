@@ -469,3 +469,50 @@ go mod tidy
 go mod init certifier.pb.go
 ```
 
+## Summary and comments
+
+These instructions might seem daunting and a little summary might
+make them clearer.
+
+Here are the steps described at a high level:
+
+  Steps 1-3: Generate and provision keys that would mostly already exist in
+  a real platform.
+
+  Steps 4-5: Get and embed policy key in app.  Compile app.
+
+  Step 6-7: Measure app and author policy e.g.- "Policy key says the app with
+  this measurement is-trusted".
+
+  Step 8-13 (except for step 9): Build Certifier service and provision it with
+  keys and policy.
+
+  Step 9: Make application directories for data.
+
+  Step 14: Initial run of app - app contacts certifier service for the
+  "admissions certificate" signed by the policy key naming the app's
+  public key and measurement.
+
+  Step 15:  Run a server app (the app with a port waiting for service
+  requests) and the client app (the app requesting a service).
+
+One of the reasons there are so many steps is that the procedure covers
+everything done by every party in the ecosystem: the Developer, the
+Security Domain Administrator (the one authoring policy and running
+the Certifier Service), and the Deployer who runs the applications.
+Iit also covers the installation of some supporting libraries used
+by the Developer and the Security Domain Administrator.
+
+Steps 1-3 are needed solely to provide a simulated environment; most
+of the keys, etc. generated in this step are unnecessary in a real
+application on a real platform.
+
+Here are the steps for each participant in a real application:
+
+  1. Developer performs steps 4-5.
+  2. Security Domain Administrator performs steps 6-13 (except 9).
+  3. Deployer performs steps 9 and 15.
+
+Step 14 is transparent and happens automatically when the app first runs.
+It's called out as a separate step for "pedagogical reasons."
+
