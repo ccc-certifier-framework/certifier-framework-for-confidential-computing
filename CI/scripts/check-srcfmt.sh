@@ -10,18 +10,27 @@ set -eu -o pipefail
 
 Me=$(basename "$0")
 
-# Standardize on this version to avoid diffs-in-behaviour across
-# versions of clang-format tool.
-#CLANG_FMT_TOOL="clang-format-11"
-CLANG_FMT_TOOL="clang-format"
+# Detect the best available clang-format version
+# Preferred clang-format-11 for consistency, but fall back to other versions
+CLANG_FMT_TOOL=""
+for tool in clang-format-11 clang-format-14 clang-format-15 clang-format-16 clang-format; do
+    if command -v "$tool" &> /dev/null; then
+        CLANG_FMT_TOOL="$tool"
+        break
+    fi
+done
 
-# Check if required tool exists
-if ! command -v "$CLANG_FMT_TOOL" &> /dev/null; then
-   echo "${Me}: Error: missing required tool $CLANG_FMT_TOOL
+# Check if we found a suitable tool
+if [ -z "$CLANG_FMT_TOOL" ]; then
+   echo "${Me}: Error: No clang-format tool found. Tried: clang-format-11, clang-format-14, clang-format-15, clang-format-16, clang-format
 
-This tool is typically provided by the clang-format package"
+This tool is typically provided by the clang-format package.
+To install on Ubuntu/Debian: sudo apt-get install clang-format
+To install on CentOS/RHEL: sudo yum install clang-tools-extra"
    exit 1
 fi
+
+echo "${Me}: Using clang-format tool: $CLANG_FMT_TOOL"
 
 # Establish root-dir for Certifier library.
 pushd "$(dirname "$0")" > /dev/null 2>&1
