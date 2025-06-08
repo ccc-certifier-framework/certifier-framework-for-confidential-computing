@@ -13,6 +13,7 @@ AlignConsecutiveMacros: true
 AlignEscapedNewlines: Right
 
 AllowShortBlocksOnASingleLine: false
+AllowShortEnumsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
@@ -29,7 +30,8 @@ BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel:  true
   AfterClass:      false
-  AfterControlStatement: false
+
+  AfterControlStatement: Never
   AfterEnum:       false
   AfterFunction:   false
   AfterObjCDeclaration: false
@@ -47,6 +49,7 @@ BreakStringLiterals: true
 
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeTernaryOperators: true
+#BreakStringLiterals: true
 
 ColumnLimit:     80
 CompactNamespaces: false
@@ -65,8 +68,11 @@ DerivePointerAlignment: false
 FixNamespaceComments: true
 
 IndentCaseLabels: true
+IndentCaseBlocks: false
+IndentGotoLabels: false
 IndentPPDirectives: AfterHash
 IndentWrappedFunctionNames: false
+InsertTrailingCommas: None
 IndentWidth:     2
 
 KeepEmptyLinesAtTheStartOfBlocks: true
@@ -85,12 +91,14 @@ SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
 SpacesBeforeTrailingComments: 2
-SpaceBeforeCpp11BracedList: true
+SpaceBeforeCpp11BracedList : true
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeParens: ControlStatements
 SpaceInEmptyParentheses: false
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+  #SpaceInEmptyParentheses: false
 SpacesInAngles: false
 SpacesInCStyleCastParentheses: false
 SpacesInConditionalStatement: false
