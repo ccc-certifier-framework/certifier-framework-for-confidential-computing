@@ -212,6 +212,30 @@ make
 ```shell
 make dummy
 ```
+  Compile the graminelib for gramine host verification
+
+```shell
+cd $CERTIFIER_ROOT/certifier_service/graminelib
+
+make
+```
+
+  If you do not have Gramine installed or do not want to enable it:
+```shell
+make dummy
+```
+  Compile the isletlib for islet host verification
+
+```shell
+cd $CERTIFIER_ROOT/certifier_service/isletlib
+
+make
+```
+
+  If you do not have Islet installed or do not want to enable it:
+```shell
+make dummy
+```
 
   Compile the teelib for running the certifier service inside a TEE
 ```shell
