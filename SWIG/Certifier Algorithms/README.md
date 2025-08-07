@@ -28,3 +28,19 @@ The Java test class uses the wrapped KeyWrapper class to:
 2. Sign a message
 3. Verify the signature
 4. Export and import the key (round trip)
+
+## How to Compile and Run
+1. Make sure you have the following files in your Java folder:
+- KeyWrapper.java
+- KeyWrapperJNI.java
+- KeyWrapperTest.java
+
+2. Then compile and run:
+
+```
+javac KeyWrapper*.java KeyWrapperTest.java
+```
+```
+java KeyWrapperTest
+```
+Make sure `libkey_wrapper.so` is in your `LD_LIBRARY_PATH` or in the same directory.
