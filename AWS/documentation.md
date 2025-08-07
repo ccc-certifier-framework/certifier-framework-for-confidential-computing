@@ -1,6 +1,4 @@
-# AWS Bootcamp – EC2 Instance Setup and Introduction to Secure Encrypted Virtualization (SEV)
-
-**Objective:** Provide a clear and structured guide to setting up an Amazon EC2 instance, followed by an introduction to Secure Encrypted Virtualization (SEV) as an advanced feature.
+# AWS Bootcamp – Configuring an EC2 Instance
 
 ---
 
@@ -50,7 +48,7 @@ Amazon Web Services (AWS) is a comprehensive cloud computing platform offering a
 
 ### Step 3: Launch a New Instance
 1. Click **Launch Instance**.
-2. Under **Name and tags**, provide a descriptive name for your instance (e.g., `MyFirstEC2Server`).
+2. Under **Name and tags**, provide a descriptive name for your instance (e.g., `myCertifierServer`).
 
 ### Step 4: Select an AMI (Operating System)
 - Recommended: **Amazon Linux 2 AMI** or **Ubuntu 20.04 LTS**.
@@ -64,7 +62,7 @@ Amazon Web Services (AWS) is a comprehensive cloud computing platform offering a
 3. Choose file format:
    - **PEM** for macOS/Linux
    - **PPK** for Windows (PuTTY)
-4. Download the file and store it securely—this is required for SSH access.
+4. Download the file and store it securely — this is required for SSH access.
 
 ### Step 7: Configure Network Settings (Security Group)
 1. Allow **SSH (port 22)** access from your IP address for secure terminal access.
