@@ -45,18 +45,8 @@ Amazon Web Services (AWS) is a cloud platform offering 200+ services for compute
 
 ---
 
-## 3. Confidential Computing on AWS
+## 3. AWS Support for SEV
 
-### 3.1 What is Confidential Computing?
-- Protects **data in use** with hardware-based encryption
-- Complements encryption **at rest** (EBS) and **in transit** (TLS)
-
-### 3.2 What is AMD SEV?
-- **Secure Encrypted Virtualization**
-- Encrypts VM memory so even the hypervisor cannot access it
-- Enabled on certain AMD-based EC2 instance families (`m6a`, `c6a`, `r6a`)
-
-### 3.3 AWS Support for SEV
 - SEV-enabled instance families:
   - General Purpose: `m6a`
   - Compute Optimized: `c6a`
