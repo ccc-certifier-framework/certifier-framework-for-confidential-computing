@@ -9,7 +9,7 @@ This creates:
 - simulated_enclave.java
 - simulated_enclaveJNI.java
 
-# Compile `.so' (Shared Library for Java)
+# Compile `.so` (Shared Library for Java)
 
 > Assuming headers are in `include/` and JNI path is:
 
