@@ -1,11 +1,3 @@
-# Note:
-
-> `key_message` (in `certifier_algorithms.h`) is a protobuf class. To wrap it in SWIG, I have created a SWIG-friendly wrapper class.
-> The wrapper class internally uses `key_message` and exposes clean `std::string' methods for"
-> - loading a key
-> - exporting a key
-> - signing/verification
-
 # How to Run
 
 ```
@@ -44,3 +36,11 @@ javac KeyWrapper*.java KeyWrapperTest.java
 java KeyWrapperTest
 ```
 Make sure `libkey_wrapper.so` is in your `LD_LIBRARY_PATH` or in the same directory.
+
+# Note
+
+> `key_message` (in `certifier_algorithms.h`) is a protobuf class. To wrap it in SWIG, I have created a SWIG-friendly wrapper class.
+> The wrapper class internally uses `key_message` and exposes clean `std::string' methods for"
+> - loading a key
+> - exporting a key
+> - signing/verification
