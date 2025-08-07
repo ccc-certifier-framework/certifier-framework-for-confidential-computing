@@ -4,7 +4,7 @@
 swig -c++ -java policy_store.i
 ```
 
-# Compile `.so' (Shared Library for Java)
+# Compile `.so` (Shared Library for Java)
 
 > Assuming JNI headers are at `/usr/lib/jvm/java-17-amazon-corretto/include`
 
