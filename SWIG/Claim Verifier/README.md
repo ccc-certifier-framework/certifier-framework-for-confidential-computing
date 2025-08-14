@@ -4,13 +4,15 @@
 swig -c++ -java claim_verifier.i
 ```
 
-# Compile `.so` (Shared Library for Java)
+# Compile
 
+## Run SWIG
 ```
 g++ -fPIC -c claim_verifier.cc claim_verifier_wrap.cxx -Iinclude \
   -I/usr/lib/jvm/java-17-amazon-corretto/include \
   -I/usr/lib/jvm/java-17-amazon-corretto/include/linux
 ```
+##
 ```
 g++ -shared claim_verifier.o claim_verifier_wrap.o -o libclaim_verifier.so
 ```
