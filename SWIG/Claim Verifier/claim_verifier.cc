@@ -15,4 +15,6 @@ bool ClaimVerifier::verify(const std::string& serialized_claim, const std::strin
     }
 
     return verify_signed_claim(claim, key);
-}
+
+
+// verify_signed_claim(...) is the real framework function from support.cc
