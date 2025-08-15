@@ -97,13 +97,14 @@ Here is the calling arguments:
 
 cf-osutility.exe
     --init-trust
+    --enclave-type=type
     --policy-store-name=filename
     --encrypted-cryptstore-filename=filename
     --cryptstore-name=filename
     --sealed-key-filename=filename
     --symmetric_algorithm=name
     --public_key_algorithm=name
-    --generate-key
+    --generate-and-save-key
     --get-item
         --tag=xxx
         --version=xxx
@@ -123,3 +124,7 @@ cf-osutility.exe
         --tag=xxx
         --type=xxx
     --save-cryptstore
+
+Instructions for building and using the utility are in build.md,
+you should be able to just copy and paste each step.
+
