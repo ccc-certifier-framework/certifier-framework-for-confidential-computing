@@ -93,38 +93,181 @@ included (using virtee) in the OS measurement.  These optional properties can in
 See the use instruction in the examples in this directory.
 
 
-Here is the calling arguments:
+Here are the calling arguments.  Utility uses gflags so if not specified,
+indicated defaults are used.
 
 cf-osutility.exe
-    --init-trust
-    --enclave-type=type
-    --policy-store-name=filename
-    --encrypted-cryptstore-filename=filename
-    --cryptstore-name=filename
-    --sealed-key-filename=filename
-    --symmetric_algorithm=name
-    --public_key_algorithm=name
-    --generate-and-save-key
-    --get-item
-        --tag=xxx
-        --version=xxx
-        --type=xxx
-    --put-item==name of file with value
-        --tag=xxx
-        --version=xxx
-        --type=xxx
-    --output-file=filename
-    --output-format=format
-    --input-format=format
-    --print-cryptstore
-    --earliest-version
-        --tag=xxx
-        --type=xxx
-    --latest-version
-        --tag=xxx
-        --type=xxx
-    --save-cryptstore
+    --init-trust=true
+    --reinit-trust=false
+    --policy_key_file=policy_store=policy_cert_file.policy_domain_name
+    --enclave_type="sev-enclave"
+    --output-format=serialized-protobuf
+    --input-format=serialized-protobuf
+    --policy-store-filename=MUST-SPECIFY-IF-Neded
+    --encrypted-cryptstore-filename=MUST-SPECIFY
+    --sealed-cryptstore-key-filename=MUST-SPECIFY
+    --symmetric_algorithm=aes-256-gcm
+    --public_key_algorithm=_rsa_2048
+    --generate-symmetric-key=false
+    --generate-public-key=false
+    --keyname=MUST-SPECIFY-IF-NEEDED
+    --tag=MUST-SPECIFY-IF-NEEDED
+    --version=MUST-SPECIFY-IF-NEEDED
+    --type=MUST-SPECIFY-IF-NEEDED
+    --get-item=false
+    --put-item=false
+    --print-cryptstore=true
+    --save-cryptstore=true  // this can be false for "get" operations.
+    --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
+    --output-format=MUST-BE-SPECIFIED-IF-NEEDED
+    --input-format=MUST-BE-SPECIFIED-IF-NEEDED
+    --service-port=MUST-BE-SPECIFIED-IF-NEEDED
+
 
 Instructions for building and using the utility are in build.md,
-you should be able to just copy and paste each step.
+you should be able to just copy and paste each step.  The subdirectory
+"src" has the source code for cf-osutility and the example directories
+have examples on using it and setting up the OS security domain (this
+parrallels the same procedures in "simple-example".
 
+--------------------------------------------------------------------------
+
+Use scenarios 1
+
+Intitialze domain and generate and store a symmetric key for
+protecting, for example, a local store.
+
+This scenario uses the utility twice
+on startup, The first call certifes the OS within the security domain.
+The second generates, stores and outputs a symmetric key to protect a local
+resource (like a dmverity or dmcrypt enables disk).  On restart (unless a
+reinit is demanded), this utility is called only once to retrieve the relevant
+key.
+
+Command flow for first
+
+mkdir cf_management_files          // do this if the directory doesn't exist yet
+cd cf_management_files
+cp $(POLICY_CERT) ./policy_cert_file.bin
+For the remainder, policy_domain_name is the name of the relevant security
+(policy) domain. $(VM_OS_TOOLS_BIN) is the directory containing the utility.
+
+$(VM_OS_TOOLS_BIN)/cf-osutility.exe
+    --init-trust=true
+    --policy_key_file=policy_store=policy_cert_file.policy_domain_name
+    --policy-store-filename=policy_store.policy_domain_name
+    --enclave_type="sev-enclave"
+    --sealed-cryptstore-key-filename=sealed-crypstore-key.policy_domain_name
+    --encrypted-cryptstore-filename=cryptstore.policy_domain_name
+    --symmetric_algorithm=aes-256-gcm
+    --public_key_algorithm=rsa_2048
+    --print-cryptstore=true
+    --certifier_service_URL=url-of-certifier-service
+    --service-port=port-for-certifier-service
+
+What this command does
+
+If the OS has been initialized (as determined by the policy_store)
+and resgistered in the security domain, the only effect of this
+command is to print the cryptstore if indicated.
+
+If not, and the cryptstore does not exist, it creates a sealed key which
+is used to encrypt the cryptstore and saves it in the indicated file; if
+the cryptstore already exists, it recovers the key and decrypts the existing
+cryptstore for the security domain.  Next, it generates a public/private
+keypair of the specified type for use as the authentication keys for the
+OS in this domain, these are the keys used to open an authenticated secure
+channel with other OS's in this policy domain.  It the contacts the certifier
+service to obtain a signed certificate for the public key.  Basically performing
+a "cold_init".  It stores the key and the certificate in the cryptstore for
+later access.  The policy store is automatically initialized in the customary
+way.  The cryptstore is reencrypted and saved.
+
+If all this works it prints "succeeded" on the standard input; otherwise,
+it prints "failed".
+
+The --reinit command does the same thing but always reinitializes the keys
+and recertifies EVEN if it has already done so.  The policy key file contains
+the self-signed certificate for the policy key for this security domain.
+
+Command 2:
+
+$(VM_OS_TOOLS_BIN)/cf-osutility.exe
+    --init-trust=false
+    --policy_key_file=policy_store=policy_cert_file.policy_domain_name
+    --enclave_type="sev-enclave"
+    --sealed-cryptstore-key-filename=sealed-crypstore-key.policy_domain_name
+    --encrypted-cryptstore-filename=cryptstore.policy_domain_name
+    --tag=dmcrypt-key
+    --type=MUST-SPECIFY-IF-NEEDED
+    --get-item=false
+    --put-item=false
+    --print-cryptstore=true
+    --generate-symmetric-key=true
+    --keyname=dmcrypt-key
+    --tag=dmcrypt-key
+    --type=serialized-key-message
+    --print-cryptstore=true
+    --save-cryptstore=true  // this can be false for "get" operations.
+    --output-format=serialized-protobuf
+    --output-filename=new-key.bin
+
+
+What this command does
+
+This generates a symmetric key of the named type, puts it in cryptstore and
+writes the unencrypted key as a serialized protobuf of type key_message.
+It saves the cryptstore.  Since the version is not specified, it the
+key does not already exist, it will have version 1; otherwise, the version
+will be one higher than the latest pre-existing version in the store.
+Note that the tag (which is used to find the entry in cryptstore) and the
+key-name (which is the name of the key in the key message) are the same.
+
+If all this works it prints "succeeded" on the standard input; otherwise,
+it prints "failed".
+
+-------------------------------------------------------------------------------
+
+Use scenario 2
+
+Retrieve an existing symmetric key from cryptstore for protecting, for
+example, a local store.  This only requires one call.
+
+cd cf_management_files
+
+Command
+
+$(VM_OS_TOOLS_BIN)/cf-osutility.exe
+    --init-trust=false
+    --policy_key_file=policy_store=policy_cert_file.policy_domain_name
+    --enclave_type="sev-enclave"
+    --sealed-cryptstore-key-filename=sealed-crypstore-key.policy_domain_name
+    --encrypted-cryptstore-filename=cryptstore.policy_domain_name
+    --print-cryptstore=true
+    --get-item=true
+    --keyname=dmcrypt-key
+    --tag=dmcrypt-key
+    --output-format=serialized-protobuf
+    --print-cryptstore=true
+    --save-cryptstore=true  // this can be false for "get" operations.
+    --output-format=serialized-protobuf
+    --output-filename=existing-key.bin
+
+What this command does
+
+It searched the cryptstore for an entry with tag "dmcrypt-key."
+If found, it writes the associated protobuf for the key 
+with the latest version (since we specified no version number).
+into the output-file and prints "suceeded;" ; otherwise,
+it prints "failed".
+
+--------------------------------------------------------------------------------
+
+Semantics for cryptstore
+
+Inlike the policy store, all items have versions to simplify key rotation.  In "get"
+operations if unspecified, the latest version of the key is retrieved.  In "put"
+operations, if unspecified, the item will have a version 1 higher than the largest
+pre-existing version in the store.  Version numbers must be positive.  "0" is
+unspecified.  If the version is unspecified and there is no version of the key in
+the store, it will be version 1.
