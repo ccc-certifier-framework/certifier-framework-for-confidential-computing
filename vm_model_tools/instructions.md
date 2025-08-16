@@ -1,7 +1,7 @@
-
 This directory contains additional tools and libraries to make a newly supported
 security model easy to implement using the Certifier.
 
+---------------------------------------------------------------------------------------------
 
 Discussion of VM security models
 
@@ -92,9 +92,13 @@ included (using virtee) in the OS measurement.  These optional properties can in
   --append CMDLINE      Kernel command line to calculate hash from (use with --kernel)
 See the use instruction in the examples in this directory.
 
+---------------------------------------------------------------------------------------------
 
-Here are the calling arguments.  Utility uses gflags so if not specified,
-indicated defaults are used.
+Description of cf-osutility
+
+
+Here are the calling arguments for cf-utility.  It uses gflags so if arguments are
+not specified, ther indicated defaults are used.
 
 cf-osutility.exe
     --init-trust=true
@@ -131,6 +135,11 @@ have examples on using it and setting up the OS security domain (this
 parrallels the same procedures in "simple-example".
 
 --------------------------------------------------------------------------
+
+
+Example scenarios
+
+
 
 Use scenarios 1
 
