@@ -34,12 +34,15 @@ storage device if the OS allows it but the CF guarentees the security of each ap
 We are introducing another use model called "VM-centric" protection model.  Here
 the OS policy still controls what apps run at all but the SEV primitives are
 available to all apps.  The only (possible) restriction, dictated by OS policy,
-is whether the SEV device driver is restricted in use to privileged applications.
-In this model, it the job of OS configuration and not the CF framework to decide what
-apps are trusted and it must prevent untrusted apps from running and accessing CC services.
-In other words, the security policy is rooted in the OS, not the apps.
-The  CF still authenticates the OS but the OS has "OS-wide" policy certified
-keys but the OS as a whole is the trust boundary.  To achieve the desired security
+is whether the SEV device driver is restricted to privileged applications.
+
+In this model, it the job of OS configuration and not the CF framework to decide
+what apps are trusted and the OS configuration must prevent untrusted apps from
+running and accessing CC services.  In other words, the security policy is rooted
+largely in the OS configuration, not apps.
+
+The CF still authenticates the OS but the OS has "OS-wide" policy certified
+keys and the entire OS is the trust boundary.  To achieve the desired security
 goal, the person that configures the OS, might only run programs from designated
 integrity controlled mounted disks and only rely on sensitive data in disks
 encrypted with keys protected by the CF.  This model can be useful when a few
@@ -55,17 +58,22 @@ between two VM's in the same "security domain" (i.e.-VM's with trusted measureme
 the certifier service).  The trust model is based on the whole VM measurement (including configuration
 information, and in-OS policy).
 
-Second, it offers protected storage for these and other important keys.  For example, a program
-might request access to the VM authentication keys from this utility to open secure channels.
-A very simple, but important, application is to maintain protected keys that the OS uses to
-ensure OS properties.  For exmaple, at startup, the OS could generate keys that are used to
-provide integrity and or confidentiality properties for storage (e.g.-dmverity or dmcrypt protected
-devices).  The OS generates them for initialization on first use but protects them between
-activations using storage protected by the CF.  In this case, the utility simply returns unencrypted
-versions of these keys.  The VM itself can actually be in multiple policy domains (identified by a
-policy key just as for apps in the foregoing model).  Protected items associated with a policy domain
-should use independant secure stores. These stores are managed using an (CF-encrypted) table of
-keys and sensitive material under a key-storage model, called cryptstore  under the utility.
+Second, it offers protected storage for these and other important keys.  For
+example, a program might request access to the VM authentication keys from
+this utility to open secure channels.
+
+A very simple, but important, application is to maintain CF-protected keys
+that the OS uses to ensure OS properties.  For example, at startup, the OS
+could generate keys that are used to provide integrity and or confidentiality
+properties for storage (e.g.-dmverity or dmcrypt protected devices).  In this
+case, the OS generates them for initialization on first use but protects them
+between activations using storage protected by the CF.  In this case, the utility
+simply returns unencrypted versions of these keys.  The VM itself can actually be
+in multiple policy domains (identified by a policy key just as for apps in the
+foregoing model).  Protected items associated with a policy domain should use
+independant secure stores. These stores are managed using an (CF-encrypted)
+table of keys and sensitive material under a key-storage model, called cryptstore
+under the utility.
 
 Typically, cryptstore will be used to store:
   1.  Symmetric keys (as for dmverify or dmcrypt or other storage deveices).
@@ -74,18 +82,21 @@ Typically, cryptstore will be used to store:
   3.  Cerificates and Certificate chains (for things like SSH and TLS) that are needed by applications or
       OS wide.
 
-The cryptstore is very simple.  Each entry consists of a tag (like tha name of the key) which can be used
-to locate the right entry, a type, which is the format of the binary string in the entry value and a
-version which can be used for keys which are subsequently rotated with newly generated keys.  The type 
-usually indicates type of the serialized protobuf in the value although there are other types like
-X509-certificate which is just the DER encoded X509 certificate.
+The cryptstore is very simple.  Each entry consists of a tag (like tha name of the
+key) which can be used to locate the right entry, a type, which is the format
+of the binary string in the entry value and a version which can be used for
+keys which are subsequently rotated with newly generated keys.  The type 
+usually indicates type of the serialized protobuf in the value although there
+are other types like X509-certificate which is just the DER encoded X509 certificate.
 
-In the first version, the OS calls the utility and the utility either does initialization, adds a new
-key or certificate to the store or retrieves and returns (in a file) the unencrypted object that was
-stored. cryptstore is encrypted with a key protected by seal and must be decrypted for use.
+In the first version, the OS calls the utility and the utility either does
+initialization, adds a new key or certificate to the store or retrieves and
+returns (in a file) the unencrypted object that was stored. cryptstore is
+encrypted with a key protected by seal and must be decrypted for use.
 
-Note that since the OS policy and associaated stores are critical to the security model, they are
-included (using virtee) in the OS measurement.  These optional properties can include, for example,
+Note that since the OS policy and associated stores are critical to the
+security model, they are included (using virtee) in the OS measurement.
+These optional properties can include, for example,
   --ovmf PATH           OVMF file to calculate hash from
   --kernel PATH         Kernel file to calculate hash from
   --initrd PATH         Initrd file to calculate hash from (use with --kernel)
