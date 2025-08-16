@@ -50,49 +50,48 @@ related standard apps run in a VM especially if a goal is that they should run
 without modification.  It may also be useful in offering some additional protection
 to existing VM workloads with minimal modification (but be careful!).
 
-To support this model, we provide a new command line utility.  The utility has two functions:
+To support this model, we provide a new command line utility called
+cf-osutility.  The utility has two functions:
 
-First, it uses the CF framework to authenticate the VM, generate OS wide keys and obtain
-certificates that allow mutually authenticated, encrypted and integrity protected channels
-between two VM's in the same "security domain" (i.e.-VM's with trusted measurements certified by
-the certifier service).  The trust model is based on the whole VM measurement (including configuration
-information, and in-OS policy).
+    First, it uses the CF framework to authenticate the VM, generate
+    OS wide keys and obtain certificates that allow mutually authenticated,
+    encrypted and integrity protected channels between two VM's in the same
+    "security domain" (i.e.-VM's with trusted measurements certified by
+    the certifier service).  The trust model is based on the whole VM measurement
+    (including configuration information, and in-OS policy).
 
-Second, it offers protected storage for these and other important keys.  For
-example, a program might request access to the VM authentication keys from
-this utility to open secure channels.
+    Second, it offers protected storage for these and other important keys.  For
+    example, a program might request access to the VM authentication keys from
+    this utility to open secure channels.
 
-A very simple, but important, application is to maintain CF-protected keys
-that the OS uses to ensure OS properties.  For example, at startup, the OS
-could generate keys that are used to provide integrity and or confidentiality
-properties for storage (e.g.-dmverity or dmcrypt protected devices).  In this
-case, the OS generates them for initialization on first use but protects them
-between activations using storage protected by the CF.  In this case, the utility
-simply returns unencrypted versions of these keys.  The VM itself can actually be
-in multiple policy domains (identified by a policy key just as for apps in the
-foregoing model).  Protected items associated with a policy domain should use
-independant secure stores. These stores are managed using an (CF-encrypted)
-table of keys and sensitive material under a key-storage model, called cryptstore
+A very simple, but important, application of the utility, is to maintain
+CF-protected keys that the OS uses to ensure OS properties.  For example,
+at startup, the OS could generate keys that are used to provide integrity
+and or confidentiality properties for storage (e.g.-dmverity or dmcrypt
+protected devices).  In this case, the OS generates them for initialization
+on first use but protects them between activations using storage protected by
+the CF.  In this case, the utility simply returns unencrypted versions of
+these keys.  The VM itself can actually be in multiple policy domains
+(identified by a policy key just as for apps in the foregoing model).
+Protected items associated with a policy domain should use independant
+secure stores. These stores are managed using an (CF-encrypted) table of
+keys and sensitive material under a key-storage model, called cryptstore
 under the utility.
 
 Typically, cryptstore will be used to store:
   1.  Symmetric keys (as for dmverify or dmcrypt or other storage deveices).
-  2.  Private keys used as trust anchors (whose public keys have been "certified" using the CF
-      just as with applications.   SSH and TLS keys are common here.
-  3.  Cerificates and Certificate chains (for things like SSH and TLS) that are needed by applications or
-      OS wide.
+  2.  Private keys used as trust anchors (whose public keys have been "certified"
+      using the CF just as with applications.   SSH and TLS keys are common here.
+  3.  Cerificates and certificate chains (for things like SSH and TLS) that
+      are needed by applications or OS wide.
 
-The cryptstore is very simple.  Each entry consists of a tag (like tha name of the
-key) which can be used to locate the right entry, a type, which is the format
+The cryptstore is very simple.  Each entry consists of a tag 
+that is used to locate the desired entry, a type, which is the format
 of the binary string in the entry value and a version which can be used for
 keys which are subsequently rotated with newly generated keys.  The type 
 usually indicates type of the serialized protobuf in the value although there
-are other types like X509-certificate which is just the DER encoded X509 certificate.
-
-In the first version, the OS calls the utility and the utility either does
-initialization, adds a new key or certificate to the store or retrieves and
-returns (in a file) the unencrypted object that was stored. cryptstore is
-encrypted with a key protected by seal and must be decrypted for use.
+are other types like X509-certificate which is just the DER encoded X509
+certificate.
 
 Note that since the OS policy and associated stores are critical to the
 security model, they are included (using virtee) in the OS measurement.
@@ -107,7 +106,6 @@ See the use instruction in the examples in this directory.
 ---------------------------------------------------------------------------------------------
 
 Description of cf-osutility
-
 
 Here are the calling arguments for cf-utility.  It uses gflags so if arguments are
 not specified, ther indicated defaults are used.
@@ -240,7 +238,7 @@ What this command does
 
 This generates a symmetric key of the named type, puts it in cryptstore and
 writes the unencrypted key as a serialized protobuf of type key_message.
-It saves the cryptstore.  Since the version is not specified, it the
+It saves the cryptstore.  Since the version is not specified, if the
 key does not already exist, it will have version 1; otherwise, the version
 will be one higher than the latest pre-existing version in the store.
 Note that the tag (which is used to find the entry in cryptstore) and the
@@ -278,7 +276,7 @@ $(VM_OS_TOOLS_BIN)/cf-osutility.exe
 
 What this command does
 
-It searched the cryptstore for an entry with tag "dmcrypt-key."
+It searches the cryptstore for an entry with tag "dmcrypt-key."
 If found, it writes the associated protobuf for the key 
 with the latest version (since we specified no version number).
 into the output-file and prints "suceeded;" ; otherwise,
@@ -288,9 +286,13 @@ it prints "failed".
 
 Semantics for cryptstore
 
-Inlike the policy store, all items have versions to simplify key rotation.  In "get"
-operations if unspecified, the latest version of the key is retrieved.  In "put"
-operations, if unspecified, the item will have a version 1 higher than the largest
-pre-existing version in the store.  Version numbers must be positive.  "0" is
-unspecified.  If the version is unspecified and there is no version of the key in
-the store, it will be version 1.
+Unlike the policy store, all items in cryptstore have versions to simplify
+key rotation.  In "get" operations if unspecified, the latest version of
+the key is retrieved.  In "put" operations, if unspecified, the item will
+have a version 1 higher than the largest pre-existing version in the store.
+Version numbers must be positive.  "0" is unspecified.  If the version is
+unspecified and there is no version of the key in the store, it will be
+version 1.
+
+--------------------------------------------------------------------------------
+
