@@ -19,35 +19,35 @@ hence verifiable via Attest), the scope of the measurement was really vm-wide.  
 itself is programmed has a Linux process boundary isolating it from other applications and
 it is the job of the OS to ensure that this is the only such app that runs (in the example case).
 
-The more sophisticate model is illustrated in simple_app_under_app_service.  There, a privileged
+The more sophisticated model is illustrated in simple_app_under_app_service.  There, a privileged
 daemon, is the only program that accesses the underlying hardware.  The service is certified
-in the role of attestation, that is, it provided CC-like services (e.g. - Attest, Seal, Unseal)
+in the role of attestation, that is, it provides CC-like services (e.g. - Attest, Seal, Unseal)
 for individual apps, each app is measured and certified separately, each app has its own keys, etc
 and acts independantly.  Each app is isolated from other apps (trusted or not) by the OS, usually,
-Linux.  Apps in this model should not be able ti interfere with each other and every such app
+Linux.  Apps in this model should not be able to interfere with each other and every such app
 has independant privileges and policy, again this is apps centric.
 
 In both of these models, the protected app does not trust any storaage except the ramdisk; all
 other IO is untrusted.  New or updated apps can be run from network download or an untrusted
 storage device if the OS allows it but the CF guarentees the security of each app indepentantly.
 
-We are introducing another use model called "VM-centric" protection.  Here the OS policy still
-controls what apps run at all but the SEV primitives are available to all apps.  The only
-(possible) restriction, dictated by OS policy, is whether the SEV device driver is restricted
-in use to privileged applications.  In this model, it the job of OS configuration and not the
-CF framework to decide what apps are trusted and it must prevent untrusted apps from running
-and accessing CC services.  In other words, the security policy is rooted in the OS, not the apps.
-The  CF still authenticates the OS and the OS has "OS-wide" policy certified keys but the OS as
-a whole is the trust boundary.  To achieve a security goal, the person that configures the OS,
-might only run programs from designated integrity controlled mounted disks and only rely on
-sensitive data in disks encrypted with keys protected by the CF.  This model can be useful
-when a few related standard apps run especially if a goal is that they should run without
-modification.  IT may also be useful in offering some additional protection to existing VM
-workloads (but be careful!).
+We are introducing another use model called "VM-centric" protection model.  Here
+the OS policy still controls what apps run at all but the SEV primitives are
+available to all apps.  The only (possible) restriction, dictated by OS policy,
+is whether the SEV device driver is restricted in use to privileged applications.
+In this model, it the job of OS configuration and not the CF framework to decide what
+apps are trusted and it must prevent untrusted apps from running and accessing CC services.
+In other words, the security policy is rooted in the OS, not the apps.
+The  CF still authenticates the OS but the OS has "OS-wide" policy certified
+keys but the OS as a whole is the trust boundary.  To achieve the desired security
+goal, the person that configures the OS, might only run programs from designated
+integrity controlled mounted disks and only rely on sensitive data in disks
+encrypted with keys protected by the CF.  This model can be useful when a few
+related standard apps run in a VM especially if a goal is that they should run
+without modification.  It may also be useful in offering some additional protection
+to existing VM workloads with minimal modification (but be careful!).
 
-To support this model, we provide a few utilities that can be run on command line.
-
-The most important utility has two functions:
+To support this model, we provide a new command line utility.  The utility has two functions:
 
 First, it uses the CF framework to authenticate the VM, generate OS wide keys and obtain
 certificates that allow mutually authenticated, encrypted and integrity protected channels
@@ -92,6 +92,7 @@ included (using virtee) in the OS measurement.  These optional properties can in
   --append CMDLINE      Kernel command line to calculate hash from (use with --kernel)
 See the use instruction in the examples in this directory.
 
+
 ---------------------------------------------------------------------------------------------
 
 Description of cf-osutility
@@ -101,32 +102,34 @@ Here are the calling arguments for cf-utility.  It uses gflags so if arguments a
 not specified, ther indicated defaults are used.
 
 cf-osutility.exe
-    --init-trust=true
+    --init-trust=false
     --reinit-trust=false
+    --generate-symmetric-key=false
+    --generate-public-key=false
+    --get-item=false
+    --put-item=false
+
     --policy_key_file=policy_store=policy_cert_file.policy_domain_name
     --enclave_type="sev-enclave"
-    --output-format=serialized-protobuf
     --input-format=serialized-protobuf
     --policy-store-filename=MUST-SPECIFY-IF-Neded
     --encrypted-cryptstore-filename=MUST-SPECIFY
     --sealed-cryptstore-key-filename=MUST-SPECIFY
     --symmetric_algorithm=aes-256-gcm
-    --public_key_algorithm=_rsa_2048
-    --generate-symmetric-key=false
-    --generate-public-key=false
+    --public_key_algorithm=rsa_2048
     --keyname=MUST-SPECIFY-IF-NEEDED
     --tag=MUST-SPECIFY-IF-NEEDED
     --version=MUST-SPECIFY-IF-NEEDED
     --type=MUST-SPECIFY-IF-NEEDED
-    --get-item=false
-    --put-item=false
     --print-cryptstore=true
     --save-cryptstore=true  // this can be false for "get" operations.
     --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
-    --output-format=MUST-BE-SPECIFIED-IF-NEEDED
-    --input-format=MUST-BE-SPECIFIED-IF-NEEDED
-    --service-port=MUST-BE-SPECIFIED-IF-NEEDED
-
+    --output-format=serialized-protobuf
+    --output-file=MUST-BE-SPECIFIED-IF-NEEDED
+    --input-format=serialized-protobuf
+    --input-file=MUST-BE-SPECIFIED-IF-NEEDED
+    --certifier_service_URL=url-of-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
+    --service-port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
 
 Instructions for building and using the utility are in build.md,
 you should be able to just copy and paste each step.  The subdirectory
@@ -138,7 +141,6 @@ parrallels the same procedures in "simple-example".
 
 
 Example scenarios
-
 
 
 Use scenarios 1
@@ -153,10 +155,10 @@ resource (like a dmverity or dmcrypt enables disk).  On restart (unless a
 reinit is demanded), this utility is called only once to retrieve the relevant
 key.
 
-Command flow for first
+Command flow for first scenario.
 
-mkdir cf_management_files          // do this if the directory doesn't exist yet
-cd cf_management_files
+mkdir cf_management_files  // do this if the directory doesn't exist yet
+cd cf_management_files     // this is where you keep store, etc.
 cp $(POLICY_CERT) ./policy_cert_file.bin
 For the remainder, policy_domain_name is the name of the relevant security
 (policy) domain. $(VM_OS_TOOLS_BIN) is the directory containing the utility.
@@ -177,7 +179,7 @@ $(VM_OS_TOOLS_BIN)/cf-osutility.exe
 What this command does
 
 If the OS has been initialized (as determined by the policy_store)
-and resgistered in the security domain, the only effect of this
+and registered in the security domain, the only effect of this
 command is to print the cryptstore if indicated.
 
 If not, and the cryptstore does not exist, it creates a sealed key which
@@ -187,10 +189,11 @@ cryptstore for the security domain.  Next, it generates a public/private
 keypair of the specified type for use as the authentication keys for the
 OS in this domain, these are the keys used to open an authenticated secure
 channel with other OS's in this policy domain.  It the contacts the certifier
-service to obtain a signed certificate for the public key.  Basically performing
-a "cold_init".  It stores the key and the certificate in the cryptstore for
-later access.  The policy store is automatically initialized in the customary
-way.  The cryptstore is reencrypted and saved.
+service to obtain a signed certificate for the public key.  In
+other words, it basically performs a "cold_init" for the OS in the indicated
+security domain.  After certification, it stores the key and the certificate
+in the cryptstore for later access.  The policy store is automatically
+initialized in the customary way.  The cryptstore is reencrypted and saved.
 
 If all this works it prints "succeeded" on the standard input; otherwise,
 it prints "failed".
