@@ -1,6 +1,12 @@
 This directory contains additional tools and libraries to make a newly supported
 security model easy to implement using the Certifier.
 
+Instructions for building and using the utility are in build.md,
+you should be able to just copy and paste each step.  The subdirectory
+"src" has the source code for cf-osutility and the example directories
+have examples on using it and setting up the OS security domain (this
+parrallels the same procedures in "simple-example".
+
 ---------------------------------------------------------------------------------------------
 
 Discussion of VM security models
@@ -139,12 +145,6 @@ cf-osutility.exe
     --input-file=MUST-BE-SPECIFIED-IF-NEEDED
     --certifier_service_URL=url-of-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
     --service-port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
-
-Instructions for building and using the utility are in build.md,
-you should be able to just copy and paste each step.  The subdirectory
-"src" has the source code for cf-osutility and the example directories
-have examples on using it and setting up the OS security domain (this
-parrallels the same procedures in "simple-example".
 
 --------------------------------------------------------------------------
 
@@ -295,4 +295,3 @@ unspecified and there is no version of the key in the store, it will be
 version 1.
 
 --------------------------------------------------------------------------------
-
