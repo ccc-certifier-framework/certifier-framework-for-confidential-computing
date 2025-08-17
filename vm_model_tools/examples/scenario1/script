@@ -1,0 +1,139 @@
+#
+# Helpful script to run example
+#
+
+#export GOROOT=/usr/local/go
+#export PATH=$PATH:$GOROOT/bin
+#export GO111MODULE=off
+export GOPATH=$HOME
+export CERTIFIER_PROTOTYPE=~/src/github.com/jlmucb/crypto/v2/certifier-framework-for-confidential-computing
+export EXAMPLE_DIR=$CERTIFIER_PROTOTYPE/sample_apps/simple_app
+
+# Compile utilities
+cd $CERTIFIER_PROTOTYPE/utilities
+make -f cert_utility.mak
+make -f policy_utilities.mak
+
+# Create keys
+mkdir -p $EXAMPLE_DIR/provisioning
+cd $EXAMPLE_DIR/provisioning
+
+$CERTIFIER_PROTOTYPE/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys \
+    --policy_key_output_file=policy_key_file.bin --policy_cert_output_file=policy_cert_file.bin \
+    --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
+
+# embed policy key and compile app
+cd $EXAMPLE_DIR/provisioning
+$CERTIFIER_PROTOTYPE/utilities/embed_policy_key.exe --input=policy_cert_file.bin --output=../policy_key.cc
+
+# make app and compute app measurement
+cd $EXAMPLE_DIR
+make -f example_app.mak
+
+# build policy
+cd $EXAMPLE_DIR/provisioning
+
+#policyKey says platformKey is-trused-for-attestation
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=platform_key_file.bin \
+  --verb="is-trusted-for-attestation" --output=ts1.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+  --verb="says" --clause=ts1.bin --output=vse_policy1.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy1.bin \
+  --duration=9000 --private_key_file=policy_key_file.bin --output=signed_claim_1.bin
+
+# policy key says measurement is-trusted
+$CERTIFIER_PROTOTYPE/utilities/measurement_utility.exe --type=hash --input=../example_app.exe \
+      --output=example_app.measurement
+
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject="" \
+  --measurement_subject=example_app.measurement --verb="is-trusted" \
+  --output=ts2.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.bin \
+  --verb="says" --clause=ts2.bin --output=vse_policy2.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe \
+  --vse_file=vse_policy2.bin --duration=9000 \
+  --private_key_file=policy_key_file.bin --output=signed_claim_2.bin
+
+$CERTIFIER_PROTOTYPE/utilities/package_claims.exe --input=signed_claim_1.bin,signed_claim_2.bin\
+  --output=policy.bin
+
+$CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+
+# This gets included from the app
+$CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe --key_subject=attest_key_file.bin \
+  --verb="is-trusted-for-attestation" --output=tsc1.bin
+$CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe --key_subject=platform_key_file.bin \
+  --verb="says" --clause=tsc1.bin --output=vse_policy3.bin
+
+$CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe --vse_file=vse_policy3.bin \
+  --duration=9000 --private_key_file=platform_key_file.bin \
+  --output=platform_attest_endorsement.bin
+
+$CERTIFIER_PROTOTYPE/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
+
+# provision service and apps
+cd $EXAMPLE_DIR
+mkdir -p app1_data app2_data
+mkdir -p service
+
+# provision service and apps
+cd $EXAMPLE_DIR/provisioning
+
+cp ./* $EXAMPLE_DIR/service
+cp ./* $EXAMPLE_DIR/app1_data
+cp ./* $EXAMPLE_DIR/app2_data
+
+#compile the server
+cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
+make dummy
+
+cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
+make dummy
+
+cd $CERTIFIER_PROTOTYPE/certifier_service/isletlib
+make dummy
+
+cd $CERTIFIER_PROTOTYPE/certifier_service/teelib
+make
+
+cd $CERTIFIER_PROTOTYPE/certifier_service
+go build simpleserver.go
+
+#run server
+cd $EXAMPLE_DIR/service
+$CERTIFIER_PROTOTYPE/certifier_service/simpleserver \
+      --policyFile=policy.bin --readPolicy=true
+
+# initialize client app
+cd $EXAMPLE_DIR
+$EXAMPLE_DIR/example_app.exe --print_all=true \
+      --operation=cold-init --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store
+
+# get client app certified
+$EXAMPLE_DIR/example_app.exe --print_all=true \
+      --operation=get-certified --data_dir=./app1_data/ --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store
+
+# initialize server app
+$EXAMPLE_DIR/example_app.exe --print_all=true \
+      --operation=cold-init --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store
+
+# get server app certified
+$EXAMPLE_DIR/example_app.exe --print_all=true \
+      --operation=get-certified --data_dir=./app2_data/ --measurement_file="example_app.measurement" \
+       --policy_store_file=policy_store
+
+#run the app
+cd $EXAMPLE_DIR
+$EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-server --data_dir=./app2_data/ \
+      --policy_store_file=policy_store --measurement_file="example_app.measurement"
+
+cd $EXAMPLE_DIR
+$EXAMPLE_DIR/example_app.exe --print_all=true --operation=run-app-as-client --data_dir=./app1_data/ \
+      --policy_store_file=policy_store --measurement_file="example_app.measurement"

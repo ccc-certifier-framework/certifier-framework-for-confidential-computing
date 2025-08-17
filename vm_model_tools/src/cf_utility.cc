@@ -1,5 +1,6 @@
 //  Copyright (c) 2021-23, VMware Inc, and the Certifier Authors.  All rights
-//  reserved.
+//  reserved.  Copyright (c), 2025, John Manferdelli, Paul England and
+//  Datica Researdh.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,36 +36,55 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-// Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
-DEFINE_bool(print_all, false, "verbose");
-DEFINE_string(operation, "", "operation");
+/*
+ * cf-osutility.exe
+    --init-trust=false
+    --reinit-trust=false
+    --generate-symmetric-key=false
+    --generate-public-key=false
+    --get-item=false
+    --put-item=false
 
-DEFINE_string(policy_host, "localhost", "address for policy server");
-DEFINE_int32(policy_port, 8123, "port for policy server");
-DEFINE_string(data_dir, "./app1_data/", "directory for application data");
+    --policy_key_file=policy_store=policy_cert_file.policy_domain_name
+    --enclave_type="sev-enclave"
+    --input-format=serialized-protobuf
+    --policy-store-filename=MUST-SPECIFY-IF-Neded
+    --encrypted-cryptstore-filename=MUST-SPECIFY
+    --sealed-cryptstore-key-filename=MUST-SPECIFY
+    --symmetric_algorithm=aes-256-gcm
+    --public_key_algorithm=rsa_2048
+    --keyname=MUST-SPECIFY-IF-NEEDED
+    --tag=MUST-SPECIFY-IF-NEEDED
+    --version=MUST-SPECIFY-IF-NEEDED
+    --type=MUST-SPECIFY-IF-NEEDED
+    --print-cryptstore=true
+    --save-cryptstore=true  // this can be false for "get" operations.
+    --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
+    --output-format=serialized-protobuf
+    --output-file=MUST-BE-SPECIFIED-IF-NEEDED
+    --input-format=serialized-protobuf
+    --input-file=MUST-BE-SPECIFIED-IF-NEEDED
+    --certifier_service_URL=url-of-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
+    --service-port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
+ */
 
-DEFINE_string(server_app_host, "localhost", "address for app server");
-DEFINE_int32(server_app_port, 8124, "port for server app server");
-
-DEFINE_string(policy_store_file, "store.bin", "policy store file name");
-
-#ifdef SIMPLE_APP
-DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement,
-              "platform_attest_endorsement.bin",
-              "platform endorsement of attest key");
-DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
-DEFINE_string(measurement_file, "example_app.measurement", "measurement");
+DEFINE_string(certifier_service_URL, "localhost", "address for service");
+DEFINE_int32(service-port, 8124, "port for service");
 
 DEFINE_string(public_key_alg, Enc_method_rsa_2048, "public key algorithm");
-DEFINE_string(auth_symmetric_key_alg,
-              Enc_method_aes_256_cbc_hmac_sha256,
-              "authenticated symmetric key algorithm");
+DEFINE_string(symmetric_key_alg, Enc_method_aes_256_cbc_hmac_sha256,
+              "symmetric key algorithm");
 
-static string enclave_type("simulated-enclave");
+string enclave_type("simulated-enclave");
+
+// -------------------------------------------------------------------------
+
+
+// cf_utility see ../cf_utility_usage_notes.md for description
+
 
 // Parameters for simulated enclave
-bool get_enclave_parameters(string **s, int *n) {
+bool get_simulated_enclave_parameters(string **s, int *n) {
 
   // serialized attest key, measurement, serialized endorsement, in that order
   string *args = new string[3];
@@ -103,133 +123,9 @@ err:
   *s = nullptr;
   return false;
 }
-#endif  // SIMPLE_APP
 
-#ifdef GRAMINE_SIMPLE_APP
-DEFINE_string(gramine_cert_file, "sgx.cert.der", "certificate file name");
-
-static string enclave_type("gramine-enclave");
-
-// Parameters for gramine enclave
-bool get_enclave_parameters(string **s, int *n) {
-
-  string *args = new string[1];
-  if (args == nullptr) {
-    return false;
-  }
-  *s = args;
-
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_gramine_cert_file,
-                             &args[0])) {
-    printf("%s() error, line %d, Can't read cert cert file\n",
-           __func__,
-           __LINE__);
-    delete[] args;
-    *s = nullptr;
-    return false;
-  }
-
-  *n = 1;
-  return true;
+void print_input_parameters() {
 }
-#endif  // GRAMINE_SIMPLE_APP
-
-#ifdef SEV_SIMPLE_APP
-DEFINE_string(ark_cert_file, "ark_cert.der", "ark cert file name");
-DEFINE_string(ask_cert_file, "ask_cert.der", "ask cert file name");
-DEFINE_string(vcek_cert_file, "vcek_cert.der", "vcek cert file name");
-
-static string enclave_type("sev-enclave");
-
-// Parameters for sev enclave for now.
-// We will switch to using extended guest requests in the future.
-bool get_enclave_parameters(string **s, int *n) {
-
-  // ark cert file, ask cert file, vcek cert file
-  string *args = new string[3];
-  if (args == nullptr) {
-    return false;
-  }
-  *s = args;
-
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ark_cert_file, &args[0])) {
-    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
-    goto err;
-  }
-
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
-    printf("%s() error, line %d, Can't read measurement file\n",
-           __func__,
-           __LINE__);
-    goto err;
-  }
-
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
-    printf("%s() error, line %d, Can't read endorsement file\n",
-           __func__,
-           __LINE__);
-    goto err;
-  }
-
-  *n = 3;
-  return true;
-
-err:
-  delete[] args;
-  *s = nullptr;
-  return false;
-}
-#endif  // SEV_SIMPLE_APP
-
-#ifdef ISLET_SIMPLE_APP
-DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement,
-              "platform_attest_endorsement.bin",
-              "platform endorsement of attest key");
-DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
-DEFINE_string(measurement_file, "example_app.measurement", "measurement");
-
-static string enclave_type("islet-enclave");
-
-// Parameters not needed for ISLET enclave
-bool get_enclave_parameters(string **s, int *n) {
-  *s = nullptr;
-  *n = 0;
-  return true;
-}
-#endif  // ISLET_SIMPLE_APP
-
-#ifdef KEYSTONE_SIMPLE_APP
-DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement,
-              "platform_attest_endorsement.bin",
-              "platform endorsement of attest key");
-DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
-DEFINE_string(measurement_file, "example_app.measurement", "measurement");
-
-static string enclave_type("keystone-enclave");
-
-// Parameters not needed for Keystone enclave
-bool get_enclave_parameters(string **s, int *n) {
-  *s = nullptr;
-  *n = 0;
-  return true;
-}
-#endif  // KEYSTONE_SIMPLE_APP
-
-// The test app performs five possible roles
-//    cold-init: This creates application keys and initializes the policy store.
-//    get-certified: This obtains the app admission cert naming the public app
-//    key from the service. run-app-as-client: This runs the app as a client.
-//    run-app-as-server: This runs the app as server.
-//    warm-restart:  This retrieves the policy store data. Operation is subsumed
-//      under other ops.
-
-#include "policy_key.cc"
-
-cc_trust_manager *trust_mgr = nullptr;
-
-// -----------------------------------------------------------------------------------------
 
 bool client_application(secure_authenticated_channel &channel) {
 
@@ -260,7 +156,6 @@ bool client_application(secure_authenticated_channel &channel) {
   return true;
 }
 
-
 void server_application(secure_authenticated_channel &channel) {
 
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
@@ -282,14 +177,20 @@ void server_application(secure_authenticated_channel &channel) {
   channel.close();
 }
 
+// -----------------------------------------------------------------------------------------
+
+
+#include "policy_key.cc"
+
+cc_trust_manager *trust_mgr = nullptr;
+
 int main(int an, char **av) {
-  string usage("Simple App");
+  string usage("cf-osutility");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
 
-  // clang-format off
   if (FLAGS_operation == "") {
     printf("                                                                            (Defaults)\n");
     printf("%s --operation=<op>                                        ; %s", av[0], "(See below)");
@@ -308,6 +209,7 @@ int main(int an, char **av) {
                   FLAGS_server_app_port,
                   FLAGS_data_dir.c_str(),
                   FLAGS_policy_store_file.c_str());
+
 #ifdef SIMPLE_APP
     printf("\n\
                   --platform_file_name=platform-cert-bin-file-name        ; %s\n\
@@ -326,23 +228,15 @@ int main(int an, char **av) {
                   --ask_cert_file=./service/milan_ask_cert.der \n\
                   --vcek_cert_file=./service/milan_vcek_cert.der ");
 #endif  // SEV_SIMPLE_APP
-#ifdef GRAMINE_SIMPLE_APP
-    printf("\n\
-                  --gramine_cert_file=sgx.cert.der");
-#endif  // GRAMINE_SIMPLE_APP
+	//
     printf("\n\nOperations are: cold-init, get-certified, "
            "run-app-as-client, run-app-as-server\n");
 
-#ifdef SIMPLE_APP
-
-    // clang-format off
-    printf("\nFor the simple_app, you can additionally drive 'cold-init' with different pairs of:\n");
     printf("\n\
     --public_key_alg=public-key-algorigthm-name                          : %s\n\
     --auth_symmetric_key_alg=authenticated-symmetric-key-algorigthm-name : %s\n",
             FLAGS_public_key_alg.c_str(),
             FLAGS_auth_symmetric_key_alg.c_str());
-    // clang-format on
 
     printf("\nPublic-key algorithms supported:\n");
     for (int i = 0; i < Num_public_key_algorithms; i++) {
@@ -353,7 +247,6 @@ int main(int an, char **av) {
       printf("  %s\n", Enc_authenticated_symmetric_key_algorithms[i]);
     }
 
-#endif  // SIMPLE_APP
     return 0;
   }
   // clang-format on
@@ -395,8 +288,6 @@ int main(int an, char **av) {
     params = nullptr;
   }
 
-  // clang-format off
-
   // Use specified algorithms for the enclave            Defaults:
 #ifdef SIMPLE_APP
   // We support --public_key_alg and --auth_symmetric_key_alg only for simple_app
@@ -433,6 +324,7 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
+
     // Debug
 #ifdef DEBUG
     trust_mgr->print_trust_data();
