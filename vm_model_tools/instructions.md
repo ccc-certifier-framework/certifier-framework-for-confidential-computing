@@ -295,3 +295,23 @@ unspecified and there is no version of the key in the store, it will be
 version 1.
 
 --------------------------------------------------------------------------------
+
+Important usage notes
+
+Neither this utility nor the remainder of CF, imposes any additional
+requirements on the OS configurer to protect the integrity or
+confidentiality of the files it uses.  The OS can (but shouldn't)
+delete any of these file or rollback the files.  Generally, rollback
+is a denial of service attack interfering with the ability of the
+OS to provide service but is not a security violation.
+
+cf-osutility does rely on the OS to save the files it creates across
+restarts (failure to do so is a denial of service attack).  Also,
+note that, in response to invocations, cf-osutility places sensitive
+data in unprotected files (the --input-file and the --output-file);
+it is the responsibility of the OS policy to ensure these files are
+never visible outside the OS, including, by way of illustration
+and not limitation as a result of saving these files.  At a minimum,
+these files should be deleted.
+
+--------------------------------------------------------------------------------
