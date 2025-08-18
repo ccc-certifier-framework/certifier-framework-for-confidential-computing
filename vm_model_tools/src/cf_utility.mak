@@ -1,5 +1,5 @@
 #    
-#    File: example_app.mak
+#    File: cf_utility.mak
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 ifndef CERTIFIER_ROOT
@@ -28,7 +28,7 @@ O= $(OBJ_DIR)
 US=.
 I= $(CERTIFIER_ROOT)/include
 INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
-COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
+CF_UTILITY_SRC= $(CERTIFIER_ROOT)/vm_model_tools/src
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
 # When this happens, everything must be compiles with C++17 and the linking is a
@@ -60,30 +60,26 @@ endif
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
-dobj = $(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
-       $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
-       $(O)/cc_useful.o
+dobj = $(O)/cf_utility.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+       $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
+       $(O)/cc_useful.o $(O)/cryptstore.pb.o
 
-robj = $(O)/example_key_rotation.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
-       $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
-       $(O)/cc_useful.o
-
-all:	example_app.exe example_key_rotation.exe
+all:	cf_utility.exe
 clean:
 	@echo "removing generated files"
 	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
 	@echo "removing object files"
 	rm -rf $(O)/*.o
 	@echo "removing executable file"
-	rm -rf $(EXE_DIR)/example_app.exe
+	rm -rf $(EXE_DIR)/cf_utility.exe
 
-$(EXE_DIR)/example_app.exe: $(dobj)
+$(EXE_DIR)/cf_utility.exe: $(dobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
 
-$(EXE_DIR)/example_key_rotation.exe: $(robj)
-	@echo "\nlinking executable $@"
-	$(LINK) $(robj) $(LDFLAGS) -o $(@D)/$@
+$(CF_UTILITY_SRC)/cryptstore.pb.h: $(CF_UTILITY_SRC)/cryptstore.pb.cc
+$(CF_UTILITY_SRC)/cryptstore.pb.cc: $(CF_UTILITY_SRC)/cryptstore.proto
+	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
@@ -94,11 +90,7 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
 
-$(O)/example_app.o: $(COMMON_SRC)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
-	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
-
-$(O)/example_key_rotation.o: $(US)/example_key_rotation.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/cf_utility.o: $(CF_UTILITY_SRC)/cf_utility.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -115,10 +107,6 @@ $(O)/support.o: $(S)/support.cc $(I)/support.h
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
-	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
-
-$(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

@@ -33,6 +33,8 @@
 #include "certifier_utilities.h"
 #include "certifier_algorithms.h"
 
+#include "cryptstore.pb.h"
+
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
@@ -125,6 +127,35 @@ err:
   delete[] args;
   *s = nullptr;
   return false;
+}
+
+void print_cryptstore_entry(const cryptstore_entry& ent) {
+  if (ent.has_tag()) {
+    printf("tag: %s\n", ent.tag().c_str());
+  }
+  if (ent.has_type()) {
+    printf("type: %s\n", ent.type().c_str());
+  }
+  if (ent.has_version()) {
+    printf("version: %d\n", (int)ent.version());
+  }
+  if (ent.has_time_entered()) {
+    printf("time entered:\n");
+    print_time_point(ent.time_entered())
+  }
+  if (ent.has_blob()) {
+    if (ent.type() == "key_message_serialized-protobuf") {
+      key_message km;
+      if (km.ParseFromString()) {
+        print_key(km);
+        printf("\n");
+      }
+    } else {
+      printf("Value:\n");
+      printf_bytes(ent.blob().size(), (byte*)ent.blob().data());
+      printf("\n");
+    }
+  }
 }
 
 void print_os_model_parameters() {
