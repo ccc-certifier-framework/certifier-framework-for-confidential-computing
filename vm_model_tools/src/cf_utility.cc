@@ -36,46 +36,49 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-/*
- * cf-osutility.exe
-    --init-trust=false
-    --reinit-trust=false
-    --generate-symmetric-key=false
-    --generate-public-key=false
-    --get-item=false
-    --put-item=false
-
-    --policy_key_file=policy_store=policy_cert_file.policy_domain_name
-    --enclave_type="sev-enclave"
-    --input-format=serialized-protobuf
-    --policy-store-filename=MUST-SPECIFY-IF-Neded
-    --encrypted-cryptstore-filename=MUST-SPECIFY
-    --sealed-cryptstore-key-filename=MUST-SPECIFY
-    --symmetric_algorithm=aes-256-gcm
-    --public_key_algorithm=rsa_2048
-    --keyname=MUST-SPECIFY-IF-NEEDED
-    --tag=MUST-SPECIFY-IF-NEEDED
-    --version=MUST-SPECIFY-IF-NEEDED
-    --type=MUST-SPECIFY-IF-NEEDED
-    --print-cryptstore=true
-    --save-cryptstore=true  // this can be false for "get" operations.
-    --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
-    --output-format=serialized-protobuf
-    --output-file=MUST-BE-SPECIFIED-IF-NEEDED
-    --input-format=serialized-protobuf
-    --input-file=MUST-BE-SPECIFIED-IF-NEEDED
-    --certifier_service_URL=url-of-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
-    --service-port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
- */
 
 DEFINE_string(certifier_service_URL, "localhost", "address for service");
 DEFINE_int32(service-port, 8124, "port for service");
-
-DEFINE_string(public_key_alg, Enc_method_rsa_2048, "public key algorithm");
-DEFINE_string(symmetric_key_alg, Enc_method_aes_256_cbc_hmac_sha256,
               "symmetric key algorithm");
+DEFINE_string(enclave_type, "simulated-enclave", "supporting enclave type");
 
-string enclave_type("simulated-enclave");
+DEFINE_bool(init_trust, false, "initialize certification?");
+DEFINE_bool(reinit_trust, false, "reinitialize certification?");
+DEFINE_bool(generate_symmetric_key, false, "generate symmetric key?");
+DEFINE_bool(generate_public_key, false, "generate public key?");
+DEFINE_bool(get_item, false, "get item from cryptstore");
+DEFINE_bool(put_item, false, "put item into cryptstore");
+DEFINE_bool(print_cryptstore, true, "print cryptstore");
+DEFINE_bool(save_cryptstore, true, "save cryptstore");
+
+DEFINE_string(public_key_algorithm, Enc_method_rsa_2048, "public key algorithm");
+DEFINE_string(symmetric_key_algorithm, Enc_method_aes_256_cbc_hmac_sha256,
+    "symmetric algorithm");
+DEFINE_string(policy_domain_name, "datica_file_share_1", "policy domain name");
+DEFINE_string(policy_key_cert_file, "policy_certificate.policy_domain_1",
+    "file name for policy certificate");
+DEFINE_string(policy_store_filename, "policy_cert_file.policy_domain_name", );
+DEFINE_string(input_format, "serialized-protobuf", "input file format");
+DEFINE_string(output_format, "serialized-protobuf", "output file format");
+DEFINE_string(policy_store_filename, "policy_store.bin", "policy store file name");
+DEFINE_string(encrypted_cryptstore_filename,
+    "encrypted_keystore.policy_domain_1",
+    "encrypted crypstore filename");
+DEFINE_string(sealed_cryptstore_key_filename,
+     "sealed_cryptstore_key.policy_domain_1",
+     "sealed cryptstore file name");
+DEFINE_string(keyname, "primary_store_encryption_key",
+     "generated key name");
+DEFINE_string(tag, "policy-key", "cryptstore entry tag");
+DEFINE_string(version, 0, "cryptstore entry version");
+DEFINE_string(type, "key_message_protobuf", "cryptstore data type");
+DEFINE_string(output-file, "out_1", "output file name");
+DEFINE_string(input-file, "in_1", "input file name");
+
+DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der", "machine ark certificate location");
+DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der", "machine ask certificate location");
+DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der", "machine vcek certificate location");
+
 
 // -------------------------------------------------------------------------
 
@@ -124,9 +127,69 @@ err:
   return false;
 }
 
-void print_input_parameters() {
+void print_os_model_parameters() {
+  printf("cf_utility parameters:\n");
+  printf("\t address for certifier service: %s\n",
+          FLAGS_certifier_service_URL.c_str());
+  printf("\tPort for service" %d\n", (int)FLAGS_service_port);
+  printf("\tProtecting enclave type: %s\n", FLAGS_enclave_type.c_str());
+
+  if (FLAGS_init_trust)
+    printf("\tInitialize certification?: yes\n");
+  else
+    printf("\tInitialize certification?: no\n");
+  if (FLAGS_reinit_trust)
+    printf("\tReinitialize certification?: yes\n");
+  else
+    printf("\tReinitialize certification?: no\n");
+
+  if (FLAGS_generate_symmetric_key)
+    printf("\tGenerate symmetric key?: yes\n");
+  else
+    printf("\tGenerate symmetric key?: no\n");
+  if (FLAGS_generate_public_key)
+    printf("\tGenerate public key?: yes\n");
+  else
+    printf("\tGenerate public key?: no\n");
+  if (FLAGS_get_item)
+    printf("\tRetrieve cryptstore entry?: yes\n");
+  else
+    printf("\tRetrieve cryptstore entry?: no\n");
+  if (FLAGS_put_item)
+    printf("\tInsert cryptstore entry?: yes\n");
+  else
+    printf("\tInsert cryptstore entry?: no\n");
+  if (FLAGS_print_cryptstore)
+    printf("\tPrint cryptstore?: yes\n");
+  else
+    printf("\tPrint cryptstore?: no\n");
+  if (FLAGS_save_cryptstore)
+    printf("\tSave cryptstore?: yes\n");
+  else
+    printf("\tSave cryptstore?: no\n");
+
+  printf("\tPublic key algorithm: %s\n", FLAGS_public_key_algorithm.c_str());
+  printf("\tSymmetric key algorithm: %s\n", FLAGS_symmetric_key_algorithm.c_str());
+  printf("\tPolicy doman name: %s\n", FLAGS_policy_domain_name.c_str());
+  printf("\tpolicy_key_cert_file: %s\n", FLAGS_policy_key_cert_file.c_str());
+  printf("\tPolicy store file name: %s\n", FLAGS)policy_store_filename, "policy_cert_file.policy_domain_name", );
+  printf("\tInput file format: : %s\n", FLAGS_input_format, "serialized-protobuf", "input file format");
+  printf("\tOutput file format: %s\n", FLAGS_output_format, "serialized-protobuf", "output file format");
+  printf("\tPolicy store file name: %s\n", FLAGS_policy_store_filename, "policy_store.bin", "policy store file name");
+  printf("\tEncrypted store file name: %s\n", FLAGS_encrypted_cryptstore_filename.c_str());
+  printf("\tSealed cypstore file name: %s\n", FLAGS_sealed_cryptstore_key_filename.c_str());
+  printf("\tKey name: %s\n", FLAGS_keyname.c_str());
+  printf("\tCryptstore entry name: %s\n", FLAGS_tag.c_str());
+  printf("\tCryptstore entry version: %d\n", (int)FLAGS_version);
+  printf("\tCryptstore entry type: %s\n", FLAGS_type.c_str());
+  printf("\tOutput file name: %s\n", FLAGS_output-file, "out_1", "output file name");
+  printf("\tInput file name: %s\n", FLAGS_input-file.c_str());
+  printf("\tLocation of ARK certificate: %s\n", FLAGS_ark_cert_file.c_str());
+  printf("\tLocation of ASK certificate: %s\n", FLAGS_ask_cert_file.c_str());
+  printf("\tLocation of VCEK certificate: %s\n", FLAGS_vcek_cert_file.c_str());
 }
 
+/*
 bool client_application(secure_authenticated_channel &channel) {
 
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
@@ -176,6 +239,7 @@ void server_application(secure_authenticated_channel &channel) {
   channel.write(strlen(msg), (byte *)msg);
   channel.close();
 }
+*/
 
 // -----------------------------------------------------------------------------------------
 

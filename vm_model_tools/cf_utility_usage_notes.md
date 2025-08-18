@@ -6,34 +6,44 @@ cf_osutility uses gflags to manage command line arguments,so if
 arguments are not specified, the defaults indicated below are used.
 
 cf-osutility.exe
-    --init-trust=false
-    --reinit-trust=false
-    --generate-symmetric-key=false
-    --generate-public-key=false
-    --get-item=false
-    --put-item=false
+    --init_trust=false
+    --reinit_trust=false
+    --generate_symmetric_key=false
+    --generate_public_key=false
+    --get_item=false
+    --put_item=false
+    --print_cryptstore=true
+    --save_cryptstore=true  // this can be false for "get" operations.
 
-    --policy_key_file=policy_store=policy_cert_file.policy_domain_name
     --enclave_type="sev-enclave"
-    --input-format=serialized-protobuf
-    --policy-store-filename=MUST-SPECIFY-IF-Neded
-    --encrypted-cryptstore-filename=MUST-SPECIFY
-    --sealed-cryptstore-key-filename=MUST-SPECIFY
+    --policy_domain_name=datica_file_share_1
+    --policy_key_file=policy_cert_file.policy_domain_name
+    --policy_store_filename=MUST-SPECIFY-IF-NEEDED
+    --encrypted_cryptstore_filename=MUST-SPECIFY
+    --sealed_cryptstore_key_filename=MUST-SPECIFY
+    --keyname="store_encryption_key_1"
     --symmetric_algorithm=aes-256-gcm
     --public_key_algorithm=rsa_2048
-    --keyname=MUST-SPECIFY-IF-NEEDED
+
     --tag=MUST-SPECIFY-IF-NEEDED
     --version=MUST-SPECIFY-IF-NEEDED
     --type=MUST-SPECIFY-IF-NEEDED
-    --print-cryptstore=true
-    --save-cryptstore=true  // this can be false for "get" operations.
+
     --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
-    --output-format=serialized-protobuf
-    --output-file=MUST-BE-SPECIFIED-IF-NEEDED
-    --input-format=serialized-protobuf
-    --input-file=MUST-BE-SPECIFIED-IF-NEEDED
-    --certifier_service_URL=url-of-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
-    --service-port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
+    --service_port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
+
+    --output_format=key_message_serialized-protobuf
+    --input_format=key_message_serialized-protobuf
+    --input_file=in_1
+    --output_file=out_1
+
+    SEV enclave specific
+    --ark_cert_file=./service/milan_ark_cert.der"
+    --ask_cert_file=./service/milan_ask_cert.der"
+    --vcek_cert_file=./service/milan_vcek_cert.der"
+
+    Simulated enclave specific
+
 
 --------------------------------------------------------------------------
 
