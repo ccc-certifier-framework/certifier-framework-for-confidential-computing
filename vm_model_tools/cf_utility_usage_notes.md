@@ -72,17 +72,17 @@ For the remainder, policy_domain_name is the name of the relevant security
 (policy) domain. $(VM_OS_TOOLS_BIN) is the directory containing the utility.
 
 $(VM_OS_TOOLS_BIN)/cf-osutility.exe
-    --init-trust=true
+    --init_trust=true
     --policy_key_file=policy_store=policy_cert_file.policy_domain_name
-    --policy-store-filename=policy_store.policy_domain_name
+    --policy_store_filename=policy_store.policy_domain_name
     --enclave_type="sev-enclave"
-    --sealed-cryptstore-key-filename=sealed-crypstore-key.policy_domain_name
-    --encrypted-cryptstore-filename=cryptstore.policy_domain_name
+    --sealed_cryptstore_key-filename=sealed-crypstore-key.policy_domain_name
+    --encrypted_cryptstore_filename=cryptstore.policy_domain_name
     --symmetric_algorithm=aes-256-gcm
     --public_key_algorithm=rsa_2048
-    --print-cryptstore=true
+    --print_cryptstore=true
     --certifier_service_URL=url-of-certifier-service
-    --service-port=port-for-certifier-service
+    --service_port=port-for-certifier-service
 
 What this command does
 
@@ -113,24 +113,24 @@ the self-signed certificate for the policy key for this security domain.
 Command 2:
 
 $(VM_OS_TOOLS_BIN)/cf-osutility.exe
-    --init-trust=false
+    --init_trust=false
     --policy_key_file=policy_store=policy_cert_file.policy_domain_name
     --enclave_type="sev-enclave"
-    --sealed-cryptstore-key-filename=sealed-crypstore-key.policy_domain_name
-    --encrypted-cryptstore-filename=cryptstore.policy_domain_name
+    --sealed_cryptstore_key_filename=sealed-crypstore-key.policy_domain_name
+    --encrypted_cryptstore_filename=cryptstore.policy_domain_name
     --tag=dmcrypt-key
     --type=MUST-SPECIFY-IF-NEEDED
-    --get-item=false
-    --put-item=false
-    --print-cryptstore=true
-    --generate-symmetric-key=true
+    --get_item=false
+    --put_item=false
+    --print_cryptstore=true
+    --generate_symmetric_key=true
     --keyname=dmcrypt-key
     --tag=dmcrypt-key
     --type=serialized-key-message
-    --print-cryptstore=true
-    --save-cryptstore=true  // this can be false for "get" operations.
-    --output-format=serialized-protobuf
-    --output-filename=new-key.bin
+    --print_cryptstore=true
+    --save_cryptstore=true  // this can be false for "get" operations.
+    --output_format=serialized-protobuf
+    --output_filename=new-key.bin
 
 
 What this command does
@@ -158,20 +158,20 @@ cd cf_management_files
 Command
 
 $(VM_OS_TOOLS_BIN)/cf-osutility.exe
-    --init-trust=false
+    --init_trust=false
     --policy_key_file=policy_store=policy_cert_file.policy_domain_name
     --enclave_type="sev-enclave"
-    --sealed-cryptstore-key-filename=sealed-crypstore-key.policy_domain_name
-    --encrypted-cryptstore-filename=cryptstore.policy_domain_name
-    --print-cryptstore=true
-    --get-item=true
+    --sealed_cryptstore_key_filename=sealed-crypstore-key.policy_domain_name
+    --encrypted_cryptstore_filename=cryptstore.policy_domain_name
+    --print_cryptstore=true
+    --get_item=true
     --keyname=dmcrypt-key
     --tag=dmcrypt-key
-    --output-format=serialized-protobuf
-    --print-cryptstore=true
-    --save-cryptstore=true  // this can be false for "get" operations.
-    --output-format=serialized-protobuf
-    --output-filename=existing-key.bin
+    --output_format=key_message_serialized-protobuf
+    --print_cryptstore=true
+    --save_cryptstore=true  // this can be false for "get" operations.
+    --output_format=serialized-protobuf
+    --output_filename=existing-key.bin
 
 What this command does
 
