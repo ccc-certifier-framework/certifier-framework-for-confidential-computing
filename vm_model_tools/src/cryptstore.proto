@@ -22,7 +22,7 @@ message cryptstore_entry {
   optional string tag                       = 1;
   optional string type                      = 2;
   optional int32 version                    = 3;
-  optional time_point time_entered          = 4;
+  optional bytes time_entered               = 4;
   optional bytes blob                       = 5;
 };
 

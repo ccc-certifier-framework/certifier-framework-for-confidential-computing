@@ -37,11 +37,11 @@ CF_UTILITY_SRC= $(CERTIFIER_ROOT)/vm_model_tools/src
 NEWPROTOBUF=1
 
 ifndef NEWPROTOBUF
-CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 else
-CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
-CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
+CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 endif
 CFLAGS=$(CFLAGS_NOERROR) -Werror
 
@@ -62,7 +62,7 @@ endif
 #  if you link in the certifier library certifier.a.
 dobj = $(O)/cf_utility.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
-       $(O)/cc_useful.o $(O)/cryptstore.pb.o
+       $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o
 
 all:	cf_utility.exe
 clean:
@@ -77,22 +77,25 @@ $(EXE_DIR)/cf_utility.exe: $(dobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
 
-$(CF_UTILITY_SRC)/cryptstore.pb.h: $(CF_UTILITY_SRC)/cryptstore.pb.cc
-$(CF_UTILITY_SRC)/cryptstore.pb.cc: $(CF_UTILITY_SRC)/cryptstore.proto
-	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
-
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
 	mv $(@D)/certifier.pb.h $(I)
 
-$(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
-	@echo "\ncompiling $<"
-	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
+$(CF_UTILITY_SRC)/cryptstore.pb.cc: $(CF_UTILITY_SRC)/cryptstore.proto
+	$(PROTO) --proto_path=$(CF_UTILITY_SRC) --cpp_out=$(CF_UTILITY_SRC) $(CF_UTILITY_SRC)/cryptstore.proto
 
 $(O)/cf_utility.o: $(CF_UTILITY_SRC)/cf_utility.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
+
+$(O)/cryptstore.pb.o: $(CF_UTILITY_SRC)/cryptstore.pb.h $(CF_UTILITY_SRC)/cryptstore.pb.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS_NOERROR) -o $(O)/cryptstore.pb.o -c $(CF_UTILITY_SRC)/cryptstore.pb.cc
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "\ncompiling $<"
@@ -107,6 +110,10 @@ $(O)/support.o: $(S)/support.cc $(I)/support.h
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

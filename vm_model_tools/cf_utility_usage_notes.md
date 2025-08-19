@@ -6,6 +6,7 @@ cf_osutility uses gflags to manage command line arguments,so if
 arguments are not specified, the defaults indicated below are used.
 
 cf-osutility.exe
+    --cf_utility_help=false
     --init_trust=false
     --reinit_trust=false
     --generate_symmetric_key=false
@@ -26,14 +27,14 @@ cf-osutility.exe
     --public_key_algorithm=rsa_2048
 
     --tag=MUST-SPECIFY-IF-NEEDED
-    --version=MUST-SPECIFY-IF-NEEDED
+    --entry_version=MUST-SPECIFY-IF-NEEDED
     --type=MUST-SPECIFY-IF-NEEDED
 
     --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
     --service_port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
 
-    --output_format=key_message_serialized-protobuf
-    --input_format=key_message_serialized-protobuf
+    --output_format=key-message-serialized-protobuf
+    --input_format=key-message-serialized-protobuf
     --input_file=in_1
     --output_file=out_1
 
@@ -178,7 +179,7 @@ What this command does
 It searches the cryptstore for an entry with tag "dmcrypt-key."
 If found, it writes the associated protobuf for the key 
 with the latest version (since we specified no version number).
-into the output-file and prints "suceeded;" ; otherwise,
+into the output-file and prints "suceeded;" otherwise,
 it prints "failed".
 
 --------------------------------------------------------------------------------
