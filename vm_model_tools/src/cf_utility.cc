@@ -60,24 +60,29 @@ DEFINE_string(policy_key_cert_file, "policy_certificate.datica",
     "file name for policy certificate");
 DEFINE_string(input_format, "serialized-protobuf", "input file format");
 DEFINE_string(output_format, "serialized-protobuf", "output file format");
-DEFINE_string(policy_store_filename, "policy_store.bin", "policy store file name");
+DEFINE_string(policy_store_filename, "policy_store.bin.datica",
+		"policy store file name");
 DEFINE_string(encrypted_cryptstore_filename,
-    "encrypted_keystore.datica",
-    "encrypted crypstore filename");
+    "encrypted_cryptstore.datica",
+    "encrypted cryptstore file name");
 DEFINE_string(sealed_cryptstore_key_filename,
-     "sealed_cryptstore_key.daticaa",
+     "sealed_cryptstore_key.datica",
      "sealed cryptstore file name");
 DEFINE_string(keyname, "primary_store_encryption_key",
      "generated key name");
 DEFINE_string(tag, "policy-key", "cryptstore entry tag");
 DEFINE_int32(entry_version, 0, "cryptstore entry version");
-DEFINE_string(type, "key_message_protobuf", "cryptstore data type");
+DEFINE_string(type, "key-message-serialized-protobuf",
+		"cryptstore entry data type");
 DEFINE_string(output_file, "out_1", "output file name");
 DEFINE_string(input_file, "in_1", "input file name");
 
-DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der", "machine ark certificate location");
-DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der", "machine ask certificate location");
-DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der", "machine vcek certificate location");
+DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der",
+		"machine ark certificate location");
+DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der",
+		"machine ask certificate location");
+DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der",
+		"machine vcek certificate location");
 
 
 // -------------------------------------------------------------------------
@@ -134,64 +139,72 @@ void print_cryptstore_entry(const cryptstore_entry& ent) {
 
 void print_os_model_parameters() {
   printf("cf_utility parameters:\n");
-  printf("\t address for certifier service: %s\n",
-          FLAGS_certifier_service_URL.c_str());
-  printf("\tPort for service %d\n", (int)FLAGS_service_port);
-  printf("\tProtecting enclave type: %s\n", FLAGS_enclave_type.c_str());
+  printf("\n");
 
   if (FLAGS_init_trust)
-    printf("\tInitialize certification?: yes\n");
+    printf("  Initialize certification?: yes\n");
   else
-    printf("\tInitialize certification?: no\n");
+    printf("  Initialize certification?: no\n");
   if (FLAGS_reinit_trust)
-    printf("\tReinitialize certification?: yes\n");
+    printf("  Reinitialize certification?: yes\n");
   else
-    printf("\tReinitialize certification?: no\n");
+    printf("  Reinitialize certification?: no\n");
 
   if (FLAGS_generate_symmetric_key)
-    printf("\tGenerate symmetric key?: yes\n");
+    printf("  Generate symmetric key?: yes\n");
   else
-    printf("\tGenerate symmetric key?: no\n");
+    printf("  Generate symmetric key?: no\n");
   if (FLAGS_generate_public_key)
-    printf("\tGenerate public key?: yes\n");
+    printf("  Generate public key?: yes\n");
   else
-    printf("\tGenerate public key?: no\n");
+    printf("  Generate public key?: no\n");
   if (FLAGS_get_item)
-    printf("\tRetrieve cryptstore entry?: yes\n");
+    printf("  Retrieve cryptstore entry?: yes\n");
   else
-    printf("\tRetrieve cryptstore entry?: no\n");
+    printf("  Retrieve cryptstore entry?: no\n");
   if (FLAGS_put_item)
-    printf("\tInsert cryptstore entry?: yes\n");
+    printf("  Insert cryptstore entry?: yes\n");
   else
-    printf("\tInsert cryptstore entry?: no\n");
+    printf("  Insert cryptstore entry?: no\n");
   if (FLAGS_print_cryptstore)
-    printf("\tPrint cryptstore?: yes\n");
+    printf("  Print cryptstore?: yes\n");
   else
-    printf("\tPrint cryptstore?: no\n");
+    printf("  Print cryptstore?: no\n");
   if (FLAGS_save_cryptstore)
-    printf("\tSave cryptstore?: yes\n");
+    printf("  Save cryptstore?: yes\n");
   else
-    printf("\tSave cryptstore?: no\n");
-
-  printf("\tPublic key algorithm: %s\n", FLAGS_public_key_algorithm.c_str());
-  printf("\tSymmetric key algorithm: %s\n", FLAGS_symmetric_key_algorithm.c_str());
-  printf("\tPolicy doman name: %s\n", FLAGS_policy_domain_name.c_str());
-  printf("\tpolicy_key_cert_file: %s\n", FLAGS_policy_key_cert_file.c_str());
-  printf("\tPolicy store file name: %s\n", FLAGS_policy_store_filename.c_str());
-  printf("\tInput file format: %s\n", FLAGS_input_format.c_str());
-  printf("\tOutput file format: %s\n", FLAGS_output_format.c_str());
-  printf("\tPolicy store file name: %s\n", FLAGS_policy_store_filename.c_str());
-  printf("\tEncrypted store file name: %s\n", FLAGS_encrypted_cryptstore_filename.c_str());
-  printf("\tSealed cypstore file name: %s\n", FLAGS_sealed_cryptstore_key_filename.c_str());
-  printf("\tKey name: %s\n", FLAGS_keyname.c_str());
-  printf("\tCryptstore entry name: %s\n", FLAGS_tag.c_str());
-  printf("\tCryptstore entry version: %d\n", (int)FLAGS_entry_version);
-  printf("\tCryptstore entry type: %s\n", FLAGS_type.c_str());
-  printf("\tOutput file name: %s\n", FLAGS_output_file.c_str());
-  printf("\tInput file name: %s\n", FLAGS_input_file.c_str());
-  printf("\tARK certificate file: %s\n", FLAGS_ark_cert_file.c_str());
-  printf("\tASK certificate file: %s\n", FLAGS_ask_cert_file.c_str());
-  printf("\tVCEK certificate file: %s\n", FLAGS_vcek_cert_file.c_str());
+    printf("  Save cryptstore?: no\n");
+  printf("\n");
+  printf("  Policy doman name: %s\n", FLAGS_policy_domain_name.c_str());
+  printf("  Policy_key_cert_file: %s\n", FLAGS_policy_key_cert_file.c_str());
+  printf("  Policy store file name: %s\n",
+		  FLAGS_policy_store_filename.c_str());
+  printf("  Encrypted cryptstore file name: %s\n",
+		  FLAGS_encrypted_cryptstore_filename.c_str());
+  printf("  Sealed cryptstore key file name: %s\n",
+		  FLAGS_sealed_cryptstore_key_filename.c_str());
+  printf("\n");
+  printf("  Protecting enclave type: %s\n", FLAGS_enclave_type.c_str());
+  printf("  Address for certifier service: %s\n",
+          FLAGS_certifier_service_URL.c_str());
+  printf("  Port for service %d\n", (int)FLAGS_service_port);
+  printf("\n");
+  printf("  Input file format: %s\n", FLAGS_input_format.c_str());
+  printf("  Output file format: %s\n", FLAGS_output_format.c_str());
+  printf("  Input file name: %s\n", FLAGS_input_file.c_str());
+  printf("  Output file name: %s\n", FLAGS_output_file.c_str());
+  printf("\n");
+  printf("  Public key algorithm: %s\n", FLAGS_public_key_algorithm.c_str());
+  printf("  Symmetric key algorithm: %s\n",
+		  FLAGS_symmetric_key_algorithm.c_str());
+  printf("  Key name: %s\n", FLAGS_keyname.c_str());
+  printf("  Cryptstore entry name: %s\n", FLAGS_tag.c_str());
+  printf("  Cryptstore entry version: %d\n", (int)FLAGS_entry_version);
+  printf("  Cryptstore entry type: %s\n", FLAGS_type.c_str());
+  printf("\n");
+  printf("  ARK certificate file: %s\n", FLAGS_ark_cert_file.c_str());
+  printf("  ASK certificate file: %s\n", FLAGS_ask_cert_file.c_str());
+  printf("  VCEK certificate file: %s\n", FLAGS_vcek_cert_file.c_str());
 }
 
 // -----------------------------------------------------------------------------------------
@@ -316,6 +329,7 @@ int main(int an, char **av) {
     print_help();
     return ret;
   }
+  print_os_model_parameters();
 
   SSL_library_init();
   string purpose("authentication");
