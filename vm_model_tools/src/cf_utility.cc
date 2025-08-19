@@ -38,6 +38,10 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
+// cf_utility see ../cf_utility_usage_notes.md for description
+
+//  -------------------------------------------------------------------
+
 DEFINE_bool(cf_utility_help, false, "provide help");
 DEFINE_string(certifier_service_URL, "localhost", "address for service");
 DEFINE_int32(service_port, 8124, "port for service");
@@ -50,7 +54,7 @@ DEFINE_bool(generate_public_key, false, "generate public key?");
 DEFINE_bool(get_item, false, "get item from cryptstore");
 DEFINE_bool(put_item, false, "put item into cryptstore");
 DEFINE_bool(print_cryptstore, true, "print cryptstore");
-DEFINE_bool(save_cryptstore, true, "save cryptstore");
+DEFINE_bool(save_cryptstore, false, "save cryptstore");
 
 DEFINE_string(public_key_algorithm, Enc_method_rsa_2048, "public key algorithm");
 DEFINE_string(symmetric_key_algorithm, Enc_method_aes_256_cbc_hmac_sha256,
@@ -84,12 +88,7 @@ DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der",
 DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der",
 		"machine vcek certificate location");
 
-
 // -------------------------------------------------------------------------
-
-
-// cf_utility see ../cf_utility_usage_notes.md for description
-
 
 void print_cryptstore_entry(const cryptstore_entry& ent) {
   if (ent.has_tag()) {
@@ -317,22 +316,53 @@ void print_help() {
 cc_trust_manager *trust_mgr = nullptr;
 
 
-int main(int an, char **av) {
-  string usage("cf-osutility");
-  gflags::SetUsageMessage(usage);
-  gflags::ParseCommandLineFlags(&an, &av, true);
-  an = 1;
-  ::testing::InitGoogleTest(&an, av);
-  int ret = 0;
+bool save_cryptstore(cryptstore& cs) {
+  // get sealing key
+  // serialize store 
+  // encrypt it
+  // write file
+  return false;
+}
 
-  if (FLAGS_cf_utility_help) {
-    print_help();
-    return ret;
+bool open_cryptstore(cryptstore* cs) {
+  // get sealing key
+  // get encrypted store
+  // decrypt it
+  // Deserialize
+  return false;
+}
+
+bool get_existing_trust_domain() {
+  return false;
+}
+
+bool initialize_new_trust_domain() {
+  return false;
+}
+
+bool generate_symmetric_key(key_message* km, string& name, string& key_type) {
+  return false;
+}
+
+bool generate_public_key(key_message* km, string& name, string& key_type) {
+  return false;
+}
+
+bool get_item(string& tag, string* type, int* version, time_point* tp,
+                string* blob) {
+  return false;
+}
+
+bool put_item(string& tag, string& type, int& version, string& blob) {
+  return false;
+}
+
+void print_cryptstore(cryptstore& cs) {
+  printf("\nCryptstore:\n");
+  for (int i = 0; i < cs.entries_size(); i++) {
+    print_cryptstore_entry(cs.entries(i));
   }
-  print_os_model_parameters();
-
-  SSL_library_init();
-  string purpose("authentication");
+}
 
   /*
   string store_file(FLAGS_data_dir);
@@ -464,13 +494,240 @@ int main(int an, char **av) {
   } else {
     printf("%s() error, line %d, Unknown operation\n", __func__, __LINE__);
   }
+  */
+
+
+int main(int an, char **av) {
+  string usage("cf-osutility");
+  gflags::SetUsageMessage(usage);
+  gflags::ParseCommandLineFlags(&an, &av, true);
+  an = 1;
+  ::testing::InitGoogleTest(&an, av);
+  int ret = 0;
+
+  if (FLAGS_cf_utility_help) {
+    print_help();
+    return ret;
+  }
+  print_os_model_parameters();
+
+  SSL_library_init();
+  string purpose("authentication");
+
+  if (FLAGS_init_trust) {
+
+    if (!get_existing_trust_domain()) {
+      if (!initialize_new_trust_domain()) {
+        printf("%s() error, line %d, cannot initialize new trust domain\n",
+               __func__, __LINE__);
+        ret= 1;
+        goto done;
+      } 
+
+      // get or initialize cryptstore
+      cryptstore cs;
+      if (!open_cryptstore(&cs)) {
+        printf("%s() error, line %d, cannot open cryptstore\n",
+              __func__, __LINE__);
+        ret= 1;
+        goto done;
+      }
+      // add keys and certificates
+      if (!save_cryptstore(cs)) {
+        printf("%s() error, line %d, cannot save cryptstore\n",
+              __func__, __LINE__);
+        ret= 1;
+        goto done;
+      }
+    }
+    goto done;
+  } else if (FLAGS_reinit_trust) {
+    cryptstore cs;
+    if (!initialize_new_trust_domain()) {
+      printf("%s() error, line %d, cannot initialize new trust domain\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+
+    // get or initialize cryptstore
+    if (!open_cryptstore(&cs)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+            __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    // add keys and certificates
+    if (!save_cryptstore(cs)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+            __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    goto done;
+  } else if (FLAGS_generate_symmetric_key) {
+
+    // open existing trust domain to get cryptstore
+    if (!get_existing_trust_domain()) {
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    cryptstore cs;
+
+    if (!open_cryptstore(&cs)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    key_message km;
+    string key_name;
+    string key_type;
+    if (!generate_symmetric_key(&km, key_name, key_type)) {
+      printf("%s() error, line %d, cannot generate symmetric key\n",
+            __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    // add key to store and save it
+    if (!save_cryptstore(cs)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+            __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    goto done;
+  } else if (FLAGS_generate_public_key) {
+
+    // open existing trust domain to get cryptstore
+    if (!get_existing_trust_domain()) {
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    cryptstore cs;
+
+    if (!open_cryptstore(&cs)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    key_message km;
+    string key_name;
+    string key_type;
+    if (!generate_public_key(&km, key_name, key_type)) {
+      printf("%s() error, line %d, cannot generate public key\n",
+            __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    // add key to store and save it
+    if (!save_cryptstore(cs)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+            __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    goto done;
+  } else if (FLAGS_get_item) {
+
+    // open existing trust domain to get cryptstore
+    if (!get_existing_trust_domain()) {
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    cryptstore cs;
+
+    string entry_tag;
+    string entry_type;
+    int entry_version;
+    time_point entry_tp;
+    string value;
+
+    if (!open_cryptstore(&cs)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    if (!get_item(entry_tag, &entry_type, &entry_version, &entry_tp, &value)) {
+      printf("%s() error, line %d, cannot find %s entry\n",
+            __func__, __LINE__, entry_tag.c_str());
+      ret= 1;
+      goto done;
+    }
+    goto done;
+  } else if (FLAGS_put_item) {
+
+    // open existing trust domain to get cryptstore
+    if (!get_existing_trust_domain()) {
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    cryptstore cs;
+
+    if (!open_cryptstore(&cs)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+
+    string entry_tag;
+    string entry_type;
+    int entry_version;
+    time_point entry_tp;
+    string value;
+    if (!put_item(entry_tag, entry_type, entry_version, value)) {
+      printf("%s() error, line %d, cannot insert %s entry\n",
+            __func__, __LINE__, entry_tag.c_str());
+      ret= 1;
+      goto done;
+    }
+    // add key to store and save it
+    if (!save_cryptstore(cs)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+            __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    goto done;
+  } else if (FLAGS_print_cryptstore) {
+
+    // open existing trust domain to get cryptstore
+    if (!get_existing_trust_domain()) {
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    cryptstore cs;
+
+    if (!open_cryptstore(&cs)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__, __LINE__);
+      ret= 1;
+      goto done;
+    }
+    print_cryptstore(cs);
+    goto done;
+  } else {
+    printf("No action\n");
+    goto done;
+  }
 
 done:
-  // trust_mgr->print_trust_data();
   trust_mgr->clear_sensitive_data();
   if (trust_mgr != nullptr) {
     delete trust_mgr;
   }
-  */
   return ret;
 }
