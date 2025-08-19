@@ -273,7 +273,7 @@ void print_help() {
   printf("  --generate_symmetric_key=false, generate a symmetric key of specified key type\n");
   printf("  --generate_public_key=false, generate a public key of specified key type\n");
   printf("  --print_cryptstore=true, print cryptstore\n");
-  printf("  --save_cryptstore=true, save cryptstore (normally automatic)\n");
+  printf("  --save_cryptstore=false, save cryptstore (normally automatic)\n");
   printf("\n");
   printf("  --tag=\"\", value of tag for put_item\n");
   printf("  --version=0, value of version for put_item\n");
@@ -316,6 +316,14 @@ void print_help() {
 cc_trust_manager *trust_mgr = nullptr;
 
 
+bool create_cryptstore(cryptstore& cs) {
+  // generate sealing key
+  // serialize it
+  // encrypt it
+  // write file
+  return false;
+}
+
 bool save_cryptstore(cryptstore& cs) {
   // get sealing key
   // serialize store 
@@ -333,11 +341,97 @@ bool open_cryptstore(cryptstore* cs) {
 }
 
 bool get_existing_trust_domain() {
+  string purpose("authentication");
+  string store_file(FLAGS_policy_store_filename);
+
+#if 0
+  trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
+  if (trust_mgr == nullptr) {
+    printf("%s() error, line %d, couldn't initialize trust object\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  // read policy cert
+  string der_policy_cert;
+
+  if (!trust_mgr->warm_restart()) {
+      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+      return false;
+    }
+#else
   return false;
+#endif
 }
 
 bool initialize_new_trust_domain() {
+  string purpose("authentication");
+  string store_file(FLAGS_policy_store_filename);
+
+#if 0
+  trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
+  if (trust_mgr == nullptr) {
+    printf("%s() error, line %d, couldn't initialize trust object\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  // read policy cert
+  string der_policy_cert;
+
+  // Init policy key info
+  if (!trust_mgr->init_policy_key((byte*)der_policy_cert.data(), der_policy_cert.size())) {
+    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
+    return false;
+  }
+
+  // Get parameters
+  string *params = nullptr;
+  int     n = 0;
+  if (!get_enclave_parameters(&params, &n)) {
+    printf("%s() error, line %d, get enclave parameters\n", __func__, __LINE__);
+    return false;
+  }
+
+  // get parameters for enclave
+  
+  // Init enclave
+  if (!trust_mgr->initialize_enclave(n, params)) {
+    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
+    return false;
+  }
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
+  }
+
+  // app host and port not needed
+  string app_host;
+  int app_port= 0;
+  if (!trust_mgr->cold_init(FLAGS_public_key_algorithm,
+                            FLAGS_symmetric_algorithm,
+                            FLAGS_policy_domain_name,
+                            FLAGS_certifier_service_URL,
+                            FLAGS_service_port,
+                            app_host,
+                            app_port)) {
+      printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
+      return false;
+    }
+
+  if (!trust_mgr->certify_me()) {
+    printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+  trust_mgr->print_trust_data();
+#endif  // DEBUG
+  return true;
+#else
   return false;
+#endif
 }
 
 bool generate_symmetric_key(key_message* km, string& name, string& key_type) {
@@ -363,138 +457,6 @@ void print_cryptstore(cryptstore& cs) {
     print_cryptstore_entry(cs.entries(i));
   }
 }
-
-  /*
-  string store_file(FLAGS_data_dir);
-  store_file.append(FLAGS_policy_store_file);
-  trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
-  if (trust_mgr == nullptr) {
-    printf("%s() error, line %d, couldn't initialize trust object\n",
-           __func__,
-           __LINE__);
-    return 1;
-  }
-
-  // Init policy key info
-  if (!trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)) {
-    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
-    return 1;
-  }
-
-  // Get parameters
-  string *params = nullptr;
-  int     n = 0;
-  if (!get_enclave_parameters(&params, &n)) {
-    printf("%s() error, line %d, get enclave parameters\n", __func__, __LINE__);
-    return 1;
-  }
-
-  // Init simulated enclave
-  if (!trust_mgr->initialize_enclave(n, params)) {
-    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
-    return 1;
-  }
-  if (params != nullptr) {
-    delete[] params;
-    params = nullptr;
-  }
-
-  // Carry out operation
-  if (FLAGS_operation == "cold-init") {
-    if (!trust_mgr->cold_init(public_key_alg,
-                              auth_symmetric_key_alg,
-                              "simple-app-home_domain",
-                              FLAGS_policy_host,
-                              FLAGS_policy_port,
-                              FLAGS_server_app_host,
-                              FLAGS_server_app_port)) {
-      printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-
-    // Debug
-#ifdef DEBUG
-    trust_mgr->print_trust_data();
-#endif  // DEBUG
-  } else if (FLAGS_operation == "get-certified") {
-    if (!trust_mgr->warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-    if (!trust_mgr->certify_me()) {
-      printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-    // Debug
-#ifdef DEBUG
-    trust_mgr->print_trust_data();
-#endif  // DEBUG
-  } else if (FLAGS_operation == "run-app-as-client") {
-    string                       my_role("client");
-    secure_authenticated_channel channel(my_role);
-
-    if (!trust_mgr->warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-
-    printf("Running App as client\n");
-    if (!trust_mgr->cc_auth_key_initialized_
-        || !trust_mgr->cc_policy_info_initialized_) {
-      printf("%s() error, line %d, trust data not initialized\n",
-             __func__,
-             __LINE__);
-      ret = 1;
-      goto done;
-    }
-
-    if (!trust_mgr->primary_admissions_cert_valid_) {
-      printf("%s() error, line %d, primary admissions cert not valid\n",
-             __func__,
-             __LINE__);
-      ret = 1;
-      goto done;
-    }
-    if (!channel.init_client_ssl(FLAGS_server_app_host,
-                                 FLAGS_server_app_port,
-                                 *trust_mgr)) {
-      printf("%s() error, line %d, Can't init client app\n",
-             __func__,
-             __LINE__);
-      ret = 1;
-      goto done;
-    }
-
-    // This is the actual application code.
-    if (!client_application(channel)) {
-      printf("%s() error, line %d, client_application failed\n",
-             __func__,
-             __LINE__);
-      ret = 1;
-      goto done;
-    }
-  } else if (FLAGS_operation == "run-app-as-server") {
-    if (!trust_mgr->warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
-      ret = 1;
-      goto done;
-    }
-    printf("Running App as server\n");
-    if (!server_dispatch(FLAGS_server_app_host,
-                         FLAGS_server_app_port,
-                         *trust_mgr,
-                         server_application)) {
-      ret = 1;
-      goto done;
-    }
-  } else {
-    printf("%s() error, line %d, Unknown operation\n", __func__, __LINE__);
-  }
-  */
 
 
 int main(int an, char **av) {

@@ -14,7 +14,7 @@ cf-osutility.exe
     --get_item=false
     --put_item=false
     --print_cryptstore=true
-    --save_cryptstore=true  // this can be false for "get" operations.
+    --save_cryptstore=false
 
     --enclave_type="sev-enclave"
     --policy_domain_name=datica_file_share_1
@@ -129,7 +129,7 @@ $(VM_OS_TOOLS_BIN)/cf-osutility.exe
     --tag=dmcrypt-key
     --type=serialized-key-message
     --print_cryptstore=true
-    --save_cryptstore=true  // this can be false for "get" operations.
+    --save_cryptstore=false
     --output_format=serialized-protobuf
     --output_filename=new-key.bin
 
@@ -170,7 +170,7 @@ $(VM_OS_TOOLS_BIN)/cf-osutility.exe
     --tag=dmcrypt-key
     --output_format=key_message_serialized-protobuf
     --print_cryptstore=true
-    --save_cryptstore=true  // this can be false for "get" operations.
+    --save_cryptstore=false
     --output_format=serialized-protobuf
     --output_filename=existing-key.bin
 
