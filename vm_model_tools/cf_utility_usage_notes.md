@@ -17,6 +17,7 @@ cf-osutility.exe
     --save_cryptstore=false
 
     --enclave_type="sev-enclave"
+    --data_dir=./cf_data
     --policy_domain_name=datica_file_share_1
     --policy_key_file=policy_cert_file.policy_domain_name
     --policy_store_filename=MUST-SPECIFY-IF-NEEDED

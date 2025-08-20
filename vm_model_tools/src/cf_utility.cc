@@ -62,6 +62,7 @@ DEFINE_string(symmetric_key_algorithm, Enc_method_aes_256_cbc_hmac_sha256,
 DEFINE_string(policy_domain_name, "datica", "policy domain name");
 DEFINE_string(policy_key_cert_file, "policy_certificate.datica",
     "file name for policy certificate");
+DEFINE_string(data_dir, "./cf_data", "supporting file directory");
 DEFINE_string(input_format, "serialized-protobuf", "input file format");
 DEFINE_string(output_format, "serialized-protobuf", "output file format");
 DEFINE_string(policy_store_filename, "policy_store.bin.datica",
@@ -182,6 +183,8 @@ void print_os_model_parameters() {
 		  FLAGS_encrypted_cryptstore_filename.c_str());
   printf("  Sealed cryptstore key file name: %s\n",
 		  FLAGS_sealed_cryptstore_key_filename.c_str());
+  printf("  Directory for cf_utility supporting data for this policy: %s\n",
+		  FLAGS_data_dir.c_str());
   printf("\n");
   printf("  Protecting enclave type: %s\n", FLAGS_enclave_type.c_str());
   printf("  Address for certifier service: %s\n",
@@ -265,6 +268,7 @@ void print_help() {
                   " containing encrypted store\n");
   printf("  --sealed_cryptstore_key_filename=encrypted_store.datica.sealed_key, "\
                   "file name of file containing sealed cryptstore key\n");
+  printf("  --data_dir=./cf_data, directory for configuration data.\n");
   printf("\n");
   printf("  --init_trust=false, initialize trust domain if needed\n");
   printf("  --reinit_trust=false, unconditionally initialize trust domain if needed\n");

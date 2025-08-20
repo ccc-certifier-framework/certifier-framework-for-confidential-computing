@@ -191,42 +191,6 @@ cd $CERTIFIER_ROOT/certifier_service/oelib
 make
 ```
 
-  If you do not have OE SDK installed or do not want to enable OE:
-```shell
-make dummy
-```
-  Compile the graminelib for gramine host verification
-
-```shell
-cd $CERTIFIER_ROOT/certifier_service/graminelib
-
-make
-```
-
-  If you do not have Gramine installed or do not want to enable it:
-```shell
-make dummy
-```
-  Compile the isletlib for islet host verification
-
-```shell
-cd $CERTIFIER_ROOT/certifier_service/isletlib
-
-make
-```
-
-  If you do not have Islet installed or do not want to enable it:
-```shell
-make dummy
-```
-
-  Compile the teelib for running the certifier service inside a TEE
-```shell
-cd $CERTIFIER_ROOT/certifier_service/teelib
-
-make
-```
-
 This should produce a Go file for the certifier protobufs called certifier.pb.go in certprotos.
 Now build simpleserver:
 
@@ -259,10 +223,6 @@ On real hardware, these are not needed.
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-cp -p ./* $EXAMPLE_DIR/app1_data
-cp -p ./* $EXAMPLE_DIR/app2_data
-```
-
 
 ## Step 12: Provision the service files
 ```shell
@@ -284,84 +244,48 @@ $CERTIFIER_ROOT/certifier_service/simpleserver   \
 ```
 
 ## Step 14:  Run the apps and get admission certificates from Certifier Service
-Open two new terminals (one for the example app running as a client and one for the
-same example app running as a server):
 
-In the app-as-a-client terminal run the following:
+cf-osutility.exe
+    --cf_utility_help=false
+    --init_trust=false
+    --reinit_trust=false
+    --generate_symmetric_key=false
+    --generate_public_key=false
+    --get_item=false
+    --put_item=false
+    --print_cryptstore=true
+    --save_cryptstore=false
+    
+    --enclave_type="sev-enclave"
+    --policy_domain_name=datica_file_share_1
+    --policy_key_file=policy_cert_file.policy_domain_name
+    --policy_store_filename=MUST-SPECIFY-IF-NEEDED
+    --encrypted_cryptstore_filename=MUST-SPECIFY
+    --sealed_cryptstore_key_filename=MUST-SPECIFY
+    --keyname="store_encryption_key_1"
+    --symmetric_algorithm=aes-256-gcm 
+    --public_key_algorithm=rsa_2048
 
-```shell
-cd $EXAMPLE_DIR
+    --tag=MUST-SPECIFY-IF-NEEDED
+    --entry_version=MUST-SPECIFY-IF-NEEDED
+    --type=MUST-SPECIFY-IF-NEEDED
 
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app1_data/                      \
-      --operation=cold-init                        \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store
-      --print_all=true
+    --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
+    --service_port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
+    --certifier_service_URL=MUST-BE-SPECIFIED-IF-NEEDED
+    --service_port=port-for-certifier-service, MUST-BE-SPECIFIED-IF-NEEDED
 
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app1_data/                      \
-      --operation=get-certified                    \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store             \
-      --print_all=true
-```
+    --output_format=key-message-serialized-protobuf
+    --input_format=key-message-serialized-protobuf
+    --input_file=in_1
+    --output_file=out_1
 
-In the app-as-a-server terminal run the following:
+    SEV enclave specific
+    --ark_cert_file=./service/milan_ark_cert.der"
+    --ask_cert_file=./service/milan_ask_cert.der"
+    --vcek_cert_file=./service/milan_vcek_cert.der"
 
-```shell
-cd $EXAMPLE_DIR
-
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app2_data/                      \
-      --operation=cold-init                        \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store
-      --print_all=true
-
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app2_data/                      \
-      --operation=get-certified                    \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store             \
-      --print_all=true
-```
-
-At this point, both versions of the app have their admission certificates.  You can look at
-the output of the terminal running simpleserver for output.  Now all we have to do is have
-the apps connect to each other for the final test.  **The Certifier Service is no longer needed
-at this point.**
-
-
-## Step 15:  Run the apps to test trusted services
-
-### a. In the app-as-a-server terminal run the following:
-
-```shell
-
-cd $EXAMPLE_DIR
-
-$EXAMPLE_DIR/example_app.exe           \
-      --data_dir=./app2_data/          \
-      --operation=run-app-as-server    \
-      --policy_store_file=policy_store \
-      --print_all=true
-```
-
-### b. In the app-as-a-client terminal run the following:
-
-```shell
-cd $EXAMPLE_DIR
-
-$EXAMPLE_DIR/example_app.exe           \
-      --data_dir=./app1_data/          \
-      --operation=run-app-as-client    \
-      --policy_store_file=policy_store \
-      --print_all=true
-```
-
-You should see the message "Hi from your secret server" in the client terminal window and
-"Hi from your secret client".
+    Simulated enclave specific
 
 If so, **Congratulations! Your first Confidential Computing program worked!**
 
@@ -392,8 +316,10 @@ and produces a measurement which is used to construct the policy.
 
 * The utility `measurement_utility.exe` does this in step 6 above for the simulated enclave.
 * For SEV, you can obtain the corresponding tool from https://github.com/AMDESE/sev-tool.
-* When Open Enclaves is used for SGX development, the oesign tool should be used.  This
-can be obtained from https://github.com/openenclave/openenclave/tree/master/tools/oesign.
+* However, we are switching to virtee, which is more flexible.  Download the
+* utility from https://github.com/virtee/sev-snp-measure
+* and follow the instructions.
+
 * These tools both produce a file containing the binary measurement which should
 be used in step 7(a), above.
 
@@ -402,69 +328,6 @@ https://github.com/intel/linux-sgx/blob/master/sdk/sign_tool/SignTool/sign_tool.
 
 
 -----
-## Below are commands for general testing:
-
-Other commands that can be run in the app-as-a-client terminal.
-
-The operations are: _cold-init_, _get-certified_ and _run-app-as-client_.
-
-**NOTE: --data_dir=./app1_data/** in these examples.
-
-```shell
-./example_app.exe                               \
-      --data_dir=./app1_data/                   \
-      --operation=cold-init                     \
-      --policy_cert_file=policy_cert_file.bin   \
-      --policy_store_file=policy_store          \
-      --print_all=true
-
-./example_app.exe                               \
-      --data_dir=./app1_data/                   \
-      --operation=get-certified                 \
-      --policy_cert_file=policy_cert_file.bin   \
-      --policy_store_file=policy_store          \
-      --print_all=true
-
-./example_app.exe                               \
-      --data_dir=./app1_data/                   \
-      --operation=run-app-as-client             \
-      --policy_cert_file=policy_cert_file.bin   \
-      --policy_store_file=policy_store          \
-      --print_all=true
-```
-Similar sequence of commands can be run in the app-as-a-server terminal, with the final command being _run-app-as-server_ in this case:
-
-**NOTE: --data_dir=./app2_data/** in these examples.
-
-```shell
-./```
-
-### b. Produce the signed claims for each vse policy statement.
-```shell
-
-example_app.exe                                 \
-      --data_dir=./app2_data/                   \
-      --operation=cold-init                     \
-      --policy_cert_file=policy_cert_file.bin   \
-      --policy_store_file=policy_store          \
-      --print_all=true
-
-./example_app.exe                               \
-      --data_dir=./app2_data/                   \
-      --operation=get-certified                 \
-      --policy_cert_file=policy_cert_file.bin   \
-      --policy_store_file=policy_store          \
-      --print_all=true
-
-./example_app.exe                               \
-      --data_dir=./app2_data/                   \
-      --operation=run-app-as-server             \
-      --policy_cert_file=policy_cert_file.bin   \
-      --policy_store_file=policy_store          \
-      --print_all=true
-```
-
-## Go setup
 
 ```shell
 export GOPATH=$HOME
