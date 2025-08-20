@@ -1106,6 +1106,8 @@ bool certifier::framework::cc_trust_manager::generate_symmetric_key(
   symmetric_key_.set_key_name("app-symmetric-key");
   symmetric_key_.set_key_type(symmetric_key_algorithm_);
   symmetric_key_.set_key_format("vse-key");
+  // FIX! should be
+  //  symmetric_key_.set_secret_key_bits(symmetric_key_bytes_,  num_key_bytes);
   symmetric_key_.set_secret_key_bits(symmetric_key_bytes_, 8 * num_key_bytes);
 
   return true;
@@ -1145,8 +1147,8 @@ bool certifier::framework::cc_trust_manager::generate_sealing_key(bool regen) {
   service_sealing_key_.set_key_name("sealing-key");
   service_sealing_key_.set_key_type(symmetric_key_algorithm_);
   service_sealing_key_.set_key_format("vse-key");
-  service_sealing_key_.set_secret_key_bits(sealing_key_bytes_,
-                                           8 * num_key_bytes);
+  // FIX!  should be
+  //    service_sealing_key_.set_secret_key_bits(sealing_key_bytes_, num_key_bytes);
 
   return true;
 }

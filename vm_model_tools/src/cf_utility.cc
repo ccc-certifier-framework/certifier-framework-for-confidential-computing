@@ -62,11 +62,11 @@ DEFINE_string(symmetric_key_algorithm, Enc_method_aes_256_cbc_hmac_sha256,
 DEFINE_string(policy_domain_name, "datica", "policy domain name");
 DEFINE_string(policy_key_cert_file, "policy_certificate.datica",
     "file name for policy certificate");
-DEFINE_string(data_dir, "./cf_data", "supporting file directory");
+DEFINE_string(data_dir, "./", "supporting file directory");
 DEFINE_string(input_format, "serialized-protobuf", "input file format");
 DEFINE_string(output_format, "serialized-protobuf", "output file format");
 DEFINE_string(policy_store_filename, "policy_store.bin.datica",
-		"policy store file name");
+                "policy store file name");
 DEFINE_string(encrypted_cryptstore_filename,
     "encrypted_cryptstore.datica",
     "encrypted cryptstore file name");
@@ -78,16 +78,25 @@ DEFINE_string(keyname, "primary_store_encryption_key",
 DEFINE_string(tag, "policy-key", "cryptstore entry tag");
 DEFINE_int32(entry_version, 0, "cryptstore entry version");
 DEFINE_string(type, "key-message-serialized-protobuf",
-		"cryptstore entry data type");
+                "cryptstore entry data type");
 DEFINE_string(output_file, "out_1", "output file name");
 DEFINE_string(input_file, "in_1", "input file name");
 
+// For SEV
 DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der",
-		"machine ark certificate location");
+                "machine ark certificate location");
 DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der",
-		"machine ask certificate location");
+                "machine ask certificate location");
 DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der",
-		"machine vcek certificate location");
+                "machine vcek certificate location");
+
+// For simulated-enclave
+DEFINE_string(attest_key_file, "./provisioning/attest_key_file.bin",
+                "simulated attestation key");
+DEFINE_string(measurement_file, "./provisioning/cf_utility.measurement",
+                "simulated enclave measurement");
+DEFINE_string(platform_attest_endorsement_file, "./provisioning/platform_attest_endorsement.bin",
+                "platform endorsement");
 
 // -------------------------------------------------------------------------
 
@@ -178,13 +187,13 @@ void print_os_model_parameters() {
   printf("  Policy doman name: %s\n", FLAGS_policy_domain_name.c_str());
   printf("  Policy_key_cert_file: %s\n", FLAGS_policy_key_cert_file.c_str());
   printf("  Policy store file name: %s\n",
-		  FLAGS_policy_store_filename.c_str());
+                  FLAGS_policy_store_filename.c_str());
   printf("  Encrypted cryptstore file name: %s\n",
-		  FLAGS_encrypted_cryptstore_filename.c_str());
+                  FLAGS_encrypted_cryptstore_filename.c_str());
   printf("  Sealed cryptstore key file name: %s\n",
-		  FLAGS_sealed_cryptstore_key_filename.c_str());
+                  FLAGS_sealed_cryptstore_key_filename.c_str());
   printf("  Directory for cf_utility supporting data for this policy: %s\n",
-		  FLAGS_data_dir.c_str());
+                  FLAGS_data_dir.c_str());
   printf("\n");
   printf("  Protecting enclave type: %s\n", FLAGS_enclave_type.c_str());
   printf("  Address for certifier service: %s\n",
@@ -198,7 +207,7 @@ void print_os_model_parameters() {
   printf("\n");
   printf("  Public key algorithm: %s\n", FLAGS_public_key_algorithm.c_str());
   printf("  Symmetric key algorithm: %s\n",
-		  FLAGS_symmetric_key_algorithm.c_str());
+                  FLAGS_symmetric_key_algorithm.c_str());
   printf("  Key name: %s\n", FLAGS_keyname.c_str());
   printf("  Cryptstore entry name: %s\n", FLAGS_tag.c_str());
   printf("  Cryptstore entry version: %d\n", (int)FLAGS_entry_version);
@@ -211,7 +220,6 @@ void print_os_model_parameters() {
 
 // -----------------------------------------------------------------------------------------
 
-/*
 // Parameters for simulated enclave
 bool get_simulated_enclave_parameters(string **s, int *n) {
 
@@ -236,7 +244,7 @@ bool get_simulated_enclave_parameters(string **s, int *n) {
     goto err;
   }
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement,
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_platform_attest_endorsement_file,
                              &args[2])) {
     printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
@@ -252,7 +260,42 @@ err:
   *s = nullptr;
   return false;
 }
-*/
+
+bool get_sev_enclave_parameters(string **s, int *n) {
+
+  // ark cert file, ask cert file, vcek cert file
+  string *args = new string[3];
+  if (args == nullptr) {
+    return false;
+  }
+  *s = args;
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ark_cert_file, &args[0])) {
+    printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
+    goto err;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
+    printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
+           __LINE__);
+    goto err;
+  }
+
+  if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
+    printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
+           __LINE__);
+    goto err;
+  }
+  *n = 3;
+  return true;
+
+err:
+  delete[] args;
+  *s = nullptr;
+  return false;
+}
 
 void print_help() {
   printf("cf_utility.exe\n");
@@ -315,12 +358,191 @@ void print_help() {
   }
 }
 
+/*
+  optional rsa_message rsa_key              = 4;
+  optional ecc_message ecc_key              = 5;
+  optional bytes certificate                = 7;
+  optional string not_before                = 9;
+  optional string not_after                 = 10;
+  bool time_now(time_point *t);
+  bool time_to_string(time_point &t, string *s);
+  bool string_to_time(const string &s, time_point *t);
+  bool add_interval_to_time_point(time_point &t_in,
+                                  double      hours,
+                                  time_point *out);
+  int  compare_time(time_point &t1, time_point &t2);
+*/
+
+bool cf_generate_symmetric_key(
+   key_message* key,
+   string key_name,
+   string key_type,
+   string key_format,
+   double duration_in_hours) {
+
+  int num_key_bytes;
+  if (key_type == Enc_method_aes_256_cbc_hmac_sha256
+      || key_type == Enc_method_aes_256_cbc_hmac_sha384
+      || key_type == Enc_method_aes_256_gcm) {
+    num_key_bytes = cipher_key_byte_size(key_type.c_str());
+    if (num_key_bytes <= 0) {
+      printf("%s() error, line %d, Can't recover symmetric alg key size\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  } else {
+    printf("%s() error, line %d, unsupported encryption algorithm: '%s'\n",
+           __func__,
+           __LINE__,
+           key_type.c_str());
+    return false;
+  }
+  byte key_bytes[num_key_bytes];
+  memset(key_bytes, 0, num_key_bytes);
+  if (!get_random(8 * num_key_bytes, key_bytes)) {
+    printf("%s() error, line %d, Can't get random bytes for app key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  key->set_key_name(key_name);
+  key->set_key_type(key_type);
+  key->set_key_format("vse-key");
+  key->set_secret_key_bits((byte*)key_bytes, num_key_bytes);
+  time_point tp_not_before;
+  time_point tp_not_after;
+  if (!time_now(&tp_not_before)) {
+    printf("%s() error, line %d, Can't get current time\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!add_interval_to_time_point(tp_not_before,
+                                duration_in_hours,
+                                &tp_not_after)) {
+    printf("%s() error, line %d, Can't add time points\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  string nb_str;
+  string na_str;
+  if (!time_to_string(tp_not_before, &nb_str)) {
+    printf("%s() error, line %d, Can't convert time to string\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!time_to_string(tp_not_after, &na_str)) {
+    printf("%s() error, line %d, Can't convert time to string\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  key->set_not_before(nb_str);
+  key->set_not_after(na_str);
+
+  return true;
+}
+
+#if 0
+bool cf_generate_public_key(
+   key_message* key,
+   string key_name,
+   string key_type,
+   string key_format,
+   double duration_in_hours) {
+
+  if (key_type == Enc_method_rsa_2048) {
+    if (!make_certifier_rsa_key(2048, key)) {
+      printf("%s() error, line %d, Can't generate private key\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  } else if (key_type == Enc_method_rsa_3072) {
+    if (!make_certifier_rsa_key(3072, key)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  } else if (key_type == Enc_method_rsa_4096) {
+    if (!make_certifier_rsa_key(4096, key)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  } else if (key_type == Enc_method_ecc_384) {
+    if (!make_certifier_ecc_key(384, key)) {
+      printf("%s() error, line %d, Can't generate App private key\n",
+             __func__,
+            __LINE__);
+      return false;
+    }
+  } else {
+    printf("%s() error, line %d, Unsupported public key algorithm: '%s'\n",
+           __func__,
+           __LINE__,
+           key_type.c_str());
+    return false;
+  }
+
+  key->set_key_name(key_name);
+  key->set_key_type(key_type);
+  key->set_key_format("vse-key");
+
+  time_point tp_not_before;
+  time_point tp_not_after;
+  if (!time_now(&tp_not_before)) {
+    printf("%s() error, line %d, Can't get current time\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!add_interval_to_time_point(tp_not_before,
+                                duration_in_hours,
+                                &tp_not_after)) {
+    printf("%s() error, line %d, Can't add time points\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  string nb_str;
+  string na_str;
+  if (!time_to_string(tp_not_before, &nb_str)) {
+    printf("%s() error, line %d, Can't convert time to string\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!time_to_string(tp_not_after, &na_str)) {
+    printf("%s() error, line %d, Can't convert time to string\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  key->set_not_before(nb_str);
+  key->set_not_after(na_str);
+
+  return true;
+}
+#endif
+  
+
 // -------------------------------------------------------------------------------------
 
 cc_trust_manager *trust_mgr = nullptr;
 
 
 bool create_cryptstore(cryptstore& cs) {
+  string sealed_key_file_name(FLAGS_data_dir);
+  sealed_key_file_name.append(FLAGS_sealed_cryptstore_key_filename);
+  string cryptstore_file_name(FLAGS_data_dir);
+  cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
+
   // generate sealing key
   // serialize it
   // encrypt it
@@ -329,6 +551,66 @@ bool create_cryptstore(cryptstore& cs) {
 }
 
 bool save_cryptstore(cryptstore& cs) {
+  string sealed_key_file_name(FLAGS_data_dir);
+  sealed_key_file_name.append(FLAGS_sealed_cryptstore_key_filename);
+
+  string cryptstore_file_name(FLAGS_data_dir);
+  cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
+
+  /*
+   * int file_size(const string &file_name);
+
+bool read_file(const string &file_name, int *size, byte *data);
+bool write_file(const string &file_name, int size, byte *data);
+
+bool read_file_into_string(const string &file_name, string *out);
+bool write_file_from_string(const string &file_name, const string &in);
+
+bool digest_message(const char  *alg,
+                    const byte  *message,
+                    int          message_len,
+                    byte        *digest,
+                    unsigned int digest_len);
+
+
+bool authenticated_encrypt(const char *alg,
+                           byte       *in,
+                           int         in_len,
+                           byte       *key,
+                           int         key_len,
+                           byte       *iv,
+                           int         iv_len,
+                           byte       *out,
+                           int        *out_size);
+bool authenticated_decrypt(const char *alg,
+                           byte       *in,
+                           int         in_len,
+                           byte       *key,
+                           int         key_len,
+                           byte       *out,
+                           int        *out_size);
+                           bool time_t_to_tm_time(time_t *t, struct tm *tm_time);
+bool tm_time_to_time_point(struct tm *tm_time, time_point *tp);
+bool asn1_time_to_tm_time(const ASN1_TIME *s, struct tm *tm_time);
+bool get_not_before_from_cert(X509 *c, time_point *tp);
+bool get_not_after_from_cert(X509 *c, time_point *tp);
+bool time_now(time_point *t);
+bool time_to_string(time_point &t, string *s);
+bool string_to_time(const string &s, time_point *t);
+bool add_interval_to_time_point(time_point &t_in,
+                                double      hours,
+                                time_point *out);
+int  compare_time(time_point &t1, time_point &t2);
+void print_time_point(time_point &t);
+void print_entity(const entity_message &em);
+void print_key(const key_message &k);
+void print_key(const key_message &k);
+  bool generate_symmetric_key(bool regen);
+  bool generate_sealing_key(bool regen);
+  bool generate_auth_key(bool regen);
+  bool generate_service_key(bool regen);
+
+   */
   // get sealing key
   // serialize store 
   // encrypt it
@@ -337,6 +619,11 @@ bool save_cryptstore(cryptstore& cs) {
 }
 
 bool open_cryptstore(cryptstore* cs) {
+  string sealed_key_file_name(FLAGS_data_dir);
+  sealed_key_file_name.append(FLAGS_sealed_cryptstore_key_filename);
+  string cryptstore_file_name(FLAGS_data_dir);
+  cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
+
   // get sealing key
   // get encrypted store
   // decrypt it
@@ -346,24 +633,25 @@ bool open_cryptstore(cryptstore* cs) {
 
 bool get_existing_trust_domain() {
   string purpose("authentication");
-  string store_file(FLAGS_policy_store_filename);
+  string store_file(FLAGS_data_dir);
+  store_file.append(FLAGS_policy_store_filename);
 
-#if 0
-  trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
+#if 1
   if (trust_mgr == nullptr) {
-    printf("%s() error, line %d, couldn't initialize trust object\n",
-           __func__,
-           __LINE__);
-    return false;
+    trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
+    if (trust_mgr == nullptr) {
+      printf("%s() error, line %d, couldn't initialize trust object\n",
+            __func__,
+            __LINE__);
+      return false;
+    }
   }
-
-  // read policy cert
-  string der_policy_cert;
 
   if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       return false;
     }
+  return true;
 #else
   return false;
 #endif
@@ -373,17 +661,29 @@ bool initialize_new_trust_domain() {
   string purpose("authentication");
   string store_file(FLAGS_policy_store_filename);
 
-#if 0
-  trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
+#if 1
   if (trust_mgr == nullptr) {
-    printf("%s() error, line %d, couldn't initialize trust object\n",
-           __func__,
-           __LINE__);
-    return false;
+    trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
+    if (trust_mgr == nullptr) {
+      printf("%s() error, line %d, couldn't initialize trust object\n",
+            __func__,
+            __LINE__);
+      return false;
+    }
   }
 
   // read policy cert
+  string der_policy_cert_file_name(FLAGS_data_dir);
+  der_policy_cert_file_name.append("/provisioning/");
+  der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
   string der_policy_cert;
+  if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
+      printf("%s() error, line %d, couldn't read %s\n",
+            __func__,
+            __LINE__,
+            der_policy_cert.c_str());
+      return false;
+  }
 
   // Init policy key info
   if (!trust_mgr->init_policy_key((byte*)der_policy_cert.data(), der_policy_cert.size())) {
@@ -394,13 +694,21 @@ bool initialize_new_trust_domain() {
   // Get parameters
   string *params = nullptr;
   int     n = 0;
-  if (!get_enclave_parameters(&params, &n)) {
-    printf("%s() error, line %d, get enclave parameters\n", __func__, __LINE__);
+  if (FLAGS_enclave_type == "simulated-enclave") {
+    if (!get_simulated_enclave_parameters(&params, &n)) {
+      printf("%s() error, line %d, get enclave parameters\n", __func__, __LINE__);
+      return false;
+    }
+  } else if (FLAGS_enclave_type == "sev-enclave") {
+    if (!get_sev_enclave_parameters(&params, &n)) {
+      printf("%s() error, line %d, get enclave parameters\n", __func__, __LINE__);
+      return false;
+    }
+  } else {
+    printf("%s() error, line %d, unsupported enclave\n", __func__, __LINE__);
     return false;
   }
 
-  // get parameters for enclave
-  
   // Init enclave
   if (!trust_mgr->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
@@ -415,7 +723,7 @@ bool initialize_new_trust_domain() {
   string app_host;
   int app_port= 0;
   if (!trust_mgr->cold_init(FLAGS_public_key_algorithm,
-                            FLAGS_symmetric_algorithm,
+                            FLAGS_symmetric_key_algorithm,
                             FLAGS_policy_domain_name,
                             FLAGS_certifier_service_URL,
                             FLAGS_service_port,
