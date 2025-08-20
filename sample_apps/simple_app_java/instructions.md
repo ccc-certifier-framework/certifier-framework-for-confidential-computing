@@ -1,7 +1,4 @@
-# Running the simple Java application
-
-
-# Certifier Framework — Java “Simple Example” (SWIG/JNI) Setup
+# Java Simple Example (SWIG/JNI) Setup
 
 This guide gives you **copy‑pasteable** steps to build and run a Java port of the Certifier Framework’s `simple_app`, **without hardcoding any paths**. We’ll auto‑detect include and library directories and feed them to SWIG/CMake/Gradle via environment variables.
 
