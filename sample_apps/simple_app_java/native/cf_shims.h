@@ -1,6 +1,6 @@
 #pragma once
 
-// TODO: adjust these includes to your repo paths:
+// TODO: adjust these includes to correct repo paths:
 #include "trust_manager/trust_manager.h"
 #include "secure_authenticated_channel/secure_authenticated_channel.h"
 
