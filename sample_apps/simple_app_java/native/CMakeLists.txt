@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.16)
 project(certifier_jni)
 
-# Options: adjust to your paths
+# Options: adjust to appropriate paths
 set(JAVA_HOME $ENV{JAVA_HOME})
 find_package(Java REQUIRED)
 find_package(JNI REQUIRED)
 
 include_directories(${JNI_INCLUDE_DIRS})
 include_directories(${JAVA_INCLUDE_PATH})
-# TODO adjust to your certifier include roots:
+# TODO adjust to certifier include roots:
 include_directories(${CMAKE_SOURCE_DIR}/../third_party/include)
 include_directories(${CMAKE_SOURCE_DIR}/../)  # repo root if needed
 
