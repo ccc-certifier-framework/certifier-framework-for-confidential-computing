@@ -17,6 +17,6 @@ application {
 
 tasks.run {
     // Tell JVM where to find libcertifier_jni.so
-    // Update the path below to your native build output
+    // Update the path below to native build output
     jvmArgs "-Djava.library.path=${projectDir}/../native/build"
 }
