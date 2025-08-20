@@ -173,16 +173,16 @@ This should produce a Go file for the certifier protobufs called certifier.pb.go
 Now build simpleserver, the first set of makes buils stubs for different platforms.
 
 ```shell
-cd $CERTIFIER_PROTOTYPE/certifier_service/graminelib
+cd $CERTIFIER_ROOT/certifier_service/graminelib
 make dummy
 
-cd $CERTIFIER_PROTOTYPE/certifier_service/oelib
+cd $CERTIFIER_ROOT/certifier_service/oelib
 make dummy
 
-cd $CERTIFIER_PROTOTYPE/certifier_service/isletlib
+cd $CERTIFIER_ROOT/certifier_service/isletlib
 make dummy
 
-cd $CERTIFIER_PROTOTYPE/certifier_service/teelib
+cd $CERTIFIER_ROOT/certifier_service/teelib
 make
 
 cd $CERTIFIER_ROOT/certifier_service
@@ -200,7 +200,7 @@ mkdir $EXAMPLE_DIR/service
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-cp -p policy_key_file.bin policy_cert_file.bin policy.bin $EXAMPLE_DIR/service
+cp -p policy_key_file.datica_test policy_cert_file.datica_test policy.bin $EXAMPLE_DIR/service
 ```
 
 ## Step 11: Start the Certifier Service
@@ -208,11 +208,21 @@ cp -p policy_key_file.bin policy_cert_file.bin policy.bin $EXAMPLE_DIR/service
 In a new terminal window:
 
 ```shell
+
 cd $EXAMPLE_DIR/service
 
-$CERTIFIER_ROOT/certifier_service/simpleserver   \
-      --policyFile=policy.bin                         \
-      --readPolicy=true
+# You may need to make sure the shared libraries paths are in your LD_LIBRARY_PATH.
+#export LD_LIBRARY_PATH=/usr/local/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/teelib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/graminelib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/isletlib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/oelib
+echo $LD_LIBRARY_PATH
+sudo ldconfig
+
+$CERTIFIER_ROOT/certifier_service/simpleserver \
+--policy_key_file=policy_key_file.datica_test --policy_cert_file=policy_cert_file.datica_test \
+--policyFile=policy.bin --readPolicy=true
 ```
 
 ## Step 12:  Run the scenario tests.
@@ -267,7 +277,7 @@ be used in step 7(a), above.
 export GOPATH=$HOME
 export GOROOT=/usr/local/go
 export PATH=$PATH:$GOROOT/bin
-export GO111MODULE=off
+export GO111MODULE=on
 go mod init
 go mod tidy
 go mod init certifier.pb.go
