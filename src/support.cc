@@ -1227,7 +1227,7 @@ bool      certifier::utilities::private_key_to_public_key(const key_message &in,
   }
 }
 
-bool make_certifier_rsa_key(int n, key_message *k) {
+bool certifier::utilities::make_certifier_rsa_key(int n, key_message *k) {
   if (k == nullptr) {
     return false;
   }
@@ -1565,7 +1565,7 @@ done:
   return ret;
 }
 
-bool key_to_RSA(const key_message &k, RSA *r) {
+bool certifier::utilities::key_to_RSA(const key_message &k, RSA *r) {
   if (k.key_format() != "vse-key") {
     printf("%s() error, line: %d, no key format\n", __func__, __LINE__);
     return false;
@@ -1710,7 +1710,7 @@ bool key_to_RSA(const key_message &k, RSA *r) {
   return true;
 }
 
-bool RSA_to_key(const RSA *r, key_message *k) {
+bool certifier::utilities::RSA_to_key(const RSA *r, key_message *k) {
   const BIGNUM *m = nullptr;
   const BIGNUM *e = nullptr;
   const BIGNUM *d = nullptr;
@@ -2298,7 +2298,7 @@ bool certifier::utilities::ECC_to_key(const EC_KEY *ecc_key, key_message *k) {
   return true;
 }
 
-bool make_certifier_ecc_key(int n, key_message *k) {
+bool certifier::utilities::make_certifier_ecc_key(int n, key_message *k) {
   if (k == nullptr)
     return false;
   if (n == 384) {
@@ -3414,7 +3414,7 @@ bool verify_signed_claim(const signed_claim_message &signed_claim,
 
 // -----------------------------------------------------------------------
 
-void print_protected_blob(protected_blob_message &pb) {
+void certifier::utilities::print_protected_blob(protected_blob_message &pb) {
   if (pb.has_encrypted_key()) {
     printf("encrypted_key (%d): ", (int)pb.encrypted_key().size());
     print_bytes((int)pb.encrypted_key().size(),

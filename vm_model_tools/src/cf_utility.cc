@@ -446,7 +446,6 @@ bool cf_generate_symmetric_key(
   return true;
 }
 
-#if 0
 bool cf_generate_public_key(
    key_message* key,
    string key_name,
@@ -529,8 +528,7 @@ bool cf_generate_public_key(
 
   return true;
 }
-#endif
-  
+
 
 // -------------------------------------------------------------------------------------
 

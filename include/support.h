@@ -101,7 +101,6 @@ bool decrypt(byte *in,
              byte *out,
              int  *size_out);
 
-bool make_certifier_rsa_key(int n, key_message *k);
 bool rsa_public_encrypt(RSA  *key,
                         byte *data,
                         int   data_len,
@@ -130,7 +129,6 @@ bool rsa_verify(const char *alg,
                 byte       *sig);
 void print_point(const point_message &pt);
 
-bool make_certifier_ecc_key(int n, key_message *k);
 bool ecc_sign(const char *alg,
               EC_KEY     *key,
               int         size,
@@ -157,8 +155,6 @@ bool same_environment(const environment &e1, const environment &e2);
 bool same_vse_claim(const vse_clause &c1, const vse_clause &c2);
 
 bool generate_new_rsa_key(int num_bits, RSA *r);
-bool key_to_RSA(const key_message &k, RSA *r);
-bool RSA_to_key(const RSA *r, key_message *k);
 
 bool make_key_entity(const key_message &key, entity_message *ent);
 bool make_measurement_entity(const string &measurement, entity_message *ent);
@@ -205,7 +201,6 @@ void print_environment_descriptor(const environment &env);
 void print_vse_clause(const vse_clause c);
 void print_claim(const claim_message &claim);
 void print_signed_claim(const signed_claim_message &signed_claim);
-void print_protected_blob(protected_blob_message &pb);
 
 bool make_signed_claim(const char           *alg,
                        const claim_message  &claim,
