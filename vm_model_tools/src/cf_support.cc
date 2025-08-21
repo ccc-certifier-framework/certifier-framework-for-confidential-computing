@@ -99,7 +99,7 @@ bool version_range_in_cryptstore(cryptstore& cs, string& tag,
     const cryptstore_entry& ce = cs.entries(i);
     if (ce.tag() == tag) {
       ret= true;
-      if (ce.version() > 0 && ce.version() < *low) {
+      if (ce.version() > 0 && (ce.version() < *low || *low ==0)) {
         *low= ce.version();
       }
       if (ce.version() > 0 && ce.version() > *high) {
@@ -275,15 +275,16 @@ bool get_item(cryptstore& cs, string& tag, string* type, int* version,
   int h= 0;
 
   if (*version == 0) {
-    if (!version_range_in_cryptstore(cs, tag, &l, &h)) {
+    if (version_range_in_cryptstore(cs, tag, &l, &h)) {
       ce= find_in_cryptstore(cs, tag, h);
       *version= h;
     }
   } else {
     ce= find_in_cryptstore(cs, tag, *version);
   }
-  if (ce == nullptr)
+  if (ce == nullptr) {
     return false;
+  }
   *tp= ce->time_entered(); 
   value->assign((const char*)ce->blob().data(), ce->blob().size());
   return true;
@@ -304,8 +305,10 @@ bool put_item(cryptstore& cs, string& tag, string& type, int& version,
   }
 
   ce= cs.add_entries();
-  if (ce == nullptr)
+  if (ce == nullptr) {
+    printf("error pointer\n");
     return false;
+  }
 
   time_point tp;
   if (!time_now(&tp)) {
@@ -325,7 +328,6 @@ bool put_item(cryptstore& cs, string& tag, string& type, int& version,
   ce->set_type(type);
   ce->set_time_entered(tp_str);
   ce->set_version(ver);
-
   ce->set_blob((byte*)value.data(), value.size());
   return true;
   // return save_cryptstore(cs);

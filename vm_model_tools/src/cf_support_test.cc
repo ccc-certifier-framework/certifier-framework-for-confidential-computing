@@ -104,16 +104,42 @@ bool test_get_put_item(bool print) {
     return false;
   }
 
+  int l= 0;
+  int h= 0;
+  cryptstore_entry* ce=  find_in_cryptstore(cs, tag1, 1);
+  if (ce == nullptr) {
+    printf("find_in_cryptstore failed\n");
+    return false;
+  }
+
+  if (print) {
+    printf("find_in_cryptstore succeeded\n");
+    print_cryptstore_entry(*ce);
+    printf("\n");
+  }
+
+  if (!version_range_in_cryptstore(cs, tag1, &l, &h)) {
+    printf("version_in_range failed\n");
+    return false;
+  }
+
+  if (print) {
+    printf("version_in_range succeeded, low: %d, high: %d\n", l, h);
+  }
+
   string recovered_value_1;
   string recovered_value_2;
   string tp_str2;
-#if 0
   if (!get_item(cs, tag1, &cs_type, &version2,
-              &tp_str2, &recovered_value_1)) {
+                &tp_str2, &recovered_value_1)) {
     printf("Can't get_item key 1\n");
     return false;
   }
-#endif
+
+  if (print) {
+    printf("get_item succeeded, %s, %s, %d, %s\n",
+	   tag1.c_str(), cs_type.c_str(), version2, tp_str2.c_str());
+  }
 
   print_cryptstore(cs);
   return true;
