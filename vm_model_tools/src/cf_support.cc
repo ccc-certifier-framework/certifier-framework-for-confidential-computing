@@ -330,7 +330,6 @@ bool put_item(cryptstore& cs, string& tag, string& type, int& version,
   ce->set_version(ver);
   ce->set_blob((byte*)value.data(), value.size());
   return true;
-  // return save_cryptstore(cs);
 }
 
 void print_cryptstore(cryptstore& cs) {

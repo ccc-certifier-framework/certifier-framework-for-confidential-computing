@@ -820,10 +820,17 @@ int main(int an, char **av) {
 
       // get or initialize cryptstore
       cryptstore cs;
-#if 0
-      // Does it exist yet?
-      create_cryptstore(cs);
-#endif
+      string cryptstore_file_name(FLAGS_data_dir);
+      cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
+
+      if (file_size(cryptstore_file_name) < 0) {
+        if (!create_cryptstore(cs)) {
+          printf("%s() error, line %d, cannot create cryptstore\n",
+              __func__, __LINE__);
+          ret= 1;
+          goto done;
+          }
+      }
       if (!open_cryptstore(&cs)) {
         printf("%s() error, line %d, cannot open cryptstore\n",
               __func__, __LINE__);
@@ -840,7 +847,9 @@ int main(int an, char **av) {
     }
     goto done;
   } else if (FLAGS_reinit_trust) {
+
     cryptstore cs;
+
     if (!initialize_new_trust_domain()) {
       printf("%s() error, line %d, cannot initialize new trust domain\n",
              __func__, __LINE__);
@@ -950,6 +959,7 @@ int main(int an, char **av) {
       ret= 1;
       goto done;
     }
+
     cryptstore cs;
 
     string entry_tag;
@@ -980,6 +990,7 @@ int main(int an, char **av) {
       ret= 1;
       goto done;
     }
+
     cryptstore cs;
 
     if (!open_cryptstore(&cs)) {
