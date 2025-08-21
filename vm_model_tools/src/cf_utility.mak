@@ -62,9 +62,14 @@ endif
 #  if you link in the certifier library certifier.a.
 dobj = $(O)/cf_utility.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
-       $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o
+       $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
 
-all:	cf_utility.exe
+sobj = $(O)/cf_support_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+       $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
+       $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
+
+
+all:	cf_utility.exe cf_support_test.exe
 clean:
 	@echo "removing generated files"
 	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
@@ -72,10 +77,16 @@ clean:
 	rm -rf $(O)/*.o
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/cf_utility.exe
+	@echo "removing executable file"
+	rm -rf $(EXE_DIR)/cf_support_test.exe
 
 $(EXE_DIR)/cf_utility.exe: $(dobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(dobj) $(LDFLAGS) -o $(@D)/$@
+
+$(EXE_DIR)/cf_support_test.exe: $(sobj)
+	@echo "\nlinking executable $@"
+	$(LINK) $(sobj) $(LDFLAGS) -o $(@D)/$@
 
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
@@ -85,7 +96,15 @@ $(US)/certifier.pb.cc: $(CP)/certifier.proto
 $(CF_UTILITY_SRC)/cryptstore.pb.cc: $(CF_UTILITY_SRC)/cryptstore.proto
 	$(PROTO) --proto_path=$(CF_UTILITY_SRC) --cpp_out=$(CF_UTILITY_SRC) $(CF_UTILITY_SRC)/cryptstore.proto
 
+$(O)/cf_support_test.o: $(CF_UTILITY_SRC)/cf_support_test.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
 $(O)/cf_utility.o: $(CF_UTILITY_SRC)/cf_utility.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/cf_support.o: $(CF_UTILITY_SRC)/cf_support.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
