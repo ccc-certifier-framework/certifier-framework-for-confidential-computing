@@ -772,8 +772,67 @@ bool generate_symmetric_key(key_message* km, string& name,
   return true;
 }
 
-bool generate_public_key(key_message* km, string& name, string& key_type) {
-  return false;
+bool generate_public_key(key_message* km, string& name, string& key_type,
+		string& tag) {
+  cryptstore cs;
+  string key_format("vse-key");
+  double duration_in_hours= FLAGS_duration;
+
+  if (!cf_generate_symmetric_key(km, FLAGS_keyname,
+                                 FLAGS_public_key_algorithm,
+                                 key_format, duration_in_hours)) {
+    printf("%s() error, line %d, cannot  generate key\n",
+           __func__, __LINE__);
+    return false;
+  }
+  if (!open_cryptstore(&cs)) {
+    printf("%s() error, line %d, cannot open cryptstore\n",
+           __func__, __LINE__);
+    return false;
+  }
+
+  // update cryptstore
+  int l, h;
+  cryptstore_entry* ce= nullptr;
+  ce= cs.add_entries();
+  if (version_range_in_cryptstore(cs, tag, &l, &h)) {
+    ce->set_version(h + 1);
+  } else {
+    ce->set_version(1);
+  }
+  ce->set_tag(tag);
+  ce->set_type("key-message-serialized-protobuf");
+  time_point tp;
+  if (!time_now(&tp)) {
+    printf("%s() error, line %d, Can't get current time\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  string tp_str;
+  if (!time_to_string(tp, &tp_str)) {
+    printf("%s() error, line %d, Can't convert time to string\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  ce->set_time_entered(tp_str);
+
+  string serialized_key;
+  if (!km->SerializeToString(&serialized_key)) {
+    printf("%s() error, line %d, cannot serialize key\n",
+           __func__, __LINE__);
+    return false;
+  }
+  ce->set_blob((byte*)serialized_key.data(), serialized_key.size());
+  // save store
+  if (!save_cryptstore(cs)) {
+        printf("%s() error, line %d, cannot save cryptstore\n",
+              __func__, __LINE__);
+        return false;
+      }
+  return true;
 }
 
 int main(int an, char **av) {
@@ -899,10 +958,12 @@ int main(int an, char **av) {
       ret= 1;
       goto done;
     }
+
     key_message km;
-    string key_name;
-    string key_type;
-    if (!generate_symmetric_key(&km, key_name, key_type, FLAGS_tag)) {
+    string key_name(FLAGS_keyname);
+    string key_type(FLAGS_symmetric_key_algorithm);
+    string tag(FLAGS_keyname);
+    if (!generate_symmetric_key(&km, key_name, key_type, FLAGS_keyname)) {
       printf("%s() error, line %d, cannot generate symmetric key\n",
             __func__, __LINE__);
       ret= 1;
@@ -933,10 +994,12 @@ int main(int an, char **av) {
       ret= 1;
       goto done;
     }
+
     key_message km;
-    string key_name;
-    string key_type;
-    if (!generate_public_key(&km, key_name, key_type)) {
+    string key_name(FLAGS_keyname);
+    string key_type(FLAGS_public_key_algorithm);
+    string tag(FLAGS_keyname);
+    if (!generate_public_key(&km, key_name, key_type, tag)) {
       printf("%s() error, line %d, cannot generate public key\n",
             __func__, __LINE__);
       ret= 1;
