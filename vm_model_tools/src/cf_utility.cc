@@ -514,6 +514,7 @@ bool cf_generate_public_key(
 cc_trust_manager *trust_mgr = nullptr;
 
 
+// generates cryptstore encryption key and saves protected blob
 bool create_cryptstore(cryptstore& cs) {
   string cryptstore_file_name(FLAGS_data_dir);
   cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
@@ -536,64 +537,41 @@ bool create_cryptstore(cryptstore& cs) {
     return false;
   }
 
-  printf("\nSymmetric key for sealing cryptstore\n");
+#define DEBUG
+#ifdef DEBUG
+  printf("\ncreate_cryptstore: Symmetric key for sealing cryptstore\n");
   print_key(cryptstore_key);
   printf("\n");
+#endif
 
-  string serialized_sealing_key;
-  string encrypted_sealing_key;
-  string serialized_store;
-  string encrypted_store;
-
-  if (!cryptstore_key.SerializeToString(&serialized_sealing_key)) {
+  string serialized_encryption_key;
+  if (!cryptstore_key.SerializeToString(&serialized_encryption_key)) {
     printf("%s() error, line %d, Can't serialize key\n",
            __func__,
            __LINE__);
     return false;
   }
 
-  int out_size= serialized_sealing_key.size() + 128;
-  byte out[out_size];
-  memset(out, 0, out_size);
+  string enclave_id("test-enclave");
+  int size_sealed_key = serialized_encryption_key.size();
+  byte sealed_key[size_sealed_key];
 
-  int iv_len= 32;
-  byte iv[iv_len];
-  memset(iv, 0, iv_len);
-
-  if (!get_random(8 * iv_len, iv)) {
-    printf("%s() error, line %d, Can't get iv\n",
+  memset((byte*)sealed_key, 0, size_sealed_key);
+  if (!Seal(FLAGS_enclave_type, enclave_id,
+            serialized_encryption_key.size(),
+            (byte*)serialized_encryption_key.data(),
+	    &size_sealed_key, sealed_key)) {
+    printf("%s() error, line %d, Can't seal cryptstore key\n",
            __func__,
            __LINE__);
     return false;
   }
-
-  // Use seal here instead for key, use this for serialized store
-  if (!authenticated_encrypt(cryptstore_key.key_type().c_str(),
-                           (byte*)serialized_sealing_key.data(),
-                           (int)serialized_sealing_key.size(),
-                           (byte*)cryptstore_key.secret_key_bits().data(),
-                           64,
-                           (byte*)iv,
-                           iv_len,
-                           (byte*) out,
-                           &out_size)) {
-    printf("%s() error, line %d, Can't encrypt sealing key\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  printf("In (%d): ", (int)serialized_sealing_key.size());
-  print_bytes(serialized_sealing_key.size(), (byte*)serialized_sealing_key.data());
-  printf("\n");
-  printf("out (%d): ", out_size);
-  print_bytes(out_size, (byte*)out);
-  printf("\n");
 
   protected_blob_message encrypted_blob;
   string serialized_encrypted_blob;
 
-  encrypted_blob.set_encrypted_key((byte*)out, out_size);
-  encrypted_blob.set_encrypted_data((byte*)out, out_size);
+  encrypted_blob.set_encrypted_key((byte*)sealed_key, size_sealed_key);
+  encrypted_blob.set_encrypted_data((byte*)sealed_key, 0);
 
   if (!encrypted_blob.SerializeToString(&serialized_encrypted_blob)) {
     printf("%s() error, line %d, Can't serialize encrypted blob\n",
@@ -615,30 +593,199 @@ bool save_cryptstore(cryptstore& cs) {
   string cryptstore_file_name(FLAGS_data_dir);
   cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
 
-  // get sealing key
-  // serialize store 
-  // encrypt it
+  protected_blob_message encrypted_blob;
+  string serialized_encrypted_blob;
+
+  if (!read_file_into_string(FLAGS_encrypted_cryptstore_filename,
+                             &serialized_encrypted_blob)) {
+      printf("%s() error, line %d, couldn't read encrypted cryptstore %s\n",
+            __func__,
+            __LINE__,
+            FLAGS_encrypted_cryptstore_filename.c_str());
+      return false;
+  }
+
+  if (!encrypted_blob.ParseFromString(serialized_encrypted_blob)) {
+    printf("%s() error, line %d, Can't serialize encrypted blob\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  string enclave_id("test-enclave");
+  int size_unsealed_serialized_key = encrypted_blob.encrypted_key().size() + 64;
+  byte unsealed_serialized_key[size_unsealed_serialized_key];
+
+  if (!Unseal(FLAGS_enclave_type, enclave_id,
+            encrypted_blob.encrypted_key().size(),
+            (byte*)encrypted_blob.encrypted_key().data(),
+	    &size_unsealed_serialized_key, unsealed_serialized_key)) {
+    printf("%s() error, line %d, Can't unseal cryptstore key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  string serialized_encryption_key;
+  key_message crypt_key;
+  serialized_encryption_key.assign((const char*)unsealed_serialized_key,
+                                   size_unsealed_serialized_key);
+
+  if (!crypt_key.ParseFromString(serialized_encryption_key)) {
+    printf("%s() error, line %d, Can't parse unsealed key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+#define DEBUG
+#ifdef DEBUG
+  printf("\nsave_cryptstore: Symmetric key for sealing cryptstore\n");
+  print_key(crypt_key);
+  printf("\n");
+#endif
+
+  string serialized_store;
+  if (!cs.SerializeToString(&serialized_store)) {
+    printf("%s() error, line %d, Can't parse unsealed key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  int out_size= serialized_store.size() + 128;
+  byte out[out_size];
+  memset(out, 0, out_size);
+
+  int iv_len= 32;
+  byte iv[iv_len];
+  memset(iv, 0, iv_len);
+
+  if (!get_random(8 * iv_len, iv)) {
+    printf("%s() error, line %d, Can't get iv\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!authenticated_encrypt(crypt_key.key_type().c_str(),
+                           (byte*)serialized_store.data(),
+                           (int)serialized_store.size(),
+                           (byte*)crypt_key.secret_key_bits().data(),
+                           64,
+                           (byte*)iv,
+                           iv_len,
+                           (byte*) out,
+                           &out_size)) {
+    printf("%s() error, line %d, Can't encrypt sealing key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  encrypted_blob.set_encrypted_data((byte*)out, out_size);
+  serialized_encrypted_blob.clear();
+  if (!encrypted_blob.SerializeToString(&serialized_encrypted_blob)) {
+    printf("%s() error, line %d, Can't serialize encrypted blob\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
   // write file
-  return false;
+  if(!write_file_from_string(cryptstore_file_name, serialized_encrypted_blob)) {
+    printf("%s() error, line %d, Can't write protected blob\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  return true;
 }
 
 bool open_cryptstore(cryptstore* cs) {
   string cryptstore_file_name(FLAGS_data_dir);
   cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
 
-  // get sealing key
-  // get encrypted store
-  // decrypt it
-  /* bool authenticated_decrypt(const char *alg,
-                           byte       *in,
-                           int         in_len,
-                           byte       *key,
-                           int         key_len,
-                           byte       *out,
-                           int        *out_size);
-   */
-  // Deserialize
-  return false;
+  protected_blob_message encrypted_blob;
+  string serialized_encrypted_blob;
+
+  if (!read_file_into_string(FLAGS_encrypted_cryptstore_filename,
+                             &serialized_encrypted_blob)) {
+      printf("%s() error, line %d, couldn't read encrypted cryptstore %s\n",
+            __func__,
+            __LINE__,
+            FLAGS_encrypted_cryptstore_filename.c_str());
+      return false;
+  }
+
+  if (!encrypted_blob.ParseFromString(serialized_encrypted_blob)) {
+    printf("%s() error, line %d, Can't serialize encrypted blob\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  string enclave_id("test-enclave");
+  int size_unsealed_serialized_key = encrypted_blob.encrypted_key().size() + 64;
+  byte unsealed_serialized_key[size_unsealed_serialized_key];
+
+  if (!Unseal(FLAGS_enclave_type, enclave_id,
+            encrypted_blob.encrypted_key().size(),
+            (byte*)encrypted_blob.encrypted_key().data(),
+	    &size_unsealed_serialized_key, unsealed_serialized_key)) {
+    printf("%s() error, line %d, Can't unseal cryptstore key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  string serialized_encryption_key;
+  key_message crypt_key;
+  serialized_encryption_key.assign((const char*)unsealed_serialized_key,
+                                   size_unsealed_serialized_key);
+
+  if (!crypt_key.ParseFromString(serialized_encryption_key)) {
+    printf("%s() error, line %d, Can't parse unsealed key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+#define DEBUG
+#ifdef DEBUG
+  printf("\nopen_cryptstore: Symmetric key for sealing cryptstore\n");
+  print_key(crypt_key);
+  printf("\n");
+#endif
+
+  int out_size = encrypted_blob.encrypted_data().size() + 64;
+  byte out[out_size];
+  memset((byte*)out, 0, out_size);
+
+  if (!authenticated_decrypt(crypt_key.key_type().c_str(),
+                           (byte*)serialized_encrypted_blob.data(),
+                           serialized_encrypted_blob.size(),
+                           (byte*)crypt_key.secret_key_bits().data(),
+                           crypt_key.secret_key_bits().size(),
+                           (byte*)out,
+                           &out_size)) {
+    printf("%s() error, line %d, Can't decrypt cryptstore\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  string serialized_cryptstore;
+  serialized_cryptstore.assign((const char*)out, out_size);
+  if (!cs->ParseFromString(serialized_cryptstore)) {
+    printf("%s() error, line %d, Can't parse cryptstore\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  return true;
 }
 
 bool get_existing_trust_domain() {
@@ -791,8 +938,15 @@ int main(int an, char **av) {
 
   if (FLAGS_cf_utility_help) {
     print_help();
+#if 1
     cryptstore cs;
     create_cryptstore(cs);
+    // add an entry
+    save_cryptstore(cs);
+    cryptstore recovered_cs;
+    open_cryptstore(&recovered_cs);
+    print_cryptstore(recovered_cs);
+#endif
     return ret;
   }
   print_os_model_parameters();
