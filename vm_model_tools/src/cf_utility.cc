@@ -552,6 +552,7 @@ bool create_cryptstore(cryptstore& cs) {
     return false;
   }
 
+return true;
   string enclave_id("test-enclave");
   int size_sealed_key = serialized_encryption_key.size();
   byte sealed_key[size_sealed_key];
@@ -566,7 +567,6 @@ bool create_cryptstore(cryptstore& cs) {
            __LINE__);
     return false;
   }
-
   protected_blob_message encrypted_blob;
   string serialized_encrypted_blob;
 
@@ -939,9 +939,16 @@ int main(int an, char **av) {
   if (FLAGS_cf_utility_help) {
     print_help();
 #if 1
+    // temporary test
     cryptstore cs;
     create_cryptstore(cs);
-    // add an entry
+#else
+    cryptstore_entry* ce = cs.add_entries();
+    ce->set_tag("test-entry");
+    ce->set_type("blob");
+    ce->set_version(1);
+    const char* a= "12345";
+    ce->set_blob((byte*)a, strlen(a)+1);
     save_cryptstore(cs);
     cryptstore recovered_cs;
     open_cryptstore(&recovered_cs);
