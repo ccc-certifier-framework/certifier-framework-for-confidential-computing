@@ -44,12 +44,86 @@ DEFINE_bool(print_all, false, "verbose");
 // --------------------------------------------------------------------
 
 bool test_get_put_item(bool print) {
+  cryptstore cs;
+
+  key_message km1;
+  string key_name1("test-key-1");
+  string key_type1(Enc_method_aes_256_cbc_hmac_sha256);
+  string key_format("vse-key");
+  double duration_in_hours= 24.0 * 365.0;
+
+  if (!cf_generate_symmetric_key(&km1, key_name1,
+                key_type1, key_format, duration_in_hours)) {
+    printf("Can't generate symmetric key\n");
+    return false;
+  }
+
+  if (print) {
+    printf("Generated key\n");
+    print_key(km1);
+    printf("\n");
+  }
+
+  key_message km2;
+  string key_name2("test-key-2");
+  string key_type2(Enc_method_rsa_2048);
+  if (!cf_generate_public_key(&km2, key_name2,
+          key_type2, key_format, duration_in_hours)) {
+    printf("Can't generate public key\n");
+    return false;
+  }
+
+  if (print) {
+    printf("Generated key\n");
+    print_key(km2);
+    printf("\n");
+  }
+
+  string tag1("test-key1-tag");
+  string tag2("test-key2-tag");
+  int version1 = 0;
+  int version2 = 0;
+  string cs_type("key-message-serialized-protobuf");
+  string tp_str;
+  string serialized_key_1;
+  string serialized_key_2;
+  if (!km1.SerializeToString(&serialized_key_1)) {
+    printf("Can't serialize symmetric key\n");
+    return false;
+  }
+  if (!km2.SerializeToString(&serialized_key_2)) {
+    printf("Can't serialize public key\n");
+    return false;
+  }
+  if (!put_item(cs, tag1, cs_type, version1, serialized_key_1)) {
+    printf("Can't put_item key 1\n");
+    return false;
+  }
+  if (!put_item(cs, tag2, cs_type, version2, serialized_key_2)) {
+    printf("Can't put_item key 1\n");
+    return false;
+  }
+
+  string recovered_value_1;
+  string recovered_value_2;
+  string tp_str2;
+#if 0
+  if (!get_item(cs, tag1, &cs_type, &version2,
+              &tp_str2, &recovered_value_1)) {
+    printf("Can't get_item key 1\n");
+    return false;
+  }
+#endif
+
+  print_cryptstore(cs);
   return true;
 }
 
 TEST(test_get_put, test_get_put_item) {
   EXPECT_TRUE(test_get_put_item(FLAGS_print_all));
 }
+
+// --------------------------------------------------------------------
 
 
 int main(int an, char **av) {

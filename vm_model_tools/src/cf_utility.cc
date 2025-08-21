@@ -955,7 +955,7 @@ int main(int an, char **av) {
     string entry_tag;
     string entry_type;
     int entry_version;
-    time_point entry_tp;
+    string entry_tp;
     string value;
 
     if (!open_cryptstore(&cs)) {

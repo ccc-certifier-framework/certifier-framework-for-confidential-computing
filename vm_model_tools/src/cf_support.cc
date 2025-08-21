@@ -50,13 +50,7 @@ void print_cryptstore_entry(const cryptstore_entry& ent) {
     printf("version: %d\n", (int)ent.version());
   }
   if (ent.has_time_entered()) {
-    printf("time entered:\n");
-    time_point tp;
-    if (tp.ParseFromString(ent.time_entered())) {
-      print_time_point(tp);
-    } else {
-      printf("Can't parse time entered\n");
-    }
+    printf("time entered: %s\n", ent.time_entered().c_str());
   }
   if (ent.has_blob()) {
     if (ent.type() == "key_message_serialized-protobuf") {
@@ -275,7 +269,7 @@ bool cf_generate_public_key(
 }
 
 bool get_item(cryptstore& cs, string& tag, string* type, int* version,
-              const time_point* tp, string* value) {
+              string* tp, string* value) {
   cryptstore_entry* ce= nullptr;
   int l= 0;
   int h= 0;
@@ -290,7 +284,7 @@ bool get_item(cryptstore& cs, string& tag, string* type, int* version,
   }
   if (ce == nullptr)
     return false;
-  // *tp= ce->time_entered(); 
+  *tp= ce->time_entered(); 
   value->assign((const char*)ce->blob().data(), ce->blob().size());
   return true;
 }
@@ -338,9 +332,10 @@ bool put_item(cryptstore& cs, string& tag, string& type, int& version,
 }
 
 void print_cryptstore(cryptstore& cs) {
-  printf("\nCryptstore:\n");
+  printf("\nCryptstore:\n\n");
   for (int i = 0; i < cs.entries_size(); i++) {
     print_cryptstore_entry(cs.entries(i));
+    printf("\n");
   }
 }
 

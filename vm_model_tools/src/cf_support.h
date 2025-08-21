@@ -45,13 +45,13 @@ void print_cryptstore_entry(const cryptstore_entry& ent);
 cryptstore_entry* find_in_cryptstore(cryptstore& cs, string& tag, int version);
 bool version_range_in_cryptstore(cryptstore& cs, string& tag,
                                  int* low, int* high);
-bool cf_generate_symmetric_key( key_message* key, string key_name,
+bool cf_generate_symmetric_key(key_message* key, string key_name,
    string key_type, string key_format,
    double duration_in_hours);
-bool cf_generate_public_key( key_message* key, string key_name,
+bool cf_generate_public_key(key_message* key, string key_name,
    string key_type, string key_format, double duration_in_hours);
 bool get_item(cryptstore& cs, string& tag, string* type, int* version,
-              const time_point* tp, string* value);
+              string* tp, string* value);
 bool put_item(cryptstore& cs, string& tag, string& type, int& version,
                string& value);
 void print_cryptstore(cryptstore& cs);
