@@ -997,7 +997,6 @@ bool generate_public_key(key_message* km, string& name, string& key_type) {
 
 bool get_item(cryptstore& cs, string& tag, string* type, int* version,
               const time_point* tp, string* value) {
-
   cryptstore_entry* ce= nullptr;
   int l= 0;
   int h= 0;
@@ -1018,8 +1017,44 @@ bool get_item(cryptstore& cs, string& tag, string* type, int* version,
 }
 
 bool put_item(cryptstore& cs, string& tag, string& type, int& version,
-               string& blob) {
-  return false;
+               string& value) {
+  cryptstore_entry* ce= nullptr;
+  int l= 0;
+  int h= 0;
+  int ver= version;
+
+  if (version == 0) {
+    if (!version_range_in_cryptstore(cs, tag, &l, &h)) {
+      ce= find_in_cryptstore(cs, tag, h);
+      ver= h + 1;
+    }
+  }
+
+  ce= cs.add_entries();
+  if (ce == nullptr)
+    return false;
+
+  time_point tp;
+  if (!time_now(&tp)) {
+    printf("%s() error, line %d, Can't get current time\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  string tp_str;
+  if (!time_to_string(tp, &tp_str)) {
+    printf("%s() error, line %d, Can't convert time to string\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  ce->set_tag(tag);
+  ce->set_type(type);
+  ce->set_time_entered(tp_str);
+  ce->set_version(ver);
+
+  ce->set_blob((byte*)value.data(), value.size());
+  return save_cryptstore(cs);
 }
 
 void print_cryptstore(cryptstore& cs) {
@@ -1294,3 +1329,6 @@ done:
   }
   return ret;
 }
+
+// -------------------------------------------------------------------------------
+
