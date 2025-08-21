@@ -32,6 +32,7 @@ cmake --build build -j
 # 5) Run Java app (from app/)
 gradle run --args="--mode=server --port=8080"     # Terminal A
 gradle run --args="--mode=client --host=127.0.0.1 --port=8080"  # Terminal B
+
 ---
 
 ## A) One‑time auto‑detect script
