@@ -41,6 +41,15 @@ using namespace certifier::utilities;
 
 DEFINE_bool(print_all, false, "verbose");
 
+DEFINE_string(enclave_type, "simulated_enclave", "enclave type");
+DEFINE_string(data_dir, "./", "data directory");
+DEFINE_string(encrypted_cryptstore_filename, "encrypted_filestore.datica", "cryptstore");
+DEFINE_double(duration, 24.0 * 365.0, "duration of key");
+DEFINE_string(public_key_algorithm, Enc_method_rsa_2048, "public key algorithm");
+DEFINE_string(symmetric_key_algorithm, Enc_method_aes_256_cbc_hmac_sha256,
+    "symmetric algorithm");
+
+
 // --------------------------------------------------------------------
 
 bool test_get_put_item(bool print) {
@@ -138,15 +147,50 @@ bool test_get_put_item(bool print) {
 
   if (print) {
     printf("get_item succeeded, %s, %s, %d, %s\n",
-	   tag1.c_str(), cs_type.c_str(), version2, tp_str2.c_str());
+           tag1.c_str(), cs_type.c_str(), version2, tp_str2.c_str());
   }
 
   print_cryptstore(cs);
   return true;
 }
 
+bool test_store(bool print) {
+  extern bool simulator_init();
+  if (!simulator_init()) {
+    printf("Can't init simulator\n");
+    return false;
+  }
+
+  cryptstore cs;
+#if 0
+    // temporary test
+    create_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
+		    );
+    cryptstore_entry* ce = cs.add_entries();
+    ce->set_tag("test-entry");
+    ce->set_type("blob");
+    ce->set_version(1);
+    const char* a= "12345";
+    ce->set_blob((byte*)a, strlen(a)+1);
+    save_cryptstore(cs);
+    cryptstore recovered_cs;
+    open_cryptstore(&recovered_cs);
+    print_cryptstore(recovered_cs);
+
+  if (!create_cryptstore(cs)) {
+    printf("Can't create cryptstore\n");
+    return false;
+  }
+#endif
+  return true;
+}
+
 TEST(test_get_put, test_get_put_item) {
   EXPECT_TRUE(test_get_put_item(FLAGS_print_all));
+}
+
+TEST(test_store, test_store) {
+  EXPECT_TRUE(test_store(FLAGS_print_all));
 }
 
 // --------------------------------------------------------------------
@@ -156,21 +200,6 @@ int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
-
-#if 1
-  extern bool simulator_init();
-  if (!simulator_init()) {
-    return 1;
-  }
-#else
-  if (!simulated_Init(serialized_policy_cert_,
-                      attest_key_file_name,
-                      measurement_file_name,
-                      attest_endorsement_file_name)) {
-    printf("simulated_init failed\n");
-    return false;
-  }
-#endif
 
   int result = RUN_ALL_TESTS();
 

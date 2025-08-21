@@ -53,8 +53,18 @@ bool cf_generate_public_key(key_message* key, string key_name,
 bool get_item(cryptstore& cs, string& tag, string* type, int* version,
               string* tp, string* value);
 bool put_item(cryptstore& cs, string& tag, string& type, int& version,
-               string& value);
+              string& value);
 void print_cryptstore(cryptstore& cs);
+
+bool create_cryptstore(cryptstore& cs, string& data_dir,
+                string& encrypted_cryptstore_filename, double duration,
+                string& enclave_type, string& sym_alg);
+bool open_cryptstore(cryptstore* cs, string& data_dir,
+                     string& encrypted_cryptstore_filename, double duration,
+                     string& enclave_type, string& sym_alg);
+bool save_cryptstore(cryptstore& cs, string& data_dir,
+                     string& encrypted_cryptstore_filename, double duration,
+                     string& enclave_type, string& sym_alg);
 #endif
 
 // -------------------------------------------------------------------------------
