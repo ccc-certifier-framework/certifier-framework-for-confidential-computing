@@ -2825,6 +2825,12 @@ void certifier::utilities::print_key(const key_message &k) {
   if (k.has_key_format()) {
     printf("Key format: %s\n", k.key_format().c_str());
   }
+  if (k.has_not_before()) {
+    printf("Not before: %s\n", k.not_before().c_str());
+  }
+  if (k.has_not_after()) {
+    printf("Not after: %s\n", k.not_after().c_str());
+  }
   if (k.has_rsa_key()) {
     print_rsa_key(k.rsa_key());
   }

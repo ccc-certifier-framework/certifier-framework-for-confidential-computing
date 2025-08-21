@@ -22,7 +22,6 @@ cf-osutility.exe
     --policy_key_file=policy_cert_file.policy_domain_name
     --policy_store_filename=MUST-SPECIFY-IF-NEEDED
     --encrypted_cryptstore_filename=MUST-SPECIFY
-    --sealed_cryptstore_key_filename=MUST-SPECIFY
     --keyname="store_encryption_key_1"
     --symmetric_algorithm=aes-256-gcm
     --public_key_algorithm=rsa_2048
@@ -78,7 +77,6 @@ $(VM_OS_TOOLS_BIN)/cf-osutility.exe
     --policy_key_file=policy_store=policy_cert_file.policy_domain_name
     --policy_store_filename=policy_store.policy_domain_name
     --enclave_type="sev-enclave"
-    --sealed_cryptstore_key-filename=sealed-crypstore-key.policy_domain_name
     --encrypted_cryptstore_filename=cryptstore.policy_domain_name
     --symmetric_algorithm=aes-256-gcm
     --public_key_algorithm=rsa_2048
@@ -118,7 +116,6 @@ $(VM_OS_TOOLS_BIN)/cf-osutility.exe
     --init_trust=false
     --policy_key_file=policy_store=policy_cert_file.policy_domain_name
     --enclave_type="sev-enclave"
-    --sealed_cryptstore_key_filename=sealed-crypstore-key.policy_domain_name
     --encrypted_cryptstore_filename=cryptstore.policy_domain_name
     --tag=dmcrypt-key
     --type=MUST-SPECIFY-IF-NEEDED
@@ -163,7 +160,6 @@ $(VM_OS_TOOLS_BIN)/cf-osutility.exe
     --init_trust=false
     --policy_key_file=policy_store=policy_cert_file.policy_domain_name
     --enclave_type="sev-enclave"
-    --sealed_cryptstore_key_filename=sealed-crypstore-key.policy_domain_name
     --encrypted_cryptstore_filename=cryptstore.policy_domain_name
     --print_cryptstore=true
     --get_item=true

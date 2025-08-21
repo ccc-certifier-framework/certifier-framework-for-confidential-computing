@@ -70,9 +70,6 @@ DEFINE_string(policy_store_filename, "policy_store.bin.datica",
 DEFINE_string(encrypted_cryptstore_filename,
     "encrypted_cryptstore.datica",
     "encrypted cryptstore file name");
-DEFINE_string(sealed_cryptstore_key_filename,
-     "sealed_cryptstore_key.datica",
-     "sealed cryptstore file name");
 DEFINE_string(keyname, "primary_store_encryption_key",
      "generated key name");
 DEFINE_string(tag, "policy-key", "cryptstore entry tag");
@@ -190,8 +187,6 @@ void print_os_model_parameters() {
                   FLAGS_policy_store_filename.c_str());
   printf("  Encrypted cryptstore file name: %s\n",
                   FLAGS_encrypted_cryptstore_filename.c_str());
-  printf("  Sealed cryptstore key file name: %s\n",
-                  FLAGS_sealed_cryptstore_key_filename.c_str());
   printf("  Directory for cf_utility supporting data for this policy: %s\n",
                   FLAGS_data_dir.c_str());
   printf("\n");
@@ -309,8 +304,6 @@ void print_help() {
   printf("  --policy_store_filename=\"\", name of policy store (as used in certifier\n");
   printf("  --encrypted_cryptstore_filename=encrypted_store.policy_domain_name, file"\
                   " containing encrypted store\n");
-  printf("  --sealed_cryptstore_key_filename=encrypted_store.datica.sealed_key, "\
-                  "file name of file containing sealed cryptstore key\n");
   printf("  --data_dir=./cf_data, directory for configuration data.\n");
   printf("\n");
   printf("  --init_trust=false, initialize trust domain if needed\n");
@@ -358,21 +351,6 @@ void print_help() {
   }
 }
 
-/*
-  optional rsa_message rsa_key              = 4;
-  optional ecc_message ecc_key              = 5;
-  optional bytes certificate                = 7;
-  optional string not_before                = 9;
-  optional string not_after                 = 10;
-  bool time_now(time_point *t);
-  bool time_to_string(time_point &t, string *s);
-  bool string_to_time(const string &s, time_point *t);
-  bool add_interval_to_time_point(time_point &t_in,
-                                  double      hours,
-                                  time_point *out);
-  int  compare_time(time_point &t1, time_point &t2);
-*/
-
 bool cf_generate_symmetric_key(
    key_message* key,
    string key_name,
@@ -398,6 +376,7 @@ bool cf_generate_symmetric_key(
            key_type.c_str());
     return false;
   }
+  printf("num_bytes: %d\n", num_key_bytes);
   byte key_bytes[num_key_bytes];
   memset(key_bytes, 0, num_key_bytes);
   if (!get_random(8 * num_key_bytes, key_bytes)) {
@@ -408,7 +387,7 @@ bool cf_generate_symmetric_key(
   }
   key->set_key_name(key_name);
   key->set_key_type(key_type);
-  key->set_key_format("vse-key");
+  key->set_key_format(key_format);
   key->set_secret_key_bits((byte*)key_bytes, num_key_bytes);
   time_point tp_not_before;
   time_point tp_not_after;
@@ -536,79 +515,106 @@ cc_trust_manager *trust_mgr = nullptr;
 
 
 bool create_cryptstore(cryptstore& cs) {
-  string sealed_key_file_name(FLAGS_data_dir);
-  sealed_key_file_name.append(FLAGS_sealed_cryptstore_key_filename);
   string cryptstore_file_name(FLAGS_data_dir);
   cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
 
-  // generate sealing key
-  // serialize it
-  // encrypt it
-  // write file
-  return false;
+  // generate the key
+  key_message cryptstore_key;
+  string cryptstore_key_name("cryptstore-sealing_key");
+  string cryptstore_key_type(FLAGS_symmetric_key_algorithm);
+  string cryptstore_key_format("vse-key");
+  double cryptstore_duration_in_hours = 24.0 * 365.0;
+
+  if (!cf_generate_symmetric_key(&cryptstore_key,
+                                 cryptstore_key_name,
+                                 cryptstore_key_type,
+                                 cryptstore_key_format,
+                                 cryptstore_duration_in_hours)) {
+    printf("%s() error, line %d, Can't generate symmetric key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  printf("\nSymmetric key for sealing cryptstore\n");
+  print_key(cryptstore_key);
+  printf("\n");
+
+  string serialized_sealing_key;
+  string encrypted_sealing_key;
+  string serialized_store;
+  string encrypted_store;
+
+  if (!cryptstore_key.SerializeToString(&serialized_sealing_key)) {
+    printf("%s() error, line %d, Can't serialize key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  int out_size= serialized_sealing_key.size() + 128;
+  byte out[out_size];
+  memset(out, 0, out_size);
+
+  int iv_len= 32;
+  byte iv[iv_len];
+  memset(iv, 0, iv_len);
+
+  if (!get_random(8 * iv_len, iv)) {
+    printf("%s() error, line %d, Can't get iv\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  // Use seal here instead for key, use this for serialized store
+  if (!authenticated_encrypt(cryptstore_key.key_type().c_str(),
+                           (byte*)serialized_sealing_key.data(),
+                           (int)serialized_sealing_key.size(),
+                           (byte*)cryptstore_key.secret_key_bits().data(),
+                           64,
+                           (byte*)iv,
+                           iv_len,
+                           (byte*) out,
+                           &out_size)) {
+    printf("%s() error, line %d, Can't encrypt sealing key\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  printf("In (%d): ", (int)serialized_sealing_key.size());
+  print_bytes(serialized_sealing_key.size(), (byte*)serialized_sealing_key.data());
+  printf("\n");
+  printf("out (%d): ", out_size);
+  print_bytes(out_size, (byte*)out);
+  printf("\n");
+
+  protected_blob_message encrypted_blob;
+  string serialized_encrypted_blob;
+
+  encrypted_blob.set_encrypted_key((byte*)out, out_size);
+  encrypted_blob.set_encrypted_data((byte*)out, out_size);
+
+  if (!encrypted_blob.SerializeToString(&serialized_encrypted_blob)) {
+    printf("%s() error, line %d, Can't serialize encrypted blob\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if(!write_file_from_string(cryptstore_file_name, serialized_encrypted_blob)) {
+    printf("%s() error, line %d, Can't write protected blob\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  printf("File written: %s\n", cryptstore_file_name.c_str());
+  return true;
 }
 
 bool save_cryptstore(cryptstore& cs) {
-  string sealed_key_file_name(FLAGS_data_dir);
-  sealed_key_file_name.append(FLAGS_sealed_cryptstore_key_filename);
-
   string cryptstore_file_name(FLAGS_data_dir);
   cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
 
-  /*
-   * int file_size(const string &file_name);
-
-bool read_file(const string &file_name, int *size, byte *data);
-bool write_file(const string &file_name, int size, byte *data);
-
-bool read_file_into_string(const string &file_name, string *out);
-bool write_file_from_string(const string &file_name, const string &in);
-
-bool digest_message(const char  *alg,
-                    const byte  *message,
-                    int          message_len,
-                    byte        *digest,
-                    unsigned int digest_len);
-
-
-bool authenticated_encrypt(const char *alg,
-                           byte       *in,
-                           int         in_len,
-                           byte       *key,
-                           int         key_len,
-                           byte       *iv,
-                           int         iv_len,
-                           byte       *out,
-                           int        *out_size);
-bool authenticated_decrypt(const char *alg,
-                           byte       *in,
-                           int         in_len,
-                           byte       *key,
-                           int         key_len,
-                           byte       *out,
-                           int        *out_size);
-                           bool time_t_to_tm_time(time_t *t, struct tm *tm_time);
-bool tm_time_to_time_point(struct tm *tm_time, time_point *tp);
-bool asn1_time_to_tm_time(const ASN1_TIME *s, struct tm *tm_time);
-bool get_not_before_from_cert(X509 *c, time_point *tp);
-bool get_not_after_from_cert(X509 *c, time_point *tp);
-bool time_now(time_point *t);
-bool time_to_string(time_point &t, string *s);
-bool string_to_time(const string &s, time_point *t);
-bool add_interval_to_time_point(time_point &t_in,
-                                double      hours,
-                                time_point *out);
-int  compare_time(time_point &t1, time_point &t2);
-void print_time_point(time_point &t);
-void print_entity(const entity_message &em);
-void print_key(const key_message &k);
-void print_key(const key_message &k);
-  bool generate_symmetric_key(bool regen);
-  bool generate_sealing_key(bool regen);
-  bool generate_auth_key(bool regen);
-  bool generate_service_key(bool regen);
-
-   */
   // get sealing key
   // serialize store 
   // encrypt it
@@ -617,14 +623,20 @@ void print_key(const key_message &k);
 }
 
 bool open_cryptstore(cryptstore* cs) {
-  string sealed_key_file_name(FLAGS_data_dir);
-  sealed_key_file_name.append(FLAGS_sealed_cryptstore_key_filename);
   string cryptstore_file_name(FLAGS_data_dir);
   cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
 
   // get sealing key
   // get encrypted store
   // decrypt it
+  /* bool authenticated_decrypt(const char *alg,
+                           byte       *in,
+                           int         in_len,
+                           byte       *key,
+                           int         key_len,
+                           byte       *out,
+                           int        *out_size);
+   */
   // Deserialize
   return false;
 }
@@ -779,6 +791,8 @@ int main(int an, char **av) {
 
   if (FLAGS_cf_utility_help) {
     print_help();
+    cryptstore cs;
+    create_cryptstore(cs);
     return ret;
   }
   print_os_model_parameters();
