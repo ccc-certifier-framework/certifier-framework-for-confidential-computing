@@ -41,7 +41,7 @@ using namespace certifier::utilities;
 
 DEFINE_bool(print_all, false, "verbose");
 
-DEFINE_string(enclave_type, "simulated_enclave", "enclave type");
+DEFINE_string(enclave_type, "simulated-enclave", "enclave type");
 DEFINE_string(data_dir, "./", "data directory");
 DEFINE_string(encrypted_cryptstore_filename, "encrypted_filestore.datica", "cryptstore");
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
@@ -162,26 +162,47 @@ bool test_store(bool print) {
   }
 
   cryptstore cs;
-#if 0
-    // temporary test
-    create_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-		    );
-    cryptstore_entry* ce = cs.add_entries();
-    ce->set_tag("test-entry");
-    ce->set_type("blob");
-    ce->set_version(1);
-    const char* a= "12345";
-    ce->set_blob((byte*)a, strlen(a)+1);
-    save_cryptstore(cs);
-    cryptstore recovered_cs;
-    open_cryptstore(&recovered_cs);
-    print_cryptstore(recovered_cs);
-
-  if (!create_cryptstore(cs)) {
+  if (!create_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
+			 FLAGS_duration, FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
     printf("Can't create cryptstore\n");
     return false;
   }
-#endif
+
+  cryptstore_entry* ce = cs.add_entries();
+  ce->set_tag("test-entry");
+  ce->set_type("blob");
+  ce->set_version(1);
+  const char* a= "12345";
+  ce->set_blob((byte*)a, strlen(a)+1);
+
+  if (print) {
+    printf("\noriginal keystore\n");
+    print_cryptstore(cs);
+    printf("\n");
+  }
+
+  if (!save_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
+                       FLAGS_duration, FLAGS_enclave_type,
+                       FLAGS_symmetric_key_algorithm)) {
+    printf("Can't save cryptstore\n");
+    return false;
+  }
+
+  cryptstore recovered_cs;
+  if (!open_cryptstore(&recovered_cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
+                       FLAGS_duration, FLAGS_enclave_type,
+                       FLAGS_symmetric_key_algorithm)) {
+    printf("Can't reopen cryptstore\n");
+    return false;
+  }
+
+  if (print) {
+    printf("\nrecovered keystore\n");
+    print_cryptstore(recovered_cs);
+    printf("\n");
+  }
+
   return true;
 }
 

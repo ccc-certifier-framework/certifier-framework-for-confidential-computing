@@ -367,13 +367,6 @@ bool create_cryptstore(cryptstore& cs, string& data_dir,
     return false;
   }
 
-#define DEBUG
-#ifdef DEBUG
-  printf("\ncreate_cryptstore: Symmetric key for sealing cryptstore\n");
-  print_key(cryptstore_key);
-  printf("\n");
-#endif
-
   string serialized_encryption_key;
   if (!cryptstore_key.SerializeToString(&serialized_encryption_key)) {
     printf("%s() error, line %d, Can't serialize key\n",
@@ -383,7 +376,7 @@ bool create_cryptstore(cryptstore& cs, string& data_dir,
   }
 
   string enclave_id("test-enclave");
-  int size_sealed_key = serialized_encryption_key.size();
+  int size_sealed_key = serialized_encryption_key.size() + 128;
   byte sealed_key[size_sealed_key];
 
   memset((byte*)sealed_key, 0, size_sealed_key);
@@ -396,6 +389,7 @@ bool create_cryptstore(cryptstore& cs, string& data_dir,
            __LINE__);
     return false;
   }
+
   protected_blob_message encrypted_blob;
   string serialized_encrypted_blob;
 
@@ -414,7 +408,6 @@ bool create_cryptstore(cryptstore& cs, string& data_dir,
            __LINE__);
     return false;
   }
-  printf("File written: %s\n", cryptstore_file_name.c_str());
   return true;
 }
 
@@ -469,13 +462,6 @@ bool save_cryptstore(cryptstore& cs, string& data_dir,
     return false;
   }
 
-#define DEBUG
-#ifdef DEBUG
-  printf("\nsave_cryptstore: Symmetric key for sealing cryptstore\n");
-  print_key(crypt_key);
-  printf("\n");
-#endif
-
   string serialized_store;
   if (!cs.SerializeToString(&serialized_store)) {
     printf("%s() error, line %d, Can't parse unsealed key\n",
@@ -488,7 +474,7 @@ bool save_cryptstore(cryptstore& cs, string& data_dir,
   byte out[out_size];
   memset(out, 0, out_size);
 
-  int iv_len= 32;
+  int iv_len= 16;
   byte iv[iv_len];
   memset(iv, 0, iv_len);
 
@@ -522,6 +508,18 @@ bool save_cryptstore(cryptstore& cs, string& data_dir,
            __LINE__);
     return false;
   }
+
+#ifdef DEBUG
+  printf("\nsave_cryptstore: Symmetric key for unsealing cryptstore\n");
+  print_key(crypt_key);
+  printf("\n");
+  printf("encrypted store save\n");
+  print_bytes(serialized_encrypted_blob.size(), (byte*)serialized_encrypted_blob.data());
+  printf("\n");
+  printf("serialized store:\n");
+  print_bytes(serialized_store.size(), (byte*)serialized_store.data());
+  printf("\n");
+#endif
 
   // write file
   if(!write_file_from_string(cryptstore_file_name, serialized_encrypted_blob)) {
@@ -585,20 +583,22 @@ bool open_cryptstore(cryptstore* cs, string& data_dir,
     return false;
   }
 
-#define DEBUG
-#ifdef DEBUG
-  printf("\nopen_cryptstore: Symmetric key for sealing cryptstore\n");
-  print_key(crypt_key);
-  printf("\n");
-#endif
-
-  int out_size = encrypted_blob.encrypted_data().size() + 64;
+  int out_size = encrypted_blob.encrypted_data().size() + 128;
   byte out[out_size];
   memset((byte*)out, 0, out_size);
 
+#ifdef DEBUG
+  printf("\nopen_cryptstore: Symmetric key for unsealing cryptstore\n");
+  print_key(crypt_key);
+  printf("\n");
+  printf("encrypted store in open\n");
+  print_bytes(encrypted_blob.encrypted_data().size(), (byte*)encrypted_blob.encrypted_data().data());
+  printf("\n");
+#endif
+
   if (!authenticated_decrypt(crypt_key.key_type().c_str(),
-                           (byte*)serialized_encrypted_blob.data(),
-                           serialized_encrypted_blob.size(),
+                           (byte*)encrypted_blob.encrypted_data().data(),
+                           encrypted_blob.encrypted_data().size(),
                            (byte*)crypt_key.secret_key_bits().data(),
                            crypt_key.secret_key_bits().size(),
                            (byte*)out,
@@ -617,6 +617,12 @@ bool open_cryptstore(cryptstore* cs, string& data_dir,
            __LINE__);
     return false;
   }
+
+#ifdef DEBUG
+  printf("\nserialized cryptstore\n");
+  print_bytes(serialized_cryptstore.size(), (byte*)serialized_cryptstore.data());
+  printf("\n");
+#endif
 
   return true;
 }

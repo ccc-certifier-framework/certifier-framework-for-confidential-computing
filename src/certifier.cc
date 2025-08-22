@@ -506,7 +506,6 @@ bool certifier::framework::Seal(const string &enclave_type,
                                 byte         *in,
                                 int          *size_out,
                                 byte         *out) {
-
   if (enclave_type == "simulated-enclave") {
     return simulated_Seal(enclave_type, enclave_id, in_size, in, size_out, out);
   }
