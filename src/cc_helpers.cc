@@ -463,6 +463,7 @@ bool certifier::framework::cc_trust_manager::initialize_islet_enclave() {
 
 
 void certifier::framework::cc_trust_manager::print_trust_data() {
+  printf("\n--------------Start of Trust Data ------------------\n");
   if (!cc_basic_data_initialized_) {
     printf("%s() error, line %d, No trust info initialized\n",
            __func__,
@@ -586,6 +587,7 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
   for (int i = 0; i < num_certified_domains_; i++) {
     certified_domains_[i]->print_certifiers_entry();
   }
+  printf("--------------End of Trust Data ------------------\n");
 }
 
 const int max_pad_size_for_store = 1024;
@@ -1265,10 +1267,10 @@ bool certifier::framework::cc_trust_manager::cold_init(
     int           home_port,
     const string &service_host,
     int           service_port) {
-
+#ifdef DEBUG
   printf("cold_init, public_key_alg: %s, symmetric_key_alg: %s, home_domain_name: %s\n",
                   public_key_alg.c_str(), symmetric_key_alg.c_str(), home_domain_name.c_str());
-
+#endif
   if (!cc_policy_info_initialized_) {
     printf("%s() error, line %d, policy key should have been initialized\n",
            __func__,
@@ -1708,9 +1710,11 @@ void certifier::framework::certifiers::print_certifiers_entry() {
     printf("\n");
   }
 
-  printf("Service host: %s, service port: %d\n",
-         service_host_.c_str(),
-         service_port_);
+  if (service_host_.size() > 0) {
+    printf("Service host: %s, service port: %d\n",
+           service_host_.c_str(),
+           service_port_);
+  }
 }
 
 bool certifier::framework::certifiers::get_certified_status() {
@@ -1728,15 +1732,16 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     return false;
   }
 
-  // Note: if you change the auth key, you must recertify in all domains
-
-  evidence_list platform_evidence;
+#ifdef DEBUG
   printf("%s():%d: enclave_type_ = '%s', purpose_ = '%s'\n",
          __func__,
          __LINE__,
          owner_->enclave_type_.c_str(),
          owner_->purpose_.c_str());
+#endif
 
+  // Note: if you change the auth key, you must recertify in all domains
+  evidence_list platform_evidence;
   if (owner_->enclave_type_ == "simulated-enclave"
       || owner_->enclave_type_ == "application-enclave") {
     signed_claim_message signed_platform_says_attest_key_is_trusted;

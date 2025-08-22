@@ -410,11 +410,11 @@ bool initialize_new_trust_domain() {
       printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
       return false;
     }
-
   if (!trust_mgr->certify_me()) {
     printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
     return false;
   }
+#define DEBUG
 #ifdef DEBUG
   trust_mgr->print_trust_data();
 #endif  // DEBUG
@@ -615,14 +615,15 @@ int main(int an, char **av) {
     goto done;
   } else if (FLAGS_reinit_trust) {
 
-    cryptstore cs;
-
     if (!initialize_new_trust_domain()) {
       printf("%s() error, line %d, cannot initialize new trust domain\n",
              __func__, __LINE__);
       ret= 1;
       goto done;
     }
+    printf("initialize_new_trust_domain succeeded\n");
+
+    cryptstore cs;
 
     // get or initialize cryptstore
     string cryptstore_file_name(FLAGS_data_dir);
@@ -841,6 +842,10 @@ done:
   if (trust_mgr != nullptr) {
     delete trust_mgr;
   }
+  if (ret ==0)
+    printf("Succeeded\n");
+  else
+    printf("Failed\n");
   return ret;
 }
 

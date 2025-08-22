@@ -351,7 +351,7 @@ bool create_cryptstore(cryptstore& cs, string& data_dir,
 
   // generate the key
   key_message cryptstore_key;
-  string cryptstore_key_name("cryptstore-sealing_key");
+  string cryptstore_key_name("cryptstore-sealing-key");
   string cryptstore_key_type(sym_alg);
   string cryptstore_key_format("vse-key");
   double cryptstore_duration_in_hours = duration;
@@ -470,6 +470,9 @@ bool save_cryptstore(cryptstore& cs, string& data_dir,
     return false;
   }
 
+  if (serialized_store.size() <=0) {
+  }
+
   int out_size= serialized_store.size() + 128;
   byte out[out_size];
   memset(out, 0, out_size);
@@ -489,7 +492,7 @@ bool save_cryptstore(cryptstore& cs, string& data_dir,
                            (byte*)serialized_store.data(),
                            (int)serialized_store.size(),
                            (byte*)crypt_key.secret_key_bits().data(),
-                           64,
+                           crypt_key.secret_key_bits().size(),
                            (byte*)iv,
                            iv_len,
                            (byte*) out,
@@ -591,10 +594,14 @@ bool open_cryptstore(cryptstore* cs, string& data_dir,
   printf("\nopen_cryptstore: Symmetric key for unsealing cryptstore\n");
   print_key(crypt_key);
   printf("\n");
-  printf("encrypted store in open\n");
+  printf("encrypted store in open %d\n", (int)encrypted_blob.encrypted_data().size());
   print_bytes(encrypted_blob.encrypted_data().size(), (byte*)encrypted_blob.encrypted_data().data());
   printf("\n");
 #endif
+
+  // Nothing to do?
+  if ((int)encrypted_blob.encrypted_data().size() <= 0)
+    return true;
 
   if (!authenticated_decrypt(crypt_key.key_type().c_str(),
                            (byte*)encrypted_blob.encrypted_data().data(),
