@@ -136,7 +136,7 @@ bool cf_generate_symmetric_key(
            key_type.c_str());
     return false;
   }
-  printf("num_bytes: %d\n", num_key_bytes);
+
   byte key_bytes[num_key_bytes];
   memset(key_bytes, 0, num_key_bytes);
   if (!get_random(8 * num_key_bytes, key_bytes)) {
@@ -471,6 +471,7 @@ bool save_cryptstore(cryptstore& cs, string& data_dir,
   }
 
   if (serialized_store.size() <=0) {
+    return true;
   }
 
   int out_size= serialized_store.size() + 128;

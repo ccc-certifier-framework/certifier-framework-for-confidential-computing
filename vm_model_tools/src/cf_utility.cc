@@ -570,6 +570,7 @@ int main(int an, char **av) {
   string purpose("authentication");
 
   if (FLAGS_init_trust) {
+    bool add_new_certs= false;
 
     if (!get_existing_trust_domain()) {
       if (!initialize_new_trust_domain()) {
@@ -577,41 +578,48 @@ int main(int an, char **av) {
                __func__, __LINE__);
         ret= 1;
         goto done;
-      } 
+        } 
+      add_new_certs= true;
+    } else {
+      printf("Found existing domain\n");
+    }
 
-      // get or initialize cryptstore
-      cryptstore cs;
-      string cryptstore_file_name(FLAGS_data_dir);
-      cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
+    // get or initialize cryptstore
+    cryptstore cs;
+    string cryptstore_file_name(FLAGS_data_dir);
+    cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
 
-      if (file_size(cryptstore_file_name) < 0) {
-        if (!create_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-                               FLAGS_duration, FLAGS_enclave_type,
-                               FLAGS_symmetric_key_algorithm)) {
-          printf("%s() error, line %d, cannot create cryptstore\n",
-              __func__, __LINE__);
+    if (file_size(cryptstore_file_name) < 0) {
+      if (!create_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
+                             FLAGS_duration, FLAGS_enclave_type,
+                             FLAGS_symmetric_key_algorithm)) {
+        printf("%s() error, line %d, cannot create cryptstore\n",
+            __func__, __LINE__);
+        ret= 1;
+        goto done;
+        }
+        // add keys and certificates
+        if (!save_cryptstore(cs , FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
+                            FLAGS_duration, FLAGS_enclave_type,
+                            FLAGS_symmetric_key_algorithm)) {
+          printf("%s() error, line %d, cannot save cryptstore\n",
+                __func__, __LINE__);
           ret= 1;
           goto done;
-          }
+        }
+      } else {
+        if (!open_cryptstore(&cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
+                             FLAGS_duration, FLAGS_enclave_type,
+                             FLAGS_symmetric_key_algorithm)) {
+          printf("%s() error, line %d, cannot open cryptstore\n",
+                __func__, __LINE__);
+          ret= 1;
+          goto done;
+        }
+        if (add_new_certs) {
+          // add keys and certificates and save
+        }
       }
-      if (!open_cryptstore(&cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-                           FLAGS_duration, FLAGS_enclave_type,
-                           FLAGS_symmetric_key_algorithm)) {
-        printf("%s() error, line %d, cannot open cryptstore\n",
-              __func__, __LINE__);
-        ret= 1;
-        goto done;
-      }
-      // add keys and certificates
-      if (!save_cryptstore(cs , FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-                           FLAGS_duration, FLAGS_enclave_type,
-                           FLAGS_symmetric_key_algorithm)) {
-        printf("%s() error, line %d, cannot save cryptstore\n",
-              __func__, __LINE__);
-        ret= 1;
-        goto done;
-      }
-    }
     goto done;
   } else if (FLAGS_reinit_trust) {
 
@@ -628,6 +636,7 @@ int main(int an, char **av) {
     // get or initialize cryptstore
     string cryptstore_file_name(FLAGS_data_dir);
     cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
+
     if (file_size(cryptstore_file_name) < 0) {
       if (!create_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
                              FLAGS_duration, FLAGS_enclave_type,
@@ -637,14 +646,15 @@ int main(int an, char **av) {
         ret= 1;
         goto done;
       }
-    }
-    if (!open_cryptstore(&cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-                       FLAGS_duration, FLAGS_enclave_type,
-                       FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot open cryptstore\n",
-            __func__, __LINE__);
-      ret= 1;
-      goto done;
+    } else {
+      if (!open_cryptstore(&cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
+                           FLAGS_duration, FLAGS_enclave_type,
+                           FLAGS_symmetric_key_algorithm)) {
+        printf("%s() error, line %d, cannot open cryptstore\n",
+              __func__, __LINE__);
+        ret= 1;
+        goto done;
+      }
     }
     // add keys and certificates
     if (!save_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
