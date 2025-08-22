@@ -1266,6 +1266,9 @@ bool certifier::framework::cc_trust_manager::cold_init(
     const string &service_host,
     int           service_port) {
 
+  printf("cold_init, public_key_alg: %s, symmetric_key_alg: %s, home_domain_name: %s\n",
+                  public_key_alg.c_str(), symmetric_key_alg.c_str(), home_domain_name.c_str());
+
   if (!cc_policy_info_initialized_) {
     printf("%s() error, line %d, policy key should have been initialized\n",
            __func__,
