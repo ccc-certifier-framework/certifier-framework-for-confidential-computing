@@ -516,6 +516,7 @@ bool generate_symmetric_key(key_message* km, string& name,
            __func__, __LINE__);
     return false;
   }
+
   // update cryptstore
   int l, h;
   cryptstore_entry* ce= nullptr;
@@ -550,6 +551,7 @@ bool generate_symmetric_key(key_message* km, string& name,
     return false;
   }
   ce->set_blob((byte*)serialized_key.data(), serialized_key.size());
+
   // save store
   if (!save_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
                        FLAGS_duration, FLAGS_enclave_type,
@@ -617,6 +619,7 @@ bool generate_public_key(key_message* km, string& name, string& key_type,
     return false;
   }
   ce->set_blob((byte*)serialized_key.data(), serialized_key.size());
+
   // save store
   if (!save_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
                        FLAGS_duration, FLAGS_enclave_type,
@@ -803,6 +806,7 @@ int main(int an, char **av) {
     string key_name(FLAGS_keyname);
     string key_type(FLAGS_symmetric_key_algorithm);
     string tag(FLAGS_keyname);
+
     if (!generate_symmetric_key(&km, key_name, key_type, FLAGS_keyname)) {
       printf("%s() error, line %d, cannot generate symmetric key\n",
             __func__, __LINE__);
