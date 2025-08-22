@@ -350,7 +350,7 @@ bool initialize_new_trust_domain() {
 
   // read policy cert
   string der_policy_cert_file_name(FLAGS_data_dir);
-  der_policy_cert_file_name.append("/provisioning/");
+  der_policy_cert_file_name.append("./provisioning/");
   der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
   string der_policy_cert;
   if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {

@@ -856,9 +856,11 @@ bool certifier::framework::protect_blob(const string &enclave_type,
   }
   byte *key_buf = (byte *)key.secret_key_bits().data();
   if (key.secret_key_bits().size() < protect_key_size) {
-    printf("%s() error, line %d, protect_blob: key too small\n",
+    printf("%s() error, line %d, protect_blob: key too small %d %d\n",
            __func__,
-           __LINE__);
+           __LINE__,
+	   (int)key.secret_key_bits().size(),
+	   protect_key_size);
     return false;
   }
 

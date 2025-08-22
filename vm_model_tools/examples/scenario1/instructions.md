@@ -229,19 +229,18 @@ $CERTIFIER_ROOT/certifier_service/simpleserver \
 
 First, get certified.
 
-cf-osutility.exe \
+cf_utility.exe \
     --cf_utility_help=false \
     --init_trust=true \
     --print_cryptstore=true \
     --save_cryptstore=false \
     --enclave_type="simulated-enclave" \
     --policy_domain_name=datica_test \
-    --policy_key_file=policy_cert_file.datica_test \
+    --policy_key_cert_file=policy_cert_file.datica_test \
     --policy_store_filename=policy_store.datica_test \
     --encrypted_cryptstore_filename=cryptstore.datica_test \
-    --sealed_cryptstore_key_filename=cryptstore_key.datica_test \
-    --symmetric_algorithm=aes-256-gcm  \
-    --public_key_algorithm=rsa_2048 \
+    --symmetric_key_algorithm=aes-256-gcm  \
+    --public_key_algorithm=rsa-2048 \
     --data_dir=$(EXAMPLE_DIR) \
     --certifier_service_URL=localhost \
     --service_port=8123
