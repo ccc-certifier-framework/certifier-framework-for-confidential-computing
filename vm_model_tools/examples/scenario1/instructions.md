@@ -229,7 +229,7 @@ $CERTIFIER_ROOT/certifier_service/simpleserver \
 
 First, get certified.
 
-cf_utility.exe \
+$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --cf_utility_help=false \
     --init_trust=true \
     --print_cryptstore=true \
@@ -246,6 +246,22 @@ cf_utility.exe \
     --service_port=8123
 
 Now generate a key.
+
+$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+    --cf_utility_help=false \
+    --generate_symmetric_key=true \
+    --print_cryptstore=true \
+    --save_cryptstore=false \
+    --enclave_type="simulated-enclave" \
+    --policy_domain_name=datica_test \
+    --policy_key_cert_file=policy_cert_file.datica_test \
+    --policy_store_filename=policy_store.datica_test \
+    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --symmetric_key_algorithm=aes-256-gcm  \
+    --public_key_algorithm=rsa-2048 \
+    --data_dir=$(EXAMPLE_DIR) \
+    --certifier_service_URL=localhost \
+    --service_port=8123
 
 Check key
 

@@ -65,6 +65,7 @@ DEFINE_string(policy_key_cert_file, "policy_certificate.datica",
 DEFINE_string(data_dir, "./", "supporting file directory");
 DEFINE_string(input_format, "serialized-protobuf", "input file format");
 DEFINE_string(output_format, "serialized-protobuf", "output file format");
+
 DEFINE_string(policy_store_filename, "policy_store.bin.datica",
                 "policy store file name");
 DEFINE_string(encrypted_cryptstore_filename,
@@ -77,6 +78,7 @@ DEFINE_string(tag, "policy-key", "cryptstore entry tag");
 DEFINE_int32(entry_version, 0, "cryptstore entry version");
 DEFINE_string(type, "key-message-serialized-protobuf",
                 "cryptstore entry data type");
+
 DEFINE_string(output_file, "out_1", "output file name");
 DEFINE_string(input_file, "in_1", "input file name");
 
