@@ -53,7 +53,7 @@ void print_cryptstore_entry(const cryptstore_entry& ent) {
     printf("time entered: %s\n", ent.time_entered().c_str());
   }
   if (ent.has_blob()) {
-    if (ent.type() == "key_message_serialized-protobuf") {
+    if (ent.type() == "key-message-serialized-protobuf") {
       key_message km;
       if (km.ParseFromString(ent.blob())) {
         print_key(km);

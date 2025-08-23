@@ -673,10 +673,6 @@ bool certifier::framework::cc_trust_manager::fetch_store() {
   }
 
   key_message pk;
-  pk.set_key_name("protect-key");
-  pk.set_key_type(Enc_method_aes_256_cbc_hmac_sha256);
-  pk.set_key_format("vse-key");
-
   if (!unprotect_blob(enclave_type_,
                       size_protected_blob,
                       protected_blob,
@@ -1032,7 +1028,8 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
     printf("\n");
 #endif
     cc_auth_key_initialized_ = true;
-    if (private_auth_key_.has_certificate()) {
+    if (private_auth_key_.has_certificate() ||
+	 primary_admissions_cert_valid_) {
       cc_is_certified_ = true;
 #ifdef DEBUG
       X509 *x = X509_new();
@@ -1042,6 +1039,11 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
       X509_free(x);
 #endif
     }
+#ifdef DEBUG2
+    else {
+      printf("\n***is not certified\n");
+    }
+#endif
 
     string symmetric_key_tag("app-symmetric-key");
     ent = store_.find_entry(symmetric_key_tag, key_type);

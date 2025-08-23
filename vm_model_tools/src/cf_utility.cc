@@ -71,7 +71,7 @@ DEFINE_string(policy_store_filename, "policy_store.bin.datica",
 DEFINE_string(encrypted_cryptstore_filename,
     "encrypted_cryptstore.datica",
     "encrypted cryptstore file name");
-DEFINE_string(keyname, "primary_store_encryption_key",
+DEFINE_string(keyname, "primary-store-encryption-key",
      "generated key name");
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
 DEFINE_string(tag, "policy-key", "cryptstore entry tag");
@@ -323,7 +323,7 @@ bool add_key_and_cert(cryptstore& cs) {
   }
 
   time_point tp;
-    if (!time_now(&tp)) {
+  if (!time_now(&tp)) {
     printf("%s() error, line %d, Can't get current time\n",
            __func__,
            __LINE__);
@@ -405,6 +405,59 @@ bool get_existing_trust_domain() {
     }
   }
 
+  // Get parameters
+  string *params = nullptr;
+  int     n = 0;
+  if (FLAGS_enclave_type == "simulated-enclave") {
+    if (!get_simulated_enclave_parameters(&params, &n)) {
+      printf("%s() error, line %d, get enclave parameters\n", __func__, __LINE__);
+      return false;
+    }
+  } else if (FLAGS_enclave_type == "sev-enclave") {
+    if (!get_sev_enclave_parameters(&params, &n)) {
+      printf("%s() error, line %d, get enclave parameters\n", __func__, __LINE__);
+      return false;
+    }
+  } else {
+    printf("%s() error, line %d, unsupported enclave\n", __func__, __LINE__);
+    return false;
+  }
+
+  // read policy cert
+  string der_policy_cert_file_name(FLAGS_data_dir);
+  der_policy_cert_file_name.append("./provisioning/");
+  der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+  string der_policy_cert;
+  if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
+      printf("%s() error, line %d, couldn't read %s\n",
+            __func__,
+            __LINE__,
+            der_policy_cert.c_str());
+      return false;
+  }
+
+#ifdef DEBUG
+  printf("\n*****Initializing enclave new trust\n");
+#endif
+
+  // Init policy key info
+  if (!trust_mgr->init_policy_key((byte*)der_policy_cert.data(),
+			  der_policy_cert.size())) {
+    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
+    return false;
+  }
+
+  // Init enclave
+  if (!trust_mgr->initialize_enclave(n, params)) {
+    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
+    return false;
+  }
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
+  }
+
+  // Init enclave
   if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       return false;
@@ -426,25 +479,6 @@ bool initialize_new_trust_domain() {
     }
   }
 
-  // read policy cert
-  string der_policy_cert_file_name(FLAGS_data_dir);
-  der_policy_cert_file_name.append("./provisioning/");
-  der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
-  string der_policy_cert;
-  if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
-      printf("%s() error, line %d, couldn't read %s\n",
-            __func__,
-            __LINE__,
-            der_policy_cert.c_str());
-      return false;
-  }
-
-  // Init policy key info
-  if (!trust_mgr->init_policy_key((byte*)der_policy_cert.data(), der_policy_cert.size())) {
-    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
-    return false;
-  }
-
   // Get parameters
   string *params = nullptr;
   int     n = 0;
@@ -462,6 +496,30 @@ bool initialize_new_trust_domain() {
     printf("%s() error, line %d, unsupported enclave\n", __func__, __LINE__);
     return false;
   }
+
+  // read policy cert
+  string der_policy_cert_file_name(FLAGS_data_dir);
+  der_policy_cert_file_name.append("./provisioning/");
+  der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+  string der_policy_cert;
+  if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
+      printf("%s() error, line %d, couldn't read %s\n",
+            __func__,
+            __LINE__,
+            der_policy_cert.c_str());
+      return false;
+  }
+
+  // Init policy key info
+  if (!trust_mgr->init_policy_key((byte*)der_policy_cert.data(),
+			  der_policy_cert.size())) {
+    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
+    return false;
+  }
+
+#ifdef DEBUG
+  printf("\n*****Initializing enclave new trust\n");
+#endif
 
   // Init enclave
   if (!trust_mgr->initialize_enclave(n, params)) {
@@ -569,7 +627,7 @@ bool generate_public_key(key_message* km, string& name, string& key_type,
   string key_format("vse-key");
   double duration_in_hours= FLAGS_duration;
 
-  if (!cf_generate_symmetric_key(km, FLAGS_keyname,
+  if (!cf_generate_public_key(km, FLAGS_keyname,
                                  FLAGS_public_key_algorithm,
                                  key_format, duration_in_hours)) {
     printf("%s() error, line %d, cannot  generate key\n",
@@ -783,6 +841,8 @@ int main(int an, char **av) {
     goto done;
   } else if (FLAGS_generate_symmetric_key) {
 
+    printf("\ngenerate_symmetric_key %s\n", FLAGS_symmetric_key_algorithm.c_str());
+
     // open existing trust domain to get cryptstore
     if (!get_existing_trust_domain()) {
       printf("%s() error, line %d, cannot recover existing domain\n",
@@ -790,6 +850,12 @@ int main(int an, char **av) {
       ret= 1;
       goto done;
     }
+
+#define DEBUG
+#ifdef DEBUG
+    printf("get_existing_trust_domain succeeded\n");
+#endif
+
     cryptstore cs;
 
     if (!open_cryptstore(&cs, FLAGS_data_dir,
@@ -802,6 +868,8 @@ int main(int an, char **av) {
       goto done;
     }
 
+    printf("cryptstore open\n");
+
     key_message km;
     string key_name(FLAGS_keyname);
     string key_type(FLAGS_symmetric_key_algorithm);
@@ -813,7 +881,54 @@ int main(int an, char **av) {
       ret= 1;
       goto done;
     }
-    // add key to store and save it
+
+    if (!trust_mgr->cc_is_certified_) {
+      printf("%s() error, line %d, domain not certified\n",
+             __func__, __LINE__);
+      return false;
+    }
+
+    time_point tp;
+    if (!time_now(&tp)) {
+      printf("%s() error, line %d, Can't get current time\n",
+           __func__,
+           __LINE__);
+      return false;
+    }
+
+    string tp_str;
+    if (!time_to_string(tp, &tp_str)) {
+      printf("%s() error, line %d, Can't convert time to string\n",
+            __func__,
+            __LINE__);
+      return false;
+    }
+
+    int version= 1;
+    string type("key-message-serialized-protobuf");
+
+    cryptstore_entry* ce = cs.add_entries();
+    int l= 0;
+    int h= 0;
+    if (version_range_in_cryptstore(cs, tag, &l, &h)) {
+      version= h + 1;
+    } else {
+      version= 1;
+    }
+    ce->set_tag(tag);
+    ce->set_type(type);
+    ce->set_version(version);
+    ce->set_time_entered(tp_str);
+
+    string serialized_key;
+    if (!km.SerializeToString(&serialized_key)) {
+      printf("%s() error, line %d, Can't generate serialized key\n",
+            __func__,
+            __LINE__);
+      return false;
+    }
+    ce->set_blob((byte*)serialized_key.data(), serialized_key.size());
+
     if (!save_cryptstore(cs, FLAGS_data_dir,
                          FLAGS_encrypted_cryptstore_filename,
                          FLAGS_duration, FLAGS_enclave_type,
@@ -823,6 +938,10 @@ int main(int an, char **av) {
       ret= 1;
       goto done;
     }
+#define DEBUG
+#ifdef DEBUG
+    print_cryptstore(cs);
+#endif
     goto done;
   } else if (FLAGS_generate_public_key) {
 

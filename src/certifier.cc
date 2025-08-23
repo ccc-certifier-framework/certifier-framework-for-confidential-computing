@@ -947,14 +947,6 @@ bool certifier::framework::unprotect_blob(const string &enclave_type,
     return false;
   }
 
-  if (key->key_type() != Enc_method_aes_256_cbc_hmac_sha256) {
-    printf("%s() error, line %d, unprotect_blob, unsupported encryption "
-           "scheme: '%s'\n",
-           __func__,
-           __LINE__,
-           key->key_type().c_str());
-    return false;
-  }
   if (!key->has_secret_key_bits()) {
     printf("%s() error, line %d, unprotect_blob: no key bits\n",
            __func__,
@@ -962,12 +954,6 @@ bool certifier::framework::unprotect_blob(const string &enclave_type,
     return false;
   }
   byte *key_buf = (byte *)key->secret_key_bits().data();
-  if (key->secret_key_bits().size() < protect_key_size) {
-    printf("%s() error, line %d, unprotect_blob: key too small\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
   int key_len = key->secret_key_bits().size();
 
   // decrypt encrypted data

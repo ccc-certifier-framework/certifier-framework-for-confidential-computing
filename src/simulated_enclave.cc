@@ -160,6 +160,12 @@ bool simulated_Seal(const string &enclave_type,
     return false;
   }
 
+#ifdef DEBUG
+  printf("simulated_Seal %d, key:\n", sealing_key_size);
+  print_bytes(sealing_key_size, sealing_key);
+  printf("\n");
+#endif
+
   memcpy(out, output, real_output_size);
   *size_out = real_output_size;
   return true;
@@ -183,6 +189,12 @@ bool simulated_Unseal(const string &enclave_type,
 
   memset(output, 0, output_size);
   memcpy(iv, in, iv_size);
+
+#ifdef DEBUG
+  printf("simulated_Unseal %d, key:\n", sealing_key_size);
+  print_bytes(sealing_key_size, sealing_key);
+  printf("\n");
+#endif
 
   int real_output_size = output_size;
   if (!authenticated_decrypt(Enc_method_aes_256_cbc_hmac_sha256,
