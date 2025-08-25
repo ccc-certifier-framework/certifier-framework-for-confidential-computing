@@ -19,6 +19,7 @@
 #include "attestation.h"
 
 using namespace certifier::utilities;
+using namespace certifier::framework;
 
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(ark_der, "sev_ark_cert.der", "ark cert file");
