@@ -30,6 +30,8 @@ I= $(CERTIFIER_ROOT)/include
 INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 CF_UTILITY_SRC= $(CERTIFIER_ROOT)/vm_model_tools/src
 
+ENABLE_SEV=1
+
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
 # When this happens, everything must be compiles with C++17 and the linking is a
 # little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
@@ -45,6 +47,10 @@ CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-depr
 endif
 CFLAGS=$(CFLAGS_NOERROR) -Werror
 
+#ifdef ENABLE_SEV
+CFLAGS  += -D SEV_SNP -D SEV_DUMMY_GUEST
+#endif
+
 CC=g++
 LINK=g++
 PROTO=protoc
@@ -52,10 +58,10 @@ AR=ar
 
 ifdef NEWPROTOBUF
 export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L/usr/local/lib `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS= -L/usr/local/lib `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 else
 export LD_LIBRARY_PATH=/usr/local/lib
-LDFLAGS= -L/usr/local/lib -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl
+LDFLAGS= -L/usr/local/lib -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 endif
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
@@ -67,6 +73,11 @@ dobj = $(O)/cf_utility.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_pro
 sobj = $(O)/cf_support_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
        $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
+
+ifdef ENABLE_SEV
+dobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
+sobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
+endif
 
 
 all:	cf_utility.exe cf_support_test.exe
@@ -147,3 +158,17 @@ $(O)/cc_useful.o: $(S)/cc_useful.cc $(I)/cc_useful.h
 $(O)/certifier_algorithms.o: $(S)/certifier_algorithms.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+ifdef ENABLE_SEV
+$(O)/sev_support.o: $(S)/sev-snp/sev_support.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(O)/sev_support.o -c $(S)/sev-snp/sev_support.cc
+
+$(O)/sev_report.o: $(S)/sev-snp/sev_report.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(O)/sev_report.o -c $(S)/sev-snp/sev_report.cc
+
+$(O)/sev_cert_table.o: $(S)/sev-snp/sev_cert_table.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(O)/sev_cert_table.o -c $(S)/sev-snp/sev_cert_table.cc
+endif
