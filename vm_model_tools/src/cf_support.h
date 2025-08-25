@@ -14,22 +14,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <sys/socket.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
 #include <netdb.h>
-#include <openssl/ssl.h>
-#include <openssl/rsa.h>
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/hmac.h>
+#include <netinet/in.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#include <sys/socket.h>
 
+#include "certifier_algorithms.h"
 #include "certifier_framework.h"
 #include "certifier_utilities.h"
-#include "certifier_algorithms.h"
-
 #include "cryptstore.pb.h"
 
 // cf_support.h
@@ -43,13 +42,13 @@ using namespace certifier::utilities;
 
 void print_cryptstore_entry(const cryptstore_entry& ent);
 cryptstore_entry* find_in_cryptstore(cryptstore& cs, string& tag, int version);
-bool version_range_in_cryptstore(cryptstore& cs, string& tag,
-                                 int* low, int* high);
+bool version_range_in_cryptstore(cryptstore& cs, string& tag, int* low,
+                                 int* high);
 bool cf_generate_symmetric_key(key_message* key, string key_name,
-   string key_type, string key_format,
-   double duration_in_hours);
-bool cf_generate_public_key(key_message* key, string key_name,
-   string key_type, string key_format, double duration_in_hours);
+                               string key_type, string key_format,
+                               double duration_in_hours);
+bool cf_generate_public_key(key_message* key, string key_name, string key_type,
+                            string key_format, double duration_in_hours);
 bool get_item(cryptstore& cs, string& tag, string* type, int* version,
               string* tp, string* value);
 bool put_item(cryptstore& cs, string& tag, string& type, int& version,
@@ -57,8 +56,8 @@ bool put_item(cryptstore& cs, string& tag, string& type, int& version,
 void print_cryptstore(cryptstore& cs);
 
 bool create_cryptstore(cryptstore& cs, string& data_dir,
-                string& encrypted_cryptstore_filename, double duration,
-                string& enclave_type, string& sym_alg);
+                       string& encrypted_cryptstore_filename, double duration,
+                       string& enclave_type, string& sym_alg);
 bool open_cryptstore(cryptstore* cs, string& data_dir,
                      string& encrypted_cryptstore_filename, double duration,
                      string& enclave_type, string& sym_alg);
@@ -68,4 +67,3 @@ bool save_cryptstore(cryptstore& cs, string& data_dir,
 #endif
 
 // -------------------------------------------------------------------------------
-
