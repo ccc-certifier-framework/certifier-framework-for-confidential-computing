@@ -54,43 +54,54 @@ DEFINE_bool(put_item, false, "put item into cryptstore");
 DEFINE_bool(print_cryptstore, true, "print cryptstore");
 DEFINE_bool(save_cryptstore, false, "save cryptstore");
 
-DEFINE_string(public_key_algorithm, Enc_method_rsa_2048,
+DEFINE_string(public_key_algorithm,
+              Enc_method_rsa_2048,
               "public key algorithm");
-DEFINE_string(symmetric_key_algorithm, Enc_method_aes_256_cbc_hmac_sha256,
+DEFINE_string(symmetric_key_algorithm,
+              Enc_method_aes_256_cbc_hmac_sha256,
               "symmetric algorithm");
 DEFINE_string(policy_domain_name, "datica", "policy domain name");
-DEFINE_string(policy_key_cert_file, "policy_certificate.datica",
+DEFINE_string(policy_key_cert_file,
+              "policy_certificate.datica",
               "file name for policy certificate");
 DEFINE_string(data_dir, "./", "supporting file directory");
 DEFINE_string(input_format, "serialized-protobuf", "input file format");
 DEFINE_string(output_format, "serialized-protobuf", "output file format");
 
-DEFINE_string(policy_store_filename, "policy_store.bin.datica",
+DEFINE_string(policy_store_filename,
+              "policy_store.bin.datica",
               "policy store file name");
-DEFINE_string(encrypted_cryptstore_filename, "encrypted_cryptstore.datica",
+DEFINE_string(encrypted_cryptstore_filename,
+              "encrypted_cryptstore.datica",
               "encrypted cryptstore file name");
 DEFINE_string(keyname, "primary-store-encryption-key", "generated key name");
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
 DEFINE_string(tag, "policy-key", "cryptstore entry tag");
 DEFINE_int32(entry_version, 0, "cryptstore entry version");
-DEFINE_string(type, "key-message-serialized-protobuf",
+DEFINE_string(type,
+              "key-message-serialized-protobuf",
               "cryptstore entry data type");
 
 DEFINE_string(output_file, "out_1", "output file name");
 DEFINE_string(input_file, "in_1", "input file name");
 
 // For SEV
-DEFINE_string(ark_cert_file, "./service/milan_ark_cert.der",
+DEFINE_string(ark_cert_file,
+              "./service/milan_ark_cert.der",
               "machine ark certificate location");
-DEFINE_string(ask_cert_file, "./service/milan_ask_cert.der",
+DEFINE_string(ask_cert_file,
+              "./service/milan_ask_cert.der",
               "machine ask certificate location");
-DEFINE_string(vcek_cert_file, "./service/milan_vcek_cert.der",
+DEFINE_string(vcek_cert_file,
+              "./service/milan_vcek_cert.der",
               "machine vcek certificate location");
 
 // For simulated-enclave
-DEFINE_string(attest_key_file, "./provisioning/attest_key_file.bin",
+DEFINE_string(attest_key_file,
+              "./provisioning/attest_key_file.bin",
               "simulated attestation key");
-DEFINE_string(measurement_file, "./provisioning/cf_utility.measurement",
+DEFINE_string(measurement_file,
+              "./provisioning/cf_utility.measurement",
               "simulated enclave measurement");
 DEFINE_string(platform_attest_endorsement_file,
               "./provisioning/platform_attest_endorsement.bin",
@@ -187,14 +198,17 @@ bool get_simulated_enclave_parameters(string **s, int *n) {
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file,
                              &args[1])) {
-    printf("%s() error, line %d, Can't read measurement file\n", __func__,
+    printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
            __LINE__);
     goto err;
   }
 
   if (!read_file_into_string(
-          FLAGS_data_dir + FLAGS_platform_attest_endorsement_file, &args[2])) {
-    printf("%s() error, line %d, Can't read endorsement file\n", __func__,
+          FLAGS_data_dir + FLAGS_platform_attest_endorsement_file,
+          &args[2])) {
+    printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
            __LINE__);
     goto err;
   }
@@ -222,13 +236,15 @@ bool get_sev_enclave_parameters(string **s, int *n) {
   }
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_ask_cert_file, &args[1])) {
-    printf("%s() error, line %d, Can't read measurement file\n", __func__,
+    printf("%s() error, line %d, Can't read measurement file\n",
+           __func__,
            __LINE__);
     goto err;
   }
 
   if (!read_file_into_string(FLAGS_data_dir + FLAGS_vcek_cert_file, &args[2])) {
-    printf("%s() error, line %d, Can't read endorsement file\n", __func__,
+    printf("%s() error, line %d, Can't read endorsement file\n",
+           __func__,
            __LINE__);
     goto err;
   }
@@ -248,12 +264,10 @@ void print_help() {
   printf("  --policy_domain_name=%s, name of policy domain\n",
          FLAGS_policy_domain_name.c_str());
   printf("  --enclave_type=sev-enclave, enclave type\n");
-  printf(
-      "  --policy_key_cert_file=policy_cert_file.datica,"
-      " name of file with policy domain root cert\n");
-  printf(
-      "  --policy_store_filename=\"\", name of policy store (as used in "
-      "certifier\n");
+  printf("  --policy_key_cert_file=policy_cert_file.datica,"
+         " name of file with policy domain root cert\n");
+  printf("  --policy_store_filename=\"\", name of policy store (as used in "
+         "certifier\n");
   printf(
       "  --encrypted_cryptstore_filename=encrypted_store.policy_domain_name, "
       "file"
@@ -261,38 +275,30 @@ void print_help() {
   printf("  --data_dir=./cf_data, directory for configuration data.\n");
   printf("\n");
   printf("  --init_trust=false, initialize trust domain if needed\n");
-  printf(
-      "  --reinit_trust=false, unconditionally initialize trust domain if "
-      "needed\n");
-  printf(
-      "  --symmetric_algorithm=aes-256-gcm, key type of selected symmetric "
-      "key\n");
+  printf("  --reinit_trust=false, unconditionally initialize trust domain if "
+         "needed\n");
+  printf("  --symmetric_algorithm=aes-256-gcm, key type of selected symmetric "
+         "key\n");
   printf(
       "  --public_key_algorithm=rsa_2048, key type of selected public key\n");
-  printf(
-      "  --generate_symmetric_key=false, generate a symmetric key of "
-      "specified key type\n");
-  printf(
-      "  --generate_public_key=false, generate a public key of specified "
-      "key type\n");
+  printf("  --generate_symmetric_key=false, generate a symmetric key of "
+         "specified key type\n");
+  printf("  --generate_public_key=false, generate a public key of specified "
+         "key type\n");
   printf("  --print_cryptstore=true, print cryptstore\n");
   printf("  --save_cryptstore=false, save cryptstore (normally automatic)\n");
   printf("\n");
   printf("  --tag=\"\", value of tag for put_item\n");
   printf("  --version=0, value of version for put_item\n");
   printf("  --type=\"\", value of type for put_item\n");
-  printf(
-      "    Possible types: X509-der-cert, key-message-serialized-protobuf, "
-      "binary-blob\n");
-  printf(
-      "  --get_item=false, get cryptstore enty of specified tag/value, "
-      "write to output file\n");
-  printf(
-      "  --put_item=false, set cryptstore entry of specified tag/value from "
-      "input file\n");
-  printf(
-      "  --keyname=store_encryption_key_1, name of keys generated by above "
-      "calls\n");
+  printf("    Possible types: X509-der-cert, key-message-serialized-protobuf, "
+         "binary-blob\n");
+  printf("  --get_item=false, get cryptstore enty of specified tag/value, "
+         "write to output file\n");
+  printf("  --put_item=false, set cryptstore entry of specified tag/value from "
+         "input file\n");
+  printf("  --keyname=store_encryption_key_1, name of keys generated by above "
+         "calls\n");
   printf("  --duration=time in hours, duration of keys or certs\n");
   printf("\n");
   printf("  --certifier_service_URL=%s, URL for Certifier Service\n",
@@ -343,7 +349,8 @@ bool add_key_and_cert(cryptstore &cs) {
   }
   string tp_str;
   if (!time_to_string(tp, &tp_str)) {
-    printf("%s() error, line %d, Can't convert time to string\n", __func__,
+    printf("%s() error, line %d, Can't convert time to string\n",
+           __func__,
            __LINE__);
     return false;
   }
@@ -351,12 +358,12 @@ bool add_key_and_cert(cryptstore &cs) {
   if (trust_mgr->primary_admissions_cert_valid_) {
     string tag(FLAGS_policy_domain_name);
     tag.append("-admission-certificate");
-    int version = 1;
+    int    version = 1;
     string type("X509-der-cert");
 
     cryptstore_entry *ce = cs.add_entries();
-    int l = 0;
-    int h = 0;
+    int               l = 0;
+    int               h = 0;
     if (version_range_in_cryptstore(cs, tag, &l, &h)) {
       version = h + 1;
     } else {
@@ -372,12 +379,12 @@ bool add_key_and_cert(cryptstore &cs) {
   if (trust_mgr->cc_auth_key_initialized_) {
     string tag(FLAGS_policy_domain_name);
     tag.append("-private-auth-key");
-    int version = 1;
+    int    version = 1;
     string type("key-message-serialized-protobuf");
 
     cryptstore_entry *ce = cs.add_entries();
-    int l = 0;
-    int h = 0;
+    int               l = 0;
+    int               h = 0;
     if (version_range_in_cryptstore(cs, tag, &l, &h)) {
       version = h + 1;
     } else {
@@ -407,23 +414,26 @@ bool get_existing_trust_domain() {
     trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
     if (trust_mgr == nullptr) {
       printf("%s() error, line %d, couldn't initialize trust object\n",
-             __func__, __LINE__);
+             __func__,
+             __LINE__);
       return false;
     }
   }
 
   // Get parameters
   string *params = nullptr;
-  int n = 0;
+  int     n = 0;
   if (FLAGS_enclave_type == "simulated-enclave") {
     if (!get_simulated_enclave_parameters(&params, &n)) {
-      printf("%s() error, line %d, get enclave parameters\n", __func__,
+      printf("%s() error, line %d, get enclave parameters\n",
+             __func__,
              __LINE__);
       return false;
     }
   } else if (FLAGS_enclave_type == "sev-enclave") {
     if (!get_sev_enclave_parameters(&params, &n)) {
-      printf("%s() error, line %d, get enclave parameters\n", __func__,
+      printf("%s() error, line %d, get enclave parameters\n",
+             __func__,
              __LINE__);
       return false;
     }
@@ -438,7 +448,9 @@ bool get_existing_trust_domain() {
   der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
   string der_policy_cert;
   if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
-    printf("%s() error, line %d, couldn't read %s\n", __func__, __LINE__,
+    printf("%s() error, line %d, couldn't read %s\n",
+           __func__,
+           __LINE__,
            der_policy_cert.c_str());
     return false;
   }
@@ -480,23 +492,26 @@ bool initialize_new_trust_domain() {
     trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
     if (trust_mgr == nullptr) {
       printf("%s() error, line %d, couldn't initialize trust object\n",
-             __func__, __LINE__);
+             __func__,
+             __LINE__);
       return false;
     }
   }
 
   // Get parameters
   string *params = nullptr;
-  int n = 0;
+  int     n = 0;
   if (FLAGS_enclave_type == "simulated-enclave") {
     if (!get_simulated_enclave_parameters(&params, &n)) {
-      printf("%s() error, line %d, get enclave parameters\n", __func__,
+      printf("%s() error, line %d, get enclave parameters\n",
+             __func__,
              __LINE__);
       return false;
     }
   } else if (FLAGS_enclave_type == "sev-enclave") {
     if (!get_sev_enclave_parameters(&params, &n)) {
-      printf("%s() error, line %d, get enclave parameters\n", __func__,
+      printf("%s() error, line %d, get enclave parameters\n",
+             __func__,
              __LINE__);
       return false;
     }
@@ -511,7 +526,9 @@ bool initialize_new_trust_domain() {
   der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
   string der_policy_cert;
   if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
-    printf("%s() error, line %d, couldn't read %s\n", __func__, __LINE__,
+    printf("%s() error, line %d, couldn't read %s\n",
+           __func__,
+           __LINE__,
            der_policy_cert.c_str());
     return false;
   }
@@ -539,11 +556,14 @@ bool initialize_new_trust_domain() {
 
   // app host and port not needed
   string app_host;
-  int app_port = 0;
-  if (!trust_mgr->cold_init(
-          FLAGS_public_key_algorithm, FLAGS_symmetric_key_algorithm,
-          FLAGS_policy_domain_name, FLAGS_certifier_service_URL,
-          FLAGS_service_port, app_host, app_port)) {
+  int    app_port = 0;
+  if (!trust_mgr->cold_init(FLAGS_public_key_algorithm,
+                            FLAGS_symmetric_key_algorithm,
+                            FLAGS_policy_domain_name,
+                            FLAGS_certifier_service_URL,
+                            FLAGS_service_port,
+                            app_host,
+                            app_port)) {
     printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
     return false;
   }
@@ -557,27 +577,34 @@ bool initialize_new_trust_domain() {
   return true;
 }
 
-bool generate_symmetric_key(key_message *km, string &name, string &key_type,
-                            string &tag) {
+bool generate_symmetric_key(key_message *km,
+                            string      &name,
+                            string      &key_type,
+                            string      &tag) {
   cryptstore cs;
-  string key_format("vse-key");
-  double duration_in_hours = FLAGS_duration;
+  string     key_format("vse-key");
+  double     duration_in_hours = FLAGS_duration;
 
-  if (!cf_generate_symmetric_key(km, FLAGS_keyname,
-                                 FLAGS_symmetric_key_algorithm, key_format,
+  if (!cf_generate_symmetric_key(km,
+                                 FLAGS_keyname,
+                                 FLAGS_symmetric_key_algorithm,
+                                 key_format,
                                  duration_in_hours)) {
     printf("%s() error, line %d, cannot  generate key\n", __func__, __LINE__);
     return false;
   }
-  if (!open_cryptstore(&cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-                       FLAGS_duration, FLAGS_enclave_type,
+  if (!open_cryptstore(&cs,
+                       FLAGS_data_dir,
+                       FLAGS_encrypted_cryptstore_filename,
+                       FLAGS_duration,
+                       FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
     printf("%s() error, line %d, cannot open cryptstore\n", __func__, __LINE__);
     return false;
   }
 
   // update cryptstore
-  int l, h;
+  int               l, h;
   cryptstore_entry *ce = nullptr;
   ce = cs.add_entries();
   if (version_range_in_cryptstore(cs, tag, &l, &h)) {
@@ -594,7 +621,8 @@ bool generate_symmetric_key(key_message *km, string &name, string &key_type,
   }
   string tp_str;
   if (!time_to_string(tp, &tp_str)) {
-    printf("%s() error, line %d, Can't convert time to string\n", __func__,
+    printf("%s() error, line %d, Can't convert time to string\n",
+           __func__,
            __LINE__);
     return false;
   }
@@ -608,8 +636,11 @@ bool generate_symmetric_key(key_message *km, string &name, string &key_type,
   ce->set_blob((byte *)serialized_key.data(), serialized_key.size());
 
   // save store
-  if (!save_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-                       FLAGS_duration, FLAGS_enclave_type,
+  if (!save_cryptstore(cs,
+                       FLAGS_data_dir,
+                       FLAGS_encrypted_cryptstore_filename,
+                       FLAGS_duration,
+                       FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
     printf("%s() error, line %d, cannot save cryptstore\n", __func__, __LINE__);
     return false;
@@ -617,26 +648,34 @@ bool generate_symmetric_key(key_message *km, string &name, string &key_type,
   return true;
 }
 
-bool generate_public_key(key_message *km, string &name, string &key_type,
-                         string &tag) {
+bool generate_public_key(key_message *km,
+                         string      &name,
+                         string      &key_type,
+                         string      &tag) {
   cryptstore cs;
-  string key_format("vse-key");
-  double duration_in_hours = FLAGS_duration;
+  string     key_format("vse-key");
+  double     duration_in_hours = FLAGS_duration;
 
-  if (!cf_generate_public_key(km, FLAGS_keyname, FLAGS_public_key_algorithm,
-                              key_format, duration_in_hours)) {
+  if (!cf_generate_public_key(km,
+                              FLAGS_keyname,
+                              FLAGS_public_key_algorithm,
+                              key_format,
+                              duration_in_hours)) {
     printf("%s() error, line %d, cannot  generate key\n", __func__, __LINE__);
     return false;
   }
-  if (!open_cryptstore(&cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-                       FLAGS_duration, FLAGS_enclave_type,
+  if (!open_cryptstore(&cs,
+                       FLAGS_data_dir,
+                       FLAGS_encrypted_cryptstore_filename,
+                       FLAGS_duration,
+                       FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
     printf("%s() error, line %d, cannot open cryptstore\n", __func__, __LINE__);
     return false;
   }
 
   // update cryptstore
-  int l, h;
+  int               l, h;
   cryptstore_entry *ce = nullptr;
   ce = cs.add_entries();
   if (version_range_in_cryptstore(cs, tag, &l, &h)) {
@@ -654,7 +693,8 @@ bool generate_public_key(key_message *km, string &name, string &key_type,
 
   string tp_str;
   if (!time_to_string(tp, &tp_str)) {
-    printf("%s() error, line %d, Can't convert time to string\n", __func__,
+    printf("%s() error, line %d, Can't convert time to string\n",
+           __func__,
            __LINE__);
     return false;
   }
@@ -668,8 +708,11 @@ bool generate_public_key(key_message *km, string &name, string &key_type,
   ce->set_blob((byte *)serialized_key.data(), serialized_key.size());
 
   // save store
-  if (!save_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-                       FLAGS_duration, FLAGS_enclave_type,
+  if (!save_cryptstore(cs,
+                       FLAGS_data_dir,
+                       FLAGS_encrypted_cryptstore_filename,
+                       FLAGS_duration,
+                       FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
     printf("%s() error, line %d, cannot save cryptstore\n", __func__, __LINE__);
     return false;
@@ -699,7 +742,8 @@ int main(int an, char **av) {
     if (!get_existing_trust_domain()) {
       if (!initialize_new_trust_domain()) {
         printf("%s() error, line %d, cannot initialize new trust domain\n",
-               __func__, __LINE__);
+               __func__,
+               __LINE__);
         ret = 1;
         goto done;
       }
@@ -710,15 +754,18 @@ int main(int an, char **av) {
 
     // get or initialize cryptstore
     cryptstore cs;
-    string cryptstore_file_name(FLAGS_data_dir);
+    string     cryptstore_file_name(FLAGS_data_dir);
     cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
 
     if (file_size(cryptstore_file_name) < 0) {
-      if (!create_cryptstore(cs, FLAGS_data_dir,
+      if (!create_cryptstore(cs,
+                             FLAGS_data_dir,
                              FLAGS_encrypted_cryptstore_filename,
-                             FLAGS_duration, FLAGS_enclave_type,
+                             FLAGS_duration,
+                             FLAGS_enclave_type,
                              FLAGS_symmetric_key_algorithm)) {
-        printf("%s() error, line %d, cannot create cryptstore\n", __func__,
+        printf("%s() error, line %d, cannot create cryptstore\n",
+               __func__,
                __LINE__);
         ret = 1;
         goto done;
@@ -727,24 +774,33 @@ int main(int an, char **av) {
       // add keys and certificates
       if (!add_key_and_cert(cs)) {
         printf("%s() error, line %d, cannot add keys and certificates\n",
-               __func__, __LINE__);
+               __func__,
+               __LINE__);
         ret = 1;
         goto done;
       }
 
-      if (!save_cryptstore(cs, FLAGS_data_dir,
-                           FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                           FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-        printf("%s() error, line %d, cannot save cryptstore\n", __func__,
+      if (!save_cryptstore(cs,
+                           FLAGS_data_dir,
+                           FLAGS_encrypted_cryptstore_filename,
+                           FLAGS_duration,
+                           FLAGS_enclave_type,
+                           FLAGS_symmetric_key_algorithm)) {
+        printf("%s() error, line %d, cannot save cryptstore\n",
+               __func__,
                __LINE__);
         ret = 1;
         goto done;
       }
     } else {
-      if (!open_cryptstore(&cs, FLAGS_data_dir,
-                           FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                           FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-        printf("%s() error, line %d, cannot open cryptstore\n", __func__,
+      if (!open_cryptstore(&cs,
+                           FLAGS_data_dir,
+                           FLAGS_encrypted_cryptstore_filename,
+                           FLAGS_duration,
+                           FLAGS_enclave_type,
+                           FLAGS_symmetric_key_algorithm)) {
+        printf("%s() error, line %d, cannot open cryptstore\n",
+               __func__,
                __LINE__);
         ret = 1;
         goto done;
@@ -753,15 +809,19 @@ int main(int an, char **av) {
         // add keys and certificates
         if (!add_key_and_cert(cs)) {
           printf("%s() error, line %d, cannot add keys and certificates\n",
-                 __func__, __LINE__);
+                 __func__,
+                 __LINE__);
           ret = 1;
           goto done;
         }
-        if (!save_cryptstore(cs, FLAGS_data_dir,
+        if (!save_cryptstore(cs,
+                             FLAGS_data_dir,
                              FLAGS_encrypted_cryptstore_filename,
-                             FLAGS_duration, FLAGS_enclave_type,
+                             FLAGS_duration,
+                             FLAGS_enclave_type,
                              FLAGS_symmetric_key_algorithm)) {
-          printf("%s() error, line %d, cannot save cryptstore\n", __func__,
+          printf("%s() error, line %d, cannot save cryptstore\n",
+                 __func__,
                  __LINE__);
           ret = 1;
           goto done;
@@ -776,7 +836,8 @@ int main(int an, char **av) {
   } else if (FLAGS_reinit_trust) {
     if (!initialize_new_trust_domain()) {
       printf("%s() error, line %d, cannot initialize new trust domain\n",
-             __func__, __LINE__);
+             __func__,
+             __LINE__);
       ret = 1;
       goto done;
     }
@@ -789,30 +850,41 @@ int main(int an, char **av) {
     cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
 
     if (file_size(cryptstore_file_name) < 0) {
-      if (!create_cryptstore(cs, FLAGS_data_dir,
+      if (!create_cryptstore(cs,
+                             FLAGS_data_dir,
                              FLAGS_encrypted_cryptstore_filename,
-                             FLAGS_duration, FLAGS_enclave_type,
+                             FLAGS_duration,
+                             FLAGS_enclave_type,
                              FLAGS_symmetric_key_algorithm)) {
         printf("%s() error, line %d, cannot initialize new trust domain\n",
-               __func__, __LINE__);
+               __func__,
+               __LINE__);
         ret = 1;
         goto done;
       }
     } else {
-      if (!open_cryptstore(&cs, FLAGS_data_dir,
-                           FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                           FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-        printf("%s() error, line %d, cannot open cryptstore\n", __func__,
+      if (!open_cryptstore(&cs,
+                           FLAGS_data_dir,
+                           FLAGS_encrypted_cryptstore_filename,
+                           FLAGS_duration,
+                           FLAGS_enclave_type,
+                           FLAGS_symmetric_key_algorithm)) {
+        printf("%s() error, line %d, cannot open cryptstore\n",
+               __func__,
                __LINE__);
         ret = 1;
         goto done;
       }
     }
     // add keys and certificates
-    if (!save_cryptstore(cs, FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                         FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot save cryptstore\n", __func__,
+    if (!save_cryptstore(cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
@@ -828,7 +900,8 @@ int main(int an, char **av) {
 
     // open existing trust domain to get cryptstore
     if (!get_existing_trust_domain()) {
-      printf("%s() error, line %d, cannot recover existing domain\n", __func__,
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
@@ -841,10 +914,14 @@ int main(int an, char **av) {
 
     cryptstore cs;
 
-    if (!open_cryptstore(&cs, FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                         FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot open cryptstore\n", __func__,
+    if (!open_cryptstore(&cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
@@ -853,12 +930,13 @@ int main(int an, char **av) {
     printf("cryptstore open\n");
 
     key_message km;
-    string key_name(FLAGS_keyname);
-    string key_type(FLAGS_symmetric_key_algorithm);
-    string tag(FLAGS_keyname);
+    string      key_name(FLAGS_keyname);
+    string      key_type(FLAGS_symmetric_key_algorithm);
+    string      tag(FLAGS_keyname);
 
     if (!generate_symmetric_key(&km, key_name, key_type, FLAGS_keyname)) {
-      printf("%s() error, line %d, cannot generate symmetric key\n", __func__,
+      printf("%s() error, line %d, cannot generate symmetric key\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
@@ -871,24 +949,26 @@ int main(int an, char **av) {
 
     time_point tp;
     if (!time_now(&tp)) {
-      printf("%s() error, line %d, Can't get current time\n", __func__,
+      printf("%s() error, line %d, Can't get current time\n",
+             __func__,
              __LINE__);
       return false;
     }
 
     string tp_str;
     if (!time_to_string(tp, &tp_str)) {
-      printf("%s() error, line %d, Can't convert time to string\n", __func__,
+      printf("%s() error, line %d, Can't convert time to string\n",
+             __func__,
              __LINE__);
       return false;
     }
 
-    int version = 1;
+    int    version = 1;
     string type("key-message-serialized-protobuf");
 
     cryptstore_entry *ce = cs.add_entries();
-    int l = 0;
-    int h = 0;
+    int               l = 0;
+    int               h = 0;
     if (version_range_in_cryptstore(cs, tag, &l, &h)) {
       version = h + 1;
     } else {
@@ -901,16 +981,21 @@ int main(int an, char **av) {
 
     string serialized_key;
     if (!km.SerializeToString(&serialized_key)) {
-      printf("%s() error, line %d, Can't generate serialized key\n", __func__,
+      printf("%s() error, line %d, Can't generate serialized key\n",
+             __func__,
              __LINE__);
       return false;
     }
     ce->set_blob((byte *)serialized_key.data(), serialized_key.size());
 
-    if (!save_cryptstore(cs, FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                         FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot save cryptstore\n", __func__,
+    if (!save_cryptstore(cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
@@ -923,37 +1008,47 @@ int main(int an, char **av) {
   } else if (FLAGS_generate_public_key) {
     // open existing trust domain to get cryptstore
     if (!get_existing_trust_domain()) {
-      printf("%s() error, line %d, cannot recover existing domain\n", __func__,
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
     }
     cryptstore cs;
 
-    if (!open_cryptstore(&cs, FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                         FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot open cryptstore\n", __func__,
+    if (!open_cryptstore(&cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
     }
 
     key_message km;
-    string key_name(FLAGS_keyname);
-    string key_type(FLAGS_public_key_algorithm);
-    string tag(FLAGS_keyname);
+    string      key_name(FLAGS_keyname);
+    string      key_type(FLAGS_public_key_algorithm);
+    string      tag(FLAGS_keyname);
     if (!generate_public_key(&km, key_name, key_type, tag)) {
-      printf("%s() error, line %d, cannot generate public key\n", __func__,
+      printf("%s() error, line %d, cannot generate public key\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
     }
     // add key to store and save it
-    if (!save_cryptstore(cs, FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                         FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot save cryptstore\n", __func__,
+    if (!save_cryptstore(cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
@@ -962,7 +1057,8 @@ int main(int an, char **av) {
   } else if (FLAGS_get_item) {
     // open existing trust domain to get cryptstore
     if (!get_existing_trust_domain()) {
-      printf("%s() error, line %d, cannot recover existing domain\n", __func__,
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
@@ -972,21 +1068,31 @@ int main(int an, char **av) {
 
     string entry_tag;
     string entry_type;
-    int entry_version;
+    int    entry_version;
     string entry_tp;
     string value;
 
-    if (!open_cryptstore(&cs, FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                         FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot open cryptstore\n", __func__,
+    if (!open_cryptstore(&cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
     }
-    if (!get_item(cs, entry_tag, &entry_type, &entry_version, &entry_tp,
+    if (!get_item(cs,
+                  entry_tag,
+                  &entry_type,
+                  &entry_version,
+                  &entry_tp,
                   &value)) {
-      printf("%s() error, line %d, cannot find %s entry\n", __func__, __LINE__,
+      printf("%s() error, line %d, cannot find %s entry\n",
+             __func__,
+             __LINE__,
              entry_tag.c_str());
       ret = 1;
       goto done;
@@ -995,7 +1101,8 @@ int main(int an, char **av) {
   } else if (FLAGS_put_item) {
     // open existing trust domain to get cryptstore
     if (!get_existing_trust_domain()) {
-      printf("%s() error, line %d, cannot recover existing domain\n", __func__,
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
@@ -1003,31 +1110,41 @@ int main(int an, char **av) {
 
     cryptstore cs;
 
-    if (!open_cryptstore(&cs, FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                         FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot open cryptstore\n", __func__,
+    if (!open_cryptstore(&cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
     }
 
-    string entry_tag;
-    string entry_type;
-    int entry_version;
+    string     entry_tag;
+    string     entry_type;
+    int        entry_version;
     time_point entry_tp;
-    string value;
+    string     value;
     if (!put_item(cs, entry_tag, entry_type, entry_version, value)) {
-      printf("%s() error, line %d, cannot insert %s entry\n", __func__,
-             __LINE__, entry_tag.c_str());
+      printf("%s() error, line %d, cannot insert %s entry\n",
+             __func__,
+             __LINE__,
+             entry_tag.c_str());
       ret = 1;
       goto done;
     }
     // add key to store and save it
-    if (!save_cryptstore(cs, FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                         FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot save cryptstore\n", __func__,
+    if (!save_cryptstore(cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
@@ -1036,17 +1153,22 @@ int main(int an, char **av) {
   } else if (FLAGS_print_cryptstore) {
     // open existing trust domain to get cryptstore
     if (!get_existing_trust_domain()) {
-      printf("%s() error, line %d, cannot recover existing domain\n", __func__,
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;
     }
     cryptstore cs;
 
-    if (!open_cryptstore(&cs, FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename, FLAGS_duration,
-                         FLAGS_enclave_type, FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot open cryptstore\n", __func__,
+    if (!open_cryptstore(&cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
              __LINE__);
       ret = 1;
       goto done;

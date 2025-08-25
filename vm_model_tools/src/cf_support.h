@@ -36,34 +36,57 @@
 //  -------------------------------------------------------------------
 
 #ifndef __CF_SUPPORT__
-#define __CF_SUPPORT__
+#  define __CF_SUPPORT__
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-void print_cryptstore_entry(const cryptstore_entry& ent);
-cryptstore_entry* find_in_cryptstore(cryptstore& cs, string& tag, int version);
-bool version_range_in_cryptstore(cryptstore& cs, string& tag, int* low,
-                                 int* high);
-bool cf_generate_symmetric_key(key_message* key, string key_name,
-                               string key_type, string key_format,
-                               double duration_in_hours);
-bool cf_generate_public_key(key_message* key, string key_name, string key_type,
-                            string key_format, double duration_in_hours);
-bool get_item(cryptstore& cs, string& tag, string* type, int* version,
-              string* tp, string* value);
-bool put_item(cryptstore& cs, string& tag, string& type, int& version,
-              string& value);
-void print_cryptstore(cryptstore& cs);
+void              print_cryptstore_entry(const cryptstore_entry &ent);
+cryptstore_entry *find_in_cryptstore(cryptstore &cs, string &tag, int version);
+bool              version_range_in_cryptstore(cryptstore &cs,
+                                              string     &tag,
+                                              int        *low,
+                                              int        *high);
+bool              cf_generate_symmetric_key(key_message *key,
+                                            string       key_name,
+                                            string       key_type,
+                                            string       key_format,
+                                            double       duration_in_hours);
+bool              cf_generate_public_key(key_message *key,
+                                         string       key_name,
+                                         string       key_type,
+                                         string       key_format,
+                                         double       duration_in_hours);
+bool              get_item(cryptstore &cs,
+                           string     &tag,
+                           string     *type,
+                           int        *version,
+                           string     *tp,
+                           string     *value);
+bool              put_item(cryptstore &cs,
+                           string     &tag,
+                           string     &type,
+                           int        &version,
+                           string     &value);
+void              print_cryptstore(cryptstore &cs);
 
-bool create_cryptstore(cryptstore& cs, string& data_dir,
-                       string& encrypted_cryptstore_filename, double duration,
-                       string& enclave_type, string& sym_alg);
-bool open_cryptstore(cryptstore* cs, string& data_dir,
-                     string& encrypted_cryptstore_filename, double duration,
-                     string& enclave_type, string& sym_alg);
-bool save_cryptstore(cryptstore& cs, string& data_dir,
-                     string& encrypted_cryptstore_filename, double duration,
-                     string& enclave_type, string& sym_alg);
+bool create_cryptstore(cryptstore &cs,
+                       string     &data_dir,
+                       string     &encrypted_cryptstore_filename,
+                       double      duration,
+                       string     &enclave_type,
+                       string     &sym_alg);
+bool open_cryptstore(cryptstore *cs,
+                     string     &data_dir,
+                     string     &encrypted_cryptstore_filename,
+                     double      duration,
+                     string     &enclave_type,
+                     string     &sym_alg);
+bool save_cryptstore(cryptstore &cs,
+                     string     &data_dir,
+                     string     &encrypted_cryptstore_filename,
+                     double      duration,
+                     string     &enclave_type,
+                     string     &sym_alg);
 #endif
 
 // -------------------------------------------------------------------------------

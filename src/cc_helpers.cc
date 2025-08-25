@@ -1028,8 +1028,7 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
     printf("\n");
 #endif
     cc_auth_key_initialized_ = true;
-    if (private_auth_key_.has_certificate() ||
-	 primary_admissions_cert_valid_) {
+    if (private_auth_key_.has_certificate() || primary_admissions_cert_valid_) {
       cc_is_certified_ = true;
 #ifdef DEBUG
       X509 *x = X509_new();
@@ -1270,8 +1269,11 @@ bool certifier::framework::cc_trust_manager::cold_init(
     const string &service_host,
     int           service_port) {
 #ifdef DEBUG
-  printf("cold_init, public_key_alg: %s, symmetric_key_alg: %s, home_domain_name: %s\n",
-                  public_key_alg.c_str(), symmetric_key_alg.c_str(), home_domain_name.c_str());
+  printf("cold_init, public_key_alg: %s, symmetric_key_alg: %s, "
+         "home_domain_name: %s\n",
+         public_key_alg.c_str(),
+         symmetric_key_alg.c_str(),
+         home_domain_name.c_str());
 #endif
   if (!cc_policy_info_initialized_) {
     printf("%s() error, line %d, policy key should have been initialized\n",

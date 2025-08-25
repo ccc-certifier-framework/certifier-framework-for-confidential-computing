@@ -954,7 +954,7 @@ bool certifier::framework::unprotect_blob(const string &enclave_type,
     return false;
   }
   byte *key_buf = (byte *)key->secret_key_bits().data();
-  int key_len = key->secret_key_bits().size();
+  int   key_len = key->secret_key_bits().size();
 
   // decrypt encrypted data
   if (!authenticated_decrypt(key->key_type().c_str(),

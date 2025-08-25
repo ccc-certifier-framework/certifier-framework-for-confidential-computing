@@ -132,9 +132,7 @@ bool simulated_Seal(const string &enclave_type,
   memset(input, 0, input_size);
   memset(output, 0, output_size);
   if (!get_random(8 * block_size, iv)) {
-    printf("%s() error, line %d, getrandom failed\n",
-            __func__,  
-            __LINE__);
+    printf("%s() error, line %d, getrandom failed\n", __func__, __LINE__);
     return false;
   }
 
@@ -155,8 +153,8 @@ bool simulated_Seal(const string &enclave_type,
                              output,
                              &real_output_size)) {
     printf("%s() error, line %d, authenticated encrypt failed\n",
-            __func__,  
-            __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -205,8 +203,8 @@ bool simulated_Unseal(const string &enclave_type,
                              output,
                              &real_output_size)) {
     printf("%s() error, line %d, authenticated decrypt failed\n",
-            __func__,  
-            __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -214,9 +212,7 @@ bool simulated_Unseal(const string &enclave_type,
              (byte *)my_measurement.data(),
              (int)my_measurement.size())
       != 0) {
-    printf("%s() error, line %d, measurement mismatch\n",
-            __func__,  
-            __LINE__);
+    printf("%s() error, line %d, measurement mismatch\n", __func__, __LINE__);
     return false;
   }
   real_output_size -= my_measurement.size();
@@ -268,9 +264,7 @@ bool simulated_Attest(const string &enclave_type,
                    signing_alg,
                    my_attestation_key,
                    &serialized_signed_report)) {
-    printf("%s() error, line %d, can't sign report\n",
-            __func__,  
-            __LINE__);
+    printf("%s() error, line %d, can't sign report\n", __func__, __LINE__);
     return false;
   }
 
@@ -280,8 +274,8 @@ bool simulated_Attest(const string &enclave_type,
   }
   if (*size_out < (int)serialized_signed_report.size()) {
     printf("%s() error, line %d, size out in simulated Attest is too small\n",
-            __func__,  
-            __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   memset(out, 0, *size_out);
@@ -294,31 +288,27 @@ bool simulated_Verify(string &serialized_signed_report) {
   string type("vse-attestation-report");
 
   if (!verify_report(type, serialized_signed_report, my_attestation_key)) {
-    printf("%s() error, line %d, verify report failed\n",
-            __func__,  
-            __LINE__);
+    printf("%s() error, line %d, verify report failed\n", __func__, __LINE__);
     return false;
   }
 
   signed_report sr;
   if (!sr.ParseFromString(serialized_signed_report)) {
     printf("%s() error, line %d, can't parse serialized signed report\n",
-            __func__,  
-            __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   if (!sr.has_report_format()
       || sr.report_format() != "vse-attestation-report") {
     printf("%s() error, line %d, signed report malformed\n",
-            __func__,  
-            __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   vse_attestation_report_info info;
   if (!info.ParseFromString(sr.report())) {
-    printf("%s() error, line %d, can't parse report\n",
-            __func__,  
-            __LINE__);
+    printf("%s() error, line %d, can't parse report\n", __func__, __LINE__);
     return false;
   }
   if (info.verified_measurement() != my_measurement) {
@@ -330,8 +320,8 @@ bool simulated_Verify(string &serialized_signed_report) {
     print_bytes(my_measurement.size(), (byte *)my_measurement.data());
     printf("\n");
     printf("%s() error, line %d, simulated verify 3 failed\n",
-            __func__,  
-            __LINE__);
+           __func__,
+           __LINE__);
     return false;
   }
   return check_date_range(info.not_before(), info.not_after());
