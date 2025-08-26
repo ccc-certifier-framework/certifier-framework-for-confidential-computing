@@ -68,7 +68,7 @@ make -f cf_utility.mak
 cd $EXAMPLE_DIR/provisioning
 
 ##     For the simulated enclave (this is a little hokey and
-##     will be removed.
+##     will be removed.)
 
 ```shell
 
@@ -77,11 +77,26 @@ $CERTIFIER_ROOT/utilities/measurement_utility.exe \
 --output=cf_utility.measurement
 ```
 
+##For SEV
+
+```
+$CERTIFIER_ROOT/utilities/simulated_sev_key_generation.exe            \
+         --ark_der=sev_ark_cert.der                                        \
+         --ask_der=sev_ask_cert.der                                        \
+         --vcek_der=sev_vcek_cert.der                                      \
+         --vcek_key_file=/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem
+mv sev_ark_cert.der ark_cert.der
+mv sev_ask_cert.der ask_cert.der
+mv sev_vcek_cert.der vcek_cert.der
+```
+
 ## Step 6: Author the policy for the security domain and produce the signed claims the apps need
 
 ```shell
 cd $EXAMPLE_DIR/provisioning
 ```
+
+##For the simulated enclave
 
 ### a. Construct policyKey says platformKey is-trusted-for-attestation
 
@@ -147,10 +162,62 @@ $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
 --private_key_file=platform_key_file.bin --output=platform_attest_endorsement.bin
 ```
 
+##For simulated SEV
+
+$CERTIFIER_ROOT/utilities/measurement_init.exe --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 --out_file=sev_example_app.measurement
+
+#ark key is trusted
+$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" --cert-subject=ark_cert.der \
+  --verb="is-trusted-for-attestation" --output=sev_ts1.bin
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica_test \
+  --verb="says" --clause=sev_ts1.bin --output=sev_vse_policy1.bin
+$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+  --vse_file=sev_vse_policy1.bin --duration=9000 \
+  --private_key_file=policy_key_file.datica_test --output=sev_signed_claim_1.bin
+
+#measurement is-trusted
+$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" \
+  --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
+  --output=sev_ts2.bin
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica_test \
+  --verb="says" --clause=sev_ts2.bin --output=sev_vse_policy2.bin
+$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe --vse_file=sev_vse_policy2.bin \
+  --duration=9000 --private_key_file=policy_key_file.datica_test --output=sev_signed_claim_2.bin
+
+#trusted platform
+$CERTIFIER_ROOT/utilities/make_property.exe --property_name=debug --property_type='string' comparator="=" \
+--string_value=no --output=sev_property1.bin
+$CERTIFIER_ROOT/utilities/make_property.exe --property_name=migrate --property_type='string' comparator="=" \
+--string_value=no --output=sev_property2.bin
+$CERTIFIER_ROOT/utilities/make_property.exe --property_name=smt --property_type='string' comparator="=" \
+--string_value=no --output=sev_property5.bin
+$CERTIFIER_ROOT/utilities/make_property.exe --property_name='api-major' --property_type=int --comparator=">=" \
+--int_value=0 --output=sev_property3.bin
+$CERTIFIER_ROOT/utilities/make_property.exe --property_name='api-minor' --property_type=int --comparator=">=" \
+--int_value=0 --output=sev_property4.bin
+$CERTIFIER_ROOT/utilities/make_property.exe --property_name='tcb-version' --property_type=int --comparator="=" \
+--int_value=0x03000000000008115 --output=sev_property6.bin
+$CERTIFIER_ROOT/utilities/combine_properties.exe \
+--in=sev_property1.bin,sev_property2.bin,sev_property3.bin,sev_property4.bin,sev_property5.bin,sev_property6.bin \
+--output=sev_properties.bin
+
+$CERTIFIER_ROOT/utilities/make_platform.exe --platform_type=amd-sev-snp \
+--properties_file=sev_properties.bin --output=sev_platform.bin
+$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --platform_subject=sev_platform.bin \
+--verb="has-trusted-platform-property" --output=sev_ts3.bin
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica_test \
+--verb="says" --clause=sev_ts3.bin --output=sev_vse_policy3.bin
+$CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe --vse_file=sev_vse_policy3.bin \
+  --duration=9000 --private_key_file=policy_key_file.datica_test --output=sev_signed_claim_3.bin
+
+
+$CERTIFIER_ROOT/utilities/package_claims.exe --input=sev_signed_claim_1.bin,sev_signed_claim_2.bin,sev_signed_claim_3.bin \
+  --output=sev_policy.bin
+
 ### g. [optional] Print it
 
 ```shell
-$CERTIFIER_ROOT/utilities/print_signed_claim.exe --input=platform_attest_endorsement.bin
+$CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=sev_policy.bin
 ```
 
 ## Step 8: Build SimpleServer
@@ -201,6 +268,7 @@ mkdir $EXAMPLE_DIR/service
 cd $EXAMPLE_DIR/provisioning
 
 cp -p policy_key_file.datica_test policy_cert_file.datica_test policy.bin $EXAMPLE_DIR/service
+cp -p sev_policy.bin ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/service
 ```
 
 ## Step 11: Start the Certifier Service
@@ -220,13 +288,22 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/src/github.com/ccc-certifier-framework
 echo $LD_LIBRARY_PATH
 sudo ldconfig
 
+## For the simulated enclave:
 $CERTIFIER_ROOT/certifier_service/simpleserver \
 --policy_key_file=policy_key_file.datica_test --policy_cert_file=policy_cert_file.datica_test \
 --policyFile=policy.bin --readPolicy=true
+
+## For the simulated SEV enclave:
+$CERTIFIER_ROOT/certifier_service/simpleserver \
+--policy_key_file=policy_key_file.datica_test --policy_cert_file=policy_cert_file.datica_test \
+--policyFile=sev_policy.bin --readPolicy=true
 ```
 
 ## Step 12:  Run the scenario tests.
 
+cd $EXAMPLE_DIR
+
+##For the simulated-enclave
 First, get certified.
 
 $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
@@ -263,7 +340,47 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --certifier_service_URL=localhost \
     --service_port=8123
 
-Check key
+## For the simulated SEV enclave
+
+export CERTIFIER_ROOT=/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
+
+First, get certified.
+
+$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+    --cf_utility_help=false \
+    --init_trust=true \
+    --print_cryptstore=true \
+    --save_cryptstore=false \
+    --enclave_type="sev-enclave" \
+    --policy_domain_name=datica_test \
+    --policy_key_cert_file=policy_cert_file.datica_test \
+    --policy_store_filename=policy_store.datica_test \
+    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --symmetric_key_algorithm=aes-256-gcm  \
+    --public_key_algorithm=rsa-2048 \
+    --data_dir=$(EXAMPLE_DIR) \
+    --certifier_service_URL=localhost \
+    --service_port=8123
+
+Now generate a key.
+
+$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+    --cf_utility_help=false \
+    --init_trust=false \
+    --generate_symmetric_key=true \
+    --save_cryptstore=false \
+    --enclave_type="sev-enclave" \
+    --policy_domain_name=datica_test \
+    --policy_key_cert_file=policy_cert_file.datica_test \
+    --policy_store_filename=policy_store.datica_test \
+    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --symmetric_key_algorithm=aes-256-gcm  \
+    --public_key_algorithm=rsa-2048 \
+    --data_dir=$(EXAMPLE_DIR) \
+    --certifier_service_URL=localhost \
+    --service_port=8123
+
 
 -------
 ## Notes on real deployment and measurements

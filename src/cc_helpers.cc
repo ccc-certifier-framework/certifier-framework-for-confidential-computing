@@ -1765,7 +1765,7 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     }
     evidence *ev = platform_evidence.add_assertion();
     if (ev == nullptr) {
-      printf("%s() error, line %d,: Can't add to platform evidence\n",
+      printf("%s() error, line %d, Can't add to platform evidence\n",
              __func__,
              __LINE__);
       return false;
@@ -2088,14 +2088,6 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
   ep->set_prover_type(pt);
   ep->set_enclave_type(attesting_enclave_type);
 
-#ifdef DEBUG
-  printf("construct_platform_evidence_package %d existing assertions\n",
-         platform_assertions.assertion_size());
-  for (int i = 0; i < platform_assertions.assertion_size(); i++) {
-    print_evidence(platform_assertions.assertion(i));
-    printf("\n");
-  }
-#endif
   for (int i = 0; i < platform_assertions.assertion_size(); i++) {
     const evidence &ev_from = platform_assertions.assertion(i);
     evidence       *ev_to = ep->add_fact_assertion();
@@ -2132,6 +2124,14 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
   }
 
   ev2->set_serialized_evidence(serialized_attestation);
+
+#ifdef DEBUG3
+  printf("Evidence package %d\n", ep->fact_assertion_size());
+  for (int i = 0; i < ep->fact_assertion_size(); i++) {
+    print_evidence(ep->fact_assertion(i));
+    printf("\n");
+  }
+#endif
   return true;
 }
 

@@ -400,6 +400,7 @@ bool test_sev_platform_certify(const bool    debug_print,
   string      ark_cert;
   string      ask_cert;
   string      vcek_cert;
+
   if (!read_file_into_string(ark_cert_file_name, &ark_cert)) {
     printf("%s() error, line: %d, Can't read ark cert %s\n",
            __func__,
@@ -448,11 +449,15 @@ bool test_sev_platform_certify(const bool    debug_print,
     return false;
   }
   if (!policy_key.ParseFromString(policy_key_str)) {
-    printf("test_sev_platform_certify: Can't parse policy key\n");
+    printf("%s(), error, line: %d, can't parse policy key\n",
+           __func__,
+           __LINE__);
     return false;
   }
   if (!private_key_to_public_key(policy_key, &policy_pk)) {
-    printf("test_sev_platform_certify: Can't convert policy key\n");
+    printf("%s(), error, line: %d, can't convert policy key\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -464,18 +469,20 @@ bool test_sev_platform_certify(const bool    debug_print,
   key_message ark_pk;
   string      ark_key_str;
   if (!read_file_into_string(ark_key_file_name, &ark_key_str)) {
-    printf("test_sev_platform_certify: Can't read ark key\n");
+    printf("%s(), error, line: %d, can't read ark key\n", __func__, __LINE__);
     return false;
   }
   if (!ark_key.ParseFromString(ark_key_str)) {
-    printf("test_sev_platform_certify: Can't parse ark key\n");
+    printf("%s(), error, line: %d, can't parse ark key\n", __func__, __LINE__);
     return false;
   }
   ark_key.set_key_name("ARKKey");
   ark_key.set_key_type(Enc_method_rsa_2048_private);
   ark_key.set_key_format("vse-key");
   if (!private_key_to_public_key(ark_key, &ark_pk)) {
-    printf("test_sev_platform_certify: Can't convert ark key\n");
+    printf("%s(), error, line: %d, can't convert ark key\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -483,18 +490,20 @@ bool test_sev_platform_certify(const bool    debug_print,
   key_message ask_pk;
   string      ask_key_str;
   if (!read_file_into_string(ask_key_file_name, &ask_key_str)) {
-    printf("test_sev_platform_certify: Can't read ask  key\n");
+    printf("%s(), error, line: %d, can't read ask  key\n", __func__, __LINE__);
     return false;
   }
   if (!ask_key.ParseFromString(ask_key_str)) {
-    printf("test_sev_platform_certify: Can't parse ask key\n");
+    printf("%s(), error, line: %d, can't parse ask key\n", __func__, __LINE__);
     return false;
   }
   ask_key.set_key_name("ASKKey");
   ask_key.set_key_type(Enc_method_rsa_2048_private);
   ask_key.set_key_format("vse-key");
   if (!private_key_to_public_key(ask_key, &ask_pk)) {
-    printf("test_sev_platform_certify: Can't convert ask key\n");
+    printf("%s(), error, line: %d, can't convert ask key\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -502,18 +511,20 @@ bool test_sev_platform_certify(const bool    debug_print,
   key_message vcek_pk;
   string      vcek_key_str;
   if (!read_file_into_string(vcek_key_file_name, &vcek_key_str)) {
-    printf("test_sev_platform_certify: Can't read vcek key\n");
+    printf("%s(), error, line: %d, can't read vcek key\n", __func__, __LINE__);
     return false;
   }
   if (!vcek_key.ParseFromString(vcek_key_str)) {
-    printf("test_sev_platform_certify: Can't parse vcek key\n");
+    printf("%s(), error, line: %d, can't parse vcek key\n", __func__, __LINE__);
     return false;
   }
   vcek_key.set_key_name("VCEKKey");
   vcek_key.set_key_type(Enc_method_ecc_384_private);
   vcek_key.set_key_format("vse-key");
   if (!private_key_to_public_key(vcek_key, &vcek_pk)) {
-    printf("test_sev_platform_certify: Can't convert vcek key\n");
+    printf("%s(), error, line: %d, can't convert vcek key\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -532,7 +543,9 @@ bool test_sev_platform_certify(const bool    debug_print,
                         365.26 * 86400,
                         x_ark,
                         true)) {
-    printf("test_sev_platform_certify: Can't produce ark artifact\n");
+    printf("%s(), error, line: %d, can't produce ark artifact\n",
+           __func__,
+           __LINE__);
     return false;
   }
   string serialized_ark_cert;
@@ -553,7 +566,9 @@ bool test_sev_platform_certify(const bool    debug_print,
                         365.26 * 86400,
                         x_ask,
                         false)) {
-    printf("test_sev_platform_certify: Can't produce ask artifact\n");
+    printf("%s(), error, line: %d, can't produce ask artifact\n",
+           __func__,
+           __LINE__);
     return false;
   }
   string serialized_ask_cert;
@@ -576,7 +591,9 @@ bool test_sev_platform_certify(const bool    debug_print,
                         365.26 * 86400,
                         x_vcek,
                         false)) {
-    printf("test_sev_platform_certify: Can't produce vcek artifact\n");
+    printf("%s(), error, line: %d, can't produce vcek artifact\n",
+           __func__,
+           __LINE__);
     return false;
   }
   string serialized_vcek_cert;
@@ -593,7 +610,9 @@ bool test_sev_platform_certify(const bool    debug_print,
                                        serialized_vcek_cert,
                                        vcek_key,
                                        &evp)) {
-    printf("construct_sev_platform_evidence failed\n");
+    printf("%s(), error, line: %d, construct_sev_platform_evidence failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -608,8 +627,10 @@ bool test_sev_platform_certify(const bool    debug_print,
   }
 
   if (debug_print) {
-    printf("test_platform_certify, evidence descriptor: %s, enclave type: %s, "
+    printf("%s(), line: %d, , evidence descriptor: %s, enclave type: %s, "
            "evidence:\n",
+           __func__,
+           __LINE__,
            evidence_descriptor.c_str(),
            enclave_type.c_str());
     for (int i = 0; i < evp.fact_assertion_size(); i++) {
@@ -618,14 +639,16 @@ bool test_sev_platform_certify(const bool    debug_print,
     }
   }
 
-  // Fix this
+  // FIX!
   return true;
   if (!validate_evidence_from_policy(evidence_descriptor,
                                      signed_statements,
                                      purpose,
                                      evp,
                                      policy_pk)) {
-    printf("validate_evidence failed\n");
+    printf("%s(), error, line: %d, validate_evidence failed\n",
+           __func__,
+           __LINE__);
     return false;
   }
 

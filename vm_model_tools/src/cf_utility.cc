@@ -87,13 +87,13 @@ DEFINE_string(input_file, "in_1", "input file name");
 
 // For SEV
 DEFINE_string(ark_cert_file,
-              "./service/milan_ark_cert.der",
+              "./service/ark_cert.der",
               "machine ark certificate location");
 DEFINE_string(ask_cert_file,
-              "./service/milan_ask_cert.der",
+              "./service/ask_cert.der",
               "machine ask certificate location");
 DEFINE_string(vcek_cert_file,
-              "./service/milan_vcek_cert.der",
+              "./service/vcek_cert.der",
               "machine vcek certificate location");
 
 // For simulated-enclave
@@ -179,7 +179,7 @@ void print_os_model_parameters() {
   printf("  VCEK certificate file: %s\n", FLAGS_vcek_cert_file.c_str());
 }
 
-// -----------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 
 // Parameters for simulated enclave
 bool get_simulated_enclave_parameters(string **s, int *n) {
@@ -540,7 +540,7 @@ bool initialize_new_trust_domain() {
     return false;
   }
 
-#ifdef DEBUG
+#ifdef DEBUG3
   printf("\n*****Initializing enclave new trust\n");
 #endif
 
@@ -571,7 +571,7 @@ bool initialize_new_trust_domain() {
     printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG3
   trust_mgr->print_trust_data();
 #endif  // DEBUG
   return true;

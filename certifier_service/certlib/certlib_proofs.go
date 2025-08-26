@@ -229,20 +229,26 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 	// find the platform key needed from evp and the corresponding policy rule
 	ev_list := evp.FactAssertion
 	if ev_list == nil {
+		/* DEBUG
+		fmt.Printf("ev_list is empty\n")
+		 */
 		return nil
 	}
 	var platSubject *certprotos.EntityMessage = nil
 
 	// find platformKey says attestationKey is-trusted-for-attestation
-	fmt.Printf("GetRelevantPlatformKeyPolicy: %d evidence statements\n", len(ev_list))
+	/* DEBUG
+	fmt.Printf("\nGetRelevantPlatformKeyPolicy: %d evidence statements\n", len(ev_list))
+	 */
 	for i := 0; i < len(ev_list); i++ {
 		ev := ev_list[i]
 
-		/* Debug
+		/* DEBUG
 		fmt.Printf("%d: GetRelevantPlatformKeyPolicy: evidence\n", i)
 		PrintEvidence(ev)
 		fmt.Printf("\n")
-		*/
+		 */
+
 		if ev == nil {
 			continue
 		}
@@ -266,11 +272,11 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 				continue
 			}
 
-			/* Debug
+			/* DEBUG
 			fmt.Printf("%d: Clause\n", i)
 			PrintVseClause(&cl)
 			fmt.Printf("\n")
-			*/
+			 */
 
 			if cl.GetVerb() != "says" || cl.Clause == nil {
 				continue
@@ -319,8 +325,17 @@ func GetRelevantPlatformKeyPolicy(pool *PolicyPool, evType string,
 		if cl.Clause == nil || cl.Clause.Subject == nil {
 			continue
 		}
+		/* DEBUG
+		fmt.Printf("platSubject: ")
+		PrintEntity(platSubject)
+		fmt.Printf("\n")
+		fmt.Printf("Clause subject: ")
+		PrintEntity(cl.Clause.Subject)
+		fmt.Printf("\n")
+		 */
 		if SameEntity(platSubject, cl.Clause.Subject) {
 			return cl
+
 		}
 	}
 	return nil
@@ -680,7 +695,7 @@ func FilterSevPolicy(policyKey *certprotos.KeyMessage, evp *certprotos.EvidenceP
 	// policyKey says platformKey is-trusted-for-attestation
 	from = GetRelevantPlatformKeyPolicy(policyPool, evType, evp)
 	if from == nil {
-		fmt.Printf("FilterSevPolicy: Can't get relavent platform key\n")
+		fmt.Printf("FilterSevPolicy: Can't get relavent platform key policy\n")
 		return nil
 	}
 	to = proto.Clone(from).(*certprotos.VseClause)
