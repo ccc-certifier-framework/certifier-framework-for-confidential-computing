@@ -85,8 +85,10 @@ int hash_utility(string &input, string &other_files, string &output) {
 
   if (to_hash == nullptr) {
     printf("Error %s, %d, bad malloc %d bytes, file %s.\n",
-		   __func__, __LINE__,  to_hash_size,
-		   input.c_str());
+           __func__,
+           __LINE__,
+           to_hash_size,
+           input.c_str());
     return 1;
   }
 
