@@ -43,11 +43,16 @@ DEFINE_bool(print_all, false, "verbose");
 
 DEFINE_string(enclave_type, "simulated-enclave", "enclave type");
 DEFINE_string(data_dir, "./", "data directory");
-DEFINE_string(encrypted_cryptstore_filename, "encrypted_filestore.datica", "cryptstore");
+DEFINE_string(encrypted_cryptstore_filename,
+              "encrypted_filestore.datica",
+              "cryptstore");
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
-DEFINE_string(public_key_algorithm, Enc_method_rsa_2048, "public key algorithm");
-DEFINE_string(symmetric_key_algorithm, Enc_method_aes_256_cbc_hmac_sha256,
-    "symmetric algorithm");
+DEFINE_string(public_key_algorithm,
+              Enc_method_rsa_2048,
+              "public key algorithm");
+DEFINE_string(symmetric_key_algorithm,
+              Enc_method_aes_256_cbc_hmac_sha256,
+              "symmetric algorithm");
 
 
 // --------------------------------------------------------------------
@@ -56,13 +61,16 @@ bool test_get_put_item(bool print) {
   cryptstore cs;
 
   key_message km1;
-  string key_name1("test-key-1");
-  string key_type1(Enc_method_aes_256_cbc_hmac_sha256);
-  string key_format("vse-key");
-  double duration_in_hours= 24.0 * 365.0;
+  string      key_name1("test-key-1");
+  string      key_type1(Enc_method_aes_256_cbc_hmac_sha256);
+  string      key_format("vse-key");
+  double      duration_in_hours = 24.0 * 365.0;
 
-  if (!cf_generate_symmetric_key(&km1, key_name1,
-                key_type1, key_format, duration_in_hours)) {
+  if (!cf_generate_symmetric_key(&km1,
+                                 key_name1,
+                                 key_type1,
+                                 key_format,
+                                 duration_in_hours)) {
     printf("Can't generate symmetric key\n");
     return false;
   }
@@ -74,10 +82,13 @@ bool test_get_put_item(bool print) {
   }
 
   key_message km2;
-  string key_name2("test-key-2");
-  string key_type2(Enc_method_rsa_2048);
-  if (!cf_generate_public_key(&km2, key_name2,
-          key_type2, key_format, duration_in_hours)) {
+  string      key_name2("test-key-2");
+  string      key_type2(Enc_method_rsa_2048);
+  if (!cf_generate_public_key(&km2,
+                              key_name2,
+                              key_type2,
+                              key_format,
+                              duration_in_hours)) {
     printf("Can't generate public key\n");
     return false;
   }
@@ -90,8 +101,8 @@ bool test_get_put_item(bool print) {
 
   string tag1("test-key1-tag");
   string tag2("test-key2-tag");
-  int version1 = 0;
-  int version2 = 0;
+  int    version1 = 0;
+  int    version2 = 0;
   string cs_type("key-message-serialized-protobuf");
   string tp_str;
   string serialized_key_1;
@@ -113,9 +124,9 @@ bool test_get_put_item(bool print) {
     return false;
   }
 
-  int l= 0;
-  int h= 0;
-  cryptstore_entry* ce=  find_in_cryptstore(cs, tag1, 1);
+  int               l = 0;
+  int               h = 0;
+  cryptstore_entry *ce = find_in_cryptstore(cs, tag1, 1);
   if (ce == nullptr) {
     printf("find_in_cryptstore failed\n");
     return false;
@@ -139,15 +150,17 @@ bool test_get_put_item(bool print) {
   string recovered_value_1;
   string recovered_value_2;
   string tp_str2;
-  if (!get_item(cs, tag1, &cs_type, &version2,
-                &tp_str2, &recovered_value_1)) {
+  if (!get_item(cs, tag1, &cs_type, &version2, &tp_str2, &recovered_value_1)) {
     printf("Can't get_item key 1\n");
     return false;
   }
 
   if (print) {
     printf("get_item succeeded, %s, %s, %d, %s\n",
-           tag1.c_str(), cs_type.c_str(), version2, tp_str2.c_str());
+           tag1.c_str(),
+           cs_type.c_str(),
+           version2,
+           tp_str2.c_str());
   }
 
   print_cryptstore(cs);
@@ -162,19 +175,22 @@ bool test_store(bool print) {
   }
 
   cryptstore cs;
-  if (!create_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-			 FLAGS_duration, FLAGS_enclave_type,
+  if (!create_cryptstore(cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
                          FLAGS_symmetric_key_algorithm)) {
     printf("Can't create cryptstore\n");
     return false;
   }
 
-  cryptstore_entry* ce = cs.add_entries();
+  cryptstore_entry *ce = cs.add_entries();
   ce->set_tag("test-entry");
   ce->set_type("blob");
   ce->set_version(1);
-  const char* a= "12345";
-  ce->set_blob((byte*)a, strlen(a)+1);
+  const char *a = "12345";
+  ce->set_blob((byte *)a, strlen(a) + 1);
 
   if (print) {
     printf("\noriginal keystore\n");
@@ -182,16 +198,22 @@ bool test_store(bool print) {
     printf("\n");
   }
 
-  if (!save_cryptstore(cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-                       FLAGS_duration, FLAGS_enclave_type,
+  if (!save_cryptstore(cs,
+                       FLAGS_data_dir,
+                       FLAGS_encrypted_cryptstore_filename,
+                       FLAGS_duration,
+                       FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
     printf("Can't save cryptstore\n");
     return false;
   }
 
   cryptstore recovered_cs;
-  if (!open_cryptstore(&recovered_cs, FLAGS_data_dir, FLAGS_encrypted_cryptstore_filename,
-                       FLAGS_duration, FLAGS_enclave_type,
+  if (!open_cryptstore(&recovered_cs,
+                       FLAGS_data_dir,
+                       FLAGS_encrypted_cryptstore_filename,
+                       FLAGS_duration,
+                       FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
     printf("Can't reopen cryptstore\n");
     return false;
