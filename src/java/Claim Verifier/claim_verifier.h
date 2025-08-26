@@ -4,12 +4,13 @@
 #include <string>
 
 class ClaimVerifier {
-public:
-    ClaimVerifier();
-    ~ClaimVerifier();
+ public:
+  ClaimVerifier();
+  ~ClaimVerifier();
 
-    // Accepts serialized protobufs as strings
-    bool verify(const std::string& serialized_claim, const std::string& serialized_key);
+  // Accepts serialized protobufs as strings
+  bool verify(const std::string &serialized_claim,
+              const std::string &serialized_key);
 };
 
 #endif
