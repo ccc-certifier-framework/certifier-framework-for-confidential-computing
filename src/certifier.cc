@@ -425,8 +425,9 @@ bool PublicKeyFromCert(const string &cert, key_message *k) {
   // extensions.
   k->set_snp_tcb_version(get_tcb_version_from_vcek(x));
   memset(chipid, 0, CHIP_ID_SIZE);
-  get_chipid_from_vcek(x, chipid, CHIP_ID_SIZE);
-  k->set_snp_chipid(chipid, CHIP_ID_SIZE);
+  if (get_chipid_from_vcek(x, chipid, CHIP_ID_SIZE)) {
+    k->set_snp_chipid(chipid, CHIP_ID_SIZE);
+  }
 #endif  // SEV_SNP
 
 done:
@@ -506,7 +507,6 @@ bool certifier::framework::Seal(const string &enclave_type,
                                 byte         *in,
                                 int          *size_out,
                                 byte         *out) {
-
   if (enclave_type == "simulated-enclave") {
     return simulated_Seal(enclave_type, enclave_id, in_size, in, size_out, out);
   }
@@ -855,20 +855,13 @@ bool certifier::framework::protect_blob(const string &enclave_type,
            __LINE__);
     return false;
   }
-  byte *key_buf = (byte *)key.secret_key_bits().data();
-  if (key.secret_key_bits().size() < protect_key_size) {
-    printf("%s() error, line %d, protect_blob: key too small\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
 
   int  size_encrypted = size_unencrypted_data + max_key_seal_pad;
   byte encrypted_data[size_encrypted];
   if (!authenticated_encrypt(key.key_type().c_str(),
                              unencrypted_data,
                              size_unencrypted_data,
-                             key_buf,
+                             (byte *)key.secret_key_bits().data(),
                              key.secret_key_bits().size(),
                              iv,
                              16,
@@ -955,14 +948,6 @@ bool certifier::framework::unprotect_blob(const string &enclave_type,
     return false;
   }
 
-  if (key->key_type() != Enc_method_aes_256_cbc_hmac_sha256) {
-    printf("%s() error, line %d, unprotect_blob, unsupported encryption "
-           "scheme: '%s'\n",
-           __func__,
-           __LINE__,
-           key->key_type().c_str());
-    return false;
-  }
   if (!key->has_secret_key_bits()) {
     printf("%s() error, line %d, unprotect_blob: no key bits\n",
            __func__,
@@ -970,13 +955,7 @@ bool certifier::framework::unprotect_blob(const string &enclave_type,
     return false;
   }
   byte *key_buf = (byte *)key->secret_key_bits().data();
-  if (key->secret_key_bits().size() < protect_key_size) {
-    printf("%s() error, line %d, unprotect_blob: key too small\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  int key_len = key->secret_key_bits().size();
+  int   key_len = key->secret_key_bits().size();
 
   // decrypt encrypted data
   if (!authenticated_decrypt(key->key_type().c_str(),

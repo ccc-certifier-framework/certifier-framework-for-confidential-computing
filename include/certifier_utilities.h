@@ -42,6 +42,12 @@ bool write_file(const string &file_name, int size, byte *data);
 bool read_file_into_string(const string &file_name, string *out);
 bool write_file_from_string(const string &file_name, const string &in);
 
+bool make_certifier_rsa_key(int n, key_message *k);
+bool make_certifier_ecc_key(int n, key_message *k);
+bool key_to_RSA(const key_message &k, RSA *r);
+bool RSA_to_key(const RSA *r, key_message *k);
+void print_protected_blob(protected_blob_message &pb);
+
 bool digest_message(const char  *alg,
                     const byte  *message,
                     int          message_len,

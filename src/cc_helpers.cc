@@ -463,6 +463,7 @@ bool certifier::framework::cc_trust_manager::initialize_islet_enclave() {
 
 
 void certifier::framework::cc_trust_manager::print_trust_data() {
+  printf("\n--------------Start of Trust Data ------------------\n");
   if (!cc_basic_data_initialized_) {
     printf("%s() error, line %d, No trust info initialized\n",
            __func__,
@@ -586,6 +587,7 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
   for (int i = 0; i < num_certified_domains_; i++) {
     certified_domains_[i]->print_certifiers_entry();
   }
+  printf("--------------End of Trust Data ------------------\n");
 }
 
 const int max_pad_size_for_store = 1024;
@@ -671,10 +673,6 @@ bool certifier::framework::cc_trust_manager::fetch_store() {
   }
 
   key_message pk;
-  pk.set_key_name("protect-key");
-  pk.set_key_type(Enc_method_aes_256_cbc_hmac_sha256);
-  pk.set_key_format("vse-key");
-
   if (!unprotect_blob(enclave_type_,
                       size_protected_blob,
                       protected_blob,
@@ -1030,7 +1028,7 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
     printf("\n");
 #endif
     cc_auth_key_initialized_ = true;
-    if (private_auth_key_.has_certificate()) {
+    if (private_auth_key_.has_certificate() || primary_admissions_cert_valid_) {
       cc_is_certified_ = true;
 #ifdef DEBUG
       X509 *x = X509_new();
@@ -1040,6 +1038,11 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
       X509_free(x);
 #endif
     }
+#ifdef DEBUG2
+    else {
+      printf("\n***is not certified\n");
+    }
+#endif
 
     string symmetric_key_tag("app-symmetric-key");
     ent = store_.find_entry(symmetric_key_tag, key_type);
@@ -1145,8 +1148,6 @@ bool certifier::framework::cc_trust_manager::generate_sealing_key(bool regen) {
   service_sealing_key_.set_key_name("sealing-key");
   service_sealing_key_.set_key_type(symmetric_key_algorithm_);
   service_sealing_key_.set_key_format("vse-key");
-  service_sealing_key_.set_secret_key_bits(sealing_key_bytes_,
-                                           8 * num_key_bytes);
 
   return true;
 }
@@ -1267,7 +1268,13 @@ bool certifier::framework::cc_trust_manager::cold_init(
     int           home_port,
     const string &service_host,
     int           service_port) {
-
+#ifdef DEBUG
+  printf("cold_init, public_key_alg: %s, symmetric_key_alg: %s, "
+         "home_domain_name: %s\n",
+         public_key_alg.c_str(),
+         symmetric_key_alg.c_str(),
+         home_domain_name.c_str());
+#endif
   if (!cc_policy_info_initialized_) {
     printf("%s() error, line %d, policy key should have been initialized\n",
            __func__,
@@ -1707,9 +1714,11 @@ void certifier::framework::certifiers::print_certifiers_entry() {
     printf("\n");
   }
 
-  printf("Service host: %s, service port: %d\n",
-         service_host_.c_str(),
-         service_port_);
+  if (service_host_.size() > 0) {
+    printf("Service host: %s, service port: %d\n",
+           service_host_.c_str(),
+           service_port_);
+  }
 }
 
 bool certifier::framework::certifiers::get_certified_status() {
@@ -1727,15 +1736,16 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     return false;
   }
 
-  // Note: if you change the auth key, you must recertify in all domains
-
-  evidence_list platform_evidence;
+#ifdef DEBUG
   printf("%s():%d: enclave_type_ = '%s', purpose_ = '%s'\n",
          __func__,
          __LINE__,
          owner_->enclave_type_.c_str(),
          owner_->purpose_.c_str());
+#endif
 
+  // Note: if you change the auth key, you must recertify in all domains
+  evidence_list platform_evidence;
   if (owner_->enclave_type_ == "simulated-enclave"
       || owner_->enclave_type_ == "application-enclave") {
     signed_claim_message signed_platform_says_attest_key_is_trusted;
@@ -1755,7 +1765,7 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     }
     evidence *ev = platform_evidence.add_assertion();
     if (ev == nullptr) {
-      printf("%s() error, line %d,: Can't add to platform evidence\n",
+      printf("%s() error, line %d, Can't add to platform evidence\n",
              __func__,
              __LINE__);
       return false;
@@ -2078,14 +2088,6 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
   ep->set_prover_type(pt);
   ep->set_enclave_type(attesting_enclave_type);
 
-#ifdef DEBUG
-  printf("construct_platform_evidence_package %d existing assertions\n",
-         platform_assertions.assertion_size());
-  for (int i = 0; i < platform_assertions.assertion_size(); i++) {
-    print_evidence(platform_assertions.assertion(i));
-    printf("\n");
-  }
-#endif
   for (int i = 0; i < platform_assertions.assertion_size(); i++) {
     const evidence &ev_from = platform_assertions.assertion(i);
     evidence       *ev_to = ep->add_fact_assertion();
@@ -2122,6 +2124,14 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
   }
 
   ev2->set_serialized_evidence(serialized_attestation);
+
+#ifdef DEBUG3
+  printf("Evidence package %d\n", ep->fact_assertion_size());
+  for (int i = 0; i < ep->fact_assertion_size(); i++) {
+    print_evidence(ep->fact_assertion(i));
+    printf("\n");
+  }
+#endif
   return true;
 }
 
