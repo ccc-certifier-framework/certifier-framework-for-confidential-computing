@@ -783,6 +783,9 @@ bool test_digest(bool print_all) {
  * that the resultant digest is different between the two schemes.
  */
 bool test_digest_multiple(bool print_all) {
+  // FIX: with python
+  return false;
+
   // This test-case will be invoked by ./certifier_tests.exe from the src/
   // dir. Create a list of files to build the hash digest for verification.
   const char *files_list[] = {"./certifier_tests.exe",
