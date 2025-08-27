@@ -1,27 +1,18 @@
-%module(directors="1") trust_manager
+%module trust_manager
 
 %{
 #include "trust_manager/trust_manager.h"
 #include "cf_shims.h"
 %}
 
-// Java package for generated classes:
-%package(org.certifier);
+%package(org.certifier)
 
-// Tell SWIG to generate directors & JNI for C++
-%feature("director") TrustManager;
-
-// Expose the class itself:
 %include "std_string.i"
 %include "std_vector.i"
 
-namespace std {
-    %template(StringVector) vector<string>;
-}
-
 %include "trust_manager/trust_manager.h"
 
-// --- Add shim functions to access flags ---
+// Shim functions (so Java can read the flags)
 %inline %{
 extern "C" {
   int cf_tm_auth_key_initialized(TrustManager* tm);

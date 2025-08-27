@@ -16,6 +16,41 @@ This guide gives you **copy‑pasteable** steps to build and run a Java port of 
 
 ---
 
+## How to Run
+### 1) Build certifier as usual (headers + libs)
+### 2) Auto-detect paths
+```
+./detect_paths.sh && source paths.env
+```
+
+### 3) Generate SWIG wrappers (from native/)
+```
+swig -c++ -java -package org.certifier -outdir ../app/src/main/java/org/certifier \
+  -I"$CERTIFIER_INC1" -I"$CERTIFIER_INC2" ${CERTIFIER_INC3:+-I"$CERTIFIER_INC3"} trust_manager.i
+```
+```
+swig -c++ -java -package org.certifier -outdir ../app/src/main/java/org/certifier \
+  -I"$CERTIFIER_INC1" -I"$CERTIFIER_INC2" ${CERTIFIER_INC3:+-I"$CERTIFIER_INC3"} secure_authenticated_channel.i
+```
+
+### 4) Build JNI bridge (from native/)
+```
+cmake -B build -S .
+```
+```
+cmake --build build -j
+```
+
+# 5) Run Java app (from app/)
+```
+gradle run --args="--mode=server --port=8080"     # Terminal A
+```
+```
+gradle run --args="--mode=client --host=127.0.0.1 --port=8080"  # Terminal B
+```
+
+---
+
 ## A) One‑time auto‑detect script
 
 Create `detect_paths.sh` in your project **root** (the folder that has `native/` and `app/`):
@@ -318,4 +353,3 @@ Then re-run:
 
 - **Symbols from Certifier libs unresolved**  
   Check `ls "$CERTIFIER_LIBDIR"/lib*`, add the matching targets (without `lib` prefix) to CMake.
-```
