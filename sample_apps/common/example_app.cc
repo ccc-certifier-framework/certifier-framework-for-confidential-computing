@@ -35,8 +35,9 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-// Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false, "verbose");
+
+// Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
 DEFINE_string(operation, "", "operation");
 
 DEFINE_string(policy_host, "localhost", "address for policy server");
@@ -48,7 +49,14 @@ DEFINE_int32(server_app_port, 8124, "port for server app server");
 
 DEFINE_string(policy_store_file, "store.bin", "policy store file name");
 
-#ifdef SIMPLE_APP
+// In the sample_apps, you should only change the defaults for the
+// simulated_enclave.
+DEFINE_string(public_key_alg, Enc_method_rsa_2048, "public key algorithm");
+DEFINE_string(auth_symmetric_key_alg,
+              Enc_method_aes_256_cbc_hmac_sha256,
+              "authenticated symmetric key algorithm");
+
+// For simulated enclave
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
 DEFINE_string(platform_attest_endorsement,
               "platform_attest_endorsement.bin",
@@ -56,11 +64,18 @@ DEFINE_string(platform_attest_endorsement,
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 
-DEFINE_string(public_key_alg, Enc_method_rsa_2048, "public key algorithm");
-DEFINE_string(auth_symmetric_key_alg,
-              Enc_method_aes_256_cbc_hmac_sha256,
-              "authenticated symmetric key algorithm");
+// For SEV enclave
+DEFINE_string(ark_cert_file, "ark_cert.der", "ark cert file name");
+DEFINE_string(ask_cert_file, "ask_cert.der", "ask cert file name");
+DEFINE_string(vcek_cert_file, "vcek_cert.der", "vcek cert file name");
 
+// For Gramine enclave
+DEFINE_string(gramine_cert_file, "sgx.cert.der", "certificate file name");
+
+// ----------------------------------------------------------------------
+// Fetch parameters for enclave initialization
+
+#ifdef SIMPLE_APP
 static string enclave_type("simulated-enclave");
 
 // Parameters for simulated enclave
@@ -106,8 +121,6 @@ err:
 #endif  // SIMPLE_APP
 
 #ifdef GRAMINE_SIMPLE_APP
-DEFINE_string(gramine_cert_file, "sgx.cert.der", "certificate file name");
-
 static string enclave_type("gramine-enclave");
 
 // Parameters for gramine enclave
@@ -135,10 +148,6 @@ bool get_enclave_parameters(string **s, int *n) {
 #endif  // GRAMINE_SIMPLE_APP
 
 #ifdef SEV_SIMPLE_APP
-DEFINE_string(ark_cert_file, "ark_cert.der", "ark cert file name");
-DEFINE_string(ask_cert_file, "ask_cert.der", "ask cert file name");
-DEFINE_string(vcek_cert_file, "vcek_cert.der", "vcek cert file name");
-
 static string enclave_type("sev-enclave");
 
 // Parameters for sev enclave for now.
@@ -182,13 +191,6 @@ err:
 #endif  // SEV_SIMPLE_APP
 
 #ifdef ISLET_SIMPLE_APP
-DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement,
-              "platform_attest_endorsement.bin",
-              "platform endorsement of attest key");
-DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
-DEFINE_string(measurement_file, "example_app.measurement", "measurement");
-
 static string enclave_type("islet-enclave");
 
 // Parameters not needed for ISLET enclave
@@ -200,13 +202,6 @@ bool get_enclave_parameters(string **s, int *n) {
 #endif  // ISLET_SIMPLE_APP
 
 #ifdef KEYSTONE_SIMPLE_APP
-DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
-DEFINE_string(platform_attest_endorsement,
-              "platform_attest_endorsement.bin",
-              "platform endorsement of attest key");
-DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
-DEFINE_string(measurement_file, "example_app.measurement", "measurement");
-
 static string enclave_type("keystone-enclave");
 
 // Parameters not needed for Keystone enclave
@@ -217,19 +212,24 @@ bool get_enclave_parameters(string **s, int *n) {
 }
 #endif  // KEYSTONE_SIMPLE_APP
 
-// The test app performs five possible roles
-//    cold-init: This creates application keys and initializes the policy store.
-//    get-certified: This obtains the app admission cert naming the public app
-//    key from the service. run-app-as-client: This runs the app as a client.
-//    run-app-as-server: This runs the app as server.
-//    warm-restart:  This retrieves the policy store data. Operation is subsumed
-//      under other ops.
-
+// In our sample_apps, the policy certs are embedded in the program.
+// With the new API you can have more than one.
+//
 #include "policy_key.cc"
 
-cc_trust_manager *trust_mgr = nullptr;
+// ----------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------------------
+// The test app performs five possible roles
+//    In old api:
+//      cold-init: This creates application keys and initializes the policy store.
+//      get-certified: This obtains the app admission cert naming the public app
+//      key from the service.
+//      run-app-as-client: This runs the app as a client.
+//      run-app-as-server: This runs the app as server.
+//      warm-restart:  This retrieves the policy store data. Operation is subsumed
+//      under other ops.
+
+cc_trust_manager *trust_mgr = nullptr;
 
 bool client_application(secure_authenticated_channel &channel) {
 
@@ -260,7 +260,6 @@ bool client_application(secure_authenticated_channel &channel) {
   return true;
 }
 
-
 void server_application(secure_authenticated_channel &channel) {
 
   printf("Server peer id is %s\n", channel.peer_id_.c_str());
@@ -282,81 +281,81 @@ void server_application(secure_authenticated_channel &channel) {
   channel.close();
 }
 
+void print_options(const char* op) {
+  // clang-format off
+  printf("                                                                            (Defaults)\n");
+   printf("%s --operation=<op>                                        ; %s", op, "(See below)");
+   printf("\n\
+                 --policy_host=policy-host-address                       ; %s\n\
+                 --policy_port=policy-host-port                          ; %d\n\
+                 --server_app_host=my-server-host-address                ; %s\n\
+                 --server_app_port=my-server-port-number                 ; %d\n\
+                 --data_dir=-directory-for-app-data                      ; %s\n\
+                 --policy_cert_file=self-signed-policy-cert-file-name    ; \n\
+                 --policy_store_file=policy-store-file-name              ; %s\n\
+                 --print_all=true|false",
+                 FLAGS_policy_host.c_str(),
+                 FLAGS_policy_port,
+                 FLAGS_server_app_host.c_str(),
+                 FLAGS_server_app_port,
+                 FLAGS_data_dir.c_str(),
+                 FLAGS_policy_store_file.c_str());
+#ifdef SIMPLE_APP
+   printf("\nCompiled for simulated enclave\
+                 --platform_file_name=platform-cert-bin-file-name        ; %s\n\
+                 --platform_attest_endorsement=endorsement-bin-file-name ; %s\n\
+                 --measurement_file=measurement-bin-file-name            ; %s\n\
+                 --attest_key_file=attest-key-bin-file-name              ; %s\n",
+                 FLAGS_platform_file_name.c_str(),
+                 FLAGS_platform_attest_endorsement.c_str(),
+                 FLAGS_measurement_file.c_str(),
+                 FLAGS_attest_key_file.c_str());
+#endif  // SIMPLE_APP
+
+#ifdef SEV_SIMPLE_APP
+   printf("\nCompiled for SEV\
+                 --ark_cert_file=./service/milan_ark_cert.der \n\
+                 --ask_cert_file=./service/milan_ask_cert.der \n\
+                 --vcek_cert_file=./service/milan_vcek_cert.der ");
+#endif  // SEV_SIMPLE_APP
+	//
+#ifdef GRAMINE_SIMPLE_APP
+   printf("\nCompiled for Gramine\
+                 --gramine_cert_file=sgx.cert.der");
+#endif  // GRAMINE_SIMPLE_APP
+   printf("\n\nOperations are: cold-init, get-certified, "
+          "run-app-as-client, run-app-as-server\n");
+
+#ifdef SIMPLE_APP
+    // clang-format off
+   printf("\nFor the simple_app, you can additionally drive 'cold-init' with different pairs of:\n");
+   printf("\n\
+   --public_key_alg=public-key-algorigthm-name                          : %s\n\
+   --auth_symmetric_key_alg=authenticated-symmetric-key-algorigthm-name : %s\n",
+           FLAGS_public_key_alg.c_str(),
+           FLAGS_auth_symmetric_key_alg.c_str());
+#endif  // SIMPLE_APP
+   // clang-format on
+
+   printf("\nPublic-key algorithms supported:\n");
+   for (int i = 0; i < Num_public_key_algorithms; i++) {
+     printf("  %s\n", Enc_public_key_algorithms[i]);
+   }
+   printf("\nSymmetric-key algorithms supported:\n");
+   for (int i = 0; i < Num_symmetric_key_algorithms; i++) {
+     printf("  %s\n", Enc_authenticated_symmetric_key_algorithms[i]);
+   }
+  return;
+}
+
+// ----------------------------------------------------------------------
+
 int main(int an, char **av) {
   string usage("Simple App");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
   ::testing::InitGoogleTest(&an, av);
-
-  // clang-format off
-  if (FLAGS_operation == "") {
-    printf("                                                                            (Defaults)\n");
-    printf("%s --operation=<op>                                        ; %s", av[0], "(See below)");
-    printf("\n\
-                  --policy_host=policy-host-address                       ; %s\n\
-                  --policy_port=policy-host-port                          ; %d\n\
-                  --server_app_host=my-server-host-address                ; %s\n\
-                  --server_app_port=my-server-port-number                 ; %d\n\
-                  --data_dir=-directory-for-app-data                      ; %s\n\
-                  --policy_cert_file=self-signed-policy-cert-file-name    ; \n\
-                  --policy_store_file=policy-store-file-name              ; %s\n\
-                  --print_all=true|false",
-                  FLAGS_policy_host.c_str(),
-                  FLAGS_policy_port,
-                  FLAGS_server_app_host.c_str(),
-                  FLAGS_server_app_port,
-                  FLAGS_data_dir.c_str(),
-                  FLAGS_policy_store_file.c_str());
-#ifdef SIMPLE_APP
-    printf("\n\
-                  --platform_file_name=platform-cert-bin-file-name        ; %s\n\
-                  --platform_attest_endorsement=endorsement-bin-file-name ; %s\n\
-                  --measurement_file=measurement-bin-file-name            ; %s\n\
-                  --attest_key_file=attest-key-bin-file-name              ; %s\n",
-                  FLAGS_platform_file_name.c_str(),
-                  FLAGS_platform_attest_endorsement.c_str(),
-                  FLAGS_measurement_file.c_str(),
-                  FLAGS_attest_key_file.c_str());
-#endif  // SIMPLE_APP
-
-#ifdef SEV_SIMPLE_APP
-    printf("\n\
-                  --ark_cert_file=./service/milan_ark_cert.der \n\
-                  --ask_cert_file=./service/milan_ask_cert.der \n\
-                  --vcek_cert_file=./service/milan_vcek_cert.der ");
-#endif  // SEV_SIMPLE_APP
-#ifdef GRAMINE_SIMPLE_APP
-    printf("\n\
-                  --gramine_cert_file=sgx.cert.der");
-#endif  // GRAMINE_SIMPLE_APP
-    printf("\n\nOperations are: cold-init, get-certified, "
-           "run-app-as-client, run-app-as-server\n");
-
-#ifdef SIMPLE_APP
-
-    // clang-format off
-    printf("\nFor the simple_app, you can additionally drive 'cold-init' with different pairs of:\n");
-    printf("\n\
-    --public_key_alg=public-key-algorigthm-name                          : %s\n\
-    --auth_symmetric_key_alg=authenticated-symmetric-key-algorigthm-name : %s\n",
-            FLAGS_public_key_alg.c_str(),
-            FLAGS_auth_symmetric_key_alg.c_str());
-    // clang-format on
-
-    printf("\nPublic-key algorithms supported:\n");
-    for (int i = 0; i < Num_public_key_algorithms; i++) {
-      printf("  %s\n", Enc_public_key_algorithms[i]);
-    }
-    printf("\nSymmetric-key algorithms supported:\n");
-    for (int i = 0; i < Num_symmetric_key_algorithms; i++) {
-      printf("  %s\n", Enc_authenticated_symmetric_key_algorithms[i]);
-    }
-
-#endif  // SIMPLE_APP
-    return 0;
-  }
-  // clang-format on
 
   SSL_library_init();
   string purpose("authentication");
@@ -369,6 +368,11 @@ int main(int an, char **av) {
            __func__,
            __LINE__);
     return 1;
+  }
+
+  if (FLAGS_operation == "") {
+   print_options(FLAGS_operation.c_str());
+   return 0;
   }
 
   // Init policy key info
@@ -395,23 +399,9 @@ int main(int an, char **av) {
     params = nullptr;
   }
 
-  // clang-format off
-
-  // Use specified algorithms for the enclave            Defaults:
-#ifdef SIMPLE_APP
-  // We support --public_key_alg and --auth_symmetric_key_alg only for simple_app
-  // (as a way to exercise tests w/ different pairs of algorithms).
-  string public_key_alg(FLAGS_public_key_alg);                  // Enc_method_rsa_2048
-  string auth_symmetric_key_alg(FLAGS_auth_symmetric_key_alg);  // Enc_method_aes_256_cbc_hmac_sha256
-  if (FLAGS_print_all) {
-      printf("measurement file='%s', ", FLAGS_measurement_file.c_str());
-  }
-#else
-  string public_key_alg(Enc_method_rsa_2048);
-  string auth_symmetric_key_alg(Enc_method_aes_256_cbc_hmac_sha256);
-#endif  // SIMPLE_APP
-
-  // clang-format on
+  // See note above about defaults
+  string public_key_alg(FLAGS_public_key_alg);
+  string auth_symmetric_key_alg(FLAGS_auth_symmetric_key_alg);
 
   if (FLAGS_print_all && (FLAGS_operation == "cold-init")) {
     printf("public_key_alg='%s', authenticated_symmetric_key_alg='%s\n",
@@ -433,7 +423,6 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-    // Debug
 #ifdef DEBUG
     trust_mgr->print_trust_data();
 #endif  // DEBUG
@@ -448,7 +437,6 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-    // Debug
 #ifdef DEBUG
     trust_mgr->print_trust_data();
 #endif  // DEBUG
@@ -516,10 +504,14 @@ int main(int an, char **av) {
   }
 
 done:
-  // trust_mgr->print_trust_data();
+#ifdef DEBUG
+  trust_mgr->print_trust_data();
+#endif  // DEBUG
   trust_mgr->clear_sensitive_data();
   if (trust_mgr != nullptr) {
     delete trust_mgr;
   }
   return ret;
 }
+
+// ----------------------------------------------------------------------

@@ -280,8 +280,6 @@ class cc_trust_manager {
   ~cc_trust_manager();
 
   // Each of the enclave types have bespoke initialization
-  // consider removing this and moving it into individual
-  // platforms
   bool initialize_simulated_enclave(
       const string &serialized_attest_key,
       const string &measurement,

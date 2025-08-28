@@ -3,6 +3,7 @@ Old flow
 trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file)
 trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)
 get_enclave_parameters(string **s, int *n)
+initialize_enclave
 trust_mgr->cold_init(public_key_alg,
                               auth_symmetric_key_alg,
                               "simple-app-home_domain",
@@ -30,7 +31,6 @@ trust_mgr->clear_sensitive_data();
 New Flow
 
 trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file)
-trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)
 get_enclave_parameters(string **s, int *n)
 trust_mgr->initialize_keys(public_key_alg,
                            auth_symmetric_key_alg)
