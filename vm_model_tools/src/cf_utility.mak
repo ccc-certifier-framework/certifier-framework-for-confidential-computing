@@ -104,18 +104,15 @@ $(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
 	mv $(@D)/certifier.pb.h $(I)
 
-$(CF_UTILITY_SRC)/cryptstore.pb.cc: $(CF_UTILITY_SRC)/cryptstore.proto
-	$(PROTO) --proto_path=$(CF_UTILITY_SRC) --cpp_out=$(CF_UTILITY_SRC) $(CF_UTILITY_SRC)/cryptstore.proto
-
-$(O)/cf_support_test.o: $(CF_UTILITY_SRC)/cf_support_test.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/cf_support_test.o: $(CF_UTILITY_SRC)/cf_support_test.cc $(I)/certifier.h $(US)/certifier.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/cf_utility.o: $(CF_UTILITY_SRC)/cf_utility.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/cf_utility.o: $(CF_UTILITY_SRC)/cf_utility.cc $(I)/certifier.h $(US)/certifier.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/cf_support.o: $(CF_UTILITY_SRC)/cf_support.cc $(I)/certifier.h $(US)/certifier.pb.cc
+$(O)/cf_support.o: $(CF_UTILITY_SRC)/cf_support.cc $(I)/certifier.h $(US)/certifier.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
@@ -123,9 +120,14 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
 
-$(O)/cryptstore.pb.o: $(CF_UTILITY_SRC)/cryptstore.pb.h $(CF_UTILITY_SRC)/cryptstore.pb.cc
+$(O)/cryptstore.pb.o: $(CF_UTILITY_SRC)/cryptstore.pb.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(O)/cryptstore.pb.o -c $(CF_UTILITY_SRC)/cryptstore.pb.cc
+
+$(CF_UTILITY_SRC)/cryptstore.pb.h: $(CF_UTILITY_SRC)/cryptstore.proto
+	$(PROTO) --proto_path=$(CF_UTILITY_SRC) --cpp_out=. $(CF_UTILITY_SRC)/cryptstore.proto
+
+$(CF_UTILITY_SRC)/cryptstore.pb.cc: $(CF_UTILITY_SRC)/cryptstore.pb.h
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "\ncompiling $<"

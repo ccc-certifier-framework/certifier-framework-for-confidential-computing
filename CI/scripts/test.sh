@@ -320,7 +320,7 @@ function unit-test-certlib-utility-programs() {
     echo " "
     # Run certlib/ Go unit-tests, which use policy_key_file.bin policy_cert_file.bin
     # from test_data/ dir.
-    cd ../certlib
+    # cd ../certlib
     go test
 
     popd > /dev/null 2>&1
