@@ -31,12 +31,15 @@ typedef unsigned char byte;
 
 using std::string;
 
-// Policy store
+#define NEW_API 1
+#define OLD_API 1
+
 // -------------------------------------------------------------------
 
 namespace certifier {
 namespace framework {
 
+// Policy store
 // This will replace the old policy store
 class store_entry {
  public:
@@ -133,6 +136,29 @@ bool reprotect_blob(const string &enclave_type,
                     byte         *protected_blob,
                     int          *size_new_encrypted_blob,
                     byte         *data);
+
+// Note added 28 August 2025
+// I'm changing the API exposed by trust manager a little.
+// and tidying up a bit.  There are two defines, NEW_API
+// and OLD_API which conditionally compile in the NEW
+// and/or OLD API's.  For compatibility, both will be
+// defined initially although I hope to remove OLD_API
+// in the future.
+//
+//    a. Paul England pointed out that the simulated_enclave,
+//       which is currently in $CERTIFIER/src should move to a
+//       subdirectory like the other platform interfaces.
+//    b. Some of the interfaces assumed that a program (or app) would
+//       talk to only one application server and participate in
+//       one domain. Later improvements removed these restrictions.
+//       So some calls (like cold_init) ask for the URL of an applications
+//       server when initializing the trust manager and the trust manager
+//       has a concept of "primary" domain. Neither of these are necessary.
+//       No certified domain is distinguished and you only need to know
+//       the url (and port) of an applications server when you connect to
+//       it using secure_authenticated_channel.  These changes (and some
+//       other cosmetic ones) will have minimal effect on application
+//       writing but should make the code easier to understand.
 
 class domain_info {
  public:
