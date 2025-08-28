@@ -120,14 +120,12 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
 
-$(O)/cryptstore.pb.o: $(CF_UTILITY_SRC)/cryptstore.pb.cc
+$(O)/cryptstore.pb.o: $(CF_UTILITY_SRC)/cryptstore.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(O)/cryptstore.pb.o -c $(CF_UTILITY_SRC)/cryptstore.pb.cc
 
 $(CF_UTILITY_SRC)/cryptstore.pb.h: $(CF_UTILITY_SRC)/cryptstore.proto
 	$(PROTO) --proto_path=$(CF_UTILITY_SRC) --cpp_out=. $(CF_UTILITY_SRC)/cryptstore.proto
-
-$(CF_UTILITY_SRC)/cryptstore.pb.cc: $(CF_UTILITY_SRC)/cryptstore.pb.h
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "\ncompiling $<"

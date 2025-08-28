@@ -1,0 +1,56 @@
+Old flow
+
+trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file)
+trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)
+get_enclave_parameters(string **s, int *n)
+trust_mgr->cold_init(public_key_alg,
+                              auth_symmetric_key_alg,
+                              "simple-app-home_domain",
+                              FLAGS_policy_host,
+                              FLAGS_policy_port,
+                              FLAGS_server_app_host,
+                              FLAGS_server_app_port)
+trust_mgr->warm_restart()
+trust_mgr->certify_me()
+if (!trust_mgr->cc_auth_key_initialized_
+        || !trust_mgr->cc_policy_info_initialized_)
+if (!trust_mgr->primary_admissions_cert_valid_) {
+if (!channel.init_client_ssl(FLAGS_server_app_host,
+                             FLAGS_server_app_port,
+                             *trust_mgr))
+if (!client_application(channel)) 
+if (!server_dispatch(FLAGS_server_app_host,
+                     FLAGS_server_app_port,
+                     *trust_mgr,
+                     server_application)
+trust_mgr->print_trust_data();
+trust_mgr->clear_sensitive_data();
+
+
+New Flow
+
+trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file)
+trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)
+get_enclave_parameters(string **s, int *n)
+trust_mgr->initialize_keys(public_key_alg,
+                           auth_symmetric_key_alg)
+initialize_new_domain(public_key_alg,
+                      auth_symmetric_key_alg,
+                      domain_name,
+                      host_url,
+                      port);
+
+initialize_existing_domain(domain_name);
+get_certified_status(domain_name)
+get_admissions_cert(domain_name)
+admissions_cert_valid(domain_name)
+trust_mgr->certify(domain_name)
+if (!channel.init_client_ssl(domain_name,
+                             FLAGS_server_app_host,
+                             FLAGS_server_app_port))
+if (!client_application(channel)) 
+if (!server_dispatch(domain_name,
+                     FLAGS_server_app_host,
+                     FLAGS_server_app_port,
+                     server_application)
+
