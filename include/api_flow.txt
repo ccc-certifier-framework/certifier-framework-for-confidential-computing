@@ -31,12 +31,13 @@ trust_mgr->clear_sensitive_data();
 New Flow
 
 trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file)
+initialize_store()
 get_enclave_parameters(string **s, int *n)
+initialize_enclave()
 trust_mgr->initialize_keys(public_key_alg,
-                           auth_symmetric_key_alg)
-initialize_new_domain(public_key_alg,
-                      auth_symmetric_key_alg,
-                      domain_name,
+                           auth_symmetric_key_alg,
+                           false)
+initialize_new_domain(domain_name,
                       host_url,
                       port);
 

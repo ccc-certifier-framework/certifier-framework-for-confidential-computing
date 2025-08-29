@@ -39,7 +39,9 @@ DEFINE_bool(print_all, false, "verbose");
 
 // Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
 DEFINE_string(operation, "", "operation");
-
+#ifdef NEW_API
+DEFINE_string(domain_name, "simple-app-home_domain", "domain name");
+#endif
 DEFINE_string(policy_host, "localhost", "address for policy server");
 DEFINE_int32(policy_port, 8123, "port for policy server");
 DEFINE_string(data_dir, "./app1_data/", "directory for application data");
@@ -222,13 +224,12 @@ bool get_enclave_parameters(string **s, int *n) {
 
 // The test app performs five possible roles
 //    In old api:
-//      cold-init: This creates application keys and initializes the policy store.
-//      get-certified: This obtains the app admission cert naming the public app
-//      key from the service.
-//      run-app-as-client: This runs the app as a client.
-//      run-app-as-server: This runs the app as server.
-//      warm-restart:  This retrieves the policy store data. Operation is subsumed
-//      under other ops.
+//      cold-init: This creates application keys and initializes the policy
+//      store. get-certified: This obtains the app admission cert naming the
+//      public app key from the service. run-app-as-client: This runs the app as
+//      a client. run-app-as-server: This runs the app as server. warm-restart:
+//      This retrieves the policy store data. Operation is subsumed under other
+//      ops.
 
 cc_trust_manager *trust_mgr = nullptr;
 
@@ -282,7 +283,7 @@ void server_application(secure_authenticated_channel &channel) {
   channel.close();
 }
 
-void print_options(const char* op) {
+void print_options(const char *op) {
   // clang-format off
   printf("                                                                            (Defaults)\n");
    printf("%s --operation=<op>                                        ; %s", op, "(See below)");
@@ -336,16 +337,16 @@ void print_options(const char* op) {
            FLAGS_public_key_alg.c_str(),
            FLAGS_auth_symmetric_key_alg.c_str());
 #endif  // SIMPLE_APP
-   // clang-format on
+  // clang-format on
 
-   printf("\nPublic-key algorithms supported:\n");
-   for (int i = 0; i < Num_public_key_algorithms; i++) {
-     printf("  %s\n", Enc_public_key_algorithms[i]);
-   }
-   printf("\nSymmetric-key algorithms supported:\n");
-   for (int i = 0; i < Num_symmetric_key_algorithms; i++) {
-     printf("  %s\n", Enc_authenticated_symmetric_key_algorithms[i]);
-   }
+  printf("\nPublic-key algorithms supported:\n");
+  for (int i = 0; i < Num_public_key_algorithms; i++) {
+    printf("  %s\n", Enc_public_key_algorithms[i]);
+  }
+  printf("\nSymmetric-key algorithms supported:\n");
+  for (int i = 0; i < Num_symmetric_key_algorithms; i++) {
+    printf("  %s\n", Enc_authenticated_symmetric_key_algorithms[i]);
+  }
   return;
 }
 
@@ -374,13 +375,15 @@ int main(int an, char **av) {
   }
 
   if (FLAGS_operation == "") {
-   print_options(FLAGS_operation.c_str());
-   return 0;
+    print_options(FLAGS_operation.c_str());
+    return 0;
   }
 
-  // Init policy key info
-  if (!trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)) {
-    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
+  // Init store
+  if (!trust_mgr->initialize_store()) {
+    printf("%s() error, line %d, Can't inititialize store\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -392,7 +395,7 @@ int main(int an, char **av) {
     return 1;
   }
 
-  // Init simulated enclave
+  // Init enclave (simulated encalve in this case)
   if (!trust_mgr->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
@@ -406,43 +409,56 @@ int main(int an, char **av) {
   string public_key_alg(FLAGS_public_key_alg);
   string auth_symmetric_key_alg(FLAGS_auth_symmetric_key_alg);
 
-  if (FLAGS_print_all && (FLAGS_operation == "cold-init")) {
-    printf("public_key_alg='%s', authenticated_symmetric_key_alg='%s\n",
-           public_key_alg.c_str(),
-           auth_symmetric_key_alg.c_str());
+  if (!trust_mgr->initialize_keys(public_key_alg,
+                                  auth_symmetric_key_alg,
+                                  false)) {
+    printf("%s() error, line %d, Can't inititialize keys \n",
+           __func__,
+           __LINE__);
+    return 1;
   }
 
   // Carry out operation
   int ret = 0;
-  if (FLAGS_operation == "cold-init") {
-    if (!trust_mgr->cold_init(public_key_alg,
-                              auth_symmetric_key_alg,
-                              "simple-app-home_domain",
-                              FLAGS_policy_host,
-                              FLAGS_policy_port,
-                              FLAGS_server_app_host,
-                              FLAGS_server_app_port)) {
-      printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
+  if (FLAGS_operation == "fresh-start") {
+    string serialized_policy_cert;
+    serialized_policy_cert.assign((char *)initialized_cert,
+                                  initialized_cert_size);
+    if (!trust_mgr->initialize_new_domain(FLAGS_domain_name,
+                                          serialized_policy_cert,
+                                          FLAGS_policy_host,
+                                          FLAGS_policy_port)) {
+      printf("%s() error, line %d, fresh-start failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
-#ifdef DEBUG
+#  ifdef DEBUG
     trust_mgr->print_trust_data();
-#endif  // DEBUG
+#  endif  // DEBUG
   } else if (FLAGS_operation == "get-certified") {
-    if (!trust_mgr->warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+    if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
+      printf("%s() error, line %d, initialize_existing_domain failed\n",
+             __func__,
+             __LINE__);
       ret = 1;
       goto done;
     }
-    if (!trust_mgr->certify_me()) {
+    certifiers *c = trust_mgr->find_certifier_by_domain_name(FLAGS_domain_name);
+    if (c == nullptr) {
+      printf("%s() error, line %d, can't find this domain\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!c->certify_domain(trust_mgr->purpose_)) {
       printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
-#ifdef DEBUG
+#  ifdef DEBUG
     trust_mgr->print_trust_data();
-#endif  // DEBUG
+#  endif  // DEBUG
   } else if (FLAGS_operation == "run-app-as-client") {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);
@@ -507,9 +523,9 @@ int main(int an, char **av) {
   }
 
 done:
-#ifdef DEBUG
+#  ifdef DEBUG
   trust_mgr->print_trust_data();
-#endif  // DEBUG
+#  endif  // DEBUG
   trust_mgr->clear_sensitive_data();
   if (trust_mgr != nullptr) {
     delete trust_mgr;
@@ -542,8 +558,8 @@ int main(int an, char **av) {
   }
 
   if (FLAGS_operation == "") {
-   print_options(FLAGS_operation.c_str());
-   return 0;
+    print_options(FLAGS_operation.c_str());
+    return 0;
   }
 
   // Get parameters
@@ -574,6 +590,7 @@ int main(int an, char **av) {
            auth_symmetric_key_alg.c_str());
   }
 
+#  if 0
   // Carry out operation
   string domain_name("simple-app-home_domain");
   string serialized_policy_cert;
@@ -586,24 +603,29 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
   }
+#  endif
+  string serialized_policy_cert;
+  serialized_policy_cert.assign((char *)serialized_cert, serialized_cert_size);
 
   if (FLAGS_operation == "initialize-new-domain") {
-    if (!trust_mgr->initialize_new_domain(public_key_alg,
-                      auth_symmetric_key_alg,
-                      domain_name,
-		      serialized_policy_cert,
-                      FLAGS_policy_host,
-                      FLAGS_policy_port)) {
-      printf("%s() error, line %d, initialize_new_domain failed\n", __func__, __LINE__);
+    if (!trust_mgr->initialize_new_domain(FLAGS_domain_name,
+                                          serialized_policy_cert,
+                                          FLAGS_policy_host,
+                                          FLAGS_policy_port)) {
+      printf("%s() error, line %d, initialize_new_domain failed\n",
+             __func__,
+             __LINE__);
       ret = 1;
       goto done;
     }
-#ifdef DEBUG
+#  ifdef DEBUG
     trust_mgr->print_trust_data();
-#endif  // DEBUG
+#  endif  // DEBUG
   } else if (FLAGS_operation == "get-certified") {
     if (!trust_mgr->initialize_existing_domain(domain_name)) {
-      printf("%s() error, line %d, initialize_existing_domain failed\n", __func__, __LINE__);
+      printf("%s() error, line %d, initialize_existing_domain failed\n",
+             __func__,
+             __LINE__);
       ret = 1;
       goto done;
     }
@@ -612,9 +634,9 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG
+#  ifdef DEBUG
     trust_mgr->print_trust_data();
-#endif  // DEBUG
+#  endif  // DEBUG
   } else if (FLAGS_operation == "run-app-as-client") {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);
@@ -635,7 +657,8 @@ int main(int an, char **av) {
       goto done;
     }
 
-    if (!channel.init_client_ssl(FLAGS_server_app_host,
+    if (!channel.init_client_ssl(FLAGS_domain_name,
+                                 FLAGS_server_app_host,
                                  FLAGS_server_app_port,
                                  *trust_mgr)) {
       printf("%s() error, line %d, Can't init client app\n",
@@ -655,12 +678,15 @@ int main(int an, char **av) {
     }
   } else if (FLAGS_operation == "run-app-as-server") {
     if (!trust_mgr->initialize_existing_domain(domain_name)) {
-      printf("%s() error, line %d, initialize_existing_domain failed\n", __func__, __LINE__);
+      printf("%s() error, line %d, initialize_existing_domain failed\n",
+             __func__,
+             __LINE__);
       ret = 1;
       goto done;
     }
     printf("Running App as server\n");
-    if (!server_dispatch(FLAGS_server_app_host,
+    if (!server_dispatch(FLAGS_domain_name,
+                         FLAGS_server_app_host,
                          FLAGS_server_app_port,
                          *trust_mgr,
                          server_application)) {
@@ -672,9 +698,9 @@ int main(int an, char **av) {
   }
 
 done:
-#ifdef DEBUG
+#  ifdef DEBUG
   trust_mgr->print_trust_data();
-#endif  // DEBUG
+#  endif  // DEBUG
   trust_mgr->clear_sensitive_data();
   if (trust_mgr != nullptr) {
     delete trust_mgr;
