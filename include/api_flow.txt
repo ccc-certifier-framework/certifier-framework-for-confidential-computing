@@ -44,7 +44,7 @@ initialize_existing_domain(domain_name);
 get_certified_status(domain_name)
 get_admissions_cert(domain_name)
 admissions_cert_valid(domain_name)
-trust_mgr->certify(domain_name)
+trust_mgr->certify(domain_name) in initialize_new_domain
 if (!channel.init_client_ssl(domain_name,
                              FLAGS_server_app_host,
                              FLAGS_server_app_port))

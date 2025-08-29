@@ -335,18 +335,18 @@ class cc_trust_manager {
   bool warm_restart();
 #endif
 #ifdef NEW_API
-  bool initialize_keys(string& public_key_alg,
-                       string& auth_symmetric_key_alg);
-  bool initialize_new_domain(string& domain_name,
-                             string& policy_key_cert,
-                             string& public_key_alg,
-                             string& auth_symmetric_key_alg,
-                             string& host_url,
+  certifiers* find_certifier_by_domain_name(const string& domain_name);
+  bool initialize_keys(const string& public_key_alg,
+                       const string& auth_symmetric_key_alg);
+  bool initialize_domain(const string& domain_name,
+                             const string& policy_key_cert,
+                             const string& public_key_alg,
+                             const string& auth_symmetric_key_alg,
+                             const string& host_url,
                              int port) ;
-  bool initialize_existing_domain(string& domain_name);
-  bool get_domain_certified_status(string& domain_name);
-  bool get_admissions_cert(string& domain_name);
-  bool admissions_cert_valid_status(string& domain_name);
+  bool initialize_existing_domain(const string& domain_name);
+  bool get_admissions_cert(const string& domain_name, string* admin_cert);
+  bool admissions_cert_valid_status(const string& domain_name);
 #endif
 
   bool GetPlatformSaysAttestClaim(signed_claim_message *scm);
@@ -373,8 +373,8 @@ class cc_trust_manager {
   bool write_private_key_to_file(const string &filename);
 };
 
-// Certification Anchors
 
+// Certification Anchors
 class certifiers {
  private:
   // should be const, don't delete it
@@ -389,12 +389,22 @@ class certifiers {
   bool   is_certified_;
   string host_;
   int    port_;
+
+  certifiers(cc_trust_manager *owner);
+  ~certifiers();
+
 #ifdef OLD_API
   string service_host_;
   int    service_port_;
 #endif
-  certifiers(cc_trust_manager *owner);
-  ~certifiers();
+
+#ifdef NEW_API
+  bool init_certifiers_data_new(
+	   const string &domain_name,
+           const string &cert,
+           const string &host,
+           int port);
+#endif // NEW_API
 
 #ifdef OLD_API
   bool init_certifiers_data(const string &domain_name,
@@ -403,17 +413,9 @@ class certifiers {
                             int           port,
                             const string &service_host,
                             int           service_port);
-
-#endif
-
-#ifdef NEW_API
-  bool init_certifiers_data(const string &domain_name,
-                            const string &cert,
-                            const string &host,
-                            int           port);
-
-#endif
   bool get_certified_status();
+#endif  // OLD_API
+
   bool certify_domain(const string &purpose);
   void print_certifiers_entry();
 };
