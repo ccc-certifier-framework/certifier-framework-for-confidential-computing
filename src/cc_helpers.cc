@@ -479,12 +479,12 @@ bool certifier::framework::cc_trust_manager::warm_restart() {
     return false;
   }
 
-#  if 0
+#ifdef DEBUG
   printf("\nRecovered trust data\n");
   print_trust_data();
   printf("\n");
   printf("End Recovered trust data\n");
-#  endif
+#endif
   return true;
 }
 
@@ -679,6 +679,11 @@ bool certifier::framework::cc_trust_manager::initialize_new_domain(
     return false;
   }
 
+  if (!save_store()) {
+    printf("%s() error, line %d, Can't save store\n", __func__, __LINE__);
+    return false;
+  }
+
   return true;
 }
 
@@ -707,12 +712,12 @@ bool certifier::framework::cc_trust_manager::initialize_existing_domain(
     return false;
   }
 
-#  if 0
+#ifdef DEBUG
   printf("\nRecovered trust data\n");
   print_trust_data();
   printf("\n");
   printf("End Recovered trust data\n");
-#  endif
+#endif
   return true;
 }
 
@@ -825,7 +830,7 @@ bool certifier::framework::cc_trust_manager::initialize_simulated_enclave(
     const string &measurement,
     const string &serialized_attest_endorsement) {
 
-#ifdef OLD_API
+#if 0
   if (!cc_policy_info_initialized_) {
     printf("%s() error, line %d, Policy key must be initialized first\n",
            __func__,
@@ -1132,6 +1137,7 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
   } else {
     printf("cc_policy_store_initialized_ is false\n");
   }
+
 #ifdef OLD_API
   if (cc_all_initialized()) {
     printf("all initialized\n");
@@ -1151,7 +1157,7 @@ const int max_pad_size_for_store = 1024;
 
 bool certifier::framework::cc_trust_manager::save_store() {
 
-#if 0
+#ifdef DEBUG
   printf("Saved trust data:\n");
   print_trust_data();
   printf("\n");
@@ -1272,7 +1278,7 @@ void certifier::framework::cc_trust_manager::clear_sensitive_data() {
 //  initialized_cert_size These are set in embed+policy_key.cc.
 bool certifier::framework::cc_trust_manager::put_trust_data_in_store() {
 
-#if 0
+#ifdef DEBUB
   store_.policy_key_.CopyFrom(public_policy_key_);
   store_.policy_key_valid_ = true;
 #endif
@@ -1403,8 +1409,7 @@ bool certifier::framework::cc_trust_manager::put_trust_data_in_store() {
       return false;
     }
 
-#if 0
-    // Debug
+#ifdef DEBUG
     printf("put_trust_data_from_store: outgoing store\n");
     store_.print();
 #endif
@@ -2823,7 +2828,7 @@ bool load_server_certs_and_key(X509         *root_cert,
   SSL_CTX_add1_chain_cert(ctx, peer_root_cert);
 
 // When intermediate certs exist
-#if 0
+#ifdef DEBUG2
   X509* X509_chain_certs[cert_chain_length];
   for (int i = 0; i < cert_chain_length; i++) {
     X509_chain_certs[i] = X509_new();
@@ -3331,7 +3336,7 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   X509_STORE_add_cert(cs, peer_root_cert_);
 
 // When intermediate certs exist
-#if 0
+#ifdef DEBUG2
   X509* X509_chain_certs[cert_chain_length];
   for (int i = 0; i < cert_chain_length; i++) {
     X509_chain_certs[i] = X509_new();

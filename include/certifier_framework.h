@@ -32,7 +32,7 @@ typedef unsigned char byte;
 using std::string;
 
 #define NEW_API 1
-#define OLD_API 1
+//#define OLD_API 1
 
 // -------------------------------------------------------------------
 

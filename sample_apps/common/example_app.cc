@@ -597,15 +597,15 @@ int main(int an, char **av) {
   string policy_file_name("./provisioning/");
   policy_file_name.append(FLAGS_policy_cert_file);
 
-  int ret = 0;
   if (!read_file_into_string(policy_file_name, &serialized_policy_cert)) {
       printf("%s() error, line %d, can't read policy cert\n", __func__, __LINE__);
       ret = 1;
       goto done;
   }
 #  endif
+  int ret = 0;
   string serialized_policy_cert;
-  serialized_policy_cert.assign((char *)serialized_cert, serialized_cert_size);
+  serialized_policy_cert.assign((char *)initialized_cert, initialized_cert_size);
 
   if (FLAGS_operation == "initialize-new-domain") {
     if (!trust_mgr->initialize_new_domain(FLAGS_domain_name,
@@ -622,14 +622,22 @@ int main(int an, char **av) {
     trust_mgr->print_trust_data();
 #  endif  // DEBUG
   } else if (FLAGS_operation == "get-certified") {
-    if (!trust_mgr->initialize_existing_domain(domain_name)) {
+    if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, initialize_existing_domain failed\n",
              __func__,
              __LINE__);
       ret = 1;
       goto done;
     }
-    if (!trust_mgr->certify_me()) {
+    certifiers *c = trust_mgr->find_certifier_by_domain_name(FLAGS_domain_name);
+    if (c == nullptr) {
+      printf("%s() error, line %d, can't find this domain\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!c->certify_domain(trust_mgr->purpose_)) {
       printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
       ret = 1;
       goto done;

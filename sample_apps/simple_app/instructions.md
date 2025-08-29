@@ -101,31 +101,26 @@ cd $EXAMPLE_DIR/provisioning
 
 ```shell
 $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
-      --key_subject=platform_key_file.bin                   \
-      --verb="is-trusted-for-attestation"                   \
+      --key_subject=platform_key_file.bin              \
+      --verb="is-trusted-for-attestation"              \
       --output=ts1.bin
 
-$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe    \
-      --key_subject=policy_key_file.bin                        \
-      --verb="says"                                            \
-      --clause=ts1.bin                                         \
-      --output=vse_policy1.bin
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+ --key_subject=policy_key_file.bin --verb="says"       \
+ --clause=ts1.bin --output=vse_policy1.bin
 ```
 
 ### b. Construct  policy key says measurement is-trusted
 
 ```shell
-$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
-      --key_subject=""                                      \
-      --measurement_subject=example_app.measurement         \
-      --verb="is-trusted"                                   \
-      --output=ts2.bin
+$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe  \
+  --key_subject=""   \
+  --measurement_subject=example_app.measurement \
+  --verb="is-trusted" --output=ts2.bin
 
-$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe    \
-      --key_subject=policy_key_file.bin                        \
-      --verb="says"                                            \
-      --clause=ts2.bin                                         \
-      --output=vse_policy2.bin
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe   \
+  --key_subject=policy_key_file.bin --verb="says"  \
+  --clause=ts2.bin  --output=vse_policy2.bin
 ```
 
 ### c. Produce the signed claims for each vse policy statement.
@@ -147,8 +142,7 @@ $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
 
 ```shell
 $CERTIFIER_ROOT/utilities/package_claims.exe     \
-      --input=signed_claim_1.bin,signed_claim_2.bin   \
-      --output=policy.bin
+  --input=signed_claim_1.bin,signed_claim_2.bin --output=policy.bin
 ```
 
 ### e. [optional] Print the policy
