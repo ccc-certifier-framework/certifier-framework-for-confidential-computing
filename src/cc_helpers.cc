@@ -107,7 +107,9 @@ certifier::framework::cc_trust_manager::cc_trust_manager(
   cc_trust_manager_default_init();
   if (purpose == "authentication" || purpose == "attestation") {
     purpose_ = purpose;
+#ifdef OLD_API
     cc_basic_data_initialized_ = true;
+#endif
   }
   enclave_type_ = enclave_type;
   store_file_name_ = policy_store_name;
@@ -118,18 +120,20 @@ certifier::framework::cc_trust_manager::cc_trust_manager() {
 }
 
 void certifier::framework::cc_trust_manager::cc_trust_manager_default_init() {
-  cc_basic_data_initialized_ = false;
   purpose_ = "unknown";
-  cc_policy_info_initialized_ = false;
   cc_policy_store_initialized_ = false;
   cc_service_key_initialized_ = false;
   cc_service_cert_initialized_ = false;
   cc_service_platform_rule_initialized_ = false;
   cc_sealing_key_initialized_ = false;
   cc_provider_provisioned_ = false;
-  x509_policy_cert_ = nullptr;
-  cc_is_certified_ = false;
   peer_data_initialized_ = false;
+#ifdef OLD_API
+  x509_policy_cert_ = nullptr;
+  cc_policy_info_initialized_ = false;
+  cc_basic_data_initialized_ = false;
+  cc_is_certified_ = false;
+#endif
   num_accelerators_ = 0;
   max_num_certified_domains_ = MAX_NUM_CERTIFIERS;
   num_certified_domains_ = 0;
@@ -309,6 +313,45 @@ bool certifier::framework::cc_trust_manager::certify_primary_domain() {
   return true;
 }
 
+bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
+    const string &domain_name,
+    const string &cert,
+    const string &host,
+    int           port,
+    const string &service_host,
+    int           service_port) {
+
+  // don't duplicate
+  certifiers *found = nullptr;
+  for (int i = 0; i < num_certified_domains_; i++) {
+    certifiers *c = certified_domains_[i];
+    if (c != nullptr && domain_name == c->domain_name_) {
+      found = c;
+      break;
+    }
+  }
+
+  if (found == nullptr) {
+    if (num_certified_domains_ >= max_num_certified_domains_) {
+      return false;
+    }
+
+    found = new certifiers(this);
+    certified_domains_[num_certified_domains_++] = found;
+  }
+
+#ifdef DEBUG
+  printf("num_certified_domains_: %d\n", num_certified_domains_);
+#endif
+
+  return found->init_certifiers_data(domain_name,
+                                     cert,
+                                     host,
+                                     port,
+                                     service_host,
+                                     service_port);
+}
+
 //  public_key_alg can be rsa-2048, rsa-1024, rsa-3072, rsa-4096, ecc-384
 //  symmetric_key_alg can be aes-256-cbc-hmac-sha256, aes-256-cbc-hmac-sha384 or
 //  aes-256-gcm
@@ -464,6 +507,12 @@ bool certifier::framework::certifiers::init_certifiers_data(
   return true;
 }
 
+
+bool certifier::framework::certifiers::get_certified_status() {
+  return is_certified_;
+}
+#endif  // OLD API
+
 void certifier::framework::certifiers::print_certifiers_entry() {
   printf("\nDomain name: %s\n", domain_name_.c_str());
   printf("Domain policy cert: ");
@@ -494,21 +543,22 @@ void certifier::framework::certifiers::print_certifiers_entry() {
     printf("\n");
   }
 
+#ifdef OLD_API
   if (service_host_.size() > 0) {
     printf("Service host: %s, service port: %d\n",
            service_host_.c_str(),
            service_port_);
   }
+#endif
 }
-
-bool certifier::framework::certifiers::get_certified_status() {
-  return is_certified_;
-}
-#endif  // OLD API
 
 #ifdef NEW_API
 bool certifier::framework::cc_trust_manager::initialize_keys(const string& public_key_alg,
-                       const string& symmetric_key_alg) {
+                       const string& symmetric_key_alg,
+                       bool force) {
+
+  if (cc_auth_key_initialized_ && ! force)
+    return true;
 
   public_key_algorithm_ = public_key_alg;
   symmetric_key_algorithm_ = symmetric_key_alg;
@@ -571,15 +621,25 @@ certifiers* certifier::framework::cc_trust_manager::find_certifier_by_domain_nam
   return nullptr;
 }
 
-bool certifier::framework::cc_trust_manager::initialize_domain(const string& domain_name,
+bool certifier::framework::cc_trust_manager::initialize_new_domain(const string& domain_name,
                              const string& policy_key_cert,
                              const string& public_key_alg,
-                             const string& auth_symmetric_key_alg,
+                             const string& symmetric_key_alg,
                              const string& host_url,
                              int port)  {
   certifiers* c = find_certifier_by_domain_name(domain_name);
   if (c == nullptr) {
   }
+  if (!add_or_update_new_domain(domain_name,
+                                policy_key_cert,
+                                host_url,
+                                port)) {
+  }
+
+  if (initialize_keys(public_key_alg,
+                       symmetric_key_alg)) {
+  }
+
   return false;
 }
 
@@ -618,6 +678,34 @@ bool certifier::framework::certifiers::init_certifiers_data_new(const string &do
   is_certified_ = false;
   return true;
 }
+
+bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
+    const string &domain_name,
+    const string &cert,
+    const string &host,
+    int           port) {
+
+  // don't duplicate
+  certifiers *found = find_certifier_by_domain_name(domain_name);
+  if (found == nullptr) {
+    if (num_certified_domains_ >= max_num_certified_domains_) {
+      return false;
+    }
+
+    found = new certifiers(this);
+    certified_domains_[num_certified_domains_++] = found;
+  }
+
+#ifdef DEBUG
+  printf("num_certified_domains_: %d\n", num_certified_domains_);
+#endif
+
+  return found->init_certifiers_data_new(
+           domain_name,
+           cert,
+           host,
+           port);
+}
 #endif //NEW_API
 
 bool certifier::framework::cc_trust_manager::initialize_application_enclave(
@@ -625,12 +713,14 @@ bool certifier::framework::cc_trust_manager::initialize_application_enclave(
     int           in_fd,
     int           out_fd) {
 
+#ifdef OLD_API
   if (!cc_policy_info_initialized_) {
     printf("%s() error, line %d, Policy key must be initialized first\n",
            __func__,
            __LINE__);
     return false;
   }
+#endif
 
   if (enclave_type_ != "application-enclave") {
     printf("%s() error, line %d, Not a application enclave\n",
@@ -653,12 +743,14 @@ bool certifier::framework::cc_trust_manager::initialize_simulated_enclave(
     const string &measurement,
     const string &serialized_attest_endorsement) {
 
+#ifdef OLD_API
   if (!cc_policy_info_initialized_) {
     printf("%s() error, line %d, Policy key must be initialized first\n",
            __func__,
            __LINE__);
     return false;
   }
+#endif
 
   if (enclave_type_ != "simulated-enclave") {
     printf("%s() error, line %d, Not a simulated enclave\n",
@@ -752,6 +844,7 @@ bool certifier::framework::cc_trust_manager::add_accelerator(
   return false;
 }
 
+#ifdef OLD_API
 bool certifier::framework::cc_trust_manager::init_policy_key(
     byte *asn1_cert,
     int   asn1_cert_size) {
@@ -773,6 +866,7 @@ bool certifier::framework::cc_trust_manager::init_policy_key(
   cc_policy_info_initialized_ = true;
   return true;
 }
+#endif
 
 bool certifier::framework::cc_trust_manager::initialize_keystone_enclave() {
 
@@ -836,16 +930,18 @@ bool certifier::framework::cc_trust_manager::initialize_islet_enclave() {
 
 void certifier::framework::cc_trust_manager::print_trust_data() {
   printf("\n--------------Start of Trust Data ------------------\n");
+  printf("\nTrust data, enclave_type: %s, purpose: %s, policy file: %s\n",
+         enclave_type_.c_str(),
+         purpose_.c_str(),
+         store_file_name_.c_str());
+
+#ifdef OLD_API
   if (!cc_basic_data_initialized_) {
     printf("%s() error, line %d, No trust info initialized\n",
            __func__,
            __LINE__);
     return;
   }
-  printf("\nTrust data, enclave_type: %s, purpose: %s, policy file: %s\n",
-         enclave_type_.c_str(),
-         purpose_.c_str(),
-         store_file_name_.c_str());
 
   if (cc_policy_info_initialized_) {
     printf("\nPolicy key\n");
@@ -855,6 +951,7 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
                 (byte *)serialized_policy_cert_.data());
     printf("\n");
   }
+#endif
 
   if (cc_auth_key_initialized_) {
     printf("\nPrivate auth key\n");
@@ -894,6 +991,7 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
     print_signed_claim(platform_rule_);
   }
 
+#ifdef OLD_API
   if (cc_basic_data_initialized_) {
     printf("cc_basic_data_initialized_ is true\n");
   } else {
@@ -904,16 +1002,19 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
   } else {
     printf("cc_policy_info_initialized_ is false\n");
   }
+#endif
   if (cc_provider_provisioned_) {
     printf("cc_provider_provisioned_ is true\n");
   } else {
     printf("cc_provider_provisioned_ is false\n");
   }
+#ifdef OLD_API
   if (cc_is_certified_) {
     printf("cc_is_certified_ is true\n");
   } else {
     printf("cc_is_certified_ is false\n");
   }
+#endif
   if (cc_auth_key_initialized_) {
     printf("cc_auth_key_initialized_ is true\n");
   } else {
@@ -949,11 +1050,13 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
   } else {
     printf("cc_policy_store_initialized_ is false\n");
   }
+#ifdef OLD_API
   if (cc_all_initialized()) {
     printf("all initialized\n");
   } else {
     printf("all not initialized\n");
   }
+#endif
 
   printf("Number of certifiers: %d\n", num_certified_domains_);
   for (int i = 0; i < num_certified_domains_; i++) {
@@ -1277,11 +1380,13 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
     return false;
   }
 
+#ifdef OLD_API
   if (num_certified_domains_ > 0 && certified_domains_[0]->is_certified_) {
     primary_admissions_cert_valid_ = true;
     serialized_primary_admissions_cert_ =
         certified_domains_[0]->admissions_cert_;
   }
+#endif
 
   if (purpose_ == "attestation") {
 
@@ -1363,7 +1468,9 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
       }
       cc_service_platform_rule_initialized_ = true;
     }
+#ifdef OLD_API
     cc_is_certified_ = true;
+#endif
     return true;
   }
 
@@ -1399,7 +1506,11 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
     print_key(public_auth_key_);
     printf("\n");
 #endif
+
     cc_auth_key_initialized_ = true;
+
+
+#ifdef OLD_API
     if (private_auth_key_.has_certificate() || primary_admissions_cert_valid_) {
       cc_is_certified_ = true;
 #ifdef DEBUG
@@ -1414,6 +1525,7 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
     else {
       printf("\n***is not certified\n");
     }
+#endif
 #endif
 
     string symmetric_key_tag("app-symmetric-key");
@@ -1656,45 +1768,6 @@ bool certifier::framework::cc_trust_manager::GetPlatformSaysAttestClaim(
   return false;
 }
 
-bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
-    const string &domain_name,
-    const string &cert,
-    const string &host,
-    int           port,
-    const string &service_host,
-    int           service_port) {
-
-  // don't duplicate
-  certifiers *found = nullptr;
-  for (int i = 0; i < num_certified_domains_; i++) {
-    certifiers *c = certified_domains_[i];
-    if (c != nullptr && domain_name == c->domain_name_) {
-      found = c;
-      break;
-    }
-  }
-
-  if (found == nullptr) {
-    if (num_certified_domains_ >= max_num_certified_domains_) {
-      return false;
-    }
-
-    found = new certifiers(this);
-    certified_domains_[num_certified_domains_++] = found;
-  }
-
-#ifdef DEBUG
-  printf("num_certified_domains_: %d\n", num_certified_domains_);
-#endif
-
-  return found->init_certifiers_data(domain_name,
-                                     cert,
-                                     host,
-                                     port,
-                                     service_host,
-                                     service_port);
-}
-
 bool certifier::framework::cc_trust_manager::init_peer_certification_data(
     const string &public_key_alg) {
   // bool peer_data_initialized_;
@@ -1763,8 +1836,10 @@ bool certifier::framework::cc_trust_manager::get_certifiers_from_store() {
     ce->is_certified_ = cm.is_certified();
     ce->admissions_cert_ = cm.admissions_cert();
     ce->signed_rule_ = cm.platform_rule();
+#ifdef OLD_API
     ce->service_host_ = cm.service_host();
     ce->service_port_ = cm.service_port();
+#endif
   }
   return true;
 }
@@ -1785,8 +1860,10 @@ bool certifier::framework::cc_trust_manager::put_certifiers_in_store() {
     if (ce->is_certified_) {
       cm->set_admissions_cert(ce->admissions_cert_);
     }
+#ifdef OLD_API
     cm->set_service_host(ce->service_host_);
     cm->set_service_port(ce->service_port_);
+#endif
   }
 
   if (!cert_messages.SerializeToString(&serialized_cert_messages)) {
@@ -2161,8 +2238,10 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
 
     admissions_cert_.assign((char *)response.artifact().data(),
                             response.artifact().size());
+#ifdef OLD_API
     owner_->primary_admissions_cert_valid_ = true;
     owner_->serialized_primary_admissions_cert_ = admissions_cert_;
+#endif
 
   } else if (owner_->purpose_ == "attestation") {
 
@@ -3008,6 +3087,7 @@ bool certifier::framework::server_dispatch(
     const cc_trust_manager &mgr,
     void (*func)(secure_authenticated_channel &)) {
 
+#ifdef OLD_API
   return server_dispatch(
       host_name,
       port,
@@ -3018,6 +3098,10 @@ bool certifier::framework::server_dispatch(
       // Admission cert
       (const string &)mgr.serialized_primary_admissions_cert_,
       func);
+#endif
+#ifdef NEW_API
+  return false;
+#endif
 }
 
 certifier::framework::secure_authenticated_channel::
@@ -3421,12 +3505,17 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
     int                     port,
     const cc_trust_manager &mgr) {
 
+#ifdef OLD_API
   return secure_authenticated_channel::init_client_ssl(
       host_name,
       port,
       (string &)mgr.serialized_policy_cert_,
       (key_message &)mgr.private_auth_key_,
       (const string &)mgr.serialized_primary_admissions_cert_);
+#endif
+#ifdef NEW_API
+  return false;
+#endif
 }
 
 // Loads client side certs and keys.  Note: key for private_key is in
@@ -3596,12 +3685,17 @@ bool certifier::framework::secure_authenticated_channel::init_server_ssl(
     const string           &host_name,
     int                     port,
     const cc_trust_manager &mgr) {
+#ifdef OLD_API
   return secure_authenticated_channel::init_server_ssl(
       host_name,
       port,
       (string &)mgr.serialized_policy_cert_,
       (key_message &)mgr.private_auth_key_,
       mgr.serialized_primary_admissions_cert_);
+#endif
+#ifdef NEW_API
+  return false;
+#endif
 }
 
 int certifier::framework::secure_authenticated_channel::read(int   size,

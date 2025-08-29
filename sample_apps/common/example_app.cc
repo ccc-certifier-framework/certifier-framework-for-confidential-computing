@@ -47,6 +47,7 @@ DEFINE_string(data_dir, "./app1_data/", "directory for application data");
 DEFINE_string(server_app_host, "localhost", "address for app server");
 DEFINE_int32(server_app_port, 8124, "port for server app server");
 
+DEFINE_string(policy_cert_file, "policy_cert_file.bin", "policy cert file");
 DEFINE_string(policy_store_file, "store.bin", "policy store file name");
 
 // In the sample_apps, you should only change the defaults for the
@@ -350,6 +351,7 @@ void print_options(const char* op) {
 
 // ----------------------------------------------------------------------
 
+#ifdef OLD_API
 int main(int an, char **av) {
   string usage("Simple App");
   gflags::SetUsageMessage(usage);
@@ -513,5 +515,171 @@ done:
   }
   return ret;
 }
+#endif
+
+// ----------------------------------------------------------------------
+
+#if defined(NEW_API) & !defined(OLD_API)
+int main(int an, char **av) {
+  string usage("Simple App");
+  gflags::SetUsageMessage(usage);
+  gflags::ParseCommandLineFlags(&an, &av, true);
+  an = 1;
+  ::testing::InitGoogleTest(&an, av);
+
+  SSL_library_init();
+  string purpose("authentication");
+
+  string store_file(FLAGS_data_dir);
+  store_file.append(FLAGS_policy_store_file);
+  trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
+  if (trust_mgr == nullptr) {
+    printf("%s() error, line %d, couldn't initialize trust object\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  if (FLAGS_operation == "") {
+   print_options(FLAGS_operation.c_str());
+   return 0;
+  }
+
+  // Get parameters
+  string *params = nullptr;
+  int     n = 0;
+  if (!get_enclave_parameters(&params, &n)) {
+    printf("%s() error, line %d, get enclave parameters\n", __func__, __LINE__);
+    return 1;
+  }
+
+  // Init simulated enclave
+  if (!trust_mgr->initialize_enclave(n, params)) {
+    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
+    return 1;
+  }
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
+  }
+
+  // See note above about defaults
+  string public_key_alg(FLAGS_public_key_alg);
+  string auth_symmetric_key_alg(FLAGS_auth_symmetric_key_alg);
+
+  if (FLAGS_print_all) {
+    printf("public_key_alg='%s', authenticated_symmetric_key_alg='%s\n",
+           public_key_alg.c_str(),
+           auth_symmetric_key_alg.c_str());
+  }
+
+  // Carry out operation
+  string domain_name("simple-app-home_domain");
+  string serialized_policy_cert;
+  string policy_file_name("./provisioning/");
+  policy_file_name.append(FLAGS_policy_cert_file);
+
+  int ret = 0;
+  if (!read_file_into_string(policy_file_name, &serialized_policy_cert)) {
+      printf("%s() error, line %d, can't read policy cert\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+  }
+
+  if (FLAGS_operation == "initialize-new-domain") {
+    if (!trust_mgr->initialize_new_domain(public_key_alg,
+                      auth_symmetric_key_alg,
+                      domain_name,
+		      serialized_policy_cert,
+                      FLAGS_policy_host,
+                      FLAGS_policy_port)) {
+      printf("%s() error, line %d, initialize_new_domain failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+#ifdef DEBUG
+    trust_mgr->print_trust_data();
+#endif  // DEBUG
+  } else if (FLAGS_operation == "get-certified") {
+    if (!trust_mgr->initialize_existing_domain(domain_name)) {
+      printf("%s() error, line %d, initialize_existing_domain failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!trust_mgr->certify_me()) {
+      printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+#ifdef DEBUG
+    trust_mgr->print_trust_data();
+#endif  // DEBUG
+  } else if (FLAGS_operation == "run-app-as-client") {
+    string                       my_role("client");
+    secure_authenticated_channel channel(my_role);
+
+    if (!initialize_existing_domain(domain_name)) {
+      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+
+    printf("Running App as client\n");
+    if (!trust_mgr->cc_auth_key_initialized_
+        || !trust_mgr->cc_policy_info_initialized_) {
+      printf("%s() error, line %d, trust data not initialized\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+
+    if (!channel.init_client_ssl(FLAGS_server_app_host,
+                                 FLAGS_server_app_port,
+                                 *trust_mgr)) {
+      printf("%s() error, line %d, Can't init client app\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+
+    // This is the actual application code.
+    if (!client_application(channel)) {
+      printf("%s() error, line %d, client_application failed\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+  } else if (FLAGS_operation == "run-app-as-server") {
+    if (!trust_mgr->initialize_existing_domain(domain_name)) {
+      printf("%s() error, line %d, initialize_existing_domain failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+    printf("Running App as server\n");
+    if (!server_dispatch(FLAGS_server_app_host,
+                         FLAGS_server_app_port,
+                         *trust_mgr,
+                         server_application)) {
+      ret = 1;
+      goto done;
+    }
+  } else {
+    printf("%s() error, line %d, Unknown operation\n", __func__, __LINE__);
+  }
+
+done:
+#ifdef DEBUG
+  trust_mgr->print_trust_data();
+#endif  // DEBUG
+  trust_mgr->clear_sensitive_data();
+  if (trust_mgr != nullptr) {
+    delete trust_mgr;
+  }
+  return ret;
+}
+#endif
 
 // ----------------------------------------------------------------------

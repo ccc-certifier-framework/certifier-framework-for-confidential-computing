@@ -337,8 +337,9 @@ class cc_trust_manager {
 #ifdef NEW_API
   certifiers* find_certifier_by_domain_name(const string& domain_name);
   bool initialize_keys(const string& public_key_alg,
-                       const string& auth_symmetric_key_alg);
-  bool initialize_domain(const string& domain_name,
+                       const string& symmetric_key_alg,
+		       bool force = false);
+  bool initialize_new_domain(const string& domain_name,
                              const string& policy_key_cert,
                              const string& public_key_alg,
                              const string& auth_symmetric_key_alg,
@@ -359,14 +360,20 @@ class cc_trust_manager {
   bool run_peer_certification_service(const string &host_name, int port);
 
   // multi-domain support
+#ifdef OLD_API
   bool add_or_update_new_domain(const string &domain_name,
-                                const string &cert,
+                                const string &policy_cert,
                                 const string &host,
                                 int           port,
                                 const string &service_host,
                                 int           service_port);
-#if OLD_API
   bool certify_secondary_domain(const string &domain_name);
+#endif
+#ifdef NEW_API
+  bool add_or_update_new_domain(const string &domain_name,
+                                const string &policy_cert,
+                                const string &host,
+                                int           port);
 #endif
   bool get_certifiers_from_store();
   bool put_certifiers_in_store();
