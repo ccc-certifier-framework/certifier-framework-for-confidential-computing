@@ -2034,9 +2034,11 @@ bool certifier::framework::cc_trust_manager::write_private_key_to_file(
 
 certifier::framework::certifiers::certifiers(cc_trust_manager *owner) {
   owner_ = owner;
+#ifdef NEW_API
   x509_policy_cert_ = nullptr;
   is_initialized_ = false;
   is_certified_ = false;
+#endif
 }
 
 certifier::framework::certifiers::~certifiers() {}

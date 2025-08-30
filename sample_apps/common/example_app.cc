@@ -352,7 +352,7 @@ void print_options(const char *op) {
 
 // ----------------------------------------------------------------------
 
-#ifndef USE_NEW_API
+#ifdef OLD_API
 
 int main(int an, char **av) {
   string usage("Simple App");
@@ -523,7 +523,7 @@ done:
 
 // ----------------------------------------------------------------------
 
-#ifdef USE_NEW_API
+#ifdef NEW_API
 int main(int an, char **av) {
   string usage("Simple App");
   gflags::SetUsageMessage(usage);

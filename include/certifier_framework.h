@@ -31,8 +31,10 @@ typedef unsigned char byte;
 
 using std::string;
 
-#define NEW_API 1
-// #define OLD_API 1
+// Note only one of NEW_API and OLD_API can be defined.
+#ifndef NEW_API
+#  define OLD_API 1
+#endif
 
 // -------------------------------------------------------------------
 

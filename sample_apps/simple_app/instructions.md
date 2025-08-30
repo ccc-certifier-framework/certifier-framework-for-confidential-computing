@@ -322,27 +322,19 @@ $EXAMPLE_DIR/example_app.exe                       \
 For new API:
 ```shell
 cd $EXAMPLE_DIR
-
 $EXAMPLE_DIR/example_app.exe                       \
       --data_dir=./app1_data/                      \
       --operation=fresh-start                      \
       --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
       --print_all=true
-
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app1_data/                      \
-      --operation=get-certified                    \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store             \
-      --print_all=true
 ```
 
 In the app-as-a-server terminal run the following:
 
+For old API
 ```shell
 cd $EXAMPLE_DIR
-
 $EXAMPLE_DIR/example_app.exe                       \
       --data_dir=./app2_data/                      \
       --operation=cold-init                        \
@@ -358,6 +350,17 @@ $EXAMPLE_DIR/example_app.exe                       \
       --print_all=true
 ```
 
+For new API
+cd $EXAMPLE_DIR
+$EXAMPLE_DIR/example_app.exe                       \
+      --data_dir=./app2_data/                      \
+      --operation=fresh-start                      \
+      --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store
+      --print_all=true
+
+
+
 At this point, both versions of the app have their admission certificates.  You can look at
 the output of the terminal running simpleserver for output.  Now all we have to do is have
 the apps connect to each other for the final test.  **The Certifier Service is no longer needed
@@ -371,7 +374,6 @@ at this point.**
 ```shell
 
 cd $EXAMPLE_DIR
-
 $EXAMPLE_DIR/example_app.exe           \
       --data_dir=./app2_data/          \
       --operation=run-app-as-server    \
