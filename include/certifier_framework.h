@@ -532,7 +532,6 @@ class secure_authenticated_channel {
   bool get_peer_id(string *out_peer_id);
 };
 
-#ifdef OLD_API
 bool server_dispatch(const string &host_name,
                      int           port,
                      const string &asn1_root_cert,
@@ -550,6 +549,7 @@ bool server_dispatch(const string &host_name,
                      const string &private_key_cert,
                      void (*)(secure_authenticated_channel &));
 
+#ifdef OLD_API
 bool server_dispatch(const string           &host_name,
                      int                     port,
                      const cc_trust_manager &mgr,
@@ -560,7 +560,7 @@ bool server_dispatch(const string           &host_name,
 bool server_dispatch(const string           &domain_name,
                      const string           &host_name,
                      int                     port,
-                     const cc_trust_manager &mgr,
+                     cc_trust_manager &mgr,
                      void (*)(secure_authenticated_channel &));
 #endif
 

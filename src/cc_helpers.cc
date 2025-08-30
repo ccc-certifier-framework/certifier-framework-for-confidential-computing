@@ -3056,7 +3056,6 @@ bool certifier::framework::server_dispatch(
   return true;
 }
 
-#ifdef OLD_API
 bool certifier::framework::server_dispatch(
     const string &host_name,
     int           port,
@@ -3172,13 +3171,13 @@ bool certifier::framework::server_dispatch(
   return true;
 }
 
+#ifdef OLD_API
 bool certifier::framework::server_dispatch(
     const string           &host_name,
     int                     port,
     const cc_trust_manager &mgr,
     void (*func)(secure_authenticated_channel &)) {
 
-#  ifdef OLD_API
   return server_dispatch(
       host_name,
       port,
@@ -3186,20 +3185,32 @@ bool certifier::framework::server_dispatch(
       (key_message &)mgr.private_auth_key_,  // Private key (whose public key is
                                              // named in the admission cert)
 
-      // Admission cert
       (const string &)mgr.serialized_primary_admissions_cert_,
       func);
-#  endif
 }
-#endif  // OLD_API
+#endif
 
 #ifdef NEW_API
-bool server_dispatch(const string           &domain_name,
+bool certifier::framework::server_dispatch(
+                     const string           &domain_name,
                      const string           &host_name,
                      int                     port,
-                     const cc_trust_manager &mgr,
-                     void (*)(secure_authenticated_channel &)) {
-  return false;
+                     cc_trust_manager &mgr,
+                     void (*func)(secure_authenticated_channel &)) {
+
+  certifiers *c = mgr.find_certifier_by_domain_name(domain_name);
+  if (c == nullptr) {
+    printf("%s() error, line %d, can't find domain\n", __func__, __LINE__);
+    return false;
+  }   
+
+  return server_dispatch(
+      host_name,
+      port,
+      (const string &)c->domain_policy_cert_, // Policy-certificate / Root cert
+      (key_message &)mgr.private_auth_key_,   // Private key (public key is in the admission cert)
+      (const string &)c->admissions_cert_,
+      func);
 }
 #endif  // NEW_API
 
