@@ -577,7 +577,7 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init store\n", __func__, __LINE__);
     return 1;
   }
-#  ifdef DEBUG3
+#  ifdef DEBUG4
   printf("\n\nStore initialized\n");
   printf("\ntrust data at initialization\n");
   trust_mgr->print_trust_data();
@@ -606,7 +606,7 @@ int main(int an, char **av) {
 
   if (FLAGS_operation == "fresh-start") {
 #  ifdef DEBUG3
-    printf("fresh-start\n");
+    printf("\nfresh-start\n");
 #  endif
     string purpose("authentication");
     if (!trust_mgr->initialize_new_domain(FLAGS_domain_name,
@@ -625,7 +625,7 @@ int main(int an, char **av) {
 #  endif  // DEBUG
   } else if (FLAGS_operation == "get-certified") {
 #  ifdef DEBUG3
-    printf("get-certified\n");
+    printf("\nget-certified\n");
 #  endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, initialize_existing_domain failed\n",
@@ -652,7 +652,7 @@ int main(int an, char **av) {
     secure_authenticated_channel channel(my_role);
 
 #  ifdef DEBUG3
-    printf("run-app-as-client\n");
+    printf("\nrun-app-as-client\n");
 #  endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
@@ -691,7 +691,7 @@ int main(int an, char **av) {
   } else if (FLAGS_operation == "run-app-as-server") {
 
 #  ifdef DEBUG3
-    printf("run-app-as-server\n");
+    printf("\nrun-app-as-server\n");
 #  endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, initialize_existing_domain failed\n",
@@ -717,8 +717,6 @@ done:
 #  ifdef DEBUG3
   printf("\n\ntrust data on exit\n");
   trust_mgr->print_trust_data();
-  printf("\n\nStore\n");
-  trust_mgr->store_.print();
   printf("\n\nDone\n");
 #  endif  // DEBUG3
   trust_mgr->clear_sensitive_data();

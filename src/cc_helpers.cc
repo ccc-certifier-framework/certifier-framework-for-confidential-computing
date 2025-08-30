@@ -85,7 +85,6 @@ extern string gramine_platform_cert;
 //  fancier.
 
 // #define DEBUG
-#define DEBUG3
 
 // ------------------------------------------------------------------------
 
@@ -570,13 +569,10 @@ bool certifier::framework::cc_trust_manager::initialize_keys(
     const string &symmetric_key_alg,
     bool          force) {
 
-#  ifdef DEBUG3
+#  ifdef DEBUG4
   printf("in initialize_keys\n");
 #  endif
   if (cc_auth_key_initialized_ && !force) {
-#  ifdef DEBUG3
-    printf("keys already initialized\n");
-#  endif
     return true;
   }
 
