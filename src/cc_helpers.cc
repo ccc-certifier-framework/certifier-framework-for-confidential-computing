@@ -106,6 +106,7 @@ certifier::framework::cc_trust_manager::cc_trust_manager(
     const string &enclave_type,
     const string &purpose,
     const string &policy_store_name) {
+
   cc_trust_manager_default_init();
   if (purpose == "authentication" || purpose == "attestation") {
     purpose_ = purpose;
@@ -135,6 +136,7 @@ void certifier::framework::cc_trust_manager::cc_trust_manager_default_init() {
   cc_policy_info_initialized_ = false;
   cc_basic_data_initialized_ = false;
   cc_is_certified_ = false;
+  primary_admissions_cert_valid_ = false;
 #endif
   num_accelerators_ = 0;
   max_num_certified_domains_ = MAX_NUM_CERTIFIERS;
@@ -273,8 +275,12 @@ bool certifier::framework::cc_trust_manager::certify_secondary_domain(
 bool certifier::framework::cc_trust_manager::certify_primary_domain() {
 
   // already certified
-  if (cc_is_certified_)
+  if (cc_is_certified_) {
+#ifdef DEBUG3
+    printf("Primary domain already certified\n");
+#endif
     return true;
+  }
 
   // primary domain should be entry 0
   // if not already certified, certify
@@ -283,8 +289,7 @@ bool certifier::framework::cc_trust_manager::certify_primary_domain() {
     return false;
   }
 
-#  ifdef DEBUG
-  // Debug: print primary certifier data
+#  ifdef DEBUG3
   printf("Certifying primary domain\n");
   certified_domains_[0]->print_certifiers_entry();
 #  endif
@@ -448,13 +453,6 @@ bool certifier::framework::cc_trust_manager::cold_init(
     return false;
   }
 
-  if (!put_trust_data_in_store()) {
-    printf("%s() error, line %d, Can't put trust data in store\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
   if (!save_store()) {
     printf("%s() error, line %d, Can't save store\n", __func__, __LINE__);
     return false;
@@ -473,22 +471,6 @@ bool certifier::framework::cc_trust_manager::warm_restart() {
     }
   }
   cc_policy_store_initialized_ = true;
-
-#  if 0
-  if (!get_trust_data_from_store()) {
-    printf("%s() error, line %d, Can't get trust data from store\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-#  endif
-
-#  ifdef DEBUG
-  printf("\nRecovered trust data\n");
-  print_trust_data();
-  printf("\n");
-  printf("End Recovered trust data\n");
-#  endif
   return true;
 }
 
@@ -753,22 +735,6 @@ bool certifier::framework::cc_trust_manager::initialize_existing_domain(
       return false;
     }
   }
-
-#  if 0
-  if (!get_trust_data_from_store()) {
-    printf("%s() error, line %d, Can't get trust data from store\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-#  endif
-
-#  ifdef DEBUG
-  printf("\nRecovered trust data\n");
-  print_trust_data();
-  printf("\n");
-  printf("End Recovered trust data\n");
-#  endif
   return true;
 }
 
@@ -887,15 +853,6 @@ bool certifier::framework::cc_trust_manager::initialize_simulated_enclave(
     const string &serialized_attest_key,
     const string &measurement,
     const string &serialized_attest_endorsement) {
-
-#if 0
-  if (!cc_policy_info_initialized_) {
-    printf("%s() error, line %d, Policy key must be initialized first\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-#endif
 
   if (enclave_type_ != "simulated-enclave") {
     printf("%s() error, line %d, Not a simulated enclave\n",
@@ -1147,6 +1104,11 @@ void certifier::framework::cc_trust_manager::print_trust_data() {
   } else {
     printf("cc_policy_info_initialized_ is false\n");
   }
+  if (primary_admissions_cert_valid_) {
+    printf("primary_admissions_cert_valid_ is true\n");
+  } else {
+    printf("primary_admissions_cert_valid_ is false\n");
+  }
 #endif
   if (cc_provider_provisioned_) {
     printf("cc_provider_provisioned_ is true\n");
@@ -1347,7 +1309,7 @@ void certifier::framework::cc_trust_manager::clear_sensitive_data() {
 //  initialized_cert_size These are set in embed+policy_key.cc.
 bool certifier::framework::cc_trust_manager::put_trust_data_in_store() {
 
-#ifdef DEBUB
+#ifdef DEBUG
   store_.policy_key_.CopyFrom(public_policy_key_);
   store_.policy_key_valid_ = true;
 #endif
@@ -1479,7 +1441,7 @@ bool certifier::framework::cc_trust_manager::put_trust_data_in_store() {
     }
 
 #ifdef DEBUG
-    printf("put_trust_data_from_store: outgoing store\n");
+    printf("put_trust_data_in_store: outgoing store\n");
     store_.print();
 #endif
     return true;
@@ -1538,6 +1500,7 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
 
 #ifdef OLD_API
   if (num_certified_domains_ > 0 && certified_domains_[0]->is_certified_) {
+    cc_is_certified_ = certified_domains_[0]->is_certified_;
     primary_admissions_cert_valid_ = true;
     serialized_primary_admissions_cert_ =
         certified_domains_[0]->admissions_cert_;
@@ -1625,7 +1588,7 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
       cc_service_platform_rule_initialized_ = true;
     }
 #ifdef OLD_API
-    cc_is_certified_ = true;
+    // cc_is_certified_ = true;
 #endif
     return true;
   }
@@ -1669,20 +1632,8 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
 #ifdef OLD_API
     if (private_auth_key_.has_certificate() || primary_admissions_cert_valid_) {
       cc_is_certified_ = true;
-#  ifdef DEBUG
-      X509 *x = X509_new();
-      if (asn1_to_x509(private_auth_key_.certificate(), x)) {
-        X509_print_fp(stdout, x);
-      }
-      X509_free(x);
-#  endif
     }
-#  ifdef DEBUG2
-    else {
-      printf("\n***is not certified\n");
-    }
-#  endif
-#endif
+#endif // OLD_API
 
     string symmetric_key_tag("app-symmetric-key");
     ent = store_.find_entry(symmetric_key_tag, key_type);
@@ -2119,7 +2070,6 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     return false;
   }
 
-#define DEBUG3
 #ifdef DEBUG3
   printf("%s():%d: enclave_type_ = '%s', purpose_ = '%s'\n",
          __func__,

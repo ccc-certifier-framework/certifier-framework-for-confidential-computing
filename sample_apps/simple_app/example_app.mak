@@ -44,7 +44,7 @@ CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -W
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
 endif
 CFLAGS=$(CFLAGS_NOERROR) -Werror -fPIC
-CFLAGS += -DNEW_API
+# CFLAGS += -DNEW_API
 
 CC=g++
 LINK=g++

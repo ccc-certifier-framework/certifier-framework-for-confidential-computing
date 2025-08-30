@@ -289,9 +289,8 @@ In a new terminal window:
 ```shell
 cd $EXAMPLE_DIR/service
 
-$CERTIFIER_ROOT/certifier_service/simpleserver   \
-      --policyFile=policy.bin                         \
-      --readPolicy=true
+$CERTIFIER_ROOT/certifier_service/simpleserver \
+   --policyFile=policy.bin --readPolicy=true
 ```
 
 ## Step 14:  Run the apps and get admission certificates from Certifier Service
@@ -304,19 +303,15 @@ In the app-as-a-client terminal run the following:
 ```shell
 cd $EXAMPLE_DIR
 
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app1_data/                      \
-      --operation=cold-init                        \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store
-      --print_all=true
+$EXAMPLE_DIR/example_app.exe \
+  --data_dir=./app1_data/ --operation=cold-init  \
+  --measurement_file="example_app.measurement" \
+  --policy_store_file=policy_store --print_all=true
 
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app1_data/                      \
-      --operation=get-certified                    \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store             \
-      --print_all=true
+$EXAMPLE_DIR/example_app.exe  \
+  --data_dir=./app1_data/ --operation=get-certified \
+  --measurement_file="example_app.measurement" \
+  --policy_store_file=policy_store --print_all=true
 ```
 
 For new API:
@@ -335,19 +330,14 @@ In the app-as-a-server terminal run the following:
 For old API
 ```shell
 cd $EXAMPLE_DIR
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app2_data/                      \
-      --operation=cold-init                        \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store
-      --print_all=true
+$EXAMPLE_DIR/example_app.exe  \
+  --data_dir=./app2_data/ --operation=cold-init  \
+  --measurement_file="example_app.measurement" \
+  --policy_store_file=policy_store --print_all=true
 
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app2_data/                      \
-      --operation=get-certified                    \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store             \
-      --print_all=true
+$EXAMPLE_DIR/example_app.exe   \
+   --data_dir=./app2_data/ --operation=get-certified --measurement_file="example_app.measurement" \
+   --policy_store_file=policy_store --print_all=true
 ```
 
 For new API
@@ -372,25 +362,21 @@ at this point.**
 ### a. In the app-as-a-server terminal run the following:
 
 ```shell
-
+# This is the same for new and old api
 cd $EXAMPLE_DIR
-$EXAMPLE_DIR/example_app.exe           \
-      --data_dir=./app2_data/          \
-      --operation=run-app-as-server    \
-      --policy_store_file=policy_store \
-      --print_all=true
+$EXAMPLE_DIR/example_app.exe \
+  --data_dir=./app2_data/ --operation="run-app-as-server" \
+  --policy_store_file=policy_store --print_all=true
 ```
 
 ### b. In the app-as-a-client terminal run the following:
 
 ```shell
+# This is the same for new and old api
 cd $EXAMPLE_DIR
-
-$EXAMPLE_DIR/example_app.exe           \
-      --data_dir=./app1_data/          \
-      --operation=run-app-as-client    \
-      --policy_store_file=policy_store \
-      --print_all=true
+$EXAMPLE_DIR/example_app.exe \
+  --data_dir=./app1_data/  --operation=run-app-as-client   \
+  --policy_store_file=policy_store --print_all=true
 ```
 
 You should see the message "Hi from your secret server" in the client terminal window and
