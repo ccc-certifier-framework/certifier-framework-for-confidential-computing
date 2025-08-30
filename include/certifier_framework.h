@@ -31,12 +31,21 @@ typedef unsigned char byte;
 
 using std::string;
 
-// Policy store
+#ifndef NEW_API
+#  define OLD_API 1
+#endif
+
+// Note only one of NEW_API and OLD_API can be defined.
+#if defined(OLD_API) && defined(NEW_API)
+#  undef NEW_API
+#endif
+
 // -------------------------------------------------------------------
 
 namespace certifier {
 namespace framework {
 
+// Policy store
 // This will replace the old policy store
 class store_entry {
  public:
@@ -134,14 +143,39 @@ bool reprotect_blob(const string &enclave_type,
                     int          *size_new_encrypted_blob,
                     byte         *data);
 
+// Note added 28 August 2025
+// I'm changing the API exposed by trust manager a little.
+// and tidying up a bit.  There are two defines, NEW_API
+// and OLD_API which conditionally compile in the NEW
+// and/or OLD API's.  For compatibility, both will be
+// defined initially although I hope to remove OLD_API
+// in the future.
+//
+//    a. Paul England pointed out that the simulated_enclave,
+//       which is currently in $CERTIFIER/src should move to a
+//       subdirectory like the other platform interfaces.
+//    b. Some of the interfaces assumed that a program (or app) would
+//       talk to only one application server and participate in
+//       one domain. Later improvements removed these restrictions.
+//       So some calls (like cold_init) ask for the URL of an applications
+//       server when initializing the trust manager and the trust manager
+//       has a concept of "primary" domain. Neither of these are necessary.
+//       No certified domain is distinguished and you only need to know
+//       the url (and port) of an applications server when you connect to
+//       it using secure_authenticated_channel.  These changes (and some
+//       other cosmetic ones) will have minimal effect on application
+//       writing but should make the code easier to understand.
+
 class domain_info {
  public:
   string domain_name_;
   string domain_policy_cert_;
   string host_;
   int    port_;
+#ifdef OLD_API
   string service_host_;
   int    service_port_;
+#endif
 };
 
 const int max_accerlerators = 4;
@@ -172,8 +206,6 @@ class cc_trust_manager {
   // Python swig bindings need this to be public, to size other array decls
   static const int max_symmetric_key_size_ = 128;
 
-  bool cc_basic_data_initialized_;
-
   string purpose_;
   string enclave_type_;
   string store_file_name_;
@@ -185,25 +217,28 @@ class cc_trust_manager {
   bool add_accelerator(const string &acc_type, int num_certs, string *certs);
   bool accelerator_verified(const string &acc_type);
 
-  // For primary security domain only
-  bool        cc_policy_info_initialized_;
-  string      serialized_policy_cert_;
-  X509       *x509_policy_cert_;
-  key_message public_policy_key_;
-
   bool         cc_policy_store_initialized_;
   policy_store store_;
 
   // platform initialized?
   bool cc_provider_provisioned_;
 
+#ifdef OLD_API
   // primary domain certified?
-  bool cc_is_certified_;
-
+  bool   cc_is_certified_;
   bool   primary_admissions_cert_valid_;
   string serialized_primary_admissions_cert_;
+
+  // For primary security domain only
+  bool        cc_basic_data_initialized_;
+  bool        cc_policy_info_initialized_;
+  string      serialized_policy_cert_;
+  X509       *x509_policy_cert_;
+  key_message public_policy_key_;
+  bool        init_policy_key(byte *asn1_cert, int asn1_cert_size);
   // Note: if purpose is attestation, serialized_home_admissions_cert_
   // is the same as the serialized_service_cert_, so remove it later
+#endif
 
   // auth key is the same in all domains
   bool        cc_auth_key_initialized_;
@@ -242,26 +277,14 @@ class cc_trust_manager {
   key_message local_policy_key_;
   string      local_policy_cert_;
 
-
   enum { MAX_NUM_CERTIFIERS = 32 };
   cc_trust_manager();
   cc_trust_manager(const string &enclave_type,
                    const string &purpose,
                    const string &policy_store_name);
-  /*
-  cc_trust_manager(const string &enclave_type,
-                   const string &purpose,
-                   const string &policy_store_name);
-  */
   ~cc_trust_manager();
 
-  // If n == 0, systems should be able to find parameters
-  // by default, for example, sev and sgx.
-  bool initialize_enclave(int n, string *params);
-
   // Each of the enclave types have bespoke initialization
-
-  // C++ Interface ignored through SWIG bindings
   bool initialize_simulated_enclave(
       const string &serialized_attest_key,
       const string &measurement,
@@ -275,34 +298,39 @@ class cc_trust_manager {
       int         measurement_size,
       const byte *serialized_attest_endorsement,
       int         attest_key_signed_claim_size);
-
   bool initialize_sev_enclave(const string &ark_der_cert,
                               const string &ask_der_cert,
                               const string &vcek_der_cert);
-
   bool initialize_gramine_enclave(const int size, byte *cert);
-
   bool initialize_oe_enclave(const string &cert);
-
   bool initialize_application_enclave(const string &parent_enclave_type,
                                       int           in_fd,
                                       int           out_fd);
-
   bool initialize_keystone_enclave();
   bool initialize_islet_enclave();
 
-  bool cc_all_initialized();
-  bool init_policy_key(byte *asn1_cert, int asn1_cert_size);
+  // If n == 0, systems should be able to find parameters
+  // by default, for example, sev and sgx.
+  bool initialize_enclave(int n, string *params);
+
   bool put_trust_data_in_store();
   bool get_trust_data_from_store();
-  bool save_store();
+#ifdef NEW_API
+  bool initialize_store();
+#endif
   bool fetch_store();
+  bool save_store();
   void clear_sensitive_data();
 
   bool generate_symmetric_key(bool regen);
   bool generate_sealing_key(bool regen);
   bool generate_auth_key(bool regen);
   bool generate_service_key(bool regen);
+
+#ifdef OLD_API
+  bool cc_all_initialized();
+  bool certify_primary_domain();
+  bool certify_me() { return certify_primary_domain(); };
 
   bool cold_init(const string &public_key_alg,
                  const string &symmetric_key_alg,
@@ -313,11 +341,24 @@ class cc_trust_manager {
                  int           service_port);
 
   bool warm_restart();
+#endif
+#ifdef NEW_API
+  certifiers *find_certifier_by_domain_name(const string &domain_name);
+  bool        initialize_keys(const string &public_key_alg,
+                              const string &symmetric_key_alg,
+                              bool          force = false);
+  bool        initialize_new_domain(const string &domain_name,
+                                    const string &purpose,
+                                    const string &symmetric_key_alg,
+                                    const string &host_url,
+                                    int           port);
+  bool        initialize_existing_domain(const string &domain_name);
+  bool get_admissions_cert(const string &domain_name, string *admin_cert);
+  bool admissions_cert_valid_status(const string &domain_name);
+#endif
+
   bool GetPlatformSaysAttestClaim(signed_claim_message *scm);
   void print_trust_data();
-
-  bool certify_primary_domain();
-  bool certify_me() { return certify_primary_domain(); };
 
   // For peer-to-peer certification (not used yet)
   bool init_peer_certification_data(const string &public_key_alg);
@@ -326,49 +367,75 @@ class cc_trust_manager {
   bool run_peer_certification_service(const string &host_name, int port);
 
   // multi-domain support
+#ifdef OLD_API
   bool add_or_update_new_domain(const string &domain_name,
-                                const string &cert,
+                                const string &policy_cert,
                                 const string &host,
                                 int           port,
                                 const string &service_host,
                                 int           service_port);
-
   bool certify_secondary_domain(const string &domain_name);
+#endif
+#ifdef NEW_API
+  bool add_or_update_new_domain(const string &domain_name,
+                                const string &purpose,
+                                const string &policy_cert,
+                                const string &host,
+                                int           port);
+#endif
   bool get_certifiers_from_store();
   bool put_certifiers_in_store();
   bool write_private_key_to_file(const string &filename);
 };
 
-// Certification Anchors
 
+// Certification Anchors
 class certifiers {
  private:
   // should be const, don't delete it
   cc_trust_manager *owner_;
 
  public:
+  string signed_rule_;
+  string purpose_;
   string domain_name_;
   string domain_policy_cert_;
+#ifdef NEW_API
+  bool        is_initialized_;
+  X509       *x509_policy_cert_;
+  key_message public_policy_key_;
+#endif  // NEW_API
   string host_;
   int    port_;
-  string purpose_;
   string admissions_cert_;
-  string signed_rule_;
   bool   is_certified_;
-  string service_host_;
-  int    service_port_;
 
   certifiers(cc_trust_manager *owner);
   ~certifiers();
 
+#ifdef OLD_API
+  string service_host_;
+  int    service_port_;
+#endif
+
+#ifdef NEW_API
+  bool init_certifiers_data_new(const string &domain_name,
+                                const string &purpose,
+                                const string &cert,
+                                const string &host,
+                                int           port);
+#endif  // NEW_API
+
+#ifdef OLD_API
   bool init_certifiers_data(const string &domain_name,
                             const string &cert,
                             const string &host,
                             int           port,
                             const string &service_host,
                             int           service_port);
-
   bool get_certified_status();
+#endif  // OLD_API
+
   bool certify_domain(const string &purpose);
   void print_certifiers_entry();
 };
@@ -405,15 +472,24 @@ class secure_authenticated_channel {
 
   // Interface invoked through Python apps. (We don't use the python_ prefix
   // as other tests / programs also exercise this through C++ code.)
+
   bool init_client_ssl(const string &host_name,
                        int           port,
                        const string &asn1_root_cert,
                        key_message  &private_key,
                        const string &private_key_cert);
 
+#ifdef OLD_API
   bool init_client_ssl(const string           &host_name,
                        int                     port,
                        const cc_trust_manager &mgr);
+#endif  // OLD_API
+#ifdef NEW_API
+  bool init_client_ssl(const string     &domain_name,
+                       const string     &host_name,
+                       int               port,
+                       cc_trust_manager &mgr);
+#endif
 
   // Interface invoked through Python apps. (We don't use the python_ prefix
   // as other tests / programs also exercise this through C++ code.)
@@ -423,10 +499,17 @@ class secure_authenticated_channel {
                        key_message  &private_key,
                        const string &private_key_cert);
 
+#ifdef OLD_API
   bool init_server_ssl(const string           &host_name,
                        int                     port,
                        const cc_trust_manager &mgr);
-
+#endif
+#ifdef NEW_API
+  bool init_server_ssl(const string     &domain_name,
+                       const string     &host_name,
+                       int               port,
+                       cc_trust_manager &mgr);
+#endif  //  NEW_API
 
   // Interface invoked for user supplied keys and cert chain.
   // This is used, for example, when either endpoint is not a certifier approved
@@ -475,10 +558,20 @@ bool server_dispatch(const string &host_name,
                      const string &private_key_cert,
                      void (*)(secure_authenticated_channel &));
 
+#ifdef OLD_API
 bool server_dispatch(const string           &host_name,
                      int                     port,
                      const cc_trust_manager &mgr,
                      void (*)(secure_authenticated_channel &));
+#endif  // OLD_API
+
+#ifdef NEW_API
+bool server_dispatch(const string     &domain_name,
+                     const string     &host_name,
+                     int               port,
+                     cc_trust_manager &mgr,
+                     void (*)(secure_authenticated_channel &));
+#endif
 
 }  // namespace framework
 }  // namespace certifier

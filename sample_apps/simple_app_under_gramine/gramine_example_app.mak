@@ -42,6 +42,7 @@ CERTIFIER_ROOT = ../..
 endif
 CERTIFIER_SRC_PATH = $(CERTIFIER_ROOT)/src
 COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
+SE = $(CERTIFIER_SRC_PATH)/simulated-enclave
 
 .SECONDARY: certifier
 CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc        \
@@ -49,7 +50,7 @@ CERTIFIER_SRC = $(CERTIFIER_SRC_PATH)/gramine/gramine_api.cc        \
 		$(CERTIFIER_SRC_PATH)/certifier.cc                  \
 		$(CERTIFIER_SRC_PATH)/certifier_proofs.cc           \
 		$(CERTIFIER_SRC_PATH)/support.cc                    \
-		$(CERTIFIER_SRC_PATH)/simulated_enclave.cc          \
+		$(SE)/simulated_enclave.cc          \
 		$(CERTIFIER_SRC_PATH)/application_enclave.cc        \
 		$(CERTIFIER_SRC_PATH)/cc_helpers.cc                 \
 		$(CERTIFIER_SRC_PATH)/cc_useful.cc                  \

@@ -29,6 +29,7 @@ US=.
 I= $(CERTIFIER_ROOT)/include
 INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 CF_UTILITY_SRC= $(CERTIFIER_ROOT)/vm_model_tools/src
+SE= $(S)/simulated-enclave
 
 ENABLE_SEV=1
 
@@ -120,14 +121,12 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
 
-$(O)/cryptstore.pb.o: $(CF_UTILITY_SRC)/cryptstore.pb.cc
+$(O)/cryptstore.pb.o: $(CF_UTILITY_SRC)/cryptstore.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(O)/cryptstore.pb.o -c $(CF_UTILITY_SRC)/cryptstore.pb.cc
 
 $(CF_UTILITY_SRC)/cryptstore.pb.h: $(CF_UTILITY_SRC)/cryptstore.proto
 	$(PROTO) --proto_path=$(CF_UTILITY_SRC) --cpp_out=. $(CF_UTILITY_SRC)/cryptstore.proto
-
-$(CF_UTILITY_SRC)/cryptstore.pb.cc: $(CF_UTILITY_SRC)/cryptstore.pb.h
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "\ncompiling $<"
@@ -141,7 +140,7 @@ $(O)/support.o: $(S)/support.cc $(I)/support.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
+$(O)/simulated_enclave.o: $(SE)/simulated_enclave.cc $(I)/simulated_enclave.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

@@ -101,31 +101,26 @@ cd $EXAMPLE_DIR/provisioning
 
 ```shell
 $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
-      --key_subject=platform_key_file.bin                   \
-      --verb="is-trusted-for-attestation"                   \
+      --key_subject=platform_key_file.bin              \
+      --verb="is-trusted-for-attestation"              \
       --output=ts1.bin
 
-$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe    \
-      --key_subject=policy_key_file.bin                        \
-      --verb="says"                                            \
-      --clause=ts1.bin                                         \
-      --output=vse_policy1.bin
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+ --key_subject=policy_key_file.bin --verb="says"       \
+ --clause=ts1.bin --output=vse_policy1.bin
 ```
 
 ### b. Construct  policy key says measurement is-trusted
 
 ```shell
-$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
-      --key_subject=""                                      \
-      --measurement_subject=example_app.measurement         \
-      --verb="is-trusted"                                   \
-      --output=ts2.bin
+$CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe  \
+  --key_subject=""   \
+  --measurement_subject=example_app.measurement \
+  --verb="is-trusted" --output=ts2.bin
 
-$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe    \
-      --key_subject=policy_key_file.bin                        \
-      --verb="says"                                            \
-      --clause=ts2.bin                                         \
-      --output=vse_policy2.bin
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe   \
+  --key_subject=policy_key_file.bin --verb="says"  \
+  --clause=ts2.bin  --output=vse_policy2.bin
 ```
 
 ### c. Produce the signed claims for each vse policy statement.
@@ -147,8 +142,7 @@ $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
 
 ```shell
 $CERTIFIER_ROOT/utilities/package_claims.exe     \
-      --input=signed_claim_1.bin,signed_claim_2.bin   \
-      --output=policy.bin
+  --input=signed_claim_1.bin,signed_claim_2.bin --output=policy.bin
 ```
 
 ### e. [optional] Print the policy
@@ -295,54 +289,67 @@ In a new terminal window:
 ```shell
 cd $EXAMPLE_DIR/service
 
-$CERTIFIER_ROOT/certifier_service/simpleserver   \
-      --policyFile=policy.bin                         \
-      --readPolicy=true
+$CERTIFIER_ROOT/certifier_service/simpleserver \
+   --policyFile=policy.bin --readPolicy=true
 ```
 
 ## Step 14:  Run the apps and get admission certificates from Certifier Service
 Open two new terminals (one for the example app running as a client and one for the
 same example app running as a server):
 
+For old API:
 In the app-as-a-client terminal run the following:
 
 ```shell
 cd $EXAMPLE_DIR
 
+$EXAMPLE_DIR/example_app.exe \
+  --data_dir=./app1_data/ --operation=cold-init  \
+  --measurement_file="example_app.measurement" \
+  --policy_store_file=policy_store --print_all=true
+
+$EXAMPLE_DIR/example_app.exe  \
+  --data_dir=./app1_data/ --operation=get-certified \
+  --measurement_file="example_app.measurement" \
+  --policy_store_file=policy_store --print_all=true
+```
+
+For new API:
+```shell
+cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe                       \
       --data_dir=./app1_data/                      \
-      --operation=cold-init                        \
+      --operation=fresh-start                      \
       --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
-      --print_all=true
-
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app1_data/                      \
-      --operation=get-certified                    \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store             \
       --print_all=true
 ```
 
 In the app-as-a-server terminal run the following:
 
+For old API
 ```shell
 cd $EXAMPLE_DIR
+$EXAMPLE_DIR/example_app.exe  \
+  --data_dir=./app2_data/ --operation=cold-init  \
+  --measurement_file="example_app.measurement" \
+  --policy_store_file=policy_store --print_all=true
 
+$EXAMPLE_DIR/example_app.exe   \
+   --data_dir=./app2_data/ --operation=get-certified --measurement_file="example_app.measurement" \
+   --policy_store_file=policy_store --print_all=true
+```
+
+For new API
+cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe                       \
       --data_dir=./app2_data/                      \
-      --operation=cold-init                        \
+      --operation=fresh-start                      \
       --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
       --print_all=true
 
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app2_data/                      \
-      --operation=get-certified                    \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store             \
-      --print_all=true
-```
+
 
 At this point, both versions of the app have their admission certificates.  You can look at
 the output of the terminal running simpleserver for output.  Now all we have to do is have
@@ -355,26 +362,21 @@ at this point.**
 ### a. In the app-as-a-server terminal run the following:
 
 ```shell
-
+# This is the same for new and old api
 cd $EXAMPLE_DIR
-
-$EXAMPLE_DIR/example_app.exe           \
-      --data_dir=./app2_data/          \
-      --operation=run-app-as-server    \
-      --policy_store_file=policy_store \
-      --print_all=true
+$EXAMPLE_DIR/example_app.exe \
+  --data_dir=./app2_data/ --operation="run-app-as-server" \
+  --policy_store_file=policy_store --print_all=true
 ```
 
 ### b. In the app-as-a-client terminal run the following:
 
 ```shell
+# This is the same for new and old api
 cd $EXAMPLE_DIR
-
-$EXAMPLE_DIR/example_app.exe           \
-      --data_dir=./app1_data/          \
-      --operation=run-app-as-client    \
-      --policy_store_file=policy_store \
-      --print_all=true
+$EXAMPLE_DIR/example_app.exe \
+  --data_dir=./app1_data/  --operation=run-app-as-client   \
+  --policy_store_file=policy_store --print_all=true
 ```
 
 You should see the message "Hi from your secret server" in the client terminal window and

@@ -1130,6 +1130,7 @@ func PrintVseAttestationReportInfo(info *certprotos.VseAttestationReportInfo) {
 	if info.VerifiedMeasurement != nil {
 		fmt.Printf("Measurement : ")
 		PrintBytes(info.VerifiedMeasurement)
+		fmt.Printf("\n")
 	}
 	if info.NotBefore != nil && info.NotAfter != nil {
 		fmt.Printf("Valid between: %s and %s\n", *info.NotBefore, *info.NotAfter)
@@ -1137,6 +1138,7 @@ func PrintVseAttestationReportInfo(info *certprotos.VseAttestationReportInfo) {
 	if info.UserData != nil {
 		fmt.Printf("User Data   : ")
 		PrintBytes(info.UserData)
+		fmt.Printf("\n")
 	}
 	return
 }

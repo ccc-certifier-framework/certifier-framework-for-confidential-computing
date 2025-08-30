@@ -29,6 +29,7 @@ US=.
 I= $(CERTIFIER_ROOT)/include
 INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
+SE= $(S)/simulated-enclave
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
 # When this happens, everything must be compiles with C++17 and the linking is a
@@ -43,7 +44,8 @@ else
 CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
 endif
-CFLAGS=$(CFLAGS_NOERROR) -Werror
+CFLAGS=$(CFLAGS_NOERROR) -Werror -fPIC
+# CFLAGS += -DNEW_API
 
 CC=g++
 LINK=g++
@@ -114,7 +116,7 @@ $(O)/support.o: $(S)/support.cc $(I)/support.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/simulated_enclave.o: $(S)/simulated_enclave.cc $(I)/simulated_enclave.h
+$(O)/simulated_enclave.o: $(SE)/simulated_enclave.cc $(I)/simulated_enclave.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

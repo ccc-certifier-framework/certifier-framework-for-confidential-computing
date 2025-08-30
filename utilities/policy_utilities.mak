@@ -43,6 +43,7 @@ S= $(SRC_DIR)
 O= $(OBJ_DIR)
 I= $(INC_DIR)
 INCLUDE= -I$(INC_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(CERT_SRC)/sev-snp/
+SE = $(CERT_SRC)/simulated-enclave
 
 # Compilation of protobuf files could run into some errors, so avoid using
 # -Werror for those targets
@@ -167,7 +168,7 @@ $(O)/certifier_proofs.o: $(CERT_SRC)/certifier_proofs.cc $(INC_DIR)/certifier.pb
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/simulated_enclave.o: $(CERT_SRC)/simulated_enclave.cc $(INC_DIR)/simulated_enclave.h
+$(O)/simulated_enclave.o: $(SE)/simulated_enclave.cc $(INC_DIR)/simulated_enclave.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
