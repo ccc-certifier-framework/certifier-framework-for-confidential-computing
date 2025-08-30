@@ -1309,11 +1309,6 @@ void certifier::framework::cc_trust_manager::clear_sensitive_data() {
 //  initialized_cert_size These are set in embed+policy_key.cc.
 bool certifier::framework::cc_trust_manager::put_trust_data_in_store() {
 
-#ifdef DEBUG
-  store_.policy_key_.CopyFrom(public_policy_key_);
-  store_.policy_key_valid_ = true;
-#endif
-
   const string string_type("string");
   const string key_type("key");
   const string signed_claim_type("signed_claim");
