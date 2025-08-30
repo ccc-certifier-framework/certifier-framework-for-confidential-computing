@@ -85,6 +85,9 @@ extern string gramine_platform_cert;
 //  fancier.
 
 // #define DEBUG
+#define DEBUG3
+
+// ------------------------------------------------------------------------
 
 certifier::framework::accelerator::accelerator() {
   num_certs_ = 0;
@@ -472,12 +475,14 @@ bool certifier::framework::cc_trust_manager::warm_restart() {
   }
   cc_policy_store_initialized_ = true;
 
+#  if 0
   if (!get_trust_data_from_store()) {
     printf("%s() error, line %d, Can't get trust data from store\n",
            __func__,
            __LINE__);
     return false;
   }
+#  endif
 
 #  ifdef DEBUG
   printf("\nRecovered trust data\n");
@@ -507,7 +512,6 @@ bool certifier::framework::certifiers::init_certifiers_data(
   return true;
 }
 
-
 bool certifier::framework::certifiers::get_certified_status() {
   return is_certified_;
 }
@@ -525,6 +529,14 @@ void certifier::framework::certifiers::print_certifiers_entry() {
     printf("Purpose: not declared\n");
   }
   printf("Host: %s, port: %d\n", host_.c_str(), port_);
+
+#ifdef NEW_API
+  if (is_initialized_) {
+    printf("Initialized\n");
+  } else {
+    printf("Not Initialized\n");
+  }
+#endif
 
   if (is_certified_) {
     printf("Certified\n");
@@ -558,7 +570,6 @@ bool certifier::framework::cc_trust_manager::initialize_keys(
     const string &symmetric_key_alg,
     bool          force) {
 
-#  define DEBUG3
 #  ifdef DEBUG3
   printf("in initialize_keys\n");
 #  endif
@@ -625,9 +636,8 @@ bool certifier::framework::cc_trust_manager::initialize_keys(
     c->admissions_cert_.clear();
   }
 
-#  define DEBUG3
 #  ifdef DEBUG3
-  printf("keys in init_keys\n");
+  printf("\n\nkeys in init_keys\n");
   printf("private auth key:\n");
   print_key(private_auth_key_);
   printf("\n");
@@ -657,7 +667,6 @@ certifier::framework::cc_trust_manager::find_certifier_by_domain_name(
 bool certifier::framework::cc_trust_manager::initialize_store() {
   if (!cc_policy_store_initialized_) {
     if (file_size(store_file_name_) < 0) {
-#  define DEBUG3
 #  ifdef DEBUG3
       printf("Store %s doesn't exist, starting new one\n",
              store_file_name_.c_str());
@@ -666,7 +675,7 @@ bool certifier::framework::cc_trust_manager::initialize_store() {
       return true;
     }
     if (!fetch_store()) {
-      printf("%s() error, line %d, store file exists but couln't be read\n",
+      printf("%s() error, line %d, store file exists but couldn't be read\n",
              __func__,
              __LINE__);
       return false;
@@ -678,6 +687,7 @@ bool certifier::framework::cc_trust_manager::initialize_store() {
 
 bool certifier::framework::cc_trust_manager::initialize_new_domain(
     const string &domain_name,
+    const string &purpose,
     const string &policy_key_cert,
     const string &host_url,
     int           port) {
@@ -687,7 +697,11 @@ bool certifier::framework::cc_trust_manager::initialize_new_domain(
     return false;
   }
 
-  if (!add_or_update_new_domain(domain_name, policy_key_cert, host_url, port)) {
+  if (!add_or_update_new_domain(domain_name,
+                                purpose,
+                                policy_key_cert,
+                                host_url,
+                                port)) {
     printf("%s() error, line %d, can't add_or_update domain\n",
            __func__,
            __LINE__);
@@ -730,20 +744,28 @@ bool certifier::framework::cc_trust_manager::initialize_existing_domain(
   }
 
   certifiers *c = find_certifier_by_domain_name(domain_name);
-  if (c == nullptr)
+  if (c == nullptr) {
+    printf("%s() error, line %d, can't find certifier for %s\n",
+           __func__,
+           __LINE__,
+           domain_name.c_str());
     return false;
+  }
   if (!cc_policy_store_initialized_) {
     if (!fetch_store()) {
       printf("%s() error, line %d, Can't fetch store\n", __func__, __LINE__);
       return false;
     }
   }
+
+#  if 0
   if (!get_trust_data_from_store()) {
     printf("%s() error, line %d, Can't get trust data from store\n",
            __func__,
            __LINE__);
     return false;
   }
+#  endif
 
 #  ifdef DEBUG
   printf("\nRecovered trust data\n");
@@ -774,6 +796,7 @@ bool certifier::framework::cc_trust_manager::admissions_cert_valid_status(
 
 bool certifier::framework::certifiers::init_certifiers_data_new(
     const string &domain_name,
+    const string &purpose,
     const string &cert,
     const string &host,
     int           port) {
@@ -782,6 +805,7 @@ bool certifier::framework::certifiers::init_certifiers_data_new(
   domain_policy_cert_.assign(cert.data(), cert.size());
   host_ = host;
   port_ = port;
+  purpose_ = purpose;
   is_certified_ = false;
   x509_policy_cert_ = X509_new();
   if (x509_policy_cert_ == nullptr) {
@@ -805,6 +829,7 @@ bool certifier::framework::certifiers::init_certifiers_data_new(
 
 bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
     const string &domain_name,
+    const string &purpose,
     const string &cert,
     const string &host,
     int           port) {
@@ -824,7 +849,11 @@ bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
   printf("num_certified_domains_: %d\n", num_certified_domains_);
 #  endif
 
-  return found->init_certifiers_data_new(domain_name, cert, host, port);
+  return found->init_certifiers_data_new(domain_name,
+                                         purpose,
+                                         cert,
+                                         host,
+                                         port);
 }
 #endif  // NEW_API
 
@@ -1197,6 +1226,12 @@ bool certifier::framework::cc_trust_manager::save_store() {
   printf("End saved trust data\n");
 #endif
 
+  if (!put_trust_data_in_store()) {
+    printf("%s() error, line %d, save_store() can't put_trust_data\n",
+           __func__,
+           __LINE__);
+  }
+
   string serialized_store;
   if (!store_.Serialize(&serialized_store)) {
     printf("%s() error, line %d, save_store() can't serialize store\n",
@@ -1284,6 +1319,11 @@ bool certifier::framework::cc_trust_manager::fetch_store() {
   serialized_store.assign((char *)unprotected_blob, size_unprotected_blob);
   if (!store_.Deserialize(serialized_store)) {
     printf("%s(): Can't deserialize store\n", __func__);
+    return false;
+  }
+
+  if (!get_trust_data_from_store()) {
+    printf("%s(): Can't get trust data\n", __func__);
     return false;
   }
 
@@ -1510,7 +1550,7 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
 
   if (purpose_ == "attestation") {
 
-    // put private service key and symmetric keys in store
+    // get private service key and symmetric keys in store
     string service_key_tag("service-attest-key");
     ent = store_.find_entry(service_key_tag, key_type);
     if (ent < 0) {
@@ -1960,6 +2000,31 @@ bool certifier::framework::cc_trust_manager::get_certifiers_from_store() {
     ce->service_host_ = cm.service_host();
     ce->service_port_ = cm.service_port();
 #endif
+#ifdef NEW_API
+    ce->is_initialized_ = cm.is_initialized();
+    if (ce->is_initialized_) {
+      // x509_policy_cert_
+      // public_policy_key_
+      ce->x509_policy_cert_ = X509_new();
+      if (ce->x509_policy_cert_ == nullptr) {
+        printf("%s() error, line %d, can't get new X509\n", __func__, __LINE__);
+        return false;
+      }
+      if (!asn1_to_x509(ce->domain_policy_cert_, ce->x509_policy_cert_)) {
+        printf("%s() error, line %d, Can't translate cert\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+      if (!PublicKeyFromCert(ce->domain_policy_cert_,
+                             &ce->public_policy_key_)) {
+        printf("%s() error, line %d, Can't get public policy key\n",
+               __func__,
+               __LINE__);
+        return false;
+      }
+    }
+#endif
   }
   return true;
 }
@@ -1974,6 +2039,7 @@ bool certifier::framework::cc_trust_manager::put_certifiers_in_store() {
 
     cm->set_domain_name(ce->domain_name_);
     cm->set_domain_cert(ce->domain_policy_cert_);
+    cm->set_purpose(ce->purpose_);
     cm->set_domain_host(ce->host_);
     cm->set_domain_port(ce->port_);
     cm->set_is_certified(ce->is_certified_);
@@ -1983,6 +2049,9 @@ bool certifier::framework::cc_trust_manager::put_certifiers_in_store() {
 #ifdef OLD_API
     cm->set_service_host(ce->service_host_);
     cm->set_service_port(ce->service_port_);
+#endif
+#ifdef NEW_API
+    cm->set_is_initialized(ce->is_initialized_);
 #endif
   }
 
@@ -2457,7 +2526,7 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
 
   ev2->set_serialized_evidence(serialized_attestation);
 
-#ifdef DEBUG3
+#ifdef DEBUG4
   printf("Evidence package %d\n", ep->fact_assertion_size());
   for (int i = 0; i < ep->fact_assertion_size(); i++) {
     print_evidence(ep->fact_assertion(i));

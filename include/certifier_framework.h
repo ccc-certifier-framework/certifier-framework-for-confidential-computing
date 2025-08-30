@@ -348,6 +348,7 @@ class cc_trust_manager {
                               const string &symmetric_key_alg,
                               bool          force = false);
   bool        initialize_new_domain(const string &domain_name,
+                                    const string &purpose,
                                     const string &symmetric_key_alg,
                                     const string &host_url,
                                     int           port);
@@ -377,6 +378,7 @@ class cc_trust_manager {
 #endif
 #ifdef NEW_API
   bool add_or_update_new_domain(const string &domain_name,
+                                const string &purpose,
                                 const string &policy_cert,
                                 const string &host,
                                 int           port);
@@ -418,6 +420,7 @@ class certifiers {
 
 #ifdef NEW_API
   bool init_certifiers_data_new(const string &domain_name,
+                                const string &purpose,
                                 const string &cert,
                                 const string &host,
                                 int           port);

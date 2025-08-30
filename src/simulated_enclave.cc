@@ -47,8 +47,6 @@ RSA                 *rsa_attestation_key = nullptr;
 
 // ----------------------------------------------------------
 
-#define DEBUG2
-
 bool simulated_GetAttestClaim(signed_claim_message *out) {
   if (!my_data_initialized) {
     printf("simulated_GetAttestClaim: data not initialized\n");

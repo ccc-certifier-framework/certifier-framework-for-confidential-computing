@@ -346,10 +346,11 @@ message certifier_entry {
   optional int32 domain_port                = 4;
   optional string purpose                   = 5;
   optional bool is_certified                = 6;
-  optional bytes admissions_cert            = 7;
-  optional bytes platform_rule              = 8;
-  optional string service_host              = 9;
-  optional int32 service_port               = 10;
+  optional bool is_initialized              = 7;
+  optional bytes admissions_cert            = 8;
+  optional bytes platform_rule              = 9;
+  optional string service_host              = 10;
+  optional int32 service_port               = 11;
 };
 
 message certifiers_message {
