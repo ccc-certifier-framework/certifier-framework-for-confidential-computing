@@ -276,9 +276,9 @@ bool certifier::framework::cc_trust_manager::certify_primary_domain() {
 
   // already certified
   if (cc_is_certified_) {
-#ifdef DEBUG3
+#  ifdef DEBUG3
     printf("Primary domain already certified\n");
-#endif
+#  endif
     return true;
   }
 
@@ -1633,7 +1633,7 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
     if (private_auth_key_.has_certificate() || primary_admissions_cert_valid_) {
       cc_is_certified_ = true;
     }
-#endif // OLD_API
+#endif  // OLD_API
 
     string symmetric_key_tag("app-symmetric-key");
     ent = store_.find_entry(symmetric_key_tag, key_type);

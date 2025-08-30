@@ -407,7 +407,7 @@ int main(int an, char **av) {
   }
 
 #  ifdef DEBUG3
-    printf("\nEnclave initialized\n");
+  printf("\nEnclave initialized\n");
 #  endif
 
   // See note above about defaults
@@ -533,7 +533,7 @@ done:
   } else {
     printf("Failed\n");
   }
-#endif
+#  endif
 #  ifdef DEBUG4
   trust_mgr->print_trust_data();
 #  endif  // DEBUG3
