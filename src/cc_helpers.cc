@@ -1692,6 +1692,28 @@ bool certifier::framework::cc_trust_manager::generate_symmetric_key(
            __LINE__);
     return false;
   }
+
+  // default one year validity
+  time_point t_nb;
+  time_point t_na;
+  string     s_nb;
+  string     s_na;
+  double     hours_to_add = 365.0 * 24.0;
+
+  if (!time_now(&t_nb))
+    return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
+    return false;
+
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!time_to_string(t_na, &s_na))
+    return false;
+  symmetric_key_.set_not_before(s_nb);
+  symmetric_key_.set_not_after(s_na);
+
   symmetric_key_.set_key_name("app-symmetric-key");
   symmetric_key_.set_key_type(symmetric_key_algorithm_);
   symmetric_key_.set_key_format("vse-key");
@@ -1780,6 +1802,27 @@ bool certifier::framework::cc_trust_manager::generate_auth_key(bool regen) {
     return false;
   }
 
+  // default one year validity
+  time_point t_nb;
+  time_point t_na;
+  string     s_nb;
+  string     s_na;
+  double     hours_to_add = 365.0 * 24.0;
+
+  if (!time_now(&t_nb))
+    return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
+    return false;
+
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!time_to_string(t_na, &s_na))
+    return false;
+  private_auth_key_.set_not_before(s_nb);
+  private_auth_key_.set_not_after(s_na);
+
   private_auth_key_.set_key_name("auth-key");
   if (!private_key_to_public_key(private_auth_key_, &public_auth_key_)) {
     printf("%s() error, line %d, Can't make public Auth key\n",
@@ -1831,6 +1874,27 @@ bool certifier::framework::cc_trust_manager::generate_service_key(bool regen) {
            __LINE__);
     return false;
   }
+
+  // default one year validity
+  time_point t_nb;
+  time_point t_na;
+  string     s_nb;
+  string     s_na;
+  double     hours_to_add = 365.0 * 24.0;
+
+  if (!time_now(&t_nb))
+    return false;
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!add_interval_to_time_point(t_nb, hours_to_add, &t_na))
+    return false;
+
+  if (!time_to_string(t_nb, &s_nb))
+    return false;
+  if (!time_to_string(t_na, &s_na))
+    return false;
+  private_service_key_.set_not_before(s_nb);
+  private_service_key_.set_not_after(s_na);
 
   private_service_key_.set_key_name("service-attest-key");
   if (!private_key_to_public_key(private_service_key_, &public_service_key_)) {
