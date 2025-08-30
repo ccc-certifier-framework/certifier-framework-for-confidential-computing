@@ -48,6 +48,7 @@ S = $(CERTIFIER_ROOT)/certifier_service/teelib
 OBJ_DIR = .
 O = $(OBJ_DIR)
 I = $(CERTIFIER_ROOT)/include
+SE=$(CS)/simulated-enclave
 
 dobj = $(O)/certifier.pb.o $(O)/tee_primitives.o $(O)/certifier.o $(O)/support.o \
 	$(O)/sev_support.o $(O)/sev_cert_table.o $(O)/sev_report.o \
@@ -104,7 +105,7 @@ $(O)/sev_report.o: $(CS)/sev-snp/sev_report.cc
 	@ echo " \nCompiling $<"
 	$(CXX) $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
 
-$(O)/simulated_enclave.o: $(CS)/simulated_enclave.cc
+$(O)/simulated_enclave.o: $(SE)/simulated_enclave.cc
 	@ echo " \nCompiling $<"
 	$(CXX) $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
 
