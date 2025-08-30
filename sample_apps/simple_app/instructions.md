@@ -298,6 +298,7 @@ $CERTIFIER_ROOT/certifier_service/simpleserver   \
 Open two new terminals (one for the example app running as a client and one for the
 same example app running as a server):
 
+For old API:
 In the app-as-a-client terminal run the following:
 
 ```shell
@@ -306,6 +307,25 @@ cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe                       \
       --data_dir=./app1_data/                      \
       --operation=cold-init                        \
+      --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store
+      --print_all=true
+
+$EXAMPLE_DIR/example_app.exe                       \
+      --data_dir=./app1_data/                      \
+      --operation=get-certified                    \
+      --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store             \
+      --print_all=true
+```
+
+For new API:
+```shell
+cd $EXAMPLE_DIR
+
+$EXAMPLE_DIR/example_app.exe                       \
+      --data_dir=./app1_data/                      \
+      --operation=fresh-start                      \
       --measurement_file="example_app.measurement" \
       --policy_store_file=policy_store
       --print_all=true

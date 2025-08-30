@@ -354,7 +354,9 @@ func GetVseMeasurementFromAttestation(evBuf []byte) []byte {
 		fmt.Printf("GetVseMeasurementFromAttestation: Can't unmarshal info\n")
 		return nil
 	}
-
+fmt.Printf("returning info.VerifiedMeasurement\n")
+PrintVseAttestationReportInfo(&info)
+fmt.Printf("\n")
 	return info.VerifiedMeasurement
 }
 
@@ -424,6 +426,7 @@ func GetIsletMeasurementFromAttestation(evBuf []byte) []byte {
 func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string,
 	evp *certprotos.EvidencePackage) *certprotos.VseClause {
 
+fmt.Printf("GetRelevaneMeasurementPolicy\n")
 	ev_list := evp.FactAssertion
 	if ev_list == nil {
 		return nil
@@ -433,6 +436,9 @@ func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string,
 	var measurement []byte = nil
 	for i := 0; i < len(ev_list); i++ {
 		ev := ev_list[i]
+fmt.Printf("\n")
+PrintEvidence(ev)
+fmt.Printf("\n")
 		if ev == nil {
 			continue
 		}
@@ -444,6 +450,7 @@ func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string,
 		} else if ev.GetEvidenceType() == "cert" {
 			continue
 		} else if ev.GetEvidenceType() == "signed-vse-attestation-report" {
+fmt.Printf("Got signed-vse-attestation-report\n")
 			measurement = GetVseMeasurementFromAttestation(ev.SerializedEvidence)
 			break
 		} else if ev.GetEvidenceType() == "sev-attestation" {
@@ -477,6 +484,9 @@ func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string,
 	// look for policyKey says Measurement[] is-trusted
 	for i := 0; i < len(pool.MeasurementPolicy.Proved); i++ {
 		s := pool.MeasurementPolicy.Proved[i]
+fmt.Printf("Proved %d:\n", i)
+PrintVseClause(s)
+fmt.Printf("\n")
 		if s == nil || s.Verb == nil || s.GetVerb() != "says" {
 			continue
 		}
@@ -484,6 +494,9 @@ func GetRelevantMeasurementPolicy(pool *PolicyPool, evType string,
 		if cl == nil || cl.Subject == nil || cl.Verb == nil {
 			continue
 		}
+fmt.Printf("Clause:\n")
+PrintVseClause(cl)
+fmt.Printf("\n")
 		if cl.Subject.GetEntityType() != "measurement" || cl.GetVerb() != "is-trusted" {
 			continue
 		}
@@ -2469,9 +2482,15 @@ func VerifyProof(policyKey *certprotos.KeyMessage, toProve *certprotos.VseClause
 		}
 		if VerifyExternalProofStep(&tree, p.Steps[i]) {
 			ps.Proved = append(ps.Proved, c)
+fmt.Printf("passing in VerifyProof step %d\n", i)
+PrintVseClause(toProve)
+PrintVseClause(c)
+fmt.Printf("\n")
 			if SameVseClause(toProve, c) {
+fmt.Printf("matched\n")
 				return true
 			}
+fmt.Printf("Didnt match\n")
 		} else {
 			fmt.Printf("VerifyProof error: Step %d, does not pass\n", i)
 			PrintProofStep("    ", p.Steps[i])

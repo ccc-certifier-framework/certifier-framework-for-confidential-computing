@@ -479,12 +479,12 @@ bool certifier::framework::cc_trust_manager::warm_restart() {
     return false;
   }
 
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("\nRecovered trust data\n");
   print_trust_data();
   printf("\n");
   printf("End Recovered trust data\n");
-#endif
+#  endif
   return true;
 }
 
@@ -558,8 +558,16 @@ bool certifier::framework::cc_trust_manager::initialize_keys(
     const string &symmetric_key_alg,
     bool          force) {
 
-  if (cc_auth_key_initialized_ && !force)
+#  define DEBUG3
+#  ifdef DEBUG3
+  printf("in initialize_keys\n");
+#  endif
+  if (cc_auth_key_initialized_ && !force) {
+#  ifdef DEBUG3
+    printf("keys already initialized\n");
+#  endif
     return true;
+  }
 
   public_key_algorithm_ = public_key_alg;
   symmetric_key_algorithm_ = symmetric_key_alg;
@@ -617,6 +625,20 @@ bool certifier::framework::cc_trust_manager::initialize_keys(
     c->admissions_cert_.clear();
   }
 
+#  define DEBUG3
+#  ifdef DEBUG3
+  printf("keys in init_keys\n");
+  printf("private auth key:\n");
+  print_key(private_auth_key_);
+  printf("\n");
+  printf("public auth key:\n");
+  print_key(public_auth_key_);
+  printf("\n");
+  printf("symmetric key:\n");
+  print_key(symmetric_key_);
+  printf("\n");
+  printf("\n");
+#  endif
   return true;
 }
 
@@ -634,8 +656,20 @@ certifier::framework::cc_trust_manager::find_certifier_by_domain_name(
 
 bool certifier::framework::cc_trust_manager::initialize_store() {
   if (!cc_policy_store_initialized_) {
+    if (file_size(store_file_name_) < 0) {
+#  define DEBUG3
+#  ifdef DEBUG3
+      printf("Store %s doesn't exist, starting new one\n",
+             store_file_name_.c_str());
+#  endif
+      cc_policy_store_initialized_ = true;
+      return true;
+    }
     if (!fetch_store()) {
-      printf("No existing store, starting new one\n");
+      printf("%s() error, line %d, store file exists but couln't be read\n",
+             __func__,
+             __LINE__);
+      return false;
     }
   }
   cc_policy_store_initialized_ = true;
@@ -698,7 +732,6 @@ bool certifier::framework::cc_trust_manager::initialize_existing_domain(
   certifiers *c = find_certifier_by_domain_name(domain_name);
   if (c == nullptr)
     return false;
-  // fetch store
   if (!cc_policy_store_initialized_) {
     if (!fetch_store()) {
       printf("%s() error, line %d, Can't fetch store\n", __func__, __LINE__);
@@ -712,12 +745,12 @@ bool certifier::framework::cc_trust_manager::initialize_existing_domain(
     return false;
   }
 
-#ifdef DEBUG
+#  ifdef DEBUG
   printf("\nRecovered trust data\n");
   print_trust_data();
   printf("\n");
   printf("End Recovered trust data\n");
-#endif
+#  endif
   return true;
 }
 
@@ -2019,12 +2052,24 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     return false;
   }
 
-#ifdef DEBUG
+#define DEBUG3
+#ifdef DEBUG3
   printf("%s():%d: enclave_type_ = '%s', purpose_ = '%s'\n",
          __func__,
          __LINE__,
          owner_->enclave_type_.c_str(),
          owner_->purpose_.c_str());
+  printf("keys in certify_domain\n");
+  printf("private auth key:\n");
+  print_key(owner_->private_auth_key_);
+  printf("\n");
+  printf("public auth key:\n");
+  print_key(owner_->public_auth_key_);
+  printf("\n");
+  printf("symmetric key:\n");
+  print_key(owner_->symmetric_key_);
+  printf("\n");
+  printf("\n");
 #endif
 
   // Note: if you change the auth key, you must recertify in all domains
@@ -2829,7 +2874,7 @@ bool load_server_certs_and_key(X509         *root_cert,
 
 // When intermediate certs exist
 #ifdef DEBUG2
-  X509* X509_chain_certs[cert_chain_length];
+  X509 *X509_chain_certs[cert_chain_length];
   for (int i = 0; i < cert_chain_length; i++) {
     X509_chain_certs[i] = X509_new();
     if (!asn1_to_x509(cert_chain[i], X509_chain_certs[i])) {
@@ -3064,7 +3109,7 @@ bool certifier::framework::server_dispatch(
     const string &private_key_cert,
     void (*func)(secure_authenticated_channel &)) {
 
-#  ifdef DEBUG
+#ifdef DEBUG
   printf("\nserver_dispatch\n");
   printf("ans1_root_cert: ");
   print_bytes(asn1_root_cert.size(), (byte *)asn1_root_cert.data());
@@ -3075,7 +3120,7 @@ bool certifier::framework::server_dispatch(
   printf("private_key: ");
   print_key(private_key);
   printf("\n");
-#  endif
+#endif
 
   OPENSSL_init_ssl(0, NULL);
   SSL_load_error_strings();
@@ -3123,21 +3168,21 @@ bool certifier::framework::server_dispatch(
   const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
   SSL_CTX_set_options(ctx, flags);
 
-#  if 0
+#if 0
   // This is unnecessary usually.
   if(!isRoot()) {
     printf("server_dispatch: This program must be run as root/sudo user!!");
     return false;
   }
-#  endif
+#endif
 
   // Verify peer
   SSL_CTX_set_verify(ctx,
                      SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
                      nullptr);
-#  ifdef DEBUG
+#ifdef DEBUG
   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
-#  endif
+#endif
 
   // Testing hook: Allow pytests to invoke with NULL 'func' hdlr.
   // Close socket before exiting, so we don't have unpredictable
@@ -3148,9 +3193,9 @@ bool certifier::framework::server_dispatch(
   }
 
   while (1) {
-#  ifdef DEBUG
+#ifdef DEBUG
     printf("at accept\n");
-#  endif
+#endif
     struct sockaddr_in addr;
     unsigned int       len = sizeof(sockaddr_in);
     int                client = accept(sock, (struct sockaddr *)&addr, &len);
@@ -3192,23 +3237,24 @@ bool certifier::framework::server_dispatch(
 
 #ifdef NEW_API
 bool certifier::framework::server_dispatch(
-                     const string           &domain_name,
-                     const string           &host_name,
-                     int                     port,
-                     cc_trust_manager &mgr,
-                     void (*func)(secure_authenticated_channel &)) {
+    const string     &domain_name,
+    const string     &host_name,
+    int               port,
+    cc_trust_manager &mgr,
+    void (*func)(secure_authenticated_channel &)) {
 
   certifiers *c = mgr.find_certifier_by_domain_name(domain_name);
   if (c == nullptr) {
     printf("%s() error, line %d, can't find domain\n", __func__, __LINE__);
     return false;
-  }   
+  }
 
   return server_dispatch(
       host_name,
       port,
-      (const string &)c->domain_policy_cert_, // Policy-certificate / Root cert
-      (key_message &)mgr.private_auth_key_,   // Private key (public key is in the admission cert)
+      (const string &)c->domain_policy_cert_,  // Policy-certificate / Root cert
+      (key_message &)mgr.private_auth_key_,    // Private key (public key is in
+                                               // the admission cert)
       (const string &)c->admissions_cert_,
       func);
 }
@@ -3348,7 +3394,7 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
 
 // When intermediate certs exist
 #ifdef DEBUG2
-  X509* X509_chain_certs[cert_chain_length];
+  X509 *X509_chain_certs[cert_chain_length];
   for (int i = 0; i < cert_chain_length; i++) {
     X509_chain_certs[i] = X509_new();
     if (!asn1_to_x509(cert_chain_[i], X509_cert_chains[i])) {

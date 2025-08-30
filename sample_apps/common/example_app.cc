@@ -55,7 +55,7 @@ DEFINE_string(policy_store_file, "store.bin", "policy store file name");
 // In the sample_apps, you should only change the defaults for the
 // simulated_enclave.
 DEFINE_string(public_key_alg, Enc_method_rsa_2048, "public key algorithm");
-DEFINE_string(auth_symmetric_key_alg,
+DEFINE_string(symmetric_key_alg,
               Enc_method_aes_256_cbc_hmac_sha256,
               "authenticated symmetric key algorithm");
 
@@ -333,9 +333,9 @@ void print_options(const char *op) {
    printf("\nFor the simple_app, you can additionally drive 'cold-init' with different pairs of:\n");
    printf("\n\
    --public_key_alg=public-key-algorigthm-name                          : %s\n\
-   --auth_symmetric_key_alg=authenticated-symmetric-key-algorigthm-name : %s\n",
+   --symmetric_key_alg=authenticated-symmetric-key-algorigthm-name : %s\n",
            FLAGS_public_key_alg.c_str(),
-           FLAGS_auth_symmetric_key_alg.c_str());
+           FLAGS_symmetric_key_alg.c_str());
 #endif  // SIMPLE_APP
   // clang-format on
 
@@ -406,19 +406,19 @@ int main(int an, char **av) {
 
   // See note above about defaults
   string public_key_alg(FLAGS_public_key_alg);
-  string auth_symmetric_key_alg(FLAGS_auth_symmetric_key_alg);
+  string symmetric_key_alg(FLAGS_symmetric_key_alg);
 
   if (FLAGS_print_all && (FLAGS_operation == "cold-init")) {
     printf("public_key_alg='%s', authenticated_symmetric_key_alg='%s\n",
            public_key_alg.c_str(),
-           auth_symmetric_key_alg.c_str());
+           symmetric_key_alg.c_str());
   }
 
   // Carry out operation
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
     if (!trust_mgr->cold_init(public_key_alg,
-                              auth_symmetric_key_alg,
+                              symmetric_key_alg,
                               "simple-app-home_domain",
                               FLAGS_policy_host,
                               FLAGS_policy_port,
@@ -429,9 +429,9 @@ int main(int an, char **av) {
       goto done;
     }
     // Debug
-#ifdef DEBUG
+#  ifdef DEBUG
     trust_mgr->print_trust_data();
-#endif  // DEBUG
+#  endif  // DEBUG
   } else if (FLAGS_operation == "get-certified") {
     if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
@@ -444,9 +444,9 @@ int main(int an, char **av) {
       goto done;
     }
     // Debug
-#ifdef DEBUG
+#  ifdef DEBUG
     trust_mgr->print_trust_data();
-#endif  // DEBUG
+#  endif  // DEBUG
   } else if (FLAGS_operation == "run-app-as-client") {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);
@@ -562,34 +562,40 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
+  printf("Enclave initialized\n");
   if (params != nullptr) {
     delete[] params;
     params = nullptr;
   }
 
+  // Initialize store
+  if (!trust_mgr->initialize_store()) {
+    printf("%s() error, line %d, Can't init store\n", __func__, __LINE__);
+    return 1;
+  }
+  printf("Store initialized\n");
   // See note above about defaults
   string public_key_alg(FLAGS_public_key_alg);
-  string auth_symmetric_key_alg(FLAGS_auth_symmetric_key_alg);
+  string symmetric_key_alg(FLAGS_symmetric_key_alg);
 
   if (FLAGS_print_all) {
     printf("public_key_alg='%s', authenticated_symmetric_key_alg='%s\n",
            public_key_alg.c_str(),
-           auth_symmetric_key_alg.c_str());
+           symmetric_key_alg.c_str());
   }
 
-  int ret = 0;
-  string serialized_policy_cert;
-  serialized_policy_cert.assign((char *)initialized_cert, initialized_cert_size);
+  if (!trust_mgr->initialize_keys(public_key_alg, symmetric_key_alg, false)) {
+    printf("%s() error, line %d, Can't init keys\n", __func__, __LINE__);
+    return 1;
+  }
 
-  if (!trust_mgr->initialize_store()) {
-      printf("%s() error, line %d, can't initialize store\n",
-             __func__,
-             __LINE__);
-      ret = 1;
-      goto done;
-    }
+  int    ret = 0;
+  string serialized_policy_cert;
+  serialized_policy_cert.assign((char *)initialized_cert,
+                                initialized_cert_size);
 
   if (FLAGS_operation == "fresh-start") {
+    printf("fresh-start\n");
     if (!trust_mgr->initialize_new_domain(FLAGS_domain_name,
                                           serialized_policy_cert,
                                           FLAGS_policy_host,
@@ -604,6 +610,7 @@ int main(int an, char **av) {
     trust_mgr->print_trust_data();
 #  endif  // DEBUG
   } else if (FLAGS_operation == "get-certified") {
+    printf("get-certified\n");
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, initialize_existing_domain failed\n",
              __func__,
@@ -631,6 +638,7 @@ int main(int an, char **av) {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);
 
+    printf("run-app-as-client\n");
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
@@ -666,6 +674,8 @@ int main(int an, char **av) {
       goto done;
     }
   } else if (FLAGS_operation == "run-app-as-server") {
+
+    printf("run-app-as-client\n");
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, initialize_existing_domain failed\n",
              __func__,

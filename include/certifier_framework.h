@@ -32,7 +32,7 @@ typedef unsigned char byte;
 using std::string;
 
 #define NEW_API 1
-//#define OLD_API 1
+// #define OLD_API 1
 
 // -------------------------------------------------------------------
 
@@ -557,9 +557,9 @@ bool server_dispatch(const string           &host_name,
 #endif  // OLD_API
 
 #ifdef NEW_API
-bool server_dispatch(const string           &domain_name,
-                     const string           &host_name,
-                     int                     port,
+bool server_dispatch(const string     &domain_name,
+                     const string     &host_name,
+                     int               port,
                      cc_trust_manager &mgr,
                      void (*)(secure_authenticated_channel &));
 #endif
