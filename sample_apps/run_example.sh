@@ -2254,7 +2254,7 @@ function run_app_by_name_as_server_talk_to_Cert_Service() {
             public_key_algo_arg="--public_key_alg=${Simple_app_public_key_algo}"
         fi
         if [ "${Simple_app_symmetric_key_algo}" != "" ]; then
-            symmetric_key_algo_arg="--auth_symmetric_key_alg=${Simple_app_symmetric_key_algo}"
+            symmetric_key_algo_arg="--symmetric_key_alg=${Simple_app_symmetric_key_algo}"
         fi
         echo "${Me}: Public-key algorithm: '${public_key_algo_arg}', Authenticated Symmetric-key algorithm: '${symmetric_key_algo_arg}'"
     fi
@@ -2455,7 +2455,7 @@ function run_app_by_name_as_client_talk_to_Cert_Service() {
             public_key_algo_arg="--public_key_alg=${Simple_app_public_key_algo}"
         fi
         if [ "${Simple_app_symmetric_key_algo}" != "" ]; then
-            symmetric_key_algo_arg="--auth_symmetric_key_alg=${Simple_app_symmetric_key_algo}"
+            symmetric_key_algo_arg="--symmetric_key_alg=${Simple_app_symmetric_key_algo}"
         fi
         echo "${Me}: Public-key algorithm: '${public_key_algo_arg}', Authenticated Symmetric-key algorithm: '${symmetric_key_algo_arg}'"
     fi

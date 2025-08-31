@@ -53,7 +53,7 @@ Use scenarios 1
 Intitialze domain and generate and store a symmetric key for
 protecting, for example, a local store.
 
-This scenario uses the utility twice on startup, The first call certifesthe OS
+This scenario uses the utility twice on startup, The first call certifes the VM
 within the security domain.  The second generates, stores and outputs a
 symmetric key to protect a local resource (like a dmverity or dmcrypt enables
 disk).  On restart (unless a reinit is demanded), this utility is called only

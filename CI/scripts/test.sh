@@ -73,7 +73,7 @@ TestList=(
            "test-run_example-help-list-args"
            "test-run_example-dry-run"
            "test-run_example-simple_app"
-           #"test-simple_app-with-crypto_algorithms"
+           "test-simple_app-with-crypto_algorithms"
            "test-build-and-setup-App-Service-and-simple_app_under_app_service"
            "test-run_example-multidomain_simple_app"
            "test-build-and-install-sev-snp-simulator"
@@ -869,7 +869,7 @@ function test-acl_lib-programs() {
     make -i -f standalone_acl_lib_test.mak clean
 
     # Prepare test_data
-    mkdir acl_test_data
+    mkdir acl_test_data || true
     cp file_1 file_2 acl_test_data
 
     make -j${NumMakeThreads} -f standalone_acl_lib_test.mak
