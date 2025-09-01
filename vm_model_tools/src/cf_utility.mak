@@ -52,6 +52,9 @@ CFLAGS=$(CFLAGS_NOERROR) -Werror -fPIC
 CFLAGS  += -D SEV_SNP -D SEV_DUMMY_GUEST
 #endif
 
+# This should be commented in for the new interface
+CFLAGS += -DNEW_API
+
 CC=g++
 LINK=g++
 PROTO=protoc

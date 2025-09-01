@@ -336,23 +336,8 @@ void print_help() {
 
 cc_trust_manager *trust_mgr = nullptr;
 
-#define DEBUG3
-
 bool add_key_and_cert(cryptstore &cs) {
-
-  if (!trust_mgr->cc_auth_key_initialized_) {
-    printf("%s() error, line %d, no existing auth key\n", __func__, __LINE__);
-    return false;
-  }
-
-  certifiers *c =
-      trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
-  if (c == nullptr) {
-    printf("%s() error, line %d, can't find this domain\n", __func__, __LINE__);
-    return false;
-  }
-
-  if (!c->is_certified_) {
+  if (!trust_mgr->cc_is_certified_) {
     printf("%s() error, line %d, domain not initialized\n", __func__, __LINE__);
     return false;
   }
@@ -370,50 +355,225 @@ bool add_key_and_cert(cryptstore &cs) {
     return false;
   }
 
-  string tag1(FLAGS_policy_domain_name);
-  tag1.append("-admission-certificate");
-  int    version = 1;
-  string type("X509-der-cert");
+  if (trust_mgr->primary_admissions_cert_valid_) {
+    string tag(FLAGS_policy_domain_name);
+    tag.append("-admission-certificate");
+    int    version = 1;
+    string type("X509-der-cert");
 
-  cryptstore_entry *ce = cs.add_entries();
-  int               l = 0;
-  int               h = 0;
-  if (version_range_in_cryptstore(cs, tag1, &l, &h)) {
-    version = h + 1;
-  } else {
-    version = 1;
+    cryptstore_entry *ce = cs.add_entries();
+    int               l = 0;
+    int               h = 0;
+    if (version_range_in_cryptstore(cs, tag, &l, &h)) {
+      version = h + 1;
+    } else {
+      version = 1;
+    }
+    ce->set_tag(tag);
+    ce->set_type(type);
+    ce->set_version(version);
+    ce->set_time_entered(tp_str);
+    ce->set_blob((byte *)trust_mgr->serialized_primary_admissions_cert_.data(),
+                 trust_mgr->serialized_primary_admissions_cert_.size());
   }
-  ce->set_tag(tag1);
-  ce->set_type(type);
-  ce->set_version(version);
-  ce->set_time_entered(tp_str);
-  ce->set_blob((byte *)c->admissions_cert_.data(), c->admissions_cert_.size());
+  if (trust_mgr->cc_auth_key_initialized_) {
+    string tag(FLAGS_policy_domain_name);
+    tag.append("-private-auth-key");
+    int    version = 1;
+    string type("key-message-serialized-protobuf");
 
-  string tag2(FLAGS_policy_domain_name);
-  tag2.append("-private-auth-key");
-  version = 1;
-  type.assign("key-message-serialized-protobuf");
+    cryptstore_entry *ce = cs.add_entries();
+    int               l = 0;
+    int               h = 0;
+    if (version_range_in_cryptstore(cs, tag, &l, &h)) {
+      version = h + 1;
+    } else {
+      version = 1;
+    }
+    ce->set_tag(tag);
+    ce->set_type(type);
+    ce->set_version(version);
+    ce->set_time_entered(tp_str);
 
-  ce = cs.add_entries();
-  l = 0;
-  h = 0;
-  if (version_range_in_cryptstore(cs, tag2, &l, &h)) {
-    version = h + 1;
-  } else {
-    version = 1;
+    string serialized_key;
+    if (!trust_mgr->private_auth_key_.SerializeToString(&serialized_key)) {
+      printf("%s() error, line %d, Can't serialize key\n", __func__, __LINE__);
+      return false;
+    }
+    ce->set_blob((byte *)serialized_key.data(), serialized_key.size());
   }
-  ce->set_tag(tag2);
-  ce->set_type(type);
-  ce->set_version(version);
-  ce->set_time_entered(tp_str);
+  return true;
+}
 
-  string serialized_key;
-  if (!trust_mgr->private_auth_key_.SerializeToString(&serialized_key)) {
-    printf("%s() error, line %d, Can't serialize key\n", __func__, __LINE__);
+bool get_existing_trust_domain() {
+  string purpose("authentication");
+  string store_file(FLAGS_data_dir);
+  store_file.append(FLAGS_policy_store_filename);
+
+  if (trust_mgr == nullptr) {
+    trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
+    if (trust_mgr == nullptr) {
+      printf("%s() error, line %d, couldn't initialize trust object\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  }
+
+  // Get parameters
+  string *params = nullptr;
+  int     n = 0;
+  if (FLAGS_enclave_type == "simulated-enclave") {
+    if (!get_simulated_enclave_parameters(&params, &n)) {
+      printf("%s() error, line %d, get enclave parameters\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  } else if (FLAGS_enclave_type == "sev-enclave") {
+    if (!get_sev_enclave_parameters(&params, &n)) {
+      printf("%s() error, line %d, get enclave parameters\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  } else {
+    printf("%s() error, line %d, unsupported enclave\n", __func__, __LINE__);
     return false;
   }
 
-  ce->set_blob((byte *)serialized_key.data(), serialized_key.size());
+  // read policy cert
+  string der_policy_cert_file_name(FLAGS_data_dir);
+  der_policy_cert_file_name.append("./provisioning/");
+  der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+  string der_policy_cert;
+  if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
+    printf("%s() error, line %d, couldn't read %s\n",
+           __func__,
+           __LINE__,
+           der_policy_cert.c_str());
+    return false;
+  }
+
+#ifdef DEBUG
+  printf("\n*****Initializing enclave new trust\n");
+#endif
+
+  // Init policy key info
+  if (!trust_mgr->init_policy_key((byte *)der_policy_cert.data(),
+                                  der_policy_cert.size())) {
+    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
+    return false;
+  }
+
+  // Init enclave
+  if (!trust_mgr->initialize_enclave(n, params)) {
+    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
+    return false;
+  }
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
+  }
+
+  // Init enclave
+  if (!trust_mgr->warm_restart()) {
+    printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+    return false;
+  }
+  return true;
+}
+
+bool initialize_new_trust_domain() {
+  string purpose("authentication");
+  string store_file(FLAGS_policy_store_filename);
+
+  if (trust_mgr == nullptr) {
+    trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
+    if (trust_mgr == nullptr) {
+      printf("%s() error, line %d, couldn't initialize trust object\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  }
+
+  // Get parameters
+  string *params = nullptr;
+  int     n = 0;
+  if (FLAGS_enclave_type == "simulated-enclave") {
+    if (!get_simulated_enclave_parameters(&params, &n)) {
+      printf("%s() error, line %d, get enclave parameters\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  } else if (FLAGS_enclave_type == "sev-enclave") {
+    if (!get_sev_enclave_parameters(&params, &n)) {
+      printf("%s() error, line %d, get enclave parameters\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+  } else {
+    printf("%s() error, line %d, unsupported enclave\n", __func__, __LINE__);
+    return false;
+  }
+
+  // read policy cert
+  string der_policy_cert_file_name(FLAGS_data_dir);
+  der_policy_cert_file_name.append("./provisioning/");
+  der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+  string der_policy_cert;
+  if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
+    printf("%s() error, line %d, couldn't read %s\n",
+           __func__,
+           __LINE__,
+           der_policy_cert.c_str());
+    return false;
+  }
+
+  // Init policy key info
+  if (!trust_mgr->init_policy_key((byte *)der_policy_cert.data(),
+                                  der_policy_cert.size())) {
+    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
+    return false;
+  }
+
+#ifdef DEBUG3
+  printf("\n*****Initializing enclave new trust\n");
+#endif
+
+  // Init enclave
+  if (!trust_mgr->initialize_enclave(n, params)) {
+    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
+    return false;
+  }
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
+  }
+
+  // app host and port not needed
+  string app_host;
+  int    app_port = 0;
+  if (!trust_mgr->cold_init(FLAGS_public_key_algorithm,
+                            FLAGS_symmetric_key_algorithm,
+                            FLAGS_policy_domain_name,
+                            FLAGS_certifier_service_URL,
+                            FLAGS_service_port,
+                            app_host,
+                            app_port)) {
+    printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
+    return false;
+  }
+  if (!trust_mgr->certify_me()) {
+    printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG3
+  trust_mgr->print_trust_data();
+#endif  // DEBUG
   return true;
 }
 
@@ -560,91 +720,6 @@ bool generate_public_key(key_message *km,
   return true;
 }
 
-//  ---------------------------------------------------------------------------------
-
-bool reinit_domain_and_update() {
-  string purpose("authentication");
-
-  // read policy cert
-  string der_policy_cert;
-  string der_policy_cert_file_name(FLAGS_data_dir);
-  der_policy_cert_file_name.append("./provisioning/");
-  der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
-  if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
-    printf("%s() error, line %d, couldn't read, policy domain cert in %s\n",
-           __func__,
-           __LINE__,
-           der_policy_cert.c_str());
-    return false;
-  }
-
-  // re-init domain
-  if (!trust_mgr->initialize_new_domain(FLAGS_policy_domain_name,
-                                        purpose,
-                                        der_policy_cert,
-                                        FLAGS_certifier_service_URL,
-                                        FLAGS_service_port)) {
-    printf("%s() error, line %d, Can't initialize domain\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  // get or initialize cryptstore
-  cryptstore cs;
-  string     cryptstore_file_name(FLAGS_data_dir);
-  cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
-
-  if (file_size(cryptstore_file_name) < 0) {
-    if (!create_cryptstore(cs,
-                           FLAGS_data_dir,
-                           FLAGS_encrypted_cryptstore_filename,
-                           FLAGS_duration,
-                           FLAGS_enclave_type,
-                           FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot create cryptstore\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
-  } else {
-    // Read existing cryptstore
-    if (!open_cryptstore(&cs,
-                         FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename,
-                         FLAGS_duration,
-                         FLAGS_enclave_type,
-                         FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot open cryptstore\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
-  }
-
-  // add keys and certificates
-  if (!add_key_and_cert(cs)) {
-    printf("%s() error, line %d, couldn't add domain and cert to cryptstore\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  if (!save_cryptstore(cs,
-                       FLAGS_data_dir,
-                       FLAGS_encrypted_cryptstore_filename,
-                       FLAGS_duration,
-                       FLAGS_enclave_type,
-                       FLAGS_symmetric_key_algorithm)) {
-    printf("%s() error, line %d, cannot save cryptstore\n", __func__, __LINE__);
-    return false;
-  }
-#ifdef DEBUG3
-  print_cryptstore(cs);
-#endif
-  return true;
-}
-
-
 int main(int an, char **av) {
   string usage("cf-osutility");
   gflags::SetUsageMessage(usage);
@@ -652,122 +727,193 @@ int main(int an, char **av) {
   an = 1;
   int ret = 0;
 
-  SSL_library_init();
-  string purpose("authentication");
-
   if (FLAGS_cf_utility_help) {
     print_help();
     return ret;
   }
   print_os_model_parameters();
 
-  // Get parameters
-  string *params = nullptr;
-  int     n = 0;
-  if (FLAGS_enclave_type == "simulated-enclave") {
-    if (!get_simulated_enclave_parameters(&params, &n)) {
-      printf("%s() error, line %d, get enclave parameters\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
-  } else if (FLAGS_enclave_type == "sev-enclave") {
-    if (!get_sev_enclave_parameters(&params, &n)) {
-      printf("%s() error, line %d, get enclave parameters\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
-  } else {
-    printf("%s() error, line %d, unsupported enclave\n", __func__, __LINE__);
-    return false;
-  }
+  SSL_library_init();
+  string purpose("authentication");
 
-  // Create trust manager
-  string store_file(FLAGS_data_dir);
-  store_file.append(FLAGS_policy_store_filename);
-  trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
-  if (trust_mgr == nullptr) {
-    printf("%s() error, line %d, couldn't initialize trust object\n",
-           __func__,
-           __LINE__);
-    return 1;
-  }
-
-  // Initialize store
-  if (!trust_mgr->initialize_store()) {
-    printf("%s() error, line %d, Can't init store\n", __func__, __LINE__);
-    ret = 1;
-    goto done;
-  }
-
-  // Initialize keys
-  if (!trust_mgr->initialize_keys(FLAGS_public_key_algorithm,
-                                  FLAGS_symmetric_key_algorithm,
-                                  false)) {
-    printf("%s() error, line %d, Can't init keys\n", __func__, __LINE__);
-    ret = 1;
-    goto done;
-  }
-
-  // Operation?
   if (FLAGS_init_trust) {
+    bool add_new_certs = false;
 
-    if (trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
-      certifiers *c =
-          trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
-      if (c != nullptr) {
-        if (c->is_certified_) {
-          // Domain exists and is certified, return
-          printf("Domain already exists and is certified\n");
+    if (!get_existing_trust_domain()) {
+      if (!initialize_new_trust_domain()) {
+        printf("%s() error, line %d, cannot initialize new trust domain\n",
+               __func__,
+               __LINE__);
+        ret = 1;
+        goto done;
+      }
+      add_new_certs = true;
+    } else {
+      printf("Found existing domain\n");
+    }
+
+    // get or initialize cryptstore
+    cryptstore cs;
+    string     cryptstore_file_name(FLAGS_data_dir);
+    cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
+
+    if (file_size(cryptstore_file_name) < 0) {
+      if (!create_cryptstore(cs,
+                             FLAGS_data_dir,
+                             FLAGS_encrypted_cryptstore_filename,
+                             FLAGS_duration,
+                             FLAGS_enclave_type,
+                             FLAGS_symmetric_key_algorithm)) {
+        printf("%s() error, line %d, cannot create cryptstore\n",
+               __func__,
+               __LINE__);
+        ret = 1;
+        goto done;
+      }
+
+      // add keys and certificates
+      if (!add_key_and_cert(cs)) {
+        printf("%s() error, line %d, cannot add keys and certificates\n",
+               __func__,
+               __LINE__);
+        ret = 1;
+        goto done;
+      }
+
+      if (!save_cryptstore(cs,
+                           FLAGS_data_dir,
+                           FLAGS_encrypted_cryptstore_filename,
+                           FLAGS_duration,
+                           FLAGS_enclave_type,
+                           FLAGS_symmetric_key_algorithm)) {
+        printf("%s() error, line %d, cannot save cryptstore\n",
+               __func__,
+               __LINE__);
+        ret = 1;
+        goto done;
+      }
+    } else {
+      if (!open_cryptstore(&cs,
+                           FLAGS_data_dir,
+                           FLAGS_encrypted_cryptstore_filename,
+                           FLAGS_duration,
+                           FLAGS_enclave_type,
+                           FLAGS_symmetric_key_algorithm)) {
+        printf("%s() error, line %d, cannot open cryptstore\n",
+               __func__,
+               __LINE__);
+        ret = 1;
+        goto done;
+      }
+      if (add_new_certs) {
+        // add keys and certificates
+        if (!add_key_and_cert(cs)) {
+          printf("%s() error, line %d, cannot add keys and certificates\n",
+                 __func__,
+                 __LINE__);
+          ret = 1;
+          goto done;
+        }
+        if (!save_cryptstore(cs,
+                             FLAGS_data_dir,
+                             FLAGS_encrypted_cryptstore_filename,
+                             FLAGS_duration,
+                             FLAGS_enclave_type,
+                             FLAGS_symmetric_key_algorithm)) {
+          printf("%s() error, line %d, cannot save cryptstore\n",
+                 __func__,
+                 __LINE__);
+          ret = 1;
           goto done;
         }
       }
     }
-
-    if (!reinit_domain_and_update()) {
-      ret = 1;
-      goto done;
-    }
+#define DEBUG
+#ifdef DEBUG
+    print_cryptstore(cs);
+#endif
+    goto done;
   } else if (FLAGS_reinit_trust) {
-
-    if (!reinit_domain_and_update()) {
+    if (!initialize_new_trust_domain()) {
+      printf("%s() error, line %d, cannot initialize new trust domain\n",
+             __func__,
+             __LINE__);
       ret = 1;
       goto done;
     }
+    printf("initialize_new_trust_domain succeeded\n");
+
+    cryptstore cs;
+
+    // get or initialize cryptstore
+    string cryptstore_file_name(FLAGS_data_dir);
+    cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
+
+    if (file_size(cryptstore_file_name) < 0) {
+      if (!create_cryptstore(cs,
+                             FLAGS_data_dir,
+                             FLAGS_encrypted_cryptstore_filename,
+                             FLAGS_duration,
+                             FLAGS_enclave_type,
+                             FLAGS_symmetric_key_algorithm)) {
+        printf("%s() error, line %d, cannot initialize new trust domain\n",
+               __func__,
+               __LINE__);
+        ret = 1;
+        goto done;
+      }
+    } else {
+      if (!open_cryptstore(&cs,
+                           FLAGS_data_dir,
+                           FLAGS_encrypted_cryptstore_filename,
+                           FLAGS_duration,
+                           FLAGS_enclave_type,
+                           FLAGS_symmetric_key_algorithm)) {
+        printf("%s() error, line %d, cannot open cryptstore\n",
+               __func__,
+               __LINE__);
+        ret = 1;
+        goto done;
+      }
+    }
+    // add keys and certificates
+    if (!save_cryptstore(cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+#define DEBUG
+#ifdef DEBUG
+    print_cryptstore(cs);
+#endif
     goto done;
   } else if (FLAGS_generate_symmetric_key) {
     printf("\ngenerate_symmetric_key %s\n",
            FLAGS_symmetric_key_algorithm.c_str());
 
-    if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
-      printf("%s() error, line %d, domain %s does not init\n",
+    // open existing trust domain to get cryptstore
+    if (!get_existing_trust_domain()) {
+      printf("%s() error, line %d, cannot recover existing domain\n",
              __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-    certifiers *c =
-        trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
-    if (c == nullptr) {
-      printf("%s() error, line %d, can't find certifier for %s\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-    if (!c->is_certified_) {
-      printf("%s() error, line %d, domain %s snot certified\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
+             __LINE__);
       ret = 1;
       goto done;
     }
 
+#define DEBUG
+#ifdef DEBUG
+    printf("get_existing_trust_domain succeeded\n");
+#endif
+
     cryptstore cs;
+
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
                          FLAGS_encrypted_cryptstore_filename,
@@ -780,6 +926,8 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
+
+    printf("cryptstore open\n");
 
     key_message km;
     string      key_name(FLAGS_keyname);
@@ -792,6 +940,11 @@ int main(int an, char **av) {
              __LINE__);
       ret = 1;
       goto done;
+    }
+
+    if (!trust_mgr->cc_is_certified_) {
+      printf("%s() error, line %d, domain not certified\n", __func__, __LINE__);
+      return false;
     }
 
     time_point tp;
@@ -847,40 +1000,22 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG3
+#define DEBUG
+#ifdef DEBUG
     print_cryptstore(cs);
 #endif
     goto done;
   } else if (FLAGS_generate_public_key) {
-
-    if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
-      printf("%s() error, line %d, domain %s does not init\n",
+    // open existing trust domain to get cryptstore
+    if (!get_existing_trust_domain()) {
+      printf("%s() error, line %d, cannot recover existing domain\n",
              __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
+             __LINE__);
       ret = 1;
       goto done;
     }
-    certifiers *c =
-        trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
-    if (c == nullptr) {
-      printf("%s() error, line %d, can't find certifier for %s\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-    if (!c->is_certified_) {
-      printf("%s() error, line %d, domain %s snot certified\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-
     cryptstore cs;
+
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
                          FLAGS_encrypted_cryptstore_filename,
@@ -905,7 +1040,6 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-
     // add key to store and save it
     if (!save_cryptstore(cs,
                          FLAGS_data_dir,
@@ -921,40 +1055,22 @@ int main(int an, char **av) {
     }
     goto done;
   } else if (FLAGS_get_item) {
-
-    if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
-      printf("%s() error, line %d, domain %s does not init\n",
+    // open existing trust domain to get cryptstore
+    if (!get_existing_trust_domain()) {
+      printf("%s() error, line %d, cannot recover existing domain\n",
              __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-    certifiers *c =
-        trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
-    if (c == nullptr) {
-      printf("%s() error, line %d, can't find certifier for %s\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-    if (!c->is_certified_) {
-      printf("%s() error, line %d, domain %s snot certified\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
+             __LINE__);
       ret = 1;
       goto done;
     }
 
     cryptstore cs;
-    string     entry_tag;
-    string     entry_type;
-    int        entry_version;
-    string     entry_tp;
-    string     value;
+
+    string entry_tag;
+    string entry_type;
+    int    entry_version;
+    string entry_tp;
+    string value;
 
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
@@ -981,40 +1097,19 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG3
-    print_cryptstore(cs);
-#endif
     goto done;
   } else if (FLAGS_put_item) {
-
-    if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
-      printf("%s() error, line %d, domain %s does not init\n",
+    // open existing trust domain to get cryptstore
+    if (!get_existing_trust_domain()) {
+      printf("%s() error, line %d, cannot recover existing domain\n",
              __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-    certifiers *c =
-        trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
-    if (c == nullptr) {
-      printf("%s() error, line %d, can't find certifier for %s\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-    if (!c->is_certified_) {
-      printf("%s() error, line %d, domain %s snot certified\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
+             __LINE__);
       ret = 1;
       goto done;
     }
 
     cryptstore cs;
+
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
                          FLAGS_encrypted_cryptstore_filename,
@@ -1027,6 +1122,7 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
+
     string     entry_tag;
     string     entry_type;
     int        entry_version;
@@ -1040,6 +1136,7 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
+    // add key to store and save it
     if (!save_cryptstore(cs,
                          FLAGS_data_dir,
                          FLAGS_encrypted_cryptstore_filename,
@@ -1052,12 +1149,18 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG3
-    print_cryptstore(cs);
-#endif
     goto done;
   } else if (FLAGS_print_cryptstore) {
+    // open existing trust domain to get cryptstore
+    if (!get_existing_trust_domain()) {
+      printf("%s() error, line %d, cannot recover existing domain\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
     cryptstore cs;
+
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
                          FLAGS_encrypted_cryptstore_filename,

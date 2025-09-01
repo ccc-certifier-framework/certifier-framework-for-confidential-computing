@@ -729,12 +729,6 @@ bool certifier::framework::cc_trust_manager::initialize_existing_domain(
            domain_name.c_str());
     return false;
   }
-  if (!cc_policy_store_initialized_) {
-    if (!fetch_store()) {
-      printf("%s() error, line %d, Can't fetch store\n", __func__, __LINE__);
-      return false;
-    }
-  }
   return true;
 }
 
