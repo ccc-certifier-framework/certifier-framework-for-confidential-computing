@@ -31,6 +31,7 @@ INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 CF_UTILITY_SRC= $(CERTIFIER_ROOT)/vm_model_tools/src
 SE= $(S)/simulated-enclave
 
+#NEW_API = 1
 ENABLE_SEV=1
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
@@ -52,6 +53,11 @@ CFLAGS=$(CFLAGS_NOERROR) -Werror -fPIC
 CFLAGS  += -D SEV_SNP -D SEV_DUMMY_GUEST
 #endif
 
+ifdef NEW_API
+CFLAGS += -DNEW_API
+endif
+
+
 CC=g++
 LINK=g++
 PROTO=protoc
@@ -65,11 +71,18 @@ export LD_LIBRARY_PATH=/usr/local/lib
 LDFLAGS= -L/usr/local/lib -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 endif
 
-# Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
+# Note:  You can omit all the files below in d_obj except $(O)/cf_utility.o,
 #  if you link in the certifier library certifier.a.
+#
+ifdef NEW_API
 dobj = $(O)/cf_utility.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
        $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
+else
+dobj = $(O)/cf_utility_old_api.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+       $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
+       $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
+endif
 
 sobj = $(O)/cf_support_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
@@ -110,6 +123,10 @@ $(O)/cf_support_test.o: $(CF_UTILITY_SRC)/cf_support_test.cc $(I)/certifier.h $(
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/cf_utility.o: $(CF_UTILITY_SRC)/cf_utility.cc $(I)/certifier.h $(US)/certifier.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/cf_utility_old_api.o: $(CF_UTILITY_SRC)/cf_utility_old_api.cc $(I)/certifier.h $(US)/certifier.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

@@ -851,6 +851,20 @@ function test-run_example-simple_app_under_islet-using-shim() {
 }
 
 # #############################################################################
+function test-cf-utility() {
+    echo "******************************************************************"
+    echo "* Test the cf_utility"
+    echo "******************************************************************"
+    echo " "
+
+    pushd "${CERT_ROOT}"/vm_model_tools/src > /dev/null 2>&1
+    # We need to clean here
+    make -i -f cf_utility.mak clean
+    make -j${NumMakeThreads} -f cf_utility.mak
+    popd > /dev/null 2>&1
+}
+
+# #############################################################################
 function test-acl_lib-programs() {
     echo "******************************************************************"
     echo "* Test the acl_lib programs"

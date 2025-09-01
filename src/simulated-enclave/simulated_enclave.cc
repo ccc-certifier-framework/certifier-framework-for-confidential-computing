@@ -49,7 +49,10 @@ RSA                 *rsa_attestation_key = nullptr;
 
 bool simulated_GetAttestClaim(signed_claim_message *out) {
   if (!my_data_initialized) {
-    printf("simulated_GetAttestClaim: data not initialized\n");
+    printf(
+        "%s() error, line %d, simulated_GetAttestClaim: data not initialized\n",
+        __func__,
+        __LINE__);
     return false;
   }
   out->CopyFrom(my_attest_claim);
@@ -58,7 +61,10 @@ bool simulated_GetAttestClaim(signed_claim_message *out) {
 
 bool simulated_GetPlatformClaim(signed_claim_message *out) {
   if (!my_data_initialized) {
-    printf("simulated_GetPlatformClaim: data not initialized\n");
+    printf("%s() error, line %d, simulated_GetPlatformClaim: data not "
+           "initialized\n",
+           __func__,
+           __LINE__);
     return false;
   }
   out->CopyFrom(my_platform_claim);
@@ -82,7 +88,7 @@ bool simulated_Init(const string &serialized_attest_key,
 
   // attest key
   if (!my_attestation_key.ParseFromString(serialized_attest_key)) {
-    printf("simulated_Init: Can't parse attest key\n");
+    printf("%s() error, line %d, Can't parse attest key\n", __func__, __LINE__);
     printf("Key: %s\n", serialized_attest_key.c_str());
     return false;
   }
@@ -90,13 +96,17 @@ bool simulated_Init(const string &serialized_attest_key,
   my_attestation_key.set_key_name("attestKey");
   rsa_attestation_key = RSA_new();
   if (!key_to_RSA(my_attestation_key, rsa_attestation_key)) {
-    printf("simulated_Init: Can't recover attestation key\n");
+    printf("%s() error, line %d, Can't recover attestation key\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
   // Claim
   if (!my_attest_claim.ParseFromString(serialized_attest_key_signed_claim)) {
-    printf("simulated_Init: Can't parse attest claim\n");
+    printf("%s() error, line %d, Can't parse attest claim\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -367,11 +377,13 @@ bool simulator_init() {
 
   rsa_attestation_key = RSA_new();
   if (!generate_new_rsa_key(2048, rsa_attestation_key)) {
-    printf("simulator_init: Can't generate RSA key\n");
+    printf("%s() error, line %d, Can't generate RSA key\n", __func__, __LINE__);
     return false;
   }
   if (!RSA_to_key(rsa_attestation_key, &my_attestation_key)) {
-    printf("simulator_init: Can't convert RSA key to internal\n");
+    printf("%s() error, line %d, Can't convert RSA key to internal\n",
+           __func__,
+           __LINE__);
     return false;
   }
   my_attestation_key.set_key_type(Enc_method_rsa_2048_private);
