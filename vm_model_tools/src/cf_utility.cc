@@ -595,6 +595,9 @@ bool reinit_domain_and_update() {
   string     cryptstore_file_name(FLAGS_data_dir);
   cryptstore_file_name.append(FLAGS_encrypted_cryptstore_filename);
 
+#ifdef DEBUG3
+  printf("cryptstore name: %s\n", cryptstore_file_name.c_str());
+#endif
   if (file_size(cryptstore_file_name) < 0) {
     if (!create_cryptstore(cs,
                            FLAGS_data_dir,
@@ -686,12 +689,29 @@ int main(int an, char **av) {
   // Create trust manager
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_filename);
+#ifdef DEBUG3
+  printf("\npolicy store: %s\n", store_file.c_str());
+#endif
   trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
   if (trust_mgr == nullptr) {
     printf("%s() error, line %d, couldn't initialize trust object\n",
            __func__,
            __LINE__);
     return 1;
+  }
+
+  // Init enclave
+  if (!trust_mgr->initialize_enclave(n, params)) {
+    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
+    return 1;
+  }
+#ifdef DEBUG3
+  printf("Enclave initialized\n");
+#endif
+
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
   }
 
   // Initialize store
