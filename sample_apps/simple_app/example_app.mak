@@ -37,6 +37,9 @@ SE= $(S)/simulated-enclave
 # is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
 
+#If NEW_API is defined, compile with new API.
+NEW_API=1
+
 ifndef NEWPROTOBUF
 CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
@@ -45,7 +48,9 @@ CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -W
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
 endif
 CFLAGS=$(CFLAGS_NOERROR) -Werror -fPIC
-# CFLAGS += -DNEW_API
+ifdef NEW_API
+CFLAGS += -DNEW_API
+endif
 
 CC=g++
 LINK=g++

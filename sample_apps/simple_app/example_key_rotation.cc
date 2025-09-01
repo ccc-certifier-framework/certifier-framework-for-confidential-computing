@@ -34,7 +34,7 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-// Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
+// Ops are: fresh-start, get-certified, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(operation, "", "operation");
 
@@ -42,6 +42,7 @@ DEFINE_string(policy_host, "localhost", "address for policy server");
 DEFINE_int32(policy_port, 8123, "port for policy server");
 DEFINE_string(data_dir, "./app1_data/", "directory for application data");
 
+DEFINE_string(domain_name, "simple-app-home_domain", "domain name");
 DEFINE_string(policy_store_file, "store.bin", "policy store file name");
 DEFINE_string(platform_file_name, "platform_file.bin", "platform certificate");
 DEFINE_string(platform_attest_endorsement,
@@ -49,6 +50,11 @@ DEFINE_string(platform_attest_endorsement,
               "platform endorsement of attest key");
 DEFINE_string(attest_key_file, "attest_key_file.bin", "attest key");
 DEFINE_string(measurement_file, "example_app.measurement", "measurement");
+
+DEFINE_string(public_key_alg, Enc_method_rsa_2048, "public key algorithm");
+DEFINE_string(symmetric_key_alg,
+              Enc_method_aes_256_cbc_hmac_sha256,
+              "authenticated symmetric key algorithm");
 
 
 // The test demonstrates key rotation of the public key
@@ -96,6 +102,225 @@ bool get_simulated_enclave_parameters(string **s, int *n) {
   return true;
 }
 
+void print_ops() {
+  printf("example_key_rotation.exe --print_all=true|false --operation=op "
+         "--domain_name= simple-app-home_domain"
+         "--policy_host=policy-host-address --policy_port=policy-host-port\n");
+  printf("\t --data_dir=-directory-for-app-data\n");
+  printf("\t --policy_cert_file=self-signed-policy-cert-file-name "
+         "--policy_store_file=policy-store-file-name\n");
+}
+
+// -----------------------------------------------------------------------------
+
+#ifdef NEW_API
+int main(int an, char **av) {
+  string usage("Example Key Rotation");
+  gflags::ParseCommandLineFlags(&an, &av, true);
+  an = 1;
+  ::testing::InitGoogleTest(&an, av);
+
+  // time left?
+  time_point  now;
+  time_point  expires;
+  time_point  two_days_from_now;
+  string      der_policy_cert;
+  certifiers *c = nullptr;
+
+  if (FLAGS_operation == "") {
+    print_ops();
+    return 0;
+  }
+
+  SSL_library_init();
+  string enclave_type("simulated-enclave");
+
+  string store_file(FLAGS_data_dir);
+  store_file.append(FLAGS_policy_store_file);
+  string purpose("authentication");
+  X509  *x509_cert = nullptr;
+
+  // Get parameters
+  string *params = nullptr;
+  int     n = 0;
+  if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
+    printf("%s() error, line %d, get simulated enclave parameters\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  if (FLAGS_operation == "") {
+    print_ops();
+    return 0;
+  }
+  trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
+  if (trust_mgr == nullptr) {
+    printf("%s() error, line %d, couldn't initialize trust object\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  // Init simulated enclave
+  if (!trust_mgr->initialize_enclave(n, params)) {
+    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
+    return 1;
+  }
+#  ifdef DEBUG3
+  printf("Enclave initialized\n");
+#  endif
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
+  }
+
+  // Initialize store
+  if (!trust_mgr->initialize_store()) {
+    printf("%s() error, line %d, Can't init store\n", __func__, __LINE__);
+    return 1;
+  }
+#  ifdef DEBUG3
+  printf("\n\nStore initialized\n");
+  printf("\ntrust data at initialization\n");
+  trust_mgr->print_trust_data();
+  printf("\nStore\n");
+  trust_mgr->store_.print();
+#  endif
+
+  if (!trust_mgr->initialize_keys(FLAGS_public_key_alg,
+                                  FLAGS_symmetric_key_alg,
+                                  false)) {
+    printf("%s() error, line %d, Can't init keys\n", __func__, __LINE__);
+    return 1;
+  }
+
+  int ret = 0;
+  // Get policy certificate
+  der_policy_cert.assign((char *)initialized_cert, initialized_cert_size);
+
+  if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
+    printf("%s() error, line %d, initialize_existing_domain failed\n",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+  c = trust_mgr->find_certifier_by_domain_name(FLAGS_domain_name);
+  if (c == nullptr) {
+    printf("%s() error, line %d, can't find this domain\n", __func__, __LINE__);
+    ret = 1;
+    goto done;
+  }
+
+  x509_cert = X509_new();
+  if (x509_cert == nullptr) {
+    printf("%s() error, line %d, can't initialize x509 cert",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+  if (!trust_mgr->cc_auth_key_initialized_) {
+    printf("%s() error, line %d, Auth key uninitialized", __func__, __LINE__);
+    ret = 1;
+    goto done;
+  }
+  if (!asn1_to_x509(der_policy_cert, x509_cert)) {
+    printf("%s() error, line %d, Can't convert der to x509",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+
+  if (!get_not_after_from_cert(x509_cert, &expires)) {
+    printf("%s() error, line %d, Can't get expitation time",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+
+  if (!time_now(&now)) {
+    printf("%s() error, line %d, Can't get time now\n", __func__, __LINE__);
+    ret = 1;
+    goto done;
+  }
+  if (!add_interval_to_time_point(now, 48.0, &two_days_from_now)) {
+    printf("%s() error, line %d, Can't add time interval\n",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+
+  if (compare_time(two_days_from_now, expires) <= 0) {
+    printf("%s() error, line %d, More than two days left\n",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+
+  if (!trust_mgr->generate_symmetric_key(true)) {
+    printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
+    ret = 1;
+    goto done;
+  }
+  if (!trust_mgr->generate_sealing_key(true)) {
+    printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
+    ret = 1;
+    goto done;
+  }
+  if (!trust_mgr->generate_auth_key(true)) {
+    printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
+    ret = 1;
+    goto done;
+  }
+  if (!trust_mgr->generate_service_key(true)) {
+    printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
+    ret = 1;
+    goto done;
+  }
+
+  // Now recertify
+  if (!trust_mgr->initialize_new_domain(FLAGS_domain_name,
+                                        purpose,
+                                        der_policy_cert,
+                                        FLAGS_policy_host,
+                                        FLAGS_policy_port)) {
+    printf("%s() error, line %d, can't initialize new domain\n",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+
+  if (!trust_mgr->save_store()) {
+    printf("%s() error, line %d, Can't save store\n", __func__, __LINE__);
+    ret = 1;
+    goto done;
+  }
+  printf("Key rotation succeeded\n");
+
+done:
+  if (x509_cert != nullptr) {
+    X509_free(x509_cert);
+    x509_cert = nullptr;
+  }
+  trust_mgr->clear_sensitive_data();
+  if (trust_mgr != nullptr) {
+    delete trust_mgr;
+    trust_mgr = nullptr;
+  }
+  return ret;
+}
+#endif
+
+// ----------------------------------------------------------------------------
+
+#ifdef OLD_API
 int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -268,3 +493,6 @@ int main(int an, char **av) {
   }
   return ret;
 }
+#endif
+
+// ----------------------------------------------------------------------------
