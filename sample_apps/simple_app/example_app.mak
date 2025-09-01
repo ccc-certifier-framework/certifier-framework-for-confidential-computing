@@ -37,6 +37,9 @@ SE= $(S)/simulated-enclave
 # is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
 
+#If NEW_API is defined, compile with new API.
+#NEW_API=1
+
 ifndef NEWPROTOBUF
 CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
@@ -45,7 +48,9 @@ CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -W
 CFLAGS1=$(INCLUDE) -O1 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP
 endif
 CFLAGS=$(CFLAGS_NOERROR) -Werror -fPIC
-# CFLAGS += -DNEW_API
+ifdef NEW_API
+CFLAGS += -DNEW_API
+endif
 
 CC=g++
 LINK=g++
@@ -62,6 +67,7 @@ endif
 
 # Note:  You can omit all the files below in d_obj except $(O)/example_app.o,
 #  if you link in the certifier library certifier.a.
+ifdef NEW_API
 dobj = $(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
        $(O)/cc_useful.o
@@ -69,6 +75,15 @@ dobj = $(O)/example_app.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_pr
 robj = $(O)/example_key_rotation.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
        $(O)/cc_useful.o
+else
+dobj = $(O)/example_app_old_api.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+       $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
+       $(O)/cc_useful.o
+
+robj = $(O)/example_key_rotation_old_api.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+       $(O)/support.o $(O)/simulated_enclave.o $(O)/application_enclave.o $(O)/cc_helpers.o \
+       $(O)/cc_useful.o
+endif
 
 all:	example_app.exe example_key_rotation.exe
 clean:
@@ -96,6 +111,7 @@ $(O)/certifier.pb.o: $(US)/certifier.pb.cc $(I)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS_NOERROR) -o $(@D)/$@ -c $<
 
+ifdef NEW_API
 $(O)/example_app.o: $(COMMON_SRC)/example_app.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
@@ -103,6 +119,15 @@ $(O)/example_app.o: $(COMMON_SRC)/example_app.cc $(I)/certifier.h $(US)/certifie
 $(O)/example_key_rotation.o: $(US)/example_key_rotation.cc $(I)/certifier.h $(US)/certifier.pb.cc
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+else
+$(O)/example_app_old_api.o: $(COMMON_SRC)/example_app_old_api.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/example_key_rotation_old_api.o: $(US)/example_key_rotation_old_api.cc $(I)/certifier.h $(US)/certifier.pb.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+endif
 
 $(O)/certifier.o: $(S)/certifier.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "\ncompiling $<"
