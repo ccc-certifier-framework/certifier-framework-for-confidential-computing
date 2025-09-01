@@ -190,23 +190,20 @@ bool get_simulated_enclave_parameters(string **s, int *n) {
   }
   *s = args;
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_attest_key_file,
-                             &args[0])) {
+  if (!read_file_into_string(FLAGS_attest_key_file, &args[0])) {
     printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
     goto err;
   }
 
-  if (!read_file_into_string(FLAGS_data_dir + FLAGS_measurement_file,
-                             &args[1])) {
+  if (!read_file_into_string(FLAGS_measurement_file, &args[1])) {
     printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     goto err;
   }
 
-  if (!read_file_into_string(
-          FLAGS_data_dir + FLAGS_platform_attest_endorsement_file,
-          &args[2])) {
+  if (!read_file_into_string(FLAGS_platform_attest_endorsement_file,
+                             &args[2])) {
     printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
@@ -336,8 +333,6 @@ void print_help() {
 
 cc_trust_manager *trust_mgr = nullptr;
 
-#define DEBUG3
-
 bool add_key_and_cert(cryptstore &cs) {
 
   if (!trust_mgr->cc_auth_key_initialized_) {
@@ -424,6 +419,8 @@ bool generate_symmetric_key(key_message *km,
   cryptstore cs;
   string     key_format("vse-key");
   double     duration_in_hours = FLAGS_duration;
+  string     encrypted_cryptstore_filename(FLAGS_data_dir);
+  encrypted_cryptstore_filename.append(FLAGS_encrypted_cryptstore_filename);
 
   if (!cf_generate_symmetric_key(km,
                                  FLAGS_keyname,
@@ -435,7 +432,7 @@ bool generate_symmetric_key(key_message *km,
   }
   if (!open_cryptstore(&cs,
                        FLAGS_data_dir,
-                       FLAGS_encrypted_cryptstore_filename,
+                       encrypted_cryptstore_filename,
                        FLAGS_duration,
                        FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
@@ -478,7 +475,7 @@ bool generate_symmetric_key(key_message *km,
   // save store
   if (!save_cryptstore(cs,
                        FLAGS_data_dir,
-                       FLAGS_encrypted_cryptstore_filename,
+                       encrypted_cryptstore_filename,
                        FLAGS_duration,
                        FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
@@ -578,6 +575,9 @@ bool reinit_domain_and_update() {
     return false;
   }
 
+  string encrypted_cryptstore_filename(FLAGS_data_dir);
+  encrypted_cryptstore_filename.append(FLAGS_encrypted_cryptstore_filename);
+
   // re-init domain
   if (!trust_mgr->initialize_new_domain(FLAGS_policy_domain_name,
                                         purpose,
@@ -598,6 +598,7 @@ bool reinit_domain_and_update() {
 #ifdef DEBUG3
   printf("cryptstore name: %s\n", cryptstore_file_name.c_str());
 #endif
+
   if (file_size(cryptstore_file_name) < 0) {
     if (!create_cryptstore(cs,
                            FLAGS_data_dir,

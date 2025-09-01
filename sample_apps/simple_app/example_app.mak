@@ -38,7 +38,7 @@ SE= $(S)/simulated-enclave
 NEWPROTOBUF=1
 
 #If NEW_API is defined, compile with new API.
-#NEW_API=1
+NEW_API=1
 
 ifndef NEWPROTOBUF
 CFLAGS_NOERROR=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations -DSIMPLE_APP

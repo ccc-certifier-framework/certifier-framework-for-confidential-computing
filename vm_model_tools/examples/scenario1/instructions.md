@@ -304,7 +304,11 @@ $CERTIFIER_ROOT/certifier_service/simpleserver \
 cd $EXAMPLE_DIR
 
 ##For the simulated-enclave
-First, get certified.
+
+# remove old files
+rm policy_store.datica_test cryptstore.datica_test
+
+Get certified.
 
 $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --cf_utility_help=false \
@@ -342,10 +346,17 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
 
 ## For the simulated SEV enclave
 
+# You have to be root and have installed the device driver
+sudo bash
 export CERTIFIER_ROOT=/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
 export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 
-First, get certified.
+cd $EXAMPLE_DIR
+
+# remove old files
+rm policy_store.datica_test cryptstore.datica_test
+
+Get certified.
 
 $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --cf_utility_help=false \

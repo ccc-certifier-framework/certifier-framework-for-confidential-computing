@@ -31,7 +31,7 @@ INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 CF_UTILITY_SRC= $(CERTIFIER_ROOT)/vm_model_tools/src
 SE= $(S)/simulated-enclave
 
-#NEW_API = 1
+NEW_API = 1
 ENABLE_SEV=1
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.

@@ -402,9 +402,9 @@ int main(int an, char **av) {
     params = nullptr;
   }
 
-#  ifdef DEBUG3
+#ifdef DEBUG3
   printf("\nEnclave initialized\n");
-#  endif
+#endif
 
   // See note above about defaults
   string public_key_alg(FLAGS_public_key_alg);
@@ -420,9 +420,9 @@ int main(int an, char **av) {
   int ret = 0;
   if (FLAGS_operation == "cold-init") {
 
-#  ifdef DEBUG3
+#ifdef DEBUG3
     printf("\ncold-init\n");
-#  endif
+#endif
     if (!trust_mgr->cold_init(public_key_alg,
                               symmetric_key_alg,
                               "simple-app-home_domain",
@@ -435,32 +435,32 @@ int main(int an, char **av) {
       goto done;
     }
   } else if (FLAGS_operation == "get-certified") {
-#  ifdef DEBUG3
+#ifdef DEBUG3
     printf("\nget-certified\n");
-#  endif
+#endif
     if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
-#  ifdef DEBUG3
+#ifdef DEBUG3
     printf("\nwarm-restart succeeded\n");
-#  endif
+#endif
     if (!trust_mgr->certify_me()) {
       printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
-#  ifdef DEBUG3
+#ifdef DEBUG3
     printf("\ncertify_me succeeded\n");
-#  endif
+#endif
   } else if (FLAGS_operation == "run-app-as-client") {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);
 
-#  ifdef DEBUG3
+#ifdef DEBUG3
     printf("\nrun-app-as-client\n");
-#  endif
+#endif
     if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
@@ -502,9 +502,9 @@ int main(int an, char **av) {
       goto done;
     }
   } else if (FLAGS_operation == "run-app-as-server") {
-#  ifdef DEBUG3
+#ifdef DEBUG3
     printf("\nrun-app-as-server\n");
-#  endif
+#endif
     if (!trust_mgr->warm_restart()) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
@@ -523,16 +523,16 @@ int main(int an, char **av) {
   }
 
 done:
-#  ifdef DEBUG3
+#ifdef DEBUG3
   if (ret == 0) {
     printf("Succeeded\n");
   } else {
     printf("Failed\n");
   }
-#  endif
-#  ifdef DEBUG4
+#endif
+#ifdef DEBUG4
   trust_mgr->print_trust_data();
-#  endif  // DEBUG3
+#endif  // DEBUG3
   trust_mgr->clear_sensitive_data();
   if (trust_mgr != nullptr) {
     delete trust_mgr;

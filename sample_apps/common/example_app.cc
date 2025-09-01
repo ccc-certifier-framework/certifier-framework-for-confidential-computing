@@ -391,9 +391,9 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
-#  ifdef DEBUG3
+#ifdef DEBUG3
   printf("Enclave initialized\n");
-#  endif
+#endif
   if (params != nullptr) {
     delete[] params;
     params = nullptr;
@@ -404,13 +404,13 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init store\n", __func__, __LINE__);
     return 1;
   }
-#  ifdef DEBUG4
+#ifdef DEBUG4
   printf("\n\nStore initialized\n");
   printf("\ntrust data at initialization\n");
   trust_mgr->print_trust_data();
   printf("\nStore\n");
   trust_mgr->store_.print();
-#  endif
+#endif
   // See note above about defaults
   string public_key_alg(FLAGS_public_key_alg);
   string symmetric_key_alg(FLAGS_symmetric_key_alg);
@@ -431,10 +431,12 @@ int main(int an, char **av) {
   serialized_policy_cert.assign((char *)initialized_cert,
                                 initialized_cert_size);
 
-  if (FLAGS_operation == "fresh-start") {
-#  ifdef DEBUG3
+  if (FLAGS_operation == "fresh-start"
+      || FLAGS_operation == "cold-init") {  // just to make test run
+
+#ifdef DEBUG3
     printf("\nfresh-start\n");
-#  endif
+#endif
     string purpose("authentication");
     if (!trust_mgr->initialize_new_domain(FLAGS_domain_name,
                                           purpose,
@@ -447,13 +449,13 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#  ifdef DEBUG
+#ifdef DEBUG
     trust_mgr->print_trust_data();
-#  endif  // DEBUG
+#endif  // DEBUG
   } else if (FLAGS_operation == "get-certified") {
-#  ifdef DEBUG3
+#ifdef DEBUG3
     printf("\nget-certified\n");
-#  endif
+#endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, initialize_existing_domain failed\n",
              __func__,
@@ -478,9 +480,9 @@ int main(int an, char **av) {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);
 
-#  ifdef DEBUG3
+#ifdef DEBUG3
     printf("\nrun-app-as-client\n");
-#  endif
+#endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
@@ -517,9 +519,9 @@ int main(int an, char **av) {
     }
   } else if (FLAGS_operation == "run-app-as-server") {
 
-#  ifdef DEBUG3
+#ifdef DEBUG3
     printf("\nrun-app-as-server\n");
-#  endif
+#endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, initialize_existing_domain failed\n",
              __func__,
@@ -541,11 +543,11 @@ int main(int an, char **av) {
   }
 
 done:
-#  ifdef DEBUG3
+#ifdef DEBUG3
   printf("\n\ntrust data on exit\n");
   trust_mgr->print_trust_data();
   printf("\n\nDone\n");
-#  endif  // DEBUG3
+#endif  // DEBUG3
   trust_mgr->clear_sensitive_data();
   if (trust_mgr != nullptr) {
     delete trust_mgr;

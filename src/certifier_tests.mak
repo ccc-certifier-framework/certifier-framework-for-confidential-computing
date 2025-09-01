@@ -40,6 +40,10 @@ endif
 # is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
 
+# Compile with new api
+NEW_API=1
+#endif
+
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 S= $(SRC_DIR)
 O= $(OBJ_DIR)
@@ -55,6 +59,11 @@ CFLAGS_COMMON = $(INCLUDE) -g -std=c++17 -D X64 -Wall -Wno-unused-variable -Wno-
 endif
 
 CFLAGS  = $(CFLAGS_COMMON) -O3
+
+ifndef NEW_API
+CFLAGS += -DNEW_API
+endif
+
 ifdef ENABLE_SEV
 
 CFLAGS  += -D SEV_SNP -D SEV_DUMMY_GUEST

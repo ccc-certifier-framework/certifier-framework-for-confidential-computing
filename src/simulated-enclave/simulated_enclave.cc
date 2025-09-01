@@ -247,6 +247,12 @@ bool simulated_Unseal(const string &enclave_type,
              (int)my_measurement.size())
       != 0) {
     printf("%s() error, line %d, measurement mismatch\n", __func__, __LINE__);
+    printf("In output: ");
+    print_bytes((int)my_measurement.size(), (byte *)output);
+    printf("\n");
+    printf("Actual   : ");
+    print_bytes((int)my_measurement.size(), (byte *)my_measurement.data());
+    printf("\n");
     return false;
   }
   real_output_size -= my_measurement.size();
