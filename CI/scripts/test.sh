@@ -83,6 +83,7 @@ TestList=(
 	   "test-simple_app_under_keystone-using-shim"
 
 	   "test-acl_lib-programs"
+	   "test-cf-utility"
            
            #"test-run_example-simple_app_python"
            #"test-simple_app_python-with-warm-restart"
@@ -861,6 +862,8 @@ function test-cf-utility() {
     # We need to clean here
     make -i -f cf_utility.mak clean
     make -j${NumMakeThreads} -f cf_utility.mak
+    sleep 3
+    ./cf_support_test.exe
     popd > /dev/null 2>&1
 }
 

@@ -197,9 +197,11 @@ $(O)/claims_tests.o: $(S)/claims_tests.cc $(I)/certifier.pb.h $(I)/certifier.h $
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
+ifdef ENABLE_SEV
 $(O)/sev_tests.o: $(S)/sev_tests.cc $(I)/certifier.pb.h $(I)/certifier.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+endif
 
 $(O)/certifier_tests.o: $(S)/certifier_tests.cc $(I)/certifier.pb.h $(I)/certifier.h $(S)/test_support.cc
 	@echo "\ncompiling $<"
