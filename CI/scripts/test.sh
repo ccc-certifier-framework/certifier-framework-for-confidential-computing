@@ -862,9 +862,9 @@ function test-cf-utility() {
     # We need to clean here
     make -i -f cf_utility.mak clean
     make -j${NumMakeThreads} -f cf_utility.mak
-    sleep 3
     ./cf_support_test.exe
     popd > /dev/null 2>&1
+
 }
 
 # #############################################################################

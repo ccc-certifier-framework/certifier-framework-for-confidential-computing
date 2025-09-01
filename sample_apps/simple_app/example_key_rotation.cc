@@ -113,6 +113,7 @@ void print_ops() {
 
 // -----------------------------------------------------------------------------
 
+#ifdef NEW_API
 int main(int an, char **av) {
   string usage("Example Key Rotation");
   gflags::ParseCommandLineFlags(&an, &av, true);
@@ -166,9 +167,9 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
-#ifdef DEBUG3
+#  ifdef DEBUG3
   printf("Enclave initialized\n");
-#endif
+#  endif
   if (params != nullptr) {
     delete[] params;
     params = nullptr;
@@ -179,13 +180,13 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init store\n", __func__, __LINE__);
     return 1;
   }
-#ifdef DEBUG3
+#  ifdef DEBUG3
   printf("\n\nStore initialized\n");
   printf("\ntrust data at initialization\n");
   trust_mgr->print_trust_data();
   printf("\nStore\n");
   trust_mgr->store_.print();
-#endif
+#  endif
 
   if (!trust_mgr->initialize_keys(FLAGS_public_key_alg,
                                   FLAGS_symmetric_key_alg,
@@ -315,5 +316,183 @@ done:
   }
   return ret;
 }
+#endif
+
+// ----------------------------------------------------------------------------
+
+#ifdef OLD_API
+int main(int an, char **av) {
+  gflags::ParseCommandLineFlags(&an, &av, true);
+  an = 1;
+  ::testing::InitGoogleTest(&an, av);
+
+  if (FLAGS_operation == "") {
+    printf(
+        "example_key_rotation.exe --print_all=true|false --operation=op "
+        "--policy_host=policy-host-address --policy_port=policy-host-port\n");
+    printf("\t --data_dir=-directory-for-app-data\n");
+    printf("\t --policy_cert_file=self-signed-policy-cert-file-name "
+           "--policy_store_file=policy-store-file-name\n");
+    return 0;
+  }
+
+  SSL_library_init();
+  string enclave_type("simulated-enclave");
+
+  string store_file(FLAGS_data_dir);
+  store_file.append(FLAGS_policy_store_file);
+  string purpose("authentication");
+
+  trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
+  if (trust_mgr == nullptr) {
+    printf("%s() error, line %d, couldn't initialize trust object\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  // Init policy key info
+  if (!trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)) {
+    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
+    return 1;
+  }
+
+  // Get parameters
+  string *params = nullptr;
+  int     n = 0;
+  if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
+    printf("%s() error, line %d, get simulated enclave parameters\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  // Init simulated enclave
+  if (!trust_mgr->initialize_enclave(n, params)) {
+    printf("%s() error, line %d, Can't init simulated enclave\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
+  }
+
+  int ret = 0;
+
+  // Get certificate
+  string der_cert;
+  X509  *x509_cert = X509_new();
+  if (purpose == "authentication") {
+    if (!trust_mgr->cc_auth_key_initialized_) {
+      printf("%s() error, line %d, Auth key uninitialized", __func__, __LINE__);
+      return 1;
+    }
+    der_cert = trust_mgr->public_auth_key_.certificate();
+    if (!asn1_to_x509(der_cert, x509_cert)) {
+      printf("%s() error, line %d, Can't convert der to x509",
+             __func__,
+             __LINE__);
+      return 1;
+    }
+  } else if (purpose == "attestation") {
+    if (!trust_mgr->cc_service_key_initialized_) {
+      printf("%s() error, line %d, Service key uninitialized",
+             __func__,
+             __LINE__);
+      return 1;
+    }
+    der_cert = trust_mgr->public_service_key_.certificate();
+    if (!asn1_to_x509(der_cert, x509_cert)) {
+      printf("%s() error, line %d, Can't convert der to x509",
+             __func__,
+             __LINE__);
+      return 1;
+    }
+  } else {
+    printf("%s() error, line %d, Unknown purpose\n", __func__, __LINE__);
+    return 1;
+  }
+
+  // time left?
+  time_point now;
+  time_point expires;
+  time_point two_days_from_now;
+
+  if (!get_not_after_from_cert(x509_cert, &expires)) {
+    printf("%s() error, line %d, Can't get expitation time",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  if (!time_now(&now)) {
+    printf("%s() error, line %d, Can't get time now\n", __func__, __LINE__);
+    return 1;
+  }
+  if (!add_interval_to_time_point(now, 48.0, &two_days_from_now)) {
+    printf("%s() error, line %d, Can't add time interval\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  if (compare_time(two_days_from_now, expires) <= 0) {
+    printf("%s() error, line %d, More than two days left\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  if (!trust_mgr->generate_symmetric_key(true)) {
+    printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
+    return 1;
+  }
+  if (!trust_mgr->generate_sealing_key(true)) {
+    printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
+    return 1;
+  }
+  if (!trust_mgr->generate_auth_key(true)) {
+    printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
+    return 1;
+  }
+  if (!trust_mgr->generate_service_key(true)) {
+    printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
+    return 1;
+  }
+
+  trust_mgr->cc_is_certified_ = false;
+
+  // Now recertify
+  if (!trust_mgr->certify_me()) {
+    printf("%s() error, line %d, can't recertify\n", __func__, __LINE__);
+    return 1;
+  }
+
+  if (!trust_mgr->put_trust_data_in_store()) {
+    printf("%s() error, line %d, Can't put_trust_in_store\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+  if (!trust_mgr->save_store()) {
+    printf("%s() error, line %d, Can't save store\n", __func__, __LINE__);
+    return 1;
+  }
+  printf("Key rotation succeeded\n");
+
+  if (x509_cert != nullptr) {
+    X509_free(x509_cert);
+    x509_cert = nullptr;
+  }
+
+  trust_mgr->clear_sensitive_data();
+  if (trust_mgr != nullptr) {
+    delete trust_mgr;
+  }
+  return ret;
+}
+#endif
 
 // ----------------------------------------------------------------------------

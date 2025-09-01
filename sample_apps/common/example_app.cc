@@ -215,12 +215,9 @@ bool get_enclave_parameters(string **s, int *n) {
 
 // In our sample_apps, the policy certs are embedded in the program.
 // With the new API you can have more than one.
-//
 #include "policy_key.cc"
 
 // ----------------------------------------------------------------------
-
-#define DEBUG3
 
 // The test app performs five possible roles
 //    In old api:
@@ -352,6 +349,7 @@ void print_options(const char *op) {
 
 // ----------------------------------------------------------------------
 
+#ifdef NEW_API
 int main(int an, char **av) {
   string usage("Simple App");
   gflags::SetUsageMessage(usage);
@@ -391,9 +389,9 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
-#ifdef DEBUG3
+#  ifdef DEBUG3
   printf("Enclave initialized\n");
-#endif
+#  endif
   if (params != nullptr) {
     delete[] params;
     params = nullptr;
@@ -404,13 +402,13 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init store\n", __func__, __LINE__);
     return 1;
   }
-#ifdef DEBUG4
+#  ifdef DEBUG4
   printf("\n\nStore initialized\n");
   printf("\ntrust data at initialization\n");
   trust_mgr->print_trust_data();
   printf("\nStore\n");
   trust_mgr->store_.print();
-#endif
+#  endif
   // See note above about defaults
   string public_key_alg(FLAGS_public_key_alg);
   string symmetric_key_alg(FLAGS_symmetric_key_alg);
@@ -434,9 +432,9 @@ int main(int an, char **av) {
   if (FLAGS_operation == "fresh-start"
       || FLAGS_operation == "cold-init") {  // just to make test run
 
-#ifdef DEBUG3
+#  ifdef DEBUG3
     printf("\nfresh-start\n");
-#endif
+#  endif
     string purpose("authentication");
     if (!trust_mgr->initialize_new_domain(FLAGS_domain_name,
                                           purpose,
@@ -449,13 +447,13 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG
+#  ifdef DEBUG
     trust_mgr->print_trust_data();
-#endif  // DEBUG
+#  endif  // DEBUG
   } else if (FLAGS_operation == "get-certified") {
-#ifdef DEBUG3
+#  ifdef DEBUG3
     printf("\nget-certified\n");
-#endif
+#  endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, initialize_existing_domain failed\n",
              __func__,
@@ -480,9 +478,9 @@ int main(int an, char **av) {
     string                       my_role("client");
     secure_authenticated_channel channel(my_role);
 
-#ifdef DEBUG3
+#  ifdef DEBUG3
     printf("\nrun-app-as-client\n");
-#endif
+#  endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
       ret = 1;
@@ -519,9 +517,9 @@ int main(int an, char **av) {
     }
   } else if (FLAGS_operation == "run-app-as-server") {
 
-#ifdef DEBUG3
+#  ifdef DEBUG3
     printf("\nrun-app-as-server\n");
-#endif
+#  endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
       printf("%s() error, line %d, initialize_existing_domain failed\n",
              __func__,
@@ -543,16 +541,209 @@ int main(int an, char **av) {
   }
 
 done:
-#ifdef DEBUG3
+#  ifdef DEBUG3
   printf("\n\ntrust data on exit\n");
   trust_mgr->print_trust_data();
   printf("\n\nDone\n");
-#endif  // DEBUG3
+#  endif  // DEBUG3
   trust_mgr->clear_sensitive_data();
   if (trust_mgr != nullptr) {
     delete trust_mgr;
   }
   return ret;
 }
+#endif
+
+// ----------------------------------------------------------------------
+
+#ifdef OLD_API
+int main(int an, char **av) {
+  string usage("Simple App");
+  gflags::SetUsageMessage(usage);
+  gflags::ParseCommandLineFlags(&an, &av, true);
+  an = 1;
+  ::testing::InitGoogleTest(&an, av);
+
+  SSL_library_init();
+  string purpose("authentication");
+
+  string store_file(FLAGS_data_dir);
+  store_file.append(FLAGS_policy_store_file);
+
+  trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
+  if (trust_mgr == nullptr) {
+    printf("%s() error, line %d, couldn't initialize trust object\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  if (FLAGS_operation == "") {
+    print_options(FLAGS_operation.c_str());
+    return 0;
+  }
+
+  // Get parameters
+  string *params = nullptr;
+  int     n = 0;
+  if (!get_enclave_parameters(&params, &n)) {
+    printf("%s() error, line %d, get enclave parameters\n", __func__, __LINE__);
+    return 1;
+  }
+
+  // Init policy key info
+  if (!trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)) {
+    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
+    return 1;
+  }
+
+  // Init enclave (simulated encalve in this case)
+  if (!trust_mgr->initialize_enclave(n, params)) {
+    printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
+    return 1;
+  }
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
+  }
+
+#  ifdef DEBUG3
+  printf("\nEnclave initialized\n");
+#  endif
+
+  // See note above about defaults
+  string public_key_alg(FLAGS_public_key_alg);
+  string symmetric_key_alg(FLAGS_symmetric_key_alg);
+
+  if (FLAGS_print_all && (FLAGS_operation == "cold-init")) {
+    printf("public_key_alg='%s', authenticated_symmetric_key_alg='%s\n",
+           public_key_alg.c_str(),
+           symmetric_key_alg.c_str());
+  }
+
+  // Carry out operation
+  int ret = 0;
+  if (FLAGS_operation == "cold-init") {
+
+#  ifdef DEBUG3
+    printf("\ncold-init\n");
+#  endif
+    if (!trust_mgr->cold_init(public_key_alg,
+                              symmetric_key_alg,
+                              "simple-app-home_domain",
+                              FLAGS_policy_host,
+                              FLAGS_policy_port,
+                              FLAGS_server_app_host,
+                              FLAGS_server_app_port)) {
+      printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+  } else if (FLAGS_operation == "get-certified") {
+#  ifdef DEBUG3
+    printf("\nget-certified\n");
+#  endif
+    if (!trust_mgr->warm_restart()) {
+      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+#  ifdef DEBUG3
+    printf("\nwarm-restart succeeded\n");
+#  endif
+    if (!trust_mgr->certify_me()) {
+      printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+#  ifdef DEBUG3
+    printf("\ncertify_me succeeded\n");
+#  endif
+  } else if (FLAGS_operation == "run-app-as-client") {
+    string                       my_role("client");
+    secure_authenticated_channel channel(my_role);
+
+#  ifdef DEBUG3
+    printf("\nrun-app-as-client\n");
+#  endif
+    if (!trust_mgr->warm_restart()) {
+      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+
+    printf("Running App as client\n");
+    if (!trust_mgr->cc_auth_key_initialized_
+        || !trust_mgr->cc_policy_info_initialized_) {
+      printf("%s() error, line %d, trust data not initialized\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!trust_mgr->primary_admissions_cert_valid_) {
+      printf("%s() error, line %d, primary admissions cert not valid\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!channel.init_client_ssl(FLAGS_server_app_host,
+                                 FLAGS_server_app_port,
+                                 *trust_mgr)) {
+      printf("%s() error, line %d, Can't init client app\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+
+    // This is the actual application code.
+    if (!client_application(channel)) {
+      printf("%s() error, line %d, client_application failed\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+  } else if (FLAGS_operation == "run-app-as-server") {
+#  ifdef DEBUG3
+    printf("\nrun-app-as-server\n");
+#  endif
+    if (!trust_mgr->warm_restart()) {
+      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+    printf("Running App as server\n");
+    if (!server_dispatch(FLAGS_server_app_host,
+                         FLAGS_server_app_port,
+                         *trust_mgr,
+                         server_application)) {
+      ret = 1;
+      goto done;
+    }
+  } else {
+    printf("%s() error, line %d, Unknown operation\n", __func__, __LINE__);
+  }
+
+done:
+#  ifdef DEBUG3
+  if (ret == 0) {
+    printf("Succeeded\n");
+  } else {
+    printf("Failed\n");
+  }
+#  endif
+#  ifdef DEBUG4
+  trust_mgr->print_trust_data();
+#  endif  // DEBUG3
+  trust_mgr->clear_sensitive_data();
+  if (trust_mgr != nullptr) {
+    delete trust_mgr;
+  }
+  return ret;
+}
+#endif
 
 // ----------------------------------------------------------------------
