@@ -28,7 +28,17 @@ There is still benefit in carrying out the steps in run-test by copying and
 pasting since you can see all the output and preserve the running servers.
 
 The shell scripts assume you have all the right software installed including
-the go programs and libraries mentioned below.
+the go programs and libraries mentioned below.  If you are running the sev
+tests in run-test.sh, you must have previously installed the sev device
+driver:
+  cd $CERTIFIER_ROOT/sev-snp-simulator
+  make clean
+  make
+  make keys
+  make insmod
+If you've already built it and made keys, you just need to
+  cd $CERTIFIER_ROOT/sev-snp-simulator
+  make insmod
 
 The shell scripts use the new API.
 

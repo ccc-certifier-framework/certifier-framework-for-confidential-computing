@@ -432,7 +432,7 @@ bool generate_symmetric_key(key_message *km,
   }
   if (!open_cryptstore(&cs,
                        FLAGS_data_dir,
-                       encrypted_cryptstore_filename,
+                       FLAGS_encrypted_cryptstore_filename,
                        FLAGS_duration,
                        FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
@@ -475,7 +475,7 @@ bool generate_symmetric_key(key_message *km,
   // save store
   if (!save_cryptstore(cs,
                        FLAGS_data_dir,
-                       encrypted_cryptstore_filename,
+                       FLAGS_encrypted_cryptstore_filename,
                        FLAGS_duration,
                        FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {

@@ -530,9 +530,10 @@ bool save_cryptstore(cryptstore &cs,
   // write file
   if (!write_file_from_string(cryptstore_file_name,
                               serialized_encrypted_blob)) {
-    printf("%s() error, line %d, Can't write protected blob\n",
+    printf("%s() error, line %d, Can't write protected blob to %s\n",
            __func__,
-           __LINE__);
+           __LINE__,
+	   cryptstore_file_name.c_str());
     return false;
   }
 

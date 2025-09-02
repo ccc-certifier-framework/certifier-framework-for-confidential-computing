@@ -1,6 +1,6 @@
 #!/bin/bash
 # ############################################################################
-# prepare-test.sh: Driver script to run build-and-test for cf_utility.
+# prepare-test.sh: Script to run build cf_utility test environment.
 # ############################################################################
 
 set -Eeuo pipefail
@@ -22,7 +22,7 @@ echo "Example directory: $EXAMPLE_DIR"
 ARG_SIZE="$#"
 
 if [ $ARG_SIZE == 0 ] ; then
-  echo "Must call with an arguments, as follows:"
+  echo "Must call with arguments, as follows:"
   echo "  ./prepare-test.sh fresh"
   echo "  ./prepare-test.sh all"
   echo "  ./prepare-test.sh compile-utilities"
@@ -354,3 +354,6 @@ if [ "$1" == "copy-files" ] ; then
   do-copy-files
   exit
 fi
+
+echo " "
+echo "Unknown option: $1"
