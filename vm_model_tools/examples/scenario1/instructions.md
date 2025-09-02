@@ -27,6 +27,9 @@ the program and support files.  The shell script run-test.sh runs the test.
 There is still benefit in carrying out the steps in run-test by copying and
 pasting since you can see all the output and preserve the running servers.
 
+The shell scripts assume you have all the right software installed including
+the go programs and libraries mentioned below.
+
 The shell scripts use the new API.
 
 To prepare the test files, type:
@@ -91,8 +94,8 @@ cd $EXAMPLE_DIR/provisioning
 
 $CERTIFIER_ROOT/utilities/cert_utility.exe          \
       --operation=generate-policy-key-and-test-keys      \
-      --policy_key_output_file=policy_key_file.datica_test  \
-      --policy_cert_output_file=policy_cert_file.datica_test \
+      --policy_key_output_file=policy_key_file.datica-test  \
+      --policy_cert_output_file=policy_cert_file.datica-test \
       --platform_key_output_file=platform_key_file.bin  \
       --attest_key_output_file=attest_key_file.bin
   ```
@@ -102,7 +105,7 @@ that use the simulated enclave.
 
 You can print the certificate using:
 
-openssl x509 -in policy_cert_file.datica_test -inform der -text
+openssl x509 -in policy_cert_file.datica-test -inform der -text
 
 ### Step 4: Compile cf_utility (note unlike app examples where
 ###   the app is the measured object, you need NOT include policy
@@ -156,7 +159,7 @@ $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
 --key_subject="platform_key_file.bin" --verb="is-trusted-for-attestation" --output=ts1.bin 
 
 $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
---key_subject=policy_key_file.datica_test --verb="says" \
+--key_subject=policy_key_file.datica-test --verb="says" \
 --clause=ts1.bin --output=vse_policy1.bin
 ```
 
@@ -170,19 +173,19 @@ $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
 --verb="is-trusted" --output=ts2.bin
 
 $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
---key_subject="policy_key_file.datica_test" --verb="says" \
+--key_subject="policy_key_file.datica-test" --verb="says" \
 --clause=ts2.bin --output=vse_policy2.bin
 ```
 
 ### c. Produce the signed claims for each vse policy statement.
 ```shell
 $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
---vse_file=vse_policy1.bin --duration=9000 --private_key_file=policy_key_file.datica_test \
+--vse_file=vse_policy1.bin --duration=9000 --private_key_file=policy_key_file.datica-test \
 --output=signed_claim_1.bin
 
 $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
 --vse_file=vse_policy2.bin  --duration=9000  \
---private_key_file=policy_key_file.datica_test --output=signed_claim_2.bin
+--private_key_file=policy_key_file.datica-test --output=signed_claim_2.bin
 ```
 
 ### d. Combine signed policy statements for Certifier Service use
@@ -215,25 +218,25 @@ $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
 
 ### For simulated SEV
 
-$CERTIFIER_ROOT/utilities/measurement_init.exe --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 --out_file=sev_example_app.measurement
+$CERTIFIER_ROOT/utilities/measurement_init.exe --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 --out_file=sev_cf_utility.measurement
 
 ark key is trusted
 $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" --cert-subject=ark_cert.der \
   --verb="is-trusted-for-attestation" --output=sev_ts1.bin
-$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica_test \
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica-test \
   --verb="says" --clause=sev_ts1.bin --output=sev_vse_policy1.bin
 $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
   --vse_file=sev_vse_policy1.bin --duration=9000 \
-  --private_key_file=policy_key_file.datica_test --output=sev_signed_claim_1.bin
+  --private_key_file=policy_key_file.datica-test --output=sev_signed_claim_1.bin
 
 #measurement is-trusted
 $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" \
-  --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
+  --measurement_subject=sev_cf_utility.measurement --verb="is-trusted" \
   --output=sev_ts2.bin
-$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica_test \
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica-test \
   --verb="says" --clause=sev_ts2.bin --output=sev_vse_policy2.bin
 $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe --vse_file=sev_vse_policy2.bin \
-  --duration=9000 --private_key_file=policy_key_file.datica_test --output=sev_signed_claim_2.bin
+  --duration=9000 --private_key_file=policy_key_file.datica-test --output=sev_signed_claim_2.bin
 
 #trusted platform
 $CERTIFIER_ROOT/utilities/make_property.exe --property_name=debug --property_type='string' comparator="=" \
@@ -256,10 +259,10 @@ $CERTIFIER_ROOT/utilities/make_platform.exe --platform_type=amd-sev-snp \
 --properties_file=sev_properties.bin --output=sev_platform.bin
 $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --platform_subject=sev_platform.bin \
 --verb="has-trusted-platform-property" --output=sev_ts3.bin
-$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica_test \
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica-test \
 --verb="says" --clause=sev_ts3.bin --output=sev_vse_policy3.bin
 $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe --vse_file=sev_vse_policy3.bin \
-  --duration=9000 --private_key_file=policy_key_file.datica_test --output=sev_signed_claim_3.bin
+  --duration=9000 --private_key_file=policy_key_file.datica-test --output=sev_signed_claim_3.bin
 
 
 $CERTIFIER_ROOT/utilities/package_claims.exe --input=sev_signed_claim_1.bin,sev_signed_claim_2.bin,sev_signed_claim_3.bin \
@@ -318,7 +321,7 @@ mkdir $EXAMPLE_DIR/service
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-cp -p policy_key_file.datica_test policy_cert_file.datica_test policy.bin $EXAMPLE_DIR/service
+cp -p policy_key_file.datica-test policy_cert_file.datica-test policy.bin $EXAMPLE_DIR/service
 cp -p sev_policy.bin ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/service
 ```
 
@@ -341,12 +344,12 @@ sudo ldconfig
 
 ## For the simulated enclave:
 $CERTIFIER_ROOT/certifier_service/simpleserver \
---policy_key_file=policy_key_file.datica_test --policy_cert_file=policy_cert_file.datica_test \
+--policy_key_file=policy_key_file.datica-test --policy_cert_file=policy_cert_file.datica-test \
 --policyFile=policy.bin --readPolicy=true
 
 ## For the simulated SEV enclave:
 $CERTIFIER_ROOT/certifier_service/simpleserver \
---policy_key_file=policy_key_file.datica_test --policy_cert_file=policy_cert_file.datica_test \
+--policy_key_file=policy_key_file.datica-test --policy_cert_file=policy_cert_file.datica-test \
 --policyFile=sev_policy.bin --readPolicy=true
 ```
 
@@ -357,7 +360,7 @@ cd $EXAMPLE_DIR
 ##For the simulated-enclave
 
 # remove old files
-rm policy_store.datica_test cryptstore.datica_test
+rm policy_store.datica-test cryptstore.datica-test
 
 Get certified.
 
@@ -367,10 +370,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --print_cryptstore=true \
     --save_cryptstore=false \
     --enclave_type="simulated-enclave" \
-    --policy_domain_name=datica_test \
-    --policy_key_cert_file=policy_cert_file.datica_test \
-    --policy_store_filename=policy_store.datica_test \
-    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --policy_domain_name=datica-test \
+    --policy_key_cert_file=policy_cert_file.datica-test \
+    --policy_store_filename=policy_store.datica-test \
+    --encrypted_cryptstore_filename=cryptstore.datica-test \
     --symmetric_key_algorithm=aes-256-gcm  \
     --public_key_algorithm=rsa-2048 \
     --data_dir=$(EXAMPLE_DIR) \
@@ -385,10 +388,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --generate_symmetric_key=true \
     --save_cryptstore=false \
     --enclave_type="simulated-enclave" \
-    --policy_domain_name=datica_test \
-    --policy_key_cert_file=policy_cert_file.datica_test \
-    --policy_store_filename=policy_store.datica_test \
-    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --policy_domain_name=datica-test \
+    --policy_key_cert_file=policy_cert_file.datica-test \
+    --policy_store_filename=policy_store.datica-test \
+    --encrypted_cryptstore_filename=cryptstore.datica-test \
     --symmetric_key_algorithm=aes-256-gcm  \
     --public_key_algorithm=rsa-2048 \
     --data_dir=$(EXAMPLE_DIR) \
@@ -405,7 +408,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 cd $EXAMPLE_DIR
 
 # remove old files
-rm policy_store.datica_test cryptstore.datica_test
+rm policy_store.datica-test cryptstore.datica-test
 
 Get certified.
 
@@ -415,10 +418,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --print_cryptstore=true \
     --save_cryptstore=false \
     --enclave_type="sev-enclave" \
-    --policy_domain_name=datica_test \
-    --policy_key_cert_file=policy_cert_file.datica_test \
-    --policy_store_filename=policy_store.datica_test \
-    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --policy_domain_name=datica-test \
+    --policy_key_cert_file=policy_cert_file.datica-test \
+    --policy_store_filename=policy_store.datica-test \
+    --encrypted_cryptstore_filename=cryptstore.datica-test \
     --symmetric_key_algorithm=aes-256-gcm  \
     --public_key_algorithm=rsa-2048 \
     --data_dir=$(EXAMPLE_DIR) \
@@ -433,10 +436,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --generate_symmetric_key=true \
     --save_cryptstore=false \
     --enclave_type="sev-enclave" \
-    --policy_domain_name=datica_test \
-    --policy_key_cert_file=policy_cert_file.datica_test \
-    --policy_store_filename=policy_store.datica_test \
-    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --policy_domain_name=datica-test \
+    --policy_key_cert_file=policy_cert_file.datica-test \
+    --policy_store_filename=policy_store.datica-test \
+    --encrypted_cryptstore_filename=cryptstore.datica-test \
     --symmetric_key_algorithm=aes-256-gcm  \
     --public_key_algorithm=rsa-2048 \
     --data_dir=$(EXAMPLE_DIR) \

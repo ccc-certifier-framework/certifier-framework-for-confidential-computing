@@ -31,7 +31,7 @@ INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 CF_UTILITY_SRC= $(CERTIFIER_ROOT)/vm_model_tools/src
 SE= $(S)/simulated-enclave
 
-NEW_API = 1
+CF_NEW_API = 1
 ENABLE_SEV=1
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
@@ -53,7 +53,7 @@ CFLAGS=$(CFLAGS_NOERROR) -Werror -fPIC
 CFLAGS  += -D SEV_SNP -D SEV_DUMMY_GUEST
 #endif
 
-ifdef NEW_API
+ifdef CF_NEW_API
 CFLAGS += -DNEW_API
 endif
 
@@ -74,7 +74,7 @@ endif
 # Note:  You can omit all the files below in d_obj except $(O)/cf_utility.o,
 #  if you link in the certifier library certifier.a.
 #
-ifdef NEW_API
+ifdef CF_NEW_API
 dobj = $(O)/cf_utility.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
        $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
        $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
