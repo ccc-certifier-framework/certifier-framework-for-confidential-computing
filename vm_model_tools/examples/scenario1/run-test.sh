@@ -79,6 +79,14 @@ function do-fresh() {
   exit
 }
 
+function cleanup_stale_procs() {
+# Find and kill simpleserver processes that may be running.
+  echo " "
+  pid=$(ps -ef | grep -E "simpleserver" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
+  set -x
+  kill -9 $pid || true
+}
+
 function do-run() {
   echo "do-run"
 
@@ -153,48 +161,13 @@ function do-run() {
 
   if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
 
-    sudo bash
+    sudo sev-client-call.sh $DOMAIN_NAME $POLICY_CERT_FILE_NAME $POLICY_STORE_NAME $CRYPTSTORE_NAME "$EXAMPLE_DIR/"
 
-    CERTIFIER_ROOT=../../..
-    EXIMPLE_DIR=.
-
-    $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-      --cf_utility_help=false \
-      --init_trust=true \
-      --print_cryptstore=true \
-      --save_cryptstore=false \
-      --enclave_type="sev-enclave" \
-      --policy_domain_name=$DOMAIN_NAME \
-      --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-      --policy_store_filename=$POLICY_STORE_NAME \
-      --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-      --symmetric_key_algorithm=aes-256-gcm  \
-      --public_key_algorithm=rsa-2048 \
-      --data_dir="$EXAMPLE_DIR/" \
-      --certifier_service_URL=localhost \
-      --service_port=8123
-  sleep 3
-
-  $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-      --cf_utility_help=false \
-      --init_trust=false \
-      --generate_symmetric_key=true \
-      --save_cryptstore=false \
-      --enclave_type="sev-enclave" \
-      --policy_domain_name=$DOMAIN_NAME \
-      --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-      --policy_store_filename=$POLICY_STORE_NAME \
-      --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-      --symmetric_key_algorithm=aes-256-gcm  \
-      --public_key_algorithm=rsa-2048 \
-      --data_dir="$EXAMPLE_DIR/" \
-      --certifier_service_URL=localhost \
-      --service_port=8123
-    exit
   fi
 
   popd > /dev/null
 
+  cleanup_stale_procs
 
   echo "do-run done"
 }
