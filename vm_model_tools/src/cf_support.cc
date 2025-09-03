@@ -533,7 +533,7 @@ bool save_cryptstore(cryptstore &cs,
     printf("%s() error, line %d, Can't write protected blob to %s\n",
            __func__,
            __LINE__,
-	   cryptstore_file_name.c_str());
+           cryptstore_file_name.c_str());
     return false;
   }
 
