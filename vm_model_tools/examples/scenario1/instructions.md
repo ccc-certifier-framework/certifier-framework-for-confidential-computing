@@ -1,6 +1,6 @@
 # cf_utility - Instructions
 
-This document gives detailed instructions for buildingi and testing
+This document gives detailed instructions for building and testing
 cf_utility and running the examples in scenario 1 and scenario 2
 as described in cf_utility_usage_notes.md.
 
@@ -12,14 +12,78 @@ export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framewo
 ```
 
 $EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable
-is useful.
+is useful, if you run the detailed steps below.
 
 ```shell
 export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
-----
-## Step 1: Build the utilities
+## Overview
+
+The step by step instructions for building  cf_utility and running the tests
+are enumerated below.  However, to save time, we also supply two shell
+scripts to do this automatically. The shell script prepare-test.sh builds
+the program and support files.  The shell script run-test.sh runs the test.
+There is still benefit in carrying out the steps in run-test by copying and
+pasting since you can see all the output and preserve the running servers.
+
+The shell scripts assume you have all the right software installed including
+the go programs and libraries mentioned below.  If you are running the sev
+tests in run-test.sh, you must have previously installed the sev device
+driver:
+  cd $CERTIFIER_ROOT/sev-snp-simulator
+  make clean
+  make
+  make keys
+  make insmod
+If you've already built it and made keys, you just need to
+  cd $CERTIFIER_ROOT/sev-snp-simulator
+  make insmod
+
+The shell scripts use the new API.
+
+To prepare the test files, type:
+
+  prepare-test.sh fresh [domain-name]
+      - This clears out all old files
+then
+  prepare-test.sh all [domain-name]
+      - This builds the files corresponding to steps 1-9 below.
+then
+  run-test.sh fresh [domain-name]
+      - This removes old application files (policy store and cryptstore)
+      - and runs the tests, corresponding to steps 9 and 10 below.
+
+prepare-test.sh all runs the following subcommands in order:
+  prepare-test.sh compile-utilities [domain-name]
+      - This performs steps 1-2 below.
+  prepare-test.sh make-keys [domain-name]
+      - This performs step 3 below.
+  prepare-test.sh compile-program [domain-name]
+      - This performs step 4 below.
+  prepare-test.sh make-policy [domain-name]
+      - This performs steps 5 and 6 below.
+  prepare-test.sh compile-certifier [domain-name]
+      - This performs step 7 below.
+  prepare-test.sh copy-files [domain-name]
+      - This performs steps 8 and 9 below.
+
+Each of these subcommands is runable from prepare-test.sh, for example,
+you could run,
+   prepare-test.sh make-policy [domain-name]
+to remake the policy.
+
+After you run "prepare-test.sh all", you can rerun the tests without
+invoking prepare-test.sh.  After you run "prepare-test.sh all",
+you need only run subcommands that cause a change in the files;
+for example, if you change the policy, you need only run
+"prepare-test.sh make-policy" before running the tests.
+
+---------------------------------------------------------------------------------
+
+## Detailed instructions
+
+### Step 1: Build the utilities
 
 ```shell
 cd $CERTIFIER_ROOT/utilities
@@ -27,21 +91,21 @@ make -f cert_utility.mak
 make -f policy_utilities.mak
 ```
 
-## Step 2:  Create a directory for provisioning policy files
+### Step 2:  Create a directory for provisioning policy files
 
 ```shell
 mkdir $EXAMPLE_DIR/provisioning
 ```
 
-## Step 3: Generate the policy key and self-signed certificate
+### Step 3: Generate the policy key and self-signed certificate
 
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
 $CERTIFIER_ROOT/utilities/cert_utility.exe          \
       --operation=generate-policy-key-and-test-keys      \
-      --policy_key_output_file=policy_key_file.datica_test  \
-      --policy_cert_output_file=policy_cert_file.datica_test \
+      --policy_key_output_file=policy_key_file.datica-test  \
+      --policy_cert_output_file=policy_cert_file.datica-test \
       --platform_key_output_file=platform_key_file.bin  \
       --attest_key_output_file=attest_key_file.bin
   ```
@@ -51,11 +115,11 @@ that use the simulated enclave.
 
 You can print the certificate using:
 
-openssl x509 -in policy_cert_file.datica_test -inform der -text
+openssl x509 -in policy_cert_file.datica-test -inform der -text
 
-## Step 4: Compile cf_utility (note unlike app examples where
-##   the app is the measured object, you need NOT include policy
-##   keys in the image.
+### Step 4: Compile cf_utility (note unlike app examples where
+###   the app is the measured object, you need NOT include policy
+###   keys in the image.
 
 ```shell
 cd $CERTIFIER_ROOT/vm_model_tools/src
@@ -63,12 +127,12 @@ cd $CERTIFIER_ROOT/vm_model_tools/src
 make -f cf_utility.mak
 ```
 
-## Step 5: Obtain the measurement of the for this security domain.
+### Step 5: Obtain the measurement of the for this security domain.
 
 cd $EXAMPLE_DIR/provisioning
 
-##     For the simulated enclave (this is a little hokey and
-##     will be removed.)
+###     For the simulated enclave (this is a little hokey and
+###     will be removed.)
 
 ```shell
 
@@ -90,13 +154,13 @@ mv sev_ask_cert.der ask_cert.der
 mv sev_vcek_cert.der vcek_cert.der
 ```
 
-## Step 6: Author the policy for the security domain and produce the signed claims the apps need
+### Step 6: Author the policy for the security domain and produce the signed claims the apps need
 
 ```shell
 cd $EXAMPLE_DIR/provisioning
 ```
 
-##For the simulated enclave
+### For the simulated enclave
 
 ### a. Construct policyKey says platformKey is-trusted-for-attestation
 
@@ -105,13 +169,13 @@ $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
 --key_subject="platform_key_file.bin" --verb="is-trusted-for-attestation" --output=ts1.bin 
 
 $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
---key_subject=policy_key_file.datica_test --verb="says" \
+--key_subject=policy_key_file.datica-test --verb="says" \
 --clause=ts1.bin --output=vse_policy1.bin
 ```
 
 ### b. Construct  policy key says measurement is-trusted
-##     Note in real applications the measurement is that
-##     of the OS.
+###     Note in real applications the measurement is that
+###     of the OS.
 
 ```shell
 $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
@@ -119,19 +183,19 @@ $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
 --verb="is-trusted" --output=ts2.bin
 
 $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
---key_subject="policy_key_file.datica_test" --verb="says" \
+--key_subject="policy_key_file.datica-test" --verb="says" \
 --clause=ts2.bin --output=vse_policy2.bin
 ```
 
 ### c. Produce the signed claims for each vse policy statement.
 ```shell
 $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
---vse_file=vse_policy1.bin --duration=9000 --private_key_file=policy_key_file.datica_test \
+--vse_file=vse_policy1.bin --duration=9000 --private_key_file=policy_key_file.datica-test \
 --output=signed_claim_1.bin
 
 $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
 --vse_file=vse_policy2.bin  --duration=9000  \
---private_key_file=policy_key_file.datica_test --output=signed_claim_2.bin
+--private_key_file=policy_key_file.datica-test --output=signed_claim_2.bin
 ```
 
 ### d. Combine signed policy statements for Certifier Service use
@@ -162,27 +226,27 @@ $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
 --private_key_file=platform_key_file.bin --output=platform_attest_endorsement.bin
 ```
 
-##For simulated SEV
+### For simulated SEV
 
-$CERTIFIER_ROOT/utilities/measurement_init.exe --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 --out_file=sev_example_app.measurement
+$CERTIFIER_ROOT/utilities/measurement_init.exe --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 --out_file=sev_cf_utility.measurement
 
-#ark key is trusted
+ark key is trusted
 $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" --cert-subject=ark_cert.der \
   --verb="is-trusted-for-attestation" --output=sev_ts1.bin
-$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica_test \
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica-test \
   --verb="says" --clause=sev_ts1.bin --output=sev_vse_policy1.bin
 $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
   --vse_file=sev_vse_policy1.bin --duration=9000 \
-  --private_key_file=policy_key_file.datica_test --output=sev_signed_claim_1.bin
+  --private_key_file=policy_key_file.datica-test --output=sev_signed_claim_1.bin
 
 #measurement is-trusted
 $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" \
-  --measurement_subject=sev_example_app.measurement --verb="is-trusted" \
+  --measurement_subject=sev_cf_utility.measurement --verb="is-trusted" \
   --output=sev_ts2.bin
-$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica_test \
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica-test \
   --verb="says" --clause=sev_ts2.bin --output=sev_vse_policy2.bin
 $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe --vse_file=sev_vse_policy2.bin \
-  --duration=9000 --private_key_file=policy_key_file.datica_test --output=sev_signed_claim_2.bin
+  --duration=9000 --private_key_file=policy_key_file.datica-test --output=sev_signed_claim_2.bin
 
 #trusted platform
 $CERTIFIER_ROOT/utilities/make_property.exe --property_name=debug --property_type='string' comparator="=" \
@@ -205,10 +269,10 @@ $CERTIFIER_ROOT/utilities/make_platform.exe --platform_type=amd-sev-snp \
 --properties_file=sev_properties.bin --output=sev_platform.bin
 $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --platform_subject=sev_platform.bin \
 --verb="has-trusted-platform-property" --output=sev_ts3.bin
-$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica_test \
+$CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=policy_key_file.datica-test \
 --verb="says" --clause=sev_ts3.bin --output=sev_vse_policy3.bin
 $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe --vse_file=sev_vse_policy3.bin \
-  --duration=9000 --private_key_file=policy_key_file.datica_test --output=sev_signed_claim_3.bin
+  --duration=9000 --private_key_file=policy_key_file.datica-test --output=sev_signed_claim_3.bin
 
 
 $CERTIFIER_ROOT/utilities/package_claims.exe --input=sev_signed_claim_1.bin,sev_signed_claim_2.bin,sev_signed_claim_3.bin \
@@ -220,7 +284,7 @@ $CERTIFIER_ROOT/utilities/package_claims.exe --input=sev_signed_claim_1.bin,sev_
 $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=sev_policy.bin
 ```
 
-## Step 8: Build SimpleServer
+## Step 7: Build SimpleServer
 
 You should have gotten the protobuf compiler (protoc) for Go when you got Go.
 If not, do:
@@ -257,21 +321,21 @@ cd $CERTIFIER_ROOT/certifier_service
 go build simpleserver.go
 ```
 
-## Step 9: Create a directory for service data
+## Step 8: Create a directory for service data
 
 ```shell
 mkdir $EXAMPLE_DIR/service
 ```
 
-## Step 10: Provision the service files
+## Step 9: Provision the service files
 ```shell
 cd $EXAMPLE_DIR/provisioning
 
-cp -p policy_key_file.datica_test policy_cert_file.datica_test policy.bin $EXAMPLE_DIR/service
+cp -p policy_key_file.datica-test policy_cert_file.datica-test policy.bin $EXAMPLE_DIR/service
 cp -p sev_policy.bin ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/service
 ```
 
-## Step 11: Start the Certifier Service
+## Step 10: Start the Certifier Service
 
 In a new terminal window:
 
@@ -290,23 +354,24 @@ sudo ldconfig
 
 ## For the simulated enclave:
 $CERTIFIER_ROOT/certifier_service/simpleserver \
---policy_key_file=policy_key_file.datica_test --policy_cert_file=policy_cert_file.datica_test \
+--policy_key_file=policy_key_file.datica-test --policy_cert_file=policy_cert_file.datica-test \
 --policyFile=policy.bin --readPolicy=true
 
 ## For the simulated SEV enclave:
 $CERTIFIER_ROOT/certifier_service/simpleserver \
---policy_key_file=policy_key_file.datica_test --policy_cert_file=policy_cert_file.datica_test \
+--policy_key_file=policy_key_file.datica-test --policy_cert_file=policy_cert_file.datica-test \
 --policyFile=sev_policy.bin --readPolicy=true
 ```
 
-## Step 12:  Run the scenario tests.
+## Step 11:  Run the scenario tests.
 
 cd $EXAMPLE_DIR
 
 ##For the simulated-enclave
 
 # remove old files
-rm policy_store.datica_test cryptstore.datica_test
+rm policy_store.datica-test cryptstore.datica-test
+
 
 Get certified.
 
@@ -316,10 +381,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --print_cryptstore=true \
     --save_cryptstore=false \
     --enclave_type="simulated-enclave" \
-    --policy_domain_name=datica_test \
-    --policy_key_cert_file=policy_cert_file.datica_test \
-    --policy_store_filename=policy_store.datica_test \
-    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --policy_domain_name=datica-test \
+    --policy_key_cert_file=policy_cert_file.datica-test \
+    --policy_store_filename=policy_store.datica-test \
+    --encrypted_cryptstore_filename=cryptstore.datica-test \
     --symmetric_key_algorithm=aes-256-gcm  \
     --public_key_algorithm=rsa-2048 \
     --data_dir=$(EXAMPLE_DIR) \
@@ -334,10 +399,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --generate_symmetric_key=true \
     --save_cryptstore=false \
     --enclave_type="simulated-enclave" \
-    --policy_domain_name=datica_test \
-    --policy_key_cert_file=policy_cert_file.datica_test \
-    --policy_store_filename=policy_store.datica_test \
-    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --policy_domain_name=datica-test \
+    --policy_key_cert_file=policy_cert_file.datica-test \
+    --policy_store_filename=policy_store.datica-test \
+    --encrypted_cryptstore_filename=cryptstore.datica-test \
     --symmetric_key_algorithm=aes-256-gcm  \
     --public_key_algorithm=rsa-2048 \
     --data_dir=$(EXAMPLE_DIR) \
@@ -354,7 +419,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 cd $EXAMPLE_DIR
 
 # remove old files
-rm policy_store.datica_test cryptstore.datica_test
+rm policy_store.datica-test cryptstore.datica-test
 
 Get certified.
 
@@ -364,10 +429,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --print_cryptstore=true \
     --save_cryptstore=false \
     --enclave_type="sev-enclave" \
-    --policy_domain_name=datica_test \
-    --policy_key_cert_file=policy_cert_file.datica_test \
-    --policy_store_filename=policy_store.datica_test \
-    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --policy_domain_name=datica-test \
+    --policy_key_cert_file=policy_cert_file.datica-test \
+    --policy_store_filename=policy_store.datica-test \
+    --encrypted_cryptstore_filename=cryptstore.datica-test \
     --symmetric_key_algorithm=aes-256-gcm  \
     --public_key_algorithm=rsa-2048 \
     --data_dir=$(EXAMPLE_DIR) \
@@ -382,10 +447,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
     --generate_symmetric_key=true \
     --save_cryptstore=false \
     --enclave_type="sev-enclave" \
-    --policy_domain_name=datica_test \
-    --policy_key_cert_file=policy_cert_file.datica_test \
-    --policy_store_filename=policy_store.datica_test \
-    --encrypted_cryptstore_filename=cryptstore.datica_test \
+    --policy_domain_name=datica-test \
+    --policy_key_cert_file=policy_cert_file.datica-test \
+    --policy_store_filename=policy_store.datica-test \
+    --encrypted_cryptstore_filename=cryptstore.datica-test \
     --symmetric_key_algorithm=aes-256-gcm  \
     --public_key_algorithm=rsa-2048 \
     --data_dir=$(EXAMPLE_DIR) \
