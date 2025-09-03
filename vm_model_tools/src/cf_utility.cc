@@ -419,8 +419,6 @@ bool generate_symmetric_key(key_message *km,
   cryptstore cs;
   string     key_format("vse-key");
   double     duration_in_hours = FLAGS_duration;
-  string     encrypted_cryptstore_filename(FLAGS_data_dir);
-  encrypted_cryptstore_filename.append(FLAGS_encrypted_cryptstore_filename);
 
   if (!cf_generate_symmetric_key(km,
                                  FLAGS_keyname,
@@ -432,7 +430,7 @@ bool generate_symmetric_key(key_message *km,
   }
   if (!open_cryptstore(&cs,
                        FLAGS_data_dir,
-                       encrypted_cryptstore_filename,
+                       FLAGS_encrypted_cryptstore_filename,
                        FLAGS_duration,
                        FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
@@ -475,7 +473,7 @@ bool generate_symmetric_key(key_message *km,
   // save store
   if (!save_cryptstore(cs,
                        FLAGS_data_dir,
-                       encrypted_cryptstore_filename,
+                       FLAGS_encrypted_cryptstore_filename,
                        FLAGS_duration,
                        FLAGS_enclave_type,
                        FLAGS_symmetric_key_algorithm)) {
