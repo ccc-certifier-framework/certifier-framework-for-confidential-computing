@@ -482,7 +482,9 @@ int main(int an, char **av) {
     printf("\nrun-app-as-client\n");
 #  endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
-      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+      printf("%s() error, line %d, initialize_existing_domain failed\n",
+             __func__,
+             __LINE__);
       ret = 1;
       goto done;
     }
@@ -500,9 +502,12 @@ int main(int an, char **av) {
                                  FLAGS_server_app_host,
                                  FLAGS_server_app_port,
                                  *trust_mgr)) {
-      printf("%s() error, line %d, Can't init client app\n",
+      printf("%s() error, line %d, Can't init client app %s %s %d\n",
              __func__,
-             __LINE__);
+             __LINE__,
+             FLAGS_domain_name.c_str(),
+             FLAGS_server_app_host.c_str(),
+             FLAGS_server_app_port);
       ret = 1;
       goto done;
     }
