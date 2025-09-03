@@ -1,5 +1,6 @@
 #
-# Helpful script to run example
+# Helpful script to run example, the need for this is obviated by
+# the new shell scripts.
 #
 
 #export GOROOT=/usr/local/go

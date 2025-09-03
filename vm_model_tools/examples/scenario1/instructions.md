@@ -11,8 +11,8 @@ It is helpful to have a shell variable for it:
 export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
 ```
 
-$EXAMPLE_DIR is this directory containing the example application.  Again, a shell variable
-is useful, if you run the detailed steps below.
+$EXAMPLE_DIR is this directory containing the example application.  Again, a
+shell variable is useful, if you run the detailed steps below.
 
 ```shell
 export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
@@ -80,19 +80,20 @@ for example, if you change the policy, you need only run
 "prepare-test.sh make-policy" before running the tests.
 
 To run the tests
-  echo "  ./run-test.sh fresh"
-  echo "  ./run-test.sh fresh domain-name"
-     -- This clears previous operational files.  The first assumes the
+  ./run-test.sh fresh
+  or
+  ./run-test.sh fresh domain-name"
+     -- This clears previous operational files.  The first command assumes the
         default domain name ("datica-test").
-  echo "  ./run-test.sh run (se | sev)"
-  echo "  ./run-test.sh run domain_name (se | sev)"
-     -- This runds the test.  The first assumes the default domain
+  ./run-test.sh run (se | sev)
+  ./run-test.sh run domain_name (se | sev)"
+     -- This runs the test.  The first command assumes the default domain
          name ("datica-test").
 
 
 ---------------------------------------------------------------------------------
 
-## Detailed instructions
+## Detailed, step byt step instructions
 
 ### Step 1: Build the utilities
 
@@ -478,19 +479,19 @@ approved platform keys.
 
 ### Platform-specific tools
 
-As part of program measurement, each platform has a tool that takes an application
-and produces a measurement which is used to construct the policy.
+As part of program measurement, each platform has a tool that takes an
+application and produces a measurement which is used to construct the policy.
 
 * The utility `measurement_utility.exe` does this in step 6 above for the
 * simulated enclave.  For SEV, you can obtain a measurement tool from
 * https://github.com/AMDESE/sev-tool; however, we are switching to virtee,
 * which is more flexible.  Download the utility from
 * https://github.com/virtee/sev-snp-measure and follow the instructions.
+*
+* These tools both produce a file containing the binary measurement which
+should be used in step 7(a), above.
 
-* These tools both produce a file containing the binary measurement which should
-be used in step 7(a), above.
-
------
+-------------------------------------------------------------------------------
 
 ```shell
 export GOPATH=$HOME
