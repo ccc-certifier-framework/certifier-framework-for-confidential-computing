@@ -372,6 +372,7 @@ cd $EXAMPLE_DIR
 # remove old files
 rm policy_store.datica-test cryptstore.datica-test
 
+
 Get certified.
 
 $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
