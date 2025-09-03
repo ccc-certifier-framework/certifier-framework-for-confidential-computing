@@ -79,7 +79,7 @@ you need only run subcommands that cause a change in the files;
 for example, if you change the policy, you need only run
 "prepare-test.sh make-policy" before running the tests.
 
-To run the tests 
+To run the tests
   echo "  ./run-test.sh fresh"
   echo "  ./run-test.sh fresh domain-name"
      -- This clears previous operational files.  The first assumes the

@@ -86,14 +86,14 @@ for example, if you change the policy, you need only run
 "prepare-test.sh make-policy" before running the tests.
 
 
-To run the tests  
+To run the tests
   echo "  ./run-test.sh fresh"
   echo "  ./run-test.sh fresh domain-name"
      -- This clears previous operational files.  The first assumes the
         default domain name ("datica-test").
   echo "  ./run-test.sh run (se | sev)"
   echo "  ./run-test.sh run domain_name (se | sev)"
-     -- This runds the test.  The first assumes the default domain 
+     -- This runds the test.  The first assumes the default domain
          name ("datica-test").
 
 ---------------------------------------------------------------------------------------
@@ -407,7 +407,7 @@ For new API
 cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe --data_dir=./app2_data/ \
       --operation=fresh-start\ --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store.datica-test --print_all=true
+      --policy_store_file=policy_store --print_all=true
 
 
 
@@ -427,7 +427,7 @@ cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe \
   --data_dir=./app2_data/ --operation="run-app-as-server" \
   --measurement_file="example_app.measurement" \
-  --policy_store_file=policy_store.datica-test --print_all=true
+  --policy_store_file=policy_store --print_all=true
 ```
 
 ### b. In the app-as-a-client terminal run the following:
@@ -438,7 +438,7 @@ cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe \
   --data_dir=./app1_data/  --operation=run-app-as-client   \
   --measurement_file="example_app.measurement" \
-  --policy_store_file=policy_store.datica-test --print_all=true
+  --policy_store_file=policy_store --print_all=true
 ```
 
 You should see the message "Hi from your secret server" in the client terminal window and
