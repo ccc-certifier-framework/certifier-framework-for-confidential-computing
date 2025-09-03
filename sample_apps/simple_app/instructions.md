@@ -66,13 +66,13 @@ prepare-test.sh all runs the following subcommands in order:
   prepare-test.sh make-keys [domain-name]
       - This performs step 3 below.
   prepare-test.sh compile-program [domain-name]
-      - This performs step 4 below.
+      - This performs step 4 to 5 below.
   prepare-test.sh make-policy [domain-name]
-      - This performs steps 5 and 6 below.
+      - This performs steps 6 and 7 below.
   prepare-test.sh compile-certifier [domain-name]
-      - This performs step 7 below.
+      - This performs step 8 below.
   prepare-test.sh copy-files [domain-name]
-      - This performs steps 8 and 9 below.
+      - This performs steps 9 to 12 below.
 
 Each of these subcommands is runable from prepare-test.sh, for example,
 you could run,
