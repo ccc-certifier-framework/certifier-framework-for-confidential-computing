@@ -44,7 +44,7 @@ There is still benefit in carrying out the steps in run-test by copying and
 pasting since you can see all the output and preserve the running servers.
 
 The shell scripts assume you have all the right software installed including
-the go programs and libraries mentioned below.  
+the go programs and libraries mentioned below.
 
 The shell scripts use the new API.
 
