@@ -103,6 +103,7 @@ function do-fresh() {
   popd > /dev/null
 
   mkdir $EXAMPLE_DIR/app2_data || true
+  pushd $EXAMPLE_DIR/app2_data > /dev/null
   if [[ "$(pwd)" == "${EXAMPLE_DIR}/app2_data" ]] ; then
     echo " "
     echo "in $(pwd)"
@@ -153,7 +154,7 @@ function do-compile-program() {
   pushd $CERTIFIER_ROOT/sample_apps/simple_app > /dev/null
   pushd ./provisioning > /dev/null
   $CERTIFIER_ROOT/utilities/embed_policy_key.exe      \
-      --input=$POLICY_CERT_FILE_NAME --output=policy_key.cc
+    --input=$POLICY_CERT_FILE_NAME --output=../policy_key.cc
   popd > /dev/null
   make -f example_app.mak
   popd > /dev/null
@@ -244,12 +245,14 @@ function do-compile-certifier() {
 function do-copy-files() {
   echo "do-copy-files"
 
+  mkdir $EXAMPLE_DIR/app1_data || true
+  mkdir $EXAMPLE_DIR/app2_data || true
   pushd $EXAMPLE_DIR/provisioning > /dev/null
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME ..
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app1_dir
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app2_dir
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME ..
+  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
+  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
+  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
+  cp platform_attest_endorsement.bin  attest_key_file.bin ../app1_data || true
+  cp platform_attest_endorsement.bin  attest_key_file.bin ../app2_data || true
   popd > /dev/null
 }
 

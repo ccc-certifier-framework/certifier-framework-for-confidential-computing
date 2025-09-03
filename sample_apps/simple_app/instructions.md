@@ -383,12 +383,9 @@ $EXAMPLE_DIR/example_app.exe  \
 For new API:
 ```shell
 cd $EXAMPLE_DIR
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app1_data/                      \
-      --operation=fresh-start                      \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store
-      --print_all=true
+$EXAMPLE_DIR/example_app.exe  --data_dir=./app1_data/  \
+      --operation=fresh-start --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store --print_all=true
 ```
 
 In the app-as-a-server terminal run the following:
@@ -401,19 +398,16 @@ $EXAMPLE_DIR/example_app.exe  \
   --measurement_file="example_app.measurement" \
   --policy_store_file=policy_store --print_all=true
 
-$EXAMPLE_DIR/example_app.exe   \
-   --data_dir=./app2_data/ --operation=get-certified --measurement_file="example_app.measurement" \
-   --policy_store_file=policy_store --print_all=true
+$EXAMPLE_DIR/example_app.exe  --data_dir=./app2_data/ \
+  --operation=get-certified --measurement_file="example_app.measurement" \
+  --policy_store_file=policy_store --print_all=true
 ```
 
 For new API
 cd $EXAMPLE_DIR
-$EXAMPLE_DIR/example_app.exe                       \
-      --data_dir=./app2_data/                      \
-      --operation=fresh-start                      \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store
-      --print_all=true
+$EXAMPLE_DIR/example_app.exe --data_dir=./app2_data/ \
+      --operation=fresh-start\ --measurement_file="example_app.measurement" \
+      --policy_store_file=policy_store.datica-test --print_all=true
 
 
 
@@ -432,7 +426,8 @@ at this point.**
 cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe \
   --data_dir=./app2_data/ --operation="run-app-as-server" \
-  --policy_store_file=policy_store --print_all=true
+  --measurement_file="example_app.measurement" \
+  --policy_store_file=policy_store.datica-test --print_all=true
 ```
 
 ### b. In the app-as-a-client terminal run the following:
@@ -442,7 +437,8 @@ $EXAMPLE_DIR/example_app.exe \
 cd $EXAMPLE_DIR
 $EXAMPLE_DIR/example_app.exe \
   --data_dir=./app1_data/  --operation=run-app-as-client   \
-  --policy_store_file=policy_store --print_all=true
+  --measurement_file="example_app.measurement" \
+  --policy_store_file=policy_store.datica-test --print_all=true
 ```
 
 You should see the message "Hi from your secret server" in the client terminal window and

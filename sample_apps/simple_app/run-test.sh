@@ -44,6 +44,12 @@ fi
 if [[ $ARG_SIZE == 1  && $1 == "fresh" ]] ; then
   DOMAIN_NAME="datica-test"
 fi
+if [[ $ARG_SIZE == 2  && $1 == "fresh" ]] ; then
+  DOMAIN_NAME=$2
+fi
+if [[ $ARG_SIZE == 1  && $1 == "run" ]] ; then
+  DOMAIN_NAME="datica-test"
+fi
 if [[ $ARG_SIZE == 2  && $1 == "run" ]] ; then
   DOMAIN_NAME=$2
 fi
@@ -56,14 +62,15 @@ echo "policy key file name: $POLICY_KEY_FILE_NAME"
 echo "policy cert file name: $POLICY_CERT_FILE_NAME"
 
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
-echo "policy store name: $POLICY_STORE_NAME"
+echo "policy store name 1: ./app1_data/$POLICY_STORE_NAME
+echo "policy store name 2: ./app2_data/$POLICY_STORE_NAME
 
 function do-fresh() {
   echo "do-fresh"
 
   pushd $EXAMPLE_DIR > /dev/null
-  rm $POLICY_STORE_NAME > /dev/null || true
-  rm $CRYPTSTORE_NAME > /dev/null || true
+  rm ./app1_data/$POLICY_STORE_NAME > /dev/null || true
+  rm ./app2_data/$POLICY_STORE_NAME > /dev/null || true
   popd > /dev/null
 
   echo "Done"
@@ -108,25 +115,27 @@ function do-run() {
   pushd $EXAMPLE_DIR > /dev/null
   $EXAMPLE_DIR/example_app.exe --data_dir=./app1_data/  \
       --operation=fresh-start  --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store --print_all=true
+      --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
   sleep 2
 
   $EXAMPLE_DIR/example_app.exe  --data_dir=./app2_data/ \
       --operation=fresh-start  --measurement_file="example_app.measurement" \
-      --policy_store_file=policy_store --print_all=true
+      --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
   sleep 2
 
   $EXAMPLE_DIR/example_app.exe \
     --data_dir=./app2_data/ --operation="run-app-as-server" \
-    --policy_store_file=policy_store --print_all=true
+    --measurement_file="example_app.measurement" \
+    --policy_store_file=$POLICY_STORE_NAME  --print_all=true > /dev/null &
 
   sleep 2
 
   $EXAMPLE_DIR/example_app.exe \
-    --data_dir=./app1_data/ --operation=run-app-as-client   \
-    --policy_store_file=policy_store --print_all=true
+    --data_dir=./app1_data/ --operation="run-app-as-client"   \
+    --measurement_file="example_app.measurement" \
+    --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
   popd > /dev/null
 
