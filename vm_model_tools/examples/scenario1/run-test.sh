@@ -48,6 +48,14 @@ fi
 if [[ $ARG_SIZE == 2  && $1 == "run" ]] ; then
   DOMAIN_NAME="datica-test"
   ENCLAVE_TYPE=$2
+else
+  echo "Wrong number of arguments"
+  echo "Must call, as follows:"
+  echo "  ./run-test.sh fresh"
+  echo "  ./run-test.sh fresh domain-name"
+  echo "  ./run-test.sh run  (se | sev)"
+  echo "  ./run-test.sh run  (se | sev) domain-name"
+  exit
 fi
 if [[ $ARG_SIZE == 3 && $1 == "run" ]] ; then
   DOMAIN_NAME=$2
