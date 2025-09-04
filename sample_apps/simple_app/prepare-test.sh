@@ -9,9 +9,9 @@ Me=$(basename "$0")
 if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
 else
-  pushd ../../ > /dev/null
+  pushd ../..
   CERTIFIER_ROOT=$(pwd)
-  popd > /dev/null
+  popd
 fi
 EXAMPLE_DIR=$(pwd)
 
@@ -54,11 +54,12 @@ function do-fresh() {
   echo "do-fresh"
 
   pushd $CERTIFIER_ROOT/utilities
-  make clean -f cert_utility.mak
-  make clean -f policy_utilities.mak
+    make clean -f cert_utility.mak
+    make clean -f policy_utilities.mak
   popd
+
   pushd $EXAMPLE_DIR
-  make clean -f example_app.mak
+    make clean -f example_app.mak
   popd
 
   if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
@@ -75,66 +76,71 @@ function do-fresh() {
   fi
 
   pushd $EXAMPLE_DIR/provisioning
-  if [[ "$(pwd)" == "${EXAMPLE_DIR}/provisioning" ]] ; then
-    echo " "
-    echo "in $(pwd)"
-    rm ./* || true
-    echo " "
-  else
-    echo "Wrong directory "
-    exit
-  fi
+    if [[ "$(pwd)" == "${EXAMPLE_DIR}/provisioning" ]] ; then
+      echo " "
+      echo "in $(pwd)"
+      if [[ ! -z "$( ls -A '.' )" ]]; then
+        rm ./*
+      fi
+      echo " "
+    else
+      echo "Wrong directory "
+      exit
+    fi
   popd
 
   pushd $EXAMPLE_DIR/service
-
-  if [[ "$(pwd)" == "${EXAMPLE_DIR}/service" ]] ; then
-    echo " "
-    echo "In $(pwd)"
-    rm ./* || true
-    echo " "
-  else
-    echo "Wrong directory "
-    exit
-  fi
+    if [[ "$(pwd)" == "${EXAMPLE_DIR}/service" ]] ; then
+      echo " "
+      echo "In $(pwd)"
+      if [[ ! -z "$( ls -A '.' )" ]]; then
+        rm ./*
+      fi
+    else
+      echo "Wrong directory "
+      exit
+    fi
   popd
 
   pushd $EXAMPLE_DIR/app1_data
-  if [[ "$(pwd)" == "${EXAMPLE_DIR}/app1_data" ]] ; then
-    echo " "
-    echo "in $(pwd)"
-    rm ./* || true
-    echo " "
-  else
-    echo "Wrong directory "
-    exit
-  fi
+    if [[ "$(pwd)" == "${EXAMPLE_DIR}/app1_data" ]] ; then
+      echo " "
+      echo "in $(pwd)"
+      if [[ ! -z "$( ls -A '.' )" ]]; then
+        rm ./*
+      fi
+      echo " "
+    else
+      echo "Wrong directory "
+      exit
+    fi
   popd
 
   pushd $EXAMPLE_DIR/app2_data
-  if [[ "$(pwd)" == "${EXAMPLE_DIR}/app2_data" ]] ; then
-    echo " "
-    echo "in $(pwd)"
-    rm ./* || true
-    echo " "
-  else
-    echo "Wrong directory "
-    exit
-  fi
+    if [[ "$(pwd)" == "${EXAMPLE_DIR}/app2_data" ]] ; then
+      echo " "
+      echo "in $(pwd)"
+      if [[ ! -z "$( ls -A '.' )" ]]; then
+        rm ./*
+      fi
+      echo " "
+    else
+      echo "Wrong directory "
+      exit
+    fi
   popd
 
   echo "Done"
-
   exit
 }
 
 function do-compile-utilities() {
   echo "do-compile-utilities"
 
-  pushd $CERTIFIER_ROOT/utilities > /dev/null
-  make -f cert_utility.mak
-  make -f policy_utilities.mak
-  popd > /dev/null 2>&1
+  pushd $CERTIFIER_ROOT/utilities
+    make -f cert_utility.mak
+    make -f policy_utilities.mak
+    popd
 
   echo "do-compile-utilities done"
 }
@@ -146,15 +152,14 @@ function do-make-keys() {
     mkdir $EXAMPLE_DIR/provisioning
   fi
 
-  pushd $EXAMPLE_DIR/provisioning > /dev/null
+  pushd $EXAMPLE_DIR/provisioning
     $CERTIFIER_ROOT/utilities/cert_utility.exe  \
       --operation=generate-policy-key-and-test-keys  \
       --policy_key_output_file=$POLICY_KEY_FILE_NAME  \
       --policy_cert_output_file=$POLICY_CERT_FILE_NAME \
       --platform_key_output_file=platform_key_file.bin  \
       --attest_key_output_file=attest_key_file.bin
-
-  popd > /dev/null
+  popd
 
   echo "do-make-keys done"
 }
@@ -177,53 +182,52 @@ function do-compile-program() {
 function do-make-policy() {
   echo "do-make-policy"
 
-  pushd $EXAMPLE_DIR/provisioning > /dev/null
+  pushd $EXAMPLE_DIR/provisioning
 
-  echo " "
+    echo " "
 
-  $CERTIFIER_ROOT/utilities/measurement_utility.exe      \
-    --type=hash --input=../example_app.exe --output=example_app.measurement
+    $CERTIFIER_ROOT/utilities/measurement_utility.exe      \
+      --type=hash --input=../example_app.exe --output=example_app.measurement
 
-  $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-    --key_subject="platform_key_file.bin" --verb="is-trusted-for-attestation" --output=ts1.bin
-  $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-    --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
-    --clause=ts1.bin --output=vse_policy1.bin
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+      --key_subject="platform_key_file.bin" --verb="is-trusted-for-attestation" --output=ts1.bin
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
+      --clause=ts1.bin --output=vse_policy1.bin
 
-  $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-    --key_subject="" --measurement_subject="example_app.measurement" \
-    --verb="is-trusted" --output=ts2.bin
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+      --key_subject="" --measurement_subject="example_app.measurement" \
+      --verb="is-trusted" --output=ts2.bin
 
-  $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-    --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
-    --clause=ts2.bin --output=vse_policy2.bin
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
+      --clause=ts2.bin --output=vse_policy2.bin
 
-  $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-    --vse_file=vse_policy1.bin --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME \
-    --output=signed_claim_1.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      --vse_file=vse_policy1.bin --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME \
+      --output=signed_claim_1.bin
 
-  $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-    --vse_file=vse_policy2.bin  --duration=9000  \
-    --private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      --vse_file=vse_policy2.bin  --duration=9000  \
+      --private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
 
-  $CERTIFIER_ROOT/utilities/package_claims.exe \
-    --input=signed_claim_1.bin,signed_claim_2.bin --output=policy.bin
-  $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
+    $CERTIFIER_ROOT/utilities/package_claims.exe \
+      --input=signed_claim_1.bin,signed_claim_2.bin --output=policy.bin
+    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
 
-  $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-    --key_subject=attest_key_file.bin --verb="is-trusted-for-attestation" --output=tsc1.bin
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+      --key_subject=attest_key_file.bin --verb="is-trusted-for-attestation" --output=tsc1.bin
 
-  $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-    --key_subject=platform_key_file.bin --verb="says" \
-    --clause=tsc1.bin --output=vse_policy3.bin
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      --key_subject=platform_key_file.bin --verb="says" \
+      --clause=tsc1.bin --output=vse_policy3.bin
 
-  $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-    --vse_file=vse_policy3.bin --duration=9000 \
-    --private_key_file=platform_key_file.bin --output=platform_attest_endorsement.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      --vse_file=vse_policy3.bin --duration=9000 \
+      --private_key_file=platform_key_file.bin --output=platform_attest_endorsement.bin
 
-  echo " "
-
-  popd > /dev/null
+    echo " "
+  popd
 
   echo "do-make-policy done"
 }
@@ -232,10 +236,12 @@ function do-compile-certifier() {
 
   echo "do-compile-certifier"
 
-  #Make sure protobufs are compiled
   pushd $CERTIFIER_ROOT/certifier_service/certprotos
-  if [[ ! -e "./certifier.proto.go" ]] ; then
-    protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
+    if [[ ! -e "./certifier.proto.go" ]] ; then
+      echo " "
+      echo "making protobufs"
+      protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
+    fi
   popd
 
   pushd $CERTIFIER_ROOT/certifier_service
