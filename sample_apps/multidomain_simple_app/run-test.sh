@@ -3,6 +3,44 @@
 # run-test.sh: Driver script to run cf_utility test.
 # ############################################################################
 
+    server_app="multidomain_server_app.exe"
+
+    run_cmd "${EXAMPLE_DIR}/${server_app}"                              \
+                --operation=cold-init                                   \
+                --data_dir="./${Server_app_data}/"                      \
+                --measurement_file="multidomain_server_app.measurement" \
+                --policy_store_file=policy_store                        \
+                --policy_port=8121                                      \
+                --print_all=true
+
+    run_cmd "${EXAMPLE_DIR}/${server_app}"                              \
+                --operation=get-certified                               \
+                --data_dir="./${Server_app_data}/"                      \
+                --measurement_file="multidomain_server_app.measurement" \
+                --policy_store_file=policy_store                        \
+                --policy_port=8121                                      \
+                --print_all=true
+
+        client_app="multidomain_client_app.exe"
+
+    run_cmd "${EXAMPLE_DIR}/${client_app}"                              \
+                --operation=cold-init                                   \
+                --data_dir="./${Client_app_data}/"                      \
+                --measurement_file="multidomain_client_app.measurement" \
+                --policy_store_file=policy_store                        \
+                --primary_policy_port=8122                              \
+                --secondary_policy_port=8121                            \
+                --print_all=true
+
+    run_cmd "${EXAMPLE_DIR}/${client_app}"                              \
+                --operation=get-certified                               \
+                --data_dir="./${Client_app_data}/"                      \
+                --measurement_file="multidomain_client_app.measurement" \
+                --policy_store_file=policy_store                        \
+                --primary_policy_port=8122                              \
+                --secondary_policy_port=8121                            \
+                --print_all=true
+
 set -Eeuo pipefail
 Me=$(basename "$0")
 

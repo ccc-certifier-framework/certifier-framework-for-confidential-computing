@@ -35,20 +35,27 @@ if [ $ARG_SIZE == 0 ] ; then
 fi
 
 if [[ $ARG_SIZE == 1 ]] ; then
-  DOMAIN_NAME="datica-test"
+  CLIENT_DOMAIN_NAME="datica-test"
+  SERVER_DOMAIN_NAME="datica-test"
 fi
 if [[ $ARG_SIZE == 2 ]] ; then
-  DOMAIN_NAME=$2
+  CLIENT_DOMAIN_NAME=$2
+  SERVER_DOMAIN_NAME="datica-test"
 fi
-echo "domain name: $DOMAIN_NAME"
 
-POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
-POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
-echo "policy key file name: $POLICY_KEY_FILE_NAME"
-echo "policy cert file name: $POLICY_CERT_FILE_NAME"
+CLIENT_POLICY_KEY_FILE_NAME="client_policy_key_file.$CLIENT_DOMAIN_NAME"
+SERVER_POLICY_KEY_FILE_NAME="server_policy_key_file.$SERVER_DOMAIN_NAME"
+CLIENT_POLICY_CERT_FILE_NAME="client_policy_cert_file.$CLIENT_DOMAIN_NAME"
+SERVER_POLICY_CERT_FILE_NAME="server_policy_cert_file.$SERVER_DOMAIN_NAME"
+CLIENT_POLICY_STORE_NAME="client_policy_store.$CLIENT_DOMAIN_NAME"
+SERVER_POLICY_STORE_NAME="server_policy_store.$SERVER_DOMAIN_NAME"
 
-POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
-echo "policy store name: $POLICY_STORE_NAME"
+echo "client policy key file name: $CLIENT_POLICY_KEY_FILE_NAME"
+echo "server policy key file name: $SERVER_POLICY_KEY_FILE_NAME"
+echo "client policy cert file name: $CLIENT_POLICY_CERT_FILE_NAME"
+echo "server policy cert file name: $SERVER_POLICY_CERT_FILE_NAME"
+echo "server policy store name: $SERVER_POLICY_STORE_NAME"
+echo "client policy store name: $CLIENT_POLICY_STORE_NAME"
 
 function do-fresh() {
   echo "do-fresh"
@@ -137,12 +144,22 @@ function do-make-keys() {
 
   mkdir $EXAMPLE_DIR/provisioning || true
   pushd $EXAMPLE_DIR/provisioning > /dev/null
-    $CERTIFIER_ROOT/utilities/cert_utility.exe  \
-      --operation=generate-policy-key-and-test-keys  \
-      --policy_key_output_file=$POLICY_KEY_FILE_NAME  \
-      --policy_cert_output_file=$POLICY_CERT_FILE_NAME \
-      --platform_key_output_file=platform_key_file.bin  \
-      --attest_key_output_file=attest_key_file.bin
+
+  $CERTIFIER_ROOT/utilities/cert_utility.exe            \
+    --operation=generate-policy-key-and-test-keys           \
+    --policy_key_name=client-policy-key                     \
+    --policy_key_output_file=$CLIENT_POLICY_KEY_FILE_NAME     \
+    --policy_cert_output_file=$CLIENT_POLICY_CERT_FILE_NAME   \
+    --platform_key_output_file=platform_key_file.bin        \
+    --attest_key_output_file=attest_key_file.bin
+
+  $CERTIFIER_ROOT/utilities/cert_utility.exe                              \
+    --operation=generate-policy-key-and-test-keys           \
+    --policy_key_name=server-policy-key                     \
+    --policy_key_output_file=$SERVER_POLICY_KEY_FILE_NAME   \
+    --policy_cert_output_file=$SERVER_POLICY_CERT_FILE_NAME \
+    --platform_key_output_file=platform_key_file.bin        \
+    --attest_key_output_file=attest_key_file.bin
 
   popd > /dev/null
 
@@ -152,13 +169,16 @@ function do-make-keys() {
 function do-compile-program() {
   echo "do-compile-program"
 
-  pushd $CERTIFIER_ROOT/sample_apps/simple_app > /dev/null
-  pushd ./provisioning > /dev/null
+  pushd $CERTIFIER_ROOT/sample_apps/multidomain_simple_app > /dev/null
+  pushd ./client_provisioning > /dev/null
   $CERTIFIER_ROOT/utilities/embed_policy_key.exe      \
-    --input=$POLICY_CERT_FILE_NAME --output=../policy_key.cc
+    --input=$CLIENT_POLICY_CERT_FILE_NAME --output=../client_policy_key.cc
   popd > /dev/null
-  make -f example_app.mak
+  pushd ./client_provisioning > /dev/null
+  $CERTIFIER_ROOT/utilities/embed_policy_key.exe      \
+    --input=$SERVER_POLICY_CERT_FILE_NAME --output=../server_policy_key.cc
   popd > /dev/null
+  make -f multidomain_app.mak
 
   echo "do-compile-program done"
 }
@@ -166,49 +186,97 @@ function do-compile-program() {
 function do-make-policy() {
   echo "do-make-policy"
 
-  pushd $EXAMPLE_DIR/provisioning > /dev/null
+  $CERTIFIER_ROOT/utilities/measurement_utility.exe   \
+     --type=hash --input=../multidomain_client_app.exe       \
+     --output=multidomain_client_app.exe.measurement
 
-  echo " "
+  $CERTIFIER_ROOT/utilities/measurement_utility.exe   \
+     --type=hash --input=../multidomain_server_app.exe       \
+     --output=multidomain_server_app.exe.measurement
 
-  $CERTIFIER_ROOT/utilities/measurement_utility.exe      \
-    --type=hash --input=../example_app.exe --output=example_app.measurement
+  $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe            \
+    --key_subject=""                                 \
+    --measurement_subject=multidomain_client_app.exe.measurement      \
+    --verb="is-trusted"                              \
+    --output=ts2a-md-server.bin
 
-  $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-    --key_subject="platform_key_file.bin" --verb="is-trusted-for-attestation" --output=ts1.bin
-  $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-    --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
-    --clause=ts1.bin --output=vse_policy1.bin
+    # vse_policy2a is server-policy-key says server_measurement is-trusted
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe     \
+       --key_subject=server_policy_key_file.bin     \
+       --verb="says"                                \
+       --clause=ts2a-md-server.bin                  \
+       --output=server_vse_policy2a.bin
 
-  $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-    --key_subject="" --measurement_subject="example_app.measurement" \
-    --verb="is-trusted" --output=ts2.bin
+    # ts2b is client-measurement is-trusted
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe            \
+       --key_subject=""                                 \
+       --measurement_subject=multidomain_client_app.exe.measurement \
+       --verb="is-trusted"                              \
+       --output=ts2b-md-client.bin
+   # vse_policy2b is server-policy-key says client_measurement is-trusted
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe     \
+       --key_subject=server_policy_key_file.bin     \
+       --verb="says"                                \
+       --clause=ts2b-md-client.bin                  \
+       --output=server_vse_policy2b.bin
 
-  $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-    --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
-    --clause=ts2.bin --output=vse_policy2.bin
+    # vse_policy2c is client-policy-key says server_measurement is-trusted
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+       --key_subject=client_policy_key_file.bin \
+       --verb="says" \
+       --clause=ts2a-md-server.bin \
+       --output=client_vse_policy2c.bin
 
-  $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-    --vse_file=vse_policy1.bin --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME \
-    --output=signed_claim_1.bin
+    # vse_policy2d is client-policy-key says client_measurement is-trusted
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+       --key_subject=client_policy_key_file.bin \
+       --verb="says" \
+       --clause=ts2b-md-client.bin \
+       --output=client_vse_policy2d.bin
 
-  $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-    --vse_file=vse_policy2.bin  --duration=9000  \
-    --private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
+      --vse_file=server_vse_policy1a.bin                   \
+      --duration=9000                                      \
+      --private_key_file=server_policy_key_file.bin        \
+      --output=server_signed_claim_1a.bin
 
-  $CERTIFIER_ROOT/utilities/package_claims.exe \
-    --input=signed_claim_1.bin,signed_claim_2.bin --output=policy.bin
-  $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
+      --vse_file=client_vse_policy1b.bin                   \
+      --duration=9000                                      \
+      --private_key_file=client_policy_key_file.bin        \
+      --output=client_signed_claim_1b.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
+      --vse_file=server_vse_policy2a.bin                  \
+      --duration=9000                                     \
+      --private_key_file=server_policy_key_file.bin       \
+      --output=server_signed_claim_2a.bin
 
-  $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-    --key_subject=attest_key_file.bin --verb="is-trusted-for-attestation" --output=tsc1.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
+      --vse_file=server_vse_policy2b.bin                  \
+      --duration=9000                                     \
+      --private_key_file=server_policy_key_file.bin       \
+      --output=server_signed_claim_2b.bin
 
-  $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-    --key_subject=platform_key_file.bin --verb="says" \
-    --clause=tsc1.bin --output=vse_policy3.bin
+    # client-policy-key signs vse_policy2c and policy2d
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
+      --vse_file=client_vse_policy2c.bin                  \
+      --duration=9000                                     \
+      --private_key_file=client_policy_key_file.bin       \
+      --output=client_signed_claim_2c.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
+      --vse_file=client_vse_policy2d.bin                  \
+      --duration=9000                                     \
+      --private_key_file=client_policy_key_file.bin       \
+      --output=client_signed_claim_2d.bin
 
-  $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-    --vse_file=vse_policy3.bin --duration=9000 \
-    --private_key_file=platform_key_file.bin --output=platform_attest_endorsement.bin
+    $CERTIFIER_ROOT/utilities/package_claims.exe       \
+      --input=server_signed_claim_1a.bin,server_signed_claim_2a.bin,server_signed_claim_2b.bin \ 
+      --output=server_policy.bin
+    $CERTIFIER_ROOT/utilities/package_claims.exe       \
+      --input=client_signed_claim_1b.bin,client_signed_claim_2c.bin,client_signed_claim_2d.bin \
+      --output=client_policy.bin
+    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=server_policy.bin
+    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=client_policy.bin
 
   echo " "
 
