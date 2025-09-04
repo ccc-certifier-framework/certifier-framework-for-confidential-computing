@@ -56,7 +56,6 @@ DEFINE_string(server_domain_name,
 DEFINE_string(client_domain_name,
               "simple-app-client-home-domain",
               "client domain name");
-
 DEFINE_string(secondary_cert_file,
               "client_policy_cert_file.bin",
               "directory for application data");

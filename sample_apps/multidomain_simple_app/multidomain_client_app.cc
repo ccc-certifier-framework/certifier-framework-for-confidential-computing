@@ -45,6 +45,9 @@ DEFINE_string(client_domain_name,
               "simple-app-client-home-domain",
               "client domain name");
 
+DEFINE_string(policy_host, "localhost", "address for policy server");
+DEFINE_int32(policy_port, 8123, "port for policy server");
+
 DEFINE_string(primary_policy_host, "localhost", "address for policy server");
 DEFINE_int32(primary_policy_port, 8123, "port for policy server");
 
