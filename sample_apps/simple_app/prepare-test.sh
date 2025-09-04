@@ -23,20 +23,21 @@ ARG_SIZE="$#"
 
 if [ $ARG_SIZE == 0 ] ; then
   echo "Must call with arguments, as follows:"
-  echo "  ./prepare-test.sh fresh"
-  echo "  ./prepare-test.sh all"
-  echo "  ./prepare-test.sh compile-utilities"
-  echo "  ./prepare-test.sh make-keys"
-  echo "  ./prepare-test.sh compile-program"
-  echo "  ./prepare-test.sh make-policy"
-  echo "  ./prepare-test.sh compile-certifier"
-  echo "  ./prepare-test.sh copy-files"
+  echo "  ./prepare-test.sh fresh [domain_name]"
+  echo "  ./prepare-test.sh all [domain_name]"
+  echo "  ./prepare-test.sh compile-utilities [domain_name]"
+  echo "  ./prepare-test.sh make-keys [domain_name]"
+  echo "  ./prepare-test.sh compile-program [domain_name]"
+  echo "  ./prepare-test.sh make-policy [domain_name]"
+  echo "  ./prepare-test.sh compile-certifier [domain_name]"
+  echo "  ./prepare-test.sh copy-files [domain_name]"
   exit
 fi
 
-if [ $ARG_SIZE == 1 ] ; then
+if [[ $ARG_SIZE == 1 ]] ; then
   DOMAIN_NAME="datica-test"
-else
+fi
+if [[ $ARG_SIZE == 2 ]] ; then
   DOMAIN_NAME=$2
 fi
 echo "domain name: $DOMAIN_NAME"
@@ -172,7 +173,6 @@ function do-make-policy() {
   $CERTIFIER_ROOT/utilities/measurement_utility.exe      \
     --type=hash --input=../example_app.exe --output=example_app.measurement
 
-
   $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
     --key_subject="platform_key_file.bin" --verb="is-trusted-for-attestation" --output=ts1.bin
   $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
@@ -180,7 +180,7 @@ function do-make-policy() {
     --clause=ts1.bin --output=vse_policy1.bin
 
   $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-    --measurement_subject="example_app.measurement" \
+    --key_subject="" --measurement_subject="example_app.measurement" \
     --verb="is-trusted" --output=ts2.bin
 
   $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
