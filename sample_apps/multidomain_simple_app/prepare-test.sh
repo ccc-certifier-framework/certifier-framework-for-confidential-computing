@@ -306,41 +306,41 @@ function do-make-policy() {
        --key_subject=attest_key_file.bin --verb="is-trusted-for-attestation" \
        --output=ts4.bin
      echo "ts4 done"
-    
-    # vse-policy3a.bin: sever-policy-key says platform-key is-trusted-for-attestation
-    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-    --key_subject=$SERVER_POLICY_KEY_FILE_NAME --verb="says" \
-    --clause=ts3.bin --output=vse_policy3a.bin
-   echo "vse_policy3a done"
+   
+     # vse-policy3a.bin: sever-policy-key says platform-key is-trusted-for-attestation
+     $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+       --key_subject=$SERVER_POLICY_KEY_FILE_NAME --verb="says" \
+       --clause=ts3.bin --output=vse_policy3a.bin
+     echo "vse_policy3a done"
 
-    # vse-policy3b.bin: client-policy-key says platform-key is-trusted-for-attestation
-    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-    	--key_subject=$CLIENT_POLICY_KEY_FILE_NAME --verb="says" \
-    	--clause="ts3.bin" --output="vse_policy3b.bin"
-    echo "vse_policy3b done"
+     # vse-policy3b.bin: client-policy-key says platform-key is-trusted-for-attestation
+     $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+        --key_subject=$CLIENT_POLICY_KEY_FILE_NAME --verb="says" \
+        --clause="ts3.bin" --output="vse_policy3b.bin"
+     echo "vse_policy3b done"
 
-    # vse-policy4.bin: platform-key says attest-key is-trusted-for-attestation
-    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-    --key_subject=platform_key_file.bin --verb="says" \
-    --clause=ts4.bin --output=vse_policy4.bin
-    echo "vse_policy4 done"
+     # vse-policy4.bin: platform-key says attest-key is-trusted-for-attestation
+     $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+        --key_subject=platform_key_file.bin --verb="says" \
+        --clause=ts4.bin --output=vse_policy4.bin
+     echo "vse_policy4 done"
     
-    # platform_attest_endorsement.bin: platform-key-signed attest-key is-trusted-for-attestation
-    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
+     # platform_attest_endorsement.bin: platform-key-signed attest-key is-trusted-for-attestation
+     $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
       --vse_file="vse_policy4.bin" --duration=9000  \
       --private_key_file=platform_key_file.bin  --output=platform_attest_endorsement.bin
-    echo "signed_vse_policy4 done"
+     echo "signed_vse_policy4 done"
 
-    $CERTIFIER_ROOT/utilities/package_claims.exe \
-      --input=signed_claim_1a.bin,signed_claim_1b.bin,signed_claim_3a.bin  \
-      --output=server_policy.bin
+     $CERTIFIER_ROOT/utilities/package_claims.exe \
+       --input=signed_claim_1a.bin,signed_claim_1b.bin,signed_claim_3a.bin  \
+       --output=server_policy.bin
 
-    $CERTIFIER_ROOT/utilities/package_claims.exe  \
+     $CERTIFIER_ROOT/utilities/package_claims.exe  \
       --input=signed_claim_2a.bin,signed_claim_2b.bin,signed_claim_3b.bin  \
       --output=client_policy.bin
 
-    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=server_policy.bin
-    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=client_policy.bin
+     $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=server_policy.bin
+     $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=client_policy.bin
 
   echo " "
 
