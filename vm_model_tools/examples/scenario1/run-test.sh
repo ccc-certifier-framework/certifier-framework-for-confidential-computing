@@ -176,7 +176,7 @@ function do-run() {
     fi
 
     if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
-      sudo sev-client-call.sh $DOMAIN_NAME $POLICY_CERT_FILE_NAME $POLICY_STORE_NAME $CRYPTSTORE_NAME "$EXAMPLE_DIR/"
+      sudo ./sev-client-call.sh $DOMAIN_NAME $POLICY_CERT_FILE_NAME $POLICY_STORE_NAME $CRYPTSTORE_NAME "$EXAMPLE_DIR/"
     fi
   popd
 
