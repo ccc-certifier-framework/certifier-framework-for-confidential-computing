@@ -686,14 +686,13 @@ bool certifier::framework::cc_trust_manager::initialize_new_domain(
     return false;
   }
 
-  if (!certify(domain_name)) {
-    printf("%s() error, line %d, can't certify domain %s\n",
+  if (!save_store()) {
+    printf("%s() error, line %d, can't save store%s\n",
            __func__,
            __LINE__,
            domain_name.c_str());
     return false;
   }
-
   return true;
 }
 

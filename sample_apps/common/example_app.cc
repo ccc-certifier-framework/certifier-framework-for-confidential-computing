@@ -469,6 +469,9 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
+    if (c->is_certified_) {
+      goto done;
+    }
     if (!c->certify_domain(trust_mgr->purpose_)) {
       printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
       ret = 1;

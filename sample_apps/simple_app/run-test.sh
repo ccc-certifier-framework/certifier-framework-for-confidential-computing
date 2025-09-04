@@ -152,19 +152,29 @@ function do-run() {
 
   pushd $EXAMPLE_DIR
     echo " "
-    echo "certifying app1"
+    echo "initializing app1"
     $EXAMPLE_DIR/example_app.exe --data_dir=./app1_data/  \
         --domain_name=$DOMAIN_NAME \
         --operation=fresh-start  --measurement_file="example_app.measurement" \
+        --policy_store_file=$POLICY_STORE_NAME --print_all=true
+    echo "certifying app1"
+    $EXAMPLE_DIR/example_app.exe --data_dir=./app1_data/  \
+        --domain_name=$DOMAIN_NAME \
+        --operation=get-certified --measurement_file="example_app.measurement" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
     sleep 5
   
     echo " "
-    echo "certifying app2"
+    echo "initializing app2"
     $EXAMPLE_DIR/example_app.exe  --data_dir=./app2_data/ \
         --domain_name=$DOMAIN_NAME \
         --operation=fresh-start  --measurement_file="example_app.measurement" \
+        --policy_store_file=$POLICY_STORE_NAME --print_all=true
+    echo "certifying app2"
+    $EXAMPLE_DIR/example_app.exe  --data_dir=./app2_data/ \
+        --domain_name=$DOMAIN_NAME \
+        --operation=get-certified  --measurement_file="example_app.measurement" \
         --policy_store_file=$POLICY_STORE_NAME --print_all=true
 
     sleep 5
