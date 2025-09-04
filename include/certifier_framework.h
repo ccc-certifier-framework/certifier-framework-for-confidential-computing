@@ -353,6 +353,7 @@ class cc_trust_manager {
                                     const string &host_url,
                                     int           port);
   bool        initialize_existing_domain(const string &domain_name);
+  bool        certify(const string &domain_name);
   bool get_admissions_cert(const string &domain_name, string *admin_cert);
   bool admissions_cert_valid_status(const string &domain_name);
 #endif

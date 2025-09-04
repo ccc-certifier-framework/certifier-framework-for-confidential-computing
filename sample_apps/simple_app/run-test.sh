@@ -6,12 +6,12 @@
 set -Eeuo pipefail
 Me=$(basename "$0")
 
-if [ -z "{$CERTIFIER_ROOT}+set" ] ; then
-  echo " "
-  CERTIFIER_ROOT=../../..
-else
-  echo " "
+if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
+else
+  pushd ../../ > /dev/null
+  CERTIFIER_ROOT=$(pwd)
+  popd > /dev/null
 fi
 EXAMPLE_DIR=$(pwd)
 
@@ -69,8 +69,18 @@ function do-fresh() {
   echo "do-fresh"
 
   pushd $EXAMPLE_DIR > /dev/null
-  rm ./app1_data/$POLICY_STORE_NAME > /dev/null || true
-  rm ./app2_data/$POLICY_STORE_NAME > /dev/null || true
+  if [[ ! -d "./app1" ]] ; then
+    mkdir ./app1
+  fi
+  if [[ ! -d "./app2" ]] ; then
+    mkdir ./app2
+  fi
+  if [[ -e "./app1_data/$POLICY_STORE_NAME" ]] ; then
+    rm ./app1_data/$POLICY_STORE_NAME
+  fi
+  if [[ -e "./app2_data/$POLICY_STORE_NAME" ]] ; then
+    rm ./app2_data/$POLICY_STORE_NAME
+  fi
   popd > /dev/null
 
   echo "Done"
@@ -152,7 +162,6 @@ function do-run() {
     --policy_store_file=$POLICY_STORE_NAME  --print_all=true > /dev/null &
 
   sleep 5
-
 
   echo " "
   echo "running app-as-client"

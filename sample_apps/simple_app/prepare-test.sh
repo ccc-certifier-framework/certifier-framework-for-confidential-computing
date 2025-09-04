@@ -6,12 +6,12 @@
 set -Eeuo pipefail
 Me=$(basename "$0")
 
-if [ -z "{$CERTIFIER_ROOT}+set" ] ; then
-  echo " "
-  CERTIFIER_ROOT=../../..
-else
-  echo " "
+if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
+else
+  pushd ../../ > /dev/null
+  CERTIFIER_ROOT=$(pwd)
+  popd > /dev/null
 fi
 EXAMPLE_DIR=$(pwd)
 
@@ -21,7 +21,7 @@ echo "Example directory: $EXAMPLE_DIR"
 
 ARG_SIZE="$#"
 
-if [ $ARG_SIZE == 0 ] ; then
+if [[ $ARG_SIZE == 0 ]] ; then
   echo "Must call with arguments, as follows:"
   echo "  ./prepare-test.sh fresh [domain_name]"
   echo "  ./prepare-test.sh all [domain_name]"
@@ -53,17 +53,28 @@ echo "policy store name: $POLICY_STORE_NAME"
 function do-fresh() {
   echo "do-fresh"
 
-  pushd $CERTIFIER_ROOT/utilities > /dev/null
+  pushd $CERTIFIER_ROOT/utilities
   make clean -f cert_utility.mak
   make clean -f policy_utilities.mak
-  popd > /dev/null
-  pushd $CERTIFIER_ROOT/vm_model_tools/src > /dev/null
-  make clean -f cf_utility.mak
-  popd > /dev/null
+  popd
+  pushd $EXAMPLE_DIR
+  make clean -f example_app.mak
+  popd
 
-  mkdir $EXAMPLE_DIR/provisioning || true
-  pushd $EXAMPLE_DIR/provisioning  > /dev/null
+  if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+    mkdir $EXAMPLE_DIR/provisioning
+  fi
+  if [[ ! -e "$EXAMPLE_DIR/service" ]] ; then
+    mkdir $EXAMPLE_DIR/service
+  fi
+  if [[ ! -e "$EXAMPLE_DIR/app1_data" ]] ; then
+    mkdir $EXAMPLE_DIR/app1_data
+  fi
+  if [[ ! -e "$EXAMPLE_DIR/app2_data" ]] ; then
+    mkdir $EXAMPLE_DIR/app2_data
+  fi
 
+  pushd $EXAMPLE_DIR/provisioning
   if [[ "$(pwd)" == "${EXAMPLE_DIR}/provisioning" ]] ; then
     echo " "
     echo "in $(pwd)"
@@ -73,10 +84,9 @@ function do-fresh() {
     echo "Wrong directory "
     exit
   fi
-  popd > /dev/null
+  popd
 
-  mkdir $EXAMPLE_DIR/service || true
-  pushd $EXAMPLE_DIR/service > /dev/null
+  pushd $EXAMPLE_DIR/service
 
   if [[ "$(pwd)" == "${EXAMPLE_DIR}/service" ]] ; then
     echo " "
@@ -87,11 +97,9 @@ function do-fresh() {
     echo "Wrong directory "
     exit
   fi
-  popd > /dev/null
+  popd
 
-  mkdir $EXAMPLE_DIR/app1_data || true
-  pushd $EXAMPLE_DIR/app1_data > /dev/null
-
+  pushd $EXAMPLE_DIR/app1_data
   if [[ "$(pwd)" == "${EXAMPLE_DIR}/app1_data" ]] ; then
     echo " "
     echo "in $(pwd)"
@@ -101,10 +109,9 @@ function do-fresh() {
     echo "Wrong directory "
     exit
   fi
-  popd > /dev/null
+  popd
 
-  mkdir $EXAMPLE_DIR/app2_data || true
-  pushd $EXAMPLE_DIR/app2_data > /dev/null
+  pushd $EXAMPLE_DIR/app2_data
   if [[ "$(pwd)" == "${EXAMPLE_DIR}/app2_data" ]] ; then
     echo " "
     echo "in $(pwd)"
@@ -114,7 +121,7 @@ function do-fresh() {
     echo "Wrong directory "
     exit
   fi
-  popd > /dev/null
+  popd
 
   echo "Done"
 
@@ -135,7 +142,10 @@ function do-compile-utilities() {
 function do-make-keys() {
   echo "do-make-keys"
 
-  mkdir $EXAMPLE_DIR/provisioning || true
+  if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+    mkdir $EXAMPLE_DIR/provisioning
+  fi
+
   pushd $EXAMPLE_DIR/provisioning > /dev/null
     $CERTIFIER_ROOT/utilities/cert_utility.exe  \
       --operation=generate-policy-key-and-test-keys  \
@@ -152,13 +162,14 @@ function do-make-keys() {
 function do-compile-program() {
   echo "do-compile-program"
 
-  pushd $CERTIFIER_ROOT/sample_apps/simple_app > /dev/null
-  pushd ./provisioning > /dev/null
-  $CERTIFIER_ROOT/utilities/embed_policy_key.exe      \
-    --input=$POLICY_CERT_FILE_NAME --output=../policy_key.cc
-  popd > /dev/null
-  make -f example_app.mak
-  popd > /dev/null
+  pushd $CERTIFIER_ROOT/sample_apps/simple_app
+    pushd ./provisioning
+    $CERTIFIER_ROOT/utilities/embed_policy_key.exe  \
+      --input=$POLICY_CERT_FILE_NAME --output=../policy_key.cc
+    popd
+
+    make -f example_app.mak
+  popd
 
   echo "do-compile-program done"
 }
@@ -218,26 +229,33 @@ function do-make-policy() {
 }
 
 function do-compile-certifier() {
+
   echo "do-compile-certifier"
 
-  pushd $CERTIFIER_ROOT/certifier_service > /dev/null
+  #Make sure protobufs are compiled
+  pushd $CERTIFIER_ROOT/certifier_service/certprotos
+  if [[ ! -e "./certifier.proto.go" ]] ; then
+    protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
+  popd
 
-  pushd graminelib > /dev/null
-    make dummy
-  popd > /dev/null
-  pushd oelib > /dev/null
-    make dummy
-  popd > /dev/null
-  pushd isletlib > /dev/null
-    make dummy
-  popd > /dev/null
-  pushd teelib > /dev/null
-    make
-  popd > /dev/null
+  pushd $CERTIFIER_ROOT/certifier_service
 
-  go build simpleserver.go
+    pushd graminelib
+      make dummy
+    popd
+    pushd oelib
+      make dummy
+    popd
+    pushd isletlib
+      make dummy
+    popd
+    pushd teelib
+      make
+    popd
 
-  popd > /dev/null
+    go build simpleserver.go
+
+  popd
 
   echo "do-compile-certifier done"
 }
@@ -245,15 +263,28 @@ function do-compile-certifier() {
 function do-copy-files() {
   echo "do-copy-files"
 
-  mkdir $EXAMPLE_DIR/app1_data || true
-  mkdir $EXAMPLE_DIR/app2_data || true
-  pushd $EXAMPLE_DIR/provisioning > /dev/null
+  pushd $EXAMPLE_DIR
+    if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+      mkdir $EXAMPLE_DIR/provisioning
+    fi
+    if [[ ! -e "$EXAMPLE_DIR/service" ]] ; then
+      mkdir $EXAMPLE_DIR/service
+    fi
+    if [[ ! -e "$EXAMPLE_DIR/app1_data" ]] ; then
+      mkdir $EXAMPLE_DIR/app1_data
+    fi
+    if [[ ! -e "$EXAMPLE_DIR/app2_data" ]] ; then
+      mkdir $EXAMPLE_DIR/app2_data
+    fi
+  popd
+
+  pushd $EXAMPLE_DIR/provisioning
   cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
   cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
   cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
-  cp platform_attest_endorsement.bin  attest_key_file.bin ../app1_data || true
-  cp platform_attest_endorsement.bin  attest_key_file.bin ../app2_data || true
-  popd > /dev/null
+  cp platform_attest_endorsement.bin  attest_key_file.bin ../app1_data
+  cp platform_attest_endorsement.bin  attest_key_file.bin ../app2_data
+  popd
 }
 
 function do-all() {
