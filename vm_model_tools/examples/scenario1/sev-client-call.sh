@@ -21,8 +21,6 @@ echo "Cert file name: $2"
 echo "policy store name: $3"
 echo "cryptstore name: $4"
 
-exit
-
 $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
   --cf_utility_help=false \
   --init_trust=true \

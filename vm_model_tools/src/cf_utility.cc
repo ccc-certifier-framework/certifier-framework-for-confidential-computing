@@ -557,7 +557,7 @@ bool generate_public_key(key_message *km,
 
 //  ---------------------------------------------------------------------------------
 
-bool reinit_domain_and_update() {
+bool reinit_domain_and_update(const string &domain_name) {
   string purpose("authentication");
 
   // read policy cert
@@ -585,6 +585,21 @@ bool reinit_domain_and_update() {
     printf("%s() error, line %d, Can't initialize domain\n",
            __func__,
            __LINE__);
+    return false;
+  }
+  certifiers *c =
+      trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
+  if (c == nullptr) {
+    printf("%s() error, line %d, find certifier for initialized domain\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  c->is_certified_ = false;
+  if (!trust_mgr->certify(FLAGS_policy_domain_name)) {
+  }
+  if (!trust_mgr->save_store()) {
+    printf("%s() error, line %d, can't save store\n", __func__, __LINE__);
     return false;
   }
 
@@ -648,7 +663,7 @@ bool reinit_domain_and_update() {
 
 
 int main(int an, char **av) {
-  string usage("cf-osutility");
+  string usage("cf-utility");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
@@ -737,20 +752,39 @@ int main(int an, char **av) {
           trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
       if (c != nullptr) {
         if (c->is_certified_) {
-          // Domain exists and is certified, return
           printf("Domain already exists and is certified\n");
           goto done;
         }
       }
+      if (!trust_mgr->certify(FLAGS_policy_domain_name)) {
+        printf("%s() error, line %d, can't certify domain %s\n",
+               __func__,
+               __LINE__,
+               FLAGS_policy_domain_name.c_str());
+        ret = 1;
+        goto done;
+      }
+      if (!trust_mgr->save_store()) {
+        printf("%s() error, line %d, can't save store\n", __func__, __LINE__);
+        ret = 1;
+        goto done;
+      }
+      goto done;
     }
 
-    if (!reinit_domain_and_update()) {
+    if (!reinit_domain_and_update(FLAGS_policy_domain_name)) {
       ret = 1;
       goto done;
     }
+    goto done;
   } else if (FLAGS_reinit_trust) {
 
-    if (!reinit_domain_and_update()) {
+    if (!reinit_domain_and_update(FLAGS_policy_domain_name)) {
+      ret = 1;
+      goto done;
+    }
+    if (!trust_mgr->save_store()) {
+      printf("%s() error, line %d, can't save store\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }

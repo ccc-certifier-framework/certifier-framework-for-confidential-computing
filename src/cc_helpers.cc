@@ -685,31 +685,14 @@ bool certifier::framework::cc_trust_manager::initialize_new_domain(
            __LINE__);
     return false;
   }
-  certifiers *c = find_certifier_by_domain_name(domain_name);
-  if (c == nullptr) {
-    printf("%s() error, line %d, can't fid certifier\n", __func__, __LINE__);
-    return false;
-  }
-
-  c->is_certified_ = false;
-  c->admissions_cert_.clear();
-  if (!cc_auth_key_initialized_) {
-    printf("%s() error, line %d, can't auth key uninitialized\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-
-  if (!c->certify_domain(purpose_)) {
-    printf("%s() error, line %d, can't certify domain\n", __func__, __LINE__);
-    return false;
-  }
 
   if (!save_store()) {
-    printf("%s() error, line %d, Can't save store\n", __func__, __LINE__);
+    printf("%s() error, line %d, can't save store%s\n",
+           __func__,
+           __LINE__,
+           domain_name.c_str());
     return false;
   }
-
   return true;
 }
 
@@ -810,6 +793,44 @@ bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
                                          cert,
                                          host,
                                          port);
+}
+
+bool certifier::framework::cc_trust_manager::certify(
+    const string &domain_name) {
+
+  if (!cc_auth_key_initialized_) {
+    printf("%s() error, line %d, auth key not yet initialized\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  certifiers *c = find_certifier_by_domain_name(domain_name);
+  if (c == nullptr) {
+    printf("%s() error, line %d, can't find certifier\n", __func__, __LINE__);
+    return false;
+  }
+
+  c->is_certified_ = false;
+  c->admissions_cert_.clear();
+  if (!cc_auth_key_initialized_) {
+    printf("%s() error, line %d, can't auth key uninitialized\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (!c->certify_domain(purpose_)) {
+    printf("%s() error, line %d, can't certify domain\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!save_store()) {
+    printf("%s() error, line %d, Can't save store\n", __func__, __LINE__);
+    return false;
+  }
+
+  return true;
 }
 #endif  // NEW_API
 
