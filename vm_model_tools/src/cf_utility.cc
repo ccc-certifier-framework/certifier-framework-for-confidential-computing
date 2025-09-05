@@ -597,6 +597,11 @@ bool reinit_domain_and_update(const string &domain_name) {
   }
   c->is_certified_ = false;
   if (!trust_mgr->certify(FLAGS_policy_domain_name)) {
+    printf("%s() error, line %d, can't certify %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_policy_domain_name.c_str());
+    return false;
   }
   if (!trust_mgr->save_store()) {
     printf("%s() error, line %d, can't save store\n", __func__, __LINE__);
