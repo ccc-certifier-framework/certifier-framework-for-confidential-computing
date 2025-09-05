@@ -9,9 +9,9 @@ Me=$(basename "$0")
 if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
 else
-  pushd ../../ > /dev/null
+  pushd ../..
   CERTIFIER_ROOT=$(pwd)
-  popd > /dev/null
+  popd
 fi
 EXAMPLE_DIR=$(pwd)
 
@@ -66,6 +66,7 @@ echo "policy store name 1: ./app1_data/$POLICY_STORE_NAME
 echo "policy store name 2: ./app2_data/$POLICY_STORE_NAME
 
 function do-fresh() {
+  echo " "
   echo "do-fresh"
 
   pushd $EXAMPLE_DIR
@@ -81,13 +82,14 @@ function do-fresh() {
     if [[ -e "./app2_data/$POLICY_STORE_NAME" ]] ; then
       rm ./app2_data/$POLICY_STORE_NAME
     fi
-  popd > /dev/null
+  popd
 
   echo "Done"
   exit
 }
 
 function cleanup_stale_procs() {
+  echo " "
   echo "cleanup_stale_procs"
 
   # Find and kill simpleserver processes that may be running.
@@ -125,8 +127,8 @@ function cleanup_stale_procs() {
 #   --certifier_service_URL=localhost \
 #   --service_port=8123
 function do-run() {
-  echo "do-run"
   echo " "
+  echo "do-run"
 
   cleanup_stale_procs
   echo " "

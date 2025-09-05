@@ -53,6 +53,7 @@ echo "policy store name: $POLICY_STORE_NAME"
 SIMULATED_SEV=1
 
 function do-fresh() {
+  echo " "
   echo "do-fresh"
 
   pushd $CERTIFIER_ROOT/utilities
@@ -61,7 +62,7 @@ function do-fresh() {
   popd
 
   pushd $EXAMPLE_DIR
-    make clean -f example_app.mak
+    make clean -f sev_example_app.mak
   popd
 
   if [[ ! -d "$EXAMPLE_DIR/provisioning" ]] ; then
@@ -136,14 +137,17 @@ function do-fresh() {
   exit
 }
 
-function initialize-sev-simulator() {
-  echo "initialize-sev-simulator"
+function do-initialize-sev-simulator() {
+  echo " "
+  echo "do-initialize-sev-simulator"
 
   pushd $CERTIFIER_ROOT/sev-snp-simulator
     if [[ -d "/etc/certifier-snp-sim" ]] ; then
-      if [[ -e "ec-secp384r1-priv-key.pem" && -e ec-secp384r1-pub-key.pem ]] ; then
-        echo "Sev simultator keys already exist"
+      if [[ -e "/etc/certifier-snp-sim/ec-secp384r1-priv-key.pem" && -e "/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem" ]] ; then
+        echo "sev simultator keys already exist"
         return
+      else
+        echo "building simulator"
       fi
     fi
     make
@@ -156,10 +160,11 @@ function initialize-sev-simulator() {
     sudo cp ./keys/* /etc/certifier-snp-sim
     set -e
   popd
-  echo "initialize-sev-simulator done"
+  echo "do-initialize-sev-simulator done"
 }
 
 function do-compile-utilities() {
+  echo " "
   echo "do-compile-utilities"
 
   pushd $CERTIFIER_ROOT/utilities
@@ -171,9 +176,10 @@ function do-compile-utilities() {
 }
 
 function do-make-keys() {
+  echo " "
   echo "do-make-keys"
 
-  if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+  if [[ ! -d "$EXAMPLE_DIR/provisioning" ]] ; then
     mkdir $EXAMPLE_DIR/provisioning
   fi
 
@@ -183,7 +189,7 @@ function do-make-keys() {
       --policy_key_output_file=$POLICY_KEY_FILE_NAME  \
       --policy_cert_output_file=$POLICY_CERT_FILE_NAME \
 
-    $CERTIFIER_PROTOTYPE/utilities/simulated_sev_key_generation.exe  \
+    $CERTIFIER_ROOT/utilities/simulated_sev_key_generation.exe  \
          --ark_der=ark_cert.der --ask_der=ask_cert.der \
          --vcek_der=vcek_cert.der  \
          --vcek_key_file=/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem
@@ -193,12 +199,13 @@ function do-make-keys() {
 }
 
 function do-compile-program() {
+  echo " "
   echo "do-compile-program"
 
-  pushd $CERTIFIER_ROOT/sample_apps/simple_app
+  pushd $EXAMPLE_DIR
     pushd ./provisioning
-    $CERTIFIER_ROOT/utilities/embed_policy_key.exe  \
-      --input=$POLICY_CERT_FILE_NAME --output=../policy_key.cc
+      $CERTIFIER_ROOT/utilities/embed_policy_key.exe  \
+        --input=$POLICY_CERT_FILE_NAME --output=../policy_key.cc
     popd
 
     if [[ -v SIMULATED_SEV ]] ; then
@@ -221,15 +228,16 @@ function do-compile-program() {
 # The following arguments are required: --mode, --ovmf
 
 function do-make-policy() {
+  echo " "
   echo "do-make-policy"
 
   pushd $EXAMPLE_DIR/provisioning
     echo " "
 
     if [[ -v SIMULATED_SEV ]] ; then
-      $CERTIFIER_ROOT/utilities/measurement_utility.exe      \
-        --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708\
-        --input=../example_app.exe --output=sev-example-app.measurement
+      $CERTIFIER_ROOT/utilities/measurement_init.exe \
+        --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 \
+        --out_file=sev-example-app.measurement
     else
       pushd $CERTIFIER_ROOT
         if [[ ! -d "../sev-snp-measure" ]] ; then
@@ -244,8 +252,8 @@ function do-make-policy() {
       popd
     fi
 
-    $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe    \
-        --certificate-subject=ark_cert.der --verb="is-trusted-for-attestation"  \
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
+        --cert-subject=ark_cert.der --verb="is-trusted-for-attestation"  \
         --output=ts1.bin
     $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
       --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
@@ -265,72 +273,72 @@ function do-make-policy() {
       --vse_file=vse_policy2.bin  --duration=9000  \
       --private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
 
-    $CERTIFIER_PROTOTYPE/utilities/make_property.exe    \
+    $CERTIFIER_ROOT/utilities/make_property.exe    \
         --property_name=debug                       \
         --property_type='string' comparator="="     \
         --string_value=no                           \
         --output=property1.bin
 
-    $CERTIFIER_PROTOTYPE/utilities/make_property.exe    \
+    $CERTIFIER_ROOT/utilities/make_property.exe    \
         --property_name=migrate                     \
         --property_type='string' comparator="="     \
         --string_value=no                           \
         --output=property2.bin
 
-    $CERTIFIER_PROTOTYPE/utilities/make_property.exe    \
+    $CERTIFIER_ROOT/utilities/make_property.exe    \
         --property_name=smt                         \
         --property_type='string' comparator="="     \
         --string_value=no                           \
         --output=property5.bin
-    $CERTIFIER_PROTOTYPE/utilities/make_property.exe    \
+    $CERTIFIER_ROOT/utilities/make_property.exe    \
         --property_name='api-major'                 \
         --property_type=int                         \
         --comparator=">="                           \
         --int_value=0                               \
         --output=property3.bin
 
-    $CERTIFIER_PROTOTYPE/utilities/make_property.exe    \
+    $CERTIFIER_ROOT/utilities/make_property.exe    \
         --property_name='api-minor'                 \
         --property_type=int                         \
         --comparator=">="                           \
         --int_value=0                               \
         --output=property4.bin
 
-    $CERTIFIER_PROTOTYPE/utilities/make_property.exe    \
+    $CERTIFIER_ROOT/utilities/make_property.exe    \
         --property_name='tcb-version'               \
         --property_type=int                         \
         --comparator="="                            \
         --int_value=0x03000000000008115             \
         --output=property6.bin
 
-    $CERTIFIER_PROTOTYPE/utilities/combine_properties.exe   \
+    $CERTIFIER_ROOT/utilities/combine_properties.exe   \
       --in=property1.bin,property2.bin,property3.bin,property4.bin,property5.bin,property6.bin \
       --output=properties.bin
 
-    $CERTIFIER_PROTOTYPE/utilities/make_platform.exe    \
+    $CERTIFIER_ROOT/utilities/make_platform.exe    \
         --platform_type=amd-sev-snp                 \
         --properties_file=properties.bin            \
         --output=platform.bin
 
-    $CERTIFIER_PROTOTYPE/utilities/make_unary_vse_clause.exe    \
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
         --platform_subject=platform.bin                     \
         --verb="has-trusted-platform-property"              \
         --output=ts3.bin
-    $CERTIFIER_PROTOTYPE/utilities/make_indirect_vse_clause.exe     \
-        --key_subject=policy_key_file.bin                       \
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe     \
+        --key_subject=$POLICY_KEY_FILE_NAME \
         --verb="says"                                           \
         --clause=ts3.bin                                        \
         --output=vse_policy3.bin
-    $CERTIFIER_PROTOTYPE/utilities/make_signed_claim_from_vse_clause.exe    \
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
         --vse_file=vse_policy3.bin                                      \
         --duration=9000                                                 \
-        --private_key_file=policy_key_file.bin                          \
+        --private_key_file=$POLICY_KEY_FILE_NAME \
         --output=signed_claim_3.bin
 
-    $CERTIFIER_PROTOTYPE/utilities/package_claims.exe                           \
+    $CERTIFIER_ROOT/utilities/package_claims.exe                           \
         --input=signed_claim_1.bin,signed_claim_2.bin,signed_claim_3.bin    \
         --output=policy.bin
-    $CERTIFIER_PROTOTYPE/utilities/print_packaged_claims.exe --input=policy.bin
+    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
   popd
 
   echo " "
@@ -338,7 +346,7 @@ function do-make-policy() {
 }
 
 function do-compile-certifier() {
-
+  echo " "
   echo "do-compile-certifier"
 
   pushd $CERTIFIER_ROOT/certifier_service/certprotos
@@ -372,30 +380,33 @@ function do-compile-certifier() {
 }
 
 function do-copy-files() {
+  echo " "
   echo "do-copy-files"
 
   pushd $EXAMPLE_DIR
-    if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+    if [[ ! -d "$EXAMPLE_DIR/provisioning" ]] ; then
       mkdir $EXAMPLE_DIR/provisioning
     fi
-    if [[ ! -e "$EXAMPLE_DIR/service" ]] ; then
+    if [[ ! -d "$EXAMPLE_DIR/service" ]] ; then
       mkdir $EXAMPLE_DIR/service
     fi
-    if [[ ! -e "$EXAMPLE_DIR/app1_data" ]] ; then
+    if [[ ! -d "$EXAMPLE_DIR/app1_data" ]] ; then
       mkdir $EXAMPLE_DIR/app1_data
     fi
-    if [[ ! -e "$EXAMPLE_DIR/app2_data" ]] ; then
+    if [[ ! -d "$EXAMPLE_DIR/app2_data" ]] ; then
       mkdir $EXAMPLE_DIR/app2_data
     fi
   popd
 
   pushd $EXAMPLE_DIR/provisioning
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
-  cp platform_attest_endorsement.bin  attest_key_file.bin ../app1_data
-  cp platform_attest_endorsement.bin  attest_key_file.bin ../app2_data
+    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
+    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/app1_data
+    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/app2_data
+    cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/service
+    cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/app1_data
+    cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/app2_data
   popd
+  echo "do-copy-files done"
 }
 
 function do-all() {
