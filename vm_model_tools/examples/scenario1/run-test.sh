@@ -54,8 +54,8 @@ if [[ $ARG_SIZE == 2  && $1 == "run" ]] ; then
   ENCLAVE_TYPE=$2
 fi
 if [[ $ARG_SIZE == 3 && $1 == "run" ]] ; then
-  DOMAIN_NAME=$2
-  ENCLAVE_TYPE=$3
+  DOMAIN_NAME=$3
+  ENCLAVE_TYPE=$2
 fi
 
 echo "domain name: $DOMAIN_NAME"
