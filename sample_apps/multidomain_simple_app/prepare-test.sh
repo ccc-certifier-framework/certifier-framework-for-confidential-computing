@@ -6,14 +6,15 @@
 set -Eeuo pipefail
 Me=$(basename "$0")
 
-if [ -z "{$CERTIFIER_ROOT}+set" ] ; then
-  echo " "
-  CERTIFIER_ROOT=../../..
-else
-  echo " "
+if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
+else
+  pushd ../..
+  CERTIFIER_ROOT=$(pwd)
+  popd
 fi
 EXAMPLE_DIR=$(pwd)
+
 
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
@@ -63,81 +64,86 @@ echo "client policy store name: $CLIENT_POLICY_STORE_NAME"
 function do-fresh() {
   echo "do-fresh"
 
-  pushd $CERTIFIER_ROOT/utilities > /dev/null
-  make clean -f cert_utility.mak
-  make clean -f policy_utilities.mak
-  popd > /dev/null
-  pushd $CERTIFIER_ROOT/vm_model_tools/src > /dev/null
-  make clean -f cf_utility.mak
-  popd > /dev/null
+  pushd $CERTIFIER_ROOT/utilities
+    make clean -f cert_utility.mak
+    make clean -f policy_utilities.mak
+  popd
+  pushd $CERTIFIER_ROOT/vm_model_tools/src
+    make clean -f cf_utility.mak
+  popd
 
-  mkdir $EXAMPLE_DIR/provisioning || true
-  pushd $EXAMPLE_DIR/provisioning  > /dev/null
-
-  if [[ "$(pwd)" == "${EXAMPLE_DIR}/provisioning" ]] ; then
-    echo " "
-    echo "in $(pwd)"
-    rm ./* || true
-    echo " "
-  else
-    echo "Wrong directory "
-    exit
+  if [[ ! -v "$EXAMPLE_DIR/provisioning" ]] ; then
+    mkdir $EXAMPLE_DIR/provisioning
   fi
-  popd > /dev/null
-
-  mkdir $EXAMPLE_DIR/service || true
-  pushd $EXAMPLE_DIR/service > /dev/null
-
-  if [[ "$(pwd)" == "${EXAMPLE_DIR}/service" ]] ; then
-    echo " "
-    echo "In $(pwd)"
-    rm ./* || true
-    echo " "
-  else
-    echo "Wrong directory "
-    exit
+  if [[ ! -v "$EXAMPLE_DIR/service" ]] ; then
+    mkdir $EXAMPLE_DIR/service
   fi
-  popd > /dev/null
-
-  mkdir $EXAMPLE_DIR/app1_data || true
-  pushd $EXAMPLE_DIR/app1_data > /dev/null
-
-  if [[ "$(pwd)" == "${EXAMPLE_DIR}/app1_data" ]] ; then
-    echo " "
-    echo "in $(pwd)"
-    rm ./* || true
-    echo " "
-  else
-    echo "Wrong directory "
-    exit
+  if [[ ! -v "$EXAMPLE_DIR/app1_data" ]] ; then
+    mkdir $EXAMPLE_DIR/app1_data
   fi
-  popd > /dev/null
-
-  mkdir $EXAMPLE_DIR/app2_data || true
-  pushd $EXAMPLE_DIR/app2_data > /dev/null
-  if [[ "$(pwd)" == "${EXAMPLE_DIR}/app2_data" ]] ; then
-    echo " "
-    echo "in $(pwd)"
-    rm ./* || true
-    echo " "
-  else
-    echo "Wrong directory "
-    exit
+  if [[ ! -v "$EXAMPLE_DIR/app2_data" ]] ; then
+    mkdir $EXAMPLE_DIR/app2_data
   fi
-  popd > /dev/null
+
+  pushd $EXAMPLE_DIR/provisioning 
+    if [[ "$(pwd)" == "${EXAMPLE_DIR}/provisioning" ]] ; then
+      echo " "
+      echo "in $(pwd)"
+      if [[ ! -z "$( ls -A '.' )" ]]; then
+        rm ./*
+      fi
+    else
+      echo "Wrong directory "
+      exit
+    fi
+  popd
+
+  pushd $EXAMPLE_DIR/service
+    if [[ "$(pwd)" == "${EXAMPLE_DIR}/service" ]] ; then
+      echo "In $(pwd)"
+      if [[ ! -z "$( ls -A '.' )" ]]; then
+        rm ./*
+      fi
+    else
+      echo "Wrong directory "
+      exit
+    fi
+  popd
+
+  pushd $EXAMPLE_DIR/app1_data
+    if [[ "$(pwd)" == "${EXAMPLE_DIR}/app1_data" ]] ; then
+      if [[ ! -z "$( ls -A '.' )" ]]; then
+        rm ./*
+      fi
+      echo " "
+    else
+      echo "Wrong directory "
+      exit
+    fi
+  popd
+
+  pushd $EXAMPLE_DIR/app2_data
+    if [[ "$(pwd)" == "${EXAMPLE_DIR}/app2_data" ]] ; then
+      if [[ ! -z "$( ls -A '.' )" ]]; then
+        rm ./*
+      fi
+    else
+      echo "Wrong directory "
+      exit
+    fi
+  popd
 
   echo "Done"
-
   exit
 }
 
 function do-compile-utilities() {
   echo "do-compile-utilities"
 
-  pushd $CERTIFIER_ROOT/utilities > /dev/null
-  make -f cert_utility.mak
-  make -f policy_utilities.mak
-  popd > /dev/null 2>&1
+  pushd $CERTIFIER_ROOT/utilities
+    make -f cert_utility.mak
+    make -f policy_utilities.mak
+  popd
 
   echo "do-compile-utilities done"
 }
@@ -145,26 +151,27 @@ function do-compile-utilities() {
 function do-make-keys() {
   echo "do-make-keys"
 
-  mkdir $EXAMPLE_DIR/provisioning || true
-  pushd $EXAMPLE_DIR/provisioning > /dev/null
+  if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+    mkdir $EXAMPLE_DIR/provisioning
+  fi
 
-  $CERTIFIER_ROOT/utilities/cert_utility.exe  \
-    --operation=generate-policy-key-and-test-keys  \
-    --policy_key_name=client-policy-key            \
-    --policy_key_output_file=$CLIENT_POLICY_KEY_FILE_NAME     \
-    --policy_cert_output_file=$CLIENT_POLICY_CERT_FILE_NAME   \
-    --platform_key_output_file=platform_key_file.bin  \
-    --attest_key_output_file=attest_key_file.bin
+  pushd $EXAMPLE_DIR/provisioning
+    $CERTIFIER_ROOT/utilities/cert_utility.exe  \
+      --operation=generate-policy-key-and-test-keys  \
+      --policy_key_name=client-policy-key            \
+      --policy_key_output_file=$CLIENT_POLICY_KEY_FILE_NAME     \
+      --policy_cert_output_file=$CLIENT_POLICY_CERT_FILE_NAME   \
+      --platform_key_output_file=platform_key_file.bin  \
+      --attest_key_output_file=attest_key_file.bin
 
-  $CERTIFIER_ROOT/utilities/cert_utility.exe    \
-    --operation=generate-policy-key-and-test-keys           \
-    --policy_key_name=server-policy-key                     \
-    --policy_key_output_file=$SERVER_POLICY_KEY_FILE_NAME   \
-    --policy_cert_output_file=$SERVER_POLICY_CERT_FILE_NAME \
-    --platform_key_output_file=platform_key_file.bin        \
-    --attest_key_output_file=attest_key_file.bin
-
-  popd > /dev/null
+    $CERTIFIER_ROOT/utilities/cert_utility.exe    \
+      --operation=generate-policy-key-and-test-keys           \
+      --policy_key_name=server-policy-key                     \
+      --policy_key_output_file=$SERVER_POLICY_KEY_FILE_NAME   \
+      --policy_cert_output_file=$SERVER_POLICY_CERT_FILE_NAME \
+      --platform_key_output_file=platform_key_file.bin        \
+      --attest_key_output_file=attest_key_file.bin
+  popd
 
   echo "do-make-keys done"
 }
@@ -172,15 +179,15 @@ function do-make-keys() {
 function do-compile-program() {
   echo "do-compile-program"
 
-  pushd $CERTIFIER_ROOT/sample_apps/multidomain_simple_app > /dev/null
-  pushd ./provisioning > /dev/null
-  $CERTIFIER_ROOT/utilities/embed_policy_key.exe  \
-    --input=$CLIENT_POLICY_CERT_FILE_NAME --output=../client_policy_key.cc
-  popd > /dev/null
-  pushd ./provisioning > /dev/null
+  pushd $CERTIFIER_ROOT/sample_apps/multidomain_simple_app
+    pushd ./provisioning
+      $CERTIFIER_ROOT/utilities/embed_policy_key.exe  \
+        --input=$CLIENT_POLICY_CERT_FILE_NAME --output=../client_policy_key.cc
+    popd
+  pushd ./provisioning
   $CERTIFIER_ROOT/utilities/embed_policy_key.exe  \
     --input=$SERVER_POLICY_CERT_FILE_NAME --output=../server_policy_key.cc
-  popd > /dev/null
+  popd
   make -f multidomain_app.mak
 
   echo "do-compile-program done"
@@ -212,56 +219,55 @@ function do-compile-program() {
 function do-make-policy() {
   echo "do-make-policy"
 
-  pushd $EXAMPLE_DIR/provisioning > /dev/null
+  pushd $EXAMPLE_DIR/provisioning
+    $CERTIFIER_ROOT/utilities/measurement_utility.exe   \
+      --type=hash --input=../multidomain_client_app.exe  \
+      --output=multidomain_client_app.exe.measurement
 
-  $CERTIFIER_ROOT/utilities/measurement_utility.exe   \
-     --type=hash --input=../multidomain_client_app.exe  \
-     --output=multidomain_client_app.exe.measurement
+    $CERTIFIER_ROOT/utilities/measurement_utility.exe   \
+      --type=hash --input=../multidomain_server_app.exe \
+      --output=multidomain_server_app.exe.measurement
 
-  $CERTIFIER_ROOT/utilities/measurement_utility.exe   \
-     --type=hash --input=../multidomain_server_app.exe \
-     --output=multidomain_server_app.exe.measurement
+    # ts1a.bin: client_measurement is-trusted
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe   \
+      --measurement_subject=multidomain_client_app.exe.measurement  \
+      --key_subject="" --verb="is-trusted" --output="ts1a.bin"
 
-  # ts1a.bin: client_measurement is-trusted
-  $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe   \
-    --measurement_subject=multidomain_client_app.exe.measurement  \
-    --key_subject="" --verb="is-trusted" --output="ts1a.bin"
+    # ts1b.bin: server_measurement is-trusted
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe   \
+      --measurement_subject=multidomain_server_app.exe.measurement  \
+      --key_subject="" --verb="is-trusted"    \
+      --output="ts1b.bin"
 
-  # ts1b.bin: server_measurement is-trusted
-  $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe   \
-    --measurement_subject=multidomain_server_app.exe.measurement  \
-    --key_subject="" --verb="is-trusted"    \
-    --output="ts1b.bin"
+    # vse_policy1a: server-policy-key says server_measurement is-trusted
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe     \
+      --key_subject=$SERVER_POLICY_KEY_FILE_NAME  \
+      --verb="says" --clause="ts1a.bin" --output="vse_policy1a.bin"
+    echo "vse_policy1a done"
 
-  # vse_policy1a: server-policy-key says server_measurement is-trusted
-  $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe     \
-     --key_subject=$SERVER_POLICY_KEY_FILE_NAME  \
-     --verb="says" --clause="ts1a.bin" --output="vse_policy1a.bin"
-  echo "vse_policy1a done"
+    # vse_policy1b: server-policy-key says client_measurement is-trusted
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe     \
+      --key_subject=$SERVER_POLICY_KEY_FILE_NAME  \
+      --verb="says" --clause=ts1b.bin --output=vse_policy1b.bin
+    echo "vse_policy1b done"
 
-  # vse_policy1b: server-policy-key says client_measurement is-trusted
-  $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe     \
-     --key_subject=$SERVER_POLICY_KEY_FILE_NAME  \
-     --verb="says" --clause=ts1b.bin --output=vse_policy1b.bin
-  echo "vse_policy1b done"
-
-   # vse_policy2a: client-policy-key says server_measurement is-trusted
-   $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-     --key_subject=$CLIENT_POLICY_KEY_FILE_NAME \
-     --verb="says" --clause="ts1a.bin" --output="vse_policy2a.bin"
-   echo "vse_policy2a done"
+    # vse_policy2a: client-policy-key says server_measurement is-trusted
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      --key_subject=$CLIENT_POLICY_KEY_FILE_NAME \
+      --verb="says" --clause="ts1a.bin" --output="vse_policy2a.bin"
+    echo "vse_policy2a done"
 
     # vse_policy2b: client-policy-key says client_measurement is-trusted
     $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
        --key_subject=$CLIENT_POLICY_KEY_FILE_NAME \
        --verb="says" --clause="ts1b.bin" --output="vse_policy2b.bin"
-   echo "vse_policy2b done"
+    echo "vse_policy2b done"
 
     # signed_claim_1a.bin: server-signed server_vse_policy1a.bin
     $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
       --vse_file="vse_policy1a.bin" --duration=9000  \
       --private_key_file=$SERVER_POLICY_KEY_FILE_NAME --output="signed_claim_1a.bin"
-   echo "signed_claim_1a done"
+    echo "signed_claim_1a done"
 
     # signed_claim_1b.bin: client signed client_vse_policy1b.bin
     $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe    \
@@ -278,8 +284,7 @@ function do-make-policy() {
     # signed_claim_2b.bin: vse_policy2b.bin
     $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe   \
       --vse_file="vse_policy2b.bin" --duration=9000    \
-      --private_key_file=$CLIENT_POLICY_KEY_FILE_NAME  \
-      --output="signed_claim_2b.bin"
+      --private_key_file=$CLIENT_POLICY_KEY_FILE_NAME --output="signed_claim_2b.bin"
     echo "signed_claim_2b done"
 
     # signed_claim_3a.bin: server-signed server_vse_policy3a.bin
@@ -341,60 +346,66 @@ function do-make-policy() {
 
      $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=server_policy.bin
      $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=client_policy.bin
-
   echo " "
-
-  popd > /dev/null
+  popd
 
   echo "do-make-policy done"
 }
 
 function do-compile-certifier() {
   echo "do-compile-certifier"
+  pushd $CERTIFIER_ROOT/certifier_service/certprotos
+    if [[ ! -e "./certifier.proto.go" ]] ; then
+      echo " "
+      echo "making protobufs"
+      protoc --go_opt=paths=source_relative --go_out=. --go_opt=M=certifier.proto ./certifier.proto
+    fi
+  popd
 
-  pushd $CERTIFIER_ROOT/certifier_service > /dev/null
+  pushd $CERTIFIER_ROOT/certifier_service
+    pushd graminelib
+      make dummy
+    popd
+    pushd oelib
+      make dummy
+    popd
+    pushd isletlib
+      make dummy
+    popd
+    pushd teelib
+      make
+    popd
 
-  pushd graminelib > /dev/null
-    make dummy
-  popd > /dev/null
-  pushd oelib > /dev/null
-    make dummy
-  popd > /dev/null
-  pushd isletlib > /dev/null
-    make dummy
-  popd > /dev/null
-  pushd teelib > /dev/null
-    make
-  popd > /dev/null
+    go build simpleserver.go
 
-  go build simpleserver.go
-
-  popd > /dev/null
-
+    pop
   echo "do-compile-certifier done"
 }
 
 function do-copy-files() {
   echo "do-copy-files"
 
-  mkdir $EXAMPLE_DIR/app1_data || true
-  mkdir $EXAMPLE_DIR/app2_data || true
-  pushd $EXAMPLE_DIR/provisioning > /dev/null
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
-  cp platform_attest_endorsement.bin  attest_key_file.bin ../app1_data || true
-  cp platform_attest_endorsement.bin  attest_key_file.bin ../app2_data || true
-  popd > /dev/null
+
+  pushd $EXAMPLE_DIR/provisioning
+    cp -p server_policy.bin client_policy.bin $EXAMPLE_DIR/service
+    cp -p $CLIENT_POLICY_KEY_FILE_NAME  $CLIENT_POLICY_CERT_FILE_NAME \
+          multidomain_client_app.exe.measurement policy.bin $EXAMPLE_DIR/app1_data
+    cp -p $SERVER_POLICY_KEY_FILE_NAME $SERVER_POLICY_CERT_FILE_NAME \
+          multidomain_server_app.exe.measurement policy.bin $EXAMPLE_DIR/app2_data
+    cp platform_attest_endorsement.bin  attest_key_file.bin ../app1_data
+    cp platform_attest_endorsement.bin  attest_key_file.bin ../app2_data
+  popd
 }
 
+
 function do-all() {
+
   echo " "
   echo "do-all"
 
   do-compile-utilities
   do-make-keys
-  do-compile-program
+  do-compile-program 
   do-make-policy
   do-compile-certifier
   do-copy-files
