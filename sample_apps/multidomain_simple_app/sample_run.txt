@@ -1,0 +1,65 @@
+CERT_PROTO=/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+EXAMPLE_DIR=/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/sample_apps/multidomain_simple_app
+PATH=/home/rgerganov/go/bin:/home/jlm/.cargo/bin:/home/jlm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/usr/local/go/bin
+PROV_DIR=/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/sample_apps/multidomain_simple_app/provisioning
+LOCAL_LIB=/usr/local/lib
+DoMakeClean=/usr/local/lib
+protoc-gen-go:  /home/jlm/bin/protoc-gen-go
+ 
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/utilities/cert_utility.exe --operation=generate-policy-key-and-test-keys --policy_key_name=server-policy-key --policy_key_output_file=server_policy_key_file.bin --policy_cert_output_file=server_policy_cert_file.bin --platform_key_output_file=platform_key_file.bin --attest_key_output_file=attest_key_file.bin
+ 
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/utilities/embed_policy_key.exe --input=client_policy_cert_file.bin --output=../client_policy_key.cc
+ 
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/utilities/embed_policy_key.exe --input=server_policy_cert_file.bin --output=../server_policy_key.cc
+
+linking executable multidomain_client_app.exe
+g++ ./multidomain_client_app.o ./certifier.pb.o ./certifier.o ./certifier_proofs.o ./support.o ./simulated_enclave.o ./application_enclave.o ./cc_helpers.o ./cc_useful.o -L /usr/local/lib `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -o ./multidomain_client_app.exe
+ 
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/utilities/measurement_utility.exe --type=hash --input=../multidomain_client_app.exe '' --print_debug --output=multidomain_client_app.measurement
+104: to_hash_size=22147240, in_size=22147240, in_read=22147240, other_files_total_size=0
+ 
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/utilities/measurement_utility.exe --type=hash --input=../multidomain_server_app.exe --output=multidomain_server_app.measurement
+ 
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/utilities/print_packaged_claims.exe --input=server_policy.bin
+
+ 3 blocks
+1: Key[rsa, server-policy-key, 8e35ffa69625ce6179acdb735452908a9466fb82] says Key[rsa, platformKey, d052ca285796a4a9c0c16f2e6dd1018c0e5d2663] is-trusted-for-attestation  
+2: Key[rsa, server-policy-key, 8e35ffa69625ce6179acdb735452908a9466fb82] says Measurement[f8a95653acf26067609154d84928b07cd27eaacac2e9a591fd7d6ce2a89a38a5]  is-trusted  
+3: Key[rsa, server-policy-key, 8e35ffa69625ce6179acdb735452908a9466fb82] says Measurement[fe570550f88c30e4340ba189c05738389c44cd6b5685bb0647fc49496687b174]  is-trusted  
+
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/utilities/print_packaged_claims.exe --input=client_policy.bin
+
+ 3 blocks
+1: Key[rsa, client-policy-key, ac16f84249c5cda8d47346edf1fea4cb9a60ed80] says Key[rsa, platformKey, d052ca285796a4a9c0c16f2e6dd1018c0e5d2663] is-trusted-for-attestation  
+2: Key[rsa, client-policy-key, ac16f84249c5cda8d47346edf1fea4cb9a60ed80] says Measurement[f8a95653acf26067609154d84928b07cd27eaacac2e9a591fd7d6ce2a89a38a5]  is-trusted  
+3: Key[rsa, client-policy-key, ac16f84249c5cda8d47346edf1fea4cb9a60ed80] says Measurement[fe570550f88c30e4340ba189c05738389c44cd6b5685bb0647fc49496687b174]  is-trusted  
+
+Key[rsa, platformKey, d052ca285796a4a9c0c16f2e6dd1018c0e5d2663] says Key[rsa, attestKey, c7a1966777cb8c380a008e2f03e52dfd988b444f] is-trusted-for-attestation  
+
+Key[rsa, platformKey, d052ca285796a4a9c0c16f2e6dd1018c0e5d2663] says Key[rsa, attestKey, c7a1966777cb8c380a008e2f03e52dfd988b444f] is-trusted-for-attestation  
+ 
+/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/simpleserver --policyFile=server_policy.bin ... server_policy_key_file.bin ... server_policy_cert_file.bin --readPolicy=true
+ 
+/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/certifier_service/simpleserver --policyFile=client_policy.bin ... client_policy_key_file.bin ... client_policy_cert_file.bin --readPolicy=true
+ 
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/sample_apps/multidomain_simple_app/multidomain_server_app.exe --operation=cold-init --data_dir=./app2_data/ --measurement_file=multidomain_server_app.measurement --policy_store_file=policy_store --policy_port=8121 --print_all=true
+
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/sample_apps/multidomain_simple_app/multidomain_server_app.exe --operation=get-certified --data_dir=./app2_data/ --measurement_file=multidomain_server_app.measurement --policy_store_file=policy_store --policy_port=8121 --print_all=true
+
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/sample_apps/multidomain_simple_app/multidomain_client_app.exe --operation=cold-init --data_dir=./app1_data/ --measurement_file=multidomain_client_app.measurement --policy_store_file=policy_store --primary_policy_port=8122 --secondary_policy_port=8121 --print_all=true
+
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/sample_apps/multidomain_simple_app/multidomain_client_app.exe --operation=get-certified --data_dir=./app1_data/ --measurement_file=multidomain_client_app.measurement --policy_store_file=policy_store --primary_policy_port=8122 --secondary_policy_port=8121 --print_all=true
+
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/sample_apps/multidomain_simple_app/multidomain_server_app.exe --data_dir=./app2_data/ --operation=run-app-as-server --policy_store_file=policy_store --measurement_file=multidomain_server_app.measurement --print_all=true
+
+Running App as server
+ 
++ /home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing/sample_apps/multidomain_simple_app/multidomain_client_app.exe --data_dir=./app1_data/ --operation=run-app-as-client --policy_store_file=policy_store --measurement_file=multidomain_client_app.measurement --print_all=true
+
+Client peer id is Measured-f8a95653acf26067609154d84928b07cd27eaacac2e9a591fd7d6ce2a89a38a5
+Client peer cert is:
+Server peer id is Measured-fe570550f88c30e4340ba189c05738389c44cd6b5685bb0647fc49496687b174
+Server peer cert is:
+SSL server read: Hi from your secret client
+SSL client read: Hi from your secret server
+
