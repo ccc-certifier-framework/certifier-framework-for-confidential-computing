@@ -102,10 +102,10 @@ function cleanup_stale_procs() {
     echo "no certifier_service running"
   fi
 
-  # Find and kill app processes that are running.
+  # Find and kill app processes that app still running.
   echo " "
   set +e
-  app_pid=$(ps -ef | grep -E "example_app" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
+  app_pid=$(ps -ef | grep -E "sev_example_app" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
   set -e
   
   if [[ $app_pid != "" ]] ; then
@@ -118,6 +118,12 @@ function cleanup_stale_procs() {
   echo "cleanup_stale_procs done"
 }
 
+# In call to sev-client-call.sh
+#   --policy_domain_name=$1 \
+#   --policy_key_cert_file=$2 \
+#   --policy_store_filename=$3 \
+#   --certifier_service_URL=localhost \
+#   --service_port=8123
 function do-run() {
   echo "do-run"
   echo " "
@@ -152,50 +158,8 @@ function do-run() {
 
   pushd $EXAMPLE_DIR
     echo " "
-    echo "initializing app1"
-    $EXAMPLE_DIR/example_app.exe --data_dir=./app1_data/  \
-        --domain_name=$DOMAIN_NAME \
-        --operation=fresh-start  --measurement_file="example_app.measurement" \
-        --policy_store_file=$POLICY_STORE_NAME --print_all=true
-    echo "certifying app1"
-    $EXAMPLE_DIR/example_app.exe --data_dir=./app1_data/  \
-        --domain_name=$DOMAIN_NAME \
-        --operation=get-certified --measurement_file="example_app.measurement" \
-        --policy_store_file=$POLICY_STORE_NAME --print_all=true
-
-    sleep 5
-  
+    sudo ./sev-client-call.sh $DOMAIN_NAME $POLICY_CERT_FILE_NAME $POLICY_STORE_NAME
     echo " "
-    echo "initializing app2"
-    $EXAMPLE_DIR/example_app.exe  --data_dir=./app2_data/ \
-        --domain_name=$DOMAIN_NAME \
-        --operation=fresh-start  --measurement_file="example_app.measurement" \
-        --policy_store_file=$POLICY_STORE_NAME --print_all=true
-    echo "certifying app2"
-    $EXAMPLE_DIR/example_app.exe  --data_dir=./app2_data/ \
-        --domain_name=$DOMAIN_NAME \
-        --operation=get-certified  --measurement_file="example_app.measurement" \
-        --policy_store_file=$POLICY_STORE_NAME --print_all=true
-
-    sleep 5
-
-    echo " "
-    echo "running app-as-server"
-    $EXAMPLE_DIR/example_app.exe \
-      --data_dir=./app2_data/ --operation="run-app-as-server" \
-      --domain_name=$DOMAIN_NAME \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=$POLICY_STORE_NAME  --print_all=true &
-
-    sleep 5
-
-    echo " "
-    echo "running app-as-client"
-    $EXAMPLE_DIR/example_app.exe \
-      --data_dir=./app1_data/ --operation="run-app-as-client"   \
-      --domain_name=$DOMAIN_NAME \
-      --measurement_file="example_app.measurement" \
-      --policy_store_file=$POLICY_STORE_NAME --print_all=true
   popd
 
   cleanup_stale_procs

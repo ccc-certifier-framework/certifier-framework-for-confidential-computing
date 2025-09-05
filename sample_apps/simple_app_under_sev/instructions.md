@@ -1,17 +1,18 @@
-# Simple App under AMD Secure Encrypted Virtualization (SEV)
+# Simple App under AMD Secure Encrypted Virtualization (SEV), instructions
+
 
 This example app shows all the major steps in a Confidential Computing program,
 running under AMD SEV-SNP.
 
-This document gives
+The document
 [detailed instructions](#Steps-to-build-and-run-Simple-App-under-AMD-SEV-SNP)
- for building and running the sample application on the
+gives instructions for building and running the sample application on the
 [AMD Secure Encrypted Virtualization](https://www.amd.com/en/developer/sev.html)
 (AMD-SEV) platform using
 [AMD Secure Nested Paging](https://www.amd.com/system/files/TechDocs/SEV-SNP-strengthening-vm-isolation-with-integrity-protection-and-more.pdf)
 (SEV-SNP).
 
-The work instructions in this document assume that you have an AMD SEV-SNP-enabled
+The instructions in this document assume that you have an AMD SEV-SNP-enabled
 host configured and an encrypted SNP-VM ready for development.
 Refer to the
 [section further below](#General-notes-on-building-and-running-an-SEV-enabled-VM-under-KVM)
@@ -19,6 +20,7 @@ for detailed instructions on how-to build and run an SEV-enableed VM under KVM.
 
 You can try out the instructions given below to build-and-run a simple app inside
 this AMD SNP-SEV VM.
+
 This uses the same application as in [simple_app](../simple_app/example_app.cc).
 This example embeds the policy key in the application using the
 `embed_policy_key.exe`.
@@ -31,7 +33,72 @@ build-and-run the sample app under the simulator are documented below.
 
 ----
 
-# Steps to build-and-run Simple App under AMD SEV-SNP
+## Overview
+
+The step by step instructions for building simple_app and running the tests
+are enumerated below.  However, to save time, we also supply two shell
+scripts to do this automatically. The shell script prepare-test.sh builds
+the program and support files.  The shell script run-test.sh runs the test.
+There is still benefit in carrying out the steps in run-test by copying and
+pasting since you can see all the output and preserve the running servers.
+
+The shell scripts assume you have all the right software installed including
+the go programs and libraries mentioned below.
+
+The shell scripts use the new API.
+
+To prepare the test files, type:
+
+  prepare-test.sh fresh [domain-name]
+      - This clears out all old files
+then
+  prepare-test.sh all [domain-name]
+      - This builds the files corresponding to steps 1-9 below.
+then
+  run-test.sh fresh [domain-name]
+      - This removes old application files (policy store and cryptstore)
+      - and runs the tests, corresponding to steps 9 and 10 below.
+
+prepare-test.sh all runs the following subcommands in order:
+  prepare-test.sh compile-utilities [domain-name]
+      - This performs steps 1-2 below.
+  prepare-test.sh make-keys [domain-name]
+      - This performs step 3 below.
+  prepare-test.sh compile-program [domain-name]
+      - This performs step 4 to 5 below.
+  prepare-test.sh make-policy [domain-name]
+      - This performs steps 6 and 7 below.
+  prepare-test.sh compile-certifier [domain-name]
+      - This performs step 8 below.
+  prepare-test.sh copy-files [domain-name]
+      - This performs steps 9 to 12 below.
+
+Each of these subcommands is runable from prepare-test.sh, for example,
+you could run,
+   prepare-test.sh make-policy [domain-name]
+to remake the policy.
+
+After you run "prepare-test.sh all", you can rerun the tests without
+invoking prepare-test.sh.  After you run "prepare-test.sh all",
+you need only run subcommands that cause a change in the files;
+for example, if you change the policy, you need only run
+"prepare-test.sh make-policy" before running the tests.
+
+
+To run the tests
+  echo "  ./run-test.sh fresh"
+  echo "  ./run-test.sh fresh domain-name"
+     -- This clears previous operational files.  The first assumes the
+        default domain name ("datica-test").
+  echo "  ./run-test.sh run (se | sev)"
+  echo "  ./run-test.sh run domain_name (se | sev)"
+     -- This runds the test.  The first assumes the default domain
+         name ("datica-test").
+
+---------------------------------------------------------------------------------------
+
+
+## Detailed steps by step instructions to build-and-run Simple App under AMD SEV-SNP
 
 $CERTIFIER_PROTOTYPE is the top level directory for the certifier repository.
 It is helpful to have a shell variable for it, e.g.,:
