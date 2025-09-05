@@ -49,7 +49,8 @@ else
 CFLAGS += $(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -D SEV_SNP -Wno-deprecated-declarations
 endif
 CFLAGS += -DSEV_SIMPLE_APP
-if CF_NEW_API
+
+ifdef CF_NEW_API
 CFLAGS += -DNEW_API
 endif
 

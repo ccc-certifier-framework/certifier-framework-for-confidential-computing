@@ -63,7 +63,7 @@ function do-fresh() {
     make clean -f cf_utility.mak
   popd
 
-  if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+  if [[ ! -d "$EXAMPLE_DIR/provisioning" ]] ; then
     mkdir $EXAMPLE_DIR/provisioning
   fi
   pushd $EXAMPLE_DIR/provisioning
@@ -80,7 +80,7 @@ function do-fresh() {
     fi
   popd
 
-  if [[ ! -e "$EXAMPLE_DIR/service" ]] ; then
+  if [[ ! -d "$EXAMPLE_DIR/service" ]] ; then
     mkdir $EXAMPLE_DIR/service
   fi
   pushd $EXAMPLE_DIR/service
