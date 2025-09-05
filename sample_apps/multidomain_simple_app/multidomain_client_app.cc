@@ -34,9 +34,14 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
+// ------------------------------------------------------------------
+
 // Ops are: cold-init, get-certified, run-app-as-client, run-app-as-server
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(operation, "", "operation");
+
+DEFINE_string(client_domain_name, "client_domain", "client domain name");
+DEFINE_string(server_domain_name, "server_domain", "server domain name");
 
 DEFINE_string(primary_policy_host, "localhost", "address for policy server");
 DEFINE_int32(primary_policy_port, 8123, "port for policy server");
@@ -69,10 +74,30 @@ DEFINE_string(measurement_file, "example_app.measurement", "measurement");
 //    warm-restart:  This retrieves the policy store data. Operation is subsumed
 //      under other ops.
 
+
 #include "client_policy_key.cc"
-cc_trust_manager *trust_mgr = nullptr;
+
+void print_ops() {
+  printf("multidomain_client_app.exe --print_all=true|false --operation=op\n");
+
+  printf("\t--client_domain_name=client-domain\n");
+  printf("\t--server_domain_name=server-domain\n");
+
+  printf("\t--primary_policy_host=policy-host-address "
+         "--primary_policy_port=policy-host-port\n");
+  printf("\t--secondary_policy_host=policy-host-address "
+         "--secondary_policy_port=policy-host-port\n");
+  printf("\t--data_dir=-directory-for-app-data\n");
+  printf("\t--server_app_host=my-server-host-address "
+         "--server_app_port=server-host-port\n");
+  printf("\t--policy_cert_file=self-signed-policy-cert-file-name "
+         "--policy_store_file=policy-store-file-name\n");
+  printf("Operations are: cold-init, get-certified, run-app-as-client\n");
+}
 
 // -----------------------------------------------------------------------------------------
+
+cc_trust_manager *trust_mgr = nullptr;
 
 bool client_application(secure_authenticated_channel &channel) {
 
@@ -102,8 +127,6 @@ bool client_application(secure_authenticated_channel &channel) {
   }
   return true;
 }
-
-// --------------------------------------------------------------------------
 
 // Parameters for simulated enclave
 bool get_simulated_enclave_parameters(string **s, int *n) {
@@ -195,18 +218,7 @@ int main(int an, char **av) {
   ::testing::InitGoogleTest(&an, av);
 
   if (FLAGS_operation == "") {
-    printf(
-        "multidomain_client_app.exe --print_all=true|false --operation=op\n");
-    printf("\t--primary_policy_host=policy-host-address "
-           "--primary_policy_port=policy-host-port\n");
-    printf("\t--secondary_policy_host=policy-host-address "
-           "--secondary_policy_port=policy-host-port\n");
-    printf("\t--data_dir=-directory-for-app-data\n");
-    printf("\t--server_app_host=my-server-host-address "
-           "--server_app_port=server-host-port\n");
-    printf("\t--policy_cert_file=self-signed-policy-cert-file-name "
-           "--policy_store_file=policy-store-file-name\n");
-    printf("Operations are: cold-init, get-certified, run-app-as-client\n");
+    print_ops();
     return 0;
   }
 
@@ -291,8 +303,6 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-    // Debug
-    // trust_mgr->print_trust_data();
 
     // now server domain
     string server_domain_name = "simple-app-server-home-domain";
