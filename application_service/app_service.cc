@@ -45,6 +45,8 @@
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
+DEFINE_string(domain_name, "d", "domain name");
+
 DEFINE_string(parent_enclave, "simulated-enclave", "parent enclave");
 DEFINE_bool(help_me, false, "Want help?");
 DEFINE_bool(cold_init_service, false, "Start over");
@@ -89,7 +91,6 @@ DEFINE_string(ask_cert_file,
 DEFINE_string(vcek_cert_file,
               "./service/milan_vcek_cert.der",
               "vcek cert file name");
-
 
 // #define DEBUG
 
@@ -868,6 +869,7 @@ bool get_sev_enclave_parameters(string **s, int *n) {
 
 // -----------------------------------------------------------------------------------------
 
+#ifndef NEW_API
 int main(int an, char **av) {
   string usage("Application Service utility");
   gflags::SetUsageMessage(usage);
@@ -996,3 +998,139 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
   helper.clear_sensitive_data();
   return 0;
 }
+#endif
+
+// -----------------------------------------------------------------------------------------
+
+#ifdef NEW_API
+int main(int an, char **av) {
+  string usage("Application Service utility");
+  gflags::SetUsageMessage(usage);
+  gflags::ParseCommandLineFlags(&an, &av, true);
+  an = 1;
+  ::testing::InitGoogleTest(&an, av);
+
+  if (FLAGS_help_me) {
+    printf("\
+app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
+                --policy_port=policy-host-port \n\
+                --service_dir=-directory-for-service-data \n\
+                --server_service_host=my-server-host-address \n\
+                --server_service_port=server-host-port \n\
+                --policy_cert_file=self-signed-policy-cert-file-name \n\
+                --policy_store_file=policy-store-file-name \n\
+                --host_enclave_type=\"simulated-enclave\"\n");
+    return 0;
+  }
+
+  SSL_library_init();
+  string enclave_type(FLAGS_parent_enclave);
+  string purpose("attestation");
+
+  string store_file(FLAGS_service_dir);
+  store_file.append(FLAGS_service_policy_store);
+  cc_trust_manager helper(enclave_type, purpose, store_file);
+  trust_mgr = &helper;
+
+  // Init policy key info
+  if (!helper.init_policy_key(initialized_cert, initialized_cert_size)) {
+    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (FLAGS_host_enclave_type == "simulated-enclave") {
+
+    // get parameters
+    int     n = 0;
+    string *params = nullptr;
+    if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
+      printf("%s() error, line %d, Can't get simulated enclave parameters\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+
+    // Init simulated enclave
+    if (!helper.initialize_enclave(n, params)) {
+      printf("%s() error, line %d, Can't init simulated enclave\n",
+             __func__,
+             __LINE__);
+      return 1;
+    }
+    if (params != nullptr) {
+      delete[] params;
+      params = nullptr;
+    }
+  } else if (FLAGS_host_enclave_type == "oe-enclave") {
+    printf("%s() error, line %d, Unsupported host enclave\n",
+           __func__,
+           __LINE__);
+    return 1;
+  } else if (FLAGS_host_enclave_type == "sev-enclave") {
+
+    // get parameters
+    int     n = 0;
+    string *params = nullptr;
+    if (!get_sev_enclave_parameters(&params, &n) || params == nullptr) {
+      printf("%s() error, line %d, Can't get simulated enclave parameters\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+
+    // Init sev enclave
+    if (!helper.initialize_enclave(n, params)) {
+      printf("%s() error, line %d, Can't init sev-enclave\n",
+             __func__,
+             __LINE__);
+      return 1;
+    }
+    if (params != nullptr) {
+      delete[] params;
+      params = nullptr;
+    }
+  } else {
+    printf("%s() error, line %d, Unsupported host enclave\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  // initialize and certify service data
+  if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
+    if (!helper.cold_init(public_key_alg,
+                          symmetric_key_alg,
+                          "application_enclave_domain",
+                          FLAGS_policy_host,
+                          FLAGS_policy_port,
+                          FLAGS_server_app_host,
+                          FLAGS_server_app_port)) {
+      printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
+      return 1;
+    }
+
+    if (!helper.certify_me()) {
+      printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
+      return 1;
+    }
+  } else {
+    if (!helper.warm_restart()) {
+      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+      return 1;
+    }
+  }
+
+  // run service response
+  if (!app_request_server()) {
+    printf("%s() error, line %d, Can't run request server\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  helper.clear_sensitive_data();
+  return 0;
+}
+#endif
+
+// ----------------------------------------------------------------------------

@@ -44,8 +44,7 @@ sleep 1
 $EXAMPLE_DIR/sev_example_app.exe  \
   --data_dir="./app2_data/" --operation=get-certified \
   --policy_store_file=$3 --print_all=true
-
-sleep 1
+sleep 3
 $EXAMPLE_DIR/sev_example_app.exe  \
    --data_dir="./app2_data/" --operation=run-app-as-server \
    --policy_store_file=$3 --print_all=true &
