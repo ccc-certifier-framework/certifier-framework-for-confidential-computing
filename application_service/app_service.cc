@@ -97,8 +97,6 @@ DEFINE_string(vcek_cert_file,
               "./service/milan_vcek_cert.der",
               "vcek cert file name");
 
-// #define DEBUG
-
 // ---------------------------------------------------------------------------------
 
 #include "policy_key.cc"
@@ -1007,6 +1005,8 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
 
 // -----------------------------------------------------------------------------------------
 
+#define DEBUG3
+
 #ifdef NEW_API
 int main(int an, char **av) {
   string usage("Application Service utility");
@@ -1098,12 +1098,13 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
 #  ifdef DEBUG3
   printf("Enclave initialized\n");
 #  endif
+
   // Initialize store
   if (!helper->initialize_store()) {
     printf("%s() error, line %d, Can't init store\n", __func__, __LINE__);
     return 1;
   }
-#  ifdef DEBUG4
+#  ifdef DEBUG3
   printf("\n\nStore initialized\n");
   printf("\ntrust data at initialization\n");
   helper->print_trust_data();
@@ -1111,7 +1112,9 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
   helper->store_.print();
 #  endif
 
-  if (!helper->initialize_keys(FLAGS_public_key_alg, FLAGS_symmetric_key_alg, false)) {
+  if (!helper->initialize_keys(FLAGS_public_key_alg,
+                               FLAGS_symmetric_key_alg,
+                               false)) {
     printf("%s() error, line %d, Can't init keys\n", __func__, __LINE__);
     return 1;
   }
@@ -1121,21 +1124,24 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
   serialized_policy_cert.assign((char *)initialized_cert,
                                 initialized_cert_size);
 
-  // initialize and certify service data
-  if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
+  if (FLAGS_cold_init_service) {
 #  ifdef DEBUG3
     printf("\nfresh-start\n");
 #  endif
 
+    // initialize and certify service data
     if (!helper.initialize_new_domain(FLAGS_domain_name,
-                                          purpose,
-                                          serialized_policy_cert,
-                                          FLAGS_policy_host,
-                                          FLAGS_policy_port))  {
+                                      purpose,
+                                      serialized_policy_cert,
+                                      FLAGS_policy_host,
+                                      FLAGS_policy_port)) {
       printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
+#  ifdef DEBUG3
+    printf("Not certified yet\n");
+#  endif
 
     certifiers *c = helper.find_certifier_by_domain_name(FLAGS_domain_name);
     if (c == nullptr) {
@@ -1145,23 +1151,36 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
       ret = 1;
       goto done;
     }
-    if (c->is_certified_) {
+
+    if (!c->is_certified_) {
       if (!c->certify_domain(helper.purpose_)) {
-        printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
+        printf("%s() error, line %d, certification failed\n",
+               __func__,
+               __LINE__);
         ret = 1;
         goto done;
       }
+    } else {
+      printf("%s() error, line %d, not certified\n", __func__, __LINE__);
     }
+#  ifdef DEBUG3
+    printf("\ncertified\n");
+#  endif
   } else {
-    if (!helper.initialize_existing_domain(FLAGS_domain_name))  {
-      printf("%s() error, line %d, initialize_existing_domain failed\n", __func__, __LINE__);
+    if (!helper.initialize_existing_domain(FLAGS_domain_name)) {
+      printf("%s() error, line %d, initialize_existing_domain failed\n",
+             __func__,
+             __LINE__);
       ret = 1;
       goto done;
     }
+#  ifdef DEBUG3
+    printf("\ncertified\n");
+#  endif
   }
 
-#  ifdef DEBUG
-    helper.print_trust_data();
+#  ifdef DEBUG3
+  helper.print_trust_data();
 #  endif  // DEBUG
 
   // run service response

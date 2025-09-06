@@ -51,15 +51,16 @@ echo "domain name: $DOMAIN_NAME"
 
 POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
 POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
-echo "policy key file name: $POLICY_KEY_FILE_NAME"
-echo "policy cert file name: $POLICY_CERT_FILE_NAME"
+echo "Policy key file name: $POLICY_KEY_FILE_NAME"
+echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
 
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
-echo "policy store name: $POLICY_STORE_NAME"
+echo "Policy store name: $POLICY_STORE_NAME"
 
 APP_SERVICE_POLICY_KEY_CERT=""
 
 function do-fresh() {
+  echo " "
   echo "do-fresh"
 
   pushd $CERTIFIER_ROOT/utilities
@@ -151,9 +152,9 @@ echo "do-make-service"
 
     if [[ -e "$APP_SERVICE_DIR/app_service.exe" && -d "$APP_SERVICE_DIR/service" ]] ; then
         echo "App service already built"
-    	if [[ -e "$APP_SERVICE_DIR/service/policy_cert_file.app_service" ]] ; then
-       	  APP_SERVICE_POLICY_KEY_CERT="$APP_SERVICE_DIR/service/policy_cert_file.app_service"
-	fi
+        if [[ -e "$APP_SERVICE_DIR/service/policy_cert_file.app_service" ]] ; then
+          APP_SERVICE_POLICY_KEY_CERT="$APP_SERVICE_DIR/service/policy_cert_file.app_service"
+        fi
         return
     fi
     echo "Building app service"

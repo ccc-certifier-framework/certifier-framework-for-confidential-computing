@@ -43,13 +43,13 @@ echo "domain name: $DOMAIN_NAME"
 
 POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
 POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
-echo "policy key file name: $POLICY_KEY_FILE_NAME"
-echo "policy cert file name: $POLICY_CERT_FILE_NAME"
+echo "Policy key file name: $POLICY_KEY_FILE_NAME"
+echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
 
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
 CRYPTSTORE_NAME="cryptstore.$DOMAIN_NAME"
-echo "policy store name: $POLICY_STORE_NAME"
-echo "cryptstore name: $CRYPTSTORE_NAME"
+echo "Policy store name: $POLICY_STORE_NAME"
+echo "Cryptstore name: $CRYPTSTORE_NAME"
 
 function do-fresh() {
   echo " "
