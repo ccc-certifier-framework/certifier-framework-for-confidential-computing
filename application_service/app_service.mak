@@ -30,6 +30,7 @@ endif
 # little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
 # is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
+#CF_NEW_API=1
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 LIBSRC= $(SRC_DIR)/src
@@ -88,6 +89,8 @@ clean:
 	rm -rf $(O)/*.o
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/app_service.exe
+	rm -rf $(EXE_DIR)/send_request.exe
+	rm -rf $(EXE_DIR)/test_user.exe
 
 hello_world.exe: $(S)/hello_world.cc
 	@echo "compiling $<"

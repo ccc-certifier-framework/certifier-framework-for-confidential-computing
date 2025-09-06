@@ -1,6 +1,6 @@
 #!/bin/bash
 # ############################################################################
-# prepare-test.sh: Script to run build simple_app test environment.
+# prepare-test.sh: Script to build and test app_service.
 # ############################################################################
 
 set -Eeuo pipefail
@@ -9,7 +9,7 @@ Me=$(basename "$0")
 if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
 else
-  pushd ../..
+  pushd ..
   CERTIFIER_ROOT=$(pwd)
   popd
 fi
@@ -18,20 +18,6 @@ APP_SERVICE_DIR=$(pwd)
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
 echo "Example directory: $APP_SERVICE_DIR"
-
-#cd $APP_SERVICE_DIR
-#$ APP_SERVICE_DIR/app_service.exe                                       \
-      #--service_dir="./service/"                                        \
-      #--cold_init_service=true                                          \
-      #--policy_cert_file="policy_cert_file.bin"                         \
-      #--service_policy_store="policy_store"                             \
-      #--host_enclave_type="simulated-enclave"                           \
-      #--platform_file_name="platform_file.bin"                          \
-      #--platform_attest_endorsement="platform_attest_endorsement.bin"   \
-      #--attest_key_file="attest_key_file.bin"                           \
-      #--measurement_file="example_app.measurement"                      \
-      #--guest_login_name="guest"
-
 
 ARG_SIZE="$#"
 
@@ -55,7 +41,7 @@ if [[ $ARG_SIZE == 1 ]] ; then
 fi
 if [[ $ARG_SIZE == 2 ]] ; then
   ENCLAVE_TYPE="se"
-  DOMAIN_NAME="datica-test"
+  DOMAIN_NAME=$2
 fi
 if [[ $ARG_SIZE == 3 ]] ; then
   ENCLAVE_TYPE=$2
@@ -64,16 +50,16 @@ fi
 
 SIMULATED_SEV=1
 
-echo "domain name: $DOMAIN_NAME"
-echo "enclave type: $ENCLAVE_TYPE"
+echo "Domain name: $DOMAIN_NAME"
+echo "Enclave type: $ENCLAVE_TYPE"
 
 POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
 POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
-echo "policy key file name: $POLICY_KEY_FILE_NAME"
-echo "policy cert file name: $POLICY_CERT_FILE_NAME"
+echo "Policy key file name: $POLICY_KEY_FILE_NAME"
+echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
 
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
-echo "policy store name: $POLICY_STORE_NAME"
+echo "Policy store name: $POLICY_STORE_NAME"
 
 function do-fresh() {
   echo " "
@@ -223,9 +209,9 @@ function do-compile-program() {
     popd
 
     if [[ ENCLAVE_TYPE == "sev" && -v SIMULATED_SEV ]] ; then
-      CFLAGS='-DSEV_DUMMY_GUEST' make -f app_service.mak
+      CFLAGS='-DSEV_DUMMY_GUEST -DCF_NEW_API' make -f app_service.mak
     else
-      cd $APP_SERVICE_DIR
+      CFLAGS='-DCF_NEW_API' make -f app_service.mak
       make -f app_service.mak
     fi
   popd
@@ -275,10 +261,7 @@ function do-make-policy() {
         --key_subject="platform_key_file.bin" --verb="is-trusted-for-attestation" --output=ts2.bin
     fi
 
-    echo " 1"
-
     if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
-      echo " 6"
 
       $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe    \
         --cert-subject=ark_cert.der --verb="is-trusted-for-attestation"  \
@@ -288,16 +271,12 @@ function do-make-policy() {
         --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
         --clause=ts2.bin --output=vse_policy2.bin
 
-    echo " 2"
-
     $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
         --key_subject="" --measurement_subject="app_service.measurement" \
         --verb="is-trusted" --output=ts1.bin
     $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
       --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
       --clause=ts1.bin --output=vse_policy1.bin
-
-    echo " 3"
 
     $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
       --vse_file=vse_policy1.bin --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME \
@@ -433,8 +412,8 @@ function do-copy-files() {
   pushd $APP_SERVICE_DIR/provisioning
     cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $APP_SERVICE_DIR/service
     cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME $APP_SERVICE_DIR/service_data
-    cp -p app_service.measnurement $APP_SERVICE_DIR/service
-    cp -p app_service.measnurement $APP_SERVICE_DIR/service_data
+    cp -p app_service.measurement $APP_SERVICE_DIR/service
+    cp -p app_service.measurement $APP_SERVICE_DIR/service_data
  
     if [[ -e platform_attest_endorsement.bin ]] ; then
       cp -p attest_key_file.bin platform_key_file.bin $APP_SERVICE_DIR/service
@@ -460,8 +439,8 @@ function do-all() {
   echo " "
   echo "do-all"
 
-  do-initialize-sev-simulator
   do-compile-utilities
+  do-initialize-sev-simulator
   do-make-keys
   do-compile-program
   do-make-policy

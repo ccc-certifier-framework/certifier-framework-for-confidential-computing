@@ -91,6 +91,8 @@ function do-fresh() {
 function cleanup_stale_procs() {
   # Find and kill simpleserver processes that may be running.
   echo " "
+  echo "cleanup_stale_procs"
+
   set +e
   certifier_pid=$(ps -ef | grep -E "simpleserver" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
   set -e
@@ -100,6 +102,8 @@ function cleanup_stale_procs() {
   else
     echo "no certifier_service running"
   fi
+
+  echo "cleanup_stale_procsdone"
 }
 
 function do-run() {

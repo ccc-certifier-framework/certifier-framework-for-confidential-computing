@@ -58,14 +58,15 @@ echo "domain name: $DOMAIN_NAME"
 
 POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
 POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
-echo "policy key file name: $POLICY_KEY_FILE_NAME"
-echo "policy cert file name: $POLICY_CERT_FILE_NAME"
+echo "Policy key file name: $POLICY_KEY_FILE_NAME"
+echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
 
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
-echo "policy store name 1: ./app1_data/$POLICY_STORE_NAME
-echo "policy store name 2: ./app2_data/$POLICY_STORE_NAME
+echo "Policy store name 1: ./app1_data/$POLICY_STORE_NAME"
+echo "Policy store name 2: ./app2_data/$POLICY_STORE_NAME"
 
 function do-fresh() {
+  echo " "
   echo "do-fresh"
 
   pushd $EXAMPLE_DIR
@@ -81,13 +82,14 @@ function do-fresh() {
     if [[ -e "./app2_data/$POLICY_STORE_NAME" ]] ; then
       rm ./app2_data/$POLICY_STORE_NAME
     fi
-  popd > /dev/null
+  popd
 
   echo "Done"
   exit
 }
 
 function cleanup_stale_procs() {
+  echo " "
   echo "cleanup_stale_procs"
 
   # Find and kill simpleserver processes that may be running.
@@ -120,8 +122,8 @@ function cleanup_stale_procs() {
 
 
 function do-run() {
-  echo "do-run"
   echo " "
+  echo "do-run"
 
   cleanup_stale_procs
   echo " "
@@ -146,14 +148,12 @@ function do-run() {
       --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
       --policyFile=policy.bin --readPolicy=true &
     echo "simpleserver started"
-    echo " "
 
     sleep 5
   popd
 
   pushd $EXAMPLE_DIR
     echo " "
-
     echo "initializing app1"
     $EXAMPLE_DIR/start_program.exe                              \
       --executable=$EXAMPLE_DIR/service_example_app.exe   \
@@ -164,7 +164,7 @@ function do-run() {
       --executable=$EXAMPLE_DIR/service_example_app.exe   \
       --args="--print_all=true,--operation=get-certified,--data_dir=./app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
     sleep 2
-      echo "initializing app1"
+      echo "initializing app2"
     $EXAMPLE_DIR/start_program.exe                              \
       --executable=$EXAMPLE_DIR/service_example_app.exe   \
       --args="--print_all=true,--operation=cold-init,--data_dir=./app2_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
