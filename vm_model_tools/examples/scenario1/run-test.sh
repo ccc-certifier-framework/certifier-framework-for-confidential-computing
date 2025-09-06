@@ -9,11 +9,11 @@ Me=$(basename "$0")
 if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
 else
-  pushd ../..
-  CERTIFIER_ROOT=$(pwd)
+  pushd ../../.. > /dev/null
+  CERTIFIER_ROOT=$(pwd) > /dev/null
   popd
 fi
-EXAMPLE_DIR=$(pwd)
+EXAMPLE_DIR=$(pwd) > /dev/null
 
 echo " "
 echo "Certifier root: $CERTIFIER_ROOT"
@@ -58,20 +58,21 @@ if [[ $ARG_SIZE == 3 && $1 == "run" ]] ; then
   ENCLAVE_TYPE=$2
 fi
 
-echo "domain name: $DOMAIN_NAME"
-echo "enclave type: $ENCLAVE_TYPE"
+echo "Domain name: $DOMAIN_NAME"
+echo "Enclave type: $ENCLAVE_TYPE"
 
 POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
 POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
-echo "policy key file name: $POLICY_KEY_FILE_NAME"
-echo "policy cert file name: $POLICY_CERT_FILE_NAME"
+echo "Policy key file name: $POLICY_KEY_FILE_NAME"
+echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
 
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
 CRYPTSTORE_NAME="cryptstore.$DOMAIN_NAME"
-echo "policy store name: $POLICY_STORE_NAME"
-echo "cryptstore name: $CRYPTSTORE_NAME"
+echo "Policy store name: $POLICY_STORE_NAME"
+echo "Cryptstore name: $CRYPTSTORE_NAME"
 
 function do-fresh() {
+  echo " "
   echo "do-fresh"
 
   pushd $EXAMPLE_DIR
@@ -102,6 +103,7 @@ function cleanup_stale_procs() {
 }
 
 function do-run() {
+  echo " "
   echo "do-run"
 
   if [[ $ENCLAVE_TYPE != "se" && $ENCLAVE_TYPE != "sev" ]] ; then

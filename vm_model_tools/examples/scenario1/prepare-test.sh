@@ -9,7 +9,7 @@ Me=$(basename "$0")
 if [[ -v CERTIFIER_ROOT ]] ; then
   echo "CERTIFIER_ROOT already set."
 else
-  pushd ../..
+  pushd ../../..
   CERTIFIER_ROOT=$(pwd)
   popd
 fi
@@ -21,7 +21,7 @@ echo "Example directory: $EXAMPLE_DIR"
 
 ARG_SIZE="$#"
 
-if [ $ARG_SIZE == 0 ] ; then
+if [[ $ARG_SIZE == 0 || $ARG_SIZE > 2 ]] ; then
   echo "Must call with arguments, as follows:"
   echo "  ./prepare-test.sh fresh"
   echo "  ./prepare-test.sh all [domain name]"
@@ -34,7 +34,7 @@ if [ $ARG_SIZE == 0 ] ; then
   exit
 fi
 
-if [ $ARG_SIZE == 1 ] ; then
+if [[ $ARG_SIZE == 1 ]] ; then
   DOMAIN_NAME="datica-test"
 else
   DOMAIN_NAME=$2
@@ -52,6 +52,7 @@ echo "policy store name: $POLICY_STORE_NAME"
 echo "cryptstore name: $CRYPTSTORE_NAME"
 
 function do-fresh() {
+  echo " "
   echo "do-fresh"
 
   pushd $CERTIFIER_ROOT/utilities
@@ -98,10 +99,10 @@ function do-fresh() {
   popd
 
   pushd $EXAMPLE_DIR
-    if [[ ! -e $POLICY_STORE_NAME  ]] ; then
+    if [[ -e $POLICY_STORE_NAME  ]] ; then
       rm $POLICY_STORE_NAME
     fi
-    if [[ ! -e $CRYPTSTORE_NAME  ]] ; then
+    if [[ -e $CRYPTSTORE_NAME  ]] ; then
       rm $CRYPTSTORE_NAME
     fi
   popd
@@ -111,6 +112,7 @@ function do-fresh() {
 }
 
 function do-compile-utilities() {
+  echo " "
   echo "do-compile-utilities"
 
   pushd $CERTIFIER_ROOT/utilities
@@ -150,6 +152,7 @@ function do-make-keys() {
 }
 
 function do-compile-program() {
+  echo " "
   echo "do-compile-program"
 
   pushd $CERTIFIER_ROOT/vm_model_tools/src
@@ -267,6 +270,7 @@ function do-make-policy() {
 }
 
 function do-compile-certifier() {
+  echo " "
   echo "do-compile-certifier"
 
   pushd $CERTIFIER_ROOT/certifier_service/certprotos
@@ -298,6 +302,7 @@ function do-compile-certifier() {
 }
 
 function do-copy-files() {
+  echo " "
   echo "do-copy-files"
 
   if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
