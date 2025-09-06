@@ -55,6 +55,11 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_bool(print_log, false, "print log");
 DEFINE_string(log_file_name, "service.log", "service log file");
 
+DEFINE_string(public_key_alg, Enc_method_rsa_2048, "public key algorithm");
+DEFINE_string(symmetric_key_alg,
+              Enc_method_aes_256_cbc_hmac_sha256,
+              "authenticated symmetric key algorithm");
+
 DEFINE_string(policy_cert_file, "policy_cert_file.bin", "policy_cert");
 DEFINE_string(policy_host, "localhost", "address for policy server");
 DEFINE_int32(policy_port, 8123, "port for policy server");
@@ -1029,14 +1034,9 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
 
   string store_file(FLAGS_service_dir);
   store_file.append(FLAGS_service_policy_store);
+
   cc_trust_manager helper(enclave_type, purpose, store_file);
   trust_mgr = &helper;
-
-  // Init policy key info
-  if (!helper.init_policy_key(initialized_cert, initialized_cert_size)) {
-    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
-    return false;
-  }
 
   if (FLAGS_host_enclave_type == "simulated-enclave") {
 
@@ -1095,41 +1095,87 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
            __LINE__);
     return 1;
   }
+#  ifdef DEBUG3
+  printf("Enclave initialized\n");
+#  endif
+  // Initialize store
+  if (!helper->initialize_store()) {
+    printf("%s() error, line %d, Can't init store\n", __func__, __LINE__);
+    return 1;
+  }
+#  ifdef DEBUG4
+  printf("\n\nStore initialized\n");
+  printf("\ntrust data at initialization\n");
+  helper->print_trust_data();
+  printf("\nStore\n");
+  helper->store_.print();
+#  endif
+
+  if (!helper->initialize_keys(FLAGS_public_key_alg, FLAGS_symmetric_key_alg, false)) {
+    printf("%s() error, line %d, Can't init keys\n", __func__, __LINE__);
+    return 1;
+  }
+
+  int    ret = 0;
+  string serialized_policy_cert;
+  serialized_policy_cert.assign((char *)initialized_cert,
+                                initialized_cert_size);
 
   // initialize and certify service data
   if (FLAGS_cold_init_service || file_size(store_file) <= 0) {
-    if (!helper.cold_init(public_key_alg,
-                          symmetric_key_alg,
-                          "application_enclave_domain",
-                          FLAGS_policy_host,
-                          FLAGS_policy_port,
-                          FLAGS_server_app_host,
-                          FLAGS_server_app_port)) {
+#  ifdef DEBUG3
+    printf("\nfresh-start\n");
+#  endif
+
+    if (!helper.initialize_new_domain(FLAGS_domain_name,
+                                          purpose,
+                                          serialized_policy_cert,
+                                          FLAGS_policy_host,
+                                          FLAGS_policy_port))  {
       printf("%s() error, line %d, cold-init failed\n", __func__, __LINE__);
-      return 1;
+      ret = 1;
+      goto done;
     }
 
-    if (!helper.certify_me()) {
-      printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
-      return 1;
+    certifiers *c = helper.find_certifier_by_domain_name(FLAGS_domain_name);
+    if (c == nullptr) {
+      printf("%s() error, line %d, can't find this domain\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (c->is_certified_) {
+      if (!c->certify_domain(helper.purpose_)) {
+        printf("%s() error, line %d, certification failed\n", __func__, __LINE__);
+        ret = 1;
+        goto done;
+      }
     }
   } else {
-    if (!helper.warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
-      return 1;
+    if (!helper.initialize_existing_domain(FLAGS_domain_name))  {
+      printf("%s() error, line %d, initialize_existing_domain failed\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
     }
   }
+
+#  ifdef DEBUG
+    helper.print_trust_data();
+#  endif  // DEBUG
 
   // run service response
   if (!app_request_server()) {
     printf("%s() error, line %d, Can't run request server\n",
            __func__,
            __LINE__);
-    return 1;
+    ret = 1;
+    goto done;
   }
 
+done:
   helper.clear_sensitive_data();
-  return 0;
+  return ret;
 }
 #endif
 
