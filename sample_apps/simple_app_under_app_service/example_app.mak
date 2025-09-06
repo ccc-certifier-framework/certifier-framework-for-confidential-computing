@@ -30,6 +30,7 @@ endif
 # little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
 # is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
+#CF_NEW_API=1
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 S= $(SRC_DIR)/src
@@ -43,6 +44,9 @@ ifndef NEWPROTOBUF
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 else
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+endif
+ifdef CF_NEW_API
+CFLAGS += -DNEW_API
 endif
 
 CC=g++
