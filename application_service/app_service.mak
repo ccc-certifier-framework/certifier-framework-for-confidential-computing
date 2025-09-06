@@ -45,6 +45,9 @@ CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D DEBUG -
 else
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -D DEBUG -Wno-deprecated-declarations
 endif
+ifdef NEW_API
+CFLAGS += -DNEW_API
+endif
 
 CC=g++
 LINK=g++
