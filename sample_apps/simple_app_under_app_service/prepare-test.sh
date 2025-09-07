@@ -172,10 +172,12 @@ echo "do-make-service done"
 function do-compile-utilities() {
   echo "do-compile-utilities"
 
-  pushd $CERTIFIER_ROOT/utilities
-    make -f cert_utility.mak
-    make -f policy_utilities.mak
+  if [[ ! -v NO_COMPILE_UTILITIES ]] ; then
+    pushd $CERTIFIER_ROOT/utilities
+      make -f cert_utility.mak
+      make -f policy_utilities.mak
     popd
+  fi
 
   echo "do-compile-utilities done"
 }
@@ -258,6 +260,17 @@ function do-make-policy() {
       --vse_file=vse_policy2.bin  --duration=9000  \
       --private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
 
+     $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+      --key_subject=attest_key_file.bin --verb="is-trusted-for-attestation" --output=tsc1.bin
+  
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      --key_subject=platform_key_file.bin --verb="says" \
+      --clause=tsc1.bin --output=vse_policy3.bin
+
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      --vse_file=vse_policy3.bin --duration=9000 \
+      --private_key_file=platform_key_file.bin --output=platform_attest_endorsement.bin
+
     $CERTIFIER_ROOT/utilities/package_claims.exe \
       --input=signed_claim_1.bin,signed_claim_2.bin --output=policy.bin
     $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
@@ -322,8 +335,8 @@ function do-copy-files() {
 
   pushd $EXAMPLE_DIR/provisioning
   cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
+  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
+  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
   cp platform_attest_endorsement.bin  attest_key_file.bin ../app1_data
   cp platform_attest_endorsement.bin  attest_key_file.bin ../app2_data
   popd

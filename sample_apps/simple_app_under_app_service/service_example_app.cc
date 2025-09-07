@@ -446,13 +446,6 @@ int main(int an, char **av) {
     return 1;
   }
 
-
-  // Init policy key info
-  if (!trust_mgr->init_policy_key(initialized_cert, initialized_cert_size)) {
-    printf("%s() error, line %d, Can't init policy key\n", __func__, __LINE__);
-    return false;
-  }
-
   // Application enclave parameters
   int    n = 3;
   string params[3];

@@ -56,10 +56,12 @@ function do-fresh() {
   echo " "
   echo "do-fresh"
 
-  pushd $CERTIFIER_ROOT/utilities
-    make clean -f cert_utility.mak
-    make clean -f policy_utilities.mak
-  popd
+  if [[ ! -v NO_COMPILE_UTILITIES ]] ; then
+    pushd $CERTIFIER_ROOT/utilities
+      make clean -f cert_utility.mak
+      make clean -f policy_utilities.mak
+    popd
+  fi
 
   pushd $EXAMPLE_DIR
     make clean -f sev_example_app.mak
@@ -167,10 +169,12 @@ function do-compile-utilities() {
   echo " "
   echo "do-compile-utilities"
 
-  pushd $CERTIFIER_ROOT/utilities
-    make -f cert_utility.mak
-    make -f policy_utilities.mak
+  if [[ ! -v NO_COMPILE_UTILITIES ]] ; then
+    pushd $CERTIFIER_ROOT/utilities
+      make -f cert_utility.mak
+      make -f policy_utilities.mak
     popd
+  fi
 
   echo "do-compile-utilities done"
 }
@@ -209,9 +213,9 @@ function do-compile-program() {
     popd
 
     if [[ -v SIMULATED_SEV ]] ; then
-      CFLAGS='-DSEV_DUMMY_GUEST' make -f sev_example_app.mak
+      CFLAGS='-DSEV_DUMMY_GUEST -DNEW_API' make -f sev_example_app.mak
     else
-      make -f sev_example_app.mak
+      CFLAGS='-DNEW_API' make -f sev_example_app.mak
     fi
   popd
 
