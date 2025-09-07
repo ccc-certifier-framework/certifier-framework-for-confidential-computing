@@ -63,10 +63,12 @@ function do-fresh() {
   echo " "
   echo "do-fresh"
 
-  pushd $CERTIFIER_ROOT/utilities
-    make clean -f cert_utility.mak
-    make clean -f policy_utilities.mak
-  popd
+  if [[ ! -v NO_COMPILE_UTILITIES ]] ; then
+    pushd $CERTIFIER_ROOT/utilities
+      make clean -f cert_utility.mak
+      make clean -f policy_utilities.mak
+    popd
+  fi
 
   pushd $EXAMPLE_DIR
     make clean -f example_app.mak
