@@ -363,6 +363,9 @@ int main(int an, char **av) {
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_file);
 
+#  ifdef DEBUG3
+  printf("New API\n");
+#  endif
   trust_mgr = new cc_trust_manager(enclave_type, purpose, store_file);
   if (trust_mgr == nullptr) {
     printf("%s() error, line %d, couldn't initialize trust object\n",
