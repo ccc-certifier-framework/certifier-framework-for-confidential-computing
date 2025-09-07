@@ -55,10 +55,15 @@ function do-fresh() {
   echo " "
   echo "do-fresh"
 
-  pushd $CERTIFIER_ROOT/utilities
-    make clean -f cert_utility.mak
-    make clean -f policy_utilities.mak
-  popd
+  if [[ ! -v NO_COMPILE_UTILITIES ]] ; then
+    echo "compiling utilities"
+    pushd $CERTIFIER_ROOT/utilities
+      make clean -f cert_utility.mak
+      make clean -f policy_utilities.mak
+    popd
+  else
+    echo "not compiling utilities"
+  fi
 
   pushd $CERTIFIER_ROOT/vm_model_tools/src
     make clean -f cf_utility.mak
@@ -115,10 +120,12 @@ function do-compile-utilities() {
   echo " "
   echo "do-compile-utilities"
 
-  pushd $CERTIFIER_ROOT/utilities
-    make -f cert_utility.mak
-    make -f policy_utilities.mak
-  popd
+  if [[ ! -v NO_COMPILE_UTILITIES ]] ; then
+    pushd $CERTIFIER_ROOT/utilities
+      make -f cert_utility.mak
+      make -f policy_utilities.mak
+    popd
+  fi
 
   echo "do-compile-utilities done"
 }
@@ -156,7 +163,7 @@ function do-compile-program() {
   echo "do-compile-program"
 
   pushd $CERTIFIER_ROOT/vm_model_tools/src
-  make -f cf_utility.mak
+    make -f cf_utility.mak
   popd
 
   echo "do-compile-program done"

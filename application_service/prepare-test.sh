@@ -65,10 +65,12 @@ function do-fresh() {
   echo " "
   echo "do-fresh"
 
-  pushd $CERTIFIER_ROOT/utilities
-    make clean -f cert_utility.mak
-    make clean -f policy_utilities.mak
-  popd
+  if [[ ! -v NO_COMPILE_UTILITIES ]] ; then
+    pushd $CERTIFIER_ROOT/utilities
+      make clean -f cert_utility.mak
+      make clean -f policy_utilities.mak
+    popd
+  fi
 
   pushd $APP_SERVICE_DIR
     make clean -f app_service.mak
@@ -165,10 +167,12 @@ function do-compile-utilities() {
   echo " "
   echo "do-compile-utilities"
 
-  pushd $CERTIFIER_ROOT/utilities
-    make -f cert_utility.mak
-    make -f policy_utilities.mak
+  if [[ ! -v NO_COMPILE_UTILITIES ]] ; then
+    pushd $CERTIFIER_ROOT/utilities
+      make -f cert_utility.mak
+      make -f policy_utilities.mak
     popd
+  fi
 
   echo "do-compile-utilities done"
 }
