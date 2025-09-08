@@ -168,7 +168,7 @@ function do-run() {
     echo "sending requests"
     ./send_request.exe --executable="./hello_world.exe" --server_app_port=8127 \
          --server_app_host="localhost"
-$   ./send_request.exe --executable="./test_user.exe" --server_app_port=8127
+    ./send_request.exe --executable="./test_user.exe" --server_app_port=8127 \
          --server_app_host="localhost"
   popd
 

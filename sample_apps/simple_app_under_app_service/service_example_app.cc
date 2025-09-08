@@ -144,7 +144,7 @@ string symmetric_key_alg(Enc_method_aes_256_cbc_hmac_sha256);
 
 // -------------------------------------------------------------
 
-#ifndef NEW_API
+#ifdef OLD_API
 int main(int an, char **av) {
 
   // remove pipe descriptors before processing other arguments
@@ -354,8 +354,6 @@ done:
 
 // -----------------------------------------------------------------------------------------
 
-#define DEBUG3
-
 #ifdef NEW_API
 int main(int an, char **av) {
 
@@ -415,6 +413,13 @@ int main(int an, char **av) {
     return 1;
   }
 
+  // Application enclave parameters
+  int    n = 3;
+  string params[3];
+  params[0] = parent_enclave_type;
+  params[1] = input_fd;
+  params[2] = output_fd;
+
   // Init simulated enclave
   if (!trust_mgr->initialize_enclave(n, params)) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
@@ -423,10 +428,6 @@ int main(int an, char **av) {
 #  ifdef DEBUG3
   printf("Enclave initialized\n");
 #  endif
-  if (params != nullptr) {
-    delete[] params;
-    params = nullptr;
-  }
 
   // Initialize store
   if (!trust_mgr->initialize_store()) {
@@ -443,21 +444,6 @@ int main(int an, char **av) {
 
   if (!trust_mgr->initialize_keys(public_key_alg, symmetric_key_alg, false)) {
     printf("%s() error, line %d, Can't init keys\n", __func__, __LINE__);
-    return 1;
-  }
-
-  // Application enclave parameters
-  int    n = 3;
-  string params[3];
-  params[0] = parent_enclave_type;
-  params[1] = input_fd;
-  params[2] = output_fd;
-
-  // Init application enclave
-  if (!trust_mgr->initialize_enclave(n, params)) {
-    printf("%s() error, line %d, Can't init application-enclave\n",
-           __func__,
-           __LINE__);
     return 1;
   }
 
@@ -514,7 +500,9 @@ int main(int an, char **av) {
     printf("running as client\n");
 #  endif
     if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
-      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+      printf("%s() error, line %d, initialize_existing_domain failed\n",
+             __func__,
+             __LINE__);
       ret = 1;
       goto done;
     }
@@ -549,15 +537,15 @@ int main(int an, char **av) {
     }
 
   } else if (FLAGS_operation == "run-app-as-server") {
-    if (!trust_mgr->warm_restart()) {
-      printf("%s() error, line %d, warm-restart failed\n", __func__, __LINE__);
+    if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
+      printf("%s() error, line %d, initialize_existing_domain failed\n",
+             __func__,
+             __LINE__);
       ret = 1;
       goto done;
     }
-    if (!trust_mgr->primary_admissions_cert_valid_) {
-      printf("%s() error, line %d, primary admissions cert not valid\n",
-             __func__,
-             __LINE__);
+    if (!trust_mgr->admissions_cert_valid_status(FLAGS_domain_name)) {
+      printf("%s() error, line %d, not certified\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
@@ -568,6 +556,11 @@ int main(int an, char **av) {
       printf("%s() error, line %d, initialize_existing_domain failed\n",
              __func__,
              __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!trust_mgr->admissions_cert_valid_status(FLAGS_domain_name)) {
+      printf("%s() error, line %d, not certified\n", __func__, __LINE__);
       ret = 1;
       goto done;
     }
@@ -590,7 +583,10 @@ done:
          parent_enclave_type.c_str(),
          trust_mgr->purpose_.c_str());
   printf("\n");
-  // trust_mgr->print_trust_data();
+
+#  ifdef DEBUG3
+  trust_mgr->print_trust_data();
+#  endif
   trust_mgr->clear_sensitive_data();
   if (trust_mgr != nullptr) {
     delete trust_mgr;

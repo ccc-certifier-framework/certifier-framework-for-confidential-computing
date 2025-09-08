@@ -215,6 +215,7 @@ void delete_child(int signum) {
   if (c->thread_obj_ != nullptr) {
     delete c->thread_obj_;
   }
+
   // close parent fds/
   remove_kid(pid);
 }
@@ -229,7 +230,7 @@ cc_trust_manager *trust_mgr = nullptr;
 
 
 bool soft_Seal(spawned_children *kid, string in, string *out) {
-#if 1
+#ifdef DEBUG3
   printf("soft_Seal\n");
   const char *alg = trust_mgr->symmetric_key_algorithm_.c_str();
   printf("alg: %s\n", trust_mgr->symmetric_key_algorithm_.c_str());
@@ -269,7 +270,7 @@ bool soft_Seal(spawned_children *kid, string in, string *out) {
 }
 
 bool soft_Unseal(spawned_children *kid, string in, string *out) {
-#if 1
+#ifdef DEBUG3
   printf("soft_Unseal\n");
   const char *alg = trust_mgr->symmetric_key_algorithm_.c_str();
   printf("alg: %s\n", trust_mgr->symmetric_key_algorithm_.c_str());
@@ -294,7 +295,7 @@ bool soft_Unseal(spawned_children *kid, string in, string *out) {
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG3
   printf("Unsealed  : ");
   print_bytes(t_size, t_out);
   printf("\n");
@@ -315,7 +316,7 @@ bool soft_Unseal(spawned_children *kid, string in, string *out) {
 }
 
 bool soft_Attest(spawned_children *kid, string in, string *out) {
-#ifdef DEBUG
+#ifdef DEBUG3
   printf("soft_Attest\n");
 #endif
 
@@ -460,7 +461,7 @@ void app_service_loop(spawned_children *kid, int read_fd, int write_fd) {
     }
 
 finishreq:
-#ifdef DEBUG
+#ifdef DEBUG3
     if (succeeded)
       printf("Service response: succeeded\n");
     else
@@ -996,8 +997,6 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
 #endif
 
 // -----------------------------------------------------------------------------------------
-
-#define DEBUG3
 
 #ifdef NEW_API
 int main(int an, char **av) {

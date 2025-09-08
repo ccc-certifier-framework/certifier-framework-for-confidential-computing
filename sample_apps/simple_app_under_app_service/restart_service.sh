@@ -18,10 +18,10 @@ echo " "
 pushd $APP_SERVICE
 
 $APP_SERVICE_DIR/app_service.exe \
-    --domain_name=$DOMAIN_NAME \
+    --domain_name="$DOMAIN_NAME" \
     --service_dir="./service/" --cold_init_service=false \
-    --policy_cert_file=$POLICY_KEY_FILE_NAME --service_policy_store=$POLICY_STORE_NAME \
-    --host_enclave_type="sev-enclave" --platform_file_name="platform_file.bin" \
+    --policy_cert_file="$POLICY_KEY_FILE_NAME" --service_policy_store="$POLICY_STORE_NAME" \
+    --host_enclave_type="simulated-enclave" --platform_file_name="platform_file.bin" \
     --platform_attest_endorsement="platform_attest_endorsement.bin"   \
     --attest_key_file="attest_key_file.bin" \
     --measurement_file="app_service.measurement" --guest_login_name="jlm" &
