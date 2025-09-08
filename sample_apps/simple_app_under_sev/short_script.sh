@@ -1,6 +1,6 @@
 export CERTIFIER_ROOT=/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
 export EXAMPLE_DIR=$(pwd)
-export DOMAIN_NAME="datica-test"
+export DOMAIN_NAME="dom0"
 export POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
 export POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
 export POLICY_STORE_FILE_NAME="policy_store.$DOMAIN_NAME"
@@ -12,10 +12,10 @@ echo "Policy key: $POLICY_KEY_FILE_NAME"
 echo "Policy cert: $POLICY_CERT_FILE_NAME"
 echo "Policy store: $POLICY_STORE_FILE_NAME"
 
-
+cd service
 $CERTIFIER_ROOT/certifier_service/simpleserver  \
    --policy_key_file="$POLICY_KEY_FILE_NAME" --policy_cert_file="$POLICY_CERT_FILE_NAME"  \
-   --policyFile=policy.bin --readPolicy=true
+   --policyFile=policy.bin --readPolicy=true &
 
 sleep 2
 
