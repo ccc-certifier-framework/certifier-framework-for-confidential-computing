@@ -563,7 +563,7 @@ bool reinit_domain_and_update(const string &domain_name) {
   // read policy cert
   string der_policy_cert;
   string der_policy_cert_file_name(FLAGS_data_dir);
-  der_policy_cert_file_name.append("./provisioning/");
+  der_policy_cert_file_name.append("provisioning/");
   der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
   if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
     printf("%s() error, line %d, couldn't read, policy domain cert in %s\n",
