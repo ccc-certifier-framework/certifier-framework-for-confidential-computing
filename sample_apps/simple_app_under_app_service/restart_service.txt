@@ -1,0 +1,28 @@
+if [[ ! -v CERTIFIER_ROOT ]] ; then
+  export CERTIFIER_ROOT=/home/jlm/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+fi
+
+export APP_SERVICE_DIR=$CERTIFIER_ROOT/application_service
+export DOMAIN_NAME="app_service"
+export POLICY_KEY_FILE_NAME=policy_key_file.app_service
+export POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
+
+echo " "
+echo "Root: $CERTIFIER_ROOT"
+echo "App service directory: $APP_SERVICE_DIR"
+echo "Domain name: $DOMAIN_NAME"
+echo "Policy key file: $POLICY_KEY_FILE_NAME"
+echo "Policy store name: $POLICY_STORE_NAME"
+echo " "
+
+pushd $APP_SERVICE
+
+$APP_SERVICE_DIR/app_service.exe \
+    --domain_name=$DOMAIN_NAME \
+    --service_dir="./service/" --cold_init_service=false \
+    --policy_cert_file=$POLICY_KEY_FILE_NAME --service_policy_store=$POLICY_STORE_NAME \
+    --host_enclave_type="sev-enclave" --platform_file_name="platform_file.bin" \
+    --platform_attest_endorsement="platform_attest_endorsement.bin"   \
+    --attest_key_file="attest_key_file.bin" \
+    --measurement_file="app_service.measurement" --guest_login_name="jlm" &
+

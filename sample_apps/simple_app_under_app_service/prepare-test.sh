@@ -334,11 +334,11 @@ function do-copy-files() {
   popd
 
   pushd $EXAMPLE_DIR/provisioning
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
-  cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
-  cp platform_attest_endorsement.bin  attest_key_file.bin ../app1_data
-  cp platform_attest_endorsement.bin  attest_key_file.bin ../app2_data
+    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
+    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
+    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
+    cp platform_attest_endorsement.bin  attest_key_file.bin ../app1_data
+    cp platform_attest_endorsement.bin  attest_key_file.bin ../app2_data
   popd
 }
 

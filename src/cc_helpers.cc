@@ -706,7 +706,7 @@ bool certifier::framework::cc_trust_manager::initialize_existing_domain(
 
   certifiers *c = find_certifier_by_domain_name(domain_name);
   if (c == nullptr) {
-    printf("%s() error, line %d, can't find certifier for %s\n",
+    printf("%s() warning, line %d, can't find certifier for %s\n",
            __func__,
            __LINE__,
            domain_name.c_str());

@@ -149,7 +149,7 @@ function do-run() {
         --host_enclave_type="simulated-enclave" --platform_file_name="platform_file.bin" \
         --platform_attest_endorsement="platform_attest_endorsement.bin"  \
         --attest_key_file="attest_key_file.bin" \
-        --measurement_file="app_service.measurement" --guest_login_name="guest" &
+        --measurement_file="app_service.measurement" --guest_login_name="jlm" &
     fi
     if [[ "$ENCLAVE_TYPE" == "sev" ]] ;  then
       $APP_SERVICE_DIR/app_service.exe \
@@ -159,7 +159,7 @@ function do-run() {
         --host_enclave_type="sev-enclave" --platform_file_name="platform_file.bin" \
         --platform_attest_endorsement="platform_attest_endorsement.bin"   \
         --attest_key_file="attest_key_file.bin" \
-        --measurement_file="app_service.measurement" --guest_login_name="guest" &
+        --measurement_file="app_service.measurement" --guest_login_name="jlm" &
     fi
 
     sleep 3
