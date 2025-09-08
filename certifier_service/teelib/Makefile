@@ -49,6 +49,7 @@ OBJ_DIR = .
 O = $(OBJ_DIR)
 I = $(CERTIFIER_ROOT)/include
 SE=$(CS)/simulated-enclave
+AE=$(CS)/application-enclave
 
 dobj = $(O)/certifier.pb.o $(O)/tee_primitives.o $(O)/certifier.o $(O)/support.o \
 	$(O)/sev_support.o $(O)/sev_cert_table.o $(O)/sev_report.o \
@@ -109,7 +110,7 @@ $(O)/simulated_enclave.o: $(SE)/simulated_enclave.cc
 	@ echo " \nCompiling $<"
 	$(CXX) $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
 
-$(O)/application_enclave.o: $(CS)/application_enclave.cc
+$(O)/application_enclave.o: $(AE)/application_enclave.cc
 	@ echo " \nCompiling $<"
 	$(CXX) $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
 

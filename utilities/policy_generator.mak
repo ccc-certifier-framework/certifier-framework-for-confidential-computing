@@ -21,6 +21,7 @@ S= $(SRC_DIR)
 CERT_SRC=$(CERTIFIER_ROOT)/src
 O= $(OBJ_DIR)
 SE = $(S)/simulated-enclave
+AE=$(S)/application-enclave
 
 JSON_VALIDATOR=/usr/local
 LOCAL_LIB=$(JSON_VALIDATOR)/lib

@@ -40,6 +40,7 @@ I= $(SRC_DIR)/include
 INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/ -I$(KS)
 COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 SE = $(S)/simulated-enclave
+AE= $(S)/application-enclave
 
 # Compilation of protobuf files could run into some errors, so avoid using
 # # -Werror for those targets
@@ -118,7 +119,7 @@ $(O)/simulated_enclave.o: $(SE)/simulated_enclave.cc $(I)/simulated_enclave.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
+$(O)/application_enclave.o: $(AE)/application_enclave.cc $(I)/application_enclave.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
