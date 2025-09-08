@@ -213,9 +213,9 @@ function do-compile-program() {
     popd
 
     if [[ -v SIMULATED_SEV ]] ; then
-      CFLAGS='-DSEV_DUMMY_GUEST -DNEW_API' make -f sev_example_app.mak
+      CFLAGS='-DSEV_DUMMY_GUEST' make -f sev_example_app_new_api.mak
     else
-      CFLAGS='-DNEW_API' make -f sev_example_app.mak
+      make -f sev_example_app_new_api.mak
     fi
   popd
 

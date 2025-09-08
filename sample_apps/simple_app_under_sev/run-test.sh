@@ -54,16 +54,16 @@ if [[ $ARG_SIZE == 2  && $1 == "run" ]] ; then
   DOMAIN_NAME=$2
 fi
 
-echo "domain name: $DOMAIN_NAME"
+echo "Domain name: $DOMAIN_NAME"
 
 POLICY_KEY_FILE_NAME="policy_key_file.$DOMAIN_NAME"
 POLICY_CERT_FILE_NAME="policy_cert_file.$DOMAIN_NAME"
-echo "policy key file name: $POLICY_KEY_FILE_NAME"
-echo "policy cert file name: $POLICY_CERT_FILE_NAME"
+echo "Policy key file name: $POLICY_KEY_FILE_NAME"
+echo "Policy cert file name: $POLICY_CERT_FILE_NAME"
 
 POLICY_STORE_NAME="policy_store.$DOMAIN_NAME"
-echo "policy store name 1: ./app1_data/$POLICY_STORE_NAME
-echo "policy store name 2: ./app2_data/$POLICY_STORE_NAME
+echo "Policy store name 1: ./app1_data/$POLICY_STORE_NAME"
+echo "Policy store name 2: ./app2_data/$POLICY_STORE_NAME"
 
 function do-fresh() {
   echo " "

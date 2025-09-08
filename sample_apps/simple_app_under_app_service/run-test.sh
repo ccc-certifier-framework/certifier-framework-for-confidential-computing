@@ -155,40 +155,40 @@ function do-run() {
   pushd $EXAMPLE_DIR
     echo " "
     echo "initializing app1"
-    $EXAMPLE_DIR/start_program.exe                              \
+    $EXAMPLE_DIR/start_program.exe  \
       --executable=$EXAMPLE_DIR/service_example_app.exe   \
-      --args="--print_all=true,--operation=cold-init,--data_dir=./app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
+      --args="--domain_name=$DOMAIN_NAME,--print_all=true,--operation=cold-init,--data_dir=$EXAMPLE_DIR/app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=$POLICY_STORE_NAME"
     sleep 2
     echo "certifying app1"
-    $EXAMPLE_DIR/start_program.exe                              \
+    $EXAMPLE_DIR/start_program.exe \
       --executable=$EXAMPLE_DIR/service_example_app.exe   \
-      --args="--print_all=true,--operation=get-certified,--data_dir=./app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
+      --args="--domain_name=$DOMAIN_NAME,--print_all=true,--operation=get-certified,--data_dir=$EXAMPLE_DIR/app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=$POLICY_STORE_NAME"
     sleep 2
       echo "initializing app2"
-    $EXAMPLE_DIR/start_program.exe                              \
+    $EXAMPLE_DIR/start_program.exe \
       --executable=$EXAMPLE_DIR/service_example_app.exe   \
-      --args="--print_all=true,--operation=cold-init,--data_dir=./app2_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
+      --args="--domain_name=$DOMAIN_NAME,--print_all=true,--operation=cold-init,--data_dir=$EXAMPLE_DIR/app2_data/,--measurement_file=service_example_app.measurement,--policy_store_file=$POLICY_STORE_NAME"
     sleep 2
     echo "certifying app2"
-    $EXAMPLE_DIR/start_program.exe                              \
+    $EXAMPLE_DIR/start_program.exe  \
       --executable=$EXAMPLE_DIR/service_example_app.exe   \
-      --args="--print_all=true,--operation=get-certified,--data_dir=./app2_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
+      --args="--domain_name=$DOMAIN_NAME,--print_all=true,--operation=get-certified,--data_dir=$EXAMPLE_DIR/app2_data/,--measurement_file=service_example_app.measurement,--policy_store_file=$POLICY_STORE_NAME"
 
     sleep 3
 
     echo " "
     echo "running app-as-server"
-    $EXAMPLE_DIR/start_program.exe                              \
+    $EXAMPLE_DIR/start_program.exe \
       --executable=$EXAMPLE_DIR/service_example_app.exe   \
-      --args="--print_all=true,--operation=run-app-as-server,--data_dir=./app2_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
+      --args="--domain_name=$DOMAIN_NAME,--print_all=true,--operation=run-app-as-server,--data_dir=$EXAMPLE_DIR/app2_data/,--measurement_file=service_example_app.measurement,--policy_store_file=$POLICY_STORE_NAME"
 
     sleep 5
 
     echo " "
     echo "running app-as-client"
-    $EXAMPLE_DIR/start_program.exe                              \
+    $EXAMPLE_DIR/start_program.exe \
       --executable=$EXAMPLE_DIR/service_example_app.exe   \
-      --args="--print_all=true,--operation=run-app-as-server,--data_dir=./app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=policy_store"
+      --args="--print_all=true,--operation=run-app-as-client,--data_dir=$EXAMPLE_DIR/app1_data/,--measurement_file=service_example_app.measurement,--policy_store_file=$POLICY_STORE_NAME"
   popd
 
   cleanup_stale_procs

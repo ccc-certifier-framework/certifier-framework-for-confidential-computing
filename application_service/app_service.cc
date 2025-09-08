@@ -50,6 +50,7 @@ DEFINE_string(domain_name, "d", "domain name");
 DEFINE_string(parent_enclave, "simulated-enclave", "parent enclave");
 DEFINE_bool(help_me, false, "Want help?");
 DEFINE_bool(cold_init_service, false, "Start over");
+DEFINE_bool(restart_service, false, "restart");
 
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_bool(print_log, false, "print log");
@@ -87,15 +88,9 @@ DEFINE_string(measurement_file, "app_service.measurement", "measurement");
 
 DEFINE_string(guest_login_name, "jlm", "guest name");
 
-DEFINE_string(ark_cert_file,
-              "./service/milan_ark_cert.der",
-              "ark cert file name");
-DEFINE_string(ask_cert_file,
-              "./service/milan_ask_cert.der",
-              "ask cert file name");
-DEFINE_string(vcek_cert_file,
-              "./service/milan_vcek_cert.der",
-              "vcek cert file name");
+DEFINE_string(ark_cert_file, "ark_cert.der", "ark cert file name");
+DEFINE_string(ask_cert_file, "ask_cert.der", "ask cert file name");
+DEFINE_string(vcek_cert_file, "vcek_cert.der", "vcek cert file name");
 
 // ---------------------------------------------------------------------------------
 
@@ -220,6 +215,7 @@ void delete_child(int signum) {
   if (c->thread_obj_ != nullptr) {
     delete c->thread_obj_;
   }
+
   // close parent fds/
   remove_kid(pid);
 }
@@ -234,7 +230,7 @@ cc_trust_manager *trust_mgr = nullptr;
 
 
 bool soft_Seal(spawned_children *kid, string in, string *out) {
-#if 1
+#ifdef DEBUG3
   printf("soft_Seal\n");
   const char *alg = trust_mgr->symmetric_key_algorithm_.c_str();
   printf("alg: %s\n", trust_mgr->symmetric_key_algorithm_.c_str());
@@ -274,7 +270,7 @@ bool soft_Seal(spawned_children *kid, string in, string *out) {
 }
 
 bool soft_Unseal(spawned_children *kid, string in, string *out) {
-#if 1
+#ifdef DEBUG3
   printf("soft_Unseal\n");
   const char *alg = trust_mgr->symmetric_key_algorithm_.c_str();
   printf("alg: %s\n", trust_mgr->symmetric_key_algorithm_.c_str());
@@ -299,7 +295,7 @@ bool soft_Unseal(spawned_children *kid, string in, string *out) {
            __LINE__);
     return false;
   }
-#ifdef DEBUG
+#ifdef DEBUG3
   printf("Unsealed  : ");
   print_bytes(t_size, t_out);
   printf("\n");
@@ -320,7 +316,7 @@ bool soft_Unseal(spawned_children *kid, string in, string *out) {
 }
 
 bool soft_Attest(spawned_children *kid, string in, string *out) {
-#ifdef DEBUG
+#ifdef DEBUG3
   printf("soft_Attest\n");
 #endif
 
@@ -465,7 +461,7 @@ void app_service_loop(spawned_children *kid, int read_fd, int write_fd) {
     }
 
 finishreq:
-#ifdef DEBUG
+#ifdef DEBUG3
     if (succeeded)
       printf("Service response: succeeded\n");
     else
@@ -844,22 +840,19 @@ bool get_sev_enclave_parameters(string **s, int *n) {
   }
   *s = args;
 
-  if (!read_file_into_string(FLAGS_service_dir + FLAGS_ark_cert_file,
-                             &args[0])) {
+  if (!read_file_into_string(FLAGS_ark_cert_file, &args[0])) {
     printf("%s() error, line %d, Can't read attest file\n", __func__, __LINE__);
     return false;
   }
 
-  if (!read_file_into_string(FLAGS_service_dir + FLAGS_ask_cert_file,
-                             &args[1])) {
+  if (!read_file_into_string(FLAGS_ask_cert_file, &args[1])) {
     printf("%s() error, line %d, Can't read measurement file\n",
            __func__,
            __LINE__);
     return false;
   }
 
-  if (!read_file_into_string(FLAGS_service_dir + FLAGS_vcek_cert_file,
-                             &args[2])) {
+  if (!read_file_into_string(FLAGS_vcek_cert_file, &args[2])) {
     printf("%s() error, line %d, Can't read endorsement file\n",
            __func__,
            __LINE__);
@@ -872,7 +865,7 @@ bool get_sev_enclave_parameters(string **s, int *n) {
 
 // -----------------------------------------------------------------------------------------
 
-#ifndef NEW_API
+#ifdef OLD_API
 int main(int an, char **av) {
   string usage("Application Service utility");
   gflags::SetUsageMessage(usage);
@@ -1005,8 +998,6 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
 
 // -----------------------------------------------------------------------------------------
 
-#define DEBUG3
-
 #ifdef NEW_API
 int main(int an, char **av) {
   string usage("Application Service utility");
@@ -1038,28 +1029,20 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
   cc_trust_manager helper(enclave_type, purpose, store_file);
   trust_mgr = &helper;
 
+#  ifdef DEBUG3
+  printf("Enclave type: %s\n", FLAGS_host_enclave_type.c_str());
+#  endif
+
+  int     n = 0;
+  string *params = nullptr;
   if (FLAGS_host_enclave_type == "simulated-enclave") {
 
     // get parameters
-    int     n = 0;
-    string *params = nullptr;
     if (!get_simulated_enclave_parameters(&params, &n) || params == nullptr) {
       printf("%s() error, line %d, Can't get simulated enclave parameters\n",
              __func__,
              __LINE__);
-      return false;
-    }
-
-    // Init simulated enclave
-    if (!helper.initialize_enclave(n, params)) {
-      printf("%s() error, line %d, Can't init simulated enclave\n",
-             __func__,
-             __LINE__);
       return 1;
-    }
-    if (params != nullptr) {
-      delete[] params;
-      params = nullptr;
     }
   } else if (FLAGS_host_enclave_type == "oe-enclave") {
     printf("%s() error, line %d, Unsupported host enclave\n",
@@ -1069,25 +1052,11 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
   } else if (FLAGS_host_enclave_type == "sev-enclave") {
 
     // get parameters
-    int     n = 0;
-    string *params = nullptr;
     if (!get_sev_enclave_parameters(&params, &n) || params == nullptr) {
       printf("%s() error, line %d, Can't get simulated enclave parameters\n",
              __func__,
              __LINE__);
-      return false;
-    }
-
-    // Init sev enclave
-    if (!helper.initialize_enclave(n, params)) {
-      printf("%s() error, line %d, Can't init sev-enclave\n",
-             __func__,
-             __LINE__);
       return 1;
-    }
-    if (params != nullptr) {
-      delete[] params;
-      params = nullptr;
     }
   } else {
     printf("%s() error, line %d, Unsupported host enclave\n",
@@ -1095,26 +1064,41 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
            __LINE__);
     return 1;
   }
+
+  // Init enclave
+  if (!helper.initialize_enclave(n, params)) {
+    printf("%s() error, line %d, Can't init simulated enclave\n",
+           __func__,
+           __LINE__);
+    return 1;
+  }
+
+  if (params != nullptr) {
+    delete[] params;
+    params = nullptr;
+  }
+
 #  ifdef DEBUG3
   printf("Enclave initialized\n");
 #  endif
 
   // Initialize store
-  if (!helper->initialize_store()) {
+  if (!helper.initialize_store()) {
     printf("%s() error, line %d, Can't init store\n", __func__, __LINE__);
     return 1;
   }
+
 #  ifdef DEBUG3
   printf("\n\nStore initialized\n");
   printf("\ntrust data at initialization\n");
-  helper->print_trust_data();
+  helper.print_trust_data();
   printf("\nStore\n");
-  helper->store_.print();
+  helper.store_.print();
 #  endif
 
-  if (!helper->initialize_keys(FLAGS_public_key_alg,
-                               FLAGS_symmetric_key_alg,
-                               false)) {
+  if (!helper.initialize_keys(FLAGS_public_key_alg,
+                              FLAGS_symmetric_key_alg,
+                              false)) {
     printf("%s() error, line %d, Can't init keys\n", __func__, __LINE__);
     return 1;
   }

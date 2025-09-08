@@ -1,4 +1,4 @@
-#    
+#
 #    File: sev_example_app.mak
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir

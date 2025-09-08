@@ -73,7 +73,7 @@ function do-fresh() {
   fi
 
   pushd $APP_SERVICE_DIR
-    make clean -f app_service.mak
+    make clean -f app_service_new_api.mak
   popd
 
   if [[ ! -d "$APP_SERVICE_DIR/provisioning" ]] ; then
@@ -213,10 +213,9 @@ function do-compile-program() {
     popd
 
     if [[ ENCLAVE_TYPE == "sev" && -v SIMULATED_SEV ]] ; then
-      CFLAGS='-DSEV_DUMMY_GUEST -DCF_NEW_API' make -f app_service.mak
+      CFLAGS='-DSEV_DUMMY_GUEST' make -f app_service_new_api.mak
     else
-      CFLAGS='-DCF_NEW_API' make -f app_service.mak
-      make -f app_service.mak
+      make -f app_service_new_api.mak
     fi
   popd
 

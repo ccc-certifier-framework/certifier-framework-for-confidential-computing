@@ -1,5 +1,5 @@
 #    
-#    File: app_service.mak
+#    File: app_service_new_api.mak
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 ifndef CERTIFIER_ROOT
@@ -30,7 +30,7 @@ endif
 # little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
 # is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
-# CF_NEW_API=1
+CF_NEW_API=1
 
 CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
 LIBSRC= $(SRC_DIR)/src
