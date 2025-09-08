@@ -30,6 +30,7 @@ I= $(CERTIFIER_ROOT)/include
 INCLUDE= -I. -I$(I) -I/usr/local/opt/openssl@1.1/include/ -I$(S)/sev-snp/
 COMMON_SRC = $(CERTIFIER_ROOT)/sample_apps/common
 SE= $(S)/simulated-enclave
+AE= $(S)/application-enclave
 
 # Newer versions of protobuf require C++17 and dependancies on additional libraries.
 # When this happens, everything must be compiles with C++17 and the linking is a
@@ -124,7 +125,7 @@ $(O)/simulated_enclave.o: $(SE)/simulated_enclave.cc $(I)/simulated_enclave.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(O)/application_enclave.o: $(S)/application_enclave.cc $(I)/application_enclave.h
+$(O)/application_enclave.o: $(AE)/application_enclave.cc $(I)/application_enclave.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
