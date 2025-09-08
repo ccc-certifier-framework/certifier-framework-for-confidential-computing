@@ -36,8 +36,7 @@ SE= $(S)/simulated-enclave
 # little more complicated.  To use newer protobuf libraries, define NEWPROROBUF as
 # is done below.  Comment it out for older protobuf usage.
 NEWPROTOBUF=1
-
-#If NEW_API is defined, compile with new API.
+#If CF_NEW_API is defined, compile with new API.
 CF_NEW_API=1
 
 ifndef NEWPROTOBUF

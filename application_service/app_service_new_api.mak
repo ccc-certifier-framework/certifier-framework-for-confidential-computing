@@ -42,9 +42,9 @@ INCLUDE= -I$(I) -I$(LIBSRC)/sev-snp -I/usr/local/opt/openssl@1.1/include/ -I/usr
 SE= $(LIBSRC)/simulated-enclave
 
 ifndef NEWPROTOBUF
-CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -D DEBUG -Wno-deprecated-declarations
+CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 else
-CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -D DEBUG -Wno-deprecated-declarations
+CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 endif
 ifdef CF_NEW_API
 CFLAGS+=-DNEW_API
