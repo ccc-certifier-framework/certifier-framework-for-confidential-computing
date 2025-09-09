@@ -801,8 +801,15 @@ bool certifier::framework::cc_trust_manager::add_or_update_new_domain(
 bool certifier::framework::cc_trust_manager::certify(
     const string &domain_name) {
 
-  if (!cc_auth_key_initialized_) {
+  if (purpose_ == "authentication" && !cc_auth_key_initialized_) {
     printf("%s() error, line %d, auth key not yet initialized\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  if (purpose_ == "attestation" && !cc_service_key_initialized_) {
+    printf("%s() error, line %d, service key not yet initialized\n",
            __func__,
            __LINE__);
     return false;
@@ -816,12 +823,6 @@ bool certifier::framework::cc_trust_manager::certify(
 
   c->is_certified_ = false;
   c->admissions_cert_.clear();
-  if (!cc_auth_key_initialized_) {
-    printf("%s() error, line %d, can't auth key uninitialized\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
 
   if (!c->certify_domain(purpose_)) {
     printf("%s() error, line %d, can't certify domain\n", __func__, __LINE__);
@@ -2474,6 +2475,9 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
 #endif
 
   } else if (owner_->purpose_ == "attestation") {
+
+    admissions_cert_.assign((char *)response.artifact().data(),
+                            response.artifact().size());
 
     signed_rule_.assign((char *)response.artifact().data(),
                         response.artifact().size());
