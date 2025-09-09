@@ -141,7 +141,7 @@ and directories:
           This is the file containing signed rules that determine the policy for
           evidence (including attestations) required for domain admission.
 
-      .../cf_utility/utility_data (for SEV)
+      .../cf_utility/cf_data (for SEV)
           policy_cert_file.dom0
             This is the self signed certificate for the policy key.
           ark-cert.der
@@ -153,7 +153,7 @@ and directories:
             This is a cert that means "The ask-key says the vcek-key
               is-trusted-for-attestation"
 
-      .../cf_utility/utility_data (for simulated enclave)
+      .../cf_utility/cf_data (for simulated enclave)
         policy_cert_file.dom0
           This is the self signed certificate for the policy key.
         attest_key_file.bin
@@ -167,8 +167,8 @@ and directories:
           attestation-key is-trusted-for-attestation
 
     For both enclave types, the policy store and cryptstore are in
-      $EXAMPLE_DIR/policy_store.$DOMAIN_NAME
-      $EXAMPLE_DIR/cryptstore.$DOMAIN_NAME
+      $EXAMPLE_DIR/cf_data/policy_store.$DOMAIN_NAME
+      $EXAMPLE_DIR/cf_data/cryptstore.$DOMAIN_NAME
 
 
     For application_service, after the provisioning step, the directories contain the

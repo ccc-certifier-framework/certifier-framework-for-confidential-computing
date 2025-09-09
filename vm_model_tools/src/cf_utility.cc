@@ -64,7 +64,7 @@ DEFINE_string(policy_domain_name, "datica", "policy domain name");
 DEFINE_string(policy_key_cert_file,
               "policy_certificate.datica",
               "file name for policy certificate");
-DEFINE_string(data_dir, "./", "supporting file directory");
+DEFINE_string(data_dir, "./cf_data", "supporting file directory");
 DEFINE_string(input_format, "serialized-protobuf", "input file format");
 DEFINE_string(output_format, "serialized-protobuf", "output file format");
 

@@ -64,8 +64,11 @@ DEFINE_string(symmetric_key_alg,
 DEFINE_string(policy_cert_file, "policy_cert_file.bin", "policy_cert");
 DEFINE_string(policy_host, "localhost", "address for policy server");
 DEFINE_int32(policy_port, 8123, "port for policy server");
+DEFINE_string(service_attestation_cert_file_name,
+              "service_attestation_cert.bin",
+              "service attestation");
 
-DEFINE_string(service_dir, "./service/", "directory for service data");
+DEFINE_string(service_dir, "./service_data/", "directory for service data");
 DEFINE_string(service_policy_store,
               "policy_store.bin",
               "policy store for service");
@@ -1146,9 +1149,21 @@ app_service.exe --print_all=true|false --policy_host=policy-host-address \n\
       }
     } else {
       printf("%s() error, line %d, not certified\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+    string file_name(FLAGS_service_dir);
+    file_name += FLAGS_service_attestation_cert_file_name;
+    if (!write_file_from_string(file_name, c->admissions_cert_)) {
+      printf("%s() error, line %d, can't write service cert\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
     }
 #  ifdef DEBUG3
-    printf("\ncertified\n");
+    printf("\ncertified %s\n", file_name.c_str());
+
 #  endif
   } else {
     if (!helper.initialize_existing_domain(FLAGS_domain_name)) {
