@@ -332,7 +332,7 @@ function do-copy-files() {
   pushd $EXAMPLE_DIR/provisioning
     cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
     cp -p sev_policy.bin ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/service
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME $EXAMPLE_DIR/cf_data
+    cp -p $POLICY_CERT_FILE_NAME $EXAMPLE_DIR/cf_data
     cp -p platform_key_file.bin attest_key_file.bin sev_cf_utility.measurement $EXAMPLE_DIR/cf_data
     cp -p cf_utility.measurement platform_attest_endorsement.bin $EXAMPLE_DIR/cf_data
     cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data
