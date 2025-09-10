@@ -379,7 +379,7 @@ Call 4 prints all the data in the trust manager. (This is optional)
 
 Call 5 generates the keys needed by the progam or retrieves then from the store if already initialized.
 public_key_alg is the name of the public key algorithm used by the program (e.g.- RSA-4096)
-symmetric_key_alg is the name of the symmetric key algorithm the program uses (e.g.-are256-gcm).
+symmetric_key_alg is the name of the symmetric key algorithm the program uses (e.g., aes256-gcm).
 The final argument can force generating new keys even if old ones exist.
 
 Call 6 specifies pocicy cert (which can, fore example, be embedded in the program in the byte array
