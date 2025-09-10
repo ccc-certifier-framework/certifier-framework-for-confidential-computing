@@ -283,7 +283,7 @@ A simple certification service implementation is in:
 
 ```
  $CERTIFIER_ROOT/certifier_service/simpleserver.go
-``
+```
 
 There is a description there of the rules, proofs and mechanisms used by the
 policy authority to verify domain compliance.  However, here we focus on the
@@ -353,11 +353,11 @@ its almost all that's needed most of the time, using this new api.
   channel.write(strlen(msg), (byte *)msg);
 ````
 
-Call 1 intantiates the trust manager; the arguments are all C++
+Call 1 instantiates the trust manager; the arguments are all C++
 string.
 
     enclave_type is the enclave type, for example,
-````
+
     string enclave_type("sev");
     purpose specifies the use of the certifiered key, there are two: "authentication,"
       described above, where the key is used to authenticate a program and share secrets
