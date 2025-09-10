@@ -391,11 +391,11 @@ Call 7 (only needed if Call 6 fails) initializes domain parameters for a new dom
 them for an existing domain).
 
 Call 8 certifies the domain with the indicated domain name byt contacting a certification service
-as described above.A
+as described above.
 
-Call 9 intialized a secure channel with the indicated mode (the other is "server").
+Call 9 intializes and establishes, a secure channel with the indicated mode (the other is "server").
 
-Call 10 establishes the commection (for the client, in this case).
+Call 10 show a write to the channel.
 
 After call 10, you can send and receive messages over the channel with channel.write and channel.read.
 Once the channel is established, channel.peer_cert_ retrieves you peer's measurement,
