@@ -294,7 +294,7 @@ a safe program.
 
 The use of these two classes is rather simple.  Consider the sequence of calls
 below, which form the backbone of any Certifier Framework program.  In fact,
-its almost all that's needed most of the time, using this new api.
+it's almost all that's needed most of the time, using this new api.
 
 ````
 
@@ -404,10 +404,12 @@ if you need it.
 That's it!
 
 As mentioned above, there are number of example applications in:
+```
     $CERTIFIER_ROOT/sample_apps/simple_app
     $CERTIFIER_ROOT/sample_apps/simple_app_under_sev
     $CERTIFIER_ROOT/sample_apps/simple_app_under_gramine (sgx)
     $CERTIFIER_ROOT/sample_apps/simple_app_under_app_service
+```
 
 simple_app uses a "simulated enclave" which is very useful for development and
 simple_app_under_app_service uses a system deamon (in, say, a CC protected VM)
