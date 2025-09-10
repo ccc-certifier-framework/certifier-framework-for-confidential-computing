@@ -246,7 +246,7 @@ interaction involves the two C++ classes:
 ```
 cc_trust_manager
 secure_authenticated_channel.
-``
+```
 
 The first class handles all the paraphenalia of interacting with CC.
 It automatically save CC program data securely and performs "certification."
