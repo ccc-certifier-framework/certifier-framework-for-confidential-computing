@@ -12,6 +12,8 @@ development, and the application-enclave, which can present an enclave like
 "isolated" environment for processes in Linux inside a parent enclave (like
 SEV).
 
+## Running sample applications
+
 Generallly, for an application in the directory $EXAMPLE_DIR, there's a
 shell script, prepare-test.sh, that creates the supporting infrastructure,
 keys, policy and runtime environment to run the application (like the
@@ -212,3 +214,200 @@ cd $CERTIFIER_ROOT/sample_apps/simple_app
 The arguments to prepare-test.sh and run-test.sh vary slightly depending on
 the application.  To check call them with no arguments and they will print
 out the required arguments.
+
+## Writing programs with the Certifier Framework
+
+The certifier framework is a library and utilities to simplify and accelerate
+writing programs protected by Confidential Computing ("CC") technology.
+It also makes these programs portable across different CC platforms.
+
+For the following, let $CERTIFIER_ROOT be the top level directory for the
+downloaded repository.
+
+The library a library, certifier.a, can be built as follows:
+
+```
+  cd $CERTIFIER_ROOT/src
+  make clean -f certifier.mak
+  make -f certifier.mak
+```
+
+The certifier uses four principal tools: protobuf, for serialization and
+deserialization of program data, openssl, for crypto implementations and
+basic TLS functionality, gflags to simplify specifying program arguments
+at the shell level and gtes for testing.
+
+The certifier provides many routines to simplify programming.  You can see
+the full list of callable functions in
+$CERTIFIER_ROOT/include/certifier_utilities.h, and
+$CERTIFIER_ROOT/include/certifier_framework.h.  However, most programmer
+interaction involves the two C++ classes:
+
+```
+cc_trust_manager
+secure_authenticated_channel.
+``
+
+The first class handles all the paraphenalia of interacting with CC.
+It automatically save CC program data securely and performs "certification."
+Certification is the process of collecting signed evidence, including
+attestations, contacting and providing this evidence to an policy authority, or
+domain manager (a program called the Certifier Service) and retrieving
+a signed certificate, called a certification, proving that the program
+possessing the private key corrresponding to the public key in the certificate,
+has the program "measurement" named in the certificate. The second class,
+secure_authenticated_channel allows two programs to use their certification
+certificates (sometimes called admissions certificates) and their
+corresponding private keys, to open a mutually authenticated, encrypted,
+integrity protected channel between them.  Each program is assured that the
+correspondent follows all domain policy, as proved via certification.  Thus
+the connection, essentially, extends the program trust boundary of
+one program in a domain to other "trusted" programs.
+
+Each policy authority controls a "security domain," identified by a public
+policy keyand associated "domain name".  Each participating program has an
+unforegeable copy of the key (often ist is part of the "program measurement."
+The certification is signed by a key that chains to the policy-key.
+A program presenting this certificate to another member of the security
+domain can use the certified public key to "prove" it is part of the domain,
+complies with domain rules, and while it has access to the corresponding
+private key, is under the protection of a domain approved CC platform.
+
+The protobufs used by the Certifier are defined in
+
+```
+ $CERTIFIER_ROOT/certifier_service/certprotos
+```
+
+A simple certification service implementation is in 
+```
+ $CERTIFIER_ROOT/certifier_service/simpleserver.go
+``
+
+There is a description there of the rules, proofs and mechanisms used by the
+policy authority to verify domain compliance.  However, here we focus on the
+applications programmer's task.  Importantly, the application programmer
+is freed from the mechanics of both the individual CC platform and the possibly
+(but hopefully not) complex domain rules.  She just has to focus on writing
+a safe program.
+
+The use of these two classes is rather simple.  Consider the sequence of calls
+below, which form the backbone of any Certifier Framework program.  In fact,
+its almost all that's needed most of the time, using this new api.
+
+````
+
+  // Call 1
+  cc_trust_manager* trust_mgr =  new cc_trust_manager(enclave_type, purpose, store_file);
+
+  // Call 2
+  if (!trust_mgr->initialize_enclave(n, params)) {
+     ...error processing
+  }
+
+  // Call 3
+  if (!trust_mgr->initialize_store()) {
+     ...error processing
+  }
+
+  // Call 4
+  trust_mgr->print_trust_data()
+
+  // Call 5
+  if (!trust_mgr->initialize_keys(public_key_alg, symmetric_key_alg, false)) {
+     ...error processing
+  }
+
+  // Call 6
+  string serialized_policy_cert;
+  serialized_policy_cert.assign((char *)initialized_cert,
+                                initialized_cert_size);
+  if (!trust_mgr->initialize_existing_domain(FLAGS_domain_name)) {
+   ...error processing
+  }
+
+  // Call 7
+  string purpose("authentication");
+  if (!trust_mgr->initialize_new_domain(FLAGS_domain_name,
+             purpose, serialized_policy_cert,
+             FLAGS_policy_host, FLAGS_policy_port)) {
+     ...error processing
+  }
+
+  // Call 8
+  if (!trust_mgr.certify(FLAGS_domain_name) {
+     ...error processing
+  }
+
+  // Call 9
+  string my_role("client");
+  secure_authenticated_channel channel(my_role);
+  if (!channel.init_client_ssl(FLAGS_domain_name,
+         FLAGS_server_app_host, FLAGS_server_app_port, *trust_mgr)) {
+     ...error processing
+  }
+
+  // Call 10
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
+````
+
+Call 1 intantiates the trust manager; the arguments are all C++
+string.
+
+    enclave_type is the enclave type, for example,
+````
+    string enclave_type("sev");
+    purpose specifies the use of the certifiered key, there are two: "authentication,"
+      described above, where the key is used to authenticate a program and share secrets
+      and "attestation," where the key is used to attest for other programs (see the
+      application enclave)
+    store_file is the name of the file that hold the "secure store" used by the certifier.
+      The secure store is only accessible to the measured program under CC using Seal and
+      Unseal.
+
+Call 2 initializes the enclave.  Each enclave type has different parameters for initialization
+like the name of the files containing certificates it needs.   Each enclave we support has a
+"helper" function which collects these parameters.
+
+
+Call 3  initializes the secure store, retrieving an secure store established by the program earlier,
+if it exists.
+
+Call 4 prints all the data in the trust manager. (This is optional)
+
+Call 5 generates the keys needed by the progam or retrieves then from the store if already initialized.
+public_key_alg is the name of the public key algorithm used by the program (e.g.- RSA-4096)
+symmetric_key_alg is the name of the symmetric key algorithm the program uses (e.g.-are256-gcm).
+The final argument can force generating new keys even if old ones exist.
+
+Call 6 specifies pocicy cert (which can, fore example, be embedded in the program in the byte array
+initialized_cert.  initialize_existing_domain(FLAGS_domain_name) retrives the parameters (admissions
+certificates, keys, host url, host port) for a domain. FLAGS_domain_name is the domain name associated
+with the policy authority.
+
+Call 7 (only needed if Call 6 fails) initializes domain parameters for a new domain (or changes
+them for an existing domain).
+
+Call 8 certifies the domain with the indicated domain name byt contacting a certification service
+as described above.A
+
+Call 9 intialized a secure channel with the indicated mode (the other is "server").
+
+Call 10 establishes the commection (for the client, in this case).
+
+After call 10, you can send and receive messages over the channel with channel.write and channel.read.
+Once the channel is established, channel.peer_cert_ retrieves you peer's measurement,
+if you need it.
+
+That's it!
+
+As mentioned above, there are number of example applications in:
+    $CERTIFIER_ROOT/sample_apps/simple_app
+    $CERTIFIER_ROOT/sample_apps/simple_app_under_sev
+    $CERTIFIER_ROOT/sample_apps/simple_app_under_gramine (sgx)
+    $CERTIFIER_ROOT/sample_apps/simple_app_under_app_service
+
+simple_app uses a "simulated enclave" which is very useful for development and
+simple_app_under_app_service uses a system deamon (in, say, a CC protected VM)
+to provide CC services for individual processes in the VM.
