@@ -233,7 +233,7 @@ function do-make-policy() {
     echo "got signing cert: $APP_SERVICE_POLICY_KEY_CERT"
 
     $CERTIFIER_ROOT/utilities/measurement_utility.exe      \
-      --type=hash --input=../service_example_app.exe --output=service_example_app.measurement
+      --type=hash --input=../example_app.exe --output=example_app.measurement
 
     $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
       --cert_subject=$APP_SERVICE_POLICY_KEY_CERT --verb="is-trusted-for-attestation" \
@@ -243,7 +243,7 @@ function do-make-policy() {
       --clause=ts1.bin --output=vse_policy1.bin
 
     $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-      --key_subject="" --measurement_subject="service_example_app.measurement" \
+      --key_subject="" --measurement_subject="example_app.measurement" \
       --verb="is-trusted" --output=ts2.bin
 
     $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
@@ -257,17 +257,6 @@ function do-make-policy() {
     $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
       --vse_file=vse_policy2.bin  --duration=9000  \
       --private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
-
-     $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-      --key_subject=$APP_SERVICE_DIR/service/attest_key_file.bin --verb="is-trusted-for-attestation" --output=tsc1.bin
-  
-    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
-      --key_subject=$APP_SERVICE_DIR/service/policy_key_file.app_service --verb="says" \
-      --clause=tsc1.bin --output=vse_policy3.bin
-
-    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
-      --vse_file=vse_policy3.bin --duration=9000 \
-      --private_key_file=$APP_SERVICE_DIR/service/policy_key_file.app_service --output=platform_attest_endorsement.bin
 
     $CERTIFIER_ROOT/utilities/package_claims.exe \
       --input=signed_claim_1.bin,signed_claim_2.bin --output=policy.bin
@@ -333,10 +322,9 @@ function do-copy-files() {
 
   pushd $EXAMPLE_DIR/provisioning
     cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
-    cp $APP_SERVICE_DIR/service/platform_attest_endorsement.bin  ../app1_data
-    cp $APP_SERVICE_DIR/service/platform_attest_endorsement.bin  ../app2_data
+    cp -p $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
+    cp -p $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
+    cp $APP_SERVICE_DIR/service_data/service_attestation_cert.bin ./provisioning
   popd
 }
 
