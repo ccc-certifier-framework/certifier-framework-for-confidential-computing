@@ -397,7 +397,7 @@ Call 9 intializes and establishes, a secure channel with the indicated mode (the
 
 Call 10 show a write to the channel.
 
-After call 10, you can send and receive messages over the channel with channel.write and channel.read.
+After call 9, you can send and receive messages over the channel with channel.write and channel.read.
 Once the channel is established, channel.peer_cert_ retrieves you peer's measurement,
 if you need it.
 
