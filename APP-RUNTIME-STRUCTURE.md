@@ -279,7 +279,8 @@ The protobufs used by the Certifier are defined in
  $CERTIFIER_ROOT/certifier_service/certprotos
 ```
 
-A simple certification service implementation is in 
+A simple certification service implementation is in:
+
 ```
  $CERTIFIER_ROOT/certifier_service/simpleserver.go
 ``
