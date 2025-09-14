@@ -52,7 +52,7 @@ endif
 CFLAGS += -DSEV_SIMPLE_APP
 
 ifdef CF_NEW_API
-CFLAGS += -DNEW_API -DDEBUG3
+CFLAGS += -DNEW_API
 endif
 
 CC=g++

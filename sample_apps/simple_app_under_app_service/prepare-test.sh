@@ -326,7 +326,7 @@ function do-copy-files() {
     cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
     cp -p $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
     cp -p $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
-    cp $APP_SERVICE_DIR/service_data/service_attestation_cert.bin ./provisioning
+    cp $APP_SERVICE_DIR/service_data/policy_cert_file.app_service ./provisioning
   popd
 }
 
