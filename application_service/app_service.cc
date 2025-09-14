@@ -323,7 +323,6 @@ bool soft_Attest(spawned_children *kid, string in, string *out) {
   printf("soft_Attest\n");
 #endif
 
-  // in  is a serialized vse-attestation
   if (!trust_mgr->cc_service_key_initialized_) {
     printf("%s() error, line %d, soft_Attest: service key not initialized\n",
            __func__,
@@ -348,7 +347,8 @@ bool soft_Attest(spawned_children *kid, string in, string *out) {
 
   report_info.set_not_before(nb);
   report_info.set_not_after(na);
-  // in should be a serialized attestation_user_data
+
+  // in is a serialized attestation_user_data
   report_info.set_user_data((byte *)in.data(), in.size());
   report_info.set_verified_measurement((byte *)kid->measurement_.data(),
                                        kid->measurement_.size());
@@ -371,6 +371,12 @@ bool soft_Attest(spawned_children *kid, string in, string *out) {
   } else {
     return false;
   }
+
+#ifdef DEBUG3
+  printf("Signing report with:\n");
+  print_key(trust_mgr->private_service_key_);
+  printf("\n");
+#endif
 
   if (!sign_report(type,
                    serialized_report_info,

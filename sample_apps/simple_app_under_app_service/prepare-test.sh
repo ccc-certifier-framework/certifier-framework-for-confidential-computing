@@ -192,8 +192,10 @@ function do-make-keys() {
   fi
 
   pushd $EXAMPLE_DIR/provisioning
+    authorityName="$DOMAIN_NAME/policyAuthority"
     $CERTIFIER_ROOT/utilities/cert_utility.exe  \
       --operation=generate-policy-key-and-test-keys  \
+      --policy_authority_name=$authorityName   \
       --policy_key_output_file=$POLICY_KEY_FILE_NAME  \
       --policy_cert_output_file=$POLICY_CERT_FILE_NAME \
   popd
@@ -233,7 +235,7 @@ function do-make-policy() {
     echo "got signing cert: $APP_SERVICE_POLICY_KEY_CERT"
 
     $CERTIFIER_ROOT/utilities/measurement_utility.exe      \
-      --type=hash --input=../example_app.exe --output=example_app.measurement
+      --type=hash --input=../service_example_app.exe --output=service_example_app.measurement
 
     $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
       --cert_subject=$APP_SERVICE_POLICY_KEY_CERT --verb="is-trusted-for-attestation" \
@@ -243,7 +245,7 @@ function do-make-policy() {
       --clause=ts1.bin --output=vse_policy1.bin
 
     $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
-      --key_subject="" --measurement_subject="example_app.measurement" \
+      --key_subject="" --measurement_subject="service_example_app.measurement" \
       --verb="is-trusted" --output=ts2.bin
 
     $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
@@ -322,8 +324,8 @@ function do-copy-files() {
 
   pushd $EXAMPLE_DIR/provisioning
     cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
-    cp -p $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
-    cp -p $POLICY_CERT_FILE_NAME example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
+    cp -p $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app1_data
+    cp -p $POLICY_CERT_FILE_NAME service_example_app.measurement policy.bin $EXAMPLE_DIR/app2_data
     cp $APP_SERVICE_DIR/service_data/service_attestation_cert.bin ./provisioning
   popd
 }
