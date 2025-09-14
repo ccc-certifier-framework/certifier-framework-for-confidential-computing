@@ -618,8 +618,8 @@ bool certifier::framework::cc_trust_manager::initialize_keys(
     c->admissions_cert_.clear();
   }
 
-#  ifdef DEBUG3
-  printf("\n\nkeys in init_keys\n");
+#  ifdef DEBUG4
+  printf("\n\nkeys in inititialize_keys\n");
   printf("private auth key:\n");
   print_key(private_auth_key_);
   printf("\n");
@@ -2156,7 +2156,7 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     return false;
   }
 
-#ifdef DEBUG3
+#ifdef DEBUG4
   printf("%s():%d: enclave_type_ = '%s', purpose_ = '%s'\n",
          __func__,
          __LINE__,
@@ -2489,11 +2489,6 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
 
   } else if (owner_->purpose_ == "attestation") {
 
-#if 0
-    admissions_cert_.assign((char *)response.artifact().data(),
-                            response.artifact().size());
-#endif
-
     signed_rule_.assign((char *)response.artifact().data(),
                         response.artifact().size());
     if (!owner_->platform_rule_.ParseFromString(signed_rule_)) {
@@ -2503,7 +2498,7 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
       return false;
     }
     owner_->cc_service_platform_rule_initialized_ = true;
-#ifdef DEBUG3
+#ifdef DEBUG4
     printf("\nPlatform rule: ");
     print_signed_claim(owner_->platform_rule_);
     printf("\n");

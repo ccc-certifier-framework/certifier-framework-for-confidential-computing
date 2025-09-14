@@ -2603,7 +2603,7 @@ bool construct_proof_from_request(const string          &evidence_descriptor,
     return false;
   }
 
-#ifdef DEBUG3
+#ifdef DEBUG4
   printf("construct proof from request, initial proved statements:\n");
   for (int i = 0; i < already_proved->proved_size(); i++) {
     print_vse_clause(already_proved->proved(i));
