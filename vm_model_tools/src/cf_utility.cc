@@ -53,6 +53,8 @@ DEFINE_bool(get_item, false, "get item from cryptstore");
 DEFINE_bool(put_item, false, "put item into cryptstore");
 DEFINE_bool(print_cryptstore, true, "print cryptstore");
 DEFINE_bool(save_cryptstore, false, "save cryptstore");
+DEFINE_bool(import_cryptstore, false, "import unencrypted cryptstore");
+DEFINE_bool(export_cryptstore, false, "export cryptstore unencrypted");
 
 DEFINE_string(public_key_algorithm,
               Enc_method_rsa_2048,
@@ -552,6 +554,46 @@ bool generate_public_key(key_message *km,
     printf("%s() error, line %d, cannot save cryptstore\n", __func__, __LINE__);
     return false;
   }
+  return true;
+}
+
+bool import_cryptstore(cryptstore *cs, string &input_file_name) {
+
+  string serialized_store;
+
+  if (!read_file_into_string(input_file_name, &serialized_store)) {
+    printf("%s() error, line %d, couldn't write to %s\n",
+           __func__,
+           __LINE__,
+           input_file_name.c_str());
+    return false;
+  }
+
+  if (!cs->ParseFromString(serialized_store)) {
+    printf("%s() error, line %d, couldn't parse cryptstore\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  return true;
+}
+
+bool export_cryptstore(cryptstore &cs, string &output_file_name) {
+  string serialized_store;
+  if (!cs.SerializeToString(&serialized_store)) {
+    printf("%s() error, line %d, couldn't serialize cryptstore\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!write_file_from_string(output_file_name, serialized_store)) {
+    printf("%s() error, line %d, couldn't write to %s\n",
+           __func__,
+           __LINE__,
+           output_file_name.c_str());
+    return false;
+  }
+
   return true;
 }
 
@@ -1130,8 +1172,52 @@ int main(int an, char **av) {
     }
     print_cryptstore(cs);
     goto done;
+  } else if (FLAGS_import_cryptstore) {
+    cryptstore cs;
+    if (!import_cryptstore(&cs, FLAGS_input_file)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!save_cryptstore(cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    goto done;
+  } else if (FLAGS_export_cryptstore) {
+    cryptstore cs;
+    if (!open_cryptstore(&cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!export_cryptstore(cs, FLAGS_input_file)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    goto done;
   } else {
-    printf("No action\n");
+    printf("No action specified\n");
     goto done;
   }
 

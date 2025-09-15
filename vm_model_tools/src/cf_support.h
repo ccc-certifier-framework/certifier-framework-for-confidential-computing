@@ -69,6 +69,16 @@ bool              put_item(cryptstore &cs,
                            string     &value);
 void              print_cryptstore(cryptstore &cs);
 
+bool encrypt_cryptstore(cryptstore &cs,
+                        double      duration,
+                        string     &output_file_name,
+                        string     &enclave_type,
+                        string     &sym_alg);
+bool decrypt_cryptstore(cryptstore *cs,
+                        string     &input_file_name,
+                        string     &enclave_type,
+                        string     &sym_alg);
+
 bool create_cryptstore(cryptstore &cs,
                        string     &data_dir,
                        string     &encrypted_cryptstore_filename,
