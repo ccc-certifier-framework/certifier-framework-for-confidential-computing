@@ -1,5 +1,5 @@
 #
-#    File: sev_example_app.mak
+#    File: sev_example_app_new_api.mak
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
 ifndef CERTIFIER_ROOT

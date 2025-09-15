@@ -2,7 +2,7 @@
 #    File: simple_app_under_app_service/example_app.mak (service_example_app.mak)
 
 # CERTIFIER_ROOT will be certifier-framework-for-confidential-computing/ dir
-ifndef NEWPROTOBUF
+ifndef CERTIFIER_ROOT
 CERTIFIER_ROOT = ../..
 endif
 
@@ -47,7 +47,7 @@ else
 CFLAGS=$(INCLUDE) -O3 -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 endif
 ifdef CF_NEW_API
-CFLAGS += -DNEW_API -DDEBUG3
+CFLAGS += -DNEW_API
 endif
 
 CC=g++

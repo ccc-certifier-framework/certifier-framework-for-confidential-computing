@@ -186,8 +186,10 @@ function do-make-keys() {
   fi
 
   pushd $APP_SERVICE_DIR/provisioning
+    authorityName="$DOMAIN_NAME/policyAuthority"
     $CERTIFIER_ROOT/utilities/cert_utility.exe  \
       --operation=generate-policy-key-and-test-keys  \
+      --policy_authority_name=$authorityName   \
       --policy_key_output_file=$POLICY_KEY_FILE_NAME  \
       --policy_cert_output_file=$POLICY_CERT_FILE_NAME \
       --platform_key_output_file=platform_key_file.bin   \

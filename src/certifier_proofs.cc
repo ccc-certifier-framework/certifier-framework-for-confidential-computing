@@ -2503,9 +2503,10 @@ bool construct_proof_from_full_vse_evidence(key_message       &policy_pk,
 
   proof_step *ps = nullptr;
 
-  // "policyKey is-trusted" AND "policyKey says platformKey
-  // is-trusted-for-attestation"
-  //     --> "platformKey is-trusted-for-attestation"
+  // Step 1
+  //   "policyKey is-trusted" AND "policyKey says platformKey
+  //   is-trusted-for-attestation"
+  //       --> "platformKey is-trusted-for-attestation"
   if (!already_proved->proved(4).has_clause()) {
     printf(
         "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
@@ -2520,8 +2521,9 @@ bool construct_proof_from_full_vse_evidence(key_message       &policy_pk,
   ps->set_rule_applied(3);
   const vse_clause &platformkey_is_trusted = ps->conclusion();
 
-  // "policyKey is-trusted" AND "policyKey says measurement is-trusted" -->
-  // "measurement is-trusted"
+  // Step 2
+  //   "policyKey is-trusted" AND "policyKey says measurement is-trusted" -->
+  //   "measurement is-trusted"
   if (!already_proved->proved(3).has_clause()) {
     printf(
         "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
@@ -2536,9 +2538,10 @@ bool construct_proof_from_full_vse_evidence(key_message       &policy_pk,
   ps->set_rule_applied(3);
   const vse_clause &measurement_is_trusted = ps->conclusion();
 
+  // Step 3
   // "platformKey is-trusted-for-attestation" AND "platformKey says attestKey
   // is-trusted-for-attestation"
-  //      --> "attestKey is-trusted"
+  //      --> "attestKey is-trusted-for-attestation"
   if (!already_proved->proved(1).has_clause()) {
     printf(
         "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
@@ -2553,9 +2556,10 @@ bool construct_proof_from_full_vse_evidence(key_message       &policy_pk,
   ps->set_rule_applied(5);
   const vse_clause &attestkey_is_trusted = ps->conclusion();
 
-  // "attestKey is-trusted-for-attestation" AND  "attestKey says enclaveKey
-  // speaks-for measurement"
-  //      --> "enclaveKey speaks-for measurement"
+  // Step 4
+  //   "attestKey is-trusted-for-attestation" AND  "attestKey says enclaveKey
+  //     speaks-for measurement"
+  //    --> "enclaveKey speaks-for measurement"
   if (!already_proved->proved(2).has_clause()) {
     printf(
         "%s() error, line %d, construct_proof_from_full_vse_evidence error\n",
@@ -2570,7 +2574,8 @@ bool construct_proof_from_full_vse_evidence(key_message       &policy_pk,
   ps->set_rule_applied(6);
   const vse_clause &enclave_speaksfor_measurement = ps->conclusion();
 
-  // "measurement is-trusted" AND "enclaveKey speaks-for measurement"
+  // Step 4
+  //   "measurement is-trusted" AND "enclaveKey speaks-for measurement"
   //      --> "enclaveKey is-trusted-for-authentication"
   ps = pf->add_steps();
   ps->mutable_s1()->CopyFrom(measurement_is_trusted);
@@ -2598,7 +2603,7 @@ bool construct_proof_from_request(const string          &evidence_descriptor,
     return false;
   }
 
-#ifdef PRINT_ALREADY_PROVED
+#ifdef DEBUG4
   printf("construct proof from request, initial proved statements:\n");
   for (int i = 0; i < already_proved->proved_size(); i++) {
     print_vse_clause(already_proved->proved(i));

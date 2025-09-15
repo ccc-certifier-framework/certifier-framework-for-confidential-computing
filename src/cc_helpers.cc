@@ -554,32 +554,14 @@ bool certifier::framework::cc_trust_manager::initialize_keys(
 #  ifdef DEBUG4
   printf("in initialize_keys\n");
 #  endif
-  if (cc_auth_key_initialized_ && !force) {
-    return true;
-  }
-
-  public_key_algorithm_ = public_key_alg;
-  symmetric_key_algorithm_ = symmetric_key_alg;
-
-  // Make up symmetric keys (e.g.-for sealing)for app
-  if (!generate_symmetric_key(true)) {
-    printf("%s() error, line %d, Can't generate symmetric key\n",
-           __func__,
-           __LINE__);
-    return false;
-  }
-  cc_symmetric_key_initialized_ = true;
-  if (purpose_ == "attestation") {
-    if (!generate_sealing_key(true)) {
-      printf("%s() error, line %d, Can't generate sealing key\n",
-             __func__,
-             __LINE__);
-      return false;
-    }
-  }
-  cc_sealing_key_initialized_ = true;
 
   if (purpose_ == "authentication") {
+    if (cc_auth_key_initialized_ && !force) {
+      return true;
+    }
+
+    public_key_algorithm_ = public_key_alg;
+    symmetric_key_algorithm_ = symmetric_key_alg;
 
     if (!generate_auth_key(true)) {
       printf("%s() error, line %d, Can't generate auth key\n",
@@ -589,7 +571,22 @@ bool certifier::framework::cc_trust_manager::initialize_keys(
     }
     cc_auth_key_initialized_ = true;
 
+    // Make up symmetric keys (e.g.-for sealing)for app
+    if (!generate_symmetric_key(true)) {
+      printf("%s() error, line %d, Can't generate symmetric key\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    cc_symmetric_key_initialized_ = true;
   } else if (purpose_ == "attestation") {
+
+    if (cc_service_key_initialized_ && !force) {
+      return true;
+    }
+
+    public_key_algorithm_ = public_key_alg;
+    symmetric_key_algorithm_ = symmetric_key_alg;
 
     if (!generate_service_key(true)) {
       printf("%s() error, line %d, Can't generate service key\n",
@@ -599,6 +596,13 @@ bool certifier::framework::cc_trust_manager::initialize_keys(
     }
     cc_service_key_initialized_ = true;
 
+    if (!generate_sealing_key(true)) {
+      printf("%s() error, line %d, Can't generate sealing key\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
+    cc_sealing_key_initialized_ = true;
   } else {
     printf("%s() error, line %d, invalid cold_init purpose\n",
            __func__,
@@ -614,8 +618,8 @@ bool certifier::framework::cc_trust_manager::initialize_keys(
     c->admissions_cert_.clear();
   }
 
-#  ifdef DEBUG3
-  printf("\n\nkeys in init_keys\n");
+#  ifdef DEBUG4
+  printf("\n\nkeys in inititialize_keys\n");
   printf("private auth key:\n");
   print_key(private_auth_key_);
   printf("\n");
@@ -687,7 +691,7 @@ bool certifier::framework::cc_trust_manager::initialize_new_domain(
   }
 
   if (!save_store()) {
-    printf("%s() error, line %d, can't save store%s\n",
+    printf("%s() error, line %d, can't save store: %s\n",
            __func__,
            __LINE__,
            domain_name.c_str());
@@ -1225,7 +1229,10 @@ bool certifier::framework::cc_trust_manager::save_store() {
 
   int num_key_bytes = cipher_key_byte_size(symmetric_key_algorithm_.c_str());
   if (num_key_bytes <= 0) {
-    printf("%s() error, line %d, can't get key size\n", __func__, __LINE__);
+    printf("%s() error, line %d, can't get key size for %s\n",
+           __func__,
+           __LINE__,
+           symmetric_key_algorithm_.c_str());
     return false;
   }
   if (!get_random(8 * num_key_bytes, pkb)) {
@@ -1580,7 +1587,7 @@ bool certifier::framework::cc_trust_manager::get_trust_data_from_store() {
            (byte *)service_sealing_key_.secret_key_bits().data(),
            service_sealing_key_.secret_key_bits().size());
 
-    cc_symmetric_key_initialized_ = true;
+    cc_sealing_key_initialized_ = true;
 
     // platform rule?
     string rule_tag("platform-rule");
@@ -2149,7 +2156,7 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     return false;
   }
 
-#ifdef DEBUG3
+#ifdef DEBUG4
   printf("%s():%d: enclave_type_ = '%s', purpose_ = '%s'\n",
          __func__,
          __LINE__,
@@ -2318,6 +2325,12 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
     printf("\n");
 #endif
   } else if (purpose == "attestation") {
+#ifdef DEBUG
+    printf("\n---In certify_domain\n");
+    printf("Filling ud with public service key:\n");
+    print_key(owner_->service_auth_key_);
+    printf("\n");
+#endif
     if (!make_attestation_user_data(owner_->enclave_type_,
                                     owner_->public_service_key_,
                                     &ud)) {
@@ -2476,9 +2489,6 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
 
   } else if (owner_->purpose_ == "attestation") {
 
-    admissions_cert_.assign((char *)response.artifact().data(),
-                            response.artifact().size());
-
     signed_rule_.assign((char *)response.artifact().data(),
                         response.artifact().size());
     if (!owner_->platform_rule_.ParseFromString(signed_rule_)) {
@@ -2488,6 +2498,11 @@ bool certifier::framework::certifiers::certify_domain(const string &purpose) {
       return false;
     }
     owner_->cc_service_platform_rule_initialized_ = true;
+#ifdef DEBUG4
+    printf("\nPlatform rule: ");
+    print_signed_claim(owner_->platform_rule_);
+    printf("\n");
+#endif
 
   } else {
     printf("%s() error, line: %d, Unknown purpose\n", __func__, __LINE__);
@@ -2554,7 +2569,7 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
 
   ev2->set_serialized_evidence(serialized_attestation);
 
-#ifdef DEBUG4
+#ifdef DEBUG3
   printf("Evidence package %d\n", ep->fact_assertion_size());
   for (int i = 0; i < ep->fact_assertion_size(); i++) {
     print_evidence(ep->fact_assertion(i));

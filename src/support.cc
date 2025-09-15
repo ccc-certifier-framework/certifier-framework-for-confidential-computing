@@ -4198,7 +4198,8 @@ bool certifier::utilities::make_root_key_with_cert(string      &type,
                                                    string      &name,
                                                    string      &issuer_name,
                                                    key_message *k) {
-  string root_name("root");
+
+  string root_name(issuer_name);
 
   if (type == Enc_method_rsa_4096_private || type == Enc_method_rsa_2048_private
       || type == Enc_method_rsa_3072_private
@@ -4223,10 +4224,10 @@ bool certifier::utilities::make_root_key_with_cert(string      &type,
     if (cert == nullptr)
       return false;
     if (!produce_artifact(*k,
-                          issuer_name,
+                          name,
                           root_name,
                           *k,
-                          issuer_name,
+                          name,
                           root_name,
                           01L,
                           duration,

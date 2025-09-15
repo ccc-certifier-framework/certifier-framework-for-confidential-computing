@@ -436,6 +436,8 @@ int main(int an, char **av) {
   }
 #  ifdef DEBUG3
   printf("\n\nStore initialized\n");
+#  endif
+#  ifdef DEBUG4
   printf("\ntrust data at initialization\n");
   trust_mgr->print_trust_data();
   printf("\nStore\n");
@@ -584,7 +586,7 @@ done:
          trust_mgr->purpose_.c_str());
   printf("\n");
 
-#  ifdef DEBUG3
+#  ifdef DEBUG4
   trust_mgr->print_trust_data();
 #  endif
   trust_mgr->clear_sensitive_data();

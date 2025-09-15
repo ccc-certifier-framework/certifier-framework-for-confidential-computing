@@ -235,6 +235,8 @@ cc_trust_manager *trust_mgr = nullptr;
 bool soft_Seal(spawned_children *kid, string in, string *out) {
 #ifdef DEBUG3
   printf("soft_Seal\n");
+#endif
+#ifdef DEBUG4
   const char *alg = trust_mgr->symmetric_key_algorithm_.c_str();
   printf("alg: %s\n", trust_mgr->symmetric_key_algorithm_.c_str());
   int ks = cipher_key_byte_size(alg);
@@ -275,6 +277,8 @@ bool soft_Seal(spawned_children *kid, string in, string *out) {
 bool soft_Unseal(spawned_children *kid, string in, string *out) {
 #ifdef DEBUG3
   printf("soft_Unseal\n");
+#endif
+#ifdef DEBUG4
   const char *alg = trust_mgr->symmetric_key_algorithm_.c_str();
   printf("alg: %s\n", trust_mgr->symmetric_key_algorithm_.c_str());
   int ks = cipher_key_byte_size(alg);
@@ -298,7 +302,7 @@ bool soft_Unseal(spawned_children *kid, string in, string *out) {
            __LINE__);
     return false;
   }
-#ifdef DEBUG3
+#ifdef DEBUG4
   printf("Unsealed  : ");
   print_bytes(t_size, t_out);
   printf("\n");
@@ -323,7 +327,6 @@ bool soft_Attest(spawned_children *kid, string in, string *out) {
   printf("soft_Attest\n");
 #endif
 
-  // in  is a serialized vse-attestation
   if (!trust_mgr->cc_service_key_initialized_) {
     printf("%s() error, line %d, soft_Attest: service key not initialized\n",
            __func__,
@@ -348,7 +351,8 @@ bool soft_Attest(spawned_children *kid, string in, string *out) {
 
   report_info.set_not_before(nb);
   report_info.set_not_after(na);
-  // in should be a serialized attestation_user_data
+
+  // in is a serialized attestation_user_data
   report_info.set_user_data((byte *)in.data(), in.size());
   report_info.set_verified_measurement((byte *)kid->measurement_.data(),
                                        kid->measurement_.size());
@@ -371,6 +375,12 @@ bool soft_Attest(spawned_children *kid, string in, string *out) {
   } else {
     return false;
   }
+
+#ifdef DEBUG4
+  printf("Signing report with:\n");
+  print_key(trust_mgr->private_service_key_);
+  printf("\n");
+#endif
 
   if (!sign_report(type,
                    serialized_report_info,
@@ -424,13 +434,16 @@ bool soft_Getmeasurement(spawned_children *kid, string *out) {
 void app_service_loop(spawned_children *kid, int read_fd, int write_fd) {
   bool continue_loop = true;
 
-#ifdef DEBUG
+#ifdef DEBUG3
   printf("[%d] Application Service loop: read_fd=%d write_fd=%d\n",
          __LINE__,
          read_fd,
          write_fd);
 #endif
   while (continue_loop) {
+#ifdef DEBUG3
+    printf("%s [%d] Application Service loop top\n", __func__, __LINE__);
+#endif
     bool   succeeded = false;
     string in;
     string out;
@@ -490,16 +503,18 @@ finishreq:
       printf("Response write failed\n");
     }
 
-#ifdef DEBUG
-    printf("Service loop: ended\n");
+#ifdef DEBUG3
+    printf("%s [%d] Application Service loop bottom\n", __func__, __LINE__);
 #endif
   }
 }
 
 bool start_app_service_loop(spawned_children *kid, int read_fd, int write_fd) {
-#ifdef DEBUG
+
+#ifdef DEBUG3
   printf("\n[%d] %s\n", __LINE__, __func__);
 #endif
+
 #ifndef NOTHREAD
   std::thread *t = new std::thread(app_service_loop, kid, read_fd, write_fd);
   kid->thread_obj_ = t;

@@ -25,7 +25,7 @@ DEFINE_string(operation, "", "generate policy key and self-signed cert");
 DEFINE_string(policy_key_name, "policyKey", "key name");
 DEFINE_string(policy_key_type, Enc_method_rsa_2048_private, "policy key type");
 DEFINE_string(policy_authority_name,
-              "policyAuthority",
+              "policyAuthority ",
               "policy authority name");
 DEFINE_string(policy_key_output_file, "policy_key_file.bin", "policy key file");
 DEFINE_string(policy_cert_output_file,
