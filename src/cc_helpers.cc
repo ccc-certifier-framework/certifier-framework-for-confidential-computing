@@ -2738,7 +2738,7 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
     if (sfd == -1)
       continue;
 
-    // Reuse addresses and ports
+      // Reuse addresses and ports
 #define REUSE_SOCKETS_AND_PORTS
 #ifdef REUSE_SOCKETS_AND_PORTS
 
