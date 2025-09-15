@@ -368,9 +368,17 @@ bool encrypt_cryptstore(cryptstore &cs,
     return false;
   }
 
-  int  size_protected_blob = serialized_cryptstore.size() + 256;
+  int  size_protected_blob = serialized_cryptstore.size() + 2048;
   byte blob[size_protected_blob];
 
+#define DEBUG7
+#ifdef DEBUG7
+  printf("store size: %d, assigned size: %d\n",
+         (int)serialized_cryptstore.size(),
+         size_protected_blob);
+#endif
+
+  // protect blob
   if (!protect_blob(enclave_type,
                     cryptstore_key,
                     serialized_cryptstore.size(),
@@ -401,6 +409,7 @@ bool decrypt_cryptstore(cryptstore *cs,
   string serialized_encrypted_blob;
   string serialized_cryptstore;
 
+  // read file
   if (!read_file_into_string(input_file_name, &serialized_encrypted_blob)) {
     printf("%s() error, line %d, couldn't read encrypted cryptstore %s\n",
            __func__,
@@ -409,6 +418,7 @@ bool decrypt_cryptstore(cryptstore *cs,
     return false;
   }
 
+  // unprotected blob
   key_message sealing_key;
   int         size_of_unencrypted_data = serialized_encrypted_blob.size() + 128;
   byte        unencrypted_data[size_of_unencrypted_data];

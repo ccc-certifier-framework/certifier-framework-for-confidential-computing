@@ -881,9 +881,12 @@ bool certifier::framework::protect_blob(const string &enclave_type,
   string serialized_blob;
   blob_msg.SerializeToString(&serialized_blob);
   if (((int)serialized_blob.size()) > *size_protected_blob) {
-    printf("%s() error, line %d, protect_blob: furnished buffer is too small\n",
+    printf("%s() error, line %d, protect_blob: furnished buffer is too small, "
+           "allocated: %d, needed: %d\n",
            __func__,
-           __LINE__);
+           __LINE__,
+           *size_protected_blob,
+           (int)serialized_blob.size());
     return false;
   }
   *size_protected_blob = (int)serialized_blob.size();
