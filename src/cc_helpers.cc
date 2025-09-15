@@ -2741,6 +2741,7 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
       // Reuse addresses and ports
 #define REUSE_SOCKETS_AND_PORTS
 #ifdef REUSE_SOCKETS_AND_PORTS
+
     int reuse = 1;
     if (setsockopt(sfd,
                    SOL_SOCKET,
@@ -3248,7 +3249,7 @@ bool certifier::framework::server_dispatch(
   // Get a socket.
   int sock = -1;
   if (!open_server_socket(host_name, port, &sock)) {
-    printf("%s() error, line %d, Can't open server socket to %s:%d\n",
+    printf("%s() error, line %d, Can't open server socket to %s: %d\n",
            __func__,
            __LINE__,
            host_name.c_str(),
