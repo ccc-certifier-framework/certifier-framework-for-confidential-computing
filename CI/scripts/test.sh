@@ -874,11 +874,11 @@ function test-acl_lib-programs() {
     echo "******************************************************************"
     echo " "
 
-    pushd "${CERT_ROOT}"/src > /dev/null 2>&1
+    pushd "${CERT_ROOT}"/src
     make -j${NumMakeThreads} -f certifier.mak
     popd > /dev/null 2>&1
 
-    pushd "${CERT_ROOT}"/acl_lib > /dev/null 2>&1
+    pushd "${CERT_ROOT}"/acl_lib
     cp ${CERT_ROOT}/certifier_service/certprotos/certifier.proto .
 
     # We need to clean here, otherwise make certifier_tests.mak will run
@@ -899,12 +899,13 @@ function test-acl_lib-programs() {
     make -j${NumMakeThreads} -f standalone_app.mak
 
     # Build utilities
-    pushd  ${CERT_ROOT}/utilities > /dev/null 2>&1
+    pushd  ${CERT_ROOT}/utilities
 
     make -j${NumMakeThreads} -f cert_utility.mak
     make -j${NumMakeThreads} -f policy_utilities.mak
 
-    popd > /dev/null 2>&1
+    popd
+    return 0
 
     # Prepare test_data
     cp file_1 file_2 test_data
@@ -912,8 +913,8 @@ function test-acl_lib-programs() {
 
     # This creates the policy key and policy cert.
     ${CERT_ROOT}/utilities/cert_utility.exe --operation=generate-policy-key  \
-                            --policy_key_output_file=policy_key_file.bin \
-                            --policy_cert_output_file=policy_cert_file.bin
+	--policy_authority_name="datica" --policy_key_output_file=policy_key_file.bin \
+        --policy_cert_output_file=policy_cert_file.bin
     cd ..
     # This makes the channel keys (auth keys and certs for the secure channel).
     sleep 1
