@@ -371,13 +371,6 @@ bool encrypt_cryptstore(cryptstore &cs,
   int  size_protected_blob = serialized_cryptstore.size() + 2048;
   byte blob[size_protected_blob];
 
-#define DEBUG7
-#ifdef DEBUG7
-  printf("store size: %d, assigned size: %d\n",
-         (int)serialized_cryptstore.size(),
-         size_protected_blob);
-#endif
-
   // protect blob
   if (!protect_blob(enclave_type,
                     cryptstore_key,
