@@ -1074,9 +1074,9 @@ int main(int an, char **av) {
     }
 
     cryptstore cs;
-    string     entry_tag;
+    string     entry_tag(FLAGS_tag);
     string     entry_type;
-    int        entry_version;
+    int        entry_version = FLAGS_entry_version;
     string     entry_tp;
     string     value;
     bool       exportable;
@@ -1108,10 +1108,21 @@ int main(int an, char **av) {
       goto done;
     }
 #ifdef DEBUG7
-    printf("Got item:\n");
-    print_cryptstore(cs);
-    // TODO, what do we write?
+    printf("Got item, tag: %s, type: %s, version: %d, exportable: %B\n",
+           entry_tag.c_str(),
+           entry_type.c_str(),
+           entry_version,
+           exportable);
 #endif
+    if (!write_file_from_string(FLAGS_output_file, value)) {
+      printf("%s() error, line %d, cannot write value to %s\n",
+             __func__,
+             __LINE__,
+             FLAGS_output_file.c_str());
+      ret = 1;
+      goto done;
+    }
+
     goto done;
   } else if (FLAGS_put_item) {
 
