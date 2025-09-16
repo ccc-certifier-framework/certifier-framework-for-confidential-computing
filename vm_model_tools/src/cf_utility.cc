@@ -51,7 +51,7 @@ DEFINE_bool(generate_symmetric_key, false, "generate symmetric key?");
 DEFINE_bool(generate_public_key, false, "generate public key?");
 DEFINE_bool(get_item, false, "get item from cryptstore");
 DEFINE_bool(put_item, false, "put item into cryptstore");
-DEFINE_bool(print_cryptstore, true, "print cryptstore");
+DEFINE_bool(print_cryptstore, false, "print cryptstore");
 DEFINE_bool(save_cryptstore, false, "save cryptstore");
 DEFINE_bool(import_cryptstore, false, "import unencrypted cryptstore");
 DEFINE_bool(export_cryptstore, false, "export cryptstore unencrypted");
@@ -66,12 +66,12 @@ DEFINE_string(policy_domain_name, "datica", "policy domain name");
 DEFINE_string(policy_key_cert_file,
               "policy_certificate.datica",
               "file name for policy certificate");
-DEFINE_string(data_dir, "./cf_data", "supporting file directory");
+DEFINE_string(data_dir, "./cf_data/", "supporting file directory");
 DEFINE_string(input_format, "serialized-protobuf", "input file format");
 DEFINE_string(output_format, "serialized-protobuf", "output file format");
 
 DEFINE_string(policy_store_filename,
-              "policy_store.bin.datica",
+              "policy_store.datica",
               "policy store file name");
 DEFINE_string(encrypted_cryptstore_filename,
               "encrypted_cryptstore.datica",
@@ -111,6 +111,8 @@ DEFINE_string(platform_attest_endorsement_file,
 
 // -------------------------------------------------------------------------
 
+#define DEBUG7
+
 void print_os_model_parameters() {
   printf("cf_utility parameters:\n");
   printf("\n");
@@ -148,6 +150,14 @@ void print_os_model_parameters() {
     printf("  Save cryptstore?: yes\n");
   else
     printf("  Save cryptstore?: no\n");
+  if (FLAGS_import_cryptstore)
+    printf("  Import cryptstore?: yes\n");
+  else
+    printf("  Import cryptstore?: no\n");
+  if (FLAGS_export_cryptstore)
+    printf("  Export cryptstore?: yes\n");
+  else
+    printf("  Export cryptstore?: no\n");
   printf("\n");
   printf("  Policy doman name: %s\n", FLAGS_policy_domain_name.c_str());
   printf("  Policy_key_cert_file: %s\n", FLAGS_policy_key_cert_file.c_str());
@@ -579,6 +589,7 @@ bool import_cryptstore(cryptstore *cs, string &input_file_name) {
 }
 
 bool export_cryptstore(cryptstore &cs, string &output_file_name) {
+
   string serialized_store;
   if (!cs.SerializeToString(&serialized_store)) {
     printf("%s() error, line %d, couldn't serialize cryptstore\n",
@@ -750,9 +761,6 @@ int main(int an, char **av) {
   // Create trust manager
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_filename);
-#ifdef DEBUG3
-  printf("\npolicy store: %s\n", store_file.c_str());
-#endif
   trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
   if (trust_mgr == nullptr) {
     printf("%s() error, line %d, couldn't initialize trust object\n",
@@ -1173,6 +1181,10 @@ int main(int an, char **av) {
     print_cryptstore(cs);
     goto done;
   } else if (FLAGS_import_cryptstore) {
+#ifdef DEBUG7
+    printf("\nImport cryptstore\n");
+#endif
+
     cryptstore cs;
     if (!import_cryptstore(&cs, FLAGS_input_file)) {
       printf("%s() error, line %d, cannot open cryptstore\n",
@@ -1181,6 +1193,11 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
+#ifdef DEBUG7
+    printf("Recovered cryptstore:\n");
+    print_cryptstore(cs);
+    goto done;
+#endif
     if (!save_cryptstore(cs,
                          FLAGS_data_dir,
                          FLAGS_encrypted_cryptstore_filename,
@@ -1195,6 +1212,9 @@ int main(int an, char **av) {
     }
     goto done;
   } else if (FLAGS_export_cryptstore) {
+#ifdef DEBUG7
+    printf("\nExport cryptstore\n");
+#endif
     cryptstore cs;
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
@@ -1208,13 +1228,17 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-    if (!export_cryptstore(cs, FLAGS_input_file)) {
+    if (!export_cryptstore(cs, FLAGS_output_file)) {
       printf("%s() error, line %d, cannot open cryptstore\n",
              __func__,
              __LINE__);
       ret = 1;
       goto done;
     }
+#ifdef DEBUG7
+    printf("Original cryptstore\n");
+    print_cryptstore(cs);
+#endif
     goto done;
   } else {
     printf("No action specified\n");

@@ -412,9 +412,9 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG3
+#  ifdef DEBUG3
     print_cryptstore(cs);
-#endif
+#  endif
     goto done;
   } else if (FLAGS_print_cryptstore) {
     cryptstore cs;
