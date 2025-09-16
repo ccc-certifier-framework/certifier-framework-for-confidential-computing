@@ -80,6 +80,7 @@ DEFINE_string(keyname, "primary-store-encryption-key", "generated key name");
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
 DEFINE_string(tag, "policy-key", "cryptstore entry tag");
 DEFINE_int32(entry_version, 0, "cryptstore entry version");
+DEFINE_bool(exportable, false, "exportable");
 DEFINE_string(type,
               "key-message-serialized-protobuf",
               "cryptstore entry data type");
@@ -159,6 +160,7 @@ void print_os_model_parameters() {
   else
     printf("  Export cryptstore?: no\n");
   printf("\n");
+
   printf("  Policy doman name: %s\n", FLAGS_policy_domain_name.c_str());
   printf("  Policy_key_cert_file: %s\n", FLAGS_policy_key_cert_file.c_str());
   printf("  Policy store file name: %s\n", FLAGS_policy_store_filename.c_str());
@@ -167,28 +169,39 @@ void print_os_model_parameters() {
   printf("  Directory for cf_utility supporting data for this policy: %s\n",
          FLAGS_data_dir.c_str());
   printf("\n");
+
   printf("  Protecting enclave type: %s\n", FLAGS_enclave_type.c_str());
   printf("  Address for certifier service: %s\n",
          FLAGS_certifier_service_URL.c_str());
   printf("  Port for service %d\n", (int)FLAGS_service_port);
   printf("\n");
+
   printf("  Input file format: %s\n", FLAGS_input_format.c_str());
   printf("  Output file format: %s\n", FLAGS_output_format.c_str());
   printf("  Input file name: %s\n", FLAGS_input_file.c_str());
   printf("  Output file name: %s\n", FLAGS_output_file.c_str());
   printf("\n");
+
   printf("  Public key algorithm: %s\n", FLAGS_public_key_algorithm.c_str());
   printf("  Symmetric key algorithm: %s\n",
          FLAGS_symmetric_key_algorithm.c_str());
   printf("  Key name: %s\n", FLAGS_keyname.c_str());
   printf("  Duration: %lf\n", FLAGS_duration);
+  printf("\n");
+
   printf("  Cryptstore entry name: %s\n", FLAGS_tag.c_str());
   printf("  Cryptstore entry version: %d\n", (int)FLAGS_entry_version);
   printf("  Cryptstore entry type: %s\n", FLAGS_type.c_str());
+  if (FLAGS_exportable)
+    printf("  Cryptstore entry is exportable\n");
+  else
+    printf("  Cryptstore entry is not exportable\n");
   printf("\n");
+
   printf("  ARK certificate file: %s\n", FLAGS_ark_cert_file.c_str());
   printf("  ASK certificate file: %s\n", FLAGS_ask_cert_file.c_str());
   printf("  VCEK certificate file: %s\n", FLAGS_vcek_cert_file.c_str());
+  printf("\n");
 }
 
 // --------------------------------------------------------------------------
@@ -395,6 +408,7 @@ bool add_key_and_cert(cryptstore &cs) {
   ce->set_version(version);
   ce->set_time_entered(tp_str);
   ce->set_blob((byte *)c->admissions_cert_.data(), c->admissions_cert_.size());
+  ce->set_exportable(true);
 
   string tag2(FLAGS_policy_domain_name);
   tag2.append("-private-auth-key");
@@ -413,6 +427,7 @@ bool add_key_and_cert(cryptstore &cs) {
   ce->set_type(type);
   ce->set_version(version);
   ce->set_time_entered(tp_str);
+  ce->set_exportable(false);
 
   string serialized_key;
   if (!trust_mgr->private_auth_key_.SerializeToString(&serialized_key)) {
@@ -933,6 +948,7 @@ int main(int an, char **av) {
     ce->set_type(type);
     ce->set_version(version);
     ce->set_time_entered(tp_str);
+    ce->set_exportable(true);
 
     string serialized_key;
     if (!km.SerializeToString(&serialized_key)) {
@@ -1063,6 +1079,7 @@ int main(int an, char **av) {
     int        entry_version;
     string     entry_tp;
     string     value;
+    bool       exportable;
 
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
@@ -1081,7 +1098,8 @@ int main(int an, char **av) {
                   &entry_type,
                   &entry_version,
                   &entry_tp,
-                  &value)) {
+                  &value,
+                  &exportable)) {
       printf("%s() error, line %d, cannot find %s entry\n",
              __func__,
              __LINE__,
@@ -1089,8 +1107,10 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG3
+#ifdef DEBUG7
+    printf("Got item:\n");
     print_cryptstore(cs);
+    // TODO, what do we write?
 #endif
     goto done;
   } else if (FLAGS_put_item) {
@@ -1135,16 +1155,25 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-    string     entry_tag;
-    string     entry_type;
-    int        entry_version;
-    time_point entry_tp;
-    string     value;
-    if (!put_item(cs, entry_tag, entry_type, entry_version, value)) {
+    string value;
+    if (!read_file_into_string(FLAGS_input_file, &value)) {
+      printf("%s() error, line %d, couldn't read value from %s\n",
+             __func__,
+             __LINE__,
+             FLAGS_input_file.c_str());
+      ret = 1;
+      goto done;
+    }
+    if (!put_item(cs,
+                  FLAGS_tag,
+                  FLAGS_type,
+                  FLAGS_entry_version,
+                  value,
+                  FLAGS_exportable)) {
       printf("%s() error, line %d, cannot insert %s entry\n",
              __func__,
              __LINE__,
-             entry_tag.c_str());
+             FLAGS_tag.c_str());
       ret = 1;
       goto done;
     }

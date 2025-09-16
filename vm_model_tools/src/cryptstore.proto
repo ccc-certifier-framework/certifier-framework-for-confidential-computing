@@ -25,6 +25,7 @@ message cryptstore_entry {
   optional int32 version                    = 3;
   optional bytes time_entered               = 4;
   optional bytes blob                       = 5;
+  optional bool exportable                  = 6;
 };
 
 message cryptstore {

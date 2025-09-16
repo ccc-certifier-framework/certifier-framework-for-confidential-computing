@@ -61,12 +61,14 @@ bool              get_item(cryptstore &cs,
                            string     *type,
                            int        *version,
                            string     *tp,
-                           string     *value);
+                           string     *value,
+                           bool       *exportable);
 bool              put_item(cryptstore &cs,
                            string     &tag,
                            string     &type,
                            int        &version,
-                           string     &value);
+                           string     &value,
+                           bool       &exportable);
 void              print_cryptstore(cryptstore &cs);
 
 bool encrypt_cryptstore(cryptstore &cs,

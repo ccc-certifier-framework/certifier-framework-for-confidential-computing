@@ -107,6 +107,8 @@ bool test_get_put_item(bool print) {
   string tp_str;
   string serialized_key_1;
   string serialized_key_2;
+  bool   exportable = true;
+
   if (!km1.SerializeToString(&serialized_key_1)) {
     printf("Can't serialize symmetric key\n");
     return false;
@@ -115,11 +117,11 @@ bool test_get_put_item(bool print) {
     printf("Can't serialize public key\n");
     return false;
   }
-  if (!put_item(cs, tag1, cs_type, version1, serialized_key_1)) {
+  if (!put_item(cs, tag1, cs_type, version1, serialized_key_1, exportable)) {
     printf("Can't put_item key 1\n");
     return false;
   }
-  if (!put_item(cs, tag2, cs_type, version2, serialized_key_2)) {
+  if (!put_item(cs, tag2, cs_type, version2, serialized_key_2, exportable)) {
     printf("Can't put_item key 1\n");
     return false;
   }
@@ -150,7 +152,13 @@ bool test_get_put_item(bool print) {
   string recovered_value_1;
   string recovered_value_2;
   string tp_str2;
-  if (!get_item(cs, tag1, &cs_type, &version2, &tp_str2, &recovered_value_1)) {
+  if (!get_item(cs,
+                tag1,
+                &cs_type,
+                &version2,
+                &tp_str2,
+                &recovered_value_1,
+                &exportable)) {
     printf("Can't get_item key 1\n");
     return false;
   }

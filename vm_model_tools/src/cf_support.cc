@@ -70,11 +70,21 @@ void print_cryptstore_entry(const cryptstore_entry &ent) {
         }
       }
       X509_free(cert);
-    } else {
+    } else if (ent.type() == "binary-blob") {
       printf("Value:\n");
       print_bytes(ent.blob().size(), (byte *)ent.blob().data());
       printf("\n");
+    } else {
+      printf("Unknown type:\n");
+      print_bytes(ent.blob().size(), (byte *)ent.blob().data());
+      printf("\n");
     }
+  }
+  if (ent.has_exportable()) {
+    if (ent.exportable())
+      printf("Exportable\n");
+    else
+      printf("Not exportable\n");
   }
 }
 
@@ -262,7 +272,8 @@ bool get_item(cryptstore &cs,
               string     *type,
               int        *version,
               string     *tp,
-              string     *value) {
+              string     *value,
+              bool       *exportable) {
   cryptstore_entry *ce = nullptr;
   int               l = 0;
   int               h = 0;
@@ -278,7 +289,14 @@ bool get_item(cryptstore &cs,
   if (ce == nullptr) {
     return false;
   }
-  *tp = ce->time_entered();
+  if (ce->has_time_entered())
+    *tp = ce->time_entered();
+  if (ce->has_type())
+    *type = ce->type();
+  if (ce->has_version())
+    *version = ce->version();
+  if (ce->has_exportable())
+    *exportable = ce->exportable();
   value->assign((const char *)ce->blob().data(), ce->blob().size());
   return true;
 }
@@ -287,7 +305,8 @@ bool put_item(cryptstore &cs,
               string     &tag,
               string     &type,
               int        &version,
-              string     &value) {
+              string     &value,
+              bool       &exportable) {
   cryptstore_entry *ce = nullptr;
   int               l = 0;
   int               h = 0;
@@ -323,6 +342,7 @@ bool put_item(cryptstore &cs,
   ce->set_time_entered(tp_str);
   ce->set_version(ver);
   ce->set_blob((byte *)value.data(), value.size());
+  ce->set_exportable(exportable);
   return true;
 }
 
