@@ -67,6 +67,8 @@ DEFINE_string(policy_store_filename,
 DEFINE_string(encrypted_cryptstore_filename,
               "encrypted_cryptstore.datica",
               "encrypted cryptstore file name");
+DEFINE_string(key_server_url, "localhost", "address of the key service");
+DEFINE_int32(key_server_port, 8120, "port for key service");
 
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
 DEFINE_string(type,
@@ -105,8 +107,13 @@ void print_parameters() {
   else
     printf("  Print cryptstore?: no\n");
   printf("\n");
+
   printf("  Policy doman name: %s\n", FLAGS_policy_domain_name.c_str());
   printf("  Policy_key_cert_file: %s\n", FLAGS_policy_key_cert_file.c_str());
+  printf("  key-server url: %s\n", FLAGS_key_server_url.c_str());
+  printf("  key-server port: %d\n", (int)FLAGS_key_server_port);
+  printf("\n");
+
   printf("  Policy store file name: %s\n", FLAGS_policy_store_filename.c_str());
   printf("  Encrypted cryptstore file name: %s\n",
          FLAGS_encrypted_cryptstore_filename.c_str());
@@ -117,14 +124,12 @@ void print_parameters() {
   printf("  Input file name: %s\n", FLAGS_input_file.c_str());
   printf("  Output file name: %s\n", FLAGS_output_file.c_str());
   printf("\n");
+
   printf("  Public key algorithm: %s\n", FLAGS_public_key_algorithm.c_str());
   printf("  Symmetric key algorithm: %s\n",
          FLAGS_symmetric_key_algorithm.c_str());
   printf("  Duration: %lf\n", FLAGS_duration);
   printf("\n");
-  printf("  ARK certificate file: %s\n", FLAGS_ark_cert_file.c_str());
-  printf("  ASK certificate file: %s\n", FLAGS_ask_cert_file.c_str());
-  printf("  VCEK certificate file: %s\n", FLAGS_vcek_cert_file.c_str());
 }
 
 // --------------------------------------------------------------------------

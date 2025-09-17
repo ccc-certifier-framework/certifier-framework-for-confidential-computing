@@ -31,3 +31,22 @@ message cryptstore_entry {
 message cryptstore {
   repeated cryptstore_entry entries         = 1;
 };
+
+// request_type is "store", "retrieve" or "signed-nonce"
+message key_service_message_request {
+  optional string resource_name             = 1;
+  optional string request_type              = 2;
+  optional bytes data                       = 3;
+  optional string serialized_credentials    = 4;
+};
+
+// response_type is "final" or "request-further-authentication"
+// status is "succeeded" or "failed"
+message key_service_message_response {
+  optional string resource_name             = 1;
+  optional string response_type             = 2;
+  optional string status                    = 3;
+  optional bytes  data                      = 4;
+};
+
+
