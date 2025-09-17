@@ -59,8 +59,8 @@ DEFINE_string(symmetric_key_algorithm,
               "symmetric algorithm");
 
 DEFINE_string(data_dir, "./cf_data", "supporting file directory");
-DEFINE_string(input_file, "in", "input file");
-DEFINE_string(output_file, "out", "output file");
+DEFINE_string(input_file, "server.in", "input file");
+DEFINE_string(output_file, "server.out", "output file");
 
 DEFINE_string(policy_store_filename,
               "policy_store.bin.datica",
@@ -227,7 +227,6 @@ void print_help() {
   printf("  --save_cryptstore=false, save cryptstore (normally automatic)\n");
   printf("\n");
   printf("  --tag=\"\", value of tag for put_item\n");
-  printf("  --version=0, value of version for put_item\n");
   printf("  --type=\"\", value of type for put_item\n");
   printf("    Possible types: X509-der-cert, key-message-serialized-protobuf, "
          "binary-blob\n");
@@ -306,7 +305,7 @@ void server_application(secure_authenticated_channel &channel) {
   // This should be a request protobuf
   printf("SSL server read %d bytes:\n", (int)out.size());
   print_bytes(out.size(), (byte *)out.data());
-#endif
+#endif  // DEBUG7
 
   // Parse request
   if (!request.ParseFromString(out)) {
@@ -316,6 +315,12 @@ void server_application(secure_authenticated_channel &channel) {
     channel.close();
     return;
   }
+
+#ifdef DEBUG7
+  printf("key_server received request\n");
+  print_request_packet(request);
+#endif
+
   response.set_resource_name(request.resource_name());
   response.set_response_type("final");
 
@@ -384,11 +389,14 @@ void server_application(secure_authenticated_channel &channel) {
     return;
   }
 
+#ifdef DEBUG7
+  printf("key_server response sent\n");
+  print_response_packet(response);
+#endif
+
   // Serialize response
   if (!response.SerializeToString(&serialized_response)) {
-#ifdef DEBUG7
     printf("Couldn't serialize response\n");
-#endif
     channel.close();
     return;
   }

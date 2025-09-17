@@ -60,8 +60,8 @@ DEFINE_string(symmetric_key_algorithm,
 DEFINE_string(data_dir, "./cf_data", "supporting file directory");
 DEFINE_string(input_format, "cryptstore-entry", "input format");
 DEFINE_string(output_format, "cryptstore-entry", "output format");
-DEFINE_string(input_file, "in", "input file");
-DEFINE_string(output_file, "out", "output file");
+DEFINE_string(input_file, "client.in", "input file");
+DEFINE_string(output_file, "client.out", "output file");
 
 DEFINE_string(policy_store_filename,
               "policy_store.bin.datica",
@@ -74,7 +74,7 @@ DEFINE_int32(key_server_port, 8120, "port for key service");
 
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
 DEFINE_string(resource_name, "", "resource name");
-DEFINE_int32(version, 0, "version");
+DEFINE_int32(key_version, 0, "version");
 DEFINE_string(action, "retrieve", "retrieve or store");
 
 DEFINE_string(ark_cert_file,
@@ -239,7 +239,7 @@ void print_help() {
   printf("\n");
 
   printf("  --action=retrieve|store, value of version\n");
-  printf("  --version=0, value of version for put_item\n");
+  printf("  --key_version=0, value of version for put_item\n");
   printf("  --get_item=false, get cryptstore enty of specified tag/value, "
          "write to output file\n");
   printf("  --put_item=false, set cryptstore entry of specified tag/value from "
@@ -283,6 +283,8 @@ void print_help() {
 
 // -------------------------------------------------------------------------------------
 
+#define DEBUG7
+
 cc_trust_manager *trust_mgr = nullptr;
 cryptstore        g_cs;
 string            g_serialized_policy_cert;
@@ -315,7 +317,7 @@ bool client_application(secure_authenticated_channel &channel) {
   cryptstore_entry cf;
   string           serialized_cs_entry;
   request.set_resource_name(FLAGS_resource_name);
-  request.set_version(FLAGS_version);
+  request.set_version(FLAGS_key_version);
 
   if (FLAGS_action == "retrieve") {
     request.set_request_type("retrieve");
@@ -340,7 +342,7 @@ bool client_application(secure_authenticated_channel &channel) {
         return true;
       }
       request.set_resource_name(FLAGS_resource_name);
-      request.set_version(FLAGS_version);
+      request.set_version(FLAGS_key_version);
       request.set_value_type("binary-blob");
       request.set_data(value);
 
@@ -428,6 +430,18 @@ bool client_application(secure_authenticated_channel &channel) {
 #ifdef DEBUG7
   printf("Request succeeded\n");
 #endif
+
+  // save updated key store
+  if (!save_cryptstore(g_cs,
+                       FLAGS_data_dir,
+                       FLAGS_encrypted_cryptstore_filename,
+                       FLAGS_duration,
+                       FLAGS_enclave_type,
+                       FLAGS_symmetric_key_algorithm)) {
+    printf("%s() error, line %d, cannot save cryptstore\n", __func__, __LINE__);
+    printf("Couldn't save cryptstore\n");
+    return true;
+  }
 
   // print data and write value
   cryptstore_entry ce;
@@ -585,6 +599,18 @@ int main(int an, char **av) {
     goto done;
   }
 
+  // open cryptstore
+  if (!open_cryptstore(&g_cs,
+                       FLAGS_data_dir,
+                       FLAGS_encrypted_cryptstore_filename,
+                       FLAGS_duration,
+                       FLAGS_enclave_type,
+                       FLAGS_symmetric_key_algorithm)) {
+    printf("%s() error, line %d, cannot open cryptstore\n", __func__, __LINE__);
+    ret = 1;
+    goto done;
+  }
+
   // Get policy-cert, admissions_cert and private-key
   // Put them in
   //    g_serialized_policy_cert;
@@ -615,7 +641,7 @@ int main(int an, char **av) {
                 &tp,
                 &g_serialized_admissions_cert,
                 &exportable)) {
-    printf("%s() error, line %d, can't retrieve admissions cert\n",
+    printf("%s() error, line %d, get-item failed to get admissions cert\n",
            __func__,
            __LINE__);
     ret = 1;
