@@ -277,14 +277,61 @@ void print_help() {
 // -------------------------------------------------------------------------------------
 
 cc_trust_manager *trust_mgr = nullptr;
+cryptstore        g_cs;
+string            g_serialized_policy_cert;
+key_message       g_my_private_key;
+string            g_serialized_admissions_cert;
 
+bool error_response(key_service_message_response *response,
+                    string                       *serialized_response) {
+  response->set_status("failed");
+  return response->SerializeToString(serialized_response);
+}
+
+bool client_application(secure_authenticated_channel &channel) {
+
+  printf("Client peer id is %s\n", channel.peer_id_.c_str());
+#ifdef DEBUG
+  if (channel.peer_cert_ != nullptr) {
+    printf("Client peer cert is:\n");
+    X509_print_fp(stdout, channel.peer_cert_);
+  }
+#endif  // DEBUG
+
+  // client sends a message over authenticated, encrypted channel
+  const char *msg = "Hi from your secret client\n";
+  channel.write(strlen(msg), (byte *)msg);
+
+  // Get server response over authenticated, encrypted channel and print it
+  string out;
+  int    n = channel.read(&out);
+  printf("SSL client read: %s\n", out.data());
+  channel.close();
+
+  if (n < 0 || strcmp(out.c_str(), "Hi from your secret server\n") != 0) {
+    printf("%s() error, line %d, did not receive expected server response\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  return true;
+}
 
 int main(int an, char **av) {
   string usage("cf_key_client");
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
-  int ret = 0;
+  int         ret = 0;
+  certifiers *c = nullptr;
+  string      tag;
+  string      type;
+  string      value;
+  int         version;
+  string      tp;
+  bool        exportable;
+  string      policy_cert_file_name;
+  string      my_role("client");
 
   SSL_library_init();
   string purpose("authentication");
@@ -317,12 +364,15 @@ int main(int an, char **av) {
     return false;
   }
 
-  // Create trust manager
+  secure_authenticated_channel channel(my_role);
+
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_filename);
 #ifdef DEBUG3
   printf("\npolicy store: %s\n", store_file.c_str());
 #endif
+
+  // Create trust manager
   trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
   if (trust_mgr == nullptr) {
     printf("%s() error, line %d, couldn't initialize trust object\n",
@@ -361,87 +411,107 @@ int main(int an, char **av) {
     goto done;
   }
 
-#if 0
-  // Operation?
-  if (FLAGS_init_trust) {
-
-    if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
-      printf("%s() error, line %d, domain %s does not init\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-    certifiers *c =
-        trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
-    if (c == nullptr) {
-      printf("%s() error, line %d, can't find certifier for %s\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-    if (!c->is_certified_) {
-      printf("%s() error, line %d, domain %s snot certified\n",
-             __func__,
-             __LINE__,
-             FLAGS_policy_domain_name.c_str());
-      ret = 1;
-      goto done;
-    }
-
-    cryptstore cs;
-    if (!open_cryptstore(&cs,
-                         FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename,
-                         FLAGS_duration,
-                         FLAGS_enclave_type,
-                         FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot open cryptstore\n",
-             __func__,
-             __LINE__);
-      ret = 1;
-      goto done;
-    }
-    if (!save_cryptstore(cs,
-                         FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename,
-                         FLAGS_duration,
-                         FLAGS_enclave_type,
-                         FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot save cryptstore\n",
-             __func__,
-             __LINE__);
-      ret = 1;
-      goto done;
-    }
-#  ifdef DEBUG3
-    print_cryptstore(cs);
-#  endif
-    goto done;
-  } else if (FLAGS_print_cryptstore) {
-    cryptstore cs;
-    if (!open_cryptstore(&cs,
-                         FLAGS_data_dir,
-                         FLAGS_encrypted_cryptstore_filename,
-                         FLAGS_duration,
-                         FLAGS_enclave_type,
-                         FLAGS_symmetric_key_algorithm)) {
-      printf("%s() error, line %d, cannot open cryptstore\n",
-             __func__,
-             __LINE__);
-      ret = 1;
-      goto done;
-    }
-    print_cryptstore(cs);
-    goto done;
-  } else {
-    printf("No action specified\n");
+  if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
+    printf("%s() error, line %d, domain %s does not init\n",
+           __func__,
+           __LINE__,
+           FLAGS_policy_domain_name.c_str());
+    ret = 1;
     goto done;
   }
-#endif
+  c = trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
+  if (c == nullptr) {
+    printf("%s() error, line %d, can't find certifier for %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_policy_domain_name.c_str());
+    ret = 1;
+    goto done;
+  }
+  if (!c->is_certified_) {
+    printf("%s() error, line %d, domain %s snot certified\n",
+           __func__,
+           __LINE__,
+           FLAGS_policy_domain_name.c_str());
+    ret = 1;
+    goto done;
+  }
+
+  // Get policy-cert, admissions_cert and private-key
+  // Put them in
+  //    g_serialized_policy_cert;
+  //    g_serialized_admissions_cert;  tag is domain-name-admission-certificate
+  //    g_my_private_key;  tag is domain-name-private-auth-key
+  policy_cert_file_name = FLAGS_data_dir;
+  policy_cert_file_name.append("cf_data/");
+  policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+  if (!read_file_into_string(policy_cert_file_name,
+                             &g_serialized_policy_cert)) {
+    printf("%s() error, line %d, can't read policy cert \n",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+
+  // Admissions cert tag is domain-name-admission-certificate
+  //    g_serialized_admissions_cert
+  // Private key tag is domain-name-private-auth-key
+  //    g_my_private_key
+  tag = FLAGS_policy_domain_name;
+  tag.append("-admission-certificate");
+  if (!get_item(g_cs,
+                tag,
+                &type,
+                &version,
+                &tp,
+                &g_serialized_admissions_cert,
+                &exportable)) {
+    printf("%s() error, line %d, can't retrieve admissions cert\n",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+  // g_my_private_key tag is domain-name-private-auth-key
+  tag.clear();
+  type.clear();
+  tp.clear();
+  version = 0;
+  tag = FLAGS_policy_domain_name;
+  tag.append("-private-auth-key");
+  if (!get_item(g_cs, tag, &type, &version, &tp, &value, &exportable)) {
+    printf("%s() error, line %d, can't retrieve private key\n",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+  if (!g_my_private_key.ParseFromString(value)) {
+    printf("%s() error, line %d, can't parse private key\n",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
+
+  if (!channel.init_client_ssl(FLAGS_policy_domain_name,
+                               FLAGS_key_server_url,
+                               FLAGS_key_server_port,
+                               *trust_mgr)) {
+    printf("%s() error, line %d, Can't init client app\n", __func__, __LINE__);
+    ret = 1;
+    goto done;
+  }
+
+  // This is the actual application code.
+  if (!client_application(channel)) {
+    printf("%s() error, line %d, client_application failed\n",
+           __func__,
+           __LINE__);
+    ret = 1;
+    goto done;
+  }
 
 done:
   trust_mgr->clear_sensitive_data();
