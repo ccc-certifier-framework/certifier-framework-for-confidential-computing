@@ -290,7 +290,7 @@ void server_application(secure_authenticated_channel &channel) {
   string                       serialized_response;
 
 #ifdef DEBUG7
-  printf("Server peer id is %s\n", channel.peer_id_.c_str());
+  printf("key_server: Server peer id is %s\n", channel.peer_id_.c_str());
   if (channel.peer_cert_ != nullptr) {
     printf("Server peer cert is:\n");
     X509_print_fp(stdout, channel.peer_cert_);
@@ -303,8 +303,9 @@ void server_application(secure_authenticated_channel &channel) {
 
 #ifdef DEBUG7
   // This should be a request protobuf
-  printf("SSL server read %d bytes:\n", (int)out.size());
+  printf("key_server: SSL server read %d bytes:\n", (int)out.size());
   print_bytes(out.size(), (byte *)out.data());
+  printf("\n");
 #endif  // DEBUG7
 
   // Parse request
@@ -317,7 +318,7 @@ void server_application(secure_authenticated_channel &channel) {
   }
 
 #ifdef DEBUG7
-  printf("key_server received request\n");
+  printf("\nkey_server received request\n");
   print_request_packet(request);
 #endif
 
@@ -349,6 +350,9 @@ void server_application(secure_authenticated_channel &channel) {
     }
     string serialized_entry;
     if (!ce.SerializeToString(&serialized_entry)) {
+      printf("%s() error, line %d, can't serialize cryptstore_entry\n",
+             __func__,
+             __LINE__);
       channel.write((int)serialized_response.size(),
                     (byte *)serialized_response.data());
       channel.close();
@@ -357,30 +361,70 @@ void server_application(secure_authenticated_channel &channel) {
     response.set_data(serialized_entry);
     response.set_response_type("final");
     response.set_status("succeeded");
+
   } else if (request.request_type() == "store") {
+
     cryptstore_entry rce;
     string           serialized_cryptstore_entry;
     serialized_cryptstore_entry.assign((char *)request.data().data(),
                                        request.data().size());
-    if (!rce.ParseFromString(serialized_cryptstore_entry)) {
-      if (error_response(&response, &serialized_response))
-        channel.write((int)serialized_response.size(),
-                      (byte *)serialized_response.data());
-      channel.close();
-      return;
+    if (request.value_type() == "binary-blob") {
+
+      rce.set_tag(request.resource_name());
+      rce.set_type("binary-blob");
+      rce.set_version(request.version());
+      rce.set_exportable(true);
+      rce.set_blob((byte *)request.data().data(), (int)request.data().size());
+
+    } else {
+
+      if (!rce.ParseFromString(serialized_cryptstore_entry)) {
+        printf("%s() error, line %d, can't parse cryptstore_entry\n",
+               __func__,
+               __LINE__);
+        if (error_response(&response, &serialized_response))
+          channel.write((int)serialized_response.size(),
+                        (byte *)serialized_response.data());
+        channel.close();
+        return;
+      }
     }
+
     if (!put_cryptstore_item_entry(g_cs, rce.tag(), rce.version(), rce)) {
       if (error_response(&response, &serialized_response))
         channel.write((int)serialized_response.size(),
                       (byte *)serialized_response.data());
+      printf("%s() error, line %d, can't put_item into crytpstore\n",
+             __func__,
+             __LINE__);
       channel.close();
       return;
     }
+
+#ifdef DEBUG7
+    printf("\nkey_server: put_cryptstore_item_entry succeeded\n");
+    print_cryptstore_entry(rce);
+    printf("\n");
+#endif
+
     response.set_response_type("final");
     response.set_status("succeeded");
+
+    if (!save_cryptstore(g_cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+             __func__,
+             __LINE__);
+      return;
+    }
   } else {
+
 #ifdef DEBUG7
-    printf("Unknown request type\n");
+    printf("key_server: Unknown request type\n");
 #endif
     if (error_response(&response, &serialized_response))
       channel.write((int)serialized_response.size(),
@@ -390,7 +434,7 @@ void server_application(secure_authenticated_channel &channel) {
   }
 
 #ifdef DEBUG7
-  printf("key_server response sent\n");
+  printf("\nkey_server response sent\n");
   print_response_packet(response);
 #endif
 
@@ -459,7 +503,7 @@ int main(int an, char **av) {
   bool   exportable;
   string tp;
 
-#ifdef DEBUG7
+#ifdef DEBUG8
   printf("\npolicy store: %s\n", store_file.c_str());
 #endif
   // Create trust manager
@@ -476,7 +520,7 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
-#ifdef DEBUG7
+#ifdef DEBUG8
   printf("Enclave initialized\n");
 #endif
 
@@ -599,7 +643,7 @@ int main(int an, char **av) {
     goto done;
   }
 
-#ifdef DEBUG7
+#ifdef DEBUG8
   printf("Got all keys and certificates\n");
 #endif
 

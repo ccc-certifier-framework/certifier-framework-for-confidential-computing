@@ -291,7 +291,11 @@ bool put_cryptstore_item_entry(cryptstore       &cs,
   }
 
   ce->CopyFrom(rce);
-  ce->set_version(version);
+  ce->set_version(version + 1);
+#ifdef DEBUG7
+  printf("\nput_cryptstore_item_entry\n");
+  print_cryptstore_entry(rce);
+#endif
   return true;
 }
 
@@ -571,7 +575,7 @@ bool open_cryptstore(cryptstore *cs,
 
 void print_response_packet(key_service_message_response &r) {
   printf("resource name: %s\n", r.resource_name().c_str());
-  printf("resource type: %s\n", r.response_type().c_str());
+  printf("response type: %s\n", r.response_type().c_str());
   printf("status       : %s\n", r.status().c_str());
   if (r.has_data())
     printf("data size    : %d\n", (int)r.data().size());
@@ -582,7 +586,8 @@ void print_response_packet(key_service_message_response &r) {
 void print_request_packet(key_service_message_request &r) {
   printf("resource name: %s\n", r.resource_name().c_str());
   printf("resource type: %s\n", r.request_type().c_str());
-  printf("value type   : %s\n", r.value_type().c_str());
+  if (r.has_value_type())
+    printf("value type   : %s\n", r.value_type().c_str());
   if (r.has_data())
     printf("data size    : %d\n", (int)r.data().size());
   else

@@ -235,7 +235,6 @@ void print_help() {
   printf("  --generate_public_key=false, generate a public key of specified "
          "key type\n");
   printf("  --print_cryptstore=true, print cryptstore\n");
-  printf("  --save_cryptstore=false, save cryptstore (normally automatic)\n");
   printf("\n");
 
   printf("  --action=retrieve|store, value of version\n");
@@ -281,9 +280,9 @@ void print_help() {
   }
 }
 
-// -------------------------------------------------------------------------------------
-
 #define DEBUG7
+
+// -------------------------------------------------------------------------------------
 
 cc_trust_manager *trust_mgr = nullptr;
 cryptstore        g_cs;
@@ -386,7 +385,7 @@ bool client_application(secure_authenticated_channel &channel) {
   }
 
 #ifdef DEBUG7
-  printf("cf_key_client request to send\n");
+  printf("\ncf_key_client request to send\n");
   print_request_packet(request);
 #endif
 
@@ -418,30 +417,19 @@ bool client_application(secure_authenticated_channel &channel) {
   }
 
 #ifdef DEBUG7
-  printf("cf_key_client response received\n");
+  printf("\ncf_key_client response received\n");
   print_response_packet(response);
 #endif
 
   if (response.status() != "succeeded") {
-    printf("Request for %s failed\n", response.resource_name().c_str());
+    printf("key_client: Request for %s failed\n",
+           response.resource_name().c_str());
     return true;
   }
 
 #ifdef DEBUG7
-  printf("Request succeeded\n");
+  printf("key_client: Request succeeded\n");
 #endif
-
-  // save updated key store
-  if (!save_cryptstore(g_cs,
-                       FLAGS_data_dir,
-                       FLAGS_encrypted_cryptstore_filename,
-                       FLAGS_duration,
-                       FLAGS_enclave_type,
-                       FLAGS_symmetric_key_algorithm)) {
-    printf("%s() error, line %d, cannot save cryptstore\n", __func__, __LINE__);
-    printf("Couldn't save cryptstore\n");
-    return true;
-  }
 
   // print data and write value
   cryptstore_entry ce;
@@ -450,26 +438,28 @@ bool client_application(secure_authenticated_channel &channel) {
   serialized_cryptstore_entry.assign((char *)response.data().data(),
                                      (int)response.data().size());
   if (!ce.ParseFromString(serialized_cryptstore_entry)) {
-    printf("Couldn't parse cryptstore in response\n");
+    printf("key_client: Couldn't parse cryptstore in response\n");
     return true;
   }
 
 #ifdef DEBUG7
-  printf("\nResponse entry:\n");
+  printf("\nkey_client: Response entry:\n");
   print_cryptstore_entry(ce);
 #endif
 
   if (FLAGS_output_format == "cryptstore-entry") {
     if (!write_file_from_string(FLAGS_output_file,
                                 serialized_cryptstore_entry)) {
-      printf("Couldn't write output file %s\n", FLAGS_output_file.c_str());
+      printf("key_client: Couldn't write output file %s\n",
+             FLAGS_output_file.c_str());
       return true;
     }
   } else {
     string value;
     value.assign((char *)ce.blob().data(), (int)ce.blob().size());
     if (!write_file_from_string(FLAGS_output_file, value)) {
-      printf("Couldn't write output file %s\n", FLAGS_output_file.c_str());
+      printf("key_client: Couldn't write output file %s\n",
+             FLAGS_output_file.c_str());
       return true;
     }
     return true;

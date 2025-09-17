@@ -112,8 +112,6 @@ DEFINE_string(platform_attest_endorsement_file,
 
 // -------------------------------------------------------------------------
 
-#define DEBUG7
-
 void print_os_model_parameters() {
   printf("cf_utility parameters:\n");
   printf("\n");
@@ -1233,7 +1231,7 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG7
+#ifdef DEBUG8
     printf("Recovered cryptstore:\n");
     print_cryptstore(cs);
     goto done;
@@ -1275,7 +1273,7 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG7
+#ifdef DEBUG8
     printf("Original cryptstore\n");
     print_cryptstore(cs);
 #endif
