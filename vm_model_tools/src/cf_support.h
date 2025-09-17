@@ -41,11 +41,13 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 void              print_cryptstore_entry(const cryptstore_entry &ent);
-cryptstore_entry *find_in_cryptstore(cryptstore &cs, string &tag, int version);
-bool              version_range_in_cryptstore(cryptstore &cs,
-                                              string     &tag,
-                                              int        *low,
-                                              int        *high);
+cryptstore_entry *find_in_cryptstore(cryptstore   &cs,
+                                     const string &tag,
+                                     int           version);
+bool              version_range_in_cryptstore(cryptstore   &cs,
+                                              const string &tag,
+                                              int          *low,
+                                              int          *high);
 bool              cf_generate_symmetric_key(key_message *key,
                                             string       key_name,
                                             string       key_type,
@@ -56,18 +58,38 @@ bool              cf_generate_public_key(key_message *key,
                                          string       key_type,
                                          string       key_format,
                                          double       duration_in_hours);
+bool              get_cryptstore_item_entry(cryptstore       &cs,
+                                            const string     &tag,
+                                            int               version,
+                                            cryptstore_entry *rce);
 bool              get_item(cryptstore &cs,
                            string     &tag,
                            string     *type,
                            int        *version,
                            string     *tp,
-                           string     *value);
+                           string     *value,
+                           bool       *exportable);
+bool              put_cryptstore_item_entry(cryptstore       &cs,
+                                            const string     &tag,
+                                            int               version,
+                                            cryptstore_entry &rce);
 bool              put_item(cryptstore &cs,
                            string     &tag,
                            string     &type,
                            int        &version,
-                           string     &value);
+                           string     &value,
+                           bool       &exportable);
 void              print_cryptstore(cryptstore &cs);
+
+bool encrypt_cryptstore(cryptstore &cs,
+                        double      duration,
+                        string     &output_file_name,
+                        string     &enclave_type,
+                        string     &sym_alg);
+bool decrypt_cryptstore(cryptstore *cs,
+                        string     &input_file_name,
+                        string     &enclave_type,
+                        string     &sym_alg);
 
 bool create_cryptstore(cryptstore &cs,
                        string     &data_dir,
@@ -87,6 +109,9 @@ bool save_cryptstore(cryptstore &cs,
                      double      duration,
                      string     &enclave_type,
                      string     &sym_alg);
+
+void print_response_packet(key_service_message_response &r);
+void print_request_packet(key_service_message_request &r);
 #endif
 
 // -------------------------------------------------------------------------------

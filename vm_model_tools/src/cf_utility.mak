@@ -89,13 +89,23 @@ sobj = $(O)/cf_support_test.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifie
        $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
        $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
 
+ksobj = $(O)/cf_key_server.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+       $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
+       $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
+
+kcobj = $(O)/cf_key_client.o $(O)/certifier.pb.o $(O)/certifier.o $(O)/certifier_proofs.o \
+       $(O)/support.o $(O)/simulated_enclave.o $(O)/cc_helpers.o \
+       $(O)/application_enclave.o $(O)/cc_useful.o $(O)/cryptstore.pb.o $(O)/cf_support.o
+
 ifdef ENABLE_SEV
 dobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
 sobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
+ksobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
+kcobj += $(O)/sev_support.o $(O)/sev_report.o $(O)/sev_cert_table.o
 endif
 
 
-all:	cf_utility.exe cf_support_test.exe
+all:	cf_utility.exe cf_support_test.exe cf_key_client.exe cf_key_server.exe
 clean:
 	@echo "removing generated files"
 	rm -rf $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
@@ -105,6 +115,10 @@ clean:
 	rm -rf $(EXE_DIR)/cf_utility.exe
 	@echo "removing executable file"
 	rm -rf $(EXE_DIR)/cf_support_test.exe
+	@echo "removing executable file"
+	rm -rf $(EXE_DIR)/cf_key_client.exe
+	@echo "removing executable file"
+	rm -rf $(EXE_DIR)/cf_key_server.exe
 
 $(EXE_DIR)/cf_utility.exe: $(dobj)
 	@echo "\nlinking executable $@"
@@ -114,10 +128,26 @@ $(EXE_DIR)/cf_support_test.exe: $(sobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(sobj) $(LDFLAGS) -o $(@D)/$@
 
+$(EXE_DIR)/cf_key_client.exe: $(kcobj)
+	@echo "\nlinking executable $@"
+	$(LINK) $(kcobj) $(LDFLAGS) -o $(@D)/$@
+
+$(EXE_DIR)/cf_key_server.exe: $(ksobj)
+	@echo "\nlinking executable $@"
+	$(LINK) $(ksobj) $(LDFLAGS) -o $(@D)/$@
+
 $(I)/certifier.pb.h: $(US)/certifier.pb.cc
 $(US)/certifier.pb.cc: $(CP)/certifier.proto
 	$(PROTO) --proto_path=$(<D) --cpp_out=$(@D) $<
 	mv $(@D)/certifier.pb.h $(I)
+
+$(O)/cf_key_client.o: $(CF_UTILITY_SRC)/cf_key_client.cc $(I)/certifier.h $(US)/certifier.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/cf_key_server.o: $(CF_UTILITY_SRC)/cf_key_server.cc $(I)/certifier.h $(US)/certifier.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/cf_support_test.o: $(CF_UTILITY_SRC)/cf_support_test.cc $(I)/certifier.h $(US)/certifier.pb.cc $(CF_UTILITY_SRC)/cryptstore.pb.h
 	@echo "\ncompiling $<"

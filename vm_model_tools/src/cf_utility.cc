@@ -51,8 +51,10 @@ DEFINE_bool(generate_symmetric_key, false, "generate symmetric key?");
 DEFINE_bool(generate_public_key, false, "generate public key?");
 DEFINE_bool(get_item, false, "get item from cryptstore");
 DEFINE_bool(put_item, false, "put item into cryptstore");
-DEFINE_bool(print_cryptstore, true, "print cryptstore");
+DEFINE_bool(print_cryptstore, false, "print cryptstore");
 DEFINE_bool(save_cryptstore, false, "save cryptstore");
+DEFINE_bool(import_cryptstore, false, "import unencrypted cryptstore");
+DEFINE_bool(export_cryptstore, false, "export cryptstore unencrypted");
 
 DEFINE_string(public_key_algorithm,
               Enc_method_rsa_2048,
@@ -64,12 +66,12 @@ DEFINE_string(policy_domain_name, "datica", "policy domain name");
 DEFINE_string(policy_key_cert_file,
               "policy_certificate.datica",
               "file name for policy certificate");
-DEFINE_string(data_dir, "./cf_data", "supporting file directory");
+DEFINE_string(data_dir, "./cf_data/", "supporting file directory");
 DEFINE_string(input_format, "serialized-protobuf", "input file format");
 DEFINE_string(output_format, "serialized-protobuf", "output file format");
 
 DEFINE_string(policy_store_filename,
-              "policy_store.bin.datica",
+              "policy_store.datica",
               "policy store file name");
 DEFINE_string(encrypted_cryptstore_filename,
               "encrypted_cryptstore.datica",
@@ -78,6 +80,7 @@ DEFINE_string(keyname, "primary-store-encryption-key", "generated key name");
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
 DEFINE_string(tag, "policy-key", "cryptstore entry tag");
 DEFINE_int32(entry_version, 0, "cryptstore entry version");
+DEFINE_bool(exportable, false, "exportable");
 DEFINE_string(type,
               "key-message-serialized-protobuf",
               "cryptstore entry data type");
@@ -146,7 +149,16 @@ void print_os_model_parameters() {
     printf("  Save cryptstore?: yes\n");
   else
     printf("  Save cryptstore?: no\n");
+  if (FLAGS_import_cryptstore)
+    printf("  Import cryptstore?: yes\n");
+  else
+    printf("  Import cryptstore?: no\n");
+  if (FLAGS_export_cryptstore)
+    printf("  Export cryptstore?: yes\n");
+  else
+    printf("  Export cryptstore?: no\n");
   printf("\n");
+
   printf("  Policy doman name: %s\n", FLAGS_policy_domain_name.c_str());
   printf("  Policy_key_cert_file: %s\n", FLAGS_policy_key_cert_file.c_str());
   printf("  Policy store file name: %s\n", FLAGS_policy_store_filename.c_str());
@@ -155,28 +167,39 @@ void print_os_model_parameters() {
   printf("  Directory for cf_utility supporting data for this policy: %s\n",
          FLAGS_data_dir.c_str());
   printf("\n");
+
   printf("  Protecting enclave type: %s\n", FLAGS_enclave_type.c_str());
   printf("  Address for certifier service: %s\n",
          FLAGS_certifier_service_URL.c_str());
   printf("  Port for service %d\n", (int)FLAGS_service_port);
   printf("\n");
+
   printf("  Input file format: %s\n", FLAGS_input_format.c_str());
   printf("  Output file format: %s\n", FLAGS_output_format.c_str());
   printf("  Input file name: %s\n", FLAGS_input_file.c_str());
   printf("  Output file name: %s\n", FLAGS_output_file.c_str());
   printf("\n");
+
   printf("  Public key algorithm: %s\n", FLAGS_public_key_algorithm.c_str());
   printf("  Symmetric key algorithm: %s\n",
          FLAGS_symmetric_key_algorithm.c_str());
   printf("  Key name: %s\n", FLAGS_keyname.c_str());
   printf("  Duration: %lf\n", FLAGS_duration);
+  printf("\n");
+
   printf("  Cryptstore entry name: %s\n", FLAGS_tag.c_str());
   printf("  Cryptstore entry version: %d\n", (int)FLAGS_entry_version);
   printf("  Cryptstore entry type: %s\n", FLAGS_type.c_str());
+  if (FLAGS_exportable)
+    printf("  Cryptstore entry is exportable\n");
+  else
+    printf("  Cryptstore entry is not exportable\n");
   printf("\n");
+
   printf("  ARK certificate file: %s\n", FLAGS_ark_cert_file.c_str());
   printf("  ASK certificate file: %s\n", FLAGS_ask_cert_file.c_str());
   printf("  VCEK certificate file: %s\n", FLAGS_vcek_cert_file.c_str());
+  printf("\n");
 }
 
 // --------------------------------------------------------------------------
@@ -383,6 +406,7 @@ bool add_key_and_cert(cryptstore &cs) {
   ce->set_version(version);
   ce->set_time_entered(tp_str);
   ce->set_blob((byte *)c->admissions_cert_.data(), c->admissions_cert_.size());
+  ce->set_exportable(true);
 
   string tag2(FLAGS_policy_domain_name);
   tag2.append("-private-auth-key");
@@ -401,6 +425,7 @@ bool add_key_and_cert(cryptstore &cs) {
   ce->set_type(type);
   ce->set_version(version);
   ce->set_time_entered(tp_str);
+  ce->set_exportable(false);
 
   string serialized_key;
   if (!trust_mgr->private_auth_key_.SerializeToString(&serialized_key)) {
@@ -552,6 +577,47 @@ bool generate_public_key(key_message *km,
     printf("%s() error, line %d, cannot save cryptstore\n", __func__, __LINE__);
     return false;
   }
+  return true;
+}
+
+bool import_cryptstore(cryptstore *cs, string &input_file_name) {
+
+  string serialized_store;
+
+  if (!read_file_into_string(input_file_name, &serialized_store)) {
+    printf("%s() error, line %d, couldn't write to %s\n",
+           __func__,
+           __LINE__,
+           input_file_name.c_str());
+    return false;
+  }
+
+  if (!cs->ParseFromString(serialized_store)) {
+    printf("%s() error, line %d, couldn't parse cryptstore\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  return true;
+}
+
+bool export_cryptstore(cryptstore &cs, string &output_file_name) {
+
+  string serialized_store;
+  if (!cs.SerializeToString(&serialized_store)) {
+    printf("%s() error, line %d, couldn't serialize cryptstore\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+  if (!write_file_from_string(output_file_name, serialized_store)) {
+    printf("%s() error, line %d, couldn't write to %s\n",
+           __func__,
+           __LINE__,
+           output_file_name.c_str());
+    return false;
+  }
+
   return true;
 }
 
@@ -708,9 +774,6 @@ int main(int an, char **av) {
   // Create trust manager
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_filename);
-#ifdef DEBUG3
-  printf("\npolicy store: %s\n", store_file.c_str());
-#endif
   trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
   if (trust_mgr == nullptr) {
     printf("%s() error, line %d, couldn't initialize trust object\n",
@@ -883,6 +946,7 @@ int main(int an, char **av) {
     ce->set_type(type);
     ce->set_version(version);
     ce->set_time_entered(tp_str);
+    ce->set_exportable(true);
 
     string serialized_key;
     if (!km.SerializeToString(&serialized_key)) {
@@ -1008,11 +1072,12 @@ int main(int an, char **av) {
     }
 
     cryptstore cs;
-    string     entry_tag;
+    string     entry_tag(FLAGS_tag);
     string     entry_type;
-    int        entry_version;
+    int        entry_version = FLAGS_entry_version;
     string     entry_tp;
     string     value;
+    bool       exportable;
 
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
@@ -1031,7 +1096,8 @@ int main(int an, char **av) {
                   &entry_type,
                   &entry_version,
                   &entry_tp,
-                  &value)) {
+                  &value,
+                  &exportable)) {
       printf("%s() error, line %d, cannot find %s entry\n",
              __func__,
              __LINE__,
@@ -1039,9 +1105,22 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG3
-    print_cryptstore(cs);
+#ifdef DEBUG7
+    printf("Got item, tag: %s, type: %s, version: %d, exportable: %B\n",
+           entry_tag.c_str(),
+           entry_type.c_str(),
+           entry_version,
+           exportable);
 #endif
+    if (!write_file_from_string(FLAGS_output_file, value)) {
+      printf("%s() error, line %d, cannot write value to %s\n",
+             __func__,
+             __LINE__,
+             FLAGS_output_file.c_str());
+      ret = 1;
+      goto done;
+    }
+
     goto done;
   } else if (FLAGS_put_item) {
 
@@ -1085,16 +1164,25 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-    string     entry_tag;
-    string     entry_type;
-    int        entry_version;
-    time_point entry_tp;
-    string     value;
-    if (!put_item(cs, entry_tag, entry_type, entry_version, value)) {
+    string value;
+    if (!read_file_into_string(FLAGS_input_file, &value)) {
+      printf("%s() error, line %d, couldn't read value from %s\n",
+             __func__,
+             __LINE__,
+             FLAGS_input_file.c_str());
+      ret = 1;
+      goto done;
+    }
+    if (!put_item(cs,
+                  FLAGS_tag,
+                  FLAGS_type,
+                  FLAGS_entry_version,
+                  value,
+                  FLAGS_exportable)) {
       printf("%s() error, line %d, cannot insert %s entry\n",
              __func__,
              __LINE__,
-             entry_tag.c_str());
+             FLAGS_tag.c_str());
       ret = 1;
       goto done;
     }
@@ -1130,8 +1218,68 @@ int main(int an, char **av) {
     }
     print_cryptstore(cs);
     goto done;
+  } else if (FLAGS_import_cryptstore) {
+#ifdef DEBUG7
+    printf("\nImport cryptstore\n");
+#endif
+
+    cryptstore cs;
+    if (!import_cryptstore(&cs, FLAGS_input_file)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+#ifdef DEBUG8
+    printf("Recovered cryptstore:\n");
+    print_cryptstore(cs);
+    goto done;
+#endif
+    if (!save_cryptstore(cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot save cryptstore\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    goto done;
+  } else if (FLAGS_export_cryptstore) {
+#ifdef DEBUG7
+    printf("\nExport cryptstore\n");
+#endif
+    cryptstore cs;
+    if (!open_cryptstore(&cs,
+                         FLAGS_data_dir,
+                         FLAGS_encrypted_cryptstore_filename,
+                         FLAGS_duration,
+                         FLAGS_enclave_type,
+                         FLAGS_symmetric_key_algorithm)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+    if (!export_cryptstore(cs, FLAGS_output_file)) {
+      printf("%s() error, line %d, cannot open cryptstore\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
+#ifdef DEBUG8
+    printf("Original cryptstore\n");
+    print_cryptstore(cs);
+#endif
+    goto done;
   } else {
-    printf("No action\n");
+    printf("No action specified\n");
     goto done;
   }
 
