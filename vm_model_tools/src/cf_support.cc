@@ -582,6 +582,7 @@ void print_response_packet(key_service_message_response &r) {
 void print_request_packet(key_service_message_request &r) {
   printf("resource name: %s\n", r.resource_name().c_str());
   printf("resource type: %s\n", r.request_type().c_str());
+  printf("value type   : %s\n", r.value_type().c_str());
   if (r.has_data())
     printf("data size    : %d\n", (int)r.data().size());
   else

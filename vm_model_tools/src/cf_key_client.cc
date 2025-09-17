@@ -58,6 +58,8 @@ DEFINE_string(symmetric_key_algorithm,
               "symmetric algorithm");
 
 DEFINE_string(data_dir, "./cf_data", "supporting file directory");
+DEFINE_string(input_format, "cryptstore-entry", "input format");
+DEFINE_string(output_format, "cryptstore-entry", "output format");
 DEFINE_string(input_file, "in", "input file");
 DEFINE_string(output_file, "out", "output file");
 
@@ -251,6 +253,10 @@ void print_help() {
   printf("  --output_format=key-message-serialized-protobuf, output format\n");
   printf("\n");
 
+  printf("  --input_format=%s, input format (crayptstore-entry or raw)\n",
+         FLAGS_input_format.c_str());
+  printf("  --output_format=%s, output format (crayptstore-entry or raw)\n",
+         FLAGS_output_format.c_str());
   printf("  --input_file=%s, input file name\n", FLAGS_input_file.c_str());
   printf("  --output_file=%s, output file name\n", FLAGS_output_file.c_str());
   printf("\n");
@@ -293,6 +299,8 @@ bool client_application(secure_authenticated_channel &channel) {
 
   key_service_message_request  request;
   key_service_message_response response;
+  string                       serialized_request;
+  string                       serialized_response;
 
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
 
@@ -304,20 +312,88 @@ bool client_application(secure_authenticated_channel &channel) {
 #endif  // DEBUG
 
   // Construct request
+  cryptstore_entry cf;
+  string           serialized_cs_entry;
   request.set_resource_name(FLAGS_resource_name);
-  request.set_request_type(FLAGS_action);
   request.set_version(FLAGS_version);
 
-  // Serialize it
-  string serialized_request;
-  string serialized_response;
+  if (FLAGS_action == "retrieve") {
+    request.set_request_type("retrieve");
+  } else if (FLAGS_action == "store") {
 
-  if (!request.SerializeToString(&serialized_request)) {
-    printf("Couldn't serialize request\n");
+    string tag;
+    string type;
+    string value;
+    int    version;
+    string time_entered;
+    bool   exportable;
+
+    request.set_request_type("store");
+    if (FLAGS_input_format == "raw") {
+
+      if (!read_file_into_string(FLAGS_input_file, &value)) {
+        printf("Can't read %s\n", FLAGS_input_file.c_str());
+        if (error_response(&response, &serialized_response))
+          channel.write((int)serialized_response.size(),
+                        (byte *)serialized_response.data());
+        channel.close();
+        return true;
+      }
+      request.set_resource_name(FLAGS_resource_name);
+      request.set_version(FLAGS_version);
+      request.set_value_type("binary-blob");
+      request.set_data(value);
+
+    } else if (FLAGS_input_format == "cryptstore-entry") {
+
+      if (!read_file_into_string(FLAGS_input_file, &serialized_cs_entry)) {
+        printf("Can't read %s\n", FLAGS_input_file.c_str());
+        if (error_response(&response, &serialized_response))
+          channel.write((int)serialized_response.size(),
+                        (byte *)serialized_response.data());
+        channel.close();
+        return true;
+      }
+      if (!cf.ParseFromString(serialized_cs_entry)) {
+        printf("Can't parse string\n");
+        if (error_response(&response, &serialized_response))
+          channel.write((int)serialized_response.size(),
+                        (byte *)serialized_response.data());
+        channel.close();
+        return true;
+      }
+
+      request.set_resource_name(cf.tag());
+      request.set_version(cf.version());
+      request.set_value_type(request.value_type());
+      request.set_data(serialized_cs_entry);
+
+    } else {
+
+      printf("Unknown input format\n");
+      if (error_response(&response, &serialized_response))
+        channel.write((int)serialized_response.size(),
+                      (byte *)serialized_response.data());
+      channel.close();
+      return true;
+    }
+
+  } else {
+    channel.close();
     return true;
   }
 
-  // send serialized request over authenticated, encrypted channel
+  // Serialize request
+  if (!request.SerializeToString(&serialized_request)) {
+    printf("Couldn't serialize request\n");
+    if (error_response(&response, &serialized_response))
+      channel.write((int)serialized_response.size(),
+                    (byte *)serialized_response.data());
+    channel.close();
+    return true;
+  }
+
+  // Send serialized request over authenticated, encrypted channel
   channel.write((int)serialized_request.size(),
                 (byte *)serialized_request.data());
 
@@ -339,14 +415,40 @@ bool client_application(secure_authenticated_channel &channel) {
     return true;
   }
 
+#ifdef DEBUG7
+  printf("Request succeeded\n");
+#endif
+
   // print data and write value
   cryptstore_entry ce;
-  printf("Request succeeded\n");
+  string           serialized_cryptstore_entry;
+
+  serialized_cryptstore_entry.assign((char *)response.data().data(),
+                                     (int)response.data().size());
+  if (!ce.ParseFromString(serialized_cryptstore_entry)) {
+    printf("Couldn't parse cryptstore in response\n");
+    return true;
+  }
+
+#ifdef DEBUG7
+  printf("\nResponse entry:\n");
   print_cryptstore_entry(ce);
-  string value;
-  value.assign((char *)ce.blob().data(), (int)ce.blob().size());
-  if (!write_file_from_string(FLAGS_output_file, value)) {
-    printf("Couldn't write output file: %s\n", FLAGS_output_file.c_str());
+#endif
+
+  if (FLAGS_output_format == "cryptstore-entry") {
+    if (!write_file_from_string(FLAGS_output_file,
+                                serialized_cryptstore_entry)) {
+      printf("Couldn't write output file %s\n", FLAGS_output_file.c_str());
+      return true;
+    }
+  } else {
+    string value;
+    value.assign((char *)ce.blob().data(), (int)ce.blob().size());
+    if (!write_file_from_string(FLAGS_output_file, value)) {
+      printf("Couldn't write output file %s\n", FLAGS_output_file.c_str());
+      return true;
+    }
+    return true;
   }
 
   return true;
