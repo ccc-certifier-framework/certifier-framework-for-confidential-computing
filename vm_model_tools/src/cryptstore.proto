@@ -36,8 +36,9 @@ message cryptstore {
 message key_service_message_request {
   optional string resource_name             = 1;
   optional string request_type              = 2;
-  optional bytes data                       = 3;
-  optional string serialized_credentials    = 4;
+  optional int32 version                    = 3;
+  optional bytes data                       = 4;
+  optional string serialized_credentials    = 5;
 };
 
 // response_type is "final" or "request-further-authentication"

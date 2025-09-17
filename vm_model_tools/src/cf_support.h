@@ -41,11 +41,13 @@ using namespace certifier::framework;
 using namespace certifier::utilities;
 
 void              print_cryptstore_entry(const cryptstore_entry &ent);
-cryptstore_entry *find_in_cryptstore(cryptstore &cs, string &tag, int version);
-bool              version_range_in_cryptstore(cryptstore &cs,
-                                              string     &tag,
-                                              int        *low,
-                                              int        *high);
+cryptstore_entry *find_in_cryptstore(cryptstore   &cs,
+                                     const string &tag,
+                                     int           version);
+bool              version_range_in_cryptstore(cryptstore   &cs,
+                                              const string &tag,
+                                              int          *low,
+                                              int          *high);
 bool              cf_generate_symmetric_key(key_message *key,
                                             string       key_name,
                                             string       key_type,
@@ -56,6 +58,10 @@ bool              cf_generate_public_key(key_message *key,
                                          string       key_type,
                                          string       key_format,
                                          double       duration_in_hours);
+bool              get_cryptstore_item_entry(cryptstore       &cs,
+                                            const string     &tag,
+                                            int               version,
+                                            cryptstore_entry *rce);
 bool              get_item(cryptstore &cs,
                            string     &tag,
                            string     *type,

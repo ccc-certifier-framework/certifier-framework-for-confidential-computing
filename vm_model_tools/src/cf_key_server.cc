@@ -340,10 +340,32 @@ void server_application(secure_authenticated_channel &channel) {
   response.set_resource_name(request.resource_name());
   response.set_response_type("final");
 
+  cryptstore_entry ce;
   if (request.request_type() == "retrieve") {
-    // For retrieve:
     //   Look up tag and make sure it's exportable
-    //   if so, stick it in the response proto
+    if (!get_cryptstore_item_entry(g_cs,
+                                   request.resource_name(),
+                                   (int)request.version(),
+                                   &ce)) {
+      printf("%s() error, line %d, can't get entry for requested resource\n",
+             __func__,
+             __LINE__);
+    }
+    if (!ce.exportable()) {
+      if (error_response(&response, &serialized_response))
+        channel.write((int)serialized_response.size(),
+                      (byte *)serialized_response.data());
+      channel.close();
+      return;
+    }
+    string serialized_entry;
+    if (!ce.SerializeToString(&serialized_entry)) {
+      channel.write((int)serialized_response.size(),
+                    (byte *)serialized_response.data());
+      channel.close();
+      return;
+    }
+    response.set_data(serialized_entry);
   } else if (request.request_type() == "store") {
     // For store
     //   Make sure it doesn't exist or it exportable
@@ -510,9 +532,9 @@ int main(int an, char **av) {
 
   // Get policy-cert, admissions_cert and private-key
   // Put them in
-  //  	g_serialized_policy_cert;
-  //  	g_serialized_admissions_cert;  tag is domain-name-admission-certificate
-  //  	g_my_private_key;  tag is domain-name-private-auth-key
+  //    g_serialized_policy_cert;
+  //    g_serialized_admissions_cert;  tag is domain-name-admission-certificate
+  //    g_my_private_key;  tag is domain-name-private-auth-key
   policy_cert_file_name = FLAGS_data_dir;
   policy_cert_file_name.append("cf_data/");
   policy_cert_file_name.append(FLAGS_policy_key_cert_file);
@@ -526,8 +548,8 @@ int main(int an, char **av) {
   }
 
   // admissions cert tag is domain-name-admission-certificate
-  //  	g_serialized_admissions_cert;  tag is domain-name-admission-certificate
-  //  	g_my_private_key;  tag is domain-name-private-auth-key
+  //    g_serialized_admissions_cert;  tag is domain-name-admission-certificate
+  //    g_my_private_key;  tag is domain-name-private-auth-key
   tag = FLAGS_policy_domain_name;
   tag.append("-admission-certificate");
   if (!get_item(g_cs,

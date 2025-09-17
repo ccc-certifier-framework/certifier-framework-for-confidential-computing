@@ -88,7 +88,9 @@ void print_cryptstore_entry(const cryptstore_entry &ent) {
   }
 }
 
-cryptstore_entry *find_in_cryptstore(cryptstore &cs, string &tag, int version) {
+cryptstore_entry *find_in_cryptstore(cryptstore   &cs,
+                                     const string &tag,
+                                     int           version) {
   for (int i = 0; i < cs.entries_size(); i++) {
     const cryptstore_entry &ce = cs.entries(i);
     if (ce.tag() == tag) {
@@ -98,10 +100,10 @@ cryptstore_entry *find_in_cryptstore(cryptstore &cs, string &tag, int version) {
   return nullptr;
 }
 
-bool version_range_in_cryptstore(cryptstore &cs,
-                                 string     &tag,
-                                 int        *low,
-                                 int        *high) {
+bool version_range_in_cryptstore(cryptstore   &cs,
+                                 const string &tag,
+                                 int          *low,
+                                 int          *high) {
   bool ret = false;
 
   *low = 0;
@@ -264,6 +266,29 @@ bool cf_generate_public_key(key_message *key,
   key->set_not_before(nb_str);
   key->set_not_after(na_str);
 
+  return true;
+}
+
+bool get_cryptstore_item_entry(cryptstore       &cs,
+                               const string     &tag,
+                               int               version,
+                               cryptstore_entry *rce) {
+  cryptstore_entry *ce = nullptr;
+  int               l = 0;
+  int               h = 0;
+
+  if (version == 0) {
+    if (version_range_in_cryptstore(cs, tag, &l, &h)) {
+      ce = find_in_cryptstore(cs, tag, h);
+      version = h;
+    }
+  } else {
+    ce = find_in_cryptstore(cs, tag, version);
+  }
+  if (ce == nullptr) {
+    return false;
+  }
+  rce->CopyFrom(*ce);
   return true;
 }
 
