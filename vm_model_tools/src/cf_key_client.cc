@@ -71,9 +71,9 @@ DEFINE_string(key_server_url, "localhost", "address of the key service");
 DEFINE_int32(key_server_port, 8120, "port for key service");
 
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
-DEFINE_string(type,
-              "key-message-serialized-protobuf",
-              "cryptstore entry data type");
+DEFINE_string(resource_name, "", "resource name");
+DEFINE_int32(version, 0, "version");
+DEFINE_string(action, "retrieve", "retrieve or store");
 
 DEFINE_string(ark_cert_file,
               "./service/ark_cert.der",
@@ -235,11 +235,9 @@ void print_help() {
   printf("  --print_cryptstore=true, print cryptstore\n");
   printf("  --save_cryptstore=false, save cryptstore (normally automatic)\n");
   printf("\n");
-  printf("  --tag=\"\", value of tag for put_item\n");
+
+  printf("  --action=retrieve|store, value of version\n");
   printf("  --version=0, value of version for put_item\n");
-  printf("  --type=\"\", value of type for put_item\n");
-  printf("    Possible types: X509-der-cert, key-message-serialized-protobuf, "
-         "binary-blob\n");
   printf("  --get_item=false, get cryptstore enty of specified tag/value, "
          "write to output file\n");
   printf("  --put_item=false, set cryptstore entry of specified tag/value from "
@@ -248,12 +246,15 @@ void print_help() {
          "calls\n");
   printf("  --duration=time in hours, duration of keys or certs\n");
   printf("\n");
+
   printf("  --input_format=key-message-serialized-protobuf, input format\n");
   printf("  --output_format=key-message-serialized-protobuf, output format\n");
   printf("\n");
+
   printf("  --input_file=%s, input file name\n", FLAGS_input_file.c_str());
   printf("  --output_file=%s, output file name\n", FLAGS_output_file.c_str());
   printf("\n");
+
   printf("  SEV enclave specific arguments\n");
   printf("    --ark_cert_file=%s, file with ark certificate for this machine\n",
          FLAGS_ark_cert_file.c_str());
@@ -290,32 +291,67 @@ bool error_response(key_service_message_response *response,
 
 bool client_application(secure_authenticated_channel &channel) {
 
+  key_service_message_request  request;
+  key_service_message_response response;
+
   printf("Client peer id is %s\n", channel.peer_id_.c_str());
-#ifdef DEBUG
+
+#ifdef DEBUG7
   if (channel.peer_cert_ != nullptr) {
     printf("Client peer cert is:\n");
     X509_print_fp(stdout, channel.peer_cert_);
   }
 #endif  // DEBUG
 
-  // client sends a message over authenticated, encrypted channel
-  const char *msg = "Hi from your secret client\n";
-  channel.write(strlen(msg), (byte *)msg);
+  // Construct request
+  request.set_resource_name(FLAGS_resource_name);
+  request.set_request_type(FLAGS_action);
+  request.set_version(FLAGS_version);
 
-  // Get server response over authenticated, encrypted channel and print it
-  string out;
-  int    n = channel.read(&out);
-  printf("SSL client read: %s\n", out.data());
+  // Serialize it
+  string serialized_request;
+  string serialized_response;
+
+  if (!request.SerializeToString(&serialized_request)) {
+    printf("Couldn't serialize request\n");
+    return true;
+  }
+
+  // send serialized request over authenticated, encrypted channel
+  channel.write((int)serialized_request.size(),
+                (byte *)serialized_request.data());
+
+  // Get server response over authenticated, encrypted channel
+  int n = channel.read(&serialized_response);
+
+#ifdef DEBUG7
+  printf("SSL client read: %d\n", (int)serialized_response.size());
+#endif
   channel.close();
 
-  if (n < 0 || strcmp(out.c_str(), "Hi from your secret server\n") != 0) {
-    printf("%s() error, line %d, did not receive expected server response\n",
-           __func__,
-           __LINE__);
-    return false;
+  if (!response.ParseFromString(serialized_response)) {
+    printf("Couldn't parse response\n");
+    return true;
   }
+
+  if (response.status() != "succeeded") {
+    printf("Request for %s failed\n", response.resource_name().c_str());
+    return true;
+  }
+
+  // print data and write value
+  cryptstore_entry ce;
+  printf("Request succeeded\n");
+  print_cryptstore_entry(ce);
+  string value;
+  value.assign((char *)ce.blob().data(), (int)ce.blob().size());
+  if (!write_file_from_string(FLAGS_output_file, value)) {
+    printf("Couldn't write output file: %s\n", FLAGS_output_file.c_str());
+  }
+
   return true;
 }
+
 
 int main(int an, char **av) {
   string usage("cf_key_client");
