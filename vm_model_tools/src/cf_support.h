@@ -69,6 +69,10 @@ bool              get_item(cryptstore &cs,
                            string     *tp,
                            string     *value,
                            bool       *exportable);
+bool              put_cryptstore_item_entry(cryptstore       &cs,
+                                            const string     &tag,
+                                            int               version,
+                                            cryptstore_entry &rce);
 bool              put_item(cryptstore &cs,
                            string     &tag,
                            string     &type,
@@ -105,6 +109,9 @@ bool save_cryptstore(cryptstore &cs,
                      double      duration,
                      string     &enclave_type,
                      string     &sym_alg);
+
+void print_response_packet(key_service_message_response &r);
+void print_request_packet(key_service_message_request &r);
 #endif
 
 // -------------------------------------------------------------------------------

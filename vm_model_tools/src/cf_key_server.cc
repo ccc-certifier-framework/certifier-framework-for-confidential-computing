@@ -281,23 +281,6 @@ string            g_serialized_admissions_cert;
 
 #define DEBUG7
 
-
-/*
- * request_type is "store", "retrieve" or "signed-nonce"
- * key_service_message_request
- *   string resource_name
- *   string request_type
- *   string data
- *   serialized_credentials
- * response_type is "final" or "request-further-authentication"
- * status is "succeeded" or "failed"
- * key_service_message_response
- *   string resource_name
- *   string response_type
- *   string status
- *   bytes data
- */
-
 bool error_response(key_service_message_response *response,
                     string                       *serialized_response) {
   response->set_status("failed");
@@ -324,13 +307,12 @@ void server_application(secure_authenticated_channel &channel) {
 
 #ifdef DEBUG7
   // This should be a request protobuf
-  printf("SSL server read:\n");
+  printf("SSL server read %d bytes:\n", (int)out.size());
   print_bytes(out.size(), (byte *)out.data());
 #endif
 
   // Parse request
   if (!request.ParseFromString(out)) {
-    // send error response
     if (error_response(&response, &serialized_response))
       channel.write((int)serialized_response.size(),
                     (byte *)serialized_response.data());
@@ -350,6 +332,11 @@ void server_application(secure_authenticated_channel &channel) {
       printf("%s() error, line %d, can't get entry for requested resource\n",
              __func__,
              __LINE__);
+      if (error_response(&response, &serialized_response))
+        channel.write((int)serialized_response.size(),
+                      (byte *)serialized_response.data());
+      channel.close();
+      return;
     }
     if (!ce.exportable()) {
       if (error_response(&response, &serialized_response))
@@ -366,11 +353,29 @@ void server_application(secure_authenticated_channel &channel) {
       return;
     }
     response.set_data(serialized_entry);
+    response.set_response_type("final");
+    response.set_status("succeeded");
   } else if (request.request_type() == "store") {
-    // For store
-    //   Make sure it doesn't exist or it exportable
-    //   Insert or update it and save cryptstore
-    //   Construct the response proto
+    cryptstore_entry rce;
+    string           serialized_cryptstore_entry;
+    serialized_cryptstore_entry.assign((char *)request.data().data(),
+                                       request.data().size());
+    if (!rce.ParseFromString(serialized_cryptstore_entry)) {
+      if (error_response(&response, &serialized_response))
+        channel.write((int)serialized_response.size(),
+                      (byte *)serialized_response.data());
+      channel.close();
+      return;
+    }
+    if (!put_cryptstore_item_entry(g_cs, rce.tag(), rce.version(), rce)) {
+      if (error_response(&response, &serialized_response))
+        channel.write((int)serialized_response.size(),
+                      (byte *)serialized_response.data());
+      channel.close();
+      return;
+    }
+    response.set_response_type("final");
+    response.set_status("succeeded");
   } else {
 #ifdef DEBUG7
     printf("Unknown request type\n");
@@ -491,7 +496,7 @@ int main(int an, char **av) {
     goto done;
   }
 
-  // initialize domain
+  // Initialize domain
   if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
     printf("%s() error, line %d, domain %s does not init\n",
            __func__,
@@ -547,9 +552,10 @@ int main(int an, char **av) {
     goto done;
   }
 
-  // admissions cert tag is domain-name-admission-certificate
-  //    g_serialized_admissions_cert;  tag is domain-name-admission-certificate
-  //    g_my_private_key;  tag is domain-name-private-auth-key
+  // Admissions cert tag is domain-name-admission-certificate
+  //    g_serialized_admissions_cert
+  // Private key tag is domain-name-private-auth-key
+  //    g_my_private_key
   tag = FLAGS_policy_domain_name;
   tag.append("-admission-certificate");
   if (!get_item(g_cs,

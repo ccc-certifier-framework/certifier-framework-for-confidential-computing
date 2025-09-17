@@ -269,6 +269,33 @@ bool cf_generate_public_key(key_message *key,
   return true;
 }
 
+bool put_cryptstore_item_entry(cryptstore       &cs,
+                               const string     &tag,
+                               int               version,
+                               cryptstore_entry &rce) {
+
+  cryptstore_entry *ce = nullptr;
+  int               l = 0;
+  int               h = 0;
+
+  if (version == 0) {
+    if (version_range_in_cryptstore(cs, tag, &l, &h)) {
+      ce = find_in_cryptstore(cs, tag, h);
+      version = h;
+    }
+  } else {
+    ce = find_in_cryptstore(cs, tag, version);
+  }
+  if (ce == nullptr) {
+    ce = cs.add_entries();
+  }
+
+  ce->CopyFrom(rce);
+  ce->set_version(version);
+  return true;
+}
+
+
 bool get_cryptstore_item_entry(cryptstore       &cs,
                                const string     &tag,
                                int               version,
@@ -540,6 +567,29 @@ bool open_cryptstore(cryptstore *cs,
   }
 
   return true;
+}
+
+void print_response_packet(key_service_message_response &r) {
+  printf("resource name: %s\n", r.resource_name().c_str());
+  printf("resource type: %s\n", r.response_type().c_str());
+  printf("status       : %s\n", r.status().c_str());
+  if (r.has_data())
+    printf("data size    : %d\n", (int)r.data().size());
+  else
+    printf("no data\n");
+}
+
+void print_request_packet(key_service_message_request &r) {
+  printf("resource name: %s\n", r.resource_name().c_str());
+  printf("resource type: %s\n", r.request_type().c_str());
+  if (r.has_data())
+    printf("data size    : %d\n", (int)r.data().size());
+  else
+    printf("no data\n");
+  if (r.has_serialized_credentials())
+    printf("creds size   : %d\n", (int)r.serialized_credentials().size());
+  else
+    printf("no creds\n");
 }
 
 // -------------------------------------------------------------------------------
