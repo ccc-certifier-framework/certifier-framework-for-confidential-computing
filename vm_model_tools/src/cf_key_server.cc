@@ -70,9 +70,6 @@ DEFINE_string(encrypted_cryptstore_filename,
               "encrypted cryptstore file name");
 
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
-DEFINE_string(type,
-              "key-message-serialized-protobuf",
-              "cryptstore entry data type");
 
 DEFINE_string(ark_cert_file,
               "./service/ark_cert.der",

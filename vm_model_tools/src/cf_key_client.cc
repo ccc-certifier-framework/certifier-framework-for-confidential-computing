@@ -383,6 +383,11 @@ bool client_application(secure_authenticated_channel &channel) {
     return true;
   }
 
+#ifdef DEBUG7
+  printf("cf_key_client request to send\n");
+  print_request_packet(request);
+#endif
+
   // Serialize request
   if (!request.SerializeToString(&serialized_request)) {
     printf("Couldn't serialize request\n");
@@ -409,6 +414,11 @@ bool client_application(secure_authenticated_channel &channel) {
     printf("Couldn't parse response\n");
     return true;
   }
+
+#ifdef DEBUG7
+  printf("cf_key_client response received\n");
+  print_response_packet(response);
+#endif
 
   if (response.status() != "succeeded") {
     printf("Request for %s failed\n", response.resource_name().c_str());
