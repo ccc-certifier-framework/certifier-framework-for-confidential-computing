@@ -23,6 +23,15 @@ import java.nio.charset.StandardCharsets;
  */
 public class SimpleApp {
 
+    static { System.loadLibrary("certifier_native"); }
+    public static native String runCertifierNative(String workDir, String mode, String host, int port);
+    public static String runCertifier(String workDir) {
+        return runCertifierNative(workDir, "client", "127.0.0.1", 8080);
+    }
+    public static String runCertifier(String workDir, String mode, String host, int port) {
+        return runCertifierNative(workDir, mode, host, port);
+    }
+
     // Loads your NDK shared library (built via CMake).
     // Ensure add_library(...) name in CMakeLists.txt matches "certifier_native".
     static { System.loadLibrary("certifier_native"); }
