@@ -1,21 +1,63 @@
 plugins {
-    id 'application'
+    id 'com.android.application'
 }
 
-repositories {
-    mavenCentral()
+android {
+    namespace 'com.example.certifier'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.example.certifier"
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+
+        // NDK setup
+        ndk {
+            abiFilters "arm64-v8a"   // add "x86_64" if you want to run on emulator
+        }
+
+        externalNativeBuild {
+            cmake {
+                // Compiler flags
+                cppFlags "-std=c++17 -fexceptions -frtti"
+                // Uncomment below when you want to point directly to the Certifier repo:
+                // arguments "-DCERTIFIER_ROOT=/absolute/path/to/certifier-framework-for-confidential-computing"
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                          'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    // Link to your CMakeLists.txt
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
 }
 
 dependencies {
-    // add test libs if you want
-}
-
-application {
-    // Entry point class (adjust only if your class name/package is different)
-    mainClass = 'org.certifier.examples.SimpleApp'
-}
-
-tasks.run {
-    // Make sure this points to the folder that actually contains certifier_jni.{so,dylib,dll}
-    jvmArgs "-Djava.library.path=${projectDir}/../native/build"
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
