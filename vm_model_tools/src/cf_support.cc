@@ -281,17 +281,22 @@ bool put_cryptstore_item_entry(cryptstore       &cs,
   if (version == 0) {
     if (version_range_in_cryptstore(cs, tag, &l, &h)) {
       ce = find_in_cryptstore(cs, tag, h);
-      version = h;
+      version = h + 1;
+      ce = cs.add_entries();
     }
-  } else {
+  }
+  if (ce == nullptr) {
     ce = find_in_cryptstore(cs, tag, version);
   }
   if (ce == nullptr) {
     ce = cs.add_entries();
   }
+  if (ce == nullptr) {
+    return false;
+  }
 
   ce->CopyFrom(rce);
-  ce->set_version(version + 1);
+  ce->set_version(version);
 #ifdef DEBUG7
   printf("\nput_cryptstore_item_entry\n");
   print_cryptstore_entry(rce);
