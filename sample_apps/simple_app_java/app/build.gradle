@@ -13,16 +13,14 @@ android {
         versionCode 1
         versionName "1.0"
 
-        // NDK setup
-        ndk {
-            abiFilters "arm64-v8a"   // add "x86_64" if you want to run on emulator
-        }
+        // NDK ABIs
+        ndk { abiFilters "arm64-v8a" } // add "x86_64" if you want emulator
 
+        // CMake/NDK config
         externalNativeBuild {
             cmake {
-                // Compiler flags
                 cppFlags "-std=c++17 -fexceptions -frtti"
-                // Uncomment below when you want to point directly to the Certifier repo:
+                // When you want to link the real Certifier repo directly:
                 // arguments "-DCERTIFIER_ROOT=/absolute/path/to/certifier-framework-for-confidential-computing"
             }
         }
@@ -34,16 +32,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
                           'proguard-rules.pro'
         }
-        debug {
-            minifyEnabled false
-        }
+        debug { minifyEnabled false }
     }
 
-    // Link to your CMakeLists.txt
+    // Point to CMakeLists.txt
     externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-        }
+        cmake { path "src/main/cpp/CMakeLists.txt" }
     }
 
     compileOptions {
