@@ -8,6 +8,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_library(certifier_native SHARED
     native-lib.cpp
     simple_core_android.cc
+    # Later: add Certifier framework sources here or via CERTIFIER_ROOT
 )
 
 find_library(log-lib log)
