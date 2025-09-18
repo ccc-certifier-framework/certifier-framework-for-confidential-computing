@@ -10,11 +10,45 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Usage:
+ * Desktop usage:
  *   java org.certifier.examples.SimpleApp --mode=server --port=8080
  *   java org.certifier.examples.SimpleApp --mode=client --host=127.0.0.1 --port=8080
+ *
+ * Android usage (no command line):
+ *   // In your Activity:
+ *   String workDir = getFilesDir().getAbsolutePath();
+ *   String result  = org.certifier.examples.SimpleApp.runCertifier(workDir);
+ *   // Or choose explicit mode/host/port:
+ *   // String result = org.certifier.examples.SimpleApp.runCertifier(workDir, "client", "127.0.0.1", 8080);
  */
 public class SimpleApp {
+
+    // Loads your NDK shared library (built via CMake).
+    // Ensure add_library(...) name in CMakeLists.txt matches "certifier_native".
+    static { System.loadLibrary("certifier_native"); }
+
+    /**
+     * JNI entry (implementation in C++): run the Certifier workflow.
+     * You can route to native-only logic, or have native call back into Java as needed.
+     */
+    public static native String runCertifierNative(String workDir, String mode, String host, int port);
+
+    /**
+     * Android-friendly convenience: default to client:127.0.0.1:8080.
+     * Calls the JNI implementation above.
+     */
+    public static String runCertifier(String workDir) {
+        return runCertifierNative(workDir, "client", "127.0.0.1", 8080);
+    }
+
+    /**
+     * Android-friendly convenience with explicit options.
+     */
+    public static String runCertifier(String workDir, String mode, String host, int port) {
+        return runCertifierNative(workDir, mode, host, port);
+    }
+
+    // ----------------------------- Desktop entrypoint -----------------------------
 
     public static void main(String[] args) throws Exception {
         String mode = "client";
@@ -34,6 +68,8 @@ public class SimpleApp {
         }
     }
 
+    // ----------------------------- Original logic -----------------------------
+
     private static void runServer(int port) throws Exception {
         TrustManager tm = new TrustManager();
         if (!tm.init_policy_key() || !tm.initialize_enclave()) {
@@ -49,8 +85,7 @@ public class SimpleApp {
         System.out.println("AuthKeyInitialized=" + tm.isAuthKeyInitialized() +
                 ", PrimaryAdmissionsCertValid=" + tm.isPrimaryAdmissionsCertValid());
 
-        // For “server_dispatch” you can SWIG it and call directly.
-        // Here we demo a trivial plaintext accept loop; replace with your secure server path later.
+        // Demo plaintext accept loop; replace with secure server path later.
         try (ServerSocket ss = new ServerSocket(port)) {
             System.out.println("[Server] Listening on " + port);
             try (Socket s = ss.accept()) {
