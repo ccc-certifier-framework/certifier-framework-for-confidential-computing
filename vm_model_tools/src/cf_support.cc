@@ -290,8 +290,12 @@ bool put_cryptstore_item_entry(cryptstore       &cs,
   }
   if (ce == nullptr) {
     ce = cs.add_entries();
+    version = 1;
   }
   if (ce == nullptr) {
+    printf("%s() error, line %d, can't alloc cryptstore-entry\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -322,6 +326,9 @@ bool get_cryptstore_item_entry(cryptstore       &cs,
     ce = find_in_cryptstore(cs, tag, version);
   }
   if (ce == nullptr) {
+    printf("%s() error, line %d, can't find cryptstore-entry\n",
+           __func__,
+           __LINE__);
     return false;
   }
   rce->CopyFrom(*ce);
@@ -344,10 +351,14 @@ bool get_item(cryptstore &cs,
       ce = find_in_cryptstore(cs, tag, h);
       *version = h;
     }
-  } else {
+  }
+  if (ce == nullptr) {
     ce = find_in_cryptstore(cs, tag, *version);
   }
   if (ce == nullptr) {
+    printf("%s() error, line %d, can't find cryptstore-entry\n",
+           __func__,
+           __LINE__);
     return false;
   }
   if (ce->has_time_entered())
@@ -380,9 +391,14 @@ bool put_item(cryptstore &cs,
     }
   }
 
-  ce = cs.add_entries();
   if (ce == nullptr) {
-    printf("error pointer\n");
+    ver = 1;
+    ce = cs.add_entries();
+  }
+  if (ce == nullptr) {
+    printf("%s() error, line %d, can't alloc cryptstore-entry\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
