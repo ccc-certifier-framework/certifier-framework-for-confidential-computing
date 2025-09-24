@@ -21,7 +21,8 @@
 using namespace certifier::utilities;
 using namespace certifier::framework;
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
+
 DEFINE_string(ark_der, "sev_ark_cert.der", "ark cert file");
 DEFINE_string(ask_der, "sev_ask_cert.der", "ask cert file");
 DEFINE_string(vcek_der, "sev_vcek_cert.der", "vcek cert file");
