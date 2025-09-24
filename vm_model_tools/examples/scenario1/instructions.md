@@ -115,6 +115,18 @@ app directory.
 
 Then run prepare-test.sh  and run-test.sh as above.
 
+To test cf_key_client and cf_key_server, AFTER, certifying the VM (as above),
+  ./test-script.sh
+
+Then to fetch the key inserted by this test
+
+$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+  --get_item=true --output_format=raw \
+  --entry_tag="key-client-test-key" \
+  --policy_domain_name=dom0 --encrypted_cryptstore_filename=cryptstore.dom0 \
+  --policy_store_filename=policy_store.dom0 --enclave_type=simulated-enclave \
+  --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./
+
 ---------------------------------------------------------------------------------
 
 ## Detailed, step by step instructions

@@ -77,14 +77,15 @@ DEFINE_string(encrypted_cryptstore_filename,
               "encrypted_cryptstore.datica",
               "encrypted cryptstore file name");
 
-DEFINE_string(keyname, "primary-store-encryption-key", "generated key name");
-DEFINE_double(duration, 24.0 * 365.0, "duration of key");
-DEFINE_string(tag, "policy-key", "cryptstore entry tag");
+DEFINE_string(entry_tag, "policy-key", "cryptstore entry tag");
 DEFINE_int32(entry_version, 0, "cryptstore entry version");
-DEFINE_bool(exportable, false, "exportable");
-DEFINE_string(type,
+DEFINE_string(entry_type,
               "key-message-serialized-protobuf",
               "cryptstore entry data type");
+DEFINE_bool(exportable, false, "exportable");
+
+DEFINE_string(keyname, "primary-store-encryption-key", "generated key name");
+DEFINE_double(duration, 24.0 * 365.0, "duration of key");
 
 DEFINE_string(output_file, "out_1", "output file name");
 DEFINE_string(input_file, "in_1", "input file name");
@@ -193,9 +194,9 @@ void print_os_model_parameters() {
   printf("  Duration: %lf\n", FLAGS_duration);
   printf("\n");
 
-  printf("  Cryptstore entry name: %s\n", FLAGS_tag.c_str());
+  printf("  Cryptstore entry name: %s\n", FLAGS_entry_tag.c_str());
   printf("  Cryptstore entry version: %d\n", (int)FLAGS_entry_version);
-  printf("  Cryptstore entry type: %s\n", FLAGS_type.c_str());
+  printf("  Cryptstore entry type: %s\n", FLAGS_entry_type.c_str());
   if (FLAGS_exportable)
     printf("  Cryptstore entry is exportable\n");
   else
@@ -317,8 +318,8 @@ void print_help() {
   printf("  --print_cryptstore=true, print cryptstore\n");
   printf("  --save_cryptstore=false, save cryptstore (normally automatic)\n");
   printf("\n");
-  printf("  --tag=\"\", value of tag for put_item\n");
-  printf("  --version=0, value of version for put_item\n");
+  printf("  --entry_tag=\"\", value of tag for put_item\n");
+  printf("  --entry_version=0, value of version for put_item\n");
   printf("  --type=\"\", value of type for put_item\n");
   printf("    Possible types: X509-der-cert, key-message-serialized-protobuf, "
          "binary-blob\n");
@@ -1103,13 +1104,8 @@ int main(int an, char **av) {
       goto done;
     }
 
-    cryptstore cs;
-    string     entry_tag(FLAGS_tag);
-    string     entry_type;
-    int        entry_version = FLAGS_entry_version;
-    string     entry_tp;
-    string     value;
-    bool       exportable;
+    cryptstore       cs;
+    cryptstore_entry rce;
 
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
@@ -1123,27 +1119,58 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-    if (!get_item(cs,
-                  entry_tag,
-                  &entry_type,
-                  &entry_version,
-                  &entry_tp,
-                  &value,
-                  &exportable)) {
+
+    if (!get_cryptstore_item_entry(cs,
+                                   FLAGS_entry_tag,
+                                   FLAGS_entry_version,
+                                   &rce)) {
       printf("%s() error, line %d, cannot find %s entry\n",
              __func__,
              __LINE__,
-             entry_tag.c_str());
+             FLAGS_entry_tag.c_str());
       ret = 1;
       goto done;
     }
 
     if (FLAGS_print_level > 4) {
       printf("Got item, tag: %s, type: %s, version: %d, exportable: %B\n",
-             entry_tag.c_str(),
-             entry_type.c_str(),
-             entry_version,
-             exportable);
+             rce.tag().c_str(),
+             rce.type().c_str(),
+             rce.version(),
+             rce.exportable());
+    }
+
+    string value;
+
+    if (FLAGS_output_format == "raw") {
+      if (rce.type() == "key-message-serialized-protobuf") {
+        string      serialized_key;
+        key_message key;
+        serialized_key.assign((char *)rce.blob().data(), rce.blob().size());
+        if (!key.ParseFromString(serialized_key)) {
+          printf("%s() error, line %d, can't deserialize key\n",
+                 __func__,
+                 __LINE__);
+          ret = 1;
+          goto done;
+        }
+        value.assign((char *)key.secret_key_bits().data(),
+                     key.secret_key_bits().size());
+      } else if (rce.type() == "binary-blob" || rce.type() == "X509-der-cert") {
+        value.assign((char *)rce.blob().data(), rce.blob().size());
+      } else {
+        printf("%s() error, line %d, unknown type\n", __func__, __LINE__);
+        ret = 1;
+        goto done;
+      }
+    } else {
+      if (!rce.SerializeToString(&value)) {
+        printf("%s() error, line %d, can't serialize store entry\n",
+               __func__,
+               __LINE__);
+        ret = 1;
+        goto done;
+      }
     }
 
     if (!write_file_from_string(FLAGS_output_file, value)) {
@@ -1212,15 +1239,15 @@ int main(int an, char **av) {
       goto done;
     }
     if (!put_item(cs,
-                  FLAGS_tag,
-                  FLAGS_type,
+                  FLAGS_entry_tag,
+                  FLAGS_entry_type,
                   FLAGS_entry_version,
                   value,
                   FLAGS_exportable)) {
       printf("%s() error, line %d, cannot insert %s entry\n",
              __func__,
              __LINE__,
-             FLAGS_tag.c_str());
+             FLAGS_entry_tag.c_str());
       ret = 1;
       goto done;
     }
