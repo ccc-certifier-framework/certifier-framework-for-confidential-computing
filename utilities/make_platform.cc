@@ -26,6 +26,8 @@ DEFINE_string(platform_type, "", "platform type");
 DEFINE_string(properties_file, "", "properties files");
 DEFINE_string(output, "", "output file");
 
+// --------------------------------------------------------------------------
+
 int main(int an, char **av) {
   string usage(
       "Construct platform characteristics for platform verification policy");
@@ -37,7 +39,7 @@ int main(int an, char **av) {
                    "--properties_file=<properties.bin> "
                    "--output=<platform.bin>");
   if (FLAGS_platform_type == "") {
-    printf("No platform type\n");
+    printf("%s() error, line %d, no platform type\n", __func__, __LINE__);
     printf("%s %s\n", av[0], usage_str.c_str());
     return 1;
   }
@@ -49,26 +51,34 @@ int main(int an, char **av) {
   if (FLAGS_properties_file != "") {
     string pp_str;
     if (!read_file_into_string(FLAGS_properties_file, &pp_str)) {
-      printf("Can't read properties file\n");
+      printf("%s() error, line %d, can't read properties file\n",
+             __func__,
+             __LINE__);
       return 1;
     }
     if (!plat.mutable_props()->ParseFromString(pp_str)) {
-      printf("Can't parse properties file\n");
+      printf("%s() error, line %d, can't parse properties file\n",
+             __func__,
+             __LINE__);
       return 1;
     }
   }
 
   string p_out;
   if (!plat.SerializeToString(&p_out)) {
-    printf("Can't serialize\n");
+    printf("%s() error, line %d, can't serialize\n", __func__, __LINE__);
     return 1;
   }
 
   if (!write_file(FLAGS_output, p_out.size(), (byte *)p_out.data())) {
-    printf("Can't write output file\n");
+    printf("%s() error, line %d, can't write output files\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
   print_platform(plat);
   return 0;
 }
+
+// --------------------------------------------------------------------------

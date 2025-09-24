@@ -76,17 +76,21 @@ DEFINE_string(policy_store_filename,
 DEFINE_string(encrypted_cryptstore_filename,
               "encrypted_cryptstore.datica",
               "encrypted cryptstore file name");
-DEFINE_string(keyname, "primary-store-encryption-key", "generated key name");
-DEFINE_double(duration, 24.0 * 365.0, "duration of key");
-DEFINE_string(tag, "policy-key", "cryptstore entry tag");
+
+DEFINE_string(entry_tag, "policy-key", "cryptstore entry tag");
 DEFINE_int32(entry_version, 0, "cryptstore entry version");
-DEFINE_bool(exportable, false, "exportable");
-DEFINE_string(type,
+DEFINE_string(entry_type,
               "key-message-serialized-protobuf",
               "cryptstore entry data type");
+DEFINE_bool(exportable, false, "exportable");
+
+DEFINE_string(keyname, "primary-store-encryption-key", "generated key name");
+DEFINE_double(duration, 24.0 * 365.0, "duration of key");
 
 DEFINE_string(output_file, "out_1", "output file name");
 DEFINE_string(input_file, "in_1", "input file name");
+
+DEFINE_int32(print_level, 1, "print level");
 
 // For SEV
 DEFINE_string(ark_cert_file,
@@ -113,7 +117,7 @@ DEFINE_string(platform_attest_endorsement_file,
 // -------------------------------------------------------------------------
 
 void print_os_model_parameters() {
-  printf("cf_utility parameters:\n");
+  printf("\ncf_utility parameters:\n");
   printf("\n");
 
   if (FLAGS_init_trust)
@@ -124,6 +128,7 @@ void print_os_model_parameters() {
     printf("  Reinitialize certification?: yes\n");
   else
     printf("  Reinitialize certification?: no\n");
+  printf("\n");
 
   if (FLAGS_generate_symmetric_key)
     printf("  Generate symmetric key?: yes\n");
@@ -133,6 +138,8 @@ void print_os_model_parameters() {
     printf("  Generate public key?: yes\n");
   else
     printf("  Generate public key?: no\n");
+  printf("\n");
+
   if (FLAGS_get_item)
     printf("  Retrieve cryptstore entry?: yes\n");
   else
@@ -187,13 +194,16 @@ void print_os_model_parameters() {
   printf("  Duration: %lf\n", FLAGS_duration);
   printf("\n");
 
-  printf("  Cryptstore entry name: %s\n", FLAGS_tag.c_str());
+  printf("  Cryptstore entry name: %s\n", FLAGS_entry_tag.c_str());
   printf("  Cryptstore entry version: %d\n", (int)FLAGS_entry_version);
-  printf("  Cryptstore entry type: %s\n", FLAGS_type.c_str());
+  printf("  Cryptstore entry type: %s\n", FLAGS_entry_type.c_str());
   if (FLAGS_exportable)
     printf("  Cryptstore entry is exportable\n");
   else
     printf("  Cryptstore entry is not exportable\n");
+  printf("\n");
+
+  printf("  Print level: %d\n", (int)FLAGS_print_level);
   printf("\n");
 
   printf("  ARK certificate file: %s\n", FLAGS_ark_cert_file.c_str());
@@ -308,8 +318,8 @@ void print_help() {
   printf("  --print_cryptstore=true, print cryptstore\n");
   printf("  --save_cryptstore=false, save cryptstore (normally automatic)\n");
   printf("\n");
-  printf("  --tag=\"\", value of tag for put_item\n");
-  printf("  --version=0, value of version for put_item\n");
+  printf("  --entry_tag=\"\", value of tag for put_item\n");
+  printf("  --entry_version=0, value of version for put_item\n");
   printf("  --type=\"\", value of type for put_item\n");
   printf("    Possible types: X509-der-cert, key-message-serialized-protobuf, "
          "binary-blob\n");
@@ -331,6 +341,8 @@ void print_help() {
   printf("\n");
   printf("  --input_file=%s, input file name\n", FLAGS_input_file.c_str());
   printf("  --output_file=%s, output file name\n", FLAGS_output_file.c_str());
+  printf("\n");
+  printf("  --print_level: %d\n", (int)FLAGS_print_level);
   printf("\n");
   printf("  SEV enclave specific arguments\n");
   printf("    --ark_cert_file=%s, file with ark certificate for this machine\n",
@@ -747,7 +759,10 @@ int main(int an, char **av) {
     print_help();
     return ret;
   }
-  print_os_model_parameters();
+
+  if (FLAGS_print_level > 0) {
+    print_os_model_parameters();
+  }
 
   // Get parameters
   string *params = nullptr;
@@ -787,9 +802,9 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
-#ifdef DEBUG3
-  printf("Enclave initialized\n");
-#endif
+  if (FLAGS_print_level > 2) {
+    printf("Enclave initialized\n");
+  }
 
   if (params != nullptr) {
     delete[] params;
@@ -814,6 +829,10 @@ int main(int an, char **av) {
 
   // Operation?
   if (FLAGS_init_trust) {
+
+    if (FLAGS_print_level > 1) {
+      printf("init_trust\n");
+    }
 
     if (trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
       certifiers *c =
@@ -847,6 +866,10 @@ int main(int an, char **av) {
     goto done;
   } else if (FLAGS_reinit_trust) {
 
+    if (FLAGS_print_level > 1) {
+      printf("reinit_trust\n");
+    }
+
     if (!reinit_domain_and_update(FLAGS_policy_domain_name)) {
       ret = 1;
       goto done;
@@ -858,8 +881,10 @@ int main(int an, char **av) {
     }
     goto done;
   } else if (FLAGS_generate_symmetric_key) {
-    printf("\ngenerate_symmetric_key %s\n",
-           FLAGS_symmetric_key_algorithm.c_str());
+
+    if (FLAGS_print_level > 1) {
+      printf("generate symmetric key\n");
+    }
 
     if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
       printf("%s() error, line %d, domain %s does not init\n",
@@ -913,6 +938,11 @@ int main(int an, char **av) {
              __LINE__);
       ret = 1;
       goto done;
+    }
+
+    if (FLAGS_print_level > 2) {
+      printf("Generate key: Generated symmetric key size %d\n",
+             (int)km.secret_key_bits().size());
     }
 
     time_point tp;
@@ -974,6 +1004,10 @@ int main(int an, char **av) {
 #endif
     goto done;
   } else if (FLAGS_generate_public_key) {
+
+    if (FLAGS_print_level > 1) {
+      printf("generate public key\n");
+    }
 
     if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
       printf("%s() error, line %d, domain %s does not init\n",
@@ -1044,6 +1078,10 @@ int main(int an, char **av) {
     goto done;
   } else if (FLAGS_get_item) {
 
+    if (FLAGS_print_level > 1) {
+      printf("get_item\n");
+    }
+
     if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
       printf("%s() error, line %d, domain %s does not init\n",
              __func__,
@@ -1071,13 +1109,8 @@ int main(int an, char **av) {
       goto done;
     }
 
-    cryptstore cs;
-    string     entry_tag(FLAGS_tag);
-    string     entry_type;
-    int        entry_version = FLAGS_entry_version;
-    string     entry_tp;
-    string     value;
-    bool       exportable;
+    cryptstore       cs;
+    cryptstore_entry rce;
 
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
@@ -1091,27 +1124,68 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-    if (!get_item(cs,
-                  entry_tag,
-                  &entry_type,
-                  &entry_version,
-                  &entry_tp,
-                  &value,
-                  &exportable)) {
+
+    if (!get_cryptstore_item_entry(cs,
+                                   FLAGS_entry_tag,
+                                   FLAGS_entry_version,
+                                   &rce)) {
       printf("%s() error, line %d, cannot find %s entry\n",
              __func__,
              __LINE__,
-             entry_tag.c_str());
+             FLAGS_entry_tag.c_str());
       ret = 1;
       goto done;
     }
-#ifdef DEBUG7
-    printf("Got item, tag: %s, type: %s, version: %d, exportable: %B\n",
-           entry_tag.c_str(),
-           entry_type.c_str(),
-           entry_version,
-           exportable);
-#endif
+
+    if (FLAGS_print_level > 0) {
+      printf("Got item, tag: %s, type: %s, version: %d, exportable: %B\n",
+             rce.tag().c_str(),
+             rce.type().c_str(),
+             rce.version(),
+             rce.exportable());
+    }
+
+    string value;
+
+    if (FLAGS_output_format == "raw") {
+      if (rce.type() == "key-message-serialized-protobuf") {
+        string      serialized_key;
+        key_message key;
+        serialized_key.assign((char *)rce.blob().data(), rce.blob().size());
+        if (!key.ParseFromString(serialized_key)) {
+          printf("%s() error, line %d, can't deserialize key\n",
+                 __func__,
+                 __LINE__);
+          ret = 1;
+          goto done;
+        }
+        value.assign((char *)key.secret_key_bits().data(),
+                     key.secret_key_bits().size());
+        if (FLAGS_print_level > 2) {
+          printf("get_item, symmetric key size from proto %d\n",
+                 (int)key.secret_key_bits().size());
+        }
+      } else if (rce.type() == "binary-blob" || rce.type() == "X509-der-cert") {
+        value.assign((char *)rce.blob().data(), rce.blob().size());
+        if (FLAGS_print_level > 2) {
+          printf("get_item, symmetric key size from blob %d\n",
+                 (int)rce.blob().size());
+        }
+      } else {
+        printf("%s() error, line %d, unknown type\n", __func__, __LINE__);
+        ret = 1;
+        goto done;
+      }
+    } else {
+      if (!rce.SerializeToString(&value)) {
+        printf("%s() error, line %d, can't serialize store entry\n",
+               __func__,
+               __LINE__);
+        ret = 1;
+        goto done;
+      }
+    }
+
     if (!write_file_from_string(FLAGS_output_file, value)) {
       printf("%s() error, line %d, cannot write value to %s\n",
              __func__,
@@ -1123,6 +1197,10 @@ int main(int an, char **av) {
 
     goto done;
   } else if (FLAGS_put_item) {
+
+    if (FLAGS_print_level > 1) {
+      printf("put_item\n");
+    }
 
     if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
       printf("%s() error, line %d, domain %s does not init\n",
@@ -1174,15 +1252,15 @@ int main(int an, char **av) {
       goto done;
     }
     if (!put_item(cs,
-                  FLAGS_tag,
-                  FLAGS_type,
+                  FLAGS_entry_tag,
+                  FLAGS_entry_type,
                   FLAGS_entry_version,
                   value,
                   FLAGS_exportable)) {
       printf("%s() error, line %d, cannot insert %s entry\n",
              __func__,
              __LINE__,
-             FLAGS_tag.c_str());
+             FLAGS_entry_tag.c_str());
       ret = 1;
       goto done;
     }
@@ -1203,6 +1281,11 @@ int main(int an, char **av) {
 #endif
     goto done;
   } else if (FLAGS_print_cryptstore) {
+
+    if (FLAGS_print_level > 1) {
+      printf("print_cryptstore\n");
+    }
+
     cryptstore cs;
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
@@ -1219,9 +1302,10 @@ int main(int an, char **av) {
     print_cryptstore(cs);
     goto done;
   } else if (FLAGS_import_cryptstore) {
-#ifdef DEBUG7
-    printf("\nImport cryptstore\n");
-#endif
+
+    if (FLAGS_print_level > 2) {
+      printf("\nImport cryptstore\n");
+    }
 
     cryptstore cs;
     if (!import_cryptstore(&cs, FLAGS_input_file)) {
@@ -1231,11 +1315,11 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG8
-    printf("Recovered cryptstore:\n");
-    print_cryptstore(cs);
+    if (FLAGS_print_level > 0) {
+      printf("Recovered cryptstore:\n");
+      print_cryptstore(cs);
+    }
     goto done;
-#endif
     if (!save_cryptstore(cs,
                          FLAGS_data_dir,
                          FLAGS_encrypted_cryptstore_filename,
@@ -1250,9 +1334,11 @@ int main(int an, char **av) {
     }
     goto done;
   } else if (FLAGS_export_cryptstore) {
-#ifdef DEBUG7
-    printf("\nExport cryptstore\n");
-#endif
+
+    if (FLAGS_print_level > 2) {
+      printf("\nExport cryptstore\n");
+    }
+
     cryptstore cs;
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
@@ -1273,10 +1359,11 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG8
-    printf("Original cryptstore\n");
-    print_cryptstore(cs);
-#endif
+
+    if (FLAGS_print_level > 3) {
+      printf("Original cryptstore\n");
+      print_cryptstore(cs);
+    }
     goto done;
   } else {
     printf("No action specified\n");
@@ -1288,10 +1375,12 @@ done:
   if (trust_mgr != nullptr) {
     delete trust_mgr;
   }
-  if (ret == 0) {
-    printf("Succeeded\n");
-  } else {
-    printf("Failed\n");
+  if (FLAGS_print_level > 0) {
+    if (ret == 0) {
+      printf("Succeeded\n");
+    } else {
+      printf("Failed\n");
+    }
   }
   return ret;
 }

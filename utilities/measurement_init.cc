@@ -35,7 +35,8 @@ typedef unsigned char byte;
 using std::string;
 
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
+
 DEFINE_bool(test_measurement, false, "init test measurement");
 DEFINE_string(in_file, "test.exe", "Input binary");
 DEFINE_string(out_file,
@@ -43,12 +44,19 @@ DEFINE_string(out_file,
               "binary_trusted_measurements_file");
 DEFINE_string(mrenclave, "", "Measurement Hex String");
 
+// -----------------------------------------------------------------------
+
 bool write_file(string file_name, int size, byte *data) {
   int out = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-  if (out < 0)
+  if (out < 0) {
+    printf("%s() error, line %d, can't open %s\n",
+           __func__,
+           __LINE__,
+           file_name.c_str());
     return false;
+  }
   if (write(out, data, size) < 0) {
-    printf("Can't write file\n");
+    printf("%s() error, line %d, can't write file\n", __func__, __LINE__);
     close(out);
     return false;
   }
@@ -59,27 +67,41 @@ bool write_file(string file_name, int size, byte *data) {
 int file_size(string file_name) {
   struct stat file_info;
 
-  if (stat(file_name.c_str(), &file_info) != 0)
+  if (stat(file_name.c_str(), &file_info) != 0) {
+    printf("%s() error, line %d, can't stat file\n", __func__, __LINE__);
     return false;
-  if (!S_ISREG(file_info.st_mode))
+  }
+  if (!S_ISREG(file_info.st_mode)) {
+    printf("%s() error, line %d, can't change mode\n", __func__, __LINE__);
     return false;
+  }
   return (int)file_info.st_size;
 }
 
 bool read_file(string file_name, int *size, byte *data) {
   struct stat file_info;
 
-  if (stat(file_name.c_str(), &file_info) != 0)
+  if (stat(file_name.c_str(), &file_info) != 0) {
+    printf("%s() error, line %d, can't stat file\n", __func__, __LINE__);
     return false;
-  if (!S_ISREG(file_info.st_mode))
+  }
+  if (!S_ISREG(file_info.st_mode)) {
+    printf("%s() error, line %d, can't change mode\n", __func__, __LINE__);
     return false;
+  }
   int bytes_in_file = (int)file_info.st_size;
   if (bytes_in_file > *size) {
+    printf("%s() error, line %d, buffer too small\n", __func__, __LINE__);
     return false;
   }
   int fd = ::open(file_name.c_str(), O_RDONLY);
-  if (fd < 0)
+  if (fd < 0) {
+    printf("%s() error, line %d, can't open %s\n",
+           __func__,
+           __LINE__,
+           file_name.c_str());
     return false;
+  }
   int n = (int)read(fd, data, bytes_in_file);
   close(fd);
   *size = n;
@@ -92,14 +114,22 @@ bool digest_message(const byte  *message,
                     unsigned int digest_len) {
   EVP_MD_CTX *mdctx;
 
-  if ((mdctx = EVP_MD_CTX_new()) == NULL)
+  if ((mdctx = EVP_MD_CTX_new()) == NULL) {
+    printf("%s() error, line %d, can't get md context\n", __func__, __LINE__);
     return false;
-  if (1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
+  }
+  if (1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL)) {
+    printf("%s() error, line %d, can't init digest\n", __func__, __LINE__);
     return false;
-  if (1 != EVP_DigestUpdate(mdctx, message, message_len))
+  }
+  if (1 != EVP_DigestUpdate(mdctx, message, message_len)) {
+    printf("%s() error, line %d, can't update digest\n", __func__, __LINE__);
     return false;
-  if (1 != EVP_DigestFinal_ex(mdctx, digest, &digest_len))
+  }
+  if (1 != EVP_DigestFinal_ex(mdctx, digest, &digest_len)) {
+    printf("%s() error, line %d, can't finalize digest\n", __func__, __LINE__);
     return false;
+  }
   EVP_MD_CTX_free(mdctx);
 
   return true;
@@ -108,7 +138,7 @@ bool digest_message(const byte  *message,
 int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
-  if (FLAGS_print_all) {
+  if (FLAGS_print_level > 0) {
     if (FLAGS_test_measurement)
       printf("Generating test measurement\n");
     else if (FLAGS_mrenclave.size() != 0) {
@@ -127,7 +157,10 @@ int main(int an, char **av) {
     for (int i = 0; i < measurement_size; i++)
       m[i] = (byte)i;
     if (!write_file(FLAGS_out_file, measurement_size, m)) {
-      printf("Can't write %s\n", FLAGS_out_file.c_str());
+      printf("%s() error, line %d, can't write %s\n",
+             __func__,
+             __LINE__,
+             FLAGS_out_file.c_str());
       return 1;
     }
     return 0;
@@ -143,7 +176,9 @@ int main(int an, char **av) {
     } else {
       memcpy(hex, FLAGS_mrenclave.c_str(), size + 1);
     }
-    printf("Using measurement: %s\n", hex);
+    if (FLAGS_print_level > 0) {
+      printf("Using measurement: %s\n", hex);
+    }
     measurement_size = strlen(hex) / 2;
     for (size_t count = 0;
          count < strlen(hex) / 2 && count < (size_t)measurement_size;
@@ -153,7 +188,10 @@ int main(int an, char **av) {
     }
 
     if (!write_file(FLAGS_out_file, measurement_size, m)) {
-      printf("Can't write %s\n", FLAGS_out_file.c_str());
+      printf("%s() error, line %d, can't write %s\n",
+             __func__,
+             __LINE__,
+             FLAGS_out_file.c_str());
       return 1;
     }
     return 0;
@@ -162,31 +200,37 @@ int main(int an, char **av) {
   // read file and hash it
   int size = file_size(FLAGS_in_file);
 
-  if (FLAGS_print_all) {
+  if (FLAGS_print_level > 1) {
     printf("File size: %d\n", size);
   }
 
   byte *file_contents = (byte *)malloc(size);
   if (file_contents == nullptr) {
-    printf("Can't alloc\n");
+    printf("%s() error, line %d, can't alloc\n", __func__, __LINE__);
     return 1;
   }
 
   if (!read_file(FLAGS_in_file, &size, file_contents)) {
-    printf("Can't read %s\n", FLAGS_in_file.c_str());
+    printf("%s() error, line %d, can't read %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_in_file.c_str());
     free(file_contents);
     return 1;
   }
 
   measurement_size = 32;
   if (!digest_message(file_contents, size, m, (unsigned int)measurement_size)) {
-    printf("Can't digest file\n");
+    printf("%s() error, line %d, can't digest file\n", __func__, __LINE__);
     free(file_contents);
     return 1;
   }
 
   if (!write_file(FLAGS_out_file, measurement_size, m)) {
-    printf("Can't write %s\n", FLAGS_out_file.c_str());
+    printf("%s() error, line %d, can't write %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_out_file.c_str());
     free(file_contents);
     return 1;
   }
@@ -194,3 +238,5 @@ int main(int an, char **av) {
   free(file_contents);
   return 0;
 }
+
+// -----------------------------------------------------------------------

@@ -103,7 +103,7 @@ function cleanup_stale_procs() {
     echo "no certifier_service running"
   fi
 
-  echo "cleanup_stale_procsdone"
+  echo "cleanup_stale_procs done"
 }
 
 function do-run() {
@@ -161,7 +161,7 @@ function do-run() {
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=localhost \
-        --service_port=8123"
+        --service_port=8123" --print_level=1
       echo " "
 
 
@@ -179,7 +179,7 @@ function do-run() {
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=localhost \
-        --service_port=8123
+        --service_port=8123 --print_level=1
 
       sleep 3
 
@@ -198,7 +198,7 @@ function do-run() {
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=localhost \
-        --service_port=8123"
+        --service_port=8123" --print_level=3
       echo " "
 
       $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
@@ -215,7 +215,7 @@ function do-run() {
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=localhost \
-        --service_port=8123
+        --service_port=8123 --print_level=3
     fi
 
     if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then

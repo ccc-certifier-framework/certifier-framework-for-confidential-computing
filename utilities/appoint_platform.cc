@@ -24,6 +24,7 @@ DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(output, "simple_clause.bin", "output file");
 DEFINE_string(policy_key_file, "", "policy key file");
 DEFINE_string(cert_file, "", "cert file");
+DEFINE_int32(print_level, 1, "print level");
 
 bool get_key_from_file(const string &in, key_message *k) {
   int  in_size = file_size(in);
@@ -31,14 +32,17 @@ bool get_key_from_file(const string &in, key_message *k) {
   byte serialized_key[in_size];
 
   if (!read_file(in, &in_read, serialized_key)) {
-    printf("Can't read %s\n", in.c_str());
+    printf("%s() error, line %d, can't read %s\n",
+           __func__,
+           __LINE__,
+           in.c_str());
     return false;
   }
 
   string k_str;
   k_str.assign((char *)serialized_key, in_size);
   if (!k->ParseFromString(k_str)) {
-    printf("Can't parse key\n");
+    printf("%s() error, line %d, can't parse key\n", __func__, __LINE__);
     return false;
   }
   return true;
@@ -50,7 +54,10 @@ bool get_key_from_cert_file(const string &in, key_message *k) {
   byte serialized_cert[in_size];
 
   if (!read_file(in, &in_read, serialized_cert)) {
-    printf("Can't read %s\n", in.c_str());
+    printf("%s() error, line %d, can't read %s\n",
+           __func__,
+           __LINE__,
+           in.c_str());
     return false;
   }
   string str_cert;
@@ -58,11 +65,13 @@ bool get_key_from_cert_file(const string &in, key_message *k) {
 
   X509 *x = X509_new();
   if (!asn1_to_x509(str_cert, x)) {
-    printf("Can't asn1 convert\n");
+    printf("%s() error, line %d, can't asn1 convert\n", __func__, __LINE__);
     return false;
   }
   if (!x509_to_public_key(x, k)) {
-    printf("Can't get public key from cert\n");
+    printf("%s() error, line %d, can't get public key from cert\n",
+           __func__,
+           __LINE__);
     return false;
   }
   return true;
@@ -76,13 +85,13 @@ int main(int an, char **av) {
   string usage_str("--policy_key=<file> --cert_file=<ark_cert.bin> "
                    "--output=<output-file-name>");
   if (FLAGS_policy_key_file == "") {
-    printf("No policy key\n");
+    printf("%s() error, line %d, no policy key\n", __func__, __LINE__);
     printf("%s %s\n", av[0], usage_str.c_str());
     return 1;
   }
 
   if (FLAGS_cert_file == "") {
-    printf("No cert\n");
+    printf("%s() error, line %d, no cert\n", __func__, __LINE__);
     printf("%s: %s\n", av[0], usage_str.c_str());
     return 1;
   }
@@ -92,28 +101,34 @@ int main(int an, char **av) {
 
   key_message policy_key;
   if (!get_key_from_file(FLAGS_policy_key_file, &policy_key)) {
-    printf("Can't get policy key\n");
+    printf("%s() error, line %d, can't get policy key\n", __func__, __LINE__);
     return 1;
   }
   key_message pub_policy_key;
   if (!private_key_to_public_key(policy_key, &pub_policy_key)) {
-    printf("Can't get public policy key\n");
+    printf("%s() error, line %d, can't get public policy key\n",
+           __func__,
+           __LINE__);
     return 1;
   }
   if (!make_key_entity(policy_key, &sub_ent)) {
-    printf("Can't get subject entity\n");
+    printf("%s() error, line %d, can't get subject entity\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
   key_message platform_key;
   if (!get_key_from_cert_file(FLAGS_cert_file, &platform_key)) {
-    printf("Can't get platform key\n");
+    printf("%s() error, line %d, can't get platform key\n", __func__, __LINE__);
     return 1;
   }
 
   entity_message plat_ent;
   if (!make_key_entity(platform_key, &plat_ent)) {
-    printf("Can't get subject entity\n");
+    printf("%s() error, line %d, can't get subject entity\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -121,24 +136,27 @@ int main(int an, char **av) {
   string     att_str("is-trusted-for-attestation");
   vse_clause cl1;
   if (!make_unary_vse_clause(plat_ent, att_str, &cl1)) {
-    printf("Can't make clause 1\n");
+    printf("%s() error, line %d, can't make clause 1\n", __func__, __LINE__);
     return 1;
   }
 
   vse_clause cl2;
   if (!make_indirect_vse_clause(sub_ent, says_str, cl1, &cl2)) {
-    printf("Can't make clause 2\n");
+    printf("%s() error, line %d, can't make clause 2\n", __func__, __LINE__);
     return 1;
   }
 
   string out_str;
   if (!cl2.SerializeToString(&out_str)) {
-    printf("Can't serialize clause\n");
+    printf("%s() error, line %d, can't serialise clause\n", __func__, __LINE__);
     return 1;
   }
 
   if (!write_file(FLAGS_output, out_str.size(), (byte *)out_str.data())) {
-    printf("Can't write %s\n", FLAGS_output.c_str());
+    printf("%s() error, line %d, can't write %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_output.c_str());
     return 1;
   }
 

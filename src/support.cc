@@ -3023,7 +3023,7 @@ void print_signed_claim(const signed_claim_message &signed_claim) {
               (byte *)signed_claim.serialized_claim_message().data());
   printf("\n");
   if (signed_claim.has_signing_key()) {
-    printf("Signer key: ");
+    printf("\nSigner key: ");
     print_key(signed_claim.signing_key());
     printf("\n");
   }

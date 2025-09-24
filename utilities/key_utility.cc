@@ -18,7 +18,7 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
 
 DEFINE_bool(is_root, false, "verbose");
 DEFINE_string(key_name, "testKey", "key name");
@@ -41,28 +41,43 @@ bool generate_key(const string &name,
   int n = 0;
   if (type == Enc_method_rsa_4096_private) {
     if (!make_certifier_rsa_key(4096, priv)) {
+      printf("%s() error, line %d, can't make_certifier_rsa_key\n",
+             __func__,
+             __LINE__);
       return false;
     }
   } else if (type == Enc_method_rsa_2048_private) {
     if (!make_certifier_rsa_key(2048, priv)) {
+      printf("%s() error, line %d, can't make_certifier_rsa_key\n",
+             __func__,
+             __LINE__);
       return false;
     }
   } else if (type == Enc_method_rsa_1024_private) {
     if (!make_certifier_rsa_key(1024, priv)) {
+      printf("%s() error, line %d, can't make_certifier_rsa_key\n",
+             __func__,
+             __LINE__);
       return false;
     }
   } else if (type == Enc_method_ecc_384_private) {
     if (!make_certifier_ecc_key(384, priv)) {
+      printf("%s() error, line %d, can't make_certifier_rsa_key\n",
+             __func__,
+             __LINE__);
       return false;
     }
   } else {
+    printf("%s() error, line %d, bad key type\n", __func__, __LINE__);
     return false;
   }
   priv->set_key_name(name);
   priv->set_key_type(type);
   priv->set_key_format("vse-key");
-  if (!private_key_to_public_key(*priv, pub))
+  if (!private_key_to_public_key(*priv, pub)) {
+    printf("%s() error, line %d, can't make public key\n", __func__, __LINE__);
     return false;
+  }
 
   return true;
 }
@@ -93,21 +108,21 @@ int main(int an, char **av) {
                       FLAGS_authority_name,
                       &priv,
                       &pub)) {
-      printf("Couldn't generate key\n");
+      printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
       return 0;
     }
   } else {
-    printf("unsupported key type\n");
+    printf("%s() error, line %d, unsupported key type\n", __func__, __LINE__);
     return 1;
   }
   if (!priv.SerializeToString(&serialized_key)) {
-    printf("Can't serialize key\n");
+    printf("%s() error, line %d, can't serialize key\n", __func__, __LINE__);
     return 1;
   }
   if (!write_file(FLAGS_key_output_file,
                   serialized_key.size(),
                   (byte *)serialized_key.data())) {
-    printf("Can't write key file\n");
+    printf("%s() error, line %d, can't write key file\n", __func__, __LINE__);
     return 1;
   }
   string asn_cert;
@@ -123,11 +138,15 @@ int main(int an, char **av) {
                           FLAGS_duration,
                           cert,
                           FLAGS_is_root)) {
-      printf("Can't generate cert, produce_artifact failed\n");
+      printf(
+          "%s() error, line %d, can't generate cert, produce_artifact failed\n",
+          __func__,
+          __LINE__);
       return 1;
     }
+
     if (!x509_to_asn1(cert, &asn_cert)) {
-      printf("Can't convert to asn1\n");
+      printf("%s() error, line %d, can't convert asn1\n", __func__, __LINE__);
       return 1;
     }
     string      issuer_name_str;
@@ -144,17 +163,26 @@ int main(int an, char **av) {
                         &subject_name_str,
                         &subject_organization_str,
                         &sn)) {
-      printf("Certificate verifies\n");
+      if (FLAGS_print_level > 0) {
+        printf("Certificate verifies\n");
+      }
     } else {
-      printf("Certificate does not verify\n");
+      if (FLAGS_print_level > 0) {
+        printf("Certificate does not verify\n");
+      }
     }
     if (!write_file(FLAGS_cert_output_file,
                     asn_cert.size(),
                     (byte *)asn_cert.data())) {
-      printf("Can't write cert file\n");
+      printf("%s() error, line %d, can't write cert files\n",
+             __func__,
+             __LINE__);
       return 1;
     }
   }
 
   return 0;
 }
+
+
+// -------------------------------------------------------------------------

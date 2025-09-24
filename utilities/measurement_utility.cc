@@ -27,7 +27,8 @@ int parse_other_files_size(string         &other_files,
                            vector<string> &other_files_list,
                            vector<int>    &other_files_size);
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
+
 DEFINE_bool(print_debug, false, "print debugging info");
 DEFINE_string(type, "hash", "measurement type");
 DEFINE_string(input, "measurement_utility.exe", "input file");
@@ -36,6 +37,8 @@ DEFINE_string(other_files,
               "Comma-separated list of other files to include in measurement; "
               "e.g., policy_key.py,certifier_framework.py");
 DEFINE_string(output, "measurement_utility.exe.measurement", "output file");
+
+// ----------------------------------------------------------------------------
 
 
 const int sha256_size = 32;
@@ -95,7 +98,10 @@ int hash_utility(string &input, string &other_files, string &output) {
   // Read-in input file to be measured
   if (!read_file(input, &in_read, to_hash)) {
     free(to_hash_start);
-    printf("Can't read %s\n", input.c_str());
+    printf("%s() error, line %d, can't read %s\n",
+           __func__,
+           __LINE__,
+           input.c_str());
     return 1;
   }
   if (FLAGS_print_debug) {
@@ -119,10 +125,14 @@ int hash_utility(string &input, string &other_files, string &output) {
 
       if (!read_file(other_files_list[fctr], &bytes_read_this_file, to_hash)) {
         free(to_hash_start);
-        printf("Can't read %s\n", other_files_list[fctr].c_str());
+        printf("%s() error, line %d, can't read %s\n",
+               __func__,
+               __LINE__,
+               other_files_list[fctr].c_str());
         return 1;
       }
-      if (FLAGS_print_debug) {
+
+      if (FLAGS_print_level > 0) {
         printf("%d: File: '%s', bytes read=%d\n",
                __LINE__,
                other_files_list[fctr].c_str(),
@@ -150,15 +160,20 @@ int hash_utility(string &input, string &other_files, string &output) {
                       out,
                       out_len)) {
     free(to_hash_start);
+    printf("%s() error, line %d, can't digest message\n", __func__, __LINE__);
     return 1;
   }
   if (!write_file(output, (int)out_len, out)) {
     free(to_hash_start);
     printf("Can't write %s\n", output.c_str());
+    printf("%s() error, line %d, can't write %s\n",
+           __func__,
+           __LINE__,
+           output.c_str());
     return 1;
   }
 
-  if (FLAGS_print_all) {
+  if (FLAGS_print_level > 0) {
     printf("Measurement: ");
     print_bytes((int)out_len, out);
     printf("\n");
@@ -213,3 +228,5 @@ int main(int an, char **av) {
 
   return 1;
 }
+
+// ----------------------------------------------------------------------------

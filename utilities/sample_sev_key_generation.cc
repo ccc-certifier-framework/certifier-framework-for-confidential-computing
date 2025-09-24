@@ -21,12 +21,15 @@
 using namespace certifier::utilities;
 using namespace certifier::framework;
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
+
 DEFINE_string(ark_der, "sev_ark_cert.der", "ark cert file");
 DEFINE_string(ask_der, "sev_ask_cert.der", "ask cert file");
 DEFINE_string(vcek_der, "sev_vcek_cert.der", "vcek cert file");
 DEFINE_string(policy_key_file, "policy_key.bin", "policy key file");
 DEFINE_string(sev_attest, "sev_attest.bin", "simulated attestation file");
+
+// ---------------------------------------------------------------------------
 
 /*
   From a real Sev machine
@@ -122,16 +125,16 @@ int main(int an, char **av) {
   string      policy_key_str;
   key_message policy_key;
   if (!read_file_into_string(FLAGS_policy_key_file, &policy_key_str)) {
-    printf("Can't read policy key\n");
+    printf("%s() error, line %d, can't read policy key\n", __func__, __LINE__);
     return 1;
   }
   if (!policy_key.ParseFromString(policy_key_str)) {
-    printf("Can't parse policy key\n");
+    printf("%s() error, line %d, can't parse policy key\n", __func__, __LINE__);
     return 1;
   }
   key_message pub_policy_key;
   if (!private_key_to_public_key(policy_key, &pub_policy_key)) {
-    printf("Can't translate private policy key\n");
+    printf("%s() error, line %d, can't translate key\n", __func__, __LINE__);
     return 1;
   }
   default_report.reported_tcb.raw = 0x03000000000008115ULL;
@@ -152,16 +155,18 @@ int main(int an, char **av) {
   key_message pub_ark_vse_key;
   RSA        *r1 = RSA_new();
   if (!generate_new_rsa_key(4096, r1)) {
-    printf("Generate RSA ark key failed\n");
+    printf("%s() error, line %d, can't generate ark key\n", __func__, __LINE__);
     return 1;
   }
   if (!RSA_to_key(r1, &ark_vse_key)) {
-    printf("Generate vse ark key failed\n");
+    printf("%s() error, line %d, can't generate vse key\n", __func__, __LINE__);
     return 1;
   }
   ark_vse_key.set_key_name(ark_name);
   if (!private_key_to_public_key(ark_vse_key, &pub_ark_vse_key)) {
-    printf("private to public ark key failed\n");
+    printf("%s() error, line %d, can't translate to public key\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -176,18 +181,29 @@ int main(int an, char **av) {
                         86400 * 365.25,
                         ark_509,
                         true)) {
-    printf("Generate ark cert failed\n");
+    printf("%s() error, line %d, can't generate ark cert\n",
+           __func__,
+           __LINE__);
     return 1;
   }
-  printf("\nARK Cert\n");
-  X509_print_fp(stdout, ark_509);
+
+  if (FLAGS_print_level > 0) {
+    printf("\nARK Cert\n");
+    X509_print_fp(stdout, ark_509);
+  }
+
   string ark_der;
   if (!x509_to_asn1(ark_509, &ark_der)) {
-    printf("Can't convert ARK to der\n");
+    printf("%s() error, line %d, can't convert ark to der\n",
+           __func__,
+           __LINE__);
     return 1;
   }
   if (!write_file(FLAGS_ark_der, ark_der.size(), (byte *)ark_der.data())) {
-    printf("Can't write %s\n", FLAGS_ark_der.c_str());
+    printf("%s() error, line %d, can't write %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_ark_der.c_str());
     return 1;
   }
   RSA_free(r1);
@@ -197,16 +213,18 @@ int main(int an, char **av) {
   key_message pub_ask_vse_key;
   RSA        *r2 = RSA_new();
   if (!generate_new_rsa_key(4096, r2)) {
-    printf("Generate RSA ark key failed\n");
+    printf("%s() error, line %d, can't generate ask key\n", __func__, __LINE__);
     return 1;
   }
   if (!RSA_to_key(r2, &ask_vse_key)) {
-    printf("Generate vse ask key failed\n");
+    printf("%s() error, line %d, can't convert ask key\n", __func__, __LINE__);
     return 1;
   }
   ask_vse_key.set_key_name(ask_name);
   if (!private_key_to_public_key(ask_vse_key, &pub_ask_vse_key)) {
-    printf("private to public ask key failed\n");
+    printf("%s() error, line %d, can't convert to public key\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -221,18 +239,27 @@ int main(int an, char **av) {
                         86400 * 365.25,
                         ask_509,
                         false)) {
-    printf("Generate ark cert failed\n");
+    printf("%s() error, line %d, can't generate ask cert\n",
+           __func__,
+           __LINE__);
     return 1;
   }
-  printf("\nASK Cert\n");
-  X509_print_fp(stdout, ask_509);
+
+  if (FLAGS_print_level > 0) {
+    printf("\nASK Cert\n");
+    X509_print_fp(stdout, ask_509);
+  }
+
   string ask_der;
   if (!x509_to_asn1(ask_509, &ask_der)) {
-    printf("Can't convert ASK to der\n");
+    printf("%s() error, line %d, can't convert ask key\n", __func__, __LINE__);
     return 1;
   }
   if (!write_file(FLAGS_ask_der, ask_der.size(), (byte *)ask_der.data())) {
-    printf("Can't write %s\n", FLAGS_ask_der.c_str());
+    printf("%s() error, line %d, can't write %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_ask_der.c_str());
     return 1;
   }
   RSA_free(r2);
@@ -242,16 +269,18 @@ int main(int an, char **av) {
   key_message pub_vcek_vse_key;
   EC_KEY     *ec = generate_new_ecc_key(384);
   if (ec == nullptr) {
-    printf("Can't generate ecc key\n");
+    printf("%s() error, line %d, can't generate ecc key\n", __func__, __LINE__);
     return 1;
   }
   if (!ECC_to_key(ec, &vcek_vse_key)) {
-    printf("Generate vse vcek key failed\n");
+    printf("%s() error, line %d, can't generate vck key\n", __func__, __LINE__);
     return 1;
   }
   vcek_vse_key.set_key_name(vcek_name);
   if (!private_key_to_public_key(vcek_vse_key, &pub_vcek_vse_key)) {
-    printf("private to public vcek key failed\n");
+    printf("%s() error, line %d, can't convert vcek public key\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -266,18 +295,29 @@ int main(int an, char **av) {
                         86400 * 365.25,
                         vcek_509,
                         false)) {
-    printf("Generate ark cert failed\n");
+    printf("%s() error, line %d, can't geenrate vcek key\n",
+           __func__,
+           __LINE__);
     return 1;
   }
-  printf("\nVCEK Cert\n");
-  X509_print_fp(stdout, vcek_509);
+
+  if (FLAGS_print_level > 0) {
+    printf("\nVCEK Cert\n");
+    X509_print_fp(stdout, vcek_509);
+  }
+
   string vcek_der;
   if (!x509_to_asn1(vcek_509, &vcek_der)) {
-    printf("Can't convert ASK to der\n");
+    printf("%s() error, line %d, can't convert ASK to der\n",
+           __func__,
+           __LINE__);
     return 1;
   }
   if (!write_file(FLAGS_vcek_der, vcek_der.size(), (byte *)vcek_der.data())) {
-    printf("Can't write %s\n", FLAGS_vcek_der.c_str());
+    printf("%s() error, line %d, can't  write %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_vcek_der.c_str());
     return 1;
   }
 
@@ -287,14 +327,16 @@ int main(int an, char **av) {
 
   // use policy key as enclave key
   if (!make_attestation_user_data(enclave_type, pub_policy_key, &ud)) {
-    printf("Can't make user data\n");
+    printf("%s() error, line %d, can't make user data\n", __func__, __LINE__);
     return 1;
   }
   ud.mutable_policy_key()->CopyFrom(pub_policy_key);
 
   string said_str;
   if (!ud.SerializeToString(&said_str)) {
-    printf("Can't serialize user data\n");
+    printf("%s() error, line %d, can't serialize user data\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -306,7 +348,7 @@ int main(int an, char **av) {
                       said_str.size(),
                       user_data_hash,
                       hash_len)) {
-    printf("digest_message failed\n");
+    printf("%s() error, line %d, can't digest message\n", __func__, __LINE__);
     return 1;
   }
   memcpy(default_report.report_data, user_data_hash, hash_len);
@@ -323,13 +365,13 @@ int main(int an, char **av) {
                       sizeof(attestation_report) - sizeof(signature),
                       sig_digest,
                       sig_digest_len)) {
-    printf("digest_message  for whole report failed\n");
+    printf("%s() error, line %d, can't digest message\n", __func__, __LINE__);
     return 1;
   }
   ECDSA_SIG *sig = ECDSA_do_sign((const byte *)sig_digest, sig_digest_len, ec);
 
   if (sig == nullptr) {
-    printf("Can't sign digest\n");
+    printf("%s() error, line %d, can't sign digest\n", __func__, __LINE__);
     return 1;
   }
 
@@ -363,16 +405,23 @@ int main(int an, char **av) {
 
   string sev_attest_str;
   if (!the_attestation.SerializeToString(&sev_attest_str)) {
-    printf("Can't serialize attestation message\n");
+    printf("%s() error, line %d, can't serialize attestation message\n",
+           __func__,
+           __LINE__);
     return 1;
   }
   if (!write_file(FLAGS_sev_attest,
                   sev_attest_str.size(),
                   (byte *)sev_attest_str.data())) {
-    printf("Can't write %s\n", FLAGS_sev_attest.c_str());
+    printf("%s() error, line %d, can't write %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_sev_attest.c_str());
     return 1;
   }
   EC_KEY_free(ec);
 
   return 0;
 }
+
+// ---------------------------------------------------------------------------

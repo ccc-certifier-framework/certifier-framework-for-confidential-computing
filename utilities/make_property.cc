@@ -31,6 +31,8 @@ DEFINE_uint64(int_value, 0, "int value");
 DEFINE_string(string_value, "", "string value");
 DEFINE_string(output, "prop.bin", "output file");
 
+// -------------------------------------------------------------------------
+
 int main(int an, char **av) {
   string usage("Specify a platform policy property used in policy.");
   gflags::SetUsageMessage(usage);
@@ -41,7 +43,7 @@ int main(int an, char **av) {
                    "--comparator=<cmp> --int_value=3 "
                    "--string_value=<string> --output=<output_file>");
   if (FLAGS_property_name == "") {
-    printf("No property name\n");
+    printf("%s() error, line %d, no property name\n", __func__, __LINE__);
     printf("%s %s\n", av[0], usage_str.c_str());
     return 1;
   }
@@ -53,21 +55,23 @@ int main(int an, char **av) {
                      FLAGS_int_value,
                      FLAGS_string_value,
                      &prop)) {
-    printf("Can't make property\n");
+    printf("%s() error, line %d, can't property\n", __func__, __LINE__);
     return 1;
   }
 
   string p_out;
   if (!prop.SerializeToString(&p_out)) {
-    printf("Can't serialize\n");
+    printf("%s() error, line %d, can't serialize\n", __func__, __LINE__);
     return 1;
   }
 
   if (!write_file(FLAGS_output, p_out.size(), (byte *)p_out.data())) {
-    printf("Can't write cert file\n");
+    printf("%s() error, line %d, can't write cert file\n", __func__, __LINE__);
     return 1;
   }
 
   print_property(prop);
   return 0;
 }
+
+// -------------------------------------------------------------------------

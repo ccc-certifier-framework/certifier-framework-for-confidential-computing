@@ -70,6 +70,7 @@ DEFINE_string(encrypted_cryptstore_filename,
               "encrypted cryptstore file name");
 
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
+DEFINE_int32(print_level, 1, "print level");
 
 DEFINE_string(ark_cert_file,
               "./service/ark_cert.der",
@@ -120,6 +121,7 @@ void print_parameters() {
   printf("  Symmetric key algorithm: %s\n",
          FLAGS_symmetric_key_algorithm.c_str());
   printf("  Duration: %lf\n", FLAGS_duration);
+  printf("  Print level: %d\n", FLAGS_print_level);
   printf("\n");
 }
 
@@ -244,6 +246,8 @@ void print_help() {
   printf("  --input_file=%s, input file name\n", FLAGS_input_file.c_str());
   printf("  --output_file=%s, output file name\n", FLAGS_output_file.c_str());
   printf("\n");
+  printf("  --print_level=%d\n", FLAGS_print_level);
+  printf("\n");
   printf("  SEV enclave specific arguments\n");
   printf("    --ark_cert_file=%s, file with ark certificate for this machine\n",
          FLAGS_ark_cert_file.c_str());
@@ -289,24 +293,24 @@ void server_application(secure_authenticated_channel &channel) {
   key_service_message_response response;
   string                       serialized_response;
 
-#ifdef DEBUG7
-  printf("key_server: Server peer id is %s\n", channel.peer_id_.c_str());
-  if (channel.peer_cert_ != nullptr) {
-    printf("Server peer cert is:\n");
-    X509_print_fp(stdout, channel.peer_cert_);
+  if (FLAGS_print_level > 2) {
+    printf("key_server: Server peer id is %s\n", channel.peer_id_.c_str());
+    if (channel.peer_cert_ != nullptr) {
+      printf("Server peer cert is:\n");
+      X509_print_fp(stdout, channel.peer_cert_);
+    }
   }
-#endif  // DEBUG7
 
   // Read message from client over authenticated, encrypted channel
   string out;
   int    n = channel.read(&out);
 
-#ifdef DEBUG7
   // This should be a request protobuf
-  printf("key_server: SSL server read %d bytes:\n", (int)out.size());
-  print_bytes(out.size(), (byte *)out.data());
-  printf("\n");
-#endif  // DEBUG7
+  if (FLAGS_print_level > 2) {
+    printf("key_server: SSL server read %d bytes:\n", (int)out.size());
+    print_bytes(out.size(), (byte *)out.data());
+    printf("\n");
+  }
 
   // Parse request
   if (!request.ParseFromString(out)) {
@@ -317,10 +321,10 @@ void server_application(secure_authenticated_channel &channel) {
     return;
   }
 
-#ifdef DEBUG7
-  printf("\nkey_server received request\n");
-  print_request_packet(request);
-#endif
+  if (FLAGS_print_level > 1) {
+    printf("\nkey_server received request\n");
+    print_request_packet(request);
+  }
 
   response.set_resource_name(request.resource_name());
   response.set_response_type("final");
@@ -401,11 +405,11 @@ void server_application(secure_authenticated_channel &channel) {
       return;
     }
 
-#ifdef DEBUG7
-    printf("\nkey_server: put_cryptstore_item_entry succeeded\n");
-    print_cryptstore_entry(rce);
-    printf("\n");
-#endif
+    if (FLAGS_print_level > 2) {
+      printf("\nkey_server: put_cryptstore_item_entry succeeded\n");
+      print_cryptstore_entry(rce);
+      printf("\n");
+    }
 
     response.set_response_type("final");
     response.set_status("succeeded");
@@ -423,9 +427,10 @@ void server_application(secure_authenticated_channel &channel) {
     }
   } else {
 
-#ifdef DEBUG7
-    printf("key_server: Unknown request type\n");
-#endif
+    if (FLAGS_print_level > 0) {
+      printf("key_server: Unknown request type\n");
+    }
+
     if (error_response(&response, &serialized_response))
       channel.write((int)serialized_response.size(),
                     (byte *)serialized_response.data());
@@ -433,10 +438,10 @@ void server_application(secure_authenticated_channel &channel) {
     return;
   }
 
-#ifdef DEBUG7
-  printf("\nkey_server response sent\n");
-  print_response_packet(response);
-#endif
+  if (FLAGS_print_level > 2) {
+    printf("\nkey_server response sent\n");
+    print_response_packet(response);
+  }
 
   // Serialize response
   if (!response.SerializeToString(&serialized_response)) {
@@ -503,9 +508,10 @@ int main(int an, char **av) {
   bool   exportable;
   string tp;
 
-#ifdef DEBUG8
-  printf("\npolicy store: %s\n", store_file.c_str());
-#endif
+  if (FLAGS_print_level > 2) {
+    printf("\npolicy store: %s\n", store_file.c_str());
+  }
+
   // Create trust manager
   trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
   if (trust_mgr == nullptr) {
@@ -520,9 +526,10 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
-#ifdef DEBUG8
-  printf("Enclave initialized\n");
-#endif
+
+  if (FLAGS_print_level > 1) {
+    printf("Enclave initialized\n");
+  }
 
   if (params != nullptr) {
     delete[] params;
@@ -643,11 +650,11 @@ int main(int an, char **av) {
     goto done;
   }
 
-#ifdef DEBUG8
-  printf("Got all keys and certificates\n");
-#endif
+  if (FLAGS_print_level > 2) {
+    printf("Got all keys and certificates\n");
+    printf("Running key-server\n");
+  }
 
-  printf("Running key-server\n");
   if (!server_dispatch(FLAGS_key_server_url,
                        FLAGS_key_server_port,
                        g_serialized_policy_cert,
@@ -666,10 +673,12 @@ done:
   if (trust_mgr != nullptr) {
     delete trust_mgr;
   }
-  if (ret == 0) {
-    printf("Succeeded\n");
-  } else {
-    printf("Failed\n");
+  if (FLAGS_print_level > 0) {
+    if (ret == 0) {
+      printf("Succeeded\n");
+    } else {
+      printf("Failed\n");
+    }
   }
   return ret;
 }

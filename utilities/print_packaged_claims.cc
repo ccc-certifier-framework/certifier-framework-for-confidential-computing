@@ -21,8 +21,10 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
 DEFINE_string(input, "simple_clause.bin", "input file");
+
+// --------------------------------------------------------------------------
 
 void print_signed_claim_clauses(const signed_claim_message &sc) {
   string cm_str;
@@ -30,7 +32,9 @@ void print_signed_claim_clauses(const signed_claim_message &sc) {
                 sc.serialized_claim_message().size());
   claim_message cm;
   if (!cm.ParseFromString(cm_str)) {
-    printf("Can't parse serialized claim\n");
+    printf("%s() error, line %d, can't parse serialized claim\n",
+           __func__,
+           __LINE__);
     return;
   }
   string vse_str;
@@ -38,7 +42,9 @@ void print_signed_claim_clauses(const signed_claim_message &sc) {
                  cm.serialized_claim().size());
   vse_clause v;
   if (!v.ParseFromString(vse_str)) {
-    printf("Can't parse serialized vse clasue\n");
+    printf("%s() error, line %d, can't serialize vse clause\n",
+           __func__,
+           __LINE__);
     return;
   }
   print_vse_clause(v);
@@ -70,26 +76,35 @@ int main(int an, char **av) {
   all_bufs.assign((char *)buf, in_size);
   buffer_sequence seq;
   if (!seq.ParseFromString(all_bufs)) {
-    printf("Can't deserialize %s\n", FLAGS_input.c_str());
+    printf("%s() error, line %d, can't deserialize\n", __func__, __LINE__);
     return 1;
   }
 
-  printf("\n %d blocks\n", seq.block_size());
+  if (FLAGS_print_level > 1) {
+    printf("\n %d blocks\n", seq.block_size());
+  }
+
   for (int i = 0; i < seq.block_size(); i++) {
     const string        &s = seq.block(i);
     signed_claim_message sc;
 
     if (!sc.ParseFromString(s)) {
-      printf("Can't parse input file\n");
+      printf("%s() error, line %d, can't parse input file\n",
+             __func__,
+             __LINE__);
       return 1;
     }
     printf("%d: ", i + 1);
-    if (FLAGS_print_all)
+
+    if (FLAGS_print_level > 2) {
       print_signed_claim(sc);
-    else
+    } else {
       print_signed_claim_clauses(sc);
-    printf("\n");
+      printf("\n");
+    }
   }
 
   return 0;
 }
+
+// --------------------------------------------------------------------------

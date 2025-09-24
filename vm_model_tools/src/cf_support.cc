@@ -356,9 +356,10 @@ bool get_item(cryptstore &cs,
     ce = find_in_cryptstore(cs, tag, *version);
   }
   if (ce == nullptr) {
-    printf("%s() error, line %d, can't find cryptstore-entry\n",
+    printf("%s() error, line %d, can't find cryptstore-entry %s\n",
            __func__,
-           __LINE__);
+           __LINE__,
+           tag.c_str());
     return false;
   }
   if (ce->has_time_entered())

@@ -19,6 +19,7 @@
 using namespace certifier::utilities;
 
 DEFINE_bool(print_all, false, "verbose");
+
 // "generate-policy-key-and-test-keys" is the other option
 DEFINE_string(operation, "", "generate policy key and self-signed cert");
 
@@ -59,6 +60,8 @@ DEFINE_string(key_type, Enc_method_rsa_2048, "key type");
 DEFINE_string(key_name, "anonymous", "key name");
 DEFINE_string(cert_output_file, "cert_file.bin", "cert file");
 
+DEFINE_int32(print_level, 1, "print level");
+
 
 bool generate_test_keys() {
   key_message platform_key;
@@ -70,17 +73,28 @@ bool generate_test_keys() {
   else if (FLAGS_platform_key_type == Enc_method_rsa_1024_private)
     n = 1024;
   if (!make_certifier_rsa_key(n, &platform_key)) {
+    printf("%s() error, line %d, can't make_certifier_rsa_key\n",
+           __func__,
+           __LINE__);
     return false;
   }
   platform_key.set_key_name(FLAGS_platform_key_name);
   platform_key.set_key_type(FLAGS_platform_key_type);
   string serialized_platform_key;
-  if (!platform_key.SerializeToString(&serialized_platform_key))
+  if (!platform_key.SerializeToString(&serialized_platform_key)) {
+    printf("%s() error, line %d, can't serialize platform key\n",
+           __func__,
+           __LINE__);
     return false;
+  }
   if (!write_file(FLAGS_platform_key_output_file,
                   serialized_platform_key.size(),
-                  (byte *)serialized_platform_key.data()))
+                  (byte *)serialized_platform_key.data())) {
+    printf("%s() error, line %d, can't write output file\n",
+           __func__,
+           __LINE__);
     return false;
+  }
 
   n = 2048;
   if (FLAGS_attest_key_type == Enc_method_rsa_2048_private)
@@ -88,6 +102,9 @@ bool generate_test_keys() {
   else if (FLAGS_attest_key_type == Enc_method_rsa_1024_private)
     n = 1024;
   if (!make_certifier_rsa_key(n, &attest_key)) {
+    printf("%s() error, line %d, can't make_certifier_rsa_key\n",
+           __func__,
+           __LINE__);
     return false;
   }
   attest_key.set_key_name(FLAGS_attest_key_name);
@@ -97,16 +114,20 @@ bool generate_test_keys() {
     return false;
   if (!write_file(FLAGS_attest_key_output_file,
                   serialized_attest_key.size(),
-                  (byte *)serialized_attest_key.data()))
+                  (byte *)serialized_attest_key.data())) {
+    printf("%s() error, line %d, can't write file\n", __func__, __LINE__);
     return false;
+  }
 
-  printf("\nGenerated platform key:\n");
-  print_key(platform_key);
-  printf("\n");
+  if (FLAGS_print_level > 1) {
+    printf("\nGenerated platform key:\n");
+    print_key(platform_key);
+    printf("\n");
 
-  printf("\nGenerated attest key:\n");
-  print_key(attest_key);
-  printf("\n");
+    printf("\nGenerated attest key:\n");
+    print_key(attest_key);
+    printf("\n");
+  }
 
   return true;
 }
@@ -135,9 +156,11 @@ bool generate_policy_key() {
                   (byte *)policy_key.certificate().data()))
     return false;
 
-  printf("\nGenerated policy key:\n");
-  print_key(policy_key);
-  printf("\n");
+  if (FLAGS_print_level > 1) {
+    printf("\nGenerated policy key:\n");
+    print_key(policy_key);
+    printf("\n");
+  }
   return true;
 }
 
@@ -146,14 +169,17 @@ void test_sig() {
   byte serialized_key[key_file_size + 1];
   int  size = key_file_size;
   if (!read_file(FLAGS_platform_key_output_file, &size, serialized_key)) {
-    printf("Can't read key file: %s\n", FLAGS_platform_key_output_file.c_str());
+    printf("%s() error, line %d, can't read %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_platform_key_output_file.c_str());
     return;
   }
   string platform_key_str;
   platform_key_str.assign((char *)serialized_key, size);
   key_message platform_key;
   if (!platform_key.ParseFromString(platform_key_str)) {
-    printf("Can't parse key file\n");
+    printf("%s() error, line %d, can't parse key file\n", __func__, __LINE__);
     return;
   }
 
@@ -163,7 +189,9 @@ void test_sig() {
   if (!read_file(FLAGS_platform_attest_endorsement,
                  &size,
                  serialized_endorsement)) {
-    printf("Can't read endorsement file %s\n",
+    printf("%s() error, line %d, can't read endorsement file %s\n",
+           __func__,
+           __LINE__,
            FLAGS_platform_attest_endorsement.c_str());
     return;
   }
@@ -171,7 +199,9 @@ void test_sig() {
   endorsement_str.assign((char *)serialized_endorsement, size);
   signed_claim_message scm;
   if (!scm.ParseFromString(endorsement_str)) {
-    printf("Can't endorsement file\n");
+    printf("%s() error, line %d, can't parse endorsement file\n",
+           __func__,
+           __LINE__);
     return;
   }
   claim_message cl;
@@ -179,20 +209,27 @@ void test_sig() {
   serialized_claim_str.assign((char *)scm.serialized_claim_message().data(),
                               scm.serialized_claim_message().size());
   if (!cl.ParseFromString(serialized_claim_str)) {
-    printf("Can't deserialize claim\n");
+    printf("%s() error, line %d, can't deserialize claim\n",
+           __func__,
+           __LINE__);
     return;
   }
-  printf("serialized: \n");
-  print_bytes(scm.serialized_claim_message().size(),
-              (byte *)scm.serialized_claim_message().data());
-  printf("\n");
+
+  if (FLAGS_print_level > 1) {
+    printf("serialized: \n");
+    print_bytes(scm.serialized_claim_message().size(),
+                (byte *)scm.serialized_claim_message().data());
+    printf("\n");
+  }
 
   byte dec_buf[256];
   memset(dec_buf, 0, 256);
 
   RSA *r = RSA_new();
   if (!key_to_RSA(platform_key, r)) {
-    printf("Can't convert key to rsa key\n");
+    printf("%s() error, line %d, can't convert key to rsa key\n",
+           __func__,
+           __LINE__);
     return;
   }
 
@@ -202,13 +239,15 @@ void test_sig() {
                              r,
                              RSA_NO_PADDING);
   if (n < 0) {
-    printf("public encrypt failed\n");
+    printf("%s() error, line %d, publi encrypt failed\n", __func__, __LINE__);
     return;
   }
 
-  printf("Decrypted signature: ");
-  print_bytes(n, dec_buf);
-  printf("\n");
+  if (FLAGS_print_level > 0) {
+    printf("Decrypted signature: ");
+    print_bytes(n, dec_buf);
+    printf("\n");
+  }
 
   return;
 }
@@ -218,60 +257,78 @@ bool generate_key(const string &type, const string &name, key_message *k) {
   if (type == Enc_method_rsa_1024) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(1024, r)) {
-      printf("Can't generate rsa key\n");
+      printf("%s() error, line %d, can't generate rsa key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     if (!RSA_to_key(r, k)) {
-      printf("Can't convert rsa key to key\n");
+      printf("%s() error, line %d, can't convert rsa key ro vse key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     k->set_key_type(Enc_method_rsa_1024_private);
   } else if (type == Enc_method_rsa_2048) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(2048, r)) {
-      printf("Can't generate rsa key\n");
+      printf("%s() error, line %d, can't generate rsa key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     if (!RSA_to_key(r, k)) {
-      printf("Can't convert rsa key to key\n");
+      printf("%s() error, line %d, can't convert rsa key to vse key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     k->set_key_type(Enc_method_rsa_2048_private);
   } else if (type == Enc_method_rsa_3072) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(3072, r)) {
-      printf("Can't generate rsa key\n");
+      printf("%s() error, line %d, can't generate rsa key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     if (!RSA_to_key(r, k)) {
-      printf("Can't convert rsa key to key\n");
+      printf("%s() error, line %d, can't convert rsa key to vse key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     k->set_key_type(Enc_method_rsa_3072_private);
   } else if (type == Enc_method_rsa_4096) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(4096, r)) {
-      printf("Can't generate rsa key\n");
+      printf("%s() error, line %d, can't generate rsa key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     if (!RSA_to_key(r, k)) {
+      printf("%s() error, line %d, can't conver rsa key\n", __func__, __LINE__);
       printf("Can't convert rsa key to key\n");
-      return false;
     }
     k->set_key_type(Enc_method_rsa_4096_private);
   } else if (type == Enc_method_ecc_384) {
     EC_KEY *ec = generate_new_ecc_key(384);
     if (ec == nullptr) {
-      printf("Can't generate ecc key\n");
+      printf("%s() error, line %d, can't generate ecc key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     if (!ECC_to_key(ec, k)) {
+      printf("%s() error, line %d, can't convert ecc key\n",
+             __func__,
+             __LINE__);
       printf("Can't convert ecc key to key\n");
-      return false;
     }
     k->set_key_type(Enc_method_ecc_384_private);
   } else {
-    printf("Unknown key type\n");
+    printf("%s() error, line %d, unknown key type\n", __func__, __LINE__);
     return false;
   }
 
@@ -286,8 +343,11 @@ bool generate_key(const string &type, const string &name, key_message *k) {
     printf("Can't write file\n");
     return false;
   }
-  print_key(*k);
-  printf("\n");
+
+  if (FLAGS_print_level > 2) {
+    print_key(*k);
+    printf("\n");
+  }
 
   return true;
 }
