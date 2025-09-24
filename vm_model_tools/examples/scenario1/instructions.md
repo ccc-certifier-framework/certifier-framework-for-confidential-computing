@@ -90,10 +90,29 @@ To run the tests
      -- This runs the test.  The first command assumes the default domain
          name ("datica-test").
 
+*****
+
+NOTE: prepare-test.sh and run-test.sh assume the directory structure for this
+example.  If you have your certifier framework repository in an unrelated directory
+you MUST specify CERTIFIER_ROOT before running prepare-test or run-test.  So
+you should start out:
+
+export CERTIFIER_ROOT="your certifier respository path"
+cd "you application path"
+
+Before running prepare-test or run-test.  Both prepare-test and run-test assume
+you are running them from your app directory (corresponding to
+.../examples/scenario1" in the example.
 
 ---------------------------------------------------------------------------------
 
-## Detailed, step byt step instructions
+## Detailed, step by step instructions
+
+Warning:  The instructions below, unlike the istructions above, are
+not continuously tested.  Although generally right, use the scripts
+prepare-test.sh and run-test.sh as above.  These scripts can be
+responsible for setting the command line arguments correctly even
+if the instructions below are out-of-date.
 
 ### Step 1: Build the utilities
 
@@ -333,10 +352,11 @@ cd $CERTIFIER_ROOT/certifier_service
 go build simpleserver.go
 ```
 
-## Step 8: Create a directory for service data
+## Step 8: Create directories for service data and operations data
 
 ```shell
 mkdir $EXAMPLE_DIR/service
+mkdir $EXAMPLE_DIR/cf_data
 ```
 
 ## Step 9: Provision the service files
@@ -345,6 +365,8 @@ cd $EXAMPLE_DIR/provisioning
 
 cp -p policy_key_file.datica-test policy_cert_file.datica-test policy.bin $EXAMPLE_DIR/service
 cp -p sev_policy.bin ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/service
+cp -p policy_cert_file.datica-test platform_key_file.bin attest_key_file.bin sev_cf_utility.measurement $EXAMPLE_DIR/cf_data
+cp -p cf_utility.measurement platform_attest_endorsement.bin $EXAMPLE_DIR/cf_data
 ```
 
 ## Step 10: Start the Certifier Service

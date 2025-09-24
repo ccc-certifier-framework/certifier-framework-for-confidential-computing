@@ -146,6 +146,25 @@ function do-run() {
 
     if [[ "$ENCLAVE_TYPE" == "se" ]] ; then
 
+      echo " "
+      echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+        --cf_utility_help=false \
+        --init_trust=true \
+        --print_cryptstore=true \
+        --save_cryptstore=false \
+        --enclave_type="simulated-enclave" \
+        --policy_domain_name=$DOMAIN_NAME \
+        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
+        --policy_store_filename=$POLICY_STORE_NAME \
+        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+        --symmetric_key_algorithm=aes-256-gcm  \
+        --public_key_algorithm=rsa-2048 \
+        --data_dir="$EXAMPLE_DIR/" \
+        --certifier_service_URL=localhost \
+        --service_port=8123"
+      echo " "
+
+
       $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
         --init_trust=true \
@@ -163,6 +182,24 @@ function do-run() {
         --service_port=8123
 
       sleep 3
+
+      echo " "
+      echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+        --cf_utility_help=false \
+        --init_trust=false \
+        --generate_symmetric_key=true \
+        --save_cryptstore=false \
+        --enclave_type="simulated-enclave" \
+        --policy_domain_name=$DOMAIN_NAME \
+        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
+        --policy_store_filename=$POLICY_STORE_NAME \
+        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+        --symmetric_key_algorithm=aes-256-gcm  \
+        --public_key_algorithm=rsa-2048 \
+        --data_dir="$EXAMPLE_DIR/" \
+        --certifier_service_URL=localhost \
+        --service_port=8123"
+      echo " "
 
       $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
