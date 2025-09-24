@@ -76,6 +76,7 @@ DEFINE_string(policy_store_filename,
 DEFINE_string(encrypted_cryptstore_filename,
               "encrypted_cryptstore.datica",
               "encrypted cryptstore file name");
+
 DEFINE_string(keyname, "primary-store-encryption-key", "generated key name");
 DEFINE_double(duration, 24.0 * 365.0, "duration of key");
 DEFINE_string(tag, "policy-key", "cryptstore entry tag");
@@ -115,7 +116,7 @@ DEFINE_string(platform_attest_endorsement_file,
 // -------------------------------------------------------------------------
 
 void print_os_model_parameters() {
-  printf("cf_utility parameters:\n");
+  printf("\ncf_utility parameters:\n");
   printf("\n");
 
   if (FLAGS_init_trust)
@@ -126,6 +127,7 @@ void print_os_model_parameters() {
     printf("  Reinitialize certification?: yes\n");
   else
     printf("  Reinitialize certification?: no\n");
+  printf("\n");
 
   if (FLAGS_generate_symmetric_key)
     printf("  Generate symmetric key?: yes\n");
@@ -135,6 +137,8 @@ void print_os_model_parameters() {
     printf("  Generate public key?: yes\n");
   else
     printf("  Generate public key?: no\n");
+  printf("\n");
+
   if (FLAGS_get_item)
     printf("  Retrieve cryptstore entry?: yes\n");
   else
@@ -197,7 +201,9 @@ void print_os_model_parameters() {
   else
     printf("  Cryptstore entry is not exportable\n");
   printf("\n");
+
   printf("  Print level: %d\n", (int)FLAGS_print_level);
+  printf("\n");
 
   printf("  ARK certificate file: %s\n", FLAGS_ark_cert_file.c_str());
   printf("  ASK certificate file: %s\n", FLAGS_ask_cert_file.c_str());
@@ -823,6 +829,10 @@ int main(int an, char **av) {
   // Operation?
   if (FLAGS_init_trust) {
 
+    if (FLAGS_print_level > 1) {
+      printf("init_trust\n");
+    }
+
     if (trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
       certifiers *c =
           trust_mgr->find_certifier_by_domain_name(FLAGS_policy_domain_name);
@@ -855,6 +865,10 @@ int main(int an, char **av) {
     goto done;
   } else if (FLAGS_reinit_trust) {
 
+    if (FLAGS_print_level > 1) {
+      printf("reinit_trust\n");
+    }
+
     if (!reinit_domain_and_update(FLAGS_policy_domain_name)) {
       ret = 1;
       goto done;
@@ -866,8 +880,10 @@ int main(int an, char **av) {
     }
     goto done;
   } else if (FLAGS_generate_symmetric_key) {
-    printf("\ngenerate_symmetric_key %s\n",
-           FLAGS_symmetric_key_algorithm.c_str());
+
+    if (FLAGS_print_level > 1) {
+      printf("generate public key\n");
+    }
 
     if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
       printf("%s() error, line %d, domain %s does not init\n",
@@ -983,6 +999,10 @@ int main(int an, char **av) {
     goto done;
   } else if (FLAGS_generate_public_key) {
 
+    if (FLAGS_print_level > 1) {
+      printf("generate public key\n");
+    }
+
     if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
       printf("%s() error, line %d, domain %s does not init\n",
              __func__,
@@ -1051,6 +1071,10 @@ int main(int an, char **av) {
     }
     goto done;
   } else if (FLAGS_get_item) {
+
+    if (FLAGS_print_level > 1) {
+      printf("get_item\n");
+    }
 
     if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
       printf("%s() error, line %d, domain %s does not init\n",
@@ -1134,6 +1158,10 @@ int main(int an, char **av) {
     goto done;
   } else if (FLAGS_put_item) {
 
+    if (FLAGS_print_level > 1) {
+      printf("put_item\n");
+    }
+
     if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
       printf("%s() error, line %d, domain %s does not init\n",
              __func__,
@@ -1213,6 +1241,11 @@ int main(int an, char **av) {
 #endif
     goto done;
   } else if (FLAGS_print_cryptstore) {
+
+    if (FLAGS_print_level > 1) {
+      printf("print_cryptstore\n");
+    }
+
     cryptstore cs;
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
@@ -1229,6 +1262,7 @@ int main(int an, char **av) {
     print_cryptstore(cs);
     goto done;
   } else if (FLAGS_import_cryptstore) {
+
     if (FLAGS_print_level > 2) {
       printf("\nImport cryptstore\n");
     }
@@ -1260,9 +1294,11 @@ int main(int an, char **av) {
     }
     goto done;
   } else if (FLAGS_export_cryptstore) {
+
     if (FLAGS_print_level > 2) {
       printf("\nExport cryptstore\n");
     }
+
     cryptstore cs;
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,

@@ -96,7 +96,7 @@ int main(int an, char **av) {
     }
     printf("%d: ", i + 1);
 
-    if (FLAGS_print_level > 0) {
+    if (FLAGS_print_level > 2) {
       print_signed_claim(sc);
     } else {
       print_signed_claim_clauses(sc);

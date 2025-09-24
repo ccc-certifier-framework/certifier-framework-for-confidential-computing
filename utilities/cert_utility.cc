@@ -155,9 +155,11 @@ bool generate_policy_key() {
                   (byte *)policy_key.certificate().data()))
     return false;
 
-  printf("\nGenerated policy key:\n");
-  print_key(policy_key);
-  printf("\n");
+  if (FLAGS_print_level > 1) {
+    printf("\nGenerated policy key:\n");
+    print_key(policy_key);
+    printf("\n");
+  }
   return true;
 }
 
