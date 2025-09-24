@@ -30,66 +30,77 @@ DEFINE_string(output_file, "cert_chain_output.bin", "output file");
 DEFINE_int32(num_intermediate, 0, "number of intermediate certs");
 DEFINE_string(input_file, "cert_chain_output.bin", "input file");
 DEFINE_string(role, "client", "client/server");
+DEFINE_int32(print_level, 1, "print level");
 
 bool generate_key(const string &type, const string &name, key_message *k) {
 
   if (type == Enc_method_rsa_1024_private) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(1024, r)) {
-      printf("Can't generate rsa key\n");
+      printf("%s() error, line %d, can't generate rsa key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     if (!RSA_to_key(r, k)) {
-      printf("Can't convert rsa key to key\n");
+      printf("%s() error, line %d, can't convert key\n", __func__, __LINE__);
       return false;
     }
     k->set_key_type(Enc_method_rsa_1024_private);
   } else if (type == Enc_method_rsa_2048_private) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(2048, r)) {
-      printf("Can't generate rsa key\n");
+      printf("%s() error, line %d, can't generate key\n", __func__, __LINE__);
       return false;
     }
     if (!RSA_to_key(r, k)) {
-      printf("Can't convert rsa key to key\n");
+      printf("%s() error, line %d, can't convert key\n", __func__, __LINE__);
       return false;
     }
     k->set_key_type(Enc_method_rsa_2048_private);
   } else if (type == Enc_method_rsa_3072_private) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(3072, r)) {
-      printf("Can't generate rsa key\n");
+      printf("%s() error, line %d, can't generate rsa key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     if (!RSA_to_key(r, k)) {
-      printf("Can't convert rsa key to key\n");
+      printf("%s() error, line %d, can't convert key\n", __func__, __LINE__);
       return false;
     }
     k->set_key_type(Enc_method_rsa_3072_private);
   } else if (type == Enc_method_rsa_4096) {
     RSA *r = RSA_new();
     if (!generate_new_rsa_key(4096, r)) {
-      printf("Can't generate rsa key\n");
+      printf("%s() error, line %d, can't generate rsa key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     if (!RSA_to_key(r, k)) {
-      printf("Can't convert rsa key to key\n");
+      printf("%s() error, line %d, can't convert key\n", __func__, __LINE__);
       return false;
     }
     k->set_key_type(Enc_method_rsa_4096_private);
   } else if (type == Enc_method_ecc_384_private) {
     EC_KEY *ec = generate_new_ecc_key(384);
     if (ec == nullptr) {
-      printf("Can't generate ecc key\n");
+      printf("%s() error, line %d, can't generate ecc key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     if (!ECC_to_key(ec, k)) {
-      printf("Can't convert ecc key to key\n");
+      printf("%s() error, line %d, can't convert ecc key\n",
+             __func__,
+             __LINE__);
       return false;
     }
     k->set_key_type(Enc_method_ecc_384_private);
   } else {
-    printf("Unknown key type\n");
+    printf("%s() error, line %d, unknown key type\n", __func__, __LINE__);
     return false;
   }
 
@@ -143,10 +154,11 @@ bool generate_chain(const string    &root_key_name,
     return false;
   }
 
-  // Debug
-  printf("\nRoot cert:\n");
-  X509_print_fp(stdout, x509_root_cert);
-  printf("\n");
+  if (FLAGS_print_level > 2) {
+    printf("\nRoot cert:\n");
+    X509_print_fp(stdout, x509_root_cert);
+    printf("\n");
+  }
 
   full_cert_chain_entry *ent = chain->add_list();
 
@@ -223,10 +235,11 @@ bool generate_chain(const string    &root_key_name,
       return false;
     }
 
-    // Debug
-    printf("\nIntermediate cert %d:\n", i);
-    X509_print_fp(stdout, x509_int_cert);
-    printf("\n");
+    if (FLAGS_print_level > 0) {
+      printf("\nIntermediate cert %d:\n", i);
+      X509_print_fp(stdout, x509_int_cert);
+      printf("\n");
+    }
     ent = chain->add_list();
 
     // add root to first entry
@@ -375,9 +388,12 @@ int main(int an, char **av) {
       print_key(ent.signer_key());
       printf("\n");
     }
-    printf("Final signer:\n");
-    print_key(chain.final_private_key());
-    printf("\n");
+
+    if (FLAGS_print_level > 0) {
+      printf("Final signer:\n");
+      print_key(chain.final_private_key());
+      printf("\n");
+    }
 
     return 0;
   } else if (FLAGS_operation == "generate") {
@@ -418,3 +434,5 @@ int main(int an, char **av) {
 
   return 0;
 }
+
+//----------------------------------------------------------------------------

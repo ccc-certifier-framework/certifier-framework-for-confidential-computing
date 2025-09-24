@@ -22,7 +22,8 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
+
 DEFINE_string(output, "simple_clause.bin", "output file");
 DEFINE_string(key_subject, "", "subject file");
 DEFINE_string(measurement_subject, "", "subject file");
@@ -31,19 +32,24 @@ DEFINE_string(environment_subject, "", "environment subject file");
 DEFINE_string(verb, "verb", "verb to use");
 DEFINE_string(clause, "", "clause file");
 
+// --------------------------------------------------------------------------
+
 bool get_clause_from_file(const string &in, vse_clause *cl) {
   int  in_size = file_size(in);
   int  in_read = in_size;
   byte serialized_cl[in_size];
 
   if (!read_file(in, &in_read, serialized_cl)) {
-    printf("Can't read %s\n", in.c_str());
+    printf("%s() error, line %d, can't read %s\n",
+           __func__,
+           __LINE__,
+           in.c_str());
     return false;
   }
   string cl_str;
   cl_str.assign((char *)serialized_cl, in_size);
   if (!cl->ParseFromString(cl_str)) {
-    printf("Can't parse clause\n");
+    printf("%s() error, line %d, can't parse clause\n", __func__, __LINE__);
     return false;
   }
   return true;
@@ -57,13 +63,13 @@ int make_indirect_clause_file_utility(entity_message &subject,
   vse_clause out_cl;
   string     v = verb;
   if (!make_indirect_vse_clause(subject, v, in_cl, &out_cl)) {
-    printf("Can't make clause\n");
+    printf("%s() error, line %d, can't make clause\n", __func__, __LINE__);
     return 1;
   }
 
   string out_string;
   if (!out_cl.SerializeToString(&out_string)) {
-    printf("Can't serialize\n");
+    printf("%s() error, line %d, can't serialize\n", __func__, __LINE__);
     return 1;
   }
 
@@ -72,7 +78,7 @@ int make_indirect_clause_file_utility(entity_message &subject,
     return 1;
   }
 
-  if (FLAGS_print_all) {
+  if (FLAGS_print_level > 1) {
     printf("Clause constructed: ");
     print_vse_clause(out_cl);
     printf("\n");
@@ -94,7 +100,7 @@ bool get_key_from_file(const string &in, key_message *k) {
   string      k_str;
   k_str.assign((char *)serialized_key, in_size);
   if (!kt.ParseFromString(k_str)) {
-    printf("Can't parse key\n");
+    printf("%s() error, line %d, can't parse key\n", __func__, __LINE__);
     return false;
   }
   return private_key_to_public_key(kt, k);
@@ -106,13 +112,18 @@ bool get_measurement_entity_from_file(const string &in, entity_message *em) {
   byte m[in_size];
 
   if (!read_file(in, &in_read, m)) {
-    printf("Can't read %s\n", in.c_str());
+    printf("%s() error, line %d, can't read %s\n",
+           __func__,
+           __LINE__,
+           in.c_str());
     return false;
   }
   string m_str;
   m_str.assign((char *)m, in_size);
   if (!make_measurement_entity(m_str, em)) {
-    printf("Can't make measurement entity\n");
+    printf("%s() error, line %d, can't make measurement entity\n",
+           __func__,
+           __LINE__);
     return false;
   }
   return true;
@@ -127,13 +138,15 @@ int main(int an, char **av) {
   string usage_str("--key_subject=<file> --verb=\"says\" --clause=<file> "
                    "--output=<output-file-name>");
   if (FLAGS_key_subject == "" && FLAGS_measurement_subject == "") {
-    printf("No key or measurement subject\n");
+    printf("%s() error, line %d, no key or measurement subject\n",
+           __func__,
+           __LINE__);
     printf("%s: %s\n", av[0], usage_str.c_str());
     return 1;
   }
 
   if (FLAGS_clause == "") {
-    printf("No clause file\n");
+    printf("%s() error, line %d, no clause file\n", __func__, __LINE__);
     printf("%s %s\n", av[0], usage_str.c_str());
     return 1;
   }
@@ -141,7 +154,9 @@ int main(int an, char **av) {
   vse_clause in_cl;
 
   if (!get_clause_from_file(FLAGS_clause, &in_cl)) {
-    printf("Can't get indirect clause\n");
+    printf("%s() error, line %d, can't get indirect clause\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -151,16 +166,22 @@ int main(int an, char **av) {
   if (FLAGS_key_subject != "") {
     key_message k;
     if (!get_key_from_file(FLAGS_key_subject, &k)) {
-      printf("Can't get subject key\n");
+      printf("%s() error, line %d, can't get subject key\n",
+             __func__,
+             __LINE__);
       return 1;
     }
     if (!make_key_entity(k, &sub_ent)) {
-      printf("Can't get subject entity\n");
+      printf("%s() error, line %d, can't get subject entity\n",
+             __func__,
+             __LINE__);
       return 1;
     }
   } else if (FLAGS_measurement_subject != "") {
     if (!get_measurement_entity_from_file(FLAGS_key_subject, &sub_ent)) {
-      printf("Can't make subject measurement\n");
+      printf("%s() error, line %d, can't make subject measurement\n",
+             __func__,
+             __LINE__);
       return 1;
     }
   }
@@ -170,3 +191,5 @@ int main(int an, char **av) {
                                            in_cl,
                                            FLAGS_output);
 }
+
+// --------------------------------------------------------------------------

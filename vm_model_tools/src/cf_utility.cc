@@ -88,6 +88,8 @@ DEFINE_string(type,
 DEFINE_string(output_file, "out_1", "output file name");
 DEFINE_string(input_file, "in_1", "input file name");
 
+DEFINE_int32(print_level, 1, "print level");
+
 // For SEV
 DEFINE_string(ark_cert_file,
               "./service/ark_cert.der",
@@ -195,6 +197,7 @@ void print_os_model_parameters() {
   else
     printf("  Cryptstore entry is not exportable\n");
   printf("\n");
+  printf("  Print level: %d\n", (int)FLAGS_print_level);
 
   printf("  ARK certificate file: %s\n", FLAGS_ark_cert_file.c_str());
   printf("  ASK certificate file: %s\n", FLAGS_ask_cert_file.c_str());
@@ -331,6 +334,8 @@ void print_help() {
   printf("\n");
   printf("  --input_file=%s, input file name\n", FLAGS_input_file.c_str());
   printf("  --output_file=%s, output file name\n", FLAGS_output_file.c_str());
+  printf("\n");
+  printf("  --print_level: %d\n", (int)FLAGS_print_level);
   printf("\n");
   printf("  SEV enclave specific arguments\n");
   printf("    --ark_cert_file=%s, file with ark certificate for this machine\n",
@@ -747,7 +752,10 @@ int main(int an, char **av) {
     print_help();
     return ret;
   }
-  print_os_model_parameters();
+
+  if (FLAGS_print_level > 0) {
+    print_os_model_parameters();
+  }
 
   // Get parameters
   string *params = nullptr;
@@ -787,9 +795,9 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
-#ifdef DEBUG3
-  printf("Enclave initialized\n");
-#endif
+  if (FLAGS_print_level > 2) {
+    printf("Enclave initialized\n");
+  }
 
   if (params != nullptr) {
     delete[] params;
@@ -1105,13 +1113,15 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG7
-    printf("Got item, tag: %s, type: %s, version: %d, exportable: %B\n",
-           entry_tag.c_str(),
-           entry_type.c_str(),
-           entry_version,
-           exportable);
-#endif
+
+    if (FLAGS_print_level > 4) {
+      printf("Got item, tag: %s, type: %s, version: %d, exportable: %B\n",
+             entry_tag.c_str(),
+             entry_type.c_str(),
+             entry_version,
+             exportable);
+    }
+
     if (!write_file_from_string(FLAGS_output_file, value)) {
       printf("%s() error, line %d, cannot write value to %s\n",
              __func__,
@@ -1219,9 +1229,9 @@ int main(int an, char **av) {
     print_cryptstore(cs);
     goto done;
   } else if (FLAGS_import_cryptstore) {
-#ifdef DEBUG7
-    printf("\nImport cryptstore\n");
-#endif
+    if (FLAGS_print_level > 2) {
+      printf("\nImport cryptstore\n");
+    }
 
     cryptstore cs;
     if (!import_cryptstore(&cs, FLAGS_input_file)) {
@@ -1231,11 +1241,11 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG8
-    printf("Recovered cryptstore:\n");
-    print_cryptstore(cs);
+    if (FLAGS_print_level > 0) {
+      printf("Recovered cryptstore:\n");
+      print_cryptstore(cs);
+    }
     goto done;
-#endif
     if (!save_cryptstore(cs,
                          FLAGS_data_dir,
                          FLAGS_encrypted_cryptstore_filename,
@@ -1250,9 +1260,9 @@ int main(int an, char **av) {
     }
     goto done;
   } else if (FLAGS_export_cryptstore) {
-#ifdef DEBUG7
-    printf("\nExport cryptstore\n");
-#endif
+    if (FLAGS_print_level > 2) {
+      printf("\nExport cryptstore\n");
+    }
     cryptstore cs;
     if (!open_cryptstore(&cs,
                          FLAGS_data_dir,
@@ -1273,10 +1283,11 @@ int main(int an, char **av) {
       ret = 1;
       goto done;
     }
-#ifdef DEBUG8
-    printf("Original cryptstore\n");
-    print_cryptstore(cs);
-#endif
+
+    if (FLAGS_print_level > 3) {
+      printf("Original cryptstore\n");
+      print_cryptstore(cs);
+    }
     goto done;
   } else {
     printf("No action specified\n");
@@ -1288,10 +1299,12 @@ done:
   if (trust_mgr != nullptr) {
     delete trust_mgr;
   }
-  if (ret == 0) {
-    printf("Succeeded\n");
-  } else {
-    printf("Failed\n");
+  if (FLAGS_print_level > 0) {
+    if (ret == 0) {
+      printf("Succeeded\n");
+    } else {
+      printf("Failed\n");
+    }
   }
   return ret;
 }

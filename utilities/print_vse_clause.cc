@@ -21,8 +21,10 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
 DEFINE_string(input, "measurement_utility.exe", "input file");
+
+// ---------------------------------------------------------------------------
 
 bool get_clause_from_file(const string &in, vse_clause *cl) {
   int  in_size = file_size(in);
@@ -30,13 +32,16 @@ bool get_clause_from_file(const string &in, vse_clause *cl) {
   byte serialized_cl[in_size];
 
   if (!read_file(in, &in_read, serialized_cl)) {
-    printf("Can't read %s\n", in.c_str());
+    printf("%s() error, line %d, can't read %s\n",
+           __func__,
+           __LINE__,
+           in.c_str());
     return false;
   }
   string cl_str;
   cl_str.assign((char *)serialized_cl, in_size);
   if (!cl->ParseFromString(cl_str)) {
-    printf("Can't parse clause\n");
+    printf("%s() error, line %d, can't parse clause\n", __func__, __LINE__);
     return false;
   }
   return true;
@@ -48,11 +53,16 @@ int main(int an, char **av) {
 
   vse_clause in_cl;
   if (!get_clause_from_file(FLAGS_input, &in_cl)) {
-    printf("Can't get clause\n");
+    printf("%s() error, line %d, can't get clause\n", __func__, __LINE__);
     return 1;
   }
-  printf("Clause: ");
-  print_vse_clause(in_cl);
-  printf("\n");
+
+  if (FLAGS_print_level > 0) {
+    printf("Clause: ");
+    print_vse_clause(in_cl);
+    printf("\n");
+  }
   return 0;
 }
+
+// ---------------------------------------------------------------------------

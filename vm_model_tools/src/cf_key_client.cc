@@ -77,6 +77,8 @@ DEFINE_string(resource_name, "", "resource name");
 DEFINE_int32(key_version, 0, "version");
 DEFINE_string(action, "retrieve", "retrieve or store");
 
+DEFINE_int32(print_level, 1, "print level");
+
 DEFINE_string(ark_cert_file,
               "./service/ark_cert.der",
               "machine ark certificate location");
@@ -303,14 +305,16 @@ bool client_application(secure_authenticated_channel &channel) {
   string                       serialized_request;
   string                       serialized_response;
 
-  printf("Client peer id is %s\n", channel.peer_id_.c_str());
-
-#ifdef DEBUG7
-  if (channel.peer_cert_ != nullptr) {
-    printf("Client peer cert is:\n");
-    X509_print_fp(stdout, channel.peer_cert_);
+  if (FLAGS_print_level > 0) {
+    printf("Client peer id is %s\n", channel.peer_id_.c_str());
   }
-#endif  // DEBUG
+
+  if (FLAGS_print_level > 2) {
+    if (channel.peer_cert_ != nullptr) {
+      printf("Client peer cert is:\n");
+      X509_print_fp(stdout, channel.peer_cert_);
+    }
+  }
 
   // Construct request
   cryptstore_entry cf;
@@ -333,7 +337,10 @@ bool client_application(secure_authenticated_channel &channel) {
     if (FLAGS_input_format == "raw") {
 
       if (!read_file_into_string(FLAGS_input_file, &value)) {
-        printf("Can't read %s\n", FLAGS_input_file.c_str());
+        printf("%s() error, line %d, can't read %s\n",
+               __func__,
+               __LINE__,
+               FLAGS_input_file.c_str());
         if (error_response(&response, &serialized_response))
           channel.write((int)serialized_response.size(),
                         (byte *)serialized_response.data());
@@ -348,7 +355,10 @@ bool client_application(secure_authenticated_channel &channel) {
     } else if (FLAGS_input_format == "cryptstore-entry") {
 
       if (!read_file_into_string(FLAGS_input_file, &serialized_cs_entry)) {
-        printf("Can't read %s\n", FLAGS_input_file.c_str());
+        printf("%s() error, line %d, can't read %s\n",
+               __func__,
+               __LINE__,
+               FLAGS_input_file.c_str());
         if (error_response(&response, &serialized_response))
           channel.write((int)serialized_response.size(),
                         (byte *)serialized_response.data());
@@ -356,7 +366,7 @@ bool client_application(secure_authenticated_channel &channel) {
         return true;
       }
       if (!cf.ParseFromString(serialized_cs_entry)) {
-        printf("Can't parse string\n");
+        printf("%s() error, line %d, can't parse string\n", __func__, __LINE__);
         if (error_response(&response, &serialized_response))
           channel.write((int)serialized_response.size(),
                         (byte *)serialized_response.data());
@@ -371,7 +381,7 @@ bool client_application(secure_authenticated_channel &channel) {
 
     } else {
 
-      printf("Unknown input format\n");
+      printf("%s() error, line %d, unknown input format\n", __func__, __LINE__);
       if (error_response(&response, &serialized_response))
         channel.write((int)serialized_response.size(),
                       (byte *)serialized_response.data());
@@ -391,7 +401,9 @@ bool client_application(secure_authenticated_channel &channel) {
 
   // Serialize request
   if (!request.SerializeToString(&serialized_request)) {
-    printf("Couldn't serialize request\n");
+    printf("%s() error, line %d, couldn't serialize request\n",
+           __func__,
+           __LINE__);
     if (error_response(&response, &serialized_response))
       channel.write((int)serialized_response.size(),
                     (byte *)serialized_response.data());
@@ -406,30 +418,34 @@ bool client_application(secure_authenticated_channel &channel) {
   // Get server response over authenticated, encrypted channel
   int n = channel.read(&serialized_response);
 
-#ifdef DEBUG7
-  printf("SSL client read: %d\n", (int)serialized_response.size());
-#endif
+  if (FLAGS_print_level > 3) {
+    printf("SSL client read: %d\n", (int)serialized_response.size());
+  }
   channel.close();
 
   if (!response.ParseFromString(serialized_response)) {
-    printf("Couldn't parse response\n");
+    printf("%s() error, line %d, couldn't parse response\n",
+           __func__,
+           __LINE__);
     return true;
   }
 
-#ifdef DEBUG7
-  printf("\ncf_key_client response received\n");
-  print_response_packet(response);
-#endif
+  if (FLAGS_print_level > 2) {
+    printf("\ncf_key_client response received\n");
+    print_response_packet(response);
+  }
 
   if (response.status() != "succeeded") {
-    printf("key_client: Request for %s failed\n",
-           response.resource_name().c_str());
+    if (FLAGS_print_level > 0) {
+      printf("key_client: Request for %s failed\n",
+             response.resource_name().c_str());
+    }
     return true;
   }
 
-#ifdef DEBUG7
-  printf("key_client: Request succeeded\n");
-#endif
+  if (FLAGS_print_level > 0) {
+    printf("key_client: Request succeeded\n");
+  }
 
   // print data and write value
   cryptstore_entry ce;
@@ -442,15 +458,17 @@ bool client_application(secure_authenticated_channel &channel) {
     return true;
   }
 
-#ifdef DEBUG7
-  printf("\nkey_client: Response entry:\n");
-  print_cryptstore_entry(ce);
-#endif
+  if (FLAGS_print_level > 1) {
+    printf("\nkey_client: Response entry:\n");
+    print_cryptstore_entry(ce);
+  }
 
   if (FLAGS_output_format == "cryptstore-entry") {
     if (!write_file_from_string(FLAGS_output_file,
                                 serialized_cryptstore_entry)) {
-      printf("key_client: Couldn't write output file %s\n",
+      printf("%s() error, line %d, couldn't write output file %s\n",
+             __func__,
+             __LINE__,
              FLAGS_output_file.c_str());
       return true;
     }
@@ -458,7 +476,9 @@ bool client_application(secure_authenticated_channel &channel) {
     string value;
     value.assign((char *)ce.blob().data(), (int)ce.blob().size());
     if (!write_file_from_string(FLAGS_output_file, value)) {
-      printf("key_client: Couldn't write output file %s\n",
+      printf("%s() error, line %d, couldn't write output file %s\n",
+             __func__,
+             __LINE__,
              FLAGS_output_file.c_str());
       return true;
     }
@@ -520,9 +540,10 @@ int main(int an, char **av) {
 
   string store_file(FLAGS_data_dir);
   store_file.append(FLAGS_policy_store_filename);
-#ifdef DEBUG3
-  printf("\npolicy store: %s\n", store_file.c_str());
-#endif
+
+  if (FLAGS_print_level > 1) {
+    printf("\npolicy store: %s\n", store_file.c_str());
+  }
 
   // Create trust manager
   trust_mgr = new cc_trust_manager(FLAGS_enclave_type, purpose, store_file);
@@ -538,9 +559,9 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init enclave\n", __func__, __LINE__);
     return 1;
   }
-#ifdef DEBUG3
-  printf("Enclave initialized\n");
-#endif
+  if (FLAGS_print_level > 2) {
+    printf("Enclave initialized\n");
+  }
 
   if (params != nullptr) {
     delete[] params;
@@ -682,10 +703,12 @@ done:
   if (trust_mgr != nullptr) {
     delete trust_mgr;
   }
-  if (ret == 0) {
-    printf("Succeeded\n");
-  } else {
-    printf("Failed\n");
+  if (FLAGS_print_level > 0) {
+    if (ret == 0) {
+      printf("Succeeded\n");
+    } else {
+      printf("Failed\n");
+    }
   }
   return ret;
 }

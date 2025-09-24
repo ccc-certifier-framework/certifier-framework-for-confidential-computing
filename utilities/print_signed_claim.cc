@@ -21,6 +21,8 @@
 
 using namespace certifier::utilities;
 
+// --------------------------------------------------------------------------
+
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(input, "", "input file");
 
@@ -31,13 +33,18 @@ bool get_signed_from_file(const string &in, signed_claim_message *sc) {
   byte serialized_cm[in_size];
 
   if (!read_file(in, &in_read, serialized_cm)) {
-    printf("Can't read input file '%s'.\n", in.c_str());
+    printf("%s() error, line %d, can't read %s\n",
+           __func__,
+           __LINE__,
+           in.c_str());
     return false;
   }
   string cm_str;
   cm_str.assign((char *)serialized_cm, in_size);
   if (!sc->ParseFromString(cm_str)) {
-    printf("Can't parse signed claim\n");
+    printf("%s() error, line %d, can't parse signed claim\n",
+           __func__,
+           __LINE__);
     return false;
   }
   return true;
@@ -49,10 +56,14 @@ int main(int an, char **av) {
 
   signed_claim_message sc;
   if (!get_signed_from_file(FLAGS_input, &sc)) {
-    printf("Can't get signed claim from file '%s'.\n", FLAGS_input.c_str());
+    printf("%s() error, line %d, can't get signed claim\n", __func__, __LINE__);
     return 1;
   }
 
-  print_signed_claim(sc);
+  if (FLAGS_print_level > 0) {
+    print_signed_claim(sc);
+  }
   return 0;
 }
+
+// --------------------------------------------------------------------------

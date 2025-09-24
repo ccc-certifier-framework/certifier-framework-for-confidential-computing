@@ -21,9 +21,12 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
+
 DEFINE_string(input, "input1,input2,...,inputk", "input file");
 DEFINE_string(output, "claims_sequence.bin", "output file");
+
+// -------------------------------------------------------------------------
 
 bool get_claim_from_block(const string &block, signed_claim_message *sc) {
   if (!sc->ParseFromString(block)) {
@@ -64,12 +67,12 @@ int main(int an, char **av) {
 
   int num = 0;
   if (!get_input_file_names(FLAGS_input, &num, nullptr)) {
-    printf("Can't get input file\n");
+    printf("%s() error, line %d, can't get input file\n", __func__, __LINE__);
     return 1;
   }
   string *file_names = new string[num];
   if (!get_input_file_names(FLAGS_input, &num, file_names)) {
-    printf("Can't get input file\n");
+    printf("%s() error, line %d, can't get input file\n", __func__, __LINE__);
     return 1;
   }
 
@@ -79,7 +82,10 @@ int main(int an, char **av) {
     byte buf[sz];
 
     if (!read_file(file_names[i], &sz, buf)) {
-      printf("Can't open %s\n", file_names[i].c_str());
+      printf("%s() error, line %d, can't open %s\n",
+             __func__,
+             __LINE__,
+             file_names[i].c_str());
       return 1;
     }
     string *out = bufs.add_block();
@@ -88,15 +94,22 @@ int main(int an, char **av) {
 
   string final_buffer;
   if (!bufs.SerializeToString(&final_buffer)) {
-    printf("Can't serialize final buffers\n");
+    printf("%s() error, line %d, can't serialize final buffers\n",
+           __func__,
+           __LINE__);
     return 1;
   }
   if (!write_file(FLAGS_output,
                   final_buffer.size(),
                   (byte *)final_buffer.data())) {
-    printf("Can't write %s\n", FLAGS_output.c_str());
+    printf("%s() error, line %d, can't write %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_output.c_str());
     return 1;
   }
 
   return 0;
 }
+
+// -------------------------------------------------------------------------

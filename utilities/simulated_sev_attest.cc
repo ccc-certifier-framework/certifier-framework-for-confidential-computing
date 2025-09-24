@@ -20,12 +20,15 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
+
 DEFINE_string(
     key_file,
     "../certifier_service/certlib/test_data/ec-secp384r1-priv-key.pem",
     "private key file name");
 DEFINE_string(output, "signed_sev_attest.bin", "simulated attest file");
+
+// --------------------------------------------------------------------------
 
 /*
   From a real Sev machine
@@ -132,20 +135,22 @@ out:
 int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
 
-  printf("simulated_sev_attest.exe.exe --key_file=ecc-384-private.pem "
-         "--output=test_sev_attest.bin\n");
+  if (FLAGS_print_level > 0) {
+    printf("simulated_sev_attest.exe.exe --key_file=ecc-384-private.pem "
+           "--output=test_sev_attest.bin\n");
+  }
 
   default_report.reported_tcb.raw = 0x03000000000008115ULL;
   default_report.platform_version.raw = 0x03000000000008115ULL;
 
   EVP_PKEY *pkey = nullptr;
   if (read_key_file(FLAGS_key_file, &pkey, true) < 0) {
-    printf("Can't read key from %s\n", FLAGS_key_file.c_str());
+    printf("%s() error, line %d, can't read key\n", __func__, __LINE__);
     return 1;
   }
   EC_KEY *eck = EVP_PKEY_get1_EC_KEY(pkey);
   if (eck == nullptr) {
-    printf("Can't get ec key\n");
+    printf("%s() error, line %d, can't get ecc key\n", __func__, __LINE__);
     return 1;
   }
   int size_out = sizeof(signature);
@@ -155,15 +160,17 @@ int main(int an, char **av) {
                 (byte *)&default_report,
                 &size_out,
                 (byte *)&default_report.signature)) {
-    printf("signature failure\n");
+    printf("%s() error, line %d, signature failure\n", __func__, __LINE__);
     return 1;
   }
   if (!write_file(FLAGS_output,
                   sizeof(attestation_report),
                   (byte *)&default_report)) {
-    printf("Can't write %s\n", FLAGS_output.c_str());
+    printf("%s() error, line %d, can't write file\n", __func__, __LINE__);
     return 1;
   }
 
   return 0;
 }
+
+// --------------------------------------------------------------------------

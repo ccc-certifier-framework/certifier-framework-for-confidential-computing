@@ -22,7 +22,8 @@
 
 using namespace certifier::utilities;
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
+
 DEFINE_string(platform_file, "", "platform file");
 DEFINE_string(measurement_file, "", "measurement file");
 DEFINE_string(output, "", "output file");
@@ -74,39 +75,51 @@ int main(int an, char **av) {
   string   plat_str;
 
   if (!read_file_into_string(FLAGS_platform_file, &plat_str)) {
-    printf("Can't read platform file\n");
+    printf("%s() error, line %d, can't read platform file\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
   if (!read_file_into_string(FLAGS_measurement_file, &m_str)) {
-    printf("Can't read measurement file\n");
+    printf("%s() error, line %d, can't read measurement\n", __func__, __LINE__);
     return 1;
   }
 
   environment env;
   if (!env.mutable_the_platform()->ParseFromString(plat_str)) {
-    printf("Can't parse platform file\n");
+    printf("%s() error, line %d, can't parse platform file\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
   string meas;
   if (!calculate_measurement(m_str, &meas)) {
-    printf("Can't calculate measurement\n");
+    printf("%s() error, line %d, can't calculate measurement\n",
+           __func__,
+           __LINE__);
     return 1;
   }
   env.mutable_the_measurement()->assign(meas);
 
   string p_out;
   if (!env.SerializeToString(&p_out)) {
-    printf("Can't serialize\n");
+    printf("%s() error, line %d, can't serialize\n", __func__, __LINE__);
     return 1;
   }
 
   if (!write_file(FLAGS_output, p_out.size(), (byte *)p_out.data())) {
-    printf("Can't write output file\n");
+    printf("%s() error, line %d, can't write output file\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
-  print_environment(env);
+  if (FLAGS_print_level > 0) {
+    print_environment(env);
+  }
   return 0;
 }
+
+// -------------------------------------------------------------------------

@@ -24,6 +24,7 @@ using namespace certifier::utilities;
 DEFINE_bool(print_all, false, "verbose");
 DEFINE_string(in, "", "input files");
 DEFINE_string(output, "", "output file");
+DEFINE_int32(print_level, 1, "print level");
 
 const char *next_comma(const char *p) {
   if (p == nullptr)
@@ -69,7 +70,9 @@ int main(int an, char **av) {
   int    num = 20;
   string names[num];
   if (!get_input_file_names(FLAGS_in, &num, names)) {
-    printf("Too few names allocated\n");
+    printf("%s() error, line %d, too few names allocated\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
@@ -78,23 +81,31 @@ int main(int an, char **av) {
     property *np = my_props.add_props();
     string    p_str;
     if (!read_file_into_string(names[i], &p_str)) {
-      printf("Can't read property file %s\n", names[i].c_str());
+      printf("%s() error, line %d, can't read property file\n",
+             __func__,
+             __LINE__);
       return 1;
     }
     if (!np->ParseFromString(p_str)) {
-      printf("Can't parse property file %s\n", names[i].c_str());
+      printf("%s() error, line %d, can't parse property file\n",
+             __func__,
+             __LINE__);
       return 1;
     }
   }
 
   string set_props;
   if (!my_props.SerializeToString(&set_props)) {
-    printf("Can't serialize properties\n");
+    printf("%s() error, line %d, can't serialize properties\n",
+           __func__,
+           __LINE__);
     return 1;
   }
 
   if (!write_file(FLAGS_output, set_props.size(), (byte *)set_props.data())) {
-    printf("Can't write output file\n");
+    printf("%s() error, line %d, can't write output file\n",
+           __func__,
+           __LINE__);
     return 1;
   }
   return 0;
