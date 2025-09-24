@@ -23,7 +23,7 @@ using namespace certifier::utilities;
 
 // --------------------------------------------------------------------------
 
-DEFINE_bool(print_all, false, "verbose");
+DEFINE_int32(print_level, 1, "print level");
 DEFINE_string(input, "", "input file");
 
 
