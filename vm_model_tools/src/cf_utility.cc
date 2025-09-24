@@ -883,7 +883,7 @@ int main(int an, char **av) {
   } else if (FLAGS_generate_symmetric_key) {
 
     if (FLAGS_print_level > 1) {
-      printf("generate public key\n");
+      printf("generate symmetric key\n");
     }
 
     if (!trust_mgr->initialize_existing_domain(FLAGS_policy_domain_name)) {
@@ -938,6 +938,11 @@ int main(int an, char **av) {
              __LINE__);
       ret = 1;
       goto done;
+    }
+
+    if (FLAGS_print_level > 2) {
+      printf("Generate key: Generated symmetric key size %d\n",
+             (int)km.secret_key_bits().size());
     }
 
     time_point tp;
@@ -1132,7 +1137,7 @@ int main(int an, char **av) {
       goto done;
     }
 
-    if (FLAGS_print_level > 4) {
+    if (FLAGS_print_level > 0) {
       printf("Got item, tag: %s, type: %s, version: %d, exportable: %B\n",
              rce.tag().c_str(),
              rce.type().c_str(),
@@ -1156,8 +1161,16 @@ int main(int an, char **av) {
         }
         value.assign((char *)key.secret_key_bits().data(),
                      key.secret_key_bits().size());
+        if (FLAGS_print_level > 2) {
+          printf("get_item, symmetric key size from proto %d\n",
+                 (int)key.secret_key_bits().size());
+        }
       } else if (rce.type() == "binary-blob" || rce.type() == "X509-der-cert") {
         value.assign((char *)rce.blob().data(), rce.blob().size());
+        if (FLAGS_print_level > 2) {
+          printf("get_item, symmetric key size from blob %d\n",
+                 (int)rce.blob().size());
+        }
       } else {
         printf("%s() error, line %d, unknown type\n", __func__, __LINE__);
         ret = 1;

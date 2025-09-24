@@ -198,7 +198,7 @@ function do-run() {
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1
+        --service_port=8123" --print_level=3
       echo " "
 
       $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
@@ -215,7 +215,7 @@ function do-run() {
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=localhost \
-        --service_port=8123 --print_level=1
+        --service_port=8123 --print_level=3
     fi
 
     if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
