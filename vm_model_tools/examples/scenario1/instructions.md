@@ -90,19 +90,30 @@ To run the tests
      -- This runs the test.  The first command assumes the default domain
          name ("datica-test").
 
-*****
+*********************
 
-NOTE: prepare-test.sh and run-test.sh assume the directory structure for this
-example.  If you have your certifier framework repository in an unrelated directory
+NOTE: prepare-test.sh and run-test.sh assume the directory structure as
+provided in the certifier repository, starting at $CERTIFIER_ROOT.
+
+It assumes prepare-test.sh, and run-test.sh are in the app directory,
+corresponding to "..../EXAMPLES/SCENARIO1" and that the executables
+cf_utility.exe, cf_key_server.exe or cf_key_client.exe are in
+CERTIFIER_ROOT/vm_model_tools/src.
+
+If you have your certifier framework repository in an unrelated directory,
 you MUST specify CERTIFIER_ROOT before running prepare-test or run-test.  So
 you should start out:
 
-export CERTIFIER_ROOT="your certifier respository path"
-cd "you application path"
+  export CERTIFIER_ROOT="your certifier respository path"
+  cd "you application path"
 
-Before running prepare-test or run-test.  Both prepare-test and run-test assume
-you are running them from your app directory (corresponding to
-.../examples/scenario1" in the example.
+Finally, you'll need to copy the test prep and run scripts to your
+app directory.
+
+  cp $CERTIFIER_ROOT/vm_model_tools/examples/scenario1/prepare-test.sh .
+  cp $CERTIFIER_ROOT/vm_model_tools/examples/scenario1/run-test.sh .
+
+Then run prepare-test.sh  and run-test.sh as above.
 
 ---------------------------------------------------------------------------------
 
