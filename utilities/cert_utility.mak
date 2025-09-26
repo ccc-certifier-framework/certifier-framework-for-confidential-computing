@@ -79,12 +79,12 @@ common_objs = $(O)/certifier.pb.o $(O)/support.o $(O)/certifier.o \
               $(O)/application_enclave.o
 
 dobj =	$(O)/cert_utility.o $(common_objs)
-
 key_dobj = $(O)/key_utility.o $(common_objs)
-
+combine_dobj = $(O)/combine_policy_certs.o $(common_objs)
 mobj = $(O)/measurement_init.o $(common_objs)
 
-all:	cert_utility.exe measurement_init.exe key_utility.exe
+
+all:	cert_utility.exe measurement_init.exe key_utility.exe combine_policy_certs.exe
 clean:
 	@echo "removing object and generated files"
 	rm -rf $(O)/*.o $(US)/certifier.pb.cc $(US)/certifier.pb.h $(I)/certifier.pb.h
@@ -102,6 +102,14 @@ key_utility.exe: $(key_dobj)
 measurement_init.exe: $(mobj)
 	@echo "\nlinking executable $@"
 	$(LINK) $(mobj) $(LDFLAGS) -o $(EXE_DIR)/$@
+
+combine_policy_certs.exe: $(combine_dobj) 
+	@echo "\nlinking executable $@"
+	$(LINK) $(combine_dobj) $(LDFLAGS) -o $(EXE_DIR)/$@
+
+$(O)/combine_policy_certs.o: $(US)/combine_policy_certs.cc
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
 $(O)/measurement_init.o: $(US)/measurement_init.cc
 	@echo "\ncompiling $<"
