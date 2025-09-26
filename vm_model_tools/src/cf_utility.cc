@@ -30,6 +30,7 @@
 #include "certifier_algorithms.h"
 #include "certifier_framework.h"
 #include "certifier_utilities.h"
+#include "cc_helpers.h"
 #include "cf_support.h"
 #include "cryptstore.pb.h"
 
@@ -62,6 +63,8 @@ DEFINE_string(public_key_algorithm,
 DEFINE_string(symmetric_key_algorithm,
               Enc_method_aes_256_cbc_hmac_sha256,
               "symmetric algorithm");
+
+DEFINE_string(trust_anchors, "", "trust anchors file");
 DEFINE_string(policy_domain_name, "datica", "policy domain name");
 DEFINE_string(policy_key_cert_file,
               "policy_certificate.datica",
@@ -165,6 +168,8 @@ void print_os_model_parameters() {
   else
     printf("  Export cryptstore?: no\n");
   printf("\n");
+
+  printf("  Trust anchors: %s\n", FLAGS_trust_anchors.c_str());
 
   printf("  Policy doman name: %s\n", FLAGS_policy_domain_name.c_str());
   printf("  Policy_key_cert_file: %s\n", FLAGS_policy_key_cert_file.c_str());
@@ -640,15 +645,47 @@ bool reinit_domain_and_update(const string &domain_name) {
 
   // read policy cert
   string der_policy_cert;
-  string der_policy_cert_file_name(FLAGS_data_dir);
-  der_policy_cert_file_name.append("provisioning/");
-  der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
-  if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
-    printf("%s() error, line %d, couldn't read, policy domain cert in %s\n",
-           __func__,
-           __LINE__,
-           der_policy_cert.c_str());
-    return false;
+  if (FLAGS_trust_anchors == "") {
+    string der_policy_cert_file_name(FLAGS_data_dir);
+    der_policy_cert_file_name.append("cf_data/");
+    der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+    if (!read_file_into_string(der_policy_cert_file_name, &der_policy_cert)) {
+      printf("%s() error, line %d, couldn't read policy domain cert in %s\n",
+             __func__,
+             __LINE__,
+             der_policy_cert.c_str());
+      return false;
+    }
+  } else {
+    string          der_certs;
+    buffer_sequence seq;
+
+    if (!read_file_into_string(FLAGS_trust_anchors, &der_certs)) {
+      printf("%s() error, line %d, couldn't read trust anchors in %s\n",
+             __func__,
+             __LINE__,
+             der_policy_cert.c_str());
+      return false;
+    }
+
+    if (!seq.ParseFromString(der_certs)) {
+      printf("%s() error, line %d, couldn't parse certs\n", __func__, __LINE__);
+      return false;
+    }
+
+    int i = 0;
+    for (i = 0; i < seq.block_size(); i++) {
+      if (correct_domain(domain_name, seq.block(i))) {
+        der_policy_cert.assign(seq.block(i));
+        break;
+      }
+    }
+    if (i >= seq.block_size()) {
+      printf("%s() error, line %d, can't find domain cert\n",
+             __func__,
+             __LINE__);
+      return false;
+    }
   }
 
   string encrypted_cryptstore_filename(FLAGS_data_dir);

@@ -44,9 +44,6 @@ bool construct_platform_evidence_package(string           &enclave_type,
 bool add_policy_key_says_platform_key_is_trusted(
     signed_claim_message &platform_key_is_trusted,
     evidence_package     *ep);
-void print_cn_name(X509_NAME *name);
-void print_org_name(X509_NAME *name);
-void print_ssl_error(int code);
 
 bool load_server_certs_and_key(X509         *x509_root_cert,
                                key_message  &private_key,
@@ -59,6 +56,12 @@ bool load_server_certs_and_key(X509         *peer_root_cert,
                                key_message  &private_key,
                                const string &private_key_cert,
                                SSL_CTX      *ctx);
+
+void print_cn_name(X509_NAME *name);
+void print_org_name(X509_NAME *name);
+void print_ssl_error(int code);
+
+bool correct_domain(const string domain, string buf);
 
 // The functions below are used by BORING_SSL
 // Eventually they will be deprecated

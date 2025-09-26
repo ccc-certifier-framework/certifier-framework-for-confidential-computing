@@ -39,7 +39,7 @@ int main(int an, char **av) {
   an = 1;
   buffer_sequence seq;
 
-  printf("combine_policy_certs.exe --init=true "
+  printf("\ncombine_policy_certs.exe --init=true "
          "--add_cert=true --new_cert_file=policy_cert_file.dom0 "
          "-- existing_certs=my_certs --output=my_certs");
   if (FLAGS_print_level > 0) {

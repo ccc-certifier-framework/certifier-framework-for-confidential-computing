@@ -339,6 +339,12 @@ function do-copy-files() {
     cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data
   popd
 
+  pushd $EXAMPLE_DIR/cf_data
+    $CERTIFIER_ROOT/utilities/combine_policy_certs.exe \
+      --init=true --new_cert_file=$POLICY_CERT_FILE_NAME \
+      --output=my_certs
+  popd
+
   echo "do-copy-files done"
 }
 
