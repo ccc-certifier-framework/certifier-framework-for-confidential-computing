@@ -147,6 +147,7 @@ function do-make-keys() {
   pushd $EXAMPLE_DIR/provisioning
     $CERTIFIER_ROOT/utilities/cert_utility.exe  \
       --operation=generate-policy-key-and-test-keys  \
+      --domain_name=$DOMAIN_NAME \
       --policy_key_output_file=$POLICY_KEY_FILE_NAME  \
       --policy_cert_output_file=$POLICY_CERT_FILE_NAME \
       --platform_key_output_file=platform_key_file.bin  \

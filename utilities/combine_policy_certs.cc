@@ -37,52 +37,89 @@ DEFINE_bool(add_cert, false, "add cert to existing cert");
 int main(int an, char **av) {
   gflags::ParseCommandLineFlags(&an, &av, true);
   an = 1;
+  buffer_sequence seq;
 
-#if 0
-  int num = 0;
-  if (!get_input_file_names(FLAGS_input, &num, nullptr)) {
-    printf("%s() error, line %d, can't get input file\n", __func__, __LINE__);
-    return 1;
+  printf("combine_policy_certs.exe --init=true "
+         "--add_cert=true --new_cert_file=policy_cert_file.dom0 "
+         "-- existing_certs=my_certs --output=my_certs");
+  if (FLAGS_print_level > 0) {
+    printf("combine_policy_certs\n");
+    if (FLAGS_init) {
+      printf("initialize new file\n");
+    } else {
+      printf("existing file: %s\n", FLAGS_existing_certs.c_str());
+    }
+    printf("New cert: %s\n", FLAGS_new_cert_file.c_str());
   }
-  string *file_names = new string[num];
-  if (!get_input_file_names(FLAGS_input, &num, file_names)) {
-    printf("%s() error, line %d, can't get input file\n", __func__, __LINE__);
-    return 1;
-  }
 
-  buffer_sequence bufs;
-  for (int i = 0; i < num; i++) {
-    int  sz = file_size(file_names[i]);
-    byte buf[sz];
+  if (!FLAGS_init) {
+    string in;
 
-    if (!read_file(file_names[i], &sz, buf)) {
-      printf("%s() error, line %d, can't open %s\n",
+    if (!read_file_into_string(FLAGS_existing_certs, &in)) {
+      printf("%s() error, line %d, can't read %s\n",
              __func__,
              __LINE__,
-             file_names[i].c_str());
+             FLAGS_existing_certs.c_str());
       return 1;
     }
-    string *out = bufs.add_block();
-    out->assign((char *)buf, sz);
+    if (!seq.ParseFromString(in)) {
+      printf("%s() error, line %d, can't parse existing certs\n",
+             __func__,
+             __LINE__);
+      return 1;
+    }
   }
 
-  string final_buffer;
-  if (!bufs.SerializeToString(&final_buffer)) {
+  string new_cert;
+  if (!read_file_into_string(FLAGS_new_cert_file, &new_cert)) {
+    printf("%s() error, line %d, can't read %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_new_cert_file.c_str());
+    return 1;
+  }
+
+  string *n = seq.add_block();
+  n->assign(new_cert.data(), new_cert.size());
+
+  string final_serialized_buffer;
+  if (!seq.SerializeToString(&final_serialized_buffer)) {
     printf("%s() error, line %d, can't serialize final buffers\n",
            __func__,
            __LINE__);
     return 1;
   }
   if (!write_file(FLAGS_output,
-                  final_buffer.size(),
-                  (byte *)final_buffer.data())) {
+                  final_serialized_buffer.size(),
+                  (byte *)final_serialized_buffer.data())) {
     printf("%s() error, line %d, can't write %s\n",
            __func__,
            __LINE__,
            FLAGS_output.c_str());
     return 1;
   }
-#endif
+
+  if (FLAGS_print_level > 1) {
+    printf("certs in final file:\n");
+    for (int i = 0; i < seq.block_size(); i++) {
+      X509 *x = X509_new();
+      if (x == nullptr) {
+        return 1;
+      }
+      if (!asn1_to_x509(seq.block(i), x)) {
+        printf("%s() error, line %d, can't asn1 translate %d\n",
+               __func__,
+               __LINE__,
+               i);
+        return 1;
+      }
+      printf("\nCert %d:\n", i);
+      X509_print_fp(stdout, x);
+      printf("\n");
+
+      X509_free(x);
+    }
+  }
 
   return 0;
 }

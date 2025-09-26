@@ -23,11 +23,13 @@ DEFINE_bool(print_all, false, "verbose");
 // "generate-policy-key-and-test-keys" is the other option
 DEFINE_string(operation, "", "generate policy key and self-signed cert");
 
+DEFINE_string(domain_name, "datica", "domain name");
+DEFINE_string(policy_authority_name,
+              "policyAuthority",
+              "policy authority name");
+
 DEFINE_string(policy_key_name, "policyKey", "key name");
 DEFINE_string(policy_key_type, Enc_method_rsa_2048_private, "policy key type");
-DEFINE_string(policy_authority_name,
-              "policyAuthority ",
-              "policy authority name");
 DEFINE_string(policy_key_output_file, "policy_key_file.bin", "policy key file");
 DEFINE_string(policy_cert_output_file,
               "policy_cert_file.bin",
@@ -136,9 +138,13 @@ bool generate_policy_key() {
   key_message policy_key;
   key_message policy_pk;  // public policy key
 
+  // org name
+  string org_name(FLAGS_domain_name);
+  org_name += "/";
+  org_name += FLAGS_policy_authority_name;
   if (!make_root_key_with_cert(FLAGS_policy_key_type,
                                FLAGS_policy_key_name,
-                               FLAGS_policy_authority_name,
+                               org_name,
                                &policy_key))
     return false;
   if (!private_key_to_public_key(policy_key, &policy_pk))
