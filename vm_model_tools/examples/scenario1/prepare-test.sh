@@ -147,6 +147,7 @@ function do-make-keys() {
   pushd $EXAMPLE_DIR/provisioning
     $CERTIFIER_ROOT/utilities/cert_utility.exe  \
       --operation=generate-policy-key-and-test-keys  \
+      --domain_name=$DOMAIN_NAME \
       --policy_key_output_file=$POLICY_KEY_FILE_NAME  \
       --policy_cert_output_file=$POLICY_CERT_FILE_NAME \
       --platform_key_output_file=platform_key_file.bin  \
@@ -336,6 +337,12 @@ function do-copy-files() {
     cp -p platform_key_file.bin attest_key_file.bin sev_cf_utility.measurement $EXAMPLE_DIR/cf_data
     cp -p cf_utility.measurement platform_attest_endorsement.bin $EXAMPLE_DIR/cf_data
     cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data
+  popd
+
+  pushd $EXAMPLE_DIR/cf_data
+    $CERTIFIER_ROOT/utilities/combine_policy_certs.exe \
+      --init=true --new_cert_file=$POLICY_CERT_FILE_NAME \
+      --output=my_certs
   popd
 
   echo "do-copy-files done"

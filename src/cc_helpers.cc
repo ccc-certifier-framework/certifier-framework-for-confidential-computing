@@ -2822,6 +2822,57 @@ int verify_callback(int preverify, X509_STORE_CTX *x509_ctx) {
 
 // ----------------------------------------------------------------------------------
 
+bool correct_domain(const string domain, string buf) {
+  X509 *x = X509_new();
+  bool  ret = false;
+
+  if (x == nullptr) {
+    printf("%s() error, line %d, couldn't alloc X509\n", __func__, __LINE__);
+    return false;
+  }
+
+  if (!asn1_to_x509(buf, x)) {
+    printf("%s() error, line %d, couldn't asn convert\n", __func__, __LINE__);
+    return false;
+  }
+
+  X509_NAME *sname = X509_get_subject_name(x);
+  if (sname == nullptr) {
+    printf("%s() error, line %d, couldn't get subject name\n",
+           __func__,
+           __LINE__);
+    return false;
+  }
+
+  int len = X509_NAME_get_text_by_NID(sname, NID_organizationName, nullptr, 0);
+  if (len <= 0) {
+    printf("%s() error, line %d, bad length\n", __func__, __LINE__);
+    return false;
+  }
+  len++;
+  char name_buf[len];
+  int n = X509_NAME_get_text_by_NID(sname, NID_organizationName, name_buf, len);
+  if (n <= 0) {
+    printf("%s() error, line %d, can't get text by NID\n", __func__, __LINE__);
+    return false;
+  }
+  name_buf[len - 1] = 0;
+
+  for (int j = 0; j < len; j++) {
+    if (name_buf[j] == '/') {
+      name_buf[j] = 0;
+    }
+  }
+  string nt;
+  nt.assign((char *)name_buf);
+  if (nt == domain) {
+    ret = true;
+  }
+
+  X509_free(x);
+  return ret;
+}
+
 bool extract_id_from_cert(X509 *in, string *out) {
   if (in == nullptr)
     return false;

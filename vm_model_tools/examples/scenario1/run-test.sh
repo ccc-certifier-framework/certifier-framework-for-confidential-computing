@@ -161,7 +161,8 @@ function do-run() {
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1
+        --service_port=8123" --print_level=1 \
+	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
       echo " "
 
 
@@ -198,7 +199,10 @@ function do-run() {
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=3
+        --service_port=8123" --print_level=1
+      echo " "
+      echo " Alternatively add \
+	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs"
       echo " "
 
       $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
@@ -215,7 +219,8 @@ function do-run() {
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
         --certifier_service_URL=localhost \
-        --service_port=8123 --print_level=3
+        --service_port=8123 --print_level=1 \
+	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
     fi
 
     if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then

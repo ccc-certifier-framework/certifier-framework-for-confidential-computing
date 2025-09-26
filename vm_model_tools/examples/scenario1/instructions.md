@@ -138,6 +138,7 @@ run a third script, /test-script.sh.
 
   ./test-script.sh
 
+
 This test will insert a key into the cryptstore, to fetch the key inserted
 by this test, run
 
@@ -147,6 +148,35 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
   --policy_domain_name=dom0 --encrypted_cryptstore_filename=cryptstore.dom0 \
   --policy_store_filename=policy_store.dom0 --enclave_type=simulated-enclave \
   --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./
+
+
+One more addition:
+
+In VM applications, the self-signed certs for any policy domain for a VM
+often lie in a read-only file system (like ram disk), which is a critical
+part of VM measurement.  We are providing an additional flag, 
+--trust_anchors="full path to policy certificates".  Normally, this
+is set to "" but if it's not empty, this will be the full filename,
+including path, for the self signed policy certs within this read only
+file system.  This file will be a sequence of policy certificates.
+At initialization, programs using this will select the certificate from the
+sequence fof the domain named in --domain_name flag.  This should simplify
+deploying VMs.  We have added a new utility, combine_policy_certs to add
+a new policy sequence.  When the first certificate is installed, call:
+
+  combine_policy_certs.exe --init=true --new_cert_file=policy_cert_file.dom0
+    --output=my_certs
+
+to add another cert
+
+  combine_policy_certs.exe --add_cert=true --existing_certs=my_certs
+    --new_cert_file=policy_cert_file.dom1 \
+    --output=my_certs
+
+When you're done constucting "my_certs", deploy "my_certs" to your read
+only disk.  When calling cf_utility.exe, cf_key_server.exe or
+cf_key_client.exe you should use the flag --trust_anchors=/ramdisk/my_certs
+(or whatever the path to the read only file system is).
 
 
 ---------------------------------------------------------------------------------

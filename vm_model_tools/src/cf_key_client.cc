@@ -31,6 +31,7 @@
 #include "certifier_framework.h"
 #include "certifier_utilities.h"
 #include "cf_support.h"
+#include "cc_helpers.h"
 #include "cryptstore.pb.h"
 
 using namespace certifier::framework;
@@ -47,6 +48,8 @@ DEFINE_string(policy_domain_name, "datica", "policy domain name");
 DEFINE_string(policy_key_cert_file,
               "policy_certificate.datica",
               "file name for policy certificate");
+
+DEFINE_string(trust_anchors, "", "trust anchors file");
 
 DEFINE_bool(print_cryptstore, true, "print cryptstore");
 
@@ -627,16 +630,53 @@ int main(int an, char **av) {
   //    g_serialized_policy_cert;
   //    g_serialized_admissions_cert;  tag is domain-name-admission-certificate
   //    g_my_private_key;  tag is domain-name-private-auth-key
-  policy_cert_file_name = FLAGS_data_dir;
-  policy_cert_file_name.append("cf_data/");
-  policy_cert_file_name.append(FLAGS_policy_key_cert_file);
-  if (!read_file_into_string(policy_cert_file_name,
-                             &g_serialized_policy_cert)) {
-    printf("%s() error, line %d, can't read policy cert \n",
-           __func__,
-           __LINE__);
-    ret = 1;
-    goto done;
+
+  // read policy cert
+  if (FLAGS_trust_anchors == "") {
+    string der_policy_cert_file_name(FLAGS_data_dir);
+    der_policy_cert_file_name.append("cf_data/");
+    der_policy_cert_file_name.append(FLAGS_policy_key_cert_file);
+    if (!read_file_into_string(der_policy_cert_file_name,
+                               &g_serialized_policy_cert)) {
+      printf("%s() error, line %d, couldn't read policy domain cert in %s\n",
+             __func__,
+             __LINE__,
+             g_serialized_policy_cert.c_str());
+      ret = 1;
+      goto done;
+    }
+  } else {
+    string          der_certs;
+    buffer_sequence seq;
+
+    if (!read_file_into_string(FLAGS_trust_anchors, &der_certs)) {
+      printf("%s() error, line %d, couldn't read trust anchors in %s\n",
+             __func__,
+             __LINE__,
+             g_serialized_policy_cert.c_str());
+      return false;
+    }
+
+    if (!seq.ParseFromString(der_certs)) {
+      printf("%s() error, line %d, couldn't parse certs\n", __func__, __LINE__);
+      ret = 1;
+      goto done;
+    }
+
+    int i = 0;
+    for (i = 0; i < seq.block_size(); i++) {
+      if (correct_domain(FLAGS_policy_domain_name, seq.block(i))) {
+        g_serialized_policy_cert.assign(seq.block(i));
+        break;
+      }
+    }
+    if (i >= seq.block_size()) {
+      printf("%s() error, line %d, can't find domain cert\n",
+             __func__,
+             __LINE__);
+      ret = 1;
+      goto done;
+    }
   }
 
   // Admissions cert tag is domain-name-admission-certificate
