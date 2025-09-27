@@ -189,6 +189,7 @@ function do-run() {
         --cf_utility_help=false \
         --init_trust=false \
         --generate_symmetric_key=true \
+	--keyname=primary-store-encryption-key \
         --save_cryptstore=false \
         --enclave_type="simulated-enclave" \
         --policy_domain_name=$DOMAIN_NAME \
@@ -209,6 +210,7 @@ function do-run() {
         --cf_utility_help=false \
         --init_trust=false \
         --generate_symmetric_key=true \
+	--keyname=primary-store-encryption-key \
         --save_cryptstore=false \
         --enclave_type="simulated-enclave" \
         --policy_domain_name=$DOMAIN_NAME \
