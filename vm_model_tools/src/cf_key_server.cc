@@ -232,7 +232,6 @@ void print_help() {
   printf("  --generate_public_key=false, generate a public key of specified "
          "key type\n");
   printf("  --print_cryptstore=true, print cryptstore\n");
-  printf("  --save_cryptstore=false, save cryptstore (normally automatic)\n");
   printf("\n");
   printf("  --trust_anhors=%s\n", FLAGS_trust_anchors.c_str());
   printf("\n");

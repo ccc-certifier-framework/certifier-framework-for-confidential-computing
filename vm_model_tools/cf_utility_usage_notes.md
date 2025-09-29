@@ -14,7 +14,6 @@ cf-osutility.exe
     --get_item=false
     --put_item=false
     --print_cryptstore=true
-    --save_cryptstore=false
 
     --enclave_type="sev-enclave"
     --data_dir=./cf_data

@@ -53,7 +53,6 @@ DEFINE_bool(generate_public_key, false, "generate public key?");
 DEFINE_bool(get_item, false, "get item from cryptstore");
 DEFINE_bool(put_item, false, "put item into cryptstore");
 DEFINE_bool(print_cryptstore, false, "print cryptstore");
-DEFINE_bool(save_cryptstore, false, "save cryptstore");
 DEFINE_bool(import_cryptstore, false, "import unencrypted cryptstore");
 DEFINE_bool(export_cryptstore, false, "export cryptstore unencrypted");
 
@@ -155,10 +154,6 @@ void print_os_model_parameters() {
     printf("  Print cryptstore?: yes\n");
   else
     printf("  Print cryptstore?: no\n");
-  if (FLAGS_save_cryptstore)
-    printf("  Save cryptstore?: yes\n");
-  else
-    printf("  Save cryptstore?: no\n");
   if (FLAGS_import_cryptstore)
     printf("  Import cryptstore?: yes\n");
   else
@@ -321,7 +316,6 @@ void print_help() {
   printf("  --generate_public_key=false, generate a public key of specified "
          "key type\n");
   printf("  --print_cryptstore=true, print cryptstore\n");
-  printf("  --save_cryptstore=false, save cryptstore (normally automatic)\n");
   printf("\n");
   printf("  --entry_tag=\"\", value of tag for put_item\n");
   printf("  --entry_version=0, value of version for put_item\n");
