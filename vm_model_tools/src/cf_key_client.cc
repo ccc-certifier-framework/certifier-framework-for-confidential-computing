@@ -106,7 +106,7 @@ DEFINE_string(platform_attest_endorsement_file,
 // -------------------------------------------------------------------------
 
 void print_parameters() {
-  printf("cf_key_client parameters:\n");
+  printf("\ncf_key_client parameters:\n");
   printf("\n");
 
   if (FLAGS_print_cryptstore)
@@ -130,6 +130,9 @@ void print_parameters() {
   printf("  Protecting enclave type: %s\n", FLAGS_enclave_type.c_str());
   printf("  Input file name: %s\n", FLAGS_input_file.c_str());
   printf("  Output file name: %s\n", FLAGS_output_file.c_str());
+  printf("\n");
+
+  printf("  Trust anchor    : %s\n", FLAGS_trust_anchors.c_str());
   printf("\n");
 
   printf("  Public key algorithm: %s\n", FLAGS_public_key_algorithm.c_str());
@@ -240,6 +243,9 @@ void print_help() {
   printf("  --generate_public_key=false, generate a public key of specified "
          "key type\n");
   printf("  --print_cryptstore=true, print cryptstore\n");
+  printf("\n");
+
+  printf("  --trust_anchors=%s\n", FLAGS_trust_anchors.c_str());
   printf("\n");
 
   printf("  --action=retrieve|store, value of version\n");

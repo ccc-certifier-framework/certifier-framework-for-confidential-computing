@@ -99,7 +99,7 @@ DEFINE_string(platform_attest_endorsement_file,
 // -------------------------------------------------------------------------
 
 void print_parameters() {
-  printf("cf_key_server parameters:\n");
+  printf("\ncf_key_server parameters:\n");
   printf("\n");
 
   printf("  Policy doman name: %s\n", FLAGS_policy_domain_name.c_str());
@@ -113,6 +113,9 @@ void print_parameters() {
          FLAGS_encrypted_cryptstore_filename.c_str());
   printf("  Directory for cf_utility supporting data for this policy: %s\n",
          FLAGS_data_dir.c_str());
+  printf("\n");
+
+  printf("  Trust anchor file: %s\n", FLAGS_trust_anchors.c_str());
   printf("\n");
 
   printf("  Protecting enclave type: %s\n", FLAGS_enclave_type.c_str());
@@ -204,7 +207,7 @@ err:
 }
 
 void print_help() {
-  printf("cf_key_server.exe\n");
+  printf("\ncf_key_server.exe\n");
   printf("  --cf_key_server_help=false, print this help message\n");
   printf("\n");
   printf("  --policy_domain_name=%s, name of policy domain\n",
@@ -230,6 +233,8 @@ void print_help() {
          "key type\n");
   printf("  --print_cryptstore=true, print cryptstore\n");
   printf("  --save_cryptstore=false, save cryptstore (normally automatic)\n");
+  printf("\n");
+  printf("  --trust_anhors=%s\n", FLAGS_trust_anchors.c_str());
   printf("\n");
   printf("  --tag=\"\", value of tag for put_item\n");
   printf("  --type=\"\", value of type for put_item\n");
