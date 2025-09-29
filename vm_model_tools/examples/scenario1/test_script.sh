@@ -58,6 +58,9 @@ sleep 5
 echo " "
 echo "key-client: storing new value"
 echo " "
+echo "First, create key in client.in"
+echo "01234567890123456789012345678901" > client.in
+echo " "
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=dom0 \
     --encrypted_cryptstore_filename=cryptstore.dom0 \
     --enclave_type=simulated-enclave --policy_store_filename=policy_store.dom0 \
