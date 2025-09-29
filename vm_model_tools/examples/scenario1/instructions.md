@@ -153,6 +153,10 @@ The key-client tests uses the file client.in which muest be initialized; it
 is intended to contain the raw key bits for a raw update.  client.out contains
 the retrieved key values.
 
+You can change the location of the policy cert with the --trust_anchors=arg
+flag.  arg should then be the full path name of the file containing the
+self-signed policy cert.
+
 
 One more addition:
 
