@@ -2563,7 +2563,9 @@ bool construct_platform_evidence_package(string        &attesting_enclave_type,
     string et2("islet-attestation");
     ev2->set_evidence_type(et2);
   } else {
-    printf("%s:%d:%s: - can't add attestation\n", __FILE__, __LINE__, __func__);
+    printf("error %s(), line %d: - can't add attestation\n",
+           __func__,
+           __LINE__);
     return false;
   }
 
@@ -2657,6 +2659,15 @@ void print_ssl_error(int code) {
   printf("%s\n", ssl_strerror(code));
 }
 
+void get_ssl_error_code_and_print() {
+  unsigned long err_code;
+  while ((err_code = ERR_get_error()) != 0) {
+    char err_buf[256];
+    ERR_error_string_n(err_code, err_buf, sizeof(err_buf));
+    printf("OpenSSL Error: %s\n", err_buf);
+  }
+}
+
 // Socket and SSL support
 
 bool open_client_socket(const string &host_name, int port, int *soc) {
@@ -2676,7 +2687,10 @@ bool open_client_socket(const string &host_name, int port, int *soc) {
 
   s = getaddrinfo(host_name.c_str(), port_str, &hints, &result);
   if (s != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+    printf("%s() error, line %d, getaddrinfo: %s\n",
+           __func__,
+           __LINE__,
+           gai_strerror(s));
     return false;
   }
 
@@ -2696,7 +2710,11 @@ bool open_client_socket(const string &host_name, int port, int *soc) {
   }
 
   if (rp == NULL) {
-    fprintf(stderr, "Could not connect to %s:%d\n", host_name.c_str(), port);
+    printf("%s() line, %d, couldn't connect to %s:%d\n",
+           __func__,
+           __LINE__,
+           host_name.c_str(),
+           port);
     return false;
   }
 
@@ -2725,7 +2743,10 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
 
   s = getaddrinfo(host_name.c_str(), port_str, &hints, &result);
   if (s != 0) {
-    fprintf(stderr, "%s: getaddrinfo: %s\n", __func__, gai_strerror(s));
+    printf("error %s() line, %d, getaddrinfo: %s\n",
+           __func__,
+           __LINE__,
+           gai_strerror(s));
     return false;
   }
 
@@ -2749,7 +2770,7 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
                    (const char *)&reuse,
                    sizeof(reuse))
         < 0) {
-      fprintf(stderr, "Can't reuse socket %s\n", __func__);
+      printf("%s() error, line %d, can't reuse socket\n", __func__, __LINE__);
       return false;
     }
 
@@ -2759,7 +2780,7 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
                    (const char *)&reuse,
                    sizeof(reuse))
         < 0) {
-      fprintf(stderr, "Can't reuse port %s\n", __func__);
+      printf("%s() error, line %d, can't reuse port\n", __func__, __LINE__);
       return false;
     }
 #endif
@@ -2771,18 +2792,18 @@ bool open_server_socket(const string &host_name, int port, int *soc) {
   }
 
   if (rp == NULL) {
-    fprintf(stderr,
-            "%s: Could not bind to %s:%d\n",
-            __func__,
-            host_name.c_str(),
-            port);
+    printf("%s() error, line %d, could not bind to %s:%d\n",
+           __func__,
+           __LINE__,
+           host_name.c_str(),
+           port);
     return false;
   }
 
   freeaddrinfo(result);
 
   if (listen(sfd, 10) != 0) {
-    printf("%s: cant listen\n", __func__);
+    printf("%s()error, line, %d, cant listen\n", __func__, __LINE__);
     return false;
   }
 
