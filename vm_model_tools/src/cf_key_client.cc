@@ -348,7 +348,7 @@ bool client_application(secure_authenticated_channel &channel) {
           channel.write((int)serialized_response.size(),
                         (byte *)serialized_response.data());
         channel.close();
-        return true;
+        return false;
       }
       request.set_resource_name(FLAGS_resource_name);
       request.set_version(FLAGS_key_version);
@@ -366,7 +366,7 @@ bool client_application(secure_authenticated_channel &channel) {
           channel.write((int)serialized_response.size(),
                         (byte *)serialized_response.data());
         channel.close();
-        return true;
+        return false;
       }
       if (!cf.ParseFromString(serialized_cs_entry)) {
         printf("%s() error, line %d, can't parse string\n", __func__, __LINE__);
@@ -374,7 +374,7 @@ bool client_application(secure_authenticated_channel &channel) {
           channel.write((int)serialized_response.size(),
                         (byte *)serialized_response.data());
         channel.close();
-        return true;
+        return false;
       }
 
       request.set_resource_name(cf.tag());
@@ -389,7 +389,7 @@ bool client_application(secure_authenticated_channel &channel) {
         channel.write((int)serialized_response.size(),
                       (byte *)serialized_response.data());
       channel.close();
-      return true;
+      return false;
     }
 
   } else {
@@ -411,7 +411,7 @@ bool client_application(secure_authenticated_channel &channel) {
       channel.write((int)serialized_response.size(),
                     (byte *)serialized_response.data());
     channel.close();
-    return true;
+    return false;
   }
 
   // Send serialized request over authenticated, encrypted channel
@@ -430,7 +430,7 @@ bool client_application(secure_authenticated_channel &channel) {
     printf("%s() error, line %d, couldn't parse response\n",
            __func__,
            __LINE__);
-    return true;
+    return false;
   }
 
   if (FLAGS_print_level > 2) {
@@ -443,7 +443,7 @@ bool client_application(secure_authenticated_channel &channel) {
       printf("key_client: Request for %s failed\n",
              response.resource_name().c_str());
     }
-    return true;
+    return false;
   }
 
   if (FLAGS_print_level > 0) {
@@ -458,7 +458,7 @@ bool client_application(secure_authenticated_channel &channel) {
                                      (int)response.data().size());
   if (!ce.ParseFromString(serialized_cryptstore_entry)) {
     printf("key_client: Couldn't parse cryptstore in response\n");
-    return true;
+    return false;
   }
 
   if (FLAGS_print_level > 1) {
@@ -473,19 +473,43 @@ bool client_application(secure_authenticated_channel &channel) {
              __func__,
              __LINE__,
              FLAGS_output_file.c_str());
+      return false;
+    }
+  } else if (FLAGS_output_format == "raw") {
+    string value;
+    if (ce.type() == "binary-blob" || ce.type() == "X509-der-cert") {
+      value.assign((char *)ce.blob().data(), (int)ce.blob().size());
+    } else if (ce.type() == "key-message-serialized-protobuf") {
+      key_message km;
+      if (!km.ParseFromString(ce.blob())) {
+        printf("%s() error, line %d, can't parse key message\n",
+               __func__,
+               __LINE__);
+        return true;
+      }
+      value.assign((char *)km.secret_key_bits().data(),
+                   (int)km.secret_key_bits().size());
+    } else {
+      printf("%s() error, line %d, unsupported type %s\n",
+             __func__,
+             __LINE__,
+             ce.type().c_str());
       return true;
     }
-  } else {
-    string value;
-    value.assign((char *)ce.blob().data(), (int)ce.blob().size());
     if (!write_file_from_string(FLAGS_output_file, value)) {
       printf("%s() error, line %d, couldn't write output file %s\n",
              __func__,
              __LINE__,
              FLAGS_output_file.c_str());
-      return true;
+      return false;
     }
     return true;
+  } else {
+    printf("%s() error, line %d, unknown output type %s\n",
+           __func__,
+           __LINE__,
+           FLAGS_output_format.c_str());
+    return false;
   }
 
   return true;

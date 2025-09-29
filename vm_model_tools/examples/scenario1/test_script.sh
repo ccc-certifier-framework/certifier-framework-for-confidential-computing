@@ -14,6 +14,25 @@ echo "CERTIFIER_ROOT: $CERTIFIER_ROOT"
 echo "EXAMPLE_DIR: $EXAMPLE_DIR"
 echo " "
 
+function cleanup_stale_procs() {
+  # Find and kill simpleserver processes that may be running.
+  echo " "
+  echo "cleanup_stale_procs"
+
+  set +e
+  key_server_pid=$(ps -ef | grep -E "cf_key_server" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
+  set -e
+  if [[ $key_server_pid != "" ]] ; then
+    kill -9 $key_server_pid
+    echo "killed key_server_service, pid $key_server_pid"
+  else
+    echo "no key_server_service running"
+  fi
+
+  echo "cleanup_stale_procs done"
+}
+
+
 echo " "
 echo "printing cryptstore"
 echo " "
@@ -39,6 +58,9 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --export_cryptstore=true --pol
     --encrypted_cryptstore_filename=cryptstore.dom0 --output_file=exported.cryptstore \
     --policy_store_filename=policy_store.dom0 --enclave_type=simulated-enclave \
     --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./
+
+# kill running key servers
+cleanup_stale_procs
 
 echo " "
 echo "running key-server"
