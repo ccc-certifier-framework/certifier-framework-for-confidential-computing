@@ -149,6 +149,10 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
   --policy_store_filename=policy_store.dom0 --enclave_type=simulated-enclave \
   --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./
 
+The key-client tests uses the file client.in which muest be initialized; it
+is intended to contain the raw key bits for a raw update.  client.out contains
+the retrieved key values.
+
 
 One more addition:
 
