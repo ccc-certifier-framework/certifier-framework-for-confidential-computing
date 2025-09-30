@@ -3596,7 +3596,8 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
   if (asn1_to_x509(auth_cert, x509_auth_cert)) {
     X509_STORE_add_cert(cs, x509_auth_cert);
   } else {
-    printf("COULDNT ADD\n");
+    printf("%s() error, line %d, asn translate\n", __func__, __LINE__);
+    return false;
   }
 
 #ifdef DEBUG
@@ -3751,8 +3752,11 @@ bool certifier::framework::secure_authenticated_channel::init_client_ssl(
            __func__,
            __LINE__);
     if (asn1_peer_root_cert_.size() == 0) {
-      printf("root cert empty\n");
+      printf("%s() error, line %d, init_client_ssl: root cert empty\n",
+             __func__,
+             __LINE__);
     } else {
+      printf("peer cert: \n");
       print_bytes(asn1_peer_root_cert_.size(),
                   (byte *)asn1_peer_root_cert_.data());
       printf("\n");
