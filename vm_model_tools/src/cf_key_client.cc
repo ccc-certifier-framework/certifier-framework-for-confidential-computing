@@ -750,6 +750,17 @@ int main(int an, char **av) {
     goto done;
   }
 
+  /* Alternative:
+   * bool certifier::framework::secure_authenticated_channel::init_client_ssl(
+   *  const string &host_name,
+   *  int           port,
+   *  const string &asn1_root_cert,
+   *  const string &peer_asn1_root_cert,
+   *  int           cert_chain_length,
+   *  string       *der_certs,
+   *  key_message  &private_key,
+   *  const string &auth_cert)
+   */
   if (!channel.init_client_ssl(FLAGS_policy_domain_name,
                                FLAGS_key_server_url,
                                FLAGS_key_server_port,
@@ -757,6 +768,29 @@ int main(int an, char **av) {
     printf("%s() error, line %d, Can't init client app\n", __func__, __LINE__);
     ret = 1;
     goto done;
+  }
+
+  if (FLAGS_print_level > 3) {
+    printf("\nClient channel data:\n");
+    if (channel.root_cert_ != nullptr) {
+      printf("\nRoot cert:\n");
+      X509_print_fp(stdout, channel.root_cert_);
+    } else {
+      printf("%s() error, line %d, no root cert\n", __func__, __LINE__);
+    }
+    if (channel.asn1_my_cert_.size() > 0) {
+      X509 *x = X509_new();
+      if (asn1_to_x509(channel.asn1_my_cert_, x)) {
+        printf("\nAdmissions cert:\n");
+        X509_print_fp(stdout, x);
+      } else {
+        printf("No admissions cert\n");
+      }
+      X509_free(x);
+    }
+    printf("\nPrivate key:\n");
+    print_key(channel.private_key_);
+    printf("\n");
   }
 
   // This is the actual application code.

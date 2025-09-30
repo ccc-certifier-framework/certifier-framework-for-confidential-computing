@@ -308,6 +308,29 @@ void server_application(secure_authenticated_channel &channel) {
     }
   }
 
+  if (FLAGS_print_level > 3) {
+    printf("\nserver_application channel data:\n");
+    if (channel.root_cert_ != nullptr) {
+      printf("\nRoot cert:\n");
+      X509_print_fp(stdout, channel.root_cert_);
+    } else {
+      printf("%s() error, line %d, no root cert\n", __func__, __LINE__);
+    }
+    if (channel.asn1_my_cert_.size() > 0) {
+      X509 *x = X509_new();
+      if (asn1_to_x509(channel.asn1_my_cert_, x)) {
+        printf("\nAdmissions cert:\n");
+        X509_print_fp(stdout, x);
+      } else {
+        printf("No admissions cert\n");
+      }
+      X509_free(x);
+    }
+    printf("\nPrivate key:\n");
+    print_key(channel.private_key_);
+    printf("\n");
+  }
+
   // Read message from client over authenticated, encrypted channel
   string out;
   int    n = channel.read(&out);
@@ -696,8 +719,7 @@ int main(int an, char **av) {
   }
 
   if (FLAGS_print_level > 2) {
-    printf("Got all keys and certificates\n");
-    printf("Running key-server\n");
+    printf("\nRunning key-server\n");
   }
 
   if (!server_dispatch(FLAGS_key_server_url,
