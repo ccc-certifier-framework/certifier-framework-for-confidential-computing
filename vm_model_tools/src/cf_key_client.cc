@@ -232,7 +232,7 @@ void print_help() {
       "  --encrypted_cryptstore_filename=encrypted_store.policy_domain_name, "
       "file"
       " containing encrypted store\n");
-  printf("  --data_dir=./cf_data, directory for configuration data.\n");
+  printf("  --data_dir=./, application directory.\n");
   printf("\n");
   printf("  --symmetric_algorithm=aes-256-gcm, key type of selected symmetric "
          "key\n");

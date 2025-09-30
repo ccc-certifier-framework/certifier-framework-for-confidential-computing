@@ -139,3 +139,4 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --print_cryptstore=true --poli
     --enclave_type=simulated-enclave \
     --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./
 
+cleanup_stale_procs

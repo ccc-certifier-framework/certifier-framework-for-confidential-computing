@@ -61,7 +61,7 @@ DEFINE_string(symmetric_key_algorithm,
               Enc_method_aes_256_cbc_hmac_sha256,
               "symmetric algorithm");
 
-DEFINE_string(data_dir, "./cf_data", "supporting file directory");
+DEFINE_string(data_dir, "./", "application directory");
 DEFINE_string(input_file, "server.in", "input file");
 DEFINE_string(output_file, "server.out", "output file");
 
