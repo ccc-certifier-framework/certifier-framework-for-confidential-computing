@@ -94,13 +94,13 @@ DEFINE_string(vcek_cert_file,
 
 // For simulated-enclave
 DEFINE_string(attest_key_file,
-              "./provisioning/attest_key_file.bin",
+              "./cf_data/attest_key_file.bin",
               "simulated attestation key");
 DEFINE_string(measurement_file,
-              "./provisioning/cf_utility.measurement",
+              "./cf_data/cf_utility.measurement",
               "simulated enclave measurement");
 DEFINE_string(platform_attest_endorsement_file,
-              "./provisioning/platform_attest_endorsement.bin",
+              "./cf_data/platform_attest_endorsement.bin",
               "platform endorsement");
 
 // -------------------------------------------------------------------------
