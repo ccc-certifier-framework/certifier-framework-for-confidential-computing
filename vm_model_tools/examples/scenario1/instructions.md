@@ -644,6 +644,13 @@ shell variable is useful, if you run the detailed steps below.
 export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1 
 ```
 
+    Step 0:  Build certifier, simpleserver, certifier library and utilities if they
+    dont exist.
+
+```shell
+    ./build-certifier.sh
+```
+
 
     Step 1: Provison keys.
 

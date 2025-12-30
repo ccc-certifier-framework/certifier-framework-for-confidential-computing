@@ -1,6 +1,6 @@
 #!/bin/bash
 # ############################################################################
-# run-test.sh: Script to run cf_utility test.
+# build-policy.sh: Script to build policy on the deployment machine
 # ############################################################################
 
 set -Eeuo pipefail
@@ -22,12 +22,6 @@ echo "Example directory: $EXAMPLE_DIR"
 ARG_SIZE="$#"
 
 if [ $ARG_SIZE == 0 ] ; then
-  echo "Must call with arguments, as follows:"
-  echo "  ./run-test.sh fresh"
-  echo "  ./run-test.sh fresh domain-name"
-  echo "  ./run-test.sh run (se | sev)"
-  echo "  ./run-test.sh run (se | sev) domain-name"
-  exit
 fi
 
 if [[ $ARG_SIZE != 1 && $ARG_SIZE != 2 && $ARG_SIZE != 3  ]] ; then
@@ -71,175 +65,112 @@ CRYPTSTORE_NAME="cryptstore.$DOMAIN_NAME"
 echo "Policy store name: $POLICY_STORE_NAME"
 echo "Cryptstore name: $CRYPTSTORE_NAME"
 
-function do-fresh() {
-  echo " "
-  echo "do-fresh"
+function do-make-policy() {
+  echo "do-make-policy"
 
-  pushd $EXAMPLE_DIR
-    if [[ -e "$POLICY_STORE_NAME" ]] ; then
-      rm $POLICY_STORE_NAME
-    fi
-    if [[ -e "$CRYPTSTORE_NAME" ]] ; then
-      rm $CRYPTSTORE_NAME
-    fi
-  popd
-
-  echo "Done"
-  exit
-}
-
-function cleanup_stale_procs() {
-  # Find and kill simpleserver processes that may be running.
-  echo " "
-  echo "cleanup_stale_procs"
-
-  set +e
-  certifier_pid=$(ps -ef | grep -E "simpleserver" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
-  set -e
-  if [[ $certifier_pid != "" ]] ; then
-    kill -9 $certifier_pid
-    echo "killed certifier_service, pid $certifier_pid"
-  else
-    echo "no certifier_service running"
+  if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+    mkdir $EXAMPLE_DIR/provisioning
   fi
+  pushd $EXAMPLE_DIR/provisioning 
+    echo " " 
+    echo "For simulated enclave"
+  
+    $CERTIFIER_ROOT/utilities/measurement_utility.exe \
+      --type=hash --input=$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+      --output=cf_utility.measurement
+  
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+      --key_subject="platform_key_file.bin" --verb="is-trusted-for-attestation" --output=ts1.bin
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
+      --clause=ts1.bin --output=vse_policy1.bin
 
-  echo "cleanup_stale_procs done"
-}
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+      --measurement_subject="cf_utility.measurement" \
+      --verb="is-trusted" --output=ts2.bin
 
-function do-run() {
-  echo " "
-  echo "do-run"
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      --key_subject=$POLICY_KEY_FILE_NAME --verb="says" \
+      --clause=ts2.bin --output=vse_policy2.bin
 
-  if [[ $ENCLAVE_TYPE != "se" && $ENCLAVE_TYPE != "sev" ]] ; then
-    echo "Unsupported enclave type: $ENCLAVE_TYPE"
-    exit
-  fi
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      --vse_file=vse_policy1.bin --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME \
+      --output=signed_claim_1.bin
 
-  cleanup_stale_procs
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      --vse_file=vse_policy2.bin  --duration=9000  \
+      --private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
+  $CERTIFIER_ROOT/utilities/package_claims.exe \
+      --input=signed_claim_1.bin,signed_claim_2.bin --output=policy.bin
+    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
 
-  export LD_LIBRARY_PATH=/usr/local/lib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
-  echo $LD_LIBRARY_PATH
-  sudo ldconfig
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe \
+      --key_subject=attest_key_file.bin --verb="is-trusted-for-attestation" --output=tsc1.bin
 
-  pushd $EXAMPLE_DIR/service
-    if [[ "$ENCLAVE_TYPE" == "se" ]] ; then
-      echo "running policy server for simulated-enclave"
-      $CERTIFIER_ROOT/certifier_service/simpleserver \
-        --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
-        --policyFile=policy.bin --readPolicy=true &
-    fi
-    if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
-      echo "running policy server for sev"
-      $CERTIFIER_ROOT/certifier_service/simpleserver \
-        --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
-          --policyFile=sev_policy.bin --readPolicy=true &
-    fi
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe \
+      --key_subject=platform_key_file.bin --verb="says" \
+      --clause=tsc1.bin --output=vse_policy3.bin
+
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      --vse_file=vse_policy3.bin --duration=9000 \
+      --private_key_file=platform_key_file.bin --output=platform_attest_endorsement.bin
+
+    echo " "
+    echo "For simulated enclave"
+
+    $CERTIFIER_ROOT/utilities/measurement_init.exe  \
+      --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708  \
+      --out_file=sev_cf_utility.measurement
+
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" --cert-subject=ark_cert.der \
+      --verb="is-trusted-for-attestation" --output=sev_ts1.bin
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=$POLICY_KEY_FILE_NAME \
+      --verb="says" --clause=sev_ts1.bin --output=sev_vse_policy1.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
+      --vse_file=sev_vse_policy1.bin --duration=9000 \
+      --private_key_file=$POLICY_KEY_FILE_NAME --output=sev_signed_claim_1.bin
+
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" \
+      --measurement_subject=sev_cf_utility.measurement --verb="is-trusted" \
+      --output=sev_ts2.bin
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=$POLICY_KEY_FILE_NAME \
+      --verb="says" --clause=sev_ts2.bin --output=sev_vse_policy2.bin
+   $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe --vse_file=sev_vse_policy2.bin \
+      --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME --output=sev_signed_claim_2.bin
+
+    $CERTIFIER_ROOT/utilities/make_property.exe --property_name=debug --property_type='string' comparator="=" \
+      --string_value=no --output=sev_property1.bin
+    $CERTIFIER_ROOT/utilities/make_property.exe --property_name=migrate --property_type='string' comparator="=" \
+      --string_value=no --output=sev_property2.bin
+    $CERTIFIER_ROOT/utilities/make_property.exe --property_name=smt --property_type='string' comparator="=" \
+      --string_value=no --output=sev_property5.bin
+    $CERTIFIER_ROOT/utilities/make_property.exe --property_name='api-major' --property_type=int --comparator=">=" \
+      --int_value=0 --output=sev_property3.bin
+    $CERTIFIER_ROOT/utilities/make_property.exe --property_name='api-minor' --property_type=int --comparator=">=" \
+      --int_value=0 --output=sev_property4.bin
+    $CERTIFIER_ROOT/utilities/make_property.exe --property_name='tcb-version' --property_type=int --comparator="=" \
+      --int_value=0x03000000000008115 --output=sev_property6.bin
+    $CERTIFIER_ROOT/utilities/combine_properties.exe \
+      --in=sev_property1.bin,sev_property2.bin,sev_property3.bin,sev_property4.bin,sev_property5.bin,sev_property6.bin \
+      --output=sev_properties.bin
+
+    $CERTIFIER_ROOT/utilities/make_platform.exe --platform_type=amd-sev-snp \
+      --properties_file=sev_properties.bin --output=sev_platform.bin
+    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --platform_subject=sev_platform.bin \
+      --verb="has-trusted-platform-property" --output=sev_ts3.bin
+    $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=$POLICY_KEY_FILE_NAME \
+      --verb="says" --clause=sev_ts3.bin --output=sev_vse_policy3.bin
+    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe --vse_file=sev_vse_policy3.bin \
+      --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME --output=sev_signed_claim_3.bin
+
+    $CERTIFIER_ROOT/utilities/package_claims.exe --input=sev_signed_claim_1.bin,sev_signed_claim_2.bin,sev_signed_claim_3.bin \
+      --output=sev_policy.bin
+    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=sev_policy.bin
   popd
 
-  sleep 3
-
-  pushd $EXAMPLE_DIR
-
-    if [[ "$ENCLAVE_TYPE" == "se" ]] ; then
-
-      echo " "
-      echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=true \
-        --print_cryptstore=true \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1 \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
-      echo " "
-
-
-      $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=true \
-        --print_cryptstore=true \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123 --print_level=1
-
-      sleep 3
-
-      echo " "
-      echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=false \
-        --generate_symmetric_key=true \
-	--keyname=primary-store-encryption-key \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1
-      echo " "
-      echo " Alternatively add \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs"
-      echo " "
-
-      $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=false \
-        --generate_symmetric_key=true \
-	--keyname=primary-store-encryption-key \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123 --print_level=1 \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
-    fi
-
-    if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
-      sudo ./sev-client-call.sh $DOMAIN_NAME $POLICY_CERT_FILE_NAME $POLICY_STORE_NAME $CRYPTSTORE_NAME "$EXAMPLE_DIR/"
-    fi
-  popd
-
-  cleanup_stale_procs
-
-  echo "do-run done"
+  echo "do-make-policy done"
 }
 
-if [ "$1" == "fresh" ] ; then
-  do-fresh
-  exit
-fi
-
-if [ "$1" == "run" ] ; then
-  do-run
-  exit
-fi
-
-echo " "
-echo "Unknown option: $1"
+do-make-policy $DOMAIN_NAME
+echo "Policy file name is sev_policy.bin"
+echo ""
