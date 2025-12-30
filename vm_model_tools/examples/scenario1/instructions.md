@@ -710,7 +710,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./run-policy-server.sh.
+    ./run-policy-server.sh
 ```
 
     Step 7: Certify deployment environment
@@ -718,7 +718,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./certify-deployment-machine.sh.
+    ./certify-deployment-machine.sh
 ```
 
     Step 8: Generate sample application secret for testing
@@ -734,7 +734,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./run-deployment-keyserver.sh.
+    ./run-deployment-keyserver.sh
 ```
 
     Step 10: Certify deployed program or VM
