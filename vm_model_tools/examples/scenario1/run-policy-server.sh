@@ -1,6 +1,6 @@
 #!/bin/bash
 # ############################################################################
-# run-test.sh: Script to run cf_utility test.
+# run-policy-server.sh
 # ############################################################################
 
 set -Eeuo pipefail
@@ -22,21 +22,12 @@ echo "Example directory: $EXAMPLE_DIR"
 ARG_SIZE="$#"
 
 if [ $ARG_SIZE == 0 ] ; then
-  echo "Must call with arguments, as follows:"
-  echo "  ./run-test.sh fresh"
-  echo "  ./run-test.sh fresh domain-name"
-  echo "  ./run-test.sh run (se | sev)"
-  echo "  ./run-test.sh run (se | sev) domain-name"
   exit
 fi
 
 if [[ $ARG_SIZE != 1 && $ARG_SIZE != 2 && $ARG_SIZE != 3  ]] ; then
   echo "Wrong number of arguments"
   echo "Must call, as follows:"
-  echo "  ./run-test.sh fresh"
-  echo "  ./run-test.sh fresh domain-name"
-  echo "  ./run-test.sh run  (se | sev)"
-  echo "  ./run-test.sh run  (se | sev) domain-name"
   exit
 fi
 
@@ -106,9 +97,9 @@ function cleanup_stale_procs() {
   echo "cleanup_stale_procs done"
 }
 
-function do-run() {
+function run-policy-server() {
   echo " "
-  echo "do-run"
+  echo "run-policy-server"
 
   if [[ $ENCLAVE_TYPE != "se" && $ENCLAVE_TYPE != "sev" ]] ; then
     echo "Unsupported enclave type: $ENCLAVE_TYPE"
@@ -141,105 +132,9 @@ function do-run() {
   popd
 
   sleep 3
-
-  pushd $EXAMPLE_DIR
-
-    if [[ "$ENCLAVE_TYPE" == "se" ]] ; then
-
-      echo " "
-      echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=true \
-        --print_cryptstore=true \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1 \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
-      echo " "
-
-
-      $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=true \
-        --print_cryptstore=true \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123 --print_level=1
-
-      sleep 3
-
-      echo " "
-      echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=false \
-        --generate_symmetric_key=true \
-	--keyname=primary-store-encryption-key \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1
-      echo " "
-      echo " Alternatively add \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs"
-      echo " "
-
-      $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=false \
-        --generate_symmetric_key=true \
-	--keyname=primary-store-encryption-key \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123 --print_level=1 \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
-    fi
-
-    if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
-      sudo ./sev-client-call.sh $DOMAIN_NAME $POLICY_CERT_FILE_NAME $POLICY_STORE_NAME $CRYPTSTORE_NAME "$EXAMPLE_DIR/"
-    fi
-  popd
-
-  cleanup_stale_procs
-
-  echo "do-run done"
 }
 
-if [ "$1" == "fresh" ] ; then
-  do-fresh
-  exit
-fi
-
-if [ "$1" == "run" ] ; then
-  do-run
-  exit
-fi
-
-echo " "
+run-policy-server
+echo "policy server running"
+echo ""
 echo "Unknown option: $1"

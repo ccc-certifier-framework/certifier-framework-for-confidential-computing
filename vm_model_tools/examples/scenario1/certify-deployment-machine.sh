@@ -1,6 +1,6 @@
 #!/bin/bash
 # ############################################################################
-# run-test.sh: Script to run cf_utility test.
+# certify deployment machine.sh 
 # ############################################################################
 
 set -Eeuo pipefail
