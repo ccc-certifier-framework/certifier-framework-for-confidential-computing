@@ -1,4 +1,3 @@
-#!/bin/bash
 
 # ------------------------------------------------------------------------------------------
 
@@ -6,19 +5,19 @@
 ARG_SIZE="$#"
 
 if [[ ${CERTIFIER_ROOT+x} ]]; then
-	echo "CERTIFIER_ROOT already set"
+        echo "CERTIFIER_ROOT already set"
 else
-	echo "setting CERTIFIER_ROOT"
-	pushd ../../.. > /dev/null
-	CERTIFIER_ROOT=$(pwd) > /dev/null
-	popd > /dev/null
+        echo "setting CERTIFIER_ROOT"
+        pushd ../../.. > /dev/null
+        CERTIFIER_ROOT=$(pwd) > /dev/null
+        popd > /dev/null
 fi
 
 if [[ ${EXAMPLE_DIR+x} ]]; then
-	echo "EXAMPLE_DIR already set"
+        echo "EXAMPLE_DIR already set"
 else
-	echo "setting EXAMPLE_DIR"
-	EXAMPLE_DIR=$(pwd) > /dev/null
+        echo "setting EXAMPLE_DIR"
+        EXAMPLE_DIR=$(pwd) > /dev/null
 fi
 
 #echo ""
@@ -210,15 +209,4 @@ function process-args() {
 }
 
 # ------------------------------------------------------------------------------------------
-
-
-# This script will print the above options if called with -print as first argument.
-#echo "Start"
-
-if [ $1 = "-print" ]; then
-	print-options
-else
-	process-args
-	print-variables
-fi
 
