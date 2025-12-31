@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # certify-deployed-machine.sh  Script to certify machine
 # ############################################################################
@@ -223,15 +224,14 @@ function process-args() {
 
 # ------------------------------------------------------------------------------------------
 
-
 if [[ $VERBOSE -eq 1 ]]; then                   
         print-variables 
 	exit
 fi
 
-  pushd $EXAMPLE_DIR
+pushd $EXAMPLE_DIR
 
-    if [[ "$ENCLAVE_TYPE" == "se" ]] ; then
+if [[ "$ENCLAVE_TYPE" == "simulated-enclave"" ]] ; then
 
       echo " "
       echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
@@ -289,4 +289,5 @@ fi
       echo " Alternatively add \
 	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs"
       echo " "
-  .fi
+
+fi

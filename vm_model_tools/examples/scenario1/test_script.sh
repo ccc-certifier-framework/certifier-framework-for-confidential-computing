@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # test-script.sh: Additional tests  for cf_utility, key-client and key-server
 # This can only be run after the certification is ./run-test.sh.
@@ -222,8 +223,6 @@ function process-args() {
 	CRYPTSTORE_NAME=$CRYPTSTORE_NAME.$DOMAIN_NAME
 }
 
-# ------------------------------------------------------------------------------------------
-
 function cleanup_stale_procs() {
   # Find and kill simpleserver processes that may be running.
   echo " "
@@ -242,6 +241,9 @@ function cleanup_stale_procs() {
   echo "cleanup_stale_procs done"
 }
 
+# ------------------------------------------------------------------------------------------
+
+
 if [[ $VERBOSE -eq 1 ]]; then
         print-variables
         exit
@@ -250,28 +252,28 @@ fi
 echo " "
 echo "printing cryptstore"
 echo " "
-echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --print_cryptstore=true --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 --policy_store_filename=policy_store.dom0 \
-    --enclave_type=simulated-enclave \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./"
+echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --print_cryptstore=true --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME --policy_store_filename=$POLICY_STORE_NAME \
+    --enclave_type=$ENCLAVE_TYPE \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR"
 echo " "
-$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --print_cryptstore=true --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 --policy_store_filename=policy_store.dom0 \
-    --enclave_type=simulated-enclave \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./
+$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --print_cryptstore=true --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME --policy_store_filename=$POLICY_STORE_NAME \
+    --enclave_type=$ENCLAVE_TYPE \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR
 
 echo " "
 echo "exporting cryptstore"
 echo " "
-echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --export_cryptstore=true --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 --output_file=exported.cryptstore \
-    --policy_store_filename=policy_store.dom0 --enclave_type=simulated-enclave \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./"
+echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --export_cryptstore=true --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME --output_file=exported.cryptstore \
+    --policy_store_filename=$POLICY_STORE_NAME --enclave_type=$ENCLAVE_TYPE \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR"
 echo " "
-$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --export_cryptstore=true --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 --output_file=exported.cryptstore \
-    --policy_store_filename=policy_store.dom0 --enclave_type=simulated-enclave \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./
+$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --export_cryptstore=true --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME --output_file=exported.cryptstore \
+    --policy_store_filename=$POLICY_STORE_NAME --enclave_type=$ENCLAVE_TYPE \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR
 
 # kill running key servers
 cleanup_stale_procs
@@ -279,17 +281,17 @@ cleanup_stale_procs
 echo " "
 echo "running key-server"
 echo " "
-echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 \
+echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=simulated-enclave --policy_store_filename=policy_store.dom0 \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./ &"
+    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR &"
 echo " "
-$CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 \
+$CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=simulated-enclave --policy_store_filename=policy_store.dom0 \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./ &
+    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR &
 
 sleep 5
 
@@ -299,20 +301,20 @@ echo " "
 echo "First, create key in client.in"
 echo "01234567890123456789012345678901" > client.in
 echo " "
-echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 \
+echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=simulated-enclave --policy_store_filename=policy_store.dom0 \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./ \
+    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
     --input_file=client.in --output_file=client.out --action=store"
 echo " "
-$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 \
+$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=simulated-enclave --policy_store_filename=policy_store.dom0 \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./ \
+    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
     --input_file=client.in --output_file=client.out --action=store
@@ -320,20 +322,20 @@ $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=dom0 \
 echo " "
 echo "key-client: retrieving"
 echo " "
-echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 \
+echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=simulated-enclave --policy_store_filename=policy_store.dom0 \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./ \
+    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
     --input_file=client.in --output_file=client.out --action=retrieve"
 echo " "
-$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 \
+$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=simulated-enclave --policy_store_filename=policy_store.dom0 \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./ \
+    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
     --input_file=client.in --output_file=client.out --action=retrieve
@@ -343,14 +345,15 @@ sleep 3
 echo " "
 echo "printing cryptstore"
 echo " "
-echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --print_cryptstore=true --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 --policy_store_filename=policy_store.dom0 \
-    --enclave_type=simulated-enclave \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./"
+echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --print_cryptstore=true --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME --policy_store_filename=$POLICY_STORE_NAME \
+    --enclave_type=$ENCLAVE_TYPE \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR"
+
 echo " "
-$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --print_cryptstore=true --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 --policy_store_filename=policy_store.dom0 \
-    --enclave_type=simulated-enclave \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./
+$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe --print_cryptstore=true --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME --policy_store_filename=$POLICY_STORE_NAME \
+    --enclave_type=$ENCLAVE_TYPE \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR
 
 cleanup_stale_procs

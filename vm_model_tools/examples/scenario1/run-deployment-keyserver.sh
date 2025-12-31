@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # run-deployment-keyserver.sh
 # ############################################################################
@@ -232,11 +233,12 @@ fi
 echo " "
 echo "running key-server"
 echo " "
-echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe --policy_domain_name=dom0 \
-    --encrypted_cryptstore_filename=cryptstore.dom0 \
+echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe --policy_domain_name=$DOMAIN_NAME \
+    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=simulated-enclave --policy_store_filename=policy_store.dom0 \
-    --policy_key_cert_file=policy_cert_file.dom0 --data_dir=./ &"
+    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR  &"
+
 sleep 5
 echo "keyserver running"
 echo ""

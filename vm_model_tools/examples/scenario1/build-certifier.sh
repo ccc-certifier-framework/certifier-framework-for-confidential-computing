@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # build-certifier.sh: Script to build certifier and utilities
 # ############################################################################
@@ -359,14 +360,19 @@ fi
 exit
 
 echo "removing old programs"
-do-fresh
-echo "removing old programs"
+if [[ $CLEAN -eq 1 ]]; then
+	do-fresh
+fi
+echo "removed old programs"
+
 do-compile-certifier
 echo "simpleserver built"
-do-compile-utilities
-echo "utilities built"
+
+if [[ $COMRILE_UTILITIES -eq 1 ]]; then
+	do-compile-utilities
+	echo "utilities built"
+fi
+
 do-compile-program
 echo "cf_utility.exe built"
 
-echo " "
-echo "Unknown option: $1"

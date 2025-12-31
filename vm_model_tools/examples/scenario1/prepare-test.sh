@@ -1,6 +1,7 @@
 #!/bin/bash
+
 # ############################################################################
-# prepare-test.sh: Script to run build cf_utility test environment.
+# prepare-test.sh
 # ############################################################################
 
 set -Eeuo pipefail
@@ -542,53 +543,54 @@ if [[ $VERBOSE -eq 1 ]]; then
         exit
 fi
 
-if [ "$1" == "fresh" ] ; then
+if [[ $CLEAN -eq 1 ]] ; then
   echo " "
   do-fresh
   exit
 fi
 
-if [ "$1" == "all" ] ; then
+if [ $OPERATION == "all" ] ; then
   echo "Base name: $0"
   do-all
   exit
 fi
 
-if [ "$1" == "compile-utilities" ] ; then
+if [ $OPERATION == "compile-utilities" ] ; then
   echo " "
   do-compile-utilities
   exit
 fi
 
-if [ "$1" == "make-keys" ] ; then
+if [ $OPERATION == "make-keys" ] ; then
   echo " "
   do-make-keys
   exit
 fi
 
-if [ "$1" == "compile-program" ] ; then
+if [ $OPERATION == "compile-program" ] ; then
   echo " "
   do-compile-program
   exit
 fi
 
-if [ "$1" == "make-policy" ] ; then
+if [ $OPERATION == "make-policy" ] ; then
   echo " "
   do-make-policy
   exit
 fi
 
-if [ "$1" == "compile-certifier" ] ; then
+if [ $OPERATION == "compile-certifier" ] ; then
   echo " "
   do-compile-certifier
   exit
 fi
 
-if [ "$1" == "copy-files" ] ; then
+if [ $OPERATION == "copy-files" ] ; then
   echo " "
   do-copy-files
   exit
 fi
 
+echo "Unknown operation: $OPERATION"
+
 echo " "
-echo "Unknown option: $1"

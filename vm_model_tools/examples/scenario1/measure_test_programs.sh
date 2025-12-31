@@ -1,6 +1,7 @@
 #!/bin/bash
+
 # ############################################################################
-# run-test.sh: Script to run cf_utility test.
+# measure-test-program.sh: Script to measure test program
 # ############################################################################
 
 set -Eeuo pipefail
@@ -390,15 +391,15 @@ if [[ $VERBOSE -eq 1 ]]; then
         exit
 fi
 
-if [ "$1" == "fresh" ] ; then
+if [[ $clean -.eq 1 ]] ; then
   do-fresh
   exit
 fi
 
-if [ "$1" == "run" ] ; then
+if [ $OPERATION  == "run" ] ; then
   do-run
-  exit
+else
+  echo "Unknown operation: $OPERATION"
 fi
 
 echo " "
-echo "Unknown option: $1"

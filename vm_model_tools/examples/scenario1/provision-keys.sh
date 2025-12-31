@@ -1,8 +1,7 @@
 #!/bin/bash
 
-
 # ############################################################################
-# provision-keys.sh: generate Certifier keys
+# provision-keys.sh: Generate Certifier keys
 # ############################################################################
 
 set -Eeuo pipefail
@@ -280,9 +279,6 @@ if [[ $CLEAN = 1 ]]; then
 	do-fresh
 fi
 do-make-keys
-if [[ $VERBOSE -eq 1 ]]; then
-	print-variables
-fi
 
 echo "Succeeded"
 echo ""

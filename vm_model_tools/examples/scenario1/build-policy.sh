@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # build-policy.sh: Script to build policy on the deployment machine
 # ############################################################################
@@ -331,7 +332,8 @@ function do-make-policy() {
 }
 if [[ $VERBOSE -eq 1 ]]; then                   
         print-variables                         
+	exit
 fi
-exit
-do-make-policy $DOMAIN_NAME
+
+do-make-policy
 echo ""

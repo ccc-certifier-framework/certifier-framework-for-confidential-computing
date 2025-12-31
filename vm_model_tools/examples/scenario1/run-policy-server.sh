@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # ############################################################################
 # run-policy-server.sh
 # ############################################################################
@@ -302,5 +303,6 @@ if [[ $VERBOSE -eq 1 ]]; then
 fi
 run-policy-server
 echo "policy server running"
+exit
 echo ""
-echo "Unknown option: $1"
+echo "Unknown operation: $OPERATION"

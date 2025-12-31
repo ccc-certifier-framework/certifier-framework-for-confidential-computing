@@ -1,6 +1,7 @@
 #!/bin/bash
+
 # ############################################################################
-# run-test.sh: Script to run cf_utility test.
+# run-test-scenario1.sh: Run entire scenario 1 test
 # ############################################################################
 
 set -Eeuo pipefail
@@ -389,15 +390,12 @@ if [[ $VERBOSE -eq 1 ]]; then
         exit
 fi
 
-if [ "$1" == "fresh" ] ; then
+if [[ $CLEAN -eq 1 ]] ; then
   do-fresh
-  exit
 fi
 
-if [ "$1" == "run" ] ; then
+if [[ $OPERATION  == "run" ]] ; then
   do-run
   exit
 fi
-
-echo " "
-echo "Unknown option: $1"
+echo "Unknown operation: $OPERATION"
