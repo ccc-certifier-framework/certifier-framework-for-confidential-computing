@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # Argument proccessing
-
-echo " "
 ARG_SIZE="$#"
 
 if [[ -z $CERTIFIER_ROOT ]] ; then
@@ -14,6 +12,9 @@ fi
 if [[ -z $EXAMPLE_DIR ]]; then
 	EXAMPLE_DIR=$(pwd)
 fi
+
+#echo ""
+#echo "Starting"
 
 # Variables to find
 #	Variable NAME				Flag		Values
@@ -36,8 +37,6 @@ fi
 #	POLICY_SERVER_PORT   			-psp		port number
 #	KEY_SERVER_ADDRESS			-ksa		ip address or localhost
 #	KEY_SERVER_PORT   			-ksp		port number
-
-# This script will print the above options if called with -print as first argument.
 
 function print-options() {
 
@@ -188,6 +187,8 @@ function process-args() {
 	CRYPTSTORE_NAME=$CRYPTSTORE_NAME.$DOMAIN_NAME
 }
 
+
+# This script will print the above options if called with -print as first argument.
 #echo "Start"
 
 if [ $1 = "-print" ]; then
