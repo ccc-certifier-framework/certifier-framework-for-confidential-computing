@@ -37,6 +37,187 @@ in carrying out the steps in run-test by copying and pasting since you
 can see all the output and preserve the running servers.
 
 
+## Running either in SEV or the test environment using the new scripts
+
+As descibed in the SevProvisioning documents, scenario 1 has been automated using new shell
+scripts that work either in the test environment or for testing with a real Sev VM.  Before
+you start, some shell variables should be defined.  At the end, we show how to run a fresh
+test using the consolidated-test.sh scripw which removes old files and calls the appropriate
+sub scripts described below
+
+
+```shell
+export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
+``` 
+
+$EXAMPLE_DIR is this directory containing the example application.  Again, a
+shell variable is useful, if you run the detailed steps below.
+
+```shell
+export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1 
+```
+
+    Step 0:  Build certifier, simpleserver, certifier library and utilities if they
+    dont exist.
+
+```shell
+    ./build-certifier.sh
+```
+
+
+    Step 1: Provison keys.
+
+    In #EXAMPLE_DIR, call provision-keys.sh as follows:
+
+```shell
+    ./provision-keys.sh
+```
+
+    This will generate the policy key and other files requred either for test or real SEV.
+
+    Step 2: Prepare the SEV simulator (in teh test environment and copy files
+
+    If you are running in the simulated sev environment,
+
+```shell
+    ./copy-files-test-simulated-sev.sh
+```
+    For real SEV environment, after compiling the applications that go in the VM and
+    the startup scripts you prepared (See custom VM files):
+
+```shell
+    ./copy-vm-files.sh
+```
+
+    Step 3: Build the VM or test application
+
+    For the test environment
+
+```shell
+    ./build-test.sh
+```
+
+    For the real SEV environment
+
+```shell
+    ./build_vm.sh
+```
+    Step 4: Measure programs
+
+    For the test environment:
+
+```shell
+    ./measure_test_programs.sh
+```
+
+    For real Sev:
+
+```shell
+    ./measure_programs.sh
+```
+
+
+    Step 5: Build policy
+
+    For either test of real Sev:
+
+```shell
+    ./build-policy.sh
+```
+
+    Step 6: Run the policy server
+
+    For either test of real Sev:
+
+```shell
+    ./run-policy-server.sh
+```
+
+    Step 7: Certify deployment environment
+
+    For either test of real Sev:
+
+```shell
+    ./certify-deployment-machine.sh
+```
+
+    Step 8: Generate sample application secret for testing
+
+    For either test of real Sev:
+
+```shell
+    ./generate-and-store-secret-for-deployment.sh
+```
+
+    Step 9: Run deployment machine keyserver
+
+    For either test of real Sev:
+
+```shell
+    ./run-deployment-keyserver.sh
+```
+
+    Step 10: Certify deployed program or VM
+
+    For either test:
+
+```shell
+    ./certify-deployed-machine.sh
+```
+    For real Sev, the initialization script that you run at startup should
+    check to see if you are certified, if not, that script should contain
+    commands analogous to:
+
+```shell
+    ./certify-deployed-machine.sh
+```
+
+
+    Step 11: Obtain application secrets
+
+    For the test SEV environment:
+
+```shell
+    ./obtain-application-secrets.sh
+```
+    For real Sev, the initialization script that you run after certification
+    should check to see if you have obtaind secrets, if not, that script should contain
+    commands analogous to:
+
+```shell
+    ./obtain-application-secrets.sh
+```
+    Step 12: Cleanup
+
+    To kill runing services and clean up files
+
+    For the test SEV environment:
+
+```shell
+    ./cleanup.sh
+```
+
+    For real SEV you probably want to stop the VM and remove post init files
+    like cryptstore and policystore
+
+```shell
+    ./cleanup-vm.sh
+```
+
+# Running a consolidated test
+
+To run a consolidated test in the test environment::
+
+```shell
+    ./run-test-scenario1.sh
+```
+
+To run a consolidated test in the real sev environment::
+
+```shell
+    ./run-scenario1.sh
+```
+
 ## Running in the legacy test environment
 
 
@@ -59,34 +240,25 @@ The shell scripts compile programs using the new API.
 
 To prepare the test files, type:
 
-  prepare-test.sh fresh [domain-name]
+  prepare-test.sh -dn domain-name [-clean 1] -op all [-COMPILE_UTILITIES 1]
       - This clears out all old files
-
-then
-
-  prepare-test.sh all [domain-name]
-      - This builds the files corresponding to steps 1-9 below.
-
-then
-
-  run-test.sh fresh [domain-name]
-      - This removes old application files (policy store and cryptstore)
-      - and runs the tests, corresponding to steps 9 and 10 below.
 
 prepare-test.sh all runs the following subcommands in order:
 
-  prepare-test.sh compile-utilities [domain-name]
+  prepare-test.sh compile-utilities
       - This performs steps 1-2 below.
-  prepare-test.sh make-keys [domain-name]
+  prepare-test.sh make-keys
       - This performs step 3 below.
-  prepare-test.sh compile-program [domain-name]
+  prepare-test.sh compile-program
       - This performs step 4 below.
-  prepare-test.sh make-policy [domain-name]
+  prepare-test.sh make-policy
       - This performs steps 5 and 6 below.
-  prepare-test.sh compile-certifier [domain-name]
+  prepare-test.sh compile-certifier
       - This performs step 7 below.
-  prepare-test.sh copy-files [domain-name]
+  prepare-test.sh copy-files
       - This performs steps 8 and 9 below.
+
+If you specify the clean option all old files are deleated
 
 Each of these subcommands is runable from prepare-test.sh, for example,
 you could run,
@@ -101,23 +273,10 @@ make-policy" before running the tests.
 
 To run the tests
 
-  ./run-test.sh fresh
-
-  or
-
-  ./run-test.sh fresh domain-name"
-     -- This clears previous operational files.  The previous command assumes the
-        default domain name ("datica-test").
-
+  ./run-test.she -dn domain-name [-clean 1]
 then
 
-  ./run-test.sh run (se | sev)
-
-  or
-
-  ./run-test.sh run domain_name (se | sev)"
-     -- This runs the test.  The first command assumes the default domain
-         name ("datica-test").
+  ./run-test.sh -op run  [-clean 1] -et [simulated-enclave | sev]
 
 
 Additional notes
@@ -148,7 +307,7 @@ Next run prepare-test.sh and run-test.sh as above.
 To test cf_key_client and cf_key_server, AFTER certifying the VM (as above),
 run a third script, /test-script.sh.
 
-  ./test-script.sh
+  ./test-script.sh [-dn domain-name] [-clean 1] -et [simulated-enclave | sev]
 
 
 This test will insert a key into the cryptstore, to fetch the key inserted
@@ -622,185 +781,3 @@ go mod init certifier.pb.go
 These instructions might seem daunting and a little summary might
 make them clearer.  See the notes in the "simple_apps/simple_example"
 for more background.
-
-
-## Running either in SEV or the test environment
-
-As descibed in the SevProvisioning documents, scenario 1 has been automated using new shell
-scripts that work either in the test environment or for testing with a real Sev VM.  Before
-you start, some shell variables should be defined.  At the end, we show how to run a fresh
-test using the consolidated-test.sh scripw which removes old files and calls the appropriate
-sub scripts described below
-
-
-```shell
-export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
-``` 
-
-$EXAMPLE_DIR is this directory containing the example application.  Again, a
-shell variable is useful, if you run the detailed steps below.
-
-```shell
-export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1 
-```
-
-    Step 0:  Build certifier, simpleserver, certifier library and utilities if they
-    dont exist.
-
-```shell
-    ./build-certifier.sh
-```
-
-
-    Step 1: Provison keys.
-
-    In #EXAMPLE_DIR, call provision-keys.sh as follows:
-
-```shell
-    ./provision-keys.sh
-```
-
-    This will generate the policy key and other files requred either for test or real SEV.
-
-    Step 2: Prepare the SEV simulator (in teh test environment and copy files
-
-    If you are running in the simulated sev environment,
-
-```shell
-    ./copy-files-test-simulated-sev.sh
-```
-    For real SEV environment, after compiling the applications that go in the VM and
-    the startup scripts you prepared (See custom VM files):
-
-```shell
-    ./copy-vm-files.sh
-```
-
-    Step 3: Build the VM or test application
-
-    For the test environment
-
-```shell
-    ./build-test.sh
-```
-
-    For the real SEV environment
-
-```shell
-    ./build_vm.sh
-```
-    Step 4: Measure programs
-
-    For the test environment:
-
-```shell
-    ./measure_test_programs.sh
-```
-
-    For real Sev:
-
-```shell
-    ./measure_programs.sh
-```
-
-
-    Step 5: Build policy
-
-    For either test of real Sev:
-
-```shell
-    ./build-policy.sh
-```
-
-    Step 6: Run the policy server
-
-    For either test of real Sev:
-
-```shell
-    ./run-policy-server.sh
-```
-
-    Step 7: Certify deployment environment
-
-    For either test of real Sev:
-
-```shell
-    ./certify-deployment-machine.sh
-```
-
-    Step 8: Generate sample application secret for testing
-
-    For either test of real Sev:
-
-```shell
-    ./generate-and-store-secret-for-deployment.sh
-```
-
-    Step 9: Run deployment machine keyserver
-
-    For either test of real Sev:
-
-```shell
-    ./run-deployment-keyserver.sh
-```
-
-    Step 10: Certify deployed program or VM
-
-    For either test:
-
-```shell
-    ./certify-deployed-machine.sh
-```
-    For real Sev, the initialization script that you run at startup should
-    check to see if you are certified, if not, that script should contain
-    commands analogous to:
-
-```shell
-    ./certify-deployed-machine.sh
-```
-
-
-    Step 11: Obtain application secrets
-
-    For the test SEV environment:
-
-```shell
-    ./obtain-application-secrets.sh
-```
-    For real Sev, the initialization script that you run after certification
-    should check to see if you have obtaind secrets, if not, that script should contain
-    commands analogous to:
-
-```shell
-    ./obtain-application-secrets.sh
-```
-    Step 12: Cleanup
-
-    To kill runing services and clean up files
-
-    For the test SEV environment:
-
-```shell
-    ./cleanup.sh
-```
-
-    For real SEV you probably want to stop the VM and remove post init files
-    like cryptstore and policystore
-
-```shell
-    ./cleanup-vm.sh
-```
-
-# Running a consolidated test
-
-To run a consolidated test in the test environment::
-
-```shell
-    ./run-test-scenario1.sh
-```
-
-To run a consolidated test in the real sev environment::
-
-```shell
-    ./run-scenario1.sh
-```
