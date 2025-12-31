@@ -47,6 +47,7 @@ fi
 #	KEY_SERVER_PORT   			-ksp		port number
 #	OPERATION         			-op 		name
 #	CLEAN             			-clean 		0/1
+#	VERBOSE           			-loud 		0/1
 
 function print-options() {
 
@@ -100,6 +101,7 @@ KEY_SERVER_ADDRESS="localhost"
 KEY_SERVER_PORT="8120"
 OPERATION=""
 CLEAN=0
+VERBOSE=1
 
 
 function print-variables() {
@@ -127,6 +129,7 @@ function print-variables() {
 	echo "Key server port:                       $KEY_SERVER_PORT"
 	echo "Operation:                             $OPERATION"
 	echo "Clean:                                 $CLEAN"
+	echo "Verbose:                               $VERBOSE"
 	echo ""
 }
 
@@ -201,6 +204,9 @@ function process-args() {
 		fi
 		if [ ${array[i]} = "-clean" ]; then
 			CLEAN="${array[i+1]}"
+		fi
+		if [ ${array[i]} = "-loud" ]; then
+			VERBOSE="${array[i+1]}"
 		fi
 	done
 

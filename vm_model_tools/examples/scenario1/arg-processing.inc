@@ -5,19 +5,19 @@
 ARG_SIZE="$#"
 
 if [[ ${CERTIFIER_ROOT+x} ]]; then
-        echo "CERTIFIER_ROOT already set"
+	echo "CERTIFIER_ROOT already set"
 else
-        echo "setting CERTIFIER_ROOT"
-        pushd ../../.. > /dev/null
-        CERTIFIER_ROOT=$(pwd) > /dev/null
-        popd > /dev/null
+	echo "setting CERTIFIER_ROOT"
+	pushd ../../.. > /dev/null
+	CERTIFIER_ROOT=$(pwd) > /dev/null
+	popd > /dev/null
 fi
 
 if [[ ${EXAMPLE_DIR+x} ]]; then
-        echo "EXAMPLE_DIR already set"
+	echo "EXAMPLE_DIR already set"
 else
-        echo "setting EXAMPLE_DIR"
-        EXAMPLE_DIR=$(pwd) > /dev/null
+	echo "setting EXAMPLE_DIR"
+	EXAMPLE_DIR=$(pwd) > /dev/null
 fi
 
 #echo ""
@@ -46,6 +46,7 @@ fi
 #	KEY_SERVER_PORT   			-ksp		port number
 #	OPERATION         			-op 		name
 #	CLEAN             			-clean 		0/1
+#	VERBOSE           			-loud 		0/1
 
 function print-options() {
 
@@ -99,6 +100,7 @@ KEY_SERVER_ADDRESS="localhost"
 KEY_SERVER_PORT="8120"
 OPERATION=""
 CLEAN=0
+VERBOSE=1
 
 
 function print-variables() {
@@ -126,6 +128,7 @@ function print-variables() {
 	echo "Key server port:                       $KEY_SERVER_PORT"
 	echo "Operation:                             $OPERATION"
 	echo "Clean:                                 $CLEAN"
+	echo "Verbose:                               $VERBOSE"
 	echo ""
 }
 
@@ -200,6 +203,9 @@ function process-args() {
 		fi
 		if [ ${array[i]} = "-clean" ]; then
 			CLEAN="${array[i+1]}"
+		fi
+		if [ ${array[i]} = "-loud" ]; then
+			VERBOSE="${array[i+1]}"
 		fi
 	done
 
