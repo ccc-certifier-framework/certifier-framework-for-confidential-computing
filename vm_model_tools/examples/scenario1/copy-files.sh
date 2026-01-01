@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ############################################################################
-# provision-keys.sh: Generate Certifier keys
+# copy-files.sh copy run time files
 # ############################################################################
 
 set -Eeuo pipefail
@@ -140,6 +140,7 @@ function print-variables() {
 	echo ""
 }
 
+
 arg_string=$*
 function process-args() {
 
@@ -223,50 +224,52 @@ function process-args() {
 # ------------------------------------------------------------------------------------------
 
 
-function do-fresh() {
+function cleanup_stale_procs() {
+  # Find and kill simpleserver processes that may be running.
   echo " "
-  echo "do-fresh"
+  echo "cleanup_stale_procs"
 
-  pushd $EXAMPLE_DIR
-    if [[ -e "$POLICY_STORE_NAME" ]] ; then
-      rm $POLICY_STORE_NAME
-    fi
-    if [[ -e "$CRYPTSTORE_NAME" ]] ; then
-      rm $CRYPTSTORE_NAME
-    fi
-  popd
+  set +e
+  certifier_pid=$(ps -ef | grep -E "simpleserver" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
+  set -e
+  if [[ $certifier_pid != "" ]] ; then
+    kill -9 $certifier_pid
+    echo "killed certifier_service, pid $certifier_pid"
+  else
+    echo "no certifier_service running"
+  fi
 
-  echo "Done"
-  exit
+  echo "cleanup_stale_procs done"
 }
 
-function do-make-keys() {
-  echo "do-make-keys"
+function do-copy-files() {
+  echo " "
+  echo "do-copy-files"
       
   if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
     mkdir $EXAMPLE_DIR/provisioning
-  fi  
+  fi
+  if [[ ! -e "$EXAMPLE_DIR/service" ]] ; then
+    mkdir $EXAMPLE_DIR/service
+  fi
+  if [[ ! -e "$EXAMPLE_DIR/cf_data" ]] ; then
+    mkdir $EXAMPLE_DIR/cf_data
+  fi
   pushd $EXAMPLE_DIR/provisioning
-    $CERTIFIER_ROOT/utilities/cert_utility.exe  \
-      --operation=generate-policy-key-and-test-keys  \
-      --domain_name=$DOMAIN_NAME \
-      --policy_key_output_file=$POLICY_KEY_FILE_NAME  \
-      --policy_cert_output_file=$POLICY_CERT_FILE_NAME \
-      --platform_key_output_file=platform_key_file.bin  \
-      --attest_key_output_file=attest_key_file.bin
-
-    $CERTIFIER_ROOT/utilities/simulated_sev_key_generation.exe            \
-         --ark_der=sev_ark_cert.der                                        \
-         --ask_der=sev_ask_cert.der                                        \
-         --vcek_der=sev_vcek_cert.der                                      \
-         --vcek_key_file=/etc/certifier-snp-sim/ec-secp384r1-pub-key.pem
-
-    mv sev_ark_cert.der ark_cert.der
-    mv sev_ask_cert.der ask_cert.der
-    mv sev_vcek_cert.der vcek_cert.der
+    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
+    cp -p sev_policy.bin ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/service
+    cp -p $POLICY_CERT_FILE_NAME $EXAMPLE_DIR/cf_data
+    cp -p platform_key_file.bin attest_key_file.bin sev_cf_utility.measurement $EXAMPLE_DIR/cf_data
+    cp -p cf_utility.measurement platform_attest_endorsement.bin $EXAMPLE_DIR/cf_data
   popd
 
-  echo "do-make-keys done"
+  pushd $EXAMPLE_DIR/cf_data
+    $CERTIFIER_ROOT/utilities/combine_policy_certs.exe \
+      --init=true --new_cert_file=$POLICY_CERT_FILE_NAME \
+      --output=my_certs
+  popd
+
+  echo "do-copy-files done"
 }
 
 echo "Processing arguments"
@@ -274,13 +277,9 @@ process-args
 echo "Processed arguments"
 
 if [[ $VERBOSE -eq 1 ]]; then
-	print-variables
+        print-variables
 fi
 
-if [[ $CLEAN = 1 ]]; then
-	do-fresh
-fi
-do-make-keys
-
-echo "Succeeded"
+do-copy-files
+echo " files copied"
 echo ""

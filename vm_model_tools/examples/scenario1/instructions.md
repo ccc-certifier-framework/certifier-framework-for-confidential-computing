@@ -69,17 +69,17 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     In #EXAMPLE_DIR, call provision-keys.sh as follows:
 
 ```shell
-    ./provision-keys.sh
+    ./provision-keys.sh -dn dom0 -loud 1
 ```
 
     This will generate the policy key and other files requred either for test or real SEV.
 
-    Step 2: Prepare the SEV simulator (in teh test environment and copy files
+    Step 2: Prepare the SEV simulator (in the test environment and copy files
 
     If you are running in the simulated sev environment,
 
 ```shell
-    ./copy-files-test-simulated-sev.sh
+    ./copy-files-test-simulated-sev.sh -loud 1
 ```
     For real SEV environment, after compiling the applications that go in the VM and
     the startup scripts you prepared (See custom VM files):
@@ -114,8 +114,6 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```shell
     ./measure_programs.sh
 ```
-
-
     Step 5: Build policy
 
     For either test of real Sev:
@@ -124,7 +122,23 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     ./build-policy.sh
 ```
 
-    Step 6: Run the policy server
+    Step 6 Copy remaining files
+
+    For test:
+
+```shell
+    ./copy-files.sh
+```
+
+    For real SEV
+
+    Step 6 Copy remaining files
+
+```shell
+    ./copy-vm-files.sh
+```
+
+    Step 7: Run the policy server
 
     For either test of real Sev:
 
@@ -132,7 +146,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     ./run-policy-server.sh
 ```
 
-    Step 7: Certify deployment environment
+    Step 8: Certify deployment environment
 
     For either test of real Sev:
 
@@ -140,7 +154,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     ./certify-deployment-machine.sh
 ```
 
-    Step 8: Generate sample application secret for testing
+    Step 9: Generate sample application secret for testing
 
     For either test of real Sev:
 
@@ -148,7 +162,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     ./generate-and-store-secret-for-deployment.sh
 ```
 
-    Step 9: Run deployment machine keyserver
+    Step 10: Run deployment machine keyserver
 
     For either test of real Sev:
 
@@ -156,7 +170,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     ./run-deployment-keyserver.sh
 ```
 
-    Step 10: Certify deployed program or VM
+    Step 11: Certify deployed program or VM
 
     For either test:
 
@@ -170,7 +184,6 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```shell
     ./certify-deployed-machine.sh
 ```
-
 
     Step 11: Obtain application secrets
 
@@ -208,13 +221,13 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 To run a consolidated test in the test environment::
 
 ```shell
-    ./run-test-scenario1.sh
+    ./run-test-scenario1.sh -dn dom0 -clean 1 -loud 1
 ```
 
 To run a consolidated test in the real sev environment::
 
 ```shell
-    ./run-scenario1.sh
+    ./run-scenario1.sh -dn dom0 -clean 1 -loud 1
 ```
 
 ## Running in the legacy test environment
@@ -238,8 +251,7 @@ The shell scripts compile programs using the new API.
 
 To prepare the test files, type:
 
-  prepare-test.sh -dn domain-name [-clean 1] -op all [-COMPILE_UTILITIES 1]
-      - This clears out all old files
+  prepare-test.sh -dn domain-name -clean 1 -op all -cut 1 -ccf 1
 
 prepare-test.sh all runs the following subcommands in order:
 
@@ -258,24 +270,16 @@ prepare-test.sh all runs the following subcommands in order:
 
 If you specify the clean option all old files are deleated
 
-Each of these subcommands is runable from prepare-test.sh, for example,
-you could run,
-   prepare-test.sh make-policy [domain-name]
-to remake the policy.
+Each of these subcommands is runable from prepare-test.sh,
+if you include the right arguments.
 
-After you run "prepare-test.sh all", you can rerun the tests without
-invoking prepare-test.sh.  After you run "prepare-test.sh all",
-you need only run subcommands that cause a change in the files;
+After you run "prepare-test.sh", you can rerun the tests without
+invoking prepare-test.sh, running only subcommands that cause a change in the files;
 for example, if you change the policy, you need only run "prepare-test.sh
 make-policy" before running the tests.
 
 To run the tests
-
-  ./run-test.she -dn domain-name [-clean 1]
-then
-
-  ./run-test.sh -op run  [-clean 1] -et [simulated-enclave | sev]
-
+  ./run-test.she -dn domain-name [-clean 1] -op run
 
 Additional notes
 

@@ -144,75 +144,74 @@ function print-variables() {
 arg_string=$*
 function process-args() {
 
-
 	IFS=' ' read -ra array <<< "$arg_string"
 	for (( i=0; i < $ARG_SIZE; i++ )); do
 		# echo "Processing arg $i: ${array[i]}"
 
-		if [ ${array[i]} = "-dn" ]; then
+		if [[ ${array[i]} = "-dn" ]]; then
 			DOMAIN_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pkn" ]; then
+		if [[ ${array[i]} = "-pkn" ]]; then
 			POLICY_KEY_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-cfn" ]; then
+		if [[ ${array[i]} = "-cfn" ]]; then
 			POLICY_CERT_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psn" ]; then
+		if [[ ${array[i]} = "-psn" ]]; then
 			POLICY_STORE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-csn" ]; then
+		if [[ ${array[i]} = "-csn" ]]; then
 			CRYPTSTORE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-et" ]; then
+		if [[ ${array[i]} = "-et" ]]; then
 			ENCLAVE_TYPE="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-dd" ]; then
+		if [[ ${array[i]} = "-dd" ]]; then
 			DATA_DIR="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-sea" ]; then
+		if [[ ${array[i]} = "-sea" ]]; then
 			SYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-aen" ]; then
+		if [[ ${array[i]} = "-aen" ]]; then
 			ASYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pn" ]; then
+		if [[ ${array[i]} = "-pn" ]]; then
 			PROGRAM_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-vmn" ]; then
+		if [[ ${array[i]} = "-vmn" ]]; then
 			VM_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-tt" ]; then
+		if [[ ${array[i]} = "-tt" ]]; then
 			TEST_TYPE="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-cut" ]; then
+		if [[ ${array[i]} = "-cut" ]]; then
 			COMPILE_UTILITIES="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ccf" ]; then
+		if [[ ${array[i]} = "-ccf" ]]; then
 			COMPILE_CF="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pfn" ]; then
+		if [[ ${array[i]} = "-pfn" ]]; then
 			POLICY_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psa" ]; then
+		if [[ ${array[i]} = "-psa" ]]; then
 			POLICY_SERVER_ADDRESS="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psp" ]; then
+		if [[ ${array[i]} = "-psp" ]]; then
 			POLICY_SERVER_PORT="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ksa" ]; then
+		if [[ ${array[i]} = "-ksa" ]]; then
 			KEY_SERVER_ADDRESS="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ksp" ]; then
+		if [[ ${array[i]} = "-ksp" ]]; then
 			KEY_SERVER_PORT="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-op" ]; then
+		if [[ ${array[i]} = "-op" ]]; then
 			OPERATION="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-clean" ]; then
+		if [[ ${array[i]} = "-clean" ]]; then
 			CLEAN="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-loud" ]; then
+		if [[ ${array[i]} = "-loud" ]]; then
 			VERBOSE="${array[i+1]}"
 		fi
 	done
@@ -243,9 +242,9 @@ function cleanup_stale_procs() {
   echo "cleanup_stale_procs done"
 }
 
-function do-copy-files() {
+function do-copy-sev-files() {
   echo " "
-  echo "do-copy-files"
+  echo "do-copy-sev-files"
       
   if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
     mkdir $EXAMPLE_DIR/provisioning
@@ -257,27 +256,20 @@ function do-copy-files() {
     mkdir $EXAMPLE_DIR/cf_data
   fi
   pushd $EXAMPLE_DIR/provisioning
-    cp -p $POLICY_KEY_FILE_NAME $POLICY_CERT_FILE_NAME policy.bin $EXAMPLE_DIR/service
-    cp -p sev_policy.bin ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/service
-    cp -p $POLICY_CERT_FILE_NAME $EXAMPLE_DIR/cf_data
-    cp -p platform_key_file.bin attest_key_file.bin sev_cf_utility.measurement $EXAMPLE_DIR/cf_data
-    cp -p cf_utility.measurement platform_attest_endorsement.bin $EXAMPLE_DIR/cf_data
     cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data
   popd
 
-  pushd $EXAMPLE_DIR/cf_data
-    $CERTIFIER_ROOT/utilities/combine_policy_certs.exe \
-      --init=true --new_cert_file=$POLICY_CERT_FILE_NAME \
-      --output=my_certs
-  popd
-
-  echo "do-copy-files done"
+  echo "do-copy-sev-files done"
 }
+
+echo "Processing arguments"
+process-args
+echo "Processed arguments"
 
 if [[ $VERBOSE -eq 1 ]]; then
         print-variables
-        exit
 fi
-do-copy-files
+
+do-copy-sev-files
 echo " files copied"
 echo ""
