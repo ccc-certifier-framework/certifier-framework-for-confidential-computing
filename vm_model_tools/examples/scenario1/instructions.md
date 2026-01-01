@@ -45,7 +45,6 @@ you start, some shell variables should be defined.  At the end, we show how to r
 test using the consolidated-test.sh scripw which removes old files and calls the appropriate
 sub scripts described below
 
-
 ```shell
 export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
 ``` 
@@ -58,10 +57,10 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
     Step 0:  Build certifier, simpleserver, certifier library and utilities if they
-    dont exist.
+    don't exist, or to rebuild.
 
 ```shell
-    ./build-certifier.sh
+    ./build-certifier.sh -clean 1 -loud 1
 ```
 
 
@@ -219,7 +218,6 @@ To run a consolidated test in the real sev environment::
 ```
 
 ## Running in the legacy test environment
-
 
 # Using the shell scripts
 

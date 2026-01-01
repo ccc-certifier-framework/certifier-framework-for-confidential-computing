@@ -82,6 +82,7 @@ function print-options() {
 	echo "KEY_SERVER_PORT   		-ksp		port number"
 	echo "OPERATION     	   		-op 		operation"
 	echo "CLEAN             		-clean		0/1"
+	echo "VERBOSE           		-loud 		0/1"
 	echo ""
 }
 
@@ -140,79 +141,80 @@ function print-variables() {
 	echo ""
 }
 
-
 arg_string=$*
 function process-args() {
-
+	#echo "processing arguments"
+	#echo "$arg_string"
+	#echo ""
 
 	IFS=' ' read -ra array <<< "$arg_string"
 	for (( i=0; i < $ARG_SIZE; i++ )); do
-		# echo "Processing arg $i: ${array[i]}"
+		#echo "Processing arg $i: ${array[i]}"
 
-		if [ ${array[i]} = "-dn" ]; then
+		if [[ ${array[i]} = "-dn" ]]; then
 			DOMAIN_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pkn" ]; then
+		if [[ ${array[i]} = "-pkn" ]]; then
 			POLICY_KEY_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-cfn" ]; then
+		if [[ ${array[i]} = "-cfn" ]]; then
 			POLICY_CERT_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psn" ]; then
+		if [[ ${array[i]} = "-psn" ]]; then
 			POLICY_STORE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-csn" ]; then
+		if [[ ${array[i]} = "-csn" ]]; then
 			CRYPTSTORE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-et" ]; then
+		if [[ ${array[i]} = "-et" ]]; then
 			ENCLAVE_TYPE="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-dd" ]; then
+		if [[ ${array[i]} = "-dd" ]]; then
 			DATA_DIR="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-sea" ]; then
+		if [[ ${array[i]} = "-sea" ]]; then
 			SYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-aen" ]; then
+		if [[ ${array[i]} = "-aen" ]]; then
 			ASYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pn" ]; then
+		if [[ ${array[i]} = "-pn" ]]; then
 			PROGRAM_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-vmn" ]; then
+		if [[ ${array[i]} = "-vmn" ]]; then
 			VM_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-tt" ]; then
+		if [[ ${array[i]} = "-tt" ]]; then
 			TEST_TYPE="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-cut" ]; then
+		if [[ ${array[i]} = "-cut" ]]; then
 			COMPILE_UTILITIES="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ccf" ]; then
+		if [[ ${array[i]} = "-ccf" ]]; then
 			COMPILE_CF="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pfn" ]; then
+		if [[ ${array[i]} = "-pfn" ]]; then
 			POLICY_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psa" ]; then
+		if [[ ${array[i]} = "-psa" ]]; then
 			POLICY_SERVER_ADDRESS="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psp" ]; then
+		if [[ ${array[i]} = "-psp" ]]; then
 			POLICY_SERVER_PORT="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ksa" ]; then
+		if [[ ${array[i]} = "-ksa" ]]; then
 			KEY_SERVER_ADDRESS="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ksp" ]; then
+		if [[ ${array[i]} = "-ksp" ]]; then
 			KEY_SERVER_PORT="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-op" ]; then
+		if [[ ${array[i]} = "-op" ]]; then
 			OPERATION="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-clean" ]; then
+		if [[ ${array[i]} = "-clean" ]]; then
 			CLEAN="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-loud" ]; then
+		if [[ ${array[i]} = "-loud" ]]; then
 			VERBOSE="${array[i+1]}"
 		fi
 	done
@@ -224,24 +226,28 @@ function process-args() {
 
 # ------------------------------------------------------------------------------------------
 
-
 function do-fresh() {
   echo " "
   echo "do-fresh"
 
-  if [[  $COMPILE_UTILITIES -eq 1 ]] ; then
-    echo "compiling utilities"
-    pushd $CERTIFIER_ROOT/utilities
-      make clean -f cert_utility.mak
-      make clean -f policy_utilities.mak
-    popd
-  else
-    echo "not compiling utilities"
-  fi
+  if [[ $CLEAN -eq 1 ]] ; then
+	echo "cleaning programs and utilities"
+	pushd $CERTIFIER_ROOT/utilities
+	if [[ $COMPILE_UTILITIES -eq 1 ]]; then
+		make clean -f cert_utility.mak
+		make clean -f policy_utilities.mak
+	popd
+	fi
 
-  pushd $CERTIFIER_ROOT/vm_model_tools/src
-    make clean -f cf_utility.mak
-  popd
+	if [[ $COMPILE_CF -eq 1 ]]; then
+    		echo "cleaning cf_program"
+  		pushd $CERTIFIER_ROOT/vm_model_tools/src
+    		make clean -f cf_utility.mak
+  		popd
+	fi
+  else
+  	echo "not cleaning programs or utilities"
+  fi
 
   if [[ ! -d "$EXAMPLE_DIR/provisioning" ]] ; then
     mkdir $EXAMPLE_DIR/provisioning
@@ -294,15 +300,15 @@ function do-fresh() {
     fi
   popd
 
-  echo "Done"
-  exit
+  echo "Done fresh"
+  echo ""
 }
 
 function do-compile-utilities() {
   echo " "
   echo "do-compile-utilities"
 
-  if [[ ! $COMPILE_UTILITIES -eq 1 ]] ; then
+  if [[ $COMPILE_UTILITIES -eq 1 ]] ; then
     pushd $CERTIFIER_ROOT/utilities
       make -f cert_utility.mak
       make -f policy_utilities.mak
@@ -317,7 +323,9 @@ function do-compile-program() {
   echo "do-compile-program"
 
   pushd $CERTIFIER_ROOT/vm_model_tools/src
-    make -f cf_utility.mak
+  if [[ $COMPILE_CF -eq 1 ]]; then
+  	make -f cf_utility.mak
+  fi
   popd
 
   echo "do-compile-program done"
@@ -354,21 +362,25 @@ function do-compile-certifier() {
 
   echo "do-compile-certifier done"
 }
+
+echo "processing arguments"
+process-args
+echo "processed arguments"
+
 if [[ $VERBOSE -eq 1 ]]; then                   
         print-variables                         
 fi
-exit
 
-echo "removing old programs"
 if [[ $CLEAN -eq 1 ]]; then
+	echo "Removing old programs"
 	do-fresh
+	echo "Removed old programs"
+else
+	echo "Not removing existing versions"
 fi
-echo "removed old programs"
 
-do-compile-certifier
-echo "simpleserver built"
-
-if [[ $COMRILE_UTILITIES -eq 1 ]]; then
+if [[ $COMPILE_UTILITIES -eq 1 ]]; then
+	echo "compiling utilities"
 	do-compile-utilities
 	echo "utilities built"
 fi
@@ -376,3 +388,6 @@ fi
 do-compile-program
 echo "cf_utility.exe built"
 
+echo "compiling simpleserver"
+do-compile-certifier
+echo "simpleserver built"
