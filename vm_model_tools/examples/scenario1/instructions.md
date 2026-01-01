@@ -99,27 +99,28 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For the real SEV environment
 
 ```shell
-    ./build_vm.sh
+    ./build-vm.sh
 ```
     Step 4: Measure programs
 
     For the test environment:
 
 ```shell
-    ./measure_test_programs.sh -dn dom0 -clean 1 -loud 1 -op measure
+    ./measure-programs.sh -dn dom0 -clean 1 -loud 1 -op measure
 ```
 
-    For real Sev:
+    For real Sev, we need to measure what we do for the deployment machine but also the vm: 
 
 ```shell
-    ./measure_programs.sh
+    ./measure-vm-programs.sh -dn dom0 -clean 1 -loud 1 -op measure -vmn Pauls_vm
 ```
+
     Step 5: Build policy
 
     For either test of real Sev:
 
 ```shell
-    ./build-policy.sh
+    ./build-policy.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin.
 ```
 
     Step 6 Copy remaining files
@@ -127,15 +128,14 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For test:
 
 ```shell
-    ./copy-files.sh
+    ./copy-files.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin.
 ```
 
-    For real SEV
+    For real SEV, you must also cLL:
 
-    Step 6 Copy remaining files
 
 ```shell
-    ./copy-vm-files.sh
+    ./copy-vm-files.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin.
 ```
 
     Step 7: Run the policy server
@@ -143,7 +143,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./run-policy-server.sh
+    ./run-policy-server.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin.
 ```
 
     Step 8: Certify deployment environment
@@ -151,7 +151,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./certify-deployment-machine.sh
+    ./certify-deployment-machine.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
 ```
 
     Step 9: Generate sample application secret for testing
@@ -159,7 +159,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./generate-and-store-secret-for-deployment.sh
+    ./generate-and-store-secret-for-deployment.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
 ```
 
     Step 10: Run deployment machine keyserver
@@ -167,7 +167,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./run-deployment-keyserver.sh
+    ./run-deployment-keyserver.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -ksa localhost
 ```
 
     Step 11: Certify deployed program or VM
@@ -175,28 +175,26 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test:
 
 ```shell
-    ./certify-deployed-machine.sh
+    ./certify-deployed-machine.sh ./generate-and-store-secret-for-deployment.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
+
 ```
     For real Sev, the initialization script that you run at startup should
     check to see if you are certified, if not, that script should contain
-    commands analogous to:
+    commands analogous to ./certify-deployed-machine.sh
 
-```shell
-    ./certify-deployed-machine.sh
-```
     Step 11: Obtain application secrets
 
     For the test SEV environment:
 
 ```shell
-    ./obtain-application-secrets.sh
+    ./obtain-application-secrets.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -ksa localhost
 ```
     For real Sev, the initialization script that you run after certification
     should check to see if you have obtaind secrets, if not, that script should contain
     commands analogous to:
 
 ```shell
-    ./obtain-application-secrets.sh
+    ./obtain-application-secrets.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -ksa localhost
 ```
     Step 12: Cleanup
 
@@ -205,14 +203,14 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For the test SEV environment:
 
 ```shell
-    ./cleanup.sh
+    ./cleanup.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
 ```
 
     For real SEV you probably want to stop the VM and remove post init files
     like cryptstore and policystore
 
 ```shell
-    ./cleanup-vm.sh
+    ./cleanup-vm.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
 ```
 
 # Running a consolidated test
@@ -220,13 +218,13 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 To run a consolidated test in the test environment::
 
 ```shell
-    ./run-test-scenario1.sh -dn dom0 -clean 1 -loud 1
+    ./run-test-scenario1.sh  -tt 0 -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
 ```
 
 To run a consolidated test in the real sev environment::
 
 ```shell
-    ./run-scenario1.sh -dn dom0 -clean 1 -loud 1
+    ./run-scenario1.sh -tt 1 -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
 ```
 
 ## Running in the legacy test environment
