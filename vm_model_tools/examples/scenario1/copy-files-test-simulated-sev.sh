@@ -44,7 +44,7 @@ fi
 #	ASYMMETRIC_ENCRYPTION_ALGORITHM		-aen		alg name (see certifier)
 #	PROGRAM_NAME				-pn		name
 #	VM_NAME					-vmn		name
-#	TEST_TYPE				-tt		test/real
+#	TEST_TYPE				-tt		simulated/real
 #	COMPILE_UTILITIES			-cut		1 or 0
 #	COMPILE_CF				-ccf		1 or 0
 #	POLICY_FILE_NAME			-pfn		name
@@ -72,7 +72,7 @@ function print-options() {
 	echo "ASYMMETRIC_ENCRYPTION_ALGORITHM	-aen		alg name (see certifier)"
 	echo "PROGRAM_NAME			-pn		name"
 	echo "VM_NAME				-vmn		name"
-	echo "TEST_TYPE			-tt		test/real"
+	echo "TEST_TYPE			-tt		simulated/real"
 	echo "COMPILE_UTILITIES		-cut		1 or 0"
 	echo "COMPILE_CF			-ccf		1 or 0"
 	echo "POLICY_FILE_NAME		-pfn		name"
@@ -98,7 +98,7 @@ DATA_DIR="./cf_data"
 SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
 VM_NAME="datica-sample-vm"
-TEST_TYPE="test"
+TEST_TYPE="simulated"
 COMPILE_UTILITIES=1
 COMPILE_CF=1
 POLICY_FILE_NAME="policy.bin"
@@ -221,27 +221,43 @@ function process-args() {
 	CRYPTSTORE_NAME=$CRYPTSTORE_NAME.$DOMAIN_NAME
 }
 
-# ------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------
+
+function compile-sev-programs() {
+	echo " "
+	echo "do-compile-sev-programs"
+
+	if [[ $CLEAN -eq 1 ]]; then
+		sudo make rmmod sevnull
+	fi
+	cd $CERTIFIER_ROOT/sev-snp-simulator
+	make clean
+	make
+	make keys
+	sudo make insmod
+
+	echo "done"
+	echo " "
+}
 
 function do-copy-sev-files() {
-  echo " "
-  echo "do-copy-sev-files"
+	echo " "
+	echo "do-copy-sev-files"
       
-  if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
-    mkdir $EXAMPLE_DIR/provisioning
-  fi
-  if [[ ! -e "$EXAMPLE_DIR/service" ]] ; then
-    mkdir $EXAMPLE_DIR/service
-  fi
-  if [[ ! -e "$EXAMPLE_DIR/cf_data" ]] ; then
-    mkdir $EXAMPLE_DIR/cf_data
-  fi
-  pushd $EXAMPLE_DIR/provisioning
-    cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data
-  popd
-
-  echo "do-copy-sev-files done"
-  echo " "
+	if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+		mkdir $EXAMPLE_DIR/provisioning
+	fi
+	if [[ ! -e "$EXAMPLE_DIR/service" ]] ; then
+		mkdir $EXAMPLE_DIR/service
+	fi
+	if [[ ! -e "$EXAMPLE_DIR/cf_data" ]] ; then
+		mkdir $EXAMPLE_DIR/cf_data
+	fi
+	pushd $EXAMPLE_DIR/provisioning
+		cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data
+	popd
+	echo "do-copy-sev-files done"
+	echo " "
 }
 
 # ------------------------------------------------------------------------------------------
@@ -254,6 +270,7 @@ if [[ $VERBOSE -eq 1 ]]; then
         print-variables
 fi
 
+compile-sev-programs
 do-copy-sev-files
-echo " files copied"
+echo "simulator compiled and files copied"
 echo ""

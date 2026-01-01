@@ -82,13 +82,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     If you are running in the simulated sev environment,
 
 ```shell
-    ./copy-files-test-simulated-sev.sh -loud 1  -dn dom0 -clean 1 -loud 1
-```
-    For real SEV environment, after compiling the applications that go in the VM and
-    the startup scripts you prepared (See custom VM files):
-
-```shell
-    ./copy-vm-files.sh  -dn dom0 -clean 1 -loud 1 -op measure -vmn Pauls_vm
+    ./copy-files-test-simulated-sev.sh -dn dom0 -clean 1 -loud 1
 ```
 
     Step 3: Build the VM or test application
@@ -123,12 +117,12 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For test:
 
 ```shell
-    ./build-policy.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -tt 0
+    ./build-policy.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -tt simulated
 ```
     For real SEV:
 
 ```shell
-    ./build-policy.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -tt 1
+    ./build-policy.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -tt real 
 ```
 
     Step 6 Copy remaining files
@@ -188,7 +182,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For real Sev, your startup scripts should check to see if you are certified, if not, that script should contain
     commands analogous to ./certify-deployed-machine.sh.
 
-    Step 11: Obtain application secrets
+    Step 12: Obtain application secrets
 
     For the test SEV environment:
 
@@ -202,7 +196,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```shell
     ./obtain-application-secrets.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -ksa localhost
 ```
-    Step 12: Cleanup
+    Step 13: Cleanup
 
     To kill runing services and clean up files
 
@@ -219,19 +213,16 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     ./cleanup-vm.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost -vmn Pauls_vm
 ```
 
-
-# Running a consolidated test
-
 To run a consolidated test in the test environment::
 
 ```shell
-    ./run-test-scenario1.sh  -tt 0 -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
+    ./run-test-scenario1.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost -tt simulated -pfn sev_policy.bin
 ```
 
-To run a consolidated test in the real sev environment::
+To run a consolidated test in the real sev environment:
 
 ```shell
-    ./run-test-scenario1.sh -tt 1 -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost -vmn Pauls_vm
+    ./run-test-scenario1.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost -vmn Pauls_vm -tt real -pfn sev_policy.bin
 ```
 
 

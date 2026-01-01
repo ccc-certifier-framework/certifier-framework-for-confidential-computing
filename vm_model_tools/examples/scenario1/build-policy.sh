@@ -44,7 +44,7 @@ fi
 #	ASYMMETRIC_ENCRYPTION_ALGORITHM		-aen		alg name (see certifier)
 #	PROGRAM_NAME				-pn		name
 #	VM_NAME					-vmn		name
-#	TEST_TYPE				-tt		test/real
+#	TEST_TYPE				-tt		simulated/real
 #	COMPILE_UTILITIES			-cut		1 or 0
 #	COMPILE_CF				-ccf		1 or 0
 #	POLICY_FILE_NAME			-pfn		name
@@ -72,7 +72,7 @@ function print-options() {
 	echo "ASYMMETRIC_ENCRYPTION_ALGORITHM	-aen		alg name (see certifier)"
 	echo "PROGRAM_NAME			-pn		name"
 	echo "VM_NAME				-vmn		name"
-	echo "TEST_TYPE			-tt		test/real"
+	echo "TEST_TYPE			-tt		simulated/real"
 	echo "COMPILE_UTILITIES		-cut		1 or 0"
 	echo "COMPILE_CF			-ccf		1 or 0"
 	echo "POLICY_FILE_NAME		-pfn		name"
@@ -98,7 +98,7 @@ DATA_DIR="./cf_data"
 SYMMETRIC_ENCRYPTION_ALGORITHM="aes256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
 VM_NAME="datica-sample-vm"
-TEST_TYPE="test"
+TEST_TYPE="simulated"
 COMPILE_UTILITIES=1
 COMPILE_CF=1
 POLICY_FILE_NAME="policy.bin"
@@ -260,7 +260,7 @@ function do-make-policy() {
     $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe \
       --vse_file=vse_policy2.bin  --duration=9000  \
       --private_key_file=$POLICY_KEY_FILE_NAME --output=signed_claim_2.bin
-  $CERTIFIER_ROOT/utilities/package_claims.exe \
+    $CERTIFIER_ROOT/utilities/package_claims.exe \
       --input=signed_claim_1.bin,signed_claim_2.bin --output=policy.bin
     $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=policy.bin
 
@@ -278,9 +278,11 @@ function do-make-policy() {
     echo " "
     echo "For simulated enclave"
 
-    $CERTIFIER_ROOT/utilities/measurement_init.exe  \
-      --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708  \
-      --out_file=sev_cf_utility.measurement
+    if [[ $tt -eq 0 ]]; then
+      $CERTIFIER_ROOT/utilities/measurement_init.exe  \
+        --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708  \
+        --out_file=sev_cf_utility.measurement
+    fi
 
     $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" --cert-subject=ark_cert.der \
       --verb="is-trusted-for-attestation" --output=sev_ts1.bin
@@ -290,9 +292,15 @@ function do-make-policy() {
       --vse_file=sev_vse_policy1.bin --duration=9000 \
       --private_key_file=$POLICY_KEY_FILE_NAME --output=sev_signed_claim_1.bin
 
-    $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" \
-      --measurement_subject=sev_cf_utility.measurement --verb="is-trusted" \
+    if [[ $tt -eq 0 ]]; then
+      $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" \
+        --measurement_subject=sev_cf_utility.measurement --verb="is-trusted" \
+        --output=sev_ts2.bin
+    else
+     CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" \
+      --measurement_subject=Pauls_vm.measurement--verb="is-trusted" \
       --output=sev_ts2.bin
+    fi
     $CERTIFIER_ROOT/utilities/make_indirect_vse_clause.exe --key_subject=$POLICY_KEY_FILE_NAME \
       --verb="says" --clause=sev_ts2.bin --output=sev_vse_policy2.bin
    $CERTIFIER_ROOT/utilities/make_signed_claim_from_vse_clause.exe --vse_file=sev_vse_policy2.bin \
@@ -324,8 +332,8 @@ function do-make-policy() {
       --duration=9000 --private_key_file=$POLICY_KEY_FILE_NAME --output=sev_signed_claim_3.bin
 
     $CERTIFIER_ROOT/utilities/package_claims.exe --input=sev_signed_claim_1.bin,sev_signed_claim_2.bin,sev_signed_claim_3.bin \
-      --output=sev_policy.bin
-    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=sev_policy.bin
+      --output=$POLICY_FILE_NAME
+    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=s$POLICY_FILE_NAME
   popd
 
   echo "do-make-policy done"

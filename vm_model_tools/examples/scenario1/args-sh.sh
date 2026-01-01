@@ -70,7 +70,7 @@ function print-options() {
 	echo "ASYMMETRIC_ENCRYPTION_ALGORITHM	-aen		alg name (see certifier)"
 	echo "PROGRAM_NAME			-pn		name"
 	echo "VM_NAME				-vmn		name"
-	echo "TEST_TYPE			-tt		test/real"
+	echo "TEST_TYPE			-tt		simulated/real"
 	echo "COMPILE_UTILITIES		-cut		1 or 0"
 	echo "COMPILE_CF			-ccf		1 or 0"
 	echo "POLICY_FILE_NAME		-pfn		name"
@@ -96,7 +96,7 @@ DATA_DIR="./cf_data"
 SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
 VM_NAME="datica-sample-vm"
-TEST_TYPE="test"
+TEST_TYPE="simulated"
 COMPILE_UTILITIES=1
 COMPILE_CF=1
 POLICY_FILE_NAME="policy.bin"
