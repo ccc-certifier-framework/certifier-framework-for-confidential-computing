@@ -106,7 +106,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For the test environment:
 
 ```shell
-    ./measure_test_programs.sh
+    ./measure_test_programs.sh -dn dom0 -clean 1 -loud 1 -op measure
 ```
 
     For real Sev:
@@ -184,7 +184,6 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```shell
     ./certify-deployed-machine.sh
 ```
-
     Step 11: Obtain application secrets
 
     For the test SEV environment:
@@ -361,11 +360,10 @@ cf_key_client.exe you should use the flag --trust_anchors=/ramdisk/my_certs
 
 
 ---------------------------------------------------------------------------------
----------------------------------------------------------------------------------
 
 ## Detailed, step by step instructions
 
-Warning:  The instructions below, unlike the istructions above, are
+Warning:  The instructions below, unlike the instructions above, are
 not continuously tested.  Although generally right, use the scripts
 prepare-test.sh and run-test.sh as above.  These scripts can be
 responsible for setting the command line arguments correctly even

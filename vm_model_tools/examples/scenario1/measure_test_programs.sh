@@ -140,79 +140,77 @@ function print-variables() {
 	echo ""
 }
 
-
 arg_string=$*
 function process-args() {
-
 
 	IFS=' ' read -ra array <<< "$arg_string"
 	for (( i=0; i < $ARG_SIZE; i++ )); do
 		# echo "Processing arg $i: ${array[i]}"
 
-		if [ ${array[i]} = "-dn" ]; then
+		if [[ ${array[i]} = "-dn" ]]; then
 			DOMAIN_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pkn" ]; then
+		if [[ ${array[i]} = "-pkn" ]]; then
 			POLICY_KEY_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-cfn" ]; then
+		if [[ ${array[i]} = "-cfn" ]]; then
 			POLICY_CERT_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psn" ]; then
+		if [[ ${array[i]} = "-psn" ]]; then
 			POLICY_STORE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-csn" ]; then
+		if [[ ${array[i]} = "-csn" ]]; then
 			CRYPTSTORE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-et" ]; then
+		if [[ ${array[i]} = "-et" ]]; then
 			ENCLAVE_TYPE="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-dd" ]; then
+		if [[ ${array[i]} = "-dd" ]]; then
 			DATA_DIR="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-sea" ]; then
+		if [[ ${array[i]} = "-sea" ]]; then
 			SYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-aen" ]; then
+		if [[ ${array[i]} = "-aen" ]]; then
 			ASYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pn" ]; then
+		if [[ ${array[i]} = "-pn" ]]; then
 			PROGRAM_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-vmn" ]; then
+		if [[ ${array[i]} = "-vmn" ]]; then
 			VM_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-tt" ]; then
+		if [[ ${array[i]} = "-tt" ]]; then
 			TEST_TYPE="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-cut" ]; then
+		if [[ ${array[i]} = "-cut" ]]; then
 			COMPILE_UTILITIES="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ccf" ]; then
+		if [[ ${array[i]} = "-ccf" ]]; then
 			COMPILE_CF="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pfn" ]; then
+		if [[ ${array[i]} = "-pfn" ]]; then
 			POLICY_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psa" ]; then
+		if [[ ${array[i]} = "-psa" ]]; then
 			POLICY_SERVER_ADDRESS="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psp" ]; then
+		if [[ ${array[i]} = "-psp" ]]; then
 			POLICY_SERVER_PORT="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ksa" ]; then
+		if [[ ${array[i]} = "-ksa" ]]; then
 			KEY_SERVER_ADDRESS="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ksp" ]; then
+		if [[ ${array[i]} = "-ksp" ]]; then
 			KEY_SERVER_PORT="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-op" ]; then
+		if [[ ${array[i]} = "-op" ]]; then
 			OPERATION="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-clean" ]; then
+		if [[ ${array[i]} = "-clean" ]]; then
 			CLEAN="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-loud" ]; then
+		if [[ ${array[i]} = "-loud" ]]; then
 			VERBOSE="${array[i+1]}"
 		fi
 	done
@@ -226,180 +224,51 @@ function process-args() {
 
 
 function do-fresh() {
-  echo " "
-  echo "do-fresh"
+	echo " "
+	echo "do-fresh"
 
-  pushd $EXAMPLE_DIR
-    if [[ -e "$POLICY_STORE_NAME" ]] ; then
-      rm $POLICY_STORE_NAME
-    fi
-    if [[ -e "$CRYPTSTORE_NAME" ]] ; then
-      rm $CRYPTSTORE_NAME
-    fi
-  popd
-
-  echo "Done"
-  exit
+	if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+		mkdir $EXAMPLE_DIR/provisioning
+	fi
+	pushd $EXAMPLE_DIR/provisioning
+		if [[ -f "$EXAMPLE_DIR/provisioning/cf_utility.measurement" ]] ; then
+			rm cf_utility.measurement
+		fi
+	popd
+	echo "do-fresh done"
 }
 
-function cleanup_stale_procs() {
-  # Find and kill simpleserver processes that may be running.
-  echo " "
-  echo "cleanup_stale_procs"
+function do-measure() {
+  echo "measuring test program"
 
-  set +e
-  certifier_pid=$(ps -ef | grep -E "simpleserver" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
-  set -e
-  if [[ $certifier_pid != "" ]] ; then
-    kill -9 $certifier_pid
-    echo "killed certifier_service, pid $certifier_pid"
-  else
-    echo "no certifier_service running"
+  if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+  	mkdir $EXAMPLE_DIR/provisioning
   fi
 
-  echo "cleanup_stale_procs done"
-}
-
-function do-run() {
-  echo " "
-  echo "do-run"
-
-  if [[ $ENCLAVE_TYPE != "se" && $ENCLAVE_TYPE != "sev" ]] ; then
-    echo "Unsupported enclave type: $ENCLAVE_TYPE"
-    exit
-  fi
-
-  cleanup_stale_procs
-
-  export LD_LIBRARY_PATH=/usr/local/lib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/teelib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/graminelib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/isletlib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CERTIFIER_ROOT/certifier_service/oelib
-  echo $LD_LIBRARY_PATH
-  sudo ldconfig
-
-  pushd $EXAMPLE_DIR/service
-    if [[ "$ENCLAVE_TYPE" == "se" ]] ; then
-      echo "running policy server for simulated-enclave"
-      $CERTIFIER_ROOT/certifier_service/simpleserver \
-        --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
-        --policyFile=policy.bin --readPolicy=true &
-    fi
-    if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
-      echo "running policy server for sev"
-      $CERTIFIER_ROOT/certifier_service/simpleserver \
-        --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
-          --policyFile=sev_policy.bin --readPolicy=true &
-    fi
+  pushd $EXAMPLE_DIR/provisioning
+  $CERTIFIER_ROOT/utilities/measurement_utility.exe \
+      --type=hash --input=$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+      --output=$EXAMPLE_DIR/provisioning/cf_utility.measurement
   popd
 
-  sleep 3
-
-  pushd $EXAMPLE_DIR
-
-    if [[ "$ENCLAVE_TYPE" == "se" ]] ; then
-
-      echo " "
-      echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=true \
-        --print_cryptstore=true \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1 \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
-      echo " "
-
-
-      $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=true \
-        --print_cryptstore=true \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123 --print_level=1
-
-      sleep 3
-
-      echo " "
-      echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=false \
-        --generate_symmetric_key=true \
-	--keyname=primary-store-encryption-key \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1
-      echo " "
-      echo " Alternatively add \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs"
-      echo " "
-
-      $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-        --cf_utility_help=false \
-        --init_trust=false \
-        --generate_symmetric_key=true \
-	--keyname=primary-store-encryption-key \
-        --enclave_type="simulated-enclave" \
-        --policy_domain_name=$DOMAIN_NAME \
-        --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
-        --symmetric_key_algorithm=aes-256-gcm  \
-        --public_key_algorithm=rsa-2048 \
-        --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123 --print_level=1 \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
-    fi
-
-    if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
-      sudo ./sev-client-call.sh $DOMAIN_NAME $POLICY_CERT_FILE_NAME $POLICY_STORE_NAME $CRYPTSTORE_NAME "$EXAMPLE_DIR/"
-    fi
-  popd
-
-  cleanup_stale_procs
-
-  echo "do-run done"
+  echo "test program measured"
 }
 
+echo "Processing arguments - $*"
+process-args
+echo "Arguments processed"
 
 if [[ $VERBOSE -eq 1 ]]; then
         print-variables
-        exit
 fi
 
-if [[ $clean -.eq 1 ]] ; then
-  do-fresh
-  exit
+if [[ $CLEAN -eq 1 ]] ; then
+	do-fresh
 fi
 
-if [ $OPERATION  == "run" ] ; then
-  do-run
+if [[ $OPERATION  = "measure" ]] ; then
+	do-measure
 else
-  echo "Unknown operation: $OPERATION"
+	echo "Unknown operation: $OPERATION"
 fi
-
 echo " "
