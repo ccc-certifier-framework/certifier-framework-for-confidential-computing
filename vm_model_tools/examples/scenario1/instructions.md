@@ -1,8 +1,9 @@
 # cf_utility - Instructions
 
-This document gives detailed instructions for building and testing
-cf_utility and running the examples in scenario 1 and scenario 2
-as described in cf_utility_usage_notes.md.
+This document gives detailed instructions for running scenario1
+in both test and full SEV environment.
+
+cf_utility.exe is described in cf_utility_usage_notes.md.
 
 $CERTIFIER_ROOT is the top level directory for the Certifier repository.
 It is helpful to have a shell variable for it:
@@ -46,8 +47,9 @@ test using the consolidated-test.sh scripw which removes old files and calls the
 sub scripts described below
 
 ```shell
-export CERTIFIER_ROOT=~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing
-``` 
+    export CERTIFIER_ROOT=~/src/github.com//ccc-certifier-framework/certifier-framework-for-confidential-computing
+    export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
+```
 
 $EXAMPLE_DIR is this directory containing the example application.  Again, a
 shell variable is useful, if you run the detailed steps below.
@@ -57,16 +59,17 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 ```
 
     Step 0:  Build certifier, simpleserver, certifier library and utilities if they
-    don't exist, or to rebuild.
+    don't exist, or if you want to rebuild.
 
 ```shell
+    export CERTIFIER_ROOT=~/src/github.com//ccc-certifier-framework/certifier-framework-for-confidential-computing
+    export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     ./build-certifier.sh -clean 1 -loud 1
 ```
 
-
     Step 1: Provison keys.
 
-    In #EXAMPLE_DIR, call provision-keys.sh as follows:
+    In $EXAMPLE_DIR, call provision-keys.sh as follows:
 
 ```shell
     ./provision-keys.sh -dn dom0 -loud 1
@@ -79,13 +82,13 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     If you are running in the simulated sev environment,
 
 ```shell
-    ./copy-files-test-simulated-sev.sh -loud 1
+    ./copy-files-test-simulated-sev.sh -loud 1  -dn dom0 -clean 1 -loud 1
 ```
     For real SEV environment, after compiling the applications that go in the VM and
     the startup scripts you prepared (See custom VM files):
 
 ```shell
-    ./copy-vm-files.sh
+    ./copy-vm-files.sh  -dn dom0 -clean 1 -loud 1 -op measure -vmn Pauls_vm
 ```
 
     Step 3: Build the VM or test application
@@ -93,13 +96,13 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For the test environment
 
 ```shell
-    ./build-test.sh
+    ./build-test.sh  -dn dom0 -clean 1 -loud 1 -op measure -vmn Pauls_vm
 ```
 
     For the real SEV environment
 
 ```shell
-    ./build-vm.sh
+    ./build-vm.sh  -dn dom0 -clean 1 -loud 1 -op measure -vmn Pauls_vm
 ```
     Step 4: Measure programs
 
@@ -117,10 +120,15 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
 
     Step 5: Build policy
 
-    For either test of real Sev:
+    For test:
 
 ```shell
-    ./build-policy.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin.
+    ./build-policy.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -tt 0
+```
+    For real SEV:
+
+```shell
+    ./build-policy.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -tt 1
 ```
 
     Step 6 Copy remaining files
@@ -131,11 +139,10 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     ./copy-files.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin.
 ```
 
-    For real SEV, you must also cLL:
-
+    For real SEV, you must also call:
 
 ```shell
-    ./copy-vm-files.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin.
+    ./copy-vm-files.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -vmn Pauls_vm
 ```
 
     Step 7: Run the policy server
@@ -143,7 +150,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./run-policy-server.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin.
+    ./run-policy-server.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
 ```
 
     Step 8: Certify deployment environment
@@ -151,7 +158,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./certify-deployment-machine.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
+    ./certify-deployment-machine.sh -dn dom0 -clean 1 -loud 1 -op run -pfn policy.bin. -psa localhost
 ```
 
     Step 9: Generate sample application secret for testing
@@ -159,7 +166,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./generate-and-store-secret-for-deployment.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
+    ./generate-and-store-secret-for-deployment.sh  -dn dom0 -clean 1 -loud 1 -op run -pfn policy.bin. -psa localhost
 ```
 
     Step 10: Run deployment machine keyserver
@@ -167,7 +174,7 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test of real Sev:
 
 ```shell
-    ./run-deployment-keyserver.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -ksa localhost
+    ./run-deployment-keyserver.sh  -dn dom0 -clean 1 -loud 1 -op run -pfn policy.bin. -ksa localhost
 ```
 
     Step 11: Certify deployed program or VM
@@ -175,19 +182,18 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For either test:
 
 ```shell
-    ./certify-deployed-machine.sh ./generate-and-store-secret-for-deployment.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
+    ./certify-deployed-machine.sh ./generate-and-store-secret-for-deployment.sh  -dn dom0 -clean 1 -loud 1 -op run -pfn policy.bin. -psa localhost
 
 ```
-    For real Sev, the initialization script that you run at startup should
-    check to see if you are certified, if not, that script should contain
-    commands analogous to ./certify-deployed-machine.sh
+    For real Sev, your startup scripts should check to see if you are certified, if not, that script should contain
+    commands analogous to ./certify-deployed-machine.sh.
 
     Step 11: Obtain application secrets
 
     For the test SEV environment:
 
 ```shell
-    ./obtain-application-secrets.sh -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -ksa localhost
+    ./obtain-application-secrets.sh -dn dom0 -clean 1 -loud 1 -op run -pfn policy.bin. -ksa localhost
 ```
     For real Sev, the initialization script that you run after certification
     should check to see if you have obtaind secrets, if not, that script should contain
@@ -203,15 +209,16 @@ export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
     For the test SEV environment:
 
 ```shell
-    ./cleanup.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
+    ./cleanup.sh  -dn dom0 -clean 1 -loud 1 -pfn policy.bin. -psa localhost
 ```
 
     For real SEV you probably want to stop the VM and remove post init files
     like cryptstore and policystore
 
 ```shell
-    ./cleanup-vm.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
+    ./cleanup-vm.sh  -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost -vmn Pauls_vm
 ```
+
 
 # Running a consolidated test
 
@@ -224,8 +231,9 @@ To run a consolidated test in the test environment::
 To run a consolidated test in the real sev environment::
 
 ```shell
-    ./run-scenario1.sh -tt 1 -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost
+    ./run-test-scenario1.sh -tt 1 -dn dom0 -clean 1 -loud 1 -op measure -pfn policy.bin. -psa localhost -vmn Pauls_vm
 ```
+
 
 ## Running in the legacy test environment
 
@@ -248,9 +256,7 @@ The shell scripts compile programs using the new API.
 
 To prepare the test files, type:
 
-  prepare-test.sh -dn domain-name -clean 1 -op all -cut 1 -ccf 1
-
-prepare-test.sh all runs the following subcommands in order:
+  prepare-test.sh -dn domain-name -clean 1 -op all -cut 1 -ccf 1 -loud 1
 
   prepare-test.sh compile-utilities
       - This performs steps 1-2 below.
@@ -265,7 +271,7 @@ prepare-test.sh all runs the following subcommands in order:
   prepare-test.sh copy-files
       - This performs steps 8 and 9 below.
 
-If you specify the clean option all old files are deleated
+If you specify the clean option all old files are deleted
 
 Each of these subcommands is runable from prepare-test.sh,
 if you include the right arguments.
@@ -277,6 +283,7 @@ make-policy" before running the tests.
 
 To run the tests
   ./run-test.she -dn domain-name [-clean 1] -op run
+
 
 Additional notes
 

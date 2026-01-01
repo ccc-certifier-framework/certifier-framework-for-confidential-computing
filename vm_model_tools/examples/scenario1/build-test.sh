@@ -374,6 +374,7 @@ function do-run() {
 	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
     fi
 
+    This next call must be made as root.
     if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
       sudo ./sev-client-call.sh $DOMAIN_NAME $POLICY_CERT_FILE_NAME $POLICY_STORE_NAME $CRYPTSTORE_NAME "$EXAMPLE_DIR/"
     fi

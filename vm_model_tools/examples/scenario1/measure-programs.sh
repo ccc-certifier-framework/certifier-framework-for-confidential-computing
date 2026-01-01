@@ -231,7 +231,7 @@ function do-fresh() {
 		mkdir $EXAMPLE_DIR/provisioning
 	fi
 	pushd $EXAMPLE_DIR/provisioning
-		if [[ -f "$EXAMPLE_DIR/provisioning/cf_utility.measurement" ]] ; then
+		if [[ -f "cf_utility.measurement" ]] ; then
 			rm cf_utility.measurement
 		fi
 	popd

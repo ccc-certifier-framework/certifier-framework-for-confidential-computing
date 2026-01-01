@@ -264,7 +264,7 @@ function run-policy-server() {
   echo " "
   echo "run-policy-server"
 
-  if [[ $ENCLAVE_TYPE != "se" && $ENCLAVE_TYPE != "sev" ]] ; then
+  if [[ $ENCLAVE_TYPE != "simulated-enclave" && $ENCLAVE_TYPE != "sev" ]] ; then
     echo "Unsupported enclave type: $ENCLAVE_TYPE"
     exit
   fi
