@@ -241,29 +241,11 @@ function do-fresh() {
   exit
 }
 
-function cleanup_stale_procs() {
-  # Find and kill simpleserver processes that may be running.
-  echo " "
-  echo "cleanup_stale_procs"
-
-  set +e
-  certifier_pid=$(ps -ef | grep -E "simpleserver" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
-  set -e
-  if [[ $certifier_pid != "" ]] ; then
-    kill -9 $certifier_pid
-    echo "killed certifier_service, pid $certifier_pid"
-  else
-    echo "no certifier_service running"
-  fi
-
-  echo "cleanup_stale_procs done"
-}
-
 function do-run() {
   echo " "
   echo "do-run"
 
-  if [[ $ENCLAVE_TYPE != "se" && $ENCLAVE_TYPE != "sev" ]] ; then
+  if [[ $ENCLAVE_TYPE != "simulated-enclave" && $ENCLAVE_TYPE != "sev" ]] ; then
     echo "Unsupported enclave type: $ENCLAVE_TYPE"
     exit
   fi
@@ -279,7 +261,7 @@ function do-run() {
   sudo ldconfig
 
   pushd $EXAMPLE_DIR/service
-    if [[ "$ENCLAVE_TYPE" == "se" ]] ; then
+    if [[ "$ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
       echo "running policy server for simulated-enclave"
       $CERTIFIER_ROOT/certifier_service/simpleserver \
         --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
@@ -297,7 +279,7 @@ function do-run() {
 
   pushd $EXAMPLE_DIR
 
-    if [[ "$ENCLAVE_TYPE" == "se" ]] ; then
+    if [[ "$ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
 
       echo " "
       echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \

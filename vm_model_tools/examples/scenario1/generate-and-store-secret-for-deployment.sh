@@ -222,26 +222,6 @@ function process-args() {
 
 # ------------------------------------------------------------------------------------------
 
-function cleanup_stale_procs() {
-  # Find and kill simpleserver processes that may be running.
-  echo " "
-  echo "cleanup_stale_procs"
-
-  set +e
-  key_server_pid=$(ps -ef | grep -E "cf_key_server" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
-  set -e
-  if [[ $key_server_pid != "" ]] ; then
-    kill -9 $key_server_pid
-    echo "killed key_server_service, pid $key_server_pid"
-  else
-    echo "no key_server_service running"
-  fi
-
-  echo "cleanup_stale_procs done"
-}
-
-# ---------------------------------------------------------------------------------------------
-
 echo "Processing arguments"
 process-args
 echo "Arguments processed"

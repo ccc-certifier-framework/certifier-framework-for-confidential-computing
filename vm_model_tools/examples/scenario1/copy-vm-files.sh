@@ -224,24 +224,6 @@ function process-args() {
 
 # ------------------------------------------------------------------------------------------
 
-function cleanup_stale_procs() {
-  # Find and kill simpleserver processes that may be running.
-  echo " "
-  echo "cleanup_stale_procs"
-
-  set +e
-  certifier_pid=$(ps -ef | grep -E "simpleserver" | grep -v -w -E 'grep|vi|vim' | awk '{print $2}')
-  set -e
-  if [[ $certifier_pid != "" ]] ; then
-    kill -9 $certifier_pid
-    echo "killed certifier_service, pid $certifier_pid"
-  else
-    echo "no certifier_service running"
-  fi
-
-  echo "cleanup_stale_procs done"
-}
-
 function do-copy-files() {
   echo " "
   echo "do-copy-files"
