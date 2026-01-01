@@ -95,7 +95,7 @@ CRYPTSTORE_NAME="cryptstore"
 PROGRAM_NAME="datica-program"
 ENCLAVE_TYPE="simulated-enclave"
 DATA_DIR="./cf_data"
-SYMMETRIC_ENCRYPTION_ALGORITHM="aes256-gcm"
+SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
 VM_NAME="datica-sample-vm"
 TEST_TYPE="test"
@@ -537,6 +537,11 @@ function do-all() {
   echo "do-all done"
 }
 
+# -----------------------------------------------------------------------------------------------
+
+echo "Processing arguments"
+process-args
+echo "Arguments processed"
 
 if [[ $VERBOSE -eq 1 ]]; then
         print-variables
@@ -546,46 +551,45 @@ fi
 if [[ $CLEAN -eq 1 ]] ; then
   echo " "
   do-fresh
-  exit
 fi
 
-if [ $OPERATION == "all" ] ; then
+if [[ $OPERATION == "all" ] ; then
   echo "Base name: $0"
   do-all
   exit
 fi
 
-if [ $OPERATION == "compile-utilities" ] ; then
+if [[ $OPERATION == "compile-utilities" ]] ; then
   echo " "
   do-compile-utilities
   exit
 fi
 
-if [ $OPERATION == "make-keys" ] ; then
+if [[ $OPERATION == "make-keys" ]] ; then
   echo " "
   do-make-keys
   exit
 fi
 
-if [ $OPERATION == "compile-program" ] ; then
+if [[ $OPERATION == "compile-program" ]] ; then
   echo " "
   do-compile-program
   exit
 fi
 
-if [ $OPERATION == "make-policy" ] ; then
+if [[ $OPERATION == "make-policy" ]] ; then
   echo " "
   do-make-policy
   exit
 fi
 
-if [ $OPERATION == "compile-certifier" ] ; then
+if [[ $OPERATION == "compile-certifier" ]] ; then
   echo " "
   do-compile-certifier
   exit
 fi
 
-if [ $OPERATION == "copy-files" ] ; then
+if [[ $OPERATION == "copy-files" ]] ; then
   echo " "
   do-copy-files
   exit

@@ -330,9 +330,15 @@ function do-make-policy() {
 
   echo "do-make-policy done"
 }
+
+# ---------------------------------------------------------------------------------------------------
+
+echo "Processing arguments"
+process-args
+echo "Arguments processed"
+
 if [[ $VERBOSE -eq 1 ]]; then                   
         print-variables                         
-	exit
 fi
 
 do-make-policy

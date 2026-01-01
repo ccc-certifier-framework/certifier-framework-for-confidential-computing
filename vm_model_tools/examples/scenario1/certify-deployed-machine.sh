@@ -95,7 +95,7 @@ CRYPTSTORE_NAME="cryptstore"
 PROGRAM_NAME="datica-program"
 ENCLAVE_TYPE="simulated-enclave"
 DATA_DIR="./cf_data"
-SYMMETRIC_ENCRYPTION_ALGORITHM="aes256-gcm"
+SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
 VM_NAME="datica-sample-vm"
 TEST_TYPE="test"
@@ -224,21 +224,24 @@ function process-args() {
 
 # ------------------------------------------------------------------------------------------
 
+echo "Processing arguments"
+process-args
+echo "Arguments processed"
+
 if [[ $VERBOSE -eq 1 ]]; then                   
         print-variables 
-	exit
 fi
 
 pushd $EXAMPLE_DIR
 
-if [[ "$ENCLAVE_TYPE" == "simulated-enclave"" ]] ; then
+if [[ "$ENCLAVE_TYPE == $ENCLAVE_TYPE ]] ; then
 
       echo " "
       echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
         --init_trust=true \
         --print_cryptstore=true \
-        --enclave_type="simulated-enclave" \
+        --enclave_type=$ENCLAVE_TYPE \
         --policy_domain_name=$DOMAIN_NAME \
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
         --policy_store_filename=$POLICY_STORE_NAME \
@@ -256,7 +259,7 @@ if [[ "$ENCLAVE_TYPE" == "simulated-enclave"" ]] ; then
         --cf_utility_help=false \
         --init_trust=true \
         --print_cryptstore=true \
-        --enclave_type="simulated-enclave" \
+        --enclave_type=$ENCLAVE_TYPE \
         --policy_domain_name=$DOMAIN_NAME \
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
         --policy_store_filename=$POLICY_STORE_NAME \
@@ -275,7 +278,7 @@ if [[ "$ENCLAVE_TYPE" == "simulated-enclave"" ]] ; then
         --init_trust=false \
         --generate_symmetric_key=true \
 	--keyname=primary-store-encryption-key \
-        --enclave_type="simulated-enclave" \
+        --enclave_type=$ENCLAVE_TYPE \
         --policy_domain_name=$DOMAIN_NAME \
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
         --policy_store_filename=$POLICY_STORE_NAME \
@@ -291,3 +294,5 @@ if [[ "$ENCLAVE_TYPE" == "simulated-enclave"" ]] ; then
       echo " "
 
 fi
+
+echo "deployed machine certified"

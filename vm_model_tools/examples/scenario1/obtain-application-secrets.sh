@@ -95,7 +95,7 @@ CRYPTSTORE_NAME="cryptstore"
 PROGRAM_NAME="datica-program"
 ENCLAVE_TYPE="simulated-enclave"
 DATA_DIR="./cf_data"
-SYMMETRIC_ENCRYPTION_ALGORITHM="aes256-gcm"
+SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
 VM_NAME="datica-sample-vm"
 TEST_TYPE="test"
@@ -248,6 +248,12 @@ if [[ $VERBOSE -eq 1 ]]; then
         print-variables
         exit
 fi
+
+# ------------------------------------------------------------------------------------------
+
+echo "Processing arguments"
+process-args
+echo "Arguments processed"
 
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \

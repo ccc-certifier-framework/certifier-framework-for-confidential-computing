@@ -95,7 +95,7 @@ CRYPTSTORE_NAME="cryptstore"
 PROGRAM_NAME="datica-program"
 ENCLAVE_TYPE="simulated-enclave"
 DATA_DIR="./cf_data"
-SYMMETRIC_ENCRYPTION_ALGORITHM="aes256-gcm"
+SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
 VM_NAME="datica-sample-vm"
 TEST_TYPE="test"
@@ -384,10 +384,12 @@ function do-run() {
   echo "do-run done"
 }
 
+echo "Processing arguments"
+process-args
+echo "Arguments processed"
 
 if [[ $VERBOSE -eq 1 ]]; then
         print-variables
-        exit
 fi
 
 if [[ $CLEAN -eq 1 ]] ; then
