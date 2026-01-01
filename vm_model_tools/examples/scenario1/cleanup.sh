@@ -258,8 +258,10 @@ echo "Arguments processed"
 
 if [[ $VERBOSE -eq 1 ]]; then
         print-variables
-        exit
 fi
-cleanup-stale-procs
 
+echo " "
+echo "cleaning stale procs"
+cleanup-stale-procs
+echo "cleaned stale procs"
 echo " "

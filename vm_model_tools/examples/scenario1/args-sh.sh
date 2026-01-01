@@ -144,7 +144,7 @@ function process-args() {
 
 	IFS=' ' read -ra array <<< "$arg_string"
 	for (( i=0; i < $ARG_SIZE; i++ )); do
-		# echo "Processing arg $i: ${array[i]}"
+		#echo "Processing arg $i: ${array[i]}"
 
 		if [[ ${array[i]} = "-dn" ]]; then
 			DOMAIN_NAME="${array[i+1]}"
@@ -225,7 +225,7 @@ function process-args() {
 # This script will print the above options if called with -print as first argument.
 #echo "Start"
 
-if [ $1 = "-print" ]; then
+if [[ $1 = "-print" ]]; then
 	print-options
 else
 	process-args

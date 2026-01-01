@@ -265,8 +265,9 @@ if [[ $VERBOSE -eq 1 ]]; then
         print-variables
 fi
 
-if [[ $TT -eq 0 ]]; then
+if [[ $TEST_TYPE = "simulated" ]]; then
         echo "Nothing to do in simulated environment"
+	exit
 fi
 
 echo "John need =s help with this"

@@ -222,7 +222,6 @@ function process-args() {
 
 # ------------------------------------------------------------------------------------------
 
-
 function do-fresh() {
 	echo " "
 	echo "do-fresh"
@@ -236,9 +235,11 @@ function do-fresh() {
 		fi
 	popd
 	echo "do-fresh done"
+  echo ""
 }
 
 function do-measure() {
+  echo ""
   echo "measuring test program"
 
   if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
@@ -252,6 +253,7 @@ function do-measure() {
   popd
 
   echo "test program measured"
+  echo ""
 }
 
 echo "Processing arguments - $*"

@@ -227,6 +227,8 @@ function compile-sev-programs() {
 	echo " "
 	echo "do-compile-sev-programs"
 
+	echo "Not going to do it"
+	return
 	if [[ $CLEAN -eq 1 ]]; then
 		sudo make rmmod sevnull
 	fi

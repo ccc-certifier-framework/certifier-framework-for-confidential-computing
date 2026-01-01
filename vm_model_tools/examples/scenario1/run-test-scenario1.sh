@@ -255,38 +255,40 @@ echo "Processing arguments"
 process-args
 echo "Arguments processed"
 
-if [[ $VERBOSE -eq 1 ]]; then
-        print-variables
-fi
-
 ALLARGS=""
 if [[ $TEST_TYPE = "simulated" ]]; then
 	ALLSIMARG1="-tt simulated -pn scenario1-test -dn dom0"
-	ALLSIMARG2="--clean 1 -loud 1 -dd -cut 1 -ccf 1 -dd ./cf_data"
+	ALLSIMARG2="-clean 1 -loud 1 -dd -cut 1 -ccf 1 -dd ./cf_data"
 	ALLSIMARG3="-pkn policy_key_file -cfn policy_cert_file -psn policy_store -csn cryptstore"
 	ALLSIMARG4="-pfn sev_policy.bin -psa localhost -ksa localhost"
 	ALLARGS="$ALLSIMARG1 $ALLSIMARG2 $ALLSIMARG3 $ALLSIMARG4"
 else
-	echo "Not working yet"
+	echo ""real" sev test not working yet"
 	exit
 fi
 
+echo ""
 echo "Running consolidated test with $ALLARGS"
-exit
+echo ""
 
-./build-certifier.sh $ALLARGS
-./copy-files-test-simulated-sev.sh $ALLARGS
-./build-vm.sh $ALLARGS
-./measure-programs.sh "$ALLAGS -op measure"
-./measure-vm-programs.sh "$ALLARGS -op measure"
-./build-policy.sh $ALLARGS
-./copy-files.sh $ALLARGS
-./copy-vm-files.sh $ALLARGS
-./run-policy-server.sh $ALLARGS
-./certify-deployment-machine.sh "$ALLARGS -op run"
-./generate-and-store-secret-for-deployment.sh $ALLARGS
-./run-deployment-keyserver.sh $ALLARGS
+./build-certifier.sh $ALLARGS			# working
+./provision-keys.sh $ALLARGS			# working
+./copy-files-test-simulated-sev.sh $ALLARGS	# working
+./build-vm.sh $ALLARGS			# working
+TA="$ALLARGS -op measure"
+./measure-programs.sh $TA			# working
+./measure-vm-programs.sh $TA			# working
+./build-policy.sh $ALLARGS			# working
+./copy-files.sh $ALLARGS			# working
+./copy-vm-files.sh $ALLARGS			# working
+./run-policy-server.sh $ALLARGS		# working
+TA="$ALLARGS -op run"
+./certify-deployment-machine.sh $TA		# working
+./generate-and-store-secret-for-deployment.sh $ALLARGS # working
+./run-deployment-keyserver.sh $ALLARGS		# working
 ./obtain-application-secrets.sh $ALLARGS
 ./cleanup.sh $ALLARGS
 
+echo ""
 echo "Consolidated test complete"
+echo ""

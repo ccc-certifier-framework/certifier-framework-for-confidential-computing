@@ -278,7 +278,7 @@ function do-make-policy() {
     echo " "
     echo "For simulated enclave"
 
-    if [[ $tt -eq 0 ]]; then
+    if [[ $TEST_TYPE = "simulated" ]]; then
       $CERTIFIER_ROOT/utilities/measurement_init.exe  \
         --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708  \
         --out_file=sev_cf_utility.measurement
@@ -292,7 +292,7 @@ function do-make-policy() {
       --vse_file=sev_vse_policy1.bin --duration=9000 \
       --private_key_file=$POLICY_KEY_FILE_NAME --output=sev_signed_claim_1.bin
 
-    if [[ $tt -eq 0 ]]; then
+    if [[ $TEST_TYPE = "simulated" ]]; then
       $CERTIFIER_ROOT/utilities/make_unary_vse_clause.exe --key_subject="" \
         --measurement_subject=sev_cf_utility.measurement --verb="is-trusted" \
         --output=sev_ts2.bin
@@ -333,7 +333,7 @@ function do-make-policy() {
 
     $CERTIFIER_ROOT/utilities/package_claims.exe --input=sev_signed_claim_1.bin,sev_signed_claim_2.bin,sev_signed_claim_3.bin \
       --output=$POLICY_FILE_NAME
-    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=s$POLICY_FILE_NAME
+    $CERTIFIER_ROOT/utilities/print_packaged_claims.exe --input=$POLICY_FILE_NAME
   popd
 
   echo "do-make-policy done"

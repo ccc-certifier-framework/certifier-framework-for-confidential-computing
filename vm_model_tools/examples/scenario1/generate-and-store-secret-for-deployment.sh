@@ -230,19 +230,18 @@ if [[ $VERBOSE -eq 1 ]]; then
         print-variables
 fi
 
-# kill running key servers?
-
 echo " "
 echo "key-client: storing new value"
 echo " "
 echo "First, create key in client.in"
 echo "01234567890123456789012345678901" > client.in
 echo " "
+echo "Running"
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
     --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
-    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR  \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=./  \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
     --input_file=client.in --output_file=client.out --action=store"
@@ -251,8 +250,8 @@ echo " "
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICYSTORE_NAME \
-    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=$DATA_DIR  \
+    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir="./"  \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
     --input_file=client.in --output_file=client.out --action=store
@@ -264,16 +263,15 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
     --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
-    --policy_key_cert_file=$iPOLICY_CERT_FILE_NAME --data_dir=$DATA_DIR  \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=./  \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
     --input_file=client.in --output_file=client.out --action=retrieve"
-echo " "
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
     --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
-    --policy_key_cert_file=$iPOLICY_CERT_FILE_NAME --data_dir=./ \
+    --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=./ \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
     --input_file=client.in --output_file=client.out --action=retrieve

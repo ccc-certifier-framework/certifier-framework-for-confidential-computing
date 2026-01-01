@@ -238,6 +238,7 @@ function do-fresh() {
                 fi
         popd
         echo "do-fresh done"
+        echo " "
 }
 
 # git clone https://github.com/virtee/sev-snp-measure.git
@@ -248,17 +249,19 @@ function do-fresh() {
 #         \ --kernel=vmlinuz --initrd=initrd.img --append="console=ttyS0 loglevel=7"
 
 function do-measure-vm() {
-  echo "measuring vm"
+	echo " "
+	echo "measuring vm"
 
-  if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
-        mkdir $EXAMPLE_DIR/provisioning
-  fi
+	if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
+		mkdir $EXAMPLE_DIR/provisioning
+	fi
 
-  pushd $EXAMPLE_DIR/provisioning
-  	echo "virtee call goes here"
-  popd
+	pushd $EXAMPLE_DIR/provisioning
+	echo "virtee call goes here"
+	popd
 
-  echo "vm measured"
+	echo "vm measured"
+	echo " "
 }
 
 echo "Processing arguments - $*"
@@ -269,8 +272,9 @@ if [[ $VERBOSE -eq 1 ]]; then
         print-variables
 fi
 
-if [[ $TT -eq 0 ]]; then
+if [[ $TEST_TYPE = "simulated" ]]; then
         echo "Nothing to do in simulated environment"
+	exit
 fi
 
 if [[ $CLEAN -eq 1 ]] ; then

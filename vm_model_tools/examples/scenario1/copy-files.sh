@@ -251,6 +251,7 @@ function do-copy-files() {
   popd
 
   echo "do-copy-files done"
+  echo " "
 }
 
 echo "Processing arguments"
@@ -262,5 +263,5 @@ if [[ $VERBOSE -eq 1 ]]; then
 fi
 
 do-copy-files
-echo " files copied"
+echo "Files copied"
 echo ""
