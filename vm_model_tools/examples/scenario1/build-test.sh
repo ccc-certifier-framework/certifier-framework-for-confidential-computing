@@ -114,7 +114,7 @@ OPERATION=""
 CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
-DEPLOYED_ENCLAVE_TYPE="sev"
+DEPLOYED_ENCLAVE_TYPE="sev-enclave"
 
 
 function print-variables() {
@@ -262,7 +262,7 @@ function do-run() {
     echo "Unsupported deployment enclave type: $DEPLOYMENT_ENCLAVE_TYPE"
     exit
   fi
-  if [[ $DEPLOYED_ENCLAVE_TYPE != "simulated-enclave" && $DEPLOYED_ENCLAVE_TYPE != "sev" ]] ; then
+  if [[ $DEPLOYED_ENCLAVE_TYPE != "simulated-enclave" && $DEPLOYED_ENCLAVE_TYPE != "sev-enclave" ]] ; then
     echo "Unsupported deployed enclave type: $DEPLOYED_ENCLAVE_TYPE"
     exit
   fi
@@ -365,7 +365,7 @@ function do-run() {
     fi
 
     This next call must be made as root.
-    if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
+    if [[ "$ENCLAVE_TYPE" == "sev-enclave" ]] ; then
       sudo ./sev-client-call.sh $DOMAIN_NAME $POLICY_CERT_FILE_NAME $POLICY_STORE_NAME $CRYPTSTORE_NAME "$EXAMPLE_DIR/"
     fi
   popd

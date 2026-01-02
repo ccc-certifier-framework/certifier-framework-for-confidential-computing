@@ -114,7 +114,7 @@ OPERATION=""
 CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
-DEPLOYED_ENCLAVE_TYPE="sev"
+DEPLOYED_ENCLAVE_TYPE="sev-enclave"
 
 
 function print-variables() {
@@ -242,7 +242,7 @@ function run-policy-server() {
 	echo " "
 	echo "run-policy-server"
 
-	if [[ $ENCLAVE_TYPE != "simulated-enclave" && $ENCLAVE_TYPE != "sev" ]] ; then
+	if [[ $ENCLAVE_TYPE != "simulated-enclave" && $ENCLAVE_TYPE != "sev-enclave" ]] ; then
 		echo "Unsupported enclave type: $ENCLAVE_TYPE"
 	fi
 
@@ -261,7 +261,7 @@ function run-policy-server() {
 		  --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
 		  --policyFile=policy.bin --readPolicy=true &
 	fi
-	if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
+	if [[ "$ENCLAVE_TYPE" == "sev-enclave" ]] ; then
 		echo "running policy server for sev"
 		$CERTIFIER_ROOT/certifier_service/simpleserver \
 		  --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \

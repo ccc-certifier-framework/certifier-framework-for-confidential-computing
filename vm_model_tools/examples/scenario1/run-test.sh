@@ -114,7 +114,7 @@ OPERATION=""
 CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
-DEPLOYED_ENCLAVE_TYPE="sev"
+DEPLOYED_ENCLAVE_TYPE="sev-enclave"
 
 
 function print-variables() {
@@ -277,7 +277,7 @@ function do-run() {
   echo " "
   echo "do-run"
 
-  if [[ $ENCLAVE_TYPE != "simulated-enclave" && $ENCLAVE_TYPE != "sev" ]] ; then
+  if [[ $ENCLAVE_TYPE != "simulated-enclave" && $ENCLAVE_TYPE != "sev-enclave" ]] ; then
     echo "Unsupported enclave type: $ENCLAVE_TYPE"
     exit
   fi

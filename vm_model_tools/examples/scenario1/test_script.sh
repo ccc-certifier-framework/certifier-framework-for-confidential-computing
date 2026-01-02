@@ -115,7 +115,7 @@ OPERATION=""
 CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
-DEPLOYED_ENCLAVE_TYPE="sev"
+DEPLOYED_ENCLAVE_TYPE="sev-enclave"
 
 
 function print-variables() {
