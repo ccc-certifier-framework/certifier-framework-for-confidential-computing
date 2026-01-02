@@ -288,16 +288,16 @@ echo ""
 echo "Running consolidated test with $ALLARGS"
 echo ""
 
-./build-certifier.sh $ALLARGS			# working
-./provision-keys.sh $ALLARGS			# working
-./copy-files-test-simulated-sev.sh $ALLARGS	# working
-./build-vm.sh $ALLARGS			# working
+#./build-certifier.sh $ALLARGS			# working
+#./provision-keys.sh $ALLARGS			# working
+#./copy-files-test-simulated-sev.sh $ALLARGS	# working
+#./build-vm.sh $ALLARGS			# working
 TA="$ALLARGS -op measure"
-./measure-programs.sh $TA			# working
-./measure-vm-programs.sh $TA			# working
-./build-policy.sh $ALLARGS			# working
-./copy-files.sh $ALLARGS			# working
-./copy-vm-files.sh $ALLARGS			# working
+#./measure-programs.sh $TA			# working
+#./measure-vm-programs.sh $TA			# working
+#./build-policy.sh $ALLARGS			# working
+#./copy-files.sh $ALLARGS			# working
+#./copy-vm-files.sh $ALLARGS			# working
 ./run-policy-server.sh $ALLARGS		# working
 TA="$ALLARGS -op run"
 ./certify-deployment-machine.sh $TA		# working

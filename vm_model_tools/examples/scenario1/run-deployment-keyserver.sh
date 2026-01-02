@@ -68,7 +68,6 @@ function print-options() {
 	echo "POLICY_STORE_NAME		-psn		name"
 	echo "CRYPTSTORE_NAME			-csn		name"
 	echo "DOMAIN_NAME			-dn		name"
-	echo "ENCLAVE_TYPE			-et		enclave type"
 	echo "DATA_DIR			-dd		directory"
 	echo "SYMMETRIC_ENCRYPTION_ALGORITHM	-sea		alg name (see certifier)"
 	echo "ASYMMETRIC_ENCRYPTION_ALGORITHM	-aen		alg name (see certifier)"
@@ -84,6 +83,7 @@ function print-options() {
 	echo "KEY_SERVER_PORT   		-ksp		port number"
 	echo "OPERATION     	   		-op 		operation"
 	echo "CLEAN             		-clean		0/1"
+	echo "ENCLAVE_TYPE			-et		enclave type"
         echo "DEPLOYMENT_ENCLAVE_TYPE		-et1		enclave types"
         echo "DEPLOYED_ENCLAVE_TYPE		-et2		enclave types"
 	echo ""
@@ -97,7 +97,6 @@ POLICY_CERT_FILE_NAME="policy_cert_file"
 POLICY_STORE_NAME="policy_store"
 CRYPTSTORE_NAME="cryptstore"
 PROGRAM_NAME="datica-program"
-ENCLAVE_TYPE="simulated-enclave"
 DATA_DIR="./"
 SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
@@ -113,6 +112,7 @@ KEY_SERVER_PORT="8120"
 OPERATION=""
 CLEAN=0
 VERBOSE=1
+ENCLAVE_TYPE="simulated-enclave"
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
 DEPLOYED_ENCLAVE_TYPE="sev"
 
@@ -142,9 +142,9 @@ function print-variables() {
 	echo "Operation:                             $OPERATION"
 	echo "Clean:                                 $CLEAN"
 	echo "Verbose:                               $VERBOSE"
+	echo "Enclave type:                          $ENCLAVE_TYPE"
 	echo "Deployment enclave type                $DEPLOYMENT_ENCLAVE_TYPE"
 	echo "Deployed enclave type                  $DEPLOYED_ENCLAVE_TYPE"
-	echo "Enclave type:                          $ENCLAVE_TYPE"
 	echo ""
 }
 
@@ -252,14 +252,14 @@ echo " "
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
     --key_server_url=$KEY_SERVER_ADDRESS --key_server_port=$KEY_SERVER_PORT \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=./ &"
 
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_server.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
     --key_server_url=$KEY_SERVER_ADDRESS --key_server_port=$KEY_SERVER_PORT \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=./ &
 

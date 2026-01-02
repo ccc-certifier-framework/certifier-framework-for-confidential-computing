@@ -95,7 +95,6 @@ POLICY_CERT_FILE_NAME="policy_cert_file"
 POLICY_STORE_NAME="policy_store"
 CRYPTSTORE_NAME="cryptstore"
 PROGRAM_NAME="datica-program"
-ENCLAVE_TYPE="simulated-enclave"
 DATA_DIR="./"
 SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
@@ -111,6 +110,7 @@ KEY_SERVER_PORT="8120"
 OPERATION=""
 CLEAN=0
 VERBOSE=1
+ENCLAVE_TYPE="simulated-enclave"
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
 DEPLOYED_ENCLAVE_TYPE="sev"
 
@@ -257,7 +257,7 @@ echo "01234567890123456789012345678901" > $CLIENT_IN_FILE
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=./  \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
@@ -266,7 +266,7 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir="./"  \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
@@ -277,7 +277,7 @@ echo "key-client: retrieving"
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=./  \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
@@ -285,7 +285,7 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \
-    --enclave_type=$ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
+    --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
     --policy_key_cert_file=$POLICY_CERT_FILE_NAME --data_dir=./ \
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
