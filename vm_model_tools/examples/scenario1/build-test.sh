@@ -258,8 +258,12 @@ function do-run() {
   echo " "
   echo "do-run"
 
-  if [[ $ENCLAVE_TYPE != "simulated-enclave" && $ENCLAVE_TYPE != "sev" ]] ; then
-    echo "Unsupported enclave type: $ENCLAVE_TYPE"
+  if [[ $DEPLOYMENT_ENCLAVE_TYPE != "simulated-enclave" ]]; then
+    echo "Unsupported deployment enclave type: $DEPLOYMENT_ENCLAVE_TYPE"
+    exit
+  fi
+  if [[ $DEPLOYED_ENCLAVE_TYPE != "simulated-enclave" && $DEPLOYED_ENCLAVE_TYPE != "sev" ]] ; then
+    echo "Unsupported deployed enclave type: $DEPLOYED_ENCLAVE_TYPE"
     exit
   fi
 
@@ -274,18 +278,9 @@ function do-run() {
   sudo ldconfig
 
   pushd $EXAMPLE_DIR/service
-    if [[ "$ENCLAVE_TYPE" == "simulated-enclave" ]] ; then
-      echo "running policy server for simulated-enclave"
-      $CERTIFIER_ROOT/certifier_service/simpleserver \
+  $CERTIFIER_ROOT/certifier_service/simpleserver \
         --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
-        --policyFile=policy.bin --readPolicy=true &
-    fi
-    if [[ "$ENCLAVE_TYPE" == "sev" ]] ; then
-      echo "running policy server for sev"
-      $CERTIFIER_ROOT/certifier_service/simpleserver \
-        --policy_key_file=$POLICY_KEY_FILE_NAME --policy_cert_file=$POLICY_CERT_FILE_NAME \
-          --policyFile=sev_policy.bin --readPolicy=true &
-    fi
+        --policyFile=$POLICY_FILE_NAME --readPolicy=true &
   popd
 
   sleep 3
@@ -389,7 +384,6 @@ echo "Arguments processed"
 if [[ $VERBOSE -eq 1 ]]; then                   
         print-variables 
 fi
-
 if [ $CLEAN -eq 1 ] ; then
   exit
 fi
