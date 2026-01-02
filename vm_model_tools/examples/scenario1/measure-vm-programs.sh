@@ -114,7 +114,7 @@ OPERATION=""
 CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
-DEPLOYED_ENCLAVE_TYPE="simulated-sev"
+DEPLOYED_ENCLAVE_TYPE="sev"
 
 
 function print-variables() {
@@ -271,6 +271,7 @@ function do-measure-vm() {
 
 	pushd $EXAMPLE_DIR/provisioning
 	echo "virtee call goes here"
+	# put it in $VM_NAME.measurement
 	popd
 
 	echo "vm measured"

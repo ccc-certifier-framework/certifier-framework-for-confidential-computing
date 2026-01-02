@@ -114,7 +114,7 @@ OPERATION=""
 CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
-DEPLOYED_ENCLAVE_TYPE="simulated-sev"
+DEPLOYED_ENCLAVE_TYPE="sev"
 
 
 function print-variables() {
@@ -275,8 +275,8 @@ if [[ $TEST_TYPE = "simulated" ]]; then
 	ALLSIMARG1="-tt simulated -pn scenario1-test -dn dom0"
 	ALLSIMARG2="-clean 1 -loud 1 -dd -cut 1 -ccf 1 -dd ./"
 	ALLSIMARG3="-pkn policy_key_file -cfn policy_cert_file -psn policy_store -csn cryptstore"
-	ALLSIMARG4="-pfn sev_policy.bin -psa localhost -ksa localhost"
-	ALLSIMARG5="-et1 simulated-enclave -et2 sev"
+	ALLSIMARG4="-pfn policy.bin -psa localhost -ksa localhost"
+	ALLSIMARG5="-vmn pauls_vm -et1 simulated-enclave -et2 sev"
 	ALLARGS="$ALLSIMARG1 $ALLSIMARG2 $ALLSIMARG3 $ALLSIMARG4 $ALLSIMARG5
 "
 else
@@ -301,8 +301,8 @@ TA="$ALLARGS -op measure"
 ./run-policy-server.sh $ALLARGS		# working
 TA="$ALLARGS -op run"
 ./certify-deployment-machine.sh $TA		# working
-# The following command is actually redundant in the simulated
-#     environment
+#     The following command is actually redundant in the simulated
+#         environment
 ./certify-deployed-machine.sh $TA		# working
 ./run-deployment-keyserver.sh $ALLARGS		# working
 ./generate-and-store-secret-for-deployment.sh $ALLARGS # working

@@ -114,7 +114,7 @@ OPERATION=""
 CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
-DEPLOYED_ENCLAVE_TYPE="simulated-sev"
+DEPLOYED_ENCLAVE_TYPE="sev"
 
 
 function print-variables() {
@@ -264,9 +264,14 @@ function do-measure() {
   fi
 
   pushd $EXAMPLE_DIR/provisioning
-  $CERTIFIER_ROOT/utilities/measurement_utility.exe \
-      --type=hash --input=$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
-      --output=$EXAMPLE_DIR/provisioning/cf_utility.measurement
+  	$CERTIFIER_ROOT/utilities/measurement_utility.exe \
+           --type=hash --input=$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
+           --output=$EXAMPLE_DIR/provisioning/cf_utility.measurement
+	if [[ $DEPLOYED_ENCLAVE_TYPE = "sev" && $TEST_TYPE = "simulated" ]]; then
+	  $CERTIFIER_ROOT/utilities/measurement_init.exe \
+            --mrenclave=010203040506070801020304050607080102030405060708010203040506070801020304050607080102030405060708 \
+            --out_file=sev_cf_utility.measurement
+	fi
   popd
 
   echo "test program measured"

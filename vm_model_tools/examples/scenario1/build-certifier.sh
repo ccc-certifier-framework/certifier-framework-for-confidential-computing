@@ -114,7 +114,7 @@ OPERATION=""
 CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
-DEPLOYED_ENCLAVE_TYPE="simulated-sev"
+DEPLOYED_ENCLAVE_TYPE="sev"
 
 
 function print-variables() {
@@ -336,7 +336,11 @@ function do-compile-program() {
 
   pushd $CERTIFIER_ROOT/vm_model_tools/src
   if [[ $COMPILE_CF -eq 1 ]]; then
-  	make -f cf_utility.mak
+	if [[ $DEPLOYED_ENCLAVE_TYPE = "sev" && $TEST_TYPE = "simulated" ]]; then
+  		make -f cf_utility.mak
+	else
+  		CFLAGS += '-DSEV_DUMMY_GUEST' make -f cf_utility.mak
+	fi
   fi
   popd
 
