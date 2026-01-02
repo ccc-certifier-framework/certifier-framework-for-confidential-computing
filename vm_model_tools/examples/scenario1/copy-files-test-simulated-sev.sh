@@ -55,6 +55,8 @@ fi
 #	OPERATION         			-op 		name
 #	CLEAN             			-clean 		0/1
 #	VERBOSE           			-loud 		0/1
+#       DEPLOYMENT_ENCLAVE_TYPE			-et1		enclave types
+#       DEPLOYED_ENCLAVE_TYPE			-et2		enclave types
 
 function print-options() {
 
@@ -82,6 +84,8 @@ function print-options() {
 	echo "KEY_SERVER_PORT   		-ksp		port number"
 	echo "OPERATION     	   		-op 		operation"
 	echo "CLEAN             		-clean		0/1"
+        echo "DEPLOYMENT_ENCLAVE_TYPE		-et1		enclave types"
+        echo "DEPLOYED_ENCLAVE_TYPE		-et2		enclave types"
 	echo ""
 }
 
@@ -109,6 +113,8 @@ KEY_SERVER_PORT="8120"
 OPERATION=""
 CLEAN=0
 VERBOSE=1
+DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
+DEPLOYED_ENCLAVE_TYPE="simulated-sev"
 
 
 function print-variables() {
@@ -121,7 +127,6 @@ function print-variables() {
 	echo "Policy store file name:                $POLICY_STORE_NAME"
 	echo "Cryptstore file name:                  $CRYPTSTORE_NAME"
 	echo "Program name:                          $PROGRAM_NAME"
-	echo "Enclave type:                          $ENCLAVE_TYPE"
 	echo "Data directory name:                   $DATA_DIR"
 	echo "Encryption Algorithm:                  $SYMMETRIC_ENCRYPTION_ALGORITHM"
 	echo "Public key algorithm:                  $ASYMMETRIC_ENCRYPTION_ALGORITHM"
@@ -137,6 +142,9 @@ function print-variables() {
 	echo "Operation:                             $OPERATION"
 	echo "Clean:                                 $CLEAN"
 	echo "Verbose:                               $VERBOSE"
+	echo "Deployment enclave type                $DEPLOYMENT_ENCLAVE_TYPE"
+	echo "Deployed enclave type                  $DEPLOYED_ENCLAVE_TYPE"
+	echo "Enclave type:                          $ENCLAVE_TYPE"
 	echo ""
 }
 
@@ -146,7 +154,7 @@ function process-args() {
 
 	IFS=' ' read -ra array <<< "$arg_string"
 	for (( i=0; i < $ARG_SIZE; i++ )); do
-		# echo "Processing arg $i: ${array[i]}"
+		#echo "Processing arg $i: ${array[i]}"
 
 		if [[ ${array[i]} = "-dn" ]]; then
 			DOMAIN_NAME="${array[i+1]}"
@@ -214,6 +222,12 @@ function process-args() {
 		if [[ ${array[i]} = "-loud" ]]; then
 			VERBOSE="${array[i+1]}"
 		fi
+		if [[ ${array[i]} = "-et1 " ]]; then
+			DEPLOYMENT_ENCLAVE_TYPE="${array[i+1]}"
+		fi
+		if [[ ${array[i]} = "-et2" ]]; then
+			DEPLOYED_ENCLAVE_TYPE="${array[i+1]}"
+		fi
 	done
 
 	POLICY_CERT_FILE_NAME=$POLICY_CERT_FILE_NAME.$DOMAIN_NAME
@@ -221,7 +235,8 @@ function process-args() {
 	CRYPTSTORE_NAME=$CRYPTSTORE_NAME.$DOMAIN_NAME
 }
 
-# ----------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------
+
 
 function compile-sev-programs() {
 	echo " "

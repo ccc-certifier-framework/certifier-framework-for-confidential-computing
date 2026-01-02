@@ -55,6 +55,8 @@ fi
 #	OPERATION         			-op 		name
 #	CLEAN             			-clean 		0/1
 #	VERBOSE           			-loud 		0/1
+#       DEPLOYMENT_ENCLAVE_TYPE			-et1		enclave types
+#       DEPLOYED_ENCLAVE_TYPE			-et2		enclave types
 
 function print-options() {
 
@@ -82,6 +84,8 @@ function print-options() {
 	echo "KEY_SERVER_PORT   		-ksp		port number"
 	echo "OPERATION     	   		-op 		operation"
 	echo "CLEAN             		-clean		0/1"
+        echo "DEPLOYMENT_ENCLAVE_TYPE		-et1		enclave types"
+        echo "DEPLOYED_ENCLAVE_TYPE		-et2		enclave types"
 	echo ""
 }
 
@@ -109,6 +113,8 @@ KEY_SERVER_PORT="8120"
 OPERATION=""
 CLEAN=0
 VERBOSE=1
+DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
+DEPLOYED_ENCLAVE_TYPE="simulated-sev"
 
 
 function print-variables() {
@@ -121,7 +127,6 @@ function print-variables() {
 	echo "Policy store file name:                $POLICY_STORE_NAME"
 	echo "Cryptstore file name:                  $CRYPTSTORE_NAME"
 	echo "Program name:                          $PROGRAM_NAME"
-	echo "Enclave type:                          $ENCLAVE_TYPE"
 	echo "Data directory name:                   $DATA_DIR"
 	echo "Encryption Algorithm:                  $SYMMETRIC_ENCRYPTION_ALGORITHM"
 	echo "Public key algorithm:                  $ASYMMETRIC_ENCRYPTION_ALGORITHM"
@@ -137,6 +142,9 @@ function print-variables() {
 	echo "Operation:                             $OPERATION"
 	echo "Clean:                                 $CLEAN"
 	echo "Verbose:                               $VERBOSE"
+	echo "Deployment enclave type                $DEPLOYMENT_ENCLAVE_TYPE"
+	echo "Deployed enclave type                  $DEPLOYED_ENCLAVE_TYPE"
+	echo "Enclave type:                          $ENCLAVE_TYPE"
 	echo ""
 }
 
@@ -144,76 +152,81 @@ function print-variables() {
 arg_string=$*
 function process-args() {
 
-
 	IFS=' ' read -ra array <<< "$arg_string"
 	for (( i=0; i < $ARG_SIZE; i++ )); do
-		# echo "Processing arg $i: ${array[i]}"
+		#echo "Processing arg $i: ${array[i]}"
 
-		if [ ${array[i]} = "-dn" ]; then
+		if [[ ${array[i]} = "-dn" ]]; then
 			DOMAIN_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pkn" ]; then
+		if [[ ${array[i]} = "-pkn" ]]; then
 			POLICY_KEY_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-cfn" ]; then
+		if [[ ${array[i]} = "-cfn" ]]; then
 			POLICY_CERT_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psn" ]; then
+		if [[ ${array[i]} = "-psn" ]]; then
 			POLICY_STORE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-csn" ]; then
+		if [[ ${array[i]} = "-csn" ]]; then
 			CRYPTSTORE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-et" ]; then
+		if [[ ${array[i]} = "-et" ]]; then
 			ENCLAVE_TYPE="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-dd" ]; then
+		if [[ ${array[i]} = "-dd" ]]; then
 			DATA_DIR="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-sea" ]; then
+		if [[ ${array[i]} = "-sea" ]]; then
 			SYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-aen" ]; then
+		if [[ ${array[i]} = "-aen" ]]; then
 			ASYMMETRIC_ENCRYPTION_ALGORITHM="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pn" ]; then
+		if [[ ${array[i]} = "-pn" ]]; then
 			PROGRAM_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-vmn" ]; then
+		if [[ ${array[i]} = "-vmn" ]]; then
 			VM_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-tt" ]; then
+		if [[ ${array[i]} = "-tt" ]]; then
 			TEST_TYPE="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-cut" ]; then
+		if [[ ${array[i]} = "-cut" ]]; then
 			COMPILE_UTILITIES="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ccf" ]; then
+		if [[ ${array[i]} = "-ccf" ]]; then
 			COMPILE_CF="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-pfn" ]; then
+		if [[ ${array[i]} = "-pfn" ]]; then
 			POLICY_FILE_NAME="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psa" ]; then
+		if [[ ${array[i]} = "-psa" ]]; then
 			POLICY_SERVER_ADDRESS="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-psp" ]; then
+		if [[ ${array[i]} = "-psp" ]]; then
 			POLICY_SERVER_PORT="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ksa" ]; then
+		if [[ ${array[i]} = "-ksa" ]]; then
 			KEY_SERVER_ADDRESS="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-ksp" ]; then
+		if [[ ${array[i]} = "-ksp" ]]; then
 			KEY_SERVER_PORT="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-op" ]; then
+		if [[ ${array[i]} = "-op" ]]; then
 			OPERATION="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-clean" ]; then
+		if [[ ${array[i]} = "-clean" ]]; then
 			CLEAN="${array[i+1]}"
 		fi
-		if [ ${array[i]} = "-loud" ]; then
+		if [[ ${array[i]} = "-loud" ]]; then
 			VERBOSE="${array[i+1]}"
+		fi
+		if [[ ${array[i]} = "-et1 " ]]; then
+			DEPLOYMENT_ENCLAVE_TYPE="${array[i+1]}"
+		fi
+		if [[ ${array[i]} = "-et2" ]]; then
+			DEPLOYED_ENCLAVE_TYPE="${array[i+1]}"
 		fi
 	done
 
@@ -223,6 +236,7 @@ function process-args() {
 }
 
 # ------------------------------------------------------------------------------------------
+
 
 function do-fresh() {
   echo " "
