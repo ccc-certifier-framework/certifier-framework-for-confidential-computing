@@ -245,9 +245,9 @@ echo "Arguments processed"
 CLIENT_IN_FILE="./cf_data/client.in"
 CLIENT_OUT_FILE="./cf_data/client.out"
 
-# FIX
 echo ""
 echo "Calling keyclient"
+# FIX --enclave_type=$DEPLOYED_ENCLAVE_TYPE --policy_store_filename=$POLICY_STORE_NAME \
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
     --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
     --print_level=5 \

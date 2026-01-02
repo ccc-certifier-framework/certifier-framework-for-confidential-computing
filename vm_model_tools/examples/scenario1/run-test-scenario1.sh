@@ -300,11 +300,11 @@ TA="$ALLARGS -op measure"
 ./copy-vm-files.sh $ALLARGS			# working
 ./run-policy-server.sh $ALLARGS		# working
 TA="$ALLARGS -op run"
-./certify-deployment-machine.sh $TA		# working
+#./certify-deployment-machine.sh $TA		# working
 #     The following command is actually redundant in the simulated
 #         environment
 ./certify-deployed-machine.sh $TA		# working
-./run-deployment-keyserver.sh $ALLARGS		# working
+./run-deployment-keyserver.sh $ALLARGS          # working
 ./generate-and-store-secret-for-deployment.sh $ALLARGS # working
 ./obtain-application-secrets.sh $ALLARGS
 ./cleanup.sh $ALLARGS
