@@ -94,7 +94,7 @@ POLICY_STORE_NAME="policy_store"
 CRYPTSTORE_NAME="cryptstore"
 PROGRAM_NAME="datica-program"
 ENCLAVE_TYPE="simulated-enclave"
-DATA_DIR="./cf_data"
+DATA_DIR="./"
 SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
 VM_NAME="datica-sample-vm"
@@ -258,7 +258,7 @@ echo "Arguments processed"
 ALLARGS=""
 if [[ $TEST_TYPE = "simulated" ]]; then
 	ALLSIMARG1="-tt simulated -pn scenario1-test -dn dom0"
-	ALLSIMARG2="-clean 1 -loud 1 -dd -cut 1 -ccf 1 -dd ./cf_data"
+	ALLSIMARG2="-clean 1 -loud 1 -dd -cut 1 -ccf 1 -dd ./"
 	ALLSIMARG3="-pkn policy_key_file -cfn policy_cert_file -psn policy_store -csn cryptstore"
 	ALLSIMARG4="-pfn sev_policy.bin -psa localhost -ksa localhost"
 	ALLARGS="$ALLSIMARG1 $ALLSIMARG2 $ALLSIMARG3 $ALLSIMARG4"
@@ -284,8 +284,11 @@ TA="$ALLARGS -op measure"
 ./run-policy-server.sh $ALLARGS		# working
 TA="$ALLARGS -op run"
 ./certify-deployment-machine.sh $TA		# working
-./generate-and-store-secret-for-deployment.sh $ALLARGS # working
+# The following command is actually redundant in the simulated
+#     environment
+./certify-deployed-machine.sh $TA		# working
 ./run-deployment-keyserver.sh $ALLARGS		# working
+./generate-and-store-secret-for-deployment.sh $ALLARGS # working
 ./obtain-application-secrets.sh $ALLARGS
 ./cleanup.sh $ALLARGS
 

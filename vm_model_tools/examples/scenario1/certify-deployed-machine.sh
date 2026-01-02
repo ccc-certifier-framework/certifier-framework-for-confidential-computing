@@ -94,7 +94,7 @@ POLICY_STORE_NAME="policy_store"
 CRYPTSTORE_NAME="cryptstore"
 PROGRAM_NAME="datica-program"
 ENCLAVE_TYPE="simulated-enclave"
-DATA_DIR="./cf_data"
+DATA_DIR="./"
 SYMMETRIC_ENCRYPTION_ALGORITHM="aes-256-gcm"
 ASYMMETRIC_ENCRYPTION_ALGORITHM="RSA-4096"
 VM_NAME="datica-sample-vm"
@@ -234,9 +234,10 @@ fi
 
 pushd $EXAMPLE_DIR
 
-if [[ "$ENCLAVE_TYPE == $ENCLAVE_TYPE ]] ; then
+if [[ $ENCLAVE_TYPE == "simulated-enclave" ]] ; then
 
       echo " "
+      echo "Running"
       echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
         --init_trust=true \
@@ -249,11 +250,10 @@ if [[ "$ENCLAVE_TYPE == $ENCLAVE_TYPE ]] ; then
         --symmetric_key_algorithm=aes-256-gcm  \
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1 \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs
+        --certifier_service_URL=$POLICY_SERVER_ADDRESS \
+        --service_port=$POLICY_SERVER_PORT " --print_level=1 \
+	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs
       echo " "
-
 
       $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
@@ -267,12 +267,13 @@ if [[ "$ENCLAVE_TYPE == $ENCLAVE_TYPE ]] ; then
         --symmetric_key_algorithm=aes-256-gcm  \
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
+        --certifier_service_URL=$POLICY_SERVER_ADDRESS \
         --service_port=8123 --print_level=1
 
       sleep 3
 
       echo " "
+      echo "Running"
       echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
         --init_trust=false \
@@ -286,11 +287,11 @@ if [[ "$ENCLAVE_TYPE == $ENCLAVE_TYPE ]] ; then
         --symmetric_key_algorithm=aes-256-gcm  \
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \
-        --certifier_service_URL=localhost \
-        --service_port=8123" --print_level=1
+        --certifier_service_URL=$POLICY_SERVER_ADDRESS \
+        --service_port=$POLICY_SERVER_PORT --print_level=1"
       echo " "
       echo " Alternatively add \
-	--trust_anchors=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1/cf_data/my_certs"
+	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs"
       echo " "
 
 fi
