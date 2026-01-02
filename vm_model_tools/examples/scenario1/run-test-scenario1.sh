@@ -114,7 +114,7 @@ OPERATION=""
 CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
-DEPLOYED_ENCLAVE_TYPE="sev"
+DEPLOYED_ENCLAVE_TYPE="sev-enclave"
 
 
 function print-variables() {
@@ -276,7 +276,7 @@ if [[ $TEST_TYPE = "simulated" ]]; then
 	ALLSIMARG2="-clean 1 -loud 1 -dd -cut 1 -ccf 1 -dd ./"
 	ALLSIMARG3="-pkn policy_key_file -cfn policy_cert_file -psn policy_store -csn cryptstore"
 	ALLSIMARG4="-pfn policy.bin -psa localhost -ksa localhost"
-	ALLSIMARG5="-vmn pauls_vm -et1 simulated-enclave -et2 sev"
+	ALLSIMARG5="-vmn pauls_vm -et1 simulated-enclave -et2 sev-enclave"
 	ALLARGS="$ALLSIMARG1 $ALLSIMARG2 $ALLSIMARG3 $ALLSIMARG4 $ALLSIMARG5
 "
 else

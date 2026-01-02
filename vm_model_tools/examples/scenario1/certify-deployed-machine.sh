@@ -244,7 +244,7 @@ echo "Arguments processed"
 if [[ $VERBOSE -eq 1 ]]; then                   
         print-variables 
 fi
-
+# FIX
 echo " "
 echo "Running"
 echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \

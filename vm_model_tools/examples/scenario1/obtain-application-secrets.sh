@@ -245,6 +245,7 @@ echo "Arguments processed"
 CLIENT_IN_FILE="./cf_data/client.in"
 CLIENT_OUT_FILE="./cf_data/client.out"
 
+# FIX
 echo ""
 echo "Calling keyclient"
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
