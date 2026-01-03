@@ -292,7 +292,6 @@ function process-args() {
 
 # ------------------------------------------------------------------------------------------
 
-
 echo "Processing arguments"
 process-args
 echo "Arguments processed"
@@ -320,16 +319,15 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
 	--trust_anchors=$EXAMPLE_DIR/cf_data/my_certs
 echo " "
 
-# FIX --enclave_type=$DEPLOYED_ENCLAVE_TYPE \
 $CERTIFIER_ROOT/vm_model_tools/src/cf_utility.exe \
         --cf_utility_help=false \
         --init_trust=true \
         --print_cryptstore=true \
-        --enclave_type=$ENCLAVE_TYPE \
+        --enclave_type=$DEPLOYED_ENCLAVE_TYPE \
         --policy_domain_name=$DOMAIN_NAME \
         --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-        --policy_store_filename=$POLICY_STORE_NAME \
-        --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+        --policy_store_filename=$DEPLOYED_POLICY_STORE_NAME \
+        --encrypted_cryptstore_filename=$DEPLOYED_CRYPTSTORE_NAME \
         --symmetric_key_algorithm=aes-256-gcm  \
         --public_key_algorithm=rsa-2048 \
         --data_dir="$EXAMPLE_DIR/" \

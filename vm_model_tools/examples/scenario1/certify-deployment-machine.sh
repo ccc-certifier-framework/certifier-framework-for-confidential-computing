@@ -310,8 +310,8 @@ function do-run() {
 	  --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE \
 	  --policy_domain_name=$DOMAIN_NAME \
 	  --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-	  --policy_store_filename=$POLICY_STORE_NAME \
-	  --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+	  --policy_store_filename=$DEPLOYMENT_POLICY_STORE_NAME \
+	  --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \
 	  --symmetric_key_algorithm=aes-256-gcm  \
 	  --public_key_algorithm=rsa-2048 \
 	  --data_dir="$EXAMPLE_DIR/" \
@@ -328,8 +328,8 @@ function do-run() {
 	  --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE  \
 	  --policy_domain_name=$DOMAIN_NAME \
 	  --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-	  --policy_store_filename=$POLICY_STORE_NAME \
-	  --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+	  --policy_store_filename=$DEPLOYMENT_POLICY_STORE_NAME \
+	  --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \
 	  --symmetric_key_algorithm=aes-256-gcm  \
 	  --public_key_algorithm=rsa-2048 \
 	  --data_dir="$EXAMPLE_DIR/" \
@@ -348,8 +348,8 @@ function do-run() {
 	  --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE  \
 	  --policy_domain_name=$DOMAIN_NAME \
 	  --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-	  --policy_store_filename=$POLICY_STORE_NAME \
-	  --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+	  --policy_store_filename=$DEPLOYMENT_POLICY_STORE_NAME \
+	  --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \
 	  --symmetric_key_algorithm=aes-256-gcm  \
 	  --public_key_algorithm=rsa-2048 \
 	  --data_dir='$EXAMPLE_DIR/' \
@@ -370,8 +370,8 @@ function do-run() {
 	  --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE \
 	  --policy_domain_name=$DOMAIN_NAME \
 	  --policy_key_cert_file=$POLICY_CERT_FILE_NAME \
-	  --policy_store_filename=$POLICY_STORE_NAME \
-	  --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+	  --policy_store_filename=$DEPLOYMENT_POLICY_STORE_NAME \
+	  --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \
 	  --symmetric_key_algorithm=aes-256-gcm  \
 	  --public_key_algorithm=rsa-2048 \
 	  --data_dir="$EXAMPLE_DIR/" \

@@ -346,7 +346,7 @@ echo ""
 echo "Running consolidated test with $ALLARGS"
 echo ""
 
-./build-certifier.sh $ALLARGS			# working
+#./build-certifier.sh $ALLARGS			# working
 ./provision-keys.sh $ALLARGS			# working
 ./copy-files-test-simulated-sev.sh $ALLARGS	# working
 ./build-vm.sh $ALLARGS			# working
@@ -358,7 +358,7 @@ TA="$ALLARGS -op measure"
 ./copy-vm-files.sh $ALLARGS			# working
 ./run-policy-server.sh $ALLARGS		# working
 TA="$ALLARGS -op run"
-#./certify-deployment-machine.sh $TA		# working
+./certify-deployment-machine.sh $TA		# working
 #     The following command is actually redundant in the simulated
 #         environment
 ./certify-deployed-machine.sh $TA		# working
