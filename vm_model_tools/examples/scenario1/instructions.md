@@ -44,7 +44,7 @@ Almost all the variables are set within run-test-scenario1.sh.  To run it from s
 in the simulated sev environment type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 1 -loud 1
 ```
 
 The three variable have the following effect:
@@ -58,18 +58,25 @@ After you run the first time, you need not compile the certifier or install the 
 you can run the test by typing:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -loud 1
 ```
 
 This saves considerable time.  You can also type:
 
 ```shell
-    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 0
+    ./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 0 -loud 1
 ```
 
 which, does not regenerate policy keys and certificates.
 
 Since the device driver can only be accessed by root, you should run as root when you type these commands.
+
+All the subcomands can be called from the command line, provided you supply the
+needed arguments. ./run-test-scenario1.sh provides ALL the arguments needed by
+ALL the programs so you can economize by txamining the scripts.  Some are easy.
+Sore example, ./cleanup.sh can be called with no arguments.  It is not described
+in Sevprovisioning; it kills running simpleserver instances and keyserver
+instances so it is useful if the script aborts.
 
 You can clean all the test data and configuration files by typing:
 

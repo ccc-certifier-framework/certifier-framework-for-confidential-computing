@@ -61,8 +61,9 @@ echo "$CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=
     --resource_name=key-client-test-key --version=0 \
     --input_format=raw --output_format=raw \
     --input_file=$CLIENT_IN_FILE --output_file=$CLIENT_OUT_FILE --action=retrieve"
+
 $CERTIFIER_ROOT/vm_model_tools/src/cf_key_client.exe --policy_domain_name=$DOMAIN_NAME \
-    --encrypted_cryptstore_filename=$CRYPTSTORE_NAME \
+    --encrypted_cryptstore_filename=$DEPLOYMENT_CRYPTSTORE_NAME \
     --print_level=5 \
     --enclave_type=$DEPLOYMENT_ENCLAVE_TYPE \
     --policy_store_filename=$DEPLOYMENT_POLICY_STORE_NAME \
