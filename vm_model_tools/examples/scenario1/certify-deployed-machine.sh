@@ -68,7 +68,6 @@ function print-options() {
 	echo "POLICY_STORE_NAME		-psn		name"
 	echo "CRYPTSTORE_NAME			-csn		name"
 	echo "DOMAIN_NAME			-dn		name"
-	echo "ENCLAVE_TYPE			-et		enclave type"
 	echo "DATA_DIR			-dd		directory"
 	echo "SYMMETRIC_ENCRYPTION_ALGORITHM	-sea		alg name (see certifier)"
 	echo "ASYMMETRIC_ENCRYPTION_ALGORITHM	-aen		alg name (see certifier)"
@@ -84,8 +83,17 @@ function print-options() {
 	echo "KEY_SERVER_PORT   		-ksp		port number"
 	echo "OPERATION     	   		-op 		operation"
 	echo "CLEAN             		-clean		0/1"
+	echo "ENCLAVE_TYPE			-et		enclave type"
         echo "DEPLOYMENT_ENCLAVE_TYPE		-et1		enclave types"
         echo "DEPLOYED_ENCLAVE_TYPE		-et2		enclave types"
+        echo "DEPLOYMENT_PROGRAM_NAME		-pn1		deployment program name"
+        echo "DEPLOYED_PROGRAM_NAME		-pn2		deployment progran name"
+	echo "DEPLOYMENT_DATA_DIR		-dd1		deployment data directory"
+	echo "DEPLOYED_DATA_DIR			-dd2		deployed data directory"
+	echo "DEPLOYMENT_POLICY_STORE_NAME	-psn1		deployment policy file name"
+	echo "DEPLOYED_POLICY_STORE_NAME	-psn2		deployed policy store name"
+	echo "DEPLOYMENT_CRYPTSTORE_NAME	-csn1		deployment cryptstore name"
+	echo "DEPLOYED_CRYPTSTORE_NAME		-csn2		deployed cryptstore name"
 	echo ""
 }
 
@@ -115,6 +123,14 @@ CLEAN=0
 VERBOSE=1
 DEPLOYMENT_ENCLAVE_TYPE="simulated-enclave"
 DEPLOYED_ENCLAVE_TYPE="sev-enclave"
+DEPLOYMENT_PROGRAM_NAME=""
+DEPLOYED_PROGRAM_NAME=""
+DEPLOYMENT_DATA_DIR=""
+DEPLOYED_DATA_DIR=""
+DEPLOYMENT_POLICY_STORE_NAME=""
+DEPLOYED_POLICY_STORE_NAME=""
+DEPLOYMENT_CRYPTSTORE_NAME=""
+DEPLOYED_CRYPTSTORE_NAME=""
 
 
 function print-variables() {
@@ -142,9 +158,15 @@ function print-variables() {
 	echo "Operation:                             $OPERATION"
 	echo "Clean:                                 $CLEAN"
 	echo "Verbose:                               $VERBOSE"
+	echo "Enclave type:                          $ENCLAVE_TYPE"
 	echo "Deployment enclave type                $DEPLOYMENT_ENCLAVE_TYPE"
 	echo "Deployed enclave type                  $DEPLOYED_ENCLAVE_TYPE"
-	echo "Enclave type:                          $ENCLAVE_TYPE"
+	echo "Deployment data directory              $DEPLOYMENT_DATA_DIR"
+	echo "Deployed data directory                $DEPLOYED_DATA_DIR"
+	echo "Deployment policy store name           $DEPLOYMENT_POLICY_STORE_NAME"
+	echo "Deployed policy store directory        $DEPLOYED_POLICY_STORE_NAME"
+	echo "Deployment cryptstore name             $DEPLOYMENT_CRYPTSTORE_NAME"
+	echo "Deployed cryptstore name               $DEPLOYED_CRYPTSTORE_NAME"
 	echo ""
 }
 
@@ -228,14 +250,48 @@ function process-args() {
 		if [[ ${array[i]} = "-et2" ]]; then
 			DEPLOYED_ENCLAVE_TYPE="${array[i+1]}"
 		fi
+		if [[ ${array[i]} = "-dd1" ]]; then
+			DEPLOYMENT_DATA_DIR="${array[i+1]}"
+		fi
+		if [[ ${array[i]} = "-dd2" ]]; then
+			DEPLOYED_DATA_DIR="${array[i+1]}"
+		fi
+		if [[ ${array[i]} = "-psn1" ]]; then
+			DEPLOYMENT_POLICY_STORE_NAME="${array[i+1]}"
+		fi
+		if [[ ${array[i]} = "-psn2" ]]; then
+			DEPLOYED_POLICY_STORE_NAME="${array[i+1]}"
+		fi
+		if [[ ${array[i]} = "-csn1" ]]; then
+			DEPLOYMENT_CRYPTSTORE_NAME="${array[i+1]}"
+		fi
+		if [[ ${array[i]} = "-csn2" ]]; then
+			DEPLOYED_CRYPTSTORE_NAME="${array[i+1]}"
+		fi
 	done
 
 	POLICY_CERT_FILE_NAME=$POLICY_CERT_FILE_NAME.$DOMAIN_NAME
 	POLICY_STORE_NAME=$POLICY_STORE_NAME.$DOMAIN_NAME
 	CRYPTSTORE_NAME=$CRYPTSTORE_NAME.$DOMAIN_NAME
+        if [[ $DEPLOYMENT_ENCLAVE_TYPE != $DEPLOYED_ENCLAVE_TYPE ]]; then
+	    DEPLOYMENT_DATA_DIR="$DATA_DIR.deployment"
+	    DEPLOYED_DATA_DIR="$DATA_DIR.deployed"
+            DEPLOYMENT_POLICY_STORE_NAME="$POLICY_STORE_NAME.deployment"
+            DEPLOYED_POLICY_STORE_NAME="$POLICY_STORE_NAME.deployed"
+	    DEPLOYMENT_CRYPTSTORE_NAME="$CRYPTSTORE_NAME.deployment"
+	    DEPLOYED_CRYPTSTORE_NAME="$CRYPTSTORE_NAME.deployed"
+        else
+	    DEPLOYMENT_DATA_DIR="$DATA_DIR"
+	    DEPLOYED_DATA_DIR="$DATA_DIR"
+            DEPLOYMENT_POLICY_STORE_NAME="$POLICY_STORE_NAME"
+            DEPLOYED_POLICY_STORE_NAME="$POLICY_STORE_NAME"
+	    DEPLOYMENT_CRYPTSTORE_NAME="$CRYPTSTORE_NAME"
+	    DEPLOYED_CRYPTSTORE_NAME="$CRYPTSTORE_NAME"
+        fi
 }
 
 # ------------------------------------------------------------------------------------------
+
 
 echo "Processing arguments"
 process-args
