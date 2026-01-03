@@ -346,7 +346,7 @@ echo ""
 echo "Running consolidated test with $ALLARGS"
 echo ""
 
-#./build-certifier.sh $ALLARGS			# working
+./build-certifier.sh $ALLARGS			# working
 ./provision-keys.sh $ALLARGS			# working
 ./copy-files-test-simulated-sev.sh $ALLARGS	# working
 ./build-vm.sh $ALLARGS			# working
