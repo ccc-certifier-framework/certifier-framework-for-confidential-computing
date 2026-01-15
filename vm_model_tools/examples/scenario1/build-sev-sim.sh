@@ -18,7 +18,9 @@ function compile-sev-programs() {
 
 	cd $CERTIFIER_ROOT/sev-snp-simulator
 	if [[ $CLEAN -eq 1 ]]; then
-		sudo make rmmod sevnull
+		if lsmod | grep -wq "sevnull"; then
+			sudo make rmmod sevnull
+		fi
 	fi
 	make clean
 	make
