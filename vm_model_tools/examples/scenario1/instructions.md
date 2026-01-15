@@ -95,4 +95,14 @@ or device driver but you need to do everything else, by typing:
 
 If you installed the device driver (sev_null) before running the scripts, you do not need "-bss 1".
 
+One more thing: If you run a test that fails and you want to cleanup, you should run:
+
+```shell
+    ./cleanup.sh
+    ./clean-files.sh
+```
+
+This removes the application files from the last run and kills the server processes used in the
+test.  If you don't do this, subsequent test may not be able to open the ports needed for the tests.
+
 The scripts do not build a VM yet.  Stay tuned for more information on that.
