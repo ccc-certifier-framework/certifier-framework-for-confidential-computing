@@ -66,10 +66,10 @@ echo ""
 if [[ $COMPILE_CF -eq 1 ]]; then
 	./build-certifier.sh $ALLARGS		# working
 fi
+./build-sev-sim.sh $ALLARGS			# working
 if [[ $PROVISION_KEYS -eq 1 ]]; then
 	./provision-keys.sh $ALLARGS		# working
 fi
-./build-sev-sim.sh $ALLARGS			# working
 ./build-vm.sh $ALLARGS				# working
 TA="$ALLARGS -op measure"
 ./measure-programs.sh $TA			# working
