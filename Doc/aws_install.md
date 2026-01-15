@@ -26,7 +26,7 @@ Install the static checking tool, if needed:
 	sudo apt install -y cppcheck
 ```
 
-Install tools for swigging, etc if needed:
+(Skip this sstep) Install tools for swigging, etc, if needed:
 
 ```shell
 	sudo apt install -y python3 pylint
@@ -46,10 +46,15 @@ Get certifier repository:
 	cd certifier-framework-for-confidential-computing
 ```
 
-Compile certifier tests as a check:
+Set the Certifier root directory:
 
 ```shell
 	export CERTIFIER_ROOT="/home/ubuntu/src/github.com/certifier-framework-for-confidential-computing"
+```
+
+Compile certifier tests as a check:
+
+```shell
 	cd $CERTIFIER_ROOT
 	cd src
 	make -f certifier_tests.mak
@@ -61,3 +66,13 @@ Run the tests:
 	./certifier_tests.exe --print_all=true
 ```
 
+Now let's build the vm_model_tools and examples:
+
+```shell
+	cd $CERTIFIER_ROOT
+	sudo bash
+	export CERTIFIER_ROOT="/home/ubuntu/src/github.com/certifier-framework-for-confidential-computing"
+	export EXAMPLE_DIR=$CERTIFIER_ROOT/vm_model_tools/examples/scenario1
+	cd $EXAMPLE_DIR
+	./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -pk 1 -loud 1
+```
