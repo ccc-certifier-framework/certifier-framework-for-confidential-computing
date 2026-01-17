@@ -1,5 +1,7 @@
 #!/bin/bash
-
+ if lsmod | grep -wq "sevnull"; then
+                sudo make rmmod sevnull
+        fi
 # ############################################################################
 # build-sev-sim.sh
 # ############################################################################
@@ -18,7 +20,7 @@ function compile-sev-programs() {
 
 	cd $CERTIFIER_ROOT/sev-snp-simulator
 	if lsmod | grep -wq "sevnull"; then
-		sudo make rmmod sevnull
+		rmmod sevnull
 	fi
 	make clean
 	make
