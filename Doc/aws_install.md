@@ -21,20 +21,30 @@ After creating an Ubuntu AWS instance and sshing into it, proceed as follows.
 ```shell
 	sudo apt update -y
 	sudo apt upgrade -y
-	sudo apt install "Development Tools"
-	sudo apt install g++
+    sudo apt install -y build-essential
 ```
 
-If this doesn't work, try using "sudo apt install build-essential" (see the notes in the final
-section below).
+Make sure g++ was installed.  If not,
 
-Install the additional development tools as follows (This is required):
+```shell
+	sudo apt install -y g++
+```
+
+If git, cmake or vim is not installed, you might want to install them.
+
+```shell
+	sudo apt install -y git
+	sudo apt install -y cmake
+	sudo apt install -y vim
+```
+
+Next, install the additional development tools as follows (This is required):
 
 ```shell
 	sudo apt install -y clang-format libgtest-dev libgflags-dev openssl libssl-dev protobuf-compiler protoc-gen-go golang-go cmake uuid-dev
 ```
 
-Install the static checking tool, if needed:
+Finally, install the static checking tool, if needed:
 
 ```shell
 	sudo apt install -y cppcheck
@@ -43,7 +53,7 @@ Install the static checking tool, if needed:
 ## Step 2 Install tools for swigging
 
 This step is not needed for vm_model_tools and you should skip it.  It may be useful in rare cases
-later but can cause problems.
+later but it can cause problems on some distros.
 
 ```shell
 	sudo apt install -y python3 pylint
@@ -67,7 +77,9 @@ Download the Certifier Framework from github.
 
 ## Step 4 - Set the Certifier root directory
 
-The actual full directory name is VM dependant.  For the Ubuntu instance I used, the following works.
+Next, set a shell variable to point to the certifier root directory.
+The actual full root certifier directory name is VM dependant.
+For the Ubuntu instance I used, the following works.
 
 ```shell
 	export CERTIFIER_ROOT="/home/ubuntu/src/github.com/certifier-framework-for-confidential-computing"
@@ -104,44 +116,43 @@ in use.
 	./run-test-scenario1.sh  -tt simulated -bss 1 -ccf 1 -pk 1 -loud 1
 ```
 
-## Notes on installation variations (especially related to development tools)
+Compiling the certifier is time consuming.  If a script fails after the certifier is built
+or you want to start again, and skip recompiling the certifier stuff, I suggest running:
+
+```shell
+    ./cleanup.sh
+    ./clean-files.sh
+	./run-test-scenario1.sh -tt simulated -bss 1 -ccf 0 -pk 1 -loud 1
+```
+
+cleanup.sh kills old service processes (for the certifier and key server).
+clean-files.sh removes application files.
+
+Similarly, once the sev builds simulator successfully, you need not rebuld it.
+In that case, run:
+
+```shell
+    ./cleanup.sh
+    ./clean-files.sh
+	./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 1 -loud 1
+```
+You can see if the simulator is installed by searching the output of lsmod
+for sevnull.
+
+
+## Notes
 
 The instructions above were tested on a standard AWS Ubuntu VM image but differences between Linux VM's
-have caused problems.
+have caused problems.  Red hat uses "yum" instad of "apt."  "dnf" is the later version of yum.
 
-Some VM contain the basic development tools already (The stuff installed by build-essential" below).
-
-If the command 'sudo apt install "Development Tools"' fails, there are numerous alternatives.
-For example, on Red Hat distributions "yum" replaces apt.  In the future I'll try and find a set of
-commands that run on all VM's, if such a thing is possible.  In the meanwhile, here is some first aid.
-
-If 'sudo apt install "Development Tools"' fails, and dnf is installed, try:
+Some AWS instructions suggest running:
 
 ```shell
-sudo dnf update
-sudo dnf group install "Development Tools"
+sudo apt install "Development Tools"
 ```
+or the yum equivalent.  It worked for me but fails on a lot of VMs.
 
-"dnf" stands for "dandified yum" (go figure).
+Some VMs already contain the basic development tools already (The stuff installed by build-essential).
 
-
-If that doesn't work, try installing the build essential tools and then individual tools.
-Build-essentials is supposed to include the base gcc, make and things you need to build.
-
-```shell
-	sudo apt update -y
-        sudo apt upgrade
-	sudo apt install build-essential
-```
-
-You may have to install individual packages.  For example,
-
-```shell
-	sudo apt install g++
-	sudo apt install git
-	sudo apt install cmake
-	sudo apt install vim
-```
-
-Stay tuned for definitive alternatives.  Please let me know if you encounter problems or have suggestions.
+Please let me know if you encounter problems or have suggestions.
 
