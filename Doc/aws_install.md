@@ -21,7 +21,7 @@ After creating an Ubuntu AWS instance and sshing into it, proceed as follows.
 ```shell
 	sudo apt update -y
 	sudo apt upgrade -y
-    sudo apt install -y build-essential
+	sudo apt install -y build-essential
 ```
 
 Make sure g++ was installed.  If not,
@@ -120,8 +120,8 @@ Compiling the certifier is time consuming.  If a script fails after the certifie
 or you want to start again, and skip recompiling the certifier stuff, I suggest running:
 
 ```shell
-    ./cleanup.sh
-    ./clean-files.sh
+	./cleanup.sh
+	./clean-files.sh
 	./run-test-scenario1.sh -tt simulated -bss 1 -ccf 0 -pk 1 -loud 1
 ```
 
@@ -132,8 +132,8 @@ Similarly, once the sev builds simulator successfully, you need not rebuld it.
 In that case, run:
 
 ```shell
-    ./cleanup.sh
-    ./clean-files.sh
+	./cleanup.sh
+	./clean-files.sh
 	./run-test-scenario1.sh  -tt simulated -bss 0 -ccf 0 -pk 1 -loud 1
 ```
 You can see if the simulator is installed by searching the output of lsmod
