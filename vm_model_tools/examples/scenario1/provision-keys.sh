@@ -53,6 +53,8 @@ function do-make-keys() {
 		mv sev_ark_cert.der ark_cert.der
 		mv sev_ask_cert.der ask_cert.der
 		mv sev_vcek_cert.der vcek_cert.der
+
+		cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data
 	popd
 
 echo "do-make-keys done"

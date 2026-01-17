@@ -29,26 +29,6 @@ function compile-sev-programs() {
 	echo " "
 }
 
-function do-copy-sev-files() {
-	echo " "
-	echo "do-copy-sev-files"
-      
-	if [[ ! -e "$EXAMPLE_DIR/provisioning" ]] ; then
-		mkdir $EXAMPLE_DIR/provisioning
-	fi
-	if [[ ! -e "$EXAMPLE_DIR/service" ]] ; then
-		mkdir $EXAMPLE_DIR/service
-	fi
-	if [[ ! -e "$EXAMPLE_DIR/cf_data" ]] ; then
-		mkdir $EXAMPLE_DIR/cf_data
-	fi
-	pushd $EXAMPLE_DIR/provisioning
-		cp -p ark_cert.der ask_cert.der vcek_cert.der $EXAMPLE_DIR/cf_data
-	popd
-	echo "do-copy-sev-files done"
-	echo " "
-}
-
 # ------------------------------------------------------------------------------------------
 
 echo "Processing arguments"
@@ -62,7 +42,5 @@ fi
 if [[ $BUILD_SEV_SIMULATOR -eq 1 ]]; then
 	compile-sev-programs
 fi
-do-copy-sev-files
-
-echo "simulator compiled and files copied"
+echo "simulator compiled"
 echo ""
