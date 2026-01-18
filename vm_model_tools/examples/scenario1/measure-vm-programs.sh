@@ -9,6 +9,10 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
+# This script measures the deployed vm in a real sev test using the
+# sev-snp-measure tool.
+# This script is currently incomplete and untested.
+
 # ------------------------------------------------------------------------------------------
 
 
@@ -21,7 +25,7 @@ function do-fresh() {
         fi
         pushd $EXAMPLE_DIR/provisioning
                 if [[ -f "Pauls_vm.measurement" ]] ; then
-                        rm Pauls_vm.measuremen
+                        rm Pauls_vm.measurement
                 fi
         popd
         echo "do-fresh done"

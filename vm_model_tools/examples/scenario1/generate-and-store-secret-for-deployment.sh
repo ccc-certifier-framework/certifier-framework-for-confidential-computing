@@ -10,6 +10,10 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
+# This script generates a secret with the tag key-client-test-key.   It then
+# contacts the key server service (over a secure channel, see the key server description)
+# to store the new key so it can be retrieved by others.
+
 # ------------------------------------------------------------------------------------------
 
 echo ""

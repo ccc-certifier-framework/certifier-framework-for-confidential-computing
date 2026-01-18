@@ -9,6 +9,36 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
+# This script calls a number of subordinate scripts to build the certifier, utilities
+# and vm_model_tools and applications as well as the simulated-enclave and sev
+# simulator.  It then generates keys and policy to run the "scenario1" example,
+# which distributes symmetric keys from a deployment environment to a deployed
+# environment.  It is a "one step" end-to-end test for scenario1.
+#
+# Throughout this example, $CERTIFIER_ROOT is the directory the certifier was cloned into,
+# ~/src/github.com/ccc-certifier-framework/certifier-framework-for-confidential-computing in
+# this case.
+# $EXAMPLE_DIR is the application directory for the test,
+#    $CERTIFIER_ROOT/vm_model_tools/examples/scenario1 in this case.
+#
+# This script and the subscripts it calls employ a number of parameters that affect the
+# processing, for example, specifying the deployment and deployed enclave and
+# environments.  The arguments are set below and the file "./arg-processing.inc"
+# processes the arguments fot this script and all the subscripts.   Each subscript
+# corresponds to a well encapsulated step of the "Certifier Tao."
+#
+# For out example,
+# 	$EXAMPLE_DIR will contain the policy and cryptstore for the deployment and
+# 	deployed environment.
+# 	The $EXAMPLE_DIR/provisioning directory contains all the files generated for
+# 	the test.
+# 	The $EXAMPLE_DIR/service directory contains all the files required for
+# 	the certifier sevice.
+# 	The $EXAMPLE_DIR/cf_data directory contains all the application data for
+# 	the application.
+
+
+
 # ------------------------------------------------------------------------------------------
 
 

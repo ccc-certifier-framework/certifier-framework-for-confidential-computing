@@ -9,6 +9,17 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
+# This script calls the certifier service to certify the deployed
+# environment.  In the case of the simulated sev, the thing certified
+# is the predefined measurement in the simulator.  If the deployed environment
+# is an real VM, # it would certify a VM based on the VM measurement.
+# As for the deployment environemnt, the client here generates a public private keypair
+# (stored in the deployed policy store) called its authentication key pair.
+# A successful # certification results in "Admissions certificate" which is stored in both
+# the policy store and keystore.  Both the private key and the Admissions
+# Certificate are used to open and authenticated secure channel to other
+# certified environments in this security domain.
+
 # ------------------------------------------------------------------------------------------
 
 echo "Processing arguments"

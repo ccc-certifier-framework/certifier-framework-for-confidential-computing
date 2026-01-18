@@ -9,8 +9,15 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
-# ------------------------------------------------------------------------------------------
+# This script runs the key server (cf_key_server) in the deployment environment.
+# The key server is an API attached http service which listens for requests.
+# When a request is received, the key server open an autheticated encrypted
+# channel withthe requestor using the VM private key and Admissions Certificate.
+# It accepts, among other things, requests to store new secrets or retrieve
+# and transmit existing secrets. Secrets are stored in the (deployment)
+# cryptstore.
 
+# ------------------------------------------------------------------------------------------
 
 echo "Processing arguments"
 process-args

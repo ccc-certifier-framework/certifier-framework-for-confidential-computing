@@ -9,6 +9,17 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
+# This script calls the certifier service to certify the deployment
+# environment.  In the case of the simulated enclave, the thing certified
+# is cf_utility.exe.  If the deployment environment is an entire VM,
+# it would certify a VM based on its measurement.  In all cases here,
+# the client here generates a public private keypair (stored in the deployment
+# policy store) called its authentication key pair .  A successful
+# certification results in "Admissions certificate" which is stored in both
+# the policy store and keystore.  Both the private key and the Admissions
+# Certificate are used to open and authenticated secure channel to other
+# certified environments in this security domain.
+
 # -----------------------------------------------------------------------------------------------
 
 function do-run() {

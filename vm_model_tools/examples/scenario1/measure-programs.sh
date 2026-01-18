@@ -11,6 +11,12 @@ source ./arg-processing.inc
 
 # ------------------------------------------------------------------------------------------
 
+# This script measures the programs that can run under the simulated enclave,
+# namely, cf_utility.exe.  The measurement is a hash for the simulated enclave
+# environment and a fixed measurement in the sev simulator fir the simulated
+# sev environment.  The measurements are stored in the provisiong directory
+# in cf_utility.measurement and sev_cf_utility.measurement.
+
 
 function do-fresh() {
 	echo " "

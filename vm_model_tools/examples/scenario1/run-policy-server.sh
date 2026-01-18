@@ -9,8 +9,11 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
-# ------------------------------------------------------------------------------------------
+# This script runs the certifier service using the policy generated earlier
+# (in the service directory).  It runs as an http service and waits for
+# requests.
 
+# ------------------------------------------------------------------------------------------
 
 function run-policy-server() {
 	echo " "

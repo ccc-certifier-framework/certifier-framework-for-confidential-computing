@@ -4,6 +4,10 @@
 # clean-files.sh, Removes data files created by run
 #########################################################
 
+# This script removes the policy stores, cryptstores and application
+# and service data used by the tests.  Run this first if you
+# want to restart tests.
+
 echo "Removing runtime data files"
 rm policy_store.dom0* cryptstore.dom0*
 pushd provisioning

@@ -11,8 +11,11 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
-# ------------------------------------------------------------------------------------------
+# This subscript builds the sev simulator (in $/CERTIFIER_ROOT/sev-snp-simulator).
+# It produces and installs a loadable driver module (sevnull) and generates the
+# simulated environments signing key.
 
+# ------------------------------------------------------------------------------------------
 
 function compile-sev-programs() {
 	echo " "

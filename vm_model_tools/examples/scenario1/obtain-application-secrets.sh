@@ -9,6 +9,10 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
+# This script uses cf_key_client to contact a key server and retrieve
+# a secret previously stored.  Again, this happend over an http API mediated
+# secure channel establised using certifier credentials.
+
 # ------------------------------------------------------------------------------------------
 
 

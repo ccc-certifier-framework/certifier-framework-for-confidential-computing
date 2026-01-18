@@ -9,6 +9,10 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
+# This script builds the policy employed by simpleserver to certify applications
+# or VM's.  It uses the policy-key and measurements generated earlier as well
+# as the (simulated or real) ark cert.
+
 # ------------------------------------------------------------------------------------------
 
 function do-make-policy() {

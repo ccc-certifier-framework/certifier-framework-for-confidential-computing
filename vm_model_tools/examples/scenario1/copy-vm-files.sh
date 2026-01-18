@@ -9,6 +9,10 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
+# This script copies the files needed in the deploed vm to locations
+# used to build the VM.
+# This script is currently incomplete and untested.
+
 # ------------------------------------------------------------------------------------------
 
 

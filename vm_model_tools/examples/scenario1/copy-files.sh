@@ -9,6 +9,9 @@ Me=$(basename "$0")
 
 source ./arg-processing.inc
 
+# This script copies file from the provisioning directory to the
+# locations used at run-time.
+
 # ------------------------------------------------------------------------------------------
 
 

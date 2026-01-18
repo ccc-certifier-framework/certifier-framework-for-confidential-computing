@@ -11,6 +11,10 @@ source ./arg-processing.inc
 
 # ------------------------------------------------------------------------------------------
 
+# This script builds the certifier framework, the utilities (for generating keys and policy),
+# the vm_model_tool (in $CERTIFIER_ROOT/vm_model_tools/src), and the key server (cf_key_server)
+# key client programs (cf_key_client) used to distribute and request keys.  It also compiles
+# the Certifier Service (simpleserver).
 
 function do-fresh() {
   echo " "
