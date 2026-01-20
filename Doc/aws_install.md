@@ -148,7 +148,7 @@ have caused problems.  Red hat uses "yum" instad of "apt."  "dnf" is the later v
 Some AWS instructions suggest running:
 
 ```shell
-sudo apt install "Development Tools"
+	sudo apt install "Development Tools"
 ```
 or the yum equivalent.  It worked for me but fails on a lot of VMs.
 
