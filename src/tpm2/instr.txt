@@ -1,0 +1,65 @@
+Enable secure extensions in bios
+
+apt-get install trousers
+apt-get install libtspi-dev
+apt-get install tpm-tools
+apt-get install tcm
+
+https://help.ubuntu.com/community/Grub2/Setup#Configuring_GRUB_2
+
+BIOS: Enable "Platform Trust Technology"
+Boot kernel
+dmesg | grep -i tpm  # Look for ACPI: TPM2 0x...
+lsmod | grep -i tpm  # Look for tpm_crb
+
+/home/jlm$ sudo ./tpm2-utils-master/tpm2-test vendor_string_1 | hd
+[sudo] password for jonmccune:
+00000000  80 01 00 00 00 1b 00 00  00 00 01 00 00 00 06 00  |................|
+00000010  00 00 01 00 00 01 06 49  6e 74 65                 |.......Inte|
+0000001b
+
+# ./tpm2-utils-master/tpm2-test /dev/tpm0 vendor_string_1 | hd
+00000000  80 01 00 00 00 1b 00 00  00 00 01 00 00 00 06 00  |................|
+00000010  00 00 01 00 00 01 06 49  6e 74 65                 |.......Inte|
+0000001b
+
+root@Fermat:/home/jlm/TPM2.0-TSS-master# make clean; make all
+
+root@Fermat:/home/jlm/TPM2.0-TSS-master# find . -executable -type f
+./resourcemgr/debug/resourcemgr
+./resourcemgr/release/resourcemgr
+./test/tpmclient/debug/tpmclient
+./test/tpmclient/release/tpmclient
+./test/tpmclient/release/tpmclient
+get TPM2.0-TSS-master
+cd TPM2.0-TSS-master
+make clean; make all
+
+
+TERMINAL 1:
+root@Fermat:/home/jlm/TPM2.0-TSS-master# ./resourcemgr/debug/resourcemgr
+
+TERMINAL 2:
+jonmccune@Fermat:/home/jlm/TPM2.0-TSS-master$ ./test/tpmclient/debug/tpmclient
+
+insmod multiboot
+insmod multiboot2
+insmod relocator
+
+at grub> normal
+
+
+menuentry 'tboot + Linux vmlinuz-4.0.0-040000-generic' --class ubuntu --class gnu-linux --class gnu --class os {
+        recordfail
+        set root="hd0,2"
+        echo "tboot booting"
+        multiboot2 /boot/tboot.gz /boot/tboot.gz logging=serial,vga,memory
+        echo "linux booting"
+        module /boot/vmlinuz-4.0.0-040000-generic /boot/vmlinuz-4.0.0-040000-generic tpm_tis.force=1 intel_iommu=on
+        echo "initram"
+        module /boot/initrd.img-4.0.0-040000-generic /boot/initrd.img-4.0.0-040000-generic
+        echo "sinit"
+        module /boot/5th_gen_i5_i7_SINIT_79.BIN /boot/5th_gen_i5_i7_SINIT_79.BIN
+}
+
+

@@ -1,0 +1,35 @@
+PCRComputeCurrentDigest --> quoted
+qualifying data --> quoted
+
+
+result = SignAttestInfo(in->signHandle, &in->inScheme,
+                        &quoted, &in->qualifyingData,
+                        &out->quoted, &out->signature);
+
+SignAttestInfo(
+signHandle,
+*scheme,
+TPMS_ATTEST certifyInfo,
+*qualifyingData,
+*attest,
+)
+
+// Table 116 - TPMS_ATTEST Structure
+typedef struct {
+  TPM_GENERATED   magic;
+  TPMI_ST_ATTEST  type;
+  TPM2B_NAME      qualifiedSigner;
+  TPM2B_DATA      extraData; (none)
+  TPMS_CLOCK_INFO clockInfo;
+  uint64_t        firmwareVersion;
+  TPMU_ATTEST     attested;  (quote info)
+} TPMS_ATTEST;
+
+certifyInfo --> buffer
+
+hash certifyinfo  (contains pcrDigests)
+hash(qualifyingData || hash(attestationData))
+
+
+
+
