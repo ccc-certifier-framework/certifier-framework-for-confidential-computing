@@ -10,8 +10,6 @@
 #include <tpm2_lib.h>
 #include <gflags/gflags.h>
 
-#include <openssl_helpers.h>
-
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
@@ -21,6 +19,8 @@
 #include <openssl/aes.h>
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
+
+#include <Openssl_help.h>
 
 //
 // Copyright 2015 Google Corporation, All Rights Reserved.
@@ -139,7 +139,7 @@ int main(int an, char** av) {
 
   if (FLAGS_command == "GetCapabilities") {
     int size = 512;
-    byte buf[512];
+    byte_t buf[512];
     if (!Tpm2_GetCapability(tpm, TPM_CAP_TPM_PROPERTIES, FLAGS_startHandle,
                             &size, buf)) {
       printf("Tpm2_GetCapability failed\n");
@@ -154,7 +154,7 @@ int main(int an, char** av) {
       printf("Tpm2_Shutdown failed\n");
     }
   } else if (FLAGS_command == "GetRandom") {
-    byte buf[256];
+    byte_t buf[256];
 
     if (FLAGS_numbytes >256) {
       printf("Can only get up to 256 bytes\n");
@@ -214,9 +214,9 @@ int main(int an, char** av) {
       parent_handle = (TPM_HANDLE) t;
     } 
     int size_public = 4096;
-    byte inPublic[4096];
+    byte_t inPublic[4096];
     int size_private = 4096;
-    byte inPrivate[4096];
+    byte_t inPrivate[4096];
     bool ok = true;
     if (!ReadFileIntoBlock(FLAGS_public_file, &size_public, inPublic)) {
       printf("Can't read public block\n");
@@ -259,9 +259,9 @@ int main(int an, char** av) {
     TPM2B_DIGEST digest_out;
     TPMT_TK_CREATION creation_ticket;
     int size_public = 4096;
-    byte out_public[4096];
+    byte_t out_public[4096];
     int size_private = 4096;
-    byte out_private[4096];
+    byte_t out_private[4096];
 
     parent_handle = 0x80000000;
     if (FLAGS_handle.size() > 0 ) {
@@ -302,9 +302,9 @@ int main(int an, char** av) {
 #if 0
     TPM_HANDLE item_handle = 0;
     int out_size = 1024;
-    byte out[1024];
+    byte_t out[1024];
     int size_digest = 0;
-    byte digest[64];
+    byte_t digest[64];
     if (Tpm2_Unseal(tpm, item_handle, FLAGS_parentAuth,
                     pcrSelector, TPM_ALG_SHA1, size_digest, digest,
                     &out_size, out)) {
@@ -318,14 +318,14 @@ int main(int an, char** av) {
   } else if (FLAGS_command == "Quote") {
 #if 0
     int quote_size = 1024;
-    byte quote[1024];
+    byte_t quote[1024];
     TPM_HANDLE signingHandle = 0;
     TPMT_SIG_SCHEME scheme;
     TPML_PCR_SELECTION pcr_selection;
     int attest_size = 1024;
-    byte attest[1024];
+    byte_t attest[1024];
     int sig_size = 1024;
-    byte sig[1024];
+    byte_t sig[1024];
     if (Tpm2_Quote(tpm, signingHandle, quote_size, quote, scheme, pcr_selection,
                &attest_size, attest, &sig_size, sig)) {
       printf("Quote succeeded\n");
@@ -354,7 +354,7 @@ int main(int an, char** av) {
     }
   } else if (FLAGS_command == "LoadContext") {
     int size = 4096;
-    byte saveArea[4096];
+    byte_t saveArea[4096];
     memset(saveArea, 0, 4096);
     TPM_HANDLE handle = 0;
 
@@ -367,7 +367,7 @@ int main(int an, char** av) {
     }
   } else if (FLAGS_command == "SaveContext") {
     uint16_t size = 4096;
-    byte saveArea[4096];
+    byte_t saveArea[4096];
     memset(saveArea, 0, 4096);
 
     TPM_HANDLE handle = 0x80000000;
@@ -399,7 +399,7 @@ int main(int an, char** av) {
   } else if (FLAGS_command == "Tpm2_Read_Nv") {
     TPMI_RH_NV_INDEX index = (TPMI_RH_NV_INDEX) FLAGS_index;
     uint16_t size_data = 16;
-    byte data[1024];
+    byte_t data[1024];
     if (Tpm2_ReadNv(tpm, index, FLAGS_authString, &size_data, data)) {
       printf("Tpm2_Read_Nv succeeded\n");
       PrintBytes(size_data, data);
@@ -410,7 +410,7 @@ int main(int an, char** av) {
   } else if (FLAGS_command == "Tpm2_Write_Nv") {
     TPMI_RH_NV_INDEX index = (TPMI_RH_NV_INDEX) FLAGS_index;
     int size_data = 0;
-    byte data[1024];
+    byte_t data[1024];
     if (Tpm2_WriteNv(tpm, index, FLAGS_authString, size_data, data)) {
       printf("Tpm2_Write_Nv succeeded\n");
     } else {
@@ -490,7 +490,7 @@ bool Tpm2_EndorsementCombinedTest(LocalTpm& tpm) {
   TPM2B_NAME pub_name;
   TPM2B_NAME qualified_pub_name;
   uint16_t pub_blob_size = 1024;
-  byte pub_blob[1024];
+  byte_t pub_blob[1024];
 
   TPML_PCR_SELECTION pcrSelect;
   memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
@@ -560,9 +560,9 @@ bool Tpm2_EndorsementCombinedTest(LocalTpm& tpm) {
   TPM2B_DIGEST digest_out;
   TPMT_TK_CREATION creation_ticket;
   int size_public = MAX_SIZE_PARAMS;
-  byte out_public[MAX_SIZE_PARAMS];
+  byte_t out_public[MAX_SIZE_PARAMS];
   int size_private = MAX_SIZE_PARAMS;
-  byte out_private[MAX_SIZE_PARAMS];
+  byte_t out_private[MAX_SIZE_PARAMS];
 
   memset((void*)&pub_out, 0, sizeof(TPM2B_PUBLIC));
 
@@ -614,7 +614,7 @@ bool Tpm2_EndorsementCombinedTest(LocalTpm& tpm) {
   TPM2B_NAME active_pub_name;
   TPM2B_NAME active_qualified_pub_name;
   uint16_t active_pub_blob_size = 1024;
-  byte active_pub_blob[1024];
+  byte_t active_pub_blob[1024];
 
   memset((void*)&active_pub_out, 0, sizeof(TPM2B_PUBLIC));
 
@@ -669,7 +669,7 @@ bool Tpm2_EndorsementCombinedTest(LocalTpm& tpm) {
 bool Tpm2_ContextCombinedTest(LocalTpm& tpm) {
   TPM_HANDLE handle;
   uint16_t size = 4096;
-  byte saveArea[4096];
+  byte_t saveArea[4096];
   string authString("01020304");
 
   TPM2B_PUBLIC pub_out;
@@ -722,14 +722,14 @@ bool Tpm2_NvCombinedTest(LocalTpm& tpm) {
   int slot = 1000;
   string authString("01020304");
   uint16_t size_data = 16;
-  byte data_in[512] = {
+  byte_t data_in[512] = {
     0x9, 0x8, 0x7, 0x6,
     0x9, 0x8, 0x7, 0x6,
     0x9, 0x8, 0x7, 0x6,
     0x9, 0x8, 0x7, 0x6
   };
   uint16_t size_out = 512;
-  byte data_out[512];
+  byte_t data_out[512];
   TPM_HANDLE nv_handle = GetNvHandle(slot);
 
   if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
@@ -842,9 +842,9 @@ bool Tpm2_KeyCombinedTest(LocalTpm& tpm, int pcr_num) {
   TPM2B_DIGEST digest_out;
   TPMT_TK_CREATION creation_ticket;
   int size_public = MAX_SIZE_PARAMS;
-  byte out_public[MAX_SIZE_PARAMS];
+  byte_t out_public[MAX_SIZE_PARAMS];
   int size_private = MAX_SIZE_PARAMS;
-  byte out_private[MAX_SIZE_PARAMS];
+  byte_t out_private[MAX_SIZE_PARAMS];
 
   TPMA_OBJECT create_flags;
   *(uint32_t*)(&create_flags) = 0;
@@ -967,14 +967,14 @@ bool Tpm2_SealCombinedTest(LocalTpm& tpm, int pcr_num) {
   TPM2B_DIGEST secret;
   secret.size = 16;
   for  (int i = 0; i < 16; i++)
-    secret.buffer[i] = (byte)(i + 1);
+    secret.buffer[i] = (byte_t)(i + 1);
 
   TPM2B_CREATION_DATA creation_out;
   TPMT_TK_CREATION creation_ticket;
   int size_public = MAX_SIZE_PARAMS;
-  byte out_public[MAX_SIZE_PARAMS];
+  byte_t out_public[MAX_SIZE_PARAMS];
   int size_private = MAX_SIZE_PARAMS;
-  byte out_private[MAX_SIZE_PARAMS];
+  byte_t out_private[MAX_SIZE_PARAMS];
 
   TPM2B_DIGEST digest_out;
   TPM2B_NONCE initial_nonce;
@@ -1073,7 +1073,7 @@ bool Tpm2_SealCombinedTest(LocalTpm& tpm, int pcr_num) {
   }
 
   int unsealed_size = MAX_SIZE_PARAMS;
-  byte unsealed[MAX_SIZE_PARAMS];
+  byte_t unsealed[MAX_SIZE_PARAMS];
   TPM2B_DIGEST hmac;
   hmac.size = 0;
   if (!Tpm2_Unseal(tpm, load_handle, parentAuth, session_handle,
@@ -1124,7 +1124,7 @@ bool Tpm2_QuoteCombinedTest(LocalTpm& tpm, int pcr_num) {
 
   if (pcr_num >= 0) {
     uint16_t size_eventData = 3;
-    byte eventData[3] = {1, 2, 3};
+    byte_t eventData[3] = {1, 2, 3};
     if (Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
       printf("Tpm2_PCR_Event succeeded\n");
     } else {
@@ -1135,9 +1135,9 @@ bool Tpm2_QuoteCombinedTest(LocalTpm& tpm, int pcr_num) {
   TPM2B_CREATION_DATA creation_out;
   TPMT_TK_CREATION creation_ticket;
   int size_public = MAX_SIZE_PARAMS;
-  byte out_public[MAX_SIZE_PARAMS];
+  byte_t out_public[MAX_SIZE_PARAMS];
   int size_private = MAX_SIZE_PARAMS;
-  byte out_private[MAX_SIZE_PARAMS];
+  byte_t out_private[MAX_SIZE_PARAMS];
   TPM2B_DIGEST digest_out;
 
   TPMA_OBJECT create_flags;
@@ -1175,13 +1175,13 @@ bool Tpm2_QuoteCombinedTest(LocalTpm& tpm, int pcr_num) {
   TPM2B_DATA to_quote;
   to_quote.size = 16;
   for  (int i = 0; i < 16; i++)
-    to_quote.buffer[i] = (byte)(i + 1);
+    to_quote.buffer[i] = (byte_t)(i + 1);
   TPMT_SIG_SCHEME scheme;
 
   int quote_size = MAX_SIZE_PARAMS;
-  byte quoted[MAX_SIZE_PARAMS];
+  byte_t quoted[MAX_SIZE_PARAMS];
   int sig_size = MAX_SIZE_PARAMS;
-  byte sig[MAX_SIZE_PARAMS];
+  byte_t sig[MAX_SIZE_PARAMS];
   if (!Tpm2_Quote(tpm, load_handle, parentAuth,
                   to_quote.size, to_quote.buffer,
                   scheme, pcr_selection, TPM_ALG_RSA, TPM_ALG_SHA1,
@@ -1212,27 +1212,27 @@ void seperate_key_test() {
   TPM2B_DIGEST secret;
   TPM2B_ENCRYPTED_SECRET salt;
   secret.size = 20;
-  memcpy(secret.buffer, (byte*)"12345678901234567890", secret.size);
+  memcpy(secret.buffer, (byte_t*)"12345678901234567890", secret.size);
 
 // Encrypt salt
   printf("\nencrypting salt\n");
   int size_padded_secret= 256;
-  byte padded_secret[256];
+  byte_t padded_secret[256];
   RSA_padding_add_PKCS1_OAEP(padded_secret, 256, secret.buffer, secret.size,
-      (byte*)"SECRET", strlen("SECRET")+1);
+      (byte_t*)"SECRET", strlen("SECRET")+1);
   int n = RSA_public_encrypt(size_padded_secret, padded_secret, salt.secret,
                              rsa_key, RSA_NO_PADDING);
   salt.size = n;
 
-  byte decrypted_with_pad[512];
-  byte recovered_secret[512];
+  byte_t decrypted_with_pad[512];
+  byte_t recovered_secret[512];
   memset(recovered_secret, 0, 512);
   memset(decrypted_with_pad, 0, 512);
 
   printf("\nEncrypted salt (%d): ", n);
   PrintBytes(n, salt.secret); printf("\n");
-  int m = RSA_private_decrypt(n, (byte*) salt.secret,
-               (byte*)decrypted_with_pad, rsa_key,
+  int m = RSA_private_decrypt(n, (byte_t*) salt.secret,
+               (byte_t*)decrypted_with_pad, rsa_key,
                RSA_NO_PADDING);
   if (m < 0) {
     printf("Can't decrypt\n");
@@ -1245,19 +1245,19 @@ void seperate_key_test() {
   while(k < 256 && decrypted_with_pad[k] == 0) k++;
   RSA_padding_check_PKCS1_OAEP(recovered_secret, 256, 
       &decrypted_with_pad[k], 256-k, 256,
-      (byte*)"SECRET", strlen("SECRET")+1);
+      (byte_t*)"SECRET", strlen("SECRET")+1);
 }
 
 // For Jethro
 bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm) {
   printf("Tpm2_NvCombinedSessionTest\n\n");
-  extern int CreatePasswordAuthArea(string& password, int size, byte* buf);
+  extern int CreatePasswordAuthArea(string& password, int size, byte_t* buf);
 
   int slot = 1000;
   string authString("01020304");
   uint16_t size_data = 8;
   uint16_t size_out = 512;
-  byte data_out[512];
+  byte_t data_out[512];
   TPM_HANDLE nv_handle = GetNvHandle(slot);
   bool ret = true;
 
@@ -1349,7 +1349,7 @@ bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm) {
   TPM2B_NAME pub_name;
   TPM2B_NAME qualified_pub_name;
   uint16_t pub_blob_size = 2048;
-  byte pub_blob[2048];
+  byte_t pub_blob[2048];
 
   if (Tpm2_ReadPublic(tpm, ekHandle, &pub_blob_size, pub_blob, &pub_out,
                       &pub_name, &qualified_pub_name)) {
@@ -1362,20 +1362,24 @@ bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm) {
   // Normally, the caller would get the key from the endorsement certificate
   EVP_PKEY* tpmKey = EVP_PKEY_new();
   RSA* rsa_tpmKey = RSA_new();
-  rsa_tpmKey->n = bin_to_BN((int)pub_out.publicArea.unique.rsa.size,
-                            pub_out.publicArea.unique.rsa.buffer);
+  BIGNUM* m = bin_to_BN((int)pub_out.publicArea.unique.rsa.size,
+                        pub_out.publicArea.unique.rsa.buffer);
   uint64_t exp = 0x010001ULL;
-  byte b_exp[16];
+  byte_t b_exp[16];
   ChangeEndian64((uint64_t*)&exp, (uint64_t*)b_exp);
-  rsa_tpmKey->e = bin_to_BN(sizeof(uint64_t), b_exp);
+  BIGNUM* e = bin_to_BN(sizeof(uint64_t), b_exp);
+  if (1 != RSA_set0_key(rsa_tpmKey, m, e, nullptr)) {
+    printf("RSA_set0_key failed\n");
+    return false;
+  }
   EVP_PKEY_assign_RSA(tpmKey, rsa_tpmKey);
 
   // Encrypt salt
-  byte padded_secret[1024];
+  byte_t padded_secret[1024];
   memset(padded_secret, 0, 1024);
   RSA_padding_add_PKCS1_OAEP(padded_secret, 256,
       secret.buffer, secret.size,
-      (byte*)"SECRET", strlen("SECRET")+1);
+      (byte_t*)"SECRET", strlen("SECRET")+1);
   int n = RSA_public_encrypt(256, padded_secret, salt.secret,
                              rsa_tpmKey, RSA_NO_PADDING);
   salt.size = n;
@@ -1390,8 +1394,8 @@ bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm) {
   authInfo.protectedSize_ = size_data;
   authInfo.hash_alg_ = TPM_ALG_SHA1;
   authInfo.tpmSessionAttributes_ = CONTINUESESSION;
-  extern int SetPasswordData(string& password, int size, byte* buf);
-  byte tbuf[128];
+  extern int SetPasswordData(string& password, int size, byte_t* buf);
+  byte_t tbuf[128];
   int l = SetPasswordData(authString, 128, tbuf);
   authInfo.targetAuthValue_.size = l - 2;
   memcpy(authInfo.targetAuthValue_.buffer, &tbuf[2], l - 2);

@@ -20,6 +20,6 @@
 #ifndef _TPM2_TYPES_H__
 #define _TPM2_TYPES_H__
 #include <stdint.h>
-typedef unsigned char byte;
+typedef unsigned char byte_t;
 #endif
 

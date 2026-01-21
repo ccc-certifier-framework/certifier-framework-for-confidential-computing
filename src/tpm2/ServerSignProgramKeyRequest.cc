@@ -14,8 +14,8 @@
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 
-#include <openssl_helpers.h>
-#include <quote_protocol.h>
+#include <Openssl_help.h>
+#include <QuoteProtocol.h>
 
 #include <tpm20.h>
 #include <tpm2_lib.h>

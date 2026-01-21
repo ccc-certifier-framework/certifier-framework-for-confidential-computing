@@ -29,29 +29,29 @@ using std::string;
 #define NBITSINBYTE 8
 
 // General Utility functions
-bool Equal(int size_in1, byte* in1, int size_in2, byte* in2);
-void ReverseCpy(int size, byte* in, byte* out);
-void PrintBytes(int n, byte* in);
+bool Equal(int size_in1, byte_t* in1, int size_in2, byte_t* in2);
+void ReverseCpy(int size, byte_t* in, byte_t* out);
+void PrintBytes(int n, byte_t* in);
 void ChangeEndian16(const uint16_t* in, uint16_t* out);
 void ChangeEndian32(const uint32_t* in, uint32_t* out);
 void ChangeEndian64(const uint64_t* in, uint64_t* out);
 void InitSinglePcrSelection(int pcrNum, TPM_ALG_ID alg,
                             TPML_PCR_SELECTION* pcrSelect);
-void setPcrBit(int pcrNum, byte* array);
-bool testPcrBit(int pcrNum, byte* array);
+void setPcrBit(int pcrNum, byte_t* array);
+bool testPcrBit(int pcrNum, byte_t* array);
 
-bool ReadFileIntoBlock(const string& filename, int* size, byte* block);
-bool WriteFileFromBlock(const string& filename, int size, byte* block);
+bool ReadFileIntoBlock(const string& filename, int* size, byte_t* block);
+bool WriteFileFromBlock(const string& filename, int size, byte_t* block);
 
-void PrintCapabilities(int size, byte* buf);
-bool GetReadPublicOut(uint16_t size_in, byte* input, TPM2B_PUBLIC* outPublic);
-bool MakeCredential(int size_endorsement_blob, byte* endorsement_cert_blob,
+void PrintCapabilities(int size, byte_t* buf);
+bool GetReadPublicOut(uint16_t size_in, byte_t* input, TPM2B_PUBLIC* outPublic);
+bool MakeCredential(int size_endorsement_blob, byte_t* endorsement_cert_blob,
                     TPM_ALG_ID hash_alg_id,
                     TPM2B_DIGEST& unmarshaled_credential,
                     TPM2B_DIGEST& marshaled_credential,
                     TPM2B_NAME& unmarshaled_name,
                     TPM2B_NAME& marshaled_name,
-                    int* size_encIdentity, byte* encIdentity,
+                    int* size_encIdentity, byte_t* encIdentity,
                     TPM2B_ENCRYPTED_SECRET* unmarshaled_encrypted_secret,
                     TPM2B_ENCRYPTED_SECRET* marshaled_encrypted_secret,
                     TPM2B_DIGEST* unmarshaled_integrityHmac,
@@ -59,9 +59,9 @@ bool MakeCredential(int size_endorsement_blob, byte* endorsement_cert_blob,
 bool EncryptDataWithCredential(bool encrypt_flag, TPM_ALG_ID hash_alg_id,
                                TPM2B_DIGEST unmarshaled_credential,
                                TPM2B_DIGEST marshaled_credential,
-                               int size_input_data, byte* input_data,
-                               int* size_hmac, byte* encrypted_data_hmac,
-                               int* size_output_data, byte* output_data);
+                               int size_input_data, byte_t* input_data,
+                               int* size_hmac, byte_t* encrypted_data_hmac,
+                               int* size_output_data, byte_t* output_data);
 
 // Local Tpm interaction
 class LocalTpm {
@@ -75,33 +75,33 @@ public:
 
   bool OpenTpm(const char* device);
   void CloseTpm();
-  bool SendCommand(int size, byte* command);
-  bool GetResponse(int* size, byte* response);
+  bool SendCommand(int size, byte_t* command);
+  bool GetResponse(int* size, byte_t* response);
 };
 
 // Helpers
-int Tpm2_SetCommand(TPM_ST tag, uint32_t cmd, byte* buf,
-                    int size_param, byte* params);
-void Tpm2_IntepretResponse(int out_size, byte* out_buf,
+int Tpm2_SetCommand(TPM_ST tag, uint32_t cmd, byte_t* buf,
+                    int size_param, byte_t* params);
+void Tpm2_IntepretResponse(int out_size, byte_t* out_buf,
                            int16_t* cap, uint32_t* responseSize,
                            uint32_t* responseCode);
-int Tpm2_Set_OwnerAuthHandle(int size, byte* buf);
-int Tpm2_Set_OwnerAuthData(int size, byte* buf);
+int Tpm2_Set_OwnerAuthHandle(int size, byte_t* buf);
+int Tpm2_Set_OwnerAuthData(int size, byte_t* buf);
 
 TPM_HANDLE GetNvHandle(uint32_t slot);
 
 
 bool FillTpmPcrData(LocalTpm& tpm, TPMS_PCR_SELECTION pcrSelection,
-                    int* size, byte* buf);
-bool ComputePcrDigest(TPM_ALG_ID hash, int size_in, byte* in_buf,
-                      int* size_out, byte* out);
+                    int* size, byte_t* buf);
+bool ComputePcrDigest(TPM_ALG_ID hash, int size_in, byte_t* in_buf,
+                      int* size_out, byte_t* out);
 
 // TPM Commands
 bool Tpm2_Startup(LocalTpm& tpm);
 bool Tpm2_Shutdown(LocalTpm& tpm);
 bool Tpm2_GetCapability(LocalTpm& tpm, uint32_t cap, uint32_t start,
-                        int* size, byte* buf);
-bool Tpm2_GetRandom(LocalTpm& tpm, int numBytes, byte* buf);
+                        int* size, byte_t* buf);
+bool Tpm2_GetRandom(LocalTpm& tpm, int numBytes, byte_t* buf);
 
 bool Tpm2_ReadClock(LocalTpm& tpm, uint64_t* current_time,
                     uint64_t* current_clock);
@@ -119,13 +119,13 @@ bool Tpm2_CreatePrimary(LocalTpm& tpm, TPM_HANDLE owner, string& authString,
                         int mod_size, uint32_t exp,
                         TPM_HANDLE* handle, TPM2B_PUBLIC* pub_out);
 bool Tpm2_Load(LocalTpm& tpm, TPM_HANDLE parent_handle, string& parentAuth,
-               int size_public, byte* inPublic,
-               int size_private, byte* inPrivate,
+               int size_public, byte_t* inPublic,
+               int size_private, byte_t* inPrivate,
                TPM_HANDLE* new_handle, TPM2B_NAME* name);
 bool Tpm2_Save(LocalTpm& tpm);
 bool Tpm2_PolicyPassword(LocalTpm& tpm, TPM_HANDLE handle);
 bool Tpm2_PCR_Event(LocalTpm& tpm, int pcr_num,
-                    uint16_t size, byte* eventData);
+                    uint16_t size, byte_t* eventData);
 bool Tpm2_PolicyGetDigest(LocalTpm& tpm, TPM_HANDLE handle,
                           TPM2B_DIGEST* digest_out);
 bool Tpm2_StartAuthSession(LocalTpm& tpm, TPM_RH tpm_obj, TPM_RH bind_obj,
@@ -142,17 +142,17 @@ bool Tpm2_PolicySecret(LocalTpm& tpm, TPM_HANDLE handle,
                        TPMT_TK_AUTH* ticket);
 
 bool Tpm2_CreateSealed(LocalTpm& tpm, TPM_HANDLE parent_handle,
-                       int size_policy_digest, byte* policy_digest,
+                       int size_policy_digest, byte_t* policy_digest,
                        string& parentAuth,
-                       int size_to_seal, byte* to_seal,
+                       int size_to_seal, byte_t* to_seal,
                        TPML_PCR_SELECTION& pcr_selection,
                        TPM_ALG_ID int_alg,
                        TPMA_OBJECT& flags, TPM_ALG_ID sym_alg,
                        TPMI_AES_KEY_BITS sym_key_size,
                        TPMI_ALG_SYM_MODE sym_mode, TPM_ALG_ID sig_scheme,
                        int mod_size, uint32_t exp,
-                       int* size_public, byte* out_public,
-                       int* size_private, byte* out_private,
+                       int* size_public, byte_t* out_public,
+                       int* size_private, byte_t* out_private,
                        TPM2B_CREATION_DATA* creation_out,
                        TPM2B_DIGEST* digest_out,
                        TPMT_TK_CREATION* creation_ticket);
@@ -164,34 +164,34 @@ bool Tpm2_CreateKey(LocalTpm& tpm, TPM_HANDLE parent_handle,
                     TPMI_AES_KEY_BITS sym_key_size,
                     TPMI_ALG_SYM_MODE sym_mode, TPM_ALG_ID sig_scheme,
                     int mod_size, uint32_t exp,
-                    int* size_public, byte* out_public,
-                    int* size_private, byte* out_private,
+                    int* size_public, byte_t* out_public,
+                    int* size_private, byte_t* out_private,
                     TPM2B_CREATION_DATA* creation_out,
                     TPM2B_DIGEST* digest_out, TPMT_TK_CREATION* creation_ticket);
 
 bool Tpm2_Unseal(LocalTpm& tpm, TPM_HANDLE item_handle, string& parentAuth,
                  TPM_HANDLE session_handle, TPM2B_NONCE& nonce,
-                 byte session_attributes, TPM2B_DIGEST& hmac_digest,
-                 int* out_size, byte* sealed);
+                 byte_t session_attributes, TPM2B_DIGEST& hmac_digest,
+                 int* out_size, byte_t* sealed);
 bool Tpm2_Quote(LocalTpm& tpm, TPM_HANDLE signingHandle, string& parentAuth,
-                int quote_size, byte* toQuote,
+                int quote_size, byte_t* toQuote,
                 TPMT_SIG_SCHEME scheme, TPML_PCR_SELECTION& pcr_selection,
                 TPM_ALG_ID sig_alg, TPM_ALG_ID hash_alg, 
-                int* attest_size, byte* attest, int* sig_size, byte* sig);
-bool Tpm2_LoadContext(LocalTpm& tpm, uint16_t size, byte* saveArea,
+                int* attest_size, byte_t* attest, int* sig_size, byte_t* sig);
+bool Tpm2_LoadContext(LocalTpm& tpm, uint16_t size, byte_t* saveArea,
                       TPM_HANDLE* handle);
 bool Tpm2_SaveContext(LocalTpm& tpm, TPM_HANDLE handle, uint16_t* size,
-                      byte* saveArea);
+                      byte_t* saveArea);
 bool Tpm2_FlushContext(LocalTpm& tpm, TPM_HANDLE handle);
 
 bool Tpm2_IncrementNv(LocalTpm& tpm, TPMI_RH_NV_INDEX index, string& authString);
 bool Tpm2_ReadNv(LocalTpm& tpm, TPMI_RH_NV_INDEX index, 
-                 string& authString, uint16_t* size, byte* data);
+                 string& authString, uint16_t* size, byte_t* data);
 bool Tpm2_WriteNv(LocalTpm& tpm, TPMI_RH_NV_INDEX index, string& authString,
-                  uint16_t size, byte* data);
+                  uint16_t size, byte_t* data);
 bool Tpm2_DefineSpace(LocalTpm& tpm, TPM_HANDLE owner, TPMI_RH_NV_INDEX index,
                       string& authString, uint16_t authPolicySize,
-                      byte* authPolicy, uint32_t attributes, uint16_t size_data);
+                      byte_t* authPolicy, uint32_t attributes, uint16_t size_data);
 bool Tpm2_UndefineSpace(LocalTpm& tpm, TPM_HANDLE owner, TPMI_RH_NV_INDEX index);
 bool Tpm2_Flushall(LocalTpm& tpm, uint32_t start);
 
@@ -213,7 +213,7 @@ bool Tpm2_Certify(LocalTpm& tpm, TPM_HANDLE signedKey, TPM_HANDLE signingKey,
                   TPM2B_DATA& qualifyingData,
                   TPM2B_ATTEST* attest, TPMT_SIGNATURE* sig);
 bool Tpm2_ReadPublic(LocalTpm& tpm, TPM_HANDLE handle, 
-                     uint16_t* pub_blob_size, byte* pub_blob,
+                     uint16_t* pub_blob_size, byte_t* pub_blob,
                      TPM2B_PUBLIC* outPublic,
                      TPM2B_NAME* name, TPM2B_NAME* qualifiedName);
 
@@ -247,17 +247,17 @@ public:
   uint16_t protectedSize_;
   TPM2B_NAME nameProtected_;
   TPM2B_DIGEST targetAuthValue_;
-  byte tpmSessionAttributes_;
+  byte_t tpmSessionAttributes_;
   int sessionKeySize_;
-  byte sessionKey_[64];
+  byte_t sessionKey_[64];
 };
 
 bool CalculateNvName(ProtectedSessionAuthInfo& in, TPM_HANDLE nv_handle,
          uint16_t nv_hash_alg, uint32_t nv_attributes,
-         uint16_t data_size, bool wasWritten, byte* out);
+         uint16_t data_size, bool wasWritten, byte_t* out);
 bool CalculateSessionKey(ProtectedSessionAuthInfo& in, TPM2B_DIGEST& rawSalt);
 bool CalculateSessionHmac(ProtectedSessionAuthInfo& in, bool dir, uint32_t cmd,
-		int size_parms, byte* parms, int* size_hmac, byte* hmac);
+		int size_parms, byte_t* parms, int* size_hmac, byte_t* hmac);
 void RollNonces(ProtectedSessionAuthInfo& in, TPM2B_NONCE& newNonce);
 bool Tpm2_StartProtectedAuthSession(LocalTpm& tpm, TPM_RH tpm_obj, TPM_RH bind_obj,
                            ProtectedSessionAuthInfo& authInfo,
@@ -267,7 +267,7 @@ bool Tpm2_StartProtectedAuthSession(LocalTpm& tpm, TPM_RH tpm_obj, TPM_RH bind_o
 bool Tpm2_IncrementProtectedNv(LocalTpm& tpm, TPMI_RH_NV_INDEX index,
           ProtectedSessionAuthInfo& authInfo);
 bool Tpm2_ReadProtectedNv(LocalTpm& tpm, TPMI_RH_NV_INDEX index,
-                 ProtectedSessionAuthInfo& authInfo, uint16_t* size, byte* data);
+                 ProtectedSessionAuthInfo& authInfo, uint16_t* size, byte_t* data);
 bool Tpm2_DefineProtectedSpace(LocalTpm& tpm, TPM_HANDLE owner, TPMI_RH_NV_INDEX index,
                       ProtectedSessionAuthInfo& authInfo, uint32_t attributes,
                       uint16_t size_data);

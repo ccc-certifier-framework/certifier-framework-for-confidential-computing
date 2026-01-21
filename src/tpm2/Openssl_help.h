@@ -62,18 +62,18 @@ void print_internal_private_key(RSA& key);
 void print_cert_request_message(x509_cert_request_parameters_message&
                                 req_message);
 
-BIGNUM* bin_to_BN(int len, byte* buf);
+BIGNUM* bin_to_BN(int len, byte_t* buf);
 string* BN_to_bin(BIGNUM& n);
 
-void XorBlocks(int size, byte* in1, byte* in2, byte* out);
-bool AesCtrCrypt(int key_size_bits, byte* key, int size,
-                 byte* in, byte* out);
+void XorBlocks(int size, byte_t* in1, byte_t* in2, byte_t* out);
+bool AesCtrCrypt(int key_size_bits, byte_t* key, int size,
+                 byte_t* in, byte_t* out);
 bool KDFa(uint16_t hashAlg, string& key, string& label, string& contextU,
-          string& contextV, int bits, int out_size, byte* out);
-bool AesCFBEncrypt(byte* key, int in_size, byte* in, int iv_size, byte* iv,
-                   int* out_size, byte* out);
-bool AesCFBDecrypt(byte* key, int in_size, byte* in, int iv_size, byte* iv,
-                   int* out_size, byte* out);
+          string& contextV, int bits, int out_size, byte_t* out);
+bool AesCFBEncrypt(byte_t* key, int in_size, byte_t* in, int iv_size, byte_t* iv,
+                   int* out_size, byte_t* out);
+bool AesCFBDecrypt(byte_t* key, int in_size, byte_t* in, int iv_size, byte_t* iv,
+                   int* out_size, byte_t* out);
 int SizeHash(TPM_ALG_ID hash);
 #endif
 

@@ -31,7 +31,7 @@
 
 #include <tpm2.pb.h>
 #include <openssl/sha.h>
-#include <openssl_helpers.h>
+#include <Openssl_help.h>
 
 #include <string>
 #define DEBUG

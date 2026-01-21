@@ -7,7 +7,8 @@
 #include <string.h>
 
 #include <openssl/rsa.h>
-#include <openssl_helpers.h>
+
+#include <Openssl_help.h>
 
 #include <tpm20.h>
 #include <tpm2_lib.h>

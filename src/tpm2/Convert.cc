@@ -25,8 +25,8 @@ using namespace std;
 const char* websafebase64_order =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
-void ThreeBytesToBase64(byte a, byte b, byte c, char* out) {
-  byte x;
+void ThreeBytesToBase64(byte_t a, byte_t b, byte_t c, char* out) {
+  byte_t x;
 
   x = (a >> 2) & 0x3f;
   *out = websafebase64_order[x];
@@ -39,8 +39,8 @@ void ThreeBytesToBase64(byte a, byte b, byte c, char* out) {
   return;
 }
 
-void TwoBytesToBase64(byte a, byte b, char* out) {
-  byte x;
+void TwoBytesToBase64(byte_t a, byte_t b, char* out) {
+  byte_t x;
 
   x = (a >> 2) & 0x3f;
   *out = websafebase64_order[x];
@@ -52,8 +52,8 @@ void TwoBytesToBase64(byte a, byte b, char* out) {
   return;
 }
 
-void OneByteToBase64(byte a, char* out) {
-  byte x;
+void OneByteToBase64(byte_t a, char* out) {
+  byte_t x;
 
   x = a >> 2;
   *out = websafebase64_order[x];
@@ -64,7 +64,7 @@ void OneByteToBase64(byte a, char* out) {
   return;
 }
 
-int NumBase64StringInBytes(int size, byte* in) {
+int NumBase64StringInBytes(int size, byte_t* in) {
   int n = (size + 3) / 3;
   return n * 4;
 }
@@ -85,13 +85,13 @@ int NumBytesInBase64String(char* in) {
   return n;
 }
 
-byte Base64CharValue(char a) {
+byte_t Base64CharValue(char a) {
   if (a >= 'A' && a <= 'Z') {
-    return a - 'A';
+    return (byte_t)(a - 'A');
   } else if (a >= 'a' && a <= 'z') {
-    return a - 'a' + 26;
+    return (byte_t)(a - 'a' + 26);
   } else if (a >= '0' && a <= '9') {
-    return a - '0' + 52;
+    return (byte_t)(a - '0' + 52);
   } else if (a == '-') {
     return 62;
   } else if (a == '_') {
@@ -101,8 +101,8 @@ byte Base64CharValue(char a) {
   }
 }
 
-bool FourBase64ToBytes(char* in, byte* out) {
-  byte x, y;
+bool FourBase64ToBytes(char* in, byte_t* out) {
+  byte_t x, y;
 
   x = Base64CharValue(*in);
   y = Base64CharValue(*(in + 1));
@@ -125,8 +125,8 @@ bool FourBase64ToBytes(char* in, byte* out) {
   return true;
 }
 
-bool FourBase64ToBytesReverse(char* in, byte* out) {
-  byte x, y;
+bool FourBase64ToBytesReverse(char* in, byte_t* out) {
+  byte_t x, y;
 
   x = Base64CharValue(*in);
   y = Base64CharValue(*(in + 1));
@@ -149,7 +149,7 @@ bool FourBase64ToBytesReverse(char* in, byte* out) {
   return true;
 }
 
-string* ByteToBase64LeftToRight(int size, byte* in) {
+string* ByteToBase64LeftToRight(int size, byte_t* in) {
   int n = NumBase64StringInBytes(size, in);
   string* out = new string(n, 0);
   char* str = (char*)out->c_str();
@@ -177,7 +177,7 @@ string* ByteToBase64LeftToRight(int size, byte* in) {
   return out;
 }
 
-string* ByteToBase64RightToLeft(int size, byte* in) {
+string* ByteToBase64RightToLeft(int size, byte_t* in) {
   int n = NumBase64StringInBytes(size, in);
   string* out = new string(n, 0);
   char* str = (char*)out->c_str();
@@ -206,7 +206,7 @@ string* ByteToBase64RightToLeft(int size, byte* in) {
   return out;
 }
 
-int Base64ToByteLeftToRight(char* in, int size, byte* out) {
+int Base64ToByteLeftToRight(char* in, int size, byte_t* out) {
   if (in == nullptr)
      return -1;
 
@@ -228,7 +228,7 @@ int Base64ToByteLeftToRight(char* in, int size, byte* out) {
   return n;
 }
 
-int Base64ToByteRightToLeft(char* in, int size, byte* out) {
+int Base64ToByteRightToLeft(char* in, int size, byte_t* out) {
   if (in == nullptr)
     return -1;
   int k = strlen(in);
@@ -249,7 +249,7 @@ int Base64ToByteRightToLeft(char* in, int size, byte* out) {
   return n;
 }
 
-int NumHexInBytes(int size, byte* in) { return 2 * size; }
+int NumHexInBytes(int size, byte_t* in) { return 2 * size; }
 
 int NumBytesInHex(char* in) {
   if (in == nullptr)
@@ -258,7 +258,7 @@ int NumBytesInHex(char* in) {
   return ((len + 1) / 2);
 }
 
-char ValueToHex(byte x) {
+char ValueToHex(byte_t x) {
   if (x >= 0 && x <= 9) {
     return x + '0';
   } else if (x >= 10 && x <= 15) {
@@ -268,7 +268,7 @@ char ValueToHex(byte x) {
   }
 }
 
-byte HexToValue(char x) {
+byte_t HexToValue(char x) {
   if (x >= '0' && x <= '9') {
     return x - '0';
   } else if (x >= 'a' && x <= 'f') {
@@ -278,13 +278,13 @@ byte HexToValue(char x) {
   }
 }
 
-string* ByteToHexLeftToRight(int size, byte* in) {
+string* ByteToHexLeftToRight(int size, byte_t* in) {
   if (in == nullptr)
     return nullptr;
   int n = NumHexInBytes(size, in);
   string* out = new string(n, 0);
   char* str = (char*)out->c_str();
-  byte a, b;
+  byte_t a, b;
 
   while (size > 0) {
     a = (*in) >> 4;
@@ -297,12 +297,12 @@ string* ByteToHexLeftToRight(int size, byte* in) {
   return out;
 }
 
-int HexToByteLeftToRight(char* in, int size, byte* out) {
+int HexToByteLeftToRight(char* in, int size, byte_t* out) {
   if (in == nullptr)
     return -1;
   int n = NumBytesInHex(in);
   int m = strlen(in);
-  byte a, b;
+  byte_t a, b;
 
   if (n > size) {
     return -1;
@@ -316,13 +316,13 @@ int HexToByteLeftToRight(char* in, int size, byte* out) {
   return n;
 }
 
-string* ByteToHexRightToLeft(int size, byte* in) {
+string* ByteToHexRightToLeft(int size, byte_t* in) {
   if (in == nullptr)
     return nullptr;
   int n = NumHexInBytes(size, in);
   string* out = new string(n, 0);
   char* str = (char*)out->c_str();
-  byte a, b;
+  byte_t a, b;
 
   in += size - 1;
   while (size > 0) {
@@ -336,13 +336,13 @@ string* ByteToHexRightToLeft(int size, byte* in) {
   return out;
 }
 
-int HexToByteRightToLeft(char* in, int size, byte* out) {
+int HexToByteRightToLeft(char* in, int size, byte_t* out) {
   if (in == nullptr) {
     return -1;
   }
   int n = NumBytesInHex(in);
   int m = strlen(in);
-  byte a, b;
+  byte_t a, b;
 
   out += n - 1;
   if (m < 0) {

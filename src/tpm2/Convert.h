@@ -30,15 +30,15 @@
 using std::string;
 
 char ValueToHex(byte x);
-byte HexToValue(char x);
+byte_t HexToValue(char x);
 
-string* ByteToBase64LeftToRight(int size, byte* in);
-string* ByteToBase64RightToLeft(int size, byte* in);
-int Base64ToByteLeftToRight(char* in, int size, byte* out);
-int Base64ToByteRightToLeft(char* in, int size, byte* out);
+string* ByteToBase64LeftToRight(int size, byte_t* in);
+string* ByteToBase64RightToLeft(int size, byte_t* in);
+int Base64ToByteLeftToRight(char* in, int size, byte_t* out);
+int Base64ToByteRightToLeft(char* in, int size, byte_t* out);
 
-string* ByteToHexLeftToRight(int, byte*);
-string* ByteToHexRightToLeft(int, byte*);
-int HexToByteLeftToRight(char*, int, byte*);
-int HexToByteRightToLeft(char*, int, byte*);
+string* ByteToHexLeftToRight(int, byte_t*);
+string* ByteToHexRightToLeft(int, byte_t*);
+int HexToByteLeftToRight(char*, int, byte_t*);
+int HexToByteRightToLeft(char*, int, byte_t*);
 #endif

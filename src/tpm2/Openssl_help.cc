@@ -11,7 +11,6 @@
 
 #include <tpm2.pb.h>
 
-#include <openssl_helpers.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
@@ -21,6 +20,7 @@
 #include <openssl/aes.h>
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
+#include <Openssl_help.h>
 
 #include <string>
 using std::string;
@@ -82,41 +82,47 @@ void print_cert_request_message(x509_cert_request_parameters_message& req_messag
   if (req_message.key().rsa_key().has_exponent()) {
     string exp = req_message.key().rsa_key().exponent();
     printf("exponent: ");
-    PrintBytes(exp.size(), (byte*)exp.data());
+    PrintBytes(exp.size(), (byte_t*)exp.data());
     printf("\n");
   }
   if (req_message.key().rsa_key().has_modulus()) {
     string mod = req_message.key().rsa_key().modulus();
     printf("modulus : ");
-    PrintBytes(mod.size(), (byte*)mod.data());
+    PrintBytes(mod.size(), (byte_t*)mod.data());
     printf("\n");
   }
 }
 
 void print_internal_private_key(RSA& key) {
-  if (key.n != nullptr) {
+  const RSA* r = &key;
+  const BIGNUM* n = RSA_get0_n(r);
+  const BIGNUM* e = RSA_get0_e(r);
+  const BIGNUM* d = RSA_get0_d(r);
+  const BIGNUM* p = RSA_get0_p(r);
+  const BIGNUM* q = RSA_get0_q(r);
+  if (n != nullptr) {
     printf("\nModulus: \n");
-    BN_print_fp(stdout, key.n);
+    BN_print_fp(stdout, n);
     printf("\n");
   }
-  if (key.e != nullptr) {
+  if (e != nullptr) {
     printf("\ne: \n");
-    BN_print_fp(stdout, key.e);
+    BN_print_fp(stdout, e);
     printf("\n");
   }
-  if (key.d != nullptr) {
+  if (d != nullptr) {
     printf("\nd: \n");
-    BN_print_fp(stdout, key.d);
+    BN_print_fp(stdout, d);
     printf("\n");
   }
-  if (key.p != nullptr) {
+  if (p != nullptr) {
     printf("\np: \n");
-    BN_print_fp(stdout, key.p);
+    BN_print_fp(stdout, p);
     printf("\n");
   }
-  if (key.q != nullptr) {
+  if (q != nullptr) {
     printf("\nq: \n");
-    BN_print_fp(stdout, key.q);
+    BN_print_fp(stdout, q);
     printf("\n");
   }
 #if 0
@@ -138,13 +144,13 @@ void print_internal_private_key(RSA& key) {
 #endif
 }
 
-BIGNUM* bin_to_BN(int len, byte* buf) {
+BIGNUM* bin_to_BN(int len, byte_t* buf) {
   BIGNUM* bn = BN_bin2bn(buf, len, nullptr);
   return bn;
 }
 
 string* BN_to_bin(BIGNUM& n) {
-  byte buf[MAX_SIZE_PARAMS];
+  byte_t buf[MAX_SIZE_PARAMS];
 
   int len = BN_bn2bin(&n, buf);
   return new string((const char*)buf, len);
@@ -154,7 +160,7 @@ bool GenerateX509CertificateRequest(x509_cert_request_parameters_message&
         params, bool sign_request, X509_REQ* req) {
   RSA*  rsa = RSA_new();
   X509_NAME* subject = X509_NAME_new();
-  EVP_PKEY* pKey = new EVP_PKEY();
+  EVP_PKEY* pKey = EVP_PKEY_new();
 
   X509_REQ_set_version(req, 2L);
   if (params.key().key_type() != "RSA") {
@@ -168,7 +174,7 @@ bool GenerateX509CertificateRequest(x509_cert_request_parameters_message&
   if (params.has_common_name()) {
     int nid = OBJ_txt2nid("CN");
     X509_NAME_ENTRY* ent = X509_NAME_ENTRY_create_by_NID(nullptr, nid,
-        MBSTRING_ASC, (byte*)params.common_name().c_str(), -1);
+        MBSTRING_ASC, (byte_t*)params.common_name().c_str(), -1);
     if (ent == nullptr) {
       printf("X509_NAME_ENTRY return is null, nid: %d\n", nid);
       return false;
@@ -199,7 +205,6 @@ bool GenerateX509CertificateRequest(x509_cert_request_parameters_message&
       printf("ERR: %s\n", ERR_lib_error_string(ERR_get_error()));
     }
   }
-  pKey->type = EVP_PKEY_RSA;
   if (X509_REQ_set_pubkey(req, pKey) ==0) {
       printf("X509_REQ_set_pubkey failed\n");
   }
@@ -209,9 +214,12 @@ bool GenerateX509CertificateRequest(x509_cert_request_parameters_message&
 
 bool GetPublicRsaKeyFromParameters(const rsa_public_key_message& key_msg,
                                    RSA* rsa) {
-  rsa->e = bin_to_BN(key_msg.exponent().size(), (byte*)key_msg.exponent().data());
-  rsa->n = bin_to_BN(key_msg.modulus().size(), (byte*)key_msg.modulus().data());
+  /*
+  rsa->e = bin_to_BN(key_msg.exponent().size(), (byte_t*)key_msg.exponent().data());
+  rsa->n = bin_to_BN(key_msg.modulus().size(), (byte_t*)key_msg.modulus().data());
   return rsa->e != nullptr && rsa->n != nullptr;
+   */
+  return false;
 }
 
 bool GetPrivateRsaKeyFromParameters(const rsa_public_key_message& key_msg,
@@ -298,7 +306,6 @@ bool SignX509Certificate(RSA* signing_key, bool f_isCa,
   const EVP_MD* digest = EVP_sha256();
   X509_NAME* name;
   EVP_PKEY_set1_RSA(pSigningKey, signing_key);
-  pSigningKey->type = EVP_PKEY_RSA;
   X509_set_version(cert, 2L);
   ASN1_INTEGER_set(X509_get_serialNumber(cert), serial++);
 
@@ -323,7 +330,7 @@ bool SignX509Certificate(RSA* signing_key, bool f_isCa,
   X509_NAME* issuer = X509_NAME_new();
   int nid = OBJ_txt2nid("CN");
   X509_NAME_ENTRY* ent = X509_NAME_ENTRY_create_by_NID(nullptr, nid,
-      MBSTRING_ASC, (byte*)signing_instructions.issuer().c_str(), -1);
+      MBSTRING_ASC, (byte_t*)signing_instructions.issuer().c_str(), -1);
   if (X509_NAME_add_entry(issuer, ent, -1, 0) != 1) {
     printf("Can't add issuer name ent: %s, %ld\n",
            signing_instructions.issuer().c_str(), (long unsigned)ent);
@@ -340,7 +347,6 @@ bool SignX509Certificate(RSA* signing_key, bool f_isCa,
   int n = 0;
   if (f_isCa)
     entries[n++] = new extEntry("basicConstraints", "critical,CA:TRUE");
-  // entries[n++] = new extEntry("subjectKeyIdentifier", "hash");
   entries[n++] = new extEntry("keyUsage", signing_instructions.purpose().c_str());
   if (!addExtensionsToCert(n, entries, cert)) {
     printf("Can't add extensions\n");
@@ -352,13 +358,10 @@ bool SignX509Certificate(RSA* signing_key, bool f_isCa,
     return false;
   }
 
-  printf("digest->size: %d\n", digest->md_size);
-  PrintBytes(digest->md_size, (byte*)digest->final);
-  printf("\n");
   return true;
 }
 
-void XorBlocks(int size, byte* in1, byte* in2, byte* out) {
+void XorBlocks(int size, byte_t* in1, byte_t* in2, byte_t* out) {
   int i;
 
   for (i = 0; i < size; i++)
@@ -366,15 +369,15 @@ void XorBlocks(int size, byte* in1, byte* in2, byte* out) {
 }
 
 bool KDFa(uint16_t hashAlg, string& key, string& label, string& contextU,
-          string& contextV, int bits, int out_size, byte* out) {
-  HMAC_CTX ctx;
+          string& contextV, int bits, int out_size, byte_t* out) {
   uint32_t len = 32;
   uint32_t counter = 0;
   int bytes_left = (bits + 7) / 8;
-  byte* current_out = out;
+  byte_t* current_out = out;
   int size_buf = 0;
-  byte buf[MAX_SIZE_PARAMS];
+  byte_t buf[MAX_SIZE_PARAMS];
   int n;
+  HMAC_CTX* ctx = nullptr;
 
   memset(buf, 0, 128);
   ChangeEndian32(&counter, (uint32_t*)&buf[size_buf]);
@@ -397,26 +400,25 @@ bool KDFa(uint16_t hashAlg, string& key, string& label, string& contextU,
     counter++;
     ChangeEndian32(&counter, (uint32_t*)buf);
 
-    HMAC_CTX_init(&ctx);
     if (hashAlg == TPM_ALG_SHA1 ) {
-      HMAC_Init_ex(&ctx, key.data(), key.size(), EVP_sha1(), nullptr);
+      HMAC_Init_ex(ctx, key.data(), key.size(), EVP_sha1(), nullptr);
     } else {
-      HMAC_Init_ex(&ctx, key.data(), key.size(), EVP_sha256(), nullptr);
+      HMAC_Init_ex(ctx, key.data(), key.size(), EVP_sha256(), nullptr);
     }
-    HMAC_Update(&ctx, buf, size_buf);
-    HMAC_Final(&ctx, current_out, &len);
-    HMAC_CTX_cleanup(&ctx);
+    HMAC_Update(ctx, buf, size_buf);
+    HMAC_Final(ctx, current_out, &len);
+    HMAC_CTX_free(ctx);
     current_out += len;
     bytes_left -= len;
   }
   return true;
 }
 
-bool AesCtrCrypt(int key_size_bits, byte* key, int size,
-                 byte* in, byte* out) {
+bool AesCtrCrypt(int key_size_bits, byte_t* key, int size,
+                 byte_t* in, byte_t* out) {
   AES_KEY ectx;
   uint64_t ctr[2] = {0ULL, 0ULL};
-  byte block[32];
+  byte_t block[32];
 
   if (key_size_bits != 128) {
     return false;
@@ -425,7 +427,7 @@ bool AesCtrCrypt(int key_size_bits, byte* key, int size,
   AES_set_encrypt_key(key, 128, &ectx);
   while (size > 0) {
     ctr[1]++;
-    AES_encrypt((byte*)ctr, block, &ectx);
+    AES_encrypt((byte_t*)ctr, block, &ectx);
     XorBlocks(16, block, in, out);
     in += 16;
     out += 16;
@@ -436,10 +438,10 @@ bool AesCtrCrypt(int key_size_bits, byte* key, int size,
 
 #define AESBLKSIZE 16
 
-bool AesCFBEncrypt(byte* key, int in_size, byte* in, int iv_size, byte* iv,
-                   int* out_size, byte* out) {
-  byte last_cipher[32];
-  byte cipher_block[32];
+bool AesCFBEncrypt(byte_t* key, int in_size, byte_t* in, int iv_size, byte_t* iv,
+                   int* out_size, byte_t* out) {
+  byte_t last_cipher[32];
+  byte_t cipher_block[32];
   int size = 0;
   int current_size;
 
@@ -469,10 +471,10 @@ bool AesCFBEncrypt(byte* key, int in_size, byte* in, int iv_size, byte* iv,
   return true;
 }
 
-bool AesCFBDecrypt(byte* key, int in_size, byte* in, int iv_size, byte* iv,
-                   int* out_size, byte* out) {
-  byte last_cipher[32];
-  byte cipher_block[32];
+bool AesCFBDecrypt(byte_t* key, int in_size, byte_t* in, int iv_size, byte_t* iv,
+                   int* out_size, byte_t* out) {
+  byte_t last_cipher[32];
+  byte_t cipher_block[32];
   int size = 0;
   int current_size;
 

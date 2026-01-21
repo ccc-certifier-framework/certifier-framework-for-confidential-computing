@@ -8,17 +8,16 @@
 #include <tpm20.h>
 #include <tpm2_lib.h>
 #include <errno.h>
-#include <conversions.h>
+#include <Convert.h>
 
 #include <openssl/aes.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
-#include <openssl_helpers.h>
 #include <openssl/rand.h>
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 
-#include <openssl_helpers.h>
+#include <Openssl_help.h>
 
 #include <string>
 using std::string;
@@ -3155,19 +3154,24 @@ bool MakeCredential(int size_endorsement_blob, byte* endorsement_blob,
   }
 
 // 6. Calculate outerMac = HMAC(hmacKey, encIdentity || name);
-  HMAC_CTX hctx;
-  HMAC_CTX_init(&hctx);
-  if (hash_alg_id == TPM_ALG_SHA1) {
-    HMAC_Init_ex(&hctx, hmacKey, size_hmacKey, EVP_sha1(), nullptr);
-  } else {
-    HMAC_Init_ex(&hctx, hmacKey, size_hmacKey, EVP_sha256(), nullptr);
+  HMAC_CTX* hctx = nullptr;
+  hctx = HMAC_CTX_new();
+  if (hctx == nullptr) {
+    printf("Can't get hmac context\n");
+    return false;
   }
-  HMAC_Update(&hctx, (const byte*)encIdentity, (size_t)*size_encIdentity);
-  HMAC_Update(&hctx, (const byte*)name.data(), name.size());
+
+  if (hash_alg_id == TPM_ALG_SHA1) {
+    HMAC_Init_ex(hctx, hmacKey, size_hmacKey, EVP_sha1(), nullptr);
+  } else {
+    HMAC_Init_ex(hctx, hmacKey, size_hmacKey, EVP_sha256(), nullptr);
+  }
+  HMAC_Update(hctx, (const byte*)encIdentity, (size_t)*size_encIdentity);
+  HMAC_Update(hctx, (const byte*)name.data(), name.size());
   // HMAC_Update(&hctx, (const byte*)&marshaled_name.name, name.size());
   unmarshaled_integrityHmac->size = size_hmacKey;
-  HMAC_Final(&hctx, unmarshaled_integrityHmac->buffer, (uint32_t*)&size_hmacKey);
-  HMAC_CTX_cleanup(&hctx);
+  HMAC_Final(hctx, unmarshaled_integrityHmac->buffer, (uint32_t*)&size_hmacKey);
+  HMAC_CTX_free(hctx);
 
   // integrityHMAC
   ChangeEndian16((uint16_t*)&size_hmacKey, &marshaled_integrityHmac->size);
@@ -3218,22 +3222,27 @@ bool EncryptDataWithCredential(bool encrypt_flag, TPM_ALG_ID hash_alg_id,
     encrypted_data = input_data;
   else
     encrypted_data = output_data;
-  HMAC_CTX hctx;
-  HMAC_CTX_init(&hctx);
+
+  HMAC_CTX* hctx = nullptr;
+  hctx = HMAC_CTX_new();
+  if (hctx == nullptr) {
+    printf("Can't create hmac context\n");
+    return false;
+  }
   if (hash_alg_id == TPM_ALG_SHA1) {
-    HMAC_Init_ex(&hctx, &derived_keys[16], 16, EVP_sha1(), nullptr);
+    HMAC_Init_ex(hctx, &derived_keys[16], 16, EVP_sha1(), nullptr);
     *size_hmac = 20;
   } else {
-    HMAC_Init_ex(&hctx, &derived_keys[16], 16, EVP_sha256(), nullptr);
+    HMAC_Init_ex(hctx, &derived_keys[16], 16, EVP_sha256(), nullptr);
     *size_hmac = 32;
   }
-  HMAC_Update(&hctx, encrypted_data, size_input_data);
+  HMAC_Update(hctx, encrypted_data, size_input_data);
   if (encrypt_flag) {
-    HMAC_Final(&hctx, encrypted_data_hmac, (uint32_t*)size_hmac);
-    HMAC_CTX_cleanup(&hctx);
+    HMAC_Final(hctx, encrypted_data_hmac, (uint32_t*)size_hmac);
+    HMAC_CTX_free(hctx);
   } else {
-    HMAC_Final(&hctx, decrypt_mac, (uint32_t*)size_hmac);
-    HMAC_CTX_cleanup(&hctx);
+    HMAC_Final(hctx, decrypt_mac, (uint32_t*)size_hmac);
+    HMAC_CTX_free(hctx);
     if (memcmp(decrypt_mac, encrypted_data_hmac, *size_hmac) != 0)
       return false;
   }
@@ -3438,18 +3447,22 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo& in, bool dir, uint32_t cmd,
   PrintBytes(current_out_size, toHash); printf("\n");
 #endif
 
-  HMAC_CTX hctx;
-  HMAC_CTX_init(&hctx);
+  HMAC_CTX* hctx = nullptr;
+  hctx = HMAC_CTX_new();
+  if (hctx == nullptr) {
+    printf("Can't allocate hmac contaxt\n");
+    return false;
+  }
   if (in.hash_alg_ == TPM_ALG_SHA1) {
-    HMAC_Init_ex(&hctx, hmac_key, sizeHmacKey, EVP_sha1(), nullptr);
+    HMAC_Init_ex(hctx, hmac_key, sizeHmacKey, EVP_sha1(), nullptr);
     *size_hmac = 20;
   } else {
-    HMAC_Init_ex(&hctx, hmac_key, sizeHmacKey, EVP_sha256(), nullptr);
+    HMAC_Init_ex(hctx, hmac_key, sizeHmacKey, EVP_sha256(), nullptr);
     *size_hmac = 32;
   }
-  HMAC_Update(&hctx, (const byte*)toHash, (size_t)current_out_size);
-  HMAC_Final(&hctx, hmac, (unsigned*)size_hmac);
-  HMAC_CTX_cleanup(&hctx);
+  HMAC_Update(hctx, (const byte*)toHash, (size_t)current_out_size);
+  HMAC_Final(hctx, hmac, (unsigned*)size_hmac);
+  HMAC_CTX_free(hctx);
 
 #if 1
   printf("Hmac out: ");

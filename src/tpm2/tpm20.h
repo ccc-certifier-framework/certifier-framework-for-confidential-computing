@@ -145,8 +145,8 @@ typedef uint64_t                        CONTEXT_COUNTER;
 // 5 Base Types
 
 // Table 3 - Definition of Base Types
-typedef byte BYTE;
-typedef byte BOOL;
+typedef byte_t BYTE;
+typedef byte_t BOOL;
 
 // Table 4 - Definition of Types for Documentation Clarity
 //
@@ -509,7 +509,7 @@ typedef uint16_t TPM_SU;
 #define TPM_SU_STATE (TPM_SU)(0x0001)
 
 // Table 20 - TPM_SE Constants
-typedef byte TPM_SE;
+typedef byte_t TPM_SE;
 #define TPM_SE_HMAC   (TPM_SE)(0x00)
 #define TPM_SE_POLICY (TPM_SE)(0x01)
 #define TPM_SE_TRIAL  (TPM_SE)(0x03)
@@ -648,7 +648,7 @@ typedef uint32_t TPM_PS;
 //typedef uint32_t    TPM_HANDLE;
 
 // Table 26 - TPM_HT Constants
-typedef byte TPM_HT;
+typedef byte_t TPM_HT;
 #define TPM_HT_PCR            (TPM_HT)(0x00)
 #define TPM_HT_NV_INDEX       (TPM_HT)(0x01)
 #define TPM_HT_HMAC_SESSION   (TPM_HT)(0x02)
@@ -746,13 +746,13 @@ typedef struct {
 
 // Table 31 - TPMA_SESSION Bits
 typedef struct {
-  byte continueSession : 1;
-  byte auditExclusive  : 1;
-  byte auditReset      : 1;
-  byte reserved3_4     : 2;
-  byte decrypt         : 1;
-  byte encrypt         : 1;
-  byte audit           : 1;
+  byte_t continueSession : 1;
+  byte_t auditExclusive  : 1;
+  byte_t auditReset      : 1;
+  byte_t reserved3_4     : 2;
+  byte_t decrypt         : 1;
+  byte_t encrypt         : 1;
+  byte_t audit           : 1;
 } TPMA_SESSION;
 
 // Table 32 - TPMA_LOCALITY Bits
@@ -760,12 +760,12 @@ typedef struct {
 // NOTE: Use low case here to resolve conflict
 //
 typedef struct {
-  byte locZero  : 1;
-  byte locOne   : 1;
-  byte locTwo   : 1;
-  byte locThree : 1;
-  byte locFour  : 1;
-  byte Extended : 3;
+  byte_t locZero  : 1;
+  byte_t locOne   : 1;
+  byte_t locTwo   : 1;
+  byte_t locThree : 1;
+  byte_t locFour  : 1;
+  byte_t Extended : 3;
 } TPMA_LOCALITY;
 
 // Table 33 - TPMA_PERMANENT Bits
@@ -984,14 +984,14 @@ typedef struct {
 
 // Table 80 - TPMS_PCR_SELECT Structure
 typedef struct {
-  byte sizeofSelect;
+  byte_t sizeofSelect;
   BYTE  pcrSelect[PCR_SELECT_MAX];
 } TPMS_PCR_SELECT;
 
 // Table 81 - TPMS_PCR_SELECTION Structure
 typedef struct {
   TPMI_ALG_HASH hash;
-  byte          sizeofSelect;
+  byte_t          sizeofSelect;
   BYTE          pcrSelect[PCR_SELECT_MAX];
 } TPMS_PCR_SELECTION;
 
@@ -1038,7 +1038,7 @@ typedef struct {
 // Table 90 - TPMS_TAGGED_PCR_SELECT Structure
 typedef struct {
   TPM_PT tag;
-  byte  sizeofSelect;
+  byte_t  sizeofSelect;
   BYTE   pcrSelect[PCR_SELECT_MAX];
 } TPMS_TAGGED_PCR_SELECT;
 
