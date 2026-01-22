@@ -29,7 +29,7 @@
 
 using std::string;
 
-char ValueToHex(byte x);
+char ValueToHex(byte_t x);
 byte_t HexToValue(char x);
 
 string* ByteToBase64LeftToRight(int size, byte_t* in);
