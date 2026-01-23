@@ -324,7 +324,22 @@ GetEndorsementKey.cc
   }
   if (sealed_load_handle != 0) {
     Tpm2_FlushContext(tpm, sealed_load_handle);
+}
 
+void InitSinglePcrSelection(int pcrNum, TPM_ALG_ID hash,
+                            TPML_PCR_SELECTION* pcrSelect) {
+  if (pcrNum == -1) {
+    pcrSelect->count = 0; 
+    return;
+  }
+  pcrSelect->count = 1;
+  pcrSelect->pcrSelections[0].hash = hash;
+  pcrSelect->pcrSelections[0].sizeofSelect = 3;
+  for (int i = 0; i < 3; i++)
+    pcrSelect->pcrSelections[0].pcrSelect[i] = 0;
+  if (pcrNum != 0)
+    setPcrBit(pcrNum, pcrSelect->pcrSelections[0].pcrSelect);
+} 
 
 bool Tpm2_SealCombinedTest(LocalTpm& tpm, int pcr_num) {
   string authString("01020304");
@@ -387,9 +402,6 @@ bool Tpm2_SealCombinedTest(LocalTpm& tpm, int pcr_num) {
     printf("nonce (%d): ", nonce_obj.size);
     PrintBytes(nonce_obj.size, nonce_obj.buffer);
     printf("\n");
-  } else {
-    printf("Tpm2_StartAuthSession fails\n");
-    return false;
   }
 
   TPM2B_DIGEST policy_digest;
@@ -647,14 +659,6 @@ bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm) {
   secret.size = 20;
   RAND_bytes(secret.buffer, secret.size);
 
-#if 1
-  printf("newNonce: ");
-  PrintBytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
-  printf("oldNonce: ");
-  PrintBytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
-  printf("Secret:   "); PrintBytes(secret.size, secret.buffer); printf("\n");
-#endif
-
   // Get endorsement key handle
   string emptyAuth;
   TPM_HANDLE ekHandle;
@@ -740,11 +744,6 @@ bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm) {
                              rsa_tpmKey, RSA_NO_PADDING);
   salt.size = n;
 
-#if 1
-  printf("\nEncrypted salt (%d): ", n);
-  PrintBytes(n, salt.secret); printf("\n");
-#endif
-
   authInfo.protectedHandle_ = nv_handle;
   authInfo.protectedAttributes_ = NV_COUNTER | NV_AUTHWRITE | NV_AUTHREAD;
   authInfo.protectedSize_ = size_data;
@@ -777,10 +776,6 @@ bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm) {
 
   if (Tpm2_IncrementProtectedNv(tpm, nv_handle, authInfo)) {
     printf("Tpm2_IncrementProtectedNv %d succeeds\n", nv_handle);
-  } else {
-    printf("Tpm2_IncrementProtectedNv fails\n");
-    ret = false;
-    goto done;
   }
 
   size_out = 8;
@@ -788,10 +783,6 @@ bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm) {
     printf("Tpm2_ReadProtectedNv %d succeeds: ", nv_handle);
     PrintBytes(size_out, data_out);
     printf("\n");
-  } else {
-    printf("Tpm2_ReadProtectedNv fails\n");
-    ret = false;
-    goto done;
   }
 
 done:
