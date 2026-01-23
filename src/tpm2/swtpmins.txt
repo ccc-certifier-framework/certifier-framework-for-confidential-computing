@@ -1,0 +1,146 @@
+swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1     --create-ek-cert --create-platform-cert --lock-nvram
+echo $XDG_CONFIG_HOME
+/home/jlm/.config
+export TPM2TOOLS_TCTI="swtpm:port=2321"
+swtpm socket --tpmstate dir=<swtpm_path> --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear
+
+mkdir -p /tmp/my_swtpm_dir
+swtpm_setup --tpm2 --tpmstate /tmp/my_swtpm_dir/ --create-ek-cert --create-platform-cert --lock-nvram
+export TPM2TOOLS_TCTI="swtpm:path=/tmp/my_swtpm_dir/swtpm-sock"
+tpm2_pcrread sha256
+It can interact via a character device path (e.g., /dev/tpm0) 
+
+
+PCR commands:
+TPM2_PCR_Extend, TPM2_PCR_Event, TPM2_Read, TPM2_Reset, TPRM2_Allocate, TPM2_SetAuthorizationPolicy, TPM2_SetAuthorizationValue.
+
+Seal
+    1. Construct policy using TPM2_PolicyPCR
+    2. TPM2_GetRandom to generate key
+    3. TPM2_Create to specify policy and key
+
+Unseal
+    1. Start Session Auth
+    2. TPM2_Load
+    3. PolicyPCR
+    4. TPM2_Unseal (with blob from Create)
+    5. Close session
+
+Quote
+    1. Policy
+    2. Use TPM_GENERATED
+    3. Specify qualified name
+    4. Specify extra data
+    5. FW
+    6. Clock
+    7. PCR numbers
+    8. Digest of PCRs
+    9. TPM2_Quote
+    10. You have to reload these
+
+
+in /usr/bin
+
+tpm2_activatecredential
+tpm2_certify
+tpm2_certifycreation
+tpm2_certifyX509certutil
+tpm2_changeauth
+tpm2_changeeps
+tpm2_changepps
+tpm2_checkquote
+tpm2_clear
+tpm2_clearcontrol
+tpm2_clockrateadjust
+tpm2_commit
+tpm2_create
+tpm2_createak
+tpm2_createek
+tpm2_createpolicy
+tpm2_createprimary
+tpm2_dictionarylockout
+tpm2_duplicate
+tpm2_ecdhkeygen
+tpm2_ecdhzgen
+tpm2_ecephemeral
+tpm2_encodeobject
+tpm2_encryptdecrypt
+tpm2_eventlog
+tpm2_evictcontrol
+tpm2_flushcontext
+tpm2_getcap
+tpm2_getcommandauditdigest
+tpm2_geteccparameters
+tpm2_getekcertificate
+tpm2_getpolicydigest
+tpm2_getrandom --hex 32
+tpm2_getsessionauditdigest
+tpm2_gettestresult
+tpm2_gettime
+tpm2_hash
+tpm2_hierarchycontrol
+tpm2_hmac
+tpm2_import
+tpm2_incrementalselftest
+tpm2_load
+tpm2_loadexternal
+tpm2_makecredential
+tpm2_nvcertify
+tpm2_nvdefine
+tpm2_nvextend
+tpm2_nvincrement
+tpm2_nvread
+tpm2_nvreadlock
+tpm2_nvreadpublic
+tpm2_nvsetbits
+tpm2_nvundefine
+tpm2_nvwrite
+tpm2_nvwritelock
+tpm2_pcrallocate
+tpm2_pcrevent
+tpm2_pcrextend
+tpm2_pcrread
+tpm2_pcrreset
+tpm2_policyauthorize
+tpm2_policyauthorizenv
+tpm2_policyauthvalue
+tpm2_policycommandcode
+tpm2_policycountertimer
+tpm2_policycphash
+tpm2_policyduplicationselect
+tpm2_policylocality
+tpm2_policynamehash
+tpm2_policynv
+tpm2_policynvwritten
+tpm2_policyor
+tpm2_policypassword
+tpm2_policypcr
+tpm2_policyrestart
+tpm2_policysecret
+tpm2_policysigned
+tpm2_policytemplate
+tpm2_policyticket
+tpm2_print
+tpm2_quote
+tpm2_rc_decode
+tpm2_readclock
+tpm2_readpublic
+tpm2_rsadecrypt
+tpm2_rsaencrypt
+tpm2_selftest
+tpm2_send
+tpm2_sessionconfig
+tpm2_setclock
+tpm2_setcommandauditstatus
+tpm2_setprimarypolicy
+tpm2_shutdown
+tpm2_sign
+tpm2_startauthsession
+tpm2_startup
+tpm2_stirrandom
+tpm2_testparms
+tpm2_tr_encode
+tpm2_unseal
+tpm2_verifysignature
+tpm2_zgen2phase
+
