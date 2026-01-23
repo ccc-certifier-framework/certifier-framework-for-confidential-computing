@@ -198,3 +198,131 @@ Structure: Unlike a simple name, which is just the hash of the public
 area, the qualified name includes the parent's information, providing
 a secure, hierarchical, and verifiable identifier for keys. 
 
+
+GetEndorsementKey.cc
+  primary_flags.fixedTPM = 1;
+  primary_flags.fixedParent = 1;
+  primary_flags.sensitiveDataOrigin = 1;
+  primary_flags.userWithAuth = 1;
+  primary_flags.decrypt = 1;
+  primary_flags.restricted = 1;
+  InitSinglePcrSelection(7, hash_alg_id, &pcrSelect);
+  if (Tpm2_CreatePrimary(tpm, TPM_RH_ENDORSEMENT, emptyAuth, pcrSelect,
+                         TPM_ALG_RSA, hash_alg_id, primary_flags,
+                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
+                         2048, 0x010001, &ekHandle, &pub_out))
+  Tpm2_ReadPublic(tpm, ekHandle, &pub_blob_size, pub_blob,
+                      &pub_out, &pub_name, &qualified_pub_name)
+  Tpm2_FlushContext(tpm, ekHandle);
+
+  string authString("01020304");
+  string parentAuth("01020304");
+  string emptyAuth;
+
+  TPML_PCR_SELECTION pcrSelect;
+  TPMA_OBJECT root_flags;
+
+  TPM2B_CREATION_DATA creation_out;
+  TPM2B_DIGEST digest_out;
+  TPMT_TK_CREATION creation_ticket;
+
+  TPM_HANDLE root_handle = 0;
+  TPM2B_PUBLIC root_pub_out;
+
+  TPM_HANDLE seal_load_handle = 0;
+  TPMA_OBJECT seal_create_flags;
+  TPM2B_NAME seal_name;
+  int seal_size_public = MAX_SIZE_PARAMS;
+  byte seal_out_public[MAX_SIZE_PARAMS];
+  int seal_size_private = MAX_SIZE_PARAMS;
+  byte seal_out_private[MAX_SIZE_PARAMS];
+
+  TPMA_OBJECT quote_create_flags;
+  TPM2B_NAME quote_name;
+  TPM_HANDLE quote_load_handle = 0;
+  int quote_size_public = MAX_SIZE_PARAMS;
+  byte quote_out_public[MAX_SIZE_PARAMS];
+  int quote_size_private = MAX_SIZE_PARAMS;
+  byte quote_out_private[MAX_SIZE_PARAMS];
+
+  TPM_HANDLE nv_handle = 0;
+  byte context_save_area[MAX_SIZE_PARAMS];
+  uint16_t context_data_size = MAX_SIZE_PARAMS;
+  TPM_HANDLE sealed_load_handle = 0;
+  TPM_ALG_ID hash_alg_id;
+  InitSinglePcrSelection(7, hash_alg_id, &pcrSelect);
+  *(uint32_t*)(&root_flags) = 0;
+  root_flags.fixedTPM = 1;
+  root_flags.fixedParent = 1;
+  root_flags.sensitiveDataOrigin = 1;
+  root_flags.userWithAuth = 1;
+  root_flags.decrypt = 1;
+  root_flags.restricted = 1;
+  if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcrSelect,
+                         TPM_ALG_RSA, hash_alg_id, root_flags,
+                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
+                         2048, 0x010001, &root_handle, &root_pub_out)) 
+ *(uint32_t*)(&seal_create_flags) = 0;
+  seal_create_flags.fixedTPM = 1;
+  seal_create_flags.fixedParent = 1;
+  seal_create_flags.sensitiveDataOrigin = 1;
+  seal_create_flags.userWithAuth = 1;
+  seal_create_flags.sign = 1;
+
+  if (Tpm2_CreateKey(tpm, root_handle, parentAuth, authString, pcrSelect,
+                     TPM_ALG_RSA, hash_alg_id, seal_create_flags, TPM_ALG_NULL,
+                     (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
+                     2048, 0x010001, &seal_size_public, seal_out_public,
+                     &seal_size_private, seal_out_private,
+                     &creation_out, &digest_out, &creation_ticket)) {
+  if (Tpm2_Load(tpm, root_handle, parentAuth, seal_size_public,
+                seal_out_public, seal_size_private, seal_out_private,
+                &seal_load_handle, &seal_name)) {
+
+  *(uint32_t*)(&quote_create_flags) = 0;
+  quote_create_flags.fixedTPM = 1;
+  quote_create_flags.fixedParent = 1;
+  quote_create_flags.sensitiveDataOrigin = 1;
+  quote_create_flags.userWithAuth = 1;
+  quote_create_flags.sign = 1;
+  quote_create_flags.restricted = 1;
+  if (Tpm2_CreateKey(tpm, root_handle, parentAuth, authString, pcrSelect,
+                     TPM_ALG_RSA, hash_alg_id, quote_create_flags, TPM_ALG_NULL,
+                     (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
+                     1024, 0x010001,
+                     &quote_size_public, quote_out_public,
+                     &quote_size_private, quote_out_private,
+                     &creation_out, &digest_out, &creation_ticket)) {
+  if (Tpm2_Load(tpm, root_handle, parentAuth, quote_size_public,
+                quote_out_public, quote_size_private, quote_out_private,
+                &quote_load_handle, &quote_name)) {
+  nv_handle = GetNvHandle(FLAGS_slot_primary);
+  context_data_size = MAX_SIZE_PARAMS;
+  if (!Tpm2_SaveContext(tpm, root_handle, &context_data_size,
+                        context_save_area)) {
+  Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle))
+  if (!Tpm2_WriteNv(tpm, nv_handle, authString,
+                    (uint16_t)context_data_size, context_save_area)){
+  if (!Tpm2_SaveContext(tpm, seal_load_handle, &context_data_size,
+                        context_save_area)) {
+
+  if (!Tpm2_WriteNv(tpm, nv_handle, authString,
+                    (uint16_t)context_data_size, context_save_area)){
+  // Save quote context
+  nv_handle = GetNvHandle(FLAGS_slot_quote);
+  context_data_size = MAX_SIZE_PARAMS;
+  if (!Tpm2_SaveContext(tpm, quote_load_handle, &context_data_size,
+                        context_save_area)) {
+  if (root_handle != 0) {
+    Tpm2_FlushContext(tpm, root_handle);
+  }
+  if (seal_load_handle != 0) {
+    Tpm2_FlushContext(tpm, seal_load_handle);
+  }
+  if (quote_load_handle != 0) {
+    Tpm2_FlushContext(tpm, quote_load_handle);
+  }
+  if (sealed_load_handle != 0) {
+    Tpm2_FlushContext(tpm, sealed_load_handle);
+
+
