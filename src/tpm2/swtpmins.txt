@@ -15,7 +15,7 @@ PCR commands:
 TPM2_PCR_Extend, TPM2_PCR_Event, TPM2_Read, TPM2_Reset, TPRM2_Allocate, TPM2_SetAuthorizationPolicy, TPM2_SetAuthorizationValue.
 
 Seal
-    1. Construct policy using TPM2_PolicyPCR
+    1. Construct policy using tpm2_createpolicy, TPM2_policypcr
     2. TPM2_GetRandom to generate key
     3. TPM2_Create to specify policy and key
 
@@ -24,7 +24,7 @@ Unseal
     2. TPM2_Load
     3. PolicyPCR
     4. TPM2_Unseal (with blob from Create)
-    5. Close session
+    5. Close session: tpm2_flushcontext
 
 Quote
     1. Policy
@@ -143,4 +143,58 @@ tpm2_tr_encode
 tpm2_unseal
 tpm2_verifysignature
 tpm2_zgen2phase
+
+tpm2_getrandom --hex 32
+tpm2_readclock
+tpm2_pcrread sha256
+tpm2_policypcr [ -L | --policy=<value>] [ -f | --pcr=<value>] [ -l | --pcr-list=<value>] [ -S | --session=<value>]
+tpm2_createpolicy [ -L | --policy=<value>] [ -g | --policy-algorithm=<value>] [ -l | --pcr-list=<value>] [ -f | --pcr=<value>]
+    [ --policy-pcr] [ --policy-session]
+tpm2_create [ -P | --parent-auth=<value>] [ -p | --key-auth=<value>] [ -g | --hash-algorithm=<value>] [ -G | --key-algorithm=<value>]
+    [ -a | --attributes=<value>] [ -i | --sealing-input=<value>] [ -L | --policy=<value>] [ -u | --public=<value>]
+    [ -r | --private=<value>] [ -C | --parent-context=<value>] [ -c | --key-context=<value>] [ --creation-data=<value>]
+    [ --template-data=<value>] [ -t | --creation-ticket=<value>] [ -d | --creation-hash=<value>] [ -q | --outside-info=<value>]
+    [ -l | --pcr-list=<value>] [ --cphash=<value>] [ --rphash=<value>] [ -S | --session=<value>]
+    [ -f | --format=<value>] [ -o | --output=<value>]
+tpm2_startauthsession    [ --policy-session] [ --audit-session] [ --bind-context=<value>] [ --bind-auth=<value>]
+    [ --tpmkey-context=<value>] [ --hmac-session] [ -g | --hash-algorithm=<value>] [ -G | --key-algorithm=<value>]
+    [ -S | --session=<value>] [ -c | --key-context=<value>] [ -n | --name=<value>]
+tpm2_unseal [ -p | --auth=<value>] [ -o | --output=<value>] [ -c | --object-context=<value>] [ --cphash=<value>]
+    [ --rphash=<value>] [ -S | --session=<value>]
+tmp2_quote [ -c | --key-context=<value>] [ -p | --auth=<value>] [ -l | --pcr-list=<value>] [ -q | --qualification=<value>]
+    [ -s | --signature=<value>] [ -m | --message=<value>] [ -o | --pcr=<value>] [ -F | --pcrs_format=<value>]
+    [ -f | --format=<value>] [ -g | --hash-algorithm=<value>] [ --cphash=<value>] [ --scheme=<value>]
+
+
+tpm2_load [ -P | --auth=<value>] [ -u | --public=<value>] [ -r | --private=<value>] [ -n | --name=<value>]
+    [ -c | --key-context=<value>] [ -C | --parent-context=<value>] [ --cphash=<value>]
+
+
+Tpm2_StartAuthSession(LocalTpm& tpm, TPM_RH tpm_obj, TPM_RH bind_obj, TPM2B_NONCE& initial_nonce, TPM2B_ENCRYPTED_SECRET& salt, TPM_SE session_type, TPMT_SYM_DEF& symmetric, TPMI_ALG_HASH hash_alg, TPM_HANDLE* session_handle, TPM2B_NONCE* nonce_obj);
+bool Tpm2_PolicyPcr(LocalTpm& tpm, TPM_HANDLE session_handle, TPM2B_DIGEST& expected_digest, TPML_PCR_SELECTION& pcr);
+
+
+
+TPM2 Qualified Names are unique identifiers for TPM objects (keys, NV indices)
+that include the hash of the parent object’s name in the hierarchy (e.g.,
+Endorsement Hierarchy). This structure binds an object to its parent, ensuring
+it belongs to a specific TPM, crucial for remote attestation and ensuring secure,
+trusted key creation.
+
+Definition: A qualified name is the name algorithm hash of the parent’s
+qualified name concatenated with the object’s own name.
+
+Purpose: It acts as proof that an object, such as an Attestation Key (AK),
+was created under a specific parent object, typically the Endorsement Key (EK).
+
+Hierarchy Binding: The qualified name chain extends from the object up to
+the Primary Seed (e.g., Owner, Platform, or Endorsement Hierarchy),
+allowing verification of the entire hierarchy.
+
+Usage in Tools: tpm2_createak utilizes the -q option to record this,
+verifying the key's ancestry. tpm2_readpublic is used to read this name.
+
+Structure: Unlike a simple name, which is just the hash of the public
+area, the qualified name includes the parent's information, providing
+a secure, hierarchical, and verifiable identifier for keys. 
 
