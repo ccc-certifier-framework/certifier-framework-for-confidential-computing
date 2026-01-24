@@ -794,3 +794,33 @@ done:
   }
   return ret;
 }
+
+
+Get endorsement
+  flags: fixedTPM fixedParent sensitivedataorigin user-with-auth decrypt restricted
+  tpm2_createprimary endorsement empty-auth pcr-select rsa-alg hash-id-alg flags 
+    aes-alg cfb alg-null 2048 010001 &handle &pub-out
+  tpm2_createkey root-handle sealed-out
+  tpm2_load sealed-out creation-out &seal-load-handle ...
+  tpm2-savecontext context-save-area
+  tpm2-writenv context save area
+  
+sealtest
+  tpm2_createprimary ... &parent_handle &pub-out
+  tpm2-startauthsession RH_NULL RH_NULL initial-nonce salt SE_POLICY symmetric SHA &session-handle
+    &nonce-obj
+  tpm2_policygetdigest session-handle &policy-digest
+  tpm2_policypassword session-handle
+  tpm2_policypcr session-handle expected-digest pcr-select
+  tpm2_createsealed parent-handle policy-digest parent-auth secret pcr-select hash-alg create-flags
+    pub-out private-out digest-out ticket
+  tpm2_load out-pub out-priv &load-handle &name
+  tpm2_unseal load-handle parent-auth session-handle nonce 01 hmac &unsealed
+
+
+quote
+  tpm2_createprimary auth pcr-sel flags size &parent-handle &pub-out
+  tpm2_pcrevent
+  tpm2_createkey parent-handle parent-auth .. &pub &priv &create-out &digest-auth &&ticket-out
+  tpm2_load parent-handle ... &load-handle &name
+  tpm2_quote load-handle parent-auth to-quote scheme pcr-selection &quoted &sig
