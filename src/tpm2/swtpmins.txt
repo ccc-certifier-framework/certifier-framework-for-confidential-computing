@@ -147,33 +147,54 @@ tpm2_zgen2phase
 tpm2_getrandom --hex 32
 tpm2_readclock
 tpm2_pcrread sha256
-tpm2_policypcr [ -L | --policy=<value>] [ -f | --pcr=<value>] [ -l | --pcr-list=<value>] [ -S | --session=<value>]
-tpm2_createpolicy [ -L | --policy=<value>] [ -g | --policy-algorithm=<value>] [ -l | --pcr-list=<value>] [ -f | --pcr=<value>]
-    [ --policy-pcr] [ --policy-session]
-tpm2_create [ -P | --parent-auth=<value>] [ -p | --key-auth=<value>] [ -g | --hash-algorithm=<value>] [ -G | --key-algorithm=<value>]
-    [ -a | --attributes=<value>] [ -i | --sealing-input=<value>] [ -L | --policy=<value>] [ -u | --public=<value>]
-    [ -r | --private=<value>] [ -C | --parent-context=<value>] [ -c | --key-context=<value>] [ --creation-data=<value>]
-    [ --template-data=<value>] [ -t | --creation-ticket=<value>] [ -d | --creation-hash=<value>] [ -q | --outside-info=<value>]
-    [ -l | --pcr-list=<value>] [ --cphash=<value>] [ --rphash=<value>] [ -S | --session=<value>]
-    [ -f | --format=<value>] [ -o | --output=<value>]
-tpm2_startauthsession    [ --policy-session] [ --audit-session] [ --bind-context=<value>] [ --bind-auth=<value>]
-    [ --tpmkey-context=<value>] [ --hmac-session] [ -g | --hash-algorithm=<value>] [ -G | --key-algorithm=<value>]
-    [ -S | --session=<value>] [ -c | --key-context=<value>] [ -n | --name=<value>]
-tpm2_unseal [ -p | --auth=<value>] [ -o | --output=<value>] [ -c | --object-context=<value>] [ --cphash=<value>]
-    [ --rphash=<value>] [ -S | --session=<value>]
-tmp2_quote [ -c | --key-context=<value>] [ -p | --auth=<value>] [ -l | --pcr-list=<value>] [ -q | --qualification=<value>]
-    [ -s | --signature=<value>] [ -m | --message=<value>] [ -o | --pcr=<value>] [ -F | --pcrs_format=<value>]
-    [ -f | --format=<value>] [ -g | --hash-algorithm=<value>] [ --cphash=<value>] [ --scheme=<value>]
 
-
-tpm2_load [ -P | --auth=<value>] [ -u | --public=<value>] [ -r | --private=<value>] [ -n | --name=<value>]
-    [ -c | --key-context=<value>] [ -C | --parent-context=<value>] [ --cphash=<value>]
+tpm2_createpolicy [ -L | --policy=<value>] [ -g | --policy-algorithm=<value>]
+  [ -l | --pcr-list=<value>] [ -f | --pcr=<value>]
+  [ --policy-pcr] [ --policy-session]
+tpm2_policypcr [ -L | --policy=<value>] [ -f | --pcr=<value>]
+  [ -l | --pcr-list=<value>] [ -S | --session=<value>]
+tpm2_load [ -P | --auth=<value>] [ -u | --public=<value>]
+  [ -r | --private=<value>] [ -n | --name=<value>]
+  [ -c | --key-context=<value>] [ -C | --parent-context=<value>]
+  [ --cphash=<value>]
+tpm2_createprimary  [ -C | --hierarchy=<value>]
+  [ -P | --hierarchy-auth=<value>] [ -p | --key-auth=<value>]
+  [ -g | --hash-algorithm=<value>] [ -G | --key-algorithm=<value>]
+  [ -c | --key-context=<value>] [ -L | --policy=<value>]
+  [ -a | --attributes=<value>] [ -u | --unique-data=<value>]
+  [ --creation-data=<value>] [ --template-data=<value>]
+  [ -t | --creation-ticket=<value>] [ -d | --creation-hash=<value>]
+  [ -q | --outside-info=<value>] [ -l | --pcr-list=<value>] [ --cphash=<value>]
+  [ -f | --format=<value>] [ -o | --output=<value>]
+tpm2_create [ -P | --parent-auth=<value>] [ -p | --key-auth=<value>]
+  [ -g | --hash-algorithm=<value>] [ -G | --key-algorithm=<value>]
+  [ -a | --attributes=<value>] [ -i | --sealing-input=<value>]
+  [ -L | --policy=<value>] [ -u | --public=<value>]
+  [ -r | --private=<value>] [ -C | --parent-context=<value>]
+  [ -c | --key-context=<value>] [ --creation-data=<value>]
+  [ --template-data=<value>] [ -t | --creation-ticket=<value>]
+  [ -d | --creation-hash=<value>] [ -q | --outside-info=<value>]
+  [ -l | --pcr-list=<value>] [ --cphash=<value>] [ --rphash=<value>]
+  [ -S | --session=<value>] [ -f | --format=<value>] [ -o | --output=<value>]
+tpm2_startauthsession [ --policy-session] [ --audit-session]
+  [ --bind-context=<value>] [ --bind-auth=<value>]
+  [ --tpmkey-context=<value>] [ --hmac-session]
+  [ -g | --hash-algorithm=<value>] [ -G | --key-algorithm=<value>]
+  [ -S | --session=<value>] [ -c | --key-context=<value>]
+  [ -n | --name=<value>]
+tpm2_unseal [ -p | --auth=<value>] [ -o | --output=<value>]
+  [ -c | --object-context=<value>] [ --cphash=<value>]
+  [ --rphash=<value>] [ -S | --session=<value>]
+tmp2_quote [ -c | --key-context=<value>] [ -p | --auth=<value>]
+  [ -l | --pcr-list=<value>] [ -q | --qualification=<value>]
+  [ -s | --signature=<value>] [ -m | --message=<value>]
+  [ -o | --pcr=<value>] [ -F | --pcrs_format=<value>]
+  [ -f | --format=<value>] [ -g | --hash-algorithm=<value>]
+  [ --cphash=<value>] [ --scheme=<value>]
 
 
 Tpm2_StartAuthSession(LocalTpm& tpm, TPM_RH tpm_obj, TPM_RH bind_obj, TPM2B_NONCE& initial_nonce, TPM2B_ENCRYPTED_SECRET& salt, TPM_SE session_type, TPMT_SYM_DEF& symmetric, TPMI_ALG_HASH hash_alg, TPM_HANDLE* session_handle, TPM2B_NONCE* nonce_obj);
 bool Tpm2_PolicyPcr(LocalTpm& tpm, TPM_HANDLE session_handle, TPM2B_DIGEST& expected_digest, TPML_PCR_SELECTION& pcr);
-
-
 
 TPM2 Qualified Names are unique identifiers for TPM objects (keys, NV indices)
 that include the hash of the parent object’s name in the hierarchy (e.g.,
@@ -218,17 +239,13 @@ GetEndorsementKey.cc
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
-
   TPML_PCR_SELECTION pcrSelect;
   TPMA_OBJECT root_flags;
-
   TPM2B_CREATION_DATA creation_out;
   TPM2B_DIGEST digest_out;
   TPMT_TK_CREATION creation_ticket;
-
   TPM_HANDLE root_handle = 0;
   TPM2B_PUBLIC root_pub_out;
-
   TPM_HANDLE seal_load_handle = 0;
   TPMA_OBJECT seal_create_flags;
   TPM2B_NAME seal_name;
@@ -236,7 +253,6 @@ GetEndorsementKey.cc
   byte seal_out_public[MAX_SIZE_PARAMS];
   int seal_size_private = MAX_SIZE_PARAMS;
   byte seal_out_private[MAX_SIZE_PARAMS];
-
   TPMA_OBJECT quote_create_flags;
   TPM2B_NAME quote_name;
   TPM_HANDLE quote_load_handle = 0;
@@ -244,7 +260,6 @@ GetEndorsementKey.cc
   byte quote_out_public[MAX_SIZE_PARAMS];
   int quote_size_private = MAX_SIZE_PARAMS;
   byte quote_out_private[MAX_SIZE_PARAMS];
-
   TPM_HANDLE nv_handle = 0;
   byte context_save_area[MAX_SIZE_PARAMS];
   uint16_t context_data_size = MAX_SIZE_PARAMS;
@@ -345,12 +360,10 @@ bool Tpm2_SealCombinedTest(LocalTpm& tpm, int pcr_num) {
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
-
   TPM_HANDLE parent_handle;
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcrSelect;
   InitSinglePcrSelection(pcr_num, TPM_ALG_SHA1, &pcrSelect);
-
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
   primary_flags.fixedTPM = 1;
@@ -379,7 +392,6 @@ bool Tpm2_SealCombinedTest(LocalTpm& tpm, int pcr_num) {
   byte_t out_public[MAX_SIZE_PARAMS];
   int size_private = MAX_SIZE_PARAMS;
   byte_t out_private[MAX_SIZE_PARAMS];
-
   TPM2B_DIGEST digest_out;
   TPM2B_NONCE initial_nonce;
   TPM2B_ENCRYPTED_SECRET salt;
@@ -571,230 +583,7 @@ bool Tpm2_QuoteCombinedTest(LocalTpm& tpm, int pcr_num) {
   return true;
 }
 
-void seperate_key_test() {
-  RSA* rsa_key = RSA_generate_key(2048, 0x010001ULL, nullptr, nullptr);
-  if (rsa_key == nullptr) {
-    printf("Can't generate RSA key\n");
-    return;
-  }
-  TPM2B_DIGEST secret;
-  TPM2B_ENCRYPTED_SECRET salt;
-  secret.size = 20;
-  memcpy(secret.buffer, (byte_t*)"12345678901234567890", secret.size);
-
-// Encrypt salt
-  printf("\nencrypting salt\n");
-  int size_padded_secret= 256;
-  byte_t padded_secret[256];
-  RSA_padding_add_PKCS1_OAEP(padded_secret, 256, secret.buffer, secret.size,
-      (byte_t*)"SECRET", strlen("SECRET")+1);
-  int n = RSA_public_encrypt(size_padded_secret, padded_secret, salt.secret,
-                             rsa_key, RSA_NO_PADDING);
-  salt.size = n;
-
-  byte_t decrypted_with_pad[512];
-  byte_t recovered_secret[512];
-  memset(recovered_secret, 0, 512);
-  memset(decrypted_with_pad, 0, 512);
-
-  printf("\nEncrypted salt (%d): ", n);
-  PrintBytes(n, salt.secret); printf("\n");
-  int m = RSA_private_decrypt(n, (byte_t*) salt.secret,
-               (byte_t*)decrypted_with_pad, rsa_key,
-               RSA_NO_PADDING);
-  if (m < 0) {
-    printf("Can't decrypt\n");
-    return;
-  }
-  printf("decrypted(%d): ", m);
-  PrintBytes(m, decrypted_with_pad);printf("\n");
-  salt.size = m;
-  int k = 0;
-  while(k < 256 && decrypted_with_pad[k] == 0) k++;
-  RSA_padding_check_PKCS1_OAEP(recovered_secret, 256, 
-      &decrypted_with_pad[k], 256-k, 256,
-      (byte_t*)"SECRET", strlen("SECRET")+1);
-}
-
-// For Jethro
-bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm) {
-  printf("Tpm2_NvCombinedSessionTest\n\n");
-  extern int CreatePasswordAuthArea(string& password, int size, byte_t* buf);
-
-  int slot = 1000;
-  string authString("01020304");
-  uint16_t size_data = 8;
-  uint16_t size_out = 512;
-  byte_t data_out[512];
-  TPM_HANDLE nv_handle = GetNvHandle(slot);
-  bool ret = true;
-
-  TPM2B_ENCRYPTED_SECRET salt;
-  TPM_HANDLE sessionHandle = 0;
-  TPML_PCR_SELECTION pcrSelect;
-  memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
-
-  TPM2B_DIGEST secret;
-  ProtectedSessionAuthInfo authInfo;
-  TPMT_SYM_DEF symmetric;
-
-  authInfo.hash_alg_ = TPM_ALG_SHA1;
-  int hashSize = SizeHash(authInfo.hash_alg_);
-
-  // If encryption.
-  symmetric.algorithm = TPM_ALG_AES;
-  symmetric.keyBits.aes = 128;
-  symmetric.mode.aes = TPM_ALG_CFB;
-
-  authInfo.targetAuthValue_.size = authString.size();
-  memset(authInfo.targetAuthValue_.buffer, 0, authString.size());
-
-  authInfo.newNonce_.size = hashSize;
-  authInfo.oldNonce_.size = hashSize;
-  memset(authInfo.newNonce_.buffer, 0, hashSize);
-  memset(authInfo.oldNonce_.buffer, 0, hashSize);
-  RAND_bytes(authInfo.oldNonce_.buffer, authInfo.oldNonce_.size);
-
-  memset(secret.buffer, 0, 32);
-  secret.size = 20;
-  RAND_bytes(secret.buffer, secret.size);
-
-  // Get endorsement key handle
-  string emptyAuth;
-  TPM_HANDLE ekHandle;
-  TPM2B_PUBLIC pub_out;
-
-  // TPM_RH_ENDORSEMENT
-  TPMA_OBJECT primary_flags;
-  *(uint32_t*)(&primary_flags) = 0;
-  primary_flags.fixedTPM = 1;
-  primary_flags.fixedParent = 1;
-  primary_flags.sensitiveDataOrigin = 1;
-  primary_flags.userWithAuth = 1;
-  primary_flags.decrypt = 1;
-  primary_flags.restricted = 1;
-
-  // Get rid of the old counter.
-  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
-    printf("Tpm2_UndefineSpace %d succeeds\n", slot);
-  } else {
-    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
-  }
-  if (Tpm2_DefineSpace(tpm, TPM_RH_OWNER, nv_handle, authString,
-                        0, nullptr, NV_COUNTER | NV_AUTHWRITE | NV_AUTHREAD,
-                        size_data)) {
-     printf("DefineSpace succeeded\n");
-   } else {
-     printf("DefineSpace failed\n");
-     return false;
-   }
-  if (Tpm2_IncrementNv(tpm, nv_handle, authString)) {
-    printf("Initial Tpm2_IncrementNv succeeds\n");
-  } else {
-    printf("Initial Tpm2_IncrementNv fails\n");
-     return false;
-  }
-
-  // Get endorsement key.
-  if (Tpm2_CreatePrimary(tpm, TPM_RH_ENDORSEMENT, emptyAuth, pcrSelect,
-                         TPM_ALG_RSA, TPM_ALG_SHA1, primary_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
-                         2048, 0x010001, &ekHandle, &pub_out)) {
-    printf("CreatePrimary succeeded: %08x\n", ekHandle);
-  } else {
-    printf("CreatePrimary failed\n");
-    return false;
-  }
-
-  TPM2B_NAME pub_name;
-  TPM2B_NAME qualified_pub_name;
-  uint16_t pub_blob_size = 2048;
-  byte_t pub_blob[2048];
-
-  if (Tpm2_ReadPublic(tpm, ekHandle, &pub_blob_size, pub_blob, &pub_out,
-                      &pub_name, &qualified_pub_name)) {
-    printf("ReadPublic succeeded\n");
-  } else {
-    printf("ReadPublic failed\n");
-    return false;
-  }
-
-  // Normally, the caller would get the key from the endorsement certificate
-  EVP_PKEY* tpmKey = EVP_PKEY_new();
-  RSA* rsa_tpmKey = RSA_new();
-  BIGNUM* m = bin_to_BN((int)pub_out.publicArea.unique.rsa.size,
-                        pub_out.publicArea.unique.rsa.buffer);
-  uint64_t exp = 0x010001ULL;
-  byte_t b_exp[16];
-  ChangeEndian64((uint64_t*)&exp, (uint64_t*)b_exp);
-  BIGNUM* e = bin_to_BN(sizeof(uint64_t), b_exp);
-  if (1 != RSA_set0_key(rsa_tpmKey, m, e, nullptr)) {
-    printf("RSA_set0_key failed\n");
-    return false;
-  }
-  EVP_PKEY_assign_RSA(tpmKey, rsa_tpmKey);
-
-  // Encrypt salt
-  byte_t padded_secret[1024];
-  memset(padded_secret, 0, 1024);
-  RSA_padding_add_PKCS1_OAEP(padded_secret, 256,
-      secret.buffer, secret.size,
-      (byte_t*)"SECRET", strlen("SECRET")+1);
-  int n = RSA_public_encrypt(256, padded_secret, salt.secret,
-                             rsa_tpmKey, RSA_NO_PADDING);
-  salt.size = n;
-
-  authInfo.protectedHandle_ = nv_handle;
-  authInfo.protectedAttributes_ = NV_COUNTER | NV_AUTHWRITE | NV_AUTHREAD;
-  authInfo.protectedSize_ = size_data;
-  authInfo.hash_alg_ = TPM_ALG_SHA1;
-  authInfo.tpmSessionAttributes_ = CONTINUESESSION;
-  extern int SetPasswordData(string& password, int size, byte_t* buf);
-  byte_t tbuf[128];
-  int l = SetPasswordData(authString, 128, tbuf);
-  authInfo.targetAuthValue_.size = l - 2;
-  memcpy(authInfo.targetAuthValue_.buffer, &tbuf[2], l - 2);
-  
-  // Start auth session.
-    if (Tpm2_StartProtectedAuthSession(tpm, ekHandle, TPM_RH_NULL, authInfo,
-         salt, TPM_SE_HMAC, symmetric, authInfo.hash_alg_, &sessionHandle)) {
-    printf("Tpm2_StartProtectedAuthSession succeeds handle: %08x\n",
-           sessionHandle);
-  } else {
-    printf("Tpm2_StartProtectedAuthSession fails\n");
-    ret = false;
-    goto done;
-  }
-  authInfo.sessionHandle_ = sessionHandle;
-
-  // Calculate session key.
-  if (!CalculateSessionKey(authInfo, secret)) {
-    printf("Can't calculate HMac session key\n");
-    ret = false;
-    goto done;
-  }
-
-  if (Tpm2_IncrementProtectedNv(tpm, nv_handle, authInfo)) {
-    printf("Tpm2_IncrementProtectedNv %d succeeds\n", nv_handle);
-  }
-
-  size_out = 8;
-  if (Tpm2_ReadProtectedNv(tpm, nv_handle, authInfo, &size_out, data_out)) {
-    printf("Tpm2_ReadProtectedNv %d succeeds: ", nv_handle);
-    PrintBytes(size_out, data_out);
-    printf("\n");
-  }
-
-done:
-  if (sessionHandle != 0) {
-    Tpm2_FlushContext(tpm, sessionHandle);
-  }
-  if (ekHandle != 0) {
-    Tpm2_FlushContext(tpm, ekHandle);
-  }
-  return ret;
-}
-
+--------------------------------------------------
 
 Get endorsement
   flags: fixedTPM fixedParent sensitivedataorigin user-with-auth decrypt restricted
