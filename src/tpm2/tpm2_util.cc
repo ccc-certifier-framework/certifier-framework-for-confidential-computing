@@ -105,7 +105,7 @@ std::string tpmutil_ops[] = {
     "--command=DictionaryAttackLockReset",
     "--command=KeyTest",
     "--command=NvTest",
-    "--command=Contextest",
+    "--command=ContextTest",
     "--command=EndorsementTest",
     "--command=NvSessionTest",
 };
