@@ -111,7 +111,7 @@ std::string tpmutil_ops[] = {
 };
 
 // standard buffer size
-#define MAX_SIZE_PARAMS 4096
+#define MAX_SIZE_PARAMS 16384
 
 // Combined tests
 bool seal_test(LocalTpm& tpm, int pcr_num);
@@ -954,7 +954,7 @@ bool seal_test(LocalTpm& tpm, int pcr_num) {
   primary_flags.restricted = 1;
 
   if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcrSelect, 
-                         TPM_ALG_RSA, TPM_ALG_SHA1, primary_flags,
+                         TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
                          TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
                          1024, 0x010001,
                         &parent_handle, &pub_out)) {
@@ -990,7 +990,7 @@ bool seal_test(LocalTpm& tpm, int pcr_num) {
   // Start auth session
   if (Tpm2_StartAuthSession(tpm, TPM_RH_NULL, TPM_RH_NULL,
                             initial_nonce, salt, TPM_SE_POLICY,
-                            symmetric, TPM_ALG_SHA1, &session_handle,
+                            symmetric, TPM_ALG_SHA256, &session_handle,
                             &nonce_obj)) {
     printf("Tpm2_StartAuthSession succeeds handle: %08x\n",
            session_handle);
@@ -1047,7 +1047,7 @@ bool seal_test(LocalTpm& tpm, int pcr_num) {
 
   if (Tpm2_CreateSealed(tpm, parent_handle, policy_digest.size,
                         policy_digest.buffer, parentAuth, secret.size,
-                        secret.buffer, pcrSelect, TPM_ALG_SHA1, create_flags,
+                        secret.buffer, pcrSelect, TPM_ALG_SHA256, create_flags,
                         TPM_ALG_NULL, (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB,
                         TPM_ALG_RSASSA, 1024, 0x010001,
                         &size_public, out_public, &size_private, out_private,
@@ -1099,7 +1099,7 @@ bool quote_test(LocalTpm& tpm, int pcr_num) {
   TPM_HANDLE parent_handle;
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcr_selection;
-  InitSinglePcrSelection(pcr_num, TPM_ALG_SHA1, &pcr_selection);
+  InitSinglePcrSelection(pcr_num, TPM_ALG_SHA256, &pcr_selection);
 
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
@@ -1111,11 +1111,11 @@ bool quote_test(LocalTpm& tpm, int pcr_num) {
   primary_flags.restricted = 1;
 
   if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcr_selection, 
-                         TPM_ALG_RSA, TPM_ALG_SHA1, primary_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
-                         1024, 0x010001,
+                         TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
+                         TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
+                         2048, 0x010001,
                          &parent_handle, &pub_out)) {
-    printf("CreatePrimary succeeded\n");
+    printf("CreatePrimary succeeded 1 (2048)\n");
   } else {
     printf("CreatePrimary failed\n");
     return false;
@@ -1149,12 +1149,12 @@ bool quote_test(LocalTpm& tpm, int pcr_num) {
   create_flags.restricted = 1;
 
   if (Tpm2_CreateKey(tpm, parent_handle, parentAuth, authString, pcr_selection,
-                     TPM_ALG_RSA, TPM_ALG_SHA1, create_flags, TPM_ALG_NULL,
-                     (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
-                     1024, 0x010001,
+                     TPM_ALG_RSA, TPM_ALG_SHA256, create_flags, TPM_ALG_NULL,
+                     (TPMI_AES_KEY_BITS)256, TPM_ALG_ECB, TPM_ALG_RSASSA,
+                     2048, 0x010001,
                      &size_public, out_public, &size_private, out_private,
                      &creation_out, &digest_out, &creation_ticket)) {
-    printf("Create succeeded, private size: %d, public size: %d\n",
+    printf("CreateKey succeeded, private size: %d, public size: %d\n",
            size_private, size_public);
   } else {
     printf("Create failed\n");
@@ -1172,8 +1172,8 @@ bool quote_test(LocalTpm& tpm, int pcr_num) {
   }
 
   TPM2B_DATA to_quote;
-  to_quote.size = 16;
-  for  (int i = 0; i < 16; i++)
+  to_quote.size = 32;
+  for  (int i = 0; i < to_quote.size; i++)
     to_quote.buffer[i] = (byte_t)(i + 1);
   TPMT_SIG_SCHEME scheme;
 
@@ -1183,9 +1183,9 @@ bool quote_test(LocalTpm& tpm, int pcr_num) {
   byte_t sig[MAX_SIZE_PARAMS];
   if (!Tpm2_Quote(tpm, load_handle, parentAuth,
                   to_quote.size, to_quote.buffer,
-                  scheme, pcr_selection, TPM_ALG_RSA, TPM_ALG_SHA1,
+                  scheme, pcr_selection, TPM_ALG_RSA, TPM_ALG_SHA256,
                   &quote_size, quoted, &sig_size, sig)) {
-    printf("Quote failed\n");
+    printf("Quote failed, pcr_num: %d\n", pcr_num);
     Tpm2_FlushContext(tpm, load_handle);
     Tpm2_FlushContext(tpm, parent_handle);
     return false;
