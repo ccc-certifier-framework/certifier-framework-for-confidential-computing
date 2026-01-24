@@ -24,6 +24,7 @@
 
 //
 // Copyright 2015 Google Corporation, All Rights Reserved.
+// Copyright 2025 John L Manferdelli, All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,6 +72,7 @@ DEFINE_string(creation_data_file, "", "private public area");
 DEFINE_string(save_context_file, "", "save(d) context area");
 DEFINE_string(decrypt, "", "decrypt flag");
 DEFINE_uint64(startHandle, 0x80000000, "start handle range");
+DEFINE_string(tpm_device, "/dev/tpm0", "Tpm device");
 
 #ifndef GFLAGS_NS
 #define GFLAGS_NS google
@@ -98,27 +100,27 @@ std::string tpmutil_ops[] = {
     "--command=WriteNv",
     "--command=DefineSpace",
     "--command=UndefineSpace",
-    "--command=SealCombinedTest",
-    "--command=QuoteCombinedTest",
+    "--command=SealTest",
+    "--command=QuoteTest",
     "--command=DictionaryAttackLockReset",
-    "--command=KeyCombinedTest",
-    "--command=NvCombinedTest",
-    "--command=ContextCombinedTest",
-    "--command=EndorsementCombinedTest",
-    "--command=NvCombinedSessionTest",
+    "--command=KeyTest",
+    "--command=NvTest",
+    "--command=Contextest",
+    "--command=EndorsementTest",
+    "--command=NvSessionTest",
 };
 
 // standard buffer size
 #define MAX_SIZE_PARAMS 4096
 
 // Combined tests
-bool Tpm2_SealCombinedTest(LocalTpm& tpm, int pcr_num);
-bool Tpm2_QuoteCombinedTest(LocalTpm& tpm, int pcr_num);
-bool Tpm2_KeyCombinedTest(LocalTpm& tpm, int pcr_num);
-bool Tpm2_NvCombinedTest(LocalTpm& tpm);
-bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm);
-bool Tpm2_ContextCombinedTest(LocalTpm& tpm);
-bool Tpm2_EndorsementCombinedTest(LocalTpm& tpm);
+bool seal_test(LocalTpm& tpm, int pcr_num);
+bool quote_test(LocalTpm& tpm, int pcr_num);
+bool key_test(LocalTpm& tpm, int pcr_num);
+bool nv_test(LocalTpm& tpm);
+bool context_test(LocalTpm& tpm);
+bool endorsement_test(LocalTpm& tpm);
+
 
 void PrintOptions() {
   printf("Permitted operations:\n");
@@ -132,8 +134,8 @@ int main(int an, char** av) {
   LocalTpm tpm;
 
   GFLAGS_NS::ParseCommandLineFlags(&an, &av, true);
-  if (!tpm.OpenTpm("/dev/tpm0")) {
-    printf("Can't open tpm\n");
+  if (!tpm.OpenTpm(FLAGS_tpm_device.c_str())) {
+    printf("Can't open tpm: %s\n", FLAGS_tpm_device.c_str());
     return 1;
   }
 
@@ -204,6 +206,7 @@ int main(int an, char** av) {
       printf("CreatePrimary failed\n");
     }
 #endif
+    printf("CreatePrimary failed\n");
   } else if (FLAGS_command == "Load") {
     TPM_HANDLE parent_handle = 0x80000000;
     TPM_HANDLE new_handle;
@@ -422,47 +425,41 @@ int main(int an, char** av) {
     } else {
       printf("Flushall failed\n");
     }
-  } else if (FLAGS_command == "KeyCombinedTest") {
-    if (Tpm2_KeyCombinedTest(tpm, FLAGS_pcr_num)) {
-      printf("Tpm2_KeyCombinedTest succeeded\n");
+  } else if (FLAGS_command == "KeyTest") {
+    if (key_test(tpm, FLAGS_pcr_num)) {
+      printf("Tpm2_KeyTest succeeded\n");
     } else {
-      printf("Tpm2_KeyCombinedTest failed\n");
+      printf("Tpm2_KeyTest failed\n");
     }
-  } else if (FLAGS_command == "SealCombinedTest") {
-    if (Tpm2_SealCombinedTest(tpm, FLAGS_pcr_num)) {
-      printf("SealCombinedTest succeeded\n");
+  } else if (FLAGS_command == "SealTest") {
+    if (seal_test(tpm, FLAGS_pcr_num)) {
+      printf("SealTest succeeded\n");
     } else {
-      printf("SealCombinedTest failed\n");
+      printf("SealTest failed\n");
     }
-  } else if (FLAGS_command == "QuoteCombinedTest") {
-    if (Tpm2_QuoteCombinedTest(tpm, FLAGS_pcr_num)) {
-      printf("QuoteCombinedTest succeeded\n");
+  } else if (FLAGS_command == "QuoteTest") {
+    if (quote_test(tpm, FLAGS_pcr_num)) {
+      printf("QuoteTest succeeded\n");
     } else {
-      printf("QuoteCombinedTest failed\n");
+      printf("QuoteTest failed\n");
     }
-  } else if (FLAGS_command == "NvCombinedTest") {
-    if (Tpm2_NvCombinedTest(tpm)) {
-      printf("NvCombinedTest succeeded\n");
+  } else if (FLAGS_command == "NvTest") {
+    if (nv_test(tpm)) {
+      printf("NvTest succeeded\n");
     } else {
-      printf("NvCombinedTest failed\n");
+      printf("NvTest failed\n");
     }
-  } else if (FLAGS_command == "NvCombinedSessionTest") {
-    if (Tpm2_NvCombinedSessionTest(tpm)) {
-      printf("NvCombinedSessionTest succeeded\n");
+  } else if (FLAGS_command == "ContextTest") {
+    if (context_test(tpm)) {
+      printf("ContextTest succeeded\n");
     } else {
-      printf("NvCombinedSessionTest failed\n");
+      printf("ContextTest failed\n");
     }
-  } else if (FLAGS_command == "ContextCombinedTest") {
-    if (Tpm2_ContextCombinedTest(tpm)) {
-      printf("ContextCombinedTest succeeded\n");
+  } else if (FLAGS_command == "EndorsementTest") {
+    if (endorsement_test(tpm)) {
+      printf("EndorsementTest succeeded\n");
     } else {
-      printf("ContextCombinedTest failed\n");
-    }
-  } else if (FLAGS_command == "EndorsementCombinedTest") {
-    if (Tpm2_EndorsementCombinedTest(tpm)) {
-      printf("EndorsementCombinedTest succeeded\n");
-    } else {
-      printf("EndorsementCombinedTest failed\n");
+      printf("EndorsementTest failed\n");
     }
   } else if (FLAGS_command == "DictionaryAttackLockReset") {
     if (Tpm2_DictionaryAttackLockReset(tpm)) {
@@ -480,7 +477,7 @@ done:
 
 // Combined tests
 
-bool Tpm2_EndorsementCombinedTest(LocalTpm& tpm) {
+bool endorsement_test(LocalTpm& tpm) {
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
@@ -666,7 +663,7 @@ bool Tpm2_EndorsementCombinedTest(LocalTpm& tpm) {
   return true;
 }
 
-bool Tpm2_ContextCombinedTest(LocalTpm& tpm) {
+bool context_test(LocalTpm& tpm) {
   TPM_HANDLE handle;
   uint16_t size = 4096;
   byte_t saveArea[4096];
@@ -718,7 +715,7 @@ bool Tpm2_ContextCombinedTest(LocalTpm& tpm) {
   return true;
 }
 
-bool Tpm2_NvCombinedTest(LocalTpm& tpm) {
+bool nv_test(LocalTpm& tpm) {
   int slot = 1000;
   string authString("01020304");
   uint16_t size_data = 16;
@@ -809,7 +806,7 @@ bool Tpm2_NvCombinedTest(LocalTpm& tpm) {
   return true;
 }
 
-bool Tpm2_KeyCombinedTest(LocalTpm& tpm, int pcr_num) {
+bool key_test(LocalTpm& tpm, int pcr_num) {
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
@@ -935,7 +932,7 @@ bool Tpm2_KeyCombinedTest(LocalTpm& tpm, int pcr_num) {
 }
 
 
-bool Tpm2_SealCombinedTest(LocalTpm& tpm, int pcr_num) {
+bool seal_test(LocalTpm& tpm, int pcr_num) {
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
@@ -1092,7 +1089,7 @@ bool Tpm2_SealCombinedTest(LocalTpm& tpm, int pcr_num) {
   return true;
 }
 
-bool Tpm2_QuoteCombinedTest(LocalTpm& tpm, int pcr_num) {
+bool quote_test(LocalTpm& tpm, int pcr_num) {
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
@@ -1249,8 +1246,8 @@ void seperate_key_test() {
 }
 
 // For Jethro
-bool Tpm2_NvCombinedSessionTest(LocalTpm& tpm) {
-  printf("Tpm2_NvCombinedSessionTest\n\n");
+bool NvSessionTest(LocalTpm& tpm) {
+  printf("NvSessionTest\n\n");
   extern int CreatePasswordAuthArea(string& password, int size, byte_t* buf);
 
   int slot = 1000;

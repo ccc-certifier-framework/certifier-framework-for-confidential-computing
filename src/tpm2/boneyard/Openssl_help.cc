@@ -25,7 +25,6 @@ using std::string;
 
 //
 // Copyright 2015 Google Corporation, All Rights Reserved.
-// Copyright 2025 John L Manferdelli, All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,6 +45,51 @@ using std::string;
 // standard buffer size
 #define MAX_SIZE_PARAMS 4096
 
+void print_cert_request_message(x509_cert_request_parameters_message& req_message) {
+  if (req_message.has_common_name()) {
+    printf("common name: %s\n", req_message.common_name().c_str());
+  }
+  if (req_message.has_country_name()) {
+    printf("country name: %s\n", req_message.country_name().c_str());
+  }
+  if (req_message.has_state_name()) {
+    printf("state name: %s\n", req_message.state_name().c_str());
+  }
+  if (req_message.has_locality_name()) {
+    printf("locality name: %s\n", req_message.locality_name().c_str());
+  }
+  if (req_message.has_organization_name()) {
+    printf("organization name: %s\n", req_message.organization_name().c_str());
+  }
+  if (req_message.has_suborganization_name()) {
+    printf("suborganization name: %s\n",
+        req_message.suborganization_name().c_str());
+  }
+  if (!req_message.has_key())
+    return;
+  if (req_message.key().has_key_type()) {
+    printf("key_type name: %s\n", req_message.key().key_type().c_str());
+  }
+  if (req_message.key().rsa_key().has_key_name()) {
+    printf("key name: %s\n", req_message.key().rsa_key().key_name().c_str());
+  }
+  if (req_message.key().rsa_key().has_bit_modulus_size()) {
+    printf("modulus bit size: %d\n",
+           req_message.key().rsa_key().bit_modulus_size());
+  }
+  if (req_message.key().rsa_key().has_exponent()) {
+    string exp = req_message.key().rsa_key().exponent();
+    printf("exponent: ");
+    PrintBytes(exp.size(), (byte_t*)exp.data());
+    printf("\n");
+  }
+  if (req_message.key().rsa_key().has_modulus()) {
+    string mod = req_message.key().rsa_key().modulus();
+    printf("modulus : ");
+    PrintBytes(mod.size(), (byte_t*)mod.data());
+    printf("\n");
+  }
+}
 
 void print_internal_private_key(RSA& key) {
   const RSA* r = &key;
@@ -110,6 +154,77 @@ string* BN_to_bin(BIGNUM& n) {
   return new string((const char*)buf, len);
 }
 
+bool GenerateX509CertificateRequest(x509_cert_request_parameters_message&
+        params, bool sign_request, X509_REQ* req) {
+  RSA*  rsa = RSA_new();
+  X509_NAME* subject = X509_NAME_new();
+  EVP_PKEY* pKey = EVP_PKEY_new();
+
+  X509_REQ_set_version(req, 2L);
+  if (params.key().key_type() != "RSA") {
+    printf("Only rsa keys supported %s\n", params.key().key_type().c_str());
+    return false;
+  }
+  if (subject == nullptr) {
+    printf("Can't alloc x509 name\n");
+    return false;
+  }
+  if (params.has_common_name()) {
+    int nid = OBJ_txt2nid("CN");
+    X509_NAME_ENTRY* ent = X509_NAME_ENTRY_create_by_NID(nullptr, nid,
+        MBSTRING_ASC, (byte_t*)params.common_name().c_str(), -1);
+    if (ent == nullptr) {
+      printf("X509_NAME_ENTRY return is null, nid: %d\n", nid);
+      return false;
+    }
+    if (X509_NAME_add_entry(subject, ent, -1, 0) != 1) {
+      printf("Can't add name ent\n");
+      return false;
+    }
+  }
+  // TODO: do the foregoing for the other name components
+  if (X509_REQ_set_subject_name(req, subject) != 1)  {
+    printf("Can't set x509 subject\n");
+    return false;
+  }
+
+  if (!GetPublicRsaKeyFromParameters(params.key().rsa_key(), rsa)) {
+    printf("Can't make rsa key\n");
+    return false;
+  }
+
+  EVP_PKEY_assign_RSA(pKey, rsa);
+
+  // fill key parameters in request
+  if (sign_request) {
+    const EVP_MD* digest = EVP_sha256();
+    if (!X509_REQ_sign(req, pKey, digest)) {
+      printf("Sign request fails\n");
+      printf("ERR: %s\n", ERR_lib_error_string(ERR_get_error()));
+    }
+  }
+  if (X509_REQ_set_pubkey(req, pKey) ==0) {
+      printf("X509_REQ_set_pubkey failed\n");
+  }
+
+  return true;
+}
+
+bool GetPublicRsaKeyFromParameters(const rsa_public_key_message& key_msg,
+                                   RSA* rsa) {
+  /*
+  rsa->e = bin_to_BN(key_msg.exponent().size(), (byte_t*)key_msg.exponent().data());
+  rsa->n = bin_to_BN(key_msg.modulus().size(), (byte_t*)key_msg.modulus().data());
+  return rsa->e != nullptr && rsa->n != nullptr;
+   */
+  return false;
+}
+
+bool GetPrivateRsaKeyFromParameters(const rsa_public_key_message& key_msg,
+                                    RSA* rsa) {
+  return false;
+}
+
 class extEntry {
 public:
   char* key_;
@@ -140,6 +255,10 @@ char* extEntry::getValue() {
 }
 
 bool addExtensionsToCert(int num_entry, extEntry** entries, X509* cert) {
+#if 1
+  // Temporary because of go verification
+  return true;
+#endif
   // add extensions
   for (int i = 0; i < num_entry; i++) {
     int nid = OBJ_txt2nid(entries[i]->getKey());
@@ -162,8 +281,88 @@ bool addExtensionsToCert(int num_entry, extEntry** entries, X509* cert) {
   return true;
 }
 
+bool SignX509Certificate(RSA* signing_key, bool f_isCa,
+                         signing_instructions_message& signing_instructions,
+                         EVP_PKEY* signedKey,
+                         X509_REQ* req, bool verify_req_sig, X509* cert) {
+  if (signedKey == nullptr)
+    signedKey = X509_REQ_get_pubkey(req);
+  if (signedKey == nullptr) {
+    printf("Can't get pubkey\n");
+    return false;
+  }
+
+  if (verify_req_sig) {
+    if (X509_REQ_verify(req, signedKey) != 1) {
+      printf("Req does not verify\n");
+      // return false;
+    }
+  }
+  
+  uint64_t serial = 1;
+  EVP_PKEY* pSigningKey= EVP_PKEY_new();
+  const EVP_MD* digest = EVP_sha256();
+  X509_NAME* name;
+  EVP_PKEY_set1_RSA(pSigningKey, signing_key);
+  X509_set_version(cert, 2L);
+  ASN1_INTEGER_set(X509_get_serialNumber(cert), serial++);
+
+  name = X509_REQ_get_subject_name(req);
+  if (X509_set_subject_name(cert, name) != 1) {
+    printf("Can't set subject name\n");
+    return false;
+  }
+  if (X509_set_pubkey(cert, signedKey) != 1) {
+    printf("Can't set pubkey\n");
+    return false;
+  }
+  if (!X509_gmtime_adj(X509_get_notBefore(cert), 0)) {
+    printf("Can't adj notBefore\n");
+    return false;
+  }
+  if (!X509_gmtime_adj(X509_get_notAfter(cert),
+                       signing_instructions.duration())) {
+    printf("Can't adj notAfter\n");
+    return false;
+  }
+  X509_NAME* issuer = X509_NAME_new();
+  int nid = OBJ_txt2nid("CN");
+  X509_NAME_ENTRY* ent = X509_NAME_ENTRY_create_by_NID(nullptr, nid,
+      MBSTRING_ASC, (byte_t*)signing_instructions.issuer().c_str(), -1);
+  if (X509_NAME_add_entry(issuer, ent, -1, 0) != 1) {
+    printf("Can't add issuer name ent: %s, %ld\n",
+           signing_instructions.issuer().c_str(), (long unsigned)ent);
+    printf("ERR: %s\n", ERR_lib_error_string(ERR_get_error()));
+    return false;
+  }
+  if (X509_set_issuer_name(cert, issuer) != 1) {
+    printf("Can't set issuer name\n");
+    return false;
+  }
+
+  // add extensions
+  extEntry* entries[4];
+  int n = 0;
+  if (f_isCa)
+    entries[n++] = new extEntry("basicConstraints", "critical,CA:TRUE");
+  entries[n++] = new extEntry("keyUsage", signing_instructions.purpose().c_str());
+  if (!addExtensionsToCert(n, entries, cert)) {
+    printf("Can't add extensions\n");
+    return false;
+  }
+
+  if (!X509_sign(cert, pSigningKey, digest)) {
+    printf("Bad PKEY type\n");
+    return false;
+  }
+
+  return true;
+}
+
 void XorBlocks(int size, byte_t* in1, byte_t* in2, byte_t* out) {
-  for (int i = 0; i < size; i++)
+  int i;
+
+  for (i = 0; i < size; i++)
     out[i] = in1[i] ^ in2[i];
 }
 

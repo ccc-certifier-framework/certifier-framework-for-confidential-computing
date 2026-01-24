@@ -41,165 +41,31 @@ PROTO=protoc
 NEWPROTOBUF=1
 ifndef NEWPROTOBUF
 CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
+LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 else
+LDFLAGS = -L $(LOCAL_LIB) `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
 CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 endif
 CFLAGS=$(CFLAGS_COMMON)
 
-ifndef NEWPROTOBUF
-LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
-else
-LDFLAGS = -L $(LOCAL_LIB) `pkg-config --cflags --libs protobuf` -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
-endif
-
-dobj_tpm2_util=					$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
+dobj_tpm2_util=	$(O)/tpm2_lib.o \
   $(O)/Openssl_help.o \
   $(O)/Convert.o \
   $(O)/tpm2_util.o
-dobj_GeneratePolicyKey=				$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
-  $(O)/Openssl_help.o \
-  $(O)/Convert.o \
-  $(O)/GeneratePolicyKey.o
-dobj_CloudProxySignEndorsementKey=		$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
-  $(O)/Convert.o \
-  $(O)/Openssl_help.o \
-  $(O)/CloudProxySignEndorsementKey.o 
-dobj_GetEndorsementKey=				$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
-  $(O)/Convert.o \
-  $(O)/Openssl_help.o \
-  $(O)/GetEndorsementKey.o
-dobj_SelfSignPolicyCert=			$(O)/tpm2_lib.o \
-  $(O)/Openssl_help.o \
-  $(O)/Convert.o \
-  $(O)/tpm2.pb.o \
-  $(O)/SelfSignPolicyCert.o
-dobj_CreateAndSaveCloudProxyKeyHierarchy=	$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
-  $(O)/Openssl_help.o \
-  $(O)/Convert.o \
-  $(O)/CreateAndSaveCloudProxyKeyHierarchy.o
-dobj_RestoreCloudProxyKeyHierarchy=		$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
-  $(O)/Openssl_help.o \
-  $(O)/Convert.o \
-  $(O)/RestoreCloudProxyKeyHierarchy.o
-dobj_ClientGenerateProgramKeyRequest=		$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
-  $(O)/quote_protocol.o \
-  $(O)/Convert.o \
-  $(O)/Openssl_help.o \
-  $(O)/ClientGenerateProgramKeyRequest.o
-dobj_ServerSignProgramKeyRequest=		$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
-  $(O)/quote_protocol.o \
-  $(O)/Convert.o \
-  $(O)/Openssl_help.o \
-  $(O)/ServerSignProgramKeyRequest.o
-dobj_ClientGetProgramKeyCert=			$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
-  $(O)/Convert.o \
-  $(O)/Openssl_help.o \
-  $(O)/ClientGetProgramKeyCert.o
-dobj_SigningInstructions=			$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
-  $(O)/Convert.o \
-  $(O)/Openssl_help.o \
-  $(O)/SigningInstructions.o
-dobj_PadTest =	$(O)/tpm2_lib.o \
-  $(O)/tpm2.pb.o \
-  $(O)/Convert.o \
-  $(O)/quote_protocol.o \
-  $(O)/Openssl_help.o \
-  $(O)/Pad_test.o
 
 all:	$(EXE_DIR)/tpm2_util.exe \
-#	$(EXE_DIR)/GeneratePolicyKey.exe \
-#	$(EXE_DIR)/SigningInstructions.exe \
-#	$(EXE_DIR)/GetEndorsementKey.exe \
-#	$(EXE_DIR)/SelfSignPolicyCert.exe \
-#	$(EXE_DIR)/CloudProxySignEndorsementKey.exe \
-#	$(EXE_DIR)/CreateAndSaveCloudProxyKeyHierarchy.exe \
-#	$(EXE_DIR)/CloudProxySignEndorsementKey.exe \
-#	$(EXE_DIR)/RestoreCloudProxyKeyHierarchy.exe \
-#	$(EXE_DIR)/ClientGenerateProgramKeyRequest.exe \
-#	$(EXE_DIR)/ServerSignProgramKeyRequest.exe \
-#	$(EXE_DIR)/ClientGetProgramKeyCert.exe \
-#	$(EXE_DIR)/Pad_test.exe
 
 clean:
 	@echo "removing object files"
 	rm $(O)/*.o
 	@echo "removing executable file"
 	rm $(EXE_DIR)/tpm2_util.exe
-#	rm $(EXE_DIR)/GeneratePolicyKey.exe
-#	rm $(EXE_DIR)/SigningInstructions.exe
-#	rm $(EXE_DIR)/GetEndorsementKey.exe
-#	rm $(EXE_DIR)/SelfSignPolicyCert.exe
-#	rm $(EXE_DIR)/CloudProxySignEndorsementKey.exe
-#	rm $(EXE_DIR)/CreateAndSaveCloudProxyKeyHierarchy.exe
-#	rm $(EXE_DIR)/CloudProxySignEndorsementKey.exe
-#	rm $(EXE_DIR)/RestoreCloudProxyKeyHierarchy.exe
-#	rm $(EXE_DIR)/ClientGenerateProgramKeyRequest.exe
-#	rm $(EXE_DIR)/ServerSignProgramKeyRequest.exe
-#	rm $(EXE_DIR)/ClientGetProgramKeyCert.exe
 
 $(EXE_DIR)/tpm2_util.exe: $(dobj_tpm2_util)
 	@echo "linking tpm2_util"
 	$(LINK) -o $(EXE_DIR)/tpm2_util.exe $(dobj_tpm2_util) $(LDFLAGS)
 
-$(EXE_DIR)/GeneratePolicyKey.exe: $(dobj_GeneratePolicyKey)
-	@echo "linking GeneratePolicyKey"
-	$(LINK) -o $(EXE_DIR)/GeneratePolicyKey.exe $(dobj_GeneratePolicyKey) $(LDFLAGS)
-
-$(EXE_DIR)/CloudProxySignEndorsementKey.exe: $(dobj_CloudProxySignEndorsementKey)
-	@echo "linking CloudProxySignEndorsementKey"
-	$(LINK) -o $(EXE_DIR)/CloudProxySignEndorsementKey.exe $(dobj_CloudProxySignEndorsementKey) $(LDFLAGS)
-
-$(EXE_DIR)/GetEndorsementKey.exe: $(dobj_GetEndorsementKey)
-	@echo "linking GetEndorsementKey"
-	$(LINK) -o $(EXE_DIR)/GetEndorsementKey.exe $(dobj_GetEndorsementKey) $(LDFLAGS)
-
-$(EXE_DIR)/SelfSignPolicyCert.exe: $(dobj_SelfSignPolicyCert)
-	@echo "linking SelfSignPolicyCert"
-	$(LINK) -o $(EXE_DIR)/SelfSignPolicyCert.exe $(dobj_SelfSignPolicyCert) $(LDFLAGS)
-
-$(EXE_DIR)/CreateAndSaveCloudProxyKeyHierarchy.exe: $(dobj_CreateAndSaveCloudProxyKeyHierarchy)
-	@echo "linking CreateAndSaveCloudProxyKeyHierarchy"
-	$(LINK) -o $(EXE_DIR)/CreateAndSaveCloudProxyKeyHierarchy.exe $(dobj_CreateAndSaveCloudProxyKeyHierarchy) $(LDFLAGS)
-
-$(EXE_DIR)/RestoreCloudProxyKeyHierarchy.exe: $(dobj_RestoreCloudProxyKeyHierarchy)
-	@echo "linking RestoreCloudProxyKeyHierarchy"
-	$(LINK) -o $(EXE_DIR)/RestoreCloudProxyKeyHierarchy.exe $(dobj_RestoreCloudProxyKeyHierarchy) $(LDFLAGS)
-
-$(EXE_DIR)/ClientGenerateProgramKeyRequest.exe: $(dobj_ClientGenerateProgramKeyRequest)
-	@echo "linking ClientGenerateProgramKeyRequest"
-	$(LINK) -o $(EXE_DIR)/ClientGenerateProgramKeyRequest.exe $(dobj_ClientGenerateProgramKeyRequest) $(LDFLAGS)
-
-$(EXE_DIR)/ServerSignProgramKeyRequest.exe: $(dobj_ServerSignProgramKeyRequest)
-	@echo "linking ServerSignProgramKeyRequest"
-	$(LINK) -o $(EXE_DIR)/ServerSignProgramKeyRequest.exe $(dobj_ServerSignProgramKeyRequest) $(LDFLAGS)
-
-$(EXE_DIR)/ClientGetProgramKeyCert.exe: $(dobj_ClientGetProgramKeyCert)
-	@echo "linking ClientGetProgramKeyCert"
-	$(LINK) -o $(EXE_DIR)/ClientGetProgramKeyCert.exe $(dobj_ClientGetProgramKeyCert) $(LDFLAGS)
-
-$(EXE_DIR)/SigningInstructions.exe: $(dobj_SigningInstructions)
-	@echo "linking SigningInstructions"
-	$(LINK) -o $(EXE_DIR)/SigningInstructions.exe $(dobj_SigningInstructions) $(LDFLAGS)
-
-$(S)/tpm2.pb.cc $(S)/tpm2.pb.h: $(S)/tpm2.proto
-	@echo "creating protobuf files"
-	$(PROTO) -I=$(S) --cpp_out=$(S) $(S)/tpm2.proto
-
-$(O)/tpm2.pb.o: $(S)/tpm2.pb.cc
-	@echo "compiling protobuf object"
-	$(CC) $(CFLAGS) -c -o $(O)/tpm2.pb.o $(S)/tpm2.pb.cc
-
-$(O)/tpm2_lib.o: $(S)/tpm2_lib.cc $(S)/tpm2.pb.cc $(S)/tpm2.pb.h
+$(O)/tpm2_lib.o: $(S)/tpm2_lib.cc
 	@echo "compiling tpm2_lib.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(S)/tpm2_lib.cc
 
@@ -211,60 +77,7 @@ $(O)/Openssl_help.o: $(S)/Openssl_help.cc
 	@echo "compiling Openssl_help.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/Openssl_help.o $(S)/Openssl_help.cc
 
-$(O)/quote_protocol.o: $(S)/quote_protocol.cc
-	@echo "compiling quote_protocol.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/quote_protocol.o $(S)/quote_protocol.cc
-
 $(O)/tpm2_util.o: $(S)/tpm2_util.cc
 	@echo "compiling tpm2_util.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_util.o $(S)/tpm2_util.cc
-
-$(O)/GeneratePolicyKey.o: $(S)/GeneratePolicyKey.cc
-	@echo "compiling GeneratePolicyKey.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/GeneratePolicyKey.o $(S)/GeneratePolicyKey.cc
-
-$(O)/CloudProxySignEndorsementKey.o: $(S)/CloudProxySignEndorsementKey.cc
-	@echo "compiling CloudProxySignEndorsementKey.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/CloudProxySignEndorsementKey.o $(S)/CloudProxySignEndorsementKey.cc
-
-$(O)/CreateAndSaveCloudProxyKeyHierarchy.o: $(S)/CreateAndSaveCloudProxyKeyHierarchy.cc
-	@echo "compiling CreateAndSaveCloudProxyKeyHierarchy.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/CreateAndSaveCloudProxyKeyHierarchy.o $(S)/CreateAndSaveCloudProxyKeyHierarchy.cc
-
-$(O)/RestoreCloudProxyKeyHierarchy.o: $(S)/RestoreCloudProxyKeyHierarchy.cc
-	@echo "compiling RestoreCloudProxyKeyHierarchy.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/RestoreCloudProxyKeyHierarchy.o $(S)/RestoreCloudProxyKeyHierarchy.cc
-
-$(O)/ClientGetProgramKeyCert.o: $(S)/ClientGetProgramKeyCert.cc
-	@echo "compiling ClientGetProgramKeyCert.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/ClientGetProgramKeyCert.o $(S)/ClientGetProgramKeyCert.cc
-
-$(O)/ServerSignProgramKeyRequest.o: $(S)/ServerSignProgramKeyRequest.cc
-	@echo "compiling ServerSignProgramKeyRequest.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/ServerSignProgramKeyRequest.o $(S)/ServerSignProgramKeyRequest.cc
-
-$(O)/ClientGenerateProgramKeyRequest.o: $(S)/ClientGenerateProgramKeyRequest.cc
-	@echo "compiling ClientGenerateProgramKeyRequest.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/ClientGenerateProgramKeyRequest.o $(S)/ClientGenerateProgramKeyRequest.cc
-
-$(O)/GetEndorsementKey.o: $(S)/GetEndorsementKey.cc
-	@echo "compiling GetEndorsementKey.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/GetEndorsementKey.o $(S)/GetEndorsementKey.cc
-
-$(O)/SelfSignPolicyCert.o: $(S)/SelfSignPolicyCert.cc
-	@echo "compiling SelfSignPolicyCert.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/SelfSignPolicyCert.o $(S)/SelfSignPolicyCert.cc
-
-$(O)/SigningInstructions.o: $(S)/SigningInstructions.cc
-	@echo "compiling SigningInstructions.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/SigningInstructions.o $(S)/SigningInstructions.cc
-
-$(O)/padtest.o: $(S)/padtest.cc
-	@echo "compiling padtest.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/padtest.o $(S)/padtest.cc
-
-$(EXE_DIR)/padtest.exe: $(dobj_PadTest)
-	@echo "linking padtest"
-	$(LINK) -o $(EXE_DIR)/padtest.exe $(dobj_PadTest) $(LDFLAGS)
-
 
