@@ -664,6 +664,7 @@ sudo swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 
 
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom --numbytes=32
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=EndorsementTest
+sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=ContextTest
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=SealTest
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=NvTest

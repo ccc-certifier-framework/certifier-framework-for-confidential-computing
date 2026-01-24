@@ -534,7 +534,7 @@ bool endorsement_test(LocalTpm& tpm) {
   TPM_HANDLE activeHandle;
   TPM2B_PUBLIC parent_pub_out;
   TPML_PCR_SELECTION parent_pcrSelect;
-  InitSinglePcrSelection(7, TPM_ALG_SHA1, &parent_pcrSelect);
+  InitSinglePcrSelection(7, TPM_ALG_SHA256, &parent_pcrSelect);
 
   TPMA_OBJECT parent_flags;
   *(uint32_t*)(&parent_flags) = 0;
@@ -684,7 +684,7 @@ bool context_test(LocalTpm& tpm) {
   primary_flags.sign = 1;
 
   if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcrSelect,
-                         TPM_ALG_RSA, TPM_ALG_SHA1, primary_flags, TPM_ALG_NULL,
+                         TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags, TPM_ALG_NULL,
                          (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
                          1024, 0x010001,
                          &handle, &pub_out)) {
