@@ -416,6 +416,7 @@ bool Tpm2_GetRandom(LocalTpm& tpm, int numBytes, byte_t* buf) {
                                 (byte_t*)&num_bytes_big_endian);
   if (!tpm.SendCommand(in_size, (byte_t*)commandBuf)) {
     printf("SendCommand failed\n");
+    printCommand("GetRandom", in_size, commandBuf);
     return false;
   }
   printCommand("GetRandom", in_size, commandBuf);

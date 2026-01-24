@@ -137,6 +137,8 @@ int main(int an, char** av) {
   if (!tpm.OpenTpm(FLAGS_tpm_device.c_str())) {
     printf("Can't open tpm: %s\n", FLAGS_tpm_device.c_str());
     return 1;
+  } else {
+    printf("Opened tpm: %s %d\n", FLAGS_tpm_device.c_str(), tpm.tpm_fd_);
   }
 
   if (FLAGS_command == "GetCapabilities") {

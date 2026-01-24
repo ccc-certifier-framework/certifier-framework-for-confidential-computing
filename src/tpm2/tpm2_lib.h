@@ -65,11 +65,8 @@ bool EncryptDataWithCredential(bool encrypt_flag, TPM_ALG_ID hash_alg_id,
 
 // Local Tpm interaction
 class LocalTpm {
-
-private:
-  int tpm_fd_;
-
 public:
+  int tpm_fd_;
   LocalTpm();
   ~LocalTpm();
 

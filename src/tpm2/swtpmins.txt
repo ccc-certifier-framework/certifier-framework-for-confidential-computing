@@ -1,14 +1,14 @@
-swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1     --create-ek-cert --create-platform-cert --lock-nvram
+export XDG_CONFIG_HOME="/home/jlm/.config"
 echo $XDG_CONFIG_HOME
-/home/jlm/.config
+
+swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
+
 export TPM2TOOLS_TCTI="swtpm:port=2321"
 swtpm socket --tpmstate dir=<swtpm_path> --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear
 
-mkdir -p /tmp/my_swtpm_dir
-swtpm_setup --tpm2 --tpmstate /tmp/my_swtpm_dir/ --create-ek-cert --create-platform-cert --lock-nvram
 export TPM2TOOLS_TCTI="swtpm:path=/tmp/my_swtpm_dir/swtpm-sock"
 tpm2_pcrread sha256
-It can interact via a character device path (e.g., /dev/tpm0) 
+It can interact via a character device path (e.g., /dev/vtpm) 
 
 
 PCR commands:
@@ -613,3 +613,57 @@ quote
   tpm2_createkey parent-handle parent-auth .. &pub &priv &create-out &digest-auth &&ticket-out
   tpm2_load parent-handle ... &load-handle &name
   tpm2_quote load-handle parent-auth to-quote scheme pcr-selection &quoted &sig
+
+
+The following options are supported if the chardev interface is chosen:
+
+       -c|--chardev <device path>
+       --vtpm-proxy
+
+XDG_CONFIG_HOME="/home/jlm/.config"
+swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
+echo $XDG_CONFIG_HOME
+/home/jlm/.config
+export TPM2TOOLS_TCTI="swtpm:port=2321"
+swtpm socket --tpmstate dir=<swtpm_path> --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear
+
+
+export XDG_CONFIG_HOME="/home/jlm/.config"
+sudo swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
+sudo swtpm chardev -c /dev/vtpm --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322
+
+sudo swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=unixio
+/usr/bin/echo "capability sys_admin," > /etc/apparmor.d/local/usr.bin.swtpm
+/usr/bin/echo "capability sys_admin," > /etc/apparmor.d/local/usr.bin.swtpm
+aa-enforce /usr/bin/swtpm
+
+modprobe tpm_vtpm_proxy
+swtpm chardev --vtpm-proxy --tpmstate dir=... --tpm2 ...
+
+mkdir -p /tmp/my_swtpm_dir
+swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
+
+
+---------------------------
+
+sudo apt-get install apparmor-utils
+
+Start:
+
+export XDG_CONFIG_HOME="/home/jlm/.config"
+echo $XDG_CONFIG_HOME
+
+sudo aa-complain /usr/bin/swtpm
+sudo apparmor_parser -r /etc/apparmor.d/usr.bin.swtpm
+
+sudo swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
+
+sudo swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear
+
+sudo swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 &
+
+sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=EndorsementTest
+sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom
+
+----------------------------
+
