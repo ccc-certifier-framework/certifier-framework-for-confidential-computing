@@ -45,13 +45,38 @@ using std::string;
 // standard buffer size
 #define MAX_SIZE_PARAMS 4096
 
-void reverse_byte_copy(int size, byte_t* in, byte_t* out) {
-  out += size - 1;
-  for (int i = 0; i < size; i++) *(out--) = *(in++);
-}
+
+// ------------------------------------------------------------
+// Replace with cc routines
 
 void PrintBytes(int n, byte_t* in) {
   for (int i = 0; i < n; i++) printf("%02x", in[i]);
+}
+
+bool ReadFileIntoBlock(const string& filename, int* size, byte_t* block) {
+  int fd = open(filename.c_str(), O_RDONLY);
+  if (fd < 0)
+    return false;
+  int n = read(fd, block, *size);
+  *size = n;
+  close(fd);
+  return true;
+}
+
+bool WriteFileFromBlock(const string& filename, int size, byte_t* block) {
+  int fd = creat(filename.c_str(), S_IRWXU | S_IRWXG);
+  if (fd < 0)
+    return false;
+  int n = write(fd, block, size);
+  close(fd);
+  return n > 0;
+}
+
+// ------------------------------------------------------------
+
+void reverse_byte_copy(int size, byte_t* in, byte_t* out) {
+  out += size - 1;
+  for (int i = 0; i < size; i++) *(out--) = *(in++);
 }
 
 void change_endian16(const uint16_t* in, uint16_t* out) {
@@ -86,34 +111,15 @@ void change_endian64(const uint64_t* in, uint64_t* out) {
   p_out[7] = p_in[0];
 }
 
-bool ReadFileIntoBlock(const string& filename, int* size, byte_t* block) {
-  int fd = open(filename.c_str(), O_RDONLY);
-  if (fd < 0)
-    return false;
-  int n = read(fd, block, *size);
-  *size = n;
-  close(fd);
-  return true;
-}
-
-bool WriteFileFromBlock(const string& filename, int size, byte_t* block) {
-  int fd = creat(filename.c_str(), S_IRWXU | S_IRWXG);
-  if (fd < 0)
-    return false;
-  int n = write(fd, block, size);
-  close(fd);
-  return n > 0;
-}
-
 // Debug routines
-void printCommand(const char* name, int size, byte_t* buf) {
+void print_command(const char* name, int size, byte_t* buf) {
   printf("\n");
   printf("%s command: ", name);
   PrintBytes(size, buf);
   printf("\n");
 }
 
-void printResponse(const char* name, uint16_t cap, uint32_t size,
+void print_response(const char* name, uint16_t cap, uint32_t size,
                    uint32_t code, byte_t* buf) {
   printf("%s response, ", name);
   printf("cap: %04x, size: %08x, error code: %08x\n", cap, size, code);
@@ -187,7 +193,7 @@ struct TPM_RESPONSE {
 };
 #pragma pack(pop)
 
-bool fillPpcr_data(local_tpm& tpm, TPMS_PCR_SELECTION pcrSelection,
+bool fill_pcr_data(local_tpm& tpm, TPMS_PCR_SELECTION pcrSelection,
                     int* size, byte_t* buf) {
   TPML_PCR_SELECTION pcrSelect;
   uint32_t updateCounter = 0;
@@ -199,7 +205,7 @@ bool fillPpcr_data(local_tpm& tpm, TPMS_PCR_SELECTION pcrSelection,
 
   if (!Tpm2_ReadPcrs(tpm, pcrSelect, &updateCounter,
                      &pcrSelectOut, &digest)) {
-    printf("fillPpcr_data: Tpm2_ReadPcrs fails\n");
+    printf("fill_pcr_data: Tpm2_ReadPcrs fails\n");
     return false;
   }
   int total_size = 0;
@@ -208,7 +214,7 @@ bool fillPpcr_data(local_tpm& tpm, TPMS_PCR_SELECTION pcrSelection,
   for (int i = 0; i < (int)digest.count; i++) {
     if ((int)(total_size + digest.digests[i].size + sizeof(uint16_t))
           > *size) {
-      printf("fillPpcr_data: buffer too small\n");
+      printf("fill_pcr_data: buffer too small\n");
       return false;
     }
     // change_endian16(&digest.digests[i].size, (uint16_t*)&buf[total_size]);
@@ -268,7 +274,7 @@ bool Tpm2_Startup(local_tpm& tpm) {
     printf("send_command failed\n");
     return false;
   }
-  printCommand("Tpm2_Startup", in_size, commandBuf);
+  print_command("Tpm2_Startup", in_size, commandBuf);
 
   int resp_size = 128;
   byte_t resp_buf[128];
@@ -283,7 +289,7 @@ bool Tpm2_Startup(local_tpm& tpm) {
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("Tpm2_Startup", cap, responseSize, responseCode, resp_buf);
+  print_response("Tpm2_Startup", cap, responseSize, responseCode, resp_buf);
   if (responseCode == RC_VER1) {
     printf("TPM not initialized\n");
   }
@@ -372,7 +378,7 @@ bool Tpm2_GetCapability(local_tpm& tpm, uint32_t cap, uint32_t start,
   
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_GetCapability,
                                 commandBuf, size_params, params);
-  printCommand("GetCapability", in_size, commandBuf);
+  print_command("GetCapability", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -386,7 +392,7 @@ bool Tpm2_GetCapability(local_tpm& tpm, uint32_t cap, uint32_t start,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap2,
                          &responseSize, &responseCode);
-  printResponse("GetCapability", cap, responseSize, responseCode, resp_buf);
+  print_response("GetCapability", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   *out_size = (int)(responseSize - sizeof(TPM_RESPONSE));
@@ -406,10 +412,10 @@ bool Tpm2_GetRandom(local_tpm& tpm, int numBytes, byte_t* buf) {
                                 (byte_t*)&num_bytes_big_endian);
   if (!tpm.send_command(in_size, (byte_t*)commandBuf)) {
     printf("send_command failed\n");
-    printCommand("GetRandom", in_size, commandBuf);
+    print_command("GetRandom", in_size, commandBuf);
     return false;
   }
-  printCommand("GetRandom", in_size, commandBuf);
+  print_command("GetRandom", in_size, commandBuf);
 
   int resp_size = MAX_SIZE_PARAMS;
   byte_t resp_buf[MAX_SIZE_PARAMS];
@@ -424,7 +430,7 @@ bool Tpm2_GetRandom(local_tpm& tpm, int numBytes, byte_t* buf) {
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("GetRandom", cap, responseSize, responseCode, resp_buf);
+  print_response("GetRandom", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* random_bytes = resp_buf + sizeof(TPM_RESPONSE);
@@ -443,7 +449,7 @@ bool Tpm2_ReadClock(local_tpm& tpm, uint64_t* current_time, uint64_t* current_cl
     printf("send_command failed\n");
     return false;
   }
-  printCommand("ReadClock", in_size, commandBuf);
+  print_command("ReadClock", in_size, commandBuf);
 
   int resp_size = MAX_SIZE_PARAMS;
   byte_t resp_buf[MAX_SIZE_PARAMS];
@@ -458,7 +464,7 @@ bool Tpm2_ReadClock(local_tpm& tpm, uint64_t* current_time, uint64_t* current_cl
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("ReadClock", cap, responseSize, responseCode, resp_buf);
+  print_response("ReadClock", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   change_endian64(
@@ -479,7 +485,7 @@ bool testPcrBit(int pcrNum, byte_t* array) {
   return (array[pcrNum / 8] & (1 << (pcrNum % 8))) != 0;
 }
 
-bool GetPcrValue(int size, byte_t* in, uint32_t* updateCounter,
+bool get_pcr_value(int size, byte_t* in, uint32_t* updateCounter,
                  TPML_PCR_SELECTION* pcr_out, TPML_DIGEST* values) {
   byte_t* current_in = in;
   change_endian32((uint32_t*)current_in, updateCounter);
@@ -566,7 +572,7 @@ bool Tpm2_ReadPcrs(local_tpm& tpm, TPML_PCR_SELECTION pcrSelect,
     printf("send_command failed\n");
     return false;
   }
-  printCommand("ReadPcr", cmd_size, commandBuf);
+  print_command("ReadPcr", cmd_size, commandBuf);
 
   if (!tpm.get_response(&resp_size, resp_buf)) {
     printf("get_response failed\n");
@@ -578,10 +584,10 @@ bool Tpm2_ReadPcrs(local_tpm& tpm, TPML_PCR_SELECTION pcrSelect,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("ReadPcr", cap, responseSize, responseCode, resp_buf);
+  print_response("ReadPcr", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
-  return GetPcrValue(responseSize - sizeof(TPM_RESPONSE),
+  return get_pcr_value(responseSize - sizeof(TPM_RESPONSE),
                      resp_buf + sizeof(TPM_RESPONSE), updateCounter,
                      pcrSelectOut, values);
 }
@@ -779,7 +785,7 @@ bool Tpm2_PCR_Event(local_tpm& tpm, int pcr_num,
     printf("send_command failed\n");
     return false;
   }
-  printCommand("PCR_Event", in_size, commandBuf);
+  print_command("PCR_Event", in_size, commandBuf);
 
   if (!tpm.get_response(&resp_size, resp_buf)) {
     printf("get_response failed\n");
@@ -791,7 +797,7 @@ bool Tpm2_PCR_Event(local_tpm& tpm, int pcr_num,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("PCR_Event", cap, responseSize, responseCode, resp_buf);
+  print_response("PCR_Event", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
@@ -1211,7 +1217,7 @@ bool Tpm2_CreatePrimary(local_tpm& tpm, TPM_HANDLE owner, string& authString,
     printf("send_command failed\n");
     return false;
   }
-  printCommand("CreatePrimary", in_size, commandBuf);
+  print_command("CreatePrimary", in_size, commandBuf);
 
   int resp_size = MAX_SIZE_PARAMS;
   byte_t resp_buf[MAX_SIZE_PARAMS];
@@ -1226,7 +1232,7 @@ bool Tpm2_CreatePrimary(local_tpm& tpm, TPM_HANDLE owner, string& authString,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("CreatePrimary", cap, responseSize, responseCode, resp_buf);
+  print_response("CreatePrimary", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 
@@ -1279,7 +1285,7 @@ bool Tpm2_PolicySecret(local_tpm& tpm, TPM_HANDLE handle,
 
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_PolicySecret,
                                 commandBuf, total_size, params);
-  printCommand("PolicySecret", in_size, commandBuf);
+  print_command("PolicySecret", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -1293,7 +1299,7 @@ bool Tpm2_PolicySecret(local_tpm& tpm, TPM_HANDLE handle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("PolicySecret", cap, responseSize, responseCode, resp_buf);
+  print_response("PolicySecret", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
@@ -1314,7 +1320,7 @@ bool Tpm2_PolicyPassword(local_tpm& tpm, TPM_HANDLE handle) {
 
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_PolicyPassword,
                                 commandBuf, total_size, params);
-  printCommand("PolicyPassword", in_size, commandBuf);
+  print_command("PolicyPassword", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -1328,7 +1334,7 @@ bool Tpm2_PolicyPassword(local_tpm& tpm, TPM_HANDLE handle) {
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("PolicyPassword", cap, responseSize, responseCode, resp_buf);
+  print_response("PolicyPassword", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
@@ -1348,7 +1354,7 @@ bool Tpm2_PolicyGetDigest(local_tpm& tpm, TPM_HANDLE handle, TPM2B_DIGEST* diges
   size_params += sizeof(uint32_t);
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_PolicyGetDigest,
                                 commandBuf, size_params, params);
-  printCommand("PolicyGetDigest", in_size, commandBuf);
+  print_command("PolicyGetDigest", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -1362,7 +1368,7 @@ bool Tpm2_PolicyGetDigest(local_tpm& tpm, TPM_HANDLE handle, TPM2B_DIGEST* diges
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("PolicyGetDigest", cap, responseSize, responseCode, resp_buf);
+  print_response("PolicyGetDigest", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* current_in = resp_buf + sizeof(TPM_RESPONSE);
@@ -1394,7 +1400,7 @@ bool Tpm2_StartAuthSession(local_tpm& tpm, TPM_RH tpm_obj, TPM_RH bind_obj,
   Update(n, &in, &size_params, &space_left);
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_StartAuthSession,
                                 commandBuf, size_params, params);
-  printCommand("StartAuthSession", in_size, commandBuf);
+  print_command("StartAuthSession", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -1408,7 +1414,7 @@ bool Tpm2_StartAuthSession(local_tpm& tpm, TPM_RH tpm_obj, TPM_RH bind_obj,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("StartAuthSession", cap, responseSize, responseCode, resp_buf);
+  print_response("StartAuthSession", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* current_out = resp_buf + sizeof(TPM_RESPONSE);
@@ -1443,7 +1449,7 @@ bool Tpm2_PolicyPcr(local_tpm& tpm, TPM_HANDLE session_handle,
   Update(n, &out, &total_size, &space_left);
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_PolicyPCR,
                                 commandBuf, total_size, params);
-  printCommand("PolicyPcr", in_size, commandBuf);
+  print_command("PolicyPcr", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -1457,7 +1463,7 @@ bool Tpm2_PolicyPcr(local_tpm& tpm, TPM_HANDLE session_handle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("PolicyPcr", cap, responseSize, responseCode, resp_buf);
+  print_response("PolicyPcr", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
@@ -1502,7 +1508,7 @@ bool Tpm2_MakeCredential(local_tpm& tpm,
 
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_MakeCredential,
                                 commandBuf, total_size, params);
-  printCommand("MakeCredential", in_size, commandBuf);
+  print_command("MakeCredential", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -1516,7 +1522,7 @@ bool Tpm2_MakeCredential(local_tpm& tpm,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("MakeCredential", cap, responseSize, responseCode, resp_buf);
+  print_response("MakeCredential", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 
@@ -1588,7 +1594,7 @@ bool Tpm2_ActivateCredential(local_tpm& tpm, TPM_HANDLE activeHandle,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_ActivateCredential,
                                 commandBuf, total_size, params);
-  printCommand("ActivateCredential", in_size, commandBuf);
+  print_command("ActivateCredential", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -1602,7 +1608,7 @@ bool Tpm2_ActivateCredential(local_tpm& tpm, TPM_HANDLE activeHandle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("ActivateCredential", cap, responseSize, responseCode, resp_buf);
+  print_response("ActivateCredential", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 
@@ -1652,7 +1658,7 @@ bool Tpm2_Load(local_tpm& tpm, TPM_HANDLE parent_handle,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_Load, (byte_t*)commandBuf,
                                 size_params, (byte_t*)params_buf);
-  printCommand("Load", in_size, commandBuf);
+  print_command("Load", in_size, commandBuf);
   if (!tpm.send_command(in_size, (byte_t*)commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -1671,7 +1677,7 @@ bool Tpm2_Load(local_tpm& tpm, TPM_HANDLE parent_handle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("Load", cap, responseSize, responseCode, resp_buf);
+  print_response("Load", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return GetLoadOut(responseSize - sizeof(TPM_RESPONSE),
@@ -1797,7 +1803,7 @@ bool Tpm2_ReadPublic(local_tpm& tpm, TPM_HANDLE handle,
 
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_ReadPublic,
                                 commandBuf, size_params, params_buf);
-  printCommand("ReadPublic", in_size, commandBuf);
+  print_command("ReadPublic", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -1811,7 +1817,7 @@ bool Tpm2_ReadPublic(local_tpm& tpm, TPM_HANDLE handle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("ReadPublic", cap, responseSize, responseCode, resp_buf);
+  print_response("ReadPublic", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* out = resp_buf + sizeof(TPM_RESPONSE);
@@ -1927,7 +1933,7 @@ bool Tpm2_Certify(local_tpm& tpm, TPM_HANDLE signedKey, TPM_HANDLE signingKey,
   Update(sizeof(uint16_t), &in, &size_params, &space_left);
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_Certify,
                                 commandBuf, size_params, params_buf);
-  printCommand("Certify", in_size, commandBuf);
+  print_command("Certify", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -1941,7 +1947,7 @@ bool Tpm2_Certify(local_tpm& tpm, TPM_HANDLE signedKey, TPM_HANDLE signingKey,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("Certify", cap, responseSize, responseCode, resp_buf);
+  print_response("Certify", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* out = resp_buf + sizeof(TPM_RESPONSE);
@@ -2077,7 +2083,7 @@ bool Tpm2_CreateKey(local_tpm& tpm, TPM_HANDLE parent_handle,
                                 (byte_t*)commandBuf,
                                 size_params,
                                 (byte_t*)params);
-  printCommand("Create", in_size, commandBuf);
+  print_command("Create", in_size, commandBuf);
   if (!tpm.send_command(in_size, (byte_t*)commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2096,7 +2102,7 @@ bool Tpm2_CreateKey(local_tpm& tpm, TPM_HANDLE parent_handle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("Create", cap, responseSize, responseCode, resp_buf);
+  print_response("Create", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 
@@ -2171,7 +2177,7 @@ bool Tpm2_CreateSealed(local_tpm& tpm, TPM_HANDLE parent_handle,
                                 (byte_t*)commandBuf,
                                 size_params,
                                 (byte_t*)params);
-  printCommand("CreateSealed", in_size, commandBuf);
+  print_command("CreateSealed", in_size, commandBuf);
   if (!tpm.send_command(in_size, (byte_t*)commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2190,7 +2196,7 @@ bool Tpm2_CreateSealed(local_tpm& tpm, TPM_HANDLE parent_handle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("Create", cap, responseSize, responseCode, resp_buf);
+  print_response("Create", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 
@@ -2263,7 +2269,7 @@ bool Tpm2_Unseal(local_tpm& tpm, TPM_HANDLE item_handle, string& parentAuth,
   change_endian16(&auth_area, (uint16_t*)auth_area_size_ptr);
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_Unseal,
                                 commandBuf, size_params, params_buf);
-  printCommand("Unseal", in_size, commandBuf);
+  print_command("Unseal", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2277,7 +2283,7 @@ bool Tpm2_Unseal(local_tpm& tpm, TPM_HANDLE item_handle, string& parentAuth,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("Unseal", cap, responseSize, responseCode, resp_buf);
+  print_response("Unseal", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   *out_size = (int)(responseSize - sizeof(TPM_RESPONSE));
@@ -2345,7 +2351,7 @@ bool Tpm2_Quote(local_tpm& tpm, TPM_HANDLE signingHandle, string& parentAuth,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_Quote,
                                 commandBuf, size_params, params_buf);
-  printCommand("Quote", in_size, commandBuf);
+  print_command("Quote", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2359,7 +2365,7 @@ bool Tpm2_Quote(local_tpm& tpm, TPM_HANDLE signingHandle, string& parentAuth,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("Quote", cap, responseSize, responseCode, resp_buf);
+  print_response("Quote", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 
@@ -2402,7 +2408,7 @@ bool Tpm2_LoadContext(local_tpm& tpm, uint16_t size, byte_t* saveArea,
   
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_ContextLoad,
                                 commandBuf, size_params, params_buf);
-  printCommand("ContextLoad", in_size, commandBuf);
+  print_command("ContextLoad", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2416,7 +2422,7 @@ bool Tpm2_LoadContext(local_tpm& tpm, uint16_t size, byte_t* saveArea,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("ContextLoad", cap, responseSize, responseCode, resp_buf);
+  print_response("ContextLoad", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   change_endian32((uint32_t*)(resp_buf + responseSize - sizeof(uint32_t)),
@@ -2443,7 +2449,7 @@ bool Tpm2_SaveContext(local_tpm& tpm, TPM_HANDLE handle, uint16_t* size,
   
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_ContextSave,
                                 commandBuf, size_params, params_buf);
-  printCommand("SaveContext", in_size, commandBuf);
+  print_command("SaveContext", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2457,7 +2463,7 @@ bool Tpm2_SaveContext(local_tpm& tpm, TPM_HANDLE handle, uint16_t* size,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("SaveContext", cap, responseSize, responseCode, resp_buf);
+  print_response("SaveContext", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   *size = responseSize - sizeof(TPM_RESPONSE);
@@ -2478,7 +2484,7 @@ bool Tpm2_FlushContext(local_tpm& tpm, TPM_HANDLE handle) {
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_FlushContext,
                                 commandBuf, sizeof(TPM_HANDLE),
                                 (byte_t*)&big_endian_handle);
-  printCommand("FlushContext", in_size, commandBuf);
+  print_command("FlushContext", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2492,7 +2498,7 @@ bool Tpm2_FlushContext(local_tpm& tpm, TPM_HANDLE handle) {
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("FlushContext", cap, responseSize, responseCode, resp_buf);
+  print_response("FlushContext", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
@@ -2532,7 +2538,7 @@ bool Tpm2_IncrementNv(local_tpm& tpm, TPMI_RH_NV_INDEX index, string& authString
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_NV_Increment,
                                 commandBuf, size_params, params_buf);
-  printCommand("IncrementNv", in_size, commandBuf);
+  print_command("IncrementNv", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2546,7 +2552,7 @@ bool Tpm2_IncrementNv(local_tpm& tpm, TPMI_RH_NV_INDEX index, string& authString
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("IncrementNv", cap, responseSize, responseCode, resp_buf);
+  print_response("IncrementNv", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 
@@ -2594,7 +2600,7 @@ bool Tpm2_ReadNv(local_tpm& tpm, TPMI_RH_NV_INDEX index,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_NV_Read,
                                 commandBuf, size_params, params_buf);
-  printCommand("ReadNv", in_size, commandBuf);
+  print_command("ReadNv", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2608,7 +2614,7 @@ bool Tpm2_ReadNv(local_tpm& tpm, TPMI_RH_NV_INDEX index,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("ReadNv", cap, responseSize, responseCode, resp_buf);
+  print_response("ReadNv", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* out = resp_buf + sizeof(TPM_RESPONSE) + sizeof(uint32_t);
@@ -2663,7 +2669,7 @@ bool Tpm2_WriteNv(local_tpm& tpm, TPMI_RH_NV_INDEX index,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_NV_Write,
                                 commandBuf, size_params, params_buf);
-  printCommand("WriteNv", in_size, commandBuf);
+  print_command("WriteNv", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2677,7 +2683,7 @@ bool Tpm2_WriteNv(local_tpm& tpm, TPMI_RH_NV_INDEX index,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("WriteNv", cap, responseSize, responseCode, resp_buf);
+  print_response("WriteNv", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
@@ -2756,7 +2762,7 @@ bool Tpm2_DefineSpace(local_tpm& tpm, TPM_HANDLE owner, TPMI_RH_NV_INDEX index,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_NV_DefineSpace,
                                 commandBuf, size_params, params_buf);
-  printCommand("DefineSpace", in_size, commandBuf);
+  print_command("DefineSpace", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2770,7 +2776,7 @@ bool Tpm2_DefineSpace(local_tpm& tpm, TPM_HANDLE owner, TPMI_RH_NV_INDEX index,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("Definespace", cap, responseSize, responseCode, resp_buf);
+  print_response("Definespace", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
@@ -2808,7 +2814,7 @@ bool Tpm2_UndefineSpace(local_tpm& tpm, TPM_HANDLE owner, TPMI_RH_NV_INDEX index
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_NV_UndefineSpace,
                                 commandBuf, size_params, params_buf);
-  printCommand("UndefineSpace", in_size, commandBuf);
+  print_command("UndefineSpace", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2822,7 +2828,7 @@ bool Tpm2_UndefineSpace(local_tpm& tpm, TPM_HANDLE owner, TPMI_RH_NV_INDEX index
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("UndefineSpace", cap, responseSize, responseCode, resp_buf);
+  print_response("UndefineSpace", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
@@ -2848,7 +2854,7 @@ bool Tpm2_DictionaryAttackLockReset(local_tpm& tpm) {
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS,
                                 TPM_CC_DictionaryAttackLockReset,
                                 commandBuf, size_params, params_buf);
-  printCommand("DictionaryAttackLockReset", in_size, commandBuf);
+  print_command("DictionaryAttackLockReset", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2862,7 +2868,7 @@ bool Tpm2_DictionaryAttackLockReset(local_tpm& tpm) {
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("DictionaryAttackLockReset", cap, responseSize,
+  print_response("DictionaryAttackLockReset", cap, responseSize,
                 responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
@@ -2948,7 +2954,7 @@ bool Tpm2_Rsa_Encrypt(local_tpm& tpm, TPM_HANDLE handle, string& authString,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_RSA_Encrypt,
                                 commandBuf, size_params, params_buf);
-  printCommand("TPM_CC_RSA_Encrypt", in_size, commandBuf);
+  print_command("TPM_CC_RSA_Encrypt", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -2962,7 +2968,7 @@ bool Tpm2_Rsa_Encrypt(local_tpm& tpm, TPM_HANDLE handle, string& authString,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("TPM_RSA_Encrypt", cap, responseSize, responseCode, resp_buf);
+  print_response("TPM_RSA_Encrypt", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* out = resp_buf +  sizeof(TPM_RESPONSE);
@@ -3017,7 +3023,7 @@ bool Tpm2_EvictControl(local_tpm& tpm, TPMI_RH_PROVISION owner,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_EvictControl,
                                 commandBuf, size_params, params_buf);
-  printCommand("EvictControl", in_size, commandBuf);
+  print_command("EvictControl", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -3031,7 +3037,7 @@ bool Tpm2_EvictControl(local_tpm& tpm, TPMI_RH_PROVISION owner,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("EvictControl", cap, responseSize, responseCode, resp_buf);
+  print_response("EvictControl", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 #if 0
@@ -3627,7 +3633,7 @@ bool Tpm2_StartProtectedAuthSession(local_tpm& tpm, TPM_RH tpm_obj, TPM_RH bind_
   Update(n, &in, &size_params, &space_left);
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_StartAuthSession,
                                 commandBuf, size_params, params);
-  printCommand("StartAuthSession", in_size, commandBuf);
+  print_command("StartAuthSession", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -3641,7 +3647,7 @@ bool Tpm2_StartProtectedAuthSession(local_tpm& tpm, TPM_RH tpm_obj, TPM_RH bind_
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("StartAuthSession", cap, responseSize, responseCode, resp_buf);
+  print_response("StartAuthSession", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* current_out = resp_buf + sizeof(TPM_RESPONSE);
@@ -3739,7 +3745,7 @@ bool Tpm2_DefineProtectedSpace(local_tpm& tpm, TPM_HANDLE owner,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_NV_DefineSpace,
                                 commandBuf, size_params, params_buf);
-  printCommand("DefineSpace", in_size, commandBuf);
+  print_command("DefineSpace", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -3753,7 +3759,7 @@ bool Tpm2_DefineProtectedSpace(local_tpm& tpm, TPM_HANDLE owner,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
-  printResponse("Definespace", cap, responseSize, responseCode, resp_buf);
+  print_response("Definespace", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 
@@ -3832,7 +3838,7 @@ bool Tpm2_IncrementProtectedNv(local_tpm& tpm, TPMI_RH_NV_INDEX index,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_NV_Increment,
                                 commandBuf, size_params, params_buf);
-  printCommand("IncrementProtectedNv", in_size, commandBuf);
+  print_command("IncrementProtectedNv", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -3845,7 +3851,7 @@ bool Tpm2_IncrementProtectedNv(local_tpm& tpm, TPMI_RH_NV_INDEX index,
   uint32_t responseSize;
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap, &responseSize, &responseCode);
-  printResponse("IncrementProtectedNv", cap, responseSize, responseCode, resp_buf);
+  print_response("IncrementProtectedNv", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   printf("TPM_CC_NV_Increment response size: %d\n", responseSize);
@@ -3932,7 +3938,7 @@ bool Tpm2_ReadProtectedNv(local_tpm& tpm, TPMI_RH_NV_INDEX index,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_NV_Read,
                                 commandBuf, size_params, params_buf);
-  printCommand("ReadProtectedNv", in_size, commandBuf);
+  print_command("ReadProtectedNv", in_size, commandBuf);
   if (!tpm.send_command(in_size, commandBuf)) {
     printf("send_command failed\n");
     return false;
@@ -3946,7 +3952,7 @@ bool Tpm2_ReadProtectedNv(local_tpm& tpm, TPMI_RH_NV_INDEX index,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                          &responseSize, &responseCode);
-  printResponse("ReadNv", cap, responseSize, responseCode, resp_buf);
+  print_response("ReadNv", cap, responseSize, responseCode, resp_buf);
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 

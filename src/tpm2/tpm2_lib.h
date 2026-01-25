@@ -36,6 +36,7 @@ void change_endian64(const uint64_t* in, uint64_t* out);
 void init_single_pcr_selection(int pcrNum, TPM_ALG_ID alg,
                             TPML_PCR_SELECTION* pcrSelect);
 void add_pcr_selection(int pcrNum, TPML_PCR_SELECTION* pcrSelect);
+void add_pcr_selection(int pcrNum, TPML_PCR_SELECTION* pcrSelect);
 void setPcrBit(int pcrNum, byte_t* array);
 bool testPcrBit(int pcrNum, byte_t* array);
 
@@ -83,7 +84,7 @@ int Tpm2_Set_OwnerAuthData(int size, byte_t* buf);
 TPM_HANDLE GetNvHandle(uint32_t slot);
 
 
-bool fillPpcr_data(local_tpm& tpm, TPMS_PCR_SELECTION pcrSelection,
+bool fill_pcr_data(local_tpm& tpm, TPMS_PCR_SELECTION pcrSelection,
                     int* size, byte_t* buf);
 bool compute_pcr_digest(TPM_ALG_ID hash, int size_in, byte_t* in_buf,
                       int* size_out, byte_t* out);
