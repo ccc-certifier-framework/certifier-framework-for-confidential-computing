@@ -674,5 +674,7 @@ sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=NvTest
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=QuoteTest
 
+tpm2_rc_decode 0x921
+
 ----------------------------
 

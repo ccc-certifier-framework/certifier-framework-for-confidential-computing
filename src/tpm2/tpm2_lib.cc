@@ -8,7 +8,7 @@
 #include <tpm20.h>
 #include <tpm2_lib.h>
 #include <errno.h>
-#include <Convert.h>
+#include <convert.h>
 
 #include <openssl/aes.h>
 #include <openssl/rsa.h>
@@ -17,7 +17,7 @@
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 
-#include <Openssl_help.h>
+#include <openssl_help.h>
 
 #include <string>
 using std::string;

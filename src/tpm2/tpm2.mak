@@ -49,8 +49,8 @@ endif
 CFLAGS=$(CFLAGS_COMMON)
 
 dobj_tpm2_util=	$(O)/tpm2_lib.o \
-  $(O)/Openssl_help.o \
-  $(O)/Convert.o \
+  $(O)/openssl_help.o \
+  $(O)/convert.o \
   $(O)/tpm2_util.o
 
 all:	$(EXE_DIR)/tpm2_util.exe \
@@ -69,13 +69,13 @@ $(O)/tpm2_lib.o: $(S)/tpm2_lib.cc
 	@echo "compiling tpm2_lib.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_lib.o $(S)/tpm2_lib.cc
 
-$(O)/Convert.o: $(S)/Convert.cc
-	@echo "compiling Convert.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/Convert.o $(S)/Convert.cc
+$(O)/convert.o: $(S)/convert.cc
+	@echo "compiling convert.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/convert.o $(S)/convert.cc
 
-$(O)/Openssl_help.o: $(S)/Openssl_help.cc
-	@echo "compiling Openssl_help.cc"
-	$(CC) $(CFLAGS) -c -o $(O)/Openssl_help.o $(S)/Openssl_help.cc
+$(O)/openssl_help.o: $(S)/openssl_help.cc
+	@echo "compiling openssl_help.cc"
+	$(CC) $(CFLAGS) -c -o $(O)/openssl_help.o $(S)/openssl_help.cc
 
 $(O)/tpm2_util.o: $(S)/tpm2_util.cc
 	@echo "compiling tpm2_util.cc"

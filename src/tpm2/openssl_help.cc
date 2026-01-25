@@ -18,7 +18,7 @@
 #include <openssl/aes.h>
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
-#include <Openssl_help.h>
+#include <openssl_help.h>
 
 #include <string>
 using std::string;
