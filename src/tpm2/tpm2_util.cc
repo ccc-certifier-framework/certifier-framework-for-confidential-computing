@@ -114,12 +114,12 @@ std::string tpmutil_ops[] = {
 #define MAX_SIZE_PARAMS 16384
 
 // Combined tests
-bool seal_test(LocalTpm& tpm, int pcr_num);
-bool quote_test(LocalTpm& tpm, int pcr_num);
-bool key_test(LocalTpm& tpm, int pcr_num);
-bool nv_test(LocalTpm& tpm);
-bool context_test(LocalTpm& tpm);
-bool endorsement_test(LocalTpm& tpm);
+bool seal_test(local_tpm& tpm, int pcr_num);
+bool quote_test(local_tpm& tpm, int pcr_num);
+bool key_test(local_tpm& tpm, int pcr_num);
+bool nv_test(local_tpm& tpm);
+bool context_test(local_tpm& tpm);
+bool endorsement_test(local_tpm& tpm);
 
 
 void PrintOptions() {
@@ -131,10 +131,10 @@ void PrintOptions() {
 }
 
 int main(int an, char** av) {
-  LocalTpm tpm;
+  local_tpm tpm;
 
   GFLAGS_NS::ParseCommandLineFlags(&an, &av, true);
-  if (!tpm.OpenTpm(FLAGS_tpm_device.c_str())) {
+  if (!tpm.open_tpm(FLAGS_tpm_device.c_str())) {
     printf("Can't open tpm: %s\n", FLAGS_tpm_device.c_str());
     return 1;
   } else {
@@ -148,7 +148,7 @@ int main(int an, char** av) {
                             &size, buf)) {
       printf("Tpm2_GetCapability failed\n");
     }
-    PrintCapabilities(size, buf);
+    print_capabilities(size, buf);
   } else if (FLAGS_command == "Startup") {
     if (!Tpm2_Startup(tpm)) {
       printf("Tpm2_Startup failed\n");
@@ -474,12 +474,12 @@ int main(int an, char** av) {
     PrintOptions();
   }
 done:
-  tpm.CloseTpm();
+  tpm.close_tpm();
 }
 
 // Combined tests
 
-bool endorsement_test(LocalTpm& tpm) {
+bool endorsement_test(local_tpm& tpm) {
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
@@ -677,7 +677,7 @@ bool endorsement_test(LocalTpm& tpm) {
   return true;
 }
 
-bool context_test(LocalTpm& tpm) {
+bool context_test(local_tpm& tpm) {
   TPM_HANDLE handle;
   uint16_t size = 4096;
   byte_t saveArea[4096];
@@ -729,7 +729,7 @@ bool context_test(LocalTpm& tpm) {
   return true;
 }
 
-bool nv_test(LocalTpm& tpm) {
+bool nv_test(local_tpm& tpm) {
   int slot = 1000;
   string authString("01020304");
   uint16_t size_data = 16;
@@ -820,7 +820,7 @@ bool nv_test(LocalTpm& tpm) {
   return true;
 }
 
-bool key_test(LocalTpm& tpm, int pcr_num) {
+bool key_test(local_tpm& tpm, int pcr_num) {
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
@@ -946,7 +946,7 @@ bool key_test(LocalTpm& tpm, int pcr_num) {
 }
 
 
-bool seal_test(LocalTpm& tpm, int pcr_num) {
+bool seal_test(local_tpm& tpm, int pcr_num) {
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
@@ -1103,7 +1103,7 @@ bool seal_test(LocalTpm& tpm, int pcr_num) {
   return true;
 }
 
-bool quote_test(LocalTpm& tpm, int pcr_num) {
+bool quote_test(local_tpm& tpm, int pcr_num) {
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
@@ -1260,7 +1260,7 @@ void seperate_key_test() {
 }
 
 // For Jethro
-bool NvSessionTest(LocalTpm& tpm) {
+bool NvSessionTest(local_tpm& tpm) {
   printf("NvSessionTest\n\n");
   extern int CreatePasswordAuthArea(string& password, int size, byte_t* buf);
 
