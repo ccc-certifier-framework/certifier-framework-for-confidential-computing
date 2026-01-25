@@ -179,7 +179,7 @@ bool KDFa(uint16_t hashAlg, string& key, string& label, string& contextU,
   HMAC_CTX* ctx = nullptr;
 
   memset(buf, 0, 128);
-  ChangeEndian32(&counter, (uint32_t*)&buf[size_buf]);
+  change_endian32(&counter, (uint32_t*)&buf[size_buf]);
   size_buf += sizeof(uint32_t);
   n = strlen(label.c_str()) + 1;
   if ((size_buf + n) > MAX_SIZE_PARAMS) return false;
@@ -192,12 +192,12 @@ bool KDFa(uint16_t hashAlg, string& key, string& label, string& contextU,
   memcpy(&buf[size_buf], contextV.data(), contextV.size());
   size_buf += contextV.size();
   if ((size_buf + sizeof(uint32_t)) > MAX_SIZE_PARAMS) return false;
-  ChangeEndian32((uint32_t*)&bits, (uint32_t*)&buf[size_buf]);
+  change_endian32((uint32_t*)&bits, (uint32_t*)&buf[size_buf]);
   size_buf += sizeof(uint32_t);
 
   while (bytes_left > 0) {
     counter++;
-    ChangeEndian32(&counter, (uint32_t*)buf);
+    change_endian32(&counter, (uint32_t*)buf);
 
     if (hashAlg == TPM_ALG_SHA1 ) {
       HMAC_Init_ex(ctx, key.data(), key.size(), EVP_sha1(), nullptr);

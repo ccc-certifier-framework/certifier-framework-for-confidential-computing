@@ -184,7 +184,7 @@ int main(int an, char** av) {
     TPM_HANDLE handle;
     TPM2B_PUBLIC pub_out;
     TPML_PCR_SELECTION pcrSelect;
-    InitSinglePcrSelection(FLAGS_pcr_num, TPM_ALG_SHA1, &pcrSelect);
+    init_single_pcr_selection(FLAGS_pcr_num, TPM_ALG_SHA1, &pcrSelect);
     bool sign = true;
     if (FLAGS_decrypt.size() > 0)
       sign = false;
@@ -275,7 +275,7 @@ int main(int an, char** av) {
       parent_handle = (TPM_HANDLE) t;
     } 
     TPML_PCR_SELECTION pcrSelect;
-    InitSinglePcrSelection(FLAGS_pcr_num, TPM_ALG_SHA1, &pcrSelect);
+    init_single_pcr_selection(FLAGS_pcr_num, TPM_ALG_SHA1, &pcrSelect);
     bool sign = true;
     if (FLAGS_decrypt.size() > 0)
       sign = false;
@@ -545,7 +545,7 @@ bool endorsement_test(LocalTpm& tpm) {
   TPM_HANDLE activeHandle;
   TPM2B_PUBLIC parent_pub_out;
   TPML_PCR_SELECTION parent_pcrSelect;
-  InitSinglePcrSelection(7, TPM_ALG_SHA256, &parent_pcrSelect);
+  init_single_pcr_selection(7, TPM_ALG_SHA256, &parent_pcrSelect);
 
   TPMA_OBJECT parent_flags;
   *(uint32_t*)(&parent_flags) = 0;
@@ -556,7 +556,7 @@ bool endorsement_test(LocalTpm& tpm) {
   parent_flags.decrypt = 1;
   parent_flags.restricted = 1;
 
-  InitSinglePcrSelection(7, TPM_ALG_SHA256, &pcrSelect);
+  init_single_pcr_selection(7, TPM_ALG_SHA256, &pcrSelect);
   if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, parent_pcrSelect,
                          TPM_ALG_RSA, TPM_ALG_SHA256, parent_flags,
                          TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
@@ -685,7 +685,7 @@ bool context_test(LocalTpm& tpm) {
 
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcrSelect;
-  InitSinglePcrSelection(7, TPM_ALG_SHA1, &pcrSelect);
+  init_single_pcr_selection(7, TPM_ALG_SHA1, &pcrSelect);
 
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
@@ -828,7 +828,7 @@ bool key_test(LocalTpm& tpm, int pcr_num) {
   TPM_HANDLE parent_handle;
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcrSelect;
-  InitSinglePcrSelection(pcr_num, TPM_ALG_SHA1, &pcrSelect);
+  init_single_pcr_selection(pcr_num, TPM_ALG_SHA1, &pcrSelect);
 
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
@@ -954,7 +954,7 @@ bool seal_test(LocalTpm& tpm, int pcr_num) {
   TPM_HANDLE parent_handle;
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcrSelect;
-  InitSinglePcrSelection(pcr_num, TPM_ALG_SHA1, &pcrSelect);
+  init_single_pcr_selection(pcr_num, TPM_ALG_SHA1, &pcrSelect);
 
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
@@ -1111,7 +1111,7 @@ bool quote_test(LocalTpm& tpm, int pcr_num) {
   TPM_HANDLE parent_handle;
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcr_selection;
-  InitSinglePcrSelection(pcr_num, TPM_ALG_SHA256, &pcr_selection);
+  init_single_pcr_selection(pcr_num, TPM_ALG_SHA256, &pcr_selection);
 
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
@@ -1377,7 +1377,7 @@ bool NvSessionTest(LocalTpm& tpm) {
                         pub_out.publicArea.unique.rsa.buffer);
   uint64_t exp = 0x010001ULL;
   byte_t b_exp[16];
-  ChangeEndian64((uint64_t*)&exp, (uint64_t*)b_exp);
+  change_endian64((uint64_t*)&exp, (uint64_t*)b_exp);
   BIGNUM* e = bin_to_BN(sizeof(uint64_t), b_exp);
   if (1 != RSA_set0_key(rsa_tpmKey, m, e, nullptr)) {
     printf("RSA_set0_key failed\n");

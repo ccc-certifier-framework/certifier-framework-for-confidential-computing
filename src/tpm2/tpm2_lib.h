@@ -29,17 +29,16 @@ using std::string;
 #define NBITSINBYTE 8
 
 // General Utility functions
-bool Equal(int size_in1, byte_t* in1, int size_in2, byte_t* in2);
-void ReverseCpy(int size, byte_t* in, byte_t* out);
-void PrintBytes(int n, byte_t* in);
-void ChangeEndian16(const uint16_t* in, uint16_t* out);
-void ChangeEndian32(const uint32_t* in, uint32_t* out);
-void ChangeEndian64(const uint64_t* in, uint64_t* out);
-void InitSinglePcrSelection(int pcrNum, TPM_ALG_ID alg,
+void reverse_byte_copy(int size, byte_t* in, byte_t* out);
+void change_endian16(const uint16_t* in, uint16_t* out);
+void change_endian32(const uint32_t* in, uint32_t* out);
+void change_endian64(const uint64_t* in, uint64_t* out);
+void init_single_pcr_selection(int pcrNum, TPM_ALG_ID alg,
                             TPML_PCR_SELECTION* pcrSelect);
-void AddSinglePcrSelection(int pcrNum, TPML_PCR_SELECTION* pcrSelect);
+void add_pcr_selection(int pcrNum, TPML_PCR_SELECTION* pcrSelect);
 void setPcrBit(int pcrNum, byte_t* array);
 bool testPcrBit(int pcrNum, byte_t* array);
+void PrintBytes(int n, byte_t* in);
 
 bool ReadFileIntoBlock(const string& filename, int* size, byte_t* block);
 bool WriteFileFromBlock(const string& filename, int size, byte_t* block);
