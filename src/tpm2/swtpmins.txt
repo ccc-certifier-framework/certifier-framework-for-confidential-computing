@@ -656,14 +656,18 @@ echo $XDG_CONFIG_HOME
 sudo aa-complain /usr/bin/swtpm
 sudo apparmor_parser -r /etc/apparmor.d/usr.bin.swtpm
 
-sudo swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
+sudo apt update
+sudo apt install swtpm swtpm-tools apparmor -y
+sudo modprobe tpm_vtpm_proxy
 
-sudo swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear
+sudo swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram --print-capabilities
 
-sudo swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 &
+sudo swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
+
+sudo swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
 
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom --numbytes=32
-sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=EndorsementTest
+sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=EndorsementTest
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=ContextTest
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=SealTest
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest

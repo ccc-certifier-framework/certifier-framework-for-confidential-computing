@@ -518,6 +518,12 @@ bool GetPcrValue(int size, byte_t* in, uint32_t* updateCounter,
   return true;
 }
 
+void AddSinglePcrSelection(int pcrNum, TPML_PCR_SELECTION* pcrSelect) {
+  pcrSelect->count++;
+  if (pcrNum != 0)
+    setPcrBit(pcrNum, pcrSelect->pcrSelections[0].pcrSelect);
+}
+
 void InitSinglePcrSelection(int pcrNum, TPM_ALG_ID hash,
                             TPML_PCR_SELECTION* pcrSelect) {
   if (pcrNum == -1) {

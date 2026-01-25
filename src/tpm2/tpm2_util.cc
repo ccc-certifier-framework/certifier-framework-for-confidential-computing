@@ -488,8 +488,8 @@ bool endorsement_test(LocalTpm& tpm) {
   TPM2B_PUBLIC pub_out;
   TPM2B_NAME pub_name;
   TPM2B_NAME qualified_pub_name;
-  uint16_t pub_blob_size = 1024;
-  byte_t pub_blob[1024];
+  uint16_t pub_blob_size = 4096;
+  byte_t pub_blob[pub_blob_size];
 
   TPML_PCR_SELECTION pcrSelect;
   memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
@@ -508,9 +508,9 @@ bool endorsement_test(LocalTpm& tpm) {
                          TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
                          TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
                          2048, 0x010001, &ekHandle, &pub_out)) {
-    printf("CreatePrimary succeeded parent: %08x\n", ekHandle);
+    printf("CreatePrimary succeeded primary: %08x\n", ekHandle);
   } else {
-    printf("CreatePrimary failed\n");
+    printf("CreatePrimary failed --- primary key\n");
     return false;
   }
   if (Tpm2_ReadPublic(tpm, ekHandle, &pub_blob_size, pub_blob,
@@ -523,11 +523,22 @@ bool endorsement_test(LocalTpm& tpm) {
   printf("Public blob: ");
   PrintBytes(pub_blob_size, pub_blob);
   printf("\n");
-  printf("Name: ");
+  printf("\nName: ");
   PrintBytes(pub_name.size, pub_name.name);
   printf("\n");
   printf("Qualified name: ");
   PrintBytes(qualified_pub_name.size, qualified_pub_name.name);
+  printf("\n");
+  printf("\n");
+  printf("Pubout size: %d\n", pub_out.size);
+  printf("Type: %d\n", pub_out.publicArea.type);
+  printf("Name: %d\n", pub_out.publicArea.nameAlg);
+  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
+  PrintBytes((int)pub_out.publicArea.unique.rsa.size,
+             (byte_t*)pub_out.publicArea.unique.rsa.buffer);
+  printf("\n");
+  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
 
   TPM_HANDLE parentHandle;
@@ -545,14 +556,15 @@ bool endorsement_test(LocalTpm& tpm) {
   parent_flags.decrypt = 1;
   parent_flags.restricted = 1;
 
+  InitSinglePcrSelection(7, TPM_ALG_SHA256, &pcrSelect);
   if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, parent_pcrSelect,
                          TPM_ALG_RSA, TPM_ALG_SHA256, parent_flags,
                          TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
-                         1024, 0x010001,
+                         2048, 0x010001,
                          &parentHandle, &parent_pub_out)) {
-    printf("CreatePrimary succeeded\n");
+    printf("CreatePrimary second key succeeded\n");
   } else {
-    printf("CreatePrimary failed\n");
+    printf("CreatePrimary failed - second key\n");
     return false;
   }
   TPM2B_CREATION_DATA creation_out;
@@ -577,13 +589,13 @@ bool endorsement_test(LocalTpm& tpm) {
                      parent_pcrSelect,
                      TPM_ALG_RSA, TPM_ALG_SHA256, active_flags, TPM_ALG_NULL,
                      (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
-                     1024, 0x010001, &size_public, out_public,
+                     2048, 0x010001, &size_public, out_public,
                      &size_private, out_private,
                      &creation_out, &digest_out, &creation_ticket)) {
-    printf("Create succeeded private size: %d, public size: %d\n",
+    printf("CreateKey succeeded private size: %d, public size: %d\n",
            size_private, size_public);
   } else {
-    printf("Create failed\n");
+    printf("CreateKey failed\n");
     return false;
   }
 
