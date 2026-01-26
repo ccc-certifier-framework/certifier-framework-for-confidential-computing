@@ -955,7 +955,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
   TPM_HANDLE parent_handle;
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcrSelect;
-  init_single_pcr_selection(pcr_num, TPM_ALG_SHA1, &pcrSelect);
+  init_single_pcr_selection(pcr_num, TPM_ALG_SHA256, &pcrSelect);
 
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
@@ -1115,6 +1115,12 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
   printf("Buffer (%d): ", sb);
   PrintBytes(sb, sym->buffer);
   printf("\n");
+
+  if  (memcmp(secret.buffer, sym->buffer, sb) == 0) {
+    printf("unsealed string matches\n");
+  } else {
+    printf("unsealed string DOES NOT matches\n");
+  }
 
   Tpm2_FlushContext(tpm, session_handle);
   Tpm2_FlushContext(tpm, load_handle);
