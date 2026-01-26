@@ -504,6 +504,7 @@ bool endorsement_test(local_tpm& tpm) {
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
+  // Create Endorsement key
   if (Tpm2_CreatePrimary(tpm, TPM_RH_ENDORSEMENT, emptyAuth, pcrSelect,
                          TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
                          TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
@@ -556,6 +557,7 @@ bool endorsement_test(local_tpm& tpm) {
   parent_flags.decrypt = 1;
   parent_flags.restricted = 1;
 
+  // What key is this?
   init_single_pcr_selection(7, TPM_ALG_SHA256, &pcrSelect);
   if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, parent_pcrSelect,
                          TPM_ALG_RSA, TPM_ALG_SHA256, parent_flags,
@@ -945,7 +947,6 @@ bool key_test(local_tpm& tpm, int pcr_num) {
   return true;
 }
 
-
 bool seal_test(local_tpm& tpm, int pcr_num) {
   string authString("01020304");
   string parentAuth("01020304");
@@ -976,9 +977,14 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
     return false;
   }
   TPM2B_DIGEST secret;
-  secret.size = 16;
-  for  (int i = 0; i < 16; i++)
-    secret.buffer[i] = (byte_t)(i + 1);
+  secret.size = 32;
+  if (!Tpm2_GetRandom(tpm, secret.size, secret.buffer)) {
+    printf("Can't get random key\n");
+    return false;
+  }
+  printf("Secret: ");
+  PrintBytes(secret.size, secret.buffer);
+  printf("\n");
 
   TPM2B_CREATION_DATA creation_out;
   TPMT_TK_CREATION creation_ticket;
@@ -1098,6 +1104,18 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
   printf("Unseal succeeded, unsealed (%d): ", unsealed_size); 
   PrintBytes(unsealed_size, unsealed);
   printf("\n"); 
+
+  TPM2B_SENSITIVE_DATA* unsealed_return = (TPM2B_SENSITIVE_DATA*)(&unsealed[2]);
+  uint16_t ss;
+  change_endian16(&unsealed_return->size, &ss);
+  printf("Sensitive data size: %d\n", ss);
+  TPM2B_DATA* sym = (TPM2B_DATA*) unsealed_return->buffer;
+  uint16_t sb;
+  change_endian16(&sym->size, &sb);
+  printf("Buffer (%d): ", sb);
+  PrintBytes(sb, sym->buffer);
+  printf("\n");
+
   Tpm2_FlushContext(tpm, session_handle);
   Tpm2_FlushContext(tpm, load_handle);
   return true;

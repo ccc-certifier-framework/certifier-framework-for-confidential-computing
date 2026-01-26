@@ -35,8 +35,7 @@ void change_endian32(const uint32_t* in, uint32_t* out);
 void change_endian64(const uint64_t* in, uint64_t* out);
 void init_single_pcr_selection(int pcrNum, TPM_ALG_ID alg,
                             TPML_PCR_SELECTION* pcrSelect);
-void add_pcr_selection(int pcrNum, TPML_PCR_SELECTION* pcrSelect);
-void add_pcr_selection(int pcrNum, TPML_PCR_SELECTION* pcrSelect);
+void add_pcr_selection(int pcrNum, TPM_ALG_ID hash, TPML_PCR_SELECTION* pcrSelect);
 void setPcrBit(int pcrNum, byte_t* array);
 bool testPcrBit(int pcrNum, byte_t* array);
 

@@ -514,10 +514,15 @@ bool get_pcr_value(int size, byte_t* in, uint32_t* updateCounter,
   return true;
 }
 
-void add_pcr_selection(int pcrNum, TPML_PCR_SELECTION* pcrSelect) {
+void add_pcr_selection(int pcrNum, TPM_ALG_ID hash, TPML_PCR_SELECTION* pcrSelect) {
+  int n = pcrSelect->count;
   pcrSelect->count++;
+  pcrSelect->pcrSelections[n].hash = hash;
+  pcrSelect->pcrSelections[n].sizeofSelect = 3;
+  for (int i = 0; i < 3; i++)
+    pcrSelect->pcrSelections[n].pcrSelect[i] = 0;
   if (pcrNum != 0)
-    setPcrBit(pcrNum, pcrSelect->pcrSelections[0].pcrSelect);
+    setPcrBit(pcrNum, pcrSelect->pcrSelections[n].pcrSelect);
 }
 
 void init_single_pcr_selection(int pcrNum, TPM_ALG_ID hash,
