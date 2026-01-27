@@ -507,7 +507,7 @@ bool endorsement_test(local_tpm& tpm) {
   // Create Endorsement key
   if (Tpm2_CreatePrimary(tpm, TPM_RH_ENDORSEMENT, emptyAuth, pcrSelect,
                          TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
+                         TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
                          2048, 0x010001, &ekHandle, &pub_out)) {
     printf("CreatePrimary succeeded primary: %08x\n", ekHandle);
   } else {
@@ -557,11 +557,11 @@ bool endorsement_test(local_tpm& tpm) {
   parent_flags.decrypt = 1;
   parent_flags.restricted = 1;
 
-  // What key is this?
+  // Storage root key
   init_single_pcr_selection(7, TPM_ALG_SHA256, &pcrSelect);
   if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, parent_pcrSelect,
                          TPM_ALG_RSA, TPM_ALG_SHA256, parent_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
+                         TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
                          2048, 0x010001,
                          &parentHandle, &parent_pub_out)) {
     printf("CreatePrimary second key succeeded\n");
@@ -586,7 +586,9 @@ bool endorsement_test(local_tpm& tpm) {
   active_flags.sensitiveDataOrigin = 1;
   active_flags.userWithAuth = 1;
   active_flags.sign = 1;
+  active_flags.restricted = 1;
 
+  // Quoting Key
   if (Tpm2_CreateKey(tpm, parentHandle, parentAuth, authString,
                      parent_pcrSelect,
                      TPM_ALG_RSA, TPM_ALG_SHA256, active_flags, TPM_ALG_NULL,
@@ -620,7 +622,7 @@ bool endorsement_test(local_tpm& tpm) {
   memset((void*)&secret, 0, sizeof(TPM2B_ENCRYPTED_SECRET));
   memset((void*)&credentialBlob, 0, sizeof(TPM2B_ID_OBJECT));
   credential.size = 20;
-  for (int i = 0; i < 20; i++)
+  for (int i = 0; i < credential.size; i++)
     credential.buffer[i] = i + 1;
 
   TPM2B_PUBLIC active_pub_out;
@@ -968,8 +970,8 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
 
   if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcrSelect, 
                          TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
-                         1024, 0x010001,
+                         TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
+                         2048, 0x010001,
                         &parent_handle, &pub_out)) {
     printf("CreatePrimary succeeded\n");
   } else {
@@ -1001,10 +1003,13 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
   TPM2B_NONCE nonce_obj;
 
   initial_nonce.size = 16;
-  memset(initial_nonce.buffer, 0, 16);
+  memset(initial_nonce.buffer, 0, initial_nonce.size);
   salt.size = 0;
   symmetric.algorithm = TPM_ALG_NULL;
-  
+ 
+  // In a real use, we need to create a session when
+  // we make the key (like here) AND whe we use it.
+
   // Start auth session
   if (Tpm2_StartAuthSession(tpm, TPM_RH_NULL, TPM_RH_NULL,
                             initial_nonce, salt, TPM_SE_POLICY,
@@ -1067,7 +1072,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
                         policy_digest.buffer, parentAuth, secret.size,
                         secret.buffer, pcrSelect, TPM_ALG_SHA256, create_flags,
                         TPM_ALG_NULL, (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB,
-                        TPM_ALG_RSASSA, 1024, 0x010001,
+                        TPM_ALG_RSASSA, 2048, 0x010001,
                         &size_public, out_public, &size_private, out_private,
                         &creation_out, &digest_out, &creation_ticket)) {
     printf("Create with digest succeeded private size: %d, public size: %d\n",
@@ -1146,6 +1151,7 @@ bool quote_test(local_tpm& tpm, int pcr_num) {
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
+  // Storage root key
   if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcr_selection, 
                          TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
                          TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
@@ -1184,6 +1190,7 @@ bool quote_test(local_tpm& tpm, int pcr_num) {
   create_flags.sign = 1;
   create_flags.restricted = 1;
 
+  // Quote key
   if (Tpm2_CreateKey(tpm, parent_handle, parentAuth, authString, pcr_selection,
                      TPM_ALG_RSA, TPM_ALG_SHA256, create_flags, TPM_ALG_NULL,
                      (TPMI_AES_KEY_BITS)256, TPM_ALG_ECB, TPM_ALG_RSASSA,
@@ -1217,7 +1224,7 @@ bool quote_test(local_tpm& tpm, int pcr_num) {
   byte_t quoted[MAX_SIZE_PARAMS];
   int sig_size = MAX_SIZE_PARAMS;
   byte_t sig[MAX_SIZE_PARAMS];
-  if (!Tpm2_Quote(tpm, load_handle, parentAuth,
+  if (!Tpm2_Quote(tpm, load_handle, parentAuth,  // should be authString
                   to_quote.size, to_quote.buffer,
                   scheme, pcr_selection, TPM_ALG_RSA, TPM_ALG_SHA256,
                   &quote_size, quoted, &sig_size, sig)) {

@@ -219,369 +219,65 @@ Structure: Unlike a simple name, which is just the hash of the public
 area, the qualified name includes the parent's information, providing
 a secure, hierarchical, and verifiable identifier for keys. 
 
+-------------------------------------------------------------------------------
 
-GetEndorsementKey.cc
-  primary_flags.fixedTPM = 1;
-  primary_flags.fixedParent = 1;
-  primary_flags.sensitiveDataOrigin = 1;
-  primary_flags.userWithAuth = 1;
-  primary_flags.decrypt = 1;
-  primary_flags.restricted = 1;
-  InitSinglePcrSelection(7, hash_alg_id, &pcrSelect);
-  if (Tpm2_CreatePrimary(tpm, TPM_RH_ENDORSEMENT, emptyAuth, pcrSelect,
-                         TPM_ALG_RSA, hash_alg_id, primary_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
-                         2048, 0x010001, &ekHandle, &pub_out))
-  Tpm2_ReadPublic(tpm, ekHandle, &pub_blob_size, pub_blob,
-                      &pub_out, &pub_name, &qualified_pub_name)
-  Tpm2_FlushContext(tpm, ekHandle);
+This just covers how we go from a vendor-certified EK to quoting key that CF can use.  Endorsement_test is close to what we will need.
 
-  string authString("01020304");
-  string parentAuth("01020304");
-  string emptyAuth;
-  TPML_PCR_SELECTION pcrSelect;
-  TPMA_OBJECT root_flags;
-  TPM2B_CREATION_DATA creation_out;
-  TPM2B_DIGEST digest_out;
-  TPMT_TK_CREATION creation_ticket;
-  TPM_HANDLE root_handle = 0;
-  TPM2B_PUBLIC root_pub_out;
-  TPM_HANDLE seal_load_handle = 0;
-  TPMA_OBJECT seal_create_flags;
-  TPM2B_NAME seal_name;
-  int seal_size_public = MAX_SIZE_PARAMS;
-  byte seal_out_public[MAX_SIZE_PARAMS];
-  int seal_size_private = MAX_SIZE_PARAMS;
-  byte seal_out_private[MAX_SIZE_PARAMS];
-  TPMA_OBJECT quote_create_flags;
-  TPM2B_NAME quote_name;
-  TPM_HANDLE quote_load_handle = 0;
-  int quote_size_public = MAX_SIZE_PARAMS;
-  byte quote_out_public[MAX_SIZE_PARAMS];
-  int quote_size_private = MAX_SIZE_PARAMS;
-  byte quote_out_private[MAX_SIZE_PARAMS];
-  TPM_HANDLE nv_handle = 0;
-  byte context_save_area[MAX_SIZE_PARAMS];
-  uint16_t context_data_size = MAX_SIZE_PARAMS;
-  TPM_HANDLE sealed_load_handle = 0;
-  TPM_ALG_ID hash_alg_id;
-  InitSinglePcrSelection(7, hash_alg_id, &pcrSelect);
-  *(uint32_t*)(&root_flags) = 0;
-  root_flags.fixedTPM = 1;
-  root_flags.fixedParent = 1;
-  root_flags.sensitiveDataOrigin = 1;
-  root_flags.userWithAuth = 1;
-  root_flags.decrypt = 1;
-  root_flags.restricted = 1;
-  if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcrSelect,
-                         TPM_ALG_RSA, hash_alg_id, root_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
-                         2048, 0x010001, &root_handle, &root_pub_out)) 
- *(uint32_t*)(&seal_create_flags) = 0;
-  seal_create_flags.fixedTPM = 1;
-  seal_create_flags.fixedParent = 1;
-  seal_create_flags.sensitiveDataOrigin = 1;
-  seal_create_flags.userWithAuth = 1;
-  seal_create_flags.sign = 1;
+ 
 
-  if (Tpm2_CreateKey(tpm, root_handle, parentAuth, authString, pcrSelect,
-                     TPM_ALG_RSA, hash_alg_id, seal_create_flags, TPM_ALG_NULL,
-                     (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
-                     2048, 0x010001, &seal_size_public, seal_out_public,
-                     &seal_size_private, seal_out_private,
-                     &creation_out, &digest_out, &creation_ticket)) {
-  if (Tpm2_Load(tpm, root_handle, parentAuth, seal_size_public,
-                seal_out_public, seal_size_private, seal_out_private,
-                &seal_load_handle, &seal_name)) {
+The TPM “comes with” a certified restricted decryption key that we call the endorsement key (EK).  Restricted means that it can only be used for certain purposes.  The one we care about is ActivateCredential
 
-  *(uint32_t*)(&quote_create_flags) = 0;
-  quote_create_flags.fixedTPM = 1;
-  quote_create_flags.fixedParent = 1;
-  quote_create_flags.sensitiveDataOrigin = 1;
-  quote_create_flags.userWithAuth = 1;
-  quote_create_flags.sign = 1;
-  quote_create_flags.restricted = 1;
-  if (Tpm2_CreateKey(tpm, root_handle, parentAuth, authString, pcrSelect,
-                     TPM_ALG_RSA, hash_alg_id, quote_create_flags, TPM_ALG_NULL,
-                     (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
-                     1024, 0x010001,
-                     &quote_size_public, quote_out_public,
-                     &quote_size_private, quote_out_private,
-                     &creation_out, &digest_out, &creation_ticket)) {
-  if (Tpm2_Load(tpm, root_handle, parentAuth, quote_size_public,
-                quote_out_public, quote_size_private, quote_out_private,
-                &quote_load_handle, &quote_name)) {
-  nv_handle = GetNvHandle(FLAGS_slot_primary);
-  context_data_size = MAX_SIZE_PARAMS;
-  if (!Tpm2_SaveContext(tpm, root_handle, &context_data_size,
-                        context_save_area)) {
-  Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle))
-  if (!Tpm2_WriteNv(tpm, nv_handle, authString,
-                    (uint16_t)context_data_size, context_save_area)){
-  if (!Tpm2_SaveContext(tpm, seal_load_handle, &context_data_size,
-                        context_save_area)) {
+ 
 
-  if (!Tpm2_WriteNv(tpm, nv_handle, authString,
-                    (uint16_t)context_data_size, context_save_area)){
-  // Save quote context
-  nv_handle = GetNvHandle(FLAGS_slot_quote);
-  context_data_size = MAX_SIZE_PARAMS;
-  if (!Tpm2_SaveContext(tpm, quote_load_handle, &context_data_size,
-                        context_save_area)) {
-  if (root_handle != 0) {
-    Tpm2_FlushContext(tpm, root_handle);
-  }
-  if (seal_load_handle != 0) {
-    Tpm2_FlushContext(tpm, seal_load_handle);
-  }
-  if (quote_load_handle != 0) {
-    Tpm2_FlushContext(tpm, quote_load_handle);
-  }
-  if (sealed_load_handle != 0) {
-    Tpm2_FlushContext(tpm, sealed_load_handle);
-}
+The endorsement key is not usually TPM resident: it’s deterministically generated based on input parameters (what sort of key we want) and the endorsement seed (which we can assume never changes.) 
 
-void InitSinglePcrSelection(int pcrNum, TPM_ALG_ID hash,
-                            TPML_PCR_SELECTION* pcrSelect) {
-  if (pcrNum == -1) {
-    pcrSelect->count = 0; 
-    return;
-  }
-  pcrSelect->count = 1;
-  pcrSelect->pcrSelections[0].hash = hash;
-  pcrSelect->pcrSelections[0].sizeofSelect = 3;
-  for (int i = 0; i < 3; i++)
-    pcrSelect->pcrSelections[0].pcrSelect[i] = 0;
-  if (pcrNum != 0)
-    setPcrBit(pcrNum, pcrSelect->pcrSelections[0].pcrSelect);
-} 
+ 
 
-bool Tpm2_SealCombinedTest(LocalTpm& tpm, int pcr_num) {
-  string authString("01020304");
-  string parentAuth("01020304");
-  string emptyAuth;
-  TPM_HANDLE parent_handle;
-  TPM2B_PUBLIC pub_out;
-  TPML_PCR_SELECTION pcrSelect;
-  InitSinglePcrSelection(pcr_num, TPM_ALG_SHA1, &pcrSelect);
-  TPMA_OBJECT primary_flags;
-  *(uint32_t*)(&primary_flags) = 0;
-  primary_flags.fixedTPM = 1;
-  primary_flags.fixedParent = 1;
-  primary_flags.sensitiveDataOrigin = 1;
-  primary_flags.userWithAuth = 1;
-  primary_flags.decrypt = 1;
-  primary_flags.restricted = 1;
+This is what is happening at line 508.
 
-  if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcrSelect, 
-                         TPM_ALG_RSA, TPM_ALG_SHA1, primary_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
-                         1024, 0x010001,
-                        &parent_handle, &pub_out)) {
-    printf("CreatePrimary succeeded\n");
-  }
-  
-  TPM2B_DIGEST secret;
-  secret.size = 16;
-  for  (int i = 0; i < 16; i++)
-    secret.buffer[i] = (byte_t)(i + 1);
+ 
 
-  TPM2B_CREATION_DATA creation_out;
-  TPMT_TK_CREATION creation_ticket;
-  int size_public = MAX_SIZE_PARAMS;
-  byte_t out_public[MAX_SIZE_PARAMS];
-  int size_private = MAX_SIZE_PARAMS;
-  byte_t out_private[MAX_SIZE_PARAMS];
-  TPM2B_DIGEST digest_out;
-  TPM2B_NONCE initial_nonce;
-  TPM2B_ENCRYPTED_SECRET salt;
-  TPMT_SYM_DEF symmetric;
-  TPM_HANDLE session_handle;
-  TPM2B_NONCE nonce_obj;
+Note that you ReadPublic shortly after: you should be able to match this pubkey with the cert that you found in NV storage.
 
-  initial_nonce.size = 16;
-  memset(initial_nonce.buffer, 0, 16);
-  salt.size = 0;
-  symmetric.algorithm = TPM_ALG_NULL;
-  
-  // Start auth session
-  if (Tpm2_StartAuthSession(tpm, TPM_RH_NULL, TPM_RH_NULL,
-                            initial_nonce, salt, TPM_SE_POLICY,
-                            symmetric, TPM_ALG_SHA1, &session_handle,
-                            &nonce_obj)) {
-    printf("Tpm2_StartAuthSession succeeds handle: %08x\n",
-           session_handle);
-    printf("nonce (%d): ", nonce_obj.size);
-    PrintBytes(nonce_obj.size, nonce_obj.buffer);
-    printf("\n");
-  }
+ 
 
-  TPM2B_DIGEST policy_digest;
-  // get policy digest
-  if(Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
-    printf("PolicyGetDigest before Pcr succeeded: ");
-    PrintBytes(policy_digest.size, policy_digest.buffer); printf("\n");
-  }
+You make the quoting key at line 590.  You have made it a child of a “storage root key” that is created earlier (line 562).  Making your quoting key a child of the storage root key means that after reboot you can recreate the SRK (deterministic) and then load the key blob that you got at line 590.
 
-  if (Tpm2_PolicyPassword(tpm, session_handle)) {
-    printf("PolicyPassword succeeded\n");
-  }
+ 
 
-  TPM2B_DIGEST expected_digest;
-  expected_digest.size = 0;
-  if (Tpm2_PolicyPcr(tpm, session_handle,
-                     expected_digest, pcrSelect)) {
-    printf("PolicyPcr succeeded\n");
-  }
+Now we want to cryptographically link the quoting key to the EK.
 
-  if(Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
-    printf("PolicyGetDigest succeeded: ");
-    PrintBytes(policy_digest.size, policy_digest.buffer); printf("\n");
-  }
+ 
 
-  TPMA_OBJECT create_flags;
-  *(uint32_t*)(&create_flags) = 0;
-  create_flags.fixedTPM = 1;
-  create_flags.fixedParent = 1;
+The cryptographic operation public key decryption with the EK, but rather than the server simply encrypting a secret, it encrypts a secret PLUS the public key of the quoting key we’re trying to get certified (there’s other stuff too.)  Creating the blob (secret+thing-to-check) can be done with library code or using the TPM helper function MakeCredential.
 
-  if (Tpm2_CreateSealed(tpm, parent_handle, policy_digest.size,
-                        policy_digest.buffer, parentAuth, secret.size,
-                        secret.buffer, pcrSelect, TPM_ALG_SHA1, create_flags,
-                        TPM_ALG_NULL, (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB,
-                        TPM_ALG_RSASSA, 1024, 0x010001,
-                        &size_public, out_public, &size_private, out_private,
-                        &creation_out, &digest_out, &creation_ticket)) {
-    printf("Create with digest succeeded private size: %d, public size: %d\n",
-           size_private, size_public);
-  }
+ 
 
-  TPM_HANDLE load_handle;
-  TPM2B_NAME name;
-  if (Tpm2_Load(tpm, parent_handle, parentAuth, size_public, out_public,
-               size_private, out_private, &load_handle, &name)) {
-    printf("Load succeeded\n");
-  }
+We get to choose how we use this ActivateCredential function, but the simplest thing would be:
 
-  int unsealed_size = MAX_SIZE_PARAMS;
-  byte_t unsealed[MAX_SIZE_PARAMS];
-  TPM2B_DIGEST hmac;
-  hmac.size = 0;
-  if (!Tpm2_Unseal(tpm, load_handle, parentAuth, session_handle,
-                   nonce_obj, 0x01, hmac,
-                   &unsealed_size, unsealed)) {
-    printf("Unseal failed\n");
-    Tpm2_FlushContext(tpm, session_handle);
-    Tpm2_FlushContext(tpm, load_handle);
-    return false;
-  }
-  printf("Unseal succeeded, unsealed (%d): ", unsealed_size); 
-  PrintBytes(unsealed_size, unsealed);
-  printf("\n"); 
-  Tpm2_FlushContext(tpm, session_handle);
-  Tpm2_FlushContext(tpm, load_handle);
-  return true;
-}
+ 
 
-bool Tpm2_QuoteCombinedTest(LocalTpm& tpm, int pcr_num) {
-  string authString("01020304");
-  string parentAuth("01020304");
-  string emptyAuth;
+Client sends EK, EK-cred, pub-key of newly created (but not yet certified) quoting key to server
+Server checks the EK cert chai.  If OK
+The server creates a certificate for the quoting key based on whatever root it wants to use.            
+It then creates a random symmetric encryption key
+And encrypts the certificate
+The server uses MakeCredential (or a library function) to create an encrypted blob containing the symmetric key 3(b)
+This blob is send to the client (as well as the now-encrypted cert
+The client calls ActivateCredential
+If this succeeds, the client can now decrypt the cert for the quoting key
+ 
 
-  TPM_HANDLE parent_handle;
-  TPM2B_PUBLIC pub_out;
-  TPML_PCR_SELECTION pcr_selection;
-  InitSinglePcrSelection(pcr_num, TPM_ALG_SHA1, &pcr_selection);
+On reboot, client code must recreate the SRK as before (line 562) and Load() the qutoting key, like line 604
 
-  TPMA_OBJECT primary_flags;
-  *(uint32_t*)(&primary_flags) = 0;
-  primary_flags.fixedTPM = 1;
-  primary_flags.fixedParent = 1;
-  primary_flags.sensitiveDataOrigin = 1;
-  primary_flags.userWithAuth = 1;
-  primary_flags.decrypt = 1;
-  primary_flags.restricted = 1;
+ 
 
-  if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcr_selection, 
-                         TPM_ALG_RSA, TPM_ALG_SHA1, primary_flags,
-                         TPM_ALG_AES, 128, TPM_ALG_CFB, TPM_ALG_NULL,
-                         1024, 0x010001,
-                         &parent_handle, &pub_out)) {
-    printf("CreatePrimary succeeded\n");
-  }
+It can then quote with this key.
 
-  if (pcr_num >= 0) {
-    uint16_t size_eventData = 3;
-    byte_t eventData[3] = {1, 2, 3};
-    if (Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
-      printf("Tpm2_PCR_Event succeeded\n");
-    } else {
-      printf("Tpm2_PCR_Event failed\n");
-    }
-  }
+ 
 
-  TPM2B_CREATION_DATA creation_out;
-  TPMT_TK_CREATION creation_ticket;
-  int size_public = MAX_SIZE_PARAMS;
-  byte_t out_public[MAX_SIZE_PARAMS];
-  int size_private = MAX_SIZE_PARAMS;
-  byte_t out_private[MAX_SIZE_PARAMS];
-  TPM2B_DIGEST digest_out;
+I can walk you through the other stuff, but that’s the tricky one
 
-  TPMA_OBJECT create_flags;
-  *(uint32_t*)(&create_flags) = 0;
-  create_flags.fixedTPM = 1;
-  create_flags.fixedParent = 1;
-  create_flags.sensitiveDataOrigin = 1;
-  create_flags.userWithAuth = 1;
-  create_flags.sign = 1;
-  create_flags.restricted = 1;
-
-  if (Tpm2_CreateKey(tpm, parent_handle, parentAuth, authString, pcr_selection,
-                     TPM_ALG_RSA, TPM_ALG_SHA1, create_flags, TPM_ALG_NULL,
-                     (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
-                     1024, 0x010001,
-                     &size_public, out_public, &size_private, out_private,
-                     &creation_out, &digest_out, &creation_ticket)) {
-    printf("Create succeeded, private size: %d, public size: %d\n",
-           size_private, size_public);
-  }
-
-  TPM_HANDLE load_handle;
-  TPM2B_NAME name;
-  if (Tpm2_Load(tpm, parent_handle, parentAuth, size_public, out_public,
-               size_private, out_private, &load_handle, &name)) {
-    printf("Load succeeded\n");
-  }
-
-  TPM2B_DATA to_quote;
-  to_quote.size = 16;
-  for  (int i = 0; i < 16; i++)
-    to_quote.buffer[i] = (byte_t)(i + 1);
-  TPMT_SIG_SCHEME scheme;
-
-  int quote_size = MAX_SIZE_PARAMS;
-  byte_t quoted[MAX_SIZE_PARAMS];
-  int sig_size = MAX_SIZE_PARAMS;
-  byte_t sig[MAX_SIZE_PARAMS];
-  if (!Tpm2_Quote(tpm, load_handle, parentAuth,
-                  to_quote.size, to_quote.buffer,
-                  scheme, pcr_selection, TPM_ALG_RSA, TPM_ALG_SHA1,
-                  &quote_size, quoted, &sig_size, sig)) {
-    printf("Quote failed\n");
-    Tpm2_FlushContext(tpm, load_handle);
-    Tpm2_FlushContext(tpm, parent_handle);
-    return false;
-  }
-  printf("Quote succeeded, quoted (%d): ", quote_size); 
-  PrintBytes(quote_size, quoted);
-  printf("\n"); 
-  printf("Sig (%d): ", sig_size); 
-  PrintBytes(sig_size, sig);
-  printf("\n"); 
-  Tpm2_FlushContext(tpm, load_handle);
-  Tpm2_FlushContext(tpm, parent_handle);
-  return true;
-}
 
 --------------------------------------------------
 
@@ -643,27 +339,26 @@ swtpm chardev --vtpm-proxy --tpmstate dir=... --tpm2 ...
 mkdir -p /tmp/my_swtpm_dir
 swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
 
+sudo apt update
+sudo apt install swtpm swtpm-tools apparmor -y
 
 ---------------------------
 
-sudo apt-get install apparmor-utils
+To run the simulator:
 
 Start:
 
 export XDG_CONFIG_HOME="/home/jlm/.config"
 echo $XDG_CONFIG_HOME
 
-sudo aa-complain /usr/bin/swtpm
-sudo apparmor_parser -r /etc/apparmor.d/usr.bin.swtpm
-
-sudo apt update
-sudo apt install swtpm swtpm-tools apparmor -y
 sudo modprobe tpm_vtpm_proxy
 
 sudo swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram --print-capabilities
 
+If you use the tcp utility
 sudo swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
 
+If you use the vtpm2 device (/dev/tpm1)
 sudo swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
 
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom --numbytes=32
@@ -674,7 +369,8 @@ sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=NvTest
 sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=QuoteTest
 
-tpm2_rc_decode 0x921
+To decode error messages:
+  tpm2_rc_decode 0x921
 
 ----------------------------
 
