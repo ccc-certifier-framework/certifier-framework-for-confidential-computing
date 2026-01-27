@@ -481,7 +481,7 @@ done:
 
 bool endorsement_test(local_tpm& tpm) {
   string authString("01020304");
-  string parentAuth("01020304");
+  string srkAuth("01020304");
   string emptyAuth;
 
   TPM_HANDLE ekHandle;
@@ -504,7 +504,7 @@ bool endorsement_test(local_tpm& tpm) {
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
-  // Create Endorsement key
+  // Create Endorsement key with handle ekHandle
   if (Tpm2_CreatePrimary(tpm, TPM_RH_ENDORSEMENT, emptyAuth, pcrSelect,
                          TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
                          TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
@@ -542,28 +542,28 @@ bool endorsement_test(local_tpm& tpm) {
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
 
-  TPM_HANDLE parentHandle;
-  TPM_HANDLE activeHandle;
-  TPM2B_PUBLIC parent_pub_out;
-  TPML_PCR_SELECTION parent_pcrSelect;
-  init_single_pcr_selection(7, TPM_ALG_SHA256, &parent_pcrSelect);
+  TPM_HANDLE srkHandle;
+  TPM_HANDLE quotingHandle;
+  TPM2B_PUBLIC srk_pub_out;
+  TPML_PCR_SELECTION srk_pcrSelect;
+  init_single_pcr_selection(7, TPM_ALG_SHA256, &srk_pcrSelect);
 
-  TPMA_OBJECT parent_flags;
-  *(uint32_t*)(&parent_flags) = 0;
-  parent_flags.fixedTPM = 1;
-  parent_flags.fixedParent = 1;
-  parent_flags.sensitiveDataOrigin = 1;
-  parent_flags.userWithAuth = 1;
-  parent_flags.decrypt = 1;
-  parent_flags.restricted = 1;
+  TPMA_OBJECT srk_flags;
+  *(uint32_t*)(&srk_flags) = 0;
+  srk_flags.fixedTPM = 1;
+  srk_flags.fixedParent = 1;
+  srk_flags.sensitiveDataOrigin = 1;
+  srk_flags.userWithAuth = 1;
+  srk_flags.decrypt = 1;
+  srk_flags.restricted = 1;
 
   // Storage root key
   init_single_pcr_selection(7, TPM_ALG_SHA256, &pcrSelect);
-  if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, parent_pcrSelect,
-                         TPM_ALG_RSA, TPM_ALG_SHA256, parent_flags,
+  if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, srk_pcrSelect,
+                         TPM_ALG_RSA, TPM_ALG_SHA256, srk_flags,
                          TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
                          2048, 0x010001,
-                         &parentHandle, &parent_pub_out)) {
+                         &srkHandle, &srk_pub_out)) {
     printf("CreatePrimary second key succeeded\n");
   } else {
     printf("CreatePrimary failed - second key\n");
@@ -579,19 +579,19 @@ bool endorsement_test(local_tpm& tpm) {
 
   memset((void*)&pub_out, 0, sizeof(TPM2B_PUBLIC));
 
-  TPMA_OBJECT active_flags;
-  *(uint32_t*)(&active_flags) = 0;
-  active_flags.fixedTPM = 1;
-  active_flags.fixedParent = 1;
-  active_flags.sensitiveDataOrigin = 1;
-  active_flags.userWithAuth = 1;
-  active_flags.sign = 1;
-  active_flags.restricted = 1;
+  TPMA_OBJECT quoting_flags;
+  *(uint32_t*)(&quoting_flags) = 0;
+  quoting_flags.fixedTPM = 1;
+  quoting_flags.fixedParent = 1;
+  quoting_flags.sensitiveDataOrigin = 1;
+  quoting_flags.userWithAuth = 1;
+  quoting_flags.sign = 1;
+  quoting_flags.restricted = 1;
 
   // Quoting Key
-  if (Tpm2_CreateKey(tpm, parentHandle, parentAuth, authString,
-                     parent_pcrSelect,
-                     TPM_ALG_RSA, TPM_ALG_SHA256, active_flags, TPM_ALG_NULL,
+  if (Tpm2_CreateKey(tpm, srkHandle, srkAuth, authString,
+                     srk_pcrSelect,
+                     TPM_ALG_RSA, TPM_ALG_SHA256, quoting_flags, TPM_ALG_NULL,
                      (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
                      2048, 0x010001, &size_public, out_public,
                      &size_private, out_private,
@@ -603,12 +603,13 @@ bool endorsement_test(local_tpm& tpm) {
     return false;
   }
 
-  if (Tpm2_Load(tpm, parentHandle, parentAuth, size_public, out_public,
-               size_private, out_private, &activeHandle, &pub_name)) {
-    printf("Load succeeded, handle: %08x\n", activeHandle);
+  // Load Quote key
+  if (Tpm2_Load(tpm, srkHandle, srkAuth, size_public, out_public,
+               size_private, out_private, &quotingHandle, &pub_name)) {
+    printf("Load succeeded, handle: %08x\n", quotingHandle);
   } else {
     Tpm2_FlushContext(tpm, ekHandle);
-    Tpm2_FlushContext(tpm, parentHandle);
+    Tpm2_FlushContext(tpm, srkHandle);
     printf("Load failed\n");
     return false;
   }
@@ -625,42 +626,41 @@ bool endorsement_test(local_tpm& tpm) {
   for (int i = 0; i < credential.size; i++)
     credential.buffer[i] = i + 1;
 
-  TPM2B_PUBLIC active_pub_out;
-  TPM2B_NAME active_pub_name;
-  TPM2B_NAME active_qualified_pub_name;
-  uint16_t active_pub_blob_size = 1024;
-  byte_t active_pub_blob[1024];
+  TPM2B_PUBLIC quoting_pub_out;
+  TPM2B_NAME quoting_pub_name;
+  TPM2B_NAME quoting_qualified_pub_name;
+  uint16_t quoting_pub_blob_size = 1024;
+  byte_t quoting_pub_blob[quoting_pub_blob_size];
 
-  memset((void*)&active_pub_out, 0, sizeof(TPM2B_PUBLIC));
+  memset((void*)&quoting_pub_out, 0, sizeof(TPM2B_PUBLIC));
 
-  if (Tpm2_ReadPublic(tpm, activeHandle,
-                      &active_pub_blob_size, active_pub_blob,
-                      &active_pub_out, &active_pub_name,
-                      &active_qualified_pub_name)) {
+  if (Tpm2_ReadPublic(tpm, quotingHandle,
+                      &quoting_pub_blob_size, quoting_pub_blob,
+                      &quoting_pub_out, &quoting_pub_name,
+                      &quoting_qualified_pub_name)) {
     printf("ReadPublic succeeded\n");
   } else {
     printf("ReadPublic failed\n");
     return false;
   }
-  printf("Active Name (%d): ", active_pub_name.size);
-  PrintBytes(active_pub_name.size, active_pub_name.name);
+  printf("Active Name (%d): ", quoting_pub_name.size);
+  PrintBytes(quoting_pub_name.size, quoting_pub_name.name);
   printf("\n");
 
-  if (Tpm2_MakeCredential(tpm, ekHandle, credential, active_pub_name,
+  if (Tpm2_MakeCredential(tpm, ekHandle, credential, quoting_pub_name,
                           &credentialBlob, &secret)) {
     printf("MakeCredential succeeded\n");
   } else {
-    Tpm2_FlushContext(tpm, parentHandle);
     printf("MakeCredential failed\n");
-    Tpm2_FlushContext(tpm, activeHandle);
-    Tpm2_FlushContext(tpm, parentHandle);
+    Tpm2_FlushContext(tpm, quotingHandle);
+    Tpm2_FlushContext(tpm, srkHandle);
     Tpm2_FlushContext(tpm, ekHandle);
     return false;
   }
   printf("credBlob size: %d\n", credentialBlob.size);
   printf("secret size: %d\n", secret.size);
-  if (Tpm2_ActivateCredential(tpm, activeHandle, ekHandle,
-                              parentAuth, emptyAuth,
+  if (Tpm2_ActivateCredential(tpm, quotingHandle, ekHandle,
+                              srkAuth, emptyAuth,
                               credentialBlob, secret,
                               &recovered_credential)) {
     printf("ActivateCredential succeeded\n");
@@ -668,15 +668,14 @@ bool endorsement_test(local_tpm& tpm) {
     PrintBytes(recovered_credential.size, recovered_credential.buffer);
     printf("\n");
   } else {
-    Tpm2_FlushContext(tpm, parentHandle);
     printf("ActivateCredential failed\n");
-    Tpm2_FlushContext(tpm, activeHandle);
-    Tpm2_FlushContext(tpm, parentHandle);
+    Tpm2_FlushContext(tpm, quotingHandle);
+    Tpm2_FlushContext(tpm, srkHandle);
     Tpm2_FlushContext(tpm, ekHandle);
     return false;
   }
-  Tpm2_FlushContext(tpm, activeHandle);
-  Tpm2_FlushContext(tpm, parentHandle);
+  Tpm2_FlushContext(tpm, quotingHandle);
+  Tpm2_FlushContext(tpm, srkHandle);
   Tpm2_FlushContext(tpm, ekHandle);
   return true;
 }
