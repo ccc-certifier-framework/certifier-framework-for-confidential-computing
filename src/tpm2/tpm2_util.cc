@@ -569,6 +569,9 @@ bool endorsement_test(local_tpm& tpm) {
     printf("CreatePrimary failed - second key\n");
     return false;
   }
+
+  // TODO: Save this key for reloading when we quote
+
   TPM2B_CREATION_DATA creation_out;
   TPM2B_DIGEST digest_out;
   TPMT_TK_CREATION creation_ticket;
@@ -588,7 +591,7 @@ bool endorsement_test(local_tpm& tpm) {
   quoting_flags.sign = 1;
   quoting_flags.restricted = 1;
 
-  // Quoting Key
+  // Create the Quote Key
   if (Tpm2_CreateKey(tpm, srkHandle, srkAuth, authString,
                      srk_pcrSelect,
                      TPM_ALG_RSA, TPM_ALG_SHA256, quoting_flags, TPM_ALG_NULL,
@@ -622,6 +625,9 @@ bool endorsement_test(local_tpm& tpm) {
   memset((void*)&credential, 0, sizeof(TPM2B_DIGEST));
   memset((void*)&secret, 0, sizeof(TPM2B_ENCRYPTED_SECRET));
   memset((void*)&credentialBlob, 0, sizeof(TPM2B_ID_OBJECT));
+
+  // TODO: Make a real secret here for MakeCredential with
+  // size 32 bits.
   credential.size = 20;
   for (int i = 0; i < credential.size; i++)
     credential.buffer[i] = i + 1;
@@ -967,6 +973,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
   primary_flags.decrypt = 1;
   primary_flags.restricted = 1;
 
+  // Creating a new SRK
   if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcrSelect, 
                          TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
                          TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
@@ -1067,6 +1074,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
   create_flags.fixedTPM = 1;
   create_flags.fixedParent = 1;
 
+  // Creating new sealed key
   if (Tpm2_CreateSealed(tpm, parent_handle, policy_digest.size,
                         policy_digest.buffer, parentAuth, secret.size,
                         secret.buffer, pcrSelect, TPM_ALG_SHA256, create_flags,
@@ -1081,6 +1089,10 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
     Tpm2_FlushContext(tpm, session_handle);
     return false;
   }
+
+  // Usually, we'd save the new SRK and sealing key
+  // when creating and then reload them using a
+  // recreated auth session like the one above.
 
   TPM_HANDLE load_handle;
   TPM2B_NAME name;
@@ -1135,6 +1147,10 @@ bool quote_test(local_tpm& tpm, int pcr_num) {
   string authString("01020304");
   string parentAuth("01020304");
   string emptyAuth;
+
+  // Usually, we'd just load the SRK created in
+  // the endorsement test and the quoting key
+  // rather than making new ones.
 
   TPM_HANDLE parent_handle;
   TPM2B_PUBLIC pub_out;
@@ -1242,7 +1258,6 @@ bool quote_test(local_tpm& tpm, int pcr_num) {
   Tpm2_FlushContext(tpm, parent_handle);
   return true;
 }
-
 
 void seperate_key_test() {
   RSA* rsa_key = RSA_generate_key(2048, 0x010001ULL, nullptr, nullptr);
