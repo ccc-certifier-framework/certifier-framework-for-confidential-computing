@@ -30,16 +30,25 @@ LOCAL_LIB=/usr/local/lib
 TARGET_MACHINE_TYPE= x64
 #endif
 
+NEWPROTOBUF=1
+NEW_API=1
+
 S= $(TPM_DIR)
 O= $(TPM_DIR)
+CP = $(CERTIFIER_ROOT)/certifier_service/certprotos
+CI = $(CERTIFIER_ROOT)/include
+SC= $(CERTIFIER_ROOT)/src
+SE= $(CERTIFIER_ROOT)/src/simulated-enclave
+AE= $(CERTIFIER_ROOT)/src/application-enclave
+TE= $(CERTIFIER_ROOT)/src/tpm2
+
 INCLUDE=-I$(TPM_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(GOOGLE_INCLUDE) \
-	-I$(CERTIFIER_ROOT)/include
+	-I$(CI) -I$(SC)/sev-snp -I $(SC)/gramine
 
 CC=g++
 LINK=g++
 PROTO=protoc
 
-NEWPROTOBUF=1
 ifndef NEWPROTOBUF
 CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++11 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 LDFLAGS = -L $(LOCAL_LIB) -lprotobuf -lgtest -lgflags -lpthread -L/usr/local/opt/openssl@1.1/lib/ -lcrypto -lssl -luuid
@@ -48,11 +57,16 @@ LDFLAGS = -L $(LOCAL_LIB) `pkg-config --cflags --libs protobuf` -lgtest -lgflags
 CFLAGS_COMMON = $(INCLUDE) -g -Wall -std=c++17 -Wno-unused-variable -D X64 -Wno-deprecated-declarations
 endif
 CFLAGS=$(CFLAGS_COMMON)
+ifndef NEW_API
+CFLAGS += -DNEW_API
+endif
+
+certifier_objs = $(O)/certifier.pb.o $(O)/certifier.o      \
+              $(O)/certifier_proofs.o  $(O)/support.o $(O)/simulated_enclave.o \
+              $(O)/application_enclave.o
 
 dobj_tpm2_util=	$(O)/tpm2_lib.o \
-  $(O)/openssl_help.o \
-  $(O)/convert.o \
-  $(O)/tpm2_util.o
+  $(O)/openssl_help.o $(O)/convert.o $(O)/tpm2_util.o $(O)/tpm2.pb.o
 
 all:	$(EXE_DIR)/tpm2_util.exe \
 
@@ -81,4 +95,46 @@ $(O)/openssl_help.o: $(S)/openssl_help.cc
 $(O)/tpm2_util.o: $(S)/tpm2_util.cc
 	@echo "compiling tpm2_util.cc"
 	$(CC) $(CFLAGS) -c -o $(O)/tpm2_util.o $(S)/tpm2_util.cc
+
+$(S)/tpm2.pb.cc $(S)/tpm2.pb.h: $(S)/tpm2.proto
+	$(PROTO) --cpp_out=$(S) --proto_path $(<D) $<
+	mv $(S)/tpm2.pb.h $(CI)
+$(O)/tpm2.pb.o: $(S)/tpm2.pb.cc $(S)/tpm2.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(SC)/certifier.pb.cc: $(CP)/certifier.proto
+	$(PROTO) --cpp_out=$(SC) --proto_path $(<D) $<
+	mv $(SC)/certifier.pb.h $(CI)
+$(O)/certifier.pb.o: $(SC)/certifier.pb.cc $()/certifier.pb.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/certifier.o: $(SC)/certifier.cc $(CI)/certifier.pb.h $(CI)/certifier.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/certifier_proofs.o: $(SC)/certifier_proofs.cc $(CI)/certifier.pb.h $(CI)/certifier.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/cc_helpers.o: $(SC)/cc_helpers.cc $(CI)/certifier.pb.h $(CI)/cc_helpers.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/cc_useful.o: $(SC)/cc_useful.cc $(CI)/cc_useful.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/support.o: $(SC)/support.cc $(CI)/support.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/simulated_enclave.o: $(SE)/simulated_enclave.cc $(CI)/simulated_enclave.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
+
+$(O)/application_enclave.o: $(AE)/application_enclave.cc $(CI)/application_enclave.h
+	@echo "\ncompiling $<"
+	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

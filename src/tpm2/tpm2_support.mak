@@ -10,7 +10,6 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License
-#    Project: New Cloudproxy Crypto
 #    File: tpm2.mak
 
 #ifndef CERTIFIER_ROOT
@@ -32,7 +31,8 @@ TARGET_MACHINE_TYPE= x64
 
 S= $(TPM_DIR)
 O= $(TPM_DIR)
-INCLUDE=-I$(TPM_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(GOOGLE_INCLUDE)
+INCLUDE=-I$(TPM_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(GOOGLE_INCLUDE) \
+	-I$(CERTIFIER_ROOT)/include
 
 CC=g++
 LINK=g++

@@ -24,7 +24,7 @@
 #include <tpm2_types.h>
 #include "certifier.h"
 #include "support.h"
-#include "tpm2_lib.h"
+#include "tpm2.pb.h"
 #include <string>
 using std::string;
 using namespace certifier::framework;
