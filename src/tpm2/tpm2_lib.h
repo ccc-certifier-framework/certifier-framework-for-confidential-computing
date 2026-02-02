@@ -22,9 +22,13 @@
 
 #include <tpm20.h>
 #include <tpm2_types.h>
-
+#include "certifier.h"
+#include "support.h"
+#include "tpm2_lib.h"
 #include <string>
 using std::string;
+using namespace certifier::framework;
+using namespace certifier::utilities;
 
 #define NBITSINBYTE 8
 

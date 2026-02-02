@@ -32,8 +32,7 @@ TARGET_MACHINE_TYPE= x64
 
 S= $(TPM_DIR)
 O= $(TPM_DIR)
-INCLUDE=-I$(TPM_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(GOOGLE_INCLUDE) \
-	-I$(CERTIFIER_ROOT)/include
+INCLUDE=-I$(TPM_DIR) -I/usr/local/opt/openssl@1.1/include/ -I$(GOOGLE_INCLUDE)
 
 CC=g++
 LINK=g++
