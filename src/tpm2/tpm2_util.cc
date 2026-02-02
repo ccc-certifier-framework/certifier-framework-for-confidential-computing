@@ -167,7 +167,7 @@ int main(int an, char** av) {
     memset(buf, 0, 256);
     if (Tpm2_GetRandom(tpm, FLAGS_numbytes, buf)) {
       printf("Random bytes: ");
-      PrintBytes(FLAGS_numbytes, buf);
+      print_bytes(FLAGS_numbytes, buf);
       printf("\n");
     } else {
       printf("GetRandom failed\n");
@@ -201,7 +201,7 @@ int main(int an, char** av) {
         pub_out.publicArea.parameters.rsaDetail.symmetric.algorithm);
       printf("keySize: %04x\n", pub_out.publicArea.parameters.rsaDetail.keyBits);
       printf("Modulus: ");
-      PrintBytes(pub_out.publicArea.unique.rsa.size,
+      print_bytes(pub_out.publicArea.unique.rsa.size,
                 pub_out.publicArea.unique.rsa.buffer);
       printf("\n");
     } else {
@@ -223,11 +223,11 @@ int main(int an, char** av) {
     int size_private = 4096;
     byte_t inPrivate[4096];
     bool ok = true;
-    if (!ReadFileIntoBlock(FLAGS_public_file, &size_public, inPublic)) {
+    if (!read_file(FLAGS_public_file, &size_public, inPublic)) {
       printf("Can't read public block\n");
       ok = false;
     }
-    if (!ReadFileIntoBlock(FLAGS_private_file, &size_private, inPrivate)) {
+    if (!read_file(FLAGS_private_file, &size_private, inPrivate)) {
       printf("Can't read public block\n");
       ok = false;
     }
@@ -251,7 +251,7 @@ int main(int an, char** av) {
                      &pcrSelectOut, &values)) {
       printf("ReadPcr succeeds, updateCounter: %08x\n", updateCounter);
       printf("Pcr %d :", FLAGS_pcr_num);
-      PrintBytes(values.digests[0].size, values.digests[0].buffer);
+      print_bytes(values.digests[0].size, values.digests[0].buffer);
       printf("\n");
     } else {
       printf("ReadPcr failed\n");
@@ -286,15 +286,15 @@ int main(int an, char** av) {
                     &creation_out, &digest_out, &creation_ticket)) {
       printf("CreateKey succeeded\n");
       printf("Public (%d): ", size_public);
-      PrintBytes(size_public, out_public);
+      print_bytes(size_public, out_public);
       printf("\n");
       printf("Private (%d): ", size_private);
-      PrintBytes(size_private, out_private);
+      print_bytes(size_private, out_private);
       printf("\n");
-      if (!WriteFileFromBlock(FLAGS_public_file, 
+      if (!write_file(FLAGS_public_file, 
                               size_public, out_public)) {
         printf("Can't write %s, CreateKey failed\n", FLAGS_private_file.c_str());
-      } else if (!WriteFileFromBlock(FLAGS_private_file,
+      } else if (!write_file(FLAGS_private_file,
                                      size_private, out_private)){ 
         printf("Can't write %s\n", FLAGS_private_file.c_str());
       } else {
@@ -314,7 +314,7 @@ int main(int an, char** av) {
                     pcrSelector, TPM_ALG_SHA1, size_digest, digest,
                     &out_size, out)) {
       printf("Unseal succeeded: ");
-      PrintBytes(out_size, out);
+      print_bytes(out_size, out);
       printf("\n");
     } else {
       printf("Unseal failed\n");
@@ -363,7 +363,7 @@ int main(int an, char** av) {
     memset(saveArea, 0, 4096);
     TPM_HANDLE handle = 0;
 
-    if (!ReadFileIntoBlock(FLAGS_save_context_file, &size, saveArea)) {
+    if (!read_file(FLAGS_save_context_file, &size, saveArea)) {
         printf("Can't read %s, LoadContext failed\n", FLAGS_save_context_file.c_str());
     } else if (Tpm2_LoadContext(tpm, size, saveArea, &handle)) {
       printf("LoadContext succeeded\n");
@@ -381,7 +381,7 @@ int main(int an, char** av) {
       t = std::stoul(FLAGS_handle.c_str(), nullptr, 16);
       handle = (TPM_HANDLE) t;
     } else if (Tpm2_SaveContext(tpm, handle, &size, saveArea)) {
-      if (!WriteFileFromBlock(FLAGS_save_context_file, size, saveArea)) {
+      if (!write_file(FLAGS_save_context_file, size, saveArea)) {
         printf("Can't write %s, SaveContext failed\n", FLAGS_save_context_file.c_str());
       } else { 
         printf("SaveContext successful\n");
@@ -407,7 +407,7 @@ int main(int an, char** av) {
     byte_t data[1024];
     if (Tpm2_ReadNv(tpm, index, FLAGS_authString, &size_data, data)) {
       printf("Tpm2_Read_Nv succeeded\n");
-      PrintBytes(size_data, data);
+      print_bytes(size_data, data);
       printf("\n");
     } else {
       printf("Tpm2_Read_Nv failed\n");
@@ -522,13 +522,13 @@ bool endorsement_test(local_tpm& tpm) {
     return false;
   }
   printf("Public blob: ");
-  PrintBytes(pub_blob_size, pub_blob);
+  print_bytes(pub_blob_size, pub_blob);
   printf("\n");
   printf("\nName: ");
-  PrintBytes(pub_name.size, pub_name.name);
+  print_bytes(pub_name.size, pub_name.name);
   printf("\n");
   printf("Qualified name: ");
-  PrintBytes(qualified_pub_name.size, qualified_pub_name.name);
+  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
   printf("\n");
   printf("\n");
   printf("Pubout size: %d\n", pub_out.size);
@@ -536,7 +536,7 @@ bool endorsement_test(local_tpm& tpm) {
   printf("Name: %d\n", pub_out.publicArea.nameAlg);
   printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
   printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
-  PrintBytes((int)pub_out.publicArea.unique.rsa.size,
+  print_bytes((int)pub_out.publicArea.unique.rsa.size,
              (byte_t*)pub_out.publicArea.unique.rsa.buffer);
   printf("\n");
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
@@ -650,7 +650,7 @@ bool endorsement_test(local_tpm& tpm) {
     return false;
   }
   printf("Active Name (%d): ", quoting_pub_name.size);
-  PrintBytes(quoting_pub_name.size, quoting_pub_name.name);
+  print_bytes(quoting_pub_name.size, quoting_pub_name.name);
   printf("\n");
 
   if (Tpm2_MakeCredential(tpm, ekHandle, credential, quoting_pub_name,
@@ -671,7 +671,7 @@ bool endorsement_test(local_tpm& tpm) {
                               &recovered_credential)) {
     printf("ActivateCredential succeeded\n");
     printf("Recovered credential (%d): ", recovered_credential.size);
-    PrintBytes(recovered_credential.size, recovered_credential.buffer);
+    print_bytes(recovered_credential.size, recovered_credential.buffer);
     printf("\n");
   } else {
     printf("ActivateCredential failed\n");
@@ -773,7 +773,7 @@ bool nv_test(local_tpm& tpm) {
   size_out = size_data;
   if (Tpm2_ReadNv(tpm, nv_handle, authString, &size_out, data_out)) {
     printf("Tpm2_ReadNv %d succeeds: ", nv_handle);
-    PrintBytes(size_out, data_out);
+    print_bytes(size_out, data_out);
     printf("\n");
   } else {
     printf("Tpm2_ReadNv fails\n");
@@ -805,7 +805,7 @@ bool nv_test(local_tpm& tpm) {
   size_out = size_data;
   if (Tpm2_ReadNv(tpm, nv_handle, authString, &size_out, data_out)) {
     printf("Tpm2_ReadNv succeeds\n");
-    printf("Counter value: "); PrintBytes(size_out, data_out); printf("\n");
+    printf("Counter value: "); print_bytes(size_out, data_out); printf("\n");
   } else {
     printf("Tpm2_ReadNv fails\n");
   }
@@ -816,7 +816,7 @@ bool nv_test(local_tpm& tpm) {
   }
   if (Tpm2_ReadNv(tpm, nv_handle, authString, &size_out, data_out)) {
     printf("Tpm2_ReadNv succeeds\n");
-    printf("Counter value: "); PrintBytes(size_out, data_out); printf("\n");
+    printf("Counter value: "); print_bytes(size_out, data_out); printf("\n");
   } else {
     printf("Tpm2_ReadNv fails\n");
   }
@@ -909,11 +909,11 @@ bool key_test(local_tpm& tpm, int pcr_num) {
                   qualifyingData, &attest, &sig)) {
     printf("Certify succeeded\n");
     printf("attested (%d): ", attest.size);
-    PrintBytes(attest.size, attest.attestationData);
+    print_bytes(attest.size, attest.attestationData);
     printf("\n");
     printf("signature (%d %d %d): ", sig.sigAlg, sig.signature.rsassa.hash,
            sig.signature.rsassa.sig.size);
-    PrintBytes(sig.signature.rsassa.sig.size, sig.signature.rsassa.sig.buffer);
+    print_bytes(sig.signature.rsassa.sig.size, sig.signature.rsassa.sig.buffer);
     printf("\n");
   } else {
     Tpm2_FlushContext(tpm, load_handle);
@@ -991,7 +991,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
     return false;
   }
   printf("Secret: ");
-  PrintBytes(secret.size, secret.buffer);
+  print_bytes(secret.size, secret.buffer);
   printf("\n");
 
   TPM2B_CREATION_DATA creation_out;
@@ -1024,7 +1024,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
     printf("Tpm2_StartAuthSession succeeds handle: %08x\n",
            session_handle);
     printf("nonce (%d): ", nonce_obj.size);
-    PrintBytes(nonce_obj.size, nonce_obj.buffer);
+    print_bytes(nonce_obj.size, nonce_obj.buffer);
     printf("\n");
   } else {
     printf("Tpm2_StartAuthSession fails\n");
@@ -1035,7 +1035,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
   // get policy digest
   if(Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
     printf("PolicyGetDigest before Pcr succeeded: ");
-    PrintBytes(policy_digest.size, policy_digest.buffer); printf("\n");
+    print_bytes(policy_digest.size, policy_digest.buffer); printf("\n");
   } else {
     Tpm2_FlushContext(tpm, session_handle);
     printf("PolicyGetDigest failed\n");
@@ -1063,7 +1063,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
 
   if(Tpm2_PolicyGetDigest(tpm, session_handle, &policy_digest)) {
     printf("PolicyGetDigest succeeded: ");
-    PrintBytes(policy_digest.size, policy_digest.buffer); printf("\n");
+    print_bytes(policy_digest.size, policy_digest.buffer); printf("\n");
   } else {
     printf("PolicyGetDigest failed\n");
     return false;
@@ -1118,7 +1118,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
     return false;
   }
   printf("Unseal succeeded, unsealed (%d): ", unsealed_size); 
-  PrintBytes(unsealed_size, unsealed);
+  print_bytes(unsealed_size, unsealed);
   printf("\n"); 
 
   TPM2B_SENSITIVE_DATA* unsealed_return = (TPM2B_SENSITIVE_DATA*)(&unsealed[2]);
@@ -1129,7 +1129,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
   uint16_t sb;
   change_endian16(&sym->size, &sb);
   printf("Buffer (%d): ", sb);
-  PrintBytes(sb, sym->buffer);
+  print_bytes(sb, sym->buffer);
   printf("\n");
 
   if  (memcmp(secret.buffer, sym->buffer, sb) == 0) {
@@ -1249,10 +1249,10 @@ bool quote_test(local_tpm& tpm, int pcr_num) {
     return false;
   }
   printf("Quote succeeded, quoted (%d): ", quote_size); 
-  PrintBytes(quote_size, quoted);
+  print_bytes(quote_size, quoted);
   printf("\n"); 
   printf("Sig (%d): ", sig_size); 
-  PrintBytes(sig_size, sig);
+  print_bytes(sig_size, sig);
   printf("\n"); 
   Tpm2_FlushContext(tpm, load_handle);
   Tpm2_FlushContext(tpm, parent_handle);
@@ -1286,7 +1286,7 @@ void seperate_key_test() {
   memset(decrypted_with_pad, 0, 512);
 
   printf("\nEncrypted salt (%d): ", n);
-  PrintBytes(n, salt.secret); printf("\n");
+  print_bytes(n, salt.secret); printf("\n");
   int m = RSA_private_decrypt(n, (byte_t*) salt.secret,
                (byte_t*)decrypted_with_pad, rsa_key,
                RSA_NO_PADDING);
@@ -1295,7 +1295,7 @@ void seperate_key_test() {
     return;
   }
   printf("decrypted(%d): ", m);
-  PrintBytes(m, decrypted_with_pad);printf("\n");
+  print_bytes(m, decrypted_with_pad);printf("\n");
   salt.size = m;
   int k = 0;
   while(k < 256 && decrypted_with_pad[k] == 0) k++;
@@ -1349,10 +1349,10 @@ bool NvSessionTest(local_tpm& tpm) {
 
 #if 1
   printf("newNonce: ");
-  PrintBytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
+  print_bytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
   printf("oldNonce: ");
-  PrintBytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
-  printf("Secret:   "); PrintBytes(secret.size, secret.buffer); printf("\n");
+  print_bytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
+  printf("Secret:   "); print_bytes(secret.size, secret.buffer); printf("\n");
 #endif
 
   // Get endorsement key handle
@@ -1442,7 +1442,7 @@ bool NvSessionTest(local_tpm& tpm) {
 
 #if 1
   printf("\nEncrypted salt (%d): ", n);
-  PrintBytes(n, salt.secret); printf("\n");
+  print_bytes(n, salt.secret); printf("\n");
 #endif
 
   authInfo.protectedHandle_ = nv_handle;
@@ -1471,9 +1471,9 @@ bool NvSessionTest(local_tpm& tpm) {
 #if 1
   printf("\nAfterStartProtectedAuthSession\n");
   printf("newNonce: ");
-  PrintBytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
+  print_bytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
   printf("oldNonce: ");
-  PrintBytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
+  print_bytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
 #endif
 
   // Calculate session key.
@@ -1486,9 +1486,9 @@ bool NvSessionTest(local_tpm& tpm) {
 #if 1
   printf("After CalculateSessionKey before IncrementProtected\n");
   printf("newNonce: ");
-  PrintBytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
+  print_bytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
   printf("oldNonce: ");
-  PrintBytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
+  print_bytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
 #endif
 
   if (Tpm2_IncrementProtectedNv(tpm, nv_handle, authInfo)) {
@@ -1506,7 +1506,7 @@ bool NvSessionTest(local_tpm& tpm) {
   size_out = 8;
   if (Tpm2_ReadProtectedNv(tpm, nv_handle, authInfo, &size_out, data_out)) {
     printf("Tpm2_ReadProtectedNv %d succeeds: ", nv_handle);
-    PrintBytes(size_out, data_out);
+    print_bytes(size_out, data_out);
     printf("\n");
   } else {
     printf("Tpm2_ReadProtectedNv fails\n");

@@ -65,8 +65,8 @@ certifier_objs = $(O)/certifier.pb.o $(O)/certifier.o      \
               $(O)/certifier_proofs.o  $(O)/support.o $(O)/simulated_enclave.o \
               $(O)/application_enclave.o
 
-dobj_tpm2_util=	$(O)/tpm2_lib.o \
-  $(O)/openssl_help.o $(O)/convert.o $(O)/tpm2_util.o $(O)/tpm2.pb.o
+dobj_tpm2_util=	$(certifier_objs) $(O)/tpm2_lib.o \
+	$(O)/openssl_help.o $(O)/convert.o $(O)/tpm2_util.o $(O)/tpm2.pb.o
 
 all:	$(EXE_DIR)/tpm2_util.exe \
 
@@ -103,10 +103,10 @@ $(O)/tpm2.pb.o: $(S)/tpm2.pb.cc $(S)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 
-$(SC)/certifier.pb.cc: $(CP)/certifier.proto
-	$(PROTO) --cpp_out=$(SC) --proto_path $(<D) $<
-	mv $(SC)/certifier.pb.h $(CI)
-$(O)/certifier.pb.o: $(SC)/certifier.pb.cc $()/certifier.pb.h
+$(S)/certifier.pb.cc $(CI)/certifier.pb.h: $(CP)/certifier.proto
+	$(PROTO) --cpp_out=$(S) --proto_path $(<D) $<
+	mv $(S)/certifier.pb.h $(CI)
+$(O)/certifier.pb.o: $(S)/certifier.pb.cc $(CI)/certifier.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<
 

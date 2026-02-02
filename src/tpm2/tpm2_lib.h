@@ -43,11 +43,6 @@ void add_pcr_selection(int pcrNum, TPM_ALG_ID hash, TPML_PCR_SELECTION* pcrSelec
 void setPcrBit(int pcrNum, byte_t* array);
 bool testPcrBit(int pcrNum, byte_t* array);
 
-// To be replaced by certifier functions.
-void PrintBytes(int n, byte_t* in);
-bool ReadFileIntoBlock(const string& filename, int* size, byte_t* block);
-bool WriteFileFromBlock(const string& filename, int size, byte_t* block);
-
 void print_capabilities(int size, byte_t* buf);
 bool get_public_out(uint16_t size_in, byte_t* input, TPM2B_PUBLIC* outPublic);
 bool make_credential(int size_endorsement_blob, byte_t* endorsement_cert_blob,

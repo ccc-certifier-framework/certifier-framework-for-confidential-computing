@@ -47,32 +47,6 @@ using std::string;
 
 
 // ------------------------------------------------------------
-// Replace with cc routines
-
-void PrintBytes(int n, byte_t* in) {
-  for (int i = 0; i < n; i++) printf("%02x", in[i]);
-}
-
-bool ReadFileIntoBlock(const string& filename, int* size, byte_t* block) {
-  int fd = open(filename.c_str(), O_RDONLY);
-  if (fd < 0)
-    return false;
-  int n = read(fd, block, *size);
-  *size = n;
-  close(fd);
-  return true;
-}
-
-bool WriteFileFromBlock(const string& filename, int size, byte_t* block) {
-  int fd = creat(filename.c_str(), S_IRWXU | S_IRWXG);
-  if (fd < 0)
-    return false;
-  int n = write(fd, block, size);
-  close(fd);
-  return n > 0;
-}
-
-// ------------------------------------------------------------
 
 void reverse_byte_copy(int size, byte_t* in, byte_t* out) {
   out += size - 1;
@@ -115,7 +89,7 @@ void change_endian64(const uint64_t* in, uint64_t* out) {
 void print_command(const char* name, int size, byte_t* buf) {
   printf("\n");
   printf("%s command: ", name);
-  PrintBytes(size, buf);
+  print_bytes(size, buf);
   printf("\n");
 }
 
@@ -123,7 +97,7 @@ void print_response(const char* name, uint16_t cap, uint32_t size,
                    uint32_t code, byte_t* buf) {
   printf("%s response, ", name);
   printf("cap: %04x, size: %08x, error code: %08x\n", cap, size, code);
-  PrintBytes(size, buf);
+  print_bytes(size, buf);
   printf("\n\n");
 }
 
@@ -3112,9 +3086,9 @@ bool make_credential(int size_endorsement_blob, byte_t* endorsement_blob,
   while(k < 256 && secret_buf[k] == 0) k++;
   int check_len = RSA_padding_check_PKCS1_OAEP(check, 256, &secret_buf[k], 256-k,
                     256, (byte_t*)"IDENTITY", strlen("IDENTITY")+1);
-  printf("Seed         : ");PrintBytes(size_seed, seed);printf("\n");
-  printf("Funny padding: ");PrintBytes(256, secret_buf);printf("\n");
-  printf("check %03d    : ", check_len);PrintBytes(check_len, check);printf("\n");
+  printf("Seed         : ");print_bytes(size_seed, seed);printf("\n");
+  printf("Funny padding: ");print_bytes(256, secret_buf);printf("\n");
+  printf("check %03d    : ", check_len);print_bytes(check_len, check);printf("\n");
 #endif
   int n = RSA_public_encrypt(size_secret, secret_buf,
                              unmarshaled_encrypted_secret->secret,
@@ -3181,10 +3155,10 @@ bool make_credential(int size_endorsement_blob, byte_t* endorsement_blob,
   memcpy(marshaled_integrityHmac->buffer, unmarshaled_integrityHmac->buffer,
          size_hmacKey);
 #ifdef DEBUG
-  printf("encIdentity: "); PrintBytes(*size_encIdentity, (byte_t*)encIdentity); printf("\n");
-  printf("name       : "); PrintBytes(name.size(), (byte_t*)name.data()); printf("\n");
-  printf("hmac       : "); PrintBytes(size_hmacKey, (byte_t*)unmarshaled_integrityHmac->buffer); printf("\n");
-  printf("marsh-hmac : "); PrintBytes(size_hmacKey + 2, (byte_t*)&marshaled_integrityHmac); printf("\n");
+  printf("encIdentity: "); print_bytes(*size_encIdentity, (byte_t*)encIdentity); printf("\n");
+  printf("name       : "); print_bytes(name.size(), (byte_t*)name.data()); printf("\n");
+  printf("hmac       : "); print_bytes(size_hmacKey, (byte_t*)unmarshaled_integrityHmac->buffer); printf("\n");
+  printf("marsh-hmac : "); print_bytes(size_hmacKey + 2, (byte_t*)&marshaled_integrityHmac); printf("\n");
 #endif
   return true;
 }
@@ -3238,7 +3212,7 @@ bool CalculateNvName(ProtectedSessionAuthInfo& in, TPM_HANDLE nv_handle,
   Update(sizeof(uint16_t), &current, &current_out_size, &room_left);
 
 printf("\nCalculateNvName hash buf: ");
-PrintBytes(current_out_size, toHash); printf("\n");
+print_bytes(current_out_size, toHash); printf("\n");
 
   int size_out = 0;
   if (in.hash_alg_ == TPM_ALG_SHA1) {
@@ -3255,7 +3229,7 @@ PrintBytes(current_out_size, toHash); printf("\n");
   }
 
 printf("CalculateNvName name: ");
-PrintBytes(size_out, out); printf("\n");
+print_bytes(size_out, out); printf("\n");
   return true;
 }
 
@@ -3275,13 +3249,13 @@ bool CalculateBindName(local_tpm& tpm, TPM_HANDLE bind_obj,
     return false;
   }
   printf("Public blob: ");
-  PrintBytes(pub_blob_size, pub_blob);
+  print_bytes(pub_blob_size, pub_blob);
   printf("\n");
   printf("Name: ");
-  PrintBytes(pub_name.size, pub_name.name);
+  print_bytes(pub_name.size, pub_name.name);
   printf("\n");
   printf("Qualified name: ");
-  PrintBytes(qualified_pub_name.size, qualified_pub_name.name);
+  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
   printf("\n");
   authInfo.nameProtected_.size = pub_name.size;
   memcpy(authInfo.nameProtected_.name, pub_name.name, pub_name.size);
@@ -3321,7 +3295,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo& in, bool dir, uint32_t cmd,
 
 #if 1
   printf("hmac_key: ");
-  PrintBytes(sizeHmacKey, hmac_key); printf("\n");
+  print_bytes(sizeHmacKey, hmac_key); printf("\n");
 #endif
 
   int current_out_size = 0;
@@ -3348,7 +3322,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo& in, bool dir, uint32_t cmd,
 
 #if 1
   printf("toHash for cpHash: ");
-  PrintBytes(current_out_size, toHash); printf("\n");
+  print_bytes(current_out_size, toHash); printf("\n");
 #endif
 
   // Note: current_out_size is repurposed.
@@ -3366,7 +3340,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo& in, bool dir, uint32_t cmd,
 
 #if 1
   printf("cpHash: ");
-  PrintBytes(current_out_size, cpHash); printf("\n");
+  print_bytes(current_out_size, cpHash); printf("\n");
 #endif
 
   memcpy(toHash, cpHash, current_out_size);
@@ -3383,7 +3357,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo& in, bool dir, uint32_t cmd,
 
 #if 1
   printf("Hmac in: ");
-  PrintBytes(current_out_size, toHash); printf("\n");
+  print_bytes(current_out_size, toHash); printf("\n");
 #endif
 
   HMAC_CTX* hctx = nullptr;
@@ -3405,7 +3379,7 @@ bool CalculateSessionHmac(ProtectedSessionAuthInfo& in, bool dir, uint32_t cmd,
 
 #if 1
   printf("Hmac out: ");
-  PrintBytes(*size_hmac, hmac); printf("\n\n");
+  print_bytes(*size_hmac, hmac); printf("\n\n");
 #endif
 
   return true;
@@ -3420,7 +3394,7 @@ bool CalculateSessionKey(ProtectedSessionAuthInfo& in, TPM2B_DIGEST& rawSalt) {
 #if 1
   printf("\nCalculateSessionKey\n");
   printf("Auth value: ");
-  PrintBytes(in.targetAuthValue_.size, in.targetAuthValue_.buffer); printf("\n");
+  print_bytes(in.targetAuthValue_.size, in.targetAuthValue_.buffer); printf("\n");
 #endif
 
   string label= "ATH";
@@ -3438,13 +3412,13 @@ bool CalculateSessionKey(ProtectedSessionAuthInfo& in, TPM2B_DIGEST& rawSalt) {
 #if 1
   printf("CalculateSessionKey KDFa:\n");
   printf("    key    : ");
-  PrintBytes(key.size(), (byte_t*)key.data()); printf("\n");
+  print_bytes(key.size(), (byte_t*)key.data()); printf("\n");
   printf("    label  : ");
-  PrintBytes(label.size(), (byte_t*)label.data()); printf("\n");
+  print_bytes(label.size(), (byte_t*)label.data()); printf("\n");
   printf("    U      : ");
-  PrintBytes(contextU.size(), (byte_t*)contextU.data()); printf("\n");
+  print_bytes(contextU.size(), (byte_t*)contextU.data()); printf("\n");
   printf("    V      : ");
-  PrintBytes(contextV.size(), (byte_t*)contextV.data()); printf("\n");
+  print_bytes(contextV.size(), (byte_t*)contextV.data()); printf("\n");
 #endif
 
   if (!KDFa(in.hash_alg_, key, label, contextU, contextV,
@@ -3455,7 +3429,7 @@ bool CalculateSessionKey(ProtectedSessionAuthInfo& in, TPM2B_DIGEST& rawSalt) {
 
 #if 1
   printf("CalculateSessionKey, key: ");
-  PrintBytes(sizeKey, in.sessionKey_); printf("\n");
+  print_bytes(sizeKey, in.sessionKey_); printf("\n");
 #endif
   return true;
 }
@@ -3489,7 +3463,7 @@ int CalculateandSetProtectedAuth(ProtectedSessionAuthInfo& authInfo,
 
 #if 1
   printf("CalculateandSetProtectedAuth nonce: ");
-  PrintBytes(newNonce.size, newNonce.buffer); printf("\n");
+  print_bytes(newNonce.size, newNonce.buffer); printf("\n");
 #endif
 
   RollNonces(authInfo, newNonce);
@@ -3497,9 +3471,9 @@ int CalculateandSetProtectedAuth(ProtectedSessionAuthInfo& authInfo,
 #if 1
   printf("\nAfter RollNounces in CalculateandSetProtectedAuth\n");
   printf("newNonce: ");
-  PrintBytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
+  print_bytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
   printf("oldNonce: ");
-  PrintBytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
+  print_bytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
 #endif
 
   int sizeHmac = SizeHash(authInfo.hash_alg_);
@@ -3554,9 +3528,9 @@ bool GetandVerifyProtectedAuth(ProtectedSessionAuthInfo& authInfo, uint32_t cmd,
 
 #if 1
 printf("GetandVerifyProtectedAuth: ");
-PrintBytes(size_in, in); printf("\n");
+print_bytes(size_in, in); printf("\n");
 printf("size_params %d: ", size_params);
-PrintBytes(size_params, params); printf("\n");
+print_bytes(size_params, params); printf("\n");
 #endif
 
   // New nonce
@@ -3581,9 +3555,9 @@ PrintBytes(size_params, params); printf("\n");
 
 #if 1
   printf("NewNonce: ");
-  PrintBytes(newNonce.size, newNonce.buffer); printf("\n");
+  print_bytes(newNonce.size, newNonce.buffer); printf("\n");
   printf("submitted: ");
-  PrintBytes(submitted_hmac.size, submitted_hmac.buffer); printf("\n");
+  print_bytes(submitted_hmac.size, submitted_hmac.buffer); printf("\n");
 #endif
 
   RollNonces(authInfo, newNonce);
@@ -3591,9 +3565,9 @@ PrintBytes(size_params, params); printf("\n");
 #if 1
   printf("\nAfter RollNounces in GetandVerifyProtectedAuth\n");
   printf("newNonce: ");
-  PrintBytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
+  print_bytes(authInfo.newNonce_.size, authInfo.newNonce_.buffer); printf("\n");
   printf("oldNonce: ");
-  PrintBytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
+  print_bytes(authInfo.oldNonce_.size, authInfo.oldNonce_.buffer); printf("\n");
 #endif
 
   // Make sure the Hmac is right.
