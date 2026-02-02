@@ -1014,7 +1014,7 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
   symmetric.algorithm = TPM_ALG_NULL;
  
   // In a real use, we need to create a session when
-  // we make the key (like here) AND whe we use it.
+  // we make the key (like here) AND when we use it.
 
   // Start auth session
   if (Tpm2_StartAuthSession(tpm, TPM_RH_NULL, TPM_RH_NULL,
@@ -1239,7 +1239,7 @@ bool quote_test(local_tpm& tpm, int pcr_num) {
   byte_t quoted[MAX_SIZE_PARAMS];
   int sig_size = MAX_SIZE_PARAMS;
   byte_t sig[MAX_SIZE_PARAMS];
-  if (!Tpm2_Quote(tpm, load_handle, parentAuth,  // should be authString
+  if (!Tpm2_Quote(tpm, load_handle, parentAuth,  // should be authString?
                   to_quote.size, to_quote.buffer,
                   scheme, pcr_selection, TPM_ALG_RSA, TPM_ALG_SHA256,
                   &quote_size, quoted, &sig_size, sig)) {
