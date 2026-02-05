@@ -458,6 +458,136 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
   return true;
 }
 
+bool save_context(local_tpm& tpm, TPM_HANDLE& handle, string* out) {
+  TPM_HANDLE handle;
+  uint16_t size = 4096;
+  byte_t saveArea[4096];
+  string authString;
+
+  if (!Tpm2_SaveContext(tpm, handle, &size, saveArea)) {
+    printf("%s() error, line %d, SaveContext failed\n", __func__, __LINE__);
+    printf("Tpm2_SaveContext failed\n");
+    return false;
+  }
+#ifdef DEBUG
+  printf("Tpm2_SaveContext succeeds, save area %d\n", size);
+#endif
+  out->assign(saveArea, size);
+  return true;
+}
+
+bool load_context(local_tpm& tpm, TPM_HANDLE& handle, string& in) {
+  if (Tpm2_LoadContext(tpm, in.size(), in.data(), handle)) {
+    printf("Tpm2_LoadContext succeeds, handle: %08x, save area %d\n",
+           handle, size);
+    printf("%s() error, line %d, LoadContext failed\n", __func__, __LINE__);
+    return false;
+  }
+  return true;
+}
+
+bool nv_increment_counter(local_tpm& tpm, int slot) {
+  TPM_HANDLE nv_handle = GetNvHandle(slot);
+
+  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace %d succeeds\n", slot);
+#endif
+  } else {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
+#endif
+  }
+
+  // Should be AuthRead, AuthWrite, Counter, Sha256
+  if (Tpm2_DefineSpace(tpm, TPM_RH_OWNER, nv_handle, authString, 0, nullptr,
+                       NV_COUNTER | NV_AUTHWRITE | NV_AUTHREAD, 8)) {
+    printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
+  } else {
+    printf("Tpm2_DefineSpace fails\n");
+    return false;
+  }
+  if (!Tpm2_IncrementNv(tpm, nv_handle, authString)) {
+    printf("%s() error, line %d, IncrementNv failed\n", __func__, __LINE__);
+    return false;
+  }
+
+  return true;
+}
+
+bool read_nv_slot(local_tpm& tpm, int slot, string* out) {
+  string authString;
+
+  TPM_HANDLE nv_handle = GetNvHandle(slot);
+
+  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace %d succeeds\n", slot);
+#endif
+  } else {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
+#endif
+  }
+
+  if (!Tpm2_DefineSpace(tpm, TPM_RH_OWNER, nv_handle, authString, 0, nullptr,
+                       NV_AUTHWRITE | NV_AUTHREAD, size_data) ) {
+    printf("%s() error, line %d, DefineSpace failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+  printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
+#endif
+
+  uint16_t size_out = 1024;
+  byte_t data_out[1024];
+  if (Tpm2_ReadNv(tpm, nv_handle, authString, &size_out, data_out)) {
+    printf("%s() error, line %d, ReadNv failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+  printf("Tpm2_ReadNv %d succeeds: ", nv_handle);
+  print_bytes(size_out, data_out);
+  printf("\n");
+#endif
+
+  out->assign(data_out, size_out);
+  return true;
+}
+
+bool write_nv_slot(local_tpm& tpm, int slot, string& in) {
+
+  TPM_HANDLE nv_handle = GetNvHandle(slot);
+
+  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace %d succeeds\n", slot);
+#endif
+  } else {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
+#endif
+  }
+  if (!Tpm2_DefineSpace(tpm, TPM_RH_OWNER, nv_handle, authString, 0, nullptr,
+                       NV_AUTHWRITE | NV_AUTHREAD, size_data) ) {
+    printf("%s() error, line %d, DefineSpace failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+    printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
+#endif
+
+  if (!Tpm2_WriteNv(tpm, nv_handle, authString, size_data, data_in)) {
+    printf("%s() error, line %d, WriteNv failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+    printf("Tpm2_WriteNv %d succeeds, %d bytes written\n", nv_handle, size_data);
+#endif
+
+  return true;
+}
+
 bool recover_endorsement_cert(string& file_name) {
   return false;
 }
@@ -720,7 +850,7 @@ bool verify_credential() {
     return false;
   }
   printf("Active Name (%d): ", quoting_pub_name.size);
-  PrintBytes(quoting_pub_name.size, quoting_pub_name.name);
+  print_bytes(quoting_pub_name.size, quoting_pub_name.name);
   printf("\n");
 
   if (Tpm2_MakeCredential(tpm, ekHandle, credential, quoting_pub_name,
@@ -741,7 +871,7 @@ bool verify_credential() {
                               &recovered_credential)) {
     printf("ActivateCredential succeeded\n");
     printf("Recovered credential (%d): ", recovered_credential.size);
-    PrintBytes(recovered_credential.size, recovered_credential.buffer);
+    print_bytes(recovered_credential.size, recovered_credential.buffer);
     printf("\n");
   } else {
     printf("ActivateCredential failed\n");

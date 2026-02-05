@@ -112,33 +112,28 @@ bool context_test(local_tpm& tpm) {
     printf("CreatePrimary failed\n");
     return false;
   }
-  if (Tpm2_SaveContext(tpm, handle, &size, saveArea)) {
-    printf("Tpm2_SaveContext succeeds, save area %d\n", size);
-  } else {
-    printf("Tpm2_SaveContext failed\n");
+
+  string in;
+  string out;
+
+  if (!save_context(tpm, handle, &out)) {
+    printf("%s() error, line %d, save_context failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, handle);
     return false;
   }
-  if (Tpm2_FlushContext(tpm, handle)) {
-    printf("Tpm2_FlushContext succeeds, save area %d\n", size);
-  } else {
-    printf("Tpm2_FlushContext failed\n");
+  if (!load_context(tpm, handle, in)) {
+    printf("%s() error, line %d, load_context failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, handle);
     return false;
   }
-  handle = 0;
-  if (Tpm2_LoadContext(tpm, size, saveArea, &handle)) {
-    printf("Tpm2_LoadContext succeeds, handle: %08x, save area %d\n",
-           handle, size);
-  } else {
-    printf("Tpm2_LoadContext failed\n");
-    return false;
-  }
+
   Tpm2_FlushContext(tpm, handle);
   return true;
 }
 
 bool nv_test(local_tpm& tpm) {
   int slot = 1000;
-  string authString("01020304");
+
   uint16_t size_data = 16;
   byte_t data_in[512] = {
     0x9, 0x8, 0x7, 0x6,
@@ -148,84 +143,27 @@ bool nv_test(local_tpm& tpm) {
   };
   uint16_t size_out = 512;
   byte_t data_out[512];
-  TPM_HANDLE nv_handle = GetNvHandle(slot);
 
-  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
-    printf("Tpm2_UndefineSpace %d succeeds\n", slot);
-  } else {
-    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
-  }
-  if (Tpm2_DefineSpace(tpm, TPM_RH_OWNER, nv_handle, authString, 0, nullptr,
-                       NV_AUTHWRITE | NV_AUTHREAD, size_data) ) {
-    printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
-  } else {
-    printf("Tpm2_DefineSpace fails\n");
+  string in;
+  string out;
+  in.assign(data_in, size_data);
+
+  if (!write_nv_slot(tpm, in) ) {
+    printf("%s() error, line %d, write_nv_slot failed\n", __func__, __LINE__);
     return false;
   }
-  if (Tpm2_WriteNv(tpm, nv_handle, authString, size_data, data_in)) {
-    printf("Tpm2_WriteNv %d succeeds, %d bytes written\n", nv_handle, size_data);
-  } else {
-    printf("Tpm2_WriteNv fails\n");
-    return false;
-  }
-  size_out = size_data;
-  if (Tpm2_ReadNv(tpm, nv_handle, authString, &size_out, data_out)) {
-    printf("Tpm2_ReadNv %d succeeds: ", nv_handle);
-    PrintBytes(size_out, data_out);
-    printf("\n");
-  } else {
-    printf("Tpm2_ReadNv fails\n");
+  if (!read_nv_slot(tpm, slot, &out) {
+    printf("%s() error, line %d, read_nv_slot failed\n", __func__, __LINE__);
     return false;
   }
 
-  size_data = 8;
-  memset(data_out, 0, 16);
-  // Counter tests
-  printf("\n\nCounter tests\n");
-  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
-    printf("Tpm2_UndefineSpace %d succeeds\n", slot);
-  } else {
-    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
-  }
-  // Should be AuthRead, AuthWrite, Counter, Sha256
-  if (Tpm2_DefineSpace(tpm, TPM_RH_OWNER, nv_handle, authString, 0, nullptr,
-                       NV_COUNTER | NV_AUTHWRITE | NV_AUTHREAD, 8)) {
-    printf("Tpm2_DefineSpace %d succeeds\n", nv_handle);
-  } else {
-    printf("Tpm2_DefineSpace fails\n");
+  if (memcmp(in.data(), out.data(), out.size()) != 0) {
+    printf("%s() error, line %d, written and read values don't match\n", __func__, __LINE__);
     return false;
   }
-  if (Tpm2_IncrementNv(tpm, nv_handle, authString)) {
-    printf("Tpm2_IncrementNv succeeds\n");
-  } else {
-    printf("Tpm2_IncrementNv fails\n");
-  }
-  size_out = size_data;
-  if (Tpm2_ReadNv(tpm, nv_handle, authString, &size_out, data_out)) {
-    printf("Tpm2_ReadNv succeeds\n");
-    printf("Counter value: "); PrintBytes(size_out, data_out); printf("\n");
-  } else {
-    printf("Tpm2_ReadNv fails\n");
-  }
-  if (Tpm2_IncrementNv(tpm, nv_handle, authString)) {
-    printf("Tpm2_IncrementNv succeeds\n");
-  } else {
-    printf("Tpm2_IncrementNv fails\n");
-  }
-  if (Tpm2_ReadNv(tpm, nv_handle, authString, &size_out, data_out)) {
-    printf("Tpm2_ReadNv succeeds\n");
-    printf("Counter value: "); PrintBytes(size_out, data_out); printf("\n");
-  } else {
-    printf("Tpm2_ReadNv fails\n");
-  }
-  if (Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, nv_handle)) {
-    printf("Tpm2_UndefineSpace %d succeeds\n", slot);
-  } else {
-    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
-  }
-
   return true;
 }
+
 
 // ------------------------------------------------------------------------
 
