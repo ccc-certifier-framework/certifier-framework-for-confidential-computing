@@ -593,6 +593,7 @@ bool write_nv_slot(local_tpm& tpm, int slot, string& in) {
 }
 
 bool get_endorsement_cert(local_tpm& tpm, string* out) {
+  // should be in 0x01c00002 in nvram
   return true;
 }
 
