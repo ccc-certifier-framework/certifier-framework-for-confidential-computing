@@ -393,6 +393,10 @@ bool recover_sealing_secret(local_tpm& tpm, string& file_name, string* seal_secr
   return true;
 }
 
+bool make_and_install_endorsement_cert(local_tpm& tpm, string& signng_key_file, int nv_slot, string* cert_out) {
+  return true;
+}
+
 bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
   string emptyAuth;
 
@@ -429,10 +433,10 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
 
   if (!Tpm2_ReadPublic(tpm, ekHandle, &pub_blob_size, pub_blob,
                       &pub_out, &pub_name, &qualified_pub_name)) {
-    printf("%s() error, line %d, unseal failed\n", __func__, __LINE__);
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUB
+#ifdef DEBUG
   printf("Public blob: ");
   print_bytes(pub_blob_size, pub_blob);
   printf("\n");
@@ -819,7 +823,7 @@ bool do_quote(local_tpm& tpm, TPM_HANDLE& srk_handle,
   return true;
 }
 
-bool verify_credential(local_tpm& tpm) {
+bool verify_credential(local_tpm& tpm, string& to_quote, string& quote) {
 #if 0
   TPM2B_DIGEST credential;
   TPM2B_ID_OBJECT credentialBlob;

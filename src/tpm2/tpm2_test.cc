@@ -28,7 +28,7 @@
 #include <openssl_help.h>
 
 //
-// Copyright 2025 John L Manferdelli, All Rights Reserved.
+// Copyright 2026 John L Manferdelli, All Rights Reserved.
 // Portions, Copyright 2015 Google Corporation (see "License__notices.txt)
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,10 +75,44 @@ bool endorsement_test(local_tpm& tpm) {
   TPM_HANDLE ek_handle;
 
   if  (!get_endorsement_key(tpm, &ek_handle)) {
+    printf("%s() error, line %d, get_endorsement_key failed\n", __func__, __LINE__);
     return false;
   }
+
+  TPM2B_PUBLIC pub_out;
+  TPM2B_NAME pub_name;
+  TPM2B_NAME qualified_pub_name;
+  uint16_t pub_blob_size = 4096;
+  byte_t pub_blob[pub_blob_size];
+  if (!Tpm2_ReadPublic(tpm, ekHandle, &pub_blob_size, pub_blob,
+                      &pub_out, &pub_name, &qualified_pub_name)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    return false;
+  }
+  printf("Public blob: ");
+  print_bytes(pub_blob_size, pub_blob);
+  printf("\n");
+  printf("\nName: ");
+  print_bytes(pub_name.size, pub_name.name);
+  printf("\n");
+  printf("Qualified name: ");
+  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
+  printf("\n");
+  printf("\n");
+  printf("Pubout size: %d\n", pub_out.size);
+  printf("Type: %d\n", pub_out.publicArea.type);
+  printf("Name: %d\n", pub_out.publicArea.nameAlg);
+  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
+  print_bytes((int)pub_out.publicArea.unique.rsa.size,
+             (byte_t*)pub_out.publicArea.unique.rsa.buffer);
+  printf("\n");
+  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
+  printf("\n");
+
   string cert_out;
   if (!get_endorsement_cert(tpm, &cert_out)) {
+    printf("%s() error, line %d, get_endorsement_cert failed\n", __func__, __LINE__);
     return false;
   }
 
@@ -111,10 +145,13 @@ bool quote_test(local_tpm& tpm) {
   byte_t pcrs[1] = { 7 };
   string quote_file("./quote.bin");
 
-  if (!create_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file) ) {
-
   TPM_HANDLE srk_handle;
   TPM_HANDLE quote_handle;
+
+  if (!create_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file) ) {
+    printf("%s() error, line %d, create_quote_hierarchy failed\n", __func__, __LINE__);
+    return false;
+  }
 
   if (!recover_and_load_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file,
         &srk_handle, &quote_handle)) {
@@ -124,7 +161,7 @@ bool quote_test(local_tpm& tpm) {
     return false;
   }
 
-  string to_quote;
+  string to_quote(("I am being quoted");
   string quote_sig;
 
   if (!do_quote(tpm, srk_handle, quote_handle, to_quote, &quote_sig) {
@@ -135,7 +172,7 @@ bool quote_test(local_tpm& tpm) {
   }
 
   // Verify it
-  if (!verify_credential(tpm)) {
+  if (!verify_credential(tpm, to_quote, quote_sig)) {
     printf("%s() error, line %d, verify_credential failed\n", __func__, __LINE__);
     return false;
   }
@@ -144,7 +181,6 @@ bool quote_test(local_tpm& tpm) {
   Tpm2_FlushContext(srk_handle);
   return true;
 }
-
 
 bool context_test(local_tpm& tpm) {
   TPM_HANDLE handle;
@@ -170,7 +206,6 @@ bool context_test(local_tpm& tpm) {
                          1024, 0x010001,
                          &handle, &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
-    printf("CreatePrimary failed\n");
     return false;
   }
 #ifdef DEBUG
