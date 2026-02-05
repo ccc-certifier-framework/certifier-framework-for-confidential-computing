@@ -1,0 +1,66 @@
+Read EK certificates and create the associated EKs
+
+  1. Get a list of all NV indices stored in the handle range reserved for EK certificates
+    (0x01C00000 – 0x01C07FFF) using TPM2_GetCapabilty(). The handle range is defined in
+    the Registry of Reserved TPM 2.0 Handles and Localities [2].
+   
+  2. Identify whether the returned NV index handles lie in the Low Range (0x01C00002 -
+     0x01C0000C) or in the High Range (0x01C00012 - 0x01C07FFF), excluding the range for
+     the EK Certificate Chain (0x01C00100 – 0x01C001FF).
+
+    a. In the Low Range, an EK Certificate, an EK Nonce (recommended to be Absent),
+    and an EK Template (recommended to be Absent) are Populated at assigned
+    standard handle values. If present,
+    i. an EK Certificate is at 0x01c00002 (RSA) or 0x01c0000a (ECC)
+    ii. an EK Nonce is at 0x01c00003 (RSA) or 0x01c0000b (ECC)
+    iii. an EK Template is at 0x01c00004 (RSA) or 0x01c0000c (ECC)
+    b. In the High Range, no standard handle values are assigned. An EK Certificate is
+    Populated at an even handle value, and (if present) an EK Template is Populated
+    at the subsequent odd handle value.
+
+  3. Read all NV index handles or those of interest returned in the list from step 1 using
+    TPM2_NV_ReadPublic(), and TPM2_NV_Read().
+
+  4. Identify the type of EK certificate in order to create the associated EK.
+    a. In the Low Range, the certificate Populated at
+    i. 0x01c00002 is an RSA 2048 certificate
+    ii. 0x01c0000a is an ECC NIST P256 certificate
+    b. In the High Range, it is necessary to parse the content of the certificate because no
+    standard handle values are assigned. Parse the SubjectPublicKeyInfo field in the
+    certificate to determine the algorithm and key size/curve - If the algorithms is
+    i. rsaEncryption (OID 1 2 840 113549 1 1 1), it is an RSA certificate
+
+    1. This document only defines a Template for 2048, so it is an RSA
+    2048 bit key
+    ii. ecPublicKey (OID 1 2 840 10045 2 1), it is an ECC certificate
+    1. Parse namedCurve in the ECParameter to determine the curve – if
+    namedCurve is
+    a. secp256r1 (OID 1 2 840 10045 3 1 7), it is a NIST P256
+    key
+    b. secp384r1 (OID 1 3 132 0 34), it is a NIST P384 key
+    c. secp521r1 (OID 1 3 132 0 35), it is a NIST P521 key
+    d. SM2EllipticCurveCryptography (OID 1 2 156 10197 1 301),
+    it is an SM2 P256 key
+
+  5. Create the associated EK using TPM2_CreatePrimary() (typically with a NULL password)
+    a. Call TPM2_CreatePrimary() with
+    i. inPublic.publicArea set to
+    1. If the EK Template and/or the EK Nonce is Populated, the
+    parameter values defined in section 2.2.1.5.2
+    2. Otherwise the parameter values of default EK Templates defined
+    in annex B of this document
+    ii. inSensitive.sensitive.data set to Empty Buffer 
+    b. Parse the public key from the returned outPublic.publicArea.unique parameter and
+    compare it with the public key stored in the certificate. If they match, the key
+    corresponds to the certificate.
+
+$ tpm2_createek -c 0x81010001 -G rsa -u ek.pub
+$ tpm2_createak -C 0x81010001 -c ak.ctx -u ak.pub -n ak.name
+$ tpm2_evictcontrol -C o -c ak.ctx 0x81010002
+$ tpm2_getcap handles-persistent
+
+https://github.com/Infineon/optiga-tpm-cheatsheet?tab=readme-ov-file#ek-credential
+tpm2_getekcertificate -X -o ECcert.bin -u ek.pub \
+https://tpm.manufacturer.com/ekcertserver/
+
+
