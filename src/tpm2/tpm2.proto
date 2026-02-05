@@ -3,7 +3,7 @@
 // Definition of protobufs for tpm2 applications
 syntax = "proto2";
 
-// Used to restore keys with tmp2_load
+// Used to restore keys with tpm2_load
 message tpm_load_key_info {
   optional string hierarchy_name              = 1;
   optional string pub_key                     = 2;

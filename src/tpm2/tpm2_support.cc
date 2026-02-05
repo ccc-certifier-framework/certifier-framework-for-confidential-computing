@@ -357,7 +357,9 @@ bool recover_sealing_secret(local_tpm& tpm, string& file_name, string* seal_secr
   if (!Tpm2_Unseal(tpm, seal_handle, parentAuth, session_handle,
                    nonce_obj, 0x01, hmac,
                    &unsealed_size, unsealed)) {
-    printf("%s() error, line %d, unseal failed\n");
+    printf("%s() error, line %d, unseal failed\n",
+         __func__,
+         __LINE__);
     Tpm2_FlushContext(tpm, session_handle);
     Tpm2_FlushContext(tpm, seal_handle);
     Tpm2_FlushContext(tpm, srk_handle);
@@ -399,12 +401,194 @@ bool save_endorsement_cert(string& file_name) {
   return false;
 }
 
-bool create_quote_hierarchy() {
+bool create_quote_hierarchy(local_tpm& tpm,
+        int num_pcrs, byte_t* pcrs,
+	string& file_name, TPM_HANDLE* ek_handle,
+        TPM_HANDLE* srk_handle,
+        TPM_HANDLE* quote_handle) {
+
+  string authString;
+  string quoteAuth;
+  string emptyAuth;
+
+  TPM2B_PUBLIC pub_out;
+  TPML_PCR_SELECTION pcr_selection;
+
+  if (num_pcrs < 1) {
+    printf("%s() error, line %d: No pcrs\n",
+         __func__,
+         __LINE__);
+    return false;
+  }
+  init_single_pcr_selection(pcrs[0], TPM_ALG_SHA256, &pcrSelect);
+  for (int i = 1; i < mum_pcrs; i++) {
+    add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
+  }
+
+
+  TPMA_OBJECT primary_flags;
+  *(uint32_t*)(&primary_flags) = 0;
+  primary_flags.fixedTPM = 1;
+  primary_flags.fixedParent = 1;
+  primary_flags.sensitiveDataOrigin = 1;
+  primary_flags.userWithAuth = 1;
+  primary_flags.decrypt = 1;
+  primary_flags.restricted = 1;
+
+  // Storage root key
+  if (!Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcr_selection, 
+                         TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
+                         TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
+                         2048, 0x010001, srk_handle, &pub_out)) {
+    printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
+    printf("CreatePrimary failed\n");
+    return false;
+  }
+#ifdef DEBUG
+    printf("CreatePrimary succeeded\n");
+#endif
+
+  if (pcr_num >= 0) {
+    uint16_t size_eventData = 3;
+    byte_t eventData[3] = {1, 2, 3};
+    if (Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
+      printf("Tpm2_PCR_Event succeeded\n");
+    } else {
+      printf("Tpm2_PCR_Event failed\n");
+    }
+  }
+
+  TPM2B_CREATION_DATA creation_out;
+  TPMT_TK_CREATION creation_ticket;
+  int size_public = MAX_SIZE_PARAMS;
+  byte_t out_public[MAX_SIZE_PARAMS];
+  int size_private = MAX_SIZE_PARAMS;
+  byte_t out_private[MAX_SIZE_PARAMS];
+  TPM2B_DIGEST digest_out;
+
+  TPMA_OBJECT create_flags;
+  *(uint32_t*)(&create_flags) = 0;
+  create_flags.fixedTPM = 1;
+  create_flags.fixedParent = 1;
+  create_flags.sensitiveDataOrigin = 1;
+  create_flags.userWithAuth = 1;
+  create_flags.sign = 1;
+  create_flags.restricted = 1;
+
+  // Quote key
+  if (!Tpm2_CreateKey(tpm, parent_handle, parentAuth, authString, pcr_selection,
+                     TPM_ALG_RSA, TPM_ALG_SHA256, create_flags, TPM_ALG_NULL,
+                     (TPMI_AES_KEY_BITS)256, TPM_ALG_ECB, TPM_ALG_RSASSA,
+                     2048, 0x010001,
+                     &size_public, out_public, &size_private, out_private,
+                     &creation_out, &digest_out, &creation_ticket)) {
+    printf("%s() error, line %d, CreateKey failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+  printf("CreateKey succeeded, private size: %d, public size: %d\n",
+           size_private, size_public);
+#endif
+
+  // Save the stuff for load
+  tpm_load_key_info key_info;
+  key_info.set_hierarchy_name("Quote-Key-Hierarchy");
+  key_info.set_pub_key(size_public, out_public);
+  key_info.set_priv_key(size_private, out_private);
+  string serialized_key_info;
+  if (!key_info.SerializeToString(&serialized_key_info)) {
+    printf("%s() error, line: %d, Can't serialize key_info\n",
+       __func__, __LINE__);
+    return false;
+  }
+  if (!write_file_from_string(file, serialized_key_info)) {
+    printf("%s() error, line: %d, Can't writ key_inf file %s\n",
+       __func__, __LINE__, file.c_str());
   return false;
+  }
+  return true;
 }
 
-bool recover_and_load_quote_hierarchy(string& file_name) {
-#if 0
+bool recover_and_load_quote_hierarchy(local_tpm& tpm,
+        int num_pcrs, byte_t* pcrs,
+        string& file_name, TPM_HANDLE* ek_handle,
+        TPM_HANDLE* srk_handle,
+        TPM_HANDLE* quote_handle) {
+  string authString;
+  string quoteAuth("01020304");
+  string emptyAuth;
+
+  // Usually, we'd just load the SRK created in
+  // the endorsement test and the quoting key
+  // rather than making new ones.
+
+  TPM_HANDLE parent_handle;
+  TPM2B_PUBLIC pub_out;
+  TPML_PCR_SELECTION pcr_selection;
+  init_single_pcr_selection(pcr_num, TPM_ALG_SHA256, &pcr_selection);
+
+  TPMA_OBJECT primary_flags;
+  *(uint32_t*)(&primary_flags) = 0;
+  primary_flags.fixedTPM = 1;
+  primary_flags.fixedParent = 1;
+  primary_flags.sensitiveDataOrigin = 1;
+  primary_flags.userWithAuth = 1;
+  primary_flags.decrypt = 1;
+  primary_flags.restricted = 1;
+
+  // Storage root key
+  if (Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcr_selection, 
+                         TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
+                         TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
+                         2048, 0x010001,
+                         &parent_handle, &pub_out)) {
+    printf("CreatePrimary succeeded 1 (2048)\n");
+  } else {
+    printf("CreatePrimary failed\n");
+    return false;
+  }
+
+  if (pcr_num >= 0) {
+    uint16_t size_eventData = 3;
+    byte_t eventData[3] = {1, 2, 3};
+    if (Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
+      printf("Tpm2_PCR_Event succeeded\n");
+    } else {
+      printf("Tpm2_PCR_Event failed\n");
+    }
+  }
+
+  TPM2B_CREATION_DATA creation_out;
+  TPMT_TK_CREATION creation_ticket;
+  int size_public = MAX_SIZE_PARAMS;
+  byte_t out_public[MAX_SIZE_PARAMS];
+  int size_private = MAX_SIZE_PARAMS;
+  byte_t out_private[MAX_SIZE_PARAMS];
+  TPM2B_DIGEST digest_out;
+
+  TPMA_OBJECT create_flags;
+  *(uint32_t*)(&create_flags) = 0;
+  create_flags.fixedTPM = 1;
+  create_flags.fixedParent = 1;
+  create_flags.sensitiveDataOrigin = 1;
+  create_flags.userWithAuth = 1;
+  create_flags.sign = 1;
+  create_flags.restricted = 1;
+
+  // Quote key
+  if (Tpm2_CreateKey(tpm, parent_handle, parentAuth, authString, pcr_selection,
+                     TPM_ALG_RSA, TPM_ALG_SHA256, create_flags, TPM_ALG_NULL,
+                     (TPMI_AES_KEY_BITS)256, TPM_ALG_ECB, TPM_ALG_RSASSA,
+                     2048, 0x010001,
+                     &size_public, out_public, &size_private, out_private,
+                     &creation_out, &digest_out, &creation_ticket)) {
+    printf("CreateKey succeeded, private size: %d, public size: %d\n",
+           size_private, size_public);
+  } else {
+    printf("Create failed\n");
+    return false;
+  }
+
   TPM_HANDLE load_handle;
   TPM2B_NAME name;
   if (Tpm2_Load(tpm, parent_handle, parentAuth, size_public, out_public,
@@ -412,13 +596,37 @@ bool recover_and_load_quote_hierarchy(string& file_name) {
     printf("Load succeeded\n");
   } else {
     printf("Load failed\n");
-    Tpm2_FlushContext(tpm, session_handle);
     return false;
   }
 
+  TPM2B_DATA to_quote;
+  to_quote.size = 32;
+  for  (int i = 0; i < to_quote.size; i++)
+    to_quote.buffer[i] = (byte_t)(i + 1);
+  TPMT_SIG_SCHEME scheme;
+
+  int quote_size = MAX_SIZE_PARAMS;
+  byte_t quoted[MAX_SIZE_PARAMS];
+  int sig_size = MAX_SIZE_PARAMS;
+  byte_t sig[MAX_SIZE_PARAMS];
+  if (!Tpm2_Quote(tpm, load_handle, authString,
+                  to_quote.size, to_quote.buffer,
+                  scheme, pcr_selection, TPM_ALG_RSA, TPM_ALG_SHA256,
+                  &quote_size, quoted, &sig_size, sig)) {
+    printf("Quote failed, pcr_num: %d\n", pcr_num);
+    Tpm2_FlushContext(tpm, load_handle);
+    Tpm2_FlushContext(tpm, parent_handle);
+    return false;
+  }
+  printf("Quote succeeded, quoted (%d): ", quote_size); 
+  print_bytes(quote_size, quoted);
+  printf("\n"); 
+  printf("Sig (%d): ", sig_size); 
+  print_bytes(sig_size, sig);
+  printf("\n"); 
+  Tpm2_FlushContext(tpm, load_handle);
+  Tpm2_FlushContext(tpm, parent_handle);
   return true;
-#endif
-  return false;
 }
 
 bool tpm_init(const string &device_name,
