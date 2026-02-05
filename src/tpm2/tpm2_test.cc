@@ -72,14 +72,76 @@ DEFINE_string(quote_hierearchy_name, "quote_hierarchy.bin",
 
 
 bool endorsement_test(local_tpm& tpm) {
+  TPM_HANDLE ek_handle;
+
+  if  (!get_endorsement_key(tpm, &ek_handle)) {
+    return false;
+  }
+  string cert_out;
+  if (!get_endorsement_cert(tpm, &cert_out)) {
+    return false;
+  }
+
+  Tpm2_FlushContext(ek_handle);
   return true;
 }
 
 bool seal_test(local_tpm& tpm, int pcr_num) {
+
+  int num_pcrs = 1;
+  byte_t pcrs[1] = { 7 };
+  string seal_file("./seal.bin");
+
+  if (!create_seal_hierarchy_and_secret(tpm, num_pcrs, pcrs, seal_file)) {
+    printf("%s() error, line %d, create_seal_hierarchy_and_secret failed\n", __func__, __LINE__);
+    return false;
+  }
+
+  string seal_secret;
+  if (!recover_sealing_secret(tpm, seal_file, &seal_secret)) {
+    printf("%s() error, line %d, recover_sealing_secret failed\n", __func__, __LINE__);
+    return false;
+  }
+
   return true;
 }
 
-bool quote_test(local_tpm& tpm, int pcr_num) {
+bool quote_test(local_tpm& tpm) {
+  int num_pcrs = 1;
+  byte_t pcrs[1] = { 7 };
+  string quote_file("./quote.bin");
+
+  if (!create_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file) ) {
+
+  TPM_HANDLE srk_handle;
+  TPM_HANDLE quote_handle;
+
+  if (!recover_and_load_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file,
+        &srk_handle, &quote_handle)) {
+    printf("%s() error, line %d, recover_sealing_secret failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(quote_handle);
+    Tpm2_FlushContext(srk_handle);
+    return false;
+  }
+
+  string to_quote;
+  string quote_sig;
+
+  if (!do_quote(tpm, srk_handle, quote_handle, to_quote, &quote_sig) {
+    printf("%s() error, line %d, recover_sealing_secret failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(quote_handle);
+    Tpm2_FlushContext(srk_handle);
+    return false;
+  }
+
+  // Verify it
+  if (!verify_credential(tpm)) {
+    printf("%s() error, line %d, verify_credential failed\n", __func__, __LINE__);
+    return false;
+  }
+
+  Tpm2_FlushContext(quote_handle);
+  Tpm2_FlushContext(srk_handle);
   return true;
 }
 
@@ -107,11 +169,13 @@ bool context_test(local_tpm& tpm) {
                          (TPMI_AES_KEY_BITS)0, TPM_ALG_ECB, TPM_ALG_RSASSA,
                          1024, 0x010001,
                          &handle, &pub_out)) {
-    printf("CreatePrimary succeeded\n");
-  } else {
+    printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
     printf("CreatePrimary failed\n");
     return false;
   }
+#ifdef DEBUG
+  printf("CreatePrimary succeeded\n");
+#endif
 
   string in;
   string out;

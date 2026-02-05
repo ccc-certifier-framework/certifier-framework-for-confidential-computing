@@ -588,6 +588,10 @@ bool write_nv_slot(local_tpm& tpm, int slot, string& in) {
   return true;
 }
 
+bool get_endorsement_cert(local_tpm& tpm, string* out) {
+  return true;
+}
+
 bool recover_endorsement_cert(string& file_name) {
   return false;
 }
@@ -815,7 +819,7 @@ bool do_quote(local_tpm& tpm, TPM_HANDLE& srk_handle,
   return true;
 }
 
-bool verify_credential() {
+bool verify_credential(local_tpm& tpm) {
 #if 0
   TPM2B_DIGEST credential;
   TPM2B_ID_OBJECT credentialBlob;
