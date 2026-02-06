@@ -353,8 +353,9 @@ sudo bash
 export XDG_CONFIG_HOME="/home/jlm/.config"
 echo $XDG_CONFIG_HOME
 
-cd $XDG_CONFIG_HOME/mytpm1
+pushd $XDG_CONFIG_HOME/mytpm1
 rm ./*
+popd
 
 modprobe tpm_vtpm_proxy
 
