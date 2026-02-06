@@ -949,7 +949,7 @@ bool key_test(local_tpm& tpm, int pcr_num) {
   }
 
   if (load_handle != 0)
-    Tpm2_FlushContext(tpm, load_handle);
+   Tpm2_FlushContext(tpm, load_handle);
   Tpm2_FlushContext(tpm, parent_handle);
   return true;
 }

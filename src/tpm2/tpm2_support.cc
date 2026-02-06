@@ -121,7 +121,8 @@ bool create_seal_session(local_tpm& tpm, TPML_PCR_SELECTION& pcrSelect,
 }
 
 bool create_seal_hierarchy_and_secret(local_tpm& tpm,
-        int num_pcrs, byte_t* pcrs, string& file) {
+        int num_pcrs, byte_t* pcrs, const string& seal_file) {
+
   string srkAuth;
   string sealAuth;
   string emptyAuth;
@@ -195,6 +196,9 @@ bool create_seal_hierarchy_and_secret(local_tpm& tpm,
          __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("Seal session succeeded\n");
+#endif
 
   // Get policy digest
   TPM2B_DIGEST policy_digest;
@@ -255,20 +259,21 @@ bool create_seal_hierarchy_and_secret(local_tpm& tpm,
        __func__, __LINE__);
     return false;
   }
-  if (!write_file_from_string(file, serialized_key_info)) {
+  if (!write_file_from_string(seal_file, serialized_key_info)) {
     printf("%s() error, line: %d, Can't writ key_inf file %s\n",
-       __func__, __LINE__, file.c_str());
+       __func__, __LINE__, seal_file.c_str());
   return false;
   }
   Tpm2_FlushContext(tpm, session_handle);
+  Tpm2_FlushContext(tpm, srk_handle);
   return true;
 }
 
 bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
-                string& file_name, string* seal_secret) {
+                const string& file_name, string* seal_secret) {
 
-  string authString;
   string srkAuth;
+  string sealAuth;
 
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcrSelect;
@@ -299,7 +304,7 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
   primary_flags.restricted = 1;
 
   // Creating a new SRK
-  if (!Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, authString, pcrSelect,
+  if (!Tpm2_CreatePrimary(tpm, TPM_RH_OWNER, srkAuth, pcrSelect,
                          TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
                          TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
                          2048, 0x010001,
@@ -334,7 +339,7 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
   }
 
   TPM2B_NAME name;
-  if (!Tpm2_Load(tpm, srk_handle, srkAuth,
+  if (!Tpm2_Load(tpm, srk_handle, sealAuth,
         key_info.pub_key().size(), (byte_t*)key_info.pub_key().data(),
         key_info.priv_key().size(), (byte_t*)key_info.priv_key().data(),
         &seal_handle, &name)) {
@@ -479,11 +484,11 @@ bool get_endorsement_cert(local_tpm& tpm, string* out) {
   return true;
 }
 
-bool recover_endorsement_cert(string& file_name) {
+bool recover_endorsement_cert(const string& file_name) {
   return false;
 }
 
-bool save_endorsement_cert(string& file_name) {
+bool save_endorsement_cert(const string& file_name) {
   return false;
 }
 
@@ -622,7 +627,7 @@ bool write_nv_slot(local_tpm& tpm, int slot, string& in) {
 
 bool create_quote_hierarchy(local_tpm& tpm,
         int num_pcrs, byte_t* pcrs,
-        string& file_name) {
+        const string& file_name) {
 
   string srkAuth;
   string quoteAuth;
@@ -734,7 +739,7 @@ bool create_quote_hierarchy(local_tpm& tpm,
 }
 
 bool recover_and_load_quote_hierarchy(local_tpm& tpm,
-        int num_pcrs, byte_t* pcrs, string& file_name,
+        int num_pcrs, byte_t* pcrs, const string& file_name,
         TPM_HANDLE* srk_handle, TPM_HANDLE* quote_handle) {
   string srkAuth;
   string quoteAuth;
@@ -753,7 +758,6 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
   for (int i = 1; i < num_pcrs; i++) {
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
-
 
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
@@ -778,7 +782,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
 
     uint16_t size_eventData = 3;
     byte_t eventData[3] = {1, 2, 3};
-    int pcr_num = 7;  // FIX
+    int pcr_num = 7;  // FIX: What am I doing here?
     if (Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
       printf("%s() error, line %d, Tpm2_PCR_Event failed\n", __func__, __LINE__);
       return false;
@@ -806,7 +810,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
   }
 
   TPM2B_NAME name;
-  if (!Tpm2_Load(tpm, *srk_handle, srkAuth,
+  if (!Tpm2_Load(tpm, *srk_handle, quoteAuth,
                  key_info.pub_key().size(), (byte_t*)key_info.pub_key().data(),
                  key_info.priv_key().size(), (byte_t*)key_info.priv_key().data(),
                  quote_handle, &name)) {
@@ -820,8 +824,9 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
 }
 
 bool do_quote(local_tpm& tpm, TPM_HANDLE& srk_handle,
-     TPM_HANDLE& quote_handle, string& to_quote,
-     string* quote_out) {
+        int num_pcrs, byte_t* pcrs,
+        TPM_HANDLE& quote_handle, string& to_quote,
+        string* quote_out) {
 
   TPML_PCR_SELECTION pcrSelect;
   TPMT_SIG_SCHEME scheme;
@@ -830,6 +835,11 @@ bool do_quote(local_tpm& tpm, TPM_HANDLE& srk_handle,
   byte_t quoted[quote_size];
 
   memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
+
+  init_single_pcr_selection(pcrs[0], TPM_ALG_SHA256, &pcrSelect);
+  for (int i = 1; i < num_pcrs; i++) {
+    add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
+  }
 
   int sig_size = MAX_SIZE_PARAMS;
   byte_t sig[MAX_SIZE_PARAMS];

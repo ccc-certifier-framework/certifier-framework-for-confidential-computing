@@ -27,9 +27,9 @@ using namespace certifier::utilities;
 bool create_seal_session(local_tpm& tpm, TPML_PCR_SELECTION& pcrSelect,
                 TPM_HANDLE* session_handle);
 bool create_seal_hierarchy_and_secret(local_tpm& tpm,
-        int num_pcrs, byte_t* pcrs, string& file);
+        int num_pcrs, byte_t* pcrs, const string& file);
 bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
-                string& file_name, string* seal_secret);
+                const string& file_name, string* seal_secret);
 bool make_and_install_endorsement_cert(local_tpm& tpm,
 		string& signng_key_file, int nv_slot, string* cert_out);
 bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle);
@@ -42,13 +42,14 @@ bool get_endorsement_cert(local_tpm& tpm, string* out);
 bool recover_endorsement_cert(string& file_name);
 bool save_endorsement_cert(string& file_name);
 bool create_quote_hierarchy(local_tpm& tpm,
-        int num_pcrs, byte_t* pcrs, string& file_name);
+        int num_pcrs, byte_t* pcrs, const string& file_name);
 bool recover_and_load_quote_hierarchy(local_tpm& tpm,
-        int num_pcrs, byte_t* pcrs, string& file_name,
+        int num_pcrs, byte_t* pcrs, const string& file_name,
         TPM_HANDLE* srk_handle, TPM_HANDLE* quote_handle);
 bool do_quote(local_tpm& tpm, TPM_HANDLE& srk_handle,
-     TPM_HANDLE& quote_handle, string& to_quote,
-     string* quote_out);
+        int num_pcrs, byte_t* pcrs,
+        TPM_HANDLE& quote_handle, string& to_quote,
+        string* quote_out);
 bool verify_credential(local_tpm& tpm, string& to_quote, string& quote);
 bool tpm_init(const string &device_name,
               const string &endorsement_cert_file_name,
