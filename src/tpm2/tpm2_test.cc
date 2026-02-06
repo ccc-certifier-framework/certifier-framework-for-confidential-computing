@@ -51,7 +51,7 @@ using std::string;
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
-DEFINE_string(command, "", "command");
+DEFINE_string(operation, "", "operation");
 DEFINE_string(password, "password", "password");
 DEFINE_int32(pcr_num, -1, "integer parameter");
 DEFINE_int32(index, -1, "nv index");
@@ -84,7 +84,7 @@ bool endorsement_test(local_tpm& tpm) {
   TPM2B_NAME qualified_pub_name;
   uint16_t pub_blob_size = 4096;
   byte_t pub_blob[pub_blob_size];
-  if (!Tpm2_ReadPublic(tpm, ekHandle, &pub_blob_size, pub_blob,
+  if (!Tpm2_ReadPublic(tpm, ek_handle, &pub_blob_size, pub_blob,
                       &pub_out, &pub_name, &qualified_pub_name)) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
     return false;
@@ -116,7 +116,7 @@ bool endorsement_test(local_tpm& tpm) {
     return false;
   }
 
-  Tpm2_FlushContext(ek_handle);
+  Tpm2_FlushContext(tpm, ek_handle);
   return true;
 }
 
@@ -132,7 +132,8 @@ bool seal_test(local_tpm& tpm, int pcr_num) {
   }
 
   string seal_secret;
-  if (!recover_sealing_secret(tpm, seal_file, &seal_secret)) {
+  if (!recover_sealing_secret(tpm, num_pcrs, pcrs,
+                             FLAGS_seal_hierearchy_name, &seal_secret)) {
     printf("%s() error, line %d, recover_sealing_secret failed\n", __func__, __LINE__);
     return false;
   }
@@ -156,18 +157,18 @@ bool quote_test(local_tpm& tpm) {
   if (!recover_and_load_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file,
         &srk_handle, &quote_handle)) {
     printf("%s() error, line %d, recover_sealing_secret failed\n", __func__, __LINE__);
-    Tpm2_FlushContext(quote_handle);
-    Tpm2_FlushContext(srk_handle);
+    Tpm2_FlushContext(tpm, quote_handle);
+    Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
 
-  string to_quote(("I am being quoted");
+  string to_quote("I am being quoted");
   string quote_sig;
 
-  if (!do_quote(tpm, srk_handle, quote_handle, to_quote, &quote_sig) {
+  if (!do_quote(tpm, srk_handle, quote_handle, to_quote, &quote_sig)) {
     printf("%s() error, line %d, recover_sealing_secret failed\n", __func__, __LINE__);
-    Tpm2_FlushContext(quote_handle);
-    Tpm2_FlushContext(srk_handle);
+    Tpm2_FlushContext(tpm, quote_handle);
+    Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
 
@@ -177,8 +178,8 @@ bool quote_test(local_tpm& tpm) {
     return false;
   }
 
-  Tpm2_FlushContext(quote_handle);
-  Tpm2_FlushContext(srk_handle);
+  Tpm2_FlushContext(tpm, quote_handle);
+  Tpm2_FlushContext(tpm, srk_handle);
   return true;
 }
 
@@ -245,13 +246,13 @@ bool nv_test(local_tpm& tpm) {
 
   string in;
   string out;
-  in.assign(data_in, size_data);
+  in.assign((char*)data_in, size_data);
 
-  if (!write_nv_slot(tpm, in) ) {
+  if (!write_nv_slot(tpm, slot, in)) {
     printf("%s() error, line %d, write_nv_slot failed\n", __func__, __LINE__);
     return false;
   }
-  if (!read_nv_slot(tpm, slot, &out) {
+  if (!read_nv_slot(tpm, slot, &out)) {
     printf("%s() error, line %d, read_nv_slot failed\n", __func__, __LINE__);
     return false;
   }
