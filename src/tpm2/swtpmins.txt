@@ -344,30 +344,37 @@ sudo apt install swtpm swtpm-tools apparmor -y
 
 ---------------------------
 
-To run the simulator:
+To run the simulator and tests:
 
 Start:
+
+sudo bash
 
 export XDG_CONFIG_HOME="/home/jlm/.config"
 echo $XDG_CONFIG_HOME
 
-sudo modprobe tpm_vtpm_proxy
+cd $XDG_CONFIG_HOME/mytpm1
+rm ./*
 
-sudo swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram --print-capabilities
+modprobe tpm_vtpm_proxy
+
+swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram --print-capabilities
 
 If you use the tcp utility
-sudo swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
+swtpm socket --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
 
 If you use the vtpm2 device (/dev/tpm1)
-sudo swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
+swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear &
 
-sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom --numbytes=32
-sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=EndorsementTest
-sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=ContextTest
-sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=SealTest
-sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest
-sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --command=NvTest
-sudo ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=QuoteTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --command=GetRandom --numbytes=32
+./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=EndorsementTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --command=ContextTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=SealTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --command=KeyTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --command=NvTest
+./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=QuoteTest
+
+./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpm1
 
 To decode error messages:
   tpm2_rc_decode 0x921

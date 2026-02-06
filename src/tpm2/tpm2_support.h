@@ -39,8 +39,8 @@ bool nv_increment_counter(local_tpm& tpm, int slot);
 bool read_nv_slot(local_tpm& tpm, int slot, string* out);
 bool write_nv_slot(local_tpm& tpm, int slot, string& in);
 bool get_endorsement_cert(local_tpm& tpm, string* out);
-bool recover_endorsement_cert(string& file_name);
-bool save_endorsement_cert(string& file_name);
+bool recover_endorsement_cert(const string& file_name);
+bool save_endorsement_cert(const string& file_name);
 bool create_quote_hierarchy(local_tpm& tpm,
         int num_pcrs, byte_t* pcrs, const string& file_name);
 bool recover_and_load_quote_hierarchy(local_tpm& tpm,
@@ -50,7 +50,7 @@ bool do_quote(local_tpm& tpm, TPM_HANDLE& srk_handle,
         int num_pcrs, byte_t* pcrs,
         TPM_HANDLE& quote_handle, string& to_quote,
         string* quote_out);
-bool verify_credential(local_tpm& tpm, string& to_quote, string& quote);
+bool verify_credential(local_tpm& tpm, const string& to_quote, const string& quote);
 bool tpm_init(const string &device_name,
               const string &endorsement_cert_file_name,
               const string &seal_hierarchy_file_name,

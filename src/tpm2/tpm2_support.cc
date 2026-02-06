@@ -862,7 +862,7 @@ bool do_quote(local_tpm& tpm, TPM_HANDLE& srk_handle,
   return true;
 }
 
-bool verify_credential(local_tpm& tpm, string& to_quote, string& quote) {
+bool verify_credential(local_tpm& tpm, const string& to_quote, const string& quote) {
 #if 0
   TPM2B_DIGEST credential;
   TPM2B_ID_OBJECT credentialBlob;
