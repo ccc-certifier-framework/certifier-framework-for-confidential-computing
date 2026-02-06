@@ -264,9 +264,7 @@ bool nv_test(local_tpm& tpm) {
   return true;
 }
 
-
 // ------------------------------------------------------------------------
-
 
 int main(int an, char** av) {
   local_tpm tpm;
@@ -282,6 +280,17 @@ int main(int an, char** av) {
 #endif
 
   GFLAGS_NS::ParseCommandLineFlags(&an, &av, true);
+
+  if (FLAGS_operation == "") {
+    printf("operations:\n");
+    printf("  EndorsementTest\n");
+    printf("  SealTest\n");
+    printf("  QuoteTest\n");
+    printf("  ContextTest\n");
+    printf("  NvTest\n");
+    return 1;
+  }
+
   if (!tpm.open_tpm(FLAGS_tpm_device.c_str())) {
     printf("Can't open tpm: %s\n", FLAGS_tpm_device.c_str());
     return 1;
@@ -289,6 +298,39 @@ int main(int an, char** av) {
     printf("Opened tpm: %s %d\n", FLAGS_tpm_device.c_str(), tpm.tpm_fd_);
   }
 
-done:
+  if (FLAGS_operation == "EndorsementTest") {
+    if (endorsement_test(tpm)) {
+      printf("endorsement test succeeded\n");
+    } else {
+      printf("endorsement test failed\n");
+    }
+  } else if (FLAGS_operation == "SealTest") {
+    if(seal_test(tpm, 7)) {
+      printf("seal test succeeded\n");
+    } else {
+      printf("seal test failed\n");
+    }
+  } else if (FLAGS_operation == "QuoteTest") {
+    if(quote_test(tpm)) {
+      printf("quote test succeeded\n");
+    } else {
+      printf("quote test failed\n");
+    }
+  } else if (FLAGS_operation == "ContextTest") {
+    if(context_test(tpm)) {
+      printf("context test succeeded\n");
+    } else {
+      printf("context test failed\n");
+    }
+  } else if (FLAGS_operation == "NvTest") {
+    if(nv_test(tpm)) {
+      printf("nv test succeeded\n");
+    } else {
+      printf("nv test failed\n");
+    }
+  } else {
+    printf("No such operation (%s)\n", FLAGS_operation.c_str());
+  }
+
   tpm.close_tpm();
 }
