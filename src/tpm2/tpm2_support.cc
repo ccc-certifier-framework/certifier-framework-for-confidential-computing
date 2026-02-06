@@ -127,6 +127,7 @@ bool create_seal_hierarchy_and_secret(local_tpm& tpm,
   string emptyAuth;
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcrSelect;
+  memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
 
   TPM_HANDLE srk_handle;
 
@@ -271,6 +272,7 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
 
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcrSelect;
+  memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
 
   TPM_HANDLE srk_handle;
   TPM_HANDLE seal_handle;
@@ -346,8 +348,7 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
     printf("Load succeeded\n");
 #endif
  
-  if (!create_seal_session(tpm, pcrSelect,
-                &session_handle)) {
+  if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
     printf("%s() error, line %d, create_seal_session failed\n",
          __func__,
          __LINE__);
@@ -402,6 +403,8 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
 
 bool make_and_install_endorsement_cert(local_tpm& tpm,
                 string& signng_key_file, int nv_slot, string* cert_out) {
+  // EK Certificate is at 0x01c00002 (RSA) or 0x01c0000a (ECC)
+  // in nvram
   return true;
 }
 
@@ -468,6 +471,20 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
 #endif
 
   return true;
+}
+
+bool get_endorsement_cert(local_tpm& tpm, string* out) {
+  // EK Certificate is at 0x01c00002 (RSA) or 0x01c0000a (ECC)
+  // in nvram
+  return true;
+}
+
+bool recover_endorsement_cert(string& file_name) {
+  return false;
+}
+
+bool save_endorsement_cert(string& file_name) {
+  return false;
 }
 
 bool save_context(local_tpm& tpm, TPM_HANDLE& handle, string* out) {
@@ -603,19 +620,6 @@ bool write_nv_slot(local_tpm& tpm, int slot, string& in) {
   return true;
 }
 
-bool get_endorsement_cert(local_tpm& tpm, string* out) {
-  // should be in 0x01c00002 in nvram
-  return true;
-}
-
-bool recover_endorsement_cert(string& file_name) {
-  return false;
-}
-
-bool save_endorsement_cert(string& file_name) {
-  return false;
-}
-
 bool create_quote_hierarchy(local_tpm& tpm,
         int num_pcrs, byte_t* pcrs,
         string& file_name) {
@@ -626,6 +630,7 @@ bool create_quote_hierarchy(local_tpm& tpm,
 
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcrSelect;
+  memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
 
   if (num_pcrs < 1) {
     printf("%s() error, line %d: No pcrs\n",
@@ -736,6 +741,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
 
   TPM2B_PUBLIC pub_out;
   TPML_PCR_SELECTION pcrSelect;
+  memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
 
   if (num_pcrs < 1) {
     printf("%s() error, line %d: No pcrs\n",
@@ -822,6 +828,8 @@ bool do_quote(local_tpm& tpm, TPM_HANDLE& srk_handle,
   string quoteAuth;
   int quote_size = 2048;
   byte_t quoted[quote_size];
+
+  memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
 
   int sig_size = MAX_SIZE_PARAMS;
   byte_t sig[MAX_SIZE_PARAMS];
