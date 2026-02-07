@@ -712,6 +712,7 @@ bool create_quote_hierarchy(local_tpm& tpm,
     printf("CreatePrimary succeeded\n");
 #endif
 
+#if 0
   int pcr_num = 7;  // FIX
   if (num_pcrs >= 0) {
     uint16_t size_eventData = 3;
@@ -722,6 +723,7 @@ bool create_quote_hierarchy(local_tpm& tpm,
       printf("Tpm2_PCR_Event failed\n");
     }
   }
+#endif
 
   TPM2B_CREATION_DATA creation_out;
   TPMT_TK_CREATION creation_ticket;
@@ -821,6 +823,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
     printf("CreatePrimary succeeded\n");
 #endif
 
+#if 0
     uint16_t size_eventData = 3;
     byte_t eventData[3] = {1, 2, 3};
     int pcr_num = 7;  // FIX: What am I doing here?
@@ -830,6 +833,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
     }
 #ifdef DEBUG
   printf("Tpm2_PCR_Event succeeded\n");
+#endif
 #endif
 
   // Get info for load

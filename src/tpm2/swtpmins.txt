@@ -347,6 +347,7 @@ sudo apt install swtpm swtpm-tools apparmor -y
 To run the simulator and tests:
 
 Start:
+  tpm2_rc_decode 0x905
 
 sudo bash
 
@@ -380,7 +381,13 @@ swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctr
 
 To decode error messages:
   tpm2_rc_decode 0x921
+    tpm:warn(2.0): authorizations for objects subject to DA protection are not allowed at this time because the TPM is in DA lockout mode
   tpm2_rc_decode 0x905
+    tpm:warn(2.0): out of session handles
+  tpm2_rc_decode 0x902
+    tpm:warn(2.0): out of memory for object contexts
+  tpm2_rc_decode 0x1c4
+     tpm:parameter(1):value is out of range or is not correct for the context
   tpm2_rc_decode 0x01df
      tpm:parameter(1):integrity check failed
 
