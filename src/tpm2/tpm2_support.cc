@@ -84,6 +84,7 @@ bool print_pcrs(local_tpm& tpm, int num_pcrs, byte* pcrs) {
       print_bytes(the_digests.digests[i].size, the_digests.digests[i].buffer);
       printf("\n");
   }
+  printf("\n");
   return true;
 }
 
@@ -737,10 +738,6 @@ bool create_quote_hierarchy(local_tpm& tpm,
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
 
-#ifdef DEBUG
-  print_pcrs(tpm, num_pcrs, pcrs);
-#endif
-
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
   primary_flags.fixedTPM = 1;
@@ -763,7 +760,7 @@ bool create_quote_hierarchy(local_tpm& tpm,
     printf("CreatePrimary succeeded\n");
 #endif
 
-#if 0
+#if 1
   int pcr_num = 7;  // FIX
   if (num_pcrs >= 0) {
     uint16_t size_eventData = 3;
@@ -774,6 +771,11 @@ bool create_quote_hierarchy(local_tpm& tpm,
       printf("Tpm2_PCR_Event failed\n");
     }
   }
+#endif
+
+#ifdef DEBUG
+  printf("Create\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
 #endif
 
   TPM2B_CREATION_DATA creation_out;
@@ -852,6 +854,11 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
   for (int i = 1; i < num_pcrs; i++) {
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
+
+#ifdef DEBUG
+  printf("\nRecover\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+#endif
 
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
