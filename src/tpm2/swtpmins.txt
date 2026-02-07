@@ -223,35 +223,17 @@ a secure, hierarchical, and verifiable identifier for keys.
 
 This just covers how we go from a vendor-certified EK to quoting key that CF can use.  Endorsement_test is close to what we will need.
 
- 
-
 The TPM “comes with” a certified restricted decryption key that we call the endorsement key (EK).  Restricted means that it can only be used for certain purposes.  The one we care about is ActivateCredential
-
- 
 
 The endorsement key is not usually TPM resident: it’s deterministically generated based on input parameters (what sort of key we want) and the endorsement seed (which we can assume never changes.) 
 
- 
-
-This is what is happening at line 508.
-
- 
-
 Note that you ReadPublic shortly after: you should be able to match this pubkey with the cert that you found in NV storage.
-
- 
 
 You make the quoting key at line 590.  You have made it a child of a “storage root key” that is created earlier (line 562).  Making your quoting key a child of the storage root key means that after reboot you can recreate the SRK (deterministic) and then load the key blob that you got at line 590.
 
- 
-
 Now we want to cryptographically link the quoting key to the EK.
 
- 
-
 The cryptographic operation public key decryption with the EK, but rather than the server simply encrypting a secret, it encrypts a secret PLUS the public key of the quoting key we’re trying to get certified (there’s other stuff too.)  Creating the blob (secret+thing-to-check) can be done with library code or using the TPM helper function MakeCredential.
-
- 
 
 We get to choose how we use this ActivateCredential function, but the simplest thing would be:
 
@@ -267,17 +249,11 @@ This blob is send to the client (as well as the now-encrypted cert
 The client calls ActivateCredential
 If this succeeds, the client can now decrypt the cert for the quoting key
  
-
 On reboot, client code must recreate the SRK as before (line 562) and Load() the qutoting key, like line 604
-
- 
 
 It can then quote with this key.
 
- 
-
 I can walk you through the other stuff, but that’s the tricky one
-
 
 --------------------------------------------------
 
@@ -302,7 +278,6 @@ sealtest
   tpm2_load out-pub out-priv &load-handle &name
   tpm2_unseal load-handle parent-auth session-handle nonce 01 hmac &unsealed
 
-
 quote
   tpm2_createprimary auth pcr-sel flags size &parent-handle &pub-out
   tpm2_pcrevent
@@ -310,9 +285,7 @@ quote
   tpm2_load parent-handle ... &load-handle &name
   tpm2_quote load-handle parent-auth to-quote scheme pcr-selection &quoted &sig
 
-
 The following options are supported if the chardev interface is chosen:
-
        -c|--chardev <device path>
        --vtpm-proxy
 
@@ -322,7 +295,6 @@ echo $XDG_CONFIG_HOME
 /home/jlm/.config
 export TPM2TOOLS_TCTI="swtpm:port=2321"
 swtpm socket --tpmstate dir=<swtpm_path> --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear
-
 
 export XDG_CONFIG_HOME="/home/jlm/.config"
 sudo swtpm_setup --tpm2 --tpmstate ${XDG_CONFIG_HOME}/mytpm1 --create-ek-cert --create-platform-cert --lock-nvram
@@ -380,7 +352,6 @@ swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctr
 ./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpm1
 ./tpm2_test.exe --operation=QuoteTest --tpm_device=/dev/tpm1
 ./tpm2_test.exe --operation=GetCert --tpm_device=/dev/tpm1
-
 
 To decode error messages:
   tpm2_rc_decode 0x921
