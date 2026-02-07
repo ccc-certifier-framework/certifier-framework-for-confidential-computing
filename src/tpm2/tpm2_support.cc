@@ -259,25 +259,24 @@ bool create_seal_hierarchy_and_secret(local_tpm& tpm,
 
   // Save the stuff for load
   tpm_load_key_info key_info;
+
   key_info.set_hierarchy_name("Seal-Key-Hierarchy");
   string str_pub_key;
   string str_priv_key;
-
   str_pub_key.assign((char*)out_public, size_public);
   str_priv_key.assign((char*)out_private, size_private);
-
   key_info.set_pub_key(str_pub_key);
   key_info.set_priv_key(str_priv_key);
 
   string serialized_key_info;
   if (!key_info.SerializeToString(&serialized_key_info)) {
-  printf("\n");
+    printf("\n");
     printf("%s() error, line: %d, Can't serialize key_info\n",
        __func__, __LINE__);
     return false;
   }
   if (!write_file_from_string(seal_file, serialized_key_info)) {
-  printf("\n");
+    printf("\n");
     printf("%s() error, line: %d, Can't writ key_inf file %s\n",
        __func__, __LINE__, seal_file.c_str());
   return false;
@@ -360,16 +359,6 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
         __LINE__);
     return false;
   }
- 
-  if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
-    printf("\n");
-    printf("%s() error, line %d, create_seal_session failed\n",
-         __func__,
-         __LINE__);
-    Tpm2_FlushContext(tpm, seal_handle);
-    Tpm2_FlushContext(tpm, srk_handle);
-    return false;
-  }
 
   TPM2B_NAME name;
   if (!Tpm2_Load(tpm, srk_handle, sealAuth,
@@ -388,12 +377,22 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
     printf("Load succeeded\n");
 #endif
 
+  if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
+    printf("\n");
+    printf("%s() error, line %d, create_seal_session failed\n",
+         __func__,
+         __LINE__);
+    Tpm2_FlushContext(tpm, seal_handle);
+    Tpm2_FlushContext(tpm, srk_handle);
+    return false;
+  }
+
   int unsealed_size = MAX_SIZE_PARAMS;
   byte_t unsealed[MAX_SIZE_PARAMS];
   TPM2B_DIGEST hmac;
   TPM2B_NONCE nonce_obj;
   hmac.size = 0;
-  if (!Tpm2_Unseal(tpm, seal_handle, srkAuth, session_handle,
+  if (!Tpm2_Unseal(tpm, seal_handle, sealAuth, session_handle,
                    nonce_obj, 0x01, hmac,
                    &unsealed_size, unsealed)) {
     printf("\n");
