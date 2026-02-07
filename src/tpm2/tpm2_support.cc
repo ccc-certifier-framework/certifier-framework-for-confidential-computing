@@ -248,8 +248,10 @@ bool create_seal_hierarchy_and_secret(local_tpm& tpm,
   key_info.set_hierarchy_name("Seal-Key-Hierarchy");
   string str_pub_key;
   string str_priv_key;
+
   str_pub_key.assign((char*)out_public, size_public);
   str_priv_key.assign((char*)out_private, size_private);
+
   key_info.set_pub_key(str_pub_key);
   key_info.set_priv_key(str_priv_key);
 

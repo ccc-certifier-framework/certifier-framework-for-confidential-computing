@@ -376,9 +376,11 @@ swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctr
 ./tpm2_util.exe --tpm_device="/dev/tpm1" --pcr_num=7 --command=QuoteTest
 
 ./tpm2_test.exe --operation=EndorsementTest --tpm_device=/dev/tpm1
+./tpm2_test.exe --operation=SealTest --tpm_device=/dev/tpm1
 
 To decode error messages:
   tpm2_rc_decode 0x921
+  tpm2_rc_decode 0x01df
 
 ----------------------------
 

@@ -384,18 +384,21 @@ bool Tpm2_GetRandom(local_tpm& tpm, int numBytes, byte_t* buf) {
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_GetRandom,
                                 (byte_t*)commandBuf, sizeof(uint16_t),
                                 (byte_t*)&num_bytes_big_endian);
+#ifdef DEBUG
+  print_command("GetRandom", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, (byte_t*)commandBuf)) {
-    printf("send_command failed\n");
-    print_command("GetRandom", in_size, commandBuf);
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
-  print_command("GetRandom", in_size, commandBuf);
 
   int resp_size = MAX_SIZE_PARAMS;
   byte_t resp_buf[MAX_SIZE_PARAMS];
   memset(resp_buf, 0, resp_size);
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
  
@@ -404,7 +407,9 @@ bool Tpm2_GetRandom(local_tpm& tpm, int numBytes, byte_t* buf) {
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
+#ifdef DEBUG
   print_response("GetRandom", cap, responseSize, responseCode, resp_buf);
+#endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* random_bytes = resp_buf + sizeof(TPM_RESPONSE);
@@ -1305,13 +1310,17 @@ bool Tpm2_PolicyPassword(local_tpm& tpm, TPM_HANDLE handle) {
 
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_PolicyPassword,
                                 commandBuf, total_size, params);
+#ifdef DEBUG
   print_command("PolicyPassword", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
   uint16_t cap = 0;
@@ -1319,7 +1328,9 @@ bool Tpm2_PolicyPassword(local_tpm& tpm, TPM_HANDLE handle) {
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
+#ifdef DEBUG
   print_response("PolicyPassword", cap, responseSize, responseCode, resp_buf);
+#endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
@@ -1339,13 +1350,17 @@ bool Tpm2_PolicyGetDigest(local_tpm& tpm, TPM_HANDLE handle, TPM2B_DIGEST* diges
   size_params += sizeof(uint32_t);
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_PolicyGetDigest,
                                 commandBuf, size_params, params);
+#ifdef DEBUG
   print_command("PolicyGetDigest", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
   uint16_t cap = 0;
@@ -1353,7 +1368,9 @@ bool Tpm2_PolicyGetDigest(local_tpm& tpm, TPM_HANDLE handle, TPM2B_DIGEST* diges
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
+#ifdef DEBUG
   print_response("PolicyGetDigest", cap, responseSize, responseCode, resp_buf);
+#endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* current_in = resp_buf + sizeof(TPM_RESPONSE);
@@ -1385,13 +1402,17 @@ bool Tpm2_StartAuthSession(local_tpm& tpm, TPM_RH tpm_obj, TPM_RH bind_obj,
   Update(n, &in, &size_params, &space_left);
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_StartAuthSession,
                                 commandBuf, size_params, params);
+#ifdef DEBUG
   print_command("StartAuthSession", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
   uint16_t cap = 0;
@@ -1434,13 +1455,17 @@ bool Tpm2_PolicyPcr(local_tpm& tpm, TPM_HANDLE session_handle,
   Update(n, &out, &total_size, &space_left);
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_PolicyPCR,
                                 commandBuf, total_size, params);
+#ifdef DEBUG
   print_command("PolicyPcr", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
   uint16_t cap = 0;
@@ -1448,7 +1473,9 @@ bool Tpm2_PolicyPcr(local_tpm& tpm, TPM_HANDLE session_handle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
+#ifdef DEBUG
   print_response("PolicyPcr", cap, responseSize, responseCode, resp_buf);
+#endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
@@ -1493,13 +1520,17 @@ bool Tpm2_MakeCredential(local_tpm& tpm,
 
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_MakeCredential,
                                 commandBuf, total_size, params);
+#ifdef DEBUG
   print_command("MakeCredential", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
   uint16_t cap = 0;
@@ -1579,13 +1610,17 @@ bool Tpm2_ActivateCredential(local_tpm& tpm, TPM_HANDLE activeHandle,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_ActivateCredential,
                                 commandBuf, total_size, params);
+#ifdef DEBUG
   print_command("ActivateCredential", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
   uint16_t cap = 0;
@@ -1593,7 +1628,9 @@ bool Tpm2_ActivateCredential(local_tpm& tpm, TPM_HANDLE activeHandle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                          &responseSize, &responseCode);
+#ifdef DEBUG
   print_response("ActivateCredential", cap, responseSize, responseCode, resp_buf);
+#endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 
@@ -1643,9 +1680,12 @@ bool Tpm2_Load(local_tpm& tpm, TPM_HANDLE parent_handle,
 
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_Load, (byte_t*)commandBuf,
                                 size_params, (byte_t*)params_buf);
+#ifdef DEBUG
   print_command("Load", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, (byte_t*)commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
 
@@ -1653,7 +1693,8 @@ bool Tpm2_Load(local_tpm& tpm, TPM_HANDLE parent_handle,
   byte_t resp_buf[MAX_SIZE_PARAMS];
   memset(resp_buf, 0, resp_size);
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
  
@@ -1662,7 +1703,9 @@ bool Tpm2_Load(local_tpm& tpm, TPM_HANDLE parent_handle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                         &responseSize, &responseCode);
+#ifdef DEBUG
   print_response("Load", cap, responseSize, responseCode, resp_buf);
+#endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return GetLoadOut(responseSize - sizeof(TPM_RESPONSE),

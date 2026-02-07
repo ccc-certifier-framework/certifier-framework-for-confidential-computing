@@ -6,8 +6,8 @@ syntax = "proto2";
 // Used to restore keys with tpm2_load
 message tpm_load_key_info {
   optional string hierarchy_name              = 1;
-  optional string pub_key                     = 2;
-  optional string priv_key                    = 3;
+  optional bytes pub_key                     = 2;
+  optional bytes priv_key                    = 3;
 }
 
 message quote_certification_information {
