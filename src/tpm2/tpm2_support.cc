@@ -69,6 +69,9 @@ bool create_seal_session(local_tpm& tpm, TPML_PCR_SELECTION& pcrSelect,
   printf("\n");
   printf("Tpm2_StartAuthSession succeeds handle: %08x\n",
          *session_handle);
+  printf("initial nonce (%d): ", initial_nonce.size);
+  print_bytes(initial_nonce.size, initial_nonce.buffer);
+  printf("\n");
   printf("nonce (%d): ", nonce_obj.size);
   print_bytes(nonce_obj.size, nonce_obj.buffer);
   printf("\n");
@@ -99,7 +102,6 @@ bool create_seal_session(local_tpm& tpm, TPML_PCR_SELECTION& pcrSelect,
     return false;
   }
 #ifdef DEBUG
-  printf("\n");
   printf("%s(), line %d, Tpm2_PolicyPassword succeeded\n",
        __func__,
        __LINE__); 
@@ -116,7 +118,6 @@ bool create_seal_session(local_tpm& tpm, TPML_PCR_SELECTION& pcrSelect,
     return false;
   }
 #ifdef DEBUG
-  printf("\n");
   printf("%s(), line %d, Tpm2_PolicyPcr succeeded\n",
          __func__,
          __LINE__); 
@@ -367,7 +368,7 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
 
 #ifdef DEBUG
   printf("After recovery private size: %d, public size: %d\n",
-           key_info.priv_key().size(), key_info.pub_key().size());
+           (int)key_info.priv_key().size(), (int)key_info.pub_key().size());
 #endif
   TPM2B_NAME name;
   if (!Tpm2_Load(tpm, srk_handle, sealAuth,
