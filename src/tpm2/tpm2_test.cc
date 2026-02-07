@@ -124,19 +124,23 @@ bool seal_test(local_tpm& tpm, int pcr_num, const string& seal_file) {
   byte_t pcrs[1] = { 7 };
 
   if (!create_seal_hierarchy_and_secret(tpm, num_pcrs, pcrs, seal_file)) {
+    printf("\n");
     printf("%s() error, line %d, create_seal_hierarchy_and_secret failed\n",
 	   __func__, __LINE__);
     return false;
   }
 
+  printf("\n");
   string seal_secret;
   if (!recover_sealing_secret(tpm, num_pcrs, pcrs,
                              FLAGS_seal_hierearchy_name, &seal_secret)) {
+    printf("\n");
     printf("%s() error, line %d, recover_sealing_secret failed\n",
             __func__, __LINE__);
     return false;
   }
 #ifdef DEBUG
+  printf("\n");
   printf("Recovered seal secret: ");
   print_bytes(seal_secret.size(), (byte_t*)seal_secret.data());
   printf("\n");
@@ -313,36 +317,42 @@ int main(int an, char** av) {
   }
 
   if (FLAGS_operation == "EndorsementTest") {
+    printf("\n");
     if (endorsement_test(tpm)) {
       printf("endorsement test succeeded\n");
     } else {
       printf("endorsement test failed\n");
     }
   } else if (FLAGS_operation == "SealTest") {
+    printf("\n");
     if(seal_test(tpm, 7, FLAGS_seal_hierearchy_name)) {
       printf("seal test succeeded\n");
     } else {
       printf("seal test failed\n");
     }
   } else if (FLAGS_operation == "QuoteTest") {
+    printf("\n");
     if(quote_test(tpm, FLAGS_quote_hierearchy_name)) {
       printf("quote test succeeded\n");
     } else {
       printf("quote test failed\n");
     }
   } else if (FLAGS_operation == "ContextTest") {
+    printf("\n");
     if(context_test(tpm)) {
       printf("context test succeeded\n");
     } else {
       printf("context test failed\n");
     }
   } else if (FLAGS_operation == "NvTest") {
+    printf("\n");
     if(nv_test(tpm)) {
       printf("nv test succeeded\n");
     } else {
       printf("nv test failed\n");
     }
   } else {
+    printf("\n");
     printf("No such operation (%s)\n", FLAGS_operation.c_str());
   }
 
