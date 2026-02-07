@@ -339,6 +339,15 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
         __LINE__);
     return false;
   }
+ 
+  if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
+    printf("%s() error, line %d, create_seal_session failed\n",
+         __func__,
+         __LINE__);
+    Tpm2_FlushContext(tpm, seal_handle);
+    Tpm2_FlushContext(tpm, srk_handle);
+    return false;
+  }
 
   TPM2B_NAME name;
   if (!Tpm2_Load(tpm, srk_handle, sealAuth,
@@ -354,15 +363,6 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
 #ifdef DEBUG
     printf("Load succeeded\n");
 #endif
- 
-  if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
-    printf("%s() error, line %d, create_seal_session failed\n",
-         __func__,
-         __LINE__);
-    Tpm2_FlushContext(tpm, seal_handle);
-    Tpm2_FlushContext(tpm, srk_handle);
-    return false;
-  }
 
   int unsealed_size = MAX_SIZE_PARAMS;
   byte_t unsealed[MAX_SIZE_PARAMS];
