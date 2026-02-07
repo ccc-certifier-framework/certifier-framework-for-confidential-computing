@@ -40,6 +40,54 @@
 #define MAX_SIZE_PARAMS 16384
 #define DEBUG
 
+void print_mask(int n, byte* m) {
+  byte* p = m + n - 1;
+  while (n-->0)
+    printf("%02x", *(p--));
+}
+
+bool print_pcrs(local_tpm& tpm, int num_pcrs, byte* pcrs) {
+  TPML_PCR_SELECTION pcrSelect;
+  memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
+
+  if (num_pcrs < 1) {
+    printf("%s() error, line %d: No pcrs\n",
+         __func__,
+         __LINE__);
+    return false;
+  }
+  init_single_pcr_selection(pcrs[0], TPM_ALG_SHA256, &pcrSelect);
+  for (int i = 1; i < num_pcrs; i++) {
+    add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
+  }
+
+  uint32_t upCounters = 0;
+  TPML_PCR_SELECTION pcrSelectOut;
+  memset((void*)&pcrSelectOut, 0, sizeof(TPML_PCR_SELECTION));
+  TPML_DIGEST the_digests;
+
+  if (!Tpm2_ReadPcrs(tpm, pcrSelect,
+                 &upCounters,
+                 &pcrSelectOut, &the_digests)) {
+    printf("%s() error, line %d, Tpm2_ReadPcrs failed\n",
+         __func__, __LINE__);
+  return false;
+  }
+  printf("Tpm2_ReadPcrssucceeded %d entries\n", pcrSelectOut.count);
+  for (int i = 0; i < (int)pcrSelectOut.count; i++) {
+      printf("  hash: %d, size: %d, ",
+          pcrSelectOut.pcrSelections[i].hash,
+          pcrSelectOut.pcrSelections[i].sizeofSelect);
+      printf("mask: ");
+      print_mask(5, pcrSelectOut.pcrSelections[i].pcrSelect);
+      printf(", value: ");
+      print_bytes(the_digests.digests[i].size, the_digests.digests[i].buffer);
+      printf("\n");
+  }
+  return true;
+}
+
+
 bool create_seal_session(local_tpm& tpm, TPML_PCR_SELECTION& pcrSelect,
                 TPM_HANDLE* session_handle) {
 
@@ -689,6 +737,9 @@ bool create_quote_hierarchy(local_tpm& tpm,
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
 
+#ifdef DEBUG
+  print_pcrs(tpm, num_pcrs, pcrs);
+#endif
 
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;

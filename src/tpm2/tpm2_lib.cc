@@ -245,16 +245,20 @@ bool Tpm2_Startup(local_tpm& tpm) {
                                 (byte_t*)commandBuf, sizeof(TPM_SU),
                                 (byte_t*)&big_endian_state);
   if (!tpm.send_command(in_size, (byte_t*)commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
+#ifdef DEBUG
   print_command("Tpm2_Startup", in_size, commandBuf);
+#endif
 
   int resp_size = 128;
   byte_t resp_buf[128];
   memset(resp_buf, 0, resp_size);
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
  
@@ -571,10 +575,13 @@ bool Tpm2_ReadPcrs(local_tpm& tpm, TPML_PCR_SELECTION pcrSelect,
   int cmd_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_PCR_Read,
                                 commandBuf, in_size, input_params);
   if (!tpm.send_command(cmd_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
+#ifdef DEBUG
   print_command("ReadPcr", cmd_size, commandBuf);
+#endif
 
   if (!tpm.get_response(&resp_size, resp_buf)) {
     printf("get_response failed\n");
@@ -602,7 +609,7 @@ bool Tpm2_ReadPcrs(local_tpm& tpm, TPML_PCR_SELECTION pcrSelect,
 bool Tpm2_ReadPcr(local_tpm& tpm, int pcrNum, uint32_t* updateCounter,
                   TPML_PCR_SELECTION* pcrSelectOut, TPML_DIGEST* values) {
   TPML_PCR_SELECTION pcrSelect;
-  init_single_pcr_selection(pcrNum, TPM_ALG_SHA1, &pcrSelect);
+  init_single_pcr_selection(pcrNum, TPM_ALG_SHA256, &pcrSelect);
   return Tpm2_ReadPcrs(tpm, pcrSelect, updateCounter,
                    pcrSelectOut, values);
 }

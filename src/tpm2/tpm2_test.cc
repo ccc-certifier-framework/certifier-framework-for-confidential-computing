@@ -126,7 +126,7 @@ bool seal_test(local_tpm& tpm, int pcr_num, const string& seal_file) {
   if (!create_seal_hierarchy_and_secret(tpm, num_pcrs, pcrs, seal_file)) {
     printf("\n");
     printf("%s() error, line %d, create_seal_hierarchy_and_secret failed\n",
-	   __func__, __LINE__);
+           __func__, __LINE__);
     return false;
   }
 
@@ -164,7 +164,7 @@ bool quote_test(local_tpm& tpm, const string& quote_file) {
 
   if (!recover_and_load_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file,
         &srk_handle, &quote_handle)) {
-    printf("%s() error, line %d, recover_sealing_secret failed\n",
+    printf("%s() error, line %d, recover_and_load_quote_hierarchy failed\n",
            __func__, __LINE__);
     Tpm2_FlushContext(tpm, quote_handle);
     Tpm2_FlushContext(tpm, srk_handle);

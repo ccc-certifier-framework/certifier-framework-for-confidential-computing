@@ -24,6 +24,7 @@ using std::string;
 using namespace certifier::framework;
 using namespace certifier::utilities;
 
+bool print_pcrs(local_tpm& tpm, int num_pcrs, byte* pcrs);
 bool create_seal_session(local_tpm& tpm, TPML_PCR_SELECTION& pcrSelect,
                 TPM_HANDLE* session_handle);
 bool create_seal_hierarchy_and_secret(local_tpm& tpm,
