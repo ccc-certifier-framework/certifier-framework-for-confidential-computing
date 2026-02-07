@@ -61,7 +61,9 @@ DEFINE_string(tpm_device, "/dev/tpm0", "tpm device");
 DEFINE_string(seal_hierearchy_name, "seal_hierarchy.bin",
               "seal hierarch save file name");
 DEFINE_string(quote_hierearchy_name, "quote_hierarchy.bin",
-              "quote hierarch save file namec");
+              "quote hierarch save file name");
+DEFINE_string(file_name, "tpm_cert.bin",
+              "tpm file name");
 
 #ifndef GFLAGS_NS
 #define GFLAGS_NS google
@@ -294,6 +296,23 @@ bool nv_test(local_tpm& tpm) {
   return true;
 }
 
+bool get_cert(local_tpm& tpm, const string& file_name) {
+  string out;
+
+  if (!get_endorsement_cert(tpm, &out)) {
+    printf("%s() error, line %d, can't get endorsement cert\n",
+           __func__, __LINE__);
+    return false;
+  }
+  if (!write_file_from_string(file_name, out)) {
+    printf("%s() error, line: %d, Can't writ key_inf file %s\n",
+       __func__, __LINE__, file_name.c_str());
+    return false;
+  }
+
+  return true;
+}
+
 // ------------------------------------------------------------------------
 
 int main(int an, char** av) {
@@ -318,6 +337,7 @@ int main(int an, char** av) {
     printf("  QuoteTest\n");
     printf("  ContextTest\n");
     printf("  NvTest\n");
+    printf("  GetCert\n");
     return 1;
   }
 
@@ -362,6 +382,13 @@ int main(int an, char** av) {
       printf("nv test succeeded\n");
     } else {
       printf("nv test failed\n");
+    }
+  } else if (FLAGS_operation == "GetCert") {
+    printf("\n");
+    if(get_cert(tpm, FLAGS_file_name)) {
+      printf("get cert test succeeded\n");
+    } else {
+      printf("get cert test failed\n");
     }
   } else {
     printf("\n");

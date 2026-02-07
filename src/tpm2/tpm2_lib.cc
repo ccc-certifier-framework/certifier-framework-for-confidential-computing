@@ -361,13 +361,17 @@ bool Tpm2_GetCapability(local_tpm& tpm, uint32_t cap, uint32_t start,
   
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_GetCapability,
                                 commandBuf, size_params, params);
+#ifdef DEBUG
   print_command("GetCapability", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
   uint16_t cap2 = 0;
