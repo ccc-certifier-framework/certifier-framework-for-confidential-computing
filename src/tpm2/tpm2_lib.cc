@@ -768,7 +768,8 @@ bool Tpm2_PCR_Event(local_tpm& tpm, int pcr_num,
   memset(input_params, 0, MAX_SIZE_PARAMS);
 
   if (pcr_num < 0) {
-    printf("No PCR to update\n");
+    printf("%s() error, line %d: No PCR to update\n",
+	   __func__, __LINE__);
     return true;
   }
 
@@ -796,13 +797,17 @@ bool Tpm2_PCR_Event(local_tpm& tpm, int pcr_num,
   int in_size = Tpm2_SetCommand(TPM_ST_SESSIONS, TPM_CC_PCR_Event,
                                 commandBuf, input_size, input_params);
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d: send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
+#ifdef DEBUG
   print_command("PCR_Event", in_size, commandBuf);
+#endif
 
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d: get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
 

@@ -715,6 +715,18 @@ bool write_nv_slot(local_tpm& tpm, int slot, string& in) {
   return true;
 }
 
+bool extend_pcrs(local_tpm& tpm, int pcr_num) {
+  return true;
+  uint16_t size_eventData = 3;
+  byte_t eventData[3] = {1, 2, 3};
+  if (Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
+    printf("Tpm2_PCR_Event succeeded\n");
+  } else {
+    printf("Tpm2_PCR_Event failed\n");
+    return false;
+  }
+}
+
 bool create_quote_hierarchy(local_tpm& tpm,
         int num_pcrs, byte_t* pcrs,
         const string& file_name) {
@@ -758,19 +770,6 @@ bool create_quote_hierarchy(local_tpm& tpm,
   }
 #ifdef DEBUG
     printf("CreatePrimary succeeded\n");
-#endif
-
-#if 1
-  int pcr_num = 7;  // FIX
-  if (num_pcrs >= 0) {
-    uint16_t size_eventData = 3;
-    byte_t eventData[3] = {1, 2, 3};
-    if (Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
-      printf("Tpm2_PCR_Event succeeded\n");
-    } else {
-      printf("Tpm2_PCR_Event failed\n");
-    }
-  }
 #endif
 
 #ifdef DEBUG
@@ -879,19 +878,6 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
   }
 #ifdef DEBUG
     printf("CreatePrimary succeeded\n");
-#endif
-
-#if 0
-    uint16_t size_eventData = 3;
-    byte_t eventData[3] = {1, 2, 3};
-    int pcr_num = 7;  // FIX: What am I doing here?
-    if (Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
-      printf("%s() error, line %d, Tpm2_PCR_Event failed\n", __func__, __LINE__);
-      return false;
-    }
-#ifdef DEBUG
-  printf("Tpm2_PCR_Event succeeded\n");
-#endif
 #endif
 
   // Get info for load

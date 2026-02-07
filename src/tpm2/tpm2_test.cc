@@ -123,6 +123,12 @@ bool seal_test(local_tpm& tpm, int pcr_num, const string& seal_file) {
   int num_pcrs = 1;
   byte_t pcrs[1] = { 7 };
 
+  if (!extend_pcrs(tpm, 7)) {
+    printf("%s() error, line %d, extend_pcrs failed\n",
+            __func__, __LINE__);
+    return false;
+  }
+
   if (!create_seal_hierarchy_and_secret(tpm, num_pcrs, pcrs, seal_file)) {
     printf("\n");
     printf("%s() error, line %d, create_seal_hierarchy_and_secret failed\n",
@@ -155,6 +161,12 @@ bool quote_test(local_tpm& tpm, const string& quote_file) {
 
   TPM_HANDLE srk_handle;
   TPM_HANDLE quote_handle;
+
+  if (!extend_pcrs(tpm, 7)) {
+    printf("%s() error, line %d, extend_pcrs failed\n",
+            __func__, __LINE__);
+    return false;
+  }
 
   if (!create_quote_hierarchy(tpm, num_pcrs, pcrs, quote_file) ) {
     printf("%s() error, line %d, create_quote_hierarchy failed\n",
