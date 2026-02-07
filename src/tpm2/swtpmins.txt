@@ -381,6 +381,7 @@ swtpm chardev --vtpm-proxy --tpmstate dir=${XDG_CONFIG_HOME}/mytpm1 --tpm2 --ctr
 To decode error messages:
   tpm2_rc_decode 0x921
   tpm2_rc_decode 0x01df
+  tpm2_rc_decode 0x905
 
 ----------------------------
 
