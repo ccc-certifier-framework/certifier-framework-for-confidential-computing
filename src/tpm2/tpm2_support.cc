@@ -798,8 +798,38 @@ bool create_quote_hierarchy(local_tpm& tpm,
 #endif
 
 #ifdef DEBUG
-  printf("Create\n");
+  printf("\nCreate hierarchy\n");
   print_pcrs(tpm, num_pcrs, pcrs);
+  printf("\n");
+  TPM2B_NAME pub_name;
+  TPM2B_NAME qualified_pub_name;
+  uint16_t pub_blob_size = 4096;
+  byte_t pub_blob[pub_blob_size];
+  if (!Tpm2_ReadPublic(tpm, srk_handle, &pub_blob_size, pub_blob,
+                      &pub_out, &pub_name, &qualified_pub_name)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    return false;
+  }
+  printf("Public blob: ");
+  print_bytes(pub_blob_size, pub_blob);
+  printf("\n");
+  printf("\nName: ");
+  print_bytes(pub_name.size, pub_name.name);
+  printf("\n");
+  printf("Qualified name: ");
+  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
+  printf("\n");
+  printf("\n");
+  printf("Pubout size: %d\n", pub_out.size);
+  printf("Type: %d\n", pub_out.publicArea.type);
+  printf("Name: %d\n", pub_out.publicArea.nameAlg);
+  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
+  print_bytes((int)pub_out.publicArea.unique.rsa.size,
+             (byte_t*)pub_out.publicArea.unique.rsa.buffer);
+  printf("\n");
+  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
+  printf("\n");
 #endif
 
   TPM2B_CREATION_DATA creation_out;
@@ -832,6 +862,11 @@ bool create_quote_hierarchy(local_tpm& tpm,
 #ifdef DEBUG
   printf("CreateKey succeeded, private size: %d, public size: %d\n",
            size_private, size_public);
+  printf("Private: ");
+  print_bytes(size_private, out_private);
+  printf("\n Public: ");
+  print_bytes(size_public, out_public);
+  printf("\n");
 #endif
 
   // Save the stuff for load
@@ -879,11 +914,6 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
     add_pcr_selection(pcrs[i], TPM_ALG_SHA256, &pcrSelect);
   }
 
-#ifdef DEBUG
-  printf("\nRecover\n");
-  print_pcrs(tpm, num_pcrs, pcrs);
-#endif
-
   TPMA_OBJECT primary_flags;
   *(uint32_t*)(&primary_flags) = 0;
   primary_flags.fixedTPM = 1;
@@ -905,6 +935,41 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
     printf("CreatePrimary succeeded\n");
 #endif
 
+#ifdef DEBUG
+  printf("\nRecover hierarchy\n");
+  print_pcrs(tpm, num_pcrs, pcrs);
+  printf("\n");
+  TPM2B_NAME pub_name;
+  TPM2B_NAME qualified_pub_name;
+  uint16_t pub_blob_size = 4096;
+  byte_t pub_blob[pub_blob_size];
+  if (!Tpm2_ReadPublic(tpm, *srk_handle, &pub_blob_size, pub_blob,
+                      &pub_out, &pub_name, &qualified_pub_name)) {
+    printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    return false;
+  }
+  printf("Public blob: ");
+  print_bytes(pub_blob_size, pub_blob);
+  printf("\n");
+  printf("\nName: ");
+  print_bytes(pub_name.size, pub_name.name);
+  printf("\n");
+  printf("Qualified name: ");
+  print_bytes(qualified_pub_name.size, qualified_pub_name.name);
+  printf("\n");
+  printf("\n");
+  printf("Pubout size: %d\n", pub_out.size);
+  printf("Type: %d\n", pub_out.publicArea.type);
+  printf("Name: %d\n", pub_out.publicArea.nameAlg);
+  printf("Scheme: %d\n", pub_out.publicArea.parameters.rsaDetail.scheme.scheme);
+  printf("Bytes (%d):\n", (int)pub_out.publicArea.unique.rsa.size);
+  print_bytes((int)pub_out.publicArea.unique.rsa.size,
+             (byte_t*)pub_out.publicArea.unique.rsa.buffer);
+  printf("\n");
+  printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
+  printf("\n");
+#endif
+
   // Get info for load
   tpm_load_key_info key_info;
   string serialized_key_info;
@@ -922,6 +987,15 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
         __LINE__);
     return false;
   }
+#ifdef DEBUG
+  printf("\nCreateKey\n");
+  printf("Private: ");
+  print_bytes((int)key_info.priv_key().size(), (byte_t*)key_info.priv_key().data());
+  printf("\n Public: ");
+  print_bytes((int)key_info.pub_key().size(), (byte_t*)key_info.pub_key().data());
+  printf("\n");
+  printf("\n");
+#endif
 
   TPM2B_NAME name;
   if (!Tpm2_Load(tpm, *srk_handle, quoteAuth,
