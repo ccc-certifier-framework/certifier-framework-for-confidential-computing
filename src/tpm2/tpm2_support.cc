@@ -268,6 +268,11 @@ bool create_seal_hierarchy_and_secret(local_tpm& tpm,
   key_info.set_pub_key(str_pub_key);
   key_info.set_priv_key(str_priv_key);
 
+#ifdef DEBUG
+  printf("After creation private size: %d, public size: %d\n",
+           size_private, size_public);
+#endif
+
   string serialized_key_info;
   if (!key_info.SerializeToString(&serialized_key_info)) {
     printf("\n");
@@ -360,6 +365,10 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
     return false;
   }
 
+#ifdef DEBUG
+  printf("After recovery private size: %d, public size: %d\n",
+           key_info.priv_key().size(), key_info.pub_key().size());
+#endif
   TPM2B_NAME name;
   if (!Tpm2_Load(tpm, srk_handle, sealAuth,
         key_info.pub_key().size(), (byte_t*)key_info.pub_key().data(),
@@ -374,7 +383,7 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
   }
 #ifdef DEBUG
   printf("\n");
-    printf("Load succeeded\n");
+  printf("Load succeeded\n");
 #endif
 
   if (!create_seal_session(tpm, pcrSelect, &session_handle)) {
