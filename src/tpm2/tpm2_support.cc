@@ -436,7 +436,7 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
   primary_flags.restricted = 1;
 
   // Create Endorsement key with handle ekHandle
-  if (Tpm2_CreatePrimary(tpm, TPM_RH_ENDORSEMENT, emptyAuth, pcrSelect,
+  if (!Tpm2_CreatePrimary(tpm, TPM_RH_ENDORSEMENT, emptyAuth, pcrSelect,
                          TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
                          TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
                          2048, 0x010001, ek_handle, &pub_out)) {
@@ -447,6 +447,7 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
     printf("CreatePrimary succeeded primary: %08x\n", *ek_handle);
 #endif
 
+#ifdef DEBUG1
   if (!Tpm2_ReadPublic(tpm, *ek_handle, &pub_blob_size, pub_blob,
                       &pub_out, &pub_name, &qualified_pub_name)) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
@@ -473,6 +474,7 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
   printf("\n");
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
+#endif
 #endif
 
   return true;

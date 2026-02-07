@@ -1193,16 +1193,20 @@ bool Tpm2_CreatePrimary(local_tpm& tpm, TPM_HANDLE owner, string& authString,
                                 size_params,
                                 (byte_t*)params);
   if (!tpm.send_command(in_size, (byte_t*)commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
+#ifdef DEBUG
   print_command("CreatePrimary", in_size, commandBuf);
+#endif
 
   int resp_size = MAX_SIZE_PARAMS;
   byte_t resp_buf[MAX_SIZE_PARAMS];
   memset(resp_buf, 0, resp_size);
   if (!tpm.get_response(&resp_size, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
  
@@ -1211,7 +1215,9 @@ bool Tpm2_CreatePrimary(local_tpm& tpm, TPM_HANDLE owner, string& authString,
   uint32_t responseCode;
   Tpm2_InterpretResponse(resp_size, resp_buf, &cap,
                         &responseSize, &responseCode);
+#ifdef DEBUG
   print_response("CreatePrimary", cap, responseSize, responseCode, resp_buf);
+#endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
 
@@ -1782,13 +1788,17 @@ bool Tpm2_ReadPublic(local_tpm& tpm, TPM_HANDLE handle,
 
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_ReadPublic,
                                 commandBuf, size_params, params_buf);
+#ifdef DEBUG
   print_command("ReadPublic", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	__func__, __LINE__);
     return false;
   }
   if (!tpm.get_response(&size_resp, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	__func__, __LINE__);
     return false;
   }
   uint16_t cap = 0;
@@ -1796,7 +1806,9 @@ bool Tpm2_ReadPublic(local_tpm& tpm, TPM_HANDLE handle,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
+#ifdef DEBUG
   print_response("ReadPublic", cap, responseSize, responseCode, resp_buf);
+#endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   byte_t* out = resp_buf + sizeof(TPM_RESPONSE);
@@ -1806,19 +1818,22 @@ bool Tpm2_ReadPublic(local_tpm& tpm, TPM_HANDLE handle,
   memcpy(pub_blob, out, outPublic->size + 2);
   out += sizeof(uint16_t);
   if (!get_public_out(outPublic->size, out, outPublic)) {
-    printf("ReadPublic can't GetPublic\n");
+    printf("%s() error, line %d, ReadPublic can't GetPublic\n",
+	__func__, __LINE__);
     return false;
   }
   out += outPublic->size;
   n = GetName(0, out, name);
   if (n < 0) {
-    printf("ReadPublic can't Get name\n");
+    printf("%s() error, line %d, ReadPublic can't Get name\n",
+	__func__, __LINE__);
     return false;
   }
   out += n;
   n = GetName(0, out, qualifiedName);
   if (n < 0) {
-    printf("ReadPublic can't Get qualified name\n");
+    printf("%s() error, line %d, ReadPublic can't Get qualified name\n",
+	__func__, __LINE__);
     return false;
   }
   out += n;
@@ -2428,13 +2443,17 @@ bool Tpm2_SaveContext(local_tpm& tpm, TPM_HANDLE handle, uint16_t* size,
   
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_ContextSave,
                                 commandBuf, size_params, params_buf);
+#ifdef DEBUG
   print_command("SaveContext", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+           __func__, __LINE__);
     return false;
   }
   if (!tpm.get_response(&size_resp, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+           __func__, __LINE__);
     return false;
   }
   uint16_t cap = 0;
@@ -2442,7 +2461,9 @@ bool Tpm2_SaveContext(local_tpm& tpm, TPM_HANDLE handle, uint16_t* size,
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
+#ifdef DEBUG
   print_response("SaveContext", cap, responseSize, responseCode, resp_buf);
+#endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   *size = responseSize - sizeof(TPM_RESPONSE);
@@ -2463,13 +2484,17 @@ bool Tpm2_FlushContext(local_tpm& tpm, TPM_HANDLE handle) {
   int in_size = Tpm2_SetCommand(TPM_ST_NO_SESSIONS, TPM_CC_FlushContext,
                                 commandBuf, sizeof(TPM_HANDLE),
                                 (byte_t*)&big_endian_handle);
+#ifdef DEBUG
   print_command("FlushContext", in_size, commandBuf);
+#endif
   if (!tpm.send_command(in_size, commandBuf)) {
-    printf("send_command failed\n");
+    printf("%s() error, line %d, send_command failed\n",
+	   __func__, __LINE__);
     return false;
   }
   if (!tpm.get_response(&size_resp, resp_buf)) {
-    printf("get_response failed\n");
+    printf("%s() error, line %d, get_response failed\n",
+	   __func__, __LINE__);
     return false;
   }
   uint16_t cap = 0;
@@ -2477,7 +2502,9 @@ bool Tpm2_FlushContext(local_tpm& tpm, TPM_HANDLE handle) {
   uint32_t responseCode;
   Tpm2_InterpretResponse(size_resp, resp_buf, &cap,
                         &responseSize, &responseCode);
+#ifdef DEBUG
   print_response("FlushContext", cap, responseSize, responseCode, resp_buf);
+#endif
   if (responseCode != TPM_RC_SUCCESS)
     return false;
   return true;
