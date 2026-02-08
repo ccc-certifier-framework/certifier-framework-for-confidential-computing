@@ -540,7 +540,6 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
   printf("Public blob: ");
   print_bytes(pub_blob_size, pub_blob);
   printf("\n");
@@ -561,7 +560,6 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
   printf("\n");
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
-#endif
 #endif
 
   return true;
@@ -741,7 +739,6 @@ bool write_nv_slot(local_tpm& tpm, int slot, string& in) {
 }
 
 bool extend_pcrs(local_tpm& tpm, int pcr_num) {
-  return true;
   uint16_t size_eventData = 3;
   byte_t eventData[3] = {1, 2, 3};
   if (Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
@@ -750,6 +747,7 @@ bool extend_pcrs(local_tpm& tpm, int pcr_num) {
     printf("Tpm2_PCR_Event failed\n");
     return false;
   }
+  return true;
 }
 
 bool create_quote_hierarchy(local_tpm& tpm,
@@ -790,11 +788,22 @@ bool create_quote_hierarchy(local_tpm& tpm,
                          TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
                          2048, 0x010001, &srk_handle, &pub_out)) {
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
-    printf("CreatePrimary failed\n");
     return false;
   }
+
+#if 0
+  uint16_t save_size = 4096;
+  byte_t saveArea[4096]
+  if (!Tpm2_SaveContext(tpm, srk_handle, &save_
+			  size, saveArea)) {
+    printf("%s() error, line %d, Tpm2_SaveContext fails\n",
+	   __func__, __LINE__);
+  }
+  Tpm2_FlushContext(tpm, srk_handle);
+#endif
+
 #ifdef DEBUG
-    printf("CreatePrimary succeeded\n");
+  printf("CreatePrimary succeeded\n");
 #endif
 
 #ifdef DEBUG
@@ -864,6 +873,9 @@ bool create_quote_hierarchy(local_tpm& tpm,
 #ifdef DEBUG
   printf("CreateKey succeeded, private size: %d, public size: %d\n",
            size_private, size_public);
+  printf("Digest (%d): ", digest_out.size);
+  print_bytes(digest_out.size, digest_out.buffer);
+  printf("\n");
   printf("Private: ");
   print_bytes(size_private, out_private);
   printf("\nPublic: ");
@@ -933,12 +945,24 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
                          TPM_ALG_RSA, TPM_ALG_SHA256, primary_flags,
                          TPM_ALG_AES, 256, TPM_ALG_CFB, TPM_ALG_NULL,
                          2048, 0x010001, srk_handle, &pub_out)) {
-    printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
+    printf("%s() error, line %d, CreatePrimary failed\n",
+	   __func__, __LINE__);
     return false;
   }
 #ifdef DEBUG
-    printf("CreatePrimary succeeded\n");
+  printf("CreatePrimary succeeded\n");
 #endif
+
+#if 0
+  uint16_t save_size = 4096;
+  byte_t saveArea[4096]
+  if (!Tpm2_LoadContext(tpm, size_size, saveArea, &srk_handle)) {
+    printf("%s() error, line %d, Tpm2_LoadContext failed\n",
+	   __func__, __LINE__);
+    return false;
+  }
+#endif
+
 
 #ifdef DEBUG
   printf("\nRecover hierarchy\n");
@@ -1016,6 +1040,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
     Tpm2_FlushContext(tpm, *srk_handle);
     return false;
   }
+
 #ifdef DEBUG
   printf("Load succeeded\n");
 #endif
