@@ -98,7 +98,6 @@ $(O)/tpm2_util.o: $(S)/tpm2_util.cc
 
 $(S)/tpm2.pb.cc $(S)/tpm2.pb.h: $(S)/tpm2.proto
 	$(PROTO) --cpp_out=$(S) --proto_path $(<D) $<
-	mv $(S)/tpm2.pb.h $(CI)
 $(O)/tpm2.pb.o: $(S)/tpm2.pb.cc $(S)/tpm2.pb.h
 	@echo "\ncompiling $<"
 	$(CC) $(CFLAGS) -o $(@D)/$@ -c $<

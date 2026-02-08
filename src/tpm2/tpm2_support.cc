@@ -954,8 +954,6 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
 #endif
 
 #if 0
-  uint16_t save_size = 4096;
-  byte_t saveArea[4096]
   if (!Tpm2_LoadContext(tpm, size_size, saveArea, &srk_handle)) {
     printf("%s() error, line %d, Tpm2_LoadContext failed\n",
 	   __func__, __LINE__);
