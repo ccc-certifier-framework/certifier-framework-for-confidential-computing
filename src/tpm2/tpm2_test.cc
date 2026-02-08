@@ -87,6 +87,7 @@ bool endorsement_test(local_tpm& tpm) {
   if (!Tpm2_ReadPublic(tpm, ek_handle, &pub_blob_size, pub_blob,
                       &pub_out, &pub_name, &qualified_pub_name)) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, ek_handle);
     return false;
   }
   printf("Public blob: ");
@@ -109,6 +110,7 @@ bool endorsement_test(local_tpm& tpm) {
   printf("\n");
   printf("Exponent: %d\n", pub_out.publicArea.parameters.rsaDetail.exponent);
   printf("\n");
+  Tpm2_FlushContext(tpm, ek_handle);
 
   string cert_out;
   if (!get_endorsement_cert(tpm, &cert_out)) {
@@ -116,7 +118,6 @@ bool endorsement_test(local_tpm& tpm) {
     return false;
   }
 
-  Tpm2_FlushContext(tpm, ek_handle);
   return true;
 }
 
