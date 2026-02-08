@@ -180,8 +180,6 @@ bool quote_test(local_tpm& tpm, const string& quote_file) {
         &srk_handle, &quote_handle)) {
     printf("%s() error, line %d, recover_and_load_quote_hierarchy failed\n",
            __func__, __LINE__);
-    Tpm2_FlushContext(tpm, quote_handle);
-    Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
 
@@ -201,6 +199,8 @@ bool quote_test(local_tpm& tpm, const string& quote_file) {
   if (!verify_credential(tpm, to_quote, quote_sig)) {
     printf("%s() error, line %d, verify_credential failed\n",
             __func__, __LINE__);
+    Tpm2_FlushContext(tpm, quote_handle);
+    Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
 

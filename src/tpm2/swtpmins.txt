@@ -368,6 +368,8 @@ To decode error messages:
      tpm:parameter(2):value is out of range or is not correct for the context
   tpm2_rc_decode 0x14a
   tpm2_rc_decode 0x284
+  tpm2_rc_decode 0x1c4
+  tpm2_rc_decode 0x1cb
 
 ----------------------------
 

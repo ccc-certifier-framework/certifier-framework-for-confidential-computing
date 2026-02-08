@@ -808,6 +808,7 @@ bool create_quote_hierarchy(local_tpm& tpm,
   if (!Tpm2_ReadPublic(tpm, srk_handle, &pub_blob_size, pub_blob,
                       &pub_out, &pub_name, &qualified_pub_name)) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
   printf("Public blob: ");
@@ -857,6 +858,7 @@ bool create_quote_hierarchy(local_tpm& tpm,
                      &size_public, out_public, &size_private, out_private,
                      &creation_out, &digest_out, &creation_ticket)) {
     printf("%s() error, line %d, CreateKey failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
 #ifdef DEBUG
@@ -864,7 +866,7 @@ bool create_quote_hierarchy(local_tpm& tpm,
            size_private, size_public);
   printf("Private: ");
   print_bytes(size_private, out_private);
-  printf("\n Public: ");
+  printf("\nPublic: ");
   print_bytes(size_public, out_public);
   printf("\n");
 #endif
@@ -883,6 +885,7 @@ bool create_quote_hierarchy(local_tpm& tpm,
   if (!key_info.SerializeToString(&serialized_key_info)) {
     printf("%s() error, line: %d, Can't serialize key_info\n",
        __func__, __LINE__);
+    Tpm2_FlushContext(tpm, srk_handle);
     return false;
   }
   if (!write_file_from_string(file_name, serialized_key_info)) {
@@ -890,6 +893,8 @@ bool create_quote_hierarchy(local_tpm& tpm,
        __func__, __LINE__, file_name.c_str());
     return false;
   }
+
+  Tpm2_FlushContext(tpm, srk_handle);
   return true;
 }
 
@@ -946,6 +951,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
   if (!Tpm2_ReadPublic(tpm, *srk_handle, &pub_blob_size, pub_blob,
                       &pub_out, &pub_name, &qualified_pub_name)) {
     printf("%s() error, line %d, ReadPublic failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, *srk_handle);
     return false;
   }
   printf("Public blob: ");
@@ -979,19 +985,21 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
          __func__,
          __LINE__,
         file_name.c_str()); 
+    Tpm2_FlushContext(tpm, *srk_handle);
     return false;
   }
   if (!key_info.ParseFromString(serialized_key_info)) {
     printf("%s() error, line: %d, Can't deserialize key_info\n",
         __func__,
         __LINE__);
+    Tpm2_FlushContext(tpm, *srk_handle);
     return false;
   }
 #ifdef DEBUG
   printf("\nCreateKey\n");
   printf("Private: ");
   print_bytes((int)key_info.priv_key().size(), (byte_t*)key_info.priv_key().data());
-  printf("\n Public: ");
+  printf("\nPublic: ");
   print_bytes((int)key_info.pub_key().size(), (byte_t*)key_info.pub_key().data());
   printf("\n");
   printf("\n");
@@ -999,10 +1007,13 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
 
   TPM2B_NAME name;
   if (!Tpm2_Load(tpm, *srk_handle, quoteAuth,
-                 key_info.pub_key().size(), (byte_t*)key_info.pub_key().data(),
-                 key_info.priv_key().size(), (byte_t*)key_info.priv_key().data(),
+                 (int)key_info.pub_key().size(),
+                 (byte_t*)key_info.pub_key().data(),
+                 (int)key_info.priv_key().size(),
+                 (byte_t*)key_info.priv_key().data(),
                  quote_handle, &name)) {
     printf("%s() error, line %d, Load failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, *srk_handle);
     return false;
   }
 #ifdef DEBUG
