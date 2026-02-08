@@ -45,7 +45,6 @@ using std::string;
 // standard buffer size
 #define MAX_SIZE_PARAMS 4096
 
-
 // ------------------------------------------------------------
 
 void reverse_byte_copy(int size, byte_t* in, byte_t* out) {

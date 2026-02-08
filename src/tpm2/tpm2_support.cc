@@ -310,8 +310,10 @@ bool create_seal_hierarchy_and_secret(local_tpm& tpm,
   tpm_load_key_info key_info;
 
   key_info.set_hierarchy_name("Seal-Key-Hierarchy");
-  key_info.set_pub_key((byte_t*)out_public, size_public);
-  key_info.set_priv_key((byte_t*)out_private, size_private);
+
+  // See the note in create quote hierarchy
+  key_info.set_pub_key((byte_t*)out_public, size_public + 2);
+  key_info.set_priv_key((byte_t*)out_private, size_private + 2);
 
 #ifdef DEBUG
   printf("After creation private size: %d, public size: %d\n",
@@ -416,8 +418,8 @@ bool recover_sealing_secret(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
 #endif
   TPM2B_NAME name;
   if (!Tpm2_Load(tpm, srk_handle, sealAuth,
-        key_info.pub_key().size(), (byte_t*)key_info.pub_key().data(),
-        key_info.priv_key().size(), (byte_t*)key_info.priv_key().data(),
+        key_info.pub_key().size() - 2, (byte_t*)key_info.pub_key().data(),
+        key_info.priv_key().size() - 2, (byte_t*)key_info.priv_key().data(),
         &seal_handle, &name)) {
     printf("\n");
     printf("%s() error, line %d, Load failed\n",
@@ -539,7 +541,7 @@ bool get_endorsement_key(local_tpm& tpm, TPM_HANDLE* ek_handle) {
   printf("Public blob: ");
   print_bytes(pub_blob_size, pub_blob);
   printf("\n");
-  printf("\nName: ");
+  printf("Name: ");
   print_bytes(pub_name.size, pub_name.name);
   printf("\n");
   printf("Qualified name: ");
@@ -788,12 +790,10 @@ bool create_quote_hierarchy(local_tpm& tpm,
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
-  printf("CreatePrimary succeeded\n");
-#endif
 
 #ifdef DEBUG
   printf("\nCreate hierarchy\n");
+  printf("CreatePrimary succeeded\n");
   print_pcrs(tpm, num_pcrs, pcrs);
   printf("\n");
   TPM2B_NAME pub_name;
@@ -885,13 +885,11 @@ bool create_quote_hierarchy(local_tpm& tpm,
 
   // Save the stuff for load
   tpm_load_key_info key_info;
+
+  // Copy two extra bytes: document this later.
   key_info.set_hierarchy_name("Quote-Key-Hierarchy");
-  string str_pub_key;
-  string str_priv_key;
-  str_pub_key.assign((char*)out_public, size_public);
-  str_priv_key.assign((char*)out_private, size_private);
-  key_info.set_pub_key(str_pub_key);
-  key_info.set_priv_key(str_priv_key);
+  key_info.set_pub_key((byte_t*)out_public, size_public + 2);
+  key_info.set_priv_key((byte_t*)out_private, size_private + 2);
 
   string serialized_key_info;
   if (!key_info.SerializeToString(&serialized_key_info)) {
@@ -949,12 +947,10 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
 	   __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
-  printf("CreatePrimary succeeded\n");
-#endif
 
 #ifdef DEBUG
   printf("\nRecover hierarchy\n");
+  printf("CreatePrimary succeeded\n");
   print_pcrs(tpm, num_pcrs, pcrs);
   printf("\n");
   TPM2B_NAME pub_name;
@@ -970,7 +966,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
   printf("Public blob: ");
   print_bytes(pub_blob_size, pub_blob);
   printf("\n");
-  printf("\nName: ");
+  printf("Name: ");
   print_bytes(pub_name.size, pub_name.name);
   printf("\n");
   printf("Qualified name: ");
@@ -1020,10 +1016,11 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
 
   TPM2B_NAME name;
   memset((byte_t*)&name, 0, sizeof(name));
+  // There are two bytes after the keys that dont count.
   if (!Tpm2_Load(tpm, *srk_handle, quoteAuth,
-                 (int)key_info.pub_key().size(),
+                 (int)key_info.pub_key().size() - 2,
                  (byte_t*)key_info.pub_key().data(),
-                 (int)key_info.priv_key().size(),
+                 (int)key_info.priv_key().size() - 2,
                  (byte_t*)key_info.priv_key().data(),
                  quote_handle, &name)) {
     printf("%s() error, line %d, Load failed\n", __func__, __LINE__);
