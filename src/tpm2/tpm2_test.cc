@@ -147,12 +147,10 @@ bool seal_test(local_tpm& tpm, int pcr_num, const string& seal_file) {
             __func__, __LINE__);
     return false;
   }
-#ifdef DEBUG
-  printf("\n");
+
   printf("Recovered seal secret: ");
   print_bytes(seal_secret.size(), (byte_t*)seal_secret.data());
   printf("\n");
-#endif
 
   return true;
 }
