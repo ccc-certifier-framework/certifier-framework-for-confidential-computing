@@ -310,12 +310,8 @@ bool create_seal_hierarchy_and_secret(local_tpm& tpm,
   tpm_load_key_info key_info;
 
   key_info.set_hierarchy_name("Seal-Key-Hierarchy");
-  string str_pub_key;
-  string str_priv_key;
-  str_pub_key.assign((char*)out_public, size_public);
-  str_priv_key.assign((char*)out_private, size_private);
-  key_info.set_pub_key(str_pub_key);
-  key_info.set_priv_key(str_priv_key);
+  key_info.set_pub_key((byte_t*)out_public, size_public);
+  key_info.set_priv_key((byte_t*)out_private, size_private);
 
 #ifdef DEBUG
   printf("After creation private size: %d, public size: %d\n",
@@ -741,12 +737,14 @@ bool write_nv_slot(local_tpm& tpm, int slot, string& in) {
 bool extend_pcrs(local_tpm& tpm, int pcr_num) {
   uint16_t size_eventData = 3;
   byte_t eventData[3] = {1, 2, 3};
-  if (Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
-    printf("Tpm2_PCR_Event succeeded\n");
-  } else {
-    printf("Tpm2_PCR_Event failed\n");
+  if (!Tpm2_PCR_Event(tpm, pcr_num, size_eventData, eventData)) {
+    printf("%s() error, line %d, Tpm2_PCR_Event failed\n",
+	   __func__, __LINE__);
     return false;
   }
+#ifdef DEBUG
+    printf("Tpm2_PCR_Event succeeded\n");
+#endif
   return true;
 }
 
@@ -790,18 +788,6 @@ bool create_quote_hierarchy(local_tpm& tpm,
     printf("%s() error, line %d, CreatePrimary failed\n", __func__, __LINE__);
     return false;
   }
-
-#if 0
-  uint16_t save_size = 4096;
-  byte_t saveArea[4096]
-  if (!Tpm2_SaveContext(tpm, srk_handle, &save_
-			  size, saveArea)) {
-    printf("%s() error, line %d, Tpm2_SaveContext fails\n",
-	   __func__, __LINE__);
-  }
-  Tpm2_FlushContext(tpm, srk_handle);
-#endif
-
 #ifdef DEBUG
   printf("CreatePrimary succeeded\n");
 #endif
@@ -883,6 +869,20 @@ bool create_quote_hierarchy(local_tpm& tpm,
   printf("\n");
 #endif
 
+#if 1
+  printf("\nLOAD TEST\n");
+  TPM2B_NAME t_name;
+  TPM_HANDLE t_handle;
+  if (!Tpm2_Load(tpm, srk_handle, quoteAuth,
+                 size_public, out_public, size_private, out_private,
+                 &t_handle, &t_name)) {
+    printf("%s() error, line %d, Load failed\n", __func__, __LINE__);
+    Tpm2_FlushContext(tpm, t_handle);
+    return false;
+  }
+  printf("LOAD TEST succeeded\n");
+#endif
+
   // Save the stuff for load
   tpm_load_key_info key_info;
   key_info.set_hierarchy_name("Quote-Key-Hierarchy");
@@ -953,15 +953,6 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
   printf("CreatePrimary succeeded\n");
 #endif
 
-#if 0
-  if (!Tpm2_LoadContext(tpm, size_size, saveArea, &srk_handle)) {
-    printf("%s() error, line %d, Tpm2_LoadContext failed\n",
-	   __func__, __LINE__);
-    return false;
-  }
-#endif
-
-
 #ifdef DEBUG
   printf("\nRecover hierarchy\n");
   print_pcrs(tpm, num_pcrs, pcrs);
@@ -1018,7 +1009,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
     return false;
   }
 #ifdef DEBUG
-  printf("\nCreateKey\n");
+  printf("\nRecoverKey\n");
   printf("Private: ");
   print_bytes((int)key_info.priv_key().size(), (byte_t*)key_info.priv_key().data());
   printf("\nPublic: ");
@@ -1028,6 +1019,7 @@ bool recover_and_load_quote_hierarchy(local_tpm& tpm,
 #endif
 
   TPM2B_NAME name;
+  memset((byte_t*)&name, 0, sizeof(name));
   if (!Tpm2_Load(tpm, *srk_handle, quoteAuth,
                  (int)key_info.pub_key().size(),
                  (byte_t*)key_info.pub_key().data(),
