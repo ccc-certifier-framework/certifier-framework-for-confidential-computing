@@ -94,6 +94,12 @@ bool create_pcr_policy(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
   TPM_HANDLE session_handle;
   TPML_PCR_SELECTION pcrSelect;
   memset((void*)&pcrSelect, 0, sizeof(TPML_PCR_SELECTION));
+  
+  TPM2B_DIGEST digest_out;
+  TPM2B_NONCE initial_nonce;
+  TPM2B_ENCRYPTED_SECRET salt;
+  TPMT_SYM_DEF symmetric;
+  TPM2B_NONCE nonce_obj;
 
   if (num_pcrs < 1) {
     printf("%s() error, line %d: No pcrs\n",
@@ -125,7 +131,7 @@ bool create_pcr_policy(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
 
   TPM2B_DIGEST expected_digest;
   expected_digest.size = 0;
-  if (!Tpm2_PolicyPcr(tpm, *session_handle,
+  if (!Tpm2_PolicyPcr(tpm, session_handle,
                      expected_digest, pcrSelect)) {
     printf("%s() error, line %d, Tpm2_StartAuthSession fails\n",
          __func__,
