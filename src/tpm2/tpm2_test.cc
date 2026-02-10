@@ -305,7 +305,34 @@ bool get_cert(local_tpm& tpm, const string& file_name, string* out) {
     return false;
   }
 
-  if (!write_nv_handle(tpm, handle, cert)) {
+  TPM2B_AUTH auth;
+  string authString;
+
+  if (!Tpm2_UndefineSpace(tpm, TPM_RH_OWNER, handle)) {
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace fails (but that's OK usually)\n");
+#endif
+  }
+#ifdef DEBUG
+    printf("Tpm2_UndefineSpace %x succeeds\n", handle);
+#endif
+
+  // TODO: define a policy here using StartAuthSession
+  // create_pcr_policy(local_tpm& tpm, int num_pcrs, byte_t* pcrs,
+                //string* policy_out)
+
+  int size = 2048;
+  if (!Tpm2_DefineSpace(tpm, TPM_RH_OWNER, handle, authString, 
+                        sizeof(auth), (byte_t*) &auth,
+                        NV_AUTHWRITE | NV_AUTHREAD, size)) {
+    printf("%s() error, line %x, DefineSpace failed\n", __func__, __LINE__);
+    return false;
+  }
+#ifdef DEBUG
+    printf("Tpm2_DefineSpace %x succeeds\n", handle);
+#endif
+
+  if (!write_nv_handle(tpm, handle, authString, cert)) {
     printf("%s() error, line %d, write nvram\n",
            __func__, __LINE__);
     return false;
