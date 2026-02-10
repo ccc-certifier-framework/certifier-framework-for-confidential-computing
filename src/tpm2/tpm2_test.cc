@@ -359,10 +359,42 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
 #endif
 
   // define a policy here using StartAuthSession
-  // bool create_pcr_policy(local_tpm &tpm, int num_pcrs, byte_t *pcrs,
-  // TPM2B_DIGEST* policy_out)
+  int num_pcrs = 1;
+  byte_t pcrs[1] = {7};
+  if (!extend_pcrs(tpm, 7)) {
+    printf("%s() error, line %d, extend_pcrs failed\n",
+		    __func__, __LINE__);
+    return false;
+  }
 
-  int size = 2048;
+  if (!create_pcr_policy(tpm, num_pcrs, pcrs, &auth)) {
+    printf("%s() error, line %d, create_pcr_policy failed\n",
+		   __func__, __LINE__);
+    return false;
+  }
+
+#if 0
+  TPM2B_NV_PUBLIC nv_pub;
+  nv_pub.nvPublic.nvIndex = handle;
+  nv_pub.nvPublic.nameAlg = TPM_ALG_SHA256;
+  // nv_pub.nvPublic.attributes = (TPMA_NV) (NV_AUTHWRITE | NV_AUTHREAD);
+  nv_pub.nvPublic.authPolicy = auth;
+  nv_pub.nvPublic.dataSize = (uint16_t)cert.size();
+  nv_pub.size = (uint16_t) sizeof(nv_pub.nvPublic);
+#endif
+
+  /*
+   * Replace with
+   * Tpm2_DefineSpace(tpm,
+                        TPM_RH_OWNER,
+                        authString,
+                        handle,
+                        alg,
+                        permissions,
+                        auth,
+                        (uint16_t)cert.size()))
+   */
+
   if (!Tpm2_DefineSpace(tpm,
                         TPM_RH_OWNER,
                         handle,
@@ -370,8 +402,9 @@ bool get_cert(local_tpm &tpm, const string &file_name, string *out) {
                         sizeof(auth),
                         (byte_t *)&auth,
                         NV_AUTHWRITE | NV_AUTHREAD,
-                        size)) {
-    printf("%s() error, line %x, DefineSpace failed\n", __func__, __LINE__);
+                        (uint16_t)cert.size())) {
+    printf("%s() error, line %x, DefineSpace failed\n",
+		    __func__, __LINE__);
     return false;
   }
 #ifdef DEBUG

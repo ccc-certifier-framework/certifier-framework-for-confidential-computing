@@ -336,6 +336,10 @@ To decode error messages:
   tpm2_rc_decode 0x1c4
   tpm2_rc_decode 0x1cb
   tpm2_rc_decode 0x18b
+   tpm:handle(1):the handle is not correct for the use
+  tpm2_rc_decode 0x2d5
+   tpm:parameter(2):structure is the wrong size
+
 
 ----------------------------
 
